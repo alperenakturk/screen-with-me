@@ -5,62 +5,235 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <title>ScreenWithMe eklentisi</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cpath d='M12 9l12 7-12 7z' fill='white'/%3E%3C/svg%3E"
+    />
     <style>
-      :root { --bg: #0f1014; --surface: #181a21; --border: #2c303b; --text: #ecedf1; --muted: #9a9fad; --accent: #7c5cff; }
+      :root {
+        --bg: #0f1014; --surface: #181a21; --surface-2: #22252e; --border: #2c303b;
+        --text: #ecedf1; --muted: #9a9fad; --accent: #7c5cff; --accent-hover: #8f74ff; --ok: #3ccf8e;
+      }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-      main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
-      h1 { margin: 0 0 4px; }
-      .muted { color: var(--muted); }
-      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 20px; }
-      ol { padding-left: 22px; margin: 8px 0 0; }
-      li { margin: 8px 0; }
-      code { background: #22252e; border-radius: 6px; padding: 2px 6px; }
-      .btn { display: inline-block; background: var(--accent); color: white; text-decoration: none; font-weight: 600; padding: 12px 20px; border-radius: 10px; margin-top: 8px; }
-      a { color: #8f74ff; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      a { color: var(--accent-hover); }
+      main { max-width: 980px; margin: 0 auto; padding: 20px 16px 72px; }
+      .back { display: inline-block; margin-bottom: 24px; text-decoration: none; color: var(--muted); }
+      .back:hover { color: var(--text); }
+
+      /* Mağaza başlığı */
+      .store { display: flex; gap: 24px; align-items: center; background: var(--surface); border: 1px solid var(--border);
+        border-radius: 20px; padding: 28px; }
+      .store-icon { flex: none; width: 112px; height: 112px; border-radius: 26px; background: linear-gradient(135deg, #8f74ff, #5b3cf0);
+        display: grid; place-items: center; font-size: 44px; color: white; box-shadow: 0 10px 30px rgb(124 92 255 / .35); }
+      .store h1 { margin: 0; font-size: 30px; }
+      .store p { margin: 4px 0 12px; color: var(--muted); }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+      .chip { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
+      .download { display: inline-flex; align-items: center; gap: 10px; background: var(--accent); color: white; text-decoration: none;
+        font-weight: 700; font-size: 18px; padding: 14px 26px; border-radius: 12px; }
+      .download:hover { background: var(--accent-hover); }
+      .version { color: var(--muted); font-size: 13px; margin-left: 12px; }
+
+      section { margin-top: 48px; }
+      h2 { font-size: 24px; margin: 0 0 6px; }
+      .sub { color: var(--muted); margin: 0 0 20px; }
+
+      /* Özellikler */
+      .features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+      .feature { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+      .feature .big { font-size: 34px; }
+      .feature h3 { margin: 8px 0 4px; font-size: 16px; }
+      .feature p { margin: 0; color: var(--muted); font-size: 14px; }
+
+      /* Kurulum adımları */
+      .steps { display: flex; flex-direction: column; gap: 14px; counter-reset: step; }
+      .step { display: grid; grid-template-columns: 56px minmax(0, 1fr) 300px; gap: 20px; align-items: center;
+        background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; }
+      .num { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); display: grid; place-items: center;
+        font-weight: 800; font-size: 20px; }
+      .step h3 { margin: 0 0 4px; font-size: 18px; }
+      .step p { margin: 0; color: var(--muted); font-size: 15px; }
+      .step code { background: var(--surface-2); border-radius: 6px; padding: 2px 6px; color: var(--text); }
+
+      /* Adımlardaki küçük çizimler */
+      .art { background: #0b0c10; border: 1px solid var(--border); border-radius: 12px; padding: 14px; min-height: 96px;
+        display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 14px; }
+      .file { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+      .file .ico { font-size: 38px; }
+      .arrow { color: var(--accent-hover); font-size: 22px; font-weight: 700; }
+      .urlbar { width: 100%; display: flex; align-items: center; gap: 8px; background: #1d2027; border-radius: 999px; padding: 8px 14px;
+        font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+      .urlbar .lock { color: var(--muted); }
+      .copy { margin-left: auto; font: inherit; font-family: system-ui; font-size: 12px; color: var(--text); background: var(--surface-2);
+        border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+      .devmode { display: flex; align-items: center; gap: 10px; }
+      .toggle { width: 42px; height: 24px; border-radius: 999px; background: #4a7cf7; position: relative; flex: none; }
+      .toggle::after { content: ''; position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; }
+      .hand { font-size: 22px; }
+      .fakebtn { border: 1px solid #4a7cf7; color: #8fb0ff; border-radius: 8px; padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+      .pin { display: flex; align-items: center; gap: 10px; background: #1d2027; border-radius: 10px; padding: 8px 12px; }
+      .pin .tile { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: grid; place-items: center; font-size: 10px; color: white; }
+
+      .note { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: rgb(124 92 255 / .08); border: 1px solid rgb(124 92 255 / .3);
+        color: var(--muted); font-size: 14px; }
+      .note b { color: var(--text); }
+
+      /* Kullanım */
+      .use { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .use .feature { text-align: center; }
+
+      details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-top: 10px; }
+      summary { cursor: pointer; font-weight: 600; }
+      details p { color: var(--muted); margin: 8px 0 0; font-size: 15px; }
+
+      @media (max-width: 860px) {
+        .store { flex-direction: column; text-align: center; }
+        .chips { justify-content: center; }
+        .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .step { grid-template-columns: 48px minmax(0, 1fr); }
+        .step .art { grid-column: 1 / -1; }
+        .use { grid-template-columns: 1fr; }
+      }
     </style>
   </head>
   <body>
     <main>
-      <a href="/">← ScreenWithMe</a>
-      <h1>Eklentiyi kur</h1>
-      <p class="muted">YouTube dışındaki sitelerde (videonun bir web sayfasında olduğu her yerde) birlikte izlemek için gerekiyor. Chrome, Edge, Brave ve Opera'da çalışır.</p>
+      <a class="back" href="/">← ScreenWithMe</a>
 
-      <div class="card">
-        <strong>1. İndir</strong>
-        <div><a class="btn" href="/screenwithme-extension.zip" download>Eklentiyi indir (.zip)</a></div>
+      <div class="store">
+        <div class="store-icon">▶</div>
+        <div>
+          <h1>ScreenWithMe</h1>
+          <p>Arkadaşlarınla herhangi bir sitedeki videoyu aynı anda izle.</p>
+          <div class="chips">
+            <span class="chip">Ücretsiz</span>
+            <span class="chip">Hesap gerekmez</span>
+            <span class="chip">Chrome · Edge · Brave · Opera</span>
+          </div>
+          <a class="download" href="/screenwithme-extension.zip" download>⬇ Eklentiyi indir</a>
+          <span class="version" id="version"></span>
+        </div>
       </div>
 
-      <div class="card">
-        <strong>2. Kur</strong>
-        <ol>
-          <li>İndirdiğin zip dosyasını bir klasöre çıkar (sağ tık → "Tümünü ayıkla"). Bu klasörü silme, eklenti oradan çalışır.</li>
-          <li>Adres çubuğuna <code>chrome://extensions</code> yaz (Edge'de <code>edge://extensions</code>).</li>
-          <li>Sağ üstteki <strong>Geliştirici modu</strong>nu aç.</li>
-          <li><strong>Paketlenmemiş öğe yükle</strong> butonuna bas ve çıkardığın klasörü seç.</li>
-          <li>Eklentiyi kolay bulmak için yapboz simgesine tıklayıp ScreenWithMe'yi sabitle.</li>
-        </ol>
-      </div>
+      <section>
+        <h2>Neler yapar?</h2>
+        <p class="sub">Video herkesin kendi tarayıcısında oynar; eklenti sadece "durdur, 12:34'e git" gibi küçük mesajları taşır.</p>
+        <div class="features">
+          <div class="feature"><div class="big">🎬</div><h3>Her sitede</h3><p>Sayfadaki videoyu kendisi bulur, oynatıcı iframe içinde olsa bile.</p></div>
+          <div class="feature"><div class="big">⏯️</div><h3>Tam senkron</h3><p>Oynat, durdur, sar, hız: biri yapınca herkeste olur. Geride kalan yakalanır.</p></div>
+          <div class="feature"><div class="big">😂</div><h3>Emoji ve mesaj</h3><p>Videonun üstünde uçuşan emojiler ve kısa mesajlar; tam ekranda da.</p></div>
+          <div class="feature"><div class="big">🔒</div><h3>Gizli kalır</h3><p>Sadece odaya katıldığın sekmede çalışır. Gezinti geçmişini toplamaz.</p></div>
+        </div>
+      </section>
 
-      <div class="card">
-        <strong>3. Kullan</strong>
-        <ol>
-          <li>Videonun olduğu sayfayı aç, eklenti simgesine tıkla ve <strong>Bu sayfada oda oluştur</strong>'a bas.</li>
-          <li>Davet linkini arkadaşlarına at. Eklentisi olanlar linke tıklayınca otomatik olarak aynı sayfaya, aynı odaya gelir.</li>
-          <li>Ya da sitedeki bir odaya sayfanın linkini yapıştır; eklentisi olan herkes oraya yönlendirilir.</li>
-        </ol>
-        <p class="muted">Eklenti sadece bir odaya katıldığın sekmede çalışır; diğer sekmelerde hiçbir şey yapmaz ve gezinti bilgini toplamaz.</p>
-      </div>
+      <section>
+        <h2>Kurulum · 5 adım, 1 dakika</h2>
+        <p class="sub">Eklenti henüz Chrome Web Store'da değil; o yüzden tek seferlik elle kuruluyor.</p>
 
-      <hr style="border-color: var(--border); margin: 40px 0" />
+        <div class="steps">
+          <div class="step">
+            <div class="num">1</div>
+            <div>
+              <h3>İndir ve klasöre çıkar</h3>
+              <p>Yukarıdaki <b>Eklentiyi indir</b> butonuna bas. İnen dosyaya sağ tıkla → <b>Tümünü ayıkla</b>. Çıkan klasörü kalıcı bir yere koy (ör. Belgeler); eklenti oradan çalışır, silme.</p>
+            </div>
+            <div class="art">
+              <div class="file"><span class="ico">🗜️</span>screenwithme-extension.zip</div>
+              <span class="arrow">→</span>
+              <div class="file"><span class="ico">📁</span>screenwithme-extension</div>
+            </div>
+          </div>
 
-      <h2 lang="en">Install the extension</h2>
-      <ol lang="en">
-        <li><a href="/screenwithme-extension.zip" download>Download the .zip</a> and extract it to a folder (keep the folder).</li>
-        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code>) and turn on <strong>Developer mode</strong>.</li>
-        <li>Click <strong>Load unpacked</strong> and pick the extracted folder.</li>
-        <li>On the page with the video, click the extension icon → <strong>Create a room on this page</strong> and share the invite link.</li>
-      </ol>
+          <div class="step">
+            <div class="num">2</div>
+            <div>
+              <h3>Eklentiler sayfasını aç</h3>
+              <p>Yeni sekmede adres çubuğuna yaz ve Enter'a bas. Edge'de <code>edge://extensions</code>, Brave'de <code>brave://extensions</code>.</p>
+            </div>
+            <div class="art">
+              <div class="urlbar"><span class="lock">🧩</span><span id="ext-url">chrome://extensions</span><button class="copy" type="button" id="copy-url">Kopyala</button></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num">3</div>
+            <div>
+              <h3>Geliştirici modunu aç</h3>
+              <p>Sayfanın <b>sağ üstündeki</b> anahtarı aç. Mağaza dışından eklenti kurmak için gerekiyor; zararsız, istediğin zaman kapatabilirsin.</p>
+            </div>
+            <div class="art">
+              <div class="devmode">Geliştirici modu <span class="toggle"></span><span class="hand">👈</span></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num">4</div>
+            <div>
+              <h3>Klasörü yükle</h3>
+              <p>Solda beliren <b>Paketlenmemiş öğe yükle</b> butonuna bas ve 1. adımda çıkardığın <b>screenwithme-extension</b> klasörünü seç.</p>
+            </div>
+            <div class="art">
+              <span class="fakebtn">Paketlenmemiş öğe yükle</span>
+              <span class="arrow">→</span>
+              <div class="file"><span class="ico">📁</span>screenwithme-extension</div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num">5</div>
+            <div>
+              <h3>Sabitle</h3>
+              <p>Adres çubuğunun sağındaki <b>yapboz</b> simgesine tıkla, ScreenWithMe'nin yanındaki <b>raptiyeye</b> bas. Artık simge hep orada.</p>
+            </div>
+            <div class="art">
+              <span style="font-size: 26px">🧩</span>
+              <span class="arrow">→</span>
+              <div class="pin"><span class="tile">▶</span>ScreenWithMe <span>📌</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">
+          <b>Chrome bir uyarı gösterirse:</b> açılışta "geliştirici modundaki eklentileri devre dışı bırak" diyebilir. Mağaza dışından kurulan her eklentide çıkar; <b>Yoksay</b> deyip devam et.
+        </div>
+      </section>
+
+      <section>
+        <h2>Nasıl kullanılır?</h2>
+        <p class="sub">Arkadaşlarının da eklentiyi kurmuş olması gerekiyor (YouTube için gerekmez, onu sitede izlersiniz).</p>
+        <div class="use">
+          <div class="feature"><div class="big">🌐</div><h3>1. Filmin sayfasını aç</h3><p>İzleyeceğin sitede filmin ya da bölümün sayfasına git.</p></div>
+          <div class="feature"><div class="big">▶️</div><h3>2. "Bu sayfada oda oluştur"</h3><p>ScreenWithMe simgesine tıkla ve odanı kur. Davet linkini kopyala.</p></div>
+          <div class="feature"><div class="big">🍿</div><h3>3. Linki gönder, izle</h3><p>Arkadaşın linke tıklayınca aynı sayfaya, aynı odaya gelir. Videoyu başlatın.</p></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Sık sorulanlar</h2>
+        <details><summary>Nasıl güncellerim?</summary><p>Bu sayfadan yeni zip'i indir, aynı klasörün içine çıkar (eskilerin üzerine yaz) ve eklentiler sayfasındaki ScreenWithMe kartında ↻ butonuna bas.</p></details>
+        <details><summary>Video algılanmıyor</summary><p>Videoyu bir kez başlat; eklenti oynayan videoyu daha kolay bulur. Hâlâ olmuyorsa simgeye tıkla, penceredeki "Tanı" satırında yazanı bize ilet.</p></details>
+        <details><summary>Netflix / Disney+ çalışır mı?</summary><p>Hayır, şifreli (DRM'li) servisler hedeflenmiyor.</p></details>
+        <details><summary>Firefox?</summary><p>Henüz değil, üzerinde çalışıyoruz.</p></details>
+      </section>
+
+      <section lang="en">
+        <h2>In English</h2>
+        <p class="sub">Download the zip and extract it → open <code>chrome://extensions</code> → turn on <b>Developer mode</b> → <b>Load unpacked</b> and pick the folder → pin it from the puzzle icon. Then, on the page with the video, click the icon → <b>Create a room on this page</b> and share the invite link.</p>
+      </section>
     </main>
+    <script>
+      // Tarayıcıya göre doğru adres
+      const ua = navigator.userAgent;
+      const url = navigator.brave ? 'brave://extensions' : /Edg\//.test(ua) ? 'edge://extensions' : /OPR\//.test(ua) ? 'opera://extensions' : 'chrome://extensions';
+      document.getElementById('ext-url').textContent = url;
+      document.getElementById('copy-url').addEventListener('click', async (event) => {
+        try { await navigator.clipboard.writeText(url); event.target.textContent = 'Kopyalandı'; } catch {}
+      });
+      // Sürüm (derleme sırasında yazılır)
+      fetch('/extension-version.json').then((r) => r.json()).then((v) => {
+        document.getElementById('version').textContent = 'Sürüm ' + v.version;
+      }).catch(() => {});
+    </script>
   </body>
 </html>

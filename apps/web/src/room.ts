@@ -31,39 +31,24 @@ import { createToasts } from './ui/toasts.ts';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const MAX_ACTIVITY = 12;
 
-/** Önce isim sorulur. Bu tıklama aynı zamanda tarayıcının sesli oynatma izni için gereken etkileşimdir. */
+/**
+ * Odaya giriş iki adımlıdır: önce isim, sonra avatar. İkisi de tarayıcıda
+ * saklanır ve bir dahakine hazır gelir. "Odaya gir" tıklaması aynı zamanda
+ * tarayıcının sesli oynatma izni için gereken etkileşimdir.
+ */
 export function renderRoom(app: HTMLElement, roomId: string): void {
   app.innerHTML = `
     <section class="card join-card">
-      <p class="muted" id="room-code"></p>
+      <p class="muted step-label" id="room-code"></p>
       <form id="name-form" class="stack">
-        <label for="name" data-i18n="yourName"></label>
+        <label for="name" class="step-title" data-i18n="yourName"></label>
         <input id="name" maxlength="32" required autocomplete="nickname" data-i18n-placeholder="namePlaceholder" />
-        <span class="label" data-i18n="yourAvatar"></span>
-        <div id="avatar-picker" class="avatar-picker" role="radiogroup"></div>
-        <button class="btn primary big" data-i18n="enterRoom"></button>
+        <button class="btn primary big" data-i18n="continue"></button>
         <p class="muted small" data-i18n="nameHint"></p>
       </form>
     </section>
   `;
   translate(app);
-
-  // Avatar: bir kez seçilir, tarayıcıda saklanır (yoksa rastgele biri önerilir).
-  const savedAvatar = load('avatar');
-  let avatar: Avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
-  const picker = app.querySelector<HTMLElement>('#avatar-picker')!;
-  const renderPicker = () =>
-    picker.replaceChildren(
-      ...AVATARS.map((option) => {
-        const button = el('button', { type: 'button', class: 'avatar-option', role: 'radio', 'aria-checked': String(option === avatar) }, option);
-        button.addEventListener('click', () => {
-          avatar = option;
-          renderPicker();
-        });
-        return button;
-      }),
-    );
-  renderPicker();
 
   const roomCode = app.querySelector<HTMLElement>('#room-code')!;
   const renderCode = () => (roomCode.textContent = t('roomCode', { id: roomId }));
@@ -80,9 +65,58 @@ export function renderRoom(app: HTMLElement, roomId: string): void {
     const name = cleanName(input.value);
     if (name === null) return;
     save('name', name);
-    save('avatar', avatar);
     window.removeEventListener('langchange', renderCode);
+    renderAvatarStep(app, roomId, name);
+  });
+}
+
+/** 2. adım: avatar seçimi. Daha önce seçilen işaretli gelir (yoksa rastgele biri). */
+function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void {
+  app.innerHTML = `
+    <section class="card join-card avatar-card">
+      <p class="muted step-label" id="hello"></p>
+      <h2 class="step-title" data-i18n="pickAvatar"></h2>
+      <div id="avatar-picker" class="avatar-picker big" role="radiogroup"></div>
+      <div id="avatar-preview" class="avatar-preview"></div>
+      <button id="enter" type="button" class="btn primary big" data-i18n="enterRoom"></button>
+      <button id="back" type="button" class="link-btn" data-i18n="back"></button>
+    </section>
+  `;
+  translate(app);
+
+  const savedAvatar = load('avatar');
+  let avatar: Avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
+  const picker = app.querySelector<HTMLElement>('#avatar-picker')!;
+  const preview = app.querySelector<HTMLElement>('#avatar-preview')!;
+  const hello = app.querySelector<HTMLElement>('#hello')!;
+  const renderTexts = () => (hello.textContent = t('helloName', { name }));
+  const renderPicker = () => {
+    picker.replaceChildren(
+      ...AVATARS.map((option) => {
+        const button = el('button', { type: 'button', class: 'avatar-option', role: 'radio', 'aria-checked': String(option === avatar) }, option);
+        button.addEventListener('click', () => {
+          avatar = option;
+          renderPicker();
+        });
+        button.addEventListener('dblclick', enter);
+        return button;
+      }),
+    );
+    preview.textContent = `${avatar} ${name}`;
+  };
+  renderPicker();
+  renderTexts();
+  window.addEventListener('langchange', renderTexts);
+
+  function enter(): void {
+    save('avatar', avatar);
+    window.removeEventListener('langchange', renderTexts);
     startRoom(app, roomId, name, avatar);
+  }
+  app.querySelector('#enter')!.addEventListener('click', enter);
+  app.querySelector('#back')!.addEventListener('click', () => {
+    window.removeEventListener('langchange', renderTexts);
+    renderRoom(app, roomId);
   });
 }
 

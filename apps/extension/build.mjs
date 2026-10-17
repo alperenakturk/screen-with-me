@@ -71,5 +71,6 @@ if (!dev) {
   const files = {};
   for (const name of readdirSync('dist')) files[name] = readFileSync(`dist/${name}`);
   writeFileSync('../web/public/screenwithme-extension.zip', zipSync(files, { level: 9 }));
+  writeFileSync('../web/public/extension-version.json', JSON.stringify({ version: pkg.version }));
   console.log('✓ ../web/public/screenwithme-extension.zip yazıldı');
 }

@@ -6,8 +6,9 @@ import type { ChatLine, RoomInfo } from './messages.ts';
 const QUICK_CHAT_MAX = Math.min(120, CHAT_MAX_LENGTH);
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const MAX_FLOATS = 30;
-const MAX_TOASTS = 5;
-const TOAST_MS = 6000;
+/** Uzun bir sütun olmasın: en fazla bu kadar mesaj aynı anda görünür, kısa sürede kaybolur. */
+const MAX_TOASTS = 4;
+const TOAST_MS = 5000;
 /** Fare bu kadar hareketsiz kalınca buton (ve açıksa çubuk) solar. */
 const IDLE_MS = 3000;
 
@@ -30,17 +31,18 @@ const CSS = `
   100% { transform: translate(var(--drift, 0), -220px) scale(1); opacity: 0; }
 }
 
-/* Mesajlar ve bildirimler: sol üstten aşağı akar (oynatıcının alttaki kontrolleriyle karışmasın) */
-.toasts { position: absolute; left: 14px; top: 14px; display: flex; flex-direction: column; align-items: flex-start;
-  gap: 6px; max-width: min(420px, 55%); }
-.toast { background: rgb(0 0 0 / .72); border: 1px solid rgb(255 255 255 / .12); padding: 6px 12px; border-radius: 12px;
-  font-size: 15px; overflow-wrap: anywhere; animation: in .2s ease-out; }
+/* Mesajlar ve bildirimler: sağ üstteki ScreenWithMe çubuğunun hemen altında belirip kaybolur.
+   (top değeri çubuğun yüksekliğine göre JS ile ayarlanır.) */
+.toasts { position: absolute; right: 12px; top: 56px; display: flex; flex-direction: column; align-items: flex-end;
+  gap: 5px; max-width: min(380px, calc(100% - 24px)); transition: top .2s; }
+.toast { background: rgb(0 0 0 / .72); border: 1px solid rgb(255 255 255 / .12); padding: 5px 11px; border-radius: 12px;
+  font-size: 14px; overflow-wrap: anywhere; text-align: right; animation: in .2s ease-out; }
 .toast b { color: #a48dff; }
 .toast.me b { color: #3ccf8e; }
-.toast.notice { font-size: 13px; color: #c9cbd3; font-style: italic; padding: 4px 10px; }
+.toast.notice { font-size: 12px; color: #c9cbd3; font-style: italic; padding: 3px 10px; }
 .toast.leaving { animation: out .4s ease-in forwards; }
-@keyframes in { from { opacity: 0; transform: translateY(-8px); } }
-@keyframes out { to { opacity: 0; transform: translateX(-12px); } }
+@keyframes in { from { opacity: 0; transform: translateX(10px); } }
+@keyframes out { to { opacity: 0; transform: translateY(-6px); } }
 
 /* Sağ üst: buton ve kompakt çubuk */
 .fab, .bar { position: absolute; top: 12px; right: 12px; pointer-events: auto; transition: opacity .25s; }
@@ -224,6 +226,8 @@ export function createOverlay(actions: OverlayActions) {
       width: `${box.width}px`,
       height: `${box.height}px`,
     });
+    // Video boyutu değişince çubuk iki satıra inebilir; mesajlar onun altında kalsın.
+    placeToasts();
   }
 
   /** Fare oynayınca buton/çubuk görünür, hareketsiz kalınca solar (yazı yazarken solmaz). */
@@ -247,7 +251,16 @@ export function createOverlay(actions: OverlayActions) {
       renderBadge();
       parts.input.focus();
     }
+    placeToasts();
     wake();
+  }
+
+  /** Mesajları buton/çubuk hangisi görünüyorsa onun hemen altına koyar. */
+  function placeToasts(): void {
+    if (!parts) return;
+    const anchor = barOpen ? parts.bar : parts.fab;
+    const height = anchor.getBoundingClientRect().height || (barOpen ? 84 : 34);
+    parts.toasts.style.top = `${12 + height + 8}px`;
   }
 
   function renderBadge(): void {

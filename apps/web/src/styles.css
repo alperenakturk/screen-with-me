@@ -258,6 +258,157 @@ select:focus {
   background: var(--border);
 }
 
+.nav-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.nav-link:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* ---- Nasıl çalışır ---- */
+.how {
+  max-width: 1100px;
+  margin: 72px auto 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.how > h2 {
+  text-align: center;
+  font-size: clamp(24px, 4vw, 32px);
+  margin: 0;
+}
+
+.how-flow h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+
+.how-badge {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #ff3d3d;
+  font-size: 14px;
+}
+
+.how-badge.site {
+  background: var(--accent);
+}
+
+.how-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+
+.how-step {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 16px 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Adımlar arasındaki ok */
+.how-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent-hover);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.how-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgb(143 116 255 / 0.35), rgb(124 92 255 / 0.12));
+  font-size: 42px;
+}
+
+.how-num {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--surface);
+}
+
+.how-step h4 {
+  margin: 4px 0 0;
+  font-size: 17px;
+}
+
+.how-step p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.how-step .btn {
+  margin-top: 6px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+@media (max-width: 860px) {
+  .how-steps {
+    grid-auto-flow: row;
+    gap: 26px;
+  }
+
+  .how-step:not(:last-child)::after {
+    content: '↓';
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: -24px;
+    transform: translateX(-50%);
+  }
+
+  .topbar .nav-link span:last-child {
+    display: none;
+  }
+}
+
 /* ---- İsim ekranı ---- */
 .join-card {
   max-width: 400px;
@@ -291,6 +442,50 @@ select:focus {
 .avatar-option[aria-checked='true'] {
   border-color: var(--accent);
   background: rgb(124 92 255 / 0.2);
+}
+
+.step-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.step-label {
+  margin: 0;
+}
+
+.avatar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+}
+
+.avatar-picker.big {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.avatar-picker.big .avatar-option {
+  font-size: 34px;
+  border-radius: 14px;
+}
+
+.avatar-preview {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.link-btn {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  color: var(--text);
 }
 
 .join-card p {
@@ -731,17 +926,18 @@ select:focus {
   height: 40px;
 }
 
-/* Tam ekranda gelen sohbet mesajları: sol üstten aşağı akar (alttaki kontrollerle karışmasın) */
+/* Tam ekranda gelen sohbet mesajları: sağ üstten aşağı akar (eklentiyle aynı yer, alttaki kontrollerle karışmaz) */
 .toasts {
   position: absolute;
-  left: 20px;
+  right: 20px;
   top: 20px;
   z-index: 2;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 6px;
   max-width: min(420px, 60%);
   pointer-events: none;
+  text-align: right;
 }
 
 .toast {

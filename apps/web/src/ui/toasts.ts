@@ -1,7 +1,7 @@
 import { el } from '../dom.ts';
 
 const MAX_TOASTS = 4;
-const TOAST_MS = 6000;
+const TOAST_MS = 5000;
 
 /** Tam ekranda gelen sohbet mesajlarını videonun köşesinde kısa süre gösterir. */
 export function createToasts(container: HTMLElement) {
