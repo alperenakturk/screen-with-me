@@ -2,12 +2,13 @@
 // burası sadece durumu gösterir ve istekleri iletir.
 
 import { AVATARS, REACTIONS, randomAvatar, type Avatar } from '@swm/shared/protocol';
-import { isKey, t } from './i18n.ts';
+import { isKey, langReady, t } from './i18n.ts';
 import type { PopupRequest, PopupResponse, PopupStatus } from './messages.ts';
 
 const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 
-// Statik metinler
+// Statik metinler (önce sitede seçilen dili oku)
+await langReady;
 for (const el of document.querySelectorAll<HTMLElement>('[data-t]')) {
   const key = el.dataset.t!;
   if (isKey(key)) el.textContent = t(key);

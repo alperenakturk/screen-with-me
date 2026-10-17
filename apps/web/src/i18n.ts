@@ -144,7 +144,8 @@ const tr = {
   'error.bad_message': 'Sunucu bir isteği reddetti.',
   'error.not_joined': 'Odaya henüz katılmadın.',
   home: 'Ana sayfa',
-  adblockTip: 'İpucu: reklamlar için tarayıcına uBlock Origin kurabilirsin.',
+  adblockTip: 'Reklamsız izlemek istersen önerimiz:',
+  adblockNote: '(ücretsiz, ayrı bir eklenti; ScreenWithMe\'nin parçası değil, sadece öneri)',
 };
 
 type Key = keyof typeof tr;
@@ -291,15 +292,20 @@ const en: Record<Key, string> = {
   'error.bad_message': 'The server rejected a request.',
   'error.not_joined': "You haven't joined the room yet.",
   home: 'Home',
-  adblockTip: 'Tip: install uBlock Origin in your browser to block ads.',
+  adblockTip: 'Want to watch without ads? We recommend',
+  adblockNote: "(free, a separate extension; not part of ScreenWithMe, just a suggestion)",
 };
 
 const dictionaries: Record<Lang, Record<Key, string>> = { tr, en };
 
+/**
+ * Varsayılan dil İngilizce. Seçim tarayıcıda 'lang' anahtarıyla saklanır ve
+ * aynı adresteki tüm sayfalar (site, eklenti sayfası, gizlilik) bunu paylaşır;
+ * eklenti de site-bridge üzerinden aynı dili alır.
+ */
 function detect(): Lang {
   const saved = load('lang');
-  if (saved === 'tr' || saved === 'en') return saved;
-  return navigator.language.toLowerCase().startsWith('tr') ? 'tr' : 'en';
+  return saved === 'tr' ? 'tr' : 'en';
 }
 
 let current: Lang = detect();

@@ -1,4 +1,4 @@
-// Eklentinin metinleri. Dil, tarayıcının diline göre seçilir.
+// Eklentinin metinleri.
 
 const tr = {
   tagline: 'Bu sekmedeki videoyu arkadaşlarınla aynı anda izle.',
@@ -106,7 +106,23 @@ const en: Record<Key, string> = {
   chatEmpty: 'No messages yet.',
 };
 
-const dict = navigator.language.toLowerCase().startsWith('tr') ? tr : en;
+// Dil sitedekiyle aynı: site-bridge sitedeki seçimi 'lang' olarak buraya yazar.
+// Varsayılan İngilizce. Okuma bitene kadar İngilizce kullanılır; arayüzü
+// hemen çizen yerler (popup) önce langReady'yi bekler.
+let dict: Record<Key, string> = en;
+
+function use(lang: unknown): void {
+  dict = lang === 'tr' ? tr : en;
+}
+
+export const langReady: Promise<void> = chrome.storage.local
+  .get('lang')
+  .then((stored) => use(stored.lang))
+  .catch(() => {});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.lang) use(changes.lang.newValue);
+});
 
 export function t(key: Key, params: Record<string, string | number> = {}): string {
   return dict[key].replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? ''));
