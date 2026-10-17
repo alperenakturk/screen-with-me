@@ -272,7 +272,7 @@ export function createOverlay(actions: OverlayActions) {
   function renderRoom(): void {
     if (!parts || !room) return;
     const names = room.members.map((m) => {
-      const name = m.avatar ? `${m.avatar} ${m.name}` : m.name;
+      const name = (m.avatar ? `${m.avatar} ${m.name}` : m.name) + (m.id === room!.hostId ? ' 👑' : '');
       return m.id === room!.myId ? `${name} (${t('you')})` : name;
     });
     parts.members.textContent = `👥 ${room.members.length}`;

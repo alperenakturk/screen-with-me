@@ -54,6 +54,15 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'hello', v: 3, name: 'Ali', avatar: '<img src=x>' })).toEqual({ t: 'hello', v: 3, name: 'Ali' });
   });
 
+  it('accepts rename, kick and a valid client id', () => {
+    expect(parse({ t: 'hello', v: 3, name: 'Ali', cid: 'abcd1234efgh' })).toEqual({ t: 'hello', v: 3, name: 'Ali', cid: 'abcd1234efgh' });
+    expect(parse({ t: 'hello', v: 3, name: 'Ali', cid: 'x' })).toEqual({ t: 'hello', v: 3, name: 'Ali' });
+    expect(parse({ t: 'rename', name: ' Veli ', avatar: '🐼' })).toEqual({ t: 'rename', name: 'Veli', avatar: '🐼' });
+    expect(parse({ t: 'rename', name: '' })).toBeNull();
+    expect(parse({ t: 'kick', id: 'abc12345' })).toEqual({ t: 'kick', id: 'abc12345' });
+    expect(parse({ t: 'kick', id: '../x' })).toBeNull();
+  });
+
   it('strips unknown fields from media', () => {
     expect(parse({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ', evil: '<script>' } })).toEqual({
       t: 'load',

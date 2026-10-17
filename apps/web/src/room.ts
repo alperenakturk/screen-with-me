@@ -4,6 +4,7 @@ import { parseMediaInput } from '@swm/shared/media';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
   AVATARS,
+  CLIENT_ID,
   cleanName,
   isAvatar,
   randomAvatar,
@@ -16,7 +17,7 @@ import {
 } from '@swm/shared/protocol';
 import { pageInviteUrl } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
-import { el, rememberOpen } from './dom.ts';
+import { el } from './dom.ts';
 import { t, translate } from './i18n.ts';
 import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
 import { createHtml5Player } from './players/html5.ts';
@@ -25,11 +26,13 @@ import { load, save } from './storage.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
+import { createPeoplePanel } from './ui/people.ts';
 import { createReactions } from './ui/reactions.ts';
+import { createSettingsPanel } from './ui/settings.ts';
+import { createTabs } from './ui/tabs.ts';
 import { createToasts } from './ui/toasts.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-const MAX_ACTIVITY = 12;
 
 /**
  * Odaya giriş iki adımlıdır: önce isim, sonra avatar. İkisi de tarayıcıda
@@ -120,6 +123,20 @@ function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void 
   });
 }
 
+/**
+ * Tarayıcının kalıcı kimliği: rastgele bir kod, hesap değil. Oda yöneticisinin
+ * sayfayı yenileyince yöneticiliği kaybetmemesi ve atılanın hemen geri
+ * girememesi için sunucuya gönderilir.
+ */
+function clientId(): string {
+  const saved = load('cid');
+  if (saved && CLIENT_ID.test(saved)) return saved;
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  save('cid', id);
+  return id;
+}
+
 /** İsmin önüne avatarı koyar (varsa). */
 function withAvatar(member: { name: string; avatar?: string }): string {
   return member.avatar ? `${member.avatar} ${member.name}` : member.name;
@@ -186,6 +203,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="toolbar">
             <div class="reaction-bar" role="group"></div>
             <div class="toolbar-right">
+              <button id="sync-all" type="button" class="btn small-btn">🔄 <span data-i18n="syncAll"></span></button>
               <label class="speed"><span data-i18n="speed"></span>
                 <select id="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
               </label>
@@ -197,35 +215,80 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       </div>
 
       <aside class="side">
-        <section class="card">
-          <h3 data-i18n="invite"></h3>
+        <section class="card invite-card">
+          <span class="invite-label" data-i18n="invite"></span>
           <div class="row">
             <input id="invite" readonly />
-            <button id="copy" type="button" class="btn" data-i18n="copy"></button>
+            <button id="copy" type="button" class="btn primary" data-i18n="copy"></button>
           </div>
         </section>
-        <section class="card">
-          <h3 id="members-title"></h3>
-          <ul id="members" class="members"></ul>
+
+        <section class="card tabs-card">
+          <nav class="tabs" role="tablist">
+            <button type="button" class="tab" role="tab" data-tab="chat">
+              <span aria-hidden="true">💬</span><span data-i18n="tab.chat"></span><span id="chat-badge" class="badge" hidden></span>
+            </button>
+            <button type="button" class="tab" role="tab" data-tab="queue">
+              <span aria-hidden="true">🎵</span><span data-i18n="tab.queue"></span><span id="queue-count" class="count"></span>
+            </button>
+            <button type="button" class="tab" role="tab" data-tab="people">
+              <span aria-hidden="true">👥</span><span id="people-count" class="count"></span>
+            </button>
+            <button type="button" class="tab tab-icon" role="tab" data-tab="settings" id="settings-tab">⚙️</button>
+          </nav>
+
+          <div class="tab-panel chat-panel" data-panel="chat">
+            <ul id="chat-list" class="chat-list"></ul>
+            <form id="chat-form" class="row chat-form">
+              <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" />
+              <button class="btn primary" data-i18n="send"></button>
+            </form>
+          </div>
+
+          <div class="tab-panel" data-panel="queue" hidden>
+            <ol id="queue" class="queue"></ol>
+            <p id="queue-empty" class="muted small" data-i18n="queueEmpty"></p>
+          </div>
+
+          <div class="tab-panel" data-panel="people" hidden>
+            <ul id="members" class="people"></ul>
+            <p id="host-hint" class="muted small"></p>
+          </div>
+
+          <div class="tab-panel settings" data-panel="settings" hidden>
+            <h4 data-i18n="settings.profile"></h4>
+            <form id="rename-form" class="row">
+              <input id="rename-input" maxlength="32" autocomplete="nickname" />
+              <button class="btn" data-i18n="save"></button>
+            </form>
+            <div id="settings-avatars" class="avatar-picker"></div>
+            <h4 data-i18n="settings.theme"></h4>
+            <div id="settings-themes" class="theme-grid" role="radiogroup"></div>
+            <h4 data-i18n="settings.room"></h4>
+            <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
+            <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
+          </div>
         </section>
-        <section class="card">
-          <h3 id="queue-title"></h3>
-          <ol id="queue" class="queue"></ol>
-          <p id="queue-empty" class="muted small" data-i18n="queueEmpty"></p>
-        </section>
-        <details id="chat-panel" class="card panel">
-          <summary><span data-i18n="chat"></span><span id="chat-badge" class="badge" hidden></span></summary>
-          <ul id="chat-list" class="chat-list"></ul>
-          <form id="chat-form" class="row">
-            <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" />
-            <button class="btn" data-i18n="send"></button>
-          </form>
-        </details>
-        <details id="activity-panel" class="card panel">
-          <summary data-i18n="activity"></summary>
-          <ul id="activity" class="activity"></ul>
-        </details>
       </aside>
+    </div>
+
+    <dialog id="ext-dialog" class="dialog">
+      <h3 data-i18n="extDialog.title"></h3>
+      <p data-i18n="extDialog.text"></p>
+      <div class="dialog-actions">
+        <a class="btn primary" href="/eklenti.html" target="_blank" rel="noopener" data-i18n="extDialog.install"></a>
+        <button type="button" class="btn" id="ext-add-anyway" data-i18n="extDialog.addAnyway"></button>
+        <button type="button" class="btn" id="ext-cancel" data-i18n="extDialog.cancel"></button>
+      </div>
+    </dialog>
+
+    <div id="kicked" class="kicked-screen" hidden>
+      <div class="card">
+        <div class="kicked-icon">🚪</div>
+        <h2 data-i18n="kickedTitle"></h2>
+        <p class="muted" data-i18n="kickedText"></p>
+        <a class="btn primary big" href="/" data-i18n="home"></a>
+      </div>
     </div>
   `;
   translate(app);
@@ -240,23 +303,34 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const nowPlayingEl = $('#now-playing');
   const nowTitleEl = $('#now-title');
   const skipEl = $<HTMLButtonElement>('#skip');
-  const membersTitleEl = $('#members-title');
-  const membersEl = $('#members');
-  const activityEl = $('#activity');
   const statusEl = document.querySelector<HTMLElement>('#status')!;
 
   let myId: string | null = null;
   let members: Member[] = [];
+  let hostId: string | null = null;
+  const kickedIds = new Set<string>();
   let status: ConnectionStatus = 'connecting';
   let errorText: (() => string) | null = null;
   let roomState: PlaybackState | null = null;
-  const activity: { at: Date; text: () => string }[] = [];
 
   const send = (message: ClientMessage) => connection.send(message);
   const queue = createQueuePanel(app, send);
-  const chat = createChatPanel(app, send, () => myId);
+  const chatBadge = $('#chat-badge');
+  const chat = createChatPanel(app, send, () => myId, (count) => {
+    chatBadge.hidden = count === 0;
+    chatBadge.textContent = count > 9 ? '9+' : String(count);
+  });
+  const people = createPeoplePanel(app, send);
+  const tabs = createTabs(app, (tab) => chat.setVisible(tab === 'chat'));
+  const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
+    myName = name;
+    myAvatar = avatar;
+    save('name', name);
+    save('avatar', avatar);
+    connection.setIdentity(name, avatar);
+    send({ t: 'rename', name, avatar });
+  });
   const reactions = createReactions(app, send);
-  rememberOpen($<HTMLDetailsElement>('#activity-panel'), 'panel:activity', load, save);
 
   // ---- Senkron ----
   const clock = new ServerClock();
@@ -271,6 +345,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     roomId,
     name: myName,
     avatar: myAvatar,
+    cid: clientId(),
     clock,
     onMessage: handleMessage,
     onStatus: (next) => {
@@ -284,7 +359,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     switch (message.t) {
       case 'welcome':
         myId = message.you;
-        setMembers(message.members, false);
+        setMembers(message.members, message.hostId, false);
         queue.set(message.queue);
         chat.set(message.chat);
         void applyState(message.state);
@@ -306,7 +381,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (roomState?.item?.id === message.itemId) $('#external-title').textContent = message.title;
         renderNowPlaying();
         queue.render();
-        renderActivity();
+        chat.render();
         break;
       case 'queue': {
         queue.set(message.queue);
@@ -316,10 +391,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         break;
       }
       case 'members':
-        setMembers(message.members, true);
+        setMembers(message.members, message.hostId, true);
         break;
+      case 'kicked': {
+        const { who, by } = message;
+        kickedIds.add(who.id);
+        addActivity(() => t('kickedNotice', { who: withAvatar(who), by: withAvatar(by) }));
+        break;
+      }
       case 'reaction':
-        reactions.show(message.emoji, withAvatar(message.by));
+        if (settings.options.showReactions) reactions.show(message.emoji, withAvatar(message.by));
         break;
       case 'chat': {
         const { by, text } = message.message;
@@ -329,6 +410,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         break;
       }
       case 'error':
+        if (message.code === 'kicked') {
+          // Oda yöneticisi çıkardı: tekrar bağlanmaya çalışma, bilgilendirme ekranını göster.
+          connection.close();
+          engine.destroy();
+          current?.player.pause();
+          $('#kicked').hidden = false;
+          break;
+        }
         showError(() => t(`error.${message.code}`));
         if (message.code === 'version' || message.code === 'room_full') connection.close();
         break;
@@ -470,6 +559,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Video linki ----
   const mediaInput = $<HTMLInputElement>('#media-input');
   const mediaError = $('#media-error');
+  const extDialog = $<HTMLDialogElement>('#ext-dialog');
+  let pendingAdd: (() => void) | null = null;
+  $('#ext-add-anyway').addEventListener('click', () => {
+    extDialog.close();
+    pendingAdd?.();
+    pendingAdd = null;
+  });
+  $('#ext-cancel').addEventListener('click', () => {
+    extDialog.close();
+    pendingAdd = null;
+  });
+
   $<HTMLFormElement>('#media-form').addEventListener('submit', (event) => {
     event.preventDefault();
     const media = parseMediaInput(mediaInput.value);
@@ -477,8 +578,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (media === null) return;
     // Enter'a basılınca ilk buton ("Sıraya ekle") geçerli olur; izlenen video yanlışlıkla değişmez.
     const mode = (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue';
-    send({ t: mode, media });
-    mediaInput.value = '';
+    const add = () => {
+      send({ t: mode, media });
+      mediaInput.value = '';
+    };
+    // YouTube ya da video dosyası değil, bir web sayfası: eklentisi yoksa önce ne gerektiğini anlat.
+    const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
+    if (media.kind === 'page' && !hasExtension) {
+      pendingAdd = add;
+      extDialog.showModal();
+      return;
+    }
+    add();
+  });
+
+  // ---- Herkesi bana eşitle: kendi konumumu odaya yayar (biri kaydıysa tek tıkla düzelir). ----
+  const syncAllEl = $<HTMLButtonElement>('#sync-all');
+  syncAllEl.addEventListener('click', () => {
+    engine.syncEveryoneToMe();
+    syncAllEl.disabled = true;
+    setTimeout(() => (syncAllEl.disabled = false), 1500);
   });
 
   // ---- Davet linki ----
@@ -503,34 +622,28 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     return member.id === myId ? `${name} (${t('you')})` : name;
   }
 
-  function setMembers(next: Member[], announce: boolean): void {
+  function setMembers(next: Member[], nextHost: string | null, announce: boolean): void {
     if (announce) {
       const before = new Set(members.map((m) => m.id));
       const after = new Set(next.map((m) => m.id));
       for (const m of next) if (!before.has(m.id) && m.id !== myId) addActivity(() => t('joined', { name: withAvatar(m) }));
-      for (const m of members) if (!after.has(m.id)) addActivity(() => t('left', { name: withAvatar(m) }));
+      // Atılan kişi için ayrıca "ayrıldı" yazma ("çıkardı" satırı zaten var).
+      for (const m of members) if (!after.has(m.id) && !kickedIds.has(m.id)) addActivity(() => t('left', { name: withAvatar(m) }));
+      if (nextHost !== hostId && nextHost === myId) addActivity(() => t('youAreHostNow'));
     }
     members = next;
+    hostId = nextHost;
     renderMembers();
   }
 
   function renderMembers(): void {
-    membersTitleEl.textContent = t('members', { n: members.length });
-    membersEl.replaceChildren(...members.map((m) => el('li', { class: m.id === myId ? 'me' : '' }, displayName(m))));
+    people.set(members, hostId, myId);
+    $('#people-count').textContent = String(members.length);
   }
 
+  /** Oda hareketlerini sohbete gri satır olarak yazar (ayarlardan kapatılabilir). */
   function addActivity(text: () => string): void {
-    activity.unshift({ at: new Date(), text });
-    activity.length = Math.min(activity.length, MAX_ACTIVITY);
-    renderActivity();
-  }
-
-  function renderActivity(): void {
-    activityEl.replaceChildren(
-      ...activity.map((item) =>
-        el('li', {}, el('time', {}, item.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })), ' ', item.text()),
-      ),
-    );
+    if (settings.options.showEvents) chat.system(text);
   }
 
   function renderStatus(): void {
@@ -555,12 +668,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     label($('#fs-skip'), t('skip'));
     label($('#fs-exit'), t('exitFullscreen'));
     label($('#fs-speed'), t('speed'));
+    label($('#settings-tab'), t('tab.settings'));
+    label(syncAllEl, t('syncAllHint'));
   }
 
   window.addEventListener('langchange', () => {
     renderStatus();
     renderMembers();
-    renderActivity();
     renderLabels();
     queue.render();
     chat.render();

@@ -117,6 +117,13 @@ export class SyncEngine {
     this.localChange('rate', { rate, position: player.getTime() });
   }
 
+  /** "Herkesi bana eşitle": kendi oynatıcımın konumunu odaya yayar. */
+  syncEveryoneToMe(): void {
+    const player = this.player;
+    if (player === null || this.state === null || this.state.item === null) return;
+    this.localChange('seek', { position: player.getTime() });
+  }
+
   /** Otomatik oynatma engellendikten sonra kullanıcı "başlat"a bastığında çağrılır. */
   resume(): void {
     this.autoplayBlocked = false;

@@ -9,6 +9,8 @@ export interface RoomConnectionOptions {
   roomId: string;
   name: string;
   avatar?: Avatar;
+  /** Tarayıcının kalıcı kimliği (bkz. hello.cid). */
+  cid?: string;
   clock: ServerClock;
   onMessage: (message: ServerMessage) => void;
   onStatus?: (status: ConnectionStatus) => void;
@@ -38,6 +40,12 @@ export class RoomConnection {
     this.open(this.retries === 0 ? 'connecting' : 'reconnecting');
   }
 
+  /** Yeniden bağlanınca hello'da gidecek ismi/avatarı günceller (isim değiştirince). */
+  setIdentity(name: string, avatar?: Avatar): void {
+    this.options.name = name;
+    this.options.avatar = avatar;
+  }
+
   send(message: ClientMessage): boolean {
     if (this.ws?.readyState !== WebSocket.OPEN) return false;
     this.ws.send(JSON.stringify(message));
@@ -61,8 +69,8 @@ export class RoomConnection {
     ws.addEventListener('open', () => {
       this.retries = 0;
       this.options.onStatus?.('open');
-      const { name, avatar } = this.options;
-      this.send(avatar ? { t: 'hello', v: PROTOCOL_VERSION, name, avatar } : { t: 'hello', v: PROTOCOL_VERSION, name });
+      const { name, avatar, cid } = this.options;
+      this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}) });
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
       this.pingTimer = setInterval(() => this.ping(), PING_INTERVAL_MS);
     });

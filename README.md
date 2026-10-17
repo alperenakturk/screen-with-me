@@ -17,6 +17,9 @@ Birisi oynatır, durdurur, sarar ya da hızı değiştirirse odadaki herkeste ay
 - Emoji tepkileri: videonun üstünde uçuşur. Kendi tam ekran modumuzda da görünür.
 - Basit sohbet (son 50 mesaj saklanır) ve açılıp kapanan "son hareketler" paneli
 - Spam koruması (hız sınırı)
+- Sekmeli sağ panel: sohbet (oda hareketleri de içinde), sıra, kişiler, ayarlar
+- Oda yöneticisi (👑, ilk giren; sayfayı yenilese de yönetici kalır), kişileri odadan çıkarma (10 dk yasak)
+- İsim/avatar değiştirme, 5 koyu tema (Gece, Okyanus, Gün batımı, Neon, Simsiyah), "Herkesi bana eşitle"
 - Türkçe + İngilizce arayüz, telefonda da çalışır
 
 **Aşama 2 — tarayıcı eklentisi** ✅ ilk sürüm (Chrome, Edge, Brave, Opera)

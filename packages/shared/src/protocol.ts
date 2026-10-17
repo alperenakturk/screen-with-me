@@ -87,7 +87,16 @@ export type QueueChange =
 
 /** İstemci → sunucu. `at`, istemcinin tahmin ettiği sunucu saatidir. */
 export type ClientMessage =
-  | { t: 'hello'; v: number; name: string; avatar?: Avatar }
+  /**
+   * `cid`: tarayıcıda saklanan kalıcı kimlik. Sayfa yenilense de aynı kalır;
+   * oda yöneticisinin yenileyince yöneticiliği kaybetmemesi ve atılan kişinin
+   * hemen geri girememesi için kullanılır. Hesap değildir, sadece rastgele bir kod.
+   */
+  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string }
+  /** İsim ya da avatar değiştir. */
+  | { t: 'rename'; name: string; avatar?: Avatar }
+  /** (Sadece oda yöneticisi) birini odadan çıkar. */
+  | { t: 'kick'; id: string }
   | { t: 'ping'; c: number }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
@@ -106,7 +115,17 @@ export type ClientMessage =
   | { t: 'react'; emoji: Reaction }
   | { t: 'chat'; text: string };
 
-export type ErrorCode = 'bad_message' | 'not_joined' | 'version' | 'room_full' | 'rate_limited' | 'queue_full';
+export type ErrorCode =
+  | 'bad_message'
+  | 'not_joined'
+  | 'version'
+  | 'room_full'
+  | 'rate_limited'
+  | 'queue_full'
+  /** Oda yöneticisi seni çıkardı (ya da kısa süre önce çıkarılmıştın). */
+  | 'kicked'
+  /** Bu işlem sadece oda yöneticisine açık. */
+  | 'not_host';
 
 /** Sunucu → istemci. */
 export type ServerMessage =
@@ -116,6 +135,8 @@ export type ServerMessage =
       state: PlaybackState;
       queue: QueueItem[];
       members: Member[];
+      /** Oda yöneticisinin üye ID'si. */
+      hostId: string | null;
       chat: ChatMessage[];
     }
   | { t: 'pong'; c: number; s: number }
@@ -123,7 +144,9 @@ export type ServerMessage =
   | { t: 'queue'; queue: QueueItem[]; change: QueueChange | null }
   /** Video beklemeden yayınlanır; başlığı sonradan bulununca bu mesaj gelir. */
   | { t: 'title'; itemId: string; title: string }
-  | { t: 'members'; members: Member[] }
+  | { t: 'members'; members: Member[]; hostId: string | null }
+  /** Biri odadan çıkarıldı (herkese duyurulur). */
+  | { t: 'kicked'; who: Member; by: Member }
   | { t: 'reaction'; emoji: Reaction; by: Member }
   | { t: 'chat'; message: ChatMessage }
   | { t: 'error'; code: ErrorCode };
@@ -141,6 +164,8 @@ export function expectedPosition(state: PlaybackState, serverNow: number): numbe
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const ITEM_ID = /^[A-Za-z0-9_-]{1,32}$/;
+/** Tarayıcının kalıcı kimliği (bkz. hello.cid). */
+export const CLIENT_ID = /^[A-Za-z0-9_-]{8,40}$/;
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null && !Array.isArray(x);
@@ -222,9 +247,19 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'hello': {
       const name = cleanName(m.name);
       if (typeof m.v !== 'number' || name === null) return null;
-      // Avatar isteğe bağlı: geçersizse sessizce yok sayılır, katılım engellenmez.
-      return isAvatar(m.avatar) ? { t: 'hello', v: m.v, name, avatar: m.avatar } : { t: 'hello', v: m.v, name };
+      // Avatar ve kalıcı kimlik isteğe bağlı: geçersizse sessizce yok sayılır, katılım engellenmez.
+      const hello: Extract<ClientMessage, { t: 'hello' }> = { t: 'hello', v: m.v, name };
+      if (isAvatar(m.avatar)) hello.avatar = m.avatar;
+      if (typeof m.cid === 'string' && CLIENT_ID.test(m.cid)) hello.cid = m.cid;
+      return hello;
     }
+    case 'rename': {
+      const name = cleanName(m.name);
+      if (name === null) return null;
+      return isAvatar(m.avatar) ? { t: 'rename', name, avatar: m.avatar } : { t: 'rename', name };
+    }
+    case 'kick':
+      return isItemId(m.id) ? { t: 'kick', id: m.id } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

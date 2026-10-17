@@ -19,18 +19,30 @@ const MAX_MEMBERS = 50;
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 /** Sonradan gelenlerin görebileceği son sohbet mesajı sayısı. */
 const CHAT_HISTORY = 50;
+/** Odadan çıkarılan kişi bu süre boyunca geri giremez. */
+const KICK_BAN_MS = 10 * 60 * 1000;
 
 /** Her WebSocket bağlantısına iliştirilen bilgi. Sunucu uykuya geçse bile korunur. */
 interface Attachment {
   id: string;
   name: string | null;
   avatar?: Avatar;
+  /** Tarayıcının kalıcı kimliği (varsa). */
+  cid?: string;
+  joinedAt?: number;
 }
 
-function memberOf(attachment: Attachment & { name: string }): Member {
+type Joined = Attachment & { name: string };
+
+function memberOf(attachment: Joined): Member {
   return attachment.avatar
     ? { id: attachment.id, name: attachment.name, avatar: attachment.avatar }
     : { id: attachment.id, name: attachment.name };
+}
+
+/** Yöneticilik ve atma için kişiyi tanıyan anahtar: kalıcı kimlik varsa o, yoksa bağlantı. */
+function keyOf(attachment: Attachment): string {
+  return attachment.cid ? `c:${attachment.cid}` : `i:${attachment.id}`;
 }
 
 function titleKey(media: Media): string {
@@ -49,11 +61,18 @@ function newId(): string {
  * WebSocket Hibernation kullanılır: kimse bir şey yapmazken nesne uykuya
  * geçer ve ücret işlemez, bağlantılar açık kalır. Uyanınca constructor tekrar
  * çalışır, bu yüzden oda durumu bellekte değil depoda (storage) da tutulur.
+ *
+ * Oda yöneticisi: odaya ilk giren kişi. Kalıcı kimliğiyle tanındığı için
+ * sayfayı yenilese de yönetici kalır. Odada değilken, odadaki en eski kişi
+ * geçici olarak yönetici sayılır; asıl yönetici dönünce yetki ona geri geçer.
  */
 export class Room extends DurableObject<Env> {
   private room: RoomData = initialRoom(Date.now());
   private chat: ChatMessage[] = [];
-  private titles = new Map<string, string | null>();
+  private titles = new Map<string, string>();
+  private hostKey: string | null = null;
+  /** Atılanlar: anahtar → ne zamana kadar giremez (ms). */
+  private bans: Record<string, number> = {};
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
@@ -66,6 +85,8 @@ export class Room extends DurableObject<Env> {
       const saved = await ctx.storage.get<RoomData>('room');
       if (saved && Array.isArray(saved.queue)) this.room = saved;
       this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
+      this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
+      this.bans = (await ctx.storage.get<Record<string, number>>('bans')) ?? {};
     });
   }
 
@@ -102,7 +123,7 @@ export class Room extends DurableObject<Env> {
     }
 
     if (message.t === 'hello') {
-      this.join(ws, attachment, message.v, message.name, message.avatar);
+      await this.join(ws, attachment, message);
       return;
     }
 
@@ -110,7 +131,8 @@ export class Room extends DurableObject<Env> {
       this.sendTo(ws, { t: 'error', code: 'not_joined' });
       return;
     }
-    const me = memberOf({ ...attachment, name: attachment.name });
+    const joined: Joined = { ...attachment, name: attachment.name };
+    const me = memberOf(joined);
 
     if (!this.commandLimit.allow(me.id)) {
       this.sendTo(ws, { t: 'error', code: 'rate_limited' });
@@ -127,6 +149,15 @@ export class Room extends DurableObject<Env> {
           return;
         }
         await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now() });
+        return;
+      case 'rename':
+        attachment.name = message.name;
+        if (message.avatar) attachment.avatar = message.avatar;
+        ws.serializeAttachment(attachment);
+        this.broadcast(this.membersMessage());
+        return;
+      case 'kick':
+        await this.kick(ws, me, message.id);
         return;
       case 'load':
       case 'enqueue': {
@@ -160,29 +191,74 @@ export class Room extends DurableObject<Env> {
       await this.ctx.storage.deleteAll();
       this.room = initialRoom(Date.now());
       this.chat = [];
+      this.hostKey = null;
+      this.bans = {};
     }
   }
 
-  private join(ws: WebSocket, attachment: Attachment, version: number, name: string, avatar: Avatar | undefined): void {
-    if (version !== PROTOCOL_VERSION) {
+  private async join(ws: WebSocket, attachment: Attachment, hello: Extract<ClientMessage, { t: 'hello' }>): Promise<void> {
+    if (hello.v !== PROTOCOL_VERSION) {
       this.sendTo(ws, { t: 'error', code: 'version' });
       ws.close(4002, 'version');
       return;
     }
-    attachment.name = name;
-    if (avatar) attachment.avatar = avatar;
+    if (hello.cid) attachment.cid = hello.cid;
+    const until = this.bans[keyOf(attachment)];
+    if (until && until > Date.now()) {
+      this.sendTo(ws, { t: 'error', code: 'kicked' });
+      ws.close(4003, 'kicked');
+      return;
+    }
+
+    attachment.name = hello.name;
+    attachment.joinedAt ??= Date.now();
+    if (hello.avatar) attachment.avatar = hello.avatar;
     else delete attachment.avatar;
     ws.serializeAttachment(attachment);
-    const members = this.members();
+
+    // Odaya ilk giren yönetici olur.
+    if (this.hostKey === null) {
+      this.hostKey = keyOf(attachment);
+      await this.ctx.storage.put('host', this.hostKey);
+    }
+
+    const { members, hostId } = this.membersMessage();
     this.sendTo(ws, {
       t: 'welcome',
       you: attachment.id,
       state: this.room.state,
       queue: this.room.queue,
       members,
+      hostId,
       chat: this.chat,
     });
-    this.broadcast({ t: 'members', members }, ws);
+    this.broadcast({ t: 'members', members, hostId }, ws);
+  }
+
+  private async kick(ws: WebSocket, me: Member, targetId: string): Promise<void> {
+    if (this.hostId() !== me.id) {
+      this.sendTo(ws, { t: 'error', code: 'not_host' });
+      return;
+    }
+    const target = this.openSockets().find((s) => (s.deserializeAttachment() as Attachment | null)?.id === targetId);
+    if (!target || target === ws) return;
+    const attachment = target.deserializeAttachment() as Attachment;
+    if (!attachment.name) return;
+
+    // Süresi geçmiş yasakları temizle, yenisini ekle.
+    const now = Date.now();
+    for (const [key, until] of Object.entries(this.bans)) if (until <= now) delete this.bans[key];
+    this.bans[keyOf(attachment)] = now + KICK_BAN_MS;
+    await this.ctx.storage.put('bans', this.bans);
+
+    this.sendTo(target, { t: 'error', code: 'kicked' });
+    try {
+      target.close(4003, 'kicked');
+    } catch {
+      // Zaten kapanmış olabilir.
+    }
+    this.broadcast({ t: 'kicked', who: memberOf({ ...attachment, name: attachment.name }), by: me }, target);
+    this.broadcast(this.membersMessage(target), target);
   }
 
   /** Bir oynatma/sıra komutunu uygular, kaydeder ve değişenleri herkese yollar. */
@@ -237,7 +313,7 @@ export class Room extends DurableObject<Env> {
     if (attachment) {
       for (const limiter of [this.commandLimit, this.reactionLimit, this.chatLimit]) limiter.forget(attachment.id);
     }
-    this.broadcast({ t: 'members', members: this.members(leaving) }, leaving);
+    this.broadcast(this.membersMessage(leaving), leaving);
     if (this.openSockets(leaving).length === 0) {
       await this.ctx.storage.setAlarm(Date.now() + EMPTY_ROOM_TTL_MS);
     }
@@ -247,13 +323,27 @@ export class Room extends DurableObject<Env> {
     return this.ctx.getWebSockets().filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
   }
 
-  private members(except?: WebSocket): Member[] {
-    const members: Member[] = [];
+  private joined(except?: WebSocket): Joined[] {
+    const list: Joined[] = [];
     for (const ws of this.openSockets(except)) {
       const attachment = ws.deserializeAttachment() as Attachment | null;
-      if (attachment?.name) members.push(memberOf({ ...attachment, name: attachment.name }));
+      if (attachment?.name) list.push({ ...attachment, name: attachment.name });
     }
-    return members;
+    return list;
+  }
+
+  /** Şu anki yöneticinin üye ID'si: asıl yönetici odadaysa o, değilse odadaki en eski kişi. */
+  private hostId(except?: WebSocket): string | null {
+    const people = this.joined(except);
+    const host = people.find((a) => keyOf(a) === this.hostKey);
+    if (host) return host.id;
+    let oldest: Joined | null = null;
+    for (const a of people) if (!oldest || (a.joinedAt ?? 0) < (oldest.joinedAt ?? 0)) oldest = a;
+    return oldest?.id ?? null;
+  }
+
+  private membersMessage(except?: WebSocket): Extract<ServerMessage, { t: 'members' }> {
+    return { t: 'members', members: this.joined(except).map(memberOf), hostId: this.hostId(except) };
   }
 
   private broadcast(message: ServerMessage, except?: WebSocket): void {
@@ -274,6 +364,9 @@ export class Room extends DurableObject<Env> {
 }
 
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
-type _Handled = Exclude<ClientMessage['t'], 'ping' | 'hello' | 'react' | 'chat' | 'load' | 'enqueue' | RoomAction['t']>;
+type _Handled = Exclude<
+  ClientMessage['t'],
+  'ping' | 'hello' | 'react' | 'chat' | 'rename' | 'kick' | 'load' | 'enqueue' | RoomAction['t']
+>;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

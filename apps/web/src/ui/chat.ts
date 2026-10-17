@@ -1,28 +1,29 @@
 import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } from '@swm/shared/protocol';
-import { el, rememberOpen } from '../dom.ts';
+import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
-import { load, save } from '../storage.ts';
 
-/** Basit sohbet paneli. Kapalıyken gelen mesajlar rozet olarak sayılır. */
-export function createChatPanel(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null) {
-  const panel = root.querySelector<HTMLDetailsElement>('#chat-panel')!;
+const MAX_LINES = 120;
+
+type Line = { kind: 'chat'; message: ChatMessage } | { kind: 'system'; at: number; text: () => string };
+
+/**
+ * Sohbet sekmesi: mesaj geçmişi ve yazma kutusu. "Ali durdurdu" gibi oda
+ * hareketleri de gri sistem satırı olarak aynı akışa düşer. Sekme açık değilken
+ * gelen mesajlar okunmamış sayılır.
+ */
+export function createChatPanel(
+  root: HTMLElement,
+  send: (message: ClientMessage) => void,
+  myId: () => string | null,
+  onUnread: (count: number) => void,
+) {
   const list = root.querySelector<HTMLUListElement>('#chat-list')!;
-  const badge = root.querySelector<HTMLElement>('#chat-badge')!;
   const form = root.querySelector<HTMLFormElement>('#chat-form')!;
   const input = root.querySelector<HTMLInputElement>('#chat-input')!;
   input.maxLength = CHAT_MAX_LENGTH;
-  let messages: ChatMessage[] = [];
+  let lines: Line[] = [];
+  let visible = false;
   let unread = 0;
-
-  rememberOpen(panel, 'panel:chat', load, save);
-  panel.addEventListener('toggle', () => {
-    if (panel.open) {
-      unread = 0;
-      renderBadge();
-      scrollToEnd();
-      input.focus();
-    }
-  });
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -32,47 +33,69 @@ export function createChatPanel(root: HTMLElement, send: (message: ClientMessage
     input.value = '';
   });
 
-  function renderBadge(): void {
-    badge.hidden = unread === 0;
-    badge.textContent = unread > 9 ? '9+' : String(unread);
+  const time = (at: number) => new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  function node(line: Line): HTMLLIElement {
+    if (line.kind === 'system') {
+      return el('li', { class: 'chat-system' }, el('time', {}, time(line.at)), ' ', line.text());
+    }
+    const { message } = line;
+    const mine = message.by.id === myId();
+    return el(
+      'li',
+      { class: mine ? 'chat-line me' : 'chat-line' },
+      el('span', { class: 'chat-avatar', 'aria-hidden': 'true' }, message.by.avatar ?? '🙂'),
+      el(
+        'div',
+        { class: 'chat-body' },
+        el('div', { class: 'chat-meta' }, el('span', { class: 'chat-name' }, message.by.name), el('time', {}, time(message.at))),
+        el('p', { class: 'chat-text' }, message.text),
+      ),
+    );
   }
 
   function scrollToEnd(): void {
     list.scrollTop = list.scrollHeight;
   }
 
-  function line(message: ChatMessage): HTMLLIElement {
-    const mine = message.by.id === myId();
-    const time = new Date(message.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return el(
-      'li',
-      { class: mine ? 'chat-line me' : 'chat-line' },
-      el('span', { class: 'chat-name' }, message.by.avatar ? `${message.by.avatar} ${message.by.name}` : message.by.name),
-      el('time', { class: 'muted' }, time),
-      el('p', { class: 'chat-text' }, message.text),
-    );
-  }
-
   function render(): void {
-    list.replaceChildren(...(messages.length ? messages.map(line) : [el('li', { class: 'muted small' }, t('chatEmpty'))]));
+    list.replaceChildren(...(lines.length ? lines.map(node) : [el('li', { class: 'chat-empty' }, t('chatEmpty'))]));
     scrollToEnd();
   }
 
+  function push(line: Line, countsAsUnread: boolean): void {
+    const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+    lines.push(line);
+    if (lines.length > MAX_LINES) lines = lines.slice(-MAX_LINES);
+    if (lines.length === 1) list.replaceChildren();
+    list.append(node(line));
+    while (list.children.length > MAX_LINES) list.firstElementChild?.remove();
+    if (atBottom || (line.kind === 'chat' && line.message.by.id === myId())) scrollToEnd();
+    if (countsAsUnread && !visible) {
+      unread++;
+      onUnread(unread);
+    }
+  }
+
   return {
-    set(next: ChatMessage[]): void {
-      messages = next;
+    set(messages: ChatMessage[]): void {
+      lines = messages.map((message) => ({ kind: 'chat', message }));
       render();
     },
     add(message: ChatMessage): void {
-      const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
-      messages = [...messages, message].slice(-50);
-      if (messages.length === 1) list.replaceChildren();
-      list.append(line(message));
-      if (list.children.length > 50) list.firstElementChild?.remove();
-      if (atBottom || message.by.id === myId()) scrollToEnd();
-      if (!panel.open && message.by.id !== myId()) {
-        unread++;
-        renderBadge();
+      push({ kind: 'chat', message }, message.by.id !== myId());
+    },
+    /** Gri sistem satırı (oda hareketleri). Okunmamış sayılmaz. */
+    system(text: () => string): void {
+      push({ kind: 'system', at: Date.now(), text }, false);
+    },
+    /** Sohbet sekmesi açıldı/kapandı. */
+    setVisible(value: boolean): void {
+      visible = value;
+      if (visible) {
+        unread = 0;
+        onUnread(0);
+        scrollToEnd();
       }
     },
     render,

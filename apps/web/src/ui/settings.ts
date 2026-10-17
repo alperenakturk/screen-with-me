@@ -1,0 +1,69 @@
+import { AVATARS, cleanName, type Avatar } from '@swm/shared/protocol';
+import { el } from '../dom.ts';
+import { renderThemePicker } from '../themes.ts';
+import { load, save } from '../storage.ts';
+
+export interface Options {
+  /** Oda hareketleri (oynattı, durdurdu...) sohbette görünsün mü? */
+  showEvents: boolean;
+  /** Emojiler videonun üstünde uçuşsun mu? */
+  showReactions: boolean;
+}
+
+function readOption(key: string): boolean {
+  return load(key) !== '0';
+}
+
+/** Ayarlar sekmesi: isim, avatar, tema ve birkaç aç/kapa. */
+export function createSettingsPanel(
+  root: HTMLElement,
+  identity: { name: string; avatar: Avatar },
+  onIdentity: (name: string, avatar: Avatar) => void,
+) {
+  const form = root.querySelector<HTMLFormElement>('#rename-form')!;
+  const input = root.querySelector<HTMLInputElement>('#rename-input')!;
+  const avatars = root.querySelector<HTMLElement>('#settings-avatars')!;
+  const events = root.querySelector<HTMLInputElement>('#opt-events')!;
+  const reactions = root.querySelector<HTMLInputElement>('#opt-reactions')!;
+  let { name, avatar } = identity;
+
+  input.value = name;
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const next = cleanName(input.value);
+    if (!next) return;
+    name = next;
+    input.value = next;
+    onIdentity(name, avatar);
+  });
+
+  function drawAvatars(): void {
+    avatars.replaceChildren(
+      ...AVATARS.map((option) => {
+        const button = el('button', { type: 'button', class: 'avatar-option', role: 'radio', 'aria-checked': String(option === avatar) }, option);
+        button.addEventListener('click', () => {
+          avatar = option;
+          drawAvatars();
+          onIdentity(name, avatar);
+        });
+        return button;
+      }),
+    );
+  }
+  drawAvatars();
+  renderThemePicker(root.querySelector<HTMLElement>('#settings-themes')!);
+
+  const options: Options = { showEvents: readOption('opt:events'), showReactions: readOption('opt:reactions') };
+  events.checked = options.showEvents;
+  reactions.checked = options.showReactions;
+  events.addEventListener('change', () => {
+    options.showEvents = events.checked;
+    save('opt:events', events.checked ? '1' : '0');
+  });
+  reactions.addEventListener('change', () => {
+    options.showReactions = reactions.checked;
+    save('opt:reactions', reactions.checked ? '1' : '0');
+  });
+
+  return { options };
+}

@@ -5,7 +5,8 @@ import { itemThumbnail, itemTitle } from '../media-info.ts';
 
 /** "Sıradakiler" paneli: listeyi çizer, butonlar sunucuya komut yollar. */
 export function createQueuePanel(root: HTMLElement, send: (message: ClientMessage) => void) {
-  const title = root.querySelector<HTMLElement>('#queue-title')!;
+  // Sekmedeki küçük sayı (sırada kaç video var).
+  const count = root.querySelector<HTMLElement>('#queue-count')!;
   const list = root.querySelector<HTMLOListElement>('#queue')!;
   const empty = root.querySelector<HTMLElement>('#queue-empty')!;
   let items: QueueItem[] = [];
@@ -18,7 +19,7 @@ export function createQueuePanel(root: HTMLElement, send: (message: ClientMessag
   }
 
   function render(): void {
-    title.textContent = t('queue', { n: items.length });
+    count.textContent = items.length ? String(items.length) : '';
     empty.hidden = items.length > 0;
     list.replaceChildren(
       ...items.map((item, index) => {

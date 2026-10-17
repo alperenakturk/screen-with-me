@@ -29,6 +29,8 @@ export interface RoomInfo {
   inviteUrl: string;
   members: Member[];
   myId: string | null;
+  /** Oda yöneticisinin üye ID'si (👑). */
+  hostId: string | null;
   queueLength: number;
 }
 

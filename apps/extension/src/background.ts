@@ -10,6 +10,7 @@ import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { samePage } from '@swm/shared/media';
 import {
+  CLIENT_ID,
   ROOM_ID_PATTERN,
   cleanChatText,
   cleanName,
@@ -58,6 +59,7 @@ interface Session {
   state: PlaybackState | null;
   queue: QueueItem[];
   members: Member[];
+  hostId: string | null;
   /** Senkronun çalıştığı çerçeve. */
   activeFrame: number | null;
   /** Etkin çerçeveye oda durumu yollandı mı? */
@@ -77,6 +79,19 @@ const frames = new Map<number, Map<number, Frame>>();
 async function getName(): Promise<string | null> {
   const { name } = await chrome.storage.local.get('name');
   return typeof name === 'string' ? cleanName(name) : null;
+}
+
+/**
+ * Kalıcı kimlik (sitede de aynısı kullanılır; site-bridge aktarır). Böylece
+ * siteden film sayfasına geçen oda yöneticisi yöneticiliğini kaybetmez.
+ */
+async function getCid(): Promise<string> {
+  const { cid } = await chrome.storage.local.get('cid');
+  if (typeof cid === 'string' && CLIENT_ID.test(cid)) return cid;
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const fresh = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  await chrome.storage.local.set({ cid: fresh });
+  return fresh;
 }
 
 async function getAvatar(): Promise<Avatar | null> {
@@ -114,6 +129,7 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
 
   const name = (await getName()) ?? 'Misafir';
   const avatar = (await getAvatar()) ?? undefined;
+  const cid = await getCid();
   const clock = new ServerClock();
   const session: Session = {
     tabId,
@@ -125,6 +141,7 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
     state: null,
     queue: [],
     members: [],
+    hostId: null,
     activeFrame: null,
     activated: false,
     followedItemId: null,
@@ -135,6 +152,7 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
     roomId,
     name,
     ...(avatar ? { avatar } : {}),
+    cid,
     clock,
     onMessage: (message) => onServer(session, message),
     onStatus: (status) => (session.status = status),
@@ -162,6 +180,7 @@ function onServer(session: Session, message: ServerMessage): void {
     case 'welcome':
       session.myId = message.you;
       session.members = message.members;
+      session.hostId = message.hostId ?? null;
       session.queue = message.queue;
       session.state = message.state;
       if (session.pendingLoad) {
@@ -193,6 +212,7 @@ function onServer(session: Session, message: ServerMessage): void {
         if (!after.has(m.id)) toActive(session, { type: 'notice', kind: 'left', name: withAvatar(m) });
       }
       session.members = message.members;
+      session.hostId = message.hostId ?? null;
       pushRoom(session);
       break;
     }
@@ -211,7 +231,8 @@ function onServer(session: Session, message: ServerMessage): void {
       toActive(session, clockMessage(session));
       break;
     case 'error':
-      if (message.code === 'version' || message.code === 'room_full') endSession(session.tabId);
+      // Oda yöneticisi çıkardıysa (ya da yasak sürüyorsa) bağlantıyı tamamen kapat.
+      if (message.code === 'version' || message.code === 'room_full' || message.code === 'kicked') endSession(session.tabId);
       break;
   }
 }
@@ -249,6 +270,7 @@ function pushRoom(session: Session): void {
     inviteUrl: `${SITE_URL}/r/${session.roomId}`,
     members: session.members,
     myId: session.myId,
+    hostId: session.hostId,
     queueLength: session.queue.length,
   };
   toActive(session, { type: 'room', room });
