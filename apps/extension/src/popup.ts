@@ -1,7 +1,7 @@
 // Eklenti simgesine tıklanınca açılan pencere. Bütün işi arka plan yapar;
 // burası sadece durumu gösterir ve istekleri iletir.
 
-import { REACTIONS } from '@swm/shared/protocol';
+import { AVATARS, REACTIONS, randomAvatar, type Avatar } from '@swm/shared/protocol';
 import { isKey, t } from './i18n.ts';
 import type { PopupRequest, PopupResponse, PopupStatus } from './messages.ts';
 
@@ -40,13 +40,36 @@ async function refresh(): Promise<void> {
   if (response.ok && response.status) render(response.status);
 }
 
+let avatar: Avatar | null = null;
+
+function renderPicker(): void {
+  $('#avatar-picker').replaceChildren(
+    ...AVATARS.map((option) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = option;
+      button.setAttribute('role', 'radio');
+      button.setAttribute('aria-checked', String(option === avatar));
+      button.addEventListener('click', () => {
+        avatar = option;
+        renderPicker();
+      });
+      return button;
+    }),
+  );
+}
+
 function render(status: PopupStatus): void {
   last = status;
   const needName = !status.name || editingName;
   $('#name-view').hidden = !needName;
   $('#me-view').hidden = needName;
-  $('#me-name').textContent = status.name ?? '';
+  $('#me-name').textContent = status.avatar ? `${status.avatar} ${status.name ?? ''}` : (status.name ?? '');
   if (needName && document.activeElement !== $('#name')) $<HTMLInputElement>('#name').value = status.name ?? '';
+  if (avatar === null) {
+    avatar = status.avatar ?? randomAvatar();
+    renderPicker();
+  }
 
   const session = status.session;
   $('#idle-view').hidden = needName || session !== null;
@@ -81,7 +104,7 @@ function render(status: PopupStatus): void {
 
 $('#name-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const response = await request({ type: 'set-name', name: $<HTMLInputElement>('#name').value });
+  const response = await request({ type: 'set-name', name: $<HTMLInputElement>('#name').value, avatar: avatar ?? randomAvatar() });
   if (response.ok) editingName = false;
   await refresh();
 });

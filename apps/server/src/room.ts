@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import {
   PROTOCOL_VERSION,
   parseClientMessage,
+  type Avatar,
   type ChatMessage,
   type ClientMessage,
   type Media,
@@ -23,6 +24,13 @@ const CHAT_HISTORY = 50;
 interface Attachment {
   id: string;
   name: string | null;
+  avatar?: Avatar;
+}
+
+function memberOf(attachment: Attachment & { name: string }): Member {
+  return attachment.avatar
+    ? { id: attachment.id, name: attachment.name, avatar: attachment.avatar }
+    : { id: attachment.id, name: attachment.name };
 }
 
 function titleKey(media: Media): string {
@@ -94,7 +102,7 @@ export class Room extends DurableObject<Env> {
     }
 
     if (message.t === 'hello') {
-      this.join(ws, attachment, message.v, message.name);
+      this.join(ws, attachment, message.v, message.name, message.avatar);
       return;
     }
 
@@ -102,7 +110,7 @@ export class Room extends DurableObject<Env> {
       this.sendTo(ws, { t: 'error', code: 'not_joined' });
       return;
     }
-    const me: Member = { id: attachment.id, name: attachment.name };
+    const me = memberOf({ ...attachment, name: attachment.name });
 
     if (!this.commandLimit.allow(me.id)) {
       this.sendTo(ws, { t: 'error', code: 'rate_limited' });
@@ -155,13 +163,15 @@ export class Room extends DurableObject<Env> {
     }
   }
 
-  private join(ws: WebSocket, attachment: Attachment, version: number, name: string): void {
+  private join(ws: WebSocket, attachment: Attachment, version: number, name: string, avatar: Avatar | undefined): void {
     if (version !== PROTOCOL_VERSION) {
       this.sendTo(ws, { t: 'error', code: 'version' });
       ws.close(4002, 'version');
       return;
     }
     attachment.name = name;
+    if (avatar) attachment.avatar = avatar;
+    else delete attachment.avatar;
     ws.serializeAttachment(attachment);
     const members = this.members();
     this.sendTo(ws, {
@@ -204,9 +214,10 @@ export class Room extends DurableObject<Env> {
     const key = titleKey(item.media);
     if (this.titles.has(key)) return;
     const title = await resolveTitle(item.media);
+    // Bulunamadıysa hatırlama: geçici bir ağ sorunu olabilir, bir dahaki sefere tekrar denensin.
+    if (title === null) return;
     if (this.titles.size > 500) this.titles.clear();
     this.titles.set(key, title);
-    if (title === null) return;
     // Beklerken oda değişmiş olabilir; güncel duruma uygula.
     const next = setItemTitle(this.room, item.id, title);
     if (next === null) return;
@@ -240,7 +251,7 @@ export class Room extends DurableObject<Env> {
     const members: Member[] = [];
     for (const ws of this.openSockets(except)) {
       const attachment = ws.deserializeAttachment() as Attachment | null;
-      if (attachment?.name) members.push({ id: attachment.id, name: attachment.name });
+      if (attachment?.name) members.push(memberOf({ ...attachment, name: attachment.name }));
     }
     return members;
   }

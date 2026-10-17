@@ -9,7 +9,7 @@
 // plan en iyisini "etkin" seçer, senkron o çerçevede çalışır.
 
 import type { ConnectionStatus } from '@swm/shared/connection';
-import type { ClientMessage, Member, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
+import type { Avatar, ClientMessage, Member, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
 
 /** Çerçevelerin "oda var mı" diye baktığı yer (chrome.storage.session). */
 export const SESSIONS_KEY = 'sessions';
@@ -23,18 +23,18 @@ export type FrameMessage =
   | { type: 'send'; message: ClientMessage }
   | { type: 'join'; roomId: string };
 
-/** Sayfa üstü panelde gösterilen oda bilgisi. */
+/** Sayfa üstü çubukta gösterilen oda bilgisi. */
 export interface RoomInfo {
   roomId: string;
   inviteUrl: string;
   members: Member[];
   myId: string | null;
   queueLength: number;
-  chat: ChatLine[];
 }
 
 export interface ChatLine {
   id: string;
+  /** Avatarıyla birlikte, örn. "🦊 Ali". */
   name: string;
   text: string;
   mine: boolean;
@@ -50,7 +50,9 @@ export type BackgroundMessage =
   | { type: 'clock'; offset: number; synced: boolean }
   | { type: 'room'; room: RoomInfo }
   | { type: 'reaction'; emoji: Reaction; name: string }
-  | { type: 'chat'; line: ChatLine };
+  | { type: 'chat'; line: ChatLine }
+  /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte). */
+  | { type: 'notice'; kind: 'joined' | 'left'; name: string };
 
 /** Arka plan → sekmedeki tüm çerçeveler: "bu sekmede oda var, videonu bildir". */
 export const PROBE = 'swm-probe';
@@ -70,7 +72,7 @@ export const SITE_MESSAGE_SOURCE = 'screenwithme-site';
 /** Popup → arka plan */
 export type PopupRequest =
   | { type: 'status'; tabId: number }
-  | { type: 'set-name'; name: string }
+  | { type: 'set-name'; name: string; avatar: Avatar }
   | { type: 'create'; tabId: number }
   | { type: 'join'; tabId: number; input: string }
   | { type: 'leave'; tabId: number }
@@ -81,6 +83,7 @@ export type PopupRequest =
 
 export interface PopupStatus {
   name: string | null;
+  avatar: Avatar | null;
   tabUrl: string | null;
   session: null | {
     roomId: string;

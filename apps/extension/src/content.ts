@@ -9,7 +9,7 @@
 // bunlar da yakalanır.
 
 import { OffsetClock } from '@swm/shared/clock';
-import type { PlaybackState } from '@swm/shared/protocol';
+import { expectedPosition, type PlaybackState } from '@swm/shared/protocol';
 import { roomIdFromHash } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { describeVideo, findVideos, scoreVideo, wrapVideoElement } from '@swm/shared/video-element';
@@ -29,12 +29,24 @@ let state: PlaybackState | null = null;
 let adapter: ReturnType<typeof wrapVideoElement> | null = null;
 let engine: SyncEngine | null = null;
 const clock = new OffsetClock();
-const overlay = createOverlay((message) => send({ type: 'send', message }));
-// Paneldeki "Sonraki": o an oynayan öğeden sonrakine geç (sunucu aynı anda gelen istekleri bir kez uygular).
-overlay.onNext(() => {
-  const id = state?.item?.id;
-  if (id) send({ type: 'send', message: { t: 'next', from: id } });
+const overlay = createOverlay({
+  send: (message) => send({ type: 'send', message }),
+  // "Sonraki": o an oynayan öğeden sonrakine geç (sunucu aynı anda gelen istekleri bir kez uygular).
+  onNext: () => {
+    const id = engine?.getState()?.item?.id ?? state?.item?.id;
+    if (id) send({ type: 'send', message: { t: 'next', from: id } });
+  },
+  // Hız: videoya uygulanır ve odaya yayılır (sitenin kendi hız menüsü olmasa bile çalışır).
+  onRate: (rate) => engine?.requestRate(rate),
 });
+
+/** Çubuktaki senkron noktası için: videomuz odanın olması gereken yerinden ne kadar uzakta? */
+let syncTimer: ReturnType<typeof setInterval> | null = null;
+function updateSync(): void {
+  const current = engine?.getState();
+  if (!current?.item || !adapter || !clock.synced) return overlay.setSync(null);
+  overlay.setSync((adapter.getTime() - expectedPosition(current, clock.now())) * 1000);
+}
 
 function connect(): void {
   if (port) return;
@@ -153,10 +165,14 @@ function attachEngine(): void {
   if (state) engine.receive(state);
   engine.attach(adapter);
   overlay.follow(best);
+  if (state) overlay.setRate(state.rate);
+  syncTimer ??= setInterval(updateSync, 1000);
 }
 
 function deactivate(): void {
   active = false;
+  if (syncTimer !== null) clearInterval(syncTimer);
+  syncTimer = null;
   engine?.destroy();
   engine = null;
   adapter?.release();
@@ -175,6 +191,7 @@ function onMessage(message: BackgroundMessage): void {
     case 'state':
       state = message.state;
       engine?.receive(message.state);
+      overlay.setRate(message.state.rate);
       break;
     case 'clock':
       clock.set(message.offset, message.synced);
@@ -187,6 +204,9 @@ function onMessage(message: BackgroundMessage): void {
       break;
     case 'chat':
       overlay.chat(message.line);
+      break;
+    case 'notice':
+      overlay.notice(message.kind, message.name);
       break;
     case 'deactivate':
       deactivate();

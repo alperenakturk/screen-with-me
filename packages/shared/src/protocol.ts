@@ -17,6 +17,19 @@ export const REACTIONS = ['😂', '😮', '😍', '😱', '👏', '🔥', '😢'
 
 export type Reaction = (typeof REACTIONS)[number];
 
+/** Seçilebilen avatarlar. Sunucu bunların dışındakini kabul etmez. */
+export const AVATARS = ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'] as const;
+
+export type Avatar = (typeof AVATARS)[number];
+
+export function isAvatar(x: unknown): x is Avatar {
+  return typeof x === 'string' && (AVATARS as readonly string[]).includes(x);
+}
+
+export function randomAvatar(): Avatar {
+  return AVATARS[Math.floor(Math.random() * AVATARS.length)]!;
+}
+
 export const TITLE_MAX_LENGTH = 200;
 
 export type Media =
@@ -53,6 +66,8 @@ export interface PlaybackState {
 export interface Member {
   id: string;
   name: string;
+  /** Eski istemciler avatar yollamaz; o zaman yoktur. */
+  avatar?: Avatar;
 }
 
 export interface ChatMessage {
@@ -72,7 +87,7 @@ export type QueueChange =
 
 /** İstemci → sunucu. `at`, istemcinin tahmin ettiği sunucu saatidir. */
 export type ClientMessage =
-  | { t: 'hello'; v: number; name: string }
+  | { t: 'hello'; v: number; name: string; avatar?: Avatar }
   | { t: 'ping'; c: number }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
@@ -207,7 +222,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'hello': {
       const name = cleanName(m.name);
       if (typeof m.v !== 'number' || name === null) return null;
-      return { t: 'hello', v: m.v, name };
+      // Avatar isteğe bağlı: geçersizse sessizce yok sayılır, katılım engellenmez.
+      return isAvatar(m.avatar) ? { t: 'hello', v: m.v, name, avatar: m.avatar } : { t: 'hello', v: m.v, name };
     }
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;

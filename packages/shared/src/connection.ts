@@ -1,5 +1,5 @@
 import type { ServerClock } from './clock.ts';
-import { PROTOCOL_VERSION, type ClientMessage, type ServerMessage } from './protocol.ts';
+import { PROTOCOL_VERSION, type Avatar, type ClientMessage, type ServerMessage } from './protocol.ts';
 
 export type ConnectionStatus = 'connecting' | 'open' | 'reconnecting' | 'closed';
 
@@ -8,6 +8,7 @@ export interface RoomConnectionOptions {
   serverUrl: string;
   roomId: string;
   name: string;
+  avatar?: Avatar;
   clock: ServerClock;
   onMessage: (message: ServerMessage) => void;
   onStatus?: (status: ConnectionStatus) => void;
@@ -60,7 +61,8 @@ export class RoomConnection {
     ws.addEventListener('open', () => {
       this.retries = 0;
       this.options.onStatus?.('open');
-      this.send({ t: 'hello', v: PROTOCOL_VERSION, name: this.options.name });
+      const { name, avatar } = this.options;
+      this.send(avatar ? { t: 'hello', v: PROTOCOL_VERSION, name, avatar } : { t: 'hello', v: PROTOCOL_VERSION, name });
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
       this.pingTimer = setInterval(() => this.ping(), PING_INTERVAL_MS);
     });

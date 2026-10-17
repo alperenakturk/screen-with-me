@@ -2,7 +2,18 @@ import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { parseMediaInput } from '@swm/shared/media';
 import type { PlayerAdapter } from '@swm/shared/player';
-import { cleanName, type ClientMessage, type Member, type PlaybackState, type QueueItem, type ServerMessage } from '@swm/shared/protocol';
+import {
+  AVATARS,
+  cleanName,
+  isAvatar,
+  randomAvatar,
+  type Avatar,
+  type ClientMessage,
+  type Member,
+  type PlaybackState,
+  type QueueItem,
+  type ServerMessage,
+} from '@swm/shared/protocol';
 import { pageInviteUrl } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { el, rememberOpen } from './dom.ts';
@@ -28,12 +39,31 @@ export function renderRoom(app: HTMLElement, roomId: string): void {
       <form id="name-form" class="stack">
         <label for="name" data-i18n="yourName"></label>
         <input id="name" maxlength="32" required autocomplete="nickname" data-i18n-placeholder="namePlaceholder" />
+        <span class="label" data-i18n="yourAvatar"></span>
+        <div id="avatar-picker" class="avatar-picker" role="radiogroup"></div>
         <button class="btn primary big" data-i18n="enterRoom"></button>
         <p class="muted small" data-i18n="nameHint"></p>
       </form>
     </section>
   `;
   translate(app);
+
+  // Avatar: bir kez seçilir, tarayıcıda saklanır (yoksa rastgele biri önerilir).
+  const savedAvatar = load('avatar');
+  let avatar: Avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
+  const picker = app.querySelector<HTMLElement>('#avatar-picker')!;
+  const renderPicker = () =>
+    picker.replaceChildren(
+      ...AVATARS.map((option) => {
+        const button = el('button', { type: 'button', class: 'avatar-option', role: 'radio', 'aria-checked': String(option === avatar) }, option);
+        button.addEventListener('click', () => {
+          avatar = option;
+          renderPicker();
+        });
+        return button;
+      }),
+    );
+  renderPicker();
 
   const roomCode = app.querySelector<HTMLElement>('#room-code')!;
   const renderCode = () => (roomCode.textContent = t('roomCode', { id: roomId }));
@@ -50,12 +80,18 @@ export function renderRoom(app: HTMLElement, roomId: string): void {
     const name = cleanName(input.value);
     if (name === null) return;
     save('name', name);
+    save('avatar', avatar);
     window.removeEventListener('langchange', renderCode);
-    startRoom(app, roomId, name);
+    startRoom(app, roomId, name, avatar);
   });
 }
 
-function startRoom(app: HTMLElement, roomId: string, myName: string): void {
+/** İsmin önüne avatarı koyar (varsa). */
+function withAvatar(member: { name: string; avatar?: string }): string {
+  return member.avatar ? `${member.avatar} ${member.name}` : member.name;
+}
+
+function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar): void {
   // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla.
   loadYouTubeApi().catch(() => {});
 
@@ -200,6 +236,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
     serverUrl: location.origin,
     roomId,
     name: myName,
+    avatar: myAvatar,
     clock,
     onMessage: handleMessage,
     onStatus: (next) => {
@@ -248,13 +285,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
         setMembers(message.members, true);
         break;
       case 'reaction':
-        reactions.show(message.emoji, message.by.name);
+        reactions.show(message.emoji, withAvatar(message.by));
         break;
       case 'chat': {
         const { by, text } = message.message;
         chat.add(message.message);
         // Tam ekranda sohbet paneli görünmez; mesaj videonun köşesinde belirir.
-        if (fullscreen.isActive()) toasts.show(by.name, text, by.id === myId);
+        if (fullscreen.isActive()) toasts.show(withAvatar(by), text, by.id === myId);
         break;
       }
       case 'error':
@@ -428,15 +465,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
 
   // ---- Arayüz parçaları ----
   function displayName(member: Member): string {
-    return member.id === myId ? `${member.name} (${t('you')})` : member.name;
+    const name = withAvatar(member);
+    return member.id === myId ? `${name} (${t('you')})` : name;
   }
 
   function setMembers(next: Member[], announce: boolean): void {
     if (announce) {
       const before = new Set(members.map((m) => m.id));
       const after = new Set(next.map((m) => m.id));
-      for (const m of next) if (!before.has(m.id) && m.id !== myId) addActivity(() => t('joined', { name: m.name }));
-      for (const m of members) if (!after.has(m.id)) addActivity(() => t('left', { name: m.name }));
+      for (const m of next) if (!before.has(m.id) && m.id !== myId) addActivity(() => t('joined', { name: withAvatar(m) }));
+      for (const m of members) if (!after.has(m.id)) addActivity(() => t('left', { name: withAvatar(m) }));
     }
     members = next;
     renderMembers();

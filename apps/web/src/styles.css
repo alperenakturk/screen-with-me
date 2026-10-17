@@ -260,8 +260,37 @@ select:focus {
 
 /* ---- İsim ekranı ---- */
 .join-card {
-  max-width: 380px;
+  max-width: 400px;
   margin: 8vh auto 0;
+}
+
+.label {
+  font-size: 14px;
+}
+
+.avatar-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.avatar-option {
+  aspect-ratio: 1;
+  font-size: 22px;
+  background: var(--surface-2);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatar-option:hover {
+  border-color: var(--border);
+}
+
+.avatar-option[aria-checked='true'] {
+  border-color: var(--accent);
+  background: rgb(124 92 255 / 0.2);
 }
 
 .join-card p {
@@ -702,11 +731,11 @@ select:focus {
   height: 40px;
 }
 
-/* Tam ekranda gelen sohbet mesajları */
+/* Tam ekranda gelen sohbet mesajları: sol üstten aşağı akar (alttaki kontrollerle karışmasın) */
 .toasts {
   position: absolute;
   left: 20px;
-  bottom: 130px;
+  top: 20px;
   z-index: 2;
   flex-direction: column;
   align-items: flex-start;
@@ -741,7 +770,7 @@ select:focus {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(-8px);
   }
 }
 

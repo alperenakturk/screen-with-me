@@ -231,6 +231,27 @@ label,
   background: var(--border);
 }
 
+.avatar-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.avatar-picker button {
+  aspect-ratio: 1;
+  font-size: 18px;
+  background: var(--surface-2);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatar-picker button[aria-checked='true'] {
+  border-color: var(--accent);
+  background: rgb(124 92 255 / 0.2);
+}
+
 .reactions {
   display: flex;
   justify-content: space-between;

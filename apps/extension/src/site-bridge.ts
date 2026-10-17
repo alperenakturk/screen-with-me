@@ -4,6 +4,7 @@
 //    odaya bağlayıp odanın açık olduğu sayfaya kendisi götürür.
 // 3) Sitede yazdığın ismi eklentiye aktarır; eklentide tekrar sorulmaz.
 
+import { isAvatar } from '@swm/shared/protocol';
 import { SITE_MESSAGE_SOURCE, type SiteJoinMessage } from './messages.ts';
 
 document.documentElement.dataset.swmExtension = chrome.runtime.getManifest().version;
@@ -17,14 +18,20 @@ addEventListener('message', (event: MessageEvent) => {
   void chrome.runtime.sendMessage({ type: 'site-join', roomId: data.roomId } satisfies SiteJoinMessage);
 });
 
+/** Sitede seçilen isim ve avatarı eklentiye aktarır. */
 function syncName(): void {
   let name: string | null = null;
+  let avatar: string | null = null;
   try {
     name = localStorage.getItem('name');
+    avatar = localStorage.getItem('avatar');
   } catch {
     return;
   }
-  if (name) void chrome.storage.local.set({ name });
+  const update: Record<string, string> = {};
+  if (name) update.name = name;
+  if (avatar && isAvatar(avatar)) update.avatar = avatar;
+  if (Object.keys(update).length) void chrome.storage.local.set(update);
 }
 
 syncName();

@@ -13,6 +13,8 @@ import {
   ROOM_ID_PATTERN,
   cleanChatText,
   cleanName,
+  isAvatar,
+  type Avatar,
   type ChatMessage,
   type Media,
   type Member,
@@ -56,7 +58,6 @@ interface Session {
   state: PlaybackState | null;
   queue: QueueItem[];
   members: Member[];
-  chat: ChatMessage[];
   /** Senkronun çalıştığı çerçeve. */
   activeFrame: number | null;
   /** Etkin çerçeveye oda durumu yollandı mı? */
@@ -76,6 +77,16 @@ const frames = new Map<number, Map<number, Frame>>();
 async function getName(): Promise<string | null> {
   const { name } = await chrome.storage.local.get('name');
   return typeof name === 'string' ? cleanName(name) : null;
+}
+
+async function getAvatar(): Promise<Avatar | null> {
+  const { avatar } = await chrome.storage.local.get('avatar');
+  return isAvatar(avatar) ? avatar : null;
+}
+
+/** İsmin önüne avatarı koyar (varsa): "🦊 Ali". */
+function withAvatar(member: Member): string {
+  return member.avatar ? `${member.avatar} ${member.name}` : member.name;
 }
 
 async function persist(): Promise<void> {
@@ -102,6 +113,7 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
   endSession(tabId, false);
 
   const name = (await getName()) ?? 'Misafir';
+  const avatar = (await getAvatar()) ?? undefined;
   const clock = new ServerClock();
   const session: Session = {
     tabId,
@@ -113,7 +125,6 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
     state: null,
     queue: [],
     members: [],
-    chat: [],
     activeFrame: null,
     activated: false,
     followedItemId: null,
@@ -123,6 +134,7 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
     serverUrl: SITE_URL,
     roomId,
     name,
+    ...(avatar ? { avatar } : {}),
     clock,
     onMessage: (message) => onServer(session, message),
     onStatus: (status) => (session.status = status),
@@ -151,7 +163,6 @@ function onServer(session: Session, message: ServerMessage): void {
       session.myId = message.you;
       session.members = message.members;
       session.queue = message.queue;
-      session.chat = message.chat;
       session.state = message.state;
       if (session.pendingLoad) {
         session.connection.send({ t: 'load', ...session.pendingLoad });
@@ -171,20 +182,29 @@ function onServer(session: Session, message: ServerMessage): void {
       session.queue = message.queue;
       pushRoom(session);
       break;
-    case 'members':
+    case 'members': {
+      // Katılan/ayrılanları videonun üstünde kısaca göster.
+      const before = new Map(session.members.map((m) => [m.id, m]));
+      const after = new Set(message.members.map((m) => m.id));
+      for (const m of message.members) {
+        if (!before.has(m.id) && m.id !== session.myId) toActive(session, { type: 'notice', kind: 'joined', name: withAvatar(m) });
+      }
+      for (const m of session.members) {
+        if (!after.has(m.id)) toActive(session, { type: 'notice', kind: 'left', name: withAvatar(m) });
+      }
       session.members = message.members;
       pushRoom(session);
       break;
+    }
     case 'title': {
       const item = session.state?.item;
       if (session.state && item?.id === message.itemId) session.state = { ...session.state, item: { ...item, title: message.title } };
       break;
     }
     case 'reaction':
-      toActive(session, { type: 'reaction', emoji: message.emoji, name: message.by.name });
+      toActive(session, { type: 'reaction', emoji: message.emoji, name: withAvatar(message.by) });
       break;
     case 'chat':
-      session.chat = [...session.chat, message.message].slice(-50);
       toActive(session, { type: 'chat', line: chatLine(session, message.message) });
       break;
     case 'pong':
@@ -218,7 +238,7 @@ async function follow(session: Session): Promise<void> {
 }
 
 function chatLine(session: Session, message: ChatMessage): ChatLine {
-  return { id: message.id, name: message.by.name, text: message.text, mine: message.by.id === session.myId };
+  return { id: message.id, name: withAvatar(message.by), text: message.text, mine: message.by.id === session.myId };
 }
 
 /** Sayfa üstü panel için oda bilgisini etkin çerçeveye yollar. */
@@ -230,7 +250,6 @@ function pushRoom(session: Session): void {
     members: session.members,
     myId: session.myId,
     queueLength: session.queue.length,
-    chat: session.chat.map((m) => chatLine(session, m)),
   };
   toActive(session, { type: 'room', room });
 }
@@ -365,6 +384,7 @@ async function status(tabId: number): Promise<PopupStatus> {
   const item = session?.state?.item ?? null;
   return {
     name: await getName(),
+    avatar: await getAvatar(),
     tabUrl: tab?.url ?? null,
     session: session
       ? {
@@ -398,7 +418,9 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
     case 'set-name': {
       const name = cleanName(request.name);
       if (!name) return { ok: false, error: 'name' };
-      await chrome.storage.local.set({ name });
+      const update: Record<string, string> = { name };
+      if (isAvatar(request.avatar)) update.avatar = request.avatar;
+      await chrome.storage.local.set(update);
       return { ok: true };
     }
 

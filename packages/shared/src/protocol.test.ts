@@ -49,6 +49,11 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'load', media: { kind: 'page', url: 'chrome://settings' } })).toBeNull();
   });
 
+  it('accepts a known avatar and silently drops an unknown one', () => {
+    expect(parse({ t: 'hello', v: 3, name: 'Ali', avatar: '🦊' })).toEqual({ t: 'hello', v: 3, name: 'Ali', avatar: '🦊' });
+    expect(parse({ t: 'hello', v: 3, name: 'Ali', avatar: '<img src=x>' })).toEqual({ t: 'hello', v: 3, name: 'Ali' });
+  });
+
   it('strips unknown fields from media', () => {
     expect(parse({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ', evil: '<script>' } })).toEqual({
       t: 'load',

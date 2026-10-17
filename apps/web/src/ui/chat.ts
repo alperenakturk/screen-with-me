@@ -47,7 +47,7 @@ export function createChatPanel(root: HTMLElement, send: (message: ClientMessage
     return el(
       'li',
       { class: mine ? 'chat-line me' : 'chat-line' },
-      el('span', { class: 'chat-name' }, message.by.name),
+      el('span', { class: 'chat-name' }, message.by.avatar ? `${message.by.avatar} ${message.by.name}` : message.by.name),
       el('time', { class: 'muted' }, time),
       el('p', { class: 'chat-text' }, message.text),
     );
