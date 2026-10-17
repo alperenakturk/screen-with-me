@@ -276,6 +276,11 @@ select:focus {
   align-items: start;
 }
 
+.stage,
+.side {
+  min-width: 0;
+}
+
 .stage {
   display: flex;
   flex-direction: column;
@@ -380,9 +385,318 @@ select:focus {
   opacity: 0.7;
 }
 
+/* ---- Video linki formu ---- */
+.media-form {
+  display: flex;
+  gap: 8px;
+}
+
+.media-form input {
+  flex: 1;
+}
+
+/* ---- Sahne: başlık + oynatıcı + araç çubuğu (tam ekranda birlikte büyür) ---- */
+.theater {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.now-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.now-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.small-btn {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.btn:disabled,
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reaction-bar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.reaction-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.reaction-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--muted);
+}
+
+.reaction-btn:active {
+  transform: scale(0.9);
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.icon-btn:not(:disabled):hover {
+  border-color: var(--muted);
+  background: var(--surface-2);
+}
+
+.big-icon {
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+}
+
+/* ---- Uçuşan emojiler ---- */
+.reactions-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.float-reaction {
+  position: absolute;
+  bottom: 12%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: float-up 2.8s ease-out forwards;
+}
+
+.float-emoji {
+  font-size: 40px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.5));
+}
+
+.float-name {
+  font-size: 12px;
+  font-weight: 600;
+  background: rgb(0 0 0 / 0.55);
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translate(0, 20px) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift, 0), -220px) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-reaction {
+    animation-duration: 1.5s;
+  }
+}
+
+/* ---- Tam ekran ---- */
+.theater:fullscreen {
+  padding: 12px;
+  height: 100vh;
+}
+
+.theater:fullscreen .player-wrap {
+  flex: 1;
+  aspect-ratio: auto;
+}
+
+/* ---- Sıra ---- */
+.queue {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.queue-item {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+}
+
+.thumb {
+  width: 64px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--surface-2);
+  grid-row: span 2;
+}
+
+.thumb.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.queue-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.queue-title {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ---- Açılır paneller ---- */
+.panel summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel summary::before {
+  content: '▸';
+  transition: transform 0.15s;
+}
+
+.panel[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.panel[open] summary {
+  margin-bottom: 12px;
+}
+
+.badge {
+  background: var(--accent);
+  color: white;
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 1px 7px;
+}
+
+/* ---- Sohbet ---- */
+.chat-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-line {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 8px;
+  font-size: 14px;
+}
+
+.chat-name {
+  font-weight: 600;
+}
+
+.chat-line.me .chat-name {
+  color: var(--accent-hover);
+}
+
+.chat-line time {
+  font-size: 11px;
+  align-self: center;
+}
+
+.chat-text {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 860px) {
   .room {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   main {
@@ -391,5 +705,23 @@ select:focus {
 
   .status {
     font-size: 0;
+  }
+
+  .media-form {
+    flex-wrap: wrap;
+  }
+
+  .media-form input {
+    flex-basis: 100%;
+  }
+
+  .media-form .btn {
+    flex: 1;
+  }
+
+  .reaction-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
   }
 }

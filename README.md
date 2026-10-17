@@ -11,6 +11,10 @@ Birisi oynatır, durdurur, sarar ya da hızı değiştirirse odadaki herkeste ay
 - Tek tıkla oda, davet linki, hesap yok (isim bir kez sorulur, tarayıcıda saklanır)
 - YouTube ve doğrudan video linkleri (.mp4/.webm)
 - Oynat / durdur / sar / hız senkronu, kayma düzeltmesi, saat farkı telafisi
+- Sıra (playlist): ekle, çıkar, sırala, istediğini hemen oynat. Video bitince sıradakine geçilir.
+- Emoji tepkileri: videonun üstünde uçuşur. Kendi tam ekran modumuzda da görünür.
+- Basit sohbet (son 50 mesaj saklanır) ve açılıp kapanan "son hareketler" paneli
+- Spam koruması (hız sınırı)
 - Türkçe + İngilizce arayüz, telefonda da çalışır
 
 **Aşama 2 — tarayıcı eklentisi** (sırada): herhangi bir sitedeki (iframe içindekiler dahil) HTML5 videoyu aynı sunucu ve aynı senkron motoruyla eşitlemek.

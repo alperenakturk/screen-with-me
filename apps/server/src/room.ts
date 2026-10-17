@@ -1,22 +1,32 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
   PROTOCOL_VERSION,
-  applyAction,
-  initialState,
   parseClientMessage,
+  type ChatMessage,
+  type ClientMessage,
+  type Media,
   type Member,
-  type PlaybackState,
+  type QueueItem,
   type ServerMessage,
 } from '@wb/shared/protocol';
+import { applyRoomAction, initialRoom, type RoomAction, type RoomData } from '@wb/shared/room-logic';
+import { RateLimiter } from './rate-limit.ts';
+import { resolveTitle } from './titles.ts';
 
 const MAX_MEMBERS = 50;
 /** Kimse kalmayan oda bu süre sonra silinir. */
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+/** Sonradan gelenlerin görebileceği son sohbet mesajı sayısı. */
+const CHAT_HISTORY = 50;
 
 /** Her WebSocket bağlantısına iliştirilen bilgi. Sunucu uykuya geçse bile korunur. */
 interface Attachment {
   id: string;
   name: string | null;
+}
+
+function newId(): string {
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 12);
 }
 
 /**
@@ -29,13 +39,21 @@ interface Attachment {
  * çalışır, bu yüzden oda durumu bellekte değil depoda (storage) da tutulur.
  */
 export class Room extends DurableObject<Env> {
-  private state: PlaybackState = initialState(Date.now());
+  private room: RoomData = initialRoom(Date.now());
+  private chat: ChatMessage[] = [];
+  private titles = new Map<string, string | null>();
+
+  // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
+  private readonly commandLimit = new RateLimiter(20, 4);
+  private readonly reactionLimit = new RateLimiter(6, 1.5);
+  private readonly chatLimit = new RateLimiter(5, 0.5);
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     ctx.blockConcurrencyWhile(async () => {
-      const saved = await ctx.storage.get<PlaybackState>('state');
-      if (saved) this.state = saved;
+      const saved = await ctx.storage.get<RoomData>('room');
+      if (saved && Array.isArray(saved.queue)) this.room = saved;
+      this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
     });
   }
 
@@ -50,7 +68,7 @@ export class Room extends DurableObject<Env> {
       this.sendTo(server, { t: 'error', code: 'room_full' });
       server.close(4001, 'room_full');
     } else {
-      const attachment: Attachment = { id: crypto.randomUUID().slice(0, 8), name: null };
+      const attachment: Attachment = { id: newId().slice(0, 8), name: null };
       server.serializeAttachment(attachment);
       await this.ctx.storage.deleteAlarm();
     }
@@ -72,16 +90,7 @@ export class Room extends DurableObject<Env> {
     }
 
     if (message.t === 'hello') {
-      if (message.v !== PROTOCOL_VERSION) {
-        this.sendTo(ws, { t: 'error', code: 'version' });
-        ws.close(4002, 'version');
-        return;
-      }
-      attachment.name = message.name;
-      ws.serializeAttachment(attachment);
-      const members = this.members();
-      this.sendTo(ws, { t: 'welcome', you: attachment.id, state: this.state, members });
-      this.broadcast({ t: 'members', members }, ws);
+      this.join(ws, attachment, message.v, message.name);
       return;
     }
 
@@ -89,15 +98,31 @@ export class Room extends DurableObject<Env> {
       this.sendTo(ws, { t: 'error', code: 'not_joined' });
       return;
     }
+    const me: Member = { id: attachment.id, name: attachment.name };
 
-    this.state = applyAction(this.state, message, Date.now());
-    await this.ctx.storage.put('state', this.state);
-    this.broadcast({
-      t: 'state',
-      state: this.state,
-      action: message.t,
-      by: { id: attachment.id, name: attachment.name },
-    });
+    if (!this.commandLimit.allow(me.id)) {
+      this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+      return;
+    }
+
+    switch (message.t) {
+      case 'react':
+        if (this.reactionLimit.allow(me.id)) this.broadcast({ t: 'reaction', emoji: message.emoji, by: me });
+        return;
+      case 'chat':
+        if (!this.chatLimit.allow(me.id)) {
+          this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+          return;
+        }
+        await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now() });
+        return;
+      case 'load':
+      case 'enqueue':
+        await this.apply(ws, me, { t: message.t, item: await this.makeItem(message.media, me) });
+        return;
+      default:
+        await this.apply(ws, me, message);
+    }
   }
 
   override async webSocketClose(ws: WebSocket, code: number): Promise<void> {
@@ -115,10 +140,75 @@ export class Room extends DurableObject<Env> {
 
   /** Oda uzun süre boş kaldığında çalışır ve depoyu temizler. */
   override async alarm(): Promise<void> {
-    if (this.openSockets().length === 0) await this.ctx.storage.deleteAll();
+    if (this.openSockets().length === 0) {
+      await this.ctx.storage.deleteAll();
+      this.room = initialRoom(Date.now());
+      this.chat = [];
+    }
+  }
+
+  private join(ws: WebSocket, attachment: Attachment, version: number, name: string): void {
+    if (version !== PROTOCOL_VERSION) {
+      this.sendTo(ws, { t: 'error', code: 'version' });
+      ws.close(4002, 'version');
+      return;
+    }
+    attachment.name = name;
+    ws.serializeAttachment(attachment);
+    const members = this.members();
+    this.sendTo(ws, {
+      t: 'welcome',
+      you: attachment.id,
+      state: this.room.state,
+      queue: this.room.queue,
+      members,
+      chat: this.chat,
+    });
+    this.broadcast({ t: 'members', members }, ws);
+  }
+
+  /** Bir oynatma/sıra komutunu uygular, kaydeder ve değişenleri herkese yollar. */
+  private async apply(ws: WebSocket, me: Member, action: RoomAction): Promise<void> {
+    const update = applyRoomAction(this.room, action, Date.now());
+    if (update.error) this.sendTo(ws, { t: 'error', code: update.error });
+    if (update.stateAction === null && !update.queueChanged) return;
+
+    this.room = update.data;
+    await this.ctx.storage.put('room', this.room);
+    if (update.queueChanged) {
+      this.broadcast({
+        t: 'queue',
+        queue: this.room.queue,
+        change: update.change ? { ...update.change, by: me } : null,
+      });
+    }
+    if (update.stateAction !== null) {
+      this.broadcast({ t: 'state', state: this.room.state, action: update.stateAction, by: me });
+    }
+  }
+
+  private async makeItem(media: Media, me: Member): Promise<QueueItem> {
+    const key = media.kind === 'youtube' ? `yt:${media.id}` : media.url;
+    let title = this.titles.get(key);
+    if (title === undefined) {
+      title = await resolveTitle(media);
+      if (this.titles.size > 500) this.titles.clear();
+      this.titles.set(key, title);
+    }
+    return { id: newId(), media, title, by: me.name };
+  }
+
+  private async addChat(message: ChatMessage): Promise<void> {
+    this.chat = [...this.chat, message].slice(-CHAT_HISTORY);
+    await this.ctx.storage.put('chat', this.chat);
+    this.broadcast({ t: 'chat', message });
   }
 
   private async onLeave(leaving: WebSocket): Promise<void> {
+    const attachment = leaving.deserializeAttachment() as Attachment | null;
+    if (attachment) {
+      for (const limiter of [this.commandLimit, this.reactionLimit, this.chatLimit]) limiter.forget(attachment.id);
+    }
     this.broadcast({ t: 'members', members: this.members(leaving) }, leaving);
     if (this.openSockets(leaving).length === 0) {
       await this.ctx.storage.setAlarm(Date.now() + EMPTY_ROOM_TTL_MS);
@@ -126,9 +216,7 @@ export class Room extends DurableObject<Env> {
   }
 
   private openSockets(except?: WebSocket): WebSocket[] {
-    return this.ctx
-      .getWebSockets()
-      .filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
+    return this.ctx.getWebSockets().filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
   }
 
   private members(except?: WebSocket): Member[] {
@@ -156,3 +244,8 @@ export class Room extends DurableObject<Env> {
     }
   }
 }
+
+// ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
+type _Handled = Exclude<ClientMessage['t'], 'ping' | 'hello' | 'react' | 'chat' | 'load' | 'enqueue' | RoomAction['t']>;
+const _exhaustive: [_Handled] extends [never] ? true : never = true;
+void _exhaustive;

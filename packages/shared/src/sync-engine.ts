@@ -1,6 +1,6 @@
 import type { ServerClock } from './clock.ts';
 import type { PlayerAdapter, PlayerEvent } from './player.ts';
-import { expectedPosition, type Action, type ClientMessage, type PlaybackState } from './protocol.ts';
+import { expectedPosition, type ClientMessage, type PlaybackAction, type PlaybackState } from './protocol.ts';
 
 /** Kontrol döngüsü bu sıklıkla çalışır. */
 export const TICK_MS = 500;
@@ -26,6 +26,8 @@ export interface SyncEngineOptions {
   send: (message: ClientMessage) => void;
   /** Tarayıcı sesli otomatik oynatmayı engellediğinde çağrılır; arayüz "başlat" butonu göstermeli. */
   onAutoplayBlocked?: () => void;
+  /** Oynayan video sona erdiğinde (her öğe için bir kez) çağrılır; arayüz sıradakini ister. */
+  onEnded?: (itemId: string) => void;
   /** Test için değiştirilebilir. */
   wallNow?: () => number;
 }
@@ -52,6 +54,7 @@ export class SyncEngine {
   private pauseTimer: ReturnType<typeof setTimeout> | null = null;
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private autoplayBlocked = false;
+  private endedItemId: string | null = null;
   private readonly wallNow: () => number;
 
   constructor(private readonly options: SyncEngineOptions) {
@@ -111,7 +114,7 @@ export class SyncEngine {
   private enforce(seekThreshold: number): void {
     const player = this.player;
     const state = this.state;
-    if (player === null || state === null || state.media === null) return;
+    if (player === null || state === null || state.item === null) return;
 
     this.markProgrammatic();
     this.nudgeRate = null;
@@ -166,7 +169,7 @@ export class SyncEngine {
   private tick(): void {
     const player = this.player;
     const state = this.state;
-    if (player === null || state === null || state.media === null) return;
+    if (player === null || state === null || state.item === null) return;
 
     const wall = this.wallNow();
     const time = player.getTime();
@@ -195,7 +198,14 @@ export class SyncEngine {
       return;
     }
     if (!state.paused && !playing) {
-      if (!player.isEnded() && !this.autoplayBlocked) this.enforce(DRIFT_SEEK_SECONDS);
+      if (player.isEnded()) {
+        if (this.endedItemId !== state.item.id) {
+          this.endedItemId = state.item.id;
+          this.options.onEnded?.(state.item.id);
+        }
+      } else if (!this.autoplayBlocked) {
+        this.enforce(DRIFT_SEEK_SECONDS);
+      }
       return;
     }
 
@@ -228,7 +238,7 @@ export class SyncEngine {
   }
 
   /** Yerel kullanıcının yaptığı değişikliği hemen uygular (sunucuyu beklemeden) ve sunucuya yollar. */
-  private localChange(action: Exclude<Action, 'load'>, patch: Partial<PlaybackState>): void {
+  private localChange(action: Exclude<PlaybackAction, 'load' | 'next'>, patch: Partial<PlaybackState>): void {
     const state = this.state;
     if (state === null) return;
     const at = this.options.clock.now();

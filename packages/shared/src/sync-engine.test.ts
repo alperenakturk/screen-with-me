@@ -54,6 +54,7 @@ let sent: ClientMessage[];
 let engine: SyncEngine;
 let clock: ServerClock;
 let autoplayBlocked: number;
+let ended: string[];
 
 /** Gerçek zamanı ve oynatıcının zamanını birlikte ilerletir. */
 async function run(ms: number) {
@@ -65,7 +66,7 @@ async function run(ms: number) {
 
 function state(patch: Partial<PlaybackState> = {}): PlaybackState {
   return {
-    media: { kind: 'youtube', id: 'dQw4w9WgXcQ' },
+    item: { id: 'item1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
     paused: false,
     position: 0,
     rate: 1,
@@ -79,12 +80,14 @@ beforeEach(() => {
   player = new FakePlayer();
   sent = [];
   autoplayBlocked = 0;
+  ended = [];
   clock = new ServerClock(() => Date.now());
   clock.addSample(Date.now(), Date.now());
   engine = new SyncEngine({
     clock,
     send: (message) => sent.push(message),
     onAutoplayBlocked: () => autoplayBlocked++,
+    onEnded: (itemId) => ended.push(itemId),
     wallNow: () => Date.now(),
   });
 });
@@ -168,11 +171,12 @@ describe('local user actions', () => {
     expect(sent[0]).toMatchObject({ t: 'rate', rate: 1.5 });
   });
 
-  it('does not broadcast the pause when the video ends', async () => {
+  it('does not broadcast the pause when the video ends, and reports the end once', async () => {
     player.ended = true;
     player.pause();
-    await run(1000);
+    await run(3000);
     expect(sent).toEqual([]);
+    expect(ended).toEqual(['item1']);
   });
 });
 
