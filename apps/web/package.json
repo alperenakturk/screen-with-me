@@ -1,0 +1,18 @@
+{
+  "name": "@wb/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@wb/shared": "*"
+  },
+  "devDependencies": {
+    "@types/youtube": "^0.3.0",
+    "vite": "^8.3.4"
+  }
+}
