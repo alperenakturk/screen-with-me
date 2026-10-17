@@ -6,6 +6,7 @@
     "./protocol": "./src/protocol.ts",
     "./room-logic": "./src/room-logic.ts",
     "./room-id": "./src/room-id.ts",
+    "./waiting": "./src/waiting.ts",
     "./media": "./src/media.ts",
     "./clock": "./src/clock.ts",
     "./player": "./src/player.ts",

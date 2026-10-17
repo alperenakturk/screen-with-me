@@ -23,6 +23,8 @@ export const NUDGE_FACTOR = 0.05;
  * oynat komutu en fazla bu sıklıkla tekrarlanır.
  */
 export const PLAY_RETRY_MS = 3000;
+/** Oda oynarken video bu kadar süre ilerlemezse "hazır değilim" denir (oda bekler). */
+export const STALL_REPORT_MS = 1500;
 /** Kullanıcının ileri/geri sarması: beklenen ilerlemeden bu kadar fazla sıçrama. */
 export const SEEK_DETECT_SECONDS = 0.75;
 
@@ -70,6 +72,9 @@ export class SyncEngine {
   private autoplayBlocked = false;
   private endedItemId: string | null = null;
   private lastPlayAttempt = -Infinity;
+  /** "Herkes hazır": sunucuya en son ne dedik, video ne zamandan beri ilerlemiyor. */
+  private readyReported = true;
+  private stallSince: number | null = null;
   private readonly wallNow: () => number;
 
   constructor(private readonly options: SyncEngineOptions) {
@@ -78,6 +83,9 @@ export class SyncEngine {
 
   attach(player: PlayerAdapter): void {
     this.detach();
+    // Önceki oynatıcıda "hazır değilim" demiş olabiliriz; yeni oynatıcıyla temiz başla.
+    if (!this.readyReported) this.reportReady(true);
+    this.stallSince = null;
     this.player = player;
     this.lastSample = null;
     this.nudgeRate = null;
@@ -232,6 +240,9 @@ export class SyncEngine {
     const last = this.lastSample;
     this.lastSample = { wall, time, playing };
 
+    // 0) "Herkes hazır": video takıldıysa ya da tekrar hazırsa sunucuya söyle.
+    this.trackReadiness(player, state, wall, last, time);
+
     // 1) Kullanıcı ileri/geri sardı mı? (Biz yeni sardıysak zaman ölçümü henüz güvenilmez.)
     if (last !== null && wall >= this.seekSettleUntil) {
       const elapsed = (wall - last.wall) / 1000;
@@ -284,6 +295,39 @@ export class SyncEngine {
         this.clearNudge(player, state);
       }
     }
+  }
+
+  /**
+   * Oda oynarken video STALL_REPORT_MS boyunca ilerlemezse (yükleniyor, reklam,
+   * otomatik oynatma engeli) "hazır değilim" der; ilerlemeye başlayınca ya da oda
+   * beklerken yeterince yüklenince "hazırım" der. Sadece değişince mesaj gider.
+   */
+  private trackReadiness(
+    player: PlayerAdapter,
+    state: PlaybackState,
+    wall: number,
+    last: { wall: number; time: number; playing: boolean } | null,
+    time: number,
+  ): void {
+    if (state.paused) {
+      this.stallSince = null;
+      if (!this.readyReported && (player.canPlayThrough?.() ?? true)) this.reportReady(true);
+      return;
+    }
+    if (player.isEnded()) return;
+    const advancing = last !== null && Math.abs(time - last.time) > 0.05;
+    if (advancing) {
+      this.stallSince = null;
+      if (!this.readyReported) this.reportReady(true);
+      return;
+    }
+    this.stallSince ??= wall;
+    if (this.readyReported && wall - this.stallSince >= STALL_REPORT_MS) this.reportReady(false);
+  }
+
+  private reportReady(ready: boolean): void {
+    this.readyReported = ready;
+    this.options.send({ t: 'ready', ready });
   }
 
   private clearNudge(player: PlayerAdapter, state: PlaybackState): void {

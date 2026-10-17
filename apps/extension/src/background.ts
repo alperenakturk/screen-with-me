@@ -230,6 +230,14 @@ function onServer(session: Session, message: ServerMessage): void {
     case 'pong':
       toActive(session, clockMessage(session));
       break;
+    case 'waiting': {
+      const names = message.ids
+        .map((id) => session.members.find((m) => m.id === id))
+        .filter((m): m is Member => !!m)
+        .map(withAvatar);
+      toActive(session, { type: 'waiting', names, me: session.myId !== null && message.ids.includes(session.myId) });
+      break;
+    }
     case 'error':
       // Oda yöneticisi çıkardıysa (ya da yasak sürüyorsa) bağlantıyı tamamen kapat.
       if (message.code === 'version' || message.code === 'room_full' || message.code === 'kicked') endSession(session.tabId);

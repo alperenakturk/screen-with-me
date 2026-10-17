@@ -22,6 +22,7 @@ class FakePlayer implements PlayerAdapter {
 
   getTime = () => this.time;
   getDuration = () => 600;
+  canPlayThrough?: () => boolean;
   isPaused = () => this.paused;
   isEnded = () => this.ended;
   getRate = () => this.rate;
@@ -69,6 +70,8 @@ let engine: SyncEngine;
 let clock: ServerClock;
 let autoplayBlocked: number;
 let ended: string[];
+/** "Herkes hazır" mesajları ayrı toplanır (diğer testler oynatma mesajlarına bakar). */
+let readyReports: boolean[];
 
 /** Gerçek zamanı ve oynatıcının zamanını birlikte ilerletir. */
 async function run(ms: number) {
@@ -95,11 +98,12 @@ beforeEach(() => {
   sent = [];
   autoplayBlocked = 0;
   ended = [];
+  readyReports = [];
   clock = new ServerClock(() => Date.now());
   clock.addSample(Date.now(), Date.now());
   engine = new SyncEngine({
     clock,
-    send: (message) => sent.push(message),
+    send: (message) => (message.t === 'ready' ? readyReports.push(message.ready) : sent.push(message)),
     onAutoplayBlocked: () => autoplayBlocked++,
     onEnded: (itemId) => ended.push(itemId),
     wallNow: () => Date.now(),
@@ -296,6 +300,52 @@ describe('slow start', () => {
     player.pause();
     await run(500);
     expect(sent.map((m) => m.t)).toEqual(['pause']);
+  });
+});
+
+describe('ready check ("herkes hazır")', () => {
+  it('reports not-ready when the video stalls while the room plays, and ready once it moves again', async () => {
+    engine.receive(state());
+    engine.attach(player);
+    await run(1000);
+    player.stalled = true;
+    await run(1000);
+    expect(readyReports).toEqual([]); // kısa takılma: sorun yok
+    await run(1500);
+    expect(readyReports).toEqual([false]);
+    player.stalled = false;
+    await run(1000);
+    expect(readyReports).toEqual([false, true]);
+  });
+
+  it('while the room waits (paused), reports ready once enough is loaded', async () => {
+    let loaded = false;
+    player.canPlayThrough = () => loaded;
+    engine.receive(state());
+    engine.attach(player);
+    await run(1000);
+    player.stalled = true;
+    await run(2500);
+    expect(readyReports).toEqual([false]);
+    // Sunucu odayı durdurdu ve bekliyor.
+    engine.receive(state({ paused: true, position: player.time, updatedAt: Date.now() }));
+    await run(1500);
+    expect(readyReports).toEqual([false]);
+    loaded = true;
+    await run(600);
+    expect(readyReports).toEqual([false, true]);
+  });
+
+  it('does not report while paused or after the video ended', async () => {
+    engine.receive(state({ paused: true }));
+    engine.attach(player);
+    await run(3000);
+    engine.receive(state());
+    await run(1000);
+    player.ended = true;
+    player.stalled = true;
+    await run(3000);
+    expect(readyReports).toEqual([]);
   });
 });
 

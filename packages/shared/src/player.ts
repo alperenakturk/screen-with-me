@@ -22,6 +22,11 @@ export interface PlayerAdapter {
   isPaused(): boolean;
   /** Video sona geldi mi? (Sona gelen videoyu tekrar başlatmamak için.) */
   isEnded(): boolean;
+  /**
+   * Oynat dense takılmadan oynayabilecek kadar yüklendi mi? ("Herkes hazır" için;
+   * bilinmiyorsa true kabul edilir.)
+   */
+  canPlayThrough?(): boolean;
   getRate(): number;
   /** Tarayıcı otomatik oynatmayı engellerse 'blocked' döner. */
   play(): Promise<'ok' | 'blocked'>;

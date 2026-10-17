@@ -1,8 +1,11 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
   PROTOCOL_VERSION,
+  SYSTEM_MEMBER_ID,
+  expectedPosition,
   parseClientMessage,
   type Avatar,
+  type RoomSettings,
   type ChatMessage,
   type ClientMessage,
   type Media,
@@ -11,6 +14,7 @@ import {
   type ServerMessage,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
+import { WAIT_MAX_MS, WaitTracker } from '@swm/shared/waiting';
 import { RateLimiter } from './rate-limit.ts';
 import { resolveTitle } from './titles.ts';
 
@@ -21,6 +25,8 @@ const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 const CHAT_HISTORY = 50;
 /** Odadan çıkarılan kişi bu süre boyunca geri giremez. */
 const KICK_BAN_MS = 10 * 60 * 1000;
+/** Oda adına yapılan hareketler (otomatik bekleme) bu "kişi" adına duyurulur. */
+const SYSTEM: Member = { id: SYSTEM_MEMBER_ID, name: 'ScreenWithMe' };
 
 /** Her WebSocket bağlantısına iliştirilen bilgi. Sunucu uykuya geçse bile korunur. */
 interface Attachment {
@@ -73,6 +79,10 @@ export class Room extends DurableObject<Env> {
   private hostKey: string | null = null;
   /** Atılanlar: anahtar → ne zamana kadar giremez (ms). */
   private bans: Record<string, number> = {};
+  private settings: RoomSettings = { waitForAll: true };
+  /** "Herkes hazır": kim takıldı, oda bekliyor mu (bellekte; uyku sırasında zaten kimse oynatmıyor). */
+  private readonly waits = new WaitTracker();
+  private waitTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
@@ -87,6 +97,7 @@ export class Room extends DurableObject<Env> {
       this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
       this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
       this.bans = (await ctx.storage.get<Record<string, number>>('bans')) ?? {};
+      this.settings = (await ctx.storage.get<RoomSettings>('settings')) ?? { waitForAll: true };
     });
   }
 
@@ -159,6 +170,20 @@ export class Room extends DurableObject<Env> {
       case 'kick':
         await this.kick(ws, me, message.id);
         return;
+      case 'ready':
+        this.waits.setReady(me.id, message.ready);
+        await this.evaluateWait();
+        return;
+      case 'settings':
+        if (this.hostId() !== me.id) {
+          this.sendTo(ws, { t: 'error', code: 'not_host' });
+          return;
+        }
+        this.settings = { waitForAll: message.waitForAll };
+        await this.ctx.storage.put('settings', this.settings);
+        this.broadcast({ t: 'settings', settings: this.settings });
+        await this.evaluateWait();
+        return;
       case 'load':
       case 'enqueue': {
         // Video beklemeden herkese gider; başlık (biliniyorsa hemen, yoksa) sonradan eklenir.
@@ -193,6 +218,7 @@ export class Room extends DurableObject<Env> {
       this.chat = [];
       this.hostKey = null;
       this.bans = {};
+      this.settings = { waitForAll: true };
     }
   }
 
@@ -231,6 +257,8 @@ export class Room extends DurableObject<Env> {
       members,
       hostId,
       chat: this.chat,
+      settings: this.settings,
+      waiting: this.waits.waiting,
     });
     this.broadcast({ t: 'members', members, hostId }, ws);
   }
@@ -261,11 +289,50 @@ export class Room extends DurableObject<Env> {
     this.broadcast(this.membersMessage(target), target);
   }
 
+  /**
+   * "Herkes hazır": takılan biri varsa odayı durdurur, herkes hazır olunca ya da
+   * süre dolunca devam ettirir (kararlar WaitTracker'da).
+   */
+  private async evaluateWait(): Promise<void> {
+    const now = Date.now();
+    const state = this.room.state;
+    const present = new Set(this.joined().map((a) => a.id));
+    const decision = this.waits.decide(now, this.settings.waitForAll, !state.paused && state.item !== null, present);
+
+    if (decision.kind === 'start') {
+      this.room = { ...this.room, state: { ...state, paused: true, position: expectedPosition(state, now), updatedAt: now } };
+      await this.ctx.storage.put('room', this.room);
+      this.broadcast({ t: 'state', state: this.room.state, action: 'pause', by: SYSTEM });
+      this.broadcast({ t: 'waiting', ids: decision.ids });
+      // Süre dolunca beklenenler olmadan devam etmek için tekrar bak.
+      if (this.waitTimer !== null) clearTimeout(this.waitTimer);
+      this.waitTimer = setTimeout(() => void this.evaluateWait(), WAIT_MAX_MS + 50);
+    } else if (decision.kind === 'update') {
+      this.broadcast({ t: 'waiting', ids: decision.ids });
+    } else if (decision.kind === 'resume') {
+      if (this.waitTimer !== null) clearTimeout(this.waitTimer);
+      this.waitTimer = null;
+      if (state.paused && state.item !== null) {
+        this.room = { ...this.room, state: { ...state, paused: false, updatedAt: now } };
+        await this.ctx.storage.put('room', this.room);
+        this.broadcast({ t: 'state', state: this.room.state, action: 'play', by: SYSTEM });
+      }
+      this.broadcast({ t: 'waiting', ids: [] });
+    }
+  }
+
   /** Bir oynatma/sıra komutunu uygular, kaydeder ve değişenleri herkese yollar. */
   private async apply(ws: WebSocket, me: Member, action: RoomAction): Promise<void> {
     const update = applyRoomAction(this.room, action, Date.now());
     if (update.error) this.sendTo(ws, { t: 'error', code: update.error });
     if (update.stateAction === null && !update.queueChanged) return;
+
+    // Biri elle oynattı/durdurdu/sardı: otomatik bekleme iptal, o ne dediyse o.
+    if (update.stateAction !== null && this.waits.cancel()) {
+      if (this.waitTimer !== null) clearTimeout(this.waitTimer);
+      this.waitTimer = null;
+      this.broadcast({ t: 'waiting', ids: [] });
+    }
 
     this.room = update.data;
     await this.ctx.storage.put('room', this.room);
@@ -312,8 +379,11 @@ export class Room extends DurableObject<Env> {
     const attachment = leaving.deserializeAttachment() as Attachment | null;
     if (attachment) {
       for (const limiter of [this.commandLimit, this.reactionLimit, this.chatLimit]) limiter.forget(attachment.id);
+      this.waits.remove(attachment.id);
     }
     this.broadcast(this.membersMessage(leaving), leaving);
+    // Beklenen kişi çıktıysa oda beklemeyi bıraksın.
+    if (this.waits.waitingSince !== null) await this.evaluateWait();
     if (this.openSockets(leaving).length === 0) {
       await this.ctx.storage.setAlarm(Date.now() + EMPTY_ROOM_TTL_MS);
     }
@@ -366,7 +436,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'react' | 'chat' | 'rename' | 'kick' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'react' | 'chat' | 'rename' | 'kick' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

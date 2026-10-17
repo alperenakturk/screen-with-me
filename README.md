@@ -13,8 +13,9 @@ Free · no accounts · open source · works on YouTube and on (almost) any websi
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-92%20unit%20%2B%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.4-7c5cff)
+![Tests](https://img.shields.io/badge/tests-100%20unit%20%2B%20e2e-3ccf8e)
+![Version](https://img.shields.io/badge/version-0.5-7c5cff)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
 
@@ -38,6 +39,7 @@ and there is a shared queue.
 | 🎵 **Queue** | Add, reorder, play now; the next video starts automatically for everyone. |
 | 💬 **Chat & reactions** | Tabbed side panel (chat with room activity, queue, people, settings). Emoji reactions fly over the video, also in fullscreen. |
 | 👑 **Room host** | The first person in is the host (survives page reloads) and can remove people. |
+| ⏳ **Ready check** | If someone's video stalls (buffering, an ad), the room waits for them — at most 12 s, and the same person can't stall the room again for 30 s, so one slow connection can't ruin the night. |
 | 🖥️ **Distraction-free fullscreen** | Only the video; controls, reactions and a quick-message box appear when you move the mouse. |
 | 🎨 **5 dark themes** | Night, Ocean, Sunset, Neon, Pitch black. TR / EN interface. |
 | 🔒 **Private by design** | Video plays in each person's own browser. The server only relays tiny "pause at 12:34" messages. The extension stays idle outside of a room. |
@@ -80,8 +82,8 @@ hands the tab over to the extension, which takes it to that page; switching back
 
 | Check | Result |
 |---|---|
-| Unit tests (sync engine with fake clock & player, protocol validation, room rules) | 92 passing |
-| End-to-end (fake users against the real server: queue, chat, reactions, host & kick, page items) | `npm run e2e` |
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check) | 100 passing |
+| End-to-end (fake users against the real server: queue, chat, reactions, host & kick, page items, ready check) | `npm run e2e` |
 | Real players (extension code injected into public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, 4 remote + 4 local actions ✓, 26–100 ms apart |
 | Tricky pages (test harness) | iframe player, player loaded after join, source switch ✓ |
 
@@ -119,8 +121,14 @@ uploads one Worker that serves both the API and the static site).
 
 ## 🗺️ Roadmap
 
-Next up: a "ready check" so rooms wait for whoever is buffering, Chrome Web Store & Firefox releases,
-manual video picker, push-to-talk voice chat. Full list: [docs/VIZYON.md](docs/VIZYON.md).
+Next up: Chrome Web Store & Firefox releases, manual video picker, host-only control mode,
+push-to-talk voice chat. Full list: [docs/VIZYON.md](docs/VIZYON.md).
+
+## 📄 License & privacy
+
+[MIT](LICENSE) © 2026 Alperen Aktürk. All shipped code (site, server, extension) is our own; build tools are
+MIT / Apache-2.0. Privacy policy: [gizlilik.html](https://screen-with-me.swm-server.workers.dev/gizlilik.html)
+— no accounts, no tracking, room data deleted 24 h after a room is empty.
 
 ## ⚠️ Limitations
 

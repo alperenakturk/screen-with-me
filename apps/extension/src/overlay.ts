@@ -74,6 +74,11 @@ input { flex: 1; min-width: 0; }
 input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 .send { background: #7c5cff; border-color: #7c5cff; }
 
+/* "Herkes hazır" bekleme bandı (üst orta) */
+.waiting { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 7px 14px; border-radius: 999px;
+  background: rgb(0 0 0 / .78); border: 1px solid rgb(255 255 255 / .15); font-size: 14px; font-weight: 600;
+  white-space: nowrap; max-width: 50%; overflow: hidden; text-overflow: ellipsis; }
+
 /* Otomatik oynatma engellenince */
 .start { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 12px; background: rgb(0 0 0 / .7); pointer-events: auto; font-size: 16px; text-align: center; padding: 16px; }
@@ -177,8 +182,11 @@ export function createOverlay(actions: OverlayActions) {
     );
     bar.hidden = true;
 
-    container.append(floats, toasts, fab, bar);
-    return { floats, toasts, fab, badge, bar, dot, members, next, input, speed };
+    const waiting = el('div', 'waiting');
+    waiting.hidden = true;
+
+    container.append(floats, toasts, waiting, fab, bar);
+    return { floats, toasts, waiting, fab, badge, bar, dot, members, next, input, speed };
   }
 
   function mount(): HTMLElement {
@@ -356,6 +364,15 @@ export function createOverlay(actions: OverlayActions) {
         unread++;
         renderBadge();
       }
+    },
+
+    /** "Herkes hazır": oda birilerini bekliyorsa üstte bant gösterir. */
+    setWaiting(names: string[], me: boolean): void {
+      if (names.length === 0 && !parts) return;
+      mount();
+      if (!parts) return;
+      parts.waiting.hidden = names.length === 0;
+      parts.waiting.textContent = me ? t('waitingForYou') : t('waitingFor', { names: names.join(', ') });
     },
 
     notice(kind: 'joined' | 'left', name: string): void {

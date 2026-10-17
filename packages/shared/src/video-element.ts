@@ -25,6 +25,8 @@ export function wrapVideoElement(video: HTMLVideoElement): PlayerAdapter & { rea
     getDuration: () => (Number.isFinite(video.duration) ? video.duration : 0),
     isPaused: () => video.paused,
     isEnded: () => video.ended,
+    // HAVE_FUTURE_DATA: şu anki konumdan ileriye biraz veri var.
+    canPlayThrough: () => video.readyState >= 3,
     getRate: () => video.playbackRate,
     async play() {
       try {

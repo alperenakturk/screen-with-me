@@ -51,10 +51,11 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
 ## Yol haritası
 
 ### Kısa vade (v0.5 – v0.6)
-- [ ] **Herkes hazır bariyeri:** biri yükleniyorsa ya da reklam izliyorsa
-  oda kısa süre bekler (rakiplerin en çok şikâyet edilen eksiği).
-- [ ] **Chrome Web Store'da yayın:** gizlilik politikası sayfası, mağaza metni
-  (resmî metinlerde belirli site adı geçmez), ekran görüntüleri.
+- [x] **Herkes hazır bariyeri (v0.5):** videosu takılan biri olunca oda bekler;
+  en fazla 12 sn, aynı kişi 30 sn içinde tekrar bekletemez, yönetici kapatabilir.
+- [x] **MIT lisansı ve gizlilik politikası sayfası (v0.5).**
+- [ ] **Chrome Web Store'da yayın:** mağaza metni (resmî metinlerde belirli site
+  adı geçmez), ekran görüntüleri, iletişim e-postası.
 - [ ] **Firefox desteği:** arka plan için ayrı manifest; Firefox Android'de de
   eklenti çalıştığı için telefonda da izlenebilir.
 - [ ] **Elle video seçimi:** otomatik seçim yanılırsa "bu videoyu senkronla".

@@ -1,6 +1,8 @@
 {
   "name": "screen-with-me",
   "private": true,
+  "license": "MIT",
+  "author": "Alperen Aktürk",
   "type": "module",
   "workspaces": [
     "packages/*",

@@ -70,6 +70,14 @@ export interface Member {
   avatar?: Avatar;
 }
 
+export interface RoomSettings {
+  /** Videosu takılan biri olduğunda oda onu kısa süre beklesin mi? */
+  waitForAll: boolean;
+}
+
+/** Oda adına yapılan (kişiden gelmeyen) hareketlerin "yapanı". */
+export const SYSTEM_MEMBER_ID = 'system';
+
 export interface ChatMessage {
   id: string;
   text: string;
@@ -97,6 +105,13 @@ export type ClientMessage =
   | { t: 'rename'; name: string; avatar?: Avatar }
   /** (Sadece oda yöneticisi) birini odadan çıkar. */
   | { t: 'kick'; id: string }
+  /**
+   * "Herkes hazır": videom takıldı (ready=false) ya da tekrar oynayabilir (ready=true).
+   * Sunucu takılan biri olduğunda odayı kısa süre bekletir.
+   */
+  | { t: 'ready'; ready: boolean }
+  /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
+  | { t: 'settings'; waitForAll: boolean }
   | { t: 'ping'; c: number }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
@@ -138,6 +153,10 @@ export type ServerMessage =
       /** Oda yöneticisinin üye ID'si. */
       hostId: string | null;
       chat: ChatMessage[];
+      /** Eski sunucular yollamaz. */
+      settings?: RoomSettings;
+      /** Şu an beklenenler (üye ID'leri). */
+      waiting?: string[];
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member }
@@ -147,6 +166,9 @@ export type ServerMessage =
   | { t: 'members'; members: Member[]; hostId: string | null }
   /** Biri odadan çıkarıldı (herkese duyurulur). */
   | { t: 'kicked'; who: Member; by: Member }
+  /** Oda takılan birini bekliyor (boş liste: bekleme bitti). */
+  | { t: 'waiting'; ids: string[] }
+  | { t: 'settings'; settings: RoomSettings }
   | { t: 'reaction'; emoji: Reaction; by: Member }
   | { t: 'chat'; message: ChatMessage }
   | { t: 'error'; code: ErrorCode };
@@ -260,6 +282,10 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case 'kick':
       return isItemId(m.id) ? { t: 'kick', id: m.id } : null;
+    case 'ready':
+      return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
+    case 'settings':
+      return typeof m.waitForAll === 'boolean' ? { t: 'settings', waitForAll: m.waitForAll } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

@@ -5,6 +5,7 @@ import type { PlayerAdapter } from '@swm/shared/player';
 import {
   AVATARS,
   CLIENT_ID,
+  SYSTEM_MEMBER_ID,
   cleanName,
   isAvatar,
   randomAvatar,
@@ -13,6 +14,7 @@ import {
   type Member,
   type PlaybackState,
   type QueueItem,
+  type RoomSettings,
   type ServerMessage,
 } from '@swm/shared/protocol';
 import { pageInviteUrl } from '@swm/shared/room-id';
@@ -168,6 +170,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="player" class="player"></div>
             <div id="fs-catcher" class="fs-only fs-catcher"></div>
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
+            <div id="waiting-banner" class="waiting-banner" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
             <div id="fs-controls" class="fs-only fs-controls">
               <div class="fs-progress">
@@ -267,6 +270,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <h4 data-i18n="settings.room"></h4>
             <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
+            <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
+            <p id="opt-wait-hint" class="muted small"></p>
           </div>
         </section>
       </aside>
@@ -309,6 +314,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let members: Member[] = [];
   let hostId: string | null = null;
   const kickedIds = new Set<string>();
+  /** "Herkes hazır": oda kimleri bekliyor, yönetici özelliği açtı mı. */
+  let waitingIds: string[] = [];
+  let roomSettings: RoomSettings = { waitForAll: true };
   let status: ConnectionStatus = 'connecting';
   let errorText: (() => string) | null = null;
   let roomState: PlaybackState | null = null;
@@ -360,6 +368,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'welcome':
         myId = message.you;
         setMembers(message.members, message.hostId, false);
+        if (message.settings) roomSettings = message.settings;
+        waitingIds = message.waiting ?? [];
+        renderWaiting();
         queue.set(message.queue);
         chat.set(message.chat);
         void applyState(message.state);
@@ -367,6 +378,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'state': {
         void applyState(message.state);
         const { action, by, state } = message;
+        // Otomatik bekleme hareketleri "waiting" mesajıyla ayrıca anlatılıyor.
+        if (by.id === SYSTEM_MEMBER_ID) break;
         const item = state.item;
         addActivity(() => {
           const title = item ? itemTitle(item) : '';
@@ -392,6 +405,22 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
       case 'members':
         setMembers(message.members, message.hostId, true);
+        break;
+      case 'waiting': {
+        const before = waitingIds;
+        waitingIds = message.ids;
+        if (before.length === 0 && waitingIds.length > 0) {
+          const names = waitingNames();
+          addActivity(() => t('waitStarted', { names }));
+        } else if (before.length > 0 && waitingIds.length === 0) {
+          addActivity(() => t('waitEnded'));
+        }
+        renderWaiting();
+        break;
+      }
+      case 'settings':
+        roomSettings = message.settings;
+        renderWaiting();
         break;
       case 'kicked': {
         const { who, by } = message;
@@ -639,7 +668,27 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function renderMembers(): void {
     people.set(members, hostId, myId);
     $('#people-count').textContent = String(members.length);
+    renderWaiting();
   }
+
+  function waitingNames(): string {
+    return waitingIds.map((id) => members.find((m) => m.id === id)).filter((m): m is Member => !!m).map(withAvatar).join(', ');
+  }
+
+  /** Bekleme bandı (video üstünde) ve ayarlardaki "yüklenen birini bekle" anahtarı. */
+  function renderWaiting(): void {
+    const banner = $('#waiting-banner');
+    const names = waitingNames();
+    banner.hidden = waitingIds.length === 0;
+    banner.textContent = waitingIds.includes(myId ?? '') ? t('waitingForYou') : t('waitingFor', { names: names || '…' });
+    const toggle = $<HTMLInputElement>('#opt-wait');
+    toggle.checked = roomSettings.waitForAll;
+    toggle.disabled = myId === null || myId !== hostId;
+    $('#opt-wait-hint').textContent = toggle.disabled ? t('settings.hostOnly') : '';
+  }
+  $<HTMLInputElement>('#opt-wait').addEventListener('change', (event) => {
+    send({ t: 'settings', waitForAll: (event.target as HTMLInputElement).checked });
+  });
 
   /** Oda hareketlerini sohbete gri satır olarak yazar (ayarlardan kapatılabilir). */
   function addActivity(text: () => string): void {

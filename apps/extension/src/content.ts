@@ -212,6 +212,9 @@ function onMessage(message: BackgroundMessage): void {
     case 'notice':
       overlay.notice(message.kind, message.name);
       break;
+    case 'waiting':
+      overlay.setWaiting(message.names, message.me);
+      break;
     case 'deactivate':
       deactivate();
       break;

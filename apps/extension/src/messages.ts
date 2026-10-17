@@ -54,7 +54,9 @@ export type BackgroundMessage =
   | { type: 'reaction'; emoji: Reaction; name: string }
   | { type: 'chat'; line: ChatLine }
   /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte). */
-  | { type: 'notice'; kind: 'joined' | 'left'; name: string };
+  | { type: 'notice'; kind: 'joined' | 'left'; name: string }
+  /** "Herkes hazır": oda bunları bekliyor (boş: bekleme yok). `me`: beklenen bensem. */
+  | { type: 'waiting'; names: string[]; me: boolean };
 
 /** Arka plan → sekmedeki tüm çerçeveler: "bu sekmede oda var, videonu bildir". */
 export const PROBE = 'swm-probe';

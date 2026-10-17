@@ -91,6 +91,10 @@ export async function createYouTubePlayer(
         return !wantsToPlay;
       },
       isEnded: () => state() === YT.PlayerState.ENDED,
+      // Yüklenen kısım, şu anki konumun en az 2 saniye ötesine geçtiyse hazır.
+      canPlayThrough: () =>
+        state() === YT.PlayerState.PLAYING ||
+        player.getVideoLoadedFraction() * (player.getDuration() || 0) - player.getCurrentTime() > 2,
       getRate: () => player.getPlaybackRate(),
       play() {
         wantsToPlay = true;
