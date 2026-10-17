@@ -342,7 +342,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
     const hint = $('#external-hint');
     if (hasExtension) {
       hint.textContent = t('externalRedirecting');
-      location.assign(target);
+      // Eklentiye "bu sekme bu odaya katılsın" de; sekmeyi sayfaya eklenti götürür.
+      // Adresteki işarete (#swm=) güvenmez: bazı siteler yönlendirirken onu siler.
+      const askExtension = () => window.postMessage({ source: 'screenwithme-site', type: 'join', roomId }, location.origin);
+      open.onclick = (event) => {
+        event.preventDefault();
+        askExtension();
+      };
+      askExtension();
+      // Eski sürüm eklenti bu mesajı tanımıyorsa adres işaretiyle git.
+      setTimeout(() => {
+        if (roomState?.item?.id === item.id) location.assign(target);
+      }, 4000);
     } else {
       hint.replaceChildren(t('externalNeedExtension'), ' ', el('a', { href: '/eklenti.html', target: '_blank' }, t('installExtension')));
     }

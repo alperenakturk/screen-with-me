@@ -11,25 +11,61 @@
 import type { ConnectionStatus } from '@swm/shared/connection';
 import type { ClientMessage, Member, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
 
+/** Çerçevelerin "oda var mı" diye baktığı yer (chrome.storage.session). */
+export const SESSIONS_KEY = 'sessions';
+
 export const PORT_NAME = 'swm';
 
 /** Çerçeve → arka plan */
 export type FrameMessage =
-  | { type: 'candidate'; score: number }
+  /** `size` tanı içindir: en iyi videonun ekrandaki boyutu, örn. "1280×720". */
+  | { type: 'candidate'; score: number; size?: string }
   | { type: 'send'; message: ClientMessage }
   | { type: 'join'; roomId: string };
+
+/** Sayfa üstü panelde gösterilen oda bilgisi. */
+export interface RoomInfo {
+  roomId: string;
+  inviteUrl: string;
+  members: Member[];
+  myId: string | null;
+  queueLength: number;
+  chat: ChatLine[];
+}
+
+export interface ChatLine {
+  id: string;
+  name: string;
+  text: string;
+  mine: boolean;
+}
 
 /** Arka plan → çerçeve */
 export type BackgroundMessage =
   | { type: 'activate'; state: PlaybackState; offset: number; synced: boolean }
   | { type: 'deactivate' }
+  /** Bu sekmede oda yok: çerçeve uykuya dönsün. */
+  | { type: 'idle' }
   | { type: 'state'; state: PlaybackState }
   | { type: 'clock'; offset: number; synced: boolean }
+  | { type: 'room'; room: RoomInfo }
   | { type: 'reaction'; emoji: Reaction; name: string }
-  | { type: 'chat'; name: string; text: string; mine: boolean };
+  | { type: 'chat'; line: ChatLine };
 
 /** Arka plan → sekmedeki tüm çerçeveler: "bu sekmede oda var, videonu bildir". */
 export const PROBE = 'swm-probe';
+
+/**
+ * ScreenWithMe sitesi → eklenti (site-bridge üzerinden): "bu sekme şu odaya
+ * katılsın". Sekme odaya bağlanır, eklenti onu odanın sayfasına kendisi götürür.
+ */
+export interface SiteJoinMessage {
+  type: 'site-join';
+  roomId: string;
+}
+
+/** Sitenin pencereye attığı mesajın biçimi (window.postMessage). */
+export const SITE_MESSAGE_SOURCE = 'screenwithme-site';
 
 /** Popup → arka plan */
 export type PopupRequest =
@@ -58,6 +94,9 @@ export interface PopupStatus {
     onRoomPage: boolean;
     /** Bu sekmede senkronlanan bir video bulundu mu? */
     hasVideo: boolean;
+    /** Tanı için: sekmede arka plana bağlı çerçeve sayısı ve en iyi videonun boyutu (piksel). */
+    frames: number;
+    bestVideo: string | null;
   };
 }
 

@@ -9,14 +9,41 @@
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { samePage } from '@swm/shared/media';
-import { cleanChatText, cleanName, type Media, type Member, type PlaybackState, type QueueItem, type ServerMessage } from '@swm/shared/protocol';
+import {
+  ROOM_ID_PATTERN,
+  cleanChatText,
+  cleanName,
+  type ChatMessage,
+  type Media,
+  type Member,
+  type PlaybackState,
+  type QueueItem,
+  type ServerMessage,
+} from '@swm/shared/protocol';
 import { extractRoomId, newRoomId } from '@swm/shared/room-id';
 import { SITE_URL } from './config.ts';
-import { PORT_NAME, PROBE, type BackgroundMessage, type FrameMessage, type PopupRequest, type PopupResponse, type PopupStatus } from './messages.ts';
+import {
+  PORT_NAME,
+  PROBE,
+  SESSIONS_KEY,
+  type BackgroundMessage,
+  type ChatLine,
+  type FrameMessage,
+  type PopupRequest,
+  type PopupResponse,
+  type PopupStatus,
+  type RoomInfo,
+  type SiteJoinMessage,
+} from './messages.ts';
+
+// Sayfalardaki betikler "şu an bir odada mıyım" diye buraya bakabilsin
+// (sonradan yüklenen oynatıcı iframe'leri kendiliğinden bağlansın diye).
+void chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
 
 interface Frame {
   port: chrome.runtime.Port;
   score: number;
+  size?: string;
 }
 
 interface Session {
@@ -29,6 +56,7 @@ interface Session {
   state: PlaybackState | null;
   queue: QueueItem[];
   members: Member[];
+  chat: ChatMessage[];
   /** Senkronun çalıştığı çerçeve. */
   activeFrame: number | null;
   /** Etkin çerçeveye oda durumu yollandı mı? */
@@ -52,11 +80,11 @@ async function getName(): Promise<string | null> {
 
 async function persist(): Promise<void> {
   const saved = [...sessions.values()].map(({ tabId, roomId }) => ({ tabId, roomId }));
-  await chrome.storage.session.set({ sessions: saved });
+  await chrome.storage.session.set({ [SESSIONS_KEY]: saved });
 }
 
 async function restore(): Promise<void> {
-  const { sessions: saved } = await chrome.storage.session.get('sessions');
+  const { [SESSIONS_KEY]: saved } = await chrome.storage.session.get(SESSIONS_KEY);
   if (!Array.isArray(saved)) return;
   for (const entry of saved as { tabId: number; roomId: string }[]) {
     const tab = await chrome.tabs.get(entry.tabId).catch(() => null);
@@ -85,6 +113,7 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
     state: null,
     queue: [],
     members: [],
+    chat: [],
     activeFrame: null,
     activated: false,
     followedItemId: null,
@@ -122,6 +151,7 @@ function onServer(session: Session, message: ServerMessage): void {
       session.myId = message.you;
       session.members = message.members;
       session.queue = message.queue;
+      session.chat = message.chat;
       session.state = message.state;
       if (session.pendingLoad) {
         session.connection.send({ t: 'load', ...session.pendingLoad });
@@ -130,6 +160,7 @@ function onServer(session: Session, message: ServerMessage): void {
         void follow(session);
       }
       pushState(session);
+      pushRoom(session);
       break;
     case 'state':
       session.state = message.state;
@@ -138,9 +169,11 @@ function onServer(session: Session, message: ServerMessage): void {
       break;
     case 'queue':
       session.queue = message.queue;
+      pushRoom(session);
       break;
     case 'members':
       session.members = message.members;
+      pushRoom(session);
       break;
     case 'title': {
       const item = session.state?.item;
@@ -151,12 +184,8 @@ function onServer(session: Session, message: ServerMessage): void {
       toActive(session, { type: 'reaction', emoji: message.emoji, name: message.by.name });
       break;
     case 'chat':
-      toActive(session, {
-        type: 'chat',
-        name: message.message.by.name,
-        text: message.message.text,
-        mine: message.message.by.id === session.myId,
-      });
+      session.chat = [...session.chat, message.message].slice(-50);
+      toActive(session, { type: 'chat', line: chatLine(session, message.message) });
       break;
     case 'pong':
       toActive(session, clockMessage(session));
@@ -182,9 +211,28 @@ async function follow(session: Session): Promise<void> {
   if (item.media.kind === 'page') {
     if (!tab.url || !samePage(tab.url, item.media.url)) await chrome.tabs.update(session.tabId, { url: item.media.url });
   } else {
+    const roomUrl = `${SITE_URL}/r/${session.roomId}`;
     endSession(session.tabId);
-    await chrome.tabs.update(session.tabId, { url: `${SITE_URL}/r/${session.roomId}` });
+    if (!tab.url || !samePage(tab.url, roomUrl)) await chrome.tabs.update(session.tabId, { url: roomUrl });
   }
+}
+
+function chatLine(session: Session, message: ChatMessage): ChatLine {
+  return { id: message.id, name: message.by.name, text: message.text, mine: message.by.id === session.myId };
+}
+
+/** Sayfa üstü panel için oda bilgisini etkin çerçeveye yollar. */
+function pushRoom(session: Session): void {
+  if (!session.activated) return;
+  const room: RoomInfo = {
+    roomId: session.roomId,
+    inviteUrl: `${SITE_URL}/r/${session.roomId}`,
+    members: session.members,
+    myId: session.myId,
+    queueLength: session.queue.length,
+    chat: session.chat.map((m) => chatLine(session, m)),
+  };
+  toActive(session, { type: 'room', room });
 }
 
 // ---- Çerçeveler ----
@@ -220,6 +268,7 @@ function pushState(session: Session): void {
     const clock = clockMessage(session) as Extract<BackgroundMessage, { type: 'clock' }>;
     post(frame.port, { type: 'activate', state: session.state, offset: clock.offset, synced: clock.synced });
     session.activated = true;
+    pushRoom(session);
   } else {
     post(frame.port, { type: 'state', state: session.state });
   }
@@ -245,6 +294,31 @@ function chooseActive(session: Session): void {
   pushState(session);
 }
 
+async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.Port, message: FrameMessage): Promise<void> {
+  await ready;
+  const frame = frames.get(tabId)?.get(frameId);
+  if (!frame || frame.port !== port) return;
+  switch (message.type) {
+    case 'join':
+      await startSession(tabId, message.roomId);
+      break;
+    case 'candidate': {
+      frame.score = message.score;
+      frame.size = message.size;
+      const session = sessions.get(tabId);
+      // Bu sekmede oda yoksa çerçeve boşuna video aramasın.
+      if (session) chooseActive(session);
+      else post(port, { type: 'idle' });
+      break;
+    }
+    case 'send': {
+      const session = sessions.get(tabId);
+      if (session && session.activeFrame === frameId) session.connection.send(message.message);
+      break;
+    }
+  }
+}
+
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== PORT_NAME) return;
   const tabId = port.sender?.tab?.id;
@@ -257,26 +331,10 @@ chrome.runtime.onConnect.addListener((port) => {
   if (!tabFrames) frames.set(tabId, (tabFrames = new Map()));
   tabFrames.set(frameId, { port, score: 0 });
 
-  port.onMessage.addListener(async (message: FrameMessage) => {
-    await ready;
-    const frame = frames.get(tabId)?.get(frameId);
-    if (!frame || frame.port !== port) return;
-    switch (message.type) {
-      case 'join':
-        await startSession(tabId, message.roomId);
-        break;
-      case 'candidate': {
-        frame.score = message.score;
-        const session = sessions.get(tabId);
-        if (session) chooseActive(session);
-        break;
-      }
-      case 'send': {
-        const session = sessions.get(tabId);
-        if (session && session.activeFrame === frameId) session.connection.send(message.message);
-        break;
-      }
-    }
+  // Bir çerçevenin mesajları sırayla işlenir ("katıl" bitmeden "aday" işlenmesin).
+  let queue = Promise.resolve();
+  port.onMessage.addListener((message: FrameMessage) => {
+    queue = queue.then(() => handleFrame(tabId, frameId, port, message)).catch(() => {});
   });
 
   port.onDisconnect.addListener(() => {
@@ -319,6 +377,8 @@ async function status(tabId: number): Promise<PopupStatus> {
           queueLength: session.queue.length,
           onRoomPage: !item || item.media.kind !== 'page' || (!!tab?.url && samePage(tab.url, item.media.url)),
           hasVideo: session.activeFrame !== null,
+          frames: frames.get(tabId)?.size ?? 0,
+          bestVideo: session.activeFrame === null ? null : (frames.get(tabId)?.get(session.activeFrame)?.size ?? null),
         }
       : null,
   };
@@ -390,9 +450,27 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
   }
 }
 
-chrome.runtime.onMessage.addListener((request: PopupRequest, sender, respond) => {
-  // Sadece eklentinin kendi sayfalarından (popup) gelen istekler.
-  if (sender.id !== chrome.runtime.id || sender.tab) return false;
-  handlePopup(request).then(respond, (error: unknown) => respond({ ok: false, error: String(error) }));
+const SITE_ORIGIN = new URL(SITE_URL).origin;
+
+chrome.runtime.onMessage.addListener((request: PopupRequest | SiteJoinMessage, sender, respond) => {
+  if (sender.id !== chrome.runtime.id) return false;
+
+  // ScreenWithMe sitesindeki köprü: "bu sekme şu odaya katılsın". Sadece sitenin
+  // kendi adresinden kabul edilir; başka bir site bu isteği yapamaz.
+  if (sender.tab) {
+    const tabId = sender.tab.id;
+    if (request.type === 'site-join' && sender.origin === SITE_ORIGIN && tabId !== undefined && ROOM_ID_PATTERN.test(request.roomId)) {
+      void ready.then(async () => {
+        const session = await startSession(tabId, request.roomId);
+        // Hoş geldin mesajı zaten geldiyse takip etmeyi şimdi başlat.
+        session.followedItemId = null;
+        await follow(session);
+      });
+    }
+    return false;
+  }
+
+  // Popup
+  handlePopup(request as PopupRequest).then(respond, (error: unknown) => respond({ ok: false, error: String(error) }));
   return true;
 });

@@ -64,6 +64,7 @@ function render(status: PopupStatus): void {
   $('#item-title').textContent = session.item ? (session.item.title ?? session.item.id) : t('nothingPlaying');
   $('#page-warning').hidden = session.onRoomPage;
   $('#video-state').textContent = session.onRoomPage && session.item ? t(session.hasVideo ? 'videoFound' : 'noVideo') : '';
+  $('#diag').textContent = t('diag', { frames: session.frames, video: session.bestVideo ?? '–' });
 
   $('#members-title').textContent = t('members', { n: session.members.length });
   $('#members').replaceChildren(

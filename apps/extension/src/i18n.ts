@@ -36,6 +36,11 @@ const tr = {
   'error.name': 'Önce adını yaz.',
   autoplayBlocked: 'Tarayıcın otomatik oynatmayı engelledi.',
   startWatching: 'İzlemeye başla',
+  diag: 'Tanı: {frames} çerçeve bağlı · seçilen video: {video}',
+  close: 'Kapat',
+  copyInvite: 'Davet linkini kopyala',
+  next: 'Sonraki',
+  chatEmpty: 'Henüz mesaj yok.',
 };
 
 type Key = keyof typeof tr;
@@ -76,6 +81,11 @@ const en: Record<Key, string> = {
   'error.name': 'Enter your name first.',
   autoplayBlocked: 'Your browser blocked autoplay.',
   startWatching: 'Start watching',
+  diag: 'Diagnostics: {frames} frames connected · chosen video: {video}',
+  close: 'Close',
+  copyInvite: 'Copy invite link',
+  next: 'Next',
+  chatEmpty: 'No messages yet.',
 };
 
 const dict = navigator.language.toLowerCase().startsWith('tr') ? tr : en;

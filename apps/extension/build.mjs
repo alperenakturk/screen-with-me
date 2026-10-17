@@ -50,7 +50,9 @@ const manifest = {
       js: ['content.js'],
       all_frames: true,
       match_about_blank: true,
-      run_at: 'document_idle',
+      // Erken çalışır: bazı siteler adresteki #swm=ODA işaretini kendi betikleri
+      // çalışınca hemen siler; ondan önce okumak için.
+      run_at: 'document_start',
     },
     {
       matches: siteMatches,
