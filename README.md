@@ -1,9 +1,11 @@
-# Watch Birlikte
+# ScreenWithMe
 
 Arkadaşlarınla aynı videoyu aynı anda izlemek için ücretsiz, hesapsız bir araç.
 Birisi oynatır, durdurur, sarar ya da hızı değiştirirse odadaki herkeste aynısı olur.
 
 > *A free, account-less watch-together tool: play, pause, seek and speed stay in sync for everyone in the room.*
+
+**Canlı:** <https://screen-with-me.swm-server.workers.dev>
 
 ## Durum
 
@@ -41,7 +43,10 @@ Diğer komutlar:
 npm test          # senkron motoru ve protokol testleri
 npm run typecheck # tüm paketlerde tip kontrolü
 npm run build     # sitenin yayın sürümü (apps/web/dist)
+npm run deploy    # test + derleme + Cloudflare'e yükleme
 ```
+
+Yayında site ve sunucu tek bir Cloudflare Worker'dır: `/api/*` istekleri Worker koduna, geri kalan her şey `apps/web/dist` içindeki statik dosyalara gider. İlk yayından önce `npx wrangler login` ile bir kez giriş yapılır.
 
 ## Mimari
 
@@ -73,7 +78,7 @@ Detaylı rakip incelemesi için: [docs/rakip-analizi.md](docs/rakip-analizi.md).
 - [ ] **Karma oda.** Eklentisi olmayan arkadaş, aynı odada site oynatıcısıyla izlemeye devam eder.
 - [ ] **Senkron ölçümü.** Birkaç istemci arasındaki farkın p50/p95 değerleri README'de grafikle gösterilir.
 - [ ] **GitHub Actions ile CI.** Test, tip kontrolü ve derleme.
-- [ ] **Cloudflare'e yayın.** Site, aynı Worker'dan statik dosya olarak sunulur.
+- [x] **Cloudflare'e yayın.** Site, aynı Worker'dan statik dosya olarak sunulur.
 
 ## Sınırlar
 

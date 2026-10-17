@@ -1,4 +1,4 @@
-import { REACTIONS, type ClientMessage, type Reaction } from '@wb/shared/protocol';
+import { REACTIONS, type ClientMessage, type Reaction } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 

@@ -1,4 +1,4 @@
-import type { ClientMessage, QueueItem } from '@wb/shared/protocol';
+import type { ClientMessage, QueueItem } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { itemThumbnail, itemTitle } from '../media-info.ts';

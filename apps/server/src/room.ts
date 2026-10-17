@@ -8,8 +8,8 @@ import {
   type Member,
   type QueueItem,
   type ServerMessage,
-} from '@wb/shared/protocol';
-import { applyRoomAction, initialRoom, type RoomAction, type RoomData } from '@wb/shared/room-logic';
+} from '@swm/shared/protocol';
+import { applyRoomAction, initialRoom, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { RateLimiter } from './rate-limit.ts';
 import { resolveTitle } from './titles.ts';
 

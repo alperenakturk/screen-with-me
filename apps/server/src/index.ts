@@ -1,4 +1,4 @@
-import { ROOM_ID_PATTERN } from '@wb/shared/protocol';
+import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 
 export { Room } from './room.ts';
 

@@ -1,4 +1,4 @@
-import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } from '@wb/shared/protocol';
+import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } from '@swm/shared/protocol';
 import { el, rememberOpen } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';

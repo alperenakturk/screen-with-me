@@ -4,13 +4,13 @@
     {
       "name": "server",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "@wb/server"],
+      "runtimeArgs": ["run", "dev", "-w", "@swm/server"],
       "port": 8787
     },
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "@wb/web"],
+      "runtimeArgs": ["run", "dev", "-w", "@swm/web"],
       "port": 5173
     }
   ]

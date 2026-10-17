@@ -1,4 +1,4 @@
-import type { QueueItem } from '@wb/shared/protocol';
+import type { QueueItem } from '@swm/shared/protocol';
 
 /** Sıra öğesinin ekranda görünecek adı. */
 export function itemTitle(item: QueueItem): string {

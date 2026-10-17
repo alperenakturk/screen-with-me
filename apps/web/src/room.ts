@@ -1,9 +1,9 @@
-import { ServerClock } from '@wb/shared/clock';
-import { RoomConnection, type ConnectionStatus } from '@wb/shared/connection';
-import { parseMediaInput } from '@wb/shared/media';
-import type { PlayerAdapter } from '@wb/shared/player';
-import { cleanName, type ClientMessage, type Member, type PlaybackState, type QueueItem, type ServerMessage } from '@wb/shared/protocol';
-import { SyncEngine } from '@wb/shared/sync-engine';
+import { ServerClock } from '@swm/shared/clock';
+import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
+import { parseMediaInput } from '@swm/shared/media';
+import type { PlayerAdapter } from '@swm/shared/player';
+import { cleanName, type ClientMessage, type Member, type PlaybackState, type QueueItem, type ServerMessage } from '@swm/shared/protocol';
+import { SyncEngine } from '@swm/shared/sync-engine';
 import { el, rememberOpen } from './dom.ts';
 import { t, translate } from './i18n.ts';
 import { formatTime, itemTitle } from './media-info.ts';
@@ -407,6 +407,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
 
   // Sadece geliştirme modunda: tarayıcı konsolundan senkronu incelemek için.
   if (import.meta.env.DEV) {
-    Object.assign(window, { __wb: { engine, clock, player: () => current?.player ?? null } });
+    Object.assign(window, { __swm: { engine, clock, player: () => current?.player ?? null } });
   }
 }

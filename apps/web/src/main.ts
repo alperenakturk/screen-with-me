@@ -1,5 +1,5 @@
 import './styles.css';
-import { ROOM_ID_PATTERN } from '@wb/shared/protocol';
+import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { renderHome } from './home.ts';
 import { lang, setLang, translate, type Lang } from './i18n.ts';
 import { renderRoom } from './room.ts';

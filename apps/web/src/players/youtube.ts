@@ -1,4 +1,4 @@
-import type { PlayerAdapter, PlayerEvent } from '@wb/shared/player';
+import type { PlayerAdapter, PlayerEvent } from '@swm/shared/player';
 
 let apiReady: Promise<void> | null = null;
 

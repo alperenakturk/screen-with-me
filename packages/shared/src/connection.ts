@@ -4,7 +4,7 @@ import { PROTOCOL_VERSION, type ClientMessage, type ServerMessage } from './prot
 export type ConnectionStatus = 'connecting' | 'open' | 'reconnecting' | 'closed';
 
 export interface RoomConnectionOptions {
-  /** Örn. "http://localhost:8787" veya "https://watch-birlikte.example.workers.dev" */
+  /** Örn. "http://localhost:8787" veya "https://screen-with-me.example.workers.dev" */
   serverUrl: string;
   roomId: string;
   name: string;

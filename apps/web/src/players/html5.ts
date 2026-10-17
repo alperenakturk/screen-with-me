@@ -1,4 +1,4 @@
-import type { PlayerAdapter, PlayerEvent } from '@wb/shared/player';
+import type { PlayerAdapter, PlayerEvent } from '@swm/shared/player';
 
 /**
  * Doğrudan video linkleri (.mp4, .webm) için tarayıcının kendi oynatıcısı.

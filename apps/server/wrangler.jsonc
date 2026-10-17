@@ -1,8 +1,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "watch-birlikte",
+  "name": "screen-with-me",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
+  // Site (apps/web'in derlenmiş hali) aynı Worker'dan statik dosya olarak sunulur.
+  // /api/* istekleri önce Worker koduna gider; diğer her şey dosyalardan gelir,
+  // bulunamayan yollar (örn. /r/abc123) index.html'e düşer.
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
   "durable_objects": {
     "bindings": [{ "name": "ROOMS", "class_name": "Room" }]
   },

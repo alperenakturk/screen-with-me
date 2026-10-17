@@ -1,4 +1,4 @@
-import type { Media } from '@wb/shared/protocol';
+import type { Media } from '@swm/shared/protocol';
 
 const TIMEOUT_MS = 2500;
 const MAX_TITLE_LENGTH = 200;

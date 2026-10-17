@@ -1,5 +1,5 @@
 {
-  "name": "watch-birlikte",
+  "name": "screen-with-me",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -7,9 +7,10 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -n server,web -c blue,green \"npm run dev -w @wb/server\" \"npm run dev -w @wb/web\"",
-    "build": "npm run build -w @wb/web",
-    "test": "npm test -w @wb/shared",
+    "dev": "concurrently -n server,web -c blue,green \"npm run dev -w @swm/server\" \"npm run dev -w @swm/web\"",
+    "build": "npm run build -w @swm/web",
+    "deploy": "npm test && npm run build && npm run deploy -w @swm/server",
+    "test": "npm test -w @swm/shared",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

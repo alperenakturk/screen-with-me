@@ -1,5 +1,5 @@
 {
-  "name": "@wb/web",
+  "name": "@swm/web",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@wb/shared": "*"
+    "@swm/shared": "*"
   },
   "devDependencies": {
     "@types/youtube": "^0.3.0",

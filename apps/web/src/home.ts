@@ -1,4 +1,4 @@
-import { ROOM_ID_PATTERN } from '@wb/shared/protocol';
+import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { translate } from './i18n.ts';
 
 // Karışan harfler (l/1, o/0) yok; linki sesli okurken bile hata olmasın.
@@ -20,7 +20,7 @@ export function extractRoomId(input: string): string | null {
 export function renderHome(app: HTMLElement): void {
   app.innerHTML = `
     <section class="hero">
-      <h1>Watch Birlikte</h1>
+      <h1>ScreenWithMe</h1>
       <p class="tagline" data-i18n="tagline"></p>
       <button id="create" type="button" class="btn primary big" data-i18n="createRoom"></button>
       <div class="divider"><span data-i18n="or"></span></div>

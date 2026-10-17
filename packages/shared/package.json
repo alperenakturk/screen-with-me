@@ -1,5 +1,5 @@
 {
-  "name": "@wb/shared",
+  "name": "@swm/shared",
   "private": true,
   "type": "module",
   "exports": {
