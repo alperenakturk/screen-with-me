@@ -101,6 +101,8 @@ export type ServerMessage =
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member }
   | { t: 'queue'; queue: QueueItem[]; change: QueueChange | null }
+  /** Video beklemeden yayınlanır; başlığı sonradan bulununca bu mesaj gelir. */
+  | { t: 'title'; itemId: string; title: string }
   | { t: 'members'; members: Member[] }
   | { t: 'reaction'; emoji: Reaction; by: Member }
   | { t: 'chat'; message: ChatMessage }

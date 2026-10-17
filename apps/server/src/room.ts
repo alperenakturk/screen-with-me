@@ -9,7 +9,7 @@ import {
   type QueueItem,
   type ServerMessage,
 } from '@swm/shared/protocol';
-import { applyRoomAction, initialRoom, type RoomAction, type RoomData } from '@swm/shared/room-logic';
+import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { RateLimiter } from './rate-limit.ts';
 import { resolveTitle } from './titles.ts';
 
@@ -23,6 +23,10 @@ const CHAT_HISTORY = 50;
 interface Attachment {
   id: string;
   name: string | null;
+}
+
+function titleKey(media: Media): string {
+  return media.kind === 'youtube' ? `yt:${media.id}` : media.url;
 }
 
 function newId(): string {
@@ -117,9 +121,13 @@ export class Room extends DurableObject<Env> {
         await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now() });
         return;
       case 'load':
-      case 'enqueue':
-        await this.apply(ws, me, { t: message.t, item: await this.makeItem(message.media, me) });
+      case 'enqueue': {
+        // Video beklemeden herkese gider; başlık (biliniyorsa hemen, yoksa) sonradan eklenir.
+        const item = this.makeItem(message.media, me);
+        await this.apply(ws, me, { t: message.t, item });
+        if (item.title === null) await this.fillTitle(item);
         return;
+      }
       default:
         await this.apply(ws, me, message);
     }
@@ -187,15 +195,24 @@ export class Room extends DurableObject<Env> {
     }
   }
 
-  private async makeItem(media: Media, me: Member): Promise<QueueItem> {
-    const key = media.kind === 'youtube' ? `yt:${media.id}` : media.url;
-    let title = this.titles.get(key);
-    if (title === undefined) {
-      title = await resolveTitle(media);
-      if (this.titles.size > 500) this.titles.clear();
-      this.titles.set(key, title);
-    }
-    return { id: newId(), media, title, by: me.name };
+  private makeItem(media: Media, me: Member): QueueItem {
+    return { id: newId(), media, title: this.titles.get(titleKey(media)) ?? null, by: me.name };
+  }
+
+  /** Başlığı bulur, odadaki öğeye yazar ve herkese bildirir. */
+  private async fillTitle(item: QueueItem): Promise<void> {
+    const key = titleKey(item.media);
+    if (this.titles.has(key)) return;
+    const title = await resolveTitle(item.media);
+    if (this.titles.size > 500) this.titles.clear();
+    this.titles.set(key, title);
+    if (title === null) return;
+    // Beklerken oda değişmiş olabilir; güncel duruma uygula.
+    const next = setItemTitle(this.room, item.id, title);
+    if (next === null) return;
+    this.room = next;
+    await this.ctx.storage.put('room', this.room);
+    this.broadcast({ t: 'title', itemId: item.id, title });
   }
 
   private async addChat(message: ChatMessage): Promise<void> {

@@ -11,6 +11,8 @@ export interface PlayerAdapter {
    */
   readonly fineRate: boolean;
   getTime(): number;
+  /** Videonun toplam süresi (saniye); bilinmiyorsa 0. */
+  getDuration(): number;
   isPaused(): boolean;
   /** Video sona geldi mi? (Sona gelen videoyu tekrar başlatmamak için.) */
   isEnded(): boolean;

@@ -2,8 +2,8 @@ import type { PlayerAdapter, PlayerEvent } from '@swm/shared/player';
 
 let apiReady: Promise<void> | null = null;
 
-/** YouTube'un resmi oynatıcı API'sini bir kez yükler. */
-function loadYouTubeApi(): Promise<void> {
+/** YouTube'un resmi oynatıcı API'sini bir kez yükler. Odaya girerken önden çağrılır, ilk video hızlı açılsın. */
+export function loadYouTubeApi(): Promise<void> {
   if ('YT' in window && typeof YT.Player === 'function') return Promise.resolve();
   apiReady ??= new Promise<void>((resolve, reject) => {
     const w = window as unknown as { onYouTubeIframeAPIReady?: () => void };
@@ -23,7 +23,8 @@ function loadYouTubeApi(): Promise<void> {
   return apiReady;
 }
 
-const PLAY_CONFIRM_MS = 1500;
+/** Oynat dedikten sonra en fazla bu kadar "engellendi" haberi beklenir. */
+const PLAY_CONFIRM_MS = 5000;
 
 export async function createYouTubePlayer(
   container: HTMLElement,
@@ -37,26 +38,42 @@ export async function createYouTubePlayer(
   const emit = (event: PlayerEvent) => listeners.forEach((listener) => listener(event));
 
   return new Promise((resolve) => {
-    // Arabelleğe almadan (buffering) önceki son kararlı durum. YouTube "oynat"a
-    // basılınca önce BUFFERING'e geçer, PLAYING olayını sonra yollar; o arada
-    // video hâlâ "duraklatılmış" sayılmalı, yoksa motor bunu tuhaflık sanıp durdurur.
-    let lastStable: YT.PlayerState = YT.PlayerState.UNSTARTED;
+    // Oynatıcıdan en son ne istendi: oynamak mı, durmak mı?
+    // YouTube "oynat"tan sonra bir süre yükleniyor (UNSTARTED/BUFFERING) durumunda
+    // kalır. Bu arada videonun oynuyor mu duraklatılmış mı sayılacağına bu karar verir:
+    // - Biz oynat dediysek yükleme "oynuyor" sayılır; motor tekrar tekrar oynat demez.
+    // - Kullanıcı duraklatmışken başlayan yükleme (örn. ileri sarma) "duraklatılmış" sayılır.
+    let wantsToPlay = false;
+    let onBlocked: (() => void) | null = null;
 
     const player: YT.Player = new YT.Player(host, {
       videoId,
       width: '100%',
       height: '100%',
-      playerVars: { playsinline: 1, rel: 0 },
+      // fs: 0 → YouTube'un kendi tam ekran butonu gizlenir. Onun tam ekranında
+      // bizim emojilerimiz ve kontrollerimiz görünmez; herkes bizimkini kullansın.
+      playerVars: { playsinline: 1, rel: 0, fs: 0 },
       events: {
         onReady: () => resolve(adapter),
         onStateChange: (event) => {
-          if (event.data !== YT.PlayerState.BUFFERING) lastStable = event.data;
-          if (event.data === YT.PlayerState.PLAYING) emit('play');
-          else if (event.data === YT.PlayerState.PAUSED) emit('pause');
+          if (event.data === YT.PlayerState.PLAYING) {
+            wantsToPlay = true;
+            emit('play');
+          } else if (event.data === YT.PlayerState.PAUSED) {
+            wantsToPlay = false;
+            emit('pause');
+          } else if (event.data === YT.PlayerState.ENDED) {
+            wantsToPlay = false;
+          }
         },
         onPlaybackRateChange: () => emit('ratechange'),
         onError: (event) => onError(event.data),
-      },
+        // Tarayıcı sesli otomatik oynatmayı gerçekten engellediğinde YouTube bunu söyler.
+        onAutoplayBlocked: () => {
+          wantsToPlay = false;
+          onBlocked?.();
+        },
+      } as YT.Events,
     });
 
     const state = () => player.getPlayerState();
@@ -64,27 +81,37 @@ export async function createYouTubePlayer(
     const adapter: PlayerAdapter = {
       fineRate: false,
       getTime: () => player.getCurrentTime(),
-      // Oynarken takılma (buffering) "oynuyor" sayılır; duraklatılmışken başlayan yükleme sayılmaz.
+      getDuration: () => player.getDuration() || 0,
       isPaused: () => {
         const current = state();
         if (current === YT.PlayerState.PLAYING) return false;
-        if (current === YT.PlayerState.BUFFERING) return lastStable !== YT.PlayerState.PLAYING;
-        return true;
+        if (current === YT.PlayerState.PAUSED || current === YT.PlayerState.ENDED) return true;
+        return !wantsToPlay;
       },
       isEnded: () => state() === YT.PlayerState.ENDED,
       getRate: () => player.getPlaybackRate(),
-      async play() {
+      play() {
+        wantsToPlay = true;
         player.playVideo();
-        // YouTube, oynatmanın engellenip engellenmediğini söylemez; kısa süre bekleyip bakarız.
-        const started = Date.now();
-        while (Date.now() - started < PLAY_CONFIRM_MS) {
-          await new Promise((r) => setTimeout(r, 100));
-          const current = state();
-          if (current === YT.PlayerState.PLAYING || current === YT.PlayerState.BUFFERING) return 'ok';
-        }
-        return 'blocked';
+        // Sadece YouTube "engellendi" derse engellenmiş sayılır. Yükleme uzun sürse
+        // bile yanlış alarm verilmez; video başlayınca ya da süre dolunca 'ok' döner.
+        return new Promise((done) => {
+          const started = Date.now();
+          const finish = (result: 'ok' | 'blocked') => {
+            clearInterval(timer);
+            onBlocked = null;
+            done(result);
+          };
+          onBlocked = () => finish('blocked');
+          const timer = setInterval(() => {
+            if (state() === YT.PlayerState.PLAYING || Date.now() - started > PLAY_CONFIRM_MS) finish('ok');
+          }, 200);
+        });
       },
-      pause: () => player.pauseVideo(),
+      pause: () => {
+        wantsToPlay = false;
+        player.pauseVideo();
+      },
       seek: (seconds) => player.seekTo(seconds, true),
       setRate: (rate) => player.setPlaybackRate(rate),
       onEvent: (listener) => listeners.add(listener),

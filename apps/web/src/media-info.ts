@@ -1,8 +1,16 @@
 import type { QueueItem } from '@swm/shared/protocol';
 
+/** Sunucunun sonradan bildirdiği başlıklar (öğe ID'sine göre). */
+const lateTitles = new Map<string, string>();
+
+export function rememberTitle(itemId: string, title: string): void {
+  lateTitles.set(itemId, title);
+}
+
 /** Sıra öğesinin ekranda görünecek adı. */
 export function itemTitle(item: QueueItem): string {
-  if (item.title) return item.title;
+  const title = item.title ?? lateTitles.get(item.id);
+  if (title) return title;
   return item.media.kind === 'youtube' ? `YouTube · ${item.media.id}` : item.media.url;
 }
 

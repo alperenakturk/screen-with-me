@@ -6,13 +6,15 @@ import { cleanName, type ClientMessage, type Member, type PlaybackState, type Qu
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { el, rememberOpen } from './dom.ts';
 import { t, translate } from './i18n.ts';
-import { formatTime, itemTitle } from './media-info.ts';
+import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
 import { createHtml5Player } from './players/html5.ts';
-import { createYouTubePlayer } from './players/youtube.ts';
+import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
 import { load, save } from './storage.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
+import { createFullscreen } from './ui/fullscreen.ts';
 import { createReactions } from './ui/reactions.ts';
+import { createToasts } from './ui/toasts.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const MAX_ACTIVITY = 12;
@@ -53,6 +55,9 @@ export function renderRoom(app: HTMLElement, roomId: string): void {
 }
 
 function startRoom(app: HTMLElement, roomId: string, myName: string): void {
+  // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla.
+  loadYouTubeApi().catch(() => {});
+
   app.innerHTML = `
     <div class="room">
       <div class="stage">
@@ -73,7 +78,25 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
           </div>
           <div class="player-wrap">
             <div id="player" class="player"></div>
+            <div id="fs-catcher" class="fs-only fs-catcher"></div>
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
+            <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
+            <div id="fs-controls" class="fs-only fs-controls">
+              <div class="fs-progress">
+                <input id="fs-seek" type="range" min="0" max="1000" step="1" value="0" />
+                <span id="fs-time" class="fs-time">0:00 / 0:00</span>
+              </div>
+              <div class="fs-row">
+                <button id="fs-play" type="button" class="fs-btn">▶</button>
+                <div class="reaction-bar fs-reactions" role="group"></div>
+                <form id="fs-chat" class="fs-chat">
+                  <input id="fs-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" />
+                </form>
+                <button id="fs-skip" type="button" class="fs-btn">⏭</button>
+                <select id="fs-speed" class="fs-speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
+                <button id="fs-exit" type="button" class="fs-btn">✕</button>
+              </div>
+            </div>
             <div id="empty" class="empty">
               <h2 data-i18n="emptyTitle"></h2>
               <p data-i18n="emptyBody"></p>
@@ -84,7 +107,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
             </div>
           </div>
           <div class="toolbar">
-            <div id="reaction-bar" class="reaction-bar" role="group"></div>
+            <div class="reaction-bar" role="group"></div>
             <div class="toolbar-right">
               <label class="speed"><span data-i18n="speed"></span>
                 <select id="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
@@ -190,14 +213,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
       case 'state': {
         void applyState(message.state);
         const { action, by, state } = message;
-        const title = state.item ? itemTitle(state.item) : '';
-        addActivity(() =>
-          action === 'next'
+        const item = state.item;
+        addActivity(() => {
+          const title = item ? itemTitle(item) : '';
+          return action === 'next'
             ? t('action.next', { title })
-            : t(`action.${action}`, { name: displayName(by), title, time: formatTime(state.position), rate: state.rate }),
-        );
+            : t(`action.${action}`, { name: displayName(by), title, time: formatTime(state.position), rate: state.rate });
+        });
         break;
       }
+      case 'title':
+        rememberTitle(message.itemId, message.title);
+        renderNowPlaying();
+        queue.render();
+        renderActivity();
+        break;
       case 'queue': {
         queue.set(message.queue);
         renderNowPlaying();
@@ -211,9 +241,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
       case 'reaction':
         reactions.show(message.emoji, message.by.name);
         break;
-      case 'chat':
+      case 'chat': {
+        const { by, text } = message.message;
         chat.add(message.message);
+        // Tam ekranda sohbet paneli görünmez; mesaj videonun köşesinde belirir.
+        if (fullscreen.isActive()) toasts.show(by.name, text, by.id === myId);
         break;
+      }
       case 'error':
         showError(() => t(`error.${message.code}`));
         if (message.code === 'version' || message.code === 'room_full') connection.close();
@@ -230,7 +264,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
 
   async function applyState(state: PlaybackState): Promise<void> {
     roomState = state;
-    if (SPEEDS.includes(state.rate)) speedEl.value = String(state.rate);
+    if (SPEEDS.includes(state.rate)) {
+      speedEl.value = String(state.rate);
+      fullscreen.setRate(state.rate);
+    }
     renderNowPlaying();
     const itemId = state.item?.id ?? null;
     if (itemId === currentItemId) {
@@ -282,12 +319,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
       nowTitleEl.title = itemTitle(item);
     }
     skipEl.disabled = queue.length === 0;
+    fullscreen.setSkipEnabled(queue.length > 0);
   }
 
-  skipEl.addEventListener('click', () => {
+  function skip(): void {
     const id = roomState?.item?.id;
     if (id) send({ t: 'next', from: id });
-  });
+  }
+  skipEl.addEventListener('click', skip);
 
   autoplayEl.querySelector('button')!.addEventListener('click', () => {
     autoplayEl.hidden = true;
@@ -296,14 +335,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
 
   speedEl.addEventListener('change', () => engine.requestRate(Number(speedEl.value)));
 
-  // ---- Tam ekran: YouTube'un kendi tam ekranı emojileri göstermez, bu yüzden tüm sahneyi büyütürüz. ----
-  const theater = $('#theater');
+  // ---- Tam ekran: sadece video kalır, fare oynayınca kontroller ve hızlı mesaj belirir. ----
+  const fullscreen = createFullscreen({
+    theater: $('#theater'),
+    getPlayer: () => current?.player ?? null,
+    send,
+    onSkip: skip,
+    onRate: (rate) => engine.requestRate(rate),
+  });
+  const toasts = createToasts($('#toasts'));
   const fullscreenEl = $<HTMLButtonElement>('#fullscreen');
   fullscreenEl.hidden = !document.fullscreenEnabled;
-  fullscreenEl.addEventListener('click', () => {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void theater.requestFullscreen();
-  });
+  fullscreenEl.addEventListener('click', () => fullscreen.toggle());
 
   // ---- Video linki ----
   const mediaInput = $<HTMLInputElement>('#media-input');
@@ -383,8 +426,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
   }
 
   function renderLabels(): void {
-    fullscreenEl.title = t('fullscreen');
-    fullscreenEl.setAttribute('aria-label', t('fullscreen'));
+    const label = (element: HTMLElement, text: string) => {
+      element.title = text;
+      element.setAttribute('aria-label', text);
+    };
+    label(fullscreenEl, t('fullscreen'));
+    label($('#fs-play'), t('playPause'));
+    label($('#fs-skip'), t('skip'));
+    label($('#fs-exit'), t('exitFullscreen'));
+    label($('#fs-speed'), t('speed'));
   }
 
   window.addEventListener('langchange', () => {

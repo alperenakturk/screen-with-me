@@ -556,15 +556,182 @@ select:focus {
   }
 }
 
-/* ---- Tam ekran ---- */
+/* ---- Tam ekran: ekranda sadece video; kontroller fare oynayınca belirir ---- */
+.fs-only {
+  display: none;
+}
+
 .theater:fullscreen {
-  padding: 12px;
+  padding: 0;
   height: 100vh;
+  background: #000;
+}
+
+.theater:fullscreen .now-playing,
+.theater:fullscreen .toolbar {
+  display: none !important;
 }
 
 .theater:fullscreen .player-wrap {
   flex: 1;
   aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.theater:fullscreen .fs-only {
+  display: flex;
+}
+
+.theater:fullscreen.idle {
+  cursor: none;
+}
+
+/* YouTube iframe'i fare hareketlerini sayfaya iletmez; bu katman yakalar. */
+.fs-catcher {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.fs-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  flex-direction: column;
+  gap: 10px;
+  padding: 48px 20px 16px;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0));
+  transition: opacity 0.25s;
+}
+
+.theater.idle .fs-controls {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fs-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fs-progress input[type='range'] {
+  flex: 1;
+  accent-color: var(--accent);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  height: 6px;
+  cursor: pointer;
+}
+
+.fs-time {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #ddd;
+  white-space: nowrap;
+}
+
+.fs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fs-btn {
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  color: white;
+  border-radius: 10px;
+  min-width: 40px;
+  height: 40px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.fs-btn:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.2);
+}
+
+.fs-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fs-reactions .reaction-btn {
+  background: rgb(255 255 255 / 0.08);
+  border-color: rgb(255 255 255 / 0.15);
+}
+
+.fs-chat {
+  flex: 1;
+  min-width: 140px;
+}
+
+.fs-chat input {
+  width: 100%;
+  background: rgb(0 0 0 / 0.5);
+  border-color: rgb(255 255 255 / 0.2);
+}
+
+.fs-speed {
+  background: rgb(0 0 0 / 0.5);
+  border-color: rgb(255 255 255 / 0.2);
+  height: 40px;
+}
+
+/* Tam ekranda gelen sohbet mesajları */
+.toasts {
+  position: absolute;
+  left: 20px;
+  bottom: 130px;
+  z-index: 2;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: min(420px, 60%);
+  pointer-events: none;
+}
+
+.toast {
+  background: rgb(0 0 0 / 0.7);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast-name {
+  font-weight: 700;
+  color: var(--accent-hover);
+}
+
+.toast.me .toast-name {
+  color: var(--ok);
+}
+
+.toast.leaving {
+  animation: toast-out 0.4s ease-in forwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
 }
 
 /* ---- Sıra ---- */

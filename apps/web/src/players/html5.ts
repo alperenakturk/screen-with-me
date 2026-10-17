@@ -10,6 +10,8 @@ export function createHtml5Player(container: HTMLElement, url: string, onError: 
   video.controls = true;
   video.playsInline = true;
   video.preload = 'auto';
+  // Tarayıcının kendi tam ekranı yerine bizimki kullanılsın (emojiler ve kontroller orada görünür).
+  video.setAttribute('controlslist', 'nofullscreen');
   container.append(video);
 
   const listeners = new Set<(event: PlayerEvent) => void>();
@@ -22,6 +24,7 @@ export function createHtml5Player(container: HTMLElement, url: string, onError: 
   return {
     fineRate: true,
     getTime: () => video.currentTime,
+    getDuration: () => (Number.isFinite(video.duration) ? video.duration : 0),
     isPaused: () => video.paused,
     isEnded: () => video.ended,
     getRate: () => video.playbackRate,

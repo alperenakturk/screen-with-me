@@ -18,6 +18,12 @@ export const DRIFT_COOLDOWN_MS = 3000;
 export const NUDGE_START_SECONDS = 0.15;
 export const NUDGE_STOP_SECONDS = 0.04;
 export const NUDGE_FACTOR = 0.05;
+/**
+ * Oda "oynuyor" derken oynatıcı hâlâ başlamadıysa (yükleniyor, reklam vb.)
+ * oynat komutu en fazla bu sıklıkla tekrarlanır. Sık tekrarlarsa her komutun
+ * yankı penceresi kullanıcının gerçek "durdur"unu da yutar.
+ */
+export const PLAY_RETRY_MS = 3000;
 /** Kullanıcının ileri/geri sarması: beklenen ilerlemeden bu kadar fazla sıçrama. */
 export const SEEK_DETECT_SECONDS = 0.75;
 
@@ -55,6 +61,7 @@ export class SyncEngine {
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private autoplayBlocked = false;
   private endedItemId: string | null = null;
+  private lastPlayAttempt = -Infinity;
   private readonly wallNow: () => number;
 
   constructor(private readonly options: SyncEngineOptions) {
@@ -126,6 +133,7 @@ export class SyncEngine {
     if (state.paused) {
       if (!player.isPaused()) player.pause();
     } else if (player.isPaused() && !player.isEnded() && !this.autoplayBlocked) {
+      this.lastPlayAttempt = this.wallNow();
       void player.play().then((result) => {
         if (result === 'blocked' && this.player === player) {
           this.autoplayBlocked = true;
@@ -203,7 +211,7 @@ export class SyncEngine {
           this.endedItemId = state.item.id;
           this.options.onEnded?.(state.item.id);
         }
-      } else if (!this.autoplayBlocked) {
+      } else if (!this.autoplayBlocked && wall - this.lastPlayAttempt >= PLAY_RETRY_MS) {
         this.enforce(DRIFT_SEEK_SECONDS);
       }
       return;

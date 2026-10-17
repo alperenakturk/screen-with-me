@@ -36,6 +36,18 @@ export interface RoomUpdate {
   error: ErrorCode | null;
 }
 
+/** Sonradan bulunan başlığı, öğe hâlâ oynuyorsa ya da sıradaysa yerine yazar. Bulamazsa null. */
+export function setItemTitle(data: RoomData, itemId: string, title: string): RoomData | null {
+  const named = (item: QueueItem): QueueItem => (item.id === itemId ? { ...item, title } : item);
+  const playing = data.state.item?.id === itemId;
+  const queued = data.queue.some((q) => q.id === itemId);
+  if (!playing && !queued) return null;
+  return {
+    state: playing && data.state.item ? { ...data.state, item: named(data.state.item) } : data.state,
+    queue: queued ? data.queue.map(named) : data.queue,
+  };
+}
+
 export function initialRoom(now: number): RoomData {
   return { state: { item: null, paused: true, position: 0, rate: 1, updatedAt: now }, queue: [] };
 }

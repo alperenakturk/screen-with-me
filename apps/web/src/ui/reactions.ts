@@ -9,13 +9,16 @@ const MAX_ON_SCREEN = 30;
  * üstünde aşağıdan yukarı süzülür. Katman tıklamaları engellemez.
  */
 export function createReactions(root: HTMLElement, send: (message: ClientMessage) => void) {
-  const bar = root.querySelector<HTMLElement>('#reaction-bar')!;
+  // Biri video altında, biri tam ekran kontrollerinde olmak üzere birden fazla emoji çubuğu olabilir.
+  const bars = root.querySelectorAll<HTMLElement>('.reaction-bar');
   const layer = root.querySelector<HTMLElement>('#reactions-layer')!;
 
-  for (const emoji of REACTIONS) {
-    const button = el('button', { type: 'button', class: 'reaction-btn', title: t('react') }, emoji);
-    button.addEventListener('click', () => send({ t: 'react', emoji }));
-    bar.append(button);
+  for (const bar of bars) {
+    for (const emoji of REACTIONS) {
+      const button = el('button', { type: 'button', class: 'reaction-btn', title: t('react') }, emoji);
+      button.addEventListener('click', () => send({ t: 'react', emoji }));
+      bar.append(button);
+    }
   }
 
   return {
@@ -28,7 +31,7 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
       layer.append(bubble);
     },
     relabel(): void {
-      for (const button of bar.querySelectorAll('button')) button.title = t('react');
+      for (const button of root.querySelectorAll<HTMLButtonElement>('.reaction-btn')) button.title = t('react');
     },
   };
 }

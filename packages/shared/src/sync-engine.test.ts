@@ -13,19 +13,32 @@ class FakePlayer implements PlayerAdapter {
   stalled = false;
   rate = 1;
   autoplayAllowed = true;
+  /** >0 ise oynat dendikten bu kadar sonra başlar (yavaş yükleme, reklam). */
+  startDelayMs = 0;
+  playCalls = 0;
+  private wantsToPlay = false;
   private listeners: ((event: PlayerEvent) => void)[] = [];
 
   getTime = () => this.time;
+  getDuration = () => 600;
   isPaused = () => this.paused;
   isEnded = () => this.ended;
   getRate = () => this.rate;
   async play() {
+    this.playCalls++;
     if (!this.autoplayAllowed) return 'blocked' as const;
-    this.paused = false;
-    this.emit('play');
+    this.wantsToPlay = true;
+    const start = () => {
+      if (!this.wantsToPlay || !this.paused) return;
+      this.paused = false;
+      this.emit('play');
+    };
+    if (this.startDelayMs > 0) setTimeout(start, this.startDelayMs);
+    else start();
     return 'ok' as const;
   }
   pause = () => {
+    this.wantsToPlay = false;
     this.paused = true;
     this.emit('pause');
   };
@@ -208,6 +221,30 @@ describe('drift correction', () => {
     await run(15_000);
     expect(player.rate).toBe(1);
     expect(sent).toEqual([]);
+  });
+});
+
+describe('slow start', () => {
+  it('does not hammer play() while the video is still loading', async () => {
+    player.startDelayMs = 4000;
+    engine.receive(state());
+    engine.attach(player);
+    await run(2500);
+    expect(player.playCalls).toBe(1);
+    await run(3000);
+    expect(player.paused).toBe(false);
+    expect(player.playCalls).toBeLessThanOrEqual(2);
+    expect(sent).toEqual([]);
+  });
+
+  it("still hears the user's pause while the video is loading", async () => {
+    player.startDelayMs = 5000;
+    engine.receive(state());
+    engine.attach(player);
+    await run(1500);
+    player.pause();
+    await run(500);
+    expect(sent.map((m) => m.t)).toEqual(['pause']);
   });
 });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { QueueItem } from './protocol.ts';
-import { applyRoomAction, initialRoom, type RoomData } from './room-logic.ts';
+import { applyRoomAction, initialRoom, setItemTitle, type RoomData } from './room-logic.ts';
 
 const now = 2_000_000;
 const item = (id: string): QueueItem => ({ id, media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: id, by: 'Ali' });
@@ -96,6 +96,18 @@ describe('next', () => {
     const update = applyRoomAction(roomWith('a', []), { t: 'next', from: 'a' }, now);
     expect(update.stateAction).toBe('pause');
     expect(update.data.state).toMatchObject({ paused: true, position: 15 });
+  });
+});
+
+describe('setItemTitle', () => {
+  it('fills the title of the playing item and queued items', () => {
+    const room = roomWith('a', ['b']);
+    expect(setItemTitle(room, 'a', 'Film')?.state.item?.title).toBe('Film');
+    expect(setItemTitle(room, 'b', 'Dizi')?.queue[0]?.title).toBe('Dizi');
+  });
+
+  it('returns null when the item is gone', () => {
+    expect(setItemTitle(roomWith('a', ['b']), 'zzz', 'X')).toBeNull();
   });
 });
 
