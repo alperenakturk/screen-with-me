@@ -1,3 +1,31 @@
+/** Senkron motorunun ihtiyaç duyduğu tek şey: tahmini sunucu saati. */
+export interface Clock {
+  now(): number;
+  readonly synced: boolean;
+}
+
+/**
+ * Saat farkını başka bir yerden (örn. eklentinin arka planından) hazır alan saat.
+ * Aynı bilgisayardaki tüm bağlamlar aynı yerel saati paylaştığı için fark yeterlidir.
+ */
+export class OffsetClock implements Clock {
+  private offset = 0;
+  private hasOffset = false;
+
+  set(offset: number, synced: boolean): void {
+    this.offset = offset;
+    this.hasOffset = synced;
+  }
+
+  get synced(): boolean {
+    return this.hasOffset;
+  }
+
+  now(): number {
+    return Date.now() + this.offset;
+  }
+}
+
 /**
  * Herkesin bilgisayar saati birkaç saniye farklı olabilir. Bu sınıf,
  * ping/pong ölçümleriyle sunucu saatini tahmin eder (NTP'nin basit hali).
@@ -7,7 +35,7 @@
  * önce sunucu saati `s` idi; buradan fark (offset) hesaplanır. En kısa
  * gidiş-dönüşlü ölçüm en güvenilir olandır, o kullanılır.
  */
-export class ServerClock {
+export class ServerClock implements Clock {
   private samples: { rtt: number; offset: number }[] = [];
   private offset = 0;
 

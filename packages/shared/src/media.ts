@@ -9,10 +9,14 @@ const YOUTUBE_HOSTS = new Set([
   'www.youtube-nocookie.com',
 ]);
 
+/** Doğrudan oynatılabilen video dosyası uzantıları. */
+const VIDEO_FILE = /\.(mp4|m4v|webm|ogv|ogg|mov)$/i;
+
 /**
- * Kullanıcının yapıştırdığı metni bir videoya çevirir.
- * Kabul edilenler: YouTube linkleri (watch, youtu.be, shorts, embed, live),
- * çıplak 11 karakterlik YouTube ID'si ve doğrudan video linkleri (.mp4, .webm...).
+ * Kullanıcının yapıştırdığı metni bir videoya çevirir:
+ * - YouTube linkleri (watch, youtu.be, shorts, embed, live) ve çıplak 11 karakterlik ID → sitede oynar
+ * - Video dosyası linkleri (.mp4, .webm...) → sitede oynar
+ * - Diğer her web adresi → "sayfa": herkes kendi sekmesinde açar, eklenti senkronlar
  */
 export function parseMediaInput(input: string): Media | null {
   const text = input.trim();
@@ -43,14 +47,33 @@ export function parseMediaInput(input: string): Media | null {
     return isValidMedia(media) ? media : null;
   }
   if (YOUTUBE_HOSTS.has(host)) return null;
+  // "merhaba" gibi düz metinler adres sayılmasın: alan adında nokta olmalı.
+  if (!host.includes('.') && host !== 'localhost') return null;
 
-  const media: Media = { kind: 'html5', url: url.toString() };
+  const media: Media = { kind: VIDEO_FILE.test(url.pathname) ? 'html5' : 'page', url: url.toString() };
   return isValidMedia(media) ? media : null;
 }
 
 export function sameMedia(a: Media | null, b: Media | null): boolean {
   if (a === null || b === null) return a === b;
   if (a.kind === 'youtube' && b.kind === 'youtube') return a.id === b.id;
-  if (a.kind === 'html5' && b.kind === 'html5') return a.url === b.url;
+  if (a.kind !== 'youtube' && b.kind === a.kind) return a.url === b.url;
   return false;
+}
+
+/**
+ * İki adres aynı sayfa mı? Adres çubuğundaki # kısmı ve sondaki / farkı
+ * önemsenmez (siteler bunları kendiliğinden değiştirebiliyor).
+ */
+export function samePage(a: string, b: string): boolean {
+  const normalize = (raw: string) => {
+    try {
+      const url = new URL(raw);
+      url.hash = '';
+      return url.toString().replace(/\/$/, '');
+    } catch {
+      return raw;
+    }
+  };
+  return normalize(a) === normalize(b);
 }

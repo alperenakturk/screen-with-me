@@ -1,10 +1,10 @@
-import type { ServerClock } from './clock.ts';
+import type { Clock } from './clock.ts';
 import type { PlayerAdapter, PlayerEvent } from './player.ts';
 import { expectedPosition, type ClientMessage, type PlaybackAction, type PlaybackState } from './protocol.ts';
 
 /** Kontrol döngüsü bu sıklıkla çalışır. */
 export const TICK_MS = 500;
-/** Biz oynatıcıya komut verdikten sonra bu süre boyunca gelen olaylar "bizim" sayılır. */
+/** Biz oynatıcıya komut verdikten sonra bu süre içinde gelen, beklediğimiz olaylar "bizim" sayılır. */
 export const PROGRAMMATIC_WINDOW_MS = 1000;
 /** Duraklatma bu kadar beklenip öyle gönderilir: ilerleme çubuğunu sürüklerken oynatıcı anlık durur. */
 export const PAUSE_DEBOUNCE_MS = 300;
@@ -20,15 +20,14 @@ export const NUDGE_STOP_SECONDS = 0.04;
 export const NUDGE_FACTOR = 0.05;
 /**
  * Oda "oynuyor" derken oynatıcı hâlâ başlamadıysa (yükleniyor, reklam vb.)
- * oynat komutu en fazla bu sıklıkla tekrarlanır. Sık tekrarlarsa her komutun
- * yankı penceresi kullanıcının gerçek "durdur"unu da yutar.
+ * oynat komutu en fazla bu sıklıkla tekrarlanır.
  */
 export const PLAY_RETRY_MS = 3000;
 /** Kullanıcının ileri/geri sarması: beklenen ilerlemeden bu kadar fazla sıçrama. */
 export const SEEK_DETECT_SECONDS = 0.75;
 
 export interface SyncEngineOptions {
-  clock: ServerClock;
+  clock: Clock;
   send: (message: ClientMessage) => void;
   /** Tarayıcı sesli otomatik oynatmayı engellediğinde çağrılır; arayüz "başlat" butonu göstermeli. */
   onAutoplayBlocked?: () => void;
@@ -38,14 +37,18 @@ export interface SyncEngineOptions {
   wallNow?: () => number;
 }
 
+type Command = 'play' | 'pause' | 'rate' | 'seek';
+
 /**
  * Sunucudaki oda durumunu (PlaybackState) yerel oynatıcıya uygular ve
  * kullanıcının oynatıcıda yaptığı değişiklikleri sunucuya bildirir.
  *
  * En zor kısım şunu ayırt etmek: oynatıcı "durdu" dediğinde kullanıcı mı
- * durdurdu, yoksa biz mi durdurduk? Bizim verdiğimiz komutlardan sonraki kısa
- * süre (PROGRAMMATIC_WINDOW_MS) içindeki olaylar yok sayılır; bunun dışında
- * odanın durumuyla çelişen her olay kullanıcıdan gelmiş kabul edilir.
+ * durdurdu, yoksa biz mi durdurduk? Motor oynatıcıya her komut verdiğinde
+ * hangi olayı beklediğini not eder (durdur dediyse bir "durdu" olayı).
+ * Kısa süre içinde gelen beklenen olaylar yok sayılır; beklenmeyen her olay
+ * kullanıcıdan gelmiş kabul edilir. Böylece biz bir şey yaparken kullanıcının
+ * bastığı "durdur" kaybolmaz.
  *
  * YouTube "ileri sarıldı" olayı vermediği için sarmalar, zamanın beklenmedik
  * şekilde sıçramasından anlaşılır.
@@ -53,7 +56,12 @@ export interface SyncEngineOptions {
 export class SyncEngine {
   private player: PlayerAdapter | null = null;
   private state: PlaybackState | null = null;
+  /** Son komuttan sonra kontrol döngüsünün düzeltme yapmadan beklediği an. */
   private programmaticUntil = 0;
+  /** Biz sardıktan sonra oynatıcının bildirdiği zaman bir süre güvenilmez. */
+  private seekSettleUntil = 0;
+  /** Verdiğimiz komutlar yüzünden beklenen olaylar. */
+  private expected: Record<PlayerEvent, number> = { play: 0, pause: 0, ratechange: 0 };
   private lastSample: { wall: number; time: number; playing: boolean } | null = null;
   private driftCooldownUntil = 0;
   private nudgeRate: number | null = null;
@@ -74,6 +82,7 @@ export class SyncEngine {
     this.lastSample = null;
     this.nudgeRate = null;
     this.autoplayBlocked = false;
+    this.expected = { play: 0, pause: 0, ratechange: 0 };
     player.onEvent((event) => this.handlePlayerEvent(player, event));
     this.tickTimer = setInterval(() => this.tick(), TICK_MS);
     this.enforce(ACTION_SEEK_SECONDS);
@@ -88,7 +97,9 @@ export class SyncEngine {
 
   /** Sunucudan yeni oda durumu geldiğinde çağrılır. */
   receive(state: PlaybackState): void {
+    const rateChanged = this.state !== null && this.state.rate !== state.rate;
     this.state = state;
+    if (rateChanged) this.nudgeRate = null;
     this.enforce(ACTION_SEEK_SECONDS);
   }
 
@@ -100,8 +111,8 @@ export class SyncEngine {
   requestRate(rate: number): void {
     const player = this.player;
     if (player === null || this.state === null) return;
-    this.markProgrammatic();
     this.nudgeRate = null;
+    this.command('rate');
     player.setRate(rate);
     this.localChange('rate', { rate, position: player.getTime() });
   }
@@ -117,22 +128,33 @@ export class SyncEngine {
     this.state = null;
   }
 
-  /** Oda durumunu oynatıcıya zorla uygular. */
+  /**
+   * Oda durumunu oynatıcıya uygular. Sadece gerçekten farklı olanlar için
+   * komut verir; hiçbir şey değişmediyse oynatıcıya dokunmaz.
+   */
   private enforce(seekThreshold: number): void {
     const player = this.player;
     const state = this.state;
     if (player === null || state === null || state.item === null) return;
 
-    this.markProgrammatic();
-    this.nudgeRate = null;
-    if (Math.abs(player.getRate() - state.rate) > 0.01) player.setRate(state.rate);
+    // Kayma için hafifçe hızlanıyorsak (nudge) bu bilerek yapılan bir fark; bozma.
+    const wantedRate = this.nudgeRate ?? state.rate;
+    if (Math.abs(player.getRate() - wantedRate) > 0.01) {
+      this.nudgeRate = null;
+      this.command('rate');
+      player.setRate(state.rate);
+    }
 
     const target = expectedPosition(state, this.options.clock.now());
     if (Math.abs(player.getTime() - target) > seekThreshold) this.seekTo(target);
 
     if (state.paused) {
-      if (!player.isPaused()) player.pause();
+      if (!player.isPaused()) {
+        this.command('pause');
+        player.pause();
+      }
     } else if (player.isPaused() && !player.isEnded() && !this.autoplayBlocked) {
+      this.command('play');
       this.lastPlayAttempt = this.wallNow();
       void player.play().then((result) => {
         if (result === 'blocked' && this.player === player) {
@@ -146,7 +168,11 @@ export class SyncEngine {
   private handlePlayerEvent(player: PlayerAdapter, event: PlayerEvent): void {
     const state = this.state;
     if (player !== this.player || state === null) return;
-    if (this.wallNow() < this.programmaticUntil) return;
+    // Bizim komutumuzun beklenen sonucu mu? Öyleyse yok say.
+    if (this.wallNow() < this.programmaticUntil && this.expected[event] > 0) {
+      this.expected[event]--;
+      return;
+    }
 
     switch (event) {
       case 'play':
@@ -168,7 +194,10 @@ export class SyncEngine {
       case 'ratechange': {
         const rate = player.getRate();
         if (this.nudgeRate !== null && Math.abs(rate - this.nudgeRate) < 0.001) return;
-        if (Math.abs(rate - state.rate) > 0.01) this.localChange('rate', { rate, position: player.getTime() });
+        if (Math.abs(rate - state.rate) > 0.01) {
+          this.nudgeRate = null;
+          this.localChange('rate', { rate, position: player.getTime() });
+        }
         break;
       }
     }
@@ -182,12 +211,11 @@ export class SyncEngine {
     const wall = this.wallNow();
     const time = player.getTime();
     const playing = !player.isPaused();
-    const inWindow = wall < this.programmaticUntil;
     const last = this.lastSample;
     this.lastSample = { wall, time, playing };
 
-    // 1) Kullanıcı ileri/geri sardı mı?
-    if (last !== null && !inWindow) {
+    // 1) Kullanıcı ileri/geri sardı mı? (Biz yeni sardıysak zaman ölçümü henüz güvenilmez.)
+    if (last !== null && wall >= this.seekSettleUntil) {
       const elapsed = (wall - last.wall) / 1000;
       const advance = last.playing ? elapsed * player.getRate() : 0;
       // Video takılırsa zaman ilerlemez; bu sarma sayılmasın diye `advance` kadar pay bırakılır.
@@ -197,11 +225,12 @@ export class SyncEngine {
       }
     }
 
-    if (inWindow || this.pauseTimer !== null) return;
+    // Kendi komutumuzun sonucunu ya da kullanıcının duraklatmasının kesinleşmesini bekle.
+    if (wall < this.programmaticUntil || this.pauseTimer !== null) return;
 
     // 2) Oynatıcı odadan farklı durumda kaldıysa (otomatik oynatma, oynatıcı tuhaflıkları) düzelt.
     if (state.paused && playing) {
-      this.markProgrammatic();
+      this.command('pause');
       player.pause();
       return;
     }
@@ -222,7 +251,6 @@ export class SyncEngine {
     const target = expectedPosition(state, this.options.clock.now());
     const diff = time - target;
     if (Math.abs(diff) > DRIFT_SEEK_SECONDS) {
-      this.markProgrammatic();
       this.clearNudge(player, state);
       this.seekTo(target);
       this.driftCooldownUntil = wall + DRIFT_COOLDOWN_MS;
@@ -231,6 +259,7 @@ export class SyncEngine {
         const rate = state.rate * (diff > 0 ? 1 - NUDGE_FACTOR : 1 + NUDGE_FACTOR);
         if (this.nudgeRate !== rate) {
           this.nudgeRate = rate;
+          this.command('rate');
           player.setRate(rate);
         }
       } else if (Math.abs(diff) < NUDGE_STOP_SECONDS) {
@@ -242,6 +271,7 @@ export class SyncEngine {
   private clearNudge(player: PlayerAdapter, state: PlaybackState): void {
     if (this.nudgeRate === null) return;
     this.nudgeRate = null;
+    this.command('rate');
     player.setRate(state.rate);
   }
 
@@ -260,12 +290,27 @@ export class SyncEngine {
   }
 
   private seekTo(seconds: number): void {
+    this.command('seek');
     this.player?.seek(seconds);
     this.lastSample = null;
   }
 
-  private markProgrammatic(): void {
-    this.programmaticUntil = this.wallNow() + PROGRAMMATIC_WINDOW_MS;
+  /** Oynatıcıya komut vermeden hemen önce çağrılır: hangi olayın geleceğini not eder. */
+  private command(kind: Command): void {
+    const wall = this.wallNow();
+    if (wall >= this.programmaticUntil) this.expected = { play: 0, pause: 0, ratechange: 0 };
+    this.programmaticUntil = wall + PROGRAMMATIC_WINDOW_MS;
+    if (kind === 'play') this.expected.play++;
+    else if (kind === 'pause') this.expected.pause++;
+    else if (kind === 'rate') this.expected.ratechange++;
+    else {
+      this.seekSettleUntil = wall + PROGRAMMATIC_WINDOW_MS;
+      // YouTube sararken kendiliğinden "oynuyor/durdu" diyebilir.
+      if (this.player?.seekNoise) {
+        this.expected.play++;
+        this.expected.pause++;
+      }
+    }
   }
 
   private cancelPauseTimer(): void {

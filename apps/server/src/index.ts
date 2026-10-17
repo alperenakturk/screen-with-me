@@ -15,7 +15,9 @@ export default {
 
     const match = url.pathname.match(/^\/api\/rooms\/([^/]+)\/ws$/);
     if (match) {
-      const roomId = decodeURIComponent(match[1]!);
+      // Oda ID'si sadece harf, rakam, - ve _ içerebilir; kodlanmış karakterlere gerek yok.
+      // (decodeURIComponent bozuk girdide hata fırlatıp 500 döndürüyordu.)
+      const roomId = match[1]!;
       if (!ROOM_ID_PATTERN.test(roomId)) return new Response('Invalid room id', { status: 400 });
       if (request.headers.get('Upgrade') !== 'websocket') {
         return new Response('Expected WebSocket', { status: 426 });

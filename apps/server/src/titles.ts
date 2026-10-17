@@ -10,6 +10,9 @@ const MAX_TITLE_LENGTH = 200;
  */
 export async function resolveTitle(media: Media): Promise<string | null> {
   if (media.kind === 'html5') return titleFromUrl(media.url);
+  // Sayfaların başlığını sunucu çekmez (rastgele sitelere istek atmamak için);
+  // eklenti sekme başlığını yollar, yoksa alan adı gösterilir.
+  if (media.kind === 'page') return hostOf(media.url);
 
   const videoUrl = `https://www.youtube.com/watch?v=${media.id}`;
   try {
@@ -20,6 +23,14 @@ export async function resolveTitle(media: Media): Promise<string | null> {
     const data: unknown = await response.json();
     const title = typeof data === 'object' && data !== null ? (data as { title?: unknown }).title : null;
     return typeof title === 'string' ? title.slice(0, MAX_TITLE_LENGTH) : null;
+  } catch {
+    return null;
+  }
+}
+
+function hostOf(raw: string): string | null {
+  try {
+    return new URL(raw).hostname.replace(/^www\./, '');
   } catch {
     return null;
   }

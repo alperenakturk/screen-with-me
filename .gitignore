@@ -8,3 +8,5 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+# Eklentinin derlenmiş zip'i (npm run build sırasında üretilir)
+apps/web/public/screenwithme-extension.zip

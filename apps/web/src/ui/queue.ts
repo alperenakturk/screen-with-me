@@ -26,7 +26,9 @@ export function createQueuePanel(root: HTMLElement, send: (message: ClientMessag
         return el(
           'li',
           { class: 'queue-item' },
-          thumb ? el('img', { class: 'thumb', src: thumb, alt: '', loading: 'lazy' }) : el('div', { class: 'thumb placeholder' }, '▶'),
+          thumb
+            ? el('img', { class: 'thumb', src: thumb, alt: '', loading: 'lazy' })
+            : el('div', { class: 'thumb placeholder' }, item.media.kind === 'page' ? '🌐' : '▶'),
           el(
             'div',
             { class: 'queue-text' },

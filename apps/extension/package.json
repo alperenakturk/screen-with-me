@@ -1,0 +1,19 @@
+{
+  "name": "@swm/extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:dev": "node build.mjs --dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@swm/shared": "*"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.5",
+    "esbuild": "^0.28.2",
+    "fflate": "^0.8.3"
+  }
+}

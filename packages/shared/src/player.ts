@@ -10,6 +10,12 @@ export interface PlayerAdapter {
    * YouTube sadece 0.25'lik adımlara izin verdiği için false.
    */
   readonly fineRate: boolean;
+  /**
+   * Biz sardığımızda oynatıcı kendiliğinden "oynuyor/durdu" olayları da yollar mı?
+   * (YouTube yollar; tarayıcının <video>'su yollamaz.) Öyleyse sarmadan hemen
+   * sonraki bir oynat/durdur olayı kullanıcıdan gelmiş sayılmaz.
+   */
+  readonly seekNoise?: boolean;
   getTime(): number;
   /** Videonun toplam süresi (saniye); bilinmiyorsa 0. */
   getDuration(): number;

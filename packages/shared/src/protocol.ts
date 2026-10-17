@@ -2,7 +2,7 @@
 // Bu dosya hem tarayıcıda hem Cloudflare sunucusunda çalışır, bu yüzden
 // DOM'a veya Node'a özel hiçbir şey kullanmaz.
 
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 export const ROOM_ID_PATTERN = /^[A-Za-z0-9_-]{4,32}$/;
 export const NAME_MAX_LENGTH = 32;
@@ -17,9 +17,14 @@ export const REACTIONS = ['😂', '😮', '😍', '😱', '👏', '🔥', '😢'
 
 export type Reaction = (typeof REACTIONS)[number];
 
+export const TITLE_MAX_LENGTH = 200;
+
 export type Media =
   | { kind: 'youtube'; id: string }
-  | { kind: 'html5'; url: string };
+  /** Doğrudan video dosyası (.mp4 vb.); sitede oynar. */
+  | { kind: 'html5'; url: string }
+  /** Videonun içinde olduğu bir web sayfası; eklentiyle, herkes kendi sekmesinde açarak izler. */
+  | { kind: 'page'; url: string };
 
 /** Sıradaki ya da şu an oynayan bir video. */
 export interface QueueItem {
@@ -69,10 +74,10 @@ export type QueueChange =
 export type ClientMessage =
   | { t: 'hello'; v: number; name: string }
   | { t: 'ping'; c: number }
-  /** Hemen aç (şu an oynayanın yerine). */
-  | { t: 'load'; media: Media }
+  /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
+  | { t: 'load'; media: Media; title?: string }
   /** Sıraya ekle. Oda boşsa hemen açılır. */
-  | { t: 'enqueue'; media: Media }
+  | { t: 'enqueue'; media: Media; title?: string }
   | { t: 'dequeue'; id: string }
   | { t: 'move'; id: string; to: number }
   /** Sıradaki bir öğeyi hemen oynat. */
@@ -165,17 +170,23 @@ export function cleanMedia(x: unknown): Media | null {
   if (x.kind === 'youtube') {
     return typeof x.id === 'string' && YOUTUBE_ID.test(x.id) ? { kind: 'youtube', id: x.id } : null;
   }
-  if (x.kind === 'html5') {
+  if (x.kind === 'html5' || x.kind === 'page') {
     if (typeof x.url !== 'string' || x.url.length > 2048) return null;
     try {
       const url = new URL(x.url);
       if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
-      return { kind: 'html5', url: url.toString() };
+      return { kind: x.kind, url: url.toString() };
     } catch {
       return null;
     }
   }
   return null;
+}
+
+export function cleanTitle(x: unknown): string | null {
+  if (typeof x !== 'string') return null;
+  const title = x.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  return title ? Array.from(title).slice(0, TITLE_MAX_LENGTH).join('') : null;
 }
 
 export function isValidMedia(x: unknown): x is Media {
@@ -203,7 +214,9 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'load':
     case 'enqueue': {
       const media = cleanMedia(m.media);
-      return media ? { t: m.t, media } : null;
+      if (!media) return null;
+      const title = media.kind === 'page' ? cleanTitle(m.title) : null;
+      return title ? { t: m.t, media, title } : { t: m.t, media };
     }
     case 'dequeue':
     case 'jump':

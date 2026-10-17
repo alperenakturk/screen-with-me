@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>ScreenWithMe eklentisi</title>
+    <style>
+      :root { --bg: #0f1014; --surface: #181a21; --border: #2c303b; --text: #ecedf1; --muted: #9a9fad; --accent: #7c5cff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
+      h1 { margin: 0 0 4px; }
+      .muted { color: var(--muted); }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 20px; }
+      ol { padding-left: 22px; margin: 8px 0 0; }
+      li { margin: 8px 0; }
+      code { background: #22252e; border-radius: 6px; padding: 2px 6px; }
+      .btn { display: inline-block; background: var(--accent); color: white; text-decoration: none; font-weight: 600; padding: 12px 20px; border-radius: 10px; margin-top: 8px; }
+      a { color: #8f74ff; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="/">← ScreenWithMe</a>
+      <h1>Eklentiyi kur</h1>
+      <p class="muted">YouTube dışındaki sitelerde (videonun bir web sayfasında olduğu her yerde) birlikte izlemek için gerekiyor. Chrome, Edge, Brave ve Opera'da çalışır.</p>
+
+      <div class="card">
+        <strong>1. İndir</strong>
+        <div><a class="btn" href="/screenwithme-extension.zip" download>Eklentiyi indir (.zip)</a></div>
+      </div>
+
+      <div class="card">
+        <strong>2. Kur</strong>
+        <ol>
+          <li>İndirdiğin zip dosyasını bir klasöre çıkar (sağ tık → "Tümünü ayıkla"). Bu klasörü silme, eklenti oradan çalışır.</li>
+          <li>Adres çubuğuna <code>chrome://extensions</code> yaz (Edge'de <code>edge://extensions</code>).</li>
+          <li>Sağ üstteki <strong>Geliştirici modu</strong>nu aç.</li>
+          <li><strong>Paketlenmemiş öğe yükle</strong> butonuna bas ve çıkardığın klasörü seç.</li>
+          <li>Eklentiyi kolay bulmak için yapboz simgesine tıklayıp ScreenWithMe'yi sabitle.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <strong>3. Kullan</strong>
+        <ol>
+          <li>Videonun olduğu sayfayı aç, eklenti simgesine tıkla ve <strong>Bu sayfada oda oluştur</strong>'a bas.</li>
+          <li>Davet linkini arkadaşlarına at. Eklentisi olanlar linke tıklayınca otomatik olarak aynı sayfaya, aynı odaya gelir.</li>
+          <li>Ya da sitedeki bir odaya sayfanın linkini yapıştır; eklentisi olan herkes oraya yönlendirilir.</li>
+        </ol>
+        <p class="muted">Eklenti sadece bir odaya katıldığın sekmede çalışır; diğer sekmelerde hiçbir şey yapmaz ve gezinti bilgini toplamaz.</p>
+      </div>
+
+      <hr style="border-color: var(--border); margin: 40px 0" />
+
+      <h2 lang="en">Install the extension</h2>
+      <ol lang="en">
+        <li><a href="/screenwithme-extension.zip" download>Download the .zip</a> and extract it to a folder (keep the folder).</li>
+        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code>) and turn on <strong>Developer mode</strong>.</li>
+        <li>Click <strong>Load unpacked</strong> and pick the extracted folder.</li>
+        <li>On the page with the video, click the extension icon → <strong>Create a room on this page</strong> and share the invite link.</li>
+      </ol>
+    </main>
+  </body>
+</html>

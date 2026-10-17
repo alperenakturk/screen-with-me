@@ -334,6 +334,24 @@ select:focus {
   gap: 12px;
 }
 
+.external {
+  background: var(--surface);
+}
+
+.external h2 {
+  margin: 0;
+  max-width: 90%;
+  overflow-wrap: anywhere;
+}
+
+.external a.btn {
+  text-decoration: none;
+}
+
+.external a:not(.btn) {
+  color: var(--accent-hover);
+}
+
 .controls {
   display: flex;
   justify-content: flex-end;

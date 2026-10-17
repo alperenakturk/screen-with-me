@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <span class="logo">▶</span>
+      <strong>ScreenWithMe</strong>
+      <span id="status" class="status" hidden></span>
+    </header>
+
+    <section id="name-view" hidden>
+      <form id="name-form" class="stack">
+        <label for="name" data-t="yourName"></label>
+        <div class="row">
+          <input id="name" maxlength="32" autocomplete="nickname" data-t-placeholder="namePlaceholder" />
+          <button class="btn primary" data-t="save"></button>
+        </div>
+      </form>
+    </section>
+
+    <section id="me-view" class="me" hidden>
+      <span id="me-name"></span>
+      <button id="edit-name" class="link" data-t="edit"></button>
+    </section>
+
+    <section id="idle-view" class="stack" hidden>
+      <p class="muted" data-t="tagline"></p>
+      <button id="create" class="btn primary big" data-t="createHere"></button>
+      <p class="muted small" data-t="createHint"></p>
+      <div class="divider"><span data-t="or"></span></div>
+      <form id="join-form" class="row">
+        <input id="join-input" autocomplete="off" data-t-placeholder="joinPlaceholder" />
+        <button class="btn" data-t="join"></button>
+      </form>
+    </section>
+
+    <section id="room-view" class="stack" hidden>
+      <div class="card">
+        <div class="label" data-t="invite"></div>
+        <div class="row">
+          <input id="invite" readonly />
+          <button id="copy" class="btn" data-t="copy"></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label" data-t="nowPlaying"></div>
+        <div id="item-title" class="item-title"></div>
+        <div id="page-warning" class="warning" hidden>
+          <span data-t="notOnRoomPage"></span>
+          <div class="row">
+            <button id="go-room-page" class="btn small" data-t="goToRoomPage"></button>
+            <button id="share-page" class="btn small" data-t="shareThisPage"></button>
+          </div>
+        </div>
+        <div id="video-state" class="muted small"></div>
+      </div>
+
+      <div id="reactions" class="reactions"></div>
+      <form id="chat-form" class="row">
+        <input id="chat-input" maxlength="120" autocomplete="off" data-t-placeholder="chatPlaceholder" />
+        <button class="btn" data-t="send"></button>
+      </form>
+
+      <div class="card">
+        <div id="members-title" class="label"></div>
+        <ul id="members" class="members"></ul>
+      </div>
+
+      <button id="leave" class="btn danger" data-t="leave"></button>
+    </section>
+
+    <p id="error" class="error" hidden></p>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

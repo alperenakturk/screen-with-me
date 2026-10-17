@@ -123,7 +123,7 @@ export class Room extends DurableObject<Env> {
       case 'load':
       case 'enqueue': {
         // Video beklemeden herkese gider; başlık (biliniyorsa hemen, yoksa) sonradan eklenir.
-        const item = this.makeItem(message.media, me);
+        const item = this.makeItem(message.media, me, message.title ?? null);
         await this.apply(ws, me, { t: message.t, item });
         if (item.title === null) await this.fillTitle(item);
         return;
@@ -195,8 +195,8 @@ export class Room extends DurableObject<Env> {
     }
   }
 
-  private makeItem(media: Media, me: Member): QueueItem {
-    return { id: newId(), media, title: this.titles.get(titleKey(media)) ?? null, by: me.name };
+  private makeItem(media: Media, me: Member, givenTitle: string | null): QueueItem {
+    return { id: newId(), media, title: givenTitle ?? this.titles.get(titleKey(media)) ?? null, by: me.name };
   }
 
   /** Başlığı bulur, odadaki öğeye yazar ve herkese bildirir. */

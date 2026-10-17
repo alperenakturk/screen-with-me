@@ -1,21 +1,5 @@
-import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
+import { extractRoomId, newRoomId } from '@swm/shared/room-id';
 import { translate } from './i18n.ts';
-
-// Karışan harfler (l/1, o/0) yok; linki sesli okurken bile hata olmasın.
-const ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
-
-export function newRoomId(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(10));
-  return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
-}
-
-/** "https://site/r/abc123", "site/r/abc123" veya sadece "abc123" kabul edilir. */
-export function extractRoomId(input: string): string | null {
-  const text = input.trim();
-  const fromPath = text.match(/\/r\/([^/?#\s]+)/)?.[1];
-  const id = fromPath ?? text;
-  return ROOM_ID_PATTERN.test(id) ? id : null;
-}
 
 export function renderHome(app: HTMLElement): void {
   app.innerHTML = `

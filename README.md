@@ -19,7 +19,16 @@ Birisi oynatır, durdurur, sarar ya da hızı değiştirirse odadaki herkeste ay
 - Spam koruması (hız sınırı)
 - Türkçe + İngilizce arayüz, telefonda da çalışır
 
-**Aşama 2 — tarayıcı eklentisi** (sırada): herhangi bir sitedeki (iframe içindekiler dahil) HTML5 videoyu aynı sunucu ve aynı senkron motoruyla eşitlemek.
+**Aşama 2 — tarayıcı eklentisi** ✅ ilk sürüm (Chrome, Edge, Brave, Opera)
+- Herhangi bir sayfadaki HTML5 videoyu bulur, iframe içindekiler dahil. Reklam ve önizleme gibi küçük ya da kısa videolar elenir.
+- "Bu sayfada oda oluştur" ile oda kurulur. Davet linkine tıklayan eklentili arkadaş aynı sayfaya, aynı odaya gelir (`sayfa#swm=ODA`).
+- Siteyle birlikte çalışır:
+  - Sitedeki odaya bir sayfa linki yapıştırılınca eklentisi olanlar o sayfaya yönlenir.
+  - YouTube'a geçilince geri siteye dönerler.
+  - Sitede yazılan isim eklentiye aktarılır.
+- Emojiler ve mesajlar videonun üstünde görünür. Popup'tan emoji ve hızlı mesaj gönderilebilir.
+- Eklenti sadece odaya katılmış sekmede çalışır, diğer sekmelerde hiçbir şey yapmaz.
+- Kurulum (şimdilik "paketlenmemiş" olarak): <https://screen-with-me.swm-server.workers.dev/eklenti.html>
 
 ## Çalıştırma
 
@@ -42,9 +51,12 @@ Diğer komutlar:
 ```bash
 npm test          # senkron motoru ve protokol testleri
 npm run typecheck # tüm paketlerde tip kontrolü
-npm run build     # sitenin yayın sürümü (apps/web/dist)
+npm run build     # eklenti + sitenin yayın sürümü (eklenti zip'i siteye konur)
 npm run deploy    # test + derleme + Cloudflare'e yükleme
+npm run build:extension:dev  # yerel sunucuya bağlanan eklenti (apps/extension/dist)
 ```
+
+Eklentiyi geliştirirken: `npm run build:extension:dev`, sonra `chrome://extensions` → Geliştirici modu → **Paketlenmemiş öğe yükle** → `apps/extension/dist`. Kod değişince tekrar derleyip eklenti kartındaki ↻ butonuna basılır.
 
 Yayında site ve sunucu tek bir Cloudflare Worker'dır: `/api/*` istekleri Worker koduna, geri kalan her şey `apps/web/dist` içindeki statik dosyalara gider. İlk yayından önce `npx wrangler login` ile bir kez giriş yapılır.
 
@@ -54,14 +66,25 @@ Yayında site ve sunucu tek bir Cloudflare Worker'dır: `/api/*` istekleri Worke
 packages/shared   Ortak kod: mesaj protokolü, senkron motoru, saat eşitleme, bağlantı
 apps/server       Cloudflare Workers + Durable Objects (her oda = bir Durable Object)
 apps/web          Site: sade HTML/CSS/TypeScript, framework yok
-apps/extension    (Aşama 2)
+apps/extension    Tarayıcı eklentisi (Manifest V3): arka plan, sayfa betiği, popup
 ```
+
+**Eklenti nasıl çalışır?**
+- **Arka plan (service worker):** her sekme için ayrı bir oda bağlantısı tutar.
+- **Sayfa betiği:** sekmedeki her çerçevede çalışır ve kendi bulduğu en iyi videonun puanını bildirir. Puan boyuta, süreye ve oynayıp oynamadığına göre hesaplanır.
+- **Etkin çerçeve:** arka plan en yüksek puanlı çerçeveyi seçer. Senkron motoru, sitedekiyle aynı kod olarak orada çalışır.
+- **Saat:** saat farkı arka plandan iletilir.
 
 **Sunucu tek doğru kaynaktır.** Odanın durumu şu birkaç alandan oluşur: hangi video, duraklatıldı mı, hangi saniyede, hangi hızda ve bu bilgi hangi anda geçerliydi (`updatedAt`). Video oynuyorsa şu anki konum `position + (şimdi − updatedAt) × hız` ile hesaplanır. Böylece sürekli "şu an 12.4. saniyedeyim" mesajı yollamaya gerek kalmaz, sadece biri bir şey yaptığında mesaj gider.
 
 **Saat farkı.** Herkesin bilgisayar saati farklıdır. İstemci birkaç ping/pong ile sunucu saatini tahmin eder (NTP'nin basit hali) ve tüm hesapları sunucu saatine göre yapar.
 
-**Kim yaptı: kullanıcı mı, biz mi?** Uzaktan gelen bir "durdur" komutunu uyguladığımızda oynatıcı da "durdum" olayı yollar. Bunu kullanıcı hareketi sanıp geri yollarsak sonsuz döngü olur. Motor, kendi verdiği komutlardan sonraki kısa süreyi yok sayar. Bunun dışında odanın durumuyla çelişen her olayı kullanıcıdan gelmiş kabul eder. YouTube "sarıldı" olayı vermediği için sarmalar, zamanın beklenmedik sıçramasından anlaşılır.
+**Kim yaptı: kullanıcı mı, biz mi?** Uzaktan gelen bir "durdur" komutunu uyguladığımızda oynatıcı da "durdum" olayı yollar. Bunu kullanıcı hareketi sanıp geri yollarsak sonsuz döngü olur. Motor bunu şöyle çözer:
+- Oynatıcıya her komut verdiğinde hangi olayı beklediğini not eder.
+- Kısa süre içinde gelen beklenen olayları yok sayar.
+- Beklenmeyen her olayı kullanıcıdan gelmiş kabul eder. Böylece motor bir şey düzeltirken kullanıcının bastığı "durdur" kaybolmaz.
+
+YouTube "sarıldı" olayı vermediği için sarmalar, zamanın beklenmedik sıçramasından anlaşılır.
 
 **Kayma düzeltmesi.** Biri geride kalırsa (takılma, yavaş internet):
 - 1 saniyeden büyük farkta doğru yere atlanır.
@@ -74,8 +97,10 @@ Detaylı rakip incelemesi için: [docs/rakip-analizi.md](docs/rakip-analizi.md).
 ## Yol haritası
 
 - [ ] **"Herkes hazır" bariyeri.** Biri yükleniyorsa ya da YouTube reklamı izliyorsa diğerleri bekler.
-- [ ] **Tarayıcı eklentisi (Manifest V3).** `all_frames` ile iframe içindeki videoları bulur. Birden fazla video varsa doğrusu seçilir.
-- [ ] **Karma oda.** Eklentisi olmayan arkadaş, aynı odada site oynatıcısıyla izlemeye devam eder.
+- [x] **Tarayıcı eklentisi (Manifest V3).** `all_frames` ile iframe içindeki videoları bulur. Birden fazla video varsa doğrusu seçilir.
+- [ ] **Sayfa üstünde kontrol çubuğu.** Eklentide emoji ve mesaj, popup'ı açmadan da gönderilebilsin.
+- [ ] **Chrome Web Store ve Firefox.** Firefox, arka plan betiği için farklı bir manifest istiyor.
+- [ ] **Elle video seçimi.** Otomatik seçim yanılırsa kullanıcı doğru videoyu işaretleyebilsin.
 - [ ] **Senkron ölçümü.** Birkaç istemci arasındaki farkın p50/p95 değerleri README'de grafikle gösterilir.
 - [ ] **GitHub Actions ile CI.** Test, tip kontrolü ve derleme.
 - [x] **Cloudflare'e yayın.** Site, aynı Worker'dan statik dosya olarak sunulur.

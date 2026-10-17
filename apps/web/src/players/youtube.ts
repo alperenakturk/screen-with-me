@@ -44,6 +44,7 @@ export async function createYouTubePlayer(
     // - Biz oynat dediysek yükleme "oynuyor" sayılır; motor tekrar tekrar oynat demez.
     // - Kullanıcı duraklatmışken başlayan yükleme (örn. ileri sarma) "duraklatılmış" sayılır.
     let wantsToPlay = false;
+    let destroyed = false;
     let onBlocked: (() => void) | null = null;
 
     const player: YT.Player = new YT.Player(host, {
@@ -80,6 +81,7 @@ export async function createYouTubePlayer(
 
     const adapter: PlayerAdapter = {
       fineRate: false,
+      seekNoise: true,
       getTime: () => player.getCurrentTime(),
       getDuration: () => player.getDuration() || 0,
       isPaused: () => {
@@ -104,7 +106,8 @@ export async function createYouTubePlayer(
           };
           onBlocked = () => finish('blocked');
           const timer = setInterval(() => {
-            if (state() === YT.PlayerState.PLAYING || Date.now() - started > PLAY_CONFIRM_MS) finish('ok');
+            // Oynatıcı bu arada kapatıldıysa yoklamayı bırak.
+            if (destroyed || state() === YT.PlayerState.PLAYING || Date.now() - started > PLAY_CONFIRM_MS) finish('ok');
           }, 200);
         });
       },
@@ -116,6 +119,7 @@ export async function createYouTubePlayer(
       setRate: (rate) => player.setPlaybackRate(rate),
       onEvent: (listener) => listeners.add(listener),
       destroy: () => {
+        destroyed = true;
         listeners.clear();
         player.destroy();
         container.replaceChildren();

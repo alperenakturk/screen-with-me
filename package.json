@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "dev": "concurrently -n server,web -c blue,green \"npm run dev -w @swm/server\" \"npm run dev -w @swm/web\"",
-    "build": "npm run build -w @swm/web",
+    "build": "npm run build -w @swm/extension && npm run build -w @swm/web",
+    "build:extension:dev": "npm run build:dev -w @swm/extension",
     "deploy": "npm test && npm run build && npm run deploy -w @swm/server",
     "test": "npm test -w @swm/shared",
     "typecheck": "npm run typecheck --workspaces --if-present"

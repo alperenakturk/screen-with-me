@@ -5,10 +5,12 @@
   "exports": {
     "./protocol": "./src/protocol.ts",
     "./room-logic": "./src/room-logic.ts",
+    "./room-id": "./src/room-id.ts",
     "./media": "./src/media.ts",
     "./clock": "./src/clock.ts",
     "./player": "./src/player.ts",
     "./sync-engine": "./src/sync-engine.ts",
+    "./video-element": "./src/video-element.ts",
     "./connection": "./src/connection.ts"
   },
   "scripts": {

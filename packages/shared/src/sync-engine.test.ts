@@ -160,6 +160,36 @@ describe('local user actions', () => {
     expect((sent[0] as { position: number }).position).toBeCloseTo(300, 0);
   });
 
+  it('still detects a seek made right after an unchanged state arrives', async () => {
+    player.pause();
+    await run(400);
+    // Sunucu, bizim duraklatmamızı aynen geri yollar (hiçbir şey değişmez).
+    engine.receive({ ...engine.getState()!, updatedAt: Date.now() });
+    await run(100);
+    player.seek(120);
+    await run(600);
+    expect(sent.map((m) => m.t)).toEqual(['pause', 'seek']);
+    expect(sent[1]).toMatchObject({ position: 120 });
+  });
+
+  it("hears the user's pause even while the engine is busy correcting drift", async () => {
+    player.fineRate = true;
+    player.time -= 0.5; // geride kaldı → motor hafifçe hızlanır (kendi komutu)
+    await run(500);
+    expect(player.rate).toBeGreaterThan(1);
+    player.pause();
+    await run(500);
+    expect(sent.map((m) => m.t)).toEqual(['pause']);
+  });
+
+  it("hears the user's pause right after the room jumped elsewhere", async () => {
+    engine.receive(state({ position: 300, updatedAt: Date.now() }));
+    await run(100);
+    player.pause();
+    await run(500);
+    expect(sent.map((m) => m.t)).toEqual(['pause']);
+  });
+
   it('detects a seek from the jump in time', async () => {
     player.seek(500);
     await run(600);

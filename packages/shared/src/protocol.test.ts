@@ -36,6 +36,19 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'chat', text: ' selam\n\nnasılsın ' })).toEqual({ t: 'chat', text: 'selam nasılsın' });
   });
 
+  it('accepts pages with a cleaned title, and drops titles for other media', () => {
+    expect(parse({ t: 'load', media: { kind: 'page', url: 'https://film.example/izle' }, title: '  Film\n  İzle ' })).toEqual({
+      t: 'load',
+      media: { kind: 'page', url: 'https://film.example/izle' },
+      title: 'Film İzle',
+    });
+    expect(parse({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: 'fake' })).toEqual({
+      t: 'load',
+      media: { kind: 'youtube', id: 'dQw4w9WgXcQ' },
+    });
+    expect(parse({ t: 'load', media: { kind: 'page', url: 'chrome://settings' } })).toBeNull();
+  });
+
   it('strips unknown fields from media', () => {
     expect(parse({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ', evil: '<script>' } })).toEqual({
       t: 'load',

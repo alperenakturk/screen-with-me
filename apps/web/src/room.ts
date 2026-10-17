@@ -3,6 +3,7 @@ import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { parseMediaInput } from '@swm/shared/media';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { cleanName, type ClientMessage, type Member, type PlaybackState, type QueueItem, type ServerMessage } from '@swm/shared/protocol';
+import { pageInviteUrl } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { el, rememberOpen } from './dom.ts';
 import { t, translate } from './i18n.ts';
@@ -101,6 +102,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
               <h2 data-i18n="emptyTitle"></h2>
               <p data-i18n="emptyBody"></p>
             </div>
+            <div id="external" class="overlay external" hidden>
+              <p class="muted" data-i18n="externalTitle"></p>
+              <h2 id="external-title"></h2>
+              <a id="external-open" class="btn primary big"></a>
+              <p id="external-hint" class="muted small"></p>
+            </div>
             <div id="autoplay" class="overlay" hidden>
               <p data-i18n="autoplayBlocked"></p>
               <button type="button" class="btn primary big" data-i18n="startPlayback"></button>
@@ -156,6 +163,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
   const $ = <T extends HTMLElement>(selector: string) => app.querySelector<T>(selector)!;
   const playerEl = $('#player');
   const emptyEl = $('#empty');
+  const externalEl = $('#external');
   const autoplayEl = $('#autoplay');
   const playerErrorEl = $('#player-error');
   const speedEl = $<HTMLSelectElement>('#speed');
@@ -224,6 +232,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
       }
       case 'title':
         rememberTitle(message.itemId, message.title);
+        if (roomState?.item?.id === message.itemId) $('#external-title').textContent = message.title;
         renderNowPlaying();
         queue.render();
         renderActivity();
@@ -288,9 +297,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
     showError(null);
     engine.receive(state);
     emptyEl.hidden = state.item !== null;
+    externalEl.hidden = state.item?.media.kind !== 'page';
     if (state.item === null) return;
 
     const media = state.item.media;
+    if (media.kind === 'page') {
+      showExternal(state.item, media.url);
+      return;
+    }
     const slot = el('div', { class: 'slot' });
     playerEl.append(slot);
     const onError = () => showError(() => t('playerError'));
@@ -309,6 +323,29 @@ function startRoom(app: HTMLElement, roomId: string, myName: string): void {
     }
     current = { player, slot };
     engine.attach(player);
+  }
+
+  /**
+   * Odada bir web sayfası açık: video o sayfada, herkesin kendi sekmesinde oynar.
+   * Eklenti kuruluysa sayfaya oda işaretiyle (#swm=ODA) gidilir, eklenti oradan
+   * devam eder. Kurulu değilse sayfa linki ve kurulum yardımı gösterilir.
+   */
+  function showExternal(item: QueueItem, url: string): void {
+    const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
+    const target = pageInviteUrl(url, roomId);
+    $('#external-title').textContent = itemTitle(item);
+    const open = $<HTMLAnchorElement>('#external-open');
+    open.href = hasExtension ? target : url;
+    open.target = hasExtension ? '_self' : '_blank';
+    open.rel = 'noopener noreferrer';
+    open.textContent = t(hasExtension ? 'externalGoJoin' : 'externalOpen');
+    const hint = $('#external-hint');
+    if (hasExtension) {
+      hint.textContent = t('externalRedirecting');
+      location.assign(target);
+    } else {
+      hint.replaceChildren(t('externalNeedExtension'), ' ', el('a', { href: '/eklenti.html', target: '_blank' }, t('installExtension')));
+    }
   }
 
   function renderNowPlaying(): void {

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { parseMediaInput, sameMedia } from './media.ts';
+import { parseMediaInput, sameMedia, samePage } from './media.ts';
+
+describe('samePage', () => {
+  it('ignores the #fragment and a trailing slash', () => {
+    expect(samePage('https://a.example/x/', 'https://a.example/x#swm=abcd')).toBe(true);
+    expect(samePage('https://a.example/x?ep=1', 'https://a.example/x?ep=2')).toBe(false);
+    expect(samePage('https://a.example/x', 'https://b.example/x')).toBe(false);
+  });
+});
 
 describe('parseMediaInput', () => {
   it.each([
@@ -21,9 +29,18 @@ describe('parseMediaInput', () => {
       kind: 'html5',
       url: 'https://example.com/movie.mp4',
     });
+    expect(parseMediaInput('https://cdn.example.com/a/b/clip.WEBM?token=1')).toMatchObject({ kind: 'html5' });
   });
 
-  it.each(['', 'hello world', 'https://www.youtube.com/watch?v=short', 'https://www.youtube.com/', 'javascript:alert(1)'])(
+  it('treats any other web address as a page to watch with the extension', () => {
+    expect(parseMediaInput('https://film-site.example/dizi/bolum-1')).toEqual({
+      kind: 'page',
+      url: 'https://film-site.example/dizi/bolum-1',
+    });
+    expect(parseMediaInput('film-site.example/izle')).toMatchObject({ kind: 'page', url: 'https://film-site.example/izle' });
+  });
+
+  it.each(['', 'hello world', 'merhaba', 'https://www.youtube.com/watch?v=short', 'https://www.youtube.com/', 'javascript:alert(1)', 'ftp://x.example/a'])(
     'rejects %j',
     (input) => {
       expect(parseMediaInput(input)).toBeNull();
