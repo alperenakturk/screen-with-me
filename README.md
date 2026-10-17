@@ -1,115 +1,155 @@
-# ScreenWithMe
+<div align="center">
 
-Arkadaşlarınla aynı videoyu aynı anda izlemek için ücretsiz, hesapsız bir araç.
-Birisi oynatır, durdurur, sarar ya da hızı değiştirirse odadaki herkeste aynısı olur.
+# ▶ ScreenWithMe
 
-> *A free, account-less watch-together tool: play, pause, seek and speed stay in sync for everyone in the room.*
+**Watch any video together, in perfect sync.**<br/>
+Free · no accounts · open source · works on YouTube and on (almost) any website.
 
-**Canlı:** <https://screen-with-me.swm-server.workers.dev>
+[**Live site**](https://screen-with-me.swm-server.workers.dev) ·
+[**Get the extension**](https://screen-with-me.swm-server.workers.dev/eklenti.html) ·
+[Roadmap](docs/VIZYON.md) ·
+[🇹🇷 Türkçe](#-türkçe)
 
-## Durum
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
+![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
+![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-92%20unit%20%2B%20e2e-3ccf8e)
+![Version](https://img.shields.io/badge/version-0.4-7c5cff)
 
-**Aşama 1 — web sitesi** ✅ ilk sürüm
-- Tek tıkla oda, davet linki, hesap yok (isim bir kez sorulur, tarayıcıda saklanır)
-- YouTube ve doğrudan video linkleri (.mp4/.webm)
-- Oynat / durdur / sar / hız senkronu, kayma düzeltmesi, saat farkı telafisi
-- Sıra (playlist): ekle, çıkar, sırala, istediğini hemen oynat. Video bitince sıradakine geçilir.
-- Emoji tepkileri: videonun üstünde uçuşur. Kendi tam ekran modumuzda da görünür.
-- Basit sohbet (son 50 mesaj saklanır) ve açılıp kapanan "son hareketler" paneli
-- Spam koruması (hız sınırı)
-- Sekmeli sağ panel: sohbet (oda hareketleri de içinde), sıra, kişiler, ayarlar
-- Oda yöneticisi (👑, ilk giren; sayfayı yenilese de yönetici kalır), kişileri odadan çıkarma (10 dk yasak)
-- İsim/avatar değiştirme, 5 koyu tema (Gece, Okyanus, Gün batımı, Neon, Simsiyah), "Herkesi bana eşitle"
-- Türkçe + İngilizce arayüz, telefonda da çalışır
+</div>
 
-**Aşama 2 — tarayıcı eklentisi** ✅ ilk sürüm (Chrome, Edge, Brave, Opera)
-- Herhangi bir sayfadaki HTML5 videoyu bulur, iframe içindekiler dahil. Reklam ve önizleme gibi küçük ya da kısa videolar elenir.
-- "Bu sayfada oda oluştur" ile oda kurulur. Davet linkine tıklayan eklentili arkadaş aynı sayfaya, aynı odaya gelir (`sayfa#swm=ODA`).
-- Siteyle birlikte çalışır:
-  - Sitedeki odaya bir sayfa linki yapıştırılınca eklentisi olanlar o sayfaya yönlenir.
-  - YouTube'a geçilince geri siteye dönerler.
-  - Sitede yazılan isim eklentiye aktarılır.
-- Emojiler ve mesajlar videonun üstünde görünür. Popup'tan emoji ve hızlı mesaj gönderilebilir.
-- Eklenti sadece odaya katılmış sekmede çalışır, diğer sekmelerde hiçbir şey yapmaz.
-- Kurulum (şimdilik "paketlenmemiş" olarak): <https://screen-with-me.swm-server.workers.dev/eklenti.html>
+---
 
-## Çalıştırma
+Send a link, and everyone watches the same second. If anyone pauses, seeks or changes
+the speed, it happens for everyone. Reactions fly over the video, chat runs on the side,
+and there is a shared queue.
 
-Gerekenler: Node.js 20+.
+- **YouTube or a video file** → plays right on the site, nothing to install.
+- **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → the browser
+  extension finds the video on the page and keeps everyone in sync.
+
+## ✨ Features
+
+| | |
+|---|---|
+| ⏯️ **Tight sync** | Play / pause / seek / speed for everyone. Server-time based, measured **30–100 ms** apart on real players. Drift is corrected silently. |
+| 🔗 **One link, no accounts** | Create a room, share the link. Pick a name and an avatar once — remembered by the browser. |
+| 🧩 **Any website** | The extension finds the right video (skips ads and previews), also inside iframes and in players that load late or switch sources. |
+| 🎵 **Queue** | Add, reorder, play now; the next video starts automatically for everyone. |
+| 💬 **Chat & reactions** | Tabbed side panel (chat with room activity, queue, people, settings). Emoji reactions fly over the video, also in fullscreen. |
+| 👑 **Room host** | The first person in is the host (survives page reloads) and can remove people. |
+| 🖥️ **Distraction-free fullscreen** | Only the video; controls, reactions and a quick-message box appear when you move the mouse. |
+| 🎨 **5 dark themes** | Night, Ocean, Sunset, Neon, Pitch black. TR / EN interface. |
+| 🔒 **Private by design** | Video plays in each person's own browser. The server only relays tiny "pause at 12:34" messages. The extension stays idle outside of a room. |
+
+## 🧠 How it works
+
+```mermaid
+flowchart LR
+  subgraph A[Ali's browser]
+    SA[Site / extension] --> EA[Sync engine]
+    EA <--> PA[(Player)]
+  end
+  subgraph B[Ayşe's browser]
+    SB[Site / extension] --> EB[Sync engine]
+    EB <--> PB[(Player)]
+  end
+  EA <-- WebSocket --> R{{Durable Object<br/>one per room}}
+  EB <-- WebSocket --> R
+```
+
+- **The server is the single source of truth.** A room's state is just
+  `{ item, paused, position, rate, updatedAt }`; the current position is
+  `position + (serverNow − updatedAt) × rate`. Messages are only sent when someone *does* something.
+- **Clock sync.** Clients estimate server time with a few ping/pongs (a mini NTP) and do all math in server time.
+- **"Was that the user or me?"** When the engine commands the player it records which event it expects
+  (e.g. one `pause`). Expected events are ignored for a moment; anything unexpected is a user action.
+  This prevents echo loops without swallowing a real pause.
+- **Seeks** are detected from unexpected jumps in time (YouTube has no seek event).
+- **Drift** above 1 s jumps back into place; smaller drift is closed by playing ±5 % faster/slower.
+- **One Durable Object per room** — rooms scale independently; with WebSocket Hibernation an idle room costs nothing.
+
+### Extension in one paragraph
+A Manifest V3 extension. The background service worker keeps one room connection per tab. A content
+script runs in every frame (top page and iframes) but does nothing unless the user is in a room; then
+each frame reports its best video candidate (size, duration, playing) and the background picks the
+winner, where the same sync engine as the site runs. When a web-page link is opened in a room, the site
+hands the tab over to the extension, which takes it to that page; switching back to YouTube returns the tab to the site.
+
+## 🧪 Quality
+
+| Check | Result |
+|---|---|
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules) | 92 passing |
+| End-to-end (fake users against the real server: queue, chat, reactions, host & kick, page items) | `npm run e2e` |
+| Real players (extension code injected into public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, 4 remote + 4 local actions ✓, 26–100 ms apart |
+| Tricky pages (test harness) | iframe player, player loaded after join, source switch ✓ |
+
+## 🛠️ Tech
+
+TypeScript (strict) everywhere, no front-end framework · Vite · Cloudflare Workers + Durable Objects
+(SQLite-backed, WebSocket Hibernation) · Chrome Manifest V3 + esbuild · Vitest.
+
+```
+packages/shared   protocol + validation, room rules, sync engine, clock, connection, media parsing
+apps/server       Worker + Durable Object (one per room)
+apps/web          the site (plain TS/HTML/CSS)
+apps/extension    browser extension (background, content script, overlay, popup)
+scripts/          end-to-end tests and an extension test harness
+docs/             vision & roadmap, competitor analysis
+```
+
+## 🚀 Development
+
+Requires Node.js 20+.
 
 ```bash
 npm install
-npm run dev
+npm run dev          # server on :8787 + site on :5173 (proxies /api)
+npm test             # unit tests
+npm run typecheck
+npm run e2e          # end-to-end against the local server
 ```
 
-Sonra <http://localhost:5173> adresini aç. Bu komut iki şeyi birlikte başlatır:
+Extension: `npm run build:extension:dev`, then `chrome://extensions` → Developer mode →
+**Load unpacked** → `apps/extension/dist`.
 
-| | Adres | Ne |
-|---|---|---|
-| `apps/server` | `localhost:8787` | Cloudflare Worker'ı yerelde çalıştırır (`wrangler dev`) |
-| `apps/web` | `localhost:5173` | Site (Vite). `/api` isteklerini sunucuya yönlendirir |
+Deploy: `npx wrangler login` once, then `npm run deploy` (tests, builds the extension zip and the site,
+uploads one Worker that serves both the API and the static site).
 
-Diğer komutlar:
+## 🗺️ Roadmap
 
-```bash
-npm test          # senkron motoru ve protokol testleri
-npm run typecheck # tüm paketlerde tip kontrolü
-npm run build     # eklenti + sitenin yayın sürümü (eklenti zip'i siteye konur)
-npm run deploy    # test + derleme + Cloudflare'e yükleme
-npm run build:extension:dev  # yerel sunucuya bağlanan eklenti (apps/extension/dist)
-```
+Next up: a "ready check" so rooms wait for whoever is buffering, Chrome Web Store & Firefox releases,
+manual video picker, push-to-talk voice chat. Full list: [docs/VIZYON.md](docs/VIZYON.md).
 
-Eklentiyi geliştirirken: `npm run build:extension:dev`, sonra `chrome://extensions` → Geliştirici modu → **Paketlenmemiş öğe yükle** → `apps/extension/dist`. Kod değişince tekrar derleyip eklenti kartındaki ↻ butonuna basılır.
+## ⚠️ Limitations
 
-Yayında site ve sunucu tek bir Cloudflare Worker'dır: `/api/*` istekleri Worker koduna, geri kalan her şey `apps/web/dist` içindeki statik dosyalara gider. İlk yayından önce `npx wrangler login` ile bir kez giriş yapılır.
+- DRM-protected services (Netflix, Disney+…) are not a goal.
+- The extension is not in the Chrome Web Store yet (manual install, ~1 minute).
+- Firefox is not supported yet.
+- ScreenWithMe never hosts or relays video content; it only synchronises players that each person opens themselves.
 
-## Mimari
+---
 
-```
-packages/shared   Ortak kod: mesaj protokolü, senkron motoru, saat eşitleme, bağlantı
-apps/server       Cloudflare Workers + Durable Objects (her oda = bir Durable Object)
-apps/web          Site: sade HTML/CSS/TypeScript, framework yok
-apps/extension    Tarayıcı eklentisi (Manifest V3): arka plan, sayfa betiği, popup
-```
+## 🇹🇷 Türkçe
 
-**Eklenti nasıl çalışır?**
-- **Arka plan (service worker):** her sekme için ayrı bir oda bağlantısı tutar.
-- **Sayfa betiği:** sekmedeki her çerçevede çalışır ve kendi bulduğu en iyi videonun puanını bildirir. Puan boyuta, süreye ve oynayıp oynamadığına göre hesaplanır.
-- **Etkin çerçeve:** arka plan en yüksek puanlı çerçeveyi seçer. Senkron motoru, sitedekiyle aynı kod olarak orada çalışır.
-- **Saat:** saat farkı arka plandan iletilir.
+**ScreenWithMe**, arkadaşlarınla aynı videoyu aynı anda izlemek için ücretsiz, hesapsız ve açık
+kaynak bir araç. Link at, herkes aynı saniyede izlesin; biri durdurursa herkes dursun.
 
-**Sunucu tek doğru kaynaktır.** Odanın durumu şu birkaç alandan oluşur: hangi video, duraklatıldı mı, hangi saniyede, hangi hızda ve bu bilgi hangi anda geçerliydi (`updatedAt`). Video oynuyorsa şu anki konum `position + (şimdi − updatedAt) × hız` ile hesaplanır. Böylece sürekli "şu an 12.4. saniyedeyim" mesajı yollamaya gerek kalmaz, sadece biri bir şey yaptığında mesaj gider.
+- **YouTube ya da video dosyası:** doğrudan sitede, kurulum yok.
+- **Başka bir site:** eklenti sayfadaki videoyu bulur (iframe içindekiler dahil) ve herkesi senkronda tutar.
 
-**Saat farkı.** Herkesin bilgisayar saati farklıdır. İstemci birkaç ping/pong ile sunucu saatini tahmin eder (NTP'nin basit hali) ve tüm hesapları sunucu saatine göre yapar.
+Özellikler:
+- Sıra (playlist)
+- Sekmeli panel: sohbet, sıra, kişiler, ayarlar
+- Uçan emojiler
+- Oda yöneticisi (👑) ve kişileri odadan çıkarma
+- İsim ve avatar
+- 5 koyu tema
+- Dikkat dağıtmayan tam ekran
+- "Herkesi bana eşitle"
 
-**Kim yaptı: kullanıcı mı, biz mi?** Uzaktan gelen bir "durdur" komutunu uyguladığımızda oynatıcı da "durdum" olayı yollar. Bunu kullanıcı hareketi sanıp geri yollarsak sonsuz döngü olur. Motor bunu şöyle çözer:
-- Oynatıcıya her komut verdiğinde hangi olayı beklediğini not eder.
-- Kısa süre içinde gelen beklenen olayları yok sayar.
-- Beklenmeyen her olayı kullanıcıdan gelmiş kabul eder. Böylece motor bir şey düzeltirken kullanıcının bastığı "durdur" kaybolmaz.
-
-YouTube "sarıldı" olayı vermediği için sarmalar, zamanın beklenmedik sıçramasından anlaşılır.
-
-**Kayma düzeltmesi.** Biri geride kalırsa (takılma, yavaş internet):
-- 1 saniyeden büyük farkta doğru yere atlanır.
-- Hassas hız ayarı destekleyen oynatıcılarda küçük farklar, fark edilmeyecek kadar hafif hızlanıp yavaşlayarak kapatılır.
-
-**Neden Durable Objects?** Aynı oda ID'sine bağlanan herkes, dünyanın neresinde olursa olsun aynı nesneye düşer. Odalar birbirinden bağımsız ölçeklenir. WebSocket Hibernation sayesinde kimse bir şey yapmazken nesne uyur ve ücret işlemez.
-
-Detaylı rakip incelemesi için: [docs/rakip-analizi.md](docs/rakip-analizi.md).
-
-## Yol haritası
-
-- [ ] **"Herkes hazır" bariyeri.** Biri yükleniyorsa ya da YouTube reklamı izliyorsa diğerleri bekler.
-- [x] **Tarayıcı eklentisi (Manifest V3).** `all_frames` ile iframe içindeki videoları bulur. Birden fazla video varsa doğrusu seçilir.
-- [ ] **Sayfa üstünde kontrol çubuğu.** Eklentide emoji ve mesaj, popup'ı açmadan da gönderilebilsin.
-- [ ] **Chrome Web Store ve Firefox.** Firefox, arka plan betiği için farklı bir manifest istiyor.
-- [ ] **Elle video seçimi.** Otomatik seçim yanılırsa kullanıcı doğru videoyu işaretleyebilsin.
-- [ ] **Senkron ölçümü.** Birkaç istemci arasındaki farkın p50/p95 değerleri README'de grafikle gösterilir.
-- [ ] **GitHub Actions ile CI.** Test, tip kontrolü ve derleme.
-- [x] **Cloudflare'e yayın.** Site, aynı Worker'dan statik dosya olarak sunulur.
-
-## Sınırlar
-
-- DRM'li servisler (Netflix, Disney+ vb.) hedef değildir.
-- Video herkesin kendi tarayıcısında oynar. Sunucu hiçbir video içeriğini barındırmaz ya da iletmez, sadece "oynat / durdur / 1:23'e git" gibi küçük mesajları taşır.
-- Reklamlar için kullanıcılar kendi tarayıcılarına uBlock Origin gibi bir engelleyici kurabilir. Bu proje reklam engelleme yapmaz.
+Bağlantılar:
+- **Canlı site:** https://screen-with-me.swm-server.workers.dev
+- **Eklenti kurulumu:** https://screen-with-me.swm-server.workers.dev/eklenti.html
+- **Vizyon ve yol haritası:** [docs/VIZYON.md](docs/VIZYON.md)

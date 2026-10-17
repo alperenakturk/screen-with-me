@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>body { margin: 0; background: #000; } video { width: 100%; height: 100vh; }</style>
+    <script src="shim.js"></script>
+    <script src="content.js"></script>
+  </head>
+  <body>
+    <script>
+      // Oynatıcılar videoyu genelde sonradan ekler; burada da 1 sn sonra ekleniyor.
+      setTimeout(() => {
+        const v = document.createElement('video');
+        v.src = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm';
+        v.controls = true;
+        v.muted = true;
+        v.loop = false;
+        document.body.append(v);
+      }, 1000);
+    </script>
+  </body>
+</html>

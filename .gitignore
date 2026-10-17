@@ -11,3 +11,4 @@ Thumbs.db
 # Eklentinin derlenmiş zip'i (npm run build sırasında üretilir)
 apps/web/public/screenwithme-extension.zip
 apps/web/public/extension-version.json
+apps/web/public/dev/

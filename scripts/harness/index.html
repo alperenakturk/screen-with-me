@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Eklenti test düzeneği</title>
+    <style>
+      body { font-family: system-ui; background: #222; color: #eee; margin: 16px; }
+      iframe { width: 800px; height: 470px; border: 2px solid #555; }
+      #log { font: 12px monospace; white-space: pre-wrap; max-height: 200px; overflow: auto; }
+      .tiny { width: 120px; height: 68px; }
+    </style>
+    <script>
+      // Eklentinin arka planının basit bir taklidi: odaya bağlanır, çerçevelerden
+      // gelen video adaylarından en iyisini seçer, durumu ona iletir.
+      const ROOM = new URLSearchParams(location.search).get('room') || 'harness1';
+      const log = (...a) => { const el = document.getElementById('log'); if (el) el.textContent += a.join(' ') + '\n'; };
+      window.__bg = {
+        nextFrameId: 1,
+        inRoom: false,
+        frames: new Map(),
+        probes: [],
+        state: null,
+        active: null,
+        activated: false,
+        ws: null,
+        registerFrame(deliver) { this.probes.push(deliver); },
+        connect(frameId) {
+          const port = {
+            msgL: [], discL: [],
+            onMessage: { addListener: (f) => port.msgL.push(f) },
+            onDisconnect: { addListener: (f) => port.discL.push(f) },
+            postMessage: (m) => setTimeout(() => this.fromFrame(frameId, m), 0),
+            deliver: (m) => setTimeout(() => port.msgL.forEach((f) => f(m)), 0),
+          };
+          this.frames.set(frameId, { port, score: 0 });
+          log('frame connected', frameId);
+          return port;
+        },
+        disconnect(frameId) {
+          if (!this.frames.delete(frameId)) return;
+          log('frame gone', frameId);
+          if (this.active === frameId) { this.active = null; this.activated = false; }
+          this.choose();
+        },
+        fromFrame(frameId, m) {
+          if (m.type === 'candidate') {
+            this.frames.get(frameId).score = m.score;
+            log('candidate', frameId, m.score);
+            this.choose();
+          } else if (m.type === 'send') {
+            if (frameId === this.active) { log('→ server', JSON.stringify(m.message)); this.ws.send(JSON.stringify(m.message)); }
+          }
+        },
+        choose() {
+          let best = null, bestScore = 0;
+          for (const [id, f] of this.frames) if (f.score > bestScore) { best = id; bestScore = f.score; }
+          if (best !== this.active) { this.active = best; this.activated = false; log('active frame', best); }
+          this.push();
+        },
+        push() {
+          if (this.active === null || !this.state) return;
+          const port = this.frames.get(this.active).port;
+          if (!this.activated) { port.deliver({ type: 'activate', state: this.state, offset: 0, synced: true }); this.activated = true; this.pushRoom(); }
+          else port.deliver({ type: 'state', state: this.state });
+        },
+        start() {
+          this.ws = new WebSocket(`ws://localhost:8787/api/rooms/${ROOM}/ws`);
+          this.ws.onopen = () => this.ws.send(JSON.stringify({ t: 'hello', v: 3, name: 'Eklenti' }));
+          this.ws.onmessage = (e) => {
+            const m = JSON.parse(e.data);
+            if (m.t === 'welcome' || m.t === 'state') { this.state = m.state; log('state', JSON.stringify({ paused: m.state.paused, position: m.state.position, rate: m.state.rate })); this.push(); }
+            if (m.t === 'welcome') {
+              this.inRoom = true;
+              this.myId = m.you;
+              this.members = m.members;
+              this.chat = m.chat;
+              this.probes.forEach((d) => d({ type: 'swm-probe' }));
+              // Oynatıcı iframe'i odaya katıldıktan SONRA yüklenir (gerçek sitelerdeki gibi).
+              setTimeout(() => { document.getElementById('player').src = 'frame.html'; log('player iframe loaded late'); }, 2000);
+            }
+            if (m.t === 'members') { this.members = m.members; this.pushRoom(); }
+            if (m.t === 'reaction') this.toActive({ type: 'reaction', emoji: m.emoji, name: m.by.name });
+            if (m.t === 'chat') {
+              this.chat.push(m.message);
+              this.toActive({ type: 'chat', line: { id: m.message.id, name: m.message.by.name, text: m.message.text, mine: m.message.by.id === this.myId } });
+            }
+          };
+        },
+        pushRoom() {
+          if (this.active === null) return;
+          this.toActive({ type: 'room', room: { roomId: ROOM, inviteUrl: 'https://example/r/' + ROOM, members: this.members, myId: this.myId, queueLength: 1,
+            chat: this.chat.map((c) => ({ id: c.id, name: c.by.name, text: c.text, mine: c.by.id === this.myId })) } });
+        },
+        toActive(msg) { if (this.active !== null) this.frames.get(this.active).port.deliver(msg); },
+      };
+    </script>
+    <script src="shim.js"></script>
+    <script src="content.js"></script>
+  </head>
+  <body>
+    <h3>Üst sayfa (küçük bir önizleme videosu var, seçilmemeli)</h3>
+    <video class="tiny" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm" muted loop></video>
+    <div><iframe id="player" src="about:blank"></iframe></div>
+    <div id="log"></div>
+    <script>window.__bg.start();</script>
+  </body>
+</html>

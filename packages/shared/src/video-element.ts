@@ -82,9 +82,9 @@ export function scoreVideo(info: VideoInfo): number {
  * içine de bakar (bazı oynatıcılar videoyu orada saklar). Derin tarama pahalı
  * olduğu için sadece gerektiğinde yapılır.
  */
-export function findVideos(root: Document | ShadowRoot | Element): HTMLVideoElement[] {
+export function findVideos(root: Document | ShadowRoot | Element, deep = true): HTMLVideoElement[] {
   const direct = [...root.querySelectorAll('video')];
-  if (direct.length > 0) return direct;
+  if (direct.length > 0 || !deep) return direct;
   const found: HTMLVideoElement[] = [];
   const visit = (node: Document | ShadowRoot | Element) => {
     for (const el of node.querySelectorAll('*')) {

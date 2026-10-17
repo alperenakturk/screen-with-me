@@ -118,11 +118,15 @@ function bucket(score: number): number {
   return score === 0 ? 0 : Math.round(Math.log2(score) * 2);
 }
 
+/** Derin (shadow DOM) tarama pahalı: sadece her DEEP_EVERY taramada bir yapılır. */
+const DEEP_EVERY = 5;
+let scanCount = 0;
+
 function scan(): void {
   let bestVideo: HTMLVideoElement | null = null;
   let bestScore = 0;
   let largest = { w: 0, h: 0 };
-  const videos = findVideos(document);
+  const videos = findVideos(document, scanCount++ % DEEP_EVERY === 0);
   for (const video of videos) {
     const info = describeVideo(video);
     if (info.width * info.height > largest.w * largest.h) largest = { w: Math.round(info.width), h: Math.round(info.height) };

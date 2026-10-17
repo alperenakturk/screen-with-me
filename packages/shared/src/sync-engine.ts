@@ -160,7 +160,8 @@ export class SyncEngine {
         this.command('pause');
         player.pause();
       }
-    } else if (player.isPaused() && !player.isEnded() && !this.autoplayBlocked) {
+    } else if (player.isPaused() && !player.isEnded() && !this.autoplayBlocked && this.pauseTimer === null) {
+      // (pauseTimer: kullanıcı az önce duraklattı ve gönderilmeyi bekliyor; onu ezme.)
       this.command('play');
       this.lastPlayAttempt = this.wallNow();
       void player.play().then((result) => {
@@ -187,17 +188,27 @@ export class SyncEngine {
         this.autoplayBlocked = false;
         if (state.paused) this.localChange('play', { paused: false, position: player.getTime() });
         break;
-      case 'pause':
-        if (!state.paused && this.pauseTimer === null) {
-          this.pauseTimer = setTimeout(() => {
-            this.pauseTimer = null;
-            const current = this.state;
-            if (this.player === player && current !== null && !current.paused && player.isPaused() && !player.isEnded()) {
-              this.localChange('pause', { paused: true, position: player.getTime() });
-            }
-          }, PAUSE_DEBOUNCE_MS);
+      case 'pause': {
+        if (state.paused || this.pauseTimer !== null) break;
+        const sendPause = () => {
+          const current = this.state;
+          if (this.player === player && current !== null && !current.paused && player.isPaused() && !player.isEnded()) {
+            this.localChange('pause', { paused: true, position: player.getTime() });
+          }
+        };
+        // YouTube ilerleme çubuğu sürüklenirken anlık "durdu" der; orada biraz beklenir.
+        // Tarayıcının kendi <video>'su bunu yapmaz: duraklatma hemen gönderilir
+        // (beklerken gelen bir oda mesajı kullanıcının duraklatmasını ezmesin).
+        if (!player.seekNoise) {
+          sendPause();
+          break;
         }
+        this.pauseTimer = setTimeout(() => {
+          this.pauseTimer = null;
+          sendPause();
+        }, PAUSE_DEBOUNCE_MS);
         break;
+      }
       case 'ratechange': {
         const rate = player.getRate();
         if (this.nudgeRate !== null && Math.abs(rate - this.nudgeRate) < 0.001) return;

@@ -12,6 +12,7 @@
     "build:extension:dev": "npm run build:dev -w @swm/extension",
     "deploy": "npm test && npm run build && npm run deploy -w @swm/server",
     "test": "npm test -w @swm/shared",
+    "e2e": "node scripts/e2e/run.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

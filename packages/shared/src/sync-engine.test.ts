@@ -7,6 +7,7 @@ import { SyncEngine } from './sync-engine.ts';
 /** Gerçek oynatıcı gibi davranan sahte oynatıcı. Zaman sadece `run` ile ilerler. */
 class FakePlayer implements PlayerAdapter {
   fineRate = false;
+  seekNoise = false;
   time = 0;
   paused = true;
   ended = false;
@@ -150,7 +151,8 @@ describe('local user actions', () => {
     expect((sent[0] as { position: number }).position).toBeCloseTo(2, 0);
   });
 
-  it('treats a quick pause+play (scrubbing) as a seek, not a pause', async () => {
+  it('treats a quick pause+play (YouTube scrubbing) as a seek, not a pause', async () => {
+    player.seekNoise = true;
     player.pause();
     player.seek(300);
     await run(100);
@@ -188,6 +190,25 @@ describe('local user actions', () => {
     player.pause();
     await run(500);
     expect(sent.map((m) => m.t)).toEqual(['pause']);
+  });
+
+  it("a room message right after the user's pause does not undo it", async () => {
+    // Normal <video>: duraklatma hemen gider.
+    player.pause();
+    engine.receive(state({ position: 2, updatedAt: Date.now() })); // hâlâ "oynuyor" diyen eski mesaj
+    await run(500);
+    expect(sent[0]).toMatchObject({ t: 'pause' });
+
+    // YouTube: beklerken gelen mesaj videoyu yeniden başlatmaz.
+    sent = [];
+    engine.receive(state({ position: player.time, updatedAt: Date.now() }));
+    await run(1500);
+    player.seekNoise = true;
+    player.pause();
+    engine.receive(state({ position: player.time, updatedAt: Date.now() }));
+    await run(500);
+    expect(player.paused).toBe(true);
+    expect(sent.map((m) => m.t)).toContain('pause');
   });
 
   it('detects a seek from the jump in time', async () => {
