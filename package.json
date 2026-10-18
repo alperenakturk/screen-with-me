@@ -15,6 +15,7 @@
     "deploy": "npm test && npm run build && npm run deploy -w @swm/server",
     "test": "npm test -w @swm/shared",
     "e2e": "node scripts/e2e/run.mjs",
+    "store": "npm run build && node scripts/store-shots.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

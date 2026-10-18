@@ -12,3 +12,5 @@ Thumbs.db
 apps/web/public/screenwithme-extension.zip
 apps/web/public/extension-version.json
 apps/web/public/dev/
+# Mağazaya yüklenecek zip (npm run store üretir)
+store/*.zip

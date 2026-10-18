@@ -43,7 +43,11 @@ npm run e2e [-- wss://...]   # uçtan uca (varsayılan yerel; canlı için URL v
 npm run build                # eklenti (zip'i siteye koyar) + site
 npm run deploy               # test + build + Cloudflare'e yükle
 npm run build:extension:dev  # yerel sunucuya bağlanan eklenti (apps/extension/dist)
+npm run store                # Web Store paketi: store/ (zip + ekran görüntüleri + tanıtım görseli)
+node scripts/make-icons.mjs  # eklenti simgelerini yeniden üret (apps/extension/static/icon*.png)
 ```
+Mağaza formunda ne yazılacağı: `docs/web-store.md`. Ekran görüntüleri `store/src/shots.html`'den
+çekilir; eklentinin görünümü değişirse oradaki taklidi de güncelle.
 Windows/PowerShell notları: commit mesajını dosyaya yazıp `git commit -F` kullan (tırnaklar
 bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH'te değilse:
 `C:\Program Files\GitHub CLI\gh.exe`.
@@ -96,5 +100,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - DRM'li servisler (Netflix vb.) hedef değil. `<video>`'nun kendisi tam ekransa eklenti katmanı
   görünmez (oynatıcı kapsayıcısı tam ekransa görünür).
 - Eklenti henüz mağazada değil (paketlenmemiş kurulum, `apps/web/public/eklenti.html`).
+  Geliştirici hesabı açıldı (yayıncı e-postası screenwithme.app@gmail.com, tacir değil);
+  paket hazır, kullanıcı birkaç güncelleme daha yapıp gönderecek.
 - Firefox desteklenmiyor (arka plan için ayrı manifest gerekiyor).
 - Brave/Edge'de kullanıcı testi bekleniyor; sorun olursa popup'taki "Tanı" satırını iste.

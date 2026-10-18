@@ -39,10 +39,17 @@ const manifest = {
   name: dev ? 'ScreenWithMe (dev)' : 'ScreenWithMe',
   version: pkg.version,
   description: 'Watch any HTML5 video in sync with friends: play, pause, seek and speed stay together.',
+  homepage_url: 'https://screen-with-me.swm-server.workers.dev/eklenti.html',
+  // Simgeler: node scripts/make-icons.mjs ile üretilir (static/ içinde).
+  icons: { 16: 'icon16.png', 32: 'icon32.png', 48: 'icon48.png', 128: 'icon128.png' },
   permissions: ['storage'],
   host_permissions: ['<all_urls>'],
   background: { service_worker: 'background.js', type: 'module' },
-  action: { default_popup: 'popup.html', default_title: 'ScreenWithMe' },
+  action: {
+    default_popup: 'popup.html',
+    default_title: 'ScreenWithMe',
+    default_icon: { 16: 'icon16.png', 32: 'icon32.png' },
+  },
   content_scripts: [
     {
       matches: ['<all_urls>'],

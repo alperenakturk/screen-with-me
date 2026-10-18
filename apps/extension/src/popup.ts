@@ -94,7 +94,8 @@ function render(status: PopupStatus): void {
   $('#members').replaceChildren(
     ...session.members.map((member) => {
       const li = document.createElement('li');
-      li.textContent = member.id === session.myId ? `${member.name} (${t('you')})` : member.name;
+      const name = member.avatar ? `${member.avatar} ${member.name}` : member.name;
+      li.textContent = member.id === session.myId ? `${name} (${t('you')})` : name;
       if (member.id === session.myId) li.className = 'me';
       return li;
     }),
