@@ -31,7 +31,9 @@ import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
-import { createReactions } from './ui/reactions.ts';
+import { createReactions, isTyping } from './ui/reactions.ts';
+import { createHeatStrip } from './ui/heat-strip.ts';
+import { HeatMap } from '@swm/shared/heat';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs } from './ui/tabs.ts';
 import { createToasts } from './ui/toasts.ts';
@@ -195,7 +197,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="toast-handle" class="fs-only toast-handle" data-i18n-title="toastHandleHint"><span data-i18n="toastHandle"></span></div>
             <div id="fs-controls" class="fs-only fs-controls">
               <div class="fs-progress">
-                <input id="fs-seek" type="range" min="0" max="1000" step="1" value="0" />
+                <div class="fs-seek-wrap">
+                  <div id="fs-heat" class="heat-strip fs" hidden></div>
+                  <input id="fs-seek" type="range" min="0" max="1000" step="1" value="0" />
+                </div>
                 <span id="fs-time" class="fs-time">0:00 / 0:00</span>
               </div>
               <div class="fs-row">
@@ -242,6 +247,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button type="button" class="btn primary big" data-i18n="startPlayback"></button>
             </div>
           </div>
+          <div id="heat-strip" class="heat-strip" data-i18n-title="heatLabel" hidden></div>
           <div class="toolbar">
             <div class="reaction-bar" role="group"></div>
             <div class="toolbar-right">
@@ -388,6 +394,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send({ t: 'rename', name, avatar });
   });
   const reactions = createReactions(app, send);
+  // Klavye: normal görünümde Enter sohbet kutusuna götürür (tam ekranda fullscreen.ts halleder).
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || document.fullscreenElement || isTyping(event.target)) return;
+    if (event.target instanceof HTMLButtonElement || event.target instanceof HTMLAnchorElement) return;
+    event.preventDefault();
+    tabs.show('chat');
+    app.querySelector<HTMLInputElement>('#chat-input')?.focus();
+  });
 
   // ---- Senkron ----
   const clock = new ServerClock();
@@ -433,9 +447,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         queue.set(message.queue);
         chat.set(message.chat);
         void applyState(message.state);
+        heat.reset(null);
+        if (message.heat) heat.load(message.heat);
+        heatStrip.render();
         break;
       case 'state': {
         void applyState(message.state);
+        if (heat.reset(message.state.item?.id ?? null)) heatStrip.render();
         const { action, by, state } = message;
         // Otomatik bekleme hareketleri "waiting" mesajıyla ayrıca anlatılıyor.
         if (by.id === SYSTEM_MEMBER_ID) break;
@@ -492,6 +510,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
       case 'reaction':
         if (settings.options.showReactions) reactions.show(message.emoji, withAvatar(message.by));
+        if (message.itemId && message.at !== undefined) {
+          heat.reset(message.itemId);
+          heat.add(message.at, message.emoji);
+          heatStrip.render();
+        }
         break;
       case 'chat': {
         const { by, text } = message.message;
@@ -669,6 +692,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onRate: (rate) => engine.requestRate(rate),
   });
   const toasts = createToasts($('#toasts'), $('#toast-handle'));
+  // Zaman çizelgesinde tepkiler: video altında ve tam ekranda ilerleme çubuğunun üstünde.
+  const heat = new HeatMap();
+  const heatStrip = createHeatStrip(
+    [$('#heat-strip'), $('#fs-heat')],
+    heat,
+    () => current?.player.getDuration() ?? 0,
+    (seconds) => current?.player.seek(seconds),
+  );
+  // Süre video yüklenince belli olur; arada bir yeniden çiz.
+  setInterval(() => heatStrip.render(), 4000);
   const fullscreenEl = $<HTMLButtonElement>('#fullscreen');
   fullscreenEl.hidden = !document.fullscreenEnabled;
   fullscreenEl.addEventListener('click', () => fullscreen.toggle());

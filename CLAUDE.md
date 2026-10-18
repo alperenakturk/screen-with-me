@@ -138,7 +138,17 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   `goToRoom` (oturumu kapatıp sekmeyi `/r/ODA#back`'e götürür; site `#back` görünce isim/avatar
   sormadan girer, isim henüz eklentiden gelmediyse 800 ms bekler). Sunucu: eklentiyle (`client: 'ext'`) filmde biri varken siteden
   yeni video açılamaz / sıradakine geçilemez (`others_watching`); sıraya eklemek serbest.
-- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) çubukta oklu
+- **Zaman çizelgesinde tepkiler (`heat.ts`):** sunucu her tepkinin videonun hangi saniyesinde
+  atıldığını kendi `PlaybackState`'inden hesaplar (istemciye güvenmez), 10 sn dilimlerde sayar
+  (`HeatMap`, depoda `heat`), `reaction` mesajına `at`/`itemId` ekler, yeni gelene `welcome.heat`
+  yollar; video değişince sıfırlanır. Site video altında + tam ekranda ilerleme çubuğu üstünde,
+  eklenti çubuğun 3. satırında ince şerit çizer (en az 3 tepki; en çok 3 an tıklanınca oraya sarar).
+- **Klavye:** 1–8 o sayfanın emojileri, Enter mesaj (sitede `reactions.ts` + `room.ts`, tam ekranda
+  `fullscreen.ts`; eklentide `overlay.ts`). Eklentide tuş yakalama aşamasında alınıp siteye hiç
+  gösterilmez: oynatıcılar rakamlarla sarar (3 = %30), yoksa emoji atınca herkes sarılırdı.
+- **Avatar sayfalama:** bir sekmede `AVATARS_PER_VIEW` (16) fazlası ‹ › ile ikinci görünüme geçer.
+- **CI (`.github/workflows/test.yml`):** her push/PR'da tip kontrolü, birim, derleme, `wrangler dev`
+  ile yerel sunucu + `npm run e2e`. Repo private: ayda 2000 dk ücretsiz.- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) çubukta oklu
   kısa kart: kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.
   "Bir daha gösterme" → `storage.local` `guideOff`.
 - **Sahnelerde üst boşluk ve yanlar:** sahne (1600×900) alttan hizalı ve ekranı kaplar; geniş ekranda

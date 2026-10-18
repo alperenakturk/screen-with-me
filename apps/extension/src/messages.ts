@@ -9,6 +9,7 @@
 // plan en iyisini "etkin" seçer, senkron o çerçevede çalışır.
 
 import type { ConnectionStatus } from '@swm/shared/connection';
+import type { Heat } from '@swm/shared/heat';
 import type { Avatar, BanEntry, ClientMessage, Member, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
 
 /** Çerçevelerin "oda var mı" diye baktığı yer (chrome.storage.session). */
@@ -54,6 +55,8 @@ export type BackgroundMessage =
   | { type: 'clock'; offset: number; synced: boolean }
   | { type: 'room'; room: RoomInfo }
   | { type: 'reaction'; emoji: Reaction; name: string }
+  /** Zaman çizelgesinde tepkiler (açık videonun). */
+  | { type: 'heat'; heat: Heat | null }
   | { type: 'chat'; line: ChatLine }
   /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte); "slow": çok hızlı mesaj atıldı. */
   | { type: 'notice'; kind: 'joined' | 'left' | 'slow'; name: string }

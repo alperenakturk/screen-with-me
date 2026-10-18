@@ -1,0 +1,48 @@
+# Her push ve PR'da: tip kontrolü, birim testleri, derleme ve yerel sunucuyla uçtan uca testler.
+# Yerel sunucu `wrangler dev` (hesap gerekmez); e2e sahte kullanıcılarla gerçek sunucu koduna bağlanır.
+name: Testler
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tip kontrolü
+        run: npm run typecheck
+
+      - name: Birim testleri
+        run: npm test
+
+      - name: Derleme (eklenti + site)
+        run: npm run build
+
+      - name: Yerel sunucuyu başlat
+        working-directory: apps/server
+        run: |
+          npx wrangler dev --port 8787 > ../../wrangler.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8787/ > /dev/null; then echo "sunucu hazır"; exit 0; fi
+            sleep 1
+          done
+          echo "sunucu açılmadı"; cat ../../wrangler.log; exit 1
+
+      - name: Uçtan uca testler
+        run: npm run e2e
+
+      - name: Sunucu kaydı (hata olursa)
+        if: failure()
+        run: cat wrangler.log || true

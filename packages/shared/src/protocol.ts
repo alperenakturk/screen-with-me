@@ -1,3 +1,4 @@
+import type { Heat } from './heat.ts';
 // Sunucu ile istemciler (site ve ileride eklenti) arasındaki mesaj formatı.
 // Bu dosya hem tarayıcıda hem Cloudflare sunucusunda çalışır, bu yüzden
 // DOM'a veya Node'a özel hiçbir şey kullanmaz.
@@ -71,6 +72,9 @@ export const DRAWN_AVATARS = {
   detective: '🕵️',
   cartoonist: '✏️',
   armadillo: '🐾',
+  wizardboy: '⚡',
+  redhead: '🍫',
+  wizardgirl: '📚',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
@@ -83,7 +87,7 @@ export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
 export const AVATAR_PAGES = [
   ['astronaut', 'alien', 'cyber', 'netrunner', 'wizard', 'sorceress', 'warrior', 'elf', 'dwarf', 'janissary', 'horseman', 'veiled'],
   ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],
-  ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature'],
+  ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
   [
     'scientist', 'sidekick', 'chemist', 'lawyer', 'detective', 'hunter', 'dragonqueen', 'goth',
     'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo',
@@ -100,6 +104,9 @@ export const AVATAR_TABS = [
   { key: 'animals', pages: [1] },
   { key: 'parody', pages: [2, 3, 4], subs: ['film', 'series', 'anime'] },
 ] as const;
+
+/** Seçicide bir sayfada en fazla bu kadar avatar; fazlası ‹ › ile ikinci sayfaya geçer. */
+export const AVATARS_PER_VIEW = 16;
 
 /** Avatarın bulunduğu sayfa (yoksa 0). */
 export function avatarPageOf(avatar: string | null | undefined): number {
@@ -273,6 +280,8 @@ export type ServerMessage =
       settings?: RoomSettings;
       /** Şu an beklenenler (üye ID'leri). */
       waiting?: string[];
+      /** Açık videonun tepki dağılımı (zaman çizelgesi). */
+      heat?: Heat;
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member }
@@ -287,7 +296,8 @@ export type ServerMessage =
   /** Oda takılan birini bekliyor (boş liste: bekleme bitti). */
   | { t: 'waiting'; ids: string[] }
   | { t: 'settings'; settings: RoomSettings }
-  | { t: 'reaction'; emoji: Reaction; by: Member }
+  /** at/itemId: tepkinin atıldığı an (sunucu hesaplar; zaman çizelgesi için). Eski sunucular yollamaz. */
+  | { t: 'reaction'; emoji: Reaction; by: Member; at?: number; itemId?: string }
   | { t: 'chat'; message: ChatMessage }
   | { t: 'error'; code: ErrorCode };
 

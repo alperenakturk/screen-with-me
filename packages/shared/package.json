@@ -14,7 +14,8 @@
     "./video-element": "./src/video-element.ts",
     "./connection": "./src/connection.ts",
     "./logo": "./src/logo.ts",
-    "./intro": "./src/intro.ts"
+    "./intro": "./src/intro.ts",
+    "./heat": "./src/heat.ts"
   },
   "scripts": {
     "test": "vitest run",

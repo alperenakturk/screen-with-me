@@ -61,24 +61,30 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
 - [x] **v0.8:** film sayfasında rehber kartı, filmden odaya dönüş (herkes dönmeden yeni video
   açılmaz), sürüklenebilir çubuk ve mesaj alanı (eklenti + site tam ekran), eklenti kurulunca
   uyarının kaybolması, açılış sesi, Film / Dizi / Anime parodi avatarları. v0.8.1: temalarda süsler kenarda (video izlerken görünür), odaya dönüş onayı, isim sormadan dönüş.
-- [ ] **Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
-  `npm run store`); gönderim bekliyor.
-- [ ] **Büyüme:** kısa alan adı, repo'yu açmak, lansman planı (`docs/BUYUME.md`).
-- [ ] **Firefox desteği:** arka plan için ayrı manifest; Firefox Android'de de
-  eklenti çalıştığı için telefonda da izlenebilir.
-- [ ] **Elle video seçimi:** otomatik seçim yanılırsa "bu videoyu senkronla".
-- [ ] **Son odalar:** ana sayfada son girilen odalar.
-- [ ] **Yönetici modları:** "sadece yönetici kontrol etsin", sırayı kilitle.
+- [x] **v0.9:** klavye kısayolları (1–8 emoji, Enter mesaj), zaman çizelgesinde tepkiler
+  (en çok emoji atılan anlar), temalara orta süsler, GitHub Actions ile otomatik testler.
+- [ ] **v1.0 — Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
+  `npm run store`); gönderim bekliyor. Hazırlık listesi: `docs/web-store.md` sonundaki kontrol listesi.
 
-### Orta vade (v0.7 – v1.0)
+### Sonraki adımlar (v1.x)
+- [ ] **Tanıtım videosu:** sitede ve mağaza sayfasında 30–60 sn'lik "nasıl çalışır" videosu
+  (oda kur → linki paylaş → arkadaş girer → aynı anda oynar → emoji / sohbet). Ana sayfada
+  otomatik, sessiz, döngülü oynasın.
+- [ ] **Senkron testi videosu:** boş odada 10 sn'lik test videosu; "ikimiz de aynı yerdeyiz ✓".
+- [ ] **Elle video seçimi:** otomatik seçim yanılırsa "bu videoyu senkronla".
+- [ ] **İzleme sonu kartı:** süre, tepki sayısı, en çok tepki alan an; paylaşılabilir görsel.
+- [ ] **Sıradaki için oylama** ve **planlı izleme** (geri sayımlı davet linki).
+- [ ] **Yönetici modları:** "sadece yönetici kontrol etsin", sırayı kilitle.
 - [ ] **Sesli sohbet (bas-konuş):** WebRTC; küçük gruplarda eşler arası,
   büyüklerde Cloudflare Realtime (SFU). Kullanıcıların en çok istediği özellik.
+- [ ] **Telefon desteği:** önce site için PWA (YouTube ve doğrudan videolar), sonra Firefox
+  Android'de eklenti.
+- [ ] **Firefox desteği:** arka plan için ayrı manifest.
+- [ ] **Kalıcı oda / son odalar:** "benim odam" linki hep aynı kalsın; ana sayfada son odalar.
+- [ ] **Eklenti yüklü gerçek Chrome testi:** Playwright ile (birim + uçtan uca zaten CI'da).
+- [ ] **Büyüme:** kısa alan adı, repo'yu açmak, lansman planı (`docs/BUYUME.md`).
 - [ ] **Senkron ölçümü ve rozet:** p50/p95 fark, README'de grafik.
-- [ ] **Otomatik testler:** GitHub Actions'ta birim + uçtan uca; Playwright ile
-  eklenti yüklü gerçek Chrome testi.
-- [ ] **PWA:** site telefona "uygulama" gibi eklenebilsin.
 - [ ] **Daha fazla dil.**
-
 ### Uzun vade
 - [ ] İsteğe bağlı hesap: kalıcı odalar, arkadaş listesi, oda davet geçmişi.
 - [ ] Altyazı senkronu / ortak altyazı dosyası.

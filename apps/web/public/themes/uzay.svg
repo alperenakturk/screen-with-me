@@ -8,8 +8,30 @@
 <linearGradient id="tail" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#9fd8ff" stop-opacity="0"/></linearGradient>
 <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8ffe0" stop-opacity=".45"/><stop offset="1" stop-color="#a8ffe0" stop-opacity="0"/></linearGradient>
 <mask id="cres"><rect width="1600" height="900" fill="#fff"/><circle cx="160" cy="104" r="28" fill="#000"/></mask>
+<filter id="neb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="40"/></filter>
+<radialGradient id="galaxy"><stop offset="0" stop-color="#fff2d6" stop-opacity=".9"/><stop offset=".4" stop-color="#b9a6ff" stop-opacity=".5"/><stop offset="1" stop-color="#6a4fd8" stop-opacity="0"/></radialGradient>
 </defs>
-<!-- Üstteki süsler biraz aşağıda: üst şerit ve geniş ekranda kırpılan üst kısım kapatmasın -->
+<!-- Orta süsler (ana sayfada ve kenar boşluklarında görünür): bulutsu, sarmal gökada,
+     halkalı küçük gezegen, uydu ve asteroit kuşağı -->
+<ellipse cx="760" cy="360" rx="420" ry="120" fill="#7a5cff" opacity=".10" filter="url(#neb)"/>
+<ellipse cx="900" cy="430" rx="300" ry="80" fill="#2ec5e8" opacity=".08" filter="url(#neb)"/>
+<g transform="translate(800 300) rotate(-18)" opacity=".75">
+  <ellipse rx="70" ry="24" fill="url(#galaxy)"/>
+  <path d="M-62 4 Q-20 -26 18 -8 Q40 4 60 -4 M62 -4 Q20 26 -18 8 Q-40 -4 -60 4" stroke="#e8e0ff" stroke-opacity=".35" stroke-width="3" fill="none"/>
+  <circle r="6" fill="#fff6e0" filter="url(#g)"/>
+</g>
+<g transform="translate(620 560)">
+  <ellipse rx="44" ry="9" fill="none" stroke="#c9f2ff" stroke-opacity=".45" stroke-width="4" transform="rotate(14)"/>
+  <circle r="22" fill="url(#mint)"/>
+  <path d="M-42 -10 A44 9 0 0 0 42 10" fill="none" stroke="#c9f2ff" stroke-opacity=".8" stroke-width="4" transform="rotate(14)"/>
+</g>
+<g transform="translate(1010 640) rotate(-24)" opacity=".9">
+  <rect x="-26" y="-6" width="18" height="12" fill="#5b7bd8" stroke="#a9c1ff" stroke-width="1.5"/>
+  <rect x="8" y="-6" width="18" height="12" fill="#5b7bd8" stroke="#a9c1ff" stroke-width="1.5"/>
+  <rect x="-8" y="-8" width="16" height="16" rx="3" fill="#e6e9f5"/>
+  <path d="M0 -8 V-18" stroke="#e6e9f5" stroke-width="2"/><circle cx="0" cy="-20" r="2.5" fill="#ffd27a"/>
+</g>
+<circle cx="380" cy="695" r="1.5" fill="#c9bfe8" opacity="0.3"/><circle cx="405.5" cy="690.4" r="3.3" fill="#c9bfe8" opacity="0.4"/><circle cx="430.9" cy="686" r="2.1" fill="#c9bfe8" opacity="0.6"/><circle cx="456.4" cy="670.6" r="3.9" fill="#c9bfe8" opacity="0.3"/><circle cx="481.8" cy="666.6" r="2.7" fill="#c9bfe8" opacity="0.5"/><circle cx="507.3" cy="662.8" r="1.5" fill="#c9bfe8" opacity="0.3"/><circle cx="532.7" cy="648.3" r="3.3" fill="#c9bfe8" opacity="0.4"/><circle cx="558.2" cy="645.4" r="2.1" fill="#c9bfe8" opacity="0.6"/><circle cx="583.6" cy="642.9" r="3.9" fill="#c9bfe8" opacity="0.3"/><circle cx="609.1" cy="630" r="2.7" fill="#c9bfe8" opacity="0.5"/><circle cx="634.5" cy="628.7" r="1.5" fill="#c9bfe8" opacity="0.3"/><circle cx="660" cy="617.1" r="3.3" fill="#c9bfe8" opacity="0.4"/><circle cx="685.5" cy="617.1" r="2.1" fill="#c9bfe8" opacity="0.6"/><circle cx="710.9" cy="617.9" r="3.9" fill="#c9bfe8" opacity="0.3"/><circle cx="736.4" cy="608.5" r="2.7" fill="#c9bfe8" opacity="0.5"/><circle cx="761.8" cy="610.9" r="1.5" fill="#c9bfe8" opacity="0.3"/><circle cx="787.3" cy="614.1" r="3.3" fill="#c9bfe8" opacity="0.4"/><circle cx="812.7" cy="607.1" r="2.1" fill="#c9bfe8" opacity="0.6"/><circle cx="838.2" cy="611.9" r="3.9" fill="#c9bfe8" opacity="0.3"/><circle cx="863.6" cy="617.5" r="2.7" fill="#c9bfe8" opacity="0.5"/><circle cx="889.1" cy="612.9" r="1.5" fill="#c9bfe8" opacity="0.3"/><circle cx="914.5" cy="620.1" r="3.3" fill="#c9bfe8" opacity="0.4"/><circle cx="940" cy="617.1" r="2.1" fill="#c9bfe8" opacity="0.6"/><circle cx="965.5" cy="625.7" r="3.9" fill="#c9bfe8" opacity="0.3"/><circle cx="990.9" cy="635" r="2.7" fill="#c9bfe8" opacity="0.5"/><circle cx="1016.4" cy="633.9" r="1.5" fill="#c9bfe8" opacity="0.3"/><circle cx="1041.8" cy="644.4" r="3.3" fill="#c9bfe8" opacity="0.4"/><circle cx="1067.3" cy="655.3" r="2.1" fill="#c9bfe8" opacity="0.6"/><circle cx="1092.7" cy="655.8" r="3.9" fill="#c9bfe8" opacity="0.3"/><circle cx="1118.2" cy="667.6" r="2.7" fill="#c9bfe8" opacity="0.5"/><circle cx="1143.6" cy="679.6" r="1.5" fill="#c9bfe8" opacity="0.3"/><circle cx="1169.1" cy="681" r="3.3" fill="#c9bfe8" opacity="0.4"/><circle cx="1194.5" cy="693.4" r="2.1" fill="#c9bfe8" opacity="0.6"/><circle cx="1220" cy="695" r="3.9" fill="#c9bfe8" opacity="0.3"/><!-- Üstteki süsler biraz aşağıda: üst şerit ve geniş ekranda kırpılan üst kısım kapatmasın -->
 <g transform="translate(0 90)">
 <!-- Hilal -->
 <circle cx="146" cy="116" r="30" fill="#f6f2ff" mask="url(#cres)" filter="url(#g)"/>
@@ -19,16 +41,12 @@
 </g>
 <circle cx="1390" cy="180" r="50" fill="url(#peach)"/>
 <g transform="rotate(-16 1390 180)"><path d="M1298 180 A92 20 0 0 0 1482 180" fill="none" stroke="#ffe7c4" stroke-opacity=".85" stroke-width="7"/></g>
-<g opacity=".9"><circle cx="1374" cy="177.5" r="3.5" fill="#1b1446"/><circle cx="1406" cy="177.5" r="3.5" fill="#1b1446"/>
-<path d="M1383 186 Q1390 193 1397 186" stroke="#1b1446" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-<ellipse cx="1365" cy="187" rx="6" ry="3.5" fill="#ff8fb8" opacity=".6"/><ellipse cx="1415" cy="187" rx="6" ry="3.5" fill="#ff8fb8" opacity=".6"/></g>
+<circle cx="1372" cy="166" r="9" fill="#d9785e" opacity=".55"/><circle cx="1406" cy="196" r="6" fill="#d9785e" opacity=".5"/><circle cx="1410" cy="160" r="4" fill="#d9785e" opacity=".45"/>
 </g>
 <!-- Mavi gezegen (sağ alt) -->
 <circle cx="1470" cy="715" r="66" fill="url(#blue)"/>
 <path d="M1410 690 Q1470 676 1532 694 M1406 726 Q1470 742 1534 722" stroke="#d6f0ff" stroke-opacity=".35" stroke-width="7" fill="none" stroke-linecap="round"/>
-<g opacity=".9"><circle cx="1448.9" cy="711.7" r="4.6" fill="#1b1446"/><circle cx="1491.1" cy="711.7" r="4.6" fill="#1b1446"/>
-<path d="M1460.8 722.9 Q1470 732.2 1479.2 722.9" stroke="#1b1446" stroke-width="3.3" fill="none" stroke-linecap="round"/>
-<ellipse cx="1437" cy="724.2" rx="7.9" ry="4.6" fill="#ff8fb8" opacity=".6"/><ellipse cx="1503" cy="724.2" rx="7.9" ry="4.6" fill="#ff8fb8" opacity=".6"/></g>
+<circle cx="1446" cy="700" r="10" fill="#2f5fb8" opacity=".45"/><circle cx="1494" cy="736" r="7" fill="#2f5fb8" opacity=".4"/>
 <!-- Küçük gezegenler -->
 <circle cx="232" cy="352" r="21" fill="url(#pink)"/>
 <circle cx="1186" cy="218" r="13" fill="url(#mint)"/>

@@ -13,6 +13,15 @@
 <circle cx="1453" cy="174" r="11" fill="#f1e1ac"/><circle cx="1498" cy="208" r="14" fill="#f1e1ac"/><circle cx="1493" cy="165" r="6" fill="#f1e1ac"/>
 <path d="M200 120 L80 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
 </g>
+<!-- Uçan halı (ortada, hafif dalgalı) -->
+<g transform="translate(790 330) rotate(-6)">
+  <path d="M-90 0 Q-45 -12 0 0 Q45 12 90 0 L70 34 Q25 22 -20 34 Q-60 46 -110 34Z" fill="#a8324a"/>
+  <path d="M-80 8 Q-40 -2 0 9 Q40 20 80 9 M-92 26 Q-52 16 -16 27 Q26 38 66 27" stroke="#e8c27a" stroke-width="2.5" fill="none"/>
+  <path d="M-58 14 l8 -6 l8 6 l-8 6Z M-6 18 l8 -6 l8 6 l-8 6Z M44 18 l8 -6 l8 6 l-8 6Z" fill="#2a5a8a"/>
+  <path d="M-110 34 l-8 4" stroke="#e8c27a" stroke-width="2"/><path d="M-98 22 l-8 4" stroke="#e8c27a" stroke-width="2"/><path d="M-86 10 l-8 4" stroke="#e8c27a" stroke-width="2"/>
+  <path d="M90 0 l9 -3 M80 17 l9 -3 M70 34 l9 -3" stroke="#e8c27a" stroke-width="2"/>
+  <path d="M118 -20 Q119.7 -15.7 124 -14 Q119.7 -12.3 118 -8 Q116.3 -12.3 112 -14 Q116.3 -15.7 118 -20Z" fill="#fff1c9" opacity="1"/><path d="M-130 8 Q-128.9 10.9 -126 12 Q-128.9 13.1 -130 16 Q-131.1 13.1 -134 12 Q-131.1 10.9 -130 8Z" fill="#fff1c9" opacity="1"/>
+</g>
 <!-- Uzak saray silueti (sol kenarda) -->
 <g fill="#15122c" transform="translate(-915 0)">
   <rect x="960" y="590" width="190" height="40"/>
@@ -20,6 +29,13 @@
   <rect x="948" y="530" width="8" height="64"/><path d="M946 532 L952 510 L958 532Z"/><rect x="1150" y="540" width="8" height="54"/><path d="M1148 542 L1154 520 L1160 542Z"/>
   <path d="M1040 540 V524" stroke="#15122c" stroke-width="3"/>
 </g>
+<!-- Uzak şehir (ortada, kumulların ardında) -->
+<g fill="#1b1738">
+  <rect x="660" y="600" width="260" height="40"/>
+  <path d="M720 602 Q720 570 745 564 Q770 570 770 602Z M800 602 Q800 556 830 548 Q860 556 860 602Z M880 602 Q880 580 896 576 Q912 580 912 602Z"/>
+  <rect x="690" y="548" width="7" height="56"/><path d="M688 550 L693.5 530 L699 550Z"/><rect x="930" y="556" width="7" height="48"/><path d="M928 558 L933.5 540 L939 558Z"/>
+</g>
+<g fill="#ffd58a" opacity=".55"><rect x="740" y="612" width="4" height="7" rx="2"/><rect x="826" y="610" width="4" height="7" rx="2"/><rect x="890" y="614" width="4" height="7" rx="2"/></g>
 <!-- Arka kumullar -->
 <path d="M0 640 Q200 590 420 630 Q640 670 860 610 Q1080 560 1300 620 Q1460 660 1600 610 V900 H0Z" fill="url(#dune1)"/>
 <!-- Kervan sırtta -->

@@ -66,10 +66,7 @@ ${mouth ? '<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" st
 // =====================================================================
 
 function uzayScene() {
-  const kawaii = (cx, cy, r) => `
-<g opacity=".9"><circle cx="${f(cx - r * 0.32)}" cy="${f(cy - r * 0.05)}" r="${f(r * 0.07)}" fill="#1b1446"/><circle cx="${f(cx + r * 0.32)}" cy="${f(cy - r * 0.05)}" r="${f(r * 0.07)}" fill="#1b1446"/>
-<path d="M${f(cx - r * 0.14)} ${f(cy + r * 0.12)} Q${f(cx)} ${f(cy + r * 0.26)} ${f(cx + r * 0.14)} ${f(cy + r * 0.12)}" stroke="#1b1446" stroke-width="${f(r * 0.05)}" fill="none" stroke-linecap="round"/>
-<ellipse cx="${f(cx - r * 0.5)}" cy="${f(cy + r * 0.14)}" rx="${f(r * 0.12)}" ry="${f(r * 0.07)}" fill="#ff8fb8" opacity=".6"/><ellipse cx="${f(cx + r * 0.5)}" cy="${f(cy + r * 0.14)}" rx="${f(r * 0.12)}" ry="${f(r * 0.07)}" fill="#ff8fb8" opacity=".6"/></g>`;
+  // Gezegenlerde yüz yok (kullanıcı istemedi): krater ve bantlarla süslenir.
 
   const sparkles = [
     [470, 90, 9], [1080, 70, 7], [1500, 330, 10], [90, 430, 8], [1230, 640, 7], [380, 780, 6],
@@ -86,8 +83,35 @@ ${GLOW('g', 4)}
 <linearGradient id="tail" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#9fd8ff" stop-opacity="0"/></linearGradient>
 <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8ffe0" stop-opacity=".45"/><stop offset="1" stop-color="#a8ffe0" stop-opacity="0"/></linearGradient>
 <mask id="cres"><rect width="${W}" height="${H}" fill="#fff"/><circle cx="160" cy="104" r="28" fill="#000"/></mask>
+<filter id="neb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="40"/></filter>
+<radialGradient id="galaxy"><stop offset="0" stop-color="#fff2d6" stop-opacity=".9"/><stop offset=".4" stop-color="#b9a6ff" stop-opacity=".5"/><stop offset="1" stop-color="#6a4fd8" stop-opacity="0"/></radialGradient>
 </defs>
-<!-- Üstteki süsler biraz aşağıda: üst şerit ve geniş ekranda kırpılan üst kısım kapatmasın -->
+<!-- Orta süsler (ana sayfada ve kenar boşluklarında görünür): bulutsu, sarmal gökada,
+     halkalı küçük gezegen, uydu ve asteroit kuşağı -->
+<ellipse cx="760" cy="360" rx="420" ry="120" fill="#7a5cff" opacity=".10" filter="url(#neb)"/>
+<ellipse cx="900" cy="430" rx="300" ry="80" fill="#2ec5e8" opacity=".08" filter="url(#neb)"/>
+<g transform="translate(800 300) rotate(-18)" opacity=".75">
+  <ellipse rx="70" ry="24" fill="url(#galaxy)"/>
+  <path d="M-62 4 Q-20 -26 18 -8 Q40 4 60 -4 M62 -4 Q20 26 -18 8 Q-40 -4 -60 4" stroke="#e8e0ff" stroke-opacity=".35" stroke-width="3" fill="none"/>
+  <circle r="6" fill="#fff6e0" filter="url(#g)"/>
+</g>
+<g transform="translate(620 560)">
+  <ellipse rx="44" ry="9" fill="none" stroke="#c9f2ff" stroke-opacity=".45" stroke-width="4" transform="rotate(14)"/>
+  <circle r="22" fill="url(#mint)"/>
+  <path d="M-42 -10 A44 9 0 0 0 42 10" fill="none" stroke="#c9f2ff" stroke-opacity=".8" stroke-width="4" transform="rotate(14)"/>
+</g>
+<g transform="translate(1010 640) rotate(-24)" opacity=".9">
+  <rect x="-26" y="-6" width="18" height="12" fill="#5b7bd8" stroke="#a9c1ff" stroke-width="1.5"/>
+  <rect x="8" y="-6" width="18" height="12" fill="#5b7bd8" stroke="#a9c1ff" stroke-width="1.5"/>
+  <rect x="-8" y="-8" width="16" height="16" rx="3" fill="#e6e9f5"/>
+  <path d="M0 -8 V-18" stroke="#e6e9f5" stroke-width="2"/><circle cx="0" cy="-20" r="2.5" fill="#ffd27a"/>
+</g>
+${Array.from({ length: 34 }, (_, i) => {
+  const a = i / 33;
+  const x = 380 + a * 840;
+  const y = 700 - Math.sin(a * Math.PI) * 90 + ((i * 37) % 11) - 5;
+  return `<circle cx="${f(x)}" cy="${f(y)}" r="${f(1.5 + ((i * 13) % 5) * 0.6)}" fill="#c9bfe8" opacity="${f(0.25 + ((i * 7) % 5) * 0.08)}"/>`;
+}).join('')}<!-- Üstteki süsler biraz aşağıda: üst şerit ve geniş ekranda kırpılan üst kısım kapatmasın -->
 <g transform="translate(0 90)">
 <!-- Hilal -->
 <circle cx="146" cy="116" r="30" fill="#f6f2ff" mask="url(#cres)" filter="url(#g)"/>
@@ -97,12 +121,12 @@ ${GLOW('g', 4)}
 </g>
 <circle cx="1390" cy="180" r="50" fill="url(#peach)"/>
 <g transform="rotate(-16 1390 180)"><path d="M1298 180 A92 20 0 0 0 1482 180" fill="none" stroke="#ffe7c4" stroke-opacity=".85" stroke-width="7"/></g>
-${kawaii(1390, 180, 50)}
+<circle cx="1372" cy="166" r="9" fill="#d9785e" opacity=".55"/><circle cx="1406" cy="196" r="6" fill="#d9785e" opacity=".5"/><circle cx="1410" cy="160" r="4" fill="#d9785e" opacity=".45"/>
 </g>
 <!-- Mavi gezegen (sağ alt) -->
 <circle cx="1470" cy="715" r="66" fill="url(#blue)"/>
 <path d="M1410 690 Q1470 676 1532 694 M1406 726 Q1470 742 1534 722" stroke="#d6f0ff" stroke-opacity=".35" stroke-width="7" fill="none" stroke-linecap="round"/>
-${kawaii(1470, 715, 66)}
+<circle cx="1446" cy="700" r="10" fill="#2f5fb8" opacity=".45"/><circle cx="1494" cy="736" r="7" fill="#2f5fb8" opacity=".4"/>
 <!-- Küçük gezegenler -->
 <circle cx="232" cy="352" r="21" fill="url(#pink)"/>
 <circle cx="1186" cy="218" r="13" fill="url(#mint)"/>
@@ -234,6 +258,16 @@ function siberScene() {
 <path d="M-20 36 h40 v10 h-40Z" fill="#1a0f33" stroke="${CYAN}" stroke-width="1.5"/>
 <circle cx="96" cy="0" r="3" fill="${YELLOW}" filter="url(#n)"/><circle cx="-110" cy="-14" r="2.5" fill="${PINK}" filter="url(#n)"/>
 </g>`);
+
+  // Uçan arabalar: ortada ışık izi bırakarak süzülen küçük kapsüller
+  const car = (x, y, dir, color) => `<g transform="translate(${x} ${y}) scale(${dir} 1)">
+<path d="M-150 2 H-18" stroke="${color}" stroke-width="2" opacity=".5" stroke-linecap="round"/>
+<path d="M-110 6 H-20" stroke="${color}" stroke-width="1.2" opacity=".3" stroke-linecap="round"/>
+<path d="M-20 4 Q-18 -8 0 -9 Q18 -8 22 4 Z" fill="#1a0f33" stroke="${color}" stroke-width="1.6" filter="url(#n)"/>
+<rect x="-24" y="3" width="50" height="6" rx="3" fill="#1a0f33" stroke="${color}" stroke-width="1.6"/>
+<circle cx="22" cy="6" r="2" fill="${YELLOW}" filter="url(#n)"/>
+</g>`;
+  parts.push(car(640, 330, 1, CYAN), car(1000, 280, -1, PINK), car(820, 420, 1, PINK), car(560, 470, -1, CYAN));
 
   // Sentetik güneş: ufukta, çizgili
   let stripes = '';
@@ -405,9 +439,14 @@ function ortacagScene() {
 ${GLOW('g', 5)}
 <radialGradient id="halo"><stop offset="0" stop-color="#e8eeff" stop-opacity=".35"/><stop offset="1" stop-color="#e8eeff" stop-opacity="0"/></radialGradient>
 <radialGradient id="ember"><stop offset="0" stop-color="#ff8a3d" stop-opacity=".55"/><stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient>
+<linearGradient id="aurora" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5dffb0"/><stop offset=".5" stop-color="#7a8cff"/><stop offset="1" stop-color="#c77dff"/></linearGradient>
+<linearGradient id="fall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe8ff"/><stop offset="1" stop-color="#cfe8ff" stop-opacity="0"/></linearGradient>
 <linearGradient id="tower" x1="0" y1="0" x2="1" y2="0"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5a6684" stop-opacity=".45"/></linearGradient>
 </defs>
 ${stars}
+<!-- Kuzey ışıkları: gökyüzünde dalgalanan soluk büyü ışığı -->
+<path d="M-20 300 Q240 220 520 280 T1080 250 T1640 290" stroke="url(#aurora)" stroke-width="70" fill="none" opacity=".22" filter="url(#blur)"/>
+<path d="M-20 340 Q300 280 620 330 T1240 300 T1640 330" stroke="url(#aurora)" stroke-width="40" fill="none" opacity=".16" filter="url(#blur)"/>
 <!-- Ay ve kartallar biraz aşağıda (üst şerit kapatmasın) -->
 <g transform="translate(0 80)">
 <circle cx="140" cy="190" r="150" fill="url(#halo)"/>
@@ -421,6 +460,25 @@ ${range(560, 260, 90, 3, '#2a3550', '#d9e2f2')}
 ${mist(600, 0.22)}
 ${range(680, 220, 110, 9, '#1d263b', '#b9c6dd')}
 ${mist(700, 0.18)}
+<!-- Uçan ada: altından şelale akar, üstünde minik ağaç ve taş kemer -->
+<g transform="translate(600 330)">
+  <path d="M-10 20 Q-4 120 6 200" stroke="url(#fall)" stroke-width="10" fill="none" opacity=".75"/>
+  <path d="M-90 0 Q0 -16 90 0 L40 40 L10 92 L-14 50 L-56 30Z" fill="#3a3550"/>
+  <path d="M-90 0 Q0 -16 90 0 Q60 10 0 8 Q-60 10 -90 0Z" fill="#3f7a52"/>
+  <path d="M30 -2 V-30" stroke="#2a2030" stroke-width="4"/><circle cx="30" cy="-38" r="13" fill="#2f6a46"/><circle cx="20" cy="-30" r="9" fill="#2f6a46"/>
+  <path d="M-50 2 V-22 Q-38 -36 -26 -22 V2 H-32 V-18 Q-38 -26 -44 -18 V2Z" fill="#8e98b0"/>
+  <circle cx="-38" cy="-12" r="3" fill="#8ff7e1" filter="url(#g)"/>
+</g>
+<!-- Büyücü kulesi (sol dağın eteğinde): mor sivri çatı, parlayan pencere -->
+<g transform="translate(470 560)">
+  <rect x="-12" y="0" width="24" height="120" fill="#1f2638"/>
+  <path d="M-20 2 L0 -60 L20 2Z" fill="#4b2f7a"/><path d="M0 -60 L20 2 H8Z" fill="#3a2460"/>
+  <path d="M0 -60 Q14 -70 10 -84" stroke="#d6a843" stroke-width="2" fill="none"/><circle cx="10" cy="-86" r="3" fill="#ffd27a" filter="url(#g)"/>
+  <rect x="-4" y="22" width="8" height="12" rx="4" fill="#b98cff" filter="url(#g)"/>
+  <rect x="-4" y="60" width="8" height="10" rx="4" fill="#ffd27a" opacity=".7"/>
+</g>
+<!-- Renkli, sevimli ejderha ortada süzülüyor (gölge ejderhanın neşeli kuzeni) -->
+${dragon(930, 250, 0.65, 1, { body: '#e8746a', dark: '#b4483f', belly: '#ffd9a8', wing: '#f29a5c' })}
 <!-- Kale ve ejderha sağ kenarda: video izlerken de yanda görünsün -->
 <g transform="translate(150 0)">${city}${shadowDragon}</g>
 ${range(800, 120, 140, 21, '#141b2b', null)}
@@ -428,6 +486,11 @@ ${range(800, 120, 140, 21, '#141b2b', null)}
 <path d="M140 900 Q260 680 420 690 Q560 700 640 900Z" fill="#101624"/>
 ${ruins}
 ${pines}
+<!-- Parlayan mantarlar ve ateş böcekleri (alt kısım, büyülü orman havası) -->
+<g filter="url(#g)">
+  ${[[250, 872, 1], [282, 880, 0.7], [1100, 878, 0.8], [1135, 884, 0.6], [760, 884, 0.7]].map(([x, y, s]) => `<g transform="translate(${x} ${y}) scale(${s})"><rect x="-3" y="-14" width="6" height="14" fill="#cfe8ff"/><path d="M-14 -12 Q0 -30 14 -12Z" fill="#7be0ff"/><circle cx="-5" cy="-18" r="2" fill="#fff"/></g>`).join('')}
+  ${Array.from({ length: 22 }, (_, i) => `<circle cx="${f(180 + ((i * 397) % 1240))}" cy="${f(660 + ((i * 131) % 200))}" r="${f(1.6 + (i % 3) * 0.7)}" fill="#e8ff9a" opacity="${f(0.45 + (i % 4) * 0.12)}"/>`).join('')}
+</g>
 `);
 }
 
@@ -579,6 +642,8 @@ ${GLOW('g', 5)}
 </defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>
 ${iznikCorner(false)}${iznikCorner(true)}
+<!-- Ortada soluk yıldızlar: gökyüzü boş kalmasın -->
+${Array.from({ length: 70 }, () => `<circle cx="${f(r() * W)}" cy="${f(200 + r() * 420)}" r="${f(0.6 + r() * 1.3)}" fill="#ffe9c9" opacity="${f(0.2 + r() * 0.5)}"/>`).join('')}
 <!-- Hilal ve martılar -->
 <circle cx="1480" cy="270" r="130" fill="url(#halo)"/>
 <circle cx="1480" cy="270" r="46" fill="#ffe9c9" mask="url(#cres)"/>
@@ -726,6 +791,15 @@ ${GLOW('g', 6)}
 <circle cx="1453" cy="174" r="11" fill="#f1e1ac"/><circle cx="1498" cy="208" r="14" fill="#f1e1ac"/><circle cx="1493" cy="165" r="6" fill="#f1e1ac"/>
 <path d="M200 120 L80 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
 </g>
+<!-- Uçan halı (ortada, hafif dalgalı) -->
+<g transform="translate(790 330) rotate(-6)">
+  <path d="M-90 0 Q-45 -12 0 0 Q45 12 90 0 L70 34 Q25 22 -20 34 Q-60 46 -110 34Z" fill="#a8324a"/>
+  <path d="M-80 8 Q-40 -2 0 9 Q40 20 80 9 M-92 26 Q-52 16 -16 27 Q26 38 66 27" stroke="#e8c27a" stroke-width="2.5" fill="none"/>
+  <path d="M-58 14 l8 -6 l8 6 l-8 6Z M-6 18 l8 -6 l8 6 l-8 6Z M44 18 l8 -6 l8 6 l-8 6Z" fill="#2a5a8a"/>
+  ${[-110, -100, -90].map((x, i) => `<path d="M${x + i * 2} ${34 - i * 12} l-8 4" stroke="#e8c27a" stroke-width="2"/>`).join('')}
+  <path d="M90 0 l9 -3 M80 17 l9 -3 M70 34 l9 -3" stroke="#e8c27a" stroke-width="2"/>
+  ${sparkle(118, -14, 6, '#fff1c9')}${sparkle(-130, 12, 4, '#fff1c9')}
+</g>
 <!-- Uzak saray silueti (sol kenarda) -->
 <g fill="#15122c" transform="translate(-915 0)">
   <rect x="960" y="590" width="190" height="40"/>
@@ -733,6 +807,13 @@ ${GLOW('g', 6)}
   <rect x="948" y="530" width="8" height="64"/><path d="M946 532 L952 510 L958 532Z"/><rect x="1150" y="540" width="8" height="54"/><path d="M1148 542 L1154 520 L1160 542Z"/>
   <path d="M1040 540 V524" stroke="#15122c" stroke-width="3"/>
 </g>
+<!-- Uzak şehir (ortada, kumulların ardında) -->
+<g fill="#1b1738">
+  <rect x="660" y="600" width="260" height="40"/>
+  <path d="M720 602 Q720 570 745 564 Q770 570 770 602Z M800 602 Q800 556 830 548 Q860 556 860 602Z M880 602 Q880 580 896 576 Q912 580 912 602Z"/>
+  <rect x="690" y="548" width="7" height="56"/><path d="M688 550 L693.5 530 L699 550Z"/><rect x="930" y="556" width="7" height="48"/><path d="M928 558 L933.5 540 L939 558Z"/>
+</g>
+<g fill="#ffd58a" opacity=".55"><rect x="740" y="612" width="4" height="7" rx="2"/><rect x="826" y="610" width="4" height="7" rx="2"/><rect x="890" y="614" width="4" height="7" rx="2"/></g>
 <!-- Arka kumullar -->
 <path d="M0 640 Q200 590 420 630 Q640 670 860 610 Q1080 560 1300 620 Q1460 660 1600 610 V900 H0Z" fill="url(#dune1)"/>
 <!-- Kervan sırtta -->
