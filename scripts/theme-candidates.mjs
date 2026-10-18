@@ -120,163 +120,13 @@ function scene() {
   };
 }
 
-/**
- * Kademeli Art Deco kulesi: her kat bir öncekinden dar; yandan ışık alır (aydınlık ve
- * gölge yüz), dikey şeritler pencere gibi durur. c: { lit, shade, line, litLine, edge }.
- */
-function tower(x, base, w, h, c, { litRight = true, tiers = 3, spire = 0 } = {}) {
-  let s = '';
-  let tx = x;
-  let tw = w;
-  let bottom = base;
-  const shares = tiers === 1 ? [1] : tiers === 2 ? [0.72, 0.28] : [0.6, 0.24, 0.16];
-  for (let t = 0; t < tiers; t++) {
-    const th = h * shares[t];
-    const top = bottom - th;
-    const litW = tw * 0.42;
-    const litX = litRight ? tx + tw - litW : tx;
-    s += `<rect x="${f(tx)}" y="${f(top)}" width="${f(tw)}" height="${f(th + 1)}" fill="${c.shade}"/>`;
-    s += `<rect x="${f(litX)}" y="${f(top)}" width="${f(litW)}" height="${f(th + 1)}" fill="${c.lit}"/>`;
-    for (let k = tx + 5; k < tx + tw - 4; k += 7) {
-      const onLit = k >= litX && k < litX + litW;
-      s += `<rect x="${f(k)}" y="${f(top + 6)}" width="2" height="${f(th - 10)}" fill="${onLit ? c.litLine : c.line}"/>`;
-    }
-    s += `<rect x="${f(tx)}" y="${f(top)}" width="${f(tw)}" height="2.5" fill="${c.edge}"/>`;
-    bottom = top;
-    const nw = tw * 0.7;
-    tx += (tw - nw) / 2;
-    tw = nw;
-  }
-  if (spire) {
-    const cx = tx + tw / 2;
-    s += `<path d="M${f(cx - tw * 0.2)} ${f(bottom)} L${f(cx)} ${f(bottom - spire)} L${f(cx + tw * 0.2)} ${f(bottom)}Z" fill="${c.lit}"/>`;
-  }
-  return s;
-}
-
 /** Arkadan görülen, yüzsüz seyirci başı ve omuzları; (x, y) omuz hizası. */
 function head(x, y, r, fill, rim) {
   return `<path d="M${f(x - r * 2.1)} ${f(y + r)} Q${f(x - r * 2)} ${f(y - r * 0.6)} ${f(x)} ${f(y - r * 0.7)} Q${f(x + r * 2)} ${f(y - r * 0.6)} ${f(x + r * 2.1)} ${f(y + r)}Z" fill="${fill}"/><circle cx="${f(x)}" cy="${f(y - r * 1.5)}" r="${f(r)}" fill="${fill}"${rim ? ` stroke="${rim}" stroke-width="1.4" stroke-opacity=".6"` : ''}/>`;
 }
 
-function note(x, y, s, color, o) {
-  return `<g transform="translate(${f(x)} ${f(y)}) scale(${s})" fill="${color}" opacity="${o}"><ellipse rx="9" ry="6.5" transform="rotate(-20)"/><rect x="6.5" y="-44" width="3" height="44"/><path d="M9.5 -44 Q24 -36 22 -18 Q19 -30 9.5 -32Z"/></g>`;
-}
-
 // =====================================================================
-// 1. PERDE AÇILIYOR (tiyatro, AYDINLIK): kadife perdeler, altın çerçeve,
-//    çapraz spotlar, sahne ışıkları; arka duvarda sunburst ve kemerler
-// =====================================================================
-
-function perdeScene() {
-  const S = scene();
-  S.defs.push(`
-<radialGradient id="wall" gradientUnits="userSpaceOnUse" cx="800" cy="860" r="1000"><stop offset="0" stop-color="#ffe9b8"/><stop offset=".3" stop-color="#f4b064"/><stop offset=".62" stop-color="#c0503c"/><stop offset="1" stop-color="#5a1424"/></radialGradient>
-<linearGradient id="velvet" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a0d1a"/><stop offset=".5" stop-color="#c62a3a"/><stop offset=".64" stop-color="#e3545c"/><stop offset="1" stop-color="#5a0d1a"/></linearGradient>
-<linearGradient id="fold" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="50" y2="0" spreadMethod="repeat"><stop offset="0" stop-color="#6a1020"/><stop offset=".5" stop-color="#c62a3a"/><stop offset=".62" stop-color="#dc4a52"/><stop offset="1" stop-color="#6a1020"/></linearGradient>
-<linearGradient id="curtShade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a0510" stop-opacity=".75"/><stop offset=".75" stop-color="#2a0510" stop-opacity="0"/></linearGradient>
-<linearGradient id="valShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0510" stop-opacity=".7"/><stop offset="1" stop-color="#2a0510" stop-opacity="0"/></linearGradient>
-<linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e09450"/><stop offset="1" stop-color="#6e3418"/></linearGradient>
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6a6"/><stop offset=".5" stop-color="#dba443"/><stop offset="1" stop-color="#8a5a1c"/></linearGradient>
-<linearGradient id="goldH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a5a1c"/><stop offset=".5" stop-color="#ffe6a6"/><stop offset="1" stop-color="#8a5a1c"/></linearGradient>
-${GLOW('g', 5)}${BLUR('blur', 18)}${GRAIN_DEFS}`);
-
-  // Perde: her kıvrım ayrı bir şerit; yukarıda geniş, bağda toplanır, aşağıda açılır.
-  const curtain = () => {
-    const k = 8;
-    const T = (t) => 300 * t;
-    const M = (t) => 140 * t;
-    const B = (t) => 235 * t;
-    let s = '';
-    for (let i = 0; i < k; i++) {
-      const a = i / k;
-      const b = (i + 1) / k;
-      s += `<path d="M${f(T(a))} 0 L${f(T(b))} 0 Q${f(T(b) * 0.93)} 380 ${f(M(b))} 545 Q${f(M(b) * 1.08)} 720 ${f(B(b))} 900 L${f(B(a))} 900 Q${f(M(a) * 1.08)} 720 ${f(M(a))} 545 Q${f(T(a) * 0.93)} 380 ${f(T(a))} 0Z" fill="url(#velvet)"/>`;
-    }
-    s += `<path d="M0 0 H300 Q279 380 140 545 Q151 720 235 900 H0Z" fill="url(#curtShade)"/>`;
-    // Altın bağ ve püskül
-    s += `<path d="M-4 526 Q84 516 156 540 Q86 566 -4 558Z" fill="url(#gold)"/>`;
-    s += `<circle cx="156" cy="542" r="10" fill="url(#gold)"/><path d="M150 550 L142 600 H170 L162 550Z" fill="url(#gold)"/>`;
-    for (let x = 144; x <= 168; x += 4) s += `<line x1="${x}" y1="600" x2="${x}" y2="612" stroke="#b9822c" stroke-width="2"/>`;
-    // Altın çerçeve (sahne ağzı) en kenarda
-    s += `<rect x="0" y="0" width="16" height="900" fill="url(#goldH)"/><rect x="20" y="0" width="3" height="900" fill="#ffe6a6" opacity=".7"/>`;
-    return s;
-  };
-
-  // Üst saçak: kıvrımlı kadife, alt kenarı fistolu, altın saçaklı
-  let scal = 'M0 0 H1600 V188';
-  let fringe = 'M1600 188';
-  let tassels = '';
-  for (let x = 1600; x > 0; x -= 100) {
-    scal += ` Q${x - 50} 246 ${x - 100} 188`;
-    fringe += ` Q${x - 50} 246 ${x - 100} 188`;
-    tassels += `<path d="M${x - 54} 216 h8 l3 22 h-14Z" fill="url(#gold)"/>`;
-  }
-  scal += 'Z';
-
-  // Sahne tahtaları: kaçış noktasına doğru
-  let planks = '';
-  for (let i = -16; i <= 16; i++) planks += `<line x1="${800 + i * 60}" y1="790" x2="${f(800 + i * 60 * 1.2245)}" y2="900" stroke="#5a2a12" stroke-opacity=".35" stroke-width="2"/>`;
-  let foot = '';
-  for (let x = 320; x <= 1280; x += 60) foot += `<path d="M${x - 14} 798 A14 9 0 0 1 ${x + 14} 798Z" fill="#fff4d0" filter="url(#g)"/>`;
-
-  let arches = '';
-  for (let k = 0; k < 5; k++) {
-    const r = 420 + k * 70;
-    arches += `<path d="M${800 - r} 790 A${r} ${r} 0 0 1 ${800 + r} 790" fill="none" stroke="#fff0c8" stroke-opacity="${f(0.32 - k * 0.04)}" stroke-width="${k % 2 ? 2 : 4}"/>`;
-  }
-
-  return S.svg(`
-<defs>__DEFS__</defs>
-<rect width="${W}" height="${H}" fill="url(#wall)"/>
-${rays(800, 860, 1300, 44, ['#fff3d6'], { from: 180, to: 360, fill: 0.5, opacity: 0.16 })}
-${arches}
-<!-- Sahne -->
-<path d="M0 790 H1600 V900 H0Z" fill="url(#floor)"/>
-${planks}
-<ellipse cx="800" cy="842" rx="380" ry="42" fill="#fff6dc" opacity=".45" filter="url(#blur)"/>
-<rect x="0" y="782" width="${W}" height="12" fill="url(#gold)"/>
-${foot}
-<!-- Çapraz spotlar -->
-${S.cone(300, 150, 760, 850, 160, '#fff6dc', 0.5, 0.06)}
-${S.cone(1300, 150, 840, 850, 160, '#fff6dc', 0.5, 0.06)}
-<!-- Perdeler -->
-${curtain()}
-<g transform="translate(${W} 0) scale(-1 1)">${curtain()}</g>
-<!-- Saçak ve ortadaki altın yelpaze -->
-<path d="${scal}" fill="url(#fold)"/>
-<path d="M0 0 H1600 V160 H0Z" fill="url(#valShade)"/>
-<path d="${fringe}" fill="none" stroke="url(#gold)" stroke-width="7"/>
-${tassels}
-${rays(800, 192, 70, 13, ['#ffe6a6', '#dba443'], { from: 180, to: 360, fill: 0.55, opacity: 0.95 })}
-<circle cx="800" cy="192" r="16" fill="url(#gold)"/>
-${grain(0.2)}
-`);
-}
-
-function perdeMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 4)}
-<linearGradient id="vel" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="18" y2="0" spreadMethod="repeat"><stop offset="0" stop-color="#6a1020"/><stop offset=".55" stop-color="#d8414c"/><stop offset="1" stop-color="#6a1020"/></linearGradient>
-<radialGradient id="spot" cx="50%" cy="60%" r="50%"><stop offset="0" stop-color="#fff2c8" stop-opacity=".75"/><stop offset="1" stop-color="#fff2c8" stop-opacity="0"/></radialGradient>
-</defs>
-<ellipse cx="120" cy="150" rx="96" ry="96" fill="url(#spot)"/>
-<path d="M0 214 H240 V240 H0Z" fill="#c06a32"/><rect y="210" width="240" height="6" fill="#e6b85c"/>
-<path d="M0 0 H62 Q46 110 26 132 Q40 176 56 214 H0Z" fill="url(#vel)"/>
-<path d="M240 0 H178 Q194 110 214 132 Q200 176 184 214 H240Z" fill="url(#vel)"/>
-<circle cx="28" cy="132" r="7" fill="#e6b85c"/><circle cx="212" cy="132" r="7" fill="#e6b85c"/>
-<path d="M0 0 H240 V22 Q225 38 210 22 Q195 38 180 22 Q165 38 150 22 Q135 38 120 22 Q105 38 90 22 Q75 38 60 22 Q45 38 30 22 Q15 38 0 22Z" fill="url(#vel)" stroke="#e6b85c" stroke-width="3"/>
-${logo(70, 98, 100, { look: [2, -1] })}
-<!-- Papyon -->
-<path d="M120 204 L98 192 L98 216Z M120 204 L142 192 L142 216Z" fill="#d8283a" stroke="#8a1020" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="120" cy="204" r="6" fill="#a81828"/>
-<!-- Sahneye atılan güller -->
-<circle cx="72" cy="224" r="5" fill="#e8425a"/><circle cx="176" cy="226" r="5" fill="#e8425a"/><path d="M76 226 l10 4 M172 228 l-10 3" stroke="#3a8a4a" stroke-width="2"/>
-`);
-}
-
-// =====================================================================
-// 2. SİNEMA SARAYI (KARANLIK): makine dairesinden salona uzanan ışık huzmesi,
+// 1. SİNEMA SARAYI (KARANLIK): makine dairesinden salona uzanan ışık huzmesi,
 //    koltuk sıraları ve arkadan görülen seyirciler, yelpaze aplikler, film makarası
 // =====================================================================
 
@@ -392,118 +242,7 @@ ${logo(76, 84, 96, { look: [2, -1] })}
 }
 
 // =====================================================================
-// 3. CAZ KULÜBÜ (KARANLIK): sahnede spotun altında yüzsüz saksafoncu, davul,
-//    kontrbas, eski mikrofon; tavandan sarkan deco lambalar, uçuşan notalar
-// =====================================================================
-
-function cazScene() {
-  const S = scene();
-  S.defs.push(`
-<radialGradient id="bg" gradientUnits="userSpaceOnUse" cx="800" cy="900" r="1100"><stop offset="0" stop-color="#145058"/><stop offset=".5" stop-color="#0a262e"/><stop offset="1" stop-color="#04121a"/></radialGradient>
-<linearGradient id="stage" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2814"/><stop offset="1" stop-color="#1a0c06"/></linearGradient>
-<linearGradient id="wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a1a0a"/><stop offset=".55" stop-color="#9a5224"/><stop offset="1" stop-color="#3a1a0a"/></linearGradient>
-<linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe2a0"/><stop offset="1" stop-color="#b8782a"/></linearGradient>
-${GLOW('g', 4)}${BLUR('blur', 14)}${GRAIN_DEFS}`);
-  const INK = '#030a0d';
-
-  let arches = '';
-  for (let k = 0; k < 6; k++) {
-    const r = 360 + k * 80;
-    arches += `<path d="M${800 - r} 900 V${900 - r * 0.55} Q${800 - r} ${900 - r * 1.05} 800 ${900 - r * 1.05} Q${800 + r} ${900 - r * 1.05} ${800 + r} ${900 - r * 0.55} V900" fill="none" stroke="${k % 2 ? '#3ab0a8' : '#f0a640'}" stroke-opacity="${f(0.2 - k * 0.02)}" stroke-width="3"/>`;
-  }
-
-  const lamps = [430, 800, 1170].map((x) => `
-<line x1="${x}" y1="0" x2="${x}" y2="196" stroke="#1f4a52" stroke-width="2"/>
-${S.cone(x, 222, x, 560, 80, '#ffd9a0', 0.16, 0)}
-<path d="M${x - 28} 222 L${x - 16} 194 H${x + 16} L${x + 28} 222Z" fill="#f0a640"/><path d="M${x - 16} 194 H${x + 16}" stroke="#ffe2a0" stroke-width="2"/>
-<ellipse cx="${x}" cy="224" rx="20" ry="4" fill="#fff2c8" filter="url(#g)"/>`).join('');
-
-  // Saksafoncu: yüzsüz siluet, fötr şapka, pirinç saksafon; spot arkasından kenar ışığı
-  const saxman = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s}) rotate(4)">
-<g fill="${INK}" stroke="#f0a640" stroke-opacity=".45" stroke-width="1.5">
-  <path d="M-24 -142 L-30 -4 L-14 -4 L-3 -118 L6 -4 L22 -4 L22 -142Z"/>
-  <path d="M-20 -262 Q-32 -240 -28 -200 L-26 -140 L24 -140 L26 -200 Q28 -244 14 -262Z"/>
-  <circle cx="-4" cy="-282" r="19"/>
-  <ellipse cx="-4" cy="-296" rx="31" ry="6"/>
-  <path d="M-22 -297 Q-22 -324 -4 -324 Q14 -324 14 -297Z"/>
-  <ellipse cx="-24" cy="-3" rx="14" ry="5"/><ellipse cx="16" cy="-3" rx="14" ry="5"/>
-</g>
-<path d="M-22 -280 Q-34 -276 -40 -256 L-48 -172 Q-48 -150 -30 -152 Q-20 -154 -20 -172 L-22 -192" stroke="url(#brass)" stroke-width="10" fill="none" stroke-linecap="round"/>
-<path d="M-30 -196 Q-20 -204 -8 -200 L-12 -186 Q-22 -190 -30 -186Z" fill="url(#brass)"/>
-<path d="M-18 -250 L-44 -224 L-46 -206 M12 -248 L-8 -206 L-38 -184" stroke="${INK}" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-</g>`;
-
-  const bass = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s}) rotate(-11)">
-<line x1="0" y1="-40" x2="0" y2="0" stroke="#1a1a1a" stroke-width="3"/>
-<path d="M0 -40 C-50 -40 -60 -80 -44 -110 C-34 -128 -46 -140 -40 -160 C-34 -190 -14 -196 0 -196 C14 -196 34 -190 40 -160 C46 -140 34 -128 44 -110 C60 -80 50 -40 0 -40Z" fill="url(#wood)" stroke="#f0a640" stroke-opacity=".4" stroke-width="1.5"/>
-<rect x="-5" y="-310" width="10" height="120" rx="3" fill="#1a0c06"/>
-<circle cx="0" cy="-316" r="9" fill="#1a0c06"/>
-<path d="M-18 -120 q-6 -10 2 -20 M18 -120 q6 -10 -2 -20" stroke="#1a0c06" stroke-width="3" fill="none"/>
-<rect x="-14" y="-92" width="28" height="5" fill="#d9b070"/>
-${[-4.5, -1.5, 1.5, 4.5].map((d) => `<line x1="${d}" y1="-60" x2="${d * 0.5}" y2="-306" stroke="#fff2c8" stroke-opacity=".55" stroke-width=".8"/>`).join('')}
-</g>`;
-
-  const drum = `
-<line x1="40" y1="840" x2="40" y2="640" stroke="#6a6a6a" stroke-width="3"/><line x1="40" y1="840" x2="22" y2="844" stroke="#6a6a6a" stroke-width="3"/><line x1="40" y1="840" x2="58" y2="844" stroke="#6a6a6a" stroke-width="3"/>
-<ellipse cx="40" cy="640" rx="42" ry="6" fill="url(#brass)"/>
-<circle cx="100" cy="778" r="62" fill="#7a1e22" stroke="#f1e2c4" stroke-width="7"/>
-<clipPath id="dc"><circle cx="100" cy="778" r="50"/></clipPath>
-<g clip-path="url(#dc)">${rays(100, 820, 80, 12, ['#f0a640'], { from: 180, to: 360, fill: 0.5, opacity: 0.85 })}</g>
-<circle cx="100" cy="820" r="12" fill="#f0a640"/>`;
-
-  const mic = `
-<line x1="1372" y1="590" x2="1372" y2="840" stroke="#8a8a8a" stroke-width="3"/>
-<ellipse cx="1372" cy="842" rx="24" ry="5" fill="#2a2a2a"/>
-<rect x="1361" y="548" width="22" height="40" rx="9" fill="url(#brass)"/>
-${[556, 564, 572, 580].map((y) => `<line x1="1363" y1="${y}" x2="1381" y2="${y}" stroke="#7a521a" stroke-width="1.5"/>`).join('')}`;
-
-  const notes = [[420, 470, 1, 0.3], [520, 380, 0.8, 0.22], [690, 330, 1.1, 0.18], [930, 360, 0.9, 0.2], [1080, 450, 1, 0.26], [1230, 380, 0.8, 0.3], [600, 560, 0.7, 0.16], [1010, 590, 0.7, 0.16]]
-    .map(([x, y, s, o]) => note(x, y, s, '#f0a640', o)).join('');
-
-  return S.svg(`
-<defs>__DEFS__</defs>
-<rect width="${W}" height="${H}" fill="url(#bg)"/>
-${arches}
-${lamps}
-${notes}
-<!-- Sahne -->
-<path d="M0 834 Q800 792 1600 834 V900 H0Z" fill="url(#stage)"/>
-<path d="M0 834 Q800 792 1600 834" stroke="#f0a640" stroke-opacity=".5" stroke-width="3" fill="none"/>
-<!-- Spot ve saksafoncu (sağ) -->
-${S.cone(1530, 130, 1450, 860, 180, '#ffd9a0', 0.42, 0.05)}
-<ellipse cx="1450" cy="846" rx="150" ry="22" fill="#ffe2b0" opacity=".45" filter="url(#blur)"/>
-${saxman(1452, 846, 1.15)}
-${mic}
-<!-- Davul ve kontrbas (sol) -->
-${S.cone(80, 130, 160, 860, 150, '#7fe0d8', 0.18, 0.02)}
-${drum}
-${bass(215, 846, 1)}
-${grain(0.24)}
-`);
-}
-
-function cazMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}
-<linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe2a0"/><stop offset="1" stop-color="#b8782a"/></linearGradient>
-</defs>
-${note(34, 80, 0.9, '#f0a640', 0.9)}${note(206, 54, 0.7, '#3ab0a8', 0.9)}
-<path d="M14 222 Q120 206 226 222 V238 H14Z" fill="#3a1a0a"/>
-${logo(66, 96, 100, { look: [2, -1] })}
-<!-- Fötr şapka -->
-<ellipse cx="116" cy="100" rx="66" ry="12" fill="#1c2a30"/>
-<path d="M76 100 Q74 58 116 56 Q158 58 156 100Z" fill="#24363e"/>
-<path d="M90 70 Q116 62 142 70" stroke="#1c2a30" stroke-width="4" fill="none"/>
-<rect x="77" y="86" width="78" height="10" fill="#f0a640"/>
-<!-- Saksafon -->
-<path d="M196 112 Q206 116 206 132 L200 206 Q198 226 180 224 Q166 222 168 204 L170 188" stroke="url(#brass)" stroke-width="12" fill="none" stroke-linecap="round"/>
-<path d="M156 190 Q170 178 186 184 L182 202 Q170 198 158 204Z" fill="url(#brass)"/>
-<circle cx="203" cy="152" r="3" fill="#7a521a"/><circle cx="202" cy="168" r="3" fill="#7a521a"/><circle cx="201" cy="184" r="3" fill="#7a521a"/>
-`);
-}
-
-// =====================================================================
-// 4. OPERA GECESİ (orta): iki yanda üç kat altın yaldızlı localar, ortada koyu
+// 2. OPERA GECESİ (orta): iki yanda üç kat altın yaldızlı localar, ortada koyu
 //    kadife perde ve kristal avize, en altta orkestra çukuru ışıkları
 // =====================================================================
 
@@ -606,7 +345,7 @@ ${sparkle(206, 150, 7, '#ffe6a6')}${sparkle(30, 70, 6, '#ffe6a6')}
 }
 
 // =====================================================================
-// 5. AÇIK HAVA SİNEMASI (KARANLIK gece): sağda büyük perde, soldan uzanan
+// 3. AÇIK HAVA SİNEMASI (KARANLIK gece): sağda büyük perde, soldan uzanan
 //    projektör huzmesi, arkadan görülen eski arabalar, ışıklı tabela direği
 // =====================================================================
 
@@ -711,356 +450,7 @@ ${[82, 98, 114, 130, 146].map((x) => `<rect x="${x}" y="193" width="10" height="
 }
 
 // =====================================================================
-// 6. ALTIN ŞEHİR (1930'lar, aydınlık): sağ üstte dev güneş ve yoğun ışınlar,
-//    kâğıt kesik bulutlar, gümüş pervaneli uçak, bakır kademeli kuleler, yeşil deniz
-// =====================================================================
-
-function sehirScene() {
-  const S = scene();
-  const r = rng(61);
-  S.defs.push(`
-<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a5a62"/><stop offset=".32" stop-color="#7aa596"/><stop offset=".6" stop-color="#e8d5a4"/><stop offset=".86" stop-color="#f2b46a"/><stop offset="1" stop-color="#e8955a"/></linearGradient>
-<radialGradient id="fadeG" gradientUnits="userSpaceOnUse" cx="1440" cy="300" r="1250"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
-<mask id="fade"><rect width="${W}" height="${H}" fill="url(#fadeG)"/></mask>
-<radialGradient id="sun" cx="40%" cy="40%" r="70%"><stop offset="0" stop-color="#fffbea"/><stop offset="1" stop-color="#ffd27a"/></radialGradient>
-<linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset=".5" stop-color="#c6ccd4"/><stop offset="1" stop-color="#7c8692"/></linearGradient>
-<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a9478"/><stop offset="1" stop-color="#1c4a3e"/></linearGradient>
-${SOFT('#3a2418')}${GLOW('g', 6)}${GRAIN_DEFS}`);
-
-  const cloudC = { top: '#c8b8a6', bottom: '#8a7868', edge: '#5a4a40' };
-  const clouds = [
-    [30, 300, 340, 70, 1], [150, 380, 260, 52, 2], [1170, 470, 440, 72, 3], [1320, 420, 280, 52, 4],
-    [620, 250, 220, 40, 5], [930, 320, 190, 36, 6],
-  ].map(([x, y, w, h, s]) => S.cloud(x, y, w, h, s, cloudC)).join('');
-
-  // Gümüş uçak: yandan, burnu hafif yukarı; pervaneler dönüyor (saydam disk)
-  const plane = `<g transform="translate(220 300) rotate(-5)">
-${[[-170, -6], [-200, 4], [-185, 14]].map(([x, y]) => `<line x1="${x}" y1="${y}" x2="${x + 60}" y2="${y}" stroke="#fff4dc" stroke-width="2" opacity=".6"/>`).join('')}
-<path d="M-130 -6 L-152 -60 L-118 -60 L-94 -12Z" fill="url(#silver)" stroke="#6a7480" stroke-width="1.2"/>
-<path d="M-150 0 Q-130 -18 -40 -20 L90 -18 Q130 -16 152 -4 Q158 2 152 8 Q120 18 60 18 L-60 14 Q-120 10 -150 4Z" fill="url(#silver)" stroke="#6a7480" stroke-width="1.2"/>
-<ellipse cx="-128" cy="6" rx="36" ry="4.5" fill="#8a949e"/>
-<path d="M-10 8 L64 8 L26 28 L-52 28Z" fill="#9aa4ae"/>
-${Array.from({ length: 10 }, (_, i) => `<rect x="${-60 + i * 14}" y="-10" width="8" height="7" rx="2" fill="#3a4a5a"/>`).join('')}
-<path d="M118 -12 L136 -10 L132 -4 L114 -5Z" fill="#2a3a4a"/>
-<rect x="-150" y="-1" width="300" height="3" fill="#c8382c" opacity=".8"/>
-<ellipse cx="36" cy="14" rx="26" ry="8" fill="url(#silver)"/>
-<ellipse cx="64" cy="14" rx="4" ry="28" fill="#fff" opacity=".35"/><circle cx="63" cy="14" r="4" fill="#6a7480"/>
-<ellipse cx="156" cy="2" rx="3.5" ry="26" fill="#fff" opacity=".35"/>
-</g>`;
-
-  // Kuleler: güneş sağda → sağ yüzleri aydınlık
-  const C = { lit: '#e8995e', shade: '#8f4530', line: '#6a2e20', litLine: '#c87444', edge: '#ffd9a8' };
-  const far = { lit: '#d9a07a', shade: '#a8684e', line: '#8a5040', litLine: '#c08a68', edge: '#f2d0b0' };
-  let mid = '';
-  for (let x = 270; x < 1320;) {
-    const w = 40 + r() * 50;
-    const h = 60 + r() * 120;
-    mid += tower(x, 802, w, h, far, { tiers: r() < 0.5 ? 2 : 3 });
-    x += w + 4 + r() * 10;
-  }
-  const left = [[-10, 90, 520, 0], [70, 72, 420, 0], [128, 108, 600, 70], [226, 64, 360, 0]];
-  // Sağdakiler güneşin altında alçak kalır (güneş görünsün), en sağdaki yüksek
-  const right = [[1300, 64, 300, 0], [1352, 96, 420, 60], [1446, 74, 340, 0], [1520, 90, 560, 0]];
-  const towers = [...left, ...right].map(([x, w, h, sp]) => tower(x, 802, w, h, C, { spire: sp })).join('');
-
-  let glitter = '';
-  for (let i = 0; i < 16; i++) {
-    const y = 812 + i * 5.5;
-    const w = 30 + i * 9;
-    glitter += `<line x1="${f(1440 - w / 2 + (r() - 0.5) * 20)}" y1="${f(y)}" x2="${f(1440 + w / 2 + (r() - 0.5) * 20)}" y2="${f(y)}" stroke="#fff2c8" stroke-width="2" opacity="${f(0.7 - i * 0.035)}" stroke-dasharray="${f(10 + r() * 20)} ${f(6 + r() * 10)}"/>`;
-  }
-  let ripples = '';
-  for (let i = 0; i < 40; i++) {
-    const x = r() * W;
-    const y = 810 + r() * 85;
-    ripples += `<line x1="${f(x)}" y1="${f(y)}" x2="${f(x + 20 + r() * 40)}" y2="${f(y)}" stroke="${r() < 0.5 ? '#e8995e' : '#bfe0d0'}" stroke-width="1.6" opacity="${f(0.2 + r() * 0.3)}"/>`;
-  }
-
-  return S.svg(`
-<defs>__DEFS__</defs>
-<rect width="${W}" height="${H}" fill="url(#sky)"/>
-<g mask="url(#fade)">${rays(1440, 300, 2000, 96, ['#fff4d8', '#f3c97a', '#bfe0d0'], { fill: 0.5, opacity: 0.5 })}</g>
-<circle cx="1440" cy="300" r="150" fill="none" stroke="#fff2c8" stroke-width="2" opacity=".45"/>
-<circle cx="1440" cy="300" r="122" fill="none" stroke="#fff2c8" stroke-width="3" opacity=".7"/>
-<circle cx="1440" cy="300" r="100" fill="url(#sun)" filter="url(#g)"/>
-${clouds}
-
-${mid}
-${towers}
-${plane}
-<rect x="0" y="800" width="${W}" height="100" fill="url(#sea)"/>
-<rect x="0" y="798" width="${W}" height="5" fill="#4a2618"/>
-${ripples}
-${glitter}
-${grain(0.2)}
-`);
-}
-
-function sehirMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}
-<radialGradient id="sun" cx="40%" cy="40%" r="70%"><stop offset="0" stop-color="#fffbea"/><stop offset="1" stop-color="#ffd27a"/></radialGradient>
-<linearGradient id="leather" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8683a"/><stop offset="1" stop-color="#6a3a1c"/></linearGradient>
-</defs>
-${rays(200, 44, 60, 16, ['#ffd27a'], { fill: 0.5, opacity: 0.5 })}
-<circle cx="200" cy="44" r="24" fill="url(#sun)"/>
-<!-- Atkı rüzgârda -->
-<path d="M150 190 Q190 186 226 160 Q214 182 230 186 Q196 206 150 206Z" fill="#f4ead6" stroke="#d6c8a8" stroke-width="2"/>
-${logo(70, 96, 100, { look: [2, -1] })}
-<!-- Pilot başlığı ve gözlük -->
-<path d="M66 132 Q60 70 120 64 Q180 70 174 132 Q170 108 160 100 Q120 90 80 100 Q70 108 66 132Z" fill="url(#leather)" stroke="#4a2410" stroke-width="2.5"/>
-<path d="M72 134 Q68 150 76 160 L84 156 Q78 146 80 132Z M168 134 Q172 150 164 160 L156 156 Q162 146 160 132Z" fill="url(#leather)"/>
-<path d="M76 92 H164" stroke="#4a2410" stroke-width="5"/>
-<circle cx="100" cy="88" r="15" fill="#9fd8d0" fill-opacity=".7" stroke="#d9a94a" stroke-width="5"/>
-<circle cx="140" cy="88" r="15" fill="#9fd8d0" fill-opacity=".7" stroke="#d9a94a" stroke-width="5"/>
-<path d="M94 82 q4 -4 9 -2 M134 82 q4 -4 9 -2" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-`);
-}
-
-// =====================================================================
-// 7. BÜYÜK SİRK (sıcak, orta-aydınlık): çizgili çadır tavanı, flamalar, ip
-//    cambazı (yüzsüz, şemsiyeli), arena halkası ve altın yıldızlar
-// =====================================================================
-
-function sirkScene() {
-  const S = scene();
-  S.defs.push(`
-<radialGradient id="calm" gradientUnits="userSpaceOnUse" cx="800" cy="460" r="560"><stop offset="0" stop-color="#2a0606" stop-opacity=".45"/><stop offset="1" stop-color="#2a0606" stop-opacity="0"/></radialGradient>
-<radialGradient id="dark" gradientUnits="userSpaceOnUse" cx="800" cy="-200" r="1100"><stop offset="0" stop-color="#1a0404" stop-opacity=".75"/><stop offset=".6" stop-color="#1a0404" stop-opacity=".25"/><stop offset="1" stop-color="#1a0404" stop-opacity=".1"/></radialGradient>
-<linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a1210"/><stop offset="1" stop-color="#2a0808"/></linearGradient>
-<radialGradient id="sand" gradientUnits="userSpaceOnUse" cx="800" cy="900" r="700"><stop offset="0" stop-color="#f0cf90"/><stop offset="1" stop-color="#b8844a"/></radialGradient>
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6a6"/><stop offset="1" stop-color="#c08a2c"/></linearGradient>
-${GLOW('g', 4)}${BLUR('blur', 16)}${GRAIN_DEFS}`);
-
-  // Bayrak zinciri: iki sarkık ip, üçgen flamalar
-  const bunting = (x1, y1, x2, y2, sag) => {
-    const cx = (x1 + x2) / 2;
-    const cy = Math.max(y1, y2) + sag;
-    let s = `<path d="M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}" stroke="#f4e6c8" stroke-width="2" fill="none"/>`;
-    const colors = ['#f2c14e', '#2f8f8a', '#f4e6c8', '#3a6ab0'];
-    let i = 0;
-    for (let t = 0.03; t < 0.98; t += 0.055) {
-      const px = (1 - t) ** 2 * x1 + 2 * (1 - t) * t * cx + t * t * x2;
-      const py = (1 - t) ** 2 * y1 + 2 * (1 - t) * t * cy + t * t * y2;
-      s += `<path d="M${f(px - 13)} ${f(py)} L${f(px + 13)} ${f(py)} L${f(px)} ${f(py + 30)}Z" fill="${colors[i++ % colors.length]}"/>`;
-    }
-    return s;
-  };
-
-  // İp ve cambaz
-  const wire = [[110, 336], [800, 386], [1490, 336]];
-  const wy = (x) => {
-    let best = 0;
-    for (let t = 0; t <= 1; t += 0.001) {
-      const px = (1 - t) ** 2 * wire[0][0] + 2 * (1 - t) * t * wire[1][0] + t * t * wire[2][0];
-      if (Math.abs(px - x) < 1) best = (1 - t) ** 2 * wire[0][1] + 2 * (1 - t) * t * wire[1][1] + t * t * wire[2][1];
-    }
-    return best;
-  };
-  const ax = 1392;
-  const ay = wy(ax);
-  const acrobat = `<g transform="translate(${ax} ${f(ay)})" fill="#1a0606">
-<circle cx="0" cy="-60" r="8"/><path d="M-7 -52 L7 -52 L6 -22 L-6 -22Z"/>
-<path d="M-6 -23 L-10 0 L-5 0 L0 -15 L5 0 L10 0 L6 -23Z"/>
-<path d="M-28 -44 L0 -50 L28 -44" stroke="#1a0606" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<line x1="28" y1="-44" x2="28" y2="-84" stroke="#1a0606" stroke-width="2.5"/>
-<path d="M6 -84 Q28 -106 50 -84Z" fill="#f2c14e" stroke="#1a0606" stroke-width="2"/>
-<path d="M-12 -24 Q0 -8 12 -24 L14 -18 Q0 -2 -14 -18Z" fill="#c8423a"/>
-</g>`;
-  const poles = [110, 1490].map((x) => `<rect x="${x - 5}" y="336" width="10" height="460" fill="#6a2a1a"/><rect x="${x - 26}" y="326" width="52" height="10" fill="url(#gold)"/>`).join('');
-
-  // Tribün: arkadan görülen küçük seyirci başları
-  let crowd = '';
-  for (let row = 0; row < 4; row++) {
-    const y = 668 + row * 26;
-    crowd += `<rect x="0" y="${y}" width="${W}" height="26" fill="${row % 2 ? '#3a0e0c' : '#320c0a'}"/>`;
-    for (let x = (row % 2) * 9; x < W; x += 18) crowd += `<circle cx="${x}" cy="${y + 2}" r="5" fill="#2a0908"/>`;
-  }
-  let valance = '';
-  for (let x = 0; x < W; x += 60) valance += `<path d="M${x} 640 Q${x + 30} 676 ${x + 60} 640Z" fill="${(x / 60) % 2 ? '#c8423a' : '#f1dcb4'}"/>`;
-
-  // Arena kenarı yıldızlı
-  const cx = 800, cy = 960, rx = 860, ry = 200;
-  let ringStars = '';
-  for (let a = 196; a <= 344; a += 8) ringStars += star5(cx + Math.cos(rad(a)) * rx, cy + Math.sin(rad(a)) * ry, 8, '#ffe6a6');
-
-  const pedestal = (x, y, extra) => `<g transform="translate(${x} ${y})">
-<rect x="-46" y="-70" width="92" height="70" fill="#c8423a"/>
-${[-34, -10, 14].map((dx) => `<rect x="${dx}" y="-70" width="12" height="70" fill="#f1dcb4"/>`).join('')}
-<ellipse cx="0" cy="-70" rx="46" ry="12" fill="url(#gold)"/><ellipse cx="0" cy="0" rx="46" ry="10" fill="#8a2a22"/>
-${star5(0, -36, 14, '#ffe6a6')}${extra}</g>`;
-  const ball = `<circle cx="0" cy="-118" r="40" fill="#2f8f8a"/><path d="M-40 -118 A40 40 0 0 1 40 -118Z" fill="#f2c14e" transform="rotate(-25 0 -118)"/><circle cx="-14" cy="-132" r="8" fill="#fff" opacity=".4"/>`;
-  const hoop = `<circle cx="0" cy="-150" r="60" fill="none" stroke="url(#gold)" stroke-width="9"/><circle cx="0" cy="-150" r="60" fill="none" stroke="#c8423a" stroke-width="9" stroke-dasharray="14 14"/>`;
-
-  return S.svg(`
-<defs>__DEFS__</defs>
-<rect width="${W}" height="${H}" fill="#c9a57c"/>
-${rays(800, -200, 1600, 40, ['#9a2e28'], { from: 0, to: 180, fill: 0.5 })}
-<rect width="${W}" height="${H}" fill="url(#dark)"/>
-<rect width="${W}" height="${H}" fill="url(#calm)"/>
-${sparkle(420, 420, 8, '#ffe6a6', 0.8)}${sparkle(1180, 460, 7, '#ffe6a6', 0.8)}${sparkle(640, 300, 5, '#ffe6a6', 0.7)}${sparkle(980, 280, 6, '#ffe6a6', 0.7)}
-${bunting(0, 214, 800, 256, 60)}${bunting(800, 256, 1600, 214, 60)}
-${S.cone(800, 130, 200, 780, 120, '#fff6dc', 0.34, 0.04)}
-${S.cone(800, 130, 1450, 760, 120, '#fff6dc', 0.34, 0.04)}
-<rect x="0" y="640" width="${W}" height="160" fill="url(#wallG)"/>
-${crowd}
-${valance}
-${poles}
-<path d="M${wire[0][0]} ${wire[0][1]} Q${wire[1][0]} ${wire[1][1]} ${wire[2][0]} ${wire[2][1]}" stroke="#f4e6c8" stroke-width="2.5" fill="none"/>
-${acrobat}
-<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#sand)"/>
-<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#b33a30" stroke-width="30"/>
-<ellipse cx="${cx}" cy="${cy}" rx="${rx - 15}" ry="${ry - 15}" fill="none" stroke="#ffe6a6" stroke-width="3" opacity=".7"/>
-${ringStars}
-<ellipse cx="200" cy="836" rx="150" ry="30" fill="#fff6dc" opacity=".35" filter="url(#blur)"/>
-<ellipse cx="1450" cy="830" rx="150" ry="30" fill="#fff6dc" opacity=".35" filter="url(#blur)"/>
-${pedestal(190, 850, ball)}
-${pedestal(1450, 846, hoop)}
-${grain(0.2)}
-`);
-}
-
-function sirkMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6a6"/><stop offset="1" stop-color="#c08a2c"/></linearGradient>
-</defs>
-${star5(34, 50, 12, '#f2c14e')}${star5(210, 140, 9, '#f2c14e')}${star5(200, 40, 6, '#f4e6c8')}
-<path d="M20 222 Q120 204 220 222 V238 H20Z" fill="#b33a30"/><path d="M20 222 Q120 204 220 222" stroke="#ffe6a6" stroke-width="3" fill="none"/>
-${logo(70, 100, 100, { look: [2, -1] })}
-<!-- Eğik kırmızı silindir şapka -->
-<g transform="rotate(-8 120 100)">
-  <ellipse cx="120" cy="104" rx="58" ry="11" fill="#7a1a18"/>
-  <path d="M86 104 L90 40 Q120 32 150 40 L154 104Z" fill="#c8302a"/>
-  <rect x="88" y="84" width="64" height="14" fill="url(#gold)"/>
-  <ellipse cx="120" cy="40" rx="30" ry="6" fill="#e04a40"/>
-</g>
-<!-- Baston -->
-<line x1="186" y1="226" x2="198" y2="120" stroke="#1a0606" stroke-width="6" stroke-linecap="round"/>
-<circle cx="199" cy="116" r="8" fill="url(#gold)"/>
-`);
-}
-
-// =====================================================================
-// 8. BALO SALONU (orta-koyu): disko küresi ve ışınları, damalı zemin, deco
-//    sütunlar, yüzsüz dans eden çift (kırmızı yelpazeli)
-// =====================================================================
-
-function baloScene() {
-  const S = scene();
-  const r = rng(83);
-  S.defs.push(`
-<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26112f"/><stop offset=".7" stop-color="#1c0c24"/><stop offset="1" stop-color="#0f0614"/></linearGradient>
-<radialGradient id="ballGlow" gradientUnits="userSpaceOnUse" cx="1420" cy="292" r="720"><stop offset="0" stop-color="#eaa5a0" stop-opacity=".28"/><stop offset="1" stop-color="#eaa5a0" stop-opacity="0"/></radialGradient>
-<radialGradient id="ball" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#d6bcc8"/><stop offset="1" stop-color="#5a3a5a"/></radialGradient>
-<linearGradient id="col" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a1e3e"/><stop offset=".5" stop-color="#8a5a6a"/><stop offset="1" stop-color="#3a1e3e"/></linearGradient>
-<linearGradient id="rose" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd8c4"/><stop offset="1" stop-color="#b87060"/></linearGradient>
-<linearGradient id="dress" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e05a6a"/><stop offset="1" stop-color="#8a2038"/></linearGradient>
-<linearGradient id="floorFade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c0c24" stop-opacity=".75"/><stop offset="1" stop-color="#1c0c24" stop-opacity="0"/></linearGradient>
-<clipPath id="ballc"><circle cx="1420" cy="292" r="72"/></clipPath>
-${GLOW('g', 3)}${GRAIN_DEFS}`);
-
-  // Duvarda soluk yelpaze sırası (ortadaki hafif ayrıntı)
-  let fans = '';
-  for (let x = 300; x <= 1300; x += 200) fans += rays(x, 700, 110, 11, ['#eaa58e'], { from: 180, to: 360, fill: 0.45, opacity: 0.1 }) + `<path d="M${x - 110} 700 A110 110 0 0 1 ${x + 110} 700" fill="none" stroke="#eaa58e" stroke-opacity=".22" stroke-width="2"/>`;
-
-  // Disko küresi: yüzeyde enlem/boylam çizgileri ve rastgele parlayan kareler
-  let facets = '';
-  for (let y = 292 - 72; y < 292 + 72; y += 12) facets += `<line x1="1340" y1="${y}" x2="1500" y2="${y}" stroke="#3a2040" stroke-opacity=".45" stroke-width="1.2"/>`;
-  for (let k = 1; k < 6; k++) facets += `<ellipse cx="1420" cy="292" rx="${f(72 * Math.cos(rad(k * 15)))}" ry="72" fill="none" stroke="#3a2040" stroke-opacity=".45" stroke-width="1.2"/>`;
-  for (let i = 0; i < 26; i++) facets += `<rect x="${f(1360 + r() * 110)}" y="${f(230 + r() * 120)}" width="9" height="9" fill="#fff" opacity="${f(0.3 + r() * 0.6)}"/>`;
-  let beams = '';
-  for (let i = 0; i < 9; i++) {
-    const a = rad(110 + i * 16);
-    beams += S.cone(1420, 292, f(1420 + Math.cos(a) * 1100), f(292 + Math.sin(a) * 1100), 26, '#ffe0ea', 0.2, 0);
-  }
-  let dots = '';
-  for (let i = 0; i < 70; i++) dots += sparkle(r() * W, 200 + r() * 560, 2 + r() * 4, r() < 0.5 ? '#ffe0ea' : '#fff4d6', f(0.25 + r() * 0.5));
-
-  // Deco sütun: oluklu gövde, yelpaze başlık
-  const column = () => {
-    let s = `<rect x="0" y="180" width="70" height="620" fill="url(#col)"/>`;
-    for (let x = 10; x < 64; x += 12) s += `<rect x="${x}" y="200" width="3" height="590" fill="#2a1430" opacity=".6"/>`;
-    s += `<path d="M-10 180 H86 V164 H-10Z" fill="url(#rose)"/>` + rays(38, 164, 50, 9, ['#ffd8c4'], { from: 180, to: 360, fill: 0.5, opacity: 0.8 });
-    return s;
-  };
-
-  // Damalı zemin: kaçış noktasına doğru
-  const VY = 560, Y0 = 770;
-  const ys = [770, 790, 814, 844, 880, 926];
-  let floor = '';
-  for (let k = 0; k < ys.length - 1; k++) {
-    const y1 = ys[k], y2 = ys[k + 1];
-    for (let i = -26; i < 26; i++) {
-      const x = (ii, y) => f(800 + ii * 70 * (y - VY) / (Y0 - VY));
-      floor += `<path d="M${x(i, y1)} ${y1} L${x(i + 1, y1)} ${y1} L${x(i + 1, y2)} ${y2} L${x(i, y2)} ${y2}Z" fill="${(i + k) % 2 ? '#e2c4b8' : '#2a1430'}"/>`;
-    }
-  }
-
-  // Dans eden çift: yüzsüz siluetler. Erkek frakla, kadın geriye eğilmiş, elinde yelpaze
-  const INK = '#0c0610';
-  const couple = `<g transform="translate(150 836)">
-<path d="M48 -150 Q38 -60 14 0 L140 0 Q118 -70 76 -152Z" fill="url(#dress)"/>
-<path d="M48 -150 Q54 -190 64 -206 L80 -200 Q76 -176 76 -152Z" fill="url(#dress)"/>
-<circle cx="80" cy="-222" r="13" fill="${INK}"/>
-<path d="M66 -204 L98 -252" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>
-${rays(100, -256, 40, 9, ['#e8303f', '#b81e30'], { from: 200, to: 340, fill: 0.85 })}
-<g fill="${INK}">
-  <circle cx="0" cy="-250" r="15"/>
-  <path d="M-15 -232 L17 -232 L24 -150 L20 -120 L-18 -120 L-23 -150Z"/>
-  <path d="M-20 -140 L-34 -76 L-14 -110Z"/>
-  <path d="M-18 -122 L-24 0 L-11 0 L0 -100 L8 0 L21 0 L19 -122Z"/>
-</g>
-<path d="M14 -216 Q40 -206 58 -180" stroke="${INK}" stroke-width="9" fill="none" stroke-linecap="round"/>
-<path d="M-2 -224 L4 -214 L10 -224" fill="#f4ead6"/>
-</g>`;
-
-  return S.svg(`
-<defs>__DEFS__</defs>
-<rect width="${W}" height="${H}" fill="url(#bg)"/>
-<rect width="${W}" height="${H}" fill="url(#ballGlow)"/>
-${fans}
-${beams}
-${dots}
-<line x1="1420" y1="0" x2="1420" y2="220" stroke="#8a5a6a" stroke-width="3"/>
-<circle cx="1420" cy="292" r="72" fill="url(#ball)"/>
-<g clip-path="url(#ballc)">${facets}</g>
-${sparkle(1392, 252, 16, '#fff')}
-${floor}
-<rect x="0" y="770" width="${W}" height="130" fill="url(#floorFade)"/>
-<rect x="0" y="766" width="${W}" height="5" fill="url(#rose)"/>
-${column()}
-<g transform="translate(${W} 0) scale(-1 1)">${column()}</g>
-${couple}
-${grain(0.22)}
-`);
-}
-
-function baloMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 3)}
-<linearGradient id="rose" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd8c4"/><stop offset="1" stop-color="#c0806a"/></linearGradient>
-<radialGradient id="ball" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#8a6a8a"/></radialGradient>
-</defs>
-<line x1="200" y1="0" x2="200" y2="22" stroke="#8a5a6a" stroke-width="2"/>
-<circle cx="200" cy="42" r="20" fill="url(#ball)"/>
-${sparkle(176, 70, 6, '#fff')}${sparkle(30, 40, 6, '#ffe0ea')}
-<path d="M10 222 H230 V238 H10Z" fill="#2a1430"/>${[10, 50, 90, 130, 170, 210].map((x) => `<rect x="${x}" y="222" width="20" height="16" fill="#e2c4b8"/>`).join('')}
-${logo(70, 98, 100, { look: [2, -1] })}
-<!-- Küçük taç -->
-<path d="M94 102 L98 74 L110 90 L120 66 L130 90 L142 74 L146 102Z" fill="url(#rose)" stroke="#a8604e" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="120" cy="92" r="5" fill="#e8303f"/>
-<!-- Açık kırmızı yelpaze -->
-<g transform="translate(40 200)">
-  ${rays(0, 0, 54, 9, ['#e8303f', '#b81e30'], { from: 200, to: 340, fill: 0.9 })}
-  <path d="M-51 -18 A54 54 0 0 1 51 -18" fill="none" stroke="#ffd8c4" stroke-width="2.5" transform="rotate(0)"/>
-  <circle r="5" fill="#ffd8c4"/>
-</g>
-`);
-}
-
-// =====================================================================
-// 9. TRANSATLANTİK (şafak, aydınlık): sağda yükselen dev gemi burnu, kırmızı
+// 4. TRANSATLANTİK (şafak, aydınlık): sağda yükselen dev gemi burnu, kırmızı
 //    bacalar, solda ufuktan doğan güneş ve ışınlar, kâğıt bulutlar, martılar
 // =====================================================================
 
@@ -1158,11 +548,11 @@ ${logo(70, 100, 100, { look: [2, -1] })}
 }
 
 // =====================================================================
-// 10. GECE EKSPRESİ (KARANLIK): sağdan gelen aerodinamik deco lokomotif, farının
+// 5. GECE EKSPRESİ (KARANLIK): sağdan gelen aerodinamik deco lokomotif, farının
 //     huzmesi, kemerli viyadük, uzak şehir ışıkları, solda saat kulesi ve sinyal
 // =====================================================================
 
-function trenScene() {
+function trenScene(variant) {
   const S = scene();
   const r = rng(101);
   S.defs.push(`
@@ -1202,17 +592,126 @@ ${[728, 744, 760].map((y, i) => `<path d="M${1352 + i * 2} ${y} Q${1420} ${y - 3
 ${[1430, 1500, 1570].map((x) => `<circle cx="${x}" cy="802" r="18" fill="#0a0d18" stroke="#6a7090" stroke-width="2"/>`).join('')}
 <circle cx="1362" cy="752" r="11" fill="#fffbe8" filter="url(#g2)"/>`;
 
-  // Saat kulesi (sol) ve sinyal direği
-  const C = { lit: '#2e3a5e', shade: '#1a2140', line: '#141a32', litLine: '#ffd27a33', edge: '#6a7aa8' };
-  const clock = `
-${tower(30, 800, 200, 470, C, { litRight: true, tiers: 3, spire: 60 })}
-<circle cx="130" cy="560" r="42" fill="#fff2c8" filter="url(#g)"/>
-<circle cx="130" cy="560" r="42" fill="none" stroke="url(#gold)" stroke-width="5"/>
-${Array.from({ length: 12 }, (_, i) => { const a = rad(i * 30); return `<line x1="${f(130 + Math.cos(a) * 32)}" y1="${f(560 + Math.sin(a) * 32)}" x2="${f(130 + Math.cos(a) * 37)}" y2="${f(560 + Math.sin(a) * 37)}" stroke="#2a2a3a" stroke-width="2"/>`; }).join('')}
-<line x1="130" y1="560" x2="130" y2="532" stroke="#1a1a2a" stroke-width="4" stroke-linecap="round"/><line x1="130" y1="560" x2="150" y2="568" stroke="#1a1a2a" stroke-width="3" stroke-linecap="round"/>
-<rect x="246" y="590" width="6" height="210" fill="#2a3050"/>
+  // ---- Sol kenardaki yapı: üç kule seçeneği (a: saat kulesi, b: gar binası, c: gökdelen) ----
+  // Ortak parçalar: blok (ön yüz lacivert, sağ yan gölgede, solda ay ışığı çizgisi, tepesi
+  // altın), ışıklı dar pencere, deco saat kadranı.
+  const NAVY = '#1c2446';
+  const SHADE = '#111731';
+  const block = (x, y, w, h) => `<rect x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" fill="${NAVY}"/><rect x="${f(x + w * 0.74)}" y="${f(y)}" width="${f(w * 0.26)}" height="${f(h)}" fill="${SHADE}"/><rect x="${f(x)}" y="${f(y)}" width="2" height="${f(h)}" fill="#7a8cc0" opacity=".55"/><rect x="${f(x - 2)}" y="${f(y)}" width="${f(w + 4)}" height="3" fill="url(#gold)"/>`;
+  const slit = (x, y, w, h, o) => `<rect x="${f(x)}" y="${f(y)}" width="${w}" height="${h}" rx="${Math.min(w, h) / 2}" fill="#ffd27a" opacity="${f(o)}"/>`;
+  const chevrons = (x1, x2, y, step = 14) => {
+    let s = '';
+    for (let x = x1; x + step <= x2; x += step) s += `<path d="M${x + 2} ${y} L${x + step / 2} ${y + 6} L${x + step - 2} ${y}" stroke="url(#gold)" stroke-width="2" fill="none"/>`;
+    return s;
+  };
+  const clockFace = (cx, cy, rr) => {
+    let s = `<circle cx="${cx}" cy="${cy}" r="${rr + 12}" fill="${SHADE}"/>`;
+    s += rays(cx, cy, rr + 22, 24, ['#d9b45a'], { fill: 0.35, opacity: 0.45 });
+    s += `<circle cx="${cx}" cy="${cy}" r="${rr + 5}" fill="none" stroke="url(#gold)" stroke-width="4"/>`;
+    s += `<circle cx="${cx}" cy="${cy}" r="${rr}" fill="#fff2c8" filter="url(#g)"/>`;
+    s += `<circle cx="${cx}" cy="${cy}" r="${f(rr * 0.78)}" fill="none" stroke="#c9a85a" stroke-width="1"/>`;
+    for (let i = 0; i < 12; i++) {
+      const a = rad(i * 30);
+      const l = i % 3 ? 0.1 : 0.2;
+      s += `<line x1="${f(cx + Math.cos(a) * rr * (0.9 - l))}" y1="${f(cy + Math.sin(a) * rr * (0.9 - l))}" x2="${f(cx + Math.cos(a) * rr * 0.9)}" y2="${f(cy + Math.sin(a) * rr * 0.9)}" stroke="#2a2a3a" stroke-width="${i % 3 ? 1.5 : 2.5}"/>`;
+    }
+    s += `<line x1="${cx}" y1="${cy}" x2="${f(cx - rr * 0.18)}" y2="${f(cy - rr * 0.5)}" stroke="#1a1a2a" stroke-width="3" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${cy}" x2="${f(cx + rr * 0.62)}" y2="${f(cy + rr * 0.12)}" stroke="#1a1a2a" stroke-width="2" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2.5" fill="#1a1a2a"/>`;
+    return s;
+  };
+  const signal = `<rect x="246" y="590" width="6" height="210" fill="#2a3050"/>
 <rect x="236" y="586" width="26" height="54" rx="8" fill="#141a2e" stroke="#6a7aa8" stroke-width="2"/>
 <circle cx="249" cy="602" r="7" fill="#3a1010"/><circle cx="249" cy="624" r="7" fill="#6fd6a8" filter="url(#g)"/>`;
+
+  // a) Deco saat kulesi: tren garının üstünde yükselen ince, kademeli kule; saat katı,
+  //    dikey kaburgalar, yan kanatlar, kemerli gar pencereleri, tepede kırmızı fener.
+  const towerA = () => {
+    const rr = rng(7);
+    let s = '';
+    for (const x of [34, 180]) {
+      s += block(x, 560, 46, 240) + block(x + 6, 542, 34, 18) + block(x + 12, 528, 22, 14);
+      for (let y = 578; y < 680; y += 24) s += slit(x + 19, y, 8, 15, 0.3 + rr() * 0.6);
+    }
+    s += block(78, 386, 104, 414);
+    for (const fx of [94, 118, 142, 166]) s += `<rect x="${fx - 3}" y="400" width="6" height="290" fill="#2a3462"/><rect x="${fx - 3}" y="400" width="1.5" height="290" fill="#8a9ad0" opacity=".5"/>`;
+    for (const wx of [102, 126, 150]) for (let y = 410; y < 670; y += 22) if (rr() < 0.7) s += slit(wx, y, 8, 14, 0.35 + rr() * 0.6);
+    s += block(0, 690, 260, 110) + chevrons(6, 254, 698, 16);
+    for (let i = 0; i < 5; i++) {
+      const x = 16 + i * 48;
+      s += `<path d="M${x} 790 V738 A15 15 0 0 1 ${x + 30} 738 V790Z" fill="#ffd27a" opacity=".85" filter="url(#g)"/><path d="M${x + 15} 723 V790 M${x} 756 H${x + 30}" stroke="${NAVY}" stroke-width="3"/>`;
+    }
+    s += block(66, 284, 128, 104) + clockFace(130, 336, 32);
+    s += block(84, 254, 92, 30) + chevrons(88, 172, 262, 14);
+    s += block(98, 230, 64, 24) + block(110, 212, 40, 18);
+    s += `<path d="M118 212 L130 136 L142 212Z" fill="url(#gold)"/><path d="M130 136 L142 212 H136Z" fill="#7a5a1c" opacity=".6"/>`;
+    s += `<line x1="130" y1="136" x2="130" y2="112" stroke="#9aa4c8" stroke-width="2"/><circle cx="130" cy="110" r="4" fill="#ff5a4a" filter="url(#g)"/>`;
+    return s + signal;
+  };
+
+  // b) Art Deco tren garı: geniş cephe, yelpaze biçimli dev ışıklı pencere, oluklu yan
+  //    pilonlar ve küre lambalar, ortada saatli küçük kule ve bayrak direği.
+  const towerB = () => {
+    let s = '';
+    s += block(46, 600, 168, 200);
+    s += `<path d="M58 790 V712 A72 72 0 0 1 202 712 V790Z" fill="#ffd27a" opacity=".85" filter="url(#g)"/>`;
+    for (let a = 180; a <= 360; a += 22.5) s += `<line x1="130" y1="712" x2="${f(130 + Math.cos(rad(a)) * 72)}" y2="${f(712 + Math.sin(rad(a)) * 72)}" stroke="${NAVY}" stroke-width="3.5"/>`;
+    s += `<path d="M110 712 A20 20 0 0 1 150 712Z" fill="${NAVY}"/><path d="M58 712 H202 M58 752 H202 M85 712 V790 M108 712 V790 M130 712 V790 M152 712 V790 M175 712 V790" stroke="${NAVY}" stroke-width="3.5"/>`;
+    s += `<path d="M52 790 V712 A78 78 0 0 1 208 712 V790" fill="none" stroke="url(#gold)" stroke-width="4"/>`;
+    s += block(40, 584, 180, 22) + chevrons(46, 214, 591, 14);
+    for (const x of [0, 214]) {
+      s += block(x, 520, 46, 280) + block(x + 5, 504, 36, 16) + block(x + 11, 492, 24, 12);
+      for (let lx = x + 9; lx < x + 34; lx += 8) s += `<rect x="${lx}" y="540" width="3" height="240" fill="#0b1026" opacity=".7"/>`;
+      s += `<rect x="${x + 21}" y="472" width="4" height="20" fill="url(#gold)"/><circle cx="${x + 23}" cy="466" r="10" fill="#fff2c8" filter="url(#g)"/>`;
+    }
+    s += block(96, 420, 68, 166) + clockFace(130, 470, 22);
+    for (const y of [512, 540]) s += slit(112, y, 8, 18, 0.7) + slit(140, y, 8, 18, 0.5);
+    s += block(102, 402, 56, 18) + block(110, 388, 40, 14) + block(118, 376, 24, 12);
+    s += `<line x1="130" y1="376" x2="130" y2="318" stroke="#9aa4c8" stroke-width="2.5"/><path d="M132 320 L158 328 L132 336Z" fill="url(#gold)"/>`;
+    s += `<rect x="62" y="786" width="136" height="8" fill="url(#gold)"/>`;
+    return s;
+  };
+
+  // c) Deco gökdelen: kademeli gövde, ışıklı pencere ızgarası, iç içe kemerli taç ve
+  //    üçgen pencereler, ince altın sivri uç; tepeden gökyüzüne iki arama ışığı; yanında
+  //    kafes radyo direği.
+  const towerC = () => {
+    const rr = rng(13);
+    let s = '';
+    s += S.cone(130, 214, -120, -160, 70, '#cfe0ff', 0.16, 0) + S.cone(130, 214, 520, -200, 70, '#cfe0ff', 0.12, 0);
+    const grid = (x, y, w, h) => {
+      let g = block(x, y, w, h);
+      for (let wx = x + 8; wx < x + w - 10; wx += 14) {
+        g += `<rect x="${wx + 8}" y="${y + 6}" width="2" height="${h - 10}" fill="#2a3462"/>`;
+        for (let wy = y + 12; wy < y + h - 12; wy += 18) if (rr() < 0.42) g += `<rect x="${wx}" y="${wy}" width="6" height="9" fill="#ffd27a" opacity="${f(0.35 + rr() * 0.55)}"/>`;
+      }
+      return g;
+    };
+    s += grid(44, 580, 172, 220) + chevrons(48, 212, 588, 14);
+    s += grid(66, 430, 128, 152) + chevrons(70, 190, 438, 12);
+    s += grid(86, 330, 88, 102);
+    s += clockFace(130, 490, 22);
+    for (let k = 0; k < 4; k++) {
+      const cy = 332 - k * 24;
+      const ar = 44 - k * 9;
+      s += `<path d="M${130 - ar} ${cy} A${ar} ${ar} 0 0 1 ${130 + ar} ${cy}Z" fill="${NAVY}" stroke="url(#gold)" stroke-width="2.5"/>`;
+      for (let a = 200; a <= 340; a += 20) {
+        const px = 130 + Math.cos(rad(a)) * (ar - 9);
+        const py = cy + Math.sin(rad(a)) * (ar - 9);
+        s += `<path d="M${f(px + Math.cos(rad(a)) * 6)} ${f(py + Math.sin(rad(a)) * 6)} L${f(px + Math.cos(rad(a + 90)) * 2.5)} ${f(py + Math.sin(rad(a + 90)) * 2.5)} L${f(px - Math.cos(rad(a + 90)) * 2.5)} ${f(py - Math.sin(rad(a + 90)) * 2.5)}Z" fill="#ffd27a" opacity=".9"/>`;
+      }
+    }
+    s += `<path d="M126 254 L130 150 L134 254Z" fill="url(#gold)"/><circle cx="130" cy="148" r="3.5" fill="#ff5a4a" filter="url(#g)"/>`;
+    let lattice = `<path d="M226 800 L236 520 L246 800" stroke="#3a4470" stroke-width="3" fill="none"/>`;
+    for (let y = 790; y > 540; y -= 22) {
+      const t = (800 - y) / 280;
+      const hw = 10 * (1 - t);
+      lattice += `<path d="M${f(236 - hw)} ${y} L${f(236 + hw * 0.92)} ${y - 22}" stroke="#3a4470" stroke-width="1.5"/>`;
+    }
+    s += lattice + `<circle cx="236" cy="516" r="4" fill="#ff5a4a" filter="url(#g)"/>`;
+    return s;
+  };
+  // a ve c uzun: üst şerit sivri ucu kesmesin diye tabandan biraz küçültülür
+  const clock = variant === 'b' ? towerB() : `<g transform="translate(13 80) scale(.9)">${variant === 'a' ? towerA() : towerC()}</g>`;
 
   return S.svg(`
 <defs>__DEFS__</defs>
@@ -1277,25 +776,11 @@ ${mouth ? '<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" st
 
 const CANDIDATES = [
   {
-    id: 'perde', tr: 'Perde Açılıyor', en: 'Curtain Up', light: 'aydınlık',
-    idea: 'Tiyatro sahnesi: kırmızı kadife perdeler, altın çerçeve, çapraz spotlar, sahne ışıkları',
-    scene: perdeScene, mascot: perdeMascot,
-    p: { bg: '#2a0c14', surface: 'rgb(46 14 24 / 0.86)', surface2: 'rgb(68 22 34 / 0.92)', border: '#7a3440', text: '#fff1e2', muted: '#e2b9a2', accent: '#ffb347', accentHover: '#ffc870', onAccent: '#2a1404' },
-    art: 'linear-gradient(#5a1424, #2a0c14 60%, #1a060c)',
-  },
-  {
     id: 'sinema', tr: 'Sinema Sarayı', en: 'Picture Palace', light: 'karanlık',
     idea: 'Eski sinema salonu: makine dairesinden uzanan ışık huzmesi, koltuk sıraları, yelpaze aplikler, film makarası',
     scene: sinemaScene, mascot: sinemaMascot,
     p: { bg: '#07080f', surface: 'rgb(14 16 28 / 0.86)', surface2: 'rgb(24 27 44 / 0.92)', border: '#2e3350', text: '#f2eee2', muted: '#a9a593', accent: '#e9b949', accentHover: '#f5cd6a', onAccent: '#1d1503' },
     art: 'linear-gradient(#0d1020, #05060c)',
-  },
-  {
-    id: 'caz', tr: 'Caz Kulübü', en: 'Jazz Club', light: 'karanlık',
-    idea: 'Konser sahnesi: spotun altında saksafoncu, davul ve kontrbas, sarkan deco lambalar, notalar',
-    scene: cazScene, mascot: cazMascot,
-    p: { bg: '#05161b', surface: 'rgb(8 30 36 / 0.86)', surface2: 'rgb(14 44 52 / 0.92)', border: '#1f5560', text: '#eaf6f2', muted: '#93b8b0', accent: '#f0a640', accentHover: '#f7bd66', onAccent: '#241302' },
-    art: 'radial-gradient(ellipse 80% 60% at 50% 100%, #12424a, #04121a 70%)',
   },
   {
     id: 'opera', tr: 'Opera Gecesi', en: 'Opera Night', light: 'orta',
@@ -1312,27 +797,6 @@ const CANDIDATES = [
     art: 'linear-gradient(#070618, #1a1340 60%, #0a0920)',
   },
   {
-    id: 'sehir', tr: 'Altın Şehir', en: 'Golden City', light: 'aydınlık',
-    idea: '1930’lar şehri: dev güneş ve ışınlar, kâğıt kesik bulutlar, gümüş pervaneli uçak, bakır kuleler, yeşil deniz',
-    scene: sehirScene, mascot: sehirMascot,
-    p: { bg: '#10262a', surface: 'rgb(16 36 40 / 0.86)', surface2: 'rgb(24 52 56 / 0.92)', border: '#3b6a66', text: '#fbf1de', muted: '#c3b597', accent: '#e8915a', accentHover: '#f2a878', onAccent: '#2a1206' },
-    art: 'linear-gradient(#2a5a62, #10262a)',
-  },
-  {
-    id: 'sirk', tr: 'Büyük Sirk', en: 'Big Top', light: 'orta-aydınlık',
-    idea: 'Sirk çadırı: çizgili tavan, flamalar, şemsiyeli ip cambazı, arena halkası, altın yıldızlar',
-    scene: sirkScene, mascot: sirkMascot,
-    p: { bg: '#24090b', surface: 'rgb(42 14 14 / 0.86)', surface2: 'rgb(60 22 20 / 0.92)', border: '#7a3a2a', text: '#fff2df', muted: '#e0b896', accent: '#f2c14e', accentHover: '#ffd572', onAccent: '#2a1a02' },
-    art: 'linear-gradient(#4a1210, #24090b)',
-  },
-  {
-    id: 'balo', tr: 'Balo Salonu', en: 'Ballroom', light: 'orta-koyu',
-    idea: 'Dans salonu: disko küresi ve ışınları, damalı zemin, deco sütunlar, yelpazeli dans eden çift',
-    scene: baloScene, mascot: baloMascot,
-    p: { bg: '#170b1d', surface: 'rgb(32 16 40 / 0.86)', surface2: 'rgb(46 24 56 / 0.92)', border: '#5e3a66', text: '#fbeef3', muted: '#c9a7b8', accent: '#eaa58e', accentHover: '#f4bda9', onAccent: '#2a1008' },
-    art: 'linear-gradient(#26112f, #170b1d 70%, #0f0614)',
-  },
-  {
     id: 'gemi', tr: 'Transatlantik', en: 'Ocean Liner', light: 'aydınlık',
     idea: 'Şafakta okyanus: sağda yükselen dev gemi burnu ve kırmızı bacalar, doğan güneş, kâğıt bulutlar, martılar',
     scene: gemiScene, mascot: gemiMascot,
@@ -1340,9 +804,23 @@ const CANDIDATES = [
     art: 'linear-gradient(#24425e, #0d1e2a)',
   },
   {
-    id: 'tren', tr: 'Gece Ekspresi', en: 'Night Express', light: 'karanlık',
+    id: 'tren-a', tr: 'Gece Ekspresi (A: saat kulesi)', en: 'Night Express', light: 'karanlık',
     idea: 'Gece treni: aerodinamik deco lokomotif ve far huzmesi, kemerli viyadük, uzak şehir, saat kulesi',
-    scene: trenScene, mascot: trenMascot,
+    scene: () => trenScene('a'), mascot: trenMascot,
+    p: { bg: '#070a16', surface: 'rgb(14 18 34 / 0.86)', surface2: 'rgb(22 28 50 / 0.92)', border: '#2e3a5e', text: '#eef1f8', muted: '#9ea7c0', accent: '#6fd6a8', accentHover: '#92e4bf', onAccent: '#052016' },
+    art: 'linear-gradient(#05070f, #0e1428 60%, #070a16)',
+  },
+  {
+    id: 'tren-b', tr: 'Gece Ekspresi (B: gar binası)', en: 'Night Express', light: 'karanlık',
+    idea: 'Gece treni: aerodinamik deco lokomotif ve far huzmesi, kemerli viyadük, uzak şehir, saat kulesi',
+    scene: () => trenScene('b'), mascot: trenMascot,
+    p: { bg: '#070a16', surface: 'rgb(14 18 34 / 0.86)', surface2: 'rgb(22 28 50 / 0.92)', border: '#2e3a5e', text: '#eef1f8', muted: '#9ea7c0', accent: '#6fd6a8', accentHover: '#92e4bf', onAccent: '#052016' },
+    art: 'linear-gradient(#05070f, #0e1428 60%, #070a16)',
+  },
+  {
+    id: 'tren-c', tr: 'Gece Ekspresi (C: gökdelen)', en: 'Night Express', light: 'karanlık',
+    idea: 'Gece treni: aerodinamik deco lokomotif ve far huzmesi, kemerli viyadük, uzak şehir, saat kulesi',
+    scene: () => trenScene('c'), mascot: trenMascot,
     p: { bg: '#070a16', surface: 'rgb(14 18 34 / 0.86)', surface2: 'rgb(22 28 50 / 0.92)', border: '#2e3a5e', text: '#eef1f8', muted: '#9ea7c0', accent: '#6fd6a8', accentHover: '#92e4bf', onAccent: '#052016' },
     art: 'linear-gradient(#05070f, #0e1428 60%, #070a16)',
   },
