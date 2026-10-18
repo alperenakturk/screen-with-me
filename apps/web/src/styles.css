@@ -1,12 +1,14 @@
+/* Varsayılan tema "Gece": gece yarısı laciverti, mor vurgu. Sade temalarda resim yok;
+   sadece adına uygun hafif bir renk geçişi (--art) var. */
 :root {
-  --bg: #0f1014;
-  --surface: #181a21;
-  --surface-2: #22252e;
-  --border: #2c303b;
-  --text: #ecedf1;
-  --muted: #9a9fad;
-  --accent: #7c5cff;
-  --accent-hover: #8f74ff;
+  --bg: #0b0d1a;
+  --surface: #151a2e;
+  --surface-2: #1e2440;
+  --border: #2a3152;
+  --text: #eceefa;
+  --muted: #9aa0c2;
+  --accent: #8b6cff;
+  --accent-hover: #9f86ff;
   --danger: #ff6b6b;
   --ok: #3ccf8e;
   --warn: #f5b94a;
@@ -14,6 +16,8 @@
   --on-accent: #ffffff;
   --glow: none;
   --radius: 12px;
+  --art: radial-gradient(ellipse 70% 45% at 50% -5%, rgb(139 108 255 / 0.16), transparent 70%), linear-gradient(#141936, #0b0d1a 60%);
+  --art-size: 100% 100%, 100% 100%;
   /* Temanın kostümlü maskotu (public/themes/*-maskot.svg). */
   --mascot: url('/themes/gece-maskot.svg');
   color: var(--text);
@@ -21,34 +25,44 @@
   --chrome-text: color-mix(in srgb, var(--text) 72%, var(--muted));
 }
 
-/* ---- Temalar (hepsi koyu). Seçim üst menüdeki 🎨'den ya da oda ayarlarından. ---- */
+/* ---- Sade temalar (hepsi koyu). Seçim üst menüdeki 🎨'den, ana sayfadaki şeritten ya da
+   oda ayarlarından. ---- */
+
+/* Okyanus: derin deniz mavisi, turkuaz vurgu; dipten hafif turkuaz ışık. */
 :root[data-theme='okyanus'] {
-  --bg: #07131a;
-  --surface: #0d1d26;
-  --surface-2: #142a37;
-  --border: #1d3a4b;
-  --text: #e6f4f8;
-  --muted: #8aa9b6;
-  --accent: #22c3e6;
-  --accent-hover: #4fd6f2;
-  --on-accent: #04202a;
+  --bg: #051726;
+  --surface: #0b2338;
+  --surface-2: #123049;
+  --border: #1c405e;
+  --text: #e6f4fb;
+  --muted: #8db0c4;
+  --accent: #2ec5e8;
+  --accent-hover: #5ad4f0;
+  --on-accent: #032130;
+  --art: radial-gradient(ellipse 80% 50% at 50% 110%, rgb(46 197 232 / 0.18), transparent 70%), linear-gradient(#0b2a45, #051726 55%, #03111d);
+  --art-size: 100% 100%, 100% 100%;
   --mascot: url('/themes/okyanus-maskot.svg');
 }
 
+/* Gün batımı: mordan bordoya, turuncuya kayan gökyüzü; altta güneş parıltısı, mercan vurgu. */
 :root[data-theme='gunbatimi'] {
-  --bg: #150c10;
-  --surface: #20141a;
-  --surface-2: #2c1b23;
-  --border: #3d2731;
-  --text: #f7ebee;
-  --muted: #b4949e;
-  --accent: #ff6b4a;
-  --accent-hover: #ff8a6e;
+  --bg: #1a0c14;
+  --surface: #26131f;
+  --surface-2: #331a29;
+  --border: #4a2638;
+  --text: #fbecef;
+  --muted: #c49aa8;
+  --accent: #ff7a4d;
+  --accent-hover: #ff9670;
+  --on-accent: #2a0d05;
+  --art: radial-gradient(ellipse 60% 40% at 50% 105%, rgb(255 140 70 / 0.28), transparent 70%), linear-gradient(#2a1238, #3a1530 40%, #24101a 75%, #160a10);
+  --art-size: 100% 100%, 100% 100%;
   --mascot: url('/themes/gunbatimi-maskot.svg');
 }
 
+/* Neon: simsiyah zemin, köşelerde pembe ve camgöbeği ışıklar, pembe vurgu. */
 :root[data-theme='neon'] {
-  --bg: #06060b;
+  --bg: #050508;
   --surface: #0d0d17;
   --surface-2: #151527;
   --border: #29294d;
@@ -58,9 +72,10 @@
   --accent-hover: #ff5ce0;
   --ok: #19f5a0;
   --glow: 0 0 18px rgb(255 43 214 / 0.45);
+  --art: radial-gradient(ellipse 45% 40% at 0% 0%, rgb(255 43 214 / 0.16), transparent 70%), radial-gradient(ellipse 45% 40% at 100% 100%, rgb(25 245 240 / 0.12), transparent 70%);
+  --art-size: 100% 100%, 100% 100%;
   --mascot: url('/themes/neon-maskot.svg');
 }
-
 /* ---- Çizimli temalar. Üç katman:
    --art       sayfanın kendi arka planı (yıldız, desen, ışık; CSS degradeleri)
    --scene     ekranı kaplayan sahne (public/themes/<tema>.svg)
@@ -223,6 +238,64 @@ body::before {
 @keyframes mascot-float {
   50% {
     transform: translateY(-8px) rotate(-1.5deg);
+  }
+}
+
+/* Ana sayfanın üstündeki tema şeridi: girmeden önce temaları denemek için */
+.theme-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: 2px 2px 10px;
+  margin: -8px 0 8px;
+  justify-content: center;
+}
+
+.theme-strip-label {
+  flex: none;
+  color: var(--chrome-text);
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.theme-chip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--chip-a), color-mix(in srgb, var(--chip-a) 70%, var(--chip-b)));
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.theme-chip img {
+  width: 28px;
+  height: 28px;
+}
+
+.theme-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--chip-b);
+}
+
+.theme-chip[aria-checked='true'] {
+  border-color: var(--chip-b);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--chip-b) 55%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .theme-strip {
+    justify-content: flex-start;
   }
 }
 

@@ -47,6 +47,18 @@ export const DRAWN_AVATARS = {
   chemist: '⚗️',
   lawyer: '⚖️',
   swordsman: '🗡️',
+  sorceress: '🧙‍♀️',
+  netrunner: '👩‍💻',
+  strawhat: '👒',
+  cook: '🍳',
+  greenblade: '🍃',
+  hunter: '🐺',
+  hacker: '💻',
+  dragonqueen: '🐉',
+  jester: '🃏',
+  nightguard: '🦇',
+  catburglar: '🐈‍⬛',
+  goth: '🖤',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
@@ -57,9 +69,12 @@ export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
  * sona eklemek eski istemcileri bozmaz.
  */
 export const AVATAR_PAGES = [
-  ['astronaut', 'alien', 'cyber', 'wizard', 'warrior', 'elf', 'dwarf', 'janissary', 'horseman', 'veiled'],
+  ['astronaut', 'alien', 'cyber', 'netrunner', 'wizard', 'sorceress', 'warrior', 'elf', 'dwarf', 'janissary', 'horseman', 'veiled'],
   ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],
-  ['scientist', 'sidekick', 'chemist', 'lawyer', 'swordsman'],
+  [
+    'scientist', 'sidekick', 'chemist', 'lawyer', 'swordsman', 'strawhat', 'cook', 'greenblade',
+    'hunter', 'hacker', 'dragonqueen', 'jester', 'nightguard', 'catburglar', 'goth',
+  ],
 ] as const;
 
 export const AVATARS = AVATAR_PAGES.flat();

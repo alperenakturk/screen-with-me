@@ -1,5 +1,6 @@
 import { extractRoomId, newRoomId } from '@swm/shared/room-id';
 import { translate } from './i18n.ts';
+import { renderThemeStrip } from './themes.ts';
 
 /** Bir "nasıl çalışır" adımı: büyük resim (emoji), başlık ve kısa açıklama (i18n anahtarları). */
 interface Step {
@@ -41,6 +42,7 @@ function stepsHtml(steps: Step[]): string {
 
 export function renderHome(app: HTMLElement): void {
   app.innerHTML = `
+    <nav id="theme-strip" class="theme-strip" role="radiogroup" aria-label="Theme"></nav>
     <section class="hero">
       <div class="theme-mascot" aria-hidden="true"></div>
       <h1>ScreenWithMe</h1>
@@ -69,6 +71,7 @@ export function renderHome(app: HTMLElement): void {
     </section>
   `;
   translate(app);
+  renderThemeStrip(app.querySelector<HTMLElement>('#theme-strip')!);
 
   app.querySelector('#create')!.addEventListener('click', () => {
     location.assign(`/r/${newRoomId()}`);

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath><radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#ff5aa0"/><stop offset="1" stop-color="#5a0f3a"/></radialGradient></defs><g clip-path="url(#c)"><rect width="64" height="64" fill="url(#bg)"/>
+<path d="M6 64 Q8 45 32 43 Q56 45 58 64Z" fill="#1c1430"/><path d="M14 54 Q20 46 32 45 Q44 46 50 54" stroke="#ff2a6d" stroke-width="1.8" fill="none"/>
+<rect x="28" y="38" width="8" height="7" fill="#f0c8a8"/>
+<path d="M18 32 Q16 14 32 13 Q48 14 46 32 L46 40 L40 40 L40 26 L24 26 L24 40 L18 40Z" fill="#14e0ee"/>
+<circle cx="32" cy="31" r="11" fill="#f0c8a8"/>
+<path d="M20 27 Q24 18 34 19 Q42 20 44 27 Q36 23 28 24 Q23 25 20 27Z" fill="#14e0ee"/>
+<rect x="21" y="27.5" width="22" height="6" rx="3" fill="#ff2a6d" opacity=".85"/>
+<rect x="24" y="29" width="6" height="2.5" rx="1.2" fill="#ffe0ef"/>
+<path d="M29.5 37 Q32 38.5 34.5 37" stroke="#9a2a4a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<path d="M44 34 h3 v3" stroke="#14e0ee" stroke-width="1" fill="none"/></g></svg>

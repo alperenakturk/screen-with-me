@@ -7,10 +7,10 @@ import { load, save } from './storage.ts';
  * blokları belirler. Uzaydan sonrakiler resimli ve maskotlu (public/themes/*.svg).
  */
 export const THEMES = [
-  { id: 'gece', swatch: ['#0f1014', '#7c5cff'] },
-  { id: 'okyanus', swatch: ['#07131a', '#22c3e6'] },
-  { id: 'gunbatimi', swatch: ['#150c10', '#ff6b4a'] },
-  { id: 'neon', swatch: ['#06060b', '#ff2bd6'] },
+  { id: 'gece', swatch: ['#141936', '#8b6cff'] },
+  { id: 'okyanus', swatch: ['#0b2a45', '#2ec5e8'] },
+  { id: 'gunbatimi', swatch: ['#3a1530', '#ff7a4d'] },
+  { id: 'neon', swatch: ['#050508', '#ff2bd6'] },
   { id: 'uzay', swatch: ['#1a1450', '#8ec5ff'] },
   { id: 'siber', swatch: ['#0b0418', '#ff2a6d'] },
   { id: 'ortacag', swatch: ['#1a1430', '#d6a843'] },
@@ -33,6 +33,36 @@ export function applyTheme(id: ThemeId): void {
   document.documentElement.dataset.theme = id;
   save('theme', id);
   window.dispatchEvent(new Event('themechange'));
+}
+
+/**
+ * Ana sayfanın üstündeki tema şeridi: her tema küçük maskotu ve adıyla; tıklayınca hemen
+ * uygulanır (kullanıcı odaya girmeden deneyebilsin). Dar ekranda yana kayar.
+ */
+export function renderThemeStrip(container: HTMLElement): void {
+  const draw = () =>
+    container.replaceChildren(
+      el('span', { class: 'theme-strip-label' }, t('settings.theme')),
+      ...THEMES.map((theme) => {
+        const button = el(
+          'button',
+          {
+            type: 'button',
+            class: 'theme-chip',
+            role: 'radio',
+            'aria-checked': String(theme.id === currentTheme()),
+            style: `--chip-a: ${theme.swatch[0]}; --chip-b: ${theme.swatch[1]}`,
+          },
+          el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '', loading: 'lazy' }),
+          el('span', {}, t(`theme.${theme.id}` as I18nKey)),
+        );
+        button.addEventListener('click', () => applyTheme(theme.id));
+        return button;
+      }),
+    );
+  draw();
+  window.addEventListener('themechange', draw);
+  window.addEventListener('langchange', draw);
 }
 
 /** Tema renk örneklerini bir kutuya çizer; tıklanınca tema değişir. */

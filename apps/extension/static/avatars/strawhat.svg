@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath><radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#68bdf0"/><stop offset="1" stop-color="#1f5a9a"/></radialGradient></defs><g clip-path="url(#c)"><rect width="64" height="64" fill="url(#bg)"/>
+<path d="M6 64 Q8 45 32 43 Q56 45 58 64Z" fill="#d62f2f"/><path d="M28 44 L32 64 L36 44Z" fill="#f2c9a0"/>
+<rect x="28" y="38" width="8" height="7" fill="#f2c9a0"/><circle cx="32" cy="30" r="12" fill="#f2c9a0"/>
+<path d="M20 28 L18 22 L23 24 L22 18 L27 22 L30 17 L33 22 L37 18 L38 23 L43 21 L44 28 Q40 23 32 23 Q24 23 20 28Z" fill="#141414"/>
+<ellipse cx="27" cy="30.5" rx="1.7" ry="2.2" fill="#1d1430"/><ellipse cx="37" cy="30.5" rx="1.7" ry="2.2" fill="#1d1430"/><circle cx="27.6" cy="29.7" r=".6" fill="#fff"/><circle cx="37.6" cy="29.7" r=".6" fill="#fff"/>
+<path d="M24 33.5 L27.5 34.5 M25 35 l1 -2" stroke="#a0505a" stroke-width="1" stroke-linecap="round"/>
+<path d="M26 36 Q32 41 38 36" stroke="#6b2f2f" stroke-width="1.6" fill="#fff" stroke-linejoin="round"/>
+<ellipse cx="32" cy="20" rx="20" ry="4.2" fill="#e8c35a"/>
+<path d="M21 20 Q22 9 32 9 Q42 9 43 20Z" fill="#f0cf6a"/>
+<path d="M21.5 17.5 Q32 15 42.5 17.5 L42.8 19.5 Q32 17 21.2 19.5Z" fill="#c62828"/>
+<path d="M24 12 Q32 10.5 40 12" stroke="#c9a240" stroke-width=".8" fill="none"/></g></svg>
