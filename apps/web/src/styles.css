@@ -291,23 +291,6 @@
   --mascot: url('/themes/tren-maskot.svg');
 }
 
-/* Şehir Ekspresi: aynı gece treni, solda kemer taçlı gökdelen; altın vurgu. */
-:root[data-theme='ekspres'] {
-  --bg: #070a16;
-  --surface: rgb(14 18 34 / 0.86);
-  --surface-2: rgb(22 28 50 / 0.92);
-  --border: #2e3a5e;
-  --text: #eef1f8;
-  --muted: #9ea7c0;
-  --accent: #e6c26a;
-  --accent-hover: #f2d68c;
-  --on-accent: #1d1604;
-  --art: linear-gradient(#05070f, #0e1428 60%, #070a16);
-  --art-size: 100% 100%;
-  --scene: url('/themes/ekspres.svg');
-  --mascot: url('/themes/ekspres-maskot.svg');
-}
-
 /* Gemi sahnesi aydınlık: kartsız, doğrudan gökyüzünün üstündeki yazılar gölgeyle okunur kalsın. */
 :root[data-theme='gemi'] :is(.hero h1, .tagline, .divider, .how h2, .how h3) {
   color: var(--text);

@@ -131,6 +131,80 @@ ${[23, 27, 31.5, 36, 40.5].map((x, i) => `<circle cx="${x}" cy="${i === 2 ? 32 :
 <path d="M24.5 28.3 Q27 26.3 30 28.3 M34 28.3 Q37 26.3 39.5 28.3" stroke="${INK}" stroke-width="1" fill="none"/>
 <path d="M22 22 Q32 17 42 22" stroke="#e8c27a" stroke-width="1.6" fill="none"/><circle cx="32" cy="21" r="1.8" fill="#e8c27a"/>`),
 
+  // Art Deco temaları: Sinema Sarayı → bereli yönetmen, Opera Gecesi → opera sanatçısı,
+  // Açık Hava Sineması → 3B gözlüklü sürücü, Transatlantik → kaptan, Gece Ekspresi → kondüktör
+
+  // Bereli yönetmen: kırmızı bere, yuvarlak gözlük, keçi sakalı, kırmızı atkı, megafon
+  director: badge(['#f0c95e', '#7a5210'], `
+${shoulders('#2a2a33', '<path d="M20 47 Q32 53 44 47 L45 52 Q32 57 19 52Z" fill="#c8283a"/><g transform="translate(49 53) rotate(-25)"><path d="M-5 -3 L8 -8 V8 L-5 3Z" fill="#f4efe4" stroke="#2a2a33" stroke-width="1"/><rect x="-9" y="-2.5" width="4" height="5" fill="#2a2a33"/></g>')}
+${neck('#f0c8a6')}${face('#f0c8a6')}
+<path d="M20 31 Q19 23 24 20 H40 Q45 23 44 31 Q42.6 26 40 24.6 H24 Q21.4 26 20 31Z" fill="#3a2a22"/>
+${eyes(30.6, 5)}
+<circle cx="27" cy="30.6" r="3.9" fill="none" stroke="#2a2a2a" stroke-width="1.2"/><circle cx="37" cy="30.6" r="3.9" fill="none" stroke="#2a2a2a" stroke-width="1.2"/><path d="M30.9 30.4 H33.1" stroke="#2a2a2a" stroke-width="1.2"/>
+<path d="M28.6 36 Q32 38 35.4 36" stroke="#6b2f2f" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+<path d="M28.4 39.4 Q32 38.6 35.6 39.4 Q34.4 43.6 32 44 Q29.6 43.6 28.4 39.4Z" fill="#3a2a22"/>
+<path d="M17.6 23 Q15.6 12.6 30 11.4 Q46 10.4 47.2 19.6 Q46.4 24 40 22.6 Q30 20.6 17.6 23Z" fill="#b8283a"/>
+<path d="M30.4 11.4 L31.4 7.4" stroke="#7a1020" stroke-width="2.2" stroke-linecap="round"/>`),
+
+  // Opera sanatçısı: topuz saç, altın taç ve krem tüy, kapalı gözler, şarkı söyleyen ağız,
+  // inci kolye, kırmızı elbise, yanda nota
+  diva: badge(['#3ab0a8', '#0f3638'], `
+<circle cx="32" cy="11.6" r="7" fill="#5a2418"/>
+<path d="M18 33 Q16 18 32 15 Q48 18 46 33 Q44 26 40 24 Q32 21 24 24 Q20 26 18 33Z" fill="#5a2418"/>
+${shoulders('#f0c8a6')}
+<path d="M8 64 Q10 53 20 51 Q32 55 44 51 Q54 53 56 64Z" fill="#a42838"/>
+${neck('#f0c8a6')}
+${[24, 27, 30, 32, 34, 37, 40].map((x, i) => `<circle cx="${x}" cy="${[45.4, 46.8, 47.6, 47.8, 47.6, 46.8, 45.4][i]}" r="1.1" fill="#fbf6ea"/>`).join('')}
+${face('#f0c8a6')}
+<path d="M20 29 Q20 18.4 32 17.6 Q44 18.4 44 29 Q40.4 22.6 32 22.4 Q23.6 22.6 20 29Z" fill="#5a2418"/>
+<path d="M24.6 17.6 L26.2 13.6 L28.4 16.4 L32 11.8 L35.6 16.4 L37.8 13.6 L39.4 17.6Z" fill="#e6c26a"/><circle cx="32" cy="15.6" r="1.3" fill="#e8708a"/>
+<path d="M40 17 Q45 7 53 4 Q48.4 10.4 45.6 18.4Z" fill="#f4efe4"/><path d="M41.4 16.6 Q46 9 51.6 5.4" stroke="#d8cfbd" stroke-width=".7" fill="none"/>
+<path d="M25 30 q2 -1.6 4 0 M35 30 q2 -1.6 4 0" stroke="${INK}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+<ellipse cx="32" cy="36.8" rx="2.1" ry="2.7" fill="#8a2030"/>
+<circle cx="20.6" cy="34" r="1.2" fill="#fbf6ea"/><circle cx="43.4" cy="34" r="1.2" fill="#fbf6ea"/>
+${blush(33.6)}
+<g fill="#f0c95e"><ellipse cx="51" cy="35" rx="2.2" ry="1.6" transform="rotate(-20 51 35)"/><rect x="52.4" y="26" width="1" height="9"/><path d="M53.4 26 Q57 28 56.4 31.6 Q55.6 29 53.4 28.6Z"/></g>`),
+
+  // Açık hava sineması sürücüsü: kabarık 50'ler saçı, kırmızı-mavi 3B gözlük, deri ceket,
+  // altta direksiyon
+  driver: badge(['#9a7ae0', '#1a1340'], `
+${shoulders('#1f1d2a', '<path d="M26 44 L32 52 L38 44Z" fill="#f4efe4"/><path d="M22 44 L28 53 L32 47 M42 44 L36 53 L32 47" stroke="#3a3648" stroke-width="1.6" fill="none"/><circle cx="32" cy="74" r="21" fill="none" stroke="#ff8a6b" stroke-width="4"/><path d="M32 53 V60 M18 62 L26 60 M46 62 L38 60" stroke="#ff8a6b" stroke-width="3"/>')}
+${neck('#e8b48f')}${face('#e8b48f')}
+<path d="M19.4 29 Q17.4 15 28 11.6 Q40 8 45.6 16.4 Q46.8 22.4 44.4 29 Q43.4 22.6 40.4 20.6 Q34 22.6 26.4 20.6 Q22.4 22.6 19.4 29Z" fill="#2a1a12"/>
+<path d="M27 12.4 Q33.6 4.6 42.6 8.6 Q36.6 8.8 33.4 13.4Z" fill="#2a1a12"/><path d="M29 13 Q34 9.4 39.6 10.4" stroke="#5a3a28" stroke-width="1" fill="none"/>
+<path d="M19.4 29.6 H44.6" stroke="#f4efe4" stroke-width="1.2"/>
+<rect x="20.6" y="26.6" width="10" height="7" rx="1.6" fill="#ff3b4a" fill-opacity=".88" stroke="#f4efe4" stroke-width="1.2"/>
+<rect x="33.4" y="26.6" width="10" height="7" rx="1.6" fill="#2ec5e8" fill-opacity=".88" stroke="#f4efe4" stroke-width="1.2"/>
+<path d="M27.4 37 Q32 40.4 36.6 37" stroke="#6b2f2f" stroke-width="1.5" fill="#fff" stroke-linecap="round"/>`),
+
+  // Transatlantik kaptanı: beyaz kaptan şapkası (siyah siperlik, altın çapa), beyaz sakal,
+  // lacivert ceket ve altın apoletler
+  captain: badge(['#f7cf8e', '#b8603a'], `
+${shoulders('#1c2a44', '<path d="M8 51 Q11 45.4 18 46 L17 52Z M56 51 Q53 45.4 46 46 L47 52Z" fill="#e6c26a"/><path d="M26 44 L32 52 L38 44Z" fill="#f4efe4"/><circle cx="29" cy="57" r="1.3" fill="#e6c26a"/><circle cx="35" cy="57" r="1.3" fill="#e6c26a"/>')}
+${neck('#e8b48f')}${face('#e8b48f')}
+<path d="M20 30 Q20.6 44 32 46.4 Q43.4 44 44 30 Q42 36 38 37 Q32 35.4 26 37 Q22 36 20 30Z" fill="#f2f2f2"/>
+<path d="M26.6 36.4 Q32 34 37.4 36.4 Q32 38.6 26.6 36.4Z" fill="#dcdcdc"/>
+<path d="M30 39.4 Q32 40.8 34 39.4" stroke="#6b2f2f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+${eyes(30.4)}
+<path d="M24.4 27 Q27 25.6 29.6 27 M34.4 27 Q37 25.6 39.6 27" stroke="#f2f2f2" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<path d="M17 21.4 Q16 10.6 32 9.6 Q48 10.6 47 21.4Z" fill="#fbf8f2" stroke="#d8d2c4" stroke-width="1"/>
+<rect x="18" y="19.2" width="28" height="4" fill="#141a22"/>
+<path d="M18 23.2 Q32 20.6 46 23.2 Q42 27.6 32 27 Q22 27.6 18 23.2Z" fill="#1e2630"/>
+<g transform="translate(32 14.6)" fill="none" stroke="#d9a94a" stroke-width="1.2"><circle cy="-2.6" r="1.1"/><path d="M0 -1.5 V3 M-2.2 -.4 H2.2 M-2.6 1.6 Q0 4.4 2.6 1.6"/></g>`),
+
+  // Gece treni kondüktörü: lacivert kasket (altın bant ve rozet), bıyık, altın düğmeli ceket
+  conductor: badge(['#6fd6a8', '#1d5a46'], `
+${shoulders('#1e2a4a', '<path d="M24 44 L32 49.6 L40 44" stroke="#e6c26a" stroke-width="1.3" fill="none"/><path d="M32 49.6 V64" stroke="#141a32" stroke-width="1.2"/><circle cx="29" cy="53" r="1.4" fill="#e6c26a"/><circle cx="29" cy="59" r="1.4" fill="#e6c26a"/><circle cx="35" cy="53" r="1.4" fill="#e6c26a"/><circle cx="35" cy="59" r="1.4" fill="#e6c26a"/>')}
+${neck('#efc4a0')}${face('#efc4a0')}
+<path d="M20.4 26 Q19.4 31 21 34.6 M43.6 26 Q44.6 31 43 34.6" stroke="#5a3a22" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+${eyes(31)}
+<path d="M32 35.4 Q28 33.8 25.2 36.6 Q28 37.6 32 36.4 Q36 37.6 38.8 36.6 Q36 33.8 32 35.4Z" fill="#5a3a22"/>
+<path d="M29.6 39.2 Q32 40.8 34.4 39.2" stroke="#6b2f2f" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+<path d="M19 24.4 V16.4 Q32 10.4 45 16.4 V24.4Z" fill="#1e2a4a"/>
+<rect x="19" y="19.4" width="26" height="4" fill="#e6c26a"/>
+<path d="M17 24.4 Q32 21.4 47 24.4 Q44 29.2 32 28.4 Q20 29.2 17 24.4Z" fill="#0c1020"/>
+<circle cx="32" cy="15.6" r="2.3" fill="#e6c26a"/><circle cx="32" cy="15.6" r="1" fill="#1e2a4a"/>`),
+
   // ---------- Parodi (sadece tarzı andırır) ----------
   // Çılgın bilim insanı: dikenli açık mavi saç, tek kaş, beyaz önlük
   scientist: badge(['#3a8a76', '#123a32'], `

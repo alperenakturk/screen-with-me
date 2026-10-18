@@ -21,7 +21,6 @@ export const THEMES = [
   { id: 'acikhava', swatch: ['#1a1340', '#ff8a6b'] },
   { id: 'gemi', swatch: ['#24425e', '#ec6a5a'] },
   { id: 'tren', swatch: ['#0e1428', '#6fd6a8'] },
-  { id: 'ekspres', swatch: ['#0e1428', '#e6c26a'] },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];
@@ -38,7 +37,7 @@ export function currentTheme(): ThemeId {
 /** Sahnesi (public/themes/<tema>.svg) olan temalar; diğerlerinin sadece maskotu var. */
 const SCENE_THEMES: readonly ThemeId[] = [
   'uzay', 'siber', 'ortacag', 'lokum', 'binbirgece',
-  'sinema', 'opera', 'acikhava', 'gemi', 'tren', 'ekspres',
+  'sinema', 'opera', 'acikhava', 'gemi', 'tren',
 ];
 
 /** Temanın resimleri (styles.css'teki --scene / --mascot / desen ile aynı adresler). */

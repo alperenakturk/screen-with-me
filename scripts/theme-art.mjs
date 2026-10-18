@@ -1364,12 +1364,11 @@ ${logo(70, 100, 100, { look: [2, -1] })}
 }
 
 // =====================================================================
-// GECE EKSPRESİ / ŞEHİR EKSPRESİ (KARANLIK): sağdan gelen aerodinamik deco lokomotif,
-//     farının huzmesi, kemerli viyadük, uzak şehir ışıkları; solda saat kulesi ve sinyal
-//     ('a') ya da kemer taçlı gökdelen ve radyo direği ('c'). İki ayrı tema.
+// GECE EKSPRESİ (KARANLIK): sağdan gelen aerodinamik deco lokomotif, farının huzmesi,
+//     kemerli viyadük, uzak şehir ışıkları; solda deco saat kulesi ve sinyal
 // =====================================================================
 
-function trenScene(variant) {
+function trenScene() {
   const S = scene();
   const r = rng(101);
   S.defs.push(`
@@ -1409,7 +1408,7 @@ ${[728, 744, 760].map((y, i) => `<path d="M${1352 + i * 2} ${y} Q${1420} ${y - 3
 ${[1430, 1500, 1570].map((x) => `<circle cx="${x}" cy="802" r="18" fill="#0a0d18" stroke="#6a7090" stroke-width="2"/>`).join('')}
 <circle cx="1362" cy="752" r="11" fill="#fffbe8" filter="url(#g2)"/>`;
 
-  // ---- Sol kenardaki yapı: a) saat kulesi (Gece Ekspresi), c) gökdelen (Şehir Ekspresi) ----
+  // ---- Sol kenardaki yapı: deco saat kulesi ----
   // Ortak parçalar: blok (ön yüz lacivert, sağ yan gölgede, solda ay ışığı çizgisi, tepesi
   // altın), ışıklı dar pencere, deco saat kadranı.
   const NAVY = '#1c2446';
@@ -1440,7 +1439,7 @@ ${[1430, 1500, 1570].map((x) => `<circle cx="${x}" cy="802" r="18" fill="#0a0d18
 <rect x="236" y="586" width="26" height="54" rx="8" fill="#141a2e" stroke="#6a7aa8" stroke-width="2"/>
 <circle cx="249" cy="602" r="7" fill="#3a1010"/><circle cx="249" cy="624" r="7" fill="#6fd6a8" filter="url(#g)"/>`;
 
-  // a) Deco saat kulesi: tren garının üstünde yükselen ince, kademeli kule; saat katı,
+  // Deco saat kulesi: tren garının üstünde yükselen ince, kademeli kule; saat katı,
   //    dikey kaburgalar, yan kanatlar, kemerli gar pencereleri, tepede kırmızı fener.
   const towerA = () => {
     const rr = rng(7);
@@ -1465,47 +1464,8 @@ ${[1430, 1500, 1570].map((x) => `<circle cx="${x}" cy="802" r="18" fill="#0a0d18
     return s + signal;
   };
 
-  // c) Deco gökdelen: kademeli gövde, ışıklı pencere ızgarası, iç içe kemerli taç ve
-  //    üçgen pencereler, ince altın sivri uç; tepeden gökyüzüne iki arama ışığı; yanında
-  //    kafes radyo direği.
-  const towerC = () => {
-    const rr = rng(13);
-    let s = '';
-    s += S.cone(130, 214, -120, -160, 70, '#cfe0ff', 0.16, 0) + S.cone(130, 214, 520, -200, 70, '#cfe0ff', 0.12, 0);
-    const grid = (x, y, w, h) => {
-      let g = block(x, y, w, h);
-      for (let wx = x + 8; wx < x + w - 10; wx += 14) {
-        g += `<rect x="${wx + 8}" y="${y + 6}" width="2" height="${h - 10}" fill="#2a3462"/>`;
-        for (let wy = y + 12; wy < y + h - 12; wy += 18) if (rr() < 0.42) g += `<rect x="${wx}" y="${wy}" width="6" height="9" fill="#ffd27a" opacity="${f(0.35 + rr() * 0.55)}"/>`;
-      }
-      return g;
-    };
-    s += grid(44, 580, 172, 220) + chevrons(48, 212, 588, 14);
-    s += grid(66, 430, 128, 152) + chevrons(70, 190, 438, 12);
-    s += grid(86, 330, 88, 102);
-    s += clockFace(130, 490, 22);
-    for (let k = 0; k < 4; k++) {
-      const cy = 332 - k * 24;
-      const ar = 44 - k * 9;
-      s += `<path d="M${130 - ar} ${cy} A${ar} ${ar} 0 0 1 ${130 + ar} ${cy}Z" fill="${NAVY}" stroke="url(#gold)" stroke-width="2.5"/>`;
-      for (let a = 200; a <= 340; a += 20) {
-        const px = 130 + Math.cos(rad(a)) * (ar - 9);
-        const py = cy + Math.sin(rad(a)) * (ar - 9);
-        s += `<path d="M${f(px + Math.cos(rad(a)) * 6)} ${f(py + Math.sin(rad(a)) * 6)} L${f(px + Math.cos(rad(a + 90)) * 2.5)} ${f(py + Math.sin(rad(a + 90)) * 2.5)} L${f(px - Math.cos(rad(a + 90)) * 2.5)} ${f(py - Math.sin(rad(a + 90)) * 2.5)}Z" fill="#ffd27a" opacity=".9"/>`;
-      }
-    }
-    s += `<path d="M126 254 L130 150 L134 254Z" fill="url(#gold)"/><circle cx="130" cy="148" r="3.5" fill="#ff5a4a" filter="url(#g)"/>`;
-    let lattice = `<path d="M226 800 L236 520 L246 800" stroke="#3a4470" stroke-width="3" fill="none"/>`;
-    for (let y = 790; y > 540; y -= 22) {
-      const t = (800 - y) / 280;
-      const hw = 10 * (1 - t);
-      lattice += `<path d="M${f(236 - hw)} ${y} L${f(236 + hw * 0.92)} ${y - 22}" stroke="#3a4470" stroke-width="1.5"/>`;
-    }
-    s += lattice + `<circle cx="236" cy="516" r="4" fill="#ff5a4a" filter="url(#g)"/>`;
-    return s;
-  };
-  // İkisi de uzun: üst şerit sivri ucu kesmesin diye tabandan biraz küçültülür
-  const clock = `<g transform="translate(13 80) scale(.9)">${variant === 'a' ? towerA() : towerC()}</g>`;
+  // Uzun: üst şerit sivri ucu kesmesin diye tabandan biraz küçültülür
+  const clock = `<g transform="translate(13 80) scale(.9)">${towerA()}</g>`;
 
   return S.svg(`
 <defs>__DEFS__</defs>
@@ -1543,34 +1503,6 @@ ${logo(70, 100, 100, { look: [2, -1] })}
   <rect x="-12" y="-32" width="24" height="34" rx="4" fill="#ffe2a0" filter="url(#g)"/>
   <path d="M-12 -32 V2 M12 -32 V2 M0 -32 V2" stroke="#2a3050" stroke-width="2"/>
   <rect x="-15" y="2" width="30" height="8" rx="2" fill="#2a3050"/>
-</g>
-`);
-}
-
-function ekspresMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 4)}
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2d68c"/><stop offset="1" stop-color="#a8822c"/></linearGradient>
-</defs>
-<!-- Arkada küçük deco gökdelen: kemerli taç, ışıklı pencereler -->
-<g transform="translate(186 0)">
-  <rect x="-22" y="96" width="44" height="126" fill="#1c2446"/><rect x="-12" y="70" width="24" height="28" fill="#1c2446"/>
-  ${[84, 76, 68].map((y, k) => `<path d="M${-12 + k * 3} ${y} A${12 - k * 3} ${12 - k * 3} 0 0 1 ${12 - k * 3} ${y}Z" fill="#1c2446" stroke="url(#gold)" stroke-width="2"/>`).join('')}
-  <path d="M-1.5 58 L0 30 L1.5 58Z" fill="url(#gold)"/><circle cy="28" r="3" fill="#ff5a4a" filter="url(#g)"/>
-  ${[110, 130, 150, 170, 190].map((y, i) => `<rect x="-14" y="${y}" width="6" height="9" fill="#ffd27a" opacity="${i % 2 ? 0.5 : 0.9}"/><rect x="6" y="${y}" width="6" height="9" fill="#ffd27a" opacity="${i % 2 ? 0.9 : 0.4}"/>`).join('')}
-</g>
-${sparkle(34, 44, 7, '#fff2d0')}${sparkle(120, 30, 5, '#fff2d0')}
-<rect x="0" y="222" width="240" height="6" fill="#6a7090"/>${[10, 50, 90, 130, 170, 210].map((x) => `<rect x="${x}" y="228" width="22" height="6" fill="#2a3050"/>`).join('')}
-${logo(56, 100, 100, { look: [2, -1] })}
-<!-- Kondüktör şapkası -->
-<path d="M62 108 V80 Q106 66 150 80 V108Z" fill="#1e2a4a" stroke="#141a32" stroke-width="2.5"/>
-<rect x="62" y="94" width="88" height="10" fill="url(#gold)"/>
-<path d="M56 108 Q106 100 158 108 Q146 122 106 120 Q68 122 56 108Z" fill="#0c1020"/>
-<circle cx="106" cy="84" r="6" fill="url(#gold)"/>
-<!-- Altın bilet -->
-<g transform="translate(36 186) rotate(-14)">
-  <path d="M-22 -12 H22 V-4 A4 4 0 0 0 22 4 V12 H-22 V4 A4 4 0 0 0 -22 -4Z" fill="url(#gold)"/>
-  <path d="M-10 -12 V12" stroke="#7a5a1c" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M-2 0 H14" stroke="#7a5a1c" stroke-width="2"/>
 </g>
 `);
 }
@@ -1689,10 +1621,8 @@ const files = {
   'acikhava-maskot.svg': acikhavaMascot(),
   'gemi.svg': gemiScene(),
   'gemi-maskot.svg': gemiMascot(),
-  'tren.svg': trenScene('a'),
+  'tren.svg': trenScene(),
   'tren-maskot.svg': trenMascot(),
-  'ekspres.svg': trenScene('c'),
-  'ekspres-maskot.svg': ekspresMascot(),
 };
 for (const [name, content] of Object.entries(files)) {
   writeFileSync(new URL(name, OUT), content.replace(/\n\s*\n/g, '\n'));

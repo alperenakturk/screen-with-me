@@ -75,6 +75,11 @@ export const DRAWN_AVATARS = {
   wizardboy: '⚡',
   redhead: '🍫',
   wizardgirl: '📚',
+  director: '🎬',
+  diva: '🎭',
+  driver: '🚗',
+  captain: '⚓',
+  conductor: '🚂',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
@@ -85,7 +90,10 @@ export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
  * etmez; yeni avatar eklemek eski istemcileri bozmaz (onlarda emoji yerine kimlik görünür).
  */
 export const AVATAR_PAGES = [
-  ['astronaut', 'alien', 'cyber', 'netrunner', 'wizard', 'sorceress', 'warrior', 'elf', 'dwarf', 'janissary', 'horseman', 'veiled'],
+  [
+    'astronaut', 'alien', 'cyber', 'netrunner', 'wizard', 'sorceress', 'warrior', 'elf', 'dwarf',
+    'janissary', 'horseman', 'veiled', 'director', 'diva', 'driver', 'captain', 'conductor',
+  ],
   ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],
   ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
   [
