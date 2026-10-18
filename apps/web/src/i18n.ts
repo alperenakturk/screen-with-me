@@ -67,12 +67,12 @@ const tr = {
   'how.yt.3.text': 'YouTube linkini odadaki kutuya yapıştır. İstersen sıraya birkaç video ekle.',
   'how.yt.4.title': 'Birlikte izle',
   'how.yt.4.text': 'Biri durdurur, sarar ya da hızı değiştirirse herkeste aynısı olur.',
-  'how.site.title': 'Başka bir sitede film ya da dizi izle',
+  'how.site.title': 'Başka bir sitedeki videoyu izle (bilgisayarda)',
   'how.site.1.title': 'Eklentiyi kur',
   'how.site.1.text': 'Bir kerelik, yaklaşık 1 dakika. Chrome, Edge ve Brave’de çalışır.',
   'how.site.1.action': 'Eklentiyi indir',
-  'how.site.2.title': 'Filmin sayfasını aç',
-  'how.site.2.text': 'İzleyeceğin siteye git ve filmin ya da bölümün sayfasını aç.',
+  'how.site.2.title': 'Videonun sayfasını aç',
+  'how.site.2.text': 'Birlikte izleyeceğiniz videonun olduğu sayfaya git.',
   'how.site.3.title': 'Odanı kur',
   'how.site.3.text': 'Sağ üstteki ScreenWithMe simgesine tıkla → "Bu sayfada oda oluştur".',
   'how.site.4.title': 'Davet linkini gönder',
@@ -101,10 +101,21 @@ const tr = {
   bansHint: 'Çıkarılanlar sen yasağı kaldırana kadar bu odaya giremez. Kişiler tarayıcılarından tanınır; başka bir tarayıcıdan girebilirler.',
   unban: 'Yasağı kaldır',
   introText: 'İyi seyirler!',
+  reconnect: 'Bağlantıyı yenile',
   moreReactions: 'Diğer emojiler',
   playNow: 'Şimdi aç',
   addToQueue: 'Sıraya ekle',
-  invalidMedia: 'Bu linki tanıyamadım. Bir YouTube veya doğrudan video linki dene.',
+  invalidMedia: 'Bu bir link gibi görünmüyor. https:// ile başlayan bir adres yapıştır.',
+  mediaLabel: 'Video ya da sayfa linki',
+  queuedNote: '✓ Sıraya eklendi',
+  emptyStep1: 'Arkadaşlarını çağır:',
+  copyInvite: 'Davet linkini kopyala',
+  share: 'Paylaş',
+  inviteShareText: 'Gel birlikte izleyelim 🍿',
+  externalMobile:
+    'Bu tür sayfalar sadece bilgisayarda (Chrome, Edge ya da Brave + ScreenWithMe eklentisi) birlikte izlenebilir. Bu arada sohbetten odayı takip edebilirsin.',
+  noBans: 'Kimse çıkarılmadı.',
+  savedNote: 'Kaydedildi ✓',
   queue: 'Sıradakiler ({n})',
   queueEmpty: 'Sıra boş. Bir link yapıştırıp "Sıraya ekle"ye bas.',
   addedBy: 'ekleyen: {name}',
@@ -122,7 +133,7 @@ const tr = {
   chat: 'Sohbet',
   chatPlaceholder: 'Bir şey yaz…',
   send: 'Gönder',
-  chatEmpty: 'Henüz mesaj yok.',
+  chatEmpty: 'Henüz mesaj yok. Arkadaşların gelince burada konuşursunuz 👋',
   'action.next': 'Sıradaki videoya geçildi: {title}',
   'queue.add': '{name} sıraya ekledi: {title}',
   'queue.remove': '{name} sıradan çıkardı: {title}',
@@ -228,12 +239,12 @@ const en: Record<Key, string> = {
   'how.yt.3.text': 'Paste a YouTube link into the room. Queue up a few more if you like.',
   'how.yt.4.title': 'Watch together',
   'how.yt.4.text': 'If anyone pauses, seeks or changes the speed, it happens for everyone.',
-  'how.site.title': 'Watch a film or series on another site',
+  'how.site.title': 'Watch a video on another website (on a computer)',
   'how.site.1.title': 'Install the extension',
   'how.site.1.text': 'Once, takes about a minute. Works in Chrome, Edge and Brave.',
   'how.site.1.action': 'Get the extension',
   'how.site.2.title': 'Open the video page',
-  'how.site.2.text': 'Go to the site and open the page of the film or episode.',
+  'how.site.2.text': 'Go to the page with the video you want to watch together.',
   'how.site.3.title': 'Create your room',
   'how.site.3.text': 'Click the ScreenWithMe icon at the top right → "Create a room on this page".',
   'how.site.4.title': 'Send the invite link',
@@ -262,10 +273,21 @@ const en: Record<Key, string> = {
   bansHint: "Removed people can't rejoin this room until you unban them. People are recognized by their browser; they could join from another browser.",
   unban: 'Unban',
   introText: 'Enjoy the show!',
+  reconnect: 'Reconnect',
   moreReactions: 'More emojis',
   playNow: 'Play now',
   addToQueue: 'Add to queue',
-  invalidMedia: "I couldn't recognise that link. Try a YouTube or direct video link.",
+  invalidMedia: "That doesn't look like a link. Paste an address starting with https://",
+  mediaLabel: 'Video or page link',
+  queuedNote: '✓ Added to the queue',
+  emptyStep1: 'Invite your friends:',
+  copyInvite: 'Copy invite link',
+  share: 'Share',
+  inviteShareText: "Let's watch together 🍿",
+  externalMobile:
+    'Pages like this can only be watched together on a computer (Chrome, Edge or Brave + the ScreenWithMe extension). You can still follow the room in the chat.',
+  noBans: 'Nobody has been removed.',
+  savedNote: 'Saved ✓',
   queue: 'Up next ({n})',
   queueEmpty: 'The queue is empty. Paste a link and press "Add to queue".',
   addedBy: 'added by {name}',
@@ -283,7 +305,7 @@ const en: Record<Key, string> = {
   chat: 'Chat',
   chatPlaceholder: 'Say something…',
   send: 'Send',
-  chatEmpty: 'No messages yet.',
+  chatEmpty: 'No messages yet. Chat here when your friends arrive 👋',
   'action.next': 'Moved on to the next video: {title}',
   'queue.add': '{name} queued {title}',
   'queue.remove': '{name} removed {title}',
@@ -359,6 +381,14 @@ export function translate(root: ParentNode = document): void {
   for (const el of root.querySelectorAll<HTMLInputElement>('[data-i18n-placeholder]')) {
     const key = el.dataset.i18nPlaceholder!;
     if (isKey(key)) el.placeholder = t(key);
+  }
+  // Başlık (üstüne gelince) ve ekran okuyucu etiketi
+  for (const el of root.querySelectorAll<HTMLElement>('[data-i18n-title]')) {
+    const key = el.dataset.i18nTitle!;
+    if (isKey(key)) {
+      el.title = t(key);
+      el.setAttribute('aria-label', t(key));
+    }
   }
 }
 

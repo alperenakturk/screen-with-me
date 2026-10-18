@@ -13,6 +13,8 @@ const MAX_TOASTS = 4;
 const TOAST_MS = 5000;
 /** Fare bu kadar hareketsiz kalınca buton (ve açıksa çubuk) solar. */
 const IDLE_MS = 3000;
+/** "Odadan çıkarıldın" gibi kapanış açıklamaları bu kadar ekranda kalır. */
+const FAREWELL_MS = 6000;
 
 const CSS = `
 :host { all: initial; }
@@ -97,6 +99,15 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 .pager button { width: 18px; height: 13px; padding: 0; border-radius: 4px; font-size: 7px; line-height: 1; color: #fff; cursor: pointer;
   background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12); }
 .pager button:hover { background: rgb(255 255 255 / .18); }
+/* Ortada kısa bilgi kartı: katılma onayı, "çıkarıldın" gibi kapanış nedenleri */
+.note { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); width: min(380px, calc(100% - 24px));
+  pointer-events: auto; background: rgb(15 16 20 / .94); border: 1px solid rgb(255 255 255 / .16); border-radius: 14px;
+  padding: 16px 18px; text-align: center; font-size: 15px; box-shadow: 0 12px 40px rgb(0 0 0 / .5); animation: in .25s ease-out; }
+.note b { display: block; font-size: 16px; margin-bottom: 6px; }
+.note .actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+.note button { font: inherit; font-weight: 600; color: #fff; background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .18);
+  border-radius: 9px; padding: 8px 16px; cursor: pointer; }
+.note button.primary { background: #7c5cff; border-color: #7c5cff; }
 ${INTRO_CSS}
 `;
 
@@ -140,6 +151,8 @@ export function createOverlay(actions: OverlayActions) {
   let barOpen = false;
   let unread = 0;
   let reactionPage = 0;
+  /** Kapanış açıklaması bu ana kadar ekranda kalır. */
+  let farewellUntil = 0;
 
   // Çubuğa yazarken basılan tuşlar sitenin ve başka eklentilerin kısayollarını
   // (boşluk = durdur, hız eklentilerinin harfleri vb.) tetiklemesin. Kapalı shadow
@@ -412,8 +425,35 @@ export function createOverlay(actions: OverlayActions) {
       parts.waiting.textContent = me ? t('waitingForYou') : t('waitingFor', { names: names.join(', ') });
     },
 
-    notice(kind: 'joined' | 'left' | 'slow', name: string): void {
-      toast([kind === 'slow' ? t('slowDown') : t(kind, { name })], 'notice');
+    notice(kind: 'joined' | 'left' | 'slow' | 'speed', name: string): void {
+      const text = kind === 'slow' ? t('slowDown') : kind === 'speed' ? t('speedLocked') : t(kind, { name });
+      toast([text], 'notice');
+    },
+
+    /** Başka bir siteden gelen davet işareti: sormadan odaya sokma. */
+    askJoin(onYes: () => void): void {
+      const layer = mount();
+      const yes = el('button', 'primary', t('joinYes'));
+      const no = el('button', '', t('joinNo'));
+      const card = el('div', 'note', el('b', '', t('joinTitle')), t('joinText'), el('div', 'actions', yes, no));
+      yes.addEventListener('click', () => {
+        card.remove();
+        onYes();
+      });
+      no.addEventListener('click', () => {
+        card.remove();
+        this.unmount();
+      });
+      layer.append(card);
+    },
+
+    /** Oda kapandı: nedenini birkaç saniye göster, sonra çubuk kalksın. */
+    farewell(reason: 'kicked' | 'version' | 'room_full'): void {
+      const layer = mount();
+      layer.querySelector('.note')?.remove();
+      const key = reason === 'kicked' ? 'endedKicked' : reason === 'version' ? 'endedVersion' : 'endedFull';
+      layer.append(el('div', 'note', el('b', '', t(`${key}Title`)), t(key)));
+      farewellUntil = Date.now() + FAREWELL_MS;
     },
 
     /** Odaya girince "İyi seyirler" açılışı (videonun üstünde). */
@@ -437,6 +477,12 @@ export function createOverlay(actions: OverlayActions) {
     },
 
     unmount(): void {
+      // Kapanış açıklaması okunabilsin: süresi dolana kadar beklet.
+      const wait = farewellUntil - Date.now();
+      if (wait > 0) {
+        setTimeout(() => this.unmount(), wait);
+        return;
+      }
       host?.remove();
       host = root = null;
       parts = null;

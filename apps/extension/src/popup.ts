@@ -10,6 +10,7 @@ const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>
 
 // Statik metinler (önce sitede seçilen dili oku)
 await langReady;
+document.documentElement.lang = t('you') === 'sen' ? 'tr' : 'en';
 for (const el of document.querySelectorAll<HTMLElement>('[data-t]')) {
   const key = el.dataset.t!;
   if (isKey(key)) el.textContent = t(key);
@@ -67,7 +68,7 @@ function render(status: PopupStatus): void {
   const onSite = !!status.tabUrl && status.tabUrl.startsWith(SITE_URL);
   $('#site-view').hidden = !onSite;
   if (onSite) {
-    for (const id of ['#name-view', '#me-view', '#idle-view', '#room-view', '#status', '#error']) $(id).hidden = true;
+    for (const id of ['#name-view', '#me-view', '#idle-view', '#room-view', '#status', '#error', '#ended']) $(id).hidden = true;
     return;
   }
   const needName = !status.name || editingName;
@@ -81,6 +82,10 @@ function render(status: PopupStatus): void {
   }
 
   const session = status.session;
+  // Oda az önce kapandıysa nedenini söyle (çıkarıldın / güncelle / oda dolu).
+  const ended = $('#ended');
+  ended.hidden = status.ended === null;
+  if (status.ended) ended.textContent = t(status.ended === 'kicked' ? 'endedKicked' : status.ended === 'version' ? 'endedVersion' : 'endedFull');
   $('#idle-view').hidden = needName || session !== null;
   $('#room-view').hidden = needName || session === null;
 
@@ -96,6 +101,10 @@ function render(status: PopupStatus): void {
   $('#item-title').textContent = session.item ? (session.item.title ?? session.item.id) : t('nothingPlaying');
   $('#page-warning').hidden = session.onRoomPage;
   $('#video-state').textContent = session.onRoomPage && session.item ? t(session.hasVideo ? 'videoFound' : 'noVideo') : '';
+  // Hiç çerçeve bağlı değilse eklenti bu sekmeye sonradan kurulmuştur: yenilemek gerekir.
+  $('#reload-box').hidden = !(session.onRoomPage && session.frames === 0);
+  // Tanı satırı sadece video bulunamadığında (kullanıcı bize iletebilsin), kapalı kutuda.
+  $('#diag-box').hidden = session.hasVideo || !session.onRoomPage;
   $('#diag').textContent = t('diag', { frames: session.frames, video: session.bestVideo ?? '–' });
 
   // Odadakiler: yönetici 👑; yöneticiysem başkalarının yanında "çıkar" butonu.
@@ -157,15 +166,31 @@ $('#edit-name').addEventListener('click', () => {
   $<HTMLInputElement>('#name').focus();
 });
 
-$('#create').addEventListener('click', async () => {
-  await request({ type: 'create', tabId });
-  await refresh();
-});
+/** İstek sürerken butonu kapat (çift tıklama iki oda kurmasın). */
+async function busy(button: HTMLButtonElement, work: () => Promise<unknown>): Promise<void> {
+  if (button.disabled) return;
+  button.disabled = true;
+  try {
+    await work();
+  } finally {
+    button.disabled = false;
+  }
+}
 
-$('#join-form').addEventListener('submit', async (event) => {
+$('#create').addEventListener('click', () =>
+  busy($<HTMLButtonElement>('#create'), async () => {
+    await request({ type: 'create', tabId });
+    await refresh();
+  }),
+);
+$('#reload').addEventListener('click', () => void request({ type: 'reload', tabId }));
+
+$('#join-form').addEventListener('submit', (event) => {
   event.preventDefault();
-  await request({ type: 'join', tabId, input: $<HTMLInputElement>('#join-input').value });
-  await refresh();
+  void busy($<HTMLButtonElement>('#join-form button'), async () => {
+    await request({ type: 'join', tabId, input: $<HTMLInputElement>('#join-input').value });
+    await refresh();
+  });
 });
 
 $('#copy').addEventListener('click', async () => {

@@ -38,8 +38,12 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
     const host = members.find((m) => m.id === hostId);
     hint.textContent = iAmHost ? t('youAreHost') : host ? t('hostIs', { name: host.name }) : '';
 
-    // Çıkarılanlar: sadece yönetici görür.
-    bansBox.hidden = !iAmHost || bans.length === 0;
+    // Çıkarılanlar: sadece yönetici görür; boşken de (nereden kaldıracağını önceden bilsin).
+    bansBox.hidden = !iAmHost;
+    if (bans.length === 0) {
+      bansList.replaceChildren(el('li', { class: 'muted small' }, t('noBans')));
+      return;
+    }
     bansList.replaceChildren(
       ...bans.map((ban) => {
         const unban = el('button', { type: 'button', class: 'btn small-btn' }, t('unban'));

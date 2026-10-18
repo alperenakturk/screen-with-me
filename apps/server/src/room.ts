@@ -14,7 +14,7 @@ import {
   type ServerMessage,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
-import { WAIT_MAX_MS, WaitTracker } from '@swm/shared/waiting';
+import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { RateLimiter } from './rate-limit.ts';
 import { resolveTitle } from './titles.ts';
 
@@ -23,6 +23,11 @@ const MAX_MEMBERS = 50;
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 /** Sonradan gelenlerin görebileceği son sohbet mesajı sayısı. */
 const CHAT_HISTORY = 50;
+/**
+ * Yönetici bundan uzun süre odada yoksa yöneticilik kalıcı olarak odadaki en eski
+ * kişiye geçer (geri gelse de geri almaz). Sayfa yenilemek bu süreden kısa sürer.
+ */
+const HOST_GRACE_MS = 20_000;
 /** Yasaklı listesi en fazla bu kadar kişi tutar (en eskisi düşer). */
 const MAX_BANS = 200;
 /** Oda adına yapılan hareketler (otomatik bekleme) bu "kişi" adına duyurulur. */
@@ -89,12 +94,16 @@ export class Room extends DurableObject<Env> {
   private chat: ChatMessage[] = [];
   private titles = new Map<string, string>();
   private hostKey: string | null = null;
+  /** Yönetici ne zamandan beri odada yok (varsa). */
+  private hostGoneAt: number | null = null;
   /** Atılanlar: kişi anahtarı (keyOf) → yasak. */
   private bans: Record<string, Ban> = {};
   private settings: RoomSettings = { waitForAll: true };
-  /** "Herkes hazır": kim takıldı, oda bekliyor mu (bellekte; uyku sırasında zaten kimse oynatmıyor). */
+  /** "Herkes hazır": kim takıldı, oda bekliyor mu (depoya da yazılır; bkz. saveWaits). */
   private readonly waits = new WaitTracker();
   private waitTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Oda ne zamandan beri boş (24 saat sonra silinir). */
+  private emptySince: number | null = null;
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
@@ -109,10 +118,13 @@ export class Room extends DurableObject<Env> {
       if (saved && Array.isArray(saved.queue)) this.room = saved;
       this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
       this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
+      this.hostGoneAt = (await ctx.storage.get<number>('hostGoneAt')) ?? null;
       // Eski biçim (anahtar → bitiş zamanı, 10 dk'lık yasak) artık geçersiz; sadece yeni biçim okunur.
       const bans = (await ctx.storage.get<Record<string, Ban | number>>('bans')) ?? {};
       for (const [key, ban] of Object.entries(bans)) if (typeof ban === 'object') this.bans[key] = ban;
       this.settings = (await ctx.storage.get<RoomSettings>('settings')) ?? { waitForAll: true };
+      this.waits.restore(await ctx.storage.get<WaitSnapshot>('waits'));
+      this.emptySince = (await ctx.storage.get<number>('emptySince')) ?? null;
     });
   }
 
@@ -129,7 +141,7 @@ export class Room extends DurableObject<Env> {
     } else {
       const attachment: Attachment = { id: newId().slice(0, 8), name: null };
       server.serializeAttachment(attachment);
-      await this.ctx.storage.deleteAlarm();
+      await this.setEmptySince(null);
     }
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -149,6 +161,11 @@ export class Room extends DurableObject<Env> {
     }
 
     if (message.t === 'hello') {
+      // Her hello herkese yayın tetikler; art arda hello ile odayı boğmasınlar.
+      if (!this.commandLimit.allow(attachment.id)) {
+        this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+        return;
+      }
       await this.join(ws, attachment, message);
       return;
     }
@@ -191,6 +208,7 @@ export class Room extends DurableObject<Env> {
       case 'ready':
         this.waits.setReady(me.id, message.ready);
         await this.evaluateWait();
+        await this.saveWaits();
         return;
       case 'settings':
         if (!this.isHost(ws)) {
@@ -228,16 +246,50 @@ export class Room extends DurableObject<Env> {
     await this.onLeave(ws);
   }
 
-  /** Oda uzun süre boş kaldığında çalışır ve depoyu temizler. */
+  /**
+   * Tek alarm iki işe bakar (nesne uyusa da kaybolmasın diye setTimeout yerine):
+   * 1) "Herkes hazır" beklemesinin süresi dolduysa odayı devam ettir.
+   * 2) Oda 24 saattir boşsa depoyu temizle.
+   */
   override async alarm(): Promise<void> {
-    if (this.openSockets().length === 0) {
+    const now = Date.now();
+    // emptySince yoksa: eski sürümün kurduğu 24 saatlik alarm (o zaman da boşsa sil).
+    if (this.openSockets().length === 0 && (this.emptySince === null || now - this.emptySince >= EMPTY_ROOM_TTL_MS)) {
       await this.ctx.storage.deleteAll();
-      this.room = initialRoom(Date.now());
+      this.room = initialRoom(now);
       this.chat = [];
       this.hostKey = null;
+      this.hostGoneAt = null;
       this.bans = {};
       this.settings = { waitForAll: true };
+      this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
+      this.emptySince = null;
+      return;
     }
+    if (this.waits.waitingSince !== null && now - this.waits.waitingSince >= WAIT_MAX_MS) await this.evaluateWait();
+    await this.scheduleAlarm();
+  }
+
+  /** Bir sonraki alarmı en yakın işe göre kurar (yoksa kaldırır). */
+  private async scheduleAlarm(): Promise<void> {
+    const times: number[] = [];
+    if (this.waits.waitingSince !== null) times.push(this.waits.waitingSince + WAIT_MAX_MS + 50);
+    if (this.emptySince !== null) times.push(this.emptySince + EMPTY_ROOM_TTL_MS);
+    if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
+    else await this.ctx.storage.deleteAlarm();
+  }
+
+  /** Bekleme durumunu depoya yazar (nesne uyuyup uyanınca kaldığı yerden devam). */
+  private async saveWaits(): Promise<void> {
+    await this.ctx.storage.put('waits', this.waits.snapshot());
+  }
+
+  private async setEmptySince(at: number | null): Promise<void> {
+    if (this.emptySince === at) return;
+    this.emptySince = at;
+    if (at === null) await this.ctx.storage.delete('emptySince');
+    else await this.ctx.storage.put('emptySince', at);
+    await this.scheduleAlarm();
   }
 
   private async join(ws: WebSocket, attachment: Attachment, hello: Extract<ClientMessage, { t: 'hello' }>): Promise<void> {
@@ -259,6 +311,7 @@ export class Room extends DurableObject<Env> {
     else delete attachment.avatar;
     ws.serializeAttachment(attachment);
 
+    await this.settleHost(ws, attachment);
     // Odaya ilk giren yönetici olur.
     if (this.hostKey === null) {
       this.hostKey = keyOf(attachment);
@@ -279,6 +332,34 @@ export class Room extends DurableObject<Env> {
     });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
+  }
+
+  /**
+   * Biri katılırken yöneticiliği netleştirir: yönetici süresinde döndüyse yönetici
+   * kalır; HOST_GRACE_MS'den uzun yoksa yöneticilik kalıcı olarak odadaki en eski
+   * kişiye (katılan hariç) geçer.
+   */
+  private async settleHost(ws: WebSocket, joining: Attachment): Promise<void> {
+    if (this.hostKey === null || this.hostGoneAt === null) return;
+    const returned = keyOf(joining) === this.hostKey;
+    if (Date.now() - this.hostGoneAt < HOST_GRACE_MS) {
+      if (returned) await this.setHostGone(null);
+      return;
+    }
+    let oldest: Joined | null = null;
+    for (const a of this.joined(ws)) if (!oldest || (a.joinedAt ?? 0) < (oldest.joinedAt ?? 0)) oldest = a;
+    if (oldest) {
+      this.hostKey = keyOf(oldest);
+      await this.ctx.storage.put('host', this.hostKey);
+    }
+    // Odada kimse yoksa ve dönen asıl yöneticiyse yönetici kalır.
+    if (oldest || returned) await this.setHostGone(null);
+  }
+
+  private async setHostGone(at: number | null): Promise<void> {
+    this.hostGoneAt = at;
+    if (at === null) await this.ctx.storage.delete('hostGoneAt');
+    else await this.ctx.storage.put('hostGoneAt', at);
   }
 
   private async kick(ws: WebSocket, me: Member, targetId: string): Promise<void> {
@@ -387,6 +468,10 @@ export class Room extends DurableObject<Env> {
       }
       this.broadcast({ t: 'waiting', ids: [] });
     }
+    if (decision.kind === 'start' || decision.kind === 'resume') {
+      await this.saveWaits();
+      await this.scheduleAlarm();
+    }
   }
 
   /** Bir oynatma/sıra komutunu uygular, kaydeder ve değişenleri herkese yollar. */
@@ -400,6 +485,8 @@ export class Room extends DurableObject<Env> {
       if (this.waitTimer !== null) clearTimeout(this.waitTimer);
       this.waitTimer = null;
       this.broadcast({ t: 'waiting', ids: [] });
+      await this.saveWaits();
+      await this.scheduleAlarm();
     }
 
     this.room = update.data;
@@ -448,15 +535,19 @@ export class Room extends DurableObject<Env> {
     if (attachment) {
       for (const limiter of [this.commandLimit, this.reactionLimit, this.chatLimit]) limiter.forget(attachment.id);
       this.waits.remove(attachment.id);
+      // Yöneticinin son bağlantısı gittiyse saymaya başla (bkz. settleHost).
+      const key = keyOf(attachment);
+      if (attachment.name && key === this.hostKey && this.hostGoneAt === null && !this.joined(leaving).some((a) => keyOf(a) === key)) {
+        await this.setHostGone(Date.now());
+      }
     }
     this.broadcast(this.membersMessage(leaving), leaving);
     // Yönetici çıktıysa geçici yönetici listeyi alsın.
     this.sendBans(leaving);
     // Beklenen kişi çıktıysa oda beklemeyi bıraksın.
     if (this.waits.waitingSince !== null) await this.evaluateWait();
-    if (this.openSockets(leaving).length === 0) {
-      await this.ctx.storage.setAlarm(Date.now() + EMPTY_ROOM_TTL_MS);
-    }
+    await this.saveWaits();
+    if (this.openSockets(leaving).length === 0) await this.setEmptySince(Date.now());
   }
 
   private openSockets(except?: WebSocket): WebSocket[] {

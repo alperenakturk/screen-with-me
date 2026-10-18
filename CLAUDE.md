@@ -100,6 +100,22 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   aynı cid + aynı isim → yöneticinin kendi sekmesi, yasaksız "kicked" ile kapatılır.
 - **İsim/avatar:** site `identityAt` yazar, eklenti de; site-bridge hangisi yeniyse onu iki
   tarafa yazar. Eklenti arka planı isim değişince açık odalara `rename` yollar.
+- **Yönetici devri:** yöneticinin son bağlantısı gidince `hostGoneAt` yazılır; 20 sn
+  (`HOST_GRACE_MS`) içinde dönerse yönetici kalır (sayfa yenileme), dönmezse bir sonraki katılımda
+  yöneticilik kalıcı olarak odadaki en eski kişiye geçer (`settleHost`), eski yönetici geri alamaz.
+- **Uyku dayanıklılığı (DO):** "herkes hazır" durumu (`WaitTracker.snapshot`) ve `emptySince`
+  depoya yazılır; tek alarm hem 12 sn'lik bekleme süresine hem 24 saatlik oda silmeye bakar
+  (`scheduleAlarm`). Bellekte `setTimeout`'a güvenme.
+- **Site:** sayfa yenilenince (aynı sekme, `sessionStorage` `in:<oda>`) isim adımı atlanır ve
+  açılış animasyonu tekrar gösterilmez. Sağ üstteki ⟳ `connection.reconnect()`. Bağlantı 25 sn
+  sessiz kalırsa `RoomConnection` kendisi yeniden bağlanır.
+- **Eklenti güvenliği:** `#swm=ODA` işaretiyle sormadan katılma sadece `document.referrer` bizim
+  siteyse; değilse çubukta "katılmak ister misin?" sorulur. Odada bir sayfa açıkken sekme başka
+  sayfaya giderse (`onRoomPage` yanlış) senkron o sayfada durur. `startSession` sekme başına
+  kilitli (çift tıklama iki bağlantı açmaz); ilk video (`load`) bağlantıdan önce verilir.
+  Atılma/sürüm/oda dolu → çubukta 6 sn açıklama (`ended`) + popup'ta neden.
+- **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
+  (herkes başa sarılmasın); 60 sn'den kısa video bitince "sıradaki" istenmez (reklam/önizleme).
 
 ## Yayın kontrol listesi
 1. `npm run typecheck && npm test`
@@ -118,6 +134,11 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   görünmez (oynatıcı kapsayıcısı tam ekransa görünür).
 - Eklenti henüz mağazada değil (paketlenmemiş kurulum, `apps/web/public/eklenti.html`).
   Geliştirici hesabı açıldı (yayıncı e-postası screenwithme.app@gmail.com, tacir değil);
-  paket hazır, kullanıcı birkaç güncelleme daha yapıp gönderecek.
+  başvuru paketi ve form metinleri hazır (`docs/web-store.md`, `npm run store`). İnceleme
+  sürerken `PROTOCOL_VERSION` artırma.
+- Repo private; herkese açık metinlerde "open source" deme (repo açılırsa önce
+  `docs/rakip-analizi.md`'deki site adlarını temizle).
+- Yasaklar hesapsız tasarımın sınırında: başka tarayıcı/gizli sekme ile aşılabilir.
+- Büyüme planı ve özellik fikirleri: `docs/BUYUME.md`.
 - Firefox desteklenmiyor (arka plan için ayrı manifest gerekiyor).
 - Brave/Edge'de kullanıcı testi bekleniyor; sorun olursa popup'taki "Tanı" satırını iste.

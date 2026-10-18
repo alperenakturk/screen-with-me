@@ -20,6 +20,11 @@ const PING_INTERVAL_MS = 10_000;
 /** Bağlanınca saati hızlıca öğrenmek için ilk birkaç ping sık atılır. */
 const INITIAL_PINGS_MS = [0, 250, 600, 1200];
 const MAX_RETRY_DELAY_MS = 10_000;
+/**
+ * Bu kadar süre sunucudan hiç cevap gelmezse bağlantı yarı açık sayılır ve yeniden
+ * kurulur (Wi-Fi değişimi, uykudan uyanma: tarayıcı "kapandı" demeyebilir).
+ */
+const SILENCE_TIMEOUT_MS = 25_000;
 
 /**
  * Sunucuyla WebSocket bağlantısı. Bağlantı koparsa kendiliğinden, giderek
@@ -32,6 +37,8 @@ export class RoomConnection {
   private timers: ReturnType<typeof setTimeout>[] = [];
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private stopped = false;
+  /** Sunucudan en son mesaj geldiği an. */
+  private lastHeard = 0;
 
   constructor(private readonly options: RoomConnectionOptions) {}
 
@@ -50,6 +57,17 @@ export class RoomConnection {
     if (this.ws?.readyState !== WebSocket.OPEN) return false;
     this.ws.send(JSON.stringify(message));
     return true;
+  }
+
+  /** Bağlantıyı hemen baştan kurar (kullanıcının "bağlantıyı yenile" düğmesi). */
+  reconnect(): void {
+    this.clearTimers();
+    const old = this.ws;
+    this.ws = null;
+    old?.close(1000);
+    this.retries = 0;
+    this.stopped = false;
+    this.open('connecting');
   }
 
   close(): void {
@@ -72,10 +90,19 @@ export class RoomConnection {
       const { name, avatar, cid } = this.options;
       this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}) });
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
-      this.pingTimer = setInterval(() => this.ping(), PING_INTERVAL_MS);
+      this.lastHeard = Date.now();
+      this.pingTimer = setInterval(() => {
+        // Uzun süre ses yoksa yeniden bağlan; yoksa normal ping.
+        if (Date.now() - this.lastHeard > SILENCE_TIMEOUT_MS) {
+          this.reconnect();
+          return;
+        }
+        this.ping();
+      }, PING_INTERVAL_MS);
     });
 
     ws.addEventListener('message', (event) => {
+      this.lastHeard = Date.now();
       let message: ServerMessage;
       try {
         message = JSON.parse(String(event.data)) as ServerMessage;

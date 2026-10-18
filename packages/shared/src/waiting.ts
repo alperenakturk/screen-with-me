@@ -21,12 +21,37 @@ export type WaitDecision =
   | { kind: 'resume'; timedOut: boolean }
   | { kind: 'none' };
 
+/** Sunucu uyuyup uyanınca kaldığı yerden devam etmek için saklanan hâl. */
+export interface WaitSnapshot {
+  notReady: string[];
+  cooldownUntil: [string, number][];
+  waitingFor: string[];
+  waitingSince: number | null;
+}
+
 export class WaitTracker {
   private notReady = new Set<string>();
   private cooldownUntil = new Map<string, number>();
   private waitingFor: string[] = [];
   /** Oda bu bekleme yüzünden ne zamandan beri duruyor (null: beklemiyor). */
   waitingSince: number | null = null;
+
+  snapshot(): WaitSnapshot {
+    return {
+      notReady: [...this.notReady],
+      cooldownUntil: [...this.cooldownUntil],
+      waitingFor: this.waitingFor,
+      waitingSince: this.waitingSince,
+    };
+  }
+
+  restore(s: WaitSnapshot | undefined): void {
+    if (!s) return;
+    this.notReady = new Set(s.notReady);
+    this.cooldownUntil = new Map(s.cooldownUntil);
+    this.waitingFor = s.waitingFor;
+    this.waitingSince = s.waitingSince;
+  }
 
   setReady(id: string, ready: boolean): void {
     if (ready) this.notReady.delete(id);

@@ -403,3 +403,30 @@ describe('rate lock (extension)', () => {
     expect(sent).toEqual([]);
   });
 });
+
+describe('review fixes', () => {
+  it('does not hold the room ("not ready") while autoplay is blocked', async () => {
+    player.autoplayAllowed = false;
+    engine.receive(state());
+    engine.attach(player);
+    await run(4000);
+    expect(autoplayBlocked).toBe(1);
+    expect(readyReports).not.toContain(false);
+  });
+
+  it('asks for the next item again when a replayed video ends a second time', async () => {
+    engine.receive(state({ position: 598 }));
+    engine.attach(player);
+    await run(1000);
+    player.paused = true;
+    player.ended = true;
+    await run(1000);
+    expect(ended).toEqual(['item1']);
+    // Biri geri sarıp tekrar izledi, video yine bitti.
+    player.ended = false;
+    await run(600);
+    player.ended = true;
+    await run(1000);
+    expect(ended).toEqual(['item1', 'item1']);
+  });
+});

@@ -41,6 +41,8 @@ export interface SyncEngineOptions {
    * yayılmaz, video odanın hızına geri döner. Eklentide açık; sitede kapalı.
    */
   lockRate?: boolean;
+  /** Hız kilidi bir değişikliği geri aldığında (arayüz "hızı çubuktan değiştir" diyebilir). */
+  onRateLocked?: () => void;
   /** Test için değiştirilebilir. */
   wallNow?: () => number;
 }
@@ -242,6 +244,7 @@ export class SyncEngine {
               this.rateReverts.push(now);
               this.command('rate');
               player.setRate(state.rate);
+              this.options.onRateLocked?.();
             }
             break;
           }
@@ -262,6 +265,8 @@ export class SyncEngine {
     const playing = !player.isPaused();
     const last = this.lastSample;
     this.lastSample = { wall, time, playing };
+    // Video bitmiş değilse (geri sarıldı), bir dahaki bitişte yine "sıradaki" istensin.
+    if (!player.isEnded()) this.endedItemId = null;
 
     // 0) "Herkes hazır": video takıldıysa ya da tekrar hazırsa sunucuya söyle.
     this.trackReadiness(player, state, wall, last, time);
@@ -332,6 +337,13 @@ export class SyncEngine {
     last: { wall: number; time: number; playing: boolean } | null,
     time: number,
   ): void {
+    // Otomatik oynatma engelli: video kullanıcı basana kadar ilerlemez. Bu "yükleniyor"
+    // değildir; odayı bekletirsek oda dur-kalk döngüsüne girer.
+    if (this.autoplayBlocked) {
+      this.stallSince = null;
+      if (!this.readyReported) this.reportReady(true);
+      return;
+    }
     if (state.paused) {
       this.stallSince = null;
       if (!this.readyReported && (player.canPlayThrough?.() ?? true)) this.reportReady(true);

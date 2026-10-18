@@ -9,6 +9,23 @@ export function load(key: string): string | null {
   }
 }
 
+/** Sadece bu sekmeye ait, sayfa yenilense de kalan kayıt (sessionStorage). */
+export function sessionLoad(key: string): string | null {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function sessionSave(key: string, value: string): void {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch {
+    // Kaydedilemezse sorun değil.
+  }
+}
+
 /**
  * İsim/avatar kaydeder ve ne zaman değiştiğini yazar: eklenti (site-bridge)
  * sitedeki ile kendindekinden hangisi daha yeniyse onu iki tarafta da geçerli yapar.

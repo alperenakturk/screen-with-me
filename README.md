@@ -13,8 +13,8 @@ Free · no accounts · open source · works on YouTube and on (almost) any websi
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-100%20unit%20%2B%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.5-7c5cff)
+![Tests](https://img.shields.io/badge/tests-106%20unit%20%2B%20e2e-3ccf8e)
+![Version](https://img.shields.io/badge/version-0.7-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
@@ -37,8 +37,8 @@ and there is a shared queue.
 | 🔗 **One link, no accounts** | Create a room, share the link. Pick a name and an avatar once — remembered by the browser. |
 | 🧩 **Any website** | The extension finds the right video (skips ads and previews), also inside iframes and in players that load late or switch sources. |
 | 🎵 **Queue** | Add, reorder, play now; the next video starts automatically for everyone. |
-| 💬 **Chat & reactions** | Tabbed side panel (chat with room activity, queue, people, settings). Emoji reactions fly over the video, also in fullscreen. |
-| 👑 **Room host** | The first person in is the host (survives page reloads) and can remove people. |
+| 💬 **Chat & reactions** | Tabbed side panel (chat with room activity, queue, people, settings). Three pages of emoji reactions (▲▼) fly over the video, also in fullscreen. A short Enjoy the show! intro when you enter. |
+| 👑 **Room host** | The first person in is the host (survives page reloads) and can remove people until they lift the ban. If the host is gone for more than 20 s, hosting passes to the longest-present member for good. |
 | ⏳ **Ready check** | If someone's video stalls (buffering, an ad), the room waits for them — at most 12 s, and the same person can't stall the room again for 30 s, so one slow connection can't ruin the night. |
 | 🖥️ **Distraction-free fullscreen** | Only the video; controls, reactions and a quick-message box appear when you move the mouse. |
 | 🎨 **9 dark themes** | Night, Ocean, Sunset, Neon, plus illustrated Space, Cyberpunk, Fantasy medieval, Turkish Delight and Arabian Nights, each with the mascot in costume. TR / EN interface. |

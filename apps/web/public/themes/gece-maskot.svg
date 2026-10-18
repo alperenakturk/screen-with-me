@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+<defs><linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8f74ff"/><stop offset="1" stop-color="#5b3cf0"/></linearGradient><filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<path d="M196 40 a26 26 0 1 0 22 40 a20 20 0 1 1 -22 -40Z" fill="#f4efff" filter="url(#g)"/>
+<path d="M40 52 Q42.2 57.8 48 60 Q42.2 62.2 40 68 Q37.8 62.2 32 60 Q37.8 57.8 40 52Z" fill="#fff6c8" opacity="1"/><path d="M170 25 Q171.4 28.6 175 30 Q171.4 31.4 170 35 Q168.6 31.4 165 30 Q168.6 28.6 170 25Z" fill="#fff6c8" opacity="1"/><path d="M60 115 Q61.4 118.6 65 120 Q61.4 121.4 60 125 Q58.6 121.4 55 120 Q58.6 118.6 60 115Z" fill="#fff6c8" opacity="1"/>
+<g transform="translate(70 92) scale(1.5625)">
+<rect width="64" height="64" rx="16" fill="url(#lg)"/>
+<ellipse cx="22" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="24" cy="24.5" r="4.8" fill="#1f1450"/><circle cx="25.6" cy="22.9" r="1.6" fill="#fff"/><ellipse cx="42" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="44" cy="24.5" r="4.8" fill="#1f1450"/><circle cx="45.6" cy="22.9" r="1.6" fill="#fff"/>
+<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</g>
+<!-- Uyku başlığı -->
+<path d="M72 106 Q74 60 120 56 Q168 58 172 84 Q186 104 204 112 Q186 122 170 104 Q150 94 72 106Z" fill="#7c5cff" stroke="#4b33b8" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="206" cy="113" r="10" fill="#fff"/>
+<path d="M70 108 Q120 92 172 104" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/>
+<!-- Patlamış mısır kovası -->
+<g transform="translate(176 170)">
+  <path d="M-22 -10 L22 -10 L16 40 L-16 40Z" fill="#fff"/>
+  <path d="M-14 -10 L-10 40 M0 -10 L0 40 M14 -10 L10 40" stroke="#ff4d6d" stroke-width="6"/>
+  <circle cx="-14" cy="-14" r="9" fill="#fff4d6"/><circle cx="0" cy="-20" r="10" fill="#fff4d6"/><circle cx="14" cy="-14" r="9" fill="#fff4d6"/><circle cx="-5" cy="-10" r="7" fill="#ffe7a8"/>
+</g>
+</svg>

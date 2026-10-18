@@ -152,11 +152,33 @@ function scan(): void {
 
 // ---- Senkron ----
 
+/**
+ * Aynı <video> öğesinde kaynak değişti (reklam, sonraki bölüm, kalite/sunucu değişimi):
+ * zaman 0'a sıçrar. Motor bunu "kullanıcı başa sardı" sanıp herkesi başa sarmasın diye
+ * oynatıcıyı yeni bir video gibi baştan bağlarız.
+ */
+let watched: HTMLVideoElement | null = null;
+function onSourceChange(): void {
+  if (!active || !adapter) return;
+  adapter.release();
+  adapter = null;
+  attachEngine();
+}
+function watchSource(video: HTMLVideoElement | null): void {
+  if (watched === video) return;
+  watched?.removeEventListener('emptied', onSourceChange);
+  watched = video;
+  video?.addEventListener('emptied', onSourceChange);
+}
+
+let lastSpeedNotice = 0;
+
 function attachEngine(): void {
   if (!active) return;
   if (adapter?.element === best) return;
   adapter?.release();
   adapter = null;
+  watchSource(best);
   if (!best) {
     // Video sayfadan kalktı (ör. oynatıcı yeniden kuruldu); yenisi bulununca bağlanır.
     engine?.detach();
@@ -167,8 +189,17 @@ function attachEngine(): void {
     clock,
     // Hızı sadece çubuktaki menü değiştirir; başka hız eklentileri odayı bozamaz.
     lockRate: true,
+    onRateLocked: () => {
+      // Kullanıcı neden hızın geri döndüğünü bilsin (en fazla 15 sn'de bir).
+      if (Date.now() - lastSpeedNotice < 15_000) return;
+      lastSpeedNotice = Date.now();
+      overlay.notice('speed', '');
+    },
     send: (message) => send({ type: 'send', message }),
-    onEnded: (itemId) => send({ type: 'send', message: { t: 'next', from: itemId } }),
+    // Kısa videolar (reklam, önizleme) bitince oda sıradakine geçmesin.
+    onEnded: (itemId) => {
+      if ((adapter?.getDuration() ?? 0) >= 60) send({ type: 'send', message: { t: 'next', from: itemId } });
+    },
     onAutoplayBlocked: () => overlay.askToStart(() => engine?.resume()),
   });
   if (state) engine.receive(state);
@@ -180,6 +211,7 @@ function attachEngine(): void {
 
 function deactivate(): void {
   active = false;
+  watchSource(null);
   if (syncTimer !== null) clearInterval(syncTimer);
   syncTimer = null;
   engine?.destroy();
@@ -220,6 +252,10 @@ function onMessage(message: BackgroundMessage): void {
     case 'intro':
       overlay.intro();
       break;
+    case 'ended':
+      // Kısa bir açıklama kalsın; ardından gelen "deactivate" çubuğu birkaç saniye sonra kaldırır.
+      overlay.farewell(message.reason);
+      break;
     case 'waiting':
       overlay.setWaiting(message.names, message.me);
       break;
@@ -247,13 +283,25 @@ function hasSessions(value: unknown): boolean {
   return Array.isArray(value) && value.length > 0;
 }
 
-// Davet linkiyle gelindiyse (sayfa#swm=ODA) odaya katıl ve işareti adresten sil.
-const hashRoom = window === window.top ? roomIdFromHash(location.hash) : null;
+// Davet işaretiyle gelindiyse (sayfa#swm=ODA) odaya katıl ve işareti adresten sil.
+// Sadece ScreenWithMe sitesinden gelindiyse sormadan; başka bir site bu işareti koyup
+// kullanıcıyı habersiz bir odaya sokamasın diye önce sorulur.
+const hashRoom = window === window.top && !insideOurSite ? roomIdFromHash(location.hash) : null;
 if (hashRoom) {
   const rest = location.hash.slice(1).split('&').filter((part) => part && !part.startsWith('swm='));
   history.replaceState(history.state, '', location.pathname + location.search + (rest.length ? `#${rest.join('&')}` : ''));
-  connect();
-  send({ type: 'join', roomId: hashRoom });
+  const join = () => {
+    connect();
+    send({ type: 'join', roomId: hashRoom });
+  };
+  let fromSite = false;
+  try {
+    fromSite = !!document.referrer && new URL(document.referrer).origin === SITE_ORIGIN;
+  } catch {
+    // Geçersiz referrer: sor.
+  }
+  if (fromSite) join();
+  else overlay.askJoin(join);
 } else {
   // Herhangi bir sekmede oda varsa bağlan (arka plan bu sekmeye ait değilse "uyu" der).
   chrome.storage.session

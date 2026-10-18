@@ -36,9 +36,13 @@ const siteMatches = dev
 
 const manifest = {
   manifest_version: 3,
-  name: dev ? 'ScreenWithMe (dev)' : 'ScreenWithMe',
+  // Mağazadaki başlık ve özet buradan gelir (özet en fazla 132 karakter).
+  name: dev ? 'ScreenWithMe (dev)' : 'ScreenWithMe – Watch Videos Together in Sync',
+  short_name: 'ScreenWithMe',
   version: pkg.version,
-  description: 'Watch any HTML5 video in sync with friends: play, pause, seek and speed stay together.',
+  description: 'Sync any HTML5 video with friends: play, pause, seek and speed together. Emoji reactions and quick chat. No account, free.',
+  // WebSocket trafiğinin service worker'ı açık tutması Chrome 116'dan beri var.
+  minimum_chrome_version: '116',
   homepage_url: 'https://screen-with-me.swm-server.workers.dev/eklenti.html',
   // Simgeler: node scripts/make-icons.mjs ile üretilir (static/ içinde).
   icons: { 16: 'icon16.png', 32: 'icon32.png', 48: 'icon48.png', 128: 'icon128.png' },

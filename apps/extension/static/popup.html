@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="popup.css" />
@@ -18,15 +18,14 @@
       <p class="muted" data-t="siteText"></p>
     </section>
 
+    <!-- İsim ve avatar: önce avatar seçilir, sonra kaydedilir (seçmeden kaydetmesin). -->
     <section id="name-view" hidden>
       <form id="name-form" class="stack">
         <label for="name" data-t="yourName"></label>
-        <div class="row">
-          <input id="name" maxlength="32" autocomplete="nickname" data-t-placeholder="namePlaceholder" />
-          <button class="btn primary" data-t="save"></button>
-        </div>
+        <input id="name" maxlength="32" autocomplete="nickname" data-t-placeholder="namePlaceholder" />
         <label data-t="yourAvatar"></label>
         <div id="avatar-picker" class="avatar-picker" role="radiogroup"></div>
+        <button class="btn primary" data-t="save"></button>
       </form>
     </section>
 
@@ -34,6 +33,9 @@
       <span id="me-name"></span>
       <button id="edit-name" class="link" data-t="edit"></button>
     </section>
+
+    <!-- Oda az önce kapandıysa nedeni (çıkarıldın, güncelle, oda dolu). -->
+    <p id="ended" class="warning" hidden></p>
 
     <section id="idle-view" class="stack" hidden>
       <p class="muted" data-t="tagline"></p>
@@ -64,9 +66,18 @@
             <button id="go-room-page" class="btn small" data-t="goToRoomPage"></button>
             <button id="share-page" class="btn small" data-t="shareThisPage"></button>
           </div>
+          <span class="muted small" data-t="shareHint"></span>
         </div>
         <div id="video-state" class="muted small"></div>
-        <div id="diag" class="muted small diag"></div>
+        <!-- Eklenti sekme açıldıktan sonra kurulduysa çerçeve yoktur: yenilemek gerekir. -->
+        <div id="reload-box" class="warning" hidden>
+          <span data-t="reloadHint"></span>
+          <button id="reload" class="btn small" data-t="reloadPage"></button>
+        </div>
+        <details id="diag-box" class="diag" hidden>
+          <summary data-t="diagTitle"></summary>
+          <div id="diag"></div>
+        </details>
       </div>
 
       <div id="reactions" class="reactions"></div>

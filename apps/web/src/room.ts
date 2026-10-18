@@ -25,7 +25,7 @@ import { t, translate } from './i18n.ts';
 import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
-import { load, save, saveIdentity } from './storage.ts';
+import { load, save, saveIdentity, sessionLoad, sessionSave } from './storage.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -43,6 +43,13 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
  * tarayıcının sesli oynatma izni için gereken etkileşimdir.
  */
 export function renderRoom(app: HTMLElement, roomId: string): void {
+  // Bu sekmede odaya zaten girilmişse (sayfa yenilendi) isim/avatar adımlarını atla.
+  const savedName = cleanName(load('name'));
+  const savedAvatar = load('avatar');
+  if (savedName && isAvatar(savedAvatar) && sessionLoad(`in:${roomId}`) === '1') {
+    startRoom(app, roomId, savedName, savedAvatar, { resumed: true });
+    return;
+  }
   app.innerHTML = `
     <section class="card join-card">
       <p class="muted step-label" id="room-code"></p>
@@ -145,7 +152,9 @@ function withAvatar(member: { name: string; avatar?: string }): string {
   return member.avatar ? `${member.avatar} ${member.name}` : member.name;
 }
 
-function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar): void {
+function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false } = {}): void {
+  // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
+  sessionSave(`in:${roomId}`, '1');
   // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla.
   loadYouTubeApi().catch(() => {});
 
@@ -153,7 +162,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     <div class="room">
       <div class="stage">
         <form id="media-form" class="media-form">
-          <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" />
+          <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
           <button class="btn primary" value="enqueue" data-i18n="addToQueue"></button>
           <button class="btn" value="load" data-i18n="playNow"></button>
         </form>
@@ -192,7 +201,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="empty" class="empty">
               <div class="theme-mascot" aria-hidden="true"></div>
               <h2 data-i18n="emptyTitle"></h2>
-              <p data-i18n="emptyBody"></p>
+              <ol class="empty-steps">
+                <li><span data-i18n="emptyStep1"></span> <button id="empty-invite" type="button" class="btn small-btn primary"></button></li>
+                <li data-i18n="emptyBody"></li>
+              </ol>
             </div>
             <div id="external" class="overlay external" hidden>
               <p class="muted" data-i18n="externalTitle"></p>
@@ -203,8 +215,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="external-go" type="button" class="btn primary big" data-i18n="externalGoJoin"></button>
               </div>
               <div id="external-noext" class="stack external-box">
-                <p data-i18n="externalNoExt"></p>
-                <ol class="external-steps">
+                <p data-i18n="externalNoExt" class="desktop-only"></p>
+                <p data-i18n="externalMobile" class="mobile-only"></p>
+                <ol class="external-steps desktop-only">
                   <li><a href="/eklenti.html" target="_blank" rel="noopener" data-i18n="externalStep1"></a></li>
                   <li data-i18n="externalStep2"></li>
                   <li data-i18n="externalStep3"></li>
@@ -235,8 +248,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         <section class="card invite-card">
           <span class="invite-label" data-i18n="invite"></span>
           <div class="row">
-            <input id="invite" readonly />
-            <button id="copy" type="button" class="btn primary" data-i18n="copy"></button>
+            <input id="invite" readonly data-i18n-title="invite" />
+            <button id="copy" type="button" class="btn primary"></button>
           </div>
         </section>
 
@@ -255,9 +268,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </nav>
 
           <div class="tab-panel chat-panel" data-panel="chat">
-            <ul id="chat-list" class="chat-list"></ul>
+            <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="row chat-form">
-              <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" />
+              <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
               <button class="btn primary" data-i18n="send"></button>
             </form>
           </div>
@@ -280,7 +293,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel settings" data-panel="settings" hidden>
             <h4 data-i18n="settings.profile"></h4>
             <form id="rename-form" class="row">
-              <input id="rename-input" maxlength="32" autocomplete="nickname" />
+              <input id="rename-input" maxlength="32" autocomplete="nickname" data-i18n-title="yourName" />
               <button class="btn" data-i18n="save"></button>
             </form>
             <div id="settings-avatars" class="avatar-picker"></div>
@@ -328,6 +341,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const nowTitleEl = $('#now-title');
   const skipEl = $<HTMLButtonElement>('#skip');
   const statusEl = document.querySelector<HTMLElement>('#status')!;
+  const reconnectEl = document.querySelector<HTMLButtonElement>('#reconnect')!;
 
   let myId: string | null = null;
   let members: Member[] = [];
@@ -382,10 +396,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   connection.connect();
 
   // Açılış: logo belirir, duraklat → oynat olur, "İyi seyirler!" (oda arkada hazırlanırken).
-  if (!document.getElementById('swm-intro-css')) {
-    document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
+  // Yenileyip geri dönünce tekrar gösterme.
+  if (!resumed) {
+    if (!document.getElementById('swm-intro-css')) {
+      document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
+    }
+    $('.player-wrap').append(createIntro(document, t('introText')));
   }
-  $('.player-wrap').append(createIntro(document, t('introText')));
 
   function handleMessage(message: ServerMessage): void {
     switch (message.t) {
@@ -657,6 +674,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const add = () => {
       send({ t: mode, media });
       mediaInput.value = '';
+      // Sıraya eklendiyse (video oynarken) sessiz kalmasın: kısa bir onay.
+      if (mode === 'enqueue' && roomState?.item) {
+        const done = $('#media-done');
+        done.textContent = t('queuedNote');
+        done.hidden = false;
+        setTimeout(() => (done.hidden = true), 2500);
+      }
     };
     // YouTube ya da video dosyası değil, bir web sayfası: eklentisi yoksa önce ne gerektiğini anlat.
     const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
@@ -681,15 +705,36 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const copyEl = $<HTMLButtonElement>('#copy');
   inviteEl.value = `${location.origin}/r/${roomId}`;
   inviteEl.addEventListener('focus', () => inviteEl.select());
-  copyEl.addEventListener('click', async () => {
+  // Telefonda (dokunmatik + paylaşım menüsü varsa) "Paylaş": WhatsApp vb. doğrudan açılır.
+  const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
+  async function shareInvite(button: HTMLButtonElement, idleText: () => string): Promise<void> {
+    if (canShare) {
+      try {
+        await navigator.share({ title: 'ScreenWithMe', text: t('inviteShareText'), url: inviteEl.value });
+        return;
+      } catch {
+        // Vazgeçildi ya da desteklenmiyor: kopyalamaya düş.
+      }
+    }
     try {
       await navigator.clipboard.writeText(inviteEl.value);
     } catch {
       inviteEl.select();
       document.execCommand('copy');
     }
-    copyEl.textContent = t('copied');
-    setTimeout(() => (copyEl.textContent = t('copy')), 1500);
+    button.textContent = t('copied');
+    setTimeout(() => (button.textContent = idleText()), 1500);
+  }
+  const inviteLabel = () => t(canShare ? 'share' : 'copy');
+  const emptyInviteLabel = () => t(canShare ? 'share' : 'copyInvite');
+  copyEl.textContent = inviteLabel();
+  copyEl.addEventListener('click', () => void shareInvite(copyEl, inviteLabel));
+  const emptyInviteEl = $<HTMLButtonElement>('#empty-invite');
+  emptyInviteEl.textContent = emptyInviteLabel();
+  emptyInviteEl.addEventListener('click', () => void shareInvite(emptyInviteEl, emptyInviteLabel));
+  window.addEventListener('langchange', () => {
+    copyEl.textContent = inviteLabel();
+    emptyInviteEl.textContent = emptyInviteLabel();
   });
 
   // ---- Arayüz parçaları ----
@@ -746,7 +791,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     statusEl.hidden = false;
     statusEl.dataset.status = status;
     statusEl.textContent = t(`status.${status}`);
+    // Bağlantı koptuysa yenile düğmesi dikkat çeksin.
+    reconnectEl.hidden = false;
+    reconnectEl.classList.toggle('attention', status === 'reconnecting' || status === 'closed');
   }
+
+  // ---- Bağlantıyı yenile (sağ üst ⟳): kopma ya da takılma için, sayfayı yenilemeden. ----
+  reconnectEl.onclick = () => {
+    if (handedOff || !$('#kicked').hidden) return;
+    reconnectEl.classList.add('spin');
+    setTimeout(() => reconnectEl.classList.remove('spin'), 700);
+    connection.reconnect();
+  };
 
   function showError(text: (() => string) | null): void {
     errorText = text;

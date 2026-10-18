@@ -17,12 +17,24 @@ document.querySelector('.brand .logo')?.append(createLogo(document, { animated: 
 const themeButton = document.querySelector<HTMLButtonElement>('#theme-button')!;
 const themeMenu = document.querySelector<HTMLElement>('#theme-menu')!;
 renderThemePicker(themeMenu);
+const setThemeMenu = (open: boolean) => {
+  themeMenu.hidden = !open;
+  themeButton.setAttribute('aria-expanded', String(open));
+  if (open) themeMenu.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+};
 themeButton.addEventListener('click', (event) => {
   event.stopPropagation();
-  themeMenu.hidden = !themeMenu.hidden;
+  setThemeMenu(themeMenu.hidden === true);
 });
 document.addEventListener('click', (event) => {
-  if (!themeMenu.contains(event.target as Node)) themeMenu.hidden = true;
+  if (!themeMenu.contains(event.target as Node)) setThemeMenu(false);
+});
+// Esc ile kapanır ve odak düğmeye döner.
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !themeMenu.hidden) {
+    setThemeMenu(false);
+    themeButton.focus();
+  }
 });
 
 const langButtons = document.querySelectorAll<HTMLButtonElement>('[data-lang]');

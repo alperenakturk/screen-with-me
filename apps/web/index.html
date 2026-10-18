@@ -5,16 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <title>ScreenWithMe</title>
+    <meta name="description" content="Watch videos together with friends, perfectly in sync. Free, no account, open source." />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <!-- Davet linki WhatsApp/Discord'da önizlemeli görünsün -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ScreenWithMe" />
+    <meta property="og:title" content="Come watch with me 🍿 · ScreenWithMe" />
+    <meta property="og:description" content="Join the room and watch together in sync. Free, no account needed." />
+    <meta property="og:image" content="https://screen-with-me.swm-server.workers.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <header class="topbar">
       <a class="brand" href="/"><span class="logo" aria-hidden="true"></span> ScreenWithMe</a>
       <div class="topbar-right">
         <span id="status" class="status" hidden></span>
+        <button id="reconnect" type="button" class="nav-link reconnect" data-i18n-title="reconnect" hidden>⟳</button>
         <a class="nav-link" href="/eklenti.html"><span aria-hidden="true">🧩</span> <span data-i18n="extensionNav"></span></a>
         <div class="theme-wrap">
-          <button id="theme-button" type="button" class="nav-link" aria-haspopup="true">🎨</button>
+          <button id="theme-button" type="button" class="nav-link" aria-haspopup="true" aria-expanded="false" data-i18n-title="settings.theme">🎨</button>
           <div id="theme-menu" class="theme-menu" role="radiogroup" hidden></div>
         </div>
         <div class="lang" role="group" aria-label="Language">

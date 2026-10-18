@@ -78,6 +78,18 @@ interface Session {
   navigatingTo: string | null;
   /** Video bulununca "İyi seyirler" açılışı gösterilsin mi (eklentiden oda kurunca/katılınca). */
   intro: boolean;
+  /** Sekmenin şu anki adresi (odanın sayfasında mıyız?). */
+  tabUrl: string | null;
+}
+
+/**
+ * Sekme odanın sayfasında mı? Odada bir sayfa açıkken başka bir sayfaya gidilirse
+ * oradaki video senkronlanmaz (kullanıcının alakasız oynat/durdur'u odaya gitmesin).
+ */
+function onRoomPage(session: Session): boolean {
+  const item = session.state?.item;
+  if (!item || item.media.kind !== 'page') return true;
+  return !!session.tabUrl && samePage(session.tabUrl, item.media.url);
 }
 
 const sessions = new Map<number, Session>();
@@ -115,31 +127,55 @@ function withAvatar(member: Member): string {
 }
 
 async function persist(): Promise<void> {
-  const saved = [...sessions.values()].map(({ tabId, roomId }) => ({ tabId, roomId }));
+  // followedItemId da saklanır: arka plan yeniden başlayınca sekme film ortasında yeniden yüklenmesin.
+  const saved = [...sessions.values()].map(({ tabId, roomId, followedItemId }) => ({ tabId, roomId, followedItemId }));
   await chrome.storage.session.set({ [SESSIONS_KEY]: saved });
 }
 
 async function restore(): Promise<void> {
   const { [SESSIONS_KEY]: saved } = await chrome.storage.session.get(SESSIONS_KEY);
   if (!Array.isArray(saved)) return;
-  for (const entry of saved as { tabId: number; roomId: string }[]) {
+  for (const entry of saved as { tabId: number; roomId: string; followedItemId?: string | null }[]) {
     const tab = await chrome.tabs.get(entry.tabId).catch(() => null);
-    if (tab) await startSession(entry.tabId, entry.roomId);
+    if (tab) await startSession(entry.tabId, entry.roomId, { followedItemId: entry.followedItemId ?? null });
   }
 }
+
+/** Son kapanan odanın nedeni (sekme başına): popup kullanıcıya söylesin. */
+const endReasons = new Map<number, 'kicked' | 'version' | 'room_full'>();
 
 const ready = restore();
 
 // ---- Oda bağlantısı ----
 
-async function startSession(tabId: number, roomId: string): Promise<Session> {
+interface StartOptions {
+  /** Bağlantı açılınca gönderilecek ilk video (oda kurarken). */
+  load?: { media: Media; title?: string };
+  followedItemId?: string | null;
+  intro?: boolean;
+}
+
+/** Aynı sekme için aynı anda tek oturum kurulsun (çift tıklama hayalet bağlantı bırakmasın). */
+const starting = new Map<number, Promise<Session>>();
+
+function startSession(tabId: number, roomId: string, options: StartOptions = {}): Promise<Session> {
+  const pending = starting.get(tabId);
+  if (pending) return pending.then((s) => (s.roomId === roomId ? s : startSession(tabId, roomId, options)));
+  const promise = createSession(tabId, roomId, options).finally(() => starting.delete(tabId));
+  starting.set(tabId, promise);
+  return promise;
+}
+
+async function createSession(tabId: number, roomId: string, options: StartOptions): Promise<Session> {
   const existing = sessions.get(tabId);
   if (existing?.roomId === roomId) return existing;
   endSession(tabId, false);
+  endReasons.delete(tabId);
 
-  const name = (await getName()) ?? 'Misafir';
+  const name = (await getName()) ?? 'Guest';
   const avatar = (await getAvatar()) ?? undefined;
   const cid = await getCid();
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
   const clock = new ServerClock();
   const session: Session = {
     tabId,
@@ -154,12 +190,14 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
     hostId: null,
     activeFrame: null,
     activated: false,
-    followedItemId: null,
-    pendingLoad: null,
+    followedItemId: options.followedItemId ?? null,
+    // Bağlantı açılmadan verilir: hoş geldin mesajı erken gelse de ilk video kaybolmasın.
+    pendingLoad: options.load ?? null,
     bans: [],
     outbox: [],
     navigatingTo: null,
-    intro: false,
+    intro: options.intro ?? false,
+    tabUrl: tab?.url ?? null,
   };
   session.connection = new RoomConnection({
     serverUrl: SITE_URL,
@@ -257,8 +295,13 @@ function onServer(session: Session, message: ServerMessage): void {
       session.bans = message.bans;
       break;
     case 'error':
-      // Oda yöneticisi çıkardıysa (ya da yasaklıysa) bağlantıyı tamamen kapat.
-      if (message.code === 'version' || message.code === 'room_full' || message.code === 'kicked') endSession(session.tabId);
+      // Oda yöneticisi çıkardıysa (ya da yasaklıysa, oda doluysa, sürüm eskiyse) bağlantıyı
+      // kapat ve kullanıcıya nedenini söyle (videonun üstünde ve popup'ta).
+      if (message.code === 'version' || message.code === 'room_full' || message.code === 'kicked') {
+        toActive(session, { type: 'ended', reason: message.code });
+        endReasons.set(session.tabId, message.code);
+        endSession(session.tabId);
+      }
       // Mesaj sessizce kaybolmasın: kullanıcıya yavaşlamasını söyle.
       if (message.code === 'rate_limited') toActive(session, { type: 'notice', kind: 'slow', name: '' });
       break;
@@ -280,6 +323,7 @@ async function follow(session: Session): Promise<void> {
   const item = session.state?.item;
   if (!item || session.followedItemId === item.id) return;
   session.followedItemId = item.id;
+  void persist();
   const tab = await chrome.tabs.get(session.tabId).catch(() => null);
   if (!tab) return;
 
@@ -332,7 +376,8 @@ function clockMessage(session: Session): BackgroundMessage {
 }
 
 function toActive(session: Session, message: BackgroundMessage): void {
-  if (session.activeFrame === null) return;
+  // Etkin olmayan (ör. odanın sayfası dışındaki) çerçeve çubuk açmasın; "kapandı" bildirimi hariç.
+  if (session.activeFrame === null || (!session.activated && message.type !== 'ended')) return;
   const frame = frames.get(session.tabId)?.get(session.activeFrame);
   if (frame) post(frame.port, message);
 }
@@ -342,6 +387,12 @@ function pushState(session: Session): void {
   if (!session.state || session.activeFrame === null) return;
   const frame = frames.get(session.tabId)?.get(session.activeFrame);
   if (!frame) return;
+  if (!onRoomPage(session)) {
+    // Odanın sayfasında değiliz: senkronu bu sayfada durdur.
+    if (session.activated) post(frame.port, { type: 'deactivate' });
+    session.activated = false;
+    return;
+  }
   if (!session.activated) {
     const clock = clockMessage(session) as Extract<BackgroundMessage, { type: 'clock' }>;
     post(frame.port, { type: 'activate', state: session.state, offset: clock.offset, synced: clock.synced });
@@ -431,7 +482,14 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 chrome.tabs.onUpdated.addListener((tabId, info) => {
-  if (info.status === 'complete' && sessions.has(tabId)) probe(tabId);
+  const session = sessions.get(tabId);
+  if (!session) return;
+  if (info.url) {
+    session.tabUrl = info.url;
+    // Odanın sayfasına dönüldü ya da ayrıldı: senkronu aç/kapat.
+    pushState(session);
+  }
+  if (info.status === 'complete') probe(tabId);
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -449,6 +507,7 @@ async function status(tabId: number): Promise<PopupStatus> {
     name: await getName(),
     avatar: await getAvatar(),
     tabUrl: tab?.url ?? null,
+    ended: session ? null : (endReasons.get(tabId) ?? null),
     session: session
       ? {
           roomId: session.roomId,
@@ -460,7 +519,7 @@ async function status(tabId: number): Promise<PopupStatus> {
           bans: session.myId !== null && session.myId === session.hostId ? session.bans : [],
           item,
           queueLength: session.queue.length,
-          onRoomPage: !item || item.media.kind !== 'page' || (!!tab?.url && samePage(tab.url, item.media.url)),
+          onRoomPage: onRoomPage(session),
           hasVideo: session.activeFrame !== null,
           frames: frames.get(tabId)?.size ?? 0,
           bestVideo: session.activeFrame === null ? null : (frames.get(tabId)?.get(session.activeFrame)?.size ?? null),
@@ -496,20 +555,20 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
       if (tab.url && new URL(tab.url).origin === SITE_ORIGIN) return { ok: false, error: 'site' };
       const load = pageMedia(tab);
       if (!load) return { ok: false, error: 'page' };
-      const session = await startSession(request.tabId, newRoomId());
-      session.pendingLoad = load;
-      session.followedItemId = null;
-      session.intro = true;
+      await startSession(request.tabId, newRoomId(), { load, intro: true });
       return { ok: true };
     }
 
     case 'join': {
       const roomId = extractRoomId(request.input);
       if (!roomId) return { ok: false, error: 'room' };
-      const session = await startSession(request.tabId, roomId);
-      session.intro = true;
+      await startSession(request.tabId, roomId, { intro: true });
       return { ok: true };
     }
+
+    case 'reload':
+      await chrome.tabs.reload(request.tabId);
+      return { ok: true };
 
     case 'leave':
       endSession(request.tabId);

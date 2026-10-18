@@ -338,6 +338,16 @@ label,
   line-height: 1;
 }
 
+.diag summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+#reload-box .btn,
+#page-warning .muted {
+  align-self: flex-start;
+}
+
 .site-view {
   text-align: center;
   padding: 8px 4px 4px;

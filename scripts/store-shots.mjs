@@ -30,7 +30,10 @@ const shots = [
   ['1', 'screenshot-1.png', 1280, 800],
   ['2', 'screenshot-2.png', 1280, 800],
   ['3', 'screenshot-3.png', 1280, 800],
+  ['4', 'screenshot-4.png', 1280, 800],
   ['promo', 'promo-small.png', 440, 280],
+  // Davet linki önizlemesi (WhatsApp/Discord): sitenin public klasörüne
+  ['og', '../apps/web/public/og.png', 1200, 630],
 ];
 for (const [shot, file, w, h] of shots) {
   execFileSync(CHROME, [

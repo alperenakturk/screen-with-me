@@ -1,5 +1,6 @@
 import { AVATARS, cleanName, type Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
+import { t } from '../i18n.ts';
 import { renderThemePicker } from '../themes.ts';
 import { load, save } from '../storage.ts';
 
@@ -35,6 +36,12 @@ export function createSettingsPanel(
     name = next;
     input.value = next;
     onIdentity(name, avatar);
+    // Kaydedildiğini göster.
+    const button = form.querySelector<HTMLButtonElement>('button');
+    if (button) {
+      button.textContent = t('savedNote');
+      setTimeout(() => (button.textContent = t('save')), 1500);
+    }
   });
 
   function drawAvatars(): void {

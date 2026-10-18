@@ -57,6 +57,8 @@ export type BackgroundMessage =
   | { type: 'notice'; kind: 'joined' | 'left' | 'slow'; name: string }
   /** Odaya yeni girildi: "İyi seyirler" açılış animasyonu. */
   | { type: 'intro' }
+  /** Oda bağlantısı kapandı (çıkarıldın / oda dolu / eklenti eski): kısa bir açıklama göster. */
+  | { type: 'ended'; reason: 'kicked' | 'version' | 'room_full' }
   /** "Herkes hazır": oda bunları bekliyor (boş: bekleme yok). `me`: beklenen bensem. */
   | { type: 'waiting'; names: string[]; me: boolean };
 
@@ -90,6 +92,7 @@ export type PopupRequest =
   | { type: 'chat'; tabId: number; text: string }
   | { type: 'go-to-room-page'; tabId: number }
   | { type: 'share-this-page'; tabId: number }
+  | { type: 'reload'; tabId: number }
   | { type: 'kick'; tabId: number; memberId: string }
   | { type: 'unban'; tabId: number; banId: string };
 
@@ -97,6 +100,8 @@ export interface PopupStatus {
   name: string | null;
   avatar: Avatar | null;
   tabUrl: string | null;
+  /** Bu sekmedeki oda az önce kapandıysa nedeni. */
+  ended: 'kicked' | 'version' | 'room_full' | null;
   session: null | {
     roomId: string;
     inviteUrl: string;
