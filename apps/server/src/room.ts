@@ -16,6 +16,7 @@ import {
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
+import { HeatMap, type Heat } from '@swm/shared/heat';
 import { RateLimiter } from './rate-limit.ts';
 import { resolveTitle } from './titles.ts';
 
@@ -106,6 +107,8 @@ function newId(): string {
  */
 export class Room extends DurableObject<Env> {
   private room: RoomData = initialRoom(Date.now());
+  /** Açık videoda tepkilerin atıldığı anlar (zaman çizelgesi); video değişince sıfırlanır. */
+  private heat = new HeatMap();
   private chat: ChatMessage[] = [];
   private titles = new Map<string, string>();
   private hostKey: string | null = null;
@@ -142,6 +145,8 @@ export class Room extends DurableObject<Env> {
       this.settings = (await ctx.storage.get<RoomSettings>('settings')) ?? { waitForAll: true };
       this.waits.restore(await ctx.storage.get<WaitSnapshot>('waits'));
       this.emptySince = (await ctx.storage.get<number>('emptySince')) ?? null;
+      const heat = await ctx.storage.get<Heat>('heat');
+      if (heat) this.heat.load(heat);
     });
   }
 
@@ -204,9 +209,21 @@ export class Room extends DurableObject<Env> {
     }
 
     switch (message.t) {
-      case 'react':
-        if (this.reactionLimit.allow(me.id)) this.broadcast({ t: 'reaction', emoji: message.emoji, by: me });
+      case 'react': {
+        if (!this.reactionLimit.allow(me.id)) return;
+        const item = this.room.state.item;
+        if (!item) {
+          this.broadcast({ t: 'reaction', emoji: message.emoji, by: me });
+          return;
+        }
+        // Tepkinin videonun kaçıncı saniyesinde atıldığını sunucu hesaplar (istemciye güvenmez).
+        this.heat.reset(item.id);
+        const at = Math.round(expectedPosition(this.room.state, Date.now()) * 10) / 10;
+        this.heat.add(at, message.emoji);
+        this.broadcast({ t: 'reaction', emoji: message.emoji, by: me, at, itemId: item.id });
+        await this.ctx.storage.put('heat', this.heat.snapshot());
         return;
+      }
       case 'chat':
         if (!this.chatLimit.allow(me.id)) {
           this.sendTo(ws, { t: 'error', code: 'rate_limited' });
@@ -390,9 +407,17 @@ export class Room extends DurableObject<Env> {
       chat: this.chat,
       settings: this.settings,
       waiting: this.waits.waiting,
+      heat: this.currentHeat(),
     });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
+  }
+
+  /** Açık videonun tepki dağılımı (başka videoya aitse ya da boşsa yok). */
+  private currentHeat(): Heat | undefined {
+    const item = this.room.state.item;
+    if (!item || this.heat.itemId !== item.id || this.heat.size === 0) return undefined;
+    return this.heat.snapshot() ?? undefined;
   }
 
   /**

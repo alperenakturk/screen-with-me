@@ -22,8 +22,8 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
 
   function draw(): void {
     for (const bar of bars) {
-      const buttons = REACTION_PAGES[page]!.map((emoji) => {
-        const button = el('button', { type: 'button', class: 'reaction-btn', title: t('react') }, emoji);
+      const buttons = REACTION_PAGES[page]!.map((emoji, i) => {
+        const button = el('button', { type: 'button', class: 'reaction-btn', title: `${t('react')} (${i + 1})` }, emoji);
         button.addEventListener('click', () => send({ t: 'react', emoji }));
         return button;
       });
@@ -43,6 +43,17 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
   }
   draw();
 
+  // Klavye: 1–8 o anki sayfanın emojileri (yazı yazarken değil). Tam ekranda ve normalde çalışır.
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
+    const n = Number(event.key);
+    if (!Number.isInteger(n) || n < 1 || n > 8) return;
+    const emoji = REACTION_PAGES[page]![n - 1];
+    if (!emoji) return;
+    event.preventDefault();
+    send({ t: 'react', emoji });
+  });
+
   return {
     show(emoji: Reaction, name: string): void {
       if (layer.childElementCount >= MAX_ON_SCREEN) layer.firstElementChild?.remove();
@@ -56,4 +67,10 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
       draw();
     },
   };
+}
+
+/** Klavye kısayolları yazı alanlarında çalışmasın. */
+export function isTyping(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
 }

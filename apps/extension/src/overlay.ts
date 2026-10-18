@@ -1,4 +1,5 @@
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
+import { HEAT_BUCKET_S, HEAT_MIN_TOTAL, HeatMap, type Heat } from '@swm/shared/heat';
 import { createLogo } from '@swm/shared/logo';
 import { CHAT_MAX_LENGTH, REACTION_PAGES, avatarText, cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import { t } from './i18n.ts';
@@ -129,6 +130,15 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 .pointer { position: absolute; font-size: 30px; color: #a48dff; filter: drop-shadow(0 2px 6px rgb(0 0 0 / .6));
   animation: bob 0.9s ease-in-out infinite; pointer-events: none; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
+/* Zaman çizelgesinde tepkiler: çubuğun altında ince şerit, en çok tepki alan anlarda küçük emoji */
+.heat { position: relative; height: 20px; margin: -4px 2px -2px; }
+.heat-track { position: absolute; left: 0; right: 0; bottom: 3px; height: 4px; border-radius: 2px; background: rgb(255 255 255 / .1); overflow: hidden; }
+.heat-bar { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: #a48dff; }
+.heat-now { position: absolute; bottom: 1px; width: 2px; height: 8px; border-radius: 1px; background: #fff; opacity: .7; }
+.heat-top { position: absolute; bottom: 7px; transform: translateX(-50%); background: none; border: 0; padding: 0 2px; font-size: 12px; line-height: 1; cursor: pointer; opacity: .8; }
+.heat-top:hover { opacity: 1; transform: translateX(-50%) scale(1.3); }
+.heat-top.pulse { animation: heat-pulse 1.1s ease 2; }
+@keyframes heat-pulse { 50% { opacity: 1; transform: translateX(-50%) scale(1.45); } }
 ${INTRO_CSS}
 `;
 
@@ -137,6 +147,21 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, .
   if (className) node.className = className;
   node.append(...children);
   return node;
+}
+
+/** 75 → "1:15", 3725 → "1:02:05". */
+function clock(seconds: number): string {
+  const s = Math.floor(seconds);
+  const two = (n: number) => String(n).padStart(2, '0');
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}:${two(m)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
+}
+
+/** Sayfanın yazı alanı mı (kısayollar orada çalışmasın)? */
+function isEditable(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
 }
 
 function button(className: string, text: string, title: string, onClick: () => void): HTMLButtonElement {
@@ -210,6 +235,46 @@ export function createOverlay(actions: OverlayActions) {
     );
   }
 
+  // Kısayollar (odadayken): 1–8 emoji, Enter hızlı mesaj. Çoğu oynatıcı rakamlarla videoyu
+  // sarar (3 = %30); o yüzden tuşu yakalama aşamasında alıp siteye hiç göstermiyoruz, yoksa
+  // emoji atarken herkes sarılırdı. Aynı tuşun keyup/keypress'i de yutulur.
+  const swallowed = new Set<string>();
+  addEventListener(
+    'keydown',
+    (event) => {
+      if (!parts || !room || event.ctrlKey || event.metaKey || event.altKey) return;
+      if ((host && event.target === host) || isEditable(event.composedPath()[0] ?? null)) return;
+      const n = event.key.length === 1 ? Number(event.key) : NaN;
+      if (Number.isInteger(n) && n >= 1 && n <= 8) {
+        const emoji = REACTION_PAGES[reactionPage]![n - 1];
+        if (!emoji) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        swallowed.add(event.code);
+        if (!event.repeat) actions.send({ t: 'react', emoji });
+        wake();
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        swallowed.add(event.code);
+        setBar(true);
+        parts.input.focus();
+      }
+    },
+    true,
+  );
+  for (const type of ['keyup', 'keypress'] as const) {
+    addEventListener(
+      type,
+      (event) => {
+        if (!swallowed.has(event.code)) return;
+        event.stopImmediatePropagation();
+        if (type === 'keyup') swallowed.delete(event.code);
+      },
+      true,
+    );
+  }
+
   function build(container: HTMLElement) {
     const floats = el('div');
     const toasts = el('div', 'toasts');
@@ -227,7 +292,7 @@ export function createOverlay(actions: OverlayActions) {
     const reactions = el('span', 'reactions');
     const drawReactions = () =>
       reactions.replaceChildren(
-        ...REACTION_PAGES[reactionPage]!.map((emoji) => button('reaction', emoji, t('react'), () => actions.send({ t: 'react', emoji }))),
+        ...REACTION_PAGES[reactionPage]!.map((emoji, i) => button('reaction', emoji, `${t('react')} (${i + 1})`, () => actions.send({ t: 'react', emoji }))),
       );
     drawReactions();
     const turn = (step: number) => {
@@ -296,12 +361,16 @@ export function createOverlay(actions: OverlayActions) {
       speed.append(option);
     }
     speed.addEventListener('change', () => actions.onRate(Number(speed.value)));
+    // 3. satır: tepki şeridi (birkaç tepki olunca görünür)
+    const heatRow = el('div', 'heat');
+    heatRow.hidden = true;
 
     const bar = el(
       'div',
       'bar',
       el('div', 'row', grip, reactions, pager, el('span', 'spacer'), dot, members, copy, home, close),
       el('div', 'row', form, speed),
+      heatRow,
     );
     bar.hidden = true;
 
@@ -309,7 +378,7 @@ export function createOverlay(actions: OverlayActions) {
     waiting.hidden = true;
 
     container.append(floats, toasts, waiting, fab, bar);
-    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed };
+    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed, heatRow };
   }
 
   function mount(): HTMLElement {
@@ -364,6 +433,58 @@ export function createOverlay(actions: OverlayActions) {
       root?.classList.add('idle');
     }, IDLE_MS);
   }
+
+  // ---- Zaman çizelgesinde tepkiler ----
+  const heatMap = new HeatMap();
+  let lastTops = '';
+  let nowMark: HTMLElement | null = null;
+
+  /** Şeridi yeniden çizer: yoğun yerler parlak, en çok tepki alan 3 anda tıklanabilir emoji. */
+  function renderHeat(): void {
+    if (!parts) return;
+    const row = parts.heatRow;
+    const duration = video && Number.isFinite(video.duration) ? video.duration : 0;
+    const show = heatMap.size >= HEAT_MIN_TOTAL && duration > 0;
+    row.hidden = !show;
+    nowMark = null;
+    if (!show) {
+      row.replaceChildren();
+      return;
+    }
+    const marks = heatMap.marks();
+    const max = Math.max(1, ...marks.map((m) => m.n));
+    const tops = heatMap.top(3);
+    const key = tops.map((m) => m.s).join(',');
+    const pulse = key !== lastTops && lastTops !== '';
+    lastTops = key;
+    const pct = (s: number) => `${Math.min(100, (s / duration) * 100)}%`;
+    const track = el('div', 'heat-track');
+    for (const m of marks) {
+      const bar = el('div', 'heat-bar');
+      bar.style.left = pct(m.s);
+      bar.style.width = `max(3px, ${(HEAT_BUCKET_S / duration) * 100}%)`;
+      bar.style.opacity = String(0.25 + 0.75 * (m.n / max));
+      track.append(bar);
+    }
+    nowMark = el('div', 'heat-now');
+    const buttons = tops.map((m) => {
+      const b = button(pulse ? 'heat-top pulse' : 'heat-top', m.emoji, t('heatTop', { time: clock(m.s), emoji: m.emoji, n: String(m.n) }), () => {
+        // Videoyu oraya sarınca motor bunu kullanıcı sarması sayıp odaya yayar.
+        if (video) video.currentTime = m.s;
+      });
+      b.style.left = pct(m.s + HEAT_BUCKET_S / 2);
+      return b;
+    });
+    row.replaceChildren(track, nowMark, ...buttons);
+    moveNow();
+  }
+
+  /** Şeritte videonun şu anki yerini gösteren çizgi. */
+  function moveNow(): void {
+    if (!nowMark || !video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    nowMark.style.left = `${Math.min(100, (video.currentTime / video.duration) * 100)}%`;
+  }
+  setInterval(() => barOpen && moveNow(), 1000);
 
   function setBar(open: boolean): void {
     barOpen = open;
@@ -537,6 +658,13 @@ export function createOverlay(actions: OverlayActions) {
       parts.dot.title = abs === null ? t('syncUnknown') : t('syncDiff', { ms: Math.round(abs) });
     },
 
+    /** Zaman çizelgesinde tepkiler: arka plan değişince yollar. */
+    setHeat(next: Heat | null): void {
+      if (next) heatMap.load(next);
+      else heatMap.reset(null);
+      renderHeat();
+    },
+
     reaction(emoji: string, name: string): void {
       mount();
       if (!parts) return;
@@ -604,7 +732,7 @@ export function createOverlay(actions: OverlayActions) {
         'div',
         'note guide',
         el('b', '', t('guideTitle')),
-        el('ul', '', item('👉', t('guideBar')), item('🧩', t('guideIcon')), item('✋', t('guideDrag')), item('🍿', t('guideSync')), item('⏭️', t('guideAd'))),
+        el('ul', '', item('👉', t('guideBar')), item('⌨️', t('guideKeys')), item('🧩', t('guideIcon')), item('✋', t('guideDrag')), item('🍿', t('guideSync')), item('⏭️', t('guideAd'))),
         el('label', '', never, t('guideNever')),
         el('div', 'actions', ok),
       );

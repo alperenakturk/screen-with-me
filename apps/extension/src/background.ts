@@ -8,6 +8,7 @@
 
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
+import { HeatMap } from '@swm/shared/heat';
 import { samePage } from '@swm/shared/media';
 import {
   CLIENT_ID,
@@ -81,6 +82,8 @@ interface Session {
   intro: boolean;
   /** Bu oturumda film sayfasındaki rehber gösterildi mi (her odada bir kez)? */
   guided: boolean;
+  /** Açık videoda tepkilerin atıldığı anlar (çubuktaki tepki şeridi için). */
+  heat: HeatMap;
   /** Sekmenin şu anki adresi (odanın sayfasında mıyız?). */
   tabUrl: string | null;
 }
@@ -201,6 +204,7 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     navigatingTo: null,
     intro: options.intro ?? false,
     guided: false,
+    heat: new HeatMap(),
     tabUrl: tab?.url ?? null,
   };
   session.connection = new RoomConnection({
@@ -240,6 +244,8 @@ function onServer(session: Session, message: ServerMessage): void {
       session.hostId = message.hostId ?? null;
       session.queue = message.queue;
       session.state = message.state;
+      session.heat.reset(null);
+      if (message.heat) session.heat.load(message.heat);
       if (session.pendingLoad) {
         session.connection.send({ t: 'load', ...session.pendingLoad });
         session.pendingLoad = null;
@@ -254,6 +260,7 @@ function onServer(session: Session, message: ServerMessage): void {
       session.state = message.state;
       void follow(session);
       pushState(session);
+      if (session.heat.reset(message.state.item?.id ?? null)) pushHeat(session);
       break;
     case 'queue':
       session.queue = message.queue;
@@ -281,6 +288,11 @@ function onServer(session: Session, message: ServerMessage): void {
     }
     case 'reaction':
       toActive(session, { type: 'reaction', emoji: message.emoji, name: withAvatar(message.by) });
+      if (message.itemId && message.at !== undefined) {
+        session.heat.reset(message.itemId);
+        session.heat.add(message.at, message.emoji);
+        pushHeat(session);
+      }
       break;
     case 'chat':
       toActive(session, { type: 'chat', line: chatLine(session, message.message) });
@@ -368,6 +380,12 @@ function pushRoom(session: Session): void {
     queueLength: session.queue.length,
   };
   toActive(session, { type: 'room', room });
+  pushHeat(session);
+}
+
+/** Çubuktaki tepki şeridi için tepki dağılımını etkin çerçeveye yollar. */
+function pushHeat(session: Session): void {
+  if (session.activated) toActive(session, { type: 'heat', heat: session.heat.snapshot() });
 }
 
 // ---- Çerçeveler ----

@@ -33,7 +33,6 @@ export function currentTheme(): ThemeId {
 function themeImages(id: ThemeId): string[] {
   const urls = [`/themes/${id}-maskot.svg`];
   if (['uzay', 'siber', 'ortacag', 'lokum', 'binbirgece'].includes(id)) urls.push(`/themes/${id}.svg`);
-  if (id === 'lokum') urls.push('/themes/lokum-desen.svg');
   return urls;
 }
 

@@ -53,6 +53,7 @@
           <li><b>Name and avatar:</b> what you pick when joining a room. Shown to the others in the room. Your browser remembers it for next time; on our server it is kept only together with the room (in its chat history and, if you are removed, in its ban list) and deleted with the room.</li>
           <li><b>Room state:</b> the address of the current video or page, playing/paused, position, speed and the queue.</li>
           <li><b>Chat messages:</b> the last 50 messages of a room, stored with the room so people who join later can see them.</li>
+          <li><b>Reaction timeline:</b> for the current video, how many emoji reactions were sent at which moment (in 10-second slices) and the most used emoji. It does not record who sent them. Reset when the video changes and deleted with the room.</li>
           <li><b>Browser ID:</b> a random code created in your browser. Used so the room host keeps the host role after reloading, and so someone the host removed can't rejoin that room until the host lifts the ban. It is stored with the room on our server for this purpose and deleted with the room. The ID itself is never shown to other people. It is not an account.</li>
         </ul>
         <p>All room data (state, chat, settings) is deleted 24 hours after the last person leaves.</p>
@@ -100,6 +101,7 @@
           <li><b>İsim ve avatar:</b> Odaya girerken seçtiklerin. Odadakilere gösterilir. Tarayıcın bir dahaki sefere hatırlar; sunucumuzda sadece oda ile birlikte (sohbet geçmişinde ve çıkarıldıysan yasak listesinde) tutulur ve oda ile birlikte silinir.</li>
           <li><b>Oda durumu:</b> O an açık olan video ya da sayfanın adresi, oynuyor/durdu bilgisi, konum, hız ve sıra listesi.</li>
           <li><b>Sohbet mesajları:</b> Odadaki son 50 mesaj, sonradan gelenler görebilsin diye oda ile birlikte saklanır.</li>
+          <li><b>Tepki şeridi:</b> Açık videoda hangi anda (10 saniyelik dilimlerle) kaç emoji atıldığı ve en çok hangisinin atıldığı. Kimin attığı tutulmaz. Video değişince sıfırlanır, oda ile birlikte silinir.</li>
           <li><b>Tarayıcı kimliği:</b> Tarayıcında rastgele oluşturulan bir kod. Oda yöneticisinin sayfayı yenileyince yöneticiliğini kaybetmemesi ve yöneticinin çıkardığı birinin, yönetici yasağı kaldırana kadar o odaya geri girememesi için kullanılır. Bu amaçla oda ile birlikte sunucumuzda tutulur ve oda ile birlikte silinir. Kodun kendisi başkalarına hiç gösterilmez. Hesap değildir.</li>
         </ul>
         <p>Odada kimse kalmadıktan 24 saat sonra odanın bütün bilgileri (oda durumu, sohbet, ayarlar) silinir.</p>

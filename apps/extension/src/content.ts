@@ -244,6 +244,9 @@ function onMessage(message: BackgroundMessage): void {
     case 'reaction':
       overlay.reaction(message.emoji, message.name);
       break;
+    case 'heat':
+      overlay.setHeat(message.heat);
+      break;
     case 'chat':
       overlay.chat(message.line);
       break;
