@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+<defs><linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8f74ff"/><stop offset="1" stop-color="#5b3cf0"/></linearGradient><filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff1c8" stop-opacity=".55"/><stop offset="1" stop-color="#fff1c8" stop-opacity="0"/></linearGradient>
+</defs>
+<path d="M30 60 L240 10 L240 150Z" fill="url(#beam)"/>
+<!-- Film makarası -->
+<g transform="translate(46 186)">
+  <circle r="38" fill="#1c2238" stroke="#d4a23e" stroke-width="5"/>
+  <circle cx="0" cy="-20" r="9" fill="#0b0e1c"/><circle cx="19" cy="-6.2" r="9" fill="#0b0e1c"/><circle cx="11.8" cy="16.2" r="9" fill="#0b0e1c"/><circle cx="-11.8" cy="16.2" r="9" fill="#0b0e1c"/><circle cx="-19" cy="-6.2" r="9" fill="#0b0e1c"/>
+  <circle r="6" fill="#d4a23e"/>
+</g>
+<path d="M78 206 Q120 226 170 214 Q206 206 230 222" stroke="#141826" stroke-width="18" fill="none"/>
+<path d="M78 206 Q120 226 170 214 Q206 206 230 222" stroke="#d4a23e" stroke-width="12" stroke-dasharray="3 5" fill="none" opacity=".8"/>
+<path d="M78 206 Q120 226 170 214 Q206 206 230 222" stroke="#1d2236" stroke-width="6" fill="none"/>
+<g transform="translate(76 84) scale(1.5)">
+<rect width="64" height="64" rx="16" fill="url(#lg)"/>
+<ellipse cx="22" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="24" cy="24.5" r="4.8" fill="#1f1450"/><circle cx="25.6" cy="22.9" r="1.6" fill="#fff"/><ellipse cx="42" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="44" cy="24.5" r="4.8" fill="#1f1450"/><circle cx="45.6" cy="22.9" r="1.6" fill="#fff"/>
+<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</g>
+<!-- Bere (eğik) -->
+<path d="M72 102 Q66 70 104 60 Q150 50 170 78 Q176 90 166 96 Q120 84 72 102Z" fill="#b8283a" stroke="#7a1020" stroke-width="3" stroke-linejoin="round"/>
+<path d="M120 58 l4 -12" stroke="#7a1020" stroke-width="5" stroke-linecap="round"/>
+</svg>

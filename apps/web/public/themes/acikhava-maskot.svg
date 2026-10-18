@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+<defs><linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8f74ff"/><stop offset="1" stop-color="#5b3cf0"/></linearGradient><filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="car" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a6b"/><stop offset="1" stop-color="#b8322a"/></linearGradient>
+</defs>
+<path d="M30 33 Q32 38 37 40 Q32 42 30 47 Q28 42 23 40 Q28 38 30 33Z" fill="#fff2d0" opacity="1"/><path d="M210 55 Q211.4 58.6 215 60 Q211.4 61.4 210 65 Q208.6 61.4 205 60 Q208.6 58.6 210 55Z" fill="#fff2d0" opacity="1"/>
+<g transform="translate(70 70) scale(1.5625)">
+<rect width="64" height="64" rx="16" fill="url(#lg)"/>
+<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</g>
+<!-- Kırmızı-mavi 3B gözlük -->
+<g transform="translate(70 70) scale(1.5625)">
+  <path d="M4 18 H60" stroke="#f4efe4" stroke-width="3"/>
+  <rect x="7" y="15" width="22" height="16" rx="3" fill="#ff3b4a" fill-opacity=".85" stroke="#f4efe4" stroke-width="2.5"/>
+  <rect x="35" y="15" width="22" height="16" rx="3" fill="#2ec5e8" fill-opacity=".85" stroke="#f4efe4" stroke-width="2.5"/>
+</g>
+<!-- Arabanın önü: logo arabada oturuyor -->
+<path d="M14 196 Q16 160 50 156 L190 156 Q224 160 226 196 V222 H14Z" fill="url(#car)"/>
+<path d="M40 156 L64 132 H176 L200 156" fill="#9fd8ff" fill-opacity=".35" stroke="#f4efe4" stroke-width="3"/>
+<rect x="70" y="190" width="100" height="18" rx="6" fill="#3a1010"/>
+<rect x="82" y="193" width="10" height="12" rx="2" fill="#c9c4d8"/><rect x="98" y="193" width="10" height="12" rx="2" fill="#c9c4d8"/><rect x="114" y="193" width="10" height="12" rx="2" fill="#c9c4d8"/><rect x="130" y="193" width="10" height="12" rx="2" fill="#c9c4d8"/><rect x="146" y="193" width="10" height="12" rx="2" fill="#c9c4d8"/>
+<circle cx="40" cy="190" r="12" fill="#fff2d0" filter="url(#g)"/><circle cx="200" cy="190" r="12" fill="#fff2d0" filter="url(#g)"/>
+<rect x="10" y="220" width="220" height="8" rx="4" fill="#c9c4d8"/>
+</svg>

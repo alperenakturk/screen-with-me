@@ -63,6 +63,8 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
   uyarının kaybolması, açılış sesi, Film / Dizi / Anime parodi avatarları. v0.8.1: temalarda süsler kenarda (video izlerken görünür), odaya dönüş onayı, isim sormadan dönüş.
 - [x] **v0.9:** klavye kısayolları (1–8 emoji, Enter mesaj), zaman çizelgesinde tepkiler
   (en çok emoji atılan anlar), temalara orta süsler, GitHub Actions ile otomatik testler.
+  v0.9.1: Art Deco / eski afiş tarzı temalar (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması,
+  Transatlantik).
 - [ ] **v1.0 — Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
   `npm run store`); gönderim bekliyor. Hazırlık listesi: `docs/web-store.md` sonundaki kontrol listesi.
 

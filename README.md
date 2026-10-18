@@ -41,7 +41,7 @@ and there is a shared queue.
 | 👑 **Room host** | The first person in is the host (survives page reloads) and can remove people until they lift the ban. If the host is gone for more than 20 s, hosting passes to the longest-present member for good. |
 | ⏳ **Ready check** | If someone's video stalls (buffering, an ad), the room waits for them — at most 12 s, and the same person can't stall the room again for 30 s, so one slow connection can't ruin the night. |
 | 🖥️ **Distraction-free fullscreen** | Only the video; controls, reactions and a quick-message box appear when you move the mouse. |
-| 🎨 **9 dark themes** | Night, Ocean, Sunset, Neon, plus illustrated Space, Cyberpunk, Fantasy medieval, Turkish Delight and Arabian Nights, each with the mascot in costume. TR / EN interface. |
+| 🎨 **13 dark themes** | Night, Ocean, Sunset, Neon, plus illustrated Space, Cyberpunk, Fantasy medieval, Turkish Delight, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner), each with the mascot in costume. TR / EN interface. |
 | 🔒 **Private by design** | Video plays in each person's own browser. The server only relays tiny "pause at 12:34" messages. The extension stays idle outside of a room. |
 
 ## 🧠 How it works

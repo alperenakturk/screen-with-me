@@ -203,6 +203,85 @@
   --mascot: url('/themes/binbirgece-maskot.svg');
 }
 
+/* ---- Art Deco / eski afiş temaları: sahne kumlu baskı dokusuyla tam boyanır (--art sadece
+   sahne yüklenene kadar görünür). ---- */
+
+/* Sinema Sarayı: karanlık salon, projektör huzmesi; altın vurgu. */
+:root[data-theme='sinema'] {
+  --bg: #07080f;
+  --surface: rgb(14 16 28 / 0.86);
+  --surface-2: rgb(24 27 44 / 0.92);
+  --border: #2e3350;
+  --text: #f2eee2;
+  --muted: #a9a593;
+  --accent: #e9b949;
+  --accent-hover: #f5cd6a;
+  --on-accent: #1d1503;
+  --art: linear-gradient(#0d1020, #05060c);
+  --art-size: 100% 100%;
+  --scene: url('/themes/sinema.svg');
+  --mascot: url('/themes/sinema-maskot.svg');
+}
+
+/* Opera Gecesi: koyu petrol yeşili salon, yaldızlı localar; gül kırmızısı vurgu. */
+:root[data-theme='opera'] {
+  --bg: #08201f;
+  --surface: rgb(10 34 36 / 0.86);
+  --surface-2: rgb(16 48 50 / 0.92);
+  --border: #2f5e57;
+  --text: #f4ecdc;
+  --muted: #b5ab92;
+  --accent: #e8708a;
+  --accent-hover: #f292a6;
+  --on-accent: #2a0710;
+  --art: linear-gradient(#0f3638, #08201f 60%, #051516);
+  --art-size: 100% 100%;
+  --scene: url('/themes/opera.svg');
+  --mascot: url('/themes/opera-maskot.svg');
+}
+
+/* Açık Hava Sineması: mor gece göğü, arabalar; stop lambası mercanı vurgu. */
+:root[data-theme='acikhava'] {
+  --bg: #0a0920;
+  --surface: rgb(18 15 42 / 0.86);
+  --surface-2: rgb(30 24 62 / 0.92);
+  --border: #3c3170;
+  --text: #f1ecff;
+  --muted: #aaa1cf;
+  --accent: #ff8a6b;
+  --accent-hover: #ffa58b;
+  --on-accent: #2a0d06;
+  --art: linear-gradient(#070618, #1a1340 60%, #0a0920);
+  --art-size: 100% 100%;
+  --scene: url('/themes/acikhava.svg');
+  --mascot: url('/themes/acikhava-maskot.svg');
+}
+
+/* Transatlantik: şafakta okyanus ve dev gemi; aydınlık sahne, koyu lacivert kartlar, baca kırmızısı vurgu. */
+:root[data-theme='gemi'] {
+  --bg: #0d1e2a;
+  --surface: rgb(14 30 42 / 0.86);
+  --surface-2: rgb(22 44 60 / 0.92);
+  --border: #36607a;
+  --text: #f6efe3;
+  --muted: #b7c0bf;
+  --accent: #ec6a5a;
+  --accent-hover: #f4887a;
+  --on-accent: #200806;
+  --art: linear-gradient(#24425e, #0d1e2a);
+  --art-size: 100% 100%;
+  --scene: url('/themes/gemi.svg');
+  --mascot: url('/themes/gemi-maskot.svg');
+}
+
+/* Gemi sahnesi aydınlık: kartsız, doğrudan gökyüzünün üstündeki yazılar gölgeyle okunur kalsın. */
+:root[data-theme='gemi'] :is(.hero h1, .tagline, .divider, .how h2, .how h3) {
+  color: var(--text);
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.6),
+    0 0 16px rgb(8 20 32 / 0.55);
+}
+
 * {
   box-sizing: border-box;
 }

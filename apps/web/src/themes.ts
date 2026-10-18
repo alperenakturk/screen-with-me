@@ -16,6 +16,10 @@ export const THEMES = [
   { id: 'ortacag', swatch: ['#1a1430', '#d6a843'] },
   { id: 'lokum', swatch: ['#2a0e1e', '#f08cae'] },
   { id: 'binbirgece', swatch: ['#141236', '#e8c27a'] },
+  { id: 'sinema', swatch: ['#0d1020', '#e9b949'] },
+  { id: 'opera', swatch: ['#0f3638', '#e8708a'] },
+  { id: 'acikhava', swatch: ['#1a1340', '#ff8a6b'] },
+  { id: 'gemi', swatch: ['#24425e', '#ec6a5a'] },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];
@@ -32,7 +36,9 @@ export function currentTheme(): ThemeId {
 /** Temanın resimleri (styles.css'teki --scene / --mascot / desen ile aynı adresler). */
 function themeImages(id: ThemeId): string[] {
   const urls = [`/themes/${id}-maskot.svg`];
-  if (['uzay', 'siber', 'ortacag', 'lokum', 'binbirgece'].includes(id)) urls.push(`/themes/${id}.svg`);
+  if (['uzay', 'siber', 'ortacag', 'lokum', 'binbirgece', 'sinema', 'opera', 'acikhava', 'gemi'].includes(id)) {
+    urls.push(`/themes/${id}.svg`);
+  }
   return urls;
 }
 
