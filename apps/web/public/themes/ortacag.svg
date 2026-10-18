@@ -42,23 +42,6 @@
   <rect x="-4" y="22" width="8" height="12" rx="4" fill="#b98cff" filter="url(#g)"/>
   <rect x="-4" y="60" width="8" height="10" rx="4" fill="#ffd27a" opacity=".7"/>
 </g>
-<!-- Renkli, sevimli ejderha ortada süzülüyor (gölge ejderhanın neşeli kuzeni) -->
-<g transform="translate(930 250) scale(0.5 0.5)">
-<path d="M-38 6 Q-70 0 -78 -18 Q-74 -6 -86 -4 L-80 -14 Q-60 16 -36 14Z" fill="#b4483f"/>
-<path d="M-90 -6 L-80 -18 L-76 -4Z" fill="#b4483f"/>
-<path d="M-6 -16 Q-30 -64 -62 -58 Q-48 -46 -50 -34 Q-36 -42 -32 -26 Q-22 -34 -8 -12Z" fill="#f29a5c" stroke="#b4483f" stroke-width="3" stroke-linejoin="round"/>
-<ellipse cx="0" cy="0" rx="40" ry="26" fill="#e8746a"/>
-<ellipse cx="4" cy="10" rx="26" ry="13" fill="#ffd9a8"/>
-<path d="M14 18 l-4 14 h10 l-2 -12Z M-18 18 l-4 14 h10 l-2 -12Z" fill="#b4483f"/>
-<path d="M-20 -24 l6 -9 l4 9 M-4 -27 l6 -9 l4 9 M12 -24 l6 -8 l3 9" fill="#b4483f"/>
-<circle cx="40" cy="-20" r="22" fill="#e8746a"/>
-<ellipse cx="56" cy="-12" rx="14" ry="10" fill="#e8746a"/>
-<circle cx="60" cy="-15" r="1.8" fill="#b4483f"/><circle cx="66" cy="-13" r="1.8" fill="#b4483f"/>
-<path d="M30 -38 l-6 -14 l12 8Z M44 -40 l2 -15 l8 12Z" fill="#f3e2a2"/>
-<circle cx="42" cy="-24" r="8" fill="#fff"/><circle cx="44" cy="-24" r="5" fill="#1d1430"/><circle cx="46" cy="-26" r="1.8" fill="#fff"/>
-<ellipse cx="36" cy="-10" rx="5" ry="3" fill="#ff8fa3" opacity=".7"/>
-<path d="M46 -4 Q54 0 62 -4" stroke="#b4483f" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-</g>
 <!-- Kale ve ejderha sağ kenarda: video izlerken de yanda görünsün -->
 <g transform="translate(150 0)">
 <g>
