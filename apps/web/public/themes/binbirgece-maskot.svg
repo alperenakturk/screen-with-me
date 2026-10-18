@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+<defs><linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8f74ff"/><stop offset="1" stop-color="#5b3cf0"/></linearGradient><filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="carpet" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a1f4b"/><stop offset="1" stop-color="#b8325a"/></linearGradient>
+</defs>
+<!-- Uçan halı -->
+<path d="M18 196 Q60 180 120 196 Q180 212 222 190 L210 220 Q168 238 120 222 Q66 206 30 222Z" fill="url(#carpet)" stroke="#e8b85c" stroke-width="3" stroke-linejoin="round"/>
+<path d="M40 204 Q80 194 120 206 Q164 218 198 204" stroke="#e8b85c" stroke-width="2" fill="none" stroke-dasharray="6 5"/>
+<path d="M14 198 l-8 4 M16 206 l-9 3 M26 222 l-6 7 M34 224 l-4 8 M214 192 l9 -2 M210 202 l9 0 M206 222 l6 6 M198 226 l4 8" stroke="#e8b85c" stroke-width="2.5" stroke-linecap="round"/>
+<g transform="translate(76 108) scale(1.375)">
+<rect width="64" height="64" rx="16" fill="url(#lg)"/>
+<ellipse cx="22" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="24" cy="24.5" r="4.8" fill="#1f1450"/><circle cx="25.6" cy="22.9" r="1.6" fill="#fff"/><ellipse cx="42" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="44" cy="24.5" r="4.8" fill="#1f1450"/><circle cx="45.6" cy="22.9" r="1.6" fill="#fff"/>
+<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</g>
+<!-- Sarık -->
+<path d="M70 118 Q72 70 120 66 Q168 70 170 118 Q152 102 120 104 Q88 102 70 118Z" fill="#f4efe4" stroke="#d6cdb8" stroke-width="3"/>
+<path d="M78 104 Q120 84 162 104 M82 92 Q120 72 158 92" stroke="#d6cdb8" stroke-width="3" fill="none"/>
+<circle cx="120" cy="96" r="8" fill="#2fb5a8" stroke="#e8b85c" stroke-width="3"/>
+<path d="M124 90 Q136 56 150 50 Q140 70 130 92Z" fill="#ff8fb8"/>
+<!-- Parıltı izi -->
+<g filter="url(#g)"><path d="M226 165 Q228 170 233 172 Q228 174 226 179 Q224 174 219 172 Q224 170 226 165Z" fill="#ffe8a8" opacity="1"/></g><g filter="url(#g)"><path d="M236 146 Q237.1 148.9 240 150 Q237.1 151.1 236 154 Q234.9 151.1 232 150 Q234.9 148.9 236 146Z" fill="#ffe8a8" opacity="1"/></g><g filter="url(#g)"><path d="M206 156 Q207.1 158.9 210 160 Q207.1 161.1 206 164 Q204.9 161.1 202 160 Q204.9 158.9 206 156Z" fill="#ffe8a8" opacity="1"/></g><g filter="url(#g)"><path d="M12 171 Q13.4 174.6 17 176 Q13.4 177.4 12 181 Q10.6 177.4 7 176 Q10.6 174.6 12 171Z" fill="#ffe8a8" opacity="1"/></g>
+</svg>

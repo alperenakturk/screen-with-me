@@ -19,13 +19,13 @@ const CSS = `
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 .root { position: fixed; pointer-events: none; z-index: 2147483647; overflow: hidden;
-  font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #ecedf1; }
+  font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #ecedf1; }
 
 /* Uçuşan emojiler */
 .float { position: absolute; bottom: 14%; display: flex; flex-direction: column; align-items: center;
   animation: up 2.8s ease-out forwards; }
-.emoji { font-size: 40px; line-height: 1; filter: drop-shadow(0 2px 6px rgb(0 0 0 / .5)); }
-.name { font-size: 12px; font-weight: 600; background: rgb(0 0 0 / .55); padding: 1px 6px; border-radius: 6px; margin-top: 2px; }
+.emoji { font-size: 44px; line-height: 1; filter: drop-shadow(0 2px 6px rgb(0 0 0 / .5)); }
+.name { font-size: 13.5px; font-weight: 600; background: rgb(0 0 0 / .55); padding: 1px 7px; border-radius: 6px; margin-top: 2px; }
 @keyframes up {
   0% { transform: translate(0, 20px) scale(.6); opacity: 0; }
   12% { transform: translate(0, 0) scale(1.1); opacity: 1; }
@@ -36,12 +36,12 @@ const CSS = `
 /* Mesajlar ve bildirimler: sağ üstteki ScreenWithMe çubuğunun hemen altında belirip kaybolur.
    (top değeri çubuğun yüksekliğine göre JS ile ayarlanır.) */
 .toasts { position: absolute; right: 12px; top: 56px; display: flex; flex-direction: column; align-items: flex-end;
-  gap: 5px; max-width: min(380px, calc(100% - 24px)); transition: top .2s; }
-.toast { background: rgb(0 0 0 / .72); border: 1px solid rgb(255 255 255 / .12); padding: 5px 11px; border-radius: 12px;
-  font-size: 14px; overflow-wrap: anywhere; text-align: right; animation: in .2s ease-out; }
+  gap: 6px; max-width: min(420px, calc(100% - 24px)); transition: top .2s; }
+.toast { background: rgb(0 0 0 / .72); border: 1px solid rgb(255 255 255 / .12); padding: 6px 12px; border-radius: 12px;
+  font-size: 16px; overflow-wrap: anywhere; text-align: right; animation: in .2s ease-out; }
 .toast b { color: #a48dff; }
 .toast.me b { color: #3ccf8e; }
-.toast.notice { font-size: 12px; color: #c9cbd3; font-style: italic; padding: 3px 10px; }
+.toast.notice { font-size: 13.5px; color: #c9cbd3; font-style: italic; padding: 4px 11px; }
 .toast.leaving { animation: out .4s ease-in forwards; }
 @keyframes in { from { opacity: 0; transform: translateX(10px); } }
 @keyframes out { to { opacity: 0; transform: translateY(-6px); } }
@@ -54,17 +54,20 @@ const CSS = `
 .logo { display: block; width: 22px; height: 22px; }
 .logo svg { display: block; width: 100%; height: 100%; }
 .badge { background: #7c5cff; border-radius: 999px; padding: 0 6px; font-size: 11px; }
-.bar { width: min(400px, calc(100% - 24px)); display: flex; flex-direction: column; gap: 8px; padding: 8px;
+.bar { width: min(470px, calc(100% - 24px)); display: flex; flex-direction: column; gap: 8px; padding: 8px;
   border-radius: 12px; background: rgb(15 16 20 / .88); border: 1px solid rgb(255 255 255 / .12);
   box-shadow: 0 6px 24px rgb(0 0 0 / .45); backdrop-filter: blur(6px); }
 .idle .fab, .idle .bar { opacity: 0; pointer-events: none; }
-.row { display: flex; align-items: center; gap: 4px; }
-.spacer { flex: 1; }
+.row { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.row > * { flex: none; }
+.row > .spacer { flex: 1; min-width: 2px; }
+.row > form { flex: 1; }
 .reaction { width: 28px; height: 28px; border-radius: 999px; background: rgb(255 255 255 / .06);
   border: 1px solid rgb(255 255 255 / .12); font-size: 15px; cursor: pointer; padding: 0; }
 .reaction:hover { background: rgb(255 255 255 / .16); }
 .icon { min-width: 28px; height: 28px; border-radius: 8px; background: rgb(255 255 255 / .06); color: #fff;
-  border: 1px solid rgb(255 255 255 / .12); font: inherit; font-size: 13px; cursor: pointer; padding: 0 6px; white-space: nowrap; }
+  border: 1px solid rgb(255 255 255 / .12); font: inherit; font-size: 13px; cursor: pointer; padding: 0 6px; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
 .icon:hover:not(:disabled) { background: rgb(255 255 255 / .16); }
 .members { display: inline-flex; align-items: center; cursor: default; }
 .icon:disabled { opacity: .35; cursor: default; }
@@ -79,12 +82,12 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 
 /* "Herkes hazır" bekleme bandı (üst orta) */
 .waiting { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 7px 14px; border-radius: 999px;
-  background: rgb(0 0 0 / .78); border: 1px solid rgb(255 255 255 / .15); font-size: 14px; font-weight: 600;
+  background: rgb(0 0 0 / .78); border: 1px solid rgb(255 255 255 / .15); font-size: 16px; font-weight: 600;
   white-space: nowrap; max-width: 50%; overflow: hidden; text-overflow: ellipsis; }
 
 /* Otomatik oynatma engellenince */
 .start { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 12px; background: rgb(0 0 0 / .7); pointer-events: auto; font-size: 16px; text-align: center; padding: 16px; }
+  gap: 12px; background: rgb(0 0 0 / .7); pointer-events: auto; font-size: 17px; text-align: center; padding: 16px; }
 .start button { font: inherit; font-weight: 600; color: #fff; background: #7c5cff; border: 0; border-radius: 10px;
   padding: 12px 22px; cursor: pointer; }
 

@@ -53,6 +53,9 @@ const tr = {
   slowDown: 'Biraz yavaş: çok hızlı mesaj gönderiyorsun.',
   intro: 'İyi seyirler!',
   'error.site': 'Burası zaten ScreenWithMe: odanı bu sayfada, sitenin kendisinde kurabilirsin.',
+  siteTitle: 'Zaten ScreenWithMe’desin!',
+  siteText:
+    'Burada eklentiye gerek yok: oda kurmak, sohbet, emoji ve ayarların hepsi bu sayfada. Eklenti, başka bir sitede film ya da dizi açtığında işe yarar; o sayfadayken bu simgeye tıkla.',
   kick: 'Odadan çıkar',
   kickConfirm: '{name} odadan çıkarılsın mı? Sen yasağı kaldırana kadar geri giremez.',
   bans: 'Çıkarılanlar',
@@ -114,6 +117,9 @@ const en: Record<Key, string> = {
   slowDown: "Slow down: you're sending messages too fast.",
   intro: 'Enjoy the show!',
   'error.site': 'This is ScreenWithMe itself: create your room right here on the website.',
+  siteTitle: "You're already on ScreenWithMe!",
+  siteText:
+    "No extension needed here: rooms, chat, reactions and settings are all on this page. The extension helps when you open a film or show on another website; click this icon on that page.",
   kick: 'Remove from room',
   kickConfirm: "Remove {name} from the room? They can't come back until you unban them.",
   bans: 'Removed',

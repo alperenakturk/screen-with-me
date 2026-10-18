@@ -76,10 +76,20 @@ const a3 = client({ name: 'Ali', cid: 'aliCid12345' });
 const wa3 = await a3.wait((m) => m.t === 'welcome', 'welcome a3');
 a2.send({ t: 'kick', id: wa3.you });
 for (let i = 0; i < 20 && a3.closed() === null; i++) await sleep(100);
-ok(a3.closed() === 4000, `Yönetici kendi diğer sekmesini kapattı (${a3.closed()})`);
+ok(a3.closed() === 4003 && a3.inbox.some((m) => m.code === 'kicked'), `Yönetici kendi diğer sekmesini kapattı, o sekme yeniden bağlanmaz (${a3.closed()})`);
 const a4 = client({ name: 'Ali', cid: 'aliCid12345' });
 const wa4 = await a4.wait((m) => m.t === 'welcome' || m.t === 'error', 'welcome a4');
 ok(wa4.t === 'welcome', 'Yönetici kendini yasaklamadı');
+
+// Aynı tarayıcıdan farklı isimle giren ikinci kişi (test ederken sık olur): o isim yasaklanır, yönetici değil.
+const v = client({ name: 'Veli', cid: 'aliCid12345' });
+const wv = await v.wait((m) => m.t === 'welcome', 'welcome veli');
+a2.send({ t: 'kick', id: wv.you });
+for (let i = 0; i < 20 && v.closed() === null; i++) await sleep(100);
+ok(v.closed() === 4003 && a2.closed() === null && a4.closed() === null, 'Aynı tarayıcıdaki Veli atıldı, yönetici sekmeleri açık kaldı');
+const v2 = client({ name: 'Veli', cid: 'aliCid12345' });
+const wv2 = await v2.wait((m) => m.t === 'welcome' || m.t === 'error', 'veli rejoin');
+ok(wv2.t === 'error' && wv2.code === 'kicked', 'Veli aynı isimle geri giremiyor');
 
 // Yeni emoji sayfaları kabul ediliyor.
 a4.send({ t: 'react', emoji: '🤮' });

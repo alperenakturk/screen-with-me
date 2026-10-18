@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+<defs><linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8f74ff"/><stop offset="1" stop-color="#5b3cf0"/></linearGradient><filter id="n" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="visor" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#05d9e8"/><stop offset="1" stop-color="#ff2a6d"/></linearGradient>
+</defs>
+<!-- Çatı kenarı -->
+<rect x="18" y="214" width="204" height="22" rx="3" fill="#120a26"/><line x1="18" y1="214" x2="222" y2="214" stroke="#ff2a6d" stroke-width="3" filter="url(#n)"/>
+<rect x="40" y="222" width="18" height="6" fill="#05d9e8" opacity=".7"/><rect x="170" y="222" width="26" height="6" fill="#f9f002" opacity=".7"/>
+<g>
+<path d="M74 128 L44 150" stroke="#8f96ad" stroke-width="13" stroke-linecap="round"/>
+<path d="M44 150 L34 112" stroke="#a9b0c6" stroke-width="11" stroke-linecap="round"/>
+<circle cx="74" cy="128" r="9" fill="#2b2f42" stroke="#05d9e8" stroke-width="3" filter="url(#n)"/>
+<circle cx="44" cy="150" r="7.5" fill="#2b2f42" stroke="#ff2a6d" stroke-width="3" filter="url(#n)"/>
+<g transform="translate(34 104)"><circle r="10" fill="#c3c9dc"/><rect x="-3" y="-22" width="6" height="16" rx="3" fill="#c3c9dc"/></g>
+</g><g>
+<path d="M166 128 L196 150" stroke="#8f96ad" stroke-width="13" stroke-linecap="round"/>
+<path d="M196 150 L206 186" stroke="#a9b0c6" stroke-width="11" stroke-linecap="round"/>
+<circle cx="166" cy="128" r="9" fill="#2b2f42" stroke="#05d9e8" stroke-width="3" filter="url(#n)"/>
+<circle cx="196" cy="150" r="7.5" fill="#2b2f42" stroke="#ff2a6d" stroke-width="3" filter="url(#n)"/>
+<g transform="translate(206 192)"><path d="M-9 0 L-14 12 M0 2 L0 15 M9 0 L14 12" stroke="#c3c9dc" stroke-width="4.5" stroke-linecap="round"/><circle r="8" fill="#c3c9dc"/></g>
+</g>
+<g transform="translate(74 90) scale(1.4375)">
+<rect width="64" height="64" rx="16" fill="url(#lg)"/>
+<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</g>
+<!-- Siber vizör -->
+<g transform="translate(74 90) scale(1.4375)">
+  <rect x="7" y="16" width="50" height="19" rx="7" fill="#0b0418" stroke="url(#visor)" stroke-width="2.4"/>
+  <rect x="14" y="23" width="14" height="5" rx="2.5" fill="#05d9e8" filter="url(#n)"/><rect x="36" y="23" width="14" height="5" rx="2.5" fill="#ff2a6d" filter="url(#n)"/>
+  <path d="M8 52 H18 L22 48 H30" stroke="#05d9e8" stroke-width="1.4" fill="none" opacity=".8"/>
+</g>
+<!-- Anten -->
+<line x1="148" y1="92" x2="166" y2="58" stroke="#8f96ad" stroke-width="3.5" stroke-linecap="round"/>
+<circle cx="168" cy="54" r="6" fill="#ff2a6d" filter="url(#n)"/>
+</svg>

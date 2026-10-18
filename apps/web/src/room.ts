@@ -190,6 +190,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
             </div>
             <div id="empty" class="empty">
+              <div class="theme-mascot" aria-hidden="true"></div>
               <h2 data-i18n="emptyTitle"></h2>
               <p data-i18n="emptyBody"></p>
             </div>

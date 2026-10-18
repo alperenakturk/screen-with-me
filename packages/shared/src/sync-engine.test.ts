@@ -368,3 +368,38 @@ describe('autoplay', () => {
     expect(sent).toEqual([]);
   });
 });
+
+describe('rate lock (extension)', () => {
+  beforeEach(async () => {
+    engine.destroy();
+    engine = new SyncEngine({ clock, send: (message) => (message.t === 'ready' ? undefined : sent.push(message)), lockRate: true, wallNow: () => Date.now() });
+    engine.receive(state());
+    engine.attach(player);
+    await run(2000);
+  });
+
+  it('undoes a speed change made by something else (another extension) without telling the room', async () => {
+    player.rate = 2; // başka bir hız eklentisi
+    player.emit('ratechange');
+    await run(500);
+    expect(player.rate).toBe(1);
+    expect(sent).toEqual([]);
+  });
+
+  it('still shares a speed picked from our own menu', async () => {
+    engine.requestRate(1.5);
+    await run(500);
+    expect(player.rate).toBe(1.5);
+    expect(sent.map((m) => m.t)).toEqual(['rate']);
+  });
+
+  it('gives up instead of fighting forever with an extension that forces its speed', async () => {
+    for (let i = 0; i < 10; i++) {
+      player.rate = 2;
+      player.emit('ratechange');
+      await run(100);
+    }
+    expect(player.rate).toBe(2);
+    expect(sent).toEqual([]);
+  });
+});

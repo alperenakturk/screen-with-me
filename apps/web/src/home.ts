@@ -42,6 +42,7 @@ function stepsHtml(steps: Step[]): string {
 export function renderHome(app: HTMLElement): void {
   app.innerHTML = `
     <section class="hero">
+      <div class="theme-mascot" aria-hidden="true"></div>
       <h1>ScreenWithMe</h1>
       <p class="tagline" data-i18n="tagline"></p>
       <button id="create" type="button" class="btn primary big" data-i18n="createRoom"></button>

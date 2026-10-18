@@ -63,6 +63,13 @@ function renderPicker(): void {
 
 function render(status: PopupStatus): void {
   last = status;
+  // ScreenWithMe sitesinin kendisindeyken eklentiye gerek yok: sadece kısa bir not.
+  const onSite = !!status.tabUrl && status.tabUrl.startsWith(SITE_URL);
+  $('#site-view').hidden = !onSite;
+  if (onSite) {
+    for (const id of ['#name-view', '#me-view', '#idle-view', '#room-view', '#status', '#error']) $(id).hidden = true;
+    return;
+  }
   const needName = !status.name || editingName;
   $('#name-view').hidden = !needName;
   $('#me-view').hidden = needName;
@@ -74,10 +81,6 @@ function render(status: PopupStatus): void {
   }
 
   const session = status.session;
-  // ScreenWithMe sitesinin kendisindeyken eklentiyle oda kurulmaz.
-  const onSite = !!status.tabUrl && status.tabUrl.startsWith(SITE_URL);
-  $('#site-note').hidden = !onSite;
-  $<HTMLButtonElement>('#create').disabled = onSite;
   $('#idle-view').hidden = needName || session !== null;
   $('#room-view').hidden = needName || session === null;
 

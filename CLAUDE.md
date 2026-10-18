@@ -46,6 +46,7 @@ npm run deploy               # test + build + Cloudflare'e yükle
 npm run build:extension:dev  # yerel sunucuya bağlanan eklenti (apps/extension/dist)
 npm run store                # Web Store paketi: store/ (zip + ekran görüntüleri + tanıtım görseli)
 node scripts/make-icons.mjs  # logo.ts'den eklenti simgeleri (icon*.png) + apps/web/public/logo.svg
+node scripts/theme-art.mjs   # resimli temaların sahne + maskot SVG'leri (apps/web/public/themes/)
 ```
 Mağaza formunda ne yazılacağı: `docs/web-store.md`. Ekran görüntüleri `store/src/shots.html`'den
 çekilir; eklentinin görünümü değişirse oradaki taklidi de güncelle.
@@ -91,6 +92,12 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   hemen o adrese götürür ve `{source:'screenwithme-extension', type:'joining'}` ile cevap verir,
   site kendi bağlantısını kapatır (aynı kişi odada iki kez görünmesin). Kimseyi habersiz
   yönlendirme: sayfa linkinde sitede açıklama + "Sayfaya git" butonu çıkar.
+- **Eklentide hız kilidi:** motor `lockRate: true`; hız sadece çubuktaki menüden değişir, başka
+  hız eklentilerinin değişikliği odaya yayılmaz, geri alınır (inatlaşma sınırı var). Sitede kapalı.
+- **Eklenti bizim sitede çalışmaz:** içerik betiği `location.ancestorOrigins` sitemizi içeriyorsa
+  bağlanmaz (sitedeki YouTube iframe'i); popup sitedeyken sadece "zaten sitedesin" notu gösterir.
+- **Atma ve aynı tarayıcı:** aynı `cid` + farklı isim → sadece o isim yasaklanır (`cid|n:isim`);
+  aynı cid + aynı isim → yöneticinin kendi sekmesi, yasaksız "kicked" ile kapatılır.
 - **İsim/avatar:** site `identityAt` yazar, eklenti de; site-bridge hangisi yeniyse onu iki
   tarafa yazar. Eklenti arka planı isim değişince açık odalara `rename` yollar.
 

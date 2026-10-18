@@ -58,6 +58,11 @@ function keyOf(attachment: Attachment): string {
   return attachment.cid ? `c:${attachment.cid}` : `i:${attachment.id}`;
 }
 
+/** Aynı tarayıcıdan bağlı ikinci bir kişinin yasağı: tarayıcı + isim. */
+function banKey(attachment: Attachment, name: string | null): string {
+  return `${keyOf(attachment)}|n:${name ?? ''}`;
+}
+
 function titleKey(media: Media): string {
   return media.kind === 'youtube' ? `yt:${media.id}` : media.url;
 }
@@ -242,7 +247,7 @@ export class Room extends DurableObject<Env> {
       return;
     }
     if (hello.cid) attachment.cid = hello.cid;
-    if (this.bans[keyOf(attachment)]) {
+    if (this.bans[keyOf(attachment)] || this.bans[banKey(attachment, hello.name)]) {
       this.sendTo(ws, { t: 'error', code: 'kicked' });
       ws.close(4003, 'kicked');
       return;
@@ -286,24 +291,21 @@ export class Room extends DurableObject<Env> {
     const attachment = target.deserializeAttachment() as Attachment;
     if (!attachment.name) return;
 
-    // Yönetici kendi başka sekmesini (aynı tarayıcı kimliği) çıkarıyorsa: yasaklama, sadece kapat.
-    if (keyOf(attachment) === keyOf(ws.deserializeAttachment() as Attachment)) {
-      try {
-        target.close(4000, 'duplicate');
-      } catch {
-        // Zaten kapanmış olabilir.
-      }
-      this.broadcast(this.membersMessage(target), target);
-      return;
-    }
+    // Aynı tarayıcıdan (aynı kimlik) bağlı biri: tarayıcıyı yasaklarsak yönetici de
+    // giremez. Farklı isimliyse (aynı bilgisayardan ikinci kişi / test) sadece o isim
+    // yasaklanır; aynı isimliyse yöneticinin kendi diğer sekmesidir, yasaksız kapatılır.
+    const sameBrowser = keyOf(attachment) === keyOf(ws.deserializeAttachment() as Attachment);
+    const sameName = sameBrowser && attachment.name === me.name;
 
-    // Kalıcı yasak: yönetici listeden kaldırana kadar geri giremez.
-    const keys = Object.keys(this.bans);
-    if (keys.length >= MAX_BANS) delete this.bans[keys[0]!];
-    const ban: Ban = { id: newId(), name: attachment.name };
-    if (attachment.avatar) ban.avatar = attachment.avatar;
-    this.bans[keyOf(attachment)] = ban;
-    await this.ctx.storage.put('bans', this.bans);
+    if (!sameName) {
+      // Kalıcı yasak: yönetici listeden kaldırana kadar geri giremez.
+      const keys = Object.keys(this.bans);
+      if (keys.length >= MAX_BANS) delete this.bans[keys[0]!];
+      const ban: Ban = { id: newId(), name: attachment.name };
+      if (attachment.avatar) ban.avatar = attachment.avatar;
+      this.bans[sameBrowser ? banKey(attachment, attachment.name) : keyOf(attachment)] = ban;
+      await this.ctx.storage.put('bans', this.bans);
+    }
 
     this.sendTo(target, { t: 'error', code: 'kicked' });
     try {
@@ -311,12 +313,14 @@ export class Room extends DurableObject<Env> {
     } catch {
       // Zaten kapanmış olabilir.
     }
-    this.broadcast({ t: 'kicked', who: memberOf({ ...attachment, name: attachment.name }), by: me }, target);
     this.broadcast(this.membersMessage(target), target);
+    if (sameName) return;
+    this.broadcast({ t: 'kicked', who: memberOf({ ...attachment, name: attachment.name }), by: me }, target);
     // Aynı kişinin başka sekmedeki bağlantıları da (ör. site + eklenti) çıkarılır.
+    // Aynı tarayıcıdaki çıkarmada sadece aynı isimli bağlantılar (yöneticiye dokunma).
     for (const other of this.openSockets(target)) {
       const a = other.deserializeAttachment() as Attachment | null;
-      if (a && other !== ws && keyOf(a) === keyOf(attachment)) {
+      if (a && other !== ws && keyOf(a) === keyOf(attachment) && (!sameBrowser || a.name === attachment.name)) {
         this.sendTo(other, { t: 'error', code: 'kicked' });
         try {
           other.close(4003, 'kicked');
@@ -471,9 +475,9 @@ export class Room extends DurableObject<Env> {
   /** Şu anki yöneticinin üye ID'si: asıl yönetici odadaysa o, değilse odadaki en eski kişi. */
   private hostId(except?: WebSocket): string | null {
     const people = this.joined(except);
-    // Yönetici birden çok sekmeyle bağlıysa en son açtığı (o an kullandığı) sekme 👑 gösterilir.
+    // Yönetici birden çok sekmeyle bağlıysa ilk bağlanan sekme 👑 gösterilir (yetki hepsinde: isHost).
     let host: Joined | null = null;
-    for (const a of people) if (keyOf(a) === this.hostKey && (!host || (a.joinedAt ?? 0) >= (host.joinedAt ?? 0))) host = a;
+    for (const a of people) if (keyOf(a) === this.hostKey && (!host || (a.joinedAt ?? 0) < (host.joinedAt ?? 0))) host = a;
     if (host) return host.id;
     let oldest: Joined | null = null;
     for (const a of people) if (!oldest || (a.joinedAt ?? 0) < (oldest.joinedAt ?? 0)) oldest = a;

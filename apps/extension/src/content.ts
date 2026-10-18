@@ -14,6 +14,7 @@ import { roomIdFromHash } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { describeVideo, findVideos, scoreVideo, wrapVideoElement } from '@swm/shared/video-element';
 import { PORT_NAME, PROBE, SESSIONS_KEY, type BackgroundMessage, type FrameMessage } from './messages.ts';
+import { SITE_URL } from './config.ts';
 import { createOverlay } from './overlay.ts';
 
 const SCAN_MS = 1000;
@@ -43,8 +44,15 @@ function updateSync(): void {
   overlay.setSync((adapter.getTime() - expectedPosition(current, clock.now())) * 1000);
 }
 
+/**
+ * ScreenWithMe sitesinin içindeki çerçeveler (ör. sitedeki YouTube oynatıcısı): orada
+ * site zaten kendi senkronunu ve arayüzünü çalıştırıyor, eklenti hiçbir şey yapmaz.
+ */
+const SITE_ORIGIN = new URL(SITE_URL).origin;
+const insideOurSite = Array.from(location.ancestorOrigins ?? []).includes(SITE_ORIGIN);
+
 function connect(): void {
-  if (port) return;
+  if (port || insideOurSite) return;
   try {
     port = chrome.runtime.connect({ name: PORT_NAME });
   } catch {
@@ -157,6 +165,8 @@ function attachEngine(): void {
   adapter = wrapVideoElement(best);
   engine ??= new SyncEngine({
     clock,
+    // Hızı sadece çubuktaki menü değiştirir; başka hız eklentileri odayı bozamaz.
+    lockRate: true,
     send: (message) => send({ type: 'send', message }),
     onEnded: (itemId) => send({ type: 'send', message: { t: 'next', from: itemId } }),
     onAutoplayBlocked: () => overlay.askToStart(() => engine?.resume()),

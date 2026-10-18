@@ -35,9 +35,19 @@ export interface SyncEngineOptions {
   onAutoplayBlocked?: () => void;
   /** Oynayan video sona erdiğinde (her öğe için bir kez) çağrılır; arayüz sıradakini ister. */
   onEnded?: (itemId: string) => void;
+  /**
+   * Hız kilidi: hız sadece requestRate ile (bizim hız menümüzden) değişir. Oynatıcıda
+   * başka bir şey hızı değiştirirse (ör. başka bir hız eklentisinin kısayolu) odaya
+   * yayılmaz, video odanın hızına geri döner. Eklentide açık; sitede kapalı.
+   */
+  lockRate?: boolean;
   /** Test için değiştirilebilir. */
   wallNow?: () => number;
 }
+
+/** Hız kilidi başka bir eklentiyle inatlaşmasın: bu sürede en fazla bu kadar geri alınır. */
+const RATE_REVERT_LIMIT = 6;
+const RATE_REVERT_WINDOW_MS = 5000;
 
 type Command = 'play' | 'pause' | 'rate' | 'seek';
 
@@ -67,6 +77,8 @@ export class SyncEngine {
   private lastSample: { wall: number; time: number; playing: boolean } | null = null;
   private driftCooldownUntil = 0;
   private nudgeRate: number | null = null;
+  /** Hız kilidinin son geri almaları (inatlaşma sınırı için). */
+  private rateReverts: number[] = [];
   private pauseTimer: ReturnType<typeof setTimeout> | null = null;
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private autoplayBlocked = false;
@@ -222,6 +234,17 @@ export class SyncEngine {
         if (this.nudgeRate !== null && Math.abs(rate - this.nudgeRate) < 0.001) return;
         if (Math.abs(rate - state.rate) > 0.01) {
           this.nudgeRate = null;
+          if (this.options.lockRate) {
+            // Bizim menümüzden gelmeyen hız değişikliği: odaya yayma, geri al.
+            const now = this.wallNow();
+            this.rateReverts = this.rateReverts.filter((t) => now - t < RATE_REVERT_WINDOW_MS);
+            if (this.rateReverts.length < RATE_REVERT_LIMIT) {
+              this.rateReverts.push(now);
+              this.command('rate');
+              player.setRate(state.rate);
+            }
+            break;
+          }
           this.localChange('rate', { rate, position: player.getTime() });
         }
         break;

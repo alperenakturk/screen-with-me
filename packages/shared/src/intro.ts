@@ -1,5 +1,5 @@
-// Odaya girince kısa açılış: logo belirir, gözler kırpılır, ağızdaki duraklat
-// işareti "oynat"a döner, "İyi seyirler!" yazısı çıkar ve hepsi yavaşça kaybolur
+// Odaya girince kısa açılış: logo belirir, gözler kırpılır, ağızdaki "oynat"a
+// basılmış gibi ⏸ olur (video başladı), "İyi seyirler!" çıkar ve hepsi yavaşça kaybolur
 // (~2,7 sn). Site ve eklenti katmanı aynı parçayı kullanır; eklentide kapalı
 // shadow DOM'un içine, sitede sayfaya eklenir. Tıklayınca hemen kapanır.
 
@@ -21,22 +21,24 @@ export const INTRO_CSS = `
   border: 3px solid rgb(164 141 255 / .8); opacity: 0; animation: swm-intro-ring .9s ease-out .95s; }
 .swm-intro .logo-eyes, .swm-intro .logo-play, .swm-intro .logo-pause { transform-box: fill-box; transform-origin: center; }
 .swm-intro .logo-eyes { animation: swm-intro-blink .32s ease .6s; }
-.swm-intro .logo-pause { animation: swm-intro-out .3s ease .95s forwards; }
-.swm-intro .logo-play { opacity: 0; transform: scale(.3); animation: swm-intro-in .45s cubic-bezier(.2, 1.6, .4, 1) 1.05s forwards; }
+/* "Oynat"a basılmış gibi: önce ▶ hafifçe içe göçer, sonra ⏸ olur (video başladı). */
+.swm-intro .logo-play { animation: swm-intro-press .35s ease .7s, swm-intro-out .25s ease 1.0s forwards; }
+.swm-intro .logo-pause { opacity: 0; transform: scale(.3); animation: swm-intro-in .45s cubic-bezier(.2, 1.6, .4, 1) 1.1s forwards; }
 .swm-intro-text { color: #fff; font-size: clamp(20px, 4.2vmin, 34px); font-weight: 800; letter-spacing: .3px;
   text-shadow: 0 4px 18px rgb(0 0 0 / .5); opacity: 0; transform: translateY(14px);
   animation: swm-intro-text .6s ease 1.25s forwards; }
 @keyframes swm-intro-fade { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes swm-intro-pop { from { transform: scale(.35) rotate(-8deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes swm-intro-blink { 50% { transform: scaleY(.12); } }
+@keyframes swm-intro-press { 50% { transform: scale(.78); } }
 @keyframes swm-intro-out { to { opacity: 0; transform: scale(.4); } }
 @keyframes swm-intro-in { to { opacity: 1; transform: none; } }
 @keyframes swm-intro-ring { 0% { opacity: .9; transform: scale(.9); } 100% { opacity: 0; transform: scale(1.35); } }
 @keyframes swm-intro-text { to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   .swm-intro-logo, .swm-intro-logo::after, .swm-intro .logo-eyes, .swm-intro-text { animation: none; opacity: 1; transform: none; }
-  .swm-intro .logo-pause { display: none; }
-  .swm-intro .logo-play { animation: none; opacity: 1; transform: none; }
+  .swm-intro .logo-play { display: none; }
+  .swm-intro .logo-pause { animation: none; opacity: 1; transform: none; }
 }
 `;
 

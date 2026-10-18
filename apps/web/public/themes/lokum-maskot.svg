@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+<defs><linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8f74ff"/><stop offset="1" stop-color="#5b3cf0"/></linearGradient><filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="tea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2562c"/><stop offset="1" stop-color="#8f1e12"/></linearGradient>
+</defs>
+<!-- Minder -->
+<path d="M30 214 Q120 188 210 214 Q214 232 196 236 H44 Q26 232 30 214Z" fill="#b8243e"/>
+<path d="M36 214 Q120 194 204 214" stroke="#e6b85c" stroke-width="4" fill="none"/>
+<circle cx="34" cy="226" r="6" fill="#e6b85c"/><circle cx="206" cy="226" r="6" fill="#e6b85c"/>
+<!-- Yeniçeri börkü: arkaya sarkan beyaz keçe + altın kaşıklık -->
+<path d="M84 98 Q80 40 120 30 Q158 26 168 58 Q196 96 206 160 Q186 150 176 118 Q170 96 156 98Z" fill="#f5f0e6" stroke="#d8cfbd" stroke-width="3" stroke-linejoin="round"/>
+<g transform="translate(74 92) scale(1.4375)">
+<rect width="64" height="64" rx="16" fill="url(#lg)"/>
+<ellipse cx="22" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="24" cy="25.5" r="4.8" fill="#1f1450"/><circle cx="25.6" cy="23.9" r="1.6" fill="#fff"/><ellipse cx="42" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="44" cy="25.5" r="4.8" fill="#1f1450"/><circle cx="45.6" cy="23.9" r="1.6" fill="#fff"/>
+<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+</g>
+<rect x="80" y="84" width="80" height="18" rx="9" fill="#f5f0e6" stroke="#d8cfbd" stroke-width="3"/>
+<path d="M110 84 Q120 52 130 84Z" fill="#e6b85c" stroke="#b8862f" stroke-width="2"/>
+<circle cx="120" cy="92" r="5" fill="#2fb5a8" stroke="#b8862f" stroke-width="2"/>
+<!-- Bıyık -->
+<path d="M120 148 Q106 140 96 150 Q92 156 98 158 Q104 150 120 154 Q136 150 142 158 Q148 156 144 150 Q134 140 120 148Z" fill="#2a1a12"/>
+<!-- İnce belli çay bardağı -->
+<g transform="translate(184 168)">
+  <ellipse cx="0" cy="30" rx="20" ry="5" fill="#e6b85c"/>
+  <path d="M-10 -10 Q-14 6 -5 12 Q-9 22 -8 28 H8 Q9 22 5 12 Q14 6 10 -10Z" fill="url(#tea)" stroke="#f3e8e8" stroke-width="2" opacity=".95"/>
+  <path d="M-4 -18 q4 -6 0 -12 M4 -18 q4 -6 0 -12" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+<!-- Lokum -->
+<g transform="translate(52 190) rotate(-12)"><rect x="-11" y="-11" width="22" height="22" rx="5" fill="#f6a3c1"/><circle cx="-4" cy="-3" r="1.4" fill="#fff"/><circle cx="4" cy="4" r="1.4" fill="#fff"/></g>
+</svg>

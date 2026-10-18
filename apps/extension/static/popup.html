@@ -11,6 +11,13 @@
       <span id="status" class="status" hidden></span>
     </header>
 
+    <!-- ScreenWithMe sitesinin kendisindeyken sadece bu görünür. -->
+    <section id="site-view" class="site-view" hidden>
+      <div class="site-emoji">🎉</div>
+      <h3 data-t="siteTitle"></h3>
+      <p class="muted" data-t="siteText"></p>
+    </section>
+
     <section id="name-view" hidden>
       <form id="name-form" class="stack">
         <label for="name" data-t="yourName"></label>
@@ -30,7 +37,6 @@
 
     <section id="idle-view" class="stack" hidden>
       <p class="muted" data-t="tagline"></p>
-      <p id="site-note" class="warning" data-t="error.site" hidden></p>
       <button id="create" class="btn primary big" data-t="createHere"></button>
       <p class="muted small" data-t="createHint"></p>
       <div class="divider"><span data-t="or"></span></div>

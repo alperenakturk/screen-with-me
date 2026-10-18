@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+<filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<radialGradient id="peach" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#ffe2b8"/><stop offset=".55" stop-color="#f59a74"/><stop offset="1" stop-color="#9b3f6b"/></radialGradient>
+<radialGradient id="blue" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#b6e6ff"/><stop offset=".5" stop-color="#4f8de8"/><stop offset="1" stop-color="#1c2669"/></radialGradient>
+<radialGradient id="pink" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#ffd1ea"/><stop offset="1" stop-color="#c2508f"/></radialGradient>
+<radialGradient id="mint" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#d6ffe9"/><stop offset="1" stop-color="#3aa880"/></radialGradient>
+<linearGradient id="tail" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#9fd8ff" stop-opacity="0"/></linearGradient>
+<linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8ffe0" stop-opacity=".45"/><stop offset="1" stop-color="#a8ffe0" stop-opacity="0"/></linearGradient>
+<mask id="cres"><rect width="1600" height="900" fill="#fff"/><circle cx="160" cy="104" r="28" fill="#000"/></mask>
+</defs>
+<!-- Hilal -->
+<circle cx="146" cy="116" r="30" fill="#f6f2ff" mask="url(#cres)" filter="url(#g)"/>
+<!-- Halkalı şeftali gezegen (sağ üst) -->
+<g transform="rotate(-16 1390 180)">
+  <ellipse cx="1390" cy="180" rx="92" ry="20" fill="none" stroke="#ffe7c4" stroke-opacity=".55" stroke-width="7"/>
+</g>
+<circle cx="1390" cy="180" r="50" fill="url(#peach)"/>
+<g transform="rotate(-16 1390 180)"><path d="M1298 180 A92 20 0 0 0 1482 180" fill="none" stroke="#ffe7c4" stroke-opacity=".85" stroke-width="7"/></g>
+<g opacity=".9"><circle cx="1374" cy="177.5" r="3.5" fill="#1b1446"/><circle cx="1406" cy="177.5" r="3.5" fill="#1b1446"/>
+<path d="M1383 186 Q1390 193 1397 186" stroke="#1b1446" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<ellipse cx="1365" cy="187" rx="6" ry="3.5" fill="#ff8fb8" opacity=".6"/><ellipse cx="1415" cy="187" rx="6" ry="3.5" fill="#ff8fb8" opacity=".6"/></g>
+<!-- Mavi gezegen (sağ alt) -->
+<circle cx="1470" cy="715" r="66" fill="url(#blue)"/>
+<path d="M1410 690 Q1470 676 1532 694 M1406 726 Q1470 742 1534 722" stroke="#d6f0ff" stroke-opacity=".35" stroke-width="7" fill="none" stroke-linecap="round"/>
+<g opacity=".9"><circle cx="1448.9" cy="711.7" r="4.6" fill="#1b1446"/><circle cx="1491.1" cy="711.7" r="4.6" fill="#1b1446"/>
+<path d="M1460.8 722.9 Q1470 732.2 1479.2 722.9" stroke="#1b1446" stroke-width="3.3" fill="none" stroke-linecap="round"/>
+<ellipse cx="1437" cy="724.2" rx="7.9" ry="4.6" fill="#ff8fb8" opacity=".6"/><ellipse cx="1503" cy="724.2" rx="7.9" ry="4.6" fill="#ff8fb8" opacity=".6"/></g>
+<!-- Küçük gezegenler -->
+<circle cx="232" cy="352" r="21" fill="url(#pink)"/>
+<circle cx="1186" cy="128" r="13" fill="url(#mint)"/>
+<circle cx="1555" cy="430" r="8" fill="#ffd27a" opacity=".9"/>
+<!-- Kuyruklu yıldız -->
+<path d="M566 112 L404 36 L560 104 Z" fill="url(#tail)"/>
+<circle cx="566" cy="111" r="6" fill="#fff" filter="url(#g)"/>
+<!-- Roket -->
+<g transform="translate(1250 480) rotate(38)">
+  <path d="M0 22 Q-7 40 0 52 Q7 40 0 22Z" fill="#ffb347"/><path d="M0 26 Q-3.5 38 0 46 Q3.5 38 0 26Z" fill="#fff3a6"/>
+  <path d="M-11 12 L-18 26 L-9 22Z M11 12 L18 26 L9 22Z" fill="#ff6f91"/>
+  <path d="M0 -26 Q12 -12 11 18 L-11 18 Q-12 -12 0 -26Z" fill="#f3f1ff"/>
+  <circle cx="0" cy="-2" r="5.5" fill="#6ee7ff" stroke="#8a7dff" stroke-width="2"/>
+</g>
+<!-- UFO -->
+<g transform="translate(330 560)">
+  <path d="M-30 18 L30 18 L58 120 L-58 120Z" fill="url(#beam)"/>
+  <ellipse cx="0" cy="8" rx="34" ry="11" fill="#b9b3ff"/><path d="M-16 4 Q0 -22 16 4Z" fill="#9cf0ff" opacity=".85"/>
+  <circle cx="-18" cy="10" r="2.6" fill="#ffe27a"/><circle cx="0" cy="13" r="2.6" fill="#ffe27a"/><circle cx="18" cy="10" r="2.6" fill="#ffe27a"/>
+</g>
+<path d="M470 81 Q472.5 87.5 479 90 Q472.5 92.5 470 99 Q467.5 92.5 461 90 Q467.5 87.5 470 81Z" fill="#fff6c8" opacity="0.85"/><path d="M1080 63 Q1082 68 1087 70 Q1082 72 1080 77 Q1078 72 1073 70 Q1078 68 1080 63Z" fill="#fff6c8" opacity="0.85"/><path d="M1500 320 Q1502.8 327.2 1510 330 Q1502.8 332.8 1500 340 Q1497.2 332.8 1490 330 Q1497.2 327.2 1500 320Z" fill="#fff6c8" opacity="0.85"/><path d="M90 422 Q92.2 427.8 98 430 Q92.2 432.2 90 438 Q87.8 432.2 82 430 Q87.8 427.8 90 422Z" fill="#fff6c8" opacity="0.85"/><path d="M1230 633 Q1232 638 1237 640 Q1232 642 1230 647 Q1228 642 1223 640 Q1228 638 1230 633Z" fill="#fff6c8" opacity="0.85"/><path d="M380 774 Q381.7 778.3 386 780 Q381.7 781.7 380 786 Q378.3 781.7 374 780 Q378.3 778.3 380 774Z" fill="#fff6c8" opacity="0.85"/><path d="M1530 514 Q1531.7 518.3 1536 520 Q1531.7 521.7 1530 526 Q1528.3 521.7 1524 520 Q1528.3 518.3 1530 514Z" fill="#fff6c8" opacity="0.85"/><path d="M690 34 Q691.7 38.3 696 40 Q691.7 41.7 690 46 Q688.3 41.7 684 40 Q688.3 38.3 690 34Z" fill="#fff6c8" opacity="0.85"/><path d="M960 815 Q961.4 818.6 965 820 Q961.4 821.4 960 825 Q958.6 821.4 955 820 Q958.6 818.6 960 815Z" fill="#fff6c8" opacity="0.85"/><path d="M250 204 Q251.7 208.3 256 210 Q251.7 211.7 250 216 Q248.3 211.7 244 210 Q248.3 208.3 250 204Z" fill="#fff6c8" opacity="0.85"/><path d="M1320 375 Q1321.4 378.6 1325 380 Q1321.4 381.4 1320 385 Q1318.6 381.4 1315 380 Q1318.6 378.6 1320 375Z" fill="#fff6c8" opacity="0.85"/><path d="M60 255 Q61.4 258.6 65 260 Q61.4 261.4 60 265 Q58.6 261.4 55 260 Q58.6 258.6 60 255Z" fill="#fff6c8" opacity="0.85"/>
+</svg>

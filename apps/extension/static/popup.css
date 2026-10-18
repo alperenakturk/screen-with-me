@@ -328,13 +328,30 @@ label,
   justify-content: center;
 }
 
+/* Emoji satırındaki ▲▼: emojilerle aynı satırda, satır yüksekliğini aşmadan üst üste. */
 .reactions .pager .mini {
+  width: 20px;
+  height: 16px;
+  border-radius: 5px;
   font-size: 7px;
-  padding: 1px 4px;
-  line-height: 1.1;
+  padding: 0;
+  line-height: 1;
 }
 
-#create:disabled {
-  opacity: 0.45;
-  cursor: default;
+.site-view {
+  text-align: center;
+  padding: 8px 4px 4px;
+}
+
+.site-view h3 {
+  margin: 6px 0;
+  font-size: 16px;
+}
+
+.site-view p {
+  line-height: 1.5;
+}
+
+.site-emoji {
+  font-size: 34px;
 }
