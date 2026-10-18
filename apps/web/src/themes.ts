@@ -40,6 +40,9 @@ const SCENE_THEMES: readonly ThemeId[] = [
   'sinema', 'opera', 'acikhava', 'gemi', 'tren',
 ];
 
+/** Ana sayfa şeridinde kaç tema görünsün (kaydırma çubuğu çıkmasın). */
+const STRIP_COUNT = 6;
+
 /** Temanın resimleri (styles.css'teki --scene / --mascot / desen ile aynı adresler). */
 function themeImages(id: ThemeId): string[] {
   const urls = [`/themes/${id}-maskot.svg`];
@@ -86,10 +89,18 @@ export function applyTheme(id: ThemeId, { wait = true } = {}): void {
  * uygulanır (kullanıcı odaya girmeden deneyebilsin). Dar ekranda yana kayar.
  */
 export function renderThemeStrip(container: HTMLElement): void {
+  // Hepsini göstermek yana kayan uzun bir şerit yapıyordu: her açılışta seçili tema + rastgele
+  // birkaç tema (çoğu resimli). Tamamı odada ve üstteki 🎨 menüsünde seçilebilir.
+  const others = THEMES.filter((theme) => theme.id !== currentTheme())
+    .map((theme) => ({ theme, key: Math.random() + (SCENE_THEMES.includes(theme.id) ? 0 : 0.6) }))
+    .sort((a, b) => a.key - b.key)
+    .slice(0, STRIP_COUNT - 1)
+    .map((x) => x.theme);
+  const shown = THEMES.filter((theme) => theme.id === currentTheme() || others.includes(theme));
   const draw = () =>
     container.replaceChildren(
       el('span', { class: 'theme-strip-label' }, t('settings.theme')),
-      ...THEMES.map((theme) => {
+      ...shown.map((theme) => {
         const button = el(
           'button',
           {
