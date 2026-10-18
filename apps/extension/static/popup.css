@@ -259,6 +259,26 @@ label,
   border-bottom-color: var(--accent);
 }
 
+/* Parodi'nin alt sekmeleri (Film / Dizi / Anime) */
+.avatar-tabs.sub {
+  border-bottom: 0;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.avatar-picker .avatar-tabs.sub .avatar-tab {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.avatar-picker .avatar-tabs.sub .avatar-tab[aria-selected='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);

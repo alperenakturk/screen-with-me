@@ -108,6 +108,24 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 .note button { font: inherit; font-weight: 600; color: #fff; background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .18);
   border-radius: 9px; padding: 8px 16px; cursor: pointer; }
 .note button.primary { background: #7c5cff; border-color: #7c5cff; }
+
+/* Sürüklenebilir çubuk: tutamak ve mesajların sola/yukarı dizilmesi */
+.fab { touch-action: none; }
+.grip { cursor: grab; color: #9a9fad; font-size: 16px; padding: 0 3px 0 1px; user-select: none; touch-action: none; }
+.grip:active { cursor: grabbing; }
+.toasts.left { align-items: flex-start; }
+.toasts.left .toast { text-align: left; }
+
+/* İlk kez gelene rehber: kart + düğmeyi gösteren zıplayan ok */
+.guide { top: 22%; text-align: left; width: min(420px, calc(100% - 24px)); }
+.guide ul { margin: 8px 0 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.guide li { display: flex; gap: 8px; align-items: flex-start; }
+.guide li span:first-child { flex: none; width: 22px; text-align: center; }
+.guide label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9cbd3; margin-top: 12px; cursor: pointer; }
+.guide .actions { justify-content: flex-end; margin-top: 10px; }
+.pointer { position: absolute; font-size: 30px; color: #a48dff; filter: drop-shadow(0 2px 6px rgb(0 0 0 / .6));
+  animation: bob 0.9s ease-in-out infinite; pointer-events: none; }
+@keyframes bob { 50% { transform: translateY(-8px); } }
 ${INTRO_CSS}
 `;
 
@@ -130,6 +148,8 @@ function button(className: string, text: string, title: string, onClick: () => v
 export interface OverlayActions {
   send: (message: ClientMessage) => void;
   onRate: (rate: number) => void;
+  /** 🏠 Odaya dön: film bitti ya da başka bir şey izlenecek. */
+  onBackToRoom: () => void;
 }
 
 /**
@@ -153,6 +173,22 @@ export function createOverlay(actions: OverlayActions) {
   let reactionPage = 0;
   /** Kapanış açıklaması bu ana kadar ekranda kalır. */
   let farewellUntil = 0;
+  /**
+   * Düğme/çubuğun kullanıcının sürüklediği yeri (videoya göre oran, sol üst köşe). null:
+   * varsayılan sağ üst. Mesajlar hep onun altında (alttaysa üstünde) akar. Hatırlanır.
+   */
+  let pos: { x: number; y: number } | null = null;
+  let suppressClick = false;
+  void chrome.storage.local
+    .get('barPos')
+    .then(({ barPos }) => {
+      const p = barPos as { x?: unknown; y?: unknown } | undefined;
+      if (p && typeof p.x === 'number' && typeof p.y === 'number') {
+        pos = { x: p.x, y: p.y };
+        layout();
+      }
+    })
+    .catch(() => {});
 
   // Çubuğa yazarken basılan tuşlar sitenin ve başka eklentilerin kısayollarını
   // (boşluk = durdur, hız eklentilerinin harfleri vb.) tetiklemesin. Kapalı shadow
@@ -179,7 +215,10 @@ export function createOverlay(actions: OverlayActions) {
     badge.hidden = true;
     const fab = el('button', 'fab', el('span', 'logo', createLogo(document)), 'ScreenWithMe', badge);
     fab.type = 'button';
-    fab.addEventListener('click', () => setBar(true));
+    fab.addEventListener('click', () => {
+      if (!suppressClick) setBar(true);
+    });
+    makeDraggable(fab);
 
     // 1. satır: emojiler (▲▼ ile sayfa) | senkron · odadakiler · davet · kapat
     const reactions = el('span', 'reactions');
@@ -207,7 +246,17 @@ export function createOverlay(actions: OverlayActions) {
       copy.textContent = '✓';
       setTimeout(() => (copy.textContent = '🔗'), 1500);
     });
+    const home = button('icon', '🏠', t('backToRoom'), () => actions.onBackToRoom());
     const close = button('icon', '✕', t('close'), () => setBar(false));
+    // Tutamak: sürükleyerek çubuğu taşı, çift tıkla eski yerine (sağ üst) al.
+    const grip = el('span', 'grip', '⠿');
+    grip.title = t('dragHint');
+    makeDraggable(grip);
+    grip.addEventListener('dblclick', () => {
+      pos = null;
+      void chrome.storage.local.remove('barPos');
+      layout();
+    });
 
     // 2. satır: hızlı mesaj | hız
     const input = el('input');
@@ -235,7 +284,7 @@ export function createOverlay(actions: OverlayActions) {
     const bar = el(
       'div',
       'bar',
-      el('div', 'row', reactions, pager, el('span', 'spacer'), dot, members, copy, close),
+      el('div', 'row', grip, reactions, pager, el('span', 'spacer'), dot, members, copy, home, close),
       el('div', 'row', form, speed),
     );
     bar.hidden = true;
@@ -286,7 +335,7 @@ export function createOverlay(actions: OverlayActions) {
       height: `${box.height}px`,
     });
     // Video boyutu değişince çubuk iki satıra inebilir; mesajlar onun altında kalsın.
-    placeToasts();
+    layout();
   }
 
   /** Fare oynayınca buton/çubuk görünür, hareketsiz kalınca solar (yazı yazarken solmaz). */
@@ -310,16 +359,92 @@ export function createOverlay(actions: OverlayActions) {
       renderBadge();
       parts.input.focus();
     }
-    placeToasts();
+    layout();
     wake();
   }
 
-  /** Mesajları buton/çubuk hangisi görünüyorsa onun hemen altına koyar. */
+  /** Düğme ve çubuğu kullanıcının seçtiği yere (yoksa sağ üste) koyar, mesajları ona göre dizer. */
+  function layout(): void {
+    if (!parts || !root) return;
+    const w = root.clientWidth;
+    const h = root.clientHeight;
+    for (const node of [parts.fab, parts.bar]) {
+      if (!pos) {
+        node.style.left = node.style.top = node.style.right = '';
+        continue;
+      }
+      const nw = node.offsetWidth || (node === parts.bar ? 470 : 140);
+      const nh = node.offsetHeight || (node === parts.bar ? 84 : 34);
+      node.style.right = 'auto';
+      node.style.left = `${Math.min(Math.max(pos.x * w, 4), Math.max(4, w - nw - 4))}px`;
+      node.style.top = `${Math.min(Math.max(pos.y * h, 4), Math.max(4, h - nh - 4))}px`;
+    }
+    placeToasts();
+  }
+
+  /** Mesajları buton/çubuk hangisi görünüyorsa onun altına (alt yarıdaysa üstüne) koyar. */
   function placeToasts(): void {
-    if (!parts) return;
+    if (!parts || !root) return;
     const anchor = barOpen ? parts.bar : parts.fab;
-    const height = anchor.getBoundingClientRect().height || (barOpen ? 84 : 34);
-    parts.toasts.style.top = `${12 + height + 8}px`;
+    const s = parts.toasts.style;
+    if (!pos) {
+      const height = anchor.getBoundingClientRect().height || (barOpen ? 84 : 34);
+      s.left = s.bottom = '';
+      s.right = '12px';
+      s.top = `${12 + height + 8}px`;
+      parts.toasts.classList.remove('left', 'up');
+      return;
+    }
+    const rr = root.getBoundingClientRect();
+    const ar = anchor.getBoundingClientRect();
+    const ax = ar.left - rr.left;
+    const ay = ar.top - rr.top;
+    const rightSide = ax + ar.width / 2 > rr.width / 2;
+    const up = ay + ar.height / 2 > rr.height * 0.6;
+    s.left = rightSide ? 'auto' : `${ax}px`;
+    s.right = rightSide ? `${rr.width - ax - ar.width}px` : 'auto';
+    s.top = up ? 'auto' : `${ay + ar.height + 8}px`;
+    s.bottom = up ? `${rr.height - ay + 8}px` : 'auto';
+    parts.toasts.classList.toggle('left', !rightSide);
+    parts.toasts.classList.toggle('up', up);
+  }
+
+  /** Düğmeyi/tutamağı sürükleyerek çubuğun yerini değiştirme (5 px'ten azı tıklama sayılır). */
+  function makeDraggable(handle: HTMLElement): void {
+    handle.addEventListener('pointerdown', (event) => {
+      if (!root || !parts || event.button !== 0) return;
+      const target = barOpen ? parts.bar : parts.fab;
+      const rr = root.getBoundingClientRect();
+      const tr = target.getBoundingClientRect();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const offX = tr.left - rr.left;
+      const offY = tr.top - rr.top;
+      let moved = false;
+      handle.setPointerCapture(event.pointerId);
+      const move = (ev: PointerEvent) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (!moved && Math.hypot(dx, dy) < 5) return;
+        moved = true;
+        pos = { x: (offX + dx) / rr.width, y: (offY + dy) / rr.height };
+        layout();
+        wake();
+      };
+      const up = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
+        if (!moved) return;
+        // Sürükleme bitti: ardından gelen tıklama çubuğu açmasın.
+        suppressClick = true;
+        setTimeout(() => (suppressClick = false), 0);
+        void chrome.storage.local.set({ barPos: pos });
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
+    });
   }
 
   function renderBadge(): void {
@@ -445,6 +570,43 @@ export function createOverlay(actions: OverlayActions) {
         this.unmount();
       });
       layer.append(card);
+    },
+
+    /**
+     * Film sayfasına ilk gelene kısa rehber: kontrollerin yeri (okla), eklenti simgesi,
+     * senkron için herkesin filmi açması. "Bir daha gösterme" işaretlenirse onNeverAgain.
+     */
+    guide(onNeverAgain: () => void): void {
+      const layer = mount();
+      if (!parts || layer.querySelector('.guide')) return;
+      wake();
+      const never = el('input');
+      never.type = 'checkbox';
+      const ok = el('button', 'primary', t('guideOk'));
+      const item = (icon: string, text: string) => el('li', '', el('span', '', icon), el('span', '', text));
+      const card = el(
+        'div',
+        'note guide',
+        el('b', '', t('guideTitle')),
+        el('ul', '', item('👉', t('guideBar')), item('🧩', t('guideIcon')), item('✋', t('guideDrag')), item('🍿', t('guideSync')), item('⏭️', t('guideAd'))),
+        el('label', '', never, t('guideNever')),
+        el('div', 'actions', ok),
+      );
+      // Ok: sağ üstteki ScreenWithMe düğmesinin hemen altında, yukarıyı gösterir.
+      const anchor = (barOpen ? parts.bar : parts.fab).getBoundingClientRect();
+      const box = layer.getBoundingClientRect();
+      const pointer = el('div', 'pointer', '⬆');
+      pointer.style.left = `${Math.max(8, anchor.left - box.left + anchor.width / 2 - 14)}px`;
+      pointer.style.top = `${anchor.bottom - box.top + 4}px`;
+      const close = () => {
+        if (never.checked) onNeverAgain();
+        card.remove();
+        pointer.remove();
+      };
+      ok.addEventListener('click', close);
+      layer.append(card, pointer);
+      // Fare hareketsiz kalınca düğme solmasın diye rehber açıkken çubuk görünür kalır.
+      const keep = setInterval(() => (card.isConnected ? wake() : clearInterval(keep)), 1000);
     },
 
     /** Oda kapandı: nedenini birkaç saniye göster, sonra çubuk kalksın. */

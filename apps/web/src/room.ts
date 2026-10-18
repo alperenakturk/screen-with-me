@@ -182,6 +182,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
             <div id="waiting-banner" class="waiting-banner" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
+            <div id="toast-handle" class="fs-only toast-handle" data-i18n-title="toastHandleHint"><span data-i18n="toastHandle"></span></div>
             <div id="fs-controls" class="fs-only fs-controls">
               <div class="fs-progress">
                 <input id="fs-seek" type="range" min="0" max="1000" step="1" value="0" />
@@ -210,6 +211,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <p class="muted" data-i18n="externalTitle"></p>
               <h2 id="external-title"></h2>
               <p id="external-host" class="external-host"></p>
+              <p id="external-watching" class="external-watching" hidden></p>
               <div id="external-ext" class="stack external-box">
                 <p data-i18n="externalHasExt"></p>
                 <button id="external-go" type="button" class="btn primary big" data-i18n="externalGoJoin"></button>
@@ -309,6 +311,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       </aside>
     </div>
 
+    <div id="ext-reload" class="ext-reload" role="status" hidden>
+      <span data-i18n="extReloadText"></span>
+      <button type="button" class="btn primary small-btn" data-i18n="extReload"></button>
+    </div>
+
     <dialog id="ext-dialog" class="dialog">
       <h3 data-i18n="extDialog.title"></h3>
       <p data-i18n="extDialog.text"></p>
@@ -386,6 +393,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     name: myName,
     avatar: myAvatar,
     cid: clientId(),
+    client: 'web',
     clock,
     onMessage: handleMessage,
     onStatus: (next) => {
@@ -491,6 +499,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           $('#kicked').hidden = false;
           break;
         }
+        if (message.code === 'others_watching') {
+          // Kim hâlâ filmde, onu söyle: herkes çubuktaki 🏠 ile dönünce yeni video açılabilir.
+          showError(() => t('error.others_watching', { names: watchingNames() }));
+          break;
+        }
         showError(() => t(`error.${message.code}`));
         if (message.code === 'version' || message.code === 'room_full') connection.close();
         break;
@@ -568,6 +581,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
     $('#external-title').textContent = itemTitle(item);
     $('#external-host').textContent = hostOf(url);
+    renderWatching();
     $('#external-ext').hidden = !hasExtension;
     $('#external-noext').hidden = hasExtension;
     $<HTMLAnchorElement>('#external-alone').href = url;
@@ -644,7 +658,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onSkip: skip,
     onRate: (rate) => engine.requestRate(rate),
   });
-  const toasts = createToasts($('#toasts'));
+  const toasts = createToasts($('#toasts'), $('#toast-handle'));
   const fullscreenEl = $<HTMLButtonElement>('#fullscreen');
   fullscreenEl.hidden = !document.fullscreenEnabled;
   fullscreenEl.addEventListener('click', () => fullscreen.toggle());
@@ -654,6 +668,23 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const mediaError = $('#media-error');
   const extDialog = $<HTMLDialogElement>('#ext-dialog');
   let pendingAdd: (() => void) | null = null;
+
+  // Eklentiyi kurmaya gidip dönen: eklenti kurulunca açık sekmeleri kendisi yeniler; olmadıysa
+  // (ör. sekme başka pencerede kaldıysa) üstte "kurduysan yenile" bandı çıkar. Yenileyince
+  // isim sormadan odaya dönülür ve uyarı kalkar.
+  let wentToInstall = false;
+  app.addEventListener('click', (event) => {
+    if ((event.target as HTMLElement).closest('a[href="/eklenti.html"]')) wentToInstall = true;
+  });
+  const extReload = $('#ext-reload');
+  extReload.querySelector('button')!.addEventListener('click', () => location.reload());
+  document.addEventListener('visibilitychange', () => {
+    const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
+    if (document.visibilityState === 'visible' && wentToInstall && !hasExtension) {
+      if (extDialog.open) extDialog.close();
+      extReload.hidden = false;
+    }
+  });
   $('#ext-add-anyway').addEventListener('click', () => {
     extDialog.close();
     pendingAdd?.();
@@ -761,6 +792,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     people.set(members, hostId, myId);
     $('#people-count').textContent = String(members.length);
     renderWaiting();
+    renderWatching();
+  }
+
+  /** Eklentiyle hâlâ odadaki sayfada (filmde) olanlar. */
+  function watchingNames(): string {
+    return members.filter((m) => m.client === 'ext' && m.id !== myId).map(withAvatar).join(', ');
+  }
+
+  /** Film kartında: "🎬 Hâlâ filmde: …" (herkes odaya dönünce yeni video açılabilir). */
+  function renderWatching(): void {
+    const line = $('#external-watching');
+    const names = watchingNames();
+    line.hidden = !names || roomState?.item?.media.kind !== 'page';
+    line.textContent = names ? t('stillWatching', { names }) : '';
   }
 
   function waitingNames(): string {

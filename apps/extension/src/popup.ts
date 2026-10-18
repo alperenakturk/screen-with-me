@@ -1,7 +1,7 @@
 // Eklenti simgesine tıklanınca açılan pencere. Bütün işi arka plan yapar;
 // burası sadece durumu gösterir ve istekleri iletir.
 
-import { AVATAR_PAGES, REACTION_PAGES, avatarText, isDrawnAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import { AVATAR_PAGES, AVATAR_TABS, REACTION_PAGES, avatarPageOf, avatarText, isDrawnAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
 import { SITE_URL } from './config.ts';
 import { isKey, langReady, t } from './i18n.ts';
 import type { PopupRequest, PopupResponse, PopupStatus } from './messages.ts';
@@ -60,24 +60,49 @@ function avatarGlyph(option: string): HTMLElement {
   return span;
 }
 
-// Avatar sayfaları: temalı karakterler, hayvanlar, parodiler
+// Avatar sayfaları: Temalı / Hayvanlar / Parodi (altında Film / Dizi / Anime)
 let avatarPage = 0;
-function renderPicker(): void {
-  const tabs = (['avatarPageTheme', 'avatarPageAnimals', 'avatarPageParody'] as const).map((key, i) => {
+const TAB_KEYS = { theme: 'avatarPageTheme', animals: 'avatarPageAnimals', parody: 'avatarPageParody' } as const;
+const SUB_KEYS = { film: 'avatarPageFilm', series: 'avatarPageSeries', anime: 'avatarPageAnime' } as const;
+
+function tabRow(items: Array<{ label: string; selected: boolean; go: () => void }>, sub = false): HTMLElement {
+  const row = document.createElement('div');
+  row.className = sub ? 'avatar-tabs sub' : 'avatar-tabs';
+  for (const item of items) {
     const tab = document.createElement('button');
     tab.type = 'button';
     tab.className = 'avatar-tab';
-    tab.textContent = t(key);
-    tab.setAttribute('aria-selected', String(i === avatarPage));
+    tab.textContent = item.label;
+    tab.setAttribute('aria-selected', String(item.selected));
     tab.addEventListener('click', () => {
-      avatarPage = i;
+      item.go();
       renderPicker();
     });
-    return tab;
-  });
-  const tabRow = document.createElement('div');
-  tabRow.className = 'avatar-tabs';
-  tabRow.append(...tabs);
+    row.append(tab);
+  }
+  return row;
+}
+
+function renderPicker(): void {
+  const active = AVATAR_TABS.find((tab) => (tab.pages as readonly number[]).includes(avatarPage)) ?? AVATAR_TABS[0];
+  const rows = [
+    tabRow(AVATAR_TABS.map((tab) => ({
+      label: t(TAB_KEYS[tab.key]),
+      selected: tab === active,
+      go: () => {
+        if (tab !== active) avatarPage = tab.pages[0];
+      },
+    }))),
+  ];
+  if ('subs' in active) {
+    rows.push(tabRow(active.subs.map((sub, i) => ({
+      label: t(SUB_KEYS[sub]),
+      selected: active.pages[i] === avatarPage,
+      go: () => {
+        avatarPage = active.pages[i]!;
+      },
+    })), true));
+  }
   const grid = document.createElement('div');
   grid.className = 'avatar-grid';
   grid.append(
@@ -94,9 +119,8 @@ function renderPicker(): void {
       return button;
     }),
   );
-  $('#avatar-picker').replaceChildren(tabRow, grid);
+  $('#avatar-picker').replaceChildren(...rows, grid);
 }
-
 function render(status: PopupStatus): void {
   last = status;
   // ScreenWithMe sitesinin kendisindeyken eklentiye gerek yok: sadece kısa bir not.
@@ -114,7 +138,7 @@ function render(status: PopupStatus): void {
   if (avatar === null) {
     avatar = status.avatar ?? randomAvatar();
     // Seçili avatarın sayfasıyla aç
-    avatarPage = Math.max(0, AVATAR_PAGES.findIndex((p) => (p as readonly string[]).includes(avatar!)));
+    avatarPage = avatarPageOf(avatar);
     renderPicker();
   }
 
@@ -239,6 +263,7 @@ $('#copy').addEventListener('click', async () => {
 
 $('#go-room-page').addEventListener('click', () => void request({ type: 'go-to-room-page', tabId }));
 $('#share-page').addEventListener('click', () => void request({ type: 'share-this-page', tabId }));
+$('#go-room').addEventListener('click', () => void request({ type: 'go-room', tabId }).then(() => window.close()));
 $('#leave').addEventListener('click', async () => {
   await request({ type: 'leave', tabId });
   await refresh();

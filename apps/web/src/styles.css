@@ -1235,6 +1235,26 @@ button.nav-link {
   border-bottom-color: var(--accent);
 }
 
+/* Parodi'nin alt sekmeleri (Film / Dizi / Anime): küçük haplar */
+.avatar-tabs.sub {
+  border-bottom: 0;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.avatar-tabs.sub .avatar-tab {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
+.avatar-tabs.sub .avatar-tab[aria-selected='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -1595,6 +1615,24 @@ button.nav-link {
   border-radius: inherit;
 }
 
+/* Eklentiyi kurup dönen için "yenile" bandı (üstte, ortada) */
+.ext-reload {
+  position: fixed;
+  top: 66px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.4);
+  max-width: calc(100% - 32px);
+}
+
 /* Telefonda eklenti yok: bilgisayar adımları yerine telefona uygun not */
 .mobile-only {
   display: none;
@@ -1640,6 +1678,13 @@ button.nav-link {
   margin: -6px 0 0;
   color: var(--muted);
   font-size: 14px;
+}
+
+.external-watching {
+  margin: 0;
+  color: var(--warn);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .external-box {
@@ -1912,6 +1957,40 @@ button.nav-link {
   max-width: min(420px, 60%);
   pointer-events: none;
   text-align: right;
+}
+
+/* Tam ekranda mesajların yerini gösteren, sürüklenebilir tutamak (fare oynayınca görünür) */
+.toast-handle {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  z-index: 3;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  border: 1px dashed rgb(255 255 255 / 0.35);
+  color: #fff;
+  font-size: 13px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: opacity 0.25s;
+}
+
+.toast-handle:active {
+  cursor: grabbing;
+}
+
+.theater:fullscreen.idle .toast-handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toasts.left {
+  align-items: flex-start;
+  text-align: left;
 }
 
 .toast {

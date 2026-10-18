@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { avatarText, cleanChatText, expectedPosition, parseClientMessage, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, expectedPosition, parseClientMessage, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -73,6 +73,17 @@ describe('parseClientMessage', () => {
     expect(avatarText('wizard')).toBe('🧙');
     expect(avatarText('🦊')).toBe('🦊');
     expect(avatarText(undefined)).toBe('');
+  });
+
+  it('puts every drawn avatar on exactly one page, and every tab page exists', () => {
+    const all = AVATAR_PAGES.flat() as readonly string[];
+    for (const id of Object.keys(DRAWN_AVATARS)) expect(all.filter((a) => a === id)).toHaveLength(1);
+    expect(new Set(all).size).toBe(all.length);
+    expect(AVATAR_TABS.flatMap((tab) => tab.pages).sort()).toEqual(AVATAR_PAGES.map((_, i) => i));
+    expect(avatarPageOf('detective')).toBe(3);
+    expect(avatarPageOf('cavecreature')).toBe(2);
+    expect(avatarPageOf('airmonk')).toBe(4);
+    expect(avatarPageOf('nope')).toBe(0);
   });
 
   it('accepts emojis from every reaction page, nothing else', () => {

@@ -13,8 +13,8 @@ Free · no accounts · open source · works on YouTube and on (almost) any websi
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-109%20unit%20%2B%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.7.3-7c5cff)
+![Tests](https://img.shields.io/badge/tests-110%20unit%20%2B%20e2e-3ccf8e)
+![Version](https://img.shields.io/badge/version-0.8.0-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
@@ -34,7 +34,7 @@ and there is a shared queue.
 | | |
 |---|---|
 | ⏯️ **Tight sync** | Play / pause / seek / speed for everyone. Server-time based, measured **30–100 ms** apart on real players. Drift is corrected silently. |
-| 🔗 **One link, no accounts** | Create a room, share the link. Pick a name and an avatar once (themed characters, animals or parody characters) — remembered by the browser. |
+| 🔗 **One link, no accounts** | Create a room, share the link. Pick a name and an avatar once (themed characters, animals, or film / series / anime parody characters) — remembered by the browser. |
 | 🧩 **Any website** | The extension finds the right video (skips ads and previews), also inside iframes and in players that load late or switch sources. |
 | 🎵 **Queue** | Add, reorder, play now; the next video starts automatically for everyone. |
 | 💬 **Chat & reactions** | Tabbed side panel (chat with room activity, queue, people, settings). Three pages of emoji reactions (▲▼) fly over the video, also in fullscreen. A short Enjoy the show! intro when you enter. |

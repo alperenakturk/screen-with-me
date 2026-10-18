@@ -3,6 +3,7 @@
 // (~2,7 sn). Site ve eklenti katmanı aynı parçayı kullanır; eklentide kapalı
 // shadow DOM'un içine, sitede sayfaya eklenir. Tıklayınca hemen kapanır.
 
+import { playIntroSound } from './intro-sound.ts';
 import { createLogo } from './logo.ts';
 
 /** Toplam süre (ms); sonunda öğe kendini kaldırır. */
@@ -44,9 +45,9 @@ export const INTRO_CSS = `
 
 /**
  * Açılış öğesini kurar. Çağıran, `.swm-intro`'yu konumlu bir kutunun içine ekler
- * (ve INTRO_CSS'in o belgede/shadow'da yüklü olduğundan emin olur).
+ * (ve INTRO_CSS'in o belgede/shadow'da yüklü olduğundan emin olur). sound: false sessiz açar.
  */
-export function createIntro(doc: Document, text: string): HTMLElement {
+export function createIntro(doc: Document, text: string, sound = true): HTMLElement {
   const root = doc.createElement('div');
   root.className = 'swm-intro';
   root.setAttribute('role', 'status');
@@ -57,6 +58,7 @@ export function createIntro(doc: Document, text: string): HTMLElement {
   caption.className = 'swm-intro-text';
   caption.textContent = text;
   root.append(logo, caption);
+  if (sound) playIntroSound();
   const remove = () => root.remove();
   root.addEventListener('click', remove);
   root.addEventListener('animationend', (event) => {

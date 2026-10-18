@@ -59,23 +59,51 @@ export const DRAWN_AVATARS = {
   nightguard: '🦇',
   catburglar: '🐈‍⬛',
   goth: '🖤',
+  cavecreature: '💍',
+  earthgirl: '🪨',
+  airmonk: '🌀',
+  waterfriend: '💧',
+  sponge: '🧽',
+  starfish: '⭐',
+  squid: '🦑',
+  pinecap: '🌲',
+  sweaterkid: '🧶',
+  piglet: '🐷',
+  detective: '🕵️',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
 
 /**
- * Avatar sayfaları: 1) temalara ait karakterler, 2) hayvanlar (emoji), 3) dizi/film
- * parodileri (sadece tarzı andırır, isim yok). Sunucu bunların dışındakini kabul etmez;
- * sona eklemek eski istemcileri bozmaz.
+ * Avatar sayfaları: 0) temalara ait karakterler, 1) hayvanlar (emoji), 2-4) parodiler
+ * (sadece tarzı andırır, isim yok): film, dizi, anime. Sunucu bunların dışındakini kabul
+ * etmez; yeni avatar eklemek eski istemcileri bozmaz (onlarda emoji yerine kimlik görünür).
  */
 export const AVATAR_PAGES = [
   ['astronaut', 'alien', 'cyber', 'netrunner', 'wizard', 'sorceress', 'warrior', 'elf', 'dwarf', 'janissary', 'horseman', 'veiled'],
   ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],
+  ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature'],
   [
-    'scientist', 'sidekick', 'chemist', 'lawyer', 'swordsman', 'strawhat', 'cook', 'greenblade',
-    'hunter', 'hacker', 'dragonqueen', 'jester', 'nightguard', 'catburglar', 'goth',
+    'scientist', 'sidekick', 'chemist', 'lawyer', 'detective', 'hunter', 'dragonqueen', 'goth',
+    'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'piglet',
   ],
+  ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl'],
 ] as const;
+
+/**
+ * Seçicideki sekmeler: Temalı, Hayvanlar, Parodi; Parodi'nin altında Film / Dizi / Anime.
+ * Her sekme AVATAR_PAGES'teki sayfa numaralarını tutar.
+ */
+export const AVATAR_TABS = [
+  { key: 'theme', pages: [0] },
+  { key: 'animals', pages: [1] },
+  { key: 'parody', pages: [2, 3, 4], subs: ['film', 'series', 'anime'] },
+] as const;
+
+/** Avatarın bulunduğu sayfa (yoksa 0). */
+export function avatarPageOf(avatar: string | null | undefined): number {
+  return Math.max(0, AVATAR_PAGES.findIndex((p) => (p as readonly string[]).includes(avatar ?? '')));
+}
 
 export const AVATARS = AVATAR_PAGES.flat();
 
@@ -134,11 +162,16 @@ export interface PlaybackState {
   updatedAt: number;
 }
 
+/** Bağlantının nereden geldiği: sitedeki oda sayfası mı, eklentiyle film sayfası mı. */
+export type ClientKind = 'web' | 'ext';
+
 export interface Member {
   id: string;
   name: string;
   /** Eski istemciler avatar yollamaz; o zaman yoktur. */
   avatar?: Avatar;
+  /** 'ext': eklentiyle bir sayfada (filmde) izliyor. Eski istemcilerde yok (site sayılır). */
+  client?: ClientKind;
 }
 
 export interface RoomSettings {
@@ -178,7 +211,7 @@ export type ClientMessage =
    * oda yöneticisinin yenileyince yöneticiliği kaybetmemesi ve atılan kişinin
    * hemen geri girememesi için kullanılır. Hesap değildir, sadece rastgele bir kod.
    */
-  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string }
+  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; client?: ClientKind }
   /** İsim ya da avatar değiştir. */
   | { t: 'rename'; name: string; avatar?: Avatar }
   /** (Sadece oda yöneticisi) birini odadan çıkar; yönetici kaldırana kadar geri giremez. */
@@ -220,7 +253,9 @@ export type ErrorCode =
   /** Oda yöneticisi seni çıkardı (ya da kısa süre önce çıkarılmıştın). */
   | 'kicked'
   /** Bu işlem sadece oda yöneticisine açık. */
-  | 'not_host';
+  | 'not_host'
+  /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
+  | 'others_watching';
 
 /** Sunucu → istemci. */
 export type ServerMessage =
@@ -355,6 +390,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       const hello: Extract<ClientMessage, { t: 'hello' }> = { t: 'hello', v: m.v, name };
       if (isAvatar(m.avatar)) hello.avatar = m.avatar;
       if (typeof m.cid === 'string' && CLIENT_ID.test(m.cid)) hello.cid = m.cid;
+      if (m.client === 'web' || m.client === 'ext') hello.client = m.client;
       return hello;
     }
     case 'rename': {

@@ -1,4 +1,4 @@
-import { AVATAR_PAGES, isDrawnAvatar, type Avatar } from '@swm/shared/protocol';
+import { AVATAR_PAGES, AVATAR_TABS, avatarPageOf, isDrawnAvatar, type Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 
@@ -10,11 +10,9 @@ export function avatarNode(avatar: string | undefined, className = 'avatar-pic')
   return el('span', { class: className }, avatar ?? '🙂');
 }
 
-const PAGE_KEYS: I18nKey[] = ['avatarPage.theme', 'avatarPage.animals', 'avatarPage.parody'];
-
 /**
- * Sayfalı avatar seçici: üstte "Temalı / Hayvanlar / Parodi" sekmeleri, altında ızgara.
- * Açılışta seçili avatarın sayfası gösterilir.
+ * Sayfalı avatar seçici: üstte "Temalı / Hayvanlar / Parodi" sekmeleri, Parodi seçiliyse
+ * altında "Film / Dizi / Anime", en altta ızgara. Açılışta seçili avatarın sayfası gösterilir.
  */
 export function renderAvatarPicker(
   container: HTMLElement,
@@ -22,20 +20,41 @@ export function renderAvatarPicker(
   onPick: (avatar: Avatar) => void,
   onDouble?: () => void,
 ): () => void {
-  let page = Math.max(0, AVATAR_PAGES.findIndex((p) => (p as readonly string[]).includes(current())));
-  const draw = () => {
-    const tabs = el(
+  let page = avatarPageOf(current());
+  const tabRow = (items: Array<{ label: string; selected: boolean; go: () => void }>, extra = '') =>
+    el(
       'div',
-      { class: 'avatar-tabs', role: 'tablist' },
-      ...PAGE_KEYS.map((key, i) => {
-        const tab = el('button', { type: 'button', class: 'avatar-tab', role: 'tab', 'aria-selected': String(i === page) }, t(key));
+      { class: `avatar-tabs${extra}`, role: 'tablist' },
+      ...items.map((item) => {
+        const tab = el('button', { type: 'button', class: 'avatar-tab', role: 'tab', 'aria-selected': String(item.selected) }, item.label);
         tab.addEventListener('click', () => {
-          page = i;
+          item.go();
           draw();
         });
         return tab;
       }),
     );
+  const draw = () => {
+    const active = AVATAR_TABS.find((tab) => (tab.pages as readonly number[]).includes(page)) ?? AVATAR_TABS[0];
+    const rows = [
+      tabRow(AVATAR_TABS.map((tab) => ({
+        label: t(`avatarPage.${tab.key}` as I18nKey),
+        selected: tab === active,
+        // Aynı sekmeye tekrar basınca alt sayfa korunur; başka sekmeye geçince ilk sayfası
+        go: () => {
+          if (tab !== active) page = tab.pages[0];
+        },
+      }))),
+    ];
+    if ('subs' in active) {
+      rows.push(tabRow(active.subs.map((sub, i) => ({
+        label: t(`avatarPage.${sub}` as I18nKey),
+        selected: active.pages[i] === page,
+        go: () => {
+          page = active.pages[i]!;
+        },
+      })), ' sub'));
+    }
     const grid = el(
       'div',
       { class: 'avatar-grid', role: 'radiogroup' },
@@ -54,7 +73,7 @@ export function renderAvatarPicker(
         return button;
       }),
     );
-    container.replaceChildren(tabs, grid);
+    container.replaceChildren(...rows, grid);
   };
   draw();
   return draw;

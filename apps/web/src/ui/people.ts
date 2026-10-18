@@ -32,6 +32,7 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
           avatarNode(member.avatar, 'person-avatar'),
           el('span', { class: 'person-name' }, isMe ? `${member.name} (${t('you')})` : member.name),
           member.id === hostId ? el('span', { class: 'host-badge', title: t('host') }, '👑') : '',
+          member.client === 'ext' ? el('span', { class: 'host-badge', title: t('inFilm') }, '🎬') : '',
           iAmHost && !isMe ? kick : '',
         );
       }),

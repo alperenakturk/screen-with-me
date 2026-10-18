@@ -5,6 +5,7 @@ import {
   expectedPosition,
   parseClientMessage,
   type Avatar,
+  type ClientKind,
   type RoomSettings,
   type ChatMessage,
   type ClientMessage,
@@ -43,6 +44,8 @@ interface Attachment {
   joinedAt?: number;
   /** Bu bağlantıdan en son mesaj (ping dahil) geldiği an; hayalet bağlantıları ayıklamak için. */
   seen?: number;
+  /** 'ext': eklentiyle film sayfasında. */
+  client?: ClientKind;
 }
 
 /**
@@ -64,9 +67,10 @@ interface Ban {
 }
 
 function memberOf(attachment: Joined): Member {
-  return attachment.avatar
-    ? { id: attachment.id, name: attachment.name, avatar: attachment.avatar }
-    : { id: attachment.id, name: attachment.name };
+  const member: Member = { id: attachment.id, name: attachment.name };
+  if (attachment.avatar) member.avatar = attachment.avatar;
+  if (attachment.client === 'ext') member.client = 'ext';
+  return member;
 }
 
 /** Yöneticilik ve atma için kişiyi tanıyan anahtar: kalıcı kimlik varsa o, yoksa bağlantı. */
@@ -239,6 +243,7 @@ export class Room extends DurableObject<Env> {
         return;
       case 'load':
       case 'enqueue': {
+        if (message.t === 'load' && this.othersWatching(attachment)) return this.refuseWhileWatching(ws);
         // Video beklemeden herkese gider; başlık (biliniyorsa hemen, yoksa) sonradan eklenir.
         const item = this.makeItem(message.media, me, message.title ?? null);
         await this.apply(ws, me, { t: message.t, item });
@@ -246,6 +251,8 @@ export class Room extends DurableObject<Env> {
         return;
       }
       default:
+        // Odadaki film sayfasını izleyenler varken siteden sıradakine geçilmesin.
+        if ((message.t === 'next' || message.t === 'jump') && this.othersWatching(attachment)) return this.refuseWhileWatching(ws);
         await this.apply(ws, me, message);
     }
   }
@@ -306,6 +313,20 @@ export class Room extends DurableObject<Env> {
     }
   }
 
+  /**
+   * Odada bir sayfa (film) açıkken, o sayfada eklentiyle izleyen başka biri var mı? Varsa
+   * siteden yeni video açılmaz: biri filmi izlerken diğeri başka bir şey açarsa oda karışır.
+   * Herkes "Odaya dön" deyince serbest. Eklentiden gelen (sayfa paylaşan) bu kurala takılmaz.
+   */
+  private othersWatching(me: Attachment): boolean {
+    if (this.room.state.item?.media.kind !== 'page' || me.client === 'ext') return false;
+    return this.joined().some((a) => a.client === 'ext' && keyOf(a) !== keyOf(me));
+  }
+
+  private refuseWhileWatching(ws: WebSocket): void {
+    this.sendTo(ws, { t: 'error', code: 'others_watching' });
+  }
+
   /** Bir sonraki alarmı en yakın işe göre kurar (yoksa kaldırır). */
   private async scheduleAlarm(): Promise<void> {
     const times: number[] = [];
@@ -335,6 +356,8 @@ export class Room extends DurableObject<Env> {
       return;
     }
     if (hello.cid) attachment.cid = hello.cid;
+    if (hello.client) attachment.client = hello.client;
+    else delete attachment.client;
     if (this.bans[keyOf(attachment)] || this.bans[banKey(attachment, hello.name)]) {
       this.sendTo(ws, { t: 'error', code: 'kicked' });
       ws.close(4003, 'kicked');

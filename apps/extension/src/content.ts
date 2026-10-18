@@ -34,6 +34,7 @@ const overlay = createOverlay({
   send: (message) => send({ type: 'send', message }),
   // Hız: videoya uygulanır ve odaya yayılır (sitenin kendi hız menüsü olmasa bile çalışır).
   onRate: (rate) => engine?.requestRate(rate),
+  onBackToRoom: () => send({ type: 'go-room' }),
 });
 
 /** Çubuktaki senkron noktası için: videomuz odanın olması gereken yerinden ne kadar uzakta? */
@@ -251,6 +252,15 @@ function onMessage(message: BackgroundMessage): void {
       break;
     case 'intro':
       overlay.intro();
+      break;
+    case 'guide':
+      // Kullanıcı "bir daha gösterme" dediyse gösterme.
+      void chrome.storage.local
+        .get('guideOff')
+        .then(({ guideOff }) => {
+          if (!guideOff) setTimeout(() => active && overlay.guide(() => void chrome.storage.local.set({ guideOff: true })), message.afterIntro ? 2900 : 600);
+        })
+        .catch(() => {});
       break;
     case 'ended':
       // Kısa bir açıklama kalsın; ardından gelen "deactivate" çubuğu birkaç saniye sonra kaldırır.

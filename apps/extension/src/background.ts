@@ -79,6 +79,8 @@ interface Session {
   navigatingTo: string | null;
   /** Video bulununca "İyi seyirler" açılışı gösterilsin mi (eklentiden oda kurunca/katılınca). */
   intro: boolean;
+  /** Bu oturumda film sayfasındaki rehber gösterildi mi (her odada bir kez)? */
+  guided: boolean;
   /** Sekmenin şu anki adresi (odanın sayfasında mıyız?). */
   tabUrl: string | null;
 }
@@ -198,6 +200,7 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     outbox: [],
     navigatingTo: null,
     intro: options.intro ?? false,
+    guided: false,
     tabUrl: tab?.url ?? null,
   };
   session.connection = new RoomConnection({
@@ -206,6 +209,7 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     name,
     ...(avatar ? { avatar } : {}),
     cid,
+    client: 'ext',
     clock,
     onMessage: (message) => onServer(session, message),
     onStatus: (status) => (session.status = status),
@@ -340,6 +344,13 @@ async function follow(session: Session): Promise<void> {
   }
 }
 
+/** Sekmeyi sitedeki odaya götürür; eklentinin bağlantısı kapanır (aynı kişi iki kez görünmesin). */
+async function goToRoom(session: Session): Promise<void> {
+  const roomUrl = `${SITE_URL}/r/${session.roomId}`;
+  endSession(session.tabId);
+  await chrome.tabs.update(session.tabId, { url: roomUrl });
+}
+
 function chatLine(session: Session, message: ChatMessage): ChatLine {
   return { id: message.id, name: withAvatar(message.by), text: message.text, mine: message.by.id === session.myId };
 }
@@ -399,9 +410,15 @@ function pushState(session: Session): void {
     post(frame.port, { type: 'activate', state: session.state, offset: clock.offset, synced: clock.synced });
     session.activated = true;
     pushRoom(session);
+    const withIntro = session.intro;
     if (session.intro) {
       session.intro = false;
       post(frame.port, { type: 'intro' });
+    }
+    // Odada ilk kez videonun üstüne gelindi: kısa rehber (kullanıcı kapatmadıysa).
+    if (!session.guided) {
+      session.guided = true;
+      post(frame.port, { type: 'guide', afterIntro: withIntro });
     }
   } else {
     post(frame.port, { type: 'state', state: session.state });
@@ -448,6 +465,12 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     case 'send': {
       const session = sessions.get(tabId);
       if (session && session.activeFrame === frameId) sendOrQueue(session, message.message);
+      break;
+    }
+    case 'go-room': {
+      // Film bitti ya da başka bir şey izlenecek: sekme sitedeki odaya döner (site bağlantısı devralır).
+      const session = sessions.get(tabId);
+      if (session) await goToRoom(session);
       break;
     }
   }
@@ -571,6 +594,12 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
       await chrome.tabs.reload(request.tabId);
       return { ok: true };
 
+    case 'go-room': {
+      const session = sessions.get(request.tabId);
+      if (session) await goToRoom(session);
+      return { ok: true };
+    }
+
     case 'leave':
       endSession(request.tabId);
       return { ok: true };
@@ -614,6 +643,16 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
 }
 
 const SITE_ORIGIN = new URL(SITE_URL).origin;
+
+// Eklenti yeni kurulunca açık ScreenWithMe sekmelerini yenile: site eklentiyi ancak sayfa
+// yeniden yüklenince görür. Böylece "eklenti gerekiyor" uyarısı kendiliğinden kalkar
+// (yenilenen oda sayfası isim sormadan odaya döner).
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason !== 'install') return;
+  void chrome.tabs.query({ url: `${SITE_ORIGIN}/*` }).then((tabs) => {
+    for (const tab of tabs) if (tab.id !== undefined) void chrome.tabs.reload(tab.id);
+  });
+});
 
 // İsim/avatar değişince (popup'tan ya da siteden) odalardakiler de hemen görsün.
 chrome.storage.onChanged.addListener((changes, area) => {

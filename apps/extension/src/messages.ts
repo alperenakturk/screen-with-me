@@ -21,6 +21,8 @@ export type FrameMessage =
   /** `size` tanı içindir: en iyi videonun ekrandaki boyutu, örn. "1280×720". */
   | { type: 'candidate'; score: number; size?: string }
   | { type: 'send'; message: ClientMessage }
+  /** Çubuktaki 🏠: sekme sitedeki odaya dönsün. */
+  | { type: 'go-room' }
   | { type: 'join'; roomId: string };
 
 /** Sayfa üstü çubukta gösterilen oda bilgisi. */
@@ -57,6 +59,8 @@ export type BackgroundMessage =
   | { type: 'notice'; kind: 'joined' | 'left' | 'slow'; name: string }
   /** Odaya yeni girildi: "İyi seyirler" açılış animasyonu. */
   | { type: 'intro' }
+  /** Film sayfasında ilk kez: nasıl kullanılır rehberi (`afterIntro`: açılıştan sonra göster). */
+  | { type: 'guide'; afterIntro: boolean }
   /** Oda bağlantısı kapandı (çıkarıldın / oda dolu / eklenti eski): kısa bir açıklama göster. */
   | { type: 'ended'; reason: 'kicked' | 'version' | 'room_full' }
   /** "Herkes hazır": oda bunları bekliyor (boş: bekleme yok). `me`: beklenen bensem. */
@@ -93,6 +97,7 @@ export type PopupRequest =
   | { type: 'go-to-room-page'; tabId: number }
   | { type: 'share-this-page'; tabId: number }
   | { type: 'reload'; tabId: number }
+  | { type: 'go-room'; tabId: number }
   | { type: 'kick'; tabId: number; memberId: string }
   | { type: 'unban'; tabId: number; banId: string };
 

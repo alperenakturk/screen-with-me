@@ -58,6 +58,9 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
   animasyonu, 9 tema (resimli + kostümlü maskot), hız kilidi, yenileyince odada kalma,
   bağlantıyı yenile, davet önizlemesi; 4 ajanlı inceleme (teknik, eklenti, UX, pazarlama)
   sonrası güvenlik ve dayanıklılık düzeltmeleri.
+- [x] **v0.8:** film sayfasında rehber kartı, filmden odaya dönüş (herkes dönmeden yeni video
+  açılmaz), sürüklenebilir çubuk ve mesaj alanı (eklenti + site tam ekran), eklenti kurulunca
+  uyarının kaybolması, açılış sesi, Film / Dizi / Anime parodi avatarları (38 çizim).
 - [ ] **Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
   `npm run store`); gönderim bekliyor.
 - [ ] **Büyüme:** kısa alan adı, repo'yu açmak, lansman planı (`docs/BUYUME.md`).

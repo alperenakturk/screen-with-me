@@ -118,12 +118,26 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   sayfaya giderse (`onRoomPage` yanlış) senkron o sayfada durur. `startSession` sekme başına
   kilitli (çift tıklama iki bağlantı açmaz); ilk video (`load`) bağlantıdan önce verilir.
   Atılma/sürüm/oda dolu → çubukta 6 sn açıklama (`ended`) + popup'ta neden.
-- **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 3 sayfa: temalı çizilmiş karakterler, hayvan
-  emojileri, parodiler. Çizilmiş avatarın değeri bir kimliktir (`wizard`); resim
-  `/avatars/<kimlik>.svg` (eklentide `chrome.runtime.getURL`), metin geçen yerlerde
-  `avatarText()` emoji karşılığını verir. Yeni avatar: `DRAWN_AVATARS` + `AVATAR_PAGES` +
-  `scripts/avatars.mjs` + site i18n `avatar.<kimlik>`. Parodiler sadece tarzı andırır: dizi/
-  karakter adı, logo, birebir kostüm, gerçek oyuncu benzerliği yok (mağaza ve telif).
+- **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 5 sayfa: temalı çizilmiş karakterler, hayvan
+  emojileri, parodi film / dizi / anime. Seçicideki sekmeler `AVATAR_TABS` (Parodi'nin alt
+  sekmeleri var; site `ui/avatar.ts` ve popup aynı yapıyı kullanır). Çizilmiş avatarın değeri bir
+  kimliktir (`wizard`); resim `/avatars/<kimlik>.svg` (eklentide `chrome.runtime.getURL`), metin
+  geçen yerlerde `avatarText()` emoji karşılığını verir. Yeni avatar: `DRAWN_AVATARS` +
+  `AVATAR_PAGES` + `scripts/avatars.mjs` + site i18n `avatar.<kimlik>` (test her çizilmişin tam
+  bir sayfada olduğuna bakar). Parodiler sadece tarzı andırır: dizi/karakter adı, logo, birebir
+  kostüm, gerçek oyuncu benzerliği yok (mağaza ve telif).
+- **Açılış sesi (`intro-sound.ts`):** dosya yok, Web Audio ile üretilir; `createIntro` çalar
+  (site + eklenti). Tarayıcı sesi engellerse 250 ms içinde vazgeçer (geç gelen ses tuhaf olur).
+  Dinlemek için `scheduleIntroSound` çevrimdışı bağlamla WAV'a basılabilir.
+- **Mesaj yeri:** eklentide çubuk ⠿ ile, sitede tam ekranda "💬 Mesajlar burada" tutamağıyla
+  sürüklenir (oran olarak saklanır: eklenti `storage.local` `barPos`, site `localStorage`
+  `toastPos`; çift tık sıfırlar). Mesajlar tutamağın yanına hizalanır, alt taraftaysa yukarı büyür.
+- **Filmden odaya dönüş:** eklenti çubuğundaki 🏠 / popup → arka plan `goToRoom` (oturumu kapatıp
+  sekmeyi `/r/ODA`'ya götürür). Sunucu: eklentiyle (`client: 'ext'`) filmde biri varken siteden
+  yeni video açılamaz / sıradakine geçilemez (`others_watching`); sıraya eklemek serbest.
+- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) çubukta oklu
+  kısa kart: kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.
+  "Bir daha gösterme" → `storage.local` `guideOff`.
 - **Sahnelerde üst boşluk:** sahne alttan hizalı ve ekranı kaplar; geniş ekranda üst kısım
   kırpılır ve üst şerit de kapatır. Ay, kandil gibi süsleri y≈150'nin üstüne koyma.
 - **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
