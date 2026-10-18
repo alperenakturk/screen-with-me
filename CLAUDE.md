@@ -146,7 +146,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Klavye:** 1–8 o sayfanın emojileri, Enter mesaj (sitede `reactions.ts` + `room.ts`, tam ekranda
   `fullscreen.ts`; eklentide `overlay.ts`). Eklentide tuş yakalama aşamasında alınıp siteye hiç
   gösterilmez: oynatıcılar rakamlarla sarar (3 = %30), yoksa emoji atınca herkes sarılırdı.
-- **Avatar sayfalama:** bir sekmede `AVATARS_PER_VIEW` (16) fazlası ‹ › ile ikinci görünüme geçer.
+- **Avatar sayfalama:** bir sekmede `AVATARS_PER_VIEW` (20) fazlası ‹ › ile ikinci görünüme geçer.
 - **CI (`.github/workflows/test.yml`):** her push/PR'da tip kontrolü, birim, derleme, `wrangler dev`
   ile yerel sunucu + `npm run e2e`. Repo private: ayda 2000 dk ücretsiz.- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) çubukta oklu
   kısa kart: kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.

@@ -2369,7 +2369,7 @@ button.nav-link {
 .heat-strip.fs .heat-track {
   background: rgb(255 255 255 / 0.12);
 }
-/* Avatar sekmesi 16'yı geçerse ‹ 1 / 2 › */
+/* Avatar sekmesi 20'yi geçerse ‹ 1 / 2 › */
 .avatar-pager {
   display: flex;
   align-items: center;

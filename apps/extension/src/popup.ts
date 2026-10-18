@@ -62,7 +62,7 @@ function avatarGlyph(option: string): HTMLElement {
 
 // Avatar sayfaları: Temalı / Hayvanlar / Parodi (altında Film / Dizi / Anime)
 let avatarPage = 0;
-/** 16'dan fazla avatarı olan sekmede görünüm (‹ ›). */
+/** 20'den fazla avatarı olan sekmede görünüm (‹ ›). */
 let avatarView = 0;
 const TAB_KEYS = { theme: 'avatarPageTheme', animals: 'avatarPageAnimals', parody: 'avatarPageParody' } as const;
 const SUB_KEYS = { film: 'avatarPageFilm', series: 'avatarPageSeries', anime: 'avatarPageAnime' } as const;

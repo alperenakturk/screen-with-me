@@ -113,8 +113,8 @@ export const AVATAR_TABS = [
   { key: 'parody', pages: [2, 3, 4], subs: ['film', 'series', 'anime'] },
 ] as const;
 
-/** Seçicide bir sayfada en fazla bu kadar avatar; fazlası ‹ › ile ikinci sayfaya geçer. */
-export const AVATARS_PER_VIEW = 16;
+/** Seçicide bir sayfada en fazla bu kadar avatar (4 sıra × 5); fazlası ‹ › ile ikinci sayfaya geçer. Tek bir avatar için yeni sayfa açılmasın diye geniş tutuldu. */
+export const AVATARS_PER_VIEW = 20;
 
 /** Avatarın bulunduğu sayfa (yoksa 0). */
 export function avatarPageOf(avatar: string | null | undefined): number {

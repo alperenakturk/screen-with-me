@@ -21,7 +21,7 @@ export function renderAvatarPicker(
   onDouble?: () => void,
 ): () => void {
   let page = avatarPageOf(current());
-  // Bir sayfada 16'dan fazla avatar varsa ‹ › ile görünüm değişir (açılışta seçili olanınki).
+  // Bir sayfada 20'den fazla avatar varsa ‹ › ile görünüm değişir (açılışta seçili olanınki).
   let view = Math.max(0, Math.floor((AVATAR_PAGES[page] as readonly string[]).indexOf(current()) / AVATARS_PER_VIEW));
   const tabRow = (items: Array<{ label: string; selected: boolean; go: () => void }>, extra = '') =>
     el(
