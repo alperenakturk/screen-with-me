@@ -14,6 +14,7 @@ import {
   ROOM_ID_PATTERN,
   cleanChatText,
   cleanName,
+  avatarText,
   isAvatar,
   type Avatar,
   type BanEntry,
@@ -123,7 +124,7 @@ async function getAvatar(): Promise<Avatar | null> {
 
 /** İsmin önüne avatarı koyar (varsa): "🦊 Ali". */
 function withAvatar(member: Member): string {
-  return member.avatar ? `${member.avatar} ${member.name}` : member.name;
+  return member.avatar ? `${avatarText(member.avatar)} ${member.name}` : member.name;
 }
 
 async function persist(): Promise<void> {

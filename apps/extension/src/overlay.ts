@@ -1,6 +1,6 @@
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { createLogo } from '@swm/shared/logo';
-import { CHAT_MAX_LENGTH, REACTION_PAGES, cleanChatText, type ClientMessage } from '@swm/shared/protocol';
+import { CHAT_MAX_LENGTH, REACTION_PAGES, avatarText, cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import { t } from './i18n.ts';
 import type { ChatLine, RoomInfo } from './messages.ts';
 
@@ -331,7 +331,7 @@ export function createOverlay(actions: OverlayActions) {
   function renderRoom(): void {
     if (!parts || !room) return;
     const names = room.members.map((m) => {
-      const name = (m.avatar ? `${m.avatar} ${m.name}` : m.name) + (m.id === room!.hostId ? ' 👑' : '');
+      const name = (m.avatar ? `${avatarText(m.avatar)} ${m.name}` : m.name) + (m.id === room!.hostId ? ' 👑' : '');
       return m.id === room!.myId ? `${name} (${t('you')})` : name;
     });
     parts.members.textContent = `👥 ${room.members.length}`;

@@ -6,12 +6,13 @@
 <linearGradient id="dune2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b77e"/><stop offset=".18" stop-color="#9a7a62"/><stop offset=".6" stop-color="#3d2f45"/><stop offset="1" stop-color="#1f1830"/></linearGradient>
 <linearGradient id="pond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f4f7a"/><stop offset="1" stop-color="#15203d"/></linearGradient>
 </defs>
-<!-- Ay -->
+<!-- Ay ve kayan yıldız biraz aşağıda (üst şerit kapatmasın) -->
+<g transform="translate(0 80)">
 <circle cx="1250" cy="170" r="210" fill="url(#halo)"/>
 <circle cx="1250" cy="170" r="78" fill="#fff1c9"/>
 <circle cx="1226" cy="152" r="12" fill="#f1e1ac"/><circle cx="1276" cy="190" r="16" fill="#f1e1ac"/><circle cx="1270" cy="142" r="7" fill="#f1e1ac"/>
-<!-- Kayan yıldız -->
 <path d="M420 120 L300 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
+</g>
 <!-- Uzak saray silueti -->
 <g fill="#15122c">
   <rect x="960" y="590" width="190" height="40"/>
@@ -22,20 +23,24 @@
 <!-- Arka kumullar -->
 <path d="M0 640 Q200 590 420 630 Q640 670 860 610 Q1080 560 1300 620 Q1460 660 1600 610 V900 H0Z" fill="url(#dune1)"/>
 <!-- Kervan sırtta -->
-<g transform="translate(1030 664) scale(0.9)" fill="#0b0817">
-<path d="M-34 -2 Q-36 -22 -22 -26 Q-14 -40 -2 -26 Q6 -38 18 -24 L26 -24 Q30 -34 36 -40 Q42 -48 48 -44 L50 -38 L44 -36 Q38 -28 36 -14 Q34 -2 26 0 Z"/>
-<path d="M-28 -2 L-30 26 L-25 26 L-22 0 M-12 0 L-12 26 L-7 26 L-6 0 M12 0 L14 26 L19 26 L18 -2 M24 -2 L28 26 L33 26 L30 -4"/>
-<path d="M-8 -30 Q-10 -46 0 -48 Q10 -46 8 -30Z"/><circle cx="0" cy="-54" r="6"/>
-</g><g transform="translate(1120 652) scale(0.85)" fill="#0b0817">
-<path d="M-34 -2 Q-36 -22 -22 -26 Q-14 -40 -2 -26 Q6 -38 18 -24 L26 -24 Q30 -34 36 -40 Q42 -48 48 -44 L50 -38 L44 -36 Q38 -28 36 -14 Q34 -2 26 0 Z"/>
-<path d="M-28 -2 L-30 26 L-25 26 L-22 0 M-12 0 L-12 26 L-7 26 L-6 0 M12 0 L14 26 L19 26 L18 -2 M24 -2 L28 26 L33 26 L30 -4"/>
-</g><g transform="translate(1205 646) scale(0.8)" fill="#0b0817">
-<path d="M-34 -2 Q-36 -22 -22 -26 Q-14 -40 -2 -26 Q6 -38 18 -24 L26 -24 Q30 -34 36 -40 Q42 -48 48 -44 L50 -38 L44 -36 Q38 -28 36 -14 Q34 -2 26 0 Z"/>
-<path d="M-28 -2 L-30 26 L-25 26 L-22 0 M-12 0 L-12 26 L-7 26 L-6 0 M12 0 L14 26 L19 26 L18 -2 M24 -2 L28 26 L33 26 L30 -4"/>
-<path d="M-8 -30 Q-10 -46 0 -48 Q10 -46 8 -30Z"/><circle cx="0" cy="-54" r="6"/>
-</g><g transform="translate(1285 650) scale(0.75)" fill="#0b0817">
-<path d="M-34 -2 Q-36 -22 -22 -26 Q-14 -40 -2 -26 Q6 -38 18 -24 L26 -24 Q30 -34 36 -40 Q42 -48 48 -44 L50 -38 L44 -36 Q38 -28 36 -14 Q34 -2 26 0 Z"/>
-<path d="M-28 -2 L-30 26 L-25 26 L-22 0 M-12 0 L-12 26 L-7 26 L-6 0 M12 0 L14 26 L19 26 L18 -2 M24 -2 L28 26 L33 26 L30 -4"/>
+<g transform="translate(1080 608) scale(0.62)" fill="#0b0817">
+<path d="M-27 -46 C-31 -36 -29 -27 -26 -22 L-25 0 L-20.5 0 L-21 -22 C-19 -30 -17 -40 -15 -45Z M-16 -44 L-13 -22 L-15.5 0 L-11.5 0 L-9.5 -22 L-9 -44Z M23 -44 L25 -22 L22.5 0 L26.5 0 L29 -22 L29.5 -44Z M30 -46 L34 -22 L33 0 L37 0 L37.5 -22 L36 -47Z"/>
+<path d="M-34 -54 Q-41 -46 -39 -32" stroke="#0b0817" stroke-width="2.2" fill="none"/>
+<path d="M-34 -54 C-36 -64 -26 -68 -16 -66 C-10 -92 10 -94 16 -66 C22 -64 26 -60 30 -56 C36 -62 38 -76 42 -86 C44 -92 50 -96 56 -94 L64 -90 Q67 -86 62 -84 L55 -84 C51 -82 49 -76 47 -68 C45 -58 42 -50 36 -46 C30 -42 24 -42 18 -42 L-24 -42 C-32 -42 -34 -46 -34 -54Z" stroke="#e9cf98" stroke-opacity=".2" stroke-width="1.1"/>
+<path d="M53 -94 l-2 -6 l5 4Z"/>
+<g transform="translate(0 -14)"><path d="M-14 -54 Q1 -48 16 -54 L17 -42 Q1 -37 -15 -42Z" fill="#2a1e3c"/><path d="M-14 -42 v4 M-8 -40 v4 M-2 -39 v4 M4 -39 v4 M10 -40 v4 M16 -42 v4" stroke="#2a1e3c" stroke-width="1.4"/></g>
+</g><path d="M1157 588 Q1139 596 1121 560" stroke="#0b0817" stroke-width="1" fill="none"/><g transform="translate(1180 612) scale(0.6)" fill="#0b0817">
+<path d="M-27 -46 C-31 -36 -29 -27 -26 -22 L-25 0 L-20.5 0 L-21 -22 C-19 -30 -17 -40 -15 -45Z M-16 -44 L-13 -22 L-15.5 0 L-11.5 0 L-9.5 -22 L-9 -44Z M23 -44 L25 -22 L22.5 0 L26.5 0 L29 -22 L29.5 -44Z M30 -46 L34 -22 L33 0 L37 0 L37.5 -22 L36 -47Z"/>
+<path d="M-34 -54 Q-41 -46 -39 -32" stroke="#0b0817" stroke-width="2.2" fill="none"/>
+<path d="M-34 -54 C-36 -64 -26 -68 -16 -66 C-10 -92 10 -94 16 -66 C22 -64 26 -60 30 -56 C36 -62 38 -76 42 -86 C44 -92 50 -96 56 -94 L64 -90 Q67 -86 62 -84 L55 -84 C51 -82 49 -76 47 -68 C45 -58 42 -50 36 -46 C30 -42 24 -42 18 -42 L-24 -42 C-32 -42 -34 -46 -34 -54Z" stroke="#e9cf98" stroke-opacity=".2" stroke-width="1.1"/>
+<path d="M53 -94 l-2 -6 l5 4Z"/>
+<g transform="translate(0 -14)"><path d="M-14 -54 Q1 -48 16 -54 L17 -42 Q1 -37 -15 -42Z" fill="#2a1e3c"/><path d="M-14 -42 v4 M-8 -40 v4 M-2 -39 v4 M4 -39 v4 M10 -40 v4 M16 -42 v4" stroke="#2a1e3c" stroke-width="1.4"/></g>
+</g><path d="M1256 599 Q1237.5 607 1219 565" stroke="#0b0817" stroke-width="1" fill="none"/><g transform="translate(1278 622) scale(0.58)" fill="#0b0817">
+<path d="M-27 -46 C-31 -36 -29 -27 -26 -22 L-25 0 L-20.5 0 L-21 -22 C-19 -30 -17 -40 -15 -45Z M-16 -44 L-13 -22 L-15.5 0 L-11.5 0 L-9.5 -22 L-9 -44Z M23 -44 L25 -22 L22.5 0 L26.5 0 L29 -22 L29.5 -44Z M30 -46 L34 -22 L33 0 L37 0 L37.5 -22 L36 -47Z"/>
+<path d="M-34 -54 Q-41 -46 -39 -32" stroke="#0b0817" stroke-width="2.2" fill="none"/>
+<path d="M-34 -54 C-36 -64 -26 -68 -16 -66 C-10 -92 10 -94 16 -66 C22 -64 26 -60 30 -56 C36 -62 38 -76 42 -86 C44 -92 50 -96 56 -94 L64 -90 Q67 -86 62 -84 L55 -84 C51 -82 49 -76 47 -68 C45 -58 42 -50 36 -46 C30 -42 24 -42 18 -42 L-24 -42 C-32 -42 -34 -46 -34 -54Z" stroke="#e9cf98" stroke-opacity=".2" stroke-width="1.1"/>
+<path d="M53 -94 l-2 -6 l5 4Z"/>
+<g transform="translate(0 -14)"><path d="M-14 -54 Q1 -48 16 -54 L17 -42 Q1 -37 -15 -42Z" fill="#2a1e3c"/><path d="M-14 -42 v4 M-8 -40 v4 M-2 -39 v4 M4 -39 v4 M10 -40 v4 M16 -42 v4" stroke="#2a1e3c" stroke-width="1.4"/></g>
 </g>
 <!-- Ön kumullar (ay ışığı tepelerde) -->
 <path d="M0 760 Q260 690 560 740 Q860 790 1120 720 Q1380 660 1600 730 V900 H0Z" fill="url(#dune2)"/>

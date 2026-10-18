@@ -1,7 +1,7 @@
 // Eklenti simgesine tıklanınca açılan pencere. Bütün işi arka plan yapar;
 // burası sadece durumu gösterir ve istekleri iletir.
 
-import { AVATARS, REACTION_PAGES, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import { AVATAR_PAGES, REACTION_PAGES, avatarText, isDrawnAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
 import { SITE_URL } from './config.ts';
 import { isKey, langReady, t } from './i18n.ts';
 import type { PopupRequest, PopupResponse, PopupStatus } from './messages.ts';
@@ -45,12 +45,46 @@ async function refresh(): Promise<void> {
 
 let avatar: Avatar | null = null;
 
+/** Avatarın görsel hali: çizilmiş avatar eklentinin içindeki resim, hayvan emoji. */
+function avatarGlyph(option: string): HTMLElement {
+  const span = document.createElement('span');
+  if (isDrawnAvatar(option)) {
+    const img = document.createElement('img');
+    img.src = chrome.runtime.getURL(`avatars/${option}.svg`);
+    img.alt = '';
+    span.className = 'drawn';
+    span.append(img);
+  } else {
+    span.textContent = option;
+  }
+  return span;
+}
+
+// Avatar sayfaları: temalı karakterler, hayvanlar, parodiler
+let avatarPage = 0;
 function renderPicker(): void {
-  $('#avatar-picker').replaceChildren(
-    ...AVATARS.map((option) => {
+  const tabs = (['avatarPageTheme', 'avatarPageAnimals', 'avatarPageParody'] as const).map((key, i) => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'avatar-tab';
+    tab.textContent = t(key);
+    tab.setAttribute('aria-selected', String(i === avatarPage));
+    tab.addEventListener('click', () => {
+      avatarPage = i;
+      renderPicker();
+    });
+    return tab;
+  });
+  const tabRow = document.createElement('div');
+  tabRow.className = 'avatar-tabs';
+  tabRow.append(...tabs);
+  const grid = document.createElement('div');
+  grid.className = 'avatar-grid';
+  grid.append(
+    ...AVATAR_PAGES[avatarPage]!.map((option) => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.textContent = option;
+      button.append(avatarGlyph(option));
       button.setAttribute('role', 'radio');
       button.setAttribute('aria-checked', String(option === avatar));
       button.addEventListener('click', () => {
@@ -60,6 +94,7 @@ function renderPicker(): void {
       return button;
     }),
   );
+  $('#avatar-picker').replaceChildren(tabRow, grid);
 }
 
 function render(status: PopupStatus): void {
@@ -74,10 +109,12 @@ function render(status: PopupStatus): void {
   const needName = !status.name || editingName;
   $('#name-view').hidden = !needName;
   $('#me-view').hidden = needName;
-  $('#me-name').textContent = status.avatar ? `${status.avatar} ${status.name ?? ''}` : (status.name ?? '');
+  $('#me-name').replaceChildren(...(status.avatar ? [avatarGlyph(status.avatar), ' '] : []), status.name ?? '');
   if (needName && document.activeElement !== $('#name')) $<HTMLInputElement>('#name').value = status.name ?? '';
   if (avatar === null) {
     avatar = status.avatar ?? randomAvatar();
+    // Seçili avatarın sayfasıyla aç
+    avatarPage = Math.max(0, AVATAR_PAGES.findIndex((p) => (p as readonly string[]).includes(avatar!)));
     renderPicker();
   }
 
@@ -114,7 +151,7 @@ function render(status: PopupStatus): void {
     ...session.members.map((member) => {
       const li = document.createElement('li');
       const isMe = member.id === session.myId;
-      const name = (member.avatar ? `${member.avatar} ${member.name}` : member.name) + (member.id === session.hostId ? ' 👑' : '');
+      const name = (member.avatar ? `${avatarText(member.avatar)} ${member.name}` : member.name) + (member.id === session.hostId ? ' 👑' : '');
       const label = document.createElement('span');
       label.textContent = isMe ? `${name} (${t('you')})` : name;
       li.append(label);
@@ -134,7 +171,7 @@ function render(status: PopupStatus): void {
     ...session.bans.map((ban) => {
       const li = document.createElement('li');
       const label = document.createElement('span');
-      label.textContent = ban.avatar ? `${ban.avatar} ${ban.name}` : ban.name;
+      label.textContent = ban.avatar ? `${avatarText(ban.avatar)} ${ban.name}` : ban.name;
       li.append(label, smallButton(t('unban'), t('unban'), () => void request({ type: 'unban', tabId, banId: ban.id })));
       return li;
     }),

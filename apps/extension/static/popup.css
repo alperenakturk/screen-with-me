@@ -227,13 +227,63 @@ label,
   background: var(--border);
 }
 
+/* Sayfalı avatar seçici */
 .avatar-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.avatar-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.avatar-picker .avatar-tab {
+  aspect-ratio: auto;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.avatar-picker .avatar-tab[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.avatar-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 4px;
 }
 
-.avatar-picker button {
+.drawn {
+  display: inline-block;
+  width: 1.3em;
+  height: 1.3em;
+  vertical-align: middle;
+}
+
+.drawn img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-grid .drawn {
+  width: 86%;
+  height: 86%;
+}
+
+.avatar-grid button {
   aspect-ratio: 1;
   font-size: 18px;
   background: var(--surface-2);
@@ -243,7 +293,7 @@ label,
   padding: 0;
 }
 
-.avatar-picker button[aria-checked='true'] {
+.avatar-grid button[aria-checked='true'] {
   border-color: var(--accent);
   background: rgb(124 92 255 / 0.2);
 }

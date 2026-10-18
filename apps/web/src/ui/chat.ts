@@ -1,5 +1,6 @@
 import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
+import { avatarNode } from './avatar.ts';
 import { t } from '../i18n.ts';
 
 const MAX_LINES = 120;
@@ -44,7 +45,7 @@ export function createChatPanel(
     return el(
       'li',
       { class: mine ? 'chat-line me' : 'chat-line' },
-      el('span', { class: 'chat-avatar', 'aria-hidden': 'true' }, message.by.avatar ?? '🙂'),
+      avatarNode(message.by.avatar, 'chat-avatar'),
       el(
         'div',
         { class: 'chat-body' },

@@ -7,7 +7,7 @@
 
 import { build } from 'esbuild';
 import { zipSync } from 'fflate';
-import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 
 const dev = process.argv.includes('--dev');
 const SITE_URL = dev ? 'http://localhost:5173' : 'https://screen-with-me.swm-server.workers.dev';
@@ -79,8 +79,12 @@ console.log(`\n✓ dist/ hazır (${dev ? 'geliştirme' : 'yayın'}: ${SITE_URL})
 // Yayın sürümü, arkadaşların siteden indirebilmesi için zip'lenip sitenin
 // public klasörüne konur (site/eklenti.html sayfasındaki indirme linki).
 if (!dev) {
+  // Alt klasörler de (avatars/) zip'e girsin.
   const files = {};
-  for (const name of readdirSync('dist')) files[name] = readFileSync(`dist/${name}`);
+  for (const name of readdirSync('dist', { recursive: true })) {
+    const path = String(name).replace(/\\/g, '/');
+    if (statSync(`dist/${path}`).isFile()) files[path] = readFileSync(`dist/${path}`);
+  }
   writeFileSync('../web/public/screenwithme-extension.zip', zipSync(files, { level: 9 }));
   writeFileSync('../web/public/extension-version.json', JSON.stringify({ version: pkg.version }));
   console.log('✓ ../web/public/screenwithme-extension.zip yazıldı');

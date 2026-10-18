@@ -1,5 +1,5 @@
-import { AVATARS, cleanName, type Avatar } from '@swm/shared/protocol';
-import { el } from '../dom.ts';
+import { cleanName, type Avatar } from '@swm/shared/protocol';
+import { renderAvatarPicker } from './avatar.ts';
 import { t } from '../i18n.ts';
 import { renderThemePicker } from '../themes.ts';
 import { load, save } from '../storage.ts';
@@ -44,20 +44,15 @@ export function createSettingsPanel(
     }
   });
 
-  function drawAvatars(): void {
-    avatars.replaceChildren(
-      ...AVATARS.map((option) => {
-        const button = el('button', { type: 'button', class: 'avatar-option', role: 'radio', 'aria-checked': String(option === avatar) }, option);
-        button.addEventListener('click', () => {
-          avatar = option;
-          drawAvatars();
-          onIdentity(name, avatar);
-        });
-        return button;
-      }),
-    );
-  }
-  drawAvatars();
+  const drawAvatars = renderAvatarPicker(
+    avatars,
+    () => avatar,
+    (option) => {
+      avatar = option;
+      onIdentity(name, avatar);
+    },
+  );
+  window.addEventListener('langchange', drawAvatars);
   renderThemePicker(root.querySelector<HTMLElement>('#settings-themes')!);
 
   const options: Options = { showEvents: readOption('opt:events'), showReactions: readOption('opt:reactions') };

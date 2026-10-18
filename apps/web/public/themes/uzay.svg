@@ -9,6 +9,8 @@
 <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8ffe0" stop-opacity=".45"/><stop offset="1" stop-color="#a8ffe0" stop-opacity="0"/></linearGradient>
 <mask id="cres"><rect width="1600" height="900" fill="#fff"/><circle cx="160" cy="104" r="28" fill="#000"/></mask>
 </defs>
+<!-- Üstteki süsler biraz aşağıda: üst şerit ve geniş ekranda kırpılan üst kısım kapatmasın -->
+<g transform="translate(0 90)">
 <!-- Hilal -->
 <circle cx="146" cy="116" r="30" fill="#f6f2ff" mask="url(#cres)" filter="url(#g)"/>
 <!-- Halkalı şeftali gezegen (sağ üst) -->
@@ -20,6 +22,7 @@
 <g opacity=".9"><circle cx="1374" cy="177.5" r="3.5" fill="#1b1446"/><circle cx="1406" cy="177.5" r="3.5" fill="#1b1446"/>
 <path d="M1383 186 Q1390 193 1397 186" stroke="#1b1446" stroke-width="2.5" fill="none" stroke-linecap="round"/>
 <ellipse cx="1365" cy="187" rx="6" ry="3.5" fill="#ff8fb8" opacity=".6"/><ellipse cx="1415" cy="187" rx="6" ry="3.5" fill="#ff8fb8" opacity=".6"/></g>
+</g>
 <!-- Mavi gezegen (sağ alt) -->
 <circle cx="1470" cy="715" r="66" fill="url(#blue)"/>
 <path d="M1410 690 Q1470 676 1532 694 M1406 726 Q1470 742 1534 722" stroke="#d6f0ff" stroke-opacity=".35" stroke-width="7" fill="none" stroke-linecap="round"/>
@@ -28,11 +31,11 @@
 <ellipse cx="1437" cy="724.2" rx="7.9" ry="4.6" fill="#ff8fb8" opacity=".6"/><ellipse cx="1503" cy="724.2" rx="7.9" ry="4.6" fill="#ff8fb8" opacity=".6"/></g>
 <!-- Küçük gezegenler -->
 <circle cx="232" cy="352" r="21" fill="url(#pink)"/>
-<circle cx="1186" cy="128" r="13" fill="url(#mint)"/>
+<circle cx="1186" cy="218" r="13" fill="url(#mint)"/>
 <circle cx="1555" cy="430" r="8" fill="#ffd27a" opacity=".9"/>
 <!-- Kuyruklu yıldız -->
-<path d="M566 112 L404 36 L560 104 Z" fill="url(#tail)"/>
-<circle cx="566" cy="111" r="6" fill="#fff" filter="url(#g)"/>
+<g transform="translate(0 100)"><path d="M566 112 L404 36 L560 104 Z" fill="url(#tail)"/>
+<circle cx="566" cy="111" r="6" fill="#fff" filter="url(#g)"/></g>
 <!-- Roket -->
 <g transform="translate(1250 480) rotate(38)">
   <path d="M0 22 Q-7 40 0 52 Q7 40 0 22Z" fill="#ffb347"/><path d="M0 26 Q-3.5 38 0 46 Q3.5 38 0 26Z" fill="#fff3a6"/>

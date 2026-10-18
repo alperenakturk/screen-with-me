@@ -4,8 +4,8 @@ import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { parseMediaInput } from '@swm/shared/media';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
-  AVATARS,
   CLIENT_ID,
+  avatarText,
   SYSTEM_MEMBER_ID,
   cleanName,
   isAvatar,
@@ -26,6 +26,7 @@ import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
 import { load, save, saveIdentity, sessionLoad, sessionSave } from './storage.ts';
+import { avatarNode, renderAvatarPicker } from './ui/avatar.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -89,7 +90,7 @@ function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void 
     <section class="card join-card avatar-card">
       <p class="muted step-label" id="hello"></p>
       <h2 class="step-title" data-i18n="pickAvatar"></h2>
-      <div id="avatar-picker" class="avatar-picker big" role="radiogroup"></div>
+      <div id="avatar-picker" class="avatar-picker big"></div>
       <div id="avatar-preview" class="avatar-preview"></div>
       <button id="enter" type="button" class="btn primary big" data-i18n="enterRoom"></button>
       <button id="back" type="button" class="link-btn" data-i18n="back"></button>
@@ -103,32 +104,31 @@ function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void 
   const preview = app.querySelector<HTMLElement>('#avatar-preview')!;
   const hello = app.querySelector<HTMLElement>('#hello')!;
   const renderTexts = () => (hello.textContent = t('helloName', { name }));
-  const renderPicker = () => {
-    picker.replaceChildren(
-      ...AVATARS.map((option) => {
-        const button = el('button', { type: 'button', class: 'avatar-option', role: 'radio', 'aria-checked': String(option === avatar) }, option);
-        button.addEventListener('click', () => {
-          avatar = option;
-          renderPicker();
-        });
-        button.addEventListener('dblclick', enter);
-        return button;
-      }),
-    );
-    preview.textContent = `${avatar} ${name}`;
-  };
-  renderPicker();
+  const renderPreview = () => preview.replaceChildren(avatarNode(avatar, 'avatar-glyph'), ` ${name}`);
+  const drawPicker = renderAvatarPicker(
+    picker,
+    () => avatar,
+    (option) => {
+      avatar = option;
+      renderPreview();
+    },
+    () => enter(),
+  );
+  renderPreview();
   renderTexts();
   window.addEventListener('langchange', renderTexts);
+  window.addEventListener('langchange', drawPicker);
 
   function enter(): void {
     if (avatar !== load('avatar')) saveIdentity(name, avatar);
     window.removeEventListener('langchange', renderTexts);
+    window.removeEventListener('langchange', drawPicker);
     startRoom(app, roomId, name, avatar);
   }
   app.querySelector('#enter')!.addEventListener('click', enter);
   app.querySelector('#back')!.addEventListener('click', () => {
     window.removeEventListener('langchange', renderTexts);
+    window.removeEventListener('langchange', drawPicker);
     renderRoom(app, roomId);
   });
 }
@@ -149,7 +149,7 @@ function clientId(): string {
 
 /** İsmin önüne avatarı koyar (varsa). */
 function withAvatar(member: { name: string; avatar?: string }): string {
-  return member.avatar ? `${member.avatar} ${member.name}` : member.name;
+  return member.avatar ? `${avatarText(member.avatar)} ${member.name}` : member.name;
 }
 
 function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false } = {}): void {

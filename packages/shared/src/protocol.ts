@@ -27,17 +27,63 @@ export const REACTIONS = REACTION_PAGES.flat();
 
 export type Reaction = (typeof REACTION_PAGES)[number][number];
 
-/** Seçilebilen avatarlar. Sunucu bunların dışındakini kabul etmez. */
-export const AVATARS = ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'] as const;
+/**
+ * Çizilmiş avatarlar (public/avatars/<kimlik>.svg; scripts/avatars.mjs çizer). Değer,
+ * metin geçen yerlerde (sohbet satırı, bildirim) kullanılan emoji karşılığı.
+ */
+export const DRAWN_AVATARS = {
+  astronaut: '🧑‍🚀',
+  alien: '👽',
+  cyber: '🕶️',
+  wizard: '🧙',
+  warrior: '⚔️',
+  elf: '🧝',
+  dwarf: '⛏️',
+  janissary: '🎖️',
+  horseman: '🏹',
+  veiled: '🧕',
+  scientist: '🧪',
+  sidekick: '😰',
+  chemist: '⚗️',
+  lawyer: '⚖️',
+  swordsman: '🗡️',
+} as const;
 
-export type Avatar = (typeof AVATARS)[number];
+export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
+
+/**
+ * Avatar sayfaları: 1) temalara ait karakterler, 2) hayvanlar (emoji), 3) dizi/film
+ * parodileri (sadece tarzı andırır, isim yok). Sunucu bunların dışındakini kabul etmez;
+ * sona eklemek eski istemcileri bozmaz.
+ */
+export const AVATAR_PAGES = [
+  ['astronaut', 'alien', 'cyber', 'wizard', 'warrior', 'elf', 'dwarf', 'janissary', 'horseman', 'veiled'],
+  ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],
+  ['scientist', 'sidekick', 'chemist', 'lawyer', 'swordsman'],
+] as const;
+
+export const AVATARS = AVATAR_PAGES.flat();
+
+export type Avatar = (typeof AVATAR_PAGES)[number][number];
 
 export function isAvatar(x: unknown): x is Avatar {
   return typeof x === 'string' && (AVATARS as readonly string[]).includes(x);
 }
 
+export function isDrawnAvatar(x: unknown): x is DrawnAvatar {
+  return typeof x === 'string' && Object.prototype.hasOwnProperty.call(DRAWN_AVATARS, x);
+}
+
+/** Metin içinde gösterilecek hali: çizilmiş avatarın emoji karşılığı, hayvanın kendisi. */
+export function avatarText(avatar: string | undefined | null): string {
+  if (!avatar) return '';
+  return isDrawnAvatar(avatar) ? DRAWN_AVATARS[avatar] : avatar;
+}
+
+/** Yeni gelen için rastgele: tematik karakterler ve hayvanlardan. */
 export function randomAvatar(): Avatar {
-  return AVATARS[Math.floor(Math.random() * AVATARS.length)]!;
+  const pool = [...AVATAR_PAGES[0], ...AVATAR_PAGES[1]];
+  return pool[Math.floor(Math.random() * pool.length)]!;
 }
 
 export const TITLE_MAX_LENGTH = 200;

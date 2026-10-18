@@ -1,5 +1,6 @@
 import type { BanEntry, ClientMessage, Member } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
+import { avatarNode } from './avatar.ts';
 import { t } from '../i18n.ts';
 
 /**
@@ -28,7 +29,7 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
         return el(
           'li',
           { class: isMe ? 'person me' : 'person' },
-          el('span', { class: 'person-avatar', 'aria-hidden': 'true' }, member.avatar ?? '🙂'),
+          avatarNode(member.avatar, 'person-avatar'),
           el('span', { class: 'person-name' }, isMe ? `${member.name} (${t('you')})` : member.name),
           member.id === hostId ? el('span', { class: 'host-badge', title: t('host') }, '👑') : '',
           iAmHost && !isMe ? kick : '',
@@ -51,7 +52,7 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
         return el(
           'li',
           { class: 'person banned' },
-          el('span', { class: 'person-avatar', 'aria-hidden': 'true' }, ban.avatar ?? '🙂'),
+          avatarNode(ban.avatar, 'person-avatar'),
           el('span', { class: 'person-name' }, ban.name),
           unban,
         );

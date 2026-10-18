@@ -47,6 +47,7 @@ npm run build:extension:dev  # yerel sunucuya bağlanan eklenti (apps/extension/
 npm run store                # Web Store paketi: store/ (zip + ekran görüntüleri + tanıtım görseli)
 node scripts/make-icons.mjs  # logo.ts'den eklenti simgeleri (icon*.png) + apps/web/public/logo.svg
 node scripts/theme-art.mjs   # resimli temaların sahne + maskot SVG'leri (apps/web/public/themes/)
+node scripts/avatars.mjs     # çizilmiş avatarlar (apps/web/public/avatars + apps/extension/static/avatars)
 ```
 Mağaza formunda ne yazılacağı: `docs/web-store.md`. Ekran görüntüleri `store/src/shots.html`'den
 çekilir; eklentinin görünümü değişirse oradaki taklidi de güncelle.
@@ -114,6 +115,14 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   sayfaya giderse (`onRoomPage` yanlış) senkron o sayfada durur. `startSession` sekme başına
   kilitli (çift tıklama iki bağlantı açmaz); ilk video (`load`) bağlantıdan önce verilir.
   Atılma/sürüm/oda dolu → çubukta 6 sn açıklama (`ended`) + popup'ta neden.
+- **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 3 sayfa: temalı çizilmiş karakterler, hayvan
+  emojileri, parodiler. Çizilmiş avatarın değeri bir kimliktir (`wizard`); resim
+  `/avatars/<kimlik>.svg` (eklentide `chrome.runtime.getURL`), metin geçen yerlerde
+  `avatarText()` emoji karşılığını verir. Yeni avatar: `DRAWN_AVATARS` + `AVATAR_PAGES` +
+  `scripts/avatars.mjs` + site i18n `avatar.<kimlik>`. Parodiler sadece tarzı andırır: dizi/
+  karakter adı, logo, birebir kostüm, gerçek oyuncu benzerliği yok (mağaza ve telif).
+- **Sahnelerde üst boşluk:** sahne alttan hizalı ve ekranı kaplar; geniş ekranda üst kısım
+  kırpılır ve üst şerit de kapatır. Ay, kandil gibi süsleri y≈150'nin üstüne koyma.
 - **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
   (herkes başa sarılmasın); 60 sn'den kısa video bitince "sıradaki" istenmez (reklam/önizleme).
 

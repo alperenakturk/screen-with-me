@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanChatText, expectedPosition, parseClientMessage, type PlaybackState } from './protocol.ts';
+import { avatarText, cleanChatText, expectedPosition, parseClientMessage, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -63,6 +63,16 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'kick', id: '../x' })).toBeNull();
     expect(parse({ t: 'unban', id: 'abc12345' })).toEqual({ t: 'unban', id: 'abc12345' });
     expect(parse({ t: 'unban', id: 42 })).toBeNull();
+  });
+
+  it('accepts drawn avatars from every avatar page, and shows them as emoji in text', () => {
+    expect(parse({ t: 'rename', name: 'Ali', avatar: 'wizard' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'wizard' });
+    expect(parse({ t: 'rename', name: 'Ali', avatar: 'swordsman' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'swordsman' });
+    expect(parse({ t: 'rename', name: 'Ali', avatar: '🦊' })).toEqual({ t: 'rename', name: 'Ali', avatar: '🦊' });
+    expect(parse({ t: 'rename', name: 'Ali', avatar: 'toString' })).toEqual({ t: 'rename', name: 'Ali' });
+    expect(avatarText('wizard')).toBe('🧙');
+    expect(avatarText('🦊')).toBe('🦊');
+    expect(avatarText(undefined)).toBe('');
   });
 
   it('accepts emojis from every reaction page, nothing else', () => {

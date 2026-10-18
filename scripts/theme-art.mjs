@@ -87,6 +87,8 @@ ${GLOW('g', 4)}
 <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8ffe0" stop-opacity=".45"/><stop offset="1" stop-color="#a8ffe0" stop-opacity="0"/></linearGradient>
 <mask id="cres"><rect width="${W}" height="${H}" fill="#fff"/><circle cx="160" cy="104" r="28" fill="#000"/></mask>
 </defs>
+<!-- Üstteki süsler biraz aşağıda: üst şerit ve geniş ekranda kırpılan üst kısım kapatmasın -->
+<g transform="translate(0 90)">
 <!-- Hilal -->
 <circle cx="146" cy="116" r="30" fill="#f6f2ff" mask="url(#cres)" filter="url(#g)"/>
 <!-- Halkalı şeftali gezegen (sağ üst) -->
@@ -96,17 +98,18 @@ ${GLOW('g', 4)}
 <circle cx="1390" cy="180" r="50" fill="url(#peach)"/>
 <g transform="rotate(-16 1390 180)"><path d="M1298 180 A92 20 0 0 0 1482 180" fill="none" stroke="#ffe7c4" stroke-opacity=".85" stroke-width="7"/></g>
 ${kawaii(1390, 180, 50)}
+</g>
 <!-- Mavi gezegen (sağ alt) -->
 <circle cx="1470" cy="715" r="66" fill="url(#blue)"/>
 <path d="M1410 690 Q1470 676 1532 694 M1406 726 Q1470 742 1534 722" stroke="#d6f0ff" stroke-opacity=".35" stroke-width="7" fill="none" stroke-linecap="round"/>
 ${kawaii(1470, 715, 66)}
 <!-- Küçük gezegenler -->
 <circle cx="232" cy="352" r="21" fill="url(#pink)"/>
-<circle cx="1186" cy="128" r="13" fill="url(#mint)"/>
+<circle cx="1186" cy="218" r="13" fill="url(#mint)"/>
 <circle cx="1555" cy="430" r="8" fill="#ffd27a" opacity=".9"/>
 <!-- Kuyruklu yıldız -->
-<path d="M566 112 L404 36 L560 104 Z" fill="url(#tail)"/>
-<circle cx="566" cy="111" r="6" fill="#fff" filter="url(#g)"/>
+<g transform="translate(0 100)"><path d="M566 112 L404 36 L560 104 Z" fill="url(#tail)"/>
+<circle cx="566" cy="111" r="6" fill="#fff" filter="url(#g)"/></g>
 <!-- Roket -->
 <g transform="translate(1250 480) rotate(38)">
   <path d="M0 22 Q-7 40 0 52 Q7 40 0 22Z" fill="#ffb347"/><path d="M0 26 Q-3.5 38 0 46 Q3.5 38 0 26Z" fill="#fff3a6"/>
@@ -222,13 +225,15 @@ function siberScene() {
     const tx = bx + (bx < W / 2 ? 260 : -260) + i * 30;
     parts.push(`<line x1="${bx}" y1="${f(H - b.h)}" x2="${f(tx)}" y2="0" stroke="${i % 2 ? CYAN : PINK}" stroke-width="2" opacity=".18"/>`);
   });
-  // Hologram halka (sol)
-  parts.push(`<g filter="url(#n)" opacity=".8"><ellipse cx="190" cy="300" rx="58" ry="18" fill="none" stroke="${CYAN}" stroke-width="2"/><ellipse cx="190" cy="280" rx="40" ry="12" fill="none" stroke="${CYAN}" stroke-width="1.5" opacity=".6"/><path d="M178 262 L206 278 L178 294Z" fill="none" stroke="${PINK}" stroke-width="2.5" stroke-linejoin="round"/></g>`);
-  // Uçan arabalar (ışık izleri)
-  const cars = [[120, 250, 1, PINK], [300, 330, -1, CYAN], [1290, 210, -1, CYAN], [1460, 300, 1, PINK], [1180, 380, 1, YELLOW], [70, 420, 1, CYAN]];
-  for (const [cx, cy, dir, c] of cars) {
-    parts.push(`<line x1="${cx}" y1="${cy}" x2="${cx - dir * 70}" y2="${cy + 4}" stroke="${c}" stroke-width="2" opacity=".55"/><ellipse cx="${cx}" cy="${cy}" rx="11" ry="4.5" fill="#1d1238" stroke="${c}" stroke-width="1.5" filter="url(#n)"/>`);
-  }
+  // Neon zeplin (sol üstte): yanında ekran, ekranda oynat işareti
+  parts.push(`<g transform="translate(250 250)">
+<path d="M-96 0 Q-96 -34 0 -36 Q96 -34 104 0 Q96 34 0 36 Q-96 34 -96 0Z" fill="#1a0f33" stroke="${CYAN}" stroke-width="2" filter="url(#n)"/>
+<path d="M-96 0 L-124 -26 L-114 0 L-124 26Z" fill="#1a0f33" stroke="${CYAN}" stroke-width="2"/>
+<rect x="-46" y="-20" width="92" height="40" rx="5" fill="#0b0418" stroke="${PINK}" stroke-width="2.5" filter="url(#n)"/>
+<path d="M-8 -11 L12 0 L-8 11Z" fill="${PINK}" filter="url(#n)"/>
+<path d="M-20 36 h40 v10 h-40Z" fill="#1a0f33" stroke="${CYAN}" stroke-width="1.5"/>
+<circle cx="96" cy="0" r="3" fill="${YELLOW}" filter="url(#n)"/><circle cx="-110" cy="-14" r="2.5" fill="${PINK}" filter="url(#n)"/>
+</g>`);
 
   // Sentetik güneş: ufukta, çizgili
   let stripes = '';
@@ -318,8 +323,8 @@ function dragon(x, y, k, dir = 1, colors = { body: '#4fbf72', dark: '#2f8f55', b
 }
 
 function ortacagScene() {
-  // Yüzüklerin Efendisi havası: sisli karlı dağlar, dağa oyulmuş beyaz şehir, sırtta
-  // yürüyen kafile, kartallar, harabeler, uzakta dağın etrafında dönen ejderha.
+  // Yüzüklerin Efendisi havası: sisli karlı dağlar, dağa oyulmuş beyaz şehir, kulenin
+  // etrafında süzülen gölge ejderha, kartallar, harabeler, dumanlı uzak tepe.
   const r = rng(11);
   let stars = '';
   for (let i = 0; i < 90; i++) {
@@ -352,31 +357,44 @@ function ortacagScene() {
     const base = 880 - Math.sin(i / 3) * 8;
     pines += `<path d="M${f(tx)} ${f(base)} L${f(tx + 15)} ${f(base - th)} L${f(tx + 30)} ${f(base)}Z" fill="#0a1018"/>`;
   }
-  // Kafile: sırtta yürüyen küçük siluetler (biri asalı, biri yaylı)
-  const walker = (x, y, kind) => `<g transform="translate(${x} ${y})" fill="#070a12">
-<circle cx="0" cy="-17" r="3.2"/><path d="M-3.5 -13 L3.5 -13 L4.5 -2 L2 -2 L1.5 6 L-1.5 6 L-2 -2 L-4.5 -2Z"/>
-${kind === 'staff' ? '<path d="M6 -24 L6 6" stroke="#070a12" stroke-width="1.6"/><circle cx="6" cy="-25" r="1.8" fill="#fff6d0"/>' : ''}
-${kind === 'bow' ? '<path d="M-6 -20 Q-11 -10 -6 0" stroke="#070a12" stroke-width="1.4" fill="none"/>' : ''}
-${kind === 'small' ? '' : '<path d="M-4.5 -12 L-7 -2 L-4 -3Z"/>'}
-</g>`;
-  const fellowship = [[300, 676, 'staff'], [318, 678, 'bow'], [334, 680, ''], [348, 684, 'small'], [358, 685, 'small'], [370, 686, '']]
-    .map(([x, y, k]) => (k === 'small' ? `<g transform="translate(${x} ${y + 4}) scale(.7) translate(${-x} ${-y})">${walker(x, y, k)}</g>` : walker(x, y, k))).join('');
   const eagle = (x, y, s) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0 0 Q-20 -14 -46 -6 Q-28 -4 -14 6 Q-6 2 0 8 Q6 2 14 6 Q28 -4 46 -6 Q20 -14 0 0Z" fill="#0b1020"/>`;
-  // Beyaz şehir: dağın yamacına basamak basamak surlar ve en üstte kule
-  const city = `
-<g>
-  <path d="M1180 900 L1240 640 L1330 560 L1420 620 L1520 600 L1600 660 V900Z" fill="#1c2436"/>
-  ${[0, 1, 2, 3, 4].map((i) => {
+  // Beyaz şehir: yedi kademeli surlar (mazgallı), kemerli kapılar, ara kuleler, en üstte
+  // balkonlu ana kule ve sancak.
+  const tiers = [0, 1, 2, 3, 4].map((i) => {
     const y = 760 - i * 34;
     const x1 = 1225 + i * 22;
     const x2 = 1495 - i * 22;
-    return `<path d="M${x1} ${y} H${x2} V${y + 30} H${x1}Z" fill="${['#cfd6e4', '#c3cadb', '#b8c0d3', '#adb6cb', '#a3adc4'][i]}"/><path d="M${x1} ${y} H${x2}" stroke="#eef2fa" stroke-width="3"/>`;
-  }).join('')}
-  <rect x="1350" y="520" width="18" height="110" fill="#e6ebf5"/><path d="M1346 522 L1359 476 L1372 522Z" fill="#e6ebf5"/>
-  <path d="M1359 476 V450 L1382 458 L1359 466" stroke="#d6a843" stroke-width="2" fill="#f0f3fa"/>
-  ${Array.from({ length: 14 }, (_, i) => `<rect x="${f(1240 + (i % 7) * 34 + (i > 6 ? 17 : 0))}" y="${i > 6 ? 700 : 734}" width="5" height="8" rx="2.5" fill="#ffd27a" opacity=".85"/>`).join('')}
+    const fill = ['#cfd6e4', '#c3cadb', '#b8c0d3', '#adb6cb', '#a3adc4'][i];
+    let merlons = '';
+    for (let mx = x1 + 2; mx < x2 - 6; mx += 10) merlons += `<rect x="${mx}" y="${y - 5}" width="5" height="5" fill="${fill}"/>`;
+    const gate = `<path d="M${(x1 + x2) / 2 - 7} ${y + 30} V${y + 16} A7 7 0 0 1 ${(x1 + x2) / 2 + 7} ${y + 16} V${y + 30}Z" fill="#3a4258"/>`;
+    const towers = [x1 - 6, x2 - 8].map((tx) => `<rect x="${tx}" y="${y - 14}" width="14" height="44" fill="${fill}"/><path d="M${tx - 2} ${y - 14} L${tx + 7} ${y - 26} L${tx + 16} ${y - 14}Z" fill="#8e98b0"/>`).join('');
+    let windows = '';
+    for (let wx = x1 + 18; wx < x2 - 18; wx += 26) windows += `<rect x="${wx}" y="${y + 9}" width="4" height="7" rx="2" fill="#ffd27a" opacity="${(wx * 7) % 3 ? 0.85 : 0.35}"/>`;
+    return `${merlons}<rect x="${x1}" y="${y}" width="${x2 - x1}" height="30" fill="${fill}"/><path d="M${x1} ${y} H${x2}" stroke="#eef2fa" stroke-width="2"/>${gate}${windows}${towers}`;
+  }).join('');
+  const city = `
+<g>
+  <path d="M1180 900 L1240 640 L1330 560 L1420 620 L1520 600 L1600 660 V900Z" fill="#1c2436"/>
+  ${tiers}
+  <rect x="1345" y="520" width="28" height="120" fill="#e6ebf5"/>
+  <path d="M1345 520 H1373 V640 H1345Z" fill="url(#tower)"/>
+  <rect x="1339" y="548" width="40" height="6" rx="2" fill="#f4f6fb"/>
+  ${[0, 1, 2, 3].map((i) => `<rect x="${1341 + i * 10}" y="542" width="4" height="6" fill="#f4f6fb"/>`).join('')}
+  <rect x="1355" y="566" width="8" height="14" rx="4" fill="#ffd27a"/><rect x="1355" y="596" width="8" height="12" rx="4" fill="#ffd27a" opacity=".7"/>
+  <path d="M1341 520 L1359 462 L1377 520Z" fill="#eef2fa"/><path d="M1359 462 L1377 520 H1366Z" fill="#c9d0e0"/>
+  <path d="M1359 462 V436 L1384 444 L1359 452" stroke="#d6a843" stroke-width="2" fill="#f0f3fa"/>
 </g>`;
-  const ruins = `<g fill="#111827">
+  // Gölge ejderha: kulenin etrafında süzülen, kanatları açık koyu siluet ve dönüş izi
+  const shadowDragon = `
+<ellipse cx="1360" cy="500" rx="150" ry="46" fill="none" stroke="#9fb0d8" stroke-opacity=".12" stroke-width="2" stroke-dasharray="6 10"/>
+<g transform="translate(1236 486) rotate(-8) scale(1.15)" fill="#04060c" opacity=".88">
+  <path d="M0 0 Q18 -6 34 -2 Q46 -8 54 -4 L62 -6 L56 0 Q48 4 36 4 Q22 10 6 8 Q-14 10 -30 18 Q-46 26 -60 22 Q-44 18 -34 10 Q-20 2 0 0Z"/>
+  <path d="M14 -2 Q4 -40 -30 -56 Q-14 -44 -18 -32 Q-30 -40 -44 -36 Q-28 -28 -26 -18 Q-38 -20 -46 -12 Q-24 -10 6 2Z"/>
+  <path d="M24 0 Q40 -34 70 -44 Q58 -30 62 -20 Q72 -26 84 -22 Q70 -14 70 -6 Q78 -6 86 0 Q60 2 30 4Z"/>
+  <path d="M54 -4 l4 -7 l2 6Z M58 -5 l6 -5 l0 6Z"/>
+</g>`;
+  const ruins = `<g fill="#111827" transform="translate(70 34)">
   <rect x="470" y="700" width="16" height="70"/><rect x="520" y="716" width="16" height="54"/><path d="M466 700 H540 V708 H466Z"/>
   <rect x="556" y="740" width="16" height="30"/><path d="M552 742 l10 -8 l14 6Z"/>
 </g>`;
@@ -387,55 +405,67 @@ ${kind === 'small' ? '' : '<path d="M-4.5 -12 L-7 -2 L-4 -3Z"/>'}
 ${GLOW('g', 5)}
 <radialGradient id="halo"><stop offset="0" stop-color="#e8eeff" stop-opacity=".35"/><stop offset="1" stop-color="#e8eeff" stop-opacity="0"/></radialGradient>
 <radialGradient id="ember"><stop offset="0" stop-color="#ff8a3d" stop-opacity=".55"/><stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient>
+<linearGradient id="tower" x1="0" y1="0" x2="1" y2="0"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5a6684" stop-opacity=".45"/></linearGradient>
 </defs>
 ${stars}
-<!-- Ay -->
+<!-- Ay ve kartallar biraz aşağıda (üst şerit kapatmasın) -->
+<g transform="translate(0 80)">
 <circle cx="300" cy="150" r="150" fill="url(#halo)"/>
 <circle cx="300" cy="150" r="54" fill="#eef1fb"/>
 <circle cx="282" cy="138" r="9" fill="#d9deee"/><circle cx="318" cy="164" r="12" fill="#d9deee"/>
-<!-- Kartallar -->
 ${eagle(1040, 170, 1)}${eagle(1120, 210, 0.7)}${eagle(560, 120, 0.55)}
+</g>
 <!-- Uzak dağlar, dumanlı tepe ve etrafında dönen ejderha -->
 ${range(560, 260, 90, 3, '#2a3550', '#d9e2f2')}
 <circle cx="1040" cy="330" r="70" fill="url(#ember)" opacity=".7"/>
-<path transform="translate(1040 290) scale(.55)" d="M0 0 Q-30 -26 -70 -14 Q-40 -10 -26 4 Q-50 6 -66 20 Q-30 16 -10 10 Q4 18 22 12 L40 18 L30 6 Q50 -2 64 -16 Q30 -14 0 0Z" fill="#0b1020"/>
 ${mist(600, 0.22)}
 ${range(680, 220, 110, 9, '#1d263b', '#b9c6dd')}
 ${mist(700, 0.18)}
 ${city}
+${shadowDragon}
 ${range(800, 120, 140, 21, '#141b2b', null)}
-<!-- Kafile ve harabeler -->
+<!-- Tepe ve harabeler -->
 <path d="M140 900 Q260 680 420 690 Q560 700 640 900Z" fill="#101624"/>
-${ruins}${fellowship}
-<circle cx="420" cy="690" r="26" fill="url(#ember)"/><path d="M414 694 l6 -12 l6 12Z" fill="#ffb347"/>
+${ruins}
 ${pines}
 `);
 }
 
 function ortacagMascot() {
-  // Korucu: kukuletalı pelerin, yaprak broş, dik tutulan kılıç.
+  // Yaşlı büyücü: geniş kenarlı sivri gri şapka, gür kaşlar, uzun beyaz sakal,
+  // gri cüppe ve ucunda ışık parlayan boğumlu asa.
   return svg(240, 240, `
-<defs>${LOGO_DEFS}
-<linearGradient id="cloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f5a3a"/><stop offset="1" stop-color="#22331f"/></linearGradient>
-<linearGradient id="blade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e9eef8"/><stop offset="1" stop-color="#9aa6bd"/></linearGradient>
+<defs>${LOGO_DEFS}${GLOW('g', 4)}
+<linearGradient id="robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a93a8"/><stop offset="1" stop-color="#5b6377"/></linearGradient>
+<linearGradient id="beard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9dde8"/></linearGradient>
 </defs>
 <!-- Taş zemin -->
-<path d="M20 222 Q120 206 220 222 V236 H20Z" fill="#2a3242"/>
-<!-- Pelerin (arkada) -->
-<path d="M58 120 Q50 190 40 222 H200 Q190 190 182 120Z" fill="url(#cloak)"/>
-${logo(72, 96, 96, { look: [1, 0] })}
-<!-- Kukuleta: yüzü çerçeveler -->
-<path d="M62 150 Q52 70 120 56 Q188 70 178 150 Q172 104 160 94 Q120 70 80 94 Q68 104 62 150Z" fill="url(#cloak)" stroke="#1a2717" stroke-width="2.5" stroke-linejoin="round"/>
-<path d="M120 56 Q132 40 150 44 Q136 50 132 62Z" fill="#33492f"/>
-<!-- Yaprak broş -->
-<path d="M120 196 Q108 186 120 172 Q132 186 120 196Z" fill="#7fc47a" stroke="#d6a843" stroke-width="2.5"/>
-<!-- Kılıç -->
-<g transform="translate(196 132)">
-  <path d="M-4 -86 L4 -86 L5 30 L0 38 L-5 30Z" fill="url(#blade)"/>
-  <rect x="-18" y="30" width="36" height="6" rx="3" fill="#d6a843"/>
-  <rect x="-4" y="36" width="8" height="26" rx="3" fill="#5a3b22"/>
-  <circle cx="0" cy="66" r="5" fill="#d6a843"/>
-</g>
+<path d="M18 224 Q120 208 222 224 V238 H18Z" fill="#2a3242"/>
+<!-- Asa (arkada, sağda) -->
+<path d="M190 226 L184 70" stroke="#6b4a2b" stroke-width="7" stroke-linecap="round"/>
+<path d="M184 82 q-8 -6 -6 -16 M186 104 q8 -4 8 -12" stroke="#6b4a2b" stroke-width="4" fill="none" stroke-linecap="round"/>
+<path d="M184 70 q-12 -10 -4 -24 q8 -10 16 0 q8 14 -12 24Z" fill="none" stroke="#6b4a2b" stroke-width="4"/>
+<circle cx="186" cy="54" r="9" fill="#e8f4ff" filter="url(#g)"/>
+${sparkle(206, 38, 7, '#e8f4ff')}${sparkle(166, 30, 4, '#e8f4ff')}
+<!-- Cüppe -->
+<path d="M62 150 Q50 196 44 224 H196 Q190 196 178 150Z" fill="url(#robe)"/>
+<path d="M120 166 V224" stroke="#4b5266" stroke-width="2" opacity=".6"/>
+<!-- El asayı tutuyor -->
+<circle cx="184" cy="150" r="10" fill="#f1d3b8"/>
+${logo(72, 92, 96, { look: [2, 0] })}
+<!-- Gür beyaz kaşlar -->
+<path d="M84 114 Q98 104 112 112 Q98 110 86 118Z M128 112 Q142 104 156 114 Q144 110 130 118Z" fill="#f4f5fa"/>
+<!-- Sakal: ağzın altından dalgalı uçlarla aşağı iner (ağız görünür kalır) -->
+<path d="M84 170 Q92 176 104 174 Q112 178 120 177 Q128 178 136 174 Q148 176 156 170
+         Q160 192 150 208 Q146 220 132 228 Q128 214 124 226 Q120 236 116 226 Q112 214 108 228 Q94 220 90 208 Q80 192 84 170Z"
+  fill="url(#beard)" stroke="#c9cedb" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M100 188 Q106 200 104 210 M120 186 Q122 200 120 216 M140 188 Q134 200 136 210" stroke="#c9cedb" stroke-width="1.5" fill="none"/>
+<!-- Bıyık: ağzın iki yanından -->
+<path d="M118 168 Q102 164 90 174 Q102 173 112 176Z M122 168 Q138 164 150 174 Q138 173 128 176Z" fill="#f4f5fa"/>
+<!-- Sivri, geniş kenarlı gri şapka (ucu hafif bükük) -->
+<path d="M50 104 Q120 86 190 104 Q170 112 120 110 Q70 112 50 104Z" fill="#6f788e"/>
+<path d="M78 102 Q96 60 112 30 Q118 18 130 12 Q124 26 128 40 Q140 70 162 102 Q120 94 78 102Z" fill="#7d879e" stroke="#5c657a" stroke-width="2" stroke-linejoin="round"/>
+<path d="M84 98 Q120 90 156 98" stroke="#4b5266" stroke-width="5" fill="none"/>
 `);
 }
 
@@ -471,13 +501,19 @@ ${minaret(cx - 120 * s, base, 160 * s)}${minaret(cx + 120 * s, base, 160 * s)}${
   };
   const galata = (x, base) => `<rect x="${x - 22}" y="${base - 150}" width="44" height="150"/><rect x="${x - 27}" y="${base - 158}" width="54" height="10" rx="3"/><path d="M${x - 24} ${base - 158} L${x} ${base - 218} L${x + 24} ${base - 158}Z"/>`;
   const cypress = (x, base, h) => `<path d="M${x} ${base} C${x - 9} ${base - h * 0.4} ${x - 6} ${base - h * 0.8} ${x} ${base - h} C${x + 6} ${base - h * 0.8} ${x + 9} ${base - h * 0.4} ${x} ${base}Z"/>`;
-  const houses = (x0, x1, base, seed) => {
+  // Karşı kıyının ve Galata tepesinin zemin eğrileri
+  const farGround = (x) => 736 - 26 * Math.sin((Math.PI * (x - 820)) / 780);
+  const hillGround = (x) => 700 + 70 * ((1600 - x) / 240) ** 2;
+  // Evler zemin eğrisine oturur (ground sayı ya da x'e göre yükseklik veren fonksiyon) ve
+  // gövdeleri aşağıya kadar iner: tepede ya da kıyıda hiçbiri havada kalmaz.
+  const houses = (x0, x1, ground, seed) => {
     const rr = rng(seed);
     let s = '';
     for (let x = x0; x < x1; ) {
       const w = 26 + rr() * 26;
       const h = 24 + rr() * 34;
-      s += `<path d="M${f(x)} ${base} V${f(base - h)} L${f(x + w / 2)} ${f(base - h - 12)} L${f(x + w)} ${f(base - h)} V${base}Z"/>`;
+      const base = (typeof ground === 'function' ? Math.min(ground(x), ground(x + w)) : ground) + 2;
+      s += `<path d="M${f(x)} 800 V${f(base - h)} L${f(x + w / 2)} ${f(base - h - 12)} L${f(x + w)} ${f(base - h)} V800Z"/>`;
       x += w + 2;
     }
     return s;
@@ -523,17 +559,17 @@ ${GLOW('g', 5)}
 <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#ff9fbf" stop-opacity="0"/><stop offset="1" stop-color="#ff9fbf" stop-opacity=".18"/></linearGradient>
 <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1f3a"/><stop offset="1" stop-color="#140713"/></linearGradient>
 <radialGradient id="halo"><stop offset="0" stop-color="#ffe6c4" stop-opacity=".4"/><stop offset="1" stop-color="#ffe6c4" stop-opacity="0"/></radialGradient>
-<mask id="cres"><rect width="${W}" height="${H}" fill="#fff"/><circle cx="1222" cy="166" r="40" fill="#000"/></mask>
+<mask id="cres"><rect width="${W}" height="${H}" fill="#fff"/><circle cx="1222" cy="236" r="40" fill="#000"/></mask>
 </defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>
 ${iznikCorner(false)}${iznikCorner(true)}
 <!-- Hilal ve martılar -->
-<circle cx="1200" cy="180" r="130" fill="url(#halo)"/>
-<circle cx="1200" cy="180" r="46" fill="#ffe9c9" mask="url(#cres)"/>
-${gull(980, 260, 1.2)}${gull(1030, 236, 0.9)}${gull(560, 300, 1)}${gull(610, 280, 0.7)}
-${nazar(300, 120)}${lamp(380, 70, '#e8425a')}${lamp(1320, 90, '#3cc6b8')}
+<circle cx="1200" cy="250" r="130" fill="url(#halo)"/>
+<circle cx="1200" cy="250" r="46" fill="#ffe9c9" mask="url(#cres)"/>
+${gull(980, 320, 1.2)}${gull(1030, 296, 0.9)}${gull(560, 340, 1)}${gull(610, 320, 0.7)}
+${nazar(300, 200)}${lamp(380, 160, '#e8425a')}${lamp(1340, 170, '#3cc6b8')}
 <!-- Karşı kıyı (uzak, soluk) -->
-<g fill="#2a1226">${houses(820, 1600, 742, 5)}<path d="M820 742 Q1100 700 1600 720 V746 H820Z"/></g>
+<g fill="#2a1226">${houses(830, 1600, farGround, 5)}<path d="M820 800 ${Array.from({ length: 40 }, (_, i) => { const x = 820 + i * 20; return `L${x} ${f(farGround(x))}`; }).join(' ')} L1600 ${f(farGround(1600))} V800Z"/></g>
 <!-- Tarihi yarımada: saray, eski cami, büyük cami, serviler, evler -->
 <g fill="#13060e">
   ${palace(20, 760)}
@@ -543,9 +579,9 @@ ${nazar(300, 120)}${lamp(380, 70, '#e8425a')}${lamp(1320, 90, '#3cc6b8')}
   ${[250, 268, 540, 556, 880, 900].map((x) => cypress(x, 760, 70)).join('')}
   <path d="M0 760 H960 V770 H0Z"/>
   <!-- Galata tepesi -->
-  <path d="M1360 770 Q1440 690 1600 700 V770Z"/>
-  ${galata(1470, 700)}
-  ${houses(1380, 1440, 730, 11)}${houses(1500, 1600, 712, 12)}
+  <path d="M1360 800 ${Array.from({ length: 13 }, (_, i) => { const x = 1360 + i * 20; return `L${x} ${f(hillGround(x))}`; }).join(' ')} V800Z"/>
+  ${houses(1376, 1446, hillGround, 11)}${houses(1496, 1600, hillGround, 12)}
+  ${galata(1470, hillGround(1470) + 2)}
 </g>
 <g fill="#ffc96b" opacity=".75">
   ${[420, 455, 700, 735, 770, 1460, 1476, 120, 160].map((x, i) => `<rect x="${x}" y="${i > 6 ? 726 : i > 4 ? 600 : 742}" width="5" height="8" rx="2.5"/>`).join('')}
@@ -558,6 +594,53 @@ ${maiden(1040, 816)}
 ${ship(300, 850, 0.9)}${ship(1430, 860, 0.7)}
 ${kayik(620, 832)}${kayik(860, 872)}${kayik(1260, 846)}
 `);
+}
+
+/**
+ * Lokum temasının arka plan deseni: Türk kilimi gibi tekrar eden döşeme. Basamaklı göbek
+ * (madalyon), uçlarında çengeller, ortada sekiz köşeli yıldız, köşelerde yarım
+ * göbekler ve ince çerçeve. Çok soluk: gözü yormaz, yakından bakınca işçilik görünür.
+ */
+function lokumPattern() {
+  const S = 120;
+  const c = S / 2;
+  // Basamaklı baklava: yarıçap R, basamak st
+  const stepped = (cx, cy, R, st) => {
+    const pts = [];
+    for (let i = 0; i <= R / st; i++) pts.push([cx + i * st, cy - R + i * st], [cx + (i + 1) * st, cy - R + i * st]);
+    const q = pts.filter(([x]) => x <= cx + R);
+    const right = q.map(([x, y]) => [x, y]);
+    const all = [
+      ...right,
+      ...right.map(([x, y]) => [x, 2 * cy - y]).reverse(),
+      ...right.map(([x, y]) => [2 * cx - x, 2 * cy - y]),
+      ...right.map(([x, y]) => [2 * cx - x, y]).reverse(),
+    ];
+    return `M${all.map(([x, y]) => `${f(x)} ${f(y)}`).join(' L')}Z`;
+  };
+  const star8 = (cx, cy, r) => {
+    const pts = [];
+    for (let i = 0; i < 16; i++) {
+      const a = (Math.PI / 8) * i - Math.PI / 2;
+      const rr = i % 2 ? r * 0.45 : r;
+      pts.push(`${f(cx + Math.cos(a) * rr)} ${f(cy + Math.sin(a) * rr)}`);
+    }
+    return `M${pts.join(' L')}Z`;
+  };
+  // Göbeğin dört ucunda çengel (koç boynuzu kıvrımı)
+  const hook = (x, y, rot) => `<path transform="translate(${x} ${y}) rotate(${rot})" d="M0 0 v-7 q0 -4 4 -4 q4 0 4 4 q0 3 -3 3" fill="none" stroke="#e6b85c" stroke-width="1.6" stroke-linecap="round"/>`;
+  const corner = (x, y) => `<path d="${stepped(x, y, 16, 4)}" fill="#3cc6b8" fill-opacity=".55"/><path d="${star8(x, y, 5)}" fill="#e6b85c"/>`;
+  return svg(S, S, `
+<g opacity=".16">
+  <rect x=".75" y=".75" width="${S - 1.5}" height="${S - 1.5}" fill="none" stroke="#e6b85c" stroke-width="1" stroke-dasharray="2 4"/>
+  <path d="${stepped(c, c, 36, 6)}" fill="none" stroke="#e6b85c" stroke-width="1.6"/>
+  <path d="${stepped(c, c, 26, 5)}" fill="#f08cae" fill-opacity=".6"/>
+  <path d="${stepped(c, c, 15, 3)}" fill="#1d4fb8" fill-opacity=".8"/>
+  <path d="${star8(c, c, 9)}" fill="#e6b85c"/>
+  ${hook(c, c - 38, 0)}${hook(c + 38, c, 90)}${hook(c, c + 38, 180)}${hook(c - 38, c, 270)}
+  ${corner(0, 0)}${corner(S, 0)}${corner(0, S)}${corner(S, S)}
+  ${[[c, 6], [c, S - 6], [6, c], [S - 6, c]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.2" fill="#3cc6b8"/>`).join('')}
+</g>`);
 }
 
 function lokumMascot() {
@@ -583,8 +666,6 @@ ${logo(74, 92, 92, { look: [2, 0] })}
   <path d="M-10 -10 Q-14 6 -5 12 Q-9 22 -8 28 H8 Q9 22 5 12 Q14 6 10 -10Z" fill="url(#tea)" stroke="#f3e8e8" stroke-width="2" opacity=".95"/>
   <path d="M-4 -18 q4 -6 0 -12 M4 -18 q4 -6 0 -12" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/>
 </g>
-<!-- Lokum -->
-<g transform="translate(52 190) rotate(-12)"><rect x="-11" y="-11" width="22" height="22" rx="5" fill="#f6a3c1"/><circle cx="-4" cy="-3" r="1.4" fill="#fff"/><circle cx="4" cy="4" r="1.4" fill="#fff"/></g>
 `);
 }
 
@@ -593,11 +674,19 @@ ${logo(74, 92, 92, { look: [2, 0] })}
 // =====================================================================
 
 function binbirScene() {
-  const camel = (x, y, s, rider = false) => `<g transform="translate(${x} ${y}) scale(${s})" fill="#0b0817">
-<path d="M-34 -2 Q-36 -22 -22 -26 Q-14 -40 -2 -26 Q6 -38 18 -24 L26 -24 Q30 -34 36 -40 Q42 -48 48 -44 L50 -38 L44 -36 Q38 -28 36 -14 Q34 -2 26 0 Z"/>
-<path d="M-28 -2 L-30 26 L-25 26 L-22 0 M-12 0 L-12 26 L-7 26 L-6 0 M12 0 L14 26 L19 26 L18 -2 M24 -2 L28 26 L33 26 L30 -4"/>
-${rider ? '<path d="M-8 -30 Q-10 -46 0 -48 Q10 -46 8 -30Z"/><circle cx="0" cy="-54" r="6"/>' : ''}
+  // Tek hörgüçlü deve (sağa bakar, ayaklar y=0'da), sırtında saçaklı örtü. Üst kenarlarda
+  // ay ışığı çizgisi. İnsan figürü yok (düz ve yapay duruyordu).
+  const INK = '#0b0817';
+  const RIM = 'stroke="#e9cf98" stroke-opacity=".2" stroke-width="1.1"';
+  const camel = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" fill="${INK}">
+<path d="M-27 -46 C-31 -36 -29 -27 -26 -22 L-25 0 L-20.5 0 L-21 -22 C-19 -30 -17 -40 -15 -45Z M-16 -44 L-13 -22 L-15.5 0 L-11.5 0 L-9.5 -22 L-9 -44Z M23 -44 L25 -22 L22.5 0 L26.5 0 L29 -22 L29.5 -44Z M30 -46 L34 -22 L33 0 L37 0 L37.5 -22 L36 -47Z"/>
+<path d="M-34 -54 Q-41 -46 -39 -32" stroke="${INK}" stroke-width="2.2" fill="none"/>
+<path d="M-34 -54 C-36 -64 -26 -68 -16 -66 C-10 -92 10 -94 16 -66 C22 -64 26 -60 30 -56 C36 -62 38 -76 42 -86 C44 -92 50 -96 56 -94 L64 -90 Q67 -86 62 -84 L55 -84 C51 -82 49 -76 47 -68 C45 -58 42 -50 36 -46 C30 -42 24 -42 18 -42 L-24 -42 C-32 -42 -34 -46 -34 -54Z" ${RIM}/>
+<path d="M53 -94 l-2 -6 l5 4Z"/>
+<g transform="translate(0 -14)"><path d="M-14 -54 Q1 -48 16 -54 L17 -42 Q1 -37 -15 -42Z" fill="#2a1e3c"/><path d="M-14 -42 v4 M-8 -40 v4 M-2 -39 v4 M4 -39 v4 M10 -40 v4 M16 -42 v4" stroke="#2a1e3c" stroke-width="1.4"/></g>
 </g>`;
+  // Develer arasındaki ip (öndekinin kuyruğundan arkadakinin başına)
+  const rope = (x1, y1, x2, y2) => `<path d="M${x1} ${y1} Q${(x1 + x2) / 2} ${Math.max(y1, y2) + 8} ${x2} ${y2}" stroke="${INK}" stroke-width="1" fill="none"/>`;
   const palm = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" fill="#0a0716">
 <path d="M-4 0 Q-10 -60 6 -120 L12 -118 Q0 -60 6 0Z"/>
 <path d="M8 -120 Q-30 -136 -62 -112 Q-30 -122 6 -112Z M8 -120 Q40 -142 76 -118 Q40 -126 10 -112Z M8 -122 Q-12 -152 -40 -158 Q-14 -140 4 -116Z M8 -122 Q30 -156 58 -160 Q34 -140 12 -116Z M8 -118 Q-24 -100 -46 -70 Q-18 -96 6 -110Z M8 -118 Q40 -100 58 -72 Q34 -96 10 -110Z"/>
@@ -614,12 +703,13 @@ ${GLOW('g', 6)}
 <linearGradient id="dune2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b77e"/><stop offset=".18" stop-color="#9a7a62"/><stop offset=".6" stop-color="#3d2f45"/><stop offset="1" stop-color="#1f1830"/></linearGradient>
 <linearGradient id="pond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f4f7a"/><stop offset="1" stop-color="#15203d"/></linearGradient>
 </defs>
-<!-- Ay -->
+<!-- Ay ve kayan yıldız biraz aşağıda (üst şerit kapatmasın) -->
+<g transform="translate(0 80)">
 <circle cx="1250" cy="170" r="210" fill="url(#halo)"/>
 <circle cx="1250" cy="170" r="78" fill="#fff1c9"/>
 <circle cx="1226" cy="152" r="12" fill="#f1e1ac"/><circle cx="1276" cy="190" r="16" fill="#f1e1ac"/><circle cx="1270" cy="142" r="7" fill="#f1e1ac"/>
-<!-- Kayan yıldız -->
 <path d="M420 120 L300 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
+</g>
 <!-- Uzak saray silueti -->
 <g fill="#15122c">
   <rect x="960" y="590" width="190" height="40"/>
@@ -630,7 +720,8 @@ ${GLOW('g', 6)}
 <!-- Arka kumullar -->
 <path d="M0 640 Q200 590 420 630 Q640 670 860 610 Q1080 560 1300 620 Q1460 660 1600 610 V900 H0Z" fill="url(#dune1)"/>
 <!-- Kervan sırtta -->
-${camel(1030, 664, 0.9, true)}${camel(1120, 652, 0.85)}${camel(1205, 646, 0.8, true)}${camel(1285, 650, 0.75)}
+${camel(1080, 608, 0.62)}${rope(1157, 588, 1121, 560)}${camel(1180, 612, 0.6)}${rope(1256, 599, 1219, 565)}${camel(1278, 622, 0.58)}
+
 <!-- Ön kumullar (ay ışığı tepelerde) -->
 <path d="M0 760 Q260 690 560 740 Q860 790 1120 720 Q1380 660 1600 730 V900 H0Z" fill="url(#dune2)"/>
 <path d="M0 840 Q300 800 640 836 Q980 870 1280 820 Q1460 796 1600 830 V900 H0Z" fill="#1a1428" opacity=".85"/>
@@ -765,6 +856,7 @@ const files = {
   'ortacag-maskot.svg': ortacagMascot(),
   'lokum.svg': lokumScene(),
   'lokum-maskot.svg': lokumMascot(),
+  'lokum-desen.svg': lokumPattern(),
   'binbirgece.svg': binbirScene(),
   'binbirgece-maskot.svg': binbirMascot(),
 };
