@@ -14,5 +14,3 @@ apps/web/public/extension-version.json
 apps/web/public/dev/
 # Mağazaya yüklenecek zip (npm run store üretir)
 store/*.zip
-# Tema adaylarının önizlemeleri (node scripts/theme-candidates.mjs üretir)
-store/theme-candidates/

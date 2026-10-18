@@ -20,6 +20,8 @@ export const THEMES = [
   { id: 'opera', swatch: ['#0f3638', '#e8708a'] },
   { id: 'acikhava', swatch: ['#1a1340', '#ff8a6b'] },
   { id: 'gemi', swatch: ['#24425e', '#ec6a5a'] },
+  { id: 'tren', swatch: ['#0e1428', '#6fd6a8'] },
+  { id: 'ekspres', swatch: ['#0e1428', '#e6c26a'] },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];
@@ -33,12 +35,16 @@ export function currentTheme(): ThemeId {
   return isTheme(saved) ? saved : 'gece';
 }
 
+/** Sahnesi (public/themes/<tema>.svg) olan temalar; diğerlerinin sadece maskotu var. */
+const SCENE_THEMES: readonly ThemeId[] = [
+  'uzay', 'siber', 'ortacag', 'lokum', 'binbirgece',
+  'sinema', 'opera', 'acikhava', 'gemi', 'tren', 'ekspres',
+];
+
 /** Temanın resimleri (styles.css'teki --scene / --mascot / desen ile aynı adresler). */
 function themeImages(id: ThemeId): string[] {
   const urls = [`/themes/${id}-maskot.svg`];
-  if (['uzay', 'siber', 'ortacag', 'lokum', 'binbirgece', 'sinema', 'opera', 'acikhava', 'gemi'].includes(id)) {
-    urls.push(`/themes/${id}.svg`);
-  }
+  if (SCENE_THEMES.includes(id)) urls.push(`/themes/${id}.svg`);
   return urls;
 }
 
