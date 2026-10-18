@@ -450,29 +450,27 @@ ${eyes(30.5, 4.8)}
 
   // Sert bakışlı dedektif (sakalsız): hacimli dalgalı kahve saç, alçak çatık kaşlar, kısık gözler,
   // somurtkan ağız, açık gri gömlek, kahve örgü kravat, lacivert rüzgârlık (yazı/arma yok)
-  detective: badge(['#c9c2a8', '#463a28'], `
-<defs><linearGradient id="dskin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c38c68"/><stop offset=".45" stop-color="#e6b892"/><stop offset="1" stop-color="#b47c5a"/></linearGradient>
-<linearGradient id="dhair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a0703f"/><stop offset="1" stop-color="#5a3a20"/></linearGradient></defs>
-${shoulders('#21455a', '<path d="M17 47 L27 43 L30.5 56Z M47 47 L37 43 L33.5 56Z" fill="#2c5a74"/><path d="M26 43 L32 52 L38 43Z" fill="#d9dfe0"/><path d="M30.8 45 h2.4 l1 1.8 -.9 9 -1.3 1.4 -1.3 -1.4 -.9 -9Z" fill="#5a4630"/><circle cx="22.5" cy="56" r=".8" fill="#8a9aa4"/>')}
-<path d="M27.4 37 H36.6 L37 46 H27Z" fill="#b98262"/><path d="M27.4 40 Q32 43 36.6 40 V42 Q32 45 27.4 42Z" fill="#9a6648" opacity=".6"/>
-<ellipse cx="21.2" cy="30.5" rx="1.8" ry="3" fill="#c48a66"/><ellipse cx="42.8" cy="30.5" rx="1.8" ry="3" fill="#b47c5a"/>
-<path d="M21.6 27 Q21.6 15.6 32 15.6 Q42.4 15.6 42.4 27 Q42.4 36 39 40.4 Q35.6 44.6 32 44.6 Q28.4 44.6 25 40.4 Q21.6 36 21.6 27Z" fill="url(#dskin)"/>
-<path d="M23.6 34 Q24.8 37.6 27.2 39.6 M40.4 34 Q39.2 37.6 36.8 39.6" stroke="#a06a4a" stroke-width=".7" fill="none" opacity=".25"/>
-<path d="M21 26 Q19.4 16.6 24 11.6 Q29.4 6.4 36.4 7.6 Q43.6 8.8 45.2 15.4 Q46 20 43.2 25 Q42.6 21.2 40.4 19.6 Q41.2 22.8 38.6 23.8 Q38.8 20.2 35.6 18.8 Q30.6 17.6 26.6 19.4 Q23.4 21 21 26Z" fill="url(#dhair)"/>
-<path d="M24.4 14.6 Q29 9.2 36 10.4 Q40.6 11.4 43.2 15.4 M26.6 17.6 Q31 13.2 37.4 15 Q40 16 41.2 18.6 M38.4 20.4 Q39.6 21.6 39 23" stroke="#c08a52" stroke-width="1.1" fill="none" stroke-linecap="round"/>
-<path d="M23.4 27.4 Q26.6 26.6 30 28.6 L29.8 29.4 Q26.6 27.8 23.6 28.4Z M40.6 27.4 Q37.4 26.6 34 28.6 L34.2 29.4 Q37.4 27.8 40.4 28.4Z" fill="#4a2f1c"/>
-<path d="M24.8 30.6 Q27.2 29.4 29.8 30.8 Q27.4 31.8 24.8 30.6Z M34.2 30.8 Q36.8 29.4 39.2 30.6 Q36.6 31.8 34.2 30.8Z" fill="#f0ece4"/>
-<circle cx="27.6" cy="30.7" r=".95" fill="#6a8494"/><circle cx="36.4" cy="30.7" r=".95" fill="#6a8494"/>
-<circle cx="27.6" cy="30.7" r=".45" fill="#1a1a1a"/><circle cx="36.4" cy="30.7" r=".45" fill="#1a1a1a"/>
-<path d="M24.6 30.5 Q27.2 29 30 30.7 M34 30.7 Q36.8 29 39.4 30.5" stroke="#2a1a12" stroke-width="1.1" fill="none" stroke-linecap="round"/>
-<path d="M25 32.6 Q27.4 33.6 29.6 32.6 M34.4 32.6 Q36.6 33.6 39 32.6" stroke="#a87656" stroke-width=".6" fill="none" opacity=".8"/>
-<path d="M32.6 30.2 L31.4 36.4 Q32.4 37.4 34 36.6" stroke="#93624a" stroke-width=".9" fill="none" stroke-linecap="round"/>
-<path d="M28.6 37.2 Q27.6 39.6 28.4 41.4 M35.6 37.2 Q36.6 39.6 35.8 41.4" stroke="#a06a4a" stroke-width=".6" fill="none" opacity=".4"/>
-<path d="M29 40.4 Q32 39.5 35 40.4" stroke="#6e3628" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-
-<path d="M34.4 40.6 L41.6 43.2" stroke="#f3efe6" stroke-width="1.6"/><path d="M34.4 40.6 L36.6 41.4" stroke="#d29a52" stroke-width="1.7"/>
-<circle cx="41.9" cy="43.3" r=".95" fill="#ff6a2a"/><circle cx="41.9" cy="43.3" r="1.8" fill="#ff8a3d" opacity=".25"/>
-<path d="M42.4 42 Q44.2 38 42.6 35 Q41.2 32 43.4 28.4 Q44.8 26.2 44 23.6" stroke="#eeeeee" stroke-width=".8" fill="none" opacity=".45" stroke-linecap="round"/>`),
+  // Sakin bakışlı dedektif (sakalsız): geriye taranmış dalgalı kahve saç, düz kaşlar, sade yüz,
+  // ağzının kenarında sigara, açık mavi gömlek, kahve kravat, kahve kadife ceket
+  detective: badge(['#d8c6c8', '#5a4048'], `
+<defs><linearGradient id="dskin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d6a07c"/><stop offset=".5" stop-color="#ecc29e"/><stop offset="1" stop-color="#cf9772"/></linearGradient>
+<linearGradient id="dhair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6703e"/><stop offset="1" stop-color="#6e4526"/></linearGradient></defs>
+${shoulders('#5a3f30', '<path d="M17 47 L27 43 L30.5 56Z M47 47 L37 43 L33.5 56Z" fill="#6a4a38"/><path d="M26 43 L32 52 L38 43Z" fill="#c9d8e4"/><path d="M30.7 45 h2.6 l1 2 -.9 9 -1.4 1.4 -1.4 -1.4 -.9 -9Z" fill="#5a3e2a"/>')}
+<path d="M27.6 37 H36.4 L36.8 46 H27.2Z" fill="#d29c78"/>
+<ellipse cx="21.4" cy="30.5" rx="1.8" ry="2.9" fill="#d29c78"/><ellipse cx="42.6" cy="30.5" rx="1.8" ry="2.9" fill="#cc9470"/>
+<path d="M21.8 27 Q21.8 15.8 32 15.8 Q42.2 15.8 42.2 27 Q42.2 35.6 39 40 Q35.6 44.2 32 44.2 Q28.4 44.2 25 40 Q21.8 35.6 21.8 27Z" fill="url(#dskin)"/>
+<path d="M21.2 26 Q19.8 16.4 24.6 11.8 Q30 7 37 8.4 Q43.8 9.8 44.8 16.4 Q45.2 21 43 25 Q42 20.6 38.6 18.8 Q33.6 16.8 28 18.2 Q24 19.4 21.2 26Z" fill="url(#dhair)"/>
+<path d="M25 14.4 Q30 9.8 37 11 Q41.4 12 43.4 15.8 M27.6 17 Q32.4 13.6 38.6 15.6" stroke="#bf8a52" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+<path d="M24.2 27.6 Q27 26.8 29.8 27.8 M34.2 27.8 Q37 26.8 39.8 27.6" stroke="#6e4526" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+<path d="M24.8 30.6 Q27.2 29.2 29.6 30.6 Q27.2 32 24.8 30.6Z M34.4 30.6 Q36.8 29.2 39.2 30.6 Q36.8 32 34.4 30.6Z" fill="#fbf8f2"/>
+<circle cx="27.2" cy="30.6" r="1.1" fill="#5f7f96"/><circle cx="36.8" cy="30.6" r="1.1" fill="#5f7f96"/>
+<circle cx="27.2" cy="30.6" r=".5" fill="#1a1a1a"/><circle cx="36.8" cy="30.6" r=".5" fill="#1a1a1a"/>
+<path d="M24.6 30.4 Q27.2 28.8 29.8 30.4 M34.2 30.4 Q36.8 28.8 39.4 30.4" stroke="#3a2418" stroke-width=".9" fill="none" stroke-linecap="round"/>
+<path d="M32.4 31 L31.6 36 Q32.4 36.8 33.6 36.3" stroke="#b47e5c" stroke-width=".9" fill="none" stroke-linecap="round"/>
+<path d="M29.2 39.8 Q32 39.3 34.8 39.8" stroke="#9a5a48" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+<path d="M34.4 40 L41.4 42.4" stroke="#f3efe6" stroke-width="1.5"/><path d="M34.4 40 L36.5 40.7" stroke="#d29a52" stroke-width="1.6"/>
+<circle cx="41.7" cy="42.5" r=".9" fill="#ff6a2a"/>
+<path d="M42.2 41.4 Q43.8 38 42.4 35.4 Q41.2 32.8 43 29.6" stroke="#eeeeee" stroke-width=".7" fill="none" opacity=".4" stroke-linecap="round"/>`),
 
   // Gözlüklü büyücü çocuk: dağınık siyah saç, yuvarlak gözlük, alnında şimşek izi, yeşil gözler,
   // siyah okul cüppesi ve kırmızı-altın çizgili kravat
@@ -492,13 +490,14 @@ ${smile(37, 3.6)}`),
   redhead: badge(['#7ab6e8', '#1c3f6e'], `
 ${shoulders('#16161c', '<path d="M24 43 L32 53 L40 43Z" fill="#e8e8e8"/><path d="M30.6 45 h2.8 l1 2 -1 9 -1.4 1.4 -1.4 -1.4 -1 -9Z" fill="#9a1f24"/><path d="M30.8 48.6 L33.4 47.8 M30.6 51.8 L33.4 51 M30.8 55 L33.2 54.2" stroke="#e0b240" stroke-width="1"/>')}
 ${neck('#f6dcc6')}
-<ellipse cx="32" cy="30.6" rx="11.6" ry="13" fill="#f6dcc6"/>
-<path d="M20 30 Q18 16 30 14 Q42 12.6 45 22 Q45.6 26 44 31 Q43 24 40 21.6 Q35 19.6 30 21 Q25 21.6 22.4 25 Q20.8 27 20 30Z" fill="#e0662a"/>
-<path d="M24 17.6 Q30 14.6 38 16.4 M23 21.4 Q27 18.6 31 19" stroke="#f0904a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-${eyes(30.8, 4.8, '#2f6fb8')}
-<path d="M24.6 27.4 Q27 26.2 29.4 27.4 M34.6 27.4 Q37 26.2 39.4 27.4" stroke="#c0541f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-<g fill="#d0844a" opacity=".75"><circle cx="24.6" cy="34" r=".6"/><circle cx="26.2" cy="35" r=".6"/><circle cx="25.2" cy="35.8" r=".5"/><circle cx="39.4" cy="34" r=".6"/><circle cx="37.8" cy="35" r=".6"/><circle cx="38.8" cy="35.8" r=".5"/><circle cx="31" cy="33.4" r=".5"/><circle cx="33" cy="33.4" r=".5"/></g>
-<path d="M28.6 38 Q32 40.6 35.4 38" stroke="#6b2f2f" stroke-width="1.5" fill="none" stroke-linecap="round"/>`),
+<ellipse cx="21" cy="31" rx="1.8" ry="2.8" fill="#f0d0b8"/><ellipse cx="43" cy="31" rx="1.8" ry="2.8" fill="#f0d0b8"/>
+<ellipse cx="32" cy="30.8" rx="11.4" ry="13" fill="#f6dcc6"/>
+<path d="M20.4 31 Q18.6 19 23 14.4 Q28 9.6 35 10.4 Q42.6 11.4 44.6 18.6 Q45.6 24 43.6 31 Q43 26 41.4 23.4 Q39 25.6 34.6 25.4 Q37.4 23.4 37.6 21.4 Q33 24.6 26.6 24.2 Q24 24 22.6 22.8 Q21 26 20.4 31Z" fill="#d9612a"/>
+<path d="M24.4 16.4 Q30 12.4 37.4 13.6 Q41.6 14.6 43 18 M25.6 20.6 Q30 17.6 35.8 18.6 M38.4 19.6 Q40.6 20.6 41.4 22.8" stroke="#ee8a46" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+${eyes(31, 4.8, '#2f6fb8')}
+<path d="M24.6 27.8 Q27 26.8 29.4 27.8 M34.6 27.8 Q37 26.8 39.4 27.8" stroke="#c0541f" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+<g fill="#d0844a" opacity=".7"><circle cx="24.8" cy="34.2" r=".55"/><circle cx="26.4" cy="35.1" r=".55"/><circle cx="25.4" cy="35.9" r=".45"/><circle cx="39.2" cy="34.2" r=".55"/><circle cx="37.6" cy="35.1" r=".55"/><circle cx="38.6" cy="35.9" r=".45"/><circle cx="31" cy="33.6" r=".45"/><circle cx="33" cy="33.6" r=".45"/></g>
+<path d="M28.8 38.2 Q32 40.4 35.2 38.2" stroke="#6b2f2f" stroke-width="1.5" fill="none" stroke-linecap="round"/>`),
 
   // Kıvırcık saçlı bilgin kız: gür kabarık kahve saç, kahve gözler, cüppe ve kravat, kitap
   wizardgirl: badge(['#e6c58a', '#7a4e22'], `
@@ -529,22 +528,20 @@ ${shoulders('#161616', '<g transform="translate(32 55.5)"><path d="M-5 0 Q-5 -6.
   // Bilge armadillo (aynı dizinin vicdanı tarzında): turuncu zırh, uzun burun, kocaman sivri
   // kulaklar, sıkılmış yarı kapalı gözler, dişlerini gösteren ağız
   armadillo: badge(['#fbefcf', '#c49a5a'], `
-<path d="M6 64 Q4 42 18 36 Q32 31 46 36 Q60 42 58 64Z" fill="#f09a3e" stroke="#c46a22" stroke-width=".8"/>
-<path d="M8 50 Q32 39 56 50 M6 58 Q32 47 58 58" stroke="#c46a22" stroke-width="1.5" fill="none"/>
-<g fill="#ffc07a" opacity=".8"><circle cx="16" cy="45" r="1.6"/><circle cx="48" cy="45" r="1.6"/><circle cx="12" cy="55" r="1.4"/><circle cx="52" cy="55" r="1.4"/></g>
-<ellipse cx="18" cy="13" rx="5" ry="9" transform="rotate(-24 18 13)" fill="#f6a443" stroke="#c46a22" stroke-width=".7"/>
-<ellipse cx="46" cy="13" rx="5" ry="9" transform="rotate(24 46 13)" fill="#f6a443" stroke="#c46a22" stroke-width=".7"/>
-<ellipse cx="18.6" cy="13.6" rx="2.6" ry="6" transform="rotate(-24 18.6 13.6)" fill="#ffb3a6"/><ellipse cx="45.4" cy="13.6" rx="2.6" ry="6" transform="rotate(24 45.4 13.6)" fill="#ffb3a6"/>
-<ellipse cx="32" cy="26" rx="14" ry="12.5" fill="#f8ae52" stroke="#c46a22" stroke-width=".8"/>
-<path d="M26 34 Q26 46 32 47.6 Q38 46 38 34Z" fill="#f8ae52" stroke="#c46a22" stroke-width=".8" stroke-linejoin="round"/>
-<path d="M24 18 Q32 13.6 40 18" stroke="#d98a34" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-<ellipse cx="32" cy="46.4" rx="2.6" ry="1.8" fill="#4a2a18"/><circle cx="31.2" cy="45.9" r=".6" fill="#fff" opacity=".7"/>
-<ellipse cx="26.4" cy="26" rx="3.4" ry="3.9" fill="#fff"/><ellipse cx="37.6" cy="26" rx="3.4" ry="3.9" fill="#fff"/>
-<circle cx="27" cy="26.6" r="2.4" fill="#2a1a10"/><circle cx="37" cy="26.6" r="2.4" fill="#2a1a10"/>
-<circle cx="27.9" cy="25.5" r=".9" fill="#fff"/><circle cx="37.9" cy="25.5" r=".9" fill="#fff"/>
-<ellipse cx="22" cy="32" rx="2.6" ry="1.5" fill="#ff7f8f" opacity=".5"/><ellipse cx="42" cy="32" rx="2.6" ry="1.5" fill="#ff7f8f" opacity=".5"/>
-<path d="M29.6 39.4 Q32 41.2 34.4 39.4" stroke="#7a3a1a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-<rect x="31.2" y="40" width="1.8" height="1.6" rx=".4" fill="#fff"/>`),
+<path d="M6 64 Q4 42 18 36 Q32 31 46 36 Q60 42 58 64Z" fill="#f09a3e"/>
+<path d="M8 50 Q32 39 56 50 M6 58 Q32 47 58 58" stroke="#d47a2c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<g fill="#ffc07a" opacity=".7"><circle cx="16" cy="45" r="1.6"/><circle cx="48" cy="45" r="1.6"/><circle cx="12" cy="55" r="1.4"/><circle cx="52" cy="55" r="1.4"/></g>
+<path d="M14 21 Q10 8 16 3 Q22 6 25 17Z M50 21 Q54 8 48 3 Q42 6 39 17Z" fill="#f6a443"/>
+<path d="M16.4 18 Q14 9 17 6 Q20.6 9 22.4 16Z M47.6 18 Q50 9 47 6 Q43.4 9 41.6 16Z" fill="#ffb8a6"/>
+<ellipse cx="32" cy="26" rx="14" ry="12.5" fill="#f8ae52"/>
+<path d="M25.6 33 Q26 45 32 47.6 Q38 45 38.4 33Z" fill="#f8ae52"/>
+<path d="M24.6 18.4 Q32 14.4 39.4 18.4" stroke="#e8923c" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+<ellipse cx="32" cy="46.6" rx="2.6" ry="1.8" fill="#5a3420"/><circle cx="31.2" cy="46.1" r=".6" fill="#fff" opacity=".6"/>
+<ellipse cx="26.4" cy="26" rx="3.3" ry="3.8" fill="#fff"/><ellipse cx="37.6" cy="26" rx="3.3" ry="3.8" fill="#fff"/>
+<circle cx="27" cy="26.6" r="2.3" fill="#2a1a10"/><circle cx="37" cy="26.6" r="2.3" fill="#2a1a10"/>
+<circle cx="27.8" cy="25.6" r=".85" fill="#fff"/><circle cx="37.8" cy="25.6" r=".85" fill="#fff"/>
+<ellipse cx="22" cy="32" rx="2.6" ry="1.5" fill="#ff7f8f" opacity=".45"/><ellipse cx="42" cy="32" rx="2.6" ry="1.5" fill="#ff7f8f" opacity=".45"/>
+<path d="M30 40.2 Q32 41.6 34 40.2" stroke="#9a5a2a" stroke-width="1.1" fill="none" stroke-linecap="round"/>`),
 });
 
 for (const [id, content] of Object.entries(AVATARS)) {

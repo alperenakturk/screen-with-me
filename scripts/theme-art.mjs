@@ -562,8 +562,6 @@ ${mist(700, 0.18)}
   <rect x="-4" y="22" width="8" height="12" rx="4" fill="#b98cff" filter="url(#g)"/>
   <rect x="-4" y="60" width="8" height="10" rx="4" fill="#ffd27a" opacity=".7"/>
 </g>
-<!-- Renkli, sevimli ejderha ortada süzülüyor (gölge ejderhanın neşeli kuzeni) -->
-${dragon(930, 250, 0.65, 1, { body: '#e8746a', dark: '#b4483f', belly: '#ffd9a8', wing: '#f29a5c' })}
 <!-- Kale ve ejderha sağ kenarda: video izlerken de yanda görünsün -->
 <g transform="translate(150 0)">${city}${shadowDragon}</g>
 ${range(800, 120, 140, 21, '#141b2b', null)}
@@ -843,6 +841,24 @@ function binbirScene() {
   // Tek hörgüçlü deve (sağa bakar, ayaklar y=0'da), sırtında saçaklı örtü. Üst kenarlarda
   // ay ışığı çizgisi. İnsan figürü yok (düz ve yapay duruyordu).
   const INK = '#0b0817';
+  // Uzak saray: simetrik ve düz. Kemerli sur, kasnak üstünde büyük kubbe, iki yanda küçük
+  // kubbeler ve balkonlu iki minare; hepsi aynı zemine oturur (yamuk durmasın).
+  // (cx, base) zeminin ortası, s ölçek; lights: pencere ışıkları.
+  const palace = (cx, base, s, lights = false) => {
+    const X = (dx) => f(cx + dx * s);
+    const Y = (dy) => f(base - dy * s);
+    const dome = (dx, w, h, y0) => `<path d="M${X(dx - w)} ${Y(y0)} Q${X(dx - w)} ${Y(y0 + h * 0.9)} ${X(dx)} ${Y(y0 + h)} Q${X(dx + w)} ${Y(y0 + h * 0.9)} ${X(dx + w)} ${Y(y0)}Z"/><rect x="${X(dx - 0.8)}" y="${Y(y0 + h + 9)}" width="${f(1.6 * s)}" height="${f(9 * s)}"/>`;
+    const minaret = (dx) => `<rect x="${X(dx - 4)}" y="${Y(96)}" width="${f(8 * s)}" height="${f(96 * s)}"/><rect x="${X(dx - 6.5)}" y="${Y(70)}" width="${f(13 * s)}" height="${f(4 * s)}"/><path d="M${X(dx - 4)} ${Y(96)} L${X(dx)} ${Y(116)} L${X(dx + 4)} ${Y(96)}Z"/>`;
+    let arches = '';
+    for (let i = -3; i <= 3; i++) arches += `<path d="M${X(i * 14 - 4)} ${Y(0)} V${Y(10)} Q${X(i * 14)} ${Y(17)} ${X(i * 14 + 4)} ${Y(10)} V${Y(0)}Z" fill="#0d0b20"/>`;
+    const glow = lights ? `<g fill="#ffd58a" opacity=".6">${[-28, 0, 28].map((dx) => `<rect x="${X(dx - 2)}" y="${Y(30)}" width="${f(4 * s)}" height="${f(7 * s)}" rx="${f(2 * s)}"/>`).join('')}</g>` : '';
+    return `<g fill="#18143a">
+<rect x="${X(-60)}" y="${Y(26)}" width="${f(120 * s)}" height="${f(26 * s)}"/>
+<rect x="${X(-26)}" y="${Y(42)}" width="${f(52 * s)}" height="${f(16 * s)}"/>
+${dome(0, 26, 34, 42)}${dome(-44, 13, 18, 26)}${dome(44, 13, 18, 26)}
+${minaret(-70)}${minaret(70)}
+</g>${arches}${glow}`;
+  };
   const RIM = 'stroke="#e9cf98" stroke-opacity=".2" stroke-width="1.1"';
   const camel = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" fill="${INK}">
 <path d="M-27 -46 C-31 -36 -29 -27 -26 -22 L-25 0 L-20.5 0 L-21 -22 C-19 -30 -17 -40 -15 -45Z M-16 -44 L-13 -22 L-15.5 0 L-11.5 0 L-9.5 -22 L-9 -44Z M23 -44 L25 -22 L22.5 0 L26.5 0 L29 -22 L29.5 -44Z M30 -46 L34 -22 L33 0 L37 0 L37.5 -22 L36 -47Z"/>
@@ -886,19 +902,9 @@ ${GLOW('g', 6)}
   ${sparkle(118, -14, 6, '#fff1c9')}${sparkle(-130, 12, 4, '#fff1c9')}
 </g>
 <!-- Uzak saray silueti (sol kenarda) -->
-<g fill="#15122c" transform="translate(-915 0)">
-  <rect x="960" y="590" width="190" height="40"/>
-  <path d="M1010 592 Q1010 548 1040 540 Q1070 548 1070 592Z M1080 594 Q1080 566 1100 560 Q1120 566 1120 594Z M975 594 Q975 572 990 566 Q1005 572 1005 594Z"/>
-  <rect x="948" y="530" width="8" height="64"/><path d="M946 532 L952 510 L958 532Z"/><rect x="1150" y="540" width="8" height="54"/><path d="M1148 542 L1154 520 L1160 542Z"/>
-  <path d="M1040 540 V524" stroke="#15122c" stroke-width="3"/>
-</g>
+${palace(150, 630, 1.05)}
 <!-- Uzak şehir (ortada, kumulların ardında) -->
-<g fill="#1b1738">
-  <rect x="660" y="600" width="260" height="40"/>
-  <path d="M720 602 Q720 570 745 564 Q770 570 770 602Z M800 602 Q800 556 830 548 Q860 556 860 602Z M880 602 Q880 580 896 576 Q912 580 912 602Z"/>
-  <rect x="690" y="548" width="7" height="56"/><path d="M688 550 L693.5 530 L699 550Z"/><rect x="930" y="556" width="7" height="48"/><path d="M928 558 L933.5 540 L939 558Z"/>
-</g>
-<g fill="#ffd58a" opacity=".55"><rect x="740" y="612" width="4" height="7" rx="2"/><rect x="826" y="610" width="4" height="7" rx="2"/><rect x="890" y="614" width="4" height="7" rx="2"/></g>
+${palace(790, 618, 0.85, true)}
 <!-- Arka kumullar -->
 <path d="M0 640 Q200 590 420 630 Q640 670 860 610 Q1080 560 1300 620 Q1460 660 1600 610 V900 H0Z" fill="url(#dune1)"/>
 <!-- Kervan sırtta -->
