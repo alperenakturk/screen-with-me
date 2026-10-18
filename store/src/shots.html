@@ -60,7 +60,7 @@
         border-radius: 12px; background: rgb(15 16 20 / .88); border: 1px solid rgb(255 255 255 / .12); box-shadow: 0 6px 24px rgb(0 0 0 / .45); }
       .fab { position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 6px; background: rgb(15 16 20 / .85);
         border: 1px solid rgb(255 255 255 / .18); color: #fff; border-radius: 999px; padding: 5px 11px 5px 5px; font-weight: 600; }
-      .logo { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #7c5cff; font-size: 9px; }
+      .logo { display: block; width: 22px; height: 22px; }
       .row { display: flex; align-items: center; gap: 4px; }
       .spacer { flex: 1; }
       .reaction { width: 28px; height: 28px; border-radius: 999px; background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12);
@@ -83,7 +83,7 @@
       .popup { position: absolute; top: 40px; right: 14px; width: 340px; padding: 14px; background: #0f1014; border: 1px solid #343846;
         border-radius: 10px; box-shadow: 0 16px 50px rgb(0 0 0 / .65); display: flex; flex-direction: column; gap: 12px; font-size: 14px; z-index: 5; }
       .popup header { display: flex; align-items: center; gap: 8px; }
-      .popup .plogo { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: #7c5cff; font-size: 10px; }
+      .popup .plogo { display: block; width: 24px; height: 24px; }
       .status { margin-left: auto; font-size: 12px; color: #9a9fad; display: flex; align-items: center; gap: 5px; }
       .status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #3ccf8e; }
       .me { color: #9a9fad; } .me b { color: #ecedf1; } .me a { color: #8f74ff; margin-left: 6px; }
@@ -163,7 +163,7 @@
           headline('Create a room in one click', 'Send the invite link: friends land on the same page, in the same room.') +
           windowFrame(
             `<div class="popup">
-              <header><span class="plogo">▶</span><strong>ScreenWithMe</strong><span class="status">Connected</span></header>
+              <header><img class="plogo" src="../icon32.png" alt="" /><strong>ScreenWithMe</strong><span class="status">Connected</span></header>
               <div class="me">🐸 <b>Sam</b><a>Change</a></div>
               <div class="card"><div class="label">Invite link</div>
                 <div class="prow"><span class="input">screen-with-me…/r/k3x9q2#swm</span><span class="btn">Copied</span></div></div>
@@ -174,7 +174,7 @@
               <div class="card"><div class="label">In the room (3)</div>
                 <ul class="members"><li><b>🐸 Sam (you)</b></li><li>🦊 Alex</li><li>🐼 Mia</li></ul></div>
               <div class="btn danger">Leave room</div>
-            </div>` + video(`<div class="fab"><span class="logo">▶</span>ScreenWithMe</div>`),
+            </div>` + video(`<div class="fab"><img class="logo" src="../icon32.png" alt="" />ScreenWithMe</div>`),
             true,
           );
       } else if (shot === '3') {

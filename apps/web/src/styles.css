@@ -104,13 +104,67 @@ body {
 }
 
 .logo {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: var(--accent);
-  font-size: 12px;
+}
+
+.logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.12s;
+}
+
+/* Logo canlandırması: üzerine gelince ağızdaki oynat düğmesine basılmış gibi
+   duraklata döner, gözler bir kez kırpılır; tıklayınca logo hafifçe içe göçer. */
+.logo .logo-play,
+.logo .logo-pause,
+.logo .logo-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.logo .logo-pause {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.brand:hover .logo .logo-play,
+.brand:focus-visible .logo .logo-play {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.brand:hover .logo .logo-pause,
+.brand:focus-visible .logo .logo-pause {
+  opacity: 1;
+  transform: none;
+}
+
+.brand:hover .logo .logo-eyes {
+  animation: logo-blink 0.4s ease 0.1s;
+}
+
+.brand:active .logo svg {
+  transform: scale(0.92);
+}
+
+@keyframes logo-blink {
+  50% {
+    transform: scaleY(0.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo svg,
+  .logo .logo-play,
+  .logo .logo-pause,
+  .logo .logo-eyes {
+    transition: none;
+    animation: none !important;
+  }
 }
 
 .topbar-right {

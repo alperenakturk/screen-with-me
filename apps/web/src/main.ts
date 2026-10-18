@@ -1,4 +1,5 @@
 import './styles.css';
+import { createLogo } from '@swm/shared/logo';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { renderHome } from './home.ts';
 import { lang, setLang, translate, type Lang } from './i18n.ts';
@@ -8,6 +9,9 @@ import { applyTheme, currentTheme, renderThemePicker } from './themes.ts';
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
 applyTheme(currentTheme());
+
+// Üst çubuktaki logo: üzerine gelince ağızdaki oynat düğmesi duraklata döner.
+document.querySelector('.brand .logo')?.append(createLogo(document, { animated: true }));
 
 // Üst menüdeki 🎨: tema seçme kutusu.
 const themeButton = document.querySelector<HTMLButtonElement>('#theme-button')!;

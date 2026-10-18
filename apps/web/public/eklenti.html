@@ -7,10 +7,7 @@
     <title>ScreenWithMe extension</title>
     <meta name="title-en" content="ScreenWithMe extension" />
     <meta name="title-tr" content="ScreenWithMe eklentisi" />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cpath d='M12 9l12 7-12 7z' fill='white'/%3E%3C/svg%3E"
-    />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <script src="/lang.js"></script>
     <style>
       :root {
@@ -32,8 +29,7 @@
       /* Mağaza başlığı */
       .store { display: flex; gap: 24px; align-items: center; background: var(--surface); border: 1px solid var(--border);
         border-radius: 20px; padding: 28px; }
-      .store-icon { flex: none; width: 112px; height: 112px; border-radius: 26px; background: linear-gradient(135deg, #8f74ff, #5b3cf0);
-        display: grid; place-items: center; font-size: 44px; color: white; box-shadow: 0 10px 30px rgb(124 92 255 / .35); }
+      .store-icon { flex: none; width: 112px; height: 112px; border-radius: 28px; box-shadow: 0 10px 30px rgb(124 92 255 / .35); }
       .store h1 { margin: 0; font-size: 30px; }
       .store p { margin: 4px 0 12px; color: var(--muted); }
       .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -121,7 +117,7 @@
       <!-- ===================== ENGLISH ===================== -->
       <div data-lang-block="en">
         <div class="store">
-          <div class="store-icon">▶</div>
+          <img class="store-icon" src="/logo.svg" alt="" />
           <div>
             <h1>ScreenWithMe</h1>
             <p>Watch the video on any website together with your friends, in sync.</p>
@@ -238,7 +234,7 @@
       <!-- ===================== TÜRKÇE ===================== -->
       <div data-lang-block="tr" hidden>
         <div class="store">
-          <div class="store-icon">▶</div>
+          <img class="store-icon" src="/logo.svg" alt="" />
           <div>
             <h1>ScreenWithMe</h1>
             <p>Arkadaşlarınla herhangi bir sitedeki videoyu aynı anda izle.</p>

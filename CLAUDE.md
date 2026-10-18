@@ -23,7 +23,8 @@ açık kaynak bir araç: **site** (YouTube / doğrudan video) + **tarayıcı ekl
 ```
 packages/shared   Ortak: protocol.ts (mesajlar + doğrulama), room-logic.ts (sıra/oynatma kuralları),
                   sync-engine.ts (senkron motoru), clock.ts, connection.ts (WebSocket istemcisi),
-                  media.ts (link tanıma), video-element.ts (<video> sarmalayıcı + puanlama), room-id.ts
+                  media.ts (link tanıma), video-element.ts (<video> sarmalayıcı + puanlama), room-id.ts,
+                  logo.ts (logonun tek kaynağı: şekiller + SVG üretimi)
 apps/server       Cloudflare Worker + Durable Object (src/room.ts: oda başına bir nesne,
                   WebSocket Hibernation, yönetici/atma, sohbet geçmişi, hız sınırı)
 apps/web          Site (Vite, sade TS/HTML/CSS). src/room.ts oda sayfası; src/ui/* paneller
@@ -44,7 +45,7 @@ npm run build                # eklenti (zip'i siteye koyar) + site
 npm run deploy               # test + build + Cloudflare'e yükle
 npm run build:extension:dev  # yerel sunucuya bağlanan eklenti (apps/extension/dist)
 npm run store                # Web Store paketi: store/ (zip + ekran görüntüleri + tanıtım görseli)
-node scripts/make-icons.mjs  # eklenti simgelerini yeniden üret (apps/extension/static/icon*.png)
+node scripts/make-icons.mjs  # logo.ts'den eklenti simgeleri (icon*.png) + apps/web/public/logo.svg
 ```
 Mağaza formunda ne yazılacağı: `docs/web-store.md`. Ekran görüntüleri `store/src/shots.html`'den
 çekilir; eklentinin görünümü değişirse oradaki taklidi de güncelle.

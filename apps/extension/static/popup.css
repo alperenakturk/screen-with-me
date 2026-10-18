@@ -40,13 +40,9 @@ header {
 }
 
 .logo {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 24px;
   height: 24px;
-  border-radius: 7px;
-  background: var(--accent);
-  font-size: 10px;
 }
 
 .status {

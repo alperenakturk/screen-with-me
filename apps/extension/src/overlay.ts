@@ -1,3 +1,4 @@
+import { createLogo } from '@swm/shared/logo';
 import { CHAT_MAX_LENGTH, REACTIONS, cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import { t } from './i18n.ts';
 import type { ChatLine, RoomInfo } from './messages.ts';
@@ -49,7 +50,8 @@ const CSS = `
 .fab { display: flex; align-items: center; gap: 6px; background: rgb(15 16 20 / .85); border: 1px solid rgb(255 255 255 / .18);
   color: #fff; border-radius: 999px; padding: 5px 11px 5px 5px; font: inherit; font-weight: 600; cursor: pointer;
   box-shadow: 0 4px 16px rgb(0 0 0 / .4); }
-.logo { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #7c5cff; font-size: 9px; }
+.logo { display: block; width: 22px; height: 22px; }
+.logo svg { display: block; width: 100%; height: 100%; }
 .badge { background: #7c5cff; border-radius: 999px; padding: 0 6px; font-size: 11px; }
 .bar { width: min(400px, calc(100% - 24px)); display: flex; flex-direction: column; gap: 8px; padding: 8px;
   border-radius: 12px; background: rgb(15 16 20 / .88); border: 1px solid rgb(255 255 255 / .12);
@@ -133,7 +135,7 @@ export function createOverlay(actions: OverlayActions) {
 
     const badge = el('span', 'badge');
     badge.hidden = true;
-    const fab = el('button', 'fab', el('span', 'logo', '▶'), 'ScreenWithMe', badge);
+    const fab = el('button', 'fab', el('span', 'logo', createLogo(document)), 'ScreenWithMe', badge);
     fab.type = 'button';
     fab.addEventListener('click', () => setBar(true));
 

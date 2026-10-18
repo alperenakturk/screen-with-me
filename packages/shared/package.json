@@ -12,7 +12,8 @@
     "./player": "./src/player.ts",
     "./sync-engine": "./src/sync-engine.ts",
     "./video-element": "./src/video-element.ts",
-    "./connection": "./src/connection.ts"
+    "./connection": "./src/connection.ts",
+    "./logo": "./src/logo.ts"
   },
   "scripts": {
     "test": "vitest run",
