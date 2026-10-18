@@ -48,8 +48,15 @@ const tr = {
   waitingForYou: '⏳ Videon yükleniyor, herkes seni bekliyor…',
   close: 'Kapat',
   copyInvite: 'Davet linkini kopyala',
-  next: 'Sonraki',
   chatEmpty: 'Henüz mesaj yok.',
+  moreReactions: 'Diğer emojiler',
+  slowDown: 'Biraz yavaş: çok hızlı mesaj gönderiyorsun.',
+  intro: 'İyi seyirler!',
+  'error.site': 'Burası zaten ScreenWithMe: odanı bu sayfada, sitenin kendisinde kurabilirsin.',
+  kick: 'Odadan çıkar',
+  kickConfirm: '{name} odadan çıkarılsın mı? Sen yasağı kaldırana kadar geri giremez.',
+  bans: 'Çıkarılanlar',
+  unban: 'Yasağı kaldır',
 };
 
 type Key = keyof typeof tr;
@@ -102,8 +109,15 @@ const en: Record<Key, string> = {
   waitingForYou: '⏳ Your video is loading, everyone is waiting for you…',
   close: 'Close',
   copyInvite: 'Copy invite link',
-  next: 'Next',
   chatEmpty: 'No messages yet.',
+  moreReactions: 'More emojis',
+  slowDown: "Slow down: you're sending messages too fast.",
+  intro: 'Enjoy the show!',
+  'error.site': 'This is ScreenWithMe itself: create your room right here on the website.',
+  kick: 'Remove from room',
+  kickConfirm: "Remove {name} from the room? They can't come back until you unban them.",
+  bans: 'Removed',
+  unban: 'Unban',
 };
 
 // Dil sitedekiyle aynı: site-bridge sitedeki seçimi 'lang' olarak buraya yazar.

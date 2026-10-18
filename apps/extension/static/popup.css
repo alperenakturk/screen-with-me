@@ -287,3 +287,54 @@ label,
 .members li.me {
   font-weight: 600;
 }
+
+.members li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.members li span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.members.banned li::before {
+  color: var(--danger);
+}
+
+/* Küçük satır içi butonlar (çıkar, yasağı kaldır, emoji sayfası) */
+.mini {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mini:hover {
+  border-color: var(--muted);
+}
+
+.reactions .pager {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+}
+
+.reactions .pager .mini {
+  font-size: 7px;
+  padding: 1px 4px;
+  line-height: 1.1;
+}
+
+#create:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

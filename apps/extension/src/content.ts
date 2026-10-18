@@ -31,11 +31,6 @@ let engine: SyncEngine | null = null;
 const clock = new OffsetClock();
 const overlay = createOverlay({
   send: (message) => send({ type: 'send', message }),
-  // "Sonraki": o an oynayan öğeden sonrakine geç (sunucu aynı anda gelen istekleri bir kez uygular).
-  onNext: () => {
-    const id = engine?.getState()?.item?.id ?? state?.item?.id;
-    if (id) send({ type: 'send', message: { t: 'next', from: id } });
-  },
   // Hız: videoya uygulanır ve odaya yayılır (sitenin kendi hız menüsü olmasa bile çalışır).
   onRate: (rate) => engine?.requestRate(rate),
 });
@@ -211,6 +206,9 @@ function onMessage(message: BackgroundMessage): void {
       break;
     case 'notice':
       overlay.notice(message.kind, message.name);
+      break;
+    case 'intro':
+      overlay.intro();
       break;
     case 'waiting':
       overlay.setWaiting(message.names, message.me);

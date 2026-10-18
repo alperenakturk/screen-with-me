@@ -61,6 +61,15 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'rename', name: '' })).toBeNull();
     expect(parse({ t: 'kick', id: 'abc12345' })).toEqual({ t: 'kick', id: 'abc12345' });
     expect(parse({ t: 'kick', id: '../x' })).toBeNull();
+    expect(parse({ t: 'unban', id: 'abc12345' })).toEqual({ t: 'unban', id: 'abc12345' });
+    expect(parse({ t: 'unban', id: 42 })).toBeNull();
+  });
+
+  it('accepts emojis from every reaction page, nothing else', () => {
+    expect(parse({ t: 'react', emoji: '😂' })).toEqual({ t: 'react', emoji: '😂' });
+    expect(parse({ t: 'react', emoji: '💩' })).toEqual({ t: 'react', emoji: '💩' });
+    expect(parse({ t: 'react', emoji: '👻' })).toEqual({ t: 'react', emoji: '👻' });
+    expect(parse({ t: 'react', emoji: '🍕' })).toBeNull();
   });
 
   it('strips unknown fields from media', () => {

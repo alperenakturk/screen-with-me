@@ -23,8 +23,8 @@ const MAX_MEMBERS = 50;
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 /** Sonradan gelenlerin görebileceği son sohbet mesajı sayısı. */
 const CHAT_HISTORY = 50;
-/** Odadan çıkarılan kişi bu süre boyunca geri giremez. */
-const KICK_BAN_MS = 10 * 60 * 1000;
+/** Yasaklı listesi en fazla bu kadar kişi tutar (en eskisi düşer). */
+const MAX_BANS = 200;
 /** Oda adına yapılan hareketler (otomatik bekleme) bu "kişi" adına duyurulur. */
 const SYSTEM: Member = { id: SYSTEM_MEMBER_ID, name: 'ScreenWithMe' };
 
@@ -39,6 +39,13 @@ interface Attachment {
 }
 
 type Joined = Attachment & { name: string };
+
+/** Bir yasak: yönetici kaldırana kadar (ya da oda silinene kadar) geçerli. */
+interface Ban {
+  id: string;
+  name: string;
+  avatar?: Avatar;
+}
 
 function memberOf(attachment: Joined): Member {
   return attachment.avatar
@@ -77,8 +84,8 @@ export class Room extends DurableObject<Env> {
   private chat: ChatMessage[] = [];
   private titles = new Map<string, string>();
   private hostKey: string | null = null;
-  /** Atılanlar: anahtar → ne zamana kadar giremez (ms). */
-  private bans: Record<string, number> = {};
+  /** Atılanlar: kişi anahtarı (keyOf) → yasak. */
+  private bans: Record<string, Ban> = {};
   private settings: RoomSettings = { waitForAll: true };
   /** "Herkes hazır": kim takıldı, oda bekliyor mu (bellekte; uyku sırasında zaten kimse oynatmıyor). */
   private readonly waits = new WaitTracker();
@@ -87,7 +94,8 @@ export class Room extends DurableObject<Env> {
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
   private readonly reactionLimit = new RateLimiter(6, 1.5);
-  private readonly chatLimit = new RateLimiter(5, 0.5);
+  // Sohbet: art arda 8 mesaj, sonra saniyede 1 (daha sıkısı arkadaşlar arasında yazışırken takılıyordu).
+  private readonly chatLimit = new RateLimiter(8, 1);
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -96,7 +104,9 @@ export class Room extends DurableObject<Env> {
       if (saved && Array.isArray(saved.queue)) this.room = saved;
       this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
       this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
-      this.bans = (await ctx.storage.get<Record<string, number>>('bans')) ?? {};
+      // Eski biçim (anahtar → bitiş zamanı, 10 dk'lık yasak) artık geçersiz; sadece yeni biçim okunur.
+      const bans = (await ctx.storage.get<Record<string, Ban | number>>('bans')) ?? {};
+      for (const [key, ban] of Object.entries(bans)) if (typeof ban === 'object') this.bans[key] = ban;
       this.settings = (await ctx.storage.get<RoomSettings>('settings')) ?? { waitForAll: true };
     });
   }
@@ -170,12 +180,15 @@ export class Room extends DurableObject<Env> {
       case 'kick':
         await this.kick(ws, me, message.id);
         return;
+      case 'unban':
+        await this.unban(ws, message.id);
+        return;
       case 'ready':
         this.waits.setReady(me.id, message.ready);
         await this.evaluateWait();
         return;
       case 'settings':
-        if (this.hostId() !== me.id) {
+        if (!this.isHost(ws)) {
           this.sendTo(ws, { t: 'error', code: 'not_host' });
           return;
         }
@@ -229,8 +242,7 @@ export class Room extends DurableObject<Env> {
       return;
     }
     if (hello.cid) attachment.cid = hello.cid;
-    const until = this.bans[keyOf(attachment)];
-    if (until && until > Date.now()) {
+    if (this.bans[keyOf(attachment)]) {
       this.sendTo(ws, { t: 'error', code: 'kicked' });
       ws.close(4003, 'kicked');
       return;
@@ -261,10 +273,11 @@ export class Room extends DurableObject<Env> {
       waiting: this.waits.waiting,
     });
     this.broadcast({ t: 'members', members, hostId }, ws);
+    this.sendBans();
   }
 
   private async kick(ws: WebSocket, me: Member, targetId: string): Promise<void> {
-    if (this.hostId() !== me.id) {
+    if (!this.isHost(ws)) {
       this.sendTo(ws, { t: 'error', code: 'not_host' });
       return;
     }
@@ -273,10 +286,23 @@ export class Room extends DurableObject<Env> {
     const attachment = target.deserializeAttachment() as Attachment;
     if (!attachment.name) return;
 
-    // Süresi geçmiş yasakları temizle, yenisini ekle.
-    const now = Date.now();
-    for (const [key, until] of Object.entries(this.bans)) if (until <= now) delete this.bans[key];
-    this.bans[keyOf(attachment)] = now + KICK_BAN_MS;
+    // Yönetici kendi başka sekmesini (aynı tarayıcı kimliği) çıkarıyorsa: yasaklama, sadece kapat.
+    if (keyOf(attachment) === keyOf(ws.deserializeAttachment() as Attachment)) {
+      try {
+        target.close(4000, 'duplicate');
+      } catch {
+        // Zaten kapanmış olabilir.
+      }
+      this.broadcast(this.membersMessage(target), target);
+      return;
+    }
+
+    // Kalıcı yasak: yönetici listeden kaldırana kadar geri giremez.
+    const keys = Object.keys(this.bans);
+    if (keys.length >= MAX_BANS) delete this.bans[keys[0]!];
+    const ban: Ban = { id: newId(), name: attachment.name };
+    if (attachment.avatar) ban.avatar = attachment.avatar;
+    this.bans[keyOf(attachment)] = ban;
     await this.ctx.storage.put('bans', this.bans);
 
     this.sendTo(target, { t: 'error', code: 'kicked' });
@@ -287,6 +313,44 @@ export class Room extends DurableObject<Env> {
     }
     this.broadcast({ t: 'kicked', who: memberOf({ ...attachment, name: attachment.name }), by: me }, target);
     this.broadcast(this.membersMessage(target), target);
+    // Aynı kişinin başka sekmedeki bağlantıları da (ör. site + eklenti) çıkarılır.
+    for (const other of this.openSockets(target)) {
+      const a = other.deserializeAttachment() as Attachment | null;
+      if (a && other !== ws && keyOf(a) === keyOf(attachment)) {
+        this.sendTo(other, { t: 'error', code: 'kicked' });
+        try {
+          other.close(4003, 'kicked');
+        } catch {
+          // Zaten kapanmış olabilir.
+        }
+      }
+    }
+    this.sendBans();
+  }
+
+  private async unban(ws: WebSocket, banId: string): Promise<void> {
+    if (!this.isHost(ws)) {
+      this.sendTo(ws, { t: 'error', code: 'not_host' });
+      return;
+    }
+    const entry = Object.entries(this.bans).find(([, ban]) => ban.id === banId);
+    if (!entry) return;
+    delete this.bans[entry[0]];
+    await this.ctx.storage.put('bans', this.bans);
+    this.sendBans();
+  }
+
+  /** Yasaklılar listesini yöneticiye (onun bütün bağlantılarına) yollar. */
+  private sendBans(except?: WebSocket): void {
+    const hostId = this.hostId(except);
+    const people = this.joined(except);
+    const host = people.find((a) => a.id === hostId);
+    if (!host) return;
+    const message: ServerMessage = { t: 'bans', bans: Object.values(this.bans) };
+    for (const ws of this.openSockets(except)) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (a?.name && keyOf(a) === keyOf(host)) this.sendTo(ws, message);
+    }
   }
 
   /**
@@ -382,6 +446,8 @@ export class Room extends DurableObject<Env> {
       this.waits.remove(attachment.id);
     }
     this.broadcast(this.membersMessage(leaving), leaving);
+    // Yönetici çıktıysa geçici yönetici listeyi alsın.
+    this.sendBans(leaving);
     // Beklenen kişi çıktıysa oda beklemeyi bıraksın.
     if (this.waits.waitingSince !== null) await this.evaluateWait();
     if (this.openSockets(leaving).length === 0) {
@@ -405,11 +471,24 @@ export class Room extends DurableObject<Env> {
   /** Şu anki yöneticinin üye ID'si: asıl yönetici odadaysa o, değilse odadaki en eski kişi. */
   private hostId(except?: WebSocket): string | null {
     const people = this.joined(except);
-    const host = people.find((a) => keyOf(a) === this.hostKey);
+    // Yönetici birden çok sekmeyle bağlıysa en son açtığı (o an kullandığı) sekme 👑 gösterilir.
+    let host: Joined | null = null;
+    for (const a of people) if (keyOf(a) === this.hostKey && (!host || (a.joinedAt ?? 0) >= (host.joinedAt ?? 0))) host = a;
     if (host) return host.id;
     let oldest: Joined | null = null;
     for (const a of people) if (!oldest || (a.joinedAt ?? 0) < (oldest.joinedAt ?? 0)) oldest = a;
     return oldest?.id ?? null;
+  }
+
+  /**
+   * Bu bağlantı yöneticinin mi? Kişiye göre bakılır: yönetici aynı tarayıcıdan iki
+   * sekmeyle (ör. site + eklenti) bağlıysa ikisi de yöneticidir.
+   */
+  private isHost(ws: WebSocket): boolean {
+    const hostId = this.hostId();
+    const host = this.joined().find((a) => a.id === hostId);
+    const me = ws.deserializeAttachment() as Attachment | null;
+    return !!host && !!me && keyOf(me) === keyOf(host);
   }
 
   private membersMessage(except?: WebSocket): Extract<ServerMessage, { t: 'members' }> {
@@ -436,7 +515,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'react' | 'chat' | 'rename' | 'kick' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'react' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

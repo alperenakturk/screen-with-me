@@ -63,6 +63,9 @@
       .logo { display: block; width: 22px; height: 22px; }
       .row { display: flex; align-items: center; gap: 4px; }
       .spacer { flex: 1; }
+      .pager { display: flex; flex-direction: column; gap: 2px; margin-left: 2px; }
+      .pager i { width: 18px; height: 13px; border-radius: 4px; font-size: 7px; font-style: normal; display: grid; place-items: center;
+        background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12); }
       .reaction { width: 28px; height: 28px; border-radius: 999px; background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12);
         font-size: 15px; display: grid; place-items: center; }
       .icon { min-width: 28px; height: 28px; border-radius: 8px; background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12);
@@ -125,8 +128,8 @@
 
       const bar = (speed = '1x') => `
         <div class="bar">
-          <div class="row">${REACTIONS.map((e) => `<span class="reaction">${e}</span>`).join('')}<span class="spacer"></span>
-            <span class="dot"></span><span class="icon">👥 3</span><span class="icon">🔗</span><span class="icon">⏭</span><span class="icon">✕</span></div>
+          <div class="row">${REACTIONS.map((e) => `<span class="reaction">${e}</span>`).join('')}
+            <span class="pager"><i>▲</i><i>▼</i></span><span class="spacer"></span><span class="dot"></span><span class="icon">👥 3</span><span class="icon">🔗</span><span class="icon">✕</span></div>
           <div class="row"><span class="field ph">Quick message…</span><span class="icon send">➤</span><span class="select">${speed} ▾</span></div>
         </div>`;
 

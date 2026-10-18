@@ -1,14 +1,20 @@
-import type { ClientMessage, Member } from '@swm/shared/protocol';
+import type { BanEntry, ClientMessage, Member } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 
-/** Kişiler sekmesi: odadakiler, oda yöneticisi (👑) ve yönetici için "çıkar" butonu. */
+/**
+ * Kişiler sekmesi: odadakiler, oda yöneticisi (👑), yönetici için "çıkar" butonu
+ * ve çıkarılanlar listesi (yasağı kaldırmak için).
+ */
 export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessage) => void) {
   const list = root.querySelector<HTMLUListElement>('#members')!;
   const hint = root.querySelector<HTMLElement>('#host-hint')!;
+  const bansBox = root.querySelector<HTMLElement>('#bans')!;
+  const bansList = root.querySelector<HTMLUListElement>('#bans-list')!;
   let members: Member[] = [];
   let hostId: string | null = null;
   let myId: string | null = null;
+  let bans: BanEntry[] = [];
 
   function render(): void {
     const iAmHost = myId !== null && myId === hostId;
@@ -31,6 +37,22 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
     );
     const host = members.find((m) => m.id === hostId);
     hint.textContent = iAmHost ? t('youAreHost') : host ? t('hostIs', { name: host.name }) : '';
+
+    // Çıkarılanlar: sadece yönetici görür.
+    bansBox.hidden = !iAmHost || bans.length === 0;
+    bansList.replaceChildren(
+      ...bans.map((ban) => {
+        const unban = el('button', { type: 'button', class: 'btn small-btn' }, t('unban'));
+        unban.addEventListener('click', () => send({ t: 'unban', id: ban.id }));
+        return el(
+          'li',
+          { class: 'person banned' },
+          el('span', { class: 'person-avatar', 'aria-hidden': 'true' }, ban.avatar ?? '🙂'),
+          el('span', { class: 'person-name' }, ban.name),
+          unban,
+        );
+      }),
+    );
   }
 
   return {
@@ -38,6 +60,10 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
       members = next;
       hostId = nextHost;
       myId = me;
+      render();
+    },
+    setBans(next: BanEntry[]): void {
+      bans = next;
       render();
     },
     get hostId(): string | null {

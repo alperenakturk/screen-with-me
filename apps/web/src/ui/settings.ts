@@ -65,5 +65,15 @@ export function createSettingsPanel(
     save('opt:reactions', reactions.checked ? '1' : '0');
   });
 
-  return { options };
+  return {
+    options,
+    /** Başka yerden (eklentiden) gelen isim/avatarı uygular ve odaya bildirir. */
+    setIdentity(nextName: string, nextAvatar: Avatar): void {
+      name = nextName;
+      avatar = nextAvatar;
+      input.value = name;
+      drawAvatars();
+      onIdentity(name, avatar);
+    },
+  };
 }

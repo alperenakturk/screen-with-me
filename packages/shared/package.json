@@ -13,7 +13,8 @@
     "./sync-engine": "./src/sync-engine.ts",
     "./video-element": "./src/video-element.ts",
     "./connection": "./src/connection.ts",
-    "./logo": "./src/logo.ts"
+    "./logo": "./src/logo.ts",
+    "./intro": "./src/intro.ts"
   },
   "scripts": {
     "test": "vitest run",

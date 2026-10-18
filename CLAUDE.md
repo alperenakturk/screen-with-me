@@ -83,7 +83,16 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   oda yoksa "idle" ile uyur). En iyi videoyu seçen arka plandır (çerçevelerin puanına göre).
   Sayfaya eklenen her UI kapalı shadow DOM'da; kullanıcı metni hep `textContent`.
 - **Güvenlik:** Kullanıcı verisi asla `innerHTML` ile yazılmaz. Hız sınırları sunucuda.
-  Yönetici/atma kalıcı tarayıcı kimliğiyle (`cid`, hesap değil); atılan 10 dk giremez.
+  Yönetici/atma kalıcı tarayıcı kimliğiyle (`cid`, hesap değil); atılan, yönetici yasağı
+  kaldırana kadar giremez (`bans` listesi sadece yöneticiye gider, `unban` ile kalkar; cid
+  istemcilere hiç gönderilmez). Yönetici kontrolü kişiye göre (`isHost`): aynı kişinin site +
+  eklenti sekmesi ikisi de yöneticidir.
+- **Site ↔ eklenti el değiştirme:** site `{type:'join', roomId, url}` yollar; eklenti sekmeyi
+  hemen o adrese götürür ve `{source:'screenwithme-extension', type:'joining'}` ile cevap verir,
+  site kendi bağlantısını kapatır (aynı kişi odada iki kez görünmesin). Kimseyi habersiz
+  yönlendirme: sayfa linkinde sitede açıklama + "Sayfaya git" butonu çıkar.
+- **İsim/avatar:** site `identityAt` yazar, eklenti de; site-bridge hangisi yeniyse onu iki
+  tarafa yazar. Eklenti arka planı isim değişince açık odalara `rename` yollar.
 
 ## Yayın kontrol listesi
 1. `npm run typecheck && npm test`

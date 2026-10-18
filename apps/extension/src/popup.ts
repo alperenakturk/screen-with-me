@@ -1,7 +1,8 @@
 // Eklenti simgesine tıklanınca açılan pencere. Bütün işi arka plan yapar;
 // burası sadece durumu gösterir ve istekleri iletir.
 
-import { AVATARS, REACTIONS, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import { AVATARS, REACTION_PAGES, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import { SITE_URL } from './config.ts';
 import { isKey, langReady, t } from './i18n.ts';
 import type { PopupRequest, PopupResponse, PopupStatus } from './messages.ts';
 
@@ -73,6 +74,10 @@ function render(status: PopupStatus): void {
   }
 
   const session = status.session;
+  // ScreenWithMe sitesinin kendisindeyken eklentiyle oda kurulmaz.
+  const onSite = !!status.tabUrl && status.tabUrl.startsWith(SITE_URL);
+  $('#site-note').hidden = !onSite;
+  $<HTMLButtonElement>('#create').disabled = onSite;
   $('#idle-view').hidden = needName || session !== null;
   $('#room-view').hidden = needName || session === null;
 
@@ -90,16 +95,48 @@ function render(status: PopupStatus): void {
   $('#video-state').textContent = session.onRoomPage && session.item ? t(session.hasVideo ? 'videoFound' : 'noVideo') : '';
   $('#diag').textContent = t('diag', { frames: session.frames, video: session.bestVideo ?? '–' });
 
+  // Odadakiler: yönetici 👑; yöneticiysem başkalarının yanında "çıkar" butonu.
+  const iAmHost = session.myId !== null && session.myId === session.hostId;
   $('#members-title').textContent = t('members', { n: session.members.length });
   $('#members').replaceChildren(
     ...session.members.map((member) => {
       const li = document.createElement('li');
-      const name = member.avatar ? `${member.avatar} ${member.name}` : member.name;
-      li.textContent = member.id === session.myId ? `${name} (${t('you')})` : name;
-      if (member.id === session.myId) li.className = 'me';
+      const isMe = member.id === session.myId;
+      const name = (member.avatar ? `${member.avatar} ${member.name}` : member.name) + (member.id === session.hostId ? ' 👑' : '');
+      const label = document.createElement('span');
+      label.textContent = isMe ? `${name} (${t('you')})` : name;
+      li.append(label);
+      if (isMe) li.className = 'me';
+      if (iAmHost && !isMe) {
+        li.append(smallButton('✕', t('kick'), () => {
+          if (confirm(t('kickConfirm', { name: member.name }))) void request({ type: 'kick', tabId, memberId: member.id });
+        }));
+      }
       return li;
     }),
   );
+
+  // Çıkarılanlar (sadece yöneticiye gelir).
+  $('#bans-card').hidden = session.bans.length === 0;
+  $('#bans').replaceChildren(
+    ...session.bans.map((ban) => {
+      const li = document.createElement('li');
+      const label = document.createElement('span');
+      label.textContent = ban.avatar ? `${ban.avatar} ${ban.name}` : ban.name;
+      li.append(label, smallButton(t('unban'), t('unban'), () => void request({ type: 'unban', tabId, banId: ban.id })));
+      return li;
+    }),
+  );
+}
+
+function smallButton(text: string, title: string, onClick: () => void): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'mini';
+  button.textContent = text;
+  button.title = title;
+  button.addEventListener('click', onClick);
+  return button;
 }
 
 // ---- Olaylar ----
@@ -142,13 +179,28 @@ $('#leave').addEventListener('click', async () => {
   await refresh();
 });
 
-for (const emoji of REACTIONS) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = emoji;
-  button.addEventListener('click', () => void request({ type: 'react', tabId, emoji }));
-  $('#reactions').append(button);
+// Emojiler sekizli sayfalar halinde; ▲▼ ile diğerleri.
+let reactionPage = 0;
+function renderReactions(): void {
+  const buttons = REACTION_PAGES[reactionPage]!.map((emoji) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = emoji;
+    button.addEventListener('click', () => void request({ type: 'react', tabId, emoji }));
+    return button;
+  });
+  const pager = document.createElement('span');
+  pager.className = 'pager';
+  for (const [arrow, step] of [['▲', -1], ['▼', 1]] as const) {
+    const b = smallButton(arrow, t('moreReactions'), () => {
+      reactionPage = (reactionPage + step + REACTION_PAGES.length) % REACTION_PAGES.length;
+      renderReactions();
+    });
+    pager.append(b);
+  }
+  $('#reactions').replaceChildren(...buttons, pager);
 }
+renderReactions();
 
 $('#chat-form').addEventListener('submit', async (event) => {
   event.preventDefault();

@@ -55,7 +55,36 @@ ok(left.members.length === 1, 'Atılan kişi listeden düştü');
 
 const b2 = client({ name: 'Ayse', cid: 'ayseCid12345' });
 const again = await b2.wait((m) => m.t === 'error', 'ban');
-ok(again.code === 'kicked', 'Atılan Ayşe hemen geri giremiyor');
+ok(again.code === 'kicked', 'Atılan Ayşe geri giremiyor');
 
-a2.ws.close();
+// Yasak listesi sadece yöneticiye gelir; yönetici yasağı kaldırınca geri girebilir.
+const bans = await a2.wait((m) => m.t === 'bans' && m.bans.length === 1, 'bans');
+ok(bans.bans[0].name === 'Ayşe K.' && !('cid' in bans.bans[0]), 'Yöneticiye çıkarılanlar listesi geldi (tarayıcı kimliği gizli)');
+a2.inbox.length = 0; // eski (boş) listeler karışmasın
+a2.send({ t: 'unban', id: bans.bans[0].id });
+const cleared = await a2.wait((m) => m.t === 'bans' && m.bans.length === 0, 'unban');
+ok(cleared.bans.length === 0, 'Yönetici yasağı kaldırdı');
+const b3 = client({ name: 'Ayse', cid: 'ayseCid12345' });
+const back = await b3.wait((m) => m.t === 'welcome' || m.t === 'error', 'rejoin');
+ok(back.t === 'welcome', 'Yasağı kalkan Ayşe geri girebildi');
+b3.send({ t: 'unban', id: 'whatever1' });
+const notHost = await b3.wait((m) => m.t === 'error', 'unban not host');
+ok(notHost.code === 'not_host', 'Yönetici olmayan yasak kaldıramaz');
+
+// Yönetici kendi ikinci sekmesini (aynı kimlik) çıkarırsa kendini yasaklamaz.
+const a3 = client({ name: 'Ali', cid: 'aliCid12345' });
+const wa3 = await a3.wait((m) => m.t === 'welcome', 'welcome a3');
+a2.send({ t: 'kick', id: wa3.you });
+for (let i = 0; i < 20 && a3.closed() === null; i++) await sleep(100);
+ok(a3.closed() === 4000, `Yönetici kendi diğer sekmesini kapattı (${a3.closed()})`);
+const a4 = client({ name: 'Ali', cid: 'aliCid12345' });
+const wa4 = await a4.wait((m) => m.t === 'welcome' || m.t === 'error', 'welcome a4');
+ok(wa4.t === 'welcome', 'Yönetici kendini yasaklamadı');
+
+// Yeni emoji sayfaları kabul ediliyor.
+a4.send({ t: 'react', emoji: '🤮' });
+const react = await b3.wait((m) => m.t === 'reaction', 'reaction');
+ok(react.emoji === '🤮', 'Yeni emojiler (2. sayfa) herkese gidiyor');
+
+for (const c of [a2, b3, a4]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

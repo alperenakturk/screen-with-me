@@ -14,9 +14,7 @@
   --on-accent: #ffffff;
   --glow: none;
   --radius: 12px;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
-  background: var(--bg);
 }
 
 /* ---- Temalar (hepsi koyu). Seçim üst menüdeki 🎨'den ya da oda ayarlarından. ---- */
@@ -56,20 +54,95 @@
   --glow: 0 0 18px rgb(255 43 214 / 0.45);
 }
 
-:root[data-theme='siyah'] {
-  --bg: #000000;
-  --surface: #0b0b0b;
-  --surface-2: #151515;
-  --border: #262626;
-  --text: #f2f2f2;
-  --muted: #8f8f8f;
-  --accent: #e8e8e8;
-  --accent-hover: #ffffff;
-  --on-accent: #000000;
+/* ---- Çizimli temalar: arka plan resmi sayfanın kendisine (--art), ek süs (gezegen,
+   ızgara, kale) sabit bir katmana (--art-extra) çizilir. Kartlar yarı saydam; resim
+   arkadan görünür. Hepsi CSS/SVG, dışarıdan dosya ya da font yüklenmez. ---- */
+:root[data-theme='uzay'] {
+  --bg: #05060f;
+  --surface: rgb(14 16 36 / 0.84);
+  --surface-2: rgb(26 29 60 / 0.9);
+  --border: #2a2f5c;
+  --text: #eef0ff;
+  --muted: #9aa0cc;
+  --accent: #6ee7ff;
+  --accent-hover: #9cf0ff;
+  --on-accent: #041a24;
+  --glow: 0 0 20px rgb(110 231 255 / 0.35);
+  --art:
+    radial-gradient(1px 1px at 20px 30px, #fff 99%, transparent),
+    radial-gradient(1.4px 1.4px at 140px 90px, #cfe6ff 99%, transparent),
+    radial-gradient(1px 1px at 80px 160px, #fff 99%, transparent),
+    radial-gradient(1.8px 1.8px at 200px 40px, #fff6d6 99%, transparent),
+    radial-gradient(1px 1px at 60px 240px, #e4dcff 99%, transparent),
+    radial-gradient(1.2px 1.2px at 260px 200px, #fff 99%, transparent),
+    radial-gradient(ellipse 55% 45% at 12% 18%, rgb(150 70 255 / 0.3), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 88% 70%, rgb(30 150 255 / 0.22), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 55% 105%, rgb(255 80 180 / 0.14), transparent 70%);
+  --art-size: 211px 197px, 293px 271px, 157px 233px, 347px 311px, 263px 281px, 389px 353px, 100% 100%, 100% 100%, 100% 100%;
+  --art-extra:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cdefs%3E%3CradialGradient id='p' cx='35%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23a58bff'/%3E%3Cstop offset='.55' stop-color='%234a2fb0'/%3E%3Cstop offset='1' stop-color='%23120a3a'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx='200' cy='200' rx='190' ry='46' fill='none' stroke='%23c9b8ff' stroke-opacity='.35' stroke-width='10' transform='rotate(-18 200 200)'/%3E%3Ccircle cx='200' cy='200' r='120' fill='url(%23p)'/%3E%3Cpath d='M16 238 A190 46 -18 0 0 384 162' fill='none' stroke='%23c9b8ff' stroke-opacity='.5' stroke-width='10' transform='rotate(0)'/%3E%3C/svg%3E") right -120px bottom -110px / 520px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23d9dcf0'/%3E%3Ccircle cx='38' cy='40' r='8' fill='%23b8bcd6'/%3E%3Ccircle cx='60' cy='62' r='11' fill='%23b8bcd6'/%3E%3Ccircle cx='64' cy='34' r='5' fill='%23b8bcd6'/%3E%3C/svg%3E") left 6% top 110px / 64px no-repeat;
+}
+
+:root[data-theme='bilimkurgu'] {
+  --bg: #02080b;
+  --surface: rgb(4 20 26 / 0.86);
+  --surface-2: rgb(8 34 42 / 0.92);
+  --border: #0f4a57;
+  --text: #dffcff;
+  --muted: #7fb3bd;
+  --accent: #00f0ff;
+  --accent-hover: #6ff7ff;
+  --on-accent: #001a1d;
+  --ok: #39ff9f;
+  --glow: 0 0 16px rgb(0 240 255 / 0.45);
+  --radius: 4px;
+  --art:
+    repeating-linear-gradient(0deg, rgb(0 240 255 / 0.035) 0 1px, transparent 1px 3px),
+    radial-gradient(rgb(0 240 255 / 0.13) 1px, transparent 1.6px),
+    radial-gradient(ellipse 80% 45% at 50% -8%, rgb(0 240 255 / 0.2), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgb(255 0 170 / 0.12), transparent 70%);
+  --art-size: auto, 28px 28px, 100% 100%, 100% 100%;
+  --art-extra: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' preserveAspectRatio='none'%3E%3Cg stroke='%2300f0ff' stroke-opacity='.45' stroke-width='1.2' fill='none'%3E%3Cpath d='M0 0H1000M0 6H1000M0 16H1000M0 32H1000M0 56H1000M0 92H1000M0 142H1000M0 210H1000M0 300H1000'/%3E%3Cpath d='M500 0L500 300M500 0L380 300M500 0L620 300M500 0L250 300M500 0L750 300M500 0L100 300M500 0L900 300M500 0L-80 300M500 0L1080 300M500 0L-300 300M500 0L1300 300M500 0L-600 300M500 0L1600 300'/%3E%3C/g%3E%3C/svg%3E")
+    center bottom / 100% 34vh no-repeat;
+  --art-mask: linear-gradient(transparent 60%, #000);
+}
+
+:root[data-theme='ortacag'] {
+  --bg: #120d08;
+  --surface: rgb(30 21 13 / 0.88);
+  --surface-2: rgb(44 31 19 / 0.94);
+  --border: #5a4426;
+  --text: #f3e6c9;
+  --muted: #bba57f;
+  --accent: #d6a843;
+  --accent-hover: #ecc261;
+  --on-accent: #1c1206;
+  --danger: #e2603e;
+  --radius: 6px;
+  --font: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  --art:
+    radial-gradient(ellipse at 50% 40%, transparent 35%, rgb(0 0 0 / 0.6)),
+    radial-gradient(circle at 6% 12%, rgb(255 150 50 / 0.18), transparent 28%),
+    radial-gradient(circle at 94% 12%, rgb(255 150 50 / 0.18), transparent 28%),
+    repeating-linear-gradient(45deg, rgb(214 168 67 / 0.05) 0 1px, transparent 1px 36px),
+    repeating-linear-gradient(-45deg, rgb(214 168 67 / 0.05) 0 1px, transparent 1px 36px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .75 0 0 0 0 .6 0 0 0 0 .4 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  --art-size: 100% 100%, 100% 100%, 100% 100%, auto, auto, 240px 240px;
+  --art-extra: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 160' preserveAspectRatio='xMidYMax slice'%3E%3Cpath fill='%23080503' d='M0 160V120H40V100H52V110H64V100H76V110H88V100H100V120H180V70H192V82H204V70H216V82H228V70H240V120H330V96H350V60L380 30L410 60V96H430V120H560V40H572V54H584V40H596V54H608V40H620V54H632V40H644V120H760V96H780V60L810 30L840 60V96H860V120H950V70H962V82H974V70H986V82H998V70H1010V120H1100V100H1112V110H1124V100H1136V110H1148V100H1160V120H1200V160Z'/%3E%3Cpath fill='%23d6a843' fill-opacity='.55' d='M596 70h12v18h-12zM374 70h12v14h-12zM804 70h12v14h-12z'/%3E%3Cpath d='M380 30V8l22 7-22 7M810 30V8l22 7-22 7' stroke='%23d6a843' stroke-opacity='.7' stroke-width='2' fill='%23a3301e'/%3E%3C/svg%3E")
+    center bottom / 100% 150px no-repeat;
 }
 
 * {
   box-sizing: border-box;
+}
+
+:root {
+  background-color: var(--bg);
+  background-image: var(--art, none);
+  background-size: var(--art-size, auto);
+  background-attachment: fixed;
+  font-family: var(--font, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
 }
 
 body {
@@ -77,7 +150,28 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  /* Arka plan sayfada (html); temaların çizimi görünsün diye burası saydam. */
+  background: transparent;
+}
+
+/* Temanın ek süsü (gezegen, ızgara, kale): içeriğin arkasında, sabit. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--art-extra, none);
+  -webkit-mask-image: var(--art-mask, none);
+  mask-image: var(--art-mask, none);
+}
+
+/* Yazı alanları ve butonlar temanın yazı tipini kullansın (orta çağ). */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 [hidden] {
@@ -1223,6 +1317,70 @@ button.nav-link {
 
 .reaction-btn:active {
   transform: scale(0.9);
+}
+
+/* Emoji sayfası değiştiren küçük ▲▼ */
+.reaction-pager {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.reaction-page {
+  width: 22px;
+  height: 17px;
+  padding: 0;
+  font-size: 8px;
+  line-height: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.reaction-page:hover {
+  border-color: var(--muted);
+}
+
+/* Odaya girişte "İyi seyirler" açılışı: videonun üstünde */
+.player-wrap .swm-intro {
+  border-radius: inherit;
+}
+
+/* Başka sitedeki video kartı */
+.external-host {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.external-box {
+  max-width: 460px;
+  text-align: center;
+  gap: 12px;
+}
+
+.external-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.external-steps {
+  text-align: left;
+  margin: 0 auto;
+  padding-left: 22px;
+  line-height: 1.8;
+}
+
+/* Kişiler sekmesi: çıkarılanlar */
+.bans h4 {
+  margin: 16px 0 6px;
+}
+
+.person.banned .person-name {
+  opacity: 0.7;
 }
 
 .icon-btn {

@@ -12,10 +12,20 @@ export const MIN_RATE = 0.25;
 export const MAX_RATE = 2;
 /** Bir mesajın en fazla kaç bayt olabileceği (kötü niyetli büyük mesajlara karşı). */
 export const MAX_MESSAGE_BYTES = 4096;
-/** Gönderilebilecek emoji tepkileri. Sunucu bunların dışındakini kabul etmez. */
-export const REACTIONS = ['😂', '😮', '😍', '😱', '👏', '🔥', '😢', '💀'] as const;
+/**
+ * Emoji tepkileri, sekizli sayfalar halinde (arayüzde ↑↓ ile sayfa değişir).
+ * İlk sayfa her zamanki; sonrakiler daha absürt/eğlenceli. Sunucu listede
+ * olmayanı kabul etmez. Sona sayfa eklemek eski istemcileri bozmaz.
+ */
+export const REACTION_PAGES = [
+  ['😂', '😮', '😍', '😱', '👏', '🔥', '😢', '💀'],
+  ['🤮', '💩', '🥵', '🤡', '🤯', '😴', '🙄', '🥴'],
+  ['😡', '🍿', '🎉', '👀', '💔', '🙏', '😈', '👻'],
+] as const;
 
-export type Reaction = (typeof REACTIONS)[number];
+export const REACTIONS = REACTION_PAGES.flat();
+
+export type Reaction = (typeof REACTION_PAGES)[number][number];
 
 /** Seçilebilen avatarlar. Sunucu bunların dışındakini kabul etmez. */
 export const AVATARS = ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'] as const;
@@ -75,6 +85,13 @@ export interface RoomSettings {
   waitForAll: boolean;
 }
 
+/** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
+export interface BanEntry {
+  id: string;
+  name: string;
+  avatar?: Avatar;
+}
+
 /** Oda adına yapılan (kişiden gelmeyen) hareketlerin "yapanı". */
 export const SYSTEM_MEMBER_ID = 'system';
 
@@ -103,8 +120,10 @@ export type ClientMessage =
   | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string }
   /** İsim ya da avatar değiştir. */
   | { t: 'rename'; name: string; avatar?: Avatar }
-  /** (Sadece oda yöneticisi) birini odadan çıkar. */
+  /** (Sadece oda yöneticisi) birini odadan çıkar; yönetici kaldırana kadar geri giremez. */
   | { t: 'kick'; id: string }
+  /** (Sadece oda yöneticisi) bir yasağı kaldır (`id`: BanEntry.id). */
+  | { t: 'unban'; id: string }
   /**
    * "Herkes hazır": videom takıldı (ready=false) ya da tekrar oynayabilir (ready=true).
    * Sunucu takılan biri olduğunda odayı kısa süre bekletir.
@@ -166,6 +185,8 @@ export type ServerMessage =
   | { t: 'members'; members: Member[]; hostId: string | null }
   /** Biri odadan çıkarıldı (herkese duyurulur). */
   | { t: 'kicked'; who: Member; by: Member }
+  /** Yasaklılar listesi (sadece yöneticiye; değişince ve yönetici değişince gelir). */
+  | { t: 'bans'; bans: BanEntry[] }
   /** Oda takılan birini bekliyor (boş liste: bekleme bitti). */
   | { t: 'waiting'; ids: string[] }
   | { t: 'settings'; settings: RoomSettings }
@@ -281,7 +302,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isAvatar(m.avatar) ? { t: 'rename', name, avatar: m.avatar } : { t: 'rename', name };
     }
     case 'kick':
-      return isItemId(m.id) ? { t: 'kick', id: m.id } : null;
+    case 'unban':
+      return isItemId(m.id) ? { t: m.t, id: m.id } : null;
     case 'ready':
       return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
     case 'settings':

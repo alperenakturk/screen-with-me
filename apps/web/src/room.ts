@@ -1,5 +1,6 @@
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
+import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { parseMediaInput } from '@swm/shared/media';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
@@ -24,7 +25,7 @@ import { t, translate } from './i18n.ts';
 import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
-import { load, save } from './storage.ts';
+import { load, save, saveIdentity } from './storage.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -69,7 +70,7 @@ export function renderRoom(app: HTMLElement, roomId: string): void {
     event.preventDefault();
     const name = cleanName(input.value);
     if (name === null) return;
-    save('name', name);
+    if (name !== load('name')) saveIdentity(name);
     window.removeEventListener('langchange', renderCode);
     renderAvatarStep(app, roomId, name);
   });
@@ -114,7 +115,7 @@ function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void 
   window.addEventListener('langchange', renderTexts);
 
   function enter(): void {
-    save('avatar', avatar);
+    if (avatar !== load('avatar')) saveIdentity(name, avatar);
     window.removeEventListener('langchange', renderTexts);
     startRoom(app, roomId, name, avatar);
   }
@@ -195,8 +196,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="external" class="overlay external" hidden>
               <p class="muted" data-i18n="externalTitle"></p>
               <h2 id="external-title"></h2>
-              <a id="external-open" class="btn primary big"></a>
-              <p id="external-hint" class="muted small"></p>
+              <p id="external-host" class="external-host"></p>
+              <div id="external-ext" class="stack external-box">
+                <p data-i18n="externalHasExt"></p>
+                <button id="external-go" type="button" class="btn primary big" data-i18n="externalGoJoin"></button>
+              </div>
+              <div id="external-noext" class="stack external-box">
+                <p data-i18n="externalNoExt"></p>
+                <ol class="external-steps">
+                  <li><a href="/eklenti.html" target="_blank" rel="noopener" data-i18n="externalStep1"></a></li>
+                  <li data-i18n="externalStep2"></li>
+                  <li data-i18n="externalStep3"></li>
+                </ol>
+                <a id="external-alone" class="muted small" target="_blank" rel="noopener noreferrer" data-i18n="externalOpenAlone"></a>
+              </div>
             </div>
             <div id="autoplay" class="overlay" hidden>
               <p data-i18n="autoplayBlocked"></p>
@@ -256,6 +269,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel" data-panel="people" hidden>
             <ul id="members" class="people"></ul>
             <p id="host-hint" class="muted small"></p>
+            <div id="bans" class="bans" hidden>
+              <h4 data-i18n="bansTitle"></h4>
+              <ul id="bans-list" class="people"></ul>
+              <p class="muted small" data-i18n="bansHint"></p>
+            </div>
           </div>
 
           <div class="tab-panel settings" data-panel="settings" hidden>
@@ -333,8 +351,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
     myAvatar = avatar;
-    save('name', name);
-    save('avatar', avatar);
+    saveIdentity(name, avatar);
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
   });
@@ -362,6 +379,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   connection.connect();
+
+  // Açılış: logo belirir, duraklat → oynat olur, "İyi seyirler!" (oda arkada hazırlanırken).
+  if (!document.getElementById('swm-intro-css')) {
+    document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
+  }
+  $('.player-wrap').append(createIntro(document, t('introText')));
 
   function handleMessage(message: ServerMessage): void {
     switch (message.t) {
@@ -421,6 +444,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'settings':
         roomSettings = message.settings;
         renderWaiting();
+        break;
+      case 'bans':
+        people.setBans(message.bans);
         break;
       case 'kicked': {
         const { who, by } = message;
@@ -516,37 +542,57 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   /**
    * Odada bir web sayfası açık: video o sayfada, herkesin kendi sekmesinde oynar.
-   * Eklenti kuruluysa sayfaya oda işaretiyle (#swm=ODA) gidilir, eklenti oradan
-   * devam eder. Kurulu değilse sayfa linki ve kurulum yardımı gösterilir.
+   * Kimseyi habersiz yönlendirmeyiz; ne olacağını anlatıp tek tuşla göndeririz.
+   * Eklenti kuruluysa sekmeyi o götürür (oda orada devam eder); değilse kurulum
+   * adımları gösterilir.
    */
   function showExternal(item: QueueItem, url: string): void {
     const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
-    const target = pageInviteUrl(url, roomId);
     $('#external-title').textContent = itemTitle(item);
-    const open = $<HTMLAnchorElement>('#external-open');
-    open.href = hasExtension ? target : url;
-    open.target = hasExtension ? '_self' : '_blank';
-    open.rel = 'noopener noreferrer';
-    open.textContent = t(hasExtension ? 'externalGoJoin' : 'externalOpen');
-    const hint = $('#external-hint');
-    if (hasExtension) {
-      hint.textContent = t('externalRedirecting');
-      // Eklentiye "bu sekme bu odaya katılsın" de; sekmeyi sayfaya eklenti götürür.
-      // Adresteki işarete (#swm=) güvenmez: bazı siteler yönlendirirken onu siler.
-      const askExtension = () => window.postMessage({ source: 'screenwithme-site', type: 'join', roomId }, location.origin);
-      open.onclick = (event) => {
-        event.preventDefault();
-        askExtension();
-      };
-      askExtension();
-      // Eski sürüm eklenti bu mesajı tanımıyorsa adres işaretiyle git.
+    $('#external-host').textContent = hostOf(url);
+    $('#external-ext').hidden = !hasExtension;
+    $('#external-noext').hidden = hasExtension;
+    $<HTMLAnchorElement>('#external-alone').href = url;
+    const go = $<HTMLButtonElement>('#external-go');
+    go.disabled = false;
+    go.textContent = t('externalGoJoin');
+    go.onclick = () => {
+      go.disabled = true;
+      go.textContent = t('externalGoing');
+      // Eklentiye "bu sekme bu odaya katılsın, sayfa da bu" de; sekmeyi eklenti hemen götürür.
+      window.postMessage({ source: 'screenwithme-site', type: 'join', roomId, url }, location.origin);
+      // Eski sürüm eklenti cevap vermezse adres işaretiyle (#swm=ODA) git.
       setTimeout(() => {
-        if (roomState?.item?.id === item.id) location.assign(target);
-      }, 4000);
-    } else {
-      hint.replaceChildren(t('externalNeedExtension'), ' ', el('a', { href: '/eklenti.html', target: '_blank' }, t('installExtension')));
+        if (!handedOff && roomState?.item?.id === item.id) location.assign(pageInviteUrl(url, roomId));
+      }, 3000);
+    };
+  }
+
+  function hostOf(url: string): string {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return '';
     }
   }
+
+  // Eklentiden gelenler: "sekmeyi ben götürüyorum" (bağlantımızı kapatırız, odada iki kez
+  // görünmeyelim) ve eklentide değişen isim/avatar.
+  let handedOff = false;
+  window.addEventListener('message', (event: MessageEvent) => {
+    if (event.source !== window || event.origin !== location.origin) return;
+    const data = event.data as { source?: string; type?: string; name?: unknown; avatar?: unknown } | null;
+    if (data?.source !== 'screenwithme-extension') return;
+    if (data.type === 'joining' && !handedOff) {
+      handedOff = true;
+      connection.close();
+      engine.destroy();
+    } else if (data.type === 'identity') {
+      const name = cleanName(data.name);
+      const avatar = isAvatar(data.avatar) ? data.avatar : myAvatar;
+      if (name && (name !== myName || avatar !== myAvatar)) settings.setIdentity(name, avatar);
+    }
+  });
 
   function renderNowPlaying(): void {
     const item = roomState?.item ?? null;

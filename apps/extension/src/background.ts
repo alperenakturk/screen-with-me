@@ -16,7 +16,9 @@ import {
   cleanName,
   isAvatar,
   type Avatar,
+  type BanEntry,
   type ChatMessage,
+  type ClientMessage,
   type Media,
   type Member,
   type PlaybackState,
@@ -68,6 +70,14 @@ interface Session {
   followedItemId: string | null;
   /** Oda oluşturulurken bağlantı açılınca gönderilecek ilk video. */
   pendingLoad: { media: Media; title?: string } | null;
+  /** Yasaklılar (sadece yöneticiyken dolu). */
+  bans: BanEntry[];
+  /** Bağlantı açılmadan yazılan mesaj/emojiler; açılınca gönderilir (kaybolmasın). */
+  outbox: ClientMessage[];
+  /** Sekme şu an bu adrese gidiyor (siteden gelince beklemeden yönlendirildi); tekrar yönlendirme. */
+  navigatingTo: string | null;
+  /** Video bulununca "İyi seyirler" açılışı gösterilsin mi (eklentiden oda kurunca/katılınca). */
+  intro: boolean;
 }
 
 const sessions = new Map<number, Session>();
@@ -146,6 +156,10 @@ async function startSession(tabId: number, roomId: string): Promise<Session> {
     activated: false,
     followedItemId: null,
     pendingLoad: null,
+    bans: [],
+    outbox: [],
+    navigatingTo: null,
+    intro: false,
   };
   session.connection = new RoomConnection({
     serverUrl: SITE_URL,
@@ -189,6 +203,7 @@ function onServer(session: Session, message: ServerMessage): void {
       } else {
         void follow(session);
       }
+      for (const queued of session.outbox.splice(0)) session.connection.send(queued);
       pushState(session);
       pushRoom(session);
       break;
@@ -238,11 +253,22 @@ function onServer(session: Session, message: ServerMessage): void {
       toActive(session, { type: 'waiting', names, me: session.myId !== null && message.ids.includes(session.myId) });
       break;
     }
+    case 'bans':
+      session.bans = message.bans;
+      break;
     case 'error':
-      // Oda yöneticisi çıkardıysa (ya da yasak sürüyorsa) bağlantıyı tamamen kapat.
+      // Oda yöneticisi çıkardıysa (ya da yasaklıysa) bağlantıyı tamamen kapat.
       if (message.code === 'version' || message.code === 'room_full' || message.code === 'kicked') endSession(session.tabId);
+      // Mesaj sessizce kaybolmasın: kullanıcıya yavaşlamasını söyle.
+      if (message.code === 'rate_limited') toActive(session, { type: 'notice', kind: 'slow', name: '' });
       break;
   }
+}
+
+/** Sunucuya yollar; bağlantı henüz açık değilse sohbet/emoji kuyrukta bekler. */
+function sendOrQueue(session: Session, message: ClientMessage): void {
+  if (session.connection.send(message)) return;
+  if ((message.t === 'chat' || message.t === 'react') && session.outbox.length < 10) session.outbox.push(message);
 }
 
 /**
@@ -258,7 +284,10 @@ async function follow(session: Session): Promise<void> {
   if (!tab) return;
 
   if (item.media.kind === 'page') {
-    if (!tab.url || !samePage(tab.url, item.media.url)) await chrome.tabs.update(session.tabId, { url: item.media.url });
+    // Siteden gelirken sekme zaten oraya gönderildiyse ikinci kez yönlendirme (sayfa baştan yüklenmesin).
+    const going = session.navigatingTo !== null && samePage(session.navigatingTo, item.media.url);
+    session.navigatingTo = null;
+    if (!going && (!tab.url || !samePage(tab.url, item.media.url))) await chrome.tabs.update(session.tabId, { url: item.media.url });
   } else {
     const roomUrl = `${SITE_URL}/r/${session.roomId}`;
     endSession(session.tabId);
@@ -318,6 +347,10 @@ function pushState(session: Session): void {
     post(frame.port, { type: 'activate', state: session.state, offset: clock.offset, synced: clock.synced });
     session.activated = true;
     pushRoom(session);
+    if (session.intro) {
+      session.intro = false;
+      post(frame.port, { type: 'intro' });
+    }
   } else {
     post(frame.port, { type: 'state', state: session.state });
   }
@@ -362,7 +395,7 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     }
     case 'send': {
       const session = sessions.get(tabId);
-      if (session && session.activeFrame === frameId) session.connection.send(message.message);
+      if (session && session.activeFrame === frameId) sendOrQueue(session, message.message);
       break;
     }
   }
@@ -423,6 +456,8 @@ async function status(tabId: number): Promise<PopupStatus> {
           connection: session.status,
           members: session.members,
           myId: session.myId,
+          hostId: session.hostId,
+          bans: session.myId !== null && session.myId === session.hostId ? session.bans : [],
           item,
           queueLength: session.queue.length,
           onRoomPage: !item || item.media.kind !== 'page' || (!!tab?.url && samePage(tab.url, item.media.url)),
@@ -448,7 +483,8 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
     case 'set-name': {
       const name = cleanName(request.name);
       if (!name) return { ok: false, error: 'name' };
-      const update: Record<string, string> = { name };
+      // identityAt: sitedeki isimle hangisi daha yeni (site-bridge iki yönlü eşitler).
+      const update: Record<string, string | number> = { name, identityAt: Date.now() };
       if (isAvatar(request.avatar)) update.avatar = request.avatar;
       await chrome.storage.local.set(update);
       return { ok: true };
@@ -456,18 +492,22 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
 
     case 'create': {
       const tab = await chrome.tabs.get(request.tabId);
+      // ScreenWithMe sitesinin kendisinde eklentiyle oda kurulmaz; oda sitede kurulur.
+      if (tab.url && new URL(tab.url).origin === SITE_ORIGIN) return { ok: false, error: 'site' };
       const load = pageMedia(tab);
       if (!load) return { ok: false, error: 'page' };
       const session = await startSession(request.tabId, newRoomId());
       session.pendingLoad = load;
       session.followedItemId = null;
+      session.intro = true;
       return { ok: true };
     }
 
     case 'join': {
       const roomId = extractRoomId(request.input);
       if (!roomId) return { ok: false, error: 'room' };
-      await startSession(request.tabId, roomId);
+      const session = await startSession(request.tabId, roomId);
+      session.intro = true;
       return { ok: true };
     }
 
@@ -475,15 +515,26 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
       endSession(request.tabId);
       return { ok: true };
 
-    case 'react':
-      sessions.get(request.tabId)?.connection.send({ t: 'react', emoji: request.emoji });
+    case 'react': {
+      const session = sessions.get(request.tabId);
+      if (session) sendOrQueue(session, { t: 'react', emoji: request.emoji });
       return { ok: true };
+    }
 
     case 'chat': {
       const text = cleanChatText(request.text);
-      if (text) sessions.get(request.tabId)?.connection.send({ t: 'chat', text });
+      const session = sessions.get(request.tabId);
+      if (text && session) sendOrQueue(session, { t: 'chat', text });
       return { ok: true };
     }
+
+    case 'kick':
+      sessions.get(request.tabId)?.connection.send({ t: 'kick', id: request.memberId });
+      return { ok: true };
+
+    case 'unban':
+      sessions.get(request.tabId)?.connection.send({ t: 'unban', id: request.banId });
+      return { ok: true };
 
     case 'go-to-room-page': {
       const item = sessions.get(request.tabId)?.state?.item;
@@ -504,6 +555,20 @@ async function handlePopup(request: PopupRequest): Promise<PopupResponse> {
 
 const SITE_ORIGIN = new URL(SITE_URL).origin;
 
+// İsim/avatar değişince (popup'tan ya da siteden) odalardakiler de hemen görsün.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || (!changes.name && !changes.avatar)) return;
+  void (async () => {
+    const name = await getName();
+    if (!name) return;
+    const avatar = (await getAvatar()) ?? undefined;
+    for (const session of sessions.values()) {
+      session.connection.setIdentity(name, avatar);
+      session.connection.send(avatar ? { t: 'rename', name, avatar } : { t: 'rename', name });
+    }
+  })();
+});
+
 chrome.runtime.onMessage.addListener((request: PopupRequest | SiteJoinMessage, sender, respond) => {
   if (sender.id !== chrome.runtime.id) return false;
 
@@ -512,8 +577,15 @@ chrome.runtime.onMessage.addListener((request: PopupRequest | SiteJoinMessage, s
   if (sender.tab) {
     const tabId = sender.tab.id;
     if (request.type === 'site-join' && sender.origin === SITE_ORIGIN && tabId !== undefined && ROOM_ID_PATTERN.test(request.roomId)) {
+      const url = typeof request.url === 'string' && /^https?:\/\//.test(request.url) ? request.url : null;
+      respond({ ok: true });
       void ready.then(async () => {
         const session = await startSession(tabId, request.roomId);
+        // Hız: sayfa belli ise bağlantının açılmasını beklemeden sekmeyi hemen götür.
+        if (url) {
+          session.navigatingTo = url;
+          await chrome.tabs.update(tabId, { url });
+        }
         // Hoş geldin mesajı zaten geldiyse takip etmeyi şimdi başlat.
         session.followedItemId = null;
         await follow(session);

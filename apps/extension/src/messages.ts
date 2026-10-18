@@ -9,7 +9,7 @@
 // plan en iyisini "etkin" seçer, senkron o çerçevede çalışır.
 
 import type { ConnectionStatus } from '@swm/shared/connection';
-import type { Avatar, ClientMessage, Member, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
+import type { Avatar, BanEntry, ClientMessage, Member, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
 
 /** Çerçevelerin "oda var mı" diye baktığı yer (chrome.storage.session). */
 export const SESSIONS_KEY = 'sessions';
@@ -53,8 +53,10 @@ export type BackgroundMessage =
   | { type: 'room'; room: RoomInfo }
   | { type: 'reaction'; emoji: Reaction; name: string }
   | { type: 'chat'; line: ChatLine }
-  /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte). */
-  | { type: 'notice'; kind: 'joined' | 'left'; name: string }
+  /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte); "slow": çok hızlı mesaj atıldı. */
+  | { type: 'notice'; kind: 'joined' | 'left' | 'slow'; name: string }
+  /** Odaya yeni girildi: "İyi seyirler" açılış animasyonu. */
+  | { type: 'intro' }
   /** "Herkes hazır": oda bunları bekliyor (boş: bekleme yok). `me`: beklenen bensem. */
   | { type: 'waiting'; names: string[]; me: boolean };
 
@@ -68,10 +70,14 @@ export const PROBE = 'swm-probe';
 export interface SiteJoinMessage {
   type: 'site-join';
   roomId: string;
+  /** Odada açık sayfa: sekme bağlantıyı beklemeden hemen oraya gider (hız için). */
+  url?: string;
 }
 
 /** Sitenin pencereye attığı mesajın biçimi (window.postMessage). */
 export const SITE_MESSAGE_SOURCE = 'screenwithme-site';
+/** Eklentinin siteye cevabı: "sekmeyi ben götürüyorum" (site kendi bağlantısını kapatır). */
+export const EXTENSION_MESSAGE_SOURCE = 'screenwithme-extension';
 
 /** Popup → arka plan */
 export type PopupRequest =
@@ -83,7 +89,9 @@ export type PopupRequest =
   | { type: 'react'; tabId: number; emoji: Reaction }
   | { type: 'chat'; tabId: number; text: string }
   | { type: 'go-to-room-page'; tabId: number }
-  | { type: 'share-this-page'; tabId: number };
+  | { type: 'share-this-page'; tabId: number }
+  | { type: 'kick'; tabId: number; memberId: string }
+  | { type: 'unban'; tabId: number; banId: string };
 
 export interface PopupStatus {
   name: string | null;
@@ -95,6 +103,9 @@ export interface PopupStatus {
     connection: ConnectionStatus;
     members: Member[];
     myId: string | null;
+    hostId: string | null;
+    /** Odadan kalıcı olarak çıkarılanlar (sadece yöneticiye gelir). */
+    bans: BanEntry[];
     item: QueueItem | null;
     queueLength: number;
     /** Sekme, odada açık olan sayfada mı? */

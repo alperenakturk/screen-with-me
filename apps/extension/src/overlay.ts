@@ -1,5 +1,6 @@
+import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { createLogo } from '@swm/shared/logo';
-import { CHAT_MAX_LENGTH, REACTIONS, cleanChatText, type ClientMessage } from '@swm/shared/protocol';
+import { CHAT_MAX_LENGTH, REACTION_PAGES, cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import { t } from './i18n.ts';
 import type { ChatLine, RoomInfo } from './messages.ts';
 
@@ -86,6 +87,14 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
   gap: 12px; background: rgb(0 0 0 / .7); pointer-events: auto; font-size: 16px; text-align: center; padding: 16px; }
 .start button { font: inherit; font-weight: 600; color: #fff; background: #7c5cff; border: 0; border-radius: 10px;
   padding: 12px 22px; cursor: pointer; }
+
+/* Emoji sayfaları: yanındaki küçük ▲▼ ile diğer emojiler */
+.reactions { display: flex; gap: 4px; }
+.pager { display: flex; flex-direction: column; gap: 2px; margin-left: 2px; }
+.pager button { width: 18px; height: 13px; padding: 0; border-radius: 4px; font-size: 7px; line-height: 1; color: #fff; cursor: pointer;
+  background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12); }
+.pager button:hover { background: rgb(255 255 255 / .18); }
+${INTRO_CSS}
 `;
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, ...children: (Node | string)[]): HTMLElementTagNameMap[K] {
@@ -106,14 +115,13 @@ function button(className: string, text: string, title: string, onClick: () => v
 
 export interface OverlayActions {
   send: (message: ClientMessage) => void;
-  onNext: () => void;
   onRate: (rate: number) => void;
 }
 
 /**
- * Videonun tam üstüne oturan saydam katman: uçuşan emojiler, sol üstte
+ * Videonun tam üstüne oturan saydam katman: uçuşan emojiler, sağ üstte
  * beliren mesajlar ve sağ üstte fare oynayınca çıkan ScreenWithMe butonuyla
- * açılan kompakt çubuk (emoji, hızlı mesaj, hız, odadakiler, davet, sonraki).
+ * açılan kompakt çubuk (emoji, hızlı mesaj, hız, odadakiler, davet).
  * Sitenin CSS'inden etkilenmemek için kapalı shadow DOM kullanır. Video tam
  * ekrana alınırsa tam ekran öğesinin içine taşınır.
  */
@@ -128,6 +136,24 @@ export function createOverlay(actions: OverlayActions) {
   let rate = 1;
   let barOpen = false;
   let unread = 0;
+  let reactionPage = 0;
+
+  // Çubuğa yazarken basılan tuşlar sitenin ve başka eklentilerin kısayollarını
+  // (boşluk = durdur, hız eklentilerinin harfleri vb.) tetiklemesin. Kapalı shadow
+  // DOM yüzünden dışarıdan bakan onlar yazı alanını değil "swm-overlay"i görür ve
+  // yazı yazıldığını anlamaz. Bu yüzden olayı en başta (pencerede, yakalama
+  // aşamasında) durdururuz; harfin kutuya yazılması bundan etkilenmez.
+  for (const type of ['keydown', 'keyup', 'keypress'] as const) {
+    addEventListener(
+      type,
+      (event) => {
+        if (!host || event.target !== host) return;
+        event.stopImmediatePropagation();
+        if (type === 'keydown' && event.key === 'Escape') setBar(false);
+      },
+      true,
+    );
+  }
 
   function build(container: HTMLElement) {
     const floats = el('div');
@@ -139,8 +165,23 @@ export function createOverlay(actions: OverlayActions) {
     fab.type = 'button';
     fab.addEventListener('click', () => setBar(true));
 
-    // 1. satır: emojiler | senkron · odadakiler · davet · sonraki · kapat
-    const reactions = REACTIONS.map((emoji) => button('reaction', emoji, t('react'), () => actions.send({ t: 'react', emoji })));
+    // 1. satır: emojiler (▲▼ ile sayfa) | senkron · odadakiler · davet · kapat
+    const reactions = el('span', 'reactions');
+    const drawReactions = () =>
+      reactions.replaceChildren(
+        ...REACTION_PAGES[reactionPage]!.map((emoji) => button('reaction', emoji, t('react'), () => actions.send({ t: 'react', emoji }))),
+      );
+    drawReactions();
+    const turn = (step: number) => {
+      reactionPage = (reactionPage + step + REACTION_PAGES.length) % REACTION_PAGES.length;
+      drawReactions();
+    };
+    const pager = el('span', 'pager', button('', '▲', t('moreReactions'), () => turn(-1)), button('', '▼', t('moreReactions'), () => turn(1)));
+    // Fare tekerleğiyle de sayfa değişir.
+    reactions.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      turn(event.deltaY > 0 ? 1 : -1);
+    }, { passive: false });
     const dot = el('span', 'dot');
     // Odadakiler: sayı görünür, isimler üstüne gelince.
     const members = el('span', 'icon members', '👥');
@@ -150,7 +191,6 @@ export function createOverlay(actions: OverlayActions) {
       copy.textContent = '✓';
       setTimeout(() => (copy.textContent = '🔗'), 1500);
     });
-    const next = button('icon', '⏭', t('next'), () => actions.onNext());
     const close = button('icon', '✕', t('close'), () => setBar(false));
 
     // 2. satır: hızlı mesaj | hız
@@ -179,7 +219,7 @@ export function createOverlay(actions: OverlayActions) {
     const bar = el(
       'div',
       'bar',
-      el('div', 'row', ...reactions, el('span', 'spacer'), dot, members, copy, next, close),
+      el('div', 'row', reactions, pager, el('span', 'spacer'), dot, members, copy, close),
       el('div', 'row', form, speed),
     );
     bar.hidden = true;
@@ -188,7 +228,7 @@ export function createOverlay(actions: OverlayActions) {
     waiting.hidden = true;
 
     container.append(floats, toasts, waiting, fab, bar);
-    return { floats, toasts, waiting, fab, badge, bar, dot, members, next, input, speed };
+    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed };
   }
 
   function mount(): HTMLElement {
@@ -200,13 +240,6 @@ export function createOverlay(actions: OverlayActions) {
     root = el('div', 'root');
     parts = build(root);
     shadow.append(style, root);
-    // Çubuktaki yazı alanına basılan tuşlar sitenin kısayollarını (boşluk = durdur vb.) tetiklemesin.
-    for (const type of ['keydown', 'keyup', 'keypress'] as const) {
-      host.addEventListener(type, (event) => {
-        event.stopPropagation();
-        if (type === 'keydown' && (event as KeyboardEvent).key === 'Escape') setBar(false);
-      });
-    }
     place();
     positionTimer ??= setInterval(position, 500);
     renderRoom();
@@ -287,7 +320,6 @@ export function createOverlay(actions: OverlayActions) {
     });
     parts.members.textContent = `👥 ${room.members.length}`;
     parts.members.title = `${t('members', { n: room.members.length })}\n${names.join('\n')}`;
-    parts.next.disabled = room.queueLength === 0;
   }
 
   function toast(content: (Node | string)[], className: string): void {
@@ -377,8 +409,15 @@ export function createOverlay(actions: OverlayActions) {
       parts.waiting.textContent = me ? t('waitingForYou') : t('waitingFor', { names: names.join(', ') });
     },
 
-    notice(kind: 'joined' | 'left', name: string): void {
-      toast([t(kind === 'joined' ? 'joined' : 'left', { name })], 'notice');
+    notice(kind: 'joined' | 'left' | 'slow', name: string): void {
+      toast([kind === 'slow' ? t('slowDown') : t(kind, { name })], 'notice');
+    },
+
+    /** Odaya girince "İyi seyirler" açılışı (videonun üstünde). */
+    intro(): void {
+      const layer = mount();
+      layer.querySelector('.swm-intro')?.remove();
+      layer.append(createIntro(document, t('intro')));
     },
 
     /** Tarayıcı otomatik oynatmayı engellerse videonun üstünde "İzlemeye başla" gösterir. */

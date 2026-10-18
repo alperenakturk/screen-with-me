@@ -9,6 +9,16 @@ export function load(key: string): string | null {
   }
 }
 
+/**
+ * İsim/avatar kaydeder ve ne zaman değiştiğini yazar: eklenti (site-bridge)
+ * sitedeki ile kendindekinden hangisi daha yeniyse onu iki tarafta da geçerli yapar.
+ */
+export function saveIdentity(name: string, avatar?: string): void {
+  save('name', name);
+  if (avatar) save('avatar', avatar);
+  save('identityAt', String(Date.now()));
+}
+
 export function save(key: string, value: string): void {
   try {
     localStorage.setItem(key, value);
