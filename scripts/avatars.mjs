@@ -376,44 +376,53 @@ ${neck('#b9805a')}${face('#b9805a')}
 ${eyes(30.5, 4.6, '#234f9a')}
 <path d="M29.5 36 Q32 37.8 34.5 36" stroke="#8a2a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>${blush(34)}`),
 
-  // Deniz altı süngeri: sarı kare gövde, delikler, kocaman mavi gözler, iki ön diş, kırmızı kravat
-  sponge: badge(['#6ad6f4', '#16609e'], `
-<path d="M14 9 Q17 7 20 9 Q23 7 26 9 Q29 7 32 9 Q35 7 38 9 Q41 7 44 9 Q47 7 50 9 V46 H14Z" fill="#f4e04a"/>
-<g fill="#c9b52c" opacity=".7"><ellipse cx="19" cy="15" rx="2" ry="2.6"/><ellipse cx="46" cy="18" rx="1.6" ry="2.2"/><ellipse cx="18" cy="38" rx="1.8" ry="2.4"/><ellipse cx="46" cy="38" rx="2.2" ry="2.8"/><ellipse cx="44" cy="12" rx="1.2" ry="1.4"/></g>
-<rect x="14" y="44" width="36" height="8" fill="#fff"/><path d="M26 44 L30 48 L32 44 L34 48 L38 44Z" fill="#e8e8e8"/>
-<path d="M30.6 45 H33.4 L34.6 51.5 L32 54.5 L29.4 51.5Z" fill="#d62f2f"/>
-<rect x="14" y="52" width="36" height="12" fill="#8a5a2a"/><path d="M14 54.5 H50" stroke="#1a1a1a" stroke-width="1.6" stroke-dasharray="3.5 2.5"/>
-<circle cx="26" cy="23" r="6" fill="#fff" stroke="#d8c43a" stroke-width=".6"/><circle cx="38" cy="23" r="6" fill="#fff" stroke="#d8c43a" stroke-width=".6"/>
-<circle cx="26.5" cy="23.4" r="2.8" fill="#3aa6e6"/><circle cx="37.5" cy="23.4" r="2.8" fill="#3aa6e6"/>
-<circle cx="26.5" cy="23.4" r="1.3" fill="${INK}"/><circle cx="37.5" cy="23.4" r="1.3" fill="${INK}"/>
-<path d="M22.5 17 L21.5 14.5 M26 16.5 V13.8 M29.5 17 L30.5 14.5 M34.5 17 L33.5 14.5 M38 16.5 V13.8 M41.5 17 L42.5 14.5" stroke="${INK}" stroke-width="1" stroke-linecap="round"/>
-<ellipse cx="32" cy="29.5" rx="1.8" ry="2.6" fill="#ead43e"/>
-<circle cx="20" cy="33" r="2.6" fill="#f2a64a" opacity=".55"/><circle cx="44" cy="33" r="2.6" fill="#f2a64a" opacity=".55"/>
-<path d="M21 32 Q32 42 43 32" stroke="#7a3a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-<rect x="28.6" y="36.4" width="3" height="3.4" rx=".5" fill="#fff" stroke="#7a3a1a" stroke-width=".5"/><rect x="32.4" y="36.4" width="3" height="3.4" rx=".5" fill="#fff" stroke="#7a3a1a" stroke-width=".5"/>`),
+  // Deniz altı süngeri: parlak sarı kare gövde, delikler, kirpikli kocaman mavi gözler,
+  // açık gülen ağız ve iki ön diş, çilli yanaklar, beyaz gömlek + kırmızı kravat
+  sponge: badge(['#7adcf6', '#1a6aa8'], `
+<rect x="14" y="44" width="36" height="9" fill="#fff"/><path d="M24 44 L30 49 L32 44 L34 49 L40 44Z" fill="#e6e6e6"/>
+<path d="M30.7 45.5 H33.3 L34.4 52 L32 55 L29.6 52Z" fill="#e0342f"/>
+<rect x="14" y="53" width="36" height="11" fill="#9a6230"/><path d="M14 55.5 H50" stroke="#2a1a10" stroke-width="1.6" stroke-dasharray="3.5 2.5"/>
+<path d="M13 8 Q16.5 5.5 20 8 Q23.5 5.5 27 8 Q30.5 5.5 34 8 Q37.5 5.5 41 8 Q44.5 5.5 48 8 Q51 7 51 10 V45 H13 V10 Q13 8 13 8Z" fill="#fff36a" stroke="#d6c22e" stroke-width=".8"/>
+<g fill="#cfd34a" opacity=".75"><ellipse cx="17.5" cy="14" rx="2" ry="2.6"/><ellipse cx="47" cy="16" rx="1.7" ry="2.3"/><ellipse cx="17" cy="38" rx="1.6" ry="2.2"/><ellipse cx="47" cy="39" rx="2" ry="2.6"/><ellipse cx="45" cy="10.5" rx="1.1" ry="1.3"/></g>
+<circle cx="25.5" cy="22" r="6.6" fill="#fff" stroke="#2a2a2a" stroke-width=".7"/><circle cx="38.5" cy="22" r="6.6" fill="#fff" stroke="#2a2a2a" stroke-width=".7"/>
+<circle cx="26.5" cy="22.4" r="3.2" fill="#46b4f0"/><circle cx="37.5" cy="22.4" r="3.2" fill="#46b4f0"/>
+<circle cx="26.5" cy="22.4" r="1.5" fill="${INK}"/><circle cx="37.5" cy="22.4" r="1.5" fill="${INK}"/>
+<circle cx="27.4" cy="21.3" r=".8" fill="#fff"/><circle cx="38.4" cy="21.3" r=".8" fill="#fff"/>
+<path d="M21.5 16.2 L20.3 13.6 M25.5 15.4 V12.6 M29.5 16.2 L30.7 13.6 M34.5 16.2 L33.3 13.6 M38.5 15.4 V12.6 M42.5 16.2 L43.7 13.6" stroke="${INK}" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M31 26 Q29.6 30 31.4 31.4 Q33.6 32 33.4 29.4 Q33 27 32.6 26Z" fill="#f1e050"/>
+<circle cx="18.6" cy="31" r="3" fill="#f6a24e" opacity=".55"/><circle cx="45.4" cy="31" r="3" fill="#f6a24e" opacity=".55"/>
+<g fill="#c8862a"><circle cx="17.6" cy="30.4" r=".5"/><circle cx="19.4" cy="31.6" r=".5"/><circle cx="44.6" cy="30.4" r=".5"/><circle cx="46.4" cy="31.6" r=".5"/></g>
+<path d="M21 31.5 Q32 33.5 43 31.5 Q40 42 32 42 Q24 42 21 31.5Z" fill="#7a1f1f" stroke="#5a1a10" stroke-width=".8"/>
+<path d="M26 38.6 Q32 36 38 38.6 Q35 41.6 32 41.6 Q29 41.6 26 38.6Z" fill="#ff7f8a"/>
+<rect x="28.4" y="32.2" width="3.4" height="3.6" rx=".6" fill="#fff" stroke="#5a1a10" stroke-width=".5"/><rect x="32.2" y="32.2" width="3.4" height="3.6" rx=".6" fill="#fff" stroke="#5a1a10" stroke-width=".5"/>`),
 
-  // Pembe deniz yıldızı: yıldız gövde, kalın kaşlar, minik gözler, yeşil çiçekli şort
-  starfish: badge(['#fbe8ae', '#c9983a'], `
-<path d="M32 3 Q36 17 41 23 Q51 25 59 29 Q51 36 45 40 L48 64 L16 64 L19 40 Q13 36 5 29 Q13 25 23 23 Q28 17 32 3Z" fill="#f59aa8"/>
-<path d="M18.5 50 H45.5 L48 64 H16Z" fill="#7ac74a"/>
-<g fill="#a35ad8"><circle cx="23" cy="55" r="1.8"/><circle cx="33" cy="58.5" r="1.8"/><circle cx="41" cy="54" r="1.8"/><circle cx="27" cy="61.5" r="1.4"/></g>
-<g fill="#e47a8c" opacity=".7"><circle cx="22" cy="31" r="1"/><circle cx="43" cy="33" r="1.1"/><circle cx="38" cy="44" r=".9"/><circle cx="25" cy="42" r=".9"/></g>
-<ellipse cx="28.8" cy="24" rx="2.4" ry="3.2" fill="#fff"/><ellipse cx="35.2" cy="24" rx="2.4" ry="3.2" fill="#fff"/>
-<circle cx="29.2" cy="24.6" r="1.1" fill="${INK}"/><circle cx="34.8" cy="24.6" r="1.1" fill="${INK}"/>
-<path d="M25.6 19.8 Q28 18.6 30.2 19.4 M38.4 19.8 Q36 18.6 33.8 19.4" stroke="${INK}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-<path d="M25 31.5 Q32 38 39 31.5" stroke="#9a2a3a" stroke-width="1.6" fill="none" stroke-linecap="round"/>`),
+  // Pembe deniz yıldızı: tombul yuvarlak uçlu yıldız, birbirine yakın gözler, ince kaşlar,
+  // kocaman gülüş, çiçekli yeşil şort
+  starfish: badge(['#fdf0c4', '#d9a648'], `
+<path d="M28.6 6 Q32 1.6 35.4 6 Q39.6 16 43 22.5 Q53 22.6 58.4 26.6 Q62 30.6 57.6 34 Q50 39 46.6 43 L49 64 H15 L17.4 43 Q14 39 6.4 34 Q2 30.6 5.6 26.6 Q11 22.6 21 22.5 Q24.4 16 28.6 6Z" fill="#ffa6b8" stroke="#e57c94" stroke-width=".8"/>
+<path d="M17.2 47 H46.8 L49 64 H15Z" fill="#8bd35a"/>
+<g fill="#b267e0"><circle cx="22" cy="53" r="2"/><circle cx="33" cy="57.5" r="2"/><circle cx="42" cy="52" r="2"/><circle cx="27" cy="61" r="1.6"/><circle cx="40" cy="61" r="1.6"/></g>
+<g fill="#ffd2dc"><circle cx="22" cy="53" r=".7"/><circle cx="33" cy="57.5" r=".7"/><circle cx="42" cy="52" r=".7"/></g>
+<ellipse cx="28.4" cy="20.5" rx="3.2" ry="4.2" fill="#fff" stroke="#c96a80" stroke-width=".5"/><ellipse cx="35.6" cy="20.5" rx="3.2" ry="4.2" fill="#fff" stroke="#c96a80" stroke-width=".5"/>
+<circle cx="29.2" cy="21.2" r="1.6" fill="${INK}"/><circle cx="34.8" cy="21.2" r="1.6" fill="${INK}"/>
+<circle cx="29.8" cy="20.4" r=".55" fill="#fff"/><circle cx="35.4" cy="20.4" r=".55" fill="#fff"/>
+<path d="M25.6 14.8 Q28 13.6 30.2 14.6 M38.4 14.8 Q36 13.6 33.8 14.6" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/>
+<ellipse cx="22.6" cy="28.4" rx="2.6" ry="1.5" fill="#ff6f92" opacity=".55"/><ellipse cx="41.4" cy="28.4" rx="2.6" ry="1.5" fill="#ff6f92" opacity=".55"/>
+<path d="M24.5 28.4 Q32 30 39.5 28.4 Q37.5 36.6 32 36.6 Q26.5 36.6 24.5 28.4Z" fill="#b3263e"/>
+<path d="M27.6 33.8 Q32 31.6 36.4 33.8 Q34.4 36.4 32 36.4 Q29.6 36.4 27.6 33.8Z" fill="#ff8a9c"/>`),
 
-  // Huysuz ahtapot komşu: uzun kel kafa, ağır göz kapakları, sarkık burun, kahve gömlek
-  squid: badge(['#c8b0ea', '#47306e'], `
-${shoulders('#b8742a')}
-<rect x="27.5" y="38" width="9" height="8" fill="#a3c7bf"/>
-<path d="M18.5 30 Q14 2 32 2 Q50 2 45.5 30 Q43.5 39 32 39 Q20.5 39 18.5 30Z" fill="#a8ccc4"/>
-<ellipse cx="26.8" cy="25" rx="4.4" ry="5.4" fill="#f4f0c8"/><ellipse cx="37.2" cy="25" rx="4.4" ry="5.4" fill="#f4f0c8"/>
-<circle cx="27.4" cy="27" r="1.3" fill="#b8303a"/><circle cx="36.6" cy="27" r="1.3" fill="#b8303a"/>
-<path d="M22.3 25 Q22.6 19.4 26.8 19.4 Q31 19.4 31.3 25Z M32.7 25 Q33 19.4 37.2 19.4 Q41.4 19.4 41.7 25Z" fill="#94bab1"/>
-<path d="M22.3 25 H31.3 M32.7 25 H41.7" stroke="#5f8a80" stroke-width=".9"/>
-<path d="M30.2 28 Q29 38 30.6 44 Q33.2 46.2 34.4 43.2 Q34.8 36 33.8 28Z" fill="#96bab2"/>
-<path d="M23.5 35.5 Q26.5 33.8 29 35.6 M35 35.6 Q37.5 33.8 40.5 35.5" stroke="#5a3a3a" stroke-width="1.3" fill="none" stroke-linecap="round"/>`),
+  // Huysuz ahtapot komşu: uzun kel kafa, ağır göz kapakları, sarkık burun, somurtkan ağız,
+  // kahve gömlek
+  squid: badge(['#d6c4f0', '#4a347a'], `
+${shoulders('#b8742a', '<path d="M24 44 L32 49 L40 44" stroke="#8f5518" stroke-width="1.6" fill="none"/>')}
+<rect x="28" y="38" width="8" height="8" fill="#a3c9c0"/>
+<path d="M18.6 31 Q13.6 3 32 3 Q50.4 3 45.4 31 Q43.6 40 32 40 Q20.4 40 18.6 31Z" fill="#b2d6cd" stroke="#86ada3" stroke-width=".8"/>
+<ellipse cx="26.6" cy="25" rx="4.6" ry="5.4" fill="#f6f2cf" stroke="#86ada3" stroke-width=".6"/><ellipse cx="37.4" cy="25" rx="4.6" ry="5.4" fill="#f6f2cf" stroke="#86ada3" stroke-width=".6"/>
+<circle cx="27.4" cy="27" r="1.2" fill="#8a2a30"/><circle cx="36.6" cy="27" r="1.2" fill="#8a2a30"/>
+<path d="M22 25.4 Q22 19.6 26.6 19.6 Q31.2 19.6 31.2 25.4Z M32.8 25.4 Q32.8 19.6 37.4 19.6 Q42 19.6 42 25.4Z" fill="#a0c6bc"/>
+<path d="M22 25.4 H31.2 M32.8 25.4 H42" stroke="#5f8a80" stroke-width="1" stroke-linecap="round"/>
+<path d="M30.4 28.4 Q29 37 30.4 42.6 Q32.6 45.4 34.2 42.4 Q35 36 33.6 28.4Z" fill="#a3c9c0" stroke="#86ada3" stroke-width=".6"/>
+<path d="M24.4 36.8 Q26.6 35.4 29.4 36.8 M34.6 36.8 Q37.4 35.4 39.6 36.8" stroke="#4a5a52" stroke-width="1.3" fill="none" stroke-linecap="round"/>`),
 
   // Gizem avcısı çocuk: önü beyaz arkası lacivert kasket (çam ağacı), kahve saç, turuncu tişört, lacivert yelek
   pinecap: badge(['#96d696', '#245236'], `
@@ -439,32 +448,56 @@ ${eyes(30.5, 4.8)}
 <path d="M26.6 36 H37.4" stroke="#8a96aa" stroke-width=".9"/><g fill="#b8c2d2"><rect x="28" y="35.3" width="1.4" height="1.4"/><rect x="31.3" y="35.3" width="1.4" height="1.4"/><rect x="34.6" y="35.3" width="1.4" height="1.4"/></g>
 <ellipse cx="23.5" cy="33.5" rx="2.6" ry="1.6" fill="#ff8fa3" opacity=".7"/><ellipse cx="40.5" cy="33.5" rx="2.6" ry="1.6" fill="#ff8fa3" opacity=".7"/>`),
 
-  // Sevimli domuzcuk: pembe yuvarlak kafa, üçgen kulaklar, iri burun
-  piglet: badge(['#c6eaa6', '#3f7e32'], `
-<ellipse cx="32" cy="60" rx="21" ry="12" fill="#eea0b2"/>
-<path d="M17.5 24 L14.5 9 L28 17Z M46.5 24 L49.5 9 L36 17Z" fill="#ec94a8"/>
-<path d="M18.5 20 L17 12.5 L24 17Z M45.5 20 L47 12.5 L40 17Z" fill="#f9c6d2"/>
-<circle cx="32" cy="32" r="16" fill="#f7b6c4"/>
-${eyes(27.5, 6.5)}
-<ellipse cx="32" cy="36" rx="6.8" ry="4.6" fill="#ee98ac"/>
-<ellipse cx="29.6" cy="36" rx="1.1" ry="1.7" fill="#b85a72"/><ellipse cx="34.4" cy="36" rx="1.1" ry="1.7" fill="#b85a72"/>
-<path d="M29 42.5 Q32 44.5 35 42.5" stroke="#b85a72" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-<ellipse cx="21.5" cy="35" rx="2.4" ry="1.4" fill="#ff7f9a" opacity=".55"/><ellipse cx="42.5" cy="35" rx="2.4" ry="1.4" fill="#ff7f9a" opacity=".55"/>`),
+  // Sert bakışlı dedektif (sakalsız): hacimli dalgalı kahve saç, alçak çatık kaşlar, kısık gözler,
+  // somurtkan ağız, açık gri gömlek, kahve örgü kravat, lacivert rüzgârlık (yazı/arma yok)
+  detective: badge(['#cfd3bc', '#5a4a30'], `
+${shoulders('#24506a', '<path d="M18 47 L27 43 L30.5 55Z M46 47 L37 43 L33.5 55Z" fill="#2f6584"/><path d="M26 43 L32 52 L38 43Z" fill="#dfe6e8"/><path d="M30.8 45 h2.4 l1 1.8 -.9 9 -1.3 1.4 -1.3 -1.4 -.9 -9Z" fill="#5c4830"/><circle cx="23" cy="56" r=".8" fill="#9aa8b0"/>')}
+${neck('#e2b48e')}
+<ellipse cx="20.8" cy="31.5" rx="1.8" ry="2.8" fill="#d9a882"/><ellipse cx="43.2" cy="31.5" rx="1.8" ry="2.8" fill="#d9a882"/>
+<ellipse cx="32" cy="30.6" rx="11" ry="13" fill="#e2b48e"/>
+<path d="M20.6 30 Q17.4 19 21.6 13.4 Q26.4 6.6 34 7.6 Q42.4 8 45 14.6 Q46.6 20 43.6 30 Q43 23.6 40.4 20.6 Q36.6 17.4 30.4 18.4 Q25.2 19.2 22.8 23 Q21.4 26 20.6 30Z" fill="#7a4e2c"/>
+<path d="M23.4 15.6 Q28 9.8 35 11.4 Q39.6 12.6 42.4 16.4 M25.6 19.6 Q30 14.8 36.4 16.6" stroke="#a5703f" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+<path d="M23.2 27.2 L29.8 28.6 M40.8 27.2 L34.2 28.6" stroke="#4a3020" stroke-width="2.1" stroke-linecap="round"/>
+<path d="M24.6 30.6 Q27 29.6 29.6 30.8 Q27.2 31.9 24.6 30.6Z M34.4 30.8 Q37 29.6 39.4 30.6 Q36.8 31.9 34.4 30.8Z" fill="#fff"/>
+<circle cx="27.4" cy="30.8" r=".95" fill="#3a4a58"/><circle cx="36.6" cy="30.8" r=".95" fill="#3a4a58"/>
+<path d="M24.4 30.5 Q27 29.3 29.8 30.7 M34.2 30.7 Q37 29.3 39.6 30.5" stroke="${INK}" stroke-width="1" fill="none"/>
+<path d="M32.4 30.4 L31.2 36.2 Q32.2 37 33.4 36.4" stroke="#b88660" stroke-width="1" fill="none" stroke-linecap="round"/>
+<path d="M23.6 33.6 Q24.8 38 27.4 40.4 M40.4 33.6 Q39.2 38 36.6 40.4" stroke="#c9946c" stroke-width=".8" fill="none"/>
+<path d="M28.4 40.6 Q32 39 35.6 40.6" stroke="#7a3a2a" stroke-width="1.4" fill="none" stroke-linecap="round"/>`),
 
-  // Yorgun dedektif: ense uzunluğunda geriye taranmış saç, bıyık, sakal gölgesi, göz altı torbaları, gevşek kravat
-  detective: badge(['#d2b98a', '#3e2f20'], `
-${shoulders('#3a3d44', '<path d="M26 43 L32 53 L38 43Z" fill="#e8e4da"/><path d="M31 45 h2.4 l1.4 11 -2.6 2 -2.4 -2Z" fill="#5a2a2a" transform="rotate(6 32 50)"/>')}
-${neck('#e6c0a0')}
-<path d="M19.5 32 Q17 14 32 14 Q46 14 44.5 32 Q44 38 46 43 L41.5 41 Q42.5 30 41 24 Q36 19.5 30 20 Q24 20.5 22.8 25 Q21.5 32 22.5 41 L18 43 Q20 37 19.5 32Z" fill="#6b4a2e"/>
-<ellipse cx="32" cy="31" rx="11" ry="12.8" fill="#e6c0a0"/>
-<path d="M21.5 28 Q22 20 30 19.8 Q37 19.5 42.5 26 Q37 22.5 31 23.2 Q25 23.5 21.5 28Z" fill="#6b4a2e"/>
-<path d="M24 27.8 L29.5 27.2 M34.5 27.2 L40 27.8" stroke="#4a3220" stroke-width="1.7" stroke-linecap="round"/>
-<path d="M24.6 30.6 Q27 29.4 29.4 30.6 M34.6 30.6 Q37 29.4 39.4 30.6" stroke="${INK}" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-<circle cx="27" cy="31.1" r="1" fill="${INK}"/><circle cx="37" cy="31.1" r="1" fill="${INK}"/>
-<path d="M24.6 33 Q27 34.4 29.4 33 M34.6 33 Q37 34.4 39.4 33" stroke="#b08868" stroke-width=".9" fill="none"/>
-<path d="M23 36 Q24 44 32 44.8 Q40 44 41 36 Q38 42 32 42.4 Q26 42 23 36Z" fill="#7a5a3a" opacity=".35"/>
-<path d="M26.2 37.2 Q29 35.2 32 36.2 Q35 35.2 37.8 37.2 Q37 39 35 38.2 Q32 37.4 29 38.2 Q27 39 26.2 37.2Z" fill="#5a3a22"/>
-<path d="M29.5 40.2 H34.5" stroke="#6b2f2f" stroke-width="1.3" stroke-linecap="round"/>`),
+  // Kaygılı çizer (kesitli dizinin anlatıcısı tarzında): sarı ten, yumurta kafa, siyah kirpi
+  // perçem, kalın dikdörtgen kaşlar, iri yuvarlak gözler, büyük burun, kuru kafalı siyah tişört
+  cartoonist: badge(['#6cb2d8', '#16344e'], `
+${shoulders('#161616', '<g transform="translate(32 55.5)"><path d="M-5 0 Q-5 -6.4 0 -6.4 Q5 -6.4 5 0 Q5 3 3 3.6 V6 H-3 V3.6 Q-5 3 -5 0Z" fill="#f2f2f2"/><circle cx="-2" cy="-.6" r="1.4" fill="#161616"/><circle cx="2" cy="-.6" r="1.4" fill="#161616"/></g>')}
+<rect x="29" y="38" width="6" height="7" fill="#e6c64e"/>
+<ellipse cx="21.4" cy="30" rx="2" ry="3" fill="#ead058"/><ellipse cx="42.6" cy="30" rx="2" ry="3" fill="#ead058"/>
+<path d="M21.6 22 Q21.6 8.6 32 8.6 Q42.4 8.6 42.4 22 L41.8 33 Q40.4 43.4 32.6 43.4 Q24 43.4 22.4 35Z" fill="#f6dc62" stroke="#2a2a2a" stroke-width=".7"/>
+<path d="M24.4 13.6 Q27.6 8.2 33 8.2 Q38.8 8.4 41.6 13.4 L43.6 10 L42.6 17.4 Q41.4 13.8 38.4 12.8 L39.4 9.6 L35.4 12.2 L33.6 7.2 L31.6 12 Q27.4 11.8 24.4 13.6Z" fill="#161616"/>
+<rect x="22.6" y="19.4" width="8.6" height="3.6" fill="#161616"/><rect x="32.8" y="19.4" width="8.6" height="3.6" fill="#161616"/>
+<circle cx="27" cy="27.4" r="3.8" fill="#fff" stroke="#161616" stroke-width=".8"/><circle cx="37" cy="27.4" r="3.8" fill="#fff" stroke="#161616" stroke-width=".8"/>
+<circle cx="27.3" cy="27.8" r="1.1" fill="#161616"/><circle cx="36.7" cy="27.8" r="1.1" fill="#161616"/>
+<path d="M23.8 32 Q27 33.6 30 32 M34 32 Q37 33.6 40.2 32" stroke="#b8962a" stroke-width=".9" fill="none"/>
+<path d="M31.6 29 Q28.4 34.6 27.8 37 Q30.6 38.8 34.4 37.4" stroke="#7a5a12" stroke-width="1.1" fill="#f0d256" stroke-linejoin="round"/>
+<path d="M29.6 41.2 Q32 39.6 34.6 41.2" stroke="#161616" stroke-width="1.2" fill="none" stroke-linecap="round"/>`),
+
+  // Bilge armadillo (aynı dizinin vicdanı tarzında): turuncu zırh, uzun burun, kocaman sivri
+  // kulaklar, sıkılmış yarı kapalı gözler, dişlerini gösteren ağız
+  armadillo: badge(['#f4e8c4', '#a88a52'], `
+<path d="M3 64 Q1 34 18 28 Q32 23 46 28 Q63 34 61 64Z" fill="#e98a2c" stroke="#b8621a" stroke-width=".8"/>
+<path d="M6 46 Q32 30 58 46 M4 55 Q32 39 60 55 M8 38 Q32 22 56 38" stroke="#b8621a" stroke-width="1.6" fill="none"/>
+<g fill="#f6a24a"><circle cx="12" cy="44" r="1.5"/><circle cx="52" cy="44" r="1.5"/><circle cx="10" cy="53" r="1.5"/><circle cx="54" cy="53" r="1.5"/><circle cx="16" cy="36" r="1.3"/><circle cx="48" cy="36" r="1.3"/></g>
+<ellipse cx="21" cy="11" rx="4.6" ry="9.5" transform="rotate(-22 21 11)" fill="#f29a3a" stroke="#b8621a" stroke-width=".7"/>
+<ellipse cx="43" cy="11" rx="4.6" ry="9.5" transform="rotate(22 43 11)" fill="#f29a3a" stroke="#b8621a" stroke-width=".7"/>
+<ellipse cx="21.4" cy="11.6" rx="2.4" ry="6.6" transform="rotate(-22 21.4 11.6)" fill="#d8742a"/><ellipse cx="42.6" cy="11.6" rx="2.4" ry="6.6" transform="rotate(22 42.6 11.6)" fill="#d8742a"/>
+<path d="M21 22 Q21 11 32 11 Q43 11 43 22 Q43 28 37.4 32 Q35.4 38 34.6 48 Q32 51.4 29.4 48 Q28.6 38 26.6 32 Q21 28 21 22Z" fill="#f6a443" stroke="#b8621a" stroke-width=".8"/>
+<path d="M25 15.4 Q32 11.4 39 15.4 M24 18.4 Q32 14.4 40 18.4" stroke="#c9661e" stroke-width="1.1" fill="none"/>
+<ellipse cx="32" cy="49.4" rx="2" ry="1.4" fill="#3a2414"/>
+<ellipse cx="27.2" cy="24.4" rx="2.8" ry="3.1" fill="#fff" stroke="#3a2414" stroke-width=".6"/><ellipse cx="36.8" cy="24.4" rx="2.8" ry="3.1" fill="#fff" stroke="#3a2414" stroke-width=".6"/>
+<circle cx="27.6" cy="25.4" r="1.35" fill="#1a1a1a"/><circle cx="36.4" cy="25.4" r="1.35" fill="#1a1a1a"/>
+<path d="M24.4 23.4 Q24.4 21.2 27.2 21.2 Q30 21.2 30 23.4Z M34 23.4 Q34 21.2 36.8 21.2 Q39.6 21.2 39.6 23.4Z" fill="#f29a3a"/>
+<path d="M24.4 23.4 H30 M34 23.4 H39.6" stroke="#3a2414" stroke-width=".9" stroke-linecap="round"/>
+<path d="M28.8 39.4 Q32 41 35.2 39.4 L34.8 42 Q32 43.4 29.2 42Z" fill="#fff" stroke="#6b2f2f" stroke-width=".8" stroke-linejoin="round"/>
+<path d="M30.6 40.2 V42.4 M32 40.5 V43 M33.4 40.2 V42.4" stroke="#c9b9a0" stroke-width=".5"/>`),
 });
 
 for (const [id, content] of Object.entries(AVATARS)) {

@@ -60,7 +60,7 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
   sonrası güvenlik ve dayanıklılık düzeltmeleri.
 - [x] **v0.8:** film sayfasında rehber kartı, filmden odaya dönüş (herkes dönmeden yeni video
   açılmaz), sürüklenebilir çubuk ve mesaj alanı (eklenti + site tam ekran), eklenti kurulunca
-  uyarının kaybolması, açılış sesi, Film / Dizi / Anime parodi avatarları (38 çizim).
+  uyarının kaybolması, açılış sesi, Film / Dizi / Anime parodi avatarları. v0.8.1: temalarda süsler kenarda (video izlerken görünür), odaya dönüş onayı, isim sormadan dönüş.
 - [ ] **Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
   `npm run store`); gönderim bekliyor.
 - [ ] **Büyüme:** kısa alan adı, repo'yu açmak, lansman planı (`docs/BUYUME.md`).

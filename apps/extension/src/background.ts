@@ -346,7 +346,8 @@ async function follow(session: Session): Promise<void> {
 
 /** Sekmeyi sitedeki odaya götürür; eklentinin bağlantısı kapanır (aynı kişi iki kez görünmesin). */
 async function goToRoom(session: Session): Promise<void> {
-  const roomUrl = `${SITE_URL}/r/${session.roomId}`;
+  // #back: site isim/avatar adımını atlayıp doğrudan odaya girsin (kişi zaten odadaydı).
+  const roomUrl = `${SITE_URL}/r/${session.roomId}#back`;
   endSession(session.tabId);
   await chrome.tabs.update(session.tabId, { url: roomUrl });
 }

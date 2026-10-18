@@ -225,8 +225,8 @@ function siberScene() {
     const tx = bx + (bx < W / 2 ? 260 : -260) + i * 30;
     parts.push(`<line x1="${bx}" y1="${f(H - b.h)}" x2="${f(tx)}" y2="0" stroke="${i % 2 ? CYAN : PINK}" stroke-width="2" opacity=".18"/>`);
   });
-  // Neon zeplin (sol üstte): yanında ekran, ekranda oynat işareti
-  parts.push(`<g transform="translate(250 250)">
+  // Neon zeplin (sol kenarda, video izlerken de görünsün): yanında ekran, ekranda oynat işareti
+  parts.push(`<g transform="translate(150 280) scale(.8)">
 <path d="M-96 0 Q-96 -34 0 -36 Q96 -34 104 0 Q96 34 0 36 Q-96 34 -96 0Z" fill="#1a0f33" stroke="${CYAN}" stroke-width="2" filter="url(#n)"/>
 <path d="M-96 0 L-124 -26 L-114 0 L-124 26Z" fill="#1a0f33" stroke="${CYAN}" stroke-width="2"/>
 <rect x="-46" y="-20" width="92" height="40" rx="5" fill="#0b0418" stroke="${PINK}" stroke-width="2.5" filter="url(#n)"/>
@@ -410,9 +410,9 @@ ${GLOW('g', 5)}
 ${stars}
 <!-- Ay ve kartallar biraz aşağıda (üst şerit kapatmasın) -->
 <g transform="translate(0 80)">
-<circle cx="300" cy="150" r="150" fill="url(#halo)"/>
-<circle cx="300" cy="150" r="54" fill="#eef1fb"/>
-<circle cx="282" cy="138" r="9" fill="#d9deee"/><circle cx="318" cy="164" r="12" fill="#d9deee"/>
+<circle cx="140" cy="190" r="150" fill="url(#halo)"/>
+<circle cx="140" cy="190" r="54" fill="#eef1fb"/>
+<circle cx="122" cy="178" r="9" fill="#d9deee"/><circle cx="158" cy="204" r="12" fill="#d9deee"/>
 ${eagle(1040, 170, 1)}${eagle(1120, 210, 0.7)}${eagle(560, 120, 0.55)}
 </g>
 <!-- Uzak dağlar, dumanlı tepe ve etrafında dönen ejderha -->
@@ -421,8 +421,8 @@ ${range(560, 260, 90, 3, '#2a3550', '#d9e2f2')}
 ${mist(600, 0.22)}
 ${range(680, 220, 110, 9, '#1d263b', '#b9c6dd')}
 ${mist(700, 0.18)}
-${city}
-${shadowDragon}
+<!-- Kale ve ejderha sağ kenarda: video izlerken de yanda görünsün -->
+<g transform="translate(150 0)">${city}${shadowDragon}</g>
 ${range(800, 120, 140, 21, '#141b2b', null)}
 <!-- Tepe ve harabeler -->
 <path d="M140 900 Q260 680 420 690 Q560 700 640 900Z" fill="#101624"/>
@@ -546,6 +546,22 @@ ${minaret(cx - 120 * s, base, 160 * s)}${minaret(cx + 120 * s, base, 160 * s)}${
 <g transform="translate(${x} ${len})" filter="url(#g)"><path d="M-8 0 H8 L14 10 Q22 28 0 50 Q-22 28 -14 10Z" fill="${c}" opacity=".9"/><path d="M-14 10 H14 M-18 24 H18" stroke="#e6b85c" stroke-width="2"/><circle cy="58" r="3" fill="#e6b85c"/></g>`;
   let water = '';
   for (let i = 0; i < 26; i++) water += `<line x1="${f(r() * W)}" y1="${f(790 + r() * 100)}" x2="${f(r() * W)}" y2="0" stroke="none"/>`;
+  // Ayın denizdeki yansıması: ayın tam altında, aşağı doğru genişleyen titrek ışık şeritleri
+  const moonPath = (cx) => {
+    const rr = rng(31);
+    let s = `<ellipse cx="${cx}" cy="836" rx="54" ry="66" fill="url(#halo)" opacity=".8"/>`;
+    for (let i = 0; i < 14; i++) {
+      const y = 778 + i * 8.5;
+      const w = 12 + i * 4.4;
+      const off = (rr() - 0.5) * 10;
+      // Her şeridi rastgele bir yerden böl: düz merdiven değil, dalgada kırılan ışık gibi dursun
+      const cut = cx - w / 2 + off + w * (0.25 + rr() * 0.5);
+      const gap = 2 + rr() * 4;
+      const line = (a, b) => `<line x1="${f(a)}" y1="${f(y)}" x2="${f(b)}" y2="${f(y)}" stroke="#ffe9c9" stroke-width="${f(1.6 + i * 0.12)}" stroke-linecap="round" opacity="${f(0.8 - i * 0.035)}"/>`;
+      s += line(cx - w / 2 + off, cut - gap / 2) + line(cut + gap / 2, cx + w / 2 + off);
+    }
+    return s;
+  };
   let ripples = '';
   for (let i = 0; i < 30; i++) {
     const x = r() * W;
@@ -559,15 +575,15 @@ ${GLOW('g', 5)}
 <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#ff9fbf" stop-opacity="0"/><stop offset="1" stop-color="#ff9fbf" stop-opacity=".18"/></linearGradient>
 <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1f3a"/><stop offset="1" stop-color="#140713"/></linearGradient>
 <radialGradient id="halo"><stop offset="0" stop-color="#ffe6c4" stop-opacity=".4"/><stop offset="1" stop-color="#ffe6c4" stop-opacity="0"/></radialGradient>
-<mask id="cres"><rect width="${W}" height="${H}" fill="#fff"/><circle cx="1222" cy="236" r="40" fill="#000"/></mask>
+<mask id="cres"><rect width="${W}" height="${H}" fill="#fff"/><circle cx="1502" cy="256" r="40" fill="#000"/></mask>
 </defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>
 ${iznikCorner(false)}${iznikCorner(true)}
 <!-- Hilal ve martılar -->
-<circle cx="1200" cy="250" r="130" fill="url(#halo)"/>
-<circle cx="1200" cy="250" r="46" fill="#ffe9c9" mask="url(#cres)"/>
+<circle cx="1480" cy="270" r="130" fill="url(#halo)"/>
+<circle cx="1480" cy="270" r="46" fill="#ffe9c9" mask="url(#cres)"/>
 ${gull(980, 320, 1.2)}${gull(1030, 296, 0.9)}${gull(560, 340, 1)}${gull(610, 320, 0.7)}
-${nazar(300, 200)}${lamp(380, 160, '#e8425a')}${lamp(1340, 170, '#3cc6b8')}
+${nazar(110, 210)}${lamp(215, 170, '#e8425a')}${lamp(1368, 240, '#3cc6b8')}
 <!-- Karşı kıyı (uzak, soluk) -->
 <g fill="#2a1226">${houses(830, 1600, farGround, 5)}<path d="M820 800 ${Array.from({ length: 40 }, (_, i) => { const x = 820 + i * 20; return `L${x} ${f(farGround(x))}`; }).join(' ')} L1600 ${f(farGround(1600))} V800Z"/></g>
 <!-- Tarihi yarımada: saray, eski cami, büyük cami, serviler, evler -->
@@ -589,10 +605,10 @@ ${nazar(300, 200)}${lamp(380, 160, '#e8425a')}${lamp(1340, 170, '#3cc6b8')}
 <!-- Boğaz -->
 <rect y="770" width="${W}" height="130" fill="url(#sea)"/>
 ${ripples}
-<g stroke="#ffe9c9" stroke-linecap="round" opacity=".55"><line x1="1160" y1="790" x2="1240" y2="790" stroke-width="3"/><line x1="1176" y1="808" x2="1224" y2="808" stroke-width="3"/><line x1="1188" y1="826" x2="1212" y2="826" stroke-width="2.5"/></g>
+${moonPath(1480)}
 ${maiden(1040, 816)}
-${ship(300, 850, 0.9)}${ship(1430, 860, 0.7)}
-${kayik(620, 832)}${kayik(860, 872)}${kayik(1260, 846)}
+${ship(300, 850, 0.9)}${ship(1230, 866, 0.7)}
+${kayik(620, 832)}${kayik(860, 872)}${kayik(1340, 884)}
 `);
 }
 
@@ -705,13 +721,13 @@ ${GLOW('g', 6)}
 </defs>
 <!-- Ay ve kayan yıldız biraz aşağıda (üst şerit kapatmasın) -->
 <g transform="translate(0 80)">
-<circle cx="1250" cy="170" r="210" fill="url(#halo)"/>
-<circle cx="1250" cy="170" r="78" fill="#fff1c9"/>
-<circle cx="1226" cy="152" r="12" fill="#f1e1ac"/><circle cx="1276" cy="190" r="16" fill="#f1e1ac"/><circle cx="1270" cy="142" r="7" fill="#f1e1ac"/>
-<path d="M420 120 L300 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
+<circle cx="1475" cy="190" r="190" fill="url(#halo)"/>
+<circle cx="1475" cy="190" r="70" fill="#fff1c9"/>
+<circle cx="1453" cy="174" r="11" fill="#f1e1ac"/><circle cx="1498" cy="208" r="14" fill="#f1e1ac"/><circle cx="1493" cy="165" r="6" fill="#f1e1ac"/>
+<path d="M200 120 L80 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
 </g>
-<!-- Uzak saray silueti -->
-<g fill="#15122c">
+<!-- Uzak saray silueti (sol kenarda) -->
+<g fill="#15122c" transform="translate(-915 0)">
   <rect x="960" y="590" width="190" height="40"/>
   <path d="M1010 592 Q1010 548 1040 540 Q1070 548 1070 592Z M1080 594 Q1080 566 1100 560 Q1120 566 1120 594Z M975 594 Q975 572 990 566 Q1005 572 1005 594Z"/>
   <rect x="948" y="530" width="8" height="64"/><path d="M946 532 L952 510 L958 532Z"/><rect x="1150" y="540" width="8" height="54"/><path d="M1148 542 L1154 520 L1160 542Z"/>
@@ -720,16 +736,16 @@ ${GLOW('g', 6)}
 <!-- Arka kumullar -->
 <path d="M0 640 Q200 590 420 630 Q640 670 860 610 Q1080 560 1300 620 Q1460 660 1600 610 V900 H0Z" fill="url(#dune1)"/>
 <!-- Kervan sırtta -->
-${camel(1080, 608, 0.62)}${rope(1157, 588, 1121, 560)}${camel(1180, 612, 0.6)}${rope(1256, 599, 1219, 565)}${camel(1278, 622, 0.58)}
+<g transform="translate(285 24)">${camel(1080, 608, 0.62)}${rope(1157, 588, 1121, 560)}${camel(1180, 612, 0.6)}${rope(1256, 599, 1219, 565)}${camel(1278, 622, 0.58)}</g>
 
 <!-- Ön kumullar (ay ışığı tepelerde) -->
 <path d="M0 760 Q260 690 560 740 Q860 790 1120 720 Q1380 660 1600 730 V900 H0Z" fill="url(#dune2)"/>
 <path d="M0 840 Q300 800 640 836 Q980 870 1280 820 Q1460 796 1600 830 V900 H0Z" fill="#1a1428" opacity=".85"/>
 ${sand}
 <!-- Vaha (sol) -->
-<ellipse cx="300" cy="790" rx="120" ry="16" fill="url(#pond)"/>
-<line x1="270" y1="786" x2="330" y2="786" stroke="#fff1c9" stroke-width="2.5" opacity=".6" stroke-linecap="round"/>
-${palm(210, 792, 1)}${palm(330, 796, 0.8)}${palm(400, 794, 0.6)}
+<ellipse cx="150" cy="790" rx="120" ry="16" fill="url(#pond)"/>
+<line x1="120" y1="786" x2="180" y2="786" stroke="#fff1c9" stroke-width="2.5" opacity=".6" stroke-linecap="round"/>
+${palm(70, 792, 1)}${palm(185, 796, 0.8)}${palm(250, 794, 0.6)}
 `);
 }
 

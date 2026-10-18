@@ -53,8 +53,8 @@ async function sync(): Promise<void> {
   const extAt = typeof ext.identityAt === 'number' ? ext.identityAt : 0;
   const update: Record<string, string | number> = {};
 
-  if (extAt > site.at && typeof ext.name === 'string') {
-    // Eklentide daha yeni değişti: siteye yaz, açık oda sayfası da hemen güncellesin.
+  if ((extAt > site.at || !site.name) && typeof ext.name === 'string' && cleanName(ext.name)) {
+    // Eklentide daha yeni değişti (ya da sitede hiç isim yok): siteye yaz, açık oda sayfası da hemen güncellesin.
     writeSite('name', ext.name);
     if (isAvatar(ext.avatar)) writeSite('avatar', ext.avatar);
     writeSite('identityAt', String(extAt));

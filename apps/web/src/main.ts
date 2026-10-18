@@ -8,7 +8,7 @@ import { applyTheme, currentTheme, renderThemePicker } from './themes.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
-applyTheme(currentTheme());
+applyTheme(currentTheme(), { wait: false });
 
 // Üst çubuktaki logo: üzerine gelince ağızdaki oynat düğmesi duraklata döner.
 document.querySelector('.brand .logo')?.append(createLogo(document, { animated: true }));

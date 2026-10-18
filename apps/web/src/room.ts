@@ -43,14 +43,24 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
  * saklanır ve bir dahakine hazır gelir. "Odaya gir" tıklaması aynı zamanda
  * tarayıcının sesli oynatma izni için gereken etkileşimdir.
  */
-export function renderRoom(app: HTMLElement, roomId: string): void {
-  // Bu sekmede odaya zaten girilmişse (sayfa yenilendi) isim/avatar adımlarını atla.
+export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
+  // Eklenti filmden odaya dönerken adrese #back koyar: kişi zaten odadaydı, isim/avatar sorma.
+  const fromExtension = location.hash === '#back';
+  if (fromExtension) history.replaceState(null, '', location.pathname + location.search);
+  // Bu sekmede odaya zaten girilmişse (sayfa yenilendi) ya da filmden dönüldüyse isim/avatar
+  // adımlarını atla.
   const savedName = cleanName(load('name'));
   const savedAvatar = load('avatar');
-  if (savedName && isAvatar(savedAvatar) && sessionLoad(`in:${roomId}`) === '1') {
+  if (savedName && isAvatar(savedAvatar) && (fromExtension || waited || sessionLoad(`in:${roomId}`) === '1')) {
     startRoom(app, roomId, savedName, savedAvatar, { resumed: true });
     return;
   }
+  // İsim eklentide seçilmiş ama siteye henüz geçmemiş olabilir (site-bridge birazdan yazar).
+  if (fromExtension && !waited) {
+    setTimeout(() => renderRoom(app, roomId, true), 800);
+    return;
+  }
+
   app.innerHTML = `
     <section class="card join-card">
       <p class="muted step-label" id="room-code"></p>

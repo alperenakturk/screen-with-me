@@ -56,13 +56,15 @@ const CSS = `
 .logo { display: block; width: 22px; height: 22px; }
 .logo svg { display: block; width: 100%; height: 100%; }
 .badge { background: #7c5cff; border-radius: 999px; padding: 0 6px; font-size: 11px; }
-.bar { width: min(470px, calc(100% - 24px)); display: flex; flex-direction: column; gap: 8px; padding: 8px;
+.bar { width: min(490px, calc(100% - 24px)); display: flex; flex-direction: column; gap: 8px; padding: 8px;
   border-radius: 12px; background: rgb(15 16 20 / .88); border: 1px solid rgb(255 255 255 / .12);
   box-shadow: 0 6px 24px rgb(0 0 0 / .45); backdrop-filter: blur(6px); }
 .idle .fab, .idle .bar { opacity: 0; pointer-events: none; }
 .row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .row > * { flex: none; }
 .row > .spacer { flex: 1; min-width: 2px; }
+/* Dar yerde (ya da odada çok kişi varken) emojiler daralır; sağdaki düğmeler ve ✕ dışarı taşmaz */
+.row > .reactions { flex: 0 1 auto; min-width: 0; overflow: hidden; display: flex; gap: 4px; }
 .row > form { flex: 1; }
 .reaction { width: 28px; height: 28px; border-radius: 999px; background: rgb(255 255 255 / .06);
   border: 1px solid rgb(255 255 255 / .12); font-size: 15px; cursor: pointer; padding: 0; }
@@ -95,6 +97,7 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 
 /* Emoji sayfaları: yanındaki küçük ▲▼ ile diğer emojiler */
 .reactions { display: flex; gap: 4px; }
+.reactions > * { flex: none; }
 .pager { display: flex; flex-direction: column; gap: 2px; margin-left: 2px; }
 .pager button { width: 18px; height: 13px; padding: 0; border-radius: 4px; font-size: 7px; line-height: 1; color: #fff; cursor: pointer;
   background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12); }
@@ -246,7 +249,20 @@ export function createOverlay(actions: OverlayActions) {
       copy.textContent = '✓';
       setTimeout(() => (copy.textContent = '🔗'), 1500);
     });
-    const home = button('icon', '🏠', t('backToRoom'), () => actions.onBackToRoom());
+    // Odaya dönmeden önce sor: bu sekmede senkron biter, yanlışlıkla basılmasın.
+    const home = button('icon', '🏠', t('backToRoom'), () => {
+      const layer = mount();
+      if (layer.querySelector('.confirm-home')) return;
+      const yes = el('button', 'primary', t('backToRoomYes'));
+      const no = el('button', '', t('backToRoomNo'));
+      const card = el('div', 'note confirm-home', el('b', '', t('backToRoomTitle')), t('backToRoomText'), el('div', 'actions', yes, no));
+      yes.addEventListener('click', () => {
+        card.remove();
+        actions.onBackToRoom();
+      });
+      no.addEventListener('click', () => card.remove());
+      layer.append(card);
+    });
     const close = button('icon', '✕', t('close'), () => setBar(false));
     // Tutamak: sürükleyerek çubuğu taşı, çift tıkla eski yerine (sağ üst) al.
     const grip = el('span', 'grip', '⠿');

@@ -8,13 +8,13 @@
 </defs>
 <!-- Ay ve kayan yıldız biraz aşağıda (üst şerit kapatmasın) -->
 <g transform="translate(0 80)">
-<circle cx="1250" cy="170" r="210" fill="url(#halo)"/>
-<circle cx="1250" cy="170" r="78" fill="#fff1c9"/>
-<circle cx="1226" cy="152" r="12" fill="#f1e1ac"/><circle cx="1276" cy="190" r="16" fill="#f1e1ac"/><circle cx="1270" cy="142" r="7" fill="#f1e1ac"/>
-<path d="M420 120 L300 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
+<circle cx="1475" cy="190" r="190" fill="url(#halo)"/>
+<circle cx="1475" cy="190" r="70" fill="#fff1c9"/>
+<circle cx="1453" cy="174" r="11" fill="#f1e1ac"/><circle cx="1498" cy="208" r="14" fill="#f1e1ac"/><circle cx="1493" cy="165" r="6" fill="#f1e1ac"/>
+<path d="M200 120 L80 168" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7" filter="url(#g)"/>
 </g>
-<!-- Uzak saray silueti -->
-<g fill="#15122c">
+<!-- Uzak saray silueti (sol kenarda) -->
+<g fill="#15122c" transform="translate(-915 0)">
   <rect x="960" y="590" width="190" height="40"/>
   <path d="M1010 592 Q1010 548 1040 540 Q1070 548 1070 592Z M1080 594 Q1080 566 1100 560 Q1120 566 1120 594Z M975 594 Q975 572 990 566 Q1005 572 1005 594Z"/>
   <rect x="948" y="530" width="8" height="64"/><path d="M946 532 L952 510 L958 532Z"/><rect x="1150" y="540" width="8" height="54"/><path d="M1148 542 L1154 520 L1160 542Z"/>
@@ -23,7 +23,7 @@
 <!-- Arka kumullar -->
 <path d="M0 640 Q200 590 420 630 Q640 670 860 610 Q1080 560 1300 620 Q1460 660 1600 610 V900 H0Z" fill="url(#dune1)"/>
 <!-- Kervan sırtta -->
-<g transform="translate(1080 608) scale(0.62)" fill="#0b0817">
+<g transform="translate(285 24)"><g transform="translate(1080 608) scale(0.62)" fill="#0b0817">
 <path d="M-27 -46 C-31 -36 -29 -27 -26 -22 L-25 0 L-20.5 0 L-21 -22 C-19 -30 -17 -40 -15 -45Z M-16 -44 L-13 -22 L-15.5 0 L-11.5 0 L-9.5 -22 L-9 -44Z M23 -44 L25 -22 L22.5 0 L26.5 0 L29 -22 L29.5 -44Z M30 -46 L34 -22 L33 0 L37 0 L37.5 -22 L36 -47Z"/>
 <path d="M-34 -54 Q-41 -46 -39 -32" stroke="#0b0817" stroke-width="2.2" fill="none"/>
 <path d="M-34 -54 C-36 -64 -26 -68 -16 -66 C-10 -92 10 -94 16 -66 C22 -64 26 -60 30 -56 C36 -62 38 -76 42 -86 C44 -92 50 -96 56 -94 L64 -90 Q67 -86 62 -84 L55 -84 C51 -82 49 -76 47 -68 C45 -58 42 -50 36 -46 C30 -42 24 -42 18 -42 L-24 -42 C-32 -42 -34 -46 -34 -54Z" stroke="#e9cf98" stroke-opacity=".2" stroke-width="1.1"/>
@@ -41,21 +41,21 @@
 <path d="M-34 -54 C-36 -64 -26 -68 -16 -66 C-10 -92 10 -94 16 -66 C22 -64 26 -60 30 -56 C36 -62 38 -76 42 -86 C44 -92 50 -96 56 -94 L64 -90 Q67 -86 62 -84 L55 -84 C51 -82 49 -76 47 -68 C45 -58 42 -50 36 -46 C30 -42 24 -42 18 -42 L-24 -42 C-32 -42 -34 -46 -34 -54Z" stroke="#e9cf98" stroke-opacity=".2" stroke-width="1.1"/>
 <path d="M53 -94 l-2 -6 l5 4Z"/>
 <g transform="translate(0 -14)"><path d="M-14 -54 Q1 -48 16 -54 L17 -42 Q1 -37 -15 -42Z" fill="#2a1e3c"/><path d="M-14 -42 v4 M-8 -40 v4 M-2 -39 v4 M4 -39 v4 M10 -40 v4 M16 -42 v4" stroke="#2a1e3c" stroke-width="1.4"/></g>
-</g>
+</g></g>
 <!-- Ön kumullar (ay ışığı tepelerde) -->
 <path d="M0 760 Q260 690 560 740 Q860 790 1120 720 Q1380 660 1600 730 V900 H0Z" fill="url(#dune2)"/>
 <path d="M0 840 Q300 800 640 836 Q980 870 1280 820 Q1460 796 1600 830 V900 H0Z" fill="#1a1428" opacity=".85"/>
 <circle cx="1075.6" cy="875.2" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="78.3" cy="837.5" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="120.4" cy="883.8" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1061.7" cy="828.8" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="916.3" cy="838" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="76" cy="864.3" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1351.3" cy="825.5" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1333.1" cy="869.5" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1531.2" cy="859" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="56" cy="815.6" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="1125.1" cy="825.1" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="1077.9" cy="858.4" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1309.7" cy="875.1" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="529.7" cy="834.5" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="109.1" cy="875.2" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="650.2" cy="804.1" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="1419.3" cy="887.7" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="1307.5" cy="848.4" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="239.8" cy="886.1" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1540.2" cy="873.4" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="1279.9" cy="836.7" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1273" cy="882.9" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="591.7" cy="877.8" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="1244.1" cy="834.2" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="174.5" cy="883.4" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="1342.6" cy="848" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="771.2" cy="841.9" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="530.3" cy="810.7" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="743.1" cy="846.4" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="905.7" cy="816.4" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="1400.1" cy="841.8" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="1281.9" cy="852.5" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="523.4" cy="816.3" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="584.3" cy="802.7" r="1.2" fill="#f1d9a6" opacity="0.2"/><circle cx="976.1" cy="839" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="172.3" cy="806.5" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="782.7" cy="851.3" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="622.3" cy="884.8" r="1.2" fill="#f1d9a6" opacity="0.3"/><circle cx="752.5" cy="831.3" r="1.2" fill="#f1d9a6" opacity="0.4"/><circle cx="1095" cy="800.6" r="1.2" fill="#f1d9a6" opacity="0.4"/>
 <!-- Vaha (sol) -->
-<ellipse cx="300" cy="790" rx="120" ry="16" fill="url(#pond)"/>
-<line x1="270" y1="786" x2="330" y2="786" stroke="#fff1c9" stroke-width="2.5" opacity=".6" stroke-linecap="round"/>
-<g transform="translate(210 792) scale(1)" fill="#0a0716">
+<ellipse cx="150" cy="790" rx="120" ry="16" fill="url(#pond)"/>
+<line x1="120" y1="786" x2="180" y2="786" stroke="#fff1c9" stroke-width="2.5" opacity=".6" stroke-linecap="round"/>
+<g transform="translate(70 792) scale(1)" fill="#0a0716">
 <path d="M-4 0 Q-10 -60 6 -120 L12 -118 Q0 -60 6 0Z"/>
 <path d="M8 -120 Q-30 -136 -62 -112 Q-30 -122 6 -112Z M8 -120 Q40 -142 76 -118 Q40 -126 10 -112Z M8 -122 Q-12 -152 -40 -158 Q-14 -140 4 -116Z M8 -122 Q30 -156 58 -160 Q34 -140 12 -116Z M8 -118 Q-24 -100 -46 -70 Q-18 -96 6 -110Z M8 -118 Q40 -100 58 -72 Q34 -96 10 -110Z"/>
-</g><g transform="translate(330 796) scale(0.8)" fill="#0a0716">
+</g><g transform="translate(185 796) scale(0.8)" fill="#0a0716">
 <path d="M-4 0 Q-10 -60 6 -120 L12 -118 Q0 -60 6 0Z"/>
 <path d="M8 -120 Q-30 -136 -62 -112 Q-30 -122 6 -112Z M8 -120 Q40 -142 76 -118 Q40 -126 10 -112Z M8 -122 Q-12 -152 -40 -158 Q-14 -140 4 -116Z M8 -122 Q30 -156 58 -160 Q34 -140 12 -116Z M8 -118 Q-24 -100 -46 -70 Q-18 -96 6 -110Z M8 -118 Q40 -100 58 -72 Q34 -96 10 -110Z"/>
-</g><g transform="translate(400 794) scale(0.6)" fill="#0a0716">
+</g><g transform="translate(250 794) scale(0.6)" fill="#0a0716">
 <path d="M-4 0 Q-10 -60 6 -120 L12 -118 Q0 -60 6 0Z"/>
 <path d="M8 -120 Q-30 -136 -62 -112 Q-30 -122 6 -112Z M8 -120 Q40 -142 76 -118 Q40 -126 10 -112Z M8 -122 Q-12 -152 -40 -158 Q-14 -140 4 -116Z M8 -122 Q30 -156 58 -160 Q34 -140 12 -116Z M8 -118 Q-24 -100 -46 -70 Q-18 -96 6 -110Z M8 -118 Q40 -100 58 -72 Q34 -96 10 -110Z"/>
 </g>

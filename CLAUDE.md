@@ -132,14 +132,18 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Mesaj yeri:** eklentide çubuk ⠿ ile, sitede tam ekranda "💬 Mesajlar burada" tutamağıyla
   sürüklenir (oran olarak saklanır: eklenti `storage.local` `barPos`, site `localStorage`
   `toastPos`; çift tık sıfırlar). Mesajlar tutamağın yanına hizalanır, alt taraftaysa yukarı büyür.
-- **Filmden odaya dönüş:** eklenti çubuğundaki 🏠 / popup → arka plan `goToRoom` (oturumu kapatıp
-  sekmeyi `/r/ODA`'ya götürür). Sunucu: eklentiyle (`client: 'ext'`) filmde biri varken siteden
+- **Filmden odaya dönüş:** eklenti çubuğundaki 🏠 (onay kartı) / popup (iki kez bas) → arka plan
+  `goToRoom` (oturumu kapatıp sekmeyi `/r/ODA#back`'e götürür; site `#back` görünce isim/avatar
+  sormadan girer, isim henüz eklentiden gelmediyse 800 ms bekler). Sunucu: eklentiyle (`client: 'ext'`) filmde biri varken siteden
   yeni video açılamaz / sıradakine geçilemez (`others_watching`); sıraya eklemek serbest.
 - **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) çubukta oklu
   kısa kart: kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.
   "Bir daha gösterme" → `storage.local` `guideOff`.
-- **Sahnelerde üst boşluk:** sahne alttan hizalı ve ekranı kaplar; geniş ekranda üst kısım
-  kırpılır ve üst şerit de kapatır. Ay, kandil gibi süsleri y≈150'nin üstüne koyma.
+- **Sahnelerde üst boşluk ve yanlar:** sahne (1600×900) alttan hizalı ve ekranı kaplar; geniş ekranda
+  üst kısım kırpılır ve üst şerit de kapatır: süsleri y≈200'ün üstüne koyma. Oda içeriği ortada en
+  fazla 1280 px; kullanıcı çoğunlukla video izlerken bakar, o yüzden ana süsler (ay, kale, ejderha,
+  kervan, zeplin) sahnenin kenarlarında (x < 260 ya da x > 1340) dursun. Tema değişirken resimler
+  önce yüklenir (pplyTheme → preload), renk ve resim birlikte değişir.
 - **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
   (herkes başa sarılmasın); 60 sn'den kısa video bitince "sıradaki" istenmez (reklam/önizleme).
 

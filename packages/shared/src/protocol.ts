@@ -68,8 +68,9 @@ export const DRAWN_AVATARS = {
   squid: '🦑',
   pinecap: '🌲',
   sweaterkid: '🧶',
-  piglet: '🐷',
   detective: '🕵️',
+  cartoonist: '✏️',
+  armadillo: '🐾',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
@@ -85,7 +86,7 @@ export const AVATAR_PAGES = [
   ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature'],
   [
     'scientist', 'sidekick', 'chemist', 'lawyer', 'detective', 'hunter', 'dragonqueen', 'goth',
-    'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'piglet',
+    'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo',
   ],
   ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl'],
 ] as const;

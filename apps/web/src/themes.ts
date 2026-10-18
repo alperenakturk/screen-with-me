@@ -29,10 +29,46 @@ export function currentTheme(): ThemeId {
   return isTheme(saved) ? saved : 'gece';
 }
 
-export function applyTheme(id: ThemeId): void {
-  document.documentElement.dataset.theme = id;
+/** Temanın resimleri (styles.css'teki --scene / --mascot / desen ile aynı adresler). */
+function themeImages(id: ThemeId): string[] {
+  const urls = [`/themes/${id}-maskot.svg`];
+  if (['uzay', 'siber', 'ortacag', 'lokum', 'binbirgece'].includes(id)) urls.push(`/themes/${id}.svg`);
+  if (id === 'lokum') urls.push('/themes/lokum-desen.svg');
+  return urls;
+}
+
+/** Resimleri indirip çözer; en fazla `ms` bekler (yavaş ağda tema değişimi takılmasın). */
+function preload(urls: string[], ms: number): Promise<void> {
+  const all = Promise.all(
+    urls.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img.decode().catch(() => undefined);
+    }),
+  ).then(() => undefined);
+  return Promise.race([all, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
+}
+
+let applying = 0;
+
+/**
+ * Temayı uygular. Önce temanın resimleri yüklenir, sonra renkler ve resimler birlikte
+ * değişir (yoksa önce yıldızlar, sonra gezegen gelir; tuhaf duruyordu). İlk açılışta
+ * beklenmez: renkler hemen gelsin. Arka arkaya tıklanırsa sadece sonuncusu uygulanır.
+ */
+export function applyTheme(id: ThemeId, { wait = true } = {}): void {
   save('theme', id);
-  window.dispatchEvent(new Event('themechange'));
+  const ticket = ++applying;
+  const set = () => {
+    if (ticket !== applying) return;
+    document.documentElement.dataset.theme = id;
+    window.dispatchEvent(new Event('themechange'));
+  };
+  if (!wait) {
+    set();
+    return;
+  }
+  void preload(themeImages(id), 1500).then(set);
 }
 
 /**

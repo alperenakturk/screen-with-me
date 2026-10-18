@@ -156,7 +156,7 @@
   --mascot: url('/themes/ortacag-maskot.svg');
 }
 
-/* Turkish Delight: gül kurusu, altın ve İznik turkuazı; hafif İznik çini deseni. */
+/* Mehtaplı Geceler (eski adı Lokum): gül kurusu, altın ve İznik turkuazı; hafif İznik çini deseni. */
 :root[data-theme='lokum'] {
   --bg: #1c0a14;
   --surface: rgb(42 16 30 / 0.86);
@@ -1511,7 +1511,15 @@ button.nav-link {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: var(--bg);
+  /* Başlık ve emoji çubuğu kenara yapışmasın: video, içi boşluklu bir kartın içinde */
+  padding: 12px 14px 14px;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+}
+
+.now-playing {
+  padding: 0 2px;
 }
 
 .now-playing {
@@ -1824,6 +1832,8 @@ button.nav-link {
 
 .theater:fullscreen {
   padding: 0;
+  border: 0;
+  border-radius: 0;
   height: 100vh;
   background: #000;
 }

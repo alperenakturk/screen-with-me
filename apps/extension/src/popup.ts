@@ -263,7 +263,20 @@ $('#copy').addEventListener('click', async () => {
 
 $('#go-room-page').addEventListener('click', () => void request({ type: 'go-to-room-page', tabId }));
 $('#share-page').addEventListener('click', () => void request({ type: 'share-this-page', tabId }));
-$('#go-room').addEventListener('click', () => void request({ type: 'go-room', tabId }).then(() => window.close()));
+// Odaya dön: yanlışlıkla basılmasın diye ilk basışta "Emin misin?" der, 3 sn içinde ikinci basış gider.
+let goRoomArmed = 0;
+$('#go-room').addEventListener('click', () => {
+  const button = $('#go-room');
+  if (Date.now() - goRoomArmed > 3000) {
+    goRoomArmed = Date.now();
+    button.textContent = t('backToRoomSure');
+    setTimeout(() => {
+      if (Date.now() - goRoomArmed >= 3000) button.textContent = t('backToRoomShort');
+    }, 3000);
+    return;
+  }
+  void request({ type: 'go-room', tabId }).then(() => window.close());
+});
 $('#leave').addEventListener('click', async () => {
   await request({ type: 'leave', tabId });
   await refresh();
