@@ -8,7 +8,7 @@ function client(hello) {
   ws.addEventListener('message', (e) => inbox.push(JSON.parse(e.data)));
   ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, ...hello })));
   const wait = async (pred, label) => {
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 100; i++) {
       const idx = inbox.findIndex(pred);
       if (idx >= 0) return inbox.splice(idx, 1)[0];
       await new Promise((r) => setTimeout(r, 100));

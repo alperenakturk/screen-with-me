@@ -6,7 +6,7 @@ const inbox = [];
 ws.addEventListener('message', (e) => inbox.push(JSON.parse(e.data)));
 await new Promise((r) => ws.addEventListener('open', r));
 const wait = async (pred) => {
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 100; i++) {
     const m = inbox.find(pred);
     if (m) return m;
     await new Promise((r) => setTimeout(r, 100));

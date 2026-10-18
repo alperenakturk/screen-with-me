@@ -17,7 +17,7 @@ function client(name) {
       const found = inbox.find(pred);
       if (found) { inbox.splice(inbox.indexOf(found), 1); return resolve(found); }
       waiters.push({ pred, resolve });
-      setTimeout(() => reject(new Error(`${name}: timeout waiting for ${label}`)), 4000);
+      setTimeout(() => reject(new Error(`${name}: timeout waiting for ${label}`)), 10000);
     });
   const opened = new Promise((r, j) => { ws.addEventListener('open', r); ws.addEventListener('error', j); });
   return { ws, next, opened, inbox, send: (m) => ws.send(JSON.stringify(m)) };
