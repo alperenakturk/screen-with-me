@@ -41,7 +41,18 @@ interface Attachment {
   /** Tarayıcının kalıcı kimliği (varsa). */
   cid?: string;
   joinedAt?: number;
+  /** Bu bağlantıdan en son mesaj (ping dahil) geldiği an; hayalet bağlantıları ayıklamak için. */
+  seen?: number;
 }
+
+/**
+ * Bu kadar süredir hiç mesaj (ping dahil) gelmeyen bağlantı kopmuş sayılır ve kapatılır.
+ * İstemciler 10 sn'de bir ping atar; ama Chrome arka plandaki sekmelerde zamanlayıcıyı
+ * dakikada bire kadar yavaşlattığı için süre uzun tutulur.
+ */
+const STALE_MS = 150_000;
+/** Hayalet ayıklama en fazla bu sıklıkla çalışır. */
+const PRUNE_EVERY_MS = 20_000;
 
 type Joined = Attachment & { name: string };
 
@@ -104,6 +115,8 @@ export class Room extends DurableObject<Env> {
   private waitTimer: ReturnType<typeof setTimeout> | null = null;
   /** Oda ne zamandan beri boş (24 saat sonra silinir). */
   private emptySince: number | null = null;
+  /** Hayalet ayıklamanın en son çalıştığı an (bkz. pruneStale). */
+  private lastPrune = 0;
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
@@ -154,6 +167,10 @@ export class Room extends DurableObject<Env> {
     }
 
     const attachment = ws.deserializeAttachment() as Attachment;
+    const now = Date.now();
+    attachment.seen = now;
+    ws.serializeAttachment(attachment);
+    if (now - this.lastPrune > PRUNE_EVERY_MS) await this.pruneStale(now);
 
     if (message.t === 'ping') {
       this.sendTo(ws, { t: 'pong', c: message.c, s: Date.now() });
@@ -270,6 +287,25 @@ export class Room extends DurableObject<Env> {
     await this.scheduleAlarm();
   }
 
+  /**
+   * Hayalet bağlantıları ayıklar: uyku/Wi-Fi değişimi gibi durumlarda istemci kopar ama
+   * sunucu bağlantıyı açık sanmaya devam edebilir. O kişi odada görünür, kendisi ise kimseyi
+   * görmez ve hareketleri gitmez. Uzun süredir sessiz olanları kapatıp listeden düşürürüz.
+   */
+  private async pruneStale(now: number): Promise<void> {
+    this.lastPrune = now;
+    for (const ws of this.openSockets()) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (!a?.name || a.seen === undefined || now - a.seen <= STALE_MS) continue;
+      try {
+        ws.close(4004, 'stale');
+      } catch {
+        // Zaten kapanmış olabilir.
+      }
+      await this.onLeave(ws);
+    }
+  }
+
   /** Bir sonraki alarmı en yakın işe göre kurar (yoksa kaldırır). */
   private async scheduleAlarm(): Promise<void> {
     const times: number[] = [];
@@ -311,6 +347,8 @@ export class Room extends DurableObject<Env> {
     else delete attachment.avatar;
     ws.serializeAttachment(attachment);
 
+    // Yeni gelen, aslında kopmuş birini odada görmesin.
+    await this.pruneStale(Date.now());
     await this.settleHost(ws, attachment);
     // Odaya ilk giren yönetici olur.
     if (this.hostKey === null) {

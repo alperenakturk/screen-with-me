@@ -108,8 +108,11 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   depoya yazılır; tek alarm hem 12 sn'lik bekleme süresine hem 24 saatlik oda silmeye bakar
   (`scheduleAlarm`). Bellekte `setTimeout`'a güvenme.
 - **Site:** sayfa yenilenince (aynı sekme, `sessionStorage` `in:<oda>`) isim adımı atlanır ve
-  açılış animasyonu tekrar gösterilmez. Sağ üstteki ⟳ `connection.reconnect()`. Bağlantı 25 sn
-  sessiz kalırsa `RoomConnection` kendisi yeniden bağlanır.
+  açılış animasyonu tekrar gösterilmez. Sağ üstteki ⟳ `connection.reconnect()`. Bir ping'e
+  15 sn hiç cevap gelmezse `RoomConnection` yeniden bağlanır (sadece "uzun süredir sessiz"e
+  bakma: Chrome arka plan sekmesinde zamanlayıcıyı dakikada bire yavaşlatır).
+- **Hayalet bağlantılar:** sunucu her bağlantının son mesajını (`seen`) tutar; 150 sn sessiz
+  olanı kapatıp listeden düşürür (`pruneStale`, katılımda ve en fazla 20 sn'de bir).
 - **Eklenti güvenliği:** `#swm=ODA` işaretiyle sormadan katılma sadece `document.referrer` bizim
   siteyse; değilse çubukta "katılmak ister misin?" sorulur. Odada bir sayfa açıkken sekme başka
   sayfaya giderse (`onRoomPage` yanlış) senkron o sayfada durur. `startSession` sekme başına

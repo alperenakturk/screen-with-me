@@ -21,10 +21,10 @@ const PING_INTERVAL_MS = 10_000;
 const INITIAL_PINGS_MS = [0, 250, 600, 1200];
 const MAX_RETRY_DELAY_MS = 10_000;
 /**
- * Bu kadar süre sunucudan hiç cevap gelmezse bağlantı yarı açık sayılır ve yeniden
- * kurulur (Wi-Fi değişimi, uykudan uyanma: tarayıcı "kapandı" demeyebilir).
+ * Gönderilen ping'e bu kadar süre hiçbir cevap gelmezse bağlantı yarı açık sayılır ve
+ * yeniden kurulur (Wi-Fi değişimi, uykudan uyanma: tarayıcı "kapandı" demeyebilir).
  */
-const SILENCE_TIMEOUT_MS = 25_000;
+const SILENCE_TIMEOUT_MS = 15_000;
 
 /**
  * Sunucuyla WebSocket bağlantısı. Bağlantı koparsa kendiliğinden, giderek
@@ -39,6 +39,8 @@ export class RoomConnection {
   private stopped = false;
   /** Sunucudan en son mesaj geldiği an. */
   private lastHeard = 0;
+  /** Düzenli ping'in en son gönderildiği an (cevap bekleniyor mu?). */
+  private lastPingAt = 0;
 
   constructor(private readonly options: RoomConnectionOptions) {}
 
@@ -91,12 +93,23 @@ export class RoomConnection {
       this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}) });
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
       this.lastHeard = Date.now();
+      this.lastPingAt = 0;
       this.pingTimer = setInterval(() => {
-        // Uzun süre ses yoksa yeniden bağlan; yoksa normal ping.
-        if (Date.now() - this.lastHeard > SILENCE_TIMEOUT_MS) {
-          this.reconnect();
+        // Son ping'e hiç cevap gelmediyse (ve üstünden yeterince geçtiyse) bağlantı yarı açık:
+        // yeniden kur. Sadece "uzun süredir ses yok"a bakmayız; Chrome arka plandaki
+        // sekmelerde zamanlayıcıyı dakikada bire yavaşlatır, o zaman sağlam bağlantı da
+        // sessiz görünür.
+        const now = Date.now();
+        if (this.lastPingAt > 0 && this.lastHeard < this.lastPingAt) {
+          // Önceki ping hâlâ cevapsız: süreyi o ping'den say, tekrar dene.
+          if (now - this.lastPingAt > SILENCE_TIMEOUT_MS) {
+            this.reconnect();
+            return;
+          }
+          this.ping();
           return;
         }
+        this.lastPingAt = now;
         this.ping();
       }, PING_INTERVAL_MS);
     });
