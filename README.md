@@ -36,6 +36,7 @@ and there is a shared queue.
 | ⏯️ **Tight sync** | Play / pause / seek / speed for everyone. Server-time based, measured **30–100 ms** apart on real players. Drift is corrected silently. |
 | 🔗 **One link, no accounts** | Create a room, share the link. Pick a name and an avatar once (themed characters, animals, or film / series / anime parody characters) — remembered by the browser. |
 | 🧩 **Any website** | The extension finds the right video (skips ads and previews), also inside iframes and in players that load late or switch sources. |
+| 🪟 **Watch inside the room** (experimental) | With the extension, a video page can open right in the room's player area instead of a separate tab — chat, reactions, pins and fullscreen stay around it. Pages that forbid being framed fall back to a separate tab automatically. |
 | 🎵 **Queue** | Add, reorder, play now; the next video starts automatically for everyone. |
 | 💬 **Chat & reactions** | Tabbed side panel (chat with room activity, queue, people, settings). Three pages of emoji reactions (▲▼) fly over the video, also in fullscreen. A short Enjoy the show! intro when you enter. |
 | 👑 **Room host** | The first person in is the host (survives page reloads) and can remove people until they lift the ban. If the host is gone for more than 20 s, hosting passes to the longest-present member for good. |
@@ -77,6 +78,9 @@ script runs in every frame (top page and iframes) but does nothing unless the us
 each frame reports its best video candidate (size, duration, playing) and the background picks the
 winner, where the same sync engine as the site runs. When a web-page link is opened in a room, the site
 hands the tab over to the extension, which takes it to that page; switching back to YouTube returns the tab to the site.
+With the experimental "watch inside the room" setting the site instead shows the page in an iframe and keeps
+its own room connection; the extension only runs the sync engine inside that frame and relays messages
+(the page's framing headers are checked first and never stripped).
 
 ## 🧪 Quality
 
@@ -146,6 +150,7 @@ kaynak bir araç. Link at, herkes aynı saniyede izlesin; biri durdurursa herkes
 
 - **YouTube ya da video dosyası:** doğrudan sitede, kurulum yok.
 - **Başka bir site:** eklenti sayfadaki videoyu bulur (iframe içindekiler dahil) ve herkesi senkronda tutar.
+  Deneysel ayarla film sayfası ayrı sekme yerine odanın içinde açılır (site izin veriyorsa).
 
 Özellikler:
 - Sıra (playlist)

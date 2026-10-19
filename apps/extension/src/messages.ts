@@ -9,17 +9,28 @@
 // plan en iyisini "etkin" seçer, senkron o çerçevede çalışır.
 
 import type { ConnectionStatus } from '@swm/shared/connection';
+import type { EmbedControl, EmbedStatus } from '@swm/shared/embed';
 import type { Avatar, BanEntry, ClientMessage, Member, Pin, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
 
 /** Çerçevelerin "oda var mı" diye baktığı yer (chrome.storage.session). */
 export const SESSIONS_KEY = 'sessions';
 
 export const PORT_NAME = 'swm';
+/** Sitenin "filmi burada göster" bağlantısı (site-bridge ⇄ arka plan). */
+export const EMBED_PORT_NAME = 'swm-embed';
 
 /** Çerçeve → arka plan */
 export type FrameMessage =
-  /** `size` tanı içindir: en iyi videonun ekrandaki boyutu, örn. "1280×720". */
-  | { type: 'candidate'; score: number; size?: string }
+  /**
+   * `size` tanı içindir: en iyi videonun ekrandaki boyutu, örn. "1280×720".
+   * `embedDepth`: çerçeve bizim sitenin içinde (film sitenin içinde açıldı); 1 = film sayfasının kendisi.
+   */
+  | { type: 'candidate'; score: number; size?: string; embedDepth?: number }
+  /** Sitenin içindeki çerçeve: videonun durumu (sitedeki ilerleme çubuğu için). */
+  | { type: 'status'; status: EmbedStatus }
+  /** Sitenin içindeki çerçeve: kısayol tuşu ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
+  | { type: 'key'; key: string }
+  | { type: 'fullscreen' }
   | { type: 'send'; message: ClientMessage }
   /** Çubuktaki 🏠: sekme sitedeki odaya dönsün. */
   | { type: 'go-room' }
@@ -52,6 +63,8 @@ export type BackgroundMessage =
   | { type: 'idle' }
   | { type: 'state'; state: PlaybackState }
   | { type: 'clock'; offset: number; synced: boolean }
+  /** Sitenin kontrollerinden gelen komut (sadece sitenin içindeki çerçeveye). */
+  | { type: 'control'; control: EmbedControl }
   | { type: 'room'; room: RoomInfo }
   | { type: 'reaction'; byId: string; name: string; avatar?: Avatar; emoji?: Reaction; sticker?: string }
   /** Odaya özel emoji eklendi (etkinleşince odadakilerin hepsi de tek tek gelir). */

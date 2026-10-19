@@ -8,6 +8,7 @@
 
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
+import { frameVerdict, isForwardedKey, isRelayable, type EmbedReply, type EmbedRequest, type FrameVerdict } from '@swm/shared/embed';
 import { samePage } from '@swm/shared/media';
 import {
   CLIENT_ID,
@@ -31,6 +32,7 @@ import {
 import { extractRoomId, newRoomId } from '@swm/shared/room-id';
 import { SITE_URL } from './config.ts';
 import {
+  EMBED_PORT_NAME,
   PORT_NAME,
   PROBE,
   SESSIONS_KEY,
@@ -52,7 +54,29 @@ interface Frame {
   port: chrome.runtime.Port;
   score: number;
   size?: string;
+  /** Çerçeve bizim sitenin içinde (gömülü film); 1 = film sayfasının kendisi. */
+  embedDepth?: number;
 }
+
+/**
+ * "Film sitenin içinde": sitedeki oda sayfası film sayfasını kendi oynatıcı alanında
+ * (iframe) açtı. Oda bağlantısı sitede kalır (aynı kişi odada iki kez görünmesin);
+ * burada sadece site ile çerçevedeki senkron motoru arasında mesaj taşınır.
+ */
+interface Embed {
+  tabId: number;
+  roomId: string;
+  /** Sitenin köprüsüyle bağlantı (site-bridge). */
+  port: chrome.runtime.Port;
+  url: string;
+  state: PlaybackState | null;
+  offset: number;
+  synced: boolean;
+  activeFrame: number | null;
+  activated: boolean;
+}
+
+const embeds = new Map<number, Embed>();
 
 interface Session {
   tabId: number;
@@ -137,14 +161,20 @@ function withAvatar(member: Member): string {
 
 async function persist(): Promise<void> {
   // followedItemId da saklanır: arka plan yeniden başlayınca sekme film ortasında yeniden yüklenmesin.
-  const saved = [...sessions.values()].map(({ tabId, roomId, followedItemId }) => ({ tabId, roomId, followedItemId }));
+  const saved: Array<{ tabId: number; roomId: string; followedItemId?: string | null; embed?: true }> = [...sessions.values()].map(
+    ({ tabId, roomId, followedItemId }) => ({ tabId, roomId, followedItemId }),
+  );
+  // Gömülü filmler de yazılır: sitenin içindeki çerçeveler "bir oda var" görüp bağlansın.
+  for (const { tabId, roomId } of embeds.values()) saved.push({ tabId, roomId, embed: true });
   await chrome.storage.session.set({ [SESSIONS_KEY]: saved });
 }
 
 async function restore(): Promise<void> {
   const { [SESSIONS_KEY]: saved } = await chrome.storage.session.get(SESSIONS_KEY);
   if (!Array.isArray(saved)) return;
-  for (const entry of saved as { tabId: number; roomId: string; followedItemId?: string | null }[]) {
+  for (const entry of saved as { tabId: number; roomId: string; followedItemId?: string | null; embed?: boolean }[]) {
+    // Gömülü filmi site kendisi yeniden kurar (köprü yeniden bağlanınca).
+    if (entry.embed) continue;
     const tab = await chrome.tabs.get(entry.tabId).catch(() => null);
     if (tab) await startSession(entry.tabId, entry.roomId, { followedItemId: entry.followedItemId ?? null });
   }
@@ -179,6 +209,8 @@ async function createSession(tabId: number, roomId: string, options: StartOption
   const existing = sessions.get(tabId);
   if (existing?.roomId === roomId) return existing;
   endSession(tabId, false);
+  // Sitenin içindeki film bırakılıp ayrı sekmeye geçiliyor: gömülü senkron biter.
+  endEmbed(tabId, false);
   endReasons.delete(tabId);
 
   const name = (await getName()) ?? 'Guest';
@@ -422,14 +454,6 @@ function pushPins(session: Session): void {
 
 // ---- Çerçeveler ----
 
-function post(port: chrome.runtime.Port, message: BackgroundMessage): void {
-  try {
-    port.postMessage(message);
-  } catch {
-    // Çerçeve kapanmış olabilir.
-  }
-}
-
 function probe(tabId: number): void {
   chrome.tabs.sendMessage(tabId, { type: PROBE }).catch(() => {});
 }
@@ -482,6 +506,7 @@ function chooseActive(session: Session): void {
   let best: number | null = null;
   let bestScore = 0;
   for (const [frameId, frame] of frames.get(session.tabId) ?? []) {
+    if (frame.embedDepth) continue;
     if (frame.score > bestScore) {
       best = frameId;
       bestScore = frame.score;
@@ -508,15 +533,44 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     case 'candidate': {
       frame.score = message.score;
       frame.size = message.size;
+      if (message.embedDepth) frame.embedDepth = message.embedDepth;
       const session = sessions.get(tabId);
-      // Bu sekmede oda yoksa çerçeve boşuna video aramasın.
-      if (session) chooseActive(session);
-      else post(port, { type: 'idle' });
+      const embed = embeds.get(tabId);
+      if (embed && frame.embedDepth) {
+        // Film sayfasının kendisinde eklenti çalıştı: sayfa çerçevede gerçekten açıldı (engellenmedi).
+        if (frame.embedDepth === 1) post(embed.port, { type: 'frame' });
+        chooseEmbedActive(embed);
+      } else if (session && !frame.embedDepth) {
+        chooseActive(session);
+      } else {
+        // Bu sekmede (bu çerçeve için) oda yoksa çerçeve boşuna video aramasın.
+        post(port, { type: 'idle' });
+      }
       break;
     }
     case 'send': {
+      const embed = embeds.get(tabId);
+      if (embed) {
+        // Oda bağlantısı sitede: sadece oynatma mesajlarını siteye ver, o yollar.
+        if (embed.activeFrame === frameId && isRelayable(message.message)) post(embed.port, { type: 'send', message: message.message });
+        break;
+      }
       const session = sessions.get(tabId);
       if (session && session.activeFrame === frameId) sendOrQueue(session, message.message);
+      break;
+    }
+    case 'status': {
+      const embed = embeds.get(tabId);
+      if (embed?.activeFrame === frameId) post(embed.port, { type: 'status', status: message.status });
+      break;
+    }
+    case 'key':
+    case 'fullscreen': {
+      // Odak ya da ⛶ düğmesi videonun olmadığı çerçevede de olabilir (film sayfası, video iç çerçevede).
+      const embed = embeds.get(tabId);
+      if (!embed || !frame.embedDepth) break;
+      if (message.type === 'fullscreen') post(embed.port, { type: 'fullscreen' });
+      else if (isForwardedKey(message.key)) post(embed.port, { type: 'key', key: message.key });
       break;
     }
     case 'go-room': {
@@ -527,6 +581,156 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     }
   }
 }
+
+// ---- Film sitenin içinde (gömülü) ----
+
+function post(port: chrome.runtime.Port, message: BackgroundMessage | EmbedReply): void {
+  try {
+    port.postMessage(message);
+  } catch {
+    // Çerçeve/site kapanmış olabilir.
+  }
+}
+
+/**
+ * Sayfa başka bir sitenin içinde açılmaya izin veriyor mu? Başlıklara önceden bakarız
+ * (X-Frame-Options, CSP frame-ancestors). Başlıkları değiştirmiyoruz; sadece açılamayacak
+ * sayfada hata ekranı göstermeden hemen ayrı sekmeye düşmek için. Çerez gönderilmez,
+ * gövde indirilmez (başlıklar gelince istek kesilir). Bakılamazsa denenir: asıl karar
+ * çerçevedeki el sıkışmadır.
+ */
+async function precheck(url: string): Promise<FrameVerdict> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const response = await fetch(url, { credentials: 'omit', redirect: 'follow', signal: controller.signal, cache: 'no-store' });
+    return frameVerdict(response.headers, response.url || url, SITE_URL);
+  } catch {
+    return frameVerdict(new Headers(), url, SITE_URL);
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+}
+
+function endEmbed(tabId: number, save = true): void {
+  const embed = embeds.get(tabId);
+  if (!embed) return;
+  embeds.delete(tabId);
+  // Sitenin içindeki çerçeveler uyusun (video aramayı, senkronu bıraksın).
+  for (const frame of frames.get(tabId)?.values() ?? []) if (frame.embedDepth) post(frame.port, { type: 'idle' });
+  if (save) void persist();
+}
+
+/** Gömülü filmin çerçeveleri arasından en iyi videoyu seçer (sadece sitenin içindekiler). */
+function chooseEmbedActive(embed: Embed): void {
+  let best: number | null = null;
+  let bestScore = 0;
+  for (const [frameId, frame] of frames.get(embed.tabId) ?? []) {
+    if (!frame.embedDepth) continue;
+    if (frame.score > bestScore) {
+      best = frameId;
+      bestScore = frame.score;
+    }
+  }
+  if (best === embed.activeFrame) return;
+  if (embed.activeFrame !== null) {
+    const old = frames.get(embed.tabId)?.get(embed.activeFrame);
+    if (old) post(old.port, { type: 'deactivate' });
+  }
+  embed.activeFrame = best;
+  embed.activated = false;
+  pushEmbedState(embed);
+}
+
+function pushEmbedState(embed: Embed): void {
+  if (!embed.state || embed.activeFrame === null) return;
+  const frame = frames.get(embed.tabId)?.get(embed.activeFrame);
+  if (!frame) return;
+  if (embed.activated) {
+    post(frame.port, { type: 'state', state: embed.state });
+    return;
+  }
+  post(frame.port, { type: 'activate', state: embed.state, offset: embed.offset, synced: embed.synced });
+  embed.activated = true;
+}
+
+function embedFrame(embed: Embed): chrome.runtime.Port | null {
+  if (embed.activeFrame === null || !embed.activated) return null;
+  return frames.get(embed.tabId)?.get(embed.activeFrame)?.port ?? null;
+}
+
+async function handleEmbed(tabId: number, port: chrome.runtime.Port, request: EmbedRequest): Promise<void> {
+  await ready;
+  const embed = embeds.get(tabId);
+  if (request.type === 'start') {
+    if (!ROOM_ID_PATTERN.test(request.roomId) || !/^https?:\/\//.test(request.url)) return;
+    // Bu sekmede eklentinin kendi oda bağlantısı varsa kapanır: bağlantıyı site tutuyor.
+    endSession(tabId);
+    endEmbed(tabId, false);
+    const next: Embed = { tabId, roomId: request.roomId, port, url: request.url, state: null, offset: 0, synced: false, activeFrame: null, activated: false };
+    if (!request.resume) {
+      const verdict = await precheck(request.url);
+      if (verdict !== 'ok') {
+        post(port, { type: 'blocked', reason: verdict });
+        await persist();
+        return;
+      }
+    }
+    // Kontrol sürerken site vazgeçmiş olabilir (başka video, sayfa kapandı).
+    if (!activeEmbedPorts.has(port)) return;
+    embeds.set(tabId, next);
+    // Çerçeveler bağlanmadan önce "oda var" yazılmış olsun.
+    await persist();
+    if (!request.resume) post(port, { type: 'try' });
+    // Arka plan yeniden başladıysa çerçeveler uykuda olabilir: uyandır.
+    probe(tabId);
+    return;
+  }
+  if (!embed || embed.port !== port) return;
+  switch (request.type) {
+    case 'state':
+      embed.state = request.state;
+      pushEmbedState(embed);
+      break;
+    case 'clock': {
+      embed.offset = request.offset;
+      embed.synced = request.synced;
+      const frame = embedFrame(embed);
+      if (frame) post(frame, { type: 'clock', offset: request.offset, synced: request.synced });
+      break;
+    }
+    case 'control': {
+      const frame = embedFrame(embed);
+      if (frame) post(frame, { type: 'control', control: request.control });
+      break;
+    }
+    case 'stop':
+      endEmbed(tabId);
+      break;
+  }
+}
+
+const activeEmbedPorts = new Set<chrome.runtime.Port>();
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== EMBED_PORT_NAME) return;
+  const tabId = port.sender?.tab?.id;
+  // Sadece sitenin kendi sayfası (üst çerçeve) film açtırabilir.
+  if (tabId === undefined || port.sender?.origin !== SITE_ORIGIN || port.sender.frameId !== 0) {
+    port.disconnect();
+    return;
+  }
+  activeEmbedPorts.add(port);
+  let queue = Promise.resolve();
+  port.onMessage.addListener((request: EmbedRequest) => {
+    queue = queue.then(() => handleEmbed(tabId, port, request)).catch(() => {});
+  });
+  port.onDisconnect.addListener(() => {
+    activeEmbedPorts.delete(port);
+    if (embeds.get(tabId)?.port === port) endEmbed(tabId);
+  });
+});
 
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== PORT_NAME) return;
@@ -554,6 +758,11 @@ chrome.runtime.onConnect.addListener((port) => {
       session.activeFrame = null;
       chooseActive(session);
     }
+    const embed = embeds.get(tabId);
+    if (embed && embed.activeFrame === frameId) {
+      embed.activeFrame = null;
+      chooseEmbedActive(embed);
+    }
   });
 });
 
@@ -570,6 +779,7 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   endSession(tabId);
+  endEmbed(tabId);
   frames.delete(tabId);
 });
 

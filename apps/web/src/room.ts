@@ -1,6 +1,7 @@
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
+import { isRelayable } from '@swm/shared/embed';
 import { parseMediaInput } from '@swm/shared/media';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
@@ -23,6 +24,7 @@ import { SyncEngine } from '@swm/shared/sync-engine';
 import { el } from './dom.ts';
 import { t, translate } from './i18n.ts';
 import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
+import { canEmbed, createEmbedPlayer, type EmbedFailure, type EmbedPlayer } from './players/embed.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
 import { load, save, saveIdentity, sessionLoad, sessionSave } from './storage.ts';
@@ -185,6 +187,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
+            <button id="embed-out" type="button" class="btn small-btn" hidden>↗ <span data-i18n="embedOut"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
           <div class="player-wrap">
@@ -223,14 +226,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <li data-i18n="emptyBody"></li>
               </ol>
             </div>
+            <div id="embed-loading" class="overlay embed-loading" hidden>
+              <div class="embed-spinner" aria-hidden="true"></div>
+              <p data-i18n="embedLoading"></p>
+              <button id="embed-loading-out" type="button" class="btn small-btn" data-i18n="embedOut"></button>
+            </div>
             <div id="external" class="overlay external" hidden>
               <p class="muted" data-i18n="externalTitle"></p>
               <h2 id="external-title"></h2>
               <p id="external-host" class="external-host"></p>
               <p id="external-watching" class="external-watching" hidden></p>
               <div id="external-ext" class="stack external-box">
+                <p id="external-note" class="external-note" hidden></p>
                 <p data-i18n="externalHasExt"></p>
                 <button id="external-go" type="button" class="btn primary big" data-i18n="externalGoJoin"></button>
+                <button id="external-embed" type="button" class="link-btn" data-i18n="embedTry" hidden></button>
               </div>
               <div id="external-noext" class="stack external-box">
                 <p data-i18n="externalNoExt" class="desktop-only"></p>
@@ -322,6 +332,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <h4 data-i18n="settings.room"></h4>
             <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
+            <label class="check-row" id="opt-embed-row" hidden><input type="checkbox" id="opt-embed" /> <span data-i18n="settings.embed"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
             <p id="opt-wait-hint" class="muted small"></p>
           </div>
@@ -532,7 +543,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           // Oda yöneticisi çıkardı: tekrar bağlanmaya çalışma, bilgilendirme ekranını göster.
           connection.close();
           engine.destroy();
-          current?.player.pause();
+          // Gömülü filmi durdurmak odayı durdururdu (oradaki motor yayardı); sadece kapat.
+          if (embed) closeCurrent();
+          else current?.player.pause();
           $('#kicked').hidden = false;
           break;
         }
@@ -564,6 +577,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const itemId = state.item?.id ?? null;
     if (itemId === currentItemId) {
       engine.receive(state);
+      embed?.setState(state);
       return;
     }
 
@@ -571,11 +585,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     currentItemId = itemId;
     const token = ++mediaToken;
     engine.detach();
-    if (current !== null) {
-      current.player.destroy();
-      current.slot.remove();
-      current = null;
-    }
+    closeCurrent();
     autoplayEl.hidden = true;
     showError(null);
     engine.receive(state);
@@ -585,7 +595,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
     const media = state.item.media;
     if (media.kind === 'page') {
-      showExternal(state.item, media.url);
+      if (wantsEmbed(state.item)) startEmbed(state.item, media.url);
+      else showExternal(state.item, media.url);
       return;
     }
     const slot = el('div', { class: 'slot' });
@@ -608,6 +619,106 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     engine.attach(player);
   }
 
+  // ---- Film sitenin içinde (deneysel, eklentiyle) ----
+  /** Şu an oynatıcı alanında açık film sayfası (yoksa null). */
+  let embed: EmbedPlayer | null = null;
+  /** Bu videolar sitenin içinde açılamadı (ya da kullanıcı ayrı sekmeyi seçti): tekrar deneme. */
+  const embedFailed = new Map<string, EmbedFailure>();
+  const embedLoadingEl = $('#embed-loading');
+  const embedToggle = $<HTMLInputElement>('#opt-embed');
+  // Kişisel tercih (herkes kendi sekmesinde izliyor; biri sitede, biri ayrı sekmede olabilir).
+  // Varsayılan kapalı: deneysel, birçok büyük site çerçevede açılmayı yasaklıyor.
+  let embedOn = load('opt:embed') === '1';
+  embedToggle.checked = embedOn;
+  $('#opt-embed-row').hidden = !canEmbed();
+
+  function wantsEmbed(item: QueueItem): boolean {
+    return embedOn && canEmbed() && !embedFailed.has(item.id);
+  }
+
+  /** Oynatıcı alanındaki videoyu/sayfayı kapatır. */
+  function closeCurrent(): void {
+    if (current !== null) {
+      current.player.destroy();
+      current.slot.remove();
+      current = null;
+    }
+    embed = null;
+    embedLoadingEl.hidden = true;
+    $('.player-wrap').classList.remove('embedding');
+    renderNowPlaying();
+  }
+
+  /**
+   * Film sayfasını oynatıcı alanında açar. Önce eklenti başlıklara bakar (yasaksa hemen
+   * ayrı sekme kartına düşeriz); açılırsa senkron çerçevenin içinde çalışır, sohbet,
+   * emojiler, pinler ve tam ekran sitede kalır.
+   */
+  function startEmbed(item: QueueItem, url: string): void {
+    externalEl.hidden = true;
+    embedLoadingEl.hidden = false;
+    $('.player-wrap').classList.add('embedding');
+    const slot = el('div', { class: 'slot' });
+    playerEl.append(slot);
+    const player: EmbedPlayer = createEmbedPlayer(slot, {
+      roomId,
+      url,
+      title: itemTitle(item),
+      onReady: () => {
+        if (embed === player) embedLoadingEl.hidden = true;
+      },
+      onBlocked: (reason) => {
+        if (embed !== player) return;
+        embedFailed.set(item.id, reason);
+        closeCurrent();
+        externalEl.hidden = false;
+        showExternal(item, url);
+      },
+      onSend: (message) => {
+        if (embed === player && isRelayable(message)) send(message);
+      },
+      // Çerçevede basılan kısayol: sitedeki kısayol dinleyicileri (emoji, Enter, P) aynen işlesin.
+      onKey: (key) => document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })),
+      onFullscreen: () => {
+        if (!fullscreen.isActive()) fullscreen.toggle();
+      },
+    });
+    current = { player, slot };
+    embed = player;
+    if (roomState) player.setState(roomState);
+    player.setClock(clock.now() - Date.now(), clock.synced);
+    renderNowPlaying();
+  }
+  // Çerçevedeki motor sunucu saatini sitenin ölçümünden alır.
+  setInterval(() => embed?.setClock(clock.now() - Date.now(), clock.synced), 2000);
+
+  /** Gömülü filmden vazgeç: ayrı sekmede aç (bugünkü yol). */
+  function leaveEmbed(): void {
+    const item = roomState?.item;
+    if (!item || item.media.kind !== 'page') return;
+    embedFailed.set(item.id, 'manual');
+    closeCurrent();
+    externalEl.hidden = false;
+    showExternal(item, item.media.url);
+    $<HTMLButtonElement>('#external-go').click();
+  }
+  $('#embed-out').addEventListener('click', leaveEmbed);
+  $('#embed-loading-out').addEventListener('click', leaveEmbed);
+
+  /** Tercih değişti: açık film sayfasını yeni tercihe göre yeniden göster. */
+  function setEmbedOn(next: boolean): void {
+    embedOn = next;
+    embedToggle.checked = next;
+    save('opt:embed', next ? '1' : '0');
+    if (next) for (const [id, reason] of embedFailed) if (reason === 'manual') embedFailed.delete(id);
+    if (roomState?.item?.media.kind === 'page' && !handedOff) {
+      currentItemId = null;
+      void applyState(roomState);
+    }
+  }
+  embedToggle.addEventListener('change', () => setEmbedOn(embedToggle.checked));
+  $('#external-embed').addEventListener('click', () => setEmbedOn(true));
+
   /**
    * Odada bir web sayfası açık: video o sayfada, herkesin kendi sekmesinde oynar.
    * Kimseyi habersiz yönlendirmeyiz; ne olacağını anlatıp tek tuşla göndeririz.
@@ -621,6 +732,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     renderWatching();
     $('#external-ext').hidden = !hasExtension;
     $('#external-noext').hidden = hasExtension;
+    // Sitenin içinde açılamadıysa nedenini söyle; hiç denenmediyse denemeyi öner.
+    const failure = embedFailed.get(item.id);
+    const note = $('#external-note');
+    note.hidden = !failure || failure === 'manual';
+    note.textContent = failure && failure !== 'manual' ? t(failure === 'timeout' ? 'embedTimeout' : 'embedBlocked') : '';
+    $('#external-embed').hidden = !hasExtension || !canEmbed() || embedOn || !!failure;
     $<HTMLAnchorElement>('#external-alone').href = url;
     const go = $<HTMLButtonElement>('#external-go');
     go.disabled = false;
@@ -654,6 +771,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (data?.source !== 'screenwithme-extension') return;
     if (data.type === 'joining' && !handedOff) {
       handedOff = true;
+      if (embed) closeCurrent();
       connection.close();
       engine.destroy();
     } else if (data.type === 'identity') {
@@ -672,6 +790,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     skipEl.disabled = queue.length === 0;
     fullscreen.setSkipEnabled(queue.length > 0);
+    $('#embed-out').hidden = embed === null;
   }
 
   function skip(): void {
@@ -685,7 +804,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     engine.resume();
   });
 
-  speedEl.addEventListener('change', () => engine.requestRate(Number(speedEl.value)));
+  // Gömülü filmde motor çerçevede çalışır: hız isteği oraya gider.
+  const requestRate = (rate: number) => (embed ? embed.control({ action: 'rate', rate }) : engine.requestRate(rate));
+  speedEl.addEventListener('change', () => requestRate(Number(speedEl.value)));
 
   // ---- Tam ekran: sadece video kalır, fare oynayınca kontroller ve hızlı mesaj belirir. ----
   const fullscreen = createFullscreen({
@@ -693,7 +814,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     getPlayer: () => current?.player ?? null,
     send,
     onSkip: skip,
-    onRate: (rate) => engine.requestRate(rate),
+    onRate: requestRate,
   });
   const toasts = createToasts($('#toasts'), $('#toast-handle'));
   // Önemli anları pinleme: video altında ve tam ekranda ilerleme çubuğunun üstünde işaretler.
@@ -777,7 +898,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Herkesi bana eşitle: kendi konumumu odaya yayar (biri kaydıysa tek tıkla düzelir). ----
   const syncAllEl = $<HTMLButtonElement>('#sync-all');
   syncAllEl.addEventListener('click', () => {
-    engine.syncEveryoneToMe();
+    if (embed) embed.control({ action: 'sync-all' });
+    else engine.syncEveryoneToMe();
     syncAllEl.disabled = true;
     setTimeout(() => (syncAllEl.disabled = false), 1500);
   });
@@ -941,6 +1063,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // Sadece geliştirme modunda: tarayıcı konsolundan senkronu incelemek için.
   if (import.meta.env.DEV) {
-    Object.assign(window, { __swm: { engine, clock, player: () => current?.player ?? null } });
+    Object.assign(window, { __swm: { engine, clock, player: () => current?.player ?? null, embed: () => embed } });
   }
 }

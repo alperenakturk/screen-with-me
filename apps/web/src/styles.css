@@ -1898,6 +1898,50 @@ button.nav-link {
   font-weight: 600;
 }
 
+.external-note {
+  margin: 0;
+  color: var(--warn);
+  font-size: 14px;
+}
+
+/* Film sitenin içinde: bir web sayfası 16:9'a sığmaz (üst menü, başlık); alan biraz daha yüksek. */
+.player-wrap.embedding {
+  aspect-ratio: auto;
+  height: clamp(360px, 64vh, 900px);
+  background: #fff;
+}
+
+.embed-loading {
+  background: var(--surface);
+  z-index: 2;
+}
+
+.embed-loading p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.embed-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  animation: embed-spin 0.9s linear infinite;
+}
+
+@keyframes embed-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .embed-spinner {
+    animation-duration: 3s;
+  }
+}
+
 .external-box {
   max-width: 460px;
   text-align: center;
@@ -2593,4 +2637,8 @@ button.nav-link {
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+.theater:fullscreen .player-wrap.embedding {
+  height: auto;
 }

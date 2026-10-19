@@ -7,16 +7,77 @@
 // 3) İsim ve avatarı iki yönlü eşitler (hangisi daha yeni değiştiyse o geçerli),
 //    dil seçimini ve kalıcı kimliği eklentiye aktarır.
 
+// 4) "Film sitenin içinde": site film sayfasını kendi oynatıcı alanında açınca arka planla
+//    sürekli bir bağlantı (port) kurar ve iki yöne mesaj taşır (site ⇄ çerçevedeki senkron).
+
+import type { EmbedReply, EmbedRequest } from '@swm/shared/embed';
 import { CLIENT_ID, cleanName, isAvatar } from '@swm/shared/protocol';
-import { EXTENSION_MESSAGE_SOURCE, SITE_MESSAGE_SOURCE, type SiteJoinMessage } from './messages.ts';
+import { EMBED_PORT_NAME, EXTENSION_MESSAGE_SOURCE, SITE_MESSAGE_SOURCE, type SiteJoinMessage } from './messages.ts';
 
 document.documentElement.dataset.swmExtension = chrome.runtime.getManifest().version;
+// Site, filmi kendi içinde açmayı bu sürümden itibaren deneyebilir.
+document.documentElement.dataset.swmEmbed = '1';
+
+// ---- Gömülü film bağlantısı ----
+let embedPort: chrome.runtime.Port | null = null;
+/** Arka plan yeniden başlarsa bağlantı kurulup kaldığı yerden devam etsin diye son durum. */
+let lastStart: Extract<EmbedRequest, { type: 'start' }> | null = null;
+let lastState: EmbedRequest | null = null;
+let lastClock: EmbedRequest | null = null;
+
+function openEmbedPort(): chrome.runtime.Port | null {
+  if (embedPort) return embedPort;
+  try {
+    embedPort = chrome.runtime.connect({ name: EMBED_PORT_NAME });
+  } catch {
+    // Eklenti güncellendi/kaldırıldı: bu sayfadaki eski kopya çalışamaz.
+    return null;
+  }
+  embedPort.onMessage.addListener((reply: EmbedReply) => {
+    window.postMessage({ source: EXTENSION_MESSAGE_SOURCE, type: 'embed', reply }, location.origin);
+  });
+  embedPort.onDisconnect.addListener(() => {
+    embedPort = null;
+    // Chrome arka planı kapattıysa (film hâlâ açıkken) yeniden bağlan ve kaldığı yerden sür.
+    if (lastStart) setTimeout(resumeEmbed, 500);
+  });
+  return embedPort;
+}
+
+function resumeEmbed(): void {
+  if (!lastStart || embedPort) return;
+  const port = openEmbedPort();
+  if (!port) return;
+  for (const message of [{ ...lastStart, resume: true }, lastState, lastClock]) if (message) port.postMessage(message);
+}
+
+function onEmbedRequest(request: EmbedRequest): void {
+  if (request.type === 'start') {
+    lastStart = { type: 'start', roomId: request.roomId, url: request.url };
+    lastState = lastClock = null;
+  } else if (request.type === 'state') lastState = request;
+  else if (request.type === 'clock') lastClock = request;
+  else if (request.type === 'stop') {
+    lastStart = lastState = lastClock = null;
+    embedPort?.postMessage(request);
+    embedPort?.disconnect();
+    embedPort = null;
+    return;
+  }
+  if (request.type !== 'start' && !embedPort) return;
+  openEmbedPort()?.postMessage(request);
+}
 
 addEventListener('message', (event: MessageEvent) => {
-  // Sadece sitenin kendi sayfasından gelen mesajlar.
+  // Sadece sitenin kendi sayfasından gelen mesajlar (içindeki film çerçevesi değil).
   if (event.source !== window || event.origin !== location.origin) return;
-  const data = event.data as { source?: string; type?: string; roomId?: unknown; url?: unknown } | null;
-  if (data?.source !== SITE_MESSAGE_SOURCE || data.type !== 'join' || typeof data.roomId !== 'string') return;
+  const data = event.data as { source?: string; type?: string; roomId?: unknown; url?: unknown; request?: EmbedRequest } | null;
+  if (data?.source !== SITE_MESSAGE_SOURCE) return;
+  if (data.type === 'embed' && data.request && typeof data.request.type === 'string') {
+    onEmbedRequest(data.request);
+    return;
+  }
+  if (data.type !== 'join' || typeof data.roomId !== 'string') return;
   void sync().then(async () => {
     const message: SiteJoinMessage = { type: 'site-join', roomId: data.roomId as string };
     if (typeof data.url === 'string') message.url = data.url;

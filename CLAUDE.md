@@ -95,8 +95,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   yönlendirme: sayfa linkinde sitede açıklama + "Sayfaya git" butonu çıkar.
 - **Eklentide hız kilidi:** motor `lockRate: true`; hız sadece çubuktaki menüden değişir, başka
   hız eklentilerinin değişikliği odaya yayılmaz, geri alınır (inatlaşma sınırı var). Sitede kapalı.
-- **Eklenti bizim sitede çalışmaz:** içerik betiği `location.ancestorOrigins` sitemizi içeriyorsa
-  bağlanmaz (sitedeki YouTube iframe'i); popup sitedeyken sadece "zaten sitedesin" notu gösterir.
+- **Eklenti bizim sitede çalışmaz:** içerik betiği sitenin sayfalarına hiç eklenmez (`exclude_matches`),
+  sitenin kendi YouTube iframe'inde (sitenin doğrudan çocuğu + youtube alan adı) bağlanmaz; popup
+  sitedeyken sadece "zaten sitedesin" notu gösterir. Tek istisna sitenin içinde açılan film çerçeveleri
+  (gömülü mod, aşağıda "Film sitenin içinde").
 - **Atma ve aynı tarayıcı:** aynı `cid` + farklı isim → sadece o isim yasaklanır (`cid|n:isim`);
   aynı cid + aynı isim → yöneticinin kendi sekmesi, yasaksız "kicked" ile kapatılır.
 - **İsim/avatar:** site `identityAt` yazar, eklenti de; site-bridge hangisi yeniyse onu iki
@@ -172,6 +174,23 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   fazla 1280 px; kullanıcı çoğunlukla video izlerken bakar, o yüzden ana süsler (ay, kale, ejderha,
   kervan, zeplin) sahnenin kenarlarında (x < 260 ya da x > 1340) dursun. Tema değişirken resimler
   önce yüklenir (pplyTheme → preload), renk ve resim birlikte değişir.
+- **Film sitenin içinde (deneysel, `packages/shared/src/embed.ts`):** kişisel ayar (`localStorage`
+  `opt:embed`, varsayılan kapalı; eklenti `data-swm-embed` ile desteğini bildirir). Açıksa `page` öğesi
+  `.player-wrap` içinde iframe'de açılır (`apps/web/src/players/embed.ts`). Oda bağlantısını **site**
+  tutar (aynı kişi iki kez görünmesin); site-bridge `swm-embed` portuyla arka plana bağlanır, arka plan
+  (`Embed`, `embeds`) sitenin içindeki çerçevelerden (`embedDepth`) en iyi videoyu seçip motoru orada
+  çalıştırır; çerçeveden sadece oynatma mesajları (`isRelayable`) siteye gider, site kendi bağlantısından
+  yollar. Site → çerçeve: `state`, `clock`, `control` (tam ekran çubuğu/pin şeridi/hız uzaktan oynatıcı
+  gibi); çerçeve → site: `status` (0,5 sn), kısayol tuşları, `fullscreen`. Önce arka plan sayfayı
+  çerezsiz ister ve başlıklara bakar (`frameVerdict`: XFO, CSP frame-ancestors, https içinde http);
+  yasaksa hemen ayrı sekme kartı + açıklama. Başlık **kaldırılmaz** (mağaza riski). Başlıklardan
+  anlaşılmayan yasak: film sayfasındaki içerik betiği el sıkışmazsa (yüklendikten 3 sn sonra / en fazla
+  20 sn) yine kart. Çerçeveye **tam ekran izni verilmez**: film sitesinin ⛶'u hata alır, içerik betiği
+  `fullscreenerror` görüp siteye söyler, site `#theater`'ı tam ekran yapar (izin verilseydi çerçevenin
+  tam ekranı kullanıcı tıklamasını harcar, site kendi tam ekranına geçemezdi). Çerçevede çubuk yok
+  (overlay `setEmbedded`, sadece "İzlemeye başla"). Sitenin YouTube iframe'i (sitenin doğrudan çocuğu,
+  youtube alan adı) hâlâ yok sayılır. "Ayrı sekmede aç" bugünkü el değiştirmeye döner. Gerçek Chrome
+  testi: `scripts/harness/embed/` (README'de).
 - **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
   (herkes başa sarılmasın); 60 sn'den kısa video bitince "sıradaki" istenmez (reklam/önizleme).
 

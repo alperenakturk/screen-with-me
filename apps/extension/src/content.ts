@@ -9,6 +9,7 @@
 // bunlar da yakalanır.
 
 import { OffsetClock } from '@swm/shared/clock';
+import { isForwardedKey, type EmbedControl } from '@swm/shared/embed';
 import { expectedPosition, type PlaybackState } from '@swm/shared/protocol';
 import { roomIdFromHash } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -46,14 +47,22 @@ function updateSync(): void {
 }
 
 /**
- * ScreenWithMe sitesinin içindeki çerçeveler (ör. sitedeki YouTube oynatıcısı): orada
- * site zaten kendi senkronunu ve arayüzünü çalıştırıyor, eklenti hiçbir şey yapmaz.
+ * ScreenWithMe sitesinin içindeki çerçeveler iki türlü olur:
+ * - Sitenin kendi YouTube oynatıcısı (sitenin doğrudan çocuğu): site kendi senkronunu
+ *   çalıştırıyor, eklenti hiçbir şey yapmaz.
+ * - Sitenin içinde açılan film sayfası ve onun içindeki oynatıcı çerçeveleri ("gömülü"):
+ *   oda bağlantısı sitede; burada sadece video senkronlanır, arayüzü site gösterir.
  */
 const SITE_ORIGIN = new URL(SITE_URL).origin;
-const insideOurSite = Array.from(location.ancestorOrigins ?? []).includes(SITE_ORIGIN);
+/** Bizim siteye kaç çerçeve uzaktayız (1: sitenin doğrudan çocuğu; 0: sitenin içinde değil). */
+const siteDepth = Array.from(location.ancestorOrigins ?? []).indexOf(SITE_ORIGIN) + 1;
+const ourYouTubePlayer = siteDepth === 1 && /(^|\.)youtube(-nocookie)?\.com$/.test(location.hostname);
+const embedded = siteDepth > 0 && !ourYouTubePlayer;
+const insideOurSite = siteDepth > 0;
+if (embedded) overlay.setEmbedded();
 
 function connect(): void {
-  if (port || insideOurSite) return;
+  if (port || ourYouTubePlayer) return;
   try {
     port = chrome.runtime.connect({ name: PORT_NAME });
   } catch {
@@ -146,7 +155,7 @@ function scan(): void {
     reportedScore = bestScore;
     // `size` sadece popup'taki tanı satırı için.
     const size = videos.length ? `${videos.length} video · ${largest.w}×${largest.h}` : undefined;
-    send({ type: 'candidate', score: bestScore, ...(size ? { size } : {}) });
+    send({ type: 'candidate', score: bestScore, ...(size ? { size } : {}), ...(embedded ? { embedDepth: siteDepth } : {}) });
   }
   if (changed && active) attachEngine();
 }
@@ -205,9 +214,76 @@ function attachEngine(): void {
   });
   if (state) engine.receive(state);
   engine.attach(adapter);
+  if (embedded) {
+    // Sitenin içindeyiz: çubuk yok (arayüzü site gösteriyor); site ilerleme çubuğu için durumu bilsin.
+    statusTimer ??= setInterval(reportStatus, 500);
+    return;
+  }
   overlay.follow(best);
   if (state) overlay.setRate(state.rate);
   syncTimer ??= setInterval(updateSync, 1000);
+}
+
+// ---- Sitenin içindeki film (gömülü mod) ----
+
+let statusTimer: ReturnType<typeof setInterval> | null = null;
+function reportStatus(): void {
+  if (!adapter) return;
+  send({
+    type: 'status',
+    status: { time: adapter.getTime(), duration: adapter.getDuration(), paused: adapter.isPaused(), rate: adapter.getRate() },
+  });
+}
+
+/**
+ * Sitenin kontrolleri (tam ekran çubuğu, pin şeridi, hız menüsü) videoya doğrudan
+ * uygulanır; motor bunu kullanıcı hareketi olarak görüp odaya yayar (film sitesinin
+ * kendi düğmesine basmakla aynı).
+ */
+function onControl(control: EmbedControl): void {
+  if (!adapter || !engine) return;
+  switch (control.action) {
+    case 'play':
+      void adapter.play();
+      break;
+    case 'pause':
+      adapter.pause();
+      break;
+    case 'seek':
+      adapter.seek(control.time);
+      break;
+    case 'rate':
+      engine.requestRate(control.rate);
+      break;
+    case 'sync-all':
+      engine.syncEveryoneToMe();
+      break;
+  }
+  reportStatus();
+}
+
+if (embedded) {
+  // Kısayollar (1–8 emoji, Enter mesaj, P pin) çerçevedeyken de çalışsın: tuşu film sitesine
+  // göstermeden (oynatıcılar rakamlarla sarar) siteye iletiriz.
+  addEventListener(
+    'keydown',
+    (event) => {
+      // (Etkin olmayan çerçeve de iletir: odak film sayfasında, video iç çerçevede olabilir.)
+      if (!port || event.ctrlKey || event.metaKey || event.altKey || !isForwardedKey(event.key)) return;
+      const target = event.composedPath()[0];
+      if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!event.repeat) send({ type: 'key', key: event.key });
+    },
+    true,
+  );
+  // Film sitesinin kendi tam ekranı sadece videoyu gösterirdi (sohbet, emojiler görünmezdi).
+  // Site çerçeveye tam ekran izni vermez; film sitesinin ⛶ düğmesi hata alır. Hata, kullanıcının
+  // tıklama iznini harcamaz: siteye haber veririz, site kendi tam ekranını açar (arayüzümüzle).
+  document.addEventListener('fullscreenerror', () => {
+    if (port) send({ type: 'fullscreen' });
+  });
 }
 
 function deactivate(): void {
@@ -215,6 +291,8 @@ function deactivate(): void {
   watchSource(null);
   if (syncTimer !== null) clearInterval(syncTimer);
   syncTimer = null;
+  if (statusTimer !== null) clearInterval(statusTimer);
+  statusTimer = null;
   engine?.destroy();
   engine = null;
   adapter?.release();
@@ -237,6 +315,9 @@ function onMessage(message: BackgroundMessage): void {
       break;
     case 'clock':
       clock.set(message.offset, message.synced);
+      break;
+    case 'control':
+      if (embedded) onControl(message.control);
       break;
     case 'room':
       overlay.setRoom(message.room);
