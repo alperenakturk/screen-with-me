@@ -112,7 +112,7 @@ function renderRecent(app: HTMLElement): void {
   box.hidden = rooms.length === 0;
   list.replaceChildren(
     ...rooms.map((room) => {
-      const link = el('a', { href: `/r/${room.id}`, class: 'recent-link' }, el('b', {}, room.id === mine ? `🏠 ${t('myRoom')}` : room.title ?? room.id), el('span', { class: 'muted small' }, ago(room.at)));
+      const link = el('a', { href: `/r/${room.id}`, class: 'recent-link' }, el('b', {}, `${room.saved ? '💾 ' : ''}${room.id === mine ? `🏠 ${t('myRoom')}` : room.title ?? room.id}`), el('span', { class: 'muted small' }, ago(room.at)));
       const remove = el('button', { type: 'button', class: 'icon-btn', title: t('remove'), 'aria-label': t('remove') }, '✕');
       remove.addEventListener('click', () => {
         forgetRoom(room.id);

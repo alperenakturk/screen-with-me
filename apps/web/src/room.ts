@@ -10,6 +10,7 @@ import {
   SYSTEM_MEMBER_ID,
   cleanName,
   expectedPosition,
+  stepRate,
   isAvatar,
   randomAvatar,
   type Avatar,
@@ -24,7 +25,7 @@ import { pageInviteUrl } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { el } from './dom.ts';
 import { t, translate } from './i18n.ts';
-import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
+import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
 import { canEmbed, createEmbedPlayer, type EmbedFailure, type EmbedPlayer } from './players/embed.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createTestPlayer } from './players/test.ts';
@@ -175,6 +176,19 @@ function formatLeft(ms: number): string {
   return t('leftS', { s });
 }
 
+/** Hızı seçimde gösterir; hazır seçeneklerde yoksa en alta "özel" seçenek olarak ekler. */
+function showRate(select: HTMLSelectElement, rate: number): void {
+  select.querySelector('option[data-custom]')?.remove();
+  if (!SPEEDS.includes(rate)) {
+    const option = document.createElement('option');
+    option.value = String(rate);
+    option.textContent = `${rate}x`;
+    option.dataset.custom = '';
+    select.append(option);
+  }
+  select.value = String(rate);
+}
+
 function withAvatar(member: { name: string; avatar?: string }): string {
   return member.avatar ? `${avatarText(member.avatar)} ${member.name}` : member.name;
 }
@@ -203,6 +217,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
+            <button id="embed-focus" type="button" class="btn small-btn" hidden></button>
             <button id="embed-out" type="button" class="btn small-btn" hidden>↗ <span data-i18n="embedOut"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
@@ -283,9 +298,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <button id="pin-btn" type="button" class="btn small-btn">📌 <span data-i18n="pin"></span></button>
               <button id="sync-all" type="button" class="btn small-btn">🔄 <span data-i18n="syncAll"></span></button>
-              <label class="speed"><span data-i18n="speed"></span>
-                <select id="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
-              </label>
+              <div class="speed"><span data-i18n="speed"></span>
+                <button id="speed-down" type="button" class="icon-btn speed-step" data-i18n-title="speedDown">−</button>
+                <select id="speed" data-i18n-title="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
+                <button id="speed-up" type="button" class="icon-btn speed-step" data-i18n-title="speedUp">+</button>
+              </div>
               <button id="fullscreen" type="button" class="icon-btn big-icon">⛶</button>
             </div>
           </div>
@@ -325,6 +342,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
 
           <div class="tab-panel" data-panel="queue" hidden>
+            <label class="check-row queue-auto"><input type="checkbox" id="opt-autonext" /> <span data-i18n="autoNext"></span></label>
+            <p class="muted small queue-hint" data-i18n="voteExplain"></p>
             <ol id="queue" class="queue"></ol>
             <p id="queue-empty" class="muted small" data-i18n="queueEmpty"></p>
           </div>
@@ -349,7 +368,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="settings-avatars" class="avatar-current"></div>
             <p class="muted small" data-i18n="avatarAutoSave"></p>
             <h4 data-i18n="settings.theme"></h4>
-            <div id="settings-themes" class="theme-grid" role="radiogroup"></div>
+            <div id="settings-themes" class="theme-current"></div>
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
@@ -361,6 +380,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
               <label class="check-row"><input type="checkbox" id="opt-hostonly" /> <span data-i18n="settings.hostOnlyMode"></span></label>
               <label class="check-row"><input type="checkbox" id="opt-lockqueue" /> <span data-i18n="settings.lockQueue"></span></label>
+              <label class="check-row"><input type="checkbox" id="opt-saved" /> <span data-i18n="settings.saved"></span></label>
               <div class="schedule-row">
                 <label for="opt-start" data-i18n="settings.schedule"></label>
                 <div class="row">
@@ -447,7 +467,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
   });
-  const reactions = createReactions(app, send);
+  const reactions = createReactions(app, send, () => myId !== null && myId === hostId);
   // Klavye: normal görünümde Enter sohbet kutusuna götürür (tam ekranda fullscreen.ts halleder).
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || document.fullscreenElement || isTyping(event.target)) return;
@@ -467,10 +487,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // İzleme sonu kartı (en az 1 dk'lık videolarda; kısa klipler ve test için değil).
       const item = roomState?.item;
       const duration = current?.player.getDuration() ?? 0;
-      if (item && item.id === itemId && item.media.kind !== 'test' && duration >= 60) {
-        showEndCard($('.player-wrap'), { title: itemTitle(item), duration, people: members.length, reactions: reactionCount, pins: [...pins.list()] });
+      const auto = roomSettings.autoNext !== false;
+      const startNext = !auto && queue.length > 0 ? () => send({ t: 'next', from: itemId }) : undefined;
+      if (item && item.id === itemId && item.media.kind !== 'test' && (duration >= 60 || startNext)) {
+        showEndCard($('.player-wrap'), { title: itemTitle(item), url: mediaUrl(item.media), duration, people: members.length, reactions: reactionCount, pins: [...pins.list()] }, startNext);
       }
-      send({ t: 'next', from: itemId });
+      // Otomatik devam kapalıysa sıradaki kendiliğinden başlamaz ("Sıradakini başlat" düğmesi).
+      if (auto) send({ t: 'next', from: itemId });
     },
   });
   const connection = new RoomConnection({
@@ -520,6 +543,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         void applyState(message.state);
         pins.reset(message.state.item?.id ?? null);
         const { action, by, state } = message;
+        if (message.resumed !== undefined) {
+          const at = message.resumed;
+          addActivity(() => t('resumedAt', { time: formatTime(at) }));
+        }
         // Otomatik bekleme hareketleri "waiting" mesajıyla ayrıca anlatılıyor.
         if (by.id === SYSTEM_MEMBER_ID) break;
         const item = state.item;
@@ -579,6 +606,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'sticker':
         reactions.addSticker(message.sticker);
         break;
+      case 'sticker-removed':
+        reactions.removeSticker(message.id);
+        break;
       case 'reaction':
         reactionCount++;
         if (settings.options.showReactions) reactions.show(message.by, message.emoji, message.sticker);
@@ -625,10 +655,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   async function applyState(state: PlaybackState): Promise<void> {
     roomState = state;
-    if (SPEEDS.includes(state.rate)) {
-      speedEl.value = String(state.rate);
-      fullscreen.setRate(state.rate);
-    }
+    showRate(speedEl, state.rate);
+    if (SPEEDS.includes(state.rate)) fullscreen.setRate(state.rate);
     renderNowPlaying();
     const itemId = state.item?.id ?? null;
     if (itemId === currentItemId) {
@@ -766,6 +794,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $<HTMLButtonElement>('#external-go').click();
   }
   $('#embed-out').addEventListener('click', leaveEmbed);
+  // Odanın içindeki film: "sadece video" (oynatıcı çerçeveyi kaplar) ↔ "sayfanın tamamı".
+  let embedFocus = load('embedFocus') !== '0';
+  const renderEmbedFocus = () => ($('#embed-focus').textContent = embedFocus ? t('embedShowPage') : t('embedOnlyVideo'));
+  renderEmbedFocus();
+  window.addEventListener('langchange', renderEmbedFocus);
+  $('#embed-focus').addEventListener('click', () => {
+    embedFocus = !embedFocus;
+    save('embedFocus', embedFocus ? '1' : '0');
+    window.postMessage({ source: 'screenwithme-site', type: 'embed-focus', on: embedFocus }, location.origin);
+    renderEmbedFocus();
+  });
   $('#embed-loading-out').addEventListener('click', leaveEmbed);
 
   /** Tercih değişti: açık film sayfasını yeni tercihe göre yeniden göster. */
@@ -856,6 +895,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     skipEl.disabled = queue.length === 0;
     fullscreen.setSkipEnabled(queue.length > 0);
     $('#embed-out').hidden = embed === null;
+    $('#embed-focus').hidden = embed === null;
   }
 
   function skip(): void {
@@ -872,6 +912,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Gömülü filmde motor çerçevede çalışır: hız isteği oraya gider.
   const requestRate = (rate: number) => (embed ? embed.control({ action: 'rate', rate }) : engine.requestRate(rate));
   speedEl.addEventListener('change', () => requestRate(Number(speedEl.value)));
+  // İnce hız ayarı: her basış ±0.05 (hazır seçeneklerin dışındaki hız listede "özel" olarak görünür).
+  $('#speed-down').addEventListener('click', () => requestRate(stepRate(roomState?.rate ?? 1, -1)));
+  $('#speed-up').addEventListener('click', () => requestRate(stepRate(roomState?.rate ?? 1, 1)));
 
   // ---- Tam ekran: sadece video kalır, fare oynayınca kontroller ve hızlı mesaj belirir. ----
   const fullscreen = createFullscreen({
@@ -1084,12 +1127,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const lockQueue = $<HTMLInputElement>('#opt-lockqueue');
     hostOnly.checked = roomSettings.hostOnly === true;
     lockQueue.checked = roomSettings.lockQueue === true;
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    $<HTMLInputElement>('#opt-saved').checked = roomSettings.saved === true;
+    rememberRoom(roomId, undefined, roomSettings.saved === true);
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-saved', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     $('#host-lock').hidden = host || !roomSettings.hostOnly;
     queue.render();
     renderSchedule();
+    const autoNext = $<HTMLInputElement>('#opt-autonext');
+    autoNext.checked = roomSettings.autoNext !== false;
+    autoNext.disabled = !host;
+    autoNext.parentElement!.title = host ? '' : t('settings.hostOnly');
   }
 
   /** Planlı başlangıç bandı: "⏰ 21:00'de başlıyor · 2 sa 13 dk". Saniyede bir yenilenir. */
@@ -1113,6 +1162,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   $<HTMLInputElement>('#opt-hostonly').addEventListener('change', (event) => {
     send({ t: 'settings', hostOnly: (event.target as HTMLInputElement).checked });
+  });
+  $<HTMLInputElement>('#opt-saved').addEventListener('change', (event) => {
+    send({ t: 'settings', saved: (event.target as HTMLInputElement).checked });
+  });
+  $<HTMLInputElement>('#opt-autonext').addEventListener('change', (event) => {
+    send({ t: 'settings', autoNext: (event.target as HTMLInputElement).checked });
   });
   $<HTMLInputElement>('#opt-lockqueue').addEventListener('change', (event) => {
     send({ t: 'settings', lockQueue: (event.target as HTMLInputElement).checked });

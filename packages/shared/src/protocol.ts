@@ -198,6 +198,10 @@ export interface RoomSettings {
   lockQueue?: boolean;
   /** Planlı başlangıç (sunucu saati, ms): o an gelince oda kendiliğinden oynar. */
   startsAt?: number;
+  /** Video bitince sıradakine kendiliğinden geçilsin mi? (yoksa açık; false: "başlat" düğmesi çıkar) */
+  autoNext?: boolean;
+  /** Kaydedilmiş oda: 30 gün saklanır, videoların kaldığı yer ve pinleri hatırlanır. */
+  saved?: boolean;
 }
 
 /** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
@@ -246,7 +250,7 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; saved?: boolean; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
@@ -269,6 +273,8 @@ export type ClientMessage =
   | { t: 'react'; sticker: string; emoji?: undefined }
   /** Odaya özel emoji ekle (küçültülmüş resim ya da GIF, data: adresi). Kimliğini sunucu hesaplar. */
   | { t: 'sticker-add'; data: string }
+  /** Özel emojiyi odadan kaldır (ekleyen ya da yönetici). */
+  | { t: 'sticker-remove'; id: string }
   /** Videonun şu anını pinle (an'ı sunucu hesaplar); isteğe bağlı kısa not. */
   | { t: 'pin'; note?: string }
   /** Pini kaldır (kendi pinin ya da yöneticiysen herhangi biri). */
@@ -308,7 +314,7 @@ export type ServerMessage =
       pins?: PinList;
     }
   | { t: 'pong'; c: number; s: number }
-  | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member }
+  | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member; /** Kayıtlı odada video kaldığı yerden açıldıysa o saniye. */ resumed?: number }
   | { t: 'queue'; queue: QueueItem[]; change: QueueChange | null }
   /** Video beklemeden yayınlanır; başlığı sonradan bulununca bu mesaj gelir. */
   | { t: 'title'; itemId: string; title: string }
@@ -324,6 +330,8 @@ export type ServerMessage =
   | { t: 'reaction'; emoji?: Reaction; sticker?: string; by: Member }
   /** Odaya bir özel emoji eklendi (girişte de odadakiler tek tek gelir). */
   | { t: 'sticker'; sticker: Sticker }
+  /** Bir özel emoji odadan kaldırıldı. */
+  | { t: 'sticker-removed'; id: string }
   /** Açık videonun pinleri değişti (tam liste). */
   | { t: 'pins'; pins: PinList }
   | { t: 'chat'; message: ChatMessage }
@@ -493,7 +501,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
-      for (const key of ['waitForAll', 'hostOnly', 'lockQueue'] as const) {
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'saved'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
       if (m.startsAt === null) out.startsAt = null;
@@ -532,6 +540,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isStickerId(m.sticker) ? { t: 'react', sticker: m.sticker } : null;
     case 'sticker-add':
       return isStickerData(m.data) ? { t: 'sticker-add', data: m.data } : null;
+    case 'sticker-remove':
+      return isStickerId(m.id) ? { t: 'sticker-remove', id: m.id } : null;
     case 'pin': {
       if (m.note === undefined) return { t: 'pin' };
       const note = cleanChatText(m.note);
@@ -544,4 +554,9 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     default:
       return null;
   }
+}
+
+/** İnce hız ayarı: ±0.05 adım, MIN_RATE–MAX_RATE arası, iki basamağa yuvarlı. */
+export function stepRate(rate: number, direction: 1 | -1): number {
+  return Math.min(MAX_RATE, Math.max(MIN_RATE, Math.round((rate + direction * 0.05) * 100) / 100));
 }

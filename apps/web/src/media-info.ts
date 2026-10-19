@@ -28,3 +28,10 @@ export function formatTime(seconds: number): string {
   const s = String(total % 60).padStart(2, '0');
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
 }
+
+/** Videonun açılabilir linki (izleme sonu kartında başlığa tıklanınca). Test sayacının linki yok. */
+export function mediaUrl(media: QueueItem['media']): string | null {
+  if (media.kind === 'youtube') return `https://www.youtube.com/watch?v=${media.id}`;
+  if (media.kind === 'test') return null;
+  return media.url;
+}

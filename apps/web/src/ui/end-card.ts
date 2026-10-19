@@ -5,6 +5,8 @@ import { t } from '../i18n.ts';
 
 export interface EndStats {
   title: string;
+  /** Başlığa tıklanınca açılacak link (yoksa düz yazı). */
+  url?: string | null;
   /** Videonun süresi (saniye). */
   duration: number;
   people: number;
@@ -18,21 +20,22 @@ const AUTO_CLOSE_MS = 30_000;
  * İzleme sonu kartı: video bitince oynatıcının üstünde süre, kişi, tepki ve pinlenen anlar.
  * "Görsel olarak indir" paylaşılabilir bir PNG yapar. 30 sn sonra kendiliğinden kapanır.
  */
-export function showEndCard(container: HTMLElement, stats: EndStats): void {
+export function showEndCard(container: HTMLElement, stats: EndStats, startNext?: () => void): void {
   container.querySelector('.end-card')?.remove();
   const close = el('button', { type: 'button', class: 'btn small-btn' }, t('close'));
-  const download = el('button', { type: 'button', class: 'btn small-btn primary' }, t('endDownload'));
+  const download = el('button', { type: 'button', class: startNext ? 'btn small-btn' : 'btn small-btn primary' }, t('endDownload'));
+  const next = el('button', { type: 'button', class: 'btn small-btn primary' }, t('startNext'));
   const card = el(
     'div',
     { class: 'end-card', role: 'dialog', 'aria-label': t('endTitle') },
     el('div', { class: 'end-emoji' }, '🎬'),
     el('h3', {}, t('endTitle')),
-    el('p', { class: 'end-name' }, stats.title),
+    el('p', { class: 'end-name' }, stats.url ? el('a', { href: stats.url, target: '_blank', rel: 'noopener noreferrer', title: t('endOpenLink') }, stats.title) : stats.title),
     el('div', { class: 'end-stats' }, ...statLines(stats).map((line) => el('span', {}, line))),
     stats.pins.length
       ? el('ul', { class: 'end-pins' }, ...stats.pins.slice(0, 5).map((p) => el('li', {}, `📌 ${formatTime(p.at)} · ${p.by.name}${p.note ? `: ${p.note}` : ''}`)))
       : '',
-    el('div', { class: 'end-actions' }, download, close),
+    el('div', { class: 'end-actions' }, ...(startNext ? [next] : []), download, close),
   );
   const timer = setTimeout(() => card.remove(), AUTO_CLOSE_MS);
   close.addEventListener('click', () => {
@@ -40,6 +43,11 @@ export function showEndCard(container: HTMLElement, stats: EndStats): void {
     card.remove();
   });
   download.addEventListener('click', () => downloadImage(stats));
+  next.addEventListener('click', () => {
+    clearTimeout(timer);
+    card.remove();
+    startNext?.();
+  });
   container.append(card);
 }
 

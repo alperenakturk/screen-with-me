@@ -73,6 +73,11 @@ addEventListener('message', (event: MessageEvent) => {
   if (event.source !== window || event.origin !== location.origin) return;
   const data = event.data as { source?: string; type?: string; roomId?: unknown; url?: unknown; request?: EmbedRequest } | null;
   if (data?.source !== SITE_MESSAGE_SOURCE) return;
+  // Odanın içindeki film: "sadece video" / "sayfanın tamamı" (film çerçeveleri bunu dinler).
+  if ((data as { type?: string }).type === 'embed-focus') {
+    void chrome.storage.local.set({ embedFocus: (data as { on?: unknown }).on !== false });
+    return;
+  }
   if (data.type === 'embed' && data.request && typeof data.request.type === 'string') {
     onEmbedRequest(data.request);
     return;

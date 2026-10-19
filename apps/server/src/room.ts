@@ -27,6 +27,19 @@ import { resolveTitle } from './titles.ts';
 const MAX_MEMBERS = 50;
 /** Kimse kalmayan oda bu süre sonra silinir. */
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+/** Kaydedilmiş oda boşken bu kadar saklanır. */
+const SAVED_ROOM_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** Kayıtlı odada en fazla kaç videonun kaldığı yer hatırlanır. */
+const MAX_HISTORY = 30;
+/** Boş oda oynuyorken bundan uzun boş kaldıysa, dönüşte kaldığı yerde durmuş olarak açılır. */
+const FREEZE_AFTER_MS = 60_000;
+
+/** Kayıtlı odada bir videonun kaldığı yer ve pinleri. */
+interface HistoryEntry {
+  position: number;
+  pins: Array<Pin & { owner: string }>;
+  at: number;
+}
 /** Sonradan gelenlerin görebileceği son sohbet mesajı sayısı. */
 const CHAT_HISTORY = 50;
 /**
@@ -123,9 +136,13 @@ export class Room extends DurableObject<Env> {
    * anahtarda (`sticker:<id>`; tek değer en fazla 128 KB), sıra `stickers` listesinde.
    */
   private stickers = new Map<string, string>();
+  /** Özel emojiyi ekleyenin kalıcı anahtarı (kaldırabilsin diye; istemcilere gitmez). */
+  private stickerOwners: Record<string, string> = {};
   /** Sıradaki her öğeye oy verenlerin kalıcı anahtarları (istemcilere gitmez; sadece sayı gider). */
   private voters: Record<string, string[]> = {};
   private titles = new Map<string, string>();
+  /** Kayıtlı oda: video (titleKey) → kaldığı yer + pinler. */
+  private history: Record<string, HistoryEntry> = {};
   private hostKey: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
   private hostGoneAt: number | null = null;
@@ -156,6 +173,7 @@ export class Room extends DurableObject<Env> {
       this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
       this.voters = (await ctx.storage.get<Record<string, string[]>>('voters')) ?? {};
       const stickerIds = (await ctx.storage.get<string[]>('stickers')) ?? [];
+      this.stickerOwners = (await ctx.storage.get<Record<string, string>>('stickerOwners')) ?? {};
       const stickerData = await ctx.storage.get<string>(stickerIds.map((id) => `sticker:${id}`));
       for (const id of stickerIds) {
         const data = stickerData.get(`sticker:${id}`);
@@ -171,6 +189,7 @@ export class Room extends DurableObject<Env> {
       this.emptySince = (await ctx.storage.get<number>('emptySince')) ?? null;
       const pins = await ctx.storage.get<typeof this.pins>('pins');
       if (pins && Array.isArray(pins.list)) this.pins = pins;
+      this.history = (await ctx.storage.get<Record<string, HistoryEntry>>('history')) ?? {};
     });
   }
 
@@ -187,6 +206,7 @@ export class Room extends DurableObject<Env> {
     } else {
       const attachment: Attachment = { id: newId().slice(0, 8), name: null };
       server.serializeAttachment(attachment);
+      await this.freezeIfLongEmpty();
       await this.setEmptySince(null);
     }
     return new Response(null, { status: 101, webSocket: client });
@@ -266,11 +286,27 @@ export class Room extends DurableObject<Env> {
         while (this.stickers.size >= MAX_STICKERS) {
           const oldest = this.stickers.keys().next().value as string;
           this.stickers.delete(oldest);
+          delete this.stickerOwners[oldest];
           await this.ctx.storage.delete(`sticker:${oldest}`);
+          this.broadcast({ t: 'sticker-removed', id: oldest });
         }
         this.stickers.set(id, message.data);
-        await this.ctx.storage.put({ [`sticker:${id}`]: message.data, stickers: [...this.stickers.keys()] });
+        this.stickerOwners[id] = keyOf(attachment);
+        await this.ctx.storage.put({ [`sticker:${id}`]: message.data, stickers: [...this.stickers.keys()], stickerOwners: this.stickerOwners });
         this.broadcast({ t: 'sticker', sticker: { id, data: message.data } });
+        return;
+      }
+      case 'sticker-remove': {
+        if (!this.stickers.has(message.id)) return;
+        if (this.stickerOwners[message.id] !== keyOf(attachment) && !this.isHost(ws)) {
+          this.sendTo(ws, { t: 'error', code: 'not_host' });
+          return;
+        }
+        this.stickers.delete(message.id);
+        delete this.stickerOwners[message.id];
+        await this.ctx.storage.delete(`sticker:${message.id}`);
+        await this.ctx.storage.put({ stickers: [...this.stickers.keys()], stickerOwners: this.stickerOwners });
+        this.broadcast({ t: 'sticker-removed', id: message.id });
         return;
       }
       case 'pin': {
@@ -335,6 +371,13 @@ export class Room extends DurableObject<Env> {
         if (message.waitForAll !== undefined) next.waitForAll = message.waitForAll;
         if (message.hostOnly !== undefined) next.hostOnly = message.hostOnly;
         if (message.lockQueue !== undefined) next.lockQueue = message.lockQueue;
+        if (message.autoNext !== undefined) next.autoNext = message.autoNext;
+        if (message.saved !== undefined) next.saved = message.saved;
+        // Kayıt kapanınca hatırlananlar da silinir.
+        if (message.saved === false && Object.keys(this.history).length) {
+          this.history = {};
+          await this.ctx.storage.delete('history');
+        }
         if (message.startsAt === null) delete next.startsAt;
         // Geçmişte ya da 30 günden ileride plan olmaz.
         else if (message.startsAt !== undefined && message.startsAt > Date.now() && message.startsAt < Date.now() + 30 * 86_400_000) next.startsAt = message.startsAt;
@@ -382,17 +425,19 @@ export class Room extends DurableObject<Env> {
   override async alarm(): Promise<void> {
     const now = Date.now();
     // emptySince yoksa: eski sürümün kurduğu 24 saatlik alarm (o zaman da boşsa sil).
-    if (this.openSockets().length === 0 && (this.emptySince === null || now - this.emptySince >= EMPTY_ROOM_TTL_MS)) {
+    if (this.openSockets().length === 0 && (this.emptySince === null || now - this.emptySince >= this.emptyTtl())) {
       await this.ctx.storage.deleteAll();
       this.room = initialRoom(now);
       this.chat = [];
       this.stickers.clear();
+      this.stickerOwners = {};
       this.pins = { itemId: null, list: [] };
       this.hostKey = null;
       this.hostGoneAt = null;
       this.bans = {};
       this.settings = { waitForAll: true };
       this.voters = {};
+      this.history = {};
       this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
       this.emptySince = null;
       return;
@@ -453,10 +498,36 @@ export class Room extends DurableObject<Env> {
   private async scheduleAlarm(): Promise<void> {
     const times: number[] = [];
     if (this.waits.waitingSince !== null) times.push(this.waits.waitingSince + WAIT_MAX_MS + 50);
-    if (this.emptySince !== null) times.push(this.emptySince + EMPTY_ROOM_TTL_MS);
+    if (this.emptySince !== null) times.push(this.emptySince + this.emptyTtl());
     if (this.settings.startsAt !== undefined) times.push(this.settings.startsAt);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
+  }
+
+  /** Boş oda ne kadar saklanır: kaydedilmiş oda 30 gün, diğerleri 24 saat. */
+  private emptyTtl(): number {
+    return this.settings.saved ? SAVED_ROOM_TTL_MS : EMPTY_ROOM_TTL_MS;
+  }
+
+  /**
+   * Oda oynarken herkes çıktıysa saat ilerlemeye devam eder; dönen kişi videoyu çok ileride
+   * bulurdu. Bir dakikadan uzun boş kaldıysa video, son kişinin çıktığı anda durmuş sayılır.
+   * (Kısa kopmalarda, ör. sayfa yenileme, oynamaya devam eder.)
+   */
+  private async freezeIfLongEmpty(): Promise<void> {
+    const state = this.room.state;
+    if (this.emptySince === null || state.paused || !state.item || Date.now() - this.emptySince < FREEZE_AFTER_MS) return;
+    const position = expectedPosition(state, this.emptySince);
+    this.room = { ...this.room, state: { ...state, paused: true, position, updatedAt: Date.now() } };
+    await this.ctx.storage.put('room', this.room);
+  }
+
+  /** Kayıtlı odada bir videonun kaldığı yeri ve pinlerini hatırlar (en yeni MAX_HISTORY tane). */
+  private remember(item: QueueItem, position: number): void {
+    const pins = this.pins.itemId === item.id ? this.pins.list : [];
+    this.history[titleKey(item.media)] = { position: Math.round(position), pins, at: Date.now() };
+    const keys = Object.keys(this.history).sort((a, b) => this.history[b]!.at - this.history[a]!.at);
+    for (const key of keys.slice(MAX_HISTORY)) delete this.history[key];
   }
 
   /** Bekleme durumunu depoya yazar (nesne uyuyup uyanınca kaldığı yerden devam). */
@@ -689,7 +760,30 @@ export class Room extends DurableObject<Env> {
       await this.scheduleAlarm();
     }
 
+    const before = this.room.state;
     this.room = update.data;
+    let resumed: number | undefined;
+    let restoredPins = false;
+    const now = Date.now();
+    if (this.settings.saved && before.item?.id !== this.room.state.item?.id) {
+      // "Sıradaki" ile geçilen video bitmiş (ya da atlanmış) sayılır: baştan başlasın.
+      if (before.item && action.t === 'next') delete this.history[titleKey(before.item.media)];
+      else if (before.item) this.remember(before.item, expectedPosition(before, now));
+      const item = this.room.state.item;
+      const saved = item ? this.history[titleKey(item.media)] : undefined;
+      if (item && saved) {
+        // Baştan 15 sn'den azsa baştan başlamak daha doğal.
+        if (saved.position > 15) {
+          resumed = saved.position;
+          this.room = { ...this.room, state: { ...this.room.state, position: saved.position, updatedAt: now } };
+        }
+        if (saved.pins.length) {
+          this.pins = { itemId: item.id, list: saved.pins.map((p) => ({ ...p })) };
+          restoredPins = true;
+        }
+      }
+      await this.ctx.storage.put('history', this.history);
+    }
     await this.ctx.storage.put('room', this.room);
     if (update.queueChanged) {
       // Sıradan çıkanların oyları unutulur.
@@ -703,8 +797,10 @@ export class Room extends DurableObject<Env> {
       });
     }
     if (update.stateAction !== null) {
-      this.broadcast({ t: 'state', state: this.room.state, action: update.stateAction, by: me });
+      this.broadcast({ t: 'state', state: this.room.state, action: update.stateAction, by: me, ...(resumed !== undefined ? { resumed } : {}) });
     }
+    // Pinler video mesajından sonra gitsin (istemci yeni videoda pin listesini sıfırlıyor).
+    if (restoredPins) await this.savePins();
   }
 
   /**
@@ -770,7 +866,15 @@ export class Room extends DurableObject<Env> {
     // Beklenen kişi çıktıysa oda beklemeyi bıraksın.
     if (this.waits.waitingSince !== null) await this.evaluateWait();
     await this.saveWaits();
-    if (this.openSockets(leaving).length === 0) await this.setEmptySince(Date.now());
+    if (this.openSockets(leaving).length === 0) {
+      // Kayıtlı odada son kişi çıkınca açık videonun yeri de hatırlansın.
+      const state = this.room.state;
+      if (this.settings.saved && state.item) {
+        this.remember(state.item, expectedPosition(state, Date.now()));
+        await this.ctx.storage.put('history', this.history);
+      }
+      await this.setEmptySince(Date.now());
+    }
   }
 
   private openSockets(except?: WebSocket): WebSocket[] {
@@ -833,7 +937,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'react' | 'sticker-add' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

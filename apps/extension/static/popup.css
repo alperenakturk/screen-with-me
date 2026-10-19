@@ -280,6 +280,7 @@ label,
 }
 
 .avatar-grid {
+  overflow-x: hidden;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 4px;
@@ -304,6 +305,7 @@ label,
 }
 
 .avatar-grid button {
+  overflow: hidden;
   aspect-ratio: 1;
   font-size: 18px;
   background: var(--surface-2);

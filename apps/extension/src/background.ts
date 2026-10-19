@@ -13,6 +13,7 @@ import { samePage } from '@swm/shared/media';
 import {
   CLIENT_ID,
   ROOM_ID_PATTERN,
+  SYSTEM_MEMBER_ID,
   isStickerData,
   cleanChatText,
   cleanName,
@@ -95,6 +96,12 @@ interface Session {
   activated: boolean;
   /** En son hangi öğe için sekme yönlendirildi (aynı öğe için tekrar yönlendirmemek için). */
   followedItemId: string | null;
+  /** Son oynatma hareketini yapan (kendi geçişlerimde soru sorulmasın). */
+  lastBy: Member | null;
+  /** Cevap bekleyen ortak geçiş: hangi öğe için ve ne tür. */
+  pendingFollow: { itemId: string | null; kind: 'page' | 'room' | 'home' } | null;
+  /** Eklentiyle filmdeyken ayrılanlar (isim → zaman): siteden dönerse "odaya döndü" sorusu. */
+  extLeft: Map<string, number>;
   /** Oda oluşturulurken bağlantı açılınca gönderilecek ilk video. */
   pendingLoad: { media: Media; title?: string } | null;
   /** Yasaklılar (sadece yöneticiyken dolu). */
@@ -109,6 +116,8 @@ interface Session {
   guided: boolean;
   /** Açık videonun pinlenmiş anları (çubuktaki pin şeridi için). */
   pins: PinList | null;
+  /** Oda ayarı: video bitince sıradakine kendiliğinden geç. */
+  autoNext: boolean;
   /** Odanın özel emojileri (kimlik → data: adresi); çerçeve etkinleşince hepsi yollanır. */
   stickers: Map<string, string>;
   /** Sekmenin şu anki adresi (odanın sayfasında mıyız?). */
@@ -232,6 +241,9 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     activeFrame: null,
     activated: false,
     followedItemId: options.followedItemId ?? null,
+    lastBy: null,
+    pendingFollow: null,
+    extLeft: new Map(),
     // Bağlantı açılmadan verilir: hoş geldin mesajı erken gelse de ilk video kaybolmasın.
     pendingLoad: options.load ?? null,
     bans: [],
@@ -240,6 +252,7 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     intro: options.intro ?? false,
     guided: false,
     pins: null,
+    autoNext: true,
     stickers: new Map(),
     tabUrl: tab?.url ?? null,
   };
@@ -281,6 +294,7 @@ function onServer(session: Session, message: ServerMessage): void {
       session.queue = message.queue;
       session.state = message.state;
       session.pins = message.pins ?? null;
+      session.autoNext = message.settings?.autoNext !== false;
       // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
       session.stickers.clear();
       toActive(session, { type: 'stickers-clear' });
@@ -297,6 +311,7 @@ function onServer(session: Session, message: ServerMessage): void {
       break;
     case 'state':
       session.state = message.state;
+      session.lastBy = message.by;
       void follow(session);
       pushState(session);
       if (session.pins && session.pins.itemId !== message.state.item?.id) {
@@ -312,11 +327,23 @@ function onServer(session: Session, message: ServerMessage): void {
       // Katılan/ayrılanları videonun üstünde kısaca göster.
       const before = new Map(session.members.map((m) => [m.id, m]));
       const after = new Set(message.members.map((m) => m.id));
-      for (const m of message.members) {
-        if (!before.has(m.id) && m.id !== session.myId) toActive(session, { type: 'notice', kind: 'joined', name: withAvatar(m) });
-      }
+      const now = Date.now();
       for (const m of session.members) {
-        if (!after.has(m.id)) toActive(session, { type: 'notice', kind: 'left', name: withAvatar(m) });
+        if (after.has(m.id)) continue;
+        toActive(session, { type: 'notice', kind: 'left', name: withAvatar(m) });
+        if (m.client === 'ext') session.extLeft.set(m.name, now);
+      }
+      for (const m of message.members) {
+        if (before.has(m.id) || m.id === session.myId) continue;
+        // Filmden çıkıp hemen siteden giren: 🏠 ile odaya döndü → "sen de dönmek ister misin?"
+        const leftAt = session.extLeft.get(m.name);
+        if (m.client !== 'ext' && leftAt !== undefined && now - leftAt < 20_000 && session.activated) {
+          session.extLeft.delete(m.name);
+          session.pendingFollow = { itemId: null, kind: 'home' };
+          toActive(session, { type: 'ask-follow', kind: 'home', name: withAvatar(m) });
+          continue;
+        }
+        toActive(session, { type: 'notice', kind: 'joined', name: withAvatar(m) });
       }
       session.members = message.members;
       session.hostId = message.hostId ?? null;
@@ -342,9 +369,17 @@ function onServer(session: Session, message: ServerMessage): void {
       session.pins = message.pins;
       pushPins(session);
       break;
+    case 'settings':
+      session.autoNext = message.settings.autoNext !== false;
+      pushRoom(session);
+      break;
     case 'sticker':
       session.stickers.set(message.sticker.id, message.sticker.data);
       toActive(session, { type: 'sticker', id: message.sticker.id, data: message.sticker.data });
+      break;
+    case 'sticker-removed':
+      session.stickers.delete(message.id);
+      toActive(session, { type: 'sticker-removed', id: message.id });
       break;
     case 'chat':
       toActive(session, { type: 'chat', line: chatLine(session, message.message) });
@@ -401,15 +436,35 @@ async function follow(session: Session): Promise<void> {
   const tab = await chrome.tabs.get(session.tabId).catch(() => null);
   if (!tab) return;
 
+  // Başkası geçiş yaptıysa ve ben şu an filmi izliyorsam önce sor: evet diyen gider, hayır diyen kalır.
+  const someoneElse = session.lastBy !== null && session.lastBy.id !== session.myId && session.lastBy.id !== SYSTEM_MEMBER_ID;
   if (item.media.kind === 'page') {
     // Siteden gelirken sekme zaten oraya gönderildiyse ikinci kez yönlendirme (sayfa baştan yüklenmesin).
     const going = session.navigatingTo !== null && samePage(session.navigatingTo, item.media.url);
     session.navigatingTo = null;
-    if (!going && (!tab.url || !samePage(tab.url, item.media.url))) await chrome.tabs.update(session.tabId, { url: item.media.url });
+    if (going || (tab.url && samePage(tab.url, item.media.url))) return;
+    if (someoneElse && session.activeFrame !== null) {
+      session.pendingFollow = { itemId: item.id, kind: 'page' };
+      toActive(session, { type: 'ask-follow', kind: 'page', name: withAvatar(session.lastBy!), host: hostOf(item.media.url) });
+      return;
+    }
+    await chrome.tabs.update(session.tabId, { url: item.media.url });
+  } else if (someoneElse && session.activeFrame !== null) {
+    session.pendingFollow = { itemId: item.id, kind: 'room' };
+    toActive(session, { type: 'ask-follow', kind: 'room', name: withAvatar(session.lastBy!) });
   } else {
     const roomUrl = `${SITE_URL}/r/${session.roomId}`;
     endSession(session.tabId);
     if (!tab.url || !samePage(tab.url, roomUrl)) await chrome.tabs.update(session.tabId, { url: roomUrl });
+  }
+}
+
+/** "www.ornek.com" → "ornek.com" (soru metninde gösterilir). */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
   }
 }
 
@@ -435,6 +490,7 @@ function pushRoom(session: Session): void {
     myId: session.myId,
     hostId: session.hostId,
     queueLength: session.queue.length,
+    autoNext: session.autoNext,
   };
   toActive(session, { type: 'room', room });
   pushPins(session);
@@ -468,8 +524,9 @@ function clockMessage(session: Session): BackgroundMessage {
 }
 
 function toActive(session: Session, message: BackgroundMessage): void {
-  // Etkin olmayan (ör. odanın sayfası dışındaki) çerçeve çubuk açmasın; "kapandı" bildirimi hariç.
-  if (session.activeFrame === null || (!session.activated && message.type !== 'ended')) return;
+  // Etkin olmayan (ör. odanın sayfası dışındaki) çerçeve çubuk açmasın; "kapandı" bildirimi ve
+  // "takip et?" sorusu hariç (yeni video gelince bu sayfadaki senkron soru gitmeden durmuş oluyor).
+  if (session.activeFrame === null || (!session.activated && message.type !== 'ended' && message.type !== 'ask-follow')) return;
   const frame = frames.get(session.tabId)?.get(session.activeFrame);
   if (frame) post(frame.port, message);
 }
@@ -576,6 +633,20 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       if (!embed || !frame.embedDepth) break;
       if (message.type === 'fullscreen') post(embed.port, { type: 'fullscreen' });
       else if (isForwardedKey(message.key)) post(embed.port, { type: 'key', key: message.key });
+      break;
+    }
+    case 'follow-answer': {
+      const session = sessions.get(tabId);
+      const pending = session?.pendingFollow ?? null;
+      if (!session || !pending) break;
+      session.pendingFollow = null;
+      if (!message.yes) break;
+      const item = session.state?.item;
+      if (pending.kind === 'page' && item && item.id === pending.itemId && item.media.kind === 'page') {
+        await chrome.tabs.update(session.tabId, { url: item.media.url });
+      } else {
+        await goToRoom(session);
+      }
       break;
     }
     case 'go-room': {
@@ -774,6 +845,12 @@ chrome.runtime.onConnect.addListener((port) => {
 chrome.tabs.onUpdated.addListener((tabId, info) => {
   const session = sessions.get(tabId);
   if (!session) return;
+  // Sekme sitedeki oda sayfasına döndüyse (geri tuşu dahil) 🏠 gibi: film bağlantısı kapanır,
+  // site kendi bağlantısıyla devralır (aynı kişi iki kez görünmesin, "filmde" sanılmasın).
+  if (info.url && info.url.startsWith(`${SITE_URL}/r/`)) {
+    endSession(tabId);
+    return;
+  }
   if (info.url) {
     session.tabUrl = info.url;
     // Odanın sayfasına dönüldü ya da ayrıldı: senkronu aç/kapat.
@@ -942,6 +1019,15 @@ chrome.runtime.onMessage.addListener((request: PopupRequest | SiteJoinMessage, s
   // kendi adresinden kabul edilir; başka bir site bu isteği yapamaz.
   if (sender.tab) {
     const tabId = sender.tab.id;
+    // Film sayfasındaki 🏠 (tek seferlik mesaj: uyuyan arka planı da uyandırır).
+    if ((request as { type?: string }).type === 'go-room-tab' && tabId !== undefined) {
+      respond({ ok: true });
+      void ready.then(async () => {
+        const session = sessions.get(tabId);
+        if (session) await goToRoom(session);
+      });
+      return false;
+    }
     if (request.type === 'site-join' && sender.origin === SITE_ORIGIN && tabId !== undefined && ROOM_ID_PATTERN.test(request.roomId)) {
       const url = typeof request.url === 'string' && /^https?:\/\//.test(request.url) ? request.url : null;
       respond({ ok: true });

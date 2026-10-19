@@ -68,6 +68,11 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
   **v0.9.45:** senkron testi (sitenin çizdiği sayaç + "aynı yerdesiniz" rozeti), yönetici modları
   (sadece yönetici kontrol etsin, sırayı kilitle), sıradakiler için oylama, planlı başlangıç (geri
   sayım bandı, saat gelince oda oynar), benim odam + son odalar, izleme sonu kartı (indirilebilir görsel).
+  **v0.9.48:** film odanın içinde (sadece video, siyah bantlarla), başkası yeni sayfa/video açınca ya da
+  odaya dönünce "sen de gel?" sorusu, geri tuşu 🏠 gibi, özel emojiler emoji sayfalarının sonunda (✕ ile
+  kaldır), eklentide tek satır emoji ve videonun üstünde 📌, önizlemeli tema penceresi, ±0.05 hız,
+  sırada otomatik devam seçeneği + oylama notu, kartta video linki, **odayı kaydet** (30 gün; videoların
+  kaldığı yer ve pinler hatırlanır), uzun boş kalan oda dönüşte kaldığı yerde durmuş açılır.
   v0.9.2: Art Deco / eski afiş tarzı temalar (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması,
   Transatlantik, Gece Ekspresi) ve her birine uygun çizilmiş avatar.
 - [ ] **v1.0 — Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,

@@ -141,3 +141,74 @@ export function renderThemePicker(container: HTMLElement): void {
   window.addEventListener('themechange', draw);
   window.addEventListener('langchange', draw);
 }
+
+/**
+ * Büyük tema penceresi: her tema bir önizleme kartı (sahnesi, renkleri ve maskotu). Karta
+ * basınca tema hemen arkada uygulanır (canlı önizleme); "Tamam", Esc ya da dışarısı kapatır.
+ */
+export function openThemeDialog(): void {
+  const grid = el('div', { class: 'theme-cards', role: 'radiogroup' });
+  const draw = () =>
+    grid.replaceChildren(
+      ...THEMES.map((theme) => {
+        const scene = SCENE_THEMES.includes(theme.id) ? `url('/themes/${theme.id}.svg') center bottom / cover no-repeat, ` : '';
+        const preview = el(
+          'span',
+          { class: 'theme-preview', style: `background: ${scene}linear-gradient(160deg, ${theme.swatch[0]} 55%, ${theme.swatch[1]})` },
+          el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '', loading: 'lazy' }),
+        );
+        const card = el(
+          'button',
+          { type: 'button', class: 'theme-card', role: 'radio', 'aria-checked': String(theme.id === currentTheme()), style: `--chip-b: ${theme.swatch[1]}` },
+          preview,
+          el('span', { class: 'theme-card-name' }, t(`theme.${theme.id}` as I18nKey)),
+        );
+        card.addEventListener('click', () => applyTheme(theme.id));
+        return card;
+      }),
+    );
+  draw();
+  window.addEventListener('themechange', draw);
+  const close = () => {
+    backdrop.remove();
+    window.removeEventListener('themechange', draw);
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') close();
+  };
+  const x = el('button', { type: 'button', class: 'icon-btn dialog-x', title: t('close'), 'aria-label': t('close') }, '✕');
+  x.addEventListener('click', close);
+  const done = el('button', { type: 'button', class: 'btn primary' }, t('done'));
+  done.addEventListener('click', close);
+  const dialog = el(
+    'div',
+    { class: 'avatar-dialog theme-dialog card', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('settings.theme') },
+    el('div', { class: 'dialog-head' }, el('h3', {}, t('pickTheme')), x),
+    grid,
+    el('div', { class: 'dialog-foot' }, done),
+  );
+  const backdrop = el('div', { class: 'dialog-backdrop' }, dialog);
+  backdrop.addEventListener('click', (event) => {
+    if (event.target === backdrop) close();
+  });
+  document.addEventListener('keydown', onKey);
+  document.body.append(backdrop);
+  done.focus();
+}
+
+/** Ayarlarda: şu anki tema küçük önizlemeyle + "Temayı değiştir" (büyük pencere açar). */
+export function renderThemeSetting(container: HTMLElement): void {
+  const draw = () => {
+    const theme = THEMES.find((x) => x.id === currentTheme()) ?? THEMES[0];
+    const button = el('button', { type: 'button', class: 'btn' }, t('changeTheme'));
+    button.addEventListener('click', openThemeDialog);
+    container.replaceChildren(
+      el('span', { class: 'theme-now' }, el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '' }), el('b', {}, t(`theme.${theme.id}` as I18nKey))),
+      button,
+    );
+  };
+  draw();
+  window.addEventListener('themechange', draw);
+  window.addEventListener('langchange', draw);
+}

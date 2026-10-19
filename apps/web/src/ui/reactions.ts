@@ -1,4 +1,4 @@
-import { REACTION_PAGES, type ClientMessage, type Member, type Sticker } from '@swm/shared/protocol';
+import { REACTION_PAGES, stickerId, type ClientMessage, type Member, type Sticker } from '@swm/shared/protocol';
 import { fileToSticker } from '@swm/shared/sticker-file';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
@@ -23,18 +23,24 @@ type Item = { emoji: string } | { sticker: string } | { add: true };
  * uçuşmaz: videonun sol altında avatar + isim + emoji kartı olarak kısa süre durur; aynı kişinin
  * aynı tepkisi yeni kart açmaz, "×2" olur.
  */
-export function createReactions(root: HTMLElement, send: (message: ClientMessage) => void) {
+export function createReactions(root: HTMLElement, send: (message: ClientMessage) => void, canManage: () => boolean = () => false) {
   // Biri video altında, biri tam ekran kontrollerinde olmak üzere birden fazla emoji çubuğu olabilir.
   const bars = root.querySelectorAll<HTMLElement>('.reaction-bar');
   const layer = root.querySelector<HTMLElement>('#reactions-layer')!;
   const stickers = new Map<string, string>();
+  /** Benim eklediğim özel emojilerin kimlikleri (✕ ile kaldırabilirim). */
+  const mine = new Set<string>();
   let page = 0;
   let coolUntil = 0;
   const fileInput = el('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif', hidden: '' }) as HTMLInputElement;
   root.append(fileInput);
 
+  /** Üç emoji sayfası, sonra özel emoji sayfaları (7 tane + "+"; hiç yoksa sadece "+"). */
   function pages(): Item[][] {
-    return REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
+    const list: Item[][] = REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
+    const ids = [...stickers.keys()];
+    for (let i = 0; i === 0 || i < ids.length; i += 7) list.push([...ids.slice(i, i + 7).map((sticker) => ({ sticker })), { add: true }]);
+    return list;
   }
 
   function turn(step: number): void {
@@ -62,69 +68,44 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
     if (page >= all.length) page = 0;
     for (const bar of bars) {
       const buttons = all[page]!.map((item, i) => {
+        if ('add' in item) {
+          const add = el('button', { type: 'button', class: 'reaction-btn add', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, '+');
+          add.addEventListener('click', () => fire(item));
+          return add;
+        }
         const title = `${t('react')} (${i + 1})`;
-        const content = 'emoji' in item ? item.emoji : 'sticker' in item ? el('img', { src: stickers.get(item.sticker) ?? '', alt: '' }) : '+';
+        const content = 'emoji' in item ? item.emoji : el('img', { src: stickers.get(item.sticker) ?? '', alt: '' });
         const button = el('button', { type: 'button', class: 'reaction-btn', title, 'aria-label': title }, content);
         button.addEventListener('click', () => fire(item));
-        return button;
+        if (!('sticker' in item) || !(mine.has(item.sticker) || canManage())) return button;
+        // Kendi eklediğim (ya da yöneticiysem herhangi bir) özel emoji: üstüne gelince ✕.
+        const remove = el('button', { type: 'button', class: 'sticker-x', title: t('stickerRemove'), 'aria-label': t('stickerRemove') }, '✕');
+        remove.addEventListener('click', () => removeSticker(item.sticker));
+        return el('span', { class: 'sticker-wrap' }, button, remove);
       });
       const up = el('button', { type: 'button', class: 'reaction-page', title: t('moreReactions'), 'aria-label': t('moreReactions') }, '▲');
       const down = el('button', { type: 'button', class: 'reaction-page', title: t('moreReactions'), 'aria-label': t('moreReactions') }, '▼');
       up.addEventListener('click', () => turn(-1));
       down.addEventListener('click', () => turn(1));
-      // Özel emojiler: her zaman görünen 🖼️ düğmesi, üstünde küçük bir panel açar.
-      const open = el('button', { type: 'button', class: 'reaction-btn sticker-open', title: t('stickerOpen'), 'aria-label': t('stickerOpen'), 'aria-expanded': 'false' }, '🖼️');
-      const panel = stickerPanel();
-      open.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const show = panel.hidden;
-        closePanels();
-        panel.hidden = !show;
-        open.setAttribute('aria-expanded', String(show));
+      // 🖼️: doğrudan özel emoji sayfasına (emojilerden sonra gelir); oradayken emojilere döner.
+      const onStickers = page >= REACTION_PAGES.length;
+      const jump = el('button', { type: 'button', class: onStickers ? 'reaction-btn sticker-open on' : 'reaction-btn sticker-open', title: onStickers ? t('stickerBack') : t('stickerOpen'), 'aria-label': onStickers ? t('stickerBack') : t('stickerOpen') }, onStickers ? '😀' : '🖼️');
+      jump.addEventListener('click', () => {
+        page = onStickers ? 0 : REACTION_PAGES.length;
+        draw();
       });
-      bar.replaceChildren(...buttons, el('span', { class: 'reaction-pager' }, up, down), open, panel);
+      bar.replaceChildren(...buttons, el('span', { class: 'reaction-pager' }, up, down), jump);
     }
   }
 
-  /** Özel emoji paneli: açıklama, odadaki özel emojiler (tıklayınca gönderilir) ve "Ekle". */
-  function stickerPanel(): HTMLElement {
-    const add = el('button', { type: 'button', class: 'btn small-btn primary' }, t('stickerAddButton'));
-    add.addEventListener('click', () => fileInput.click());
-    const grid = el(
-      'div',
-      { class: 'sticker-grid' },
-      ...[...stickers].map(([id, data]) => {
-        const b = el('button', { type: 'button', class: 'reaction-btn', title: t('react'), 'aria-label': t('react') }, el('img', { src: data, alt: '' }));
-        b.addEventListener('click', () => {
-          fire({ sticker: id });
-          closePanels();
-        });
-        return b;
-      }),
-    );
-    const panel = el(
-      'div',
-      { class: 'sticker-panel', role: 'dialog', 'aria-label': t('stickerTitle') },
-      el('b', {}, t('stickerTitle')),
-      el('p', { class: 'muted small' }, stickers.size ? t('stickerHint') : t('stickerEmpty')),
-      stickers.size ? grid : '',
-      add,
-    );
-    panel.hidden = true;
-    panel.addEventListener('click', (event) => event.stopPropagation());
-    return panel;
+  /** Özel emojiyi odadan kaldır; kendi listemden de çıkar (bir sonraki odaya yüklenmesin). */
+  async function removeSticker(id: string): Promise<void> {
+    const keep: string[] = [];
+    for (const data of myStickers()) if ((await stickerId(data)) !== id) keep.push(data);
+    save(MY_STICKERS_KEY, JSON.stringify(keep));
+    mine.delete(id);
+    send({ t: 'sticker-remove', id });
   }
-
-  function closePanels(): void {
-    for (const bar of bars) {
-      bar.querySelector<HTMLElement>('.sticker-panel')?.setAttribute('hidden', '');
-      bar.querySelector('.sticker-open')?.setAttribute('aria-expanded', 'false');
-    }
-  }
-  document.addEventListener('click', closePanels);
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closePanels();
-  });
 
   for (const bar of bars) {
     bar.addEventListener('wheel', (event) => {
@@ -141,8 +122,11 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
     if (!file) return;
     try {
       const data = await fileToSticker(file);
-      const mine = myStickers().filter((d) => d !== data);
-      save(MY_STICKERS_KEY, JSON.stringify([...mine, data].slice(-MAX_MY_STICKERS)));
+      const kept = myStickers().filter((d) => d !== data);
+      save(MY_STICKERS_KEY, JSON.stringify([...kept, data].slice(-MAX_MY_STICKERS)));
+      mine.add(await stickerId(data));
+      // Eklenen emojinin sayfası açılsın: nereye geldiği görünsün.
+      page = REACTION_PAGES.length + Math.floor(stickers.size / 7);
       send({ t: 'sticker-add', data });
     } catch (error) {
       const code = error instanceof Error && ['type', 'too_big'].includes(error.message) ? error.message : 'broken';
@@ -191,14 +175,22 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
     },
     /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir). */
     addSticker(sticker: Sticker): void {
-      const wasOpen = [...bars].some((b) => b.querySelector<HTMLElement>('.sticker-panel')?.hidden === false);
       stickers.set(sticker.id, sticker.data);
       draw();
-      if (wasOpen) bars[0]?.querySelector<HTMLElement>('.sticker-open')?.click();
+    },
+    removeSticker(id: string): void {
+      stickers.delete(id);
+      draw();
     },
     /** Odaya girince: kendi özel emojilerimi bu odaya da yükle. */
     registerMine(): void {
-      for (const data of myStickers()) send({ t: 'sticker-add', data });
+      for (const data of myStickers()) {
+        send({ t: 'sticker-add', data });
+        void stickerId(data).then((id) => {
+          mine.add(id);
+          draw();
+        });
+      }
     },
     /** Yeni odaya bağlanınca (yeniden bağlanma) eski odanın özel emojileri temizlenir. */
     clearStickers(): void {

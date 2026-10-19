@@ -2,7 +2,7 @@ import { cleanName, type Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { avatarNode, openAvatarDialog } from './avatar.ts';
 import { t } from '../i18n.ts';
-import { renderThemePicker } from '../themes.ts';
+import { renderThemeSetting } from '../themes.ts';
 import { load, save } from '../storage.ts';
 
 export interface Options {
@@ -62,7 +62,7 @@ export function createSettingsPanel(
   };
   drawAvatars();
   window.addEventListener('langchange', drawAvatars);
-  renderThemePicker(root.querySelector<HTMLElement>('#settings-themes')!);
+  renderThemeSetting(root.querySelector<HTMLElement>('#settings-themes')!);
 
   const options: Options = { showEvents: readOption('opt:events'), showReactions: readOption('opt:reactions') };
   events.checked = options.showEvents;

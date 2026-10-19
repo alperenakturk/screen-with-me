@@ -21,6 +21,8 @@ export const EMBED_PORT_NAME = 'swm-embed';
 
 /** Çerçeve → arka plan */
 export type FrameMessage =
+  /** Ortak geçiş sorusuna cevap ("gidelim mi?"): evet → git, hayır → burada kal. */
+  | { type: 'follow-answer'; yes: boolean }
   /**
    * `size` tanı içindir: en iyi videonun ekrandaki boyutu, örn. "1280×720".
    * `embedDepth`: çerçeve bizim sitenin içinde (film sitenin içinde açıldı); 1 = film sayfasının kendisi.
@@ -45,6 +47,8 @@ export interface RoomInfo {
   /** Oda yöneticisinin üye ID'si (👑). */
   hostId: string | null;
   queueLength: number;
+  /** Video bitince sıradakine kendiliğinden geçilsin mi (oda ayarı). */
+  autoNext: boolean;
 }
 
 export interface ChatLine {
@@ -70,6 +74,12 @@ export type BackgroundMessage =
   /** Odaya özel emoji eklendi (etkinleşince odadakilerin hepsi de tek tek gelir). */
   | { type: 'sticker'; id: string; data: string }
   | { type: 'stickers-clear' }
+  /**
+   * Ortak geçiş sorusu: biri yeni sayfa açtı (page), odada başka bir video açtı (room) ya da
+   * odaya döndü (home). Evet diyen gider, hayır diyen kalır.
+   */
+  | { type: 'ask-follow'; kind: 'page' | 'room' | 'home'; name: string; host?: string }
+  | { type: 'sticker-removed'; id: string }
   /** Açık videonun pinleri (`removable`: kendi pinim ya da yöneticiyim). */
   | { type: 'pins'; pins: Array<Pin & { removable: boolean }> }
   | { type: 'chat'; line: ChatLine }

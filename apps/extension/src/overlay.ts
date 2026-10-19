@@ -1,7 +1,7 @@
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { createLogo } from '@swm/shared/logo';
 import { fileToSticker } from '@swm/shared/sticker-file';
-import { CHAT_MAX_LENGTH, PIN_NOTE_MAX, REACTION_PAGES, avatarText, isDrawnAvatar, cleanChatText, type ClientMessage, type Pin } from '@swm/shared/protocol';
+import { CHAT_MAX_LENGTH, PIN_NOTE_MAX, REACTION_PAGES, stepRate, avatarText, isDrawnAvatar, cleanChatText, type ClientMessage, type Pin } from '@swm/shared/protocol';
 import { t } from './i18n.ts';
 import type { ChatLine, RoomInfo } from './messages.ts';
 
@@ -85,7 +85,12 @@ const CSS = `
 .log .line b { margin-right: 5px; }
 .log .line.me b { color: #a48dff; }
 .log:empty::before { content: attr(data-empty); color: #8b8f9c; font-size: 12px; }
-.bar .reactions { flex-wrap: wrap; }
+/* Tek satır: sığmayan emoji yarım görünmesin, alt satıra kayıp gizlensin */
+.bar .reactions { flex-wrap: wrap; height: 28px; align-content: flex-start; }
+.sticker-wrap { position: relative; display: inline-flex; flex: none; }
+.sticker-x { position: absolute; top: -5px; right: -5px; display: none; width: 16px; height: 16px; padding: 0; border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / .3); background: #222; color: #fff; font-size: 9px; line-height: 14px; cursor: pointer; }
+.sticker-wrap:hover .sticker-x { display: block; }
 .row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .row > * { flex: none; }
 .row > .spacer { flex: 1; min-width: 2px; }
@@ -168,6 +173,18 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
   animation: bob 0.9s ease-in-out infinite; pointer-events: none; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
 /* Pinlenmiş anlar: çubuğun altında ince şerit; 📌'e tıklayınca oraya gidilir */
+.pinbar { position: absolute; left: 12px; right: 12px; bottom: 58px; display: flex; align-items: flex-end; gap: 8px; pointer-events: none;
+  transition: opacity .25s; }
+.pinbar > * { pointer-events: auto; }
+.idle .pinbar { opacity: 0; }
+.bare .fab, .bare .bar, .bare .pinbar { display: none; }
+.idle .pinbar > * { pointer-events: none; }
+.pin-btn { flex: none; width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .2); background: rgb(15 16 20 / .8);
+  font-size: 16px; cursor: pointer; }
+.pin-btn:hover { border-color: #e9b949; }
+.pinbar .pin-form { flex: 0 1 300px; display: flex; }
+.pinbar .pin-form input { flex: 1; min-width: 0; border-color: #e9b949; }
+.pinbar .pins { flex: 1; min-width: 0; margin: 0 0 4px; }
 .pins { position: relative; height: 22px; margin: -4px 2px -2px; }
 .pin-track { position: absolute; left: 0; right: 0; bottom: 4px; height: 3px; border-radius: 2px; background: rgb(255 255 255 / .12); }
 .pin-now { position: absolute; bottom: 2px; width: 2px; height: 7px; border-radius: 1px; background: #fff; opacity: .6; }
@@ -333,14 +350,22 @@ export function createOverlay(actions: OverlayActions) {
   type Item = { emoji: (typeof REACTION_PAGES)[number][number] } | { sticker: string } | { add: true };
   const stickers = new Map<string, string>();
   let coolUntil = 0;
-  /** 🖼️'ye basınca şerit özel emojilere (ve "+ Ekle"ye) döner; tekrar basınca emojilere. */
-  let stickerMode = false;
+  /** Benim eklediğim özel emojiler (✕ ile kaldırabilirim). */
+  const mineStickers = new Set<string>();
+  /** Sitedeki gibi: üç emoji sayfası, sonra özel emoji sayfaları (7 tane + "+"). */
   function reactionPages(): Item[][] {
-    if (!stickerMode) return REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
+    const list: Item[][] = REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
     const ids = [...stickers.keys()];
-    const list: Item[][] = [];
     for (let i = 0; i === 0 || i < ids.length; i += 7) list.push([...ids.slice(i, i + 7).map((sticker) => ({ sticker })), { add: true }]);
     return list;
+  }
+  /** Özel emojiyi odadan kaldır; kendi listemden de çıkar (bir sonraki odaya yüklenmesin). */
+  async function removeSticker(id: string): Promise<void> {
+    const data = stickers.get(id);
+    const { myStickers } = await chrome.storage.local.get('myStickers');
+    if (data && Array.isArray(myStickers)) await chrome.storage.local.set({ myStickers: (myStickers as unknown[]).filter((d) => d !== data) });
+    mineStickers.delete(id);
+    actions.send({ t: 'sticker-remove', id });
   }
   /** Tepki yolla; ardından kısa bekleme (art arda basıp ekranı doldurmasın). "+" dosya seçtirir. */
   function fire(item: Item): void {
@@ -422,12 +447,21 @@ export function createOverlay(actions: OverlayActions) {
         ...all[reactionPage]!.map((item, i) => {
           if ('add' in item) return button('reaction add', '+', t('stickerAdd'), () => fire(item));
           const b = button('reaction', 'emoji' in item ? item.emoji : '', `${t('react')} (${i + 1})`, () => fire(item));
-          if ('sticker' in item) b.append(stickerImg(stickers.get(item.sticker) ?? '', ''));
-          return b;
+          if (!('sticker' in item)) return b;
+          b.append(stickerImg(stickers.get(item.sticker) ?? '', ''));
+          const host = room !== null && room.myId === room.hostId;
+          if (!mineStickers.has(item.sticker) && !host) return b;
+          // Kendi eklediğim (ya da yöneticiysem herhangi bir) özel emoji: üstüne gelince ✕.
+          return el('span', 'sticker-wrap', b, button('sticker-x', '✕', t('stickerRemove'), () => void removeSticker(item.sticker)));
         }),
       );
+      syncToggle();
     };
-    drawReactions();
+    const syncToggle = () => {
+      const on = reactionPage >= REACTION_PAGES.length;
+      stickerToggle.textContent = on ? '😀' : '🖼️';
+      stickerToggle.title = on ? t('stickerBack') : t('stickerOpen');
+    };
     const turn = (step: number) => {
       const count = reactionPages().length;
       reactionPage = (reactionPage + step + count) % count;
@@ -447,6 +481,7 @@ export function createOverlay(actions: OverlayActions) {
         const { myStickers } = await chrome.storage.local.get('myStickers');
         const mine = Array.isArray(myStickers) ? (myStickers as unknown[]).filter((d): d is string => typeof d === 'string' && d !== data) : [];
         await chrome.storage.local.set({ myStickers: [...mine, data].slice(-12) });
+        reactionPage = REACTION_PAGES.length + Math.floor(stickers.size / 7);
         actions.send({ t: 'sticker-add', data });
       } catch (error) {
         const code = error instanceof Error && (error.message === 'type' || error.message === 'too_big') ? error.message : 'broken';
@@ -454,14 +489,13 @@ export function createOverlay(actions: OverlayActions) {
       }
     });
     const pager = el('span', 'pager', button('', '▲', t('moreReactions'), () => turn(-1)), button('', '▼', t('moreReactions'), () => turn(1)));
-    // Özel emojiler her zaman bir tık uzakta: 🖼️ şeridi özel emojilere çevirir (😀 geri döner).
+    // 🖼️: doğrudan özel emoji sayfasına (emojilerden sonra); oradayken 😀 emojilere döner.
     const stickerToggle = button('icon sticker-toggle', '🖼️', t('stickerOpen'), () => {
-      stickerMode = !stickerMode;
-      reactionPage = 0;
-      stickerToggle.textContent = stickerMode ? '😀' : '🖼️';
-      stickerToggle.title = stickerMode ? t('stickerBack') : t('stickerOpen');
+      reactionPage = reactionPage >= REACTION_PAGES.length ? 0 : REACTION_PAGES.length;
       drawReactions();
     });
+    // İlk çizim: 🖼️ düğmesi de tanımlandıktan sonra (syncToggle ona dokunuyor).
+    drawReactions();
     // Fare tekerleğiyle de sayfa değişir.
     reactions.addEventListener('wheel', (event) => {
       event.preventDefault();
@@ -477,7 +511,7 @@ export function createOverlay(actions: OverlayActions) {
       setTimeout(() => (copy.textContent = '🔗'), 1500);
     });
     // 📌: bu anı pinle (hızlı mesaj kutusu not moduna geçer, Enter pinler).
-    const pin = button('icon', '📌', t('pinHint'), () => setPinning(!pinning));
+    const pin = button('icon', '📌', t('pinHint'), () => setPinning(true));
     // Odaya dönmeden önce sor: bu sekmede senkron biter, yanlışlıkla basılmasın.
     const home = button('icon', '🏠', t('backToRoom'), () => {
       const layer = mount();
@@ -513,13 +547,6 @@ export function createOverlay(actions: OverlayActions) {
     const form = el('form', '', input, send);
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (pinning) {
-        const note = cleanChatText(input.value.slice(0, PIN_NOTE_MAX));
-        actions.send(note ? { t: 'pin', note } : { t: 'pin' });
-        input.value = '';
-        setPinning(false);
-        return;
-      }
       const text = cleanChatText(input.value.slice(0, QUICK_CHAT_MAX));
       if (text) actions.send({ t: 'chat', text });
       input.value = '';
@@ -532,6 +559,9 @@ export function createOverlay(actions: OverlayActions) {
       speed.append(option);
     }
     speed.addEventListener('change', () => actions.onRate(Number(speed.value)));
+    // İnce hız ayarı: her basış ±0.05.
+    const slower = button('icon speed-step', '−', t('speedDown'), () => actions.onRate(stepRate(rate, -1)));
+    const faster = button('icon speed-step', '+', t('speedUp'), () => actions.onRate(stepRate(rate, 1)));
     // Sohbet geçmişi (çubuk uzatılınca görünür) ve boyutlandırma tutamağı
     const log = el('div', 'log');
     log.dataset.empty = t('logEmpty');
@@ -546,14 +576,29 @@ export function createOverlay(actions: OverlayActions) {
     // 3. satır: pin şeridi (pin varken görünür)
     const pinRow = el('div', 'pins');
     pinRow.hidden = true;
+    // Videonun altındaki pin satırı: 📌 düğmesi + not kutusu + şerit. Çubuğu açmadan pinlenir.
+    const pinNote = el('input');
+    pinNote.maxLength = PIN_NOTE_MAX;
+    pinNote.placeholder = t('pinPlaceholder');
+    pinNote.autocomplete = 'off';
+    const pinForm = el('form', 'pin-form', pinNote);
+    pinForm.hidden = true;
+    pinForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const note = cleanChatText(pinNote.value.slice(0, PIN_NOTE_MAX));
+      actions.send(note ? { t: 'pin', note } : { t: 'pin' });
+      pinNote.value = '';
+      setPinning(false);
+    });
+    const pinButton = button('pin-btn', '📌', t('pinHint'), () => setPinning(!pinning));
+    const pinbar = el('div', 'pinbar', pinButton, pinForm, pinRow);
 
     const bar = el(
       'div',
       'bar',
       el('div', 'row', grip, reactions, pager, stickerToggle, el('span', 'spacer'), dot, members, copy, pin, home, close),
       log,
-      el('div', 'row', form, speed),
-      pinRow,
+      el('div', 'row', form, slower, speed, faster),
       resize,
     );
     bar.hidden = true;
@@ -561,8 +606,8 @@ export function createOverlay(actions: OverlayActions) {
     const waiting = el('div', 'waiting');
     waiting.hidden = true;
 
-    container.append(floats, toasts, waiting, fab, bar, file);
-    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed, pinRow, form, reactions, drawReactions, file, log };
+    container.append(floats, toasts, waiting, pinbar, fab, bar, file);
+    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed, pinRow, form, reactions, drawReactions, file, log, pinbar, pinForm, pinNote };
   }
 
   function mount(): HTMLElement {
@@ -661,18 +706,19 @@ export function createOverlay(actions: OverlayActions) {
     if (!nowMark || !video || !Number.isFinite(video.duration) || video.duration <= 0) return;
     nowMark.style.left = `${Math.min(100, (video.currentTime / video.duration) * 100)}%`;
   }
-  setInterval(() => barOpen && moveNow(), 1000);
+  setInterval(moveNow, 1000);
 
   /** Hızlı mesaj kutusunu pin notu moduna alır/çıkarır. */
+  /** Videonun altındaki pin not kutusunu açar/kapatır (Enter pinler, Esc vazgeçer). */
   function setPinning(on: boolean): void {
     pinning = on;
     if (!parts) return;
-    parts.form.classList.toggle('pinning', on);
-    parts.input.placeholder = on ? t('pinPlaceholder') : t('chatPlaceholder');
-    parts.input.maxLength = on ? PIN_NOTE_MAX : QUICK_CHAT_MAX;
+    parts.pinForm.hidden = !on;
     if (on) {
-      setBar(true);
-      parts.input.focus();
+      wake();
+      parts.pinNote.focus();
+    } else {
+      parts.pinNote.blur();
     }
   }
 
@@ -886,7 +932,15 @@ export function createOverlay(actions: OverlayActions) {
     /** Odanın hızını seçicide göster. */
     setRate(value: number): void {
       rate = value;
-      if (parts && SPEEDS.includes(value)) parts.speed.value = String(value);
+      if (!parts) return;
+      parts.speed.querySelector('option[data-custom]')?.remove();
+      if (!SPEEDS.includes(value)) {
+        const option = el('option', '', `${value}x`);
+        option.value = String(value);
+        option.dataset.custom = '';
+        parts.speed.append(option);
+      }
+      parts.speed.value = String(value);
     },
 
     /** Senkron göstergesi: odadan ne kadar uzaktayız (ms); bilinmiyorsa null. */
@@ -942,7 +996,12 @@ export function createOverlay(actions: OverlayActions) {
     },
 
     /** Film bitti: süre, kişi, tepki ve pinler; özet panoya kopyalanabilir. 30 sn sonra kapanır. */
-    endCard(duration: number, title: string): void {
+    /** Oda ayarı: video bitince sıradakine kendiliğinden geçilsin mi. */
+    autoNext(): boolean {
+      return room?.autoNext !== false;
+    },
+
+    endCard(duration: number, title: string, startNext?: () => void): void {
       const layer = mount();
       layer.querySelector('.end')?.remove();
       const minutes = Math.max(1, Math.round(duration / 60));
@@ -950,9 +1009,14 @@ export function createOverlay(actions: OverlayActions) {
       const people = room?.members.length ?? 1;
       const lines = [`⏱ ${time}`, `👥 ${t('endPeople', { n: people })}`, `😂 ${t('endReactions', { n: reactionCount })}`, `📌 ${t('endPins', { n: pins.length })}`];
       const pinLines = pins.slice(0, 4).map((p) => `📌 ${clock(p.at)} · ${p.by.name}${p.note ? `: ${p.note}` : ''}`);
-      const copy = el('button', 'primary', t('endCopy'));
+      const copy = el('button', startNext ? '' : 'primary', t('endCopy'));
+      const next = el('button', 'primary', t('startNext'));
+      next.addEventListener('click', () => {
+        card.remove();
+        startNext?.();
+      });
       const close = el('button', '', t('close'));
-      const card = el('div', 'note end', el('b', '', `🎬 ${t('endTitle')}`), el('div', 'end-title', title), el('div', 'end-stats', ...lines.map((l) => el('span', '', l))), ...pinLines.map((l) => el('div', 'end-pin', l)), el('div', 'actions', copy, close));
+      const card = el('div', 'note end', el('b', '', `🎬 ${t('endTitle')}`), el('div', 'end-title', title), el('div', 'end-stats', ...lines.map((l) => el('span', '', l))), ...pinLines.map((l) => el('div', 'end-pin', l)), el('div', 'actions', ...(startNext && (room?.queueLength ?? 0) > 0 ? [next] : []), copy, close));
       const timer = setTimeout(() => card.remove(), 30_000);
       close.addEventListener('click', () => {
         clearTimeout(timer);
@@ -970,6 +1034,17 @@ export function createOverlay(actions: OverlayActions) {
     /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir). */
     addSticker(id: string, data: string): void {
       stickers.set(id, data);
+      // Benim eklediğim mi? (eklentinin kendi listesinde varsa ✕ ile kaldırabilirim)
+      void chrome.storage.local.get('myStickers').then(({ myStickers }) => {
+        if (Array.isArray(myStickers) && myStickers.includes(data)) mineStickers.add(id);
+        parts?.drawReactions();
+      });
+      parts?.drawReactions();
+    },
+
+    removeSticker(id: string): void {
+      stickers.delete(id);
+      mineStickers.delete(id);
       parts?.drawReactions();
     },
 
@@ -1010,6 +1085,28 @@ export function createOverlay(actions: OverlayActions) {
     },
 
     /** Başka bir siteden gelen davet işareti: sormadan odaya sokma. */
+    /** Ortak geçiş sorusu: "Ali yeni bir sayfa açtı, gidelim mi?" Evet → git, Hayır → burada kal. */
+    /** `bare`: bu sayfada senkron durmuşken sorulur; sadece kart görünür (çubuk ve pin düğmesi gizli). */
+    askFollow(kind: 'page' | 'room' | 'home', name: string, host: string, answer: (yes: boolean) => void, bare = false): void {
+      const layer = mount();
+      layer.classList.toggle('bare', bare);
+      layer.querySelector('.ask-follow')?.remove();
+      const title = kind === 'page' ? t('askPageTitle', { name }) : kind === 'room' ? t('askRoomTitle', { name }) : t('askHomeTitle', { name });
+      const text = kind === 'page' ? t('askPageText', { host }) : kind === 'room' ? t('askRoomText') : t('askHomeText');
+      const yes = el('button', 'primary', kind === 'page' ? t('askGo') : t('askBack'));
+      const no = el('button', '', t('askStay'));
+      const card = el('div', 'note ask-follow', el('b', '', title), text, el('div', 'actions', yes, no));
+      const done = (value: boolean) => {
+        card.remove();
+        layer.classList.remove('bare');
+        answer(value);
+      };
+      yes.addEventListener('click', () => done(true));
+      no.addEventListener('click', () => done(false));
+      layer.append(card);
+      wake();
+    },
+
     askJoin(onYes: () => void): void {
       const layer = mount();
       const yes = el('button', 'primary', t('joinYes'));

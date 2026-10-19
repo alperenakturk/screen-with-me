@@ -209,6 +209,18 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
   (herkes başa sarılmasın); 60 sn'den kısa video bitince "sıradaki" istenmez (reklam/önizleme).
 
+- **Odayı kaydet (`settings.saved`):** yönetici açar; boş oda 30 gün saklanır (`emptyTtl`). Video
+  değişince eskisinin yeri + pinleri `history`'e (`titleKey` → kayıt, en fazla 30) yazılır, son kişi
+  çıkınca da; aynı video tekrar açılınca (>15 sn ise) oradan başlar, pinler geri gelir, `state`
+  mesajında `resumed` olur. "Sıradaki" ile geçilen video baştan sayılır. Kayıt kapanınca `history`
+  silinir. Her odada: oynarken 1 dk'dan uzun boş kalan oda dönüşte son kişinin çıktığı yerde durmuş
+  açılır (`freezeIfLongEmpty`). Son odalar listesinde 💾.
+- **Sıra:** `settings.autoNext` (varsayılan açık); kapalıysa video bitince sıradaki başlamaz, izleme sonu
+  kartında "▶ Sıradakini başlat" çıkar (eklentide `RoomInfo.autoNext`). Sıra panelinde oylama notu.
+- **Takip sorusu (eklenti):** başkası yeni sayfa/video açınca ya da odaya dönünce `ask-follow`; yeni öğe
+  gelince bu sayfadaki senkron hemen durur (`pushState` → deactivate), soru yine de gider (`toActive`
+  istisnası) ve çubuksuz (`bare`) gösterilir; "burada kal" çubuğu kaldırır.
+
 ## Yayın kontrol listesi
 1. `npm run typecheck && npm test`
 2. Eklenti değiştiyse `apps/extension/package.json` sürümünü artır (siteden indirilen zip ve

@@ -10,6 +10,7 @@
 
 import { OffsetClock } from '@swm/shared/clock';
 import { isForwardedKey, type EmbedControl } from '@swm/shared/embed';
+import { applyFocus } from './focus.ts';
 import { expectedPosition, type PlaybackState } from '@swm/shared/protocol';
 import { roomIdFromHash } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -35,7 +36,8 @@ const overlay = createOverlay({
   send: (message) => send({ type: 'send', message }),
   // Hız: videoya uygulanır ve odaya yayılır (sitenin kendi hız menüsü olmasa bile çalışır).
   onRate: (rate) => engine?.requestRate(rate),
-  onBackToRoom: () => send({ type: 'go-room' }),
+  // 🏠: tek seferlik mesajla (port koptuysa da arka planı uyandırıp ulaşır; eskiden kayboluyordu).
+  onBackToRoom: () => void chrome.runtime.sendMessage({ type: 'go-room-tab' }).catch(() => send({ type: 'go-room' })),
 });
 
 /** Çubuktaki senkron noktası için: videomuz odanın olması gereken yerinden ne kadar uzakta? */
@@ -209,11 +211,13 @@ function attachEngine(): void {
     // Kısa videolar (reklam, önizleme) bitince oda sıradakine geçmesin.
     onEnded: (itemId) => {
       const duration = adapter?.getDuration() ?? 0;
-      if (duration >= 60) {
-        // İzleme sonu kartı: süre, kişi, tepki, pinler.
-        overlay.endCard(duration, state?.item?.title ?? document.title);
-        send({ type: 'send', message: { t: 'next', from: itemId } });
+      const auto = overlay.autoNext();
+      const startNext = () => send({ type: 'send', message: { t: 'next', from: itemId } });
+      if (duration >= 60 || !auto) {
+        // İzleme sonu kartı: süre, kişi, tepki, pinler (otomatik devam kapalıysa "Sıradakini başlat").
+        overlay.endCard(duration, state?.item?.title ?? document.title, auto ? undefined : startNext);
       }
+      if (duration >= 60 && auto) startNext();
     },
     onAutoplayBlocked: () => overlay.askToStart(() => engine?.resume()),
   });
@@ -289,6 +293,21 @@ if (embedded) {
   document.addEventListener('fullscreenerror', () => {
     if (port) send({ type: 'fullscreen' });
   });
+
+  // Sadece video: senkronlanan videonun oynatıcısı çerçeveyi kaplar, sayfanın geri kalanı gizlenir
+  // (video başka bir iç çerçevedeyse bu sayfa o çerçeveyi büyütür). Sitedeki düğmeyle kapatılabilir.
+  let focusOn = true;
+  const focusTick = () => applyFocus(focusOn, active ? best : null);
+  void chrome.storage.local.get('embedFocus').then(({ embedFocus }) => {
+    focusOn = embedFocus !== false;
+    focusTick();
+  });
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !('embedFocus' in changes)) return;
+    focusOn = changes.embedFocus!.newValue !== false;
+    focusTick();
+  });
+  setInterval(focusTick, 1500);
 }
 
 function deactivate(): void {
@@ -337,6 +356,16 @@ function onMessage(message: BackgroundMessage): void {
       break;
     case 'stickers-clear':
       overlay.clearStickers();
+      break;
+    case 'ask-follow':
+      overlay.askFollow(message.kind, message.name, message.host ?? '', (yes) => {
+        send({ type: 'follow-answer', yes });
+        // "Burada kal": bu sayfa artık odanın sayfası değil, senkron durmuş; çubuk da kalkar.
+        if (!yes && !active) overlay.unmount();
+      }, !active);
+      break;
+    case 'sticker-removed':
+      overlay.removeSticker(message.id);
       break;
     case 'pins':
       overlay.setPins(message.pins);

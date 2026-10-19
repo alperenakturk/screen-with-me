@@ -4,38 +4,23 @@ import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { renderHome } from './home.ts';
 import { lang, setLang, translate, type Lang } from './i18n.ts';
 import { renderRoom } from './room.ts';
-import { applyTheme, currentTheme, renderThemePicker } from './themes.ts';
+import { applyTheme, currentTheme, openThemeDialog } from './themes.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
 applyTheme(currentTheme(), { wait: false });
 
+// Geri tuşuyla dönülünce tarayıcı sayfayı önbellekten "donmuş" haliyle getirebilir (bağlantı
+// kapalı, "Sayfaya gidiliyor…" yazısı takılı kalır). Öyleyse sayfayı tazele.
+addEventListener('pageshow', (event) => {
+  if (event.persisted) location.reload();
+});
+
 // Üst çubuktaki logo: üzerine gelince ağızdaki oynat düğmesi duraklata döner.
 document.querySelector('.brand .logo')?.append(createLogo(document, { animated: true }));
 
-// Üst menüdeki 🎨: tema seçme kutusu.
-const themeButton = document.querySelector<HTMLButtonElement>('#theme-button')!;
-const themeMenu = document.querySelector<HTMLElement>('#theme-menu')!;
-renderThemePicker(themeMenu);
-const setThemeMenu = (open: boolean) => {
-  themeMenu.hidden = !open;
-  themeButton.setAttribute('aria-expanded', String(open));
-  if (open) themeMenu.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
-};
-themeButton.addEventListener('click', (event) => {
-  event.stopPropagation();
-  setThemeMenu(themeMenu.hidden === true);
-});
-document.addEventListener('click', (event) => {
-  if (!themeMenu.contains(event.target as Node)) setThemeMenu(false);
-});
-// Esc ile kapanır ve odak düğmeye döner.
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !themeMenu.hidden) {
-    setThemeMenu(false);
-    themeButton.focus();
-  }
-});
+// Üst menüdeki 🎨: önizlemeli büyük tema penceresi.
+document.querySelector<HTMLButtonElement>('#theme-button')!.addEventListener('click', openThemeDialog);
 
 const langButtons = document.querySelectorAll<HTMLButtonElement>('[data-lang]');
 function markLang(): void {

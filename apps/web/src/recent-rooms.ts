@@ -15,6 +15,8 @@ export interface RecentRoom {
   at: number;
   /** Odada en son oynayanın başlığı (biliniyorsa). */
   title?: string;
+  /** Kaydedilmiş oda mı (30 gün saklanır). */
+  saved?: boolean;
 }
 
 export function recentRooms(): RecentRoom[] {
@@ -23,18 +25,24 @@ export function recentRooms(): RecentRoom[] {
     if (!Array.isArray(list)) return [];
     return list
       .filter((r): r is RecentRoom => typeof r?.id === 'string' && ROOM_ID_PATTERN.test(r.id) && typeof r.at === 'number')
-      .map((r) => (typeof r.title === 'string' ? { id: r.id, at: r.at, title: r.title.slice(0, 120) } : { id: r.id, at: r.at }));
+      .map((r) => {
+        const room: RecentRoom = { id: r.id, at: r.at };
+        if (typeof r.title === 'string') room.title = r.title.slice(0, 120);
+        if (r.saved === true) room.saved = true;
+        return room;
+      });
   } catch {
     return [];
   }
 }
 
 /** Odaya girince (ve oynayan değişince başlıkla) listenin başına yazar. */
-export function rememberRoom(id: string, title?: string): void {
+export function rememberRoom(id: string, title?: string, saved?: boolean): void {
   const old = recentRooms().find((r) => r.id === id);
   const entry: RecentRoom = { id, at: Date.now() };
   const keep = title ?? old?.title;
   if (keep) entry.title = keep;
+  if (saved ?? old?.saved) entry.saved = true;
   save(RECENT_KEY, JSON.stringify([entry, ...recentRooms().filter((r) => r.id !== id)].slice(0, MAX_RECENT)));
 }
 

@@ -32,7 +32,9 @@ export function createPins(options: {
     for (const button of options.buttons) button.hidden = duration <= 0;
     const show = pins.length > 0 && duration > 0;
     for (const strip of strips) {
-      strip.hidden = !show;
+      // Video varken şerit yerini hep tutar (ilk pin gelince altındaki emojiler kaymasın).
+      strip.hidden = duration <= 0;
+      strip.classList.toggle('empty', !show);
       if (!show) {
         strip.replaceChildren();
         continue;
