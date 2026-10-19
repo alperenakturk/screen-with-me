@@ -273,12 +273,12 @@ const en: Record<Key, string> = {
 };
 
 // Dil sitedekiyle aynı: site-bridge sitedeki seçimi 'lang' olarak buraya yazar.
-// Varsayılan İngilizce. Okuma bitene kadar İngilizce kullanılır; arayüzü
+// Varsayılan Türkçe. Okuma bitene kadar Türkçe kullanılır; arayüzü
 // hemen çizen yerler (popup) önce langReady'yi bekler.
-let dict: Record<Key, string> = en;
+let dict: Record<Key, string> = tr;
 
 function use(lang: unknown): void {
-  dict = lang === 'tr' ? tr : en;
+  dict = lang === 'en' ? en : tr;
 }
 
 export const langReady: Promise<void> = chrome.storage.local

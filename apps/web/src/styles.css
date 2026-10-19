@@ -3182,3 +3182,32 @@ button.nav-link {
 .tab-panel:has(.queue:empty) .queue-hint {
   display: none;
 }
+
+/* Ayarlar paneli: panel kısa kalınca satırlar ezilmesin (avatar satırı 12 px'e düşüyordu),
+   onay kutuları daralmasın; düğmeler panelde küçük. */
+.settings > * {
+  flex-shrink: 0;
+}
+
+.check-row input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.settings .btn {
+  padding: 7px 12px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.settings .avatar-big {
+  width: 52px;
+  height: 52px;
+}
+
+.settings #rename-input {
+  min-width: 0;
+  flex: 1;
+}

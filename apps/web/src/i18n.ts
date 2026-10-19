@@ -395,7 +395,7 @@ const en: Record<Key, string> = {
   'theme.uzay': 'Space',
   'theme.siber': 'Cyberpunk',
   'theme.ortacag': 'Fantasy medieval',
-  'theme.lokum': 'Mehtaplı Geceler',
+  'theme.lokum': 'Turkish Delight',
   'theme.binbirgece': 'Arabian Nights',
   'theme.sinema': 'Picture Palace',
   'theme.opera': 'Opera Night',
@@ -633,13 +633,13 @@ const en: Record<Key, string> = {
 const dictionaries: Record<Lang, Record<Key, string>> = { tr, en };
 
 /**
- * Varsayılan dil İngilizce. Seçim tarayıcıda 'lang' anahtarıyla saklanır ve
+ * Varsayılan dil Türkçe (kullanıcı EN seçerse o hatırlanır). Seçim tarayıcıda 'lang' anahtarıyla saklanır ve
  * aynı adresteki tüm sayfalar (site, eklenti sayfası, gizlilik) bunu paylaşır;
  * eklenti de site-bridge üzerinden aynı dili alır.
  */
 function detect(): Lang {
   const saved = load('lang');
-  return saved === 'tr' ? 'tr' : 'en';
+  return saved === 'en' ? 'en' : 'tr';
 }
 
 let current: Lang = detect();
