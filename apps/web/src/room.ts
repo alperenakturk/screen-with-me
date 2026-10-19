@@ -353,7 +353,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
-            <label class="check-row" id="opt-embed-row" hidden><input type="checkbox" id="opt-embed" /> <span data-i18n="settings.embed"></span></label>
+            <label class="check-row" id="opt-embed-row"><input type="checkbox" id="opt-embed" /> <span data-i18n="settings.embed"></span></label>
+            <p id="opt-embed-hint" class="muted small" hidden><span data-i18n="settings.embedNeedsExt"></span> <a href="/eklenti.html" data-i18n="settings.embedGetExt"></a></p>
             <section class="host-box">
               <h4>👑 <span data-i18n="settings.hostTitle"></span></h4>
               <p id="opt-wait-hint" class="muted small"></p>
@@ -690,7 +691,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Varsayılan kapalı: deneysel, birçok büyük site çerçevede açılmayı yasaklıyor.
   let embedOn = load('opt:embed') === '1';
   embedToggle.checked = embedOn;
-  $('#opt-embed-row').hidden = !canEmbed();
+  // Seçenek hep görünür; eklenti yoksa ya da eskiyse kapalı ve altında "eklentiyi güncelle" notu.
+  embedToggle.disabled = !canEmbed();
+  $('#opt-embed-hint').hidden = canEmbed();
 
   function wantsEmbed(item: QueueItem): boolean {
     return embedOn && canEmbed() && !embedFailed.has(item.id);
