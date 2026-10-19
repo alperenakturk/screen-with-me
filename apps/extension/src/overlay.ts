@@ -329,9 +329,12 @@ export function createOverlay(actions: OverlayActions) {
   type Item = { emoji: (typeof REACTION_PAGES)[number][number] } | { sticker: string } | { add: true };
   const stickers = new Map<string, string>();
   let coolUntil = 0;
+  /** 🖼️'ye basınca şerit özel emojilere (ve "+ Ekle"ye) döner; tekrar basınca emojilere. */
+  let stickerMode = false;
   function reactionPages(): Item[][] {
-    const list: Item[][] = REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
+    if (!stickerMode) return REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
     const ids = [...stickers.keys()];
+    const list: Item[][] = [];
     for (let i = 0; i === 0 || i < ids.length; i += 7) list.push([...ids.slice(i, i + 7).map((sticker) => ({ sticker })), { add: true }]);
     return list;
   }
@@ -447,6 +450,14 @@ export function createOverlay(actions: OverlayActions) {
       }
     });
     const pager = el('span', 'pager', button('', '▲', t('moreReactions'), () => turn(-1)), button('', '▼', t('moreReactions'), () => turn(1)));
+    // Özel emojiler her zaman bir tık uzakta: 🖼️ şeridi özel emojilere çevirir (😀 geri döner).
+    const stickerToggle = button('icon sticker-toggle', '🖼️', t('stickerOpen'), () => {
+      stickerMode = !stickerMode;
+      reactionPage = 0;
+      stickerToggle.textContent = stickerMode ? '😀' : '🖼️';
+      stickerToggle.title = stickerMode ? t('stickerBack') : t('stickerOpen');
+      drawReactions();
+    });
     // Fare tekerleğiyle de sayfa değişir.
     reactions.addEventListener('wheel', (event) => {
       event.preventDefault();
@@ -535,7 +546,7 @@ export function createOverlay(actions: OverlayActions) {
     const bar = el(
       'div',
       'bar',
-      el('div', 'row', grip, reactions, pager, el('span', 'spacer'), dot, members, copy, pin, home, close),
+      el('div', 'row', grip, reactions, pager, stickerToggle, el('span', 'spacer'), dot, members, copy, pin, home, close),
       log,
       el('div', 'row', form, speed),
       pinRow,

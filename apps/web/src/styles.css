@@ -1293,7 +1293,7 @@ button.nav-link {
 }
 
 .join-card.avatar-card {
-  max-width: 640px;
+  max-width: 760px;
   margin-top: 4vh;
 }
 
@@ -1358,8 +1358,11 @@ button.nav-link {
 }
 
 .avatar-picker.big .avatar-grid {
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   gap: 12px;
+  max-height: min(52vh, 520px);
+  overflow-y: auto;
+  padding: 4px;
 }
 
 /* Büyük avatar penceresi (odadaki "Avatarı değiştir") */
@@ -2803,4 +2806,175 @@ button.nav-link {
   gap: 8px;
   justify-content: center;
   margin-top: 14px;
+}
+
+/* Özel emoji paneli (🖼️ düğmesinin üstünde) */
+.reaction-bar {
+  position: relative;
+}
+
+.sticker-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 8;
+  width: min(320px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2, #1c1f33);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
+}
+
+.sticker-panel[hidden] {
+  display: none;
+}
+
+.sticker-panel p {
+  margin: 0;
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.sticker-open[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+/* Yönetici ayarları kutusu: kimin değiştirebileceği belli olsun */
+.host-box {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+}
+
+.host-box.mine {
+  border: 1px solid color-mix(in srgb, #e9b949 60%, transparent);
+  background: color-mix(in srgb, #e9b949 8%, transparent);
+}
+
+.host-box h4 {
+  margin-top: 0;
+}
+
+/* ---- Telefon (dar ekran): hiçbir şey yana taşmasın ---- */
+@media (max-width: 560px) {
+  .topbar {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .brand {
+    font-size: 15px;
+    min-width: 0;
+  }
+
+  .topbar-right {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .topbar .nav-link {
+    padding: 6px 8px;
+  }
+
+  .lang button {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .status {
+    font-size: 0;
+  }
+
+  main,
+  .room {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .room {
+    gap: 12px;
+  }
+
+  .theater {
+    padding: 8px 8px 10px;
+  }
+
+  /* Araç çubuğu: emojiler bir satır, düğmeler alt satırda; tam ekran düğmesi kesilmesin */
+  .toolbar {
+    gap: 8px;
+  }
+
+  .toolbar-right {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .reaction-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .media-form {
+    flex-wrap: wrap;
+  }
+
+  .media-form input {
+    flex: 1 1 100%;
+  }
+
+  .media-form .btn {
+    flex: 1;
+  }
+
+  .empty h2 {
+    font-size: 17px;
+  }
+
+  .empty-steps {
+    font-size: 13px;
+  }
+
+  .sticker-panel {
+    left: auto;
+    right: 0;
+  }
+
+  .end-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .avatar-picker.big .avatar-grid,
+  .avatar-picker.huge .avatar-grid {
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  }
+
+  .schedule-row .row {
+    flex-wrap: wrap;
+  }
+
+  .create-row .btn {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Boş odada açıklama + düğmeler 16:9 kutuya sığmıyor: kutu içeriğe göre uzasın */
+  .player-wrap:has(#empty:not([hidden])) {
+    aspect-ratio: auto;
+    min-height: 280px;
+  }
 }

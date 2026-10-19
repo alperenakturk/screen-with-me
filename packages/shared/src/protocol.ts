@@ -68,7 +68,6 @@ export const DRAWN_AVATARS = {
   squid: '🦑',
   pinecap: '🌲',
   sweaterkid: '🧶',
-  detective: '🕵️',
   cartoonist: '✏️',
   armadillo: '🐾',
   wizardboy: '⚡',
@@ -96,7 +95,7 @@ export const AVATAR_PAGES = [
   ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],
   ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
   [
-    'scientist', 'sidekick', 'chemist', 'lawyer', 'detective', 'hunter', 'dragonqueen', 'goth',
+    'scientist', 'sidekick', 'chemist', 'lawyer', 'hunter', 'dragonqueen', 'goth',
     'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo',
   ],
   ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl'],
@@ -111,9 +110,6 @@ export const AVATAR_TABS = [
   { key: 'animals', pages: [1] },
   { key: 'parody', pages: [2, 3, 4], subs: ['film', 'series', 'anime'] },
 ] as const;
-
-/** Seçicide bir sayfada en fazla bu kadar avatar (4 sıra × 5); fazlası ‹ › ile ikinci sayfaya geçer. Tek bir avatar için yeni sayfa açılmasın diye geniş tutuldu. */
-export const AVATARS_PER_VIEW = 20;
 
 /** Avatarın bulunduğu sayfa (yoksa 0). */
 export function avatarPageOf(avatar: string | null | undefined): number {

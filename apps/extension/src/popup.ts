@@ -1,7 +1,7 @@
 // Eklenti simgesine tıklanınca açılan pencere. Bütün işi arka plan yapar;
 // burası sadece durumu gösterir ve istekleri iletir.
 
-import { AVATAR_PAGES, AVATAR_TABS, AVATARS_PER_VIEW, REACTION_PAGES, avatarPageOf, avatarText, isDrawnAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import { AVATAR_PAGES, AVATAR_TABS, REACTION_PAGES, avatarPageOf, avatarText, isDrawnAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
 import { SITE_URL } from './config.ts';
 import { isKey, langReady, t } from './i18n.ts';
 import type { PopupRequest, PopupResponse, PopupStatus } from './messages.ts';
@@ -62,8 +62,6 @@ function avatarGlyph(option: string): HTMLElement {
 
 // Avatar sayfaları: Temalı / Hayvanlar / Parodi (altında Film / Dizi / Anime)
 let avatarPage = 0;
-/** 20'den fazla avatarı olan sekmede görünüm (‹ ›). */
-let avatarView = 0;
 const TAB_KEYS = { theme: 'avatarPageTheme', animals: 'avatarPageAnimals', parody: 'avatarPageParody' } as const;
 const SUB_KEYS = { film: 'avatarPageFilm', series: 'avatarPageSeries', anime: 'avatarPageAnime' } as const;
 
@@ -94,7 +92,6 @@ function renderPicker(): void {
       go: () => {
         if (tab !== active) {
           avatarPage = tab.pages[0];
-          avatarView = 0;
         }
       },
     }))),
@@ -105,14 +102,13 @@ function renderPicker(): void {
       selected: active.pages[i] === avatarPage,
       go: () => {
         avatarPage = active.pages[i]!;
-        avatarView = 0;
       },
     })), true));
   }
   const grid = document.createElement('div');
   grid.className = 'avatar-grid';
   grid.append(
-    ...AVATAR_PAGES[avatarPage]!.slice(avatarView * AVATARS_PER_VIEW, (avatarView + 1) * AVATARS_PER_VIEW).map((option) => {
+    ...AVATAR_PAGES[avatarPage]!.map((option) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.append(avatarGlyph(option));
@@ -127,26 +123,6 @@ function renderPicker(): void {
       return button;
     }),
   );
-  const views = Math.ceil(AVATAR_PAGES[avatarPage]!.length / AVATARS_PER_VIEW);
-  if (views > 1) {
-    const pager = document.createElement('div');
-    pager.className = 'avatar-tabs sub';
-    const step = (d: number) => {
-      avatarView = (avatarView + d + views) % views;
-      renderPicker();
-    };
-    for (const [text, d] of [['‹', -1], [`${avatarView + 1} / ${views}`, 0], ['›', 1]] as const) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'avatar-tab';
-      b.textContent = text;
-      if (d) b.addEventListener('click', () => step(d));
-      else b.disabled = true;
-      pager.append(b);
-    }
-    $('#avatar-picker').replaceChildren(...rows, grid, pager);
-    return;
-  }
   $('#avatar-picker').replaceChildren(...rows, grid);
 }
 function render(status: PopupStatus): void {
@@ -167,7 +143,6 @@ function render(status: PopupStatus): void {
     avatar = status.avatar ?? randomAvatar();
     // Seçili avatarın sayfasıyla aç
     avatarPage = avatarPageOf(avatar);
-    avatarView = Math.max(0, Math.floor((AVATAR_PAGES[avatarPage] as readonly string[]).indexOf(avatar) / AVATARS_PER_VIEW));
     renderPicker();
     renderPreview();
   }

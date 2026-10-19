@@ -331,28 +331,33 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
           <div class="tab-panel settings" data-panel="settings" hidden>
             <h4 data-i18n="settings.profile"></h4>
+            <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
             <form id="rename-form" class="row">
               <input id="rename-input" maxlength="32" autocomplete="nickname" data-i18n-title="yourName" />
-              <button class="btn" data-i18n="save"></button>
+              <button class="btn" data-i18n="saveName"></button>
             </form>
             <div id="settings-avatars" class="avatar-current"></div>
+            <p class="muted small" data-i18n="avatarAutoSave"></p>
             <h4 data-i18n="settings.theme"></h4>
             <div id="settings-themes" class="theme-grid" role="radiogroup"></div>
-            <h4 data-i18n="settings.room"></h4>
+            <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
-            <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
-            <label class="check-row"><input type="checkbox" id="opt-hostonly" /> <span data-i18n="settings.hostOnlyMode"></span></label>
-            <label class="check-row"><input type="checkbox" id="opt-lockqueue" /> <span data-i18n="settings.lockQueue"></span></label>
-            <div class="schedule-row">
-              <label for="opt-start" data-i18n="settings.schedule"></label>
-              <div class="row">
-                <input type="datetime-local" id="opt-start" />
-                <button type="button" class="btn small-btn" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
-                <button type="button" class="btn small-btn" id="opt-start-clear" data-i18n="settings.scheduleClear"></button>
+            <section class="host-box">
+              <h4>👑 <span data-i18n="settings.hostTitle"></span></h4>
+              <p id="opt-wait-hint" class="muted small"></p>
+              <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
+              <label class="check-row"><input type="checkbox" id="opt-hostonly" /> <span data-i18n="settings.hostOnlyMode"></span></label>
+              <label class="check-row"><input type="checkbox" id="opt-lockqueue" /> <span data-i18n="settings.lockQueue"></span></label>
+              <div class="schedule-row">
+                <label for="opt-start" data-i18n="settings.schedule"></label>
+                <div class="row">
+                  <input type="datetime-local" id="opt-start" />
+                  <button type="button" class="btn small-btn" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
+                  <button type="button" class="btn small-btn" id="opt-start-clear" data-i18n="settings.scheduleClear"></button>
+                </div>
               </div>
-            </div>
-            <p id="opt-wait-hint" class="muted small"></p>
+            </section>
           </div>
         </section>
       </aside>
@@ -756,6 +761,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Önemli anları pinleme: video altında ve tam ekranda ilerleme çubuğunun üstünde işaretler.
   const pins = createPins({
     strips: [$('#pin-strip'), $('#fs-pins')],
+    buttons: [$('#pin-btn'), $('#fs-pin')],
     form: $<HTMLFormElement>('#pin-form'),
     getDuration: () => current?.player.getDuration() ?? 0,
     onSeek: (seconds) => current?.player.seek(seconds),
@@ -777,7 +783,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }, 500);
   $('#fs-pin').addEventListener('click', () => pins.open());
   // Süre video yüklenince belli olur; arada bir yeniden çiz.
-  setInterval(() => pins.render(), 4000);
+  setInterval(() => pins.render(), 2000);
   const fullscreenEl = $<HTMLButtonElement>('#fullscreen');
   fullscreenEl.hidden = !document.fullscreenEnabled;
   fullscreenEl.addEventListener('click', () => fullscreen.toggle());
@@ -940,7 +946,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const toggle = $<HTMLInputElement>('#opt-wait');
     toggle.checked = roomSettings.waitForAll;
     toggle.disabled = !amHost();
-    $('#opt-wait-hint').textContent = toggle.disabled ? t('settings.hostOnly') : '';
+    // Yönetici kutusu: yöneticiye "senin ayarların", diğerlerine "sadece yönetici değiştirir".
+    $('#opt-wait-hint').textContent = toggle.disabled ? t('settings.hostOnly') : t('settings.youAreHost');
+    $('.host-box').classList.toggle('mine', !toggle.disabled);
     renderModes();
   }
 

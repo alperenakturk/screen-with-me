@@ -147,7 +147,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Özel emojiler (sticker):** `{t:'sticker-add', data}` (`data:image/png|gif|webp|jpeg;base64`, en fazla
   `STICKER_MAX_CHARS`; SVG yok). Kimlik = SHA-256 ilk 12 hane (`stickerId`, iki taraf da hesaplar).
   Odada en fazla 24, dolunca en eskisi gider; depoda `sticker:<id>` + `stickers` sırası (tek değer ≤128 KB).
-  Girişte welcome'dan sonra tek tek `{t:'sticker'}` (1 MB mesaj sınırı). Tepki `{t:'react', sticker}`.
+  Girişte welcome'dan sonra tek tek `{t:'sticker'}` (1 MB mesaj sınırı). Tepki `{t:'react', sticker}`. Arayüz: emoji çubuğunun sonunda hep görünen 🖼️ (sitede panel, eklentide şerit özel emojilere döner) — sayfaların arasına gömme.
   Dosya hazırlama `sticker-file.ts` (resim 160 px webp, GIF olduğu gibi). Kendi listem site
   `localStorage` / eklenti `storage.local` `myStickers`; her odaya girişte yeniden yüklenir.
 - **Tepki gösterimi:** ekranın ortasında uçuşmaz; sol altta avatar + isim + emoji kartı (3,2 sn),
@@ -176,7 +176,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   olan süzülür (CSS; `prefers-reduced-motion`'da kapalı).
 - **Eklenti çubuğu boyutu:** sağ alt köşeden sürüklenir (`storage.local` `barSize`, çift tık sıfırlar);
   170 px'ten uzunsa içinde sohbet geçmişi açılır ve mesajlar ayrıca ekrana düşmez.
-- **Avatar sayfalama:** bir sekmede `AVATARS_PER_VIEW` (20) fazlası ‹ › ile ikinci görünüme geçer.
+- **Avatar listeleri sayfasız:** sekmede çok avatar olunca ızgara kayar (‹ › yok; kullanıcı istemedi).
 - **CI (`.github/workflows/test.yml`):** her push/PR'da tip kontrolü, birim, derleme, `wrangler dev`
   ile yerel sunucu + `npm run e2e`. Repo private: ayda 2000 dk ücretsiz.- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) sayfanın sağ üstünde
   sabit kart (videonun içinde değil: küçük oynatıcıda düğmeler görünmüyordu; ✕ + Esc + "Anladım",

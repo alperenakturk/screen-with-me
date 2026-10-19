@@ -41,7 +41,7 @@ export function createSettingsPanel(
     const button = form.querySelector<HTMLButtonElement>('button');
     if (button) {
       button.textContent = t('savedNote');
-      setTimeout(() => (button.textContent = t('save')), 1500);
+      setTimeout(() => (button.textContent = t('saveName')), 1500);
     }
   });
 

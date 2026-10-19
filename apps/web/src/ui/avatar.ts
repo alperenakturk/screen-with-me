@@ -1,4 +1,4 @@
-import { AVATAR_PAGES, AVATAR_TABS, AVATARS_PER_VIEW, avatarPageOf, isDrawnAvatar, type Avatar } from '@swm/shared/protocol';
+import { AVATAR_PAGES, AVATAR_TABS, avatarPageOf, isDrawnAvatar, type Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 
@@ -21,8 +21,6 @@ export function renderAvatarPicker(
   onDouble?: () => void,
 ): () => void {
   let page = avatarPageOf(current());
-  // Bir sayfada 20'den fazla avatar varsa ‹ › ile görünüm değişir (açılışta seçili olanınki).
-  let view = Math.max(0, Math.floor((AVATAR_PAGES[page] as readonly string[]).indexOf(current()) / AVATARS_PER_VIEW));
   const tabRow = (items: Array<{ label: string; selected: boolean; go: () => void }>, extra = '') =>
     el(
       'div',
@@ -46,7 +44,6 @@ export function renderAvatarPicker(
         go: () => {
           if (tab !== active) {
             page = tab.pages[0];
-            view = 0;
           }
         },
       }))),
@@ -57,14 +54,13 @@ export function renderAvatarPicker(
         selected: active.pages[i] === page,
         go: () => {
           page = active.pages[i]!;
-          view = 0;
         },
       })), ' sub'));
     }
     const grid = el(
       'div',
       { class: 'avatar-grid', role: 'radiogroup' },
-      ...AVATAR_PAGES[page]!.slice(view * AVATARS_PER_VIEW, (view + 1) * AVATARS_PER_VIEW).map((option) => {
+      ...AVATAR_PAGES[page]!.map((option) => {
         const label = isDrawnAvatar(option) ? t(`avatar.${option}` as I18nKey) : option;
         const button = el(
           'button',
@@ -79,23 +75,6 @@ export function renderAvatarPicker(
         return button;
       }),
     );
-    const views = Math.ceil(AVATAR_PAGES[page]!.length / AVATARS_PER_VIEW);
-    if (views > 1) {
-      const pager = el('div', { class: 'avatar-pager' });
-      const prev = el('button', { type: 'button', class: 'avatar-tab', 'aria-label': t('avatarMore') }, '‹');
-      const next = el('button', { type: 'button', class: 'avatar-tab', 'aria-label': t('avatarMore') }, '›');
-      prev.addEventListener('click', () => {
-        view = (view - 1 + views) % views;
-        draw();
-      });
-      next.addEventListener('click', () => {
-        view = (view + 1) % views;
-        draw();
-      });
-      pager.append(prev, el('span', { class: 'muted small' }, `${view + 1} / ${views}`), next);
-      container.replaceChildren(...rows, grid, pager);
-      return;
-    }
     container.replaceChildren(...rows, grid);
   };
   draw();

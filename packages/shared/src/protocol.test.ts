@@ -80,7 +80,7 @@ describe('parseClientMessage', () => {
     for (const id of Object.keys(DRAWN_AVATARS)) expect(all.filter((a) => a === id)).toHaveLength(1);
     expect(new Set(all).size).toBe(all.length);
     expect(AVATAR_TABS.flatMap((tab) => tab.pages).sort()).toEqual(AVATAR_PAGES.map((_, i) => i));
-    expect(avatarPageOf('detective')).toBe(3);
+    expect(avatarPageOf('chemist')).toBe(3);
     expect(avatarPageOf('cavecreature')).toBe(2);
     expect(avatarPageOf('airmonk')).toBe(4);
     expect(avatarPageOf('nope')).toBe(0);

@@ -12,6 +12,8 @@ import { isTyping } from './reactions.ts';
  */
 export function createPins(options: {
   strips: HTMLElement[];
+  /** 📌 düğmeleri: sadece sitede bir video oynarken görünür (video yokken pin olmaz). */
+  buttons: HTMLElement[];
   form: HTMLFormElement;
   getDuration: () => number;
   onSeek: (seconds: number) => void;
@@ -27,6 +29,7 @@ export function createPins(options: {
 
   function render(): void {
     const duration = options.getDuration();
+    for (const button of options.buttons) button.hidden = duration <= 0;
     const show = pins.length > 0 && duration > 0;
     for (const strip of strips) {
       strip.hidden = !show;
@@ -57,6 +60,7 @@ export function createPins(options: {
   }
 
   function open(): void {
+    if (options.getDuration() <= 0) return;
     form.hidden = false;
     input.value = '';
     input.focus();
@@ -81,7 +85,7 @@ export function createPins(options: {
   // Klavye: P pin kutusunu açar (yazı yazarken değil).
   document.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() !== 'p' || event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
-    if (!itemId && options.getDuration() <= 0) return;
+    if (options.getDuration() <= 0) return;
     event.preventDefault();
     open();
   });
