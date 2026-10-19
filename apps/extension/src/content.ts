@@ -199,7 +199,12 @@ function attachEngine(): void {
     send: (message) => send({ type: 'send', message }),
     // Kısa videolar (reklam, önizleme) bitince oda sıradakine geçmesin.
     onEnded: (itemId) => {
-      if ((adapter?.getDuration() ?? 0) >= 60) send({ type: 'send', message: { t: 'next', from: itemId } });
+      const duration = adapter?.getDuration() ?? 0;
+      if (duration >= 60) {
+        // İzleme sonu kartı: süre, kişi, tepki, pinler.
+        overlay.endCard(duration, state?.item?.title ?? document.title);
+        send({ type: 'send', message: { t: 'next', from: itemId } });
+      }
     },
     onAutoplayBlocked: () => overlay.askToStart(() => engine?.resume()),
   });
@@ -231,6 +236,8 @@ function onMessage(message: BackgroundMessage): void {
       attachEngine();
       break;
     case 'state':
+      // Başka bir video açıldıysa izleme sonu sayaçları sıfırlanır.
+      if (message.state.item?.id !== state?.item?.id) overlay.resetStats();
       state = message.state;
       engine?.receive(message.state);
       overlay.setRate(message.state.rate);

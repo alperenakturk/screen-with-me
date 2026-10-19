@@ -61,7 +61,7 @@ export type BackgroundMessage =
   | { type: 'pins'; pins: Array<Pin & { removable: boolean }> }
   | { type: 'chat'; line: ChatLine }
   /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte); "slow": çok hızlı mesaj atıldı. */
-  | { type: 'notice'; kind: 'joined' | 'left' | 'slow'; name: string }
+  | { type: 'notice'; kind: 'joined' | 'left' | 'slow' | 'locked'; name: string }
   /** Odaya yeni girildi: "İyi seyirler" açılış animasyonu. */
   | { type: 'intro' }
   /** Film sayfasında ilk kez: nasıl kullanılır rehberi (`afterIntro`: açılıştan sonra göster). */

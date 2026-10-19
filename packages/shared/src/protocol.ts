@@ -151,7 +151,9 @@ export type Media =
   /** Doğrudan video dosyası (.mp4 vb.); sitede oynar. */
   | { kind: 'html5'; url: string }
   /** Videonun içinde olduğu bir web sayfası; eklentiyle, herkes kendi sekmesinde açarak izler. */
-  | { kind: 'page'; url: string };
+  | { kind: 'page'; url: string }
+  /** Senkron testi: sitenin çizdiği 12 sn'lik sayaç (dosya yok); iki ekran aynı sayıyı göstermeli. */
+  | { kind: 'test' };
 
 /** Sıradaki ya da şu an oynayan bir video. */
 export interface QueueItem {
@@ -161,6 +163,8 @@ export interface QueueItem {
   title: string | null;
   /** Ekleyen kişinin adı. */
   by: string;
+  /** Sıradakiler için 👍 sayısı (sıra buna göre dizilir; yoksa 0). */
+  votes?: number;
 }
 
 /**
@@ -192,6 +196,12 @@ export interface Member {
 export interface RoomSettings {
   /** Videosu takılan biri olduğunda oda onu kısa süre beklesin mi? */
   waitForAll: boolean;
+  /** Sadece yönetici oynat/durdur/sar/hız/yeni video yapabilsin (sıradakine geçiş herkese açık). */
+  hostOnly?: boolean;
+  /** Sıraya ekleme/silme/taşıma sadece yöneticide (oylama serbest). */
+  lockQueue?: boolean;
+  /** Planlı başlangıç (sunucu saati, ms): o an gelince oda kendiliğinden oynar. */
+  startsAt?: number;
 }
 
 /** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
@@ -239,7 +249,10 @@ export type ClientMessage =
    */
   | { t: 'ready'; ready: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
-  | { t: 'settings'; waitForAll: boolean }
+  /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; startsAt?: number | null }
+  /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
+  | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
@@ -423,6 +436,7 @@ export function cleanChatText(x: unknown): string | null {
 
 export function cleanMedia(x: unknown): Media | null {
   if (!isObject(x)) return null;
+  if (x.kind === 'test') return { kind: 'test' };
   if (x.kind === 'youtube') {
     return typeof x.id === 'string' && YOUTUBE_ID.test(x.id) ? { kind: 'youtube', id: x.id } : null;
   }
@@ -481,8 +495,17 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isItemId(m.id) ? { t: m.t, id: m.id } : null;
     case 'ready':
       return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
-    case 'settings':
-      return typeof m.waitForAll === 'boolean' ? { t: 'settings', waitForAll: m.waitForAll } : null;
+    case 'settings': {
+      const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue'] as const) {
+        if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
+      }
+      if (m.startsAt === null) out.startsAt = null;
+      else if (isTimestamp(m.startsAt)) out.startsAt = m.startsAt;
+      return Object.keys(out).length > 1 ? out : null;
+    }
+    case 'vote':
+      return isItemId(m.id) && typeof m.up === 'boolean' ? { t: 'vote', id: m.id, up: m.up } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

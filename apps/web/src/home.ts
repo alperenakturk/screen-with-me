@@ -1,5 +1,7 @@
 import { extractRoomId, newRoomId } from '@swm/shared/room-id';
-import { translate } from './i18n.ts';
+import { el } from './dom.ts';
+import { forgetRoom, myRoomId, recentRooms } from './recent-rooms.ts';
+import { t, translate } from './i18n.ts';
 import { renderThemeStrip } from './themes.ts';
 
 /** Bir "nasıl çalışır" adımı: büyük resim (emoji), başlık ve kısa açıklama (i18n anahtarları). */
@@ -47,13 +49,20 @@ export function renderHome(app: HTMLElement): void {
       <div class="theme-mascot" aria-hidden="true"></div>
       <h1>ScreenWithMe</h1>
       <p class="tagline" data-i18n="tagline"></p>
-      <button id="create" type="button" class="btn primary big" data-i18n="createRoom"></button>
+      <div class="create-row">
+        <button id="create" type="button" class="btn primary big" data-i18n="createRoom"></button>
+        <button id="my-room" type="button" class="btn big" data-i18n-title="myRoomHint">🏠 <span data-i18n="myRoom"></span></button>
+      </div>
       <div class="divider"><span data-i18n="or"></span></div>
       <form id="join" class="row">
         <input id="join-input" data-i18n-placeholder="joinPlaceholder" autocomplete="off" />
         <button class="btn" data-i18n="join"></button>
       </form>
       <p id="join-error" class="error" data-i18n="invalidRoom" hidden></p>
+      <div id="recent" class="recent" hidden>
+        <h3 data-i18n="recentRooms"></h3>
+        <ul id="recent-list"></ul>
+      </div>
     </section>
 
     <section class="how">
@@ -76,6 +85,12 @@ export function renderHome(app: HTMLElement): void {
   app.querySelector('#create')!.addEventListener('click', () => {
     location.assign(`/r/${newRoomId()}`);
   });
+  // "Benim odam": hep aynı link (arkadaşlar her seferinde aynı linkle girer).
+  app.querySelector('#my-room')!.addEventListener('click', () => {
+    location.assign(`/r/${myRoomId()}`);
+  });
+  renderRecent(app);
+  window.addEventListener('langchange', () => renderRecent(app));
 
   const form = app.querySelector<HTMLFormElement>('#join')!;
   const input = app.querySelector<HTMLInputElement>('#join-input')!;
@@ -86,4 +101,33 @@ export function renderHome(app: HTMLElement): void {
     error.hidden = id !== null;
     if (id !== null) location.assign(`/r/${id}`);
   });
+}
+
+/** Son girilen odalar: başlık (yoksa oda adı), ne zaman; × listeden siler. */
+function renderRecent(app: HTMLElement): void {
+  const box = app.querySelector<HTMLElement>('#recent')!;
+  const list = app.querySelector<HTMLElement>('#recent-list')!;
+  const mine = myRoomId();
+  const rooms = recentRooms();
+  box.hidden = rooms.length === 0;
+  list.replaceChildren(
+    ...rooms.map((room) => {
+      const link = el('a', { href: `/r/${room.id}`, class: 'recent-link' }, el('b', {}, room.id === mine ? `🏠 ${t('myRoom')}` : room.title ?? room.id), el('span', { class: 'muted small' }, ago(room.at)));
+      const remove = el('button', { type: 'button', class: 'icon-btn', title: t('remove'), 'aria-label': t('remove') }, '✕');
+      remove.addEventListener('click', () => {
+        forgetRoom(room.id);
+        renderRecent(app);
+      });
+      return el('li', {}, link, remove);
+    }),
+  );
+}
+
+/** "az önce", "5 dk önce", "3 sa önce", "2 gün önce". */
+function ago(at: number): string {
+  const min = Math.round((Date.now() - at) / 60000);
+  if (min < 1) return t('agoNow');
+  if (min < 60) return t('agoMin', { n: min });
+  if (min < 60 * 24) return t('agoHour', { n: Math.round(min / 60) });
+  return t('agoDay', { n: Math.round(min / 1440) });
 }

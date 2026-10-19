@@ -9,6 +9,7 @@ const MAX_TITLE_LENGTH = 200;
  * Bulunamazsa null döner; başlık sadece süs, hiçbir şey ona bağlı değil.
  */
 export async function resolveTitle(media: Media): Promise<string | null> {
+  if (media.kind === 'test') return null;
   if (media.kind === 'html5') return titleFromUrl(media.url);
   // Sayfaların başlığını sunucu çekmez (rastgele sitelere istek atmamak için);
   // eklenti sekme başlığını yollar, yoksa alan adı gösterilir.

@@ -65,6 +65,9 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
   otomatik testler, Art Deco temalar. **v0.9.4:** önemli anları pinleme (tepki şeridinin yerine),
   özel emojiler (GIF/resim), tepkiler sol altta isim+avatar kartı ve bekleme süresi, büyük avatar
   penceresi ve canlı avatarlar, eklentide sabit rehber kartı (✕) ve boyutlandırılabilir çubuk.
+  **v0.9.45:** senkron testi (sitenin çizdiği sayaç + "aynı yerdesiniz" rozeti), yönetici modları
+  (sadece yönetici kontrol etsin, sırayı kilitle), sıradakiler için oylama, planlı başlangıç (geri
+  sayım bandı, saat gelince oda oynar), benim odam + son odalar, izleme sonu kartı (indirilebilir görsel).
   v0.9.2: Art Deco / eski afiş tarzı temalar (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması,
   Transatlantik, Gece Ekspresi) ve her birine uygun çizilmiş avatar.
 - [ ] **v1.0 — Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
@@ -74,11 +77,7 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
 - [ ] **Tanıtım videosu:** sitede ve mağaza sayfasında 30–60 sn'lik "nasıl çalışır" videosu
   (oda kur → linki paylaş → arkadaş girer → aynı anda oynar → emoji / sohbet). Ana sayfada
   otomatik, sessiz, döngülü oynasın.
-- [ ] **Senkron testi videosu:** boş odada 10 sn'lik test videosu; "ikimiz de aynı yerdeyiz ✓".
 - [ ] **Elle video seçimi:** otomatik seçim yanılırsa "bu videoyu senkronla".
-- [ ] **İzleme sonu kartı:** süre, tepki sayısı, en çok tepki alan an; paylaşılabilir görsel.
-- [ ] **Sıradaki için oylama** ve **planlı izleme** (geri sayımlı davet linki).
-- [ ] **Yönetici modları:** "sadece yönetici kontrol etsin", sırayı kilitle.
 - [ ] **Sesli sohbet (bas-konuş):** WebRTC; küçük gruplarda eşler arası,
   büyüklerde Cloudflare Realtime (SFU). Kullanıcıların en çok istediği özellik.
 - [ ] **Telefon desteği:** önce site için PWA (YouTube ve doğrudan videolar), sonra Firefox
@@ -86,7 +85,6 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
 - [ ] **Firefox desteği:** arka plan için ayrı manifest.
 - [ ] **Oda kaydetme:** belirli videolarda nerede kaldığımızı ve pinleri saklamak (hesapsız, oda linkine bağlı).
 - [ ] **Sitenin içinde film:** eklenti, film sayfasını sitemizdeki bir çerçevede açsın (site izin veriyorsa; izin vermeyenlerde bugünkü gibi ayrı sekme).
-- [ ] **Kalıcı oda / son odalar:** "benim odam" linki hep aynı kalsın; ana sayfada son odalar.
 - [ ] **Eklenti yüklü gerçek Chrome testi:** Playwright ile (birim + uçtan uca zaten CI'da).
 - [ ] **Büyüme:** kısa alan adı, repo'yu açmak, lansman planı (`docs/BUYUME.md`).
 - [ ] **Senkron ölçümü ve rozet:** p50/p95 fark, README'de grafik.

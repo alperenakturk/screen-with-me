@@ -341,6 +341,11 @@ function onServer(session: Session, message: ServerMessage): void {
       }
       // Mesaj sessizce kaybolmasın: kullanıcıya yavaşlamasını söyle.
       if (message.code === 'rate_limited') toActive(session, { type: 'notice', kind: 'slow', name: '' });
+      // Yönetici modu: hareketim kabul edilmedi; video odanın durumuna dönsün ve nedeni görünsün.
+      if (message.code === 'not_host') {
+        if (session.state && session.activated) toActive(session, { type: 'state', state: session.state });
+        toActive(session, { type: 'notice', kind: 'locked', name: '' });
+      }
       break;
   }
 }

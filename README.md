@@ -13,8 +13,8 @@ Free · no accounts · open source · works on YouTube and on (almost) any websi
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-111%20unit%20%2B%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.9.4-7c5cff)
+![Tests](https://img.shields.io/badge/tests-113%20unit%20%2B%20e2e-3ccf8e)
+![Version](https://img.shields.io/badge/version-0.9.45-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>

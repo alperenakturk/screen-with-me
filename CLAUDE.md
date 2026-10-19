@@ -156,6 +156,21 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Klavye:** 1–8 o sayfanın emojileri/özel emojileri, Enter mesaj, P pin (sitede `reactions.ts` + `room.ts`, tam ekranda
   `fullscreen.ts`; eklentide `overlay.ts`). Eklentide tuş yakalama aşamasında alınıp siteye hiç
   gösterilmez: oynatıcılar rakamlarla sarar (3 = %30), yoksa emoji atınca herkes sarılırdı.
+- **Yönetici modları (`settings.hostOnly` / `lockQueue`):** sunucu yönetici olmayanın play/pause/seek/
+  rate/load/jump (hostOnly) ya da enqueue/dequeue/move (lockQueue) isteğine `not_host` döner; `next`
+  herkese açık (video bitince otomatik geçiş). İstemci `not_host` alınca oynatıcıyı odanın durumuna
+  döndürür (site `engine.receive(roomState)`, eklentide arka plan durumu yeniden yollar + not).
+  `settings` mesajı kısmi: sadece gelen alanlar değişir.
+- **Oylama:** `{t:'vote', id, up}`; oy verenlerin kalıcı anahtarları sunucuda (`voters`, istemciye
+  sadece `QueueItem.votes` sayısı); sıra oya göre dizilir (eşitlerde eklenme sırası). Kendi oylarım
+  site `localStorage` `myVotes`.
+- **Planlı başlangıç (`settings.startsAt`, sunucu saati):** tek alarm buna da bakar; saat gelince plan
+  kalkar, durmuş video `SYSTEM` adına oynar. Sitede geri sayım bandı.
+- **Senkron testi (`media.kind === 'test'`):** dosya yok; `players/test.ts` canvas'a 12 sn'lik sayaç
+  çizer ve `<video>` gibi davranır. Oynarken "aynı yerdesiniz (fark ~N ms)" rozeti.
+- **Son odalar / benim odam (`recent-rooms.ts`):** sadece tarayıcıda; benim odam hep aynı ad.
+- **İzleme sonu kartı:** 60 sn'den uzun video bitince (site `ui/end-card.ts`, PNG indirme; eklentide
+  özet kopyalama): süre, kişi, tepki sayısı (istemci sayar), pinler.
 - **Avatar seçimi:** sitede odadaki ayarlarda "Avatarı değiştir" → ekran ortasında büyük pencere
   (`openAvatarDialog`); eklentide pencerenin tamamını kaplayan panel. Üstüne gelince sallanır, seçili
   olan süzülür (CSS; `prefers-reduced-motion`'da kapalı).

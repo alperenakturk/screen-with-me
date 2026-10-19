@@ -86,6 +86,21 @@ describe('parseClientMessage', () => {
     expect(avatarPageOf('nope')).toBe(0);
   });
 
+  it('accepts partial settings (host modes, schedule) and votes', () => {
+    expect(parse({ t: 'settings', waitForAll: false })).toEqual({ t: 'settings', waitForAll: false });
+    expect(parse({ t: 'settings', hostOnly: true, lockQueue: false })).toEqual({ t: 'settings', hostOnly: true, lockQueue: false });
+    expect(parse({ t: 'settings', startsAt: 1_900_000_000_000 })).toEqual({ t: 'settings', startsAt: 1_900_000_000_000 });
+    expect(parse({ t: 'settings', startsAt: null })).toEqual({ t: 'settings', startsAt: null });
+    expect(parse({ t: 'settings', hostOnly: 'yes' })).toBeNull();
+    expect(parse({ t: 'settings' })).toBeNull();
+    expect(parse({ t: 'vote', id: 'abc123def456', up: true })).toEqual({ t: 'vote', id: 'abc123def456', up: true });
+    expect(parse({ t: 'vote', id: 'abc123def456' })).toBeNull();
+  });
+
+  it('accepts the built-in sync test as media', () => {
+    expect(parse({ t: 'load', media: { kind: 'test', url: 'ignored' } })).toEqual({ t: 'load', media: { kind: 'test' } });
+  });
+
   it('accepts pins with an optional, cleaned and shortened note', () => {
     expect(parse({ t: 'pin' })).toEqual({ t: 'pin' });
     expect(parse({ t: 'pin', note: '  burayı	 anlamadım ' })).toEqual({ t: 'pin', note: 'burayı anlamadım' });

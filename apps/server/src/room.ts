@@ -89,6 +89,7 @@ function banKey(attachment: Attachment, name: string | null): string {
 }
 
 function titleKey(media: Media): string {
+  if (media.kind === 'test') return 'test';
   return media.kind === 'youtube' ? `yt:${media.id}` : media.url;
 }
 
@@ -122,6 +123,8 @@ export class Room extends DurableObject<Env> {
    * anahtarda (`sticker:<id>`; tek değer en fazla 128 KB), sıra `stickers` listesinde.
    */
   private stickers = new Map<string, string>();
+  /** Sıradaki her öğeye oy verenlerin kalıcı anahtarları (istemcilere gitmez; sadece sayı gider). */
+  private voters: Record<string, string[]> = {};
   private titles = new Map<string, string>();
   private hostKey: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
@@ -151,6 +154,7 @@ export class Room extends DurableObject<Env> {
       const saved = await ctx.storage.get<RoomData>('room');
       if (saved && Array.isArray(saved.queue)) this.room = saved;
       this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
+      this.voters = (await ctx.storage.get<Record<string, string[]>>('voters')) ?? {};
       const stickerIds = (await ctx.storage.get<string[]>('stickers')) ?? [];
       const stickerData = await ctx.storage.get<string>(stickerIds.map((id) => `sticker:${id}`));
       for (const id of stickerIds) {
@@ -228,7 +232,21 @@ export class Room extends DurableObject<Env> {
       return;
     }
 
+    // Yönetici modları: oynatma ya da sıra yöneticiye kilitliyse başkasının isteği reddedilir
+    // (istemci "not_host" alınca kendi oynatıcısını odanın durumuna geri döndürür).
+    if (!this.isHost(ws)) {
+      const playback = ['play', 'pause', 'seek', 'rate', 'load', 'jump'].includes(message.t);
+      const queueEdit = ['enqueue', 'dequeue', 'move'].includes(message.t);
+      if ((playback && this.settings.hostOnly) || (queueEdit && this.settings.lockQueue)) {
+        this.sendTo(ws, { t: 'error', code: 'not_host' });
+        return;
+      }
+    }
+
     switch (message.t) {
+      case 'vote':
+        await this.vote(keyOf(attachment), message.id, message.up);
+        return;
       case 'react':
         if (!this.reactionLimit.allow(me.id)) return;
         if (message.sticker !== undefined) {
@@ -308,16 +326,25 @@ export class Room extends DurableObject<Env> {
         await this.evaluateWait();
         await this.saveWaits();
         return;
-      case 'settings':
+      case 'settings': {
         if (!this.isHost(ws)) {
           this.sendTo(ws, { t: 'error', code: 'not_host' });
           return;
         }
-        this.settings = { waitForAll: message.waitForAll };
+        const next: RoomSettings = { ...this.settings };
+        if (message.waitForAll !== undefined) next.waitForAll = message.waitForAll;
+        if (message.hostOnly !== undefined) next.hostOnly = message.hostOnly;
+        if (message.lockQueue !== undefined) next.lockQueue = message.lockQueue;
+        if (message.startsAt === null) delete next.startsAt;
+        // Geçmişte ya da 30 günden ileride plan olmaz.
+        else if (message.startsAt !== undefined && message.startsAt > Date.now() && message.startsAt < Date.now() + 30 * 86_400_000) next.startsAt = message.startsAt;
+        this.settings = next;
         await this.ctx.storage.put('settings', this.settings);
         this.broadcast({ t: 'settings', settings: this.settings });
         await this.evaluateWait();
+        await this.scheduleAlarm();
         return;
+      }
       case 'load':
       case 'enqueue': {
         if (message.t === 'load' && this.othersWatching(attachment)) return this.refuseWhileWatching(ws);
@@ -365,12 +392,28 @@ export class Room extends DurableObject<Env> {
       this.hostGoneAt = null;
       this.bans = {};
       this.settings = { waitForAll: true };
+      this.voters = {};
       this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
       this.emptySince = null;
       return;
     }
     if (this.waits.waitingSince !== null && now - this.waits.waitingSince >= WAIT_MAX_MS) await this.evaluateWait();
+    if (this.settings.startsAt !== undefined && now >= this.settings.startsAt) await this.startScheduled(now);
     await this.scheduleAlarm();
+  }
+
+  /** Planlı saat geldi: plan kalkar, durmuş bir video varsa oda herkes için oynar. */
+  private async startScheduled(now: number): Promise<void> {
+    const { startsAt: _done, ...rest } = this.settings;
+    this.settings = rest;
+    await this.ctx.storage.put('settings', this.settings);
+    this.broadcast({ t: 'settings', settings: this.settings });
+    const state = this.room.state;
+    if (state.item && state.paused) {
+      this.room = { ...this.room, state: { ...state, paused: false, updatedAt: now } };
+      await this.ctx.storage.put('room', this.room);
+      this.broadcast({ t: 'state', state: this.room.state, action: 'play', by: SYSTEM });
+    }
   }
 
   /**
@@ -411,6 +454,7 @@ export class Room extends DurableObject<Env> {
     const times: number[] = [];
     if (this.waits.waitingSince !== null) times.push(this.waits.waitingSince + WAIT_MAX_MS + 50);
     if (this.emptySince !== null) times.push(this.emptySince + EMPTY_ROOM_TTL_MS);
+    if (this.settings.startsAt !== undefined) times.push(this.settings.startsAt);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -648,6 +692,10 @@ export class Room extends DurableObject<Env> {
     this.room = update.data;
     await this.ctx.storage.put('room', this.room);
     if (update.queueChanged) {
+      // Sıradan çıkanların oyları unutulur.
+      const ids = new Set(this.room.queue.map((q) => q.id));
+      for (const id of Object.keys(this.voters)) if (!ids.has(id)) delete this.voters[id];
+      await this.ctx.storage.put('voters', this.voters);
       this.broadcast({
         t: 'queue',
         queue: this.room.queue,
@@ -657,6 +705,25 @@ export class Room extends DurableObject<Env> {
     if (update.stateAction !== null) {
       this.broadcast({ t: 'state', state: this.room.state, action: update.stateAction, by: me });
     }
+  }
+
+  /**
+   * Sıradaki bir öğeye oy ver / geri al. Sıra oya göre (çok olan önde) yeniden dizilir; eşit
+   * oydakiler eklenme sırasını korur. Sıradakine geçişte en çok oy alan oynar.
+   */
+  private async vote(key: string, itemId: string, up: boolean): Promise<void> {
+    if (!this.room.queue.some((q) => q.id === itemId)) return;
+    const list = new Set(this.voters[itemId] ?? []);
+    if (up) list.add(key);
+    else list.delete(key);
+    this.voters[itemId] = [...list];
+    const order = new Map(this.room.queue.map((q, i) => [q.id, i]));
+    const queue = this.room.queue
+      .map((q) => ({ ...q, votes: this.voters[q.id]?.length ?? 0 }))
+      .sort((a, b) => b.votes - a.votes || order.get(a.id)! - order.get(b.id)!);
+    this.room = { ...this.room, queue };
+    await this.ctx.storage.put({ room: this.room, voters: this.voters });
+    this.broadcast({ t: 'queue', queue: this.room.queue, change: null });
   }
 
   private makeItem(media: Media, me: Member, givenTitle: string | null): QueueItem {
@@ -766,7 +833,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'react' | 'sticker-add' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'react' | 'sticker-add' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

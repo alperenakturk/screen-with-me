@@ -57,6 +57,7 @@ export function parseMediaInput(input: string): Media | null {
 export function sameMedia(a: Media | null, b: Media | null): boolean {
   if (a === null || b === null) return a === b;
   if (a.kind === 'youtube' && b.kind === 'youtube') return a.id === b.id;
+  if (a.kind === 'test' || b.kind === 'test') return a.kind === b.kind;
   if (a.kind !== 'youtube' && b.kind === a.kind) return a.url === b.url;
   return false;
 }

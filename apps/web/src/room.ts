@@ -8,6 +8,7 @@ import {
   avatarText,
   SYSTEM_MEMBER_ID,
   cleanName,
+  expectedPosition,
   isAvatar,
   randomAvatar,
   type Avatar,
@@ -24,6 +25,7 @@ import { el } from './dom.ts';
 import { t, translate } from './i18n.ts';
 import { formatTime, itemTitle, rememberTitle } from './media-info.ts';
 import { createHtml5Player } from './players/html5.ts';
+import { createTestPlayer } from './players/test.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
 import { load, save, saveIdentity, sessionLoad, sessionSave } from './storage.ts';
 import { avatarNode, renderAvatarPicker } from './ui/avatar.ts';
@@ -33,6 +35,8 @@ import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
 import { createPins } from './ui/pins.ts';
+import { showEndCard } from './ui/end-card.ts';
+import { rememberRoom } from './recent-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs } from './ui/tabs.ts';
 import { createToasts } from './ui/toasts.ts';
@@ -159,6 +163,16 @@ function clientId(): string {
 }
 
 /** İsmin önüne avatarı koyar (varsa). */
+/** Kalan süre: "2 sa 13 dk", "4 dk 05 sn", "45 sn". */
+function formatLeft(ms: number): string {
+  const s = Math.ceil(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (h > 0) return t('leftHM', { h, m });
+  if (m > 0) return t('leftMS', { m, s: String(s % 60).padStart(2, '0') });
+  return t('leftS', { s });
+}
+
 function withAvatar(member: { name: string; avatar?: string }): string {
   return member.avatar ? `${avatarText(member.avatar)} ${member.name}` : member.name;
 }
@@ -166,6 +180,7 @@ function withAvatar(member: { name: string; avatar?: string }): string {
 function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false } = {}): void {
   // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
   sessionSave(`in:${roomId}`, '1');
+  rememberRoom(roomId);
   // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla.
   loadYouTubeApi().catch(() => {});
 
@@ -179,6 +194,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         </form>
         <p id="media-error" class="error" data-i18n="invalidMedia" hidden></p>
 
+        <div id="schedule-banner" class="schedule-banner" role="status" hidden></div>
         <div id="theater" class="theater">
           <div class="now-playing" id="now-playing" hidden>
             <div class="now-text">
@@ -192,6 +208,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="fs-catcher" class="fs-only fs-catcher"></div>
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
             <div id="waiting-banner" class="waiting-banner" role="status" hidden></div>
+            <div id="sync-badge" class="sync-badge" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
             <form id="pin-form" class="pin-form" hidden><span aria-hidden="true">📌</span><input id="pin-note" autocomplete="off" data-i18n-placeholder="pinPlaceholder" /><button class="btn small-btn primary" data-i18n="pinSave"></button></form>
             <div id="toast-handle" class="fs-only toast-handle" data-i18n-title="toastHandleHint"><span data-i18n="toastHandle"></span></div>
@@ -222,6 +239,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <li><span data-i18n="emptyStep1"></span> <button id="empty-invite" type="button" class="btn small-btn primary"></button></li>
                 <li data-i18n="emptyBody"></li>
               </ol>
+              <button id="sync-test" type="button" class="btn small-btn">🧪 <span data-i18n="syncTest"></span></button>
             </div>
             <div id="external" class="overlay external" hidden>
               <p class="muted" data-i18n="externalTitle"></p>
@@ -252,6 +270,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="toolbar">
             <div class="reaction-bar" role="group"></div>
             <div class="toolbar-right">
+              <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <button id="pin-btn" type="button" class="btn small-btn">📌 <span data-i18n="pin"></span></button>
               <button id="sync-all" type="button" class="btn small-btn">🔄 <span data-i18n="syncAll"></span></button>
               <label class="speed"><span data-i18n="speed"></span>
@@ -323,6 +342,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
+            <label class="check-row"><input type="checkbox" id="opt-hostonly" /> <span data-i18n="settings.hostOnlyMode"></span></label>
+            <label class="check-row"><input type="checkbox" id="opt-lockqueue" /> <span data-i18n="settings.lockQueue"></span></label>
+            <div class="schedule-row">
+              <label for="opt-start" data-i18n="settings.schedule"></label>
+              <div class="row">
+                <input type="datetime-local" id="opt-start" />
+                <button type="button" class="btn small-btn" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
+                <button type="button" class="btn small-btn" id="opt-start-clear" data-i18n="settings.scheduleClear"></button>
+              </div>
+            </div>
             <p id="opt-wait-hint" class="muted small"></p>
           </div>
         </section>
@@ -370,6 +399,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   let myId: string | null = null;
   let members: Member[] = [];
+  /** Açık videoda atılan tepki sayısı (izleme sonu kartı için; video değişince sıfırlanır). */
+  let reactionCount = 0;
   let hostId: string | null = null;
   const kickedIds = new Set<string>();
   /** "Herkes hazır": oda kimleri bekliyor, yönetici özelliği açtı mı. */
@@ -380,7 +411,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let roomState: PlaybackState | null = null;
 
   const send = (message: ClientMessage) => connection.send(message);
-  const queue = createQueuePanel(app, send);
+  const amHost = () => myId !== null && myId === hostId;
+  const queue = createQueuePanel(app, send, {
+    play: () => amHost() || !roomSettings.hostOnly,
+    edit: () => amHost() || !roomSettings.lockQueue,
+  });
   const chatBadge = $('#chat-badge');
   const chat = createChatPanel(app, send, () => myId, (count) => {
     chatBadge.hidden = count === 0;
@@ -411,7 +446,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     clock,
     send,
     onAutoplayBlocked: () => (autoplayEl.hidden = false),
-    onEnded: (itemId) => send({ t: 'next', from: itemId }),
+    onEnded: (itemId) => {
+      // İzleme sonu kartı (en az 1 dk'lık videolarda; kısa klipler ve test için değil).
+      const item = roomState?.item;
+      const duration = current?.player.getDuration() ?? 0;
+      if (item && item.id === itemId && item.media.kind !== 'test' && duration >= 60) {
+        showEndCard($('.player-wrap'), { title: itemTitle(item), duration, people: members.length, reactions: reactionCount, pins: [...pins.list()] });
+      }
+      send({ t: 'next', from: itemId });
+    },
   });
   const connection = new RoomConnection({
     serverUrl: location.origin,
@@ -455,6 +498,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         reactions.registerMine();
         break;
       case 'state': {
+        // Video değiştiyse tepki sayacı sıfırlanır (applyState roomState'i değiştirmeden önce bak).
+        if (message.state.item?.id !== roomState?.item?.id) reactionCount = 0;
         void applyState(message.state);
         pins.reset(message.state.item?.id ?? null);
         const { action, by, state } = message;
@@ -518,6 +563,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         reactions.addSticker(message.sticker);
         break;
       case 'reaction':
+        reactionCount++;
         if (settings.options.showReactions) reactions.show(message.by, message.emoji, message.sticker);
         break;
       case 'chat': {
@@ -535,6 +581,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           current?.player.pause();
           $('#kicked').hidden = false;
           break;
+        }
+        if (message.code === 'not_host' && roomState) {
+          // Yönetici modu: yaptığım hareket kabul edilmedi, oynatıcı odanın durumuna döner.
+          engine.receive(roomState);
         }
         if (message.code === 'others_watching') {
           // Kim hâlâ filmde, onu söyle: herkes çubuktaki 🏠 ile dönünce yeni video açılabilir.
@@ -593,7 +643,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const onError = () => showError(() => t('playerError'));
     let player: PlayerAdapter;
     try {
-      player = media.kind === 'youtube' ? await createYouTubePlayer(slot, media.id, onError) : createHtml5Player(slot, media.url, onError);
+      player =
+        media.kind === 'youtube'
+          ? await createYouTubePlayer(slot, media.id, onError)
+          : media.kind === 'test'
+            ? createTestPlayer(slot)
+            : createHtml5Player(slot, media.url, onError);
     } catch {
       onError();
       slot.remove();
@@ -669,6 +724,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (item) {
       nowTitleEl.textContent = itemTitle(item);
       nowTitleEl.title = itemTitle(item);
+      // Son odalarda oda adı yerine en son oynayan görünsün.
+      rememberRoom(roomId, itemTitle(item));
     }
     skipEl.disabled = queue.length === 0;
     fullscreen.setSkipEnabled(queue.length > 0);
@@ -707,6 +764,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send,
   });
   $('#pin-btn').addEventListener('click', () => pins.open());
+  // Senkron testi: boş odada 12 sn'lik sayaç açar; oynarken "aynı yerdesiniz" rozeti fark gösterir.
+  $('#sync-test').addEventListener('click', () => send({ t: 'load', media: { kind: 'test' } }));
+  setInterval(() => {
+    const badge = $('#sync-badge');
+    const testing = roomState?.item?.media.kind === 'test' && current !== null && clock.synced;
+    badge.hidden = !testing;
+    if (!testing || !roomState || !current) return;
+    const diff = Math.abs(current.player.getTime() - expectedPosition(roomState, clock.now())) * 1000;
+    badge.classList.toggle('bad', diff > 300);
+    badge.textContent = diff <= 300 ? t('syncGood', { ms: Math.round(diff) }) : t('syncBad', { ms: Math.round(diff) });
+  }, 500);
   $('#fs-pin').addEventListener('click', () => pins.open());
   // Süre video yüklenince belli olur; arada bir yeniden çiz.
   setInterval(() => pins.render(), 4000);
@@ -871,9 +939,62 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     banner.textContent = waitingIds.includes(myId ?? '') ? t('waitingForYou') : t('waitingFor', { names: names || '…' });
     const toggle = $<HTMLInputElement>('#opt-wait');
     toggle.checked = roomSettings.waitForAll;
-    toggle.disabled = myId === null || myId !== hostId;
+    toggle.disabled = !amHost();
     $('#opt-wait-hint').textContent = toggle.disabled ? t('settings.hostOnly') : '';
+    renderModes();
   }
+
+  /** Yönetici modları ve planlı başlangıç: ayar anahtarları, kilit notu, sıra butonları. */
+  function renderModes(): void {
+    const host = amHost();
+    const hostOnly = $<HTMLInputElement>('#opt-hostonly');
+    const lockQueue = $<HTMLInputElement>('#opt-lockqueue');
+    hostOnly.checked = roomSettings.hostOnly === true;
+    lockQueue.checked = roomSettings.lockQueue === true;
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+      $<HTMLInputElement>(id).disabled = !host;
+    }
+    $('#host-lock').hidden = host || !roomSettings.hostOnly;
+    queue.render();
+    renderSchedule();
+  }
+
+  /** Planlı başlangıç bandı: "⏰ 21:00'de başlıyor · 2 sa 13 dk". Saniyede bir yenilenir. */
+  let scheduleWasSet = false;
+  function renderSchedule(): void {
+    const banner = $('#schedule-banner');
+    const at = roomSettings.startsAt;
+    if (at === undefined) {
+      if (scheduleWasSet && roomState?.item && !roomState.paused) addActivity(() => t('scheduleStarted'));
+      scheduleWasSet = false;
+      banner.hidden = true;
+      return;
+    }
+    scheduleWasSet = true;
+    const left = Math.max(0, at - clock.now());
+    const time = new Date(at - (clock.now() - Date.now())).toLocaleString(document.documentElement.lang || undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    banner.hidden = false;
+    banner.textContent = t('scheduleBanner', { time, left: formatLeft(left) });
+  }
+  setInterval(() => roomSettings.startsAt !== undefined && renderSchedule(), 1000);
+
+  $<HTMLInputElement>('#opt-hostonly').addEventListener('change', (event) => {
+    send({ t: 'settings', hostOnly: (event.target as HTMLInputElement).checked });
+  });
+  $<HTMLInputElement>('#opt-lockqueue').addEventListener('change', (event) => {
+    send({ t: 'settings', lockQueue: (event.target as HTMLInputElement).checked });
+  });
+  $('#opt-start-set').addEventListener('click', () => {
+    const value = $<HTMLInputElement>('#opt-start').value;
+    const local = value ? new Date(value).getTime() : NaN;
+    if (!Number.isFinite(local) || local <= Date.now()) {
+      showError(() => t('scheduleInvalid'));
+      return;
+    }
+    // Sunucu saatine çevir (tahmini fark).
+    send({ t: 'settings', startsAt: local + (clock.now() - Date.now()) });
+  });
+  $('#opt-start-clear').addEventListener('click', () => send({ t: 'settings', startsAt: null }));
   $<HTMLInputElement>('#opt-wait').addEventListener('change', (event) => {
     send({ t: 'settings', waitForAll: (event.target as HTMLInputElement).checked });
   });

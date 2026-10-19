@@ -1,4 +1,5 @@
 import type { QueueItem } from '@swm/shared/protocol';
+import { t } from './i18n.ts';
 
 /** Sunucunun sonradan bildirdiği başlıklar (öğe ID'sine göre). */
 const lateTitles = new Map<string, string>();
@@ -11,6 +12,7 @@ export function rememberTitle(itemId: string, title: string): void {
 export function itemTitle(item: QueueItem): string {
   const title = item.title ?? lateTitles.get(item.id);
   if (title) return title;
+  if (item.media.kind === 'test') return t('syncTestTitle');
   return item.media.kind === 'youtube' ? `YouTube · ${item.media.id}` : item.media.url;
 }
 

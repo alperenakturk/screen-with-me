@@ -89,6 +89,8 @@ export function createPins(options: {
   return {
     open,
     render,
+    /** Açık videonun pinleri (izleme sonu kartı için). */
+    list: (): Pin[] => pins,
     /** Sunucudan gelen tam liste (welcome / pins). */
     set(list: PinList | null): void {
       itemId = list?.itemId ?? itemId;

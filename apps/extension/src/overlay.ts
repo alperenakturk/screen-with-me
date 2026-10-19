@@ -149,6 +149,9 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 .guide { position: relative; left: auto; top: auto; transform: none; text-align: left; width: min(380px, calc(100vw - 32px));
   max-height: calc(100vh - 32px); overflow-y: auto; font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #ecedf1; }
 .guide > b { padding-right: 32px; }
+.end .end-title { color: #d8d2ff; font-weight: 600; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.end .end-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 13.5px; margin-bottom: 6px; }
+.end .end-pin { font-size: 12.5px; text-align: left; color: #c9cbd3; }
 .guide label { justify-content: flex-start; }
 .guide label input { flex: none; width: 16px; height: 16px; margin: 0; accent-color: #7c5cff; }
 .guide .guide-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; padding: 0; border-radius: 8px; font-size: 14px; }
@@ -600,6 +603,9 @@ export function createOverlay(actions: OverlayActions) {
     }, IDLE_MS);
   }
 
+  /** Bu videoda gelen tepki sayısı (izleme sonu kartı için). */
+  let reactionCount = 0;
+
   // ---- Pinlenmiş anlar ----
   let pins: Array<Pin & { removable: boolean }> = [];
   let nowMark: HTMLElement | null = null;
@@ -878,6 +884,7 @@ export function createOverlay(actions: OverlayActions) {
 
     /** Gelen tepki: sol altta avatar + isim + emoji/özel emoji kartı; aynı kişinin aynı tepkisi "×2" olur. */
     reaction(info: { byId: string; name: string; avatar?: string; emoji?: string; sticker?: string }): void {
+      reactionCount++;
       mount();
       if (!parts) return;
       const feed = parts.floats;
@@ -907,6 +914,36 @@ export function createOverlay(actions: OverlayActions) {
       card.dataset.count = '1';
       feed.append(card);
       expire(card);
+    },
+
+    resetStats(): void {
+      reactionCount = 0;
+    },
+
+    /** Film bitti: süre, kişi, tepki ve pinler; özet panoya kopyalanabilir. 30 sn sonra kapanır. */
+    endCard(duration: number, title: string): void {
+      const layer = mount();
+      layer.querySelector('.end')?.remove();
+      const minutes = Math.max(1, Math.round(duration / 60));
+      const time = minutes >= 60 ? t('endHM', { h: Math.floor(minutes / 60), m: minutes % 60 }) : t('endM', { m: minutes });
+      const people = room?.members.length ?? 1;
+      const lines = [`⏱ ${time}`, `👥 ${t('endPeople', { n: people })}`, `😂 ${t('endReactions', { n: reactionCount })}`, `📌 ${t('endPins', { n: pins.length })}`];
+      const pinLines = pins.slice(0, 4).map((p) => `📌 ${clock(p.at)} · ${p.by.name}${p.note ? `: ${p.note}` : ''}`);
+      const copy = el('button', 'primary', t('endCopy'));
+      const close = el('button', '', t('close'));
+      const card = el('div', 'note end', el('b', '', `🎬 ${t('endTitle')}`), el('div', 'end-title', title), el('div', 'end-stats', ...lines.map((l) => el('span', '', l))), ...pinLines.map((l) => el('div', 'end-pin', l)), el('div', 'actions', copy, close));
+      const timer = setTimeout(() => card.remove(), 30_000);
+      close.addEventListener('click', () => {
+        clearTimeout(timer);
+        card.remove();
+      });
+      copy.addEventListener('click', async () => {
+        const text = [`🎬 ${t('endTitle')}: ${title}`, lines.join(' · '), ...pinLines, room?.inviteUrl ?? ''].filter(Boolean).join('\n');
+        await copyText(text);
+        copy.textContent = '✓';
+      });
+      layer.append(card);
+      wake();
     },
 
     /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir). */
@@ -946,8 +983,8 @@ export function createOverlay(actions: OverlayActions) {
       parts.waiting.textContent = me ? t('waitingForYou') : t('waitingFor', { names: names.join(', ') });
     },
 
-    notice(kind: 'joined' | 'left' | 'slow' | 'speed', name: string): void {
-      const text = kind === 'slow' ? t('slowDown') : kind === 'speed' ? t('speedLocked') : t(kind, { name });
+    notice(kind: 'joined' | 'left' | 'slow' | 'speed' | 'locked', name: string): void {
+      const text = kind === 'slow' ? t('slowDown') : kind === 'speed' ? t('speedLocked') : kind === 'locked' ? t('hostLocked') : t(kind, { name });
       toast([text], 'notice');
     },
 
