@@ -84,7 +84,7 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
   Android'de eklenti.
 - [ ] **Firefox desteği:** arka plan için ayrı manifest.
 - [ ] **Oda kaydetme:** belirli videolarda nerede kaldığımızı ve pinleri saklamak (hesapsız, oda linkine bağlı).
-- [ ] **Sitenin içinde film:** eklenti, film sayfasını sitemizdeki bir çerçevede açsın (site izin veriyorsa; izin vermeyenlerde bugünkü gibi ayrı sekme).
+- [x] **Sitenin içinde film (deneysel, ayarlardan açılır):** eklenti film sayfasını odanın oynatıcı alanında (iframe) senkronlar; izin vermeyen sitelerde bugünkü gibi ayrı sekme. Sıradaki: gerçek sitelerde deneme, sonra varsayılanı açmak.
 - [ ] **Eklenti yüklü gerçek Chrome testi:** Playwright ile (birim + uçtan uca zaten CI'da).
 - [ ] **Büyüme:** kısa alan adı, repo'yu açmak, lansman planı (`docs/BUYUME.md`).
 - [ ] **Senkron ölçümü ve rozet:** p50/p95 fark, README'de grafik.

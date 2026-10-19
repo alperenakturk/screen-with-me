@@ -120,6 +120,8 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
   gap: 12px; background: rgb(0 0 0 / .7); pointer-events: auto; font-size: 17px; text-align: center; padding: 16px; }
 .start button { font: inherit; font-weight: 600; color: #fff; background: #7c5cff; border: 0; border-radius: 10px;
   padding: 12px 22px; cursor: pointer; }
+/* Film sitenin içinde açıldı: çubuğu, mesajları site gösteriyor; burada sadece "İzlemeye başla". */
+.root.embedded > :not(.start) { display: none !important; }
 
 /* Emoji sayfaları: yanındaki küçük ▲▼ ile diğer emojiler */
 .reactions { display: flex; gap: 4px; }
@@ -268,6 +270,8 @@ export function createOverlay(actions: OverlayActions) {
   let positionTimer: ReturnType<typeof setInterval> | null = null;
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   let room: RoomInfo | null = null;
+  /** Film sitenin içinde (iframe) açık: sadece "İzlemeye başla" kartı gösterilir. */
+  let embeddedMode = false;
   let rate = 1;
   let barOpen = false;
   let unread = 0;
@@ -568,6 +572,7 @@ export function createOverlay(actions: OverlayActions) {
     const style = document.createElement('style');
     style.textContent = CSS;
     root = el('div', 'root');
+    root.classList.toggle('embedded', embeddedMode);
     parts = build(root);
     shadow.append(style, root);
     place();
@@ -861,6 +866,11 @@ export function createOverlay(actions: OverlayActions) {
   document.addEventListener('mousemove', () => host && wake(), { passive: true, capture: true });
 
   return {
+    /** Sitenin içindeki çerçeve: arayüzü site gösterir, burada çubuk açılmaz. */
+    setEmbedded(): void {
+      embeddedMode = true;
+    },
+
     /** Katmanı bu videonun üstüne yerleştir. */
     follow(next: HTMLVideoElement): void {
       video = next;

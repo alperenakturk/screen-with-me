@@ -18,3 +18,24 @@ bağlantıları, video puanları ve sunucuya giden mesajlar görünür.
 `ctl.mjs` ile başka bir kullanıcı gibi komut gönderebilirsin (`play 40`,
 `seek 120`, `rate 1.5`, `react`, `chat merhaba`). `SWM_BASE` ortam değişkeni
 yayındaki sunucuya yönlendirir.
+
+## Film sitenin içinde (gerçek Chrome + eklenti)
+
+`embed/` klasörü, filmin odanın içinde (iframe) açılmasını gerçek Chrome'da eklentiyle uçtan uca
+dener. Markalı Chrome `--load-extension` kabul etmediği için `embed/cdp.mjs` Chrome'u
+`--remote-debugging-pipe --enable-unsafe-extension-debugging` ile açıp eklentiyi CDP
+`Extensions.loadUnpacked` ile yükler. `embed/film-server.mjs` sahte bir video sitesidir: izin veren
+sayfa, iç içe (başka kökenli) oynatıcı, `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'` ve sadece
+iframe isteğinde yasaklayan "sinsi" sayfa. Video: Big Buck Bunny (CC BY, Blender Foundation).
+
+```bash
+npm run build:extension:dev
+npm run dev
+node scripts/harness/embed/film-server.mjs
+node scripts/harness/embed/run.mjs apps/extension/dist http://localhost:5173 ws://localhost:8787 embed-test
+```
+
+Kontroller: sayfa sitede açılır, sekme gitmez, kişi odada bir kez görünür; oda komutları çerçevedeki
+videoya uygulanır, çerçevedeki tıklama odaya yayılır; 1–8 / Enter / P çerçevedeyken de çalışır; sitenin
+⛶'u ve film sitesinin kendi ⛶'u sitenin tam ekranını açar; yasaklı sayfalar ayrı sekme kartına düşer;
+doğrudan videoya geçiş ve "Ayrı sekmede aç". Ekran görüntüleri `embed-test-*.png`.
