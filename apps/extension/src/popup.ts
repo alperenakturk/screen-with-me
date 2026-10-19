@@ -121,7 +121,9 @@ function renderPicker(): void {
       button.addEventListener('click', () => {
         avatar = option;
         renderPicker();
+        renderPreview();
       });
+      button.addEventListener('dblclick', () => void closeSheet());
       return button;
     }),
   );
@@ -167,6 +169,7 @@ function render(status: PopupStatus): void {
     avatarPage = avatarPageOf(avatar);
     avatarView = Math.max(0, Math.floor((AVATAR_PAGES[avatarPage] as readonly string[]).indexOf(avatar) / AVATARS_PER_VIEW));
     renderPicker();
+    renderPreview();
   }
 
   const session = status.session;
@@ -247,6 +250,34 @@ $('#name-form').addEventListener('submit', async (event) => {
   if (response.ok) editingName = false;
   await refresh();
 });
+
+// ---- Avatar paneli (büyük seçici) ----
+/** Panel isim/avatar ekranından mı (kaydet'e basılınca yazılır) yoksa doğrudan mı açıldı. */
+let sheetSavesNow = false;
+function renderPreview(): void {
+  $('#avatar-preview').replaceChildren(...(avatar ? [avatarGlyph(avatar)] : []));
+}
+function openSheet(savesNow: boolean): void {
+  sheetSavesNow = savesNow;
+  if (avatar === null) avatar = last?.avatar ?? randomAvatar();
+  renderPicker();
+  $('#avatar-sheet').hidden = false;
+  document.body.classList.add('sheet-open');
+}
+async function closeSheet(): Promise<void> {
+  $('#avatar-sheet').hidden = true;
+  document.body.classList.remove('sheet-open');
+  renderPreview();
+  // Odadayken doğrudan değiştirildiyse hemen kaydet (isim aynı kalır).
+  if (sheetSavesNow && last?.name && avatar && avatar !== last.avatar) {
+    await request({ type: 'set-name', name: last.name, avatar });
+    await refresh();
+  }
+}
+$('#open-avatars').addEventListener('click', () => openSheet(false));
+$('#me-avatar').addEventListener('click', () => openSheet(true));
+$('#close-avatars').addEventListener('click', () => void closeSheet());
+$('#done-avatars').addEventListener('click', () => void closeSheet());
 
 $('#edit-name').addEventListener('click', () => {
   editingName = true;

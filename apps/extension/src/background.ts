@@ -8,11 +8,11 @@
 
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
-import { HeatMap } from '@swm/shared/heat';
 import { samePage } from '@swm/shared/media';
 import {
   CLIENT_ID,
   ROOM_ID_PATTERN,
+  isStickerData,
   cleanChatText,
   cleanName,
   avatarText,
@@ -23,6 +23,7 @@ import {
   type ClientMessage,
   type Media,
   type Member,
+  type PinList,
   type PlaybackState,
   type QueueItem,
   type ServerMessage,
@@ -82,8 +83,10 @@ interface Session {
   intro: boolean;
   /** Bu oturumda film sayfasındaki rehber gösterildi mi (her odada bir kez)? */
   guided: boolean;
-  /** Açık videoda tepkilerin atıldığı anlar (çubuktaki tepki şeridi için). */
-  heat: HeatMap;
+  /** Açık videonun pinlenmiş anları (çubuktaki pin şeridi için). */
+  pins: PinList | null;
+  /** Odanın özel emojileri (kimlik → data: adresi); çerçeve etkinleşince hepsi yollanır. */
+  stickers: Map<string, string>;
   /** Sekmenin şu anki adresi (odanın sayfasında mıyız?). */
   tabUrl: string | null;
 }
@@ -204,7 +207,8 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     navigatingTo: null,
     intro: options.intro ?? false,
     guided: false,
-    heat: new HeatMap(),
+    pins: null,
+    stickers: new Map(),
     tabUrl: tab?.url ?? null,
   };
   session.connection = new RoomConnection({
@@ -244,8 +248,11 @@ function onServer(session: Session, message: ServerMessage): void {
       session.hostId = message.hostId ?? null;
       session.queue = message.queue;
       session.state = message.state;
-      session.heat.reset(null);
-      if (message.heat) session.heat.load(message.heat);
+      session.pins = message.pins ?? null;
+      // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
+      session.stickers.clear();
+      toActive(session, { type: 'stickers-clear' });
+      void registerMyStickers(session);
       if (session.pendingLoad) {
         session.connection.send({ t: 'load', ...session.pendingLoad });
         session.pendingLoad = null;
@@ -260,7 +267,10 @@ function onServer(session: Session, message: ServerMessage): void {
       session.state = message.state;
       void follow(session);
       pushState(session);
-      if (session.heat.reset(message.state.item?.id ?? null)) pushHeat(session);
+      if (session.pins && session.pins.itemId !== message.state.item?.id) {
+        session.pins = null;
+        pushPins(session);
+      }
       break;
     case 'queue':
       session.queue = message.queue;
@@ -287,12 +297,22 @@ function onServer(session: Session, message: ServerMessage): void {
       break;
     }
     case 'reaction':
-      toActive(session, { type: 'reaction', emoji: message.emoji, name: withAvatar(message.by) });
-      if (message.itemId && message.at !== undefined) {
-        session.heat.reset(message.itemId);
-        session.heat.add(message.at, message.emoji);
-        pushHeat(session);
-      }
+      toActive(session, {
+        type: 'reaction',
+        byId: message.by.id,
+        name: message.by.name,
+        ...(message.by.avatar ? { avatar: message.by.avatar } : {}),
+        ...(message.emoji ? { emoji: message.emoji } : {}),
+        ...(message.sticker ? { sticker: message.sticker } : {}),
+      });
+      break;
+    case 'pins':
+      session.pins = message.pins;
+      pushPins(session);
+      break;
+    case 'sticker':
+      session.stickers.set(message.sticker.id, message.sticker.data);
+      toActive(session, { type: 'sticker', id: message.sticker.id, data: message.sticker.data });
       break;
     case 'chat':
       toActive(session, { type: 'chat', line: chatLine(session, message.message) });
@@ -380,12 +400,24 @@ function pushRoom(session: Session): void {
     queueLength: session.queue.length,
   };
   toActive(session, { type: 'room', room });
-  pushHeat(session);
+  pushPins(session);
 }
 
-/** Çubuktaki tepki şeridi için tepki dağılımını etkin çerçeveye yollar. */
-function pushHeat(session: Session): void {
-  if (session.activated) toActive(session, { type: 'heat', heat: session.heat.snapshot() });
+/** Kendi özel emojilerimi (eklentide saklı) bağlandığım odaya yükler. */
+async function registerMyStickers(session: Session): Promise<void> {
+  const { myStickers } = await chrome.storage.local.get('myStickers').catch(() => ({ myStickers: [] }));
+  if (!Array.isArray(myStickers)) return;
+  for (const data of myStickers) {
+    if (isStickerData(data)) session.connection.send({ t: 'sticker-add', data });
+  }
+}
+
+/** Çubuktaki pin şeridi için pinleri etkin çerçeveye yollar (kendi pinim / yönetici bilgisiyle). */
+function pushPins(session: Session): void {
+  if (!session.activated) return;
+  const host = session.myId !== null && session.myId === session.hostId;
+  const pins = (session.pins?.pins ?? []).map((pin) => ({ ...pin, removable: host || pin.by.id === session.myId }));
+  toActive(session, { type: 'pins', pins });
 }
 
 // ---- Çerçeveler ----
@@ -429,6 +461,7 @@ function pushState(session: Session): void {
     post(frame.port, { type: 'activate', state: session.state, offset: clock.offset, synced: clock.synced });
     session.activated = true;
     pushRoom(session);
+    for (const [id, data] of session.stickers) post(frame.port, { type: 'sticker', id, data });
     const withIntro = session.intro;
     if (session.intro) {
       session.intro = false;

@@ -15,7 +15,7 @@
     "./connection": "./src/connection.ts",
     "./logo": "./src/logo.ts",
     "./intro": "./src/intro.ts",
-    "./heat": "./src/heat.ts"
+    "./sticker-file": "./src/sticker-file.ts"
   },
   "scripts": {
     "test": "vitest run",

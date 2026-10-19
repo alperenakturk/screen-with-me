@@ -1,5 +1,6 @@
 import { cleanName, type Avatar } from '@swm/shared/protocol';
-import { renderAvatarPicker } from './avatar.ts';
+import { el } from '../dom.ts';
+import { avatarNode, openAvatarDialog } from './avatar.ts';
 import { t } from '../i18n.ts';
 import { renderThemePicker } from '../themes.ts';
 import { load, save } from '../storage.ts';
@@ -44,14 +45,22 @@ export function createSettingsPanel(
     }
   });
 
-  const drawAvatars = renderAvatarPicker(
-    avatars,
-    () => avatar,
-    (option) => {
-      avatar = option;
-      onIdentity(name, avatar);
-    },
-  );
+  // Küçük ızgara yerine: şu anki avatar büyük + "Avatarı değiştir" → ekranın ortasında büyük pencere.
+  const drawAvatars = () => {
+    const change = el('button', { type: 'button', class: 'btn' }, t('changeAvatar'));
+    change.addEventListener('click', () =>
+      openAvatarDialog(
+        () => avatar,
+        (option) => {
+          avatar = option;
+          onIdentity(name, avatar);
+          drawAvatars();
+        },
+      ),
+    );
+    avatars.replaceChildren(avatarNode(avatar, 'avatar-big'), change);
+  };
+  drawAvatars();
   window.addEventListener('langchange', drawAvatars);
   renderThemePicker(root.querySelector<HTMLElement>('#settings-themes')!);
 

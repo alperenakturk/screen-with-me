@@ -1,14 +1,18 @@
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
-import { HEAT_BUCKET_S, HEAT_MIN_TOTAL, HeatMap, type Heat } from '@swm/shared/heat';
 import { createLogo } from '@swm/shared/logo';
-import { CHAT_MAX_LENGTH, REACTION_PAGES, avatarText, cleanChatText, type ClientMessage } from '@swm/shared/protocol';
+import { fileToSticker } from '@swm/shared/sticker-file';
+import { CHAT_MAX_LENGTH, PIN_NOTE_MAX, REACTION_PAGES, avatarText, isDrawnAvatar, cleanChatText, type ClientMessage, type Pin } from '@swm/shared/protocol';
 import { t } from './i18n.ts';
 import type { ChatLine, RoomInfo } from './messages.ts';
 
 /** Hızlı mesaj kısa mesajlar içindir (popup ile aynı). */
 const QUICK_CHAT_MAX = Math.min(120, CHAT_MAX_LENGTH);
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-const MAX_FLOATS = 30;
+/** Ekranda aynı anda en fazla bu kadar tepki kartı; kart bu kadar kalır. */
+const MAX_CARDS = 5;
+const CARD_MS = 3200;
+/** Bir tepkiden sonra kısa bekleme (art arda basıp ekranı doldurmasın). */
+const COOLDOWN_MS = 1100;
 /** Uzun bir sütun olmasın: en fazla bu kadar mesaj aynı anda görünür, kısa sürede kaybolur. */
 const MAX_TOASTS = 4;
 const TOAST_MS = 5000;
@@ -24,17 +28,26 @@ const CSS = `
 .root { position: fixed; pointer-events: none; z-index: 2147483647; overflow: hidden;
   font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #ecedf1; }
 
-/* Uçuşan emojiler */
-.float { position: absolute; bottom: 14%; display: flex; flex-direction: column; align-items: center;
-  animation: up 2.8s ease-out forwards; }
-.emoji { font-size: 44px; line-height: 1; filter: drop-shadow(0 2px 6px rgb(0 0 0 / .5)); }
-.name { font-size: 13.5px; font-weight: 600; background: rgb(0 0 0 / .55); padding: 1px 7px; border-radius: 6px; margin-top: 2px; }
-@keyframes up {
-  0% { transform: translate(0, 20px) scale(.6); opacity: 0; }
-  12% { transform: translate(0, 0) scale(1.1); opacity: 1; }
-  75% { opacity: 1; }
-  100% { transform: translate(var(--drift, 0), -220px) scale(1); opacity: 0; }
-}
+/* Gelen tepkiler: sol altta avatar + isim + emoji kartları (ortada uçuşup dikkat dağıtmasın) */
+.feed { position: absolute; left: 12px; bottom: 56px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  max-width: calc(100% - 24px); }
+.card { display: flex; align-items: center; gap: 7px; padding: 4px 10px 4px 4px; border-radius: 999px; background: rgb(10 10 18 / .74);
+  border: 1px solid rgb(255 255 255 / .12); font-size: 13px; animation: card-in .25s ease-out; }
+.card.leaving { animation: card-out .35s ease-in forwards; }
+.card.bump .r-emoji, .card.bump .r-sticker { animation: bump .3s ease; }
+.r-av { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; font-size: 17px; flex: none; }
+.r-av img { width: 100%; height: 100%; display: block; }
+.r-name { font-weight: 600; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-emoji { font-size: 24px; line-height: 1; }
+.r-sticker { height: 36px; max-width: 72px; object-fit: contain; border-radius: 6px; display: block; }
+.r-count { font-weight: 700; color: #ffd27a; }
+.r-count:empty { display: none; }
+@keyframes card-in { from { opacity: 0; transform: translateX(-16px); } }
+@keyframes card-out { to { opacity: 0; transform: translateX(-16px); } }
+@keyframes bump { 50% { transform: scale(1.35); } }
+.reactions.cooling .reaction:not(.add) { opacity: .45; pointer-events: none; }
+.reaction img { width: 20px; height: 20px; object-fit: contain; border-radius: 3px; display: block; margin: auto; }
+.reaction.add { font-weight: 700; color: #b9bccc; border: 1px dashed rgb(255 255 255 / .3); }
 
 /* Mesajlar ve bildirimler: sağ üstteki ScreenWithMe çubuğunun hemen altında belirip kaybolur.
    (top değeri çubuğun yüksekliğine göre JS ile ayarlanır.) */
@@ -61,6 +74,18 @@ const CSS = `
   border-radius: 12px; background: rgb(15 16 20 / .88); border: 1px solid rgb(255 255 255 / .12);
   box-shadow: 0 6px 24px rgb(0 0 0 / .45); backdrop-filter: blur(6px); }
 .idle .fab, .idle .bar { opacity: 0; pointer-events: none; }
+/* Boyutlandırma: sağ alt köşeden sürükle (kare, dikdörtgen...). Uzunsa içinde sohbet geçmişi görünür. */
+.bar { position: absolute; min-width: 280px; min-height: 84px; }
+.resize { position: absolute; right: 2px; bottom: 2px; width: 14px; height: 14px; cursor: nwse-resize; touch-action: none;
+  background: linear-gradient(135deg, transparent 50%, rgb(255 255 255 / .35) 50%, rgb(255 255 255 / .35) 60%, transparent 60%,
+  transparent 72%, rgb(255 255 255 / .35) 72%, rgb(255 255 255 / .35) 82%, transparent 82%); border-radius: 0 0 10px 0; }
+.log { display: none; flex: 1; min-height: 0; overflow-y: auto; flex-direction: column; gap: 3px; padding: 6px 8px; border-radius: 8px;
+  background: rgb(255 255 255 / .04); font-size: 13px; }
+.bar.tall .log { display: flex; }
+.log .line b { margin-right: 5px; }
+.log .line.me b { color: #a48dff; }
+.log:empty::before { content: attr(data-empty); color: #8b8f9c; font-size: 12px; }
+.bar .reactions { flex-wrap: wrap; }
 .row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .row > * { flex: none; }
 .row > .spacer { flex: 1; min-width: 2px; }
@@ -121,7 +146,14 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 .toasts.left .toast { text-align: left; }
 
 /* İlk kez gelene rehber: kart + düğmeyi gösteren zıplayan ok */
-.guide { top: 22%; text-align: left; width: min(420px, calc(100% - 24px)); }
+.guide { position: relative; left: auto; top: auto; transform: none; text-align: left; width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px); overflow-y: auto; font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #ecedf1; }
+.guide > b { padding-right: 32px; }
+.guide label { justify-content: flex-start; }
+.guide label input { flex: none; width: 16px; height: 16px; margin: 0; accent-color: #7c5cff; }
+.guide .guide-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; padding: 0; border-radius: 8px; font-size: 14px; }
+.fab.glow { animation: glow 1.2s ease-in-out infinite; }
+@keyframes glow { 50% { box-shadow: 0 0 0 4px rgb(164 141 255 / .55), 0 0 18px 4px rgb(164 141 255 / .45); } }
 .guide ul { margin: 8px 0 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .guide li { display: flex; gap: 8px; align-items: flex-start; }
 .guide li span:first-child { flex: none; width: 22px; text-align: center; }
@@ -130,15 +162,17 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
 .pointer { position: absolute; font-size: 30px; color: #a48dff; filter: drop-shadow(0 2px 6px rgb(0 0 0 / .6));
   animation: bob 0.9s ease-in-out infinite; pointer-events: none; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
-/* Zaman çizelgesinde tepkiler: çubuğun altında ince şerit, en çok tepki alan anlarda küçük emoji */
-.heat { position: relative; height: 20px; margin: -4px 2px -2px; }
-.heat-track { position: absolute; left: 0; right: 0; bottom: 3px; height: 4px; border-radius: 2px; background: rgb(255 255 255 / .1); overflow: hidden; }
-.heat-bar { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: #a48dff; }
-.heat-now { position: absolute; bottom: 1px; width: 2px; height: 8px; border-radius: 1px; background: #fff; opacity: .7; }
-.heat-top { position: absolute; bottom: 7px; transform: translateX(-50%); background: none; border: 0; padding: 0 2px; font-size: 12px; line-height: 1; cursor: pointer; opacity: .8; }
-.heat-top:hover { opacity: 1; transform: translateX(-50%) scale(1.3); }
-.heat-top.pulse { animation: heat-pulse 1.1s ease 2; }
-@keyframes heat-pulse { 50% { opacity: 1; transform: translateX(-50%) scale(1.45); } }
+/* Pinlenmiş anlar: çubuğun altında ince şerit; 📌'e tıklayınca oraya gidilir */
+.pins { position: relative; height: 22px; margin: -4px 2px -2px; }
+.pin-track { position: absolute; left: 0; right: 0; bottom: 4px; height: 3px; border-radius: 2px; background: rgb(255 255 255 / .12); }
+.pin-now { position: absolute; bottom: 2px; width: 2px; height: 7px; border-radius: 1px; background: #fff; opacity: .6; }
+.pin-wrap { position: absolute; bottom: 0; transform: translateX(-50%); display: flex; align-items: flex-end; }
+.pin-mark { background: none; border: 0; padding: 0; font-size: 13px; line-height: 1; cursor: pointer; }
+.pin-mark:hover { transform: scale(1.3); }
+.pin-x { display: none; width: 14px; height: 14px; padding: 0; border-radius: 999px; border: 1px solid rgb(255 255 255 / .25);
+  background: #222; color: #fff; font-size: 10px; line-height: 11px; cursor: pointer; }
+.pin-wrap:hover .pin-x { display: block; }
+form.pinning input { border-color: #e9b949; }
 ${INTRO_CSS}
 `;
 
@@ -156,6 +190,42 @@ function clock(seconds: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   return h > 0 ? `${h}:${two(m)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
+}
+
+/** Kartın süresini (yeniden) başlatır; süre dolunca kayarak kaybolur. */
+function expire(card: HTMLElement): void {
+  const old = Number(card.dataset.timer ?? '0');
+  if (old) clearTimeout(old);
+  card.dataset.timer = String(
+    window.setTimeout(() => {
+      card.classList.add('leaving');
+      setTimeout(() => card.remove(), 400);
+    }, CARD_MS),
+  );
+}
+
+/** Avatar: çizilmiş olan eklentinin resmi (sayfa engellerse emoji karşılığı), hayvan emoji. */
+function avatarEl(avatar: string | undefined): HTMLElement {
+  const box = el('span', 'r-av');
+  if (avatar && isDrawnAvatar(avatar)) {
+    const img = el('img');
+    img.alt = '';
+    img.src = chrome.runtime.getURL(`avatars/${avatar}.svg`);
+    img.addEventListener('error', () => box.replaceChildren(avatarText(avatar)));
+    box.append(img);
+  } else {
+    box.textContent = avatar ?? '🙂';
+  }
+  return box;
+}
+
+/** Özel emoji resmi (sayfanın güvenlik ayarı resmi engellerse 🖼️). */
+function stickerImg(data: string, className: string): HTMLElement {
+  const img = el('img', className);
+  img.alt = '';
+  img.src = data;
+  img.addEventListener('error', () => img.replaceWith(el('span', 'r-emoji', '🖼️')));
+  return img;
 }
 
 /** Sayfanın yazı alanı mı (kısayollar orada çalışmasın)? */
@@ -201,12 +271,26 @@ export function createOverlay(actions: OverlayActions) {
   let reactionPage = 0;
   /** Kapanış açıklaması bu ana kadar ekranda kalır. */
   let farewellUntil = 0;
+  /** Sayfaya sabitlenen rehber kartı (açıksa). */
+  let guideHost: HTMLElement | null = null;
   /**
    * Düğme/çubuğun kullanıcının sürüklediği yeri (videoya göre oran, sol üst köşe). null:
    * varsayılan sağ üst. Mesajlar hep onun altında (alttaysa üstünde) akar. Hatırlanır.
    */
   let pos: { x: number; y: number } | null = null;
   let suppressClick = false;
+  /** Çubuğun kullanıcı boyutu (px); null: varsayılan. Hatırlanır. */
+  let size: { w: number; h: number } | null = null;
+  void chrome.storage.local
+    .get('barSize')
+    .then(({ barSize }) => {
+      const z = barSize as { w?: unknown; h?: unknown } | undefined;
+      if (z && typeof z.w === 'number' && typeof z.h === 'number') {
+        size = { w: z.w, h: z.h };
+        applySize();
+      }
+    })
+    .catch(() => {});
   void chrome.storage.local
     .get('barPos')
     .then(({ barPos }) => {
@@ -229,10 +313,36 @@ export function createOverlay(actions: OverlayActions) {
       (event) => {
         if (!host || event.target !== host) return;
         event.stopImmediatePropagation();
-        if (type === 'keydown' && event.key === 'Escape') setBar(false);
+        if (type === 'keydown' && event.key === 'Escape') {
+          if (pinning) setPinning(false);
+          else setBar(false);
+        }
       },
       true,
     );
+  }
+
+  // ---- Tepkiler: üç emoji sayfası + özel emoji (GIF/resim) sayfaları ----
+  type Item = { emoji: (typeof REACTION_PAGES)[number][number] } | { sticker: string } | { add: true };
+  const stickers = new Map<string, string>();
+  let coolUntil = 0;
+  function reactionPages(): Item[][] {
+    const list: Item[][] = REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
+    const ids = [...stickers.keys()];
+    for (let i = 0; i === 0 || i < ids.length; i += 7) list.push([...ids.slice(i, i + 7).map((sticker) => ({ sticker })), { add: true }]);
+    return list;
+  }
+  /** Tepki yolla; ardından kısa bekleme (art arda basıp ekranı doldurmasın). "+" dosya seçtirir. */
+  function fire(item: Item): void {
+    if ('add' in item) {
+      parts?.file.click();
+      return;
+    }
+    if (Date.now() < coolUntil) return;
+    coolUntil = Date.now() + COOLDOWN_MS;
+    actions.send('emoji' in item ? { t: 'react', emoji: item.emoji } : { t: 'react', sticker: item.sticker });
+    parts?.reactions.classList.add('cooling');
+    setTimeout(() => parts?.reactions.classList.remove('cooling'), COOLDOWN_MS);
   }
 
   // Kısayollar (odadayken): 1–8 emoji, Enter hızlı mesaj. Çoğu oynatıcı rakamlarla videoyu
@@ -246,13 +356,18 @@ export function createOverlay(actions: OverlayActions) {
       if ((host && event.target === host) || isEditable(event.composedPath()[0] ?? null)) return;
       const n = event.key.length === 1 ? Number(event.key) : NaN;
       if (Number.isInteger(n) && n >= 1 && n <= 8) {
-        const emoji = REACTION_PAGES[reactionPage]![n - 1];
-        if (!emoji) return;
+        const item = reactionPages()[reactionPage]?.[n - 1];
+        if (!item || 'add' in item) return;
         event.preventDefault();
         event.stopImmediatePropagation();
         swallowed.add(event.code);
-        if (!event.repeat) actions.send({ t: 'react', emoji });
+        if (!event.repeat) fire(item);
         wake();
+      } else if (event.key.toLowerCase() === 'p') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        swallowed.add(event.code);
+        setPinning(true);
       } else if (event.key === 'Enter') {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -276,7 +391,7 @@ export function createOverlay(actions: OverlayActions) {
   }
 
   function build(container: HTMLElement) {
-    const floats = el('div');
+    const floats = el('div', 'feed');
     const toasts = el('div', 'toasts');
 
     const badge = el('span', 'badge');
@@ -290,15 +405,44 @@ export function createOverlay(actions: OverlayActions) {
 
     // 1. satır: emojiler (▲▼ ile sayfa) | senkron · odadakiler · davet · kapat
     const reactions = el('span', 'reactions');
-    const drawReactions = () =>
+    const drawReactions = () => {
+      const all = reactionPages();
+      if (reactionPage >= all.length) reactionPage = 0;
       reactions.replaceChildren(
-        ...REACTION_PAGES[reactionPage]!.map((emoji, i) => button('reaction', emoji, `${t('react')} (${i + 1})`, () => actions.send({ t: 'react', emoji }))),
+        ...all[reactionPage]!.map((item, i) => {
+          if ('add' in item) return button('reaction add', '+', t('stickerAdd'), () => fire(item));
+          const b = button('reaction', 'emoji' in item ? item.emoji : '', `${t('react')} (${i + 1})`, () => fire(item));
+          if ('sticker' in item) b.append(stickerImg(stickers.get(item.sticker) ?? '', ''));
+          return b;
+        }),
       );
+    };
     drawReactions();
     const turn = (step: number) => {
-      reactionPage = (reactionPage + step + REACTION_PAGES.length) % REACTION_PAGES.length;
+      const count = reactionPages().length;
+      reactionPage = (reactionPage + step + count) % count;
       drawReactions();
     };
+    // Özel emoji ekle: dosyayı küçült (GIF olduğu gibi), kendi listeme kaydet, odaya yolla.
+    const file = el('input');
+    file.type = 'file';
+    file.accept = 'image/png,image/jpeg,image/webp,image/gif';
+    file.hidden = true;
+    file.addEventListener('change', async () => {
+      const picked = file.files?.[0];
+      file.value = '';
+      if (!picked) return;
+      try {
+        const data = await fileToSticker(picked);
+        const { myStickers } = await chrome.storage.local.get('myStickers');
+        const mine = Array.isArray(myStickers) ? (myStickers as unknown[]).filter((d): d is string => typeof d === 'string' && d !== data) : [];
+        await chrome.storage.local.set({ myStickers: [...mine, data].slice(-12) });
+        actions.send({ t: 'sticker-add', data });
+      } catch (error) {
+        const code = error instanceof Error && (error.message === 'type' || error.message === 'too_big') ? error.message : 'broken';
+        toast([code === 'type' ? t('stickerType') : code === 'too_big' ? t('stickerBig') : t('stickerBroken')], '');
+      }
+    });
     const pager = el('span', 'pager', button('', '▲', t('moreReactions'), () => turn(-1)), button('', '▼', t('moreReactions'), () => turn(1)));
     // Fare tekerleğiyle de sayfa değişir.
     reactions.addEventListener('wheel', (event) => {
@@ -314,6 +458,8 @@ export function createOverlay(actions: OverlayActions) {
       copy.textContent = '✓';
       setTimeout(() => (copy.textContent = '🔗'), 1500);
     });
+    // 📌: bu anı pinle (hızlı mesaj kutusu not moduna geçer, Enter pinler).
+    const pin = button('icon', '📌', t('pinHint'), () => setPinning(!pinning));
     // Odaya dönmeden önce sor: bu sekmede senkron biter, yanlışlıkla basılmasın.
     const home = button('icon', '🏠', t('backToRoom'), () => {
       const layer = mount();
@@ -349,6 +495,13 @@ export function createOverlay(actions: OverlayActions) {
     const form = el('form', '', input, send);
     form.addEventListener('submit', (event) => {
       event.preventDefault();
+      if (pinning) {
+        const note = cleanChatText(input.value.slice(0, PIN_NOTE_MAX));
+        actions.send(note ? { t: 'pin', note } : { t: 'pin' });
+        input.value = '';
+        setPinning(false);
+        return;
+      }
       const text = cleanChatText(input.value.slice(0, QUICK_CHAT_MAX));
       if (text) actions.send({ t: 'chat', text });
       input.value = '';
@@ -361,24 +514,37 @@ export function createOverlay(actions: OverlayActions) {
       speed.append(option);
     }
     speed.addEventListener('change', () => actions.onRate(Number(speed.value)));
-    // 3. satır: tepki şeridi (birkaç tepki olunca görünür)
-    const heatRow = el('div', 'heat');
-    heatRow.hidden = true;
+    // Sohbet geçmişi (çubuk uzatılınca görünür) ve boyutlandırma tutamağı
+    const log = el('div', 'log');
+    log.dataset.empty = t('logEmpty');
+    const resize = el('span', 'resize');
+    resize.title = t('resizeHint');
+    makeResizable(resize);
+    resize.addEventListener('dblclick', () => {
+      size = null;
+      void chrome.storage.local.remove('barSize');
+      applySize();
+    });
+    // 3. satır: pin şeridi (pin varken görünür)
+    const pinRow = el('div', 'pins');
+    pinRow.hidden = true;
 
     const bar = el(
       'div',
       'bar',
-      el('div', 'row', grip, reactions, pager, el('span', 'spacer'), dot, members, copy, home, close),
+      el('div', 'row', grip, reactions, pager, el('span', 'spacer'), dot, members, copy, pin, home, close),
+      log,
       el('div', 'row', form, speed),
-      heatRow,
+      pinRow,
+      resize,
     );
     bar.hidden = true;
 
     const waiting = el('div', 'waiting');
     waiting.hidden = true;
 
-    container.append(floats, toasts, waiting, fab, bar);
-    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed, heatRow };
+    container.append(floats, toasts, waiting, fab, bar, file);
+    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed, pinRow, form, reactions, drawReactions, file, log };
   }
 
   function mount(): HTMLElement {
@@ -434,48 +600,37 @@ export function createOverlay(actions: OverlayActions) {
     }, IDLE_MS);
   }
 
-  // ---- Zaman çizelgesinde tepkiler ----
-  const heatMap = new HeatMap();
-  let lastTops = '';
+  // ---- Pinlenmiş anlar ----
+  let pins: Array<Pin & { removable: boolean }> = [];
   let nowMark: HTMLElement | null = null;
+  /** Hızlı mesaj kutusu pin notu modunda mı (📌 ya da P'ye basıldı). */
+  let pinning = false;
 
-  /** Şeridi yeniden çizer: yoğun yerler parlak, en çok tepki alan 3 anda tıklanabilir emoji. */
-  function renderHeat(): void {
+  /** Pin şeridini çizer: her pin 📌; tıklayınca oraya gidilir, kendi pininde × ile kaldırılır. */
+  function renderPins(): void {
     if (!parts) return;
-    const row = parts.heatRow;
+    const row = parts.pinRow;
     const duration = video && Number.isFinite(video.duration) ? video.duration : 0;
-    const show = heatMap.size >= HEAT_MIN_TOTAL && duration > 0;
+    const show = pins.length > 0 && duration > 0;
     row.hidden = !show;
     nowMark = null;
     if (!show) {
       row.replaceChildren();
       return;
     }
-    const marks = heatMap.marks();
-    const max = Math.max(1, ...marks.map((m) => m.n));
-    const tops = heatMap.top(3);
-    const key = tops.map((m) => m.s).join(',');
-    const pulse = key !== lastTops && lastTops !== '';
-    lastTops = key;
-    const pct = (s: number) => `${Math.min(100, (s / duration) * 100)}%`;
-    const track = el('div', 'heat-track');
-    for (const m of marks) {
-      const bar = el('div', 'heat-bar');
-      bar.style.left = pct(m.s);
-      bar.style.width = `max(3px, ${(HEAT_BUCKET_S / duration) * 100}%)`;
-      bar.style.opacity = String(0.25 + 0.75 * (m.n / max));
-      track.append(bar);
-    }
-    nowMark = el('div', 'heat-now');
-    const buttons = tops.map((m) => {
-      const b = button(pulse ? 'heat-top pulse' : 'heat-top', m.emoji, t('heatTop', { time: clock(m.s), emoji: m.emoji, n: String(m.n) }), () => {
+    nowMark = el('div', 'pin-now');
+    const marks = pins.map((pin) => {
+      const who = pin.by.name + (pin.note ? `: ${pin.note}` : '');
+      const mark = button('pin-mark', '📌', t('pinTitle', { time: clock(pin.at), who }), () => {
         // Videoyu oraya sarınca motor bunu kullanıcı sarması sayıp odaya yayar.
-        if (video) video.currentTime = m.s;
+        if (video) video.currentTime = pin.at;
       });
-      b.style.left = pct(m.s + HEAT_BUCKET_S / 2);
-      return b;
+      const wrap = el('span', 'pin-wrap', mark);
+      if (pin.removable) wrap.append(button('pin-x', '×', t('pinRemove'), () => actions.send({ t: 'unpin', id: pin.id })));
+      wrap.style.left = `${Math.min(100, (pin.at / duration) * 100)}%`;
+      return wrap;
     });
-    row.replaceChildren(track, nowMark, ...buttons);
+    row.replaceChildren(el('div', 'pin-track'), nowMark, ...marks);
     moveNow();
   }
 
@@ -485,6 +640,19 @@ export function createOverlay(actions: OverlayActions) {
     nowMark.style.left = `${Math.min(100, (video.currentTime / video.duration) * 100)}%`;
   }
   setInterval(() => barOpen && moveNow(), 1000);
+
+  /** Hızlı mesaj kutusunu pin notu moduna alır/çıkarır. */
+  function setPinning(on: boolean): void {
+    pinning = on;
+    if (!parts) return;
+    parts.form.classList.toggle('pinning', on);
+    parts.input.placeholder = on ? t('pinPlaceholder') : t('chatPlaceholder');
+    parts.input.maxLength = on ? PIN_NOTE_MAX : QUICK_CHAT_MAX;
+    if (on) {
+      setBar(true);
+      parts.input.focus();
+    }
+  }
 
   function setBar(open: boolean): void {
     barOpen = open;
@@ -496,7 +664,7 @@ export function createOverlay(actions: OverlayActions) {
       renderBadge();
       parts.input.focus();
     }
-    layout();
+    applySize();
     wake();
   }
 
@@ -547,6 +715,50 @@ export function createOverlay(actions: OverlayActions) {
   }
 
   /** Düğmeyi/tutamağı sürükleyerek çubuğun yerini değiştirme (5 px'ten azı tıklama sayılır). */
+  /** Kullanıcı boyutunu çubuğa uygular (videodan büyük olamaz); uzunsa sohbet geçmişi açılır. */
+  function applySize(): void {
+    if (!parts || !root) return;
+    const bar = parts.bar;
+    if (!size) {
+      bar.style.width = '';
+      bar.style.height = '';
+      bar.classList.remove('tall');
+    } else {
+      const box = root.getBoundingClientRect();
+      const w = Math.min(Math.max(size.w, 280), Math.max(280, box.width - 16));
+      const h = Math.min(Math.max(size.h, 84), Math.max(84, box.height - 16));
+      bar.style.width = `${w}px`;
+      bar.style.height = `${h}px`;
+      bar.classList.toggle('tall', h >= 170);
+    }
+    layout();
+  }
+
+  function makeResizable(handle: HTMLElement): void {
+    handle.addEventListener('pointerdown', (event) => {
+      if (!parts || event.button !== 0) return;
+      event.stopPropagation();
+      const start = parts.bar.getBoundingClientRect();
+      const sx = event.clientX;
+      const sy = event.clientY;
+      handle.setPointerCapture(event.pointerId);
+      const move = (ev: PointerEvent) => {
+        size = { w: start.width + ev.clientX - sx, h: start.height + ev.clientY - sy };
+        applySize();
+        wake();
+      };
+      const up = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
+        if (size) void chrome.storage.local.set({ barSize: size });
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
+    });
+  }
+
   function makeDraggable(handle: HTMLElement): void {
     handle.addEventListener('pointerdown', (event) => {
       if (!root || !parts || event.button !== 0) return;
@@ -658,27 +870,67 @@ export function createOverlay(actions: OverlayActions) {
       parts.dot.title = abs === null ? t('syncUnknown') : t('syncDiff', { ms: Math.round(abs) });
     },
 
-    /** Zaman çizelgesinde tepkiler: arka plan değişince yollar. */
-    setHeat(next: Heat | null): void {
-      if (next) heatMap.load(next);
-      else heatMap.reset(null);
-      renderHeat();
+    /** Pinlenmiş anlar: arka plan değişince yollar. */
+    setPins(next: Array<Pin & { removable: boolean }>): void {
+      pins = next;
+      renderPins();
     },
 
-    reaction(emoji: string, name: string): void {
+    /** Gelen tepki: sol altta avatar + isim + emoji/özel emoji kartı; aynı kişinin aynı tepkisi "×2" olur. */
+    reaction(info: { byId: string; name: string; avatar?: string; emoji?: string; sticker?: string }): void {
       mount();
       if (!parts) return;
-      const floats = parts.floats;
-      if (floats.childElementCount >= MAX_FLOATS) floats.firstElementChild?.remove();
-      const bubble = el('div', 'float', el('span', 'emoji', emoji), el('span', 'name', name));
-      bubble.style.left = `${8 + Math.random() * 80}%`;
-      bubble.style.setProperty('--drift', `${(Math.random() - 0.5) * 60}px`);
-      bubble.addEventListener('animationend', () => bubble.remove());
-      floats.append(bubble);
+      const feed = parts.floats;
+      const key = `${info.byId}|${info.emoji ?? info.sticker}`;
+      const existing = [...feed.children].find((c) => (c as HTMLElement).dataset.key === key) as HTMLElement | undefined;
+      if (existing) {
+        const count = Number(existing.dataset.count ?? '1') + 1;
+        existing.dataset.count = String(count);
+        existing.querySelector('.r-count')!.textContent = `×${count}`;
+        existing.classList.remove('bump');
+        void existing.offsetWidth;
+        existing.classList.add('bump');
+        expire(existing);
+        return;
+      }
+      let content: HTMLElement;
+      if (info.sticker) {
+        const data = stickers.get(info.sticker);
+        if (!data) return;
+        content = stickerImg(data, 'r-sticker');
+      } else {
+        content = el('span', 'r-emoji', info.emoji ?? '');
+      }
+      while (feed.childElementCount >= MAX_CARDS) feed.firstElementChild?.remove();
+      const card = el('div', 'card', avatarEl(info.avatar), el('span', 'r-name', info.name), content, el('span', 'r-count'));
+      card.dataset.key = key;
+      card.dataset.count = '1';
+      feed.append(card);
+      expire(card);
+    },
+
+    /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir). */
+    addSticker(id: string, data: string): void {
+      stickers.set(id, data);
+      parts?.drawReactions();
+    },
+
+    clearStickers(): void {
+      stickers.clear();
+      parts?.drawReactions();
     },
 
     chat(line: ChatLine): void {
-      toast([el('b', '', line.name), ' ', line.text], line.mine ? 'me' : '');
+      mount();
+      if (parts) {
+        const log = parts.log;
+        const row = el('div', line.mine ? 'line me' : 'line', el('b', '', line.name), line.text);
+        log.append(row);
+        while (log.childElementCount > 60) log.firstElementChild?.remove();
+        log.scrollTop = log.scrollHeight;
+      }
+      // Geçmiş görünüyorsa mesaj zaten orada: ayrıca ekrana düşmesin.
+      if (!(barOpen && parts?.bar.classList.contains('tall'))) toast([el('b', '', line.name), ' ', line.text], line.mine ? 'me' : '');
       if (!barOpen && !line.mine) {
         unread++;
         renderBadge();
@@ -721,36 +973,50 @@ export function createOverlay(actions: OverlayActions) {
      * senkron için herkesin filmi açması. "Bir daha gösterme" işaretlenirse onNeverAgain.
      */
     guide(onNeverAgain: () => void): void {
-      const layer = mount();
-      if (!parts || layer.querySelector('.guide')) return;
+      mount();
+      if (!parts || guideHost) return;
       wake();
+      // Kart videonun içinde değil, sayfanın sağ üst köşesinde sabit durur: küçük oynatıcıda
+      // da "Anladım" ve ✕ görünür kalsın (önceden tam ekran yapmadan kapatılamıyordu).
+      const hostEl = document.createElement('swm-guide');
+      hostEl.style.cssText = 'position:fixed;top:16px;right:16px;z-index:2147483647;display:block;';
+      const shadow = hostEl.attachShadow({ mode: 'closed' });
+      const style = document.createElement('style');
+      style.textContent = CSS;
       const never = el('input');
       never.type = 'checkbox';
       const ok = el('button', 'primary', t('guideOk'));
+      const x = button('guide-x', '✕', t('close'), () => close());
       const item = (icon: string, text: string) => el('li', '', el('span', '', icon), el('span', '', text));
       const card = el(
         'div',
         'note guide',
+        x,
         el('b', '', t('guideTitle')),
         el('ul', '', item('👉', t('guideBar')), item('⌨️', t('guideKeys')), item('🧩', t('guideIcon')), item('✋', t('guideDrag')), item('🍿', t('guideSync')), item('⏭️', t('guideAd'))),
         el('label', '', never, t('guideNever')),
         el('div', 'actions', ok),
       );
-      // Ok: sağ üstteki ScreenWithMe düğmesinin hemen altında, yukarıyı gösterir.
-      const anchor = (barOpen ? parts.bar : parts.fab).getBoundingClientRect();
-      const box = layer.getBoundingClientRect();
-      const pointer = el('div', 'pointer', '⬆');
-      pointer.style.left = `${Math.max(8, anchor.left - box.left + anchor.width / 2 - 14)}px`;
-      pointer.style.top = `${anchor.bottom - box.top + 4}px`;
-      const close = () => {
-        if (never.checked) onNeverAgain();
-        card.remove();
-        pointer.remove();
+      shadow.append(style, card);
+      // Tam ekrandaysa kart da tam ekran öğesinin içine (yoksa görünmez).
+      (document.fullscreenElement ?? document.documentElement).append(hostEl);
+      guideHost = hostEl;
+      // Videonun üstündeki ScreenWithMe düğmesi kart açıkken parlar: kontroller orada.
+      parts.fab.classList.add('glow');
+      const onKey = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') close();
       };
+      addEventListener('keydown', onKey, true);
+      function close(): void {
+        if (never.checked) onNeverAgain();
+        hostEl.remove();
+        guideHost = null;
+        parts?.fab.classList.remove('glow');
+        removeEventListener('keydown', onKey, true);
+      }
       ok.addEventListener('click', close);
-      layer.append(card, pointer);
       // Fare hareketsiz kalınca düğme solmasın diye rehber açıkken çubuk görünür kalır.
-      const keep = setInterval(() => (card.isConnected ? wake() : clearInterval(keep)), 1000);
+      const keep = setInterval(() => (hostEl.isConnected ? wake() : clearInterval(keep)), 1000);
     },
 
     /** Oda kapandı: nedenini birkaç saniye göster, sonra çubuk kalksın. */

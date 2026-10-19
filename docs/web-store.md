@@ -29,9 +29,10 @@ WHY SCREENWITHME
 • Tight sync, measured 30–100 ms apart on popular open-source players
 • "Everyone ready": if someone is still buffering, the room waits (max 12 s)
 • Emoji reactions (with fun extra pages) and quick chat over the video, also in fullscreen
-• Reaction timeline: see the moments everyone reacted to most, click to jump there
-• Keyboard shortcuts: 1–8 send reactions, Enter opens chat
-• Move the control bar and messages anywhere over the video
+• Pin important moments with an optional note and jump back to talk about them later
+• Add your own custom emojis (images or GIFs) for the whole room
+• Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
+• Move and resize the control bar over the video; make it taller to see the chat history
 • Speed stays shared: other speed extensions can't knock the room out of sync
 • Room host can remove people and lift bans; pick a name and avatar, no account
 • YouTube and direct video links play right on the website, no extension needed
@@ -148,7 +149,7 @@ Gönderimden önce (ben kontrol ederim, ✅ olanlar 0.9.0'da yapıldı):
 - ✅ İzinler en az: sadece `storage` + `<all_urls>` (videoyu her sitede bulmak için; açıklaması
   "Gizlilik" bölümünde).
 - ✅ Gizlilik politikası saklanan her veriyi anlatıyor (isim/avatar, oda durumu, sohbet, tarayıcı
-  kimliği, tepki şeridi).
+  kimliği, pinler, özel emojiler).
 - ✅ Açıklamada film/dizi/site adı yok; "her HTML5 video için tarafsız senkron aracı".
 - ✅ Otomatik testler (GitHub Actions: tip kontrolü, birim, derleme, uçtan uca).
 - ✅ Ekran görüntüleri güncel (`npm run store`).

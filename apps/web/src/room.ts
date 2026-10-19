@@ -32,8 +32,7 @@ import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
-import { createHeatStrip } from './ui/heat-strip.ts';
-import { HeatMap } from '@swm/shared/heat';
+import { createPins } from './ui/pins.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs } from './ui/tabs.ts';
 import { createToasts } from './ui/toasts.ts';
@@ -194,11 +193,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
             <div id="waiting-banner" class="waiting-banner" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
+            <form id="pin-form" class="pin-form" hidden><span aria-hidden="true">📌</span><input id="pin-note" autocomplete="off" data-i18n-placeholder="pinPlaceholder" /><button class="btn small-btn primary" data-i18n="pinSave"></button></form>
             <div id="toast-handle" class="fs-only toast-handle" data-i18n-title="toastHandleHint"><span data-i18n="toastHandle"></span></div>
             <div id="fs-controls" class="fs-only fs-controls">
               <div class="fs-progress">
                 <div class="fs-seek-wrap">
-                  <div id="fs-heat" class="heat-strip fs" hidden></div>
+                  <div id="fs-pins" class="pin-strip fs" hidden></div>
                   <input id="fs-seek" type="range" min="0" max="1000" step="1" value="0" />
                 </div>
                 <span id="fs-time" class="fs-time">0:00 / 0:00</span>
@@ -209,6 +209,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <form id="fs-chat" class="fs-chat">
                   <input id="fs-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" />
                 </form>
+                <button id="fs-pin" type="button" class="fs-btn">📌</button>
                 <button id="fs-skip" type="button" class="fs-btn">⏭</button>
                 <select id="fs-speed" class="fs-speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
                 <button id="fs-exit" type="button" class="fs-btn">✕</button>
@@ -247,10 +248,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button type="button" class="btn primary big" data-i18n="startPlayback"></button>
             </div>
           </div>
-          <div id="heat-strip" class="heat-strip" data-i18n-title="heatLabel" hidden></div>
+          <div id="pin-strip" class="pin-strip" hidden></div>
           <div class="toolbar">
             <div class="reaction-bar" role="group"></div>
             <div class="toolbar-right">
+              <button id="pin-btn" type="button" class="btn small-btn">📌 <span data-i18n="pin"></span></button>
               <button id="sync-all" type="button" class="btn small-btn">🔄 <span data-i18n="syncAll"></span></button>
               <label class="speed"><span data-i18n="speed"></span>
                 <select id="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
@@ -314,7 +316,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <input id="rename-input" maxlength="32" autocomplete="nickname" data-i18n-title="yourName" />
               <button class="btn" data-i18n="save"></button>
             </form>
-            <div id="settings-avatars" class="avatar-picker"></div>
+            <div id="settings-avatars" class="avatar-current"></div>
             <h4 data-i18n="settings.theme"></h4>
             <div id="settings-themes" class="theme-grid" role="radiogroup"></div>
             <h4 data-i18n="settings.room"></h4>
@@ -447,13 +449,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         queue.set(message.queue);
         chat.set(message.chat);
         void applyState(message.state);
-        heat.reset(null);
-        if (message.heat) heat.load(message.heat);
-        heatStrip.render();
+        pins.set(message.pins ?? null);
+        // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
+        reactions.clearStickers();
+        reactions.registerMine();
         break;
       case 'state': {
         void applyState(message.state);
-        if (heat.reset(message.state.item?.id ?? null)) heatStrip.render();
+        pins.reset(message.state.item?.id ?? null);
         const { action, by, state } = message;
         // Otomatik bekleme hareketleri "waiting" mesajıyla ayrıca anlatılıyor.
         if (by.id === SYSTEM_MEMBER_ID) break;
@@ -508,13 +511,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         addActivity(() => t('kickedNotice', { who: withAvatar(who), by: withAvatar(by) }));
         break;
       }
+      case 'pins':
+        pins.set(message.pins);
+        break;
+      case 'sticker':
+        reactions.addSticker(message.sticker);
+        break;
       case 'reaction':
-        if (settings.options.showReactions) reactions.show(message.emoji, withAvatar(message.by));
-        if (message.itemId && message.at !== undefined) {
-          heat.reset(message.itemId);
-          heat.add(message.at, message.emoji);
-          heatStrip.render();
-        }
+        if (settings.options.showReactions) reactions.show(message.by, message.emoji, message.sticker);
         break;
       case 'chat': {
         const { by, text } = message.message;
@@ -692,16 +696,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onRate: (rate) => engine.requestRate(rate),
   });
   const toasts = createToasts($('#toasts'), $('#toast-handle'));
-  // Zaman çizelgesinde tepkiler: video altında ve tam ekranda ilerleme çubuğunun üstünde.
-  const heat = new HeatMap();
-  const heatStrip = createHeatStrip(
-    [$('#heat-strip'), $('#fs-heat')],
-    heat,
-    () => current?.player.getDuration() ?? 0,
-    (seconds) => current?.player.seek(seconds),
-  );
+  // Önemli anları pinleme: video altında ve tam ekranda ilerleme çubuğunun üstünde işaretler.
+  const pins = createPins({
+    strips: [$('#pin-strip'), $('#fs-pins')],
+    form: $<HTMLFormElement>('#pin-form'),
+    getDuration: () => current?.player.getDuration() ?? 0,
+    onSeek: (seconds) => current?.player.seek(seconds),
+    myId: () => myId,
+    isHost: () => myId !== null && myId === hostId,
+    send,
+  });
+  $('#pin-btn').addEventListener('click', () => pins.open());
+  $('#fs-pin').addEventListener('click', () => pins.open());
   // Süre video yüklenince belli olur; arada bir yeniden çiz.
-  setInterval(() => heatStrip.render(), 4000);
+  setInterval(() => pins.render(), 4000);
   const fullscreenEl = $<HTMLButtonElement>('#fullscreen');
   fullscreenEl.hidden = !document.fullscreenEnabled;
   fullscreenEl.addEventListener('click', () => fullscreen.toggle());
@@ -906,6 +914,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     label(fullscreenEl, t('fullscreen'));
     label($('#fs-play'), t('playPause'));
     label($('#fs-skip'), t('skip'));
+    label($('#fs-pin'), t('pinHint'));
+    label($('#pin-btn'), t('pinHint'));
     label($('#fs-exit'), t('exitFullscreen'));
     label($('#fs-speed'), t('speed'));
     label($('#settings-tab'), t('tab.settings'));

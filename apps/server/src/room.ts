@@ -1,9 +1,12 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
+  MAX_PINS,
+  MAX_STICKERS,
   PROTOCOL_VERSION,
   SYSTEM_MEMBER_ID,
   expectedPosition,
   parseClientMessage,
+  stickerId,
   type Avatar,
   type ClientKind,
   type RoomSettings,
@@ -11,12 +14,13 @@ import {
   type ClientMessage,
   type Media,
   type Member,
+  type Pin,
+  type PinList,
   type QueueItem,
   type ServerMessage,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
-import { HeatMap, type Heat } from '@swm/shared/heat';
 import { RateLimiter } from './rate-limit.ts';
 import { resolveTitle } from './titles.ts';
 
@@ -107,9 +111,17 @@ function newId(): string {
  */
 export class Room extends DurableObject<Env> {
   private room: RoomData = initialRoom(Date.now());
-  /** Açık videoda tepkilerin atıldığı anlar (zaman çizelgesi); video değişince sıfırlanır. */
-  private heat = new HeatMap();
+  /**
+   * Açık videonun pinlenmiş anları; video değişince sıfırlanır. `owner` pinleyenin kalıcı
+   * anahtarı (kendi pinini silebilsin); istemcilere hiç gönderilmez.
+   */
+  private pins: { itemId: string | null; list: Array<Pin & { owner: string }> } = { itemId: null, list: [] };
   private chat: ChatMessage[] = [];
+  /**
+   * Odanın özel emojileri (kimlik → data: adresi), eklenme sırasıyla. Her biri depoda ayrı
+   * anahtarda (`sticker:<id>`; tek değer en fazla 128 KB), sıra `stickers` listesinde.
+   */
+  private stickers = new Map<string, string>();
   private titles = new Map<string, string>();
   private hostKey: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
@@ -128,6 +140,8 @@ export class Room extends DurableObject<Env> {
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
   private readonly reactionLimit = new RateLimiter(6, 1.5);
+  /** Özel emoji ekleme: birkaç tane hemen, sonra 20 sn'de bir (büyük veri). */
+  private readonly stickerLimit = new RateLimiter(4, 0.05);
   // Sohbet: art arda 8 mesaj, sonra saniyede 1 (daha sıkısı arkadaşlar arasında yazışırken takılıyordu).
   private readonly chatLimit = new RateLimiter(8, 1);
 
@@ -137,6 +151,12 @@ export class Room extends DurableObject<Env> {
       const saved = await ctx.storage.get<RoomData>('room');
       if (saved && Array.isArray(saved.queue)) this.room = saved;
       this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
+      const stickerIds = (await ctx.storage.get<string[]>('stickers')) ?? [];
+      const stickerData = await ctx.storage.get<string>(stickerIds.map((id) => `sticker:${id}`));
+      for (const id of stickerIds) {
+        const data = stickerData.get(`sticker:${id}`);
+        if (data) this.stickers.set(id, data);
+      }
       this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
       this.hostGoneAt = (await ctx.storage.get<number>('hostGoneAt')) ?? null;
       // Eski biçim (anahtar → bitiş zamanı, 10 dk'lık yasak) artık geçersiz; sadece yeni biçim okunur.
@@ -145,8 +165,8 @@ export class Room extends DurableObject<Env> {
       this.settings = (await ctx.storage.get<RoomSettings>('settings')) ?? { waitForAll: true };
       this.waits.restore(await ctx.storage.get<WaitSnapshot>('waits'));
       this.emptySince = (await ctx.storage.get<number>('emptySince')) ?? null;
-      const heat = await ctx.storage.get<Heat>('heat');
-      if (heat) this.heat.load(heat);
+      const pins = await ctx.storage.get<typeof this.pins>('pins');
+      if (pins && Array.isArray(pins.list)) this.pins = pins;
     });
   }
 
@@ -209,19 +229,59 @@ export class Room extends DurableObject<Env> {
     }
 
     switch (message.t) {
-      case 'react': {
+      case 'react':
         if (!this.reactionLimit.allow(me.id)) return;
-        const item = this.room.state.item;
-        if (!item) {
+        if (message.sticker !== undefined) {
+          if (this.stickers.has(message.sticker)) this.broadcast({ t: 'reaction', sticker: message.sticker, by: me });
+        } else {
           this.broadcast({ t: 'reaction', emoji: message.emoji, by: me });
+        }
+        return;
+      case 'sticker-add': {
+        const id = await stickerId(message.data);
+        if (this.stickers.has(id)) return;
+        if (!this.stickerLimit.allow(keyOf(attachment))) {
+          this.sendTo(ws, { t: 'error', code: 'rate_limited' });
           return;
         }
-        // Tepkinin videonun kaçıncı saniyesinde atıldığını sunucu hesaplar (istemciye güvenmez).
-        this.heat.reset(item.id);
+        // Dolunca en eski özel emoji gider.
+        while (this.stickers.size >= MAX_STICKERS) {
+          const oldest = this.stickers.keys().next().value as string;
+          this.stickers.delete(oldest);
+          await this.ctx.storage.delete(`sticker:${oldest}`);
+        }
+        this.stickers.set(id, message.data);
+        await this.ctx.storage.put({ [`sticker:${id}`]: message.data, stickers: [...this.stickers.keys()] });
+        this.broadcast({ t: 'sticker', sticker: { id, data: message.data } });
+        return;
+      }
+      case 'pin': {
+        const item = this.room.state.item;
+        if (!item) return;
+        if (this.pins.itemId !== item.id) this.pins = { itemId: item.id, list: [] };
+        if (this.pins.list.length >= MAX_PINS) {
+          this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+          return;
+        }
+        // Anı sunucu kendi oynatma durumundan hesaplar (istemciye güvenmez).
         const at = Math.round(expectedPosition(this.room.state, Date.now()) * 10) / 10;
-        this.heat.add(at, message.emoji);
-        this.broadcast({ t: 'reaction', emoji: message.emoji, by: me, at, itemId: item.id });
-        await this.ctx.storage.put('heat', this.heat.snapshot());
+        const pin: Pin & { owner: string } = { id: newId(), at, by: { id: me.id, name: me.name }, owner: keyOf(attachment) };
+        if (me.avatar) pin.by.avatar = me.avatar;
+        if (message.note) pin.note = message.note;
+        this.pins.list.push(pin);
+        this.pins.list.sort((x, y) => x.at - y.at);
+        await this.savePins();
+        return;
+      }
+      case 'unpin': {
+        const pin = this.pins.list.find((p) => p.id === message.id);
+        if (!pin) return;
+        if (pin.owner !== keyOf(attachment) && !this.isHost(ws)) {
+          this.sendTo(ws, { t: 'error', code: 'not_host' });
+          return;
+        }
+        this.pins.list = this.pins.list.filter((p) => p !== pin);
+        await this.savePins();
         return;
       }
       case 'chat':
@@ -299,6 +359,8 @@ export class Room extends DurableObject<Env> {
       await this.ctx.storage.deleteAll();
       this.room = initialRoom(now);
       this.chat = [];
+      this.stickers.clear();
+      this.pins = { itemId: null, list: [] };
       this.hostKey = null;
       this.hostGoneAt = null;
       this.bans = {};
@@ -407,17 +469,25 @@ export class Room extends DurableObject<Env> {
       chat: this.chat,
       settings: this.settings,
       waiting: this.waits.waiting,
-      heat: this.currentHeat(),
+      pins: this.currentPins(),
     });
+    // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
+    for (const [id, data] of this.stickers) this.sendTo(ws, { t: 'sticker', sticker: { id, data } });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
   }
 
-  /** Açık videonun tepki dağılımı (başka videoya aitse ya da boşsa yok). */
-  private currentHeat(): Heat | undefined {
+  /** Açık videonun pinleri (sahipleri olmadan); başka videoya aitse ya da boşsa yok. */
+  private currentPins(): PinList | undefined {
     const item = this.room.state.item;
-    if (!item || this.heat.itemId !== item.id || this.heat.size === 0) return undefined;
-    return this.heat.snapshot() ?? undefined;
+    if (!item || this.pins.itemId !== item.id || this.pins.list.length === 0) return undefined;
+    return { itemId: item.id, pins: this.pins.list.map(({ owner: _owner, ...pin }) => pin) };
+  }
+
+  private async savePins(): Promise<void> {
+    await this.ctx.storage.put('pins', this.pins);
+    const list = this.currentPins();
+    this.broadcast({ t: 'pins', pins: list ?? { itemId: this.pins.itemId ?? '', pins: [] } });
   }
 
   /**
@@ -696,7 +766,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'react' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'react' | 'sticker-add' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

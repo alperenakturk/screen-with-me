@@ -61,8 +61,10 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
 - [x] **v0.8:** film sayfasında rehber kartı, filmden odaya dönüş (herkes dönmeden yeni video
   açılmaz), sürüklenebilir çubuk ve mesaj alanı (eklenti + site tam ekran), eklenti kurulunca
   uyarının kaybolması, açılış sesi, Film / Dizi / Anime parodi avatarları. v0.8.1: temalarda süsler kenarda (video izlerken görünür), odaya dönüş onayı, isim sormadan dönüş.
-- [x] **v0.9:** klavye kısayolları (1–8 emoji, Enter mesaj), zaman çizelgesinde tepkiler
-  (en çok emoji atılan anlar), temalara orta süsler, GitHub Actions ile otomatik testler.
+- [x] **v0.9:** klavye kısayolları (1–8 emoji, Enter mesaj), temalara orta süsler, GitHub Actions ile
+  otomatik testler, Art Deco temalar. **v0.9.4:** önemli anları pinleme (tepki şeridinin yerine),
+  özel emojiler (GIF/resim), tepkiler sol altta isim+avatar kartı ve bekleme süresi, büyük avatar
+  penceresi ve canlı avatarlar, eklentide sabit rehber kartı (✕) ve boyutlandırılabilir çubuk.
   v0.9.2: Art Deco / eski afiş tarzı temalar (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması,
   Transatlantik, Gece Ekspresi) ve her birine uygun çizilmiş avatar.
 - [ ] **v1.0 — Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
@@ -82,6 +84,8 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
 - [ ] **Telefon desteği:** önce site için PWA (YouTube ve doğrudan videolar), sonra Firefox
   Android'de eklenti.
 - [ ] **Firefox desteği:** arka plan için ayrı manifest.
+- [ ] **Oda kaydetme:** belirli videolarda nerede kaldığımızı ve pinleri saklamak (hesapsız, oda linkine bağlı).
+- [ ] **Sitenin içinde film:** eklenti, film sayfasını sitemizdeki bir çerçevede açsın (site izin veriyorsa; izin vermeyenlerde bugünkü gibi ayrı sekme).
 - [ ] **Kalıcı oda / son odalar:** "benim odam" linki hep aynı kalsın; ana sayfada son odalar.
 - [ ] **Eklenti yüklü gerçek Chrome testi:** Playwright ile (birim + uçtan uca zaten CI'da).
 - [ ] **Büyüme:** kısa alan adı, repo'yu açmak, lansman planı (`docs/BUYUME.md`).

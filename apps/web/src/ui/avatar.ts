@@ -101,3 +101,36 @@ export function renderAvatarPicker(
   draw();
   return draw;
 }
+/**
+ * Büyük avatar penceresi: ekranın ortasında, geniş kutucuklarla. Seçince hemen uygulanır;
+ * çift tık, "Tamam", Esc ya da dışarı tıklamak kapatır. Odadaki ayarlardan açılır.
+ */
+export function openAvatarDialog(current: () => Avatar, onPick: (avatar: Avatar) => void): void {
+  const picker = el('div', { class: 'avatar-picker huge' });
+  const close = () => {
+    backdrop.remove();
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') close();
+  };
+  const closeButton = el('button', { type: 'button', class: 'icon-btn dialog-x', 'aria-label': t('close'), title: t('close') }, '✕');
+  closeButton.addEventListener('click', close);
+  const done = el('button', { type: 'button', class: 'btn primary' }, t('done'));
+  done.addEventListener('click', close);
+  const dialog = el(
+    'div',
+    { class: 'avatar-dialog card', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('pickAvatar') },
+    el('div', { class: 'dialog-head' }, el('h3', {}, t('pickAvatar')), closeButton),
+    picker,
+    el('div', { class: 'dialog-foot' }, done),
+  );
+  const backdrop = el('div', { class: 'dialog-backdrop' }, dialog);
+  backdrop.addEventListener('click', (event) => {
+    if (event.target === backdrop) close();
+  });
+  document.addEventListener('keydown', onKey);
+  renderAvatarPicker(picker, current, onPick, close);
+  document.body.append(backdrop);
+  done.focus();
+}

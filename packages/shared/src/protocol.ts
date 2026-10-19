@@ -1,4 +1,3 @@
-import type { Heat } from './heat.ts';
 // Sunucu ile istemciler (site ve ileride eklenti) arasındaki mesaj formatı.
 // Bu dosya hem tarayıcıda hem Cloudflare sunucusunda çalışır, bu yüzden
 // DOM'a veya Node'a özel hiçbir şey kullanmaz.
@@ -256,7 +255,15 @@ export type ClientMessage =
   | { t: 'pause'; position: number; at: number }
   | { t: 'seek'; position: number; at: number }
   | { t: 'rate'; rate: number; position: number; at: number }
-  | { t: 'react'; emoji: Reaction }
+  | { t: 'react'; emoji: Reaction; sticker?: undefined }
+  /** Odadaki bir özel emojiyle (GIF/resim) tepki ver. */
+  | { t: 'react'; sticker: string; emoji?: undefined }
+  /** Odaya özel emoji ekle (küçültülmüş resim ya da GIF, data: adresi). Kimliğini sunucu hesaplar. */
+  | { t: 'sticker-add'; data: string }
+  /** Videonun şu anını pinle (an'ı sunucu hesaplar); isteğe bağlı kısa not. */
+  | { t: 'pin'; note?: string }
+  /** Pini kaldır (kendi pinin ya da yöneticiysen herhangi biri). */
+  | { t: 'unpin'; id: string }
   | { t: 'chat'; text: string };
 
 export type ErrorCode =
@@ -288,8 +295,8 @@ export type ServerMessage =
       settings?: RoomSettings;
       /** Şu an beklenenler (üye ID'leri). */
       waiting?: string[];
-      /** Açık videonun tepki dağılımı (zaman çizelgesi). */
-      heat?: Heat;
+      /** Açık videonun pinlenmiş anları. */
+      pins?: PinList;
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member }
@@ -304,8 +311,12 @@ export type ServerMessage =
   /** Oda takılan birini bekliyor (boş liste: bekleme bitti). */
   | { t: 'waiting'; ids: string[] }
   | { t: 'settings'; settings: RoomSettings }
-  /** at/itemId: tepkinin atıldığı an (sunucu hesaplar; zaman çizelgesi için). Eski sunucular yollamaz. */
-  | { t: 'reaction'; emoji: Reaction; by: Member; at?: number; itemId?: string }
+  /** emoji ya da sticker (odadaki özel emojinin kimliği) gelir. */
+  | { t: 'reaction'; emoji?: Reaction; sticker?: string; by: Member }
+  /** Odaya bir özel emoji eklendi (girişte de odadakiler tek tek gelir). */
+  | { t: 'sticker'; sticker: Sticker }
+  /** Açık videonun pinleri değişti (tam liste). */
+  | { t: 'pins'; pins: PinList }
   | { t: 'chat'; message: ChatMessage }
   | { t: 'error'; code: ErrorCode };
 
@@ -353,6 +364,53 @@ export function cleanName(x: unknown): string | null {
   if (typeof x !== 'string') return null;
   const name = x.replace(/\s+/g, ' ').trim().slice(0, NAME_MAX_LENGTH);
   return name.length > 0 ? name : null;
+}
+
+/**
+ * Özel emojiler (sticker): kullanıcının eklediği resim/GIF, `data:image/...;base64,` olarak.
+ * Sadece raster biçimler (SVG yok: betik taşıyabilir). Oda başına en fazla MAX_STICKERS;
+ * dolunca en eskisi gider. Kimlik verinin SHA-256 özetinin ilk 12 hanesi (iki taraf da hesaplar).
+ */
+export const STICKER_MAX_CHARS = 280_000;
+export const MAX_STICKERS = 24;
+const STICKER_DATA = /^data:image\/(?:png|gif|webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/;
+const STICKER_ID = /^[0-9a-f]{12}$/;
+
+export interface Sticker {
+  id: string;
+  data: string;
+}
+
+export function isStickerData(x: unknown): x is string {
+  return typeof x === 'string' && x.length <= STICKER_MAX_CHARS && STICKER_DATA.test(x);
+}
+
+export function isStickerId(x: unknown): x is string {
+  return typeof x === 'string' && STICKER_ID.test(x);
+}
+
+export async function stickerId(data: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(digest).slice(0, 6), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Pin notu en fazla bu kadar karakter; bir videoda en fazla MAX_PINS pin. */
+export const PIN_NOTE_MAX = 60;
+export const MAX_PINS = 50;
+
+/** Videonun pinlenmiş bir anı. `by` pinleyen (sadece isim/avatar; kimlik bilgisi gitmez). */
+export interface Pin {
+  id: string;
+  /** Videonun kaçıncı saniyesi. */
+  at: number;
+  note?: string;
+  by: { id: string; name: string; avatar?: Avatar };
+}
+
+/** Bir videonun pinleri (video değişince sıfırlanır). */
+export interface PinList {
+  itemId: string;
+  pins: Pin[];
 }
 
 export function cleanChatText(x: unknown): string | null {
@@ -419,6 +477,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case 'kick':
     case 'unban':
+    case 'unpin':
       return isItemId(m.id) ? { t: m.t, id: m.id } : null;
     case 'ready':
       return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
@@ -450,7 +509,15 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (!isValidRate(m.rate) || !isPosition(m.position) || !isTimestamp(m.at)) return null;
       return { t: 'rate', rate: m.rate, position: m.position, at: m.at };
     case 'react':
-      return isReaction(m.emoji) ? { t: 'react', emoji: m.emoji } : null;
+      if (isReaction(m.emoji)) return { t: 'react', emoji: m.emoji };
+      return isStickerId(m.sticker) ? { t: 'react', sticker: m.sticker } : null;
+    case 'sticker-add':
+      return isStickerData(m.data) ? { t: 'sticker-add', data: m.data } : null;
+    case 'pin': {
+      if (m.note === undefined) return { t: 'pin' };
+      const note = cleanChatText(m.note);
+      return note ? { t: 'pin', note: Array.from(note).slice(0, PIN_NOTE_MAX).join('') } : { t: 'pin' };
+    }
     case 'chat': {
       const text = cleanChatText(m.text);
       return text ? { t: 'chat', text } : null;

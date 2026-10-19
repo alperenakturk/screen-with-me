@@ -86,6 +86,15 @@ describe('parseClientMessage', () => {
     expect(avatarPageOf('nope')).toBe(0);
   });
 
+  it('accepts pins with an optional, cleaned and shortened note', () => {
+    expect(parse({ t: 'pin' })).toEqual({ t: 'pin' });
+    expect(parse({ t: 'pin', note: '  burayı	 anlamadım ' })).toEqual({ t: 'pin', note: 'burayı anlamadım' });
+    expect(parse({ t: 'pin', note: 'x'.repeat(200) })).toEqual({ t: 'pin', note: 'x'.repeat(60) });
+    expect(parse({ t: 'pin', note: 42 })).toEqual({ t: 'pin' });
+    expect(parse({ t: 'unpin', id: 'abc123def456' })).toEqual({ t: 'unpin', id: 'abc123def456' });
+    expect(parse({ t: 'unpin', id: '<script>' })).toBeNull();
+  });
+
   it('accepts emojis from every reaction page, nothing else', () => {
     expect(parse({ t: 'react', emoji: '😂' })).toEqual({ t: 'react', emoji: '😂' });
     expect(parse({ t: 'react', emoji: '💩' })).toEqual({ t: 'react', emoji: '💩' });

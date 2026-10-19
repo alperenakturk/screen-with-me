@@ -24,14 +24,22 @@
         <label for="name" data-t="yourName"></label>
         <input id="name" maxlength="32" autocomplete="nickname" data-t-placeholder="namePlaceholder" />
         <label data-t="yourAvatar"></label>
-        <div id="avatar-picker" class="avatar-picker" role="radiogroup"></div>
+        <div class="avatar-choice"><span id="avatar-preview"></span><button type="button" id="open-avatars" class="btn" data-t="changeAvatar"></button></div>
         <button class="btn primary" data-t="save"></button>
       </form>
     </section>
 
     <section id="me-view" class="me" hidden>
       <span id="me-name"></span>
+      <button id="me-avatar" class="link" data-t="changeAvatar"></button>
       <button id="edit-name" class="link" data-t="edit"></button>
+    </section>
+
+    <!-- Avatar seçimi: pencerenin tamamını kaplayan büyük panel -->
+    <section id="avatar-sheet" class="sheet" hidden>
+      <div class="sheet-head"><b data-t="yourAvatar"></b><button type="button" id="close-avatars" class="link">✕</button></div>
+      <div id="avatar-picker" class="avatar-picker big" role="radiogroup"></div>
+      <button type="button" id="done-avatars" class="btn primary" data-t="done"></button>
     </section>
 
     <!-- Oda az önce kapandıysa nedeni (çıkarıldın, güncelle, oda dolu). -->

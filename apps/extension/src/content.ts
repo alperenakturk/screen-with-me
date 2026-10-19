@@ -242,10 +242,16 @@ function onMessage(message: BackgroundMessage): void {
       overlay.setRoom(message.room);
       break;
     case 'reaction':
-      overlay.reaction(message.emoji, message.name);
+      overlay.reaction(message);
       break;
-    case 'heat':
-      overlay.setHeat(message.heat);
+    case 'sticker':
+      overlay.addSticker(message.id, message.data);
+      break;
+    case 'stickers-clear':
+      overlay.clearStickers();
+      break;
+    case 'pins':
+      overlay.setPins(message.pins);
       break;
     case 'chat':
       overlay.chat(message.line);

@@ -138,18 +138,34 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   `goToRoom` (oturumu kapatıp sekmeyi `/r/ODA#back`'e götürür; site `#back` görünce isim/avatar
   sormadan girer, isim henüz eklentiden gelmediyse 800 ms bekler). Sunucu: eklentiyle (`client: 'ext'`) filmde biri varken siteden
   yeni video açılamaz / sıradakine geçilemez (`others_watching`); sıraya eklemek serbest.
-- **Zaman çizelgesinde tepkiler (`heat.ts`):** sunucu her tepkinin videonun hangi saniyesinde
-  atıldığını kendi `PlaybackState`'inden hesaplar (istemciye güvenmez), 10 sn dilimlerde sayar
-  (`HeatMap`, depoda `heat`), `reaction` mesajına `at`/`itemId` ekler, yeni gelene `welcome.heat`
-  yollar; video değişince sıfırlanır. Site video altında + tam ekranda ilerleme çubuğu üstünde,
-  eklenti çubuğun 3. satırında ince şerit çizer (en az 3 tepki; en çok 3 an tıklanınca oraya sarar).
-- **Klavye:** 1–8 o sayfanın emojileri, Enter mesaj (sitede `reactions.ts` + `room.ts`, tam ekranda
+- **Pinler:** `{t:'pin', note?}` → sunucu anı kendi `PlaybackState`'inden hesaplar, pinleyenin
+  kalıcı anahtarını (`owner`) saklar ama istemcilere göndermez; tam liste `{t:'pins'}` ile yayılır,
+  yeni gelene `welcome.pins`. Kendi pinini (yönetici hepsini) `unpin` ile kaldırır; en fazla 50; video
+  değişince sıfırlanır. Site: video altında + tam ekranda ilerleme üstünde şerit (fare videodayken
+  belirgin), 📌 düğmesi / P → not kutusu. Eklenti: çubuğun alt satırında şerit, 📌 / P hızlı mesaj
+  kutusunu pin notu moduna alır. (Eski "tepki şeridi"/heat tamamen kaldırıldı.)
+- **Özel emojiler (sticker):** `{t:'sticker-add', data}` (`data:image/png|gif|webp|jpeg;base64`, en fazla
+  `STICKER_MAX_CHARS`; SVG yok). Kimlik = SHA-256 ilk 12 hane (`stickerId`, iki taraf da hesaplar).
+  Odada en fazla 24, dolunca en eskisi gider; depoda `sticker:<id>` + `stickers` sırası (tek değer ≤128 KB).
+  Girişte welcome'dan sonra tek tek `{t:'sticker'}` (1 MB mesaj sınırı). Tepki `{t:'react', sticker}`.
+  Dosya hazırlama `sticker-file.ts` (resim 160 px webp, GIF olduğu gibi). Kendi listem site
+  `localStorage` / eklenti `storage.local` `myStickers`; her odaya girişte yeniden yüklenir.
+- **Tepki gösterimi:** ekranın ortasında uçuşmaz; sol altta avatar + isim + emoji kartı (3,2 sn),
+  aynı kişinin aynı tepkisi "×2" olur; her tepkiden sonra 1,1 sn bekleme. Eklentide avatar resmi
+  `web_accessible_resources` ile; sayfa engellerse emoji karşılığı.
+- **Klavye:** 1–8 o sayfanın emojileri/özel emojileri, Enter mesaj, P pin (sitede `reactions.ts` + `room.ts`, tam ekranda
   `fullscreen.ts`; eklentide `overlay.ts`). Eklentide tuş yakalama aşamasında alınıp siteye hiç
   gösterilmez: oynatıcılar rakamlarla sarar (3 = %30), yoksa emoji atınca herkes sarılırdı.
+- **Avatar seçimi:** sitede odadaki ayarlarda "Avatarı değiştir" → ekran ortasında büyük pencere
+  (`openAvatarDialog`); eklentide pencerenin tamamını kaplayan panel. Üstüne gelince sallanır, seçili
+  olan süzülür (CSS; `prefers-reduced-motion`'da kapalı).
+- **Eklenti çubuğu boyutu:** sağ alt köşeden sürüklenir (`storage.local` `barSize`, çift tık sıfırlar);
+  170 px'ten uzunsa içinde sohbet geçmişi açılır ve mesajlar ayrıca ekrana düşmez.
 - **Avatar sayfalama:** bir sekmede `AVATARS_PER_VIEW` (20) fazlası ‹ › ile ikinci görünüme geçer.
 - **CI (`.github/workflows/test.yml`):** her push/PR'da tip kontrolü, birim, derleme, `wrangler dev`
-  ile yerel sunucu + `npm run e2e`. Repo private: ayda 2000 dk ücretsiz.- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) çubukta oklu
-  kısa kart: kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.
+  ile yerel sunucu + `npm run e2e`. Repo private: ayda 2000 dk ücretsiz.- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) sayfanın sağ üstünde
+  sabit kart (videonun içinde değil: küçük oynatıcıda düğmeler görünmüyordu; ✕ + Esc + "Anladım",
+  ScreenWithMe düğmesi parlar): kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.
   "Bir daha gösterme" → `storage.local` `guideOff`.
 - **Sahnelerde üst boşluk ve yanlar:** sahne (1600×900) alttan hizalı ve ekranı kaplar; geniş ekranda
   üst kısım kırpılır ve üst şerit de kapatır: süsleri y≈200'ün üstüne koyma. Oda içeriği ortada en

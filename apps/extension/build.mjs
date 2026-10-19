@@ -48,6 +48,8 @@ const manifest = {
   icons: { 16: 'icon16.png', 32: 'icon32.png', 48: 'icon48.png', 128: 'icon128.png' },
   permissions: ['storage'],
   host_permissions: ['<all_urls>'],
+  // Tepki kartlarında avatar resmi film sayfasında da görünsün.
+  web_accessible_resources: [{ resources: ['avatars/*.svg'], matches: ['<all_urls>'] }],
   background: { service_worker: 'background.js', type: 'module' },
   action: {
     default_popup: 'popup.html',
