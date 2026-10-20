@@ -40,6 +40,12 @@ await can.wait((m) => m.t === 'welcome', 'welcome can');
 const late = await can.wait((m) => m.t === 'sticker', 'late sticker');
 ok(late.sticker.id === got.sticker.id, 'Sonradan gelen, odanın özel emojilerini girişte alıyor');
 
+// Gerçek boyutlu (≈200 KB'lık GIF kadar) özel emoji de geçmeli: genel 4 KB mesaj sınırına takılmasın.
+const BIG = 'data:image/gif;base64,' + 'R0lGODlh'.repeat(25_000);
+ali.send({ t: 'sticker-add', data: BIG });
+const big = await ayse.wait((m) => m.t === 'sticker', 'big sticker');
+ok(big.sticker.data === BIG, `Büyük özel emoji (${Math.round(BIG.length / 1000)} KB) odaya ekleniyor`);
+
 ali.send({ t: 'sticker-add', data: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' });
 const err = await ali.wait((m) => m.t === 'error', 'svg refused');
 ok(err.code === 'bad_message', 'SVG (betik taşıyabilir) reddediliyor');

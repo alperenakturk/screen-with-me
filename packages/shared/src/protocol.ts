@@ -415,6 +415,8 @@ export function cleanName(x: unknown): string | null {
  */
 export const STICKER_MAX_CHARS = 280_000;
 export const MAX_STICKERS = 24;
+/** sticker-add mesajının en fazla uzunluğu: resim + JSON kabuğu. */
+const STICKER_MESSAGE_MAX = STICKER_MAX_CHARS + 64;
 const STICKER_DATA = /^data:image\/(?:png|gif|webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/;
 const STICKER_ID = /^[0-9a-f]{12}$/;
 
@@ -493,7 +495,8 @@ export function isValidMedia(x: unknown): x is Media {
 }
 
 export function parseClientMessage(raw: string): ClientMessage | null {
-  if (raw.length > MAX_MESSAGE_BYTES) return null;
+  // Özel emoji resmi taşıdığı için büyük olabilir; diğer her mesaj MAX_MESSAGE_BYTES ile sınırlı.
+  if (raw.length > STICKER_MESSAGE_MAX) return null;
   let m: unknown;
   try {
     m = JSON.parse(raw);
@@ -501,6 +504,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     return null;
   }
   if (!isObject(m)) return null;
+  if (raw.length > MAX_MESSAGE_BYTES && m.t !== 'sticker-add') return null;
 
   switch (m.t) {
     case 'hello': {
