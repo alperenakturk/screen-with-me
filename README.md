@@ -14,7 +14,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-126%20unit%20%2B%2012%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.9.51-7c5cff)
+![Version](https://img.shields.io/badge/version-0.9.52-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
@@ -38,7 +38,7 @@ the speed, it happens for everyone. Reactions, chat, pins and a shared queue sit
 | ⏳ **Everyone ready** | If someone's video stalls (buffering, an ad), the room waits for them — at most 12 s; the same person can't stall the room again for 30 s. |
 | 🧩 **Any website** | The extension finds the right video (skips ads and short previews), also inside iframes and in players that load late or switch sources. |
 | 🪟 **Film inside the room** | With the extension, a page link opens in the room's player area showing only the video. Pages that forbid being framed (checked from their headers, never stripped) fall back to their own tab. |
-| 🖼️ **Room view** | When the video plays in its own tab, the extension reshapes that page: a top bar (room, pins, sync, people, invite, back to room) and a side panel with chat, reactions and speed. Works on sites that forbid framing too. |
+| 🖼️ **Room view** | When the video plays in its own tab, the extension turns that page into the same room as on the website: top bar, invite + chat + people on the right, reactions, pins, sync and speed under the video, all in the Night theme. Works on sites that forbid framing too. Before the video exists, a "Start the film" card points at the player. Fullscreen keeps the controls and a draggable message spot. |
 | ⏩ **Shared speed** | 0.25×–4× (YouTube up to 2×), fine steps of ±0.05. In the extension other speed extensions can't knock the room out of sync. |
 | 🧪 **Sync test** | A built-in 12-second counter drawn by the site; a badge shows how far apart you are. |
 | 🖥️ **Fullscreen** | Distraction-free: controls, reactions, pins and a quick-message box appear when you move the mouse. |

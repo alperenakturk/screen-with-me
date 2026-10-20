@@ -1,6 +1,6 @@
 # ScreenWithMe — Vizyon ve Yol Haritası
 
-_Son güncelleme: 20 Ekim 2026 · şu anki sürüm 0.9.50_
+_Son güncelleme: 20 Ekim 2026 · şu anki sürüm 0.9.52_
 
 ## Vizyon
 
@@ -51,7 +51,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.50)
+## Şu an neler var? (0.9.52)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
@@ -59,8 +59,9 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 - YouTube ve doğrudan video dosyası sitede; diğer her sayfa eklentiyle.
 - **Film odanın içinde:** sayfa linki odanın oynatıcı alanında iframe'de, sadece video olarak açılır
   (seçenek yok, hep açık). İzin vermeyen site → ayrı sekme kartı.
-- **Oda görünümü (eklenti):** film kendi sekmesindeyken sayfa odaya dönüşür (üst şerit + sağda sohbet,
-  emoji, hız paneli). Gömmeyi yasaklayan sitelerde de çalışır.
+- **Oda görünümü (eklenti):** film kendi sekmesindeyken sayfa sitedeki odanın aynısına dönüşür (Gece teması;
+  üst şerit, sağda davet + sohbet + kişiler, video altında emojiler, pin, eşitle, hız, tam ekran). Gömmeyi
+  yasaklayan sitelerde de çalışır. Video henüz yoksa "Filmi başlat" kartı oynatıcıyı okla gösterir.
 - Hız 0,25x–4x (YouTube en fazla 2x), ±0,05 ince ayar; eklentide hız kilidi.
 - Senkron testi (sitenin çizdiği sayaç + "aynı yerdesiniz" rozeti), "Herkesi bana eşitle".
 - Dikkat dağıtmayan tam ekran (kontroller, emojiler, pin şeridi, hızlı mesaj).
@@ -87,7 +88,8 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   temaları, astronot / uzaylı / siber avatarlarıyla birlikte 0.9.51'de kaldırıldı.)
 - Çizilmiş avatarlar (temalı + parodi film / dizi / anime) ve hayvan emojileri; büyük seçim penceresi.
 - Açılış animasyonu ve üretilmiş açılış sesi; Türkçe (varsayılan) / İngilizce.
-- Eklentide sürüklenen ve boyutlanan çubuk, ilk girişte rehber kartı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
+- Eklentide film sayfası sitedeki oda gibi (Gece teması), video bulunmadan "Filmi başlat" kartı, tam ekranda
+  sürüklenen mesaj tutamağı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
 
 **Geliştirme**
 - 126 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
@@ -110,6 +112,10 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 - **v0.9.49:** Kaydedilen odalar (adlı, ana sayfada liste), oturum özeti, sohbette eylemler gizli,
   emojileri kapatma, 4x hız, varsayılan Türkçe.
 - **v0.9.50:** Oda görünümü (film kendi sekmesinde, sayfa odaya dönüşür).
+- **v0.9.52:** Film sayfası sitedeki odanın aynısı (Gece teması: üst şerit, sağda davet + sohbet + kişiler, video
+  altında emojiler, pin, eşitle, hız, tam ekran); küçük çubuk ve rehber kartı kaldırıldı; video bulunmadan "Filmi
+  başlat" kartı (oynatıcıyı okla gösterir); tam ekranda sitedeki gibi kontroller ve sürüklenen mesaj tutamağı; iç
+  içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
 - **v0.9.51:** Uzay ve Cyberpunk temaları ile onlara ait 4 avatar (astronot, uzaylı, siber gözlüklü,
   siber hacker kız) kaldırıldı; o temayı seçmiş olan Gece'ye, o avatarı seçmiş olan rastgele avatara düşer.
 - **Sunucu düzeltmesi (Ekim 2026):** 4 KB'tan büyük özel emojiler (gerçek resim ve GIF'ler) sunucuda

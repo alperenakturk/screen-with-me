@@ -112,8 +112,8 @@ interface Session {
   navigatingTo: string | null;
   /** Video bulununca "İyi seyirler" açılışı gösterilsin mi (eklentiden oda kurunca/katılınca). */
   intro: boolean;
-  /** Bu oturumda film sayfasındaki rehber gösterildi mi (her odada bir kez)? */
-  guided: boolean;
+  /** Odanın son mesajları (film sayfasındaki sohbet panelinde geçmiş olarak gösterilir). */
+  chatLog: ChatLine[];
   /** Açık videonun pinlenmiş anları (çubuktaki pin şeridi için). */
   pins: PinList | null;
   /** Oda ayarı: video bitince sıradakine kendiliğinden geç. */
@@ -256,7 +256,7 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     outbox: [],
     navigatingTo: null,
     intro: options.intro ?? false,
-    guided: false,
+    chatLog: [],
     pins: null,
     autoNext: true,
     noReactions: false,
@@ -306,6 +306,7 @@ function onServer(session: Session, message: ServerMessage): void {
       session.autoNext = message.settings?.autoNext !== false;
       session.noReactions = message.settings?.noReactions === true;
       session.roomName = message.settings?.saved && message.settings.name ? message.settings.name : null;
+      session.chatLog = message.chat.map((m) => chatLine(session, m));
       // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
       session.stickers.clear();
       toActive(session, { type: 'stickers-clear' });
@@ -319,12 +320,14 @@ function onServer(session: Session, message: ServerMessage): void {
       for (const queued of session.outbox.splice(0)) session.connection.send(queued);
       pushState(session);
       pushRoom(session);
+      pushRoomView(session);
       break;
     case 'state':
       session.state = message.state;
       session.lastBy = message.by;
       void follow(session);
       pushState(session);
+      pushRoomView(session);
       if (session.pins && session.pins.itemId !== message.state.item?.id) {
         session.pins = null;
         pushPins(session);
@@ -394,9 +397,12 @@ function onServer(session: Session, message: ServerMessage): void {
       session.stickers.delete(message.id);
       toActive(session, { type: 'sticker-removed', id: message.id });
       break;
-    case 'chat':
-      toActive(session, { type: 'chat', line: chatLine(session, message.message) });
+    case 'chat': {
+      const line = chatLine(session, message.message);
+      session.chatLog = [...session.chatLog, line].slice(-50);
+      toActive(session, { type: 'chat', line });
       break;
+    }
     case 'pong':
       toActive(session, clockMessage(session));
       break;
@@ -490,27 +496,35 @@ async function goToRoom(session: Session): Promise<void> {
 }
 
 function chatLine(session: Session, message: ChatMessage): ChatLine {
-  return { id: message.id, name: withAvatar(message.by), text: message.text, mine: message.by.id === session.myId };
+  return {
+    id: message.id,
+    name: message.by.name,
+    ...(message.by.avatar ? { avatar: message.by.avatar } : {}),
+    text: message.text,
+    mine: message.by.id === session.myId,
+    at: message.at,
+  };
 }
 
 /**
- * Oda görünümü tercihi (varsayılan açık): film kendi sekmesinde oynarken sayfanın üstü bizim
- * oda kabuğuyla kaplanır. Çerçeve yok, sitenin hiçbir başlığına dokunulmaz; her sitede çalışır.
+ * Oda görünümü (hep açık): film kendi sekmesinde oynarken sayfa sitedeki odaya dönüşür. Çerçeve yok,
+ * sitenin hiçbir başlığına dokunulmaz; her sitede çalışır. Video henüz bulunmadıysa (çoğu oynatıcı
+ * videoyu "oynat"a basınca oluşturur) üst çerçeve "Filmi başlat" kartı gösterir.
  */
-let roomViewPref = true;
-void chrome.storage.local.get('roomView').then(({ roomView }) => {
-  roomViewPref = roomView !== false;
-  for (const session of sessions.values()) pushRoomView(session);
-});
+function roomViewMessage(session: Session, frameId: number): Extract<BackgroundMessage, { type: 'roomview' }> {
+  const on = session.activated && session.activeFrame !== null;
+  const hint = frameId === 0 && !on && session.state?.item?.media.kind === 'page' && onRoomPage(session);
+  return { type: 'roomview', on, active: frameId === session.activeFrame, hint };
+}
 
-/** Oda görünümünü sekmedeki tüm çerçevelere duyurur (etkin çerçeve kabuğu çizer, üsttekiler büyütür). */
+/** Oda görünümünü sekmedeki tüm çerçevelere duyurur (etkin çerçeve odayı çizer, üsttekiler büyütür). */
 function pushRoomView(session: Session): void {
-  const on = roomViewPref && session.activated && session.activeFrame !== null;
-  const key = `${on}:${session.activeFrame}`;
+  const top = roomViewMessage(session, 0);
+  const key = `${top.on}:${top.hint}:${session.activeFrame}`;
   if (session.roomViewSent === key) return;
   session.roomViewSent = key;
   for (const [frameId, frame] of frames.get(session.tabId) ?? []) {
-    if (!frame.embedDepth) post(frame.port, { type: 'roomview', on, active: frameId === session.activeFrame });
+    if (!frame.embedDepth) post(frame.port, roomViewMessage(session, frameId));
   }
 }
 
@@ -586,15 +600,10 @@ function pushState(session: Session): void {
     pushRoom(session);
     pushRoomView(session);
     for (const [id, data] of session.stickers) post(frame.port, { type: 'sticker', id, data });
-    const withIntro = session.intro;
+    post(frame.port, { type: 'chat-history', lines: session.chatLog });
     if (session.intro) {
       session.intro = false;
       post(frame.port, { type: 'intro' });
-    }
-    // Odada ilk kez videonun üstüne gelindi: kısa rehber (kullanıcı kapatmadıysa).
-    if (!session.guided) {
-      session.guided = true;
-      post(frame.port, { type: 'guide', afterIntro: withIntro });
     }
   } else {
     post(frame.port, { type: 'state', state: session.state });
@@ -631,12 +640,6 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     case 'join':
       await startSession(tabId, message.roomId);
       break;
-    case 'roomview': {
-      roomViewPref = message.on;
-      void chrome.storage.local.set({ roomView: message.on });
-      for (const session of sessions.values()) pushRoomView(session);
-      break;
-    }
     case 'candidate': {
       frame.score = message.score;
       frame.size = message.size;
@@ -650,7 +653,7 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       } else if (session && !frame.embedDepth) {
         chooseActive(session);
         // Sonradan yüklenen çerçeve (oynatıcı iframe'i) de oda görünümünü bilsin.
-        post(port, { type: 'roomview', on: roomViewPref && session.activated && session.activeFrame !== null, active: frameId === session.activeFrame });
+        post(port, roomViewMessage(session, frameId));
       } else {
         // Bu sekmede (bu çerçeve için) oda yoksa çerçeve boşuna video aramasın.
         post(port, { type: 'idle' });

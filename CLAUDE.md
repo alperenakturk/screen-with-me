@@ -30,8 +30,8 @@ apps/server       Cloudflare Worker + Durable Object (src/room.ts: oda başına 
 apps/web          Site (Vite, sade TS/HTML/CSS). src/room.ts oda sayfası; src/ui/* paneller
                   (chat, queue, people, settings, tabs, fullscreen, reactions, toasts); themes.ts; i18n.ts (TR/EN)
 apps/extension    Manifest V3 eklenti (esbuild, build.mjs). background.ts (sekme başına oda bağlantısı),
-                  content.ts (her çerçevede; video bul + motoru çalıştır), overlay.ts (video üstü çubuk,
-                  emoji, mesajlar; kapalı shadow DOM), popup.ts, site-bridge.ts (sadece bizim sitede)
+                  content.ts (her çerçevede; video bul + motoru çalıştır), overlay.ts (oda görünümü, tam ekran
+                  kontrolleri, "Filmi başlat" kartı; kapalı shadow DOM), popup.ts, site-bridge.ts (sadece bizim sitede)
 scripts/e2e       Uçtan uca testler (sahte kullanıcılarla gerçek sunucu) · scripts/harness: eklenti test sayfası
 ```
 
@@ -93,7 +93,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   hemen o adrese götürür ve `{source:'screenwithme-extension', type:'joining'}` ile cevap verir,
   site kendi bağlantısını kapatır (aynı kişi odada iki kez görünmesin). Kimseyi habersiz
   yönlendirme: sayfa linkinde sitede açıklama + "Sayfaya git" butonu çıkar.
-- **Eklentide hız kilidi:** motor `lockRate: true`; hız sadece çubuktaki menüden değişir, başka
+- **Eklentide hız kilidi:** motor `lockRate: true`; hız sadece bizim hız menüsünden (video altı / tam ekran) değişir, başka
   hız eklentilerinin değişikliği odaya yayılmaz, geri alınır (inatlaşma sınırı var). Sitede kapalı.
 - **Eklenti bizim sitede çalışmaz:** içerik betiği sitenin sayfalarına hiç eklenmez (`exclude_matches`),
   sitenin kendi YouTube iframe'inde (sitenin doğrudan çocuğu + youtube alan adı) bağlanmaz; popup
@@ -116,10 +116,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Hayalet bağlantılar:** sunucu her bağlantının son mesajını (`seen`) tutar; 150 sn sessiz
   olanı kapatıp listeden düşürür (`pruneStale`, katılımda ve en fazla 20 sn'de bir).
 - **Eklenti güvenliği:** `#swm=ODA` işaretiyle sormadan katılma sadece `document.referrer` bizim
-  siteyse; değilse çubukta "katılmak ister misin?" sorulur. Odada bir sayfa açıkken sekme başka
+  siteyse; değilse videonun üstünde "katılmak ister misin?" sorulur. Odada bir sayfa açıkken sekme başka
   sayfaya giderse (`onRoomPage` yanlış) senkron o sayfada durur. `startSession` sekme başına
   kilitli (çift tıklama iki bağlantı açmaz); ilk video (`load`) bağlantıdan önce verilir.
-  Atılma/sürüm/oda dolu → çubukta 6 sn açıklama (`ended`) + popup'ta neden.
+  Atılma/sürüm/oda dolu → videonun üstünde 6 sn açıklama (`ended`) + popup'ta neden.
 - **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 5 sayfa: temalı çizilmiş karakterler, hayvan
   emojileri, parodi film / dizi / anime. Seçicideki sekmeler `AVATAR_TABS` (Parodi'nin alt
   sekmeleri var; site `ui/avatar.ts` ve popup aynı yapıyı kullanır). Çizilmiş avatarın değeri bir
@@ -133,10 +133,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   `INTRO_VARIANT` (kullanıcı F'yi seçti). Hepsi animasyon anlarına (0 / 0,72 / 1,1–1,4 sn) oturur
   (site + eklenti). Tarayıcı sesi engellerse 250 ms içinde vazgeçer (geç gelen ses tuhaf olur).
   Dinlemek için `scheduleIntroSound` çevrimdışı bağlamla WAV'a basılabilir.
-- **Mesaj yeri:** eklentide çubuk ⠿ ile, sitede tam ekranda "💬 Mesajlar burada" tutamağıyla
-  sürüklenir (oran olarak saklanır: eklenti `storage.local` `barPos`, site `localStorage`
-  `toastPos`; çift tık sıfırlar). Mesajlar tutamağın yanına hizalanır, alt taraftaysa yukarı büyür.
-- **Filmden odaya dönüş:** eklenti çubuğundaki 🏠 (onay kartı) / popup (iki kez bas) → arka plan
+- **Mesaj yeri:** tam ekranda "💬 Mesajlar burada" tutamağıyla sürüklenir (oran olarak saklanır: site
+  `localStorage` `toastPos`, eklenti `storage.local` `toastPos`; çift tık sıfırlar). Mesajlar tutamağın
+  yanına hizalanır, alt taraftaysa yukarı büyür. Eklentinin oda görünümünde mesajlar sağdaki sohbet panelinde.
+- **Filmden odaya dönüş:** eklentide oda görünümünün üst şeridindeki 🏠 (onay kartı) / popup (iki kez bas) → arka plan
   `goToRoom` (oturumu kapatıp sekmeyi `/r/ODA#back`'e götürür; site `#back` görünce isim/avatar
   sormadan girer, isim henüz eklentiden gelmediyse 800 ms bekler). Sunucu: eklentiyle (`client: 'ext'`) filmde biri varken siteden
   yeni video açılamaz / sıradakine geçilemez (`others_watching`); sıraya eklemek serbest.
@@ -144,8 +144,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kalıcı anahtarını (`owner`) saklar ama istemcilere göndermez; tam liste `{t:'pins'}` ile yayılır,
   yeni gelene `welcome.pins`. Kendi pinini (yönetici hepsini) `unpin` ile kaldırır; en fazla 50; video
   değişince sıfırlanır. Site: video altında + tam ekranda ilerleme üstünde şerit (fare videodayken
-  belirgin), 📌 düğmesi / P → not kutusu. Eklenti: 📌 sadece çubukta (videonun üstünde düğme yok), şerit videoda fare durunca 3 sn'de gizlenir; 📌 / P hızlı mesaj
-  kutusunu pin notu moduna alır. (Eski "tepki şeridi"/heat tamamen kaldırıldı.)
+  belirgin), 📌 düğmesi / P → not kutusu. Eklenti: oda görünümünde video altında şerit + araç çubuğunda 📌,
+  tam ekranda ilerleme çubuğunun üstünde; 📌 / P videonun sol altında not kutusu açar. (Eski "tepki şeridi"/heat tamamen kaldırıldı.)
 - **Özel emojiler (sticker):** `{t:'sticker-add', data}` (`data:image/png|gif|webp|jpeg;base64`, en fazla
   `STICKER_MAX_CHARS`; SVG yok). Genel mesaj sınırı 4 KB (`MAX_MESSAGE_BYTES`); sadece `sticker-add`
   `STICKER_MESSAGE_MAX`'a kadar büyük olabilir (eskiden gerçek resimler bu yüzden reddediliyordu; e2e
@@ -198,17 +198,17 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Avatar seçimi:** sitede odadaki ayarlarda "Avatarı değiştir" → ekran ortasında büyük pencere
   (`openAvatarDialog`); eklentide pencerenin tamamını kaplayan panel. Üstüne gelince sallanır, seçili
   olan süzülür (CSS; `prefers-reduced-motion`'da kapalı).
-- **Eklenti çubuğu boyutu:** sağ alt köşeden sürüklenir (`storage.local` `barSize`, çift tık sıfırlar);
-  170 px'ten uzunsa içinde sohbet geçmişi açılır ve mesajlar ayrıca ekrana düşmez.
 - **Avatar listeleri sayfasız:** sekmede çok avatar olunca ızgara kayar (‹ › yok; kullanıcı istemedi).
 - **CI (`.github/workflows/test.yml`):** her push/PR'da tip kontrolü, birim, derleme, `wrangler dev`
   ile yerel sunucu + `npm run e2e`. `main`'e push'ta (ya da Actions → "Run workflow") testler geçerse
   `deploy` işi: derleme → `wrangler deploy` → canlıya karşı e2e. Anahtarlar repo Secrets'ta
   (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`); yoksa iş uyarıyla atlanır. Repo private: ayda 2000 dk ücretsiz.
-- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) sayfanın sağ üstünde
-  sabit kart (videonun içinde değil: küçük oynatıcıda düğmeler görünmüyordu; ✕ + Esc + "Anladım",
-  ScreenWithMe düğmesi parlar): kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.
-  "Bir daha gösterme" → `storage.local` `guideOff`.
+- **"Filmi başlat" kartı (eklenti):** odanın sayfasındayız ama video henüz bulunmadıysa (çoğu oynatıcı
+  videoyu oynat'a basınca oluşturur) arka plan üst çerçeveye `roomview.hint` yollar; üst çerçeve ortada kart +
+  oynatıcının olası yerini (`focus.ts` `likelyPlayer`: video → iframe → 16:9'a yakın büyük kutu) parlayan çerçeve
+  ve 👇/👆 okla gösterir. Kart oynat düğmesini kapatmaz (yer yoksa oynatıcının üst kısmında, oksuz). Video
+  bulununca oda görünümü açılır, kart kalkar. Eski sağ üst rehber kartı ve küçük çubuk (⠿, boyutlandırma,
+  ⤡/⤢, `barPos`/`barSize`/`roomView`/`guideOff`) tamamen kaldırıldı.
 - **Sahnelerde üst boşluk ve yanlar:** sahne (1600×900) alttan hizalı ve ekranı kaplar; geniş ekranda
   üst kısım kırpılır ve üst şerit de kapatır: süsleri y≈200'ün üstüne koyma. Oda içeriği ortada en
   fazla 1280 px; kullanıcı çoğunlukla video izlerken bakar, o yüzden ana süsler (ay, kale, ejderha,
@@ -231,14 +231,18 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   (overlay `setEmbedded`, sadece "İzlemeye başla"). Sitenin YouTube iframe'i (sitenin doğrudan çocuğu,
   youtube alan adı) hâlâ yok sayılır. "Ayrı sekmede aç" bugünkü el değiştirmeye döner. Gerçek Chrome
   testi: `scripts/harness/embed/` (README'de).
-- **Oda görünümü (eklenti, film kendi sekmesindeyken):** varsayılan açık (`storage.local` `roomView`). Çerçeve yok,
-  sitenin hiçbir başlığına dokunulmaz; bu yüzden gömmeyi yasaklayan sitelerde de çalışır (site kartı bunu
-  anlatır). Arka plan `pushRoomView` ile sekmedeki tüm çerçevelere `{type:'roomview', on, active}` yollar (sonradan
-  yüklenen çerçeveye `candidate`ta). Etkin çerçeve `applyFocus(…, {top: ROOM_TOP, right: ROOM_SIDE})` ile oynatıcıyı
-  sol-alttaki boşluğa koyar, overlay `.roomview`: üst şerit (logo, oda adı, 📌, senkron, 👥, davet, 🏠, ⤡ küçült) +
-  sağda tam boy panel (sohbet geçmişi, emojiler, mesaj, hız; çubuğun kendisi CSS ile). Diğer çerçeveler en büyük iç
-  çerçeveyi tüm ekrana büyütür (üst sayfada büyük bir reklam çerçevesi varsa yanlış seçebilir; ⤡ ile küçültülür).
-  Oynatıcı tam ekransa normal çubuğa döner. Çubuktaki ⤢ yeniden açar. Test: film-server `/deny-nested`.
+- **Oda görünümü (eklenti, film kendi sekmesindeyken):** hep açık, seçenek yok. Sitedeki odanın aynısı, renkler
+  "Gece" teması (overlay CSS değişkenleri): üst şerit (logo, oda adı, senkron noktası + ms, 🏠 Odaya dön), sağda davet
+  kartı + Sohbet / 👥 Kişiler sekmeleri (sohbet geçmişi: arka plan `chatLog` → etkinleşince `chat-history`), videonun
+  altında pin şeridi + araç çubuğu (8 yuvalı emoji ▲▼ | 🖼️ 📌 🔄 eşitle, − hız +, ⛶). Ölçüler tek yerde: `focus.ts`
+  `roomLayout` (üst 72, sol 16, sağ panel 280/320 + 32, alt 96); `applyFocus` videoyu bu boşluğa koyar, zemin
+  sitenin degradesi, köşeler 12 px. Çerçeve yok, sitenin hiçbir başlığına dokunulmaz; gömmeyi yasaklayan sitelerde de
+  çalışır. İç içe oynatıcıda videolu çerçeve üstüne `postMessage({type:'swm-focus-here'})` der, ara çerçeveler
+  mesajın geldiği iframe'i bulup yukarı iletir: üst sayfa en büyük çerçeveyi değil videonun olduğu çerçeveyi büyütür.
+  **Tam ekran:** bizim ⛶ çerçevenin `documentElement`'ini tam ekran yapar → video üstte, altta `FS_BOTTOM` (112 px)
+  şeritte sitedeki gibi kontroller (ilerleme + pinler, ▶, emojiler, hızlı mesaj, 📌, hız, ✕), mesajlar sürüklenen
+  tutamağın yanında. Film sitesinin kendi ⛶'unda odak kapanır, aynı kontroller videonun üstünde (fare durunca solar).
+  Test: `scripts/harness/embed/film-server.mjs` `/late` (oynat'a basınca oluşan oynatıcı) ve `/deny-nested`.
 - **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
   (herkes başa sarılmasın); 60 sn'den kısa video bitince "sıradaki" istenmez (reklam/önizleme).
 
@@ -252,7 +256,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kartında "▶ Sıradakini başlat" çıkar (eklentide `RoomInfo.autoNext`). Sıra panelinde oylama notu.
 - **Takip sorusu (eklenti):** başkası yeni sayfa/video açınca ya da odaya dönünce `ask-follow`; yeni öğe
   gelince bu sayfadaki senkron hemen durur (`pushState` → deactivate), soru yine de gider (`toActive`
-  istisnası) ve çubuksuz (`bare`) gösterilir; "burada kal" çubuğu kaldırır.
+  istisnası) ve sadece kart (`bare`) gösterilir; "burada kal" katmanı kaldırır.
 
 ## Yayın kontrol listesi
 1. `npm run typecheck && npm test` (sunucu değiştiyse `wrangler dev` + `npm run e2e` de).
@@ -267,11 +271,17 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - Kullanıcı artık çoğunlukla evdeki bilgisayar yerine claude.ai/code bulut oturumundan çalışıyor:
   repo her oturumda temiz klonlanır, konteyner geçicidir → her işi commit + push et. Geliştirme
   `claude/...` dalında; `main`'e PR ile girer (CI orada koşar, birleşince otomatik yayın).
+  **PR'ı açmak ve CI yeşil olunca birleştirmek Claude'un işi** (kullanıcı istedi, Ekim 2026): her iş bitince
+  PR aç, testleri bekle, yeşilse birleştir, Actions'taki yayının (deploy) yeşil olduğunu kontrol edip söyle.
+  Kullanıcıya düşen sadece kendi Chrome'undaki eklentiyi güncellemek.
 - Bulutta `wrangler login` yok: yayın GitHub Actions'tan. Kurulum, tip kontrolü, birim testleri, derleme
   ve `wrangler dev` + e2e bulutta çalışır.
 - Ortamın ağ izni kısıtlıysa `www.youtube.com` kapalı olabilir: `room.mjs`'deki başlık testi takılır
   (kod hatası değil). Kullanıcı ortam ayarlarından (Network access → Allowed domains) açabilir.
-- Eklentiyi gerçek Chrome'da denemek kullanıcıya düşer (siteden zip ya da kendi bilgisayarında derleme).
+- Eklentiyi kullanıcı kendi Chrome'unda dener (siteden zip). Bulutta da gerçek Chromium + eklenti testi yapılabilir:
+  `CHROME=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` ile `scripts/harness/embed/run.mjs` (root iken
+  `cdp.mjs` kendisi `--no-sandbox` ekler); internet yoksa `FILM_VIDEO=video.webm node scripts/harness/embed/film-server.mjs`
+  (ffmpeg ile `testsrc2` üretilebilir; puan için 10 dk'dan uzun olsun).
 
 ## Lisans ve gizlilik
 - MIT (`LICENSE`, © 2026 Alperen Aktürk). Kullanıcıya giden kodda (site/sunucu/eklenti) dış paket

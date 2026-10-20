@@ -10,7 +10,7 @@
 
 import { OffsetClock } from '@swm/shared/clock';
 import { isForwardedKey, type EmbedControl } from '@swm/shared/embed';
-import { applyFocus, ROOM_SIDE, ROOM_TOP } from './focus.ts';
+import { applyFocus, FS_BOTTOM, NO_INSETS, roomLayout } from './focus.ts';
 import { expectedPosition, type PlaybackState } from '@swm/shared/protocol';
 import { roomIdFromHash } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -38,14 +38,14 @@ const overlay = createOverlay({
   onRate: (rate) => engine?.requestRate(rate),
   // 🏠: tek seferlik mesajla (port koptuysa da arka planı uyandırıp ulaşır; eskiden kayboluyordu).
   onBackToRoom: () => void chrome.runtime.sendMessage({ type: 'go-room-tab' }).catch(() => send({ type: 'go-room' })),
-  // Oda görünümü aç/kapa: tercih arka planda; o bütün çerçevelere duyurur.
-  onRoomView: (on) => send({ type: 'roomview', on }),
+  // 🔄 Herkesi bana eşitle: odanın konumu benim videomun yeri olur.
+  onSyncAll: () => engine?.syncEveryoneToMe(),
 });
 
 /**
- * Oda görünümü (film kendi sekmesinde): videonun olduğu çerçevede oynatıcı sol-alttaki boşluğa
- * yerleşir, üst şerit ve sağ paneli overlay çizer. Diğer çerçeveler sadece içlerindeki oynatıcı
- * çerçevesini tüm ekrana büyütür. Sitenin içinde (gömülü) bu kullanılmaz.
+ * Oda görünümü (film kendi sekmesinde): videonun olduğu çerçevede oynatıcı ortadaki boşluğa
+ * yerleşir, etrafını (üst şerit, sağ panel, alttaki araç çubuğu) overlay çizer. Diğer çerçeveler
+ * sadece içlerindeki oynatıcı çerçevesini tüm ekrana büyütür. Sitenin içinde (gömülü) kullanılmaz.
  */
 let roomOn = false;
 let roomActive = false;
@@ -55,8 +55,15 @@ function roomFocusTick(): void {
     applyFocus(false, null);
     return;
   }
-  if (roomActive) applyFocus(!!best, best, { top: ROOM_TOP, right: ROOM_SIDE });
-  else applyFocus(true, null);
+  if (roomActive) {
+    const fullscreen = document.fullscreenElement;
+    // Oynatıcının kendi tam ekranı (⛶ film sitesinde): ona karışma. Bizim ⛶ (sayfanın tamamı): video ekranı kaplar.
+    if (fullscreen && fullscreen !== document.documentElement) applyFocus(false, null);
+    else applyFocus(!!best, best, fullscreen ? { ...NO_INSETS, bottom: FS_BOTTOM } : roomLayout(innerWidth));
+    tellParents();
+  } else {
+    applyFocus(true, null, NO_INSETS, recentChild());
+  }
 }
 function setRoomView(on: boolean, isActive: boolean): void {
   roomOn = on;
@@ -71,7 +78,35 @@ function setRoomView(on: boolean, isActive: boolean): void {
   }
 }
 
-/** Çubuktaki senkron noktası için: videomuz odanın olması gereken yerinden ne kadar uzakta? */
+/**
+ * İç içe oynatıcı: video bir iç çerçevedeyse üstteki sayfalar "en büyük çerçeve"yi değil, videonun
+ * gerçekten olduğu çerçeveyi büyütsün (büyük bir reklam çerçevesi yanlış seçilmesin). Videolu çerçeve
+ * üstüne "buradayım" der; her ara çerçeve mesajın hangi iframe'inden geldiğini bulur ve yukarı iletir.
+ * Sadece yerleşimi etkiler; başka bir sayfanın bu mesajı yollaması zarar vermez.
+ */
+const FOCUS_MESSAGE = 'swm-focus-here';
+let focusChild: { frame: HTMLElement; at: number } | null = null;
+function tellParents(): void {
+  if (window !== window.top) window.parent.postMessage({ type: FOCUS_MESSAGE }, '*');
+}
+function recentChild(): HTMLElement | null {
+  return focusChild && Date.now() - focusChild.at < 5000 ? focusChild.frame : null;
+}
+addEventListener('message', (event) => {
+  if (!port || (event.data as { type?: unknown } | null)?.type !== FOCUS_MESSAGE || !event.source) return;
+  const frame = [...document.querySelectorAll<HTMLIFrameElement>('iframe, frame')].find((f) => f.contentWindow === event.source);
+  if (!frame) return;
+  focusChild = { frame, at: Date.now() };
+  tellParents();
+});
+document.addEventListener('fullscreenchange', () => {
+  if (roomOn) roomFocusTick();
+});
+addEventListener('resize', () => {
+  if (roomOn) roomFocusTick();
+});
+
+/** Üst şeritteki senkron göstergesi için: videomuz odanın olması gereken yerinden ne kadar uzakta? */
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 function updateSync(): void {
   const current = engine?.getState();
@@ -230,7 +265,7 @@ function attachEngine(): void {
   adapter = wrapVideoElement(best);
   engine ??= new SyncEngine({
     clock,
-    // Hızı sadece çubuktaki menü değiştirir; başka hız eklentileri odayı bozamaz.
+    // Hızı sadece bizim hız menümüz değiştirir; başka hız eklentileri odayı bozamaz.
     lockRate: true,
     onRateLocked: () => {
       // Kullanıcı neden hızın geri döndüğünü bilsin (en fazla 15 sn'de bir).
@@ -253,7 +288,7 @@ function attachEngine(): void {
   if (state) engine.receive(state);
   engine.attach(adapter);
   if (embedded) {
-    // Sitenin içindeyiz: çubuk yok (arayüzü site gösteriyor); site ilerleme çubuğu için durumu bilsin.
+    // Sitenin içindeyiz: arayüzü site gösteriyor; site ilerleme çubuğu için durumu bilsin.
     statusTimer ??= setInterval(reportStatus, 500);
     return;
   }
@@ -325,7 +360,10 @@ if (embedded) {
 
   // Sadece video: senkronlanan videonun oynatıcısı çerçeveyi kaplar, sayfanın geri kalanı gizlenir
   // (video başka bir iç çerçevedeyse bu sayfa o çerçeveyi büyütür). Hep açık; seçenek yok.
-  const focusTick = () => applyFocus(true, active ? best : null);
+  const focusTick = () => {
+    applyFocus(true, active ? best : null, NO_INSETS, recentChild());
+    if (active && best) tellParents();
+  };
   focusTick();
   setInterval(focusTick, 1500);
 }
@@ -342,6 +380,7 @@ function deactivate(): void {
   adapter?.release();
   adapter = null;
   if (!embedded) setRoomView(false, false);
+  overlay.setHint(false);
   overlay.unmount();
 }
 
@@ -354,8 +393,6 @@ function onMessage(message: BackgroundMessage): void {
       attachEngine();
       break;
     case 'state':
-      // Başka bir video açıldıysa izleme sonu sayaçları sıfırlanır.
-      if (message.state.item?.id !== state?.item?.id) overlay.resetStats();
       state = message.state;
       engine?.receive(message.state);
       overlay.setRate(message.state.rate);
@@ -381,7 +418,7 @@ function onMessage(message: BackgroundMessage): void {
     case 'ask-follow':
       overlay.askFollow(message.kind, message.name, message.host ?? '', (yes) => {
         send({ type: 'follow-answer', yes });
-        // "Burada kal": bu sayfa artık odanın sayfası değil, senkron durmuş; çubuk da kalkar.
+        // "Burada kal": bu sayfa artık odanın sayfası değil, senkron durmuş; katman da kalkar.
         if (!yes && !active) overlay.unmount();
       }, !active);
       break;
@@ -394,21 +431,14 @@ function onMessage(message: BackgroundMessage): void {
     case 'chat':
       overlay.chat(message.line);
       break;
+    case 'chat-history':
+      overlay.chatHistory(message.lines);
+      break;
     case 'notice':
       overlay.notice(message.kind, message.name);
       break;
     case 'intro':
       overlay.intro();
-      break;
-    case 'guide':
-      // Kullanıcı "bir daha gösterme" dediyse gösterme.
-      void chrome.storage.local
-        .get('guideOff')
-        .then(({ guideOff }) => {
-          // Oda görünümünde rehbere gerek yok (her şey zaten görünür).
-          if (!guideOff && !roomOn) setTimeout(() => active && overlay.guide(() => void chrome.storage.local.set({ guideOff: true })), message.afterIntro ? 2900 : 600);
-        })
-        .catch(() => {});
       break;
     case 'ended':
       // Kısa bir açıklama kalsın; ardından gelen "deactivate" çubuğu birkaç saniye sonra kaldırır.
@@ -421,7 +451,9 @@ function onMessage(message: BackgroundMessage): void {
       deactivate();
       break;
     case 'roomview':
-      if (!embedded) setRoomView(message.on, message.active);
+      if (embedded) break;
+      setRoomView(message.on, message.active);
+      overlay.setHint(message.hint && window === window.top);
       break;
     case 'idle':
       sleep();

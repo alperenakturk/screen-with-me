@@ -70,6 +70,7 @@ export const DRAWN_AVATARS = {
   sweaterkid: '🧶',
   cartoonist: '✏️',
   armadillo: '🐾',
+  timetraveler: '⏳',
   wizardboy: '⚡',
   redhead: '🍫',
   wizardgirl: '📚',
@@ -96,7 +97,7 @@ export const AVATAR_PAGES = [
   ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
   [
     'scientist', 'sidekick', 'chemist', 'lawyer', 'hunter', 'dragonqueen', 'goth',
-    'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo',
+    'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler',
   ],
   ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl'],
 ] as const;

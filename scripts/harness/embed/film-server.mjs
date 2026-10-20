@@ -8,12 +8,35 @@
 //   /csp          Content-Security-Policy: frame-ancestors 'none'
 //   /deny-nested  X-Frame-Options: DENY + video başka kökenden oynatıcı iframe'inde (oda görünümü testi)
 //   /sneaky       sadece iframe isteğinde DENY (önceden kontrol göremez; el sıkışma yakalar)
+//   /late         video "oynat"a basınca oluşur, başka kökenden oynatıcı iframe'inde (çoğu sitedeki gibi;
+//                 "Filmi başlat" kartının testi)
 //
+// İnternetsiz ortamda: FILM_VIDEO=/yol/video.webm verilirse video oradan (/video.webm) sunulur.
 // Video: Big Buck Bunny (CC BY 3.0, Blender Foundation), Wikimedia Commons.
 //   node scripts/harness/embed/film-server.mjs
+import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 
-const VIDEO = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm';
+const LOCAL_VIDEO = process.env.FILM_VIDEO;
+const VIDEO = LOCAL_VIDEO
+  ? 'http://localhost:5300/video.webm'
+  : 'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm';
+
+/** Yerel videoyu parça parça (Range) sunar; tarayıcı sarabilsin diye. */
+function sendVideo(req, res) {
+  const size = statSync(LOCAL_VIDEO).size;
+  const m = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '');
+  const start = m && m[1] ? Number(m[1]) : 0;
+  const end = m && m[2] ? Number(m[2]) : size - 1;
+  res.writeHead(m ? 206 : 200, {
+    'content-type': 'video/webm',
+    'accept-ranges': 'bytes',
+    'content-length': end - start + 1,
+    'access-control-allow-origin': '*',
+    ...(m ? { 'content-range': `bytes ${start}-${end}/${size}` } : {}),
+  });
+  createReadStream(LOCAL_VIDEO, { start, end }).pipe(res);
+}
 const PLAYER_ORIGIN = 'http://localhost:5300';
 
 const page = (title, body) => `<!doctype html>
@@ -43,6 +66,14 @@ document.getElementById('pp').onclick = () => (v.paused ? v.play() : v.pause());
 const film = (title) => page(title, videoTag);
 const nestedPage = (title) => page(title, `<div class="player"><iframe src="${PLAYER_ORIGIN}/player" allow="autoplay; fullscreen" allowfullscreen></iframe></div>`);
 const nested = nestedPage('İç içe oynatıcı');
+// Video yok; "oynat"a basınca oynatıcı iframe'i yüklenir (gerçek sitelerdeki gibi).
+const late = page('Oynatınca yüklenen oynatıcı', `<div class="player" id="slot" style="display:grid;place-items:center;cursor:pointer">
+<button id="go" style="font-size:22px;padding:14px 28px">▶ Filmi oynat</button></div>
+<script>
+document.getElementById('go').onclick = () => {
+  document.getElementById('slot').innerHTML = '<iframe src="${PLAYER_ORIGIN}/player?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+};
+</script>`);
 const player = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#000}
 .player{position:relative;height:100%}.player video{width:100%;height:100%;display:block}.fs{position:absolute;right:8px;top:8px;z-index:2}.pp{position:absolute;left:8px;top:8px;z-index:2}</style></head>
 <body>${videoTag}</body></html>`;
@@ -57,6 +88,7 @@ createServer((req, res) => {
   console.log(req.method, path, req.headers['sec-fetch-dest'] ?? '');
   if (path === '/film' || path === '/') return send(res, 200, film('Film sayfası (izin veriyor)'));
   if (path === '/film-nested') return send(res, 200, nested);
+  if (path === '/late') return send(res, 200, late);
   if (path === '/deny') return send(res, 200, film('Yasaklı sayfa (X-Frame-Options)'), { 'x-frame-options': 'DENY' });
   if (path === '/deny-nested') return send(res, 200, nestedPage('Yasaklı sayfa, iç içe oynatıcı'), { 'x-frame-options': 'DENY' });
   if (path === '/csp') return send(res, 200, film('Yasaklı sayfa (CSP)'), { 'content-security-policy': "frame-ancestors 'none'" });
@@ -68,6 +100,8 @@ createServer((req, res) => {
 }).listen(5299, () => console.log('film sayfaları: http://localhost:5299'));
 
 createServer((req, res) => {
-  if (new URL(req.url, 'http://x').pathname === '/player') return send(res, 200, player);
+  const path = new URL(req.url, 'http://x').pathname;
+  if (path === '/player') return send(res, 200, player);
+  if (path === '/video.webm' && LOCAL_VIDEO) return sendVideo(req, res);
   send(res, 404, 'yok');
 }).listen(5300, () => console.log('oynatıcı: http://localhost:5300'));
