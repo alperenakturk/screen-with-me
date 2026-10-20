@@ -266,15 +266,22 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - Gizlilik politikası: `apps/web/public/gizlilik.html`. Yeni bir veri toplarsan/saklarsan güncelle.
 
 ## Bilinen sınırlar
-- DRM'li servisler (Netflix vb.) hedef değil. `<video>`'nun kendisi tam ekransa eklenti katmanı
+- DRM'li servisler (Netflix, Prime Video, Disney+…) şimdilik desteklenmiyor; **hedef** (1.0'a doğru
+  araştır, 1.x'te siteye özel adaptörle): herkes kendi aboneliğiyle, sitenin oynatıcısına komut veririz,
+  DRM asla aşılmaz. Plan: `docs/VIZYON.md` "Büyük servisler". Bir servisin adı resmî metinlerde sadece
+  gerçekten çalışıyorsa "… ile çalışır" anlamında geçer. `<video>`'nun kendisi tam ekransa eklenti katmanı
   görünmez (oynatıcı kapsayıcısı tam ekransa görünür).
+- 1.0 öncesi durum değerlendirmesi, gerçek deneme listesi ve çıkışta beklenen sorunlar: `docs/VIZYON.md` "v1.0".
+  Teleparty'den alınacak/alınmayacak fikirler de orada.
 - Eklenti henüz mağazada değil (paketlenmemiş kurulum, `apps/web/public/eklenti.html`).
   Geliştirici hesabı açıldı (yayıncı e-postası screenwithme.app@gmail.com, tacir değil);
   başvuru paketi ve form metinleri hazır (`docs/web-store.md`, `npm run store`). **Henüz
   gönderilmedi** (Ekim 2026: kullanıcı eklentiyi hazır görmüyor). Gönderildikten sonra, inceleme
   sürerken `PROTOCOL_VERSION` artırma.
-- Repo private; herkese açık metinlerde "open source" deme (repo açılırsa önce
-  `docs/rakip-analizi.md`'deki site adlarını temizle).
+- Repo private; herkese açık metinlerde "open source" deme. Açma planı (önerim: 1.0 mağaza onayından hemen
+  sonra, site adları temizlenmiş, temiz geçmişli yeni repo): `docs/VIZYON.md` "Repoyu herkese açma".
+- Gelir sadece bağış, 1.0 ve ilk gerçek kullanıcılardan sonra (GitHub Sponsors / Patreon vb.; Türkiye'de
+  PayPal/Stripe yok). Oda içinde / video üstünde asla bağış istemi yok. Plan: `docs/VIZYON.md` "Bağış / destek".
 - Yasaklar hesapsız tasarımın sınırında: başka tarayıcı/gizli sekme ile aşılabilir.
 - Büyüme planı ve özellik fikirleri: `docs/BUYUME.md`.
 - Firefox desteklenmiyor (arka plan için ayrı manifest gerekiyor).
