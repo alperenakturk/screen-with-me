@@ -52,7 +52,8 @@ node scripts/theme-art.mjs   # resimli temaların sahne + maskot SVG'leri (apps/
 node scripts/avatars.mjs     # çizilmiş avatarlar (apps/web/public/avatars + apps/extension/static/avatars)
 ```
 Mağaza formunda ne yazılacağı: `docs/web-store.md`. Ekran görüntüleri `store/src/shots.html`'den
-çekilir; eklentinin görünümü değişirse oradaki taklidi de güncelle.
+çekilir (betik yerel sunucudan açar); oda kısmı `store/src/room.html`, sitenin gerçek `styles.css`'i +
+`room.ts` işaretlemesiyle sabit içerik. Oda sayfası ya da popup değişirse oradaki taklidi de güncelle.
 Windows/PowerShell notları: commit mesajını dosyaya yazıp `git commit -F` kullan (tırnaklar
 bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH'te değilse:
 `C:\Program Files\GitHub CLI\gh.exe`.
