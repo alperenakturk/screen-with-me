@@ -28,7 +28,7 @@ const common = {
 // Arka plan ES modülü olarak yüklenir; sayfalara eklenen betikler ise klasik
 // betik olmak zorunda, onlar kendi içine kapalı (iife) paketlenir.
 await build({ ...common, entryPoints: ['src/background.ts', 'src/popup.ts', 'src/shell.ts'], format: 'esm' });
-await build({ ...common, entryPoints: ['src/content.ts', 'src/site-bridge.ts'], format: 'iife' });
+await build({ ...common, entryPoints: ['src/content.ts', 'src/site-bridge.ts', 'src/fullscreen-guard.ts'], format: 'iife' });
 
 const siteMatches = dev
   ? ['http://localhost:5173/*', 'http://localhost:8787/*']
@@ -65,6 +65,16 @@ const manifest = {
       match_about_blank: true,
       // Erken çalışır: katman ve video yerleşimi sayfa çizilirken hazır olsun.
       run_at: 'document_start',
+    },
+    {
+      // Film sitesinin tam ekran düğmesi odanın tam ekranını açsın (sayfanın kendi dünyasında; oda yokken karışmaz).
+      matches: ['<all_urls>'],
+      exclude_matches: siteMatches,
+      js: ['fullscreen-guard.js'],
+      all_frames: true,
+      match_about_blank: true,
+      run_at: 'document_start',
+      world: 'MAIN',
     },
     {
       matches: siteMatches,

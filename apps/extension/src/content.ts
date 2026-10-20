@@ -68,6 +68,7 @@ function send(message: FrameMessage): void {
 
 /** Arka plan "bu sekmede oda yok" dedi: bağlantıyı kapat, katmanı kaldır, video aramayı bırak. */
 function sleep(): void {
+  document.documentElement.removeAttribute('data-swm-room');
   deactivate();
   stopScanning();
   setLayout(null, false);
@@ -309,6 +310,8 @@ addEventListener('message', (event) => {
 function setLayout(next: ShellLayout | null, isActive: boolean): void {
   layout = next;
   layoutActive = isActive;
+  // Oda görünümündeyken film sitesinin tam ekranı odanınkine yönlenir (fullscreen-guard.ts bu işarete bakar).
+  document.documentElement.toggleAttribute('data-swm-room', next?.mode === 'full');
   applyLayout();
 }
 
@@ -347,8 +350,21 @@ setInterval(() => {
 }, 1500);
 
 // Bizim ⛶ (sayfanın tamamı tam ekran): bitince/başlayınca site bilsin (Esc ile çıkılabilir).
+// Film sitesinin tam ekranı (oynatıcının kendi düğmesi ya da videonun yerleşik düğmesi) sadece videoyu
+// gösterirdi: oda görünümündeyken ondan çıkılır ve odanın tam ekranı istenir.
 document.addEventListener('fullscreenchange', () => {
-  if (isTop && port) send({ type: 'fullscreen-changed', on: document.fullscreenElement === document.documentElement });
+  if (!port) return;
+  const element = document.fullscreenElement;
+  if (layout?.mode === 'full' && element && element !== document.documentElement) {
+    void document.exitFullscreen().catch(() => {});
+    send({ type: 'fullscreen' });
+    return;
+  }
+  if (isTop) send({ type: 'fullscreen-changed', on: element === document.documentElement });
+});
+// fullscreen-guard.ts (sayfanın dünyası) film sitesinin tam ekran isteğini yakaladı.
+document.addEventListener('swm-fullscreen-request', () => {
+  if (port && layout?.mode === 'full') send({ type: 'fullscreen' });
 });
 
 // Kısayollar (1–8 emoji, Enter mesaj, P pin) odak film sayfasındayken de çalışsın: tuşu film

@@ -3487,7 +3487,7 @@ html.shell .footer {
 }
 
 html.shell .brand {
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .shell-home {
@@ -3571,4 +3571,42 @@ html.shell-bar .shell-strip {
   inset: 0;
   z-index: 900;
   margin: 0;
+}
+
+/* Kabukta sıra ve link kutusu yok: film izlenir, sıradakini seçmek için odaya dönülür */
+html.shell #media-form,
+html.shell #media-error,
+html.shell #media-done,
+html.shell .tab[data-tab='queue'] {
+  display: none !important;
+}
+
+/* Onay penceresi (odaya dönüş, film sitesine gitme) */
+.confirm-dialog {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.confirm-dialog h3,
+.confirm-dialog p {
+  margin: 0;
+}
+
+.confirm-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.recap-saved-title:has(+ .recap-history:empty) {
+  display: none;
 }

@@ -53,7 +53,8 @@ import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
 import { createPins } from './ui/pins.ts';
 import { showNextCard } from './ui/end-card.ts';
-import { renderRecapHistory, showRecap, showRecapInvite } from './ui/recap.ts';
+import { renderRecapHistory, showRecap } from './ui/recap.ts';
+import { confirmDialog } from './ui/confirm.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -367,7 +368,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button type="button" class="tab" role="tab" data-tab="people">
               <span aria-hidden="true">👥</span><span id="people-count" class="count"></span>
             </button>
-            <button type="button" class="tab tab-icon" role="tab" data-tab="settings" id="settings-tab">⚙️</button>
+            <button type="button" class="tab tab-icon" role="tab" data-tab="profile" data-i18n-title="tab.profile">👤</button>
+            <button type="button" class="tab tab-icon" role="tab" data-tab="settings" id="settings-tab" data-i18n-title="tab.settings">⚙️</button>
           </nav>
 
           <div class="tab-panel chat-panel" data-panel="chat">
@@ -396,7 +398,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             </div>
           </div>
 
-          <div class="tab-panel settings" data-panel="settings" hidden>
+          <div class="tab-panel settings" data-panel="profile" hidden>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
             <form id="rename-form" class="row">
@@ -407,12 +409,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="muted small" data-i18n="avatarAutoSave"></p>
             <h4 data-i18n="settings.theme"></h4>
             <div id="settings-themes" class="theme-current"></div>
+            <h4>📊 <span data-i18n="recap.title"></span></h4>
+            <p class="muted small" data-i18n="recap.explain"></p>
+            <button type="button" id="recap-open" class="btn primary recap-open">✨ <span data-i18n="recap.open"></span></button>
+            <h4 class="recap-saved-title" data-i18n="recap.savedTitle"></h4>
+            <div id="recap-history" class="recap-history"></div>
+          </div>
+
+          <div class="tab-panel settings" data-panel="settings" hidden>
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
-            <h4 data-i18n="recap.title"></h4>
-            <p class="muted small" data-i18n="recap.explain"></p>
-            <button type="button" id="recap-open" class="btn primary recap-open">📊 <span data-i18n="recap.open"></span></button>
-            <div id="recap-history" class="recap-history"></div>
             <section class="host-box">
               <h4>👑 <span data-i18n="settings.hostTitle"></span></h4>
               <p id="opt-wait-hint" class="muted small"></p>
@@ -663,12 +669,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         reactions.removeSticker(message.id);
         break;
       case 'recap': {
-        // Oturum özeti açıldı: açan hemen görür, diğerlerine "Gör" kartı çıkar.
-        const { recap, by } = message;
-        recaps = [...recaps.filter((r) => r.id !== recap.id), recap];
-        renderRecapHistory($('#recap-history'), recaps);
-        if (by.id === myId) showRecap(recap, displayName(by));
-        else showRecapInvite(displayName(by), () => showRecap(recap, displayName(by)));
+        // Bugünün özeti (oturumun başından şimdiye; sadece isteyene gelir). Son kartta "Kaydet".
+        const { recap } = message;
+        showRecap(recap, { onSave: () => send({ t: 'recap-save' }) });
         break;
       }
       case 'recaps':
@@ -862,7 +865,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         }
       }
       const hole = { x: Math.round(box.left), y: Math.round(box.top), w: Math.round(box.width), h: Math.round(box.height) };
-      layout = { mode: 'full', hole, islands: islands.slice(0, 12) };
+      // Sitenin bir penceresi açıksa (avatar, tema, özet, onay) delik tamamen kapanır: pencere videonun önünde görünsün.
+      const modal = document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open]') !== null;
+      layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12) };
     }
     const json = JSON.stringify(layout);
     if (json === sentLayout) return;
@@ -951,8 +956,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }).observe(wrap, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
     addEventListener('resize', reportLayout);
     setInterval(reportLayout, 1000);
-    // Odaya dön: sekme sitedeki odaya gider (katman kalkar, site kendi sayfasında devam eder).
-    const goHome = () => postToExtension({ type: 'navigate', url: `${location.origin}/r/${roomId}#back` });
+    // Odaya dön: önce sorulur; evet → sekme sitedeki odaya gider (katman kalkar, site kendi sayfasında devam eder).
+    const goHome = async () => {
+      const yes = await confirmDialog({ icon: '🏠', title: t('shellBackTitle'), text: t('shellBackText'), yes: t('shellBackYes'), no: t('shellBackNo') });
+      if (yes) postToExtension({ type: 'navigate', url: `${location.origin}/r/${roomId}#back` });
+    };
+    // Sol üstteki logo da odaya dönüş (ana sayfaya değil).
+    document.querySelector('.brand')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      void goHome();
+    });
+    // Sıra burada yok (sıradakini seçmek için odaya dönülür): açık kalmışsa sohbete geç.
+    if (tabs.active === 'queue') tabs.show('chat');
+    // Sitenin pencereleri (avatar, tema, özet, onay) açılınca da bildirilsin: videonun arkasında kalmasınlar.
+    new MutationObserver(() => reportLayout()).observe(document.body, { childList: true });
     $('#strip-home').addEventListener('click', goHome);
     $('.strip-logo').append(createLogo(document));
     const homeButton = el('button', { type: 'button', class: 'nav-link shell-home' }, `🏠 ${t('shellBack')}`);
@@ -1033,7 +1050,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Süre video yüklenince belli olur; arada bir yeniden çiz.
   setInterval(() => pins.render(), 2000);
   const fullscreenEl = $<HTMLButtonElement>('#fullscreen');
-  fullscreenEl.hidden = !document.fullscreenEnabled;
+  fullscreenEl.hidden = !document.fullscreenEnabled && !isShell;
   fullscreenEl.addEventListener('click', () => fullscreen.toggle());
 
   // ---- Video linki ----
@@ -1089,6 +1106,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (media.kind === 'page' && !hasExtension()) {
       pendingAdd = add;
       extDialog.showModal();
+      return;
+    }
+    // Şimdi açılan film sayfası: sekme o siteye gidecek, önce sor.
+    if (media.kind === 'page' && mode === 'load') {
+      void confirmDialog({ icon: '🎬', title: t('goFilmTitle'), text: t('goFilmText'), yes: t('goFilmYes') }).then((yes) => {
+        if (yes) add();
+      });
       return;
     }
     add();

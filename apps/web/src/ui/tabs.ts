@@ -1,6 +1,6 @@
 import { load, save } from '../storage.ts';
 
-export type TabId = 'chat' | 'queue' | 'people' | 'settings';
+export type TabId = 'chat' | 'queue' | 'people' | 'profile' | 'settings';
 
 /** Sağ paneldeki sekmeler. Son açılan sekme tarayıcıda hatırlanır. */
 export function createTabs(root: HTMLElement, onChange: (tab: TabId) => void) {
@@ -18,7 +18,7 @@ export function createTabs(root: HTMLElement, onChange: (tab: TabId) => void) {
 
   for (const button of buttons) button.addEventListener('click', () => show(button.dataset.tab as TabId));
   const saved = load('tab');
-  show(saved === 'queue' || saved === 'people' || saved === 'settings' ? saved : 'chat');
+  show(saved === 'queue' || saved === 'people' || saved === 'profile' || saved === 'settings' ? saved : 'chat');
 
   return {
     show,

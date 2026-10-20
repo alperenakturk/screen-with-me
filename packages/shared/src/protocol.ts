@@ -259,8 +259,10 @@ export type ClientMessage =
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
-  /** Oturum özetini aç (sayaçlar sıfırlanır, özet herkese gider). */
+  /** Bugünün özeti: oturumun başından şimdiye (sadece isteyene gelir, sayaç sıfırlanmaz). */
   | { t: 'recap' }
+  /** Şu anki oturumun özetini kaydet (oturum bitince silinmesin). */
+  | { t: 'recap-save' }
   /** Bu odanın önceki özetleri. */
   | { t: 'recaps' }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
@@ -539,6 +541,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'vote':
       return isItemId(m.id) && typeof m.up === 'boolean' ? { t: 'vote', id: m.id, up: m.up } : null;
     case 'recap':
+    case 'recap-save':
     case 'recaps':
       return { t: m.t };
     case 'ping':

@@ -109,7 +109,12 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   motoru durur (`detach`, odaya "durdur" gitmez). Tam ekran: bizim ⛶ film sayfasının tamamını tam ekran yapar, oda
   `.theater.fake-fs` görünümüne geçer (`:is(:fullscreen, .fake-fs)`); film sitesinin kendi ⛶'u sadece videoyu gösterir.
   Site hazır olunca `shell-ready` der (önceden gelen `page`/`video` tekrar gelir). Sayfadan çıkarken site bağlantıyı
-  kapatır (`pagehide`; yoksa önbellekteki sayfa yüzünden kişi iki kez görünüyordu). Test: `scripts/harness/embed/run.mjs`.
+  kapatır (`pagehide`; yoksa önbellekteki sayfa yüzünden kişi iki kez görünüyordu). Kabukta sıra sekmesi ve link
+  kutusu yok (sıradakini seçmek için odaya dönülür); logo ve "🏠 Odaya dön" önce sorar (`ui/confirm.ts`). Sitenin bir
+  penceresi açıkken (avatar, tema, özet, onay) delik tamamen kapanır (pencere videonun önünde). Film sitesinin tam ekranı
+  odanınkine yönlenir: `fullscreen-guard.ts` sayfanın dünyasında (MAIN world) çalışır, `<html data-swm-room>` varken
+  `requestFullscreen`'i yapmaz, `swm-fullscreen-request` olayı yayar; videonun yerleşik ⛶'u ile girilirse içerik betiği
+  çıkıp odanınkini ister. Ana sitede "Şimdi aç" + film linki önce kısa açıklamayla sorar. Test: `scripts/harness/embed/run.mjs`.
 - **Eklentide hız kilidi:** film çerçevesindeki motor `lockRate: true`; hız sadece bizim hız menüsünden değişir, başka
   hız eklentilerinin değişikliği odaya yayılmaz, geri alınır (inatlaşma sınırı var). Sitede kapalı.
 - **Eklenti bizim sitede çalışmaz:** içerik betiği sitenin sayfalarına hiç eklenmez (`exclude_matches`), sitemizin içindeki
@@ -188,13 +193,15 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   çıkardıysa `savedDismissed`, tekrar eklenmez). Satırda içeride kaç kişi var: `GET /api/rooms/:id/info`.
   Yöneticinin ✕'i odanın kaydını da kaldırır: `POST /api/rooms/:id/unsave {cid}` (sadece yönetici cid'i).
   "Benim odam" ve son odalar kaldırıldı.
-- **Oturum özeti (`packages/shared/src/recap.ts`, site `ui/recap.ts`):** sunucu `StatsTracker` ile
-  oynama süresi (oda durumu değişmeden önce `statsTick`; oda boşken saymaz), hız, video, kişi başı
-  mesaj/tepki/pin/durdurma/sarma, en kalabalık anı sayar (depoda `stats`; kişiler cid ile, özete sadece
-  ad/avatar). Ayarlarda "Özeti göster" → `{t:'recap'}`: özet herkese gider (açan hemen görür, diğerlerine
-  "Gör" kartı), sayaç sıfırlanır; boşsa `recap_empty`. Önceki özetler `{t:'recaps'}` (kayıtlı odada 10,
-  değilse 3; 90 gün). İstemci `chooseFacts` ile her seferinde rastgele 4 ilginç kart seçer (ilk süre, son
-  özet + PNG). Video sonundaki istatistik kartı kaldırıldı; otomatik devam kapalıysa sadece "Sıradakini başlat".
+- **Bugünün özeti (`packages/shared/src/recap.ts`, site `ui/recap.ts`, Profil sekmesinde):** sunucu `StatsTracker` ile
+  oynama süresi (oda durumu değişmeden önce `statsTick`; oda boşken saymaz), hız, video, kişi başı mesaj/tepki/pin/
+  durdurma/sarma, en kalabalık anı sayar (depoda `stats`; kişiler cid ile, özete sadece ad/avatar). Oturum: son hareketten
+  `SESSION_GAP_MS` (4 sa) sonra gelen ilk hareket yeni oturum başlatır, kaydedilmemiş sayaçlar silinir (gece yarısını
+  geçen izleme aynı oturumda). `{t:'recap'}` oturum başından şimdiye özeti sadece isteyene yollar, sayaç sıfırlanmaz;
+  boşsa `recap_empty`. Son kartta "Kaydet" → `{t:'recap-save'}` (aynı oturumun önceki kaydı yenisiyle değişir; kayıtlı
+  odada 20, değilse 5; 90 gün), liste `{t:'recaps'}` ile herkese. İstemci `chooseFacts` ile her seferinde rastgele (veri
+  arttıkça daha çok, en fazla 8) kart seçer; ilk süre, son özet + PNG. Video sonunda istatistik kartı yok.
+- **Sekmeler:** 💬 Sohbet, 🎵 Sıra, 👥, 👤 Profil (ad, avatar, tema, bugünün özeti), ⚙️ Ayarlar (görünüm + yönetici).
 - **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
   (`localStorage` `opt:chatEvents`). Ayarlardaki seçenek kaldırıldı.
 - **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),

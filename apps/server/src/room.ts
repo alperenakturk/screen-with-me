@@ -359,7 +359,8 @@ export class Room extends DurableObject<Env> {
         await this.savePins();
         return;
       }
-      case 'recap': {
+      case 'recap':
+      case 'recap-save': {
         if (!this.commandLimit.allow(me.id)) return;
         this.statsTick();
         if (this.stats.isEmpty()) {
@@ -367,12 +368,17 @@ export class Room extends DurableObject<Env> {
           return;
         }
         const now = Date.now();
+        // Bugünün özeti: oturumun başından şimdiye, sayaç sıfırlanmaz; sadece isteyene gider.
         const recap = this.stats.recap(now, newId());
-        this.stats.reset(now, true);
+        if (message.t === 'recap') {
+          this.sendTo(ws, { t: 'recap', recap, by: me });
+          return;
+        }
+        // Kaydet: aynı oturumun önceki kaydı yenisiyle değişir (oturum başı aynı).
         const keep = this.settings.saved ? RECAPS_KEEP_SAVED : RECAPS_KEEP;
-        this.recaps = [...this.recaps.filter((r) => now - r.to < RECAP_MAX_AGE_MS), recap].slice(-keep);
-        await this.ctx.storage.put({ recaps: this.recaps, stats: this.stats.data });
-        this.broadcast({ t: 'recap', recap, by: me });
+        this.recaps = [...this.recaps.filter((r) => now - r.to < RECAP_MAX_AGE_MS && r.from !== recap.from), recap].slice(-keep);
+        await this.ctx.storage.put('recaps', this.recaps);
+        this.broadcast({ t: 'recaps', recaps: this.recaps });
         return;
       }
       case 'recaps':
@@ -1030,7 +1036,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recaps' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;
