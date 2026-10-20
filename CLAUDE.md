@@ -42,7 +42,7 @@ npm test                     # birim testleri (vitest, packages/shared)
 npm run typecheck            # tüm paketler
 npm run e2e [-- wss://...]   # uçtan uca (varsayılan yerel; canlı için URL ver)
 npm run build                # eklenti (zip'i siteye koyar) + site
-npm run deploy               # test + build + Cloudflare'e yükle
+npm run deploy               # test + build + Cloudflare'e yükle (yerelden; normalde main'e push'ta Actions yapar)
 npm run build:extension:dev  # yerel sunucuya bağlanan eklenti (apps/extension/dist)
 npm run store                # Web Store paketi: store/ (zip + ekran görüntüleri + tanıtım görseli)
 node scripts/make-icons.mjs  # logo.ts'den eklenti simgeleri (icon*.png) + apps/web/public/logo.svg
@@ -147,8 +147,11 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   belirgin), 📌 düğmesi / P → not kutusu. Eklenti: 📌 sadece çubukta (videonun üstünde düğme yok), şerit videoda fare durunca 3 sn'de gizlenir; 📌 / P hızlı mesaj
   kutusunu pin notu moduna alır. (Eski "tepki şeridi"/heat tamamen kaldırıldı.)
 - **Özel emojiler (sticker):** `{t:'sticker-add', data}` (`data:image/png|gif|webp|jpeg;base64`, en fazla
-  `STICKER_MAX_CHARS`; SVG yok). Kimlik = SHA-256 ilk 12 hane (`stickerId`, iki taraf da hesaplar).
-  Odada en fazla 24, dolunca en eskisi gider; depoda `sticker:<id>` + `stickers` sırası (tek değer ≤128 KB).
+  `STICKER_MAX_CHARS`; SVG yok). Genel mesaj sınırı 4 KB (`MAX_MESSAGE_BYTES`); sadece `sticker-add`
+  `STICKER_MESSAGE_MAX`'a kadar büyük olabilir (eskiden gerçek resimler bu yüzden reddediliyordu; e2e
+  artık ≈200 KB'lık emoji dener). Kimlik = SHA-256 ilk 12 hane (`stickerId`, iki taraf da hesaplar).
+  Odada en fazla 24, dolunca en eskisi gider; depoda `sticker:<id>` + `stickers` sırası (SQLite tabanlı
+  DO; büyük emoji canlıdaki e2e'de de denenir).
   Girişte welcome'dan sonra tek tek `{t:'sticker'}` (1 MB mesaj sınırı). Tepki `{t:'react', sticker}`. Arayüz: emoji çubuğunun sonunda hep görünen 🖼️ (sitede panel, eklentide şerit özel emojilere döner) — sayfaların arasına gömme.
   Dosya hazırlama `sticker-file.ts` (resim 160 px webp, GIF olduğu gibi). Kendi listem site
   `localStorage` / eklenti `storage.local` `myStickers`; her odaya girişte yeniden yüklenir.
@@ -199,7 +202,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   170 px'ten uzunsa içinde sohbet geçmişi açılır ve mesajlar ayrıca ekrana düşmez.
 - **Avatar listeleri sayfasız:** sekmede çok avatar olunca ızgara kayar (‹ › yok; kullanıcı istemedi).
 - **CI (`.github/workflows/test.yml`):** her push/PR'da tip kontrolü, birim, derleme, `wrangler dev`
-  ile yerel sunucu + `npm run e2e`. Repo private: ayda 2000 dk ücretsiz.- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) sayfanın sağ üstünde
+  ile yerel sunucu + `npm run e2e`. `main`'e push'ta (ya da Actions → "Run workflow") testler geçerse
+  `deploy` işi: derleme → `wrangler deploy` → canlıya karşı e2e. Anahtarlar repo Secrets'ta
+  (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`); yoksa iş uyarıyla atlanır. Repo private: ayda 2000 dk ücretsiz.
+- **Film sayfası rehberi:** odaya ilk girişte (oturum başına bir kez, `guided`) sayfanın sağ üstünde
   sabit kart (videonun içinde değil: küçük oynatıcıda düğmeler görünmüyordu; ✕ + Esc + "Anladım",
   ScreenWithMe düğmesi parlar): kontroller, eklenti simgesi, sürükleme, "herkes filmi açsın", reklam notu.
   "Bir daha gösterme" → `storage.local` `guideOff`.
@@ -207,7 +213,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   üst kısım kırpılır ve üst şerit de kapatır: süsleri y≈200'ün üstüne koyma. Oda içeriği ortada en
   fazla 1280 px; kullanıcı çoğunlukla video izlerken bakar, o yüzden ana süsler (ay, kale, ejderha,
   kervan, zeplin) sahnenin kenarlarında (x < 260 ya da x > 1340) dursun. Tema değişirken resimler
-  önce yüklenir (pplyTheme → preload), renk ve resim birlikte değişir.
+  önce yüklenir (applyTheme → preload), renk ve resim birlikte değişir.
 - **Film sitenin içinde (`packages/shared/src/embed.ts`):** seçenek yok, hep açık ve hep "sadece video"
   (`focus.ts` her zaman); eklenti `data-swm-embed` ile desteğini bildirir (yoksa/eskiyse ayrı sekme kartı). `page` öğesi
   `.player-wrap` içinde iframe'de açılır (`apps/web/src/players/embed.ts`). Oda bağlantısını **site**
@@ -241,7 +247,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   çıkınca da; aynı video tekrar açılınca (>15 sn ise) oradan başlar, pinler geri gelir, `state`
   mesajında `resumed` olur. "Sıradaki" ile geçilen video baştan sayılır. Kayıt kapanınca `history`
   silinir. Her odada: oynarken 1 dk'dan uzun boş kalan oda dönüşte son kişinin çıktığı yerde durmuş
-  açılır (`freezeIfLongEmpty`). Son odalar listesinde 💾.
+  açılır (`freezeIfLongEmpty`). Ana sayfada "Kaydedilen odaların" listesinde görünür.
 - **Sıra:** `settings.autoNext` (varsayılan açık); kapalıysa video bitince sıradaki başlamaz, izleme sonu
   kartında "▶ Sıradakini başlat" çıkar (eklentide `RoomInfo.autoNext`). Sıra panelinde oylama notu.
 - **Takip sorusu (eklenti):** başkası yeni sayfa/video açınca ya da odaya dönünce `ask-follow`; yeni öğe
@@ -249,11 +255,23 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   istisnası) ve çubuksuz (`bare`) gösterilir; "burada kal" çubuğu kaldırır.
 
 ## Yayın kontrol listesi
-1. `npm run typecheck && npm test`
+1. `npm run typecheck && npm test` (sunucu değiştiyse `wrangler dev` + `npm run e2e` de).
 2. Eklenti değiştiyse `apps/extension/package.json` sürümünü artır (siteden indirilen zip ve
    eklenti sayfasındaki sürüm buradan gelir).
-3. `npm run deploy` → `npm run e2e -- wss://screen-with-me.swm-server.workers.dev`
-4. README / `docs/VIZYON.md` güncelle, commit (mesaj Türkçe, sonda `Co-Authored-By`), push.
+3. README / `docs/VIZYON.md` güncelle, commit (mesaj Türkçe, sonda `Co-Authored-By`), push.
+4. Yayın: değişiklik `main`'e girince (PR birleşince) GitHub Actions kendisi yükler ve canlıda e2e koşar;
+   Actions sekmesinde yeşil olduğuna bak. Anahtarlar yoksa ya da yerelden: `npm run deploy` →
+   `npm run e2e -- wss://screen-with-me.swm-server.workers.dev`.
+
+## Bulut oturumu (Claude Code web)
+- Kullanıcı artık çoğunlukla evdeki bilgisayar yerine claude.ai/code bulut oturumundan çalışıyor:
+  repo her oturumda temiz klonlanır, konteyner geçicidir → her işi commit + push et. Geliştirme
+  `claude/...` dalında; `main`'e PR ile girer (CI orada koşar, birleşince otomatik yayın).
+- Bulutta `wrangler login` yok: yayın GitHub Actions'tan. Kurulum, tip kontrolü, birim testleri, derleme
+  ve `wrangler dev` + e2e bulutta çalışır.
+- Ortamın ağ izni kısıtlıysa `www.youtube.com` kapalı olabilir: `room.mjs`'deki başlık testi takılır
+  (kod hatası değil). Kullanıcı ortam ayarlarından (Network access → Allowed domains) açabilir.
+- Eklentiyi gerçek Chrome'da denemek kullanıcıya düşer (siteden zip ya da kendi bilgisayarında derleme).
 
 ## Lisans ve gizlilik
 - MIT (`LICENSE`, © 2026 Alperen Aktürk). Kullanıcıya giden kodda (site/sunucu/eklenti) dış paket
@@ -265,7 +283,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   görünmez (oynatıcı kapsayıcısı tam ekransa görünür).
 - Eklenti henüz mağazada değil (paketlenmemiş kurulum, `apps/web/public/eklenti.html`).
   Geliştirici hesabı açıldı (yayıncı e-postası screenwithme.app@gmail.com, tacir değil);
-  başvuru paketi ve form metinleri hazır (`docs/web-store.md`, `npm run store`). İnceleme
+  başvuru paketi ve form metinleri hazır (`docs/web-store.md`, `npm run store`). **Henüz
+  gönderilmedi** (Ekim 2026: kullanıcı eklentiyi hazır görmüyor). Gönderildikten sonra, inceleme
   sürerken `PROTOCOL_VERSION` artırma.
 - Repo private; herkese açık metinlerde "open source" deme (repo açılırsa önce
   `docs/rakip-analizi.md`'deki site adlarını temizle).
