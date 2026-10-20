@@ -26,32 +26,6 @@ const blush = (y = 34) => `<ellipse cx="24.5" cy="${y}" rx="2.2" ry="1.3" fill="
 
 const AVATARS = {
   // ---------- Tematik ----------
-  astronaut: badge(['#3a4f9a', '#1b2550'], `
-${shoulders('#e9ecf5', '<rect x="38" y="50" width="8" height="5" rx="1" fill="#6ee7ff"/><circle cx="24" cy="54" r="3" fill="#ff6f91"/>')}
-<circle cx="32" cy="29" r="19" fill="#f1f3fa" stroke="#c9cfe0" stroke-width="2"/>
-<rect x="17" y="19" width="30" height="21" rx="10" fill="#22306b"/>
-<clipPath id="v"><rect x="17" y="19" width="30" height="21" rx="10"/></clipPath>
-<g clip-path="url(#v)">${face('#f2c9a8', 32, 31, 10)}${eyes(30, 4)}${smile(34.5, 3)}</g>
-<path d="M21 23 Q26 20 31 21" stroke="#fff" stroke-opacity=".7" stroke-width="2" fill="none" stroke-linecap="round"/>
-<path d="M44 14 L48 7" stroke="#c9cfe0" stroke-width="2"/><circle cx="48.5" cy="6" r="2.5" fill="#ffd27a"/>`),
-
-  alien: badge(['#5a3a9a', '#23124a'], `
-${shoulders('#5a3a9a', '<path d="M24 46 L32 54 L40 46" stroke="#8fe36b" stroke-width="2" fill="none"/>')}
-<path d="M26 14 L21 5 M38 14 L43 5" stroke="#8fe36b" stroke-width="2" stroke-linecap="round"/><circle cx="21" cy="4.5" r="2.5" fill="#d6ff9e"/><circle cx="43" cy="4.5" r="2.5" fill="#d6ff9e"/>
-<ellipse cx="32" cy="29" rx="15" ry="17" fill="#8fe36b"/>
-<ellipse cx="25" cy="29" rx="5.5" ry="3.4" transform="rotate(28 25 29)" fill="#0d0d18"/><ellipse cx="39" cy="29" rx="5.5" ry="3.4" transform="rotate(-28 39 29)" fill="#0d0d18"/>
-<circle cx="26.5" cy="27.5" r="1" fill="#fff"/><circle cx="40.5" cy="27.5" r="1" fill="#fff"/>
-<path d="M29 38 Q32 40 35 38" stroke="#2f6b1f" stroke-width="1.4" fill="none" stroke-linecap="round"/>`),
-
-  cyber: badge(['#3a1f66', '#120a26'], `
-${shoulders('#1c1430', '<path d="M14 54 Q20 46 32 45 Q44 46 50 54" stroke="#05d9e8" stroke-width="1.8" fill="none"/>')}
-${neck('#e9b896')}${face('#e9b896')}
-<path d="M27 19 L29 6 L32 16 L34 4 L36 16 L39 7 L38 20Z" fill="#ff2a6d"/>
-<rect x="18" y="25" width="28" height="9" rx="4" fill="#0b0418" stroke="#05d9e8" stroke-width="1.6"/>
-<rect x="22" y="28" width="7" height="3" rx="1.5" fill="#05d9e8"/><rect x="35" y="28" width="7" height="3" rx="1.5" fill="#ff2a6d"/>
-<path d="M40 36 h3 l2 2 h3" stroke="#05d9e8" stroke-width="1" fill="none"/>
-<path d="M29 37.5 Q33 39 36 36.5" stroke="#6b2f2f" stroke-width="1.5" fill="none" stroke-linecap="round"/>`),
-
   wizard: badge(['#4a6a9a', '#1d2a48'], `
 ${shoulders('#7d879e')}
 ${face('#f1d3b8', 32, 32, 10.5)}
@@ -275,18 +249,6 @@ ${eyes(30.5, 4.6)}
 <path d="M25 27.5 Q27 26.5 29.5 27.5 M34.5 27.5 Q37 26.5 39 27.5" stroke="#7a2a14" stroke-width="1.2" fill="none"/>
 <path d="M29.5 36 Q32 37.8 34.5 36" stroke="#b03050" stroke-width="1.6" fill="none" stroke-linecap="round"/>${blush(34)}
 <circle cx="50" cy="52" r="5" fill="#c9fff2" opacity=".9"/><circle cx="50" cy="52" r="8" fill="#8ff7e1" opacity=".25"/>`),
-
-  // Siber hacker kız (cyberpunk): camgöbeği küt saç, pembe tek camlı vizör, yaka ışığı
-  netrunner: badge(['#ff5aa0', '#5a0f3a'], `
-${shoulders('#1c1430', '<path d="M14 54 Q20 46 32 45 Q44 46 50 54" stroke="#ff2a6d" stroke-width="1.8" fill="none"/>')}
-${neck('#f0c8a8')}
-<path d="M18 32 Q16 14 32 13 Q48 14 46 32 L46 40 L40 40 L40 26 L24 26 L24 40 L18 40Z" fill="#14e0ee"/>
-${face('#f0c8a8', 32, 31, 11)}
-<path d="M20 27 Q24 18 34 19 Q42 20 44 27 Q36 23 28 24 Q23 25 20 27Z" fill="#14e0ee"/>
-<rect x="21" y="27.5" width="22" height="6" rx="3" fill="#ff2a6d" opacity=".85"/>
-<rect x="24" y="29" width="6" height="2.5" rx="1.2" fill="#ffe0ef"/>
-<path d="M29.5 37 Q32 38.5 34.5 37" stroke="#9a2a4a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-<path d="M44 34 h3 v3" stroke="#14e0ee" stroke-width="1" fill="none"/>`),
 
   // ---------- Parodi (sadece tarzı andırır) ----------
   // Hasır şapkalı korsan: dağınık siyah saç, hasır şapka (kırmızı bant), kırmızı açık yelek, göz altı yarası

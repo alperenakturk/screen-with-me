@@ -14,7 +14,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-126%20unit%20%2B%2012%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.9.50-7c5cff)
+![Version](https://img.shields.io/badge/version-0.9.51-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
@@ -67,7 +67,7 @@ the speed, it happens for everyone. Reactions, chat, pins and a shared queue sit
 ### Look & feel
 | | |
 |---|---|
-| 🎨 **14 themes** | Night, Ocean, Sunset, Neon, plus illustrated Space, Cyberpunk, Fantasy medieval, Turkish Delight, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner, Night Express), each with the mascot in costume. |
+| 🎨 **12 themes** | Night, Ocean, Sunset, Neon, plus illustrated Fantasy medieval, Turkish Delight, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner, Night Express), each with the mascot in costume. |
 | 🎬 **Intro** | A short logo animation with a generated sound (Web Audio, no files). |
 | 🌍 **Languages** | Turkish (default) and English, on the site and in the extension. |
 
@@ -192,7 +192,7 @@ bir araç. Link at, herkes aynı saniyede izlesin; biri durdurursa herkes dursun
 - Kaydedilen odalar (30 gün; videoların kaldığı yer ve pinler hatırlanır), planlı başlangıç
 - Oturum özeti (Spotify özeti gibi, indirilebilir görsel)
 - Oda yöneticisi (👑): odadan çıkarma ve yasak kaldırma, sadece yönetici kontrolü, sıra kilidi, emojileri kapatma
-- İsim ve çizilmiş avatarlar, 14 tema (resimli ve Art Deco temalar, kostümlü maskot)
+- İsim ve çizilmiş avatarlar, 12 tema (resimli ve Art Deco temalar, kostümlü maskot)
 - Dikkat dağıtmayan tam ekran, "Herkesi bana eşitle", Türkçe / İngilizce arayüz
 
 Bağlantılar:

@@ -36,9 +36,6 @@ export type Reaction = (typeof REACTION_PAGES)[number][number];
  * metin geçen yerlerde (sohbet satırı, bildirim) kullanılan emoji karşılığı.
  */
 export const DRAWN_AVATARS = {
-  astronaut: '🧑‍🚀',
-  alien: '👽',
-  cyber: '🕶️',
   wizard: '🧙',
   warrior: '⚔️',
   elf: '🧝',
@@ -52,7 +49,6 @@ export const DRAWN_AVATARS = {
   lawyer: '⚖️',
   swordsman: '🗡️',
   sorceress: '🧙‍♀️',
-  netrunner: '👩‍💻',
   strawhat: '👒',
   cook: '🍳',
   greenblade: '🍃',
@@ -93,7 +89,7 @@ export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
  */
 export const AVATAR_PAGES = [
   [
-    'astronaut', 'alien', 'cyber', 'netrunner', 'wizard', 'sorceress', 'warrior', 'elf', 'dwarf',
+    'wizard', 'sorceress', 'warrior', 'elf', 'dwarf',
     'janissary', 'horseman', 'veiled', 'director', 'diva', 'driver', 'captain', 'conductor',
   ],
   ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],

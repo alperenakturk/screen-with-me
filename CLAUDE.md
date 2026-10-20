@@ -212,7 +212,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Sahnelerde üst boşluk ve yanlar:** sahne (1600×900) alttan hizalı ve ekranı kaplar; geniş ekranda
   üst kısım kırpılır ve üst şerit de kapatır: süsleri y≈200'ün üstüne koyma. Oda içeriği ortada en
   fazla 1280 px; kullanıcı çoğunlukla video izlerken bakar, o yüzden ana süsler (ay, kale, ejderha,
-  kervan, zeplin) sahnenin kenarlarında (x < 260 ya da x > 1340) dursun. Tema değişirken resimler
+  kervan) sahnenin kenarlarında (x < 260 ya da x > 1340) dursun. Tema değişirken resimler
   önce yüklenir (applyTheme → preload), renk ve resim birlikte değişir.
 - **Film sitenin içinde (`packages/shared/src/embed.ts`):** seçenek yok, hep açık ve hep "sadece video"
   (`focus.ts` her zaman); eklenti `data-swm-embed` ile desteğini bildirir (yoksa/eskiyse ayrı sekme kartı). `page` öğesi

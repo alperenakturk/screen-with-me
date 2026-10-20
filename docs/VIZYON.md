@@ -83,7 +83,8 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 - Sunucuda hız sınırları, her mesajın doğrulanması, hayalet bağlantı ayıklama.
 
 **Görünüm**
-- 14 tema (4 sade, 5 resimli, 5 Art Deco), her birinde kostümlü maskot.
+- 12 tema (4 sade, 3 resimli, 5 Art Deco), her birinde kostümlü maskot. (Uzay ve Cyberpunk
+  temaları, astronot / uzaylı / siber avatarlarıyla birlikte 0.9.51'de kaldırıldı.)
 - Çizilmiş avatarlar (temalı + parodi film / dizi / anime) ve hayvan emojileri; büyük seçim penceresi.
 - Açılış animasyonu ve üretilmiş açılış sesi; Türkçe (varsayılan) / İngilizce.
 - Eklentide sürüklenen ve boyutlanan çubuk, ilk girişte rehber kartı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
@@ -109,6 +110,8 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 - **v0.9.49:** Kaydedilen odalar (adlı, ana sayfada liste), oturum özeti, sohbette eylemler gizli,
   emojileri kapatma, 4x hız, varsayılan Türkçe.
 - **v0.9.50:** Oda görünümü (film kendi sekmesinde, sayfa odaya dönüşür).
+- **v0.9.51:** Uzay ve Cyberpunk temaları ile onlara ait 4 avatar (astronot, uzaylı, siber gözlüklü,
+  siber hacker kız) kaldırıldı; o temayı seçmiş olan Gece'ye, o avatarı seçmiş olan rastgele avatara düşer.
 - **Sunucu düzeltmesi (Ekim 2026):** 4 KB'tan büyük özel emojiler (gerçek resim ve GIF'ler) sunucuda
   reddediliyordu; düzeltildi, uçtan uca testte artık gerçek boyutlu emoji deneniyor.
 

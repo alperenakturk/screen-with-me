@@ -4,15 +4,14 @@ import { load, save } from './storage.ts';
 
 /**
  * Hepsi koyu; renkleri ve çizimli arka planları styles.css'teki [data-theme]
- * blokları belirler. Uzaydan sonrakiler resimli ve maskotlu (public/themes/*.svg).
+ * blokları belirler. Neon'dan sonrakiler resimli ve maskotlu (public/themes/*.svg).
+ * Kaldırılan bir temayı seçmiş olan (eski 'uzay', 'siber') currentTheme'de 'gece'ye düşer.
  */
 export const THEMES = [
   { id: 'gece', swatch: ['#141936', '#8b6cff'] },
   { id: 'okyanus', swatch: ['#0b2a45', '#2ec5e8'] },
   { id: 'gunbatimi', swatch: ['#3a1530', '#ff7a4d'] },
   { id: 'neon', swatch: ['#050508', '#ff2bd6'] },
-  { id: 'uzay', swatch: ['#1a1450', '#8ec5ff'] },
-  { id: 'siber', swatch: ['#0b0418', '#ff2a6d'] },
   { id: 'ortacag', swatch: ['#1a1430', '#d6a843'] },
   { id: 'lokum', swatch: ['#2a0e1e', '#f08cae'] },
   { id: 'binbirgece', swatch: ['#141236', '#e8c27a'] },
@@ -36,7 +35,7 @@ export function currentTheme(): ThemeId {
 
 /** Sahnesi (public/themes/<tema>.svg) olan temalar; diğerlerinin sadece maskotu var. */
 const SCENE_THEMES: readonly ThemeId[] = [
-  'uzay', 'siber', 'ortacag', 'lokum', 'binbirgece',
+  'ortacag', 'lokum', 'binbirgece',
   'sinema', 'opera', 'acikhava', 'gemi', 'tren',
 ];
 
