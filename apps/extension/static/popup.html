@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="popup.css" />
@@ -8,107 +8,10 @@
     <header>
       <img class="logo" src="icon48.png" alt="" />
       <strong>ScreenWithMe</strong>
-      <span id="status" class="status" hidden></span>
     </header>
-
-    <!-- ScreenWithMe sitesinin kendisindeyken sadece bu görünür. -->
-    <section id="site-view" class="site-view" hidden>
-      <div class="site-emoji">🎉</div>
-      <h3 data-t="siteTitle"></h3>
-      <p class="muted" data-t="siteText"></p>
-    </section>
-
-    <!-- İsim ve avatar: önce avatar seçilir, sonra kaydedilir (seçmeden kaydetmesin). -->
-    <section id="name-view" hidden>
-      <form id="name-form" class="stack">
-        <label for="name" data-t="yourName"></label>
-        <input id="name" maxlength="32" autocomplete="nickname" data-t-placeholder="namePlaceholder" />
-        <label data-t="yourAvatar"></label>
-        <div class="avatar-choice"><span id="avatar-preview"></span><button type="button" id="open-avatars" class="btn" data-t="changeAvatar"></button></div>
-        <button class="btn primary" data-t="save"></button>
-      </form>
-    </section>
-
-    <section id="me-view" class="me" hidden>
-      <span id="me-name"></span>
-      <button id="me-avatar" class="link" data-t="changeAvatar"></button>
-      <button id="edit-name" class="link" data-t="edit"></button>
-    </section>
-
-    <!-- Avatar seçimi: pencerenin tamamını kaplayan büyük panel -->
-    <section id="avatar-sheet" class="sheet" hidden>
-      <div class="sheet-head"><b data-t="yourAvatar"></b><button type="button" id="close-avatars" class="link">✕</button></div>
-      <div id="avatar-picker" class="avatar-picker big" role="radiogroup"></div>
-      <button type="button" id="done-avatars" class="btn primary" data-t="done"></button>
-    </section>
-
-    <!-- Oda az önce kapandıysa nedeni (çıkarıldın, güncelle, oda dolu). -->
-    <p id="ended" class="warning" hidden></p>
-
-    <section id="idle-view" class="stack" hidden>
-      <p class="muted" data-t="tagline"></p>
-      <button id="create" class="btn primary big" data-t="createHere"></button>
-      <p class="muted small" data-t="createHint"></p>
-      <div class="divider"><span data-t="or"></span></div>
-      <form id="join-form" class="row">
-        <input id="join-input" autocomplete="off" data-t-placeholder="joinPlaceholder" />
-        <button class="btn" data-t="join"></button>
-      </form>
-    </section>
-
-    <section id="room-view" class="stack" hidden>
-      <div class="card">
-        <div class="label" data-t="invite"></div>
-        <div class="row">
-          <input id="invite" readonly />
-          <button id="copy" class="btn" data-t="copy"></button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="label" data-t="nowPlaying"></div>
-        <div id="item-title" class="item-title"></div>
-        <div id="page-warning" class="warning" hidden>
-          <span data-t="notOnRoomPage"></span>
-          <div class="row">
-            <button id="go-room-page" class="btn small" data-t="goToRoomPage"></button>
-            <button id="share-page" class="btn small" data-t="shareThisPage"></button>
-          </div>
-          <span class="muted small" data-t="shareHint"></span>
-        </div>
-        <div id="video-state" class="muted small"></div>
-        <!-- Eklenti sekme açıldıktan sonra kurulduysa çerçeve yoktur: yenilemek gerekir. -->
-        <div id="reload-box" class="warning" hidden>
-          <span data-t="reloadHint"></span>
-          <button id="reload" class="btn small" data-t="reloadPage"></button>
-        </div>
-        <details id="diag-box" class="diag" hidden>
-          <summary data-t="diagTitle"></summary>
-          <div id="diag"></div>
-        </details>
-      </div>
-
-      <div id="reactions" class="reactions"></div>
-      <form id="chat-form" class="row">
-        <input id="chat-input" maxlength="120" autocomplete="off" data-t-placeholder="chatPlaceholder" />
-        <button class="btn" data-t="send"></button>
-      </form>
-
-      <div class="card">
-        <div id="members-title" class="label"></div>
-        <ul id="members" class="members"></ul>
-      </div>
-
-      <div id="bans-card" class="card" hidden>
-        <div class="label" data-t="bans"></div>
-        <ul id="bans" class="members banned"></ul>
-      </div>
-
-      <button id="go-room" class="btn" data-t="backToRoomShort"></button>
-      <button id="leave" class="btn danger" data-t="leave"></button>
-    </section>
-
-    <p id="error" class="error" hidden></p>
+    <p id="text"></p>
+    <button id="action" type="button" class="btn"></button>
+    <p id="version" class="version"></p>
     <script type="module" src="popup.js"></script>
   </body>
 </html>

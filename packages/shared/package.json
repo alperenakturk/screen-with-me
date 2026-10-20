@@ -9,6 +9,7 @@
     "./waiting": "./src/waiting.ts",
     "./media": "./src/media.ts",
     "./embed": "./src/embed.ts",
+    "./shell": "./src/shell.ts",
     "./clock": "./src/clock.ts",
     "./player": "./src/player.ts",
     "./sync-engine": "./src/sync-engine.ts",

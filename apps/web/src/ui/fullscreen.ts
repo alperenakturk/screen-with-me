@@ -1,6 +1,7 @@
 import { cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { formatTime } from '../media-info.ts';
+import { postToExtension } from '../storage.ts';
 
 /** Tam ekrandaki hızlı mesaj kutusu kısa mesajlar içindir. */
 export const QUICK_CHAT_MAX = 120;
@@ -8,6 +9,11 @@ export const QUICK_CHAT_MAX = 120;
 const IDLE_MS = 2500;
 
 interface FullscreenOptions {
+  /**
+   * Film sayfasının üstündeki katmandayız (kabuk): tarayıcının tam ekranı film sayfasının tamamına
+   * uygulanır (video ve katman birlikte), oda kendi tam ekran görünümüne geçer (`fake-fs`).
+   */
+  shell?: boolean;
   theater: HTMLElement;
   getPlayer: () => PlayerAdapter | null;
   send: (message: ClientMessage) => void;
@@ -24,7 +30,7 @@ interface FullscreenOptions {
  * videonun üstüne görünmez bir katman (catcher) konur: hareketi o yakalar,
  * tek tık oynat/durdur, çift tık tam ekrandan çıkış yapar.
  */
-export function createFullscreen({ theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
+export function createFullscreen({ shell = false, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
   const q = <T extends HTMLElement>(selector: string) => theater.querySelector<T>(selector)!;
   const catcher = q('#fs-catcher');
   const controls = q('#fs-controls');
@@ -43,14 +49,26 @@ export function createFullscreen({ theater, getPlayer, send, onSkip, onRate }: F
   let seeking = false;
   let hoveringControls = false;
 
-  const isActive = () => document.fullscreenElement === theater;
+  let fake = false;
+  const isActive = () => (shell ? fake : document.fullscreenElement === theater);
+
+  /** Kabukta: oda tam ekran görünümüne geçer/çıkar; eklenti film sayfasını tam ekran yapar. */
+  function setFake(on: boolean, tellExtension: boolean): void {
+    if (fake === on) return;
+    fake = on;
+    theater.classList.toggle('fake-fs', on);
+    onActiveChange();
+    if (tellExtension) postToExtension({ type: 'fullscreen', on });
+  }
+  const exit = () => (shell ? setFake(false, true) : void document.exitFullscreen());
 
   function wake(): void {
     theater.classList.remove('idle');
     if (idleTimer !== null) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
       // Yazı yazarken ya da kontrollerin üstündeyken gizleme.
-      if (hoveringControls || document.activeElement === chatInput || seeking) wake();
+      // Kabukta fare hareketi film sayfasına gider (görmeyiz): kontroller hep görünür kalır.
+      if (hoveringControls || document.activeElement === chatInput || seeking || shell) wake();
       else theater.classList.add('idle');
     }, IDLE_MS);
   }
@@ -75,7 +93,7 @@ export function createFullscreen({ theater, getPlayer, send, onSkip, onRate }: F
     renderProgress();
   }
 
-  document.addEventListener('fullscreenchange', () => {
+  function onActiveChange(): void {
     if (isActive()) {
       wake();
       renderProgress();
@@ -87,6 +105,9 @@ export function createFullscreen({ theater, getPlayer, send, onSkip, onRate }: F
       progressTimer = null;
       chatInput.blur();
     }
+  }
+  document.addEventListener('fullscreenchange', () => {
+    if (!shell) onActiveChange();
   });
 
   for (const type of ['mousemove', 'mousedown', 'touchstart'] as const) {
@@ -107,11 +128,11 @@ export function createFullscreen({ theater, getPlayer, send, onSkip, onRate }: F
   catcher.addEventListener('dblclick', () => {
     if (clickTimer !== null) clearTimeout(clickTimer);
     clickTimer = null;
-    void document.exitFullscreen();
+    exit();
   });
   playButton.addEventListener('click', togglePlay);
   skipButton.addEventListener('click', onSkip);
-  exitButton.addEventListener('click', () => void document.exitFullscreen());
+  exitButton.addEventListener('click', exit);
   speed.addEventListener('change', () => onRate(Number(speed.value)));
 
   seek.addEventListener('input', () => {
@@ -156,8 +177,13 @@ export function createFullscreen({ theater, getPlayer, send, onSkip, onRate }: F
   return {
     isActive,
     toggle(): void {
-      if (isActive()) void document.exitFullscreen();
+      if (shell) setFake(!fake, true);
+      else if (isActive()) void document.exitFullscreen();
       else void theater.requestFullscreen();
+    },
+    /** Kabukta film sayfasının tam ekranı bitti/başladı (Esc vb.): görünüm de uysun. */
+    syncShell(on: boolean): void {
+      setFake(on, false);
     },
     setRate(rate: number): void {
       speed.value = String(rate);

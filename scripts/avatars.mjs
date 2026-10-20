@@ -1,13 +1,13 @@
 // Çizilmiş avatarlar (SVG, 64x64 yuvarlak rozet). Maskottan (mor kare) ayrı: insan ya da
 // yaratık yüzleri. Kimlikler packages/shared/src/avatars.ts ile aynı olmalı.
 //
-//   node scripts/avatars.mjs  → apps/web/public/avatars/*.svg ve apps/extension/static/avatars/*.svg
+//   node scripts/avatars.mjs  → apps/web/public/avatars/*.svg (eklenti avatar göstermez; arayüz sitenin kendisi)
 //
 // Parodiler sadece tarzı andırır: isim, logo, birebir kostüm yok.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-const OUTS = [new URL('../apps/web/public/avatars/', import.meta.url), new URL('../apps/extension/static/avatars/', import.meta.url)];
+const OUTS = [new URL('../apps/web/public/avatars/', import.meta.url)];
 for (const out of OUTS) mkdirSync(out, { recursive: true });
 
 const INK = '#1d1430';
@@ -580,4 +580,4 @@ ${eyes(30.6, 4.7)}
 for (const [id, content] of Object.entries(AVATARS)) {
   for (const out of OUTS) writeFileSync(new URL(`${id}.svg`, out), content.replace(/\n\s*\n/g, '\n'));
 }
-console.log(`✓ ${Object.keys(AVATARS).length} avatar → apps/web/public/avatars, apps/extension/static/avatars`);
+console.log(`✓ ${Object.keys(AVATARS).length} avatar → apps/web/public/avatars`);

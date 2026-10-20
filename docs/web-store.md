@@ -86,12 +86,12 @@ ScreenWithMe has a single purpose: watch parties. It keeps one HTML5 video, in t
 
 `storage`:
 ```
-Stores the user's chosen nickname, avatar, language preference and a random browser ID locally (chrome.storage.local), and which tab is connected to which room (chrome.storage.session), so the room survives the service worker restarting and the user isn't asked for their name again.
+Stores the website's settings (nickname, avatar, theme, language, saved rooms and a random browser ID) locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website, and which tab shows a room layer (chrome.storage.session), so it survives the service worker restarting.
 ```
 
 Host izni (`<all_urls>`):
 ```
-Users watch videos on sites we cannot list in advance, and players are usually inside cross-origin iframes, so the content script must be able to run in every frame. activeTab is not enough: invited friends open the page through a link without clicking the extension icon, and players that load later in iframes must be detected automatically. Outside a tab that has joined a room the script stays dormant. Within that tab it only reads the <video> element's playback state (time, paused, rate) and draws its own overlay. It never reads page text, forms or cookies. The page URL and title leave the device only when the user explicitly creates a room or shares that page with their room.
+Users watch videos on sites we cannot list in advance, and players are usually inside cross-origin iframes, so the content script must be able to run in every frame. activeTab is not enough: invited friends open the page through a link without clicking the extension icon, and players that load later in iframes must be detected automatically. Outside a tab that has joined a room the script stays dormant. Within that tab it only reads the <video> element's playback state (time, paused, rate) and shows our own website's room page as a layer over the page (a web-accessible extension page, shell.html, in an iframe), with a hole where the video sits. It never reads page text, forms or cookies. The page URL and title leave the device only when the user explicitly creates a room or shares that page with their room.
 ```
 
 **Uzak kod kullanıyor musunuz? (Remote code):** **No, I am not using remote code.**
@@ -123,11 +123,11 @@ Altındaki üç beyanın üçünü de işaretle:
 
 ```
 No login needed. Allow autoplay or click "Start watching" if the page asks.
-1. Open https://plyr.io/ (an open-source video player demo) or https://videojs.com/.
-2. Click the ScreenWithMe toolbar icon, enter a nickname, pick an avatar, then "Create a room on this page", then "Copy".
-3. Paste the invite link into a second window (the same profile works). It opens the room page on our website; press "Go to the page and watch together" and the tab moves to the same video and joins the room.
-4. Play, pause or seek in one window: the other follows within about 1 second.
-5. Once the video is found, the page turns into a room view: chat on the right, reactions (▲▼ for more), pin, speed and fullscreen under the video (speed is shared with the room).
+1. Open https://screen-with-me.swm-server.workers.dev, press "Create room" → "One-time", enter a nickname and pick an avatar.
+2. Paste https://plyr.io/ (an open-source video player demo) or https://videojs.com/ into the link box and press "Play now". The tab goes to that page.
+3. Once the video is found, the website's room appears around it (chat, queue, reactions, pin, speed, fullscreen); the video sits in the room's player area.
+4. Open the invite link in a second window (the same profile works) and press "Go to the film and watch together".
+5. Play, pause or seek in one window: the other follows within about 1 second.
 Tabs that have not joined a room are not affected.
 ```
 
@@ -153,7 +153,7 @@ Gönderimden önce (ben kontrol ederim, ✅ olanlar 0.9.0'da yapıldı):
 - ✅ Açıklamada film/dizi/site adı yok; "her HTML5 video için tarafsız senkron aracı".
 - ✅ Otomatik testler (GitHub Actions: tip kontrolü, birim, derleme, uçtan uca).
 - ✅ Ekran görüntüleri güncel (`npm run store`).
-- ⬜ Brave/Edge'de bir arkadaşla gerçek deneme (popup'taki "Tanı" satırı).
+- ⬜ Brave/Edge'de bir arkadaşla gerçek deneme.
 - ⬜ Sürüm `1.0.0` → `npm run store` → zip'i panele yükle → formu bu rehbere göre doldur → gönder
   (senin hesabınla; ben gönderemem).
 - ⬜ Onaylanınca: `eklenti.html` ve sitedeki kurulum linklerini mağaza linkine çevir.

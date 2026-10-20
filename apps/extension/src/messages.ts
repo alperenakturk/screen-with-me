@@ -1,171 +1,80 @@
 // Eklentinin parçaları arasındaki mesajlar.
 //
-//   popup  ⇄  arka plan (background)  ⇄  sunucu
-//                     ⇅
-//            sekmedeki çerçeveler (content)
+//   site (ana sayfa)  →  site-bridge  →  arka plan (background)
+//   site (kabukta)   ⇄  shell.html   ⇄  arka plan  ⇄  film sekmesindeki çerçeveler (content)
 //
-// Arka plan her sekme için bir oda bağlantısı tutar. Sekmedeki her çerçeve
-// (sayfa ve içindeki iframe'ler) kendi bulduğu en iyi videoyu bildirir; arka
-// plan en iyisini "etkin" seçer, senkron o çerçevede çalışır.
+// Eklentinin kendi oda bağlantısı yok: odayı her zaman site tutar. Film sekmesinde site,
+// eklentinin açtığı katmanın (kabuk) içinde çalışır; arka plan site ile film sayfasındaki
+// senkron motoru arasında mesaj taşır.
 
-import type { ConnectionStatus } from '@swm/shared/connection';
-import type { EmbedControl, EmbedStatus } from '@swm/shared/embed';
-import type { Avatar, BanEntry, ClientMessage, Member, Pin, PlaybackState, QueueItem, Reaction } from '@swm/shared/protocol';
+import type { EmbedControl, EmbedReply, EmbedRequest } from '@swm/shared/embed';
+import type { ClientMessage, PlaybackState } from '@swm/shared/protocol';
+import type { Rect, ShellLayout } from '@swm/shared/shell';
 
-/** Çerçevelerin "oda var mı" diye baktığı yer (chrome.storage.session). */
+/** Çerçevelerin "bir sekmede oda var mı" diye baktığı yer (chrome.storage.session): kabuklu sekmeler. */
 export const SESSIONS_KEY = 'sessions';
 
+/** Film çerçevesi ⇄ arka plan. */
 export const PORT_NAME = 'swm';
-/** Sitenin "filmi burada göster" bağlantısı (site-bridge ⇄ arka plan). */
-export const EMBED_PORT_NAME = 'swm-embed';
+/** shell.html ⇄ arka plan. */
+export const SHELL_PORT_NAME = 'swm-shell';
 
 /** Çerçeve → arka plan */
 export type FrameMessage =
-  /** Ortak geçiş sorusuna cevap ("gidelim mi?"): evet → git, hayır → burada kal. */
-  | { type: 'follow-answer'; yes: boolean }
-  /**
-   * `size` tanı içindir: en iyi videonun ekrandaki boyutu, örn. "1280×720".
-   * `embedDepth`: çerçeve bizim sitenin içinde (film sitenin içinde açıldı); 1 = film sayfasının kendisi.
-   */
-  | { type: 'candidate'; score: number; size?: string; embedDepth?: number }
-  /** Sitenin içindeki çerçeve: videonun durumu (sitedeki ilerleme çubuğu için). */
-  | { type: 'status'; status: EmbedStatus }
-  /** Sitenin içindeki çerçeve: kısayol tuşu ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
+  /** `size` tanı içindir: en iyi videonun ekrandaki boyutu. */
+  | { type: 'candidate'; score: number; size?: string }
+  /** Videonun durumu (sitedeki ilerleme çubuğu ve pin şeridi için). */
+  | { type: 'status'; status: { time: number; duration: number; paused: boolean; rate: number } }
+  /** Film sayfasında basılan kısayol ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
   | { type: 'key'; key: string }
   | { type: 'fullscreen' }
-  | { type: 'send'; message: ClientMessage }
-  /** Üst şeritteki 🏠: sekme sitedeki odaya dönsün. */
-  | { type: 'go-room' }
-  | { type: 'join'; roomId: string };
-
-/** Sayfa üstü çubukta gösterilen oda bilgisi. */
-export interface RoomInfo {
-  roomId: string;
-  inviteUrl: string;
-  members: Member[];
-  myId: string | null;
-  /** Oda yöneticisinin üye ID'si (👑). */
-  hostId: string | null;
-  queueLength: number;
-  /** Video bitince sıradakine kendiliğinden geçilsin mi (oda ayarı). */
-  autoNext: boolean;
-  /** Yönetici emojileri kapattı. */
-  noReactions: boolean;
-  /** Kaydedilmiş odanın adı (varsa). */
-  roomName?: string;
-}
-
-export interface ChatLine {
-  id: string;
-  name: string;
-  avatar?: Avatar;
-  text: string;
-  mine: boolean;
-  /** Sunucu saati (ms). */
-  at: number;
-}
+  /** Bizim tam ekranımız bitti/başladı (üst çerçeve: Esc vb.). */
+  | { type: 'fullscreen-changed'; on: boolean }
+  | { type: 'send'; message: ClientMessage };
 
 /** Arka plan → çerçeve */
 export type BackgroundMessage =
   | { type: 'activate'; state: PlaybackState; offset: number; synced: boolean }
   | { type: 'deactivate' }
-  /**
-   * Oda görünümü: film kendi sekmesinde, sayfa sitedeki odaya dönüşür. `active`: videonun olduğu çerçeve mi
-   * (o boşluğa yerleşir ve odayı çizer); değilse sadece içindeki oynatıcı çerçevesini büyütür.
-   * `hint`: odanın sayfasındayız ama video henüz bulunmadı → üst çerçeve "Filmi başlat" kartını gösterir.
-   */
-  | { type: 'roomview'; on: boolean; active: boolean; hint: boolean }
   /** Bu sekmede oda yok: çerçeve uykuya dönsün. */
   | { type: 'idle' }
   | { type: 'state'; state: PlaybackState }
   | { type: 'clock'; offset: number; synced: boolean }
-  /** Sitenin kontrollerinden gelen komut (sadece sitenin içindeki çerçeveye). */
+  /** Sitenin kontrollerinden gelen komut (tam ekran çubuğu, pin şeridi, hız). */
   | { type: 'control'; control: EmbedControl }
-  | { type: 'room'; room: RoomInfo }
-  | { type: 'reaction'; byId: string; name: string; avatar?: Avatar; emoji?: Reaction; sticker?: string }
-  /** Odaya özel emoji eklendi (etkinleşince odadakilerin hepsi de tek tek gelir). */
-  | { type: 'sticker'; id: string; data: string }
-  | { type: 'stickers-clear' }
+  /** Üst çerçeve: odanın katmanını (kabuk) aç. */
+  | { type: 'shell-open'; roomId: string }
   /**
-   * Ortak geçiş sorusu: biri yeni sayfa açtı (page), odada başka bir video açtı (room) ya da
-   * odaya döndü (home). Evet diyen gider, hayır diyen kalır.
+   * Katmanın hâli tüm çerçevelere: `active` videolu çerçeve mi. Üst çerçeve `hole`'a göre videoyu
+   * yerleştirir; ara çerçeveler videolu iç çerçeveyi kendi alanlarına büyütür.
    */
-  | { type: 'ask-follow'; kind: 'page' | 'room' | 'home'; name: string; host?: string }
-  | { type: 'sticker-removed'; id: string }
-  /** Açık videonun pinleri (`removable`: kendi pinim ya da yöneticiyim). */
-  | { type: 'pins'; pins: Array<Pin & { removable: boolean }> }
-  | { type: 'chat'; line: ChatLine }
-  /** Etkinleşince odanın önceki mesajları (sohbet panelinde geçmiş). */
-  | { type: 'chat-history'; lines: ChatLine[] }
-  /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte); "slow": çok hızlı mesaj atıldı. */
-  | { type: 'notice'; kind: 'joined' | 'left' | 'slow' | 'locked'; name: string }
-  /** Odaya yeni girildi: "İyi seyirler" açılış animasyonu. */
-  | { type: 'intro' }
-  /** Oda bağlantısı kapandı (çıkarıldın / oda dolu / eklenti eski): kısa bir açıklama göster. */
-  | { type: 'ended'; reason: 'kicked' | 'version' | 'room_full' }
-  /** "Herkes hazır": oda bunları bekliyor (boş: bekleme yok). `me`: beklenen bensem. */
-  | { type: 'waiting'; names: string[]; me: boolean };
+  | { type: 'shell-layout'; layout: ShellLayout; active: boolean }
+  /** Üst çerçeve: film sayfasını tam ekran yap / çık. */
+  | { type: 'shell-fullscreen'; on: boolean };
 
 /** Arka plan → sekmedeki tüm çerçeveler: "bu sekmede oda var, videonu bildir". */
 export const PROBE = 'swm-probe';
 
-/**
- * ScreenWithMe sitesi → eklenti (site-bridge üzerinden): "bu sekme şu odaya
- * katılsın". Sekme odaya bağlanır, eklenti onu odanın sayfasına kendisi götürür.
- */
-export interface SiteJoinMessage {
-  type: 'site-join';
+/** shell.html → arka plan */
+export type ShellPortMessage =
+  | { type: 'hello' }
+  | { type: 'embed'; request: EmbedRequest }
+  | { type: 'layout'; layout: ShellLayout }
+  | { type: 'navigate'; url: string }
+  | { type: 'fullscreen'; on: boolean };
+
+/** Arka plan → shell.html */
+export type ShellPortReply =
+  | { type: 'reply'; reply: EmbedReply }
+  | { type: 'page'; url: string }
+  | { type: 'video'; found: boolean }
+  | { type: 'fullscreen'; on: boolean };
+
+/** Ana site → arka plan (site-bridge üzerinden): "bu sekme film sayfasına gitsin, odanın katmanıyla". */
+export interface SiteGoMessage {
+  type: 'site-go';
   roomId: string;
-  /** Odada açık sayfa: sekme bağlantıyı beklemeden hemen oraya gider (hız için). */
-  url?: string;
+  url: string;
 }
 
-/** Sitenin pencereye attığı mesajın biçimi (window.postMessage). */
-export const SITE_MESSAGE_SOURCE = 'screenwithme-site';
-/** Eklentinin siteye cevabı: "sekmeyi ben götürüyorum" (site kendi bağlantısını kapatır). */
-export const EXTENSION_MESSAGE_SOURCE = 'screenwithme-extension';
-
-/** Popup → arka plan */
-export type PopupRequest =
-  | { type: 'status'; tabId: number }
-  | { type: 'set-name'; name: string; avatar: Avatar }
-  | { type: 'create'; tabId: number }
-  | { type: 'join'; tabId: number; input: string }
-  | { type: 'leave'; tabId: number }
-  | { type: 'react'; tabId: number; emoji: Reaction }
-  | { type: 'chat'; tabId: number; text: string }
-  | { type: 'go-to-room-page'; tabId: number }
-  | { type: 'share-this-page'; tabId: number }
-  | { type: 'reload'; tabId: number }
-  | { type: 'go-room'; tabId: number }
-  | { type: 'kick'; tabId: number; memberId: string }
-  | { type: 'unban'; tabId: number; banId: string };
-
-export interface PopupStatus {
-  name: string | null;
-  avatar: Avatar | null;
-  tabUrl: string | null;
-  /** Bu sekmedeki oda az önce kapandıysa nedeni. */
-  ended: 'kicked' | 'version' | 'room_full' | null;
-  session: null | {
-    roomId: string;
-    inviteUrl: string;
-    connection: ConnectionStatus;
-    members: Member[];
-    myId: string | null;
-    hostId: string | null;
-    /** Odadan kalıcı olarak çıkarılanlar (sadece yöneticiye gelir). */
-    bans: BanEntry[];
-    item: QueueItem | null;
-    queueLength: number;
-    /** Sekme, odada açık olan sayfada mı? */
-    onRoomPage: boolean;
-    /** Bu sekmede senkronlanan bir video bulundu mu? */
-    hasVideo: boolean;
-    /** Tanı için: sekmede arka plana bağlı çerçeve sayısı ve en iyi videonun boyutu (piksel). */
-    frames: number;
-    bestVideo: string | null;
-  };
-}
-
-export type PopupResponse = { ok: true; status?: PopupStatus } | { ok: false; error: string };
+export type { Rect };

@@ -1,8 +1,8 @@
 // Sadece video: film sayfasındaki asıl oynatıcı ekranı (ya da verilen boşluğu) kaplar, sayfanın
 // geri kalanı gizlenir, oturmayan kısımlar siyah kalır (YouTube'daki gibi). Oynatıcı film
 // sayfasının içindeki başka bir çerçevedeyse, üstteki sayfa o çerçeveyi büyütür.
-// İki yerde kullanılır: sitenin içinde açılan film (boşluk yok) ve film kendi sekmesindeyken
-// "oda görünümü" (sitedeki oda gibi: üstte şerit, sağda panel, altta araç çubuğu için boşluk).
+// Film sayfasının üstüne açılan oda katmanında (kabuk) video, sitenin bıraktığı deliğe yerleşir:
+// üst çerçevede deliğin kenarlarına kadar boşluk bırakılır, iç çerçeveler kendi alanını kaplar.
 
 const MARK = 'data-swm-focus';
 const STYLE_ID = 'swm-focus-style';
@@ -30,18 +30,6 @@ export interface Insets {
 
 export const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
 
-/**
- * Oda görünümünün ölçüleri (overlay aynı sayıları kullanır): üst şerit 56 px, sağda panel,
- * videonun altında pin şeridi + araç çubuğu, her yanda 16 px boşluk (sitedeki oda gibi).
- */
-export function roomLayout(width: number): Insets & { side: number } {
-  const side = width < 1000 ? 280 : 320;
-  return { top: 72, left: 16, right: side + 32, bottom: 96, side };
-}
-
-/** Bizim ⛶ ile tam ekran: altta kontrol şeridi için boşluk (overlay aynı sayıyı kullanır). */
-export const FS_BOTTOM = 112;
-
 /** Oda görünümünde boşlukların zemini: sitenin "Gece" teması. */
 export const ROOM_BG =
   'radial-gradient(ellipse 70% 45% at 50% -5%, rgb(139 108 255 / .24), transparent 70%), linear-gradient(#171c40, #0c0e1e 60%)';
@@ -52,11 +40,11 @@ export const ROOM_BG =
  */
 function playerBox(video: HTMLVideoElement): HTMLElement {
   const v = video.getBoundingClientRect();
-  const area = Math.max(1, v.width * v.height);
   let box: HTMLElement = video;
   for (let el = video.parentElement; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
     const r = el.getBoundingClientRect();
-    if (r.width * r.height > area * 1.6 || r.width < v.width - 2) break;
+    // Kontrol çubuğu kadar büyük olabilir; başlık/açıklama gibi başka içeriği de saran kutu oynatıcı değildir.
+    if (r.width < v.width - 2 || r.height > v.height + 72 || r.width > v.width + 24) break;
     box = el;
   }
   return box;
@@ -75,39 +63,6 @@ export function biggestFrame(preferred: HTMLElement | null = null): HTMLElement 
     const area = r.width * r.height;
     if (area > bestArea && getComputedStyle(frame).visibility !== 'hidden') {
       best = frame;
-      bestArea = area;
-    }
-  }
-  return best;
-}
-
-/**
- * Video henüz bulunmadan oynatıcının olası yeri (uyarı kartındaki ok için): en büyük video, yoksa en
- * büyük çerçeve, o da yoksa oynatıcıya benzeyen kutu (çoğu sitede oynat'a basmadan önce sadece kapak
- * resmi + ▶ olan, 16:9'a yakın büyük bir alan vardır).
- */
-export function likelyPlayer(): HTMLElement | null {
-  let best: HTMLElement | null = null;
-  let bestArea = 160 * 90;
-  for (const video of document.querySelectorAll('video')) {
-    const r = video.getBoundingClientRect();
-    if (r.width * r.height > bestArea) {
-      best = video;
-      bestArea = r.width * r.height;
-    }
-  }
-  if (best) return playerBox(best as HTMLVideoElement);
-  const frame = biggestFrame();
-  if (frame) return frame;
-  const screen = innerWidth * innerHeight;
-  bestArea = 320 * 180;
-  for (const box of document.querySelectorAll<HTMLElement>('div, section, figure, a, button, img, picture, canvas')) {
-    const r = box.getBoundingClientRect();
-    const area = r.width * r.height;
-    const ratio = r.width / Math.max(1, r.height);
-    // Eşitlikte içteki (sonra gelen) kutu kazanır: oynatıcının kendisi, sarmalayıcısı değil.
-    if (area >= bestArea && area < screen * 0.9 && ratio > 1.2 && ratio < 2.4 && r.height >= 180) {
-      best = box;
       bestArea = area;
     }
   }

@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath><radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#56b8ae"/><stop offset="1" stop-color="#1a5a55"/></radialGradient></defs><g clip-path="url(#c)"><rect width="64" height="64" fill="url(#bg)"/>
-<path d="M6 64 Q8 45 32 43 Q56 45 58 64Z" fill="#1f2228"/><path d="M27 43 L32 52 L37 43Z" fill="#6aa8e0"/><path d="M31 46 h2 l1 10 h-4Z" fill="#141414"/>
-<rect x="28" y="38" width="8" height="7" fill="#f2d0b0"/><circle cx="32" cy="30" r="12" fill="#f2d0b0"/>
-<path d="M20 30 Q18 16 31 15 Q44 15 44 26 Q40 21 34 21 L33 34 Q27 33 24 37 Q20 35 20 30Z" fill="#f2d04a"/>
-<ellipse cx="37" cy="30.5" rx="1.7" ry="2.2" fill="#1d1430"/><circle cx="37.6" cy="29.7" r=".6" fill="#fff"/>
-<path d="M34 27 Q37 25 40 27 Q41 28.5 39.5 28.8 Q39 27.6 38 28" stroke="#8a6a1a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-<path d="M30 36.5 Q33 38 36 36" stroke="#6b2f2f" stroke-width="1.5" fill="none" stroke-linecap="round"/></g></svg>

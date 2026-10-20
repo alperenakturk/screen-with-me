@@ -38,11 +38,11 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
    yankı engelleme, küçük kaymada fark edilmeyen hızlanma/yavaşlama, "herkes hazır"
    beklemesi. Ölçülen fark gerçek oynatıcılarda (Plyr, hls.js, Video.js) 30–100 ms.
 2. **Her site.** Eklenti iframe içindeki, sonradan yüklenen ve kaynağı değişen
-   oynatıcıları da bulur; reklam/önizleme videolarını eler. Film, site izin veriyorsa
-   odanın içinde açılır; vermiyorsa kendi sekmesinde "oda görünümü"yle (hiçbir engel aşılmadan).
+   oynatıcıları da bulur; reklam/önizleme videolarını eler. Film kendi sitesinde oynar,
+   eklenti sitenin oda sayfasının kendisini üstüne açar (hiçbir engel aşılmadan, her sitede).
 3. **Sıfır sürtünme.** Hesap yok; isim + avatar bir kez; tek link. Site ile
-   eklenti el ele: odaya sayfa linki yapıştırılınca eklentisi olan herkes o
-   sayfaya (ya da odanın içindeki çerçeveye) gelir.
+   eklenti el ele: odaya sayfa linki yapıştırılınca açan kişi o sayfaya gider, diğerleri
+   "Filme git"e basar; orada da oda sitedekinin aynısı.
 4. **Birlikte izlemenin eğlencesi.** Pinler, özel emojiler, oturum özeti, temalar ve
    kostümlü maskot, çizilmiş avatarlar. Rakiplerde çoğu yok.
 5. **Gizlilik.** Video herkesin kendi tarayıcısında oynar; sunucu sadece
@@ -51,17 +51,16 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.52)
+## Şu an neler var? (0.9.53)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
 - Herkes hazır: videosu takılan olursa oda en fazla 12 sn bekler (aynı kişi 30 sn tekrar bekletemez; yönetici kapatabilir).
 - YouTube ve doğrudan video dosyası sitede; diğer her sayfa eklentiyle.
-- **Film odanın içinde:** sayfa linki odanın oynatıcı alanında iframe'de, sadece video olarak açılır
-  (seçenek yok, hep açık). İzin vermeyen site → ayrı sekme kartı.
-- **Oda görünümü (eklenti):** film kendi sekmesindeyken sayfa sitedeki odanın aynısına dönüşür (Gece teması;
-  üst şerit, sağda davet + sohbet + kişiler, video altında emojiler, pin, eşitle, hız, tam ekran). Gömmeyi
-  yasaklayan sitelerde de çalışır. Video henüz yoksa "Filmi başlat" kartı oynatıcıyı okla gösterir.
+- **Film sayfasında oda (kabuk):** sekme film sitesine gider; eklenti sitenin oda sayfasını tam ekran katman
+  olarak üstüne açar, videonun yerine delik açar, film oynatıcısı tam oraya oturur. Arayüz sitenin birebir
+  aynısı (sohbet, sıra, kişiler, ayarlar, avatar/tema, özet). Video bulunana kadar üstte ince şerit. Gömmeyi
+  yasaklayan sitelerde de çalışır. Ayarlar site ile katman arasında eklenti üzerinden ortak.
 - Hız 0,25x–4x (YouTube en fazla 2x), ±0,05 ince ayar; eklentide hız kilidi.
 - Senkron testi (sitenin çizdiği sayaç + "aynı yerdesiniz" rozeti), "Herkesi bana eşitle".
 - Dikkat dağıtmayan tam ekran (kontroller, emojiler, pin şeridi, hızlı mesaj).
@@ -116,6 +115,8 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   altında emojiler, pin, eşitle, hız, tam ekran); küçük çubuk ve rehber kartı kaldırıldı; video bulunmadan "Filmi
   başlat" kartı (oynatıcıyı okla gösterir); tam ekranda sitedeki gibi kontroller ve sürüklenen mesaj tutamağı; iç
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
+- **v0.9.53:** Film sayfasının üstüne sitenin kendisi açılıyor (kabuk); "odanın içinde film" (iframe) ve
+  eklentinin kendi çubuğu/popup ayarları kalktı; site ile eklenti ayarları ortak.
 - **v0.9.51:** Uzay ve Cyberpunk temaları ile onlara ait 4 avatar (astronot, uzaylı, siber gözlüklü,
   siber hacker kız) kaldırıldı; o temayı seçmiş olan Gece'ye, o avatarı seçmiş olan rastgele avatara düşer.
 - **Sunucu düzeltmesi (Ekim 2026):** 4 KB'tan büyük özel emojiler (gerçek resim ve GIF'ler) sunucuda
