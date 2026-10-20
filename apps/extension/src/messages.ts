@@ -49,6 +49,8 @@ export interface RoomInfo {
   queueLength: number;
   /** Video bitince sıradakine kendiliğinden geçilsin mi (oda ayarı). */
   autoNext: boolean;
+  /** Yönetici emojileri kapattı. */
+  noReactions: boolean;
 }
 
 export interface ChatLine {

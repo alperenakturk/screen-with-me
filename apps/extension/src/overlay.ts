@@ -7,7 +7,7 @@ import type { ChatLine, RoomInfo } from './messages.ts';
 
 /** Hızlı mesaj kısa mesajlar içindir (popup ile aynı). */
 const QUICK_CHAT_MAX = Math.min(120, CHAT_MAX_LENGTH);
-const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 /** Ekranda aynı anda en fazla bu kadar tepki kartı; kart bu kadar kalır. */
 const MAX_CARDS = 5;
 const CARD_MS = 3200;
@@ -47,7 +47,7 @@ const CSS = `
 @keyframes bump { 50% { transform: scale(1.35); } }
 .reactions.cooling .reaction:not(.add) { opacity: .45; pointer-events: none; }
 .reaction img { width: 20px; height: 20px; object-fit: contain; border-radius: 3px; display: block; margin: auto; }
-.reaction.add { font-weight: 700; color: #b9bccc; border: 1px dashed rgb(255 255 255 / .3); }
+.reaction.slot { visibility: hidden; display: inline-block; }
 
 /* Mesajlar ve bildirimler: sağ üstteki ScreenWithMe çubuğunun hemen altında belirip kaybolur.
    (top değeri çubuğun yüksekliğine göre JS ile ayarlanır.) */
@@ -87,6 +87,8 @@ const CSS = `
 .log:empty::before { content: attr(data-empty); color: #8b8f9c; font-size: 12px; }
 /* Tek satır: sığmayan emoji yarım görünmesin, alt satıra kayıp gizlensin */
 .bar .reactions { flex-wrap: wrap; height: 28px; align-content: flex-start; }
+/* Yönetici emojileri kapattı */
+.no-react .reactions, .no-react .pager, .no-react .sticker-toggle { display: none; }
 .sticker-wrap { position: relative; display: inline-flex; flex: none; }
 .sticker-x { position: absolute; top: -5px; right: -5px; display: none; width: 16px; height: 16px; padding: 0; border-radius: 999px;
   border: 1px solid rgb(255 255 255 / .3); background: #222; color: #fff; font-size: 9px; line-height: 14px; cursor: pointer; }
@@ -352,11 +354,11 @@ export function createOverlay(actions: OverlayActions) {
   let coolUntil = 0;
   /** Benim eklediğim özel emojiler (✕ ile kaldırabilirim). */
   const mineStickers = new Set<string>();
-  /** Sitedeki gibi: üç emoji sayfası, sonra özel emoji sayfaları (7 tane + "+"). */
+  /** Sitedeki gibi: üç emoji sayfası, sonra (varsa) 8'erli özel emoji sayfaları. */
   function reactionPages(): Item[][] {
     const list: Item[][] = REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
     const ids = [...stickers.keys()];
-    for (let i = 0; i === 0 || i < ids.length; i += 7) list.push([...ids.slice(i, i + 7).map((sticker) => ({ sticker })), { add: true }]);
+    for (let i = 0; i < ids.length; i += 8) list.push(ids.slice(i, i + 8).map((sticker) => ({ sticker })));
     return list;
   }
   /** Özel emojiyi odadan kaldır; kendi listemden de çıkar (bir sonraki odaya yüklenmesin). */
@@ -369,6 +371,7 @@ export function createOverlay(actions: OverlayActions) {
   }
   /** Tepki yolla; ardından kısa bekleme (art arda basıp ekranı doldurmasın). "+" dosya seçtirir. */
   function fire(item: Item): void {
+    if (room?.noReactions) return;
     if ('add' in item) {
       parts?.file.click();
       return;
@@ -443,9 +446,8 @@ export function createOverlay(actions: OverlayActions) {
     const drawReactions = () => {
       const all = reactionPages();
       if (reactionPage >= all.length) reactionPage = 0;
-      reactions.replaceChildren(
-        ...all[reactionPage]!.map((item, i) => {
-          if ('add' in item) return button('reaction add', '+', t('stickerAdd'), () => fire(item));
+      const slots: HTMLElement[] = all[reactionPage]!.map((item, i) => {
+          if ('add' in item) return el('span', 'reaction slot');
           const b = button('reaction', 'emoji' in item ? item.emoji : '', `${t('react')} (${i + 1})`, () => fire(item));
           if (!('sticker' in item)) return b;
           b.append(stickerImg(stickers.get(item.sticker) ?? '', ''));
@@ -453,14 +455,10 @@ export function createOverlay(actions: OverlayActions) {
           if (!mineStickers.has(item.sticker) && !host) return b;
           // Kendi eklediğim (ya da yöneticiysem herhangi bir) özel emoji: üstüne gelince ✕.
           return el('span', 'sticker-wrap', b, button('sticker-x', '✕', t('stickerRemove'), () => void removeSticker(item.sticker)));
-        }),
-      );
-      syncToggle();
-    };
-    const syncToggle = () => {
-      const on = reactionPage >= REACTION_PAGES.length;
-      stickerToggle.textContent = on ? '😀' : '🖼️';
-      stickerToggle.title = on ? t('stickerBack') : t('stickerOpen');
+        });
+      // Yerler sabit: 8'den az varsa kalan yuvalar boş (yanındaki düğmeler kaymasın).
+      while (slots.length < 8) slots.push(el('span', 'reaction slot'));
+      reactions.replaceChildren(...slots);
     };
     const turn = (step: number) => {
       const count = reactionPages().length;
@@ -481,7 +479,7 @@ export function createOverlay(actions: OverlayActions) {
         const { myStickers } = await chrome.storage.local.get('myStickers');
         const mine = Array.isArray(myStickers) ? (myStickers as unknown[]).filter((d): d is string => typeof d === 'string' && d !== data) : [];
         await chrome.storage.local.set({ myStickers: [...mine, data].slice(-12) });
-        reactionPage = REACTION_PAGES.length + Math.floor(stickers.size / 7);
+        reactionPage = REACTION_PAGES.length + Math.floor(stickers.size / 8);
         actions.send({ t: 'sticker-add', data });
       } catch (error) {
         const code = error instanceof Error && (error.message === 'type' || error.message === 'too_big') ? error.message : 'broken';
@@ -489,11 +487,8 @@ export function createOverlay(actions: OverlayActions) {
       }
     });
     const pager = el('span', 'pager', button('', '▲', t('moreReactions'), () => turn(-1)), button('', '▼', t('moreReactions'), () => turn(1)));
-    // 🖼️: doğrudan özel emoji sayfasına (emojilerden sonra); oradayken 😀 emojilere döner.
-    const stickerToggle = button('icon sticker-toggle', '🖼️', t('stickerOpen'), () => {
-      reactionPage = reactionPage >= REACTION_PAGES.length ? 0 : REACTION_PAGES.length;
-      drawReactions();
-    });
+    // 🖼️: GIF / fotoğraf ekle (özel emoji sayfalarına ▲▼ ile gidilir).
+    const stickerToggle = button('icon sticker-toggle', '🖼️', t('stickerAdd'), () => fire({ add: true }));
     // İlk çizim: 🖼️ düğmesi de tanımlandıktan sonra (syncToggle ona dokunuyor).
     drawReactions();
     // Fare tekerleğiyle de sayfa değişir.
@@ -590,8 +585,8 @@ export function createOverlay(actions: OverlayActions) {
       pinNote.value = '';
       setPinning(false);
     });
-    const pinButton = button('pin-btn', '📌', t('pinHint'), () => setPinning(!pinning));
-    const pinbar = el('div', 'pinbar', pinButton, pinForm, pinRow);
+    // Videonun üstünde sadece pin notu kutusu (📌 / P ile açılır) ve pin şeridi; 📌 düğmesi çubukta.
+    const pinbar = el('div', 'pinbar', pinForm, pinRow);
 
     const bar = el(
       'div',
@@ -659,7 +654,9 @@ export function createOverlay(actions: OverlayActions) {
     root.classList.remove('idle');
     if (idleTimer !== null) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      if (parts && host && document.activeElement === host) return wake();
+      // Sadece yazı yazarken açık kalsın (düğmeye tıklayınca kalan odak her şeyi ekranda tutuyordu).
+      const focused = (root?.getRootNode() as ShadowRoot | null)?.activeElement;
+      if (focused && /^(INPUT|TEXTAREA|SELECT)$/.test(focused.tagName)) return wake();
       root?.classList.add('idle');
     }, IDLE_MS);
   }
@@ -876,6 +873,7 @@ export function createOverlay(actions: OverlayActions) {
       const name = (m.avatar ? `${avatarText(m.avatar)} ${m.name}` : m.name) + (m.id === room!.hostId ? ' 👑' : '');
       return m.id === room!.myId ? `${name} (${t('you')})` : name;
     });
+    root?.classList.toggle('no-react', room.noReactions);
     parts.members.textContent = `👥 ${room.members.length}`;
     parts.members.title = `${t('members', { n: room.members.length })}\n${names.join('\n')}`;
   }
@@ -1001,31 +999,23 @@ export function createOverlay(actions: OverlayActions) {
       return room?.autoNext !== false;
     },
 
-    endCard(duration: number, title: string, startNext?: () => void): void {
+    /** Video bitti, otomatik devam kapalı: "▶ Sıradakini başlat" kartı (sırada video varsa). */
+    nextCard(title: string, startNext: () => void): void {
+      if ((room?.queueLength ?? 0) === 0) return;
       const layer = mount();
       layer.querySelector('.end')?.remove();
-      const minutes = Math.max(1, Math.round(duration / 60));
-      const time = minutes >= 60 ? t('endHM', { h: Math.floor(minutes / 60), m: minutes % 60 }) : t('endM', { m: minutes });
-      const people = room?.members.length ?? 1;
-      const lines = [`⏱ ${time}`, `👥 ${t('endPeople', { n: people })}`, `😂 ${t('endReactions', { n: reactionCount })}`, `📌 ${t('endPins', { n: pins.length })}`];
-      const pinLines = pins.slice(0, 4).map((p) => `📌 ${clock(p.at)} · ${p.by.name}${p.note ? `: ${p.note}` : ''}`);
-      const copy = el('button', startNext ? '' : 'primary', t('endCopy'));
       const next = el('button', 'primary', t('startNext'));
-      next.addEventListener('click', () => {
-        card.remove();
-        startNext?.();
-      });
       const close = el('button', '', t('close'));
-      const card = el('div', 'note end', el('b', '', `🎬 ${t('endTitle')}`), el('div', 'end-title', title), el('div', 'end-stats', ...lines.map((l) => el('span', '', l))), ...pinLines.map((l) => el('div', 'end-pin', l)), el('div', 'actions', ...(startNext && (room?.queueLength ?? 0) > 0 ? [next] : []), copy, close));
-      const timer = setTimeout(() => card.remove(), 30_000);
-      close.addEventListener('click', () => {
+      const card = el('div', 'note end', el('b', '', t('videoEnded')), el('div', 'end-title', title), el('div', 'actions', next, close));
+      const timer = setTimeout(() => card.remove(), 60_000);
+      const done = () => {
         clearTimeout(timer);
         card.remove();
-      });
-      copy.addEventListener('click', async () => {
-        const text = [`🎬 ${t('endTitle')}: ${title}`, lines.join(' · '), ...pinLines, room?.inviteUrl ?? ''].filter(Boolean).join('\n');
-        await copyText(text);
-        copy.textContent = '✓';
+      };
+      close.addEventListener('click', done);
+      next.addEventListener('click', () => {
+        done();
+        startNext();
       });
       layer.append(card);
       wake();

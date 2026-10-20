@@ -15,6 +15,7 @@
     "./video-element": "./src/video-element.ts",
     "./connection": "./src/connection.ts",
     "./logo": "./src/logo.ts",
+    "./recap": "./src/recap.ts",
     "./intro": "./src/intro.ts",
     "./sticker-file": "./src/sticker-file.ts"
   },

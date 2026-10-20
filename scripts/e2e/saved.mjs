@@ -57,5 +57,17 @@ host.send({ t: 'load', media: { kind: 'youtube', id: 'jNQXAC9IVRw' } });
 const fresh = await guest.wait((m) => m.t === 'state' && m.state.item?.media.id === 'jNQXAC9IVRw' && m.action === 'load', 'loaded 2 again');
 ok(fresh.resumed === undefined && fresh.state.position === 0, 'Kayıt kapalıyken video baştan açılıyor');
 
+// Oda adı ve ana sayfadaki liste için bilgi / kayıt kaldırma (HTTP)
+const http = base.replace(/^ws/, 'http');
+host.send({ t: 'settings', saved: true, name: '  Cuma   film gecesi ' });
+const named = await guest.wait((m) => m.t === 'settings' && m.settings.saved && m.settings.name, 'named');
+ok(named.settings.name === 'Cuma film gecesi', 'Oda adı sadeleşerek kaydedildi');
+const info = await (await fetch(`${http}/api/rooms/${room}/info`)).json();
+ok(info.saved === true && info.name === 'Cuma film gecesi' && info.online === 2, 'Bilgi: kayıtlı, adı, içeride 2 kişi');
+const denied = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', body: JSON.stringify({ cid: 'saveAyse1234' }) });
+ok(denied.status === 403, 'Yönetici olmayan ana sayfadan kaydı kaldıramıyor');
+const done = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', body: JSON.stringify({ cid: 'saveAli12345' }) });
+ok(done.status === 200 && (await guest.wait((m) => m.t === 'settings' && !m.settings.saved, 'unsaved via http')), 'Yönetici ana sayfadan kaydı kaldırdı, odadakiler gördü');
+
 for (const c of [host, guest]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

@@ -118,6 +118,8 @@ interface Session {
   pins: PinList | null;
   /** Oda ayarı: video bitince sıradakine kendiliğinden geç. */
   autoNext: boolean;
+  /** Oda ayarı: emojiler kapalı. */
+  noReactions: boolean;
   /** Odanın özel emojileri (kimlik → data: adresi); çerçeve etkinleşince hepsi yollanır. */
   stickers: Map<string, string>;
   /** Sekmenin şu anki adresi (odanın sayfasında mıyız?). */
@@ -253,6 +255,7 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     guided: false,
     pins: null,
     autoNext: true,
+    noReactions: false,
     stickers: new Map(),
     tabUrl: tab?.url ?? null,
   };
@@ -295,6 +298,7 @@ function onServer(session: Session, message: ServerMessage): void {
       session.state = message.state;
       session.pins = message.pins ?? null;
       session.autoNext = message.settings?.autoNext !== false;
+      session.noReactions = message.settings?.noReactions === true;
       // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
       session.stickers.clear();
       toActive(session, { type: 'stickers-clear' });
@@ -371,6 +375,7 @@ function onServer(session: Session, message: ServerMessage): void {
       break;
     case 'settings':
       session.autoNext = message.settings.autoNext !== false;
+      session.noReactions = message.settings.noReactions === true;
       pushRoom(session);
       break;
     case 'sticker':
@@ -491,6 +496,7 @@ function pushRoom(session: Session): void {
     hostId: session.hostId,
     queueLength: session.queue.length,
     autoNext: session.autoNext,
+    noReactions: session.noReactions,
   };
   toActive(session, { type: 'room', room });
   pushPins(session);

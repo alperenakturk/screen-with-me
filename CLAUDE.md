@@ -144,7 +144,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kalıcı anahtarını (`owner`) saklar ama istemcilere göndermez; tam liste `{t:'pins'}` ile yayılır,
   yeni gelene `welcome.pins`. Kendi pinini (yönetici hepsini) `unpin` ile kaldırır; en fazla 50; video
   değişince sıfırlanır. Site: video altında + tam ekranda ilerleme üstünde şerit (fare videodayken
-  belirgin), 📌 düğmesi / P → not kutusu. Eklenti: çubuğun alt satırında şerit, 📌 / P hızlı mesaj
+  belirgin), 📌 düğmesi / P → not kutusu. Eklenti: 📌 sadece çubukta (videonun üstünde düğme yok), şerit videoda fare durunca 3 sn'de gizlenir; 📌 / P hızlı mesaj
   kutusunu pin notu moduna alır. (Eski "tepki şeridi"/heat tamamen kaldırıldı.)
 - **Özel emojiler (sticker):** `{t:'sticker-add', data}` (`data:image/png|gif|webp|jpeg;base64`, en fazla
   `STICKER_MAX_CHARS`; SVG yok). Kimlik = SHA-256 ilk 12 hane (`stickerId`, iki taraf da hesaplar).
@@ -170,9 +170,28 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kalkar, durmuş video `SYSTEM` adına oynar. Sitede geri sayım bandı.
 - **Senkron testi (`media.kind === 'test'`):** dosya yok; `players/test.ts` canvas'a 12 sn'lik sayaç
   çizer ve `<video>` gibi davranır. Oynarken "aynı yerdesiniz (fark ~N ms)" rozeti.
-- **Son odalar / benim odam (`recent-rooms.ts`):** sadece tarayıcıda; benim odam hep aynı ad.
-- **İzleme sonu kartı:** 60 sn'den uzun video bitince (site `ui/end-card.ts`, PNG indirme; eklentide
-  özet kopyalama): süre, kişi, tepki sayısı (istemci sayar), pinler.
+- **Kaydedilen odalar (`saved-rooms.ts`):** ana sayfada "Oda oluştur" → tek seferlik / kaydedilen (ad zorunlu;
+  ad `sessionStorage` `create:<oda>` ile odaya taşınır, ilk giren yönetici `settings {saved, name}` yollar).
+  Liste tarayıcıda (en fazla 20); kayıtlı odaya giren herkesin listesine kendiliğinden girer (kendisi
+  çıkardıysa `savedDismissed`, tekrar eklenmez). Satırda içeride kaç kişi var: `GET /api/rooms/:id/info`.
+  Yöneticinin ✕'i odanın kaydını da kaldırır: `POST /api/rooms/:id/unsave {cid}` (sadece yönetici cid'i).
+  "Benim odam" ve son odalar kaldırıldı.
+- **Oturum özeti (`packages/shared/src/recap.ts`, site `ui/recap.ts`):** sunucu `StatsTracker` ile
+  oynama süresi (oda durumu değişmeden önce `statsTick`; oda boşken saymaz), hız, video, kişi başı
+  mesaj/tepki/pin/durdurma/sarma, en kalabalık anı sayar (depoda `stats`; kişiler cid ile, özete sadece
+  ad/avatar). Ayarlarda "Özeti göster" → `{t:'recap'}`: özet herkese gider (açan hemen görür, diğerlerine
+  "Gör" kartı), sayaç sıfırlanır; boşsa `recap_empty`. Önceki özetler `{t:'recaps'}` (kayıtlı odada 10,
+  değilse 3; 90 gün). İstemci `chooseFacts` ile her seferinde rastgele 4 ilginç kart seçer (ilk süre, son
+  özet + PNG). Video sonundaki istatistik kartı kaldırıldı; otomatik devam kapalıysa sadece "Sıradakini başlat".
+- **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
+  (`localStorage` `opt:chatEvents`). Ayarlardaki seçenek kaldırıldı.
+- **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),
+  site `.no-reactions`, eklenti `.no-react` ile emoji çubuğu gizlenir.
+- **Emoji çubuğu:** her sayfada 8 sabit yuva (eksikler boş durur, yanındaki düğmeler kaymaz); "+" yok,
+  🖼️ = GIF/foto ekle; özel emoji sayfalarına ▲▼ ile gidilir. Video altı tek satır (dar ekranda alta geçer).
+- **Hız:** `MAX_RATE` 4 (HTML5), YouTube en fazla 2 (`YOUTUBE_MAX_RATE`; site isteği kırpar, sunucu YouTube
+  açılınca hızı 2'ye indirir).
+- **Varsayılan dil Türkçe** (site + eklenti); EN seçilirse hatırlanır.
 - **Avatar seçimi:** sitede odadaki ayarlarda "Avatarı değiştir" → ekran ortasında büyük pencere
   (`openAvatarDialog`); eklentide pencerenin tamamını kaplayan panel. Üstüne gelince sallanır, seçili
   olan süzülür (CSS; `prefers-reduced-motion`'da kapalı).
@@ -189,8 +208,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   fazla 1280 px; kullanıcı çoğunlukla video izlerken bakar, o yüzden ana süsler (ay, kale, ejderha,
   kervan, zeplin) sahnenin kenarlarında (x < 260 ya da x > 1340) dursun. Tema değişirken resimler
   önce yüklenir (pplyTheme → preload), renk ve resim birlikte değişir.
-- **Film sitenin içinde (deneysel, `packages/shared/src/embed.ts`):** kişisel ayar (`localStorage`
-  `opt:embed`, varsayılan kapalı; eklenti `data-swm-embed` ile desteğini bildirir). Açıksa `page` öğesi
+- **Film sitenin içinde (`packages/shared/src/embed.ts`):** seçenek yok, hep açık ve hep "sadece video"
+  (`focus.ts` her zaman); eklenti `data-swm-embed` ile desteğini bildirir (yoksa/eskiyse ayrı sekme kartı). `page` öğesi
   `.player-wrap` içinde iframe'de açılır (`apps/web/src/players/embed.ts`). Oda bağlantısını **site**
   tutar (aynı kişi iki kez görünmesin); site-bridge `swm-embed` portuyla arka plana bağlanır, arka plan
   (`Embed`, `embeds`) sitenin içindeki çerçevelerden (`embedDepth`) en iyi videoyu seçip motoru orada

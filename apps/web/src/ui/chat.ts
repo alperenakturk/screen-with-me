@@ -2,6 +2,7 @@ import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } 
 import { el } from '../dom.ts';
 import { avatarNode } from './avatar.ts';
 import { t } from '../i18n.ts';
+import { load, save } from '../storage.ts';
 
 const MAX_LINES = 120;
 
@@ -25,6 +26,25 @@ export function createChatPanel(
   let lines: Line[] = [];
   let visible = false;
   let unread = 0;
+
+  // Oda hareketleri ("Ali durdurdu") hep kaydedilir ama varsayılan gizli: sohbeti boğuyordu.
+  // Sağ üstteki küçük düğme hem eskileri hem yeni gelecekleri gösterir.
+  const eventsButton = root.querySelector<HTMLButtonElement>('#chat-events')!;
+  let showEvents = load('opt:chatEvents') === '1';
+  const drawEvents = () => {
+    list.classList.toggle('hide-events', !showEvents);
+    eventsButton.setAttribute('aria-pressed', String(showEvents));
+    const hidden = lines.filter((line) => line.kind === 'system').length;
+    eventsButton.textContent = showEvents ? t('eventsHide') : hidden ? t('eventsShowN', { n: hidden }) : t('eventsShow');
+    eventsButton.title = t('eventsTitle');
+  };
+  eventsButton.addEventListener('click', () => {
+    showEvents = !showEvents;
+    save('opt:chatEvents', showEvents ? '1' : '0');
+    drawEvents();
+    scrollToEnd();
+  });
+  window.addEventListener('langchange', drawEvents);
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -60,7 +80,8 @@ export function createChatPanel(
   }
 
   function render(): void {
-    list.replaceChildren(...(lines.length ? lines.map(node) : [el('li', { class: 'chat-empty' }, t('chatEmpty'))]));
+    list.replaceChildren(el('li', { class: 'chat-empty' }, t('chatEmpty')), ...lines.map(node));
+    drawEvents();
     scrollToEnd();
   }
 
@@ -68,9 +89,9 @@ export function createChatPanel(
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
     lines.push(line);
     if (lines.length > MAX_LINES) lines = lines.slice(-MAX_LINES);
-    if (lines.length === 1) list.replaceChildren();
     list.append(node(line));
-    while (list.children.length > MAX_LINES) list.firstElementChild?.remove();
+    while (list.children.length > MAX_LINES + 1) list.children[1]?.remove();
+    if (line.kind === 'system') drawEvents();
     if (atBottom || (line.kind === 'chat' && line.message.by.id === myId())) scrollToEnd();
     if (countsAsUnread && !visible) {
       unread++;

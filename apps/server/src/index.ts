@@ -13,6 +13,13 @@ export default {
 
     if (url.pathname === '/api/health') return new Response('ok');
 
+    // Kayıtlı odalar listesi için küçük bilgi / kayıt kaldırma (Durable Object cevaplar).
+    const info = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(info|unsave)$/);
+    if (info) {
+      if (!ROOM_ID_PATTERN.test(info[1]!)) return new Response('Invalid room id', { status: 400 });
+      return env.ROOMS.get(env.ROOMS.idFromName(info[1]!)).fetch(request);
+    }
+
     const match = url.pathname.match(/^\/api\/rooms\/([^/]+)\/ws$/);
     if (match) {
       // Oda ID'si sadece harf, rakam, - ve _ içerebilir; kodlanmış karakterlere gerek yok.

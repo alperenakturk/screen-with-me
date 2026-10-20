@@ -9,8 +9,10 @@ import {
   avatarText,
   SYSTEM_MEMBER_ID,
   cleanName,
+  cleanRoomName,
   expectedPosition,
   stepRate,
+  YOUTUBE_MAX_RATE,
   isAvatar,
   randomAvatar,
   type Avatar,
@@ -38,13 +40,15 @@ import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
 import { createPins } from './ui/pins.ts';
-import { showEndCard } from './ui/end-card.ts';
-import { rememberRoom } from './recent-rooms.ts';
+import { showNextCard } from './ui/end-card.ts';
+import { renderRecapHistory, showRecap, showRecapInvite } from './ui/recap.ts';
+import type { Recap } from '@swm/shared/recap';
+import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs } from './ui/tabs.ts';
 import { createToasts } from './ui/toasts.ts';
 
-const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
 /**
  * Odaya giriş iki adımlıdır: önce isim, sonra avatar. İkisi de tarayıcıda
@@ -83,8 +87,19 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
   translate(app);
 
   const roomCode = app.querySelector<HTMLElement>('#room-code')!;
-  const renderCode = () => (roomCode.textContent = t('roomCode', { id: roomId }));
+  let roomName: string | null = null;
+  const renderCode = () => (roomCode.textContent = roomName ? `💾 ${roomName}` : t('roomCode', { id: roomId }));
   renderCode();
+  // Kayıtlı odaysa adını göster.
+  void fetch(`/api/rooms/${roomId}/info`)
+    .then((r) => (r.ok ? (r.json() as Promise<{ saved: boolean; name: string | null }>) : null))
+    .then((info) => {
+      if (info?.saved && info.name) {
+        roomName = info.name;
+        renderCode();
+      }
+    })
+    .catch(() => {});
   window.addEventListener('langchange', renderCode);
 
   const input = app.querySelector<HTMLInputElement>('#name')!;
@@ -196,7 +211,6 @@ function withAvatar(member: { name: string; avatar?: string }): string {
 function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false } = {}): void {
   // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
   sessionSave(`in:${roomId}`, '1');
-  rememberRoom(roomId);
   // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla.
   loadYouTubeApi().catch(() => {});
 
@@ -217,7 +231,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
-            <button id="embed-focus" type="button" class="btn small-btn" hidden></button>
             <button id="embed-out" type="button" class="btn small-btn" hidden>↗ <span data-i18n="embedOut"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
@@ -296,9 +309,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div class="reaction-bar" role="group"></div>
             <div class="toolbar-right">
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
-              <button id="pin-btn" type="button" class="btn small-btn">📌 <span data-i18n="pin"></span></button>
-              <button id="sync-all" type="button" class="btn small-btn">🔄 <span data-i18n="syncAll"></span></button>
-              <div class="speed"><span data-i18n="speed"></span>
+              <button id="pin-btn" type="button" class="icon-btn tool-btn" data-i18n-title="pin">📌</button>
+              <button id="sync-all" type="button" class="icon-btn tool-btn" data-i18n-title="syncAll">🔄</button>
+              <div class="speed">
                 <button id="speed-down" type="button" class="icon-btn speed-step" data-i18n-title="speedDown">−</button>
                 <select id="speed" data-i18n-title="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
                 <button id="speed-up" type="button" class="icon-btn speed-step" data-i18n-title="speedUp">+</button>
@@ -312,6 +325,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
       <aside class="side">
         <section class="card invite-card">
+          <p id="room-name" class="room-name" hidden></p>
           <span class="invite-label" data-i18n="invite"></span>
           <div class="row">
             <input id="invite" readonly data-i18n-title="invite" />
@@ -334,6 +348,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </nav>
 
           <div class="tab-panel chat-panel" data-panel="chat">
+            <button id="chat-events" type="button" class="chat-events" aria-pressed="false"></button>
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="row chat-form">
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
@@ -370,17 +385,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <h4 data-i18n="settings.theme"></h4>
             <div id="settings-themes" class="theme-current"></div>
             <h4 data-i18n="settings.view"></h4>
-            <label class="check-row"><input type="checkbox" id="opt-events" /> <span data-i18n="settings.showEvents"></span></label>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
-            <label class="check-row" id="opt-embed-row"><input type="checkbox" id="opt-embed" /> <span data-i18n="settings.embed"></span></label>
-            <p id="opt-embed-hint" class="muted small" hidden><span data-i18n="settings.embedNeedsExt"></span> <a href="/eklenti.html" data-i18n="settings.embedGetExt"></a></p>
+            <h4 data-i18n="recap.title"></h4>
+            <p class="muted small" data-i18n="recap.explain"></p>
+            <button type="button" id="recap-open" class="btn primary recap-open">📊 <span data-i18n="recap.open"></span></button>
+            <div id="recap-history" class="recap-history"></div>
             <section class="host-box">
               <h4>👑 <span data-i18n="settings.hostTitle"></span></h4>
               <p id="opt-wait-hint" class="muted small"></p>
               <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
               <label class="check-row"><input type="checkbox" id="opt-hostonly" /> <span data-i18n="settings.hostOnlyMode"></span></label>
               <label class="check-row"><input type="checkbox" id="opt-lockqueue" /> <span data-i18n="settings.lockQueue"></span></label>
-              <label class="check-row"><input type="checkbox" id="opt-saved" /> <span data-i18n="settings.saved"></span></label>
+              <div class="save-box">
+                <p id="save-status" class="small"></p>
+                <form id="save-form" class="row">
+                  <input id="save-name" maxlength="40" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" />
+                  <button class="btn small-btn primary" id="save-submit"></button>
+                </form>
+                <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
+              </div>
+              <label class="check-row"><input type="checkbox" id="opt-noreactions" /> <span data-i18n="settings.noReactions"></span></label>
               <div class="schedule-row">
                 <label for="opt-start" data-i18n="settings.schedule"></label>
                 <div class="row">
@@ -436,8 +460,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   let myId: string | null = null;
   let members: Member[] = [];
-  /** Açık videoda atılan tepki sayısı (izleme sonu kartı için; video değişince sıfırlanır). */
-  let reactionCount = 0;
+  /** Bu odanın önceki oturum özetleri (ayarlarda listelenir). */
+  let recaps: Recap[] = [];
   let hostId: string | null = null;
   const kickedIds = new Set<string>();
   /** "Herkes hazır": oda kimleri bekliyor, yönetici özelliği açtı mı. */
@@ -467,7 +491,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
   });
-  const reactions = createReactions(app, send, () => myId !== null && myId === hostId);
+  const reactions = createReactions(app, send, () => myId !== null && myId === hostId, () => roomSettings.noReactions !== true);
   // Klavye: normal görünümde Enter sohbet kutusuna götürür (tam ekranda fullscreen.ts halleder).
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || document.fullscreenElement || isTyping(event.target)) return;
@@ -484,16 +508,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send,
     onAutoplayBlocked: () => (autoplayEl.hidden = false),
     onEnded: (itemId) => {
-      // İzleme sonu kartı (en az 1 dk'lık videolarda; kısa klipler ve test için değil).
+      // Otomatik devam kapalıysa sıradaki kendiliğinden başlamaz: küçük "Sıradakini başlat" kartı.
+      // (İstatistikler video sonunda değil, ayarlardaki oturum özetinde.)
       const item = roomState?.item;
-      const duration = current?.player.getDuration() ?? 0;
-      const auto = roomSettings.autoNext !== false;
-      const startNext = !auto && queue.length > 0 ? () => send({ t: 'next', from: itemId }) : undefined;
-      if (item && item.id === itemId && item.media.kind !== 'test' && (duration >= 60 || startNext)) {
-        showEndCard($('.player-wrap'), { title: itemTitle(item), url: mediaUrl(item.media), duration, people: members.length, reactions: reactionCount, pins: [...pins.list()] }, startNext);
+      if (roomSettings.autoNext !== false) send({ t: 'next', from: itemId });
+      else if (item && item.id === itemId && queue.length > 0) {
+        showNextCard($('.player-wrap'), itemTitle(item), mediaUrl(item.media), () => send({ t: 'next', from: itemId }));
       }
-      // Otomatik devam kapalıysa sıradaki kendiliğinden başlamaz ("Sıradakini başlat" düğmesi).
-      if (auto) send({ t: 'next', from: itemId });
     },
   });
   const connection = new RoomConnection({
@@ -536,10 +557,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
         reactions.clearStickers();
         reactions.registerMine();
+        send({ t: 'recaps' });
+        // Ana sayfada "kaydedilen oda" seçilerek kurulduysa: ilk giren (yönetici) adıyla kaydeder.
+        {
+          const wanted = sessionLoad(`create:${roomId}`);
+          if (wanted && message.hostId === message.you && !roomSettings.saved) send({ t: 'settings', saved: true, name: wanted });
+          if (wanted) sessionSave(`create:${roomId}`, '');
+        }
         break;
       case 'state': {
         // Video değiştiyse tepki sayacı sıfırlanır (applyState roomState'i değiştirmeden önce bak).
-        if (message.state.item?.id !== roomState?.item?.id) reactionCount = 0;
         void applyState(message.state);
         pins.reset(message.state.item?.id ?? null);
         const { action, by, state } = message;
@@ -609,8 +636,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'sticker-removed':
         reactions.removeSticker(message.id);
         break;
+      case 'recap': {
+        // Oturum özeti açıldı: açan hemen görür, diğerlerine "Gör" kartı çıkar.
+        const { recap, by } = message;
+        recaps = [...recaps.filter((r) => r.id !== recap.id), recap];
+        renderRecapHistory($('#recap-history'), recaps);
+        if (by.id === myId) showRecap(recap, displayName(by));
+        else showRecapInvite(displayName(by), () => showRecap(recap, displayName(by)));
+        break;
+      }
+      case 'recaps':
+        recaps = message.recaps;
+        renderRecapHistory($('#recap-history'), recaps);
+        break;
       case 'reaction':
-        reactionCount++;
         if (settings.options.showReactions) reactions.show(message.by, message.emoji, message.sticker);
         break;
       case 'chat': {
@@ -634,6 +673,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (message.code === 'not_host' && roomState) {
           // Yönetici modu: yaptığım hareket kabul edilmedi, oynatıcı odanın durumuna döner.
           engine.receive(roomState);
+        }
+        if (message.code === 'recap_empty') {
+          showError(() => t('error.recap_empty'));
+          break;
         }
         if (message.code === 'others_watching') {
           // Kim hâlâ filmde, onu söyle: herkes çubuktaki 🏠 ile dönünce yeni video açılabilir.
@@ -714,14 +757,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   /** Bu videolar sitenin içinde açılamadı (ya da kullanıcı ayrı sekmeyi seçti): tekrar deneme. */
   const embedFailed = new Map<string, EmbedFailure>();
   const embedLoadingEl = $('#embed-loading');
-  const embedToggle = $<HTMLInputElement>('#opt-embed');
-  // Kişisel tercih (herkes kendi sekmesinde izliyor; biri sitede, biri ayrı sekmede olabilir).
-  // Varsayılan kapalı: deneysel, birçok büyük site çerçevede açılmayı yasaklıyor.
-  let embedOn = load('opt:embed') === '1';
-  embedToggle.checked = embedOn;
-  // Seçenek hep görünür; eklenti yoksa ya da eskiyse kapalı ve altında "eklentiyi güncelle" notu.
-  embedToggle.disabled = !canEmbed();
-  $('#opt-embed-hint').hidden = canEmbed();
+  // Seçenek yok: eklenti destekliyorsa film hep odanın içinde ve sadece video olarak açılır.
+  // Site izin vermezse (ya da kullanıcı "ayrı sekmede aç" derse) o video için ayrı sekme kartı.
+  let embedOn = true;
 
   function wantsEmbed(item: QueueItem): boolean {
     return embedOn && canEmbed() && !embedFailed.has(item.id);
@@ -794,31 +832,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $<HTMLButtonElement>('#external-go').click();
   }
   $('#embed-out').addEventListener('click', leaveEmbed);
-  // Odanın içindeki film: "sadece video" (oynatıcı çerçeveyi kaplar) ↔ "sayfanın tamamı".
-  let embedFocus = load('embedFocus') !== '0';
-  const renderEmbedFocus = () => ($('#embed-focus').textContent = embedFocus ? t('embedShowPage') : t('embedOnlyVideo'));
-  renderEmbedFocus();
-  window.addEventListener('langchange', renderEmbedFocus);
-  $('#embed-focus').addEventListener('click', () => {
-    embedFocus = !embedFocus;
-    save('embedFocus', embedFocus ? '1' : '0');
-    window.postMessage({ source: 'screenwithme-site', type: 'embed-focus', on: embedFocus }, location.origin);
-    renderEmbedFocus();
-  });
   $('#embed-loading-out').addEventListener('click', leaveEmbed);
 
-  /** Tercih değişti: açık film sayfasını yeni tercihe göre yeniden göster. */
+  /** "Odanın içinde aç" (ayrı sekmeyi seçtikten sonra geri dönüş): açık sayfayı yeniden göster. */
   function setEmbedOn(next: boolean): void {
     embedOn = next;
-    embedToggle.checked = next;
-    save('opt:embed', next ? '1' : '0');
     if (next) for (const [id, reason] of embedFailed) if (reason === 'manual') embedFailed.delete(id);
     if (roomState?.item?.media.kind === 'page' && !handedOff) {
       currentItemId = null;
       void applyState(roomState);
     }
   }
-  embedToggle.addEventListener('change', () => setEmbedOn(embedToggle.checked));
   $('#external-embed').addEventListener('click', () => setEmbedOn(true));
 
   /**
@@ -890,12 +914,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       nowTitleEl.textContent = itemTitle(item);
       nowTitleEl.title = itemTitle(item);
       // Son odalarda oda adı yerine en son oynayan görünsün.
-      rememberRoom(roomId, itemTitle(item));
     }
     skipEl.disabled = queue.length === 0;
     fullscreen.setSkipEnabled(queue.length > 0);
     $('#embed-out').hidden = embed === null;
-    $('#embed-focus').hidden = embed === null;
   }
 
   function skip(): void {
@@ -910,7 +932,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
 
   // Gömülü filmde motor çerçevede çalışır: hız isteği oraya gider.
-  const requestRate = (rate: number) => (embed ? embed.control({ action: 'rate', rate }) : engine.requestRate(rate));
+  // YouTube 2x'ten hızlı oynatmıyor: orada en fazla 2x istenir.
+  const requestRate = (wanted: number) => {
+    const rate = roomState?.item?.media.kind === 'youtube' ? Math.min(wanted, YOUTUBE_MAX_RATE) : wanted;
+    if (embed) embed.control({ action: 'rate', rate });
+    else engine.requestRate(rate);
+  };
   speedEl.addEventListener('change', () => requestRate(Number(speedEl.value)));
   // İnce hız ayarı: her basış ±0.05 (hazır seçeneklerin dışındaki hız listede "özel" olarak görünür).
   $('#speed-down').addEventListener('click', () => requestRate(stepRate(roomState?.rate ?? 1, -1)));
@@ -1120,6 +1147,27 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     renderModes();
   }
 
+  /**
+   * Kayıt durumu: yöneticiye ad kutusu + kaydet/kaldır, diğerlerine sadece durum. Kayıtlı oda
+   * herkesin "kaydedilen odalar" listesine kendiliğinden girer (kendisi çıkarmadıysa).
+   */
+  function renderSaved(host: boolean): void {
+    const saved = roomSettings.saved === true;
+    const name = roomSettings.name ?? '';
+    $('#save-status').textContent = saved ? t('savedStatus', { name: name || roomId }) : t('notSavedStatus');
+    $('#save-form').hidden = !host;
+    $('#save-off').hidden = !host || !saved;
+    $('#save-submit').textContent = saved ? t('rename') : t('saveRoom');
+    const input = $<HTMLInputElement>('#save-name');
+    if (document.activeElement !== input) input.value = name;
+    const label = $('#room-name');
+    label.hidden = !saved;
+    label.textContent = saved ? `💾 ${name || roomId}` : '';
+    document.title = saved && name ? `${name} · ScreenWithMe` : 'ScreenWithMe';
+    if (saved) rememberSaved({ id: roomId, name: name || roomId, at: Date.now(), mine: host });
+    else forgetSaved(roomId);
+  }
+
   /** Yönetici modları ve planlı başlangıç: ayar anahtarları, kilit notu, sıra butonları. */
   function renderModes(): void {
     const host = amHost();
@@ -1127,9 +1175,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const lockQueue = $<HTMLInputElement>('#opt-lockqueue');
     hostOnly.checked = roomSettings.hostOnly === true;
     lockQueue.checked = roomSettings.lockQueue === true;
-    $<HTMLInputElement>('#opt-saved').checked = roomSettings.saved === true;
-    rememberRoom(roomId, undefined, roomSettings.saved === true);
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-saved', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    renderSaved(host);
+    $<HTMLInputElement>('#opt-noreactions').checked = roomSettings.noReactions === true;
+    app.classList.toggle('no-reactions', roomSettings.noReactions === true);
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     $('#host-lock').hidden = host || !roomSettings.hostOnly;
@@ -1163,8 +1212,22 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $<HTMLInputElement>('#opt-hostonly').addEventListener('change', (event) => {
     send({ t: 'settings', hostOnly: (event.target as HTMLInputElement).checked });
   });
-  $<HTMLInputElement>('#opt-saved').addEventListener('change', (event) => {
-    send({ t: 'settings', saved: (event.target as HTMLInputElement).checked });
+  $('#recap-open').addEventListener('click', () => send({ t: 'recap' }));
+  $<HTMLInputElement>('#opt-noreactions').addEventListener('change', (event) => {
+    send({ t: 'settings', noReactions: (event.target as HTMLInputElement).checked });
+  });
+  // Odayı kaydet: isim zorunlu. Kayıtlıyken aynı kutu adı değiştirir.
+  $<HTMLFormElement>('#save-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const name = cleanRoomName($<HTMLInputElement>('#save-name').value);
+    if (!name) {
+      $<HTMLInputElement>('#save-name').focus();
+      return;
+    }
+    send({ t: 'settings', saved: true, name });
+  });
+  $('#save-off').addEventListener('click', () => {
+    if (confirm(t('saveOffConfirm'))) send({ t: 'settings', saved: false });
   });
   $<HTMLInputElement>('#opt-autonext').addEventListener('change', (event) => {
     send({ t: 'settings', autoNext: (event.target as HTMLInputElement).checked });
@@ -1187,9 +1250,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send({ t: 'settings', waitForAll: (event.target as HTMLInputElement).checked });
   });
 
-  /** Oda hareketlerini sohbete gri satır olarak yazar (ayarlardan kapatılabilir). */
+  /** Oda hareketlerini sohbete gri satır olarak yazar (varsayılan gizli; sohbetteki düğmeyle görünür). */
   function addActivity(text: () => string): void {
-    if (settings.options.showEvents) chat.system(text);
+    chat.system(text);
   }
 
   function renderStatus(): void {

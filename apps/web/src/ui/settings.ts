@@ -6,8 +6,6 @@ import { renderThemeSetting } from '../themes.ts';
 import { load, save } from '../storage.ts';
 
 export interface Options {
-  /** Oda hareketleri (oynattı, durdurdu...) sohbette görünsün mü? */
-  showEvents: boolean;
   /** Emojiler videonun üstünde uçuşsun mu? */
   showReactions: boolean;
 }
@@ -25,7 +23,6 @@ export function createSettingsPanel(
   const form = root.querySelector<HTMLFormElement>('#rename-form')!;
   const input = root.querySelector<HTMLInputElement>('#rename-input')!;
   const avatars = root.querySelector<HTMLElement>('#settings-avatars')!;
-  const events = root.querySelector<HTMLInputElement>('#opt-events')!;
   const reactions = root.querySelector<HTMLInputElement>('#opt-reactions')!;
   let { name, avatar } = identity;
 
@@ -64,13 +61,8 @@ export function createSettingsPanel(
   window.addEventListener('langchange', drawAvatars);
   renderThemeSetting(root.querySelector<HTMLElement>('#settings-themes')!);
 
-  const options: Options = { showEvents: readOption('opt:events'), showReactions: readOption('opt:reactions') };
-  events.checked = options.showEvents;
+  const options: Options = { showReactions: readOption('opt:reactions') };
   reactions.checked = options.showReactions;
-  events.addEventListener('change', () => {
-    options.showEvents = events.checked;
-    save('opt:events', events.checked ? '1' : '0');
-  });
   reactions.addEventListener('change', () => {
     options.showReactions = reactions.checked;
     save('opt:reactions', reactions.checked ? '1' : '0');

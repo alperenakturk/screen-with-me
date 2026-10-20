@@ -1,3 +1,5 @@
+import type { Recap } from './recap.ts';
+
 // Sunucu ile istemciler (site ve ileride eklenti) arasındaki mesaj formatı.
 // Bu dosya hem tarayıcıda hem Cloudflare sunucusunda çalışır, bu yüzden
 // DOM'a veya Node'a özel hiçbir şey kullanmaz.
@@ -9,7 +11,9 @@ export const NAME_MAX_LENGTH = 32;
 export const CHAT_MAX_LENGTH = 300;
 export const QUEUE_MAX_LENGTH = 100;
 export const MIN_RATE = 0.25;
-export const MAX_RATE = 2;
+/** HTML5 videolar 4x'e kadar; YouTube en fazla 2x (YOUTUBE_MAX_RATE). */
+export const MAX_RATE = 4;
+export const YOUTUBE_MAX_RATE = 2;
 /** Bir mesajın en fazla kaç bayt olabileceği (kötü niyetli büyük mesajlara karşı). */
 export const MAX_MESSAGE_BYTES = 4096;
 /**
@@ -202,6 +206,10 @@ export interface RoomSettings {
   autoNext?: boolean;
   /** Kaydedilmiş oda: 30 gün saklanır, videoların kaldığı yer ve pinleri hatırlanır. */
   saved?: boolean;
+  /** Yönetici emojileri kapattı (dikkat dağılmasın): kimse tepki atamaz. */
+  noReactions?: boolean;
+  /** Kaydedilmiş odanın adı (yönetici verir). */
+  name?: string;
 }
 
 /** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
@@ -250,10 +258,14 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; saved?: boolean; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; saved?: boolean; noReactions?: boolean; name?: string; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
+  /** Oturum özetini aç (sayaçlar sıfırlanır, özet herkese gider). */
+  | { t: 'recap' }
+  /** Bu odanın önceki özetleri. */
+  | { t: 'recaps' }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
   /** Sıraya ekle. Oda boşsa hemen açılır. */
@@ -293,7 +305,9 @@ export type ErrorCode =
   /** Bu işlem sadece oda yöneticisine açık. */
   | 'not_host'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
-  | 'others_watching';
+  | 'others_watching'
+  /** Özet için henüz yeterince şey olmadı. */
+  | 'recap_empty';
 
 /** Sunucu → istemci. */
 export type ServerMessage =
@@ -335,7 +349,9 @@ export type ServerMessage =
   /** Açık videonun pinleri değişti (tam liste). */
   | { t: 'pins'; pins: PinList }
   | { t: 'chat'; message: ChatMessage }
-  | { t: 'error'; code: ErrorCode };
+  | { t: 'error'; code: ErrorCode }
+  | { t: 'recap'; recap: Recap; by: Member }
+  | { t: 'recaps'; recaps: Recap[] };
 
 /** Verilen sunucu saatinde videonun kaçıncı saniyede olması gerektiği. */
 export function expectedPosition(state: PlaybackState, serverNow: number): number {
@@ -375,6 +391,15 @@ export function isValidRate(x: unknown): x is number {
 
 export function isReaction(x: unknown): x is Reaction {
   return typeof x === 'string' && (REACTIONS as readonly string[]).includes(x);
+}
+
+export const ROOM_NAME_MAX = 40;
+
+/** Oda adı: boşluklar sadeleşir, en fazla ROOM_NAME_MAX karakter. */
+export function cleanRoomName(x: unknown): string | null {
+  if (typeof x !== 'string') return null;
+  const name = x.replace(/\s+/g, ' ').trim().slice(0, ROOM_NAME_MAX);
+  return name.length > 0 ? name : null;
 }
 
 export function cleanName(x: unknown): string | null {
@@ -501,15 +526,20 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
-      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'saved'] as const) {
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'saved', 'noReactions'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
+      const name = cleanRoomName(m.name);
+      if (name) out.name = name;
       if (m.startsAt === null) out.startsAt = null;
       else if (isTimestamp(m.startsAt)) out.startsAt = m.startsAt;
       return Object.keys(out).length > 1 ? out : null;
     }
     case 'vote':
       return isItemId(m.id) && typeof m.up === 'boolean' ? { t: 'vote', id: m.id, up: m.up } : null;
+    case 'recap':
+    case 'recaps':
+      return { t: m.t };
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

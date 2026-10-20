@@ -211,13 +211,11 @@ function attachEngine(): void {
     // Kısa videolar (reklam, önizleme) bitince oda sıradakine geçmesin.
     onEnded: (itemId) => {
       const duration = adapter?.getDuration() ?? 0;
-      const auto = overlay.autoNext();
       const startNext = () => send({ type: 'send', message: { t: 'next', from: itemId } });
-      if (duration >= 60 || !auto) {
-        // İzleme sonu kartı: süre, kişi, tepki, pinler (otomatik devam kapalıysa "Sıradakini başlat").
-        overlay.endCard(duration, state?.item?.title ?? document.title, auto ? undefined : startNext);
-      }
-      if (duration >= 60 && auto) startNext();
+      // Otomatik devam kapalıysa küçük "Sıradakini başlat" kartı (istatistikler sitedeki oturum özetinde).
+      if (duration < 60) return;
+      if (!overlay.autoNext()) overlay.nextCard(state?.item?.title ?? document.title, startNext);
+      else startNext();
     },
     onAutoplayBlocked: () => overlay.askToStart(() => engine?.resume()),
   });
@@ -295,18 +293,9 @@ if (embedded) {
   });
 
   // Sadece video: senkronlanan videonun oynatıcısı çerçeveyi kaplar, sayfanın geri kalanı gizlenir
-  // (video başka bir iç çerçevedeyse bu sayfa o çerçeveyi büyütür). Sitedeki düğmeyle kapatılabilir.
-  let focusOn = true;
-  const focusTick = () => applyFocus(focusOn, active ? best : null);
-  void chrome.storage.local.get('embedFocus').then(({ embedFocus }) => {
-    focusOn = embedFocus !== false;
-    focusTick();
-  });
-  chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== 'local' || !('embedFocus' in changes)) return;
-    focusOn = changes.embedFocus!.newValue !== false;
-    focusTick();
-  });
+  // (video başka bir iç çerçevedeyse bu sayfa o çerçeveyi büyütür). Hep açık; seçenek yok.
+  const focusTick = () => applyFocus(true, active ? best : null);
+  focusTick();
   setInterval(focusTick, 1500);
 }
 

@@ -23,7 +23,16 @@ type Item = { emoji: string } | { sticker: string } | { add: true };
  * uçuşmaz: videonun sol altında avatar + isim + emoji kartı olarak kısa süre durur; aynı kişinin
  * aynı tepkisi yeni kart açmaz, "×2" olur.
  */
-export function createReactions(root: HTMLElement, send: (message: ClientMessage) => void, canManage: () => boolean = () => false) {
+/** Emoji çubuğunda her sayfada kaç yuva var (1–8 tuşları). */
+const SLOTS = 8;
+
+export function createReactions(
+  root: HTMLElement,
+  send: (message: ClientMessage) => void,
+  canManage: () => boolean = () => false,
+  /** Yönetici emojileri kapattıysa false (tuşlar da çalışmaz). */
+  enabled: () => boolean = () => true,
+) {
   // Biri video altında, biri tam ekran kontrollerinde olmak üzere birden fazla emoji çubuğu olabilir.
   const bars = root.querySelectorAll<HTMLElement>('.reaction-bar');
   const layer = root.querySelector<HTMLElement>('#reactions-layer')!;
@@ -35,11 +44,11 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
   const fileInput = el('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif', hidden: '' }) as HTMLInputElement;
   root.append(fileInput);
 
-  /** Üç emoji sayfası, sonra özel emoji sayfaları (7 tane + "+"; hiç yoksa sadece "+"). */
+  /** Üç emoji sayfası, sonra (varsa) 8'erli özel emoji sayfaları. Ekleme 🖼️ düğmesiyle. */
   function pages(): Item[][] {
     const list: Item[][] = REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
     const ids = [...stickers.keys()];
-    for (let i = 0; i === 0 || i < ids.length; i += 7) list.push([...ids.slice(i, i + 7).map((sticker) => ({ sticker })), { add: true }]);
+    for (let i = 0; i < ids.length; i += SLOTS) list.push(ids.slice(i, i + SLOTS).map((sticker) => ({ sticker })));
     return list;
   }
 
@@ -50,6 +59,7 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
   }
 
   function fire(item: Item): void {
+    if (!enabled()) return;
     if ('add' in item) {
       fileInput.click();
       return;
@@ -67,12 +77,8 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
     const all = pages();
     if (page >= all.length) page = 0;
     for (const bar of bars) {
-      const buttons = all[page]!.map((item, i) => {
-        if ('add' in item) {
-          const add = el('button', { type: 'button', class: 'reaction-btn add', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, '+');
-          add.addEventListener('click', () => fire(item));
-          return add;
-        }
+      const buttons: HTMLElement[] = all[page]!.map((item, i) => {
+        if ('add' in item) return el('span', { class: 'reaction-slot' });
         const title = `${t('react')} (${i + 1})`;
         const content = 'emoji' in item ? item.emoji : el('img', { src: stickers.get(item.sticker) ?? '', alt: '' });
         const button = el('button', { type: 'button', class: 'reaction-btn', title, 'aria-label': title }, content);
@@ -87,14 +93,12 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
       const down = el('button', { type: 'button', class: 'reaction-page', title: t('moreReactions'), 'aria-label': t('moreReactions') }, '▼');
       up.addEventListener('click', () => turn(-1));
       down.addEventListener('click', () => turn(1));
-      // 🖼️: doğrudan özel emoji sayfasına (emojilerden sonra gelir); oradayken emojilere döner.
-      const onStickers = page >= REACTION_PAGES.length;
-      const jump = el('button', { type: 'button', class: onStickers ? 'reaction-btn sticker-open on' : 'reaction-btn sticker-open', title: onStickers ? t('stickerBack') : t('stickerOpen'), 'aria-label': onStickers ? t('stickerBack') : t('stickerOpen') }, onStickers ? '😀' : '🖼️');
-      jump.addEventListener('click', () => {
-        page = onStickers ? 0 : REACTION_PAGES.length;
-        draw();
-      });
-      bar.replaceChildren(...buttons, el('span', { class: 'reaction-pager' }, up, down), jump);
+      // Yerler sabit: sayfada 8'den az şey varsa kalan yuvalar boş durur (yanındaki düğmeler kaymasın).
+      while (buttons.length < SLOTS) buttons.push(el('span', { class: 'reaction-slot' }));
+      // 🖼️: GIF / fotoğraf ekle (özel emoji sayfalarına ▲▼ ile gidilir).
+      const add = el('button', { type: 'button', class: 'reaction-btn sticker-open', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, '🖼️');
+      add.addEventListener('click', () => fire({ add: true }));
+      bar.replaceChildren(...buttons, el('span', { class: 'reaction-pager' }, up, down), add);
     }
   }
 
@@ -126,7 +130,7 @@ export function createReactions(root: HTMLElement, send: (message: ClientMessage
       save(MY_STICKERS_KEY, JSON.stringify([...kept, data].slice(-MAX_MY_STICKERS)));
       mine.add(await stickerId(data));
       // Eklenen emojinin sayfası açılsın: nereye geldiği görünsün.
-      page = REACTION_PAGES.length + Math.floor(stickers.size / 7);
+      page = REACTION_PAGES.length + Math.floor(stickers.size / SLOTS);
       send({ t: 'sticker-add', data });
     } catch (error) {
       const code = error instanceof Error && ['type', 'too_big'].includes(error.message) ? error.message : 'broken';

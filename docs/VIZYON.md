@@ -73,6 +73,10 @@ güvenilir, ücretsiz ve açık kaynak" bir araç yok. ScreenWithMe tam burada.
   kaldır), eklentide tek satır emoji ve videonun üstünde 📌, önizlemeli tema penceresi, ±0.05 hız,
   sırada otomatik devam seçeneği + oylama notu, kartta video linki, **odayı kaydet** (30 gün; videoların
   kaldığı yer ve pinler hatırlanır), uzun boş kalan oda dönüşte kaldığı yerde durmuş açılır.
+  **v0.9.49:** kaydedilen odalar (kurarken sorulur, adlı; ana sayfada liste, içeride kaç kişi), Spotify
+  blend'i gibi **oturum özeti** (her seferinde farklı kartlar, logolu görsel), sohbette eylemler gizli,
+  yönetici emojileri kapatabilir, film odada hep sadece video, video altı tek satır, 4x'e kadar hız,
+  varsayılan Türkçe, ortak font.
   v0.9.2: Art Deco / eski afiş tarzı temalar (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması,
   Transatlantik, Gece Ekspresi) ve her birine uygun çizilmiş avatar.
 - [ ] **v1.0 — Chrome Web Store'da yayın:** paket ve form metinleri hazır (`docs/web-store.md`,
