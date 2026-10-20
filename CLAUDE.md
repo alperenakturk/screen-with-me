@@ -271,6 +271,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - Kullanıcı artık çoğunlukla evdeki bilgisayar yerine claude.ai/code bulut oturumundan çalışıyor:
   repo her oturumda temiz klonlanır, konteyner geçicidir → her işi commit + push et. Geliştirme
   `claude/...` dalında; `main`'e PR ile girer (CI orada koşar, birleşince otomatik yayın).
+  **PR'ı açmak ve CI yeşil olunca birleştirmek Claude'un işi** (kullanıcı istedi, Ekim 2026): her iş bitince
+  PR aç, testleri bekle, yeşilse birleştir, Actions'taki yayının (deploy) yeşil olduğunu kontrol edip söyle.
+  Kullanıcıya düşen sadece kendi Chrome'undaki eklentiyi güncellemek.
 - Bulutta `wrangler login` yok: yayın GitHub Actions'tan. Kurulum, tip kontrolü, birim testleri, derleme
   ve `wrangler dev` + e2e bulutta çalışır.
 - Ortamın ağ izni kısıtlıysa `www.youtube.com` kapalı olabilir: `room.mjs`'deki başlık testi takılır
