@@ -14,7 +14,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-126%20unit%20%2B%2012%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.9.52-7c5cff)
+![Version](https://img.shields.io/badge/version-0.9.53-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
@@ -25,9 +25,9 @@ Send a link, and everyone watches the same second. If anyone pauses, seeks or ch
 the speed, it happens for everyone. Reactions, chat, pins and a shared queue sit around the video.
 
 - **YouTube or a video file** → plays right on the site, nothing to install.
-- **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → with the browser
-  extension the page opens **inside the room** when the site allows it, otherwise in its own tab,
-  where the extension turns the page into a **room view** (video + chat panel).
+- **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → the tab goes to that
+  site and, with the browser extension, the **room itself** (exactly the site's room page) opens over it,
+  with the video sitting in the room's player area. Works on sites that forbid being framed, too.
 
 ## ✨ Features
 
@@ -37,8 +37,7 @@ the speed, it happens for everyone. Reactions, chat, pins and a shared queue sit
 | ⏯️ **Tight sync** | Play / pause / seek / speed for everyone. Server-time based, measured **30–100 ms** apart on real players. Drift is corrected silently (small drift by playing ±5 % faster/slower). |
 | ⏳ **Everyone ready** | If someone's video stalls (buffering, an ad), the room waits for them — at most 12 s; the same person can't stall the room again for 30 s. |
 | 🧩 **Any website** | The extension finds the right video (skips ads and short previews), also inside iframes and in players that load late or switch sources. |
-| 🪟 **Film inside the room** | With the extension, a page link opens in the room's player area showing only the video. Pages that forbid being framed (checked from their headers, never stripped) fall back to their own tab. |
-| 🖼️ **Room view** | When the video plays in its own tab, the extension turns that page into the same room as on the website: top bar, invite + chat + people on the right, reactions, pins, sync and speed under the video, all in the Night theme. Works on sites that forbid framing too. Before the video exists, a "Start the film" card points at the player. Fullscreen keeps the controls and a draggable message spot. |
+| 🖼️ **Room over the film page** | The extension opens the site's own room page as a full-screen layer over the film page and cuts a hole where the video goes; the film's player sits exactly there. Chat, queue, people, settings, avatar and theme dialogs, recap: everything is the real site. Until the video is found only a slim top bar shows, so you can press play. No headers are touched, so it works on sites that forbid framing. Settings (name, avatar, theme, saved rooms…) are shared between the site and the layer through the extension. |
 | ⏩ **Shared speed** | 0.25×–4× (YouTube up to 2×), fine steps of ±0.05. In the extension other speed extensions can't knock the room out of sync. |
 | 🧪 **Sync test** | A built-in 12-second counter drawn by the site; a badge shows how far apart you are. |
 | 🖥️ **Fullscreen** | Distraction-free: controls, reactions, pins and a quick-message box appear when you move the mouse. |
@@ -100,13 +99,12 @@ flowchart LR
   nothing. Timers that must survive sleep (ready-check timeout, scheduled start, room deletion) use one storage alarm.
 
 ### Extension in one paragraph
-A Manifest V3 extension. The background service worker keeps one room connection per tab. A content
-script runs in every frame (top page and iframes) but does nothing unless the user is in a room; then
-each frame reports its best video candidate (size, duration, playing) and the background picks the
-winner, where the same sync engine as the site runs. A page link opened in a room is first tried inside
-the site (an iframe in the player area; the site keeps the room connection and the extension only runs the
-engine in that frame and relays playback messages). If the page can't be framed, the site hands the tab
-over to the extension, which takes it to that page and switches on the room view.
+A Manifest V3 extension with no UI and no room connection of its own. When a page is opened in a room, the
+site sends the tab there; on the film page the extension opens `shell.html` as a full-screen layer, which loads
+the site's room page (`/r/ROOM?shell=1`). The site keeps the room connection; the extension only relays:
+a content script in every frame reports its best video, the background picks the winner and the same sync
+engine as the site runs there, playback messages go to the site, room state comes back. The site reports
+where its player area is; the top frame clips a hole there (`clip-path`) and moves the film's player into it.
 
 ## 🧪 Quality
 
@@ -127,7 +125,7 @@ packages/shared   protocol + validation, room rules, sync engine, clock, connect
                   ready check, recap, embedding rules, logo
 apps/server       Worker + Durable Object (one per room)
 apps/web          the site (plain TS/HTML/CSS)
-apps/extension    browser extension (background, content script, overlay, popup, site bridge)
+apps/extension    browser extension (background, content script, room layer "shell", site bridge, popup)
 scripts/          end-to-end tests, extension test harnesses, icon / theme art / avatar generators
 store/            Chrome Web Store package and screenshots
 docs/             vision & roadmap, growth plan, store guide
@@ -169,7 +167,7 @@ MIT / Apache-2.0. Privacy policy: [gizlilik.html](https://screen-with-me.swm-ser
 - DRM-protected services (Netflix, Disney+…) are not a goal.
 - The extension is not in the Chrome Web Store yet (manual install, ~1 minute).
 - Firefox is not supported yet. Pages from other sites need a desktop browser with the extension.
-- If the `<video>` element itself goes fullscreen, the extension overlay can't show (player-container fullscreen works).
+- The film site's own fullscreen button shows only the video; use the room's ⛶ to keep chat and controls.
 - ScreenWithMe never hosts or relays video content; it only synchronises players that each person opens themselves.
 
 ---
@@ -180,9 +178,9 @@ MIT / Apache-2.0. Privacy policy: [gizlilik.html](https://screen-with-me.swm-ser
 bir araç. Link at, herkes aynı saniyede izlesin; biri durdurursa herkes dursun.
 
 - **YouTube ya da video dosyası:** doğrudan sitede, kurulum yok.
-- **Başka bir site:** eklenti sayfadaki videoyu bulur (iframe içindekiler dahil). Site izin veriyorsa film
-  odanın içinde açılır (sadece video); izin vermiyorsa kendi sekmesinde açılır ve eklenti o sayfayı
-  **oda görünümüne** çevirir (üstte şerit, yanda sohbet / emoji / hız).
+- **Başka bir site:** sekme o siteye gider; eklenti sitenin oda sayfasının kendisini filmin üstüne açar,
+  video odanın oynatıcı alanına oturur (sohbet, sıra, ayarlar, her şey sitedeki gibi). Gömmeyi yasaklayan
+  sitelerde de çalışır.
 
 Özellikler:
 - Sıkı senkron (30–100 ms), "herkes hazır" beklemesi, 4x'e kadar ortak hız, senkron testi

@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath><radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#9a7ae0"/><stop offset="1" stop-color="#1a1340"/></radialGradient></defs><g clip-path="url(#c)"><rect width="64" height="64" fill="url(#bg)"/>
-<path d="M6 64 Q8 45 32 43 Q56 45 58 64Z" fill="#1f1d2a"/><path d="M26 44 L32 52 L38 44Z" fill="#f4efe4"/><path d="M22 44 L28 53 L32 47 M42 44 L36 53 L32 47" stroke="#3a3648" stroke-width="1.6" fill="none"/><circle cx="32" cy="74" r="21" fill="none" stroke="#ff8a6b" stroke-width="4"/><path d="M32 53 V60 M18 62 L26 60 M46 62 L38 60" stroke="#ff8a6b" stroke-width="3"/>
-<rect x="28" y="38" width="8" height="7" fill="#e8b48f"/><circle cx="32" cy="30" r="12" fill="#e8b48f"/>
-<path d="M19.4 29 Q17.4 15 28 11.6 Q40 8 45.6 16.4 Q46.8 22.4 44.4 29 Q43.4 22.6 40.4 20.6 Q34 22.6 26.4 20.6 Q22.4 22.6 19.4 29Z" fill="#2a1a12"/>
-<path d="M27 12.4 Q33.6 4.6 42.6 8.6 Q36.6 8.8 33.4 13.4Z" fill="#2a1a12"/><path d="M29 13 Q34 9.4 39.6 10.4" stroke="#5a3a28" stroke-width="1" fill="none"/>
-<path d="M19.4 29.6 H44.6" stroke="#f4efe4" stroke-width="1.2"/>
-<rect x="20.6" y="26.6" width="10" height="7" rx="1.6" fill="#ff3b4a" fill-opacity=".88" stroke="#f4efe4" stroke-width="1.2"/>
-<rect x="33.4" y="26.6" width="10" height="7" rx="1.6" fill="#2ec5e8" fill-opacity=".88" stroke="#f4efe4" stroke-width="1.2"/>
-<path d="M27.4 37 Q32 40.4 36.6 37" stroke="#6b2f2f" stroke-width="1.5" fill="#fff" stroke-linecap="round"/></g></svg>

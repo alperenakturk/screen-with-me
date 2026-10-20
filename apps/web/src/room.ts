@@ -2,7 +2,9 @@ import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { isRelayable } from '@swm/shared/embed';
-import { parseMediaInput } from '@swm/shared/media';
+import { parseMediaInput, samePage } from '@swm/shared/media';
+import type { Rect, ShellLayout } from '@swm/shared/shell';
+import { createLogo } from '@swm/shared/logo';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
   CLIENT_ID,
@@ -23,16 +25,26 @@ import {
   type RoomSettings,
   type ServerMessage,
 } from '@swm/shared/protocol';
-import { pageInviteUrl } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { el } from './dom.ts';
 import { t, translate } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
-import { canEmbed, createEmbedPlayer, type EmbedFailure, type EmbedPlayer } from './players/embed.ts';
+import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createTestPlayer } from './players/test.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
-import { load, save, saveIdentity, sessionLoad, sessionSave } from './storage.ts';
+import {
+  extensionSupportsShell,
+  hasExtension,
+  isShell,
+  load,
+  onExtensionMessage,
+  postToExtension,
+  save,
+  saveIdentity,
+  sessionLoad,
+  sessionSave,
+} from './storage.ts';
 import { avatarNode, renderAvatarPicker } from './ui/avatar.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
@@ -56,6 +68,17 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
  * tarayıcının sesli oynatma izni için gereken etkileşimdir.
  */
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
+  // Film sayfasının üstündeki katman (kabuk): kişi siteden geliyor, isim/avatar sormadan girer.
+  // (İsim hiç yoksa katman tam açılır, isim adımı görünsün.)
+  if (isShell) {
+    const name = cleanName(load('name'));
+    const avatar = load('avatar');
+    if (name && isAvatar(avatar)) {
+      startRoom(app, roomId, name, avatar, { resumed: true });
+      return;
+    }
+    postToExtension({ type: 'layout', layout: { mode: 'open' } });
+  }
   // Eklenti filmden odaya dönerken adrese #back koyar: kişi zaten odadaydı, isim/avatar sorma.
   const fromExtension = location.hash === '#back';
   if (fromExtension) history.replaceState(null, '', location.pathname + location.search);
@@ -216,6 +239,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   app.innerHTML = `
     <div class="room">
+      <div class="shell-strip" id="shell-strip">
+        <span class="logo strip-logo" aria-hidden="true"></span>
+        <b class="strip-brand">ScreenWithMe</b>
+        <span id="strip-room" class="strip-room"></span>
+        <span class="strip-hint" data-i18n="shellStripHint"></span>
+        <button id="strip-home" type="button" class="btn small-btn">🏠 <span data-i18n="shellBack"></span></button>
+      </div>
       <div class="stage">
         <form id="media-form" class="media-form">
           <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
@@ -231,7 +261,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
-            <button id="embed-out" type="button" class="btn small-btn" hidden>↗ <span data-i18n="embedOut"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
           <div class="player-wrap">
@@ -272,11 +301,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </ol>
               <button id="sync-test" type="button" class="btn small-btn">🧪 <span data-i18n="syncTest"></span></button>
             </div>
-            <div id="embed-loading" class="overlay embed-loading" hidden>
-              <div class="embed-spinner" aria-hidden="true"></div>
-              <p data-i18n="embedLoading"></p>
-              <button id="embed-loading-out" type="button" class="btn small-btn" data-i18n="embedOut"></button>
-            </div>
             <div id="external" class="overlay external" hidden>
               <p class="muted" data-i18n="externalTitle"></p>
               <h2 id="external-title"></h2>
@@ -286,7 +310,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <p id="external-note" class="external-note" hidden></p>
                 <p data-i18n="externalHasExt"></p>
                 <button id="external-go" type="button" class="btn primary big" data-i18n="externalGoJoin"></button>
-                <button id="external-embed" type="button" class="link-btn" data-i18n="embedTry" hidden></button>
               </div>
               <div id="external-noext" class="stack external-box">
                 <p data-i18n="externalNoExt" class="desktop-only"></p>
@@ -459,6 +482,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const reconnectEl = document.querySelector<HTMLButtonElement>('#reconnect')!;
 
   let myId: string | null = null;
+  /** Son oynatma hareketini yapan (kendi açtığım sayfaya beklemeden gidilir, başkasınınkine "Filme git"). */
+  let lastBy: Member | null = null;
   let members: Member[] = [];
   /** Bu odanın önceki oturum özetleri (ayarlarda listelenir). */
   let recaps: Recap[] = [];
@@ -552,6 +577,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         renderWaiting();
         queue.set(message.queue);
         chat.set(message.chat);
+        lastBy = null;
         void applyState(message.state);
         pins.set(message.pins ?? null);
         // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
@@ -566,7 +592,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         }
         break;
       case 'state': {
-        // Video değiştiyse tepki sayacı sıfırlanır (applyState roomState'i değiştirmeden önce bak).
+        lastBy = message.by;
         void applyState(message.state);
         pins.reset(message.state.item?.id ?? null);
         const { action, by, state } = message;
@@ -664,8 +690,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           // Oda yöneticisi çıkardı: tekrar bağlanmaya çalışma, bilgilendirme ekranını göster.
           connection.close();
           engine.destroy();
-          // Gömülü filmi durdurmak odayı durdururdu (oradaki motor yayardı); sadece kapat.
-          if (embed) closeCurrent();
+          // Filmi durdurmak odayı durdururdu (oradaki motor yayardı); sadece bağı kopar.
+          if (film) closeCurrent();
           else current?.player.pause();
           $('#kicked').hidden = false;
           break;
@@ -704,7 +730,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const itemId = state.item?.id ?? null;
     if (itemId === currentItemId) {
       engine.receive(state);
-      embed?.setState(state);
+      film?.setState(state);
       return;
     }
 
@@ -722,8 +748,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
     const media = state.item.media;
     if (media.kind === 'page') {
-      if (wantsEmbed(state.item)) startEmbed(state.item, media.url);
-      else showExternal(state.item, media.url);
+      // Kabukta ve film sekmesi bu sayfadaysa video katmanın deliğinde; değilse "Filme git" kartı
+      // (kendim açtıysam beklemeden gidilir).
+      if (isShell && shellPage !== null && samePage(shellPage, media.url)) startFilm(state.item);
+      else showExternal(state.item, media.url, lastBy !== null && lastBy.id === myId);
+      reportLayout();
       return;
     }
     const slot = el('div', { class: 'slot' });
@@ -749,21 +778,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     current = { player, slot };
     engine.attach(player);
+    reportLayout();
   }
 
-  // ---- Film sitenin içinde (deneysel, eklentiyle) ----
-  /** Şu an oynatıcı alanında açık film sayfası (yoksa null). */
-  let embed: EmbedPlayer | null = null;
-  /** Bu videolar sitenin içinde açılamadı (ya da kullanıcı ayrı sekmeyi seçti): tekrar deneme. */
-  const embedFailed = new Map<string, EmbedFailure>();
-  const embedLoadingEl = $('#embed-loading');
-  // Seçenek yok: eklenti destekliyorsa film hep odanın içinde ve sadece video olarak açılır.
-  // Site izin vermezse (ya da kullanıcı "ayrı sekmede aç" derse) o video için ayrı sekme kartı.
-  let embedOn = true;
-
-  function wantsEmbed(item: QueueItem): boolean {
-    return embedOn && canEmbed() && !embedFailed.has(item.id);
-  }
+  // ---- Film (kabuk): film kendi sekmesinde oynar, video bu katmanın deliğinde ----
+  /** Film sayfasındaki video (kabukta, odadaki sayfa açık sekmenin sayfasıysa). */
+  let film: ShellPlayer | null = null;
+  /** Kabukta: film sekmesinin adresi ve orada senkronlanacak video bulundu mu. */
+  let shellPage: string | null = null;
+  let videoFound = false;
 
   /** Oynatıcı alanındaki videoyu/sayfayı kapatır. */
   function closeCurrent(): void {
@@ -772,78 +795,80 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       current.slot.remove();
       current = null;
     }
-    embed = null;
-    embedLoadingEl.hidden = true;
-    $('.player-wrap').classList.remove('embedding');
+    // Film sayfasındaki motor dursun (video orada kendiliğinden durur; odaya "durdur" gitmez).
+    if (film) postToExtension({ type: 'embed', request: { type: 'detach' } });
+    film = null;
+    $('.player-wrap').classList.remove('filming');
     renderNowPlaying();
   }
 
-  /**
-   * Film sayfasını oynatıcı alanında açar. Önce eklenti başlıklara bakar (yasaksa hemen
-   * ayrı sekme kartına düşeriz); açılırsa senkron çerçevenin içinde çalışır, sohbet,
-   * emojiler, pinler ve tam ekran sitede kalır.
-   */
-  function startEmbed(item: QueueItem, url: string): void {
+  /** Film sekmesindeki videoyu oynatıcı yapar: komutlar oraya gider, oradaki motorun mesajlarını odaya yollarız. */
+  function startFilm(item: QueueItem): void {
     externalEl.hidden = true;
-    embedLoadingEl.hidden = false;
-    $('.player-wrap').classList.add('embedding');
-    const slot = el('div', { class: 'slot' });
+    $('.player-wrap').classList.add('filming');
+    const slot = el('div', { class: 'slot film-slot' });
     playerEl.append(slot);
-    const player: EmbedPlayer = createEmbedPlayer(slot, {
-      roomId,
-      url,
-      title: itemTitle(item),
-      onReady: () => {
-        if (embed === player) embedLoadingEl.hidden = true;
-      },
-      onBlocked: (reason) => {
-        if (embed !== player) return;
-        embedFailed.set(item.id, reason);
-        closeCurrent();
-        externalEl.hidden = false;
-        showExternal(item, url);
-      },
+    const player = createShellPlayer({
       onSend: (message) => {
-        if (embed === player && isRelayable(message)) send(message);
+        if (film !== player || !isRelayable(message)) return;
+        // Otomatik devam kapalıysa film bitince sıradakine geçilmez: "Sıradakini başlat" kartı.
+        if (message.t === 'next' && roomSettings.autoNext === false) {
+          if (queue.length > 0) showNextCard($('.player-wrap'), itemTitle(item), mediaUrl(item.media), () => send(message));
+          return;
+        }
+        send(message);
       },
-      // Çerçevede basılan kısayol: sitedeki kısayol dinleyicileri (emoji, Enter, P) aynen işlesin.
+      // Film sayfasında basılan kısayol: sitedeki kısayol dinleyicileri (emoji, Enter, P) aynen işlesin.
       onKey: (key) => document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })),
       onFullscreen: () => {
         if (!fullscreen.isActive()) fullscreen.toggle();
       },
     });
     current = { player, slot };
-    embed = player;
+    film = player;
     if (roomState) player.setState(roomState);
     player.setClock(clock.now() - Date.now(), clock.synced);
     renderNowPlaying();
   }
-  // Çerçevedeki motor sunucu saatini sitenin ölçümünden alır.
-  setInterval(() => embed?.setClock(clock.now() - Date.now(), clock.synced), 2000);
+  // Film çerçevesindeki motor sunucu saatini sitenin ölçümünden alır.
+  setInterval(() => film?.setClock(clock.now() - Date.now(), clock.synced), 2000);
 
-  /** Gömülü filmden vazgeç: ayrı sekmede aç (bugünkü yol). */
-  function leaveEmbed(): void {
-    const item = roomState?.item;
-    if (!item || item.media.kind !== 'page') return;
-    embedFailed.set(item.id, 'manual');
-    closeCurrent();
-    externalEl.hidden = false;
-    showExternal(item, item.media.url);
-    $<HTMLButtonElement>('#external-go').click();
-  }
-  $('#embed-out').addEventListener('click', leaveEmbed);
-  $('#embed-loading-out').addEventListener('click', leaveEmbed);
-
-  /** "Odanın içinde aç" (ayrı sekmeyi seçtikten sonra geri dönüş): açık sayfayı yeniden göster. */
-  function setEmbedOn(next: boolean): void {
-    embedOn = next;
-    if (next) for (const [id, reason] of embedFailed) if (reason === 'manual') embedFailed.delete(id);
-    if (roomState?.item?.media.kind === 'page' && !handedOff) {
-      currentItemId = null;
-      void applyState(roomState);
+  // ---- Kabuk yerleşimi: katmanın hâli ve videonun deliği eklentiye bildirilir ----
+  const STRIP_HEIGHT = 56;
+  let sentLayout = '';
+  function reportLayout(): void {
+    if (!isShell) return;
+    // Video bulunana kadar üstte ince şerit (film sayfası görünür, oynat'a basılsın); bulununca oda görünümü.
+    const mode = film === null ? 'open' : videoFound ? 'full' : 'bar';
+    document.documentElement.classList.toggle('shell-bar', mode === 'bar');
+    let layout: ShellLayout;
+    if (mode === 'open') layout = { mode: 'open' };
+    else if (mode === 'bar') layout = { mode: 'bar', height: STRIP_HEIGHT };
+    else {
+      const wrap = $('.player-wrap');
+      const box = wrap.getBoundingClientRect();
+      const islands: Rect[] = [];
+      // Deliğin içinde yine görünmesi gerekenler: tepki kartları, kartlar, tam ekran kontrolleri…
+      for (const child of wrap.children) {
+        if (child.id === 'player' || child.id === 'fs-catcher') continue;
+        const nodes = child.id === 'reactions-layer' ? [...child.children] : [child];
+        for (const node of nodes) {
+          const r = node.getBoundingClientRect();
+          const x = Math.max(r.left, box.left);
+          const y = Math.max(r.top, box.top);
+          const w = Math.min(r.right, box.right) - x;
+          const h = Math.min(r.bottom, box.bottom) - y;
+          if (w > 1 && h > 1) islands.push({ x: Math.floor(x), y: Math.floor(y), w: Math.ceil(w), h: Math.ceil(h) });
+        }
+      }
+      const hole = { x: Math.round(box.left), y: Math.round(box.top), w: Math.round(box.width), h: Math.round(box.height) };
+      layout = { mode: 'full', hole, islands: islands.slice(0, 12) };
     }
+    const json = JSON.stringify(layout);
+    if (json === sentLayout) return;
+    sentLayout = json;
+    postToExtension({ type: 'layout', layout });
   }
-  $('#external-embed').addEventListener('click', () => setEmbedOn(true));
 
   /**
    * Odada bir web sayfası açık: video o sayfada, herkesin kendi sekmesinde oynar.
@@ -851,33 +876,32 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * Eklenti kuruluysa sekmeyi o götürür (oda orada devam eder); değilse kurulum
    * adımları gösterilir.
    */
-  function showExternal(item: QueueItem, url: string): void {
-    const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
+  function showExternal(item: QueueItem, url: string, auto: boolean): void {
+    const ext = hasExtension();
+    const shellOk = extensionSupportsShell();
     $('#external-title').textContent = itemTitle(item);
     $('#external-host').textContent = hostOf(url);
     renderWatching();
-    $('#external-ext').hidden = !hasExtension;
-    $('#external-noext').hidden = hasExtension;
-    // Sitenin içinde açılamadıysa nedenini söyle; hiç denenmediyse denemeyi öner.
-    const failure = embedFailed.get(item.id);
+    $('#external-ext').hidden = !ext;
+    $('#external-noext').hidden = ext;
+    // Eski sürüm eklenti film sayfasında odayı açamaz: güncellemesi gerekir.
     const note = $('#external-note');
-    note.hidden = !failure || failure === 'manual';
-    note.textContent = failure && failure !== 'manual' ? t(failure === 'timeout' ? 'embedTimeout' : 'embedBlocked') : '';
-    $('#external-embed').hidden = !hasExtension || !canEmbed() || embedOn || !!failure;
+    note.hidden = shellOk;
+    note.textContent = shellOk ? '' : t('extensionOutdated');
     $<HTMLAnchorElement>('#external-alone').href = url;
     const go = $<HTMLButtonElement>('#external-go');
+    go.hidden = !shellOk;
     go.disabled = false;
     go.textContent = t('externalGoJoin');
     go.onclick = () => {
       go.disabled = true;
       go.textContent = t('externalGoing');
-      // Eklentiye "bu sekme bu odaya katılsın, sayfa da bu" de; sekmeyi eklenti hemen götürür.
-      window.postMessage({ source: 'screenwithme-site', type: 'join', roomId, url }, location.origin);
-      // Eski sürüm eklenti cevap vermezse adres işaretiyle (#swm=ODA) git.
-      setTimeout(() => {
-        if (!handedOff && roomState?.item?.id === item.id) location.assign(pageInviteUrl(url, roomId));
-      }, 3000);
+      // Sekme film sayfasına gider; eklenti orada odanın görünümünü videonun etrafına kurar.
+      if (isShell) postToExtension({ type: 'navigate', url });
+      else postToExtension({ type: 'go', roomId, url });
     };
+    // Kendim açtıysam beklemeden gideriz; başkası açtıysa herkes "Filme git" ile kendisi gider.
+    if (auto && shellOk) go.click();
   }
 
   function hostOf(url: string): string {
@@ -888,24 +912,54 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
   }
 
-  // Eklentiden gelenler: "sekmeyi ben götürüyorum" (bağlantımızı kapatırız, odada iki kez
-  // görünmeyelim) ve eklentide değişen isim/avatar.
-  let handedOff = false;
-  window.addEventListener('message', (event: MessageEvent) => {
-    if (event.source !== window || event.origin !== location.origin) return;
-    const data = event.data as { source?: string; type?: string; name?: unknown; avatar?: unknown } | null;
-    if (data?.source !== 'screenwithme-extension') return;
-    if (data.type === 'joining' && !handedOff) {
-      handedOff = true;
-      if (embed) closeCurrent();
-      connection.close();
-      engine.destroy();
-    } else if (data.type === 'identity') {
-      const name = cleanName(data.name);
-      const avatar = isAvatar(data.avatar) ? data.avatar : myAvatar;
-      if (name && (name !== myName || avatar !== myAvatar)) settings.setIdentity(name, avatar);
+  // Eklentiden gelenler. Ana sitede: film sayfasına gidilemediyse (eklenti eski/kapalı) düğme geri gelsin.
+  // Kabukta: film sekmesinin adresi, orada video bulundu mu, tam ekrandan çıkıldı mı.
+  onExtensionMessage((message) => {
+    if (message.type === 'going' && !message.ok) {
+      const go = $<HTMLButtonElement>('#external-go');
+      go.disabled = false;
+      go.textContent = t('externalGoJoin');
+      showError(() => t('extensionOutdated'));
+    } else if (message.type === 'page' && isShell) {
+      const changed = shellPage === null || !samePage(shellPage, message.url);
+      shellPage = message.url;
+      // Odadaki sayfa bu mu? Yeniden bak: film başlar ya da "Filme git" kartı çıkar.
+      if (changed && roomState?.item?.media.kind === 'page') {
+        currentItemId = null;
+        void applyState(roomState);
+      }
+    } else if (message.type === 'video' && isShell) {
+      videoFound = message.found;
+      reportLayout();
+    } else if (message.type === 'fullscreen' && isShell) {
+      fullscreen.syncShell(message.on);
     }
   });
+  if (isShell) {
+    postToExtension({ type: 'shell-ready' });
+    // Yerleşim değişince (pencere, tam ekran, kartlar) deliği yeniden bildir.
+    const wrap = $('.player-wrap');
+    new ResizeObserver(() => reportLayout()).observe(wrap);
+    let queued = false;
+    new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        reportLayout();
+      });
+    }).observe(wrap, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+    addEventListener('resize', reportLayout);
+    setInterval(reportLayout, 1000);
+    // Odaya dön: sekme sitedeki odaya gider (katman kalkar, site kendi sayfasında devam eder).
+    const goHome = () => postToExtension({ type: 'navigate', url: `${location.origin}/r/${roomId}#back` });
+    $('#strip-home').addEventListener('click', goHome);
+    $('.strip-logo').append(createLogo(document));
+    const homeButton = el('button', { type: 'button', class: 'nav-link shell-home' }, `🏠 ${t('shellBack')}`);
+    homeButton.addEventListener('click', goHome);
+    document.querySelector('.topbar-right')?.prepend(homeButton);
+    window.addEventListener('langchange', () => (homeButton.textContent = `🏠 ${t('shellBack')}`));
+  }
 
   function renderNowPlaying(): void {
     const item = roomState?.item ?? null;
@@ -917,7 +971,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     skipEl.disabled = queue.length === 0;
     fullscreen.setSkipEnabled(queue.length > 0);
-    $('#embed-out').hidden = embed === null;
   }
 
   function skip(): void {
@@ -931,11 +984,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     engine.resume();
   });
 
-  // Gömülü filmde motor çerçevede çalışır: hız isteği oraya gider.
+  // Filmde motor film çerçevesinde çalışır: hız isteği oraya gider.
   // YouTube 2x'ten hızlı oynatmıyor: orada en fazla 2x istenir.
   const requestRate = (wanted: number) => {
     const rate = roomState?.item?.media.kind === 'youtube' ? Math.min(wanted, YOUTUBE_MAX_RATE) : wanted;
-    if (embed) embed.control({ action: 'rate', rate });
+    if (film) film.control({ action: 'rate', rate });
     else engine.requestRate(rate);
   };
   speedEl.addEventListener('change', () => requestRate(Number(speedEl.value)));
@@ -945,6 +998,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Tam ekran: sadece video kalır, fare oynayınca kontroller ve hızlı mesaj belirir. ----
   const fullscreen = createFullscreen({
+    shell: isShell,
     theater: $('#theater'),
     getPlayer: () => current?.player ?? null,
     send,
@@ -998,8 +1052,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const extReload = $('#ext-reload');
   extReload.querySelector('button')!.addEventListener('click', () => location.reload());
   document.addEventListener('visibilitychange', () => {
-    const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
-    if (document.visibilityState === 'visible' && wentToInstall && !hasExtension) {
+    if (document.visibilityState === 'visible' && wentToInstall && !hasExtension()) {
       if (extDialog.open) extDialog.close();
       extReload.hidden = false;
     }
@@ -1033,8 +1086,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
     };
     // YouTube ya da video dosyası değil, bir web sayfası: eklentisi yoksa önce ne gerektiğini anlat.
-    const hasExtension = document.documentElement.dataset.swmExtension !== undefined;
-    if (media.kind === 'page' && !hasExtension) {
+    if (media.kind === 'page' && !hasExtension()) {
       pendingAdd = add;
       extDialog.showModal();
       return;
@@ -1045,7 +1097,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Herkesi bana eşitle: kendi konumumu odaya yayar (biri kaydıysa tek tıkla düzelir). ----
   const syncAllEl = $<HTMLButtonElement>('#sync-all');
   syncAllEl.addEventListener('click', () => {
-    if (embed) embed.control({ action: 'sync-all' });
+    if (film) film.control({ action: 'sync-all' });
     else engine.syncEveryoneToMe();
     syncAllEl.disabled = true;
     setTimeout(() => (syncAllEl.disabled = false), 1500);
@@ -1154,6 +1206,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function renderSaved(host: boolean): void {
     const saved = roomSettings.saved === true;
     const name = roomSettings.name ?? '';
+    $('#strip-room').textContent = name || roomId;
     $('#save-status').textContent = saved ? t('savedStatus', { name: name || roomId }) : t('notSavedStatus');
     $('#save-form').hidden = !host;
     $('#save-off').hidden = !host || !saved;
@@ -1264,9 +1317,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     reconnectEl.classList.toggle('attention', status === 'reconnecting' || status === 'closed');
   }
 
+  // Sayfadan çıkarken (film sayfasına gidiş, odaya dönüş) bağlantıyı hemen kapat: tarayıcı sayfayı
+  // önbellekte açık tutarsa kişi odada bir süre iki kez görünüyordu. Geri gelinirse sayfa yenilenir.
+  addEventListener('pagehide', () => connection.close());
+
   // ---- Bağlantıyı yenile (sağ üst ⟳): kopma ya da takılma için, sayfayı yenilemeden. ----
   reconnectEl.onclick = () => {
-    if (handedOff || !$('#kicked').hidden) return;
+    if (!$('#kicked').hidden) return;
     reconnectEl.classList.add('spin');
     setTimeout(() => reconnectEl.classList.remove('spin'), 700);
     connection.reconnect();
@@ -1313,6 +1370,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // Sadece geliştirme modunda: tarayıcı konsolundan senkronu incelemek için.
   if (import.meta.env.DEV) {
-    Object.assign(window, { __swm: { engine, clock, player: () => current?.player ?? null, embed: () => embed } });
+    Object.assign(window, { __swm: { engine, clock, player: () => current?.player ?? null, film: () => film } });
   }
 }

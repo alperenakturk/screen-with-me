@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath><radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#1f8a4a"/><stop offset="1" stop-color="#05240f"/></radialGradient></defs><g clip-path="url(#c)"><rect width="64" height="64" fill="url(#bg)"/>
-<g fill="#5dff9a" opacity=".35" font-family="monospace" font-size="5"><text x="6" y="12">1 0 1</text><text x="44" y="20">0 1</text><text x="8" y="44">01</text><text x="48" y="40">1 0</text></g>
-<path d="M6 64 Q8 45 32 43 Q56 45 58 64Z" fill="#101010"/><path d="M24 43 L32 58 L40 43" stroke="#2a2a2a" stroke-width="2" fill="none"/>
-<rect x="28" y="38" width="8" height="7" fill="#e6c2a2"/><circle cx="32" cy="30" r="12" fill="#e6c2a2"/>
-<path d="M20 27 Q20 15 32 15 Q44 15 44 27 Q40 18 32 19 Q24 18 20 27Z" fill="#101010"/>
-<ellipse cx="27" cy="30" rx="4" ry="2.4" fill="#0a0a0a"/><ellipse cx="37" cy="30" rx="4" ry="2.4" fill="#0a0a0a"/>
-<path d="M31 30 H33" stroke="#0a0a0a" stroke-width="1.2"/><path d="M25 29 l2 -0.6" stroke="#5dff9a" stroke-width=".7"/>
-<path d="M29 37 H35" stroke="#6b2f2f" stroke-width="1.5" stroke-linecap="round"/></g></svg>

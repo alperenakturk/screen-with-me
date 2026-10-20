@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath><radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#9ad6f2"/><stop offset="1" stop-color="#3a86bd"/></radialGradient></defs><g clip-path="url(#c)"><rect width="64" height="64" fill="url(#bg)"/>
-<path d="M6 64 Q8 45 32 43 Q56 45 58 64Z" fill="#f2d13b"/>
-<rect x="28" y="38" width="8" height="7" fill="#f3d6c0"/><circle cx="32" cy="31" r="12.5" fill="#f3d6c0"/>
-<path d="M19.5 29 Q19 16 32 16 Q45 16 44.5 29 Q42 22 38 23 Q34 20 30 23 Q24 21 19.5 29Z" fill="#6b4a2b"/>
-<circle cx="27" cy="31" r="3" fill="#fff"/><circle cx="37" cy="31" r="3" fill="#fff"/>
-<circle cx="27" cy="31.3" r="1.1" fill="#1d1430"/><circle cx="37" cy="31.3" r="1.1" fill="#1d1430"/>
-<path d="M27 38.5 q1.5 -1.5 2.5 0 q1.5 1.5 2.5 0 q1.5 -1.5 2.5 0 q1 1 2 0" stroke="#6b2f2f" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-<path d="M45 25 q2 3 0 5 q-2 -2 0 -5Z" fill="#7fd0ff"/></g></svg>
