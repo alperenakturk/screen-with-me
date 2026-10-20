@@ -128,7 +128,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 Paket ve form metinleri hazır (`docs/web-store.md`, `npm run store`), ama eklenti henüz yeterince hazır
 görülmediği için gönderilmiyor. Göndermeden önce:
 - [ ] Gerçek sitelerde ve Brave/Edge'de arkadaşlarla deneme (popup'taki "Tanı" satırı).
-- [ ] Mağaza ekran görüntülerini ve test talimatlarını son görünüme göre yenile (`store/src/shots.html`).
+- [x] Mağaza ekran görüntülerini ve test talimatlarını son görünüme göre yenile (`store/src/shots.html`, 0.9.53: 5 görsel).
 - [ ] Sürüm `1.0.0` → `npm run store` → gönderim (kullanıcının hesabıyla).
 - [ ] Onaylanınca `eklenti.html` ve sitedeki kurulum linklerini mağaza linkine çevir.
 

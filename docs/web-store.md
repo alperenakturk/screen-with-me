@@ -22,7 +22,13 @@ dili); açıklamanın sonunda kısa Türkçe paragraf var.
 ```
 Watch videos together with friends, perfectly in sync.
 
-Open a page with a video, click ScreenWithMe, create a room and send the link. When anyone plays, pauses, seeks or changes the speed, it happens for everyone. Whoever falls behind catches up silently.
+Create a room on the ScreenWithMe website and send the link. Paste the link of the page with the video into the room: everyone goes to that page, and as soon as the video starts, the extension opens your room around it (chat, reactions, controls). When anyone plays, pauses, seeks or changes the speed, it happens for everyone. Whoever falls behind catches up silently.
+
+HOW IT WORKS
+1. Create a room on the website (no account) and share the invite link.
+2. Paste the page with the video; friends get a "Go to the film" button.
+3. Press play on that page: the room view opens by itself, with the video in the middle.
+The extension has no settings to learn: its icon only shows whether the tab is in a room, with one button back to the room.
 
 WHY SCREENWITHME
 • Works with standard HTML5 video players, even inside iframes and players that load late
@@ -32,7 +38,8 @@ WHY SCREENWITHME
 • Pin important moments with an optional note and jump back to talk about them later
 • Add your own custom emojis (images or GIFs) for the whole room
 • Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
-• Room view: the page turns into a watch room with the video in the middle, chat on the side and reactions under the video; fullscreen keeps them
+• Room view: the video's page turns into your room, with the video in the middle, chat, queue and people on the side and reactions under the video; fullscreen keeps them
+• Twelve themes, drawn avatars and your own custom emojis
 • Speed stays shared: other speed extensions can't knock the room out of sync
 • Room host can remove people and lift bans; pick a name and avatar, no account
 • YouTube and direct video links play right on the website, no extension needed
@@ -51,7 +58,7 @@ NOTES
 
 —
 
-Türkçe: Arkadaşlarınla videoyu aynı saniyede izle. Videonun olduğu sayfada odayı kur, linki gönder; biri durdurunca, sarınca ya da hızı değiştirince herkeste olur. Hesap yok, reklam yok, takip yok; eklenti sadece odaya katıldığın sekmede çalışır.
+Türkçe: Arkadaşlarınla videoyu aynı saniyede izle. Sitede oda kur, linki gönder, videonun olduğu sayfanın linkini odaya yapıştır: herkes o sayfaya gider, video başlayınca oda (sohbet, emojiler, kontroller) videonun etrafında açılır. Biri durdurunca, sarınca ya da hızı değiştirince herkeste olur. Hesap yok, reklam yok, takip yok; eklenti sadece odaya katıldığın sekmede çalışır.
 ```
 
 **Kategori:** Entertainment. Listede yoksa: Social & Communication.
@@ -61,11 +68,15 @@ Türkçe: Arkadaşlarınla videoyu aynı saniyede izle. Videonun olduğu sayfada
 | Alan | Dosya | Boyut |
 |---|---|---|
 | Mağaza simgesi | `store/icon128.png` | 128×128 |
-| Ekran görüntüleri | `store/screenshot-1.png` … `-4.png` | 1280×800 |
+| Ekran görüntüleri | `store/screenshot-1.png` … `-5.png` | 1280×800 |
 | Küçük tanıtım kutusu | `store/promo-small.png` | 440×280 |
 
-Ekran görüntüsü sırası: 1) senkron + emojiler + mesajlar, 2) tek tıkla oda (popup),
-3) herkes hazır + ortak hız, 4) sitedeki tema ve maskot.
+Ekran görüntüsü sırası: 1) film sayfasında oda görünümü (senkron + emojiler + sohbet),
+2) akış: odaya sayfa linki → "Filme git" → film sayfasında oynat'a bas (üstte ince şerit),
+3) herkes hazır + ortak hız (kişiler sekmesi), 4) özelleştirme (tema penceresi, avatarlar),
+5) gizlilik + popup (sadece bilgi ve "Odaya dön" düğmesi).
+Kaynak: `store/src/shots.html` (pencere, popup, başlıklar) + `store/src/room.html` (oda taklidi;
+sitenin gerçek `styles.css`'ini kullanır, site arayüzü değişince işaretlemeyi `room.ts` ile eşitle).
 
 **Ek alanlar:**
 - Resmî URL: boş bırak (alan adı doğrulaması ister).
