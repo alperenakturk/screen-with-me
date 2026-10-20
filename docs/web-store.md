@@ -32,7 +32,7 @@ WHY SCREENWITHME
 • Pin important moments with an optional note and jump back to talk about them later
 • Add your own custom emojis (images or GIFs) for the whole room
 • Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
-• Move and resize the control bar over the video; make it taller to see the chat history
+• Room view: the page turns into a watch room with the video in the middle, chat on the side and reactions under the video; fullscreen keeps them
 • Speed stays shared: other speed extensions can't knock the room out of sync
 • Room host can remove people and lift bans; pick a name and avatar, no account
 • YouTube and direct video links play right on the website, no extension needed
@@ -127,7 +127,7 @@ No login needed. Allow autoplay or click "Start watching" if the page asks.
 2. Click the ScreenWithMe toolbar icon, enter a nickname, pick an avatar, then "Create a room on this page", then "Copy".
 3. Paste the invite link into a second window (the same profile works). It opens the room page on our website; press "Go to the page and watch together" and the tab moves to the same video and joins the room.
 4. Play, pause or seek in one window: the other follows within about 1 second.
-5. Move the mouse over the video: a "ScreenWithMe" button appears at the video's top-right corner. It opens reactions (▲▼ for more), quick chat and a speed menu (speed is shared with the room).
+5. Once the video is found, the page turns into a room view: chat on the right, reactions (▲▼ for more), pin, speed and fullscreen under the video (speed is shared with the room).
 Tabs that have not joined a room are not affected.
 ```
 

@@ -34,10 +34,8 @@ export type FrameMessage =
   | { type: 'key'; key: string }
   | { type: 'fullscreen' }
   | { type: 'send'; message: ClientMessage }
-  /** Çubuktaki 🏠: sekme sitedeki odaya dönsün. */
+  /** Üst şeritteki 🏠: sekme sitedeki odaya dönsün. */
   | { type: 'go-room' }
-  /** Oda görünümü aç/kapa (tercih kaydedilir, sekmedeki tüm çerçevelere duyurulur). */
-  | { type: 'roomview'; on: boolean }
   | { type: 'join'; roomId: string };
 
 /** Sayfa üstü çubukta gösterilen oda bilgisi. */
@@ -59,10 +57,12 @@ export interface RoomInfo {
 
 export interface ChatLine {
   id: string;
-  /** Avatarıyla birlikte, örn. "🦊 Ali". */
   name: string;
+  avatar?: Avatar;
   text: string;
   mine: boolean;
+  /** Sunucu saati (ms). */
+  at: number;
 }
 
 /** Arka plan → çerçeve */
@@ -70,10 +70,11 @@ export type BackgroundMessage =
   | { type: 'activate'; state: PlaybackState; offset: number; synced: boolean }
   | { type: 'deactivate' }
   /**
-   * Oda görünümü: film kendi sekmesinde, sayfanın üstü bizim oda kabuğuyla kaplanır. `active`: videonun
-   * olduğu çerçeve mi (o boşluğa yerleşir ve kabuğu çizer); değilse sadece içindeki oynatıcı çerçevesini büyütür.
+   * Oda görünümü: film kendi sekmesinde, sayfa sitedeki odaya dönüşür. `active`: videonun olduğu çerçeve mi
+   * (o boşluğa yerleşir ve odayı çizer); değilse sadece içindeki oynatıcı çerçevesini büyütür.
+   * `hint`: odanın sayfasındayız ama video henüz bulunmadı → üst çerçeve "Filmi başlat" kartını gösterir.
    */
-  | { type: 'roomview'; on: boolean; active: boolean }
+  | { type: 'roomview'; on: boolean; active: boolean; hint: boolean }
   /** Bu sekmede oda yok: çerçeve uykuya dönsün. */
   | { type: 'idle' }
   | { type: 'state'; state: PlaybackState }
@@ -94,12 +95,12 @@ export type BackgroundMessage =
   /** Açık videonun pinleri (`removable`: kendi pinim ya da yöneticiyim). */
   | { type: 'pins'; pins: Array<Pin & { removable: boolean }> }
   | { type: 'chat'; line: ChatLine }
+  /** Etkinleşince odanın önceki mesajları (sohbet panelinde geçmiş). */
+  | { type: 'chat-history'; lines: ChatLine[] }
   /** "Ayşe katıldı / ayrıldı" bildirimi (isim avatarıyla birlikte); "slow": çok hızlı mesaj atıldı. */
   | { type: 'notice'; kind: 'joined' | 'left' | 'slow' | 'locked'; name: string }
   /** Odaya yeni girildi: "İyi seyirler" açılış animasyonu. */
   | { type: 'intro' }
-  /** Film sayfasında ilk kez: nasıl kullanılır rehberi (`afterIntro`: açılıştan sonra göster). */
-  | { type: 'guide'; afterIntro: boolean }
   /** Oda bağlantısı kapandı (çıkarıldın / oda dolu / eklenti eski): kısa bir açıklama göster. */
   | { type: 'ended'; reason: 'kicked' | 'version' | 'room_full' }
   /** "Herkes hazır": oda bunları bekliyor (boş: bekleme yok). `me`: beklenen bensem. */

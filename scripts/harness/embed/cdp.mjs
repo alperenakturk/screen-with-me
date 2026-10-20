@@ -13,6 +13,8 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
     CHROME,
     [
       ...(headless ? ['--headless=new'] : []),
+      // Linux'ta root olarak (ör. bulut konteyneri) Chrome korumalı alan olmadan açılmak zorunda.
+      ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
       '--remote-debugging-pipe',
       '--enable-unsafe-extension-debugging',
       `--user-data-dir=${mkdtempSync(join(tmpdir(), 'swm-embed-'))}`,
