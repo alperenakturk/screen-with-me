@@ -1,4 +1,4 @@
-// Oturum özeti: sayaçlar, özetin herkese gitmesi, sıfırlanma, önceki özetler; yönetici emojileri kapatınca tepki gitmez.
+// Bugünün özeti: sayaçlar, sadece isteyene gitmesi, sıfırlanmaması, kaydetme; yönetici emojileri kapatınca tepki gitmez.
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const room = 'recap' + Math.random().toString(36).slice(2, 8);
 function client(hello) {
@@ -34,20 +34,24 @@ host.send({ t: 'react', emoji: '😢' });
 await sleep(400);
 
 guest.send({ t: 'recap' });
-const r1 = await host.wait((m) => m.t === 'recap', 'recap to host');
-const r2 = await guest.wait((m) => m.t === 'recap', 'recap to guest');
-ok(r1.recap.id === r2.recap.id && r1.by.name === 'Ayse', 'Özet odadaki herkese gitti (açan: Ayse)');
+const r1 = await guest.wait((m) => m.t === 'recap', 'recap to guest');
+await sleep(800);
+ok(!host.inbox.some((m) => m.t === 'recap'), 'Özet sadece isteyene gitti');
 const ayse = r1.recap.people.find((p) => p.name === 'Ayse');
 const ali = r1.recap.people.find((p) => p.name === 'Ali');
 ok(ayse?.chat === 3 && ali?.reactions === 2 && ali?.sad === 1, 'Mesaj ve tepkiler kişi kişi sayıldı');
 ok(r1.recap.videos === 1 && r1.recap.peak === 2, 'Video ve en kalabalık an sayıldı');
 ok(!JSON.stringify(r1).includes('recapAli1234'), 'Özette tarayıcı kimlikleri yok');
 
-guest.send({ t: 'recap' });
-ok((await guest.wait((m) => m.t === 'error', 'empty')).code === 'recap_empty', 'Hemen tekrar basınca: sayaç sıfırlanmış (boş)');
-host.send({ t: 'recaps' });
-const list = await host.wait((m) => m.t === 'recaps', 'recaps');
-ok(list.recaps.length === 1 && list.recaps[0].id === r1.recap.id, 'Önceki özetler listesi');
+host.send({ t: 'recap' });
+const again = await host.wait((m) => m.t === 'recap', 'recap again');
+ok(again.recap.chat === 3 && again.recap.from === r1.recap.from, 'Tekrar bakınca sayaç sıfırlanmamış (aynı oturum)');
+guest.send({ t: 'recap-save' });
+const list = await host.wait((m) => m.t === 'recaps' && m.recaps.length === 1, 'recaps');
+ok(list.recaps[0].from === r1.recap.from, 'Kaydedilen özet herkesin listesinde');
+guest.send({ t: 'recap-save' });
+const again2 = await host.wait((m) => m.t === 'recaps', 'recaps again');
+ok(again2.recaps.length === 1, 'Aynı oturumu tekrar kaydetmek çoğaltmıyor');
 
 // Yönetici emojileri kapatır
 host.send({ t: 'settings', noReactions: true });

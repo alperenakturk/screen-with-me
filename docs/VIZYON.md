@@ -51,7 +51,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.53)
+## Şu an neler var? (0.9.54)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
@@ -115,6 +115,9 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   altında emojiler, pin, eşitle, hız, tam ekran); küçük çubuk ve rehber kartı kaldırıldı; video bulunmadan "Filmi
   başlat" kartı (oynatıcıyı okla gösterir); tam ekranda sitedeki gibi kontroller ve sürüklenen mesaj tutamağı; iç
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
+- **v0.9.54:** Film sayfasında pencereler videonun önünde, film sitesinin ⛶ odanın tam ekranını açar, sıra ve link
+  kutusu yok, odaya dönüş onaylı; 👤 Profil sekmesi; "bugünün özeti" (oturum başından şimdiye, istenince kaydet);
+  "Şimdi aç" film linkinde önce sorar.
 - **v0.9.53:** Film sayfasının üstüne sitenin kendisi açılıyor (kabuk); "odanın içinde film" (iframe) ve
   eklentinin kendi çubuğu/popup ayarları kalktı; site ile eklenti ayarları ortak.
 - **v0.9.51:** Uzay ve Cyberpunk temaları ile onlara ait 4 avatar (astronot, uzaylı, siber gözlüklü,

@@ -87,6 +87,9 @@ check(!!(await until(() => bora.members.length === 2)), 'Ayşe ve Bora odada');
 
 // 1) Ayşe bir film sayfası açar → sekme oraya gider, eklenti katmanı açar.
 await a.evaluate(`(() => { const i = document.getElementById('media-input'); i.value = '${FILM}/film'; i.form.querySelector('button[value=load]').click(); return 1; })()`);
+// "Şimdi aç" önce kısaca anlatıp sorar.
+check(!!(await until(() => a.evaluate(`!!document.querySelector('.confirm-dialog')`))), '"Şimdi aç" film linkinde önce soruyor');
+await a.evaluate(`document.querySelector('.confirm-dialog .btn.primary').click(); 1`);
 const onFilm = await until(async () => String(await a.evaluate('location.href')).startsWith(`${FILM}/film`));
 check(!!onFilm, 'kendi açtığı film sayfasına sekme kendiliğinden gitti');
 const shellUp = await until(() => a.evaluate(`!!document.querySelector('iframe[src^="chrome-extension://"]')`));
@@ -100,6 +103,37 @@ check(!!holed, 'video bulundu: katmanda videonun yeri delik');
 check(await a.evaluate(`!!document.querySelector('[data-swm-focus]') && document.documentElement.classList.contains('swm-focus')`), 'film videosu deliğe yerleşti');
 await a.sleep(800);
 await a.shot('1-oda-gorunumu');
+
+// 2b) Katmanda sıra ve link kutusu yok, profil sekmesi var; açılan pencere videonun önünde.
+const SHELL_CLIP = `getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath`;
+check(
+  await a.evalFrame(
+    'shell=1',
+    `getComputedStyle(document.getElementById('media-form')).display === 'none' && getComputedStyle(document.querySelector('.tab[data-tab=queue]')).display === 'none' && !!document.querySelector('.tab[data-tab=profile]')`,
+  ),
+  'katmanda sıra ve link kutusu gizli, 👤 profil sekmesi var',
+);
+const clipBefore = await a.evaluate(SHELL_CLIP);
+await a.evalFrame('shell=1', `(async () => { const m = await import('/src/themes.ts'); m.openThemeDialog(); return 1; })()`);
+// Pencere açıkken delik tamamen kapanır: yolda ekran + delik + deliği kapatan adacık (3 parça).
+const covered = await until(async () => {
+  const clip = await a.evaluate(SHELL_CLIP);
+  return clip !== clipBefore && (clip.match(/M/g) || []).length === 3 ? clip : null;
+});
+check(!!covered, 'tema penceresi açıkken delik kapandı (pencere videonun önünde)');
+await a.shot('1b-pencere-onde');
+await a.evalFrame('shell=1', `document.querySelector('.dialog-backdrop .btn.primary')?.click(); 1`);
+check(!!(await until(async () => (await a.evaluate(SHELL_CLIP)) === clipBefore)), 'pencere kapanınca delik geri açıldı');
+
+// 2c) Film sitesinin kendi ⛶ düğmesi → odanın tam ekranı (sitenin kontrolleri görünür).
+const fsButton = await a.center('#fs');
+if (fsButton) await a.click(fsButton.x, fsButton.y);
+const fake = await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`));
+check(!!fake, 'film sitesinin ⛶ düğmesi → odanın tam ekranı');
+await a.sleep(800);
+await a.shot('1c-tam-ekran');
+await a.evalFrame('shell=1', `document.getElementById('fs-exit').click(); 1`);
+await a.sleep(800);
 
 // 3) Senkron: Bora oynatır / durdurur → film videosu uyar.
 bora.send({ t: 'play', position: 30, at: Date.now() });
@@ -159,6 +193,9 @@ await a.shot('3-ic-ice');
 
 // 10) Odaya dön: sekme sitedeki odaya döner, katman kalkar, ayar (tema) ana sitede de geçerli.
 await a.evalFrame('shell=1', `document.querySelector('.shell-home').click()`);
+await a.sleep(400);
+check(await a.evalFrame('shell=1', `!!document.querySelector('.confirm-dialog')`), 'Odaya dön önce soruyor');
+await a.evalFrame('shell=1', `document.querySelector('.confirm-dialog .btn.primary').click(); 1`);
 check(!!(await until(async () => String(await a.evaluate('location.href')).startsWith(`${SITE}/r/${room}`))), 'Odaya dön → sekme sitedeki odada');
 await a.sleep(2500);
 check((await a.evaluate(`document.documentElement.dataset.theme`)) === 'okyanus', 'katmanda seçilen tema ana sitede de geçerli');

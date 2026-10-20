@@ -30,6 +30,8 @@ export interface StatsData {
   lastItem: string | null;
   peak: number;
   people: Record<string, PersonStats>;
+  /** Son hareket (izleme, sohbet, tepki…); bundan uzun ara verilince yeni oturum başlar. */
+  last?: number;
 }
 
 export interface RecapPerson {
@@ -76,10 +78,14 @@ export function emptyStats(now: number): StatsData {
 
 type Who = { name: string; avatar?: Avatar };
 
+/** İzlemeye bu kadar ara verilince yeni oturum başlar (kaydedilmemiş özet silinir). */
+export const SESSION_GAP_MS = 4 * 3600_000;
+
 export class StatsTracker {
   data: StatsData;
 
-  constructor(data?: StatsData | null, now = Date.now()) {
+  /** `clock`: şimdiki zaman (testlerde sahte saat verilir). */
+  constructor(data?: StatsData | null, now = Date.now(), private readonly clock: () => number = Date.now) {
     this.data = data && typeof data.since === 'number' && data.people ? data : emptyStats(now);
   }
 
@@ -88,6 +94,7 @@ export class StatsTracker {
    * `present`: odada biri var mı (yoksa sayım durur, dönünce kaldığı yerden başlar).
    */
   tick(now: number, playing: boolean, rate: number, present: boolean): void {
+    if (playing && present) this.activity(now);
     const d = this.data;
     if (d.tick !== null && playing && now > d.tick) {
       const ms = Math.min(now - d.tick, 6 * 3600_000);
@@ -97,7 +104,18 @@ export class StatsTracker {
     d.tick = present ? now : null;
   }
 
+  /**
+   * Bir hareket oldu. Son hareketten bu yana SESSION_GAP_MS geçtiyse önceki oturum kapanır (kaydedilmediyse
+   * silinir) ve yeni oturum başlar: "bugünün özeti" gece yarısını geçen izlemeyi de aynı oturumda sayar.
+   */
+  activity(now = this.clock()): void {
+    const last = this.data.last ?? this.data.since;
+    if (now - last > SESSION_GAP_MS) this.reset(now, true);
+    this.data.last = now;
+  }
+
   private person(key: string, who: Who): PersonStats {
+    this.activity();
     let p = this.data.people[key];
     if (!p) {
       // Çok kalabalık odada sayaçlar şişmesin.
@@ -134,6 +152,7 @@ export class StatsTracker {
 
   /** Yeni bir video açıldı (aynı öğe tekrar sayılmaz). */
   video(itemId: string, title: string | null): void {
+    this.activity();
     if (this.data.lastItem === itemId) return;
     this.data.lastItem = itemId;
     this.data.videos++;
@@ -225,7 +244,7 @@ const top = (people: RecapPerson[], key: keyof Pick<RecapPerson, 'chat' | 'react
   [...people].sort((a, b) => b[key] - a[key])[0];
 
 /** Bu özete uyan ilginç kartlardan en fazla `count` tanesini rastgele seçer. */
-export function chooseFacts(recap: Recap, random: () => number = Math.random, count = 4): Fact[] {
+export function chooseFacts(recap: Recap, random: () => number = Math.random, count = 6): Fact[] {
   const many = recap.people.length >= 2;
   const options: Fact[] = [];
   const add = (ok: boolean, fact: () => Fact) => ok && options.push(fact());
@@ -257,7 +276,7 @@ export function chooseFacts(recap: Recap, random: () => number = Math.random, co
   return [{ kind: 'time' }, ...options.slice(0, count), { kind: 'summary' }];
 }
 
-/** Kayıtlı olmayan odada kaç özet tutulur / kayıtlı odada kaç tane ve ne kadar süre. */
-export const RECAPS_KEEP = 3;
-export const RECAPS_KEEP_SAVED = 10;
+/** Kullanıcının kaydettiği özetlerden kaç tane tutulur (kayıtlı odada daha çok) ve ne kadar süre. */
+export const RECAPS_KEEP = 5;
+export const RECAPS_KEEP_SAVED = 20;
 export const RECAP_MAX_AGE_MS = 90 * 86_400_000;

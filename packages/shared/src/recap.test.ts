@@ -47,9 +47,11 @@ describe('StatsTracker', () => {
 
 describe('chooseFacts', () => {
   it('ilk kart süre, son kart özet; aradakiler uygun olanlardan', () => {
-    const s = new StatsTracker(null, 0);
+    let now = 0;
+    const s = new StatsTracker(null, 0, () => now);
     s.tick(0, false, 1, true);
     s.tick(600_000, true, 1.25, true);
+    now = 600_000;
     for (let i = 0; i < 4; i++) s.chat('c:aaa', ali);
     s.chat('c:bbb', ayse);
     const facts = chooseFacts(s.recap(600_000, 'x'), () => 0.5, 10);
@@ -59,5 +61,20 @@ describe('chooseFacts', () => {
     expect(kinds).toContain('speed');
     expect(kinds).toContain('talker');
     expect(kinds).not.toContain('sad');
+  });
+});
+
+describe('oturum', () => {
+  it('uzun aradan sonra yeni oturum başlar, kısa arada aynı oturum sürer', () => {
+    let now = 1000;
+    const s = new StatsTracker(null, 0, () => now);
+    s.activity();
+    s.chat('c:aaa', ali);
+    now = 3 * 3600_000; // 3 saat sonra: aynı oturum
+    s.chat('c:aaa', ali);
+    expect(s.recap(3 * 3600_000, 'x').chat).toBe(2);
+    s.activity(8 * 3600_000); // 5 saat ara: yeni oturum
+    expect(s.data.since).toBe(8 * 3600_000);
+    expect(s.isEmpty()).toBe(true);
   });
 });

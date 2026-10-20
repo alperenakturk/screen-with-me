@@ -75,6 +75,10 @@ function summaryLines(r: Recap): string[] {
   ];
 }
 
+function timeText(at: number): string {
+  return new Date(at).toLocaleTimeString(lang() === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
 function dateText(at: number): string {
   return new Date(at).toLocaleString(lang() === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
@@ -83,9 +87,15 @@ function dateText(at: number): string {
  * Oturum özeti: Spotify "blend"i gibi art arda kartlar. İlk kart toplam süre, sonra her seferinde
  * rastgele seçilen birkaç ilginç şey, en sonda özet + görsel indirme. Sağa dokun: ileri, sola: geri.
  */
-export function showRecap(recap: Recap, byName: string): void {
+export interface RecapOptions {
+  /** Verilirse son kartta "Kaydet" (bugünün özeti yarına kalsın). Kaydedilmiş özette yok. */
+  onSave?: () => void;
+}
+
+export function showRecap(recap: Recap, options: RecapOptions = {}): void {
   document.querySelector('.recap-backdrop')?.remove();
-  const facts = chooseFacts(recap);
+  // Ne kadar çok şey olduysa o kadar çok kart (en az birkaç, en fazla 8).
+  const facts = chooseFacts(recap, Math.random, 8);
   let index = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -98,7 +108,7 @@ export function showRecap(recap: Recap, byName: string): void {
     'div',
     { class: 'recap-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('recap.title') },
     bars,
-    el('div', { class: 'recap-head' }, logo, el('div', {}, el('b', {}, t('recap.title')), el('span', {}, `${byName} · ${dateText(recap.to)}`)), x),
+    el('div', { class: 'recap-head' }, logo, el('div', {}, el('b', {}, t('recap.title')), el('span', {}, `${dateText(recap.from)} – ${timeText(recap.to)}`)), x),
     body,
   );
   const backdrop = el('div', { class: 'recap-backdrop' }, card);
@@ -139,10 +149,21 @@ export function showRecap(recap: Recap, byName: string): void {
         event.stopPropagation();
         close();
       });
+      const actions: HTMLElement[] = [download, done];
+      if (options.onSave) {
+        const save = el('button', { type: 'button', class: 'btn' }, t('recap.save'));
+        save.addEventListener('click', (event) => {
+          event.stopPropagation();
+          options.onSave?.();
+          save.textContent = t('recap.saved');
+          save.setAttribute('disabled', '');
+        });
+        actions.unshift(save);
+      }
       body.replaceChildren(
         el('h2', { class: 'recap-title' }, text.title),
         el('div', { class: 'recap-grid' }, ...summaryLines(recap).map((line) => el('span', {}, line))),
-        el('div', { class: 'recap-actions' }, download, done),
+        el('div', { class: 'recap-actions' }, ...actions),
       );
       return;
     }
@@ -169,31 +190,12 @@ export function showRecap(recap: Recap, byName: string): void {
   draw();
 }
 
-/** Başkası özeti açtı: sağ altta küçük kart, "Gör" ile aynı özet açılır. */
-export function showRecapInvite(byName: string, onOpen: () => void): void {
-  document.querySelector('.recap-invite')?.remove();
-  const open = el('button', { type: 'button', class: 'btn small-btn primary' }, t('recap.see'));
-  const x = el('button', { type: 'button', class: 'icon-btn', 'aria-label': t('close') }, '✕');
-  const card = el('div', { class: 'recap-invite card', role: 'status' }, el('span', {}, t('recap.invite', { name: byName })), open, x);
-  const timer = setTimeout(() => card.remove(), 20_000);
-  open.addEventListener('click', () => {
-    clearTimeout(timer);
-    card.remove();
-    onOpen();
-  });
-  x.addEventListener('click', () => {
-    clearTimeout(timer);
-    card.remove();
-  });
-  document.body.append(card);
-}
-
-/** Ayarlardaki "önceki özetler" listesi (yenisi üstte). */
+/** Profildeki "kaydedilen özetler" listesi (yenisi üstte). */
 export function renderRecapHistory(container: HTMLElement, recaps: Recap[]): void {
   container.replaceChildren(
     ...[...recaps].reverse().map((recap) => {
       const button = el('button', { type: 'button', class: 'recap-past' }, `📊 ${dateText(recap.to)}`, el('span', { class: 'muted small' }, ` · ${duration(recap.watchSec)}`));
-      button.addEventListener('click', () => showRecap(recap, t('recap.past')));
+      button.addEventListener('click', () => showRecap(recap));
       return button;
     }),
   );
