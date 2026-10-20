@@ -36,6 +36,8 @@ export type FrameMessage =
   | { type: 'send'; message: ClientMessage }
   /** Çubuktaki 🏠: sekme sitedeki odaya dönsün. */
   | { type: 'go-room' }
+  /** Oda görünümü aç/kapa (tercih kaydedilir, sekmedeki tüm çerçevelere duyurulur). */
+  | { type: 'roomview'; on: boolean }
   | { type: 'join'; roomId: string };
 
 /** Sayfa üstü çubukta gösterilen oda bilgisi. */
@@ -51,6 +53,8 @@ export interface RoomInfo {
   autoNext: boolean;
   /** Yönetici emojileri kapattı. */
   noReactions: boolean;
+  /** Kaydedilmiş odanın adı (varsa). */
+  roomName?: string;
 }
 
 export interface ChatLine {
@@ -65,6 +69,11 @@ export interface ChatLine {
 export type BackgroundMessage =
   | { type: 'activate'; state: PlaybackState; offset: number; synced: boolean }
   | { type: 'deactivate' }
+  /**
+   * Oda görünümü: film kendi sekmesinde, sayfanın üstü bizim oda kabuğuyla kaplanır. `active`: videonun
+   * olduğu çerçeve mi (o boşluğa yerleşir ve kabuğu çizer); değilse sadece içindeki oynatıcı çerçevesini büyütür.
+   */
+  | { type: 'roomview'; on: boolean; active: boolean }
   /** Bu sekmede oda yok: çerçeve uykuya dönsün. */
   | { type: 'idle' }
   | { type: 'state'; state: PlaybackState }

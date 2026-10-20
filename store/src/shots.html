@@ -56,7 +56,7 @@
       .toast b { color: #a48dff; }
       .toast.me b { color: #3ccf8e; }
       .toast.notice { font-size: 12px; color: #c9cbd3; font-style: italic; padding: 3px 10px; }
-      .bar { position: absolute; top: 12px; right: 12px; width: 520px; display: flex; flex-direction: column; gap: 8px; padding: 8px;
+      .bar { position: absolute; top: 12px; right: 12px; width: 556px; display: flex; flex-direction: column; gap: 8px; padding: 8px;
         border-radius: 12px; background: rgb(15 16 20 / .88); border: 1px solid rgb(255 255 255 / .12); box-shadow: 0 6px 24px rgb(0 0 0 / .45); }
       .fab { position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 6px; background: rgb(15 16 20 / .85);
         border: 1px solid rgb(255 255 255 / .18); color: #fff; border-radius: 999px; padding: 5px 11px 5px 5px; font-weight: 600; }
@@ -152,7 +152,7 @@
       const bar = (speed = '1x') => `
         <div class="bar">
           <div class="row">${REACTIONS.map((e) => `<span class="reaction">${e}</span>`).join('')}
-            <span class="pager"><i>▲</i><i>▼</i></span><span class="icon">🖼️</span><span class="spacer"></span><span class="dot"></span><span class="icon">👥 3</span><span class="icon">🔗</span><span class="icon">📌</span><span class="icon">🏠</span><span class="icon">✕</span></div>
+            <span class="pager"><i>▲</i><i>▼</i></span><span class="icon">🖼️</span><span class="spacer"></span><span class="dot"></span><span class="icon">👥 3</span><span class="icon">🔗</span><span class="icon">📌</span><span class="icon">🏠</span><span class="icon">⤢</span><span class="icon">✕</span></div>
           <div class="row"><span class="field ph">Quick message…</span><span class="icon send">➤</span><span class="icon">−</span><span class="select">${speed} ▾</span><span class="icon">+</span></div>
         </div>`;
 

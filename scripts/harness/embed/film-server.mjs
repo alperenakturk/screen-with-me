@@ -6,6 +6,7 @@
 //   /film-nested  izin verir, video başka kökenden bir oynatıcı iframe'inde
 //   /deny         X-Frame-Options: DENY
 //   /csp          Content-Security-Policy: frame-ancestors 'none'
+//   /deny-nested  X-Frame-Options: DENY + video başka kökenden oynatıcı iframe'inde (oda görünümü testi)
 //   /sneaky       sadece iframe isteğinde DENY (önceden kontrol göremez; el sıkışma yakalar)
 //
 // Video: Big Buck Bunny (CC BY 3.0, Blender Foundation), Wikimedia Commons.
@@ -40,7 +41,8 @@ document.getElementById('pp').onclick = () => (v.paused ? v.play() : v.pause());
 </script>`;
 
 const film = (title) => page(title, videoTag);
-const nested = page('İç içe oynatıcı', `<div class="player"><iframe src="${PLAYER_ORIGIN}/player" allow="autoplay; fullscreen" allowfullscreen></iframe></div>`);
+const nestedPage = (title) => page(title, `<div class="player"><iframe src="${PLAYER_ORIGIN}/player" allow="autoplay; fullscreen" allowfullscreen></iframe></div>`);
+const nested = nestedPage('İç içe oynatıcı');
 const player = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#000}
 .player{position:relative;height:100%}.player video{width:100%;height:100%;display:block}.fs{position:absolute;right:8px;top:8px;z-index:2}.pp{position:absolute;left:8px;top:8px;z-index:2}</style></head>
 <body>${videoTag}</body></html>`;
@@ -56,6 +58,7 @@ createServer((req, res) => {
   if (path === '/film' || path === '/') return send(res, 200, film('Film sayfası (izin veriyor)'));
   if (path === '/film-nested') return send(res, 200, nested);
   if (path === '/deny') return send(res, 200, film('Yasaklı sayfa (X-Frame-Options)'), { 'x-frame-options': 'DENY' });
+  if (path === '/deny-nested') return send(res, 200, nestedPage('Yasaklı sayfa, iç içe oynatıcı'), { 'x-frame-options': 'DENY' });
   if (path === '/csp') return send(res, 200, film('Yasaklı sayfa (CSP)'), { 'content-security-policy': "frame-ancestors 'none'" });
   if (path === '/sneaky') {
     const framed = req.headers['sec-fetch-dest'] === 'iframe';

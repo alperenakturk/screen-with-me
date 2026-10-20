@@ -120,6 +120,10 @@ interface Session {
   autoNext: boolean;
   /** Oda ayarı: emojiler kapalı. */
   noReactions: boolean;
+  /** Kaydedilmiş odanın adı. */
+  roomName: string | null;
+  /** Çerçevelere en son duyurulan oda görünümü durumu (aynısını tekrar yollamamak için). */
+  roomViewSent: string | null;
   /** Odanın özel emojileri (kimlik → data: adresi); çerçeve etkinleşince hepsi yollanır. */
   stickers: Map<string, string>;
   /** Sekmenin şu anki adresi (odanın sayfasında mıyız?). */
@@ -256,6 +260,8 @@ async function createSession(tabId: number, roomId: string, options: StartOption
     pins: null,
     autoNext: true,
     noReactions: false,
+    roomName: null,
+    roomViewSent: null,
     stickers: new Map(),
     tabUrl: tab?.url ?? null,
   };
@@ -299,6 +305,7 @@ function onServer(session: Session, message: ServerMessage): void {
       session.pins = message.pins ?? null;
       session.autoNext = message.settings?.autoNext !== false;
       session.noReactions = message.settings?.noReactions === true;
+      session.roomName = message.settings?.saved && message.settings.name ? message.settings.name : null;
       // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
       session.stickers.clear();
       toActive(session, { type: 'stickers-clear' });
@@ -376,6 +383,7 @@ function onServer(session: Session, message: ServerMessage): void {
     case 'settings':
       session.autoNext = message.settings.autoNext !== false;
       session.noReactions = message.settings.noReactions === true;
+      session.roomName = message.settings.saved && message.settings.name ? message.settings.name : null;
       pushRoom(session);
       break;
     case 'sticker':
@@ -485,6 +493,27 @@ function chatLine(session: Session, message: ChatMessage): ChatLine {
   return { id: message.id, name: withAvatar(message.by), text: message.text, mine: message.by.id === session.myId };
 }
 
+/**
+ * Oda görünümü tercihi (varsayılan açık): film kendi sekmesinde oynarken sayfanın üstü bizim
+ * oda kabuğuyla kaplanır. Çerçeve yok, sitenin hiçbir başlığına dokunulmaz; her sitede çalışır.
+ */
+let roomViewPref = true;
+void chrome.storage.local.get('roomView').then(({ roomView }) => {
+  roomViewPref = roomView !== false;
+  for (const session of sessions.values()) pushRoomView(session);
+});
+
+/** Oda görünümünü sekmedeki tüm çerçevelere duyurur (etkin çerçeve kabuğu çizer, üsttekiler büyütür). */
+function pushRoomView(session: Session): void {
+  const on = roomViewPref && session.activated && session.activeFrame !== null;
+  const key = `${on}:${session.activeFrame}`;
+  if (session.roomViewSent === key) return;
+  session.roomViewSent = key;
+  for (const [frameId, frame] of frames.get(session.tabId) ?? []) {
+    if (!frame.embedDepth) post(frame.port, { type: 'roomview', on, active: frameId === session.activeFrame });
+  }
+}
+
 /** Sayfa üstü panel için oda bilgisini etkin çerçeveye yollar. */
 function pushRoom(session: Session): void {
   if (!session.activated) return;
@@ -497,6 +526,7 @@ function pushRoom(session: Session): void {
     queueLength: session.queue.length,
     autoNext: session.autoNext,
     noReactions: session.noReactions,
+    ...(session.roomName ? { roomName: session.roomName } : {}),
   };
   toActive(session, { type: 'room', room });
   pushPins(session);
@@ -546,6 +576,7 @@ function pushState(session: Session): void {
     // Odanın sayfasında değiliz: senkronu bu sayfada durdur.
     if (session.activated) post(frame.port, { type: 'deactivate' });
     session.activated = false;
+    pushRoomView(session);
     return;
   }
   if (!session.activated) {
@@ -553,6 +584,7 @@ function pushState(session: Session): void {
     post(frame.port, { type: 'activate', state: session.state, offset: clock.offset, synced: clock.synced });
     session.activated = true;
     pushRoom(session);
+    pushRoomView(session);
     for (const [id, data] of session.stickers) post(frame.port, { type: 'sticker', id, data });
     const withIntro = session.intro;
     if (session.intro) {
@@ -587,6 +619,7 @@ function chooseActive(session: Session): void {
   }
   session.activeFrame = best;
   session.activated = false;
+  pushRoomView(session);
   pushState(session);
 }
 
@@ -598,6 +631,12 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     case 'join':
       await startSession(tabId, message.roomId);
       break;
+    case 'roomview': {
+      roomViewPref = message.on;
+      void chrome.storage.local.set({ roomView: message.on });
+      for (const session of sessions.values()) pushRoomView(session);
+      break;
+    }
     case 'candidate': {
       frame.score = message.score;
       frame.size = message.size;
@@ -610,6 +649,8 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
         chooseEmbedActive(embed);
       } else if (session && !frame.embedDepth) {
         chooseActive(session);
+        // Sonradan yüklenen çerçeve (oynatıcı iframe'i) de oda görünümünü bilsin.
+        post(port, { type: 'roomview', on: roomViewPref && session.activated && session.activeFrame !== null, active: frameId === session.activeFrame });
       } else {
         // Bu sekmede (bu çerçeve için) oda yoksa çerçeve boşuna video aramasın.
         post(port, { type: 'idle' });

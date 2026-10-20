@@ -225,6 +225,14 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   (overlay `setEmbedded`, sadece "İzlemeye başla"). Sitenin YouTube iframe'i (sitenin doğrudan çocuğu,
   youtube alan adı) hâlâ yok sayılır. "Ayrı sekmede aç" bugünkü el değiştirmeye döner. Gerçek Chrome
   testi: `scripts/harness/embed/` (README'de).
+- **Oda görünümü (eklenti, film kendi sekmesindeyken):** varsayılan açık (`storage.local` `roomView`). Çerçeve yok,
+  sitenin hiçbir başlığına dokunulmaz; bu yüzden gömmeyi yasaklayan sitelerde de çalışır (site kartı bunu
+  anlatır). Arka plan `pushRoomView` ile sekmedeki tüm çerçevelere `{type:'roomview', on, active}` yollar (sonradan
+  yüklenen çerçeveye `candidate`ta). Etkin çerçeve `applyFocus(…, {top: ROOM_TOP, right: ROOM_SIDE})` ile oynatıcıyı
+  sol-alttaki boşluğa koyar, overlay `.roomview`: üst şerit (logo, oda adı, 📌, senkron, 👥, davet, 🏠, ⤡ küçült) +
+  sağda tam boy panel (sohbet geçmişi, emojiler, mesaj, hız; çubuğun kendisi CSS ile). Diğer çerçeveler en büyük iç
+  çerçeveyi tüm ekrana büyütür (üst sayfada büyük bir reklam çerçevesi varsa yanlış seçebilir; ⤡ ile küçültülür).
+  Oynatıcı tam ekransa normal çubuğa döner. Çubuktaki ⤢ yeniden açar. Test: film-server `/deny-nested`.
 - **Eklentide video olayları:** aynı `<video>`'da kaynak değişince (`emptied`) motor baştan bağlanır
   (herkes başa sarılmasın); 60 sn'den kısa video bitince "sıradaki" istenmez (reklam/önizleme).
 

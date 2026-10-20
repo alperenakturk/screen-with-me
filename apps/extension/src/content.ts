@@ -10,7 +10,7 @@
 
 import { OffsetClock } from '@swm/shared/clock';
 import { isForwardedKey, type EmbedControl } from '@swm/shared/embed';
-import { applyFocus } from './focus.ts';
+import { applyFocus, ROOM_SIDE, ROOM_TOP } from './focus.ts';
 import { expectedPosition, type PlaybackState } from '@swm/shared/protocol';
 import { roomIdFromHash } from '@swm/shared/room-id';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -38,7 +38,38 @@ const overlay = createOverlay({
   onRate: (rate) => engine?.requestRate(rate),
   // 🏠: tek seferlik mesajla (port koptuysa da arka planı uyandırıp ulaşır; eskiden kayboluyordu).
   onBackToRoom: () => void chrome.runtime.sendMessage({ type: 'go-room-tab' }).catch(() => send({ type: 'go-room' })),
+  // Oda görünümü aç/kapa: tercih arka planda; o bütün çerçevelere duyurur.
+  onRoomView: (on) => send({ type: 'roomview', on }),
 });
+
+/**
+ * Oda görünümü (film kendi sekmesinde): videonun olduğu çerçevede oynatıcı sol-alttaki boşluğa
+ * yerleşir, üst şerit ve sağ paneli overlay çizer. Diğer çerçeveler sadece içlerindeki oynatıcı
+ * çerçevesini tüm ekrana büyütür. Sitenin içinde (gömülü) bu kullanılmaz.
+ */
+let roomOn = false;
+let roomActive = false;
+let focusTimer: ReturnType<typeof setInterval> | null = null;
+function roomFocusTick(): void {
+  if (!roomOn) {
+    applyFocus(false, null);
+    return;
+  }
+  if (roomActive) applyFocus(!!best, best, { top: ROOM_TOP, right: ROOM_SIDE });
+  else applyFocus(true, null);
+}
+function setRoomView(on: boolean, isActive: boolean): void {
+  roomOn = on;
+  roomActive = isActive;
+  overlay.setRoomView(on && isActive);
+  roomFocusTick();
+  // Oynatıcılar kendini yeniden kurabilir: arada bir yeniden işaretle.
+  if (on && focusTimer === null) focusTimer = setInterval(roomFocusTick, 1500);
+  if (!on && focusTimer !== null) {
+    clearInterval(focusTimer);
+    focusTimer = null;
+  }
+}
 
 /** Çubuktaki senkron noktası için: videomuz odanın olması gereken yerinden ne kadar uzakta? */
 let syncTimer: ReturnType<typeof setInterval> | null = null;
@@ -310,6 +341,7 @@ function deactivate(): void {
   engine = null;
   adapter?.release();
   adapter = null;
+  if (!embedded) setRoomView(false, false);
   overlay.unmount();
 }
 
@@ -373,7 +405,8 @@ function onMessage(message: BackgroundMessage): void {
       void chrome.storage.local
         .get('guideOff')
         .then(({ guideOff }) => {
-          if (!guideOff) setTimeout(() => active && overlay.guide(() => void chrome.storage.local.set({ guideOff: true })), message.afterIntro ? 2900 : 600);
+          // Oda görünümünde rehbere gerek yok (her şey zaten görünür).
+          if (!guideOff && !roomOn) setTimeout(() => active && overlay.guide(() => void chrome.storage.local.set({ guideOff: true })), message.afterIntro ? 2900 : 600);
         })
         .catch(() => {});
       break;
@@ -386,6 +419,9 @@ function onMessage(message: BackgroundMessage): void {
       break;
     case 'deactivate':
       deactivate();
+      break;
+    case 'roomview':
+      if (!embedded) setRoomView(message.on, message.active);
       break;
     case 'idle':
       sleep();

@@ -197,6 +197,32 @@ input:focus, select:focus { outline: 2px solid #7c5cff; outline-offset: 1px; }
   background: #222; color: #fff; font-size: 10px; line-height: 11px; cursor: pointer; }
 .pin-wrap:hover .pin-x { display: block; }
 form.pinning input { border-color: #e9b949; }
+/* Oda görünümü: film kendi sekmesinde, etrafı bizim oda kabuğu (üst şerit + sağ panel).
+   Video, focus.ts ile sol-alttaki boşluğa yerleşir (ROOM_TOP / ROOM_SIDE ile aynı ölçüler). */
+.topbar { display: none; }
+.root.roomview { left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; }
+.roomview .topbar { display: flex; position: absolute; left: 0; right: 0; top: 0; height: 52px; align-items: center; gap: 8px;
+  padding: 0 12px; pointer-events: auto; background: linear-gradient(90deg, #1a1450, #0d0f1f 60%); border-bottom: 1px solid rgb(255 255 255 / .1); }
+.topbar .logo { width: 28px; height: 28px; }
+.rv-brand { font-weight: 800; font-size: 16px; }
+.rv-name { color: #c9b8ff; font-weight: 600; max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-name:empty { display: none; }
+.topbar .spacer { flex: 1; }
+.topbar .icon { height: 32px; padding: 0 10px; font-size: 13.5px; }
+.roomview .bar { top: 52px !important; right: 0 !important; left: auto !important; bottom: 0; width: 340px !important; height: auto !important;
+  border-radius: 0; border: 0; border-left: 1px solid rgb(255 255 255 / .1); background: #0f1122; box-shadow: none; backdrop-filter: none;
+  display: flex !important; padding: 10px; opacity: 1 !important; pointer-events: auto !important; }
+.roomview .bar .log { display: flex; order: 0; font-size: 14px; padding: 8px 10px; }
+.roomview .bar > .row:first-child { order: 1; }
+.roomview .bar > .row:nth-child(3) { order: 2; }
+.roomview .grip, .roomview .resize, .roomview .b-classic { display: none !important; }
+.roomview .fab { display: none !important; }
+.roomview .toasts { right: 352px; top: 64px; }
+.roomview .pinbar { right: 352px; bottom: 64px; }
+.roomview .waiting { left: calc((100% - 340px) / 2); top: 64px; }
+.roomview .note { left: calc((100% - 340px) / 2); }
+.roomview.idle .topbar { opacity: 1; pointer-events: auto; }
+.expand { font-size: 15px; }
 ${INTRO_CSS}
 `;
 
@@ -272,6 +298,8 @@ export interface OverlayActions {
   onRate: (rate: number) => void;
   /** 🏠 Odaya dön: film bitti ya da başka bir şey izlenecek. */
   onBackToRoom: () => void;
+  /** Oda görünümünü aç/kapa. */
+  onRoomView: (on: boolean) => void;
 }
 
 /**
@@ -291,6 +319,8 @@ export function createOverlay(actions: OverlayActions) {
   let room: RoomInfo | null = null;
   /** Film sitenin içinde (iframe) açık: sadece "İzlemeye başla" kartı gösterilir. */
   let embeddedMode = false;
+  /** Oda görünümü: sayfanın üstü bizim oda kabuğu (üst şerit + sağ panel). */
+  let roomView = false;
   let rate = 1;
   let barOpen = false;
   let unread = 0;
@@ -521,7 +551,9 @@ export function createOverlay(actions: OverlayActions) {
       no.addEventListener('click', () => card.remove());
       layer.append(card);
     });
-    const close = button('icon', '✕', t('close'), () => setBar(false));
+    const close = button('icon b-classic', '✕', t('close'), () => setBar(false));
+    // ⤢: oda görünümüne geç (sayfanın üstü bizim oda kabuğuyla kaplanır).
+    const expand = button('icon expand b-classic', '⤢', t('roomViewOn'), () => actions.onRoomView(true));
     // Tutamak: sürükleyerek çubuğu taşı, çift tıkla eski yerine (sağ üst) al.
     const grip = el('span', 'grip', '⠿');
     grip.title = t('dragHint');
@@ -591,18 +623,45 @@ export function createOverlay(actions: OverlayActions) {
     const bar = el(
       'div',
       'bar',
-      el('div', 'row', grip, reactions, pager, stickerToggle, el('span', 'spacer'), dot, members, copy, pin, home, close),
+      el('div', 'row', grip, reactions, pager, stickerToggle, el('span', 'spacer'), dot, members, copy, pin, home, expand, close),
       log,
       el('div', 'row', form, slower, speed, faster),
       resize,
     );
     bar.hidden = true;
 
+    for (const node of [dot, members, copy, pin, home]) node.classList.add('b-classic');
+
+    // Oda görünümünün üst şeridi: logo, oda adı | 📌 · senkron · odadakiler · davet · 🏠 · küçült
+    const rvName = el('span', 'rv-name');
+    const rvDot = el('span', 'dot');
+    const rvMembers = el('span', 'icon members', '👥');
+    const rvCopy = button('icon', `🔗 ${t('inviteShort')}`, t('copyInvite'), async () => {
+      if (!room) return;
+      await copyText(room.inviteUrl);
+      rvCopy.textContent = '✓';
+      setTimeout(() => (rvCopy.textContent = `🔗 ${t('inviteShort')}`), 1500);
+    });
+    const topbar = el(
+      'div',
+      'topbar',
+      el('span', 'logo', createLogo(document)),
+      el('b', 'rv-brand', 'ScreenWithMe'),
+      rvName,
+      el('span', 'spacer'),
+      button('icon', `📌 ${t('pinShort')}`, t('pinHint'), () => setPinning(true)),
+      rvDot,
+      rvMembers,
+      rvCopy,
+      button('icon', `🏠 ${t('homeShort')}`, t('backToRoom'), () => home.click()),
+      button('icon', '⤡', t('roomViewOff'), () => actions.onRoomView(false)),
+    );
+
     const waiting = el('div', 'waiting');
     waiting.hidden = true;
 
-    container.append(floats, toasts, waiting, pinbar, fab, bar, file);
-    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed, pinRow, form, reactions, drawReactions, file, log, pinbar, pinForm, pinNote };
+    container.append(floats, toasts, waiting, pinbar, fab, bar, topbar, file);
+    return { floats, toasts, waiting, fab, badge, bar, dot, members, input, speed, pinRow, form, reactions, drawReactions, file, log, pinbar, pinForm, pinNote, rvName, rvDot, rvMembers };
   }
 
   function mount(): HTMLElement {
@@ -614,6 +673,7 @@ export function createOverlay(actions: OverlayActions) {
     root = el('div', 'root');
     root.classList.toggle('embedded', embeddedMode);
     parts = build(root);
+    root.classList.toggle('roomview', roomView);
     shadow.append(style, root);
     place();
     positionTimer ??= setInterval(position, 500);
@@ -636,7 +696,10 @@ export function createOverlay(actions: OverlayActions) {
 
   function position(): void {
     if (!root) return;
-    const rect = document.fullscreenElement || !video?.isConnected ? null : video.getBoundingClientRect();
+    // Oda görünümünde katman tüm ekranı kaplar (oynatıcı tam ekransa normal çubuğa döner).
+    const shell = roomView && !document.fullscreenElement;
+    root.classList.toggle('roomview', shell);
+    const rect = shell || document.fullscreenElement || !video?.isConnected ? null : video.getBoundingClientRect();
     const box = rect ?? { left: 0, top: 0, width: innerWidth, height: innerHeight };
     Object.assign(root.style, {
       left: `${box.left}px`,
@@ -784,7 +847,7 @@ export function createOverlay(actions: OverlayActions) {
   function applySize(): void {
     if (!parts || !root) return;
     const bar = parts.bar;
-    if (!size) {
+    if (!size || roomView) {
       bar.style.width = '';
       bar.style.height = '';
       bar.classList.remove('tall');
@@ -876,6 +939,9 @@ export function createOverlay(actions: OverlayActions) {
     root?.classList.toggle('no-react', room.noReactions);
     parts.members.textContent = `👥 ${room.members.length}`;
     parts.members.title = `${t('members', { n: room.members.length })}\n${names.join('\n')}`;
+    parts.rvMembers.textContent = parts.members.textContent;
+    parts.rvMembers.title = parts.members.title;
+    parts.rvName.textContent = room.roomName ?? '';
   }
 
   function toast(content: (Node | string)[], className: string): void {
@@ -915,6 +981,17 @@ export function createOverlay(actions: OverlayActions) {
       embeddedMode = true;
     },
 
+    /** Oda görünümü aç/kapa (videonun yeri content'te focus.ts ile ayarlanır). */
+    setRoomView(on: boolean): void {
+      if (roomView === on) return;
+      roomView = on;
+      if (!root) return;
+      // Panel hep açık: çubuğu açık say (okunmamış sayacı, odak), kapanınca eski hâline döner.
+      if (on) setBar(true);
+      position();
+      applySize();
+    },
+
     /** Katmanı bu videonun üstüne yerleştir. */
     follow(next: HTMLVideoElement): void {
       video = next;
@@ -945,8 +1022,12 @@ export function createOverlay(actions: OverlayActions) {
     setSync(diffMs: number | null): void {
       if (!parts) return;
       const abs = diffMs === null ? null : Math.abs(diffMs);
-      parts.dot.className = `dot ${abs === null ? '' : abs < 250 ? 'good' : abs < 1000 ? 'ok' : 'bad'}`;
+      const level = abs === null ? '' : abs < 250 ? 'good' : abs < 1000 ? 'ok' : 'bad';
+      // b-classic: oda görünümünde çubuktaki nokta gizli (üst şeritteki gösterilir).
+      parts.dot.className = `dot b-classic ${level}`;
       parts.dot.title = abs === null ? t('syncUnknown') : t('syncDiff', { ms: Math.round(abs) });
+      parts.rvDot.className = `dot ${level}`;
+      parts.rvDot.title = parts.dot.title;
     },
 
     /** Pinlenmiş anlar: arka plan değişince yollar. */
@@ -1053,7 +1134,7 @@ export function createOverlay(actions: OverlayActions) {
         log.scrollTop = log.scrollHeight;
       }
       // Geçmiş görünüyorsa mesaj zaten orada: ayrıca ekrana düşmesin.
-      if (!(barOpen && parts?.bar.classList.contains('tall'))) toast([el('b', '', line.name), ' ', line.text], line.mine ? 'me' : '');
+      if (!roomView && !(barOpen && parts?.bar.classList.contains('tall'))) toast([el('b', '', line.name), ' ', line.text], line.mine ? 'me' : '');
       if (!barOpen && !line.mine) {
         unread++;
         renderBadge();
