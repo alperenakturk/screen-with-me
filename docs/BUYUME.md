@@ -18,7 +18,7 @@ _Kural: herkese açık hiçbir metinde belirli film/dizi/korsan site adı geçme
 
 ## İlk 1.000 kullanıcı
 
-**Hafta 0 (mağaza incelemesi sürerken)**
+**Hafta 0 (mağazaya göndermeden önce / inceleme sürerken)** — eklenti henüz gönderilmedi (Ekim 2026).
 - [x] Davet linki önizlemesi (og:image, "Come watch with me 🍿").
 - [ ] Kısa, akılda kalan bir alan adı (workers.dev güven vermiyor).
 - [ ] Repoyu public yap (önce `docs/rakip-analizi.md`'yi temizle) → "open source" diyebiliriz.
@@ -47,8 +47,8 @@ _Kural: herkese açık hiçbir metinde belirli film/dizi/korsan site adı geçme
 1. **Eklentisi olmayana tek tık:** "Bu video başka bir sitede" kartı mağaza butonu göstersin,
    kurulum sonrası aynı odaya dönülsün (mağaza onayından sonra).
 2. **Zengin davet önizlemesi** (yapıldı) + kısa alan adı.
-3. **İzleme sonu paylaşım kartı:** "3 kişi · 2 sa 14 dk · 87 tepki · en çok 😂" — tarayıcıda
-   üretilir, sunucuya bir şey gitmez; hikâyede paylaşılabilir.
+3. ✅ **Paylaşılabilir özet (v0.9.49, "oturum özeti"):** süre, video, en konuşkan, en sevilen emoji…
+   logolu görsel olarak indirilir; hikâyede paylaşılabilir. Sırada: tek tıkla paylaş düğmesi.
 4. **Mağaza puanı isteği:** 2. başarılı oturumdan sonra bir kez, nazikçe.
 5. **Mevsimlik temalar:** Cadılar Bayramı, Yılbaşı, Ramazan.
 
@@ -64,9 +64,9 @@ _Kural: herkese açık hiçbir metinde belirli film/dizi/korsan site adı geçme
 
 1. Tek tıkla katıl + kurulum sonrası odaya dönüş.
 2. Bas-konuş sesli sohbet (Discord ihtiyacını azaltır).
-3. Zamanlanmış izleme partisi: geri sayım + takvim linki.
+3. Zamanlanmış izleme partisi: geri sayım ✅ (v0.9.45, planlı başlangıç); takvim linki eksik.
 4. Firefox (+ Android) ve YouTube için PWA: telefon boşluğu.
-5. İzleme sonu paylaşım kartı.
+5. ✅ Paylaşım kartı (oturum özeti).
 6. Elle video seçimi ("bu videoyu senkronla").
 7. Ortak altyazı (.srt yükle, herkese senkron) — rakiplerde yok.
 8. Discord botu / Activity: `/watch` → oda linki.

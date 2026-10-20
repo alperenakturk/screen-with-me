@@ -117,6 +117,14 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'react', emoji: '🍕' })).toBeNull();
   });
 
+  it('accepts real-sized stickers but keeps other messages small', () => {
+    // 160 px webp ya da küçük bir GIF birkaç on KB eder; genel 4 KB sınırına takılmamalı.
+    const data = 'data:image/webp;base64,' + 'A'.repeat(50_000);
+    expect(parse({ t: 'sticker-add', data })).toEqual({ t: 'sticker-add', data });
+    expect(parse({ t: 'sticker-add', data: 'data:image/gif;base64,' + 'A'.repeat(300_000) })).toBeNull();
+    expect(parse({ t: 'chat', text: 'x', pad: 'A'.repeat(50_000) })).toBeNull();
+  });
+
   it('strips unknown fields from media', () => {
     expect(parse({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ', evil: '<script>' } })).toEqual({
       t: 'load',

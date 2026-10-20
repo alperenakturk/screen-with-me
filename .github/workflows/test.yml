@@ -1,11 +1,14 @@
 # Her push ve PR'da: tip kontrolü, birim testleri, derleme ve yerel sunucuyla uçtan uca testler.
 # Yerel sunucu `wrangler dev` (hesap gerekmez); e2e sahte kullanıcılarla gerçek sunucu koduna bağlanır.
+# main'e gelen her push'ta testler geçerse site + sunucu Cloudflare'e yüklenir ve canlıda e2e koşar
+# (deploy işi). Actions sekmesinden "Run workflow" ile elle de çalıştırılabilir.
 name: Testler
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -46,3 +49,48 @@ jobs:
       - name: Sunucu kaydı (hata olursa)
         if: failure()
         run: cat wrangler.log || true
+
+  # Canlıya yükleme: sadece main'de ve testler geçtiyse. Cloudflare anahtarları repo ayarlarındaki
+  # Secrets'ta (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); yoksa iş uyarı verip atlanır.
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Art arda iki push gelirse yüklemeler çakışmasın; sıradaki beklesin.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Anahtarlar var mı?
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID eklenmemiş, canlıya yükleme atlandı."
+
+      - uses: actions/checkout@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+
+      - uses: actions/setup-node@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Kurulum ve derleme
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          npm ci
+          npm run build
+
+      - name: Cloudflare'e yükle
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: npm run deploy -w @swm/server
+
+      - name: Canlıda uçtan uca testler
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          # Yeni sürümün yayılması birkaç saniye sürebilir.
+          sleep 10
+          npm run e2e -- wss://screen-with-me.swm-server.workers.dev
