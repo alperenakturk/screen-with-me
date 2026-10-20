@@ -1,6 +1,6 @@
 # ScreenWithMe — Vizyon ve Yol Haritası
 
-_Son güncelleme: 20 Ekim 2026 · şu anki sürüm 0.9.52_
+_Son güncelleme: 21 Ekim 2026 · şu anki sürüm 0.9.54_
 
 ## Vizyon
 
@@ -129,15 +129,108 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 
 ### v1.0 — Chrome Web Store'da yayın (henüz gönderilmedi)
 Paket ve form metinleri hazır (`docs/web-store.md`, `npm run store`), ama eklenti henüz yeterince hazır
-görülmediği için gönderilmiyor. Göndermeden önce:
-- [ ] Gerçek sitelerde ve Brave/Edge'de arkadaşlarla deneme (popup'taki "Tanı" satırı).
+görülmediği için gönderilmiyor.
+
+**Durum (Ekim 2026, Claude'un değerlendirmesi):** teknik olarak çıkışa yakınız, resmî bir engel yok (içerik
+barındırmıyoruz, kilit/DRM aşmıyoruz, izinler az, uzaktan kod yok). Ama film sayfasındaki oda katmanı (kabuk)
+0.9.53–0.9.54'te baştan yazıldı ve gerçek dünyada az denendi. Öneri: 1–2 hafta gerçek kullanım, çıkan hataları
+düzelt, sonra gönder.
+
+Göndermeden önce:
+- [ ] **Gerçek deneme turu** (iki bilgisayar, bir arkadaşla; sorun olursa popup'taki "Tanı" satırı):
+  - [ ] En az 5 farklı oynatıcı: JW Player, Plyr, Video.js, hls.js demoları + iframe içinde oynatıcısı olan,
+    reklamlı/açılır pencereli siteler.
+  - [ ] Bir saatten uzun bir video baştan sona (kayma, "herkes hazır", sekme arka plandayken).
+  - [ ] İnternet kopup gelince, sayfa yenilenince, bilgisayar uykudan uyanınca odaya dönüş.
+  - [ ] Brave ve Edge.
+  - [ ] Yeni kullanıcı gözüyle: siteyi hiç görmemiş biri linkle gelip eklentiyi kurup izleyebiliyor mu?
+- [ ] **Kısa alan adı 1.0'dan önce (önerim; para gerektirdiği için karar kullanıcının, yılda ~10 $):** sonradan
+  değişirse eski davet linkleri, mağaza sayfası ve eklentideki site adresi değişir; `workers.dev` güven vermiyor.
 - [x] Mağaza ekran görüntülerini ve test talimatlarını son görünüme göre yenile (`store/src/shots.html`, 0.9.53: 5 görsel).
 - [ ] Sürüm `1.0.0` → `npm run store` → gönderim (kullanıcının hesabıyla).
 - [ ] Onaylanınca `eklenti.html` ve sitedeki kurulum linklerini mağaza linkine çevir.
 
+**Çıkışta beklenen sorunlar (hazırlıklı ol):**
+- İnceleme 1–3 hafta sürebilir ("tüm siteler" izni yüzünden). Ret gelirse çoğu zaman gerekçeyi netleştirip
+  yeniden göndermek yeter; "incelemeci çalıştıramadı" reddine karşı test talimatları yasal demo oynatıcılarla.
+- Kurulumda Chrome "tüm sitelerdeki verilerini okuyabilir" der; bazı kullanıcılar vazgeçer. Mağaza sayfasında
+  ve sitede "sadece odaya katıldığın sekmede çalışır" cümlesi öne çıksın.
+- Yanlış video seçimi (reklam/önizleme), reklamlı sitelerde iç içe çerçeveler: ilk hata raporları muhtemelen
+  buradan gelir → "elle video seçimi" önceliği yükselir.
+- Korsan sitelerle anılma: mağaza yorumlarında kullanıcılar site adı yazabilir; bizim hiçbir metnimizde
+  geçmemeli. Şikâyet gelirse tarafsızlık ve gizlilik politikası savunmamız.
+- Cloudflare ücretsiz plan sınırı (Durable Objects günde 100 bin istek); kullanıcı artarsa aylık ~5 $'lık plan.
+- İnceleme sürerken `PROTOCOL_VERSION` artırma (mağazadaki sürüm sunucuya bağlanamaz).
+
+### Büyük servisler: Netflix, Prime Video, Disney+ … (1.0'a doğru araştır, 1.x'te yayınla)
+Şu an desteklenmiyor ama imkânsız değil. Biz videonun görüntüsünü almıyoruz, sadece oynat/durdur/sar/hız komutu
+veriyoruz; herkes kendi aboneliğiyle izler (yasal, Teleparty de böyle çalışıyor). DRM asla aşılmaz.
+- [ ] **Araştırma (kullanıcının kendi hesabıyla gerçek deneme; Claude ücretli hesaba giremez):** her serviste
+  `<video>` bulunuyor mu, düz `play/pause/currentTime/playbackRate` çalışıyor mu, oda katmanı (kabuk) videoyu
+  deliğe oturtunca oynatıcı bozuluyor mu, reklamlı planlarda reklam nasıl görünüyor.
+- [ ] **Netflix:** videonun konumunu doğrudan değiştirmek oynatıcıyı hataya düşürebiliyor (geliştiriciler arasında
+  bilinen "M7375" hatası) → sarma için sitenin kendi oynatıcı arayüzü gerekir (sayfa dünyasında çalışan küçük
+  betik, MV3 `world: 'MAIN'`). Siteye özel kod = sürekli bakım (Teleparty'nin changelog'u bunun kanıtı).
+- [ ] **Prime Video, Disney+, Max …:** önce düz `<video>` komutlarıyla dene; gerekirse aynı "siteye özel adaptör"
+  yapısı (`apps/extension/src/adapters/<site>.ts` gibi, ortak arayüz: oynat, durdur, sar, hız, süre).
+- [ ] **Ülke farkı:** aynı film her ülkede yok; odada "bu video sende açılmadı" durumu anlaşılır olsun.
+- [ ] **Metinler:** bir servisin adı sadece gerçekten çalışıyorsa ve "… ile çalışır" anlamında geçer (marka
+  kullanımı); logolarını kullanmayız. Film/dizi/korsan site adı kuralı aynen sürer.
+- [ ] Sanal tarayıcı modu yine sadece sponsorla (aşağıda "Uzun vade").
+
+### Teleparty'den ilham: ekle / alma / sadeleştir
+Teleparty (~10 milyon kullanıcı) belirli servislerle sınırlı, çoğu özellik ücretli (video sohbet, özel tepkiler,
+fazladan servisler), mobil uygulaması kısıtlı. Bizden güçlü yanları: büyük servisler, sesli/görüntülü sohbet,
+tanınmışlık. ([rakip-analizi.md](rakip-analizi.md) §3.1)
+- **Bizde zaten var:** sohbet + tepkiler, "sadece yönetici kontrol eder" (`hostOnly`), linkle katılınca doğrudan
+  film sayfası, özel emojiler (Teleparty'de ücretli), temalar/avatarlar.
+- **Ekle:**
+  - [ ] Sesli / görüntülü sohbet (Teleparty'de ücretli → bizde ücretsiz olursa büyük fark). Önce bas-konuş ses.
+  - [ ] Oda görünümünde sağ paneli gizle/küçült: video büyüsün, sohbet istenince açılsın.
+  - [ ] "Alex durdurdu / 12:30'a sardı" gibi kısa bildirim videonun üstünde (neden durduğunu herkes anlasın);
+    şu an bu hareketler sohbette gizli. Varsa gözden geçir, yoksa ekle.
+  - [ ] "Denenmiş oynatıcılar" sayfası: hangi oynatıcı türlerinde çalıştığımız (site adı değil, oynatıcı adı).
+  - [ ] Telefon: önce PWA (YouTube ve doğrudan video), sonra Firefox Android.
+  - [ ] Büyük servisler (yukarıdaki bölüm).
+- **Almayacaklarımız:** ücretli katman / özellik kilidi (ücretsiz kalıyoruz, gelir bağışla), hesap zorunluluğu,
+  gezinti geçmişi toplama (Netflix Party bu yüzden kaldırılmıştı), karmaşık abonelik/fatura.
+- **Sadeleştirme adayları (karar kullanıcının):** özellik çok; ilk kez gelen biri için oda sade görünmeli.
+  Planlı başlangıç, oylama, oda kaydı, oturum özeti gibi seyrek kullanılanlar "Daha fazla" altına alınabilir.
+
+### Bağış / destek (1.0'dan ve ilk gerçek kullanıcılardan sonra)
+Ücretsiz ve reklamsız kalmak için gelir yolu bağış. Önerim:
+- **Ne zaman:** mağaza onayı + düzenli kullanan bir grup olunca. Erken koymak güven kaybettirir.
+- **Nereye:** sitenin alt bilgisi, eklenti sayfası, README, mağaza açıklamasında tek satır, oturum özetinin
+  sonunda nazik bir satır. **Oda içinde / video üstünde asla** bağış istemi yok; eklenti kimseyi dürtmez.
+- **Platformlar (kurulumdan önce güncel durumu doğrula):**
+  - GitHub Sponsors: komisyonsuz; Türkiye 2022'den beri desteklenen ülkeler listesinde. Repo public olunca anlamlı.
+  - Patreon: Türkiye dışı içerik üreticilerine Payoneer ile banka ödemesi var; komisyon yaklaşık %10.
+  - Ko-fi / Buy Me a Coffee: PayPal ya da Stripe istiyor; ikisi de Türkiye'de hesap açtırmıyor → büyük ihtimalle
+    olmaz.
+  - Yerli seçenekler (ör. Kreosus) araştırılabilir.
+- **Vergi:** Türkiye'de bu tür bağışlar gelir sayılabiliyor (Patreon için ticari kazanç diyen bir özelge var;
+  sosyal içerik üreticisi istisnası olabilir). Hesap açmadan önce bir mali müşavire sor.
+- Ödemeyi platform alır; biz kimseden veri almayız (gizlilik politikası değişmez, sadece link eklenir).
+- Platform seçimi ve hesap açmak kullanıcının işi (para).
+
+### Repoyu herkese açma (public)
+**Önerim: 1.0 mağazada onaylandıktan hemen sonra, lansmanla (Show HN vb.) birlikte.** İnceleme sırasında
+değişiklik yapmamış oluruz; açık kaynak olmak "tüm siteler" izni isteyen bir eklentiye güven verir, CV için
+değerli, GitHub Actions dakikası sınırsız olur, GitHub Sponsors açılır. Riski: kopyalanma (MIT zaten izin
+veriyor; bizi farklı kılan bakım ve topluluk) ve gelecek issue'ları yanıtlama yükü.
+
+Açmadan önce:
+- [ ] `docs/rakip-analizi.md` ve diğer belgelerdeki site adlarını temizle; CLAUDE.md'deki iç notları tarafsızlaştır.
+- [ ] **Geçmiş:** eski commit'lerde de bu adlar var → en temizi yeni bir public repo, tek "ilk sürüm" commit'iyle
+  (ya da `git filter-repo`). Private repo arşiv olarak kalır.
+- [ ] Gizli anahtar taraması (ör. gitleaks); Cloudflare anahtarları zaten repo Secrets'ta, kodda yok.
+- [ ] README'ye "open source", katkı rehberi (CONTRIBUTING), issue şablonları; mağaza açıklamasına bir sonraki
+  sürümde "open source".
+- [ ] Yeni repoda Secrets'ı tekrar ekle, Actions'ı ve otomatik yayını dene.
+
 ### Sonraki adımlar (v1.x)
 - [ ] **Elle video seçimi:** otomatik seçim yanılırsa "bu videoyu senkronla".
-- [ ] **Kısa alan adı:** workers.dev güven vermiyor.
+- [ ] **Kısa alan adı:** workers.dev güven vermiyor (önerim 1.0'dan önce, yukarıda).
 - [ ] **Tanıtım videosu / GIF:** sitede ve mağaza sayfasında 30–60 sn'lik "nasıl çalışır".
 - [ ] **Eklentiyi kurunca aynı odaya dönüş:** "eklenti gerekli" kartından mağazaya, kurulumdan sonra odaya.
 - [ ] **Sesli sohbet (bas-konuş):** WebRTC; küçük gruplarda eşler arası, büyüklerde Cloudflare Realtime (SFU).
@@ -145,7 +238,7 @@ görülmediği için gönderilmiyor. Göndermeden önce:
 - [ ] **Firefox desteği:** arka plan için ayrı manifest.
 - [ ] **Eklenti yüklü gerçek Chrome testi CI'da:** Playwright ile (`scripts/harness/embed/` temel olur).
 - [ ] **Senkron ölçümü ve rozet:** p50/p95 fark, README'de grafik.
-- [ ] **Büyüme:** repoyu açmak, lansman planı (`docs/BUYUME.md`).
+- [ ] **Büyüme:** repoyu açmak (yukarıda "Repoyu herkese açma"), lansman planı (`docs/BUYUME.md`), bağış (yukarıda).
 - [ ] **Daha fazla dil.**
 - [x] ~~Oda kaydetme~~ (v0.9.48–0.9.49), ~~sitenin içinde film~~ (v0.9.48, artık hep açık),
   ~~izleme sonu paylaşım kartı~~ (v0.9.49'da oturum özeti olarak).
@@ -176,7 +269,8 @@ görülmediği için gönderilmiyor. Göndermeden önce:
   ekran görüntülerinde ve README'de belirli film/dizi sitelerinin adı geçmez.
 - **İçerik barındırmıyoruz:** sunucu video taşımaz; sadece senkron mesajları.
 - **Engel aşmıyoruz:** gömmeyi yasaklayan sitelerin başlıkları kaldırılmaz; o sitelerde oda görünümü kullanılır.
-- **DRM:** Netflix/Disney+ gibi şifreli servisler hedef değil.
+- **DRM:** asla aşılmaz. Netflix/Disney+ gibi servisler şimdilik desteklenmiyor; ileride herkesin kendi
+  aboneliğiyle, sitenin kendi oynatıcısına komut vererek desteklenebilir (yukarıda "Büyük servisler").
 - **YouTube politikası:** reklam engelleme yazılımın parçası değil;
   kullanıcı kendi tarayıcısında istediği engelleyiciyi kullanabilir.
 - **Sürdürülebilirlik:** küçük kod tabanı, test, açık belgeler; bakım yükü düşük.

@@ -21,7 +21,8 @@ _Kural: herkese açık hiçbir metinde belirli film/dizi/korsan site adı geçme
 **Hafta 0 (mağazaya göndermeden önce / inceleme sürerken)** — eklenti henüz gönderilmedi (Ekim 2026).
 - [x] Davet linki önizlemesi (og:image, "Come watch with me 🍿").
 - [ ] Kısa, akılda kalan bir alan adı (workers.dev güven vermiyor).
-- [ ] Repoyu public yap (önce `docs/rakip-analizi.md`'yi temizle) → "open source" diyebiliriz.
+- [ ] Repoyu public yap: önerim mağaza onayından hemen sonra, lansmanla birlikte; adımlar
+  `docs/VIZYON.md` "Repoyu herkese açma" (site adları temizlenir, temiz geçmişli yeni repo).
 - [ ] 30 sn'lik demo GIF (YouTube ya da açık lisanslı video ile).
 - [ ] 15–20 arkadaşla gerçek izleme geceleri; mağaza açılınca gerçek yorum iste (sahte yorum yok).
 
@@ -70,3 +71,9 @@ _Kural: herkese açık hiçbir metinde belirli film/dizi/korsan site adı geçme
 6. Elle video seçimi ("bu videoyu senkronla").
 7. Ortak altyazı (.srt yükle, herkese senkron) — rakiplerde yok.
 8. Discord botu / Activity: `/watch` → oda linki.
+9. Büyük servisler (Netflix, Prime Video, Disney+…) siteye özel destekle; plan `docs/VIZYON.md`.
+
+## Gelir: bağış
+
+Ücretli katman yok. 1.0 ve ilk gerçek kullanıcılardan sonra bağış linki (GitHub Sponsors / Patreon vb.);
+oda içinde asla istem yok. Ayrıntı ve platform notları: `docs/VIZYON.md` "Bağış / destek".
