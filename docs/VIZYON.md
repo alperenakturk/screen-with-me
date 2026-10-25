@@ -51,7 +51,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.54)
+## Şu an neler var? (0.9.55)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
@@ -83,9 +83,9 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 - Sunucuda hız sınırları, her mesajın doğrulanması, hayalet bağlantı ayıklama.
 
 **Görünüm**
-- 12 tema (4 sade, 3 resimli, 5 Art Deco), her birinde kostümlü maskot. (Uzay ve Cyberpunk
-  temaları, astronot / uzaylı / siber avatarlarıyla birlikte 0.9.51'de kaldırıldı.)
-- Çizilmiş avatarlar (temalı + parodi film / dizi / anime) ve hayvan emojileri; büyük seçim penceresi.
+- 11 tema (4 sade, 2 resimli, 5 Art Deco), her birinde kostümlü maskot. (Uzay ve Cyberpunk
+  temaları, astronot / uzaylı / siber avatarlarıyla birlikte 0.9.51'de, Fantastik orta çağ 0.9.55'te kaldırıldı.)
+- Çizilmiş avatarlar (temalı + parodi film / dizi / anime / oyun) ve hayvan emojileri; büyük seçim penceresi.
 - Açılış animasyonu ve üretilmiş açılış sesi; Türkçe (varsayılan) / İngilizce.
 - Eklentide film sayfası sitedeki oda gibi (Gece teması), video bulunmadan "Filmi başlat" kartı, tam ekranda
   sürüklenen mesaj tutamağı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
@@ -115,6 +115,9 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   altında emojiler, pin, eşitle, hız, tam ekran); küçük çubuk ve rehber kartı kaldırıldı; video bulunmadan "Filmi
   başlat" kartı (oynatıcıyı okla gösterir); tam ekranda sitedeki gibi kontroller ve sürüklenen mesaj tutamağı; iç
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
+- **v0.9.55:** Parodi avatarlarına Oyun kategorisi (ilk: hızlı mavi kirpi), Fantastik orta çağ teması kaldırıldı;
+  film sayfası düzeltmeleri (sayfa adresi değişince video durmuyor, katman başka sitelere taşınmıyor, katman
+  oynatıcı sanılmıyor), eski eklentinin "herkes dönmeden yeni video yok" kuralı kaldırıldı.
 - **v0.9.54:** Film sayfasında pencereler videonun önünde, film sitesinin ⛶ odanın tam ekranını açar, sıra ve link
   kutusu yok, odaya dönüş onaylı; 👤 Profil sekmesi; "bugünün özeti" (oturum başından şimdiye, istenince kaydet);
   "Şimdi aç" film linkinde önce sorar.

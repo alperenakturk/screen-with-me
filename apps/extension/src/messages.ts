@@ -35,7 +35,8 @@ export type FrameMessage =
 /** Arka plan → çerçeve */
 export type BackgroundMessage =
   | { type: 'activate'; state: PlaybackState; offset: number; synced: boolean }
-  | { type: 'deactivate' }
+  /** Senkron bu çerçevede dursun; `pause`: odada artık bu film yok, video da dursun. */
+  | { type: 'deactivate'; pause?: boolean }
   /** Bu sekmede oda yok: çerçeve uykuya dönsün. */
   | { type: 'idle' }
   | { type: 'state'; state: PlaybackState }

@@ -439,7 +439,6 @@ export class Room extends DurableObject<Env> {
       }
       case 'load':
       case 'enqueue': {
-        if (message.t === 'load' && this.othersWatching(attachment)) return this.refuseWhileWatching(ws);
         // Video beklemeden herkese gider; başlık (biliniyorsa hemen, yoksa) sonradan eklenir.
         const item = this.makeItem(message.media, me, message.title ?? null);
         await this.apply(ws, me, { t: message.t, item });
@@ -447,8 +446,6 @@ export class Room extends DurableObject<Env> {
         return;
       }
       default:
-        // Odadaki film sayfasını izleyenler varken siteden sıradakine geçilmesin.
-        if ((message.t === 'next' || message.t === 'jump') && this.othersWatching(attachment)) return this.refuseWhileWatching(ws);
         await this.apply(ws, me, message);
     }
   }
@@ -530,20 +527,6 @@ export class Room extends DurableObject<Env> {
       }
       await this.onLeave(ws);
     }
-  }
-
-  /**
-   * Odada bir sayfa (film) açıkken, o sayfada eklentiyle izleyen başka biri var mı? Varsa
-   * siteden yeni video açılmaz: biri filmi izlerken diğeri başka bir şey açarsa oda karışır.
-   * Herkes "Odaya dön" deyince serbest. Eklentiden gelen (sayfa paylaşan) bu kurala takılmaz.
-   */
-  private othersWatching(me: Attachment): boolean {
-    if (this.room.state.item?.media.kind !== 'page' || me.client === 'ext') return false;
-    return this.joined().some((a) => a.client === 'ext' && keyOf(a) !== keyOf(me));
-  }
-
-  private refuseWhileWatching(ws: WebSocket): void {
-    this.sendTo(ws, { t: 'error', code: 'others_watching' });
   }
 
   /** Bir sonraki alarmı en yakın işe göre kurar (yoksa kaldırır). */

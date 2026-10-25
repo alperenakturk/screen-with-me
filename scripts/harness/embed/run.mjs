@@ -155,6 +155,11 @@ await a.evaluate(`document.querySelector('video').play().then(() => 1)`);
 const byAyse = await bora.wait((m) => m.t === 'state' && !m.state.paused && m.by?.name === 'Ayşe', 8000);
 check(!!byAyse, 'Ayşe film videosunu oynattı → oda oynuyor (Ayşe adına)');
 
+// 4b) Film sitesi oynarken adresine sorgu eklerse (zaman damgası gibi) film kapanıp video durmasın.
+await a.evaluate(`history.replaceState(null, '', location.pathname + '?t=45'); 1`);
+await a.sleep(2500);
+check(await a.evaluate(`!document.querySelector('video').paused`), 'film sitesi adresine sorgu ekledi → video durmadı');
+
 // 5) Katmandaki site videonun durumunu biliyor (ilerleme, pin şeridi için).
 const t = await until(() => a.evalFrame('shell=1', `window.__swm?.player()?.getTime()`));
 check(typeof t === 'number' && t > 40, 'katmandaki site film videosunun yerini biliyor', String(t));

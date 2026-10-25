@@ -108,7 +108,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   katman kalkar). Odada başka bir `page` açılınca "Filme git", sitenin oynattığı bir şey açılınca katman açılır ve film
   motoru durur (`detach`, odaya "durdur" gitmez). Tam ekran: bizim ⛶ film sayfasının tamamını tam ekran yapar, oda
   `.theater.fake-fs` görünümüne geçer (`:is(:fullscreen, .fake-fs)`); film sitesinin kendi ⛶'u sadece videoyu gösterir.
-  Site hazır olunca `shell-ready` der (önceden gelen `page`/`video` tekrar gelir). Sayfadan çıkarken site bağlantıyı
+  Kullanıcı film sitesinden başka bir siteye giderse (alan adının son iki parçası değişir) katman kalkar
+  (`Shell.site`). Site hazır olunca `shell-ready` der (önceden gelen `page`/`video` tekrar gelir). Sayfadan çıkarken site bağlantıyı
   kapatır (`pagehide`; yoksa önbellekteki sayfa yüzünden kişi iki kez görünüyordu). Kabukta sıra sekmesi ve link
   kutusu yok (sıradakini seçmek için odaya dönülür); logo ve "🏠 Odaya dön" önce sorar (`ui/confirm.ts`). Sitenin bir
   penceresi açıkken (avatar, tema, özet, onay) delik tamamen kapanır (pencere videonun önünde). Film sitesinin tam ekranı
@@ -137,8 +138,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   bakma: Chrome arka plan sekmesinde zamanlayıcıyı dakikada bire yavaşlatır).
 - **Hayalet bağlantılar:** sunucu her bağlantının son mesajını (`seen`) tutar; 150 sn sessiz
   olanı kapatıp listeden düşürür (`pruneStale`, katılımda ve en fazla 20 sn'de bir).
-- **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 5 sayfa: temalı çizilmiş karakterler, hayvan
-  emojileri, parodi film / dizi / anime. Seçicideki sekmeler `AVATAR_TABS` (Parodi'nin alt
+- **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 6 sayfa: temalı çizilmiş karakterler, hayvan
+  emojileri, parodi film / dizi / anime / oyun (oyun: `speedster`). Seçicideki sekmeler `AVATAR_TABS` (Parodi'nin alt
   sekmeleri var; site `ui/avatar.ts`). Çizilmiş avatarın değeri bir
   kimliktir (`wizard`); resim `/avatars/<kimlik>.svg`, metin
   geçen yerlerde `avatarText()` emoji karşılığını verir. Yeni avatar: `DRAWN_AVATARS` +

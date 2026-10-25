@@ -575,6 +575,26 @@ ${neck('#f2d2b6')}
 ${eyes(30.6, 4.7)}
 <path d="M26.8 36 Q32 40.8 37.8 35.2" stroke="#6b2f2f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
 <ellipse cx="23.8" cy="34.4" rx="2.2" ry="1.2" fill="#ff8fa3" opacity=".4"/><ellipse cx="40.2" cy="34.4" rx="2.2" ry="1.2" fill="#ff8fa3" opacity=".4"/>`),
+
+  // ---------- Oyun ----------
+  // Hızlı mavi kirpi (eski platform oyunlarının maskotu tarzında): arkaya yatık mavi dikenler, sivri
+  // kulaklar, açık ten rengi yüz, iri yeşil gözler, kendinden emin kaşlar ve yan gülüş; yeşil tepe zemini.
+  speedster: badge(['#a6e86e', '#2c6f36'], `
+<path d="M10 64 Q11 46 32 44 Q53 46 54 64Z" fill="#2a5fd8"/>
+<ellipse cx="32" cy="60" rx="9" ry="9" fill="#f1cf9a"/>
+<path d="M21 23 L3 15 L16 29 L1 33 L17 37 L5 47 L23 40Z" fill="#2a5fd8"/>
+<path d="M43 23 L59 17 L47 30 L61 36 L45 39Z" fill="#2a5fd8"/>
+<path d="M20.5 21 L17.5 6 L29 16Z M43.5 21 L46.5 6 L35 16Z" fill="#2a5fd8"/>
+<path d="M21.6 18.6 L20 10 L26.6 15.8Z M42.4 18.6 L44 10 L37.4 15.8Z" fill="#f1cf9a"/>
+<circle cx="32" cy="29" r="14" fill="#2a5fd8"/>
+<path d="M21 31 Q20 22 26.5 21.5 Q32 21 32 26 Q32 21 37.5 21.5 Q44 22 43 31 Q43 41 32 42 Q21 41 21 31Z" fill="#f1cf9a"/>
+<ellipse cx="27.5" cy="28" rx="4" ry="5.2" fill="#fff"/><ellipse cx="36.5" cy="28" rx="4" ry="5.2" fill="#fff"/>
+<ellipse cx="28.6" cy="28.6" rx="2" ry="2.8" fill="#2e9c3e"/><ellipse cx="35.4" cy="28.6" rx="2" ry="2.8" fill="#2e9c3e"/>
+<circle cx="28.8" cy="28.9" r="1.1" fill="#111"/><circle cx="35.2" cy="28.9" r="1.1" fill="#111"/>
+<circle cx="29.4" cy="27.8" r=".6" fill="#fff"/><circle cx="35.8" cy="27.8" r=".6" fill="#fff"/>
+<path d="M23.5 21.8 Q27.5 19.8 31 22.4 M33 22.4 Q36.5 19.8 40.5 21.8" stroke="#173a8a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<ellipse cx="32" cy="33.8" rx="2.2" ry="1.6" fill="#1a1a1a"/><circle cx="31.4" cy="33.3" r=".5" fill="#fff" opacity=".7"/>
+<path d="M27.4 37.2 Q33 40.6 37.6 35.8" stroke="#6b2f2f" stroke-width="1.5" fill="none" stroke-linecap="round"/>`),
 });
 
 for (const [id, content] of Object.entries(AVATARS)) {
