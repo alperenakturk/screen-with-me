@@ -147,145 +147,214 @@ ${mouth ? '<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" st
 }
 
 // =====================================================================
-// FANTASTİK ORTA ÇAĞ: ay, dağlar, kale, uçan sevimli ejderha, büyü izleri
+// MEHTAPLI GECELER (kimlik: lokum): oryantalist yağlı boya havasında mehtap gecesi. Solda çini pano,
+// mermer sütun ve kemerden sarkan kandil; sağda servi ve pirinç fener; ortada ay ışığında Boğaz,
+// karşı kıyıda saray surları, camiler ve kule; fenerli mehtap kayıkları, taş korkuluk
 // =====================================================================
-function lokumScene() {
-  const r = rng(23);
-  const minaret = (x, base, h, w = 8) => `<rect x="${f(x - w / 2)}" y="${f(base - h)}" width="${w}" height="${f(h)}"/><rect x="${f(x - w / 2 - 3)}" y="${f(base - h * 0.62)}" width="${w + 6}" height="4" rx="2"/><rect x="${f(x - w / 2 - 2)}" y="${f(base - h * 0.84)}" width="${w + 4}" height="3.5" rx="1.75"/><path d="M${f(x - w / 2)} ${f(base - h)} L${f(x)} ${f(base - h - h * 0.16)} L${f(x + w / 2)} ${f(base - h)}Z"/>`;
-  const dome = (cx, base, rx, ry) => `<path d="M${f(cx - rx)} ${f(base)} A${f(rx)} ${f(ry)} 0 0 1 ${f(cx + rx)} ${f(base)}Z"/><rect x="${f(cx - 1.5)}" y="${f(base - ry - 14)}" width="3" height="14"/>`;
-  // Büyük cami: kademeli kubbeler + 6 minare (Sultanahmet esintisi, genel)
-  const grandMosque = (cx, base, s) => `
-<path d="M${cx - 130 * s} ${base} V${base - 50 * s} H${cx + 130 * s} V${base}Z"/>
-${dome(cx, base - 50 * s, 62 * s, 60 * s)}
-${dome(cx - 72 * s, base - 50 * s, 32 * s, 28 * s)}${dome(cx + 72 * s, base - 50 * s, 32 * s, 28 * s)}
-${dome(cx - 112 * s, base - 50 * s, 18 * s, 16 * s)}${dome(cx + 112 * s, base - 50 * s, 18 * s, 16 * s)}
-${[-170, -150, 150, 170].map((dx) => minaret(cx + dx * s, base, (dx % 20 === 10 ? 190 : 170) * s)).join('')}
-${minaret(cx - 205 * s, base, 150 * s)}${minaret(cx + 205 * s, base, 150 * s)}`;
-  // Ayasofya esintisi: büyük basık kubbe, payandalar, 4 minare
-  const oldMosque = (cx, base, s) => `
-<path d="M${cx - 100 * s} ${base} V${base - 60 * s} H${cx + 100 * s} V${base}Z"/>
-<path d="M${cx - 80 * s} ${base - 60 * s} V${base - 90 * s} H${cx + 80 * s} V${base - 60 * s}Z"/>
-${dome(cx, base - 90 * s, 70 * s, 46 * s)}
-${minaret(cx - 120 * s, base, 160 * s)}${minaret(cx + 120 * s, base, 160 * s)}${minaret(cx - 96 * s, base, 140 * s)}${minaret(cx + 96 * s, base, 140 * s)}`;
-  // Saray surları ve kuleleri (Topkapı esintisi)
-  const palace = (x0, base) => {
-    let s = `<path d="M${x0} ${base} V${base - 44} H${x0 + 230} V${base}Z"/>`;
-    for (let i = 0; i < 12; i++) s += `<rect x="${x0 + i * 20}" y="${base - 52}" width="10" height="8"/>`;
-    for (const tx of [x0 + 10, x0 + 110, x0 + 210]) s += `<rect x="${tx}" y="${base - 86}" width="26" height="86"/><path d="M${tx - 4} ${base - 86} L${tx + 13} ${base - 122} L${tx + 30} ${base - 86}Z"/>`;
-    return s;
-  };
-  const galata = (x, base) => `<rect x="${x - 22}" y="${base - 150}" width="44" height="150"/><rect x="${x - 27}" y="${base - 158}" width="54" height="10" rx="3"/><path d="M${x - 24} ${base - 158} L${x} ${base - 218} L${x + 24} ${base - 158}Z"/>`;
-  const cypress = (x, base, h) => `<path d="M${x} ${base} C${x - 9} ${base - h * 0.4} ${x - 6} ${base - h * 0.8} ${x} ${base - h} C${x + 6} ${base - h * 0.8} ${x + 9} ${base - h * 0.4} ${x} ${base}Z"/>`;
-  // Karşı kıyının ve Galata tepesinin zemin eğrileri
-  const farGround = (x) => 736 - 26 * Math.sin((Math.PI * (x - 820)) / 780);
-  const hillGround = (x) => 700 + 70 * ((1600 - x) / 240) ** 2;
-  // Evler zemin eğrisine oturur (ground sayı ya da x'e göre yükseklik veren fonksiyon) ve
-  // gövdeleri aşağıya kadar iner: tepede ya da kıyıda hiçbiri havada kalmaz.
-  const houses = (x0, x1, ground, seed) => {
-    const rr = rng(seed);
-    let s = '';
-    for (let x = x0; x < x1; ) {
-      const w = 26 + rr() * 26;
-      const h = 24 + rr() * 34;
-      const base = (typeof ground === 'function' ? Math.min(ground(x), ground(x + w)) : ground) + 2;
-      s += `<path d="M${f(x)} 800 V${f(base - h)} L${f(x + w / 2)} ${f(base - h - 12)} L${f(x + w)} ${f(base - h)} V800Z"/>`;
-      x += w + 2;
-    }
-    return s;
-  };
-  // Kız Kulesi: küçük adada kule
-  const maiden = (x, y) => `<g fill="#1a0a14"><ellipse cx="${x}" cy="${y}" rx="58" ry="10"/><rect x="${x - 34}" y="${y - 28}" width="68" height="26"/><rect x="${x - 10}" y="${y - 78}" width="20" height="52"/><path d="M${x - 14} ${y - 78} H${x + 14} L${x} ${y - 104}Z"/></g><rect x="${x - 4}" y="${y - 70}" width="8" height="10" rx="4" fill="#ffd58a" opacity=".9"/>`;
-  // Kadırga: yelkenli eski gemi
-  const ship = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})">
-<path d="M-70 0 Q0 22 70 0 L58 -10 H-62Z" fill="#1a0a14"/>
-<line x1="-20" y1="-10" x2="-20" y2="-86" stroke="#1a0a14" stroke-width="3"/><line x1="24" y1="-10" x2="24" y2="-70" stroke="#1a0a14" stroke-width="3"/>
-<path d="M-20 -84 Q6 -60 -20 -24Z M-20 -84 Q-46 -54 -20 -24Z" fill="#f3dfc8" opacity=".85"/>
-<path d="M24 -68 Q44 -48 24 -22Z" fill="#f3dfc8" opacity=".8"/>
-<path d="M-20 -86 L-4 -92 L-20 -96" fill="#e8425a"/>
-</g>`;
-  const kayik = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-26 0 Q0 9 26 0 L22 -5 H-22Z" fill="#1a0a14"/><path d="M-2 -5 L-2 -22 L10 -6Z" fill="#f3dfc8" opacity=".75"/></g>`;
-  const gull = (x, y, s) => `<path transform="translate(${x} ${y}) scale(${s})" d="M-14 0 Q-7 -8 0 0 Q7 -8 14 0" stroke="#f6e7ee" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
-  // İznik köşe süsü: lale, karanfil ve kıvrık dallar (kobalt, turkuaz, mercan)
-  const iznikCorner = (flip) => `<g transform="${flip ? `translate(${W} 0) scale(-1 1)` : ''}">
-<path d="M0 0 H230 Q170 30 120 70 Q70 110 0 190Z" fill="#0f2a5a" opacity=".55"/>
-<path d="M0 0 H230 Q170 30 120 70 Q70 110 0 190" stroke="#e6b85c" stroke-width="3" fill="none" opacity=".8"/>
-<path d="M18 18 Q80 30 104 80 M18 18 Q30 80 80 104" stroke="#3cc6b8" stroke-width="3" fill="none"/>
-<path d="M104 80 q-10 -22 4 -32 q4 10 10 4 q6 10 -4 28Z" fill="#e8425a"/>
-<path d="M80 104 q-22 -4 -26 -20 q12 0 12 -8 q14 4 14 28Z" fill="#e8425a"/>
-<circle cx="56" cy="40" r="10" fill="#f3f0ff" opacity=".9"/><circle cx="56" cy="40" r="4" fill="#3cc6b8"/>
-<path d="M150 24 q8 -12 18 0 q-8 10 -18 0Z M34 140 q-12 -8 0 -18 q10 8 0 18Z" fill="#3cc6b8"/>
-</g>`;
-  // Nazar boncuğu: zincirle sarkan
-  const nazar = (x, len) => `<line x1="${x}" y1="0" x2="${x}" y2="${len}" stroke="#c99a45" stroke-width="2"/><g transform="translate(${x} ${len + 20})"><circle r="20" fill="#1d4fb8"/><circle r="13" fill="#fff"/><circle r="8" fill="#6fb6ff"/><circle r="4" fill="#0b1020"/><circle cx="-6" cy="-7" r="3" fill="#fff" opacity=".7"/></g>`;
-  const lamp = (x, len, c) => `<line x1="${x}" y1="0" x2="${x}" y2="${len}" stroke="#c99a45" stroke-width="2"/>
-<g transform="translate(${x} ${len})" filter="url(#g)"><path d="M-8 0 H8 L14 10 Q22 28 0 50 Q-22 28 -14 10Z" fill="${c}" opacity=".9"/><path d="M-14 10 H14 M-18 24 H18" stroke="#e6b85c" stroke-width="2"/><circle cy="58" r="3" fill="#e6b85c"/></g>`;
-  let water = '';
-  for (let i = 0; i < 26; i++) water += `<line x1="${f(r() * W)}" y1="${f(790 + r() * 100)}" x2="${f(r() * W)}" y2="0" stroke="none"/>`;
-  // Ayın denizdeki yansıması: ayın tam altında, aşağı doğru genişleyen titrek ışık şeritleri
-  const moonPath = (cx) => {
-    const rr = rng(31);
-    let s = `<ellipse cx="${cx}" cy="836" rx="54" ry="66" fill="url(#halo)" opacity=".8"/>`;
-    for (let i = 0; i < 14; i++) {
-      const y = 778 + i * 8.5;
-      const w = 12 + i * 4.4;
-      const off = (rr() - 0.5) * 10;
-      // Her şeridi rastgele bir yerden böl: düz merdiven değil, dalgada kırılan ışık gibi dursun
-      const cut = cx - w / 2 + off + w * (0.25 + rr() * 0.5);
-      const gap = 2 + rr() * 4;
-      const line = (a, b) => `<line x1="${f(a)}" y1="${f(y)}" x2="${f(b)}" y2="${f(y)}" stroke="#ffe9c9" stroke-width="${f(1.6 + i * 0.12)}" stroke-linecap="round" opacity="${f(0.8 - i * 0.035)}"/>`;
-      s += line(cx - w / 2 + off, cut - gap / 2) + line(cut + gap / 2, cx + w / 2 + off);
-    }
-    return s;
-  };
-  let ripples = '';
-  for (let i = 0; i < 30; i++) {
-    const x = r() * W;
-    const y = 800 + r() * 90;
-    ripples += `<line x1="${f(x)}" y1="${f(y)}" x2="${f(x + 18 + r() * 30)}" y2="${f(y)}" stroke="#f6c9d8" stroke-width="1.5" opacity="${f(0.1 + r() * 0.2)}"/>`;
-  }
 
+/**
+ * Fırça kenarı: şeklin kenarını gürültüyle hafifçe dalgalandırır (yağlı boya / ahşap baskı
+ * gibi, cetvelle çizilmiş durmasın). `scale` dalganın genliği.
+ */
+const BRUSH = (id, scale = 6, freq = 0.035, seed = 3) =>
+  `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="3" seed="${seed}" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="${scale}" xChannelSelector="R" yChannelSelector="G"/></filter>`;
+/**
+ * Bulut / duman dokusu: gürültüden saydamlık üretir; şekli bu filtreyle doldurunca içi
+ * kümelenmiş bulut gibi olur. `fx fy` yatay/dikey sıklık (dikey düşükse uzun bulut).
+ */
+const CLOUDY = (id, fx, fy, seed, gain = 1.6, bias = -0.55) =>
+  `<filter id="${id}" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="${fx} ${fy}" numOctaves="4" seed="${seed}" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  ${gain} 0 0 0 ${bias}" result="a"/><feComposite in="SourceGraphic" in2="a" operator="in"/></filter>`;
+
+/** n köşeli yıldız (iç yarıçap oranı k). */
+function starPath(cx, cy, r, n, k = 0.45, rot = -90) {
+  const pts = [];
+  for (let i = 0; i < n * 2; i++) {
+    const a = rad(rot + (i * 180) / n);
+    const rr = i % 2 ? r * k : r;
+    pts.push(`${f(cx + Math.cos(a) * rr)} ${f(cy + Math.sin(a) * rr)}`);
+  }
+  return `M${pts.join(' L')}Z`;
+}
+
+/** Sabit sayıda yıldız (gökyüzü), y aralığında. */
+function stars(seed, n, y0, y1, color = '#fff', maxR = 1.4, maxO = 0.8) {
+  const r = rng(seed);
+  let s = '';
+  for (let i = 0; i < n; i++) s += `<circle cx="${f(r() * W)}" cy="${f(y0 + r() * (y1 - y0))}" r="${f(0.4 + r() * maxR)}" fill="${color}" opacity="${f(0.15 + r() * maxO)}"/>`;
+  return s;
+}
+
+const COBALT = '#1d3f8a';
+const TURQ = '#2fa6b0';
+const CORAL = '#d8452e';
+const CREAM = '#f3ead8';
+const minaret = (x, base, h, w = 8) => `<rect x="${f(x - w / 2)}" y="${f(base - h)}" width="${w}" height="${f(h)}"/><rect x="${f(x - w / 2 - 3)}" y="${f(base - h * 0.62)}" width="${w + 6}" height="4" rx="2"/><rect x="${f(x - w / 2 - 2)}" y="${f(base - h * 0.84)}" width="${w + 4}" height="3.5" rx="1.75"/><path d="M${f(x - w / 2)} ${f(base - h)} L${f(x)} ${f(base - h - h * 0.18)} L${f(x + w / 2)} ${f(base - h)}Z"/>`;
+const dome = (cx, base, rx, ry) => `<path d="M${f(cx - rx)} ${f(base)} A${f(rx)} ${f(ry)} 0 0 1 ${f(cx + rx)} ${f(base)}Z"/><rect x="${f(cx - 1.5)}" y="${f(base - ry - 14)}" width="3" height="14"/>`;
+const cypress = (x, base, h, w = 9) => `<path d="M${x} ${base} C${f(x - w)} ${f(base - h * 0.4)} ${f(x - w * 0.66)} ${f(base - h * 0.8)} ${x} ${f(base - h)} C${f(x + w * 0.66)} ${f(base - h * 0.8)} ${f(x + w)} ${f(base - h * 0.4)} ${x} ${base}Z"/>`;
+
+/** Yıldız ve altıgen çini deseni (mavi zemin, turkuaz altı köşeli yıldızlar, beyaz kenar). */
+function tilePattern(id, { bg = COBALT, star = TURQ, line = CREAM, dot = CORAL, s = 1 } = {}) {
+  const w = 60 * s;
+  const h = 103.92 * s;
+  const pts = [[0, 0], [w, 0], [0, h], [w, h], [w / 2, h / 2]];
+  const st = pts.map(([x, y]) => `<path d="${starPath(x, y, 24 * s, 6, 0.58, -90)}" fill="${star}" stroke="${line}" stroke-width="${f(1.6 * s)}"/><circle cx="${x}" cy="${y}" r="${f(6 * s)}" fill="${dot}" stroke="${line}" stroke-width="${f(1 * s)}"/>`).join('');
+  const hexes = [[w / 2, 0], [0, h / 2], [w, h / 2], [w / 2, h]].map(([x, y]) => `<path d="${starPath(x, y, 7 * s, 6, 0.86, 0)}" fill="${line}" opacity=".7"/>`).join('');
+  return `<pattern id="${id}" width="${f(w)}" height="${f(h)}" patternUnits="userSpaceOnUse"><rect width="${f(w)}" height="${f(h)}" fill="${bg}"/>${st}${hexes}</pattern>`;
+}
+
+/** Zincirle sarkan kandil (cam gövde, içinde ışık); zincir `top`tan başlar. */
+function kandil(x, len, glass = '#e8a83a', id = 'kg', top = 0) {
+  return `<path d="M${x} ${top} V${len}" stroke="#b08a3a" stroke-width="2" stroke-dasharray="5 3"/>
+<g transform="translate(${x} ${len})">
+  <circle cy="34" r="60" fill="url(#${id})"/>
+  <path d="M-6 0 H6 L10 8 H-10Z" fill="#c99a45"/>
+  <path d="M-10 8 Q-30 30 -16 52 Q0 62 16 52 Q30 30 10 8Z" fill="${glass}" opacity=".85"/>
+  <path d="M-10 8 Q-30 30 -16 52" stroke="#fff3c8" stroke-width="2" fill="none" opacity=".6"/>
+  <ellipse cy="36" rx="7" ry="10" fill="#fff4c8" filter="url(#gl)"/>
+  <path d="M-16 52 Q0 62 16 52 L8 62 H-8Z" fill="#c99a45"/><circle cy="68" r="3" fill="#c99a45"/>
+</g>`;
+}
+
+/** Kayık; `lantern` ise pruvada fener ve sudaki yansıması. */
+function caique(x, y, s, { hull = '#120a12', lantern = true, canopy } = {}) {
+  return `<g transform="translate(${x} ${y}) scale(${s})">
+${lantern ? `<rect x="40" y="2" width="4" height="40" fill="#ffc870" opacity=".35" filter="url(#b4)"/>` : ''}
+<path d="M-60 -4 Q-70 -16 -76 -22 Q-40 6 0 6 Q40 6 70 -18 Q66 -8 56 0 Q20 12 -40 8Z" fill="${hull}"/>
+${canopy ? `<path d="M-30 -4 V-26 H20 V-4" stroke="${hull}" stroke-width="2.5" fill="none"/><path d="M-34 -26 Q-6 -36 24 -26Z" fill="${canopy}"/>` : ''}
+<path d="M-12 -4 L-18 -20 M8 -4 L14 -18" stroke="${hull}" stroke-width="3"/><circle cx="-18" cy="-24" r="5" fill="${hull}"/><circle cx="14" cy="-22" r="5" fill="${hull}"/>
+${lantern ? `<path d="M44 -6 V-30" stroke="${hull}" stroke-width="2"/><rect x="38" y="-40" width="12" height="13" rx="3" fill="#ffc870" filter="url(#gl)"/>` : ''}
+</g>`;
+}
+
+/**
+ * Karşı kıyının silüeti (elle dizilmiş): solda saray surları ve kuleleri, büyük ve küçük cami,
+ * aralarda evler ve serviler, sağda tepede yuvarlak kule. Uzakta olduğu için tek renk.
+ */
+function shoreline(base) {
+  const r = rng(77);
+  const houses = (x0, x1, b = base) => {
+    let out = '';
+    for (let x = x0; x < x1; ) {
+      const w = 14 + r() * 16;
+      const h = 10 + r() * 16;
+      out += `<path d="M${f(x)} ${b + 4} V${f(b - h)} L${f(x + w / 2)} ${f(b - h - 6)} L${f(x + w)} ${f(b - h)} V${b + 4}Z"/>`;
+      x += w + 1.5;
+    }
+    return out;
+  };
+  const mosque = (cx, s) => `<path d="M${cx - 70 * s} ${base} V${base - 26 * s} H${cx + 70 * s} V${base}Z"/>${dome(cx, base - 26 * s, 40 * s, 36 * s)}${dome(cx - 46 * s, base - 26 * s, 16 * s, 14 * s)}${dome(cx + 46 * s, base - 26 * s, 16 * s, 14 * s)}`;
+  const palace = (x0) => {
+    let out = `<path d="M${x0} ${base} V${base - 22} H${x0 + 170} V${base}Z"/>`;
+    for (let i = 0; i < 17; i++) out += `<rect x="${x0 + i * 10}" y="${base - 27}" width="5" height="5"/>`;
+    for (const tx of [x0 + 6, x0 + 76, x0 + 150]) out += `<rect x="${tx}" y="${base - 44}" width="16" height="44"/><path d="M${tx - 3} ${base - 44} L${tx + 8} ${base - 66} L${tx + 19} ${base - 44}Z"/>`;
+    return out;
+  };
+  const hillY = (x) => base - Math.max(0, 40 - ((x - 1340) / 120) ** 2 * 40);
+  let hill = `M1220 ${base + 4}`;
+  for (let x = 1220; x <= 1600; x += 20) hill += ` L${x} ${f(hillY(x))}`;
+  hill += ` V${base + 4}Z`;
+  return `<path d="M240 ${base + 4} V${base - 4} H1600 V${base + 4}Z"/>
+${palace(250)}${houses(430, 470)}
+${mosque(540, 1)}${minaret(456, base, 92, 5)}${minaret(624, base, 92, 5)}${minaret(470, base, 78, 4.5)}${minaret(610, base, 78, 4.5)}
+${houses(640, 780)}${cypress(700, base - 10, 44, 6)}${cypress(712, base - 12, 36, 5)}
+${mosque(860, 0.7)}${minaret(800, base, 70, 4)}${minaret(920, base, 70, 4)}
+${houses(950, 1220)}${cypress(1010, base - 12, 40, 6)}${cypress(1130, base - 10, 34, 5)}
+<path d="${hill}"/>${houses(1230, 1600, base - 6)}
+<rect x="1326" y="${base - 136}" width="28" height="100"/><rect x="1322" y="${base - 142}" width="36" height="8" rx="2"/><path d="M1323 ${base - 142} L1340 ${base - 178} L1357 ${base - 142}Z"/>`;
+}
+
+function lokumScene() {
+  const r = rng(803);
+  // Ay yolu: ayın altında, aşağı indikçe genişleyen fırça darbeleri
+  let glitter = '';
+  for (let i = 0; i < 150; i++) {
+    const t = r();
+    const y = 680 + t * 210;
+    const spread = 20 + t * 170;
+    const x = 1180 + (r() - 0.5) * 2 * spread * r();
+    const w = 6 + r() * 22 * (0.5 + t);
+    glitter += `<path d="M${f(x)} ${f(y)} h${f(w)}" stroke="${r() > 0.3 ? '#f4e6c8' : '#c8d4f0'}" stroke-width="${f(1 + t * 1.6)}" opacity="${f(0.3 + r() * 0.6 * (1 - Math.abs(x - 1180) / 260))}" stroke-linecap="round"/>`;
+  }
+  let ripples = '';
+  for (let i = 0; i < 70; i++) {
+    const y = 690 + r() * 200;
+    ripples += `<path d="M${f(r() * W)} ${f(y)} h${f(10 + r() * 30)}" stroke="#7a8ab8" stroke-width="1.4" opacity="${f(0.08 + r() * 0.15)}"/>`;
+  }
+  // Uzak kıyı ışıkları (bulanık sıcak noktalar ve sudaki yansımaları)
+  let lights = '';
+  for (let i = 0; i < 40; i++) {
+    const x = 280 + r() * 1040;
+    const y = 652 + r() * 14;
+    lights += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(1.2 + r())}" fill="#ffcf80"/><rect x="${f(x - 0.8)}" y="${f(y + 18)}" width="1.6" height="${f(8 + r() * 14)}" fill="#ffcf80" opacity=".35"/>`;
+  }
+  const balusters = Array.from({ length: 36 }, (_, i) => {
+    const x = 20 + i * 44;
+    return `<path d="M${x} 830 v-6 q-6 -8 -2 -18 q-8 -6 0 -14 v-6 h16 v6 q8 8 0 14 q4 10 -2 18 v6Z"/>`;
+  }).join('');
   return svg(W, H, `
 <defs>
-${GLOW('g', 5)}
-<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#ff9fbf" stop-opacity="0"/><stop offset="1" stop-color="#ff9fbf" stop-opacity=".18"/></linearGradient>
-<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1f3a"/><stop offset="1" stop-color="#140713"/></linearGradient>
-<radialGradient id="halo"><stop offset="0" stop-color="#ffe6c4" stop-opacity=".4"/><stop offset="1" stop-color="#ffe6c4" stop-opacity="0"/></radialGradient>
-<mask id="cres"><rect width="${W}" height="${H}" fill="#fff"/><circle cx="1502" cy="256" r="40" fill="#000"/></mask>
+${GLOW('gl', 6)}${BLUR('b4', 4)}${BLUR('b2', 1.6)}${BLUR('b30', 30)}${BRUSH('br', 8, 0.025, 14)}${BRUSH('br2', 4, 0.05, 9)}
+${CLOUDY('cl', 0.0025, 0.011, 23, 1.8, -0.6)}${CLOUDY('mottle', 0.012, 0.02, 5, 1.4, -0.4)}
+${tilePattern('tile', { s: 0.7, bg: '#1a3478', star: '#2a92a0' })}
+${GRAIN_DEFS}
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#090e24"/><stop offset=".45" stop-color="#18224a"/><stop offset=".72" stop-color="#3a4870"/></linearGradient>
+<radialGradient id="moonlit" cx="1180" cy="280" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#eef0ff"/><stop offset=".4" stop-color="#8a96c8"/><stop offset="1" stop-color="#2a3460"/></radialGradient>
+<radialGradient id="halo" cx="1180" cy="280" r="300" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff1d8" stop-opacity=".5"/><stop offset=".35" stop-color="#c8d0f0" stop-opacity=".15"/><stop offset="1" stop-color="#c8d0f0" stop-opacity="0"/></radialGradient>
+<linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<mask id="cm"><rect y="100" width="${W}" height="500" fill="url(#cf)"/></mask>
+<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26305a"/><stop offset="1" stop-color="#070a18"/></linearGradient>
+<linearGradient id="marble" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a3644"/><stop offset=".35" stop-color="#8e8a96"/><stop offset=".6" stop-color="#6a6672"/><stop offset="1" stop-color="#26232e"/></linearGradient>
+<radialGradient id="kg"><stop offset="0" stop-color="#ffc870" stop-opacity=".35"/><stop offset="1" stop-color="#ffc870" stop-opacity="0"/></radialGradient>
+<linearGradient id="parapet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8494"/><stop offset="1" stop-color="#3a3642"/></linearGradient>
+<radialGradient id="lamp" cx="1372" cy="726" r="260" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffb84a" stop-opacity=".55"/><stop offset=".3" stop-color="#ff9a3a" stop-opacity=".18"/><stop offset="1" stop-color="#ff9a3a" stop-opacity="0"/></radialGradient>
+<pattern id="floor" width="60" height="30" patternUnits="userSpaceOnUse"><rect width="60" height="30" fill="#2a2430"/><path d="M0 15 L30 0 L60 15 L30 30Z" fill="#4a4250"/></pattern>
+<radialGradient id="vig" cx="50%" cy="45%" r="75%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
 </defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>
-${iznikCorner(false)}${iznikCorner(true)}
-<!-- Ortada soluk yıldızlar: gökyüzü boş kalmasın -->
-${Array.from({ length: 70 }, () => `<circle cx="${f(r() * W)}" cy="${f(200 + r() * 420)}" r="${f(0.6 + r() * 1.3)}" fill="#ffe9c9" opacity="${f(0.2 + r() * 0.5)}"/>`).join('')}
-<!-- Hilal ve martılar -->
-<circle cx="1480" cy="270" r="130" fill="url(#halo)"/>
-<circle cx="1480" cy="270" r="46" fill="#ffe9c9" mask="url(#cres)"/>
-${gull(980, 320, 1.2)}${gull(1030, 296, 0.9)}${gull(560, 340, 1)}${gull(610, 320, 0.7)}
-${nazar(110, 210)}${lamp(215, 170, '#e8425a')}${lamp(1368, 240, '#3cc6b8')}
-<!-- Karşı kıyı (uzak, soluk) -->
-<g fill="#2a1226">${houses(830, 1600, farGround, 5)}<path d="M820 800 ${Array.from({ length: 40 }, (_, i) => { const x = 820 + i * 20; return `L${x} ${f(farGround(x))}`; }).join(' ')} L1600 ${f(farGround(1600))} V800Z"/></g>
-<!-- Tarihi yarımada: saray, eski cami, büyük cami, serviler, evler -->
-<g fill="#13060e">
-  ${palace(20, 760)}
-  ${oldMosque(400, 760, 0.9)}
-  ${grandMosque(700, 760, 0.85)}
-  ${houses(260, 300, 760, 7)}${houses(500, 560, 760, 8)}
-  ${[250, 268, 540, 556, 880, 900].map((x) => cypress(x, 760, 70)).join('')}
-  <path d="M0 760 H960 V770 H0Z"/>
-  <!-- Galata tepesi -->
-  <path d="M1360 800 ${Array.from({ length: 13 }, (_, i) => { const x = 1360 + i * 20; return `L${x} ${f(hillGround(x))}`; }).join(' ')} V800Z"/>
-  ${houses(1376, 1446, hillGround, 11)}${houses(1496, 1600, hillGround, 12)}
-  ${galata(1470, hillGround(1470) + 2)}
-</g>
-<g fill="#ffc96b" opacity=".75">
-  ${[420, 455, 700, 735, 770, 1460, 1476, 120, 160].map((x, i) => `<rect x="${x}" y="${i > 6 ? 726 : i > 4 ? 600 : 742}" width="5" height="8" rx="2.5"/>`).join('')}
-</g>
-<!-- Boğaz -->
-<rect y="770" width="${W}" height="130" fill="url(#sea)"/>
+${stars(81, 80, 0, 400, '#f2f0ff', 1, 0.5)}
+<g mask="url(#cm)"><rect y="100" width="${W}" height="500" fill="url(#moonlit)" filter="url(#cl)" opacity=".45"/></g>
+<rect width="${W}" height="${H}" fill="url(#halo)"/>
+<circle cx="1180" cy="280" r="46" fill="#fff4dc"/>
+<circle cx="1166" cy="268" r="9" fill="#e8dcc4" opacity=".6"/><circle cx="1194" cy="294" r="6" fill="#e8dcc4" opacity=".5"/>
+<!-- Karşı kıyı: bulanık silüet ve ışıklar -->
+<g fill="#1a1e3a" filter="url(#b2)">${shoreline(668)}</g>
+<g filter="url(#b2)">${lights}</g>
+<rect y="668" width="${W}" height="232" fill="url(#sea)"/>
 ${ripples}
-${moonPath(1480)}
-${maiden(1040, 816)}
-${ship(300, 850, 0.9)}${ship(1230, 866, 0.7)}
-${kayik(620, 832)}${kayik(860, 872)}${kayik(1340, 884)}
+${glitter}
+<!-- Mehtap kayıkları -->
+${caique(520, 770, 0.8, { hull: '#0e0a14', canopy: '#7a1e22' })}${caique(840, 812, 1, { hull: '#0e0a14', canopy: '#2a5a6a' })}${caique(1000, 734, 0.55, { hull: '#14101c' })}${caique(1290, 790, 0.85, { hull: '#0e0a14', canopy: '#8a6a2a' })}${caique(660, 722, 0.45, { hull: '#14101c' })}
+<!-- Sol: çini pano, mermer sütun ve kemer, kemerden sarkan kandil -->
+<g filter="url(#br2)">
+  <rect x="-10" y="0" width="140" height="840" fill="url(#tile)"/>
+  <rect x="-10" y="0" width="140" height="840" fill="#05040e" opacity=".45"/>
+  <path d="M176 230 Q320 60 560 -30" stroke="url(#marble)" stroke-width="40" fill="none"/>
+  <path d="M190 236 Q330 74 566 -12" stroke="#7a1e22" stroke-width="5" fill="none" opacity=".8"/>
+  <rect x="122" y="220" width="58" height="580" fill="url(#marble)"/>
+  <rect x="112" y="196" width="78" height="26" fill="url(#marble)"/><rect x="116" y="790" width="70" height="20" fill="url(#marble)"/>
+</g>
+${kandil(262, 190, '#c8402e', 'kg', 150)}
+<!-- Sağ: servi ve fener -->
+<g filter="url(#br)">
+  <path d="M1460 840 C1410 640 1418 420 1462 220 C1504 420 1514 640 1468 840Z" fill="#0b1712"/>
+  <path d="M1462 220 C1430 420 1424 600 1446 760" stroke="#2c4a3c" stroke-width="10" fill="none" opacity=".7"/>
+  <path d="M1556 840 C1526 700 1530 540 1558 400 C1588 540 1592 700 1562 840Z" fill="#0a1410"/>
+</g>
+<rect width="${W}" height="${H}" fill="url(#lamp)"/>
+<!-- Taş korkuluk ve döşeme -->
+<rect y="772" width="${W}" height="14" fill="url(#parapet)"/>
+<g fill="#5e5a68">${balusters}</g>
+<rect y="830" width="${W}" height="12" fill="url(#parapet)"/>
+<rect y="842" width="${W}" height="58" fill="url(#floor)"/>
+<g transform="translate(1372 726)">
+  <path d="M0 -40 V-26" stroke="#c99a45" stroke-width="3"/>
+  <path d="M-16 -26 H16 L12 -18 H-12Z M-14 30 H14 L18 46 H-18Z" fill="#c99a45"/>
+  <path d="M-12 -18 H12 L14 30 H-14Z" fill="#ffcf80" opacity=".9" filter="url(#gl)"/>
+  <path d="M-4 -18 V30 M4 -18 V30" stroke="#8a6a2a" stroke-width="2"/>
+</g>
+<rect width="${W}" height="${H}" fill="#000" filter="url(#mottle)" opacity=".2"/>
+<rect width="${W}" height="${H}" fill="url(#vig)"/>
+${grain(0.15)}
 `);
 }
 
@@ -337,28 +406,28 @@ function lokumPattern() {
 }
 
 function lokumMascot() {
+  // Renkli sarıklı: yeşil-sarı-mor şeritli sarık, kırmızı entari, elinde pirinç fener
+  const bands = ['#3f8a4a', '#e6c25a', '#7a4a9a', '#3f8a4a', '#e6c25a'];
   return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 3)}
-<linearGradient id="tea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2562c"/><stop offset="1" stop-color="#8f1e12"/></linearGradient>
+<defs>${LOGO_DEFS}${GLOW('gl', 4)}
+<linearGradient id="robe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8442e"/><stop offset="1" stop-color="#8a1e18"/></linearGradient>
+<radialGradient id="lg2"><stop offset="0" stop-color="#ffcf80" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf80" stop-opacity="0"/></radialGradient>
 </defs>
-<!-- Minder -->
-<path d="M30 214 Q120 188 210 214 Q214 232 196 236 H44 Q26 232 30 214Z" fill="#b8243e"/>
-<path d="M36 214 Q120 194 204 214" stroke="#e6b85c" stroke-width="4" fill="none"/>
-<circle cx="34" cy="226" r="6" fill="#e6b85c"/><circle cx="206" cy="226" r="6" fill="#e6b85c"/>
-<!-- Yeniçeri börkü: arkaya sarkan beyaz keçe + altın kaşıklık -->
-<path d="M84 98 Q80 40 120 30 Q158 26 168 58 Q196 96 206 160 Q186 150 176 118 Q170 96 156 98Z" fill="#f5f0e6" stroke="#d8cfbd" stroke-width="3" stroke-linejoin="round"/>
-${logo(74, 92, 92, { look: [2, 0] })}
-<rect x="80" y="84" width="80" height="18" rx="9" fill="#f5f0e6" stroke="#d8cfbd" stroke-width="3"/>
-<path d="M110 84 Q120 52 130 84Z" fill="#e6b85c" stroke="#b8862f" stroke-width="2"/>
-<circle cx="120" cy="92" r="5" fill="#2fb5a8" stroke="#b8862f" stroke-width="2"/>
-<!-- Bıyık -->
-<path d="M120 148 Q106 140 96 150 Q92 156 98 158 Q104 150 120 154 Q136 150 142 158 Q148 156 144 150 Q134 140 120 148Z" fill="#2a1a12"/>
-<!-- İnce belli çay bardağı -->
-<g transform="translate(184 168)">
-  <ellipse cx="0" cy="30" rx="20" ry="5" fill="#e6b85c"/>
-  <path d="M-10 -10 Q-14 6 -5 12 Q-9 22 -8 28 H8 Q9 22 5 12 Q14 6 10 -10Z" fill="url(#tea)" stroke="#f3e8e8" stroke-width="2" opacity=".95"/>
-  <path d="M-4 -18 q4 -6 0 -12 M4 -18 q4 -6 0 -12" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/>
-</g>
+<ellipse cx="120" cy="230" rx="84" ry="7" fill="#000" opacity=".25"/>
+<path d="M56 178 Q40 208 38 234 H202 Q200 208 184 178Z" fill="url(#robe)"/>
+<path d="M120 184 V234" stroke="#e6c25a" stroke-width="2"/>
+<path d="M78 210 Q120 222 162 210" stroke="#e6c25a" stroke-width="5" fill="none"/>
+${logo(72, 92, 96, { look: [2, 0] })}
+<!-- Sarık: üst üste sarılmış renkli şeritler, tepede yumuşak külah -->
+<path d="M96 66 Q120 34 144 66Z" fill="#e8e0cc"/>
+${bands.map((c, i) => `<path d="M${74 + i * 2} ${104 - i * 9} Q120 ${86 - i * 9} ${166 - i * 2} ${104 - i * 9} L${164 - i * 2} ${94 - i * 9} Q120 ${76 - i * 9} ${76 + i * 2} ${94 - i * 9}Z" fill="${c}" stroke="#2a1a10" stroke-width="1"/>`).join('')}
+<path d="M80 100 Q100 70 150 64" stroke="#fff" stroke-width="2" fill="none" opacity=".35"/>
+<!-- Fener -->
+<circle cx="196" cy="176" r="36" fill="url(#lg2)"/>
+<path d="M196 132 V146" stroke="#c99a45" stroke-width="3"/>
+<path d="M184 146 H208 L204 152 H188Z M186 196 H206 L210 206 H182Z" fill="#c99a45"/>
+<path d="M188 152 H204 L206 196 H186Z" fill="#ffcf80" filter="url(#gl)"/>
+<path d="M193 152 V196 M199 152 V196" stroke="#8a6a2a" stroke-width="1.6"/>
 `);
 }
 
