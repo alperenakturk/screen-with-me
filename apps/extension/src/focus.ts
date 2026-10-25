@@ -58,7 +58,8 @@ export function biggestFrame(preferred: HTMLElement | null = null): HTMLElement 
   if (preferred?.isConnected) return preferred;
   let best: HTMLElement | null = null;
   let bestArea = 200 * 120;
-  for (const frame of document.querySelectorAll<HTMLElement>('iframe, frame')) {
+  // Odanın katmanı (data-swm-shell) en büyük çerçevedir ama oynatıcı değildir.
+  for (const frame of document.querySelectorAll<HTMLElement>('iframe:not([data-swm-shell]), frame')) {
     const r = frame.getBoundingClientRect();
     const area = r.width * r.height;
     if (area > bestArea && getComputedStyle(frame).visibility !== 'hidden') {

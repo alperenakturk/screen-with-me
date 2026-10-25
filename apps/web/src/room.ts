@@ -228,6 +228,17 @@ function showRate(select: HTMLSelectElement, rate: number): void {
   select.value = String(rate);
 }
 
+/** Aynı site ve yol mu (sorgu/parça farkı önemsiz)? Film oynarken adres sorgusu değişirse aynı sayfa sayılır. */
+function samePath(a: string, b: string): boolean {
+  try {
+    const x = new URL(a);
+    const y = new URL(b);
+    return x.origin === y.origin && x.pathname === y.pathname;
+  } catch {
+    return false;
+  }
+}
+
 function withAvatar(member: { name: string; avatar?: string }): string {
   return member.avatar ? `${avatarText(member.avatar)} ${member.name}` : member.name;
 }
@@ -926,7 +937,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       go.textContent = t('externalGoJoin');
       showError(() => t('extensionOutdated'));
     } else if (message.type === 'page' && isShell) {
-      const changed = shellPage === null || !samePage(shellPage, message.url);
+      // Sadece "odadaki sayfa bu mu" sonucu değiştiyse yeniden kur: film sitesi oynarken adresine sorgu/zaman
+      // eklese (replaceState) film kapanıp video durmasın.
+      const item = roomState?.item;
+      const was = shellPage !== null && item?.media.kind === 'page' && samePage(shellPage, item.media.url);
+      const now = item?.media.kind === 'page' && samePage(message.url, item.media.url);
+      const changed = shellPage === null || (was !== now && !(film !== null && samePath(message.url, shellPage)));
       shellPage = message.url;
       // Odadaki sayfa bu mu? Yeniden bak: film başlar ya da "Filme git" kartı çıkar.
       if (changed && roomState?.item?.media.kind === 'page') {

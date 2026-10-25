@@ -79,13 +79,14 @@ export const DRAWN_AVATARS = {
   driver: '🚗',
   captain: '⚓',
   conductor: '🚂',
+  speedster: '💨',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
 
 /**
- * Avatar sayfaları: 0) temalara ait karakterler, 1) hayvanlar (emoji), 2-4) parodiler
- * (sadece tarzı andırır, isim yok): film, dizi, anime. Sunucu bunların dışındakini kabul
+ * Avatar sayfaları: 0) temalara ait karakterler, 1) hayvanlar (emoji), 2-5) parodiler
+ * (sadece tarzı andırır, isim yok): film, dizi, anime, oyun. Sunucu bunların dışındakini kabul
  * etmez; yeni avatar eklemek eski istemcileri bozmaz (onlarda emoji yerine kimlik görünür).
  */
 export const AVATAR_PAGES = [
@@ -100,16 +101,17 @@ export const AVATAR_PAGES = [
     'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler',
   ],
   ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl'],
+  ['speedster'],
 ] as const;
 
 /**
- * Seçicideki sekmeler: Temalı, Hayvanlar, Parodi; Parodi'nin altında Film / Dizi / Anime.
+ * Seçicideki sekmeler: Temalı, Hayvanlar, Parodi; Parodi'nin altında Film / Dizi / Anime / Oyun.
  * Her sekme AVATAR_PAGES'teki sayfa numaralarını tutar.
  */
 export const AVATAR_TABS = [
   { key: 'theme', pages: [0] },
   { key: 'animals', pages: [1] },
-  { key: 'parody', pages: [2, 3, 4], subs: ['film', 'series', 'anime'] },
+  { key: 'parody', pages: [2, 3, 4, 5], subs: ['film', 'series', 'anime', 'game'] },
 ] as const;
 
 /** Avatarın bulunduğu sayfa (yoksa 0). */

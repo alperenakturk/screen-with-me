@@ -12,7 +12,6 @@ export const THEMES = [
   { id: 'okyanus', swatch: ['#0b2a45', '#2ec5e8'] },
   { id: 'gunbatimi', swatch: ['#3a1530', '#ff7a4d'] },
   { id: 'neon', swatch: ['#050508', '#ff2bd6'] },
-  { id: 'ortacag', swatch: ['#1a1430', '#d6a843'] },
   { id: 'lokum', swatch: ['#2a0e1e', '#f08cae'] },
   { id: 'binbirgece', swatch: ['#141236', '#e8c27a'] },
   { id: 'sinema', swatch: ['#0d1020', '#e9b949'] },
@@ -35,7 +34,7 @@ export function currentTheme(): ThemeId {
 
 /** Sahnesi (public/themes/<tema>.svg) olan temalar; diğerlerinin sadece maskotu var. */
 const SCENE_THEMES: readonly ThemeId[] = [
-  'ortacag', 'lokum', 'binbirgece',
+  'lokum', 'binbirgece',
   'sinema', 'opera', 'acikhava', 'gemi', 'tren',
 ];
 

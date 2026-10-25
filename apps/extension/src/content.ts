@@ -248,6 +248,7 @@ function openShell(roomId: string): void {
   shell?.remove();
   shell = document.createElement('iframe');
   shell.dataset.room = roomId;
+  shell.setAttribute('data-swm-shell', '');
   shell.src = chrome.runtime.getURL(`shell.html#${roomId}`);
   shell.allow = 'autoplay; clipboard-write';
   shell.setAttribute('aria-label', 'ScreenWithMe');
@@ -272,18 +273,20 @@ function openShell(roomId: string): void {
     .join(';');
   // <html>'e eklenir: odak modunda <body> gizlenir.
   document.documentElement.append(shell);
+  // Bazı siteler sayfaya eklenen yabancı öğeleri siler: katman kaybolursa geri koy.
+  reattachTimer ??= setInterval(() => {
+    if (shell && !shell.isConnected) document.documentElement.append(shell);
+  }, 2000);
   applyLayout();
 }
+let reattachTimer: ReturnType<typeof setInterval> | null = null;
 
 function removeShell(): void {
   shell?.remove();
   shell = null;
+  if (reattachTimer !== null) clearInterval(reattachTimer);
+  reattachTimer = null;
 }
-
-// Bazı siteler sayfaya eklenen yabancı öğeleri siler: katman kaybolursa geri koy.
-setInterval(() => {
-  if (shell && !shell.isConnected) document.documentElement.append(shell);
-}, 2000);
 
 /**
  * İç içe oynatıcı: video bir iç çerçevedeyse üstteki sayfalar "en büyük çerçeve"yi değil, videonun
@@ -313,6 +316,7 @@ function setLayout(next: ShellLayout | null, isActive: boolean): void {
   // Oda görünümündeyken film sitesinin tam ekranı odanınkine yönlenir (fullscreen-guard.ts bu işarete bakar).
   document.documentElement.toggleAttribute('data-swm-room', next?.mode === 'full');
   applyLayout();
+  watchLayout();
 }
 
 /** Katmanın boyutu/deliği ve videonun yeri (yerleşim, pencere boyutu ya da video değişince). */
@@ -344,10 +348,17 @@ function applyLayout(): void {
   }
 }
 addEventListener('resize', applyLayout);
-// Oynatıcılar kendini yeniden kurabilir: arada bir yeniden yerleştir.
-setInterval(() => {
-  if (layout?.mode === 'full') applyLayout();
-}, 1500);
+// Oynatıcılar kendini yeniden kurabilir: oda görünümündeyken arada bir yeniden yerleştir
+// (oda yokken zamanlayıcı çalışmaz: "odada değilken hiçbir şey yapmaz").
+let layoutTimer: ReturnType<typeof setInterval> | null = null;
+function watchLayout(): void {
+  const on = layout?.mode === 'full';
+  if (on && layoutTimer === null) layoutTimer = setInterval(applyLayout, 1500);
+  if (!on && layoutTimer !== null) {
+    clearInterval(layoutTimer);
+    layoutTimer = null;
+  }
+}
 
 // Bizim ⛶ (sayfanın tamamı tam ekran): bitince/başlayınca site bilsin (Esc ile çıkılabilir).
 // Film sitesinin tam ekranı (oynatıcının kendi düğmesi ya da videonun yerleşik düğmesi) sadece videoyu
@@ -412,8 +423,9 @@ function onMessage(message: BackgroundMessage): void {
       else if (!message.on && document.fullscreenElement) void document.exitFullscreen().catch(() => {});
       break;
     case 'deactivate':
-      // Odada artık bu video yok (ya da başka çerçeve seçildi): motor durur, video burada kendiliğinden durur.
-      best?.pause();
+      // Odada artık bu film yok: video burada kendiliğinden durur (odaya bir şey gitmez). Sadece başka
+      // çerçeve seçildiyse durdurulmaz (ör. kısa süre büyük bir reklam videosu çıktı).
+      if (message.pause) best?.pause();
       deactivate();
       break;
     case 'idle':

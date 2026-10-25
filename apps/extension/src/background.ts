@@ -53,6 +53,8 @@ interface Shell {
   layout: ShellLayout;
   /** Siteye en son "video var/yok" diye ne söylendi. */
   videoSent: boolean | null;
+  /** Film sitesinin alan adı (ör. ornek.com): sekme başka bir siteye giderse katman kalkar. */
+  site: string;
 }
 
 const BAR: ShellLayout = { mode: 'bar', height: 56 };
@@ -61,24 +63,33 @@ const BAR: ShellLayout = { mode: 'bar', height: 56 };
 const frames = new Map<number, Map<number, Frame>>();
 const shells = new Map<number, Shell>();
 
-function newShell(tabId: number, roomId: string): Shell {
-  return { tabId, roomId, port: null, state: null, offset: 0, synced: false, activeFrame: null, activated: false, layout: BAR, videoSent: null };
+function newShell(tabId: number, roomId: string, site: string): Shell {
+  return { tabId, roomId, port: null, state: null, offset: 0, synced: false, activeFrame: null, activated: false, layout: BAR, videoSent: null, site };
+}
+
+/** Adresin "sitesi": alan adının son iki parçası (www.ornek.com ve izle.ornek.com aynı site). */
+function siteOf(url: string): string {
+  try {
+    return new URL(url).hostname.split('.').slice(-2).join('.');
+  } catch {
+    return '';
+  }
 }
 
 // ---- Kalıcılık ----
 
 async function persist(): Promise<void> {
-  const saved = [...shells.values()].map(({ tabId, roomId }) => ({ tabId, roomId }));
+  const saved = [...shells.values()].map(({ tabId, roomId, site }) => ({ tabId, roomId, site }));
   await chrome.storage.session.set({ [SESSIONS_KEY]: saved });
 }
 
 async function restore(): Promise<void> {
   const { [SESSIONS_KEY]: saved } = await chrome.storage.session.get(SESSIONS_KEY);
   if (!Array.isArray(saved)) return;
-  for (const entry of saved as { tabId?: unknown; roomId?: unknown }[]) {
+  for (const entry of saved as { tabId?: unknown; roomId?: unknown; site?: unknown }[]) {
     if (typeof entry.tabId !== 'number' || typeof entry.roomId !== 'string') continue;
     const tab = await chrome.tabs.get(entry.tabId).catch(() => null);
-    if (tab) shells.set(entry.tabId, newShell(entry.tabId, entry.roomId));
+    if (tab) shells.set(entry.tabId, newShell(entry.tabId, entry.roomId, typeof entry.site === 'string' ? entry.site : siteOf(tab.url ?? '')));
   }
   if (shells.size !== saved.length) await persist();
 }
@@ -268,7 +279,7 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
       } else if (request.type === 'detach') {
         // Odada başka bir şey açıldı: film sayfasındaki motor durur, video orada durur.
         shell.state = null;
-        post(activePort(shell), { type: 'deactivate' });
+        post(activePort(shell), { type: 'deactivate', pause: true });
         shell.activated = false;
       }
       break;
@@ -290,6 +301,9 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
       if (url.protocol !== 'https:' && url.protocol !== 'http:') break;
       // Sitedeki odaya dönülüyorsa katman kalkar (site kendi sayfasında devralır).
       if (url.origin === SITE_ORIGIN) endShell(shell.tabId);
+      // Odadaki başka bir film sayfası (başka bir site olabilir): katman oraya da gelsin.
+      else shell.site = siteOf(url.href);
+      void persist();
       await chrome.tabs.update(shell.tabId, { url: url.href }).catch(() => {});
       break;
     }
@@ -348,7 +362,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   const roomId = go.roomId;
   void (async () => {
     await ready;
-    shells.set(tabId, newShell(tabId, roomId));
+    shells.set(tabId, newShell(tabId, roomId, siteOf(url.href)));
     // Çerçeveler bağlanmadan önce "oda var" yazılmış olsun.
     await persist();
     sendResponse({ ok: true });
@@ -372,6 +386,11 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
   if (!shell) return;
   // Sekme sitemize döndüyse (🏠, geri tuşu): katman kalkar, site kendi sayfasında devralır.
   if (info.url && originOf(info.url) === SITE_ORIGIN) {
+    endShell(tabId);
+    return;
+  }
+  // Kullanıcı film sitesinden başka bir siteye gitti (adres çubuğu, dış link): katman orada açılmasın.
+  if (info.url && /^https?:/.test(info.url) && shell.site && siteOf(info.url) !== shell.site) {
     endShell(tabId);
     return;
   }

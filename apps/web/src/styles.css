@@ -83,28 +83,6 @@
                (.theme-mascot, public/themes/<tema>-maskot.svg)
    Resimler scripts/theme-art.mjs ile üretilir. Kartlar yarı saydam; sahne arkadan görünür.
    Dışarıdan dosya ya da font yüklenmez. ---- */
-:root[data-theme='ortacag'] {
-  --bg: #120e1e;
-  --surface: rgb(30 22 18 / 0.86);
-  --surface-2: rgb(44 32 24 / 0.92);
-  --border: #5a4426;
-  --text: #f3e6c9;
-  --muted: #bba57f;
-  --accent: #d6a843;
-  --accent-hover: #ecc261;
-  --on-accent: #1c1206;
-  --danger: #e2603e;
-  --radius: 6px;
-  --art:
-    radial-gradient(ellipse at 50% 45%, transparent 40%, rgb(0 0 0 / 0.5)),
-    radial-gradient(ellipse 60% 50% at 82% 12%, rgb(255 238 180 / 0.12), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 10% 60%, rgb(155 123 255 / 0.12), transparent 70%),
-    linear-gradient(#1a1430, #120e1e 60%, #0d0a16);
-  --art-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  --scene: url('/themes/ortacag.svg');
-  --mascot: url('/themes/ortacag-maskot.svg');
-}
-
 /* Mehtaplı Geceler (eski adı Lokum): gül kurusu, altın ve İznik turkuazı; hafif İznik çini deseni. */
 :root[data-theme='lokum'] {
   --bg: #1c0a14;

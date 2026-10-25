@@ -2,11 +2,16 @@
 // oynatma izni sadece o çerçevedeki bir tıklamayla alınabilir (sitedeki düğme işe yaramaz).
 // Sitenin CSS'inden etkilenmesin diye kapalı shadow DOM.
 
-import { t } from './i18n.ts';
+import { langReady, t } from './i18n.ts';
 
 let host: HTMLElement | null = null;
 
 export function askToStart(video: HTMLVideoElement | null, onStart: () => void): void {
+  // Dil eklentinin deposundan geliyor: yüklenmeden metin yazılırsa İngilizce kullanıcı Türkçe görürdü.
+  void langReady.then(() => render(video, onStart));
+}
+
+function render(video: HTMLVideoElement | null, onStart: () => void): void {
   host?.remove();
   host = document.createElement('swm-start');
   const shadow = host.attachShadow({ mode: 'closed' });
