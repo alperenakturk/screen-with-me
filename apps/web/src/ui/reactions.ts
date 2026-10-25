@@ -5,10 +5,10 @@ import { t, type I18nKey } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 
-/** Ekranda aynı anda en fazla bu kadar tepki kartı. */
-const MAX_CARDS = 5;
-/** Kart ekranda bu kadar kalır (aynı kişi aynı tepkiyi yinelerse süre yenilenir). */
-const CARD_MS = 3200;
+/** Ekranda aynı anda en fazla bu kadar uçuşan tepki. */
+const MAX_FLOATS = 12;
+/** Uçuşma süresi (CSS r-float ile aynı); animasyon olayı gelmezse bu sürede silinir. */
+const FLOAT_MS = 3000;
 /** Bir tepkiden sonra butonlar kısa süre bekler: art arda basıp ekranı doldurmasın. */
 const COOLDOWN_MS = 1100;
 /** Kendi özel emojilerim (tarayıcıda saklanır, girdiğim her odaya yüklenir). */
@@ -19,9 +19,9 @@ type Item = { emoji: string } | { sticker: string } | { add: true };
 
 /**
  * Tepkiler. Alttaki çubuk: üç emoji sayfası + özel emoji (GIF/resim) sayfaları; ▲▼ ya da
- * tekerlek sayfa değiştirir, 1–8 tuşları o sayfanın öğeleri. Gelen tepkiler ekranın ortasında
- * uçuşmaz: videonun sol altında avatar + isim + emoji kartı olarak kısa süre durur; aynı kişinin
- * aynı tepkisi yeni kart açmaz, "×2" olur.
+ * tekerlek sayfa değiştirir, 1–8 tuşları o sayfanın öğeleri. Gelen tepkiler videonun altından
+ * yükselip kaybolur (altında küçük avatar + isim); aynı kişinin hâlâ uçuşan aynı tepkisi yenisini
+ * açmaz, "×2" olur.
  */
 /** Emoji çubuğunda her sayfada kaç yuva var (1–8 tuşları). */
 const SLOTS = 8;
@@ -150,7 +150,7 @@ export function createReactions(
   });
 
   return {
-    /** Gelen tepki: sol altta avatar + isim + emoji/özel emoji kartı. */
+    /** Gelen tepki: videonun altından rastgele bir yerden yükselir. */
     show(by: Member, emoji?: string, sticker?: string): void {
       const key = `${by.id}|${emoji ?? sticker}`;
       const existing = layer.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
@@ -161,7 +161,6 @@ export function createReactions(
         existing.classList.remove('bump');
         void existing.offsetWidth;
         existing.classList.add('bump');
-        restart(existing);
         return;
       }
       let content: HTMLElement;
@@ -172,10 +171,16 @@ export function createReactions(
       } else {
         content = el('span', { class: 'r-emoji' }, emoji ?? '');
       }
-      while (layer.childElementCount >= MAX_CARDS) layer.firstElementChild?.remove();
-      const card = el('div', { class: 'r-card', 'data-key': key, 'data-count': '1' }, avatarNode(by.avatar, 'r-avatar'), el('span', { class: 'r-name' }, by.name), content, el('span', { class: 'r-count' }));
-      layer.append(card);
-      restart(card);
+      while (layer.childElementCount >= MAX_FLOATS) layer.firstElementChild?.remove();
+      const who = el('span', { class: 'r-who' }, avatarNode(by.avatar, 'r-avatar'), el('span', { class: 'r-name' }, by.name), el('span', { class: 'r-count' }));
+      const float = el('div', { class: 'r-float', 'data-key': key, 'data-count': '1' }, content, who);
+      float.style.left = `${6 + Math.random() * 78}%`;
+      float.style.setProperty('--drift', `${Math.round((Math.random() - 0.5) * 70)}px`);
+      float.addEventListener('animationend', (event) => {
+        if (event.target === float) float.remove();
+      });
+      setTimeout(() => float.remove(), FLOAT_MS + 200);
+      layer.append(float);
     },
     /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir). */
     addSticker(sticker: Sticker): void {
@@ -205,17 +210,6 @@ export function createReactions(
       draw();
     },
   };
-}
-
-function restart(card: HTMLElement): void {
-  const old = Number(card.dataset.timer ?? '0');
-  if (old) clearTimeout(old);
-  const timer = window.setTimeout(() => {
-    card.classList.add('leaving');
-    card.addEventListener('animationend', () => card.remove(), { once: true });
-    setTimeout(() => card.remove(), 600);
-  }, CARD_MS);
-  card.dataset.timer = String(timer);
 }
 
 function myStickers(): string[] {

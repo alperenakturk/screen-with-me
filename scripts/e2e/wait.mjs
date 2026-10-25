@@ -23,11 +23,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const a = client({ name: 'Ali', cid: 'waitAli000001' });
 const wa = await a.wait((m) => m.t === 'welcome', 'welcome a');
 ok(wa.settings?.waitForAll === true && Array.isArray(wa.waiting), 'Bekleme varsayılan olarak açık');
+
+// Tek kişiyken bekleme yok: kişi kendi yüklemesi yüzünden odayı kendine durdurmaz.
+a.send({ t: 'enqueue', media: { kind: 'youtube', id: 'aqz-KE-bpKQ' } });
+await a.wait((m) => m.t === 'state' && m.action === 'load', 'load alone');
+a.send({ t: 'ready', ready: false });
+await sleep(800);
+ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Tek kişiyken takılınca oda durmuyor');
+a.send({ t: 'ready', ready: true });
+
 const b = client({ name: 'Ayse', cid: 'waitAyse00001' });
 const wb = await b.wait((m) => m.t === 'welcome', 'welcome b');
 
-a.send({ t: 'enqueue', media: { kind: 'youtube', id: 'aqz-KE-bpKQ' } });
-await b.wait((m) => m.t === 'state' && m.action === 'load', 'load');
+// Filmden odaya dönüş haberi: gönderen hariç herkese gider.
+a.inbox.length = 0;
+b.send({ t: 'home' });
+const home = await a.wait((m) => m.t === 'home', 'home');
+await sleep(300);
+ok(home.by.name === 'Ayse' && !b.inbox.some((m) => m.t === 'home'), 'Ayşe odaya dönünce Ali haber aldı, Ayşe almadı');
 
 b.send({ t: 'ready', ready: false });
 const p = await a.wait((m) => m.t === 'state' && m.by.id === 'system', 'auto pause');

@@ -1909,50 +1909,66 @@ button.nav-link {
 }
 
 /* ---- Uçuşan emojiler ---- */
-/* Gelen tepkiler: sol altta avatar + isim + emoji kartları (ortada uçuşup dikkat dağıtmasın) */
+/* Gelen tepkiler videonun altından yükselip kaybolur; altında küçük avatar + isim. Aynı kişinin art arda aynı
+   tepkisi yeni emoji açmaz, yükselen emojide "×2" olur. Ayarlardan kapatılabilir. */
 .reactions-layer {
   position: absolute;
-  left: 12px;
-  bottom: 64px;
+  inset: 0;
   z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.r-float {
+  position: absolute;
+  bottom: 10%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  pointer-events: none;
-  max-width: calc(100% - 24px);
-}
-
-.r-card {
-  display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 10px 4px 4px;
-  border-radius: 999px;
-  background: rgb(10 10 18 / 0.72);
-  border: 1px solid rgb(255 255 255 / 0.12);
+  gap: 3px;
   color: #fff;
-  font-size: 13px;
-  backdrop-filter: blur(6px);
-  animation: r-in 0.25s ease-out;
+  animation: r-float 3s ease-out forwards;
 }
 
-.r-card.leaving {
-  animation: r-out 0.35s ease-in forwards;
-}
-
-.r-card.bump .r-emoji,
-.r-card.bump .r-sticker {
+.r-float.bump .r-emoji,
+.r-float.bump .r-sticker {
   animation: r-bump 0.3s ease;
 }
 
+.r-emoji {
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.5));
+}
+
+.r-sticker {
+  height: 64px;
+  max-width: 110px;
+  object-fit: contain;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.5));
+}
+
+.r-who {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 1px 2px;
+  border-radius: 999px;
+  background: rgb(10 10 18 / 0.6);
+  backdrop-filter: blur(4px);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .r-avatar {
-  width: 26px;
-  height: 26px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: 13px;
   overflow: hidden;
   flex: none;
 }
@@ -1963,23 +1979,9 @@ button.nav-link {
 }
 
 .r-name {
-  font-weight: 600;
-  max-width: 120px;
+  max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.r-emoji {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.r-sticker {
-  height: 36px;
-  max-width: 72px;
-  object-fit: contain;
-  border-radius: 6px;
 }
 
 .r-count {
@@ -1991,15 +1993,26 @@ button.nav-link {
   display: none;
 }
 
-@keyframes r-in {
-  from {
+@keyframes r-float {
+  0% {
+    transform: translate(0, 24px) scale(0.6);
     opacity: 0;
-    transform: translateX(-16px);
+  }
+  10% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift, 0px), -240px) scale(1);
+    opacity: 0;
   }
 }
 
-@keyframes r-out {
-  to {
+@keyframes r-in {
+  from {
     opacity: 0;
     transform: translateX(-16px);
   }
@@ -2009,6 +2022,38 @@ button.nav-link {
   50% {
     transform: scale(1.35);
   }
+}
+
+/* Film sayfasında: biri odaya döndü, "sen de dön" kartı (videonun üstünde, tıklanabilir) */
+.home-ask {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 14px;
+  border-radius: 999px;
+  background: rgb(10 10 18 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  max-width: calc(100% - 28px);
+  animation: r-in 0.25s ease-out;
+}
+
+.home-ask > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-ask .btn {
+  flex: none;
 }
 
 /* Tepkiden sonraki kısa bekleme: butonlar soluklaşır */
@@ -2031,10 +2076,19 @@ button.nav-link {
   border-style: dashed;
 }
 
+@keyframes r-fade {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .r-card,
-  .r-card.leaving {
-    animation: none;
+  .r-float {
+    animation: r-fade 3s ease forwards;
   }
 }
 

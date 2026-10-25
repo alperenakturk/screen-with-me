@@ -51,7 +51,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.55)
+## Şu an neler var? (0.9.56)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
@@ -59,15 +59,18 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 - YouTube ve doğrudan video dosyası sitede; diğer her sayfa eklentiyle.
 - **Film sayfasında oda (kabuk):** sekme film sitesine gider; eklenti sitenin oda sayfasını tam ekran katman
   olarak üstüne açar, videonun yerine delik açar, film oynatıcısı tam oraya oturur. Arayüz sitenin birebir
-  aynısı (sohbet, sıra, kişiler, ayarlar, avatar/tema, özet). Video bulunana kadar üstte ince şerit. Gömmeyi
-  yasaklayan sitelerde de çalışır. Ayarlar site ile katman arasında eklenti üzerinden ortak.
+  aynısı (sohbet, sıra, kişiler, ayarlar, avatar/tema, özet). Oda görünümü video başlamadan gelir (oynatıcının
+  olası yeri deliğe oturur); deliğin içindeki mesajlar videonun üstünde yarı saydam. Gömmeyi yasaklayan
+  sitelerde de çalışır. Biri odaya dönünce filmdekilere "sen de dön?" sorulur. Ayarlar site ile katman arasında eklenti üzerinden ortak.
 - Hız 0,25x–4x (YouTube en fazla 2x), ±0,05 ince ayar; eklentide hız kilidi.
-- Senkron testi (sitenin çizdiği sayaç + "aynı yerdesiniz" rozeti), "Herkesi bana eşitle".
+- Senkron testi (sitenin çizdiği sayaç + "aynı yerdesiniz" rozeti), "Herkesi bana eşitle" (tek kişiyken kapalı;
+  "herkes hazır" beklemesi de tek kişiyken olmaz).
 - Dikkat dağıtmayan tam ekran (kontroller, emojiler, pin şeridi, hızlı mesaj).
 
 **Oda**
 - Sıra, oylama (en çok oy alan önce), otomatik devam (kapatılırsa "Sıradakini başlat").
-- Sohbet (oda hareketleri varsayılan gizli), 3 emoji sayfası, sol altta avatarlı tepki kartları.
+- Sohbet (oda hareketleri varsayılan gizli), 3 emoji sayfası, videonun altından yükselen emojiler (avatar + isim;
+  ayarlardan kapatılabilir).
 - Özel emojiler (kendi GIF / resmin; odada en fazla 24).
 - Pinler (notlu; video altında ve tam ekranda şerit).
 - Klavye: 1–8 emoji, Enter mesaj, P pin.
@@ -91,7 +94,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   sürüklenen mesaj tutamağı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
 
 **Geliştirme**
-- 126 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
+- 123 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
 - `main`'e gelen her değişiklik testlerden sonra GitHub Actions ile Cloudflare'e yüklenir
   ve canlı sunucuya karşı uçtan uca testler koşar (bkz. CLAUDE.md "Yayın").
 
@@ -117,6 +120,9 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
 - **Mehtaplı Geceler yenilendi (Ekim 2026):** yağlı boya havasında teras: çini pano, mermer sütun, kandil, ay ışığında
   Boğaz, karşı kıyıda saray ve camiler, fenerli kayıklar; yeni maskot (renkli sarık, kırmızı entari, fener).
+- **v0.9.56:** Film sayfasında oda görünümü video başlamadan gelir (ince şerit kalktı), oynatıcının yeri otomatik
+  bulunur; altyazılar kesilmiyor; mesajlar video üstünde yarı saydam; emojiler yine alttan uçuşuyor (yan kartlar
+  kalktı); tek kişiyken senkron düğmeleri ve bekleme kapalı; biri odaya dönünce filmdekilere "sen de dön?" kartı.
 - **v0.9.55:** Parodi avatarlarına Oyun kategorisi (ilk: hızlı mavi kirpi), Fantastik orta çağ teması kaldırıldı;
   film sayfası düzeltmeleri (sayfa adresi değişince video durmuyor, katman başka sitelere taşınmıyor, katman
   oynatıcı sanılmıyor), eski eklentinin "herkes dönmeden yeni video yok" kuralı kaldırıldı.
@@ -245,6 +251,13 @@ Açmadan önce:
 - [ ] **Senkron ölçümü ve rozet:** p50/p95 fark, README'de grafik.
 - [ ] **Büyüme:** repoyu açmak (yukarıda "Repoyu herkese açma"), lansman planı (`docs/BUYUME.md`), bağış (yukarıda).
 - [ ] **Daha fazla dil.**
+- [ ] **Gelecek fikirleri (Ekim 2026, kullanıcıdan; ayrıntılı değerlendirme `docs/gelecek-fikirler.md`):**
+  - [ ] Reels / Shorts birlikte (kısa dikey videolar, sırayla kaydırma).
+  - [ ] Sitenin içinde YouTube araması (link yapıştırmadan video seç).
+  - [ ] Görüntülü + sesli sohbet (yukarıdaki sesli sohbetin devamı).
+  - [ ] Beklerken mini oyunlar (biri gelene / video yüklenene kadar).
+  - [ ] Netflix tarzı servisler (yukarıda "Büyük servisler").
+  - [ ] Telefon sürümü (yukarıda PWA / Firefox Android).
 - [x] ~~Oda kaydetme~~ (v0.9.48–0.9.49), ~~sitenin içinde film~~ (v0.9.48, artık hep açık),
   ~~izleme sonu paylaşım kartı~~ (v0.9.49'da oturum özeti olarak).
 
