@@ -73,6 +73,12 @@ _Kural: herkese açık hiçbir metinde belirli film/dizi/korsan site adı geçme
 8. Discord botu / Activity: `/watch` → oda linki.
 9. Büyük servisler (Netflix, Prime Video, Disney+…) siteye özel destekle; plan `docs/VIZYON.md`.
 
+**Gelecek fikirleri değerlendirmesi (Ekim 2026):** Reels/Shorts birlikte izleme, YouTube araması, sesli/görüntülü
+sohbet, mini oyunlar, büyük servisler ve telefon dört açıdan (mümkünlük, uyum, efor/emsal, farklılaşma/CV)
+incelendi: [gelecek-fikirler.md](gelecek-fikirler.md). Özet sıra (hepsi 1.0'dan sonra): YouTube araması + dikey
+Shorts → telefondan katılım (PWA + ikinci ekran) → tek büyük servis → bas-konuş ses → Instagram (istek gelirse) →
+oyun yerine "Mola" düğmesi.
+
 ## Gelir: bağış
 
 Ücretli katman yok. 1.0 ve ilk gerçek kullanıcılardan sonra bağış linki (GitHub Sponsors / Patreon vb.);
