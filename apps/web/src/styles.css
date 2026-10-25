@@ -83,24 +83,23 @@
                (.theme-mascot, public/themes/<tema>-maskot.svg)
    Resimler scripts/theme-art.mjs ile üretilir. Kartlar yarı saydam; sahne arkadan görünür.
    Dışarıdan dosya ya da font yüklenmez. ---- */
-/* Mehtaplı Geceler (eski adı Lokum): gül kurusu, altın ve İznik turkuazı; hafif İznik çini deseni. */
+/* Mehtaplı Geceler (kimlik: lokum): ay ışığında gece mavisi, kandil altını, çini turkuazı. */
 :root[data-theme='lokum'] {
-  --bg: #1c0a14;
-  --surface: rgb(42 16 30 / 0.86);
-  --surface-2: rgb(60 24 42 / 0.92);
-  --border: #6e3550;
-  --text: #fbeaf0;
-  --muted: #d1a3b5;
-  --accent: #f08cae;
-  --accent-hover: #f7aec7;
-  --on-accent: #2a0a18;
-  --ok: #3cc6b8;
-  --radius: 10px;
-  --art:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgb(240 140 174 / 0.16), transparent 70%),
-    radial-gradient(ellipse at 50% 50%, transparent 45%, rgb(0 0 0 / 0.45)),
-    linear-gradient(#2a0e1e, #1c0a14 55%, #12060d);
-  --art-size: 100% 100%, 100% 100%, 100% 100%;
+  --bg: #0c1028;
+  --surface: rgb(20 22 44 / 0.86);
+  --surface-2: rgb(34 34 64 / 0.92);
+  --border: #4a4670;
+  --text: #f6eedf;
+  --muted: #bdb4c8;
+  --accent: #e0a84a;
+  --accent-hover: #f0bd66;
+  --on-accent: #1e1206;
+  --danger: #d8442e;
+  --ok: #2fa6b0;
+  --radius: 8px;
+  /* Sahne yüklenene kadar aynı gökyüzü renkleri */
+  --art: linear-gradient(#090e24, #18224a 55%, #0c1028);
+  --art-size: 100% 100%;
   --scene: url('/themes/lokum.svg');
   --mascot: url('/themes/lokum-maskot.svg');
 }

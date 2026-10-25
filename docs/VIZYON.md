@@ -115,6 +115,8 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   altında emojiler, pin, eşitle, hız, tam ekran); küçük çubuk ve rehber kartı kaldırıldı; video bulunmadan "Filmi
   başlat" kartı (oynatıcıyı okla gösterir); tam ekranda sitedeki gibi kontroller ve sürüklenen mesaj tutamağı; iç
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
+- **Mehtaplı Geceler yenilendi (Ekim 2026):** yağlı boya havasında teras: çini pano, mermer sütun, kandil, ay ışığında
+  Boğaz, karşı kıyıda saray ve camiler, fenerli kayıklar; yeni maskot (renkli sarık, kırmızı entari, fener).
 - **v0.9.55:** Parodi avatarlarına Oyun kategorisi (ilk: hızlı mavi kirpi), Fantastik orta çağ teması kaldırıldı;
   film sayfası düzeltmeleri (sayfa adresi değişince video durmuyor, katman başka sitelere taşınmıyor, katman
   oynatıcı sanılmıyor), eski eklentinin "herkes dönmeden yeni video yok" kuralı kaldırıldı.
