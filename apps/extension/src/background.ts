@@ -57,14 +57,15 @@ interface Shell {
   site: string;
 }
 
-const BAR: ShellLayout = { mode: 'bar', height: 56 };
+// Katman açılır açılmaz sayfanın tamamını kaplar (oda görünümü hemen gelsin); site deliği sonra bildirir.
+const START: ShellLayout = { mode: 'open' };
 
 /** Sekme → çerçeve → bağlantı ve video puanı. */
 const frames = new Map<number, Map<number, Frame>>();
 const shells = new Map<number, Shell>();
 
 function newShell(tabId: number, roomId: string, site: string): Shell {
-  return { tabId, roomId, port: null, state: null, offset: 0, synced: false, activeFrame: null, activated: false, layout: BAR, videoSent: null, site };
+  return { tabId, roomId, port: null, state: null, offset: 0, synced: false, activeFrame: null, activated: false, layout: START, videoSent: null, site };
 }
 
 /** Adresin "sitesi": alan adının son iki parçası (www.ornek.com ve izle.ornek.com aynı site). */
@@ -238,8 +239,8 @@ chrome.runtime.onConnect.addListener((port) => {
     const tabFrames = frames.get(tabId);
     if (tabFrames?.get(frameId)?.port === port) tabFrames.delete(frameId);
     const shell = shells.get(tabId);
-    // Üst çerçeve gitti (sayfa değişti): yeni sayfada katman yine şeritle başlar, video baştan aranır.
-    if (shell && frameId === 0) shell.layout = BAR;
+    // Üst çerçeve gitti (sayfa değişti): yeni sayfada katman yine tam ekran başlar, video baştan aranır.
+    if (shell && frameId === 0) shell.layout = START;
     if (shell && shell.activeFrame === frameId) {
       shell.activeFrame = null;
       chooseActive(shell);

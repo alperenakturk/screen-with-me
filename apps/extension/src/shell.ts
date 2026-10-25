@@ -82,6 +82,8 @@ addEventListener('message', (event: MessageEvent) => {
       }
       break;
     case 'shell-ready':
+      // Site çizildi: yüklenirken film sayfasını örten zemin kalkar (deliğin içindeki mesajlar saydam görünsün).
+      document.documentElement.classList.add('ready');
       for (const message of [latest.page, latest.video, latest.fullscreen]) if (message) toSite(message);
       break;
     case 'store-push':

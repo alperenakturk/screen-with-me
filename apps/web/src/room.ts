@@ -3,8 +3,7 @@ import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { isRelayable } from '@swm/shared/embed';
 import { parseMediaInput, samePage } from '@swm/shared/media';
-import type { Rect, ShellLayout } from '@swm/shared/shell';
-import { createLogo } from '@swm/shared/logo';
+import { holePath, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
   CLIENT_ID,
@@ -251,13 +250,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   app.innerHTML = `
     <div class="room">
-      <div class="shell-strip" id="shell-strip">
-        <span class="logo strip-logo" aria-hidden="true"></span>
-        <b class="strip-brand">ScreenWithMe</b>
-        <span id="strip-room" class="strip-room"></span>
-        <span class="strip-hint" data-i18n="shellStripHint"></span>
-        <button id="strip-home" type="button" class="btn small-btn">🏠 <span data-i18n="shellBack"></span></button>
-      </div>
       <div class="stage">
         <form id="media-form" class="media-form">
           <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
@@ -798,9 +790,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Film (kabuk): film kendi sekmesinde oynar, video bu katmanın deliğinde ----
   /** Film sayfasındaki video (kabukta, odadaki sayfa açık sekmenin sayfasıysa). */
   let film: ShellPlayer | null = null;
-  /** Kabukta: film sekmesinin adresi ve orada senkronlanacak video bulundu mu. */
+  /** Kabukta: film sekmesinin adresi. */
   let shellPage: string | null = null;
-  let videoFound = false;
 
   /** Oynatıcı alanındaki videoyu/sayfayı kapatır. */
   function closeCurrent(): void {
@@ -848,16 +839,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   setInterval(() => film?.setClock(clock.now() - Date.now(), clock.synced), 2000);
 
   // ---- Kabuk yerleşimi: katmanın hâli ve videonun deliği eklentiye bildirilir ----
-  const STRIP_HEIGHT = 56;
   let sentLayout = '';
   function reportLayout(): void {
     if (!isShell) return;
-    // Video bulunana kadar üstte ince şerit (film sayfası görünür, oynat'a basılsın); bulununca oda görünümü.
-    const mode = film === null ? 'open' : videoFound ? 'full' : 'bar';
-    document.documentElement.classList.toggle('shell-bar', mode === 'bar');
+    // Film sayfasında oda görünümü hemen gelir: video henüz başlamadıysa eklenti oynatıcının olası yerini
+    // deliğe oturtur, kullanıcı ▶'a deliğin içinden basar.
     let layout: ShellLayout;
-    if (mode === 'open') layout = { mode: 'open' };
-    else if (mode === 'bar') layout = { mode: 'bar', height: STRIP_HEIGHT };
+    if (film === null) layout = { mode: 'open' };
     else {
       const wrap = $('.player-wrap');
       const box = wrap.getBoundingClientRect();
@@ -876,10 +864,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         }
       }
       const hole = { x: Math.round(box.left), y: Math.round(box.top), w: Math.round(box.width), h: Math.round(box.height) };
+      // Sitenin zeminleri deliği boyamasın (styles.css "shell-film"): yollar ekran ve sahne kartına göre.
+      const root = document.documentElement;
+      root.style.setProperty('--hole-cut', holePath(innerWidth, innerHeight, hole, []));
+      const card = $('#theater').getBoundingClientRect();
+      root.style.setProperty('--theater-cut', holePath(card.width, card.height, { ...hole, x: hole.x - card.left, y: hole.y - card.top }, []));
       // Sitenin bir penceresi açıksa (avatar, tema, özet, onay) delik tamamen kapanır: pencere videonun önünde görünsün.
       const modal = document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open]') !== null;
       layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12) };
     }
+    document.documentElement.classList.toggle('shell-film', layout.mode === 'full');
     const json = JSON.stringify(layout);
     if (json === sentLayout) return;
     sentLayout = json;
@@ -949,9 +943,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         currentItemId = null;
         void applyState(roomState);
       }
-    } else if (message.type === 'video' && isShell) {
-      videoFound = message.found;
-      reportLayout();
     } else if (message.type === 'fullscreen' && isShell) {
       fullscreen.syncShell(message.on);
     }
@@ -986,8 +977,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (tabs.active === 'queue') tabs.show('chat');
     // Sitenin pencereleri (avatar, tema, özet, onay) açılınca da bildirilsin: videonun arkasında kalmasınlar.
     new MutationObserver(() => reportLayout()).observe(document.body, { childList: true });
-    $('#strip-home').addEventListener('click', goHome);
-    $('.strip-logo').append(createLogo(document));
     const homeButton = el('button', { type: 'button', class: 'nav-link shell-home' }, `🏠 ${t('shellBack')}`);
     homeButton.addEventListener('click', goHome);
     document.querySelector('.topbar-right')?.prepend(homeButton);
@@ -1246,7 +1235,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function renderSaved(host: boolean): void {
     const saved = roomSettings.saved === true;
     const name = roomSettings.name ?? '';
-    $('#strip-room').textContent = name || roomId;
     $('#save-status').textContent = saved ? t('savedStatus', { name: name || roomId }) : t('notSavedStatus');
     $('#save-form').hidden = !host;
     $('#save-off').hidden = !host || !saved;

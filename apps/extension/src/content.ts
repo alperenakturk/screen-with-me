@@ -258,7 +258,7 @@ function openShell(roomId: string): void {
     'top:0',
     'left:0',
     'width:100vw',
-    'height:56px',
+    'height:100vh',
     'border:0',
     'margin:0',
     'padding:0',

@@ -15,7 +15,7 @@ html.swm-focus [${MARK}] { position: fixed !important;
   width: calc(100vw - var(--swm-left, 0px) - var(--swm-right, 0px)) !important;
   height: calc(100vh - var(--swm-top, 0px) - var(--swm-bottom, 0px)) !important;
   max-width: none !important; max-height: none !important; min-width: 0 !important; min-height: 0 !important; margin: 0 !important;
-  padding: 0 !important; border: 0 !important; border-radius: var(--swm-radius, 0px) !important; overflow: hidden !important;
+  padding: 0 !important; border: 0 !important; border-radius: var(--swm-radius, 0px) !important;
   transform: none !important; z-index: 2147483646 !important; background: #000 !important; }
 html.swm-focus [${MARK}] video { object-fit: contain !important; }
 html.swm-focus video[${MARK}] { object-fit: contain !important; }
@@ -70,7 +70,43 @@ export function biggestFrame(preferred: HTMLElement | null = null): HTMLElement 
   return best;
 }
 
+/**
+ * Video henüz bulunmadan oynatıcının olası yeri (oda görünümü hemen gelsin, kullanıcı ▶'a deliğin içinden
+ * bassın): videolu çerçeve kendini bildirdiyse o; yoksa en büyük video, en büyük çerçeve, o da yoksa
+ * oynatıcıya benzeyen kutu (çoğu sitede oynat'a basmadan önce kapak resmi + ▶ olan, 16:9'a yakın büyük alan).
+ */
+export function likelyPlayer(preferred: HTMLElement | null = null): HTMLElement | null {
+  if (preferred?.isConnected) return preferred;
+  let video: HTMLVideoElement | null = null;
+  let bestArea = 160 * 90;
+  for (const candidate of document.querySelectorAll('video')) {
+    const r = candidate.getBoundingClientRect();
+    if (r.width * r.height > bestArea) {
+      video = candidate;
+      bestArea = r.width * r.height;
+    }
+  }
+  if (video) return playerBox(video);
+  const frame = biggestFrame();
+  if (frame) return frame;
+  const screen = innerWidth * innerHeight;
+  let best: HTMLElement | null = null;
+  bestArea = 320 * 180;
+  for (const box of document.querySelectorAll<HTMLElement>('div, section, figure, a, button, img, picture, canvas')) {
+    const r = box.getBoundingClientRect();
+    const area = r.width * r.height;
+    const ratio = r.width / Math.max(1, r.height);
+    // Eşitlikte içteki (sonra gelen) kutu kazanır: oynatıcının kendisi, sarmalayıcısı değil.
+    if (area >= bestArea && area < screen * 0.9 && ratio > 1.2 && ratio < 2.4 && r.height >= 180) {
+      best = box;
+      bestArea = area;
+    }
+  }
+  return best;
+}
+
 let current: HTMLElement | null = null;
+let lastInset = '';
 
 /**
  * Odaklanılacak öğeyi işaretler. `video`: bu çerçevenin senkronlanan videosu (yoksa null →
@@ -92,8 +128,15 @@ export function applyFocus(on: boolean, video: HTMLVideoElement | null, inset: I
   const keep =
     on &&
     current?.isConnected &&
-    (video ? current === video || current.contains(video) : /^i?frame$/i.test(current.tagName) && (!preferredFrame || current === preferredFrame));
-  const target = on ? (keep ? current : video ? playerBox(video) : biggestFrame(preferredFrame)) : null;
+    (video ? current === video || current.contains(video) : !preferredFrame || current === preferredFrame);
+  const target = on ? (keep ? current : video ? playerBox(video) : likelyPlayer(preferredFrame)) : null;
+  // Oynatıcının boyutu değişti: kendi yerleşimini (altyazı, kontroller) yeniden hesaplasın. Çoğu oynatıcı
+  // pencerenin "resize" olayını dinler; bizim kutuyu büyütmemizi kendiliğinden görmez.
+  const insetKey = `${target ? 'on' : 'off'}:${inset.top},${inset.right},${inset.bottom},${inset.left}`;
+  if (insetKey !== lastInset || target !== current) {
+    lastInset = insetKey;
+    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+  }
   if (target === current && root.classList.contains('swm-focus') === !!target) return;
   current?.removeAttribute(MARK);
   current = target;
