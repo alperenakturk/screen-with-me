@@ -11,6 +11,10 @@
         overflow: hidden;
         background: transparent;
       }
+      /* Site yüklenene kadar film sayfası görünmesin: oda görünümü hemen gelsin (sitenin "Gece" zemini) */
+      html:not(.ready) {
+        background: linear-gradient(#171c40, #0c0e1e 60%);
+      }
       iframe {
         display: block;
         width: 100%;

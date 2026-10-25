@@ -125,8 +125,8 @@
                <span class="bird" style="left: 30%; top: 16%">⌄</span><span class="bird" style="left: 34%; top: 21%; font-size: 16px">⌄</span></div></div>
              <div class="reactions-layer">${
                q.get('reacts')
-                 ? [['Mia', '😂', 2], ['Alex', '🔥', 0], ['Leo', '😍', 0]]
-                     .map(([n, e, c]) => `<div class="r-card" data-count="${c || 1}">${av(person(n).avatar, 'r-avatar')}<span class="r-name">${n}</span><span class="r-emoji">${e}</span><span class="r-count">${c ? '×' + c : ''}</span></div>`)
+                 ? [['Mia', '😂', 2, 18, 40], ['Alex', '🔥', 0, 46, 110], ['Leo', '😍', 0, 72, 70]]
+                     .map(([n, e, c, x, y]) => `<div class="r-float" style="left: ${x}%; animation: none; transform: translateY(-${y}px)"><span class="r-emoji">${e}</span><span class="r-who">${av(person(n).avatar, 'r-avatar')}<span class="r-name">${n}</span><span class="r-count">${c ? '×' + c : ''}</span></span></div>`)
                      .join('')
                  : ''
              }</div>

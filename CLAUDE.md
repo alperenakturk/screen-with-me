@@ -100,10 +100,13 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   site ⇄ shell.html (postMessage, köken kontrollü) ⇄ arka plan (`swm-shell` portu) ⇄ film çerçeveleri (`swm` portu).
   Site → film: `embed` istekleri (`state`, `clock`, `control`, `detach`); film → site: `reply` (`send` sadece
   `isRelayable`, `status`, `key`), `page` (sekmenin adresi), `video` (bulundu mu), `fullscreen`. Site `layout`
-  bildirir: `bar` (video yok: üstte 56 px şerit, film sayfası görünür, kullanıcı oynat'a basar), `full` (oda görünümü:
+  bildirir: `full` (film varken hep, video başlamadan da: oda görünümü;
   `hole` = `.player-wrap`, `islands` = deliğin içindeki kartlar/kontroller) ya da `open` (sitenin oynattığı şey,
   delik yok). Üst çerçeve katmana `clip-path: path(evenodd …)` uygular (deliğe tıklayınca film oynatıcısı tıklanır),
-  `focus.ts` videoyu deliğe oturtur; video iç çerçevedeyse `swm-focus-here` zinciriyle doğru çerçeve büyür. Kabukta
+  `focus.ts` videoyu deliğe oturtur (video henüz yoksa `likelyPlayer`: en büyük video/çerçeve ya da 16:9'a yakın kutu;
+  katman açılırken `open` başlar, `bar` artık kullanılmıyor); kabukta sitenin zeminleri deliği boyamaz (`shell-film`,
+  `--hole-cut`), deliğin içindeki mesajlar yarı saydam; odak kutusu taşanı kesmez ve boyut değişince `resize` yayılır
+  (altyazılar). Video iç çerçevedeyse `swm-focus-here` zinciriyle doğru çerçeve büyür. Kabukta
   site isim adımını atlar, eklenti linki/ana logo/alt bilgi gizli, üstte "🏠 Odaya dön" (`navigate` → sitedeki oda,
   katman kalkar). Odada başka bir `page` açılınca "Filme git", sitenin oynattığı bir şey açılınca katman açılır ve film
   motoru durur (`detach`, odaya "durdur" gitmez). Tam ekran: bizim ⛶ film sayfasının tamamını tam ekran yapar, oda
@@ -171,8 +174,13 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   Girişte welcome'dan sonra tek tek `{t:'sticker'}` (1 MB mesaj sınırı). Tepki `{t:'react', sticker}`. Arayüz: emoji çubuğunun sonunda hep görünen 🖼️ (sitede panel, eklentide şerit özel emojilere döner) — sayfaların arasına gömme.
   Dosya hazırlama `sticker-file.ts` (resim 160 px webp, GIF olduğu gibi). Kendi listem site
   `localStorage` `myStickers` (eklentiyle ortak); her odaya girişte yeniden yüklenir.
-- **Tepki gösterimi:** ekranın ortasında uçuşmaz; sol altta avatar + isim + emoji kartı (3,2 sn),
-  aynı kişinin aynı tepkisi "×2" olur; her tepkiden sonra 1,1 sn bekleme.
+- **Tepki gösterimi:** videonun altından rastgele bir yerden yükselip kaybolur (3 sn; altında küçük avatar + isim),
+  hâlâ uçuşan aynı kişinin aynı tepkisi "×2" olur; her tepkiden sonra 1,1 sn bekleme. Ayarlardan kapatılır
+  (`opt:reactions`). Kabukta her uçuşan emojinin yolu bir adacık.
+- **Tek kişiyken senkron yok:** sitede "Herkesi bana eşitle" ve senkron testi kapalı (`isAlone`); sunucuda farklı
+  cid sayısı 2'den azsa "herkes hazır" beklemesi olmaz.
+- **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
+  `{t:'home', by}`; filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`, 20 sn).
 - **Klavye:** 1–8 o sayfanın emojileri/özel emojileri, Enter mesaj, P pin (sitede `reactions.ts` + `room.ts`, tam ekranda
   `fullscreen.ts`). Film sayfasında (kabuk) tuş yakalama aşamasında alınıp siteye iletilir, film sitesine hiç
   gösterilmez: oynatıcılar rakamlarla sarar (3 = %30), yoksa emoji atınca herkes sarılırdı.

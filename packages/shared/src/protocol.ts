@@ -267,6 +267,8 @@ export type ClientMessage =
   | { t: 'recap-save' }
   /** Bu odanın önceki özetleri. */
   | { t: 'recaps' }
+  /** Film sayfasından odaya dönüyorum: filmdeki diğerlerine "sen de dön" diye sorulur. */
+  | { t: 'home' }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
   /** Sıraya ekle. Oda boşsa hemen açılır. */
@@ -343,6 +345,8 @@ export type ServerMessage =
   | { t: 'settings'; settings: RoomSettings }
   /** emoji ya da sticker (odadaki özel emojinin kimliği) gelir. */
   | { t: 'reaction'; emoji?: Reaction; sticker?: string; by: Member }
+  /** Biri film sayfasından odaya döndü (gönderen hariç herkese). */
+  | { t: 'home'; by: Member }
   /** Odaya bir özel emoji eklendi (girişte de odadakiler tek tek gelir). */
   | { t: 'sticker'; sticker: Sticker }
   /** Bir özel emoji odadan kaldırıldı. */
@@ -545,6 +549,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'recap':
     case 'recap-save':
     case 'recaps':
+    case 'home':
       return { t: m.t };
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;

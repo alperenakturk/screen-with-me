@@ -283,6 +283,11 @@ export class Room extends DurableObject<Env> {
       case 'vote':
         await this.vote(keyOf(attachment), message.id, message.up);
         return;
+      case 'home':
+        // Sadece haber: filmdekilere "sen de dön" diye sorulur (sık basılıp kimseyi rahatsız etmesin).
+        if (!this.reactionLimit.allow(me.id)) return;
+        this.broadcast({ t: 'home', by: me }, ws);
+        return;
       case 'react':
         // Yönetici emojileri kapattıysa (yönetici dahil) kimse atamaz.
         if (this.settings.noReactions || !this.reactionLimit.allow(me.id)) return;
@@ -780,8 +785,12 @@ export class Room extends DurableObject<Env> {
   private async evaluateWait(): Promise<void> {
     const now = Date.now();
     const state = this.room.state;
-    const present = new Set(this.joined().map((a) => a.id));
-    const decision = this.waits.decide(now, this.settings.waitForAll, !state.paused && state.item !== null, present);
+    const joined = this.joined();
+    const present = new Set(joined.map((a) => a.id));
+    // Tek kişiyken (aynı tarayıcının birden çok sekmesi de tek kişi) bekleme yok: kişi kendi yüklemesi
+    // yüzünden odayı kendine durdurmasın. Senkron özellikleri 2+ kişiyle anlamlı.
+    const people = new Set(joined.map((a) => a.cid ?? a.id)).size;
+    const decision = this.waits.decide(now, this.settings.waitForAll && people >= 2, !state.paused && state.item !== null, present);
 
     if (decision.kind === 'start') {
       this.statsTick();
@@ -1019,7 +1028,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

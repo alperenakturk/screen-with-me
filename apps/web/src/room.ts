@@ -3,8 +3,7 @@ import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { isRelayable } from '@swm/shared/embed';
 import { parseMediaInput, samePage } from '@swm/shared/media';
-import type { Rect, ShellLayout } from '@swm/shared/shell';
-import { createLogo } from '@swm/shared/logo';
+import { holePath, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
   CLIENT_ID,
@@ -251,13 +250,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   app.innerHTML = `
     <div class="room">
-      <div class="shell-strip" id="shell-strip">
-        <span class="logo strip-logo" aria-hidden="true"></span>
-        <b class="strip-brand">ScreenWithMe</b>
-        <span id="strip-room" class="strip-room"></span>
-        <span class="strip-hint" data-i18n="shellStripHint"></span>
-        <button id="strip-home" type="button" class="btn small-btn">🏠 <span data-i18n="shellBack"></span></button>
-      </div>
       <div class="stage">
         <form id="media-form" class="media-form">
           <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
@@ -689,6 +681,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         recaps = message.recaps;
         renderRecapHistory($('#recap-history'), recaps);
         break;
+      case 'home':
+        if (isShell && film !== null) askHome(message.by);
+        break;
       case 'reaction':
         if (settings.options.showReactions) reactions.show(message.by, message.emoji, message.sticker);
         break;
@@ -798,9 +793,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Film (kabuk): film kendi sekmesinde oynar, video bu katmanın deliğinde ----
   /** Film sayfasındaki video (kabukta, odadaki sayfa açık sekmenin sayfasıysa). */
   let film: ShellPlayer | null = null;
-  /** Kabukta: film sekmesinin adresi ve orada senkronlanacak video bulundu mu. */
+  /** Kabukta: film sekmesinin adresi. */
   let shellPage: string | null = null;
-  let videoFound = false;
 
   /** Oynatıcı alanındaki videoyu/sayfayı kapatır. */
   function closeCurrent(): void {
@@ -847,39 +841,73 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Film çerçevesindeki motor sunucu saatini sitenin ölçümünden alır.
   setInterval(() => film?.setClock(clock.now() - Date.now(), clock.synced), 2000);
 
+  /** Kabuktan sitedeki odaya dön (katman kalkar). Filmdeyken diğerlerine de haber gider: onlara "sen de dön" sorulur. */
+  function returnToRoom(): void {
+    if (film !== null) send({ t: 'home' });
+    postToExtension({ type: 'navigate', url: `${location.origin}/r/${roomId}#back` });
+  }
+
+  /** Biri filmden odaya döndü: videonun üstünde küçük kart (pencere değil, film durmaz). 20 sn sonra kendisi kalkar. */
+  let homeAskTimer = 0;
+  function askHome(by: Member): void {
+    document.getElementById('home-ask')?.remove();
+    const yes = el('button', { type: 'button', class: 'btn small-btn primary' }, `🏠 ${t('homeAskYes')}`);
+    const no = el('button', { type: 'button', class: 'btn small-btn' }, t('homeAskNo'));
+    const card = el('div', { id: 'home-ask', class: 'home-ask', role: 'status' }, el('span', {}, t('homeAsk', { name: withAvatar(by) })), yes, no);
+    yes.addEventListener('click', returnToRoom);
+    no.addEventListener('click', () => card.remove());
+    $('.player-wrap').append(card);
+    clearTimeout(homeAskTimer);
+    homeAskTimer = window.setTimeout(() => card.remove(), 20_000);
+  }
+
   // ---- Kabuk yerleşimi: katmanın hâli ve videonun deliği eklentiye bildirilir ----
-  const STRIP_HEIGHT = 56;
   let sentLayout = '';
   function reportLayout(): void {
     if (!isShell) return;
-    // Video bulunana kadar üstte ince şerit (film sayfası görünür, oynat'a basılsın); bulununca oda görünümü.
-    const mode = film === null ? 'open' : videoFound ? 'full' : 'bar';
-    document.documentElement.classList.toggle('shell-bar', mode === 'bar');
+    // Film sayfasında oda görünümü hemen gelir: video henüz başlamadıysa eklenti oynatıcının olası yerini
+    // deliğe oturtur, kullanıcı ▶'a deliğin içinden basar.
     let layout: ShellLayout;
-    if (mode === 'open') layout = { mode: 'open' };
-    else if (mode === 'bar') layout = { mode: 'bar', height: STRIP_HEIGHT };
+    if (film === null) layout = { mode: 'open' };
     else {
       const wrap = $('.player-wrap');
       const box = wrap.getBoundingClientRect();
       const islands: Rect[] = [];
-      // Deliğin içinde yine görünmesi gerekenler: tepki kartları, kartlar, tam ekran kontrolleri…
+      const floats: Rect[] = [];
+      const add = (list: Rect[], left: number, top: number, right: number, bottom: number) => {
+        const x = Math.max(left, box.left);
+        const y = Math.max(top, box.top);
+        const w = Math.min(right, box.right) - x;
+        const h = Math.min(bottom, box.bottom) - y;
+        if (w > 1 && h > 1) list.push({ x: Math.floor(x), y: Math.floor(y), w: Math.ceil(w), h: Math.ceil(h) });
+      };
+      // Deliğin içinde yine görünmesi gerekenler: kartlar, tam ekran kontrolleri, uçuşan emojiler…
       for (const child of wrap.children) {
         if (child.id === 'player' || child.id === 'fs-catcher') continue;
-        const nodes = child.id === 'reactions-layer' ? [...child.children] : [child];
-        for (const node of nodes) {
-          const r = node.getBoundingClientRect();
-          const x = Math.max(r.left, box.left);
-          const y = Math.max(r.top, box.top);
-          const w = Math.min(r.right, box.right) - x;
-          const h = Math.min(r.bottom, box.bottom) - y;
-          if (w > 1 && h > 1) islands.push({ x: Math.floor(x), y: Math.floor(y), w: Math.ceil(w), h: Math.ceil(h) });
+        if (child.id === 'reactions-layer') {
+          // Uçuşan emoji yükselirken de görünsün: bütün yolu (yukarı ~240 px, yana biraz) tek adacık.
+          for (const node of child.children) {
+            const r = node.getBoundingClientRect();
+            add(floats, r.left - 45, r.top - 270, r.right + 45, r.bottom + 30);
+          }
+          continue;
         }
+        const r = child.getBoundingClientRect();
+        add(islands, r.left, r.top, r.right, r.bottom);
       }
+      // Sınır 12: önce kalıcı kartlar/kontroller, kalan yer emojilerin.
+      islands.push(...floats);
       const hole = { x: Math.round(box.left), y: Math.round(box.top), w: Math.round(box.width), h: Math.round(box.height) };
+      // Sitenin zeminleri deliği boyamasın (styles.css "shell-film"): yollar ekran ve sahne kartına göre.
+      const root = document.documentElement;
+      root.style.setProperty('--hole-cut', holePath(innerWidth, innerHeight, hole, []));
+      const card = $('#theater').getBoundingClientRect();
+      root.style.setProperty('--theater-cut', holePath(card.width, card.height, { ...hole, x: hole.x - card.left, y: hole.y - card.top }, []));
       // Sitenin bir penceresi açıksa (avatar, tema, özet, onay) delik tamamen kapanır: pencere videonun önünde görünsün.
       const modal = document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open]') !== null;
       layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12) };
     }
+    document.documentElement.classList.toggle('shell-film', layout.mode === 'full');
     const json = JSON.stringify(layout);
     if (json === sentLayout) return;
     sentLayout = json;
@@ -949,9 +977,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         currentItemId = null;
         void applyState(roomState);
       }
-    } else if (message.type === 'video' && isShell) {
-      videoFound = message.found;
-      reportLayout();
     } else if (message.type === 'fullscreen' && isShell) {
       fullscreen.syncShell(message.on);
     }
@@ -975,7 +1000,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Odaya dön: önce sorulur; evet → sekme sitedeki odaya gider (katman kalkar, site kendi sayfasında devam eder).
     const goHome = async () => {
       const yes = await confirmDialog({ icon: '🏠', title: t('shellBackTitle'), text: t('shellBackText'), yes: t('shellBackYes'), no: t('shellBackNo') });
-      if (yes) postToExtension({ type: 'navigate', url: `${location.origin}/r/${roomId}#back` });
+      if (yes) returnToRoom();
     };
     // Sol üstteki logo da odaya dönüş (ana sayfaya değil).
     document.querySelector('.brand')?.addEventListener('click', (event) => {
@@ -986,8 +1011,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (tabs.active === 'queue') tabs.show('chat');
     // Sitenin pencereleri (avatar, tema, özet, onay) açılınca da bildirilsin: videonun arkasında kalmasınlar.
     new MutationObserver(() => reportLayout()).observe(document.body, { childList: true });
-    $('#strip-home').addEventListener('click', goHome);
-    $('.strip-logo').append(createLogo(document));
     const homeButton = el('button', { type: 'button', class: 'nav-link shell-home' }, `🏠 ${t('shellBack')}`);
     homeButton.addEventListener('click', goHome);
     document.querySelector('.topbar-right')?.prepend(homeButton);
@@ -1140,8 +1163,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (film) film.control({ action: 'sync-all' });
     else engine.syncEveryoneToMe();
     syncAllEl.disabled = true;
-    setTimeout(() => (syncAllEl.disabled = false), 1500);
+    setTimeout(() => (syncAllEl.disabled = isAlone()), 1500);
   });
+
+  /** Tek kişiyken senkron düğmeleri kapalı; üstüne gelince nedeni yazar. */
+  function renderAlone(): void {
+    const alone = isAlone();
+    const all = $<HTMLButtonElement>('#sync-all');
+    const test = $<HTMLButtonElement>('#sync-test');
+    all.disabled = alone;
+    test.disabled = alone;
+    const hint = alone ? t('syncAlone') : t('syncAllHint');
+    all.title = hint;
+    all.setAttribute('aria-label', hint);
+    test.title = alone ? t('syncAlone') : '';
+  }
 
   // ---- Davet linki ----
   const inviteEl = $<HTMLInputElement>('#invite');
@@ -1200,9 +1236,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     renderMembers();
   }
 
+  /** Odada benden başka kimse yok: senkron düğmeleri (herkesi eşitle, senkron testi) 2+ kişiyle anlamlı. */
+  function isAlone(): boolean {
+    return members.length < 2;
+  }
+
   function renderMembers(): void {
     people.set(members, hostId, myId);
     $('#people-count').textContent = String(members.length);
+    renderAlone();
     renderWaiting();
     renderWatching();
   }
@@ -1246,7 +1288,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function renderSaved(host: boolean): void {
     const saved = roomSettings.saved === true;
     const name = roomSettings.name ?? '';
-    $('#strip-room').textContent = name || roomId;
     $('#save-status').textContent = saved ? t('savedStatus', { name: name || roomId }) : t('notSavedStatus');
     $('#save-form').hidden = !host;
     $('#save-off').hidden = !host || !saved;
@@ -1388,7 +1429,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     label($('#fs-exit'), t('exitFullscreen'));
     label($('#fs-speed'), t('speed'));
     label($('#settings-tab'), t('tab.settings'));
-    label(syncAllEl, t('syncAllHint'));
   }
 
   window.addEventListener('langchange', () => {
