@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanLayout, holePath } from './shell.ts';
+import { cleanLayout, holePath, mergeRects } from './shell.ts';
 
 describe('kabuk yerleşimi', () => {
   it('deliği ve adacıkları evenodd yolu olarak çizer', () => {
@@ -16,5 +16,23 @@ describe('kabuk yerleşimi', () => {
     const full = cleanLayout({ mode: 'full', hole: { x: 0, y: 0, w: 10, h: 10 }, islands: [...many, { x: NaN, y: 0, w: 1, h: 1 }] });
     expect(full?.mode === 'full' && full.islands.length).toBe(12);
     expect(cleanLayout(null)).toBeNull();
+  });
+});
+
+describe('mergeRects', () => {
+  it('merges overlapping islands into one box and keeps separate ones', () => {
+    const a = { x: 0, y: 0, w: 10, h: 10 };
+    const b = { x: 5, y: 5, w: 10, h: 10 };
+    const far = { x: 100, y: 100, w: 5, h: 5 };
+    expect(mergeRects([a, b, far])).toEqual([{ x: 0, y: 0, w: 15, h: 15 }, far]);
+  });
+
+  it('merges chains (a touches b, b touches c) and never leaves overlaps', () => {
+    const rects = [
+      { x: 0, y: 0, w: 10, h: 10 },
+      { x: 30, y: 0, w: 10, h: 10 },
+      { x: 8, y: 0, w: 25, h: 5 },
+    ];
+    expect(mergeRects(rects)).toEqual([{ x: 0, y: 0, w: 40, h: 10 }]);
   });
 });

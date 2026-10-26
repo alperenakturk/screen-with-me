@@ -357,7 +357,7 @@ artırma başvurusu uzun sürebildiği için, arama özelliği hazırlanırken a
   kuralları (önbellek süresi, marka, gizlilik politikası) açık ve uyulabilir.
 - **Mağaza:** yeni izinler (mikrofon, kamera) ve yeni siteye özel kod Chrome Web Store incelemesini uzatabilir;
   inceleme sürerken `PROTOCOL_VERSION` artırılmamalı.
-- **Gizlilik:** sesli sohbet ve "lideri takip et" yeni veri türleri demek; `gizlilik.html` her seferinde güncellenmeli.
+- **Gizlilik:** sesli sohbet ve "lideri takip et" yeni veri türleri demek; `privacy.html` her seferinde güncellenmeli.
 - **Para:** sesli/görüntülü sohbette büyük ölçekte trafik ücreti; günlük bütçe sınırı kodda olmalı.
 - **Bakım:** büyük servis adaptörleri ve Instagram modu, servisler sayfalarını değiştirdikçe bozulur.
 

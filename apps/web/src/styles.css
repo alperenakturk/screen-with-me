@@ -2322,7 +2322,7 @@ html:not(.shell) .shell-only {
   align-items: flex-end;
   gap: 8px;
   /* Tam ekranda uzaktan okunsun: geniş ekranda yazı ve kutu büyür */
-  max-width: min(560px, 60%);
+  max-width: min(520px, 60%);
   pointer-events: none;
   text-align: right;
 }
@@ -2366,7 +2366,7 @@ html:not(.shell) .shell-only {
   border: 1px solid rgb(255 255 255 / 0.12);
   padding: 8px 14px;
   border-radius: 14px;
-  font-size: clamp(17px, 1.25vw, 24px);
+  font-size: clamp(16px, 1.1vw, 21px);
   line-height: 1.35;
   overflow-wrap: anywhere;
   animation: toast-in 0.2s ease-out;
