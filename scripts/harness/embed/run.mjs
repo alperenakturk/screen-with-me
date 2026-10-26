@@ -9,7 +9,8 @@
 // oda sayfasını katman olarak açar → video bulununca katmanda delik açılır, video oraya oturur.
 // Film sayfası 127.0.0.1'de (site localhost'ta): farklı site, yani gerçek hayattaki gibi.
 import { resolve } from 'node:path';
-import { launch } from './cdp.mjs';
+import { writeFileSync } from 'node:fs';
+import { decodePng, launch } from './cdp.mjs';
 
 const EXT = resolve(process.argv[2] ?? 'apps/extension/dist');
 const SITE = process.argv[3] ?? 'http://localhost:5173';
@@ -23,6 +24,47 @@ const check = (ok, text, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${text}${!ok && detail ? ` → ${detail}` : ''}`);
 };
 const near = (a, b, tolerance = 1.5) => typeof a === 'number' && Math.abs(a - b) <= tolerance;
+
+// ---- Piksel yardımcıları (saydamlık testleri) ----
+/** Katmanın clip-path yolundaki dikdörtgenler: [0] ekran, [1] delik, [2..] adacıklar. */
+const clipRects = (clip) =>
+  [...String(clip).matchAll(/M\s*(-?[\d.]+)[\s,]+(-?[\d.]+)\s*H\s*(-?[\d.]+)\s*V\s*(-?[\d.]+)/g)].map((m) => ({ x: +m[1], y: +m[2], r: +m[3], b: +m[4] }));
+const inRect = (p, r, pad = 0) => p.x >= r.x + pad && p.x <= r.r - pad && p.y >= r.y + pad && p.y <= r.b - pad;
+const pxDiff = (p, q) => Math.max(...p.map((v, i) => Math.abs(v - q[i])));
+/** Chrome'un opak koyu zemini (#121212 civarı): düz, koyu gri. */
+const flatDark = ([r, g, b]) => Math.max(r, g, b) <= 32 && Math.max(r, g, b) - Math.min(r, g, b) <= 6;
+const bright = ([r, g, b]) => r + g + b > 150;
+/** Bölgedeki ızgara noktaları (adım `step`), `avoid` dikdörtgenleri (+pay) hariç. */
+function gridPoints(region, avoid = [], step = 6, pad = 12) {
+  const points = [];
+  for (let y = Math.ceil(region.y) + 2; y < region.b - 2; y += step) {
+    for (let x = Math.ceil(region.x) + 2; x < region.r - 2; x += step) {
+      if (!avoid.some((r) => inRect({ x, y }, { x: r.x - pad, y: r.y - pad, r: r.r + pad, b: r.b + pad }))) points.push({ x, y });
+    }
+  }
+  return points;
+}
+
+/** Film sayfasında örtünün (data-swm-cover) ne zaman eklenip kalktığını kaydeder (sayfanın en başında çalışır). */
+const COVER_SCRIPT = `(() => {
+  if (window !== top) return;
+  const log = { atStart: !!document.querySelector('[data-swm-cover]'), added: null, removed: null, shellAt: null, clipAt: null };
+  window.__swmCover = log;
+  new MutationObserver((muts) => {
+    for (const m of muts) {
+      for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.hasAttribute('data-swm-cover') && log.added === null) log.added = performance.now();
+        if (n.tagName === 'IFRAME' && String(n.src).startsWith('chrome-extension://') && log.shellAt === null) log.shellAt = performance.now();
+      }
+      for (const n of m.removedNodes) if (n.nodeType === 1 && n.hasAttribute('data-swm-cover')) log.removed = performance.now();
+    }
+  }).observe(document, { childList: true, subtree: true });
+  const timer = setInterval(() => {
+    const s = document.querySelector('iframe[src^="chrome-extension://"]');
+    if (s && s.style.clipPath) { log.clipAt = performance.now(); clearInterval(timer); }
+  }, 10);
+})();`;
 
 /** Sahte ikinci kullanıcı (gerçek sunucuya WebSocket ile bağlanır). */
 async function fakeUser(room, name) {
@@ -50,6 +92,7 @@ async function fakeUser(room, name) {
   return {
     send: (m) => ws.send(JSON.stringify(m)),
     wait,
+    count: (pred) => inbox.filter(pred).length,
     clear: () => inbox.splice(0),
     get state() {
       return state;
@@ -74,6 +117,58 @@ async function until(fn, ms = 10000) {
 const room = 'shl' + Math.random().toString(36).slice(2, 7);
 const a = await launch({ ext: EXT, out: OUT });
 check(!a.loaded.error, 'eklenti yüklendi', JSON.stringify(a.loaded.error));
+await a.cdp('Page.addScriptToEvaluateOnNewDocument', { source: COVER_SCRIPT });
+const coverLog = () =>
+  a.evaluate(
+    `(() => { const l = window.__swmCover; if (!l) return null; return { ...l, firstPaint: performance.getEntriesByName('first-paint')[0]?.startTime ?? null, now: !!document.querySelector('[data-swm-cover]') }; })()`,
+  );
+/**
+ * Sayfanın boyanan her karesini kaydeder (Page.startScreencast). Dönen `stop()` her karede film sitesinin bej
+ * zemininin (#f3f1ea) ekranın sol şeridinde ne kadar göründüğünü verir: oda katmanı gelmeden film sitesi bir an bile
+ * görünürse (flaş) bej oranı yüksek olur. Oda görünümünde o şerit sitenin koyu zemini, örtü ya da kabuk zeminidir.
+ */
+function beigeShare(img) {
+  let beige = 0;
+  let n = 0;
+  for (let y = 0.1; y < 0.95; y += 0.05) {
+    for (let x = 0.01; x < 0.12; x += 0.02) {
+      const [r, g, b] = img.at(x * img.width, y * img.height);
+      n++;
+      if (Math.abs(r - 243) <= 8 && Math.abs(g - 241) <= 8 && Math.abs(b - 234) <= 8) beige++;
+    }
+  }
+  return beige / n;
+}
+async function recordFlash(label) {
+  const frames = [];
+  const off = a.onEvent((m) => {
+    if (m.method !== 'Page.screencastFrame') return;
+    frames.push({ data: m.params.data, t: m.params.metadata.timestamp });
+    void a.cdp('Page.screencastFrameAck', { sessionId: m.params.sessionId });
+  });
+  await a.cdp('Page.startScreencast', { format: 'png', everyNthFrame: 1 });
+  return async () => {
+    await a.cdp('Page.stopScreencast');
+    off();
+    let worst = 0;
+    let worstAt = -1;
+    const shares = [];
+    const t0 = frames[0]?.t ?? 0;
+    frames.forEach(({ data, t }, i) => {
+      const share = beigeShare(decodePng(Buffer.from(data, 'base64')));
+      if (share > 0) writeFileSync(`${OUT}-flash-${label}-${i}.png`, Buffer.from(data, 'base64'));
+      shares.push(`${Math.round((t - t0) * 1000)}ms:${Math.round(share * 100)}%`);
+      if (share > worst) {
+        worst = share;
+        worstAt = i;
+      }
+    });
+    const beigeFrames = shares.filter((x) => !x.endsWith(':0%')).length;
+    return { frames: frames.length, beigeFrames, worst: Math.round(worst * 100) / 100, worstAt, shares: shares.join(' ') };
+  };
+}
+const fmt = (n) => (typeof n === 'number' ? Math.round(n) : n);
+const coverText = (l) => (l ? `başta:${l.atStart} eklendi:${fmt(l.added)} kalktı:${fmt(l.removed)} katman:${fmt(l.shellAt)} delik:${fmt(l.clipAt)} ilk-boyama:${fmt(l.firstPaint)} ms` : 'kayıt yok');
 
 // Ayşe: sitede (adı ve teması kayıtlı).
 await a.navigate(`${SITE}/`);
@@ -85,10 +180,49 @@ check((await a.evaluate(`document.documentElement.dataset.swmShell`)) === '1', '
 const bora = await fakeUser(room, 'Bora');
 check(!!(await until(() => bora.members.length === 2)), 'Ayşe ve Bora odada');
 
+// 0b) Sitede (kabuk değil): odayı kuran önce ⚙️ Ayarlar'da; 👤 sağ üstte en sonda, profil panelini açıp kapatır.
+const ACTIVE_TAB = `document.querySelector('[data-tab][aria-selected=true]')?.dataset.tab`;
+const hostTab = await until(async () => ((await a.evaluate(ACTIVE_TAB)) === 'settings' ? 'settings' : null), 5000);
+check(
+  hostTab === 'settings' && (await a.evaluate(`!document.querySelector('[data-panel=settings]').hidden`)),
+  'odayı kuran (yönetici) sitede önce ⚙️ Ayarlar sekmesinde',
+  `açık: ${await a.evaluate(ACTIVE_TAB)}, sessionStorage tab:${room} = ${await a.evaluate(`sessionStorage.getItem('tab:${room}')`)}`,
+);
+const profileSpot = await a.evaluate(
+  `(() => { const r = document.querySelector('.topbar-right'); const b = r?.lastElementChild; return { last: b?.dataset.tab ?? null, text: b?.textContent.trim(), n: r?.children.length }; })()`,
+);
+check(profileSpot?.last === 'profile', '👤 düğmesi sağ üstte (.topbar-right son çocuğu)', JSON.stringify(profileSpot));
+const profileAt = await a.center('.topbar-right [data-tab=profile]');
+if (profileAt) await a.click(profileAt.x, profileAt.y);
+await a.sleep(300);
+const profileOpen = await a.evaluate(
+  `!document.querySelector('[data-panel=profile]').hidden && document.querySelector('.topbar-right [data-tab=profile]').getAttribute('aria-selected') === 'true'`,
+);
+if (profileAt) await a.click(profileAt.x, profileAt.y);
+await a.sleep(300);
+const profileClosed = await a.evaluate(`document.querySelector('[data-panel=profile]').hidden && !document.querySelector('[data-panel=chat]').hidden`);
+check(profileOpen && profileClosed, '👤 profil panelini açar, tekrar basınca sohbete döner', `açtı:${profileOpen} kapattı:${profileClosed}`);
+await a.shot('0-site-oda');
+{
+  // İkinci kişi (yönetici değil) ayrı tarayıcıda: 💬 Sohbet'te açılmalı.
+  const c = await launch({ ext: EXT, out: `${OUT}-cem` });
+  await c.navigate(`${SITE}/`);
+  await c.sleep(1500);
+  await c.evaluate(`localStorage.setItem('name','Cem'); localStorage.setItem('avatar','elf'); localStorage.setItem('lang','tr'); 1`);
+  await c.navigate(`${SITE}/r/${room}#back`);
+  const cemIn = await until(() => bora.members.some((m) => m.name === 'Cem'), 10000);
+  await c.sleep(1200);
+  const cemTab = await c.evaluate(ACTIVE_TAB);
+  check(!!cemIn && cemTab === 'chat', 'ikinci kişi (yönetici değil) sitede 💬 Sohbet sekmesinde açılıyor', `odada:${!!cemIn} sekme:${cemTab}`);
+  c.close();
+  check(!!(await until(() => bora.members.length === 2, 15000)), 'Cem çıktı (odada yine 2 kişi)', JSON.stringify(bora.members.map((m) => m.name)));
+}
+
 // 1) Ayşe bir film sayfası açar → sekme oraya gider, eklenti katmanı açar.
 await a.evaluate(`(() => { const i = document.getElementById('media-input'); i.value = '${FILM}/film'; i.form.querySelector('button[value=load]').click(); return 1; })()`);
 // "Şimdi aç" önce kısaca anlatıp sorar.
 check(!!(await until(() => a.evaluate(`!!document.querySelector('.confirm-dialog')`))), '"Şimdi aç" film linkinde önce soruyor');
+const stopFlash1 = await recordFlash('film');
 await a.evaluate(`document.querySelector('.confirm-dialog .btn.primary').click(); 1`);
 const onFilm = await until(async () => String(await a.evaluate('location.href')).startsWith(`${FILM}/film`));
 check(!!onFilm, 'kendi açtığı film sayfasına sekme kendiliğinden gitti');
@@ -100,19 +234,48 @@ check(!!once, 'Ayşe odada yine tek kez (bağlantıyı katmandaki site tutuyor)'
 // 2) Video bulununca katmanda delik açılır, video deliğe yerleşir.
 const holed = await until(() => a.evaluate(`getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath.startsWith('path(')`), 15000);
 check(!!holed, 'video bulundu: katmanda videonun yeri delik');
+{
+  const flash = await stopFlash1();
+  console.log('     flaş /film:', JSON.stringify(flash));
+  check(flash.frames > 0 && flash.worst < 0.3, 'siteden film sayfasına geçerken film sitesi hiçbir karede görünmedi (flaş yok)', JSON.stringify(flash));
+}
 check(await a.evaluate(`!!document.querySelector('[data-swm-focus]') && document.documentElement.classList.contains('swm-focus')`), 'film videosu deliğe yerleşti');
 await a.sleep(800);
 await a.shot('1-oda-gorunumu');
+
+// 2a) Örtü (ilk geliş: sekmenin bu sitede örtü işareti yok, örtü depodaki oda listesiyle gelir).
+{
+  const l = await coverLog();
+  console.log('     örtü /film:', coverText(l));
+  check(!!l && (l.atStart || l.added !== null), 'film sayfasına ilk gelişte örtü (data-swm-cover) eklendi', coverText(l));
+  check(!!l && l.removed !== null && !l.now && (l.shellAt === null || l.removed >= l.shellAt), 'örtü katmanın ilk yerleşimi gelince kalktı', coverText(l));
+}
+// Koordinat sağlaması: katman ve içindeki site film sayfasıyla aynı koordinatlarda (piksel testleri buna dayanır).
+{
+  const page = await a.evaluate(`[innerWidth, innerHeight]`);
+  const site = await a.evalFrame('shell=1', `[innerWidth, innerHeight]`);
+  check(JSON.stringify(page) === JSON.stringify(site), 'katmandaki site film sayfasıyla aynı boyutta (koordinatlar ortak)', `${page} / ${site}`);
+}
+// Altyazı testi için videoya varsayılan bir WebVTT altyazısı eklenir (sayfanın kendi altyazısı gibi en altta çizilir).
+await a.evaluate(`(() => {
+  const v = document.querySelector('video');
+  const t = document.createElement('track');
+  t.kind = 'subtitles'; t.srclang = 'tr'; t.label = 'TR'; t.default = true;
+  t.src = 'data:text/vtt;charset=utf-8,' + encodeURIComponent('WEBVTT\\n\\n00:00:00.000 --> 09:59:59.000\\nALTYAZI TESTI: bu satir gorunmeli\\n');
+  v.append(t);
+  return 1;
+})()`);
 
 // 2b) Katmanda sıra ve link kutusu yok, profil sekmesi var; açılan pencere videonun önünde.
 const SHELL_CLIP = `getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath`;
 check(
   await a.evalFrame(
     'shell=1',
-    `getComputedStyle(document.getElementById('media-form')).display === 'none' && getComputedStyle(document.querySelector('.tab[data-tab=queue]')).display === 'none' && !!document.querySelector('.tab[data-tab=profile]')`,
+    `getComputedStyle(document.getElementById('media-form')).display === 'none' && getComputedStyle(document.querySelector('.tab[data-tab=queue]')).display === 'none' && document.querySelector('.topbar-right')?.lastElementChild?.dataset.tab === 'profile'`,
   ),
-  'katmanda sıra ve link kutusu gizli, 👤 profil sekmesi var',
+  'katmanda sıra ve link kutusu gizli, 👤 profil düğmesi sağ üstte',
 );
+check((await a.evalFrame('shell=1', ACTIVE_TAB)) === 'chat', 'katmanda yönetici de 💬 Sohbet sekmesiyle açılıyor (Ayarlar değil)', String(await a.evalFrame('shell=1', ACTIVE_TAB)));
 const clipBefore = await a.evaluate(SHELL_CLIP);
 await a.evalFrame('shell=1', `(async () => { const m = await import('/src/themes.ts'); m.openThemeDialog(); return 1; })()`);
 // Pencere açıkken delik tamamen kapanır: yolda ekran + delik + deliği kapatan adacık (3 parça).
@@ -174,6 +337,185 @@ check(!!(await bora.wait((m) => m.t === 'chat' && m.message.text === 'katmandan 
 // 7) Katmandaki ayar (tema) ana siteye de geçer.
 await a.evalFrame('shell=1', `(async () => { const m = await import('/src/themes.ts'); m.applyTheme('okyanus', { wait: false }); return 1; })()`);
 
+const SHELL = `document.querySelector('iframe[src^="chrome-extension://"]')`;
+const FLOATS = `document.querySelectorAll('#reactions-layer .r-float').length`;
+
+// 7b) Uçuşan emojiler: art arda basınca her biri ayrı uçar ("×2" yok, varsayılan beklemesiz).
+await a.sleep(3500);
+{
+  const before = await a.evalFrame('shell=1', FLOATS);
+  bora.clear();
+  // İstemci iki emoji arasında en az 150 ms bekler (tuş tekrarı da sayılmaz): 200 ms arayla bas.
+  for (let i = 0; i < 4; i++) {
+    await a.press('1', 'Digit1', 49);
+    await a.sleep(200);
+  }
+  await a.sleep(500);
+  const after = await a.evalFrame(
+    'shell=1',
+    `({ n: ${FLOATS}, counts: document.querySelectorAll('#reactions-layer .r-count').length, cooling: !!document.querySelector('.reaction-bar.cooling') })`,
+  );
+  await a.sleep(500);
+  const sent = bora.count((m) => m.t === 'reaction');
+  check(
+    after.n - before >= 4 && after.counts === 0 && !after.cooling && sent >= 4,
+    '4 kez hızlıca 1 → 4 ayrı uçan emoji (×2 sayacı yok, bekleme yok)',
+    `önce:${before} sonra:${after.n} ×sayaç:${after.counts} bekleme:${after.cooling} Bora'ya giden:${sent}`,
+  );
+  await a.shot('5-ucusan-emojiler');
+}
+
+// 7c) Deliğin içindeki emoji saydam: adacıkta (emojinin çevresi) videonun kendisi görünmeli, opak koyu gri (#121212) değil.
+bora.send({ t: 'pause', position: 120, at: Date.now() });
+await until(() => a.evaluate(`(() => { const v = document.querySelector('video'); return v.paused && Math.abs(v.currentTime - 120) < 1 && !v.seeking && v.readyState >= 2; })()`), 15000);
+await a.sleep(3500); // önceki emojiler uçup gitsin
+/** Emoji atar, uçarken ekranı çeker; adacıktaki (emojinin dışındaki) noktaları videoyla (A) karşılaştırır. */
+async function floatSample(name, baseline) {
+  await a.press('1', 'Digit1', 49);
+  await a.sleep(450);
+  const img = await a.pixels(name);
+  const clip = await a.evaluate(`getComputedStyle(${SHELL}).clipPath`);
+  const f = await a.evalFrame('shell=1', `(() => { const e = [...document.querySelectorAll('#reactions-layer .r-float')].at(-1); const r = e?.getBoundingClientRect(); return r ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`);
+  const rects = clipRects(clip);
+  const islands = rects.slice(2);
+  const cx = f ? (f.x + f.r) / 2 : 0;
+  const cy = f ? (f.y + f.b) / 2 : 0;
+  const island = islands.find((r) => inRect({ x: cx, y: cy }, r));
+  const points = island ? gridPoints(island, [f]) : [];
+  let same = 0;
+  let flat = 0;
+  let lit = 0;
+  for (const p of points) {
+    const A = baseline.at(p.x, p.y);
+    const B = img.at(p.x, p.y);
+    if (pxDiff(A, B) <= 24) same++;
+    if (flatDark(B) && !flatDark(A)) flat++;
+    if (bright(A)) lit++;
+  }
+  const sampleA = island ? baseline.at(island.x + 4, island.y + 4) : null;
+  const sampleB = island ? img.at(island.x + 4, island.y + 4) : null;
+  return { island, float: f, n: points.length, same, flat, lit, sampleA, sampleB, islands: islands.length };
+}
+const baseA = await a.pixels('6a-video-duruk');
+const fl = await floatSample('6b-emoji-saydam', baseA);
+console.log('     emoji adacığı:', JSON.stringify(fl));
+check(
+  !!fl.island && fl.n >= 30 && fl.lit >= 5 && fl.same / fl.n >= 0.9 && fl.flat / fl.n < 0.05,
+  'uçan emojinin adacığında video görünüyor (opak #121212 zemin yok)',
+  `nokta:${fl.n} videoyla-aynı:${fl.same} düz-koyu:${fl.flat} parlak:${fl.lit} adacık:${JSON.stringify(fl.island)}`,
+);
+// Karşı deneme (testin hatayı yakaladığını göstermek için): çerçevenin şemasını eski haline (normal) çevir → adacık opak olmalı.
+await a.evaluate(`${SHELL}.style.setProperty('color-scheme', 'normal', 'important'); 1`);
+await a.sleep(3500);
+const neg = await floatSample('6c-karsi-deneme-normal', baseA);
+console.log('     karşı deneme (color-scheme:normal):', JSON.stringify(neg));
+check(
+  !!neg.island && neg.n >= 30 && neg.same / neg.n < 0.3,
+  "karşı deneme: çerçeve color-scheme:normal iken adacık opak (test eski hatayı yakalıyor)",
+  `nokta:${neg.n} videoyla-aynı:${neg.same} düz-koyu:${neg.flat}`,
+);
+await a.evaluate(`${SHELL}.style.setProperty('color-scheme', 'dark', 'important'); 1`);
+await a.sleep(3500);
+
+// 7d) Pin: P (odak film sayfasında) → not kutusu → kaydet; tam ekran dışında video altındaki şerit görünür.
+await a.press('p', 'KeyP', 80);
+const pinForm = await until(() => a.evalFrame('shell=1', `!document.getElementById('pin-form').hidden`), 4000);
+check(!!pinForm, 'P (odak film sayfasında) → pin not kutusu açıldı');
+await a.evalFrame('shell=1', `(() => { const i = document.getElementById('pin-note'); i.value = 'test pini'; i.form.requestSubmit(); return 1; })()`);
+const STRIP_SHOWN = (id) =>
+  `(() => { const s = document.getElementById('${id}'); return !s.hidden && !s.classList.contains('empty') && getComputedStyle(s).display !== 'none' && s.offsetHeight > 0; })()`;
+const stripOk = await until(() => a.evalFrame('shell=1', STRIP_SHOWN('pin-strip')), 6000);
+check(!!stripOk, 'pin kaydedildi: tam ekran dışında video altındaki pin şeridi görünüyor');
+await a.shot('7-pin-seridi');
+
+// 7e) Tam ekran (film sitesinin ⛶'u): pinler gizli, altyazı kontrollerin üstünde, mesaj tutamağı saydam.
+const fs2 = await a.center('#fs');
+if (fs2) await a.click(fs2.x, fs2.y);
+check(!!(await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`))), 'tam ekrana geçildi (altyazı/pin/mesaj testleri için)');
+await a.sleep(1500);
+{
+  const pinsHidden = await a.evalFrame(
+    'shell=1',
+    `({ fs: getComputedStyle(document.getElementById('fs-pins')).display, strip: getComputedStyle(document.getElementById('pin-strip')).display })`,
+  );
+  check(pinsHidden.fs === 'none' && pinsHidden.strip === 'none', 'tam ekranda pin şeritleri gizli (#fs-pins, .pin-strip)', JSON.stringify(pinsHidden));
+
+  const box = await a.evaluate(`(() => { const e = document.querySelector('[data-swm-focus]'); const r = e?.getBoundingClientRect(); return r ? { tag: e.tagName, id: e.id, top: r.top, bottom: r.bottom, h: r.height } : null; })()`);
+  const bar = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-controls').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: r.height }; })()`);
+  const holeRect = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
+  const cue = await a.evaluate(`(() => { const t = document.querySelector('video').textTracks[0]; return t ? { mode: t.mode, active: t.activeCues?.length ?? 0 } : null; })()`);
+  console.log('     tam ekran: oynatıcı', JSON.stringify(box), 'kontroller', JSON.stringify(bar), 'delik', JSON.stringify(holeRect), 'altyazı', JSON.stringify(cue));
+  check(cue?.mode === 'showing' && cue.active > 0, 'film videosunun altyazısı açık (WebVTT, aktif satır var)', JSON.stringify(cue));
+  check(
+    !!box && !!bar && box.bottom <= bar.top + 1 && box.h > 300,
+    'tam ekranda oynatıcının altı (altyazı) kontrol çubuğunun üstünde kalıyor',
+    `oynatıcı alt:${box?.bottom} çubuk üst:${bar?.top}`,
+  );
+  check(!!holeRect && near(holeRect.b, bar.top, 2), 'tam ekranda delik kontrol çubuğunun üstünde bitiyor', `delik alt:${holeRect?.b} çubuk üst:${bar?.top}`);
+  const fsImg = await a.pixels('8-tam-ekran-altyazi');
+  // Kontrol çubuğu (▶, emojiler, sohbet, ✕) delik dışında kaldı: sitenin kendisi çizmeli, görünür olmalı.
+  const ctl = await a.evalFrame(
+    'shell=1',
+    `(() => { const c = document.getElementById('fs-controls'); const cs = getComputedStyle(c); const p = document.getElementById('fs-play'); const r = p.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { display: cs.display, opacity: cs.opacity, visibility: cs.visibility, play: { x: r.left, y: r.top, w: r.width, h: r.height }, hit: hit ? hit.id || hit.className : null, idle: document.getElementById('theater').classList.contains('idle') }; })()`,
+  );
+  let ctlLit = 0;
+  for (let x = 10; x < 1270; x += 10) for (let y = bar.top + 10; y < bar.bottom - 5; y += 10) if (Math.max(...fsImg.at(x, y)) > 60) ctlLit++;
+  console.log('     tam ekran kontrolleri:', JSON.stringify(ctl), 'parlak nokta:', ctlLit);
+  await a.press('1', 'Digit1', 49); // tam ekranda uçan emoji de adacık olsun
+  await a.sleep(400);
+  const fsFloat = await a.evalFrame('shell=1', `(() => { const r = [...document.querySelectorAll('#reactions-layer .r-float')].at(-1)?.getBoundingClientRect(); return r ? { y: r.top, b: r.bottom } : null; })()`);
+  console.log('     tam ekranda uçan emoji:', JSON.stringify(fsFloat));
+  await a.shot('8b-tam-ekran-emoji');
+  const fsRects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`));
+  // evenodd: delik dışında kalan bir adacık ekranla çift sayılır → orası katmandan kesilir (film sayfası görünür).
+  const outside = fsRects.slice(2).filter((r) => r.b > fsRects[1].b + 1 || r.y < fsRects[1].y - 1 || r.x < fsRects[1].x - 1 || r.r > fsRects[1].r + 1);
+  console.log('     tam ekran clip:', JSON.stringify(fsRects));
+  check(outside.length === 0, 'tam ekranda deliğin dışına taşan adacık yok (evenodd o bölgeyi katmandan keserdi)', JSON.stringify(outside));
+  check(ctl.display !== 'none' && ctl.opacity === '1' && ctl.hit === 'fs-play' && ctlLit > 20, 'tam ekranda odanın kontrol çubuğu (▶ emoji sohbet ✕) görünüyor', `${JSON.stringify(ctl)} parlak:${ctlLit}`);
+
+  // Mesaj tutamağı ("💬 Mesajlar burada"): zemini %55 siyah → altında video görünmeli (B ≈ 0,45 × A), opak gri değil.
+  await a.evalFrame('shell=1', `document.getElementById('toast-handle').style.display = 'none'; 1`);
+  await a.sleep(1500);
+  const noHandle = await a.pixels('9a-tutamaksiz');
+  await a.evalFrame('shell=1', `document.getElementById('toast-handle').style.display = ''; 1`);
+  await a.sleep(1500);
+  bora.send({ t: 'chat', text: 'tam ekranda saydam mi' });
+  await until(() => a.evalFrame('shell=1', `!!document.querySelector('#toasts .toast')`), 5000);
+  await a.sleep(400);
+  const withHandle = await a.pixels('9b-tutamak-mesaj');
+  const h = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('toast-handle').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
+  const toastR = await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const r = e?.getBoundingClientRect(); return r ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`);
+  /** Kutunun sol iç boşluğundaki noktalar (yazıdan uzak): beklenen B ≈ (1 − opaklık) × A. */
+  const padSample = (r, keep, img) => {
+    let ok = 0;
+    let n = 0;
+    let lit = 0;
+    let flat = 0;
+    for (let y = r.y + 3; y <= r.b - 3; y += 2) {
+      for (let x = r.x + 3; x <= r.x + 9; x += 2) {
+        const A = noHandle.at(x, y);
+        const B = img.at(x, y);
+        const want = A.map((v) => v * keep);
+        n++;
+        if (pxDiff(B, want) <= 22) ok++;
+        if (bright(A)) lit++;
+        if (flatDark(B) && bright(A)) flat++;
+      }
+    }
+    return { n, ok, lit, flat };
+  };
+  const hs = padSample(h, 0.45, withHandle);
+  console.log('     tutamak:', JSON.stringify(h), JSON.stringify(hs));
+  check(hs.n > 10 && hs.lit >= 3 && hs.ok / hs.n >= 0.8, 'tam ekranda mesaj tutamağının altında video görünüyor (saydam)', JSON.stringify(hs));
+  if (toastR) {
+    const ts = padSample(toastR, 0.3, withHandle);
+    console.log('     mesaj:', JSON.stringify(toastR), JSON.stringify(ts));
+    check(ts.n > 10 && ts.lit >= 3 && ts.ok / ts.n >= 0.8, 'tam ekranda gelen mesajın altında video görünüyor (saydam)', JSON.stringify(ts));
+  } else check(false, 'tam ekranda gelen mesaj göründü');
+}
+await a.evalFrame('shell=1', `document.getElementById('fs-exit').click(); 1`);
+await a.sleep(800);
+
 // 8) Başkası odada sitenin oynattığı bir şey açar (senkron testi): katman tamamen açılır, film durur.
 bora.send({ t: 'load', media: { kind: 'test' } });
 const open = await until(() => a.evaluate(`getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath === 'none'`));
@@ -195,6 +537,65 @@ const nested = await until(
 check(!!nested, 'gömmeyi yasaklayan sayfa, iç içe oynatıcı: oynatıcı çerçevesi deliğe yerleşti');
 await a.sleep(800);
 await a.shot('3-ic-ice');
+
+// 9b) Video sonradan gelen sayfa (/late): oda görünümü hemen (video başlamadan) gelir, olası oynatıcı kutusu deliğe
+// oturur. Aynı sekme aynı sitede: örtü sayfa yüklenirken hemen (document_start, sessionStorage işareti) gelmeli.
+bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/late` } });
+const lateCard = await until(() => a.evalFrame('shell=1', `!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
+check(!!lateCard, '/late için "Filme git" kartı');
+const stopFlash2 = await recordFlash('late');
+await a.evalFrame('shell=1', `document.getElementById('external-go').click()`);
+const t0 = Date.now();
+check(!!(await until(async () => String(await a.evaluate('location.href')).includes('/late'), 10000)), '"Filme git" → sekme /late sayfasına gitti');
+const lateFull = await until(
+  () =>
+    a.evaluate(
+      `(() => { const s = ${SHELL}; const f = document.querySelector('[data-swm-focus]'); return s && getComputedStyle(s).clipPath.startsWith('path(') && f ? { focus: f.tagName + '#' + f.id + '.' + f.className, go: !!document.getElementById('go'), video: !!document.querySelector('video') } : null; })()`,
+    ),
+  10000,
+);
+console.log(`     /late: ${Date.now() - t0} ms sonra`, JSON.stringify(lateFull));
+{
+  const flash = await stopFlash2();
+  console.log('     flaş /late:', JSON.stringify(flash));
+  check(flash.frames > 0 && flash.worst < 0.3, 'film sayfasından /late sayfasına geçerken film sitesi hiçbir karede görünmedi (flaş yok)', JSON.stringify(flash));
+}
+check(!!lateFull && lateFull.go, '/late: video başlamadan oda görünümü (katmanda clip-path delik) geldi', JSON.stringify(lateFull));
+check(!!lateFull && /slot|player/.test(lateFull.focus), '/late: olası oynatıcı kutusu (#slot.player) data-swm-focus aldı', JSON.stringify(lateFull));
+await a.shot('10-late-oda-gorunumu');
+{
+  const l = await coverLog();
+  console.log('     örtü /late:', coverText(l));
+  check(!!l && (l.atStart || l.added !== null), '/late (aynı sitede sonraki sayfa): örtü eklendi', coverText(l));
+  check(
+    !!l && (l.atStart || (l.added !== null && (l.firstPaint === null || l.added <= l.firstPaint))),
+    '/late: örtü sayfanın ilk boyamasından önce vardı (film sitesi hiç görünmedi)',
+    coverText(l),
+  );
+  check(!!l && l.removed !== null && !l.now, '/late: oda görünümü gelince örtü kalktı', coverText(l));
+}
+// ▶'a deliğin içinden basılır → oynatıcı çerçevesi yüklenir, odak ona geçer.
+const goAt = await a.center('#go');
+if (goAt) await a.click(goAt.x, goAt.y);
+const lateFrame = await until(() => a.evaluate(`!!document.querySelector('iframe[data-swm-focus]')`), 15000);
+check(!!lateFrame, "/late: ▶'a delikten basıldı → oynatıcı çerçevesi deliğe yerleşti");
+await a.sleep(800);
+await a.shot('11-late-oynatici');
+
+// 9c) İlgisiz bir sitedeki sekmede (oda varken) örtü ve katman hiç olmamalı.
+{
+  const other = await a.openTab('http://[::1]:5299/film', COVER_SCRIPT);
+  await a.sleep(3500);
+  const o = await other.evaluate(
+    `({ href: location.href, log: window.__swmCover ?? null, cover: !!document.querySelector('[data-swm-cover]'), shell: !!document.querySelector('iframe[src^="chrome-extension://"]') })`,
+  );
+  console.log('     ilgisiz sekme:', JSON.stringify(o));
+  // Flaş ölçüsünün sağlaması: katmansız film sayfasında sol şerit bej olmalı.
+  const plain = beigeShare(decodePng(await other.capture()));
+  check(plain > 0.8, 'flaş ölçüsü sağlaması: katmansız film sayfasında bej oranı yüksek', String(plain));
+  check(!!o?.log && !o.cover && !o.shell && !o.log.atStart && o.log.added === null, 'ilgisiz sitedeki sekmede örtü ve katman hiç yok', JSON.stringify(o));
+  await other.close();
+}
 
 // 10) Odaya dön: sekme sitedeki odaya döner, katman kalkar, ayar (tema) ana sitede de geçerli.
 await a.evalFrame('shell=1', `document.querySelector('.shell-home').click()`);

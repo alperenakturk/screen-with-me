@@ -49,15 +49,22 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'load', media: { kind: 'page', url: 'chrome://settings' } })).toBeNull();
   });
 
+  it('accepts only the listed emoji gaps and the home message', () => {
+    expect(parse({ t: 'settings', reactionGap: 3 })).toEqual({ t: 'settings', reactionGap: 3 });
+    expect(parse({ t: 'settings', reactionGap: 7 })).toBeNull();
+    expect(parse({ t: 'settings', reactionGap: '3' })).toBeNull();
+    expect(parse({ t: 'home', extra: 'x' })).toEqual({ t: 'home' });
+  });
+
   it('accepts a known avatar and silently drops an unknown one', () => {
-    expect(parse({ t: 'hello', v: 3, name: 'Ali', avatar: '🦊' })).toEqual({ t: 'hello', v: 3, name: 'Ali', avatar: '🦊' });
+    expect(parse({ t: 'hello', v: 3, name: 'Ali', avatar: 'elf' })).toEqual({ t: 'hello', v: 3, name: 'Ali', avatar: 'elf' });
     expect(parse({ t: 'hello', v: 3, name: 'Ali', avatar: '<img src=x>' })).toEqual({ t: 'hello', v: 3, name: 'Ali' });
   });
 
   it('accepts rename, kick and a valid client id', () => {
     expect(parse({ t: 'hello', v: 3, name: 'Ali', cid: 'abcd1234efgh' })).toEqual({ t: 'hello', v: 3, name: 'Ali', cid: 'abcd1234efgh' });
     expect(parse({ t: 'hello', v: 3, name: 'Ali', cid: 'x' })).toEqual({ t: 'hello', v: 3, name: 'Ali' });
-    expect(parse({ t: 'rename', name: ' Veli ', avatar: '🐼' })).toEqual({ t: 'rename', name: 'Veli', avatar: '🐼' });
+    expect(parse({ t: 'rename', name: ' Veli ', avatar: 'dwarf' })).toEqual({ t: 'rename', name: 'Veli', avatar: 'dwarf' });
     expect(parse({ t: 'rename', name: '' })).toBeNull();
     expect(parse({ t: 'kick', id: 'abc12345' })).toEqual({ t: 'kick', id: 'abc12345' });
     expect(parse({ t: 'kick', id: '../x' })).toBeNull();
@@ -68,7 +75,7 @@ describe('parseClientMessage', () => {
   it('accepts drawn avatars from every avatar page, and shows them as emoji in text', () => {
     expect(parse({ t: 'rename', name: 'Ali', avatar: 'wizard' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'wizard' });
     expect(parse({ t: 'rename', name: 'Ali', avatar: 'swordsman' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'swordsman' });
-    expect(parse({ t: 'rename', name: 'Ali', avatar: '🦊' })).toEqual({ t: 'rename', name: 'Ali', avatar: '🦊' });
+    expect(parse({ t: 'rename', name: 'Ali', avatar: 'speedster' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'speedster' });
     expect(parse({ t: 'rename', name: 'Ali', avatar: 'toString' })).toEqual({ t: 'rename', name: 'Ali' });
     expect(avatarText('wizard')).toBe('🧙');
     expect(avatarText('🦊')).toBe('🦊');
@@ -80,9 +87,9 @@ describe('parseClientMessage', () => {
     for (const id of Object.keys(DRAWN_AVATARS)) expect(all.filter((a) => a === id)).toHaveLength(1);
     expect(new Set(all).size).toBe(all.length);
     expect(AVATAR_TABS.flatMap((tab) => tab.pages).sort()).toEqual(AVATAR_PAGES.map((_, i) => i));
-    expect(avatarPageOf('chemist')).toBe(3);
-    expect(avatarPageOf('cavecreature')).toBe(2);
-    expect(avatarPageOf('airmonk')).toBe(4);
+    expect(avatarPageOf('chemist')).toBe(2);
+    expect(avatarPageOf('cavecreature')).toBe(1);
+    expect(avatarPageOf('airmonk')).toBe(3);
     expect(avatarPageOf('nope')).toBe(0);
   });
 

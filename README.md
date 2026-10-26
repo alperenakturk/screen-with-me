@@ -45,7 +45,7 @@ the speed, it happens for everyone. Reactions, chat, pins and a shared queue sit
 ### Room life
 | | |
 |---|---|
-| 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters, animals, film / series / anime parodies), remembered by the browser. |
+| 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. |
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
 | 💬 **Chat & reactions** | Tabbed side panel (chat, queue, people, settings). Three emoji pages; reactions show bottom-left as an avatar + name card. Room activity in chat is hidden by default ("Show actions"). |
 | 🖼️ **Custom emojis** | Add your own image or GIF; the whole room can react with it (up to 24 per room). |

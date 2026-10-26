@@ -76,10 +76,11 @@ a.send({ t: 'chat', text: 'selam <b>herkes</b>' });
 const c1 = await b.next((m) => m.t === 'chat', 'chat');
 ok(c1.message.text === 'selam <b>herkes</b>' && c1.message.by.name === 'Ali', 'Sohbet mesajı ulaştı (metin olduğu gibi, HTML olarak işlenmez)');
 
-for (let i = 0; i < 20; i++) b.send({ t: 'react', emoji: '😂' });
+// Art arda basmak serbest ama kötüye kullanım sınırı var (RateLimiter(12, 5): bir anda en fazla ~12).
+for (let i = 0; i < 40; i++) b.send({ t: 'react', emoji: '😂' });
 await new Promise((r) => setTimeout(r, 500));
 const got = a.inbox.filter((m) => m.t === 'reaction').length;
-ok(got > 0 && got <= 7, `Emoji spam'i sınırlandı (20 gönderildi, ${got} ulaştı)`);
+ok(got >= 10 && got <= 16, `Emoji yağmuru serbest ama sınırlı (40 gönderildi, ${got} ulaştı)`);
 
 const c = client('Can');
 await c.opened;

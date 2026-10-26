@@ -9,10 +9,10 @@ import { avatarNode } from './avatar.ts';
 const MAX_FLOATS = 12;
 /** Uçuşma süresi (CSS r-float ile aynı); animasyon olayı gelmezse bu sürede silinir. */
 const FLOAT_MS = 3000;
-/** Bir tepkiden sonra butonlar kısa süre bekler: art arda basıp ekranı doldurmasın. */
-const COOLDOWN_MS = 1100;
 /** Kendi özel emojilerim (tarayıcıda saklanır, girdiğim her odaya yüklenir). */
 const MY_STICKERS_KEY = 'myStickers';
+/** Aralık serbestken bile iki emoji arası en az bu kadar (ms). */
+const MIN_GAP_MS = 150;
 const MAX_MY_STICKERS = 12;
 
 type Item = { emoji: string } | { sticker: string } | { add: true };
@@ -20,8 +20,7 @@ type Item = { emoji: string } | { sticker: string } | { add: true };
 /**
  * Tepkiler. Alttaki çubuk: üç emoji sayfası + özel emoji (GIF/resim) sayfaları; ▲▼ ya da
  * tekerlek sayfa değiştirir, 1–8 tuşları o sayfanın öğeleri. Gelen tepkiler videonun altından
- * yükselip kaybolur (altında küçük avatar + isim); aynı kişinin hâlâ uçuşan aynı tepkisi yenisini
- * açmaz, "×2" olur.
+ * yükselip kaybolur (altında küçük avatar + isim); art arda basılan her tepki ayrı uçar.
  */
 /** Emoji çubuğunda her sayfada kaç yuva var (1–8 tuşları). */
 const SLOTS = 8;
@@ -32,6 +31,8 @@ export function createReactions(
   canManage: () => boolean = () => false,
   /** Yönetici emojileri kapattıysa false (tuşlar da çalışmaz). */
   enabled: () => boolean = () => true,
+  /** Yöneticinin koyduğu iki emoji arası en kısa süre (ms; 0 serbest: art arda basılabilir). */
+  gap: () => number = () => 0,
 ) {
   // Biri video altında, biri tam ekran kontrollerinde olmak üzere birden fazla emoji çubuğu olabilir.
   const bars = root.querySelectorAll<HTMLElement>('.reaction-bar');
@@ -65,11 +66,15 @@ export function createReactions(
       return;
     }
     if (Date.now() < coolUntil) return;
-    coolUntil = Date.now() + COOLDOWN_MS;
     send('emoji' in item ? { t: 'react', emoji: item.emoji as never } : { t: 'react', sticker: item.sticker });
+    // Serbestken de art arda iki basış arası en az 150 ms (insan eli zaten bundan hızlı basamaz; otomatik
+    // tekrar ya da takılan tuş sunucuyu boğmasın).
+    const wait = gap();
+    coolUntil = Date.now() + Math.max(MIN_GAP_MS, wait);
+    if (wait <= 0) return;
     for (const bar of bars) {
       bar.classList.add('cooling');
-      setTimeout(() => bar.classList.remove('cooling'), COOLDOWN_MS);
+      setTimeout(() => bar.classList.remove('cooling'), wait);
     }
   }
 
@@ -140,7 +145,8 @@ export function createReactions(
 
   // Klavye: 1–8 o anki sayfanın öğeleri (yazı yazarken değil). Tam ekranda ve normalde çalışır.
   document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
+    // Basılı tutulan tuşun otomatik tekrarı emoji yağdırmasın.
+    if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
     const n = Number(event.key);
     if (!Number.isInteger(n) || n < 1 || n > 8) return;
     const item = pages()[page]?.[n - 1];
@@ -152,17 +158,7 @@ export function createReactions(
   return {
     /** Gelen tepki: videonun altından rastgele bir yerden yükselir. */
     show(by: Member, emoji?: string, sticker?: string): void {
-      const key = `${by.id}|${emoji ?? sticker}`;
-      const existing = layer.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
-      if (existing) {
-        const count = Number(existing.dataset.count ?? '1') + 1;
-        existing.dataset.count = String(count);
-        existing.querySelector('.r-count')!.textContent = `×${count}`;
-        existing.classList.remove('bump');
-        void existing.offsetWidth;
-        existing.classList.add('bump');
-        return;
-      }
+      // Her tepki ayrı uçar (art arda basınca "×2" olmaz, yağmur gibi yükselir).
       let content: HTMLElement;
       if (sticker) {
         const data = stickers.get(sticker);
@@ -172,8 +168,8 @@ export function createReactions(
         content = el('span', { class: 'r-emoji' }, emoji ?? '');
       }
       while (layer.childElementCount >= MAX_FLOATS) layer.firstElementChild?.remove();
-      const who = el('span', { class: 'r-who' }, avatarNode(by.avatar, 'r-avatar'), el('span', { class: 'r-name' }, by.name), el('span', { class: 'r-count' }));
-      const float = el('div', { class: 'r-float', 'data-key': key, 'data-count': '1' }, content, who);
+      const who = el('span', { class: 'r-who' }, avatarNode(by.avatar, 'r-avatar'), el('span', { class: 'r-name' }, by.name));
+      const float = el('div', { class: 'r-float' }, content, who);
       float.style.left = `${6 + Math.random() * 78}%`;
       float.style.setProperty('--drift', `${Math.round((Math.random() - 0.5) * 70)}px`);
       float.addEventListener('animationend', (event) => {

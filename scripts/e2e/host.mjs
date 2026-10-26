@@ -33,9 +33,9 @@ b.send({ t: 'kick', id: wa.you });
 const err = await b.wait((m) => m.t === 'error', 'not_host');
 ok(err.code === 'not_host', 'Yönetici olmayan Ayşe kimseyi atamaz');
 
-b.send({ t: 'rename', name: 'Ayşe K.', avatar: '🐼' });
+b.send({ t: 'rename', name: 'Ayşe K.', avatar: 'dwarf' });
 const ren = await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ayşe K.'), 'rename');
-ok(ren.members.find((x) => x.name === 'Ayşe K.').avatar === '🐼', 'İsim ve avatar değişikliği herkese yansıdı');
+ok(ren.members.find((x) => x.name === 'Ayşe K.').avatar === 'dwarf', 'İsim ve avatar değişikliği herkese yansıdı');
 
 // Ali sayfayı yeniler: bağlantı kopar, aynı kimlikle geri gelir → yine yönetici.
 a.ws.close();

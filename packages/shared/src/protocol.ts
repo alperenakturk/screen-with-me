@@ -85,16 +85,16 @@ export const DRAWN_AVATARS = {
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
 
 /**
- * Avatar sayfaları: 0) temalara ait karakterler, 1) hayvanlar (emoji), 2-5) parodiler
- * (sadece tarzı andırır, isim yok): film, dizi, anime, oyun. Sunucu bunların dışındakini kabul
- * etmez; yeni avatar eklemek eski istemcileri bozmaz (onlarda emoji yerine kimlik görünür).
+ * Avatar sayfaları: 0) temalara ait karakterler, 1-4) parodiler (sadece tarzı andırır, isim yok):
+ * film, dizi, anime, oyun. Sunucu bunların dışındakini kabul etmez; yeni avatar eklemek eski
+ * istemcileri bozmaz (onlarda emoji yerine kimlik görünür). Hayvan emojileri 0.9.57'de kalktı
+ * (seçmiş olanın kayıtlı avatarı geçersiz sayılır, rastgele temalı karakter verilir).
  */
 export const AVATAR_PAGES = [
   [
     'wizard', 'sorceress', 'warrior', 'elf', 'dwarf',
     'janissary', 'horseman', 'veiled', 'director', 'diva', 'driver', 'captain', 'conductor',
   ],
-  ['🦊', '🐼', '🐸', '🐯', '🐨', '🐙', '🦄', '🐧', '🐵', '🐶', '🐱', '🦁', '🐻', '🐰', '🐲', '👽'],
   ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
   [
     'scientist', 'sidekick', 'chemist', 'lawyer', 'hunter', 'dragonqueen', 'goth',
@@ -105,13 +105,12 @@ export const AVATAR_PAGES = [
 ] as const;
 
 /**
- * Seçicideki sekmeler: Temalı, Hayvanlar, Parodi; Parodi'nin altında Film / Dizi / Anime / Oyun.
+ * Seçicideki sekmeler: Temalı, Parodi; Parodi'nin altında Film / Dizi / Anime / Oyun.
  * Her sekme AVATAR_PAGES'teki sayfa numaralarını tutar.
  */
 export const AVATAR_TABS = [
   { key: 'theme', pages: [0] },
-  { key: 'animals', pages: [1] },
-  { key: 'parody', pages: [2, 3, 4, 5], subs: ['film', 'series', 'anime', 'game'] },
+  { key: 'parody', pages: [1, 2, 3, 4], subs: ['film', 'series', 'anime', 'game'] },
 ] as const;
 
 /** Avatarın bulunduğu sayfa (yoksa 0). */
@@ -131,17 +130,21 @@ export function isDrawnAvatar(x: unknown): x is DrawnAvatar {
   return typeof x === 'string' && Object.prototype.hasOwnProperty.call(DRAWN_AVATARS, x);
 }
 
-/** Metin içinde gösterilecek hali: çizilmiş avatarın emoji karşılığı, hayvanın kendisi. */
+/** Metin içinde gösterilecek hali: çizilmiş avatarın emoji karşılığı (eski kayıtlarda emoji olabilir: kendisi). */
 export function avatarText(avatar: string | undefined | null): string {
   if (!avatar) return '';
   return isDrawnAvatar(avatar) ? DRAWN_AVATARS[avatar] : avatar;
 }
 
-/** Yeni gelen için rastgele: tematik karakterler ve hayvanlardan. */
+/** Yeni gelen için rastgele: temalı karakterlerden. */
 export function randomAvatar(): Avatar {
-  const pool = [...AVATAR_PAGES[0], ...AVATAR_PAGES[1]];
+  const pool = AVATAR_PAGES[0];
   return pool[Math.floor(Math.random() * pool.length)]!;
 }
+
+/** Yöneticinin seçebileceği emoji aralıkları (sn): 0 serbest (varsayılan). */
+export const REACTION_GAPS = [0, 1, 3, 5, 10] as const;
+export type ReactionGap = (typeof REACTION_GAPS)[number];
 
 export const TITLE_MAX_LENGTH = 200;
 
@@ -207,6 +210,8 @@ export interface RoomSettings {
   saved?: boolean;
   /** Yönetici emojileri kapattı (dikkat dağılmasın): kimse tepki atamaz. */
   noReactions?: boolean;
+  /** Bir kişinin iki emojisi arasındaki en kısa süre (sn; yoksa/0: serbest, art arda atılabilir). */
+  reactionGap?: ReactionGap;
   /** Kaydedilmiş odanın adı (yönetici verir). */
   name?: string;
 }
@@ -257,7 +262,7 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; saved?: boolean; noReactions?: boolean; name?: string; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; saved?: boolean; noReactions?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
@@ -538,6 +543,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'saved', 'noReactions'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
+      if ((REACTION_GAPS as readonly unknown[]).includes(m.reactionGap)) out.reactionGap = m.reactionGap as ReactionGap;
       const name = cleanRoomName(m.name);
       if (name) out.name = name;
       if (m.startsAt === null) out.startsAt = null;

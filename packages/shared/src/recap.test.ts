@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { chooseFacts, StatsTracker } from './recap.ts';
 
 const ali = { name: 'Ali' };
-const ayse = { name: 'Ayşe', avatar: '🐱' as const };
+const ayse = { name: 'Ayşe', avatar: 'elf' as const };
 
 describe('StatsTracker', () => {
   it('sadece oda oynarken ve biri varken geçen süreyi sayar', () => {
@@ -27,7 +27,7 @@ describe('StatsTracker', () => {
     const r = s.recap(1000, 'x');
     expect(JSON.stringify(r)).not.toContain('c:aaa');
     expect(r.people.find((p) => p.name === 'Ali')).toMatchObject({ chat: 1, reactions: 2, top: '😂', laugh: 2 });
-    expect(r.people.find((p) => p.name === 'Ayşe')).toMatchObject({ sad: 1, pauses: 1, avatar: '🐱' });
+    expect(r.people.find((p) => p.name === 'Ayşe')).toMatchObject({ sad: 1, pauses: 1, avatar: 'elf' });
     expect(r.emojis[0]).toEqual(['😂', 2]);
   });
 

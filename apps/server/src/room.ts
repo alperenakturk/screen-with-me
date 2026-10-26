@@ -165,7 +165,13 @@ export class Room extends DurableObject<Env> {
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
-  private readonly reactionLimit = new RateLimiter(6, 1.5);
+  // Emojiler art arda atılabilir (abanma serbest); bu sadece kötüye kullanımı keser. Yönetici isterse
+  // settings.reactionGap ile kişi başı aralık koyar (lastReaction).
+  private readonly reactionLimit = new RateLimiter(12, 5);
+  /** Yöneticinin emoji aralığı için kişinin (tarayıcının) son geçen emojisi; sadece aralık açıkken yazılır. */
+  private readonly lastReaction = new Map<string, number>();
+  /** "Odaya döndüm" haberi: kişi başı en fazla yarım dakikada bir (filmdekileri kart yağmuruna tutmasın). */
+  private readonly homeLimit = new RateLimiter(1, 1 / 30);
   /** Özel emoji ekleme: birkaç tane hemen, sonra 20 sn'de bir (büyük veri). */
   private readonly stickerLimit = new RateLimiter(4, 0.05);
   // Sohbet: art arda 8 mesaj, sonra saniyede 1 (daha sıkısı arkadaşlar arasında yazışırken takılıyordu).
@@ -263,7 +269,9 @@ export class Room extends DurableObject<Env> {
     const joined: Joined = { ...attachment, name: attachment.name };
     const me = memberOf(joined);
 
-    if (!this.commandLimit.allow(me.id)) {
+    // Emoji ve "odaya döndüm" kendi sınırlarıyla: emoji yağmuru kişinin oynat/durdur/sar komutlarını tüketmesin.
+    const cheap = message.t === 'react' || message.t === 'home';
+    if (!cheap && !this.commandLimit.allow(me.id)) {
       this.sendTo(ws, { t: 'error', code: 'rate_limited' });
       return;
     }
@@ -285,21 +293,31 @@ export class Room extends DurableObject<Env> {
         return;
       case 'home':
         // Sadece haber: filmdekilere "sen de dön" diye sorulur (sık basılıp kimseyi rahatsız etmesin).
-        if (!this.reactionLimit.allow(me.id)) return;
+        if (!this.homeLimit.allow(keyOf(attachment))) return;
         this.broadcast({ t: 'home', by: me }, ws);
         return;
-      case 'react':
-        // Yönetici emojileri kapattıysa (yönetici dahil) kimse atamaz.
-        if (this.settings.noReactions || !this.reactionLimit.allow(me.id)) return;
+      case 'react': {
+        // Yönetici emojileri kapattıysa (yönetici dahil) kimse atamaz. Sınırlar kişi (tarayıcı) başına:
+        // aynı kişinin ikinci sekmesi aralığı aşamasın.
+        const who = keyOf(attachment);
+        if (this.settings.noReactions || !this.reactionLimit.allow(who)) return;
+        // Yöneticinin koyduğu aralık (küçük pay: ağ gecikmesi iki basışı yaklaştırabilir).
+        const gap = (this.settings.reactionGap ?? 0) * 1000;
+        if (gap > 0) {
+          const now = Date.now();
+          if (now - (this.lastReaction.get(who) ?? 0) < gap - 150) return;
+          this.lastReaction.set(who, now);
+        }
         if (message.sticker !== undefined) {
           if (!this.stickers.has(message.sticker)) return;
           this.broadcast({ t: 'reaction', sticker: message.sticker, by: me });
         } else {
           this.broadcast({ t: 'reaction', emoji: message.emoji, by: me });
         }
-        this.stats.reaction(keyOf(attachment), me, message.emoji ?? null);
+        this.stats.reaction(who, me, message.emoji ?? null);
         await this.saveStats();
         return;
+      }
       case 'sticker-add': {
         const id = await stickerId(message.data);
         if (this.stickers.has(id)) return;
@@ -426,6 +444,7 @@ export class Room extends DurableObject<Env> {
         if (message.autoNext !== undefined) next.autoNext = message.autoNext;
         if (message.saved !== undefined) next.saved = message.saved;
         if (message.noReactions !== undefined) next.noReactions = message.noReactions;
+        if (message.reactionGap !== undefined) next.reactionGap = message.reactionGap;
         if (message.name !== undefined) next.name = message.name;
         // Kayıt kapanınca hatırlananlar da silinir.
         if (message.saved === false && Object.keys(this.history).length) {
@@ -941,10 +960,16 @@ export class Room extends DurableObject<Env> {
   private async onLeave(leaving: WebSocket): Promise<void> {
     const attachment = leaving.deserializeAttachment() as Attachment | null;
     if (attachment) {
-      for (const limiter of [this.commandLimit, this.reactionLimit, this.chatLimit]) limiter.forget(attachment.id);
+      for (const limiter of [this.commandLimit, this.chatLimit]) limiter.forget(attachment.id);
+      // Kişi başı tutulanlar: aynı tarayıcının başka bağlantısı kalmadıysa unutulur.
+      const key = keyOf(attachment);
+      if (!this.joined(leaving).some((other) => keyOf(other) === key)) {
+        this.reactionLimit.forget(key);
+        this.homeLimit.forget(key);
+        this.lastReaction.delete(key);
+      }
       this.waits.remove(attachment.id);
       // Yöneticinin son bağlantısı gittiyse saymaya başla (bkz. settleHost).
-      const key = keyOf(attachment);
       if (attachment.name && key === this.hostKey && this.hostGoneAt === null && !this.joined(leaving).some((a) => keyOf(a) === key)) {
         await this.setHostGone(Date.now());
       }

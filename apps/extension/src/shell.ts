@@ -13,10 +13,15 @@ import { SHELL_PORT_NAME, type ShellPortMessage, type ShellPortReply } from './m
 import { mergeStore, readStore } from './store.ts';
 
 const SITE_ORIGIN = new URL(SITE_URL).origin;
-const roomId = location.hash.slice(1);
 
-const frame = document.createElement('iframe');
-if (ROOM_ID_PATTERN.test(roomId)) {
+/**
+ * Sitemiz sadece arka plan "bu sekme şu odada" deyince açılır. Oda kimliği adreste durmaz: başka bir sayfa
+ * shell.html'i gizlice gömerse kullanıcı onun odasına isim/avatarıyla girmesin; film sitesi de kimliği okuyamasın.
+ */
+let frame: HTMLIFrameElement | null = null;
+function openSite(roomId: string): void {
+  if (frame || !ROOM_ID_PATTERN.test(roomId)) return;
+  frame = document.createElement('iframe');
   frame.src = `${SITE_URL}/r/${roomId}?shell=1`;
   frame.allow = 'autoplay; clipboard-write';
   frame.title = 'ScreenWithMe';
@@ -24,15 +29,14 @@ if (ROOM_ID_PATTERN.test(roomId)) {
 }
 
 function toSite(message: ExtToSite): void {
-  frame.contentWindow?.postMessage({ source: EXT_SOURCE, ...message }, SITE_ORIGIN);
+  frame?.contentWindow?.postMessage({ source: EXT_SOURCE, ...message }, SITE_ORIGIN);
 }
 
 // ---- Arka planla bağlantı (kopunca yeniden kurulur, son durum tekrar yollanır) ----
 let port: chrome.runtime.Port | null = null;
-let started = false;
 const last: { state?: ShellPortMessage; clock?: ShellPortMessage; layout?: ShellPortMessage } = {};
 /** Arka plandan gelen son sayfa adresi / video durumu: site hazır olmadan geldiyse sonra tekrar verilir. */
-const latest: Partial<Record<'page' | 'video' | 'fullscreen', ShellPortReply>> = {};
+const latest: Partial<Record<'page' | 'video' | 'fullscreen', Exclude<ShellPortReply, { type: 'room' }>>> = {};
 
 function connect(): void {
   if (port) return;
@@ -43,6 +47,10 @@ function connect(): void {
     return;
   }
   port.onMessage.addListener((message: ShellPortReply) => {
+    if (message.type === 'room') {
+      openSite(message.roomId);
+      return;
+    }
     if (message.type === 'page' || message.type === 'video' || message.type === 'fullscreen') latest[message.type] = message;
     toSite(message);
   });
@@ -69,17 +77,12 @@ function toBackground(message: ShellPortMessage): void {
 
 addEventListener('message', (event: MessageEvent) => {
   // Sadece içimizdeki sitemizden gelenler.
-  if (event.source !== frame.contentWindow || event.origin !== SITE_ORIGIN) return;
+  if (!frame || event.source !== frame.contentWindow || event.origin !== SITE_ORIGIN) return;
   const data = event.data as (SiteToExt & { source?: string }) | null;
   if (data?.source !== SITE_SOURCE || typeof data.type !== 'string') return;
   switch (data.type) {
     case 'store-hello':
       void readStore().then((entries) => toSite({ type: 'store', entries }));
-      // Site hazır: arka plana bağlan (sayfa adresi ve "video var mı" buna cevap olarak gelir).
-      if (!started) {
-        started = true;
-        connect();
-      }
       break;
     case 'shell-ready':
       // Site çizildi: yüklenirken film sayfasını örten zemin kalkar (deliğin içindeki mesajlar saydam görünsün).
@@ -103,3 +106,7 @@ addEventListener('message', (event: MessageEvent) => {
       break;
   }
 });
+
+// Arka plana hemen bağlan: oda kimliği oradan gelir (sayfa adresi ve "video var mı" da; site hazır olunca
+// `shell-ready` ile tekrar verilir).
+connect();

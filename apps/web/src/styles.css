@@ -662,6 +662,43 @@ select:focus {
   border-color: var(--muted);
 }
 
+/* Tek başınayken senkron düğmeleri soluk (basınca uyarı balonu) */
+.alone {
+  opacity: 0.5;
+}
+
+.hint-bubble {
+  position: fixed;
+  z-index: 3000;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgb(12 12 20 / 0.92);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.35;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+  animation: r-in 0.2s ease-out;
+}
+
+/* Sağ üstteki 👤 Profil: açıkken vurgulu (tekrar basınca sohbete döner) */
+.profile-btn {
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 2px 9px;
+  cursor: pointer;
+}
+
+.profile-btn[aria-selected='true'] {
+  color: var(--text);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
 /* Bağlantıyı yenile düğmesi: küçük; bağlantı koptuysa vurgu renginde. */
 .reconnect {
   padding: 2px 9px;
@@ -1128,6 +1165,26 @@ button.nav-link {
   align-items: flex-start;
   font-size: 14px;
   cursor: pointer;
+}
+
+/* Yönetici ayarlarında seçim kutusu (ör. emoji sıklığı) */
+.select-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.select-row select {
+  max-width: 60%;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
 }
 
 .check-row input {
@@ -1930,11 +1987,6 @@ button.nav-link {
   animation: r-float 3s ease-out forwards;
 }
 
-.r-float.bump .r-emoji,
-.r-float.bump .r-sticker {
-  animation: r-bump 0.3s ease;
-}
-
 .r-emoji {
   font-size: 42px;
   line-height: 1;
@@ -1984,15 +2036,6 @@ button.nav-link {
   text-overflow: ellipsis;
 }
 
-.r-count {
-  font-weight: 700;
-  color: #ffd27a;
-}
-
-.r-count:empty {
-  display: none;
-}
-
 @keyframes r-float {
   0% {
     transform: translate(0, 24px) scale(0.6);
@@ -2015,12 +2058,6 @@ button.nav-link {
   from {
     opacity: 0;
     transform: translateX(-16px);
-  }
-}
-
-@keyframes r-bump {
-  50% {
-    transform: scale(1.35);
   }
 }
 
@@ -3506,7 +3543,9 @@ button.nav-link {
 }
 
 /* Tam ekranda videonun altındaki şerit görünmez (orada tam ekran şeridi var; iki pin oluyordu) */
-.theater:is(:fullscreen, .fake-fs) .pin-strip:not(.fs) {
+/* Pinler sadece tam ekran dışında (video altında) görünür: tam ekranda ne video altı ne ilerleme üstü şeridi */
+.theater:is(:fullscreen, .fake-fs) .pin-strip,
+.pin-strip.fs {
   display: none !important;
 }
 
@@ -3571,6 +3610,17 @@ html.shell-film .theater:not(.fake-fs)::before {
   pointer-events: none;
   border-radius: inherit;
   background: color-mix(in srgb, var(--bg) 90%, transparent);
+  clip-path: var(--theater-cut);
+}
+
+/* Tam ekranda zemin siyah; delik (video) kontrol çubuğunun üstünde biter, çubuğun altı da siyah */
+html.shell-film .theater.fake-fs::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: #000;
   clip-path: var(--theater-cut);
 }
 
