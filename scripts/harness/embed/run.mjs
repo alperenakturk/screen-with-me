@@ -658,7 +658,8 @@ await a.shot('11-late-oynatici');
 
 // 9c) İlgisiz bir sitedeki sekmede (oda varken) örtü ve katman hiç olmamalı.
 {
-  const other = await a.openTab('http://[::1]:5299/film', COVER_SCRIPT);
+  // 127.0.0.2: 127.0.0.1'den farklı site, yine yerel döngü. [::1] IPv6'sız Linux konteynerinde (bulut) açılmıyordu.
+  const other = await a.openTab('http://127.0.0.2:5299/film', COVER_SCRIPT);
   await a.sleep(3500);
   const o = await other.evaluate(
     `({ href: location.href, log: window.__swmCover ?? null, cover: !!document.querySelector('[data-swm-cover]'), shell: !!document.querySelector('iframe[src^="chrome-extension://"]') })`,
