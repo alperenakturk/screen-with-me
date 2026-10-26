@@ -12,6 +12,7 @@ import { isForwardedKey, isRelayable, type EmbedReply } from '@swm/shared/embed'
 import { ROOM_ID_PATTERN, type PlaybackState } from '@swm/shared/protocol';
 import { cleanLayout, type ShellLayout } from '@swm/shared/shell';
 import { SITE_URL } from './config.ts';
+import { readValue } from './store.ts';
 import {
   PORT_NAME,
   PROBE,
@@ -57,6 +58,14 @@ interface Shell {
   site: string;
   /** Elle video seçimi açık: sonradan yüklenen çerçeveler de düğmelerini çizsin. */
   picking: boolean;
+  /** Film sayfasına (oda görünümünde) en son tıklanan an: hemen ardından gelen başka site yönlendirmesi reklamdır. */
+  lastClick: number;
+  /** Bu ana kadar film sekmesinden açılan sekmeler kapatılmaz (site "bağlantı açıyorum" dedi, ya da "Geri aç"). */
+  allowTabsUntil: number;
+  /** Kapatılan reklam sekmelerinin adresleri ("Geri aç" sadece bunları açar). */
+  closed: string[];
+  /** Film sayfası reklam yönlendirmesiyle başka bir siteye gitti (film sitesine dönünce biter). */
+  strayed: boolean;
 }
 
 // Katman açılır açılmaz sayfanın tamamını kaplar (oda görünümü hemen gelsin); site deliği sonra bildirir.
@@ -80,6 +89,10 @@ function newShell(tabId: number, roomId: string, site: string): Shell {
     videoSent: null,
     site,
     picking: false,
+    lastClick: 0,
+    allowTabsUntil: 0,
+    closed: [],
+    strayed: false,
   };
 }
 
@@ -192,7 +205,7 @@ function pushLayout(shell: Shell, only?: number): void {
 
 async function pushPage(shell: Shell): Promise<void> {
   const tab = await chrome.tabs.get(shell.tabId).catch(() => null);
-  if (tab?.url) post(shell.port, { type: 'page', url: tab.url });
+  if (tab?.url) post(shell.port, shell.strayed ? { type: 'page', url: tab.url, strayed: true } : { type: 'page', url: tab.url });
 }
 
 // ---- Film çerçeveleri ----
@@ -228,6 +241,7 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       reply(shell, { type: 'fullscreen' });
       break;
     case 'activity':
+      if (message.click) shell.lastClick = Date.now();
       reply(shell, { type: 'activity' });
       break;
     case 'hole':
@@ -333,7 +347,10 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
       // Sitedeki odaya dönülüyorsa katman kalkar (site kendi sayfasında devralır).
       if (url.origin === SITE_ORIGIN) endShell(shell.tabId);
       // Odadaki başka bir film sayfası (başka bir site olabilir): katman oraya da gelsin.
-      else shell.site = siteOf(url.href);
+      else {
+        shell.site = siteOf(url.href);
+        shell.strayed = false;
+      }
       void persist();
       await chrome.tabs.update(shell.tabId, { url: url.href }).catch(() => {});
       break;
@@ -345,6 +362,16 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
       shell.picking = message.on;
       for (const frame of frames.get(shell.tabId)?.values() ?? []) post(frame.port, { type: 'pick', on: message.on });
       break;
+    case 'open-ok':
+      shell.allowTabsUntil = Date.now() + 3000;
+      break;
+    case 'reopen': {
+      if (!shell.closed.includes(message.url)) break;
+      shell.closed = shell.closed.filter((url) => url !== message.url);
+      shell.allowTabsUntil = Date.now() + 3000;
+      await chrome.tabs.create({ url: message.url, openerTabId: shell.tabId }).catch(() => {});
+      break;
+    }
   }
 }
 
@@ -419,6 +446,7 @@ function originOf(url: string): string | null {
 }
 
 chrome.tabs.onUpdated.addListener((tabId, info) => {
+  if (info.url && opened.has(tabId)) void checkOpened(tabId, info.url);
   const shell = shells.get(tabId);
   if (!shell) return;
   // Sekme sitemize döndüyse (🏠, geri tuşu): katman kalkar, site kendi sayfasında devralır.
@@ -426,10 +454,18 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
     endShell(tabId);
     return;
   }
-  // Kullanıcı film sitesinden başka bir siteye gitti (adres çubuğu, dış link): katman orada açılmasın.
+  // Film sitesinden başka bir siteye gidildi. Oda görünümündeyken deliğe tıklamanın hemen ardındaysa bu bir reklam
+  // yönlendirmesidir: katman kalkmaz, site "Bu sayfa seni başka siteye götürdü · Filme geri dön" der.
+  // Değilse (adres çubuğu, bilerek gidilen link) katman kalkar.
   if (info.url && /^https?:/.test(info.url) && shell.site && siteOf(info.url) !== shell.site) {
-    endShell(tabId);
-    return;
+    const redirected = shell.layout.mode === 'full' && Date.now() - shell.lastClick < REDIRECT_MS;
+    if (!redirected && !shell.strayed) {
+      endShell(tabId);
+      return;
+    }
+    shell.strayed = true;
+  } else if (info.url && /^https?:/.test(info.url)) {
+    shell.strayed = false;
   }
   // Adres değişti (başka bölüm, sayfa içi geçiş): site odadaki sayfayla karşılaştırsın.
   if (info.url) void pushPage(shell);
@@ -439,4 +475,60 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
   endShell(tabId);
   frames.delete(tabId);
+  opened.delete(tabId);
 });
+
+// ---- Reklam sekmeleri ve yönlendirmeleri ----
+// Film sayfasındaki ilk tıklamada reklam betikleri yeni sekme açar ya da sekmeyi başka siteye götürür. Oda görünümünde
+// (kişi film sayfasının kendisini görmüyorken) film sayfasına tıklandıktan hemen sonra film sekmesinden açılıp ilk
+// saniyelerde başka bir siteye giden sekme reklam sayılır: kapatılır, film sekmesi öne gelir, sitede "kapatıldı · Geri
+// aç" notu çıkar. Kişinin kendi açtığı sekmeler (Ctrl+T: yeni sekme sayfasıyla başlar, tıklama yok) dokunulmaz.
+// Ayarlardan kapatılabilir.
+// Sayfanın betikleri bunu atlatamaz; hiçbir şey engellenmez, sadece açılan sekme kapanır.
+
+/** Tıklamadan sonra bu süre içinde başka siteye giden film sekmesi reklamla yönlendirilmiş sayılır. */
+const REDIRECT_MS = 4000;
+/** Açılan sekme bu süre izlenir (ilk adres about:blank olabilir, reklam sonra yüklenir). */
+const OPENED_WATCH_MS = 5000;
+/** Sekme film sayfasına tıklamadan en fazla bu kadar sonra açıldıysa reklam sayılabilir. */
+const CLICK_MS = 3000;
+const opened = new Map<number, { opener: number; at: number }>();
+
+chrome.tabs.onCreated.addListener((tab) => {
+  void (async () => {
+    await ready;
+    const opener = tab.openerTabId;
+    if (opener === undefined || tab.id === undefined) return;
+    const shell = shells.get(opener);
+    // Sadece oda görünümündeyken (👁 Sayfayı göster / video seçimi açıkken kişi sayfayı görüyor, bilerek tıklıyor).
+    if (!shell || shell.layout.mode !== 'full' || Date.now() < shell.allowTabsUntil) return;
+    // Sayfa betiğinin açtığı sekme bir adresle ya da boş (about:blank) başlar; yeni sekme sayfası (chrome://newtab)
+    // kişinin kendisidir.
+    const first = tab.pendingUrl || tab.url || '';
+    if (first && !/^(https?:|about:blank)/.test(first)) return;
+    opened.set(tab.id, { opener, at: Date.now() });
+    await checkOpened(tab.id, first);
+  })();
+});
+
+async function checkOpened(tabId: number, url: string): Promise<void> {
+  const entry = opened.get(tabId);
+  if (!entry) return;
+  if (Date.now() - entry.at > OPENED_WATCH_MS) {
+    opened.delete(tabId);
+    return;
+  }
+  // Henüz adres yok (about:blank): asıl adres gelince yine bakılır.
+  if (!/^https?:/.test(url)) return;
+  opened.delete(tabId);
+  const shell = shells.get(entry.opener);
+  if (!shell || originOf(url) === SITE_ORIGIN || siteOf(url) === shell.site) return;
+  // Film sayfasına (deliğe) tıklanmadan açılan sekmeye dokunulmaz.
+  if (entry.at - shell.lastClick > CLICK_MS) return;
+  // Kullanıcı ayarlardan kapattıysa dokunma.
+  if ((await readValue('opt:closeAds').catch(() => null)) === '0') return;
+  await chrome.tabs.remove(tabId).catch(() => {});
+  await chrome.tabs.update(entry.opener, { active: true }).catch(() => {});
+  shell.closed = [...shell.closed.slice(-9), url];
+  post(shell.port, { type: 'tab-closed', url });
+}

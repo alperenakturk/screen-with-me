@@ -75,6 +75,8 @@ interface Attachment {
   client?: ClientKind;
   /** Sesli sohbette: mikrofon açık mı, yayınladığı akış ve Cloudflare oturumu (oturum istemcilere gitmez). */
   voice?: { mic: boolean; track?: string; session?: string };
+  /** Film sayfasında reklam oynuyor (eklenti bildirir): oda bu kişiyi beklemez. */
+  ad?: boolean;
 }
 
 /**
@@ -101,6 +103,7 @@ function memberOf(attachment: Joined): Member {
   if (attachment.client === 'ext') member.client = 'ext';
   // Cloudflare oturumu gizli kalır; diğerleri sadece akışın adını ve mikrofon durumunu görür.
   if (attachment.voice) member.voice = { mic: attachment.voice.mic, ...(attachment.voice.track ? { track: attachment.voice.track } : {}) };
+  if (attachment.ad) member.ad = true;
   return member;
 }
 
@@ -463,11 +466,21 @@ export class Room extends DurableObject<Env> {
       case 'unban':
         await this.unban(ws, message.id);
         return;
-      case 'ready':
-        this.waits.setReady(me.id, message.ready);
+      case 'ready': {
+        // Reklam: `ad` gelince işaret değişir; motorun sonraki "takıldım"ı reklamdayken bekletmez (film reklam boyunca
+        // ilerlemez), "oynuyorum" (film geri geldi) işareti kaldırır.
+        const ad = message.ad ?? (message.ready ? false : attachment.ad === true);
+        if (ad !== (attachment.ad === true)) {
+          if (ad) attachment.ad = true;
+          else delete attachment.ad;
+          ws.serializeAttachment(attachment);
+          this.broadcast(this.membersMessage());
+        }
+        this.waits.setReady(me.id, message.ready || ad);
         await this.evaluateWait();
         await this.saveWaits();
         return;
+      }
       case 'settings': {
         if (!this.isHost(ws)) {
           this.sendTo(ws, { t: 'error', code: 'not_host' });

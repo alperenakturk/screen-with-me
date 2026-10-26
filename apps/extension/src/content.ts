@@ -174,6 +174,7 @@ function scan(): void {
   }
   const changed = bestVideo !== best;
   best = bestVideo;
+  checkAd(videos);
   if (changed || bucket(bestScore) !== bucket(reportedScore)) {
     reportedScore = bestScore;
     const size = videos.length ? `${videos.length} video · ${largest.w}×${largest.h}` : undefined;
@@ -232,6 +233,28 @@ function watchSource(video: HTMLVideoElement | null): void {
 function isShort(video: HTMLVideoElement | null): boolean {
   const duration = video?.duration ?? Number.NaN;
   return Number.isFinite(duration) && duration > 0 && duration < SHORT_S;
+}
+
+/**
+ * "Reklamda" durumu: senkronlanan çerçevede kısa bir video (reklam) oynuyor, film ya kısa videonun kendisi (aynı
+ * <video>'da ön-reklam) ya da durmuş. Oda bu kişiyi beklemez (`ready` + `ad`); reklam bitince motor bağlanır ve
+ * kişi odanın yerine atlar. Sadece etkin çerçeve bildirebilir (arka plan başkasınınkini iletmez).
+ */
+let adReported = false;
+function checkAd(videos: HTMLVideoElement[]): void {
+  const filmPlaying = !!adapter && !adapter.isPaused() && !isShort(adapter.element);
+  const ad =
+    active &&
+    !filmPlaying &&
+    !!state &&
+    !state.paused &&
+    videos.some((video) => video !== picked && isShort(video) && !video.paused && !video.ended && describeVideo(video).visible);
+  if (ad === adReported) return;
+  adReported = ad;
+  sendAd();
+}
+function sendAd(): void {
+  send({ type: 'send', message: adReported ? { t: 'ready', ready: false, ad: true } : { t: 'ready', ready: true, ad: false } });
 }
 
 /** Oda görünümünde, filmin oynatıcısı dışında sesli oynayan videolar (gizli reklamlar) susturulur. */
@@ -324,6 +347,8 @@ function onControl(control: EmbedControl): void {
 
 function deactivate(): void {
   active = false;
+  // Bu çerçeve artık etkin değil: işareti site kaldırır (arka plan buradan bir şey iletmez).
+  adReported = false;
   watchSource(null);
   if (statusTimer !== null) clearInterval(statusTimer);
   statusTimer = null;
@@ -527,9 +552,11 @@ for (const type of ['mousemove', 'mousedown', 'wheel', 'touchstart'] as const) {
     () => {
       if (!port || layout?.mode !== 'full') return;
       const now = Date.now();
-      if (now - lastActivity < 400) return;
+      // Tıklama hep bildirilir: hemen ardından sekme başka siteye giderse arka plan bunu reklam yönlendirmesi sayar.
+      const click = type === 'mousedown' || type === 'touchstart';
+      if (!click && now - lastActivity < 400) return;
       lastActivity = now;
-      send({ type: 'activity' });
+      send(click ? { type: 'activity', click: true } : { type: 'activity' });
     },
     { capture: true, passive: true },
   );
@@ -561,6 +588,9 @@ function onMessage(message: BackgroundMessage): void {
     case 'state':
       state = message.state;
       engine?.receive(message.state);
+      // Sayfa açılırken reklam, katmandaki site hazır olmadan başladıysa ilk haber kaybolmuş olabilir: site filmi
+      // kurunca durumu yollar, "reklamdayım" o an tekrar söylenir.
+      if (adReported) sendAd();
       break;
     case 'clock':
       clock.set(message.offset, message.synced);

@@ -215,5 +215,7 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
     listeners.add(fn);
     return () => listeners.delete(fn);
   };
-  return { loaded, cdp, evaluate, evalFrame, shot, pixels, openTab, onEvent, mouse, click, press, type, navigate, center, sleep, close: () => chrome.kill() };
+  /** Tarayıcının kendisine (sayfaya değil) komut: ör. Target.getTargets ile açık sekmeler. */
+  const browser = (method, params = {}) => send(method, params);
+  return { loaded, cdp, browser, evaluate, evalFrame, shot, pixels, openTab, onEvent, mouse, click, press, type, navigate, center, sleep, close: () => chrome.kill() };
 }

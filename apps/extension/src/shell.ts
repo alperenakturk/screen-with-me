@@ -107,6 +107,12 @@ addEventListener('message', (event: MessageEvent) => {
     case 'pick':
       toBackground({ type: 'pick', on: data.on === true });
       break;
+    case 'open-ok':
+      toBackground({ type: 'open-ok' });
+      break;
+    case 'reopen':
+      if (typeof data.url === 'string') toBackground({ type: 'reopen', url: data.url });
+      break;
   }
 });
 

@@ -49,14 +49,21 @@ export type SiteToExt =
   /** Bizim ⛶: film sayfasının tamamı tam ekran olsun (katman ve video birlikte). */
   | { type: 'fullscreen'; on: boolean }
   /** Elle video seçimi: film sayfasındaki videoların üstünde "Bunu senkronla" düğmeleri (aç/kapat). */
-  | { type: 'pick'; on: boolean };
+  | { type: 'pick'; on: boolean }
+  /** Kullanıcı sitede bir bağlantıyı yeni sekmede açıyor: o sekme reklam sayılıp kapatılmasın. */
+  | { type: 'open-ok' }
+  /** Kapatılan reklam sekmesini geri aç. */
+  | { type: 'reopen'; url: string };
 
 /** Eklenti → site. */
 export type ExtToSite =
   | { type: 'store'; entries: StoreEntries }
   | { type: 'reply'; reply: EmbedReply }
-  /** Film sekmesinin adresi (odadaki sayfa bu mu?). */
-  | { type: 'page'; url: string }
+  /**
+   * Film sekmesinin adresi (odadaki sayfa bu mu?). `strayed`: film sayfası reklam yönlendirmesiyle başka bir siteye
+   * gitti (oda hâlâ aynı filmde; site "Filme geri dön" der).
+   */
+  | { type: 'page'; url: string; strayed?: boolean }
   /** Film sayfasında senkronlanacak video bulundu mu? */
   | { type: 'video'; found: boolean }
   /** Tam ekran değişti (Esc ile çıkıldı vb.). */
@@ -67,7 +74,9 @@ export type ExtToSite =
    */
   | { type: 'hole' }
   /** Kullanıcı film sayfasında bir videoyu seçti: seçim modu bitti, senkron artık o videoda. */
-  | { type: 'picked' };
+  | { type: 'picked' }
+  /** Film sayfasının açtığı bir sekme (başka siteye giden, büyük ihtimalle reklam) kapatıldı. */
+  | { type: 'tab-closed'; url: string };
 
 /** Site ⇄ site-bridge / shell.html mesajlarındaki kaynak etiketleri. */
 export const SITE_SOURCE = 'screenwithme-site';

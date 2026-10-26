@@ -312,7 +312,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="sync-test" type="button" class="btn small-btn">🧪 <span data-i18n="syncTest"></span></button>
             </div>
             <div id="external" class="overlay external" hidden>
-              <p class="muted" data-i18n="externalTitle"></p>
+              <p id="external-label" class="muted" data-i18n="externalTitle"></p>
+              <p id="external-stray" class="external-stray" data-i18n="strayTitle" hidden></p>
               <h2 id="external-title"></h2>
               <p id="external-host" class="external-host"></p>
               <p id="external-watching" class="external-watching" hidden></p>
@@ -455,6 +456,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel settings" data-panel="settings" hidden>
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
+            <label class="check-row shell-only"><input type="checkbox" id="opt-closeads" /> <span data-i18n="settings.closeAds"></span></label>
             <label class="select-row shell-only"><span data-i18n="settings.fsFit"></span>
               <select id="opt-fsfit">
                 <option value="cover" data-i18n="settings.fsFit.cover"></option>
@@ -923,6 +925,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * kapatmak için); `pick`: elle video seçimi (film sayfasındaki videoların üstünde "Bunu senkronla" düğmeleri).
    */
   let peek: '' | 'page' | 'pick' = '';
+  /** Kabukta: film sayfası reklam yönlendirmesiyle başka bir siteye gitti (eklenti söyler): "Filme geri dön". */
+  let pageStrayed = false;
+  /** Kabukta: film sayfasında reklam oynuyor (eklenti bildirdi; kapanırken işaret kaldırılır). */
+  let filmAd = false;
   /** Kabukta: film sayfasında video seçildi (seçim şeridini kapatır). */
   let onPicked: (() => void) | null = null;
 
@@ -935,6 +941,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     // Film sayfasındaki motor dursun (video orada kendiliğinden durur; odaya "durdur" gitmez).
     if (film) postToExtension({ type: 'embed', request: { type: 'detach' } });
+    // Film reklamdayken kapandı: "reklamda" işareti kalmasın.
+    if (film && filmAd) send({ t: 'ready', ready: true, ad: false });
+    filmAd = false;
     film = null;
     $('.player-wrap').classList.remove('filming');
     renderNowPlaying();
@@ -949,6 +958,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const player = createShellPlayer({
       onSend: (message) => {
         if (film !== player || !isRelayable(message)) return;
+        if (message.t === 'ready') filmAd = message.ad ?? (message.ready ? false : filmAd);
         // Otomatik devam kapalıysa film bitince sıradakine geçilmez: "Sıradakini başlat" kartı.
         if (message.t === 'next' && roomSettings.autoNext === false) {
           if (queue.length > 0) showNextCard($('.player-wrap'), itemTitle(item), mediaUrl(item.media), () => send(message));
@@ -981,6 +991,38 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function returnToRoom(): void {
     if (film !== null) send({ t: 'home' });
     postToExtension({ type: 'navigate', url: `${location.origin}/r/${roomId}#back` });
+  }
+
+  /**
+   * Film sayfasının açtığı reklam sekmesi kapatıldı: videonun üstünde küçük not, "Geri aç" (bilerek açılmışsa) ve
+   * oturumda bir kez reklam engelleyici önerisi. 8 sn sonra kendisi kalkar.
+   */
+  let tabNoteTimer = 0;
+  function showTabClosed(url: string): void {
+    document.getElementById('tab-closed')?.remove();
+    const reopen = el('button', { type: 'button', class: 'btn small-btn' }, t('tabClosedReopen'));
+    const close = el('button', { type: 'button', class: 'icon-btn', 'aria-label': t('close') }, '✕');
+    const text = el('span', {}, `🛡️ ${t('tabClosed', { host: hostOf(url) })}`);
+    const card = el('div', { id: 'tab-closed', class: 'home-ask tab-closed', role: 'status' }, text, reopen, close);
+    let tipShown = false;
+    try {
+      tipShown = sessionStorage.getItem('adTipShown') === '1';
+      sessionStorage.setItem('adTipShown', '1');
+    } catch {
+      // Depo kapalı: öneri yine bir kez (bu sayfada) görünür.
+    }
+    if (!tipShown) {
+      const link = el('a', { href: 'https://github.com/uBlockOrigin/uBOL-home', target: '_blank', rel: 'noopener', class: 'small' }, t('tabClosedTip'));
+      card.append(link);
+    }
+    reopen.addEventListener('click', () => {
+      postToExtension({ type: 'reopen', url });
+      card.remove();
+    });
+    close.addEventListener('click', () => card.remove());
+    $('.player-wrap').append(card);
+    clearTimeout(tabNoteTimer);
+    tabNoteTimer = window.setTimeout(() => card.remove(), tipShown ? 8000 : 14_000);
   }
 
   /** Biri filmden odaya döndü: videonun üstünde küçük kart (pencere değil, film durmaz). 20 sn sonra kendisi kalkar. */
@@ -1104,9 +1146,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     note.textContent = shellOk ? '' : t('extensionOutdated');
     $<HTMLAnchorElement>('#external-alone').href = url;
     const go = $<HTMLButtonElement>('#external-go');
+    // Film sayfası (reklam yönlendirmesiyle) başka bir siteye gitti: oda hâlâ aynı filmde.
+    const strayed = isShell && pageStrayed;
+    $('#external-label').hidden = strayed;
+    $('#external-stray').hidden = !strayed;
     go.hidden = !shellOk;
     go.disabled = false;
-    go.textContent = t('externalGoJoin');
+    go.textContent = t(strayed ? 'strayBack' : 'externalGoJoin');
     go.onclick = () => {
       go.disabled = true;
       go.textContent = t('externalGoing');
@@ -1142,6 +1188,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       const now = item?.media.kind === 'page' && samePage(message.url, item.media.url);
       const changed = shellPage === null || (was !== now && !(film !== null && samePath(message.url, shellPage)));
       shellPage = message.url;
+      pageStrayed = message.strayed === true;
       // Odadaki sayfa bu mu? Yeniden bak: film başlar ya da "Filme git" kartı çıkar.
       if (changed && roomState?.item?.media.kind === 'page') {
         currentItemId = null;
@@ -1152,6 +1199,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (sentLayout.startsWith('{"mode":"full"')) document.documentElement.classList.add('shell-film');
     } else if (message.type === 'video' && isShell) {
       videoFound = message.found;
+    } else if (message.type === 'tab-closed' && isShell) {
+      showTabClosed(message.url);
     } else if (message.type === 'picked' && isShell) {
       // Kullanıcı film sayfasında videoyu seçti: oda görünümüne dönülür, video deliğe oturur.
       onPicked?.();
@@ -1166,6 +1215,24 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     new ResizeObserver(() => reportLayout()).observe(wrap);
     // Tam ekran kontrolleri bekleyince kaybolur (theater.idle): adacıkları da kalksın, video tıklanabilsin.
     new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
+    // Film sayfasının açtığı reklam sekmeleri kapatılsın mı (eklenti ayarı okur; varsayılan açık).
+    const closeAds = $<HTMLInputElement>('#opt-closeads');
+    closeAds.checked = load('opt:closeAds') !== '0';
+    closeAds.addEventListener('change', () => save('opt:closeAds', closeAds.checked ? '1' : '0'));
+    // Sitede bilerek yeni sekmede açılan bağlantılar (sohbetteki link, eklenti sayfası) reklam sayılıp kapatılmasın.
+    document.addEventListener(
+      'click',
+      (event) => {
+        const link = (event.target as Element | null)?.closest?.('a[href]');
+        if (link instanceof HTMLAnchorElement && (link.target === '_blank' || event.ctrlKey || event.metaKey || event.shiftKey)) {
+          postToExtension({ type: 'open-ok' });
+        }
+      },
+      true,
+    );
+    document.addEventListener('auxclick', (event) => {
+      if ((event.target as Element | null)?.closest?.('a[href]')) postToExtension({ type: 'open-ok' });
+    }, true);
     const fit = $<HTMLSelectElement>('#opt-fsfit');
     fit.value = fitAbove() ? 'above' : 'cover';
     fit.addEventListener('change', () => {

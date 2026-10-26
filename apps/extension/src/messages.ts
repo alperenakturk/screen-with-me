@@ -28,8 +28,11 @@ export type FrameMessage =
   /** Film sayfasında basılan kısayol ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
   | { type: 'key'; key: string }
   | { type: 'fullscreen' }
-  /** Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. */
-  | { type: 'activity' }
+  /**
+   * Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. `click`: tıklandı (hemen
+   * ardından sekme başka siteye giderse reklam yönlendirmesi sayılır, katman kalkmaz).
+   */
+  | { type: 'activity'; click?: boolean }
   /** Üst çerçeve: delik açıldı (sayfa gizli, video yerinde); site deliğin içini saydam yapabilir. */
   | { type: 'hole' }
   /** Bizim tam ekranımız bitti/başladı (üst çerçeve: Esc vb.). */
@@ -74,18 +77,23 @@ export type ShellPortMessage =
   | { type: 'layout'; layout: ShellLayout }
   | { type: 'navigate'; url: string }
   | { type: 'fullscreen'; on: boolean }
-  | { type: 'pick'; on: boolean };
+  | { type: 'pick'; on: boolean }
+  /** Site bir bağlantıyı yeni sekmede açıyor (sohbetteki link): o sekme reklam sayılıp kapatılmasın. */
+  | { type: 'open-ok' }
+  /** Kapatılan reklam sekmesini geri aç ("Geri aç"). */
+  | { type: 'reopen'; url: string };
 
 /** Arka plan → shell.html */
 export type ShellPortReply =
   /** Bu sekmenin odası: shell.html sitemizi ancak bunu alınca açar (başka bir sayfaya gömülen shell.html hiçbir şey açmaz). */
   | { type: 'room'; roomId: string }
   | { type: 'reply'; reply: EmbedReply }
-  | { type: 'page'; url: string }
+  | { type: 'page'; url: string; strayed?: boolean }
   | { type: 'video'; found: boolean }
   | { type: 'fullscreen'; on: boolean }
   | { type: 'hole' }
-  | { type: 'picked' };
+  | { type: 'picked' }
+  | { type: 'tab-closed'; url: string };
 
 /** Ana site → arka plan (site-bridge üzerinden): "bu sekme film sayfasına gitsin, odanın katmanıyla". */
 export interface SiteGoMessage {
