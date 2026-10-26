@@ -12,7 +12,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-127%20unit%20%2B%2011%20e2e%20%2B%20real%20Chrome-3ccf8e)
+![Tests](https://img.shields.io/badge/tests-133%20unit%20%2B%2013%20e2e%20%2B%20real%20Chrome-3ccf8e)
 ![Version](https://img.shields.io/badge/version-0.9.58-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -47,6 +47,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. The 👤 menu (top right) holds name, avatar, theme and the session recap. |
 | 📱 **Shorts view** | Open a YouTube Shorts link and the room turns vertical: the video in the middle, friends sitting on both sides. Messages pop up as bubbles from the sender's avatar, reactions rise from it. ↑ / ↓ (or ▲▼, mouse wheel) go to the previous / next short for everyone; 🔁 loop replays a finished short. Queue, chat history and settings stay one click away in the room view. |
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
+| 🎙 **Voice chat** | "Join voice" in the room: talk while you watch, mute with one click, the speaker's avatar glows. Peer-to-peer and always encrypted (the server never hears it), up to 6 people; nobody hears you unless they joined voice too. On the website for now. |
 | 💬 **Chat & reactions** | Chat, queue, people and settings tabs. Three emoji pages; reactions float up from the bottom of the video with the sender's avatar and name, as fast as you like. Anyone can hide them for themselves. Room activity in chat is hidden by default. |
 | 🖼️ **Custom emojis** | Add your own image or GIF; the whole room can react with it (up to 24 per room). |
 | 📌 **Pins** | Pin a moment with an optional note; a strip under the video jumps back to it. |
@@ -111,7 +112,7 @@ player into it.
 
 | Check | Result |
 |---|---|
-| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 127 passing |
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 133 passing |
 | End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, emoji rate, saved rooms, recap, Shorts) | `npm run e2e`, runs in CI |
 | Real Chrome with the extension (`scripts/harness/embed`) | ~70 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, pins, settings sync between site and extension |
 | Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote + local actions ✓, 26–100 ms apart |

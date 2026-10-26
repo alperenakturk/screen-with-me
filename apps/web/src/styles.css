@@ -4162,6 +4162,7 @@ html.shorts-view .footer {
   .shorts-chat {
     flex-basis: 100%;
   }
+}
 
 /* ---- Sesli sohbet kartı (sağ panelde, davet linkinin altında) ---- */
 .voice-card {

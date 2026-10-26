@@ -51,7 +51,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.58)
+## Şu an neler var? (0.9.59)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
@@ -123,6 +123,9 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 - **Site düzeltmesi (Ekim 2026, 0.9.58 üstüne):** film sayfasında art arda atılan emojiler yarım/silik görünmüyor (üst üste
   binen adacıklar birleştiriliyor); tam ekran mesajları biraz küçüldü; gizlilik sayfası `privacy.html` (bağlantının
   dilinde açılır, eski `gizlilik.html` yönlendirir).
+- **v0.9.59:** Sesli sohbet 1. aşama: sitede "🎙 Sese katıl" (eşler arası, şifreli, en fazla 6 kişi, kartsız/ücretsiz;
+  Cloudflare Realtime kodu hazır, anahtar eklenince `voiceMode: 'sfu'`); film sayfasında aralıklı tek karelik flaş tamamen
+  giderildi (site deliği eklenti "delik açıldı" deyince saydam yapar, delik odaktan iki kare sonra açılır).
 - **v0.9.58:** Kimlik karışması düzeltildi (eklentinin deposunda isim ve avatar art arda kaydedilince isim kayboluyor,
   film sayfasında eski isimle görünülüyordu); tam ekranda kontroller film sayfasında da bekleyince kayboluyor; "tam ekranda
   video" seçeneği (ekranı kaplasın / kontrollerin üstünde dursun); film sayfasında mesajlar daha büyük; 👤 Profil sağ
