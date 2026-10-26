@@ -820,6 +820,8 @@ export function isKey(key: string): key is Key {
 
 /** data-i18n="anahtar" ve data-i18n-placeholder="anahtar" olan öğelerin metnini günceller. */
 export function translate(root: ParentNode = document): void {
+  // Gizlilik sayfası sitenin o anki dilinde açılsın.
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-privacy-link]')) link.href = `/privacy.html?lang=${current}`;
   for (const el of root.querySelectorAll<HTMLElement>('[data-i18n]')) {
     const key = el.dataset.i18n!;
     if (isKey(key)) el.textContent = t(key);

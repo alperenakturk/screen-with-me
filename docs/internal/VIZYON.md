@@ -94,7 +94,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   sürüklenen mesaj tutamağı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
 
 **Geliştirme**
-- 125 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
+- 127 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
 - `main`'e gelen her değişiklik testlerden sonra GitHub Actions ile Cloudflare'e yüklenir
   ve canlı sunucuya karşı uçtan uca testler koşar (bkz. CLAUDE.md "Yayın").
 
@@ -120,6 +120,9 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
 - **Mehtaplı Geceler yenilendi (Ekim 2026):** yağlı boya havasında teras: çini pano, mermer sütun, kandil, ay ışığında
   Boğaz, karşı kıyıda saray ve camiler, fenerli kayıklar; yeni maskot (renkli sarık, kırmızı entari, fener).
+- **Site düzeltmesi (Ekim 2026, 0.9.58 üstüne):** film sayfasında art arda atılan emojiler yarım/silik görünmüyor (üst üste
+  binen adacıklar birleştiriliyor); tam ekran mesajları biraz küçüldü; gizlilik sayfası `privacy.html` (bağlantının
+  dilinde açılır, eski `gizlilik.html` yönlendirir).
 - **v0.9.58:** Kimlik karışması düzeltildi (eklentinin deposunda isim ve avatar art arda kaydedilince isim kayboluyor,
   film sayfasında eski isimle görünülüyordu); tam ekranda kontroller film sayfasında da bekleyince kayboluyor; "tam ekranda
   video" seçeneği (ekranı kaplasın / kontrollerin üstünde dursun); film sayfasında mesajlar daha büyük; 👤 Profil sağ

@@ -1,19 +1,25 @@
 // Statik sayfalar (eklenti, gizlilik) için dil seçimi. Ana siteyle aynı
 // 'lang' anahtarını kullanır: birinde seçilen dil hepsinde geçerli olur.
 // Varsayılan İngilizce. İçerik [data-lang-block="tr|en"] bloklarında,
-// düğmeler [data-set-lang="tr|en"].
+// düğmeler [data-set-lang="tr|en"]. Adreste ?lang=en|tr varsa (ör. İngilizce README'deki bağlantı) sayfa o dilde
+// açılır; kayıtlı dil değişmez (kullanıcı düğmeyle seçerse değişir).
 (function () {
   var KEY = 'lang';
   var current = 'en';
   try {
     if (localStorage.getItem(KEY) === 'tr') current = 'tr';
   } catch (e) {}
+  var asked = new URLSearchParams(location.search).get('lang');
+  var fromLink = asked === 'tr' || asked === 'en';
+  if (fromLink) current = asked;
 
-  function apply(lang) {
+  function apply(lang, remember) {
     current = lang;
-    try {
-      localStorage.setItem(KEY, lang);
-    } catch (e) {}
+    if (remember) {
+      try {
+        localStorage.setItem(KEY, lang);
+      } catch (e) {}
+    }
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-lang-block]').forEach(function (el) {
       el.hidden = el.getAttribute('data-lang-block') !== lang;
@@ -28,9 +34,9 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-set-lang]').forEach(function (button) {
       button.addEventListener('click', function () {
-        apply(button.getAttribute('data-set-lang'));
+        apply(button.getAttribute('data-set-lang'), true);
       });
     });
-    apply(current);
+    apply(current, false);
   });
 })();
