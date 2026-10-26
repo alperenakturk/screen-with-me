@@ -258,7 +258,8 @@ Açmadan önce:
 - [ ] **Kısa alan adı:** workers.dev güven vermiyor (önerim 1.0'dan önce, yukarıda).
 - [ ] **Tanıtım videosu / GIF:** sitede ve mağaza sayfasında 30–60 sn'lik "nasıl çalışır".
 - [ ] **Eklentiyi kurunca aynı odaya dönüş:** "eklenti gerekli" kartından mağazaya, kurulumdan sonra odaya.
-- [ ] **Sesli sohbet (bas-konuş):** WebRTC; küçük gruplarda eşler arası, büyüklerde Cloudflare Realtime (SFU).
+- [ ] **Sesli sohbet:** WebRTC + Cloudflare Realtime SFU (sinyalleşme DO'da); önce sitede ses, sonra eklentide (mikrofon
+  eklentinin offscreen belgesinde), sonra sınırlı kamera. Araştırma ve plan: `ses-goruntu.md`.
 - [ ] **Telefon:** site için PWA (YouTube ve doğrudan videolar), sonra Firefox Android'de eklenti.
 - [ ] **Firefox desteği:** arka plan için ayrı manifest.
 - [ ] **Eklenti yüklü gerçek Chrome testi CI'da:** Playwright ile (`scripts/harness/embed/` temel olur).
