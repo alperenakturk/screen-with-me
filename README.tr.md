@@ -12,7 +12,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Testler](https://img.shields.io/badge/test-125%20birim%20%2B%2011%20u%C3%A7tan%20uca%20%2B%20ger%C3%A7ek%20Chrome-3ccf8e)
+![Testler](https://img.shields.io/badge/test-127%20birim%20%2B%2011%20u%C3%A7tan%20uca%20%2B%20ger%C3%A7ek%20Chrome-3ccf8e)
 ![Sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.9.58-7c5cff)
 ![Lisans](https://img.shields.io/badge/lisans-MIT-blue)
 
@@ -109,7 +109,7 @@ bildirir; üst çerçeve orada bir delik keser (`clip-path`) ve filmin oynatıc�
 
 | Kontrol | Sonuç |
 |---|---|
-| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 125 geçiyor |
+| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 127 geçiyor |
 | Uçtan uca (gerçek sunucu koduna karşı sahte kullanıcılar: sıra, sohbet, yönetici ve atma, devir, herkes hazır, pinler, özel emojiler, yönetici modları, emoji sıklığı, kayıtlı odalar, özet) | `npm run e2e`, CI'da çalışır |
 | Eklentiyle gerçek Chrome (`scripts/harness/embed`) | ~70 kontrol: oda katmanı, deliğe yerleşme, sayfanın hiç görünmemesi (ekran kaydı), saydam mesajlar (piksel ölçümü), tam ekranda altyazı ve kontroller, pinler, site ile eklenti arasında ayar eşitleme |
 | Gerçek oynatıcılar (herkese açık demo sayfalarında eklenti kodu) | **Plyr, hls.js, Video.js**: bulma ✓, uzaktan + yerel hareketler ✓, 26–100 ms fark |
@@ -155,7 +155,7 @@ Chrome Web Store yayını, elle "bu videoyu senkronla" seçimi, kısa alan adı,
 ## 📄 Lisans ve gizlilik
 
 [MIT](LICENSE) © 2026 Alperen Aktürk. Kullanıcıya giden bütün kod (site, sunucu, eklenti) bizim; derleme araçları
-MIT / Apache-2.0. Gizlilik politikası: [gizlilik.html](https://screen-with-me.swm-server.workers.dev/gizlilik.html)
+MIT / Apache-2.0. Gizlilik politikası: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=tr)
 (hesap yok, takip yok; tek seferlik oda boşaldıktan 24 saat sonra, kayıtlı oda 30 gün sonra silinir).
 
 ## ⚠️ Sınırlar

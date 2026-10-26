@@ -363,6 +363,23 @@ await a.sleep(3500);
     `önce:${before} sonra:${after.n} ×sayaç:${after.counts} bekleme:${after.cooling} Bora'ya giden:${sent}`,
   );
   await a.shot('5-ucusan-emojiler');
+  // Art arda 10 emoji: adacıklar birbirine binmemeli (çift-tek kuralında kesişen yer katmandan kesilir → yarım/silik
+  // emoji) ve her uçan emojinin ortası bir adacığın içinde olmalı.
+  for (let i = 0; i < 10; i++) {
+    await a.press(String((i % 8) + 1), `Digit${(i % 8) + 1}`, 49 + (i % 8));
+    await a.sleep(170);
+  }
+  await a.sleep(300);
+  const rects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`)).slice(2);
+  const centers = await a.evalFrame('shell=1', `[...document.querySelectorAll('#reactions-layer .r-float')].map((e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })`);
+  const overlaps = rects.some((p, i) => rects.some((q, j) => j > i && p.x < q.r && q.x < p.r && p.y < q.b && q.y < p.b));
+  const uncovered = centers.filter((c) => !rects.some((r) => c.x >= r.x && c.x <= r.r && c.y >= r.y && c.y <= r.b));
+  check(
+    centers.length >= 6 && !overlaps && uncovered.length === 0,
+    'art arda 10 emoji: adacıklar çakışmıyor, her emoji tam görünür (yarım/silik değil)',
+    `emoji:${centers.length} adacık:${rects.length} çakışma:${overlaps} açıkta:${uncovered.length}`,
+  );
+  await a.shot('5b-emoji-yagmuru');
 }
 
 // 7c) Deliğin içindeki emoji saydam: adacıkta (emojinin çevresi) videonun kendisi görünmeli, opak koyu gri (#121212) değil.
@@ -385,16 +402,21 @@ async function floatSample(name, baseline) {
   let same = 0;
   let flat = 0;
   let lit = 0;
+  // Videonun parlak yerlerinde de aynı mı? (Koyu yerlerde opak gri de videoya "benzer"; ayırt eden parlak noktalar.)
+  let sameLit = 0;
   for (const p of points) {
     const A = baseline.at(p.x, p.y);
     const B = img.at(p.x, p.y);
     if (pxDiff(A, B) <= 24) same++;
     if (flatDark(B) && !flatDark(A)) flat++;
-    if (bright(A)) lit++;
+    if (bright(A)) {
+      lit++;
+      if (pxDiff(A, B) <= 24) sameLit++;
+    }
   }
   const sampleA = island ? baseline.at(island.x + 4, island.y + 4) : null;
   const sampleB = island ? img.at(island.x + 4, island.y + 4) : null;
-  return { island, float: f, n: points.length, same, flat, lit, sampleA, sampleB, islands: islands.length };
+  return { island, float: f, n: points.length, same, flat, lit, sameLit, sampleA, sampleB, islands: islands.length };
 }
 const baseA = await a.pixels('6a-video-duruk');
 const fl = await floatSample('6b-emoji-saydam', baseA);
@@ -410,9 +432,9 @@ await a.sleep(3500);
 const neg = await floatSample('6c-karsi-deneme-normal', baseA);
 console.log('     karşı deneme (color-scheme:normal):', JSON.stringify(neg));
 check(
-  !!neg.island && neg.n >= 30 && neg.same / neg.n < 0.3,
+  !!neg.island && neg.lit >= 30 && neg.sameLit / neg.lit < 0.3,
   "karşı deneme: çerçeve color-scheme:normal iken adacık opak (test eski hatayı yakalıyor)",
-  `nokta:${neg.n} videoyla-aynı:${neg.same} düz-koyu:${neg.flat}`,
+  `nokta:${neg.n} parlak:${neg.lit} parlakta-videoyla-aynı:${neg.sameLit} düz-koyu:${neg.flat}`,
 );
 await a.evaluate(`${SHELL}.style.setProperty('color-scheme', 'dark', 'important'); 1`);
 await a.sleep(3500);

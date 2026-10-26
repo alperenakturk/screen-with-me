@@ -12,7 +12,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-125%20unit%20%2B%2011%20e2e%20%2B%20real%20Chrome-3ccf8e)
+![Tests](https://img.shields.io/badge/tests-127%20unit%20%2B%2011%20e2e%20%2B%20real%20Chrome-3ccf8e)
 ![Version](https://img.shields.io/badge/version-0.9.58-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -110,7 +110,7 @@ player into it.
 
 | Check | Result |
 |---|---|
-| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 125 passing |
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 127 passing |
 | End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, emoji rate, saved rooms, recap) | `npm run e2e`, runs in CI |
 | Real Chrome with the extension (`scripts/harness/embed`) | ~70 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, pins, settings sync between site and extension |
 | Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote + local actions ✓, 26–100 ms apart |
@@ -156,7 +156,7 @@ Chrome Web Store release, a manual "sync this video" picker, a short domain, pus
 ## 📄 License & privacy
 
 [MIT](LICENSE) © 2026 Alperen Aktürk. All shipped code (site, server, extension) is our own; build tools are
-MIT / Apache-2.0. Privacy policy: [gizlilik.html](https://screen-with-me.swm-server.workers.dev/gizlilik.html)
+MIT / Apache-2.0. Privacy policy: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=en)
 (no accounts, no tracking; a one-off room is deleted 24 h after it is empty, a saved room after 30 days).
 
 ## ⚠️ Limitations

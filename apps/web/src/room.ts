@@ -3,7 +3,7 @@ import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { isRelayable } from '@swm/shared/embed';
 import { parseMediaInput, samePage } from '@swm/shared/media';
-import { holePath, type Rect, type ShellLayout } from '@swm/shared/shell';
+import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
   CLIENT_ID,
@@ -988,9 +988,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         const r = child.getBoundingClientRect();
         add(islands, r.left, r.top, r.right, r.bottom);
       }
-      // Sınır 12: önce kalıcı kartlar/kontroller; emojilerin yolu en fazla 4 adacık (en yenileri). Emoji yağmuru
-      // deliğin çoğunu kaplayıp film oynatıcısının kendi düğmelerini tıklanamaz yapmasın.
-      islands.push(...floats.slice(-4));
+      // Emojilerin yolları tek alanda birleşir (üst üste binen adacıklar çift-tek kuralında birbirini silerdi);
+      // sonra bütün adacıklar çakışmasız hâle getirilir. Sınır 12.
+      islands.push(...mergeRects(floats));
+      const merged = mergeRects(islands);
+      islands.length = 0;
+      islands.push(...merged);
       const hole = { x: Math.round(box.left), y: Math.round(box.top), w: Math.round(box.width), h: Math.round(Math.max(0, bottom - box.top)) };
       // Sitenin zeminleri deliği boyamasın (styles.css "shell-film"): yollar ekran ve sahne kartına göre.
       const root = document.documentElement;

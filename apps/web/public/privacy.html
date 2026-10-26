@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>ScreenWithMe — Privacy</title>
+    <meta name="title-en" content="ScreenWithMe — Privacy" />
+    <meta name="title-tr" content="ScreenWithMe — Gizlilik" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <script src="/lang.js"></script>
+    <style>
+      :root { --bg: #0f1014; --surface: #181a21; --surface-2: #22252e; --border: #2c303b; --text: #ecedf1; --muted: #9a9fad; --accent: #8f74ff; }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      main { max-width: 760px; margin: 0 auto; padding: 24px 16px 72px; }
+      a { color: var(--accent); }
+      h1 { margin: 16px 0 4px; }
+      h2 { margin-top: 32px; font-size: 20px; }
+      .muted { color: var(--muted); }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-top: 16px; }
+      ul { padding-left: 22px; }
+      li { margin: 6px 0; }
+      .top { display: flex; justify-content: space-between; align-items: center; }
+      .lang { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+      .lang button { background: transparent; color: var(--muted); border: 0; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+      .lang button[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="top">
+        <a href="/">← ScreenWithMe</a>
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-set-lang="tr">TR</button>
+          <button type="button" data-set-lang="en">EN</button>
+        </div>
+      </div>
+
+      <!-- ===================== ENGLISH ===================== -->
+      <div data-lang-block="en">
+        <h1>Privacy policy</h1>
+        <p class="muted">Last updated: October 2026</p>
+
+        <div class="card">
+          <b>In short:</b> no accounts, no ads, no tracking. Videos play in your own browser; our server only relays
+          the small messages needed to keep everyone in the room in sync.
+        </div>
+
+        <h2>What is used?</h2>
+        <ul>
+          <li><b>Name and avatar:</b> what you pick when joining a room. Shown to the others in the room. Your browser remembers it for next time; on our server it is kept only together with the room (in its chat history and, if you are removed, in its ban list) and deleted with the room.</li>
+          <li><b>Room state:</b> the address of the current video or page, playing/paused, position, speed and the queue.</li>
+          <li><b>Chat messages:</b> the last 50 messages of a room, stored with the room so people who join later can see them.</li>
+          <li><b>Votes and room options:</b> which queued videos got a 👍 (stored with your browser ID so a vote can be taken back; others only see the count), the host modes and a scheduled start time. Deleted with the room. Your recent rooms list is kept only in your browser.</li>
+          <li><b>Pinned moments:</b> the second of the current video, an optional short note and the name/avatar of who pinned it. Visible to the room; reset when the video changes and deleted with the room.</li>
+          <li><b>Custom emojis:</b> images or GIFs you add to a room (resized pictures, GIFs as they are). Stored with the room so everyone in it can use them (at most 24, oldest removed first) and deleted with the room. Your own list is also kept in your browser so you can use it in other rooms.</li>
+          <li><b>Browser ID:</b> a random code created in your browser. Used so the room host keeps the host role after reloading, and so someone the host removed can't rejoin that room until the host lifts the ban. It is stored with the room on our server for this purpose and deleted with the room. The ID itself is never shown to other people. It is not an account.</li>
+        </ul>
+        <p>All room data (state, chat, settings) is deleted 24 hours after the last person leaves.</p>
+
+        <h2>What is not used?</h2>
+        <ul>
+          <li>No account, email, phone number or password is asked for.</li>
+          <li>No ads, analytics or tracking tools or cookies.</li>
+          <li>Video content never passes through our server; everyone opens the video themselves.</li>
+          <li>Data is never sold or shared with anyone.</li>
+        </ul>
+
+        <h2>Browser extension</h2>
+        <ul>
+          <li>The extension only works <b>in the tab you joined a room with</b>. It reads and sends nothing in other tabs.</li>
+          <li>In that tab it only uses the state of the video on the page (playing or not, at which second, speed).</li>
+          <li>When you open a page in the room, that page's address and title are shared with the room.</li>
+          <li>It does not collect browsing history.</li>
+          <li>On the film page the extension shows our own website (the room page) as a layer over the page; the room connection is the website's, exactly as on the site. The film site cannot read this layer.</li>
+          <li>Your website settings (name, avatar, theme, language, browser ID, saved rooms, your custom emojis) are also kept in the extension's own storage in your browser, so the layer on the film page uses the same settings. Nothing extra is sent anywhere.</li>
+          <li>The "access all sites" permission is needed so videos can be found on any site (including inside iframes).</li>
+        </ul>
+
+        <h2>Infrastructure</h2>
+        <p>The site and server run on Cloudflare. Cloudflare may briefly process technical data such as IP addresses to operate and secure the service. See the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare privacy policy</a>. YouTube videos open in YouTube's own player and <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a> applies.</p>
+
+        <h2>Content</h2>
+        <p>ScreenWithMe does not host or relay any video. It only syncs the players everyone opens themselves. Only use content you have the right to watch.</p>
+
+        <h2>Contact</h2>
+        <p>Questions or requests: <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a></p>
+      </div>
+
+      <!-- ===================== TÜRKÇE ===================== -->
+      <div data-lang-block="tr" hidden>
+        <h1>Gizlilik politikası</h1>
+        <p class="muted">Son güncelleme: Ekim 2026</p>
+
+        <div class="card">
+          <b>Kısaca:</b> Hesap yok, reklam yok, takip yok. Videolar senin tarayıcında oynar; sunucumuz
+          sadece odadakilerin aynı anda izlemesi için gereken küçük mesajları taşır.
+        </div>
+
+        <h2>Hangi bilgiler kullanılıyor?</h2>
+        <ul>
+          <li><b>İsim ve avatar:</b> Odaya girerken seçtiklerin. Odadakilere gösterilir. Tarayıcın bir dahaki sefere hatırlar; sunucumuzda sadece oda ile birlikte (sohbet geçmişinde ve çıkarıldıysan yasak listesinde) tutulur ve oda ile birlikte silinir.</li>
+          <li><b>Oda durumu:</b> O an açık olan video ya da sayfanın adresi, oynuyor/durdu bilgisi, konum, hız ve sıra listesi.</li>
+          <li><b>Sohbet mesajları:</b> Odadaki son 50 mesaj, sonradan gelenler görebilsin diye oda ile birlikte saklanır.</li>
+          <li><b>Oylar ve oda ayarları:</b> Sıradaki hangi videoya 👍 verildiği (oyun geri alınabilsin diye tarayıcı kimliğinle saklanır; diğerleri sadece sayıyı görür), yönetici modları ve planlı başlangıç saati. Oda ile birlikte silinir.</li>
+          <li><b>Oturum özeti:</b> Odada kimin kaç mesaj, tepki ve pin attığı, kaç kez durdurup sardığı, ne kadar süre ve hangi videoların izlendiği sayılır (kişiler tarayıcı kimliğiyle ayırt edilir; özete sadece ad ve avatar girer). Biri özeti açınca sayaçlar sıfırlanır; son özetler (kayıtlı odada 10, diğerlerinde 3, en fazla 90 gün) oda ile birlikte saklanır ve oda ile silinir.</li>
+          <li><b>Kaydedilmiş oda listen:</b> Kaydettiğin odaların adı ve kodu sadece tarayıcında tutulur.</li>
+          <li><b>Kaydedilmiş oda (yönetici açarsa):</b> Odada açılan son 30 videonun adresi, nerede kalındığı ve pinleri, aynı video tekrar açılınca kaldığı yerden devam edebilsin diye oda ile birlikte saklanır. Yönetici kaydı kapatınca hemen silinir.</li>
+          <li><b>Pinlenmiş anlar:</b> Açık videonun hangi saniyesi, isteğe bağlı kısa not ve pinleyenin adı/avatarı. Odadakilere görünür; video değişince sıfırlanır, oda ile birlikte silinir.</li>
+          <li><b>Özel emojiler:</b> Odaya eklediğin resim ya da GIF'ler (resimler küçültülür, GIF'ler olduğu gibi). Odadaki herkes kullanabilsin diye oda ile birlikte saklanır (en fazla 24, dolunca en eskisi silinir) ve oda ile birlikte silinir. Kendi listen başka odalarda da kullanabilmen için tarayıcında da tutulur.</li>
+          <li><b>Tarayıcı kimliği:</b> Tarayıcında rastgele oluşturulan bir kod. Oda yöneticisinin sayfayı yenileyince yöneticiliğini kaybetmemesi ve yöneticinin çıkardığı birinin, yönetici yasağı kaldırana kadar o odaya geri girememesi için kullanılır. Bu amaçla oda ile birlikte sunucumuzda tutulur ve oda ile birlikte silinir. Kodun kendisi başkalarına hiç gösterilmez. Hesap değildir.</li>
+        </ul>
+        <p>Odada kimse kalmadıktan 24 saat sonra (yönetici odayı kaydettiyse 30 gün sonra) odanın bütün bilgileri (oda durumu, sohbet, ayarlar, kayıtlı videolar) silinir.</p>
+
+        <h2>Neler kullanılmıyor?</h2>
+        <ul>
+          <li>Hesap, e-posta, telefon ya da şifre istenmez.</li>
+          <li>Reklam, analiz ya da takip araçları ve çerezleri yoktur.</li>
+          <li>Video içeriği sunucumuzdan geçmez; her kişi videoyu kendi açar.</li>
+          <li>Bilgiler satılmaz ve kimseyle paylaşılmaz.</li>
+        </ul>
+
+        <h2>Tarayıcı eklentisi</h2>
+        <ul>
+          <li>Eklenti <b>sadece bir odaya katıldığın sekmede</b> çalışır. Diğer sekmelerde hiçbir şey okumaz ve göndermez.</li>
+          <li>Odadaki sekmede sadece sayfadaki videonun durumunu (oynuyor mu, kaçıncı saniyede, hız) kullanır.</li>
+          <li>Odada bir sayfa açtığında o sayfanın adresi ve başlığı odadakilere gönderilir.</li>
+          <li>Gezinti geçmişini toplamaz.</li>
+          <li>Film sayfasında eklenti, sitemizin kendisini (oda sayfası) sayfanın üstünde katman olarak gösterir; oda bağlantısı sitedeki gibi sitenin bağlantısıdır. Film sitesi bu katmanın içini okuyamaz.</li>
+          <li>Site ayarların (isim, avatar, tema, dil, tarayıcı kimliği, kayıtlı odalar, özel emojilerin) eklentinin kendi depolama alanında da, senin tarayıcında tutulur; böylece film sayfasındaki katman aynı ayarlarla açılır. Başka bir yere ek bir şey gönderilmez.</li>
+          <li>"Tüm sitelerde çalışma" izni, videoların her sitede (iframe içinde de) bulunabilmesi için gereklidir.</li>
+        </ul>
+
+        <h2>Altyapı</h2>
+        <p>Site ve sunucu Cloudflare üzerinde çalışır. Cloudflare, hizmetin işleyişi ve güvenliği için IP adresi gibi teknik bilgileri kısa süreli işleyebilir. Ayrıntılar için <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare gizlilik politikası</a>. YouTube videoları YouTube'un kendi oynatıcısıyla açılır ve <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google'ın gizlilik politikası</a> geçerlidir.</p>
+
+        <h2>İçerik</h2>
+        <p>ScreenWithMe hiçbir video barındırmaz ve iletmez. Sadece herkesin kendi açtığı oynatıcıları senkronlar. Yalnızca izleme hakkın olan içerikleri kullan.</p>
+
+        <h2>İletişim</h2>
+        <p>Soru ve istekler için: <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a></p>
+      </div>
+    </main>
+  </body>
+</html>

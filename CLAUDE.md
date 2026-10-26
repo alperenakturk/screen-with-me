@@ -205,7 +205,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   sn, `REACTION_GAPS`) ile kişi başı aralık koyar (sunucu `lastReaction` ile uygular, istemci düğmeleri soluklaştırır);
   sunucunun sınırı `RateLimiter(12, 5)`, kişi (`keyOf`, tarayıcı) başına; `react` ve `home` genel `commandLimit`'i
   harcamaz (emoji yağmuru oynat/durdur komutlarını kilitlemesin). İstemci: basılı tuş tekrarı yok, iki emoji arası
-  en az 150 ms. Kabukta uçuşan emoji adacıkları en fazla 4 (deliği kaplamasın). Kullanıcı görmek istemezse Ayarlar → "Emojiler videonun üstünde
+  en az 150 ms. Kabukta adacıklar `mergeRects` ile çakışmasız birleştirilir (kesme yolu çift-tek kuralıyla çizilir: üst üste binen
+  iki adacık birbirini silip emojileri yarım/silik gösteriyordu). Kullanıcı görmek istemezse Ayarlar → "Emojiler videonun üstünde
   uçuşsun" (`opt:reactions`). Kabukta her uçuşan emojinin yolu bir adacık.
 - **Tek kişiyken senkron yok:** sitede "Herkesi bana eşitle" ve senkron testi soluk, basınca "tek başınasın" balonu
   (`isAlone`, `ui/hint.ts` `flashHint`); sunucuda farklı cid sayısı 2'den azsa "herkes hazır" beklemesi olmaz.
@@ -307,7 +308,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 ## Lisans ve gizlilik
 - MIT (`LICENSE`, © 2026 Alperen Aktürk). Kullanıcıya giden kodda (site/sunucu/eklenti) dış paket
   kodu yok; yeni bir çalışma zamanı bağımlılığı eklersen lisansını kontrol et (MIT/Apache/BSD iyi).
-- Gizlilik politikası: `apps/web/public/gizlilik.html`. Yeni bir veri toplarsan/saklarsan güncelle.
+- Gizlilik politikası: `apps/web/public/privacy.html` (TR + EN; `?lang=en|tr` ile bağlantının dilinde açılır, `lang.js`;
+  eski `gizlilik.html` buraya yönlendirir). Yeni bir veri toplarsan/saklarsan güncelle.
 
 ## Bilinen sınırlar
 - DRM'li servisler (Netflix, Prime Video, Disney+…) şimdilik desteklenmiyor; **hedef** (1.0'a doğru

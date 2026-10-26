@@ -49,7 +49,7 @@ PRIVATE BY DESIGN
 • No account, no ads, no third-party analytics or tracking
 • Runs only in the tab you joined a room with; dormant everywhere else
 • Videos play in each person's own browser; our server only relays small sync messages and the room's chat
-• Privacy policy: https://screen-with-me.swm-server.workers.dev/gizlilik.html
+• Privacy policy: https://screen-with-me.swm-server.workers.dev/privacy.html
 
 NOTES
 • DRM-protected streaming services are not supported.
@@ -120,7 +120,7 @@ Altındaki üç beyanın üçünü de işaretle:
 - ☑ I do not use or transfer user data for purposes that are unrelated to my item's single purpose
 - ☑ I do not use or transfer user data to determine creditworthiness or for lending purposes
 
-**Gizlilik politikası URL'si:** `https://screen-with-me.swm-server.workers.dev/gizlilik.html`
+**Gizlilik politikası URL'si:** `https://screen-with-me.swm-server.workers.dev/privacy.html`
 
 ---
 

@@ -74,6 +74,32 @@ export function holePath(width: number, height: number, hole: Rect, islands: Rec
   return `path(evenodd, "${parts.join('')}")`;
 }
 
+/**
+ * Üst üste binen adacıkları kapsayan tek dikdörtgende birleştirir. Kesme yolu çift-tek kuralıyla çizilir: iki
+ * adacığın kesiştiği yer iki kez sayılıp katmandan kesilirdi (art arda atılan emojiler yarım/silik görünüyordu).
+ */
+export function mergeRects(rects: Rect[]): Rect[] {
+  const out = rects.map((r) => ({ ...r }));
+  const overlap = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  for (let merged = true; merged; ) {
+    merged = false;
+    for (let i = 0; i < out.length && !merged; i++) {
+      for (let j = i + 1; j < out.length; j++) {
+        const a = out[i]!;
+        const b = out[j]!;
+        if (!overlap(a, b)) continue;
+        const x = Math.min(a.x, b.x);
+        const y = Math.min(a.y, b.y);
+        out[i] = { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
+        out.splice(j, 1);
+        merged = true;
+        break;
+      }
+    }
+  }
+  return out;
+}
+
 /** Gelen dikdörtgen geçerli mi (sayılar, makul boyut)? Bozuk mesaj yerleşimi bozmasın. */
 export function isRect(x: unknown): x is Rect {
   const r = x as Rect | null;
