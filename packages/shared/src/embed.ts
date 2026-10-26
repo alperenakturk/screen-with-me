@@ -42,7 +42,9 @@ export type EmbedReply =
   /** Film sayfasında basılan kısayol (1–8 emoji, Enter mesaj, P pin): site kendi kısayolu gibi işler. */
   | { type: 'key'; key: string }
   /** Film sitesinin kendi tam ekran düğmesine basıldı: site kendi tam ekranını açsın. */
-  | { type: 'fullscreen' };
+  | { type: 'fullscreen' }
+  /** Fare film sayfasında oynadı: tam ekran kontrolleri belirsin (yoksa site fareyi hiç görmez). */
+  | { type: 'activity' };
 
 /** Film sayfasından siteye iletilen kısayol tuşları. */
 export function isForwardedKey(key: string): boolean {

@@ -28,6 +28,8 @@ export type FrameMessage =
   /** Film sayfasında basılan kısayol ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
   | { type: 'key'; key: string }
   | { type: 'fullscreen' }
+  /** Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. */
+  | { type: 'activity' }
   /** Bizim tam ekranımız bitti/başladı (üst çerçeve: Esc vb.). */
   | { type: 'fullscreen-changed'; on: boolean }
   | { type: 'send'; message: ClientMessage };

@@ -20,6 +20,27 @@ import { PORT_NAME, PROBE, SESSIONS_KEY, type BackgroundMessage, type FrameMessa
 import { askToStart, clearStart } from './start-card.ts';
 
 const SCAN_MS = 1000;
+/** Bundan kısa video reklam ya da önizleme sayılır: odaya oynat/durdur/sar gitmez, odanın yerine sarılmaz. */
+const SHORT_S = 60;
+/**
+ * Bilinen büyük reklam ağları: bu çerçevelerde film yoktur, videoları aday sayılmaz. Hiçbir şeyi engellemez,
+ * sadece "burada film arama" der (kısa tutulur; reklam engelleyici değiliz).
+ */
+const AD_HOSTS = [
+  'doubleclick.net',
+  'googlesyndication.com',
+  'googleadservices.com',
+  'imasdk.googleapis.com',
+  'adnxs.com',
+  'amazon-adsystem.com',
+  'pubmatic.com',
+  'rubiconproject.com',
+  'criteo.com',
+  'taboola.com',
+  'outbrain.com',
+  'adsrvr.org',
+];
+const inAdFrame = AD_HOSTS.some((host) => location.hostname === host || location.hostname.endsWith(`.${host}`));
 const SITE_ORIGIN = new URL(SITE_URL).origin;
 const isTop = window === window.top;
 
@@ -70,6 +91,9 @@ function send(message: FrameMessage): void {
 function sleep(): void {
   document.documentElement.removeAttribute('data-swm-room');
   uncover();
+  // Oda bitti: oda görünümünde susturduğumuz videolar eski hâline dönsün.
+  for (const video of mutedByUs) video.muted = false;
+  mutedByUs.clear();
   try {
     sessionStorage.removeItem(COVER_FLAG);
   } catch {
@@ -128,7 +152,7 @@ function scan(): void {
   for (const video of videos) {
     const info = describeVideo(video);
     if (info.width * info.height > largest.w * largest.h) largest = { w: Math.round(info.width), h: Math.round(info.height) };
-    const score = scoreVideo(info);
+    const score = inAdFrame ? 0 : scoreVideo(info);
     if (score > bestScore) {
       bestVideo = video;
       bestScore = score;
@@ -153,17 +177,58 @@ function scan(): void {
  * oynatıcıyı yeni bir video gibi baştan bağlarız.
  */
 let watched: HTMLVideoElement | null = null;
+let sourceToken = 0;
 function onSourceChange(): void {
-  if (!active || !adapter) return;
-  adapter.release();
+  if (!active) return;
+  adapter?.release();
   adapter = null;
-  attachEngine();
+  engine?.detach();
+  // Yeni kaynağın süresi belli olmadan bağlanma: ön-reklam aynı <video>'da başlıyorsa motor reklamın 0'a
+  // dönüşünü "kullanıcı başa sardı" sanıp herkesi başa sarardı. Süre gelince (ya da en fazla 3 sn sonra) bağlan.
+  const token = ++sourceToken;
+  const go = () => {
+    if (token === sourceToken) attachEngine();
+  };
+  if (watched && watched.readyState < 1) {
+    watched.addEventListener('loadedmetadata', go, { once: true });
+    setTimeout(go, 3000);
+  } else go();
+}
+/** Videonun süresi değişti: kısa (reklam) olduysa motor ayrılır, uzun olduysa (film başladı) bağlanır. */
+function onDurationChange(): void {
+  if (!active || !watched) return;
+  if (isShort(watched)) {
+    if (adapter) {
+      adapter.release();
+      adapter = null;
+      engine?.detach();
+    }
+  } else if (!adapter) attachEngine();
 }
 function watchSource(video: HTMLVideoElement | null): void {
   if (watched === video) return;
   watched?.removeEventListener('emptied', onSourceChange);
+  watched?.removeEventListener('durationchange', onDurationChange);
   watched = video;
   video?.addEventListener('emptied', onSourceChange);
+  video?.addEventListener('durationchange', onDurationChange);
+}
+
+/** Süresi belli ve 60 sn'den kısa: reklam/önizleme. */
+function isShort(video: HTMLVideoElement | null): boolean {
+  const duration = video?.duration ?? Number.NaN;
+  return Number.isFinite(duration) && duration > 0 && duration < SHORT_S;
+}
+
+/** Oda görünümünde, filmin oynatıcısı dışında sesli oynayan videolar (gizli reklamlar) susturulur. */
+const mutedByUs = new Set<HTMLVideoElement>();
+function muteStrays(): void {
+  if (layout?.mode !== 'full') return;
+  for (const video of document.querySelectorAll('video')) {
+    if ((video === best && layoutActive) || video.closest('[data-swm-focus]') || video.muted || video.paused) continue;
+    video.muted = true;
+    mutedByUs.add(video);
+  }
 }
 
 function attachEngine(): void {
@@ -176,6 +241,17 @@ function attachEngine(): void {
     // Video sayfadan kalktı (ör. oynatıcı yeniden kuruldu); yenisi bulununca bağlanır.
     engine?.detach();
     return;
+  }
+  // Kısa video (reklam/önizleme): odaya hareket gitmez, odanın yerine sarılmaz; reklam bitip film gelince
+  // (süre değişir) bağlanır, kişi o an odanın olduğu yere atlar.
+  if (isShort(best)) {
+    engine?.detach();
+    return;
+  }
+  // Biz susturduysak (o sırada film sanılmıyordu) sesi geri ver.
+  if (mutedByUs.has(best)) {
+    best.muted = false;
+    mutedByUs.delete(best);
   }
   adapter = wrapVideoElement(best);
   engine ??= new SyncEngine({
@@ -369,6 +445,7 @@ function applyLayout(): void {
   } else {
     applyFocus(true, null, inset, recentChild());
   }
+  muteStrays();
 }
 addEventListener('resize', applyLayout);
 // Oynatıcılar kendini yeniden kurabilir: oda görünümündeyken arada bir yeniden yerleştir
@@ -400,6 +477,23 @@ document.addEventListener('fullscreenchange', () => {
 document.addEventListener('swm-fullscreen-request', () => {
   if (port && layout?.mode === 'full') send({ type: 'fullscreen' });
 });
+
+// Fare film sayfasında (deliğin içinde) oynayınca site bunu göremez: tam ekran kontrolleri bekleyince
+// kaybolur, fare oynayınca geri gelsin diye siteye haber verilir (en fazla 0,4 sn'de bir).
+let lastActivity = 0;
+for (const type of ['mousemove', 'mousedown', 'wheel', 'touchstart'] as const) {
+  addEventListener(
+    type,
+    () => {
+      if (!port || layout?.mode !== 'full') return;
+      const now = Date.now();
+      if (now - lastActivity < 400) return;
+      lastActivity = now;
+      send({ type: 'activity' });
+    },
+    { capture: true, passive: true },
+  );
+}
 
 // Kısayollar (1–8 emoji, Enter mesaj, P pin) odak film sayfasındayken de çalışsın: tuşu film
 // sitesine göstermeden (oynatıcılar rakamlarla sarar) siteye iletiriz. Sadece oda görünümündeyken.

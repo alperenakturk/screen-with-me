@@ -14,6 +14,8 @@ interface FullscreenOptions {
    * uygulanır (video ve katman birlikte), oda kendi tam ekran görünümüne geçer (`fake-fs`).
    */
   shell?: boolean;
+  /** Kabukta: kontroller hiç kaybolmasın mı ("video kontrollerin üstünde" seçeneği). */
+  keepControls?: () => boolean;
   theater: HTMLElement;
   getPlayer: () => PlayerAdapter | null;
   send: (message: ClientMessage) => void;
@@ -30,7 +32,7 @@ interface FullscreenOptions {
  * videonun üstüne görünmez bir katman (catcher) konur: hareketi o yakalar,
  * tek tık oynat/durdur, çift tık tam ekrandan çıkış yapar.
  */
-export function createFullscreen({ shell = false, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
+export function createFullscreen({ shell = false, keepControls = () => false, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
   const q = <T extends HTMLElement>(selector: string) => theater.querySelector<T>(selector)!;
   const catcher = q('#fs-catcher');
   const controls = q('#fs-controls');
@@ -66,9 +68,9 @@ export function createFullscreen({ shell = false, theater, getPlayer, send, onSk
     theater.classList.remove('idle');
     if (idleTimer !== null) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      // Yazı yazarken ya da kontrollerin üstündeyken gizleme.
-      // Kabukta fare hareketi film sayfasına gider (görmeyiz): kontroller hep görünür kalır.
-      if (hoveringControls || document.activeElement === chatInput || seeking || shell) wake();
+      // Yazı yazarken ya da kontrollerin üstündeyken gizleme. Kabukta fare film sayfasında oynayınca eklenti
+      // haber verir (poke). "Video kontrollerin üstünde" seçiliyse çubuğun kendi yeri var: hep görünür.
+      if (hoveringControls || document.activeElement === chatInput || seeking || (shell && keepControls())) wake();
       else theater.classList.add('idle');
     }, IDLE_MS);
   }
@@ -176,6 +178,10 @@ export function createFullscreen({ shell = false, theater, getPlayer, send, onSk
 
   return {
     isActive,
+    /** Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. */
+    poke(): void {
+      if (isActive()) wake();
+    },
     toggle(): void {
       if (shell) setFake(!fake, true);
       else if (isActive()) void document.exitFullscreen();
