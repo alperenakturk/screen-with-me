@@ -42,7 +42,7 @@ scripts/e2e       Uçtan uca testler (sahte kullanıcılarla gerçek sunucu) · 
 
 ## Komutlar
 ```bash
-npm run dev                  # sunucu (8787) + site (5173, /api → 8787 proxy)
+npm run dev                  # sunucu (8787) + site (5173, /api → 8787 proxy; SWM_WEB_PORT / SWM_API_PORT ile değişir)
 npm test                     # birim testleri (vitest, packages/shared)
 npm run typecheck            # tüm paketler
 npm run e2e [-- wss://...]   # uçtan uca (varsayılan yerel; canlı için URL ver)
@@ -84,6 +84,19 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kopyalar. Geriye uyumsuz değişiklikte `PROTOCOL_VERSION` artır (eski istemci "sayfayı yenile"
   hatası alır; eklenti kullanıcıları güncellemek zorunda kalır, dikkat). İsteğe bağlı yeni
   alanlar (avatar, cid, hostId gibi) sürüm artırmadan eklenebilir.
+- **Shorts görünümü ("Oturma odası", site `ui/seats.ts` + `room.ts` "Shorts görünümü"):** `youtube.com/shorts/…` linki
+  `{kind:'youtube', id, short: true}` olur (isteğe bağlı alan; aynı video normal linkle eklenirse yatay kalır). Oynayan Shorts
+  ise `.room.shorts`: sağ panel, link kutusu, araç çubuğu gizli; dikey video ortada, kişiler iki yanda (en fazla 6, fazlası
+  "+N"; telefonda video altında tek sıra), mesaj yazanın avatarından 6 sn baloncuk, emoji avatarından yükselir (koltuğu yoksa
+  videonun üstünde). Altta mesaj kutusu + emoji çubuğu + 🔁 Döngü + "↩ Oda görünümü" (bu sekmede hatırlanır,
+  `sessionStorage` `shortsOff:<oda>`; oda görünümünde "📱 Shorts görünümü" ile dönülür). Görünüm değişimi View Transitions
+  ile (video `view-transition-name: swm-player`; sayfa çizilmiyorsa 0,6 sn'de geçişsiz). ↑/↓, PageUp/Down, ▲▼ ve fare
+  tekerleği (videonun dışında, 0,9 sn'de bir): ↓ = `next` (sıra boşsa gönderilmez, not çıkar), ↑ = `{t:'prev', from}`:
+  sunucu son oynayanları `played`'de tutar (30, depoda), bir öncekini açar, şu anki sıranın başına girer (`hostOnly`'de
+  sadece yönetici). Shorts'tan Shorts'a yeni video aşağıdan (geri dönülen yukarıdan) kayar. Döngü `settings.loop` (yönetici):
+  video bitince istemci `{t:'next', end: true}` yollar, döngü açıksa ve video Shorts'sa sunucu `restart` uygular (başa
+  sarar; konum 2 sn'den azsa tekrar sarmaz, aynı anda gelen "bitti"ler bir kez). Elle "Sonraki" döngüde de geçer.
+  Test: `scripts/e2e/shorts.mjs`.
 - **Medya türleri:** `youtube`, `html5` ve `test` sitede oynar; `page` (diğer her web adresi) film sitesinin kendisinde,
   herkes kendi sekmesinde, eklentinin açtığı oda katmanıyla (aşağıda "Kabuk").
 - **Eklenti kuralları:** Odada değilken hiçbir şey yapmaz (çerçeveler `storage.session` `sessions`'a bakar, kabuklu

@@ -31,19 +31,22 @@ export function parseMediaInput(input: string): Media | null {
 
   const host = url.hostname.toLowerCase();
   let youtubeId: string | null = null;
+  let short = false;
   if (host === 'youtu.be') {
     youtubeId = url.pathname.split('/')[1] ?? null;
   } else if (YOUTUBE_HOSTS.has(host)) {
     if (url.pathname === '/watch') {
       youtubeId = url.searchParams.get('v');
     } else {
-      const match = url.pathname.match(/^\/(?:shorts|embed|live|v)\/([^/?#]+)/);
-      youtubeId = match?.[1] ?? null;
+      const match = url.pathname.match(/^\/(shorts|embed|live|v)\/([^/?#]+)/);
+      youtubeId = match?.[2] ?? null;
+      short = match?.[1] === 'shorts';
     }
   }
 
   if (youtubeId !== null) {
-    const media: Media = { kind: 'youtube', id: youtubeId };
+    // Shorts linki dikey videodur: oda "Shorts görünümüne" geçer.
+    const media: Media = short ? { kind: 'youtube', id: youtubeId, short: true } : { kind: 'youtube', id: youtubeId };
     return isValidMedia(media) ? media : null;
   }
   if (YOUTUBE_HOSTS.has(host)) return null;

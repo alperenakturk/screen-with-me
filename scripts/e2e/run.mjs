@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const here = dirname(fileURLToPath(import.meta.url));
 let failed = 0;
-for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs']) {
+for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs']) {
   console.log(`\n▶ ${test}`);
   const result = spawnSync(process.execPath, [join(here, test), base], { stdio: 'inherit' });
   if (result.status !== 0) failed++;

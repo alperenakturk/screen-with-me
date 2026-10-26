@@ -92,6 +92,25 @@ describe('next', () => {
     expect(second.data.state.item?.id).toBe('b');
   });
 
+  it('restart (loop) plays the ended video again, once', () => {
+    const first = applyRoomAction(roomWith('a', ['b']), { t: 'restart', from: 'a' }, now);
+    expect(first.stateAction).toBe('seek');
+    expect(first.data.state).toMatchObject({ paused: false, position: 0, updatedAt: now });
+    expect(first.data.state.item?.id).toBe('a');
+    expect(ids(first.data)).toEqual(['b']);
+    // İkinci oynatıcının "bitti"si yeniden başlamış videoyu bir daha sarmaz.
+    expect(applyRoomAction(first.data, { t: 'restart', from: 'a' }, now + 500).stateAction).toBeNull();
+  });
+
+  it('prev goes back and puts the current item first in the queue', () => {
+    const update = applyRoomAction(roomWith('b', ['c']), { t: 'prev', from: 'b', item: item('a') }, now);
+    expect(update.stateAction).toBe('load');
+    expect(update.data.state).toMatchObject({ paused: false, position: 0 });
+    expect(update.data.state.item?.id).toBe('a');
+    expect(ids(update.data)).toEqual(['b', 'c']);
+    expect(applyRoomAction(roomWith('x', []), { t: 'prev', from: 'b', item: item('a') }, now).stateAction).toBeNull();
+  });
+
   it('pauses at the end when the queue is empty', () => {
     const update = applyRoomAction(roomWith('a', []), { t: 'next', from: 'a' }, now);
     expect(update.stateAction).toBe('pause');

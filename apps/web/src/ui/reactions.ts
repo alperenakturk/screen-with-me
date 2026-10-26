@@ -155,21 +155,23 @@ export function createReactions(
     fire(item);
   });
 
+  /** Tepkinin görünümü: emoji ya da odadaki özel emojinin resmi (bilinmeyen özel emoji: null). */
+  function content(emoji?: string, sticker?: string): HTMLElement | null {
+    if (!sticker) return el('span', { class: 'r-emoji' }, emoji ?? '');
+    const data = stickers.get(sticker);
+    return data ? el('img', { class: 'r-sticker', src: data, alt: '' }) : null;
+  }
+
   return {
+    content,
     /** Gelen tepki: videonun altından rastgele bir yerden yükselir. */
     show(by: Member, emoji?: string, sticker?: string): void {
       // Her tepki ayrı uçar (art arda basınca "×2" olmaz, yağmur gibi yükselir).
-      let content: HTMLElement;
-      if (sticker) {
-        const data = stickers.get(sticker);
-        if (!data) return;
-        content = el('img', { class: 'r-sticker', src: data, alt: '' });
-      } else {
-        content = el('span', { class: 'r-emoji' }, emoji ?? '');
-      }
+      const shown = content(emoji, sticker);
+      if (!shown) return;
       while (layer.childElementCount >= MAX_FLOATS) layer.firstElementChild?.remove();
       const who = el('span', { class: 'r-who' }, avatarNode(by.avatar, 'r-avatar'), el('span', { class: 'r-name' }, by.name));
-      const float = el('div', { class: 'r-float' }, content, who);
+      const float = el('div', { class: 'r-float' }, shown, who);
       float.style.left = `${6 + Math.random() * 78}%`;
       float.style.setProperty('--drift', `${Math.round((Math.random() - 0.5) * 70)}px`);
       float.addEventListener('animationend', (event) => {

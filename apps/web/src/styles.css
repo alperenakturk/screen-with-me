@@ -3738,3 +3738,428 @@ html.shell .tab[data-tab='queue'] {
 .recap-saved-title:has(+ .recap-history:empty) {
   display: none;
 }
+
+/* ---- Shorts görünümü ("Oturma odası"): dikey video ortada, arkadaşlar iki yanında; altta mesaj + emoji.
+   Sıra, sohbet geçmişi ve ayarlar oda görünümünde (sağ panel burada yok, ekran temiz). ---- */
+.shorts-only {
+  display: none;
+}
+
+/* Görünümler arası geçişte video yerinden süzülür (View Transitions; desteklemeyen tarayıcıda anında). */
+.room .player-wrap {
+  view-transition-name: swm-player;
+}
+
+::view-transition-group(swm-player),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.42s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.room.shorts {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.room.shorts > .side,
+.room.shorts #media-form,
+.room.shorts #media-error,
+html.shorts-view .footer {
+  display: none !important;
+}
+
+.room.shorts .stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto minmax(0, 1fr);
+  column-gap: 18px;
+  row-gap: 14px;
+  align-items: center;
+}
+
+.room.shorts .stage > * {
+  grid-column: 1 / -1;
+}
+
+.room.shorts .shorts-only {
+  display: flex;
+}
+
+.room.shorts .seats-l {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.room.shorts .theater {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.room.shorts .shorts-nav {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.room.shorts .seats-r {
+  grid-column: 4;
+  grid-row: 2;
+}
+
+.room.shorts .shorts-bar {
+  grid-row: 3;
+}
+
+.room.shorts .theater:not(:fullscreen, .fake-fs) {
+  padding: 0;
+  border: 0;
+  background: none;
+  align-items: center;
+}
+
+.room.shorts .theater:not(:fullscreen, .fake-fs) :is(.now-playing, .toolbar, .pin-strip) {
+  display: none !important;
+}
+
+.room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
+  aspect-ratio: 9 / 16;
+  height: clamp(320px, calc(100dvh - 210px), 880px);
+  width: auto;
+  max-width: 100%;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
+}
+
+/* Shorts'tan Shorts'a geçiş: yeni video aşağıdan (↓), geri dönülen yukarıdan (↑) kayarak gelir. */
+.player-wrap.swipe-up {
+  animation: swipe-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.player-wrap.swipe-down {
+  animation: swipe-down 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes swipe-up {
+  from {
+    transform: translateY(16%);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-down {
+  from {
+    transform: translateY(-16%);
+    opacity: 0;
+  }
+}
+
+/* Koltuklar: avatar + ad; mesaj avatarın yanında (videoya doğru) baloncuk olur. */
+.seats {
+  /* Baloncuk ve uçan emoji videonun üstüne taşabilir (telefonda baloncuk avatarın üstünde). */
+  position: relative;
+  z-index: 3;
+  flex-direction: column;
+  justify-content: center;
+  gap: 26px;
+  min-width: 0;
+}
+
+.seats-l {
+  align-items: flex-end;
+}
+
+.seats-r {
+  align-items: flex-start;
+}
+
+.seat {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.seats-l .seat {
+  flex-direction: row-reverse;
+}
+
+.seat-who {
+  flex: none;
+  width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.seat-av {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bg) 70%, transparent);
+  font-size: 34px;
+  line-height: 1;
+  transition: border-color 0.2s;
+}
+
+.seat-pic {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.seat-pic img {
+  width: 100%;
+  height: 100%;
+}
+
+.seat.me .seat-av,
+.seat:has(.seat-bubble) .seat-av {
+  border-color: var(--accent);
+}
+
+.seat.more .seat-av {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.seat-name {
+  max-width: 84px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--chrome-text);
+}
+
+.seat-bubble {
+  max-width: 220px;
+  padding: 9px 13px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.25);
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  animation: bubble-in 0.25s ease-out;
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+
+/* Emoji atanın avatarından yükselir. */
+.seat-fly {
+  position: absolute;
+  left: 50%;
+  bottom: 55%;
+  z-index: 3;
+  pointer-events: none;
+  animation: seat-fly 2.2s ease-out forwards;
+}
+
+.seat-fly .r-emoji {
+  font-size: 34px;
+}
+
+.seat-fly .r-sticker {
+  height: 48px;
+}
+
+@keyframes seat-fly {
+  0% {
+    transform: translate(-50%, 10px) scale(0.5);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-50%, 0) scale(1.1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--drift, 0px)), -130px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Önceki / sonraki: videonun sağında, aralarında sırada kaç video kaldığı. */
+.shorts-nav {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.shorts-arrow {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.shorts-arrow:hover {
+  border-color: var(--accent);
+  transform: scale(1.06);
+}
+
+.shorts-arrow:active {
+  transform: scale(0.94);
+}
+
+.shorts-left {
+  min-height: 1.2em;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.shorts-bar {
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.shorts-chat {
+  flex: 0 1 340px;
+  min-width: 200px;
+  display: flex;
+  gap: 8px;
+}
+
+.shorts-chat input {
+  flex: 1;
+  border-radius: 999px;
+  padding-inline: 16px;
+}
+
+.shorts-loop[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent-hover);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-wrap.swipe-up,
+  .player-wrap.swipe-down,
+  .seat-bubble {
+    animation: none;
+  }
+
+  .seat-fly {
+    animation: r-fade 2.2s ease forwards;
+    transform: translate(-50%, -40px);
+  }
+}
+
+/* Telefonda: video tam genişlik, altında koltuklar (ortada ▲▼), en altta mesaj + emoji. */
+@media (max-width: 860px) {
+  .room.shorts .stage {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    column-gap: 8px;
+  }
+
+  .room.shorts .theater {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .room.shorts .seats-l {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .room.shorts .shorts-nav {
+    grid-column: 2;
+    grid-row: 3;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .room.shorts .seats-r {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  .room.shorts .shorts-bar {
+    grid-row: 4;
+  }
+
+  .room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
+    height: clamp(300px, calc(100dvh - 330px), calc((100vw - 32px) * 16 / 9));
+  }
+
+  .seats {
+    flex-direction: row;
+    align-self: start;
+    gap: 6px;
+  }
+
+  .seats-l {
+    justify-content: flex-end;
+  }
+
+  .seats-r {
+    justify-content: flex-start;
+  }
+
+  .seat-who {
+    width: 50px;
+    gap: 3px;
+  }
+
+  .seat-av {
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+  }
+
+  .seat-name {
+    max-width: 50px;
+    font-size: 11px;
+  }
+
+  /* Baloncuk avatarın üstünde (yan yana yer yok). */
+  .seat-bubble {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    translate: -50% 0;
+    z-index: 4;
+    width: max-content;
+    max-width: 44vw;
+    padding: 7px 11px;
+    font-size: 13px;
+  }
+
+  .shorts-arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .shorts-chat {
+    flex-basis: 100%;
+  }
+}
