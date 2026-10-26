@@ -23,7 +23,11 @@ export interface RoomData {
 export type RoomAction =
   | { t: 'load'; item: QueueItem }
   | { t: 'enqueue'; item: QueueItem }
-  | Extract<ClientMessage, { t: 'dequeue' | 'move' | 'jump' | 'next' | 'play' | 'pause' | 'seek' | 'rate' }>;
+  | Extract<ClientMessage, { t: 'dequeue' | 'move' | 'jump' | 'next' | 'play' | 'pause' | 'seek' | 'rate' }>
+  /** Bir öncekine dön: `item` sunucunun hatırladığı son oynayan; şu an oynayan sıranın başına girer. */
+  | { t: 'prev'; from: string; item: QueueItem }
+  /** Döngü: biten video başa sarıp yeniden oynar. */
+  | { t: 'restart'; from: string };
 
 export interface RoomUpdate {
   data: RoomData;
@@ -131,6 +135,25 @@ export function applyRoomAction(data: RoomData, action: RoomAction, now: number)
         change: null,
         error: null,
       };
+    }
+
+    case 'prev': {
+      if (state.item?.id !== action.from) return unchanged(data);
+      // Sıra doluysa şu anki geri giremez (yine de bir öncekine dönülür).
+      const back = queue.length < QUEUE_MAX_LENGTH ? [state.item, ...queue] : queue;
+      return {
+        data: { state: start(state, action.item, now), queue: back },
+        stateAction: 'load',
+        queueChanged: back !== queue,
+        change: null,
+        error: null,
+      };
+    }
+
+    case 'restart': {
+      // Herkesin oynatıcısı "bitti" der; sadece ilki uygulanır: yeniden başlamış (başa yakın) video bir daha sarılmaz.
+      if (state.item?.id !== action.from || expectedPosition(state, now) < 2) return unchanged(data);
+      return { ...unchanged({ state: start(state, state.item, now), queue }), stateAction: 'seek' };
     }
 
     case 'play':

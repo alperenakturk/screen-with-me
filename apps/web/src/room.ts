@@ -52,6 +52,7 @@ import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
+import { createSeats } from './ui/seats.ts';
 import { createPins } from './ui/pins.ts';
 import { showNextCard } from './ui/end-card.ts';
 import { renderRecapHistory, showRecap } from './ui/recap.ts';
@@ -262,6 +263,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         <p id="media-error" class="error" data-i18n="invalidMedia" hidden></p>
 
         <div id="schedule-banner" class="schedule-banner" role="status" hidden></div>
+        <div id="seats-l" class="seats seats-l shorts-only"></div>
         <div id="theater" class="theater">
           <div class="now-playing" id="now-playing" hidden>
             <div class="now-text">
@@ -338,6 +340,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="toolbar">
             <div class="reaction-bar" role="group"></div>
             <div class="toolbar-right">
+              <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" hidden>📱 <span data-i18n="shorts.view"></span></button>
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <button id="pin-btn" type="button" class="icon-btn tool-btn" data-i18n-title="pin">📌</button>
               <button id="sync-all" type="button" class="icon-btn tool-btn" data-i18n-title="syncAll">🔄</button>
@@ -349,6 +352,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="fullscreen" type="button" class="icon-btn big-icon">⛶</button>
             </div>
           </div>
+        </div>
+        <div id="shorts-nav" class="shorts-nav shorts-only">
+          <button id="shorts-prev" type="button" class="shorts-arrow" data-i18n-title="shorts.prev">▲</button>
+          <span id="shorts-left" class="shorts-left"></span>
+          <button id="shorts-next" type="button" class="shorts-arrow" data-i18n-title="shorts.next">▼</button>
+        </div>
+        <div id="seats-r" class="seats seats-r shorts-only"></div>
+        <div id="shorts-bar" class="shorts-bar shorts-only">
+          <form id="shorts-chat" class="shorts-chat">
+            <input id="shorts-input" autocomplete="off" maxlength="300" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
+            <button class="btn primary" data-i18n="send"></button>
+          </form>
+          <div class="reaction-bar shorts-reactions" role="group"></div>
+          <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
+          <button id="shorts-exit" type="button" class="btn small-btn" data-i18n-title="shorts.roomViewHint">↩ <span data-i18n="shorts.roomView"></span></button>
         </div>
         <p id="player-error" class="error" hidden></p>
       </div>
@@ -586,6 +604,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (event.key !== 'Enter' || document.fullscreenElement || isTyping(event.target)) return;
     if (event.target instanceof HTMLButtonElement || event.target instanceof HTMLAnchorElement) return;
     event.preventDefault();
+    if (shortsOn) {
+      $('#shorts-input').focus();
+      return;
+    }
     tabs.show('chat');
     app.querySelector<HTMLInputElement>('#chat-input')?.focus();
   });
@@ -600,7 +622,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // Otomatik devam kapalıysa sıradaki kendiliğinden başlamaz: küçük "Sıradakini başlat" kartı.
       // (İstatistikler video sonunda değil, ayarlardaki oturum özetinde.)
       const item = roomState?.item;
-      if (roomSettings.autoNext !== false) send({ t: 'next', from: itemId });
+      const loop = roomSettings.loop === true && isShortItem(item);
+      if (roomSettings.autoNext !== false || loop) send({ t: 'next', from: itemId, end: true });
       else if (item && item.id === itemId && queue.length > 0) {
         showNextCard($('.player-wrap'), itemTitle(item), mediaUrl(item.media), () => send({ t: 'next', from: itemId }));
       }
@@ -686,6 +709,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'queue': {
         queue.set(message.queue);
         renderNowPlaying();
+        renderShorts();
         const change = message.change;
         if (change) addActivity(() => t(`queue.${change.kind}`, { name: displayName(change.by), title: itemTitle(change.item) }));
         break;
@@ -740,12 +764,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'home':
         if (isShell && film !== null) askHome(message.by);
         break;
-      case 'reaction':
-        if (settings.options.showReactions) reactions.show(message.by, message.emoji, message.sticker);
+      case 'reaction': {
+        if (!settings.options.showReactions) break;
+        // Shorts görünümünde emoji atanın avatarından yükselir (koltuğu yoksa videonun üstünde).
+        const shown = shortsOn ? reactions.content(message.emoji, message.sticker) : null;
+        if (!shown || !seats.react(message.by, shown)) reactions.show(message.by, message.emoji, message.sticker);
         break;
+      }
       case 'chat': {
         const { by, text } = message.message;
         chat.add(message.message);
+        // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
+        if (shortsOn) seats.say(by, text);
         // Tam ekranda sohbet paneli görünmez; mesaj videonun köşesinde belirir.
         if (fullscreen.isActive()) toasts.show(withAvatar(by), text, by.id === myId);
         break;
@@ -788,6 +818,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let mediaToken = 0;
 
   async function applyState(state: PlaybackState): Promise<void> {
+    const before = roomState?.item ?? null;
     roomState = state;
     showRate(speedEl, state.rate);
     if (SPEEDS.includes(state.rate)) fullscreen.setRate(state.rate);
@@ -801,6 +832,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
     // Video değişti: eskisini kapat, yenisini aç.
     currentItemId = itemId;
+    renderShorts();
+    if (state.item && isShortItem(state.item)) {
+      // Shorts'tan Shorts'a: yeni video aşağıdan (daha önce oynayansa yukarıdan) kayarak gelir.
+      if (shortsOn && isShortItem(before)) swipe(seenShorts.includes(state.item.id) ? 'down' : 'up');
+      if (!seenShorts.includes(state.item.id)) seenShorts.push(state.item.id);
+    }
     const token = ++mediaToken;
     engine.detach();
     closeCurrent();
@@ -1183,6 +1220,136 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   skipEl.addEventListener('click', skip);
 
+  // ---- Shorts görünümü ("Oturma odası"): dikey video ortada, arkadaşlar iki yanında, altta mesaj + emoji.
+  // Sıra, sohbet geçmişi ve ayarlar oda görünümünde kalır. ↑/↓ (▲▼, fare tekerleği) önceki/sonraki Shorts. ----
+  const roomEl = $('.room');
+  const seats = createSeats($('#seats-l'), $('#seats-r'));
+  /** Shorts açıkken oda görünümünü seçtim (bu sekmede hatırlanır; "Shorts görünümü" ile geri dönülür). */
+  let shortsOff = sessionLoad(`shortsOff:${roomId}`) === '1';
+  /** Shorts görünümü açık mı (geçiş animasyonu sürerken bile yeni değer). */
+  let shortsOn = false;
+  /** Bu sekmede oynayan Shorts'lar: yeni video bunlardan biriyse (↑ ile dönüldü) yukarıdan kayarak gelir. */
+  const seenShorts: string[] = [];
+
+  function isShortItem(item: QueueItem | null | undefined): boolean {
+    return item?.media.kind === 'youtube' && item.media.short === true;
+  }
+
+  function renderShorts(): void {
+    const short = isShortItem(roomState?.item);
+    const want = short && !shortsOff;
+    $('#shorts-enter').hidden = !short || want;
+    const left = queue.length;
+    const leftEl = $('#shorts-left');
+    leftEl.textContent = left > 0 ? String(left) : '';
+    leftEl.title = t('shorts.left', { n: left });
+    const loop = $('#shorts-loop');
+    loop.setAttribute('aria-pressed', String(roomSettings.loop === true));
+    loop.title = amHost() ? t('shorts.loopHint') : t('shorts.loopHost');
+    if (want === shortsOn) return;
+    shortsOn = want;
+    // Sınıflar o anki değere göre: art arda iki değişiklikte geç kalan geçiş eski hâli geri getirmesin.
+    const apply = () => {
+      roomEl.classList.toggle('shorts', shortsOn);
+      document.documentElement.classList.toggle('shorts-view', shortsOn);
+    };
+    // Görünümler arasında yumuşak geçiş (tarayıcı destekliyorsa): video yerinden süzülerek büyür/küçülür.
+    // Sayfa çizilmiyorsa (arka plandaki sekme) geçiş hiç başlamayabilir: en geç 0,6 sn'de yine değişir.
+    if (!('startViewTransition' in document) || document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      apply();
+      return;
+    }
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      apply();
+    };
+    const transition = document.startViewTransition(run);
+    // Atlanan geçiş söz (promise) hatası verir; bizim için önemsiz.
+    for (const step of [transition.ready, transition.finished, transition.updateCallbackDone]) step.catch(() => {});
+    setTimeout(() => {
+      if (done) return;
+      transition.skipTransition();
+      run();
+    }, 600);
+  }
+
+  function swipe(direction: 'up' | 'down'): void {
+    const wrap = $('.player-wrap');
+    wrap.classList.remove('swipe-up', 'swipe-down');
+    void wrap.offsetWidth; // animasyon baştan başlasın
+    wrap.classList.add(`swipe-${direction}`);
+  }
+  $('.player-wrap').addEventListener('animationend', (event) => {
+    if (event.target === event.currentTarget) (event.currentTarget as HTMLElement).classList.remove('swipe-up', 'swipe-down');
+  });
+
+  function shortsNext(anchor: HTMLElement): void {
+    const id = roomState?.item?.id;
+    if (!id) return;
+    // Sıra boşken "sıradaki" videoyu durdururdu: geçilecek bir şey yok, kısa not.
+    if (queue.length === 0) return flashHint(anchor, t('shorts.noNext'));
+    send({ t: 'next', from: id });
+  }
+
+  function shortsPrev(anchor: HTMLElement): void {
+    const id = roomState?.item?.id;
+    if (!id) return;
+    if (roomSettings.hostOnly && !amHost()) return flashHint(anchor, t('hostLock'));
+    send({ t: 'prev', from: id });
+    // Sunucu bir önceki videoyu hatırlamıyorsa hiçbir şey olmaz: kısa not.
+    setTimeout(() => {
+      if (shortsOn && roomState?.item?.id === id) flashHint(anchor, t('shorts.noPrev'));
+    }, 1500);
+  }
+
+  $('#shorts-next').addEventListener('click', (event) => shortsNext(event.currentTarget as HTMLElement));
+  $('#shorts-prev').addEventListener('click', (event) => shortsPrev(event.currentTarget as HTMLElement));
+  document.addEventListener('keydown', (event) => {
+    if (!shortsOn || event.repeat || event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
+    if (event.key === 'ArrowDown' || event.key === 'PageDown') {
+      event.preventDefault();
+      shortsNext($('#shorts-next'));
+    } else if (event.key === 'ArrowUp' || event.key === 'PageUp') {
+      event.preventDefault();
+      shortsPrev($('#shorts-prev'));
+    }
+  });
+  // Fare tekerleği (videonun dışında; YouTube çerçevesi tekerleği kendisi alır): bir tık bir video.
+  let wheelAt = 0;
+  $('.stage').addEventListener(
+    'wheel',
+    (event) => {
+      if (!shortsOn || Math.abs(event.deltaY) < 20 || (event.target as Element).closest('.reaction-bar, .shorts-chat')) return;
+      event.preventDefault();
+      if (Date.now() - wheelAt < 900) return;
+      wheelAt = Date.now();
+      if (event.deltaY > 0) shortsNext($('#shorts-next'));
+      else shortsPrev($('#shorts-prev'));
+    },
+    { passive: false },
+  );
+  $('#shorts-loop').addEventListener('click', (event) => {
+    if (!amHost()) return flashHint(event.currentTarget as HTMLElement, t('shorts.loopHost'));
+    send({ t: 'settings', loop: roomSettings.loop !== true });
+  });
+  const setShortsOff = (off: boolean) => {
+    shortsOff = off;
+    sessionSave(`shortsOff:${roomId}`, off ? '1' : '');
+    renderShorts();
+  };
+  $('#shorts-exit').addEventListener('click', () => setShortsOff(true));
+  $('#shorts-enter').addEventListener('click', () => setShortsOff(false));
+  $<HTMLFormElement>('#shorts-chat').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const input = $<HTMLInputElement>('#shorts-input');
+    const text = input.value.trim();
+    if (!text) return;
+    send({ t: 'chat', text });
+    input.value = '';
+  });
+
   autoplayEl.querySelector('button')!.addEventListener('click', () => {
     autoplayEl.hidden = true;
     engine.resume();
@@ -1397,6 +1564,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   function renderMembers(): void {
     people.set(members, hostId, myId);
+    seats.setMembers(members, myId);
     $('#people-count').textContent = String(members.length);
     renderAlone();
     renderWaiting();
@@ -1473,6 +1641,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#host-lock').hidden = host || !roomSettings.hostOnly;
     queue.render();
     renderSchedule();
+    renderShorts();
     const autoNext = $<HTMLInputElement>('#opt-autonext');
     autoNext.checked = roomSettings.autoNext !== false;
     autoNext.disabled = !host;
@@ -1597,6 +1766,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     queue.render();
     chat.render();
     reactions.relabel();
+    seats.render();
+    renderShorts();
     showError(errorText);
     copyEl.textContent = t('copy');
   });

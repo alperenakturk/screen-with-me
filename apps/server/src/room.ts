@@ -34,6 +34,8 @@ const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 const SAVED_ROOM_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /** Kayıtlı odada en fazla kaç videonun kaldığı yer hatırlanır. */
 const MAX_HISTORY = 30;
+/** Shorts'ta ↑ (bir öncekine dön) için hatırlanan son oynayanlar. */
+const MAX_PLAYED = 30;
 /** Boş oda oynuyorken bundan uzun boş kaldıysa, dönüşte kaldığı yerde durmuş olarak açılır. */
 const FREEZE_AFTER_MS = 60_000;
 
@@ -149,6 +151,8 @@ export class Room extends DurableObject<Env> {
   private recaps: Recap[] = [];
   /** Kayıtlı oda: video (titleKey) → kaldığı yer + pinler. */
   private history: Record<string, HistoryEntry> = {};
+  /** Daha önce oynayanlar (en yenisi sonda): "bir önceki" bunlardan gelir. */
+  private played: QueueItem[] = [];
   private hostKey: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
   private hostGoneAt: number | null = null;
@@ -204,6 +208,7 @@ export class Room extends DurableObject<Env> {
       this.history = (await ctx.storage.get<Record<string, HistoryEntry>>('history')) ?? {};
       this.stats = new StatsTracker(await ctx.storage.get<StatsData>('stats'));
       this.recaps = (await ctx.storage.get<Recap[]>('recaps')) ?? [];
+      this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
     });
   }
 
@@ -279,7 +284,7 @@ export class Room extends DurableObject<Env> {
     // Yönetici modları: oynatma ya da sıra yöneticiye kilitliyse başkasının isteği reddedilir
     // (istemci "not_host" alınca kendi oynatıcısını odanın durumuna geri döndürür).
     if (!this.isHost(ws)) {
-      const playback = ['play', 'pause', 'seek', 'rate', 'load', 'jump'].includes(message.t);
+      const playback = ['play', 'pause', 'seek', 'rate', 'load', 'jump', 'prev'].includes(message.t);
       const queueEdit = ['enqueue', 'dequeue', 'move'].includes(message.t);
       if ((playback && this.settings.hostOnly) || (queueEdit && this.settings.lockQueue)) {
         this.sendTo(ws, { t: 'error', code: 'not_host' });
@@ -442,6 +447,7 @@ export class Room extends DurableObject<Env> {
         if (message.hostOnly !== undefined) next.hostOnly = message.hostOnly;
         if (message.lockQueue !== undefined) next.lockQueue = message.lockQueue;
         if (message.autoNext !== undefined) next.autoNext = message.autoNext;
+        if (message.loop !== undefined) next.loop = message.loop;
         if (message.saved !== undefined) next.saved = message.saved;
         if (message.noReactions !== undefined) next.noReactions = message.noReactions;
         if (message.reactionGap !== undefined) next.reactionGap = message.reactionGap;
@@ -459,6 +465,18 @@ export class Room extends DurableObject<Env> {
         this.broadcast({ t: 'settings', settings: this.settings });
         await this.evaluateWait();
         await this.scheduleAlarm();
+        return;
+      }
+      case 'next': {
+        // Döngü açıkken biten Shorts sıradakine geçmez, başa sarar ("Sonraki"ye basmak yine geçer).
+        const item = this.room.state.item;
+        const loop = message.end && this.settings.loop && item?.media.kind === 'youtube' && item.media.short;
+        await this.apply(ws, me, loop ? { t: 'restart', from: message.from } : { t: 'next', from: message.from });
+        return;
+      }
+      case 'prev': {
+        const item = this.played.at(-1);
+        if (item) await this.apply(ws, me, { t: 'prev', from: message.from, item });
         return;
       }
       case 'load':
@@ -508,6 +526,7 @@ export class Room extends DurableObject<Env> {
       this.settings = { waitForAll: true };
       this.voters = {};
       this.history = {};
+      this.played = [];
       this.stats = new StatsTracker(null, now);
       this.recaps = [];
       this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
@@ -866,6 +885,12 @@ export class Room extends DurableObject<Env> {
       if (opened.media.kind === 'youtube' && this.room.state.rate > YOUTUBE_MAX_RATE) {
         this.room = { ...this.room, state: { ...this.room.state, rate: YOUTUBE_MAX_RATE } };
       }
+    }
+    if (before.item && before.item.id !== this.room.state.item?.id) {
+      // "Bir önceki" listesi: geri dönülen listeden çıkar, geçilen listeye girer.
+      if (action.t === 'prev') this.played.pop();
+      else this.played = [...this.played.filter((p) => p.id !== before.item!.id), before.item].slice(-MAX_PLAYED);
+      await this.ctx.storage.put('played', this.played);
     }
     let resumed: number | undefined;
     let restoredPins = false;

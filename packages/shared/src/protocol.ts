@@ -149,7 +149,8 @@ export type ReactionGap = (typeof REACTION_GAPS)[number];
 export const TITLE_MAX_LENGTH = 200;
 
 export type Media =
-  | { kind: 'youtube'; id: string }
+  /** `short`: YouTube Shorts linkinden (youtube.com/shorts/…) geldi; oda dikey "Shorts görünümüne" geçer. */
+  | { kind: 'youtube'; id: string; short?: true }
   /** Doğrudan video dosyası (.mp4 vb.); sitede oynar. */
   | { kind: 'html5'; url: string }
   /** Videonun içinde olduğu bir web sayfası; eklentiyle, herkes kendi sekmesinde açarak izler. */
@@ -214,6 +215,8 @@ export interface RoomSettings {
   reactionGap?: ReactionGap;
   /** Kaydedilmiş odanın adı (yönetici verir). */
   name?: string;
+  /** Shorts bitince sıradakine geçmek yerine başa sarsın (sadece Shorts videolarında). */
+  loop?: boolean;
 }
 
 /** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
@@ -262,7 +265,7 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; saved?: boolean; noReactions?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
@@ -282,8 +285,13 @@ export type ClientMessage =
   | { t: 'move'; id: string; to: number }
   /** Sıradaki bir öğeyi hemen oynat. */
   | { t: 'jump'; id: string }
-  /** Sıradakine geç. `from`, geçilecek (şu an oynayan) öğenin ID'si; aynı anda gelen istekler bir kez uygulanır. */
-  | { t: 'next'; from: string }
+  /**
+   * Sıradakine geç. `from`, geçilecek (şu an oynayan) öğenin ID'si; aynı anda gelen istekler bir kez uygulanır.
+   * `end`: video kendiliğinden bitti (oda "döngü"deyse Shorts sıradakine geçmez, başa sarar).
+   */
+  | { t: 'next'; from: string; end?: true }
+  /** Bir önceki videoya dön (Shorts'ta ↑): şu an oynayan, sıranın başına geri girer. */
+  | { t: 'prev'; from: string }
   | { t: 'play'; position: number; at: number }
   | { t: 'pause'; position: number; at: number }
   | { t: 'seek'; position: number; at: number }
@@ -479,7 +487,8 @@ export function cleanMedia(x: unknown): Media | null {
   if (!isObject(x)) return null;
   if (x.kind === 'test') return { kind: 'test' };
   if (x.kind === 'youtube') {
-    return typeof x.id === 'string' && YOUTUBE_ID.test(x.id) ? { kind: 'youtube', id: x.id } : null;
+    if (typeof x.id !== 'string' || !YOUTUBE_ID.test(x.id)) return null;
+    return x.short === true ? { kind: 'youtube', id: x.id, short: true } : { kind: 'youtube', id: x.id };
   }
   if (x.kind === 'html5' || x.kind === 'page') {
     if (typeof x.url !== 'string' || x.url.length > 2048) return null;
@@ -540,7 +549,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
-      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'saved', 'noReactions'] as const) {
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
       if ((REACTION_GAPS as readonly unknown[]).includes(m.reactionGap)) out.reactionGap = m.reactionGap as ReactionGap;
@@ -573,7 +582,10 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (!isItemId(m.id) || !Number.isInteger(m.to) || (m.to as number) < 0 || (m.to as number) >= QUEUE_MAX_LENGTH) return null;
       return { t: 'move', id: m.id, to: m.to as number };
     case 'next':
-      return isItemId(m.from) ? { t: 'next', from: m.from } : null;
+      if (!isItemId(m.from)) return null;
+      return m.end === true ? { t: 'next', from: m.from, end: true } : { t: 'next', from: m.from };
+    case 'prev':
+      return isItemId(m.from) ? { t: 'prev', from: m.from } : null;
     case 'play':
     case 'pause':
     case 'seek':

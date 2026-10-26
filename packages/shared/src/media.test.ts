@@ -15,13 +15,17 @@ describe('parseMediaInput', () => {
     ['https://youtube.com/watch?v=dQw4w9WgXcQ&t=42s&list=abc', 'dQw4w9WgXcQ'],
     ['https://m.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
     ['https://youtu.be/dQw4w9WgXcQ?si=xyz', 'dQw4w9WgXcQ'],
-    ['https://www.youtube.com/shorts/dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
     ['https://www.youtube.com/embed/dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
     ['https://www.youtube.com/live/dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
     ['youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
     ['  dQw4w9WgXcQ  ', 'dQw4w9WgXcQ'],
   ])('%s → YouTube %s', (input, id) => {
     expect(parseMediaInput(input)).toEqual({ kind: 'youtube', id });
+  });
+
+  it('marks Shorts links as vertical (short)', () => {
+    expect(parseMediaInput('https://www.youtube.com/shorts/dQw4w9WgXcQ')).toEqual({ kind: 'youtube', id: 'dQw4w9WgXcQ', short: true });
+    expect(parseMediaInput('youtube.com/shorts/dQw4w9WgXcQ?feature=share')).toEqual({ kind: 'youtube', id: 'dQw4w9WgXcQ', short: true });
   });
 
   it('accepts direct video links', () => {
