@@ -6,7 +6,10 @@ açık kaynak bir araç: **site** (YouTube / doğrudan video) + **tarayıcı ekl
 
 - Canlı: https://screen-with-me.swm-server.workers.dev
 - Repo: github.com/alperenakturk/screen-with-me (private)
-- Vizyon ve yol haritası: `docs/VIZYON.md` · Rakip analizi: `docs/rakip-analizi.md`
+- Vizyon ve yol haritası: `docs/internal/VIZYON.md` · Rakip analizi: `docs/internal/rakip-analizi.md`
+- **GitHub'da görünen her şey İngilizce:** `README.md` İngilizce, Türkçesi `README.tr.md` (üstteki 🇹🇷 bağlantısı); ikisi
+  hep birlikte güncellenir (birinde olan diğerinde de olur). İç notlar (yol haritası, büyüme, rakip analizi, mağaza
+  formu, reklam raporu, fikirler) Türkçe ve `docs/internal/`'da; README'den bağlantı verilmez.
 
 ## Kullanıcıyla çalışma
 - **Türkçe konuş.** Kullanıcı (Alperen) okulda JS/HTML/CSS öğreniyor; açıklamaları sade tut.
@@ -51,7 +54,7 @@ node scripts/make-icons.mjs  # logo.ts'den eklenti simgeleri (icon*.png) + apps/
 node scripts/theme-art.mjs   # resimli temaların sahne + maskot SVG'leri (apps/web/public/themes/)
 node scripts/avatars.mjs     # çizilmiş avatarlar (apps/web/public/avatars + apps/extension/static/avatars)
 ```
-Mağaza formunda ne yazılacağı: `docs/web-store.md`. Ekran görüntüleri `store/src/shots.html`'den
+Mağaza formunda ne yazılacağı: `docs/internal/web-store.md`. Ekran görüntüleri `store/src/shots.html`'den
 çekilir (betik yerel sunucudan açar); oda kısmı `store/src/room.html`, sitenin gerçek `styles.css`'i +
 `room.ts` işaretlemesiyle sabit içerik. Oda sayfası ya da popup değişirse oradaki taklidi de güncelle.
 Windows/PowerShell notları: commit mesajını dosyaya yazıp `git commit -F` kullan (tırnaklar
@@ -110,7 +113,13 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   `--hole-cut`), deliğin içindeki mesajlar yarı saydam (katman iframe'i ve shell.html `color-scheme: dark`: sitemiz koyu
   şema ilan ediyor, şemalar farklı olursa Chrome çerçevenin arkasını opak griye boyar); film sayfası açılırken katman
   binene kadar `[data-swm-cover]` örtüsü (document_start, `sessions`'ta bu site varsa ya da sekmenin `sessionStorage`
-  `swm-cover`'ı; tıklamayı yutar, ilk yerleşimde kalkar, en fazla 8 sn); tam ekranda delik `#fs-controls`'ün üstünde biter (altyazı); odak kutusu taşanı kesmez ve boyut değişince `resize` yayılır
+  `swm-cover`'ı; tıklamayı yutar, sitenin bildirdiği ilk yerleşimde kalkar (`fromSite`; arka planın yer tutucusunda
+  değil), en fazla 8 sn); tam ekranda video varsayılan olarak ekranı kaplar, kontroller bekleyince kaybolur (film
+  sayfasındaki fare hareketi `activity` ile siteye gelir → `fullscreen.poke()`; kaybolunca adacıkları da kalkar);
+  Ayarlar → "Tam ekranda video: kontrollerin üstünde dursun" (`opt:fsFit` = `above`, sadece kabukta görünür) seçilirse
+  delik `#fs-controls`'ün üstünde biter ve kontroller hep görünür (altyazı hiç örtülmez); adacıklar hep deliğe kırpılır;
+  "👁 Sayfayı göster" (kabukta üstte): katman `bar` (48 px şerit) olur, film sayfası olduğu gibi görünür (reklam/pencere
+  kapatmak için), "↩ Oda görünümü" ile döner; film açılıp 10 sn video bulunamazsa düğme önerilir (`flashHint`); odak kutusu taşanı kesmez ve boyut değişince `resize` yayılır
   (altyazılar). Video iç çerçevedeyse `swm-focus-here` zinciriyle doğru çerçeve büyür. Kabukta
   site isim adımını atlar, eklenti linki/ana logo/alt bilgi gizli, üstte "🏠 Odaya dön" (`navigate` → sitedeki oda,
   katman kalkar). Odada başka bir `page` açılınca "Filme git", sitenin oynattığı bir şey açılınca katman açılır ve film
@@ -124,6 +133,14 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   odanınkine yönlenir: `fullscreen-guard.ts` sayfanın dünyasında (MAIN world) çalışır, `<html data-swm-room>` varken
   `requestFullscreen`'i yapmaz, `swm-fullscreen-request` olayı yayar; videonun yerleşik ⛶'u ile girilirse içerik betiği
   çıkıp odanınkini ister. Ana sitede "Şimdi aç" + film linki önce kısa açıklamayla sorar. Test: `scripts/harness/embed/run.mjs`.
+- **Reklamlara dayanıklılık (`docs/internal/reklamlar.md`):** süresi belli ve 60 sn'den kısa video (reklam/önizleme)
+  motora bağlanmaz: odaya hareket gitmez, odanın yerine sarılmaz; aynı `<video>`'da kaynak değişince süre gelene kadar
+  (en fazla 3 sn) bağlanılmaz, süre uzayınca (film) bağlanır ve kişi odanın yerine atlar. Puanda kısa (×0,1), döngüde
+  sessiz (×0,2), köşeye sabitlenmiş küçük (×0,3) videolar düşer; bilinen reklam ağlarının çerçevelerinde (`AD_HOSTS`,
+  kısa liste, hiçbir şey engellenmez) aday yok. Oda görünümünde filmin oynatıcısı dışında sesli oynayan videolar
+  susturulur (oda bitince geri açılır; sonradan film seçilirse sesi geri verilir). Kendi reklam engelleme listemiz,
+  `window.open` sarmalayıcı, reklam atlatma YOK (mağaza "tek amaç", kolay atlatılır). Sırada: reklam sekmesini kapatma
+  (a5), yönlendirmeden dönüş (a6), "reklamda" durumu (a3). Eklenti sayfasında uBlock Origin Lite ipucu.
 - **Eklentide hız kilidi:** film çerçevesindeki motor `lockRate: true`; hız sadece bizim hız menüsünden değişir, başka
   hız eklentilerinin değişikliği odaya yayılmaz, geri alınır (inatlaşma sınırı var). Sitede kapalı.
 - **Eklenti bizim sitede çalışmaz:** içerik betiği sitenin sayfalarına hiç eklenmez (`exclude_matches`), sitemizin içindeki
@@ -131,7 +148,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Atma ve aynı tarayıcı:** aynı `cid` + farklı isim → sadece o isim yasaklanır (`cid|n:isim`);
   aynı cid + aynı isim → yöneticinin kendi sekmesi, yasaksız "kicked" ile kapatılır.
 - **Ortak ayarlar (`storage.ts` + eklenti `store.ts`):** sitenin her `save()`'i yazılma zamanıyla (`__at`) eklentiye de
-  gider (`siteStore`); açılışta `syncStore()` eşitler (yeni olan kazanır), sonra `app.ts` yüklenir (dil/tema ilk karede
+  gider (eklentide her ayar kendi anahtarında: `site:<anahtar>`; eski tek nesne `siteStore` sadece okunur. Tek nesnede
+  "oku-değiştir-yaz" art arda iki kaydı birbirine ezdiriyordu: isim kayboluyor, film sayfasında eski isimle
+  görünülüyordu; yazmalar da sırayla); açılışta `syncStore()` eşitler (yeni olan kazanır), sonra `app.ts` yüklenir (dil/tema ilk karede
   doğru). Ana sitede köprü site-bridge, kabukta shell.html (kabuktaki sitenin kendi deposu ayrı/kapalı olabilir; o zaman
   bellekte). Kabuk modu sadece üst çerçeve gerçekten `chrome-extension://` ise (başka site `?shell` ile ayar okuyamasın).
 - **Yönetici devri:** yöneticinin son bağlantısı gidince `hostGoneAt` yazılır; 20 sn
@@ -223,7 +242,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   odada 20, değilse 5; 90 gün), liste `{t:'recaps'}` ile herkese. İstemci `chooseFacts` ile her seferinde rastgele (veri
   arttıkça daha çok, en fazla 8) kart seçer; ilk süre, son özet + PNG. Video sonunda istatistik kartı yok.
 - **Sekmeler:** 💬 Sohbet, 🎵 Sıra, 👥, ⚙️ Ayarlar (görünüm + yönetici); 👤 Profil (ad, avatar, tema, bugünün özeti)
-  sağ üstte en sağdaki düğme (tekrar basınca sohbete döner; `ui/tabs.ts` düğmeleri belgede dinler). İlk açılışta
+  sekme değil: sağ üstte en sağdaki düğme, altında açılan menü (`.profile-pop`; dışarı tıklayınca/Esc ile kapanır,
+  kabukta açıkken delik kapanır). İlk açılışta
   yönetici ⚙️ Ayarlar'da (oda ayarlarını yapar), diğerleri 💬 Sohbet'te başlar (kabukta hep sohbet); aynı sekmede
   yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
 - **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
@@ -263,7 +283,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 1. `npm run typecheck && npm test` (sunucu değiştiyse `wrangler dev` + `npm run e2e` de).
 2. Eklenti değiştiyse `apps/extension/package.json` sürümünü artır (siteden indirilen zip ve
    eklenti sayfasındaki sürüm buradan gelir).
-3. README / `docs/VIZYON.md` güncelle, commit (mesaj Türkçe, sonda `Co-Authored-By`), push.
+3. `README.md` + `README.tr.md` (ikisi birlikte) / `docs/internal/VIZYON.md` güncelle, commit (mesaj Türkçe, sonda `Co-Authored-By`), push.
 4. Yayın: değişiklik `main`'e girince (PR birleşince) GitHub Actions kendisi yükler ve canlıda e2e koşar;
    Actions sekmesinde yeşil olduğuna bak. Anahtarlar yoksa ya da yerelden: `npm run deploy` →
    `npm run e2e -- wss://screen-with-me.swm-server.workers.dev`.
@@ -292,21 +312,21 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 ## Bilinen sınırlar
 - DRM'li servisler (Netflix, Prime Video, Disney+…) şimdilik desteklenmiyor; **hedef** (1.0'a doğru
   araştır, 1.x'te siteye özel adaptörle): herkes kendi aboneliğiyle, sitenin oynatıcısına komut veririz,
-  DRM asla aşılmaz. Plan: `docs/VIZYON.md` "Büyük servisler". Bir servisin adı resmî metinlerde sadece
+  DRM asla aşılmaz. Plan: `docs/internal/VIZYON.md` "Büyük servisler". Bir servisin adı resmî metinlerde sadece
   gerçekten çalışıyorsa "… ile çalışır" anlamında geçer. `<video>`'nun kendisi tam ekransa eklenti katmanı
   görünmez (oynatıcı kapsayıcısı tam ekransa görünür).
-- 1.0 öncesi durum değerlendirmesi, gerçek deneme listesi ve çıkışta beklenen sorunlar: `docs/VIZYON.md` "v1.0".
+- 1.0 öncesi durum değerlendirmesi, gerçek deneme listesi ve çıkışta beklenen sorunlar: `docs/internal/VIZYON.md` "v1.0".
   Teleparty'den alınacak/alınmayacak fikirler de orada.
 - Eklenti henüz mağazada değil (paketlenmemiş kurulum, `apps/web/public/eklenti.html`).
   Geliştirici hesabı açıldı (yayıncı e-postası screenwithme.app@gmail.com, tacir değil);
-  başvuru paketi ve form metinleri hazır (`docs/web-store.md`, `npm run store`). **Henüz
+  başvuru paketi ve form metinleri hazır (`docs/internal/web-store.md`, `npm run store`). **Henüz
   gönderilmedi** (Ekim 2026: kullanıcı eklentiyi hazır görmüyor). Gönderildikten sonra, inceleme
   sürerken `PROTOCOL_VERSION` artırma.
 - Repo private; herkese açık metinlerde "open source" deme. Açma planı (önerim: 1.0 mağaza onayından hemen
-  sonra, site adları temizlenmiş, temiz geçmişli yeni repo): `docs/VIZYON.md` "Repoyu herkese açma".
+  sonra, site adları temizlenmiş, temiz geçmişli yeni repo): `docs/internal/VIZYON.md` "Repoyu herkese açma".
 - Gelir sadece bağış, 1.0 ve ilk gerçek kullanıcılardan sonra (GitHub Sponsors / Patreon vb.; Türkiye'de
-  PayPal/Stripe yok). Oda içinde / video üstünde asla bağış istemi yok. Plan: `docs/VIZYON.md` "Bağış / destek".
+  PayPal/Stripe yok). Oda içinde / video üstünde asla bağış istemi yok. Plan: `docs/internal/VIZYON.md` "Bağış / destek".
 - Yasaklar hesapsız tasarımın sınırında: başka tarayıcı/gizli sekme ile aşılabilir.
-- Büyüme planı ve özellik fikirleri: `docs/BUYUME.md`.
+- Büyüme planı ve özellik fikirleri: `docs/internal/BUYUME.md`.
 - Firefox desteklenmiyor (arka plan için ayrı manifest gerekiyor).
 - Brave/Edge'de kullanıcı testi bekleniyor.

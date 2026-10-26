@@ -7,61 +7,61 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 
 [**Live site**](https://screen-with-me.swm-server.workers.dev) ·
 [**Get the extension**](https://screen-with-me.swm-server.workers.dev/eklenti.html) ·
-[Roadmap](docs/VIZYON.md) ·
-[🇹🇷 Türkçe](#-türkçe)
+[🇹🇷 Türkçe](README.tr.md)
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-126%20unit%20%2B%2012%20e2e-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.9.55-7c5cff)
+![Tests](https://img.shields.io/badge/tests-125%20unit%20%2B%2011%20e2e%20%2B%20real%20Chrome-3ccf8e)
+![Version](https://img.shields.io/badge/version-0.9.58-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
 
 ---
 
-Send a link, and everyone watches the same second. If anyone pauses, seeks or changes
-the speed, it happens for everyone. Reactions, chat, pins and a shared queue sit around the video.
+Send a link, and everyone watches the same second. If anyone pauses, seeks or changes the speed, it happens
+for everyone. Chat, reactions, pins and a shared queue sit around the video.
 
 - **YouTube or a video file** → plays right on the site, nothing to install.
-- **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → the tab goes to that
-  site and, with the browser extension, the **room itself** (exactly the site's room page) opens over it,
-  with the video sitting in the room's player area. Works on sites that forbid being framed, too.
+- **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → the tab goes to that site and,
+  with the browser extension, the **room itself** (exactly the site's room page) opens over it, with the video
+  sitting in the room's player area. Works on sites that forbid being framed, too.
 
 ## ✨ Features
 
 ### Watching together
 | | |
 |---|---|
-| ⏯️ **Tight sync** | Play / pause / seek / speed for everyone. Server-time based, measured **30–100 ms** apart on real players. Drift is corrected silently (small drift by playing ±5 % faster/slower). |
-| ⏳ **Everyone ready** | If someone's video stalls (buffering, an ad), the room waits for them — at most 12 s; the same person can't stall the room again for 30 s. |
-| 🧩 **Any website** | The extension finds the right video (skips ads and short previews), also inside iframes and in players that load late or switch sources. |
-| 🖼️ **Room over the film page** | The extension opens the site's own room page as a full-screen layer over the film page and cuts a hole where the video goes; the film's player sits exactly there. Chat, queue, people, settings, avatar and theme dialogs, recap: everything is the real site. Until the video is found only a slim top bar shows, so you can press play. No headers are touched, so it works on sites that forbid framing. Settings (name, avatar, theme, saved rooms…) are shared between the site and the layer through the extension. |
-| ⏩ **Shared speed** | 0.25×–4× (YouTube up to 2×), fine steps of ±0.05. In the extension other speed extensions can't knock the room out of sync. |
+| ⏯️ **Tight sync** | Play / pause / seek / speed for everyone. Server-time based, measured **30–100 ms** apart on real players. Small drift is closed silently by playing ±5 % faster or slower. |
+| ⏳ **Everyone ready** | If someone's video stalls, the room waits for them (at most 12 s; the same person can't stall it again for 30 s). Off when you are alone. |
+| 🧩 **Any website** | The extension finds the right video, also inside iframes and in players that load late or switch sources. Short videos, looping muted videos and small pinned corner videos (typical ads) are skipped, and an ad playing in the film's own player is never synced to the room. |
+| 🖼️ **Room over the film page** | The site's own room page opens as a layer over the film page, with a hole where the video goes. It appears right away (before the video starts) and nothing of the page flashes while it loads. Messages and emojis over the video are see-through, like on the site. **👁 Show page** steps the room aside for a moment to close a pop-up or ad covering the video. |
+| 🖥️ **Fullscreen** | Distraction-free: controls, reactions and a quick-message box appear when you move the mouse and hide again. On film pages you can choose whether the video fills the screen or stays above the controls (subtitles never covered). |
+| ⏩ **Shared speed** | 0.25×–4× (YouTube up to 2×), fine steps of ±0.05. Other speed extensions can't knock the room out of sync. |
 | 🧪 **Sync test** | A built-in 12-second counter drawn by the site; a badge shows how far apart you are. |
-| 🖥️ **Fullscreen** | Distraction-free: controls, reactions, pins and a quick-message box appear when you move the mouse. |
 
 ### Room life
 | | |
 |---|---|
-| 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. |
+| 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. The 👤 menu (top right) holds name, avatar, theme and the session recap. |
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
-| 💬 **Chat & reactions** | Tabbed side panel (chat, queue, people, settings). Three emoji pages; reactions show bottom-left as an avatar + name card. Room activity in chat is hidden by default ("Show actions"). |
+| 💬 **Chat & reactions** | Chat, queue, people and settings tabs. Three emoji pages; reactions float up from the bottom of the video with the sender's avatar and name, as fast as you like. Anyone can hide them for themselves. Room activity in chat is hidden by default. |
 | 🖼️ **Custom emojis** | Add your own image or GIF; the whole room can react with it (up to 24 per room). |
 | 📌 **Pins** | Pin a moment with an optional note; a strip under the video jumps back to it. |
-| ⌨️ **Shortcuts** | 1–8 reactions, Enter chat, P pin (the extension swallows these keys so the page's player doesn't seek). |
+| ⌨️ **Shortcuts** | 1–8 reactions, Enter chat, P pin (on film pages these keys never reach the page's player). |
 | 💾 **Saved rooms** | Create a one-off room or a named saved room (kept 30 days). Saved rooms remember where each video stopped and its pins; your list on the home page shows how many people are inside. |
 | 📊 **Session recap** | A Spotify-Wrapped-style recap of the session (time watched, videos, most talkative, favourite emoji…) with a downloadable image; past recaps are kept. |
 | ⏰ **Scheduled start** | Pick a time; a countdown banner shows and the room starts by itself. |
+| 🏠 **Back to the room** | When someone leaves the film page for the room, the others get a small "go back too?" card. |
 
 ### Host & safety
 | | |
 |---|---|
-| 👑 **Room host** | The first person in is the host (survives reloads). Gone for more than 20 s → hosting passes to the longest-present member for good. |
-| 🔒 **Host modes** | Only the host controls playback · lock the queue · turn off emojis · ready check on/off. |
+| 👑 **Room host** | The first person in is the host (survives reloads) and starts on the settings tab. Gone for more than 20 s → hosting passes to the longest-present member for good. |
+| 🔒 **Host modes** | Only the host controls playback · lock the queue · turn off emojis or limit how often each person can send one · ready check on/off. |
 | 🚪 **Remove & ban** | The host removes people; they stay out until the host lifts the ban. |
-| 🔐 **Private by design** | Video plays in each person's own browser; the server only relays tiny "pause at 12:34" messages and the room's chat. The extension is dormant outside a room. User text is never written as HTML. |
+| 🔐 **Private by design** | Video plays in each person's own browser; the server only relays tiny "pause at 12:34" messages and the room's chat. The extension is dormant outside a room, and the film page can't read which room you are in. User text is never written as HTML. Rate limits live on the server. |
 
 ### Look & feel
 | | |
@@ -86,34 +86,34 @@ flowchart LR
   EB <-- WebSocket --> R
 ```
 
-- **The server is the single source of truth.** A room's state is just
-  `{ item, paused, position, rate, updatedAt }`; the current position is
-  `position + (serverNow − updatedAt) × rate`. Messages are only sent when someone *does* something.
+- **The server is the single source of truth.** A room's state is just `{ item, paused, position, rate, updatedAt }`;
+  the current position is `position + (serverNow − updatedAt) × rate`. Messages are only sent when someone *does* something.
 - **Clock sync.** Clients estimate server time with a few ping/pongs (a mini NTP) and do all math in server time.
 - **"Was that the user or me?"** When the engine commands the player it records which event it expects
   (e.g. one `pause`). Expected events are ignored for a moment; anything unexpected is a user action.
   This prevents echo loops without swallowing a real pause.
 - **Seeks** are detected from unexpected jumps in time (YouTube has no seek event).
 - **Drift** above 1 s jumps back into place; smaller drift is closed by playing ±5 % faster/slower.
-- **One Durable Object per room** — rooms scale independently; with WebSocket Hibernation an idle room costs
+- **One Durable Object per room**: rooms scale independently; with WebSocket Hibernation an idle room costs
   nothing. Timers that must survive sleep (ready-check timeout, scheduled start, room deletion) use one storage alarm.
 
 ### Extension in one paragraph
-A Manifest V3 extension with no UI and no room connection of its own. When a page is opened in a room, the
-site sends the tab there; on the film page the extension opens `shell.html` as a full-screen layer, which loads
-the site's room page (`/r/ROOM?shell=1`). The site keeps the room connection; the extension only relays:
-a content script in every frame reports its best video, the background picks the winner and the same sync
-engine as the site runs there, playback messages go to the site, room state comes back. The site reports
-where its player area is; the top frame clips a hole there (`clip-path`) and moves the film's player into it.
+A Manifest V3 extension with no UI and no room connection of its own. When a page is opened in a room, the site
+sends the tab there; on the film page the extension opens `shell.html` as a full-screen layer, which asks the
+background for the room and loads the site's room page (`/r/ROOM?shell=1`). The site keeps the room connection;
+the extension only relays: a content script in every frame reports its best video, the background picks the
+winner and the same sync engine as the site runs there, playback messages go to the site, room state comes back.
+The site reports where its player area is; the top frame clips a hole there (`clip-path`) and moves the film's
+player into it.
 
 ## 🧪 Quality
 
 | Check | Result |
 |---|---|
-| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, embedding rules) | 126 passing |
-| End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, saved rooms, recap) | `npm run e2e`, runs in CI |
-| Real players (extension code injected into public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, 4 remote + 4 local actions ✓, 26–100 ms apart |
-| Tricky pages (test harness) | iframe player, player loaded after join, source switch, pages that forbid framing ✓ |
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 125 passing |
+| End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, emoji rate, saved rooms, recap) | `npm run e2e`, runs in CI |
+| Real Chrome with the extension (`scripts/harness/embed`) | ~70 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, pins, settings sync between site and extension |
+| Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote + local actions ✓, 26–100 ms apart |
 
 ## 🛠️ Tech
 
@@ -122,13 +122,12 @@ TypeScript (strict) everywhere, no front-end framework · Vite · Cloudflare Wor
 
 ```
 packages/shared   protocol + validation, room rules, sync engine, clock, connection, media parsing,
-                  ready check, recap, embedding rules, logo
+                  ready check, recap, video scoring, logo
 apps/server       Worker + Durable Object (one per room)
 apps/web          the site (plain TS/HTML/CSS)
 apps/extension    browser extension (background, content script, room layer "shell", site bridge, popup)
-scripts/          end-to-end tests, extension test harnesses, icon / theme art / avatar generators
+scripts/          end-to-end tests, real-Chrome extension harness, icon / theme art / avatar generators
 store/            Chrome Web Store package and screenshots
-docs/             vision & roadmap, growth plan, store guide
 ```
 
 ## 🚀 Development
@@ -143,57 +142,26 @@ npm run typecheck
 npm run e2e          # end-to-end against the local server
 ```
 
-Extension: `npm run build:extension:dev`, then `chrome://extensions` → Developer mode →
-**Load unpacked** → `apps/extension/dist`.
+Extension: `npm run build:extension:dev`, then `chrome://extensions` → Developer mode → **Load unpacked** →
+`apps/extension/dist`.
 
-Deploy: every push to `main` is tested and then deployed by GitHub Actions (needs the
-`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets), followed by the end-to-end
-tests against the live server. It can also be run by hand from the Actions tab. Locally:
-`npx wrangler login` once, then `npm run deploy`.
+Deploy: every push to `main` is tested and then deployed by GitHub Actions (needs the `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` repository secrets), followed by the end-to-end tests against the live server.
+Locally: `npx wrangler login` once, then `npm run deploy`.
 
-## 🗺️ Roadmap
+## 🗺️ What's next
 
-Next up: Chrome Web Store release, manual video picker, short domain, demo video,
-push-to-talk voice chat, Firefox. Full list: [docs/VIZYON.md](docs/VIZYON.md).
+Chrome Web Store release, a manual "sync this video" picker, a short domain, push-to-talk voice chat, Firefox.
 
 ## 📄 License & privacy
 
 [MIT](LICENSE) © 2026 Alperen Aktürk. All shipped code (site, server, extension) is our own; build tools are
 MIT / Apache-2.0. Privacy policy: [gizlilik.html](https://screen-with-me.swm-server.workers.dev/gizlilik.html)
-— no accounts, no tracking; a one-off room is deleted 24 h after it is empty, a saved room after 30 days.
+(no accounts, no tracking; a one-off room is deleted 24 h after it is empty, a saved room after 30 days).
 
 ## ⚠️ Limitations
 
-- DRM-protected services (Netflix, Disney+…) are not a goal.
-- The extension is not in the Chrome Web Store yet (manual install, ~1 minute).
+- DRM-protected services (Netflix, Disney+…) are not supported yet.
+- The extension is not in the Chrome Web Store yet (manual install, about a minute).
 - Firefox is not supported yet. Pages from other sites need a desktop browser with the extension.
-- The film site's own fullscreen button shows only the video; use the room's ⛶ to keep chat and controls.
 - ScreenWithMe never hosts or relays video content; it only synchronises players that each person opens themselves.
-
----
-
-## 🇹🇷 Türkçe
-
-**ScreenWithMe**, arkadaşlarınla aynı videoyu aynı anda izlemek için ücretsiz, hesapsız ve reklamsız
-bir araç. Link at, herkes aynı saniyede izlesin; biri durdurursa herkes dursun.
-
-- **YouTube ya da video dosyası:** doğrudan sitede, kurulum yok.
-- **Başka bir site:** sekme o siteye gider; eklenti sitenin oda sayfasının kendisini filmin üstüne açar,
-  video odanın oynatıcı alanına oturur (sohbet, sıra, ayarlar, her şey sitedeki gibi). Gömmeyi yasaklayan
-  sitelerde de çalışır.
-
-Özellikler:
-- Sıkı senkron (30–100 ms), "herkes hazır" beklemesi, 4x'e kadar ortak hız, senkron testi
-- Sıra, oylama, otomatik devam (kapatılabilir)
-- Sohbet, emojiler, özel emojiler (kendi GIF / resmin), önemli anları pinleme
-- Klavye kısayolları: 1–8 emoji, Enter mesaj, P pin
-- Kaydedilen odalar (30 gün; videoların kaldığı yer ve pinler hatırlanır), planlı başlangıç
-- Oturum özeti (Spotify özeti gibi, indirilebilir görsel)
-- Oda yöneticisi (👑): odadan çıkarma ve yasak kaldırma, sadece yönetici kontrolü, sıra kilidi, emojileri kapatma
-- İsim ve çizilmiş avatarlar, 11 tema (resimli ve Art Deco temalar, kostümlü maskot)
-- Dikkat dağıtmayan tam ekran, "Herkesi bana eşitle", Türkçe / İngilizce arayüz
-
-Bağlantılar:
-- **Canlı site:** https://screen-with-me.swm-server.workers.dev
-- **Eklenti kurulumu:** https://screen-with-me.swm-server.workers.dev/eklenti.html
-- **Vizyon ve yol haritası:** [docs/VIZYON.md](docs/VIZYON.md)

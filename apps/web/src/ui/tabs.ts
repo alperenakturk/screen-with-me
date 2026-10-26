@@ -1,11 +1,11 @@
-export type TabId = 'chat' | 'queue' | 'people' | 'profile' | 'settings';
+export type TabId = 'chat' | 'queue' | 'people' | 'settings';
 
 export function isTabId(x: unknown): x is TabId {
-  return x === 'chat' || x === 'queue' || x === 'people' || x === 'profile' || x === 'settings';
+  return x === 'chat' || x === 'queue' || x === 'people' || x === 'settings';
 }
 
 /**
- * Sağ paneldeki sekmeler. Düğmeler sayfanın herhangi bir yerinde olabilir (👤 Profil sağ üstte).
+ * Sağ paneldeki sekmeler (👤 Profil sekme değil: sağ üstte açılan menü, bkz. room.ts `profile-pop`).
  * Hangi sekmeyle açılacağına oda karar verir (yönetici Ayarlar, diğerleri Sohbet).
  */
 export function createTabs(root: HTMLElement, onChange: (tab: TabId) => void) {
@@ -19,12 +19,9 @@ export function createTabs(root: HTMLElement, onChange: (tab: TabId) => void) {
     onChange(tab);
   }
 
-  // Sonradan eklenen düğmeler (sağ üstteki profil) için de: tıklama belgede yakalanır.
-  document.addEventListener('click', (event) => {
+  root.addEventListener('click', (event) => {
     const button = (event.target as Element | null)?.closest?.<HTMLElement>('[data-tab]');
-    if (!button || !isTabId(button.dataset.tab)) return;
-    // Açık sekmenin düğmesine (sağ üstteki profil) tekrar basınca sohbete dönülür.
-    show(button.dataset.tab === active && button.dataset.tab === 'profile' ? 'chat' : button.dataset.tab);
+    if (button && isTabId(button.dataset.tab)) show(button.dataset.tab);
   });
   show('chat');
 

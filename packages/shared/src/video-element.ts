@@ -57,6 +57,10 @@ export interface VideoInfo {
   duration: number;
   playing: boolean;
   visible: boolean;
+  /** Döngüde ve sessiz: arka plan videosu ya da reklam. */
+  loopMuted?: boolean;
+  /** Ekranda sabit duran (fixed/sticky) küçük video: köşedeki "yapışkan" reklam. */
+  stickySmall?: boolean;
 }
 
 /** Bundan küçük videolar (önizleme, logo animasyonu) yok sayılır. */
@@ -74,7 +78,10 @@ export function scoreVideo(info: VideoInfo): number {
   const duration = Number.isFinite(info.duration) ? info.duration : 0;
   if (duration > 600) score *= 3;
   else if (duration > 120) score *= 1.5;
-  else if (duration > 0 && duration < 60) score *= 0.5; // büyük ihtimalle reklam
+  // 60 sn'den kısa: büyük ihtimalle reklam ya da önizleme (film henüz yokken bile tek aday olmasın diye çok düşük).
+  else if (duration > 0 && duration < 60) score *= 0.1;
+  if (info.loopMuted) score *= 0.2;
+  if (info.stickySmall) score *= 0.3;
   if (info.playing) score *= 1.2;
   return Math.round(score);
 }
@@ -102,11 +109,24 @@ export function findVideos(root: Document | ShadowRoot | Element, deep = true): 
 export function describeVideo(video: HTMLVideoElement): VideoInfo {
   const rect = video.getBoundingClientRect();
   const style = getComputedStyle(video);
+  const screen = Math.max(1, innerWidth * innerHeight);
   return {
     width: rect.width,
     height: rect.height,
     duration: video.duration,
     playing: !video.paused && !video.ended,
     visible: video.isConnected && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0.05,
+    loopMuted: video.loop && video.muted,
+    stickySmall: (rect.width * rect.height) / screen < 0.2 && isPinned(video),
   };
+}
+
+/** Video ya da birkaç üst atası ekrana sabitlenmiş mi (fixed/sticky)? Köşedeki reklamlar böyle durur. */
+function isPinned(video: HTMLElement): boolean {
+  let el: HTMLElement | null = video;
+  for (let i = 0; el && i < 6; i++, el = el.parentElement) {
+    const position = getComputedStyle(el).position;
+    if (position === 'fixed' || position === 'sticky') return true;
+  }
+  return false;
 }

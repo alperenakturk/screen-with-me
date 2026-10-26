@@ -237,7 +237,7 @@ _Fikir: Abonelikli büyük servislerde de birlikte izleme._
 ### (b) Projeye uyuyor mu? — Yüksek (doğru yöntemle)
 - ➕ Vizyonun "hangi sitede olursa olsun" kısmının en görünür eksiği; kullanıcıların ilk sorusu büyük ihtimalle
   "Netflix'te çalışıyor mu?" olacak.
-- ➕ Yöntem ilkelerle uyumlu (kendi aboneliği, sadece komut, içerik taşımıyoruz). Plan `docs/VIZYON.md`'de zaten var.
+- ➕ Yöntem ilkelerle uyumlu (kendi aboneliği, sadece komut, içerik taşımıyoruz). Plan `docs/internal/VIZYON.md`'de zaten var.
 - ➕ Yasal servisler mağazada korsan sitelerden çok daha güvenli bir vitrin.
 - ➖ "Her site için tek genel çözüm" fikrinden ilk sapma; kapı açılınca "şu servisi de ekle" talepleri gelir.
 - ➖ Tek geliştirici için **en büyük uzun vadeli bakım yükü**.
@@ -321,7 +321,7 @@ yerel uygulama en sona.
 ## Önerilen öncelik sırası
 
 **0. Önce 1.0.** Bu fikirlerin hiçbiri mağaza gönderiminden önce değil. Darboğaz yeni özellik değil; film sayfasındaki
-katmanın gerçek denemesi, elle video seçimi ve gönderim (`docs/VIZYON.md` "v1.0").
+katmanın gerçek denemesi, elle video seçimi ve gönderim (`docs/internal/VIZYON.md` "v1.0").
 
 1.0'dan sonra:
 

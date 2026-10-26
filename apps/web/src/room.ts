@@ -403,7 +403,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             </div>
           </div>
 
-          <div class="tab-panel settings" data-panel="profile" hidden>
+          <div class="settings profile-panel" id="profile-panel">
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
             <form id="rename-form" class="row">
@@ -424,6 +424,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel settings" data-panel="settings" hidden>
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
+            <label class="select-row shell-only"><span data-i18n="settings.fsFit"></span>
+              <select id="opt-fsfit">
+                <option value="cover" data-i18n="settings.fsFit.cover"></option>
+                <option value="above" data-i18n="settings.fsFit.above"></option>
+              </select>
+            </label>
             <section class="host-box">
               <h4>👑 <span data-i18n="settings.hostTitle"></span></h4>
               <p id="opt-wait-hint" class="muted small"></p>
@@ -522,10 +528,29 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     chatBadge.textContent = count > 9 ? '9+' : String(count);
   });
   const people = createPeoplePanel(app, send);
-  // Profil sekmesinin düğmesi sağ üstte (en sağda): ad, avatar, tema, özet.
+  // 👤 Profil sağ üstte (en sağda); basınca ad, avatar, tema ve özet düğmenin altında açılan menüde.
   {
-    const profileButton = el('button', { type: 'button', class: 'nav-link profile-btn', 'data-tab': 'profile', 'aria-selected': 'false', 'data-i18n-title': 'tab.profile', title: t('tab.profile') }, '👤');
+    const profileButton = el('button', { type: 'button', class: 'nav-link profile-btn', 'aria-expanded': 'false', 'aria-haspopup': 'true', 'data-i18n-title': 'tab.profile', title: t('tab.profile') }, '👤');
     document.querySelector('.topbar-right')?.append(profileButton);
+    const pop = el('div', { class: 'profile-pop', role: 'dialog', 'aria-label': t('tab.profile') });
+    pop.hidden = true;
+    pop.append($('#profile-panel'));
+    app.append(pop);
+    const setOpen = (open: boolean) => {
+      pop.hidden = !open;
+      profileButton.setAttribute('aria-expanded', String(open));
+    };
+    profileButton.addEventListener('click', () => setOpen(pop.hidden === true));
+    // Dışarı tıklayınca ya da Esc ile kapanır (menüden açılan avatar/özet pencereleri dışarı sayılmaz).
+    document.addEventListener('pointerdown', (event) => {
+      const target = event.target as Element | null;
+      if (pop.hidden || !target || pop.contains(target) || profileButton.contains(target)) return;
+      if (target.closest('.dialog-backdrop, .recap-backdrop, dialog')) return;
+      setOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !pop.hidden && !document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open]')) setOpen(false);
+    });
   }
   /** İlk girişte açılacak sekme seçildi mi (önce sekmeler varsayılan sohbetle kurulur; o hatırlanmaz). */
   let tabChosen = false;
@@ -826,6 +851,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let film: ShellPlayer | null = null;
   /** Kabukta: film sekmesinin adresi. */
   let shellPage: string | null = null;
+  /** Kabukta: film sayfasında senkronlanacak video bulundu mu (bulunmazsa "Sayfayı göster" önerilir). */
+  let videoFound = false;
+  /** "Sayfayı göster": oda görünümü üstte ince şeride çekilir, film sayfası olduğu gibi görünür (reklam/pencere kapatmak için). */
+  let peek = false;
 
   /** Oynatıcı alanındaki videoyu/sayfayı kapatır. */
   function closeCurrent(): void {
@@ -862,6 +891,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       onFullscreen: () => {
         if (!fullscreen.isActive()) fullscreen.toggle();
       },
+      onActivity: () => fullscreen.poke(),
     });
     current = { player, slot };
     film = player;
@@ -871,6 +901,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   // Film çerçevesindeki motor sunucu saatini sitenin ölçümünden alır.
   setInterval(() => film?.setClock(clock.now() - Date.now(), clock.synced), 2000);
+
+  /** Film sayfasında tam ekranda video kontrol çubuğunun üstünde mi dursun (altyazı hiç örtülmez)? Varsayılan: ekranı kaplar. */
+  function fitAbove(): boolean {
+    return load('opt:fsFit') === 'above';
+  }
 
   /** Kabuktan sitedeki odaya dön (katman kalkar). Filmdeyken diğerlerine de haber gider: onlara "sen de dön" sorulur. */
   function returnToRoom(): void {
@@ -899,19 +934,34 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Kabuk yerleşimi: katmanın hâli ve videonun deliği eklentiye bildirilir ----
   let sentLayout = '';
+  /** "Sayfayı göster" şeridinin yüksekliği (px). */
+  const PEEK_HEIGHT = 48;
+  let filmSince = 0;
   function reportLayout(): void {
     if (!isShell) return;
     // Film sayfasında oda görünümü hemen gelir: video henüz başlamadıysa eklenti oynatıcının olası yerini
     // deliğe oturtur, kullanıcı ▶'a deliğin içinden basar.
     let layout: ShellLayout;
-    if (film === null) layout = { mode: 'open' };
+    if (film === null) {
+      layout = { mode: 'open' };
+      // Film kapandı (odada başka bir şey açıldı): "Sayfayı göster" de biter.
+      if (peek) {
+        peek = false;
+        document.documentElement.classList.remove('shell-peek');
+        document.querySelector<HTMLElement>('.peek-strip')?.setAttribute('hidden', '');
+      }
+    } else if (peek) layout = { mode: 'bar', height: PEEK_HEIGHT };
     else {
       const wrap = $('.player-wrap');
       const box = wrap.getBoundingClientRect();
       // Tam ekranda kontrol çubuğu (kabukta hep görünür) videonun altını örtüp film sitesinin altyazısını
       // kapatıyordu: delik çubuğun üstünde biter, video ve altyazısı oraya sığar.
-      const fake = $('#theater').classList.contains('fake-fs');
-      const bottom = fake ? box.bottom - $('#fs-controls').offsetHeight : box.bottom;
+      const theater = $('#theater');
+      const fake = theater.classList.contains('fake-fs');
+      const idle = theater.classList.contains('idle');
+      // "Video kontrollerin üstünde" (altyazı hiç örtülmesin): delik çubuğun üstünde biter. Varsayılan: video
+      // ekranı kaplar, çubuk üstünde durur ve bekleyince kaybolur (o zaman adacık da olmaz, video tıklanır).
+      const bottom = fake && fitAbove() ? box.bottom - $('#fs-controls').offsetHeight : box.bottom;
       const islands: Rect[] = [];
       const floats: Rect[] = [];
       // Adacıklar deliğin içine kırpılır: deliğin dışı zaten katman; dışarı taşan parça evenodd'da iki kez
@@ -926,6 +976,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // Deliğin içinde yine görünmesi gerekenler: kartlar, tam ekran kontrolleri, uçuşan emojiler…
       for (const child of wrap.children) {
         if (child.id === 'player' || child.id === 'fs-catcher') continue;
+        if (idle && (child.id === 'fs-controls' || child.id === 'toast-handle')) continue;
         if (child.id === 'reactions-layer') {
           // Uçuşan emoji yükselirken de görünsün: bütün yolu (yukarı ~240 px, yana biraz) tek adacık.
           for (const node of child.children) {
@@ -947,7 +998,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       const card = $('#theater').getBoundingClientRect();
       root.style.setProperty('--theater-cut', holePath(card.width, card.height, { ...hole, x: hole.x - card.left, y: hole.y - card.top }, []));
       // Sitenin bir penceresi açıksa (avatar, tema, özet, onay) delik tamamen kapanır: pencere videonun önünde görünsün.
-      const modal = document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open]') !== null;
+      const modal = document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open], .profile-pop:not([hidden])') !== null;
       layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12) };
     }
     document.documentElement.classList.toggle('shell-film', layout.mode === 'full');
@@ -1020,6 +1071,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         currentItemId = null;
         void applyState(roomState);
       }
+    } else if (message.type === 'video' && isShell) {
+      videoFound = message.found;
     } else if (message.type === 'fullscreen' && isShell) {
       fullscreen.syncShell(message.on);
     }
@@ -1029,6 +1082,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Yerleşim değişince (pencere, tam ekran, kartlar) deliği yeniden bildir.
     const wrap = $('.player-wrap');
     new ResizeObserver(() => reportLayout()).observe(wrap);
+    // Tam ekran kontrolleri bekleyince kaybolur (theater.idle): adacıkları da kalksın, video tıklanabilsin.
+    new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
+    const fit = $<HTMLSelectElement>('#opt-fsfit');
+    fit.value = fitAbove() ? 'above' : 'cover';
+    fit.addEventListener('change', () => {
+      save('opt:fsFit', fit.value === 'above' ? 'above' : 'cover');
+      fullscreen.poke();
+      reportLayout();
+    });
     let queued = false;
     new MutationObserver(() => {
       if (queued) return;
@@ -1057,7 +1119,47 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const homeButton = el('button', { type: 'button', class: 'nav-link shell-home' }, `🏠 ${t('shellBack')}`);
     homeButton.addEventListener('click', goHome);
     document.querySelector('.topbar-right')?.prepend(homeButton);
-    window.addEventListener('langchange', () => (homeButton.textContent = `🏠 ${t('shellBack')}`));
+    // 👁 Sayfayı göster: geçiş reklamı, açılır pencere ya da videonun önünü kapatan bir şey varsa film sayfası olduğu
+    // gibi görünür (üstte ince şerit kalır), kullanıcı kapatır, "Oda görünümü" ile geri gelir.
+    const peekButton = el('button', { type: 'button', class: 'nav-link shell-peek' }, `👁 ${t('peek')}`);
+    const peekBack = el('button', { type: 'button', class: 'btn small-btn primary' }, t('peekBack'));
+    const peekText = el('span', { class: 'peek-text' }, t('peekStrip'));
+    const peekStrip = el('div', { class: 'peek-strip' }, peekText, peekBack);
+    peekStrip.hidden = true;
+    document.body.append(peekStrip);
+    const setPeek = (on: boolean) => {
+      peek = on;
+      peekStrip.hidden = !on;
+      document.documentElement.classList.toggle('shell-peek', on);
+      reportLayout();
+    };
+    peekButton.addEventListener('click', () => setPeek(true));
+    peekBack.addEventListener('click', () => setPeek(false));
+    homeButton.after(peekButton);
+    const labelPeek = () => {
+      peekButton.textContent = `👁 ${t('peek')}`;
+      peekButton.title = t('peekTitle');
+      peekBack.textContent = t('peekBack');
+      peekText.textContent = t('peekStrip');
+    };
+    labelPeek();
+    window.addEventListener('langchange', () => {
+      homeButton.textContent = `🏠 ${t('shellBack')}`;
+      labelPeek();
+    });
+    // Film açıldı ama 10 sn'dir video bulunamadı: büyük ihtimalle önünde bir reklam/pencere var, düğmeyi öner.
+    let hinted = false;
+    setInterval(() => {
+      if (film === null) {
+        filmSince = 0;
+        return;
+      }
+      filmSince ||= Date.now();
+      if (!hinted && !peek && !videoFound && Date.now() - filmSince > 10_000) {
+        hinted = true;
+        flashHint(peekButton, t('peekHint'), 7000);
+      }
+    }, 1000);
   }
 
   function renderNowPlaying(): void {
@@ -1098,6 +1200,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Tam ekran: sadece video kalır, fare oynayınca kontroller ve hızlı mesaj belirir. ----
   const fullscreen = createFullscreen({
     shell: isShell,
+    keepControls: fitAbove,
     theater: $('#theater'),
     getPlayer: () => current?.player ?? null,
     send,

@@ -189,19 +189,19 @@ check(
   `açık: ${await a.evaluate(ACTIVE_TAB)}, sessionStorage tab:${room} = ${await a.evaluate(`sessionStorage.getItem('tab:${room}')`)}`,
 );
 const profileSpot = await a.evaluate(
-  `(() => { const r = document.querySelector('.topbar-right'); const b = r?.lastElementChild; return { last: b?.dataset.tab ?? null, text: b?.textContent.trim(), n: r?.children.length }; })()`,
+  `(() => { const r = document.querySelector('.topbar-right'); const b = r?.lastElementChild; return { last: b?.classList.contains('profile-btn') ? 'profile' : null, text: b?.textContent.trim(), n: r?.children.length }; })()`,
 );
 check(profileSpot?.last === 'profile', '👤 düğmesi sağ üstte (.topbar-right son çocuğu)', JSON.stringify(profileSpot));
-const profileAt = await a.center('.topbar-right [data-tab=profile]');
+const profileAt = await a.center('.topbar-right .profile-btn');
 if (profileAt) await a.click(profileAt.x, profileAt.y);
 await a.sleep(300);
 const profileOpen = await a.evaluate(
-  `!document.querySelector('[data-panel=profile]').hidden && document.querySelector('.topbar-right [data-tab=profile]').getAttribute('aria-selected') === 'true'`,
+  `(() => { const p = document.querySelector('.profile-pop'); const b = document.querySelector('.topbar-right .profile-btn').getBoundingClientRect(); const r = p.getBoundingClientRect(); return !p.hidden && !!p.querySelector('#rename-form') && r.top >= b.bottom - 2 && Math.abs(r.right - b.right) < 40; })()`,
 );
 if (profileAt) await a.click(profileAt.x, profileAt.y);
 await a.sleep(300);
-const profileClosed = await a.evaluate(`document.querySelector('[data-panel=profile]').hidden && !document.querySelector('[data-panel=chat]').hidden`);
-check(profileOpen && profileClosed, '👤 profil panelini açar, tekrar basınca sohbete döner', `açtı:${profileOpen} kapattı:${profileClosed}`);
+const profileClosed = await a.evaluate(`document.querySelector('.profile-pop').hidden`);
+check(profileOpen && profileClosed, '👤 profil menüsünü düğmenin altında açar, tekrar basınca kapanır', `açtı:${profileOpen} kapattı:${profileClosed}`);
 await a.shot('0-site-oda');
 {
   // İkinci kişi (yönetici değil) ayrı tarayıcıda: 💬 Sohbet'te açılmalı.
@@ -271,7 +271,7 @@ const SHELL_CLIP = `getComputedStyle(document.querySelector('iframe[src^="chrome
 check(
   await a.evalFrame(
     'shell=1',
-    `getComputedStyle(document.getElementById('media-form')).display === 'none' && getComputedStyle(document.querySelector('.tab[data-tab=queue]')).display === 'none' && document.querySelector('.topbar-right')?.lastElementChild?.dataset.tab === 'profile'`,
+    `getComputedStyle(document.getElementById('media-form')).display === 'none' && getComputedStyle(document.querySelector('.tab[data-tab=queue]')).display === 'none' && document.querySelector('.topbar-right')?.lastElementChild?.classList.contains('profile-btn')`,
   ),
   'katmanda sıra ve link kutusu gizli, 👤 profil düğmesi sağ üstte',
 );
@@ -433,6 +433,24 @@ const fs2 = await a.center('#fs');
 if (fs2) await a.click(fs2.x, fs2.y);
 check(!!(await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`))), 'tam ekrana geçildi (altyazı/pin/mesaj testleri için)');
 await a.sleep(1500);
+// 7e-1) Varsayılan "ekranı kaplasın": delik ekranın altına kadar; fare oynamazsa kontroller kaybolur (adacıkları da),
+// film sayfasında fare oynayınca (eklenti haber verir) geri gelir.
+{
+  const cover = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
+  const screenH = await a.evaluate('innerHeight');
+  check(!!cover && near(cover.b, screenH, 2), 'tam ekran (varsayılan): video ekranı kaplıyor, delik ekranın altına kadar', `delik alt:${cover?.b} ekran:${screenH}`);
+  const idle = await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('idle')`), 6000);
+  await a.sleep(400);
+  const idleRects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`));
+  const ctlTop = await a.evalFrame('shell=1', `document.getElementById('fs-controls').getBoundingClientRect().top`);
+  check(!!idle && !idleRects.slice(2).some((r) => r.b > ctlTop + 5), 'tam ekran: fare oynamayınca kontroller kayboluyor (adacıkları da kalkıyor)', JSON.stringify(idleRects));
+  await a.evaluate(`dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 300 })); 1`);
+  const woke = await until(() => a.evalFrame('shell=1', `!document.getElementById('theater').classList.contains('idle')`), 3000);
+  check(!!woke, 'tam ekran: film sayfasında fare oynayınca kontroller geri geliyor');
+  // Altyazı kullananlar için: "kontrollerin üstünde dursun" → delik çubuğun üstünde biter, çubuk hep görünür.
+  await a.evalFrame('shell=1', `(() => { const s = document.getElementById('opt-fsfit'); s.value = 'above'; s.dispatchEvent(new Event('change')); return 1; })()`);
+  await a.sleep(1200);
+}
 {
   const pinsHidden = await a.evalFrame(
     'shell=1',
@@ -582,6 +600,19 @@ check(!!lateFrame, "/late: ▶'a delikten basıldı → oynatıcı çerçevesi d
 await a.sleep(800);
 await a.shot('11-late-oynatici');
 
+// 9b-2) "👁 Sayfayı göster": katman üstte 48 px şeride çekilir (film sayfası olduğu gibi), "Oda görünümü" ile geri gelir.
+{
+  await a.evalFrame('shell=1', `document.querySelector('.shell-peek').click(); 1`);
+  const peeked = await until(async () => {
+    const s = await a.evaluate(`(() => { const f = ${SHELL}; return { h: f.style.height, clip: getComputedStyle(f).clipPath, focus: document.documentElement.classList.contains('swm-focus') }; })()`);
+    return s.h === '48px' && s.clip === 'none' && !s.focus ? s : null;
+  }, 5000);
+  check(!!peeked, '👁 Sayfayı göster: katman 48 px şeride çekildi, video sayfası olduğu gibi görünüyor', JSON.stringify(peeked));
+  await a.evalFrame('shell=1', `document.querySelector('.peek-strip .btn').click(); 1`);
+  const backToRoom = await until(() => a.evaluate(`getComputedStyle(${SHELL}).clipPath !== 'none'`), 5000);
+  check(!!backToRoom, '"Oda görünümü" ile katman geri geldi (delik yeniden açıldı)');
+}
+
 // 9c) İlgisiz bir sitedeki sekmede (oda varken) örtü ve katman hiç olmamalı.
 {
   const other = await a.openTab('http://[::1]:5299/film', COVER_SCRIPT);
@@ -608,6 +639,32 @@ check((await a.evaluate(`document.documentElement.dataset.theme`)) === 'okyanus'
 const back = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Ayşe').length === 1, 10000);
 check(!!back, 'Ayşe yine tek kez (artık ana sitenin bağlantısı)');
 await a.shot('4-odaya-donus');
+
+// 11) Ana sitede isim + avatar değişir (iki ayar art arda kaydedilir) → film sayfasında yeni isimle görünür.
+// Eskiden eklentinin deposunda iki yazma birbirini eziyor, katman eski ismi kullanıyordu.
+await a.evaluate(`(() => {
+  const input = document.getElementById('rename-input');
+  input.value = 'Ayşe Yeni';
+  document.getElementById('rename-form').requestSubmit();
+  return 1;
+})()`);
+await until(() => bora.members.some((m) => m.name === 'Ayşe Yeni'), 5000);
+await a.sleep(800);
+bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/film` } });
+const renamedCard = await until(() => a.evaluate(`!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
+if (renamedCard) await a.evaluate(`document.getElementById('external-go').click(); 1`);
+await until(async () => String(await a.evaluate('location.href')).includes('/film'), 10000);
+const renamedShell = await until(
+  () => a.evalFrame('shell=1', `document.querySelector('#people-count') ? 1 : 0`),
+  15000,
+);
+await a.sleep(2500);
+const names = bora.members.map((m) => m.name);
+check(
+  !!renamedShell && names.filter((n) => n === 'Ayşe Yeni').length === 1 && !names.includes('Ayşe'),
+  'ana sitede değişen isim film sayfasında da geçerli (eski isimle görünmüyor)',
+  JSON.stringify(names),
+);
 
 bora.close();
 a.close();

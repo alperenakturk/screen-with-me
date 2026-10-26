@@ -15,6 +15,8 @@ export interface ShellOptions {
   onSend: (message: ClientMessage) => void;
   onKey: (key: string) => void;
   onFullscreen: () => void;
+  /** Fare film sayfasında oynadı (tam ekran kontrolleri belirsin). */
+  onActivity: () => void;
 }
 
 export interface ShellPlayer extends PlayerAdapter {
@@ -43,6 +45,9 @@ export function createShellPlayer(options: ShellOptions): ShellPlayer {
         break;
       case 'fullscreen':
         options.onFullscreen();
+        break;
+      case 'activity':
+        options.onActivity();
         break;
     }
   });

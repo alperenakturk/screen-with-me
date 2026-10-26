@@ -11,7 +11,7 @@ dili); açıklamanın sonunda kısa Türkçe paragraf var.
 - Özet: `Sync any HTML5 video with friends: play, pause, seek and speed together. Emoji reactions and quick chat. No account, free.`
 
 > Repo şu an private. Metinlerde "open source" yazmıyoruz; repo açılınca eklenebilir
-> (açmadan önce `docs/rakip-analizi.md` içindeki site adları temizlenmeli).
+> (açmadan önce `docs/internal/rakip-analizi.md` içindeki site adları temizlenmeli).
 
 ---
 

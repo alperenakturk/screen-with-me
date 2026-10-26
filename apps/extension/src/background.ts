@@ -212,6 +212,9 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     case 'fullscreen':
       reply(shell, { type: 'fullscreen' });
       break;
+    case 'activity':
+      reply(shell, { type: 'activity' });
+      break;
     case 'fullscreen-changed':
       if (frameId === 0) post(shell.port, { type: 'fullscreen', on: message.on });
       break;

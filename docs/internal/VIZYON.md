@@ -51,7 +51,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.57)
+## Şu an neler var? (0.9.58)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
@@ -94,7 +94,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   sürüklenen mesaj tutamağı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
 
 **Geliştirme**
-- 124 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
+- 125 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
 - `main`'e gelen her değişiklik testlerden sonra GitHub Actions ile Cloudflare'e yüklenir
   ve canlı sunucuya karşı uçtan uca testler koşar (bkz. CLAUDE.md "Yayın").
 
@@ -120,6 +120,12 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
 - **Mehtaplı Geceler yenilendi (Ekim 2026):** yağlı boya havasında teras: çini pano, mermer sütun, kandil, ay ışığında
   Boğaz, karşı kıyıda saray ve camiler, fenerli kayıklar; yeni maskot (renkli sarık, kırmızı entari, fener).
+- **v0.9.58:** Kimlik karışması düzeltildi (eklentinin deposunda isim ve avatar art arda kaydedilince isim kayboluyor,
+  film sayfasında eski isimle görünülüyordu); tam ekranda kontroller film sayfasında da bekleyince kayboluyor; "tam ekranda
+  video" seçeneği (ekranı kaplasın / kontrollerin üstünde dursun); film sayfasında mesajlar daha büyük; 👤 Profil sağ
+  üstte açılan menü; reklamlara dayanıklılık (kısa reklam videosu odaya yansımaz, reklam videoları seçilmez, gizli
+  reklamlar susar, "👁 Sayfayı göster" kaçış düğmesi, eklenti sayfasında reklam engelleyici ipucu); GitHub sayfası
+  İngilizce + Türkçe README, iç belgeler `docs/internal/`'a taşındı.
 - **v0.9.57:** Film sayfasında mesajlar ve emojiler gerçekten saydam (renk şeması uyuşmazlığı giderildi), oda katmanı
   binene kadar film sitesi hiç görünmüyor (örtü), tam ekranda altyazı kontrol çubuğunun altında kalmıyor, tam ekranda
   pin şeridi yok; emojiler art arda (×2 yok), yönetici emoji sıklığı ayarlar; hayvan avatarları kalktı, avatar seçici
@@ -144,7 +150,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 ## Yol haritası
 
 ### v1.0 — Chrome Web Store'da yayın (henüz gönderilmedi)
-Paket ve form metinleri hazır (`docs/web-store.md`, `npm run store`), ama eklenti henüz yeterince hazır
+Paket ve form metinleri hazır (`docs/internal/web-store.md`, `npm run store`), ama eklenti henüz yeterince hazır
 görülmediği için gönderilmiyor.
 
 **Durum (Ekim 2026, Claude'un değerlendirmesi):** teknik olarak çıkışa yakınız, resmî bir engel yok (içerik
@@ -236,7 +242,7 @@ değerli, GitHub Actions dakikası sınırsız olur, GitHub Sponsors açılır. 
 veriyor; bizi farklı kılan bakım ve topluluk) ve gelecek issue'ları yanıtlama yükü.
 
 Açmadan önce:
-- [ ] `docs/rakip-analizi.md` ve diğer belgelerdeki site adlarını temizle; CLAUDE.md'deki iç notları tarafsızlaştır.
+- [ ] `docs/internal/rakip-analizi.md` ve diğer belgelerdeki site adlarını temizle; CLAUDE.md'deki iç notları tarafsızlaştır.
 - [ ] **Geçmiş:** eski commit'lerde de bu adlar var → en temizi yeni bir public repo, tek "ilk sürüm" commit'iyle
   (ya da `git filter-repo`). Private repo arşiv olarak kalır.
 - [ ] Gizli anahtar taraması (ör. gitleaks); Cloudflare anahtarları zaten repo Secrets'ta, kodda yok.
@@ -254,9 +260,9 @@ Açmadan önce:
 - [ ] **Firefox desteği:** arka plan için ayrı manifest.
 - [ ] **Eklenti yüklü gerçek Chrome testi CI'da:** Playwright ile (`scripts/harness/embed/` temel olur).
 - [ ] **Senkron ölçümü ve rozet:** p50/p95 fark, README'de grafik.
-- [ ] **Büyüme:** repoyu açmak (yukarıda "Repoyu herkese açma"), lansman planı (`docs/BUYUME.md`), bağış (yukarıda).
+- [ ] **Büyüme:** repoyu açmak (yukarıda "Repoyu herkese açma"), lansman planı (`docs/internal/BUYUME.md`), bağış (yukarıda).
 - [ ] **Daha fazla dil.**
-- [ ] **Gelecek fikirleri (Ekim 2026, kullanıcıdan; ayrıntılı değerlendirme `docs/gelecek-fikirler.md`):**
+- [ ] **Gelecek fikirleri (Ekim 2026, kullanıcıdan; ayrıntılı değerlendirme `docs/internal/gelecek-fikirler.md`):**
   - [ ] Reels / Shorts birlikte (kısa dikey videolar, sırayla kaydırma).
   - [ ] Sitenin içinde YouTube araması (link yapıştırmadan video seç).
   - [ ] Görüntülü + sesli sohbet (yukarıdaki sesli sohbetin devamı).

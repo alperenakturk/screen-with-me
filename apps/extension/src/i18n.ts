@@ -1,5 +1,7 @@
 // Eklentinin kendi birkaç metni (popup ve "İzlemeye başla" kartı); asıl arayüz sitenin kendisi.
-// Dil sitedekiyle aynı: site seçimi eklentinin deposuna (`siteStore.lang`) yazar. Varsayılan Türkçe.
+// Dil sitedekiyle aynı: site seçimi eklentinin deposuna (`site:lang`, bkz. store.ts) yazar. Varsayılan Türkçe.
+
+import { readValue } from './store.ts';
 
 const tr = {
   autoplayBlocked: 'Tarayıcı videoyu kendiliğinden başlatmadı.',
@@ -24,10 +26,8 @@ const en: typeof tr = {
 export type Key = keyof typeof tr;
 let dict: typeof tr = tr;
 
-export const langReady: Promise<void> = chrome.storage.local
-  .get('siteStore')
-  .then(({ siteStore }) => {
-    const lang = (siteStore as Record<string, { v?: string }> | undefined)?.lang?.v;
+export const langReady: Promise<void> = readValue('lang')
+  .then((lang) => {
     dict = lang === 'en' ? en : tr;
   })
   .catch(() => {});
