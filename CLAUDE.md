@@ -6,6 +6,7 @@ açık kaynak bir araç: **site** (YouTube / doğrudan video) + **tarayıcı ekl
 
 - Canlı: https://screen-with-me.swm-server.workers.dev
 - Repo: github.com/alperenakturk/screen-with-me (private)
+- **Önce `docs/internal/DURUM.md`:** kaldığımız yer, bekleyen kararlar, sıradaki işler (her işten sonra güncelle).
 - Vizyon ve yol haritası: `docs/internal/VIZYON.md` · Rakip analizi: `docs/internal/rakip-analizi.md`
 - **GitHub'da görünen her şey İngilizce:** `README.md` İngilizce, Türkçesi `README.tr.md` (üstteki 🇹🇷 bağlantısı); ikisi
   hep birlikte güncellenir (birinde olan diğerinde de olur). İç notlar (yol haritası, büyüme, rakip analizi, mağaza
