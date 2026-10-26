@@ -39,6 +39,7 @@
 3. **Elle video seçimi:** otomatik seçim yanılırsa "bu videoyu senkronla".
 4. Bir arkadaşla gerçek deneme turu (iki bilgisayar, uzun film; sesli sohbet farklı ağlarda).
 5. Claude araçları önerileri: `docs/internal/claude-araclari.md` (kullanıcı kendisi kuracak).
+6. **Yayın açma** (ekran/kamera paylaşımı) araştırması ve önerisi: `docs/internal/yayin.md` (karar kullanıcının).
 
 ## Bulutta test etme (27 Ekim 2026'da baştan sona denendi, hepsi çalışıyor)
 Sıra önemli: sunucu `apps/web/dist`'i istiyor, o yüzden önce derleme.
