@@ -20,11 +20,15 @@ import {
   type PinList,
   type QueueItem,
   type ServerMessage,
+  type RtcResult,
+  VOICE_MAX,
+  VOICE_MAX_P2P,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
 import { RateLimiter } from './rate-limit.ts';
+import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
 
 const MAX_MEMBERS = 50;
@@ -69,6 +73,8 @@ interface Attachment {
   seen?: number;
   /** 'ext': eklentiyle film sayfasında. */
   client?: ClientKind;
+  /** Sesli sohbette: mikrofon açık mı, yayınladığı akış ve Cloudflare oturumu (oturum istemcilere gitmez). */
+  voice?: { mic: boolean; track?: string; session?: string };
 }
 
 /**
@@ -93,6 +99,8 @@ function memberOf(attachment: Joined): Member {
   const member: Member = { id: attachment.id, name: attachment.name };
   if (attachment.avatar) member.avatar = attachment.avatar;
   if (attachment.client === 'ext') member.client = 'ext';
+  // Cloudflare oturumu gizli kalır; diğerleri sadece akışın adını ve mikrofon durumunu görür.
+  if (attachment.voice) member.voice = { mic: attachment.voice.mic, ...(attachment.voice.track ? { track: attachment.voice.track } : {}) };
   return member;
 }
 
@@ -180,6 +188,10 @@ export class Room extends DurableObject<Env> {
   private readonly stickerLimit = new RateLimiter(4, 0.05);
   // Sohbet: art arda 8 mesaj, sonra saniyede 1 (daha sıkısı arkadaşlar arasında yazışırken takılıyordu).
   private readonly chatLimit = new RateLimiter(8, 1);
+  /** Sesli sohbetin bağlantı işleri (her yeni dinlenen kişi için birkaç istek). */
+  private readonly rtcLimit = new RateLimiter(30, 3);
+  /** Eşler arası seste bağlantı mesajları (her eş için teklif/cevap + birkaç ağ adayı). */
+  private readonly signalLimit = new RateLimiter(80, 10);
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -275,7 +287,7 @@ export class Room extends DurableObject<Env> {
     const me = memberOf(joined);
 
     // Emoji ve "odaya döndüm" kendi sınırlarıyla: emoji yağmuru kişinin oynat/durdur/sar komutlarını tüketmesin.
-    const cheap = message.t === 'react' || message.t === 'home';
+    const cheap = message.t === 'react' || message.t === 'home' || message.t === 'rtc' || message.t === 'signal';
     if (!cheap && !this.commandLimit.allow(me.id)) {
       this.sendTo(ws, { t: 'error', code: 'rate_limited' });
       return;
@@ -295,6 +307,25 @@ export class Room extends DurableObject<Env> {
     switch (message.t) {
       case 'vote':
         await this.vote(keyOf(attachment), message.id, message.up);
+        return;
+      case 'voice':
+        await this.setVoice(ws, attachment, message.on, message.mic);
+        return;
+      case 'signal': {
+        // Eşler arası ses: bağlantı mesajını sadece ikisi de seste ise karşıya ilet (sunucu içeriğe bakmaz,
+        // sadece doğrulanmış kopyasını taşır). Kim seste değilse IP adresini kimse öğrenemez.
+        if (!this.signalLimit.allow(me.id) || !attachment.voice) return;
+        const target = this.openSockets().find((c) => (c.deserializeAttachment() as Attachment | null)?.id === message.to);
+        const other = target?.deserializeAttachment() as Attachment | null;
+        if (target && other?.voice) this.sendTo(target, { t: 'signal', from: me.id, data: message.data });
+        return;
+      }
+      case 'rtc':
+        if (!this.rtcLimit.allow(me.id)) {
+          this.sendTo(ws, { t: 'rtc', id: message.id, ok: false, error: 'rate_limited' });
+          return;
+        }
+        await this.rtc(ws, message);
         return;
       case 'home':
         // Sadece haber: filmdekilere "sen de dön" diye sorulur (sık basılıp kimseyi rahatsız etmesin).
@@ -692,11 +723,85 @@ export class Room extends DurableObject<Env> {
       settings: this.settings,
       waiting: this.waits.waiting,
       pins: this.currentPins(),
+      voice: this.env.VOICE !== 'off',
+      voiceMode: realtimeConfig(this.env) ? 'sfu' : 'p2p',
     });
     // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
     for (const [id, data] of this.stickers) this.sendTo(ws, { t: 'sticker', sticker: { id, data } });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
+  }
+
+  /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa (bağlantı başına; herkese `members` gider). */
+  private async setVoice(ws: WebSocket, attachment: Attachment, on: boolean, mic?: boolean): Promise<void> {
+    if (on) {
+      if (this.env.VOICE === 'off') return this.sendTo(ws, { t: 'error', code: 'voice_unavailable' });
+      const max = realtimeConfig(this.env) ? VOICE_MAX : VOICE_MAX_P2P;
+      const inVoice = this.joined().filter((a) => a.voice && a.id !== attachment.id).length;
+      if (!attachment.voice && inVoice >= max) return this.sendTo(ws, { t: 'error', code: 'voice_full' });
+      attachment.voice = { ...attachment.voice, mic: mic ?? attachment.voice?.mic ?? true };
+    } else {
+      if (!attachment.voice) return;
+      delete attachment.voice;
+    }
+    ws.serializeAttachment(attachment);
+    this.broadcast(this.membersMessage());
+  }
+
+  /**
+   * Sesli sohbetin bağlantı işleri: Cloudflare Realtime'a bu bağlantı adına gideriz. Oturum sunucuda tutulur,
+   * istemci sadece odadaki birinin sesini üye kimliğiyle isteyebilir.
+   */
+  private async rtc(ws: WebSocket, message: Extract<ClientMessage, { t: 'rtc' }>): Promise<void> {
+    const reply = (result: RtcResult) => this.sendTo(ws, { t: 'rtc', id: message.id, ...result });
+    const config = realtimeConfig(this.env);
+    if (!config) return reply({ ok: false, error: 'voice_unavailable' });
+    // Bekleme sırasında bağlantının bilgisi değişmiş olabilir: her adımda tazesini oku.
+    const fresh = () => ws.deserializeAttachment() as Attachment | null;
+    const me = fresh();
+    if (!me?.voice) return reply({ ok: false, error: 'not_in_voice' });
+    try {
+      if (message.op === 'session') {
+        if (!me.voice.session) {
+          const session = await newSession(config);
+          const now = fresh();
+          if (!now?.voice) return reply({ ok: false, error: 'not_in_voice' });
+          now.voice.session = session;
+          ws.serializeAttachment(now);
+        }
+        return reply({ ok: true });
+      }
+      const session = me.voice.session;
+      if (!session) return reply({ ok: false, error: 'not_in_voice' });
+      switch (message.op) {
+        case 'publish': {
+          const sdp = await publish(config, session, message.sdp, message.mid, message.track);
+          const now = fresh();
+          if (now?.voice) {
+            now.voice.track = message.track;
+            ws.serializeAttachment(now);
+            // Diğerleri yeni akışı görünce dinlemeye başlar.
+            this.broadcast(this.membersMessage());
+          }
+          return reply({ ok: true, sdp, sdpType: 'answer' });
+        }
+        case 'pull': {
+          const target = this.joined().find((a) => a.id === message.from);
+          if (!target?.voice?.track || !target.voice.session) return reply({ ok: false, error: 'no_track' });
+          const result = await pull(config, session, target.voice.session, target.voice.track);
+          return reply({ ok: true, mid: result.mid, renegotiate: result.renegotiate, ...(result.sdp ? { sdp: result.sdp, sdpType: result.sdpType } : {}) });
+        }
+        case 'renegotiate':
+          await renegotiate(config, session, message.sdp);
+          return reply({ ok: true });
+        case 'close':
+          await closeTracks(config, session, message.mids);
+          return reply({ ok: true });
+      }
+    } catch (error) {
+      console.warn('realtime', String(error));
+      return reply({ ok: false, error: 'upstream' });
+    }
   }
 
   /** Açık videonun pinleri (sahipleri olmadan); başka videoya aitse ya da boşsa yok. */
@@ -985,7 +1090,7 @@ export class Room extends DurableObject<Env> {
   private async onLeave(leaving: WebSocket): Promise<void> {
     const attachment = leaving.deserializeAttachment() as Attachment | null;
     if (attachment) {
-      for (const limiter of [this.commandLimit, this.chatLimit]) limiter.forget(attachment.id);
+      for (const limiter of [this.commandLimit, this.chatLimit, this.rtcLimit, this.signalLimit]) limiter.forget(attachment.id);
       // Kişi başı tutulanlar: aynı tarayıcının başka bağlantısı kalmadıysa unutulur.
       const key = keyOf(attachment);
       if (!this.joined(leaving).some((other) => keyOf(other) === key)) {
@@ -1078,7 +1183,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

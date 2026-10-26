@@ -48,10 +48,21 @@ function gridPoints(region, avoid = [], step = 6, pad = 12) {
 /** Film sayfasında örtünün (data-swm-cover) ne zaman eklenip kalktığını kaydeder (sayfanın en başında çalışır). */
 const COVER_SCRIPT = `(() => {
   if (window !== top) return;
-  const log = { atStart: !!document.querySelector('[data-swm-cover]'), added: null, removed: null, shellAt: null, clipAt: null };
+  const log = { atStart: !!document.querySelector('[data-swm-cover]'), added: null, removed: null, shellAt: null, clipAt: null, events: [] };
+  const ev = (what) => log.events.length < 60 && log.events.push(Math.round(performance.now()) + ' ' + what);
+  // Odak modu (html.swm-focus) ve işaretli oynatıcı ne zaman açılıp kapanıyor: flaşın nedenini görmek için.
+  let focused = false;
   window.__swmCover = log;
   new MutationObserver((muts) => {
     for (const m of muts) {
+      if (m.type === 'attributes') {
+        if (m.attributeName === 'class' && m.target === document.documentElement) {
+          const now = m.target.classList.contains('swm-focus');
+          if (now !== focused) ev(now ? 'focus+' : 'focus-');
+          focused = now;
+        } else if (m.attributeName === 'data-swm-focus') ev('mark ' + (m.target.hasAttribute('data-swm-focus') ? '+' : '-') + m.target.tagName + '#' + m.target.id);
+        continue;
+      }
       for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.hasAttribute('data-swm-cover') && log.added === null) log.added = performance.now();
@@ -59,11 +70,15 @@ const COVER_SCRIPT = `(() => {
       }
       for (const n of m.removedNodes) if (n.nodeType === 1 && n.hasAttribute('data-swm-cover')) log.removed = performance.now();
     }
-  }).observe(document, { childList: true, subtree: true });
+  }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-swm-focus', 'class'] });
+  let lastClip = '';
   const timer = setInterval(() => {
     const s = document.querySelector('iframe[src^="chrome-extension://"]');
-    if (s && s.style.clipPath) { log.clipAt = performance.now(); clearInterval(timer); }
-  }, 10);
+    const clip = s ? s.style.clipPath : '';
+    if (clip !== lastClip) { ev('clip ' + (clip ? clip.slice(17, 60) : 'none') + ' h=' + (s ? s.style.height : '')); lastClip = clip; }
+    if (s && s.style.clipPath && log.clipAt === null) log.clipAt = performance.now();
+    if (performance.now() > 4000) clearInterval(timer);
+  }, 5);
 })();`;
 
 /** Sahte ikinci kullanıcı (gerçek sunucuya WebSocket ile bağlanır). */
@@ -237,6 +252,7 @@ check(!!holed, 'video bulundu: katmanda videonun yeri delik');
 {
   const flash = await stopFlash1();
   console.log('     flaş /film:', JSON.stringify(flash));
+  if (flash.worst >= 0.3) console.log('     olaylar:', JSON.stringify((await coverLog())?.events ?? null));
   check(flash.frames > 0 && flash.worst < 0.3, 'siteden film sayfasına geçerken film sitesi hiçbir karede görünmedi (flaş yok)', JSON.stringify(flash));
 }
 check(await a.evaluate(`!!document.querySelector('[data-swm-focus]') && document.documentElement.classList.contains('swm-focus')`), 'film videosu deliğe yerleşti');
@@ -429,7 +445,12 @@ check(
 // Karşı deneme (testin hatayı yakaladığını göstermek için): çerçevenin şemasını eski haline (normal) çevir → adacık opak olmalı.
 await a.evaluate(`${SHELL}.style.setProperty('color-scheme', 'normal', 'important'); 1`);
 await a.sleep(3500);
-const neg = await floatSample('6c-karsi-deneme-normal', baseA);
+// Ekran görüntüsü ile kesme yolu farklı anlarda okunur (arada emoji adacığı değişebilir): en fazla 3 deneme, en iyisi.
+let neg = await floatSample('6c-karsi-deneme-normal', baseA);
+for (let i = 0; i < 2 && !(neg.lit >= 30 && neg.sameLit / neg.lit < 0.3); i++) {
+  await a.sleep(3500);
+  neg = await floatSample('6c-karsi-deneme-normal', baseA);
+}
 console.log('     karşı deneme (color-scheme:normal):', JSON.stringify(neg));
 check(
   !!neg.island && neg.lit >= 30 && neg.sameLit / neg.lit < 0.3,

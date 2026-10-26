@@ -28,11 +28,12 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
         });
         return el(
           'li',
-          { class: isMe ? 'person me' : 'person' },
+          { class: isMe ? 'person me' : 'person', 'data-id': member.id },
           avatarNode(member.avatar, 'person-avatar'),
           el('span', { class: 'person-name' }, isMe ? `${member.name} (${t('you')})` : member.name),
           member.id === hostId ? el('span', { class: 'host-badge', title: t('host') }, '👑') : '',
           member.client === 'ext' ? el('span', { class: 'host-badge', title: t('inFilm') }, '🎬') : '',
+          member.voice ? el('span', { class: 'host-badge', title: t('voice.inVoice') }, member.voice.mic ? '🎙' : '🔇') : '',
           iAmHost && !isMe ? kick : '',
         );
       }),

@@ -371,6 +371,7 @@ let reattachTimer: ReturnType<typeof setInterval> | null = null;
 
 function removeShell(): void {
   shell?.remove();
+  holeOpen = false;
   shell = null;
   if (reattachTimer !== null) clearInterval(reattachTimer);
   reattachTimer = null;
@@ -419,14 +420,35 @@ function setLayout(next: ShellLayout | null, isActive: boolean, fromSite = false
 }
 
 /** Katmanın boyutu/deliği ve videonun yeri (yerleşim, pencere boyutu ya da video değişince). */
+/** Delik açıldı mı (ilk açılış iki kare gecikir, bkz. applyLayout). */
+let holeOpen = false;
+let holeOpening = false;
+
 function applyLayout(): void {
   const l = layout;
   if (isTop && shell) {
     const s = shell.style;
     if (l?.mode === 'full') {
       s.setProperty('height', '100vh', 'important');
-      s.setProperty('clip-path', holePath(innerWidth, innerHeight, l.hole, l.islands), 'important');
+      const clip = holePath(innerWidth, innerHeight, l.hole, l.islands);
+      if (holeOpen) s.setProperty('clip-path', clip, 'important');
+      else if (!holeOpening) {
+        // Delik ilk kez açılırken: önce odak (sayfa gizlenir, oynatıcı deliğin yerine taşınır), iki kare sonra delik.
+        // Chrome kesme yolunu sayfanın yeniden yerleşiminden önce çizebiliyor: aynı anda yapınca delikten bir kare
+        // film sitesinin eski hâli görünüyordu.
+        holeOpening = true;
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            holeOpening = false;
+            if (layout?.mode !== 'full' || !shell) return;
+            holeOpen = true;
+            applyLayout();
+            send({ type: 'hole' });
+          }),
+        );
+      }
     } else {
+      holeOpen = false;
       s.setProperty('height', l?.mode === 'bar' ? `${l.height}px` : '100vh', 'important');
       s.removeProperty('clip-path');
     }
@@ -440,7 +462,8 @@ function applyLayout(): void {
     ? { top: l.hole.y, left: l.hole.x, right: Math.max(0, innerWidth - l.hole.x - l.hole.w), bottom: Math.max(0, innerHeight - l.hole.y - l.hole.h) }
     : NO_INSETS;
   if (layoutActive) {
-    applyFocus(!!best, best, inset);
+    // Video bir anlığına kaybolsa da (oynatıcı kendini yeniden kurarken) odak açık kalır: sayfa görünmesin.
+    applyFocus(true, best, inset);
     tellParents();
   } else {
     applyFocus(true, null, inset, recentChild());
