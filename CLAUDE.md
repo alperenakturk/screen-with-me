@@ -328,7 +328,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - Ortamın ağ izni kısıtlıysa `www.youtube.com` kapalı olabilir: `room.mjs`'deki başlık testi takılır
   (kod hatası değil). Kullanıcı ortam ayarlarından (Network access → Allowed domains) açabilir.
 - Eklentiyi kullanıcı kendi Chrome'unda dener (siteden zip). Bulutta da gerçek Chromium + eklenti testi yapılabilir:
-  `CHROME=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` ile `scripts/harness/embed/run.mjs` (root iken
+  `CHROME=/opt/pw-browsers/chromium` ile `scripts/harness/embed/run.mjs` (root iken
   `cdp.mjs` kendisi `--no-sandbox` ekler); internet yoksa `FILM_VIDEO=video.webm node scripts/harness/embed/film-server.mjs`
   (ffmpeg ile `testsrc2` üretilebilir; puan için 10 dk'dan uzun olsun).
 

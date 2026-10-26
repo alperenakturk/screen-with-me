@@ -40,11 +40,28 @@
 4. Bir arkadaşla gerçek deneme turu (iki bilgisayar, uzun film; sesli sohbet farklı ağlarda).
 5. Claude araçları önerileri: `docs/internal/claude-araclari.md` (kullanıcı kendisi kuracak).
 
-## Bulutta test etme
-- Kurulum: `npm ci`; `npm run typecheck`, `npm test`; yerel sunucu `npx wrangler dev` (apps/server) + `npm run e2e`.
-- Gerçek Chrome eklenti testi: `CHROME=/opt/pw-browsers/chromium-*/chrome-linux/chrome node scripts/harness/embed/run.mjs`
-  (film sunucusu: `node scripts/harness/embed/film-server.mjs`; internet yoksa `FILM_VIDEO=video.webm`, ffmpeg testsrc2).
-- Gerçek ses testi: `node scripts/harness/voice/run.mjs <site>` (iki Chrome, sahte mikrofon).
+## Bulutta test etme (27 Ekim 2026'da baştan sona denendi, hepsi çalışıyor)
+Sıra önemli: sunucu `apps/web/dist`'i istiyor, o yüzden önce derleme.
+```bash
+npm ci && npm run typecheck && npm test           # 133 birim testi
+npm run build                                     # eklenti + site (apps/web/dist)
+(cd apps/server && npx wrangler dev --port 8787 > /tmp/wrangler.log 2>&1 &)   # yerel sunucu
+npm run e2e                                       # room.mjs dışında hepsi geçer (aşağıda)
+npm run dev -w @swm/web &                         # sadece site (5173); `npm run dev` sunucuyu da açar, 8787 doluysa çakışır
+npm run build:extension:dev                       # yerel sunucuya bağlanan eklenti
+ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=10:duration=660 \
+  -c:v libvpx-vp9 -deadline realtime -cpu-used 8 -b:v 200k /tmp/film.webm      # 11 dk video, ~25 sn
+FILM_VIDEO=/tmp/film.webm node scripts/harness/embed/film-server.mjs &
+CHROME=/opt/pw-browsers/chromium node scripts/harness/embed/run.mjs apps/extension/dist http://localhost:5173 ws://localhost:8787 /tmp/shell-test
+CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/run.mjs http://localhost:5173
+```
+- Chromium: `/opt/pw-browsers/chromium` (sürümlü klasöre bağlantı; root olunca `cdp.mjs` `--no-sandbox` ekler).
+- Ağ: varsayılan ortamda `www.youtube.com` ve `upload.wikimedia.org` kapalı (proxy 403). Bu yüzden `room.mjs` "title"
+  beklerken durur (kod hatası değil) ve film videosu ffmpeg'le üretilir. Açmak için: ortam ayarları → Network access →
+  Allowed domains'e `www.youtube.com` (ve isteğe bağlı `upload.wikimedia.org`). npm kayıt defteri açık.
+- Ses testi STUN'a ulaşamasa da geçer (iki Chrome aynı makinede, yerel adaylarla bağlanır).
+- Ekran görüntüleri `/tmp/shell-test-*.png`'ye düşer; repoya koyma.
+- GitHub: `gh` yok/yetkisiz, GitHub MCP araçlarıyla PR açılır/birleştirilir; `git push` çalışır.
 - Yayın bulutta GitHub Actions'tan (`wrangler login` yok); anahtarlar repo Secrets'ta.
 
 ## Yerelde kalan (bulutta yok, sorun değil)
