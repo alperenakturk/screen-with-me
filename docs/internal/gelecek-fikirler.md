@@ -169,7 +169,10 @@ _Fikir: Odada kamera + mikrofonla konuşmak._
   bir "sadece ses" çok daha iyi görünür.
 - Mağaza cümlesi olsaydı: _"Filmin üstünde ücretsiz sesli sohbet; Discord'a geçmeden, hesap açmadan."_
 
-**👉 Önerim:** **Sadece bas-konuş ses**, en fazla ~6 kişi, eşler arası + Cloudflare TURN, varsayılan kapalı, kamera
+> Güncel (Ekim 2026): ayrıntılı araştırma ve deneme `ses-goruntu.md`'de; orada öneri **Cloudflare SFU** (eşler arası
+> değil), açık mikrofon + sessize al, eklentide mikrofon offscreen belgede.
+
+**👉 Önerim (ilk hâli):** **Sadece bas-konuş ses**, en fazla ~6 kişi, eşler arası + Cloudflare TURN, varsayılan kapalı, kamera
 yok. Konuşanın avatarı kişiler listesinde parlar, konuşurken film sesi biraz kısılır. **Önce sitede**, sonra küçük bir
 denemeyle film sayfasındaki katmanda.
 
