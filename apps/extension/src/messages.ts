@@ -30,6 +30,8 @@ export type FrameMessage =
   | { type: 'fullscreen' }
   /** Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. */
   | { type: 'activity' }
+  /** Üst çerçeve: delik açıldı (sayfa gizli, video yerinde); site deliğin içini saydam yapabilir. */
+  | { type: 'hole' }
   /** Bizim tam ekranımız bitti/başladı (üst çerçeve: Esc vb.). */
   | { type: 'fullscreen-changed'; on: boolean }
   | { type: 'send'; message: ClientMessage };
@@ -74,7 +76,8 @@ export type ShellPortReply =
   | { type: 'reply'; reply: EmbedReply }
   | { type: 'page'; url: string }
   | { type: 'video'; found: boolean }
-  | { type: 'fullscreen'; on: boolean };
+  | { type: 'fullscreen'; on: boolean }
+  | { type: 'hole' };
 
 /** Ana site → arka plan (site-bridge üzerinden): "bu sekme film sayfasına gitsin, odanın katmanıyla". */
 export interface SiteGoMessage {

@@ -138,20 +138,31 @@ export function applyFocus(on: boolean, video: HTMLVideoElement | null, inset: I
     lastInset = insetKey;
     requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
   }
-  if (target === current && root.classList.contains('swm-focus') === !!target) return;
+  // Oda görünümünde (üst çerçeve) henüz oynatıcıya benzer bir şey yoksa (sayfa daha yükleniyor) sayfa yine gizli
+  // kalır: yoksa deliğin içinden film sitesi bir an görünüyordu. Oynatıcı belirince ona odaklanılır.
+  const blank = on && !target && roomy;
+  if (target === current && root.classList.contains('swm-focus') === (!!target || blank)) return;
   current?.removeAttribute(MARK);
   current = target;
+  if (blank) {
+    ensureStyle();
+    root.classList.add('swm-focus');
+    return;
+  }
   if (!target) {
     root.classList.remove('swm-focus');
     for (const name of ['top', 'right', 'bottom', 'left', 'bg', 'radius']) root.style.removeProperty(`--swm-${name}`);
     return;
   }
-  if (!document.getElementById(STYLE_ID)) {
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = CSS;
-    (document.head ?? root).append(style);
-  }
+  ensureStyle();
   target.setAttribute(MARK, '');
   root.classList.add('swm-focus');
+}
+
+function ensureStyle(): void {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = CSS;
+  (document.head ?? document.documentElement).append(style);
 }

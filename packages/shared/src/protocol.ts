@@ -194,7 +194,55 @@ export interface Member {
   avatar?: Avatar;
   /** 'ext': eklentiyle bir sayfada (filmde) izliyor. Eski istemcilerde yok (site sayılır). */
   client?: ClientKind;
+  /** Sesli sohbette (yoksa seste değil). `track`: yayınladığı ses akışı (diğerleri bununla dinler). */
+  voice?: MemberVoice;
 }
+
+export interface MemberVoice {
+  /** Mikrofonu açık mı (sessize aldıysa false; yine de odayı dinler). */
+  mic: boolean;
+  /** Yayın hazır olunca gelir: diğerleri bu üyenin sesini bununla çeker. */
+  track?: string;
+}
+
+/** Sesli sohbette aynı anda en fazla bu kadar kişi (SFU'da herkes herkesi çeker; maliyet ve kalabalık). */
+export const VOICE_MAX = 10;
+/** Eşler arası seste en fazla bu kadar kişi: herkes herkese ayrı akış yollar, ev internetinin yükleme hızı yetmez. */
+export const VOICE_MAX_P2P = 6;
+
+/**
+ * Sesli sohbetin taşınma yolu. `p2p`: eşler arası (kartsız, ücretsiz; sunucu sadece bağlantı mesajlarını
+ * aktarır). `sfu`: Cloudflare Realtime (sunucuda anahtar varsa; IP'ler gizli, daha çok kişi).
+ */
+export type VoiceMode = 'p2p' | 'sfu';
+
+/** Eşler arası bağlantı kurmak için iki tarayıcı arasında taşınan mesaj (WebRTC teklif/cevap ya da ağ adayı). */
+export type Signal =
+  | { sdp: { type: 'offer' | 'answer'; sdp: string } }
+  | { candidate: { candidate: string; sdpMid?: string | null; sdpMLineIndex?: number | null } };
+/** SDP (WebRTC bağlantı tarifi) birkaç KB olabilir: sadece `rtc` mesajları bu kadar büyük olabilir. */
+export const RTC_MESSAGE_MAX = 24_000;
+const SDP_MAX = 20_000;
+
+/**
+ * Sesli sohbetin bağlantı işleri (istemci → sunucu → Cloudflare Realtime). Cloudflare oturumunu sunucu açar ve
+ * bağlantıya bağlar; istemci başkasının oturumuna dokunamaz, sadece odadaki birinin sesini (üye kimliğiyle) çekebilir.
+ */
+export type RtcRequest =
+  /** Bu bağlantı için Cloudflare oturumu aç (yoksa). */
+  | { op: 'session' }
+  /** Kendi mikrofon akışımı yayınla: teklif SDP'si + akışın mid'i ve adı. */
+  | { op: 'publish'; sdp: string; mid: string; track: string }
+  /** Odadaki bir üyenin sesini çek (Cloudflare yeni bir teklif döner, cevap `renegotiate` ile gider). */
+  | { op: 'pull'; from: string }
+  /** Cloudflare'in teklifine cevap. */
+  | { op: 'renegotiate'; sdp: string }
+  /** Artık dinlemediğim akışları kapat (çıkan kişi). */
+  | { op: 'close'; mids: string[] };
+
+export type RtcResult =
+  | { ok: true; sdp?: string; sdpType?: 'offer' | 'answer'; renegotiate?: boolean; mid?: string }
+  | { ok: false; error: 'voice_unavailable' | 'voice_full' | 'not_in_voice' | 'no_track' | 'upstream' | 'rate_limited' };
 
 export interface RoomSettings {
   /** Videosu takılan biri olduğunda oda onu kısa süre beklesin mi? */
@@ -277,6 +325,12 @@ export type ClientMessage =
   | { t: 'recaps' }
   /** Film sayfasından odaya dönüyorum: filmdeki diğerlerine "sen de dön" diye sorulur. */
   | { t: 'home' }
+  /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
+  | { t: 'voice'; on: boolean; mic?: boolean; track?: string }
+  /** Sesli sohbetin bağlantı işi; cevap aynı `id` ile `{t:'rtc'}` olarak gelir. */
+  | ({ t: 'rtc'; id: number } & RtcRequest)
+  /** Eşler arası seste: bir üyeye bağlantı mesajı (sunucu sadece ikisi de seste ise iletir). */
+  | { t: 'signal'; to: string; data: Signal }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
   /** Sıraya ekle. Oda boşsa hemen açılır. */
@@ -320,6 +374,9 @@ export type ErrorCode =
   | 'kicked'
   /** Bu işlem sadece oda yöneticisine açık. */
   | 'not_host'
+  /** Sesli sohbet dolu (VOICE_MAX) ya da bu sunucuda kapalı. */
+  | 'voice_full'
+  | 'voice_unavailable'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
@@ -342,6 +399,10 @@ export type ServerMessage =
       waiting?: string[];
       /** Açık videonun pinlenmiş anları. */
       pins?: PinList;
+      /** Sesli sohbet bu sunucuda açık mı (kapatıldıysa ya da eski sunucuysa yok/false). */
+      voice?: boolean;
+      /** Sesin taşınma yolu (yoksa p2p). */
+      voiceMode?: VoiceMode;
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member; /** Kayıtlı odada video kaldığı yerden açıldıysa o saniye. */ resumed?: number }
@@ -349,6 +410,10 @@ export type ServerMessage =
   /** Video beklemeden yayınlanır; başlığı sonradan bulununca bu mesaj gelir. */
   | { t: 'title'; itemId: string; title: string }
   | { t: 'members'; members: Member[]; hostId: string | null }
+  /** Sesli sohbet bağlantı işinin cevabı (`id` isteğinki). */
+  | ({ t: 'rtc'; id: number } & RtcResult)
+  /** Eşler arası seste bir üyeden gelen bağlantı mesajı. */
+  | { t: 'signal'; from: string; data: Signal }
   /** Biri odadan çıkarıldı (herkese duyurulur). */
   | { t: 'kicked'; who: Member; by: Member }
   /** Yasaklılar listesi (sadece yöneticiye; değişince ve yönetici değişince gelir). */
@@ -513,6 +578,58 @@ export function isValidMedia(x: unknown): x is Media {
   return cleanMedia(x) !== null;
 }
 
+/** Ses akışının adı (istemci verir; Cloudflare'de oturum içinde benzersiz). */
+export function isTrackName(x: unknown): x is string {
+  return typeof x === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(x);
+}
+
+function isSdp(x: unknown): x is string {
+  return typeof x === 'string' && x.length <= SDP_MAX && x.startsWith('v=0');
+}
+
+function isMid(x: unknown): x is string {
+  return typeof x === 'string' && /^[A-Za-z0-9]{1,8}$/.test(x);
+}
+
+/** Bağlantı mesajını doğrular ve yeni nesneye kopyalar (sadece bilinen alanlar, makul boyut). */
+export function cleanSignal(x: unknown): Signal | null {
+  if (!isObject(x)) return null;
+  if (isObject(x.sdp)) {
+    const { type, sdp } = x.sdp;
+    return (type === 'offer' || type === 'answer') && isSdp(sdp) ? { sdp: { type, sdp } } : null;
+  }
+  if (isObject(x.candidate)) {
+    const { candidate, sdpMid, sdpMLineIndex } = x.candidate;
+    if (typeof candidate !== 'string' || candidate.length > 1000) return null;
+    const out: { candidate: string; sdpMid?: string | null; sdpMLineIndex?: number | null } = { candidate };
+    if (sdpMid === null || (typeof sdpMid === 'string' && sdpMid.length <= 16)) out.sdpMid = sdpMid;
+    if (sdpMLineIndex === null || (typeof sdpMLineIndex === 'number' && Number.isInteger(sdpMLineIndex) && sdpMLineIndex >= 0 && sdpMLineIndex < 64)) out.sdpMLineIndex = sdpMLineIndex;
+    return { candidate: out };
+  }
+  return null;
+}
+
+function cleanRtc(m: Record<string, unknown>): ClientMessage | null {
+  const id = m.id;
+  if (typeof id !== 'number' || !Number.isInteger(id) || id < 1 || id > 1e9) return null;
+  switch (m.op) {
+    case 'session':
+      return { t: 'rtc', id, op: 'session' };
+    case 'publish':
+      return isSdp(m.sdp) && isMid(m.mid) && isTrackName(m.track) ? { t: 'rtc', id, op: 'publish', sdp: m.sdp, mid: m.mid, track: m.track } : null;
+    case 'pull':
+      return isItemId(m.from) ? { t: 'rtc', id, op: 'pull', from: m.from } : null;
+    case 'renegotiate':
+      return isSdp(m.sdp) ? { t: 'rtc', id, op: 'renegotiate', sdp: m.sdp } : null;
+    case 'close': {
+      const mids = Array.isArray(m.mids) ? m.mids.filter(isMid).slice(0, VOICE_MAX) : [];
+      return mids.length ? { t: 'rtc', id, op: 'close', mids } : null;
+    }
+    default:
+      return null;
+  }
+}
+
 export function parseClientMessage(raw: string): ClientMessage | null {
   // Özel emoji resmi taşıdığı için büyük olabilir; diğer her mesaj MAX_MESSAGE_BYTES ile sınırlı.
   if (raw.length > STICKER_MESSAGE_MAX) return null;
@@ -523,7 +640,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     return null;
   }
   if (!isObject(m)) return null;
-  if (raw.length > MAX_MESSAGE_BYTES && m.t !== 'sticker-add') return null;
+  // Sadece özel emoji ve sesli sohbetin SDP'si büyük olabilir.
+  if (raw.length > MAX_MESSAGE_BYTES && m.t !== 'sticker-add' && !((m.t === 'rtc' || m.t === 'signal') && raw.length <= RTC_MESSAGE_MAX)) return null;
 
   switch (m.t) {
     case 'hello': {
@@ -566,6 +684,19 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'recaps':
     case 'home':
       return { t: m.t };
+    case 'voice': {
+      if (typeof m.on !== 'boolean') return null;
+      const out: Extract<ClientMessage, { t: 'voice' }> = { t: 'voice', on: m.on };
+      if (typeof m.mic === 'boolean') out.mic = m.mic;
+      if (isTrackName(m.track)) out.track = m.track;
+      return out;
+    }
+    case 'rtc':
+      return cleanRtc(m);
+    case 'signal': {
+      const data = cleanSignal(m.data);
+      return isItemId(m.to) && data ? { t: 'signal', to: m.to, data } : null;
+    }
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

@@ -49,6 +49,28 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'load', media: { kind: 'page', url: 'chrome://settings' } })).toBeNull();
   });
 
+  it('validates voice and rtc messages (only rtc may carry a big SDP)', () => {
+    expect(parse({ t: 'voice', on: true, mic: true, track: 'a1b2' })).toEqual({ t: 'voice', on: true, mic: true, track: 'a1b2' });
+    expect(parse({ t: 'voice', on: 'yes' })).toBeNull();
+    expect(parse({ t: 'voice', on: false, track: '../x' })).toEqual({ t: 'voice', on: false });
+    const sdp = 'v=0\r\n' + 'a=x\r\n'.repeat(1500);
+    expect(parse({ t: 'rtc', id: 1, op: 'publish', sdp, mid: '0', track: 'mic1' })).toMatchObject({ op: 'publish', mid: '0' });
+    expect(parse({ t: 'rtc', id: 2, op: 'publish', sdp: 'hello', mid: '0', track: 'mic1' })).toBeNull();
+    expect(parse({ t: 'rtc', id: 3, op: 'pull', from: 'abc12345' })).toEqual({ t: 'rtc', id: 3, op: 'pull', from: 'abc12345' });
+    expect(parse({ t: 'rtc', id: 0, op: 'session' })).toBeNull();
+    expect(parse({ t: 'rtc', id: 4, op: 'close', mids: ['1', 'x y'] })).toEqual({ t: 'rtc', id: 4, op: 'close', mids: ['1'] });
+    expect(parse({ t: 'signal', to: 'abc12345', data: { sdp: { type: 'offer', sdp } } })).toMatchObject({ t: 'signal', to: 'abc12345' });
+    expect(parse({ t: 'signal', to: 'abc12345', data: { candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 5 typ host', sdpMid: '0', sdpMLineIndex: 0, evil: 1 } } })).toEqual({
+      t: 'signal',
+      to: 'abc12345',
+      data: { candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 5 typ host', sdpMid: '0', sdpMLineIndex: 0 } },
+    });
+    expect(parse({ t: 'signal', to: 'abc12345', data: { sdp: { type: 'pranswer', sdp } } })).toBeNull();
+    expect(parse({ t: 'signal', to: 'abc12345', data: { html: '<b>' } })).toBeNull();
+    // Büyük ama rtc olmayan mesaj hâlâ reddedilir.
+    expect(parse({ t: 'chat', text: 'a'.repeat(6000) })).toBeNull();
+  });
+
   it('accepts only the listed emoji gaps and the home message', () => {
     expect(parse({ t: 'settings', reactionGap: 3 })).toEqual({ t: 'settings', reactionGap: 3 });
     expect(parse({ t: 'settings', reactionGap: 7 })).toBeNull();

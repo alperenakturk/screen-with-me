@@ -79,7 +79,7 @@ export function decodePng(buf) {
 
 const CHROME = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 
-export async function launch({ ext, out, width = 1280, height = 860, headless = true }) {
+export async function launch({ ext, out, width = 1280, height = 860, headless = true, args = [] }) {
   const chrome = spawn(
     CHROME,
     [
@@ -92,6 +92,8 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
       `--window-size=${width},${height}`,
       '--no-first-run',
       '--no-default-browser-check',
+      // Ek bayraklar (ör. sesli sohbet testinde sahte mikrofon).
+      ...args,
       'about:blank',
     ],
     { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] },

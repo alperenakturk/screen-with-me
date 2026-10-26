@@ -61,6 +61,7 @@ import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
+import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 
@@ -381,6 +382,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
         </section>
 
+        <section class="card voice-card" id="voice-card" hidden>
+          <div class="voice-row">
+            <button id="voice-join" type="button" class="btn primary voice-join">🎙 <span data-i18n="voice.join"></span></button>
+            <div id="voice-on" class="voice-on" hidden>
+              <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
+              <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
+            </div>
+            <div id="voice-people" class="voice-people"></div>
+          </div>
+          <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
+        </section>
+
         <section class="card tabs-card">
           <nav class="tabs" role="tablist">
             <button type="button" class="tab" role="tab" data-tab="chat">
@@ -592,6 +605,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
   });
+  // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
+  const voice = createVoice(app, send, () => myId);
   const reactions = createReactions(
     app,
     send,
@@ -658,6 +673,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     switch (message.t) {
       case 'welcome':
         myId = message.you;
+        voice.welcome(message.voice === true && !isShell, message.voiceMode ?? 'p2p');
         setMembers(message.members, message.hostId, false);
         chooseFirstTab(message.hostId === message.you);
         if (message.settings) roomSettings = message.settings;
@@ -780,7 +796,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (fullscreen.isActive()) toasts.show(withAvatar(by), text, by.id === myId);
         break;
       }
+      case 'rtc':
+        voice.rtc(message);
+        break;
+      case 'signal':
+        voice.signal(message.from, message.data);
+        break;
       case 'error':
+        if (message.code === 'voice_full' || message.code === 'voice_unavailable') {
+          voice.error(message.code);
+          break;
+        }
         if (message.code === 'kicked') {
           // Oda yöneticisi çıkardı: tekrar bağlanmaya çalışma, bilgilendirme ekranını göster.
           connection.close();
@@ -888,6 +914,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let film: ShellPlayer | null = null;
   /** Kabukta: film sekmesinin adresi. */
   let shellPage: string | null = null;
+  /** Kabukta: film sayfasında delik açıldı mı (sitenin zeminleri ancak o zaman saydam olur). */
+  let holeReady = false;
   /** Kabukta: film sayfasında senkronlanacak video bulundu mu (bulunmazsa "Sayfayı göster" önerilir). */
   let videoFound = false;
   /** "Sayfayı göster": oda görünümü üstte ince şeride çekilir, film sayfası olduğu gibi görünür (reklam/pencere kapatmak için). */
@@ -1041,7 +1069,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       const modal = document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open], .profile-pop:not([hidden])') !== null;
       layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12) };
     }
-    document.documentElement.classList.toggle('shell-film', layout.mode === 'full');
+    // Deliğin içi (sitenin zeminleri) ancak eklenti "delik açıldı" deyince saydam olur: film sayfası o an gizlenmiş olur.
+    if (layout.mode !== 'full') holeReady = false;
+    document.documentElement.classList.toggle('shell-film', layout.mode === 'full' && holeReady);
     const json = JSON.stringify(layout);
     if (json === sentLayout) return;
     sentLayout = json;
@@ -1111,6 +1141,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         currentItemId = null;
         void applyState(roomState);
       }
+    } else if (message.type === 'hole' && isShell) {
+      holeReady = true;
+      if (sentLayout.startsWith('{"mode":"full"')) document.documentElement.classList.add('shell-film');
     } else if (message.type === 'video' && isShell) {
       videoFound = message.found;
     } else if (message.type === 'fullscreen' && isShell) {
@@ -1534,6 +1567,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   emptyInviteEl.addEventListener('click', () => void shareInvite(emptyInviteEl, emptyInviteLabel));
   window.addEventListener('langchange', () => {
     copyEl.textContent = inviteLabel();
+    voice.relabel();
     emptyInviteEl.textContent = emptyInviteLabel();
   });
 
@@ -1565,6 +1599,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function renderMembers(): void {
     people.set(members, hostId, myId);
     seats.setMembers(members, myId);
+    voice.members(members);
     $('#people-count').textContent = String(members.length);
     renderAlone();
     renderWaiting();
@@ -1728,7 +1763,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // Sayfadan çıkarken (film sayfasına gidiş, odaya dönüş) bağlantıyı hemen kapat: tarayıcı sayfayı
   // önbellekte açık tutarsa kişi odada bir süre iki kez görünüyordu. Geri gelinirse sayfa yenilenir.
-  addEventListener('pagehide', () => connection.close());
+  addEventListener('pagehide', () => {
+    voice.leave();
+    connection.close();
+  });
 
   // ---- Bağlantıyı yenile (sağ üst ⟳): kopma ya da takılma için, sayfayı yenilemeden. ----
   reconnectEl.onclick = () => {

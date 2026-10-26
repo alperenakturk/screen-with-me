@@ -127,7 +127,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   şema ilan ediyor, şemalar farklı olursa Chrome çerçevenin arkasını opak griye boyar); film sayfası açılırken katman
   binene kadar `[data-swm-cover]` örtüsü (document_start, `sessions`'ta bu site varsa ya da sekmenin `sessionStorage`
   `swm-cover`'ı; tıklamayı yutar, sitenin bildirdiği ilk yerleşimde kalkar (`fromSite`; arka planın yer tutucusunda
-  değil), en fazla 8 sn); tam ekranda video varsayılan olarak ekranı kaplar, kontroller bekleyince kaybolur (film
+  değil), en fazla 8 sn); delik ilk açılışta odaktan iki kare sonra açılır ve üst çerçeve `{type:'hole'}` der: site
+  `shell-film` (saydamlık) ancak bundan sonra açar (önce açınca sayfa gizlenene kadar bir kare film sitesi görünüyordu);
+  oda görünümünde oynatıcıya benzer bir şey yoksa sayfa yine gizli kalır (`blank`); tam ekranda video varsayılan olarak ekranı kaplar, kontroller bekleyince kaybolur (film
   sayfasındaki fare hareketi `activity` ile siteye gelir → `fullscreen.poke()`; kaybolunca adacıkları da kalkar);
   Ayarlar → "Tam ekranda video: kontrollerin üstünde dursun" (`opt:fsFit` = `above`, sadece kabukta görünür) seçilirse
   delik `#fs-controls`'ün üstünde biter ve kontroller hep görünür (altyazı hiç örtülmez); adacıklar hep deliğe kırpılır;
@@ -223,6 +225,17 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   uçuşsun" (`opt:reactions`). Kabukta her uçuşan emojinin yolu bir adacık.
 - **Tek kişiyken senkron yok:** sitede "Herkesi bana eşitle" ve senkron testi soluk, basınca "tek başınasın" balonu
   (`isAlone`, `ui/hint.ts` `flashHint`); sunucuda farklı cid sayısı 2'den azsa "herkes hazır" beklemesi olmaz.
+- **Sesli sohbet (`packages/shared/src/voice.ts`, `voice-p2p.ts`, site `ui/voice.ts`, plan `docs/internal/ses-goruntu.md`):**
+  sağ panelde "🎙 Sese katıl" kartı; katılınca 🎙/🔇 ve "Ayrıl", seste olanların avatarları (konuşanın çevresi parlar,
+  `getSynchronizationSources`), kişiler listesinde 🎙/🔇. Katılmayan kimseyi duymaz. Üyenin `voice: {mic, track?}` alanı
+  (sürüm artırmadan); `{t:'voice', on, mic}`. Taşıma yolu `welcome.voiceMode`: **p2p** (varsayılan, kart/hesap yok): her
+  kişi seste olan herkesle ayrı WebRTC bağlantısı (kimliği küçük olan teklif yapar), sunucu `{t:'signal'}` mesajlarını
+  sadece iki taraf da seste ise aktarır (IP sadece seste olanlara görünür), en fazla `VOICE_MAX_P2P` (6), STUN Cloudflare +
+  Google; **sfu**: Worker'da `REALTIME_APP_ID`/`REALTIME_APP_SECRET` varsa Cloudflare Realtime (`apps/server/src/realtime.ts`,
+  `{t:'rtc'}` istekleri, oturum sunucuda, `VOICE_MAX` 10). Cloudflare kart istediği ve harcama tavanı olmadığı için şimdilik
+  p2p (kullanıcı kararı, Ekim 2026). `VOICE=off` her şeyi kapatır. Kabukta (film sayfası) kapalı: orada mikrofon izni film
+  sitesinin adına sorulur; 2. aşamada eklentinin offscreen belgesiyle. Testler: `scripts/e2e/voice.mjs`, gerçek ses
+  `scripts/harness/voice/run.mjs` (iki Chrome, sahte mikrofon, gelen sesin enerjisi ölçülür).
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).

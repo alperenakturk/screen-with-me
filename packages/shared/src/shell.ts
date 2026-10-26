@@ -58,7 +58,12 @@ export type ExtToSite =
   /** Film sayfasında senkronlanacak video bulundu mu? */
   | { type: 'video'; found: boolean }
   /** Tam ekran değişti (Esc ile çıkıldı vb.). */
-  | { type: 'fullscreen'; on: boolean };
+  | { type: 'fullscreen'; on: boolean }
+  /**
+   * Film sayfasında delik açıldı: sayfa gizlendi, video deliğe oturdu. Site deliğin içini ancak bundan sonra saydam
+   * yapar (önce yapınca, eklenti sayfayı gizleyene kadar geçen birkaç milisaniyede film sitesi görünüyordu).
+   */
+  | { type: 'hole' };
 
 /** Site ⇄ site-bridge / shell.html mesajlarındaki kaynak etiketleri. */
 export const SITE_SOURCE = 'screenwithme-site';
