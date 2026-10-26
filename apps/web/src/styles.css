@@ -3615,8 +3615,14 @@ html.shell .brand {
   cursor: pointer;
 }
 
-.shell-home {
+.shell-home,
+.nav-link.shell-peek,
+.nav-link.shell-pick {
   white-space: nowrap;
+}
+
+.nav-link.shell-pick[hidden] {
+  display: none;
 }
 
 /* Filmin deliği: eklenti film videosunu tam buraya yerleştirir */

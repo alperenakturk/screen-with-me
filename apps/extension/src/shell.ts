@@ -104,6 +104,9 @@ addEventListener('message', (event: MessageEvent) => {
     case 'fullscreen':
       toBackground({ type: 'fullscreen', on: data.on === true });
       break;
+    case 'pick':
+      toBackground({ type: 'pick', on: data.on === true });
+      break;
   }
 });
 

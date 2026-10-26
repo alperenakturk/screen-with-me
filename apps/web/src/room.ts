@@ -918,8 +918,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let holeReady = false;
   /** Kabukta: film sayfasında senkronlanacak video bulundu mu (bulunmazsa "Sayfayı göster" önerilir). */
   let videoFound = false;
-  /** "Sayfayı göster": oda görünümü üstte ince şeride çekilir, film sayfası olduğu gibi görünür (reklam/pencere kapatmak için). */
-  let peek = false;
+  /**
+   * Oda görünümü üstte ince şeride çekilir, film sayfası olduğu gibi görünür. `page`: "Sayfayı göster" (reklam/pencere
+   * kapatmak için); `pick`: elle video seçimi (film sayfasındaki videoların üstünde "Bunu senkronla" düğmeleri).
+   */
+  let peek: '' | 'page' | 'pick' = '';
+  /** Kabukta: film sayfasında video seçildi (seçim şeridini kapatır). */
+  let onPicked: (() => void) | null = null;
 
   /** Oynatıcı alanındaki videoyu/sayfayı kapatır. */
   function closeCurrent(): void {
@@ -1011,7 +1016,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       layout = { mode: 'open' };
       // Film kapandı (odada başka bir şey açıldı): "Sayfayı göster" de biter.
       if (peek) {
-        peek = false;
+        if (peek === 'pick') postToExtension({ type: 'pick', on: false });
+        peek = '';
         document.documentElement.classList.remove('shell-peek');
         document.querySelector<HTMLElement>('.peek-strip')?.setAttribute('hidden', '');
       }
@@ -1146,6 +1152,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (sentLayout.startsWith('{"mode":"full"')) document.documentElement.classList.add('shell-film');
     } else if (message.type === 'video' && isShell) {
       videoFound = message.found;
+    } else if (message.type === 'picked' && isShell) {
+      // Kullanıcı film sayfasında videoyu seçti: oda görünümüne dönülür, video deliğe oturur.
+      onPicked?.();
     } else if (message.type === 'fullscreen' && isShell) {
       fullscreen.syncShell(message.on);
     }
@@ -1200,20 +1209,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const peekStrip = el('div', { class: 'peek-strip' }, peekText, peekBack);
     peekStrip.hidden = true;
     document.body.append(peekStrip);
-    const setPeek = (on: boolean) => {
-      peek = on;
-      peekStrip.hidden = !on;
-      document.documentElement.classList.toggle('shell-peek', on);
+    // 🎯 Video seç: otomatik seçim yanlış videoyu (fragman, önizleme, reklam) tuttuysa film sayfası açılır, her videonun
+    // üstünde "Bunu senkronla" düğmesi çıkar; seçilince oda görünümüne dönülür.
+    const pickButton = el('button', { type: 'button', class: 'nav-link shell-pick' }, `🎯 ${t('pick')}`);
+    const setPeek = (mode: typeof peek) => {
+      if (peek === 'pick' && mode !== 'pick') postToExtension({ type: 'pick', on: false });
+      peek = mode;
+      peekStrip.hidden = !mode;
+      peekText.textContent = t(mode === 'pick' ? 'pickStrip' : 'peekStrip');
+      peekBack.textContent = t(mode === 'pick' ? 'pickCancel' : 'peekBack');
+      document.documentElement.classList.toggle('shell-peek', !!mode);
       reportLayout();
+      if (mode === 'pick') postToExtension({ type: 'pick', on: true });
     };
-    peekButton.addEventListener('click', () => setPeek(true));
-    peekBack.addEventListener('click', () => setPeek(false));
-    homeButton.after(peekButton);
+    onPicked = () => {
+      if (peek !== 'pick') return;
+      setPeek('');
+      flashHint(pickButton, t('picked'));
+    };
+    peekButton.addEventListener('click', () => setPeek('page'));
+    pickButton.addEventListener('click', () => setPeek('pick'));
+    peekBack.addEventListener('click', () => setPeek(''));
+    // Esc seçimden/sayfa görünümünden de çıkar.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && peek) setPeek('');
+    });
+    homeButton.after(peekButton, pickButton);
     const labelPeek = () => {
       peekButton.textContent = `👁 ${t('peek')}`;
       peekButton.title = t('peekTitle');
-      peekBack.textContent = t('peekBack');
-      peekText.textContent = t('peekStrip');
+      pickButton.textContent = `🎯 ${t('pick')}`;
+      pickButton.title = t('pickTitle');
+      peekBack.textContent = t(peek === 'pick' ? 'pickCancel' : 'peekBack');
+      peekText.textContent = t(peek === 'pick' ? 'pickStrip' : 'peekStrip');
     };
     labelPeek();
     window.addEventListener('langchange', () => {
@@ -1223,6 +1251,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Film açıldı ama 10 sn'dir video bulunamadı: büyük ihtimalle önünde bir reklam/pencere var, düğmeyi öner.
     let hinted = false;
     setInterval(() => {
+      // Video seçimi sadece film açıkken anlamlı.
+      pickButton.hidden = film === null;
       if (film === null) {
         filmSince = 0;
         return;

@@ -55,6 +55,8 @@ interface Shell {
   videoSent: boolean | null;
   /** Film sitesinin alan adı (ör. ornek.com): sekme başka bir siteye giderse katman kalkar. */
   site: string;
+  /** Elle video seçimi açık: sonradan yüklenen çerçeveler de düğmelerini çizsin. */
+  picking: boolean;
 }
 
 // Katman açılır açılmaz sayfanın tamamını kaplar (oda görünümü hemen gelsin); site deliği sonra bildirir.
@@ -65,7 +67,20 @@ const frames = new Map<number, Map<number, Frame>>();
 const shells = new Map<number, Shell>();
 
 function newShell(tabId: number, roomId: string, site: string): Shell {
-  return { tabId, roomId, port: null, state: null, offset: 0, synced: false, activeFrame: null, activated: false, layout: START, videoSent: null, site };
+  return {
+    tabId,
+    roomId,
+    port: null,
+    state: null,
+    offset: 0,
+    synced: false,
+    activeFrame: null,
+    activated: false,
+    layout: START,
+    videoSent: null,
+    site,
+    picking: false,
+  };
 }
 
 /** Adresin "sitesi": alan adının son iki parçası (www.ornek.com ve izle.ornek.com aynı site). */
@@ -221,6 +236,14 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
     case 'fullscreen-changed':
       if (frameId === 0) post(shell.port, { type: 'fullscreen', on: message.on });
       break;
+    case 'picked':
+      // Kullanıcı bu çerçevedeki videoyu seçti: başka çerçevedeki eski seçim düşer, düğmeler kalkar. Çerçeve seçilen
+      // videoyu çok yüksek puanla bildirir (hemen ardından gelen `candidate`), etkin çerçeve o olur.
+      if (!shell.picking) break;
+      shell.picking = false;
+      for (const [id, other] of frames.get(tabId) ?? []) post(other.port, id === frameId ? { type: 'pick', on: false } : { type: 'unpick' });
+      post(shell.port, { type: 'picked' });
+      break;
   }
 }
 
@@ -259,6 +282,7 @@ chrome.runtime.onConnect.addListener((port) => {
     // Üst çerçeve odanın katmanını açar; her çerçeve yerleşimi bilsin.
     if (frameId === 0) post(port, { type: 'shell-open', roomId: shell.roomId });
     pushLayout(shell, frameId);
+    if (shell.picking) post(port, { type: 'pick', on: true });
   });
 });
 
@@ -316,6 +340,10 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
     }
     case 'fullscreen':
       post(frames.get(shell.tabId)?.get(0)?.port, { type: 'shell-fullscreen', on: message.on });
+      break;
+    case 'pick':
+      shell.picking = message.on;
+      for (const frame of frames.get(shell.tabId)?.values() ?? []) post(frame.port, { type: 'pick', on: message.on });
       break;
   }
 }

@@ -17,6 +17,7 @@ import { describeVideo, findVideos, scoreVideo, wrapVideoElement } from '@swm/sh
 import { SITE_URL } from './config.ts';
 import { applyFocus, NO_INSETS, type Insets } from './focus.ts';
 import { PORT_NAME, PROBE, SESSIONS_KEY, type BackgroundMessage, type FrameMessage } from './messages.ts';
+import { startPicking, stopPicking } from './picker.ts';
 import { askToStart, clearStart } from './start-card.ts';
 
 const SCAN_MS = 1000;
@@ -52,6 +53,12 @@ let scanTimer: ReturnType<typeof setInterval> | null = null;
 let observer: MutationObserver | null = null;
 let best: HTMLVideoElement | null = null;
 let reportedScore = -1;
+/**
+ * Kullanıcının elle seçtiği video ("🎯 Bunu senkronla"): puanı ne olursa olsun bu çerçevenin videosu odur ve
+ * arka plana diğer bütün çerçevelerden yüksek puanla bildirilir. Kısa olsa da (60 sn altı) senkronlanır.
+ */
+let picked: HTMLVideoElement | null = null;
+const PICKED_SCORE = 1e12;
 
 let active = false;
 let state: PlaybackState | null = null;
@@ -91,6 +98,8 @@ function send(message: FrameMessage): void {
 function sleep(): void {
   document.documentElement.removeAttribute('data-swm-room');
   uncover();
+  stopPicking();
+  picked = null;
   // Oda bitti: oda görünümünde susturduğumuz videolar eski hâline dönsün.
   for (const video of mutedByUs) video.muted = false;
   mutedByUs.clear();
@@ -158,6 +167,11 @@ function scan(): void {
       bestScore = score;
     }
   }
+  if (picked && !picked.isConnected) picked = null;
+  if (picked) {
+    bestVideo = picked;
+    bestScore = PICKED_SCORE;
+  }
   const changed = bestVideo !== best;
   best = bestVideo;
   if (changed || bucket(bestScore) !== bucket(reportedScore)) {
@@ -197,7 +211,7 @@ function onSourceChange(): void {
 /** Videonun süresi değişti: kısa (reklam) olduysa motor ayrılır, uzun olduysa (film başladı) bağlanır. */
 function onDurationChange(): void {
   if (!active || !watched) return;
-  if (isShort(watched)) {
+  if (isShort(watched) && watched !== picked) {
     if (adapter) {
       adapter.release();
       adapter = null;
@@ -236,6 +250,9 @@ function attachEngine(): void {
   if (adapter?.element === best) return;
   adapter?.release();
   adapter = null;
+  // Motor eski videodan ayrılsın: aşağıdaki `receive` eski videoya hâlâ bağlıyken komut verip onu (ör. elle seçimden
+  // önce senkronlanan fragmanı) yeniden oynatıyordu.
+  engine?.detach();
   watchSource(best);
   if (!best) {
     // Video sayfadan kalktı (ör. oynatıcı yeniden kuruldu); yenisi bulununca bağlanır.
@@ -244,7 +261,7 @@ function attachEngine(): void {
   }
   // Kısa video (reklam/önizleme): odaya hareket gitmez, odanın yerine sarılmaz; reklam bitip film gelince
   // (süre değişir) bağlanır, kişi o an odanın olduğu yere atlar.
-  if (isShort(best)) {
+  if (isShort(best) && best !== picked) {
     engine?.detach();
     return;
   }
@@ -571,7 +588,30 @@ function onMessage(message: BackgroundMessage): void {
     case 'idle':
       sleep();
       break;
+    case 'pick':
+      if (message.on) startPicking(pick, best);
+      else stopPicking();
+      break;
+    case 'unpick':
+      // Başka bir çerçevedeki video seçildi: bu çerçeve yine puanına göre aday olur. Senkron buradaydıysa yanlış
+      // video sussun (yoksa iki ses üst üste çalardı).
+      if (adapter) best?.pause();
+      picked = null;
+      reportedScore = -1;
+      scan();
+      break;
   }
+}
+
+/** Kullanıcı bu videoyu seçti: arka plana haber ver, video bu çerçevenin (ve odanın) videosu olur. */
+function pick(video: HTMLVideoElement): void {
+  // Yanlış seçilmiş video (fragman, reklam) sussun.
+  if (best && best !== video) best.pause();
+  picked = video;
+  stopPicking();
+  send({ type: 'picked' });
+  reportedScore = -1;
+  scan();
 }
 
 // Arka plan "bu sekmede oda var" der (sekmedeki tüm çerçevelere gider).

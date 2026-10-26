@@ -34,6 +34,8 @@ export type FrameMessage =
   | { type: 'hole' }
   /** Bizim tam ekranımız bitti/başladı (üst çerçeve: Esc vb.). */
   | { type: 'fullscreen-changed'; on: boolean }
+  /** Seçim modunda kullanıcı bu çerçevedeki bir videoyu seçti ("🎯 Bunu senkronla"). */
+  | { type: 'picked' }
   | { type: 'send'; message: ClientMessage };
 
 /** Arka plan → çerçeve */
@@ -56,7 +58,11 @@ export type BackgroundMessage =
   /** `fromSite`: yerleşimi site bildirdi (yoksa arka planın yer tutucusu: katman henüz boyanmadı, örtü kalsın). */
   | { type: 'shell-layout'; layout: ShellLayout; active: boolean; fromSite: boolean }
   /** Üst çerçeve: film sayfasını tam ekran yap / çık. */
-  | { type: 'shell-fullscreen'; on: boolean };
+  | { type: 'shell-fullscreen'; on: boolean }
+  /** Elle video seçimi: videoların üstüne "Bunu senkronla" düğmeleri çizilsin / kalksın. */
+  | { type: 'pick'; on: boolean }
+  /** Başka bir çerçevedeki video seçildi: bu çerçevenin elle seçimi geçersiz. */
+  | { type: 'unpick' };
 
 /** Arka plan → sekmedeki tüm çerçeveler: "bu sekmede oda var, videonu bildir". */
 export const PROBE = 'swm-probe';
@@ -67,7 +73,8 @@ export type ShellPortMessage =
   | { type: 'embed'; request: EmbedRequest }
   | { type: 'layout'; layout: ShellLayout }
   | { type: 'navigate'; url: string }
-  | { type: 'fullscreen'; on: boolean };
+  | { type: 'fullscreen'; on: boolean }
+  | { type: 'pick'; on: boolean };
 
 /** Arka plan → shell.html */
 export type ShellPortReply =
@@ -77,7 +84,8 @@ export type ShellPortReply =
   | { type: 'page'; url: string }
   | { type: 'video'; found: boolean }
   | { type: 'fullscreen'; on: boolean }
-  | { type: 'hole' };
+  | { type: 'hole' }
+  | { type: 'picked' };
 
 /** Ana site → arka plan (site-bridge üzerinden): "bu sekme film sayfasına gitsin, odanın katmanıyla". */
 export interface SiteGoMessage {

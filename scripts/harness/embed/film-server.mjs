@@ -10,6 +10,8 @@
 //   /sneaky       sadece iframe isteğinde DENY (önceden kontrol göremez; el sıkışma yakalar)
 //   /late         video "oynat"a basınca oluşur, başka kökenden oynatıcı iframe'inde (çoğu sitedeki gibi;
 //                 "Filmi başlat" kartının testi)
+//   /two          iki video: üstte büyük bir "fragman", altta daha küçük asıl film (otomatik seçim büyüğü tutar;
+//                 elle video seçimi testi)
 //
 // İnternetsiz ortamda: FILM_VIDEO=/yol/video.webm verilirse video oradan (/video.webm) sunulur.
 // Video: Big Buck Bunny (CC BY 3.0, Blender Foundation), Wikimedia Commons.
@@ -64,6 +66,11 @@ document.getElementById('pp').onclick = () => (v.paused ? v.play() : v.pause());
 </script>`;
 
 const film = (title) => page(title, videoTag);
+const two = page(
+  'İki videolu sayfa',
+  `<h2>Fragman</h2><div class="player" id="bigbox"><video id="big" controls playsinline preload="auto" src="${VIDEO}"></video></div>
+<h2>Film</h2><div class="player" id="smallbox" style="width:60%"><video id="small" controls playsinline preload="auto" src="${VIDEO}"></video></div>`,
+);
 const nestedPage = (title) => page(title, `<div class="player"><iframe src="${PLAYER_ORIGIN}/player" allow="autoplay; fullscreen" allowfullscreen></iframe></div>`);
 const nested = nestedPage('İç içe oynatıcı');
 // Video yok; "oynat"a basınca oynatıcı iframe'i yüklenir (gerçek sitelerdeki gibi).
@@ -89,6 +96,7 @@ createServer((req, res) => {
   if (path === '/film' || path === '/') return send(res, 200, film('Film sayfası (izin veriyor)'));
   if (path === '/film-nested') return send(res, 200, nested);
   if (path === '/late') return send(res, 200, late);
+  if (path === '/two') return send(res, 200, two);
   if (path === '/deny') return send(res, 200, film('Yasaklı sayfa (X-Frame-Options)'), { 'x-frame-options': 'DENY' });
   if (path === '/deny-nested') return send(res, 200, nestedPage('Yasaklı sayfa, iç içe oynatıcı'), { 'x-frame-options': 'DENY' });
   if (path === '/csp') return send(res, 200, film('Yasaklı sayfa (CSP)'), { 'content-security-policy': "frame-ancestors 'none'" });

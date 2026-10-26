@@ -47,7 +47,9 @@ export type SiteToExt =
   /** Sekmeyi başka bir adrese götür (yeni film sayfası ya da sitedeki oda). */
   | { type: 'navigate'; url: string }
   /** Bizim ⛶: film sayfasının tamamı tam ekran olsun (katman ve video birlikte). */
-  | { type: 'fullscreen'; on: boolean };
+  | { type: 'fullscreen'; on: boolean }
+  /** Elle video seçimi: film sayfasındaki videoların üstünde "Bunu senkronla" düğmeleri (aç/kapat). */
+  | { type: 'pick'; on: boolean };
 
 /** Eklenti → site. */
 export type ExtToSite =
@@ -63,7 +65,9 @@ export type ExtToSite =
    * Film sayfasında delik açıldı: sayfa gizlendi, video deliğe oturdu. Site deliğin içini ancak bundan sonra saydam
    * yapar (önce yapınca, eklenti sayfayı gizleyene kadar geçen birkaç milisaniyede film sitesi görünüyordu).
    */
-  | { type: 'hole' };
+  | { type: 'hole' }
+  /** Kullanıcı film sayfasında bir videoyu seçti: seçim modu bitti, senkron artık o videoda. */
+  | { type: 'picked' };
 
 /** Site ⇄ site-bridge / shell.html mesajlarındaki kaynak etiketleri. */
 export const SITE_SOURCE = 'screenwithme-site';
