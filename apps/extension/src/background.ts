@@ -171,7 +171,7 @@ function pushVideo(shell: Shell): void {
 function pushLayout(shell: Shell, only?: number): void {
   for (const [frameId, frame] of frames.get(shell.tabId) ?? []) {
     if (only !== undefined && frameId !== only) continue;
-    post(frame.port, { type: 'shell-layout', layout: shell.layout, active: frameId === shell.activeFrame });
+    post(frame.port, { type: 'shell-layout', layout: shell.layout, active: frameId === shell.activeFrame, fromSite: shell.layout !== START });
   }
 }
 
@@ -329,6 +329,8 @@ chrome.runtime.onConnect.addListener((port) => {
       return;
     }
     shell.port = port;
+    // Odanın kimliği sadece buradan gider: adres çubuğunda/çerçeve öğesinde yok (film sitesi okuyamasın).
+    post(port, { type: 'room', roomId: shell.roomId });
   });
   port.onMessage.addListener((message: ShellPortMessage) => {
     queue = queue

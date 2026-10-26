@@ -51,7 +51,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 6. **Ücretsiz altyapı.** Cloudflare Workers + Durable Objects; oda başına bir nesne,
    boştayken uyur, ücret işlemez.
 
-## Şu an neler var? (0.9.56)
+## Şu an neler var? (0.9.57)
 
 **İzleme**
 - Oynat / durdur / sar / hız herkeste aynı; kayma sessizce kapanır (>1 sn atlama, küçükse ±%5 hız).
@@ -70,7 +70,7 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 **Oda**
 - Sıra, oylama (en çok oy alan önce), otomatik devam (kapatılırsa "Sıradakini başlat").
 - Sohbet (oda hareketleri varsayılan gizli), 3 emoji sayfası, videonun altından yükselen emojiler (avatar + isim;
-  ayarlardan kapatılabilir).
+  art arda basılabilir, yönetici sıklık sınırı koyabilir, isteyen görmeyi kapatır).
 - Özel emojiler (kendi GIF / resmin; odada en fazla 24).
 - Pinler (notlu; video altında ve tam ekranda şerit).
 - Klavye: 1–8 emoji, Enter mesaj, P pin.
@@ -88,13 +88,13 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
 **Görünüm**
 - 11 tema (4 sade, 2 resimli, 5 Art Deco), her birinde kostümlü maskot. (Uzay ve Cyberpunk
   temaları, astronot / uzaylı / siber avatarlarıyla birlikte 0.9.51'de, Fantastik orta çağ 0.9.55'te kaldırıldı.)
-- Çizilmiş avatarlar (temalı + parodi film / dizi / anime / oyun) ve hayvan emojileri; büyük seçim penceresi.
+- Çizilmiş avatarlar (temalı + parodi film / dizi / anime / oyun); büyük seçim penceresi (hayvan emojileri 0.9.57'de kalktı).
 - Açılış animasyonu ve üretilmiş açılış sesi; Türkçe (varsayılan) / İngilizce.
 - Eklentide film sayfası sitedeki oda gibi (Gece teması), video bulunmadan "Filmi başlat" kartı, tam ekranda
   sürüklenen mesaj tutamağı, 🏠 ile odaya dönüş, "sen de gel?" sorusu.
 
 **Geliştirme**
-- 123 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
+- 124 birim testi, 12 uçtan uca test dosyası; GitHub Actions'ta her push ve PR'da çalışır.
 - `main`'e gelen her değişiklik testlerden sonra GitHub Actions ile Cloudflare'e yüklenir
   ve canlı sunucuya karşı uçtan uca testler koşar (bkz. CLAUDE.md "Yayın").
 
@@ -120,6 +120,11 @@ güvenilir ve ücretsiz" bir araç yok. ScreenWithMe tam burada.
   içe oynatıcıda doğru çerçeve büyütülür. Yeni dizi parodisi avatar: fesli zaman yolcusu.
 - **Mehtaplı Geceler yenilendi (Ekim 2026):** yağlı boya havasında teras: çini pano, mermer sütun, kandil, ay ışığında
   Boğaz, karşı kıyıda saray ve camiler, fenerli kayıklar; yeni maskot (renkli sarık, kırmızı entari, fener).
+- **v0.9.57:** Film sayfasında mesajlar ve emojiler gerçekten saydam (renk şeması uyuşmazlığı giderildi), oda katmanı
+  binene kadar film sitesi hiç görünmüyor (örtü), tam ekranda altyazı kontrol çubuğunun altında kalmıyor, tam ekranda
+  pin şeridi yok; emojiler art arda (×2 yok), yönetici emoji sıklığı ayarlar; hayvan avatarları kalktı, avatar seçici
+  hep Temalı ile açılır; 👤 Profil sağ üstte; yönetici Ayarlar, diğerleri Sohbet sekmesiyle başlar; tek başınayken
+  senkron düğmelerine basınca uyarı.
 - **v0.9.56:** Film sayfasında oda görünümü video başlamadan gelir (ince şerit kalktı), oynatıcının yeri otomatik
   bulunur; altyazılar kesilmiyor; mesajlar video üstünde yarı saydam; emojiler yine alttan uçuşuyor (yan kartlar
   kalktı); tek kişiyken senkron düğmeleri ve bekleme kapalı; biri odaya dönünce filmdekilere "sen de dön?" kartı.

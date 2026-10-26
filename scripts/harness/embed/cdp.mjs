@@ -5,6 +5,77 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { inflateSync } from 'node:zlib';
+
+/**
+ * Ekran görüntüsünü (8 bit PNG, RGB/RGBA/gri) piksellere açar; dış paket gerekmesin diye kısa çözücü.
+ * Dönen `at(x, y)` → [r, g, b].
+ */
+export function decodePng(buf) {
+  let pos = 8;
+  let width = 0;
+  let height = 0;
+  let colorType = 0;
+  const idat = [];
+  while (pos < buf.length) {
+    const len = buf.readUInt32BE(pos);
+    const type = buf.toString('ascii', pos + 4, pos + 8);
+    const data = buf.subarray(pos + 8, pos + 8 + len);
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      colorType = data[9];
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+    pos += 12 + len;
+  }
+  const bpp = { 0: 1, 2: 3, 4: 2, 6: 4 }[colorType];
+  const raw = inflateSync(Buffer.concat(idat));
+  const stride = width * bpp;
+  const out = Buffer.alloc(width * height * 3);
+  const prev = Buffer.alloc(stride);
+  const cur = Buffer.alloc(stride);
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    const line = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1));
+    for (let i = 0; i < stride; i++) {
+      const a = i >= bpp ? cur[i - bpp] : 0;
+      const b = prev[i];
+      const c = i >= bpp ? prev[i - bpp] : 0;
+      let v = line[i];
+      if (filter === 1) v += a;
+      else if (filter === 2) v += b;
+      else if (filter === 3) v += (a + b) >> 1;
+      else if (filter === 4) {
+        const p = a + b - c;
+        const pa = Math.abs(p - a);
+        const pb = Math.abs(p - b);
+        const pc = Math.abs(p - c);
+        v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+      }
+      cur[i] = v & 255;
+    }
+    for (let x = 0; x < width; x++) {
+      const o = (y * width + x) * 3;
+      if (bpp >= 3) {
+        out[o] = cur[x * bpp];
+        out[o + 1] = cur[x * bpp + 1];
+        out[o + 2] = cur[x * bpp + 2];
+      } else out[o] = out[o + 1] = out[o + 2] = cur[x * bpp];
+    }
+    prev.set(cur);
+  }
+  return {
+    width,
+    height,
+    at(x, y) {
+      const xi = Math.min(width - 1, Math.max(0, Math.round(x)));
+      const yi = Math.min(height - 1, Math.max(0, Math.round(y)));
+      const o = (yi * width + xi) * 3;
+      return [out[o], out[o + 1], out[o + 2]];
+    },
+  };
+}
 
 const CHROME = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 
@@ -32,6 +103,8 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
   const pending = new Map();
   /** Sitenin içindeki başka kökenli çerçeveler (OOPIF): adres → oturum. */
   const frames = new Map();
+  /** Olay dinleyicileri (ör. Page.screencastFrame). */
+  const listeners = new Set();
   fromChrome.on('data', (chunk) => {
     buf += chunk.toString('utf8');
     let i;
@@ -49,6 +122,7 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
       } else if (m.method === 'Target.detachedFromTarget') {
         frames.delete(m.params.sessionId);
       }
+      if (m.method) for (const fn of listeners) fn(m);
     }
   });
   const send = (method, params = {}, sessionId) =>
@@ -93,6 +167,33 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
     console.log('  📸', file);
     return file;
   };
+  /** Ekran görüntüsü alır, kaydeder ve piksellerini döner (renk örneklemek için). */
+  const pixels = async (name) => {
+    const r = await cdp('Page.captureScreenshot', { format: 'png' });
+    const data = Buffer.from(r.result.data, 'base64');
+    const file = `${out}-${name}.png`;
+    writeFileSync(file, data);
+    console.log('  📸', file);
+    return decodePng(data);
+  };
+  /**
+   * Aynı tarayıcıda arka planda ayrı bir sekme açar (ör. ilgisiz bir site). `initScript` sayfanın her
+   * yüklenişinde en başta çalışır.
+   */
+  const openTab = async (url, initScript) => {
+    const created = await send('Target.createTarget', { url: 'about:blank', background: true });
+    const targetId = created.result.targetId;
+    const tab = await send('Target.attachToTarget', { targetId, flatten: true });
+    const s = tab.result.sessionId;
+    await send('Page.enable', {}, s);
+    if (initScript) await send('Page.addScriptToEvaluateOnNewDocument', { source: initScript }, s);
+    await send('Page.navigate', { url }, s);
+    return {
+      evaluate: async (expression) => (await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, s)).result?.result?.value,
+      capture: async () => Buffer.from((await send('Page.captureScreenshot', { format: 'png' }, s)).result.data, 'base64'),
+      close: () => send('Target.closeTarget', { targetId }),
+    };
+  };
   const mouse = (type, x, y, extra = {}) => cdp('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1, ...extra });
   const click = async (x, y) => {
     await mouse('mouseMoved', x, y);
@@ -108,5 +209,9 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
   /** Öğenin sayfadaki orta noktası (tıklamak için). */
   const center = async (selector) =>
     evaluate(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); e?.scrollIntoView({ block: 'center' }); const r = e?.getBoundingClientRect(); return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null; })()`);
-  return { loaded, cdp, evaluate, evalFrame, shot, mouse, click, press, type, navigate, center, sleep, close: () => chrome.kill() };
+  const onEvent = (fn) => {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  };
+  return { loaded, cdp, evaluate, evalFrame, shot, pixels, openTab, onEvent, mouse, click, press, type, navigate, center, sleep, close: () => chrome.kill() };
 }

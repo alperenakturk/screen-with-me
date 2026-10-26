@@ -49,7 +49,8 @@ export type BackgroundMessage =
    * Katmanın hâli tüm çerçevelere: `active` videolu çerçeve mi. Üst çerçeve `hole`'a göre videoyu
    * yerleştirir; ara çerçeveler videolu iç çerçeveyi kendi alanlarına büyütür.
    */
-  | { type: 'shell-layout'; layout: ShellLayout; active: boolean }
+  /** `fromSite`: yerleşimi site bildirdi (yoksa arka planın yer tutucusu: katman henüz boyanmadı, örtü kalsın). */
+  | { type: 'shell-layout'; layout: ShellLayout; active: boolean; fromSite: boolean }
   /** Üst çerçeve: film sayfasını tam ekran yap / çık. */
   | { type: 'shell-fullscreen'; on: boolean };
 
@@ -66,6 +67,8 @@ export type ShellPortMessage =
 
 /** Arka plan → shell.html */
 export type ShellPortReply =
+  /** Bu sekmenin odası: shell.html sitemizi ancak bunu alınca açar (başka bir sayfaya gömülen shell.html hiçbir şey açmaz). */
+  | { type: 'room'; roomId: string }
   | { type: 'reply'; reply: EmbedReply }
   | { type: 'page'; url: string }
   | { type: 'video'; found: boolean }

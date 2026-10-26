@@ -16,7 +16,9 @@ import {
   YOUTUBE_MAX_RATE,
   isAvatar,
   randomAvatar,
+  REACTION_GAPS,
   type Avatar,
+  type ReactionGap,
   type ClientMessage,
   type Member,
   type PlaybackState,
@@ -57,7 +59,8 @@ import { confirmDialog } from './ui/confirm.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
-import { createTabs } from './ui/tabs.ts';
+import { createTabs, isTabId } from './ui/tabs.ts';
+import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
@@ -371,7 +374,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button type="button" class="tab" role="tab" data-tab="people">
               <span aria-hidden="true">👥</span><span id="people-count" class="count"></span>
             </button>
-            <button type="button" class="tab tab-icon" role="tab" data-tab="profile" data-i18n-title="tab.profile">👤</button>
             <button type="button" class="tab tab-icon" role="tab" data-tab="settings" id="settings-tab" data-i18n-title="tab.settings">⚙️</button>
           </nav>
 
@@ -437,6 +439,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
               </div>
               <label class="check-row"><input type="checkbox" id="opt-noreactions" /> <span data-i18n="settings.noReactions"></span></label>
+              <label class="select-row"><span data-i18n="settings.reactionGap"></span>
+                <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
+              </label>
               <div class="schedule-row">
                 <label for="opt-start" data-i18n="settings.schedule"></label>
                 <div class="row">
@@ -517,7 +522,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     chatBadge.textContent = count > 9 ? '9+' : String(count);
   });
   const people = createPeoplePanel(app, send);
-  const tabs = createTabs(app, (tab) => chat.setVisible(tab === 'chat'));
+  // Profil sekmesinin düğmesi sağ üstte (en sağda): ad, avatar, tema, özet.
+  {
+    const profileButton = el('button', { type: 'button', class: 'nav-link profile-btn', 'data-tab': 'profile', 'aria-selected': 'false', 'data-i18n-title': 'tab.profile', title: t('tab.profile') }, '👤');
+    document.querySelector('.topbar-right')?.append(profileButton);
+  }
+  /** İlk girişte açılacak sekme seçildi mi (önce sekmeler varsayılan sohbetle kurulur; o hatırlanmaz). */
+  let tabChosen = false;
+  const tabs = createTabs(app, (tab) => {
+    chat.setVisible(tab === 'chat');
+    // Aynı sekmede yenileyince kalınan sekme korunur.
+    if (tabChosen) sessionSave(`tab:${roomId}`, tab);
+  });
+  /** İlk girişte açılacak sekme: bu sekmede daha önce açılan, yoksa yönetici Ayarlar (oda ayarlarını yapar), diğerleri Sohbet. */
+  function chooseFirstTab(host: boolean): void {
+    if (tabChosen) return;
+    tabChosen = true;
+    const remembered = sessionLoad(`tab:${roomId}`);
+    if (isTabId(remembered) && !(isShell && remembered === 'queue')) tabs.show(remembered);
+    else tabs.show(host && !isShell ? 'settings' : 'chat');
+  }
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
     myAvatar = avatar;
@@ -525,7 +549,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
   });
-  const reactions = createReactions(app, send, () => myId !== null && myId === hostId, () => roomSettings.noReactions !== true);
+  const reactions = createReactions(
+    app,
+    send,
+    () => myId !== null && myId === hostId,
+    () => roomSettings.noReactions !== true,
+    () => (roomSettings.reactionGap ?? 0) * 1000,
+  );
   // Klavye: normal görünümde Enter sohbet kutusuna götürür (tam ekranda fullscreen.ts halleder).
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || document.fullscreenElement || isTyping(event.target)) return;
@@ -581,6 +611,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'welcome':
         myId = message.you;
         setMembers(message.members, message.hostId, false);
+        chooseFirstTab(message.hostId === message.you);
         if (message.settings) roomSettings = message.settings;
         waitingIds = message.waiting ?? [];
         renderWaiting();
@@ -849,7 +880,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   /** Biri filmden odaya döndü: videonun üstünde küçük kart (pencere değil, film durmaz). 20 sn sonra kendisi kalkar. */
   let homeAskTimer = 0;
+  const homeAsked = new Map<string, number>();
   function askHome(by: Member): void {
+    // Aynı kişinin haberi dakikada bir (sunucu da sınırlar; ikinci sekmeden gelirse yine tek kart).
+    const last = homeAsked.get(by.id) ?? 0;
+    if (Date.now() - last < 60_000) return;
+    homeAsked.set(by.id, Date.now());
     document.getElementById('home-ask')?.remove();
     const yes = el('button', { type: 'button', class: 'btn small-btn primary' }, `🏠 ${t('homeAskYes')}`);
     const no = el('button', { type: 'button', class: 'btn small-btn' }, t('homeAskNo'));
@@ -872,13 +908,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     else {
       const wrap = $('.player-wrap');
       const box = wrap.getBoundingClientRect();
+      // Tam ekranda kontrol çubuğu (kabukta hep görünür) videonun altını örtüp film sitesinin altyazısını
+      // kapatıyordu: delik çubuğun üstünde biter, video ve altyazısı oraya sığar.
+      const fake = $('#theater').classList.contains('fake-fs');
+      const bottom = fake ? box.bottom - $('#fs-controls').offsetHeight : box.bottom;
       const islands: Rect[] = [];
       const floats: Rect[] = [];
-      const add = (list: Rect[], left: number, top: number, right: number, bottom: number) => {
+      // Adacıklar deliğin içine kırpılır: deliğin dışı zaten katman; dışarı taşan parça evenodd'da iki kez
+      // sayılıp katmandan kesilirdi (tam ekranda kontrol çubuğu görünmez oluyordu).
+      const add = (list: Rect[], left: number, top: number, right: number, under: number) => {
         const x = Math.max(left, box.left);
         const y = Math.max(top, box.top);
         const w = Math.min(right, box.right) - x;
-        const h = Math.min(bottom, box.bottom) - y;
+        const h = Math.min(under, bottom) - y;
         if (w > 1 && h > 1) list.push({ x: Math.floor(x), y: Math.floor(y), w: Math.ceil(w), h: Math.ceil(h) });
       };
       // Deliğin içinde yine görünmesi gerekenler: kartlar, tam ekran kontrolleri, uçuşan emojiler…
@@ -895,9 +937,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         const r = child.getBoundingClientRect();
         add(islands, r.left, r.top, r.right, r.bottom);
       }
-      // Sınır 12: önce kalıcı kartlar/kontroller, kalan yer emojilerin.
-      islands.push(...floats);
-      const hole = { x: Math.round(box.left), y: Math.round(box.top), w: Math.round(box.width), h: Math.round(box.height) };
+      // Sınır 12: önce kalıcı kartlar/kontroller; emojilerin yolu en fazla 4 adacık (en yenileri). Emoji yağmuru
+      // deliğin çoğunu kaplayıp film oynatıcısının kendi düğmelerini tıklanamaz yapmasın.
+      islands.push(...floats.slice(-4));
+      const hole = { x: Math.round(box.left), y: Math.round(box.top), w: Math.round(box.width), h: Math.round(Math.max(0, bottom - box.top)) };
       // Sitenin zeminleri deliği boyamasın (styles.css "shell-film"): yollar ekran ve sahne kartına göre.
       const root = document.documentElement;
       root.style.setProperty('--hole-cut', holePath(innerWidth, innerHeight, hole, []));
@@ -1075,7 +1118,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   $('#pin-btn').addEventListener('click', () => pins.open());
   // Senkron testi: boş odada 12 sn'lik sayaç açar; oynarken "aynı yerdesiniz" rozeti fark gösterir.
-  $('#sync-test').addEventListener('click', () => send({ t: 'load', media: { kind: 'test' } }));
+  $('#sync-test').addEventListener('click', (event) => {
+    // Tek başınayken: senkronlanacak kimse yok, kısa uyarı.
+    if (isAlone()) return flashHint(event.currentTarget as HTMLElement, t('syncAlone'));
+    send({ t: 'load', media: { kind: 'test' } });
+  });
   setInterval(() => {
     const badge = $('#sync-badge');
     const testing = roomState?.item?.media.kind === 'test' && current !== null && clock.synced;
@@ -1160,19 +1207,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Herkesi bana eşitle: kendi konumumu odaya yayar (biri kaydıysa tek tıkla düzelir). ----
   const syncAllEl = $<HTMLButtonElement>('#sync-all');
   syncAllEl.addEventListener('click', () => {
+    if (isAlone()) return flashHint(syncAllEl, t('syncAlone'));
     if (film) film.control({ action: 'sync-all' });
     else engine.syncEveryoneToMe();
     syncAllEl.disabled = true;
-    setTimeout(() => (syncAllEl.disabled = isAlone()), 1500);
+    setTimeout(() => (syncAllEl.disabled = false), 1500);
   });
 
-  /** Tek kişiyken senkron düğmeleri kapalı; üstüne gelince nedeni yazar. */
+  /** Tek kişiyken senkron düğmeleri soluk; basınca "tek başınasın" uyarısı çıkar, üstüne gelince nedeni yazar. */
   function renderAlone(): void {
     const alone = isAlone();
     const all = $<HTMLButtonElement>('#sync-all');
     const test = $<HTMLButtonElement>('#sync-test');
-    all.disabled = alone;
-    test.disabled = alone;
+    all.classList.toggle('alone', alone);
+    test.classList.toggle('alone', alone);
     const hint = alone ? t('syncAlone') : t('syncAllHint');
     all.title = hint;
     all.setAttribute('aria-label', hint);
@@ -1311,8 +1359,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     lockQueue.checked = roomSettings.lockQueue === true;
     renderSaved(host);
     $<HTMLInputElement>('#opt-noreactions').checked = roomSettings.noReactions === true;
+    $<HTMLSelectElement>('#opt-reactiongap').value = String(roomSettings.reactionGap ?? 0);
     app.classList.toggle('no-reactions', roomSettings.noReactions === true);
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     $('#host-lock').hidden = host || !roomSettings.hostOnly;
@@ -1349,6 +1398,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#recap-open').addEventListener('click', () => send({ t: 'recap' }));
   $<HTMLInputElement>('#opt-noreactions').addEventListener('change', (event) => {
     send({ t: 'settings', noReactions: (event.target as HTMLInputElement).checked });
+  });
+  $<HTMLSelectElement>('#opt-reactiongap').addEventListener('change', (event) => {
+    const gap = Number((event.target as HTMLSelectElement).value);
+    if ((REACTION_GAPS as readonly number[]).includes(gap)) send({ t: 'settings', reactionGap: gap as ReactionGap });
   });
   // Odayı kaydet: isim zorunlu. Kayıtlıyken aynı kutu adı değiştirir.
   $<HTMLFormElement>('#save-form').addEventListener('submit', (event) => {

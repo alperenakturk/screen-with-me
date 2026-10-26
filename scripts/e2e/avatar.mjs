@@ -18,20 +18,20 @@ function client(hello) {
 }
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 
-const a = client({ name: 'Ali', avatar: '🦊' });
+const a = client({ name: 'Ali', avatar: 'elf' });
 await a.wait((m) => m.t === 'welcome');
 const b = client({ name: 'Eski' }); // avatarsız (eski sürüm)
 const wb = await b.wait((m) => m.t === 'welcome');
-ok(wb.members.find((m) => m.name === 'Ali')?.avatar === '🦊', 'Üye listesinde avatar görünüyor');
+ok(wb.members.find((m) => m.name === 'Ali')?.avatar === 'elf', 'Üye listesinde avatar görünüyor');
 ok(wb.members.find((m) => m.name === 'Eski') && !('avatar' in wb.members.find((m) => m.name === 'Eski')), 'Avatarsız eski istemci de katılabildi');
 const c = client({ name: 'Hacker', avatar: '<img src=x onerror=alert(1)>' });
 const wc = await c.wait((m) => m.t === 'welcome');
 ok(!('avatar' in wc.members.find((m) => m.name === 'Hacker')), 'Geçersiz avatar sessizce yok sayıldı');
 a.send({ t: 'chat', text: 'selam' });
 const chat = await b.wait((m) => m.t === 'chat');
-ok(chat.message.by.avatar === '🦊', 'Sohbet mesajında avatar var');
+ok(chat.message.by.avatar === 'elf', 'Sohbet mesajında avatar var');
 a.send({ t: 'react', emoji: '🔥' });
 const r = await b.wait((m) => m.t === 'reaction');
-ok(r.by.avatar === '🦊', 'Tepkide avatar var');
+ok(r.by.avatar === 'elf', 'Tepkide avatar var');
 for (const k of [a, b, c]) k.ws.close();
 setTimeout(() => process.exit(0), 100);

@@ -94,8 +94,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Kabuk (oda katmanı, `packages/shared/src/shell.ts`):** odada `page` açılınca site `{source:'screenwithme-site',
   type:'go', roomId, url}` yollar → site-bridge → arka plan `site-go` (sekmeyi `shells`'e yazar, `storage.session`) →
   sekme film sayfasına gider. Kendi açtığı sayfaya kişi beklemeden gider; başkasınınkine "Filme git" kartı (kimseyi
-  habersiz yönlendirmeyiz). Film sayfasında üst çerçeve `chrome-extension://…/shell.html#ODA` iframe'ini tam ekran açar,
-  o da sitemizi `/r/ODA?shell=1` açar (sitemiz film sayfasının CSP'sine takılmaz, film sitesi içine erişemez).
+  habersiz yönlendirmeyiz). Film sayfasında üst çerçeve `chrome-extension://…/shell.html` iframe'ini tam ekran açar
+  (oda kimliği adreste/öznitelikte YOK: film sitesi katman öğesini okuyabilir; shell.html kimliği `swm-shell` portundan
+  `{type:'room'}` ile alır, arka plan sekme `shells`'te değilse vermez → başka bir sayfaya gömülen shell.html hiçbir şey
+  açmaz), o da sitemizi `/r/ODA?shell=1` açar (sitemiz film sayfasının CSP'sine takılmaz, film sitesi içine erişemez).
   Oda bağlantısını katmandaki **site** tutar (aynı kişi tek görünür); eklenti sadece aracı:
   site ⇄ shell.html (postMessage, köken kontrollü) ⇄ arka plan (`swm-shell` portu) ⇄ film çerçeveleri (`swm` portu).
   Site → film: `embed` istekleri (`state`, `clock`, `control`, `detach`); film → site: `reply` (`send` sadece
@@ -105,7 +107,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   delik yok). Üst çerçeve katmana `clip-path: path(evenodd …)` uygular (deliğe tıklayınca film oynatıcısı tıklanır),
   `focus.ts` videoyu deliğe oturtur (video henüz yoksa `likelyPlayer`: en büyük video/çerçeve ya da 16:9'a yakın kutu;
   katman açılırken `open` başlar, `bar` artık kullanılmıyor); kabukta sitenin zeminleri deliği boyamaz (`shell-film`,
-  `--hole-cut`), deliğin içindeki mesajlar yarı saydam; odak kutusu taşanı kesmez ve boyut değişince `resize` yayılır
+  `--hole-cut`), deliğin içindeki mesajlar yarı saydam (katman iframe'i ve shell.html `color-scheme: dark`: sitemiz koyu
+  şema ilan ediyor, şemalar farklı olursa Chrome çerçevenin arkasını opak griye boyar); film sayfası açılırken katman
+  binene kadar `[data-swm-cover]` örtüsü (document_start, `sessions`'ta bu site varsa ya da sekmenin `sessionStorage`
+  `swm-cover`'ı; tıklamayı yutar, ilk yerleşimde kalkar, en fazla 8 sn); tam ekranda delik `#fs-controls`'ün üstünde biter (altyazı); odak kutusu taşanı kesmez ve boyut değişince `resize` yayılır
   (altyazılar). Video iç çerçevedeyse `swm-focus-here` zinciriyle doğru çerçeve büyür. Kabukta
   site isim adımını atlar, eklenti linki/ana logo/alt bilgi gizli, üstte "🏠 Odaya dön" (`navigate` → sitedeki oda,
   katman kalkar). Odada başka bir `page` açılınca "Filme git", sitenin oynattığı bir şey açılınca katman açılır ve film
@@ -141,8 +146,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   bakma: Chrome arka plan sekmesinde zamanlayıcıyı dakikada bire yavaşlatır).
 - **Hayalet bağlantılar:** sunucu her bağlantının son mesajını (`seen`) tutar; 150 sn sessiz
   olanı kapatıp listeden düşürür (`pruneStale`, katılımda ve en fazla 20 sn'de bir).
-- **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 6 sayfa: temalı çizilmiş karakterler, hayvan
-  emojileri, parodi film / dizi / anime / oyun (oyun: `speedster`). Seçicideki sekmeler `AVATAR_TABS` (Parodi'nin alt
+- **Avatarlar (`protocol.ts` `AVATAR_PAGES`):** 5 sayfa: temalı çizilmiş karakterler, parodi film / dizi / anime /
+  oyun (oyun: `speedster`). Hayvan emojileri 0.9.57'de kalktı (seçmiş olan rastgele temalı karaktere düşer). Seçici hep
+  "Temalı" sekmesiyle açılır. Seçicideki sekmeler `AVATAR_TABS` (Parodi'nin alt
   sekmeleri var; site `ui/avatar.ts`). Çizilmiş avatarın değeri bir
   kimliktir (`wizard`); resim `/avatars/<kimlik>.svg`, metin
   geçen yerlerde `avatarText()` emoji karşılığını verir. Yeni avatar: `DRAWN_AVATARS` +
@@ -163,8 +169,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kalıcı anahtarını (`owner`) saklar ama istemcilere göndermez; tam liste `{t:'pins'}` ile yayılır,
   yeni gelene `welcome.pins`. Kendi pinini (yönetici hepsini) `unpin` ile kaldırır; en fazla 50; video
   değişince sıfırlanır. Site: video altında + tam ekranda ilerleme üstünde şerit (fare videodayken
-  belirgin), 📌 düğmesi / P → not kutusu.
-  Film sayfasında da aynısı (arayüz sitenin kendisi). (Eski "tepki şeridi"/heat tamamen kaldırıldı.)
+  belirgin; tam ekranda yok), 📌 düğmesi / P → not kutusu.
+  Film sayfasında da aynısı (arayüz sitenin kendisi). Tam ekranda pin şeridi gösterilmez (sadece video altında).
+  (Eski "tepki şeridi"/heat tamamen kaldırıldı.)
 - **Özel emojiler (sticker):** `{t:'sticker-add', data}` (`data:image/png|gif|webp|jpeg;base64`, en fazla
   `STICKER_MAX_CHARS`; SVG yok). Genel mesaj sınırı 4 KB (`MAX_MESSAGE_BYTES`); sadece `sticker-add`
   `STICKER_MESSAGE_MAX`'a kadar büyük olabilir (eskiden gerçek resimler bu yüzden reddediliyordu; e2e
@@ -174,13 +181,18 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   Girişte welcome'dan sonra tek tek `{t:'sticker'}` (1 MB mesaj sınırı). Tepki `{t:'react', sticker}`. Arayüz: emoji çubuğunun sonunda hep görünen 🖼️ (sitede panel, eklentide şerit özel emojilere döner) — sayfaların arasına gömme.
   Dosya hazırlama `sticker-file.ts` (resim 160 px webp, GIF olduğu gibi). Kendi listem site
   `localStorage` `myStickers` (eklentiyle ortak); her odaya girişte yeniden yüklenir.
-- **Tepki gösterimi:** videonun altından rastgele bir yerden yükselip kaybolur (3 sn; altında küçük avatar + isim),
-  hâlâ uçuşan aynı kişinin aynı tepkisi "×2" olur; her tepkiden sonra 1,1 sn bekleme. Ayarlardan kapatılır
-  (`opt:reactions`). Kabukta her uçuşan emojinin yolu bir adacık.
-- **Tek kişiyken senkron yok:** sitede "Herkesi bana eşitle" ve senkron testi kapalı (`isAlone`); sunucuda farklı
-  cid sayısı 2'den azsa "herkes hazır" beklemesi olmaz.
+- **Tepki gösterimi:** videonun altından rastgele bir yerden yükselip kaybolur (3 sn; altında küçük avatar + isim);
+  art arda basılan her tepki ayrı uçar ("×2" yok), varsayılan bekleme yok. Yönetici `settings.reactionGap` (0/1/3/5/10
+  sn, `REACTION_GAPS`) ile kişi başı aralık koyar (sunucu `lastReaction` ile uygular, istemci düğmeleri soluklaştırır);
+  sunucunun sınırı `RateLimiter(12, 5)`, kişi (`keyOf`, tarayıcı) başına; `react` ve `home` genel `commandLimit`'i
+  harcamaz (emoji yağmuru oynat/durdur komutlarını kilitlemesin). İstemci: basılı tuş tekrarı yok, iki emoji arası
+  en az 150 ms. Kabukta uçuşan emoji adacıkları en fazla 4 (deliği kaplamasın). Kullanıcı görmek istemezse Ayarlar → "Emojiler videonun üstünde
+  uçuşsun" (`opt:reactions`). Kabukta her uçuşan emojinin yolu bir adacık.
+- **Tek kişiyken senkron yok:** sitede "Herkesi bana eşitle" ve senkron testi soluk, basınca "tek başınasın" balonu
+  (`isAlone`, `ui/hint.ts` `flashHint`); sunucuda farklı cid sayısı 2'den azsa "herkes hazır" beklemesi olmaz.
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
-  `{t:'home', by}`; filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`, 20 sn).
+  `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
+  20 sn; aynı kişiden dakikada bir).
 - **Klavye:** 1–8 o sayfanın emojileri/özel emojileri, Enter mesaj, P pin (sitede `reactions.ts` + `room.ts`, tam ekranda
   `fullscreen.ts`). Film sayfasında (kabuk) tuş yakalama aşamasında alınıp siteye iletilir, film sitesine hiç
   gösterilmez: oynatıcılar rakamlarla sarar (3 = %30), yoksa emoji atınca herkes sarılırdı.
@@ -210,7 +222,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   boşsa `recap_empty`. Son kartta "Kaydet" → `{t:'recap-save'}` (aynı oturumun önceki kaydı yenisiyle değişir; kayıtlı
   odada 20, değilse 5; 90 gün), liste `{t:'recaps'}` ile herkese. İstemci `chooseFacts` ile her seferinde rastgele (veri
   arttıkça daha çok, en fazla 8) kart seçer; ilk süre, son özet + PNG. Video sonunda istatistik kartı yok.
-- **Sekmeler:** 💬 Sohbet, 🎵 Sıra, 👥, 👤 Profil (ad, avatar, tema, bugünün özeti), ⚙️ Ayarlar (görünüm + yönetici).
+- **Sekmeler:** 💬 Sohbet, 🎵 Sıra, 👥, ⚙️ Ayarlar (görünüm + yönetici); 👤 Profil (ad, avatar, tema, bugünün özeti)
+  sağ üstte en sağdaki düğme (tekrar basınca sohbete döner; `ui/tabs.ts` düğmeleri belgede dinler). İlk açılışta
+  yönetici ⚙️ Ayarlar'da (oda ayarlarını yapar), diğerleri 💬 Sohbet'te başlar (kabukta hep sohbet); aynı sekmede
+  yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
 - **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
   (`localStorage` `opt:chatEvents`). Ayarlardaki seçenek kaldırıldı.
 - **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),

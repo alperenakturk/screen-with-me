@@ -1,8 +1,8 @@
-import { AVATAR_PAGES, AVATAR_TABS, avatarPageOf, isDrawnAvatar, type Avatar } from '@swm/shared/protocol';
+import { AVATAR_PAGES, AVATAR_TABS, isDrawnAvatar, type Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 
-/** Avatarın görsel hali: çizilmiş avatar resim, hayvan emoji. */
+/** Avatarın görsel hali: çizilmiş avatar resim (eski kayıtlarda emoji olabilir). */
 export function avatarNode(avatar: string | undefined, className = 'avatar-pic'): HTMLElement {
   if (isDrawnAvatar(avatar)) {
     return el('span', { class: `${className} drawn` }, el('img', { src: `/avatars/${avatar}.svg`, alt: '', draggable: 'false' }));
@@ -11,8 +11,8 @@ export function avatarNode(avatar: string | undefined, className = 'avatar-pic')
 }
 
 /**
- * Sayfalı avatar seçici: üstte "Temalı / Hayvanlar / Parodi" sekmeleri, Parodi seçiliyse
- * altında "Film / Dizi / Anime", en altta ızgara. Açılışta seçili avatarın sayfası gösterilir.
+ * Sayfalı avatar seçici: üstte "Temalı / Parodi" sekmeleri, Parodi seçiliyse
+ * altında "Film / Dizi / Anime / Oyun", en altta ızgara.
  */
 export function renderAvatarPicker(
   container: HTMLElement,
@@ -20,7 +20,8 @@ export function renderAvatarPicker(
   onPick: (avatar: Avatar) => void,
   onDouble?: () => void,
 ): () => void {
-  let page = avatarPageOf(current());
+  // Hep "Temalı" ile açılır; kullanıcı isterse diğer sekmelere geçer.
+  let page = 0;
   const tabRow = (items: Array<{ label: string; selected: boolean; go: () => void }>, extra = '') =>
     el(
       'div',

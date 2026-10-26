@@ -92,7 +92,8 @@ export function likelyPlayer(preferred: HTMLElement | null = null): HTMLElement 
   const screen = innerWidth * innerHeight;
   let best: HTMLElement | null = null;
   bestArea = 320 * 180;
-  for (const box of document.querySelectorAll<HTMLElement>('div, section, figure, a, button, img, picture, canvas')) {
+  // Bağlantılar (a) aday değil: oynatıcıya benzeyen büyük reklam görselleri çoğu zaman bağlantıdır.
+  for (const box of document.querySelectorAll<HTMLElement>('div, section, figure, button, img, picture, canvas')) {
     const r = box.getBoundingClientRect();
     const area = r.width * r.height;
     const ratio = r.width / Math.max(1, r.height);

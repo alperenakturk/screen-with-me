@@ -80,9 +80,9 @@
       const av = (a, cls) => (/^[a-z]+$/.test(a) ? `<span class="${cls} drawn"><img src="/avatars/${a}.svg" alt=""></span>` : `<span class="${cls}">${a}</span>`);
       const PEOPLE = [
         { name: 'Sam', avatar: 'captain', me: true, host: true },
-        { name: 'Alex', avatar: '🦊' },
+        { name: 'Alex', avatar: 'speedster' },
         { name: 'Mia', avatar: 'elf' },
-        { name: 'Leo', avatar: '🐼' },
+        { name: 'Leo', avatar: 'wizard' },
       ];
       const person = (n) => PEOPLE.find((p) => p.name === n);
 
@@ -125,12 +125,12 @@
                <span class="bird" style="left: 30%; top: 16%">⌄</span><span class="bird" style="left: 34%; top: 21%; font-size: 16px">⌄</span></div></div>
              <div class="reactions-layer">${
                q.get('reacts')
-                 ? [['Mia', '😂', 2, 18, 40], ['Alex', '🔥', 0, 46, 110], ['Leo', '😍', 0, 72, 70]]
-                     .map(([n, e, c, x, y]) => `<div class="r-float" style="left: ${x}%; animation: none; transform: translateY(-${y}px)"><span class="r-emoji">${e}</span><span class="r-who">${av(person(n).avatar, 'r-avatar')}<span class="r-name">${n}</span><span class="r-count">${c ? '×' + c : ''}</span></span></div>`)
+                 ? [['Mia', '😂', 0, 18, 40], ['Mia', '😂', 0, 24, 120], ['Alex', '🔥', 0, 46, 110], ['Leo', '😍', 0, 72, 70]]
+                     .map(([n, e, c, x, y]) => `<div class="r-float" style="left: ${x}%; animation: none; transform: translateY(-${y}px)"><span class="r-emoji">${e}</span><span class="r-who">${av(person(n).avatar, 'r-avatar')}<span class="r-name">${n}</span></span></div>`)
                      .join('')
                  : ''
              }</div>
-             ${q.get('wait') ? '<div class="waiting-banner" role="status">⏳ Waiting for 🐼 Leo…</div>' : ''}`;
+             ${q.get('wait') ? '<div class="waiting-banner" role="status">⏳ Waiting for 🧙 Leo…</div>' : ''}`;
 
       const pins = view === 'external' ? '' : `<div class="pin-strip"><div class="pin-track"></div>${[12, 37, 58]
         .map((p) => `<span class="pin-wrap" style="left: ${p}%"><button type="button" class="pin-mark">📌</button></span>`)

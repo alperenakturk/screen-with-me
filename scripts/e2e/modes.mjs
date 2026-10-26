@@ -19,6 +19,7 @@ function client(hello) {
 }
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const host = client({ name: 'Ali', cid: 'modeAli12345' });
 await host.wait((m) => m.t === 'welcome', 'welcome host');
 const guest = client({ name: 'Ayse', cid: 'modeAyse1234' });
@@ -67,6 +68,28 @@ const started = await guest.wait((m) => m.t === 'state' && !m.state.paused, 'aut
 ok(started.by.id === 'system', 'Planlanan saat gelince oda kendiliğinden oynadı');
 const cleared = await guest.wait((m) => m.t === 'settings' && m.settings.startsAt === undefined, 'plan cleared', 5000);
 ok(!!cleared, 'Plan başlayınca kaldırılıyor');
+
+// Emojiler: varsayılan serbest (art arda), yönetici kişi başı aralık koyabilir.
+const reacts = () => host.inbox.filter((m) => m.t === 'reaction').length;
+host.inbox.length = 0;
+for (let i = 0; i < 5; i++) guest.send({ t: 'react', emoji: '🔥' });
+await sleep(500);
+ok(reacts() === 5, `Art arda 5 emoji serbest (${reacts()} geldi)`);
+guest.send({ t: 'settings', reactionGap: 3 });
+const gapDenied = await guest.wait((m) => m.t === 'error', 'gap not host');
+ok(gapDenied.code === 'not_host', 'Emoji sıklığını sadece yönetici ayarlar');
+host.send({ t: 'settings', reactionGap: 3 });
+await guest.wait((m) => m.t === 'settings' && m.settings.reactionGap === 3, 'gap set');
+// Aralık son geçen emojiden sayılır: önceki emojilerin üstünden 3 sn geçsin.
+await sleep(3000);
+host.inbox.length = 0;
+for (let i = 0; i < 4; i++) guest.send({ t: 'react', emoji: '🔥' });
+await sleep(500);
+ok(reacts() === 1, `Aralık 3 sn iken art arda 4 emojiden 1'i geçti (${reacts()})`);
+host.send({ t: 'settings', reactionGap: 7 });
+host.send({ t: 'settings', reactionGap: 0 });
+const back = await guest.wait((m) => m.t === 'settings' && m.settings.reactionGap === 0, 'gap off');
+ok(!!back, 'Geçersiz aralık (7) yok sayıldı, 0 ile serbest');
 
 for (const c of [host, guest]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

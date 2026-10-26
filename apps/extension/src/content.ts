@@ -69,6 +69,12 @@ function send(message: FrameMessage): void {
 /** Arka plan "bu sekmede oda yok" dedi: bağlantıyı kapat, katmanı kaldır, video aramayı bırak. */
 function sleep(): void {
   document.documentElement.removeAttribute('data-swm-room');
+  uncover();
+  try {
+    sessionStorage.removeItem(COVER_FLAG);
+  } catch {
+    // Depo kapalı.
+  }
   deactivate();
   stopScanning();
   setLayout(null, false);
@@ -238,18 +244,22 @@ function deactivate(): void {
 // ---- Katman (kabuk) ve videonun yeri ----
 
 let shell: HTMLIFrameElement | null = null;
+/** Katmanın açıldığı oda (sadece bu betikte; film sayfasının DOM'unda yok). */
+let shellRoom: string | null = null;
 let layout: ShellLayout | null = null;
 let layoutActive = false;
 
 /** Üst çerçeve: sitenin oda sayfasını tam ekran katman olarak açar (eklentinin shell.html'i üzerinden). */
 function openShell(roomId: string): void {
   if (!isTop) return;
-  if (shell?.isConnected && shell.dataset.room === roomId) return;
+  if (shell?.isConnected && shellRoom === roomId) return;
   shell?.remove();
   shell = document.createElement('iframe');
-  shell.dataset.room = roomId;
+  shellRoom = roomId;
   shell.setAttribute('data-swm-shell', '');
-  shell.src = chrome.runtime.getURL(`shell.html#${roomId}`);
+  // Oda kimliği adreste/özniteliklerde durmaz: film sitesi katmanın öğesini okuyabilir, kimliği görüp odaya
+  // girmesin. shell.html kimliği arka plandan ister (arka plan sekmenin gerçekten odada olduğuna bakar).
+  shell.src = chrome.runtime.getURL('shell.html');
   shell.allow = 'autoplay; clipboard-write';
   shell.setAttribute('aria-label', 'ScreenWithMe');
   // Sayfanın CSS'i katmanı bozmasın: her şey satır içi ve !important.
@@ -264,7 +274,9 @@ function openShell(roomId: string): void {
     'padding:0',
     'z-index:2147483647',
     'background:transparent',
-    'color-scheme:normal',
+    // Sitemiz koyu renk şeması ilan ediyor (meta color-scheme dark): çerçeveyle şema farklı olursa Chrome
+    // çerçevenin arkasını opak griye boyar, deliğin içindeki mesajlar saydam görünmez. Zincirin her halkası koyu.
+    'color-scheme:dark',
     'display:block',
     'visibility:visible',
     'opacity:1',
@@ -310,8 +322,19 @@ addEventListener('message', (event) => {
   tellParents();
 });
 
-function setLayout(next: ShellLayout | null, isActive: boolean): void {
+function setLayout(next: ShellLayout | null, isActive: boolean, fromSite = false): void {
   layout = next;
+  // Site katmanda çizildi ve yerleşimini bildirdi: örtüye gerek kalmadı (video deliğe oturduktan sonraki karede
+  // kalkar). Arka planın yer tutucusuyla kalkarsa katman henüz boşken film sayfası bir an görünürdü. Bu sekmede
+  // bu sitede oda sürdükçe sonraki sayfalar da beklemeden örtülür (sessionStorage sekmeye ve siteye özel).
+  if (next && isTop && fromSite) {
+    requestAnimationFrame(() => requestAnimationFrame(uncover));
+    try {
+      sessionStorage.setItem(COVER_FLAG, '1');
+    } catch {
+      // Depo kapalı: sorun değil.
+    }
+  }
   layoutActive = isActive;
   // Oda görünümündeyken film sitesinin tam ekranı odanınkine yönlenir (fullscreen-guard.ts bu işarete bakar).
   document.documentElement.toggleAttribute('data-swm-room', next?.mode === 'full');
@@ -415,7 +438,7 @@ function onMessage(message: BackgroundMessage): void {
       openShell(message.roomId);
       break;
     case 'shell-layout':
-      setLayout(message.layout, message.active);
+      setLayout(message.layout, message.active, message.fromSite);
       break;
     case 'shell-fullscreen':
       if (!isTop) break;
@@ -453,7 +476,73 @@ function hasSessions(value: unknown): boolean {
 async function checkSessions(): Promise<void> {
   if (port || insideOurSite) return;
   const items = await chrome.storage.session.get(SESSIONS_KEY).catch(() => ({}) as Record<string, unknown>);
-  if (hasSessions(items[SESSIONS_KEY])) connect();
+  const sessions = items[SESSIONS_KEY];
+  // Bu siteye açılmış bir oda var: oda katmanı gelene kadar film sayfası hiç görünmesin.
+  if (isTop && Array.isArray(sessions) && sessions.some((entry) => (entry as { site?: unknown } | null)?.site === siteOf(location.href))) cover();
+  if (hasSessions(sessions)) connect();
+  else {
+    uncover();
+    try {
+      sessionStorage.removeItem(COVER_FLAG);
+    } catch {
+      // Depo kapalı.
+    }
+  }
+}
+
+// ---- Örtü: film sayfası açılırken oda katmanı binene kadar bir an bile görünmesin ----
+// Katman (shell.html → sitemiz) arka planla konuştuktan sonra açılır; o arada sayfa çizilirdi. Örtü sayfa
+// yüklenmeye başlar başlamaz (document_start) sitenin "Gece" zeminiyle her şeyi kapatır; katmanın ilk
+// yerleşimi gelince kalkar. Aynı sekmede aynı sitede (sonraki bölüm, yenileme) beklemeden örter.
+const COVER_FLAG = 'swm-cover';
+let coverEl: HTMLElement | null = null;
+let coverTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Adresin "sitesi" (arka plandaki siteOf ile aynı: alan adının son iki parçası). */
+function siteOf(url: string): string {
+  try {
+    return new URL(url).hostname.split('.').slice(-2).join('.');
+  } catch {
+    return '';
+  }
+}
+
+function cover(): void {
+  if (!isTop || coverEl?.isConnected) return;
+  coverEl = document.createElement('div');
+  coverEl.setAttribute('data-swm-cover', '');
+  coverEl.style.cssText = [
+    'position:fixed',
+    'inset:0',
+    'z-index:2147483646',
+    'background:linear-gradient(#171c40, #0c0e1e 60%)',
+    // Görünmeyen sayfaya (reklam tuzakları) tıklanmasın: örtü tıklamayı yutar, ilk yerleşimde zaten kalkar.
+    'pointer-events:auto',
+    'display:block',
+    'visibility:visible',
+    'opacity:1',
+  ]
+    .map((rule) => `${rule} !important`)
+    .join(';');
+  document.documentElement.append(coverEl);
+  // Bir şey ters giderse (oda gelmedi) sayfa sonsuza dek örtülü kalmasın.
+  if (coverTimer !== null) clearTimeout(coverTimer);
+  coverTimer = setTimeout(uncover, 8000);
+}
+
+function uncover(): void {
+  coverEl?.remove();
+  coverEl = null;
+  if (coverTimer !== null) clearTimeout(coverTimer);
+  coverTimer = null;
+}
+
+if (isTop && !insideOurSite) {
+  try {
+    if (sessionStorage.getItem(COVER_FLAG) === '1') cover();
+  } catch {
+    // Depo kapalı (bazı gizlilik ayarları): örtü depodaki oda listesiyle gelir.
+  }
 }
 
 if (!insideOurSite) {
