@@ -52,7 +52,18 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    yüzen pencerede (sürükle, köşeden boyutlandır, küçült, karta geri koy; yer hatırlanır); tam ekranda kendiliğinden
    videonun içinde, orada da taşınır. Film sayfasında (eklenti) de aynısı: pencere deliğin üstünde adacık.
 
-**Sıradaki (0.9.81 →):** (1) oyun fikirleri konuşmasından seçilen yeni oyunlar, (2) kelime avı
+11. ✅ **Metin turu (0.9.82):** bir metin/pazarlama ajanı site, eklenti, gizlilik, README ve mağaza metinlerini baştan
+   yazdı (terim sözlüğü CLAUDE.md'de; ~190 i18n değeri; eskimiş bilgiler, servis adları, "video sayfası" → "film sayfası").
+   Kullanıcının seçtiği sloganlar: ana sayfa "Ayrı ekranlar, aynı an." + "Film gecesi artık aynı odada olmak zorunda
+   değil…", davet kartı (og, Türkçe) "Sana bir koltuk ayırdım 🍿", mağaza kısa açıklaması "A watch party for any site…",
+   eklenti sayfası "Her sitedeki videoyu arkadaşlarınla aynı anda izle."; sekme adı, mağaza ilk cümlesi ve README
+   sloganı aynı kaldı. Gizlilik politikası koda uyduruldu (özet sayaçları, 20/5 kayıt, EN'de eksik maddeler), PWA'daki
+   bozuk PlayWithMe kısayolu kalktı.
+12. **İsim ve marka araştırması** ayrı oturumda (https://claude.ai/code/session_01CfgCENd2sLGpEArKS6Uaqj): aynı adla bir
+   yapay zekâ ürünü var; tescil durumu, risk, TÜRKPATENT süreci ve yedek isimler. Sonuç `docs/internal/marka-arastirmasi.md`.
+   Ad değişirse site + eklenti + mağaza metinleri bu oturumda güncellenir.
+
+**Sıradaki (0.9.82 →):** (1) oyun fikirleri konuşmasından seçilen yeni oyunlar, (2) kelime avı
 (Türkçe sözlük gerekir; ya da sözlüksüz bir kelime oyunu), (3) gerçek deneme turu hazırlığı (VIZYON "v1.0" listesi),
 (4) Brave/Edge'de eklenti denemesi (kullanıcıdan), (5) senkron ölçümü (p50/p95) ve README rozeti.
 
