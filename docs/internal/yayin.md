@@ -8,6 +8,16 @@ Nasıl yapılır, kaç kişiye yeter, ne kadara mal olur, mağaza ve telif açı
 > developer.chrome.com'a erişilemedi; eklenti API ayrıntıları Chrome belgelerinden bildiklerime ve arama sonuçlarına
 > dayanıyor, uygulamadan önce gerçek Chrome'da denenmeli (aşağıda "Denenmesi gerekenler").
 
+## Kararlar (kullanıcı, 27 Ekim 2026)
+
+- Öneri kabul: **film yayma yok**, korsan hiçbir şey yok; senkron modeli aynen kalır. Eklentide film sekmesi yayını
+  (`tabCapture`) **yapılmayacak**.
+- **Sitede düz ekran paylaşımı** (ekran/pencere/sekme, `getDisplayMedia`) + kamera, eşler arası, kart/hesap yok: bölüm 6
+  aşama 1 + 2 (odada tek yayın, en fazla 4 izleyici, 720p; kabukta yayın açma yok, izleme var).
+- 1080p / ücretli SFU "ileride".
+- **Kişi sınırları hep açıkça gösterilsin** (ör. "Seste 4/6", "Yayını izleyen 3/4"); sınıra yaklaşınca/dolunca uyarı ve
+  neden (eşler arası, yükleme hızı); dolunca düğme soluk + açıklama balonu. Sesli sohbete de (0.9.63'te yapıldı).
+
 ## Kısaca
 
 - **Gelebilir, ama "film yayını" olarak değil.** ScreenWithMe'nin gücü şu: herkes videoyu **kendi** tarayıcısında, kendi

@@ -4342,6 +4342,27 @@ html.shorts-view .footer {
   border-color: var(--ok);
 }
 
+/* Kişi sınırı: "Seste 3/6 · 📷 1/4" (hep görünür; dolunca kırmızı, son yerde sarı) */
+.voice-limit {
+  flex-basis: 100%;
+  font-size: 12px;
+  cursor: help;
+}
+
+.voice-limit.near {
+  color: var(--warn);
+}
+
+.voice-limit.full {
+  color: var(--danger);
+}
+
+/* Dolu: düğme soluk (basınca nedenini anlatır) */
+.btn.is-full {
+  opacity: 0.5;
+  filter: grayscale(0.4);
+}
+
 /* Kameralar: sesli sohbet kartında kutular (sadece kamerası açık olanlar) */
 .voice-cams {
   display: grid;

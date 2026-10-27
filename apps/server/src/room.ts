@@ -23,6 +23,7 @@ import {
   type RtcResult,
   VOICE_MAX,
   VOICE_MAX_P2P,
+  CAM_MAX,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
@@ -755,8 +756,15 @@ export class Room extends DurableObject<Env> {
       const inVoice = this.joined().filter((a) => a.voice && a.id !== attachment.id).length;
       if (!attachment.voice && inVoice >= max) return this.sendTo(ws, { t: 'error', code: 'voice_full' });
       attachment.voice = { ...attachment.voice, mic: mic ?? attachment.voice?.mic ?? true };
-      // Kamera sadece eşler arası seste (Cloudflare yolunda görüntü yok).
+      // Kamera sadece eşler arası seste (Cloudflare yolunda görüntü yok); aynı anda en fazla CAM_MAX.
       if (cam !== undefined && !realtimeConfig(this.env)) {
+        const cams = this.joined().filter((a) => a.voice?.cam && a.id !== attachment.id).length;
+        if (cam && !attachment.voice.cam && cams >= CAM_MAX) {
+          ws.serializeAttachment(attachment);
+          this.sendTo(ws, { t: 'error', code: 'cam_full' });
+          this.broadcast(this.membersMessage());
+          return;
+        }
         if (cam) attachment.voice.cam = true;
         else delete attachment.voice.cam;
       }

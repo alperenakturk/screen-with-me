@@ -213,6 +213,11 @@ export interface MemberVoice {
 export const VOICE_MAX = 10;
 /** Eşler arası seste en fazla bu kadar kişi: herkes herkese ayrı akış yollar, ev internetinin yükleme hızı yetmez. */
 export const VOICE_MAX_P2P = 6;
+/**
+ * Aynı anda en fazla bu kadar kamera: her kamera seste olan herkese ayrı kopya yollar, her izleyici de hepsini çözer
+ * (dizüstü ısınır, yavaş internet yetmez).
+ */
+export const CAM_MAX = 4;
 
 /**
  * Sesli sohbetin taşınma yolu. `p2p`: eşler arası (kartsız, ücretsiz; sunucu sadece bağlantı mesajlarını
@@ -382,6 +387,8 @@ export type ErrorCode =
   /** Sesli sohbet dolu (VOICE_MAX) ya da bu sunucuda kapalı. */
   | 'voice_full'
   | 'voice_unavailable'
+  /** Aynı anda açık kamera sınırı (CAM_MAX) dolu. */
+  | 'cam_full'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */

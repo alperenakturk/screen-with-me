@@ -382,6 +382,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
             </div>
             <div id="voice-people" class="voice-people"></div>
+            <span id="voice-limit" class="voice-limit muted small"></span>
           </div>
           <div id="voice-cams" class="voice-cams" hidden>
           </div>
@@ -816,6 +817,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'error':
         if (message.code === 'voice_full' || message.code === 'voice_unavailable') {
           voice.error(message.code);
+          break;
+        }
+        if (message.code === 'cam_full') {
+          voice.camFull();
           break;
         }
         if (message.code === 'kicked') {

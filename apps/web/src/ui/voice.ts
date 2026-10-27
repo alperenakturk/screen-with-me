@@ -1,4 +1,4 @@
-import type { ClientMessage, Member, RtcRequest, RtcResult, ServerMessage, Signal, VoiceMode } from '@swm/shared/protocol';
+import { CAM_MAX, VOICE_MAX, VOICE_MAX_P2P, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
 import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
 import { LevelMeter } from '@swm/shared/level-meter';
@@ -36,6 +36,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const leaveButton = root.querySelector<HTMLButtonElement>('#voice-leave')!;
   const peopleBox = root.querySelector<HTMLElement>('#voice-people')!;
   const camButton = root.querySelector<HTMLButtonElement>('#voice-cam')!;
+  const limitEl = root.querySelector<HTMLElement>('#voice-limit')!;
   const camsBox = root.querySelector<HTMLElement>('#voice-cams')!;
   const camDock = root.querySelector<HTMLElement>('#cam-dock');
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
@@ -163,8 +164,21 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       }),
     );
     peopleBox.title = inVoice.length ? `${t('voice.inVoice')}: ${inVoice.map((m) => m.name).join(', ')}` : '';
+    // Sınırlar hep görünür: "Seste 3/6 · 📷 1/4" (neden sınır var: üstüne gelince). Dolunca düğme soluk, basınca açıklama.
+    const max = voiceMax();
+    const cams = members.filter((m) => m.voice?.cam).length;
+    const camsShown = mode === 'p2p' && !!client.setCam && inVoice.length > 0;
+    limitEl.textContent = t('voice.limit', { n: inVoice.length, max }) + (camsShown ? ` · ${t('voice.camLimit', { n: cams, max: CAM_MAX })}` : '');
+    limitEl.title = t('voice.limitTitle', { max }) + (camsShown ? `\n${t('voice.camLimitTitle', { max: CAM_MAX })}` : '');
+    const full = !active && inVoice.length >= max;
+    const left = max - inVoice.length;
+    limitEl.classList.toggle('full', inVoice.length >= max);
+    limitEl.classList.toggle('near', !full && left === 1 && !active);
+    if (!active && !full && left === 1) limitEl.textContent += ` · ${t('voice.lastSeat', { n: left })}`;
+    joinButton.classList.toggle('is-full', full);
     // Kamera düğmesi sadece eşler arası seste (Cloudflare yolunda ve film sayfasında görüntü henüz yok).
     camButton.hidden = !active || !client.setCam;
+    camButton.classList.toggle('is-full', client.camEnabled !== true && cams >= CAM_MAX);
     const camOn = client.camEnabled === true;
     camButton.classList.toggle('on', camOn);
     const camLabel = camOn ? t('voice.camOff') : t('voice.camOn');
@@ -219,7 +233,17 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (camDock) camDock.hidden = shown.length === 0;
   }
 
+  /** Bu odada seste en fazla kaç kişi (eşler arası 6, Cloudflare yolunda 10). */
+  function voiceMax(): number {
+    return mode === 'sfu' ? VOICE_MAX : VOICE_MAX_P2P;
+  }
+
   joinButton.addEventListener('click', async () => {
+    const inVoice = members.filter((m) => m.voice).length;
+    if (inVoice >= voiceMax()) {
+      flashHint(joinButton, t('voice.fullHint', { n: inVoice, max: voiceMax() }), 7000);
+      return;
+    }
     joinButton.disabled = true;
     try {
       client.sync(members, myId());
@@ -243,6 +267,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   });
   camButton.addEventListener('click', async () => {
     if (!client.setCam) return;
+    const cams = members.filter((m) => m.voice?.cam).length;
+    if (!client.camEnabled && cams >= CAM_MAX) {
+      flashHint(camButton, t('voice.camFullHint', { n: cams, max: CAM_MAX }), 7000);
+      return;
+    }
     camButton.disabled = true;
     try {
       await client.setCam(!client.camEnabled);
@@ -360,8 +389,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     },
     error(code: 'voice_full' | 'voice_unavailable'): void {
       client.leave();
-      flashHint(joinButton, t(`error.${code}`), 6000);
+      flashHint(joinButton, code === 'voice_full' ? t('voice.fullHint', { n: voiceMax(), max: voiceMax() }) : t(`error.${code}`), 7000);
       render();
+    },
+    /** Sunucu kamerayı kabul etmedi (aynı anda biri daha açtı): kamera kapanır, neden söylenir. */
+    camFull(): void {
+      void client.setCam?.(false).finally(() => render());
+      flashHint(camButton, t('voice.camFullHint', { n: CAM_MAX, max: CAM_MAX }), 7000);
     },
     /** Sayfadan çıkarken mikrofonu bırak. Kabukta ses eklentide sürer (film sayfası değişse de kopmaz). */
     leave(): void {
