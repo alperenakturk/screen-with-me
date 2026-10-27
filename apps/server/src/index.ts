@@ -1,5 +1,7 @@
+import { GAME_ID_PATTERN } from '@swm/shared/games/protocol';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 
+export { Game } from './game.ts';
 export { Room } from './room.ts';
 
 /**
@@ -31,6 +33,14 @@ export default {
       }
       const room = env.ROOMS.get(env.ROOMS.idFromName(roomId));
       return room.fetch(request);
+    }
+
+    // PlayWithMe oyun odaları (her maç ayrı nesne).
+    const game = url.pathname.match(/^\/api\/games\/([^/]+)\/ws$/);
+    if (game) {
+      if (!GAME_ID_PATTERN.test(game[1]!)) return new Response('Invalid game id', { status: 400 });
+      if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
+      return env.GAMES.get(env.GAMES.idFromName(game[1]!)).fetch(request);
     }
 
     return new Response('Not found', { status: 404 });

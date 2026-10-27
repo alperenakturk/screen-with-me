@@ -7,6 +7,7 @@
 // localStorage gizli sekmede veya engellenmiş çerezlerde hata verebilir; o durumda site yine
 // çalışsın (bu sayfa açık kaldıkça bellekte tutulur).
 
+import { CLIENT_ID } from '@swm/shared/protocol';
 import { EXT_SOURCE, SITE_SOURCE, type ExtToSite, type SiteToExt, type StoreEntries } from '@swm/shared/shell';
 
 /**
@@ -163,4 +164,18 @@ export function sessionSave(key: string, value: string): void {
 export function saveIdentity(name: string, avatar?: string): void {
   save('name', name);
   if (avatar) save('avatar', avatar);
+}
+
+/**
+ * Tarayıcının kalıcı kimliği: rastgele bir kod, hesap değil. Oda yöneticisinin
+ * (ve oyunlarda oyuncunun) sayfayı yenileyince yöneticiliği kaybetmemesi ve atılanın hemen geri
+ * girememesi için sunucuya gönderilir.
+ */
+export function clientId(): string {
+  const saved = load('cid');
+  if (saved && CLIENT_ID.test(saved)) return saved;
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  save('cid', id);
+  return id;
 }

@@ -253,6 +253,13 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   eklenti `caps` yollamaz → kabukta kart gizli. Testler: `scripts/e2e/voice.mjs`, gerçek ses `scripts/harness/voice/run.mjs`
   (iki Chrome, sahte mikrofon, gelen sesin enerjisi ölçülür) ve `voice/shell.mjs` (film sayfasında; `VOICE_A`/`VOICE_B` iki
   farklı wav: aynı sahte bip'i yankı engelleyici siler).
+- **PlayWithMe (oyun köşesi, 0.9.62):** üst menüde 🎮 → `/oyun` (site `games/hub.ts`: logo = ScreenWithMe yüzü + oyun kolu,
+  oyun kartları; XOX dışındakiler "yakında"), maç `/oyun/xox/<kod>` (`games/xox.ts`). Sunucuda ayrı Durable Object `Game`
+  (`apps/server/src/game.ts`, bağ `GAMES`, göç `v2`), `/api/games/:id/ws`, kendi protokolü (`packages/shared/src/games/`:
+  `protocol.ts` doğrulama + `GAME_PROTOCOL_VERSION`, `xox.ts` kurallar). İlk iki kişi X/O koltuğunda (koltuk kalıcı
+  `cid`'e bağlı: yenileyen yerinde kalır), gelenler izler; sahibi bağlı değilse izleyici `sit` ile oturur; hamleleri sunucu
+  doğrular, kazanınca skor, `rematch` ile başlayan değişir. Sohbet yok, sadece sabit emojiler (`GAME_EMOJIS`). Boş oda 24
+  sa sonra silinir. Kabukta 🎮 gizli. Yeni oyun: `GAME_KINDS` + kurallar dosyası + sayfa. Test: `scripts/e2e/xox.mjs`.
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).

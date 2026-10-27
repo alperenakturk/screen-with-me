@@ -36,7 +36,19 @@ markLang();
 // büyük kodunu (oynatıcılar, sohbet, ses…) indirmez, ilk açılış hızlanır.
 const match = location.pathname.match(/^\/r\/([^/]+)\/?$/);
 const roomId = match ? decodeURIComponent(match[1]!) : null;
-if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
+// PlayWithMe oyun köşesi: /oyun (oyunlar) ve /oyun/xox/<kod> (maç).
+const game = location.pathname.match(/^\/oyun\/xox\/([A-Za-z0-9_-]{3,40})\/?$/);
+if (game) {
+  void import('./games/xox.ts').then(({ renderXox }) => {
+    renderXox(app, game[1]!);
+    translate();
+  });
+} else if (/^\/oyun\/?$/.test(location.pathname)) {
+  void import('./games/hub.ts').then(({ renderGames }) => {
+    renderGames(app);
+    translate();
+  });
+} else if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
   void import('./room.ts').then(({ renderRoom }) => {
     renderRoom(app, roomId);
     translate();
