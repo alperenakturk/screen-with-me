@@ -76,8 +76,9 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 - **Cloudflare Realtime için kart:** Cloudflare ücretsiz kotada bile kart istiyor ve harcama tavanı yok. Kullanıcı şimdilik
   kart girmedi → ses eşler arası. Kart eklenirse Worker'a `REALTIME_APP_ID` + `REALTIME_APP_SECRET` gizli değişkenleri
   eklenir, kod kendiliğinden SFU'ya geçer (bkz. `docs/internal/ses-goruntu.md`). O zaman bütçe freni şart.
-- **Oyun fikirleri:** ayrı bir sohbette fikirler sunuldu, kullanıcının seçmesi bekleniyor (`docs/internal/gelecek-fikirler.md`
-  mini oyun bölümü; seçilirse `docs/internal/oyun-fikirleri.md`).
+- ✅ **Oyun fikirleri (27 Ekim 2026):** kullanıcı seçimi Claude'a bıraktı; plan `docs/internal/oyun-fikirleri.md`
+  (ortak oyun arayüzü + skor tablosu → izleme oyunları "Sonra ne olacak?" / "Kaç puan?" → parti motoru "En çok kim?" /
+  "Yalancı kim?" → turnuva + rozetler → Bingo / Emoji bilmece; modlar ve akıcılık kuralları orada).
 - **Kısa alan adı:** `screenwithme.app` boş (~14 $/yıl); karar ve satın alma kullanıcının.
 - **Chrome Web Store'a gönderim:** henüz değil (kullanıcı eklentiyi hazır görmüyor).
 
