@@ -1,6 +1,6 @@
 # Durum: kaldığımız yer (her oturum önce bunu okusun)
 
-> Son güncelleme: 27 Ekim 2026, sürüm **0.9.65** (eklenti sürümü; site/sunucu PR birleşince canlıda). Kullanıcı
+> Son güncelleme: 27 Ekim 2026, site **0.9.74**, eklenti **0.9.68** (site/sunucu PR birleşince canlıda). Kullanıcı
 > çoğunlukla **bulut oturumlarından** (claude.ai/code) çalışıyor; yerel bilgisayardaki hafıza notları buluta gitmez,
 > gereken her şey burada ve `CLAUDE.md`'de. Bir işi bitirince bu dosyayı güncelle (kısa tut).
 
@@ -35,8 +35,14 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    ~3,8:1 (WCAG 4,5 altı); önerim düğmelerde #6a4cf2.
 7. ✅ **Mehtaplı Geceler maskotu (0.9.67):** padişah ScreenWithMe (beyaz kavuk + sorguç, burma bıyık, kürk yakalı kırmızı
    kaftan, lale); eski renkli şeritli sarık "Arap gibi" duruyordu. Kullanıcı beğenmezse yeniçeri (börk + kaşıklık) seçeneği.
+8. ✅ **Kendi inisiyatifimle (0.9.68–0.9.74):** bas-konuş + "Ali durdurdu" notu, Dört Taş, PWA, sağ paneli gizle, Çiz-Bil,
+   odadan oyun aç, Bilgi yarışması. Canlı e2e: yayın sırasında kopan bağlantıya karşı 30 sn bekleme + canlıda bir tekrar.
 
-## Son yapılanlar (0.9.61 → 0.9.68)
+**Sıradaki (0.9.75 → 0.9.80):** (1) kullanıcının seçtiği tasarımı uygulamak (A/B/C/D; seçim bekleniyor), (2) kelime avı
+(Türkçe sözlük gerekir; ya da sözlüksüz bir kelime oyunu), (3) gerçek deneme turu hazırlığı (VIZYON "v1.0" listesi),
+(4) Brave/Edge'de eklenti denemesi (kullanıcıdan), (5) senkron ölçümü (p50/p95) ve README rozeti.
+
+## Son yapılanlar (0.9.61 → 0.9.74)
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
   görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti), yayın 2. aşama (0.9.66),
   Mehtaplı padişah maskotu (0.9.67), bas-konuş (V) + "Ali durdurdu" notu videonun üstünde (0.9.68, eklenti 0.9.68),
