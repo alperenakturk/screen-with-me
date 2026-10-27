@@ -27,8 +27,14 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    eşler arası, tek yayın, ≤4 izleyici, 720p, kabukta sadece izleme (film yayma yok). ✅ 0.9.64 (1. aşama), ✅ 0.9.66
    (2. aşama: kalite "yazı net / akıcı", yönetici durdurur, `settings.liveHostOnly`). İleride: 1080p / SFU (kart gerekir).
    Ayrıca: kişi sınırları hep görünür ("Seste 3/6 · 📷 1/4", dolunca soluk düğme + neden) ✅ 0.9.63.
-6. **Tasarım/tema alternatifleri:** önizleme sayfası, kullanıcı seçince uygulanır.
-7. **Mehtaplı tema:** maskotu daha "Türk" yap: yeniçeri ya da padişah ScreenWithMe (kullanıcı istedi; direkt ekle).
+6. ✅ **Tasarım alternatifleri (önizleme, uygulanmadı):** claude.ai tasarım tuvali "ScreenWithMe tasarım alternatifleri"
+   (https://claude.ai/artifact/Beiq1ueBUUHjUkRbL5LTHL): oda için A "Sinema Rayı" (sağda sade ray: "Birlikte" kartında
+   kişiler + ses/kamera/ekran düğmeleri, davet üst çubukta), B "Salon" (video ortada, altında koltuk sırası, sohbet dar
+   çekmece), C "Ada" (video tam ekran, üstünde cam paneller); D ana sayfa "tek adım" (link yapıştır + oda oluştur, kayıtlı
+   odalar üstte); A telefonda. Kullanıcı seçince uygulanacak (sıradaki büyük iş). Ayrıca: düğme moru #8b6cff beyaz yazıyla
+   ~3,8:1 (WCAG 4,5 altı); önerim düğmelerde #6a4cf2.
+7. ✅ **Mehtaplı Geceler maskotu (0.9.67):** padişah ScreenWithMe (beyaz kavuk + sorguç, burma bıyık, kürk yakalı kırmızı
+   kaftan, lale); eski renkli şeritli sarık "Arap gibi" duruyordu. Kullanıcı beğenmezse yeniçeri (börk + kaşıklık) seçeneği.
 
 ## Son yapılanlar (0.9.61 → 0.9.65)
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
