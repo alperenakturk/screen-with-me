@@ -4959,27 +4959,6 @@ html.shorts-view .footer {
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.8);
 }
 
-/* Tam ekranda kameralar videonun sağ üst köşesinde (sağ panel görünmüyor) */
-.cam-dock {
-  display: none;
-}
-
-.theater:is(:fullscreen, .fake-fs) .cam-dock:not([hidden]) {
-  position: absolute;
-  top: 64px;
-  right: 16px;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: clamp(110px, 12vw, 180px);
-  pointer-events: none;
-}
-
-.cam-dock .cam-tile {
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.5);
-}
-
 /* ---- PlayWithMe: oda içi oyunlar ---- */
 .pwm-logo {
   position: relative;
@@ -7339,4 +7318,132 @@ html.in-room .topbar-right > .lang {
     font-size: 12px;
     padding: 4px 10px;
   }
+}
+
+/* ==== 0.9.81: kamera kutuları kartta, sayfada yüzen pencerede ya da tam ekranda videonun içinde (ui/cam-float.ts) ==== */
+.voice-cams {
+  position: relative;
+  display: block;
+}
+
+.voice-cams .cam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+}
+
+.voice-cams .cam-bar,
+.voice-cams .cam-resize {
+  display: none;
+}
+
+.cam-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: rgb(10 12 24 / 0.72);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cam-btn:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Kartta: kutuların altında "⧉ Serbest bırak" */
+.cam-pop {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.voice-cams.floating {
+  position: fixed;
+  z-index: 800;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.5);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Tam ekranda videonun içinde (tam ekranda sadece o görünür) */
+.voice-cams.floating.in-fs {
+  position: absolute;
+  z-index: 6;
+}
+
+.voice-cams.dragging {
+  cursor: grabbing;
+  opacity: 0.92;
+}
+
+.voice-cams.floating .cam-pop,
+.voice-cams.in-fs .cam-dock-btn {
+  display: none;
+}
+
+.voice-cams.floating .cam-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cam-grip {
+  letter-spacing: -1px;
+}
+
+.cam-bar-title {
+  flex: 1;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.voice-cams.floating .cam-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+}
+
+/* Kutular sürüklemeyi yutmasın (videonun kendi sürüklemesi yok) */
+.voice-cams.floating .cam-tile {
+  pointer-events: none;
+}
+
+.voice-cams.floating .cam-resize {
+  display: block;
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 18px;
+  height: 18px;
+  border-bottom-right-radius: 12px;
+  cursor: nwse-resize;
+  background:
+    linear-gradient(135deg, transparent 55%, color-mix(in srgb, var(--text) 55%, transparent) 55% 62%, transparent 62% 72%,
+      color-mix(in srgb, var(--text) 55%, transparent) 72% 79%, transparent 79%);
+}
+
+/* Küçültülmüş: sadece "📷 3 ＋" şeridi */
+.voice-cams.floating.folded {
+  width: auto !important;
+}
+
+.voice-cams.floating.folded .cam-bar {
+  padding-bottom: 0;
+}
+
+.voice-cams.floating.folded :is(.cam-grid, .cam-resize) {
+  display: none;
 }

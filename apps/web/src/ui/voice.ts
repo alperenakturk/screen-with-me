@@ -8,6 +8,7 @@ import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
+import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
 import { ExtVoice } from './voice-ext.ts';
 
@@ -42,7 +43,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const camButton = root.querySelector<HTMLButtonElement>('#voice-cam')!;
   const limitEl = root.querySelector<HTMLElement>('#voice-limit')!;
   const camsBox = root.querySelector<HTMLElement>('#voice-cams')!;
-  const camDock = root.querySelector<HTMLElement>('#cam-dock');
+  // Kameralar kartta, sayfada yüzen pencerede ya da tam ekranda videonun içinde (sürüklenir, boyutlandırılır).
+  const camWindow = createCamWindow({
+    box: camsBox,
+    theater: root.querySelector<HTMLElement>('#theater')!,
+    wrap: root.querySelector<HTMLElement>('.player-wrap')!,
+    onMove: () => dispatchEvent(new Event('swm-layout')),
+  });
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
   const pttBox = root.querySelector<HTMLInputElement>('#voice-ptt')!;
   /** Bas-konuş: mikrofon kapalı durur, V tuşu (ya da 🎙) basılı tutulunca açılır. Tarayıcıda hatırlanır. */
@@ -221,35 +228,28 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     renderCams();
   }
 
-  // ---- Kameralar: kartta kutular, tam ekranda videonun köşesinde ----
-  /** Üye → [kart kutusu, tam ekran kutusu] (her çizimde yeniden yaratılmaz: görüntü titremesin). */
-  const tiles = new Map<string, [HTMLElement, HTMLElement]>();
-  function tile(memberId: string, name: string, stream: MediaStream, mine: boolean): [HTMLElement, HTMLElement] {
-    const make = () => {
+  // ---- Kameralar: tek kutu takımı; kartta, yüzen pencerede ya da tam ekranda videonun içinde (cam-float.ts) ----
+  /** Üye → kutu (her çizimde yeniden yaratılmaz: görüntü titremesin). */
+  const tiles = new Map<string, HTMLElement>();
+  function tile(memberId: string, name: string, stream: MediaStream, mine: boolean): HTMLElement {
+    let box = tiles.get(memberId);
+    if (!box) {
       const video = el('video', { autoplay: '', playsinline: '', 'aria-hidden': 'true' }) as HTMLVideoElement;
       video.muted = true;
+      box = el('div', { class: mine ? 'cam-tile mine' : 'cam-tile', 'data-voice-id': memberId }, video, el('span', { class: 'cam-name' }));
+      tiles.set(memberId, box);
+    }
+    const video = box.querySelector('video')!;
+    if (video.srcObject !== stream) {
       video.srcObject = stream;
       void video.play().catch(() => {});
-      return el('div', { class: mine ? 'cam-tile mine' : 'cam-tile', 'data-voice-id': memberId }, video, el('span', { class: 'cam-name' }, name));
-    };
-    let pair = tiles.get(memberId);
-    if (!pair) {
-      pair = [make(), make()];
-      tiles.set(memberId, pair);
     }
-    for (const box of pair) {
-      const video = box.querySelector('video')!;
-      if (video.srcObject !== stream) {
-        video.srcObject = stream;
-        void video.play().catch(() => {});
-      }
-      box.querySelector('.cam-name')!.textContent = name;
-    }
-    return pair;
+    box.querySelector('.cam-name')!.textContent = name;
+    return box;
   }
   function renderCams(): void {
     const me = myId();
-    const shown: [HTMLElement, HTMLElement][] = [];
+    const shown: HTMLElement[] = [];
     const keep = new Set<string>();
     if (client.active) {
       for (const member of members) {
@@ -261,10 +261,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       }
     }
     for (const id of [...tiles.keys()]) if (!keep.has(id)) tiles.delete(id);
-    camsBox.replaceChildren(...shown.map(([card]) => card));
+    camWindow.grid.replaceChildren(...shown);
     camsBox.hidden = shown.length === 0;
-    camDock?.replaceChildren(...shown.map(([, dock]) => dock));
-    if (camDock) camDock.hidden = shown.length === 0;
+    camWindow.update(shown.length);
   }
 
   /** Bu odada seste en fazla kaç kişi (eşler arası 6, Cloudflare yolunda 10). */

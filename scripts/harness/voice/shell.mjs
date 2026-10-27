@@ -113,7 +113,7 @@ const ayseIn = await until(() => ayse.evalFrame('shell=1', `!document.getElement
 check(!!ayseIn, 'Ayşe film sayfasında seste (ses eklentinin görünmeyen sayfasında)');
 
 await ali.evaluate(`document.getElementById('voice-join').click(); 1`);
-const bothIn = await until(async () => (await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face').length`)) === 2, 15000);
+const bothIn = await until(async () => (await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face.in-voice').length`)) === 2, 15000);
 check(!!bothIn, 'ikisi de seste (Ali’nin kartında iki avatar)');
 const aliHears = await until(async () => (await ali.evaluate(`document.querySelectorAll('audio').length`)) >= 1, 20000);
 check(!!aliHears, 'Ali, Ayşe’nin (eklentiden gelen) ses akışını aldı');
@@ -159,6 +159,25 @@ const aliSeesAyse = await until(async () => {
 }, 20000);
 check(!!aliSeesAyse, 'Ali sitede Ayşe’nin (film sayfasından açılan) kamerasını görüyor', JSON.stringify(aliSeesAyse));
 
+// Kameralar serbest (0.9.81) film sayfasında da: yüzen pencere deliğin üstüne gelince adacık olur (görünür kalır).
+const SHELL_CLIP = `getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath`;
+await ayse.evalFrame('shell=1', `document.querySelector('#voice-cams .cam-pop').click(); 1`);
+const floated = await until(() => ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); return b.classList.contains('floating') && b.hasAttribute('data-island'); })()`));
+check(!!floated, 'film sayfasında kameralar serbest bırakılabiliyor');
+await ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); b.style.left = w.right + 40 + 'px'; b.style.top = '120px'; dispatchEvent(new Event('swm-layout')); return 1; })()`);
+await ayse.sleep(400);
+const clipOut = await ayse.evaluate(SHELL_CLIP);
+await ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); b.style.left = w.left + 30 + 'px'; b.style.top = w.top + 30 + 'px'; dispatchEvent(new Event('swm-layout')); return 1; })()`);
+const clipOver = await until(async () => {
+  const clip = await ayse.evaluate(SHELL_CLIP);
+  return clip !== clipOut ? clip : null;
+}, 5000);
+check(!!clipOver, 'yüzen kamera penceresi deliğin üstündeyken adacık (film sayfasında görünüyor)');
+await ayse.shot('kamera-film-serbest');
+await ayse.evalFrame('shell=1', `document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
+const dockedBack = await until(() => ayse.evalFrame('shell=1', `!document.getElementById('voice-cams').classList.contains('floating')`));
+check(!!dockedBack, 'kameralar karta geri döndü');
+
 // Bas-konuş film sayfasında: V tuşu film sitesine gösterilmeden katmana gider (basınca ve bırakınca).
 await ayse.evalFrame('shell=1', `(() => { const c = document.getElementById('voice-ptt'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);
 const pttMuted = await until(() => ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
@@ -173,7 +192,7 @@ await ayse.evalFrame('shell=1', `(() => { const c = document.getElementById('voi
 await ayse.evaluate('location.reload(); 1');
 await ayse.sleep(3000);
 const again = await until(async () => {
-  const faces = await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face').length`);
+  const faces = await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face.in-voice').length`);
   const audios = await ali.evaluate(`document.querySelectorAll('audio').length`);
   return faces === 2 && audios >= 1;
 }, 25000);

@@ -108,16 +108,52 @@ check(ownPreview, 'Ali kendi kamera önizlemesini görüyor');
 const frames = await ayse.evaluate(`(async () => { const v = document.querySelector('#voice-cams .cam-tile video'); const a = v.getVideoPlaybackQuality?.().totalVideoFrames ?? 0; await new Promise((r) => setTimeout(r, 1500)); return (v.getVideoPlaybackQuality?.().totalVideoFrames ?? 0) - a; })()`);
 check(frames > 5, 'kamera görüntüsü akıyor (1,5 sn\'de ' + frames + ' kare)');
 await ayse.shot('kamera-kart');
-// Tam ekranda kameralar videonun köşesinde.
+// Kameralar serbest (0.9.81): ⧉ → sayfada yüzen pencere; sürüklenir, köşesinden büyür, görüntü kesilmez.
+const BOX = `(() => { const b = document.getElementById('voice-cams'); const r = b.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), floating: b.classList.contains('floating'), fs: b.classList.contains('in-fs'), parent: b.parentElement === document.body ? 'body' : b.parentElement.className, t: b.querySelector('video')?.currentTime ?? 0 }; })()`;
+await ayse.evaluate(`document.querySelector('#voice-cams .cam-pop').click(); 1`);
+const popped = await until(async () => {
+  const box = await ayse.evaluate(BOX);
+  return box.floating && box.parent === 'body' ? box : null;
+});
+check(!!popped, '⧉ ile kameralar sayfada yüzen pencereye çıktı', JSON.stringify(popped));
+const drag = async (from, dx, dy) => {
+  await ayse.mouse('mouseMoved', from.x, from.y);
+  await ayse.mouse('mousePressed', from.x, from.y);
+  for (let i = 1; i <= 6; i++) await ayse.mouse('mouseMoved', from.x + (dx * i) / 6, from.y + (dy * i) / 6, { buttons: 1 });
+  await ayse.mouse('mouseReleased', from.x + dx, from.y + dy);
+  await ayse.sleep(200);
+};
+const title = await ayse.center('#voice-cams .cam-bar-title');
+await drag(title, -300, -200);
+const moved = await ayse.evaluate(BOX);
+check(Math.abs(moved.x - (popped.x - 300)) < 6 && Math.abs(moved.y - (popped.y - 200)) < 6, 'yüzen pencere sürüklenince taşındı', JSON.stringify({ önce: popped, sonra: moved }));
+const corner = await ayse.center('#voice-cams .cam-resize');
+await drag(corner, 120, 0);
+const grown = await ayse.evaluate(BOX);
+check(grown.w - moved.w > 100, 'köşesinden çekince büyüdü', `${moved.w} → ${grown.w}`);
+await ayse.sleep(700);
+check((await ayse.evaluate(BOX)).t > grown.t, 'taşınırken kamera görüntüsü durmadı');
+check(!!(await ayse.evaluate(`localStorage.getItem('camFloat:spot')`)), 'yeri ve boyutu hatırlanıyor');
+await ayse.shot('kamera-serbest');
+// Tam ekranda kameralar kendiliğinden videonun içine gelir; orada da sürüklenir.
 await ayse.evaluate(`document.getElementById('sync-test')?.click(); 1`);
 await ayse.sleep(1500);
 await ayse.evaluate(`document.getElementById('fullscreen')?.click(); 1`);
 await ayse.sleep(1200);
-const dock = await ayse.evaluate(`(() => { const d = document.getElementById('cam-dock'); const r = d.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), shown: getComputedStyle(d).display !== 'none' }; })()`);
-check(dock.shown && dock.w > 80 && dock.h > 50, 'tam ekranda kameralar videonun köşesinde', JSON.stringify(dock));
+const inFs = await ayse.evaluate(BOX);
+check(inFs.fs && inFs.parent.includes('player-wrap') && inFs.w > 80 && inFs.h > 50, 'tam ekranda kameralar videonun içinde', JSON.stringify(inFs));
+const fsTitle = await ayse.center('#voice-cams .cam-bar-title');
+await drag(fsTitle, -200, 150);
+const fsMoved = await ayse.evaluate(BOX);
+check(Math.abs(fsMoved.x - (inFs.x - 200)) < 6 && Math.abs(fsMoved.y - (inFs.y + 150)) < 6, 'tam ekranda da sürükleniyor', JSON.stringify({ önce: inFs, sonra: fsMoved }));
 await ayse.shot('kamera-tam-ekran');
 await ayse.evaluate(`document.fullscreenElement ? document.exitFullscreen().then(() => 1) : (document.getElementById('fs-exit')?.click(), 1)`);
-await ayse.sleep(500);
+await ayse.sleep(700);
+const back = await ayse.evaluate(BOX);
+check(back.parent === 'body' && !back.fs && Math.abs(back.x - grown.x) < 6, 'tam ekrandan çıkınca sayfadaki yerine döndü', JSON.stringify(back));
+await ayse.evaluate(`document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
+const docked = await ayse.evaluate(BOX);
+check(!docked.floating && docked.parent !== 'body', '⤓ ile karta geri döndü', JSON.stringify(docked));
 await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
 const camGone = await until(() => ayse.evaluate(`document.getElementById('voice-cams').hidden`), 8000);
 check(!!camGone, 'Ali kamerasını kapatınca Ayşe\'de kutu kalktı');

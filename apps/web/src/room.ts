@@ -269,7 +269,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="player" class="player"></div>
             <div id="fs-catcher" class="fs-only fs-catcher"></div>
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
-            <div id="cam-dock" class="cam-dock" hidden></div>
             <div id="live-window" class="live-window" hidden>
               <video id="live-video" autoplay playsinline></video>
               <div class="live-bar">
@@ -1486,6 +1485,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       });
     }).observe(wrap, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
     addEventListener('resize', reportLayout);
+    // Yüzen kamera penceresi sürüklenirken/boyutlanırken (cam-float.ts) adacık hemen yer değiştirsin.
+    addEventListener('swm-layout', reportLayout);
     setInterval(reportLayout, 1000);
     // Odaya dön: önce sorulur; evet → sekme sitedeki odaya gider (katman kalkar, site kendi sayfasında devam eder).
     const goHome = async () => {
