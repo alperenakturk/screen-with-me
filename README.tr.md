@@ -35,7 +35,8 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 |---|---|
 | ⏯️ **Sıkı senkron** | Oynat / durdur / sar / hız herkeste. Sunucu saatine dayanır, gerçek oynatıcılarda **30–100 ms** fark ölçüldü. Küçük kaymalar sessizce ±%5 hızlı/yavaş oynatarak kapanır. |
 | ⏳ **Herkes hazır** | Birinin videosu takılırsa oda onu bekler (en fazla 12 sn; aynı kişi 30 sn tekrar bekletemez). Odada tek başınayken kapalı. |
-| 🧩 **Her site** | Eklenti doğru videoyu bulur, iframe içinde ve geç yüklenen ya da kaynağı değişen oynatıcılarda da. Kısa videolar, döngüde sessiz videolar ve köşeye sabitlenmiş küçük videolar (tipik reklamlar) atlanır; filmin kendi oynatıcısında oynayan reklam odaya asla yansımaz. |
+| 🧩 **Her site** | Eklenti doğru videoyu bulur, iframe içinde ve geç yüklenen ya da kaynağı değişen oynatıcılarda da. Kısa videolar, döngüde sessiz videolar ve köşeye sabitlenmiş küçük videolar (tipik reklamlar) atlanır; filmin kendi oynatıcısında oynayan reklam odaya asla yansımaz. Yanlış video mu? **🎯 Video seç** sayfadaki her videonun üstüne "Bunu senkronla" düğmesi koyar. |
+| 🛡️ **Reklama dayanıklı oda** | Video sayfasına tıklayınca başka siteye açılan sekme (tipik reklam penceresi) kapatılır, film önde kalır (bilerek açtıysan "Geri aç"; kapatılabilir). Sayfa seni başka bir siteye götürürse oda kalır ve **↩ Filme geri dön** der. Biri reklam izlerken oda onu beklemez; "reklamda" görünür, reklam bitince yetişir. |
 | 🖼️ **Film sayfasının üstünde oda** | Sitenin oda sayfası film sayfasının üstüne katman olarak açılır, videonun yerinde bir delik bırakır. Hemen gelir (video başlamadan) ve yüklenirken sayfadan hiçbir şey görünmez. Video üstündeki mesajlar ve emojiler sitedeki gibi saydam. **👁 Sayfayı göster** odayı bir anlığına kenara çeker: videonun önünü kapatan pencere ya da reklam kapatılır. |
 | 🖥️ **Tam ekran** | Dikkat dağıtmayan: kontroller, emojiler ve hızlı mesaj kutusu fare oynayınca belirir, sonra kaybolur. Film sayfalarında videonun ekranı mı kaplayacağı yoksa kontrollerin üstünde mi duracağı (altyazı hiç örtülmez) seçilebilir. |
 | ⏩ **Ortak hız** | 0,25×–4× (YouTube en fazla 2×), ±0,05 ince ayar. Başka hız eklentileri odanın senkronunu bozamaz. |
@@ -47,7 +48,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 🔗 **Tek link, hesap yok** | Bir kere isim + avatar (çizilmiş temalı karakterler ve film / dizi / anime / oyun parodileri), tarayıcı hatırlar. Sağ üstteki 👤 menüsünde ad, avatar, tema ve oturum özeti. |
 | 📱 **Shorts görünümü** | YouTube Shorts linki açılınca oda dikey olur: video ortada, arkadaşlar iki yanında oturur. Mesajlar yazanın avatarından baloncuk olarak çıkar, emojiler oradan yükselir. ↑ / ↓ (ya da ▲▼, fare tekerleği) herkes için önceki / sonraki Shorts; 🔁 döngü biten Shorts'u yeniden oynatır. Sıra, sohbet geçmişi ve ayarlar bir tık ötede, oda görünümünde. |
 | 🎵 **Sıra ve oylama** | Ekle, sırala, hemen aç; 👍 oylar sırayı değiştirir. Otomatik devam kapatılabilir (yerine "Sıradakini başlat" kartı). |
-| 🎙 **Sesli sohbet** | Odada "Sese katıl": izlerken konuş, tek tıkla sessize al, konuşanın avatarı parlar. Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; sese katılmayan kimse seni duymaz. Şimdilik sitede. |
+| 🎙 **Sesli sohbet** | Odada "Sese katıl": izlerken konuş, tek tıkla sessize al, konuşanın avatarı parlar. Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; sese katılmayan kimse seni duymaz. Film sayfalarında da çalışır: mikrofon izni bir kez ScreenWithMe için sorulur (film sitesi için değil), film sayfası yenilense de ses kopmaz, biri konuşurken film sesi kısılır. |
 | 💬 **Sohbet ve emojiler** | Sohbet, sıra, kişiler ve ayarlar sekmeleri. Üç emoji sayfası; emojiler videonun altından gönderenin avatarı ve adıyla yükselir, istediğin kadar hızlı. Görmek istemeyen kendisi için kapatabilir. Sohbetteki oda hareketleri varsayılan gizli. |
 | 🖼️ **Özel emojiler** | Kendi resmini ya da GIF'ini ekle; bütün oda onunla tepki verebilir (odada en fazla 24). |
 | 📌 **Pinler** | Bir anı isteğe bağlı notla pinle; video altındaki şeritten oraya dönülür. |
@@ -111,9 +112,10 @@ bildirir; üst çerçeve orada bir delik keser (`clip-path`) ve filmin oynatıc�
 
 | Kontrol | Sonuç |
 |---|---|
-| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 133 geçiyor |
+| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 134 geçiyor |
 | Uçtan uca (gerçek sunucu koduna karşı sahte kullanıcılar: sıra, sohbet, yönetici ve atma, devir, herkes hazır, pinler, özel emojiler, yönetici modları, emoji sıklığı, kayıtlı odalar, özet, Shorts) | `npm run e2e`, CI'da çalışır |
-| Eklentiyle gerçek Chrome (`scripts/harness/embed`) | ~70 kontrol: oda katmanı, deliğe yerleşme, sayfanın hiç görünmemesi (ekran kaydı), saydam mesajlar (piksel ölçümü), tam ekranda altyazı ve kontroller, pinler, site ile eklenti arasında ayar eşitleme |
+| Eklentiyle gerçek Chrome (`scripts/harness/embed`) | 90 kontrol: oda katmanı, deliğe yerleşme, sayfanın hiç görünmemesi (ekran kaydı), saydam mesajlar (piksel ölçümü), tam ekranda altyazı ve kontroller, pinler, site ile eklenti arasında ayar eşitleme, video seçimi, reklam sekmeleri, yönlendirmeler, ön-reklamlar |
+| Gerçek ses (`scripts/harness/voice`) | Sahte mikrofonlu iki Chrome: gelen sesin enerjisi ölçülür; sitede ve film sayfalarında (eklenti), izin sekmesi ve yenileme dahil |
 | Gerçek oynatıcılar (herkese açık demo sayfalarında eklenti kodu) | **Plyr, hls.js, Video.js**: bulma ✓, uzaktan + yerel hareketler ✓, 26–100 ms fark |
 
 ## 🛠️ Teknoloji
@@ -152,7 +154,7 @@ Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
 ## 🗺️ Sırada ne var?
 
-Chrome Web Store yayını, elle "bu videoyu senkronla" seçimi, kısa alan adı, bas-konuş sesli sohbet, Firefox.
+Chrome Web Store yayını, görüntülü sohbet, oyun köşesi, kısa alan adı, bas-konuş sesli sohbet, Firefox.
 
 ## 📄 Lisans ve gizlilik
 

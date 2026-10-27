@@ -6,6 +6,8 @@ eklenti bozulur mu, biz ne yapabiliriz?
 > Bu rapor **kod okumasına ve belgelere** dayanır (Ekim 2026, eklenti 0.9.56). Gerçek bir reklamlı sayfada
 > denenmedi; "olabilir" dediğim yerler deneme ister (aşağıda "Nasıl denenir").
 
+> **Durum (0.9.60):** a1, a2, a4, a9, c1 (0.9.57–0.9.59) ve a3, a5, a6 (0.9.60) yapıldı. Yapılmayacaklar aşağıda.
+
 ## Kısaca
 
 - **Odanın kendisi çoğu reklama karşı zaten korunaklı.** Oda görünümünde katmanımız (kabuk) sayfanın tamamını

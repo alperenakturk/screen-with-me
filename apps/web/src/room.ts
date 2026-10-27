@@ -457,6 +457,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
             <label class="check-row shell-only"><input type="checkbox" id="opt-closeads" /> <span data-i18n="settings.closeAds"></span></label>
+            <label class="check-row shell-only"><input type="checkbox" id="opt-duck" /> <span data-i18n="settings.duck"></span></label>
             <label class="select-row shell-only"><span data-i18n="settings.fsFit"></span>
               <select id="opt-fsfit">
                 <option value="cover" data-i18n="settings.fsFit.cover"></option>
@@ -608,7 +609,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send({ t: 'rename', name, avatar });
   });
   // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
-  const voice = createVoice(app, send, () => myId);
+  const voice = createVoice(app, send, () => myId, roomId, isShell);
   const reactions = createReactions(
     app,
     send,
@@ -675,7 +676,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     switch (message.t) {
       case 'welcome':
         myId = message.you;
-        voice.welcome(message.voice === true && !isShell, message.voiceMode ?? 'p2p');
+        voice.welcome(message.voice === true, message.voiceMode ?? 'p2p');
         setMembers(message.members, message.hostId, false);
         chooseFirstTab(message.hostId === message.you);
         if (message.settings) roomSettings = message.settings;
@@ -1199,6 +1200,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (sentLayout.startsWith('{"mode":"full"')) document.documentElement.classList.add('shell-film');
     } else if (message.type === 'video' && isShell) {
       videoFound = message.found;
+    } else if (message.type === 'caps' && isShell) {
+      voice.caps(message.voice === true);
+    } else if (message.type === 'voice' && isShell) {
+      voice.extMessage(message.msg);
     } else if (message.type === 'tab-closed' && isShell) {
       showTabClosed(message.url);
     } else if (message.type === 'picked' && isShell) {
@@ -1215,6 +1220,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     new ResizeObserver(() => reportLayout()).observe(wrap);
     // Tam ekran kontrolleri bekleyince kaybolur (theater.idle): adacıkları da kalksın, video tıklanabilsin.
     new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
+    // Sesli sohbette biri konuşurken film sesi kısılsın (varsayılan açık). Susunca 1 sn sonra eski hâline döner.
+    const duckBox = $<HTMLInputElement>('#opt-duck');
+    duckBox.checked = load('opt:duck') !== '0';
+    duckBox.addEventListener('change', () => save('opt:duck', duckBox.checked ? '1' : '0'));
+    let ducking = false;
+    let quietSince = 0;
+    setInterval(() => {
+      const talk = film !== null && duckBox.checked && voice.speaking();
+      if (talk) quietSince = 0;
+      else quietSince ||= Date.now();
+      const want = talk || (ducking && Date.now() - quietSince < 1000);
+      if (want === ducking) return;
+      ducking = want;
+      postToExtension({ type: 'embed', request: { type: 'control', control: { action: 'duck', on: want } } });
+    }, 250);
     // Film sayfasının açtığı reklam sekmeleri kapatılsın mı (eklenti ayarı okur; varsayılan açık).
     const closeAds = $<HTMLInputElement>('#opt-closeads');
     closeAds.checked = load('opt:closeAds') !== '0';

@@ -1,8 +1,8 @@
 # Durum: kaldığımız yer (her oturum önce bunu okusun)
 
-> Son güncelleme: 27 Ekim 2026, sürüm **0.9.59** canlıda. Kullanıcı artık çoğunlukla **bulut oturumlarından**
-> (claude.ai/code) çalışacak; yerel bilgisayardaki hafıza notları buluta gitmez, gereken her şey burada ve
-> `CLAUDE.md`'de. Bir işi bitirince bu dosyayı güncelle (kısa tut).
+> Son güncelleme: 27 Ekim 2026, sürüm **0.9.60** (eklenti sürümü; site/sunucu PR birleşince canlıda). Kullanıcı
+> çoğunlukla **bulut oturumlarından** (claude.ai/code) çalışıyor; yerel bilgisayardaki hafıza notları buluta gitmez,
+> gereken her şey burada ve `CLAUDE.md`'de. Bir işi bitirince bu dosyayı güncelle (kısa tut).
 
 ## Kullanıcıyla çalışma (özet; ayrıntı CLAUDE.md)
 - Türkçe, sade dil; kullanıcı (Alperen) JS/HTML/CSS öğrenen bir öğrenci. Telefondan da takip ediyor.
@@ -11,7 +11,29 @@
   olduğunu kontrol et → kısa Türkçe özet. Eklenti değiştiyse `apps/extension/package.json` sürümünü artır.
 - Büyük, ayrı işleri ayrı oturumlarda yürütmekten hoşlanıyor (araştırma, tasarım alternatifleri); sonuçları özetle.
 
-## Son yapılanlar (0.9.56 → 0.9.59)
+## Yol haritası 0.9.60 → 0.9.80 (kullanıcı 27 Ekim 2026'da verdi; sırayı Claude seçer)
+Kullanıcı: "kendi inisiyatifine göre sıra sıra 0.9.80'e kadar geliştir". Sürümler 0.9.60, 0.9.61… (0.9.6 değil: Chrome
+sürümü parça parça karşılaştırır). Kullanım: kredi bitene kadar; sonra her yeni kullanım döneminde en fazla %80 (yüzdeyi
+Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
+1. ✅ **0.9.60:** elle video seçimi, reklamların ikinci adımı (a5/a6/a3), eklentide sesli sohbet (offscreen + mic.html +
+   film sesini kısma).
+2. **Site denetimi:** tüm sitede hata/arayüz sorunlarını bul-düzelt, hız/boyut iyileştirmesi.
+3. **Görüntülü sohbet** (eşler arası, Cloudflare'siz), sonra ses + görüntüyü geliştir (ses seviyesi göstergesi, arayüz).
+4. **Oyun köşesi "PlayWithMe":** üst menüde 🎮 → logolu sayfa, altta oyun listesi; ilk oyun XOX (her maç ayrı oda,
+   2 oyuncu, gelenler izler).
+5. **Yayın açma araştırması:** ayrı oturumda yürütüldü → `docs/internal/yayin.md` (varsa).
+6. **Tasarım/tema alternatifleri:** önizleme sayfası, kullanıcı seçince uygulanır.
+7. **Mehtaplı tema:** maskotu daha "Türk" yap: yeniçeri ya da padişah ScreenWithMe (kullanıcı istedi; direkt ekle).
+
+## Son yapılanlar (0.9.60)
+- **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".
+- **Reklamlar:** film sayfasının açtığı reklam sekmesi kapatılır ("Geri aç"), reklam yönlendirmesinde "Filme geri dön",
+  reklamdaki kişi odayı bekletmez ("📺 reklamda").
+- **Eklentide sesli sohbet:** film sayfasında da "Sese katıl" (izin bir kez eklenti adına, yenilemede kopmaz, konuşulurken
+  film sesi kısılır; sitede seste olan filme geçince ses kendiliğinden devam eder).
+- Test düzeneği Linux/bulutta: embed 90/90, ses (site + film sayfası) geçiyor.
+
+## Önceki (0.9.56 → 0.9.59)
 - Film sayfasında oda görünümü video başlamadan gelir, film sitesi hiç görünmez (örtü + "delik açıldı" el sıkışması),
   mesajlar/emojiler video üstünde saydam, tam ekranda kontroller bekleyince kaybolur, "Tam ekranda video" seçeneği,
   "👁 Sayfayı göster" kaçış düğmesi, reklamlara dayanıklılık (kısa reklam videosu odaya yansımaz vb.).
@@ -31,14 +53,8 @@
 - **Chrome Web Store'a gönderim:** henüz değil (kullanıcı eklentiyi hazır görmüyor).
 
 ## Sıradaki işler (öneri sırası)
-1. **Sesli sohbet 2. aşama: eklentide ses.** Film sayfasındaki katmanda mikrofon izni film sitesinin adına sorulduğu için
-   eklentinin **offscreen** belgesi + bir kerelik `mic.html` izin sayfası; konuşulurken film sesini hafif kısma (ducking).
-   Plan: `docs/internal/ses-goruntu.md` bölüm 3 ve 5.
-2. **Reklamların ikinci adımı:** film sekmesinden açılan reklam sekmesini kapatma + "Geri aç" (a5), yönlendirmeden "Filme
-   geri dön" kartı (a6), reklamdaki kişi için odayı bekletmeme (a3). Plan: `docs/internal/reklamlar.md`.
-3. **Elle video seçimi:** otomatik seçim yanılırsa "bu videoyu senkronla".
-4. Bir arkadaşla gerçek deneme turu (iki bilgisayar, uzun film; sesli sohbet farklı ağlarda).
-5. Claude araçları önerileri: `docs/internal/claude-araclari.md` (kullanıcı kendisi kuracak).
+Yukarıdaki yol haritasına bak. Ayrıca: bir arkadaşla gerçek deneme turu (iki bilgisayar, uzun film; sesli sohbet farklı
+ağlarda, eklentide ses) ve Claude araçları önerileri (`docs/internal/claude-araclari.md`, kullanıcı kuracak).
 
 ## Bulutta test etme (27 Ekim 2026'da baştan sona denendi, hepsi çalışıyor)
 Sıra önemli: sunucu `apps/web/dist`'i istiyor, o yüzden önce derleme.
@@ -54,6 +70,11 @@ ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=10:duration=660 \
 FILM_VIDEO=/tmp/film.webm node scripts/harness/embed/film-server.mjs &
 CHROME=/opt/pw-browsers/chromium node scripts/harness/embed/run.mjs apps/extension/dist http://localhost:5173 ws://localhost:8787 /tmp/shell-test
 CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/run.mjs http://localhost:5173
+# Film sayfasında ses (eklenti): iki farklı sahte mikrofon sesi gerekir
+ffmpeg -loglevel error -f lavfi -i "sine=frequency=330:duration=20,tremolo=f=3:d=0.7" -ac 1 -ar 48000 /tmp/a.wav
+ffmpeg -loglevel error -f lavfi -i "anoisesrc=color=pink:amplitude=0.4:duration=20,tremolo=f=2:d=0.8" -ac 1 -ar 48000 /tmp/b.wav
+VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/shell.mjs
+# Ön-reklam testi için 12 sn'lik kısa video: FILM_AD=/tmp/ad.webm film-server'a, FILM_AD=1 run.mjs'e
 ```
 - Chromium: `/opt/pw-browsers/chromium` (sürümlü klasöre bağlantı; root olunca `cdp.mjs` `--no-sandbox` ekler).
 - Ağ: varsayılan ortamda `www.youtube.com` ve `upload.wikimedia.org` kapalı (proxy 403). Bu yüzden `room.mjs` "title"
@@ -61,6 +82,8 @@ CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/run.mjs http://local
   Allowed domains'e `www.youtube.com` (ve isteğe bağlı `upload.wikimedia.org`). npm kayıt defteri açık.
 - Ses testi STUN'a ulaşamasa da geçer (iki Chrome aynı makinede, yerel adaylarla bağlanır).
 - Ekran görüntüleri `/tmp/shell-test-*.png`'ye düşer; repoya koyma.
+- Dikkat: `pkill -f vite` gibi komutlar kendi kabuğunu da öldürür (komut satırı da eşleşir); süreçleri `ps` + `awk` ile bul.
+- Paket `exports`'una yeni dosya eklenince (`@swm/shared/...`) Vite yeniden başlatılmalı.
 - GitHub: `gh` yok/yetkisiz, GitHub MCP araçlarıyla PR açılır/birleştirilir; `git push` çalışır.
 - Yayın bulutta GitHub Actions'tan (`wrangler login` yok); anahtarlar repo Secrets'ta.
 

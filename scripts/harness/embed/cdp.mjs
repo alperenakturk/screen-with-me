@@ -217,5 +217,12 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
   };
   /** Tarayıcının kendisine (sayfaya değil) komut: ör. Target.getTargets ile açık sekmeler. */
   const browser = (method, params = {}) => send(method, params);
-  return { loaded, cdp, browser, evaluate, evalFrame, shot, pixels, openTab, onEvent, mouse, click, press, type, navigate, center, sleep, close: () => chrome.kill() };
+  /** Başka bir hedefe (ör. eklentinin açtığı sekme, offscreen belge) bağlanıp içinde betik çalıştırır. */
+  const attach = async (targetId) => {
+    const s = (await send('Target.attachToTarget', { targetId, flatten: true })).result?.sessionId;
+    return {
+      evaluate: async (expression) => (await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, s)).result?.result?.value,
+    };
+  };
+  return { loaded, cdp, browser, attach, evaluate, evalFrame, shot, pixels, openTab, onEvent, mouse, click, press, type, navigate, center, sleep, close: () => chrome.kill() };
 }

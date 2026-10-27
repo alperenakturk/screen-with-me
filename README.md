@@ -35,7 +35,8 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 |---|---|
 | ⏯️ **Tight sync** | Play / pause / seek / speed for everyone. Server-time based, measured **30–100 ms** apart on real players. Small drift is closed silently by playing ±5 % faster or slower. |
 | ⏳ **Everyone ready** | If someone's video stalls, the room waits for them (at most 12 s; the same person can't stall it again for 30 s). Off when you are alone. |
-| 🧩 **Any website** | The extension finds the right video, also inside iframes and in players that load late or switch sources. Short videos, looping muted videos and small pinned corner videos (typical ads) are skipped, and an ad playing in the film's own player is never synced to the room. |
+| 🧩 **Any website** | The extension finds the right video, also inside iframes and in players that load late or switch sources. Short videos, looping muted videos and small pinned corner videos (typical ads) are skipped, and an ad playing in the film's own player is never synced to the room. Wrong video? **🎯 Pick video** puts a "Sync this one" button on every video of the page. |
+| 🛡️ **Ad-proof room** | A tab the video page opens to another site right after you click it (a typical ad pop-up) is closed and the film stays in front ("Reopen" if you meant it; can be turned off). If the page redirects you elsewhere, the room stays and offers **↩ Back to the film**. While someone watches an ad, the room doesn't wait for them; they show as "in an ad" and catch up afterwards. |
 | 🖼️ **Room over the film page** | The site's own room page opens as a layer over the film page, with a hole where the video goes. It appears right away (before the video starts) and nothing of the page flashes while it loads. Messages and emojis over the video are see-through, like on the site. **👁 Show page** steps the room aside for a moment to close a pop-up or ad covering the video. |
 | 🖥️ **Fullscreen** | Distraction-free: controls, reactions and a quick-message box appear when you move the mouse and hide again. On film pages you can choose whether the video fills the screen or stays above the controls (subtitles never covered). |
 | ⏩ **Shared speed** | 0.25×–4× (YouTube up to 2×), fine steps of ±0.05. Other speed extensions can't knock the room out of sync. |
@@ -47,7 +48,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. The 👤 menu (top right) holds name, avatar, theme and the session recap. |
 | 📱 **Shorts view** | Open a YouTube Shorts link and the room turns vertical: the video in the middle, friends sitting on both sides. Messages pop up as bubbles from the sender's avatar, reactions rise from it. ↑ / ↓ (or ▲▼, mouse wheel) go to the previous / next short for everyone; 🔁 loop replays a finished short. Queue, chat history and settings stay one click away in the room view. |
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
-| 🎙 **Voice chat** | "Join voice" in the room: talk while you watch, mute with one click, the speaker's avatar glows. Peer-to-peer and always encrypted (the server never hears it), up to 6 people; nobody hears you unless they joined voice too. On the website for now. |
+| 🎙 **Voice chat** | "Join voice" in the room: talk while you watch, mute with one click, the speaker's avatar glows. Peer-to-peer and always encrypted (the server never hears it), up to 6 people; nobody hears you unless they joined voice too. Works on film pages too: the microphone is asked once for ScreenWithMe (not for the film site), voice keeps going when the film page reloads, and the film gets quieter while someone talks. |
 | 💬 **Chat & reactions** | Chat, queue, people and settings tabs. Three emoji pages; reactions float up from the bottom of the video with the sender's avatar and name, as fast as you like. Anyone can hide them for themselves. Room activity in chat is hidden by default. |
 | 🖼️ **Custom emojis** | Add your own image or GIF; the whole room can react with it (up to 24 per room). |
 | 📌 **Pins** | Pin a moment with an optional note; a strip under the video jumps back to it. |
@@ -112,9 +113,10 @@ player into it.
 
 | Check | Result |
 |---|---|
-| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 133 passing |
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 134 passing |
 | End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, emoji rate, saved rooms, recap, Shorts) | `npm run e2e`, runs in CI |
-| Real Chrome with the extension (`scripts/harness/embed`) | ~70 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, pins, settings sync between site and extension |
+| Real Chrome with the extension (`scripts/harness/embed`) | 90 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, pins, settings sync between site and extension, video picker, ad tabs, redirects, pre-roll ads |
+| Real voice (`scripts/harness/voice`) | Two Chromes with fake microphones: the received audio's energy is measured, on the site and on film pages (extension), incl. the permission tab and reloads |
 | Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote + local actions ✓, 26–100 ms apart |
 
 ## 🛠️ Tech
@@ -153,7 +155,7 @@ Locally: `npx wrangler login` once, then `npm run deploy`.
 
 ## 🗺️ What's next
 
-Chrome Web Store release, a manual "sync this video" picker, a short domain, push-to-talk voice chat, Firefox.
+Chrome Web Store release, video chat, a game corner, a short domain, push-to-talk voice chat, Firefox.
 
 ## 📄 License & privacy
 

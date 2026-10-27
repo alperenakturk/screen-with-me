@@ -9,7 +9,7 @@
 
 import type { EmbedControl, EmbedReply, EmbedRequest } from '@swm/shared/embed';
 import type { ClientMessage, PlaybackState } from '@swm/shared/protocol';
-import type { Rect, ShellLayout } from '@swm/shared/shell';
+import type { Rect, ShellLayout, VoiceDown, VoiceUp } from '@swm/shared/shell';
 
 /** Çerçevelerin "bir sekmede oda var mı" diye baktığı yer (chrome.storage.session): kabuklu sekmeler. */
 export const SESSIONS_KEY = 'sessions';
@@ -18,6 +18,21 @@ export const SESSIONS_KEY = 'sessions';
 export const PORT_NAME = 'swm';
 /** shell.html ⇄ arka plan. */
 export const SHELL_PORT_NAME = 'swm-shell';
+/** Ses sayfası (offscreen) ⇄ arka plan. */
+export const VOICE_PORT_NAME = 'swm-voice';
+/** İzin sayfası (mic.html) → arka plan: mikrofon izni verildi mi. */
+export const MIC_RESULT = 'swm-mic-result';
+
+/** Arka plan → ses sayfası. */
+export type OffscreenIn =
+  | { type: 'voice'; tabId: number; roomId: string; msg: VoiceUp }
+  /** İzin sekmesinin sonucu. */
+  | { type: 'permission'; granted: boolean }
+  /** Bu sekmenin odası bitti: ses de biter. */
+  | { type: 'end'; tabId: number };
+
+/** Ses sayfası → arka plan. */
+export type OffscreenOut = { tabId: number; msg: VoiceDown } | { type: 'need-permission' };
 
 /** Çerçeve → arka plan */
 export type FrameMessage =
@@ -81,7 +96,8 @@ export type ShellPortMessage =
   /** Site bir bağlantıyı yeni sekmede açıyor (sohbetteki link): o sekme reklam sayılıp kapatılmasın. */
   | { type: 'open-ok' }
   /** Kapatılan reklam sekmesini geri aç ("Geri aç"). */
-  | { type: 'reopen'; url: string };
+  | { type: 'reopen'; url: string }
+  | { type: 'voice'; msg: VoiceUp };
 
 /** Arka plan → shell.html */
 export type ShellPortReply =
@@ -93,7 +109,8 @@ export type ShellPortReply =
   | { type: 'fullscreen'; on: boolean }
   | { type: 'hole' }
   | { type: 'picked' }
-  | { type: 'tab-closed'; url: string };
+  | { type: 'tab-closed'; url: string }
+  | { type: 'voice'; msg: VoiceDown };
 
 /** Ana site → arka plan (site-bridge üzerinden): "bu sekme film sayfasına gitsin, odanın katmanıyla". */
 export interface SiteGoMessage {

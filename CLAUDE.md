@@ -155,8 +155,17 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   sessiz (×0,2), köşeye sabitlenmiş küçük (×0,3) videolar düşer; bilinen reklam ağlarının çerçevelerinde (`AD_HOSTS`,
   kısa liste, hiçbir şey engellenmez) aday yok. Oda görünümünde filmin oynatıcısı dışında sesli oynayan videolar
   susturulur (oda bitince geri açılır; sonradan film seçilirse sesi geri verilir). Kendi reklam engelleme listemiz,
-  `window.open` sarmalayıcı, reklam atlatma YOK (mağaza "tek amaç", kolay atlatılır). Sırada: reklam sekmesini kapatma
-  (a5), yönlendirmeden dönüş (a6), "reklamda" durumu (a3). Eklenti sayfasında uBlock Origin Lite ipucu.
+  `window.open` sarmalayıcı, reklam atlatma YOK (mağaza "tek amaç", kolay atlatılır). Eklenti sayfasında uBlock Origin
+  Lite ipucu. 0.9.60: **a5** oda görünümünde film sayfasına tıklandıktan ≤3 sn sonra film sekmesinden açılıp ilk 5 sn'de
+  başka siteye giden sekme kapatılır (arka plan `tabs.onCreated` `openerTabId`; Ctrl+T'nin `chrome://newtab`'ı, sitedeki
+  bağlantılar `open-ok`, "Geri aç" `reopen` dokunulmaz; `opt:closeAds`), sitede "kapatıldı · Geri aç" notu; **a6** tıklamadan
+  ≤4 sn sonra film sekmesi başka siteye giderse katman kalkmaz (`Shell.strayed`, `page.strayed`), site "Filme geri dön" der;
+  **a3** etkin çerçevede kısa video oynarken film oynamıyorsa `{t:'ready', ready:false, ad:true}`: sunucu bekletmez, üye
+  `ad: true` ("📺 reklamda"), film gelince kalkar (site kapanırken de temizler). Test: film-server `/popup` `/redirect`
+  `/preroll` (`FILM_AD`).
+- **Elle video seçimi (0.9.60, eklenti `picker.ts`):** kabukta "🎯 Video seç" → katman şerit olur (`peek = 'pick'`), her
+  çerçeve videolarının üstüne "Bunu senkronla" düğmesi çizer (kapalı shadow DOM); seçilen video çerçevede `picked`
+  (puanı `PICKED_SCORE`, kısa olsa da senkronlanır), eski video durur, başka çerçevenin seçimi `unpick`. Test: `/two`.
 - **Eklentide hız kilidi:** film çerçevesindeki motor `lockRate: true`; hız sadece bizim hız menüsünden değişir, başka
   hız eklentilerinin değişikliği odaya yayılmaz, geri alınır (inatlaşma sınırı var). Sitede kapalı.
 - **Eklenti bizim sitede çalışmaz:** içerik betiği sitenin sayfalarına hiç eklenmez (`exclude_matches`), sitemizin içindeki
@@ -234,9 +243,16 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   sadece iki taraf da seste ise aktarır (IP sadece seste olanlara görünür), en fazla `VOICE_MAX_P2P` (6), STUN Cloudflare +
   Google; **sfu**: Worker'da `REALTIME_APP_ID`/`REALTIME_APP_SECRET` varsa Cloudflare Realtime (`apps/server/src/realtime.ts`,
   `{t:'rtc'}` istekleri, oturum sunucuda, `VOICE_MAX` 10). Cloudflare kart istediği ve harcama tavanı olmadığı için şimdilik
-  p2p (kullanıcı kararı, Ekim 2026). `VOICE=off` her şeyi kapatır. Kabukta (film sayfası) kapalı: orada mikrofon izni film
-  sitesinin adına sorulur; 2. aşamada eklentinin offscreen belgesiyle. Testler: `scripts/e2e/voice.mjs`, gerçek ses
-  `scripts/harness/voice/run.mjs` (iki Chrome, sahte mikrofon, gelen sesin enerjisi ölçülür).
+  p2p (kullanıcı kararı, Ekim 2026). `VOICE=off` her şeyi kapatır. **Kabukta (0.9.60)** ses eklentinin offscreen belgesinde
+  (`offscreen.ts`, izin `offscreen`): site `ExtVoice` (`ui/voice-ext.ts`) ile `{type:'voice', msg}` aracılık eder (sinyal/rtc/
+  "seste" bildirimini kendi bağlantısından yollar), offscreen `P2pVoice`/`VoiceClient`'ı çalıştırır, sesleri çalar, seviyeleri
+  (`LevelMeter`, `levels` + `me`) yollar. İzin yoksa arka plan `mic.html` sekmesini açar (offscreen soramaz); film sayfası
+  yenilenince yeni site `hello` → `reset` (mikrofon kalır). `pagehide`'da ExtVoice ayrılmaz; sekme kapanınca/odaya dönünce
+  arka plan `end`. Seste olduğum `voice:<oda>` ile hatırlanır: siteden filme (ya da tersi) geçince izin varsa sessizce yeniden
+  katılır. Biri konuşurken film sesi kısılır (`opt:duck`, embed `duck`, ×0,35; kişi sesi değiştirdiyse dokunulmaz). Eski
+  eklenti `caps` yollamaz → kabukta kart gizli. Testler: `scripts/e2e/voice.mjs`, gerçek ses `scripts/harness/voice/run.mjs`
+  (iki Chrome, sahte mikrofon, gelen sesin enerjisi ölçülür) ve `voice/shell.mjs` (film sayfasında; `VOICE_A`/`VOICE_B` iki
+  farklı wav: aynı sahte bip'i yankı engelleyici siler).
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).

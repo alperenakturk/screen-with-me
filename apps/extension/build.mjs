@@ -27,7 +27,7 @@ const common = {
 };
 // Arka plan ES modülü olarak yüklenir; sayfalara eklenen betikler ise klasik
 // betik olmak zorunda, onlar kendi içine kapalı (iife) paketlenir.
-await build({ ...common, entryPoints: ['src/background.ts', 'src/popup.ts', 'src/shell.ts'], format: 'esm' });
+await build({ ...common, entryPoints: ['src/background.ts', 'src/popup.ts', 'src/shell.ts', 'src/offscreen.ts', 'src/mic.ts'], format: 'esm' });
 await build({ ...common, entryPoints: ['src/content.ts', 'src/site-bridge.ts', 'src/fullscreen-guard.ts'], format: 'iife' });
 
 const siteMatches = dev
@@ -46,7 +46,8 @@ const manifest = {
   homepage_url: 'https://screen-with-me.swm-server.workers.dev/eklenti.html',
   // Simgeler: node scripts/make-icons.mjs ile üretilir (static/ içinde).
   icons: { 16: 'icon16.png', 32: 'icon32.png', 48: 'icon48.png', 128: 'icon128.png' },
-  permissions: ['storage'],
+  // offscreen: film sayfasındaki sesli sohbet görünmeyen bir eklenti sayfasında çalışır (izin eklentinin adına).
+  permissions: ['storage', 'offscreen'],
   host_permissions: ['<all_urls>'],
   // Film sayfasının üstüne açılan oda katmanı (kabuk): içinde sitenin oda sayfası çalışır.
   web_accessible_resources: [{ resources: ['shell.html', 'shell.js'], matches: ['<all_urls>'] }],

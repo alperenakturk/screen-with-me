@@ -324,6 +324,10 @@ function reportStatus(): void {
  * motor bunu kullanıcı hareketi olarak görüp odaya yayar (film sitesinin kendi düğmesiyle aynı).
  */
 function onControl(control: EmbedControl): void {
+  if (control.action === 'duck') {
+    duck(control.on);
+    return;
+  }
   if (!adapter || !engine) return;
   switch (control.action) {
     case 'play':
@@ -345,7 +349,29 @@ function onControl(control: EmbedControl): void {
   reportStatus();
 }
 
+/** Konuşulurken film sesi bu orana iner. */
+const DUCK_RATIO = 0.35;
+let ducked: { video: HTMLVideoElement; volume: number } | null = null;
+/**
+ * Sesli sohbette biri konuşurken film sesi kısılır, susunca eski hâline döner. Kişi bu arada sesi kendisi değiştirdiyse
+ * ona dokunulmaz. Ses düzeyi olayları motoru ilgilendirmez (odaya bir şey gitmez).
+ */
+function duck(on: boolean): void {
+  if (on) {
+    const video = adapter?.element ?? best;
+    if (ducked || !video || video.muted) return;
+    ducked = { video, volume: video.volume };
+    video.volume = ducked.volume * DUCK_RATIO;
+    return;
+  }
+  if (!ducked) return;
+  const { video, volume } = ducked;
+  ducked = null;
+  if (Math.abs(video.volume - volume * DUCK_RATIO) < 0.02) video.volume = volume;
+}
+
 function deactivate(): void {
+  duck(false);
   active = false;
   // Bu çerçeve artık etkin değil: işareti site kaldırır (arka plan buradan bir şey iletmez).
   adReported = false;

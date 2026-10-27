@@ -14,12 +14,16 @@ import { cleanLayout, type ShellLayout } from '@swm/shared/shell';
 import { SITE_URL } from './config.ts';
 import { readValue } from './store.ts';
 import {
+  MIC_RESULT,
   PORT_NAME,
   PROBE,
   SESSIONS_KEY,
   SHELL_PORT_NAME,
+  VOICE_PORT_NAME,
   type BackgroundMessage,
   type FrameMessage,
+  type OffscreenIn,
+  type OffscreenOut,
   type ShellPortMessage,
   type ShellPortReply,
   type SiteGoMessage,
@@ -145,6 +149,8 @@ function probe(tabId: number): void {
 
 function endShell(tabId: number): void {
   if (!shells.delete(tabId)) return;
+  // Sesli sohbet bu sekmedeyse biter (sitedeki odaya dönüldüyse site kendi sesini açar).
+  toVoice({ type: 'end', tabId });
   // Film sayfasındaki çerçeveler uyusun (video aramayı, senkronu bıraksın, katman kalksın).
   for (const frame of frames.get(tabId)?.values() ?? []) post(frame.port, { type: 'idle' });
   void persist();
@@ -365,6 +371,9 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
     case 'open-ok':
       shell.allowTabsUntil = Date.now() + 3000;
       break;
+    case 'voice':
+      toVoice({ type: 'voice', tabId: shell.tabId, roomId: shell.roomId, msg: message.msg });
+      break;
     case 'reopen': {
       if (!shell.closed.includes(message.url)) break;
       shell.closed = shell.closed.filter((url) => url !== message.url);
@@ -405,6 +414,99 @@ chrome.runtime.onConnect.addListener((port) => {
     const shell = shells.get(tabId);
     if (shell?.port === port) shell.port = null;
   });
+});
+
+// ---- Sesli sohbet (film sayfasındaki katmanda) ----
+// Ses eklentinin görünmeyen sayfasında (offscreen.html) çalışır: izin eklentinin adına, film sayfası değişse de kopmaz.
+// Arka plan site (shell.html üzerinden) ile o sayfa arasında mesaj taşır; ilk seferde izin sekmesini (mic.html) açar.
+
+const OFFSCREEN_PAGE = chrome.runtime.getURL('offscreen.html');
+const MIC_PAGE = chrome.runtime.getURL('mic.html');
+let voicePort: chrome.runtime.Port | null = null;
+/** Ses sayfası açılırken gelen mesajlar (bağlanınca sırayla gider). */
+const voiceQueue: OffscreenIn[] = [];
+let creatingOffscreen: Promise<void> | null = null;
+/** Açık izin sekmesi ve izni isteyen film sekmesi. */
+let micTab: { id: number; filmTab: number | null } | null = null;
+
+function toVoice(message: OffscreenIn): void {
+  if (voicePort) {
+    post(voicePort, message as never);
+    return;
+  }
+  // Oda bitti ama ses sayfası hiç açılmamış: açmaya gerek yok.
+  if (message.type === 'end') return;
+  voiceQueue.push(message);
+  void ensureOffscreen();
+}
+
+async function ensureOffscreen(): Promise<void> {
+  creatingOffscreen ??= (async () => {
+    const exists = await chrome.offscreen.hasDocument().catch(() => false);
+    if (!exists) {
+      await chrome.offscreen
+        .createDocument({
+          url: 'offscreen.html',
+          reasons: [chrome.offscreen.Reason.USER_MEDIA],
+          justification: 'Voice chat in the watch room while the video plays on another site',
+        })
+        .catch(() => {});
+    }
+  })().finally(() => {
+    creatingOffscreen = null;
+  });
+  return creatingOffscreen;
+}
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== VOICE_PORT_NAME) return;
+  if (!port.sender?.url?.startsWith(OFFSCREEN_PAGE)) {
+    port.disconnect();
+    return;
+  }
+  voicePort = port;
+  for (const message of voiceQueue.splice(0)) post(port, message as never);
+  port.onMessage.addListener((message: OffscreenOut) => {
+    if ('type' in message) {
+      void openMicPage();
+      return;
+    }
+    const shell = shells.get(message.tabId);
+    post(shell?.port, { type: 'voice', msg: message.msg });
+  });
+  port.onDisconnect.addListener(() => {
+    if (voicePort === port) voicePort = null;
+  });
+});
+
+/** İlk sefer: mikrofon izni için küçük bir eklenti sekmesi (offscreen izin isteyemez). */
+async function openMicPage(): Promise<void> {
+  const [active] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => [] as chrome.tabs.Tab[]);
+  if (micTab) {
+    await chrome.tabs.update(micTab.id, { active: true }).catch(() => {});
+    return;
+  }
+  const tab = await chrome.tabs.create({ url: MIC_PAGE, ...(active?.id !== undefined ? { openerTabId: active.id } : {}) }).catch(() => null);
+  if (tab?.id !== undefined) micTab = { id: tab.id, filmTab: active?.id ?? null };
+}
+
+function micDone(granted: boolean): void {
+  const done = micTab;
+  micTab = null;
+  toVoice({ type: 'permission', granted });
+  if (!done) return;
+  if (granted) void chrome.tabs.remove(done.id).catch(() => {});
+  if (done.filmTab !== null) void chrome.tabs.update(done.filmTab, { active: true }).catch(() => {});
+}
+
+chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+  if ((message as { type?: unknown } | null)?.type !== MIC_RESULT || !sender.url?.startsWith(MIC_PAGE)) return;
+  micDone((message as { granted?: unknown }).granted === true);
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  // İzin verilmeden kapatıldı.
+  if (micTab?.id === tabId) micDone(false);
 });
 
 // ---- Ana site ----
