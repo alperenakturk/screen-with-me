@@ -1,0 +1,169 @@
+import { LIVE_MAX_VIEWERS, type ClientMessage, type LiveKind, type Member, type Signal } from '@swm/shared/protocol';
+import { LiveP2p } from '@swm/shared/live-p2p';
+import { t } from '../i18n.ts';
+import { flashHint } from './hint.ts';
+
+/**
+ * Yayın kartı (sağ panelde, sesli sohbetin altında) ve yayın penceresi (videonun köşesinde, büyütülebilir).
+ * Odada aynı anda tek yayın: ekran/pencere/sekme paylaşımı ya da kamera; en fazla LIVE_MAX_VIEWERS kişi izler (sınır hep
+ * görünür, dolunca düğme soluk ve nedeni). Kimse kendiliğinden izlemez: "▶ İzle"ye basan izler (trafik harcamasın).
+ * Film yayınlamak için değil (paylaşılan şey eşitlenmiş film değil, canlı görüntü); film sayfasında (kabuk) yayın
+ * açılamaz, izlenebilir.
+ */
+export function createLive(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, isShell: boolean) {
+  const card = root.querySelector<HTMLElement>('#live-card')!;
+  const screenButton = root.querySelector<HTMLButtonElement>('#live-screen')!;
+  const cameraButton = root.querySelector<HTMLButtonElement>('#live-camera')!;
+  const watchButton = root.querySelector<HTMLButtonElement>('#live-watch')!;
+  const stopButton = root.querySelector<HTMLButtonElement>('#live-stop')!;
+  const status = root.querySelector<HTMLElement>('#live-status')!;
+  const limit = root.querySelector<HTMLElement>('#live-limit')!;
+  const win = root.querySelector<HTMLElement>('#live-window')!;
+  const video = root.querySelector<HTMLVideoElement>('#live-video')!;
+  const title = root.querySelector<HTMLElement>('#live-title')!;
+  const bigButton = root.querySelector<HTMLButtonElement>('#live-big')!;
+  const closeButton = root.querySelector<HTMLButtonElement>('#live-close')!;
+
+  let available = false;
+  let members: Member[] = [];
+  let incoming: MediaStream | null = null;
+  // Telefonda ekran paylaşımı yok (mobil tarayıcıda getDisplayMedia yok); izlemek olur.
+  const canShare = !isShell && typeof navigator.mediaDevices?.getDisplayMedia === 'function';
+  const canCamera = !isShell && typeof navigator.mediaDevices?.getUserMedia === 'function';
+
+  const live = new LiveP2p({
+    signal: (to, data) => send({ t: 'live-signal', to, data }),
+    announce: (on, kind) => send(on && kind ? { t: 'live', on: true, kind } : { t: 'live', on: false }),
+    watch: (on) => send({ t: 'live-watch', on }),
+    onStream: (stream) => {
+      incoming = stream;
+      render();
+    },
+    onEnded: () => render(),
+    onFailed: (memberId) => {
+      const who = members.find((m) => m.id === memberId)?.name ?? '';
+      flashHint(card, t('live.failed', { name: who }), 7000);
+    },
+  });
+
+  function streamer(): Member | undefined {
+    return members.find((m) => m.live);
+  }
+
+  function render(): void {
+    card.hidden = !available;
+    const me = myId();
+    const host = streamer();
+    const mine = host?.id === me && live.broadcasting !== null;
+    const viewers = members.filter((m) => m.watching).length;
+    const full = viewers >= LIVE_MAX_VIEWERS;
+    const idle = !host;
+    screenButton.hidden = !idle || !canShare;
+    cameraButton.hidden = !idle || !canCamera;
+    stopButton.hidden = !mine;
+    watchButton.hidden = !host || mine;
+    watchButton.textContent = live.isWatching ? t('live.unwatch') : t('live.watch');
+    watchButton.classList.toggle('primary', !live.isWatching);
+    watchButton.classList.toggle('is-full', !live.isWatching && full);
+    if (idle) status.textContent = isShell ? t('live.shellIdle') : t('live.idle');
+    else if (mine) status.textContent = `🔴 ${t(host.live === 'camera' ? 'live.youCamera' : 'live.youScreen')}`;
+    else status.textContent = `🔴 ${t(host.live === 'camera' ? 'live.theyCamera' : 'live.theyScreen', { name: host.name })}`;
+    // Sınır hep görünür.
+    limit.textContent = idle ? t('live.limitIdle', { max: LIVE_MAX_VIEWERS }) : t('live.viewers', { n: viewers, max: LIVE_MAX_VIEWERS });
+    limit.title = t('live.limitTitle', { max: LIVE_MAX_VIEWERS });
+    limit.classList.toggle('full', !idle && full);
+    limit.classList.toggle('near', !idle && !full && LIVE_MAX_VIEWERS - viewers === 1);
+
+    // Pencere: yayıncıya kendi önizlemesi (sessiz), izleyiciye yayın.
+    const stream = mine ? live.preview : live.isWatching ? incoming : null;
+    win.hidden = !stream;
+    if (stream && video.srcObject !== stream) {
+      video.srcObject = stream;
+      video.muted = mine;
+      void video.play().catch(() => {});
+    }
+    if (!stream) {
+      video.srcObject = null;
+      win.classList.remove('big');
+    }
+    title.textContent = host ? `🔴 ${host.name}` : '';
+    win.classList.toggle('mine', mine);
+  }
+
+  async function start(kind: LiveKind, button: HTMLButtonElement): Promise<void> {
+    if (streamer()) return;
+    button.disabled = true;
+    try {
+      await live.start(kind);
+    } catch (error) {
+      // Kişi seçme penceresini kapattıysa sessizce vazgeç.
+      const cancelled = error instanceof DOMException && error.name === 'NotAllowedError';
+      if (!cancelled) flashHint(button, t('live.startFailed'), 6000);
+    } finally {
+      button.disabled = false;
+      render();
+    }
+  }
+
+  screenButton.addEventListener('click', () => void start('screen', screenButton));
+  cameraButton.addEventListener('click', () => void start('camera', cameraButton));
+  stopButton.addEventListener('click', () => {
+    live.stop();
+    render();
+  });
+  watchButton.addEventListener('click', () => {
+    if (live.isWatching) {
+      live.stopWatching();
+      render();
+      return;
+    }
+    const viewers = members.filter((m) => m.watching).length;
+    if (viewers >= LIVE_MAX_VIEWERS) {
+      flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
+      return;
+    }
+    live.watch();
+    render();
+  });
+  bigButton.addEventListener('click', () => win.classList.toggle('big'));
+  closeButton.addEventListener('click', () => {
+    if (live.broadcasting) live.stop();
+    else live.stopWatching();
+    render();
+  });
+
+  return {
+    welcome(enabled: boolean): void {
+      available = enabled;
+      // Yeniden bağlanınca (yeni üye kimliği) yayın da izleme de biter: sunucu eski kimliği tanımaz.
+      live.stop();
+      live.stopWatching();
+      render();
+    },
+    members(next: Member[]): void {
+      members = next;
+      live.sync(members, myId());
+      render();
+    },
+    signal(from: string, data: Signal): void {
+      void live.receive(from, data).catch(() => {});
+    },
+    error(code: 'live_busy' | 'live_full'): void {
+      if (code === 'live_busy') {
+        live.stop();
+        flashHint(card, t('live.busy'), 6000);
+      } else {
+        live.stopWatching();
+        const viewers = members.filter((m) => m.watching).length;
+        flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
+      }
+      render();
+    },
+    /** Sayfadan çıkarken / odadan atılınca. */
+    leave(): void {
+      live.stop();
+      live.stopWatching();
+    },
+    relabel: render,
+  };
+}

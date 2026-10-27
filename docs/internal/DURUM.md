@@ -23,7 +23,8 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`). Sıradaki oyun fikirleri kartlarda
    "yakında": Çiz-Bil, bilgi yarışması, kelime avı.
 5. **Yayın açma:** araştırma ✅ (`docs/internal/yayin.md`); kullanıcı kararı: sitede ekran paylaşımı + kamera yayını,
-   eşler arası, tek yayın, ≤4 izleyici, 720p, kabukta sadece izleme (film yayma yok). **Sırada.**
+   eşler arası, tek yayın, ≤4 izleyici, 720p, kabukta sadece izleme (film yayma yok). ✅ 0.9.64 (1. aşama). Sırada
+   2. aşama: kalite seçimi (yazı net / akıcı), yönetici ayarı `settings.live`, yöneticinin yayını durdurması.
    Ayrıca: kişi sınırları hep görünür ("Seste 3/6 · 📷 1/4", dolunca soluk düğme + neden) ✅ 0.9.63.
 6. **Tasarım/tema alternatifleri:** önizleme sayfası, kullanıcı seçince uygulanır.
 7. **Mehtaplı tema:** maskotu daha "Türk" yap: yeniçeri ya da padişah ScreenWithMe (kullanıcı istedi; direkt ekle).

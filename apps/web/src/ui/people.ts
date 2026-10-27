@@ -34,6 +34,7 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
           member.id === hostId ? el('span', { class: 'host-badge', title: t('host') }, '👑') : '',
           member.client === 'ext' ? el('span', { class: 'host-badge', title: t('inFilm') }, '🎬') : '',
           member.ad ? el('span', { class: 'host-badge ad-badge', title: t('inAdTitle') }, `📺 ${t('inAd')}`) : '',
+          member.live ? el('span', { class: 'host-badge', title: t('live.badge') }, '🔴') : '',
           member.voice ? el('span', { class: 'host-badge', title: t('voice.inVoice') }, member.voice.mic ? '🎙' : '🔇') : '',
           iAmHost && !isMe ? kick : '',
         );

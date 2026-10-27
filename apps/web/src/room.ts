@@ -61,6 +61,7 @@ import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
+import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
@@ -267,6 +268,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="fs-catcher" class="fs-only fs-catcher"></div>
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
             <div id="cam-dock" class="cam-dock" hidden></div>
+            <div id="live-window" class="live-window" hidden>
+              <video id="live-video" autoplay playsinline></video>
+              <div class="live-bar">
+                <span id="live-title" class="live-title"></span>
+                <button id="live-big" type="button" class="icon-btn" data-i18n-title="live.bigger">⤢</button>
+                <button id="live-close" type="button" class="icon-btn" data-i18n-title="close">✕</button>
+              </div>
+            </div>
             <div id="waiting-banner" class="waiting-banner" role="status" hidden></div>
             <div id="sync-badge" class="sync-badge" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
@@ -387,6 +396,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div id="voice-cams" class="voice-cams" hidden>
           </div>
           <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
+        </section>
+
+        <section class="card live-card" id="live-card" hidden>
+          <div class="live-row">
+            <span id="live-status" class="live-status small"></span>
+            <button id="live-screen" type="button" class="btn small-btn">🖥️ <span data-i18n="live.screen"></span></button>
+            <button id="live-camera" type="button" class="btn small-btn">📹 <span data-i18n="live.camera"></span></button>
+            <button id="live-watch" type="button" class="btn small-btn primary" hidden></button>
+            <button id="live-stop" type="button" class="btn small-btn" data-i18n="live.stop" hidden></button>
+            <span id="live-limit" class="voice-limit muted small"></span>
+          </div>
         </section>
 
         <section class="card tabs-card">
@@ -607,6 +627,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
   const voice = createVoice(app, send, () => myId, roomId, isShell);
+  const live = createLive(app, send, () => myId, isShell);
   const reactions = createReactions(
     app,
     send,
@@ -687,6 +708,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (message.settings) roomSettings = message.settings;
         settingsKnown = true;
         voice.welcome(message.voice === true, message.voiceMode ?? 'p2p');
+        live.welcome(message.voice === true);
         setMembers(message.members, message.hostId, false);
         chooseFirstTab(message.hostId === message.you);
         waitingIds = message.waiting ?? [];
@@ -814,6 +836,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'signal':
         voice.signal(message.from, message.data);
         break;
+      case 'live-signal':
+        live.signal(message.from, message.data);
+        break;
       case 'error':
         if (message.code === 'voice_full' || message.code === 'voice_unavailable') {
           voice.error(message.code);
@@ -823,12 +848,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           voice.camFull();
           break;
         }
+        if (message.code === 'live_busy' || message.code === 'live_full') {
+          live.error(message.code);
+          break;
+        }
         if (message.code === 'kicked') {
           // Oda yöneticisi çıkardı: tekrar bağlanmaya çalışma, bilgilendirme ekranını göster.
           connection.close();
           engine.destroy();
-          // Mikrofon da kapansın (ses eklentide çalışıyorsa orada da).
+          // Mikrofon da kapansın (ses eklentide çalışıyorsa orada da), yayın da.
           voice.end();
+          live.leave();
           // Filmi durdurmak odayı durdururdu (oradaki motor yayardı); sadece bağı kopar.
           if (film) closeCurrent();
           else current?.player.pause();
@@ -1702,6 +1732,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   window.addEventListener('langchange', () => {
     copyEl.textContent = inviteLabel();
     voice.relabel();
+    live.relabel();
     emptyInviteEl.textContent = emptyInviteLabel();
   });
 
@@ -1734,6 +1765,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     people.set(members, hostId, myId);
     seats.setMembers(members, myId);
     voice.members(members);
+    live.members(members);
     $('#people-count').textContent = String(members.length);
     renderAlone();
     renderWaiting();
@@ -1907,6 +1939,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // önbellekte açık tutarsa kişi odada bir süre iki kez görünüyordu. Geri gelinirse sayfa yenilenir.
   addEventListener('pagehide', () => {
     voice.leave();
+    live.leave();
     connection.close();
   });
 

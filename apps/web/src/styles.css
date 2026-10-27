@@ -4833,3 +4833,91 @@ html.shorts-view .footer {
     animation: none;
   }
 }
+
+/* ---- Yayın: kart (sağ panelde) ve pencere (videonun köşesinde) ---- */
+.live-card {
+  padding: 10px 12px;
+}
+
+.live-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.live-status {
+  flex-basis: 100%;
+  color: var(--chrome-text);
+}
+
+.live-window {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 6;
+  width: min(40%, 440px);
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.6);
+  border: 2px solid #ff4d6d;
+}
+
+.live-window.mine {
+  border-color: var(--border);
+}
+
+/* Büyüt: videonun tamamını kaplar */
+.live-window.big {
+  inset: 0;
+  width: auto;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+.live-window video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.live-bar {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: linear-gradient(rgb(0 0 0 / 0.65), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.live-window:hover .live-bar,
+.live-window:focus-within .live-bar {
+  opacity: 1;
+}
+
+.live-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.live-bar .icon-btn {
+  color: #fff;
+}
+
+@media (max-width: 560px) {
+  .live-window:not(.big) {
+    width: 55%;
+  }
+}

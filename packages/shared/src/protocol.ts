@@ -198,7 +198,19 @@ export interface Member {
   voice?: MemberVoice;
   /** Film sayfasında reklam izliyor (oda onu beklemez; bitince yetişir). */
   ad?: boolean;
+  /** Yayın yapıyor (ekran paylaşımı ya da kamera; odada aynı anda tek yayın). */
+  live?: LiveKind;
+  /** Yayını izliyor. */
+  watching?: boolean;
 }
+
+/** Yayın türü: ekran/pencere/sekme paylaşımı ya da kamera. */
+export type LiveKind = 'screen' | 'camera';
+/**
+ * Yayını aynı anda en fazla bu kadar kişi izler: yayıncı her izleyiciye ayrı kopya yollar (720p ~2 Mbit/s; 4 izleyici
+ * ev internetinin yükleme hızının sınırı).
+ */
+export const LIVE_MAX_VIEWERS = 4;
 
 export interface MemberVoice {
   /** Mikrofonu açık mı (sessize aldıysa false; yine de odayı dinler). */
@@ -341,6 +353,12 @@ export type ClientMessage =
   | ({ t: 'rtc'; id: number } & RtcRequest)
   /** Eşler arası seste: bir üyeye bağlantı mesajı (sunucu sadece ikisi de seste ise iletir). */
   | { t: 'signal'; to: string; data: Signal }
+  /** Yayın aç/kapa (odada aynı anda tek yayın). */
+  | { t: 'live'; on: boolean; kind?: LiveKind }
+  /** Yayını izle/bırak (en fazla LIVE_MAX_VIEWERS). */
+  | { t: 'live-watch'; on: boolean }
+  /** Yayın bağlantı mesajı (sunucu sadece yayıncı ile izleyicisi arasında iletir). */
+  | { t: 'live-signal'; to: string; data: Signal }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
   /** Sıraya ekle. Oda boşsa hemen açılır. */
@@ -389,6 +407,9 @@ export type ErrorCode =
   | 'voice_unavailable'
   /** Aynı anda açık kamera sınırı (CAM_MAX) dolu. */
   | 'cam_full'
+  /** Odada zaten bir yayın var / yayının izleyici sınırı dolu. */
+  | 'live_busy'
+  | 'live_full'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
@@ -426,6 +447,8 @@ export type ServerMessage =
   | ({ t: 'rtc'; id: number } & RtcResult)
   /** Eşler arası seste bir üyeden gelen bağlantı mesajı. */
   | { t: 'signal'; from: string; data: Signal }
+  /** Yayının bağlantı mesajı (yayıncıdan izleyiciye ya da tersi). */
+  | { t: 'live-signal'; from: string; data: Signal }
   /** Biri odadan çıkarıldı (herkese duyurulur). */
   | { t: 'kicked'; who: Member; by: Member }
   /** Yasaklılar listesi (sadece yöneticiye; değişince ve yönetici değişince gelir). */
@@ -653,7 +676,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
   }
   if (!isObject(m)) return null;
   // Sadece özel emoji ve sesli sohbetin SDP'si büyük olabilir.
-  if (raw.length > MAX_MESSAGE_BYTES && m.t !== 'sticker-add' && !((m.t === 'rtc' || m.t === 'signal') && raw.length <= RTC_MESSAGE_MAX)) return null;
+  if (raw.length > MAX_MESSAGE_BYTES && m.t !== 'sticker-add' && !((m.t === 'rtc' || m.t === 'signal' || m.t === 'live-signal') && raw.length <= RTC_MESSAGE_MAX)) return null;
 
   switch (m.t) {
     case 'hello': {
@@ -707,10 +730,16 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case 'rtc':
       return cleanRtc(m);
-    case 'signal': {
+    case 'signal':
+    case 'live-signal': {
       const data = cleanSignal(m.data);
-      return isItemId(m.to) && data ? { t: 'signal', to: m.to, data } : null;
+      return isItemId(m.to) && data ? { t: m.t, to: m.to, data } : null;
     }
+    case 'live':
+      if (typeof m.on !== 'boolean') return null;
+      return m.on && (m.kind === 'screen' || m.kind === 'camera') ? { t: 'live', on: true, kind: m.kind } : { t: 'live', on: false };
+    case 'live-watch':
+      return typeof m.on === 'boolean' ? { t: 'live-watch', on: m.on } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

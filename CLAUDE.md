@@ -268,6 +268,15 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   Aynı anda en fazla `CAM_MAX` (4) kamera (sunucu `cam_full`). **Sınırlar hep görünür** (kullanıcı isteği): kartta
   "Seste 3/6 · 📷 1/4", son yerde sarı, dolunca kırmızı; dolu düğme soluk (`.is-full`), basınca nedeni (eşler arası,
   yükleme hızı) `flashHint`. Test: `voice/run.mjs` (kamera görüntüsü akıyor mu, kareler sayılır), e2e `voice.mjs` (cam_full).
+- **Yayın / ekran paylaşımı (0.9.64, `packages/shared/src/live-p2p.ts`, site `ui/live.ts`, plan+kararlar `docs/internal/yayin.md`):**
+  sağ panelde 📺 kartı: "🖥️ Ekranını paylaş" (`getDisplayMedia`, 720p/30, sekme sesi) / "📹 Kamerayla yayın" (720p);
+  odada tek yayın (`live_busy`), "▶ Yayını izle" ile en fazla `LIVE_MAX_VIEWERS` (4, `live_full`). Üye `live: kind`,
+  `watching`; `{t:'live'}`, `{t:'live-watch'}`, `{t:'live-signal'}` (sunucu sadece yayıncı ↔ izleyicisi arasında iletir;
+  büyük teklifler için `RTC_MESSAGE_MAX`). Tek yönlü: yayıncı her izleyiciye teklif yapar (sendonly, ≤2,5 Mbit/s ekran,
+  `contentHint`), izleyici sadece alır (izin istemez). Yayıncı çıkınca/bitirince izleyiciler bırakılır. Görüntü videonun
+  köşesinde `#live-window` (⤢ büyüt = videoyu kaplar; kabukta adacık). Kabukta yayın açma yok, izleme var. Film yayma
+  YOK (kullanıcı kararı; eklentide `tabCapture` yapılmayacak). Testler: e2e `live.mjs`, gerçek `voice/live.mjs` (kamera
+  ve ekran; başsız Chrome'da ekran `--auto-select-desktop-capture-source`).
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).
