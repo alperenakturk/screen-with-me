@@ -203,6 +203,8 @@ export interface Member {
 export interface MemberVoice {
   /** Mikrofonu açık mı (sessize aldıysa false; yine de odayı dinler). */
   mic: boolean;
+  /** Kamerası açık mı (görüntülü sohbet, eşler arası; yoksa kapalı). */
+  cam?: boolean;
   /** Yayın hazır olunca gelir: diğerleri bu üyenin sesini bununla çeker. */
   track?: string;
 }
@@ -211,6 +213,11 @@ export interface MemberVoice {
 export const VOICE_MAX = 10;
 /** Eşler arası seste en fazla bu kadar kişi: herkes herkese ayrı akış yollar, ev internetinin yükleme hızı yetmez. */
 export const VOICE_MAX_P2P = 6;
+/**
+ * Aynı anda en fazla bu kadar kamera: her kamera seste olan herkese ayrı kopya yollar, her izleyici de hepsini çözer
+ * (dizüstü ısınır, yavaş internet yetmez).
+ */
+export const CAM_MAX = 4;
 
 /**
  * Sesli sohbetin taşınma yolu. `p2p`: eşler arası (kartsız, ücretsiz; sunucu sadece bağlantı mesajlarını
@@ -329,7 +336,7 @@ export type ClientMessage =
   /** Film sayfasından odaya dönüyorum: filmdeki diğerlerine "sen de dön" diye sorulur. */
   | { t: 'home' }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
-  | { t: 'voice'; on: boolean; mic?: boolean; track?: string }
+  | { t: 'voice'; on: boolean; mic?: boolean; track?: string; cam?: boolean }
   /** Sesli sohbetin bağlantı işi; cevap aynı `id` ile `{t:'rtc'}` olarak gelir. */
   | ({ t: 'rtc'; id: number } & RtcRequest)
   /** Eşler arası seste: bir üyeye bağlantı mesajı (sunucu sadece ikisi de seste ise iletir). */
@@ -380,6 +387,8 @@ export type ErrorCode =
   /** Sesli sohbet dolu (VOICE_MAX) ya da bu sunucuda kapalı. */
   | 'voice_full'
   | 'voice_unavailable'
+  /** Aynı anda açık kamera sınırı (CAM_MAX) dolu. */
+  | 'cam_full'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
@@ -693,6 +702,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       const out: Extract<ClientMessage, { t: 'voice' }> = { t: 'voice', on: m.on };
       if (typeof m.mic === 'boolean') out.mic = m.mic;
       if (isTrackName(m.track)) out.track = m.track;
+      if (typeof m.cam === 'boolean') out.cam = m.cam;
       return out;
     }
     case 'rtc':

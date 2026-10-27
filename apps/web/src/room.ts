@@ -266,6 +266,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="player" class="player"></div>
             <div id="fs-catcher" class="fs-only fs-catcher"></div>
             <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
+            <div id="cam-dock" class="cam-dock" hidden></div>
             <div id="waiting-banner" class="waiting-banner" role="status" hidden></div>
             <div id="sync-badge" class="sync-badge" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
@@ -377,9 +378,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="voice-join" type="button" class="btn primary voice-join">🎙 <span data-i18n="voice.join"></span></button>
             <div id="voice-on" class="voice-on" hidden>
               <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
+              <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden>📷</button>
               <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
             </div>
             <div id="voice-people" class="voice-people"></div>
+            <span id="voice-limit" class="voice-limit muted small"></span>
+          </div>
+          <div id="voice-cams" class="voice-cams" hidden>
           </div>
           <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
         </section>
@@ -812,6 +817,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'error':
         if (message.code === 'voice_full' || message.code === 'voice_unavailable') {
           voice.error(message.code);
+          break;
+        }
+        if (message.code === 'cam_full') {
+          voice.camFull();
           break;
         }
         if (message.code === 'kicked') {

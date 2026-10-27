@@ -63,6 +63,18 @@ if (wa.voice !== true) {
   c.send({ t: 'voice', on: true });
   const full = await c.wait((m) => m.t === 'error', 'voice full');
   ok(full.code === 'voice_full', 'Seste 6 kişi varken 7. kişi reddedildi (voice_full)');
+  // Kamera: aynı anda en fazla 4; beşinci reddedilir, kapatınca biri yer açar.
+  for (const e of extra) e.send({ t: 'voice', on: true, mic: true, cam: true });
+  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 4, 'four cams');
+  ok(true, '4 kamera açık, üyelerde görünüyor');
+  a.send({ t: 'voice', on: true, mic: true, cam: true });
+  const camFull = await a.wait((m) => m.t === 'error', 'cam full');
+  ok(camFull.code === 'cam_full', '5. kamera reddedildi (cam_full)');
+  extra[0].send({ t: 'voice', on: true, mic: true, cam: false });
+  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 3, 'cam off');
+  a.send({ t: 'voice', on: true, mic: true, cam: true });
+  const aliCam = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && x.voice?.cam), 'ali cam');
+  ok(!!aliCam, 'Biri kamerasını kapatınca Ali açabildi');
   for (const e of extra) e.ws.close();
   a.send({ t: 'voice', on: false });
   await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && !x.voice), 'left');

@@ -1,4 +1,4 @@
-import type { ClientMessage, Member, RtcRequest, RtcResult, ServerMessage, Signal, VoiceMode } from '@swm/shared/protocol';
+import { CAM_MAX, VOICE_MAX, VOICE_MAX_P2P, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
 import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
 import { LevelMeter } from '@swm/shared/level-meter';
@@ -29,8 +29,16 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const joinButton = root.querySelector<HTMLButtonElement>('#voice-join')!;
   const onBox = root.querySelector<HTMLElement>('#voice-on')!;
   const micButton = root.querySelector<HTMLButtonElement>('#voice-mic')!;
+  // Düğmenin içi: simge ve altında kendi sesimin seviye çubuğu ("mikrofonum sesimi alıyor mu").
+  const micIcon = el('span', {}, '🎙');
+  const micBar = el('i');
+  micButton.replaceChildren(micIcon, el('span', { class: 'mic-level', 'aria-hidden': 'true' }, micBar));
   const leaveButton = root.querySelector<HTMLButtonElement>('#voice-leave')!;
   const peopleBox = root.querySelector<HTMLElement>('#voice-people')!;
+  const camButton = root.querySelector<HTMLButtonElement>('#voice-cam')!;
+  const limitEl = root.querySelector<HTMLElement>('#voice-limit')!;
+  const camsBox = root.querySelector<HTMLElement>('#voice-cams')!;
+  const camDock = root.querySelector<HTMLElement>('#cam-dock');
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
 
   let available = false;
@@ -50,9 +58,40 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       send({ t: 'rtc', id, ...request } as ClientMessage);
     });
 
-  const announce = (on: boolean, mic?: boolean) => send(on ? { t: 'voice', on, mic: mic ?? true } : { t: 'voice', on: false });
-  /** Gelen seslerin seviyesi (WebRTC'nin ölçüsü gelmeyebilir). */
+  const announce = (on: boolean, mic?: boolean, cam?: boolean) =>
+    send(on ? { t: 'voice', on, mic: mic ?? true, ...(cam !== undefined ? { cam } : {}) } : { t: 'voice', on: false });
+  /** Gelen kamera görüntüleri (üye → akış); görünüp görünmeyeceğine üyenin `voice.cam`'i karar verir. */
+  const videos = new Map<string, MediaStream>();
+  const onRemoteVideo = (memberId: string, stream: MediaStream | null) => {
+    if (stream) videos.set(memberId, stream);
+    else videos.delete(memberId);
+    renderCams();
+  };
+  /** Gelen seslerin ve kendi mikrofonumun ("me") seviyesi (WebRTC'nin ölçüsü gelmeyebilir). */
   const meter = new LevelMeter();
+  let meteredMic: MediaStream | null = null;
+  /** Kendi sesimin seviyesi: çubuk sesle birlikte dolar (yumuşatılmış; mikrofon kapalıysa boş). */
+  let shownLevel = 0;
+  function myLevel(): number {
+    if (!client.active || !client.micEnabled) return 0;
+    if (client instanceof ExtVoice) return client.me;
+    const mic = client.microphone ?? null;
+    if (mic !== meteredMic) {
+      meteredMic = mic;
+      meter.watch('me', mic);
+    }
+    return meter.level('me');
+  }
+  const tickLevel = () => {
+    const target = myLevel();
+    // Hızlı yükselir, yavaş iner (VU göstergesi gibi).
+    shownLevel = target > shownLevel ? target : shownLevel * 0.85 + target * 0.15;
+    micBar.style.width = `${Math.round(Math.min(1, shownLevel * 1.6) * 100)}%`;
+    micBar.classList.toggle('loud', shownLevel > 0.08);
+  };
+  setInterval(() => {
+    if (client.active) tickLevel();
+  }, 80);
   const onRemote = (memberId: string, stream: MediaStream | null) => {
     audios.get(memberId)?.remove();
     audios.delete(memberId);
@@ -97,6 +136,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       signal: (to, data) => send({ t: 'signal', to, data }),
       announce,
       onRemote,
+      onRemoteVideo,
       onFailed: failed,
     });
     return p2p;
@@ -110,7 +150,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const active = client.active;
     joinButton.hidden = active;
     onBox.hidden = !active;
-    micButton.textContent = client.micEnabled ? '🎙' : '🔇';
+    micIcon.textContent = client.micEnabled ? '🎙' : '🔇';
     const micLabel = client.micEnabled ? t('voice.mute') : t('voice.unmute');
     micButton.title = micLabel;
     micButton.setAttribute('aria-label', micLabel);
@@ -124,9 +164,86 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       }),
     );
     peopleBox.title = inVoice.length ? `${t('voice.inVoice')}: ${inVoice.map((m) => m.name).join(', ')}` : '';
+    // Sınırlar hep görünür: "Seste 3/6 · 📷 1/4" (neden sınır var: üstüne gelince). Dolunca düğme soluk, basınca açıklama.
+    const max = voiceMax();
+    const cams = members.filter((m) => m.voice?.cam).length;
+    const camsShown = mode === 'p2p' && !!client.setCam && inVoice.length > 0;
+    limitEl.textContent = t('voice.limit', { n: inVoice.length, max }) + (camsShown ? ` · ${t('voice.camLimit', { n: cams, max: CAM_MAX })}` : '');
+    limitEl.title = t('voice.limitTitle', { max }) + (camsShown ? `\n${t('voice.camLimitTitle', { max: CAM_MAX })}` : '');
+    const full = !active && inVoice.length >= max;
+    const left = max - inVoice.length;
+    limitEl.classList.toggle('full', inVoice.length >= max);
+    limitEl.classList.toggle('near', !full && left === 1 && !active);
+    if (!active && !full && left === 1) limitEl.textContent += ` · ${t('voice.lastSeat', { n: left })}`;
+    joinButton.classList.toggle('is-full', full);
+    // Kamera düğmesi sadece eşler arası seste (Cloudflare yolunda ve film sayfasında görüntü henüz yok).
+    camButton.hidden = !active || !client.setCam;
+    camButton.classList.toggle('is-full', client.camEnabled !== true && cams >= CAM_MAX);
+    const camOn = client.camEnabled === true;
+    camButton.classList.toggle('on', camOn);
+    const camLabel = camOn ? t('voice.camOff') : t('voice.camOn');
+    camButton.title = camLabel;
+    camButton.setAttribute('aria-label', camLabel);
+    renderCams();
+  }
+
+  // ---- Kameralar: kartta kutular, tam ekranda videonun köşesinde ----
+  /** Üye → [kart kutusu, tam ekran kutusu] (her çizimde yeniden yaratılmaz: görüntü titremesin). */
+  const tiles = new Map<string, [HTMLElement, HTMLElement]>();
+  function tile(memberId: string, name: string, stream: MediaStream, mine: boolean): [HTMLElement, HTMLElement] {
+    const make = () => {
+      const video = el('video', { autoplay: '', playsinline: '', 'aria-hidden': 'true' }) as HTMLVideoElement;
+      video.muted = true;
+      video.srcObject = stream;
+      void video.play().catch(() => {});
+      return el('div', { class: mine ? 'cam-tile mine' : 'cam-tile', 'data-voice-id': memberId }, video, el('span', { class: 'cam-name' }, name));
+    };
+    let pair = tiles.get(memberId);
+    if (!pair) {
+      pair = [make(), make()];
+      tiles.set(memberId, pair);
+    }
+    for (const box of pair) {
+      const video = box.querySelector('video')!;
+      if (video.srcObject !== stream) {
+        video.srcObject = stream;
+        void video.play().catch(() => {});
+      }
+      box.querySelector('.cam-name')!.textContent = name;
+    }
+    return pair;
+  }
+  function renderCams(): void {
+    const me = myId();
+    const shown: [HTMLElement, HTMLElement][] = [];
+    const keep = new Set<string>();
+    if (client.active) {
+      for (const member of members) {
+        if (!member.voice?.cam) continue;
+        const stream = member.id === me ? (client.camera ?? null) : (videos.get(member.id) ?? null);
+        if (!stream) continue;
+        keep.add(member.id);
+        shown.push(tile(member.id, member.name, stream, member.id === me));
+      }
+    }
+    for (const id of [...tiles.keys()]) if (!keep.has(id)) tiles.delete(id);
+    camsBox.replaceChildren(...shown.map(([card]) => card));
+    camsBox.hidden = shown.length === 0;
+    camDock?.replaceChildren(...shown.map(([, dock]) => dock));
+    if (camDock) camDock.hidden = shown.length === 0;
+  }
+
+  /** Bu odada seste en fazla kaç kişi (eşler arası 6, Cloudflare yolunda 10). */
+  function voiceMax(): number {
+    return mode === 'sfu' ? VOICE_MAX : VOICE_MAX_P2P;
   }
 
   joinButton.addEventListener('click', async () => {
+    const inVoice = members.filter((m) => m.voice).length;
+    if (inVoice >= voiceMax()) {
+      flashHint(joinButton, t('voice.fullHint', { n: inVoice, max: voiceMax() }), 7000);
+      return;
+    }
     joinButton.disabled = true;
     try {
       client.sync(members, myId());
@@ -148,6 +265,23 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     client.setMic(!client.micEnabled);
     render();
   });
+  camButton.addEventListener('click', async () => {
+    if (!client.setCam) return;
+    const cams = members.filter((m) => m.voice?.cam).length;
+    if (!client.camEnabled && cams >= CAM_MAX) {
+      flashHint(camButton, t('voice.camFullHint', { n: cams, max: CAM_MAX }), 7000);
+      return;
+    }
+    camButton.disabled = true;
+    try {
+      await client.setCam(!client.camEnabled);
+    } catch {
+      flashHint(camButton, t('voice.camDenied'), 6000);
+    } finally {
+      camButton.disabled = false;
+      render();
+    }
+  });
   leaveButton.addEventListener('click', () => {
     client.leave();
     remember(false);
@@ -158,7 +292,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   function allLevels(): Map<string, number> {
     const out = new Map(client.levels());
     if (client instanceof ExtVoice) return out;
-    for (const [memberId, level] of meter.levels()) out.set(memberId, Math.max(out.get(memberId) ?? 0, level));
+    for (const [memberId, level] of meter.levels()) if (memberId !== 'me') out.set(memberId, Math.max(out.get(memberId) ?? 0, level));
     return out;
   }
 
@@ -187,7 +321,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (!client.active) return;
     const now = Date.now();
     for (const [memberId, level] of allLevels()) if (level > SPEAK_LEVEL) spokeAt.set(memberId, now);
-    for (const face of peopleBox.querySelectorAll<HTMLElement>('[data-voice-id]')) {
+    for (const face of root.querySelectorAll<HTMLElement>('#voice-people [data-voice-id], .cam-tile[data-voice-id]')) {
       face.classList.toggle('speaking', now - (spokeAt.get(face.dataset.voiceId!) ?? 0) < SPEAK_HOLD_MS);
     }
   }, 250);
@@ -255,8 +389,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     },
     error(code: 'voice_full' | 'voice_unavailable'): void {
       client.leave();
-      flashHint(joinButton, t(`error.${code}`), 6000);
+      flashHint(joinButton, code === 'voice_full' ? t('voice.fullHint', { n: voiceMax(), max: voiceMax() }) : t(`error.${code}`), 7000);
       render();
+    },
+    /** Sunucu kamerayı kabul etmedi (aynı anda biri daha açtı): kamera kapanır, neden söylenir. */
+    camFull(): void {
+      void client.setCam?.(false).finally(() => render());
+      flashHint(camButton, t('voice.camFullHint', { n: CAM_MAX, max: CAM_MAX }), 7000);
     },
     /** Sayfadan çıkarken mikrofonu bırak. Kabukta ses eklentide sürer (film sayfası değişse de kopmaz). */
     leave(): void {

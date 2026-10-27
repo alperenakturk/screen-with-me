@@ -23,6 +23,7 @@ import {
   type RtcResult,
   VOICE_MAX,
   VOICE_MAX_P2P,
+  CAM_MAX,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
@@ -74,7 +75,7 @@ interface Attachment {
   /** 'ext': eklentiyle film sayfasında. */
   client?: ClientKind;
   /** Sesli sohbette: mikrofon açık mı, yayınladığı akış ve Cloudflare oturumu (oturum istemcilere gitmez). */
-  voice?: { mic: boolean; track?: string; session?: string };
+  voice?: { mic: boolean; track?: string; session?: string; cam?: boolean };
   /** Film sayfasında reklam oynuyor (eklenti bildirir): oda bu kişiyi beklemez. */
   ad?: boolean;
 }
@@ -102,7 +103,9 @@ function memberOf(attachment: Joined): Member {
   if (attachment.avatar) member.avatar = attachment.avatar;
   if (attachment.client === 'ext') member.client = 'ext';
   // Cloudflare oturumu gizli kalır; diğerleri sadece akışın adını ve mikrofon durumunu görür.
-  if (attachment.voice) member.voice = { mic: attachment.voice.mic, ...(attachment.voice.track ? { track: attachment.voice.track } : {}) };
+  if (attachment.voice) {
+    member.voice = { mic: attachment.voice.mic, ...(attachment.voice.track ? { track: attachment.voice.track } : {}), ...(attachment.voice.cam ? { cam: true } : {}) };
+  }
   if (attachment.ad) member.ad = true;
   return member;
 }
@@ -312,7 +315,7 @@ export class Room extends DurableObject<Env> {
         await this.vote(keyOf(attachment), message.id, message.up);
         return;
       case 'voice':
-        await this.setVoice(ws, attachment, message.on, message.mic);
+        await this.setVoice(ws, attachment, message.on, message.mic, message.cam);
         return;
       case 'signal': {
         // Eşler arası ses: bağlantı mesajını sadece ikisi de seste ise karşıya ilet (sunucu içeriğe bakmaz,
@@ -746,13 +749,25 @@ export class Room extends DurableObject<Env> {
   }
 
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa (bağlantı başına; herkese `members` gider). */
-  private async setVoice(ws: WebSocket, attachment: Attachment, on: boolean, mic?: boolean): Promise<void> {
+  private async setVoice(ws: WebSocket, attachment: Attachment, on: boolean, mic?: boolean, cam?: boolean): Promise<void> {
     if (on) {
       if (this.env.VOICE === 'off') return this.sendTo(ws, { t: 'error', code: 'voice_unavailable' });
       const max = realtimeConfig(this.env) ? VOICE_MAX : VOICE_MAX_P2P;
       const inVoice = this.joined().filter((a) => a.voice && a.id !== attachment.id).length;
       if (!attachment.voice && inVoice >= max) return this.sendTo(ws, { t: 'error', code: 'voice_full' });
       attachment.voice = { ...attachment.voice, mic: mic ?? attachment.voice?.mic ?? true };
+      // Kamera sadece eşler arası seste (Cloudflare yolunda görüntü yok); aynı anda en fazla CAM_MAX.
+      if (cam !== undefined && !realtimeConfig(this.env)) {
+        const cams = this.joined().filter((a) => a.voice?.cam && a.id !== attachment.id).length;
+        if (cam && !attachment.voice.cam && cams >= CAM_MAX) {
+          ws.serializeAttachment(attachment);
+          this.sendTo(ws, { t: 'error', code: 'cam_full' });
+          this.broadcast(this.membersMessage());
+          return;
+        }
+        if (cam) attachment.voice.cam = true;
+        else delete attachment.voice.cam;
+      }
     } else {
       if (!attachment.voice) return;
       delete attachment.voice;
