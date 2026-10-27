@@ -61,6 +61,8 @@ import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
+import { gameIcon, gameLink, PLAY_KINDS } from './games/links.ts';
+import { newRoomId } from '@swm/shared/room-id';
 import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
@@ -351,6 +353,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <select id="speed" data-i18n-title="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
                 <button id="speed-up" type="button" class="icon-btn speed-step" data-i18n-title="speedUp">+</button>
               </div>
+              <button id="side-toggle" type="button" class="icon-btn tool-btn side-toggle"><span id="side-icon" aria-hidden="true">⇥</span><span id="side-badge" class="badge" hidden></span></button>
               <button id="fullscreen" type="button" class="icon-btn big-icon">⛶</button>
             </div>
           </div>
@@ -436,6 +439,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="chat-events" type="button" class="chat-events" aria-pressed="false"></button>
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="row chat-form">
+              <div class="chat-game-wrap">
+                <button id="chat-game" type="button" class="btn chat-game-btn" aria-haspopup="true" aria-expanded="false" data-i18n-title="chatGameOpen">🎮</button>
+                <div id="chat-game-menu" class="chat-game-menu" role="menu" hidden></div>
+              </div>
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
               <button class="btn primary" data-i18n="send"></button>
             </form>
@@ -585,6 +592,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     edit: () => amHost() || !roomSettings.lockQueue,
   });
   const chatBadge = $('#chat-badge');
+  // Odadan oyun aç: 🎮 → oyun seç → yeni maç linki sohbete gider (herkeste "Katıl" kartı), oyun yeni sekmede açılır.
+  // Film sayfasındaki katmanda yok (orada oyun köşesi de gizli).
+  {
+    const button = $<HTMLButtonElement>('#chat-game');
+    const menu = $('#chat-game-menu');
+    button.hidden = isShell;
+    const setOpen = (open: boolean) => {
+      menu.hidden = !open;
+      button.setAttribute('aria-expanded', String(open));
+    };
+    const draw = () =>
+      menu.replaceChildren(
+        ...PLAY_KINDS.map((kind) => {
+          const item = el('button', { type: 'button', role: 'menuitem', class: 'chat-game-item' }, `${gameIcon(kind)} ${t(`games.${kind}.title`)}`);
+          item.addEventListener('click', () => {
+            const url = `${location.origin}/oyun/${kind}/${newRoomId()}`;
+            send({ t: 'chat', text: url });
+            window.open(url, '_blank', 'noopener');
+            setOpen(false);
+          });
+          return item;
+        }),
+      );
+    draw();
+    addEventListener('langchange', draw);
+    button.addEventListener('click', () => setOpen(menu.hidden === true));
+    document.addEventListener('pointerdown', (event) => {
+      if (!menu.hidden && !(event.target as Element).closest?.('.chat-game-wrap')) setOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    });
+  }
   const chat = createChatPanel(app, send, () => myId, (count) => {
     chatBadge.hidden = count === 0;
     chatBadge.textContent = count > 9 ? '9+' : String(count);
@@ -855,8 +895,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         chat.add(message.message);
         // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
         if (shortsOn) seats.say(by, text);
-        // Tam ekranda sohbet paneli görünmez; mesaj videonun köşesinde belirir.
-        if (fullscreen.isActive()) toasts.show(withAvatar(by), text, by.id === myId);
+        // Tam ekranda (ya da sağ panel gizliyken) sohbet paneli görünmez; mesaj videonun köşesinde belirir.
+        if (fullscreen.isActive() || sideHidden) {
+          const game = gameLink(text);
+          toasts.show(withAvatar(by), game ? `${gameIcon(game.kind)} ${t('chatGame', { name: by.name, game: t(`games.${game.kind}.title`) })}` : text, by.id === myId);
+        }
+        if (sideHidden && by.id !== myId) side.unread();
         break;
       }
       case 'rtc':
@@ -1604,6 +1648,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onRate: requestRate,
   });
   const toasts = createToasts($('#toasts'), $('#toast-handle'));
+  let sideHidden = !isShell && load('opt:sideHidden') === '1';
+  // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu
+  // tarayıcıda hatırlanır. Film sayfasındaki katmanda yok (orada yerleşimi delik belirler).
+  const side = (() => {
+    const button = $<HTMLButtonElement>('#side-toggle');
+    const badge = $('#side-badge');
+    let unread = 0;
+    button.hidden = isShell;
+    const render = () => {
+      roomEl.classList.toggle('side-hidden', sideHidden);
+      $('#side-icon').textContent = sideHidden ? '⇤' : '⇥';
+      const label = t(sideHidden ? 'sideShow' : 'sideHide');
+      button.title = label;
+      button.setAttribute('aria-label', label);
+      button.setAttribute('aria-pressed', String(sideHidden));
+      badge.hidden = !sideHidden || unread === 0;
+      badge.textContent = unread > 9 ? '9+' : String(unread);
+    };
+    button.addEventListener('click', () => {
+      sideHidden = !sideHidden;
+      unread = 0;
+      save('opt:sideHidden', sideHidden ? '1' : '0');
+      render();
+    });
+    addEventListener('langchange', render);
+    render();
+    return {
+      unread(): void {
+        unread++;
+        render();
+      },
+    };
+  })();
   // Önemli anları pinleme: video altında ve tam ekranda ilerleme çubuğunun üstünde işaretler.
   const pins = createPins({
     strips: [$('#pin-strip'), $('#fs-pins')],

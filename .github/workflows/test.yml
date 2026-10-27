@@ -91,6 +91,6 @@ jobs:
       - name: Canlıda uçtan uca testler
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: |
-          # Yeni sürümün yayılması birkaç saniye sürebilir.
-          sleep 10
+          # Yeni sürümün yayılması (ve nesnelerin yeni kodla yeniden başlaması) bir-iki dakika sürebilir.
+          sleep 30
           npm run e2e -- wss://screen-with-me.swm-server.workers.dev

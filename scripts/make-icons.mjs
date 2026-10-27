@@ -4,11 +4,12 @@
 //
 //   node scripts/make-icons.mjs   → apps/extension/static/icon{16,32,48,128}.png
 //                                   apps/web/public/logo.svg
+//                                   apps/web/public/icons/ (PWA: 192, 512, maskable, apple-touch)
 //
 // Mağaza kuralı: 128'lik simgede çizim 96x96, etrafında 16 px boşluk olmalı.
 // Araç çubuğundaki küçük simgeler ise kenara kadar dolu (küçükken okunsun).
 
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import {
   LOGO_FROM, LOGO_RADIUS, LOGO_SHAPES, LOGO_SIZE, LOGO_TO, logoSvg,
@@ -19,7 +20,8 @@ const SS = 6; // kenar yumuşatma: her pikseli 6x6 örnekle
 // Duraklat çubukları sadece sitedeki canlandırmada görünür.
 const SHAPES = LOGO_SHAPES.filter((s) => s.part !== 'pause');
 
-function render(size, pad) {
+/** `bg` verilirse saydam yerler o renkle dolar (telefon ana ekranı simgeyi kendi şekliyle keser: "maskable"). */
+function render(size, pad, bg) {
   const scale = (size - pad * 2) / LOGO_SIZE; // 64'lük ızgaradan piksele
   const px = Buffer.alloc(size * size * 4);
   for (let y = 0; y < size; y++) {
@@ -40,6 +42,12 @@ function render(size, pad) {
       // Renk = kapsanan örneklerin ortalaması, saydamlık = kapsanan oran
       for (let c = 0; c < 3; c++) px[i + c] = sum[3] ? Math.round(sum[c] / sum[3]) : 0;
       px[i + 3] = Math.round((sum[3] / (SS * SS)) * 255);
+      if (bg) {
+        const a = px[i + 3] / 255;
+        const back = hex(bg);
+        for (let c = 0; c < 3; c++) px[i + c] = Math.round(px[i + c] * a + back[c] * (1 - a));
+        px[i + 3] = 255;
+      }
     }
   }
   return png(size, size, px);
@@ -142,6 +150,20 @@ for (const [size, pad] of [
 ]) {
   writeFileSync(new URL(`icon${size}.png`, OUT), render(size, pad));
   console.log(`✓ icon${size}.png`);
+}
+
+// Sitenin telefona "uygulama" olarak eklenmesi (PWA, manifest.webmanifest): normal simgeler kenarlarda biraz boşluklu;
+// "maskable" ve iOS simgesi zeminle dolu, logo ortadaki güvenli alanda (telefon kendi şekliyle keser).
+const ICONS = new URL('../apps/web/public/icons/', import.meta.url);
+mkdirSync(ICONS, { recursive: true });
+for (const [name, size, pad, bg] of [
+  ['icon-192.png', 192, 8],
+  ['icon-512.png', 512, 20],
+  ['icon-maskable-512.png', 512, 104, '#0b0d1a'],
+  ['apple-touch-icon.png', 180, 26, '#0b0d1a'],
+]) {
+  writeFileSync(new URL(name, ICONS), render(size, pad, bg));
+  console.log(`✓ icons/${name}`);
 }
 
 // Sitenin favicon'u ve eklenti sayfasındaki büyük simge

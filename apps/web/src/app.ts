@@ -36,9 +36,21 @@ markLang();
 // büyük kodunu (oynatıcılar, sohbet, ses…) indirmez, ilk açılış hızlanır.
 const match = location.pathname.match(/^\/r\/([^/]+)\/?$/);
 const roomId = match ? decodeURIComponent(match[1]!) : null;
-// PlayWithMe oyun köşesi: /oyun (oyunlar) ve /oyun/<tür>/<kod> (maç: xox, four).
+// PlayWithMe oyun köşesi: /oyun (oyunlar), /oyun/<tür>/<kod> (maç: xox, four), /oyun/draw/<kod> (Çiz-Bil).
 const game = location.pathname.match(/^\/oyun\/(xox|four)\/([A-Za-z0-9_-]{3,40})\/?$/);
-if (game) {
+const draw = location.pathname.match(/^\/oyun\/draw\/([A-Za-z0-9_-]{3,40})\/?$/);
+const quiz = location.pathname.match(/^\/oyun\/quiz\/([A-Za-z0-9_-]{3,40})\/?$/);
+if (quiz) {
+  void import('./games/quiz.ts').then(({ renderQuiz }) => {
+    renderQuiz(app, quiz[1]!);
+    translate();
+  });
+} else if (draw) {
+  void import('./games/draw.ts').then(({ renderDraw }) => {
+    renderDraw(app, draw[1]!);
+    translate();
+  });
+} else if (game) {
   void import('./games/match.ts').then(({ renderMatch }) => {
     renderMatch(app, game[1] as 'xox' | 'four', game[2]!);
     translate();
@@ -60,3 +72,12 @@ if (game) {
   });
 }
 translate();
+
+// Uygulama olarak eklenebilsin (PWA): sadece en üstteki pencerede (film sayfasındaki katmanda değil). Service worker
+// dosyaları önbelleğe almaz, sadece çevrimdışıyken "bağlantı yok" sayfası gösterir (public/sw.js).
+// (Bu dosya main.ts'ten sonra yüklenir; sayfanın "load"u çoktan geçmiş olabilir.)
+if ('serviceWorker' in navigator && window.top === window) {
+  const register = () => void navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (document.readyState === 'complete') register();
+  else addEventListener('load', register, { once: true });
+}

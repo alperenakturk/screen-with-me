@@ -264,6 +264,21 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   doğrular, kazanınca skor, `rematch` ile başlayan değişir. Sohbet yok, sadece sabit emojiler (`GAME_EMOJIS`). Boş oda 24
   sa sonra silinir. Kabukta 🎮 gizli. Yeni tahta oyunu: `GAME_KINDS` + `GAME_RULES` + kurallar dosyası + `match.ts`'te tahta çizimi + `app.ts` adresi.
   Test: `scripts/e2e/xox.mjs` (XOX + Dört Taş).
+  **Çiz-Bil (0.9.72):** ayrı nesne `Draw` (`apps/server/src/draw.ts`, bağ `DRAWS`, göç `v3`, `/api/draw/:id/ws`), protokol ve
+  saf kurallar `packages/shared/src/games/draw.ts` (tahmin eşleştirme: küçük harf + Türkçe harfsiz de doğru, 1 harf farkı
+  "yaklaştın"; ipucu harfleri turun %40/60/80'inde; puan 50–150, çizene bilen başına 25), kelimeler `draw-words.ts`
+  (TR/EN, odanın dili ilk gelenin). 2–8 kişi (kalıcı `cid`), tur: lobi → seçim (15 sn, kelimeler sadece çizene) → çizim
+  (80 sn) → açıklama (6 sn) → sıradaki. Süreler depo alarmıyla; çizim sadece bellekte (1000×750 ızgara, 50 ms'lik
+  parçalar, geç gelene `strokes`). Bilenler/çizen kendi aralarında `secret` yazışır. Sayfa `games/draw.ts`
+  (`/oyun/draw/<kod>`). Test: `scripts/e2e/draw.mjs`.
+  **Bilgi yarışması (0.9.74):** nesne `Quiz` (`apps/server/src/quiz.ts`, bağ `QUIZZES`, göç `v4`, `/api/quiz/:id/ws`),
+  `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` (genel kültür, TR/EN, film/dizi adı yok; şıklar her oyunda
+  karışır). 2–8 kişi, 10 soru × 15 sn, doğru 100–200 puan (hızlı çok), herkes cevaplayınca ya da süre bitince açıklama
+  (4 sn: doğru şık + kim neyi seçti), sonda kürsü; doğru şık açıklamaya kadar gitmez. Sayfa `games/quiz.ts`
+  (`/oyun/quiz/<kod>`). Test: `scripts/e2e/quiz.mjs`.
+  **Odadan oyun aç (0.9.73):** sohbet kutusunun yanında 🎮 → oyun seç (XOX, Dört Taş, Çiz-Bil, Bilgi yarışması) → yeni maç linki sohbete düz metin olarak gider,
+  istemci bu sitenin `/oyun/<tür>/<kod>` linkini "🎮 Ali bir Çiz-Bil maçı açtı · Katıl" kartı olarak çizer (`games/links.ts`;
+  başka sitenin linki karta dönmez), açan için oyun yeni sekmede açılır. Kabukta 🎮 düğmesi yok, kartlar var.
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare
@@ -287,6 +302,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   `text` (yazı net: 15 kare, `detail`, `maintain-resolution`) / `motion` (akıcı: 30 kare, `maintain-framerate`), yayın
   sürerken de değişir (`localStorage` `opt:liveQuality`); yönetici `{t:'live-stop'}` ile yayını durdurur (yayıncıya
   `live_stopped`), `settings.liveHostOnly` açıksa başkası açamaz (`live_host`), açılınca süren yayın kapanır.
+- **PWA (0.9.70):** `public/manifest.webmanifest` + `icons/` (`make-icons.mjs` üretir: 192, 512, maskable, apple-touch) +
+  `public/sw.js`: dosyaları önbelleğe ALMAZ (eski kodla odaya girilmesin), sadece sayfa açılışı internetsiz kalırsa
+  `offline.html`. Kayıt `app.ts` sonunda, sadece en üst pencerede (kabukta değil); app.ts "load"dan sonra yüklenebildiği için
+  `readyState` bakılır. SW'yi değiştirirsen `CACHE` adını artır.
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).
@@ -327,6 +346,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
 - **Kim durdurdu notu (0.9.68):** başkası oynat/durdur/sar/hız yapınca videonun sol üstünde 2,6 sn avatar + "Ali durdurdu"
   (`#action-notice`, deliğin içinde adacık; kendi hareketim ve `SYSTEM` için yok); Ayarlar'dan kapatılır (`opt:actionNotice`).
+- **Sağ paneli gizle (0.9.71):** video altındaki araç çubuğunda ⇥ (`#side-toggle`): `.room.side-hidden`, video bütün genişliği
+  alır, sohbet mesajları tam ekrandaki gibi videonun köşesinde (`toasts`), düğmede okunmamış sayısı; `localStorage`
+  `opt:sideHidden`; kabukta ve dar ekranda (≤860 px) yok.
 - **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
   (`localStorage` `opt:chatEvents`). Ayarlardaki seçenek kaldırıldı.
 - **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),

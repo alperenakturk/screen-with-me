@@ -1,0 +1,255 @@
+// PlayWithMe Bilgi yarışması sayfası (/oyun/quiz/<kod>): soru, dört şık (2×2), süre çubuğu, oyuncular ve puanlar;
+// açıklamada doğru şık yeşil, kimin neyi seçtiği şıkların altında küçük avatarlarla; sonda kürsü.
+
+import {
+  QUIZ_ANSWER_MS,
+  QUIZ_MAX_PLAYERS,
+  QUIZ_PROTOCOL_VERSION,
+  QUIZ_REVEAL_MS,
+  type QuizClientMessage,
+  type QuizServerMessage,
+} from '@swm/shared/games/quiz';
+import { cleanName, isAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import { el } from '../dom.ts';
+import { t, translate } from '../i18n.ts';
+import { clientId, load, saveIdentity } from '../storage.ts';
+import { avatarNode } from '../ui/avatar.ts';
+import { playLogo } from './hub.ts';
+
+type State = Extract<QuizServerMessage, { t: 'state' }>;
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+export function renderQuiz(app: HTMLElement, gameId: string): void {
+  document.title = `${t('games.quiz.title')} · PlayWithMe`;
+  const name = load('name');
+  const savedAvatar = load('avatar');
+  if (name && cleanName(name)) {
+    start(app, gameId, name, isAvatar(savedAvatar) ? savedAvatar : randomAvatar());
+    return;
+  }
+  app.innerHTML = `
+    <section class="hero games-hero">
+      <div id="pwm-logo"></div>
+      <form id="game-name" class="row game-name">
+        <input id="game-name-input" maxlength="24" autocomplete="off" required data-i18n-placeholder="games.namePrompt" />
+        <button class="btn primary" data-i18n="games.nameGo"></button>
+      </form>
+    </section>`;
+  app.querySelector('#pwm-logo')!.replaceWith(playLogo());
+  translate(app);
+  const input = app.querySelector<HTMLInputElement>('#game-name-input')!;
+  input.focus();
+  app.querySelector('#game-name')!.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const clean = cleanName(input.value);
+    if (!clean) return;
+    const avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
+    saveIdentity(clean, avatar);
+    start(app, gameId, clean, avatar);
+  });
+}
+
+function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): void {
+  app.innerHTML = `
+    <div class="xox-page draw-page quiz-page">
+      <header class="xox-head">
+        <a class="nav-link" href="/oyun" data-i18n="games.back"></a>
+        <div class="xox-title"><span id="quiz-logo"></span><b data-i18n="games.quiz.title"></b></div>
+      </header>
+      <section class="card xox-invite">
+        <span class="muted small" data-i18n="draw.invite"></span>
+        <div class="row">
+          <input id="quiz-link" readonly />
+          <button id="quiz-copy" type="button" class="btn primary"></button>
+        </div>
+      </section>
+      <div class="draw-main">
+        <section class="card quiz-main">
+          <div class="draw-top">
+            <span id="quiz-n" class="muted small"></span>
+            <span></span>
+            <span id="quiz-timer" class="draw-timer"></span>
+          </div>
+          <div class="draw-bar" aria-hidden="true"><i id="quiz-time"></i></div>
+          <div id="quiz-body" class="quiz-body" aria-live="polite"></div>
+        </section>
+        <aside class="card draw-side">
+          <ul id="quiz-players" class="draw-players"></ul>
+        </aside>
+      </div>
+    </div>`;
+  app.querySelector('#quiz-logo')!.replaceWith(playLogo(true));
+  translate(app);
+  const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;
+
+  const link = $<HTMLInputElement>('#quiz-link');
+  link.value = location.href.split('#')[0]!;
+  const copy = $<HTMLButtonElement>('#quiz-copy');
+  const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
+  const copyLabel = () => (copy.textContent = canShare ? t('share') : t('copy'));
+  copyLabel();
+  copy.addEventListener('click', async () => {
+    if (canShare) {
+      await navigator.share({ title: `${t('games.quiz.title')} · PlayWithMe`, url: link.value }).catch(() => {});
+      return;
+    }
+    await navigator.clipboard?.writeText(link.value).catch(() => link.select());
+    copy.textContent = t('copied');
+    setTimeout(copyLabel, 1500);
+  });
+
+  let state: State | null = null;
+  let me: string | null = null;
+  let offset = 0;
+  /** Bu soruda benim seçtiğim (sunucu açıklamaya kadar söylemez). */
+  let myPick: { n: number; pick: number } | null = null;
+  const body = $('#quiz-body');
+
+  function render(): void {
+    if (!state) return;
+    const s = state;
+    const mine = s.players.find((p) => p.id === me);
+    $('#quiz-players').replaceChildren(
+      ...[...s.players]
+        .sort((a, b) => b.score - a.score)
+        .map((p) =>
+          el(
+            'li',
+            { class: `draw-player${p.online ? '' : ' away'}${s.phase === 'question' && p.answered ? ' guessed' : ''}` },
+            avatarNode(p.avatar, 'draw-avatar'),
+            el('span', { class: 'draw-pname' }, p.id === me ? `${p.name} (${t('games.you')})` : p.name),
+            el('span', { class: 'draw-badge', 'aria-hidden': 'true' }, s.phase === 'question' && p.answered ? '✅' : s.phase === 'reveal' && p.gained ? `+${p.gained}` : ''),
+            el('b', { class: 'draw-score' }, String(p.score)),
+          ),
+        ),
+    );
+    $('#quiz-n').textContent = s.phase === 'lobby' ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: QUIZ_MAX_PLAYERS }) : s.phase === 'over' ? '' : t('quiz.n', { n: s.n, total: s.total });
+
+    if (s.phase === 'lobby' || s.phase === 'over') {
+      const online = s.players.filter((p) => p.online).length;
+      const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'quiz.again' : 'draw.start'));
+      go.disabled = online < 2;
+      go.addEventListener('click', () => send({ t: 'start' }));
+      const parts: HTMLElement[] = [];
+      if (s.phase === 'over') {
+        // Kürsü: ilk üç.
+        const top = [...s.players].sort((a, b) => b.score - a.score).slice(0, 3);
+        parts.push(
+          el('h3', {}, t('quiz.over')),
+          el(
+            'ol',
+            { class: 'quiz-podium' },
+            ...top.map((p, i) => el('li', { class: `place-${i + 1}` }, el('span', { class: 'quiz-medal', 'aria-hidden': 'true' }, ['🥇', '🥈', '🥉'][i]!), avatarNode(p.avatar, 'draw-avatar'), el('b', {}, p.name), el('span', {}, String(p.score)))),
+          ),
+        );
+      } else parts.push(el('h3', {}, t('games.quiz.title')), el('p', {}, t('quiz.rules')));
+      parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
+      body.replaceChildren(el('div', { class: 'quiz-center' }, ...parts));
+    } else {
+      const reveal = s.phase === 'reveal';
+      const picked = myPick && myPick.n === s.n ? myPick.pick : (mine?.pick ?? null);
+      const options = (s.options ?? []).map((text, i) => {
+        const pickers = reveal ? s.players.filter((p) => p.pick === i) : [];
+        const cls = ['quiz-option', `opt-${i}`];
+        if (picked === i) cls.push('picked');
+        if (reveal && i === s.correct) cls.push('correct');
+        if (reveal && picked === i && i !== s.correct) cls.push('wrong');
+        const b = el(
+          'button',
+          { type: 'button', class: cls.join(' ') },
+          el('span', { class: 'quiz-letter', 'aria-hidden': 'true' }, LETTERS[i]!),
+          el('span', { class: 'quiz-text' }, text),
+          el('span', { class: 'quiz-pickers' }, ...pickers.map((p) => avatarNode(p.avatar, 'quiz-picker'))),
+        );
+        b.disabled = reveal || picked !== null;
+        b.addEventListener('click', () => {
+          myPick = { n: s.n, pick: i };
+          send({ t: 'answer', n: s.n, pick: i });
+          render();
+        });
+        return b;
+      });
+      const note = reveal
+        ? mine?.gained
+          ? t('quiz.right', { points: mine.gained })
+          : picked === null
+            ? t('quiz.late')
+            : t('quiz.wrongAnswer')
+        : picked !== null
+          ? t('quiz.waiting')
+          : '';
+      body.replaceChildren(el('h3', { class: 'quiz-question' }, s.question ?? ''), el('div', { class: 'quiz-options' }, ...options), el('p', { class: `quiz-note${reveal && mine?.gained ? ' good' : ''}` }, note));
+    }
+    tick();
+  }
+
+  function tick(): void {
+    const s = state;
+    const bar = $('#quiz-time');
+    const timer = $('#quiz-timer');
+    if (!s || s.endsAt === null) {
+      bar.style.width = '0%';
+      timer.textContent = '';
+      return;
+    }
+    const left = Math.max(0, s.endsAt - (Date.now() + offset));
+    const total = s.phase === 'question' ? QUIZ_ANSWER_MS : QUIZ_REVEAL_MS;
+    bar.style.width = `${Math.min(100, (left / total) * 100)}%`;
+    bar.classList.toggle('low', s.phase === 'question' && left < 5000);
+    timer.textContent = s.phase === 'question' ? `${Math.ceil(left / 1000)}` : '';
+  }
+  setInterval(tick, 200);
+
+  // ---- Bağlantı ----
+  let ws: WebSocket | null = null;
+  let stopped = false;
+  let pingAt = 0;
+  function send(message: QuizClientMessage): void {
+    if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+  }
+  function connect(): void {
+    const socket = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/api/quiz/${encodeURIComponent(gameId)}/ws`);
+    ws = socket;
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'tr';
+    socket.addEventListener('open', () =>
+      socket.send(JSON.stringify({ t: 'hello', v: QUIZ_PROTOCOL_VERSION, name, avatar, cid: clientId(), lang } satisfies QuizClientMessage)),
+    );
+    socket.addEventListener('message', (event) => {
+      let m: QuizServerMessage;
+      try {
+        m = JSON.parse(String(event.data)) as QuizServerMessage;
+      } catch {
+        return;
+      }
+      if (m.t === 'welcome') {
+        me = m.you;
+        offset = m.now - Date.now();
+      } else if (m.t === 'pong') offset = m.now + (performance.now() - pingAt) / 2 - Date.now();
+      else if (m.t === 'state') {
+        state = m;
+        render();
+      } else if (m.t === 'error' && (m.code === 'version' || m.code === 'full')) {
+        stopped = true;
+        body.replaceChildren(el('p', { class: 'quiz-note' }, t(m.code === 'version' ? 'games.version' : 'games.full')));
+      }
+    });
+    socket.addEventListener('close', () => {
+      if (ws !== socket || stopped) return;
+      setTimeout(connect, 1500);
+    });
+  }
+  connect();
+  setInterval(() => {
+    pingAt = performance.now();
+    send({ t: 'ping' });
+  }, 15_000);
+  addEventListener('pagehide', () => {
+    stopped = true;
+    ws?.close();
+  });
+  addEventListener('langchange', () => {
+    translate(app);
+    copyLabel();
+    render();
+  });
+}

@@ -214,7 +214,7 @@ tanınmışlık. ([rakip-analizi.md](rakip-analizi.md) §3.1)
   film sayfası, özel emojiler (Teleparty'de ücretli), temalar/avatarlar.
 - **Ekle:**
   - [ ] Sesli / görüntülü sohbet (Teleparty'de ücretli → bizde ücretsiz olursa büyük fark). Önce bas-konuş ses.
-  - [ ] Oda görünümünde sağ paneli gizle/küçült: video büyüsün, sohbet istenince açılsın.
+  - [x] Oda görünümünde sağ paneli gizle/küçült: video büyüsün, sohbet istenince açılsın (0.9.71).
   - [ ] "Alex durdurdu / 12:30'a sardı" gibi kısa bildirim videonun üstünde (neden durduğunu herkes anlasın);
     şu an bu hareketler sohbette gizli. Varsa gözden geçir, yoksa ekle.
   - [ ] "Denenmiş oynatıcılar" sayfası: hangi oynatıcı türlerinde çalıştığımız (site adı değil, oynatıcı adı).
@@ -286,8 +286,8 @@ Açmadan önce:
 - [ ] Sanal tarayıcı modu (DRM'li servisler için) — maliyet nedeniyle ancak sponsorla.
 
 ### Teknik borç / küçük notlar
-- Sitenin `i18n.ts`'inde artık kullanılmıyor gibi görünen anahtarlar var (eski "Benim odam", "son odalar",
-  izleme sonu kartı, deneysel gömme seçeneği metinleri). Temizlerken dinamik kullanılanlara dikkat.
+- ~~`i18n.ts`'de kullanılmayan anahtarlar~~ (Ekim 2026'da tarandı: kalan 4 tanesi silindi; dinamik önekler `games.`,
+  `action.`, `error.`, `theme.`… kodda `${}` ile kurulur, taramada bunlara dikkat).
 - Gerçek YouTube başlığını isteyen uçtan uca test (`room.mjs`) YouTube'a erişimi olmayan ortamlarda
   (ör. kısıtlı bulut oturumu) takılır; CI'da ve canlıda çalışır.
 
