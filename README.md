@@ -12,8 +12,8 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-133%20unit%20%2B%2013%20e2e%20%2B%20real%20Chrome-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.9.58-7c5cff)
+![Tests](https://img.shields.io/badge/tests-157%20unit%20%2B%20e2e%20%2B%20real%20Chrome-3ccf8e)
+![Version](https://img.shields.io/badge/version-0.9.81-7c5cff)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
@@ -48,14 +48,14 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. The 👤 menu (top right) holds name, avatar, theme and the session recap. |
 | 📱 **Shorts view** | Open a YouTube Shorts link and the room turns vertical: the video in the middle, friends sitting on both sides. Messages pop up as bubbles from the sender's avatar, reactions rise from it. ↑ / ↓ (or ▲▼, mouse wheel) go to the previous / next short for everyone; 🔁 loop replays a finished short. Queue, chat history and settings stay one click away in the room view. |
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
-| 🎙 **Voice & video chat** | "Join voice" in the room: talk while you watch, mute with one click or use push-to-talk (hold V), the speaker's avatar glows and a small bar under 🎙 shows that your microphone hears you. 📷 turns on a small camera: friends' cameras appear in the voice card, or pop them out into a floating window you can drag anywhere and resize; in fullscreen they move into the video by themselves and can be moved there too (on film pages too; the camera is asked once for ScreenWithMe). Peer-to-peer and always encrypted (the server never hears it), up to 6 people; nobody hears you unless they joined voice too. Works on film pages too: the microphone is asked once for ScreenWithMe (not for the film site), voice keeps going when the film page reloads, and the film gets quieter while someone talks. |
+| 🎙 **Voice & video chat** | Press "Join voice" and talk while you watch: mute with one click or use push-to-talk (hold V). The speaker's avatar glows, and a small bar under 🎙 shows your microphone is picking you up. 📷 adds a small camera: friends' cameras show up in the voice card or in a floating window you can drag and resize, and in fullscreen they move onto the video. Peer-to-peer and always encrypted (the server never hears it), up to 6 people; only people who joined voice can hear you. Works on film pages too: microphone and camera are asked once for ScreenWithMe (not for the film site), voice survives a page reload, and the film gets quieter while someone talks. |
 | 📺 **Screen sharing** | Show your screen, a window, a tab or your camera to the room (games, photos, "look at this", not for films). One stream per room, up to 4 viewers who choose to watch, 720p, peer-to-peer. It opens in a corner of the video and can be enlarged. Choose "sharp text" (slides, sites) or "smooth" (games). The limits are always shown ("Watching 3/4"). The host can stop a stream or allow only themselves to stream. |
 | 💬 **Chat & reactions** | Chat bubbles like a messaging app (yours on the right), queue and people tabs; ⚙️ settings open in their own window. A "😀 React" tray with three emoji pages and your own GIFs, your last three emojis always one tap away; reactions float up from the bottom of the video with the sender's avatar and name, as fast as you like. Anyone can hide them for themselves. Room activity in chat is hidden by default. |
 | 🖼️ **Custom emojis** | Add your own image or GIF; the whole room can react with it (up to 24 per room). |
 | 📌 **Pins** | Pin a moment with an optional note; a strip under the video jumps back to it. |
 | ⌨️ **Shortcuts** | 1–8 reactions, Enter chat, P pin (on film pages these keys never reach the page's player). |
 | 💾 **Saved rooms** | Create a one-off room or a named saved room (kept 30 days). Saved rooms remember where each video stopped and its pins; your list on the home page shows how many people are inside. |
-| 📊 **Session recap** | A Spotify-Wrapped-style recap of the session (time watched, videos, most talkative, favourite emoji…) with a downloadable image; past recaps are kept. |
+| 📊 **Session recap** | A playful set of cards about the session (time watched, videos, chattiest person, favorite emoji…) with a downloadable image; recaps can be saved for later. |
 | ⏰ **Scheduled start** | Pick a time; a countdown banner shows and the room starts by itself. |
 | 📱 **Add to home screen** | The website can be installed as an app on phones and computers ("Add to Home Screen" / the install icon in the address bar). It always loads the latest version; when you are offline it says so. |
 | 🎮 **PlayWithMe** | Games inside the room, no separate game room: press 🎮 under the video and pick tic-tac-toe, Four in a Row (two players), Draw & Guess or a general-knowledge quiz (2–8). The game opens in place of the video; everyone else gets a "Join" card, and "Back to video" brings the film back while the game keeps going. |
@@ -64,15 +64,15 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 ### Host & safety
 | | |
 |---|---|
-| 👑 **Room host** | The first person in is the host (survives reloads) and sets the room rules with switches in ⚙️ Settings; everyone else sees a short summary. Gone for more than 20 s → hosting passes to the longest-present member for good. |
-| 🔒 **Host modes** | Only the host controls playback · lock the queue · turn off emojis or limit how often each person can send one · ready check on/off. |
+| 👑 **Room host** | The first person in is the host (even after reloading) and sets the room rules with switches in ⚙️ Settings; everyone else sees a short summary. If the host is gone for more than 20 s, hosting passes for good to whoever has been in the room longest. |
+| 🔒 **Host modes** | Only the host controls playback · lock the queue · turn off emojis or limit how often each person can send one · only the host can stream · ready check on/off. |
 | 🚪 **Remove & ban** | The host removes people; they stay out until the host lifts the ban. |
 | 🔐 **Private by design** | Video plays in each person's own browser; the server only relays tiny "pause at 12:34" messages and the room's chat. The extension is dormant outside a room, and the film page can't read which room you are in. User text is never written as HTML. Rate limits live on the server. |
 
 ### Look & feel
 | | |
 |---|---|
-| 🎨 **11 themes** | Night, Ocean, Sunset, Neon, plus illustrated Turkish Delight, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner, Night Express), each with the mascot in costume. Pick one right on the home page and the whole page switches instantly; the plain themes have soft moving light in the background. |
+| 🎨 **11 themes** | Night, Ocean, Sunset, Neon, plus illustrated Moonlit Nights, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner, Night Express), each with the mascot in costume. Pick one right on the home page and the whole page switches instantly; the plain themes have soft moving light in the background. |
 | 🎬 **Intro** | A short logo animation with a generated sound (Web Audio, no files). |
 | 🌍 **Languages** | Turkish (default) and English, on the site and in the extension. |
 
@@ -116,7 +116,7 @@ player into it.
 
 | Check | Result |
 |---|---|
-| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 140 passing |
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 157 passing |
 | End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, emoji rate, saved rooms, recap, Shorts) | `npm run e2e`, runs in CI |
 | Real Chrome with the extension (`scripts/harness/embed`) | 90 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, pins, settings sync between site and extension, video picker, ad tabs, redirects, pre-roll ads |
 | Real voice (`scripts/harness/voice`) | Two Chromes with fake microphones: the received audio's energy is measured, on the site and on film pages (extension), incl. the permission tab and reloads |
@@ -158,7 +158,7 @@ Locally: `npx wrangler login` once, then `npm run deploy`.
 
 ## 🗺️ What's next
 
-Chrome Web Store release, more games, a short domain, push-to-talk voice chat, Firefox.
+Chrome Web Store release, more games, a short domain, Firefox.
 
 ## 📄 License & privacy
 
@@ -168,7 +168,7 @@ MIT / Apache-2.0. Privacy policy: [privacy.html](https://screen-with-me.swm-serv
 
 ## ⚠️ Limitations
 
-- DRM-protected services (Netflix, Disney+…) are not supported yet.
+- DRM-protected streaming services are not supported yet.
 - The extension is not in the Chrome Web Store yet (manual install, about a minute).
 - Firefox is not supported yet. Pages from other sites need a desktop browser with the extension.
-- ScreenWithMe never hosts or relays video content; it only synchronises players that each person opens themselves.
+- ScreenWithMe never hosts or relays video content; it only synchronizes players that each person opens themselves.

@@ -4,11 +4,11 @@
 import { readValue } from './store.ts';
 
 const tr = {
-  autoplayBlocked: 'Tarayıcı videoyu kendiliğinden başlatmadı.',
+  autoplayBlocked: 'Tarayıcın videoyu kendiliğinden başlatmadı.',
   startPlayback: '▶ İzlemeye başla',
-  popupIntro: 'ScreenWithMe ile arkadaşlarınla her sitedeki videoyu aynı anda izle. Oda kur ya da bir odaya katıl, film sitesine gidince oda görünümü kendiliğinden gelir.',
+  popupIntro: 'Arkadaşlarınla her sitedeki videoyu aynı anda izle. Sitemizde oda kur ya da bir odaya katıl; film sayfasına gidince oda kendiliğinden açılır.',
   popupOpen: "ScreenWithMe'yi aç",
-  popupInRoom: 'Bu sekme bir odada: film sitesinin üstünde oda görünümü açık.',
+  popupInRoom: 'Bu sekme bir odada: oda, film sayfasının üstünde açık.',
   popupBack: '🏠 Odaya dön',
   popupSite: 'Zaten sitedesin: oda kur ya da bir linkle katıl.',
   pickThis: '🎯 Bunu senkronla',
@@ -17,11 +17,11 @@ const tr = {
 };
 
 const en: typeof tr = {
-  autoplayBlocked: "The browser didn't start the video by itself.",
+  autoplayBlocked: "Your browser didn't start the video on its own.",
   startPlayback: '▶ Start watching',
-  popupIntro: 'Watch any video on any site together with friends. Create or join a room; on the film site, room view appears by itself.',
+  popupIntro: 'Watch videos on any site together with friends. Create or join a room on our site; when you go to the film page, the room opens by itself.',
   popupOpen: 'Open ScreenWithMe',
-  popupInRoom: 'This tab is in a room: room view is shown over the film site.',
+  popupInRoom: 'This tab is in a room: the room is open over the film page.',
   popupBack: '🏠 Back to the room',
   popupSite: "You're already on the site: create a room or join with a link.",
   pickThis: '🎯 Sync this one',

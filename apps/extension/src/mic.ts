@@ -9,23 +9,23 @@ import { readValue } from './store.ts';
 const text = {
   tr: {
     title: 'Sesli sohbet için mikrofon izni',
-    text: 'Film sayfasında arkadaşlarınla konuşabilmen için ScreenWithMe mikrofonunu kullanmak istiyor. İzin bir kez verilir, sadece "Sese katıl"a bastığında açılır.',
+    text: 'Film sayfasında arkadaşlarınla konuşabilmen için ScreenWithMe mikrofonunu kullanmak istiyor. İzni bir kez verirsin; mikrofon sadece "Sese katıl"a bastığında açılır.',
     allow: '🎙 Mikrofon iznini ver',
     denied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden mikrofona izin verip tekrar dene.',
     camTitle: 'Görüntülü sohbet için kamera izni',
-    camText: 'Film sayfasında arkadaşların seni görebilsin diye ScreenWithMe kameranı kullanmak istiyor. İzin bir kez verilir, kamera sadece 📷 düğmesine bastığında açılır.',
+    camText: 'Film sayfasında arkadaşların seni görebilsin diye ScreenWithMe kameranı kullanmak istiyor. İzni bir kez verirsin; kamera sadece 📷 düğmesine bastığında açılır.',
     camAllow: '📷 Kamera iznini ver',
     camDenied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden kameraya izin verip tekrar dene.',
   },
   en: {
     title: 'Microphone permission for voice chat',
-    text: 'ScreenWithMe wants to use your microphone so you can talk with friends on the video page. You allow it once; it is only on after you press "Join voice".',
+    text: 'ScreenWithMe wants to use your microphone so you can talk with friends on the video page. You only allow it once, and the microphone is only on after you press "Join voice".',
     allow: '🎙 Allow microphone',
-    denied: 'Permission was not given. Allow the microphone from the lock/settings icon in the address bar and try again.',
+    denied: 'Permission wasn’t given. Allow the microphone from the lock/settings icon in the address bar and try again.',
     camTitle: 'Camera permission for video chat',
-    camText: 'ScreenWithMe wants to use your camera so friends can see you on the video page. You allow it once; the camera is only on after you press 📷.',
+    camText: 'ScreenWithMe wants to use your camera so friends can see you on the video page. You only allow it once, and the camera is only on after you press 📷.',
     camAllow: '📷 Allow camera',
-    camDenied: 'Permission was not given. Allow the camera from the lock/settings icon in the address bar and try again.',
+    camDenied: 'Permission wasn’t given. Allow the camera from the lock/settings icon in the address bar and try again.',
   },
 };
 

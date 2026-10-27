@@ -8,7 +8,7 @@ dili); açıklamanın sonunda kısa Türkçe paragraf var.
 
 **Başlık ve özet zip'ten gelir** (manifest, `apps/extension/build.mjs`):
 - Başlık: `ScreenWithMe – Watch Videos Together in Sync`
-- Özet: `Sync any HTML5 video with friends: play, pause, seek and speed together. Emoji reactions and quick chat. No account, free.`
+- Özet: `A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.`
 
 > Repo şu an private. Metinlerde "open source" yazmıyoruz; repo açılınca eklenebilir
 > (açmadan önce `docs/internal/rakip-analizi.md` içindeki site adları temizlenmeli).
@@ -22,26 +22,27 @@ dili); açıklamanın sonunda kısa Türkçe paragraf var.
 ```
 Watch videos together with friends, perfectly in sync.
 
-Create a room on the ScreenWithMe website and send the link. Paste the link of the page with the video into the room: everyone goes to that page, and as soon as the video starts, the extension opens your room around it (chat, reactions, controls). When anyone plays, pauses, seeks or changes the speed, it happens for everyone. Whoever falls behind catches up silently.
+Create a room on the ScreenWithMe website and share the link. Paste the link of a page with a video into the room: everyone goes to that page, and the extension opens your room around the video (chat, reactions, voice chat, controls). When anyone plays, pauses, seeks or changes the speed, it happens for everyone, and anyone who falls behind quietly catches up.
 
 HOW IT WORKS
-1. Create a room on the website (no account) and share the invite link.
-2. Paste the page with the video; friends get a "Go to the film" button.
-3. Press play on that page: the room view opens by itself, with the video in the middle.
-The extension has no settings to learn: its icon only shows whether the tab is in a room, with one button back to the room.
+1. Create a room on the website (no account needed) and share the invite link.
+2. Paste the link of the page with the video; friends get a "Go to the film" button.
+3. The page opens with your room around the video. Press play and you're watching together.
+There are no settings to learn: the extension icon only shows whether the tab is in a room, with one button back to the room.
 
 WHY SCREENWITHME
-• Works with standard HTML5 video players, even inside iframes and players that load late
+• Works with standard HTML5 video players, even inside iframes and in players that load late
 • Tight sync, measured 30–100 ms apart on popular open-source players
-• "Everyone ready": if someone is still buffering, the room waits (max 12 s)
-• Emoji reactions (with fun extra pages) and quick chat over the video, also in fullscreen
-• Pin important moments with an optional note and jump back to talk about them later
+• Wrong video picked up (a trailer or a preview)? Choose the right one with one click
+• "Everyone ready": if someone is still buffering, the room waits for them (up to 12 s)
+• Emoji reactions and quick chat over the video, also in fullscreen
+• Voice chat while you watch: the microphone is asked for once and only turns on when you join voice
+• Pin moments with an optional note and jump back to talk about them later
 • Add your own custom emojis (images or GIFs) for the whole room
 • Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
-• Room view: the video's page turns into your room, with the video in the middle, chat, queue and people on the side and reactions under the video; fullscreen keeps them
-• Twelve themes, drawn avatars and your own custom emojis
-• Speed stays shared: other speed extensions can't knock the room out of sync
-• Room host can remove people and lift bans; pick a name and avatar, no account
+• Shared speed: other speed extensions can't knock the room out of sync
+• The room host can lock the controls, remove people and lift bans
+• Eleven themes and drawn avatars; just pick a name, no account
 • YouTube and direct video links play right on the website, no extension needed
 • English and Turkish
 
@@ -58,7 +59,7 @@ NOTES
 
 —
 
-Türkçe: Arkadaşlarınla videoyu aynı saniyede izle. Sitede oda kur, linki gönder, videonun olduğu sayfanın linkini odaya yapıştır: herkes o sayfaya gider, video başlayınca oda (sohbet, emojiler, kontroller) videonun etrafında açılır. Biri durdurunca, sarınca ya da hızı değiştirince herkeste olur. Hesap yok, reklam yok, takip yok; eklenti sadece odaya katıldığın sekmede çalışır.
+Türkçe: Arkadaşlarınla videoyu aynı saniyede izle. Sitede oda kur, linki paylaş, videonun olduğu sayfanın linkini odaya yapıştır: herkes o sayfaya gider ve oda (sohbet, emojiler, sesli sohbet, kontroller) videonun etrafında açılır. Biri durdurduğunda, sardığında ya da hızı değiştirdiğinde herkeste olur. Hesap yok, reklam yok, takip yok; eklenti sadece odaya katıldığın sekmede çalışır.
 ```
 
 **Kategori:** Entertainment. Listede yoksa: Social & Communication.
@@ -90,14 +91,14 @@ sitenin gerçek `styles.css`'ini kullanır, site arayüzü değişince işaretle
 **Tek amaç (Single purpose description):**
 
 ```
-ScreenWithMe has a single purpose: watch parties. It keeps one HTML5 video, in the tab where the user joined a room, playing in sync (play, pause, seek position, playback speed) for everyone in that room. Reactions and short chat messages over the video are part of that shared-watching experience.
+ScreenWithMe has a single purpose: watch parties. It keeps one HTML5 video, in the tab where the user joined a room, playing in sync (play, pause, seek position, playback speed) for everyone in that room. Reactions, short chat messages and voice chat with the people in the room are part of that shared-watching experience.
 ```
 
 **İzin gerekçeleri:**
 
 `storage`:
 ```
-Stores the website's settings (nickname, avatar, theme, language, saved rooms and a random browser ID) locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website, and which tab shows a room layer (chrome.storage.session), so it survives the service worker restarting.
+Stores the website's settings (nickname, avatar, theme, language, saved rooms, the user's custom emojis and a random browser ID) locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website, and which tab shows a room layer (chrome.storage.session), so it survives the service worker restarting.
 ```
 
 `offscreen` (0.9.60'tan beri):
@@ -139,9 +140,9 @@ Altındaki üç beyanın üçünü de işaretle:
 
 ```
 No login needed. Allow autoplay or click "Start watching" if the page asks.
-1. Open https://screen-with-me.swm-server.workers.dev, press "Create room" → "One-time", enter a nickname and pick an avatar.
+1. Open https://screen-with-me.swm-server.workers.dev, press "Create room", enter a nickname and pick an avatar.
 2. Paste https://plyr.io/ (an open-source video player demo) or https://videojs.com/ into the link box and press "Play now". The tab goes to that page.
-3. Once the video is found, the website's room appears around it (chat, queue, reactions, pin, speed, fullscreen); the video sits in the room's player area.
+3. The website's room opens over the page right away (chat, reactions, pins, speed, fullscreen); once the video is found, it sits in the room's player area.
 4. Open the invite link in a second window (the same profile works) and press "Go to the film and watch together".
 5. Play, pause or seek in one window: the other follows within about 1 second.
 Tabs that have not joined a room are not affected.

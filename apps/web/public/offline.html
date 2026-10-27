@@ -49,7 +49,7 @@
     <main>
       <img src="/logo.svg" alt="" />
       <h1 id="title">İnternet bağlantısı yok</h1>
-      <p id="text">ScreenWithMe'yi kullanmak için internete bağlı olmalısın. Bağlantı gelince tekrar dene.</p>
+      <p id="text">ScreenWithMe internet olmadan çalışmıyor. Bağlantın gelince tekrar dene.</p>
       <button id="retry" type="button">Tekrar dene</button>
     </main>
     <script>
@@ -59,7 +59,7 @@
         document.documentElement.lang = 'en';
         document.title = 'ScreenWithMe · Offline';
         document.getElementById('title').textContent = "You're offline";
-        document.getElementById('text').textContent = 'ScreenWithMe needs an internet connection. Try again when you are back online.';
+        document.getElementById('text').textContent = "ScreenWithMe needs an internet connection. Try again once you're back online.";
         document.getElementById('retry').textContent = 'Try again';
       }
       document.getElementById('retry').addEventListener('click', function () {
