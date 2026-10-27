@@ -21,18 +21,26 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 3. ✅ **Görüntülü sohbet (0.9.63 sitede, 0.9.65 film sayfasında):** 📷, kamera kutuları, tam ekranda köşede; kendi ses
    seviyesi çubuğu. Film sayfasında kameralar eklentinin görünmeyen sayfasında, katmana yerel WebRTC köprüsüyle gelir;
    kamera izni `mic.html?cam=1`. PR #25'in canlı e2e'si testteki bir yarış yüzünden kırmızıydı (düzeltildi, #26).
-4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`). Sıradaki oyun fikirleri kartlarda
-   "yakında": Çiz-Bil, bilgi yarışması, kelime avı.
+4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`), Dört Taş (0.9.69, `/oyun/four/<kod>`).
+   Sıradaki oyun fikirleri kartlarda "yakında": Çiz-Bil, bilgi yarışması, kelime avı.
 5. **Yayın açma:** araştırma ✅ (`docs/internal/yayin.md`); kullanıcı kararı: sitede ekran paylaşımı + kamera yayını,
    eşler arası, tek yayın, ≤4 izleyici, 720p, kabukta sadece izleme (film yayma yok). ✅ 0.9.64 (1. aşama), ✅ 0.9.66
    (2. aşama: kalite "yazı net / akıcı", yönetici durdurur, `settings.liveHostOnly`). İleride: 1080p / SFU (kart gerekir).
    Ayrıca: kişi sınırları hep görünür ("Seste 3/6 · 📷 1/4", dolunca soluk düğme + neden) ✅ 0.9.63.
-6. **Tasarım/tema alternatifleri:** önizleme sayfası, kullanıcı seçince uygulanır.
-7. **Mehtaplı tema:** maskotu daha "Türk" yap: yeniçeri ya da padişah ScreenWithMe (kullanıcı istedi; direkt ekle).
+6. ✅ **Tasarım alternatifleri (önizleme, uygulanmadı):** claude.ai tasarım tuvali "ScreenWithMe tasarım alternatifleri"
+   (https://claude.ai/artifact/Beiq1ueBUUHjUkRbL5LTHL): oda için A "Sinema Rayı" (sağda sade ray: "Birlikte" kartında
+   kişiler + ses/kamera/ekran düğmeleri, davet üst çubukta), B "Salon" (video ortada, altında koltuk sırası, sohbet dar
+   çekmece), C "Ada" (video tam ekran, üstünde cam paneller); D ana sayfa "tek adım" (link yapıştır + oda oluştur, kayıtlı
+   odalar üstte); A telefonda. Kullanıcı seçince uygulanacak (sıradaki büyük iş). Ayrıca: düğme moru #8b6cff beyaz yazıyla
+   ~3,8:1 (WCAG 4,5 altı); önerim düğmelerde #6a4cf2.
+7. ✅ **Mehtaplı Geceler maskotu (0.9.67):** padişah ScreenWithMe (beyaz kavuk + sorguç, burma bıyık, kürk yakalı kırmızı
+   kaftan, lale); eski renkli şeritli sarık "Arap gibi" duruyordu. Kullanıcı beğenmezse yeniçeri (börk + kaşıklık) seçeneği.
 
-## Son yapılanlar (0.9.61 → 0.9.65)
+## Son yapılanlar (0.9.61 → 0.9.68)
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
-  görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti).
+  görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti), yayın 2. aşama (0.9.66),
+  Mehtaplı padişah maskotu (0.9.67), bas-konuş (V) + "Ali durdurdu" notu videonun üstünde (0.9.68, eklenti 0.9.68),
+  PlayWithMe'de Dört Taş (0.9.69).
 
 ## Önceki: 0.9.60
 - **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".

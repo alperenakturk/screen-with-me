@@ -406,28 +406,41 @@ function lokumPattern() {
 }
 
 function lokumMascot() {
-  // Renkli sarıklı: yeşil-sarı-mor şeritli sarık, kırmızı entari, elinde pirinç fener
-  const bands = ['#3f8a4a', '#e6c25a', '#7a4a9a', '#3f8a4a', '#e6c25a'];
+  // Padişah ScreenWithMe: kocaman beyaz kavuk (önünde mücevherli sorguç ve tüyler), burma bıyık, kürk yakalı
+  // kırmızı kaftan (altın kaytan ilikler), yanında lale. (Eski renkli şeritli sarık "Arap" gibi duruyordu.)
   return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('gl', 4)}
-<linearGradient id="robe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8442e"/><stop offset="1" stop-color="#8a1e18"/></linearGradient>
-<radialGradient id="lg2"><stop offset="0" stop-color="#ffcf80" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf80" stop-opacity="0"/></radialGradient>
+<defs>${LOGO_DEFS}
+<linearGradient id="kaftan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8322a"/><stop offset="1" stop-color="#7c1418"/></linearGradient>
+<linearGradient id="kavuk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3dccb"/></linearGradient>
+<linearGradient id="kurk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3ead8"/><stop offset="1" stop-color="#cbbd9e"/></linearGradient>
 </defs>
-<ellipse cx="120" cy="230" rx="84" ry="7" fill="#000" opacity=".25"/>
-<path d="M56 178 Q40 208 38 234 H202 Q200 208 184 178Z" fill="url(#robe)"/>
-<path d="M120 184 V234" stroke="#e6c25a" stroke-width="2"/>
-<path d="M78 210 Q120 222 162 210" stroke="#e6c25a" stroke-width="5" fill="none"/>
-${logo(72, 92, 96, { look: [2, 0] })}
-<!-- Sarık: üst üste sarılmış renkli şeritler, tepede yumuşak külah -->
-<path d="M96 66 Q120 34 144 66Z" fill="#e8e0cc"/>
-${bands.map((c, i) => `<path d="M${74 + i * 2} ${104 - i * 9} Q120 ${86 - i * 9} ${166 - i * 2} ${104 - i * 9} L${164 - i * 2} ${94 - i * 9} Q120 ${76 - i * 9} ${76 + i * 2} ${94 - i * 9}Z" fill="${c}" stroke="#2a1a10" stroke-width="1"/>`).join('')}
-<path d="M80 100 Q100 70 150 64" stroke="#fff" stroke-width="2" fill="none" opacity=".35"/>
-<!-- Fener -->
-<circle cx="196" cy="176" r="36" fill="url(#lg2)"/>
-<path d="M196 132 V146" stroke="#c99a45" stroke-width="3"/>
-<path d="M184 146 H208 L204 152 H188Z M186 196 H206 L210 206 H182Z" fill="#c99a45"/>
-<path d="M188 152 H204 L206 196 H186Z" fill="#ffcf80" filter="url(#gl)"/>
-<path d="M193 152 V196 M199 152 V196" stroke="#8a6a2a" stroke-width="1.6"/>
+<ellipse cx="120" cy="231" rx="84" ry="7" fill="#000" opacity=".25"/>
+<!-- Kaftan: kırmızı, altın kaytan ilikler; kürk yaka iki yandan iner -->
+<path d="M54 178 Q38 208 36 234 H204 Q202 208 186 178Z" fill="url(#kaftan)"/>
+<path d="M66 196 l4 6 l-4 6 l-4 -6Z M174 196 l4 6 l-4 6 l-4 -6Z M60 220 l4 6 l-4 6 l-4 -6Z M180 220 l4 6 l-4 6 l-4 -6Z" fill="#e6b84e" opacity=".7"/>
+${[194, 206, 218].map((y) => `<path d="M104 ${y} H136" stroke="#e6b84e" stroke-width="4" stroke-linecap="round"/><circle cx="104" cy="${y}" r="3.4" fill="#f6d27a"/><circle cx="136" cy="${y}" r="3.4" fill="#f6d27a"/>`).join('')}
+<path d="M70 180 Q84 182 98 186 L92 234 H62 Q64 204 70 180Z M170 180 Q156 182 142 186 L148 234 H178 Q176 204 170 180Z" fill="url(#kurk)"/>
+<path d="M74 196 l3 4 M80 210 l3 4 M72 222 l3 4 M84 226 l3 4 M166 196 l-3 4 M160 210 l-3 4 M168 222 l-3 4 M156 226 l-3 4" stroke="#a8977a" stroke-width="2" stroke-linecap="round"/>
+${logo(72, 98, 96, { look: [2, 0] })}
+<!-- Burma bıyık (ağzın hemen üstünde) -->
+<path d="M120 152 C112 148 102 148 96 152 C91 155 88 152 89 148 C86 154 92 160 100 157 C108 155 114 155 120 157 C126 155 132 155 140 157 C148 160 154 154 151 148 C152 152 149 155 144 152 C138 148 128 148 120 152Z" fill="#2b1a10"/>
+<!-- Kavuk: yuvarlak, sarık kumaşı çapraz kıvrımlı; tepede kırmızı külah görünür -->
+<path d="M108 36 Q120 22 132 36Z" fill="#c8322a"/>
+<path d="M60 112 C48 70 76 34 120 33 C164 34 192 70 180 112 Q120 126 60 112Z" fill="url(#kavuk)" stroke="#cfc6b2" stroke-width="2"/>
+<path d="M64 96 C92 66 140 50 172 58 M60 82 C86 52 124 40 150 40 M70 108 C102 84 150 72 178 88 M98 116 C126 100 160 98 180 106" stroke="#d4cbb6" stroke-width="3" fill="none" stroke-linecap="round"/>
+<!-- Sorguç: altın broş, zümrüt, yakut damlalar; arkaya kıvrılan tüyler -->
+<path d="M122 76 C116 52 122 26 140 8 C132 30 130 52 128 76Z" fill="#1d1a2a"/>
+<path d="M128 76 C130 50 142 30 162 18 C148 38 140 56 134 78Z" fill="#f4efe4" stroke="#cfc6b2" stroke-width="1.5"/>
+<path d="M116 78 C108 58 108 38 118 22 C116 42 118 60 122 78Z" fill="#f4efe4" stroke="#cfc6b2" stroke-width="1.5"/>
+<circle cx="122" cy="86" r="13" fill="#e6b84e" stroke="#a87a22" stroke-width="2"/>
+<circle cx="122" cy="86" r="7" fill="#1f9a6a" stroke="#0f5a3c" stroke-width="1.5"/>
+<circle cx="119.5" cy="83.5" r="2" fill="#c9f5df"/>
+<path d="M112 98 q-2 6 0 9 q2 -3 0 -9Z M122 100 q-2.5 7 0 10 q2.5 -3 0 -10Z M132 98 q-2 6 0 9 q2 -3 0 -9Z" fill="#d22a3a" stroke="#8a1424" stroke-width="1"/>
+<!-- Lale (sağda): sapı, iki yaprağı, üç taç yapraklı kırmızı çiçek -->
+<path d="M200 230 C200 206 198 186 196 168" stroke="#3f8a4a" stroke-width="4" fill="none" stroke-linecap="round"/>
+<path d="M199 222 C186 214 180 200 182 188 C190 198 196 208 199 222Z M200 214 C212 204 218 192 216 180 C208 190 202 200 200 214Z" fill="#4f9c58"/>
+<path d="M196 170 C184 168 178 156 180 140 C186 146 190 148 192 140 C194 134 198 134 200 140 C202 148 206 146 212 140 C214 156 208 168 196 170Z" fill="#d8302e" stroke="#8a1424" stroke-width="2" stroke-linejoin="round"/>
+<path d="M196 168 C192 158 192 148 196 140" stroke="#ff8a7a" stroke-width="2" fill="none" opacity=".7"/>
 `);
 }
 

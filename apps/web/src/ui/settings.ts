@@ -8,6 +8,8 @@ import { load, save } from '../storage.ts';
 export interface Options {
   /** Emojiler videonun üstünde uçuşsun mu? */
   showReactions: boolean;
+  /** Başkası durdurunca/sarınca videonun üstünde kısa not ("Ali durdurdu"). */
+  actionNotice: boolean;
 }
 
 function readOption(key: string): boolean {
@@ -24,6 +26,7 @@ export function createSettingsPanel(
   const input = root.querySelector<HTMLInputElement>('#rename-input')!;
   const avatars = root.querySelector<HTMLElement>('#settings-avatars')!;
   const reactions = root.querySelector<HTMLInputElement>('#opt-reactions')!;
+  const notice = root.querySelector<HTMLInputElement>('#opt-actionnotice')!;
   let { name, avatar } = identity;
 
   input.value = name;
@@ -61,11 +64,16 @@ export function createSettingsPanel(
   window.addEventListener('langchange', drawAvatars);
   renderThemeSetting(root.querySelector<HTMLElement>('#settings-themes')!);
 
-  const options: Options = { showReactions: readOption('opt:reactions') };
+  const options: Options = { showReactions: readOption('opt:reactions'), actionNotice: readOption('opt:actionNotice') };
   reactions.checked = options.showReactions;
   reactions.addEventListener('change', () => {
     options.showReactions = reactions.checked;
     save('opt:reactions', reactions.checked ? '1' : '0');
+  });
+  notice.checked = options.actionNotice;
+  notice.addEventListener('change', () => {
+    options.actionNotice = notice.checked;
+    save('opt:actionNotice', notice.checked ? '1' : '0');
   });
 
   return {

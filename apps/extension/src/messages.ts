@@ -41,7 +41,7 @@ export type FrameMessage =
   /** Videonun durumu (sitedeki ilerleme çubuğu ve pin şeridi için). */
   | { type: 'status'; status: { time: number; duration: number; paused: boolean; rate: number } }
   /** Film sayfasında basılan kısayol ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
-  | { type: 'key'; key: string }
+  | { type: 'key'; key: string; up?: boolean }
   | { type: 'fullscreen' }
   /**
    * Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. `click`: tıklandı (hemen

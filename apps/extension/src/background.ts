@@ -241,7 +241,7 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       break;
     case 'key':
       // Odak film sayfasındayken basılan kısayollar (1–8 emoji, Enter mesaj, P pin) sitede işlensin.
-      if (isForwardedKey(message.key)) reply(shell, { type: 'key', key: message.key });
+      if (isForwardedKey(message.key)) reply(shell, { type: 'key', key: message.key, ...(message.up ? { up: true } : {}) });
       break;
     case 'fullscreen':
       reply(shell, { type: 'fullscreen' });

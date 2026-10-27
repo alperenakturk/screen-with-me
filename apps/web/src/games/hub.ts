@@ -1,5 +1,5 @@
 // PlayWithMe: ScreenWithMe'nin oyun köşesi (/oyun). Üstte logo (ScreenWithMe yüzü elinde oyun koluyla), altta oyunlar.
-// Şimdilik sadece XOX oynanır; diğerleri "yakında". Her maç ayrı bir oda (/oyun/xox/<kod>), link paylaşılarak oynanır.
+// XOX ve Dört Taş oynanır; diğerleri "yakında". Her maç ayrı bir oda (/oyun/<tür>/<kod>), link paylaşılarak oynanır.
 
 import { createLogo } from '@swm/shared/logo';
 import { newRoomId } from '@swm/shared/room-id';
@@ -23,6 +23,7 @@ export function playLogo(small = false): HTMLElement {
 
 const GAMES = [
   { id: 'xox', icon: '❌⭕', ready: true },
+  { id: 'four', icon: '🔴🟡', ready: true },
   { id: 'draw', icon: '✏️', ready: false },
   { id: 'quiz', icon: '❓', ready: false },
   { id: 'word', icon: '🔤', ready: false },

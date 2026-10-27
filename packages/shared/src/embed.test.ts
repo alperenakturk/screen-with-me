@@ -11,7 +11,7 @@ describe('embed relay rules', () => {
   });
 
   it('forwards only our shortcut keys', () => {
-    expect(['1', '8', 'Enter', 'p', 'P'].every(isForwardedKey)).toBe(true);
+    expect(['1', '8', 'Enter', 'p', 'P', 'v', 'V'].every(isForwardedKey)).toBe(true);
     expect(['9', ' ', 'k', 'f', 'ArrowLeft'].some(isForwardedKey)).toBe(false);
   });
 });

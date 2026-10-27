@@ -253,13 +253,17 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   eklenti `caps` yollamaz → kabukta kart gizli. Testler: `scripts/e2e/voice.mjs`, gerçek ses `scripts/harness/voice/run.mjs`
   (iki Chrome, sahte mikrofon, gelen sesin enerjisi ölçülür) ve `voice/shell.mjs` (film sayfasında; `VOICE_A`/`VOICE_B` iki
   farklı wav: aynı sahte bip'i yankı engelleyici siler).
-- **PlayWithMe (oyun köşesi, 0.9.62):** üst menüde 🎮 → `/oyun` (site `games/hub.ts`: logo = ScreenWithMe yüzü + oyun kolu,
-  oyun kartları; XOX dışındakiler "yakında"), maç `/oyun/xox/<kod>` (`games/xox.ts`). Sunucuda ayrı Durable Object `Game`
+- **PlayWithMe (oyun köşesi, 0.9.62; Dört Taş 0.9.69):** üst menüde 🎮 → `/oyun` (site `games/hub.ts`: logo = ScreenWithMe
+  yüzü + oyun kolu, oyun kartları; XOX ve Dört Taş dışındakiler "yakında"), maç `/oyun/<tür>/<kod>` (`games/match.ts`, tür
+  `xox` | `four`). İki kişilik tahta oyunları ortak biçimde (`games/board.ts` `BoardState`, kurallar `GAME_RULES`:
+  `xox.ts`, `four.ts`: 7×6, sütuna taş düşer, 4 dizen kazanır; `move.cell` Dört Taş'ta sütun). Odanın türünü ilk gelen
+  belirler; başka türün koduna girilmez (`kind`). Sürüm 2: durum `{t:'state', kind, game}` (eski kayıt `xox` alanı okunur). Sunucuda ayrı Durable Object `Game`
   (`apps/server/src/game.ts`, bağ `GAMES`, göç `v2`), `/api/games/:id/ws`, kendi protokolü (`packages/shared/src/games/`:
   `protocol.ts` doğrulama + `GAME_PROTOCOL_VERSION`, `xox.ts` kurallar). İlk iki kişi X/O koltuğunda (koltuk kalıcı
   `cid`'e bağlı: yenileyen yerinde kalır), gelenler izler; sahibi bağlı değilse izleyici `sit` ile oturur; hamleleri sunucu
   doğrular, kazanınca skor, `rematch` ile başlayan değişir. Sohbet yok, sadece sabit emojiler (`GAME_EMOJIS`). Boş oda 24
-  sa sonra silinir. Kabukta 🎮 gizli. Yeni oyun: `GAME_KINDS` + kurallar dosyası + sayfa. Test: `scripts/e2e/xox.mjs`.
+  sa sonra silinir. Kabukta 🎮 gizli. Yeni tahta oyunu: `GAME_KINDS` + `GAME_RULES` + kurallar dosyası + `match.ts`'te tahta çizimi + `app.ts` adresi.
+  Test: `scripts/e2e/xox.mjs` (XOX + Dört Taş).
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare
@@ -286,7 +290,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).
-- **Klavye:** 1–8 o sayfanın emojileri/özel emojileri, Enter mesaj, P pin (sitede `reactions.ts` + `room.ts`, tam ekranda
+- **Klavye:** 1–8 o sayfanın emojileri/özel emojileri, Enter mesaj, P pin, V bas-konuş (sesli sohbette "Bas-konuş"
+  seçiliyse basılı tutunca mikrofon açık; `opt:ptt`; film sayfasından bırakma da gelir: embed `key` `up`) (sitede `reactions.ts` + `room.ts`, tam ekranda
   `fullscreen.ts`). Film sayfasında (kabuk) tuş yakalama aşamasında alınıp siteye iletilir, film sitesine hiç
   gösterilmez: oynatıcılar rakamlarla sarar (3 = %30), yoksa emoji atınca herkes sarılırdı.
 - **Yönetici modları (`settings.hostOnly` / `lockQueue`):** sunucu yönetici olmayanın play/pause/seek/
@@ -320,6 +325,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kabukta açıkken delik kapanır). İlk açılışta
   yönetici ⚙️ Ayarlar'da (oda ayarlarını yapar), diğerleri 💬 Sohbet'te başlar (kabukta hep sohbet); aynı sekmede
   yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
+- **Kim durdurdu notu (0.9.68):** başkası oynat/durdur/sar/hız yapınca videonun sol üstünde 2,6 sn avatar + "Ali durdurdu"
+  (`#action-notice`, deliğin içinde adacık; kendi hareketim ve `SYSTEM` için yok); Ayarlar'dan kapatılır (`opt:actionNotice`).
 - **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
   (`localStorage` `opt:chatEvents`). Ayarlardaki seçenek kaldırıldı.
 - **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),

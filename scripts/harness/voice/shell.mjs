@@ -159,6 +159,16 @@ const aliSeesAyse = await until(async () => {
 }, 20000);
 check(!!aliSeesAyse, 'Ali sitede Ayşe’nin (film sayfasından açılan) kamerasını görüyor', JSON.stringify(aliSeesAyse));
 
+// Bas-konuş film sayfasında: V tuşu film sitesine gösterilmeden katmana gider (basınca ve bırakınca).
+await ayse.evalFrame('shell=1', `(() => { const c = document.getElementById('voice-ptt'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);
+const pttMuted = await until(() => ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+await ayse.evaluate(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', bubbles: true })); 1`);
+const pttTalk = await until(() => ali.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
+await ayse.evaluate(`window.dispatchEvent(new KeyboardEvent('keyup', { key: 'v', bubbles: true })); 1`);
+const pttBack = await until(() => ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+check(!!pttMuted && !!pttTalk && !!pttBack, 'bas-konuş film sayfasında: V basılıyken mikrofon açık, bırakınca kapalı', JSON.stringify({ pttMuted, pttTalk, pttBack }));
+await ayse.evalFrame('shell=1', `(() => { const c = document.getElementById('voice-ptt'); c.checked = false; c.dispatchEvent(new Event('change')); return 1; })()`);
+
 // Film sayfası yenilenir: ses eklentide sürer, yeni bağlantıyla yeniden kurulur (Ali yine duyar).
 await ayse.evaluate('location.reload(); 1');
 await ayse.sleep(3000);

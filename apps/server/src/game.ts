@@ -1,7 +1,9 @@
 import { DurableObject } from 'cloudflare:workers';
+import type { BoardState, Mark } from '@swm/shared/games/board';
 import {
   GAME_MAX_PEOPLE,
   GAME_PROTOCOL_VERSION,
+  GAME_RULES,
   parseGameMessage,
   type GameClientMessage,
   type GameKind,
@@ -9,7 +11,6 @@ import {
   type GameScore,
   type GameServerMessage,
 } from '@swm/shared/games/protocol';
-import { isXoxState, newGame, play, rematch, type Mark, type XoxState } from '@swm/shared/games/xox';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 
@@ -34,29 +35,34 @@ interface Seat {
 
 interface Saved {
   kind: GameKind;
-  xox: XoxState;
+  state: BoardState;
   seats: [Seat | null, Seat | null];
   score: GameScore;
   emptySince: number | null;
 }
 
+const fresh = (kind: GameKind = 'xox'): Saved => ({ kind, state: GAME_RULES[kind].newGame(), seats: [null, null], score: { X: 0, O: 0, draw: 0 }, emptySince: null });
+
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 
 /**
- * PlayWithMe oyun odası (şimdilik XOX): bir maç = bir nesne. İlk iki kişi X ve O koltuklarına oturur, sonra gelenler
+ * PlayWithMe oyun odası (XOX, Dört Taş): bir maç = bir nesne. Türü ilk gelen belirler (adresteki tür). İlk iki kişi X ve O koltuklarına oturur, sonra gelenler
  * izler. Hamleleri sunucu doğrular (sıra, boş hücre). Koltuk kalıcı tarayıcı kimliğine bağlı: oyuncu sayfayı yenilerse
  * koltuğunda kalır; çıkıp gittiyse izleyicilerden biri yerine oturabilir. Durum depoya yazılır (nesne uyusa da kalır).
  */
 export class Game extends DurableObject<Env> {
-  private data: Saved = { kind: 'xox', xox: newGame(), seats: [null, null], score: { X: 0, O: 0, draw: 0 }, emptySince: null };
+  private data: Saved = fresh();
   private readonly limit = new RateLimiter(20, 8);
   private readonly reactLimit = new RateLimiter(6, 2);
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     void ctx.blockConcurrencyWhile(async () => {
-      const saved = await ctx.storage.get<Saved>('game');
-      if (saved && isXoxState(saved.xox)) this.data = saved;
+      // Eski kayıt (sürüm 1) `xox` alanında tutuyordu.
+      const saved = await ctx.storage.get<Saved & { xox?: unknown }>('game');
+      const kind = saved?.kind ?? 'xox';
+      const state = saved?.state ?? saved?.xox;
+      if (saved && GAME_RULES[kind]?.isState(state)) this.data = { kind, state, seats: saved.seats, score: saved.score, emptySince: saved.emptySince };
     });
   }
 
@@ -105,7 +111,7 @@ export class Game extends DurableObject<Env> {
     if (this.sockets().length > 0 || this.data.emptySince === null) return;
     if (Date.now() - this.data.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
-      this.data = { kind: 'xox', xox: newGame(), seats: [null, null], score: { X: 0, O: 0, draw: 0 }, emptySince: null };
+      this.data = fresh();
     } else {
       await this.ctx.storage.setAlarm(this.data.emptySince + EMPTY_TTL_MS);
     }
@@ -116,6 +122,16 @@ export class Game extends DurableObject<Env> {
       this.sendTo(ws, { t: 'error', code: 'version' });
       ws.close(4000, 'version');
       return;
+    }
+    // Tür: hiç oynanmamış odayı ilk gelen belirler; başka türün sürdüğü koda gelen (adresi elle değiştirdiyse) giremez.
+    if (message.game !== this.data.kind) {
+      const untouched = this.data.seats.every((seat) => seat === null) && this.data.state.board.every((c) => c === null);
+      if (!untouched) {
+        this.sendTo(ws, { t: 'error', code: 'kind' });
+        ws.close(4002, 'kind');
+        return;
+      }
+      this.data = { ...fresh(message.game), emptySince: null };
     }
     me.name = message.name;
     if (message.avatar) me.avatar = message.avatar;
@@ -142,16 +158,16 @@ export class Game extends DurableObject<Env> {
         if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         // İki koltuk dolmadan oyun başlamaz (tek başına iki taraf oynanmasın).
         if (this.data.seats.some((s) => s === null)) return this.sendTo(ws, { t: 'error', code: 'not_your_turn' });
-        const next = play(this.data.xox, MARKS[seat]!, message.cell);
+        const next = GAME_RULES[this.data.kind].play(this.data.state, MARKS[seat]!, message.cell);
         if (!next) return this.sendTo(ws, { t: 'error', code: 'not_your_turn' });
-        this.data.xox = next;
+        this.data.state = next;
         if (next.winner) this.data.score[next.winner] += 1;
         break;
       }
       case 'rematch':
         if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
-        if (this.data.xox.winner === null) return;
-        this.data.xox = rematch(this.data.xox);
+        if (this.data.state.winner === null) return;
+        this.data.state = GAME_RULES[this.data.kind].rematch(this.data.state);
         break;
       case 'sit': {
         if (seat !== -1) return;
@@ -160,8 +176,8 @@ export class Game extends DurableObject<Env> {
         if (current && this.online(current.key)) return this.sendTo(ws, { t: 'error', code: 'seat_taken' });
         this.data.seats[message.seat] = { key: me.key!, name: me.name, ...(me.avatar ? { avatar: me.avatar } : {}) };
         // Yeni rakip: el yarıda kaldıysa baştan.
-        if (current && current.key !== me.key && this.data.xox.winner === null && this.data.xox.board.some((c) => c !== null)) {
-          this.data.xox = newGame(this.data.xox.starter);
+        if (current && current.key !== me.key && this.data.state.winner === null && this.data.state.board.some((c) => c !== null)) {
+          this.data.state = GAME_RULES[this.data.kind].newGame(this.data.state.starter);
         }
         break;
       }
@@ -220,7 +236,7 @@ export class Game extends DurableObject<Env> {
       seen.add(a.key!);
       watchers.push(this.person(a));
     }
-    this.broadcast({ t: 'state', xox: this.data.xox, seats, watchers, score: this.data.score }, except);
+    this.broadcast({ t: 'state', kind: this.data.kind, game: this.data.state, seats, watchers, score: this.data.score }, except);
   }
 
   private async save(): Promise<void> {

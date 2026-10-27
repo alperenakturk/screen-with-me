@@ -278,6 +278,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             </div>
             <div id="waiting-banner" class="waiting-banner" role="status" hidden></div>
             <div id="sync-badge" class="sync-badge" role="status" hidden></div>
+            <div id="action-notice" class="action-notice" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
             <form id="pin-form" class="pin-form" hidden><span aria-hidden="true">📌</span><input id="pin-note" autocomplete="off" data-i18n-placeholder="pinPlaceholder" /><button class="btn small-btn primary" data-i18n="pinSave"></button></form>
             <div id="toast-handle" class="fs-only toast-handle" data-i18n-title="toastHandleHint"><span data-i18n="toastHandle"></span></div>
@@ -389,6 +390,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
               <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden>📷</button>
               <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
+              <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>
             </div>
             <div id="voice-people" class="voice-people"></div>
             <span id="voice-limit" class="voice-limit muted small"></span>
@@ -477,6 +479,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel settings" data-panel="settings" hidden>
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
+            <label class="check-row"><input type="checkbox" id="opt-actionnotice" /> <span data-i18n="settings.actionNotice"></span></label>
             <label class="check-row shell-only"><input type="checkbox" id="opt-closeads" /> <span data-i18n="settings.closeAds"></span></label>
             <label class="check-row shell-only"><input type="checkbox" id="opt-duck" /> <span data-i18n="settings.duck"></span></label>
             <label class="select-row shell-only"><span data-i18n="settings.fsFit"></span>
@@ -633,6 +636,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
   });
+  // Başkası durdurunca/sarınca videonun üstünde kısa not: herkes videonun neden durduğunu görsün (hareketler sohbette
+  // varsayılan gizli). Art arda gelenlerde sonuncusu kalır.
+  let noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  function showActionNotice(by: { name: string; avatar?: Avatar }, text: string): void {
+    if (!settings.options.actionNotice) return;
+    const box = $('#action-notice');
+    box.replaceChildren(avatarNode(by.avatar, 'action-notice-avatar'), el('span', {}, text));
+    box.hidden = false;
+    box.classList.remove('fade');
+    if (noticeTimer) clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => {
+      box.classList.add('fade');
+      noticeTimer = setTimeout(() => (box.hidden = true), 400);
+    }, 2600);
+  }
   // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
   const voice = createVoice(app, send, () => myId, roomId, isShell);
   const live = createLive(app, send, () => myId, isShell, () => amHost());
@@ -749,6 +767,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Otomatik bekleme hareketleri "waiting" mesajıyla ayrıca anlatılıyor.
         if (by.id === SYSTEM_MEMBER_ID) break;
         const item = state.item;
+        if (by.id !== myId && (action === 'play' || action === 'pause' || action === 'seek' || action === 'rate')) {
+          showActionNotice(by, t(`action.${action}`, { name: displayName(by), title: '', time: formatTime(state.position), rate: state.rate }));
+        }
         addActivity(() => {
           const title = item ? itemTitle(item) : '';
           return action === 'next'
@@ -1023,7 +1044,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         send(message);
       },
       // Film sayfasında basılan kısayol: sitedeki kısayol dinleyicileri (emoji, Enter, P) aynen işlesin.
-      onKey: (key) => document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })),
+      onKey: (key, up) => document.dispatchEvent(new KeyboardEvent(up ? 'keyup' : 'keydown', { key, bubbles: true, cancelable: true })),
       onFullscreen: () => {
         if (!fullscreen.isActive()) fullscreen.toggle();
       },

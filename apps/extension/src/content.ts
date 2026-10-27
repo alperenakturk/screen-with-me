@@ -9,7 +9,7 @@
 // için bunlar da yakalanır.
 
 import { OffsetClock } from '@swm/shared/clock';
-import { isForwardedKey, type EmbedControl } from '@swm/shared/embed';
+import { isForwardedKey, isPushToTalkKey, type EmbedControl } from '@swm/shared/embed';
 import type { PlaybackState } from '@swm/shared/protocol';
 import { holePath, type ShellLayout } from '@swm/shared/shell';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -599,6 +599,17 @@ addEventListener(
     event.preventDefault();
     event.stopImmediatePropagation();
     if (!event.repeat) send({ type: 'key', key: event.key });
+  },
+  true,
+);
+// Bas-konuş: tuşun bırakılması da gider (yoksa mikrofon açık kalırdı).
+addEventListener(
+  'keyup',
+  (event) => {
+    if (!port || layout?.mode !== 'full' || !isPushToTalkKey(event.key)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    send({ type: 'key', key: event.key, up: true });
   },
   true,
 );

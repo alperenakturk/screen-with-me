@@ -2853,6 +2853,57 @@ html:not(.shell) .shell-only {
   pointer-events: none;
 }
 
+.action-notice {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: rgb(10 12 24 / 0.78);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  animation: notice-in 0.2s ease-out;
+  transition: opacity 0.4s;
+}
+
+.action-notice.fade {
+  opacity: 0;
+}
+
+.action-notice[hidden] {
+  display: none;
+}
+
+.action-notice-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex: none;
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-notice {
+    animation: none;
+  }
+}
+
 .sync-badge.bad {
   background: rgb(160 110 20 / 0.85);
 }
@@ -4343,6 +4394,28 @@ html.shorts-view .footer {
 }
 
 /* Kişi sınırı: "Seste 3/6 · 📷 1/4" (hep görünür; dolunca kırmızı, son yerde sarı) */
+.voice-ptt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--chrome-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Bas-konuş: düğme basılı tutulurken konuşulur (dokunmatikte kaydırma/menü olmasın) */
+.voice-mic.ptt {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.voice-mic.ptt.talking {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #04120b;
+}
+
 .voice-limit {
   flex-basis: 100%;
   font-size: 12px;
@@ -4732,6 +4805,88 @@ html.shorts-view .footer {
 
 .xox-board.done .xox-cell:not(.win) {
   opacity: 0.55;
+}
+
+/* ---- Dört Taş: mavi tahta, yuvarlak delikler, kırmızı/sarı taşlar; taş sütunun tepesinden düşer ---- */
+.four-board {
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  width: min(100%, 560px);
+  aspect-ratio: 7 / 6;
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  background: linear-gradient(#2d5bd8, #1f3fa8);
+  box-shadow: inset 0 -6px 0 rgb(0 0 0 / 0.25), 0 14px 34px rgb(0 0 0 / 0.35);
+}
+
+.four-board .four-cell {
+  position: relative;
+  border-radius: 50%;
+  border: 0;
+  background: #0d1530;
+  box-shadow: inset 0 3px 6px rgb(0 0 0 / 0.55);
+  font: inherit;
+  overflow: visible;
+}
+
+/* Farenin olduğu sütunun boş delikleri belirginleşir; taşlı hücreler rengini korur (XOX'un hover kuralı
+   `background` kısaltmasıyla taşın degradesini silip taşı görünmez yapıyordu) */
+.four-board .four-cell.col-hover:not(.mark-X, .mark-O),
+.four-board .four-cell:hover:not(:disabled, .mark-X, .mark-O) {
+  background: #1b2a5a;
+}
+
+.four-board .four-cell.mark-X,
+.four-disc.mark-X {
+  background: radial-gradient(circle at 35% 30%, #ff8a8a, #e0303a 55%, #a3141f);
+}
+
+.four-board .four-cell.mark-O,
+.four-disc.mark-O {
+  background: radial-gradient(circle at 35% 30%, #fff1a0, #f5c400 55%, #b38600);
+}
+
+.four-board .four-cell.mark-X,
+.four-board .four-cell.mark-O {
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.25);
+}
+
+.four-board .four-cell.placed {
+  animation: four-drop 0.42s cubic-bezier(0.4, 0, 0.9, 0.6);
+}
+
+.four-board .four-cell.win {
+  outline: 4px solid #fff;
+  outline-offset: -4px;
+  animation: xox-win 0.9s ease-in-out 2;
+}
+
+.four-board.done .four-cell:not(.win) {
+  opacity: 0.6;
+}
+
+.four-disc {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.25);
+}
+
+/* Taş, satır sayısı kadar yukarıdan (--drop) düşer */
+@keyframes four-drop {
+  from {
+    transform: translateY(calc(-112% * var(--drop, 1)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .four-board .four-cell.placed,
+  .four-board .four-cell.win {
+    animation: none;
+  }
 }
 
 @keyframes xox-pop {
