@@ -48,7 +48,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 🔗 **Tek link, hesap yok** | Bir kere isim + avatar (çizilmiş temalı karakterler ve film / dizi / anime / oyun parodileri), tarayıcı hatırlar. Sağ üstteki 👤 menüsünde ad, avatar, tema ve oturum özeti. |
 | 📱 **Shorts görünümü** | YouTube Shorts linki açılınca oda dikey olur: video ortada, arkadaşlar iki yanında oturur. Mesajlar yazanın avatarından baloncuk olarak çıkar, emojiler oradan yükselir. ↑ / ↓ (ya da ▲▼, fare tekerleği) herkes için önceki / sonraki Shorts; 🔁 döngü biten Shorts'u yeniden oynatır. Sıra, sohbet geçmişi ve ayarlar bir tık ötede, oda görünümünde. |
 | 🎵 **Sıra ve oylama** | Ekle, sırala, hemen aç; 👍 oylar sırayı değiştirir. Otomatik devam kapatılabilir (yerine "Sıradakini başlat" kartı). |
-| 🎙 **Sesli ve görüntülü sohbet** | Odada "Sese katıl": izlerken konuş, tek tıkla sessize al, konuşanın avatarı parlar; 🎙 altındaki küçük çubuk mikrofonunun seni duyduğunu gösterir. 📷 küçük bir kamera açar (sitede): arkadaşlarının kameraları ses kartında, tam ekranda videonun köşesinde görünür. Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; sese katılmayan kimse seni duymaz. Film sayfalarında da çalışır: mikrofon izni bir kez ScreenWithMe için sorulur (film sitesi için değil), film sayfası yenilense de ses kopmaz, biri konuşurken film sesi kısılır. |
+| 🎙 **Sesli ve görüntülü sohbet** | Odada "Sese katıl": izlerken konuş, tek tıkla sessize al, konuşanın avatarı parlar; 🎙 altındaki küçük çubuk mikrofonunun seni duyduğunu gösterir. 📷 küçük bir kamera açar: arkadaşlarının kameraları ses kartında, tam ekranda videonun köşesinde görünür (film sayfalarında da; kamera izni bir kez ScreenWithMe için sorulur). Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; sese katılmayan kimse seni duymaz. Film sayfalarında da çalışır: mikrofon izni bir kez ScreenWithMe için sorulur (film sitesi için değil), film sayfası yenilense de ses kopmaz, biri konuşurken film sesi kısılır. |
 | 📺 **Ekran paylaşımı** | Ekranını, bir pencereyi, sekmeyi ya da kameranı odaya aç (oyun, fotoğraf, "şuna bak"; film için değil). Odada tek yayın, izlemeyi seçen en fazla 4 kişi, 720p, eşler arası. Videonun köşesinde açılır, büyütülebilir. Sınırlar hep görünür ("İzleyen 3/4"). |
 | 💬 **Sohbet ve emojiler** | Sohbet, sıra, kişiler ve ayarlar sekmeleri. Üç emoji sayfası; emojiler videonun altından gönderenin avatarı ve adıyla yükselir, istediğin kadar hızlı. Görmek istemeyen kendisi için kapatabilir. Sohbetteki oda hareketleri varsayılan gizli. |
 | 🖼️ **Özel emojiler** | Kendi resmini ya da GIF'ini ekle; bütün oda onunla tepki verebilir (odada en fazla 24). |
@@ -156,7 +156,7 @@ Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
 ## 🗺️ Sırada ne var?
 
-Chrome Web Store yayını, görüntülü sohbet, yeni oyunlar, kısa alan adı, bas-konuş sesli sohbet, Firefox.
+Chrome Web Store yayını, yeni oyunlar, kısa alan adı, bas-konuş sesli sohbet, Firefox.
 
 ## 📄 Lisans ve gizlilik
 

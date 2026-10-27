@@ -468,7 +468,7 @@ chrome.runtime.onConnect.addListener((port) => {
   for (const message of voiceQueue.splice(0)) post(port, message as never);
   port.onMessage.addListener((message: OffscreenOut) => {
     if ('type' in message) {
-      void openMicPage();
+      void openMicPage(message.cam === true);
       return;
     }
     const shell = shells.get(message.tabId);
@@ -479,14 +479,14 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 });
 
-/** İlk sefer: mikrofon izni için küçük bir eklenti sekmesi (offscreen izin isteyemez). */
-async function openMicPage(): Promise<void> {
+/** İlk sefer: mikrofon (ya da kamera) izni için küçük bir eklenti sekmesi (offscreen izin isteyemez). */
+async function openMicPage(cam: boolean): Promise<void> {
   const [active] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => [] as chrome.tabs.Tab[]);
   if (micTab) {
     await chrome.tabs.update(micTab.id, { active: true }).catch(() => {});
     return;
   }
-  const tab = await chrome.tabs.create({ url: MIC_PAGE, ...(active?.id !== undefined ? { openerTabId: active.id } : {}) }).catch(() => null);
+  const tab = await chrome.tabs.create({ url: cam ? `${MIC_PAGE}?cam=1` : MIC_PAGE, ...(active?.id !== undefined ? { openerTabId: active.id } : {}) }).catch(() => null);
   if (tab?.id !== undefined) micTab = { id: tab.id, filmTab: active?.id ?? null };
 }
 

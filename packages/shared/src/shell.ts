@@ -80,8 +80,8 @@ export type ExtToSite =
   | { type: 'picked' }
   /** Film sayfasının açtığı bir sekme (başka siteye giden, büyük ihtimalle reklam) kapatıldı. */
   | { type: 'tab-closed'; url: string }
-  /** Eklentinin kabukta neleri desteklediği (eski eklentide gelmez: o zaman ses kapalı kalır). */
-  | { type: 'caps'; voice: boolean }
+  /** Eklentinin kabukta neleri desteklediği (eski eklentide gelmez: o zaman ses kapalı kalır; `cam` 0.9.65'ten). */
+  | { type: 'caps'; voice: boolean; cam?: boolean }
   | { type: 'voice'; msg: VoiceDown };
 
 /**
@@ -99,20 +99,32 @@ export type VoiceUp =
   | { op: 'mic'; on: boolean }
   | { op: 'members'; myId: string | null; members: Member[] }
   | { op: 'signal'; from: string; data: Signal }
-  | { op: 'rtc-result'; id: number; result: RtcResult };
+  | { op: 'rtc-result'; id: number; result: RtcResult }
+  /** Kameramı aç/kapa (izin yoksa izin sekmesi kamerayı da sorar). */
+  | { op: 'cam'; on: boolean }
+  /** Görüntü köprüsünün cevabı / ağ adayı (ses sayfası ⇄ katmandaki site, aynı bilgisayarda). */
+  | { op: 'loop'; data: Signal };
 
 /** Eklentinin ses sayfası → site. */
 export type VoiceDown =
-  | { op: 'state'; active: boolean; mic: boolean }
+  | { op: 'state'; active: boolean; mic: boolean; cam?: boolean }
   /** Odaya "seste miyim / mikrofonum" bildir (site kendi bağlantısından yollar). */
-  | { op: 'announce'; on: boolean; mic?: boolean }
+  | { op: 'announce'; on: boolean; mic?: boolean; cam?: boolean }
   | { op: 'signal'; to: string; data: Signal }
   | { op: 'rpc'; id: number; request: RtcRequest }
   /** Dinlenenlerin ses seviyesi (0–1) ve kendi mikrofonumun seviyesi. */
   | { op: 'levels'; levels: [string, number][]; me: number }
   | { op: 'failed'; memberId: string }
   /** Katılamadı: `denied` mikrofon izni verilmedi. */
-  | { op: 'error'; code: 'denied' | 'failed' };
+  | { op: 'error'; code: 'denied' | 'failed' }
+  /** Kamera açılamadı. */
+  | { op: 'cam-error' }
+  /**
+   * Görüntü köprüsü: kameralar ses sayfasının bağlantılarına gelir; katmandaki site onları bu yerel bağlantıyla alır.
+   * Teklifle birlikte hangi kanalın (mid) kimin kamerası olduğu (`me`: kendi önizlemem). `data` yoksa: hiç kamera yok,
+   * köprü kapandı.
+   */
+  | { op: 'loop'; data?: Signal; cams?: [string, string][] };
 
 /** Site ⇄ site-bridge / shell.html mesajlarındaki kaynak etiketleri. */
 export const SITE_SOURCE = 'screenwithme-site';

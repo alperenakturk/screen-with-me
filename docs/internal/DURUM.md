@@ -1,6 +1,6 @@
 # Durum: kaldığımız yer (her oturum önce bunu okusun)
 
-> Son güncelleme: 27 Ekim 2026, sürüm **0.9.60** (eklenti sürümü; site/sunucu PR birleşince canlıda). Kullanıcı
+> Son güncelleme: 27 Ekim 2026, sürüm **0.9.65** (eklenti sürümü; site/sunucu PR birleşince canlıda). Kullanıcı
 > çoğunlukla **bulut oturumlarından** (claude.ai/code) çalışıyor; yerel bilgisayardaki hafıza notları buluta gitmez,
 > gereken her şey burada ve `CLAUDE.md`'de. Bir işi bitirince bu dosyayı güncelle (kısa tut).
 
@@ -18,8 +18,9 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 1. ✅ **0.9.60:** elle video seçimi, reklamların ikinci adımı (a5/a6/a3), eklentide sesli sohbet (offscreen + mic.html +
    film sesini kısma).
 2. ✅ **Site denetimi (0.9.61):** 11 hata, telefon görünümü, ilk yükleme ~55 → ~24 KB.
-3. ✅ **Görüntülü sohbet (0.9.63, sitede):** 📷, kamera kutuları, tam ekranda köşede; kendi ses seviyesi çubuğu. Sırada:
-   film sayfasında kameraları görmek (offscreen → katman, yerel WebRTC köprüsü) ve kendi kameramı orada açmak.
+3. ✅ **Görüntülü sohbet (0.9.63 sitede, 0.9.65 film sayfasında):** 📷, kamera kutuları, tam ekranda köşede; kendi ses
+   seviyesi çubuğu. Film sayfasında kameralar eklentinin görünmeyen sayfasında, katmana yerel WebRTC köprüsüyle gelir;
+   kamera izni `mic.html?cam=1`. PR #25'in canlı e2e'si testteki bir yarış yüzünden kırmızıydı (düzeltildi, #26).
 4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`). Sıradaki oyun fikirleri kartlarda
    "yakında": Çiz-Bil, bilgi yarışması, kelime avı.
 5. **Yayın açma:** araştırma ✅ (`docs/internal/yayin.md`); kullanıcı kararı: sitede ekran paylaşımı + kamera yayını,
@@ -29,7 +30,11 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 6. **Tasarım/tema alternatifleri:** önizleme sayfası, kullanıcı seçince uygulanır.
 7. **Mehtaplı tema:** maskotu daha "Türk" yap: yeniçeri ya da padişah ScreenWithMe (kullanıcı istedi; direkt ekle).
 
-## Son yapılanlar (0.9.60)
+## Son yapılanlar (0.9.61 → 0.9.65)
+- Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
+  görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti).
+
+## Önceki: 0.9.60
 - **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".
 - **Reklamlar:** film sayfasının açtığı reklam sekmesi kapatılır ("Geri aç"), reklam yönlendirmesinde "Filme geri dön",
   reklamdaki kişi odayı bekletmez ("📺 reklamda").

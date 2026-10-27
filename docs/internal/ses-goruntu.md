@@ -8,7 +8,8 @@ sayfasındaki katmanda (eklenti) çalışır mı?
 > uygulaması yok); o kısım belgelere dayanır. Önceki kısa değerlendirme: `gelecek-fikirler.md` bölüm 3.
 
 > **Durum:** 1. aşama (sitede ses, eşler arası) 0.9.59'da; 2. aşama (eklentide ses: offscreen + mic.html + film sesini
-> kısma) 0.9.60'ta yapıldı. Sırada kamera (eşler arası, Cloudflare'siz).
+> kısma) 0.9.60'ta yapıldı. 3. aşama kamera: sitede 0.9.63 (eşler arası, Cloudflare'siz), film sayfasında 0.9.65
+> (offscreen'deki görüntüler katmana yerel WebRTC köprüsüyle gelir; aşağıdaki "SFU'dan çeker" planı yerine).
 
 ## Kısaca
 

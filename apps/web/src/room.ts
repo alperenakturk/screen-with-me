@@ -1248,7 +1248,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     } else if (message.type === 'video' && isShell) {
       videoFound = message.found;
     } else if (message.type === 'caps' && isShell) {
-      voice.caps(message.voice === true);
+      voice.caps(message.voice === true, message.cam === true);
     } else if (message.type === 'voice' && isShell) {
       voice.extMessage(message.msg);
     } else if (message.type === 'tab-closed' && isShell) {

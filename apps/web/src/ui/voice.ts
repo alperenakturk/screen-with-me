@@ -127,6 +127,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         rpc: (id, request) => void rpc(request).then((result) => ext?.rtcResult(id, result)),
         failed,
         changed: () => render(),
+        onRemoteVideo,
       });
       ext.mode = mode;
       return ext;
@@ -176,7 +177,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     limitEl.classList.toggle('near', !full && left === 1 && !active);
     if (!active && !full && left === 1) limitEl.textContent += ` · ${t('voice.lastSeat', { n: left })}`;
     joinButton.classList.toggle('is-full', full);
-    // Kamera düğmesi sadece eşler arası seste (Cloudflare yolunda ve film sayfasında görüntü henüz yok).
+    // Kamera düğmesi sadece eşler arası seste (Cloudflare yolunda ve eski eklentinin film sayfasında görüntü yok).
     camButton.hidden = !active || !client.setCam;
     camButton.classList.toggle('is-full', client.camEnabled !== true && cams >= CAM_MAX);
     const camOn = client.camEnabled === true;
@@ -352,8 +353,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       render();
     },
     /** Kabuk: eklenti sesi destekliyor (shell.html söyler). */
-    caps(voice: boolean): void {
+    caps(voice: boolean, cam: boolean): void {
       extVoice = voice;
+      if (cam) ext?.enableCam();
       available = serverVoice && (!isShell || extVoice);
       render();
       void rejoin();

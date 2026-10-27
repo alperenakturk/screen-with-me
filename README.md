@@ -48,7 +48,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. The 👤 menu (top right) holds name, avatar, theme and the session recap. |
 | 📱 **Shorts view** | Open a YouTube Shorts link and the room turns vertical: the video in the middle, friends sitting on both sides. Messages pop up as bubbles from the sender's avatar, reactions rise from it. ↑ / ↓ (or ▲▼, mouse wheel) go to the previous / next short for everyone; 🔁 loop replays a finished short. Queue, chat history and settings stay one click away in the room view. |
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
-| 🎙 **Voice & video chat** | "Join voice" in the room: talk while you watch, mute with one click, the speaker's avatar glows and a small bar under 🎙 shows that your microphone hears you. 📷 turns on a small camera (on the website): friends' cameras appear in the voice card and, in fullscreen, in the corner of the video. Peer-to-peer and always encrypted (the server never hears it), up to 6 people; nobody hears you unless they joined voice too. Works on film pages too: the microphone is asked once for ScreenWithMe (not for the film site), voice keeps going when the film page reloads, and the film gets quieter while someone talks. |
+| 🎙 **Voice & video chat** | "Join voice" in the room: talk while you watch, mute with one click, the speaker's avatar glows and a small bar under 🎙 shows that your microphone hears you. 📷 turns on a small camera: friends' cameras appear in the voice card and, in fullscreen, in the corner of the video (on film pages too; the camera is asked once for ScreenWithMe). Peer-to-peer and always encrypted (the server never hears it), up to 6 people; nobody hears you unless they joined voice too. Works on film pages too: the microphone is asked once for ScreenWithMe (not for the film site), voice keeps going when the film page reloads, and the film gets quieter while someone talks. |
 | 📺 **Screen sharing** | Show your screen, a window, a tab or your camera to the room (games, photos, "look at this", not for films). One stream per room, up to 4 viewers who choose to watch, 720p, peer-to-peer. It opens in a corner of the video and can be enlarged. The limits are always shown ("Watching 3/4"). |
 | 💬 **Chat & reactions** | Chat, queue, people and settings tabs. Three emoji pages; reactions float up from the bottom of the video with the sender's avatar and name, as fast as you like. Anyone can hide them for themselves. Room activity in chat is hidden by default. |
 | 🖼️ **Custom emojis** | Add your own image or GIF; the whole room can react with it (up to 24 per room). |
@@ -157,7 +157,7 @@ Locally: `npx wrangler login` once, then `npm run deploy`.
 
 ## 🗺️ What's next
 
-Chrome Web Store release, video chat, more games, a short domain, push-to-talk voice chat, Firefox.
+Chrome Web Store release, more games, a short domain, push-to-talk voice chat, Firefox.
 
 ## 📄 License & privacy
 

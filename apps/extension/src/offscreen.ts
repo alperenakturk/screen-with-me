@@ -7,8 +7,12 @@
 // "seste miyim" bildirimini site kendi bağlantısından yollar). Başkalarının sesi burada <audio> ile çalar.
 //
 // İzin yoksa (ilk sefer) bu sayfa soramaz: arka plan küçük bir izin sekmesi (mic.html) açar, izin verilince katılır.
+//
+// Kameralar da burada (bağlantılar burada olduğu için gelen görüntüler buraya düşer). Katmandaki site onları göstermek
+// için bu sayfayla aynı bilgisayar içinde kalan küçük bir WebRTC bağlantısı (köprü) kurar: görüntüler bu sayfadan siteye
+// bu yolla geçer (MediaStream sayfalar arasında başka türlü taşınamaz). Kamera her açılıp kapanınca köprü baştan.
 
-import type { Member, RtcRequest, RtcResult, VoiceMode } from '@swm/shared/protocol';
+import type { Member, RtcRequest, RtcResult, Signal, VoiceMode } from '@swm/shared/protocol';
 import type { VoiceDown, VoiceUp } from '@swm/shared/shell';
 import { LevelMeter } from '@swm/shared/level-meter';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
@@ -23,6 +27,13 @@ let owner: { tabId: number; roomId: string } | null = null;
 let client: Voice | null = null;
 let p2p: P2pVoice | null = null;
 let mic: MediaStream | null = null;
+/** Gelen kamera görüntüleri (üye → akış). */
+const videos = new Map<string, MediaStream>();
+/** İzin sekmesi açıkken bekleyen kamera. */
+let pendingCam = false;
+/** Görüntü köprüsü (bu sayfa → katmandaki site). */
+let loop: RTCPeerConnection | null = null;
+let loopTimer: ReturnType<typeof setTimeout> | null = null;
 let members: Member[] = [];
 let myId: string | null = null;
 /** İzin sekmesi açıkken bekleyen katılma. */
@@ -43,7 +54,79 @@ function toSite(msg: VoiceDown): void {
 }
 
 function sendState(): void {
-  toSite({ op: 'state', active: !!client?.active, mic: client?.micEnabled ?? true });
+  toSite({ op: 'state', active: !!client?.active, mic: client?.micEnabled ?? true, cam: client?.camEnabled === true });
+}
+
+/** Kameralar değişti: köprü kısa bir beklemeyle baştan kurulur (art arda değişiklikler tek seferde). */
+function refreshLoop(): void {
+  if (loopTimer) clearTimeout(loopTimer);
+  loopTimer = setTimeout(() => {
+    loopTimer = null;
+    void buildLoop();
+  }, 120);
+}
+
+async function buildLoop(): Promise<void> {
+  loop?.close();
+  loop = null;
+  const streams: [string, MediaStream][] = [...videos];
+  const own = p2p?.camera;
+  if (own) streams.push(['me', own]);
+  if (!streams.length) {
+    toSite({ op: 'loop' });
+    return;
+  }
+  // Aynı bilgisayar içinde: STUN gerekmez.
+  const pc = new RTCPeerConnection();
+  loop = pc;
+  const kinds = streams.map(([key, stream]) => {
+    const track = stream.getVideoTracks()[0];
+    return { key, transceiver: track ? pc.addTransceiver(track, { direction: 'sendonly' }) : null };
+  });
+  pc.onicecandidate = (event) => {
+    if (!event.candidate || loop !== pc) return;
+    const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
+    toSite({ op: 'loop', data: { candidate: { candidate, sdpMid, sdpMLineIndex } } });
+  };
+  await pc.setLocalDescription(await pc.createOffer());
+  if (loop !== pc) return;
+  const cams = kinds.flatMap(({ key, transceiver }) => (transceiver?.mid ? [[transceiver.mid, key] as [string, string]] : []));
+  toSite({ op: 'loop', data: { sdp: { type: 'offer', sdp: pc.localDescription!.sdp } }, cams });
+}
+
+async function loopSignal(data: Signal): Promise<void> {
+  if (!loop) return;
+  if ('sdp' in data) {
+    if (data.sdp.type === 'answer' && loop.signalingState === 'have-local-offer') await loop.setRemoteDescription(data.sdp);
+  } else await loop.addIceCandidate(data.candidate).catch(() => {});
+}
+
+async function allowed(name: 'microphone' | 'camera'): Promise<boolean> {
+  try {
+    const status = await navigator.permissions.query({ name: name as PermissionName });
+    return status.state === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+async function setCam(on: boolean): Promise<void> {
+  // Cloudflare yolunda görüntü yok.
+  if (!client?.setCam) return toSite({ op: 'cam-error' });
+  if (on && !(await allowed('camera'))) {
+    // İzin sekmesi kamerayı sorar; izin gelince `permission` ile açılır.
+    pendingCam = true;
+    port?.postMessage({ type: 'need-permission', cam: true } satisfies OffscreenOut);
+    return;
+  }
+  pendingCam = false;
+  try {
+    await client.setCam(on);
+  } catch {
+    toSite({ op: 'cam-error' });
+  }
+  sendState();
+  refreshLoop();
 }
 
 const getMic = async (): Promise<MediaStream> => {
@@ -53,7 +136,13 @@ const getMic = async (): Promise<MediaStream> => {
 };
 
 function makeClient(mode: VoiceMode): Voice {
-  const announce = (on: boolean, micOn?: boolean) => toSite(on ? { op: 'announce', on, mic: micOn ?? true } : { op: 'announce', on: false });
+  const announce = (on: boolean, micOn?: boolean, cam?: boolean) =>
+    toSite(on ? { op: 'announce', on, mic: micOn ?? true, ...(cam !== undefined ? { cam } : {}) } : { op: 'announce', on: false });
+  const onRemoteVideo = (memberId: string, stream: MediaStream | null) => {
+    if (stream) videos.set(memberId, stream);
+    else videos.delete(memberId);
+    refreshLoop();
+  };
   const onRemote = (memberId: string, stream: MediaStream | null) => {
     audios.get(memberId)?.remove();
     audios.delete(memberId);
@@ -88,23 +177,15 @@ function makeClient(mode: VoiceMode): Voice {
     signal: (to, data) => toSite({ op: 'signal', to, data }),
     announce,
     onRemote,
+    onRemoteVideo,
     onFailed: (memberId) => toSite({ op: 'failed', memberId }),
     getMic,
   });
   return p2p;
 }
 
-async function micAllowed(): Promise<boolean> {
-  try {
-    const status = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-    return status.state === 'granted';
-  } catch {
-    return false;
-  }
-}
-
 async function join(mode: VoiceMode, quiet = false): Promise<void> {
-  if (!(await micAllowed())) {
+  if (!(await allowed('microphone'))) {
     if (quiet) {
       sendState();
       return;
@@ -131,6 +212,7 @@ async function join(mode: VoiceMode, quiet = false): Promise<void> {
 
 function leave(): void {
   pendingJoin = null;
+  pendingCam = false;
   client?.leave();
   client = null;
   p2p = null;
@@ -138,6 +220,8 @@ function leave(): void {
   meter.clear();
   for (const audio of audios.values()) audio.remove();
   audios.clear();
+  videos.clear();
+  refreshLoop();
   sendState();
 }
 
@@ -155,6 +239,8 @@ function handle(tabId: number, roomId: string, msg: VoiceUp): void {
   switch (msg.op) {
     case 'hello':
       sendState();
+      // Yeni site örneği (film sayfası yenilendi): kameralar ona da gelsin.
+      refreshLoop();
       break;
     case 'join':
       members = msg.members;
@@ -167,10 +253,14 @@ function handle(tabId: number, roomId: string, msg: VoiceUp): void {
       myId = msg.myId;
       if (!client) break;
       const micOn = client.micEnabled;
+      const camOn = client.camEnabled === true;
       client.leave();
+      videos.clear();
+      refreshLoop();
       void client.join().then(
         () => {
           if (!micOn) client?.setMic(false);
+          if (camOn) void setCam(true);
           client?.sync(members, myId);
           sendState();
         },
@@ -184,6 +274,12 @@ function handle(tabId: number, roomId: string, msg: VoiceUp): void {
     case 'mic':
       client?.setMic(msg.on);
       sendState();
+      break;
+    case 'cam':
+      void setCam(msg.on);
+      break;
+    case 'loop':
+      void loopSignal(msg.data).catch(() => {});
       break;
     case 'members':
       members = msg.members;
@@ -219,7 +315,11 @@ function connect(): void {
   port.onMessage.addListener((message: OffscreenIn) => {
     if (message.type === 'voice') handle(message.tabId, message.roomId, message.msg);
     else if (message.type === 'permission') {
-      if (pendingJoin && message.granted) void join(pendingJoin.mode);
+      if (pendingCam) {
+        pendingCam = false;
+        if (message.granted) void setCam(true);
+        else toSite({ op: 'cam-error' });
+      } else if (pendingJoin && message.granted) void join(pendingJoin.mode);
       else if (pendingJoin) {
         pendingJoin = null;
         toSite({ op: 'error', code: 'denied' });
