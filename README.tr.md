@@ -12,8 +12,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Testler](https://img.shields.io/badge/test-133%20birim%20%2B%2013%20u%C3%A7tan%20uca%20%2B%20ger%C3%A7ek%20Chrome-3ccf8e)
-![Sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.9.58-7c5cff)
+![Testler](https://img.shields.io/badge/test-157%20birim%20%2B%20u%C3%A7tan%20uca%20%2B%20ger%C3%A7ek%20Chrome-3ccf8e)
+![Sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.9.81-7c5cff)
 ![Lisans](https://img.shields.io/badge/lisans-MIT-blue)
 
 </div>
@@ -38,7 +38,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 🧩 **Her site** | Eklenti doğru videoyu bulur, iframe içinde ve geç yüklenen ya da kaynağı değişen oynatıcılarda da. Kısa videolar, döngüde sessiz videolar ve köşeye sabitlenmiş küçük videolar (tipik reklamlar) atlanır; filmin kendi oynatıcısında oynayan reklam odaya asla yansımaz. Yanlış video mu? **🎯 Video seç** sayfadaki her videonun üstüne "Bunu senkronla" düğmesi koyar. |
 | 🛡️ **Reklama dayanıklı oda** | Video sayfasına tıklayınca başka siteye açılan sekme (tipik reklam penceresi) kapatılır, film önde kalır (bilerek açtıysan "Geri aç"; kapatılabilir). Sayfa seni başka bir siteye götürürse oda kalır ve **↩ Filme geri dön** der. Biri reklam izlerken oda onu beklemez; "reklamda" görünür, reklam bitince yetişir. |
 | 🖼️ **Film sayfasının üstünde oda** | Sitenin oda sayfası film sayfasının üstüne katman olarak açılır, videonun yerinde bir delik bırakır. Hemen gelir (video başlamadan) ve yüklenirken sayfadan hiçbir şey görünmez. Video üstündeki mesajlar ve emojiler sitedeki gibi saydam. **👁 Sayfayı göster** odayı bir anlığına kenara çeker: videonun önünü kapatan pencere ya da reklam kapatılır. |
-| 🖥️ **Tam ekran** | Dikkat dağıtmayan: kontroller, emojiler ve hızlı mesaj kutusu fare oynayınca belirir, sonra kaybolur. Film sayfalarında videonun ekranı mı kaplayacağı yoksa kontrollerin üstünde mi duracağı (altyazı hiç örtülmez) seçilebilir. |
+| 🖥️ **Tam ekran** | Dikkat dağıtmaz: kontroller, emojiler ve hızlı mesaj kutusu fare oynayınca belirir, sonra kaybolur. Film sayfalarında videonun ekranı mı kaplayacağı yoksa kontrollerin üstünde mi duracağı (altyazı hiç örtülmez) seçilebilir. |
 | ⏩ **Ortak hız** | 0,25×–4× (YouTube en fazla 2×), ±0,05 ince ayar. Başka hız eklentileri odanın senkronunu bozamaz. |
 | 🧪 **Senkron testi** | Sitenin çizdiği 12 saniyelik sayaç; rozet aranızdaki farkı gösterir. |
 
@@ -48,14 +48,14 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 🔗 **Tek link, hesap yok** | Bir kere isim + avatar (çizilmiş temalı karakterler ve film / dizi / anime / oyun parodileri), tarayıcı hatırlar. Sağ üstteki 👤 menüsünde ad, avatar, tema ve oturum özeti. |
 | 📱 **Shorts görünümü** | YouTube Shorts linki açılınca oda dikey olur: video ortada, arkadaşlar iki yanında oturur. Mesajlar yazanın avatarından baloncuk olarak çıkar, emojiler oradan yükselir. ↑ / ↓ (ya da ▲▼, fare tekerleği) herkes için önceki / sonraki Shorts; 🔁 döngü biten Shorts'u yeniden oynatır. Sıra, sohbet geçmişi ve ayarlar bir tık ötede, oda görünümünde. |
 | 🎵 **Sıra ve oylama** | Ekle, sırala, hemen aç; 👍 oylar sırayı değiştirir. Otomatik devam kapatılabilir (yerine "Sıradakini başlat" kartı). |
-| 🎙 **Sesli ve görüntülü sohbet** | Odada "Sese katıl": izlerken konuş, tek tıkla sessize al ya da bas-konuş (V'ye basılı tut), konuşanın avatarı parlar; 🎙 altındaki küçük çubuk mikrofonunun seni duyduğunu gösterir. 📷 küçük bir kamera açar: arkadaşlarının kameraları ses kartında görünür ya da serbest bırakınca istediğin yere sürükleyip boyutlandırabildiğin yüzen bir pencerede; tam ekranda kendiliğinden videonun içine gelir, orada da taşınır (film sayfalarında da; kamera izni bir kez ScreenWithMe için sorulur). Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; sese katılmayan kimse seni duymaz. Film sayfalarında da çalışır: mikrofon izni bir kez ScreenWithMe için sorulur (film sitesi için değil), film sayfası yenilense de ses kopmaz, biri konuşurken film sesi kısılır. |
+| 🎙 **Sesli ve görüntülü sohbet** | "Sese katıl"a bas, izlerken konuş: tek tıkla sessize al ya da bas-konuş kullan (V'ye basılı tut). Konuşanın avatarı parlar, 🎙 altındaki küçük çubuk mikrofonunun seni duyduğunu gösterir. 📷 küçük bir kamera açar: arkadaşlarının kameraları ses kartında ya da sürükleyip boyutlandırabildiğin yüzen bir pencerede görünür, tam ekranda videonun üstüne gelir. Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; seni sadece sese katılanlar duyar. Film sayfalarında da çalışır: mikrofon ve kamera izni bir kez ScreenWithMe için sorulur (film sitesi için değil), sayfa yenilense de ses kopmaz, biri konuşurken film sesi kısılır. |
 | 📺 **Ekran paylaşımı** | Ekranını, bir pencereyi, sekmeyi ya da kameranı odaya aç (oyun, fotoğraf, "şuna bak"; film için değil). Odada tek yayın, izlemeyi seçen en fazla 4 kişi, 720p, eşler arası. Videonun köşesinde açılır, büyütülebilir. "Yazı net" (sunum, site) ya da "akıcı" (oyun) seçilir. Sınırlar hep görünür ("İzleyen 3/4"). Yönetici yayını durdurabilir ya da yayını sadece kendisi açabilsin diyebilir. |
 | 💬 **Sohbet ve emojiler** | Mesajlaşma uygulaması gibi balonlar (seninkiler sağda), sıra ve kişiler sekmeleri; ⚙️ ayarlar kendi penceresinde. "😀 Tepki" tepsisinde üç emoji sayfası ve kendi GIF'lerin, son kullandığın üç emoji hep elinin altında; emojiler videonun altından gönderenin avatarı ve adıyla yükselir, istediğin kadar hızlı. Görmek istemeyen kendisi için kapatabilir. Sohbetteki oda hareketleri varsayılan gizli. |
 | 🖼️ **Özel emojiler** | Kendi resmini ya da GIF'ini ekle; bütün oda onunla tepki verebilir (odada en fazla 24). |
 | 📌 **Pinler** | Bir anı isteğe bağlı notla pinle; video altındaki şeritten oraya dönülür. |
 | ⌨️ **Kısayollar** | 1–8 emoji, Enter mesaj, P pin (film sayfalarında bu tuşlar sayfanın oynatıcısına hiç gitmez). |
 | 💾 **Kaydedilen odalar** | Tek seferlik ya da adlı kayıtlı oda (30 gün saklanır). Kayıtlı odalar her videonun kaldığı yeri ve pinlerini hatırlar; ana sayfadaki listende içeride kaç kişi olduğu görünür. |
-| 📊 **Oturum özeti** | Spotify özeti tarzında (izleme süresi, videolar, en konuşkan, en sevilen emoji…), indirilebilir görselli; önceki özetler saklanır. |
+| 📊 **Oturum özeti** | Oturumun eğlenceli özeti kartlar hâlinde (izleme süresi, videolar, en konuşkan, en sevilen emoji…), indirilebilir görselli; özetler sonrası için kaydedilebilir. |
 | ⏰ **Planlı başlangıç** | Bir saat seç; geri sayım bandı çıkar, oda vakti gelince kendisi başlar. |
 | 📱 **Ana ekrana ekle** | Site telefona ve bilgisayara uygulama gibi eklenebilir ("Ana ekrana ekle" / adres çubuğundaki yükle simgesi). Her açılışta en yeni sürüm gelir; internet yoksa bunu söyler. |
 | 🎮 **PlayWithMe** | Oyunlar odanın içinde, ayrı oyun odası yok: videonun altındaki 🎮'a bas, XOX, Dört Taş (iki kişi), Çiz-Bil ya da bilgi yarışması (2–8 kişi) seç. Oyun videonun yerinde açılır; diğerlerine "Katıl" kartı gider, "Videoya dön" ile film geri gelir, oyun sürer. |
@@ -64,8 +64,8 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 ### Yönetici ve güvenlik
 | | |
 |---|---|
-| 👑 **Oda yöneticisi** | İlk giren yöneticidir (yenilemede kalır), oda kurallarını ⚙️ Ayarlar'daki anahtarlarla belirler; diğerleri kısa bir özet görür. 20 sn'den uzun yoksa yöneticilik kalıcı olarak odada en uzun süredir bulunan kişiye geçer. |
-| 🔒 **Yönetici modları** | Oynatmayı sadece yönetici yönetsin · sırayı kilitle · emojileri kapat ya da kişi başı ne sıklıkla atılacağını sınırla · herkes hazır beklemesi aç/kapa. |
+| 👑 **Oda yöneticisi** | İlk giren yöneticidir (sayfayı yenilese de), oda kurallarını ⚙️ Ayarlar'daki anahtarlarla belirler; diğerleri kısa bir özet görür. Yönetici 20 sn'den uzun dönmezse yöneticilik kalıcı olarak odada en uzun süredir bulunan kişiye geçer. |
+| 🔒 **Yönetici modları** | Oynatmayı sadece yönetici kontrol etsin · sırayı kilitle · emojileri kapat ya da kişi başı ne sıklıkla atılacağını sınırla · yayını sadece yönetici açsın · herkes hazır beklemesini aç/kapat. |
 | 🚪 **Çıkarma ve yasak** | Yönetici kişileri çıkarır; yönetici yasağı kaldırana kadar giremezler. |
 | 🔐 **Gizlilik baştan** | Video herkesin kendi tarayıcısında oynar; sunucu sadece "12:34'te durdur" gibi küçük mesajları ve odanın sohbetini taşır. Eklenti oda dışında uykudadır, film sayfası hangi odada olduğunu okuyamaz. Kullanıcı yazısı asla HTML olarak yazılmaz. Hız sınırları sunucuda. |
 
@@ -115,7 +115,7 @@ bildirir; üst çerçeve orada bir delik keser (`clip-path`) ve filmin oynatıc�
 
 | Kontrol | Sonuç |
 |---|---|
-| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 140 geçiyor |
+| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 157 geçiyor |
 | Uçtan uca (gerçek sunucu koduna karşı sahte kullanıcılar: sıra, sohbet, yönetici ve atma, devir, herkes hazır, pinler, özel emojiler, yönetici modları, emoji sıklığı, kayıtlı odalar, özet, Shorts) | `npm run e2e`, CI'da çalışır |
 | Eklentiyle gerçek Chrome (`scripts/harness/embed`) | 90 kontrol: oda katmanı, deliğe yerleşme, sayfanın hiç görünmemesi (ekran kaydı), saydam mesajlar (piksel ölçümü), tam ekranda altyazı ve kontroller, pinler, site ile eklenti arasında ayar eşitleme, video seçimi, reklam sekmeleri, yönlendirmeler, ön-reklamlar |
 | Gerçek ses (`scripts/harness/voice`) | Sahte mikrofonlu iki Chrome: gelen sesin enerjisi ölçülür; sitede ve film sayfalarında (eklenti), izin sekmesi ve yenileme dahil |
@@ -157,7 +157,7 @@ Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
 ## 🗺️ Sırada ne var?
 
-Chrome Web Store yayını, yeni oyunlar, kısa alan adı, bas-konuş sesli sohbet, Firefox.
+Chrome Web Store yayını, yeni oyunlar, kısa alan adı, Firefox.
 
 ## 📄 Lisans ve gizlilik
 
@@ -167,7 +167,7 @@ MIT / Apache-2.0. Gizlilik politikası: [privacy.html](https://screen-with-me.sw
 
 ## ⚠️ Sınırlar
 
-- DRM korumalı servisler (Netflix, Disney+…) henüz desteklenmiyor.
+- DRM korumalı yayın servisleri henüz desteklenmiyor.
 - Eklenti henüz Chrome Web Store'da değil (elle kurulum, yaklaşık bir dakika).
 - Firefox henüz desteklenmiyor. Başka sitelerdeki sayfalar için eklentili bir masaüstü tarayıcı gerekir.
 - ScreenWithMe hiçbir video içeriğini barındırmaz ya da aktarmaz; sadece herkesin kendi açtığı oynatıcıları eşitler.

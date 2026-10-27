@@ -20,6 +20,12 @@ açık kaynak bir araç: **site** (YouTube / doğrudan video) + **tarayıcı ekl
   Sadece hesap/para/yayınlama gibi kullanıcıya ait adımları sor.
 - Aşamalı ve güvenli ilerle; her değişikliği test et, yayınla, commit at.
 - Kod içi yorumlar **Türkçe**, kısa ve "neden"i anlatan.
+- **Arayüz metinlerinde terimler (0.9.82 metin turu):** oda, kayıtlı / tek seferlik oda, (oda) yöneticisi, odadan çıkar /
+  yasak, **film sayfası** ("video sayfası" değil), **oda görünümü** ("katman" arayüzde geçmez), Filme git / 🏠 Odaya dön,
+  emoji (gönderilen) / tepki (gönderme, "Tepki" düğmesi) / özel emoji, sıra, pin, sese katıl, yayın, senkron / eşitle,
+  davet linki, **ad** ("isim" değil), **düğme** ("buton" değil); teknik terim yok ("WebSocket" → "odanın canlı
+  bağlantısı", "eşler arası" → "sunucudan geçmez, doğrudan gider"). Sloganlar kullanıcının seçimi (ana sayfa "Ayrı
+  ekranlar, aynı an.", davet kartı "Sana bir koltuk ayırdım 🍿"); değiştirmeden önce sor.
 - **Resmî/genel metinlerde** (README, mağaza sayfası, site metinleri) belirli film/dizi/
   korsan site adları **geçmez**; araç "her HTML5 video için tarafsız senkron aracı" olarak
   anlatılır (Chrome Web Store politikası). Test için korsan siteleri sen açma; aynı oynatıcı
@@ -400,7 +406,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Sağ paneli gizle (0.9.71):** video altındaki araç çubuğunda ⇥ (`#side-toggle`): `.room.side-hidden`, video bütün genişliği
   alır, sohbet mesajları tam ekrandaki gibi videonun köşesinde (`toasts`), düğmede okunmamış sayısı; `localStorage`
   `opt:sideHidden`; kabukta ve dar ekranda (≤860 px) yok.
-- **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
+- **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Hareketleri göster (N)"
   (`localStorage` `opt:chatEvents`). Ayarlardaki seçenek kaldırıldı.
 - **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),
   site `.no-reactions`, eklenti `.no-react` ile emoji çubuğu gizlenir.

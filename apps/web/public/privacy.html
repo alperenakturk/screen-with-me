@@ -48,22 +48,25 @@
           the small messages needed to keep everyone in the room in sync.
         </div>
 
-        <h2>What is used?</h2>
+        <h2>What we use</h2>
         <ul>
           <li><b>Name and avatar:</b> what you pick when joining a room. Shown to the others in the room. Your browser remembers it for next time; on our server it is kept only together with the room (in its chat history and, if you are removed, in its ban list) and deleted with the room.</li>
           <li><b>Room state:</b> the address of the current video or page, playing/paused, position, speed and the queue.</li>
           <li><b>Chat messages:</b> the last 50 messages of a room, stored with the room so people who join later can see them.</li>
-          <li><b>Votes and room options:</b> which queued videos got a 👍 (stored with your browser ID so a vote can be taken back; others only see the count), the host modes and a scheduled start time. Deleted with the room. Your recent rooms list is kept only in your browser.</li>
+          <li><b>Votes and room options:</b> which queued videos got a 👍 (stored with your browser ID so a vote can be taken back; others only see the count), the host modes and a scheduled start time. Deleted with the room.</li>
+          <li><b>Session recap:</b> how many messages, reactions and pins each person sent, how often they paused or skipped, and how long and which videos were watched (people are told apart by browser ID; only names and avatars appear in the recap). Only the person who asks sees the recap. The counters reset when a new session starts after a break of more than 4 hours. Recaps someone saves with "Save" (up to 20 in a saved room, 5 otherwise; at most 90 days) are stored with the room and deleted with it.</li>
+          <li><b>Your saved rooms list:</b> the names and codes of the rooms you saved are kept only in your browser.</li>
+          <li><b>Saved room (if the host turns it on):</b> the addresses of the last 30 videos played in the room, where you stopped and their pins are stored with the room, so a video continues where you left off when it is opened again. Deleted as soon as the host turns saving off.</li>
           <li><b>Pinned moments:</b> the second of the current video, an optional short note and the name/avatar of who pinned it. Visible to the room; reset when the video changes and deleted with the room.</li>
           <li><b>Custom emojis:</b> images or GIFs you add to a room (resized pictures, GIFs as they are). Stored with the room so everyone in it can use them (at most 24, oldest removed first) and deleted with the room. Your own list is also kept in your browser so you can use it in other rooms.</li>
           <li><b>Browser ID:</b> a random code created in your browser. Used so the room host keeps the host role after reloading, and so someone the host removed can't rejoin that room until the host lifts the ban. It is stored with the room on our server for this purpose and deleted with the room. The ID itself is never shown to other people. It is not an account.</li>
         </ul>
-        <p>All room data (state, chat, settings) is deleted 24 hours after the last person leaves.</p>
+        <p>All room data (state, chat, settings, saved videos) is deleted 24 hours after the last person leaves (30 days if the host saved the room).</p>
 
-        <h2>What is not used?</h2>
+        <h2>What we don't use</h2>
         <ul>
           <li>No account, email, phone number or password is asked for.</li>
-          <li>No ads, analytics or tracking tools or cookies.</li>
+          <li>No ads, analytics or tracking tools, and none of their cookies.</li>
           <li>Video content never passes through our server; everyone opens the video themselves.</li>
           <li>Data is never sold or shared with anyone.</li>
         </ul>
@@ -120,16 +123,16 @@
 
         <h2>Hangi bilgiler kullanılıyor?</h2>
         <ul>
-          <li><b>İsim ve avatar:</b> Odaya girerken seçtiklerin. Odadakilere gösterilir. Tarayıcın bir dahaki sefere hatırlar; sunucumuzda sadece oda ile birlikte (sohbet geçmişinde ve çıkarıldıysan yasak listesinde) tutulur ve oda ile birlikte silinir.</li>
+          <li><b>Ad ve avatar:</b> Odaya girerken seçtiğin ad ve avatar. Odadakilere gösterilir. Tarayıcın bir dahaki sefere hatırlar; sunucumuzda sadece odayla birlikte (sohbet geçmişinde ve çıkarıldıysan yasak listesinde) tutulur ve odayla birlikte silinir.</li>
           <li><b>Oda durumu:</b> O an açık olan video ya da sayfanın adresi, oynuyor/durdu bilgisi, konum, hız ve sıra listesi.</li>
-          <li><b>Sohbet mesajları:</b> Odadaki son 50 mesaj, sonradan gelenler görebilsin diye oda ile birlikte saklanır.</li>
-          <li><b>Oylar ve oda ayarları:</b> Sıradaki hangi videoya 👍 verildiği (oyun geri alınabilsin diye tarayıcı kimliğinle saklanır; diğerleri sadece sayıyı görür), yönetici modları ve planlı başlangıç saati. Oda ile birlikte silinir.</li>
-          <li><b>Oturum özeti:</b> Odada kimin kaç mesaj, tepki ve pin attığı, kaç kez durdurup sardığı, ne kadar süre ve hangi videoların izlendiği sayılır (kişiler tarayıcı kimliğiyle ayırt edilir; özete sadece ad ve avatar girer). Biri özeti açınca sayaçlar sıfırlanır; son özetler (kayıtlı odada 10, diğerlerinde 3, en fazla 90 gün) oda ile birlikte saklanır ve oda ile silinir.</li>
+          <li><b>Sohbet mesajları:</b> Odadaki son 50 mesaj, sonradan gelenler de görebilsin diye odayla birlikte saklanır.</li>
+          <li><b>Oylar ve oda ayarları:</b> Sıradaki hangi videoya 👍 verildiği (verdiğin oyu geri alabilmen için tarayıcı kimliğinle saklanır; diğerleri sadece sayıyı görür), yönetici modları ve planlı başlangıç saati. Odayla birlikte silinir.</li>
+          <li><b>Oturum özeti:</b> Odada kimin kaç mesaj, tepki ve pin attığı, kaç kez durdurup sardığı, ne kadar süre ve hangi videoların izlendiği sayılır (kişiler tarayıcı kimliğiyle ayırt edilir; özete sadece ad ve avatar girer). Özeti sadece isteyen görür. Sayaçlar, izlemeye 4 saatten uzun ara verilince başlayan yeni oturumla sıfırlanır. "Kaydet"e basılan özetler (kayıtlı odada en fazla 20, diğerlerinde 5; en fazla 90 gün) odayla birlikte saklanır ve odayla birlikte silinir.</li>
           <li><b>Kaydedilmiş oda listen:</b> Kaydettiğin odaların adı ve kodu sadece tarayıcında tutulur.</li>
-          <li><b>Kaydedilmiş oda (yönetici açarsa):</b> Odada açılan son 30 videonun adresi, nerede kalındığı ve pinleri, aynı video tekrar açılınca kaldığı yerden devam edebilsin diye oda ile birlikte saklanır. Yönetici kaydı kapatınca hemen silinir.</li>
-          <li><b>Pinlenmiş anlar:</b> Açık videonun hangi saniyesi, isteğe bağlı kısa not ve pinleyenin adı/avatarı. Odadakilere görünür; video değişince sıfırlanır, oda ile birlikte silinir.</li>
-          <li><b>Özel emojiler:</b> Odaya eklediğin resim ya da GIF'ler (resimler küçültülür, GIF'ler olduğu gibi). Odadaki herkes kullanabilsin diye oda ile birlikte saklanır (en fazla 24, dolunca en eskisi silinir) ve oda ile birlikte silinir. Kendi listen başka odalarda da kullanabilmen için tarayıcında da tutulur.</li>
-          <li><b>Tarayıcı kimliği:</b> Tarayıcında rastgele oluşturulan bir kod. Oda yöneticisinin sayfayı yenileyince yöneticiliğini kaybetmemesi ve yöneticinin çıkardığı birinin, yönetici yasağı kaldırana kadar o odaya geri girememesi için kullanılır. Bu amaçla oda ile birlikte sunucumuzda tutulur ve oda ile birlikte silinir. Kodun kendisi başkalarına hiç gösterilmez. Hesap değildir.</li>
+          <li><b>Kaydedilmiş oda (yönetici açarsa):</b> Odada açılan son 30 videonun adresi, nerede kalındığı ve pinleri, aynı video tekrar açılınca kaldığı yerden devam edebilsin diye odayla birlikte saklanır. Yönetici kaydı kapatınca hemen silinir.</li>
+          <li><b>Pinlenmiş anlar:</b> Açık videonun hangi saniyesi, isteğe bağlı kısa not ve pinleyenin adı/avatarı. Odadakilere görünür; video değişince sıfırlanır, odayla birlikte silinir.</li>
+          <li><b>Özel emojiler:</b> Odaya eklediğin resim ya da GIF'ler (resimler küçültülür, GIF'ler olduğu gibi). Odadaki herkes kullanabilsin diye odayla birlikte saklanır (en fazla 24, dolunca en eskisi silinir) ve odayla birlikte silinir. Kendi listen başka odalarda da kullanabilmen için tarayıcında da tutulur.</li>
+          <li><b>Tarayıcı kimliği:</b> Tarayıcında rastgele oluşturulan bir kod. Oda yöneticisinin sayfayı yenileyince yöneticiliğini kaybetmemesi ve yöneticinin çıkardığı birinin, yönetici yasağı kaldırana kadar o odaya geri girememesi için kullanılır. Bu amaçla odayla birlikte sunucumuzda tutulur ve odayla birlikte silinir. Kodun kendisi başkalarına hiç gösterilmez. Hesap değildir.</li>
         </ul>
         <p>Odada kimse kalmadıktan 24 saat sonra (yönetici odayı kaydettiyse 30 gün sonra) odanın bütün bilgileri (oda durumu, sohbet, ayarlar, kayıtlı videolar) silinir.</p>
 
@@ -158,10 +161,10 @@
         <ul>
           <li>Mikrofonun <b>sadece "Sese katıl"a bastığında</b> kullanılır; izni tarayıcı sorar, istediğin an tarayıcı ayarlarından geri alabilirsin. "Ayrıl" mikrofonu kapatır.</li>
           <li>Sesin sese katılan diğer kişilere <b>doğrudan</b> (eşler arası, her zaman şifreli) gider. Sunucumuz sesi hiç duymaz; sadece sese katılanlar arasındaki bağlantı mesajlarını taşır. Ses <b>kaydedilmez, saklanmaz</b>.</li>
-          <li>Bağlantı doğrudan olduğu için seninle seste olan kişiler genel IP adresini teknik olarak görebilir (kabaca şehrin ve internet şirketin; ev adresin değil). Sese katılmayanlar göremez. Oda boyunca sunucumuz sadece kimin seste olduğunu ve mikrofonunun açık olup olmadığını tutar.</li>
+          <li>Bağlantı doğrudan olduğu için seninle seste olan kişiler genel IP adresini teknik olarak görebilir (kabaca şehrin ve internet şirketin; ev adresin değil). Sese katılmayanlar göremez. Oda açık olduğu sürece sunucumuz sadece kimin seste olduğunu ve mikrofonunun açık olup olmadığını tutar.</li>
           <li>Odadakiler kendi ekranlarını ya da hoparlörlerini kaydedebilir; bunu engelleyemeyiz. Sadece güvendiğin kişilerle konuş.</li>
-          <li><b>Ekran paylaşımı / yayın:</b> ekranın, pencere, sekme ya da kameran sadece "Ekranını paylaş" ya da "Kamerayla yayın"a basıp tarayıcının kendi penceresinde neyi paylaşacağını seçince yakalanır. Sadece "Yayını izle"ye basanlara eşler arası (şifreli) gider; sesli sohbetteki gibi onlar genel IP adresini görebilir. Kaydedilmez, saklanmaz.</li>
-          <li>Kameran <b>sadece seste iken 📷'a bastığında</b> kullanılır ve sadece seste olanlara (eşler arası, şifreli) gider. Kaydedilmez, saklanmaz; 📷'a tekrar basınca ya da sesten ayrılınca kapanır.</li>
+          <li><b>Ekran paylaşımı / yayın:</b> ekranın, bir pencere, sekme ya da kameran sadece "Ekranını paylaş" ya da "Kamerayla yayın"a basıp tarayıcının kendi penceresinde neyi paylaşacağını seçince yakalanır. Sadece "Yayını izle"ye basanlara eşler arası (şifreli) gider; sesli sohbetteki gibi onlar genel IP adresini görebilir. Kaydedilmez, saklanmaz.</li>
+          <li>Kameran <b>sadece sesteyken 📷'a bastığında</b> kullanılır ve sadece seste olanlara (eşler arası, şifreli) gider. Kaydedilmez, saklanmaz; 📷'a tekrar basınca ya da sesten ayrılınca kapanır.</li>
         </ul>
 
         <h2>Oyunlar (PlayWithMe)</h2>

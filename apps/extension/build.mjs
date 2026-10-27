@@ -40,7 +40,7 @@ const manifest = {
   name: dev ? 'ScreenWithMe (dev)' : 'ScreenWithMe – Watch Videos Together in Sync',
   short_name: 'ScreenWithMe',
   version: pkg.version,
-  description: 'Sync any HTML5 video with friends: play, pause, seek and speed together. Emoji reactions and quick chat. No account, free.',
+  description: "A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.",
   // WebSocket trafiğinin service worker'ı açık tutması Chrome 116'dan beri var.
   minimum_chrome_version: '116',
   homepage_url: 'https://screen-with-me.swm-server.workers.dev/eklenti.html',
