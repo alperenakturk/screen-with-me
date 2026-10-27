@@ -42,17 +42,18 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 8. ✅ **Kendi inisiyatifimle (0.9.68–0.9.74):** bas-konuş + "Ali durdurdu" notu, Dört Taş, PWA, sağ paneli gizle, Çiz-Bil,
    odadan oyun aç, Bilgi yarışması. Canlı e2e: yayın sırasında kopan bağlantıya karşı 30 sn bekleme + canlıda bir tekrar.
 
-**Sıradaki (0.9.77 → 0.9.80):** (1) ana sayfa tasarımı (D/E/F/G seçimi gelince), (2) kelime avı
+**Sıradaki (0.9.78 → 0.9.80):** (1) oyun fikirleri konuşmasından seçilen yeni oyunlar, (2) kelime avı
 (Türkçe sözlük gerekir; ya da sözlüksüz bir kelime oyunu), (3) gerçek deneme turu hazırlığı (VIZYON "v1.0" listesi),
 (4) Brave/Edge'de eklenti denemesi (kullanıcıdan), (5) senkron ölçümü (p50/p95) ve README rozeti.
 
-## Son yapılanlar (0.9.61 → 0.9.76)
+## Son yapılanlar (0.9.61 → 0.9.77)
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
   görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti), yayın 2. aşama (0.9.66),
   Mehtaplı padişah maskotu (0.9.67), bas-konuş (V) + "Ali durdurdu" notu videonun üstünde (0.9.68, eklenti 0.9.68),
   PlayWithMe'de Dört Taş (0.9.69), telefona/bilgisayara uygulama olarak ekleme (PWA, 0.9.70), sağ paneli gizle (0.9.71, video büyür, mesajlar
   videonun köşesinde), Çiz-Bil (0.9.72), odadan oyun aç (0.9.73), Bilgi yarışması (0.9.74), oyunlar odanın içinde
-  (0.9.75: ayrı oyun sayfaları kalktı, oyun videonun yerinde açılır), oda düzeni "Sinema Rayı" (0.9.76).
+  (0.9.75: ayrı oyun sayfaları kalktı, oyun videonun yerinde açılır), oda düzeni "Sinema Rayı" (0.9.76), ana sayfa "Vitrin" + tema seçici + sade temalara yeni tonlar (0.9.77; kullanıcı
+  seçemedi, önerimi istedi: F + E birleşimi; oyun fikirleri ayrı konuşmada).
 
 ## Önceki: 0.9.60
 - **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".

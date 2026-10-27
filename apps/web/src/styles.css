@@ -1,7 +1,7 @@
-/* Varsayılan tema "Gece": gece yarısı laciverti, mor vurgu. Sade temalarda resim yok;
-   sadece adına uygun hafif bir renk geçişi (--art) var. */
+/* Varsayılan tema "Gece": gece yarısı laciverti, mor vurgu. Sade temalarda resim yok: adına uygun katmanlı
+   renk geçişleri (--art), hafif yıldız tozu/desen ve arkada çok yavaş süzülen ışık bulutları (--aura) var. */
 :root {
-  --bg: #0b0d1a;
+  --bg: #0b0d1f;
   --surface: #151a2e;
   --surface-2: #1e2440;
   --border: #2a3152;
@@ -16,8 +16,19 @@
   --on-accent: #ffffff;
   --glow: none;
   --radius: 12px;
-  --art: radial-gradient(ellipse 70% 45% at 50% -5%, rgb(139 108 255 / 0.24), transparent 70%), radial-gradient(ellipse 40% 45% at 0% 70%, rgb(90 140 255 / 0.1), transparent 70%), radial-gradient(ellipse 40% 45% at 100% 85%, rgb(230 110 220 / 0.09), transparent 70%), linear-gradient(#171c40, #0c0e1e 60%);
-  --art-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  /* Gece yarısı: üstte mor bir hale, yanlarda lacivert ve gül rengi ışık, seyrek yıldız tozu */
+  --art:
+    radial-gradient(1px 1px at 40px 60px, rgb(255 255 255 / 0.7) 99%, transparent),
+    radial-gradient(1px 1px at 190px 140px, rgb(220 210 255 / 0.55) 99%, transparent),
+    radial-gradient(1.4px 1.4px at 110px 230px, rgb(255 255 255 / 0.5) 99%, transparent),
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgb(139 108 255 / 0.26), transparent 70%),
+    radial-gradient(ellipse 45% 50% at 0% 75%, rgb(70 110 255 / 0.13), transparent 70%),
+    radial-gradient(ellipse 45% 50% at 100% 90%, rgb(220 100 200 / 0.11), transparent 70%),
+    linear-gradient(#181d46, #0f1230 45%, #090b1c);
+  --art-size: 251px 263px, 317px 289px, 283px 307px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  --aura:
+    radial-gradient(38% 32% at 22% 28%, rgb(139 108 255 / 0.14), transparent 70%),
+    radial-gradient(34% 30% at 78% 62%, rgb(80 130 255 / 0.11), transparent 70%);
   /* Temanın kostümlü maskotu (public/themes/*-maskot.svg). */
   --mascot: url('/themes/gece-maskot.svg');
   color: var(--text);
@@ -39,8 +50,18 @@
   --accent: #2ec5e8;
   --accent-hover: #5ad4f0;
   --on-accent: #032130;
-  --art: radial-gradient(ellipse 80% 50% at 50% 110%, rgb(46 197 232 / 0.18), transparent 70%), linear-gradient(#0b2a45, #051726 55%, #03111d);
-  --art-size: 100% 100%, 100% 100%;
+  /* Derin deniz: yüzeyden süzülen eğik ışık huzmeleri, üstte turkuaz parıltı, dipte lacivert, seyrek kabarcıklar */
+  --art:
+    radial-gradient(1.6px 1.6px at 70px 90px, rgb(180 240 255 / 0.35) 99%, transparent),
+    radial-gradient(1px 1px at 200px 210px, rgb(180 240 255 / 0.3) 99%, transparent),
+    repeating-linear-gradient(105deg, rgb(120 220 255 / 0.035) 0 60px, transparent 60px 150px),
+    radial-gradient(ellipse 80% 45% at 50% -8%, rgb(46 197 232 / 0.24), transparent 70%),
+    radial-gradient(ellipse 70% 40% at 50% 112%, rgb(20 120 160 / 0.22), transparent 70%),
+    linear-gradient(#0c3150, #072036 45%, #041422);
+  --art-size: 271px 293px, 313px 337px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  --aura:
+    radial-gradient(40% 30% at 25% 20%, rgb(46 197 232 / 0.12), transparent 70%),
+    radial-gradient(36% 30% at 75% 70%, rgb(40 220 190 / 0.08), transparent 70%);
   --mascot: url('/themes/okyanus-maskot.svg');
 }
 
@@ -55,8 +76,17 @@
   --accent: #ff7a4d;
   --accent-hover: #ff9670;
   --on-accent: #2a0d05;
-  --art: radial-gradient(ellipse 60% 40% at 50% 105%, rgb(255 140 70 / 0.28), transparent 70%), linear-gradient(#2a1238, #3a1530 40%, #24101a 75%, #160a10);
-  --art-size: 100% 100%, 100% 100%;
+  /* Alacakaranlık: üstte mor gök, ufukta turuncu-pembe parıltı ve batmakta olan güneşin hâlesi */
+  --art:
+    radial-gradient(1px 1px at 60px 50px, rgb(255 230 240 / 0.5) 99%, transparent),
+    radial-gradient(circle at 50% 104%, rgb(255 190 120 / 0.35) 0 7%, rgb(255 140 90 / 0.14) 13%, transparent 30%),
+    radial-gradient(ellipse 75% 38% at 50% 102%, rgb(255 120 80 / 0.3), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 85% 0%, rgb(170 80 200 / 0.18), transparent 70%),
+    linear-gradient(#2b1442, #3b1736 38%, #2a1020 72%, #1a0b14);
+  --art-size: 233px 197px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  --aura:
+    radial-gradient(40% 30% at 20% 70%, rgb(255 110 120 / 0.1), transparent 70%),
+    radial-gradient(36% 28% at 80% 30%, rgb(190 90 220 / 0.1), transparent 70%);
   --mascot: url('/themes/gunbatimi-maskot.svg');
 }
 
@@ -72,8 +102,18 @@
   --accent-hover: #ff5ce0;
   --ok: #19f5a0;
   --glow: 0 0 18px rgb(255 43 214 / 0.45);
-  --art: radial-gradient(ellipse 50% 45% at 0% 0%, rgb(255 43 214 / 0.24), transparent 70%), radial-gradient(ellipse 50% 45% at 100% 100%, rgb(25 245 240 / 0.18), transparent 70%), radial-gradient(ellipse 60% 40% at 50% 50%, rgb(140 60 255 / 0.06), transparent 70%), #07060d;
-  --art-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  /* Gece şehri: simsiyah değil, koyu mor-lacivert; köşelerde pembe ve camgöbeği ışıklar, ince ızgara */
+  --art:
+    linear-gradient(rgb(255 43 214 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(25 245 240 / 0.035) 1px, transparent 1px),
+    radial-gradient(ellipse 50% 45% at 0% 0%, rgb(255 43 214 / 0.26), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 100% 100%, rgb(25 245 240 / 0.2), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgb(140 60 255 / 0.1), transparent 70%),
+    linear-gradient(#120b26, #0b0818 55%, #070612);
+  --art-size: 56px 56px, 56px 56px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  --aura:
+    radial-gradient(34% 28% at 70% 25%, rgb(255 43 214 / 0.12), transparent 70%),
+    radial-gradient(34% 28% at 25% 75%, rgb(25 245 240 / 0.1), transparent 70%);
   --mascot: url('/themes/neon-maskot.svg');
 }
 /* ---- Çizimli temalar. Üç katman:
@@ -217,7 +257,7 @@
 }
 
 /* Gemi sahnesi aydınlık: kartsız, doğrudan gökyüzünün üstündeki yazılar gölgeyle okunur kalsın. */
-:root[data-theme='gemi'] :is(.hero h1, .tagline, .divider, .how h2, .how h3) {
+:root[data-theme='gemi'] :is(.hero h1, .tagline, .home-title, .home-lead, .start-save, .start-join, .home-steps > h2, .home-features) {
   color: var(--text);
   text-shadow:
     0 1px 2px rgb(0 0 0 / 0.6),
@@ -253,6 +293,25 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background: var(--scene, none) center bottom / cover no-repeat;
+}
+
+/* Sade temalar: sahne yerine arkada çok yavaş süzülen ışık bulutları (--aura); resimli temalarda yok. */
+:root:is(:not([data-theme]), [data-theme='gece'], [data-theme='okyanus'], [data-theme='gunbatimi'], [data-theme='neon']):not(.shell) body::before {
+  inset: -12%;
+  background: var(--aura, none);
+  animation: aura-drift 38s ease-in-out infinite alternate;
+}
+
+@keyframes aura-drift {
+  to {
+    transform: translate(6%, 4%) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none !important;
+  }
 }
 
 @keyframes mascot-float {
@@ -799,138 +858,515 @@ button.nav-link {
   flex: none;
 }
 
-/* ---- Nasıl çalışır ---- */
-.how {
-  max-width: 1100px;
-  margin: 72px auto 24px;
+/* ---- Ana sayfa ("Vitrin"): solda başlık + tek adımlık form, sağda temanın renkleriyle canlı oda önizlemesi ---- */
+.home-hero {
+  max-width: 1180px;
+  margin: 5vh auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: 56px;
+}
+
+.home-intro {
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  align-items: flex-start;
+  gap: 16px;
 }
 
-.how > h2 {
-  text-align: center;
-  font-size: clamp(24px, 4vw, 32px);
+.home-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: color-mix(in srgb, var(--accent) 55%, var(--text));
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.home-title {
   margin: 0;
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
-.how-flow h3 {
+.home-lead {
+  margin: 0;
+  max-width: 500px;
+  color: var(--chrome-text);
+  font-size: 18px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.start-form {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 20px;
-  margin: 0 0 16px;
+  gap: 8px;
+  width: 100%;
+  max-width: 540px;
+  margin-top: 6px;
 }
 
-.how-badge {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: #ff3d3d;
+.start-form input {
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  font-size: 15px;
+}
+
+.start-form .btn.big {
+  flex: none;
+  height: 54px;
+}
+
+.start-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--chrome-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.start-name {
+  width: 100%;
+  max-width: 540px;
+}
+
+.start-join {
+  margin: 0;
   font-size: 14px;
 }
 
-.how-badge.site {
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.join-form {
+  width: 100%;
+  max-width: 540px;
+}
+
+/* Önizleme: hafif eğik bir oda kartı; maskot köşesinden bakar, sohbet baloncukları yanda süzülür */
+.home-preview {
+  position: relative;
+  padding: 28px 18px 18px;
+}
+
+.preview-mascot {
+  position: absolute;
+  top: -34px;
+  right: 6%;
+  z-index: 2;
+  --mascot-size: 104px;
+  filter: drop-shadow(0 12px 24px rgb(0 0 0 / 0.45));
+}
+
+.preview-card {
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.45), 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+  transform: rotate(-1.5deg);
+}
+
+.preview-video {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(#ff9a6b, #ffb37d 32%, #ffd59a 50%, #6d5ba8 50.5%, #3c2f7a);
+}
+
+.preview-sun {
+  position: absolute;
+  left: 60%;
+  top: 18%;
+  width: 14%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(#fff6d8, #ffd27a 60%, transparent 72%);
+}
+
+.preview-hill {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.preview-hill.h1 {
+  left: -10%;
+  top: 44%;
+  width: 70%;
+  height: 80%;
+  background: #4b3c8f;
+}
+
+.preview-hill.h2 {
+  left: 38%;
+  top: 52%;
+  width: 90%;
+  height: 80%;
+  background: #2f2468;
+}
+
+.preview-sync {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 1;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgb(20 120 70 / 0.92);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.preview-emoji {
+  position: absolute;
+  z-index: 1;
+  font-size: clamp(20px, 2.4vw, 30px);
+  animation: preview-rise 5s ease-in-out infinite;
+}
+
+.preview-emoji.e1 {
+  left: 18%;
+  bottom: 18%;
+}
+
+.preview-emoji.e2 {
+  left: 46%;
+  bottom: 30%;
+  animation-delay: 1.6s;
+}
+
+.preview-emoji.e3 {
+  left: 70%;
+  bottom: 14%;
+  animation-delay: 3.1s;
+}
+
+@keyframes preview-rise {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.95;
+  }
+
+  50% {
+    transform: translateY(-18px);
+    opacity: 1;
+  }
+}
+
+.preview-bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.preview-bar i {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: 2px;
   background: var(--accent);
 }
 
-.how-steps {
+.preview-people {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 4px 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.preview-people img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-2);
+}
+
+.preview-people img.talking {
+  box-shadow: 0 0 0 2px var(--ok), 0 0 12px var(--ok);
+}
+
+.preview-bubbles {
+  position: absolute;
+  left: -14px;
+  bottom: 22%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.preview-bubble {
+  padding: 9px 13px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
+}
+
+.preview-bubble.mine {
+  border-radius: 14px 14px 4px 14px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.preview-bubble b {
+  color: color-mix(in srgb, var(--ok) 70%, var(--text));
+}
+
+/* Tema seçici: bütün temalar; tıklayınca sayfa hemen değişir */
+.home-themes {
+  max-width: 1180px;
+  margin: 64px auto 0;
+  padding: 24px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+}
+
+.home-themes-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-bottom: 14px;
+}
+
+.home-themes h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.home-themes p {
+  margin: 0;
+}
+
+.theme-strip.all {
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+}
+
+.home-recent {
+  max-width: 1180px;
+  margin: 24px auto 0;
+}
+
+/* Üç adım */
+.home-steps {
+  max-width: 1180px;
+  margin: 64px auto 0;
+}
+
+.home-steps h2,
+.home-doors h3 {
+  margin: 0;
+}
+
+.home-steps h2 {
+  font-size: 22px;
+  margin-bottom: 14px;
+}
+
+.home-steps ol {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.how-step {
-  position: relative;
+.home-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 22px 16px 18px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
 }
 
-/* Adımlar arasındaki ok */
-.how-step:not(:last-child)::after {
-  content: '→';
-  position: absolute;
-  right: -22px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--accent-hover);
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.how-icon {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgb(143 116 255 / 0.35), rgb(124 92 255 / 0.12));
-  font-size: 42px;
-}
-
-.how-num {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 13px;
-  font-weight: 700;
-  display: grid;
-  place-items: center;
-  border: 3px solid var(--surface);
-}
-
-.how-step h4 {
-  margin: 4px 0 0;
+.home-steps h3 {
+  margin: 2px 0 4px;
   font-size: 17px;
 }
 
-.how-step p {
+.home-steps p {
   margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
-.how-step .btn {
-  margin-top: 6px;
+.step-n {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 16px;
+}
+
+/* İki kapı: link (kurulum yok) ve eklenti (her site) */
+.home-doors {
+  max-width: 1180px;
+  margin: 14px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.home-door {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.home-door p {
+  margin: 0;
+}
+
+.home-door .btn {
+  margin-top: 4px;
   text-decoration: none;
+}
+
+.door-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  color: #fff;
+}
+
+.door-icon.yt {
+  background: #e0454f;
+}
+
+.door-icon.ext {
+  background: color-mix(in srgb, var(--accent) 70%, #000);
+}
+
+.door-icon.games {
+  background: #2f9e6f;
+}
+
+.door-games {
+  margin-top: auto;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+}
+
+.home-features {
+  max-width: 1180px;
+  margin: 28px auto 40px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--chrome-text);
   font-size: 14px;
+}
+
+.home-features b {
+  color: var(--text);
+}
+
+.home-features > span {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 960px) {
+  .home-doors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    margin-top: 3vh;
+  }
+
+  .home-preview {
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .preview-bubbles {
+    left: 4px;
+  }
+}
+
+@media (max-width: 680px) {
+  .start-form {
+    flex-direction: column;
+  }
+
+  .start-form .btn.big {
+    width: 100%;
+  }
+
+  .home-steps ol,
+  .home-doors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-themes {
+    padding: 16px;
+  }
+
+  .preview-bubbles {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-emoji {
+    animation: none;
+  }
 }
 
 @media (max-width: 860px) {
-  .how-steps {
-    grid-auto-flow: row;
-    gap: 26px;
-  }
-
-  .how-step:not(:last-child)::after {
-    content: '↓';
-    right: auto;
-    left: 50%;
-    top: auto;
-    bottom: -24px;
-    transform: translateX(-50%);
-  }
-
   .topbar .nav-link span:last-child {
     display: none;
   }
@@ -3421,51 +3857,6 @@ html:not(.shell) .shell-only {
 /* Yönetici emojileri kapattı */
 .no-reactions .reaction-bar {
   display: none;
-}
-
-/* Oda kur: tek seferlik / kaydedilen */
-.create-box {
-  margin-top: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-align: left;
-}
-
-.create-q {
-  margin: 0;
-  font-weight: 600;
-}
-
-.create-choices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.create-choice {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.create-choice:hover {
-  border-color: var(--accent);
-}
-
-@media (max-width: 560px) {
-  .create-choices {
-    grid-template-columns: 1fr;
-  }
 }
 
 .recent-link.gone b {

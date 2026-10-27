@@ -773,6 +773,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           const wanted = sessionLoad(`create:${roomId}`);
           if (wanted && message.hostId === message.you && !roomSettings.saved) send({ t: 'settings', saved: true, name: wanted });
           if (wanted) sessionSave(`create:${roomId}`, '');
+          // Ana sayfada link yapıştırılarak kurulduysa: oda boşken o video açılır (link kutusunun yolundan geçer:
+          // sayfa linkinde eklenti sorusu vb. aynen çalışsın).
+          const start = sessionLoad(`start:${roomId}`);
+          if (start) {
+            sessionSave(`start:${roomId}`, '');
+            if (!message.state.item) {
+              mediaInput.value = start;
+              $<HTMLFormElement>('#media-form').requestSubmit();
+            }
+          }
         }
         break;
       case 'state': {

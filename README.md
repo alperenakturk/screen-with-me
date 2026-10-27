@@ -72,7 +72,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 ### Look & feel
 | | |
 |---|---|
-| 🎨 **11 themes** | Night, Ocean, Sunset, Neon, plus illustrated Turkish Delight, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner, Night Express), each with the mascot in costume. |
+| 🎨 **11 themes** | Night, Ocean, Sunset, Neon, plus illustrated Turkish Delight, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner, Night Express), each with the mascot in costume. Pick one right on the home page and the whole page switches instantly; the plain themes have soft moving light in the background. |
 | 🎬 **Intro** | A short logo animation with a generated sound (Web Audio, no files). |
 | 🌍 **Languages** | Turkish (default) and English, on the site and in the extension. |
 

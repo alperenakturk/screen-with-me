@@ -72,7 +72,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 ### Görünüm
 | | |
 |---|---|
-| 🎨 **11 tema** | Gece, Okyanus, Gün batımı, Neon; resimli Mehtaplı Geceler, Binbir Gece ve Art Deco afiş temaları (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması, Transatlantik, Gece Ekspresi), her birinde kostümlü maskot. |
+| 🎨 **11 tema** | Gece, Okyanus, Gün batımı, Neon; resimli Mehtaplı Geceler, Binbir Gece ve Art Deco afiş temaları (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması, Transatlantik, Gece Ekspresi), her birinde kostümlü maskot. Ana sayfada tıklayınca bütün sayfa hemen o temaya geçer; resimsiz temaların arkasında yavaşça süzülen ışıklar var. |
 | 🎬 **Açılış** | Kısa logo animasyonu ve üretilmiş ses (Web Audio, dosya yok). |
 | 🌍 **Diller** | Türkçe (varsayılan) ve İngilizce, sitede ve eklentide. |
 
