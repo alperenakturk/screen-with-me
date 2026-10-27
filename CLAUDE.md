@@ -14,6 +14,8 @@ açık kaynak bir araç: **site** (YouTube / doğrudan video) + **tarayıcı ekl
 
 ## Kullanıcıyla çalışma
 - **Türkçe konuş.** Kullanıcı (Alperen) okulda JS/HTML/CSS öğreniyor; açıklamaları sade tut.
+- **Her işin sonunda kısa rapor ver** (kullanıcı istedi, Ekim 2026): ne yaptım, neyi denedim, şu an neyi bekliyorum
+  (CI, yayın, kullanıcının cevabı) ve sırada ne var. Arka planda bir şey beklerken de bunu açıkça yaz.
 - **Teknik kararları kendin ver**, kısaca nedenini söyle; beğenmediğini kendisi değiştirtir.
   Sadece hesap/para/yayınlama gibi kullanıcıya ait adımları sor.
 - Aşamalı ve güvenli ilerle; her değişikliği test et, yayınla, commit at.
