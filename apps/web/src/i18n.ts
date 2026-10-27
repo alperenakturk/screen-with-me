@@ -16,6 +16,8 @@ const tr = {
   privacy: 'Gizlilik',
   'tab.chat': 'Sohbet',
   'tab.queue': 'Sıra',
+  'tab.people': 'Kişiler',
+  seekLabel: 'Videoda konum',
   'tab.settings': 'Ayarlar',
   'settings.profile': 'Profil',
   'settings.theme': 'Tema',
@@ -448,6 +450,8 @@ const en: Record<Key, string> = {
   privacy: 'Privacy',
   'tab.chat': 'Chat',
   'tab.queue': 'Queue',
+  'tab.people': 'People',
+  seekLabel: 'Position in the video',
   'tab.settings': 'Settings',
   'settings.profile': 'Profile',
   'settings.theme': 'Theme',
@@ -902,7 +906,10 @@ export function translate(root: ParentNode = document): void {
   }
   for (const el of root.querySelectorAll<HTMLInputElement>('[data-i18n-placeholder]')) {
     const key = el.dataset.i18nPlaceholder!;
-    if (isKey(key)) el.placeholder = t(key);
+    if (!isKey(key)) continue;
+    el.placeholder = t(key);
+    // Etiketi olmayan kutular ekran okuyucuda yer tutucu metniyle anılsın (yer tutucu yazınca kaybolur).
+    if (!el.labels?.length) el.setAttribute('aria-label', t(key));
   }
   // Başlık (üstüne gelince) ve ekran okuyucu etiketi
   for (const el of root.querySelectorAll<HTMLElement>('[data-i18n-title]')) {

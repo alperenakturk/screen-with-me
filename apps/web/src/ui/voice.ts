@@ -262,6 +262,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     leave(): void {
       if (!(client instanceof ExtVoice)) client.leave();
     },
+    /** Odadan çıkarıldım: ses her yerde (eklentide de) biter, kendiliğinden yeniden açılmaz. */
+    end(): void {
+      client.leave();
+      remember(false);
+      available = false;
+      render();
+    },
     relabel: render,
   };
 }

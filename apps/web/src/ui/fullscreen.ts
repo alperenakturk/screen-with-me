@@ -2,6 +2,7 @@ import { cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { formatTime } from '../media-info.ts';
 import { postToExtension } from '../storage.ts';
+import { isTyping } from './reactions.ts';
 
 /** Tam ekrandaki hızlı mesaj kutusu kısa mesajlar içindir. */
 export const QUICK_CHAT_MAX = 120;
@@ -150,9 +151,10 @@ export function createFullscreen({ shell = false, keepControls = () => false, th
     renderProgress();
   });
 
-  // Klavye: boşluk oynat/durdur, Enter hızlı mesaja odaklanır.
+  // Klavye: boşluk oynat/durdur, Enter hızlı mesaja odaklanır. Bir kutuya yazarken (hızlı mesaj, pin notu) değil:
+  // pin notunda boşluk herkes için oynat/durdur yapıyordu.
   document.addEventListener('keydown', (event) => {
-    if (!isActive() || event.target === chatInput) return;
+    if (!isActive() || isTyping(event.target)) return;
     if (event.key === ' ' || event.key === 'k') {
       event.preventDefault();
       togglePlay();

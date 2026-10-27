@@ -30,8 +30,11 @@ export function createTestPlayer(container: HTMLElement): PlayerAdapter {
 
   function draw(): void {
     frame = requestAnimationFrame(draw);
-    const w = (canvas.width = canvas.clientWidth * devicePixelRatio || 640);
-    const h = (canvas.height = canvas.clientHeight * devicePixelRatio || 360);
+    // Boyut sadece değişince atanır: her karede atamak tuvali baştan ayırıp temizliyordu (saniyede 60 kez).
+    const w = Math.round(canvas.clientWidth * devicePixelRatio) || 640;
+    const h = Math.round(canvas.clientHeight * devicePixelRatio) || 360;
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
     const t = now();
     if (playing && t >= TEST_DURATION) {
       settle();

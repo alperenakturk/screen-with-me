@@ -1,9 +1,7 @@
 // Sitenin asıl başlangıcı (main.ts, ayarlar eklentiyle eşitlendikten sonra bunu yükler).
 import { createLogo } from '@swm/shared/logo';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
-import { renderHome } from './home.ts';
 import { lang, setLang, translate, type Lang } from './i18n.ts';
-import { renderRoom } from './room.ts';
 import { applyTheme, currentTheme, openThemeDialog } from './themes.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
@@ -34,10 +32,19 @@ for (const button of langButtons) {
 }
 markLang();
 
-// Basit yönlendirme: /r/<oda> bir oda, geri kalan her şey ana sayfa.
+// Basit yönlendirme: /r/<oda> bir oda, geri kalan her şey ana sayfa. Oda ve ana sayfa ayrı parçalar: ana sayfa odanın
+// büyük kodunu (oynatıcılar, sohbet, ses…) indirmez, ilk açılış hızlanır.
 const match = location.pathname.match(/^\/r\/([^/]+)\/?$/);
 const roomId = match ? decodeURIComponent(match[1]!) : null;
-if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) renderRoom(app, roomId);
-else renderHome(app);
-
+if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
+  void import('./room.ts').then(({ renderRoom }) => {
+    renderRoom(app, roomId);
+    translate();
+  });
+} else {
+  void import('./home.ts').then(({ renderHome }) => {
+    renderHome(app);
+    translate();
+  });
+}
 translate();
