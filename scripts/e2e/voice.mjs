@@ -71,7 +71,8 @@ if (wa.voice !== true) {
   const camFull = await a.wait((m) => m.t === 'error', 'cam full');
   ok(camFull.code === 'cam_full', '5. kamera reddedildi (cam_full)');
   extra[0].send({ t: 'voice', on: true, mic: true, cam: false });
-  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 3, 'cam off');
+  // Kameralar tek tek açılırken gelen eski "3 kamera" mesajları kutuda: K0'ın gerçekten kapattığı mesajı bekle.
+  await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'K0' && x.voice && !x.voice.cam), 'cam off');
   a.send({ t: 'voice', on: true, mic: true, cam: true });
   const aliCam = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && x.voice?.cam), 'ali cam');
   ok(!!aliCam, 'Biri kamerasını kapatınca Ali açabildi');
