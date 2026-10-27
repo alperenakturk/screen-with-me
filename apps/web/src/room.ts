@@ -6,7 +6,6 @@ import { parseMediaInput, samePage } from '@swm/shared/media';
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
-  CLIENT_ID,
   avatarText,
   SYSTEM_MEMBER_ID,
   cleanName,
@@ -35,6 +34,7 @@ import { createHtml5Player } from './players/html5.ts';
 import { createTestPlayer } from './players/test.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
 import {
+  clientId,
   extensionSupportsShell,
   hasExtension,
   isShell,
@@ -194,19 +194,6 @@ function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void 
   });
 }
 
-/**
- * Tarayıcının kalıcı kimliği: rastgele bir kod, hesap değil. Oda yöneticisinin
- * sayfayı yenileyince yöneticiliği kaybetmemesi ve atılanın hemen geri
- * girememesi için sunucuya gönderilir.
- */
-function clientId(): string {
-  const saved = load('cid');
-  if (saved && CLIENT_ID.test(saved)) return saved;
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  const id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  save('cid', id);
-  return id;
-}
 
 /** İsmin önüne avatarı koyar (varsa). */
 /** Kalan süre: "2 sa 13 dk", "4 dk 05 sn", "45 sn". */

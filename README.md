@@ -56,6 +56,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 💾 **Saved rooms** | Create a one-off room or a named saved room (kept 30 days). Saved rooms remember where each video stopped and its pins; your list on the home page shows how many people are inside. |
 | 📊 **Session recap** | A Spotify-Wrapped-style recap of the session (time watched, videos, most talkative, favourite emoji…) with a downloadable image; past recaps are kept. |
 | ⏰ **Scheduled start** | Pick a time; a countdown banner shows and the room starts by itself. |
+| 🎮 **PlayWithMe** | A small game corner (🎮 in the top menu): tic-tac-toe for two, by link; anyone else who opens the link watches, cheers with emojis and can take a free seat. More games to come. |
 | 🏠 **Back to the room** | When someone leaves the film page for the room, the others get a small "go back too?" card. |
 
 ### Host & safety
@@ -113,7 +114,7 @@ player into it.
 
 | Check | Result |
 |---|---|
-| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 134 passing |
+| Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 140 passing |
 | End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, emoji rate, saved rooms, recap, Shorts) | `npm run e2e`, runs in CI |
 | Real Chrome with the extension (`scripts/harness/embed`) | 90 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, pins, settings sync between site and extension, video picker, ad tabs, redirects, pre-roll ads |
 | Real voice (`scripts/harness/voice`) | Two Chromes with fake microphones: the received audio's energy is measured, on the site and on film pages (extension), incl. the permission tab and reloads |
@@ -155,7 +156,7 @@ Locally: `npx wrangler login` once, then `npm run deploy`.
 
 ## 🗺️ What's next
 
-Chrome Web Store release, video chat, a game corner, a short domain, push-to-talk voice chat, Firefox.
+Chrome Web Store release, video chat, more games, a short domain, push-to-talk voice chat, Firefox.
 
 ## 📄 License & privacy
 

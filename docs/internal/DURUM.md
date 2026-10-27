@@ -17,10 +17,10 @@ sürümü parça parça karşılaştırır). Kullanım: kredi bitene kadar; sonr
 Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 1. ✅ **0.9.60:** elle video seçimi, reklamların ikinci adımı (a5/a6/a3), eklentide sesli sohbet (offscreen + mic.html +
    film sesini kısma).
-2. **Site denetimi:** tüm sitede hata/arayüz sorunlarını bul-düzelt, hız/boyut iyileştirmesi.
+2. ✅ **Site denetimi (0.9.61):** 11 hata, telefon görünümü, ilk yükleme ~55 → ~24 KB.
 3. **Görüntülü sohbet** (eşler arası, Cloudflare'siz), sonra ses + görüntüyü geliştir (ses seviyesi göstergesi, arayüz).
-4. **Oyun köşesi "PlayWithMe":** üst menüde 🎮 → logolu sayfa, altta oyun listesi; ilk oyun XOX (her maç ayrı oda,
-   2 oyuncu, gelenler izler).
+4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`). Sıradaki oyun fikirleri kartlarda
+   "yakında": Çiz-Bil, bilgi yarışması, kelime avı.
 5. **Yayın açma araştırması:** ✅ ayrı oturumda yapıldı → `docs/internal/yayin.md` (karar kullanıcının).
 6. **Tasarım/tema alternatifleri:** önizleme sayfası, kullanıcı seçince uygulanır.
 7. **Mehtaplı tema:** maskotu daha "Türk" yap: yeniçeri ya da padişah ScreenWithMe (kullanıcı istedi; direkt ekle).

@@ -56,6 +56,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 💾 **Kaydedilen odalar** | Tek seferlik ya da adlı kayıtlı oda (30 gün saklanır). Kayıtlı odalar her videonun kaldığı yeri ve pinlerini hatırlar; ana sayfadaki listende içeride kaç kişi olduğu görünür. |
 | 📊 **Oturum özeti** | Spotify özeti tarzında (izleme süresi, videolar, en konuşkan, en sevilen emoji…), indirilebilir görselli; önceki özetler saklanır. |
 | ⏰ **Planlı başlangıç** | Bir saat seç; geri sayım bandı çıkar, oda vakti gelince kendisi başlar. |
+| 🎮 **PlayWithMe** | Küçük bir oyun köşesi (üst menüde 🎮): linkle iki kişilik XOX; linki açan diğerleri izler, emojiyle tezahürat yapar, boşalan koltuğa oturabilir. Yeni oyunlar gelecek. |
 | 🏠 **Odaya dönüş** | Biri film sayfasından odaya dönünce diğerlerine küçük bir "sen de dön?" kartı çıkar. |
 
 ### Yönetici ve güvenlik
@@ -112,7 +113,7 @@ bildirir; üst çerçeve orada bir delik keser (`clip-path`) ve filmin oynatıc�
 
 | Kontrol | Sonuç |
 |---|---|
-| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 134 geçiyor |
+| Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 140 geçiyor |
 | Uçtan uca (gerçek sunucu koduna karşı sahte kullanıcılar: sıra, sohbet, yönetici ve atma, devir, herkes hazır, pinler, özel emojiler, yönetici modları, emoji sıklığı, kayıtlı odalar, özet, Shorts) | `npm run e2e`, CI'da çalışır |
 | Eklentiyle gerçek Chrome (`scripts/harness/embed`) | 90 kontrol: oda katmanı, deliğe yerleşme, sayfanın hiç görünmemesi (ekran kaydı), saydam mesajlar (piksel ölçümü), tam ekranda altyazı ve kontroller, pinler, site ile eklenti arasında ayar eşitleme, video seçimi, reklam sekmeleri, yönlendirmeler, ön-reklamlar |
 | Gerçek ses (`scripts/harness/voice`) | Sahte mikrofonlu iki Chrome: gelen sesin enerjisi ölçülür; sitede ve film sayfalarında (eklenti), izin sekmesi ve yenileme dahil |
@@ -154,7 +155,7 @@ Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
 ## 🗺️ Sırada ne var?
 
-Chrome Web Store yayını, görüntülü sohbet, oyun köşesi, kısa alan adı, bas-konuş sesli sohbet, Firefox.
+Chrome Web Store yayını, görüntülü sohbet, yeni oyunlar, kısa alan adı, bas-konuş sesli sohbet, Firefox.
 
 ## 📄 Lisans ve gizlilik
 

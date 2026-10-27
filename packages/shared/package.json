@@ -11,6 +11,8 @@
     "./embed": "./src/embed.ts",
     "./shell": "./src/shell.ts",
     "./level-meter": "./src/level-meter.ts",
+    "./games/xox": "./src/games/xox.ts",
+    "./games/protocol": "./src/games/protocol.ts",
     "./clock": "./src/clock.ts",
     "./player": "./src/player.ts",
     "./sync-engine": "./src/sync-engine.ts",
