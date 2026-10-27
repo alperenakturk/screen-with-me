@@ -100,9 +100,14 @@ ScreenWithMe has a single purpose: watch parties. It keeps one HTML5 video, in t
 Stores the website's settings (nickname, avatar, theme, language, saved rooms and a random browser ID) locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website, and which tab shows a room layer (chrome.storage.session), so it survives the service worker restarting.
 ```
 
+`offscreen` (0.9.60'tan beri):
+```
+Voice chat while watching: on the film page the microphone is used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice" and turns off with "Leave". Nothing is recorded; audio goes peer-to-peer to the others in voice.
+```
+
 Host izni (`<all_urls>`):
 ```
-Users watch videos on sites we cannot list in advance, and players are usually inside cross-origin iframes, so the content script must be able to run in every frame. activeTab is not enough: invited friends open the page through a link without clicking the extension icon, and players that load later in iframes must be detected automatically. Outside a tab that has joined a room the script stays dormant. Within that tab it only reads the <video> element's playback state (time, paused, rate) and shows our own website's room page as a layer over the page (a web-accessible extension page, shell.html, in an iframe), with a hole where the video sits. It never reads page text, forms or cookies. The page URL and title leave the device only when the user explicitly creates a room or shares that page with their room.
+Users watch videos on sites we cannot list in advance, and players are usually inside cross-origin iframes, so the content script must be able to run in every frame. activeTab is not enough: invited friends open the page through a link without clicking the extension icon, and players that load later in iframes must be detected automatically. Outside a tab that has joined a room the script stays dormant. Within that tab it only reads the <video> element's playback state (time, paused, rate) and shows our own website's room page as a layer over the page (a web-accessible extension page, shell.html, in an iframe), with a hole where the video sits. It never reads page text, forms or cookies. The page URL and title leave the device only when the user explicitly creates a room or shares that page with their room. To keep the watch party usable, a tab that the room's film tab opens to another site right after the user clicks the video (an ad pop-up) is closed locally and can be reopened with one click (tabs.onCreated openerTabId; can be turned off).
 ```
 
 **Uzak kod kullanıyor musunuz? (Remote code):** **No, I am not using remote code.**
@@ -157,8 +162,8 @@ Tabs that have not joined a room are not affected.
 ## 1.0 hazırlık kontrol listesi
 
 Gönderimden önce (ben kontrol ederim, ✅ olanlar 0.9.0'da yapıldı):
-- ✅ İzinler en az: sadece `storage` + `<all_urls>` (videoyu her sitede bulmak için; açıklaması
-  "Gizlilik" bölümünde).
+- ✅ İzinler en az: `storage` + `<all_urls>` (videoyu her sitede bulmak için) + `offscreen` (film sayfasında sesli
+  sohbet, 0.9.60; uyarı göstermez); açıklamaları yukarıda.
 - ✅ Gizlilik politikası saklanan her veriyi anlatıyor (isim/avatar, oda durumu, sohbet, tarayıcı
   kimliği, pinler, özel emojiler).
 - ✅ Açıklamada film/dizi/site adı yok; "her HTML5 video için tarafsız senkron aracı".

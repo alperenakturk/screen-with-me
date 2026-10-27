@@ -17,6 +17,7 @@ import { describeVideo, findVideos, scoreVideo, wrapVideoElement } from '@swm/sh
 import { SITE_URL } from './config.ts';
 import { applyFocus, NO_INSETS, type Insets } from './focus.ts';
 import { PORT_NAME, PROBE, SESSIONS_KEY, type BackgroundMessage, type FrameMessage } from './messages.ts';
+import { startPicking, stopPicking } from './picker.ts';
 import { askToStart, clearStart } from './start-card.ts';
 
 const SCAN_MS = 1000;
@@ -52,6 +53,12 @@ let scanTimer: ReturnType<typeof setInterval> | null = null;
 let observer: MutationObserver | null = null;
 let best: HTMLVideoElement | null = null;
 let reportedScore = -1;
+/**
+ * Kullanıcının elle seçtiği video ("🎯 Bunu senkronla"): puanı ne olursa olsun bu çerçevenin videosu odur ve
+ * arka plana diğer bütün çerçevelerden yüksek puanla bildirilir. Kısa olsa da (60 sn altı) senkronlanır.
+ */
+let picked: HTMLVideoElement | null = null;
+const PICKED_SCORE = 1e12;
 
 let active = false;
 let state: PlaybackState | null = null;
@@ -91,6 +98,8 @@ function send(message: FrameMessage): void {
 function sleep(): void {
   document.documentElement.removeAttribute('data-swm-room');
   uncover();
+  stopPicking();
+  picked = null;
   // Oda bitti: oda görünümünde susturduğumuz videolar eski hâline dönsün.
   for (const video of mutedByUs) video.muted = false;
   mutedByUs.clear();
@@ -158,8 +167,14 @@ function scan(): void {
       bestScore = score;
     }
   }
+  if (picked && !picked.isConnected) picked = null;
+  if (picked) {
+    bestVideo = picked;
+    bestScore = PICKED_SCORE;
+  }
   const changed = bestVideo !== best;
   best = bestVideo;
+  checkAd(videos);
   if (changed || bucket(bestScore) !== bucket(reportedScore)) {
     reportedScore = bestScore;
     const size = videos.length ? `${videos.length} video · ${largest.w}×${largest.h}` : undefined;
@@ -197,7 +212,7 @@ function onSourceChange(): void {
 /** Videonun süresi değişti: kısa (reklam) olduysa motor ayrılır, uzun olduysa (film başladı) bağlanır. */
 function onDurationChange(): void {
   if (!active || !watched) return;
-  if (isShort(watched)) {
+  if (isShort(watched) && watched !== picked) {
     if (adapter) {
       adapter.release();
       adapter = null;
@@ -220,6 +235,28 @@ function isShort(video: HTMLVideoElement | null): boolean {
   return Number.isFinite(duration) && duration > 0 && duration < SHORT_S;
 }
 
+/**
+ * "Reklamda" durumu: senkronlanan çerçevede kısa bir video (reklam) oynuyor, film ya kısa videonun kendisi (aynı
+ * <video>'da ön-reklam) ya da durmuş. Oda bu kişiyi beklemez (`ready` + `ad`); reklam bitince motor bağlanır ve
+ * kişi odanın yerine atlar. Sadece etkin çerçeve bildirebilir (arka plan başkasınınkini iletmez).
+ */
+let adReported = false;
+function checkAd(videos: HTMLVideoElement[]): void {
+  const filmPlaying = !!adapter && !adapter.isPaused() && !isShort(adapter.element);
+  const ad =
+    active &&
+    !filmPlaying &&
+    !!state &&
+    !state.paused &&
+    videos.some((video) => video !== picked && isShort(video) && !video.paused && !video.ended && describeVideo(video).visible);
+  if (ad === adReported) return;
+  adReported = ad;
+  sendAd();
+}
+function sendAd(): void {
+  send({ type: 'send', message: adReported ? { t: 'ready', ready: false, ad: true } : { t: 'ready', ready: true, ad: false } });
+}
+
 /** Oda görünümünde, filmin oynatıcısı dışında sesli oynayan videolar (gizli reklamlar) susturulur. */
 const mutedByUs = new Set<HTMLVideoElement>();
 function muteStrays(): void {
@@ -236,6 +273,9 @@ function attachEngine(): void {
   if (adapter?.element === best) return;
   adapter?.release();
   adapter = null;
+  // Motor eski videodan ayrılsın: aşağıdaki `receive` eski videoya hâlâ bağlıyken komut verip onu (ör. elle seçimden
+  // önce senkronlanan fragmanı) yeniden oynatıyordu.
+  engine?.detach();
   watchSource(best);
   if (!best) {
     // Video sayfadan kalktı (ör. oynatıcı yeniden kuruldu); yenisi bulununca bağlanır.
@@ -244,7 +284,7 @@ function attachEngine(): void {
   }
   // Kısa video (reklam/önizleme): odaya hareket gitmez, odanın yerine sarılmaz; reklam bitip film gelince
   // (süre değişir) bağlanır, kişi o an odanın olduğu yere atlar.
-  if (isShort(best)) {
+  if (isShort(best) && best !== picked) {
     engine?.detach();
     return;
   }
@@ -284,6 +324,10 @@ function reportStatus(): void {
  * motor bunu kullanıcı hareketi olarak görüp odaya yayar (film sitesinin kendi düğmesiyle aynı).
  */
 function onControl(control: EmbedControl): void {
+  if (control.action === 'duck') {
+    duck(control.on);
+    return;
+  }
   if (!adapter || !engine) return;
   switch (control.action) {
     case 'play':
@@ -305,8 +349,32 @@ function onControl(control: EmbedControl): void {
   reportStatus();
 }
 
+/** Konuşulurken film sesi bu orana iner. */
+const DUCK_RATIO = 0.35;
+let ducked: { video: HTMLVideoElement; volume: number } | null = null;
+/**
+ * Sesli sohbette biri konuşurken film sesi kısılır, susunca eski hâline döner. Kişi bu arada sesi kendisi değiştirdiyse
+ * ona dokunulmaz. Ses düzeyi olayları motoru ilgilendirmez (odaya bir şey gitmez).
+ */
+function duck(on: boolean): void {
+  if (on) {
+    const video = adapter?.element ?? best;
+    if (ducked || !video || video.muted) return;
+    ducked = { video, volume: video.volume };
+    video.volume = ducked.volume * DUCK_RATIO;
+    return;
+  }
+  if (!ducked) return;
+  const { video, volume } = ducked;
+  ducked = null;
+  if (Math.abs(video.volume - volume * DUCK_RATIO) < 0.02) video.volume = volume;
+}
+
 function deactivate(): void {
+  duck(false);
   active = false;
+  // Bu çerçeve artık etkin değil: işareti site kaldırır (arka plan buradan bir şey iletmez).
+  adReported = false;
   watchSource(null);
   if (statusTimer !== null) clearInterval(statusTimer);
   statusTimer = null;
@@ -510,9 +578,11 @@ for (const type of ['mousemove', 'mousedown', 'wheel', 'touchstart'] as const) {
     () => {
       if (!port || layout?.mode !== 'full') return;
       const now = Date.now();
-      if (now - lastActivity < 400) return;
+      // Tıklama hep bildirilir: hemen ardından sekme başka siteye giderse arka plan bunu reklam yönlendirmesi sayar.
+      const click = type === 'mousedown' || type === 'touchstart';
+      if (!click && now - lastActivity < 400) return;
       lastActivity = now;
-      send({ type: 'activity' });
+      send(click ? { type: 'activity', click: true } : { type: 'activity' });
     },
     { capture: true, passive: true },
   );
@@ -544,6 +614,9 @@ function onMessage(message: BackgroundMessage): void {
     case 'state':
       state = message.state;
       engine?.receive(message.state);
+      // Sayfa açılırken reklam, katmandaki site hazır olmadan başladıysa ilk haber kaybolmuş olabilir: site filmi
+      // kurunca durumu yollar, "reklamdayım" o an tekrar söylenir.
+      if (adReported) sendAd();
       break;
     case 'clock':
       clock.set(message.offset, message.synced);
@@ -571,7 +644,30 @@ function onMessage(message: BackgroundMessage): void {
     case 'idle':
       sleep();
       break;
+    case 'pick':
+      if (message.on) startPicking(pick, best);
+      else stopPicking();
+      break;
+    case 'unpick':
+      // Başka bir çerçevedeki video seçildi: bu çerçeve yine puanına göre aday olur. Senkron buradaydıysa yanlış
+      // video sussun (yoksa iki ses üst üste çalardı).
+      if (adapter) best?.pause();
+      picked = null;
+      reportedScore = -1;
+      scan();
+      break;
   }
+}
+
+/** Kullanıcı bu videoyu seçti: arka plana haber ver, video bu çerçevenin (ve odanın) videosu olur. */
+function pick(video: HTMLVideoElement): void {
+  // Yanlış seçilmiş video (fragman, reklam) sussun.
+  if (best && best !== video) best.pause();
+  picked = video;
+  stopPicking();
+  send({ type: 'picked' });
+  reportedScore = -1;
+  scan();
 }
 
 // Arka plan "bu sekmede oda var" der (sekmedeki tüm çerçevelere gider).

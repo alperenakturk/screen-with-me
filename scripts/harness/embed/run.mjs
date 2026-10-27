@@ -656,6 +656,107 @@ await a.shot('11-late-oynatici');
   check(!!backToRoom, '"Oda görünümü" ile katman geri geldi (delik yeniden açıldı)');
 }
 
+// 9b-3) Elle video seçimi: sayfada iki video var, otomatik seçim büyük "fragmanı" tutar. "🎯 Video seç" → film sayfası
+// görünür, videoların üstünde düğmeler; küçük videonunkine basılır → senkron ve delik o videoya geçer.
+{
+  bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/two` } });
+  const twoCard = await until(() => a.evalFrame('shell=1', `!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
+  check(!!twoCard, '/two için "Filme git" kartı');
+  await a.evalFrame('shell=1', `document.getElementById('external-go').click()`);
+  const focusOf = `(() => { const f = document.querySelector('[data-swm-focus]'); return f ? (f.querySelector('video') ?? f).id : null; })()`;
+  const auto = await until(async () => (await a.evaluate(`location.pathname === '/two' && ${focusOf}`)) || null, 15000);
+  check(auto === 'big', 'otomatik seçim büyük videoyu (fragman) deliğe oturttu', String(auto));
+  const pickShown = await until(() => a.evalFrame('shell=1', `(() => { const b = document.querySelector('.shell-pick'); return !!b && !b.hidden; })()`), 5000);
+  check(!!pickShown, 'film açıkken katmanda "🎯 Video seç" düğmesi var');
+  await a.evalFrame('shell=1', `document.querySelector('.shell-pick').click(); 1`);
+  const picking = await until(async () => {
+    const s = await a.evaluate(`(() => { const f = ${SHELL}; return { h: f.style.height, focus: document.documentElement.classList.contains('swm-focus'), picker: !!document.querySelector('swm-picker') }; })()`);
+    return s.h === '48px' && !s.focus && s.picker ? s : null;
+  }, 5000);
+  check(!!picking, 'seçim modu: katman şeride çekildi, film sayfası görünüyor, videoların üstünde düğmeler var', JSON.stringify(picking));
+  await a.shot('12-video-secimi');
+  const at = await a.center('#small');
+  await a.sleep(700);
+  if (at) await a.click(at.x, at.y);
+  const chosen = await until(async () => {
+    const s = await a.evaluate(`(() => ({ focus: ${focusOf}, clip: getComputedStyle(${SHELL}).clipPath, picker: !!document.querySelector('swm-picker') }))()`);
+    return s.focus === 'small' && s.clip.startsWith('path(') && !s.picker ? s : null;
+  }, 8000);
+  check(!!chosen, 'küçük video seçildi: oda görünümüne dönüldü, delikte artık o video', JSON.stringify(chosen));
+  bora.send({ t: 'play', position: 30, at: Date.now() });
+  const follows = await until(() => a.evaluate(`(() => { const s = document.getElementById('small'); return !s.paused && Math.abs(s.currentTime - 30) < 3; })()`), 10000);
+  check(!!follows, 'oda oynatınca seçilen (küçük) video oynuyor, odanın yerinde');
+  check(await a.evaluate(`document.getElementById('big').paused`), 'fragman oynamıyor (senkron ondan çıktı)');
+  bora.send({ t: 'pause', position: 40, at: Date.now() });
+}
+
+// 9b-4) Reklam sekmesi: film sayfası ilk tıklamada başka siteye yeni sekme açar → eklenti kapatır, film sekmesi önde
+// kalır, katmanda "kapatıldı · Geri aç" notu; "Geri aç" sekmeyi açar (bu kez kapatılmaz).
+const goFilm = async (path) => {
+  bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}${path}` } });
+  const card = await until(() => a.evalFrame('shell=1', `!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
+  if (card) await a.evalFrame('shell=1', `document.getElementById('external-go').click()`);
+  return until(async () => (await a.evaluate(`location.pathname === ${JSON.stringify(path)} && getComputedStyle(${SHELL}).clipPath.startsWith('path(')`)) || null, 15000);
+};
+const adTabs = async () => ((await a.browser('Target.getTargets')).result?.targetInfos ?? []).filter((t) => t.type === 'page' && t.url.includes('127.0.0.2:5299/ad'));
+{
+  check(!!(await goFilm('/popup')), '/popup: oda görünümü açıldı');
+  await a.sleep(800);
+  const at = await a.center('#v');
+  if (at) await a.click(at.x, at.y + 40);
+  const note = await until(() => a.evalFrame('shell=1', `(() => { const n = document.getElementById('tab-closed'); return n ? n.textContent : null; })()`), 8000);
+  check(!!note && note.includes('127.0.0.2'), 'film sayfasının açtığı reklam sekmesi kapatıldı, katmanda not var', String(note));
+  check((await adTabs()).length === 0, 'reklam sekmesi açık kalmadı');
+  await a.evalFrame('shell=1', `document.querySelector('#tab-closed .btn').click(); 1`);
+  const reopened = await until(async () => (await adTabs()).length === 1, 6000);
+  check(!!reopened, '"Geri aç" reklam sekmesini geri açtı (bu kez kapatılmadı)');
+  for (const t of await adTabs()) await a.browser('Target.closeTarget', { targetId: t.targetId });
+}
+
+// 9b-5) Yönlendirme: film sayfası ilk tıklamada sekmeyi başka siteye götürür → katman kalkmaz, "Filme geri dön" kartı;
+// basınca film sayfasına dönülür.
+{
+  check(!!(await goFilm('/redirect')), '/redirect: oda görünümü açıldı');
+  // Video deliğe yerleşsin (yerleşim birkaç kare sürer); tıklama kaçarsa bir kez daha.
+  await a.sleep(800);
+  for (let i = 0; i < 2; i++) {
+    const at = await a.center('#v');
+    if (at) await a.click(at.x, at.y + 40);
+    if (await until(async () => String(await a.evaluate('location.href')).includes('127.0.0.2'), 3000)) break;
+  }
+  const stray = await until(async () => {
+    const href = String(await a.evaluate('location.href'));
+    if (!href.includes('127.0.0.2:5299/ad')) return null;
+    return (await a.evalFrame('shell=1', `(() => { const s = document.getElementById('external-stray'); return !!s && !s.hidden && !document.getElementById('external').hidden ? document.getElementById('external-go').textContent : null; })()`)) || null;
+  }, 12000);
+  check(!!stray, 'reklam yönlendirmesi: katman kalktı değil, "Filme geri dön" kartı çıktı', String(stray));
+  await a.shot('13-filme-geri-don');
+  await a.evalFrame('shell=1', `document.getElementById('external-go').click(); 1`);
+  const back = await until(async () => (await a.evaluate(`location.pathname === '/redirect' && !!${SHELL}`)) || null, 12000);
+  check(!!back, '"Filme geri dön" → sekme film sayfasına döndü, oda görünümü yerinde');
+}
+
+// 9b-6) Ön-reklam (aynı <video>'da 12 sn'lik kısa video, sonra film): oda bu kişiyi beklemez, kişiler listesinde
+// "reklamda" görünür; reklam bitince işaret kalkar ve film odanın yerine atlar.
+if (process.env.FILM_AD) {
+  check(!!(await goFilm('/preroll')), '/preroll: oda görünümü açıldı');
+  bora.send({ t: 'play', position: 100, at: Date.now() });
+  await bora.wait((m) => m.t === 'state' && !m.state.paused, 5000);
+  bora.clear();
+  const inAd = await until(() => bora.members?.some((m) => m.name === 'Ayşe' && m.ad), 10000);
+  check(!!inAd, 'ön-reklam oynarken Ayşe kişiler listesinde "reklamda"');
+  await a.sleep(1500);
+  check(bora.count((m) => m.t === 'state' && m.state.paused) === 0, 'reklamdaki kişi için oda durmadı (herkes hazır beklemesi yok)');
+  const done = await until(async () => {
+    const v = await a.evaluate(`(() => { const v = document.getElementById('v'); return { src: v.currentSrc, t: v.currentTime, p: v.paused }; })()`);
+    return !bora.members?.some((m) => m.name === 'Ayşe' && m.ad) && !v.src.includes('/ad.webm') && !v.p && v.t > 100 ? v : null;
+  }, 30000);
+  check(!!done, 'reklam bitti: işaret kalktı, film odanın yerinde (100+ sn) oynuyor', JSON.stringify(done));
+  bora.send({ t: 'pause', position: 130, at: Date.now() });
+} else {
+  console.log('     (FILM_AD yok: ön-reklam testi atlandı)');
+}
+
 // 9c) İlgisiz bir sitedeki sekmede (oda varken) örtü ve katman hiç olmamalı.
 {
   // 127.0.0.2: 127.0.0.1'den farklı site, yine yerel döngü. [::1] IPv6'sız Linux konteynerinde (bulut) açılmıyordu.

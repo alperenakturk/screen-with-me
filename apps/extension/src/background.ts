@@ -12,13 +12,18 @@ import { isForwardedKey, isRelayable, type EmbedReply } from '@swm/shared/embed'
 import { ROOM_ID_PATTERN, type PlaybackState } from '@swm/shared/protocol';
 import { cleanLayout, type ShellLayout } from '@swm/shared/shell';
 import { SITE_URL } from './config.ts';
+import { readValue } from './store.ts';
 import {
+  MIC_RESULT,
   PORT_NAME,
   PROBE,
   SESSIONS_KEY,
   SHELL_PORT_NAME,
+  VOICE_PORT_NAME,
   type BackgroundMessage,
   type FrameMessage,
+  type OffscreenIn,
+  type OffscreenOut,
   type ShellPortMessage,
   type ShellPortReply,
   type SiteGoMessage,
@@ -55,6 +60,16 @@ interface Shell {
   videoSent: boolean | null;
   /** Film sitesinin alan adı (ör. ornek.com): sekme başka bir siteye giderse katman kalkar. */
   site: string;
+  /** Elle video seçimi açık: sonradan yüklenen çerçeveler de düğmelerini çizsin. */
+  picking: boolean;
+  /** Film sayfasına (oda görünümünde) en son tıklanan an: hemen ardından gelen başka site yönlendirmesi reklamdır. */
+  lastClick: number;
+  /** Bu ana kadar film sekmesinden açılan sekmeler kapatılmaz (site "bağlantı açıyorum" dedi, ya da "Geri aç"). */
+  allowTabsUntil: number;
+  /** Kapatılan reklam sekmelerinin adresleri ("Geri aç" sadece bunları açar). */
+  closed: string[];
+  /** Film sayfası reklam yönlendirmesiyle başka bir siteye gitti (film sitesine dönünce biter). */
+  strayed: boolean;
 }
 
 // Katman açılır açılmaz sayfanın tamamını kaplar (oda görünümü hemen gelsin); site deliği sonra bildirir.
@@ -65,7 +80,24 @@ const frames = new Map<number, Map<number, Frame>>();
 const shells = new Map<number, Shell>();
 
 function newShell(tabId: number, roomId: string, site: string): Shell {
-  return { tabId, roomId, port: null, state: null, offset: 0, synced: false, activeFrame: null, activated: false, layout: START, videoSent: null, site };
+  return {
+    tabId,
+    roomId,
+    port: null,
+    state: null,
+    offset: 0,
+    synced: false,
+    activeFrame: null,
+    activated: false,
+    layout: START,
+    videoSent: null,
+    site,
+    picking: false,
+    lastClick: 0,
+    allowTabsUntil: 0,
+    closed: [],
+    strayed: false,
+  };
 }
 
 /** Adresin "sitesi": alan adının son iki parçası (www.ornek.com ve izle.ornek.com aynı site). */
@@ -117,6 +149,8 @@ function probe(tabId: number): void {
 
 function endShell(tabId: number): void {
   if (!shells.delete(tabId)) return;
+  // Sesli sohbet bu sekmedeyse biter (sitedeki odaya dönüldüyse site kendi sesini açar).
+  toVoice({ type: 'end', tabId });
   // Film sayfasındaki çerçeveler uyusun (video aramayı, senkronu bıraksın, katman kalksın).
   for (const frame of frames.get(tabId)?.values() ?? []) post(frame.port, { type: 'idle' });
   void persist();
@@ -177,7 +211,7 @@ function pushLayout(shell: Shell, only?: number): void {
 
 async function pushPage(shell: Shell): Promise<void> {
   const tab = await chrome.tabs.get(shell.tabId).catch(() => null);
-  if (tab?.url) post(shell.port, { type: 'page', url: tab.url });
+  if (tab?.url) post(shell.port, shell.strayed ? { type: 'page', url: tab.url, strayed: true } : { type: 'page', url: tab.url });
 }
 
 // ---- Film çerçeveleri ----
@@ -213,6 +247,7 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       reply(shell, { type: 'fullscreen' });
       break;
     case 'activity':
+      if (message.click) shell.lastClick = Date.now();
       reply(shell, { type: 'activity' });
       break;
     case 'hole':
@@ -220,6 +255,14 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       break;
     case 'fullscreen-changed':
       if (frameId === 0) post(shell.port, { type: 'fullscreen', on: message.on });
+      break;
+    case 'picked':
+      // Kullanıcı bu çerçevedeki videoyu seçti: başka çerçevedeki eski seçim düşer, düğmeler kalkar. Çerçeve seçilen
+      // videoyu çok yüksek puanla bildirir (hemen ardından gelen `candidate`), etkin çerçeve o olur.
+      if (!shell.picking) break;
+      shell.picking = false;
+      for (const [id, other] of frames.get(tabId) ?? []) post(other.port, id === frameId ? { type: 'pick', on: false } : { type: 'unpick' });
+      post(shell.port, { type: 'picked' });
       break;
   }
 }
@@ -259,6 +302,7 @@ chrome.runtime.onConnect.addListener((port) => {
     // Üst çerçeve odanın katmanını açar; her çerçeve yerleşimi bilsin.
     if (frameId === 0) post(port, { type: 'shell-open', roomId: shell.roomId });
     pushLayout(shell, frameId);
+    if (shell.picking) post(port, { type: 'pick', on: true });
   });
 });
 
@@ -309,7 +353,10 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
       // Sitedeki odaya dönülüyorsa katman kalkar (site kendi sayfasında devralır).
       if (url.origin === SITE_ORIGIN) endShell(shell.tabId);
       // Odadaki başka bir film sayfası (başka bir site olabilir): katman oraya da gelsin.
-      else shell.site = siteOf(url.href);
+      else {
+        shell.site = siteOf(url.href);
+        shell.strayed = false;
+      }
       void persist();
       await chrome.tabs.update(shell.tabId, { url: url.href }).catch(() => {});
       break;
@@ -317,6 +364,23 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
     case 'fullscreen':
       post(frames.get(shell.tabId)?.get(0)?.port, { type: 'shell-fullscreen', on: message.on });
       break;
+    case 'pick':
+      shell.picking = message.on;
+      for (const frame of frames.get(shell.tabId)?.values() ?? []) post(frame.port, { type: 'pick', on: message.on });
+      break;
+    case 'open-ok':
+      shell.allowTabsUntil = Date.now() + 3000;
+      break;
+    case 'voice':
+      toVoice({ type: 'voice', tabId: shell.tabId, roomId: shell.roomId, msg: message.msg });
+      break;
+    case 'reopen': {
+      if (!shell.closed.includes(message.url)) break;
+      shell.closed = shell.closed.filter((url) => url !== message.url);
+      shell.allowTabsUntil = Date.now() + 3000;
+      await chrome.tabs.create({ url: message.url, openerTabId: shell.tabId }).catch(() => {});
+      break;
+    }
   }
 }
 
@@ -350,6 +414,99 @@ chrome.runtime.onConnect.addListener((port) => {
     const shell = shells.get(tabId);
     if (shell?.port === port) shell.port = null;
   });
+});
+
+// ---- Sesli sohbet (film sayfasındaki katmanda) ----
+// Ses eklentinin görünmeyen sayfasında (offscreen.html) çalışır: izin eklentinin adına, film sayfası değişse de kopmaz.
+// Arka plan site (shell.html üzerinden) ile o sayfa arasında mesaj taşır; ilk seferde izin sekmesini (mic.html) açar.
+
+const OFFSCREEN_PAGE = chrome.runtime.getURL('offscreen.html');
+const MIC_PAGE = chrome.runtime.getURL('mic.html');
+let voicePort: chrome.runtime.Port | null = null;
+/** Ses sayfası açılırken gelen mesajlar (bağlanınca sırayla gider). */
+const voiceQueue: OffscreenIn[] = [];
+let creatingOffscreen: Promise<void> | null = null;
+/** Açık izin sekmesi ve izni isteyen film sekmesi. */
+let micTab: { id: number; filmTab: number | null } | null = null;
+
+function toVoice(message: OffscreenIn): void {
+  if (voicePort) {
+    post(voicePort, message as never);
+    return;
+  }
+  // Oda bitti ama ses sayfası hiç açılmamış: açmaya gerek yok.
+  if (message.type === 'end') return;
+  voiceQueue.push(message);
+  void ensureOffscreen();
+}
+
+async function ensureOffscreen(): Promise<void> {
+  creatingOffscreen ??= (async () => {
+    const exists = await chrome.offscreen.hasDocument().catch(() => false);
+    if (!exists) {
+      await chrome.offscreen
+        .createDocument({
+          url: 'offscreen.html',
+          reasons: [chrome.offscreen.Reason.USER_MEDIA],
+          justification: 'Voice chat in the watch room while the video plays on another site',
+        })
+        .catch(() => {});
+    }
+  })().finally(() => {
+    creatingOffscreen = null;
+  });
+  return creatingOffscreen;
+}
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== VOICE_PORT_NAME) return;
+  if (!port.sender?.url?.startsWith(OFFSCREEN_PAGE)) {
+    port.disconnect();
+    return;
+  }
+  voicePort = port;
+  for (const message of voiceQueue.splice(0)) post(port, message as never);
+  port.onMessage.addListener((message: OffscreenOut) => {
+    if ('type' in message) {
+      void openMicPage();
+      return;
+    }
+    const shell = shells.get(message.tabId);
+    post(shell?.port, { type: 'voice', msg: message.msg });
+  });
+  port.onDisconnect.addListener(() => {
+    if (voicePort === port) voicePort = null;
+  });
+});
+
+/** İlk sefer: mikrofon izni için küçük bir eklenti sekmesi (offscreen izin isteyemez). */
+async function openMicPage(): Promise<void> {
+  const [active] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => [] as chrome.tabs.Tab[]);
+  if (micTab) {
+    await chrome.tabs.update(micTab.id, { active: true }).catch(() => {});
+    return;
+  }
+  const tab = await chrome.tabs.create({ url: MIC_PAGE, ...(active?.id !== undefined ? { openerTabId: active.id } : {}) }).catch(() => null);
+  if (tab?.id !== undefined) micTab = { id: tab.id, filmTab: active?.id ?? null };
+}
+
+function micDone(granted: boolean): void {
+  const done = micTab;
+  micTab = null;
+  toVoice({ type: 'permission', granted });
+  if (!done) return;
+  if (granted) void chrome.tabs.remove(done.id).catch(() => {});
+  if (done.filmTab !== null) void chrome.tabs.update(done.filmTab, { active: true }).catch(() => {});
+}
+
+chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+  if ((message as { type?: unknown } | null)?.type !== MIC_RESULT || !sender.url?.startsWith(MIC_PAGE)) return;
+  micDone((message as { granted?: unknown }).granted === true);
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  // İzin verilmeden kapatıldı.
+  if (micTab?.id === tabId) micDone(false);
 });
 
 // ---- Ana site ----
@@ -391,6 +548,7 @@ function originOf(url: string): string | null {
 }
 
 chrome.tabs.onUpdated.addListener((tabId, info) => {
+  if (info.url && opened.has(tabId)) void checkOpened(tabId, info.url);
   const shell = shells.get(tabId);
   if (!shell) return;
   // Sekme sitemize döndüyse (🏠, geri tuşu): katman kalkar, site kendi sayfasında devralır.
@@ -398,10 +556,18 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
     endShell(tabId);
     return;
   }
-  // Kullanıcı film sitesinden başka bir siteye gitti (adres çubuğu, dış link): katman orada açılmasın.
+  // Film sitesinden başka bir siteye gidildi. Oda görünümündeyken deliğe tıklamanın hemen ardındaysa bu bir reklam
+  // yönlendirmesidir: katman kalkmaz, site "Bu sayfa seni başka siteye götürdü · Filme geri dön" der.
+  // Değilse (adres çubuğu, bilerek gidilen link) katman kalkar.
   if (info.url && /^https?:/.test(info.url) && shell.site && siteOf(info.url) !== shell.site) {
-    endShell(tabId);
-    return;
+    const redirected = shell.layout.mode === 'full' && Date.now() - shell.lastClick < REDIRECT_MS;
+    if (!redirected && !shell.strayed) {
+      endShell(tabId);
+      return;
+    }
+    shell.strayed = true;
+  } else if (info.url && /^https?:/.test(info.url)) {
+    shell.strayed = false;
   }
   // Adres değişti (başka bölüm, sayfa içi geçiş): site odadaki sayfayla karşılaştırsın.
   if (info.url) void pushPage(shell);
@@ -411,4 +577,60 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
   endShell(tabId);
   frames.delete(tabId);
+  opened.delete(tabId);
 });
+
+// ---- Reklam sekmeleri ve yönlendirmeleri ----
+// Film sayfasındaki ilk tıklamada reklam betikleri yeni sekme açar ya da sekmeyi başka siteye götürür. Oda görünümünde
+// (kişi film sayfasının kendisini görmüyorken) film sayfasına tıklandıktan hemen sonra film sekmesinden açılıp ilk
+// saniyelerde başka bir siteye giden sekme reklam sayılır: kapatılır, film sekmesi öne gelir, sitede "kapatıldı · Geri
+// aç" notu çıkar. Kişinin kendi açtığı sekmeler (Ctrl+T: yeni sekme sayfasıyla başlar, tıklama yok) dokunulmaz.
+// Ayarlardan kapatılabilir.
+// Sayfanın betikleri bunu atlatamaz; hiçbir şey engellenmez, sadece açılan sekme kapanır.
+
+/** Tıklamadan sonra bu süre içinde başka siteye giden film sekmesi reklamla yönlendirilmiş sayılır. */
+const REDIRECT_MS = 4000;
+/** Açılan sekme bu süre izlenir (ilk adres about:blank olabilir, reklam sonra yüklenir). */
+const OPENED_WATCH_MS = 5000;
+/** Sekme film sayfasına tıklamadan en fazla bu kadar sonra açıldıysa reklam sayılabilir. */
+const CLICK_MS = 3000;
+const opened = new Map<number, { opener: number; at: number }>();
+
+chrome.tabs.onCreated.addListener((tab) => {
+  void (async () => {
+    await ready;
+    const opener = tab.openerTabId;
+    if (opener === undefined || tab.id === undefined) return;
+    const shell = shells.get(opener);
+    // Sadece oda görünümündeyken (👁 Sayfayı göster / video seçimi açıkken kişi sayfayı görüyor, bilerek tıklıyor).
+    if (!shell || shell.layout.mode !== 'full' || Date.now() < shell.allowTabsUntil) return;
+    // Sayfa betiğinin açtığı sekme bir adresle ya da boş (about:blank) başlar; yeni sekme sayfası (chrome://newtab)
+    // kişinin kendisidir.
+    const first = tab.pendingUrl || tab.url || '';
+    if (first && !/^(https?:|about:blank)/.test(first)) return;
+    opened.set(tab.id, { opener, at: Date.now() });
+    await checkOpened(tab.id, first);
+  })();
+});
+
+async function checkOpened(tabId: number, url: string): Promise<void> {
+  const entry = opened.get(tabId);
+  if (!entry) return;
+  if (Date.now() - entry.at > OPENED_WATCH_MS) {
+    opened.delete(tabId);
+    return;
+  }
+  // Henüz adres yok (about:blank): asıl adres gelince yine bakılır.
+  if (!/^https?:/.test(url)) return;
+  opened.delete(tabId);
+  const shell = shells.get(entry.opener);
+  if (!shell || originOf(url) === SITE_ORIGIN || siteOf(url) === shell.site) return;
+  // Film sayfasına (deliğe) tıklanmadan açılan sekmeye dokunulmaz.
+  if (entry.at - shell.lastClick > CLICK_MS) return;
+  // Kullanıcı ayarlardan kapattıysa dokunma.
+  if ((await readValue('opt:closeAds').catch(() => null)) === '0') return;
+  await chrome.tabs.remove(tabId).catch(() => {});
+  await chrome.tabs.update(entry.opener, { active: true }).catch(() => {});
+  shell.closed = [...shell.closed.slice(-9), url];
+  post(shell.port, { type: 'tab-closed', url });
+}

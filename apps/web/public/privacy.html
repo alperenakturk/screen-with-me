@@ -77,6 +77,8 @@
           <li>On the film page the extension shows our own website (the room page) as a layer over the page; the room connection is the website's, exactly as on the site. The film site cannot read this layer.</li>
           <li>Your website settings (name, avatar, theme, language, browser ID, saved rooms, your custom emojis) are also kept in the extension's own storage in your browser, so the layer on the film page uses the same settings. Nothing extra is sent anywhere.</li>
           <li>The "access all sites" permission is needed so videos can be found on any site (including inside iframes).</li>
+          <li>While you watch in the room view, a tab that the video page opens to another site right after you click on it (usually an ad pop-up) is closed and the film tab is brought back; a small note lets you reopen it. Only the address of that tab is used, only on your computer, and nothing is sent anywhere. You can turn this off in the room settings.</li>
+          <li>Voice chat on film pages runs in an invisible page of the extension ("offscreen" permission), so the microphone permission is asked once for ScreenWithMe and not for the film site. The film site cannot access your microphone through us.</li>
         </ul>
 
         <h2>Voice chat</h2>
@@ -139,6 +141,8 @@
           <li>Film sayfasında eklenti, sitemizin kendisini (oda sayfası) sayfanın üstünde katman olarak gösterir; oda bağlantısı sitedeki gibi sitenin bağlantısıdır. Film sitesi bu katmanın içini okuyamaz.</li>
           <li>Site ayarların (isim, avatar, tema, dil, tarayıcı kimliği, kayıtlı odalar, özel emojilerin) eklentinin kendi depolama alanında da, senin tarayıcında tutulur; böylece film sayfasındaki katman aynı ayarlarla açılır. Başka bir yere ek bir şey gönderilmez.</li>
           <li>"Tüm sitelerde çalışma" izni, videoların her sitede (iframe içinde de) bulunabilmesi için gereklidir.</li>
+          <li>Oda görünümünde izlerken video sayfasına tıkladığın anda sayfanın başka bir siteye açtığı sekme (genelde reklam penceresi) kapatılır ve film sekmesi öne getirilir; küçük bir notla geri açabilirsin. Bunun için sadece o sekmenin adresi, sadece senin bilgisayarında kullanılır; hiçbir yere gönderilmez. Oda ayarlarından kapatabilirsin.</li>
+          <li>Film sayfalarındaki sesli sohbet eklentinin görünmeyen bir sayfasında çalışır ("offscreen" izni): mikrofon izni film sitesi için değil, bir kez ScreenWithMe için sorulur. Film sitesi bizim üzerimizden mikrofonuna erişemez.</li>
         </ul>
 
         <h2>Sesli sohbet</h2>

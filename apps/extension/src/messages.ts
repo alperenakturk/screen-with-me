@@ -9,7 +9,7 @@
 
 import type { EmbedControl, EmbedReply, EmbedRequest } from '@swm/shared/embed';
 import type { ClientMessage, PlaybackState } from '@swm/shared/protocol';
-import type { Rect, ShellLayout } from '@swm/shared/shell';
+import type { Rect, ShellLayout, VoiceDown, VoiceUp } from '@swm/shared/shell';
 
 /** Çerçevelerin "bir sekmede oda var mı" diye baktığı yer (chrome.storage.session): kabuklu sekmeler. */
 export const SESSIONS_KEY = 'sessions';
@@ -18,6 +18,21 @@ export const SESSIONS_KEY = 'sessions';
 export const PORT_NAME = 'swm';
 /** shell.html ⇄ arka plan. */
 export const SHELL_PORT_NAME = 'swm-shell';
+/** Ses sayfası (offscreen) ⇄ arka plan. */
+export const VOICE_PORT_NAME = 'swm-voice';
+/** İzin sayfası (mic.html) → arka plan: mikrofon izni verildi mi. */
+export const MIC_RESULT = 'swm-mic-result';
+
+/** Arka plan → ses sayfası. */
+export type OffscreenIn =
+  | { type: 'voice'; tabId: number; roomId: string; msg: VoiceUp }
+  /** İzin sekmesinin sonucu. */
+  | { type: 'permission'; granted: boolean }
+  /** Bu sekmenin odası bitti: ses de biter. */
+  | { type: 'end'; tabId: number };
+
+/** Ses sayfası → arka plan. */
+export type OffscreenOut = { tabId: number; msg: VoiceDown } | { type: 'need-permission' };
 
 /** Çerçeve → arka plan */
 export type FrameMessage =
@@ -28,12 +43,17 @@ export type FrameMessage =
   /** Film sayfasında basılan kısayol ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
   | { type: 'key'; key: string }
   | { type: 'fullscreen' }
-  /** Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. */
-  | { type: 'activity' }
+  /**
+   * Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. `click`: tıklandı (hemen
+   * ardından sekme başka siteye giderse reklam yönlendirmesi sayılır, katman kalkmaz).
+   */
+  | { type: 'activity'; click?: boolean }
   /** Üst çerçeve: delik açıldı (sayfa gizli, video yerinde); site deliğin içini saydam yapabilir. */
   | { type: 'hole' }
   /** Bizim tam ekranımız bitti/başladı (üst çerçeve: Esc vb.). */
   | { type: 'fullscreen-changed'; on: boolean }
+  /** Seçim modunda kullanıcı bu çerçevedeki bir videoyu seçti ("🎯 Bunu senkronla"). */
+  | { type: 'picked' }
   | { type: 'send'; message: ClientMessage };
 
 /** Arka plan → çerçeve */
@@ -56,7 +76,11 @@ export type BackgroundMessage =
   /** `fromSite`: yerleşimi site bildirdi (yoksa arka planın yer tutucusu: katman henüz boyanmadı, örtü kalsın). */
   | { type: 'shell-layout'; layout: ShellLayout; active: boolean; fromSite: boolean }
   /** Üst çerçeve: film sayfasını tam ekran yap / çık. */
-  | { type: 'shell-fullscreen'; on: boolean };
+  | { type: 'shell-fullscreen'; on: boolean }
+  /** Elle video seçimi: videoların üstüne "Bunu senkronla" düğmeleri çizilsin / kalksın. */
+  | { type: 'pick'; on: boolean }
+  /** Başka bir çerçevedeki video seçildi: bu çerçevenin elle seçimi geçersiz. */
+  | { type: 'unpick' };
 
 /** Arka plan → sekmedeki tüm çerçeveler: "bu sekmede oda var, videonu bildir". */
 export const PROBE = 'swm-probe';
@@ -67,17 +91,26 @@ export type ShellPortMessage =
   | { type: 'embed'; request: EmbedRequest }
   | { type: 'layout'; layout: ShellLayout }
   | { type: 'navigate'; url: string }
-  | { type: 'fullscreen'; on: boolean };
+  | { type: 'fullscreen'; on: boolean }
+  | { type: 'pick'; on: boolean }
+  /** Site bir bağlantıyı yeni sekmede açıyor (sohbetteki link): o sekme reklam sayılıp kapatılmasın. */
+  | { type: 'open-ok' }
+  /** Kapatılan reklam sekmesini geri aç ("Geri aç"). */
+  | { type: 'reopen'; url: string }
+  | { type: 'voice'; msg: VoiceUp };
 
 /** Arka plan → shell.html */
 export type ShellPortReply =
   /** Bu sekmenin odası: shell.html sitemizi ancak bunu alınca açar (başka bir sayfaya gömülen shell.html hiçbir şey açmaz). */
   | { type: 'room'; roomId: string }
   | { type: 'reply'; reply: EmbedReply }
-  | { type: 'page'; url: string }
+  | { type: 'page'; url: string; strayed?: boolean }
   | { type: 'video'; found: boolean }
   | { type: 'fullscreen'; on: boolean }
-  | { type: 'hole' };
+  | { type: 'hole' }
+  | { type: 'picked' }
+  | { type: 'tab-closed'; url: string }
+  | { type: 'voice'; msg: VoiceDown };
 
 /** Ana site → arka plan (site-bridge üzerinden): "bu sekme film sayfasına gitsin, odanın katmanıyla". */
 export interface SiteGoMessage {

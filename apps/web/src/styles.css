@@ -1142,6 +1142,15 @@ button.nav-link {
   font-size: 16px;
 }
 
+.host-badge.ad-badge {
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgb(255 196 0 / 0.16);
+  color: #ffd76a;
+}
+
 .kick {
   color: var(--danger);
 }
@@ -2144,6 +2153,30 @@ html:not(.shell) .shell-only {
 
 .home-ask .btn {
   flex: none;
+}
+
+/* Film sayfasının açtığı reklam sekmesi kapatıldı: aynı kart, öneri bağlantısı alt satırda */
+.home-ask.tab-closed {
+  flex-wrap: wrap;
+  justify-content: center;
+  border-radius: 16px;
+}
+
+.home-ask.tab-closed a {
+  flex-basis: 100%;
+  text-align: center;
+  color: #cdbfff;
+}
+
+.home-ask .icon-btn {
+  color: #fff;
+}
+
+/* Film sayfası reklamla başka siteye gitti: "Filme geri dön" kartının üst yazısı */
+.external-stray {
+  margin: 0;
+  font-weight: 600;
+  color: #ffd76a;
 }
 
 /* Tepkiden sonraki kısa bekleme: butonlar soluklaşır */
@@ -3615,8 +3648,14 @@ html.shell .brand {
   cursor: pointer;
 }
 
-.shell-home {
+.shell-home,
+.nav-link.shell-peek,
+.nav-link.shell-pick {
   white-space: nowrap;
+}
+
+.nav-link.shell-pick[hidden] {
+  display: none;
 }
 
 /* Filmin deliği: eklenti film videosunu tam buraya yerleştirir */

@@ -196,6 +196,8 @@ export interface Member {
   client?: ClientKind;
   /** Sesli sohbette (yoksa seste değil). `track`: yayınladığı ses akışı (diğerleri bununla dinler). */
   voice?: MemberVoice;
+  /** Film sayfasında reklam izliyor (oda onu beklemez; bitince yetişir). */
+  ad?: boolean;
 }
 
 export interface MemberVoice {
@@ -308,9 +310,10 @@ export type ClientMessage =
   | { t: 'unban'; id: string }
   /**
    * "Herkes hazır": videom takıldı (ready=false) ya da tekrar oynayabilir (ready=true).
-   * Sunucu takılan biri olduğunda odayı kısa süre bekletir.
+   * Sunucu takılan biri olduğunda odayı kısa süre bekletir. `ad`: film sayfasında reklam oynuyor; oda bu kişiyi
+   * beklemez (reklamı herkes farklı anda görür), kişiler listesinde "reklamda" yazar, reklam bitince kişi yetişir.
    */
-  | { t: 'ready'; ready: boolean }
+  | { t: 'ready'; ready: boolean; ad?: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
   | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
@@ -664,7 +667,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'unpin':
       return isItemId(m.id) ? { t: m.t, id: m.id } : null;
     case 'ready':
-      return typeof m.ready === 'boolean' ? { t: 'ready', ready: m.ready } : null;
+      if (typeof m.ready !== 'boolean') return null;
+      return typeof m.ad === 'boolean' ? { t: 'ready', ready: m.ready, ad: m.ad } : { t: 'ready', ready: m.ready };
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
       for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions'] as const) {

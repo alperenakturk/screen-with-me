@@ -1,10 +1,14 @@
 import type { ClientMessage, Member, RtcRequest, RtcResult, ServerMessage, Signal, VoiceMode } from '@swm/shared/protocol';
+import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
+import { LevelMeter } from '@swm/shared/level-meter';
 import { P2pVoice } from '@swm/shared/voice-p2p';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
+import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 import { flashHint } from './hint.ts';
+import { ExtVoice } from './voice-ext.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
 const RPC_TIMEOUT_MS = 12_000;
@@ -13,10 +17,14 @@ const RPC_TIMEOUT_MS = 12_000;
  * Sesli sohbet kartı (sağ panelde, davet linkinin altında): "🎙 Sese katıl", katılınca 🎙/🔇 ve "Ayrıl";
  * seste olanların avatarları (konuşanın çevresi parlar). Katılmayan kimseyi duymaz (sürpriz ses yok).
  * Taşıma yolu sunucudan gelir: eşler arası (varsayılan, ücretsiz) ya da Cloudflare Realtime (anahtar varsa).
- * Şimdilik sadece sitede; film sayfasındaki katmanda (eklenti) mikrofon izni film sitesinin adına sorulduğu için
- * kapalı (bkz. docs/internal/ses-goruntu.md, 2. aşama).
+ * Film sayfasındaki katmanda (kabuk) ses eklentinin görünmeyen sayfasında çalışır (`ExtVoice`): mikrofon izni film
+ * sitesinin değil eklentinin adına sorulur, film sayfası değişse de ses kopmaz. Eski eklenti bunu bilmez (`caps`
+ * gelmez): o zaman katmanda kart gizli kalır.
+ *
+ * Seste olduğum bu sekmeden bağımsız hatırlanır (`voice:<oda>`): sitedeki odadan filme geçince (ya da tersi) izin
+ * zaten verilmişse ses kendiliğinden yeniden açılır.
  */
-export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null) {
+export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean) {
   const card = root.querySelector<HTMLElement>('#voice-card')!;
   const joinButton = root.querySelector<HTMLButtonElement>('#voice-join')!;
   const onBox = root.querySelector<HTMLElement>('#voice-on')!;
@@ -43,10 +51,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     });
 
   const announce = (on: boolean, mic?: boolean) => send(on ? { t: 'voice', on, mic: mic ?? true } : { t: 'voice', on: false });
+  /** Gelen seslerin seviyesi (WebRTC'nin ölçüsü gelmeyebilir). */
+  const meter = new LevelMeter();
   const onRemote = (memberId: string, stream: MediaStream | null) => {
     audios.get(memberId)?.remove();
     audios.delete(memberId);
-    if (!stream) return;
+    if (!stream) {
+      meter.watch(memberId, null);
+      return;
+    }
     // Görünmez <audio>: tarayıcı çalar (katılırken tıklandığı için otomatik oynatma engeline takılmaz).
     const audio = el('audio', { autoplay: '' }) as HTMLAudioElement;
     audio.srcObject = stream;
@@ -54,23 +67,43 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     document.body.append(audio);
     void audio.play().catch(() => {});
     audios.set(memberId, audio);
+    // Chrome uzaktan gelen sesi Web Audio'ya ancak bir <audio>'da çalarken verir: ölçüm çalmaya başladıktan sonra.
+    meter.watch(memberId, stream);
   };
   let mode: VoiceMode = 'p2p';
   let p2p: P2pVoice | null = null;
+  let ext: ExtVoice | null = null;
+  /** Sunucu sesi destekliyor mu / eklenti katmanda sesi destekliyor mu (sadece kabukta gerekir). */
+  let serverVoice = false;
+  let extVoice = false;
+  const failed = (memberId: string) => {
+    const who = members.find((m) => m.id === memberId)?.name ?? '';
+    flashHint(peopleBox, t('voice.p2pFailed', { name: who }), 7000);
+  };
   const makeClient = (): Voice => {
+    if (isShell) {
+      ext ??= new ExtVoice((msg) => postToExtension({ type: 'voice', msg }), {
+        announce,
+        signal: (to, data) => send({ t: 'signal', to, data }),
+        rpc: (id, request) => void rpc(request).then((result) => ext?.rtcResult(id, result)),
+        failed,
+        changed: () => render(),
+      });
+      ext.mode = mode;
+      return ext;
+    }
     if (mode === 'sfu') return new VoiceClient({ rpc, announce, onRemote });
     p2p = new P2pVoice({
       signal: (to, data) => send({ t: 'signal', to, data }),
       announce,
       onRemote,
-      onFailed: (memberId) => {
-        const who = members.find((m) => m.id === memberId)?.name ?? '';
-        flashHint(peopleBox, t('voice.p2pFailed', { name: who }), 7000);
-      },
+      onFailed: failed,
     });
     return p2p;
   };
   let client: Voice = makeClient();
+  const wantKey = `voice:${roomId}`;
+  const remember = (on: boolean) => save(wantKey, on ? '1' : '0');
 
   function render(): void {
     card.hidden = !available;
@@ -96,7 +129,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   joinButton.addEventListener('click', async () => {
     joinButton.disabled = true;
     try {
+      client.sync(members, myId());
       await client.join();
+      remember(true);
       // İlk katılışta kulaklık ipucu (film sesi hoparlörden karşıya gitmesin).
       hint.hidden = false;
       setTimeout(() => (hint.hidden = true), 9000);
@@ -115,22 +150,62 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   });
   leaveButton.addEventListener('click', () => {
     client.leave();
+    remember(false);
     render();
   });
 
+  /** Dinlediklerimin seviyesi: WebRTC'nin ölçüsü ile sesin kendisinden ölçülenin büyüğü (eklentide ölçüm orada). */
+  function allLevels(): Map<string, number> {
+    const out = new Map(client.levels());
+    if (client instanceof ExtVoice) return out;
+    for (const [memberId, level] of meter.levels()) out.set(memberId, Math.max(out.get(memberId) ?? 0, level));
+    return out;
+  }
+
+  /** Sitedeki odadan filme geçince (ya da tersi) seste idiysek ve izin zaten verilmişse sessizce yeniden katıl. */
+  async function rejoin(): Promise<void> {
+    if (client.active || load(wantKey) !== '1' || !available || !myId()) return;
+    if (client instanceof ExtVoice) {
+      // Eklenti katılmak için üye kimliğimi ve odadakileri bilmeli.
+      client.sync(members, myId());
+      await client.join(true).catch(() => {});
+    } else {
+      const state = await navigator.permissions?.query({ name: 'microphone' as PermissionName }).then((s) => s.state, () => 'prompt');
+      if (state !== 'granted') return;
+      await client.join().catch(() => {});
+    }
+    client.sync(members, myId());
+    render();
+  }
+
   // Kim konuşuyor: dinlediklerimin ses seviyesi (kendi sesim için mikrofon açıksa da göstermeyiz; yankı hissi olmasın).
+  // Son sesten sonra kısa süre yanık kalır: kelime aralarında gösterge titremesin.
+  const SPEAK_LEVEL = 0.04;
+  const SPEAK_HOLD_MS = 600;
+  const spokeAt = new Map<string, number>();
   setInterval(() => {
     if (!client.active) return;
-    const levels = client.levels();
+    const now = Date.now();
+    for (const [memberId, level] of allLevels()) if (level > SPEAK_LEVEL) spokeAt.set(memberId, now);
     for (const face of peopleBox.querySelectorAll<HTMLElement>('[data-voice-id]')) {
-      face.classList.toggle('speaking', (levels.get(face.dataset.voiceId!) ?? 0) > 0.04);
+      face.classList.toggle('speaking', now - (spokeAt.get(face.dataset.voiceId!) ?? 0) < SPEAK_HOLD_MS);
     }
   }, 250);
 
   return {
     /** Sunucu sesli sohbeti destekliyor mu (yeni bağlantıda). Yeniden bağlanınca ses de yeniden kurulur. */
     welcome(voice: boolean, nextMode: VoiceMode = 'p2p'): void {
-      available = voice;
+      serverVoice = voice;
+      available = serverVoice && (!isShell || extVoice);
+      if (client instanceof ExtVoice) {
+        // Ses eklentide sürüyor: yeni üye kimliğiyle bağlantılar baştan kurulur (mikrofon kalır).
+        mode = nextMode;
+        client.mode = mode;
+        client.reconnected();
+        render();
+        void rejoin();
+        return;
+      }
       const wasActive = client.active;
       client.leave();
       if (nextMode !== mode) {
@@ -139,11 +214,31 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       }
       // Yeniden bağlandık (yeni üye kimliği): seste idiysek sessizce yeniden katıl (izin zaten verilmiş).
       if (wasActive && available) void client.join().then(() => client.sync(members, myId()), () => render());
+      else void rejoin();
       render();
+    },
+    /** Kabuk: eklenti sesi destekliyor (shell.html söyler). */
+    caps(voice: boolean): void {
+      extVoice = voice;
+      available = serverVoice && (!isShell || extVoice);
+      render();
+      void rejoin();
+    },
+    /** Eklentinin ses sayfasından gelen (kabukta). */
+    extMessage(msg: VoiceDown): void {
+      ext?.receive(msg);
+    },
+    /** Biri konuşuyor mu (film sesini kısmak için). */
+    speaking(): boolean {
+      if (!client.active) return false;
+      const now = Date.now();
+      for (const at of spokeAt.values()) if (now - at < SPEAK_HOLD_MS) return true;
+      return false;
     },
     /** Eşler arası seste bir üyeden gelen bağlantı mesajı. */
     signal(from: string, data: Signal): void {
-      void p2p?.receive(from, data).catch(() => {});
+      if (client instanceof ExtVoice) client.signal(from, data);
+      else void p2p?.receive(from, data).catch(() => {});
     },
     members(next: Member[]): void {
       members = next;
@@ -163,9 +258,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       flashHint(joinButton, t(`error.${code}`), 6000);
       render();
     },
-    /** Sayfadan çıkarken mikrofonu bırak. */
+    /** Sayfadan çıkarken mikrofonu bırak. Kabukta ses eklentide sürer (film sayfası değişse de kopmaz). */
     leave(): void {
-      client.leave();
+      if (!(client instanceof ExtVoice)) client.leave();
     },
     relabel: render,
   };

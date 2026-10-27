@@ -6,6 +6,7 @@
 // Bu dosya üç tarafın (site, shell.html, arka plan) ortak mesajlarını içerir.
 
 import type { EmbedReply, EmbedRequest } from './embed.ts';
+import type { Member, RtcRequest, RtcResult, Signal, VoiceMode } from './protocol.ts';
 
 /** Ekrandaki bir dikdörtgen (CSS pikseli, görünür alana göre). */
 export interface Rect {
@@ -47,14 +48,25 @@ export type SiteToExt =
   /** Sekmeyi başka bir adrese götür (yeni film sayfası ya da sitedeki oda). */
   | { type: 'navigate'; url: string }
   /** Bizim ⛶: film sayfasının tamamı tam ekran olsun (katman ve video birlikte). */
-  | { type: 'fullscreen'; on: boolean };
+  | { type: 'fullscreen'; on: boolean }
+  /** Elle video seçimi: film sayfasındaki videoların üstünde "Bunu senkronla" düğmeleri (aç/kapat). */
+  | { type: 'pick'; on: boolean }
+  /** Kullanıcı sitede bir bağlantıyı yeni sekmede açıyor: o sekme reklam sayılıp kapatılmasın. */
+  | { type: 'open-ok' }
+  /** Kapatılan reklam sekmesini geri aç. */
+  | { type: 'reopen'; url: string }
+  /** Film sayfasında sesli sohbet: eklentinin görünmeyen sayfası (offscreen) mikrofonu ve bağlantıları tutar. */
+  | { type: 'voice'; msg: VoiceUp };
 
 /** Eklenti → site. */
 export type ExtToSite =
   | { type: 'store'; entries: StoreEntries }
   | { type: 'reply'; reply: EmbedReply }
-  /** Film sekmesinin adresi (odadaki sayfa bu mu?). */
-  | { type: 'page'; url: string }
+  /**
+   * Film sekmesinin adresi (odadaki sayfa bu mu?). `strayed`: film sayfası reklam yönlendirmesiyle başka bir siteye
+   * gitti (oda hâlâ aynı filmde; site "Filme geri dön" der).
+   */
+  | { type: 'page'; url: string; strayed?: boolean }
   /** Film sayfasında senkronlanacak video bulundu mu? */
   | { type: 'video'; found: boolean }
   /** Tam ekran değişti (Esc ile çıkıldı vb.). */
@@ -63,7 +75,44 @@ export type ExtToSite =
    * Film sayfasında delik açıldı: sayfa gizlendi, video deliğe oturdu. Site deliğin içini ancak bundan sonra saydam
    * yapar (önce yapınca, eklenti sayfayı gizleyene kadar geçen birkaç milisaniyede film sitesi görünüyordu).
    */
-  | { type: 'hole' };
+  | { type: 'hole' }
+  /** Kullanıcı film sayfasında bir videoyu seçti: seçim modu bitti, senkron artık o videoda. */
+  | { type: 'picked' }
+  /** Film sayfasının açtığı bir sekme (başka siteye giden, büyük ihtimalle reklam) kapatıldı. */
+  | { type: 'tab-closed'; url: string }
+  /** Eklentinin kabukta neleri desteklediği (eski eklentide gelmez: o zaman ses kapalı kalır). */
+  | { type: 'caps'; voice: boolean }
+  | { type: 'voice'; msg: VoiceDown };
+
+/**
+ * Site → eklentinin ses sayfası (offscreen). Film sayfasındaki katmanda mikrofon izni film sitesinin adına sorulurdu;
+ * ses bu yüzden eklentide çalışır, oda bağlantısı yine sitede kalır (bağlantı mesajlarını site taşır).
+ */
+export type VoiceUp =
+  /** Bu sitenin (yeni bağlantının) haberi: ses sayfası durumunu söyler. */
+  | { op: 'hello' }
+  /** `quiet`: kendiliğinden yeniden katılma (izin yoksa izin sekmesi açılmaz, sessizce vazgeçilir). */
+  | { op: 'join'; mode: VoiceMode; myId: string; members: Member[]; quiet?: boolean }
+  /** Seste iken site yeniden bağlandı (yeni üye kimliği): bağlantılar baştan kurulur, mikrofon kalır. */
+  | { op: 'reset'; myId: string; members: Member[] }
+  | { op: 'leave' }
+  | { op: 'mic'; on: boolean }
+  | { op: 'members'; myId: string | null; members: Member[] }
+  | { op: 'signal'; from: string; data: Signal }
+  | { op: 'rtc-result'; id: number; result: RtcResult };
+
+/** Eklentinin ses sayfası → site. */
+export type VoiceDown =
+  | { op: 'state'; active: boolean; mic: boolean }
+  /** Odaya "seste miyim / mikrofonum" bildir (site kendi bağlantısından yollar). */
+  | { op: 'announce'; on: boolean; mic?: boolean }
+  | { op: 'signal'; to: string; data: Signal }
+  | { op: 'rpc'; id: number; request: RtcRequest }
+  /** Dinlenenlerin ses seviyesi (0–1) ve kendi mikrofonumun seviyesi. */
+  | { op: 'levels'; levels: [string, number][]; me: number }
+  | { op: 'failed'; memberId: string }
+  /** Katılamadı: `denied` mikrofon izni verilmedi. */
+  | { op: 'error'; code: 'denied' | 'failed' };
 
 /** Site ⇄ site-bridge / shell.html mesajlarındaki kaynak etiketleri. */
 export const SITE_SOURCE = 'screenwithme-site';

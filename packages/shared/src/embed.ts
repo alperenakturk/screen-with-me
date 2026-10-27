@@ -17,7 +17,9 @@ export type EmbedControl =
   | { action: 'pause' }
   | { action: 'seek'; time: number }
   | { action: 'rate'; rate: number }
-  | { action: 'sync-all' };
+  | { action: 'sync-all' }
+  /** Sesli sohbette biri konuşuyor: film sesi kısılsın / eski hâline dönsün (odaya bir şey gitmez). */
+  | { action: 'duck'; on: boolean };
 
 /** Film videosunun durumu (sitedeki ilerleme çubuğu ve pin şeridi için). */
 export interface EmbedStatus {

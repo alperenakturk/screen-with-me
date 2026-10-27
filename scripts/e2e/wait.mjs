@@ -77,6 +77,26 @@ a.send({ t: 'play', position: 30, at: Date.now() });
 await a.wait((m) => m.t === 'waiting' && m.ids.length === 0, 'cancel by manual play');
 ok(true, 'Ali elle oynatınca bekleme iptal oldu');
 
+// Reklam: "reklamda" diyen kişi odayı bekletmez, kişiler listesinde işaretlenir; film geri gelince işaret kalkar.
+{
+  const e = client({ name: 'Ece', cid: 'waitEce000001' });
+  await e.wait((m) => m.t === 'welcome', 'welcome e');
+  a.send({ t: 'play', position: 40, at: Date.now() });
+  await sleep(300);
+  a.inbox.length = 0;
+  e.send({ t: 'ready', ready: false, ad: true });
+  const adOn = await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ece' && x.ad === true), 'ad on');
+  ok(!!adOn, 'Reklamdaki kişi listede "reklamda" görünüyor');
+  // Reklam boyunca motorun "takıldım"ı da bekletmez (film ilerlemiyor).
+  e.send({ t: 'ready', ready: false });
+  await sleep(800);
+  ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Reklamdaki kişi için oda durmuyor');
+  e.send({ t: 'ready', ready: true });
+  await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ece' && !x.ad), 'ad off');
+  ok(true, 'Film geri gelince "reklamda" işareti kalktı');
+  e.ws.close();
+}
+
 // Yönetici olmayan ayarı değiştiremez; yönetici kapatınca bekleme olmaz.
 b.send({ t: 'settings', waitForAll: false });
 const nh = await b.wait((m) => m.t === 'error', 'not host');

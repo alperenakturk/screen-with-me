@@ -312,7 +312,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="sync-test" type="button" class="btn small-btn">🧪 <span data-i18n="syncTest"></span></button>
             </div>
             <div id="external" class="overlay external" hidden>
-              <p class="muted" data-i18n="externalTitle"></p>
+              <p id="external-label" class="muted" data-i18n="externalTitle"></p>
+              <p id="external-stray" class="external-stray" data-i18n="strayTitle" hidden></p>
               <h2 id="external-title"></h2>
               <p id="external-host" class="external-host"></p>
               <p id="external-watching" class="external-watching" hidden></p>
@@ -455,6 +456,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel settings" data-panel="settings" hidden>
             <h4 data-i18n="settings.view"></h4>
             <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
+            <label class="check-row shell-only"><input type="checkbox" id="opt-closeads" /> <span data-i18n="settings.closeAds"></span></label>
+            <label class="check-row shell-only"><input type="checkbox" id="opt-duck" /> <span data-i18n="settings.duck"></span></label>
             <label class="select-row shell-only"><span data-i18n="settings.fsFit"></span>
               <select id="opt-fsfit">
                 <option value="cover" data-i18n="settings.fsFit.cover"></option>
@@ -606,7 +609,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send({ t: 'rename', name, avatar });
   });
   // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
-  const voice = createVoice(app, send, () => myId);
+  const voice = createVoice(app, send, () => myId, roomId, isShell);
   const reactions = createReactions(
     app,
     send,
@@ -673,7 +676,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     switch (message.t) {
       case 'welcome':
         myId = message.you;
-        voice.welcome(message.voice === true && !isShell, message.voiceMode ?? 'p2p');
+        voice.welcome(message.voice === true, message.voiceMode ?? 'p2p');
         setMembers(message.members, message.hostId, false);
         chooseFirstTab(message.hostId === message.you);
         if (message.settings) roomSettings = message.settings;
@@ -918,8 +921,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let holeReady = false;
   /** Kabukta: film sayfasında senkronlanacak video bulundu mu (bulunmazsa "Sayfayı göster" önerilir). */
   let videoFound = false;
-  /** "Sayfayı göster": oda görünümü üstte ince şeride çekilir, film sayfası olduğu gibi görünür (reklam/pencere kapatmak için). */
-  let peek = false;
+  /**
+   * Oda görünümü üstte ince şeride çekilir, film sayfası olduğu gibi görünür. `page`: "Sayfayı göster" (reklam/pencere
+   * kapatmak için); `pick`: elle video seçimi (film sayfasındaki videoların üstünde "Bunu senkronla" düğmeleri).
+   */
+  let peek: '' | 'page' | 'pick' = '';
+  /** Kabukta: film sayfası reklam yönlendirmesiyle başka bir siteye gitti (eklenti söyler): "Filme geri dön". */
+  let pageStrayed = false;
+  /** Kabukta: film sayfasında reklam oynuyor (eklenti bildirdi; kapanırken işaret kaldırılır). */
+  let filmAd = false;
+  /** Kabukta: film sayfasında video seçildi (seçim şeridini kapatır). */
+  let onPicked: (() => void) | null = null;
 
   /** Oynatıcı alanındaki videoyu/sayfayı kapatır. */
   function closeCurrent(): void {
@@ -930,6 +942,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     // Film sayfasındaki motor dursun (video orada kendiliğinden durur; odaya "durdur" gitmez).
     if (film) postToExtension({ type: 'embed', request: { type: 'detach' } });
+    // Film reklamdayken kapandı: "reklamda" işareti kalmasın.
+    if (film && filmAd) send({ t: 'ready', ready: true, ad: false });
+    filmAd = false;
     film = null;
     $('.player-wrap').classList.remove('filming');
     renderNowPlaying();
@@ -944,6 +959,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const player = createShellPlayer({
       onSend: (message) => {
         if (film !== player || !isRelayable(message)) return;
+        if (message.t === 'ready') filmAd = message.ad ?? (message.ready ? false : filmAd);
         // Otomatik devam kapalıysa film bitince sıradakine geçilmez: "Sıradakini başlat" kartı.
         if (message.t === 'next' && roomSettings.autoNext === false) {
           if (queue.length > 0) showNextCard($('.player-wrap'), itemTitle(item), mediaUrl(item.media), () => send(message));
@@ -976,6 +992,38 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function returnToRoom(): void {
     if (film !== null) send({ t: 'home' });
     postToExtension({ type: 'navigate', url: `${location.origin}/r/${roomId}#back` });
+  }
+
+  /**
+   * Film sayfasının açtığı reklam sekmesi kapatıldı: videonun üstünde küçük not, "Geri aç" (bilerek açılmışsa) ve
+   * oturumda bir kez reklam engelleyici önerisi. 8 sn sonra kendisi kalkar.
+   */
+  let tabNoteTimer = 0;
+  function showTabClosed(url: string): void {
+    document.getElementById('tab-closed')?.remove();
+    const reopen = el('button', { type: 'button', class: 'btn small-btn' }, t('tabClosedReopen'));
+    const close = el('button', { type: 'button', class: 'icon-btn', 'aria-label': t('close') }, '✕');
+    const text = el('span', {}, `🛡️ ${t('tabClosed', { host: hostOf(url) })}`);
+    const card = el('div', { id: 'tab-closed', class: 'home-ask tab-closed', role: 'status' }, text, reopen, close);
+    let tipShown = false;
+    try {
+      tipShown = sessionStorage.getItem('adTipShown') === '1';
+      sessionStorage.setItem('adTipShown', '1');
+    } catch {
+      // Depo kapalı: öneri yine bir kez (bu sayfada) görünür.
+    }
+    if (!tipShown) {
+      const link = el('a', { href: 'https://github.com/uBlockOrigin/uBOL-home', target: '_blank', rel: 'noopener', class: 'small' }, t('tabClosedTip'));
+      card.append(link);
+    }
+    reopen.addEventListener('click', () => {
+      postToExtension({ type: 'reopen', url });
+      card.remove();
+    });
+    close.addEventListener('click', () => card.remove());
+    $('.player-wrap').append(card);
+    clearTimeout(tabNoteTimer);
+    tabNoteTimer = window.setTimeout(() => card.remove(), tipShown ? 8000 : 14_000);
   }
 
   /** Biri filmden odaya döndü: videonun üstünde küçük kart (pencere değil, film durmaz). 20 sn sonra kendisi kalkar. */
@@ -1011,7 +1059,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       layout = { mode: 'open' };
       // Film kapandı (odada başka bir şey açıldı): "Sayfayı göster" de biter.
       if (peek) {
-        peek = false;
+        if (peek === 'pick') postToExtension({ type: 'pick', on: false });
+        peek = '';
         document.documentElement.classList.remove('shell-peek');
         document.querySelector<HTMLElement>('.peek-strip')?.setAttribute('hidden', '');
       }
@@ -1098,9 +1147,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     note.textContent = shellOk ? '' : t('extensionOutdated');
     $<HTMLAnchorElement>('#external-alone').href = url;
     const go = $<HTMLButtonElement>('#external-go');
+    // Film sayfası (reklam yönlendirmesiyle) başka bir siteye gitti: oda hâlâ aynı filmde.
+    const strayed = isShell && pageStrayed;
+    $('#external-label').hidden = strayed;
+    $('#external-stray').hidden = !strayed;
     go.hidden = !shellOk;
     go.disabled = false;
-    go.textContent = t('externalGoJoin');
+    go.textContent = t(strayed ? 'strayBack' : 'externalGoJoin');
     go.onclick = () => {
       go.disabled = true;
       go.textContent = t('externalGoing');
@@ -1136,6 +1189,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       const now = item?.media.kind === 'page' && samePage(message.url, item.media.url);
       const changed = shellPage === null || (was !== now && !(film !== null && samePath(message.url, shellPage)));
       shellPage = message.url;
+      pageStrayed = message.strayed === true;
       // Odadaki sayfa bu mu? Yeniden bak: film başlar ya da "Filme git" kartı çıkar.
       if (changed && roomState?.item?.media.kind === 'page') {
         currentItemId = null;
@@ -1146,6 +1200,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (sentLayout.startsWith('{"mode":"full"')) document.documentElement.classList.add('shell-film');
     } else if (message.type === 'video' && isShell) {
       videoFound = message.found;
+    } else if (message.type === 'caps' && isShell) {
+      voice.caps(message.voice === true);
+    } else if (message.type === 'voice' && isShell) {
+      voice.extMessage(message.msg);
+    } else if (message.type === 'tab-closed' && isShell) {
+      showTabClosed(message.url);
+    } else if (message.type === 'picked' && isShell) {
+      // Kullanıcı film sayfasında videoyu seçti: oda görünümüne dönülür, video deliğe oturur.
+      onPicked?.();
     } else if (message.type === 'fullscreen' && isShell) {
       fullscreen.syncShell(message.on);
     }
@@ -1157,6 +1220,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     new ResizeObserver(() => reportLayout()).observe(wrap);
     // Tam ekran kontrolleri bekleyince kaybolur (theater.idle): adacıkları da kalksın, video tıklanabilsin.
     new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
+    // Sesli sohbette biri konuşurken film sesi kısılsın (varsayılan açık). Susunca 1 sn sonra eski hâline döner.
+    const duckBox = $<HTMLInputElement>('#opt-duck');
+    duckBox.checked = load('opt:duck') !== '0';
+    duckBox.addEventListener('change', () => save('opt:duck', duckBox.checked ? '1' : '0'));
+    let ducking = false;
+    let quietSince = 0;
+    setInterval(() => {
+      const talk = film !== null && duckBox.checked && voice.speaking();
+      if (talk) quietSince = 0;
+      else quietSince ||= Date.now();
+      const want = talk || (ducking && Date.now() - quietSince < 1000);
+      if (want === ducking) return;
+      ducking = want;
+      postToExtension({ type: 'embed', request: { type: 'control', control: { action: 'duck', on: want } } });
+    }, 250);
+    // Film sayfasının açtığı reklam sekmeleri kapatılsın mı (eklenti ayarı okur; varsayılan açık).
+    const closeAds = $<HTMLInputElement>('#opt-closeads');
+    closeAds.checked = load('opt:closeAds') !== '0';
+    closeAds.addEventListener('change', () => save('opt:closeAds', closeAds.checked ? '1' : '0'));
+    // Sitede bilerek yeni sekmede açılan bağlantılar (sohbetteki link, eklenti sayfası) reklam sayılıp kapatılmasın.
+    document.addEventListener(
+      'click',
+      (event) => {
+        const link = (event.target as Element | null)?.closest?.('a[href]');
+        if (link instanceof HTMLAnchorElement && (link.target === '_blank' || event.ctrlKey || event.metaKey || event.shiftKey)) {
+          postToExtension({ type: 'open-ok' });
+        }
+      },
+      true,
+    );
+    document.addEventListener('auxclick', (event) => {
+      if ((event.target as Element | null)?.closest?.('a[href]')) postToExtension({ type: 'open-ok' });
+    }, true);
     const fit = $<HTMLSelectElement>('#opt-fsfit');
     fit.value = fitAbove() ? 'above' : 'cover';
     fit.addEventListener('change', () => {
@@ -1200,20 +1296,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const peekStrip = el('div', { class: 'peek-strip' }, peekText, peekBack);
     peekStrip.hidden = true;
     document.body.append(peekStrip);
-    const setPeek = (on: boolean) => {
-      peek = on;
-      peekStrip.hidden = !on;
-      document.documentElement.classList.toggle('shell-peek', on);
+    // 🎯 Video seç: otomatik seçim yanlış videoyu (fragman, önizleme, reklam) tuttuysa film sayfası açılır, her videonun
+    // üstünde "Bunu senkronla" düğmesi çıkar; seçilince oda görünümüne dönülür.
+    const pickButton = el('button', { type: 'button', class: 'nav-link shell-pick' }, `🎯 ${t('pick')}`);
+    const setPeek = (mode: typeof peek) => {
+      if (peek === 'pick' && mode !== 'pick') postToExtension({ type: 'pick', on: false });
+      peek = mode;
+      peekStrip.hidden = !mode;
+      peekText.textContent = t(mode === 'pick' ? 'pickStrip' : 'peekStrip');
+      peekBack.textContent = t(mode === 'pick' ? 'pickCancel' : 'peekBack');
+      document.documentElement.classList.toggle('shell-peek', !!mode);
       reportLayout();
+      if (mode === 'pick') postToExtension({ type: 'pick', on: true });
     };
-    peekButton.addEventListener('click', () => setPeek(true));
-    peekBack.addEventListener('click', () => setPeek(false));
-    homeButton.after(peekButton);
+    onPicked = () => {
+      if (peek !== 'pick') return;
+      setPeek('');
+      flashHint(pickButton, t('picked'));
+    };
+    peekButton.addEventListener('click', () => setPeek('page'));
+    pickButton.addEventListener('click', () => setPeek('pick'));
+    peekBack.addEventListener('click', () => setPeek(''));
+    // Esc seçimden/sayfa görünümünden de çıkar.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && peek) setPeek('');
+    });
+    homeButton.after(peekButton, pickButton);
     const labelPeek = () => {
       peekButton.textContent = `👁 ${t('peek')}`;
       peekButton.title = t('peekTitle');
-      peekBack.textContent = t('peekBack');
-      peekText.textContent = t('peekStrip');
+      pickButton.textContent = `🎯 ${t('pick')}`;
+      pickButton.title = t('pickTitle');
+      peekBack.textContent = t(peek === 'pick' ? 'pickCancel' : 'peekBack');
+      peekText.textContent = t(peek === 'pick' ? 'pickStrip' : 'peekStrip');
     };
     labelPeek();
     window.addEventListener('langchange', () => {
@@ -1223,6 +1338,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Film açıldı ama 10 sn'dir video bulunamadı: büyük ihtimalle önünde bir reklam/pencere var, düğmeyi öner.
     let hinted = false;
     setInterval(() => {
+      // Video seçimi sadece film açıkken anlamlı.
+      pickButton.hidden = film === null;
       if (film === null) {
         filmSince = 0;
         return;

@@ -36,6 +36,12 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'chat', text: ' selam\n\nnasılsın ' })).toEqual({ t: 'chat', text: 'selam nasılsın' });
   });
 
+  it('keeps the optional ad flag on ready messages', () => {
+    expect(parse({ t: 'ready', ready: false, ad: true })).toEqual({ t: 'ready', ready: false, ad: true });
+    expect(parse({ t: 'ready', ready: true })).toEqual({ t: 'ready', ready: true });
+    expect(parse({ t: 'ready', ready: true, ad: 'evet' })).toEqual({ t: 'ready', ready: true });
+  });
+
   it('accepts pages with a cleaned title, and drops titles for other media', () => {
     expect(parse({ t: 'load', media: { kind: 'page', url: 'https://film.example/izle' }, title: '  Film\n  İzle ' })).toEqual({
       t: 'load',

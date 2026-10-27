@@ -7,6 +7,9 @@ sayfasındaki katmanda (eklenti) çalışır mı?
 > ile yerelde denendi** (aşağıda "Deneme"). Cloudflare'e gerçek bir WebRTC bağlantısı kurulmadı (hesapta Realtime
 > uygulaması yok); o kısım belgelere dayanır. Önceki kısa değerlendirme: `gelecek-fikirler.md` bölüm 3.
 
+> **Durum:** 1. aşama (sitede ses, eşler arası) 0.9.59'da; 2. aşama (eklentide ses: offscreen + mic.html + film sesini
+> kısma) 0.9.60'ta yapıldı. Sırada kamera (eşler arası, Cloudflare'siz).
+
 ## Kısaca
 
 - **Önerdiğim yol: Cloudflare Realtime SFU + mevcut Durable Object'imiz.** Herkes kendi sesini/görüntüsünü bir kez

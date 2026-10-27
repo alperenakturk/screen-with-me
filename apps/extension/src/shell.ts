@@ -87,6 +87,8 @@ addEventListener('message', (event: MessageEvent) => {
     case 'shell-ready':
       // Site çizildi: yüklenirken film sayfasını örten zemin kalkar (deliğin içindeki mesajlar saydam görünsün).
       document.documentElement.classList.add('ready');
+      // Bu eklenti katmanda neleri destekliyor (eski eklentide bu mesaj yok: site sesi kapalı tutar).
+      toSite({ type: 'caps', voice: true });
       for (const message of [latest.page, latest.video, latest.fullscreen]) if (message) toSite(message);
       break;
     case 'store-push':
@@ -103,6 +105,18 @@ addEventListener('message', (event: MessageEvent) => {
       break;
     case 'fullscreen':
       toBackground({ type: 'fullscreen', on: data.on === true });
+      break;
+    case 'pick':
+      toBackground({ type: 'pick', on: data.on === true });
+      break;
+    case 'open-ok':
+      toBackground({ type: 'open-ok' });
+      break;
+    case 'voice':
+      if (data.msg && typeof data.msg === 'object' && typeof (data.msg as { op?: unknown }).op === 'string') toBackground({ type: 'voice', msg: data.msg });
+      break;
+    case 'reopen':
+      if (typeof data.url === 'string') toBackground({ type: 'reopen', url: data.url });
       break;
   }
 });

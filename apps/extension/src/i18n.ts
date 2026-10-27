@@ -1,4 +1,4 @@
-// Eklentinin kendi birkaç metni (popup ve "İzlemeye başla" kartı); asıl arayüz sitenin kendisi.
+// Eklentinin kendi birkaç metni (popup, "İzlemeye başla" kartı, video seçme düğmeleri); asıl arayüz sitenin kendisi.
 // Dil sitedekiyle aynı: site seçimi eklentinin deposuna (`site:lang`, bkz. store.ts) yazar. Varsayılan Türkçe.
 
 import { readValue } from './store.ts';
@@ -11,6 +11,9 @@ const tr = {
   popupInRoom: 'Bu sekme bir odada: film sitesinin üstünde oda görünümü açık.',
   popupBack: '🏠 Odaya dön',
   popupSite: 'Zaten sitedesin: oda kur ya da bir linkle katıl.',
+  pickThis: '🎯 Bunu senkronla',
+  pickCurrent: '✓ Şu an senkronlanan',
+  pickLength: '{n} dk',
 };
 
 const en: typeof tr = {
@@ -21,6 +24,9 @@ const en: typeof tr = {
   popupInRoom: 'This tab is in a room: room view is shown over the film site.',
   popupBack: '🏠 Back to the room',
   popupSite: "You're already on the site: create a room or join with a link.",
+  pickThis: '🎯 Sync this one',
+  pickCurrent: '✓ Currently synced',
+  pickLength: '{n} min',
 };
 
 export type Key = keyof typeof tr;
