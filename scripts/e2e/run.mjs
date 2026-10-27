@@ -7,10 +7,17 @@ import { fileURLToPath } from 'node:url';
 
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const here = dirname(fileURLToPath(import.meta.url));
+// Canlıda yeni sürüm yayılırken Cloudflare nesneleri yeniden başlatır ve açık bağlantıları koparır (testler yeniden
+// bağlanmaz, takılır). Canlıda başarısız dosya bir kez daha denenir; gerçek hata iki kez de düşer. Yerelde tekrar yok.
+const live = !/localhost|127\.0\.0\.1/.test(base);
 let failed = 0;
 for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs']) {
   console.log(`\n▶ ${test}`);
-  const result = spawnSync(process.execPath, [join(here, test), base], { stdio: 'inherit' });
+  let result = spawnSync(process.execPath, [join(here, test), base], { stdio: 'inherit' });
+  if (result.status !== 0 && live) {
+    console.log(`\n↻ ${test} canlıda bir kez daha deneniyor (yeni sürüm yayılırken bağlantı kopmuş olabilir)`);
+    result = spawnSync(process.execPath, [join(here, test), base], { stdio: 'inherit' });
+  }
   if (result.status !== 0) failed++;
 }
 console.log(failed ? `\n✗ ${failed} test dosyası başarısız` : '\n✓ Tüm uçtan uca testler geçti');
