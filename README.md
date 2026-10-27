@@ -50,7 +50,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
 | 🎙 **Voice & video chat** | "Join voice" in the room: talk while you watch, mute with one click or use push-to-talk (hold V), the speaker's avatar glows and a small bar under 🎙 shows that your microphone hears you. 📷 turns on a small camera: friends' cameras appear in the voice card and, in fullscreen, in the corner of the video (on film pages too; the camera is asked once for ScreenWithMe). Peer-to-peer and always encrypted (the server never hears it), up to 6 people; nobody hears you unless they joined voice too. Works on film pages too: the microphone is asked once for ScreenWithMe (not for the film site), voice keeps going when the film page reloads, and the film gets quieter while someone talks. |
 | 📺 **Screen sharing** | Show your screen, a window, a tab or your camera to the room (games, photos, "look at this", not for films). One stream per room, up to 4 viewers who choose to watch, 720p, peer-to-peer. It opens in a corner of the video and can be enlarged. Choose "sharp text" (slides, sites) or "smooth" (games). The limits are always shown ("Watching 3/4"). The host can stop a stream or allow only themselves to stream. |
-| 💬 **Chat & reactions** | Chat, queue, people and settings tabs. Three emoji pages; reactions float up from the bottom of the video with the sender's avatar and name, as fast as you like. Anyone can hide them for themselves. Room activity in chat is hidden by default. |
+| 💬 **Chat & reactions** | Chat bubbles like a messaging app (yours on the right), queue and people tabs; ⚙️ settings open in their own window. A "😀 React" tray with three emoji pages and your own GIFs, your last three emojis always one tap away; reactions float up from the bottom of the video with the sender's avatar and name, as fast as you like. Anyone can hide them for themselves. Room activity in chat is hidden by default. |
 | 🖼️ **Custom emojis** | Add your own image or GIF; the whole room can react with it (up to 24 per room). |
 | 📌 **Pins** | Pin a moment with an optional note; a strip under the video jumps back to it. |
 | ⌨️ **Shortcuts** | 1–8 reactions, Enter chat, P pin (on film pages these keys never reach the page's player). |
@@ -64,7 +64,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 ### Host & safety
 | | |
 |---|---|
-| 👑 **Room host** | The first person in is the host (survives reloads) and starts on the settings tab. Gone for more than 20 s → hosting passes to the longest-present member for good. |
+| 👑 **Room host** | The first person in is the host (survives reloads) and sets the room rules with switches in ⚙️ Settings; everyone else sees a short summary. Gone for more than 20 s → hosting passes to the longest-present member for good. |
 | 🔒 **Host modes** | Only the host controls playback · lock the queue · turn off emojis or limit how often each person can send one · ready check on/off. |
 | 🚪 **Remove & ban** | The host removes people; they stay out until the host lifts the ban. |
 | 🔐 **Private by design** | Video plays in each person's own browser; the server only relays tiny "pause at 12:34" messages and the room's chat. The extension is dormant outside a room, and the film page can't read which room you are in. User text is never written as HTML. Rate limits live on the server. |

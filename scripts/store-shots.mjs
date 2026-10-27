@@ -67,6 +67,8 @@ for (const [shot, file, w, h] of shots) {
   // Sunucu bu süreçte çalıştığı için Chrome'u beklerken olay döngüsü boş kalmalı (execFileSync olmaz).
   await run(CHROME, [
     '--headless=new',
+    // Bulut oturumunda root olarak çalışır: Chrome korumalı alanı root'a izin vermiyor.
+    ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
     '--disable-gpu',
     '--hide-scrollbars',
     '--force-device-scale-factor=1',

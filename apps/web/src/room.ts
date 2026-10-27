@@ -27,7 +27,7 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { el } from './dom.ts';
-import { t, translate } from './i18n.ts';
+import { lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
 import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
@@ -61,6 +61,7 @@ import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
+import { createSettingsDialog } from './ui/settings-dialog.ts';
 import { createGameStage } from './games/stage.ts';
 import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
@@ -341,23 +342,29 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
           <div id="pin-strip" class="pin-strip" hidden></div>
           <div class="toolbar">
-            <div class="reaction-bar" role="group"></div>
+            <div class="reaction-bar tray-bar" role="group"></div>
             <div class="toolbar-right">
               <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" hidden>📱 <span data-i18n="shorts.view"></span></button>
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <div class="game-menu-wrap">
-                <button id="game-btn" type="button" class="icon-btn tool-btn game-btn" aria-haspopup="true" aria-expanded="false">🎮</button>
-                <div id="game-menu" class="game-menu" role="menu" hidden></div>
+                <button id="game-btn" type="button" class="tool-btn labeled game-btn" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">🎮</span><span class="tool-label" data-i18n="tool.game"></span></button>
+                <div id="game-menu" class="game-menu" role="menu" data-island hidden></div>
               </div>
-              <button id="pin-btn" type="button" class="icon-btn tool-btn" data-i18n-title="pin">📌</button>
-              <button id="sync-all" type="button" class="icon-btn tool-btn" data-i18n-title="syncAll">🔄</button>
-              <div class="speed">
-                <button id="speed-down" type="button" class="icon-btn speed-step" data-i18n-title="speedDown">−</button>
-                <select id="speed" data-i18n-title="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
-                <button id="speed-up" type="button" class="icon-btn speed-step" data-i18n-title="speedUp">+</button>
+              <button id="pin-btn" type="button" class="tool-btn labeled" data-i18n-title="pin"><span aria-hidden="true">📌</span><span class="tool-label" data-i18n="tool.pin"></span></button>
+              <button id="sync-all" type="button" class="tool-btn labeled" data-i18n-title="syncAll"><span aria-hidden="true">🔄</span><span class="tool-label" data-i18n="tool.sync"></span></button>
+              <div class="speed-wrap">
+                <button id="speed-btn" type="button" class="tool-btn labeled speed-btn" aria-haspopup="true" aria-expanded="false" data-i18n-title="speed"><span aria-hidden="true">⏩</span><span id="speed-label" class="speed-label">1×</span></button>
+                <div id="speed-pop" class="speed-pop" data-island hidden>
+                  <span class="speed-pop-title" data-i18n="speedTitle"></span>
+                  <div class="speed">
+                    <button id="speed-down" type="button" class="icon-btn speed-step" data-i18n-title="speedDown">−</button>
+                    <select id="speed" data-i18n-title="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
+                    <button id="speed-up" type="button" class="icon-btn speed-step" data-i18n-title="speedUp">+</button>
+                  </div>
+                </div>
               </div>
               <button id="side-toggle" type="button" class="icon-btn tool-btn side-toggle"><span id="side-icon" aria-hidden="true">⇥</span><span id="side-badge" class="badge" hidden></span></button>
-              <button id="fullscreen" type="button" class="icon-btn big-icon">⛶</button>
+              <button id="fullscreen" type="button" class="icon-btn tool-btn">⛶</button>
             </div>
           </div>
         </div>
@@ -386,35 +393,43 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <span id="voice-limit" class="voice-limit muted small"></span>
           </div>
           <div id="voice-people" class="voice-people"></div>
-          <div id="voice-card" class="voice-row" hidden>
-            <button id="voice-join" type="button" class="btn primary voice-join">🎙 <span data-i18n="voice.join"></span></button>
-            <div id="voice-on" class="voice-on" hidden>
-              <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
-              <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden>📷</button>
-              <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
-              <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>
+          <div class="together-actions">
+            <div id="voice-card" class="voice-row" hidden>
+              <button id="voice-join" type="button" class="btn primary voice-join">🎙 <span data-i18n="voice.join"></span></button>
+              <div id="voice-on" class="voice-on" hidden>
+                <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
+                <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden>📷</button>
+                <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
+                <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>
+              </div>
+            </div>
+            <div class="live-card" id="live-card" hidden>
+              <div class="live-share-wrap" id="live-share-wrap">
+                <button id="live-share" type="button" class="btn live-share" aria-haspopup="true" aria-expanded="false">🖥️ <span data-i18n="live.share"></span> <span class="live-caret" aria-hidden="true">▾</span></button>
+                <div id="live-menu" class="live-menu" role="menu" hidden>
+                  <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true">🖥️</span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
+                  <button id="live-camera" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true">📹</span><b data-i18n="live.camera"></b><span class="muted small" data-i18n="live.cameraD"></span></button>
+                  <p id="live-menu-note" class="muted small live-menu-note"></p>
+                </div>
+              </div>
+              <div class="live-row" id="live-row">
+                <span id="live-status" class="live-status small"></span>
+                <button id="live-watch" type="button" class="btn small-btn primary" hidden></button>
+                <button id="live-stop" type="button" class="btn small-btn" data-i18n="live.stop" hidden></button>
+                <button id="live-kill" type="button" class="btn small-btn" data-i18n="live.kill" hidden></button>
+                <label class="live-quality small" id="live-quality-row" hidden><span data-i18n="live.quality"></span>
+                  <select id="live-quality">
+                    <option value="text" data-i18n="live.quality.text"></option>
+                    <option value="motion" data-i18n="live.quality.motion"></option>
+                  </select>
+                </label>
+                <span id="live-limit" class="voice-limit muted small"></span>
+              </div>
             </div>
           </div>
           <div id="voice-cams" class="voice-cams" hidden>
           </div>
           <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
-          <div class="live-card" id="live-card" hidden>
-            <div class="live-row">
-              <span id="live-status" class="live-status small"></span>
-              <button id="live-screen" type="button" class="btn small-btn">🖥️ <span data-i18n="live.screen"></span></button>
-              <button id="live-camera" type="button" class="btn small-btn">📹 <span data-i18n="live.camera"></span></button>
-              <button id="live-watch" type="button" class="btn small-btn primary" hidden></button>
-              <button id="live-stop" type="button" class="btn small-btn" data-i18n="live.stop" hidden></button>
-              <button id="live-kill" type="button" class="btn small-btn" data-i18n="live.kill" hidden></button>
-              <label class="live-quality small" id="live-quality-row" hidden><span data-i18n="live.quality"></span>
-                <select id="live-quality">
-                  <option value="text" data-i18n="live.quality.text"></option>
-                  <option value="motion" data-i18n="live.quality.motion"></option>
-                </select>
-              </label>
-              <span id="live-limit" class="voice-limit muted small"></span>
-            </div>
-          </div>
         </section>
 
         <section class="card tabs-card">
@@ -425,23 +440,23 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button type="button" class="tab" role="tab" data-tab="queue">
               <span aria-hidden="true">🎵</span><span data-i18n="tab.queue"></span><span id="queue-count" class="count"></span>
             </button>
-            <button type="button" class="tab" role="tab" data-tab="people" data-i18n-title="tab.people">
-              <span aria-hidden="true">👥</span><span id="people-count" class="count"></span>
+            <button type="button" class="tab" role="tab" data-tab="people">
+              <span aria-hidden="true">👥</span><span data-i18n="tab.people"></span><span id="people-count" class="count"></span>
             </button>
-            <button type="button" class="tab tab-icon" role="tab" data-tab="settings" id="settings-tab" data-i18n-title="tab.settings">⚙️</button>
+            <button type="button" class="tab-gear" id="settings-open" data-i18n-title="tab.settings">⚙️</button>
           </nav>
 
           <div class="tab-panel chat-panel" data-panel="chat">
             <button id="chat-events" type="button" class="chat-events" aria-pressed="false"></button>
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
-            <form id="chat-form" class="row chat-form">
+            <form id="chat-form" class="chat-form">
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
-              <button class="btn primary" data-i18n="send"></button>
+              <button class="chat-send" id="chat-send" data-i18n-title="send">➤</button>
             </form>
           </div>
 
           <div class="tab-panel" data-panel="queue" hidden>
-            <label class="check-row queue-auto"><input type="checkbox" id="opt-autonext" /> <span data-i18n="autoNext"></span></label>
+            <label class="set-row queue-auto"><span class="set-text"><b data-i18n="autoNext"></b></span><input type="checkbox" role="switch" class="switch" id="opt-autonext" /></label>
             <p class="muted small queue-hint" data-i18n="voteExplain"></p>
             <ol id="queue" class="queue"></ol>
             <p id="queue-empty" class="muted small" data-i18n="queueEmpty"></p>
@@ -458,6 +473,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
 
           <div class="settings profile-panel" id="profile-panel">
+            <div class="profile-actions">
+              <div class="profile-lang" id="profile-lang" role="group" aria-label="Language">
+                <span aria-hidden="true">🌐</span>
+                <button type="button" data-set-lang="tr">TR</button>
+                <button type="button" data-set-lang="en">EN</button>
+              </div>
+              <button type="button" class="btn small-btn" id="profile-settings">⚙️ <span data-i18n="tab.settings"></span></button>
+              <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
+            </div>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
             <form id="rename-form" class="row">
@@ -475,47 +499,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="recap-history" class="recap-history"></div>
           </div>
 
-          <div class="tab-panel settings" data-panel="settings" hidden>
-            <h4 data-i18n="settings.view"></h4>
-            <label class="check-row"><input type="checkbox" id="opt-reactions" /> <span data-i18n="settings.showReactions"></span></label>
-            <label class="check-row"><input type="checkbox" id="opt-actionnotice" /> <span data-i18n="settings.actionNotice"></span></label>
-            <label class="check-row shell-only"><input type="checkbox" id="opt-closeads" /> <span data-i18n="settings.closeAds"></span></label>
-            <label class="check-row shell-only"><input type="checkbox" id="opt-duck" /> <span data-i18n="settings.duck"></span></label>
-            <label class="select-row shell-only"><span data-i18n="settings.fsFit"></span>
-              <select id="opt-fsfit">
-                <option value="cover" data-i18n="settings.fsFit.cover"></option>
-                <option value="above" data-i18n="settings.fsFit.above"></option>
-              </select>
-            </label>
-            <section class="host-box">
-              <h4>👑 <span data-i18n="settings.hostTitle"></span></h4>
-              <p id="opt-wait-hint" class="muted small"></p>
-              <label class="check-row"><input type="checkbox" id="opt-wait" /> <span data-i18n="settings.waitForAll"></span></label>
-              <label class="check-row"><input type="checkbox" id="opt-hostonly" /> <span data-i18n="settings.hostOnlyMode"></span></label>
-              <label class="check-row"><input type="checkbox" id="opt-lockqueue" /> <span data-i18n="settings.lockQueue"></span></label>
-              <div class="save-box">
-                <p id="save-status" class="small"></p>
-                <form id="save-form" class="row">
-                  <input id="save-name" maxlength="40" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" />
-                  <button class="btn small-btn primary" id="save-submit"></button>
-                </form>
-                <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
-              </div>
-              <label class="check-row"><input type="checkbox" id="opt-noreactions" /> <span data-i18n="settings.noReactions"></span></label>
-              <label class="check-row"><input type="checkbox" id="opt-livehost" /> <span data-i18n="settings.liveHostOnly"></span></label>
-              <label class="select-row"><span data-i18n="settings.reactionGap"></span>
-                <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
-              </label>
-              <div class="schedule-row">
-                <label for="opt-start" data-i18n="settings.schedule"></label>
-                <div class="row">
-                  <input type="datetime-local" id="opt-start" />
-                  <button type="button" class="btn small-btn" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
-                  <button type="button" class="btn small-btn" id="opt-start-clear" data-i18n="settings.scheduleClear"></button>
-                </div>
-              </div>
-            </section>
-          </div>
         </section>
       </aside>
     </div>
@@ -534,6 +517,69 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         <button type="button" class="btn" id="ext-cancel" data-i18n="extDialog.cancel"></button>
       </div>
     </dialog>
+
+    <div id="settings-dialog" class="dialog-backdrop settings-backdrop" hidden>
+      <section class="settings-window" role="dialog" aria-modal="true" aria-labelledby="settings-heading">
+        <nav class="settings-nav">
+          <h3 id="settings-heading">⚙️ <span data-i18n="tab.settings"></span></h3>
+          <button type="button" data-sec="view">🖥️ <span data-i18n="settings.secView"></span></button>
+          <button type="button" data-sec="rules">👑 <span data-i18n="settings.secRules"></span></button>
+          <button type="button" data-sec="save">💾 <span data-i18n="settings.secSave"></span></button>
+          <button type="button" data-sec="schedule" class="host-only">⏰ <span data-i18n="settings.secSchedule"></span></button>
+        </nav>
+        <div class="settings-main">
+          <header class="settings-head">
+            <h4 id="settings-title"></h4>
+            <button type="button" class="icon-btn settings-close" id="settings-close" data-i18n-title="close">✕</button>
+          </header>
+          <div class="settings-sec" data-sec="view">
+            <p class="muted small" data-i18n="settings.view"></p>
+            <div class="set-box">
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.showReactions"></b><span data-i18n="settings.showReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-reactions" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
+              <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.closeAds"></b><span data-i18n="settings.closeAds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-closeads" /></label>
+              <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.duck"></b><span data-i18n="settings.duck.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-duck" /></label>
+              <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.fsFit"></b></span>
+                <select id="opt-fsfit">
+                  <option value="cover" data-i18n="settings.fsFit.cover"></option>
+                  <option value="above" data-i18n="settings.fsFit.above"></option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="settings-sec host-box" data-sec="rules" hidden>
+            <p id="opt-wait-hint" class="muted small"></p>
+            <ul id="rules-summary" class="rules-summary"></ul>
+            <div class="set-box host-ui">
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.waitForAll"></b><span data-i18n="settings.waitForAll.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-wait" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.hostOnlyMode"></b><span data-i18n="settings.hostOnlyMode.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-hostonly" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.reactionGap"></b><span data-i18n="settings.reactionGap.d"></span></span>
+                <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
+              </label>
+            </div>
+          </div>
+          <div class="settings-sec" data-sec="save" hidden>
+            <p id="save-status" class="small"></p>
+            <form id="save-form" class="set-inline">
+              <input id="save-name" maxlength="40" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" />
+              <button class="btn primary" id="save-submit"></button>
+            </form>
+            <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
+          </div>
+          <div class="settings-sec" data-sec="schedule" hidden>
+            <p class="muted small" data-i18n="settings.schedule"></p>
+            <div class="set-inline schedule-row">
+              <input type="datetime-local" id="opt-start" aria-labelledby="settings-title" />
+              <button type="button" class="btn primary" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
+              <button type="button" class="btn" id="opt-start-clear" data-i18n="settings.scheduleClear"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <div id="kicked" class="kicked-screen" hidden>
       <div class="card">
@@ -579,9 +625,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   const send = (message: ClientMessage) => connection.send(message);
   // Üst çubukta odanın adı (kayıtlı odada adı, değilse kodu) ve kaç kişi olduğu.
+  // Odadayken üst çubuk sade: bağlantı durumu oda adının noktasında (basınca yeniden bağlanır), tema/dil/⟳ profil
+  // menüsünde (styles.css `in-room`).
+  document.documentElement.classList.add('in-room');
   const roomTitleName = el('b', { class: 'room-title-name' });
   const roomTitleCount = el('span', { class: 'room-title-count' });
-  document.querySelector('.topbar .brand')?.after(el('div', { class: 'room-title' }, el('span', { class: 'room-title-dot', 'aria-hidden': 'true' }), roomTitleName, roomTitleCount));
+  const roomTitleDot = el('button', { type: 'button', class: 'room-title-dot' });
+  const roomTitleStatus = el('span', { class: 'room-title-status' });
+  document.querySelector('.topbar .brand')?.after(el('div', { class: 'room-title' }, roomTitleDot, roomTitleStatus, roomTitleName, roomTitleCount));
   function drawRoomTitle(): void {
     roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : t('roomTitle', { code: roomId });
     roomTitleCount.textContent = members.length ? `· ${t('peopleCount', { n: members.length })}` : '';
@@ -598,14 +649,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     chatBadge.textContent = count > 9 ? '9+' : String(count);
   });
   const people = createPeoplePanel(app, send);
+  /** Sağ üstteki profil düğmesi (kendi avatarım); kimlik değişince yeniden çizilir. */
+  let drawProfileButton = () => {};
   // 👤 Profil sağ üstte (en sağda); basınca ad, avatar, tema ve özet düğmenin altında açılan menüde.
   {
-    const profileButton = el('button', { type: 'button', class: 'nav-link profile-btn', 'aria-expanded': 'false', 'aria-haspopup': 'true', 'data-i18n-title': 'tab.profile', title: t('tab.profile') }, '👤');
+    const profileButton = el('button', { type: 'button', class: 'nav-link profile-btn', 'aria-expanded': 'false', 'aria-haspopup': 'true', 'data-i18n-title': 'tab.profile', title: t('tab.profile') });
+    drawProfileButton = () => profileButton.replaceChildren(avatarNode(myAvatar, 'profile-avatar'));
+    drawProfileButton();
     document.querySelector('.topbar-right')?.append(profileButton);
     const pop = el('div', { class: 'profile-pop', role: 'dialog', 'aria-label': t('tab.profile') });
     pop.hidden = true;
     pop.append($('#profile-panel'));
     app.append(pop);
+    // Dil, ayarlar ve bağlantıyı yenile: üst çubuktan buraya taşındı.
+    const langRow = $('#profile-lang');
+    const drawLang = () => {
+      for (const button of langRow.querySelectorAll<HTMLButtonElement>('[data-set-lang]')) button.setAttribute('aria-pressed', String(button.dataset.setLang === lang()));
+    };
+    langRow.addEventListener('click', (event) => {
+      const button = (event.target as Element | null)?.closest<HTMLButtonElement>('[data-set-lang]');
+      if (!button) return;
+      // Üst çubuktaki (odada gizli) TR/EN düğmesine basılmış gibi: app.ts dili değiştirir ve işaretler.
+      document.querySelector<HTMLButtonElement>(`.topbar [data-lang="${button.dataset.setLang}"]`)?.click();
+      drawLang();
+    });
+    drawLang();
+    $('#profile-settings').addEventListener('click', () => {
+      setOpen(false);
+      settingsDialog.open();
+    });
+    $('#profile-reconnect').addEventListener('click', () => {
+      setOpen(false);
+      reconnectNow();
+    });
     const setOpen = (open: boolean) => {
       pop.hidden = !open;
       profileButton.setAttribute('aria-expanded', String(open));
@@ -619,7 +695,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       setOpen(false);
     });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && !pop.hidden && !document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open]')) setOpen(false);
+      if (event.key === 'Escape' && !pop.hidden && !document.querySelector('.dialog-backdrop:not([hidden]), .recap-backdrop, dialog[open]')) setOpen(false);
     });
   }
   /** İlk girişte açılacak sekme seçildi mi (önce sekmeler varsayılan sohbetle kurulur; o hatırlanmaz). */
@@ -629,17 +705,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Aynı sekmede yenileyince kalınan sekme korunur.
     if (tabChosen) sessionSave(`tab:${roomId}`, tab);
   });
-  /** İlk girişte açılacak sekme: bu sekmede daha önce açılan, yoksa yönetici Ayarlar (oda ayarlarını yapar), diğerleri Sohbet. */
-  function chooseFirstTab(host: boolean): void {
+  /** İlk girişte açılacak sekme: bu sekmede daha önce açılan, yoksa Sohbet (ayarlar artık ⚙️ penceresinde). */
+  function chooseFirstTab(): void {
     if (tabChosen) return;
     tabChosen = true;
     const remembered = sessionLoad(`tab:${roomId}`);
-    if (isTabId(remembered) && !(isShell && remembered === 'queue')) tabs.show(remembered);
-    else tabs.show(host && !isShell ? 'settings' : 'chat');
+    tabs.show(isTabId(remembered) && !(isShell && remembered === 'queue') ? remembered : 'chat');
   }
+  // ⚙️ Ayarlar: sekmelerin sağındaki düğme (ve profil menüsü) ekranın ortasında pencere açar.
+  const settingsDialog = createSettingsDialog(app, amHost);
+  $('#settings-open').addEventListener('click', () => settingsDialog.open());
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
     myAvatar = avatar;
+    drawProfileButton();
     saveIdentity(name, avatar);
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
@@ -685,7 +764,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   window.addEventListener(
     'keydown',
     (event) => {
-      if (!document.querySelector('.dialog-backdrop, .recap-backdrop') || isTyping(event.target)) return;
+      if (!document.querySelector('.dialog-backdrop:not([hidden]), .recap-backdrop') || isTyping(event.target)) return;
       if (isForwardedKey(event.key) || [' ', 'k', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) event.stopImmediatePropagation();
     },
     true,
@@ -770,7 +849,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         live.welcome(message.voice === true);
         setMembers(message.members, message.hostId, false);
         games.set(message.game ?? null, undefined, false);
-        chooseFirstTab(message.hostId === message.you);
+        chooseFirstTab();
         waitingIds = message.waiting ?? [];
         renderWaiting();
         queue.set(message.queue);
@@ -978,6 +1057,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const before = roomState?.item ?? null;
     roomState = state;
     showRate(speedEl, state.rate);
+    $('#speed-label').textContent = `${state.rate}×`;
     if (SPEEDS.includes(state.rate)) fullscreen.setRate(state.rate);
     renderNowPlaying();
     const itemId = state.item?.id ?? null;
@@ -1230,6 +1310,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         const r = child.getBoundingClientRect();
         add(islands, r.left, r.top, r.right, r.bottom);
       }
+      // Deliğin dışından deliğin üstüne açılan küçük pencereler (emoji tepsisi, hız, oyun menüsü, kamera pencereleri).
+      for (const node of document.querySelectorAll<HTMLElement>('[data-island]')) {
+        if (wrap.contains(node) || node.closest('[hidden]')) continue;
+        const r = node.getBoundingClientRect();
+        if (r.width > 0) add(islands, r.left, r.top, r.right, r.bottom);
+      }
       // Emojilerin yolları tek alanda birleşir (üst üste binen adacıklar çift-tek kuralında birbirini silerdi);
       // sonra bütün adacıklar çakışmasız hâle getirilir. Sınır 12.
       islands.push(...mergeRects(floats));
@@ -1243,7 +1329,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       const card = $('#theater').getBoundingClientRect();
       root.style.setProperty('--theater-cut', holePath(card.width, card.height, { ...hole, x: hole.x - card.left, y: hole.y - card.top }, []));
       // Sitenin bir penceresi açıksa (avatar, tema, özet, onay) delik tamamen kapanır: pencere videonun önünde görünsün.
-      const modal = document.querySelector('.dialog-backdrop, .recap-backdrop, dialog[open], .profile-pop:not([hidden])') !== null;
+      const modal = document.querySelector('.dialog-backdrop:not([hidden]), .recap-backdrop, dialog[open], .profile-pop:not([hidden])') !== null;
       layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12) };
     }
     // Deliğin içi (sitenin zeminleri) ancak eklenti "delik açıldı" deyince saydam olur: film sayfası o an gizlenmiş olur.
@@ -1348,6 +1434,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     new ResizeObserver(() => reportLayout()).observe(wrap);
     // Tam ekran kontrolleri bekleyince kaybolur (theater.idle): adacıkları da kalksın, video tıklanabilsin.
     new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
+    // Araç çubuğundan açılan pencereler (tepsi, hız, oyun menüsü) deliğin üstüne biner: açılınca hemen bildir.
+    new MutationObserver(() => reportLayout()).observe($('.toolbar'), { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
     // Sesli sohbette biri konuşurken film sesi kısılsın (varsayılan açık). Susunca 1 sn sonra eski hâline döner.
     const duckBox = $<HTMLInputElement>('#opt-duck');
     duckBox.checked = load('opt:duck') !== '0';
@@ -1642,6 +1730,23 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     else engine.requestRate(rate);
   };
   speedEl.addEventListener('change', () => requestRate(Number(speedEl.value)));
+  // Hız düğmesi "⏩ 1×": basınca küçük pencere (hazır hızlar + ince ayar). Dışarı tıklayınca / Esc ile kapanır.
+  {
+    const button = $<HTMLButtonElement>('#speed-btn');
+    const pop = $('#speed-pop');
+    const setOpen = (open: boolean) => {
+      pop.hidden = !open;
+      button.setAttribute('aria-expanded', String(open));
+    };
+    button.addEventListener('click', () => setOpen(pop.hidden === true));
+    document.addEventListener('pointerdown', (event) => {
+      const target = event.target as Element | null;
+      if (!pop.hidden && target && !pop.contains(target) && !button.contains(target)) setOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !pop.hidden) setOpen(false);
+    });
+  }
   // İnce hız ayarı: her basış ±0.05 (hazır seçeneklerin dışındaki hız listede "özel" olarak görünür).
   $('#speed-down').addEventListener('click', () => requestRate(stepRate(roomState?.rate ?? 1, -1)));
   $('#speed-up').addEventListener('click', () => requestRate(stepRate(roomState?.rate ?? 1, 1)));
@@ -1918,9 +2023,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const toggle = $<HTMLInputElement>('#opt-wait');
     toggle.checked = roomSettings.waitForAll;
     toggle.disabled = !amHost();
-    // Yönetici kutusu: yöneticiye "senin ayarların", diğerlerine "sadece yönetici değiştirir".
-    $('#opt-wait-hint').textContent = toggle.disabled ? t('settings.hostOnly') : t('settings.youAreHost');
-    $('.host-box').classList.toggle('mine', !toggle.disabled);
+    // Oda kuralları: yöneticiye "senin ayarların" + anahtarlar, diğerlerine "yönetici belirliyor" + kısa özet (soluk,
+    // basılamayan anahtar kalabalığı yerine).
+    const host = !toggle.disabled;
+    const hostName = members.find((m) => m.id === hostId)?.name ?? '';
+    $('#opt-wait-hint').textContent = host ? t('settings.youAreHost') : t('settings.rulesBy', { name: hostName || '👑' });
+    $('.host-box').classList.toggle('mine', host);
+    $('.host-ui').hidden = !host;
+    $('#rules-summary').hidden = host;
+    settingsDialog.render();
     renderModes();
   }
 
@@ -1967,6 +2078,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-livehost', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
+    // Yönetici olmayana kuralların kısa özeti.
+    const rule = (on: boolean, key: I18nKey) =>
+      el('li', { class: on ? 'on' : '', 'aria-label': `${t(key)}: ${t(on ? 'settings.on' : 'settings.off')}` }, el('span', { 'aria-hidden': 'true' }, on ? '✓' : '–'), t(key));
+    const gap = roomSettings.reactionGap ?? 0;
+    $('#rules-summary').replaceChildren(
+      rule(roomSettings.waitForAll, 'settings.waitForAll'),
+      rule(roomSettings.hostOnly === true, 'settings.hostOnlyMode'),
+      rule(roomSettings.lockQueue === true, 'settings.lockQueue'),
+      rule(roomSettings.noReactions === true, 'settings.noReactions'),
+      rule(roomSettings.liveHostOnly === true, 'settings.liveHostOnly'),
+      el('li', { class: gap ? 'on' : '' }, el('span', { 'aria-hidden': 'true' }, '⏱'), `${t('settings.reactionGap')}: ${t(`settings.reactionGap.${gap}` as I18nKey)}`),
+    );
     $('#host-lock').hidden = host || !roomSettings.hostOnly;
     queue.render();
     renderSchedule();
@@ -2056,6 +2179,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Bağlantı koptuysa yenile düğmesi dikkat çeksin.
     reconnectEl.hidden = false;
     reconnectEl.classList.toggle('attention', status === 'reconnecting' || status === 'closed');
+    // Odada üst çubukta sadece oda adının noktası: yeşil bağlı, sarı bağlanıyor, kırmızı koptu; bağlı değilken yanında
+    // kısa yazı. Noktaya basınca yeniden bağlanır.
+    const text = t(`status.${status}`);
+    roomTitleDot.dataset.status = status;
+    roomTitleDot.title = `${text} · ${t('reconnect')}`;
+    roomTitleDot.setAttribute('aria-label', roomTitleDot.title);
+    roomTitleStatus.textContent = status === 'open' ? '' : text;
   }
 
   // Sayfadan çıkarken (film sayfasına gidiş, odaya dönüş) bağlantıyı hemen kapat: tarayıcı sayfayı
@@ -2067,12 +2197,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
 
   // ---- Bağlantıyı yenile (sağ üst ⟳): kopma ya da takılma için, sayfayı yenilemeden. ----
-  reconnectEl.onclick = () => {
+  function reconnectNow(): void {
     if (!$('#kicked').hidden) return;
     reconnectEl.classList.add('spin');
-    setTimeout(() => reconnectEl.classList.remove('spin'), 700);
+    roomTitleDot.classList.add('spin');
+    setTimeout(() => {
+      reconnectEl.classList.remove('spin');
+      roomTitleDot.classList.remove('spin');
+    }, 700);
     connection.reconnect();
-  };
+  }
+  reconnectEl.onclick = reconnectNow;
+  roomTitleDot.addEventListener('click', reconnectNow);
 
   function showError(text: (() => string) | null): void {
     errorText = text;
@@ -2092,7 +2228,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     label($('#pin-btn'), t('pinHint'));
     label($('#fs-exit'), t('exitFullscreen'));
     label($('#fs-speed'), t('speed'));
-    label($('#settings-tab'), t('tab.settings'));
+    label($('#chat-send'), t('send'));
   }
 
   window.addEventListener('langchange', () => {
