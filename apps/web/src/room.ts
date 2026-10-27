@@ -61,6 +61,8 @@ import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
+import { gameIcon, gameLink, PLAY_KINDS } from './games/links.ts';
+import { newRoomId } from '@swm/shared/room-id';
 import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
@@ -437,6 +439,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="chat-events" type="button" class="chat-events" aria-pressed="false"></button>
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="row chat-form">
+              <div class="chat-game-wrap">
+                <button id="chat-game" type="button" class="btn chat-game-btn" aria-haspopup="true" aria-expanded="false" data-i18n-title="chatGameOpen">🎮</button>
+                <div id="chat-game-menu" class="chat-game-menu" role="menu" hidden></div>
+              </div>
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
               <button class="btn primary" data-i18n="send"></button>
             </form>
@@ -586,6 +592,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     edit: () => amHost() || !roomSettings.lockQueue,
   });
   const chatBadge = $('#chat-badge');
+  // Odadan oyun aç: 🎮 → oyun seç → yeni maç linki sohbete gider (herkeste "Katıl" kartı), oyun yeni sekmede açılır.
+  // Film sayfasındaki katmanda yok (orada oyun köşesi de gizli).
+  {
+    const button = $<HTMLButtonElement>('#chat-game');
+    const menu = $('#chat-game-menu');
+    button.hidden = isShell;
+    const setOpen = (open: boolean) => {
+      menu.hidden = !open;
+      button.setAttribute('aria-expanded', String(open));
+    };
+    const draw = () =>
+      menu.replaceChildren(
+        ...PLAY_KINDS.map((kind) => {
+          const item = el('button', { type: 'button', role: 'menuitem', class: 'chat-game-item' }, `${gameIcon(kind)} ${t(`games.${kind}.title`)}`);
+          item.addEventListener('click', () => {
+            const url = `${location.origin}/oyun/${kind}/${newRoomId()}`;
+            send({ t: 'chat', text: url });
+            window.open(url, '_blank', 'noopener');
+            setOpen(false);
+          });
+          return item;
+        }),
+      );
+    draw();
+    addEventListener('langchange', draw);
+    button.addEventListener('click', () => setOpen(menu.hidden === true));
+    document.addEventListener('pointerdown', (event) => {
+      if (!menu.hidden && !(event.target as Element).closest?.('.chat-game-wrap')) setOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    });
+  }
   const chat = createChatPanel(app, send, () => myId, (count) => {
     chatBadge.hidden = count === 0;
     chatBadge.textContent = count > 9 ? '9+' : String(count);
@@ -857,7 +896,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
         if (shortsOn) seats.say(by, text);
         // Tam ekranda (ya da sağ panel gizliyken) sohbet paneli görünmez; mesaj videonun köşesinde belirir.
-        if (fullscreen.isActive() || sideHidden) toasts.show(withAvatar(by), text, by.id === myId);
+        if (fullscreen.isActive() || sideHidden) {
+          const game = gameLink(text);
+          toasts.show(withAvatar(by), game ? `${gameIcon(game.kind)} ${t('chatGame', { name: by.name, game: t(`games.${game.kind}.title`) })}` : text, by.id === myId);
+        }
         if (sideHidden && by.id !== myId) side.unread();
         break;
       }

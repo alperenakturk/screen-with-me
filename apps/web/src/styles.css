@@ -5409,3 +5409,74 @@ html.shorts-view .footer {
   flex: 1;
   min-width: 0;
 }
+
+/* ---- Odadan oyun aç: sohbet kutusunun yanında 🎮 menüsü, sohbette "Katıl" kartı ---- */
+.chat-game-wrap {
+  position: relative;
+  flex: none;
+}
+
+.chat-game-btn {
+  padding: 0 10px;
+}
+
+.chat-game-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+}
+
+.chat-game-menu[hidden] {
+  display: none;
+}
+
+.chat-game-item {
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chat-game-item:hover,
+.chat-game-item:focus-visible {
+  background: var(--surface-2);
+}
+
+.chat-game {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.chat-game-icon {
+  font-size: 18px;
+}
+
+.chat-game-text {
+  flex: 1;
+  min-width: 120px;
+  font-weight: 600;
+}
+
+.chat-game a {
+  text-decoration: none;
+}

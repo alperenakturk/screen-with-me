@@ -271,6 +271,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   (80 sn) → açıklama (6 sn) → sıradaki. Süreler depo alarmıyla; çizim sadece bellekte (1000×750 ızgara, 50 ms'lik
   parçalar, geç gelene `strokes`). Bilenler/çizen kendi aralarında `secret` yazışır. Sayfa `games/draw.ts`
   (`/oyun/draw/<kod>`). Test: `scripts/e2e/draw.mjs`.
+  **Odadan oyun aç (0.9.73):** sohbet kutusunun yanında 🎮 → oyun seç → yeni maç linki sohbete düz metin olarak gider,
+  istemci bu sitenin `/oyun/<tür>/<kod>` linkini "🎮 Ali bir Çiz-Bil maçı açtı · Katıl" kartı olarak çizer (`games/links.ts`;
+  başka sitenin linki karta dönmez), açan için oyun yeni sekmede açılır. Kabukta 🎮 düğmesi yok, kartlar var.
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare
