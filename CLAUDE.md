@@ -184,6 +184,11 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Uyku dayanıklılığı (DO):** "herkes hazır" durumu (`WaitTracker.snapshot`) ve `emptySince`
   depoya yazılır; tek alarm hem 12 sn'lik bekleme süresine hem 24 saatlik oda silmeye bakar
   (`scheduleAlarm`). Bellekte `setTimeout`'a güvenme.
+- **Bağlanamayan ağlar (0.9.79):** bazı mobil hatlarda (kullanıcının telefon hotspot'u) sayfa açılıyor ama odanın WebSocket'i
+  ne açılıyor ne kapanıyor ("Bağlanıyor…"da kalıyordu). `RoomConnection` 10 sn'de açılmayan bağlantıyı kapatıp yeniden dener
+  (`OPEN_TIMEOUT_MS`, `onFailures`); 2 başarısız denemede odada "📶 Odaya bağlanılamıyor" uyarısı (`.net-hint`, başka ağ / DNS
+  1.1.1.1 önerisi). `/baglanti` (`diag.ts`): sayfanın protokolü (h3 = UDP), düz istek, WebSocket açılışı, welcome, ping;
+  "Sonucu kopyala". Kalıcı çözüm adayları: kendi alan adı (workers.dev filtrelere takılabiliyor) ya da HTTP yedek yolu.
 - **Site:** sayfa yenilenince (aynı sekme, `sessionStorage` `in:<oda>`) isim adımı atlanır ve
   açılış animasyonu tekrar gösterilmez. Sağ üstteki ⟳ `connection.reconnect()`. Bir ping'e
   15 sn hiç cevap gelmezse `RoomConnection` yeniden bağlanır (sadece "uzun süredir sessiz"e

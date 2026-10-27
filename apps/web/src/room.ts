@@ -733,7 +733,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       status = next;
       renderStatus();
     },
+    // Birkaç denemede hiç bağlanılamazsa (bazı mobil hatlar/okul ağları oda bağlantısını geçirmiyor) ne olduğunu ve
+    // ne yapılabileceğini söyle; bağlanınca kalkar.
+    onFailures: (count) => {
+      netHint.hidden = count < 2;
+    },
   });
+  const netHint = el(
+    'div',
+    { class: 'net-hint card', role: 'alert' },
+    el('b', {}, `📶 ${t('netHint.title')}`),
+    el('span', {}, t('netHint.text')),
+    el('a', { class: 'btn small-btn', href: '/baglanti', target: '_blank', rel: 'noopener' }, t('netHint.test')),
+  );
+  netHint.hidden = true;
+  document.body.append(netHint);
   connection.connect();
 
   // Açılış: logo belirir, duraklat → oynat olur, "İyi seyirler!" (oda arkada hazırlanırken).
