@@ -39,7 +39,13 @@ const roomId = match ? decodeURIComponent(match[1]!) : null;
 // PlayWithMe oyun köşesi: /oyun (oyunlar), /oyun/<tür>/<kod> (maç: xox, four), /oyun/draw/<kod> (Çiz-Bil).
 const game = location.pathname.match(/^\/oyun\/(xox|four)\/([A-Za-z0-9_-]{3,40})\/?$/);
 const draw = location.pathname.match(/^\/oyun\/draw\/([A-Za-z0-9_-]{3,40})\/?$/);
-if (draw) {
+const quiz = location.pathname.match(/^\/oyun\/quiz\/([A-Za-z0-9_-]{3,40})\/?$/);
+if (quiz) {
+  void import('./games/quiz.ts').then(({ renderQuiz }) => {
+    renderQuiz(app, quiz[1]!);
+    translate();
+  });
+} else if (draw) {
   void import('./games/draw.ts').then(({ renderDraw }) => {
     renderDraw(app, draw[1]!);
     translate();

@@ -1,5 +1,5 @@
 // PlayWithMe: ScreenWithMe'nin oyun köşesi (/oyun). Üstte logo (ScreenWithMe yüzü elinde oyun koluyla), altta oyunlar.
-// XOX, Dört Taş ve Çiz-Bil oynanır; diğerleri "yakında". Her maç ayrı bir oda (/oyun/<tür>/<kod>), link paylaşılarak oynanır.
+// XOX, Dört Taş, Çiz-Bil ve Bilgi yarışması oynanır; diğerleri "yakında". Her maç ayrı bir oda (/oyun/<tür>/<kod>), link paylaşılarak oynanır.
 
 import { createLogo } from '@swm/shared/logo';
 import { newRoomId } from '@swm/shared/room-id';
@@ -25,7 +25,7 @@ const GAMES = [
   { id: 'xox', icon: '❌⭕', ready: true },
   { id: 'four', icon: '🔴🟡', ready: true },
   { id: 'draw', icon: '✏️', ready: true },
-  { id: 'quiz', icon: '❓', ready: false },
+  { id: 'quiz', icon: '❓', ready: true },
   { id: 'word', icon: '🔤', ready: false },
 ] as const;
 

@@ -1,9 +1,11 @@
 import { DRAW_ID_PATTERN } from '@swm/shared/games/draw';
 import { GAME_ID_PATTERN } from '@swm/shared/games/protocol';
+import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 
 export { Draw } from './draw.ts';
 export { Game } from './game.ts';
+export { Quiz } from './quiz.ts';
 export { Room } from './room.ts';
 
 /**
@@ -50,6 +52,13 @@ export default {
       if (!DRAW_ID_PATTERN.test(draw[1]!)) return new Response('Invalid game id', { status: 400 });
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       return env.DRAWS.get(env.DRAWS.idFromName(draw[1]!)).fetch(request);
+    }
+    // Bilgi yarışması.
+    const quiz = url.pathname.match(/^\/api\/quiz\/([^/]+)\/ws$/);
+    if (quiz) {
+      if (!QUIZ_ID_PATTERN.test(quiz[1]!)) return new Response('Invalid game id', { status: 400 });
+      if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
+      return env.QUIZZES.get(env.QUIZZES.idFromName(quiz[1]!)).fetch(request);
     }
 
     return new Response('Not found', { status: 404 });

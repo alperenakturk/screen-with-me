@@ -271,7 +271,12 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   (80 sn) → açıklama (6 sn) → sıradaki. Süreler depo alarmıyla; çizim sadece bellekte (1000×750 ızgara, 50 ms'lik
   parçalar, geç gelene `strokes`). Bilenler/çizen kendi aralarında `secret` yazışır. Sayfa `games/draw.ts`
   (`/oyun/draw/<kod>`). Test: `scripts/e2e/draw.mjs`.
-  **Odadan oyun aç (0.9.73):** sohbet kutusunun yanında 🎮 → oyun seç → yeni maç linki sohbete düz metin olarak gider,
+  **Bilgi yarışması (0.9.74):** nesne `Quiz` (`apps/server/src/quiz.ts`, bağ `QUIZZES`, göç `v4`, `/api/quiz/:id/ws`),
+  `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` (genel kültür, TR/EN, film/dizi adı yok; şıklar her oyunda
+  karışır). 2–8 kişi, 10 soru × 15 sn, doğru 100–200 puan (hızlı çok), herkes cevaplayınca ya da süre bitince açıklama
+  (4 sn: doğru şık + kim neyi seçti), sonda kürsü; doğru şık açıklamaya kadar gitmez. Sayfa `games/quiz.ts`
+  (`/oyun/quiz/<kod>`). Test: `scripts/e2e/quiz.mjs`.
+  **Odadan oyun aç (0.9.73):** sohbet kutusunun yanında 🎮 → oyun seç (XOX, Dört Taş, Çiz-Bil, Bilgi yarışması) → yeni maç linki sohbete düz metin olarak gider,
   istemci bu sitenin `/oyun/<tür>/<kod>` linkini "🎮 Ali bir Çiz-Bil maçı açtı · Katıl" kartı olarak çizer (`games/links.ts`;
   başka sitenin linki karta dönmez), açan için oyun yeni sekmede açılır. Kabukta 🎮 düğmesi yok, kartlar var.
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;

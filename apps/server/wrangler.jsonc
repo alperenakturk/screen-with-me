@@ -17,14 +17,17 @@
       // PlayWithMe oyun odaları (XOX…)
       { "name": "GAMES", "class_name": "Game" },
       // Çiz-Bil oyunları
-      { "name": "DRAWS", "class_name": "Draw" }
+      { "name": "DRAWS", "class_name": "Draw" },
+      // Bilgi yarışmaları
+      { "name": "QUIZZES", "class_name": "Quiz" }
     ]
   },
   // Ücretsiz planda Durable Object'ler SQLite tabanlı olmak zorunda.
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["Room"] },
     { "tag": "v2", "new_sqlite_classes": ["Game"] },
-    { "tag": "v3", "new_sqlite_classes": ["Draw"] }
+    { "tag": "v3", "new_sqlite_classes": ["Draw"] },
+    { "tag": "v4", "new_sqlite_classes": ["Quiz"] }
   ],
   "observability": { "enabled": true }
 }
