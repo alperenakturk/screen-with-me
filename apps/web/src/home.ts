@@ -1,4 +1,5 @@
 import { extractRoomId, newRoomId } from '@swm/shared/room-id';
+import { parseMediaInput } from '@swm/shared/media';
 import { el } from './dom.ts';
 import { cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
 import { forgetSaved, isFull, MAX_SAVED, savedRooms, type SavedRoom } from './saved-rooms.ts';
@@ -6,137 +7,155 @@ import { load, sessionSave } from './storage.ts';
 import { t, translate } from './i18n.ts';
 import { renderThemeStrip } from './themes.ts';
 
-/** Bir "nasıl çalışır" adımı: büyük resim (emoji), başlık ve kısa açıklama (i18n anahtarları). */
-interface Step {
-  icon: string;
-  title: string;
-  text: string;
-  /** İsteğe bağlı buton: [i18n anahtarı, link]. */
-  action?: [string, string];
-}
-
-const YOUTUBE_STEPS: Step[] = [
-  { icon: '🏠', title: 'how.yt.1.title', text: 'how.yt.1.text' },
-  { icon: '🔗', title: 'how.yt.2.title', text: 'how.yt.2.text' },
-  { icon: '📋', title: 'how.yt.3.title', text: 'how.yt.3.text' },
-  { icon: '🍿', title: 'how.yt.4.title', text: 'how.yt.4.text' },
-];
-
-const SITE_STEPS: Step[] = [
-  { icon: '🧩', title: 'how.site.1.title', text: 'how.site.1.text', action: ['how.site.1.action', '/eklenti.html'] },
-  { icon: '🌐', title: 'how.site.2.title', text: 'how.site.2.text' },
-  { icon: '🎬', title: 'how.site.3.title', text: 'how.site.3.text' },
-  { icon: '🔗', title: 'how.site.4.title', text: 'how.site.4.text' },
-  { icon: '🍿', title: 'how.site.5.title', text: 'how.site.5.text' },
-];
-
-function stepsHtml(steps: Step[]): string {
-  return steps
-    .map(
-      (step, index) => `
-        <li class="how-step">
-          <div class="how-icon" aria-hidden="true">${step.icon}<span class="how-num">${index + 1}</span></div>
-          <h4 data-i18n="${step.title}"></h4>
-          <p data-i18n="${step.text}"></p>
-          ${step.action ? `<a class="btn primary" href="${step.action[1]}" data-i18n="${step.action[0]}"></a>` : ''}
-        </li>`,
-    )
-    .join('');
-}
-
+/**
+ * Ana sayfa ("Vitrin"): solda başlık ve tek adımlık form (isteğe bağlı video linki + Oda oluştur), sağda temanın
+ * renkleriyle çizilmiş canlı bir oda önizlemesi (maskot köşesinden bakar). Altında tema seçici: tıklayınca sayfa
+ * hemen o temaya geçer, oda da öyle açılır. Sonra kayıtlı odalar, üç adım, iki kapı (link / eklenti) ve odada neler var.
+ */
 export function renderHome(app: HTMLElement): void {
   app.innerHTML = `
-    <nav id="theme-strip" class="theme-strip" role="radiogroup" aria-label="Theme"></nav>
-    <section class="hero">
-      <div class="theme-mascot" aria-hidden="true"></div>
-      <h1>ScreenWithMe</h1>
-      <p class="tagline" data-i18n="tagline"></p>
-      <div class="create-row">
-        <button id="create" type="button" class="btn primary big" data-i18n="createRoom"></button>
-      </div>
-      <div id="create-box" class="create-box card" hidden>
-        <p class="create-q" data-i18n="createQuestion"></p>
-        <div class="create-choices">
-          <button id="create-once" type="button" class="create-choice">
-            <b>⚡ <span data-i18n="createOnce"></span></b><span class="muted small" data-i18n="createOnceText"></span>
-          </button>
-          <button id="create-saved" type="button" class="create-choice">
-            <b>💾 <span data-i18n="createSaved"></span></b><span class="muted small" data-i18n="createSavedText"></span>
-          </button>
-        </div>
-        <form id="create-name-form" class="row" hidden>
-          <input id="create-name" maxlength="${ROOM_NAME_MAX}" autocomplete="off" required data-i18n-placeholder="roomNamePlaceholder" />
-          <button class="btn primary" data-i18n="createGo"></button>
+    <section class="home-hero">
+      <div class="home-intro">
+        <span class="home-pill" data-i18n="home.pill"></span>
+        <h1 class="home-title" data-i18n="home.title"></h1>
+        <p class="home-lead" data-i18n="home.lead"></p>
+        <form id="start-form" class="start-form">
+          <input id="start-link" autocomplete="off" data-i18n-placeholder="home.linkPlaceholder" data-i18n-title="home.linkPlaceholder" />
+          <button class="btn primary big" data-i18n="createRoom"></button>
         </form>
+        <p id="start-error" class="error small" data-i18n="home.badLink" hidden></p>
+        <label class="start-save"><input id="start-save" type="checkbox" /> <span data-i18n="home.save"></span></label>
+        <input id="create-name" class="start-name" maxlength="${ROOM_NAME_MAX}" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" hidden />
         <p id="create-full" class="error small" hidden></p>
+        <p class="start-join muted">
+          <span data-i18n="home.invited"></span>
+          <button id="join-toggle" type="button" class="link-btn" data-i18n="home.joinCode"></button>
+        </p>
+        <form id="join" class="row join-form" hidden>
+          <input id="join-input" data-i18n-placeholder="joinPlaceholder" autocomplete="off" />
+          <button class="btn" data-i18n="join"></button>
+        </form>
+        <p id="join-error" class="error" data-i18n="invalidRoom" hidden></p>
       </div>
-      <div class="divider"><span data-i18n="or"></span></div>
-      <form id="join" class="row">
-        <input id="join-input" data-i18n-placeholder="joinPlaceholder" autocomplete="off" />
-        <button class="btn" data-i18n="join"></button>
-      </form>
-      <p id="join-error" class="error" data-i18n="invalidRoom" hidden></p>
-      <div id="recent" class="recent" hidden>
-        <h3 data-i18n="savedRooms"></h3>
-        <ul id="recent-list"></ul>
-        <p class="muted small" data-i18n="savedRoomsHint"></p>
+      <div class="home-preview" aria-hidden="true">
+        <div class="theme-mascot preview-mascot"></div>
+        <div class="preview-card">
+          <div class="preview-video">
+            <span class="preview-sync" data-i18n="home.demoSync"></span>
+            <i class="preview-sun"></i><i class="preview-hill h1"></i><i class="preview-hill h2"></i>
+            <span class="preview-emoji e1">😂</span><span class="preview-emoji e2">🔥</span><span class="preview-emoji e3">😍</span>
+            <span class="preview-bar"><i></i></span>
+          </div>
+          <div class="preview-people">
+            <img src="/avatars/wizard.svg" alt="" class="talking" /><img src="/avatars/elf.svg" alt="" /><img src="/avatars/captain.svg" alt="" /><img src="/avatars/sorceress.svg" alt="" />
+            <span data-i18n="home.demoPeople"></span>
+          </div>
+        </div>
+        <div class="preview-bubbles">
+          <span class="preview-bubble mine" data-i18n="home.demoChat"></span>
+          <span class="preview-bubble"><b>Deniz</b> <span data-i18n="home.demoPause"></span></span>
+        </div>
       </div>
     </section>
 
-    <section class="how">
-      <h2 data-i18n="how.title"></h2>
-
-      <div class="how-flow">
-        <h3><span class="how-badge">▶</span> <span data-i18n="how.yt.title"></span></h3>
-        <ol class="how-steps">${stepsHtml(YOUTUBE_STEPS)}</ol>
+    <section class="home-themes">
+      <div class="home-themes-head">
+        <h2 data-i18n="home.themes"></h2>
+        <p class="muted" data-i18n="home.themesText"></p>
       </div>
+      <nav id="theme-strip" class="theme-strip all" role="radiogroup" aria-label="Theme"></nav>
+    </section>
 
-      <div class="how-flow">
-        <h3><span class="how-badge site">🌐</span> <span data-i18n="how.site.title"></span></h3>
-        <ol class="how-steps">${stepsHtml(SITE_STEPS)}</ol>
+    <section id="recent" class="recent home-recent" hidden>
+      <h3 data-i18n="savedRooms"></h3>
+      <ul id="recent-list"></ul>
+      <p class="muted small" data-i18n="savedRoomsHint"></p>
+    </section>
+
+    <section class="home-steps">
+      <h2 data-i18n="home.steps"></h2>
+      <ol>
+        <li><b class="step-n">1</b><div><h3 data-i18n="home.step1"></h3><p class="muted" data-i18n="home.step1Text"></p></div></li>
+        <li><b class="step-n">2</b><div><h3 data-i18n="home.step2"></h3><p class="muted" data-i18n="home.step2Text"></p></div></li>
+        <li><b class="step-n">3</b><div><h3 data-i18n="home.step3"></h3><p class="muted" data-i18n="home.step3Text"></p></div></li>
+      </ol>
+    </section>
+
+    <section class="home-doors">
+      <div class="home-door">
+        <span class="door-icon yt" aria-hidden="true">▶</span>
+        <h3 data-i18n="home.doorLink"></h3>
+        <p class="muted" data-i18n="home.doorLinkText"></p>
       </div>
+      <div class="home-door">
+        <span class="door-icon ext" aria-hidden="true">🧩</span>
+        <h3 data-i18n="home.doorExt"></h3>
+        <p class="muted" data-i18n="home.doorExtText"></p>
+        <a class="btn" href="/eklenti.html" data-i18n="home.doorExtGo"></a>
+      </div>
+    </section>
+
+    <section class="home-features">
+      <b data-i18n="home.features"></b>
+      <span>🎙 <span data-i18n="home.f.voice"></span></span>
+      <span>🖥️ <span data-i18n="home.f.screen"></span></span>
+      <span>🎮 <span data-i18n="home.f.games"></span></span>
+      <span>😂 <span data-i18n="home.f.react"></span></span>
+      <span>📱 <span data-i18n="home.f.phone"></span></span>
     </section>
   `;
   translate(app);
-  renderThemeStrip(app.querySelector<HTMLElement>('#theme-strip')!);
+  renderThemeStrip(app.querySelector<HTMLElement>('#theme-strip')!, { all: true });
 
-  // Oda kur: tek seferlik mi, kaydedilsin mi (kaydedilecekse ad zorunlu)?
-  const box = app.querySelector<HTMLElement>('#create-box')!;
-  const nameForm = app.querySelector<HTMLFormElement>('#create-name-form')!;
-  const nameInput = app.querySelector<HTMLInputElement>('#create-name')!;
-  const full = app.querySelector<HTMLElement>('#create-full')!;
-  app.querySelector('#create')!.addEventListener('click', () => {
-    box.hidden = !box.hidden;
-  });
-  app.querySelector('#create-once')!.addEventListener('click', () => location.assign(`/r/${newRoomId()}`));
-  app.querySelector('#create-saved')!.addEventListener('click', () => {
-    full.hidden = !isFull();
+  // Oda kur: link isteğe bağlı (odada ilk açılan video olur); "kaydet" seçiliyse ad zorunlu.
+  const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;
+  const linkInput = $<HTMLInputElement>('#start-link');
+  const saveBox = $<HTMLInputElement>('#start-save');
+  const nameInput = $<HTMLInputElement>('#create-name');
+  const full = $('#create-full');
+  saveBox.addEventListener('change', () => {
+    nameInput.hidden = !saveBox.checked;
     full.textContent = t('savedFull', { n: MAX_SAVED });
-    if (isFull()) return;
-    nameForm.hidden = false;
-    nameInput.focus();
+    full.hidden = !(saveBox.checked && isFull());
+    if (saveBox.checked) nameInput.focus();
   });
-  nameForm.addEventListener('submit', (event) => {
+  $('#start-form').addEventListener('submit', (event) => {
     event.preventDefault();
-    const name = cleanRoomName(nameInput.value);
-    if (!name) return;
+    const link = linkInput.value.trim();
+    // Linkin geçerli olduğu burada anlaşılsın (odaya girip orada hata görmesin).
+    const badLink = link !== '' && parseMediaInput(link) === null;
+    $('#start-error').hidden = !badLink;
+    if (badLink) return;
     const id = newRoomId();
-    // Odaya girince (yönetici olarak) bu adla kaydedilir; bkz. room.ts welcome.
-    sessionSave(`create:${id}`, name);
+    if (saveBox.checked) {
+      if (isFull()) return;
+      const name = cleanRoomName(nameInput.value);
+      if (!name) {
+        nameInput.focus();
+        return;
+      }
+      // Odaya girince (yönetici olarak) bu adla kaydedilir; bkz. room.ts welcome.
+      sessionSave(`create:${id}`, name);
+    }
+    if (link) sessionSave(`start:${id}`, link);
     location.assign(`/r/${id}`);
   });
-  renderRecent(app);
-  window.addEventListener('langchange', () => renderRecent(app));
 
-  const form = app.querySelector<HTMLFormElement>('#join')!;
-  const input = app.querySelector<HTMLInputElement>('#join-input')!;
-  const error = app.querySelector<HTMLElement>('#join-error')!;
-  form.addEventListener('submit', (event) => {
+  const joinForm = $<HTMLFormElement>('#join');
+  const joinInput = $<HTMLInputElement>('#join-input');
+  $('#join-toggle').addEventListener('click', () => {
+    joinForm.hidden = !joinForm.hidden;
+    if (!joinForm.hidden) joinInput.focus();
+  });
+  joinForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    const id = extractRoomId(input.value);
-    error.hidden = id !== null;
+    const id = extractRoomId(joinInput.value);
+    $('#join-error').hidden = id !== null;
     if (id !== null) location.assign(`/r/${id}`);
   });
+
+  renderRecent(app);
+  window.addEventListener('langchange', () => renderRecent(app));
 }
 
 /**

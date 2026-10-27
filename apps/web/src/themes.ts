@@ -86,18 +86,18 @@ export function applyTheme(id: ThemeId, { wait = true } = {}): void {
  * Ana sayfanın üstündeki tema şeridi: her tema küçük maskotu ve adıyla; tıklayınca hemen
  * uygulanır (kullanıcı odaya girmeden deneyebilsin). Dar ekranda yana kayar.
  */
-export function renderThemeStrip(container: HTMLElement): void {
-  // Hepsini göstermek yana kayan uzun bir şerit yapıyordu: her açılışta seçili tema + rastgele
-  // birkaç tema (çoğu resimli). Tamamı odada ve üstteki 🎨 menüsünde seçilebilir.
+export function renderThemeStrip(container: HTMLElement, { all = false } = {}): void {
+  // Dar bir şeritte hepsi yana kayan uzun bir sıra yapıyordu: orada seçili tema + rastgele birkaç tema (çoğu
+  // resimli). Ana sayfanın tema bölümünde (`all`) hepsi, sarılarak.
   const others = THEMES.filter((theme) => theme.id !== currentTheme())
     .map((theme) => ({ theme, key: Math.random() + (SCENE_THEMES.includes(theme.id) ? 0 : 0.6) }))
     .sort((a, b) => a.key - b.key)
     .slice(0, STRIP_COUNT - 1)
     .map((x) => x.theme);
-  const shown = THEMES.filter((theme) => theme.id === currentTheme() || others.includes(theme));
+  const shown = all ? THEMES : THEMES.filter((theme) => theme.id === currentTheme() || others.includes(theme));
   const draw = () =>
     container.replaceChildren(
-      el('span', { class: 'theme-strip-label' }, t('settings.theme')),
+      ...(all ? [] : [el('span', { class: 'theme-strip-label' }, t('settings.theme'))]),
       ...shown.map((theme) => {
         const button = el(
           'button',
