@@ -1,4 +1,5 @@
 import { CAM_MAX, VOICE_MAX, VOICE_MAX_P2P, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
+import { isPushToTalkKey } from '@swm/shared/embed';
 import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
 import { LevelMeter } from '@swm/shared/level-meter';
@@ -40,6 +41,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const camsBox = root.querySelector<HTMLElement>('#voice-cams')!;
   const camDock = root.querySelector<HTMLElement>('#cam-dock');
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
+  const pttBox = root.querySelector<HTMLInputElement>('#voice-ptt')!;
+  /** Bas-konuş: mikrofon kapalı durur, V tuşu (ya da 🎙) basılı tutulunca açılır. Tarayıcıda hatırlanır. */
+  let ptt = load('opt:ptt') === '1';
+  let talking = false;
+  pttBox.checked = ptt;
 
   let available = false;
   let members: Member[] = [];
@@ -146,13 +152,22 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const wantKey = `voice:${roomId}`;
   const remember = (on: boolean) => save(wantKey, on ? '1' : '0');
 
+  let wasActive = false;
   function render(): void {
     card.hidden = !available;
     const active = client.active;
+    // Sese yeni girildi (düğmeyle ya da kendiliğinden): bas-konuşta mikrofon kapalı başlar.
+    if (active && !wasActive && ptt) {
+      talking = false;
+      client.setMic(false);
+    }
+    wasActive = active;
     joinButton.hidden = active;
     onBox.hidden = !active;
     micIcon.textContent = client.micEnabled ? '🎙' : '🔇';
-    const micLabel = client.micEnabled ? t('voice.mute') : t('voice.unmute');
+    micButton.classList.toggle('ptt', ptt);
+    micButton.classList.toggle('talking', ptt && talking);
+    const micLabel = ptt ? t('voice.pttHold') : client.micEnabled ? t('voice.mute') : t('voice.unmute');
     micButton.title = micLabel;
     micButton.setAttribute('aria-label', micLabel);
     micButton.classList.toggle('muted-mic', !client.micEnabled);
@@ -263,7 +278,40 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
   });
   micButton.addEventListener('click', () => {
+    if (ptt) return;
     client.setMic(!client.micEnabled);
+    render();
+  });
+  // Bas-konuş: tuş ya da 🎙 basılı tutulurken konuşulur; pencereden çıkınca (tuş bırakılmadan) kapanır.
+  function talk(on: boolean): void {
+    if (!ptt || !client.active || talking === on) return;
+    talking = on;
+    client.setMic(on);
+    render();
+  }
+  const typing = (target: EventTarget | null) =>
+    target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+  document.addEventListener('keydown', (event) => {
+    if (!ptt || !isPushToTalkKey(event.key) || event.ctrlKey || event.metaKey || event.altKey || typing(event.target)) return;
+    if (!client.active) return;
+    event.preventDefault();
+    if (!event.repeat) talk(true);
+  });
+  document.addEventListener('keyup', (event) => {
+    if (isPushToTalkKey(event.key)) talk(false);
+  });
+  addEventListener('blur', () => talk(false));
+  micButton.addEventListener('pointerdown', (event) => {
+    if (!ptt) return;
+    micButton.setPointerCapture(event.pointerId);
+    talk(true);
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) micButton.addEventListener(type, () => talk(false));
+  pttBox.addEventListener('change', () => {
+    ptt = pttBox.checked;
+    save('opt:ptt', ptt ? '1' : '0');
+    talking = false;
+    if (client.active) client.setMic(!ptt);
     render();
   });
   camButton.addEventListener('click', async () => {

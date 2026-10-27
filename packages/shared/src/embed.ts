@@ -42,13 +42,19 @@ export type EmbedReply =
   | { type: 'send'; message: ClientMessage }
   | { type: 'status'; status: EmbedStatus }
   /** Film sayfasında basılan kısayol (1–8 emoji, Enter mesaj, P pin): site kendi kısayolu gibi işler. */
-  | { type: 'key'; key: string }
+  /** `up`: tuş bırakıldı (sadece bas-konuş tuşu için gelir). */
+  | { type: 'key'; key: string; up?: boolean }
   /** Film sitesinin kendi tam ekran düğmesine basıldı: site kendi tam ekranını açsın. */
   | { type: 'fullscreen' }
   /** Fare film sayfasında oynadı: tam ekran kontrolleri belirsin (yoksa site fareyi hiç görmez). */
   | { type: 'activity' };
 
+/** Bas-konuş tuşu: basılı tutulunca mikrofon açılır (sesli sohbette "bas-konuş" seçiliyse). */
+export function isPushToTalkKey(key: string): boolean {
+  return key.toLowerCase() === 'v';
+}
+
 /** Film sayfasından siteye iletilen kısayol tuşları. */
 export function isForwardedKey(key: string): boolean {
-  return key === 'Enter' || key.toLowerCase() === 'p' || /^[1-8]$/.test(key);
+  return key === 'Enter' || key.toLowerCase() === 'p' || /^[1-8]$/.test(key) || isPushToTalkKey(key);
 }

@@ -13,7 +13,7 @@ import { onExtensionMessage, postToExtension } from '../storage.ts';
 export interface ShellOptions {
   /** Film çerçevesindeki motorun odaya göndermek istediği mesaj (site kendi bağlantısından yollar). */
   onSend: (message: ClientMessage) => void;
-  onKey: (key: string) => void;
+  onKey: (key: string, up: boolean) => void;
   onFullscreen: () => void;
   /** Fare film sayfasında oynadı (tam ekran kontrolleri belirsin). */
   onActivity: () => void;
@@ -41,7 +41,7 @@ export function createShellPlayer(options: ShellOptions): ShellPlayer {
         statusAt = performance.now();
         break;
       case 'key':
-        if (typeof reply.key === 'string') options.onKey(reply.key);
+        if (typeof reply.key === 'string') options.onKey(reply.key, reply.up === true);
         break;
       case 'fullscreen':
         options.onFullscreen();

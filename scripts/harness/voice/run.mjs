@@ -129,6 +129,28 @@ const muted = await ali.evaluate(LEVEL);
 const badge = await ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`);
 check(muted.rms < 0.005 && badge, 'Ayşe sessize alınca Ali onu duymuyor ve 🔇 görünüyor', JSON.stringify({ muted, badge }));
 
+// Bas-konuş: Ayşe seçer (mikrofon kapalı durur), V'ye basılı tutunca Ali onu duyar, bırakınca susar.
+await ayse.evaluate(`(() => { const c = document.getElementById('voice-ptt'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);
+await ayse.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', bubbles: true })); 1`);
+const pttOn = await until(() => ali.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
+await ali.sleep(1500);
+const pttLevel = await ali.evaluate(LEVEL);
+check(!!pttOn && pttLevel.rms > 0.01, 'bas-konuş: Ayşe V’ye basılı tutunca Ali onu duyuyor', JSON.stringify(pttLevel));
+await ayse.evaluate(`document.dispatchEvent(new KeyboardEvent('keyup', { key: 'v', bubbles: true })); 1`);
+const pttOff = await until(() => ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+check(!!pttOff, 'bas-konuş: V bırakılınca Ayşe yine sessiz (🔇)');
+await ayse.evaluate(`(() => { const c = document.getElementById('voice-ptt'); c.checked = false; c.dispatchEvent(new Event('change')); return 1; })()`);
+
+// Kim durdurdu: Ali senkron testini açıp durdurunca Ayşe'de videonun üstünde "Ali durdurdu" notu.
+await ali.evaluate(`document.getElementById('sync-test').click(); 1`);
+await until(() => ayse.evaluate(`!!document.querySelector('#player canvas, #player video')`), 10000);
+await ali.sleep(1500);
+await ali.evaluate(`document.getElementById('fs-play').click(); 1`);
+const notice = await until(() => ayse.evaluate(`(() => { const n = document.getElementById('action-notice'); return n && !n.hidden ? n.textContent : null; })()`), 8000);
+check(!!notice && notice.includes('Ali'), 'Ali durdurunca Ayşe’de videonun üstünde not çıktı', String(notice));
+const ownNotice = await ali.evaluate(`document.getElementById('action-notice').hidden`);
+check(ownNotice, 'kendi hareketim için not çıkmıyor');
+
 // Ayrılma: Ayşe ayrılınca Ali'de akışı kalkar.
 await ayse.evaluate(`document.getElementById('voice-leave').click(); 1`);
 const gone = await until(async () => (await ali.evaluate(`document.querySelectorAll('audio').length`)) === 0, 10000);

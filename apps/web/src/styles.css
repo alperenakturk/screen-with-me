@@ -2853,6 +2853,57 @@ html:not(.shell) .shell-only {
   pointer-events: none;
 }
 
+.action-notice {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: rgb(10 12 24 / 0.78);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  animation: notice-in 0.2s ease-out;
+  transition: opacity 0.4s;
+}
+
+.action-notice.fade {
+  opacity: 0;
+}
+
+.action-notice[hidden] {
+  display: none;
+}
+
+.action-notice-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex: none;
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-notice {
+    animation: none;
+  }
+}
+
 .sync-badge.bad {
   background: rgb(160 110 20 / 0.85);
 }
@@ -4343,6 +4394,28 @@ html.shorts-view .footer {
 }
 
 /* Kişi sınırı: "Seste 3/6 · 📷 1/4" (hep görünür; dolunca kırmızı, son yerde sarı) */
+.voice-ptt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--chrome-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Bas-konuş: düğme basılı tutulurken konuşulur (dokunmatikte kaydırma/menü olmasın) */
+.voice-mic.ptt {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.voice-mic.ptt.talking {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #04120b;
+}
+
 .voice-limit {
   flex-basis: 100%;
   font-size: 12px;
