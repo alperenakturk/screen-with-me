@@ -33,7 +33,7 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    (https://claude.ai/artifact/Beiq1ueBUUHjUkRbL5LTHL): oda için A "Sinema Rayı" (sağda sade ray: "Birlikte" kartında
    kişiler + ses/kamera/ekran düğmeleri, davet üst çubukta), B "Salon" (video ortada, altında koltuk sırası, sohbet dar
    çekmece), C "Ada" (video tam ekran, üstünde cam paneller); D ana sayfa "tek adım" (link yapıştır + oda oluştur, kayıtlı
-   odalar üstte); A telefonda. **Kullanıcı odada A'yı seçti** (0.9.76'da uygulanacak). Ana sayfa için yeni yönler
+   odalar üstte); A telefonda. **Kullanıcı odada A'yı seçti**, 0.9.76'da uygulandı (üst çubukta oda adı + "🔗 Davet et", sağda "Birlikte" kartı). Ana sayfa için yeni yönler
    istedi: E "Sahne" (tam tema sahnesi + büyük maskot), F "Vitrin" (solda form, sağda canlı oda önizlemesi), G "Üç kapı"
    (link / her sitedeki video / odaların); D ile birlikte seçim bekleniyor. Ayrıca: düğme moru #8b6cff beyaz yazıyla
    ~3,8:1 (WCAG 4,5 altı); önerim düğmelerde #6a4cf2.
@@ -42,17 +42,17 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 8. ✅ **Kendi inisiyatifimle (0.9.68–0.9.74):** bas-konuş + "Ali durdurdu" notu, Dört Taş, PWA, sağ paneli gizle, Çiz-Bil,
    odadan oyun aç, Bilgi yarışması. Canlı e2e: yayın sırasında kopan bağlantıya karşı 30 sn bekleme + canlıda bir tekrar.
 
-**Sıradaki (0.9.76 → 0.9.80):** (1) oda tasarımı A "Sinema Rayı"nı uygulamak, ana sayfa seçimi gelince onu da, (2) kelime avı
+**Sıradaki (0.9.77 → 0.9.80):** (1) ana sayfa tasarımı (D/E/F/G seçimi gelince), (2) kelime avı
 (Türkçe sözlük gerekir; ya da sözlüksüz bir kelime oyunu), (3) gerçek deneme turu hazırlığı (VIZYON "v1.0" listesi),
 (4) Brave/Edge'de eklenti denemesi (kullanıcıdan), (5) senkron ölçümü (p50/p95) ve README rozeti.
 
-## Son yapılanlar (0.9.61 → 0.9.75)
+## Son yapılanlar (0.9.61 → 0.9.76)
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
   görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti), yayın 2. aşama (0.9.66),
   Mehtaplı padişah maskotu (0.9.67), bas-konuş (V) + "Ali durdurdu" notu videonun üstünde (0.9.68, eklenti 0.9.68),
   PlayWithMe'de Dört Taş (0.9.69), telefona/bilgisayara uygulama olarak ekleme (PWA, 0.9.70), sağ paneli gizle (0.9.71, video büyür, mesajlar
   videonun köşesinde), Çiz-Bil (0.9.72), odadan oyun aç (0.9.73), Bilgi yarışması (0.9.74), oyunlar odanın içinde
-  (0.9.75: ayrı oyun sayfaları kalktı, oyun videonun yerinde açılır).
+  (0.9.75: ayrı oyun sayfaları kalktı, oyun videonun yerinde açılır), oda düzeni "Sinema Rayı" (0.9.76).
 
 ## Önceki: 0.9.60
 - **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".

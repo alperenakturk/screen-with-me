@@ -53,7 +53,9 @@
   <body>
     <header class="topbar">
       <a class="brand"><img class="logo" src="/logo.svg" alt="" /> ScreenWithMe</a>
+      <div class="room-title"><span class="room-title-dot"></span><b class="room-title-name">Friday movie night</b><span class="room-title-count">· 4 people</span></div>
       <div class="topbar-right">
+        <button type="button" class="btn primary small-btn invite-btn"><span>🔗</span><span class="invite-text">Invite</span></button>
         <button type="button" class="nav-link shell-home">🏠 Back to the room</button>
         <span class="status" data-status="open">Connected</span>
         <button type="button" class="nav-link">🎨</button>
@@ -195,10 +197,12 @@
             </div>
           </div>
           <aside class="side">
-            <section class="card invite-card">
-              <p class="room-name">Friday movie night</p>
-              <span class="invite-label">Invite link</span>
-              <div class="row"><input readonly value="screen-with-me.swm-server.workers.dev/r/k3x9q2" /><button type="button" class="btn primary">Copy</button></div>
+            <section class="card together-card">
+              <div class="together-head"><h3 class="together-title">Together</h3><span class="voice-limit muted small">Voice 2/6 · 📷 0/4</span></div>
+              <div class="voice-people">${PEOPLE.map(
+                (p, i) => `<span class="together-person"><span class="voice-face${i < 2 ? ' in-voice' : ''}${i === 1 ? ' speaking' : ''}">${av(p.avatar, 'voice-avatar')}</span><span class="together-name">${p.me ? 'You' : p.name}</span></span>`,
+              ).join('')}</div>
+              <div class="voice-row"><div class="voice-on"><button type="button" class="btn small-btn voice-mic">🎙</button><button type="button" class="btn small-btn">📷</button><button type="button" class="btn small-btn">Leave</button></div></div>
             </section>
             <section class="card tabs-card">
               <nav class="tabs">

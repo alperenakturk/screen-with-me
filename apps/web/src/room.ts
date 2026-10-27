@@ -380,17 +380,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       </div>
 
       <aside class="side">
-        <section class="card invite-card">
-          <p id="room-name" class="room-name" hidden></p>
-          <span class="invite-label" data-i18n="invite"></span>
-          <div class="row">
-            <input id="invite" readonly data-i18n-title="invite" />
-            <button id="copy" type="button" class="btn primary"></button>
+        <section class="card together-card" id="together">
+          <div class="together-head">
+            <h3 class="together-title" data-i18n="together"></h3>
+            <span id="voice-limit" class="voice-limit muted small"></span>
           </div>
-        </section>
-
-        <section class="card voice-card" id="voice-card" hidden>
-          <div class="voice-row">
+          <div id="voice-people" class="voice-people"></div>
+          <div id="voice-card" class="voice-row" hidden>
             <button id="voice-join" type="button" class="btn primary voice-join">🎙 <span data-i18n="voice.join"></span></button>
             <div id="voice-on" class="voice-on" hidden>
               <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
@@ -398,29 +394,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
               <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>
             </div>
-            <div id="voice-people" class="voice-people"></div>
-            <span id="voice-limit" class="voice-limit muted small"></span>
           </div>
           <div id="voice-cams" class="voice-cams" hidden>
           </div>
           <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
-        </section>
-
-        <section class="card live-card" id="live-card" hidden>
-          <div class="live-row">
-            <span id="live-status" class="live-status small"></span>
-            <button id="live-screen" type="button" class="btn small-btn">🖥️ <span data-i18n="live.screen"></span></button>
-            <button id="live-camera" type="button" class="btn small-btn">📹 <span data-i18n="live.camera"></span></button>
-            <button id="live-watch" type="button" class="btn small-btn primary" hidden></button>
-            <button id="live-stop" type="button" class="btn small-btn" data-i18n="live.stop" hidden></button>
-            <button id="live-kill" type="button" class="btn small-btn" data-i18n="live.kill" hidden></button>
-            <label class="live-quality small" id="live-quality-row" hidden><span data-i18n="live.quality"></span>
-              <select id="live-quality">
-                <option value="text" data-i18n="live.quality.text"></option>
-                <option value="motion" data-i18n="live.quality.motion"></option>
-              </select>
-            </label>
-            <span id="live-limit" class="voice-limit muted small"></span>
+          <div class="live-card" id="live-card" hidden>
+            <div class="live-row">
+              <span id="live-status" class="live-status small"></span>
+              <button id="live-screen" type="button" class="btn small-btn">🖥️ <span data-i18n="live.screen"></span></button>
+              <button id="live-camera" type="button" class="btn small-btn">📹 <span data-i18n="live.camera"></span></button>
+              <button id="live-watch" type="button" class="btn small-btn primary" hidden></button>
+              <button id="live-stop" type="button" class="btn small-btn" data-i18n="live.stop" hidden></button>
+              <button id="live-kill" type="button" class="btn small-btn" data-i18n="live.kill" hidden></button>
+              <label class="live-quality small" id="live-quality-row" hidden><span data-i18n="live.quality"></span>
+                <select id="live-quality">
+                  <option value="text" data-i18n="live.quality.text"></option>
+                  <option value="motion" data-i18n="live.quality.motion"></option>
+                </select>
+              </label>
+              <span id="live-limit" class="voice-limit muted small"></span>
+            </div>
           </div>
         </section>
 
@@ -585,6 +578,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let roomState: PlaybackState | null = null;
 
   const send = (message: ClientMessage) => connection.send(message);
+  // Üst çubukta odanın adı (kayıtlı odada adı, değilse kodu) ve kaç kişi olduğu.
+  const roomTitleName = el('b', { class: 'room-title-name' });
+  const roomTitleCount = el('span', { class: 'room-title-count' });
+  document.querySelector('.topbar .brand')?.after(el('div', { class: 'room-title' }, el('span', { class: 'room-title-dot', 'aria-hidden': 'true' }), roomTitleName, roomTitleCount));
+  function drawRoomTitle(): void {
+    roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : t('roomTitle', { code: roomId });
+    roomTitleCount.textContent = members.length ? `· ${t('peopleCount', { n: members.length })}` : '';
+  }
+  addEventListener('langchange', drawRoomTitle);
   const amHost = () => myId !== null && myId === hostId;
   const queue = createQueuePanel(app, send, {
     play: () => amHost() || !roomSettings.hostOnly,
@@ -1786,40 +1788,44 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     test.title = alone ? t('syncAlone') : '';
   }
 
-  // ---- Davet linki ----
-  const inviteEl = $<HTMLInputElement>('#invite');
-  const copyEl = $<HTMLButtonElement>('#copy');
-  inviteEl.value = `${location.origin}/r/${roomId}`;
-  inviteEl.addEventListener('focus', () => inviteEl.select());
+  // ---- Davet linki: üst çubukta "🔗 Davet et" (basınca link kopyalanır; telefonda paylaşım menüsü) ----
+  const inviteUrl = `${location.origin}/r/${roomId}`;
   // Telefonda (dokunmatik + paylaşım menüsü varsa) "Paylaş": WhatsApp vb. doğrudan açılır.
   const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
-  async function shareInvite(button: HTMLButtonElement, idleText: () => string): Promise<void> {
+  async function shareInvite(button: HTMLButtonElement, idleText: () => string, text: HTMLElement = button): Promise<void> {
     if (canShare) {
       try {
-        await navigator.share({ title: 'ScreenWithMe', text: t('inviteShareText'), url: inviteEl.value });
+        await navigator.share({ title: 'ScreenWithMe', text: t('inviteShareText'), url: inviteUrl });
         return;
       } catch {
         // Vazgeçildi ya da desteklenmiyor: kopyalamaya düş.
       }
     }
     try {
-      await navigator.clipboard.writeText(inviteEl.value);
+      await navigator.clipboard.writeText(inviteUrl);
     } catch {
-      inviteEl.select();
-      document.execCommand('copy');
+      // Pano kapalı (izin yok): link elle kopyalansın.
+      window.prompt(t('invite'), inviteUrl);
+      return;
     }
-    button.textContent = t('copied');
-    setTimeout(() => (button.textContent = idleText()), 1500);
+    text.textContent = t('copied');
+    button.classList.add('done');
+    setTimeout(() => {
+      text.textContent = idleText();
+      button.classList.remove('done');
+    }, 1500);
   }
-  const inviteLabel = () => t(canShare ? 'share' : 'copy');
+  const inviteLabel = () => t(canShare ? 'share' : 'inviteButton');
   const emptyInviteLabel = () => t(canShare ? 'share' : 'copyInvite');
-  copyEl.textContent = inviteLabel();
-  copyEl.addEventListener('click', () => void shareInvite(copyEl, inviteLabel));
+  const inviteText = el('span', { class: 'invite-text' }, inviteLabel());
+  const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, el('span', { 'aria-hidden': 'true' }, '🔗'), inviteText);
+  document.querySelector('.topbar-right')?.prepend(copyEl);
+  copyEl.addEventListener('click', () => void shareInvite(copyEl, inviteLabel, inviteText));
   const emptyInviteEl = $<HTMLButtonElement>('#empty-invite');
   emptyInviteEl.textContent = emptyInviteLabel();
   emptyInviteEl.addEventListener('click', () => void shareInvite(emptyInviteEl, emptyInviteLabel));
   window.addEventListener('langchange', () => {
-    copyEl.textContent = inviteLabel();
+    inviteText.textContent = inviteLabel();
     voice.relabel();
     live.relabel();
     emptyInviteEl.textContent = emptyInviteLabel();
@@ -1856,6 +1862,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     voice.members(members);
     live.members(members);
     $('#people-count').textContent = String(members.length);
+    drawRoomTitle();
     renderAlone();
     renderWaiting();
     renderWatching();
@@ -1906,9 +1913,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#save-submit').textContent = saved ? t('rename') : t('saveRoom');
     const input = $<HTMLInputElement>('#save-name');
     if (document.activeElement !== input) input.value = name;
-    const label = $('#room-name');
-    label.hidden = !saved;
-    label.textContent = saved ? `💾 ${name || roomId}` : '';
+    drawRoomTitle();
     document.title = saved && name ? `${name} · ScreenWithMe` : 'ScreenWithMe';
     // Ana sayfadaki "Kaydedilen odalar" listesi: sadece sunucudan ayarlar geldikten sonra (önce varsayılan ayarla
     // "kayıtlı değil" sanılıp liste siliniyordu; bağlantı hiç kurulmazsa oda listeden kayboluyordu) ve sadece değişince
