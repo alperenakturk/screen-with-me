@@ -81,6 +81,42 @@ c.send({ t: 'live-watch', on: true });
 const full = await c.wait((m) => m.t === 'error', 'full');
 ok(full.code === 'live_full', '5. izleyici reddedildi (live_full)');
 
+// Yönetici (Ali, ilk giren) başkasının yayınını durdurabilir; yönetici olmayan durduramaz. (Eski mesajlar karışmasın
+// diye her adımdan önce kutular boşaltılır.)
+const clear = () => [a, b, c].forEach((x) => (x.inbox.length = 0));
+const live = (x, name, on = true) => (m) => m.t === 'members' && m.members.some((y) => y.name === name && !!y.live === on);
+clear();
+a.send({ t: 'live', on: false });
+await b.wait(live(b, 'Ali', false), 'ali off');
+clear();
+b.send({ t: 'live', on: true, kind: 'camera' });
+await a.wait(live(a, 'Ayse'), 'ayse live');
+c.send({ t: 'live-stop' });
+const notHost = await c.wait((m) => m.t === 'error', 'not host');
+ok(notHost.code === 'not_host', 'Yönetici olmayan yayını durduramıyor (not_host)');
+clear();
+a.send({ t: 'live-stop' });
+const stopped = await b.wait((m) => m.t === 'error', 'stopped');
+ok(stopped.code === 'live_stopped', 'Yönetici yayını durdurdu, yayıncıya haber gitti (live_stopped)');
+await a.wait((m) => m.t === 'members' && !m.members.some((x) => x.live || x.watching), 'stopped members');
+ok(true, 'Durdurulan yayın ve izleyicileri listeden kalktı');
+// "Sadece yönetici yayın açsın": açılınca başkasının süren yayını kapanır, sonra açamaz; yönetici açabilir.
+clear();
+b.send({ t: 'live', on: true, kind: 'camera' });
+await a.wait(live(a, 'Ayse'), 'ayse live again');
+clear();
+a.send({ t: 'settings', liveHostOnly: true });
+const locked = await b.wait((m) => m.t === 'error', 'locked stop');
+ok(locked.code === 'live_stopped', 'Kilit açılınca başkasının yayını kapandı');
+await b.wait((m) => m.t === 'settings' && m.settings.liveHostOnly === true, 'settings');
+b.send({ t: 'live', on: true, kind: 'screen' });
+const denied = await b.wait((m) => m.t === 'error', 'live host');
+ok(denied.code === 'live_host', 'Kilitliyken yönetici olmayan yayın açamıyor (live_host)');
+clear();
+a.send({ t: 'live', on: true, kind: 'screen' });
+await b.wait(live(b, 'Ali'), 'host live');
+ok(true, 'Kilitliyken yönetici yayın açabiliyor');
+
 // Yayıncı çıkınca yayın biter, izleyiciler bırakılır.
 a.ws.close();
 await b.wait((m) => m.t === 'members' && !m.members.some((x) => x.live || x.watching), 'cleared');

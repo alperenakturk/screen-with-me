@@ -1,6 +1,7 @@
 import { LIVE_MAX_VIEWERS, type ClientMessage, type LiveKind, type Member, type Signal } from '@swm/shared/protocol';
-import { LiveP2p } from '@swm/shared/live-p2p';
+import { LiveP2p, type LiveQuality } from '@swm/shared/live-p2p';
 import { t } from '../i18n.ts';
+import { load, save } from '../storage.ts';
 import { flashHint } from './hint.ts';
 
 /**
@@ -9,8 +10,17 @@ import { flashHint } from './hint.ts';
  * görünür, dolunca düğme soluk ve nedeni). Kimse kendiliğinden izlemez: "▶ İzle"ye basan izler (trafik harcamasın).
  * Film yayınlamak için değil (paylaşılan şey eşitlenmiş film değil, canlı görüntü); film sayfasında (kabuk) yayın
  * açılamaz, izlenebilir.
+ *
+ * Ekran paylaşımında kalite seçilir (yazı net / akıcı; yayın sürerken de değişir, tarayıcıda hatırlanır). Yönetici
+ * yayını herkes için durdurabilir ve "yayını sadece yönetici açsın" diyebilir (`settings.liveHostOnly`).
  */
-export function createLive(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, isShell: boolean) {
+export function createLive(
+  root: HTMLElement,
+  send: (message: ClientMessage) => void,
+  myId: () => string | null,
+  isShell: boolean,
+  isHost: () => boolean,
+) {
   const card = root.querySelector<HTMLElement>('#live-card')!;
   const screenButton = root.querySelector<HTMLButtonElement>('#live-screen')!;
   const cameraButton = root.querySelector<HTMLButtonElement>('#live-camera')!;
@@ -23,6 +33,14 @@ export function createLive(root: HTMLElement, send: (message: ClientMessage) => 
   const title = root.querySelector<HTMLElement>('#live-title')!;
   const bigButton = root.querySelector<HTMLButtonElement>('#live-big')!;
   const closeButton = root.querySelector<HTMLButtonElement>('#live-close')!;
+  const killButton = root.querySelector<HTMLButtonElement>('#live-kill')!;
+  const qualityRow = root.querySelector<HTMLElement>('#live-quality-row')!;
+  const qualitySelect = root.querySelector<HTMLSelectElement>('#live-quality')!;
+  const savedQuality = load('opt:liveQuality');
+  qualitySelect.value = savedQuality === 'text' ? 'text' : 'motion';
+  const quality = (): LiveQuality => (qualitySelect.value === 'text' ? 'text' : 'motion');
+  /** Yayını sadece yönetici açabilir. */
+  let hostOnly = false;
 
   let available = false;
   let members: Member[] = [];
@@ -58,14 +76,20 @@ export function createLive(root: HTMLElement, send: (message: ClientMessage) => 
     const viewers = members.filter((m) => m.watching).length;
     const full = viewers >= LIVE_MAX_VIEWERS;
     const idle = !host;
+    const locked = hostOnly && !isHost();
     screenButton.hidden = !idle || !canShare;
     cameraButton.hidden = !idle || !canCamera;
+    // Yönetici kilitlediyse düğmeler soluk (basınca nedeni).
+    screenButton.classList.toggle('is-full', locked);
+    cameraButton.classList.toggle('is-full', locked);
     stopButton.hidden = !mine;
+    killButton.hidden = !host || mine || !isHost();
+    qualityRow.hidden = !canShare || !(idle || (mine && live.broadcasting === 'screen'));
     watchButton.hidden = !host || mine;
     watchButton.textContent = live.isWatching ? t('live.unwatch') : t('live.watch');
     watchButton.classList.toggle('primary', !live.isWatching);
     watchButton.classList.toggle('is-full', !live.isWatching && full);
-    if (idle) status.textContent = isShell ? t('live.shellIdle') : t('live.idle');
+    if (idle) status.textContent = isShell ? t('live.shellIdle') : locked ? t('live.hostOnly') : t('live.idle');
     else if (mine) status.textContent = `🔴 ${t(host.live === 'camera' ? 'live.youCamera' : 'live.youScreen')}`;
     else status.textContent = `🔴 ${t(host.live === 'camera' ? 'live.theyCamera' : 'live.theyScreen', { name: host.name })}`;
     // Sınır hep görünür.
@@ -92,9 +116,13 @@ export function createLive(root: HTMLElement, send: (message: ClientMessage) => 
 
   async function start(kind: LiveKind, button: HTMLButtonElement): Promise<void> {
     if (streamer()) return;
+    if (hostOnly && !isHost()) {
+      flashHint(button, t('live.hostOnly'), 6000);
+      return;
+    }
     button.disabled = true;
     try {
-      await live.start(kind);
+      await live.start(kind, quality());
     } catch (error) {
       // Kişi seçme penceresini kapattıysa sessizce vazgeç.
       const cancelled = error instanceof DOMException && error.name === 'NotAllowedError';
@@ -125,6 +153,11 @@ export function createLive(root: HTMLElement, send: (message: ClientMessage) => 
     live.watch();
     render();
   });
+  killButton.addEventListener('click', () => send({ t: 'live-stop' }));
+  qualitySelect.addEventListener('change', () => {
+    save('opt:liveQuality', quality());
+    void live.setQuality(quality());
+  });
   bigButton.addEventListener('click', () => win.classList.toggle('big'));
   closeButton.addEventListener('click', () => {
     if (live.broadcasting) live.stop();
@@ -148,15 +181,20 @@ export function createLive(root: HTMLElement, send: (message: ClientMessage) => 
     signal(from: string, data: Signal): void {
       void live.receive(from, data).catch(() => {});
     },
-    error(code: 'live_busy' | 'live_full'): void {
-      if (code === 'live_busy') {
+    error(code: 'live_busy' | 'live_full' | 'live_host' | 'live_stopped'): void {
+      if (code === 'live_busy' || code === 'live_host' || code === 'live_stopped') {
         live.stop();
-        flashHint(card, t('live.busy'), 6000);
+        flashHint(card, t(code === 'live_busy' ? 'live.busy' : code === 'live_host' ? 'live.hostOnly' : 'live.stopped'), 6000);
       } else {
         live.stopWatching();
         const viewers = members.filter((m) => m.watching).length;
         flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
       }
+      render();
+    },
+    /** Oda ayarı: yayını sadece yönetici açabilsin. */
+    settings(liveHostOnly: boolean): void {
+      hostOnly = liveHostOnly;
       render();
     },
     /** Sayfadan çıkarken / odadan atılınca. */

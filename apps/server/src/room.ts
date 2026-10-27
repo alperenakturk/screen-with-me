@@ -327,6 +327,10 @@ export class Room extends DurableObject<Env> {
       case 'live':
         this.setLive(ws, attachment, message.on, message.kind);
         return;
+      case 'live-stop':
+        if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        this.stopLive();
+        return;
       case 'live-watch':
         this.setWatch(ws, attachment, message.on);
         return;
@@ -519,6 +523,7 @@ export class Room extends DurableObject<Env> {
         if (message.loop !== undefined) next.loop = message.loop;
         if (message.saved !== undefined) next.saved = message.saved;
         if (message.noReactions !== undefined) next.noReactions = message.noReactions;
+        if (message.liveHostOnly !== undefined) next.liveHostOnly = message.liveHostOnly;
         if (message.reactionGap !== undefined) next.reactionGap = message.reactionGap;
         if (message.name !== undefined) next.name = message.name;
         // Kayıt kapanınca hatırlananlar da silinir.
@@ -532,6 +537,8 @@ export class Room extends DurableObject<Env> {
         this.settings = next;
         await this.ctx.storage.put('settings', this.settings);
         this.broadcast({ t: 'settings', settings: this.settings });
+        // "Sadece yönetici yayın açsın" açıldı: başkasının süren yayını kapanır.
+        if (message.liveHostOnly === true) this.stopLive(true);
         await this.evaluateWait();
         await this.scheduleAlarm();
         return;
@@ -803,6 +810,7 @@ export class Room extends DurableObject<Env> {
    */
   private setLive(ws: WebSocket, attachment: Attachment, on: boolean, kind?: LiveKind): void {
     if (on && kind) {
+      if (this.settings.liveHostOnly && !this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'live_host' });
       if (this.joined().some((a) => a.live && a.id !== attachment.id)) return this.sendTo(ws, { t: 'error', code: 'live_busy' });
       attachment.live = kind;
       delete attachment.watching;
@@ -814,6 +822,22 @@ export class Room extends DurableObject<Env> {
       this.clearWatchers();
     }
     this.broadcast(this.membersMessage());
+  }
+
+  /**
+   * Yöneticinin "yayını durdur"u (ya da "sadece yönetici yayın açsın" açılınca başkasının yayını): yayıncıya
+   * `live_stopped` gider (görüntüsünü kapatır), izleyiciler bırakılır.
+   */
+  private stopLive(onlyOthers = false): void {
+    for (const socket of this.openSockets()) {
+      const a = socket.deserializeAttachment() as Attachment | null;
+      if (!a?.live || (onlyOthers && this.isHost(socket))) continue;
+      delete a.live;
+      socket.serializeAttachment(a);
+      this.sendTo(socket, { t: 'error', code: 'live_stopped' });
+      this.clearWatchers();
+      this.broadcast(this.membersMessage());
+    }
   }
 
   /** Yayını izle/bırak: en fazla LIVE_MAX_VIEWERS kişi (yayıncı her izleyiciye ayrı kopya yollar). */
@@ -1278,7 +1302,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-signal' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

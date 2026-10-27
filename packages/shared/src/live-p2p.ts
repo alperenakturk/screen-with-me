@@ -12,11 +12,20 @@ const ICE: RTCIceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stu
 /** 720p ekran ~2,5 Mbit/s (yazı net kalsın), kamera ~1,2 Mbit/s. Yükleme yetmezse WebRTC kendisi düşürür. */
 const MAX_BITRATE: Record<LiveKind, number> = { screen: 2_500_000, camera: 1_200_000 };
 
-export const SCREEN_CONSTRAINTS: DisplayMediaStreamOptions = {
-  video: { width: { max: 1280 }, height: { max: 720 }, frameRate: { ideal: 30, max: 30 } },
-  // Sekme paylaşılırsa sesi de gelsin (Chrome kutusu çıkarır; pencere/ekranda çoğu zaman yok).
-  audio: true,
-};
+/**
+ * Ekran paylaşımında kalite: `text` (yazı net: sunum, kod, site; saniyede 15 kare, bant genişliği keskinliğe gider) ya da
+ * `motion` (akıcı: oyun, video; 30 kare, ağ yetmezse çözünürlük düşer ama kare sayısı korunur).
+ */
+export type LiveQuality = 'text' | 'motion';
+const FPS: Record<LiveQuality, number> = { text: 15, motion: 30 };
+
+export function screenConstraints(quality: LiveQuality): DisplayMediaStreamOptions {
+  return {
+    video: { width: { max: 1280 }, height: { max: 720 }, frameRate: { ideal: FPS[quality], max: FPS[quality] } },
+    // Sekme paylaşılırsa sesi de gelsin (Chrome kutusu çıkarır; pencere/ekranda çoğu zaman yok).
+    audio: true,
+  };
+}
 export const LIVE_CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } },
   audio: false,
@@ -34,7 +43,7 @@ export interface LiveOptions {
   /** Biriyle bağlantı kurulamadı. */
   onFailed?: (memberId: string) => void;
   /** Testte sahte akış verilebilir. */
-  capture?: (kind: LiveKind) => Promise<MediaStream>;
+  capture?: (kind: LiveKind, quality: LiveQuality) => Promise<MediaStream>;
 }
 
 interface Peer {
@@ -47,6 +56,7 @@ export class LiveP2p {
   /** Yayıncıysam: yayınladığım akış ve türü. */
   private stream: MediaStream | null = null;
   private kind: LiveKind | null = null;
+  private quality: LiveQuality = 'motion';
   /** Yayıncıysam izleyicilerle, izleyiciysem yayıncıyla bağlantılar. */
   private readonly peers = new Map<string, Peer>();
   private watching = false;
@@ -66,14 +76,15 @@ export class LiveP2p {
   }
 
   /** Yayını başlat: ekran seçme penceresi (ya da kamera) açılır; vazgeçilirse hata fırlatır. */
-  async start(kind: LiveKind): Promise<void> {
+  async start(kind: LiveKind, quality: LiveQuality = 'motion'): Promise<void> {
     this.stop();
     this.stopWatching();
-    const stream = await (this.options.capture?.(kind) ??
-      (kind === 'screen' ? navigator.mediaDevices.getDisplayMedia(SCREEN_CONSTRAINTS) : navigator.mediaDevices.getUserMedia(LIVE_CAMERA_CONSTRAINTS)));
+    const stream = await (this.options.capture?.(kind, quality) ??
+      (kind === 'screen' ? navigator.mediaDevices.getDisplayMedia(screenConstraints(quality)) : navigator.mediaDevices.getUserMedia(LIVE_CAMERA_CONSTRAINTS)));
     const video = stream.getVideoTracks()[0];
-    // Yazı/slayt net kalsın (ekran), hareket akıcı kalsın (kamera).
-    if (video) video.contentHint = kind === 'screen' ? 'detail' : 'motion';
+    this.quality = quality;
+    // Tarayıcıya ne korunacağını söyle: yazı keskinliği (detail) ya da hareket (motion). Kamera hep hareket.
+    if (video) video.contentHint = kind === 'screen' && quality === 'text' ? 'detail' : 'motion';
     // Tarayıcının "Paylaşımı durdur" düğmesi: yayın biter.
     video?.addEventListener('ended', () => {
       if (this.stream !== stream) return;
@@ -83,6 +94,23 @@ export class LiveP2p {
     this.stream = stream;
     this.kind = kind;
     this.options.announce(true, kind);
+  }
+
+  get currentQuality(): LiveQuality {
+    return this.quality;
+  }
+
+  /** Yayın sürerken kaliteyi değiştir (ekran paylaşımında): kare sayısı ve tarayıcının önceliği. */
+  async setQuality(quality: LiveQuality): Promise<void> {
+    this.quality = quality;
+    const video = this.stream?.getVideoTracks()[0];
+    if (!video || this.kind !== 'screen') return;
+    video.contentHint = quality === 'text' ? 'detail' : 'motion';
+    await video.applyConstraints({ frameRate: { ideal: FPS[quality], max: FPS[quality] } }).catch(() => {});
+    for (const peer of this.peers.values()) {
+      const sender = peer.pc.getSenders().find((s) => s.track?.kind === 'video');
+      if (sender) await this.limit(sender);
+    }
   }
 
   stop(): void {
@@ -162,19 +190,27 @@ export class LiveP2p {
     const peer = this.peer(memberId);
     for (const track of stream.getTracks()) {
       const transceiver = peer.pc.addTransceiver(track, { direction: 'sendonly', streams: [stream] });
-      if (track.kind !== 'video') continue;
-      try {
-        const params = transceiver.sender.getParameters();
-        if (params.encodings?.length) {
-          params.encodings[0]!.maxBitrate = MAX_BITRATE[this.kind];
-          await transceiver.sender.setParameters(params);
-        }
-      } catch {
-        // Sınır konamadıysa tarayıcının kendi ayarı.
-      }
+      if (track.kind === 'video') await this.limit(transceiver.sender);
     }
     await peer.pc.setLocalDescription(await peer.pc.createOffer());
     this.options.signal(memberId, { sdp: { type: 'offer', sdp: peer.pc.localDescription!.sdp } });
+  }
+
+  /** Bit hızı sınırı ve ağ yetmezse neyin korunacağı (yazı netse çözünürlük, akıcıysa kare sayısı). */
+  private async limit(sender: RTCRtpSender): Promise<void> {
+    if (!this.kind) return;
+    try {
+      const params = sender.getParameters();
+      if (params.encodings?.length) {
+        params.encodings[0]!.maxBitrate = MAX_BITRATE[this.kind];
+        params.encodings[0]!.maxFramerate = this.kind === 'screen' ? FPS[this.quality] : 30;
+      }
+      (params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference =
+        this.kind === 'screen' && this.quality === 'text' ? 'maintain-resolution' : 'maintain-framerate';
+      await sender.setParameters(params);
+    } catch {
+      // Sınır konamadıysa tarayıcının kendi ayarı.
+    }
   }
 
   private peer(memberId: string): Peer {

@@ -18,6 +18,9 @@ Nasıl yapılır, kaç kişiye yeter, ne kadara mal olur, mağaza ve telif açı
 - **Kişi sınırları hep açıkça gösterilsin** (ör. "Seste 4/6", "Yayını izleyen 3/4"); sınıra yaklaşınca/dolunca uyarı ve
   neden (eşler arası, yükleme hızı); dolunca düğme soluk + açıklama balonu. Sesli sohbete de (0.9.63'te yapıldı).
 
+> **Durum:** 1. aşama 0.9.64'te (sitede ekran/kamera, mesh, ≤4 izleyici). 2. aşama 0.9.66'da: kalite seçimi ("yazı net"
+> 15 kare + keskinlik / "akıcı" 30 kare), yöneticinin yayını durdurması, `settings.liveHostOnly`.
+
 ## Kısaca
 
 - **Gelebilir, ama "film yayını" olarak değil.** ScreenWithMe'nin gücü şu: herkes videoyu **kendi** tarayıcısında, kendi
