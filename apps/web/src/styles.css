@@ -2562,9 +2562,45 @@ html:not(.shell) .shell-only {
   overflow-wrap: anywhere;
 }
 
+/* Sağ panel gizli: video bütün genişliği alır, sohbet mesajları videonun köşesinde (tam ekrandaki gibi) */
+.room.side-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.room.side-hidden > .side {
+  display: none;
+}
+
+.room.side-hidden .theater .toasts {
+  display: flex;
+}
+
+.side-toggle {
+  position: relative;
+}
+
+.side-toggle .badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+}
+
 @media (max-width: 860px) {
   .room {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Dar ekranda panel zaten videonun altında: gizleme düğmesi yok */
+  .side-toggle {
+    display: none;
+  }
+
+  .room.side-hidden > .side {
+    display: block;
+  }
+
+  .room.side-hidden .theater:not(:fullscreen, .fake-fs) .toasts {
+    display: none;
   }
 
   main {

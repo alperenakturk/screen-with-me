@@ -331,6 +331,9 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
 - **Kim durdurdu notu (0.9.68):** başkası oynat/durdur/sar/hız yapınca videonun sol üstünde 2,6 sn avatar + "Ali durdurdu"
   (`#action-notice`, deliğin içinde adacık; kendi hareketim ve `SYSTEM` için yok); Ayarlar'dan kapatılır (`opt:actionNotice`).
+- **Sağ paneli gizle (0.9.71):** video altındaki araç çubuğunda ⇥ (`#side-toggle`): `.room.side-hidden`, video bütün genişliği
+  alır, sohbet mesajları tam ekrandaki gibi videonun köşesinde (`toasts`), düğmede okunmamış sayısı; `localStorage`
+  `opt:sideHidden`; kabukta ve dar ekranda (≤860 px) yok.
 - **Sohbette oda hareketleri:** hep yazılır ama varsayılan gizli; sohbetin sağ üstündeki "Eylemleri gör (N)"
   (`localStorage` `opt:chatEvents`). Ayarlardaki seçenek kaldırıldı.
 - **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),

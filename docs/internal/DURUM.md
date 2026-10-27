@@ -40,7 +40,8 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
   görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti), yayın 2. aşama (0.9.66),
   Mehtaplı padişah maskotu (0.9.67), bas-konuş (V) + "Ali durdurdu" notu videonun üstünde (0.9.68, eklenti 0.9.68),
-  PlayWithMe'de Dört Taş (0.9.69), telefona/bilgisayara uygulama olarak ekleme (PWA, 0.9.70).
+  PlayWithMe'de Dört Taş (0.9.69), telefona/bilgisayara uygulama olarak ekleme (PWA, 0.9.70), sağ paneli gizle (0.9.71, video büyür, mesajlar
+  videonun köşesinde).
 
 ## Önceki: 0.9.60
 - **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".

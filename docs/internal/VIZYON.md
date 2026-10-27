@@ -214,7 +214,7 @@ tanınmışlık. ([rakip-analizi.md](rakip-analizi.md) §3.1)
   film sayfası, özel emojiler (Teleparty'de ücretli), temalar/avatarlar.
 - **Ekle:**
   - [ ] Sesli / görüntülü sohbet (Teleparty'de ücretli → bizde ücretsiz olursa büyük fark). Önce bas-konuş ses.
-  - [ ] Oda görünümünde sağ paneli gizle/küçült: video büyüsün, sohbet istenince açılsın.
+  - [x] Oda görünümünde sağ paneli gizle/küçült: video büyüsün, sohbet istenince açılsın (0.9.71).
   - [ ] "Alex durdurdu / 12:30'a sardı" gibi kısa bildirim videonun üstünde (neden durduğunu herkes anlasın);
     şu an bu hareketler sohbette gizli. Varsa gözden geçir, yoksa ekle.
   - [ ] "Denenmiş oynatıcılar" sayfası: hangi oynatıcı türlerinde çalıştığımız (site adı değil, oynatıcı adı).
