@@ -1,0 +1,90 @@
+// Yayın (ekran paylaşımı / kamera): odada tek yayın, en fazla 4 izleyici, bağlantı mesajları sadece yayıncı ile
+// izleyicisi arasında, yayıncı çıkınca izleyiciler bırakılır.
+const base = process.argv[2] ?? 'ws://localhost:8787';
+const room = 'live' + Math.random().toString(36).slice(2, 8);
+const V = Number(process.env.SWM_V ?? 3);
+function client(hello) {
+  const ws = new WebSocket(`${base}/api/rooms/${room}/ws`);
+  const inbox = [];
+  let members = [];
+  ws.addEventListener('message', (e) => {
+    const m = JSON.parse(e.data);
+    inbox.push(m);
+    if (m.t === 'welcome' || m.t === 'members') members = m.members;
+  });
+  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: V, ...hello })));
+  const wait = async (pred, label, ms = 8000) => {
+    for (let i = 0; i < ms / 50; i++) {
+      const idx = inbox.findIndex(pred);
+      if (idx >= 0) return inbox.splice(idx, 1)[0];
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    throw new Error('timeout ' + label);
+  };
+  return { ws, wait, inbox, send: (m) => ws.send(JSON.stringify(m)), get members() { return members; } };
+}
+const ok = (c, m) => {
+  if (!c) throw new Error('FAIL: ' + m);
+  console.log('ok  ' + m);
+};
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const welcome = await (async () => {
+  const a = client({ name: 'Ali', cid: 'liveAli000001' });
+  const w = await a.wait((m) => m.t === 'welcome', 'welcome');
+  return { a, w };
+})();
+const { a } = welcome;
+if (!welcome.w.voice) {
+  console.log('(sesli sohbet/yayın bu sunucuda kapalı: test atlandı)');
+  process.exit(0);
+}
+const b = client({ name: 'Ayse', cid: 'liveAyse00001' });
+await b.wait((m) => m.t === 'welcome', 'welcome b');
+
+// İzlenecek yayın yokken izleme isteği yok sayılır.
+b.send({ t: 'live-watch', on: true });
+await sleep(300);
+ok(!b.members.find((m) => m.name === 'Ayse')?.watching, 'Yayın yokken izleyici olunamıyor');
+
+a.send({ t: 'live', on: true, kind: 'screen' });
+await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && x.live === 'screen'), 'ali live');
+ok(true, 'Ali yayında (ekran)');
+b.send({ t: 'live', on: true, kind: 'camera' });
+const busy = await b.wait((m) => m.t === 'error', 'busy');
+ok(busy.code === 'live_busy', 'İkinci yayın reddedildi (live_busy)');
+
+// Yayın bağlantı mesajı: izlemeyen birine gitmez; izleyince gider.
+a.send({ t: 'live-signal', to: b.members.find((m) => m.name === 'Ayse').id, data: { candidate: { candidate: 'x' } } });
+await sleep(300);
+ok(!b.inbox.some((m) => m.t === 'live-signal'), 'İzlemeyen kişiye yayın bağlantı mesajı gitmiyor');
+b.send({ t: 'live-watch', on: true });
+await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ayse' && x.watching), 'watching');
+const ayseId = a.members.find((m) => m.name === 'Ayse').id;
+a.send({ t: 'live-signal', to: ayseId, data: { sdp: { type: 'offer', sdp: 'v=0' } } });
+const sig = await b.wait((m) => m.t === 'live-signal', 'signal');
+ok(sig.from === a.members.find((m) => m.name === 'Ali').id, 'İzleyene yayıncının teklifi ulaştı (gönderen belli)');
+
+// İzleyici sınırı: 4.
+const extra = [];
+for (let i = 0; i < 3; i++) {
+  const e = client({ name: `W${i}`, cid: `liveW${i}0000000` });
+  await e.wait((m) => m.t === 'welcome', 'welcome extra');
+  e.send({ t: 'live-watch', on: true });
+  extra.push(e);
+}
+await a.wait((m) => m.t === 'members' && m.members.filter((x) => x.watching).length === 4, 'four watching');
+ok(true, '4 kişi izliyor');
+const c = client({ name: 'Can', cid: 'liveCan000001' });
+await c.wait((m) => m.t === 'welcome', 'welcome c');
+c.send({ t: 'live-watch', on: true });
+const full = await c.wait((m) => m.t === 'error', 'full');
+ok(full.code === 'live_full', '5. izleyici reddedildi (live_full)');
+
+// Yayıncı çıkınca yayın biter, izleyiciler bırakılır.
+a.ws.close();
+await b.wait((m) => m.t === 'members' && !m.members.some((x) => x.live || x.watching), 'cleared');
+ok(true, 'Yayıncı çıkınca yayın ve izleyiciler kalktı');
+
+for (const x of [b, c, ...extra]) x.ws.close();
+setTimeout(() => process.exit(0), 100);

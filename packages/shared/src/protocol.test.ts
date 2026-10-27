@@ -36,6 +36,14 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'chat', text: ' selam\n\nnasılsın ' })).toEqual({ t: 'chat', text: 'selam nasılsın' });
   });
 
+  it('lets large connection offers through for voice and live streams only', () => {
+    const sdp = 'v=0\r\n' + 'a=x\r\n'.repeat(1500);
+    for (const t of ['signal', 'live-signal']) {
+      expect(parse({ t, to: 'abc12345', data: { sdp: { type: 'offer', sdp } } })).toEqual({ t, to: 'abc12345', data: { sdp: { type: 'offer', sdp } } });
+    }
+    expect(parse({ t: 'chat', text: 'x'.repeat(5000) })).toBeNull();
+  });
+
   it('keeps the optional ad flag on ready messages', () => {
     expect(parse({ t: 'ready', ready: false, ad: true })).toEqual({ t: 'ready', ready: false, ad: true });
     expect(parse({ t: 'ready', ready: true })).toEqual({ t: 'ready', ready: true });

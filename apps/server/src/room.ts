@@ -24,6 +24,8 @@ import {
   VOICE_MAX,
   VOICE_MAX_P2P,
   CAM_MAX,
+  LIVE_MAX_VIEWERS,
+  type LiveKind,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
@@ -78,6 +80,9 @@ interface Attachment {
   voice?: { mic: boolean; track?: string; session?: string; cam?: boolean };
   /** Film sayfasında reklam oynuyor (eklenti bildirir): oda bu kişiyi beklemez. */
   ad?: boolean;
+  /** Yayın yapıyor (odada tek yayın) / yayını izliyor. */
+  live?: LiveKind;
+  watching?: boolean;
 }
 
 /**
@@ -107,6 +112,8 @@ function memberOf(attachment: Joined): Member {
     member.voice = { mic: attachment.voice.mic, ...(attachment.voice.track ? { track: attachment.voice.track } : {}), ...(attachment.voice.cam ? { cam: true } : {}) };
   }
   if (attachment.ad) member.ad = true;
+  if (attachment.live) member.live = attachment.live;
+  if (attachment.watching) member.watching = true;
   return member;
 }
 
@@ -317,6 +324,21 @@ export class Room extends DurableObject<Env> {
       case 'voice':
         await this.setVoice(ws, attachment, message.on, message.mic, message.cam);
         return;
+      case 'live':
+        this.setLive(ws, attachment, message.on, message.kind);
+        return;
+      case 'live-watch':
+        this.setWatch(ws, attachment, message.on);
+        return;
+      case 'live-signal': {
+        // Yayın bağlantısı sadece yayıncı ile onu izleyen arasında (IP'ler sadece yayına katılanlara görünür).
+        if (!this.signalLimit.allow(me.id)) return;
+        const target = this.openSockets().find((c) => (c.deserializeAttachment() as Attachment | null)?.id === message.to);
+        const other = target?.deserializeAttachment() as Attachment | null;
+        const paired = (attachment.live && other?.watching) || (attachment.watching && other?.live);
+        if (target && paired) this.sendTo(target, { t: 'live-signal', from: me.id, data: message.data });
+        return;
+      }
       case 'signal': {
         // Eşler arası ses: bağlantı mesajını sadece ikisi de seste ise karşıya ilet (sunucu içeriğe bakmaz,
         // sadece doğrulanmış kopyasını taşır). Kim seste değilse IP adresini kimse öğrenemez.
@@ -777,6 +799,49 @@ export class Room extends DurableObject<Env> {
   }
 
   /**
+   * Yayın aç/kapa: odada aynı anda tek yayın (başkası yayındaysa `live_busy`). Yayın bitince izleyiciler bırakılır.
+   */
+  private setLive(ws: WebSocket, attachment: Attachment, on: boolean, kind?: LiveKind): void {
+    if (on && kind) {
+      if (this.joined().some((a) => a.live && a.id !== attachment.id)) return this.sendTo(ws, { t: 'error', code: 'live_busy' });
+      attachment.live = kind;
+      delete attachment.watching;
+      ws.serializeAttachment(attachment);
+    } else {
+      if (!attachment.live) return;
+      delete attachment.live;
+      ws.serializeAttachment(attachment);
+      this.clearWatchers();
+    }
+    this.broadcast(this.membersMessage());
+  }
+
+  /** Yayını izle/bırak: en fazla LIVE_MAX_VIEWERS kişi (yayıncı her izleyiciye ayrı kopya yollar). */
+  private setWatch(ws: WebSocket, attachment: Attachment, on: boolean): void {
+    if (on) {
+      if (attachment.watching || attachment.live || !this.joined().some((a) => a.live)) return;
+      const viewers = this.joined().filter((a) => a.watching).length;
+      if (viewers >= LIVE_MAX_VIEWERS) return this.sendTo(ws, { t: 'error', code: 'live_full' });
+      attachment.watching = true;
+    } else {
+      if (!attachment.watching) return;
+      delete attachment.watching;
+    }
+    ws.serializeAttachment(attachment);
+    this.broadcast(this.membersMessage());
+  }
+
+  /** Yayın bitti: izleyicilerin işareti kalkar. */
+  private clearWatchers(except?: WebSocket): void {
+    for (const socket of this.openSockets(except)) {
+      const a = socket.deserializeAttachment() as Attachment | null;
+      if (!a?.watching) continue;
+      delete a.watching;
+      socket.serializeAttachment(a);
+    }
+  }
+
+  /**
    * Sesli sohbetin bağlantı işleri: Cloudflare Realtime'a bu bağlantı adına gideriz. Oturum sunucuda tutulur,
    * istemci sadece odadaki birinin sesini üye kimliğiyle isteyebilir.
    */
@@ -1127,6 +1192,8 @@ export class Room extends DurableObject<Env> {
         this.lastReaction.delete(key);
       }
       this.waits.remove(attachment.id);
+      // Yayıncı çıktı: yayın biter, izleyiciler bırakılır.
+      if (attachment.live) this.clearWatchers(leaving);
       // Yöneticinin son bağlantısı gittiyse saymaya başla (bkz. settleHost).
       if (attachment.name && key === this.hostKey && this.hostGoneAt === null && !this.joined(leaving).some((a) => keyOf(a) === key)) {
         await this.setHostGone(Date.now());
@@ -1211,7 +1278,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-signal' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;
