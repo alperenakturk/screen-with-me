@@ -227,6 +227,7 @@ export class Draw extends DurableObject<Env> {
         return;
       case 'choose':
         if (d.phase !== 'choose' || d.drawer !== key) return this.sendTo(ws, { t: 'error', code: 'not_drawer' });
+        if (!d.choices[message.index]) return;
         await this.beginDraw(d.choices[message.index]!);
         return;
       case 'stroke':
