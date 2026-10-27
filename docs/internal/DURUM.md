@@ -48,8 +48,9 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    noktasında, tema/dil/⟳ profil menüsünde), "Birlikte"te "Paylaş ▾" menüsü. Hatalar: boş pin şeridi, kesik kutular,
    telefonda ayarlar, rozet kırılması, yönetici olmayana soluk anahtarlar, eşit olmayan sekmeler. Mağaza görselleri de
    yeni görünümle yeniden çekildi (eski "şerit" görünümü kaldırıldı).
-10. **Sıradaki: 0.9.81 serbest kamera pencereleri** (kullanıcı istedi): görüntülü sohbet kameraları sitede her yere
-   sürüklensin, boyutu değişsin; tam ekranda otomatik ekrana gelsin, orada da taşınsın; site + eklenti.
+10. ✅ **0.9.81 serbest kamera pencereleri** (kullanıcı istedi): kameralar kartta ya da "⧉ Serbest bırak" ile sayfada
+   yüzen pencerede (sürükle, köşeden boyutlandır, küçült, karta geri koy; yer hatırlanır); tam ekranda kendiliğinden
+   videonun içinde, orada da taşınır. Film sayfasında (eklenti) de aynısı: pencere deliğin üstünde adacık.
 
 **Sıradaki (0.9.81 →):** (1) oyun fikirleri konuşmasından seçilen yeni oyunlar, (2) kelime avı
 (Türkçe sözlük gerekir; ya da sözlüksüz bir kelime oyunu), (3) gerçek deneme turu hazırlığı (VIZYON "v1.0" listesi),

@@ -14,6 +14,8 @@ açık kaynak bir araç: **site** (YouTube / doğrudan video) + **tarayıcı ekl
 
 ## Kullanıcıyla çalışma
 - **Türkçe konuş.** Kullanıcı (Alperen) okulda JS/HTML/CSS öğreniyor; açıklamaları sade tut.
+- **Her işin sonunda kısa rapor ver** (kullanıcı istedi, Ekim 2026): ne yaptım, neyi denedim, şu an neyi bekliyorum
+  (CI, yayın, kullanıcının cevabı) ve sırada ne var. Arka planda bir şey beklerken de bunu açıkça yaz.
 - **Teknik kararları kendin ver**, kısaca nedenini söyle; beğenmediğini kendisi değiştirtir.
   Sadece hesap/para/yayınlama gibi kullanıcıya ait adımları sor.
 - Aşamalı ve güvenli ilerle; her değişikliği test et, yayınla, commit at.
@@ -294,7 +296,12 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare
-  yolunda görüntü yok. Site: ses kartında kutular (`#voice-cams`, kendi önizlemem ayna), tam ekranda `#cam-dock` (sağ üst).
+  yolunda görüntü yok. Site: kutular (`#voice-cams`, kendi önizlemem ayna); **0.9.81 serbest pencere** (`ui/cam-float.ts`,
+  kullanıcı istedi): aynı kutu takımı kartta ("⧉ Serbest bırak"), sayfada yüzen pencerede (her yere sürüklenir, sağ alt
+  köşeden boyutlanır, "−" küçültür, "⤓" karta koyar, çift tık varsayılan yer; `localStorage` `opt:camFloat`,
+  `camFloat:spot` oran olarak) ya da tam ekranda kendiliğinden `.player-wrap`'in içinde (ayrı yer `camFloat:fsSpot`).
+  Taşınınca videolar yeniden oynatılır. Kabukta yüzen pencere `data-island` (deliğin üstünde görünür), sürüklerken
+  `swm-layout` olayı adacığı hemen günceller. Eski `#cam-dock` yok.
   **Film sayfasında (0.9.65):** kameralar offscreen'de (`voice` `cam`; izin yoksa `mic.html?cam=1`); gelenler + kendi
   önizlemem (`me`) katmandaki siteye **yerel WebRTC köprüsüyle** gelir (`{op:'loop'}`: offscreen teklif yapar, `cams`
   = mid → üye; her değişiklikte köprü baştan; `data` yoksa kamera yok). Eski eklenti `caps.cam` yollamaz → düğme gizli.
