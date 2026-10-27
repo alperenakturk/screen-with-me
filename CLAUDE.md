@@ -404,7 +404,8 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kartında "▶ Sıradakini başlat" çıkar (eklentide `RoomInfo.autoNext`). Sıra panelinde oylama notu.
 ## Yayın kontrol listesi
 1. `npm run typecheck && npm test` (sunucu değiştiyse `wrangler dev` + `npm run e2e` de).
-2. Sitenin sürümünü alt bilgide artır (`apps/web/index.html` `.footer-version`). Eklenti değiştiyse `apps/extension/package.json` sürümünü artır (siteden indirilen zip ve
+2. Sitenin sürümünü alt bilgide artır (`apps/web/index.html` `.footer-version`). Eklentinin sürümü de aynı numarada tutulur (kullanıcı
+   iki sürümün farklı görünmesini "eski kalmış" sanıyordu): `apps/extension/package.json` (siteden indirilen zip ve
    eklenti sayfasındaki sürüm buradan gelir).
 3. `README.md` + `README.tr.md` (ikisi birlikte) / `docs/internal/VIZYON.md` güncelle, commit (mesaj Türkçe, sonda `Co-Authored-By`), push.
 4. Yayın: değişiklik `main`'e girince (PR birleşince) GitHub Actions kendisi yükler ve canlıda e2e koşar;
