@@ -236,7 +236,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Tek kişiyken senkron yok:** sitede "Herkesi bana eşitle" ve senkron testi soluk, basınca "tek başınasın" balonu
   (`isAlone`, `ui/hint.ts` `flashHint`); sunucuda farklı cid sayısı 2'den azsa "herkes hazır" beklemesi olmaz.
 - **Sesli sohbet (`packages/shared/src/voice.ts`, `voice-p2p.ts`, site `ui/voice.ts`, plan `docs/internal/ses-goruntu.md`):**
-  sağ panelde "🎙 Sese katıl" kartı; katılınca 🎙/🔇 ve "Ayrıl", seste olanların avatarları (konuşanın çevresi parlar,
+  "Birlikte" kartında "🎙 Sese katıl"; katılınca 🎙/🔇 ve "Ayrıl", kartta odadakilerin avatarları (seste olan yeşil halkalı, konuşanın çevresi parlar,
   `getSynchronizationSources`), kişiler listesinde 🎙/🔇. Katılmayan kimseyi duymaz. Üyenin `voice: {mic, track?}` alanı
   (sürüm artırmadan); `{t:'voice', on, mic}`. Taşıma yolu `welcome.voiceMode`: **p2p** (varsayılan, kart/hesap yok): her
   kişi seste olan herkesle ayrı WebRTC bağlantısı (kimliği küçük olan teklif yapar), sunucu `{t:'signal'}` mesajlarını
@@ -298,7 +298,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   "Seste 3/6 · 📷 1/4", son yerde sarı, dolunca kırmızı; dolu düğme soluk (`.is-full`), basınca nedeni (eşler arası,
   yükleme hızı) `flashHint`. Test: `voice/run.mjs` (kamera görüntüsü akıyor mu, kareler sayılır), e2e `voice.mjs` (cam_full).
 - **Yayın / ekran paylaşımı (0.9.64, `packages/shared/src/live-p2p.ts`, site `ui/live.ts`, plan+kararlar `docs/internal/yayin.md`):**
-  sağ panelde 📺 kartı: "🖥️ Ekranını paylaş" (`getDisplayMedia`, 720p/30, sekme sesi) / "📹 Kamerayla yayın" (720p);
+  "Birlikte" kartının alt bölümü (`#live-card`): "🖥️ Ekranını paylaş" (`getDisplayMedia`, 720p/30, sekme sesi) / "📹 Kamerayla yayın" (720p);
   odada tek yayın (`live_busy`), "▶ Yayını izle" ile en fazla `LIVE_MAX_VIEWERS` (4, `live_full`). Üye `live: kind`,
   `watching`; `{t:'live'}`, `{t:'live-watch'}`, `{t:'live-signal'}` (sunucu sadece yayıncı ↔ izleyicisi arasında iletir;
   büyük teklifler için `RTC_MESSAGE_MAX`). Tek yönlü: yayıncı her izleyiciye teklif yapar (sendonly, ≤2,5 Mbit/s ekran,
@@ -353,6 +353,12 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
 - **Kim durdurdu notu (0.9.68):** başkası oynat/durdur/sar/hız yapınca videonun sol üstünde 2,6 sn avatar + "Ali durdurdu"
   (`#action-notice`, deliğin içinde adacık; kendi hareketim ve `SYSTEM` için yok); Ayarlar'dan kapatılır (`opt:actionNotice`).
+- **Oda düzeni "Sinema Rayı" (0.9.76, kullanıcı seçti; tasarım tuvali A):** üst çubukta odanın adı (kayıtlı odada adı,
+  değilse "Oda <kod>") + "· N kişi" (`.room-title`) ve "🔗 Davet et" (`#invite-btn`: link kopyalanır, telefonda paylaşım
+  menüsü; pano kapalıysa `prompt`); sağ rayda (320 px) "Birlikte" kartı (`#together`: başlık + "Seste 2/6 · 📷 0/4",
+  odadakilerin avatarları ve adları (en fazla 8, "+N"; aynı kişinin iki sekmesi tek), ses düğmeleri (`#voice-card` artık
+  kartın içindeki satır), altında yayın bölümü `#live-card`) ve sekmeler. Eski davet kartı yok. Telefonda üst çubukta oda
+  adı ve "Davet et" yazısı gizli (sadece 🔗), bağlıyken ⟳ gizli. Oda değişirse `store/src/room.html` taklidini de güncelle.
 - **Sağ paneli gizle (0.9.71):** video altındaki araç çubuğunda ⇥ (`#side-toggle`): `.room.side-hidden`, video bütün genişliği
   alır, sohbet mesajları tam ekrandaki gibi videonun köşesinde (`toasts`), düğmede okunmamış sayısı; `localStorage`
   `opt:sideHidden`; kabukta ve dar ekranda (≤860 px) yok.

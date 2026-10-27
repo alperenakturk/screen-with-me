@@ -25,6 +25,9 @@ const RPC_TIMEOUT_MS = 12_000;
  * Seste olduğum bu sekmeden bağımsız hatırlanır (`voice:<oda>`): sitedeki odadan filme geçince (ya da tersi) izin
  * zaten verilmişse ses kendiliğinden yeniden açılır.
  */
+/** "Birlikte" kartında en fazla bu kadar kişi görünür (fazlası "+N"). */
+const PEOPLE_SHOWN = 8;
+
 export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean) {
   const card = root.querySelector<HTMLElement>('#voice-card')!;
   const joinButton = root.querySelector<HTMLButtonElement>('#voice-join')!;
@@ -172,14 +175,29 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     micButton.setAttribute('aria-label', micLabel);
     micButton.classList.toggle('muted-mic', !client.micEnabled);
     const inVoice = members.filter((m) => m.voice);
+    // "Birlikte" kartında odadaki herkes (seste olanlar önde, yeşil halkayla; konuşanın çevresi parlar). Aynı kişinin
+    // iki sekmesi (site + film) tek görünür; en fazla PEOPLE_SHOWN, fazlası "+N".
+    const seen = new Set<string>();
+    const people = [...members]
+      .sort((a, b) => Number(!!b.voice) - Number(!!a.voice))
+      .filter((m) => {
+        const key = `${m.name}|${m.avatar ?? ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    const me = myId();
     peopleBox.replaceChildren(
-      ...inVoice.map((m) => {
-        const face = el('span', { class: 'voice-face', title: m.name, 'data-voice-id': m.id }, avatarNode(m.avatar, 'voice-avatar'));
+      ...people.slice(0, PEOPLE_SHOWN).map((m) => {
+        const face = el('span', { class: `voice-face${m.voice ? ' in-voice' : ''}`, 'data-voice-id': m.id }, avatarNode(m.avatar, 'voice-avatar'));
         if (m.voice && !m.voice.mic) face.append(el('span', { class: 'voice-muted' }, '🔇'));
-        return face;
+        const label = m.id === me ? t('voice.me') : m.name;
+        return el('span', { class: 'together-person', title: m.voice ? `${m.name} · ${t('voice.inVoice')}` : m.name }, face, el('span', { class: 'together-name' }, label));
       }),
+      ...(people.length > PEOPLE_SHOWN ? [el('span', { class: 'together-more' }, `+${people.length - PEOPLE_SHOWN}`)] : []),
     );
-    peopleBox.title = inVoice.length ? `${t('voice.inVoice')}: ${inVoice.map((m) => m.name).join(', ')}` : '';
+    peopleBox.title = '';
+    limitEl.hidden = !available;
     // Sınırlar hep görünür: "Seste 3/6 · 📷 1/4" (neden sınır var: üstüne gelince). Dolunca düğme soluk, basınca açıklama.
     const max = voiceMax();
     const cams = members.filter((m) => m.voice?.cam).length;

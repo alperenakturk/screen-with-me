@@ -936,23 +936,10 @@ button.nav-link {
   }
 }
 
-/* ---- Sağ panel: davet + sekmeler ---- */
+/* ---- Sağ panel (Sinema Rayı): "Birlikte" kartı + sekmeler ---- */
 .side {
   position: sticky;
   top: 16px;
-}
-
-.invite-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-}
-
-.invite-label {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 600;
 }
 
 .tabs-card {
@@ -1620,7 +1607,7 @@ html:not(.shell) .shell-only {
 /* ---- Oda ---- */
 .room {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 20px;
   align-items: start;
 }
@@ -3486,12 +3473,7 @@ html:not(.shell) .shell-only {
   opacity: 0.6;
 }
 
-/* Kayıtlı odanın adı (davet kutusunun üstünde) ve yönetici kutusundaki kayıt alanı */
-.room-name {
-  margin: 0 0 6px;
-  font-weight: 700;
-}
-
+/* Yönetici kutusundaki kayıt alanı */
 .save-box {
   display: flex;
   flex-direction: column;
@@ -4317,9 +4299,37 @@ html.shorts-view .footer {
   }
 }
 
-/* ---- Sesli sohbet kartı (sağ panelde, davet linkinin altında) ---- */
-.voice-card {
-  padding: 10px 12px;
+/* ---- "Birlikte" kartı: odadakiler (seste olanlar yeşil halkalı), ses/kamera düğmeleri, ekran paylaşımı ---- */
+.together-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.together-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.together-card .together-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.together-head .voice-limit {
+  flex-basis: auto;
+  text-align: right;
+}
+
+.voice-row[hidden] {
+  display: none;
 }
 
 .voice-row {
@@ -4382,8 +4392,46 @@ html.shorts-view .footer {
 .voice-people {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px 6px;
+}
+
+.voice-people:empty {
+  display: none;
+}
+
+.together-person {
+  width: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 4px;
-  margin-left: auto;
+}
+
+.together-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--chrome-text);
+}
+
+.together-more {
+  align-self: flex-start;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Seste olan: yeşil halka */
+.voice-face.in-voice {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 70%, transparent);
 }
 
 .voice-face {
@@ -4399,12 +4447,13 @@ html.shorts-view .footer {
 }
 
 .voice-avatar {
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: 24px;
+  background: var(--surface-2);
   overflow: hidden;
 }
 
@@ -4925,9 +4974,14 @@ html.shorts-view .footer {
   }
 }
 
-/* ---- Yayın: kart (sağ panelde) ve pencere (videonun köşesinde) ---- */
+/* ---- Yayın: "Birlikte" kartının alt bölümü ve pencere (videonun köşesinde) ---- */
 .live-card {
-  padding: 10px 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.live-card[hidden] {
+  display: none;
 }
 
 .live-row {
@@ -4939,7 +4993,7 @@ html.shorts-view .footer {
 
 .live-status {
   flex-basis: 100%;
-  color: var(--chrome-text);
+  color: var(--muted);
 }
 
 .live-quality {
@@ -5796,5 +5850,96 @@ html.shorts-view .footer {
 @media (prefers-reduced-motion: reduce) {
   .game-btn.game-waiting::after {
     animation: none;
+  }
+}
+
+/* ---- Üst çubuk (oda): odanın adı + kişi sayısı, "🔗 Davet et" ---- */
+.room-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-right: auto;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.room-title-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 60%, transparent);
+}
+
+.room-title-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-title-count {
+  flex: none;
+  color: var(--chrome-text);
+}
+
+.invite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.invite-btn.done {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #04120b;
+}
+
+@media (max-width: 860px) {
+  .room-title-count {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .room-title,
+  .invite-btn .invite-text {
+    display: none;
+  }
+
+  /* Telefonda üst çubuk sığsın (davet düğmesi de eklendi) */
+  .topbar {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .topbar-right {
+    gap: 6px;
+  }
+
+  /* Bağlıyken ⟳ telefonda gizli (yer yok; bağlantı koparsa yine görünür) */
+  #status[data-status='open'] ~ #reconnect {
+    display: none;
+  }
+}
+
+/* Yayın düğmeleri yan yana sığsın */
+.live-row .btn {
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+@media (max-width: 380px) {
+  .topbar .brand {
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .topbar-right {
+    gap: 4px;
   }
 }
