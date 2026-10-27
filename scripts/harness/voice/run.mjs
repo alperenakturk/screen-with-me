@@ -27,8 +27,14 @@ const until = async (fn, ms = 10000) => {
   return null;
 };
 
-async function person(name, avatar) {
-  const b = await launch({ ext: EXT, out: join(here, `voice-${name}`), args: FAKE_MIC });
+/**
+ * İki kişinin sahte mikrofonu aynı anda aynı bip'i çalarsa yankı engelleyici kendi mikrofonundaki bip'i karşıdan gelenin
+ * yankısı sanıp siler (test bazen sessizlik ölçer). VOICE_A / VOICE_B: farklı ses dosyaları (wav), bkz. shell.mjs.
+ */
+const micFile = (file) => (file ? [`--use-file-for-fake-audio-capture=${file}`] : []);
+
+async function person(name, avatar, file) {
+  const b = await launch({ ext: EXT, out: join(here, `voice-${name}`), args: [...FAKE_MIC, ...micFile(file)] });
   await b.navigate(`${SITE}/`);
   await b.sleep(1500);
   await b.evaluate(`localStorage.setItem('name', ${JSON.stringify(name)}); localStorage.setItem('avatar', ${JSON.stringify(avatar)}); localStorage.setItem('lang','tr'); 1`);
@@ -60,8 +66,8 @@ const LEVEL = `(async () => {
   return { n: audios.length, rms: best };
 })()`;
 
-const ali = await person('Ali', 'wizard');
-const ayse = await person('Ayse', 'elf');
+const ali = await person('Ali', 'wizard', process.env.VOICE_A);
+const ayse = await person('Ayse', 'elf', process.env.VOICE_B);
 // İkisi de odaya girmiş olsun (kart görünür ve kişi sayısı 2): yoksa katılma mesajı bağlantıdan önce gider.
 const ready = (b) => b.evaluate(`!document.getElementById('voice-card').hidden && document.getElementById('people-count')?.textContent === '2'`);
 const available = await until(async () => (await ready(ali)) && (await ready(ayse)), 20000);
@@ -85,6 +91,36 @@ const la = await ali.evaluate(LEVEL);
 const lb = await ayse.evaluate(LEVEL);
 console.log('     ses enerjisi:', JSON.stringify({ ali: la, ayse: lb }));
 check(la.rms > 0.01 && lb.rms > 0.01, 'iki taraf da karşının sesini gerçekten duyuyor (sahte mikrofonun bip sesi geliyor)');
+
+// Kendi sesimin seviyesi: 🎙 düğmesinin altındaki çubuk sahte mikrofonun bip'iyle doluyor.
+const bar = await until(() => ali.evaluate(`(() => { const i = document.querySelector('#voice-mic .mic-level > i'); const w = parseFloat(i?.style.width ?? '0'); return w > 5 ? w : null; })()`), 8000);
+check(!!bar, 'kendi ses seviyesi göstergesi doluyor (' + bar + '%)');
+
+// Kamera: Ali 📷 → Ayşe'de Ali'nin kutusu, içinde gerçekten görüntü (kareler ilerliyor); Ali kendi önizlemesini görür.
+await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
+const camSeen = await until(
+  () => ayse.evaluate(`(() => { const v = document.querySelector('#voice-cams .cam-tile video'); return v && v.videoWidth > 0 && v.currentTime > 0 ? { w: v.videoWidth, h: v.videoHeight } : null; })()`),
+  15000,
+);
+check(!!camSeen, 'Ali kamerasını açtı: Ayşe onun görüntüsünü görüyor', JSON.stringify(camSeen));
+const ownPreview = await ali.evaluate(`!!document.querySelector('#voice-cams .cam-tile.mine video')`);
+check(ownPreview, 'Ali kendi kamera önizlemesini görüyor');
+const frames = await ayse.evaluate(`(async () => { const v = document.querySelector('#voice-cams .cam-tile video'); const a = v.getVideoPlaybackQuality?.().totalVideoFrames ?? 0; await new Promise((r) => setTimeout(r, 1500)); return (v.getVideoPlaybackQuality?.().totalVideoFrames ?? 0) - a; })()`);
+check(frames > 5, 'kamera görüntüsü akıyor (1,5 sn\'de ' + frames + ' kare)');
+await ayse.shot('kamera-kart');
+// Tam ekranda kameralar videonun köşesinde.
+await ayse.evaluate(`document.getElementById('sync-test')?.click(); 1`);
+await ayse.sleep(1500);
+await ayse.evaluate(`document.getElementById('fullscreen')?.click(); 1`);
+await ayse.sleep(1200);
+const dock = await ayse.evaluate(`(() => { const d = document.getElementById('cam-dock'); const r = d.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), shown: getComputedStyle(d).display !== 'none' }; })()`);
+check(dock.shown && dock.w > 80 && dock.h > 50, 'tam ekranda kameralar videonun köşesinde', JSON.stringify(dock));
+await ayse.shot('kamera-tam-ekran');
+await ayse.evaluate(`document.fullscreenElement ? document.exitFullscreen().then(() => 1) : (document.getElementById('fs-exit')?.click(), 1)`);
+await ayse.sleep(500);
+await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
+const camGone = await until(() => ayse.evaluate(`document.getElementById('voice-cams').hidden`), 8000);
+check(!!camGone, 'Ali kamerasını kapatınca Ayşe\'de kutu kalktı');
 
 // Sessize alma: Ayşe 🔇 → Ali'de sesi biter (akış kalır, enerji düşer), Ayşe'nin avatarında 🔇.
 await ayse.evaluate(`document.getElementById('voice-mic').click(); 1`);

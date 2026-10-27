@@ -16,3 +16,5 @@ apps/web/public/dev/
 store/*.zip
 # Gerçek Chrome eklenti testinin ekran görüntüleri (scripts/harness/embed/run.mjs)
 shell-test-*.png
+# Gerçek ses testinin ekran görüntüleri (scripts/harness/voice)
+scripts/harness/voice/*.png

@@ -203,6 +203,8 @@ export interface Member {
 export interface MemberVoice {
   /** Mikrofonu açık mı (sessize aldıysa false; yine de odayı dinler). */
   mic: boolean;
+  /** Kamerası açık mı (görüntülü sohbet, eşler arası; yoksa kapalı). */
+  cam?: boolean;
   /** Yayın hazır olunca gelir: diğerleri bu üyenin sesini bununla çeker. */
   track?: string;
 }
@@ -329,7 +331,7 @@ export type ClientMessage =
   /** Film sayfasından odaya dönüyorum: filmdeki diğerlerine "sen de dön" diye sorulur. */
   | { t: 'home' }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
-  | { t: 'voice'; on: boolean; mic?: boolean; track?: string }
+  | { t: 'voice'; on: boolean; mic?: boolean; track?: string; cam?: boolean }
   /** Sesli sohbetin bağlantı işi; cevap aynı `id` ile `{t:'rtc'}` olarak gelir. */
   | ({ t: 'rtc'; id: number } & RtcRequest)
   /** Eşler arası seste: bir üyeye bağlantı mesajı (sunucu sadece ikisi de seste ise iletir). */
@@ -693,6 +695,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       const out: Extract<ClientMessage, { t: 'voice' }> = { t: 'voice', on: m.on };
       if (typeof m.mic === 'boolean') out.mic = m.mic;
       if (isTrackName(m.track)) out.track = m.track;
+      if (typeof m.cam === 'boolean') out.cam = m.cam;
       return out;
     }
     case 'rtc':

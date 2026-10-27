@@ -16,6 +16,12 @@ export interface Voice {
   leave(): void;
   sync(members: Member[], myId: string | null): void;
   levels(): Map<string, number>;
+  /** Görüntülü sohbet (sadece eşler arası yolda): kamera açık mı, aç/kapa, kendi görüntüm (önizleme). */
+  readonly camEnabled?: boolean;
+  setCam?(on: boolean): Promise<void>;
+  readonly camera?: MediaStream | null;
+  /** Kendi mikrofonum (seviye göstergesi için; olmayan yolda yok). */
+  readonly microphone?: MediaStream | null;
 }
 
 export interface VoiceOptions {
@@ -35,6 +41,10 @@ const ICE: RTCIceServer[] = [{ urls: 'stun:stun.cloudflare.com:3478' }];
 export class VoiceClient implements Voice {
   private pc: RTCPeerConnection | null = null;
   private mic: MediaStream | null = null;
+
+  get microphone(): MediaStream | null {
+    return this.mic;
+  }
   /** Dinlediğim kişiler: üye kimliği → { mid, akışın adı }. */
   private readonly pulled = new Map<string, { mid: string; track: string }>();
   private readonly byMid = new Map<string, string>();

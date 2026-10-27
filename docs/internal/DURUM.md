@@ -18,7 +18,8 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 1. ✅ **0.9.60:** elle video seçimi, reklamların ikinci adımı (a5/a6/a3), eklentide sesli sohbet (offscreen + mic.html +
    film sesini kısma).
 2. ✅ **Site denetimi (0.9.61):** 11 hata, telefon görünümü, ilk yükleme ~55 → ~24 KB.
-3. **Görüntülü sohbet** (eşler arası, Cloudflare'siz), sonra ses + görüntüyü geliştir (ses seviyesi göstergesi, arayüz).
+3. ✅ **Görüntülü sohbet (0.9.63, sitede):** 📷, kamera kutuları, tam ekranda köşede; kendi ses seviyesi çubuğu. Sırada:
+   film sayfasında kameraları görmek (offscreen → katman, yerel WebRTC köprüsü) ve kendi kameramı orada açmak.
 4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`). Sıradaki oyun fikirleri kartlarda
    "yakında": Çiz-Bil, bilgi yarışması, kelime avı.
 5. **Yayın açma araştırması:** ✅ ayrı oturumda yapıldı → `docs/internal/yayin.md` (karar kullanıcının).
