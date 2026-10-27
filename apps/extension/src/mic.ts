@@ -1,4 +1,4 @@
-// Mikrofon izni sayfası (bir kerelik): film sayfasındaki sesli sohbet eklentinin görünmeyen sayfasında (offscreen)
+// Mikrofon / kamera izni sayfası (bir kerelik): film sayfasındaki sesli sohbet eklentinin görünmeyen sayfasında (offscreen)
 // çalışır, o sayfa izin isteyemez. İlk "Sese katıl"da arka plan bu sekmeyi açar; kişi düğmeye basar, Chrome izni
 // "ScreenWithMe" adına sorar (film sitesinin adına değil) ve hatırlar. Sonuç arka plana gider, sekme kapanır.
 
@@ -12,12 +12,20 @@ const text = {
     text: 'Film sayfasında arkadaşlarınla konuşabilmen için ScreenWithMe mikrofonunu kullanmak istiyor. İzin bir kez verilir, sadece "Sese katıl"a bastığında açılır.',
     allow: '🎙 Mikrofon iznini ver',
     denied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden mikrofona izin verip tekrar dene.',
+    camTitle: 'Görüntülü sohbet için kamera izni',
+    camText: 'Film sayfasında arkadaşların seni görebilsin diye ScreenWithMe kameranı kullanmak istiyor. İzin bir kez verilir, kamera sadece 📷 düğmesine bastığında açılır.',
+    camAllow: '📷 Kamera iznini ver',
+    camDenied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden kameraya izin verip tekrar dene.',
   },
   en: {
     title: 'Microphone permission for voice chat',
     text: 'ScreenWithMe wants to use your microphone so you can talk with friends on the video page. You allow it once; it is only on after you press "Join voice".',
     allow: '🎙 Allow microphone',
     denied: 'Permission was not given. Allow the microphone from the lock/settings icon in the address bar and try again.',
+    camTitle: 'Camera permission for video chat',
+    camText: 'ScreenWithMe wants to use your camera so friends can see you on the video page. You allow it once; the camera is only on after you press 📷.',
+    camAllow: '📷 Allow camera',
+    camDenied: 'Permission was not given. Allow the camera from the lock/settings icon in the address bar and try again.',
   },
 };
 
@@ -25,19 +33,21 @@ async function main(): Promise<void> {
   await langReady;
   const dict = (await readValue('lang').catch(() => null)) === 'en' ? text.en : text.tr;
   document.documentElement.lang = dict === text.en ? 'en' : 'tr';
-  document.getElementById('title')!.textContent = dict.title;
-  document.getElementById('text')!.textContent = dict.text;
+  // Kamera izni de aynı sayfadan (?cam=1): görüntülü sohbet eklentinin görünmeyen sayfasında, o da izin isteyemez.
+  const cam = new URLSearchParams(location.search).get('cam') === '1';
+  document.getElementById('title')!.textContent = cam ? dict.camTitle : dict.title;
+  document.getElementById('text')!.textContent = cam ? dict.camText : dict.text;
   const button = document.getElementById('allow') as HTMLButtonElement;
   const status = document.getElementById('status')!;
-  button.textContent = dict.allow;
+  button.textContent = cam ? dict.camAllow : dict.allow;
   button.addEventListener('click', async () => {
     button.disabled = true;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia(cam ? { video: true } : { audio: true });
       for (const track of stream.getTracks()) track.stop();
       await chrome.runtime.sendMessage({ type: MIC_RESULT, granted: true });
     } catch {
-      status.textContent = dict.denied;
+      status.textContent = cam ? dict.camDenied : dict.denied;
       status.hidden = false;
       button.disabled = false;
     }

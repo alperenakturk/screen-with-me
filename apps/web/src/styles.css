@@ -4851,6 +4851,19 @@ html.shorts-view .footer {
   color: var(--chrome-text);
 }
 
+.live-quality {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--chrome-text);
+}
+
+.live-quality select {
+  padding: 3px 6px;
+  border-radius: 8px;
+  font: inherit;
+}
+
 .live-window {
   position: absolute;
   right: 14px;

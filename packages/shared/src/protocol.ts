@@ -286,6 +286,8 @@ export interface RoomSettings {
   name?: string;
   /** Shorts bitince sıradakine geçmek yerine başa sarsın (sadece Shorts videolarında). */
   loop?: boolean;
+  /** Yayını (ekran paylaşımı / kamera) sadece yönetici açabilsin. */
+  liveHostOnly?: boolean;
 }
 
 /** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
@@ -335,7 +337,7 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean; ad?: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
@@ -357,6 +359,8 @@ export type ClientMessage =
   | { t: 'live'; on: boolean; kind?: LiveKind }
   /** Yayını izle/bırak (en fazla LIVE_MAX_VIEWERS). */
   | { t: 'live-watch'; on: boolean }
+  /** (Sadece yönetici) odadaki yayını durdur. */
+  | { t: 'live-stop' }
   /** Yayın bağlantı mesajı (sunucu sadece yayıncı ile izleyicisi arasında iletir). */
   | { t: 'live-signal'; to: string; data: Signal }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
@@ -410,6 +414,9 @@ export type ErrorCode =
   /** Odada zaten bir yayın var / yayının izleyici sınırı dolu. */
   | 'live_busy'
   | 'live_full'
+  /** Yayını sadece yönetici açabilir (`settings.liveHostOnly`) / yönetici yayınını durdurdu. */
+  | 'live_host'
+  | 'live_stopped'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
@@ -703,7 +710,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return typeof m.ad === 'boolean' ? { t: 'ready', ready: m.ready, ad: m.ad } : { t: 'ready', ready: m.ready };
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
-      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions'] as const) {
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
       if ((REACTION_GAPS as readonly unknown[]).includes(m.reactionGap)) out.reactionGap = m.reactionGap as ReactionGap;
@@ -740,6 +747,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return m.on && (m.kind === 'screen' || m.kind === 'camera') ? { t: 'live', on: true, kind: m.kind } : { t: 'live', on: false };
     case 'live-watch':
       return typeof m.on === 'boolean' ? { t: 'live-watch', on: m.on } : null;
+    case 'live-stop':
+      return { t: 'live-stop' };
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

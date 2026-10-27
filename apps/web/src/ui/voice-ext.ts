@@ -6,21 +6,26 @@ import type { Voice } from '@swm/shared/voice';
 const JOIN_TIMEOUT_MS = 120_000;
 
 export interface ExtVoiceHooks {
-  announce: (on: boolean, mic?: boolean) => void;
+  announce: (on: boolean, mic?: boolean, cam?: boolean) => void;
   signal: (to: string, data: Signal) => void;
   rpc: (id: number, request: RtcRequest) => void;
   failed: (memberId: string) => void;
   /** Durum değişti (kart yeniden çizilsin). */
   changed: () => void;
+  /** Birinin kamera görüntüsü geldi/gitti (köprüden). */
+  onRemoteVideo: (memberId: string, stream: MediaStream | null) => void;
 }
 
 /**
  * Film sayfasındaki katmanda ses: mikrofon ve bağlantılar eklentinin görünmeyen sayfasında (offscreen), bu sınıf
  * sadece aracı. İzin eklentinin adına bir kez sorulur, film sayfası yenilense de ses kopmaz (yeni site örneği gelince
  * "reset" ile bağlantılar yeni üye kimliğiyle kurulur).
+ *
+ * Kameralar da orada; görüntüler buraya aynı bilgisayar içinde kalan bir WebRTC köprüsüyle gelir (ses sayfası teklif
+ * yapar, burası sadece alır). Eski eklentide köprü yok: `setCam` ancak eklenti `caps.cam` deyince var.
  */
 export class ExtVoice implements Voice {
-  private state = { active: false, mic: true };
+  private state = { active: false, mic: true, cam: false };
   private last = new Map<string, number>();
   /** Kendi mikrofonumun seviyesi (0–1). */
   me = 0;
@@ -29,6 +34,13 @@ export class ExtVoice implements Voice {
   private needsReset = false;
   private joining: { resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> } | null = null;
   mode: VoiceMode = 'p2p';
+  /** Görüntü köprüsü ve köprüden gelenler (`me`: kendi önizlemem). */
+  private loop: RTCPeerConnection | null = null;
+  private loopPending: RTCIceCandidateInit[] = [];
+  private loopVideos = new Map<string, MediaStream>();
+  private camming: { on: boolean; resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> } | null = null;
+  /** Eklenti kamerayı destekliyorsa var (yoksa kamera düğmesi gizli). */
+  setCam?: (on: boolean) => Promise<void>;
 
   constructor(
     private readonly post: (msg: VoiceUp) => void,
@@ -43,6 +55,32 @@ export class ExtVoice implements Voice {
 
   get micEnabled(): boolean {
     return this.state.mic;
+  }
+
+  get camEnabled(): boolean {
+    return this.state.cam;
+  }
+
+  get camera(): MediaStream | null {
+    return this.state.cam ? (this.loopVideos.get('me') ?? null) : null;
+  }
+
+  /** Eklenti kamerayı destekliyor (caps). */
+  enableCam(): void {
+    this.setCam ??= (on) => this.toggleCam(on);
+  }
+
+  private toggleCam(on: boolean): Promise<void> {
+    if (!this.state.active || on === this.state.cam) return Promise.resolve();
+    this.camming?.reject(new Error('voice: yeniden'));
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.camming = null;
+        reject(new Error('voice: süre doldu'));
+      }, JOIN_TIMEOUT_MS);
+      this.camming = { on, resolve, reject, timer };
+      this.post({ op: 'cam', on });
+    });
   }
 
   join(quiet = false): Promise<void> {
@@ -104,7 +142,13 @@ export class ExtVoice implements Voice {
     switch (msg.op) {
       case 'state': {
         const wasActive = this.state.active;
-        this.state = { active: msg.active, mic: msg.mic };
+        this.state = { active: msg.active, mic: msg.mic, cam: msg.cam === true };
+        if (this.camming && (this.state.cam === this.camming.on || !msg.active)) {
+          const { resolve, timer } = this.camming;
+          this.camming = null;
+          clearTimeout(timer);
+          resolve();
+        }
         if (!msg.active) {
           this.last = new Map();
           this.me = 0;
@@ -127,7 +171,20 @@ export class ExtVoice implements Voice {
         break;
       }
       case 'announce':
-        this.hooks.announce(msg.on, msg.mic);
+        this.hooks.announce(msg.on, msg.mic, msg.cam);
+        break;
+      case 'cam-error': {
+        const camming = this.camming;
+        this.camming = null;
+        if (camming) {
+          clearTimeout(camming.timer);
+          camming.reject(new Error('voice: kamera'));
+        }
+        this.hooks.changed();
+        break;
+      }
+      case 'loop':
+        void this.loopSignal(msg).catch(() => {});
         break;
       case 'signal':
         this.hooks.signal(msg.to, msg.data);
@@ -153,5 +210,51 @@ export class ExtVoice implements Voice {
         break;
       }
     }
+  }
+
+  /** Köprüden gelen: yeni teklif (kameralar değişti) ya da ağ adayı. */
+  private async loopSignal(msg: Extract<VoiceDown, { op: 'loop' }>): Promise<void> {
+    const data = msg.data;
+    if (!data || 'sdp' in data) {
+      this.loop?.close();
+      this.loop = null;
+      this.loopPending = [];
+      const cams = new Map(msg.cams ?? []);
+      // Artık gelmeyecek görüntüler bırakılır (yenileri ontrack ile gelir).
+      const keep = new Set(cams.values());
+      for (const key of [...this.loopVideos.keys()]) {
+        if (keep.has(key)) continue;
+        this.loopVideos.delete(key);
+        if (key !== 'me') this.hooks.onRemoteVideo(key, null);
+      }
+      if (!data || data.sdp.type !== 'offer') {
+        this.hooks.changed();
+        return;
+      }
+      const pc = new RTCPeerConnection();
+      this.loop = pc;
+      pc.ontrack = (event) => {
+        if (this.loop !== pc) return;
+        const key = event.transceiver.mid ? cams.get(event.transceiver.mid) : undefined;
+        if (!key) return;
+        const stream = new MediaStream([event.track]);
+        this.loopVideos.set(key, stream);
+        if (key === 'me') this.hooks.changed();
+        else this.hooks.onRemoteVideo(key, stream);
+      };
+      pc.onicecandidate = (event) => {
+        if (!event.candidate || this.loop !== pc) return;
+        const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
+        this.post({ op: 'loop', data: { candidate: { candidate, sdpMid, sdpMLineIndex } } });
+      };
+      await pc.setRemoteDescription(data.sdp);
+      await pc.setLocalDescription(await pc.createAnswer());
+      if (this.loop !== pc) return;
+      this.post({ op: 'loop', data: { sdp: { type: 'answer', sdp: pc.localDescription!.sdp } } });
+      for (const candidate of this.loopPending.splice(0)) await pc.addIceCandidate(candidate).catch(() => {});
+      return;
+    }
+    if (this.loop?.remoteDescription) await this.loop.addIceCandidate(data.candidate).catch(() => {});
+    else this.loopPending.push(data.candidate);
   }
 }

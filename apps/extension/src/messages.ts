@@ -32,7 +32,7 @@ export type OffscreenIn =
   | { type: 'end'; tabId: number };
 
 /** Ses sayfası → arka plan. */
-export type OffscreenOut = { tabId: number; msg: VoiceDown } | { type: 'need-permission' };
+export type OffscreenOut = { tabId: number; msg: VoiceDown } | { type: 'need-permission'; cam?: boolean };
 
 /** Çerçeve → arka plan */
 export type FrameMessage =

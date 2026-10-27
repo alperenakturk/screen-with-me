@@ -1,5 +1,6 @@
-// Film sayfasındaki katmanda sesli sohbetin gerçek testi: Ali sitedeki odada, Ayşe eklentiyle film sayfasında. Ayşe'nin
-// sesi eklentinin görünmeyen sayfasında (offscreen) çalışır; ilk katılışta izin sekmesi (mic.html) açılır.
+// Film sayfasındaki katmanda sesli/görüntülü sohbetin gerçek testi: Ali sitedeki odada, Ayşe eklentiyle film sayfasında.
+// Ayşe'nin sesi ve kamerası eklentinin görünmeyen sayfasında (offscreen) çalışır; ilk katılışta izin sekmesi (mic.html)
+// açılır; kameralar katmandaki siteye eklentinin yerel köprüsüyle gelir.
 //
 //   npm run build:extension:dev ; sunucu (8787) + site (5173) ; node scripts/harness/embed/film-server.mjs
 //   VOICE_A=a.wav VOICE_B=b.wav node scripts/harness/voice/shell.mjs [site] [sunucu-ws]
@@ -128,6 +129,36 @@ check(!!ayseHears, 'Ayşe (eklenti) Ali’yi duyuyor: konuşan göstergesi yanı
 const ducked = await until(() => ayse.evaluate(`(() => { const v = document.querySelector('video'); return v && v.volume < 0.9 ? v.volume : null; })()`), 10000);
 check(!!ducked, 'Ali konuşurken film sesi kısıldı', String(ducked));
 
+/** Kamera kutularındaki görüntüler: [kimin, genişlik, oynuyor mu] (kare geliyorsa genişlik > 0, zaman ilerler). */
+const CAMS = `(async () => {
+  const vids = [...document.querySelectorAll('#voice-cams .cam-tile')].map((t) => ({ t, v: t.querySelector('video'), at: t.querySelector('video').currentTime }));
+  await new Promise((r) => setTimeout(r, 600));
+  return vids.map(({ t, v, at }) => ({ name: t.querySelector('.cam-name').textContent, mine: t.classList.contains('mine'), w: v.videoWidth, moving: v.currentTime > at }));
+})()`;
+const sees = (list, name, mine = false) => (list ?? []).some((c) => c.name === name && c.mine === mine && c.w > 0 && c.moving);
+
+// Görüntülü sohbet film sayfasında: Ali'nin kamerası katmandaki siteye eklentinin köprüsüyle gelir.
+await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
+const camButton = await until(() => ayse.evalFrame('shell=1', `!document.getElementById('voice-cam').hidden`), 10000);
+check(!!camButton, 'film sayfasında da kamera düğmesi var');
+const ayseSeesAli = await until(async () => {
+  const list = await ayse.evalFrame('shell=1', CAMS);
+  return sees(list, 'Ali') ? list : null;
+}, 20000);
+check(!!ayseSeesAli, 'Ayşe film sayfasında Ali’nin kamerasını görüyor (köprüden kareler geliyor)', JSON.stringify(ayseSeesAli));
+// Ayşe kamerasını film sayfasından açar (kamera eklentinin görünmeyen sayfasında).
+await ayse.evalFrame('shell=1', `document.getElementById('voice-cam').click(); 1`);
+const ayseOwn = await until(async () => {
+  const list = await ayse.evalFrame('shell=1', CAMS);
+  return sees(list, 'Ayse', true) ? list : null;
+}, 20000);
+check(!!ayseOwn, 'Ayşe film sayfasında kendi kamerasının önizlemesini görüyor', JSON.stringify(ayseOwn));
+const aliSeesAyse = await until(async () => {
+  const list = await ali.evaluate(CAMS);
+  return sees(list, 'Ayse') ? list : null;
+}, 20000);
+check(!!aliSeesAyse, 'Ali sitede Ayşe’nin (film sayfasından açılan) kamerasını görüyor', JSON.stringify(aliSeesAyse));
+
 // Film sayfası yenilenir: ses eklentide sürer, yeni bağlantıyla yeniden kurulur (Ali yine duyar).
 await ayse.evaluate('location.reload(); 1');
 await ayse.sleep(3000);
@@ -144,6 +175,12 @@ if (again) {
     return level.rms > 0.01 ? level : null;
   }, 15000);
   check(!!lb, 'yenilemeden sonra da Ali, Ayşe’yi duyuyor', JSON.stringify(lb));
+  const camsBack = await until(async () => {
+    const mine = await ayse.evalFrame('shell=1', CAMS);
+    const theirs = await ali.evaluate(CAMS);
+    return sees(mine, 'Ali') && sees(mine, 'Ayse', true) && sees(theirs, 'Ayse') ? true : null;
+  }, 25000);
+  check(!!camsBack, 'yenilemeden sonra kameralar iki tarafta da yine görünüyor');
 }
 
 // Ayşe katmandan sesten ayrılır → Ali'de akışı kalkar.

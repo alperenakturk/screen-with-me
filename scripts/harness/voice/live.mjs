@@ -73,7 +73,9 @@ await ayse.shot('buyuk');
 await ali.evaluate(`document.getElementById('live-stop').click(); 1`);
 check(!!(await until(() => ayse.evaluate(`document.getElementById('live-window').hidden`), 8000)), 'Ali yayını bitirince Ayşe’de pencere kapandı');
 
-// Ekran paylaşımı (başsız Chrome'da tüm ekran kendiliğinden seçilir; olmazsa bilgi olarak yazılır).
+// Ekran paylaşımı (başsız Chrome'da tüm ekran kendiliğinden seçilir; olmazsa bilgi olarak yazılır). Kalite "yazı net".
+check(!!(await ali.evaluate(`!document.getElementById('live-quality-row').hidden`)), 'yayın yokken kalite seçimi görünüyor');
+await ali.evaluate(`(() => { const s = document.getElementById('live-quality'); s.value = 'text'; s.dispatchEvent(new Event('change')); return 1; })()`);
 await ali.evaluate(`document.getElementById('live-screen').click(); 1`);
 const screen = await until(() => ali.evaluate(`(() => { const s = document.getElementById('live-status').textContent; return s.includes('paylaşıyorsun') ? s : null; })()`), 8000);
 if (screen) {
@@ -85,11 +87,30 @@ if (screen) {
     15000,
   );
   check(!!linked, 'ekran paylaşımının görüntü akışı izleyiciye bağlandı');
+  const hint = await ali.evaluate(`(() => { const t = document.getElementById('live-video').srcObject?.getVideoTracks()[0]; return t ? { hint: t.contentHint, fps: t.getSettings().frameRate } : null; })()`);
+  check(hint?.hint === 'detail' && hint.fps <= 15, '"Yazı net": görüntü keskinlik öncelikli, en fazla 15 kare', JSON.stringify(hint));
+  // Yayın sürerken "akıcı"ya geçilir.
+  await ali.evaluate(`(() => { const s = document.getElementById('live-quality'); s.value = 'motion'; s.dispatchEvent(new Event('change')); return 1; })()`);
+  const hint2 = await until(() => ali.evaluate(`(() => { const t = document.getElementById('live-video').srcObject?.getVideoTracks()[0]; return t?.contentHint === 'motion' ? t.contentHint : null; })()`), 4000);
+  check(!!hint2, 'yayın sürerken "akıcı"ya geçildi');
   console.log('     ekran paylaşımı kareleri (başsız Chrome):', JSON.stringify(await frames(ayse)));
   await ali.evaluate(`document.getElementById('live-stop').click(); 1`);
 } else {
   console.log('     (bu ortamda ekran seçimi kendiliğinden yapılamadı: ekran paylaşımı elle denenmeli)');
 }
+
+// Yönetici (Ali) Ayşe'nin yayınını durdurur; sonra "yayını sadece yönetici açsın".
+await until(() => ali.evaluate(`!document.getElementById('live-screen').hidden`), 8000);
+await ayse.evaluate(`document.getElementById('live-camera').click(); 1`);
+const kill = await until(() => ali.evaluate(`!document.getElementById('live-kill').hidden`), 10000);
+check(!!kill, 'yönetici başkasının yayınında "⏹ Yayını durdur" görüyor');
+check(!!(await ayse.evaluate(`document.getElementById('live-kill').hidden`)), 'yönetici olmayan kendi yayınında durdur düğmesini görmüyor');
+await ali.evaluate(`document.getElementById('live-kill').click(); 1`);
+const killed = await until(() => ayse.evaluate(`(() => { const h = document.querySelector('.hint-bubble'); return document.getElementById('live-window').hidden && h ? h.textContent : null; })()`), 10000);
+check(!!killed && killed.includes('durdurdu'), 'Ayşe’nin yayını durdu, nedeni yazıyor', String(killed));
+await ali.evaluate(`(() => { const c = document.getElementById('opt-livehost'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);
+const lockedUi = await until(() => ayse.evaluate(`document.getElementById('live-camera').classList.contains('is-full') && document.getElementById('live-status').textContent.includes('yönetici')`), 8000);
+check(!!lockedUi, 'kilitliyken Ayşe’de yayın düğmeleri soluk, nedeni yazıyor');
 
 ali.close();
 ayse.close();

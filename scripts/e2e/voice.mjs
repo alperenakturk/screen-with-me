@@ -70,9 +70,11 @@ if (wa.voice !== true) {
   a.send({ t: 'voice', on: true, mic: true, cam: true });
   const camFull = await a.wait((m) => m.t === 'error', 'cam full');
   ok(camFull.code === 'cam_full', '5. kamera reddedildi (cam_full)');
+  // Kutularda kameralar tek tek açılırken gelen eski mesajlar var (K0'ın kamerası henüz kapalıyken olanlar da): boşalt,
+  // sonra K0'ın gerçekten kapattığı mesajı bekle (canlıda gecikme yüzünden Ali'nin isteği önce gidiyordu).
+  for (const x of [a, b]) x.inbox.length = 0;
   extra[0].send({ t: 'voice', on: true, mic: true, cam: false });
-  // Kameralar tek tek açılırken gelen eski "3 kamera" mesajları kutuda: K0'ın gerçekten kapattığı mesajı bekle.
-  await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'K0' && x.voice && !x.voice.cam), 'cam off');
+  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 3, 'cam off');
   a.send({ t: 'voice', on: true, mic: true, cam: true });
   const aliCam = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && x.voice?.cam), 'ali cam');
   ok(!!aliCam, 'Biri kamerasını kapatınca Ali açabildi');

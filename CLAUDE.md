@@ -264,7 +264,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare
   yolunda görüntü yok. Site: ses kartında kutular (`#voice-cams`, kendi önizlemem ayna), tam ekranda `#cam-dock` (sağ üst).
-  Film sayfasında (ExtVoice) henüz yok. Kendi ses seviyem: 🎙 altında çubuk (`LevelMeter` "me"; eklentide offscreen `me`).
+  **Film sayfasında (0.9.65):** kameralar offscreen'de (`voice` `cam`; izin yoksa `mic.html?cam=1`); gelenler + kendi
+  önizlemem (`me`) katmandaki siteye **yerel WebRTC köprüsüyle** gelir (`{op:'loop'}`: offscreen teklif yapar, `cams`
+  = mid → üye; her değişiklikte köprü baştan; `data` yoksa kamera yok). Eski eklenti `caps.cam` yollamaz → düğme gizli.
+  Kendi ses seviyem: 🎙 altında çubuk (`LevelMeter` "me"; eklentide offscreen `me`).
   Aynı anda en fazla `CAM_MAX` (4) kamera (sunucu `cam_full`). **Sınırlar hep görünür** (kullanıcı isteği): kartta
   "Seste 3/6 · 📷 1/4", son yerde sarı, dolunca kırmızı; dolu düğme soluk (`.is-full`), basınca nedeni (eşler arası,
   yükleme hızı) `flashHint`. Test: `voice/run.mjs` (kamera görüntüsü akıyor mu, kareler sayılır), e2e `voice.mjs` (cam_full).
@@ -276,7 +279,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   `contentHint`), izleyici sadece alır (izin istemez). Yayıncı çıkınca/bitirince izleyiciler bırakılır. Görüntü videonun
   köşesinde `#live-window` (⤢ büyüt = videoyu kaplar; kabukta adacık). Kabukta yayın açma yok, izleme var. Film yayma
   YOK (kullanıcı kararı; eklentide `tabCapture` yapılmayacak). Testler: e2e `live.mjs`, gerçek `voice/live.mjs` (kamera
-  ve ekran; başsız Chrome'da ekran `--auto-select-desktop-capture-source`).
+  ve ekran; başsız Chrome'da ekran `--auto-select-desktop-capture-source`). **2. aşama (0.9.66):** ekranda kalite
+  `text` (yazı net: 15 kare, `detail`, `maintain-resolution`) / `motion` (akıcı: 30 kare, `maintain-framerate`), yayın
+  sürerken de değişir (`localStorage` `opt:liveQuality`); yönetici `{t:'live-stop'}` ile yayını durdurur (yayıncıya
+  `live_stopped`), `settings.liveHostOnly` açıksa başkası açamaz (`live_host`), açılınca süren yayın kapanır.
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).

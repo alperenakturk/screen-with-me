@@ -405,6 +405,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="live-camera" type="button" class="btn small-btn">📹 <span data-i18n="live.camera"></span></button>
             <button id="live-watch" type="button" class="btn small-btn primary" hidden></button>
             <button id="live-stop" type="button" class="btn small-btn" data-i18n="live.stop" hidden></button>
+            <button id="live-kill" type="button" class="btn small-btn" data-i18n="live.kill" hidden></button>
+            <label class="live-quality small" id="live-quality-row" hidden><span data-i18n="live.quality"></span>
+              <select id="live-quality">
+                <option value="text" data-i18n="live.quality.text"></option>
+                <option value="motion" data-i18n="live.quality.motion"></option>
+              </select>
+            </label>
             <span id="live-limit" class="voice-limit muted small"></span>
           </div>
         </section>
@@ -493,6 +500,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
               </div>
               <label class="check-row"><input type="checkbox" id="opt-noreactions" /> <span data-i18n="settings.noReactions"></span></label>
+              <label class="check-row"><input type="checkbox" id="opt-livehost" /> <span data-i18n="settings.liveHostOnly"></span></label>
               <label class="select-row"><span data-i18n="settings.reactionGap"></span>
                 <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
               </label>
@@ -627,7 +635,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
   const voice = createVoice(app, send, () => myId, roomId, isShell);
-  const live = createLive(app, send, () => myId, isShell);
+  const live = createLive(app, send, () => myId, isShell, () => amHost());
   const reactions = createReactions(
     app,
     send,
@@ -848,7 +856,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           voice.camFull();
           break;
         }
-        if (message.code === 'live_busy' || message.code === 'live_full') {
+        if (message.code === 'live_busy' || message.code === 'live_full' || message.code === 'live_host' || message.code === 'live_stopped') {
           live.error(message.code);
           break;
         }
@@ -1248,7 +1256,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     } else if (message.type === 'video' && isShell) {
       videoFound = message.found;
     } else if (message.type === 'caps' && isShell) {
-      voice.caps(message.voice === true);
+      voice.caps(message.voice === true, message.cam === true);
     } else if (message.type === 'voice' && isShell) {
       voice.extMessage(message.msg);
     } else if (message.type === 'tab-closed' && isShell) {
@@ -1842,9 +1850,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     lockQueue.checked = roomSettings.lockQueue === true;
     renderSaved(host);
     $<HTMLInputElement>('#opt-noreactions').checked = roomSettings.noReactions === true;
+    $<HTMLInputElement>('#opt-livehost').checked = roomSettings.liveHostOnly === true;
+    live.settings(roomSettings.liveHostOnly === true);
     $<HTMLSelectElement>('#opt-reactiongap').value = String(roomSettings.reactionGap ?? 0);
     app.classList.toggle('no-reactions', roomSettings.noReactions === true);
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-livehost', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     $('#host-lock').hidden = host || !roomSettings.hostOnly;
@@ -1882,6 +1892,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#recap-open').addEventListener('click', () => send({ t: 'recap' }));
   $<HTMLInputElement>('#opt-noreactions').addEventListener('change', (event) => {
     send({ t: 'settings', noReactions: (event.target as HTMLInputElement).checked });
+  });
+  $<HTMLInputElement>('#opt-livehost').addEventListener('change', (event) => {
+    send({ t: 'settings', liveHostOnly: (event.target as HTMLInputElement).checked });
   });
   $<HTMLSelectElement>('#opt-reactiongap').addEventListener('change', (event) => {
     const gap = Number((event.target as HTMLSelectElement).value);
