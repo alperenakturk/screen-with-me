@@ -21,7 +21,7 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 3. **Görüntülü sohbet** (eşler arası, Cloudflare'siz), sonra ses + görüntüyü geliştir (ses seviyesi göstergesi, arayüz).
 4. **Oyun köşesi "PlayWithMe":** üst menüde 🎮 → logolu sayfa, altta oyun listesi; ilk oyun XOX (her maç ayrı oda,
    2 oyuncu, gelenler izler).
-5. **Yayın açma araştırması:** ayrı oturumda yürütüldü → `docs/internal/yayin.md` (varsa).
+5. **Yayın açma araştırması:** ✅ ayrı oturumda yapıldı → `docs/internal/yayin.md` (karar kullanıcının).
 6. **Tasarım/tema alternatifleri:** önizleme sayfası, kullanıcı seçince uygulanır.
 7. **Mehtaplı tema:** maskotu daha "Türk" yap: yeniçeri ya da padişah ScreenWithMe (kullanıcı istedi; direkt ekle).
 
