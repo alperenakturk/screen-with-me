@@ -351,11 +351,30 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   boşsa `recap_empty`. Son kartta "Kaydet" → `{t:'recap-save'}` (aynı oturumun önceki kaydı yenisiyle değişir; kayıtlı
   odada 20, değilse 5; 90 gün), liste `{t:'recaps'}` ile herkese. İstemci `chooseFacts` ile her seferinde rastgele (veri
   arttıkça daha çok, en fazla 8) kart seçer; ilk süre, son özet + PNG. Video sonunda istatistik kartı yok.
-- **Sekmeler:** 💬 Sohbet, 🎵 Sıra, 👥, ⚙️ Ayarlar (görünüm + yönetici); 👤 Profil (ad, avatar, tema, bugünün özeti)
-  sekme değil: sağ üstte en sağdaki düğme, altında açılan menü (`.profile-pop`; dışarı tıklayınca/Esc ile kapanır,
-  kabukta açıkken delik kapanır). İlk açılışta
-  yönetici ⚙️ Ayarlar'da (oda ayarlarını yapar), diğerleri 💬 Sohbet'te başlar (kabukta hep sohbet); aynı sekmede
-  yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
+- **Sekmeler:** 💬 Sohbet, 🎵 Sıra, 👥 Kişiler (eşit genişlikte) + sağında ⚙️ düğmesi; 👤 Profil sekme değil: sağ üstte
+  en sağdaki düğme (kendi avatarım), altında açılan menü (`.profile-pop`; dışarı tıklayınca/Esc ile kapanır, kabukta
+  açıkken delik kapanır). Herkes 💬 Sohbet'le başlar; aynı sekmede yenileyince kalınan sekme (`sessionStorage` `tab:<oda>`).
+- **Oda arayüzü 0.9.80 (kullanıcı seçti: 1B 2C 3B 4A 5A, tasarım sayfası `oda-arayuzu`):**
+  - **Sohbet balonları** (`ui/chat.ts`): benimkiler sağda vurgu renginde (avatarsız), diğerleri solda avatar + ad; aynı
+    kişinin 3 dk içindeki art arda mesajları birleşir (`.cont`); oda hareketleri ortada ince çizgiler arasında; gönder oku
+    (`#chat-send`) kutunun içinde.
+  - **⚙️ Ayarlar penceresi** (`ui/settings-dialog.ts`, `#settings-dialog`): sekme değil, ekranın ortasında solda bölümleri
+    olan pencere: Ekranım / Oda kuralları / Odayı kaydet / Planlı başlangıç (sadece yöneticiye). Satırlar başlık + kısa açıklama + açma/kapama anahtarı (`.set-row`, `input.switch`, `role=switch`).
+    Yönetici olmayan anahtarları görmez, `#rules-summary` (✓/– özet, "kuralları X belirliyor") görür. Pencere hep
+    sayfada (gizli): açık pencere seçicileri `.dialog-backdrop:not([hidden])` (kabukta deliği kapatır, kısayolları yutar).
+    Telefonda bölümler üstte yatay.
+  - **Video altı** (`ui/reactions.ts` `.tray-bar`): "😀 Tepki ▴" tepsisi (Hazır / Benimkiler, 8 yuva, ‹ 1/3 ›, 🖼️ Ekle;
+    içinde basınca kapanmaz, dışarı/Esc kapatır) + yanında son kullanılan üç emoji (`localStorage` `recentReactions`);
+    sağda adı yazan düğmeler 🎮 Oyun · 📌 Pinle · 🔄 Eşitle · ⏩ 1× (basınca `#speed-pop`: −, hız listesi, +) · ⇥ · ⛶;
+    ≤1180 px'te sadece simge. Tam ekran ve Shorts çubukları eskisi gibi düz (8 yuva + ▲▼). Kabukta deliğin üstüne açılan
+    pencereler (`[data-island]`: tepsi, hız, oyun menüsü) adacık olur; bunlarda açılış animasyonu yok (ölçü kayıyordu).
+  - **Üst çubuk** (`html.in-room`): "Bağlı" yazısı, ⟳, 🎨 ve TR/EN odada gizli; bağlantı oda adının noktasında
+    (`.room-title-dot` yeşil/sarı/kırmızı, bağlı değilken yanında kısa yazı, basınca yeniden bağlanır; telefonda sadece
+    nokta). Dil, ⚙️ Ayarlar ve ⟳ profil menüsünün üstünde (`.profile-actions`).
+  - **Birlikte kartı**: "🎙 Sese katıl" + "🖥️ Paylaş ▾" aynı satırda (`.together-actions`); Paylaş menüsünde ekran /
+    kamera ve sınır notu; yayın sürerken satır tam genişlik (`.live-card.active`), kalite sadece kendi ekran yayınımda.
+    Paylaşamayan (kabuk, ekran paylaşımı olmayan telefon) boştayken kartın bu kısmını hiç görmez.
+  - Hatalar: boş pin şeridi yer kaplamıyor (`.pin-strip.empty` gizli), "Aynı yerdesiniz" rozeti tek satır.
 - **Kim durdurdu notu (0.9.68):** başkası oynat/durdur/sar/hız yapınca videonun sol üstünde 2,6 sn avatar + "Ali durdurdu"
   (`#action-notice`, deliğin içinde adacık; kendi hareketim ve `SYSTEM` için yok); Ayarlar'dan kapatılır (`opt:actionNotice`).
 - **Oda düzeni "Sinema Rayı" (0.9.76, kullanıcı seçti; tasarım tuvali A):** üst çubukta odanın adı (kayıtlı odada adı,
@@ -379,7 +398,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
 - **Emojileri kapat (`settings.noReactions`):** yönetici açar; sunucu tepkileri düşürür (yönetici dahil),
   site `.no-reactions`, eklenti `.no-react` ile emoji çubuğu gizlenir.
 - **Emoji çubuğu:** her sayfada 8 sabit yuva (eksikler boş durur, yanındaki düğmeler kaymaz); "+" yok,
-  🖼️ = GIF/foto ekle; özel emoji sayfalarına ▲▼ ile gidilir. Video altı tek satır (dar ekranda alta geçer).
+  🖼️ = GIF/foto ekle; özel emoji sayfalarına ▲▼ ile gidilir (tam ekran ve Shorts; video altında tepsi, bkz. 0.9.80).
 - **Hız:** `MAX_RATE` 4 (HTML5), YouTube en fazla 2 (`YOUTUBE_MAX_RATE`; site isteği kırpar, sunucu YouTube
   açılınca hızı 2'ye indirir).
 - **Varsayılan dil Türkçe** (site + eklenti); EN seçilirse hatırlanır.

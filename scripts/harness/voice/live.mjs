@@ -74,7 +74,7 @@ await ali.evaluate(`document.getElementById('live-stop').click(); 1`);
 check(!!(await until(() => ayse.evaluate(`document.getElementById('live-window').hidden`), 8000)), 'Ali yayını bitirince Ayşe’de pencere kapandı');
 
 // Ekran paylaşımı (başsız Chrome'da tüm ekran kendiliğinden seçilir; olmazsa bilgi olarak yazılır). Kalite "yazı net".
-check(!!(await ali.evaluate(`!document.getElementById('live-quality-row').hidden`)), 'yayın yokken kalite seçimi görünüyor');
+check(!!(await ali.evaluate(`document.getElementById('live-quality-row').hidden`)), 'yayın yokken kalite seçimi gizli (sadece kendi ekran yayınında)');
 await ali.evaluate(`(() => { const s = document.getElementById('live-quality'); s.value = 'text'; s.dispatchEvent(new Event('change')); return 1; })()`);
 await ali.evaluate(`document.getElementById('live-screen').click(); 1`);
 const screen = await until(() => ali.evaluate(`(() => { const s = document.getElementById('live-status').textContent; return s.includes('paylaşıyorsun') ? s : null; })()`), 8000);
@@ -109,8 +109,11 @@ await ali.evaluate(`document.getElementById('live-kill').click(); 1`);
 const killed = await until(() => ayse.evaluate(`(() => { const h = document.querySelector('.hint-bubble'); return document.getElementById('live-window').hidden && h ? h.textContent : null; })()`), 10000);
 check(!!killed && killed.includes('durdurdu'), 'Ayşe’nin yayını durdu, nedeni yazıyor', String(killed));
 await ali.evaluate(`(() => { const c = document.getElementById('opt-livehost'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);
-const lockedUi = await until(() => ayse.evaluate(`document.getElementById('live-camera').classList.contains('is-full') && document.getElementById('live-status').textContent.includes('yönetici')`), 8000);
-check(!!lockedUi, 'kilitliyken Ayşe’de yayın düğmeleri soluk, nedeni yazıyor');
+const lockedUi = await until(() => ayse.evaluate(`document.getElementById('live-share').classList.contains('is-full')`), 8000);
+check(!!lockedUi, 'kilitliyken Ayşe’de "Paylaş" düğmesi soluk');
+await ayse.evaluate(`document.getElementById('live-share').click(); 1`);
+const lockedHint = await until(() => ayse.evaluate(`[...document.querySelectorAll('.hint-bubble')].map((h) => h.textContent).find((x) => x.includes('yönetici')) ?? null`), 5000);
+check(!!lockedHint && lockedHint.includes('yönetici') && !!(await ayse.evaluate(`document.getElementById('live-menu').hidden`)), 'basınca menü açılmıyor, nedeni yazıyor', String(lockedHint));
 
 ali.close();
 ayse.close();

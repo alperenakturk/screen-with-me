@@ -195,14 +195,18 @@ check((await a.evaluate(`document.documentElement.dataset.swmShell`)) === '1', '
 const bora = await fakeUser(room, 'Bora');
 check(!!(await until(() => bora.members.length === 2)), 'Ayşe ve Bora odada');
 
-// 0b) Sitede (kabuk değil): odayı kuran önce ⚙️ Ayarlar'da; 👤 sağ üstte en sonda, profil panelini açıp kapatır.
+// 0b) Sitede (kabuk değil): herkes 💬 Sohbet'le açılır; ⚙️ Ayarlar ortada pencere; 👤 sağ üstte en sonda, profil
+// panelini açıp kapatır.
 const ACTIVE_TAB = `document.querySelector('[data-tab][aria-selected=true]')?.dataset.tab`;
-const hostTab = await until(async () => ((await a.evaluate(ACTIVE_TAB)) === 'settings' ? 'settings' : null), 5000);
-check(
-  hostTab === 'settings' && (await a.evaluate(`!document.querySelector('[data-panel=settings]').hidden`)),
-  'odayı kuran (yönetici) sitede önce ⚙️ Ayarlar sekmesinde',
-  `açık: ${await a.evaluate(ACTIVE_TAB)}, sessionStorage tab:${room} = ${await a.evaluate(`sessionStorage.getItem('tab:${room}')`)}`,
+const hostTab = await until(async () => ((await a.evaluate(ACTIVE_TAB)) === 'chat' ? 'chat' : null), 5000);
+check(hostTab === 'chat', 'odayı kuran (yönetici) sitede 💬 Sohbet sekmesiyle açılıyor', String(await a.evaluate(ACTIVE_TAB)));
+await a.evaluate(`document.getElementById('settings-open').click(); 1`);
+const settingsOpen = await until(() =>
+  a.evaluate(`!document.getElementById('settings-dialog').hidden && !document.querySelector('.settings-nav [data-sec=schedule]').hidden && !document.querySelector('.host-ui').hidden`),
 );
+check(!!settingsOpen, '⚙️ ayarlar penceresi açılıyor, yöneticiye oda kuralları ve planlı başlangıç görünüyor');
+await a.evaluate(`document.getElementById('settings-close').click(); 1`);
+check(!!(await a.evaluate(`document.getElementById('settings-dialog').hidden`)), 'ayarlar penceresi ✕ ile kapanıyor');
 const profileSpot = await a.evaluate(
   `(() => { const r = document.querySelector('.topbar-right'); const b = r?.lastElementChild; return { last: b?.classList.contains('profile-btn') ? 'profile' : null, text: b?.textContent.trim(), n: r?.children.length }; })()`,
 );
@@ -301,8 +305,27 @@ const covered = await until(async () => {
 });
 check(!!covered, 'tema penceresi açıkken delik kapandı (pencere videonun önünde)');
 await a.shot('1b-pencere-onde');
-await a.evalFrame('shell=1', `document.querySelector('.dialog-backdrop .btn.primary')?.click(); 1`);
+await a.evalFrame('shell=1', `document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click(); 1`);
 check(!!(await until(async () => (await a.evaluate(SHELL_CLIP)) === clipBefore)), 'pencere kapanınca delik geri açıldı');
+// ⚙️ Ayarlar penceresi de delikten önde.
+await a.evalFrame('shell=1', `document.getElementById('settings-open').click(); 1`);
+const settingsCovered = await until(async () => {
+  const clip = await a.evaluate(SHELL_CLIP);
+  return clip !== clipBefore && (clip.match(/M/g) || []).length === 3 ? clip : null;
+});
+check(!!settingsCovered, 'ayarlar penceresi açıkken delik kapandı');
+await a.evalFrame('shell=1', `document.getElementById('settings-close').click(); 1`);
+check(!!(await until(async () => (await a.evaluate(SHELL_CLIP)) === clipBefore)), 'ayarlar kapanınca delik geri açıldı');
+// "😀 Tepki" tepsisi deliğin üstüne açılır: adacık olur (görünür, tıklanır).
+await a.evalFrame('shell=1', `document.querySelector('.react-open').click(); 1`);
+const trayIsland = await until(async () => {
+  const clip = await a.evaluate(SHELL_CLIP);
+  return clip !== clipBefore ? clip : null;
+});
+check(!!trayIsland, 'emoji tepsisi deliğin üstünde adacık (katmanda görünüyor)');
+await a.shot('1d-tepki-tepsisi');
+await a.evalFrame('shell=1', `document.querySelector('.react-open').click(); 1`);
+check(!!(await until(async () => (await a.evaluate(SHELL_CLIP)) === clipBefore)), 'tepsi kapanınca adacık kalktı');
 
 // 2c) Film sitesinin kendi ⛶ düğmesi → odanın tam ekranı (sitenin kontrolleri görünür).
 const fsButton = await a.center('#fs');

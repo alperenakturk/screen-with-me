@@ -6400,3 +6400,943 @@ html.shorts-view .footer {
 .diag .btn {
   text-decoration: none;
 }
+
+/* ==== 0.9.80 oda arayüzü (kullanıcı seçti: 1B balonlar, 2C ayar penceresi, 3B tepki tepsisi + adı yazan düğmeler,
+   4A sade üst çubuk, 5A "Paylaş" menüsü). Eski kuralların üstüne yazar; bu yüzden dosyanın sonunda. ==== */
+
+/* -- 4A: odadayken üst çubukta sadece oda adı (durum noktası), Davet et, Eklenti, profil -- */
+html.in-room .topbar-right > #status,
+html.in-room .topbar-right > #reconnect,
+html.in-room .topbar-right > .theme-wrap,
+html.in-room .topbar-right > .lang {
+  display: none;
+}
+
+.room-title-dot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: -7px -4px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.room-title-dot::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 60%, transparent);
+}
+
+.room-title-dot:is([data-status='connecting'], [data-status='reconnecting'])::before {
+  background: var(--warn);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--warn) 60%, transparent);
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+
+.room-title-dot[data-status='closed']::before {
+  background: var(--danger);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--danger) 60%, transparent);
+}
+
+.room-title-dot:hover::before {
+  outline: 2px solid color-mix(in srgb, var(--text) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.room-title-dot:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.room-title-dot.spin::before {
+  animation: dot-pulse 0.35s ease-in-out 2;
+}
+
+@keyframes dot-pulse {
+  50% {
+    transform: scale(0.55);
+    opacity: 0.6;
+  }
+}
+
+.room-title-status {
+  flex: none;
+  font-size: 12px;
+  color: var(--warn);
+}
+
+.room-title-status:empty {
+  display: none;
+}
+
+/* Profil düğmesi: kendi avatarım */
+.topbar .nav-link.profile-btn {
+  width: 38px;
+  height: 38px;
+  padding: 2px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+/* (Dar ekranda .nav-link'in son span'ı yazı sayılıp gizleniyordu: avatar o değil) */
+.topbar .nav-link.profile-btn .profile-avatar {
+  display: grid;
+}
+
+.profile-avatar.drawn img {
+  width: 100%;
+  height: 100%;
+}
+
+/* Profil menüsünün üstü: dil, ⚙️ Ayarlar, ⟳ (üst çubuktan taşındı) */
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-lang {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.profile-lang > span {
+  padding: 0 4px 0 8px;
+}
+
+.profile-lang button {
+  border: 0;
+  background: none;
+  color: var(--chrome-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+.profile-lang button[aria-pressed='true'] {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+@media (max-width: 560px) {
+  /* Telefonda oda adı yerine sadece durum noktası (bağlı değilken kısa yazı da) */
+  html.in-room .room-title {
+    display: flex;
+    padding-left: 10px;
+    margin-right: auto;
+  }
+
+  html.in-room .room-title :is(.room-title-name, .room-title-count) {
+    display: none;
+  }
+}
+
+/* -- Sekmeler: üç eşit sekme + ⚙️ düğmesi -- */
+.tabs .tab {
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 5px;
+  padding-inline: 4px;
+  font-size: 13.5px;
+}
+
+.tab-gear {
+  flex: 0 0 46px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tab-gear:hover {
+  background: var(--surface-2);
+}
+
+/* -- 1B: sohbet balonları -- */
+.chat-panel .chat-list {
+  gap: 0;
+  padding: 34px 12px 12px;
+}
+
+.chat-list .chat-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.chat-list .chat-line.cont {
+  margin-top: 3px;
+}
+
+.chat-list .chat-line .chat-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+}
+
+.chat-list .chat-line.cont .chat-avatar {
+  visibility: hidden;
+  height: 0;
+}
+
+.chat-list .chat-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 82%;
+}
+
+.chat-list .chat-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 6px 3px;
+  font-size: 12px;
+}
+
+.chat-list .chat-name {
+  font-weight: 600;
+  color: var(--chrome-text);
+}
+
+.chat-list .chat-meta time {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.chat-list .chat-text {
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 17px;
+  background: var(--surface-2);
+  line-height: 1.38;
+  overflow-wrap: anywhere;
+}
+
+.chat-list .chat-line:not(.me):not(.cont) .chat-text {
+  border-top-left-radius: 6px;
+}
+
+.chat-list .chat-line.me {
+  justify-content: flex-end;
+}
+
+.chat-list .chat-line.me .chat-body {
+  align-items: flex-end;
+}
+
+.chat-list .chat-line.me .chat-text {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.chat-list .chat-line.me:not(.cont) .chat-text {
+  border-top-right-radius: 6px;
+}
+
+/* Oda hareketleri: ortada ince çizgiler arasında */
+.chat-list .chat-system {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 2px;
+  padding: 0;
+  font-size: 11.5px;
+  text-align: center;
+}
+
+.chat-list .chat-system::before,
+.chat-list .chat-system::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.chat-list .chat-system > span {
+  max-width: 80%;
+}
+
+/* Yazma kutusu: gönder oku kutunun içinde */
+.chat-form {
+  position: relative;
+  display: flex;
+}
+
+.chat-form #chat-input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding-right: 48px;
+  border-radius: 12px;
+}
+
+.chat-send {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.chat-send:hover {
+  background: var(--accent-hover);
+}
+
+/* -- 2C: Ayarlar penceresi -- */
+.settings-window {
+  width: min(740px, 100%);
+  height: min(540px, calc(100vh - 32px));
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
+  overflow: hidden;
+  animation: r-in 0.18s ease-out;
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 10px;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+}
+
+.settings-nav h3 {
+  margin: 0 10px 10px;
+  font-size: 17px;
+}
+
+.settings-nav button {
+  text-align: left;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--muted);
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.settings-nav button:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.settings-nav button[aria-current='true'] {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px 18px 22px;
+  overflow-y: auto;
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-head h4 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.settings-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-sec[hidden] {
+  display: none;
+}
+
+.settings-sec > p {
+  margin: 0;
+}
+
+/* Eski yönetici kutusunun çerçevesi pencerede yok */
+.settings-sec.host-box,
+.settings-sec.host-box.mine {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.set-box {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg) 40%, var(--surface));
+}
+
+.set-box[hidden] {
+  display: none;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.set-box .set-row + .set-row {
+  border-top: 1px solid var(--border);
+}
+
+.set-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.set-text b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.set-text span {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.set-text span:empty {
+  display: none;
+}
+
+.set-row select {
+  flex: none;
+  max-width: 55%;
+  padding: 6px 8px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+/* Açma/kapama anahtarı (onay kutusunun görünümü) */
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 40px;
+  height: 23px;
+  margin: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--muted) 38%, var(--surface-2));
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: transform 0.15s;
+}
+
+.switch:checked {
+  background: var(--accent);
+}
+
+.switch:checked::after {
+  transform: translateX(17px);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.switch:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.set-row:has(.switch:disabled) {
+  cursor: default;
+}
+
+/* Yönetici olmayana kuralların özeti */
+.rules-summary {
+  list-style: none;
+  margin: 0;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.rules-summary[hidden] {
+  display: none;
+}
+
+.rules-summary li {
+  display: flex;
+  gap: 10px;
+}
+
+.rules-summary li > span:first-child {
+  flex: none;
+  width: 16px;
+  text-align: center;
+}
+
+.rules-summary li.on {
+  color: var(--text);
+}
+
+.rules-summary li.on > span:first-child {
+  color: var(--ok);
+}
+
+/* Ad / tarih kutusu + düğmeler: dar pencerede alt alta, kesilmez */
+.set-inline {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.set-inline input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.set-inline[hidden] {
+  display: none;
+}
+
+.settings-sec #save-off {
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .settings-window {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: min(620px, calc(100dvh - 24px));
+  }
+
+  .settings-nav {
+    flex-direction: row;
+    gap: 4px;
+    padding: 10px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .settings-nav h3 {
+    display: none;
+  }
+
+  .settings-nav button {
+    flex: none;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .settings-main {
+    padding: 14px;
+  }
+}
+
+/* Sıradaki "otomatik geç" de anahtar */
+.queue-auto.set-row {
+  padding: 2px 2px 10px;
+}
+
+/* -- 3B: video altı: "😀 Tepki" tepsisi + son kullanılanlar; adı yazan düğmeler -- */
+.tray-bar {
+  align-items: center;
+  gap: 8px;
+}
+
+.react-tray-wrap,
+.speed-wrap {
+  position: relative;
+}
+
+.react-open {
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.react-open > span:first-child {
+  font-size: 17px;
+}
+
+.react-open[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface));
+}
+
+.react-caret {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.react-recent {
+  display: flex;
+  gap: 4px;
+}
+
+.react-tray,
+.speed-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+}
+
+/* Açılış animasyonu yok: film sayfasında (kabuk) bu pencereler deliğin üstünde adacık; ölçü animasyonun ilk
+   karesinde alınınca kenarı kesik kalıyordu. */
+.react-tray {
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: max-content;
+}
+
+.react-tray[hidden],
+.speed-pop[hidden] {
+  display: none;
+}
+
+.tray-head {
+  display: flex;
+  gap: 6px;
+}
+
+.tray-chip {
+  padding: 3px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tray-chip.on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.tray-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 42px);
+  gap: 6px;
+}
+
+.tray-grid :is(.reaction-btn, .reaction-slot) {
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+}
+
+.tray-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.tray-page {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.tray-count {
+  min-width: 30px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tray-gap {
+  flex: 1;
+}
+
+.tray-add {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toolbar .tool-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.toolbar .tool-btn.labeled {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.toolbar .tool-btn.labeled:not(:disabled):hover {
+  border-color: var(--muted);
+  background: var(--surface-2);
+}
+
+.toolbar .tool-btn.labeled[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.speed-label {
+  font-variant-numeric: tabular-nums;
+}
+
+.speed-pop {
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.speed-pop-title {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Orta genişlikte yazılar sığmaz: sadece simge (hız "1×" kalır) */
+@media (max-width: 1180px) {
+  .toolbar .tool-label {
+    display: none;
+  }
+
+  .toolbar .tool-btn.labeled {
+    padding: 0 10px;
+  }
+
+  .toolbar .react-open .tool-label {
+    display: inline;
+  }
+}
+
+/* -- 5A: "Birlikte": ses ve paylaş aynı satırda; paylaş menüsü -- */
+.together-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.together-actions .live-card {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.together-actions .live-card.active {
+  flex-basis: 100%;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.live-share-wrap {
+  position: relative;
+}
+
+.live-share-wrap[hidden],
+.live-row[hidden],
+.live-menu[hidden] {
+  display: none;
+}
+
+.live-share {
+  font-size: 14px;
+  padding: 7px 12px;
+}
+
+.live-share.is-full {
+  opacity: 0.55;
+}
+
+.live-caret {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.live-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+  animation: r-in 0.15s ease-out;
+}
+
+.live-menu-item {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 1px 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.live-menu-item:hover,
+.live-menu-item:focus-visible {
+  background: var(--surface);
+}
+
+.live-menu-item[hidden] {
+  display: none;
+}
+
+.live-menu-icon {
+  grid-row: span 2;
+  font-size: 18px;
+}
+
+.live-menu-note {
+  margin: 4px 10px 4px;
+}
+
+/* -- Hatalar -- */
+/* Pin yokken video altında boş şerit kalmasın */
+.pin-strip.empty {
+  display: none;
+}
+
+/* "Aynı yerdesiniz" rozeti telefonda tek satır */
+.sync-badge {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .sync-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}

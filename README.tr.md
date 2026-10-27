@@ -50,7 +50,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 🎵 **Sıra ve oylama** | Ekle, sırala, hemen aç; 👍 oylar sırayı değiştirir. Otomatik devam kapatılabilir (yerine "Sıradakini başlat" kartı). |
 | 🎙 **Sesli ve görüntülü sohbet** | Odada "Sese katıl": izlerken konuş, tek tıkla sessize al ya da bas-konuş (V'ye basılı tut), konuşanın avatarı parlar; 🎙 altındaki küçük çubuk mikrofonunun seni duyduğunu gösterir. 📷 küçük bir kamera açar: arkadaşlarının kameraları ses kartında, tam ekranda videonun köşesinde görünür (film sayfalarında da; kamera izni bir kez ScreenWithMe için sorulur). Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; sese katılmayan kimse seni duymaz. Film sayfalarında da çalışır: mikrofon izni bir kez ScreenWithMe için sorulur (film sitesi için değil), film sayfası yenilense de ses kopmaz, biri konuşurken film sesi kısılır. |
 | 📺 **Ekran paylaşımı** | Ekranını, bir pencereyi, sekmeyi ya da kameranı odaya aç (oyun, fotoğraf, "şuna bak"; film için değil). Odada tek yayın, izlemeyi seçen en fazla 4 kişi, 720p, eşler arası. Videonun köşesinde açılır, büyütülebilir. "Yazı net" (sunum, site) ya da "akıcı" (oyun) seçilir. Sınırlar hep görünür ("İzleyen 3/4"). Yönetici yayını durdurabilir ya da yayını sadece kendisi açabilsin diyebilir. |
-| 💬 **Sohbet ve emojiler** | Sohbet, sıra, kişiler ve ayarlar sekmeleri. Üç emoji sayfası; emojiler videonun altından gönderenin avatarı ve adıyla yükselir, istediğin kadar hızlı. Görmek istemeyen kendisi için kapatabilir. Sohbetteki oda hareketleri varsayılan gizli. |
+| 💬 **Sohbet ve emojiler** | Mesajlaşma uygulaması gibi balonlar (seninkiler sağda), sıra ve kişiler sekmeleri; ⚙️ ayarlar kendi penceresinde. "😀 Tepki" tepsisinde üç emoji sayfası ve kendi GIF'lerin, son kullandığın üç emoji hep elinin altında; emojiler videonun altından gönderenin avatarı ve adıyla yükselir, istediğin kadar hızlı. Görmek istemeyen kendisi için kapatabilir. Sohbetteki oda hareketleri varsayılan gizli. |
 | 🖼️ **Özel emojiler** | Kendi resmini ya da GIF'ini ekle; bütün oda onunla tepki verebilir (odada en fazla 24). |
 | 📌 **Pinler** | Bir anı isteğe bağlı notla pinle; video altındaki şeritten oraya dönülür. |
 | ⌨️ **Kısayollar** | 1–8 emoji, Enter mesaj, P pin (film sayfalarında bu tuşlar sayfanın oynatıcısına hiç gitmez). |
@@ -64,7 +64,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 ### Yönetici ve güvenlik
 | | |
 |---|---|
-| 👑 **Oda yöneticisi** | İlk giren yöneticidir (yenilemede kalır) ve ayarlar sekmesiyle başlar. 20 sn'den uzun yoksa yöneticilik kalıcı olarak odada en uzun süredir bulunan kişiye geçer. |
+| 👑 **Oda yöneticisi** | İlk giren yöneticidir (yenilemede kalır), oda kurallarını ⚙️ Ayarlar'daki anahtarlarla belirler; diğerleri kısa bir özet görür. 20 sn'den uzun yoksa yöneticilik kalıcı olarak odada en uzun süredir bulunan kişiye geçer. |
 | 🔒 **Yönetici modları** | Oynatmayı sadece yönetici yönetsin · sırayı kilitle · emojileri kapat ya da kişi başı ne sıklıkla atılacağını sınırla · herkes hazır beklemesi aç/kapa. |
 | 🚪 **Çıkarma ve yasak** | Yönetici kişileri çıkarır; yönetici yasağı kaldırana kadar giremezler. |
 | 🔐 **Gizlilik baştan** | Video herkesin kendi tarayıcısında oynar; sunucu sadece "12:34'te durdur" gibi küçük mesajları ve odanın sohbetini taşır. Eklenti oda dışında uykudadır, film sayfası hangi odada olduğunu okuyamaz. Kullanıcı yazısı asla HTML olarak yazılmaz. Hız sınırları sunucuda. |

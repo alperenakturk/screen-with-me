@@ -36,6 +36,16 @@ export function createLive(
   const killButton = root.querySelector<HTMLButtonElement>('#live-kill')!;
   const qualityRow = root.querySelector<HTMLElement>('#live-quality-row')!;
   const qualitySelect = root.querySelector<HTMLSelectElement>('#live-quality')!;
+  // Boştayken tek "🖥️ Paylaş ▾" düğmesi: basınca ekran / kamera seçenekleri ve sınır notu küçük menüde.
+  const shareWrap = root.querySelector<HTMLElement>('#live-share-wrap')!;
+  const shareButton = root.querySelector<HTMLButtonElement>('#live-share')!;
+  const menu = root.querySelector<HTMLElement>('#live-menu')!;
+  const menuNote = root.querySelector<HTMLElement>('#live-menu-note')!;
+  const row = root.querySelector<HTMLElement>('#live-row')!;
+  const setMenu = (open: boolean) => {
+    menu.hidden = !open;
+    shareButton.setAttribute('aria-expanded', String(open));
+  };
   const savedQuality = load('opt:liveQuality');
   qualitySelect.value = savedQuality === 'text' ? 'text' : 'motion';
   const quality = (): LiveQuality => (qualitySelect.value === 'text' ? 'text' : 'motion');
@@ -69,7 +79,6 @@ export function createLive(
   }
 
   function render(): void {
-    card.hidden = !available;
     const me = myId();
     const host = streamer();
     const mine = host?.id === me && live.broadcasting !== null;
@@ -77,14 +86,21 @@ export function createLive(
     const full = viewers >= LIVE_MAX_VIEWERS;
     const idle = !host;
     const locked = hostOnly && !isHost();
-    screenButton.hidden = !idle || !canShare;
-    cameraButton.hidden = !idle || !canCamera;
-    // Yönetici kilitlediyse düğmeler soluk (basınca nedeni).
-    screenButton.classList.toggle('is-full', locked);
-    cameraButton.classList.toggle('is-full', locked);
+    // Boşta ve paylaşamıyorsa (film sayfası, ekran paylaşımı olmayan telefon) kart hiç görünmez.
+    card.hidden = !available || (idle && !canShare && !canCamera);
+    card.classList.toggle('active', !idle);
+    shareWrap.hidden = !idle;
+    row.hidden = idle;
+    if (!idle) setMenu(false);
+    screenButton.hidden = !canShare;
+    cameraButton.hidden = !canCamera;
+    // Yönetici kilitlediyse düğme soluk (basınca nedeni).
+    shareButton.classList.toggle('is-full', locked);
+    menuNote.textContent = t('live.limitIdle', { max: LIVE_MAX_VIEWERS });
     stopButton.hidden = !mine;
     killButton.hidden = !host || mine || !isHost();
-    qualityRow.hidden = !canShare || !(idle || (mine && live.broadcasting === 'screen'));
+    // Kalite sadece kendi ekran yayınım sürerken (varsayılan: son seçilen).
+    qualityRow.hidden = !(mine && live.broadcasting === 'screen');
     watchButton.hidden = !host || mine;
     watchButton.textContent = live.isWatching ? t('live.unwatch') : t('live.watch');
     watchButton.classList.toggle('primary', !live.isWatching);
@@ -133,8 +149,28 @@ export function createLive(
     }
   }
 
-  screenButton.addEventListener('click', () => void start('screen', screenButton));
-  cameraButton.addEventListener('click', () => void start('camera', cameraButton));
+  shareButton.addEventListener('click', () => {
+    if (hostOnly && !isHost()) {
+      flashHint(shareButton, t('live.hostOnly'), 6000);
+      return;
+    }
+    setMenu(menu.hidden === true);
+  });
+  document.addEventListener('pointerdown', (event) => {
+    const target = event.target as Element | null;
+    if (!menu.hidden && target && !shareWrap.contains(target)) setMenu(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !menu.hidden) setMenu(false);
+  });
+  screenButton.addEventListener('click', () => {
+    setMenu(false);
+    void start('screen', shareButton);
+  });
+  cameraButton.addEventListener('click', () => {
+    setMenu(false);
+    void start('camera', shareButton);
+  });
   stopButton.addEventListener('click', () => {
     live.stop();
     render();

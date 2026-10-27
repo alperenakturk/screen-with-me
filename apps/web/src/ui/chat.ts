@@ -5,11 +5,14 @@ import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 
 const MAX_LINES = 120;
+/** Aynı kişinin bu kadar süre içindeki art arda mesajları tek balon grubunda (isim/avatar bir kez). */
+const GROUP_MS = 3 * 60_000;
 
 type Line = { kind: 'chat'; message: ChatMessage } | { kind: 'system'; at: number; text: () => string };
 
 /**
- * Sohbet sekmesi: mesaj geçmişi ve yazma kutusu. "Ali durdurdu" gibi oda
+ * Sohbet sekmesi: mesaj geçmişi (mesajlaşma uygulamaları gibi balonlar: benimkiler sağda vurgu renginde, diğerleri
+ * solda avatarla; aynı kişinin art arda mesajları birleşir) ve yazma kutusu. "Ali durdurdu" gibi oda
  * hareketleri de gri sistem satırı olarak aynı akışa düşer. Sekme açık değilken
  * gelen mesajlar okunmamış sayılır.
  */
@@ -56,22 +59,21 @@ export function createChatPanel(
 
   const time = (at: number) => new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  function node(line: Line): HTMLLIElement {
+  function node(line: Line, prev?: Line): HTMLLIElement {
     if (line.kind === 'system') {
-      return el('li', { class: 'chat-system' }, el('time', {}, time(line.at)), ' ', line.text());
+      return el('li', { class: 'chat-system' }, el('span', {}, el('time', {}, time(line.at)), ' ', line.text()));
     }
     const { message } = line;
     const mine = message.by.id === myId();
+    const cont = prev?.kind === 'chat' && prev.message.by.id === message.by.id && message.at - prev.message.at < GROUP_MS;
+    const meta = mine
+      ? el('div', { class: 'chat-meta' }, el('time', {}, time(message.at)))
+      : el('div', { class: 'chat-meta' }, el('span', { class: 'chat-name' }, message.by.name), el('time', {}, time(message.at)));
     return el(
       'li',
-      { class: mine ? 'chat-line me' : 'chat-line' },
-      avatarNode(message.by.avatar, 'chat-avatar'),
-      el(
-        'div',
-        { class: 'chat-body' },
-        el('div', { class: 'chat-meta' }, el('span', { class: 'chat-name' }, message.by.name), el('time', {}, time(message.at))),
-        el('p', { class: 'chat-text' }, message.text),
-      ),
+      { class: `chat-line${mine ? ' me' : ''}${cont ? ' cont' : ''}`, title: time(message.at) },
+      ...(mine ? [] : [avatarNode(message.by.avatar, 'chat-avatar')]),
+      el('div', { class: 'chat-body' }, ...(cont ? [] : [meta]), el('p', { class: 'chat-text' }, message.text)),
     );
   }
 
@@ -80,16 +82,17 @@ export function createChatPanel(
   }
 
   function render(): void {
-    list.replaceChildren(el('li', { class: 'chat-empty' }, t('chatEmpty')), ...lines.map(node));
+    list.replaceChildren(el('li', { class: 'chat-empty' }, t('chatEmpty')), ...lines.map((line, i) => node(line, lines[i - 1])));
     drawEvents();
     scrollToEnd();
   }
 
   function push(line: Line, countsAsUnread: boolean): void {
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+    const prev = lines.at(-1);
     lines.push(line);
     if (lines.length > MAX_LINES) lines = lines.slice(-MAX_LINES);
-    list.append(node(line));
+    list.append(node(line, prev));
     while (list.children.length > MAX_LINES + 1) list.children[1]?.remove();
     if (line.kind === 'system') drawEvents();
     if (atBottom || (line.kind === 'chat' && line.message.by.id === myId())) scrollToEnd();

@@ -1,12 +1,12 @@
-export type TabId = 'chat' | 'queue' | 'people' | 'settings';
+export type TabId = 'chat' | 'queue' | 'people';
 
 export function isTabId(x: unknown): x is TabId {
-  return x === 'chat' || x === 'queue' || x === 'people' || x === 'settings';
+  return x === 'chat' || x === 'queue' || x === 'people';
 }
 
 /**
- * Sağ paneldeki sekmeler (👤 Profil sekme değil: sağ üstte açılan menü, bkz. room.ts `profile-pop`).
- * Hangi sekmeyle açılacağına oda karar verir (yönetici Ayarlar, diğerleri Sohbet).
+ * Sağ paneldeki sekmeler: Sohbet, Sıra, Kişiler. 👤 Profil sağ üstte açılan menü (room.ts `profile-pop`), ⚙️ Ayarlar
+ * ekranın ortasında pencere (`settings-dialog.ts`).
  */
 export function createTabs(root: HTMLElement, onChange: (tab: TabId) => void) {
   const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
