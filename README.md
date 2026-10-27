@@ -57,6 +57,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 💾 **Saved rooms** | Create a one-off room or a named saved room (kept 30 days). Saved rooms remember where each video stopped and its pins; your list on the home page shows how many people are inside. |
 | 📊 **Session recap** | A Spotify-Wrapped-style recap of the session (time watched, videos, most talkative, favourite emoji…) with a downloadable image; past recaps are kept. |
 | ⏰ **Scheduled start** | Pick a time; a countdown banner shows and the room starts by itself. |
+| 📱 **Add to home screen** | The website can be installed as an app on phones and computers ("Add to Home Screen" / the install icon in the address bar). It always loads the latest version; when you are offline it says so. |
 | 🎮 **PlayWithMe** | A small game corner (🎮 in the top menu): tic-tac-toe and Four in a Row for two, by link; anyone else who opens the link watches, cheers with emojis and can take a free seat. More games to come. |
 | 🏠 **Back to the room** | When someone leaves the film page for the room, the others get a small "go back too?" card. |
 

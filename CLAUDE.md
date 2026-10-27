@@ -287,6 +287,10 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   `text` (yazı net: 15 kare, `detail`, `maintain-resolution`) / `motion` (akıcı: 30 kare, `maintain-framerate`), yayın
   sürerken de değişir (`localStorage` `opt:liveQuality`); yönetici `{t:'live-stop'}` ile yayını durdurur (yayıncıya
   `live_stopped`), `settings.liveHostOnly` açıksa başkası açamaz (`live_host`), açılınca süren yayın kapanır.
+- **PWA (0.9.70):** `public/manifest.webmanifest` + `icons/` (`make-icons.mjs` üretir: 192, 512, maskable, apple-touch) +
+  `public/sw.js`: dosyaları önbelleğe ALMAZ (eski kodla odaya girilmesin), sadece sayfa açılışı internetsiz kalırsa
+  `offline.html`. Kayıt `app.ts` sonunda, sadece en üst pencerede (kabukta değil); app.ts "load"dan sonra yüklenebildiği için
+  `readyState` bakılır. SW'yi değiştirirsen `CACHE` adını artır.
 - **Odaya dönüş haberi:** kabukta filmdeyken "🏠 Odaya dön" → `{t:'home'}` → sunucu gönderen hariç herkese
   `{t:'home', by}` (kişi başı 30 sn'de bir, `homeLimit`); filmdekilere videonun üstünde "sen de dön?" kartı (`askHome`,
   20 sn; aynı kişiden dakikada bir).

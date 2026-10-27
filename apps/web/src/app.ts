@@ -60,3 +60,12 @@ if (game) {
   });
 }
 translate();
+
+// Uygulama olarak eklenebilsin (PWA): sadece en üstteki pencerede (film sayfasındaki katmanda değil). Service worker
+// dosyaları önbelleğe almaz, sadece çevrimdışıyken "bağlantı yok" sayfası gösterir (public/sw.js).
+// (Bu dosya main.ts'ten sonra yüklenir; sayfanın "load"u çoktan geçmiş olabilir.)
+if ('serviceWorker' in navigator && window.top === window) {
+  const register = () => void navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (document.readyState === 'complete') register();
+  else addEventListener('load', register, { once: true });
+}
