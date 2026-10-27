@@ -1,9 +1,10 @@
-// PlayWithMe XOX maç sayfası (/oyun/xox/<kod>). İlk iki kişi X ve O olur, sonra gelenler izler; koltuk boşalınca
-// (oyuncu çıktıysa) izleyiciler "Oyuncu ol" ile oturur. Hamleleri sunucu doğrular; sayfa sadece gelen durumu çizer.
-// Ad ve avatar sitedekiyle aynı (yoksa ad sorulur, avatar rastgele).
+// PlayWithMe maç sayfası (/oyun/<tür>/<kod>): XOX ve Dört Taş. İlk iki kişi X ve O olur (Dört Taş'ta kırmızı ve sarı
+// taş), sonra gelenler izler; koltuk boşalınca (oyuncu çıktıysa) izleyiciler "Oyuncu ol" ile oturur. Hamleleri sunucu
+// doğrular; sayfa sadece gelen durumu çizer. Ad ve avatar sitedekiyle aynı (yoksa ad sorulur, avatar rastgele).
 
-import { GAME_EMOJIS, GAME_PROTOCOL_VERSION, type GameClientMessage, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
-import type { Mark, XoxState } from '@swm/shared/games/xox';
+import type { Mark } from '@swm/shared/games/board';
+import { COLS, dropRow } from '@swm/shared/games/four';
+import { GAME_EMOJIS, GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
 import { cleanName, isAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
@@ -14,12 +15,12 @@ import { playLogo } from './hub.ts';
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
 
-export function renderXox(app: HTMLElement, gameId: string): void {
-  document.title = 'XOX · PlayWithMe';
+export function renderMatch(app: HTMLElement, kind: GameKind, gameId: string): void {
+  document.title = `${t(`games.${kind}.title`)} · PlayWithMe`;
   const name = load('name');
   const savedAvatar = load('avatar');
   if (name && cleanName(name)) {
-    start(app, gameId, name, isAvatar(savedAvatar) ? savedAvatar : randomAvatar());
+    start(app, kind, gameId, name, isAvatar(savedAvatar) ? savedAvatar : randomAvatar());
     return;
   }
   // Ad yoksa önce sorulur (sitedeki odayla aynı ad kullanılır).
@@ -41,16 +42,17 @@ export function renderXox(app: HTMLElement, gameId: string): void {
     if (!clean) return;
     const avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
     saveIdentity(clean, avatar);
-    start(app, gameId, clean, avatar);
+    start(app, kind, gameId, clean, avatar);
   });
 }
 
-function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): void {
+function start(app: HTMLElement, kind: GameKind, gameId: string, name: string, avatar: Avatar): void {
+  const four = kind === 'four';
   app.innerHTML = `
     <div class="xox-page">
       <header class="xox-head">
         <a class="nav-link" href="/oyun" data-i18n="games.back"></a>
-        <div class="xox-title"><span id="xox-logo"></span><b>XOX</b></div>
+        <div class="xox-title"><span id="xox-logo"></span><b data-i18n="games.${kind}.title"></b></div>
       </header>
       <section class="card xox-invite">
         <span class="muted small" data-i18n="games.invite"></span>
@@ -66,7 +68,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
       </section>
       <p id="xox-status" class="xox-status" role="status" aria-live="polite"></p>
       <div class="xox-board-wrap">
-        <div id="xox-board" class="xox-board" role="grid"></div>
+        <div id="xox-board" class="${four ? 'xox-board four-board' : 'xox-board'}" role="grid"></div>
         <div id="xox-floats" class="xox-floats" aria-hidden="true"></div>
       </div>
       <div class="xox-actions">
@@ -91,7 +93,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
   copyLabel();
   copy.addEventListener('click', async () => {
     if (canShare) {
-      await navigator.share({ title: 'XOX · PlayWithMe', url: link.value }).catch(() => {});
+      await navigator.share({ title: `${t(`games.${kind}.title`)} · PlayWithMe`, url: link.value }).catch(() => {});
       return;
     }
     await navigator.clipboard?.writeText(link.value).catch(() => link.select());
@@ -100,12 +102,23 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
   });
 
   const board = app.querySelector<HTMLElement>('#xox-board')!;
-  const cells = Array.from({ length: 9 }, (_, i) => {
-    const cell = el('button', { type: 'button', class: 'xox-cell', role: 'gridcell', 'aria-label': t('games.cell', { n: i + 1 }) });
-    cell.addEventListener('click', () => send({ t: 'move', cell: i }));
+  // XOX: 9 hücre, tıklanan hücreye. Dört Taş: 42 hücre; bir hücreye tıklamak o sütuna taş atar (taş en alta düşer),
+  // fare hangi sütundaysa o sütun belirginleşir.
+  const colOf = (i: number) => i % COLS;
+  const cellLabel = (i: number) => (four ? t('games.column', { n: colOf(i) + 1 }) : t('games.cell', { n: i + 1 }));
+  const cells = Array.from({ length: four ? 42 : 9 }, (_, i) => {
+    const cell = el('button', { type: 'button', class: four ? 'xox-cell four-cell' : 'xox-cell', role: 'gridcell', 'aria-label': cellLabel(i) });
+    cell.addEventListener('click', () => send({ t: 'move', cell: four ? colOf(i) : i }));
+    if (four) {
+      cell.addEventListener('pointerenter', () => hoverCol(colOf(i)));
+      cell.addEventListener('pointerleave', () => hoverCol(-1));
+    }
     board.append(cell);
     return cell;
   });
+  function hoverCol(col: number): void {
+    cells.forEach((cell, i) => cell.classList.toggle('col-hover', colOf(i) === col && !cell.disabled));
+  }
   const status = app.querySelector<HTMLElement>('#xox-status')!;
   const rematchButton = app.querySelector<HTMLButtonElement>('#xox-rematch')!;
   const sitButton = app.querySelector<HTMLButtonElement>('#xox-sit')!;
@@ -126,6 +139,8 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
   let state: State | null = null;
   let me: string | null = null;
   let lastBoard = '';
+  /** Oyuncu işareti: XOX'ta harf, Dört Taş'ta renkli taş. */
+  const markNode = (mark: Mark) => (four ? el('span', { class: `four-disc mark-${mark}`, 'aria-label': t(mark === 'X' ? 'games.red' : 'games.yellow') }) : el('span', { class: 'xox-mark' }, mark));
 
   function mySeat(): number {
     if (!state || !me) return -1;
@@ -135,10 +150,10 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
   function personCard(seat: 0 | 1, person: GamePerson | null): void {
     const box = app.querySelector<HTMLElement>(`#seat-${seat}`)!;
     const mark = MARKS[seat];
-    const turn = !!state && state.xox.winner === null && state.xox.turn === mark && state.seats.every((s) => s !== null);
+    const turn = !!state && state.game.winner === null && state.game.turn === mark && state.seats.every((s) => s !== null);
     box.className = `xox-player mark-${mark}${turn ? ' turn' : ''}${person && !person.online ? ' away' : ''}`;
     box.replaceChildren(
-      el('span', { class: 'xox-mark' }, mark),
+      markNode(mark),
       person ? avatarNode(person.avatar, 'xox-avatar') : el('span', { class: 'xox-avatar empty' }, '?'),
       el(
         'span',
@@ -151,7 +166,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
 
   function render(): void {
     if (!state) return;
-    const { xox, seats, score, watchers } = state;
+    const { game: xox, seats, score, watchers } = state;
     const seat = mySeat();
     personCard(0, seats[0]);
     personCard(1, seats[1]);
@@ -159,16 +174,20 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     const ready = seats.every((s) => s !== null);
     const myTurn = seat !== -1 && ready && xox.winner === null && xox.turn === MARKS[seat];
     const boardKey = xox.board.join(',');
+    const changed = lastBoard !== '' && boardKey !== lastBoard;
     xox.board.forEach((value, i) => {
       const cell = cells[i]!;
-      const isNew = value !== null && lastBoard.split(',')[i] === '' && lastBoard !== '';
-      cell.textContent = value ?? '';
-      cell.className = `xox-cell${value ? ` mark-${value}` : ''}${xox.line?.includes(i) ? ' win' : ''}${isNew ? ' placed' : ''}`;
-      cell.disabled = !myTurn || value !== null;
+      const isNew = changed && value !== null && i === xox.last;
+      if (!four) cell.textContent = value ?? '';
+      cell.className = `xox-cell${four ? ' four-cell' : ''}${value ? ` mark-${value}` : ''}${xox.line?.includes(i) ? ' win' : ''}${isNew ? ' placed' : ''}`;
+      // Dört Taş: taş sütunun tepesinden düşer (kaç satır düşeceği).
+      if (four && isNew) cell.style.setProperty('--drop', String(Math.floor(i / COLS) + 1));
+      cell.disabled = !myTurn || (four ? dropRow(xox.board, colOf(i)) === -1 : value !== null);
     });
     lastBoard = boardKey;
+    board.classList.toggle('my-turn', myTurn);
     board.classList.toggle('done', xox.winner !== null);
-    const nameOf = (mark: Mark) => seats[mark === 'X' ? 0 : 1]?.name ?? mark;
+    const nameOf = (mark: Mark) => seats[mark === 'X' ? 0 : 1]?.name ?? (four ? t(mark === 'X' ? 'games.red' : 'games.yellow') : mark);
     if (!ready) status.textContent = t('games.waiting');
     else if (xox.winner === 'draw') status.textContent = t('games.draw');
     else if (xox.winner) {
@@ -204,7 +223,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     const url = `${location.origin.replace(/^http/, 'ws')}/api/games/${encodeURIComponent(gameId)}/ws`;
     const socket = new WebSocket(url);
     ws = socket;
-    socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'hello', v: GAME_PROTOCOL_VERSION, game: 'xox', name, avatar, cid: clientId() } satisfies GameClientMessage)));
+    socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'hello', v: GAME_PROTOCOL_VERSION, game: kind, name, avatar, cid: clientId() } satisfies GameClientMessage)));
     socket.addEventListener('message', (event) => {
       let message: GameServerMessage;
       try {
@@ -217,9 +236,9 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
         state = message;
         render();
       } else if (message.t === 'react') float(message.from, message.emoji);
-      else if (message.t === 'error' && (message.code === 'version' || message.code === 'full')) {
+      else if (message.t === 'error' && (message.code === 'version' || message.code === 'full' || message.code === 'kind')) {
         stopped = true;
-        status.textContent = t(message.code === 'version' ? 'games.version' : 'games.full');
+        status.textContent = t(`games.${message.code}`);
       }
     });
     socket.addEventListener('close', () => {
@@ -237,7 +256,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
   addEventListener('langchange', () => {
     translate(app);
     copyLabel();
-    cells.forEach((cell, i) => cell.setAttribute('aria-label', t('games.cell', { n: i + 1 })));
+    cells.forEach((cell, i) => cell.setAttribute('aria-label', cellLabel(i)));
     render();
   });
 }

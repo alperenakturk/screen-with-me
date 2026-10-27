@@ -2,13 +2,18 @@
 // Object), iki oyuncu oturur, gelenler izler. Sunucu gelen her şeyi doğrular ve yeni nesneye kopyalar.
 
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
-import type { XoxState } from './xox.ts';
+import type { BoardRules, BoardState } from './board.ts';
+import { FOUR } from './four.ts';
+import { XOX } from './xox.ts';
 
-/** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). */
-export const GAME_PROTOCOL_VERSION = 1;
+/** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). 2: durum `game` + `kind` (Dört Taş geldi). */
+export const GAME_PROTOCOL_VERSION = 2;
 
-export const GAME_KINDS = ['xox'] as const;
+/** Oyunlar: `xox` XOX, `four` Dört Taş (dört sıralı). Adres: /oyun/<tür>/<kod>. */
+export const GAME_KINDS = ['xox', 'four'] as const;
 export type GameKind = (typeof GAME_KINDS)[number];
+
+export const GAME_RULES: Record<GameKind, BoardRules> = { xox: XOX, four: FOUR };
 
 /** Maçta atılabilen emojiler (sabit liste: sohbet yok, kimse kimseye yazı yazamaz). */
 export const GAME_EMOJIS = ['👏', '😂', '😮', '🔥', '😭', '🤝', '😎', '🤔'] as const;
@@ -31,6 +36,7 @@ export interface GameScore {
 
 export type GameClientMessage =
   | { t: 'hello'; v: number; game: GameKind; name: string; avatar?: Avatar; cid?: string }
+  /** XOX'ta hücre (0–8), Dört Taş'ta sütun (0–6). */
   | { t: 'move'; cell: number }
   /** Yeni el (oyun bittiyse oyunculardan biri başlatır). */
   | { t: 'rematch' }
@@ -43,12 +49,13 @@ export type GameClientMessage =
 
 export type GameServerMessage =
   | { t: 'welcome'; you: string; game: GameKind }
-  | { t: 'state'; xox: XoxState; seats: [GamePerson | null, GamePerson | null]; watchers: GamePerson[]; score: GameScore }
+  | { t: 'state'; kind: GameKind; game: BoardState; seats: [GamePerson | null, GamePerson | null]; watchers: GamePerson[]; score: GameScore }
   | { t: 'react'; from: GamePerson; emoji: GameEmoji }
   | { t: 'error'; code: GameErrorCode }
   | { t: 'pong' };
 
-export type GameErrorCode = 'version' | 'bad' | 'full' | 'not_player' | 'not_your_turn' | 'seat_taken' | 'rate';
+/** `kind`: bu kodla başka bir oyun sürüyor (adres elle değiştirildi). */
+export type GameErrorCode = 'version' | 'bad' | 'full' | 'kind' | 'not_player' | 'not_your_turn' | 'seat_taken' | 'rate';
 
 /** Odada en fazla bu kadar kişi (2 oyuncu + izleyiciler). */
 export const GAME_MAX_PEOPLE = 30;
@@ -73,7 +80,8 @@ export function parseGameMessage(raw: string): GameClientMessage | null {
       return hello;
     }
     case 'move':
-      return Number.isInteger(m.cell) && (m.cell as number) >= 0 && (m.cell as number) < 9 ? { t: 'move', cell: m.cell as number } : null;
+      // Üst sınırı oyunun kuralları ayrıca denetler.
+      return Number.isInteger(m.cell) && (m.cell as number) >= 0 && (m.cell as number) < 64 ? { t: 'move', cell: m.cell as number } : null;
     case 'sit':
       return m.seat === 0 || m.seat === 1 ? { t: 'sit', seat: m.seat } : null;
     case 'react':

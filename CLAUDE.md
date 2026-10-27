@@ -253,13 +253,17 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   eklenti `caps` yollamaz → kabukta kart gizli. Testler: `scripts/e2e/voice.mjs`, gerçek ses `scripts/harness/voice/run.mjs`
   (iki Chrome, sahte mikrofon, gelen sesin enerjisi ölçülür) ve `voice/shell.mjs` (film sayfasında; `VOICE_A`/`VOICE_B` iki
   farklı wav: aynı sahte bip'i yankı engelleyici siler).
-- **PlayWithMe (oyun köşesi, 0.9.62):** üst menüde 🎮 → `/oyun` (site `games/hub.ts`: logo = ScreenWithMe yüzü + oyun kolu,
-  oyun kartları; XOX dışındakiler "yakında"), maç `/oyun/xox/<kod>` (`games/xox.ts`). Sunucuda ayrı Durable Object `Game`
+- **PlayWithMe (oyun köşesi, 0.9.62; Dört Taş 0.9.69):** üst menüde 🎮 → `/oyun` (site `games/hub.ts`: logo = ScreenWithMe
+  yüzü + oyun kolu, oyun kartları; XOX ve Dört Taş dışındakiler "yakında"), maç `/oyun/<tür>/<kod>` (`games/match.ts`, tür
+  `xox` | `four`). İki kişilik tahta oyunları ortak biçimde (`games/board.ts` `BoardState`, kurallar `GAME_RULES`:
+  `xox.ts`, `four.ts`: 7×6, sütuna taş düşer, 4 dizen kazanır; `move.cell` Dört Taş'ta sütun). Odanın türünü ilk gelen
+  belirler; başka türün koduna girilmez (`kind`). Sürüm 2: durum `{t:'state', kind, game}` (eski kayıt `xox` alanı okunur). Sunucuda ayrı Durable Object `Game`
   (`apps/server/src/game.ts`, bağ `GAMES`, göç `v2`), `/api/games/:id/ws`, kendi protokolü (`packages/shared/src/games/`:
   `protocol.ts` doğrulama + `GAME_PROTOCOL_VERSION`, `xox.ts` kurallar). İlk iki kişi X/O koltuğunda (koltuk kalıcı
   `cid`'e bağlı: yenileyen yerinde kalır), gelenler izler; sahibi bağlı değilse izleyici `sit` ile oturur; hamleleri sunucu
   doğrular, kazanınca skor, `rematch` ile başlayan değişir. Sohbet yok, sadece sabit emojiler (`GAME_EMOJIS`). Boş oda 24
-  sa sonra silinir. Kabukta 🎮 gizli. Yeni oyun: `GAME_KINDS` + kurallar dosyası + sayfa. Test: `scripts/e2e/xox.mjs`.
+  sa sonra silinir. Kabukta 🎮 gizli. Yeni tahta oyunu: `GAME_KINDS` + `GAME_RULES` + kurallar dosyası + `match.ts`'te tahta çizimi + `app.ts` adresi.
+  Test: `scripts/e2e/xox.mjs` (XOX + Dört Taş).
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare

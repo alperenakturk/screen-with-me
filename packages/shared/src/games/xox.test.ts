@@ -56,7 +56,7 @@ describe('parseGameMessage', () => {
     });
     expect(parseGameMessage(JSON.stringify({ t: 'hello', v: 1, game: 'satranç', name: 'Ali' }))).toBeNull();
     expect(parseGameMessage(JSON.stringify({ t: 'move', cell: 4 }))).toEqual({ t: 'move', cell: 4 });
-    expect(parseGameMessage(JSON.stringify({ t: 'move', cell: 9 }))).toBeNull();
+    expect(parseGameMessage(JSON.stringify({ t: 'move', cell: 64 }))).toBeNull();
     expect(parseGameMessage(JSON.stringify({ t: 'sit', seat: 1 }))).toEqual({ t: 'sit', seat: 1 });
     expect(parseGameMessage(JSON.stringify({ t: 'react', emoji: '🔥' }))).toEqual({ t: 'react', emoji: '🔥' });
     expect(parseGameMessage(JSON.stringify({ t: 'react', emoji: '💩' }))).toBeNull();
