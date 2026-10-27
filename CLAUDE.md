@@ -359,6 +359,13 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   odadakilerin avatarları ve adları (en fazla 8, "+N"; aynı kişinin iki sekmesi tek), ses düğmeleri (`#voice-card` artık
   kartın içindeki satır), altında yayın bölümü `#live-card`) ve sekmeler. Eski davet kartı yok. Telefonda üst çubukta oda
   adı ve "Davet et" yazısı gizli (sadece 🔗), bağlıyken ⟳ gizli. Oda değişirse `store/src/room.html` taklidini de güncelle.
+- **Ana sayfa "Vitrin" (0.9.77, `home.ts`):** solda başlık + tek adımlık form (isteğe bağlı video linki + "Oda oluştur";
+  link `sessionStorage` `start:<oda>` ile odaya taşınır, oda boşsa link kutusunun yolundan açılır; "Odayı kaydet" seçilince ad
+  `create:<oda>`), sağda temanın renkleriyle çizilmiş oda önizlemesi (maskot köşede); altında bütün temalarla "Temanı seç"
+  (`renderThemeStrip(…, {all:true})`, sayfa anında değişir), kayıtlı odalar, üç adım, üç kapı (link / eklenti / oda içi
+  oyunlar), "Odada neler var". Alt bilgide sitenin sürümü (`index.html` `.footer-version`, her yayında artır). Sade temalar
+  (gece/okyanus/gunbatimi/neon) katmanlı `--art` + arkada yavaşça süzülen `--aura` (`body::before`, kabukta ve "hareketi
+  azalt"ta yok).
 - **Sağ paneli gizle (0.9.71):** video altındaki araç çubuğunda ⇥ (`#side-toggle`): `.room.side-hidden`, video bütün genişliği
   alır, sohbet mesajları tam ekrandaki gibi videonun köşesinde (`toasts`), düğmede okunmamış sayısı; `localStorage`
   `opt:sideHidden`; kabukta ve dar ekranda (≤860 px) yok.
@@ -397,7 +404,7 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   kartında "▶ Sıradakini başlat" çıkar (eklentide `RoomInfo.autoNext`). Sıra panelinde oylama notu.
 ## Yayın kontrol listesi
 1. `npm run typecheck && npm test` (sunucu değiştiyse `wrangler dev` + `npm run e2e` de).
-2. Eklenti değiştiyse `apps/extension/package.json` sürümünü artır (siteden indirilen zip ve
+2. Sitenin sürümünü alt bilgide artır (`apps/web/index.html` `.footer-version`). Eklenti değiştiyse `apps/extension/package.json` sürümünü artır (siteden indirilen zip ve
    eklenti sayfasındaki sürüm buradan gelir).
 3. `README.md` + `README.tr.md` (ikisi birlikte) / `docs/internal/VIZYON.md` güncelle, commit (mesaj Türkçe, sonda `Co-Authored-By`), push.
 4. Yayın: değişiklik `main`'e girince (PR birleşince) GitHub Actions kendisi yükler ve canlıda e2e koşar;

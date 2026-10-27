@@ -93,6 +93,12 @@ export function renderHome(app: HTMLElement): void {
         <p class="muted" data-i18n="home.doorExtText"></p>
         <a class="btn" href="/eklenti.html" data-i18n="home.doorExtGo"></a>
       </div>
+      <div class="home-door">
+        <span class="door-icon games" aria-hidden="true">🎮</span>
+        <h3 data-i18n="home.doorGames"></h3>
+        <p class="muted" data-i18n="home.doorGamesText"></p>
+        <span class="door-games" aria-hidden="true">❌⭕ · 🔴🟡 · ✏️ · ❓</span>
+      </div>
     </section>
 
     <section class="home-features">
