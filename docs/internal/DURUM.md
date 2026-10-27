@@ -22,7 +22,7 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    seviyesi çubuğu. Film sayfasında kameralar eklentinin görünmeyen sayfasında, katmana yerel WebRTC köprüsüyle gelir;
    kamera izni `mic.html?cam=1`. PR #25'in canlı e2e'si testteki bir yarış yüzünden kırmızıydı (düzeltildi, #26).
 4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`), Dört Taş (0.9.69, `/oyun/four/<kod>`).
-   Sıradaki oyun fikirleri kartlarda "yakında": Çiz-Bil, bilgi yarışması, kelime avı.
+   Çiz-Bil (0.9.72, 2–8 kişi, `/oyun/draw/<kod>`). Kartlarda "yakında": bilgi yarışması, kelime avı.
 5. **Yayın açma:** araştırma ✅ (`docs/internal/yayin.md`); kullanıcı kararı: sitede ekran paylaşımı + kamera yayını,
    eşler arası, tek yayın, ≤4 izleyici, 720p, kabukta sadece izleme (film yayma yok). ✅ 0.9.64 (1. aşama), ✅ 0.9.66
    (2. aşama: kalite "yazı net / akıcı", yönetici durdurur, `settings.liveHostOnly`). İleride: 1080p / SFU (kart gerekir).
@@ -41,7 +41,7 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
   görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti), yayın 2. aşama (0.9.66),
   Mehtaplı padişah maskotu (0.9.67), bas-konuş (V) + "Ali durdurdu" notu videonun üstünde (0.9.68, eklenti 0.9.68),
   PlayWithMe'de Dört Taş (0.9.69), telefona/bilgisayara uygulama olarak ekleme (PWA, 0.9.70), sağ paneli gizle (0.9.71, video büyür, mesajlar
-  videonun köşesinde).
+  videonun köşesinde), Çiz-Bil (0.9.72).
 
 ## Önceki: 0.9.60
 - **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".

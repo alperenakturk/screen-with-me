@@ -58,7 +58,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 📊 **Oturum özeti** | Spotify özeti tarzında (izleme süresi, videolar, en konuşkan, en sevilen emoji…), indirilebilir görselli; önceki özetler saklanır. |
 | ⏰ **Planlı başlangıç** | Bir saat seç; geri sayım bandı çıkar, oda vakti gelince kendisi başlar. |
 | 📱 **Ana ekrana ekle** | Site telefona ve bilgisayara uygulama gibi eklenebilir ("Ana ekrana ekle" / adres çubuğundaki yükle simgesi). Her açılışta en yeni sürüm gelir; internet yoksa bunu söyler. |
-| 🎮 **PlayWithMe** | Küçük bir oyun köşesi (üst menüde 🎮): linkle iki kişilik XOX ve Dört Taş; linki açan diğerleri izler, emojiyle tezahürat yapar, boşalan koltuğa oturabilir. Yeni oyunlar gelecek. |
+| 🎮 **PlayWithMe** | Küçük bir oyun köşesi (üst menüde 🎮): linkle iki kişilik XOX ve Dört Taş, 2–8 kişilik Çiz-Bil; linki açan diğerleri izler, emojiyle tezahürat yapar, boşalan koltuğa oturabilir. Yeni oyunlar gelecek. |
 | 🏠 **Odaya dönüş** | Biri film sayfasından odaya dönünce diğerlerine küçük bir "sen de dön?" kartı çıkar. |
 
 ### Yönetici ve güvenlik

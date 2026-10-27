@@ -1,6 +1,8 @@
+import { DRAW_ID_PATTERN } from '@swm/shared/games/draw';
 import { GAME_ID_PATTERN } from '@swm/shared/games/protocol';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 
+export { Draw } from './draw.ts';
 export { Game } from './game.ts';
 export { Room } from './room.ts';
 
@@ -41,6 +43,13 @@ export default {
       if (!GAME_ID_PATTERN.test(game[1]!)) return new Response('Invalid game id', { status: 400 });
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       return env.GAMES.get(env.GAMES.idFromName(game[1]!)).fetch(request);
+    }
+    // Çiz-Bil (ayrı nesne türü: tur süreleri, çizim akışı).
+    const draw = url.pathname.match(/^\/api\/draw\/([^/]+)\/ws$/);
+    if (draw) {
+      if (!DRAW_ID_PATTERN.test(draw[1]!)) return new Response('Invalid game id', { status: 400 });
+      if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
+      return env.DRAWS.get(env.DRAWS.idFromName(draw[1]!)).fetch(request);
     }
 
     return new Response('Not found', { status: 404 });

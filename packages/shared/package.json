@@ -15,6 +15,8 @@
     "./games/xox": "./src/games/xox.ts",
     "./games/four": "./src/games/four.ts",
     "./games/board": "./src/games/board.ts",
+    "./games/draw": "./src/games/draw.ts",
+    "./games/draw-words": "./src/games/draw-words.ts",
     "./games/protocol": "./src/games/protocol.ts",
     "./clock": "./src/clock.ts",
     "./player": "./src/player.ts",

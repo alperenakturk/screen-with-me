@@ -5125,3 +5125,287 @@ html.shorts-view .footer {
     width: 55%;
   }
 }
+
+/* ---- PlayWithMe Çiz-Bil: solda tuval (üstte ipucu ve süre, altta araçlar), sağda oyuncular + tahminler ---- */
+.draw-page {
+  max-width: 1120px;
+}
+
+.draw-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.draw-left {
+  flex: 999 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draw-top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+}
+
+.draw-hint {
+  font: 800 22px/1.2 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: 0.08em;
+  white-space: pre;
+  text-align: center;
+}
+
+.draw-hint.mine {
+  font-family: inherit;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+
+.draw-timer {
+  justify-self: end;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+}
+
+.draw-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.draw-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.25s linear;
+}
+
+.draw-bar i.low {
+  background: var(--warn);
+}
+
+.draw-canvas-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+#draw-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  touch-action: none;
+}
+
+#draw-canvas.can-draw {
+  cursor: crosshair;
+}
+
+.draw-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  text-align: center;
+  background: rgb(12 14 30 / 0.82);
+  color: #fff;
+}
+
+.draw-overlay[hidden] {
+  display: none;
+}
+
+.draw-overlay h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.draw-overlay p {
+  margin: 0;
+  max-width: 460px;
+}
+
+.draw-reveal {
+  font-size: 36px !important;
+  color: var(--warn);
+}
+
+.draw-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.draw-choices .btn {
+  min-height: 48px;
+  font-size: 18px;
+}
+
+.draw-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.draw-tools[hidden] {
+  display: none;
+}
+
+.draw-colors,
+.draw-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.draw-color {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--c);
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.draw-size {
+  width: 40px;
+  height: 34px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.draw-size i {
+  width: var(--w);
+  height: var(--w);
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.draw-color.on,
+.draw-size.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.draw-side {
+  flex: 1 1 280px;
+  max-width: 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.draw-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.draw-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.draw-player.drawer {
+  outline: 2px solid var(--accent);
+}
+
+.draw-player.guessed {
+  background: color-mix(in srgb, var(--ok) 22%, var(--surface-2));
+}
+
+.draw-player.away {
+  opacity: 0.55;
+}
+
+.draw-avatar {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  background: var(--surface);
+}
+
+.draw-pname {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draw-score {
+  font-variant-numeric: tabular-nums;
+}
+
+.draw-feed {
+  height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 14px;
+}
+
+.draw-line.system {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.draw-line.correct {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.draw-line.close {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.draw-line.secret {
+  color: color-mix(in srgb, var(--ok) 70%, var(--text));
+}
+
+.draw-form input {
+  flex: 1;
+  min-width: 0;
+}

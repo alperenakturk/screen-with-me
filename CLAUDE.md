@@ -264,6 +264,13 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   doğrular, kazanınca skor, `rematch` ile başlayan değişir. Sohbet yok, sadece sabit emojiler (`GAME_EMOJIS`). Boş oda 24
   sa sonra silinir. Kabukta 🎮 gizli. Yeni tahta oyunu: `GAME_KINDS` + `GAME_RULES` + kurallar dosyası + `match.ts`'te tahta çizimi + `app.ts` adresi.
   Test: `scripts/e2e/xox.mjs` (XOX + Dört Taş).
+  **Çiz-Bil (0.9.72):** ayrı nesne `Draw` (`apps/server/src/draw.ts`, bağ `DRAWS`, göç `v3`, `/api/draw/:id/ws`), protokol ve
+  saf kurallar `packages/shared/src/games/draw.ts` (tahmin eşleştirme: küçük harf + Türkçe harfsiz de doğru, 1 harf farkı
+  "yaklaştın"; ipucu harfleri turun %40/60/80'inde; puan 50–150, çizene bilen başına 25), kelimeler `draw-words.ts`
+  (TR/EN, odanın dili ilk gelenin). 2–8 kişi (kalıcı `cid`), tur: lobi → seçim (15 sn, kelimeler sadece çizene) → çizim
+  (80 sn) → açıklama (6 sn) → sıradaki. Süreler depo alarmıyla; çizim sadece bellekte (1000×750 ızgara, 50 ms'lik
+  parçalar, geç gelene `strokes`). Bilenler/çizen kendi aralarında `secret` yazışır. Sayfa `games/draw.ts`
+  (`/oyun/draw/<kod>`). Test: `scripts/e2e/draw.mjs`.
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare
