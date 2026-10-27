@@ -26,6 +26,8 @@ import {
   CAM_MAX,
   LIVE_MAX_VIEWERS,
   type LiveKind,
+  type RoomGame,
+  type RoomGameKind,
 } from '@swm/shared/protocol';
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
@@ -174,6 +176,8 @@ export class Room extends DurableObject<Env> {
   private history: Record<string, HistoryEntry> = {};
   /** Daha önce oynayanlar (en yenisi sonda): "bir önceki" bunlardan gelir. */
   private played: QueueItem[] = [];
+  /** Odada açık oyun ve açanın kalıcı anahtarı (anahtar istemcilere gitmez). */
+  private game: { game: RoomGame; owner: string } | null = null;
   private hostKey: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
   private hostGoneAt: number | null = null;
@@ -234,6 +238,7 @@ export class Room extends DurableObject<Env> {
       this.stats = new StatsTracker(await ctx.storage.get<StatsData>('stats'));
       this.recaps = (await ctx.storage.get<Recap[]>('recaps')) ?? [];
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
+      this.game = (await ctx.storage.get<{ game: RoomGame; owner: string }>('game')) ?? null;
     });
   }
 
@@ -333,6 +338,9 @@ export class Room extends DurableObject<Env> {
         return;
       case 'live-watch':
         this.setWatch(ws, attachment, message.on);
+        return;
+      case 'game':
+        await this.setGame(ws, attachment, me, message.end ? null : (message.kind ?? null));
         return;
       case 'live-signal': {
         // Yayın bağlantısı sadece yayıncı ile onu izleyen arasında (IP'ler sadece yayına katılanlara görünür).
@@ -696,6 +704,8 @@ export class Room extends DurableObject<Env> {
    * (Kısa kopmalarda, ör. sayfa yenileme, oynamaya devam eder.)
    */
   private async freezeIfLongEmpty(): Promise<void> {
+    // Herkes çıkıp bir dakikadan uzun boş kalan odada açık oyun da biter (dönen kişi eski oyunu bulmasın).
+    if (this.game && this.emptySince !== null && Date.now() - this.emptySince >= FREEZE_AFTER_MS) await this.clearGame();
     const state = this.room.state;
     if (this.emptySince === null || state.paused || !state.item || Date.now() - this.emptySince < FREEZE_AFTER_MS) return;
     const position = expectedPosition(state, this.emptySince);
@@ -770,11 +780,35 @@ export class Room extends DurableObject<Env> {
       pins: this.currentPins(),
       voice: this.env.VOICE !== 'off',
       voiceMode: realtimeConfig(this.env) ? 'sfu' : 'p2p',
+      ...(this.game ? { game: this.game.game } : {}),
     });
     // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
     for (const [id, data] of this.stickers) this.sendTo(ws, { t: 'sticker', sticker: { id, data } });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
+  }
+
+  /**
+   * Odada oyun aç (`kind`) ya da bitir (`null`). Aynı anda tek oyun: açık oyunu sadece açan ya da yönetici
+   * değiştirir/bitirir. Oyunun kendisi ayrı nesnede (Game/Draw/Quiz) yeni bir kimlikle yürür.
+   */
+  private async setGame(ws: WebSocket, attachment: Attachment, me: Member, kind: RoomGameKind | null): Promise<void> {
+    const mine = this.game !== null && (this.game.owner === keyOf(attachment) || this.isHost(ws));
+    if (this.game && !mine) return this.sendTo(ws, { t: 'error', code: kind ? 'game_busy' : 'not_host' });
+    if (!kind) {
+      if (!this.game) return;
+      await this.clearGame(me);
+      return;
+    }
+    this.game = { game: { kind, id: newId(), by: me, at: Date.now() }, owner: keyOf(attachment) };
+    await this.ctx.storage.put('game', this.game);
+    this.broadcast({ t: 'game', game: this.game.game });
+  }
+
+  private async clearGame(by?: Member): Promise<void> {
+    this.game = null;
+    await this.ctx.storage.delete('game');
+    this.broadcast(by ? { t: 'game', game: null, by } : { t: 'game', game: null });
   }
 
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa (bağlantı başına; herkese `members` gider). */
@@ -1302,7 +1336,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

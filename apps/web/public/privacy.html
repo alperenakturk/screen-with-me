@@ -93,9 +93,9 @@
 
         <h2>Games (PlayWithMe)</h2>
         <ul>
-          <li>A game room keeps the board, the score, the players' names and avatars and their browser IDs (so a player who reloads keeps their seat and points; IDs are never shown to others). Emoji reactions are not stored.</li>
+          <li>Games are started inside a watch room. A game keeps the board, the score, the players' names and avatars and their browser IDs (so a player who reloads keeps their seat and points; IDs are never shown to others). Emoji reactions are not stored.</li>
           <li>Draw &amp; Guess: guesses and the short messages typed during a game are passed on to the other players and not stored. The drawing exists only while the round is played (in the game server's memory) and is gone when the round ends.</li>
-          <li>A game room is deleted 24 hours after the last person leaves.</li>
+          <li>A game's data is deleted 24 hours after the last player leaves; the room only remembers which game is open (and who opened it) until the game is ended.</li>
         </ul>
 
         <h2>Infrastructure</h2>
@@ -166,9 +166,9 @@
 
         <h2>Oyunlar (PlayWithMe)</h2>
         <ul>
-          <li>Oyun odası tahtayı, skoru, oyuncuların adını, avatarını ve tarayıcı kimliğini tutar (sayfayı yenileyen oyuncu yerini ve puanını kaybetmesin diye; kimlikler kimseye gösterilmez). Emojiler saklanmaz.</li>
+          <li>Oyunlar izleme odasının içinde açılır. Oyun tahtayı, skoru, oyuncuların adını, avatarını ve tarayıcı kimliğini tutar (sayfayı yenileyen oyuncu yerini ve puanını kaybetmesin diye; kimlikler kimseye gösterilmez). Emojiler saklanmaz.</li>
           <li>Çiz-Bil: tahminler ve oyun sırasında yazılan kısa mesajlar diğer oyunculara iletilir, saklanmaz. Çizim sadece tur oynanırken (oyun sunucusunun belleğinde) vardır, tur bitince silinir.</li>
-          <li>Oyun odası son kişi çıktıktan 24 saat sonra silinir.</li>
+          <li>Oyunun verisi son oyuncu çıktıktan 24 saat sonra silinir; oda sadece hangi oyunun açık olduğunu (ve kimin açtığını) oyun bitene kadar hatırlar.</li>
         </ul>
 
         <h2>Altyapı</h2>

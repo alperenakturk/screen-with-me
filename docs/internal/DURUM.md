@@ -21,8 +21,10 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
 3. ✅ **Görüntülü sohbet (0.9.63 sitede, 0.9.65 film sayfasında):** 📷, kamera kutuları, tam ekranda köşede; kendi ses
    seviyesi çubuğu. Film sayfasında kameralar eklentinin görünmeyen sayfasında, katmana yerel WebRTC köprüsüyle gelir;
    kamera izni `mic.html?cam=1`. PR #25'in canlı e2e'si testteki bir yarış yüzünden kırmızıydı (düzeltildi, #26).
-4. ✅ **Oyun köşesi "PlayWithMe" (0.9.62):** 🎮 → `/oyun`, XOX (`/oyun/xox/<kod>`), Dört Taş (0.9.69, `/oyun/four/<kod>`).
-   Çiz-Bil (0.9.72, 2–8 kişi, `/oyun/draw/<kod>`), Bilgi yarışması (0.9.74, genel kültür). Kartta "yakında": kelime avı.
+4. ✅ **PlayWithMe = oda içi oyunlar (0.9.75):** kullanıcı düzeltti: ayrı oyun köşesi/oyun odası OLMAYACAK, oyunlar
+   ScreenWithMe odasının içinde. Video altında 🎮 → XOX, Dört Taş, Çiz-Bil, Bilgi yarışması; oyun videonun yerinde açılır,
+   diğerlerine "Katıl" kartı, "Videoya dön" ile küçülür. `/oyun` sayfaları ve sohbet linki kartı kaldırıldı (0.9.62–0.9.74
+   arası ayrı sayfalardı). Fikir listesinde kelime avı.
 5. **Yayın açma:** araştırma ✅ (`docs/internal/yayin.md`); kullanıcı kararı: sitede ekran paylaşımı + kamera yayını,
    eşler arası, tek yayın, ≤4 izleyici, 720p, kabukta sadece izleme (film yayma yok). ✅ 0.9.64 (1. aşama), ✅ 0.9.66
    (2. aşama: kalite "yazı net / akıcı", yönetici durdurur, `settings.liveHostOnly`). İleride: 1080p / SFU (kart gerekir).
@@ -31,23 +33,26 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    (https://claude.ai/artifact/Beiq1ueBUUHjUkRbL5LTHL): oda için A "Sinema Rayı" (sağda sade ray: "Birlikte" kartında
    kişiler + ses/kamera/ekran düğmeleri, davet üst çubukta), B "Salon" (video ortada, altında koltuk sırası, sohbet dar
    çekmece), C "Ada" (video tam ekran, üstünde cam paneller); D ana sayfa "tek adım" (link yapıştır + oda oluştur, kayıtlı
-   odalar üstte); A telefonda. Kullanıcı seçince uygulanacak (sıradaki büyük iş). Ayrıca: düğme moru #8b6cff beyaz yazıyla
+   odalar üstte); A telefonda. **Kullanıcı odada A'yı seçti** (0.9.76'da uygulanacak). Ana sayfa için yeni yönler
+   istedi: E "Sahne" (tam tema sahnesi + büyük maskot), F "Vitrin" (solda form, sağda canlı oda önizlemesi), G "Üç kapı"
+   (link / her sitedeki video / odaların); D ile birlikte seçim bekleniyor. Ayrıca: düğme moru #8b6cff beyaz yazıyla
    ~3,8:1 (WCAG 4,5 altı); önerim düğmelerde #6a4cf2.
 7. ✅ **Mehtaplı Geceler maskotu (0.9.67):** padişah ScreenWithMe (beyaz kavuk + sorguç, burma bıyık, kürk yakalı kırmızı
    kaftan, lale); eski renkli şeritli sarık "Arap gibi" duruyordu. Kullanıcı beğenmezse yeniçeri (börk + kaşıklık) seçeneği.
 8. ✅ **Kendi inisiyatifimle (0.9.68–0.9.74):** bas-konuş + "Ali durdurdu" notu, Dört Taş, PWA, sağ paneli gizle, Çiz-Bil,
    odadan oyun aç, Bilgi yarışması. Canlı e2e: yayın sırasında kopan bağlantıya karşı 30 sn bekleme + canlıda bir tekrar.
 
-**Sıradaki (0.9.75 → 0.9.80):** (1) kullanıcının seçtiği tasarımı uygulamak (A/B/C/D; seçim bekleniyor), (2) kelime avı
+**Sıradaki (0.9.76 → 0.9.80):** (1) oda tasarımı A "Sinema Rayı"nı uygulamak, ana sayfa seçimi gelince onu da, (2) kelime avı
 (Türkçe sözlük gerekir; ya da sözlüksüz bir kelime oyunu), (3) gerçek deneme turu hazırlığı (VIZYON "v1.0" listesi),
 (4) Brave/Edge'de eklenti denemesi (kullanıcıdan), (5) senkron ölçümü (p50/p95) ve README rozeti.
 
-## Son yapılanlar (0.9.61 → 0.9.74)
+## Son yapılanlar (0.9.61 → 0.9.75)
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
   görünür, ekran paylaşımı/kamera yayını (0.9.64), film sayfasında kameralar (0.9.65, eklenti), yayın 2. aşama (0.9.66),
   Mehtaplı padişah maskotu (0.9.67), bas-konuş (V) + "Ali durdurdu" notu videonun üstünde (0.9.68, eklenti 0.9.68),
   PlayWithMe'de Dört Taş (0.9.69), telefona/bilgisayara uygulama olarak ekleme (PWA, 0.9.70), sağ paneli gizle (0.9.71, video büyür, mesajlar
-  videonun köşesinde), Çiz-Bil (0.9.72), odadan oyun aç (0.9.73, sohbette 🎮 → "Katıl" kartı), Bilgi yarışması (0.9.74).
+  videonun köşesinde), Çiz-Bil (0.9.72), odadan oyun aç (0.9.73), Bilgi yarışması (0.9.74), oyunlar odanın içinde
+  (0.9.75: ayrı oyun sayfaları kalktı, oyun videonun yerinde açılır).
 
 ## Önceki: 0.9.60
 - **Elle video seçimi:** kabukta "🎯 Video seç", her videoda "Bunu senkronla".

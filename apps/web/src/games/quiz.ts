@@ -1,4 +1,4 @@
-// PlayWithMe Bilgi yarışması sayfası (/oyun/quiz/<kod>): soru, dört şık (2×2), süre çubuğu, oyuncular ve puanlar;
+// Odanın içindeki Bilgi yarışması (oyun sahnesinde): soru, dört şık (2×2), süre çubuğu, oyuncular ve puanlar;
 // açıklamada doğru şık yeşil, kimin neyi seçtiği şıkların altında küçük avatarlarla; sonda kürsü.
 
 import {
@@ -9,60 +9,19 @@ import {
   type QuizClientMessage,
   type QuizServerMessage,
 } from '@swm/shared/games/quiz';
-import { cleanName, isAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
-import { clientId, load, saveIdentity } from '../storage.ts';
+import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
-import { playLogo } from './hub.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
 const LETTERS = ['A', 'B', 'C', 'D'];
 
-export function renderQuiz(app: HTMLElement, gameId: string): void {
-  document.title = `${t('games.quiz.title')} · PlayWithMe`;
-  const name = load('name');
-  const savedAvatar = load('avatar');
-  if (name && cleanName(name)) {
-    start(app, gameId, name, isAvatar(savedAvatar) ? savedAvatar : randomAvatar());
-    return;
-  }
-  app.innerHTML = `
-    <section class="hero games-hero">
-      <div id="pwm-logo"></div>
-      <form id="game-name" class="row game-name">
-        <input id="game-name-input" maxlength="24" autocomplete="off" required data-i18n-placeholder="games.namePrompt" />
-        <button class="btn primary" data-i18n="games.nameGo"></button>
-      </form>
-    </section>`;
-  app.querySelector('#pwm-logo')!.replaceWith(playLogo());
-  translate(app);
-  const input = app.querySelector<HTMLInputElement>('#game-name-input')!;
-  input.focus();
-  app.querySelector('#game-name')!.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const clean = cleanName(input.value);
-    if (!clean) return;
-    const avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
-    saveIdentity(clean, avatar);
-    start(app, gameId, clean, avatar);
-  });
-}
-
-function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): void {
+/** Oyunu `app`'in içine kurar; dönen işlev bağlantıyı ve zamanlayıcıları kapatır. */
+export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
     <div class="xox-page draw-page quiz-page">
-      <header class="xox-head">
-        <a class="nav-link" href="/oyun" data-i18n="games.back"></a>
-        <div class="xox-title"><span id="quiz-logo"></span><b data-i18n="games.quiz.title"></b></div>
-      </header>
-      <section class="card xox-invite">
-        <span class="muted small" data-i18n="draw.invite"></span>
-        <div class="row">
-          <input id="quiz-link" readonly />
-          <button id="quiz-copy" type="button" class="btn primary"></button>
-        </div>
-      </section>
       <div class="draw-main">
         <section class="card quiz-main">
           <div class="draw-top">
@@ -78,25 +37,8 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
         </aside>
       </div>
     </div>`;
-  app.querySelector('#quiz-logo')!.replaceWith(playLogo(true));
   translate(app);
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;
-
-  const link = $<HTMLInputElement>('#quiz-link');
-  link.value = location.href.split('#')[0]!;
-  const copy = $<HTMLButtonElement>('#quiz-copy');
-  const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
-  const copyLabel = () => (copy.textContent = canShare ? t('share') : t('copy'));
-  copyLabel();
-  copy.addEventListener('click', async () => {
-    if (canShare) {
-      await navigator.share({ title: `${t('games.quiz.title')} · PlayWithMe`, url: link.value }).catch(() => {});
-      return;
-    }
-    await navigator.clipboard?.writeText(link.value).catch(() => link.select());
-    copy.textContent = t('copied');
-    setTimeout(copyLabel, 1500);
-  });
 
   let state: State | null = null;
   let me: string | null = null;
@@ -198,7 +140,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     bar.classList.toggle('low', s.phase === 'question' && left < 5000);
     timer.textContent = s.phase === 'question' ? `${Math.ceil(left / 1000)}` : '';
   }
-  setInterval(tick, 200);
+  const ticker = window.setInterval(tick, 200);
 
   // ---- Bağlantı ----
   let ws: WebSocket | null = null;
@@ -208,6 +150,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
+    if (stopped) return;
     const socket = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/api/quiz/${encodeURIComponent(gameId)}/ws`);
     ws = socket;
     const lang = document.documentElement.lang === 'en' ? 'en' : 'tr';
@@ -239,17 +182,25 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     });
   }
   connect();
-  setInterval(() => {
+  const ping = window.setInterval(() => {
     pingAt = performance.now();
     send({ t: 'ping' });
   }, 15_000);
-  addEventListener('pagehide', () => {
+  const close = () => {
     stopped = true;
     ws?.close();
-  });
-  addEventListener('langchange', () => {
+  };
+  const onLang = () => {
     translate(app);
-    copyLabel();
     render();
-  });
+  };
+  addEventListener('pagehide', close);
+  addEventListener('langchange', onLang);
+  return () => {
+    close();
+    clearInterval(ticker);
+    clearInterval(ping);
+    removeEventListener('pagehide', close);
+    removeEventListener('langchange', onLang);
+  };
 }

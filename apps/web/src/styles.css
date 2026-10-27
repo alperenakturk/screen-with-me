@@ -3754,7 +3754,6 @@ html:not(.shell) .shell-only {
 /* ---- Kabuk: film sayfasının üstündeki oda katmanı (eklenti açar, sitemiz?shell=1) ---- */
 /* Sadece ana sitede olması gerekenler gizli: eklenti linki, ana sayfaya götüren logo, alt bilgi. */
 html.shell .nav-link[href='/eklenti.html'],
-html.shell .games-link,
 html.shell .footer {
   display: none !important;
 }
@@ -4541,18 +4540,7 @@ html.shorts-view .footer {
   box-shadow: 0 6px 20px rgb(0 0 0 / 0.5);
 }
 
-/* ---- PlayWithMe: oyun köşesi (/oyun) ---- */
-.games-link .nav-text {
-  white-space: nowrap;
-}
-
-@media (max-width: 560px) {
-  /* Telefonda üst çubukta sadece 🎮 */
-  .games-link .nav-text {
-    display: none;
-  }
-}
-
+/* ---- PlayWithMe: oda içi oyunlar ---- */
 .pwm-logo {
   position: relative;
   width: 116px;
@@ -4601,72 +4589,6 @@ html.shorts-view .footer {
   }
 }
 
-.games-hero h1 {
-  letter-spacing: -0.5px;
-}
-
-.pwm-with {
-  color: var(--accent);
-}
-
-.games-list {
-  max-width: 900px;
-  margin: 36px auto 60px;
-  padding: 0 16px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
-}
-
-.game-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-start;
-  transition: transform 0.15s, border-color 0.15s;
-}
-
-.game-card:not(.soon):hover {
-  transform: translateY(-3px);
-  border-color: var(--accent);
-}
-
-.game-card .btn {
-  text-decoration: none;
-}
-
-.game-card h3 {
-  margin: 0;
-}
-
-.game-card p {
-  margin: 0;
-  flex: 1;
-  font-size: 14px;
-}
-
-.game-card.soon {
-  opacity: 0.55;
-}
-
-.game-icon {
-  font-size: 32px;
-  line-height: 1;
-}
-
-.soon-badge {
-  font-size: 12px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--muted);
-}
-
-.game-name {
-  max-width: 360px;
-  margin: 0 auto;
-}
-
 /* XOX maç sayfası */
 .xox-page {
   max-width: 560px;
@@ -4675,28 +4597,6 @@ html.shorts-view .footer {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.xox-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.xox-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 20px;
-}
-
-.xox-invite .row {
-  margin-top: 6px;
-}
-
-.xox-invite input {
-  min-width: 0;
-  flex: 1;
 }
 
 .xox-players {
@@ -5410,77 +5310,6 @@ html.shorts-view .footer {
   min-width: 0;
 }
 
-/* ---- Odadan oyun aç: sohbet kutusunun yanında 🎮 menüsü, sohbette "Katıl" kartı ---- */
-.chat-game-wrap {
-  position: relative;
-  flex: none;
-}
-
-.chat-game-btn {
-  padding: 0 10px;
-}
-
-.chat-game-menu {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-  padding: 6px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
-}
-
-.chat-game-menu[hidden] {
-  display: none;
-}
-
-.chat-game-item {
-  text-align: left;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-}
-
-.chat-game-item:hover,
-.chat-game-item:focus-visible {
-  background: var(--surface-2);
-}
-
-.chat-game {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
-.chat-game-icon {
-  font-size: 18px;
-}
-
-.chat-game-text {
-  flex: 1;
-  min-width: 120px;
-  font-weight: 600;
-}
-
-.chat-game a {
-  text-decoration: none;
-}
-
 /* ---- PlayWithMe Bilgi yarışması: soru, 2×2 şık, açıklamada doğru yeşil / yanlış kırmızı, kürsü ---- */
 .quiz-main {
   flex: 999 1 520px;
@@ -5665,4 +5494,307 @@ html.shorts-view .footer {
 
 .quiz-medal {
   font-size: 24px;
+}
+
+/* ---- Oda içi oyun sahnesi: oyun videonun yerinde açılır (kabukta adacık); telefonda bütün ekranı kaplar ---- */
+.game-menu-wrap {
+  position: relative;
+  display: flex;
+}
+
+.game-btn.game-on {
+  color: var(--accent);
+}
+
+/* Oyun açık ama sahne kapalı: düğmede yanıp sönen nokta */
+.game-btn.game-waiting::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: game-dot 1.4s ease-in-out infinite;
+}
+
+.game-btn {
+  position: relative;
+}
+
+@keyframes game-dot {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.game-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: min(320px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+
+.game-menu[hidden] {
+  display: none;
+}
+
+.game-menu-title {
+  margin: 2px 6px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.game-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.game-menu-item:hover,
+.game-menu-item:focus-visible {
+  background: var(--surface-2);
+}
+
+.game-menu-item small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.game-menu-icon {
+  flex: none;
+  width: 44px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.game-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.game-stage[hidden] {
+  display: none;
+}
+
+.game-stage-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.game-stage-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-stage-gap {
+  flex: 1;
+}
+
+.game-stage-head .btn {
+  flex: none;
+}
+
+.game-stage-head .game-end:hover {
+  border-color: var(--danger, #e5484d);
+  color: var(--danger, #e5484d);
+}
+
+.game-stage-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  container: game / size;
+}
+
+.game-stage-loading {
+  text-align: center;
+}
+
+/* XOX / Dört Taş: solda oyuncular ve durum, sağda tahta (yüksekliğe sığar) */
+.game-stage .xox-page:not(.draw-page) {
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: repeat(4, auto) 1fr;
+  grid-template-areas: 'players board' 'status board' 'actions board' 'emojis board' 'watchers board';
+  gap: 10px 18px;
+  align-content: start;
+}
+
+.game-stage .xox-players {
+  grid-area: players;
+}
+
+.game-stage .xox-status {
+  grid-area: status;
+}
+
+.game-stage .xox-actions {
+  grid-area: actions;
+}
+
+.game-stage .xox-emojis {
+  grid-area: emojis;
+}
+
+.game-stage .xox-watchers {
+  grid-area: watchers;
+  align-self: start;
+}
+
+.game-stage .xox-watchers ul {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.game-stage .xox-board-wrap {
+  grid-area: board;
+  align-self: center;
+}
+
+.game-stage .xox-board {
+  width: min(100cqh - 4px, 52cqw, 420px);
+}
+
+.game-stage .xox-cell {
+  font-size: clamp(28px, 9cqh, 76px);
+}
+
+.game-stage .four-board {
+  width: min((100cqh - 4px) * 7 / 6, 54cqw, 560px);
+}
+
+/* Çiz-Bil ve Bilgi yarışması: sol taraf yüksekliğe sığar, sağda oyuncular ve tahminler */
+.game-stage .draw-page {
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.game-stage .draw-main {
+  flex: 1;
+  min-height: 0;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.game-stage .draw-page:not(.quiz-page) .draw-left {
+  flex: 0 1 auto;
+  width: min(100cqw - 290px, (100cqh - 120px) * 4 / 3);
+}
+
+.game-stage .draw-side {
+  flex: 1 1 260px;
+  max-width: none;
+  min-height: 0;
+}
+
+.game-stage .draw-feed {
+  flex: 1;
+  height: auto;
+  min-height: 80px;
+}
+
+.game-stage .quiz-main {
+  overflow: auto;
+}
+
+.game-stage .quiz-body {
+  min-height: 0;
+  flex: 1;
+}
+
+/* Dar/dikey sahne (Shorts, küçük pencere): her şey alt alta, sahne kayar */
+@container game (max-aspect-ratio: 1 / 1) {
+  .game-stage .xox-page:not(.draw-page) {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .game-stage .xox-board-wrap {
+    align-self: stretch;
+  }
+
+  .game-stage .xox-board {
+    width: min(100%, 420px);
+  }
+
+  .game-stage .four-board {
+    width: min(100%, 560px);
+  }
+
+  .game-stage .draw-main {
+    flex: none;
+    flex-wrap: wrap;
+  }
+
+  .game-stage .draw-page:not(.quiz-page) .draw-left {
+    width: 100%;
+  }
+
+  .game-stage .draw-feed {
+    height: 180px;
+  }
+}
+
+/* Telefonda video küçük: sahne sayfanın gövdesine taşınır ve bütün ekranı kaplar (üst çubuğun da üstünde) */
+.game-stage.full {
+  position: fixed;
+  z-index: 1100;
+}
+
+.game-stage.full .game-head-text {
+  display: none;
+}
+
+/* Davet kartı: "Ali bir XOX açtı · Katıl / Sonra" (filmden dönüş kartıyla aynı yerde) */
+.game-invite {
+  z-index: 6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-btn.game-waiting::after {
+    animation: none;
+  }
 }

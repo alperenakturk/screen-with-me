@@ -39,7 +39,7 @@ export default {
       return room.fetch(request);
     }
 
-    // PlayWithMe oyun odaları (her maç ayrı nesne).
+    // Oda içi oyunlar (PlayWithMe): her oyun ayrı nesne, kimliğini izleme odası verir.
     const game = url.pathname.match(/^\/api\/games\/([^/]+)\/ws$/);
     if (game) {
       if (!GAME_ID_PATTERN.test(game[1]!)) return new Response('Invalid game id', { status: 400 });

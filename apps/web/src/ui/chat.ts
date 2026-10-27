@@ -1,6 +1,5 @@
 import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
-import { gameIcon, gameLink } from '../games/links.ts';
 import { avatarNode } from './avatar.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
@@ -71,21 +70,8 @@ export function createChatPanel(
         'div',
         { class: 'chat-body' },
         el('div', { class: 'chat-meta' }, el('span', { class: 'chat-name' }, message.by.name), el('time', {}, time(message.at))),
-        gameCard(message.text, message.by.name) ?? el('p', { class: 'chat-text' }, message.text),
+        el('p', { class: 'chat-text' }, message.text),
       ),
-    );
-  }
-
-  /** Odadan açılan oyunun linki: "🎮 Ali Çiz-Bil açtı · Katıl" kartı (yeni sekmede açılır). */
-  function gameCard(text: string, by: string): HTMLElement | null {
-    const game = gameLink(text);
-    if (!game) return null;
-    return el(
-      'div',
-      { class: 'chat-game' },
-      el('span', { class: 'chat-game-icon', 'aria-hidden': 'true' }, gameIcon(game.kind)),
-      el('span', { class: 'chat-game-text' }, t('chatGame', { name: by, game: t(`games.${game.kind}.title`) })),
-      el('a', { class: 'btn small-btn primary', href: game.url, target: '_blank', rel: 'noopener' }, t('chatGameJoin')),
     );
   }
 

@@ -206,6 +206,21 @@ export interface Member {
 
 /** Yayın türü: ekran/pencere/sekme paylaşımı ya da kamera. */
 export type LiveKind = 'screen' | 'camera';
+
+/** Odanın içinde oynanan oyunlar (PlayWithMe): XOX, Dört Taş, Çiz-Bil, Bilgi yarışması. */
+export const ROOM_GAME_KINDS = ['xox', 'four', 'draw', 'quiz'] as const;
+export type RoomGameKind = (typeof ROOM_GAME_KINDS)[number];
+/**
+ * Odada açık oyun (aynı anda tek). Oyunun kendisi ayrı bir sunucu nesnesinde yürür (`id` onun kimliği; oda verir,
+ * kimse ayrı oyun odası kurmaz); oda sadece hangi oyunun açık olduğunu ve kimin açtığını tutar.
+ */
+export interface RoomGame {
+  kind: RoomGameKind;
+  id: string;
+  by: Member;
+  /** Açıldığı an (sunucu saati). */
+  at: number;
+}
 /**
  * Yayını aynı anda en fazla bu kadar kişi izler: yayıncı her izleyiciye ayrı kopya yollar (720p ~2 Mbit/s; 4 izleyici
  * ev internetinin yükleme hızının sınırı).
@@ -363,6 +378,8 @@ export type ClientMessage =
   | { t: 'live-stop' }
   /** Yayın bağlantı mesajı (sunucu sadece yayıncı ile izleyicisi arasında iletir). */
   | { t: 'live-signal'; to: string; data: Signal }
+  /** Odada oyun aç (`kind`) ya da açık oyunu bitir (`end`; sadece açan ya da yönetici). */
+  | { t: 'game'; kind?: RoomGameKind; end?: boolean }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
   /** Sıraya ekle. Oda boşsa hemen açılır. */
@@ -417,6 +434,8 @@ export type ErrorCode =
   /** Yayını sadece yönetici açabilir (`settings.liveHostOnly`) / yönetici yayınını durdurdu. */
   | 'live_host'
   | 'live_stopped'
+  /** Odada başka biri oyun açmış (önce o bitmeli; açan ya da yönetici değiştirebilir). */
+  | 'game_busy'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
@@ -443,6 +462,8 @@ export type ServerMessage =
       voice?: boolean;
       /** Sesin taşınma yolu (yoksa p2p). */
       voiceMode?: VoiceMode;
+      /** Odada açık oyun (yoksa yok). */
+      game?: RoomGame;
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member; /** Kayıtlı odada video kaldığı yerden açıldıysa o saniye. */ resumed?: number }
@@ -467,6 +488,8 @@ export type ServerMessage =
   | { t: 'reaction'; emoji?: Reaction; sticker?: string; by: Member }
   /** Biri film sayfasından odaya döndü (gönderen hariç herkese). */
   | { t: 'home'; by: Member }
+  /** Odada oyun açıldı (`game`) ya da bitti (`null`); `by`: bitireni. */
+  | { t: 'game'; game: RoomGame | null; by?: Member }
   /** Odaya bir özel emoji eklendi (girişte de odadakiler tek tek gelir). */
   | { t: 'sticker'; sticker: Sticker }
   /** Bir özel emoji odadan kaldırıldı. */
@@ -749,6 +772,9 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return typeof m.on === 'boolean' ? { t: 'live-watch', on: m.on } : null;
     case 'live-stop':
       return { t: 'live-stop' };
+    case 'game':
+      if (m.end === true) return { t: 'game', end: true };
+      return (ROOM_GAME_KINDS as readonly unknown[]).includes(m.kind) ? { t: 'game', kind: m.kind as RoomGameKind } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

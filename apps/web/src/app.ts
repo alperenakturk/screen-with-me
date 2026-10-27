@@ -36,31 +36,9 @@ markLang();
 // büyük kodunu (oynatıcılar, sohbet, ses…) indirmez, ilk açılış hızlanır.
 const match = location.pathname.match(/^\/r\/([^/]+)\/?$/);
 const roomId = match ? decodeURIComponent(match[1]!) : null;
-// PlayWithMe oyun köşesi: /oyun (oyunlar), /oyun/<tür>/<kod> (maç: xox, four), /oyun/draw/<kod> (Çiz-Bil).
-const game = location.pathname.match(/^\/oyun\/(xox|four)\/([A-Za-z0-9_-]{3,40})\/?$/);
-const draw = location.pathname.match(/^\/oyun\/draw\/([A-Za-z0-9_-]{3,40})\/?$/);
-const quiz = location.pathname.match(/^\/oyun\/quiz\/([A-Za-z0-9_-]{3,40})\/?$/);
-if (quiz) {
-  void import('./games/quiz.ts').then(({ renderQuiz }) => {
-    renderQuiz(app, quiz[1]!);
-    translate();
-  });
-} else if (draw) {
-  void import('./games/draw.ts').then(({ renderDraw }) => {
-    renderDraw(app, draw[1]!);
-    translate();
-  });
-} else if (game) {
-  void import('./games/match.ts').then(({ renderMatch }) => {
-    renderMatch(app, game[1] as 'xox' | 'four', game[2]!);
-    translate();
-  });
-} else if (/^\/oyun\/?$/.test(location.pathname)) {
-  void import('./games/hub.ts').then(({ renderGames }) => {
-    renderGames(app);
-    translate();
-  });
-} else if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
+// Eski oyun köşesi adresleri (/oyun…) artık yok: oyunlar odanın içinde. Eski linkler ana sayfaya düşer.
+if (/^\/oyun(\/|$)/.test(location.pathname)) history.replaceState(null, '', '/');
+if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
   void import('./room.ts').then(({ renderRoom }) => {
     renderRoom(app, roomId);
     translate();
