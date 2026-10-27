@@ -253,32 +253,39 @@ bozuluyor). Dosyaları PowerShell ile yazarken UTF-8 (BOM'suz) kullan. `gh` PATH
   eklenti `caps` yollamaz → kabukta kart gizli. Testler: `scripts/e2e/voice.mjs`, gerçek ses `scripts/harness/voice/run.mjs`
   (iki Chrome, sahte mikrofon, gelen sesin enerjisi ölçülür) ve `voice/shell.mjs` (film sayfasında; `VOICE_A`/`VOICE_B` iki
   farklı wav: aynı sahte bip'i yankı engelleyici siler).
-- **PlayWithMe (oyun köşesi, 0.9.62; Dört Taş 0.9.69):** üst menüde 🎮 → `/oyun` (site `games/hub.ts`: logo = ScreenWithMe
-  yüzü + oyun kolu, oyun kartları; XOX ve Dört Taş dışındakiler "yakında"), maç `/oyun/<tür>/<kod>` (`games/match.ts`, tür
-  `xox` | `four`). İki kişilik tahta oyunları ortak biçimde (`games/board.ts` `BoardState`, kurallar `GAME_RULES`:
+- **PlayWithMe (oda içi oyunlar; 0.9.75'ten beri ayrı oyun sayfası/odası YOK, kullanıcı kararı):** video altındaki
+  araç çubuğunda 🎮 (`#game-btn`) → menü (XOX, Dört Taş, Çiz-Bil, Bilgi yarışması) → `{t:'game', kind}`. Oda aynı anda tek
+  oyun tutar (`RoomGame {kind, id, by, at}`, depoda `game` + açanın kalıcı anahtarı; `welcome.game`, değişince
+  `{t:'game', game, by?}`); açık oyunu sadece açan ya da yönetici değiştirir/bitirir (`{t:'game', end:true}`), başkası
+  `game_busy`. Oyunun kimliği odanın verdiği yeni `newId()`; oyunun kendisi aşağıdaki nesnelerde yürür. Site
+  `games/stage.ts`: oyun videonun yerinde "oyun sahnesi" (`#game-stage`, `.player-wrap`'in çocuğu: kabukta kendiliğinden
+  adacık; ≤860 px'te gövdeye taşınıp tam ekran `.full`); açana hemen açılır, diğerlerine "Ali bir XOX açtı · Katıl / Sonra"
+  kartı (`#game-invite`), "▶ Videoya dön" küçültür (bağlantı açık kalır, 🎮'da yanıp sönen nokta), sohbete gri satır.
+  Oyun sayfaları gömülebilir parçalar: `mountMatch` / `mountDraw` / `mountQuiz` (dönen işlev bağlantıyı ve zamanlayıcıları
+  kapatır; ad/avatar/cid odanınki). Shorts'ta oyun açıkken ok/tekerlek video değiştirmez. Herkes çıkıp 1 dk'dan uzun boş
+  kalan odada oyun kapanır (`freezeIfLongEmpty`). Eski `/oyun…` adresleri ana sayfaya düşer. Test: `scripts/e2e/roomgame.mjs`.
+  Oyun motorları: tür `xox` | `four` (`games/match.ts`). İki kişilik tahta oyunları ortak biçimde (`games/board.ts` `BoardState`, kurallar `GAME_RULES`:
   `xox.ts`, `four.ts`: 7×6, sütuna taş düşer, 4 dizen kazanır; `move.cell` Dört Taş'ta sütun). Odanın türünü ilk gelen
   belirler; başka türün koduna girilmez (`kind`). Sürüm 2: durum `{t:'state', kind, game}` (eski kayıt `xox` alanı okunur). Sunucuda ayrı Durable Object `Game`
   (`apps/server/src/game.ts`, bağ `GAMES`, göç `v2`), `/api/games/:id/ws`, kendi protokolü (`packages/shared/src/games/`:
   `protocol.ts` doğrulama + `GAME_PROTOCOL_VERSION`, `xox.ts` kurallar). İlk iki kişi X/O koltuğunda (koltuk kalıcı
   `cid`'e bağlı: yenileyen yerinde kalır), gelenler izler; sahibi bağlı değilse izleyici `sit` ile oturur; hamleleri sunucu
-  doğrular, kazanınca skor, `rematch` ile başlayan değişir. Sohbet yok, sadece sabit emojiler (`GAME_EMOJIS`). Boş oda 24
-  sa sonra silinir. Kabukta 🎮 gizli. Yeni tahta oyunu: `GAME_KINDS` + `GAME_RULES` + kurallar dosyası + `match.ts`'te tahta çizimi + `app.ts` adresi.
+  doğrular, kazanınca skor, `rematch` ile başlayan değişir. Sohbet yok, sadece sabit emojiler (`GAME_EMOJIS`). Boş oyun 24
+  sa sonra silinir. Yeni tahta oyunu: `GAME_KINDS` + `GAME_RULES` + kurallar dosyası + `match.ts`'te tahta çizimi + `ROOM_GAME_KINDS`
+  (`protocol.ts`) + `stage.ts` (simge, hangi parça açılır) + i18n `games.<tür>.title/text`.
   Test: `scripts/e2e/xox.mjs` (XOX + Dört Taş).
   **Çiz-Bil (0.9.72):** ayrı nesne `Draw` (`apps/server/src/draw.ts`, bağ `DRAWS`, göç `v3`, `/api/draw/:id/ws`), protokol ve
   saf kurallar `packages/shared/src/games/draw.ts` (tahmin eşleştirme: küçük harf + Türkçe harfsiz de doğru, 1 harf farkı
   "yaklaştın"; ipucu harfleri turun %40/60/80'inde; puan 50–150, çizene bilen başına 25), kelimeler `draw-words.ts`
   (TR/EN, odanın dili ilk gelenin). 2–8 kişi (kalıcı `cid`), tur: lobi → seçim (15 sn, kelimeler sadece çizene) → çizim
   (80 sn) → açıklama (6 sn) → sıradaki. Süreler depo alarmıyla; çizim sadece bellekte (1000×750 ızgara, 50 ms'lik
-  parçalar, geç gelene `strokes`). Bilenler/çizen kendi aralarında `secret` yazışır. Sayfa `games/draw.ts`
-  (`/oyun/draw/<kod>`). Test: `scripts/e2e/draw.mjs`.
+  parçalar, geç gelene `strokes`). Bilenler/çizen kendi aralarında `secret` yazışır. Parça `games/draw.ts`.
+  Test: `scripts/e2e/draw.mjs`.
   **Bilgi yarışması (0.9.74):** nesne `Quiz` (`apps/server/src/quiz.ts`, bağ `QUIZZES`, göç `v4`, `/api/quiz/:id/ws`),
   `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` (genel kültür, TR/EN, film/dizi adı yok; şıklar her oyunda
   karışır). 2–8 kişi, 10 soru × 15 sn, doğru 100–200 puan (hızlı çok), herkes cevaplayınca ya da süre bitince açıklama
-  (4 sn: doğru şık + kim neyi seçti), sonda kürsü; doğru şık açıklamaya kadar gitmez. Sayfa `games/quiz.ts`
-  (`/oyun/quiz/<kod>`). Test: `scripts/e2e/quiz.mjs`.
-  **Odadan oyun aç (0.9.73):** sohbet kutusunun yanında 🎮 → oyun seç (XOX, Dört Taş, Çiz-Bil, Bilgi yarışması) → yeni maç linki sohbete düz metin olarak gider,
-  istemci bu sitenin `/oyun/<tür>/<kod>` linkini "🎮 Ali bir Çiz-Bil maçı açtı · Katıl" kartı olarak çizer (`games/links.ts`;
-  başka sitenin linki karta dönmez), açan için oyun yeni sekmede açılır. Kabukta 🎮 düğmesi yok, kartlar var.
+  (4 sn: doğru şık + kim neyi seçti), sonda kürsü; doğru şık açıklamaya kadar gitmez. Parça `games/quiz.ts`.
+  Test: `scripts/e2e/quiz.mjs`.
 - **Görüntülü sohbet (0.9.63, sadece eşler arası, sitede):** seste 📷 → `P2pVoice.setCam` (320×240, 15 kare, ≤280 kbit/s;
   video kanalı bağlantı kurulurken hep açılır, kamera açılıp kapanınca sadece `replaceTrack`, yeniden pazarlık yok; eski
   sürümün ses-tek teklifinde görüntü yok). Üye `voice.cam` (sürüm artmadan), `{t:'voice', on, mic, cam}`; Cloudflare

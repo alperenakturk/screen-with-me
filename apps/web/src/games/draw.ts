@@ -1,5 +1,5 @@
-// PlayWithMe Çiz-Bil sayfası (/oyun/draw/<kod>): tuval, kalem araçları (sadece çizende), tahmin kutusu ve akış,
-// oyuncular ve puanlar. Sunucu (Draw nesnesi) turları yürütür; bu sayfa gelen durumu çizer, çizeni dinler.
+// Odanın içindeki Çiz-Bil (oyun sahnesinde): tuval, kalem araçları (sadece çizende), tahmin kutusu ve akış,
+// oyuncular ve puanlar. Sunucu (Draw nesnesi) turları yürütür; burası gelen durumu çizer, çizeni dinler.
 // Çizim 1000×750'lik ızgarada tam sayı noktalar olarak, 50 ms'de bir parça parça gider.
 
 import {
@@ -17,59 +17,18 @@ import {
   type DrawServerMessage,
   type Stroke,
 } from '@swm/shared/games/draw';
-import { cleanName, isAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
-import { clientId, load, saveIdentity } from '../storage.ts';
+import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
-import { playLogo } from './hub.ts';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
-export function renderDraw(app: HTMLElement, gameId: string): void {
-  document.title = `${t('games.draw.title')} · PlayWithMe`;
-  const name = load('name');
-  const savedAvatar = load('avatar');
-  if (name && cleanName(name)) {
-    start(app, gameId, name, isAvatar(savedAvatar) ? savedAvatar : randomAvatar());
-    return;
-  }
-  app.innerHTML = `
-    <section class="hero games-hero">
-      <div id="pwm-logo"></div>
-      <form id="game-name" class="row game-name">
-        <input id="game-name-input" maxlength="24" autocomplete="off" required data-i18n-placeholder="games.namePrompt" />
-        <button class="btn primary" data-i18n="games.nameGo"></button>
-      </form>
-    </section>`;
-  app.querySelector('#pwm-logo')!.replaceWith(playLogo());
-  translate(app);
-  const input = app.querySelector<HTMLInputElement>('#game-name-input')!;
-  input.focus();
-  app.querySelector('#game-name')!.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const clean = cleanName(input.value);
-    if (!clean) return;
-    const avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
-    saveIdentity(clean, avatar);
-    start(app, gameId, clean, avatar);
-  });
-}
-
-function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): void {
+/** Oyunu `app`'in içine kurar; dönen işlev bağlantıyı ve zamanlayıcıları kapatır. */
+export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
     <div class="xox-page draw-page">
-      <header class="xox-head">
-        <a class="nav-link" href="/oyun" data-i18n="games.back"></a>
-        <div class="xox-title"><span id="draw-logo"></span><b data-i18n="games.draw.title"></b></div>
-      </header>
-      <section class="card xox-invite">
-        <span class="muted small" data-i18n="draw.invite"></span>
-        <div class="row">
-          <input id="draw-link" readonly />
-          <button id="draw-copy" type="button" class="btn primary"></button>
-        </div>
-      </section>
       <div class="draw-main">
         <div class="draw-left">
           <div class="draw-top">
@@ -94,26 +53,8 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
         </aside>
       </div>
     </div>`;
-  app.querySelector('#draw-logo')!.replaceWith(playLogo(true));
   translate(app);
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;
-
-  // ---- Davet linki ----
-  const link = $<HTMLInputElement>('#draw-link');
-  link.value = location.href.split('#')[0]!;
-  const copy = $<HTMLButtonElement>('#draw-copy');
-  const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
-  const copyLabel = () => (copy.textContent = canShare ? t('share') : t('copy'));
-  copyLabel();
-  copy.addEventListener('click', async () => {
-    if (canShare) {
-      await navigator.share({ title: `${t('games.draw.title')} · PlayWithMe`, url: link.value }).catch(() => {});
-      return;
-    }
-    await navigator.clipboard?.writeText(link.value).catch(() => link.select());
-    copy.textContent = t('copied');
-    setTimeout(copyLabel, 1500);
-  });
 
   // ---- Tuval ----
   const canvas = $<HTMLCanvasElement>('#draw-canvas');
@@ -194,7 +135,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     send({ t: 'stroke', s });
     pending = lastPoint && drawing ? [...lastPoint] : [];
   }
-  setInterval(() => {
+  const flusher = window.setInterval(() => {
     if (pending.length >= 4 || (!drawing && pending.length >= 2)) flush();
   }, 50);
   const iDraw = () => !!state && state.phase === 'draw' && state.drawer === me;
@@ -331,7 +272,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     bar.classList.toggle('low', s.phase === 'draw' && left < 15_000);
     timer.textContent = `${Math.ceil(left / 1000)}`;
   }
-  setInterval(tick, 250);
+  const ticker = window.setInterval(tick, 250);
 
   $('#draw-form').addEventListener('submit', (event) => {
     event.preventDefault();
@@ -349,6 +290,7 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
+    if (stopped) return;
     const url = `${location.origin.replace(/^http/, 'ws')}/api/draw/${encodeURIComponent(gameId)}/ws`;
     const socket = new WebSocket(url);
     ws = socket;
@@ -415,17 +357,24 @@ function start(app: HTMLElement, gameId: string, name: string, avatar: Avatar): 
     });
   }
   connect();
-  setInterval(() => {
+  const ping = window.setInterval(() => {
     pingAt = performance.now();
     send({ t: 'ping' });
   }, 15_000);
-  addEventListener('pagehide', () => {
+  const close = () => {
     stopped = true;
     ws?.close();
-  });
-  addEventListener('langchange', () => {
+  };
+  const onLang = () => {
     translate(app);
-    copyLabel();
     render();
-  });
+  };
+  addEventListener('pagehide', close);
+  addEventListener('langchange', onLang);
+  return () => {
+    close();
+    for (const timer of [flusher, ticker, ping]) clearInterval(timer);
+    removeEventListener('pagehide', close);
+    removeEventListener('langchange', onLang);
+  };
 }

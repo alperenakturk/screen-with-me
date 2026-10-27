@@ -46,7 +46,7 @@ const fresh = (kind: GameKind = 'xox'): Saved => ({ kind, state: GAME_RULES[kind
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 
 /**
- * PlayWithMe oyun odası (XOX, Dört Taş): bir maç = bir nesne. Türü ilk gelen belirler (adresteki tür). İlk iki kişi X ve O koltuklarına oturur, sonra gelenler
+ * Oda içi XOX / Dört Taş (PlayWithMe): bir oyun = bir nesne (kimliğini izleme odası verir). Türü ilk gelen belirler. İlk iki kişi X ve O koltuklarına oturur, sonra gelenler
  * izler. Hamleleri sunucu doğrular (sıra, boş hücre). Koltuk kalıcı tarayıcı kimliğine bağlı: oyuncu sayfayı yenilerse
  * koltuğunda kalır; çıkıp gittiyse izleyicilerden biri yerine oturabilir. Durum depoya yazılır (nesne uyusa da kalır).
  */

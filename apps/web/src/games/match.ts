@@ -1,66 +1,24 @@
-// PlayWithMe maç sayfası (/oyun/<tür>/<kod>): XOX ve Dört Taş. İlk iki kişi X ve O olur (Dört Taş'ta kırmızı ve sarı
-// taş), sonra gelenler izler; koltuk boşalınca (oyuncu çıktıysa) izleyiciler "Oyuncu ol" ile oturur. Hamleleri sunucu
-// doğrular; sayfa sadece gelen durumu çizer. Ad ve avatar sitedekiyle aynı (yoksa ad sorulur, avatar rastgele).
+// Odanın içindeki XOX ve Dört Taş (oyun sahnesinde). İlk iki kişi X ve O olur (Dört Taş'ta kırmızı ve sarı taş),
+// sonra gelenler izler; koltuk boşalınca (oyuncu çıktıysa) izleyiciler "Oyuncu ol" ile oturur. Hamleleri sunucu
+// doğrular; burası sadece gelen durumu çizer. Ad ve avatar odadakiyle aynı.
 
 import type { Mark } from '@swm/shared/games/board';
 import { COLS, dropRow } from '@swm/shared/games/four';
 import { GAME_EMOJIS, GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
-import { cleanName, isAvatar, randomAvatar, type Avatar } from '@swm/shared/protocol';
+import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
-import { clientId, load, saveIdentity } from '../storage.ts';
+import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
-import { playLogo } from './hub.ts';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
 
-export function renderMatch(app: HTMLElement, kind: GameKind, gameId: string): void {
-  document.title = `${t(`games.${kind}.title`)} · PlayWithMe`;
-  const name = load('name');
-  const savedAvatar = load('avatar');
-  if (name && cleanName(name)) {
-    start(app, kind, gameId, name, isAvatar(savedAvatar) ? savedAvatar : randomAvatar());
-    return;
-  }
-  // Ad yoksa önce sorulur (sitedeki odayla aynı ad kullanılır).
-  app.innerHTML = `
-    <section class="hero games-hero">
-      <div id="pwm-logo"></div>
-      <form id="game-name" class="row game-name">
-        <input id="game-name-input" maxlength="24" autocomplete="off" required data-i18n-placeholder="games.namePrompt" />
-        <button class="btn primary" data-i18n="games.nameGo"></button>
-      </form>
-    </section>`;
-  app.querySelector('#pwm-logo')!.replaceWith(playLogo());
-  translate(app);
-  const input = app.querySelector<HTMLInputElement>('#game-name-input')!;
-  input.focus();
-  app.querySelector('#game-name')!.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const clean = cleanName(input.value);
-    if (!clean) return;
-    const avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
-    saveIdentity(clean, avatar);
-    start(app, kind, gameId, clean, avatar);
-  });
-}
-
-function start(app: HTMLElement, kind: GameKind, gameId: string, name: string, avatar: Avatar): void {
+/** Oyunu `app`'in içine kurar; dönen işlev bağlantıyı ve zamanlayıcıları kapatır. */
+export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, name: string, avatar: Avatar): () => void {
   const four = kind === 'four';
   app.innerHTML = `
     <div class="xox-page">
-      <header class="xox-head">
-        <a class="nav-link" href="/oyun" data-i18n="games.back"></a>
-        <div class="xox-title"><span id="xox-logo"></span><b data-i18n="games.${kind}.title"></b></div>
-      </header>
-      <section class="card xox-invite">
-        <span class="muted small" data-i18n="games.invite"></span>
-        <div class="row">
-          <input id="xox-link" readonly />
-          <button id="xox-copy" type="button" class="btn primary"></button>
-        </div>
-      </section>
       <section class="xox-players">
         <div class="xox-player" id="seat-0"></div>
         <div class="xox-vs" id="xox-score"></div>
@@ -82,24 +40,7 @@ function start(app: HTMLElement, kind: GameKind, gameId: string, name: string, a
         <ul id="xox-watchers"></ul>
       </section>
     </div>`;
-  app.querySelector('#xox-logo')!.replaceWith(playLogo(true));
   translate(app);
-
-  const link = app.querySelector<HTMLInputElement>('#xox-link')!;
-  link.value = location.href.split('#')[0]!;
-  const copy = app.querySelector<HTMLButtonElement>('#xox-copy')!;
-  const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
-  const copyLabel = () => (copy.textContent = canShare ? t('share') : t('copy'));
-  copyLabel();
-  copy.addEventListener('click', async () => {
-    if (canShare) {
-      await navigator.share({ title: `${t(`games.${kind}.title`)} · PlayWithMe`, url: link.value }).catch(() => {});
-      return;
-    }
-    await navigator.clipboard?.writeText(link.value).catch(() => link.select());
-    copy.textContent = t('copied');
-    setTimeout(copyLabel, 1500);
-  });
 
   const board = app.querySelector<HTMLElement>('#xox-board')!;
   // XOX: 9 hücre, tıklanan hücreye. Dört Taş: 42 hücre; bir hücreye tıklamak o sütuna taş atar (taş en alta düşer),
@@ -220,6 +161,7 @@ function start(app: HTMLElement, kind: GameKind, gameId: string, name: string, a
     if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
+    if (stopped) return;
     const url = `${location.origin.replace(/^http/, 'ws')}/api/games/${encodeURIComponent(gameId)}/ws`;
     const socket = new WebSocket(url);
     ws = socket;
@@ -248,15 +190,22 @@ function start(app: HTMLElement, kind: GameKind, gameId: string, name: string, a
     });
   }
   connect();
-  setInterval(() => send({ t: 'ping' }), 20_000);
-  addEventListener('pagehide', () => {
+  const ping = window.setInterval(() => send({ t: 'ping' }), 20_000);
+  const close = () => {
     stopped = true;
     ws?.close();
-  });
-  addEventListener('langchange', () => {
+  };
+  const onLang = () => {
     translate(app);
-    copyLabel();
     cells.forEach((cell, i) => cell.setAttribute('aria-label', cellLabel(i)));
     render();
-  });
+  };
+  addEventListener('pagehide', close);
+  addEventListener('langchange', onLang);
+  return () => {
+    close();
+    clearInterval(ping);
+    removeEventListener('pagehide', close);
+    removeEventListener('langchange', onLang);
+  };
 }

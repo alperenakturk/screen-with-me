@@ -1,5 +1,5 @@
-// Oyun köşesinin (PlayWithMe) mesajları. İzleme odasından ayrı: her maç kendi odasında (sunucuda ayrı bir Durable
-// Object), iki oyuncu oturur, gelenler izler. Sunucu gelen her şeyi doğrular ve yeni nesneye kopyalar.
+// Oda içi oyunların (PlayWithMe) mesajları: XOX ve Dört Taş. Oyun izleme odasında açılır ama kendisi ayrı bir Durable
+// Object'te yürür (kimliğini oda verir), iki oyuncu oturur, gelenler izler. Sunucu gelen her şeyi doğrular ve yeni nesneye kopyalar.
 
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
 import type { BoardRules, BoardState } from './board.ts';
@@ -9,7 +9,7 @@ import { XOX } from './xox.ts';
 /** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). 2: durum `game` + `kind` (Dört Taş geldi). */
 export const GAME_PROTOCOL_VERSION = 2;
 
-/** Oyunlar: `xox` XOX, `four` Dört Taş (dört sıralı). Adres: /oyun/<tür>/<kod>. */
+/** Oyunlar: `xox` XOX, `four` Dört Taş (dört sıralı). */
 export const GAME_KINDS = ['xox', 'four'] as const;
 export type GameKind = (typeof GAME_KINDS)[number];
 

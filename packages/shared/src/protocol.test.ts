@@ -140,6 +140,13 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'vote', id: 'abc123def456' })).toBeNull();
   });
 
+  it('accepts starting a known in-room game or ending it, nothing else', () => {
+    expect(parse({ t: 'game', kind: 'draw', id: 'x' })).toEqual({ t: 'game', kind: 'draw' });
+    expect(parse({ t: 'game', end: true, kind: 'xox' })).toEqual({ t: 'game', end: true });
+    expect(parse({ t: 'game', kind: 'chess' })).toBeNull();
+    expect(parse({ t: 'game' })).toBeNull();
+  });
+
   it('accepts the built-in sync test as media', () => {
     expect(parse({ t: 'load', media: { kind: 'test', url: 'ignored' } })).toEqual({ t: 'load', media: { kind: 'test' } });
   });
