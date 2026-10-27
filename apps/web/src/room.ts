@@ -1,7 +1,7 @@
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
-import { isRelayable } from '@swm/shared/embed';
+import { isForwardedKey, isRelayable } from '@swm/shared/embed';
 import { parseMediaInput, samePage } from '@swm/shared/media';
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
@@ -250,8 +250,9 @@ function withAvatar(member: { name: string; avatar?: string }): string {
 function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false } = {}): void {
   // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
   sessionSave(`in:${roomId}`, '1');
-  // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla.
-  loadYouTubeApi().catch(() => {});
+  // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla. Film sayfasındaki katmanda
+  // değil: orada film sayfanın kendi oynatıcısında, her film sayfası açılışında boşuna ~1 MB inerdi (gerekirse yine yüklenir).
+  if (!isShell) loadYouTubeApi().catch(() => {});
 
   app.innerHTML = `
     <div class="room">
@@ -262,6 +263,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <button class="btn" value="load" data-i18n="playNow"></button>
         </form>
         <p id="media-error" class="error" data-i18n="invalidMedia" hidden></p>
+        <p id="media-done" class="muted small" role="status" hidden></p>
 
         <div id="schedule-banner" class="schedule-banner" role="status" hidden></div>
         <div id="seats-l" class="seats seats-l shorts-only"></div>
@@ -286,7 +288,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="fs-progress">
                 <div class="fs-seek-wrap">
                   <div id="fs-pins" class="pin-strip fs" hidden></div>
-                  <input id="fs-seek" type="range" min="0" max="1000" step="1" value="0" />
+                  <input id="fs-seek" type="range" min="0" max="1000" step="1" value="0" data-i18n-title="seekLabel" />
                 </div>
                 <span id="fs-time" class="fs-time">0:00 / 0:00</span>
               </div>
@@ -403,7 +405,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button type="button" class="tab" role="tab" data-tab="queue">
               <span aria-hidden="true">🎵</span><span data-i18n="tab.queue"></span><span id="queue-count" class="count"></span>
             </button>
-            <button type="button" class="tab" role="tab" data-tab="people">
+            <button type="button" class="tab" role="tab" data-tab="people" data-i18n-title="tab.people">
               <span aria-hidden="true">👥</span><span id="people-count" class="count"></span>
             </button>
             <button type="button" class="tab tab-icon" role="tab" data-tab="settings" id="settings-tab" data-i18n-title="tab.settings">⚙️</button>
@@ -546,6 +548,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   /** "Herkes hazır": oda kimleri bekliyor, yönetici özelliği açtı mı. */
   let waitingIds: string[] = [];
   let roomSettings: RoomSettings = { waitForAll: true };
+  /** Sunucunun ayarları geldi mi (welcome) ve kaydedilen odalar listesine en son ne yazıldı. */
+  let settingsKnown = false;
+  let savedEntry: string | null = null;
   let status: ConnectionStatus = 'connecting';
   let errorText: (() => string) | null = null;
   let roomState: PlaybackState | null = null;
@@ -617,6 +622,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     () => roomSettings.noReactions !== true,
     () => (roomSettings.reactionGap ?? 0) * 1000,
   );
+  // Bir pencere (avatar, tema, özet, onay) açıkken kısayollar arkadaki odaya gitmesin: emoji atılıyor, pin kutusu
+  // pencerenin arkasında açılıyordu. Pencerenin kendi tuşları (Esc, düğmede Enter) çalışmaya devam eder.
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (!document.querySelector('.dialog-backdrop, .recap-backdrop') || isTyping(event.target)) return;
+      if (isForwardedKey(event.key) || [' ', 'k', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) event.stopImmediatePropagation();
+    },
+    true,
+  );
   // Klavye: normal görünümde Enter sohbet kutusuna götürür (tam ekranda fullscreen.ts halleder).
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || document.fullscreenElement || isTyping(event.target)) return;
@@ -676,10 +691,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     switch (message.t) {
       case 'welcome':
         myId = message.you;
+        // Ayarlar önce: kişi listesi çizilirken kayıt durumu (kaydedilen odalar listesi) doğru bilinsin.
+        if (message.settings) roomSettings = message.settings;
+        settingsKnown = true;
         voice.welcome(message.voice === true, message.voiceMode ?? 'p2p');
         setMembers(message.members, message.hostId, false);
         chooseFirstTab(message.hostId === message.you);
-        if (message.settings) roomSettings = message.settings;
         waitingIds = message.waiting ?? [];
         renderWaiting();
         queue.set(message.queue);
@@ -814,6 +831,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           // Oda yöneticisi çıkardı: tekrar bağlanmaya çalışma, bilgilendirme ekranını göster.
           connection.close();
           engine.destroy();
+          // Mikrofon da kapansın (ses eklentide çalışıyorsa orada da).
+          voice.end();
           // Filmi durdurmak odayı durdururdu (oradaki motor yayardı); sadece bağı kopar.
           if (film) closeCurrent();
           else current?.player.pause();
@@ -821,8 +840,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           break;
         }
         if (message.code === 'not_host' && roomState) {
-          // Yönetici modu: yaptığım hareket kabul edilmedi, oynatıcı odanın durumuna döner.
-          engine.receive(roomState);
+          // Yönetici modu: yaptığım hareket kabul edilmedi, oynatıcı odanın durumuna döner (film sayfasında hareketi
+          // oradaki motor yaptı: durum ona yeniden gider).
+          if (film) film.setState(roomState);
+          else engine.receive(roomState);
         }
         if (message.code === 'recap_empty') {
           showError(() => t('error.recap_empty'));
@@ -1772,9 +1793,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     label.hidden = !saved;
     label.textContent = saved ? `💾 ${name || roomId}` : '';
     document.title = saved && name ? `${name} · ScreenWithMe` : 'ScreenWithMe';
+    // Ana sayfadaki "Kaydedilen odalar" listesi: sadece sunucudan ayarlar geldikten sonra (önce varsayılan ayarla
+    // "kayıtlı değil" sanılıp liste siliniyordu; bağlantı hiç kurulmazsa oda listeden kayboluyordu) ve sadece değişince
+    // (her kişi değişiminde depoya yazıp eklentiye yolluyordu).
+    if (!settingsKnown) return;
+    const entry = saved ? `${name}|${host}` : '';
+    if (entry === savedEntry) return;
+    savedEntry = entry;
     if (saved) rememberSaved({ id: roomId, name: name || roomId, at: Date.now(), mine: host });
     else forgetSaved(roomId);
   }
+
 
   /** Yönetici modları ve planlı başlangıç: ayar anahtarları, kilit notu, sıra butonları. */
   function renderModes(): void {
@@ -1924,7 +1953,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     seats.render();
     renderShorts();
     showError(errorText);
-    copyEl.textContent = t('copy');
+    // Davet düğmesinin yazısı ("Kopyala" / telefonda "Paylaş") kendi dinleyicisinde yenilenir.
   });
 
   renderStatus();

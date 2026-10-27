@@ -630,6 +630,8 @@ select:focus {
   margin: 0 0 8px;
   color: var(--muted);
   font-size: 18px;
+  /* Satırlar dengeli kırılsın (tek kelime alt satırda yalnız kalmasın). */
+  text-wrap: balance;
 }
 
 .divider {
@@ -703,7 +705,8 @@ select:focus {
   position: fixed;
   top: 58px;
   right: 12px;
-  z-index: 1500;
+  /* Pencerelerin (avatar, tema, özet: z-index 1000) altında: menüden açılan pencereyi örtmesin. */
+  z-index: 900;
   width: min(380px, calc(100vw - 24px));
   max-height: calc(100vh - 72px);
   overflow-y: auto;
@@ -3005,6 +3008,16 @@ html:not(.shell) .shell-only {
     font-size: 12px;
   }
 
+  /* Sağ üstteki düğmeler sıkışıp kesilmesin (dil seçici "TR E" diye kesiliyordu): küçülmezler, sığmayan eklenti
+     bağlantısı telefonda gizlenir (eklenti zaten sadece masaüstü tarayıcıda çalışır; ana sayfada anlatılıyor). */
+  .topbar-right > * {
+    flex: none;
+  }
+
+  .topbar .nav-link[href='/eklenti.html'] {
+    display: none;
+  }
+
   .status {
     font-size: 0;
   }
@@ -3033,6 +3046,20 @@ html:not(.shell) .shell-only {
     flex-wrap: wrap;
     gap: 8px;
     justify-content: space-between;
+  }
+
+  /* Emoji çubuğu dar ekrana sığsın (8 emoji + ▲▼ + 🖼️ 390 px'te 3 px taşıyıp sayfayı yana kaydırıyordu): düğmeler
+     gerekirse biraz küçülür. */
+  .toolbar .reaction-bar {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .toolbar .reaction-bar > .reaction-btn {
+    flex: 0 1 34px;
+    min-width: 0;
+    aspect-ratio: 1;
+    height: auto;
   }
 
   .reaction-btn {
