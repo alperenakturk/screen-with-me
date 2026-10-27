@@ -38,7 +38,10 @@ const match = location.pathname.match(/^\/r\/([^/]+)\/?$/);
 const roomId = match ? decodeURIComponent(match[1]!) : null;
 // Eski oyun köşesi adresleri (/oyun…) artık yok: oyunlar odanın içinde. Eski linkler ana sayfaya düşer.
 if (/^\/oyun(\/|$)/.test(location.pathname)) history.replaceState(null, '', '/');
-if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
+if (/^\/(baglanti|connection-test)\/?$/.test(location.pathname)) {
+  // Bağlantı testi: "Bağlanıyor…'da kalıyorum" diyenler için (sonuç ekranı yollanır).
+  void import('./diag.ts').then(({ renderDiag }) => renderDiag(app));
+} else if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
   void import('./room.ts').then(({ renderRoom }) => {
     renderRoom(app, roomId);
     translate();

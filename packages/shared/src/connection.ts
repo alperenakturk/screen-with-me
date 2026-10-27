@@ -16,6 +16,8 @@ export interface RoomConnectionOptions {
   clock: ServerClock;
   onMessage: (message: ServerMessage) => void;
   onStatus?: (status: ConnectionStatus) => void;
+  /** Art arda kaç kez bağlanılamadığı (açıldıktan sonra kopanlar sayılmaz); açılınca 0. */
+  onFailures?: (count: number) => void;
 }
 
 const PING_INTERVAL_MS = 10_000;
@@ -27,6 +29,11 @@ const MAX_RETRY_DELAY_MS = 10_000;
  * yeniden kurulur (Wi-Fi değişimi, uykudan uyanma: tarayıcı "kapandı" demeyebilir).
  */
 const SILENCE_TIMEOUT_MS = 15_000;
+/**
+ * Bağlantı bu sürede açılmazsa (bazı mobil ağlarda el sıkışma ne açılır ne kapanır, "Bağlanıyor…"da kalınıyordu)
+ * vazgeçilip yeniden denenir.
+ */
+const OPEN_TIMEOUT_MS = 10_000;
 
 /**
  * Sunucuyla WebSocket bağlantısı. Bağlantı koparsa kendiliğinden, giderek
@@ -43,6 +50,8 @@ export class RoomConnection {
   private lastHeard = 0;
   /** Düzenli ping'in en son gönderildiği an (cevap bekleniyor mu?). */
   private lastPingAt = 0;
+  /** Art arda açılamayan bağlantı sayısı. */
+  private failures = 0;
 
   constructor(private readonly options: RoomConnectionOptions) {}
 
@@ -87,9 +96,18 @@ export class RoomConnection {
     const base = this.options.serverUrl.replace(/^http/, 'ws').replace(/\/$/, '');
     const ws = new WebSocket(`${base}/api/rooms/${encodeURIComponent(this.options.roomId)}/ws`);
     this.ws = ws;
+    let opened = false;
+    const openTimer = setTimeout(() => {
+      if (!opened && this.ws === ws) ws.close();
+    }, OPEN_TIMEOUT_MS);
+    this.timers.push(openTimer);
 
     ws.addEventListener('open', () => {
+      opened = true;
+      clearTimeout(openTimer);
       this.retries = 0;
+      this.failures = 0;
+      this.options.onFailures?.(0);
       this.options.onStatus?.('open');
       const { name, avatar, cid, client } = this.options;
       this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}), ...(client ? { client } : {}) });
@@ -133,6 +151,7 @@ export class RoomConnection {
       this.clearTimers();
       this.ws = null;
       if (this.stopped) return;
+      if (!opened) this.options.onFailures?.(++this.failures);
       const delay = Math.min(MAX_RETRY_DELAY_MS, 500 * 2 ** this.retries) + Math.random() * 300;
       this.retries++;
       this.options.onStatus?.('reconnecting');

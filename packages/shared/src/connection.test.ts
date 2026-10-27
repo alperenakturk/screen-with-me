@@ -79,3 +79,43 @@ describe('RoomConnection silence detection', () => {
     conn.close();
   });
 });
+
+/** Hiç açılmayan bağlantı (bazı mobil ağlarda el sıkışma asılı kalıyor); kapatılınca "close" olur. */
+class HangingSocket extends FakeSocket {
+  constructor(url: string) {
+    super(url);
+    this.readyState = 0;
+  }
+  override addEventListener(type: string, fn: (event: { data?: string }) => void) {
+    // "open" hiç gelmesin.
+    if (type !== 'open') super.addEventListener(type, fn);
+  }
+  override close() {
+    this.readyState = 3;
+    this.emit('close');
+  }
+}
+
+describe('RoomConnection open timeout', () => {
+  it('gives up on a socket that never opens, retries and counts the failures', async () => {
+    vi.stubGlobal('WebSocket', HangingSocket);
+    const failures: number[] = [];
+    const conn = new RoomConnection({
+      serverUrl: 'http://test',
+      roomId: 'abc123',
+      name: 'Ali',
+      clock: new ServerClock(() => Date.now()),
+      onMessage: () => {},
+      onFailures: (n) => failures.push(n),
+    });
+    conn.connect();
+    await vi.advanceTimersByTimeAsync(9_000);
+    expect(FakeSocket.all.length).toBe(1);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(failures).toEqual([1]);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(FakeSocket.all.length).toBeGreaterThanOrEqual(3);
+    expect(failures.at(-1)).toBeGreaterThanOrEqual(2);
+    conn.close();
+  });
+});
