@@ -156,7 +156,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   persistent browser identity (`cid`, not an account); a kicked person cannot rejoin until the host lifts the ban
   (the `bans` list only goes to the host, removed with `unban`; cids are never sent to clients). Host checks are per
   person (`isHost`): the same person's site tab and extension tab are both host.
-  **Hardening (0.9.85, `docs/internal/security-review-1.md`):** the Worker accepts WebSockets only from its own origin
+  **Hardening (0.9.86, `docs/internal/security-review-1.md`):** the Worker accepts WebSockets only from its own origin
   and `localhost` (`index.ts` `guardSocket`), at most 60 new connections per IP and minute (rate-limit binding
   `CONNECT_LIMIT` in `wrangler.jsonc`), and passes the room a short SHA-256 hash of the IP in `X-SWM-Ip` (set only by
   the Worker; kept in the connection's attachment, never stored or sent to clients; used for emoji upload limits).
@@ -302,7 +302,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   one `{t:'sticker'}` each (1 MB message limit). Reaction: `{t:'react', sticker}`. UI: 🖼️ always visible at the end of
   the emoji bar (site: panel; extension: the strip switches to custom emojis) — don't bury it between pages. File
   preparation in `sticker-file.ts` (images 160 px webp; GIFs keep their frames but lose comment/XMP blocks,
-  `stripGifMetadata`). **Room-only (0.9.85, owner's decision after security review 1):** nothing is uploaded on join;
+  `stripGifMetadata`). **Room-only (0.9.86, owner's decision after security review 1):** nothing is uploaded on join;
   adding opens a dialog (preview, "added to this room only", unchecked "Koleksiyonuma da kaydet"). My collection:
   `localStorage` `stickerCollection` (max 12, shared with the extension, never uploaded by itself); tray chips
   Emojiler · Bu odada · Koleksiyonum (tap = add that one to this room). The old auto-uploaded `myStickers` list is
@@ -327,7 +327,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   is `welcome.voiceMode`: **p2p** (default, no card/account): each person has a separate WebRTC connection with
   everyone in voice (the smaller id makes the offer), the server relays `{t:'signal'}` only if both sides are in voice
   (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (6), STUN Cloudflare only (every STUN server
-  sees each user's IP). **IP notice (0.9.85, `ui/ip-notice.ts`):** before joining voice in p2p mode (lists who is in
+  sees each user's IP). **IP notice (0.9.86, `ui/ip-notice.ts`):** before joining voice in p2p mode (lists who is in
   voice), starting a stream or watching one, a dialog says the others can see your IP; "Bunu bir daha gösterme" per
   action (`opt:ipNotice:voice|stream|watch`); "🔒 Seste olanlar IP adresini görebilir · Neden?" under the voice row.
   Hiding IPs (TURN relay / SFU for voice + camera + streams) is a Phase 2 goal, needs the card. **sfu**: if the
@@ -398,7 +398,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   ("⧉ Serbest bırak"), in a floating window on the page (drag anywhere, resize from the bottom-right corner, "−"
   minimizes, "⤓" puts it back in the card, double-click resets position; `localStorage` `opt:camFloat`,
   `camFloat:spot` as a ratio) or automatically inside `.player-wrap` in fullscreen (separate spot `camFloat:fsSpot`).
-  Videos are replayed after moving. In the shell the floating window is `data-island` (visible over the hole); while
+  Videos are replayed after moving. **0.9.85 (Meet/Discord-style, owner's request):** in the floating window and in
+  fullscreen, round 🎙 / 📷 buttons under the tiles (`.cam-controls`; they press the card's own buttons; red = off); the
+  window resizes in both directions (`Spot.h`, `.sized`: tiles fill it); **M** toggles my mic on the site. Clicking a
+  face in the "Birlikte" card or a camera tile (a still click, not a drag: `onTileClick`) opens the **person menu**
+  (`.person-pop`, an island in the shell): volume for me 0–100 % and "mute for me" (`localStorage` `voiceSound`, by
+  person = name + avatar; in the shell sent to offscreen as `{op:'volume'}`, old extensions ignore it), "📌 show
+  their camera big" (`.cam-tile.pinned`, first and full width; this tab only), "🙈 hide myself" on my own tile
+  (`opt:hideSelfCam`, others still see me), and for the host "🚪 remove from the room" (same kick + confirm as the
+  people list). In the shell the floating window is `data-island` (visible over the hole); while
   dragging, the `swm-layout` event updates the island immediately. The old `#cam-dock` is gone.
   **On the film page (0.9.65):** cameras run in offscreen (`voice` `cam`; without permission `mic.html?cam=1`);
   incoming streams + my own preview (`me`) reach the site in the overlay through a **local WebRTC bridge**

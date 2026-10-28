@@ -97,6 +97,11 @@ export class ExtVoice implements Voice {
     });
   }
 
+  /** Per-person volume for me (0–1); the voices play in the extension's offscreen page. */
+  volumes(volumes: Record<string, number>): void {
+    if (this.state.active) this.post({ op: 'volume', volumes });
+  }
+
   setMic(on: boolean): void {
     if (!this.state.active) return;
     this.state.mic = on;

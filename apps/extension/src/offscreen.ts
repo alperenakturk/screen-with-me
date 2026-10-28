@@ -39,6 +39,8 @@ let myId: string | null = null;
 /** İzin sekmesi açıkken bekleyen katılma. */
 let pendingJoin: { mode: VoiceMode } | null = null;
 const audios = new Map<string, HTMLAudioElement>();
+/** My volume for each person (from the site's person menu; 0 = muted for me). */
+let volumes: Record<string, number> = {};
 const rpcs = new Map<number, { resolve: (result: RtcResult) => void; timer: ReturnType<typeof setTimeout> }>();
 /** Gelen seslerin ve kendi mikrofonumun seviyesi ("me"). */
 const meter = new LevelMeter();
@@ -153,6 +155,8 @@ function makeClient(mode: VoiceMode): Voice {
     const audio = document.createElement('audio');
     audio.autoplay = true;
     audio.srcObject = stream;
+    audio.volume = volumes[memberId] ?? 1;
+    audio.muted = audio.volume === 0;
     document.body.append(audio);
     void audio.play().catch(() => {});
     audios.set(memberId, audio);
@@ -273,6 +277,16 @@ function handle(tabId: number, roomId: string, msg: VoiceUp): void {
     case 'mic':
       client?.setMic(msg.on);
       sendState();
+      break;
+    case 'volume':
+      volumes = {};
+      for (const [memberId, volume] of Object.entries(msg.volumes ?? {})) {
+        if (typeof volume === 'number' && Number.isFinite(volume)) volumes[memberId] = Math.min(1, Math.max(0, volume));
+      }
+      for (const [memberId, audio] of audios) {
+        audio.volume = volumes[memberId] ?? 1;
+        audio.muted = audio.volume === 0;
+      }
       break;
     case 'cam':
       void setCam(msg.on);
