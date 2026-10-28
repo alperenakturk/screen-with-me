@@ -57,6 +57,8 @@ export function createReactions(
   let page = 0;
   /** The tray shows either the room's pages or my local collection. */
   let collectionOpen = false;
+  /** "In this room" was chosen while the room has no custom emoji: show an empty note (never open the file picker by itself). */
+  let roomEmptyOpen = false;
   let coolUntil = 0;
   let trayOpen = false;
   let recent = readRecent();
@@ -183,18 +185,17 @@ export function createReactions(
       const chip = el('button', { type: 'button', class: on ? 'tray-chip on' : 'tray-chip', 'aria-pressed': String(on) }, label);
       chip.addEventListener('click', () => {
         collectionOpen = false;
-        // "Bu odada" boşsa doğrudan dosya seçilir.
-        if (target >= all.length) fire({ add: true });
-        else {
-          page = target;
-          draw();
-        }
+        // An empty "In this room" shows a note; adding is only ever the 🖼️ Add button (owner's feedback, 0.9.87).
+        roomEmptyOpen = target >= all.length;
+        if (!roomEmptyOpen) page = target;
+        draw();
       });
       return chip;
     };
     const collectionChip = el('button', { type: 'button', class: collectionOpen ? 'tray-chip on' : 'tray-chip', 'aria-pressed': String(collectionOpen) }, t('stickers.collection'));
     collectionChip.addEventListener('click', () => {
       collectionOpen = true;
+      roomEmptyOpen = false;
       draw();
     });
     const prev = el('button', { type: 'button', class: 'tray-page', title: t('moreReactions'), 'aria-label': t('moreReactions') }, '‹');
@@ -206,12 +207,20 @@ export function createReactions(
     const head = el(
       'div',
       { class: 'tray-head' },
-      kind(t('reactTray.ready'), 0, !collectionOpen && page < ownFirst),
-      kind(t('reactTray.mine'), ownFirst, !collectionOpen && page >= ownFirst),
+      kind(t('reactTray.ready'), 0, !collectionOpen && !roomEmptyOpen && page < ownFirst),
+      kind(t('reactTray.mine'), ownFirst, !collectionOpen && (roomEmptyOpen || page >= ownFirst)),
       collectionChip,
     );
+    // A room emoji may have arrived (or the last one was removed) since the chip was pressed.
+    if (roomEmptyOpen && all.length > ownFirst) {
+      roomEmptyOpen = false;
+      page = ownFirst;
+    }
+    const addFoot = () => el('div', { class: 'tray-foot' }, el('span', { class: 'tray-gap' }), add);
     const body = collectionOpen
-      ? collectionView()
+      ? [...collectionView(), addFoot()]
+      : roomEmptyOpen
+      ? [el('p', { class: 'tray-empty muted small' }, t('stickers.roomEmpty')), addFoot()]
       : [
           el('div', { class: 'tray-grid' }, ...slots),
           el('div', { class: 'tray-foot' }, prev, el('span', { class: 'tray-count' }, `${page + 1}/${all.length}`), next, el('span', { class: 'tray-gap' }), add),

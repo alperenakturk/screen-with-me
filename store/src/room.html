@@ -42,6 +42,7 @@
         <button type="button" class="btn primary small-btn invite-btn"><span>🔗</span><span class="invite-text">Invite</span></button>
         <button type="button" class="nav-link shell-home">🏠 Back to the room</button>
         <button type="button" class="nav-link profile-btn"><span class="profile-avatar drawn"><img src="/avatars/captain.svg" alt="" /></span></button>
+        <button type="button" class="nav-link settings-btn">⚙️</button>
       </div>
     </header>
     <main id="app"></main>
@@ -175,7 +176,6 @@
                 <button type="button" class="tab" aria-selected="${tab === 'chat'}"><span>💬</span><span>Chat</span></button>
                 <button type="button" class="tab" aria-selected="${tab === 'queue'}"><span>🎵</span><span>Queue</span><span class="count">2</span></button>
                 <button type="button" class="tab" aria-selected="${tab === 'people'}"><span>👥</span><span>People</span><span class="count">${PEOPLE.length}</span></button>
-                <button type="button" class="tab-gear">⚙️</button>
               </nav>
               ${panels[tab]}
             </section>

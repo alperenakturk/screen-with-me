@@ -1,27 +1,54 @@
 import { el } from '../dom.ts';
 
 /**
- * Düğmenin üstünde kısa süre beliren küçük uyarı balonu (ör. "tek başınasın"). Pencere açmaz,
- * kendiliğinden kaybolur; aynı anda tek balon.
+ * A small bubble that briefly appears over a button (e.g. "you are alone"). It opens no dialog and goes away by itself;
+ * only one at a time. Any click elsewhere, Esc or scrolling closes it early, and pressing the same button again
+ * closes it instead of reopening it (owner's feedback, 0.9.87: the "Why?" bubble stayed far too long).
  */
-let current: HTMLElement | null = null;
+let current: { bubble: HTMLElement; anchor: HTMLElement } | null = null;
 let timer = 0;
+/** The anchor whose bubble was just closed by pressing it, so its click handler doesn't reopen it at once. */
+let closedBy: { anchor: HTMLElement; at: number } | null = null;
+
+function close(): void {
+  if (!current) return;
+  current.bubble.remove();
+  current = null;
+  clearTimeout(timer);
+  document.removeEventListener('pointerdown', onPointerDown, true);
+  document.removeEventListener('keydown', onKey, true);
+  window.removeEventListener('scroll', close, true);
+}
+
+function onPointerDown(event: PointerEvent): void {
+  if (!current) return;
+  const target = event.target as Node | null;
+  if (target && current.anchor.contains(target)) closedBy = { anchor: current.anchor, at: Date.now() };
+  close();
+}
+
+function onKey(event: KeyboardEvent): void {
+  if (event.key === 'Escape') close();
+}
 
 export function flashHint(anchor: HTMLElement, text: string, ms = 2800): void {
-  current?.remove();
-  clearTimeout(timer);
+  if (closedBy?.anchor === anchor && Date.now() - closedBy.at < 600) {
+    closedBy = null;
+    return;
+  }
+  close();
   const bubble = el('div', { class: 'hint-bubble', role: 'status' }, text);
   document.body.append(bubble);
   const r = anchor.getBoundingClientRect();
   const w = bubble.offsetWidth;
-  // Düğmenin ortasına hizalı, ekrandan taşmasın; üstte yer yoksa altına.
+  // Centered on the button and kept on screen; below it when there is no room above.
   const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
   const above = r.top - bubble.offsetHeight - 8;
   bubble.style.left = `${left}px`;
   bubble.style.top = `${above > 8 ? above : r.bottom + 8}px`;
-  current = bubble;
-  timer = window.setTimeout(() => {
-    bubble.remove();
-    if (current === bubble) current = null;
-  }, ms);
+  current = { bubble, anchor };
+  timer = window.setTimeout(close, ms);
+  document.addEventListener('pointerdown', onPointerDown, true);
+  document.addEventListener('keydown', onKey, true);
+  window.addEventListener('scroll', close, true);
 }

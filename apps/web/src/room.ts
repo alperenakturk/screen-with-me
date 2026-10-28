@@ -443,7 +443,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button type="button" class="tab" role="tab" data-tab="people">
               <span aria-hidden="true">👥</span><span data-i18n="tab.people"></span><span id="people-count" class="count"></span>
             </button>
-            <button type="button" class="tab-gear" id="settings-open" data-i18n-title="tab.settings">⚙️</button>
           </nav>
 
           <div class="tab-panel chat-panel" data-panel="chat">
@@ -479,7 +478,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" data-set-lang="tr">TR</button>
                 <button type="button" data-set-lang="en">EN</button>
               </div>
-              <button type="button" class="btn small-btn" id="profile-settings">⚙️ <span data-i18n="tab.settings"></span></button>
               <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
             </div>
             <h4 data-i18n="settings.profile"></h4>
@@ -571,11 +569,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
           </div>
           <div class="settings-sec" data-sec="schedule" hidden>
-            <p class="muted small" data-i18n="settings.schedule"></p>
+            <p class="schedule-intro" data-i18n="settings.schedule"></p>
+            <div class="schedule-now" id="schedule-now" hidden>
+              <div class="schedule-now-text"><b id="schedule-now-time"></b><span id="schedule-now-left"></span></div>
+              <p class="schedule-warn" id="schedule-warn" data-i18n="schedule.noVideo" hidden></p>
+              <div class="schedule-now-actions">
+                <button type="button" class="btn small-btn" id="schedule-invite" data-i18n="schedule.invite"></button>
+                <button type="button" class="btn small-btn" id="opt-start-clear" data-i18n="settings.scheduleClear"></button>
+              </div>
+            </div>
+            <p class="set-label" data-i18n="schedule.quick"></p>
+            <div class="schedule-chips" id="schedule-chips">
+              <button type="button" class="chip" data-in="15" data-i18n="schedule.in15"></button>
+              <button type="button" class="chip" data-in="30" data-i18n="schedule.in30"></button>
+              <button type="button" class="chip" data-in="60" data-i18n="schedule.in60"></button>
+              <button type="button" class="chip" data-at="21" data-i18n="schedule.tonight"></button>
+            </div>
+            <p class="set-label" data-i18n="schedule.custom"></p>
             <div class="set-inline schedule-row">
               <input type="datetime-local" id="opt-start" aria-labelledby="settings-title" />
               <button type="button" class="btn primary" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
-              <button type="button" class="btn" id="opt-start-clear" data-i18n="settings.scheduleClear"></button>
             </div>
           </div>
         </div>
@@ -660,6 +673,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     drawProfileButton = () => profileButton.replaceChildren(avatarNode(myAvatar, 'profile-avatar'));
     drawProfileButton();
     document.querySelector('.topbar-right')?.append(profileButton);
+    // ⚙️ Settings: the only entry point, right of the profile picture (owner's request, 0.9.87).
+    document.querySelector('.topbar-right')?.append(
+      el('button', { type: 'button', id: 'settings-open', class: 'nav-link settings-btn', 'data-i18n-title': 'tab.settings', title: t('tab.settings'), 'aria-label': t('tab.settings') }, '⚙️'),
+    );
     const pop = el('div', { class: 'profile-pop', role: 'dialog', 'aria-label': t('tab.profile') });
     pop.hidden = true;
     pop.append($('#profile-panel'));
@@ -677,15 +694,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       drawLang();
     });
     drawLang();
-    $('#profile-settings').addEventListener('click', () => {
-      setOpen(false);
-      settingsDialog.open();
-    });
     $('#profile-reconnect').addEventListener('click', () => {
       setOpen(false);
       reconnectNow();
     });
     const setOpen = (open: boolean) => {
+      // Right edge under the profile picture (⚙️ sits to its right since 0.9.87).
+      if (open) pop.style.right = `${Math.max(12, innerWidth - profileButton.getBoundingClientRect().right)}px`;
       pop.hidden = !open;
       profileButton.setAttribute('aria-expanded', String(open));
     };
@@ -715,9 +730,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const remembered = sessionLoad(`tab:${roomId}`);
     tabs.show(isTabId(remembered) && !(isShell && remembered === 'queue') ? remembered : 'chat');
   }
-  // ⚙️ Ayarlar: sekmelerin sağındaki düğme (ve profil menüsü) ekranın ortasında pencere açar.
+  // ⚙️ Settings (top right, next to the profile picture) opens the centered dialog.
   const settingsDialog = createSettingsDialog(app, amHost);
-  $('#settings-open').addEventListener('click', () => settingsDialog.open());
+  // The button lives in the top bar, outside `app`.
+  document.getElementById('settings-open')?.addEventListener('click', () => settingsDialog.open());
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
     myAvatar = avatar;
@@ -2144,13 +2160,31 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (scheduleWasSet && roomState?.item && !roomState.paused) addActivity(() => t('scheduleStarted'));
       scheduleWasSet = false;
       banner.hidden = true;
+      $('#schedule-now').hidden = true;
       return;
     }
     scheduleWasSet = true;
     const left = Math.max(0, at - clock.now());
-    const time = new Date(at - (clock.now() - Date.now())).toLocaleString(document.documentElement.lang || undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    const time = scheduleTime(at);
     banner.hidden = false;
-    banner.textContent = t('scheduleBanner', { time, left: formatLeft(left) });
+    banner.textContent = roomState?.item ? t('scheduleBanner', { time, left: formatLeft(left) }) : t('scheduleBannerEmpty', { time, left: formatLeft(left) });
+    // The settings section shows the same plan as a card (with "copy invite with the time" and "clear").
+    $('#schedule-now').hidden = false;
+    $('#schedule-now-time').textContent = t('schedule.at', { time });
+    $('#schedule-now-left').textContent = t('schedule.left', { left: formatLeft(left) });
+    $('#schedule-warn').hidden = !!roomState?.item;
+  }
+  /** Server time → the person's local clock, e.g. "Sat 21:00". */
+  function scheduleTime(at: number): string {
+    return new Date(at - (clock.now() - Date.now())).toLocaleString(document.documentElement.lang || undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+  /** Plan a start at a local time (ms); converted to server time. */
+  function scheduleAt(local: number): void {
+    if (!Number.isFinite(local) || local <= Date.now()) {
+      showError(() => t('scheduleInvalid'));
+      return;
+    }
+    send({ t: 'settings', startsAt: local + (clock.now() - Date.now()) });
   }
   setInterval(() => roomSettings.startsAt !== undefined && renderSchedule(), 1000);
 
@@ -2194,15 +2228,40 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   $('#opt-start-set').addEventListener('click', () => {
     const value = $<HTMLInputElement>('#opt-start').value;
-    const local = value ? new Date(value).getTime() : NaN;
-    if (!Number.isFinite(local) || local <= Date.now()) {
-      showError(() => t('scheduleInvalid'));
+    scheduleAt(value ? new Date(value).getTime() : NaN);
+  });
+  // Quick choices: in 15 / 30 / 60 minutes (rounded to the next 5 minutes) or tonight at 21:00 (tomorrow if past).
+  $('#schedule-chips').addEventListener('click', (event) => {
+    const chip = (event.target as Element).closest<HTMLButtonElement>('.chip');
+    if (!chip) return;
+    const step = 5 * 60_000;
+    if (chip.dataset.in) {
+      scheduleAt(Math.ceil((Date.now() + Number(chip.dataset.in) * 60_000) / step) * step);
       return;
     }
-    // Sunucu saatine çevir (tahmini fark).
-    send({ t: 'settings', startsAt: local + (clock.now() - Date.now()) });
+    const at = new Date();
+    at.setHours(Number(chip.dataset.at), 0, 0, 0);
+    if (at.getTime() <= Date.now() + 60_000) at.setDate(at.getDate() + 1);
+    scheduleAt(at.getTime());
   });
-  $('#opt-start-clear').addEventListener('click', () => send({ t: 'settings', startsAt: null }));
+  $('#opt-start-clear').addEventListener('click', () => {
+    send({ t: 'settings', startsAt: null });
+    $('#schedule-now').hidden = true;
+  });
+  // Copies an invite that says when the film starts (the slogan the owner chose + the time + the link).
+  $('#schedule-invite').addEventListener('click', async () => {
+    const at = roomSettings.startsAt;
+    if (at === undefined) return;
+    const text = t('schedule.inviteText', { time: scheduleTime(at), url: inviteUrl });
+    const button = $<HTMLButtonElement>('#schedule-invite');
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = t('copied');
+      setTimeout(() => (button.textContent = t('schedule.invite')), 1500);
+    } catch {
+      window.prompt(t('invite'), text);
+    }
+  });
   $<HTMLInputElement>('#opt-wait').addEventListener('change', (event) => {
     send({ t: 'settings', waitForAll: (event.target as HTMLInputElement).checked });
   });

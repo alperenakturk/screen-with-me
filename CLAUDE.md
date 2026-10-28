@@ -56,7 +56,9 @@ We are building a **global product**, so everything is professional, formal and 
 
 ## Plan in one screen (details and checklists: `docs/internal/ROADMAP.md`)
 **Before 1.0** (we are at 0.9.8x; every version moves one of these forward):
-1. **Polish existing features** (the user will walk through each one).
+1. **Polish existing features** (the user will walk through each one). Owner's list for the full pass before 1.0
+   (ROADMAP §1 "Full pass before 1.0"): **sound effects** (voice join/leave, game events, room events; with a volume /
+   off setting) and **camera window settings** (position, size, behaviour of the tiles).
 2. **Zero known bugs:** every bug gets an issue + a regression test; flaky tests are fixed, not ignored.
 3. **Security hardening:** threat model, protocol/limits review, CSP and headers, extension permissions, dependency
    and secret scanning, `SECURITY.md`.
@@ -305,7 +307,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `stripGifMetadata`). **Room-only (0.9.86, owner's decision after security review 1):** nothing is uploaded on join;
   adding opens a dialog (preview, "added to this room only", unchecked "Koleksiyonuma da kaydet"). My collection:
   `localStorage` `stickerCollection` (max 12, shared with the extension, never uploaded by itself); tray chips
-  Emojiler · Bu odada · Koleksiyonum (tap = add that one to this room). The old auto-uploaded `myStickers` list is
+  Emojiler · Bu odada · Koleksiyonum (tap = add that one to this room); an empty "Bu odada" shows a note and never opens the file picker by
+  itself (0.9.87), "🖼️ Ekle" is at the bottom of every view. The old auto-uploaded `myStickers` list is
   moved to the collection once (`stickerNote` one-time note). The server sends `mine: true` only to the uploader
   (✕ works after a reload); the host can remove all with `{t:'sticker-clear'}` (Settings → Oda kuralları). Limits:
   `stickerLimit` per IP hash + at most 60 uploads per room and day (`stickerDay`).
@@ -317,6 +320,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   emojis. In the shell islands are merged without overlap with `mergeRects` (the clip path uses even-odd: two
   overlapping islands cancelled each other and showed emojis half/faded). Users can turn them off: Settings →
   "Emojiler videonun üstünde uçuşsun" (`opt:reactions`). In the shell each flying emoji's path is an island.
+- **Hint bubbles (`ui/hint.ts` `flashHint`, 0.9.87):** close by themselves, on any click elsewhere, Esc or scroll;
+  pressing the same button again closes it (the IP "Neden?" bubble is 7 s).
 - **No sync when alone:** on the site "Herkesi bana eşitle" and the sync test are dimmed; pressing shows a "you are
   alone" bubble (`isAlone`, `ui/hint.ts` `flashHint`); on the server there is no "everyone ready" wait when fewer than
   2 distinct cids are present.
@@ -448,8 +453,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   extension the background re-sends state + a note). The `settings` message is partial: only present fields change.
 - **Voting:** `{t:'vote', id, up}`; voters' persistent keys stay on the server (`voters`; clients only get
   `QueueItem.votes`); the queue is ordered by votes (ties by insertion order). My votes: site `localStorage` `myVotes`.
-- **Scheduled start (`settings.startsAt`, server time):** the single alarm checks this too; when the time comes the
-  plan is cleared and a paused video plays as `SYSTEM`. Countdown banner on the site.
+- **Scheduled start / "Film saati" (`settings.startsAt`, server time):** the single alarm checks this too; when the
+  time comes the plan is cleared and a paused video plays as `SYSTEM`. Countdown banner on the site (says when no video
+  is picked yet). 0.9.87: Settings → Film saati has quick picks (15 / 30 / 60 min rounded to 5 min, tonight 21:00), a
+  card with the planned time + time left, "🔗 Saatli daveti kopyala" (slogan + time + link) and clear.
 - **Sync test (`media.kind === 'test'`):** no file; `players/test.ts` draws a 12 s counter on a canvas and behaves like
   a `<video>`. While playing, a "you're in the same spot (≈N ms apart)" badge.
 - **Saved rooms (`saved-rooms.ts`):** "Oda oluştur" on the home page → one-time / saved (name required; the name is
@@ -467,8 +474,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   the last card → `{t:'recap-save'}` (replaces the same session's previous save; 20 in saved rooms, otherwise 5;
   90 days), list broadcast with `{t:'recaps'}`. The client picks random cards each time with `chooseFacts` (more with
   more data, at most 8); first the duration, last the summary + PNG. No stats card at the end of a video.
-- **Tabs:** 💬 Chat, 🎵 Queue, 👥 People (equal widths) + a ⚙️ button on their right; 👤 Profile is not a tab: the
-  right-most button at the top right (my avatar) opens a menu below it (`.profile-pop`; closes on outside click/Esc;
+- **Tabs:** 💬 Chat, 🎵 Queue, 👥 People (equal widths); 👤 Profile is not a tab: the button at the top right (my
+  avatar; ⚙️ Settings sits right of it, the only settings entry point since 0.9.87) opens a menu below it (`.profile-pop`; closes on outside click/Esc;
   in the shell the hole closes while it is open). Everyone starts on 💬 Chat; a reload in the same tab keeps the tab
   (`sessionStorage` `tab:<room>`).
 - **Room UI 0.9.80 (user chose 1B 2C 3B 4A 5A, design page `oda-arayuzu`):**
@@ -476,8 +483,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
     + name; consecutive messages from the same person within 3 min merge (`.cont`); room actions centered between thin
     lines; send arrow (`#chat-send`) inside the box.
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with sections on
-    the left: Ekranım (My screen) / Oda kuralları (Room rules) / Odayı kaydet (Save room) / Planlı başlangıç (Scheduled
-    start; host only). Rows are title + short description + toggle (`.set-row`, `input.switch`, `role=switch`). Non-
+    the left: Ekranım (My screen) / Oda kuralları (Room rules) / Odayı kaydet (Save room) / Film saati (Film time; host
+    only). Rows are title + short description + toggle (`.set-row`, `input.switch`, `role=switch`). Non-
     hosts don't see the toggles; they see `#rules-summary` (✓/– summary, "X sets the rules"). The dialog is always in
     the page (hidden): selectors for open dialogs are `.dialog-backdrop:not([hidden])` (closes the hole in the shell,
     swallows shortcuts). On phones the sections are horizontal at the top.
@@ -489,7 +496,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
     opening animation (measurements shifted).
   - **Top bar** (`html.in-room`): "Bağlı" text, ⟳, 🎨 and TR/EN hidden in the room; the connection is the dot of the
     room name (`.room-title-dot` green/yellow/red, short text next to it when not connected, click reconnects; on
-    phones only the dot). Language, ⚙️ Settings and ⟳ sit at the top of the profile menu (`.profile-actions`).
+    phones only the dot). Language and ⟳ sit at the top of the profile menu (`.profile-actions`); ⚙️ is its own button
+    right of the profile picture (`#settings-open`, 0.9.87).
   - **Together card:** "🎙 Sese katıl" + "🖥️ Paylaş ▾" on the same row (`.together-actions`); the Share menu has screen /
     camera and a limits note; while streaming the row is full width (`.live-card.active`), quality only for my own
     screen stream. People who can't share (shell, phones without screen sharing) don't see this part while idle.
@@ -524,7 +532,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
 - **Rate:** `MAX_RATE` 4 (HTML5), YouTube at most 2 (`YOUTUBE_MAX_RATE`; the site clamps the request, the server lowers
   the rate to 2 when a YouTube video opens).
 - **Default language is Turkish** (site + extension); if EN is chosen it is remembered.
-- **Avatar choice:** on the site "Avatarı değiştir" → a large centered dialog (`openAvatarDialog`); in the extension a
+- **Avatar choice:** on the site "Avatarı değiştir" → a large centered dialog (`openAvatarDialog`); since 0.9.87 a pick
+  is only applied (and seen by others) with "Tamam" or a double-click; ✕ / Esc / outside cancel. In the extension a
   panel covering the whole window. Hover wobbles, the selected one floats (CSS; off with `prefers-reduced-motion`).
 - **Avatar lists have no pages:** with many avatars in a tab the grid scrolls (no ‹ ›; the user didn't want them).
 - **CI (`.github/workflows/test.yml`):** on every push/PR: typecheck, unit tests, build, local server with `wrangler
