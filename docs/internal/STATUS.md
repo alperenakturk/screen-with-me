@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.86**. The owner moved to a **new Claude
+> Last update: 28 Oct 2026. Site and extension **0.9.89**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -53,8 +53,8 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - [ ] **0.9.90** YouTube player on the site: controls stay visible long after the mouse leaves; YouTube's own volume
   control doesn't work. **Blocked here:** this sandbox can't reach `www.youtube.com` / `*.googlevideo.com` /
   `*.ytimg.com`; the owner was asked to allow them (environment → Network access → Allowed domains).
-- [ ] **0.9.91** YouTube search inside the app (owner gets a YouTube Data API key → GitHub Secrets; Claude writes the
-  guide and the code).
+- [ ] **0.9.91** YouTube search inside the app. **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
+  `YOUTUBE_API_KEY` (steps and plan in CLAUDE.md "Next up"; guide given to the owner on 28 Oct 2026).
 - [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)

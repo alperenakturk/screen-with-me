@@ -54,6 +54,24 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
+## Next up (saved 28 Oct 2026, after 0.9.89; the owner paused here — continue in this order)
+Live: 0.9.89. The same queue is in `docs/internal/STATUS.md` "Task queue".
+1. **0.9.90 YouTube player fixes** (owner's feedback): on the site the YouTube controls stay visible long after the
+   mouse leaves the video (windowed view), and YouTube's own volume control doesn't work. Our code never sets the
+   volume (checked), so suspect something over/around the iframe or our seeks/rate changes. **Needs network access:**
+   the cloud sandbox blocks `www.youtube.com`, `*.googlevideo.com`, `*.ytimg.com`; the owner was asked to add them under
+   the environment's Network access → Allowed domains. Check with `curl https://www.youtube.com/iframe_api` first;
+   if still blocked, say so and move on.
+2. **0.9.91 YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
+   owner: Google Cloud project (project e-mail) → enable "YouTube Data API v3" → API key restricted to that API →
+   GitHub repo Secrets `YOUTUBE_API_KEY` (never pasted in chat). Plan: the Worker calls `search.list` (key stays on the
+   server; the deploy job passes the secret to the Worker), results cached per query, a friendly "search is full for
+   today, paste a link" when the quota (10 000 units/day, 100 per search ≈ 100 searches/day) runs out; privacy policy
+   gets the "uses YouTube API Services" + Google privacy policy link. Quota increase = Google's YouTube API compliance
+   audit, done by the owner before 1.0 together with the domain and terms of use.
+3. **Before 1.0 full pass** (owner's list, ROADMAP §1): sound effects (voice join/leave, game events, room events, with
+   volume/off), camera window settings (position, size, behaviour), Shorts/Reels scrolling test, then ROADMAP §2–7.
+
 ## Plan in one screen (details and checklists: `docs/internal/ROADMAP.md`)
 **Before 1.0** (we are at 0.9.8x; every version moves one of these forward):
 1. **Polish existing features** (the user will walk through each one). Owner's list for the full pass before 1.0
