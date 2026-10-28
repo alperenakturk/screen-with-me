@@ -31,8 +31,8 @@ implement, test, ship.
     own camera visible in a slot; small audio glitches.
   - [x] Microphone turned on by itself after a connection problem; people count grew while one person was shown.
   - [x] Film ducking: **off by default**, only in Settings; triggers on real speech, never on a click.
-  - [ ] Meet-style controls under camera tiles (mic/camera on/off while watching).
-  - [ ] Discord-style per-person controls: mute for me, volume for me, host kick; pin a camera; hide my own camera;
+  - [x] Meet-style controls under camera tiles (mic/camera on/off while watching).
+  - [x] Discord-style per-person controls: mute for me, volume for me, host kick; pin a camera; hide my own camera;
     resize tiles in both directions.
   - [ ] Scheduled start: currently meaningless; make it clear and well designed.
   - [ ] ⚙️ next to the profile picture; remove the other settings entry points (tab row, profile menu).

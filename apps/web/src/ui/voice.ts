@@ -30,7 +30,14 @@ const RPC_TIMEOUT_MS = 12_000;
 /** "Birlikte" kartında en fazla bu kadar kişi görünür (fazlası "+N"). */
 const PEOPLE_SHOWN = 8;
 
-export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean) {
+export interface VoiceRoom {
+  /** Am I the host (the person menu offers "remove from room")? */
+  isHost: () => boolean;
+  /** Ask (confirm) and remove someone from the room. */
+  kick: (member: Member) => void;
+}
+
+export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean, room: VoiceRoom) {
   const card = root.querySelector<HTMLElement>('#voice-card')!;
   const joinButton = root.querySelector<HTMLButtonElement>('#voice-join')!;
   const onBox = root.querySelector<HTMLElement>('#voice-on')!;
@@ -45,12 +52,28 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const limitEl = root.querySelector<HTMLElement>('#voice-limit')!;
   const camsBox = root.querySelector<HTMLElement>('#voice-cams')!;
   // Kameralar kartta, sayfada yüzen pencerede ya da tam ekranda videonun içinde (sürüklenir, boyutlandırılır).
+  // Meet-style buttons under the cameras (floating window and fullscreen): my mic and camera without going back to
+  // the card. They press the card's own buttons, so behaviour (push-to-talk, limits) stays in one place.
+  const camMic = el('button', { type: 'button', class: 'cam-ctl cam-ctl-mic' });
+  const camCam = el('button', { type: 'button', class: 'cam-ctl cam-ctl-cam' }, '📷');
+  camMic.addEventListener('click', () => micButton.click());
+  camCam.addEventListener('click', () => camButton.click());
+  const camControls = el('div', { class: 'cam-controls' }, camMic, camCam);
   const camWindow = createCamWindow({
     box: camsBox,
     theater: root.querySelector<HTMLElement>('#theater')!,
     wrap: root.querySelector<HTMLElement>('.player-wrap')!,
+    controls: camControls,
     onMove: () => dispatchEvent(new Event('swm-layout')),
+    onTileClick: (tileEl) => {
+      const member = members.find((m) => m.id === tileEl.dataset.voiceId);
+      if (member) openPersonMenu(member, tileEl);
+    },
   });
+  /** Camera shown big (person key); only in this tab. */
+  let pinned: string | null = null;
+  /** Hide my own camera preview (others still see me). */
+  let hideSelf = load('opt:hideSelfCam') === '1';
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
   const pttBox = root.querySelector<HTMLInputElement>('#voice-ptt')!;
   /** Bas-konuş: mikrofon kapalı durur, V tuşu (ya da 🎙) basılı tutulunca açılır. Tarayıcıda hatırlanır. */
@@ -120,7 +143,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const audio = el('audio', { autoplay: '' }) as HTMLAudioElement;
     audio.srcObject = stream;
     audio.hidden = true;
-    audio.muted = isMyOtherTab(memberId);
+    setVolume(audio, memberId);
     document.body.append(audio);
     void audio.play().catch(() => {});
     audios.set(memberId, audio);
@@ -204,7 +227,10 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         const face = el('span', { class: `voice-face${m.voice ? ' in-voice' : ''}`, 'data-voice-id': m.id }, avatarNode(m.avatar, 'voice-avatar'));
         if (m.voice && !m.voice.mic) face.append(el('span', { class: 'voice-muted' }, '🔇'));
         const label = m.id === me ? t('voice.me') : m.name;
-        return el('span', { class: 'together-person', title: m.voice ? `${m.name} · ${t('voice.inVoice')}` : m.name }, face, el('span', { class: 'together-name' }, label));
+        const person = el('button', { type: 'button', class: 'together-person', title: m.voice ? `${m.name} · ${t('voice.inVoice')}` : m.name }, face, el('span', { class: 'together-name' }, label));
+        // Discord-style menu: volume / mute for me, pin the camera, hide myself, host: remove from the room.
+        person.addEventListener('click', () => openPersonMenu(m, person));
+        return person;
       }),
       ...(people.length > PEOPLE_SHOWN ? [el('span', { class: 'together-more' }, `+${people.length - PEOPLE_SHOWN}`)] : []),
     );
@@ -230,6 +256,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const camLabel = camOn ? t('voice.camOff') : t('voice.camOn');
     camButton.title = camLabel;
     camButton.setAttribute('aria-label', camLabel);
+    camMic.textContent = client.micEnabled ? '🎙' : '🔇';
+    camMic.classList.toggle('off', !client.micEnabled);
+    camMic.title = micLabel;
+    camMic.setAttribute('aria-label', micLabel);
+    camCam.hidden = camButton.hidden;
+    camCam.classList.toggle('off', !camOn);
+    camCam.title = camLabel;
+    camCam.setAttribute('aria-label', camLabel);
+    camControls.hidden = !active;
     renderCams();
   }
 
@@ -267,17 +302,134 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         if (!member.voice?.cam) continue;
         if (member.id !== me && self && person(member) === person(self)) continue;
         if (member.id !== me && newest.get(person(member)) !== member) continue;
+        // "Hide myself" only hides my own preview here; the others still see me.
+        if (member.id === me && hideSelf) continue;
         const stream = member.id === me ? (client.camera ?? null) : (videos.get(member.id) ?? null);
         if (!stream) continue;
         keep.add(member.id);
-        shown.push(tile(member.id, member.name, stream, member.id === me));
+        const box = tile(member.id, member.name, stream, member.id === me);
+        box.classList.toggle('pinned', pinned === person(member));
+        shown.push(box);
       }
+      // The pinned camera comes first and spans the whole width.
+      shown.sort((a, b) => Number(b.classList.contains('pinned')) - Number(a.classList.contains('pinned')));
     }
     for (const id of [...tiles.keys()]) if (!keep.has(id)) tiles.delete(id);
     camWindow.grid.replaceChildren(...shown);
     camsBox.hidden = shown.length === 0;
     camWindow.update(shown.length);
   }
+
+  // ---- Per person, for me only (Discord-like): volume, mute, pinned camera, hide my own preview ----
+  /** Remembered by person (name + avatar), not by connection: it survives reconnects and other rooms. */
+  type PersonSound = { v?: number; m?: boolean };
+  const SOUND_KEY = 'voiceSound';
+  let sound: Record<string, PersonSound> = (() => {
+    try {
+      const parsed = JSON.parse(load(SOUND_KEY) ?? '{}') as unknown;
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, PersonSound>) : {};
+    } catch {
+      return {};
+    }
+  })();
+  const personOf = (m: Member) => `${m.name}|${m.avatar ?? ''}`;
+  function volumeOf(memberId: string): number {
+    if (isMyOtherTab(memberId)) return 0;
+    const member = members.find((m) => m.id === memberId);
+    const s = member ? sound[personOf(member)] : undefined;
+    return s?.m ? 0 : Math.min(1, Math.max(0, s?.v ?? 1));
+  }
+  function setVolume(audio: HTMLAudioElement, memberId: string): void {
+    const volume = volumeOf(memberId);
+    audio.volume = volume;
+    audio.muted = volume === 0;
+  }
+  function applyVolumes(): void {
+    for (const [memberId, audio] of audios) setVolume(audio, memberId);
+    // On the film page the voices play in the extension.
+    if (client instanceof ExtVoice) client.volumes(Object.fromEntries(members.filter((m) => m.voice).map((m) => [m.id, volumeOf(m.id)])));
+  }
+  function setSound(member: Member, next: PersonSound): void {
+    const key = personOf(member);
+    sound = { ...sound, [key]: { ...sound[key], ...next } };
+    save(SOUND_KEY, JSON.stringify(sound));
+    applyVolumes();
+  }
+
+  let menu: HTMLElement | null = null;
+  function closeMenu(): void {
+    if (!menu) return;
+    menu.remove();
+    menu = null;
+    dispatchEvent(new Event('swm-layout'));
+  }
+  addEventListener('pointerdown', (event) => {
+    if (menu && !menu.contains(event.target as Node) && !(event.target as Element).closest?.('.together-person, .cam-tile')) closeMenu();
+  });
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeMenu();
+  });
+
+  /** Small menu next to a person (their face in the card or their camera tile). */
+  function openPersonMenu(member: Member, anchor: HTMLElement): void {
+    const wasOpen = menu?.dataset.member === member.id;
+    closeMenu();
+    if (wasOpen) return;
+    const isMe = member.id === myId();
+    const key = personOf(member);
+    const items: HTMLElement[] = [el('div', { class: 'person-pop-head' }, avatarNode(member.avatar, 'person-pop-avatar'), el('b', {}, isMe ? `${member.name} (${t('voice.me')})` : member.name))];
+    const button = (text: string, onClick: () => void, cls = '') => {
+      const b = el('button', { type: 'button', class: `person-pop-item ${cls}` }, text);
+      b.addEventListener('click', () => {
+        onClick();
+        closeMenu();
+        render();
+      });
+      return b;
+    };
+    const s = sound[key] ?? {};
+    if (!isMe && member.voice && client.active) {
+      const range = el('input', { type: 'range', min: '0', max: '100', step: '5', class: 'person-pop-range', 'aria-label': t('voice.volume') }) as HTMLInputElement;
+      range.value = String(Math.round((s.v ?? 1) * 100));
+      const value = el('span', { class: 'person-pop-value' }, `${range.value}%`);
+      range.addEventListener('input', () => {
+        value.textContent = `${range.value}%`;
+        setSound(member, { v: Number(range.value) / 100, m: false });
+      });
+      items.push(el('label', { class: 'person-pop-volume' }, el('span', {}, `🔊 ${t('voice.volume')}`), range, value));
+      items.push(button(s.m ? `🔊 ${t('voice.unmuteFor')}` : `🔇 ${t('voice.muteFor')}`, () => setSound(member, { m: !s.m })));
+    }
+    const hasTile = tiles.has(member.id) || (isMe && hideSelf && client.camEnabled === true);
+    if (hasTile && !isMe) items.push(button(pinned === key ? `📌 ${t('voice.unpin')}` : `📌 ${t('voice.pin')}`, () => (pinned = pinned === key ? null : key)));
+    if (isMe && client.camEnabled) {
+      items.push(
+        button(hideSelf ? `👁 ${t('voice.showSelf')}` : `🙈 ${t('voice.hideSelf')}`, () => {
+          hideSelf = !hideSelf;
+          save('opt:hideSelfCam', hideSelf ? '1' : '0');
+        }),
+      );
+    }
+    if (!isMe && room.isHost()) items.push(button(`🚪 ${t('voice.kick')}`, () => room.kick(member), 'danger'));
+    if (items.length === 1) items.push(el('p', { class: 'person-pop-note' }, t(member.voice ? 'voice.menuNothing' : 'voice.notInVoice')));
+    menu = el('div', { class: 'person-pop', role: 'menu', 'data-island': '', 'data-member': member.id }, ...items);
+    document.body.append(menu);
+    const r = anchor.getBoundingClientRect();
+    const w = menu.offsetWidth;
+    const h = menu.offsetHeight;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+    const top = r.bottom + 6 + h > innerHeight - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6;
+    menu.style.left = `${Math.round(left)}px`;
+    menu.style.top = `${Math.round(top)}px`;
+    dispatchEvent(new Event('swm-layout'));
+  }
+
+  // M toggles my microphone while I'm in voice (not with push-to-talk; never while typing).
+  document.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() !== 'm' || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+    if (!client.active || ptt || typing(event.target)) return;
+    event.preventDefault();
+    micButton.click();
+  });
 
   /** Bu odada seste en fazla kaç kişi (eşler arası 6, Cloudflare yolunda 10). */
   function voiceMax(): number {
@@ -493,8 +645,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     members(next: Member[]): void {
       members = next;
       client.sync(members, myId());
-      // My other tab in voice must not play my own voice back here.
-      for (const [memberId, audio] of audios) audio.muted = isMyOtherTab(memberId);
+      applyVolumes();
       render();
     },
     rtc(message: Extract<ServerMessage, { t: 'rtc' }>): void {

@@ -7416,10 +7416,6 @@ html.in-room .topbar-right > .lang {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
 }
 
-/* Kutular sürüklemeyi yutmasın (videonun kendi sürüklemesi yok) */
-.voice-cams.floating .cam-tile {
-  pointer-events: none;
-}
 
 .voice-cams.floating .cam-resize {
   display: block;
@@ -7446,4 +7442,177 @@ html.in-room .topbar-right > .lang {
 
 .voice-cams.floating.folded :is(.cam-grid, .cam-resize) {
   display: none;
+}
+
+/* ==== 0.9.85: Meet/Discord-style voice controls (ui/voice.ts) ==== */
+/* Faces in the "Together" card are buttons: they open the person menu. */
+button.together-person {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+button.together-person:hover .together-name,
+button.together-person:focus-visible .together-name {
+  color: var(--text);
+}
+
+.cam-tile {
+  cursor: pointer;
+}
+
+/* Mic / camera under the tiles: only in the floating window and in fullscreen (the card has its own buttons). */
+.cam-controls {
+  display: none;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.voice-cams.floating .cam-controls:not([hidden]) {
+  display: flex;
+}
+
+.voice-cams.floating.folded .cam-controls {
+  display: none;
+}
+
+.cam-ctl {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.cam-ctl:hover {
+  background: color-mix(in srgb, var(--text) 26%, transparent);
+}
+
+/* Off = red, like Meet. */
+.cam-ctl.off {
+  background: #d93a3a;
+  color: #fff;
+}
+
+/* Resized in both directions: the tiles fill the window. */
+.voice-cams.floating.sized {
+  display: flex;
+  flex-direction: column;
+}
+
+.voice-cams.floating.sized .cam-grid {
+  flex: 1;
+  min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.voice-cams.floating.sized .cam-tile {
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+/* Pinned camera: first and full width (twice as tall when the window has a set height). */
+.cam-tile.pinned {
+  grid-column: 1 / -1;
+}
+
+.voice-cams.floating.sized .cam-tile.pinned {
+  grid-row: span 2;
+}
+
+/* Person menu (volume, mute for me, pin, hide myself, remove). */
+.person-pop {
+  position: fixed;
+  z-index: 950;
+  width: 240px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.person-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 6px;
+  font-size: 14px;
+}
+
+.person-pop-avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+}
+
+.person-pop-avatar img {
+  width: 100%;
+  height: 100%;
+}
+
+.person-pop-volume {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.person-pop-range {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.person-pop-value {
+  grid-row: 1;
+  grid-column: 2;
+  font-variant-numeric: tabular-nums;
+}
+
+.person-pop-item {
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.person-pop-item:hover,
+.person-pop-item:focus-visible {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.person-pop-item.danger {
+  color: #ff6b6b;
+}
+
+.person-pop-note {
+  margin: 0;
+  padding: 4px;
+  font-size: 13px;
+  color: var(--muted);
 }

@@ -740,7 +740,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }, 2600);
   }
   // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
-  const voice = createVoice(app, send, () => myId, roomId, isShell);
+  const voice = createVoice(app, send, () => myId, roomId, isShell, {
+    isHost: () => myId !== null && myId === hostId,
+    kick: (member) => {
+      if (confirm(t('kickConfirm', { name: member.name }))) send({ t: 'kick', id: member.id });
+    },
+  });
   const live = createLive(app, send, () => myId, isShell, () => amHost());
   // Odanın içindeki oyunlar: 🎮 → oyun seç → oyun videonun yerinde açılır (ayrı oyun odası yok).
   const games = createGameStage({
