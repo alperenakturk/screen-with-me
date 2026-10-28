@@ -1,8 +1,8 @@
 # Durum: kaldığımız yer (her oturum önce bunu okusun)
 
-> Son güncelleme: 27 Ekim 2026, site **0.9.74**, eklenti **0.9.68** (site/sunucu PR birleşince canlıda). Kullanıcı
-> çoğunlukla **bulut oturumlarından** (claude.ai/code) çalışıyor; yerel bilgisayardaki hafıza notları buluta gitmez,
-> gereken her şey burada ve `CLAUDE.md`'de. Bir işi bitirince bu dosyayı güncelle (kısa tut).
+> Son güncelleme: 28 Ekim 2026, site ve eklenti **0.9.82** (main'de, canlıda). Kullanıcı **yeni bir Claude hesabına**
+> geçti (28 Ekim 2026): eski hesabın oturumlarına/hafızasına erişim yok, gereken her şey burada ve `CLAUDE.md`'de.
+> Kullanıcı çoğunlukla **bulut oturumlarından** (claude.ai/code) çalışıyor. Bir işi bitirince bu dosyayı güncelle (kısa tut).
 
 ## Kullanıcıyla çalışma (özet; ayrıntı CLAUDE.md)
 - Türkçe, sade dil; kullanıcı (Alperen) JS/HTML/CSS öğrenen bir öğrenci. Telefondan da takip ediyor.
@@ -61,11 +61,21 @@ Claude göremez, kullanıcı "dur" der). Ek oturum açmak serbest.
    bozuk PlayWithMe kısayolu kalktı.
 12. **İsim ve marka araştırması** ayrı oturumda (https://claude.ai/code/session_01CfgCENd2sLGpEArKS6Uaqj): aynı adla bir
    yapay zekâ ürünü var; tescil durumu, risk, TÜRKPATENT süreci ve yedek isimler. Sonuç `docs/internal/marka-arastirmasi.md`.
-   Ad değişirse site + eklenti + mağaza metinleri bu oturumda güncellenir.
+   Ad değişirse site + eklenti + mağaza metinleri bu oturumda güncellenir. **Not (28 Ekim):** bu dosya main'de yok
+   (o oturum eski hesapta kaldı); sonucu kullanıcıdan istenmeli.
 
 **Sıradaki (0.9.82 →):** (1) oyun fikirleri konuşmasından seçilen yeni oyunlar, (2) kelime avı
 (Türkçe sözlük gerekir; ya da sözlüksüz bir kelime oyunu), (3) gerçek deneme turu hazırlığı (VIZYON "v1.0" listesi),
 (4) Brave/Edge'de eklenti denemesi (kullanıcıdan), (5) senkron ölçümü (p50/p95) ve README rozeti.
+
+## Son tam test turu (28 Ekim 2026, 0.9.82, bulut)
+- Tip kontrolü ✅, birim 157/157 ✅, e2e 172 kontrol ✅ (sadece `room.mjs` YouTube kapalı olduğu için takılıyor, bilinen).
+- Ses (site) 24/24 ✅ ve film sayfasında ses 28/28 ✅, ama **ikisi de `VOICE_A`/`VOICE_B` ile**: onlarsız iki Chrome aynı
+  sahte bip'i kullanıyor, yankı engelleyici siliyor, "gerçekten duyuyor" kontrolleri düşüyor (kod hatası değil).
+- Eklenti (embed) 91/92: **"siteden film sayfasına geçerken flaş yok" iki koşuda da düştü**: film sayfası tek karede
+  (~60 ms) örtüsüz görünüyor. Nedeni: siteden ilk geçişte `sessionStorage` `swm-cover` yok, örtü `storage.session`
+  okumasını (async) bekliyor ve ilk boyama ondan önce geliyor (`content.ts` `checkSessions`). Yarış; makine hızına
+  bağlı. Düzeltme adayı 0.9.83'te.
 
 ## Son yapılanlar (0.9.61 → 0.9.80)
 - Site denetimi (0.9.61), PlayWithMe + XOX (0.9.62), görüntülü sohbet + ses seviyesi (0.9.63), kişi sınırları hep
