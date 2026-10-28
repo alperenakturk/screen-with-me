@@ -31,10 +31,16 @@ addEventListener('message', (event: MessageEvent) => {
     case 'go': {
       if (typeof data.roomId !== 'string' || typeof data.url !== 'string') return;
       const message: SiteGoMessage = { type: 'site-go', roomId: data.roomId, url: data.url };
-      void chrome.runtime
-        .sendMessage(message)
-        .then((reply: { ok?: boolean } | undefined) => toSite({ type: 'going', ok: reply?.ok === true }))
-        .catch(() => toSite({ type: 'going', ok: false }));
+      // After the extension is updated/reloaded this script keeps running but is cut off from it:
+      // sendMessage then throws synchronously. Always answer, so the site can ask for a page reload.
+      try {
+        void chrome.runtime
+          .sendMessage(message)
+          .then((reply: { ok?: boolean } | undefined) => toSite({ type: 'going', ok: reply?.ok === true }))
+          .catch(() => toSite({ type: 'going', ok: false }));
+      } catch {
+        toSite({ type: 'going', ok: false });
+      }
       break;
     }
   }

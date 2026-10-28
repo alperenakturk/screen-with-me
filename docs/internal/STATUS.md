@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.82** (on `main`, live). The owner moved to a **new Claude
+> Last update: 28 Oct 2026. Site and extension **0.9.83**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -19,21 +19,42 @@
 security hardening, legal/name/policies, consistency (English-first repo), operations, then 1.0 in the Chrome Web
 Store together with the domain and the final name. New feature areas wait until then unless the owner asks.
 
-**Next (0.9.83 →):**
-1. Fix the film-page cover flash (see test results below).
-2. Owner's feature walkthrough → polish list in `ROADMAP.md` §1.
-3. English migration of `docs/internal/` (one doc at a time) and the consistency items.
-4. GitHub Issues as the bug list (labels + `1.0` milestone), `CHANGELOG.md`.
+## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
+Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` §1 "Feedback round 1".
+- [x] Record the plan, conventions and this queue (CLAUDE.md, ROADMAP, STATUS).
+- [x] Separate session: name brainstorm + inspiration page (results → `docs/internal/name-ideas.md`).
+- [x] Separate session: security review of custom emojis across rooms and WebRTC IP exposure (results →
+  `docs/internal/security-review-1.md`).
+- [x] **0.9.83** quick fixes: extension popup button opens a new tab (doesn't replace our room tab); "your extension
+  is outdated" shown to an up-to-date extension (friend had to reinstall); film ducking off by default + only on real
+  speech (clicks must not trigger it); film-page cover flash.
+- [ ] **0.9.84** voice/camera bugs: tiles drop and come back (maybe when a game is opened/closed); the same person
+  appears with 2–3 camera tiles (one frozen); own camera visible in a slot even when hidden; small audio glitches.
+- [ ] **0.9.85** Meet/Discord-style controls: mic/camera toggles under the camera tiles while watching; per-person
+  mute and volume; host can kick from the tile; pin a camera; hide my own camera; resize tiles horizontally and
+  vertically.
+- [ ] **0.9.86** settings: ⚙️ button to the right of the profile picture; remove the ⚙️ next to the tabs and the
+  settings inside the profile menu; scheduled start redesigned (meaningful, explained, good-looking).
+- [ ] **0.9.87** YouTube player on the site: controls stay visible long after the mouse leaves (windowed view);
+  YouTube's own volume control doesn't work (something of ours blocks it).
+- [ ] **0.9.88** YouTube search inside the app (owner gets a YouTube Data API key → GitHub Secrets; Claude writes the
+  guide and the code).
+- [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
 - Typecheck ✅, unit 157/157 ✅, e2e 172 checks ✅ (only `room.mjs` hangs because YouTube is blocked here; known).
 - Voice on the site 24/24 ✅ and voice on the film page 28/28 ✅, **both only with `VOICE_A`/`VOICE_B`**: without them
   both Chromes use the same fake beep and the echo canceller removes it, so the "really hears" checks fail (not a
   code bug; the harness should default to two different sounds).
-- Extension (embed harness) 91/92: **"no flash when going from the site to the film page" failed in both runs**: the
+- **0.9.83:** embed harness 92/92 (flash fixed with `#swm-cover`), voice 24/24 and 28/28, unit 162/162.
+- Extension (embed harness, 0.9.82) 91/92: **"no flash when going from the site to the film page" failed in both runs**: the
   film page is visible for one frame (~60 ms) before the cover. Cause: on the first transition from the site the film
   origin has no `sessionStorage` `swm-cover`, so the cover waits for the async `storage.session` read
   (`content.ts` `checkSessions`) and the first paint wins the race. Timing-dependent. Fix planned for 0.9.83.
+
+Side sessions started 28 Oct 2026 (results come as PRs from their branches; integrate them here):
+- Name ideas: session `session_015Fyri2xNPa9YWMwBanhQXV`, branch `claude/name-ideas`.
+- Security review 1: session `session_015Fyri6wwCuwDm697YF5dv6`, branch `claude/security-review-1`.
 
 ## Pending decisions (owner's)
 - **Product name** (keep "ScreenWithMe" or rename): research in `name-research.md` (no registered mark found in web
@@ -62,6 +83,8 @@ Store together with the domain and the final name. New feature areas wait until 
   result is still pending).
 - **0.9.80:** room UI pass (chat bubbles, settings dialog, reaction tray, clean top bar).
 - **0.9.81:** free camera windows (drag, resize, inside the video in fullscreen; also on the film page).
+- **0.9.83:** popup opens the room in a new tab, "reload the page" instead of a false "outdated extension",
+  film ducking off by default and only on real speech, film-page cover flash fixed.
 - **0.9.82:** copy pass: all site/extension/privacy/README/store texts rewritten (glossary in CLAUDE.md), the owner's
   slogans, privacy policy aligned with the code.
 - Design canvases (claude.ai artifacts, old account — may not be accessible any more): room alternatives
