@@ -40,7 +40,7 @@ async function person(name, avatar, args = FAKE_MIC) {
   const b = await launch({ ext: EXT, out: join(here, `voice-${name}`), args });
   await b.navigate(`${SITE}/`);
   await b.sleep(1500);
-  await b.evaluate(`localStorage.setItem('name', ${JSON.stringify(name)}); localStorage.setItem('avatar', ${JSON.stringify(avatar)}); localStorage.setItem('lang','tr'); 1`);
+  await b.evaluate(`localStorage.setItem('name', ${JSON.stringify(name)}); localStorage.setItem('avatar', ${JSON.stringify(avatar)}); localStorage.setItem('lang','tr'); localStorage.setItem('opt:duck2','1'); 1`);
   await b.navigate(`${SITE}/r/${room}#back`);
   return b;
 }

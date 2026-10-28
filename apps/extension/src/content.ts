@@ -719,6 +719,7 @@ async function checkSessions(): Promise<void> {
 // yüklenmeye başlar başlamaz (document_start) sitenin "Gece" zeminiyle her şeyi kapatır; katmanın ilk
 // yerleşimi gelince kalkar. Aynı sekmede aynı sitede (sonraki bölüm, yenileme) beklemeden örter.
 const COVER_FLAG = 'swm-cover';
+const COVER_HASH = `#${COVER_FLAG}`;
 let coverEl: HTMLElement | null = null;
 let coverTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -762,6 +763,13 @@ function uncover(): void {
 }
 
 if (isTop && !insideOurSite) {
+  // First arrival from our site: the background adds `#swm-cover` to the film address (the film origin has no
+  // sessionStorage flag yet, and waiting for storage.session lost the race against the first paint: the film site
+  // flashed for one frame). Removed before any page script runs; it carries no room information.
+  if (location.hash === COVER_HASH) {
+    history.replaceState(history.state, '', location.href.slice(0, -COVER_HASH.length));
+    cover();
+  }
   try {
     if (sessionStorage.getItem(COVER_FLAG) === '1') cover();
   } catch {

@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.82** (on `main`, live). The owner moved to a **new Claude
+> Last update: 28 Oct 2026. Site and extension **0.9.83**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -22,10 +22,10 @@ Store together with the domain and the final name. New feature areas wait until 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` §1 "Feedback round 1".
 - [x] Record the plan, conventions and this queue (CLAUDE.md, ROADMAP, STATUS).
-- [ ] Separate session: name brainstorm + inspiration page (results → `docs/internal/name-ideas.md`).
-- [ ] Separate session: security review of custom emojis across rooms and WebRTC IP exposure (results →
+- [x] Separate session: name brainstorm + inspiration page (results → `docs/internal/name-ideas.md`).
+- [x] Separate session: security review of custom emojis across rooms and WebRTC IP exposure (results →
   `docs/internal/security-review-1.md`).
-- [ ] **0.9.83** quick fixes: extension popup button opens a new tab (doesn't replace our room tab); "your extension
+- [x] **0.9.83** quick fixes: extension popup button opens a new tab (doesn't replace our room tab); "your extension
   is outdated" shown to an up-to-date extension (friend had to reinstall); film ducking off by default + only on real
   speech (clicks must not trigger it); film-page cover flash.
 - [ ] **0.9.84** voice/camera bugs: tiles drop and come back (maybe when a game is opened/closed); the same person
@@ -46,10 +46,15 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - Voice on the site 24/24 ✅ and voice on the film page 28/28 ✅, **both only with `VOICE_A`/`VOICE_B`**: without them
   both Chromes use the same fake beep and the echo canceller removes it, so the "really hears" checks fail (not a
   code bug; the harness should default to two different sounds).
-- Extension (embed harness) 91/92: **"no flash when going from the site to the film page" failed in both runs**: the
+- **0.9.83:** embed harness 92/92 (flash fixed with `#swm-cover`), voice 24/24 and 28/28, unit 162/162.
+- Extension (embed harness, 0.9.82) 91/92: **"no flash when going from the site to the film page" failed in both runs**: the
   film page is visible for one frame (~60 ms) before the cover. Cause: on the first transition from the site the film
   origin has no `sessionStorage` `swm-cover`, so the cover waits for the async `storage.session` read
   (`content.ts` `checkSessions`) and the first paint wins the race. Timing-dependent. Fix planned for 0.9.83.
+
+Side sessions started 28 Oct 2026 (results come as PRs from their branches; integrate them here):
+- Name ideas: session `session_015Fyri2xNPa9YWMwBanhQXV`, branch `claude/name-ideas`.
+- Security review 1: session `session_015Fyri6wwCuwDm697YF5dv6`, branch `claude/security-review-1`.
 
 ## Pending decisions (owner's)
 - **Product name** (keep "ScreenWithMe" or rename): research in `name-research.md` (no registered mark found in web
@@ -78,6 +83,8 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
   result is still pending).
 - **0.9.80:** room UI pass (chat bubbles, settings dialog, reaction tray, clean top bar).
 - **0.9.81:** free camera windows (drag, resize, inside the video in fullscreen; also on the film page).
+- **0.9.83:** popup opens the room in a new tab, "reload the page" instead of a false "outdated extension",
+  film ducking off by default and only on real speech, film-page cover flash fixed.
 - **0.9.82:** copy pass: all site/extension/privacy/README/store texts rewritten (glossary in CLAUDE.md), the owner's
   slogans, privacy policy aligned with the code.
 - Design canvases (claude.ai artifacts, old account — may not be accessible any more): room alternatives

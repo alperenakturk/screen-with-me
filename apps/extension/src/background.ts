@@ -532,6 +532,9 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     // Çerçeveler bağlanmadan önce "oda var" yazılmış olsun.
     await persist();
     sendResponse({ ok: true });
+    // Lets the content script cover the page synchronously at document_start (see content.ts COVER_HASH).
+    // Skipped when the address already has a fragment (sites that route with it).
+    if (!url.hash) url.hash = 'swm-cover';
     await chrome.tabs.update(tabId, { url: url.href }).catch(() => {});
   })();
   return true;

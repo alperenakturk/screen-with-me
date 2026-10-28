@@ -3,6 +3,7 @@ import { isPushToTalkKey } from '@swm/shared/embed';
 import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
 import { LevelMeter } from '@swm/shared/level-meter';
+import { SpeechDetector } from '@swm/shared/speech-detector';
 import { P2pVoice } from '@swm/shared/voice-p2p';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
@@ -392,6 +393,14 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
   }, 250);
 
+  // Real speech (not a click or a knock) for lowering the film's volume: sampled more often than the glow above.
+  const speech = new SpeechDetector();
+  setInterval(() => {
+    if (!client.active) return;
+    const now = Date.now();
+    for (const [memberId, level] of allLevels()) speech.push(memberId, level, now);
+  }, 100);
+
   return {
     /** Sunucu sesli sohbeti destekliyor mu (yeni bağlantıda). Yeniden bağlanınca ses de yeniden kurulur. */
     welcome(voice: boolean, nextMode: VoiceMode = 'p2p'): void {
@@ -431,10 +440,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     },
     /** Biri konuşuyor mu (film sesini kısmak için). */
     speaking(): boolean {
-      if (!client.active) return false;
-      const now = Date.now();
-      for (const at of spokeAt.values()) if (now - at < SPEAK_HOLD_MS) return true;
-      return false;
+      return client.active && speech.anyone(Date.now());
     },
     /** Eşler arası seste bir üyeden gelen bağlantı mesajı. */
     signal(from: string, data: Signal): void {
