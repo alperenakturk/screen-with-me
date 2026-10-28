@@ -32,11 +32,14 @@ import {
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
+import { IP_HEADER } from './ip.ts';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
 
 const MAX_MEMBERS = 50;
+/** Custom emoji uploads per room and day (each can be ~280 KB and is kept with the room). */
+const STICKER_ADDS_PER_DAY = 60;
 /** Kimse kalmayan oda bu süre sonra silinir. */
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 /** Kaydedilmiş oda boşken bu kadar saklanır. */
@@ -85,6 +88,8 @@ interface Attachment {
   /** Yayın yapıyor (odada tek yayın) / yayını izliyor. */
   live?: LiveKind;
   watching?: boolean;
+  /** Short hash of the connection's IP (set by the Worker): abuse limits only; never stored or sent to clients. */
+  ip?: string;
 }
 
 /**
@@ -201,6 +206,8 @@ export class Room extends DurableObject<Env> {
   private readonly lastReaction = new Map<string, number>();
   /** "Odaya döndüm" haberi: kişi başı en fazla yarım dakikada bir (filmdekileri kart yağmuruna tutmasın). */
   private readonly homeLimit = new RateLimiter(1, 1 / 30);
+  /** Custom emojis added today in this room (`stickerDay` in storage); at most STICKER_ADDS_PER_DAY. */
+  private stickerDay: { day: number; count: number } = { day: 0, count: 0 };
   /** Özel emoji ekleme: birkaç tane hemen, sonra 20 sn'de bir (büyük veri). */
   private readonly stickerLimit = new RateLimiter(4, 0.05);
   // Sohbet: art arda 8 mesaj, sonra saniyede 1 (daha sıkısı arkadaşlar arasında yazışırken takılıyordu).
@@ -224,6 +231,7 @@ export class Room extends DurableObject<Env> {
         const data = stickerData.get(`sticker:${id}`);
         if (data) this.stickers.set(id, data);
       }
+      this.stickerDay = (await ctx.storage.get<{ day: number; count: number }>('stickerDay')) ?? this.stickerDay;
       this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
       this.hostGoneAt = (await ctx.storage.get<number>('hostGoneAt')) ?? null;
       // Eski biçim (anahtar → bitiş zamanı, 10 dk'lık yasak) artık geçersiz; sadece yeni biçim okunur.
@@ -260,7 +268,8 @@ export class Room extends DurableObject<Env> {
       this.sendTo(server, { t: 'error', code: 'room_full' });
       server.close(4001, 'room_full');
     } else {
-      const attachment: Attachment = { id: newId().slice(0, 8), name: null };
+      const ip = request.headers.get(IP_HEADER);
+      const attachment: Attachment = { id: newId().slice(0, 8), name: null, ...(ip ? { ip } : {}) };
       server.serializeAttachment(attachment);
       await this.freezeIfLongEmpty();
       this.statsTick(true);
@@ -397,7 +406,8 @@ export class Room extends DurableObject<Env> {
       case 'sticker-add': {
         const id = await stickerId(message.data);
         if (this.stickers.has(id)) return;
-        if (!this.stickerLimit.allow(keyOf(attachment))) {
+        // Per IP (a new browser id doesn't reset it) and a daily cap per room: images are big and kept for days.
+        if (!this.stickerLimit.allow(attachment.ip ?? keyOf(attachment)) || !(await this.countStickerAdd())) {
           this.sendTo(ws, { t: 'error', code: 'rate_limited' });
           return;
         }
@@ -412,7 +422,22 @@ export class Room extends DurableObject<Env> {
         this.stickers.set(id, message.data);
         this.stickerOwners[id] = keyOf(attachment);
         await this.ctx.storage.put({ [`sticker:${id}`]: message.data, stickers: [...this.stickers.keys()], stickerOwners: this.stickerOwners });
-        this.broadcast({ t: 'sticker', sticker: { id, data: message.data } });
+        this.broadcast({ t: 'sticker', sticker: { id, data: message.data } }, ws);
+        this.sendTo(ws, { t: 'sticker', sticker: { id, data: message.data }, mine: true });
+        return;
+      }
+      case 'sticker-clear': {
+        if (!this.isHost(ws)) {
+          this.sendTo(ws, { t: 'error', code: 'not_host' });
+          return;
+        }
+        const ids = [...this.stickers.keys()];
+        if (ids.length === 0) return;
+        this.stickers.clear();
+        this.stickerOwners = {};
+        await this.ctx.storage.delete(ids.map((id) => `sticker:${id}`));
+        await this.ctx.storage.put({ stickers: [], stickerOwners: {} });
+        for (const id of ids) this.broadcast({ t: 'sticker-removed', id });
         return;
       }
       case 'sticker-remove': {
@@ -603,6 +628,7 @@ export class Room extends DurableObject<Env> {
       this.chat = [];
       this.stickers.clear();
       this.stickerOwners = {};
+      this.stickerDay = { day: 0, count: 0 };
       this.pins = { itemId: null, list: [] };
       this.hostKey = null;
       this.hostGoneAt = null;
@@ -667,6 +693,16 @@ export class Room extends DurableObject<Env> {
   }
 
   /** Ana sayfadan kayıt kaldırma: sadece yöneticinin tarayıcı kimliğiyle. */
+  /** Counts one custom emoji upload for today; false when the room's daily cap is used up. */
+  private async countStickerAdd(): Promise<boolean> {
+    const day = Math.floor(Date.now() / 86_400_000);
+    if (this.stickerDay.day !== day) this.stickerDay = { day, count: 0 };
+    if (this.stickerDay.count >= STICKER_ADDS_PER_DAY) return false;
+    this.stickerDay.count++;
+    await this.ctx.storage.put('stickerDay', this.stickerDay);
+    return true;
+  }
+
   private async unsaveFromHome(request: Request): Promise<Response> {
     const body = (await request.json().catch(() => null)) as { cid?: unknown } | null;
     const cid = typeof body?.cid === 'string' && CLIENT_ID.test(body.cid) ? body.cid : null;
@@ -783,7 +819,11 @@ export class Room extends DurableObject<Env> {
       ...(this.game ? { game: this.game.game } : {}),
     });
     // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
-    for (const [id, data] of this.stickers) this.sendTo(ws, { t: 'sticker', sticker: { id, data } });
+    // The person who added an emoji gets `mine` so they can remove it after a reload (the owner key itself never leaves).
+    const myKey = keyOf(attachment);
+    for (const [id, data] of this.stickers) {
+      this.sendTo(ws, { t: 'sticker', sticker: { id, data }, ...(this.stickerOwners[id] === myKey ? { mine: true } : {}) });
+    }
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
   }
@@ -1336,7 +1376,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'react' | 'sticker-add' | 'sticker-remove' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

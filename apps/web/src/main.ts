@@ -28,5 +28,27 @@ addEventListener('unhandledrejection', (event) => {
   if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(message)) reloadForNewVersion();
 });
 
-// Önce ayarlar eklentiyle eşitlenir (dil, tema, isim ilk karede doğru gelsin), sonra site çizilir.
-void syncStore().then(() => import('./app.ts'));
+/**
+ * Clickjacking guard (security review 1, O2): the site only runs as the top page or inside our extension's overlay
+ * (`isShell`). Another website could otherwise frame a room and trick a click on "Join voice". The CSP can't say this
+ * with `frame-ancestors`, because in the overlay the film site is an ancestor too.
+ */
+function framedElsewhere(): boolean {
+  try {
+    return window.top !== window && !isShell;
+  } catch {
+    return true;
+  }
+}
+
+if (framedElsewhere()) {
+  const link = document.createElement('a');
+  link.href = location.href;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.textContent = 'ScreenWithMe ↗';
+  document.body.replaceChildren(link);
+} else {
+  // Önce ayarlar eklentiyle eşitlenir (dil, tema, isim ilk karede doğru gelsin), sonra site çizilir.
+  void syncStore().then(() => import('./app.ts'));
+}

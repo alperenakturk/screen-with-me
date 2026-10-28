@@ -30,6 +30,9 @@ await ayse.wait((m) => m.t === 'welcome', 'welcome ayse');
 ali.send({ t: 'sticker-add', data: PNG });
 const got = await ayse.wait((m) => m.t === 'sticker', 'sticker');
 ok(got.sticker.data === PNG && /^[0-9a-f]{12}$/.test(got.sticker.id), 'Eklenen özel emoji odadakilere gidiyor');
+ok(got.mine === undefined, 'Others do not get the "mine" flag');
+const own = await ali.wait((m) => m.t === 'sticker', 'own sticker');
+ok(own.mine === true, 'The person who added it gets "mine"');
 
 ayse.send({ t: 'react', sticker: got.sticker.id });
 const r = await ali.wait((m) => m.t === 'reaction', 'sticker reaction');
@@ -39,6 +42,14 @@ const can = client({ name: 'Can', cid: 'stikCan12345' });
 await can.wait((m) => m.t === 'welcome', 'welcome can');
 const late = await can.wait((m) => m.t === 'sticker', 'late sticker');
 ok(late.sticker.id === got.sticker.id, 'Sonradan gelen, odanın özel emojilerini girişte alıyor');
+ok(late.mine === undefined, 'A latecomer does not get "mine" for someone else\'s emoji');
+
+// Ali reloads (same browser id): the room tells him which emoji is his, so he can still remove it.
+const ali2 = client({ name: 'Ali', cid: 'stikAli12345' });
+await ali2.wait((m) => m.t === 'welcome', 'welcome ali2');
+const again = await ali2.wait((m) => m.t === 'sticker', 'sticker after reload');
+ok(again.mine === true, 'After a reload the adder still gets "mine"');
+ali2.ws.close();
 
 // Gerçek boyutlu (≈200 KB'lık GIF kadar) özel emoji de geçmeli: genel 4 KB mesaj sınırına takılmasın.
 const BIG = 'data:image/gif;base64,' + 'R0lGODlh'.repeat(25_000);
@@ -54,6 +65,20 @@ ayse.inbox.length = 0;
 ali.send({ t: 'react', sticker: 'ffffffffffff' });
 await new Promise((res) => setTimeout(res, 600));
 ok(!ayse.inbox.some((m) => m.t === 'reaction'), 'Odada olmayan özel emojiyle tepki yayılmıyor');
+
+// Removing all custom emojis: host only.
+ayse.inbox.length = 0;
+ayse.send({ t: 'sticker-clear' });
+const notHost = await ayse.wait((m) => m.t === 'error', 'clear refused');
+ok(notHost.code === 'not_host', 'Only the host can remove all custom emojis');
+ali.send({ t: 'sticker-clear' });
+const removed = [await can.wait((m) => m.t === 'sticker-removed', 'cleared 1'), await can.wait((m) => m.t === 'sticker-removed', 'cleared 2')];
+ok(removed.length === 2, 'The host removes every custom emoji for everyone');
+const dan = client({ name: 'Dan', cid: 'stikDan12345' });
+await dan.wait((m) => m.t === 'welcome', 'welcome dan');
+await new Promise((res) => setTimeout(res, 400));
+ok(!dan.inbox.some((m) => m.t === 'sticker'), 'After clearing, newcomers get no custom emojis');
+dan.ws.close();
 
 for (const c of [ali, ayse, can]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

@@ -3,6 +3,7 @@ import { LiveP2p, type LiveQuality } from '@swm/shared/live-p2p';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 import { flashHint } from './hint.ts';
+import { confirmIpNotice } from './ip-notice.ts';
 
 /**
  * Yayın kartı (sağ panelde, sesli sohbetin altında) ve yayın penceresi (videonun köşesinde, büyütülebilir).
@@ -136,6 +137,8 @@ export function createLive(
       flashHint(button, t('live.hostOnly'), 6000);
       return;
     }
+    // Streams are always peer-to-peer: viewers and the streamer see each other's IP (security review 1).
+    if (!(await confirmIpNotice('stream', []))) return;
     button.disabled = true;
     try {
       await live.start(kind, quality());
@@ -186,8 +189,11 @@ export function createLive(
       flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
       return;
     }
-    live.watch();
-    render();
+    void confirmIpNotice('watch', []).then((yes) => {
+      if (!yes) return;
+      live.watch();
+      render();
+    });
   });
   killButton.addEventListener('click', () => send({ t: 'live-stop' }));
   qualitySelect.addEventListener('change', () => {

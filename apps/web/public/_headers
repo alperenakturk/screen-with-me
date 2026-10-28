@@ -1,0 +1,11 @@
+# Security headers for every static page (security review 1, O2). Cloudflare Workers static assets read this file.
+# - script-src: our own files + YouTube's player API (www.youtube.com loads its widget script from there).
+# - style-src 'unsafe-inline': static pages keep small <style> blocks; scripts stay strict.
+# - media-src *: the HTML5 player plays video files from any address people paste.
+# - No frame-ancestors / X-Frame-Options: the extension shows the site inside its overlay on film pages (any site is
+#   an ancestor there). The site refuses to run in any other frame instead (src/main.ts, frame guard).
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://i.ytimg.com; media-src * data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self'; font-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(self), display-capture=(self), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), midi=()

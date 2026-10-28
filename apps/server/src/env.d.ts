@@ -6,4 +6,6 @@ interface Env {
   REALTIME_APP_SECRET?: string;
   /** "off": sesli sohbet her yerde kapanır (bütçe freni / acil durum). */
   VOICE?: string;
+  /** Connections per IP and minute (Workers rate limiting binding; missing in old configs = no limit). */
+  CONNECT_LIMIT?: RateLimit;
 }

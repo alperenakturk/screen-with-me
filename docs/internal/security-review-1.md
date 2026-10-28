@@ -24,7 +24,34 @@
 | O5 | Room IDs accept 4 characters (`ROOM_ID_PATTERN`): hand-typed short codes are guessable | Low / info | Small |
 | O6 | Workers observability logs are on; the policy does not mention server logs and their retention | Low (transparency) | Text only |
 
-**Recommendations in one line each:**
+## Outcome (0.9.84, 28 Oct 2026)
+
+The owner accepted the emoji design (existing lists become "My collection", the collection box starts unchecked) and
+Phase 1 for IP addresses; hiding the IP (TURN/SFU, needs a card) is a Phase 2 goal in `ROADMAP.md`, because moving
+only voice to the SFU would still leave camera and streams peer-to-peer. The owner asked for every other finding to be
+fixed. What shipped:
+
+| # | Status | Change |
+|---|--------|--------|
+| S1–S4 | Fixed | No automatic upload (`registerMine` removed). Add dialog with preview, "added to this room only" note and an unchecked "Also save to my collection" (`stickerCollection`, local, max 12). Tray: *Emojis · In this room · My collection*; tapping a collection item adds that one image. Old `myStickers` lists move to the collection once (key emptied, one-time note). Server sends `mine: true` only to the uploader (✕ still works after a reload), host-only `{t:'sticker-clear'}` (Settings → Room rules → "Remove all custom emojis"). |
+| S2 | Fixed | Privacy policy (TR + EN) rewritten as proposed in §1.5. |
+| W1 | Fixed (Phase 1) | `ui/ip-notice.ts`: notice before joining voice (peer-to-peer mode only; lists who is in voice), before starting a stream and before watching one; "Don't show this again" per action (`opt:ipNotice:<kind>`). Permanent "🔒 People in voice can see your IP · Why?" line under the voice row. |
+| W2 | Fixed | Policy says streams expose IPs both ways. |
+| W3 | Fixed | `voice-p2p.ts` and `live-p2p.ts` use Cloudflare STUN only; policy names it. |
+| W4 | Mitigated | Covered by the notice (people see who is in voice before joining). Hiding IPs: Phase 2. |
+| O1 | Fixed | `index.ts` `guardSocket`: WebSocket upgrades from another site's origin get 403 (own origin and `localhost` allowed; no `Origin` = not a browser). Also on `POST /unsave`. |
+| O2 | Fixed | `apps/web/public/_headers`: CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`. Inline scripts moved to files (`eklenti.js`, `gizlilik.js`, `offline.js`; `sw.js` caches the offline script, `CACHE` bumped). `frame-ancestors` is impossible (the film site is an ancestor of the overlay), so `main.ts` refuses to run in any frame other than the extension overlay. |
+| O3 | Fixed | Workers rate-limit binding `CONNECT_LIMIT` (60 new connections per IP and minute, rooms and games); the room object gets a short SHA-256 hash of the IP (`X-SWM-Ip`, set by the Worker only, kept in the connection's memory) and limits emoji uploads per IP; at most 60 emoji uploads per room and day. |
+| O4 | Fixed | `stripGifMetadata` (`sticker-file.ts`, unit-tested): comment and application blocks other than the loop block are dropped, frames untouched. |
+| O5 | No change (decided) | The site only creates 10-character codes; shortening the accepted pattern would break existing links and tests for no real gain. |
+| O6 | Fixed | Policy mentions Cloudflare's short technical logs and the per-IP counting. |
+
+Tests: unit (+3 GIF tests), e2e (emoji `mine` / clear cases), a browser check of the whole flow (no CSP violations on
+any page incl. YouTube, migration, collection, add dialog, voice notice, frame guard), the extension embed harness
+(92/92 on Vite; on the production build with the CSP 89/92, the 3 misses are dev-only hooks: `import('/src/…')` and
+`window.__swm`), and the voice harnesses (24 + 17 + 28).
+
+**Recommendations in one line each (original review):**
 - Emojis: room-only by default, an explicit "also save to my collection" choice, nothing uploaded automatically; fix
   the privacy policy now.
 - IP: ship a clear, friendly notice before joining voice / starting or watching a stream now (free), drop Google

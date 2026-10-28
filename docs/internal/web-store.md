@@ -1,23 +1,23 @@
-# Chrome Web Store — doldurma rehberi (başvuru günü için)
+# Chrome Web Store: form guide (for submission day)
 
-Geliştirici paneli: chrome.google.com/webstore/devconsole → **Yeni öğe** → zip'i yükle,
-sonra sekmeleri aşağıdaki gibi doldur. Kutulara girecek metinler İngilizce (mağazanın ana
-dili); açıklamanın sonunda kısa Türkçe paragraf var.
+Developer dashboard: chrome.google.com/webstore/devconsole → **New item** → upload the zip, then fill in the tabs as
+below. The texts for the form fields are in English (the store's main language); the description ends with a short
+Turkish paragraph.
 
-**Yüklenecek dosya:** `store/screenwithme-<sürüm>.zip` (`npm run store` üretir).
+**File to upload:** `store/screenwithme-<version>.zip` (made by `npm run store`).
 
-**Başlık ve özet zip'ten gelir** (manifest, `apps/extension/build.mjs`):
-- Başlık: `ScreenWithMe – Watch Videos Together in Sync`
-- Özet: `A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.`
+**Title and summary come from the zip** (manifest, `apps/extension/build.mjs`):
+- Title: `ScreenWithMe – Watch Videos Together in Sync`
+- Summary: `A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.`
 
-> Repo şu an private. Metinlerde "open source" yazmıyoruz; repo açılınca eklenebilir
-> (açmadan önce `docs/internal/rakip-analizi.md` içindeki site adları temizlenmeli).
+> The repo is private for now. The texts don't say "open source"; that can be added once the repo is public (before
+> that, remove the site names in `docs/internal/rakip-analizi.md`).
 
 ---
 
-## 1. Mağaza girişi (Store listing)
+## 1. Store listing
 
-**Açıklama (Description):**
+**Description:**
 
 ```
 Watch videos together with friends, perfectly in sync.
@@ -38,7 +38,7 @@ WHY SCREENWITHME
 • Emoji reactions and quick chat over the video, also in fullscreen
 • Voice chat while you watch: the microphone is asked for once and only turns on when you join voice
 • Pin moments with an optional note and jump back to talk about them later
-• Add your own custom emojis (images or GIFs) for the whole room
+• Add your own custom emojis (images or GIFs) to a room; they stay in that room only
 • Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
 • Shared speed: other speed extensions can't knock the room out of sync
 • The room host can lock the controls, remove people and lift bans
@@ -50,6 +50,7 @@ PRIVATE BY DESIGN
 • No account, no ads, no third-party analytics or tracking
 • Runs only in the tab you joined a room with; dormant everywhere else
 • Videos play in each person's own browser; our server only relays small sync messages and the room's chat
+• Voice chat is direct between the people in voice; you're told before joining that they can see your IP address
 • Privacy policy: https://screen-with-me.swm-server.workers.dev/privacy.html
 
 NOTES
@@ -62,81 +63,83 @@ NOTES
 Türkçe: Arkadaşlarınla videoyu aynı saniyede izle. Sitede oda kur, linki paylaş, videonun olduğu sayfanın linkini odaya yapıştır: herkes o sayfaya gider ve oda (sohbet, emojiler, sesli sohbet, kontroller) videonun etrafında açılır. Biri durdurduğunda, sardığında ya da hızı değiştirdiğinde herkeste olur. Hesap yok, reklam yok, takip yok; eklenti sadece odaya katıldığın sekmede çalışır.
 ```
 
-**Kategori:** Entertainment. Listede yoksa: Social & Communication.
-**Dil:** English.
+**Category:** Entertainment. If it isn't listed: Social & Communication.
+**Language:** English.
 
-**Görseller** (`store/` klasöründe, `npm run store` üretir):
-| Alan | Dosya | Boyut |
+**Images** (in the `store/` folder, made by `npm run store`):
+| Field | File | Size |
 |---|---|---|
-| Mağaza simgesi | `store/icon128.png` | 128×128 |
-| Ekran görüntüleri | `store/screenshot-1.png` … `-5.png` | 1280×800 |
-| Küçük tanıtım kutusu | `store/promo-small.png` | 440×280 |
+| Store icon | `store/icon128.png` | 128×128 |
+| Screenshots | `store/screenshot-1.png` … `-5.png` | 1280×800 |
+| Small promo tile | `store/promo-small.png` | 440×280 |
 
-Ekran görüntüsü sırası: 1) film sayfasında oda görünümü (senkron + emojiler + sohbet),
-2) akış: odaya sayfa linki → "Filme git" → film sayfasında oynat'a bas (üstte ince şerit),
-3) herkes hazır + ortak hız (kişiler sekmesi), 4) özelleştirme (tema penceresi, avatarlar),
-5) gizlilik + popup (sadece bilgi ve "Odaya dön" düğmesi).
-Kaynak: `store/src/shots.html` (pencere, popup, başlıklar) + `store/src/room.html` (oda taklidi;
-sitenin gerçek `styles.css`'ini kullanır, site arayüzü değişince işaretlemeyi `room.ts` ile eşitle).
+Screenshot order: 1) room view on the film page (sync + emojis + chat), 2) flow: page link into the room → "Go to the
+film" → press play on the film page (thin strip on top), 3) everyone ready + shared speed (people tab),
+4) customisation (theme dialog, avatars), 5) privacy + popup (info only and the "Back to the room" button).
+Source: `store/src/shots.html` (window, popup, titles) + `store/src/room.html` (a copy of the room; it uses the
+site's real `styles.css`, so keep its markup in step with `room.ts` when the site's UI changes).
 
-**Ek alanlar:**
-- Resmî URL: boş bırak (alan adı doğrulaması ister).
-- Ana sayfa URL'si: `https://screen-with-me.swm-server.workers.dev/`
-- Destek URL'si: `https://screen-with-me.swm-server.workers.dev/`
+**Extra fields:**
+- Official URL: leave empty (it asks for domain verification).
+- Homepage URL: `https://screen-with-me.swm-server.workers.dev/`
+- Support URL: `https://screen-with-me.swm-server.workers.dev/`
 
 ---
 
-## 2. Gizlilik (Privacy)
+## 2. Privacy
 
-**Tek amaç (Single purpose description):**
+**Single purpose description:**
 
 ```
 ScreenWithMe has a single purpose: watch parties. It keeps one HTML5 video, in the tab where the user joined a room, playing in sync (play, pause, seek position, playback speed) for everyone in that room. Reactions, short chat messages and voice chat with the people in the room are part of that shared-watching experience.
 ```
 
-**İzin gerekçeleri:**
+**Permission justifications:**
 
 `storage`:
 ```
-Stores the website's settings (nickname, avatar, theme, language, saved rooms, the user's custom emojis and a random browser ID) locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website, and which tab shows a room layer (chrome.storage.session), so it survives the service worker restarting.
+Stores the website's settings (nickname, avatar, theme, language, saved rooms, the user's own custom emoji collection and a random browser ID) locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website, and which tab shows a room layer (chrome.storage.session), so it survives the service worker restarting. The custom emoji collection never leaves the device by itself; an image is sent to a room only when the user adds it there.
 ```
 
-`offscreen` (0.9.60'tan beri):
+`offscreen` (since 0.9.60):
 ```
-Voice chat while watching: on the film page the microphone is used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice" and turns off with "Leave". Nothing is recorded; audio goes peer-to-peer to the others in voice.
+Voice chat while watching: on the film page the microphone is used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice" (after a notice that the people in voice can see their IP address) and turns off with "Leave". Nothing is recorded; audio goes peer-to-peer to the others in voice.
 ```
 
-Host izni (`<all_urls>`):
+Host permission (`<all_urls>`):
 ```
 Users watch videos on sites we cannot list in advance, and players are usually inside cross-origin iframes, so the content script must be able to run in every frame. activeTab is not enough: invited friends open the page through a link without clicking the extension icon, and players that load later in iframes must be detected automatically. Outside a tab that has joined a room the script stays dormant. Within that tab it only reads the <video> element's playback state (time, paused, rate) and shows our own website's room page as a layer over the page (a web-accessible extension page, shell.html, in an iframe), with a hole where the video sits. It never reads page text, forms or cookies. The page URL and title leave the device only when the user explicitly creates a room or shares that page with their room. To keep the watch party usable, a tab that the room's film tab opens to another site right after the user clicks the video (an ad pop-up) is closed locally and can be reopened with one click (tabs.onCreated openerTabId; can be turned off).
 ```
 
-**Uzak kod kullanıyor musunuz? (Remote code):** **No, I am not using remote code.**
-(Tüm kod paketin içinde; sunucuyla sadece WebSocket üzerinden JSON mesajları gidip geliyor.)
+**Are you using remote code?** **No, I am not using remote code.**
+(All code is in the package; only JSON messages go to and from the server over a WebSocket.)
 
-**Veri kullanımı** — şu kutuları işaretle (fazla beyan reddettirmez, eksik beyan reddettirir):
-- ☑ **Personally identifiable information** — kullanıcının seçtiği takma ad (odadakilere gösterilir).
-- ☑ **Personal communications** — hızlı sohbet mesajları odaya gider; oda son 50 mesajı saklar.
-- ☑ **Website content** — oda kurulunca ya da sayfa odada açılınca sayfanın başlığı.
-- ☑ **Web history** — aynı durumda sayfanın adresi odadakilere gider.
-- Diğerleri boş (sağlık, finans, kimlik doğrulama, konum, kullanıcı etkinliği).
+**Data usage**: tick these boxes (declaring too much doesn't get an item rejected, declaring too little does):
+- ☑ **Personally identifiable information**: the nickname the user picks (shown to the people in the room).
+- ☑ **Personal communications**: short chat messages go to the room; the room keeps the last 50.
+- ☑ **Location**: IP address. In peer-to-peer voice chat (also on film pages, through the offscreen document) the
+  people in voice can see each other's public IP address; the user is told so before joining voice (security review
+  1, W1).
+- ☑ **Website content**: the page title, when a room is created or a page is opened in the room.
+- ☑ **Web history**: in the same case the page address goes to the people in the room.
+- The rest empty (health, financial, authentication, user activity).
 
-Altındaki üç beyanın üçünü de işaretle:
+Tick all three statements below them:
 - ☑ I do not sell or transfer user data to third parties, outside of the approved use cases
 - ☑ I do not use or transfer user data for purposes that are unrelated to my item's single purpose
 - ☑ I do not use or transfer user data to determine creditworthiness or for lending purposes
 
-**Gizlilik politikası URL'si:** `https://screen-with-me.swm-server.workers.dev/privacy.html`
+**Privacy policy URL:** `https://screen-with-me.swm-server.workers.dev/privacy.html`
 
 ---
 
-## 3. Dağıtım (Distribution)
+## 3. Distribution
 
-- Ödeme: **Free**. Görünürlük: **Public**. Bölgeler: **All regions**.
+- Payment: **Free**. Visibility: **Public**. Regions: **All regions**.
 
 ---
 
-## 4. Test talimatları (Test instructions) — incelemeciye not
+## 4. Test instructions (a note to the reviewer)
 
 ```
 No login needed. Allow autoplay or click "Start watching" if the page asks.
@@ -150,27 +153,28 @@ Tabs that have not joined a room are not affected.
 
 ---
 
-## Sonra
+## Afterwards
 
-- İnceleme genelde birkaç gün, "tüm siteler" izni yüzünden 1–3 hafta sürebilir.
-- **İnceleme sürerken `PROTOCOL_VERSION` artırma** (mağazadaki sürüm sunucuya bağlanamaz olur).
-- Reddedilirse e-postadaki gerekçeyi bana yapıştır.
-- Onaylanınca: mağaza linkini ver; `eklenti.html`'deki elle kurulum adımlarını "Chrome'a ekle"
-  butonuyla değiştireyim, sitedeki "eklentiyi kur" linkleri de mağazaya gitsin.
-- Yeni sürüm: `apps/extension/package.json` sürümünü artır → `npm run store` → panelde
-  **Paket** → yeni zip'i yükle → incelemeye gönder.
+- Review usually takes a few days; because of the "all sites" permission it can take 1–3 weeks.
+- **Don't bump `PROTOCOL_VERSION` while the review is running** (the store version would no longer be able to connect
+  to the server).
+- If it is rejected, paste the reason from the e-mail into the session.
+- Once approved: share the store link; the manual install steps in `eklenti.html` become an "Add to Chrome" button,
+  and the site's "install the extension" links go to the store.
+- New version: bump `apps/extension/package.json` → `npm run store` → **Package** in the dashboard → upload the new
+  zip → submit for review.
 
-## 1.0 hazırlık kontrol listesi
+## 1.0 readiness checklist
 
-Gönderimden önce (ben kontrol ederim, ✅ olanlar 0.9.0'da yapıldı):
-- ✅ İzinler en az: `storage` + `<all_urls>` (videoyu her sitede bulmak için) + `offscreen` (film sayfasında sesli
-  sohbet, 0.9.60; uyarı göstermez); açıklamaları yukarıda.
-- ✅ Gizlilik politikası saklanan her veriyi anlatıyor (isim/avatar, oda durumu, sohbet, tarayıcı
-  kimliği, pinler, özel emojiler).
-- ✅ Açıklamada film/dizi/site adı yok; "her HTML5 video için tarafsız senkron aracı".
-- ✅ Otomatik testler (GitHub Actions: tip kontrolü, birim, derleme, uçtan uca).
-- ✅ Ekran görüntüleri güncel (`npm run store`).
-- ⬜ Brave/Edge'de bir arkadaşla gerçek deneme.
-- ⬜ Sürüm `1.0.0` → `npm run store` → zip'i panele yükle → formu bu rehbere göre doldur → gönder
-  (senin hesabınla; ben gönderemem).
-- ⬜ Onaylanınca: `eklenti.html` ve sitedeki kurulum linklerini mağaza linkine çevir.
+Before submitting (Claude checks; ✅ items were done in 0.9.0):
+- ✅ Minimal permissions: `storage` + `<all_urls>` (to find the video on any site) + `offscreen` (voice chat on film
+  pages, 0.9.60; shows no warning); justifications above.
+- ✅ The privacy policy describes every piece of data stored (name/avatar, room state, chat, browser ID, pins, custom
+  emojis, IP addresses in voice).
+- ✅ No film/series/site names in the description; "a neutral sync tool for any HTML5 video".
+- ✅ Automated tests (GitHub Actions: typecheck, unit, build, end-to-end).
+- ✅ Screenshots up to date (`npm run store`).
+- ⬜ A real test with a friend on Brave/Edge.
+- ⬜ Version `1.0.0` → `npm run store` → upload the zip in the dashboard → fill in the form with this guide → submit
+  (with the owner's account; Claude can't submit).
+- ⬜ Once approved: change the install links in `eklenti.html` and on the site to the store link.

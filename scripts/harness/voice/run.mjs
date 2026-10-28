@@ -78,9 +78,9 @@ if (!available) {
   ayse.close();
   process.exit(1);
 }
-await ali.evaluate(`document.getElementById('voice-join').click(); 1`);
+await ali.evaluate(`(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 await until(() => ali.evaluate(`!document.getElementById('voice-on').hidden`), 10000);
-await ayse.evaluate(`document.getElementById('voice-join').click(); 1`);
+await ayse.evaluate(`(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 const bothIn = await until(async () => (await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face').length`)) === 2, 15000);
 check(!!bothIn, 'ikisi de seste (kartta iki avatar)');
 const aliHears = await until(async () => (await ali.evaluate(`document.querySelectorAll('audio').length`)) >= 1, 20000);

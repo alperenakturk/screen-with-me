@@ -29,5 +29,8 @@
     { "tag": "v3", "new_sqlite_classes": ["Draw"] },
     { "tag": "v4", "new_sqlite_classes": ["Quiz"] }
   ],
+  // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
+  // address joining at once must still fit, a script opening rooms in a loop must not.
+  "ratelimits": [{ "name": "CONNECT_LIMIT", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } }],
   "observability": { "enabled": true }
 }

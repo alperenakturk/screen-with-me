@@ -168,6 +168,7 @@
                 (p, i) => `<span class="together-person"><span class="voice-face${i < 2 ? ' in-voice' : ''}${i === 1 ? ' speaking' : ''}">${av(p.avatar, 'voice-avatar')}</span><span class="together-name">${p.me ? 'You' : p.name}</span></span>`,
               ).join('')}</div>
               <div class="together-actions"><div class="voice-row"><div class="voice-on"><button type="button" class="btn small-btn voice-mic">🎙</button><button type="button" class="btn small-btn">📷</button><button type="button" class="btn small-btn">Leave</button></div></div></div>
+              <p class="muted small voice-ip">🔒 <span>People in voice can see your IP</span> <button type="button" class="link-btn">Why?</button></p>
             </section>
             <section class="card tabs-card">
               <nav class="tabs">

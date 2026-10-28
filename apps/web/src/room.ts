@@ -426,6 +426,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
             </div>
           </div>
+          <p id="voice-ip" class="muted small voice-ip" hidden>🔒 <span data-i18n="ipNotice.line"></span> <button type="button" class="link-btn" id="voice-ip-why" data-i18n="ipNotice.why"></button></p>
           <div id="voice-cams" class="voice-cams" hidden>
           </div>
           <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
@@ -555,6 +556,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="set-row"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
+              <div class="set-row"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.reactionGap"></b><span data-i18n="settings.reactionGap.d"></span></span>
                 <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
               </label>
@@ -856,9 +858,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         lastBy = null;
         void applyState(message.state);
         pins.set(message.pins ?? null);
-        // Özel emojiler welcome'dan sonra tek tek gelir; benimkileri bu odaya da yükle.
+        // Özel emojiler welcome'dan sonra tek tek gelir. Nothing of mine is uploaded automatically (security review 1).
         reactions.clearStickers();
-        reactions.registerMine();
         send({ t: 'recaps' });
         // Ana sayfada "kaydedilen oda" seçilerek kurulduysa: ilk giren (yönetici) adıyla kaydeder.
         {
@@ -947,7 +948,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         pins.set(message.pins);
         break;
       case 'sticker':
-        reactions.addSticker(message.sticker);
+        reactions.addSticker(message.sticker, message.mine === true);
         break;
       case 'sticker-removed':
         reactions.removeSticker(message.id);
@@ -2102,7 +2103,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     live.settings(roomSettings.liveHostOnly === true);
     $<HTMLSelectElement>('#opt-reactiongap').value = String(roomSettings.reactionGap ?? 0);
     app.classList.toggle('no-reactions', roomSettings.noReactions === true);
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-livehost', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-livehost', '#opt-clear-stickers', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     // Yönetici olmayana kuralların kısa özeti.
@@ -2155,6 +2156,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   $<HTMLInputElement>('#opt-livehost').addEventListener('change', (event) => {
     send({ t: 'settings', liveHostOnly: (event.target as HTMLInputElement).checked });
+  });
+  $('#opt-clear-stickers').addEventListener('click', () => {
+    void confirmDialog({ icon: '🖼️', title: t('settings.clearStickers'), text: t('settings.clearStickers.confirm'), yes: t('settings.clearStickers.btn') }).then((yes) => {
+      if (yes) send({ t: 'sticker-clear' });
+    });
   });
   $<HTMLSelectElement>('#opt-reactiongap').addEventListener('change', (event) => {
     const gap = Number((event.target as HTMLSelectElement).value);

@@ -4,16 +4,25 @@ import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
+import { confirmDialog } from './confirm.ts';
+import { flashHint } from './hint.ts';
 
 /** Ekranda aynı anda en fazla bu kadar uçuşan tepki. */
 const MAX_FLOATS = 12;
 /** Uçuşma süresi (CSS r-float ile aynı); animasyon olayı gelmezse bu sürede silinir. */
 const FLOAT_MS = 3000;
-/** Kendi özel emojilerim (tarayıcıda saklanır, girdiğim her odaya yüklenir). */
-const MY_STICKERS_KEY = 'myStickers';
+/**
+ * My custom emoji collection: kept only in this browser (and mirrored to the extension's storage), never uploaded by
+ * itself. An image goes to a room only when I add it there (security review 1, S1).
+ */
+const COLLECTION_KEY = 'stickerCollection';
+/** Before 0.9.84 every saved emoji was uploaded to every room I joined; that list becomes my collection once. */
+const OLD_STICKERS_KEY = 'myStickers';
+/** One-time note in the tray after that migration. */
+const NOTE_KEY = 'stickerNote';
 /** Aralık serbestken bile iki emoji arası en az bu kadar (ms). */
 const MIN_GAP_MS = 150;
-const MAX_MY_STICKERS = 12;
+const MAX_COLLECTION = 12;
 /** Video altındaki tepsinin yanında hep duran son kullanılanlar. */
 const RECENT_KEY = 'recentReactions';
 const RECENT_COUNT = 3;
@@ -42,9 +51,12 @@ export function createReactions(
   const bars = root.querySelectorAll<HTMLElement>('.reaction-bar');
   const layer = root.querySelector<HTMLElement>('#reactions-layer')!;
   const stickers = new Map<string, string>();
-  /** Benim eklediğim özel emojilerin kimlikleri (✕ ile kaldırabilirim). */
+  /** Ids of the room emojis I added (I can remove them with ✕); the server marks them with `mine` after a reload. */
   const mine = new Set<string>();
+  migrateCollection();
   let page = 0;
+  /** The tray shows either the room's pages or my local collection. */
+  let collectionOpen = false;
   let coolUntil = 0;
   let trayOpen = false;
   let recent = readRecent();
@@ -170,7 +182,8 @@ export function createReactions(
     const kind = (label: string, target: number, on: boolean) => {
       const chip = el('button', { type: 'button', class: on ? 'tray-chip on' : 'tray-chip', 'aria-pressed': String(on) }, label);
       chip.addEventListener('click', () => {
-        // "Benimkiler" boşsa doğrudan dosya seçilir.
+        collectionOpen = false;
+        // "Bu odada" boşsa doğrudan dosya seçilir.
         if (target >= all.length) fire({ add: true });
         else {
           page = target;
@@ -179,19 +192,31 @@ export function createReactions(
       });
       return chip;
     };
+    const collectionChip = el('button', { type: 'button', class: collectionOpen ? 'tray-chip on' : 'tray-chip', 'aria-pressed': String(collectionOpen) }, t('stickers.collection'));
+    collectionChip.addEventListener('click', () => {
+      collectionOpen = true;
+      draw();
+    });
     const prev = el('button', { type: 'button', class: 'tray-page', title: t('moreReactions'), 'aria-label': t('moreReactions') }, '‹');
     const next = el('button', { type: 'button', class: 'tray-page', title: t('moreReactions'), 'aria-label': t('moreReactions') }, '›');
     prev.addEventListener('click', () => turn(-1));
     next.addEventListener('click', () => turn(1));
     const add = el('button', { type: 'button', class: 'tray-add', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, '🖼️ ', t('reactTray.add'));
     add.addEventListener('click', () => fire({ add: true }));
-    const tray = el(
+    const head = el(
       'div',
-      { class: 'react-tray', role: 'group', 'aria-label': t('reactTray'), 'data-island': '' },
-      el('div', { class: 'tray-head' }, kind(t('reactTray.ready'), 0, page < ownFirst), kind(t('reactTray.mine'), ownFirst, page >= ownFirst)),
-      el('div', { class: 'tray-grid' }, ...slots),
-      el('div', { class: 'tray-foot' }, prev, el('span', { class: 'tray-count' }, `${page + 1}/${all.length}`), next, el('span', { class: 'tray-gap' }), add),
+      { class: 'tray-head' },
+      kind(t('reactTray.ready'), 0, !collectionOpen && page < ownFirst),
+      kind(t('reactTray.mine'), ownFirst, !collectionOpen && page >= ownFirst),
+      collectionChip,
     );
+    const body = collectionOpen
+      ? collectionView()
+      : [
+          el('div', { class: 'tray-grid' }, ...slots),
+          el('div', { class: 'tray-foot' }, prev, el('span', { class: 'tray-count' }, `${page + 1}/${all.length}`), next, el('span', { class: 'tray-gap' }), add),
+        ];
+    const tray = el('div', { class: 'react-tray', role: 'group', 'aria-label': t('reactTray'), 'data-island': '' }, head, ...noteView(), ...body);
     tray.hidden = !trayOpen;
     tray.addEventListener('wheel', (event) => {
       event.preventDefault();
@@ -219,13 +244,28 @@ export function createReactions(
     if (event.key === 'Escape' && trayOpen) setTray(false);
   });
 
-  /** Özel emojiyi odadan kaldır; kendi listemden de çıkar (bir sonraki odaya yüklenmesin). */
-  async function removeSticker(id: string): Promise<void> {
-    const keep: string[] = [];
-    for (const data of myStickers()) if ((await stickerId(data)) !== id) keep.push(data);
-    save(MY_STICKERS_KEY, JSON.stringify(keep));
+  /** Remove a custom emoji from this room (mine, or any if I'm the host). My collection is not touched. */
+  function removeSticker(id: string): void {
     mine.delete(id);
     send({ t: 'sticker-remove', id });
+  }
+
+  /** Add an image from my collection to this room (one explicit tap = one upload). */
+  async function addFromCollection(data: string, anchor: HTMLElement): Promise<void> {
+    const id = await stickerId(data);
+    if (stickers.has(id)) {
+      flashHint(anchor, t('stickers.already'), 3000);
+      return;
+    }
+    mine.add(id);
+    page = REACTION_PAGES.length + Math.floor(stickers.size / SLOTS);
+    collectionOpen = false;
+    send({ t: 'sticker-add', data });
+  }
+
+  function deleteFromCollection(data: string): void {
+    save(COLLECTION_KEY, JSON.stringify(collection().filter((d) => d !== data)));
+    draw();
   }
 
   for (const bar of bars) {
@@ -244,11 +284,24 @@ export function createReactions(
     if (!file) return;
     try {
       const data = await fileToSticker(file);
-      const kept = myStickers().filter((d) => d !== data);
-      save(MY_STICKERS_KEY, JSON.stringify([...kept, data].slice(-MAX_MY_STICKERS)));
+      // Say clearly where the image goes; keeping a copy for other rooms is an explicit, unchecked choice.
+      const keep = el('input', { type: 'checkbox', class: 'sticker-keep-box' }) as HTMLInputElement;
+      const extra = el(
+        'div',
+        { class: 'sticker-confirm' },
+        el('img', { class: 'sticker-preview', src: data, alt: '' }),
+        el('label', { class: 'sticker-keep' }, keep, el('span', {}, t('stickers.keep'))),
+      );
+      const ok = await confirmDialog({ icon: '🖼️', title: t('stickers.addTitle'), text: t('stickers.addNote'), yes: t('stickers.addYes'), extra });
+      if (!ok) return;
+      if (keep.checked) {
+        const kept = collection().filter((d) => d !== data);
+        save(COLLECTION_KEY, JSON.stringify([...kept, data].slice(-MAX_COLLECTION)));
+      }
       mine.add(await stickerId(data));
       // Eklenen emojinin sayfası açılsın: nereye geldiği görünsün.
       page = REACTION_PAGES.length + Math.floor(stickers.size / SLOTS);
+      collectionOpen = false;
       send({ t: 'sticker-add', data });
     } catch (error) {
       const code = error instanceof Error && ['type', 'too_big'].includes(error.message) ? error.message : 'broken';
@@ -267,6 +320,31 @@ export function createReactions(
     event.preventDefault();
     fire(item);
   });
+
+  /** My collection in the tray: tap = add to this room, ✕ = delete from my collection (local only). */
+  function collectionView(): HTMLElement[] {
+    const list = collection();
+    if (list.length === 0) return [el('p', { class: 'tray-empty muted small' }, t('stickers.collectionEmpty'))];
+    const items = list.map((data) => {
+      const button = el('button', { type: 'button', class: 'reaction-btn', title: t('stickers.addHere'), 'aria-label': t('stickers.addHere') }, el('img', { src: data, alt: '' }));
+      button.addEventListener('click', () => void addFromCollection(data, button));
+      const remove = el('button', { type: 'button', class: 'sticker-x', title: t('stickers.deleteMine'), 'aria-label': t('stickers.deleteMine') }, '✕');
+      remove.addEventListener('click', () => deleteFromCollection(data));
+      return el('span', { class: 'sticker-wrap' }, button, remove);
+    });
+    return [el('p', { class: 'tray-empty muted small' }, t('stickers.collectionHint')), el('div', { class: 'tray-grid tray-collection' }, ...items)];
+  }
+
+  /** One-time note after the 0.9.84 change (custom emojis no longer travel to every room). */
+  function noteView(): HTMLElement[] {
+    if (load(NOTE_KEY) !== '1') return [];
+    const ok = el('button', { type: 'button', class: 'btn small-btn' }, t('stickers.noteOk'));
+    ok.addEventListener('click', () => {
+      save(NOTE_KEY, '0');
+      draw();
+    });
+    return [el('div', { class: 'tray-note small' }, el('span', {}, t('stickers.note')), ok)];
+  }
 
   /** Tepkinin görünümü: emoji ya da odadaki özel emojinin resmi (bilinmeyen özel emoji: null). */
   function content(emoji?: string, sticker?: string): HTMLElement | null {
@@ -293,28 +371,20 @@ export function createReactions(
       setTimeout(() => float.remove(), FLOAT_MS + 200);
       layer.append(float);
     },
-    /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir). */
-    addSticker(sticker: Sticker): void {
+    /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir); `own`: I added it. */
+    addSticker(sticker: Sticker, own = false): void {
       stickers.set(sticker.id, sticker.data);
+      if (own) mine.add(sticker.id);
       draw();
     },
     removeSticker(id: string): void {
       stickers.delete(id);
       draw();
     },
-    /** Odaya girince: kendi özel emojilerimi bu odaya da yükle. */
-    registerMine(): void {
-      for (const data of myStickers()) {
-        send({ t: 'sticker-add', data });
-        void stickerId(data).then((id) => {
-          mine.add(id);
-          draw();
-        });
-      }
-    },
     /** Yeni odaya bağlanınca (yeniden bağlanma) eski odanın özel emojileri temizlenir. */
     clearStickers(): void {
       stickers.clear();
+      mine.clear();
       draw();
     },
     relabel(): void {
@@ -332,13 +402,30 @@ function readRecent(): string[] {
   }
 }
 
-function myStickers(): string[] {
+function readList(key: string): string[] {
   try {
-    const list = JSON.parse(load(MY_STICKERS_KEY) ?? '[]') as unknown;
+    const list = JSON.parse(load(key) ?? '[]') as unknown;
     return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : [];
   } catch {
     return [];
   }
+}
+
+function collection(): string[] {
+  return readList(COLLECTION_KEY);
+}
+
+/**
+ * Old list (uploaded to every room before 0.9.84) → my collection, once. The old key is emptied, so an old tab or an
+ * old cached page can't upload it again either; a one-time note explains the change.
+ */
+function migrateCollection(): void {
+  const old = readList(OLD_STICKERS_KEY);
+  if (old.length === 0) return;
+  const merged = [...collection().filter((d) => !old.includes(d)), ...old].slice(-MAX_COLLECTION);
+  save(COLLECTION_KEY, JSON.stringify(merged));
+  save(OLD_STICKERS_KEY, '[]');
+  save(NOTE_KEY, '1');
 }
 
 /** Klavye kısayolları yazı alanlarında çalışmasın. */

@@ -7447,3 +7447,80 @@ html.in-room .topbar-right > .lang {
 .voice-cams.floating.folded :is(.cam-grid, .cam-resize) {
   display: none;
 }
+
+/* Custom emoji: add confirmation (preview + "Also save to my collection") and the tray's collection view. */
+.sticker-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+
+.sticker-preview {
+  max-width: 96px;
+  max-height: 96px;
+  border-radius: 10px;
+}
+
+.sticker-keep {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sticker-keep input {
+  margin-top: 3px;
+}
+
+.tray-empty {
+  max-width: 198px;
+  margin: 0;
+}
+
+.tray-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 198px;
+  padding: 8px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+/* Peer-to-peer IP notice: the line under the voice row and the dialog's extra part. */
+.voice-ip {
+  margin: 8px 0 0;
+}
+
+.voice-ip .link-btn {
+  font-size: inherit;
+}
+
+.ip-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  text-align: left;
+}
+
+.ip-notice p {
+  margin: 0;
+}
+
+.ip-notice-who {
+  font-weight: 600;
+}
+
+.ip-notice-again {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
