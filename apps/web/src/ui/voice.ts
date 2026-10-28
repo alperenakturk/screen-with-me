@@ -366,6 +366,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   /** Sitedeki odadan filme geçince (ya da tersi) seste idiysek ve izin zaten verilmişse sessizce yeniden katıl. */
   async function rejoin(): Promise<void> {
     if (client.active || load(wantKey) !== '1' || !available || !myId()) return;
+    // Another tab of mine (e.g. the film tab while this room tab was opened from the popup) is already in voice:
+    // don't join a second time (I would hear myself and appear twice). The "Join voice" button still works.
+    if (myOtherTabInVoice()) return;
     if (client instanceof ExtVoice) {
       // Eklenti katılmak için üye kimliğimi ve odadakileri bilmeli.
       client.sync(members, myId());
@@ -377,6 +380,12 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
     client.sync(members, myId());
     render();
+  }
+
+  /** Is the same person (same name and avatar, another connection) already in voice? */
+  function myOtherTabInVoice(): boolean {
+    const me = members.find((m) => m.id === myId());
+    return !!me && members.some((m) => m.voice && m.id !== me.id && m.name === me.name && (m.avatar ?? '') === (me.avatar ?? ''));
   }
 
   // Kim konuşuyor: dinlediklerimin ses seviyesi (kendi sesim için mikrofon açıksa da göstermeyiz; yankı hissi olmasın).
