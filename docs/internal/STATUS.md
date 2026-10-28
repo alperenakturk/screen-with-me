@@ -19,11 +19,27 @@
 security hardening, legal/name/policies, consistency (English-first repo), operations, then 1.0 in the Chrome Web
 Store together with the domain and the final name. New feature areas wait until then unless the owner asks.
 
-**Next (0.9.83 →):**
-1. Fix the film-page cover flash (see test results below).
-2. Owner's feature walkthrough → polish list in `ROADMAP.md` §1.
-3. English migration of `docs/internal/` (one doc at a time) and the consistency items.
-4. GitHub Issues as the bug list (labels + `1.0` milestone), `CHANGELOG.md`.
+## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
+Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` §1 "Feedback round 1".
+- [x] Record the plan, conventions and this queue (CLAUDE.md, ROADMAP, STATUS).
+- [ ] Separate session: name brainstorm + inspiration page (results → `docs/internal/name-ideas.md`).
+- [ ] Separate session: security review of custom emojis across rooms and WebRTC IP exposure (results →
+  `docs/internal/security-review-1.md`).
+- [ ] **0.9.83** quick fixes: extension popup button opens a new tab (doesn't replace our room tab); "your extension
+  is outdated" shown to an up-to-date extension (friend had to reinstall); film ducking off by default + only on real
+  speech (clicks must not trigger it); film-page cover flash.
+- [ ] **0.9.84** voice/camera bugs: tiles drop and come back (maybe when a game is opened/closed); the same person
+  appears with 2–3 camera tiles (one frozen); own camera visible in a slot even when hidden; small audio glitches.
+- [ ] **0.9.85** Meet/Discord-style controls: mic/camera toggles under the camera tiles while watching; per-person
+  mute and volume; host can kick from the tile; pin a camera; hide my own camera; resize tiles horizontally and
+  vertically.
+- [ ] **0.9.86** settings: ⚙️ button to the right of the profile picture; remove the ⚙️ next to the tabs and the
+  settings inside the profile menu; scheduled start redesigned (meaningful, explained, good-looking).
+- [ ] **0.9.87** YouTube player on the site: controls stay visible long after the mouse leaves (windowed view);
+  YouTube's own volume control doesn't work (something of ours blocks it).
+- [ ] **0.9.88** YouTube search inside the app (owner gets a YouTube Data API key → GitHub Secrets; Claude writes the
+  guide and the code).
+- [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
 - Typecheck ✅, unit 157/157 ✅, e2e 172 checks ✅ (only `room.mjs` hangs because YouTube is blocked here; known).

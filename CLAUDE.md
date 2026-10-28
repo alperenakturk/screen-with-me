@@ -32,6 +32,11 @@ We are building a **global product**, so everything is professional, formal and 
 - Alperen is learning JS/HTML/CSS at school; keep explanations simple (in Turkish).
 - **Finish every task with a short report** (user's request, Oct 2026): what I did, what I tried, what I am waiting
   for now (CI, deploy, the user's answer) and what comes next. If something is running in the background, say so.
+- **Visible task list in every task** (user's request, 28 Oct 2026): at the start of a task create a task list (the
+  session's task tool) with one item per step, keep statuses current (in progress / done) so the user always sees
+  which step we are on and what is left. The same queue is written to `docs/internal/STATUS.md` "Task queue" and
+  pushed: if the session or the usage limit stops the work, the next session (or the same one after "devam") reads
+  that queue and continues from the first unfinished item without asking.
 - **Make technical decisions yourself**, briefly say why; the user asks for changes if they disagree. Only ask about
   things that belong to the user: accounts, money, publishing, legal commitments, the product name, slogans.
 - Move in safe steps; test every change, ship it, commit it.

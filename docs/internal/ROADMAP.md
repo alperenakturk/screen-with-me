@@ -24,6 +24,20 @@ list, big services, donations, going public), `BUYUME.md` (growth), `gelecek-fik
 The owner will go through every feature and describe what should be better. For each one: collect the feedback here,
 implement, test, ship.
 - [ ] Owner's feature walkthrough (list to be filled in as we go)
+- **Feedback round 1** (owner's friends, real use, 28 Oct 2026; scheduled as 0.9.83–0.9.88 in `STATUS.md`):
+  - [ ] Extension popup button opens our site in a **new tab** instead of replacing the current tab (the room broke).
+  - [ ] Up-to-date extension was told "outdated" on a film site and couldn't continue until reinstalling.
+  - [ ] Voice/camera: tiles drop and return (maybe on game open/close); duplicate tiles of one person (one frozen);
+    own camera visible in a slot; small audio glitches.
+  - [ ] Film ducking: **off by default**, only in Settings; triggers on real speech, never on a click.
+  - [ ] Meet-style controls under camera tiles (mic/camera on/off while watching).
+  - [ ] Discord-style per-person controls: mute for me, volume for me, host kick; pin a camera; hide my own camera;
+    resize tiles in both directions.
+  - [ ] Scheduled start: currently meaningless; make it clear and well designed.
+  - [ ] ⚙️ next to the profile picture; remove the other settings entry points (tab row, profile menu).
+  - [ ] YouTube player: controls linger after the mouse leaves; YouTube volume control doesn't work.
+  - [ ] **New feature:** YouTube search inside the app (like Watch2Gether): type in the top box, pick from results.
+- [ ] **Before 1.0:** try Shorts / Reels scrolling together end to end (owner's request).
 - [ ] **(added)** First-time experience: someone who has never seen the site arrives with an invite link, installs
   the extension and watches — measure the steps and remove friction.
 - [ ] **(added)** Simplify the room for newcomers: rarely used features (scheduled start, voting, saved rooms, recap)
