@@ -31,6 +31,9 @@ const ICE: RTCIceServer[] = [{ urls: 'stun:stun.cloudflare.com:3478' }];
  */
 export const CAM_CONSTRAINTS: MediaTrackConstraints = { width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15, max: 15 } };
 const CAM_MAX_BITRATE = 280_000;
+/** Waits before rebuilding a lost connection (then gives up and says so). */
+const RETRY_DELAYS_MS = [2000, 5000, 10000];
+const DISCONNECTED_GRACE_MS = 5000;
 
 interface Peer {
   pc: RTCPeerConnection;
@@ -46,6 +49,11 @@ export class P2pVoice implements Voice {
   private myId: string | null = null;
   private joined = false;
   private micOn = true;
+  /** Last member list (a retry re-checks who is still in voice). */
+  private members: Member[] = [];
+  /** Failed connections are rebuilt a few times before giving up (network hiccup, Wi-Fi switch). */
+  private readonly attempts = new Map<string, number>();
+  private readonly retries = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(private readonly options: P2pVoiceOptions) {}
 
@@ -107,13 +115,15 @@ export class P2pVoice implements Voice {
     }
   }
 
-  async join(): Promise<void> {
+  async join(mic = true): Promise<void> {
     if (this.joined) return;
     this.mic = await (this.options.getMic?.() ??
       navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false }));
     this.joined = true;
-    this.micOn = true;
-    this.options.announce(true, true);
+    // A muted person stays muted when voice is rebuilt after a reconnect (the track is disabled before anyone hears it).
+    this.micOn = mic;
+    for (const track of this.mic.getAudioTracks()) track.enabled = mic;
+    this.options.announce(true, mic);
   }
 
   setMic(on: boolean): void {
@@ -130,17 +140,27 @@ export class P2pVoice implements Voice {
     this.mic = null;
     this.cam = null;
     for (const memberId of [...this.peers.keys()]) this.close(memberId);
+    for (const timer of this.retries.values()) clearTimeout(timer);
+    this.retries.clear();
+    this.attempts.clear();
     this.options.announce(false);
   }
 
   /** Seste olanlarla bağlantı kur (kimliği büyük olana ben teklif yaparım), gidenlerle bağlantıyı kapat. */
   sync(members: Member[], myId: string | null): void {
     this.myId = myId;
+    this.members = members;
     if (!this.joined || !myId) return;
     const inVoice = new Set(members.filter((m) => m.voice && m.id !== myId).map((m) => m.id));
     for (const memberId of [...this.peers.keys()]) if (!inVoice.has(memberId)) this.close(memberId);
+    for (const memberId of [...this.retries.keys()]) {
+      if (inVoice.has(memberId)) continue;
+      clearTimeout(this.retries.get(memberId));
+      this.retries.delete(memberId);
+      this.attempts.delete(memberId);
+    }
     for (const memberId of inVoice) {
-      if (!this.peers.has(memberId) && myId < memberId) void this.call(memberId);
+      if (!this.peers.has(memberId) && !this.retries.has(memberId) && myId < memberId) void this.call(memberId);
     }
   }
 
@@ -216,12 +236,51 @@ export class P2pVoice implements Voice {
       if (event.track.kind === 'video') this.options.onRemoteVideo?.(memberId, new MediaStream([event.track]));
       else this.options.onRemote(memberId, new MediaStream([event.track]));
     };
+    let lost: ReturnType<typeof setTimeout> | null = null;
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState !== 'failed' || peer.failed || this.peers.get(memberId) !== peer) return;
-      peer.failed = true;
-      this.options.onFailed?.(memberId);
+      if (this.peers.get(memberId) !== peer) return;
+      const state = pc.connectionState;
+      if (state === 'connected') {
+        this.attempts.delete(memberId);
+        if (lost) clearTimeout(lost);
+        lost = null;
+      } else if (state === 'disconnected' && !lost) {
+        // Often recovers by itself within a few seconds; if not, rebuild it like a failed one.
+        lost = setTimeout(() => {
+          lost = null;
+          if (this.peers.get(memberId) === peer && pc.connectionState !== 'connected') this.lostPeer(memberId, peer);
+        }, DISCONNECTED_GRACE_MS);
+      } else if (state === 'failed') {
+        if (lost) clearTimeout(lost);
+        lost = null;
+        this.lostPeer(memberId, peer);
+      }
     };
     return peer;
+  }
+
+  /**
+   * A connection died: close it (its frozen camera tile and silent audio go away) and, if we make the offers to this
+   * person, call again after a short backoff. The other side simply waits for the new offer. After the last attempt
+   * the person is told that the connection can't be made (strict networks).
+   */
+  private lostPeer(memberId: string, peer: Peer): void {
+    if (peer.failed) return;
+    peer.failed = true;
+    this.close(memberId);
+    const attempt = (this.attempts.get(memberId) ?? 0) + 1;
+    this.attempts.set(memberId, attempt);
+    if (attempt > RETRY_DELAYS_MS.length) {
+      this.options.onFailed?.(memberId);
+      return;
+    }
+    this.retries.set(
+      memberId,
+      setTimeout(() => {
+        this.retries.delete(memberId);
+        if (this.joined) this.sync(this.members, this.myId);
+      }, RETRY_DELAYS_MS[attempt - 1]),
+    );
   }
 
   private async flush(peer: Peer): Promise<void> {

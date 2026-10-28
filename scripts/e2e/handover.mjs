@@ -46,5 +46,17 @@ a3.ws.send(JSON.stringify({ t: 'kick', id: wb.you }));
 const err = await a3.wait((m) => m.t === 'error', 'not host');
 ok(err.code === 'not_host', 'Eski yönetici artık kimseyi atamaz');
 
-for (const x of [a3, b, c]) x.ws.close();
+// Reconnect: the new connection names the old one (`prev`, same browser id) → the old one leaves at once instead of
+// staying in the room (with a frozen camera) until the stale check.
+const d = client({ name: 'Dan', cid: 'handDan12345' });
+const wd = await d.wait((m) => m.t === 'welcome', 'welcome d');
+const d2 = client({ name: 'Dan', cid: 'handDan12345', prev: wd.you });
+const wd2 = await d2.wait((m) => m.t === 'welcome', 'welcome d2');
+ok(!wd2.members.some((m) => m.id === wd.you) && wd2.members.some((m) => m.id === wd2.you), 'Yeniden bağlanan Dan’in eski bağlantısı hemen düştü');
+// Someone else can't drop a connection by naming it.
+const e = client({ name: 'Eve', cid: 'handEve12345', prev: wd2.you });
+const we = await e.wait((m) => m.t === 'welcome', 'welcome e');
+ok(we.members.some((m) => m.id === wd2.you), 'Başka tarayıcı kimliğiyle `prev` kimseyi düşürmez');
+
+for (const x of [a3, b, c, d, d2, e]) x.ws.close();
 setTimeout(() => process.exit(0), 100);

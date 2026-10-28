@@ -184,7 +184,7 @@ function makeClient(mode: VoiceMode): Voice {
   return p2p;
 }
 
-async function join(mode: VoiceMode, quiet = false): Promise<void> {
+async function join(mode: VoiceMode, quiet = false, micOn = true): Promise<void> {
   if (!(await allowed('microphone'))) {
     if (quiet) {
       sendState();
@@ -199,7 +199,7 @@ async function join(mode: VoiceMode, quiet = false): Promise<void> {
   client?.leave();
   client = makeClient(mode);
   try {
-    await client.join();
+    await client.join(micOn);
     client.sync(members, myId);
   } catch (error) {
     client.leave();
@@ -245,7 +245,7 @@ function handle(tabId: number, roomId: string, msg: VoiceUp): void {
     case 'join':
       members = msg.members;
       myId = msg.myId;
-      void join(msg.mode, msg.quiet === true);
+      void join(msg.mode, msg.quiet === true, msg.mic !== false);
       break;
     case 'reset': {
       // Site yeniden bağlandı (film sayfası yenilendi, başka bölüm): yeni kimlikle bağlantılar baştan.
@@ -257,9 +257,8 @@ function handle(tabId: number, roomId: string, msg: VoiceUp): void {
       client.leave();
       videos.clear();
       refreshLoop();
-      void client.join().then(
+      void client.join(micOn).then(
         () => {
-          if (!micOn) client?.setMic(false);
           if (camOn) void setCam(true);
           client?.sync(members, myId);
           sendState();
