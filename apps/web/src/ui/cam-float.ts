@@ -7,18 +7,23 @@ interface Spot {
   x: number;
   y: number;
   w: number;
+  /** Height as a share of the container, once the person has resized it (0.9.85: both directions). */
+  h?: number;
 }
 
 const NORMAL_DEFAULT: Spot = { x: 0.74, y: 0.58, w: 0.2 };
 const FS_DEFAULT: Spot = { x: 0.82, y: 0.08, w: 0.15 };
 const MIN_WIDTH = 140;
+const MIN_HEIGHT = 110;
 /** Kabın en fazla bu oranı kadar genişleyebilir (videonun tamamını kaplamasın). */
 const MAX_SHARE = 0.7;
 
 function readSpot(key: string, fallback: Spot): Spot {
   try {
     const spot = JSON.parse(load(key) ?? 'null') as Spot | null;
-    if (spot && [spot.x, spot.y, spot.w].every((n) => Number.isFinite(n) && n >= 0 && n <= 1)) return spot;
+    if (spot && [spot.x, spot.y, spot.w].every((n) => Number.isFinite(n) && n >= 0 && n <= 1)) {
+      return spot.h !== undefined && !(Number.isFinite(spot.h) && spot.h > 0 && spot.h <= 1) ? { x: spot.x, y: spot.y, w: spot.w } : spot;
+    }
   } catch {
     // bozuk kayıt: varsayılan
   }
@@ -35,7 +40,16 @@ function readSpot(key: string, fallback: Spot): Spot {
  * Kutular hep aynı öğeler: yer değişince taşınır (görüntü yeniden kurulmaz), taşınınca oynatma sürdürülür.
  * Film sayfasındaki katmanda (kabuk) yüzen pencere bir adacıktır (`data-island`): deliğin üstünde de görünür.
  */
-export function createCamWindow(opts: { box: HTMLElement; theater: HTMLElement; wrap: HTMLElement; onMove: () => void }) {
+export function createCamWindow(opts: {
+  box: HTMLElement;
+  theater: HTMLElement;
+  wrap: HTMLElement;
+  /** Buttons under the tiles (mic / camera), shown in the floating window and in fullscreen. */
+  controls?: HTMLElement;
+  onMove: () => void;
+  /** A tile was clicked (not dragged): opens the person menu. */
+  onTileClick?: (tile: HTMLElement) => void;
+}) {
   const { box, theater, wrap } = opts;
   // Kartta durduğu yer (geri dönmek için).
   const home = document.createComment('kameralar');
@@ -48,7 +62,7 @@ export function createCamWindow(opts: { box: HTMLElement; theater: HTMLElement; 
   const foldButton = el('button', { type: 'button', class: 'cam-btn cam-fold' });
   const bar = el('div', { class: 'cam-bar' }, el('span', { class: 'cam-grip', 'aria-hidden': 'true' }, '⠿'), title, foldButton, dockButton);
   const resize = el('span', { class: 'cam-resize', 'aria-hidden': 'true' });
-  box.replaceChildren(bar, grid, resize, popButton);
+  box.replaceChildren(bar, grid, ...(opts.controls ? [opts.controls] : []), resize, popButton);
 
   let floatOn = load('opt:camFloat') === '1';
   let folded = load('opt:camFolded') === '1';
@@ -78,13 +92,18 @@ export function createCamWindow(opts: { box: HTMLElement; theater: HTMLElement; 
   function apply(): void {
     const m = mode();
     if (m === 'card') {
-      box.style.left = box.style.top = box.style.width = '';
+      box.style.left = box.style.top = box.style.width = box.style.height = '';
+      box.classList.remove('sized');
       return;
     }
     const spot = m === 'fs' ? spots.fs : spots.normal;
     const c = container();
     const width = Math.round(Math.min(Math.max(spot.w * c.w, MIN_WIDTH), c.w * MAX_SHARE));
     box.style.width = `${width}px`;
+    // A set height: the tiles fill it (CSS .sized); folded shows only the title strip.
+    const sized = spot.h !== undefined && !folded;
+    box.classList.toggle('sized', sized);
+    box.style.height = sized ? `${Math.round(Math.min(Math.max(spot.h! * c.h, MIN_HEIGHT), c.h * MAX_SHARE))}px` : '';
     const height = box.offsetHeight;
     box.style.left = `${Math.round(Math.min(Math.max(0, spot.x * c.w), Math.max(0, c.w - width)))}px`;
     box.style.top = `${Math.round(Math.min(Math.max(0, spot.y * c.h), Math.max(0, c.h - height)))}px`;
@@ -115,21 +134,38 @@ export function createCamWindow(opts: { box: HTMLElement; theater: HTMLElement; 
     const c = container();
     const prev = m === 'fs' ? spots.fs : spots.normal;
     // Küçültülmüşken sadece yer değişir (genişlik açılınca eskisi gibi).
-    const spot = { x: box.offsetLeft / c.w, y: box.offsetTop / c.h, w: folded ? prev.w : box.offsetWidth / c.w };
+    const spot: Spot = { x: box.offsetLeft / c.w, y: box.offsetTop / c.h, w: folded ? prev.w : box.offsetWidth / c.w };
+    const h = folded ? prev.h : box.style.height ? box.offsetHeight / c.h : prev.h;
+    if (h !== undefined) spot.h = h;
     if (m === 'fs') spots = { ...spots, fs: spot };
     else spots = { ...spots, normal: spot };
     save(m === 'fs' ? 'camFloat:fsSpot' : 'camFloat:spot', JSON.stringify(spot));
   }
 
   // Sürükleme (düğmeler ve boyut köşesi hariç her yerden) ve boyutlandırma (sağ alt köşe).
-  let drag: { id: number; kind: 'move' | 'size'; x: number; y: number; left: number; top: number; width: number } | null = null;
+  let drag: { id: number; kind: 'move' | 'size'; x: number; y: number; left: number; top: number; width: number; height: number } | null = null;
+  /** The tile under a pointerdown and whether the pointer moved since: a still click opens the person menu. */
+  let downTile: HTMLElement | null = null;
+  let moved = false;
+  box.addEventListener(
+    'pointerdown',
+    (event) => {
+      downTile = (event.target as Element).closest<HTMLElement>('.cam-tile');
+      moved = false;
+    },
+    true,
+  );
+  box.addEventListener('click', (event) => {
+    if ((event.target as Element).closest('button') || !downTile || moved) return;
+    opts.onTileClick?.(downTile);
+  });
   let frame = 0;
   box.addEventListener('pointerdown', (event) => {
     if (mode() === 'card' || event.button !== 0) return;
     const target = event.target as Element;
     if (target.closest('button')) return;
     const kind = target === resize ? 'size' : 'move';
-    drag = { id: event.pointerId, kind, x: event.clientX, y: event.clientY, left: box.offsetLeft, top: box.offsetTop, width: box.offsetWidth };
+    drag = { id: event.pointerId, kind, x: event.clientX, y: event.clientY, left: box.offsetLeft, top: box.offsetTop, width: box.offsetWidth, height: box.offsetHeight };
     box.setPointerCapture(event.pointerId);
     box.classList.add('dragging');
     event.preventDefault();
@@ -139,12 +175,17 @@ export function createCamWindow(opts: { box: HTMLElement; theater: HTMLElement; 
     const c = container();
     const dx = event.clientX - drag.x;
     const dy = event.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
     if (drag.kind === 'move') {
       box.style.left = `${Math.round(Math.min(Math.max(0, drag.left + dx), Math.max(0, c.w - box.offsetWidth)))}px`;
       box.style.top = `${Math.round(Math.min(Math.max(0, drag.top + dy), Math.max(0, c.h - box.offsetHeight)))}px`;
     } else {
       const max = Math.min(c.w * MAX_SHARE, c.w - drag.left);
       box.style.width = `${Math.round(Math.min(Math.max(MIN_WIDTH, drag.width + dx), max))}px`;
+      // Both directions: the height is free too (tiles fill the box).
+      const maxH = Math.min(c.h * MAX_SHARE, c.h - drag.top);
+      box.style.height = `${Math.round(Math.min(Math.max(MIN_HEIGHT, drag.height + dy), maxH))}px`;
+      box.classList.add('sized');
     }
     // Kabukta delik/adacık her karede bir kez bildirilsin.
     if (!frame) {

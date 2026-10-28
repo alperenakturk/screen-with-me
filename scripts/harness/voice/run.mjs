@@ -134,6 +134,44 @@ check(grown.w - moved.w > 100, 'köşesinden çekince büyüdü', `${moved.w} �
 await ayse.sleep(700);
 check((await ayse.evaluate(BOX)).t > grown.t, 'taşınırken kamera görüntüsü durmadı');
 check(!!(await ayse.evaluate(`localStorage.getItem('camFloat:spot')`)), 'yeri ve boyutu hatırlanıyor');
+// 0.9.85: the window resizes vertically too, and the tiles fill it.
+const corner2 = await ayse.center('#voice-cams .cam-resize');
+await drag(corner2, 0, 140);
+const taller = await ayse.evaluate(BOX);
+check(taller.h - grown.h > 100, 'köşeden aşağı çekince yüksekliği de değişti (iki yönlü boyut)', `${grown.h} → ${taller.h}`);
+// Meet-style buttons under the cameras in the floating window.
+const ctls = await ayse.evaluate(`(() => { const c = document.querySelector('#voice-cams .cam-controls'); return c && getComputedStyle(c).display !== 'none' ? c.querySelectorAll('button:not([hidden])').length : 0; })()`);
+check(ctls === 2, 'yüzen pencerede kameraların altında 🎙 ve 📷 düğmeleri', String(ctls));
+await ayse.evaluate(`document.querySelector('#voice-cams .cam-ctl-mic').click(); 1`);
+const mutedByCtl = await until(() => ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+check(!!mutedByCtl, 'kamera altındaki 🎙 ile mikrofon kapandı');
+await ayse.evaluate(`document.querySelector('#voice-cams .cam-ctl-mic').click(); 1`);
+await until(() => ali.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
+// Person menu (Discord-like): click Ali's tile → pin; click Ali's face → mute for me.
+const aliTile = await ayse.center('#voice-cams .cam-tile:not(.mine)');
+await ayse.mouse('mouseMoved', aliTile.x, aliTile.y);
+await ayse.mouse('mousePressed', aliTile.x, aliTile.y);
+await ayse.mouse('mouseReleased', aliTile.x, aliTile.y);
+const menuItems = await until(() => ayse.evaluate(`(() => { const m = document.querySelector('.person-pop'); return m ? [...m.querySelectorAll('.person-pop-item')].map((b) => b.textContent) : null; })()`), 4000);
+check(!!menuItems && menuItems.some((x) => x.includes('📌')) && !!(await ayse.evaluate(`!!document.querySelector('.person-pop-range')`)), 'kameraya tıklayınca kişi menüsü: ses düzeyi ve büyüt', JSON.stringify(menuItems));
+await ayse.evaluate(`[...document.querySelectorAll('.person-pop-item')].find((b) => b.textContent.includes('📌')).click(); 1`);
+check(await ayse.evaluate(`!!document.querySelector('#voice-cams .cam-tile.pinned')`), '📌 ile Ali’nin kamerası büyüdü (sabitlendi)');
+await ayse.evaluate(`[...document.querySelectorAll('#voice-people .together-person')].find((p) => p.textContent.includes('Ali')).click(); 1`);
+await ayse.sleep(300);
+await ayse.evaluate(`[...document.querySelectorAll('.person-pop-item')].find((b) => b.textContent.includes('🔇')).click(); 1`);
+await ayse.sleep(300);
+const mutedForMe = await ayse.evaluate(`[...document.querySelectorAll('audio')].filter((a) => a.srcObject).every((a) => a.muted)`);
+check(mutedForMe, '“Benim için sustur”: Ali’nin sesi sadece Ayşe’de kısıldı');
+const aliStillOn = await ali.evaluate(`!document.querySelector('#voice-people .voice-muted')`);
+check(aliStillOn, 'Ali’nin mikrofonu açık kaldı (sadece Ayşe duymuyor)');
+await ayse.evaluate(`[...document.querySelectorAll('#voice-people .together-person')].find((p) => p.textContent.includes('Ali')).click(); 1`);
+await ayse.sleep(300);
+await ayse.evaluate(`[...document.querySelectorAll('.person-pop-item')].find((b) => b.textContent.includes('🔊')).click(); 1`);
+await ayse.sleep(300);
+check(await ayse.evaluate(`[...document.querySelectorAll('audio')].filter((a) => a.srcObject).every((a) => !a.muted)`), 'sesini tekrar açınca duyuluyor');
+const kickOffer = await ali.evaluate(`(() => { [...document.querySelectorAll('#voice-people .together-person')].find((p) => p.textContent.includes('Ayse'))?.click(); return [...document.querySelectorAll('.person-pop-item')].some((b) => b.textContent.includes('🚪')); })()`);
+check(kickOffer, 'yönetici (Ali) kişi menüsünde “Odadan çıkar”ı görüyor');
+await ali.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); 1`);
 await ayse.shot('kamera-serbest');
 // Tam ekranda kameralar kendiliğinden videonun içine gelir; orada da sürüklenir.
 await ayse.evaluate(`document.getElementById('sync-test')?.click(); 1`);
@@ -185,6 +223,7 @@ check(muted.rms < 0.005 && badge, 'Ayşe sessize alınca Ali onu duymuyor ve �
 // Reconnecting (network hiccup) must keep a muted microphone muted; it used to come back on by itself.
 await ayse.evaluate(`document.getElementById('profile-reconnect').click(); 1`);
 await ali.sleep(6000);
+console.log('     Ayşe (yeniden bağlandıktan sonra):', JSON.stringify(await ayse.evaluate(`({ muted: document.getElementById('voice-mic').classList.contains('muted-mic'), key: Object.keys(localStorage).filter((k) => k.startsWith('voiceMic')).map((k) => k + '=' + localStorage.getItem(k)), on: !document.getElementById('voice-on').hidden })`)));
 const ayseRows = await ali.evaluate(`[...document.querySelectorAll('#voice-people [data-voice-id]')].length`);
 const stillMuted = await ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`);
 const afterLevel = await ali.evaluate(LEVEL);

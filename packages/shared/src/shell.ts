@@ -97,6 +97,8 @@ export type VoiceUp =
   | { op: 'reset'; myId: string; members: Member[] }
   | { op: 'leave' }
   | { op: 'mic'; on: boolean }
+  /** My volume for each person (0–1, 0 = muted for me; Discord-like, 0.9.85). Old extensions ignore it. */
+  | { op: 'volume'; volumes: Record<string, number> }
   | { op: 'members'; myId: string | null; members: Member[] }
   | { op: 'signal'; from: string; data: Signal }
   | { op: 'rtc-result'; id: number; result: RtcResult }

@@ -380,7 +380,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   ("⧉ Serbest bırak"), in a floating window on the page (drag anywhere, resize from the bottom-right corner, "−"
   minimizes, "⤓" puts it back in the card, double-click resets position; `localStorage` `opt:camFloat`,
   `camFloat:spot` as a ratio) or automatically inside `.player-wrap` in fullscreen (separate spot `camFloat:fsSpot`).
-  Videos are replayed after moving. In the shell the floating window is `data-island` (visible over the hole); while
+  Videos are replayed after moving. **0.9.85 (Meet/Discord-style, owner's request):** in the floating window and in
+  fullscreen, round 🎙 / 📷 buttons under the tiles (`.cam-controls`; they press the card's own buttons; red = off); the
+  window resizes in both directions (`Spot.h`, `.sized`: tiles fill it); **M** toggles my mic on the site. Clicking a
+  face in the "Birlikte" card or a camera tile (a still click, not a drag: `onTileClick`) opens the **person menu**
+  (`.person-pop`, an island in the shell): volume for me 0–100 % and "mute for me" (`localStorage` `voiceSound`, by
+  person = name + avatar; in the shell sent to offscreen as `{op:'volume'}`, old extensions ignore it), "📌 show
+  their camera big" (`.cam-tile.pinned`, first and full width; this tab only), "🙈 hide myself" on my own tile
+  (`opt:hideSelfCam`, others still see me), and for the host "🚪 remove from the room" (same kick + confirm as the
+  people list). In the shell the floating window is `data-island` (visible over the hole); while
   dragging, the `swm-layout` event updates the island immediately. The old `#cam-dock` is gone.
   **On the film page (0.9.65):** cameras run in offscreen (`voice` `cam`; without permission `mic.html?cam=1`);
   incoming streams + my own preview (`me`) reach the site in the overlay through a **local WebRTC bridge**
