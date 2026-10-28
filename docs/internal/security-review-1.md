@@ -24,7 +24,7 @@
 | O5 | Room IDs accept 4 characters (`ROOM_ID_PATTERN`): hand-typed short codes are guessable | Low / info | Small |
 | O6 | Workers observability logs are on; the policy does not mention server logs and their retention | Low (transparency) | Text only |
 
-## Outcome (0.9.84, 28 Oct 2026)
+## Outcome (shipped in 0.9.86, 28 Oct 2026)
 
 The owner accepted the emoji design (existing lists become "My collection", the collection box starts unchecked) and
 Phase 1 for IP addresses; hiding the IP (TURN/SFU, needs a card) is a Phase 2 goal in `ROADMAP.md`, because moving
