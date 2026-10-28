@@ -53,7 +53,8 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` Â
   Careful: after `git stash`/checkout while `npm run dev` runs, Vite may keep serving an old module â€” restart it.
 - **0.9.84:** voice harness 29/29 (new: game open/close keeps cameras, reconnect keeps one tile, muted mic stays
   muted), film-page voice 28/28, e2e 174 (new `prev` checks in handover.mjs).
-- **0.9.86:** unit 165/165, e2e 192 (YouTube reachable here, `room.mjs` passed too), embed harness 92/92 (Vite),
+- **0.9.86** (re-run after merging 0.9.85: unit 165/165, e2e 181 + `room.mjs` blocked by the YouTube proxy, voice 39
+  checks, streams, film-page voice, embed harness all green; first run below): unit 165/165, e2e 192 (YouTube reachable here, `room.mjs` passed too), embed harness 92/92 (Vite),
   voice 29/29 + streams 17/17 + film-page voice 28/28, plus a browser check of the security fixes (24 checks:
   no CSP violation on any page incl. YouTube, emoji migration/collection/add dialog, voice notice, frame guard).
   Embed harness against the **production build** (CSP on) 89/92: the 3 misses use dev-only hooks
