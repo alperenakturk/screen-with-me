@@ -1372,10 +1372,36 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       go.textContent = t('externalGoing');
       // Sekme film sayfasına gider; eklenti orada odanın görünümünü videonun etrafına kurar.
       if (isShell) postToExtension({ type: 'navigate', url });
-      else postToExtension({ type: 'go', roomId, url });
+      else {
+        postToExtension({ type: 'go', roomId, url });
+        // An extension that was updated/reloaded while this tab was open leaves a dead bridge behind that never
+        // answers; without this the button would stay on "Taking you to the film…" forever.
+        if (goTimer !== null) clearTimeout(goTimer);
+        goTimer = setTimeout(() => {
+          goTimer = null;
+          if (go.disabled) extensionStale();
+        }, 4000);
+      }
     };
     // Kendim açtıysam beklemeden gideriz; başkası açtıysa herkes "Filme git" ile kendisi gider.
     if (auto && shellOk) go.click();
+  }
+
+  let goTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * The extension couldn't take this tab to the film. Almost always the extension was updated or reloaded while
+   * this page was open (Chrome cuts the old page off from it), so reloading the page is the fix — not reinstalling.
+   */
+  function extensionStale(): void {
+    const note = $('#external-note');
+    note.hidden = false;
+    note.textContent = t('extensionStale');
+    const go = $<HTMLButtonElement>('#external-go');
+    go.hidden = false;
+    go.disabled = false;
+    go.textContent = `⟳ ${t('reloadPage')}`;
+    go.onclick = () => location.reload();
   }
 
   function hostOf(url: string): string {
@@ -1389,11 +1415,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Eklentiden gelenler. Ana sitede: film sayfasına gidilemediyse (eklenti eski/kapalı) düğme geri gelsin.
   // Kabukta: film sekmesinin adresi, orada video bulundu mu, tam ekrandan çıkıldı mı.
   onExtensionMessage((message) => {
-    if (message.type === 'going' && !message.ok) {
-      const go = $<HTMLButtonElement>('#external-go');
-      go.disabled = false;
-      go.textContent = t('externalGoJoin');
-      showError(() => t('extensionOutdated'));
+    if (message.type === 'going') {
+      if (goTimer !== null) clearTimeout(goTimer);
+      goTimer = null;
+      if (!message.ok) extensionStale();
     } else if (message.type === 'page' && isShell) {
       // Sadece "odadaki sayfa bu mu" sonucu değiştiyse yeniden kur: film sitesi oynarken adresine sorgu/zaman
       // eklese (replaceState) film kapanıp video durmasın.
@@ -1435,10 +1460,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
     // Araç çubuğundan açılan pencereler (tepsi, hız, oyun menüsü) deliğin üstüne biner: açılınca hemen bildir.
     new MutationObserver(() => reportLayout()).observe($('.toolbar'), { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
-    // Sesli sohbette biri konuşurken film sesi kısılsın (varsayılan açık). Susunca 1 sn sonra eski hâline döner.
+    // Lower the film while someone in voice is really talking (off by default since 0.9.83, owner's decision:
+    // a click used to lower it too). Back to normal 1 s after they stop. New key so the old default doesn't stick.
     const duckBox = $<HTMLInputElement>('#opt-duck');
-    duckBox.checked = load('opt:duck') !== '0';
-    duckBox.addEventListener('change', () => save('opt:duck', duckBox.checked ? '1' : '0'));
+    duckBox.checked = load('opt:duck2') === '1';
+    duckBox.addEventListener('change', () => save('opt:duck2', duckBox.checked ? '1' : '0'));
     let ducking = false;
     let quietSince = 0;
     setInterval(() => {

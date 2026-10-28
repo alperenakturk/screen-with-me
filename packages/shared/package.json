@@ -11,6 +11,7 @@
     "./embed": "./src/embed.ts",
     "./shell": "./src/shell.ts",
     "./level-meter": "./src/level-meter.ts",
+    "./speech-detector": "./src/speech-detector.ts",
     "./live-p2p": "./src/live-p2p.ts",
     "./games/xox": "./src/games/xox.ts",
     "./games/four": "./src/games/four.ts",

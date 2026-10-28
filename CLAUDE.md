@@ -32,6 +32,11 @@ We are building a **global product**, so everything is professional, formal and 
 - Alperen is learning JS/HTML/CSS at school; keep explanations simple (in Turkish).
 - **Finish every task with a short report** (user's request, Oct 2026): what I did, what I tried, what I am waiting
   for now (CI, deploy, the user's answer) and what comes next. If something is running in the background, say so.
+- **Visible task list in every task** (user's request, 28 Oct 2026): at the start of a task create a task list (the
+  session's task tool) with one item per step, keep statuses current (in progress / done) so the user always sees
+  which step we are on and what is left. The same queue is written to `docs/internal/STATUS.md` "Task queue" and
+  pushed: if the session or the usage limit stops the work, the next session (or the same one after "devam") reads
+  that queue and continues from the first unfinished item without asking.
 - **Make technical decisions yourself**, briefly say why; the user asks for changes if they disagree. Only ask about
   things that belong to the user: accounts, money, publishing, legal commitments, the product name, slogans.
 - Move in safe steps; test every change, ship it, commit it.
@@ -171,7 +176,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   (`shell-film`, `--hole-cut`); messages inside the hole are semi-transparent (the overlay iframe and shell.html use
   `color-scheme: dark`: our site declares a dark scheme, and with different schemes Chrome paints the frame's
   background opaque grey). While the film page opens, a `[data-swm-cover]` cover stays until the overlay is up
-  (document_start, if `sessions` contains this site or the tab's `sessionStorage` `swm-cover` is set; it swallows
+  (document_start, if the address ends with `#swm-cover` (added by the background on `site-go`, removed with
+  `replaceState` before any page script; 0.9.83, fixes a one-frame flash on the first arrival), `sessions` contains
+  this site or the tab's `sessionStorage` `swm-cover` is set; it swallows
   clicks and is removed on the first layout reported by the site (`fromSite`; not on the background's placeholder),
   at most 8 s). On first open the hole opens two frames after focus, and the top frame says `{type:'hole'}`: only then
   does the site turn on `shell-film` (transparency) (turning it on earlier showed the film site for one frame). If
@@ -265,8 +272,12 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
 - **Message position:** in fullscreen the "💬 Mesajlar burada" handle can be dragged (stored as a ratio: site
   `localStorage` `toastPos`, extension `storage.local` `toastPos`; double-click resets). Messages align next to the
   handle and grow upwards when it is near the bottom. In the extension's room view messages are in the chat panel.
-- **Back from the film to the room:** "🏠 Odaya dön" in the overlay or the popup → the tab goes to `/r/ROOM#back` (the
-  site enters without asking the name), the overlay goes away.
+- **Back from the film to the room:** "🏠 Odaya dön" in the overlay → the tab goes to `/r/ROOM#back` (the site enters
+  without asking the name), the overlay goes away. The **popup** (0.9.83) never navigates the film tab: "🏠 Odayı ayrı
+  sekmede aç" switches to an open tab of that room or opens `/r/ROOM#back` in a new tab next to the film.
+- **Dead extension bridge (0.9.83):** an extension updated/reloaded while our site tab is open leaves a site-bridge cut
+  off from the extension (sendMessage throws). "Filme git" then gets `going ok:false` or no answer within 4 s and the
+  card says "reload the page" (`extensionStale`) instead of the misleading "your extension is outdated".
 - **Pins:** `{t:'pin', note?}` → the server computes the moment from its own `PlaybackState`, stores the pinner's
   persistent key (`owner`) but never sends it to clients; the full list is broadcast with `{t:'pins'}`, newcomers get
   `welcome.pins`. Remove your own pin (the host: any) with `unpin`; at most 50; reset when the video changes. Site:
@@ -308,8 +319,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   background opens the `mic.html` tab (offscreen can't ask); when the film page reloads the new site sends `hello` →
   `reset` (the mic stays). ExtVoice does not leave on `pagehide`; the background sends `end` when the tab closes / goes
   back to the room. Being in voice is remembered with `voice:<room>`: moving between site and film rejoins silently if
-  permission exists. While someone speaks the film's volume is lowered (`opt:duck`, embed `duck`, ×0.35; untouched if
-  the person changed the volume). Old extensions don't send `caps` → the card is hidden in the shell. Tests:
+  permission exists. While someone really speaks the film's volume is lowered (embed `duck`, ×0.35; untouched if the
+  person changed the volume): **off by default since 0.9.83** (`opt:duck2`; the old `opt:duck` key defaulted to on),
+  and only real speech counts — `SpeechDetector` (`packages/shared/src/speech-detector.ts`, levels every 100 ms, ≥4 loud
+  samples in 800 ms, 1.2 s hold) ignores clicks and knocks. Old extensions don't send `caps` → the card is hidden in the shell. Tests:
   `scripts/e2e/voice.mjs`, real audio `scripts/harness/voice/run.mjs` (two Chromes, fake mic, measures incoming audio
   energy) and `voice/shell.mjs` (on the film page). **Both need `VOICE_A`/`VOICE_B`** (two different wavs): with the
   same fake beep the echo canceller removes it and the "really hears" checks fail.

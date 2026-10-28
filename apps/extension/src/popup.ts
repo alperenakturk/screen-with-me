@@ -1,6 +1,6 @@
 // Eklenti simgesine tıklanınca açılan küçük pencere. Ayar yok: eklentinin tek işi, odada açılan
 // film sayfasının üstüne sitenin oda görünümünü getirmek. Burada sadece kısa bilgi ve tek düğme var:
-// odadaki bir film sekmesindeysek "Odaya dön", değilse "ScreenWithMe'yi aç".
+// odadaki bir film sekmesindeysek odayı ayrı sekmede aç, değilse "ScreenWithMe'yi aç".
 
 import { SITE_URL } from './config.ts';
 import { langReady, t } from './i18n.ts';
@@ -20,9 +20,10 @@ async function main(): Promise<void> {
   if (shell && tab?.id !== undefined) {
     text.textContent = t('popupInRoom');
     action.textContent = t('popupBack');
+    // Opens the room's page next to the film tab instead of navigating the film tab away (that left the film
+    // and broke the room for this person). If the room is already open in another tab, switch to it.
     action.addEventListener('click', () => {
-      void chrome.tabs.update(tab.id!, { url: `${SITE_URL}/r/${shell.roomId}#back` });
-      window.close();
+      void openRoomTab(shell.roomId, tab).finally(() => window.close());
     });
     return;
   }
@@ -33,6 +34,18 @@ async function main(): Promise<void> {
     void chrome.tabs.create({ url: SITE_URL });
     window.close();
   });
+}
+
+async function openRoomTab(roomId: string, filmTab: chrome.tabs.Tab): Promise<void> {
+  const roomUrl = `${SITE_URL}/r/${roomId}`;
+  const open = await chrome.tabs.query({ url: `${roomUrl}*` }).catch(() => [] as chrome.tabs.Tab[]);
+  const existing = open.find((t) => t.id !== undefined && t.id !== filmTab.id);
+  if (existing?.id !== undefined) {
+    await chrome.tabs.update(existing.id, { active: true });
+    if (existing.windowId !== undefined) await chrome.windows.update(existing.windowId, { focused: true });
+    return;
+  }
+  await chrome.tabs.create({ url: `${roomUrl}#back`, index: (filmTab.index ?? 0) + 1, windowId: filmTab.windowId });
 }
 
 void main();
