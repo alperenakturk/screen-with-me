@@ -92,7 +92,7 @@ cem.send(JSON.stringify({ t: 'load', media: { kind: 'page', url: FILM } }));
 {
   const deniz = await person('Deniz', 'elf', ['--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required']);
   await toFilm(deniz, 'Deniz');
-  await deniz.evalFrame('shell=1', `document.getElementById('voice-join').click(); 1`);
+  await deniz.evalFrame('shell=1', `(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
   const micTab = await until(async () => ((await deniz.browser('Target.getTargets')).result?.targetInfos ?? []).find((t) => t.url.endsWith('/mic.html')), 10000);
   check(!!micTab, 'izin yokken "Sese katıl" izin sekmesini (mic.html) açtı');
   if (micTab) {
@@ -108,11 +108,11 @@ cem.send(JSON.stringify({ t: 'load', media: { kind: 'page', url: FILM } }));
 
 await toFilm(ayse, 'Ayşe');
 // Ayşe'nin tarayıcısında istem kendiliğinden kabul edilir (sahte cihaz): izin zaten var, doğrudan katılır.
-await ayse.evalFrame('shell=1', `document.getElementById('voice-join').click(); 1`);
+await ayse.evalFrame('shell=1', `(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 const ayseIn = await until(() => ayse.evalFrame('shell=1', `!document.getElementById('voice-on').hidden`), 15000);
 check(!!ayseIn, 'Ayşe film sayfasında seste (ses eklentinin görünmeyen sayfasında)');
 
-await ali.evaluate(`document.getElementById('voice-join').click(); 1`);
+await ali.evaluate(`(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 const bothIn = await until(async () => (await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face.in-voice').length`)) === 2, 15000);
 check(!!bothIn, 'ikisi de seste (Ali’nin kartında iki avatar)');
 const aliHears = await until(async () => (await ali.evaluate(`document.querySelectorAll('audio').length`)) >= 1, 20000);

@@ -22,7 +22,8 @@ export interface P2pVoiceOptions {
   getMic?: () => Promise<MediaStream>;
 }
 
-const ICE: RTCIceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }];
+// Cloudflare only: every STUN server learns the IP of each person in voice (security review 1, W3).
+const ICE: RTCIceServer[] = [{ urls: 'stun:stun.cloudflare.com:3478' }];
 
 /**
  * Kamera: küçük ve hafif (herkes herkese ayrı kopya yollar; 5 kişiye ~1,5 Mbit/s yükleme). Video kanalı bağlantı

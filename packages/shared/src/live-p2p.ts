@@ -7,7 +7,8 @@
 
 import type { LiveKind, Member, Signal } from './protocol.ts';
 
-const ICE: RTCIceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }];
+// Cloudflare only: every STUN server learns the IP of each person in voice (security review 1, W3).
+const ICE: RTCIceServer[] = [{ urls: 'stun:stun.cloudflare.com:3478' }];
 
 /** 720p ekran ~2,5 Mbit/s (yazı net kalsın), kamera ~1,2 Mbit/s. Yükleme yetmezse WebRTC kendisi düşürür. */
 const MAX_BITRATE: Record<LiveKind, number> = { screen: 2_500_000, camera: 1_200_000 };

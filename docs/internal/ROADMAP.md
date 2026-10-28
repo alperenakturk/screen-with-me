@@ -70,14 +70,20 @@ implement, test, ship.
 - [ ] **(added)** Threat model document: assets (rooms, cids, IPs in voice, stickers), attackers (troll in a room,
   malicious website hosting the extension's shell, spammer, DoS), and the mitigation for each.
 - [ ] Protocol review: every message type validated, size/rate limits reviewed, fuzz test for `protocol.ts`.
-- [ ] **(added)** Security headers on the site: Content-Security-Policy, `frame-ancestors`, `X-Content-Type-Options`,
-  `Referrer-Policy`, `Permissions-Policy`.
+- [x] **(added)** Security headers on the site: Content-Security-Policy, `X-Content-Type-Options`, `Referrer-Policy`,
+  `Permissions-Policy` (0.9.84, `apps/web/public/_headers`). `frame-ancestors` can't be used (the film site is an
+  ancestor of the overlay), so the site refuses to run in any frame except the extension overlay (`main.ts`).
+- [x] **(added)** Security review 1 (`security-review-1.md`, 0.9.84): custom emojis room-only, IP notice before
+  peer-to-peer voice/streams, Cloudflare-only STUN, `Origin` check and per-IP limits on the server, GIF metadata
+  stripped.
 - [ ] Extension review: minimum permissions with written justifications, `postMessage` origin checks, no remote code
   (Manifest V3 policy; the shell iframes our site — document why this is allowed), closed shadow DOM everywhere.
 - [ ] **(added)** User-generated content: custom emojis (images) and chat in rooms → abuse limits, a way to remove
-  content, and a report/contact address.
-- [ ] **(added)** WebRTC: peer-to-peer voice/video reveals IP addresses to people in voice; say this clearly in the UI
-  and the privacy policy (already partly done), consider TURN-only mode later.
+  content, and a report/contact address. Done in 0.9.84: emojis stay in their room, per-IP + daily room limits, the
+  host can remove all emojis. Left: a report/contact address.
+- [x] **(added)** WebRTC: peer-to-peer voice/video reveals IP addresses to people in voice; say this clearly in the UI
+  and the privacy policy (0.9.84: notice before joining voice / starting / watching a stream, permanent line under
+  the voice row, policy updated). Hiding the IP is a Phase 2 goal (below).
 - [ ] Dependency audit (`npm audit`, Dependabot), secret scanning, branch protection on `main` (PR + green CI).
 - [ ] **(added)** `SECURITY.md` with a disclosure contact (needed once the repo is public anyway).
 - [ ] Owner will add security/privacy testing skills and repos 👤 → run them, record results here.
@@ -152,6 +158,11 @@ implement, test, ship.
 - **Donations:** after the first real users (GitHub Sponsors / Patreon…), never inside a room.
 - **Making the repo public:** right after store approval, as a new repo with clean history (plan in `VIZYON.md`).
 - **More languages**, optional accounts (persistent rooms, friends) only if users ask for them.
+- **Hide IP addresses in voice, camera and streams** (owner's decision, 28 Oct 2026: later, together with the card
+  decision). Moving only voice to Cloudflare's media server (SFU) is not enough, because camera and streams would stay
+  peer-to-peer and still show the IP. Options in `security-review-1.md` §2.5: Cloudflare TURN relay-only
+  (`iceTransportPolicy: 'relay'`, covers all three with one mechanism, an optional "Hide my IP address" switch) or
+  SFU for everything. Both need a card on Cloudflare (1 000 GB/month free, then $0.05/GB) and a budget brake.
 
 ## Success criteria (from `VIZYON.md`)
 - Sync difference p95 < 300 ms (measure and publish p50/p95).

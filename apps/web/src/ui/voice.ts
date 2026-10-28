@@ -11,6 +11,7 @@ import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
+import { confirmIpNotice } from './ip-notice.ts';
 import { ExtVoice } from './voice-ext.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
@@ -75,6 +76,10 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   /** Hide my own camera preview (others still see me). */
   let hideSelf = load('opt:hideSelfCam') === '1';
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
+  // "People in voice can see your IP · Why?" (peer-to-peer only; Cloudflare's server hides addresses).
+  const ipLine = root.querySelector<HTMLElement>('#voice-ip')!;
+  const ipWhy = root.querySelector<HTMLButtonElement>('#voice-ip-why')!;
+  ipWhy.addEventListener('click', () => flashHint(ipWhy, t('ipNotice.whyText'), 12_000));
   const pttBox = root.querySelector<HTMLInputElement>('#voice-ptt')!;
   /** Bas-konuş: mikrofon kapalı durur, V tuşu (ya da 🎙) basılı tutulunca açılır. Tarayıcıda hatırlanır. */
   let ptt = load('opt:ptt') === '1';
@@ -193,6 +198,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let wasActive = false;
   function render(): void {
     card.hidden = !available;
+    ipLine.hidden = !available || mode !== 'p2p';
     const active = client.active;
     // Sese yeni girildi (düğmeyle ya da kendiliğinden): bas-konuşta mikrofon kapalı başlar.
     if (active && !wasActive && ptt) {
@@ -441,6 +447,10 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (inVoice >= voiceMax()) {
       flashHint(joinButton, t('voice.fullHint', { n: inVoice, max: voiceMax() }), 7000);
       return;
+    }
+    if (mode === 'p2p') {
+      const others = members.filter((m) => m.voice && m.id !== myId()).map((m) => m.name);
+      if (!(await confirmIpNotice('voice', others))) return;
     }
     joinButton.disabled = true;
     try {

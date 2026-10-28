@@ -407,6 +407,8 @@ export type ClientMessage =
   | { t: 'sticker-add'; data: string }
   /** Özel emojiyi odadan kaldır (ekleyen ya da yönetici). */
   | { t: 'sticker-remove'; id: string }
+  /** Remove every custom emoji from the room (host only). */
+  | { t: 'sticker-clear' }
   /** Videonun şu anını pinle (an'ı sunucu hesaplar); isteğe bağlı kısa not. */
   | { t: 'pin'; note?: string }
   /** Pini kaldır (kendi pinin ya da yöneticiysen herhangi biri). */
@@ -492,7 +494,8 @@ export type ServerMessage =
   /** Odada oyun açıldı (`game`) ya da bitti (`null`); `by`: bitireni. */
   | { t: 'game'; game: RoomGame | null; by?: Member }
   /** Odaya bir özel emoji eklendi (girişte de odadakiler tek tek gelir). */
-  | { t: 'sticker'; sticker: Sticker }
+  /** `mine`: only in the copy sent to the person who added it (so they can remove it after a reload). */
+  | { t: 'sticker'; sticker: Sticker; mine?: boolean }
   /** Bir özel emoji odadan kaldırıldı. */
   | { t: 'sticker-removed'; id: string }
   /** Açık videonun pinleri değişti (tam liste). */
@@ -812,6 +815,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isStickerData(m.data) ? { t: 'sticker-add', data: m.data } : null;
     case 'sticker-remove':
       return isStickerId(m.id) ? { t: 'sticker-remove', id: m.id } : null;
+    case 'sticker-clear':
+      return { t: 'sticker-clear' };
     case 'pin': {
       if (m.note === undefined) return { t: 'pin' };
       const note = cleanChatText(m.note);

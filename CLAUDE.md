@@ -156,6 +156,14 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   persistent browser identity (`cid`, not an account); a kicked person cannot rejoin until the host lifts the ban
   (the `bans` list only goes to the host, removed with `unban`; cids are never sent to clients). Host checks are per
   person (`isHost`): the same person's site tab and extension tab are both host.
+  **Hardening (0.9.86, `docs/internal/security-review-1.md`):** the Worker accepts WebSockets only from its own origin
+  and `localhost` (`index.ts` `guardSocket`), at most 60 new connections per IP and minute (rate-limit binding
+  `CONNECT_LIMIT` in `wrangler.jsonc`), and passes the room a short SHA-256 hash of the IP in `X-SWM-Ip` (set only by
+  the Worker; kept in the connection's attachment, never stored or sent to clients; used for emoji upload limits).
+  Security headers live in `apps/web/public/_headers` (CSP: scripts only from us + YouTube; no inline scripts, so
+  static pages load `eklenti.js` / `gizlilik.js` / `offline.js`; if you add a third-party script, image or frame host,
+  add it to the CSP). `frame-ancestors` is impossible (in the shell the film site is an ancestor), so `main.ts`
+  refuses to run in any frame except the extension overlay (`isShell`).
 - **Shell (room overlay, `packages/shared/src/shell.ts`):** when a `page` opens in the room, the site sends
   `{source:'screenwithme-site', type:'go', roomId, url}` → site-bridge → background `site-go` (records the tab in
   `shells`, `storage.session`) → the tab goes to the film page. The person who opened it goes there directly; others
@@ -293,8 +301,14 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `sticker:<id>` + `stickers` order (SQLite-backed DO; the big emoji is also tried in live e2e). On join, after welcome,
   one `{t:'sticker'}` each (1 MB message limit). Reaction: `{t:'react', sticker}`. UI: 🖼️ always visible at the end of
   the emoji bar (site: panel; extension: the strip switches to custom emojis) — don't bury it between pages. File
-  preparation in `sticker-file.ts` (images 160 px webp, GIFs as they are). My own list: site `localStorage`
-  `myStickers` (shared with the extension); re-uploaded on every room join.
+  preparation in `sticker-file.ts` (images 160 px webp; GIFs keep their frames but lose comment/XMP blocks,
+  `stripGifMetadata`). **Room-only (0.9.86, owner's decision after security review 1):** nothing is uploaded on join;
+  adding opens a dialog (preview, "added to this room only", unchecked "Koleksiyonuma da kaydet"). My collection:
+  `localStorage` `stickerCollection` (max 12, shared with the extension, never uploaded by itself); tray chips
+  Emojiler · Bu odada · Koleksiyonum (tap = add that one to this room). The old auto-uploaded `myStickers` list is
+  moved to the collection once (`stickerNote` one-time note). The server sends `mine: true` only to the uploader
+  (✕ works after a reload); the host can remove all with `{t:'sticker-clear'}` (Settings → Oda kuralları). Limits:
+  `stickerLimit` per IP hash + at most 60 uploads per room and day (`stickerDay`).
 - **Reaction display:** rises from a random spot at the bottom of the video and fades (3 s; small avatar + name below);
   each press flies separately (no "×2"), no default cooldown. The host sets a per-person gap with
   `settings.reactionGap` (0/1/3/5/10 s, `REACTION_GAPS`) (the server enforces it via `lastReaction`, the client dims
@@ -312,7 +326,11 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   who didn't join hear nobody. Member field `voice: {mic, track?}` (no version bump); `{t:'voice', on, mic}`. Transport
   is `welcome.voiceMode`: **p2p** (default, no card/account): each person has a separate WebRTC connection with
   everyone in voice (the smaller id makes the offer), the server relays `{t:'signal'}` only if both sides are in voice
-  (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (6), STUN Cloudflare + Google; **sfu**: if the
+  (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (6), STUN Cloudflare only (every STUN server
+  sees each user's IP). **IP notice (0.9.86, `ui/ip-notice.ts`):** before joining voice in p2p mode (lists who is in
+  voice), starting a stream or watching one, a dialog says the others can see your IP; "Bunu bir daha gösterme" per
+  action (`opt:ipNotice:voice|stream|watch`); "🔒 Seste olanlar IP adresini görebilir · Neden?" under the voice row.
+  Hiding IPs (TURN relay / SFU for voice + camera + streams) is a Phase 2 goal, needs the card. **sfu**: if the
   Worker has `REALTIME_APP_ID`/`REALTIME_APP_SECRET`, Cloudflare Realtime (`apps/server/src/realtime.ts`, `{t:'rtc'}`
   requests, session on the server, `VOICE_MAX` 10). Cloudflare requires a card and has no spending cap, so p2p for now
   (user's decision, Oct 2026). `VOICE=off` turns everything off. **In the shell (0.9.60)** voice runs in the

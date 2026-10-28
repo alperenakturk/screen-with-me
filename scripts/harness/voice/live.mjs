@@ -50,11 +50,11 @@ const ready = (b) => b.evaluate(`!document.getElementById('live-card').hidden &&
 check(!!(await until(async () => (await ready(ali)) && (await ready(ayse)), 20000)), 'yayın kartı görünüyor');
 check((await ali.evaluate(`document.getElementById('live-limit').textContent`)).includes('4'), 'yayın yokken sınır görünüyor (en fazla 4 izleyici)');
 
-await ali.evaluate(`document.getElementById('live-camera').click(); 1`);
+await ali.evaluate(`(async () => { document.getElementById('live-camera').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 const offered = await until(() => ayse.evaluate(`(() => { const w = document.getElementById('live-watch'); return !w.hidden ? document.getElementById('live-status').textContent : null; })()`), 10000);
 check(!!offered && offered.includes('Ali'), 'Ali kamerayla yayın açtı: Ayşe’de "Yayını izle" ve durum', String(offered));
 check(!!(await ali.evaluate(`!document.getElementById('live-window').hidden`)), 'Ali kendi yayınının önizlemesini görüyor');
-await ayse.evaluate(`document.getElementById('live-watch').click(); 1`);
+await ayse.evaluate(`(async () => { document.getElementById('live-watch').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 const playing = await until(() => ayse.evaluate(`(() => { const v = document.getElementById('live-video'); return !document.getElementById('live-window').hidden && v.videoWidth > 0 && v.currentTime > 0 ? { w: v.videoWidth, h: v.videoHeight } : null; })()`), 15000);
 check(!!playing, 'Ayşe yayını izliyor (görüntü geldi)', JSON.stringify(playing));
 const f = await frames(ayse);
@@ -76,10 +76,10 @@ check(!!(await until(() => ayse.evaluate(`document.getElementById('live-window')
 // Ekran paylaşımı (başsız Chrome'da tüm ekran kendiliğinden seçilir; olmazsa bilgi olarak yazılır). Kalite "yazı net".
 check(!!(await ali.evaluate(`document.getElementById('live-quality-row').hidden`)), 'yayın yokken kalite seçimi gizli (sadece kendi ekran yayınında)');
 await ali.evaluate(`(() => { const s = document.getElementById('live-quality'); s.value = 'text'; s.dispatchEvent(new Event('change')); return 1; })()`);
-await ali.evaluate(`document.getElementById('live-screen').click(); 1`);
+await ali.evaluate(`(async () => { document.getElementById('live-screen').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 const screen = await until(() => ali.evaluate(`(() => { const s = document.getElementById('live-status').textContent; return s.includes('paylaşıyorsun') ? s : null; })()`), 8000);
 if (screen) {
-  await ayse.evaluate(`document.getElementById('live-watch').click(); 1`);
+  await ayse.evaluate(`(async () => { document.getElementById('live-watch').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
   // Başsız Chrome'da "tüm ekran" değişmediği için kare üretmeyebilir: görüntü akışının izleyiciye bağlandığına bakılır,
   // kare sayısı bilgi olarak yazılır (gerçek ekranda elle denenmeli).
   const linked = await until(
@@ -101,7 +101,7 @@ if (screen) {
 
 // Yönetici (Ali) Ayşe'nin yayınını durdurur; sonra "yayını sadece yönetici açsın".
 await until(() => ali.evaluate(`!document.getElementById('live-screen').hidden`), 8000);
-await ayse.evaluate(`document.getElementById('live-camera').click(); 1`);
+await ayse.evaluate(`(async () => { document.getElementById('live-camera').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 const kill = await until(() => ali.evaluate(`!document.getElementById('live-kill').hidden`), 10000);
 check(!!kill, 'yönetici başkasının yayınında "⏹ Yayını durdur" görüyor');
 check(!!(await ayse.evaluate(`document.getElementById('live-kill').hidden`)), 'yönetici olmayan kendi yayınında durdur düğmesini görmüyor');
