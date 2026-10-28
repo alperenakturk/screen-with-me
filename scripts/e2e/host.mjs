@@ -48,7 +48,8 @@ ok(wa2.hostId === wa2.you, 'Ali yenileyip geri gelince yine yönetici');
 
 a2.send({ t: 'kick', id: wb.you });
 const kickedMsg = await b.wait((m) => m.t === 'error', 'kicked');
-await sleep(300);
+// The close frame can take a moment on the live network.
+for (let i = 0; i < 50 && b.closed() === null; i++) await sleep(100);
 ok(kickedMsg.code === 'kicked' && b.closed() === 4003, 'Ali, Ayşe’yi attı; Ayşe’nin bağlantısı kapandı');
 const left = await a2.wait((m) => m.t === 'members', 'members after kick');
 ok(left.members.length === 1, 'Atılan kişi listeden düştü');
