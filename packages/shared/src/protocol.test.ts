@@ -175,6 +175,17 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'chat', text: 'x', pad: 'A'.repeat(50_000) })).toBeNull();
   });
 
+  it('accepts an image in chat (with or without text), but only raster data URLs of sticker size', () => {
+    const image = 'data:image/webp;base64,' + 'A'.repeat(150_000);
+    expect(parse({ t: 'chat', text: '', image })).toEqual({ t: 'chat', text: '', image });
+    expect(parse({ t: 'chat', text: '  look  ', image })).toEqual({ t: 'chat', text: 'look', image });
+    expect(parse({ t: 'chat', text: 'x', image: 'data:image/svg+xml;base64,AAAA' })).toBeNull();
+    expect(parse({ t: 'chat', text: 'x', image: 'https://example.com/a.png' })).toBeNull();
+    expect(parse({ t: 'chat', text: '', image: 'data:image/png;base64,' + 'A'.repeat(300_000) })).toBeNull();
+    // Without an image, a chat message still needs text and stays small.
+    expect(parse({ t: 'chat', text: '' })).toBeNull();
+  });
+
   it('strips unknown fields from media', () => {
     expect(parse({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ', evil: '<script>' } })).toEqual({
       t: 'load',

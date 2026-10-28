@@ -9,6 +9,23 @@ const MAX_SIDE = 160;
 export type StickerError = 'type' | 'too_big' | 'broken';
 
 export async function fileToSticker(file: File): Promise<string> {
+  return prepareImage(file, [{ side: MAX_SIDE, quality: 0.85 }]);
+}
+
+/**
+ * A picture for chat (0.9.88): photos are scaled to at most 1024 px WebP (smaller and lower quality until it fits the
+ * limit); drawing on a canvas also drops EXIF/GPS. GIFs stay animated, without their metadata.
+ */
+export async function fileToChatImage(file: File): Promise<string> {
+  return prepareImage(file, [
+    { side: 1024, quality: 0.8 },
+    { side: 800, quality: 0.72 },
+    { side: 640, quality: 0.65 },
+    { side: 480, quality: 0.6 },
+  ]);
+}
+
+async function prepareImage(file: File, steps: Array<{ side: number; quality: number }>): Promise<string> {
   if (file.type === 'image/gif') {
     let gif: Uint8Array;
     try {
@@ -28,18 +45,24 @@ export async function fileToSticker(file: File): Promise<string> {
   } catch {
     throw stickerError('broken');
   }
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  let data = canvas.toDataURL('image/webp', 0.85);
-  // webp desteklemeyen tarayıcı png verir; ikisi de geçerli.
-  if (!isStickerData(data)) data = canvas.toDataURL('image/png');
-  const tooBig = data.length > STICKER_MAX_CHARS;
-  if (!isStickerData(data)) throw stickerError(tooBig ? 'too_big' : 'broken');
-  return data;
+  let tooBig = false;
+  try {
+    for (const { side, quality } of steps) {
+      const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      let data = canvas.toDataURL('image/webp', quality);
+      // webp desteklemeyen tarayıcı png verir; ikisi de geçerli.
+      if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/png');
+      tooBig = data.length > STICKER_MAX_CHARS;
+      if (isStickerData(data)) return data;
+    }
+  } finally {
+    bitmap.close();
+  }
+  throw stickerError(tooBig ? 'too_big' : 'broken');
 }
 
 function toBase64(bytes: Uint8Array): string {

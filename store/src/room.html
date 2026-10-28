@@ -126,7 +126,7 @@
         chat: `<div class="tab-panel chat-panel">
             <button type="button" class="chat-events" aria-pressed="false">Show activity (4)</button>
             <ul class="chat-list">${(CHAT[view === 'external' ? 'external' : q.get('wait') ? 'wait' : 'film'] || []).map((l, i, all) => chatLine(...l, i, all)).join('')}</ul>
-            <form class="chat-form"><input id="chat-input" placeholder="Say something…" /><button class="chat-send">➤</button></form>
+            <form class="chat-form"><input id="chat-input" placeholder="Say something…" /><button type="button" class="chat-attach">🖼️</button><button class="chat-send">➤</button></form>
           </div>`,
         people: `<div class="tab-panel"><ul class="people">${PEOPLE.map(
             (p) => `<li class="person${p.me ? ' me' : ''}">${av(p.avatar, 'person-avatar')}<span class="person-name">${p.me ? p.name + ' (you)' : p.name}</span>${p.host ? '<span class="host-badge">👑</span>' : ''}<span class="host-badge">🎬</span>${p.me ? '' : '<button type="button" class="icon-btn kick">✕</button>'}</li>`,

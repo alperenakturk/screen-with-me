@@ -39,6 +39,7 @@ WHY SCREENWITHME
 • Voice chat while you watch: the microphone is asked for once and only turns on when you join voice
 • Pin moments with an optional note and jump back to talk about them later
 • Add your own custom emojis (images or GIFs) to a room; they stay in that room only
+• Send pictures in the room chat; links open in a new tab after a check
 • Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
 • Shared speed: other speed extensions can't knock the room out of sync
 • The room host can lock the controls, remove people and lift bans

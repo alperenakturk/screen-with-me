@@ -7782,3 +7782,112 @@ button.together-person:focus-visible .together-name {
   flex: 1 1 200px;
   height: auto;
 }
+
+/* ==== 0.9.88: chat images, links in chat ==== */
+.chat-form #chat-input {
+  padding-right: 84px;
+}
+
+.chat-attach {
+  position: absolute;
+  right: 51px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0.8;
+}
+
+.chat-attach:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.chat-panel.drop-on {
+  outline: 2px dashed var(--accent);
+  outline-offset: -6px;
+}
+
+.chat-image-btn {
+  display: block;
+  margin: 2px 0 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.chat-image {
+  display: block;
+  max-width: min(220px, 100%);
+  max-height: 220px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: var(--surface-2);
+}
+
+.chat-image-missing {
+  display: inline-block;
+  margin: 2px 0 4px;
+  padding: 7px 12px;
+  border-radius: 14px;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.image-viewer {
+  cursor: zoom-out;
+  z-index: 1100;
+}
+
+.image-viewer img {
+  max-width: min(92vw, 1200px);
+  max-height: 88vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
+}
+
+.chat-image-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+.chat-image-preview {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 12px;
+}
+
+.chat-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.chat-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.link-url {
+  margin: -4px 0 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  text-align: left;
+}
