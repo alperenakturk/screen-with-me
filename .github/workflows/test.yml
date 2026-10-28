@@ -1,8 +1,8 @@
-# Her push ve PR'da: tip kontrolü, birim testleri, derleme ve yerel sunucuyla uçtan uca testler.
-# Yerel sunucu `wrangler dev` (hesap gerekmez); e2e sahte kullanıcılarla gerçek sunucu koduna bağlanır.
-# main'e gelen her push'ta testler geçerse site + sunucu Cloudflare'e yüklenir ve canlıda e2e koşar
-# (deploy işi). Actions sekmesinden "Run workflow" ile elle de çalıştırılabilir.
-name: Testler
+# On every push and PR: typecheck, unit tests, build and end-to-end tests against a local server.
+# The local server is `wrangler dev` (no account needed); e2e connects fake users to the real server code.
+# On every push to main, if the tests pass, site + server are deployed to Cloudflare and e2e runs against
+# live (deploy job). Can also be started by hand from the Actions tab ("Run workflow").
+name: Tests
 
 on:
   push:
@@ -24,40 +24,40 @@ jobs:
 
       - run: npm ci
 
-      - name: Tip kontrolü
+      - name: Typecheck
         run: npm run typecheck
 
-      - name: Birim testleri
+      - name: Unit tests
         run: npm test
 
-      - name: Derleme (eklenti + site)
+      - name: Build (extension + site)
         run: npm run build
 
-      - name: Yerel sunucuyu başlat
+      - name: Start local server
         working-directory: apps/server
         run: |
           npx wrangler dev --port 8787 > ../../wrangler.log 2>&1 &
           for i in $(seq 1 60); do
-            if curl -sf http://localhost:8787/ > /dev/null; then echo "sunucu hazır"; exit 0; fi
+            if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
             sleep 1
           done
-          echo "sunucu açılmadı"; cat ../../wrangler.log; exit 1
+          echo "server did not start"; cat ../../wrangler.log; exit 1
 
-      - name: Uçtan uca testler
+      - name: End-to-end tests
         run: npm run e2e
 
-      - name: Sunucu kaydı (hata olursa)
+      - name: Server log (on failure)
         if: failure()
         run: cat wrangler.log || true
 
-  # Canlıya yükleme: sadece main'de ve testler geçtiyse. Cloudflare anahtarları repo ayarlarındaki
-  # Secrets'ta (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); yoksa iş uyarı verip atlanır.
+  # Deploy to live: only on main and only if the tests passed. Cloudflare keys are in the repo's
+  # Secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); without them the job warns and skips.
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Art arda iki push gelirse yüklemeler çakışmasın; sıradaki beklesin.
+    # Two quick pushes must not deploy at the same time; the next one waits.
     concurrency:
       group: deploy
       cancel-in-progress: false
@@ -65,9 +65,9 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - name: Anahtarlar var mı?
+      - name: Check keys
         if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
-        run: echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID eklenmemiş, canlıya yükleme atlandı."
+        run: echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are missing, deploy skipped."
 
       - uses: actions/checkout@v5
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
@@ -78,19 +78,19 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Kurulum ve derleme
+      - name: Install and build
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: |
           npm ci
           npm run build
 
-      - name: Cloudflare'e yükle
+      - name: Deploy to Cloudflare
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: npm run deploy -w @swm/server
 
-      - name: Canlıda uçtan uca testler
+      - name: End-to-end tests against live
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: |
-          # Yeni sürümün yayılması (ve nesnelerin yeni kodla yeniden başlaması) bir-iki dakika sürebilir.
+          # The new version may take a minute or two to propagate (and objects to restart with new code).
           sleep 30
           npm run e2e -- wss://screen-with-me.swm-server.workers.dev
