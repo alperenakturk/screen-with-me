@@ -208,9 +208,10 @@ check(!!settingsOpen, '⚙️ ayarlar penceresi açılıyor, yöneticiye oda kur
 await a.evaluate(`document.getElementById('settings-close').click(); 1`);
 check(!!(await a.evaluate(`document.getElementById('settings-dialog').hidden`)), 'ayarlar penceresi ✕ ile kapanıyor');
 const profileSpot = await a.evaluate(
-  `(() => { const r = document.querySelector('.topbar-right'); const b = r?.lastElementChild; return { last: b?.classList.contains('profile-btn') ? 'profile' : null, text: b?.textContent.trim(), n: r?.children.length }; })()`,
+  `(() => { const r = document.querySelector('.topbar-right'); const b = r?.lastElementChild; const p = b?.previousElementSibling; return { last: b?.id === 'settings-open' ? 'settings' : null, before: p?.classList.contains('profile-btn') ? 'profile' : null, n: r?.children.length }; })()`,
 );
-check(profileSpot?.last === 'profile', '👤 düğmesi sağ üstte (.topbar-right son çocuğu)', JSON.stringify(profileSpot));
+check(profileSpot?.last === 'settings' && profileSpot.before === 'profile', '👤 sağ üstte, ⚙️ hemen sağında (0.9.86)', JSON.stringify(profileSpot));
+check(!(await a.evaluate(`!!document.querySelector('.tab-gear, #profile-settings')`)), 'ayarların eski girişleri (sekme yanı, profil menüsü) kalktı');
 const profileAt = await a.center('.topbar-right .profile-btn');
 if (profileAt) await a.click(profileAt.x, profileAt.y);
 await a.sleep(300);
