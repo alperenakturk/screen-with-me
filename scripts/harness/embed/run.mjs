@@ -210,7 +210,7 @@ check(!!(await a.evaluate(`document.getElementById('settings-dialog').hidden`)),
 const profileSpot = await a.evaluate(
   `(() => { const r = document.querySelector('.topbar-right'); const b = r?.lastElementChild; const p = b?.previousElementSibling; return { last: b?.id === 'settings-open' ? 'settings' : null, before: p?.classList.contains('profile-btn') ? 'profile' : null, n: r?.children.length }; })()`,
 );
-check(profileSpot?.last === 'settings' && profileSpot.before === 'profile', '👤 sağ üstte, ⚙️ hemen sağında (0.9.86)', JSON.stringify(profileSpot));
+check(profileSpot?.last === 'settings' && profileSpot.before === 'profile', '👤 sağ üstte, ⚙️ hemen sağında (0.9.87)', JSON.stringify(profileSpot));
 check(!(await a.evaluate(`!!document.querySelector('.tab-gear, #profile-settings')`)), 'ayarların eski girişleri (sekme yanı, profil menüsü) kalktı');
 const profileAt = await a.center('.topbar-right .profile-btn');
 if (profileAt) await a.click(profileAt.x, profileAt.y);
@@ -292,9 +292,9 @@ const SHELL_CLIP = `getComputedStyle(document.querySelector('iframe[src^="chrome
 check(
   await a.evalFrame(
     'shell=1',
-    `getComputedStyle(document.getElementById('media-form')).display === 'none' && getComputedStyle(document.querySelector('.tab[data-tab=queue]')).display === 'none' && document.querySelector('.topbar-right')?.lastElementChild?.classList.contains('profile-btn')`,
+    `getComputedStyle(document.getElementById('media-form')).display === 'none' && getComputedStyle(document.querySelector('.tab[data-tab=queue]')).display === 'none' && document.querySelector('.topbar-right')?.lastElementChild?.previousElementSibling?.classList.contains('profile-btn') && document.querySelector('.topbar-right')?.lastElementChild?.id === 'settings-open'`,
   ),
-  'katmanda sıra ve link kutusu gizli, 👤 profil düğmesi sağ üstte',
+  'katmanda sıra ve link kutusu gizli, 👤 profil düğmesi sağ üstte (⚙️ hemen sağında)',
 );
 check((await a.evalFrame('shell=1', ACTIVE_TAB)) === 'chat', 'katmanda yönetici de 💬 Sohbet sekmesiyle açılıyor (Ayarlar değil)', String(await a.evalFrame('shell=1', ACTIVE_TAB)));
 const clipBefore = await a.evaluate(SHELL_CLIP);

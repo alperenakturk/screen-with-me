@@ -6539,7 +6539,7 @@ html.in-room .topbar-right > .lang {
   }
 }
 
-/* -- Tabs: three equal tabs (⚙️ moved next to the profile picture in 0.9.86) -- */
+/* -- Tabs: three equal tabs (⚙️ moved next to the profile picture in 0.9.87) -- */
 .tabs .tab {
   flex: 1 1 0;
   min-width: 0;
@@ -7680,7 +7680,7 @@ button.together-person:focus-visible .together-name {
   cursor: pointer;
 }
 
-/* ==== 0.9.86: ⚙️ next to the profile picture; "Film time" (scheduled start) section ==== */
+/* ==== 0.9.87: ⚙️ next to the profile picture; "Film time" (scheduled start) section ==== */
 .topbar .nav-link.settings-btn {
   width: 38px;
   height: 38px;
@@ -7769,4 +7769,16 @@ button.together-person:focus-visible .together-name {
 .schedule-chips .chip:hover {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+}
+
+/* Date + "Set" side by side (the old column layout turned the input's 220 px flex-basis into its height). */
+.settings-sec .schedule-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.settings-sec .schedule-row input {
+  flex: 1 1 200px;
+  height: auto;
 }

@@ -36,11 +36,21 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - [x] **0.9.86** security review 1 fixes (separate session, owner approved): custom emojis stay in their room +
   optional local "My collection"; IP notice before peer-to-peer voice / streams; CSP and security headers, frame
   guard, `Origin` check, per-IP limits, GIF metadata stripped (details: `security-review-1.md` "Outcome").
-- [ ] **0.9.87** settings: ⚙️ button to the right of the profile picture; remove the ⚙️ next to the tabs and the
-  settings inside the profile menu; scheduled start redesigned (meaningful, explained, good-looking).
-- [ ] **0.9.88** YouTube player on the site: controls stay visible long after the mouse leaves (windowed view);
-  YouTube's own volume control doesn't work (something of ours blocks it).
-- [ ] **0.9.89** YouTube search inside the app (owner gets a YouTube Data API key → GitHub Secrets; Claude writes the
+- [x] **0.9.87** settings: ⚙️ button to the right of the profile picture; remove the ⚙️ next to the tabs and the
+  settings inside the profile menu; scheduled start redesigned as "Film time" (quick picks, countdown card, invite
+  with the time). Started in another session (WIP commit on `claude/focused-franklin-ye6g2g`), finished here (the WIP
+  crashed the room: `$('#settings-open')` looked inside `app`). Also from round 3: avatar changes only on "Tamam";
+  empty "Bu odada" sticker tab no longer opens the file picker; "Neden?" / hint bubbles close on click, Esc, scroll.
+- [ ] **0.9.88** feedback round 2–3 (owner, 28 Oct 2026): **rooms are independent** (name and avatar per room: changing
+  them in one room must never change another room; only things the owner names, like the sticker collection, are
+  shared); send images in chat; links in chat are clickable, ask "you
+  are leaving this page" first and open in a new tab (our room tab stays); voice join / leave appear in the room
+  activity like pause / play; clicking myself in the "Together" card while in voice said "you are not in voice" (bug)
+  → show my own controls instead.
+- [ ] **0.9.89** extension toolbar icon: the owner still sees it only opening the extension page in a new tab (check
+  the popup when not in a room and when the extension is outdated); YouTube player on the site: controls stay visible
+  long after the mouse leaves; YouTube's own volume control doesn't work.
+- [ ] **0.9.90** YouTube search inside the app (owner gets a YouTube Data API key → GitHub Secrets; Claude writes the
   guide and the code).
 - [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
 
@@ -49,6 +59,9 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - Voice on the site 24/24 ✅ and voice on the film page 28/28 ✅, **both only with `VOICE_A`/`VOICE_B`**: without them
   both Chromes use the same fake beep and the echo canceller removes it, so the "really hears" checks fail (not a
   code bug; the harness should default to two different sounds).
+- **0.9.87:** unit 165/165, e2e 181 (+ `room.mjs` blocked by the YouTube proxy here), embed harness 93/93, voice 38,
+  plus a browser check of every change (⚙️ spot, Film time chips/card/banner/clear, empty sticker tab, hint bubble
+  closing, avatar Esc vs. "Tamam").
 - **0.9.85:** voice harness 38/38 (person menu, pin, mute for me, controls under cameras, vertical resize).
   Careful: after `git stash`/checkout while `npm run dev` runs, Vite may keep serving an old module — restart it.
 - **0.9.84:** voice harness 29/29 (new: game open/close keeps cameras, reconnect keeps one tile, muted mic stays

@@ -79,7 +79,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   // "People in voice can see your IP · Why?" (peer-to-peer only; Cloudflare's server hides addresses).
   const ipLine = root.querySelector<HTMLElement>('#voice-ip')!;
   const ipWhy = root.querySelector<HTMLButtonElement>('#voice-ip-why')!;
-  ipWhy.addEventListener('click', () => flashHint(ipWhy, t('ipNotice.whyText'), 12_000));
+  ipWhy.addEventListener('click', () => flashHint(ipWhy, t('ipNotice.whyText'), 7000));
   const pttBox = root.querySelector<HTMLInputElement>('#voice-ptt')!;
   /** Bas-konuş: mikrofon kapalı durur, V tuşu (ya da 🎙) basılı tutulunca açılır. Tarayıcıda hatırlanır. */
   let ptt = load('opt:ptt') === '1';

@@ -82,14 +82,20 @@ export function renderAvatarPicker(
   return draw;
 }
 /**
- * Büyük avatar penceresi: ekranın ortasında, geniş kutucuklarla. Seçince hemen uygulanır;
- * çift tık, "Tamam", Esc ya da dışarı tıklamak kapatır. Odadaki ayarlardan açılır.
+ * Large avatar dialog in the middle of the screen. Picking only marks the choice; it is applied (and seen by others)
+ * with "Done" or a double-click; ✕, Esc or a click outside cancel it (owner's feedback, 0.9.87). Opened from the
+ * room's profile menu.
  */
 export function openAvatarDialog(current: () => Avatar, onPick: (avatar: Avatar) => void): void {
+  let chosen = current();
   const picker = el('div', { class: 'avatar-picker huge' });
   const close = () => {
     backdrop.remove();
     document.removeEventListener('keydown', onKey);
+  };
+  const apply = () => {
+    if (chosen !== current()) onPick(chosen);
+    close();
   };
   const onKey = (event: KeyboardEvent) => {
     if (event.key === 'Escape') close();
@@ -97,7 +103,7 @@ export function openAvatarDialog(current: () => Avatar, onPick: (avatar: Avatar)
   const closeButton = el('button', { type: 'button', class: 'icon-btn dialog-x', 'aria-label': t('close'), title: t('close') }, '✕');
   closeButton.addEventListener('click', close);
   const done = el('button', { type: 'button', class: 'btn primary' }, t('done'));
-  done.addEventListener('click', close);
+  done.addEventListener('click', apply);
   const dialog = el(
     'div',
     { class: 'avatar-dialog card', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('pickAvatar') },
@@ -110,7 +116,7 @@ export function openAvatarDialog(current: () => Avatar, onPick: (avatar: Avatar)
     if (event.target === backdrop) close();
   });
   document.addEventListener('keydown', onKey);
-  renderAvatarPicker(picker, current, onPick, close);
+  renderAvatarPicker(picker, () => chosen, (avatar) => (chosen = avatar), apply);
   document.body.append(backdrop);
   done.focus();
 }

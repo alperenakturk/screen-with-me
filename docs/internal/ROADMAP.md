@@ -34,10 +34,27 @@ implement, test, ship.
   - [x] Meet-style controls under camera tiles (mic/camera on/off while watching).
   - [x] Discord-style per-person controls: mute for me, volume for me, host kick; pin a camera; hide my own camera;
     resize tiles in both directions.
-  - [ ] Scheduled start: currently meaningless; make it clear and well designed.
-  - [ ] ⚙️ next to the profile picture; remove the other settings entry points (tab row, profile menu).
+  - [x] Scheduled start: currently meaningless; make it clear and well designed (0.9.87 "Film saati").
+  - [x] ⚙️ next to the profile picture; remove the other settings entry points (tab row, profile menu) (0.9.87).
   - [ ] YouTube player: controls linger after the mouse leaves; YouTube volume control doesn't work.
   - [ ] **New feature:** YouTube search inside the app (like Watch2Gether): type in the top box, pick from results.
+- **Feedback round 2** (owner, 28 Oct 2026; scheduled as 0.9.88–0.9.89 in `STATUS.md`):
+  - [ ] Send images in chat.
+  - [ ] Links in chat are clickable; a "you are leaving this page" question first; they open in a new tab (our room
+    tab stays open).
+  - [ ] Voice join / leave shown in the room activity, like pause / play.
+  - [ ] Bug: clicking myself in the "Together" card while in voice says "you are not in voice"; show my own controls.
+  - [ ] Extension toolbar icon: the owner still sees it only opening the extension page in a new tab.
+- **Feedback round 3** (owner, 28 Oct 2026):
+  - [x] Avatar: a pick changes nothing until "Tamam" (0.9.87).
+  - [x] Empty "Bu odada" / "Koleksiyonum" sticker tab: show it empty, never open the file picker (0.9.87).
+  - [x] "Neden?" bubble stayed too long; bubbles close on click / Esc (0.9.87).
+  - [ ] Rooms are independent: name and avatar set in one room never change another room (0.9.88).
+- **Full pass before 1.0** (owner's request, 28 Oct 2026: "we will go through all of it before 1.0"):
+  - [ ] **Sound effects:** voice join / leave, game events (moves, wins, round start, correct guess…), other room
+    events; short, pleasant, generated or licensed, with a volume / off setting.
+  - [ ] **Camera window settings:** position, size and behaviour of the camera tiles (presets, snap to corners,
+    per-person sizes…); revisit everything about cameras together.
 - [ ] **Before 1.0:** try Shorts / Reels scrolling together end to end (owner's request).
 - [ ] **(added)** First-time experience: someone who has never seen the site arrives with an invite link, installs
   the extension and watches — measure the steps and remove friction.

@@ -673,7 +673,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     drawProfileButton = () => profileButton.replaceChildren(avatarNode(myAvatar, 'profile-avatar'));
     drawProfileButton();
     document.querySelector('.topbar-right')?.append(profileButton);
-    // ⚙️ Settings: the only entry point, right of the profile picture (owner's request, 0.9.86).
+    // ⚙️ Settings: the only entry point, right of the profile picture (owner's request, 0.9.87).
     document.querySelector('.topbar-right')?.append(
       el('button', { type: 'button', id: 'settings-open', class: 'nav-link settings-btn', 'data-i18n-title': 'tab.settings', title: t('tab.settings'), 'aria-label': t('tab.settings') }, '⚙️'),
     );
@@ -699,6 +699,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       reconnectNow();
     });
     const setOpen = (open: boolean) => {
+      // Right edge under the profile picture (⚙️ sits to its right since 0.9.87).
+      if (open) pop.style.right = `${Math.max(12, innerWidth - profileButton.getBoundingClientRect().right)}px`;
       pop.hidden = !open;
       profileButton.setAttribute('aria-expanded', String(open));
     };
@@ -730,7 +732,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   // ⚙️ Settings (top right, next to the profile picture) opens the centered dialog.
   const settingsDialog = createSettingsDialog(app, amHost);
-  $('#settings-open').addEventListener('click', () => settingsDialog.open());
+  // The button lives in the top bar, outside `app`.
+  document.getElementById('settings-open')?.addEventListener('click', () => settingsDialog.open());
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
     myAvatar = avatar;
