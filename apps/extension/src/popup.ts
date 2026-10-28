@@ -8,6 +8,7 @@ import { SESSIONS_KEY } from './messages.ts';
 
 const text = document.querySelector<HTMLElement>('#text')!;
 const action = document.querySelector<HTMLButtonElement>('#action')!;
+const action2 = document.querySelector<HTMLButtonElement>('#action2')!;
 document.querySelector('#version')!.textContent = `v${chrome.runtime.getManifest().version}`;
 
 async function main(): Promise<void> {
@@ -27,13 +28,35 @@ async function main(): Promise<void> {
     });
     return;
   }
+  // Not on a film tab of a room. If a room is open in another tab, the main button goes back to it (owner's feedback,
+  // 0.9.89: the button only ever opened the home page in a new tab, even while a room was open).
+  const roomTabs = onSite ? [] : await chrome.tabs.query({ url: `${SITE_URL}/r/*` }).catch(() => [] as chrome.tabs.Tab[]);
+  const roomTab = roomTabs.find((t) => t.id !== undefined);
+  const openHome = () => {
+    void chrome.tabs.create({ url: SITE_URL });
+    window.close();
+  };
+  if (roomTab?.id !== undefined) {
+    text.textContent = t('popupRoomOpen');
+    action.textContent = t('popupToRoom');
+    action.addEventListener('click', () => {
+      void switchTo(roomTab).finally(() => window.close());
+    });
+    action2.textContent = t('popupOpen');
+    action2.hidden = false;
+    action2.addEventListener('click', openHome);
+    return;
+  }
   text.textContent = onSite ? t('popupSite') : t('popupIntro');
   action.textContent = t('popupOpen');
   action.hidden = onSite;
-  action.addEventListener('click', () => {
-    void chrome.tabs.create({ url: SITE_URL });
-    window.close();
-  });
+  action.addEventListener('click', openHome);
+}
+
+async function switchTo(tab: chrome.tabs.Tab): Promise<void> {
+  if (tab.id === undefined) return;
+  await chrome.tabs.update(tab.id, { active: true });
+  if (tab.windowId !== undefined) await chrome.windows.update(tab.windowId, { focused: true });
 }
 
 async function openRoomTab(roomId: string, filmTab: chrome.tabs.Tab): Promise<void> {
@@ -41,8 +64,7 @@ async function openRoomTab(roomId: string, filmTab: chrome.tabs.Tab): Promise<vo
   const open = await chrome.tabs.query({ url: `${roomUrl}*` }).catch(() => [] as chrome.tabs.Tab[]);
   const existing = open.find((t) => t.id !== undefined && t.id !== filmTab.id);
   if (existing?.id !== undefined) {
-    await chrome.tabs.update(existing.id, { active: true });
-    if (existing.windowId !== undefined) await chrome.windows.update(existing.windowId, { focused: true });
+    await switchTo(existing);
     return;
   }
   await chrome.tabs.create({ url: `${roomUrl}#back`, index: (filmTab.index ?? 0) + 1, windowId: filmTab.windowId });

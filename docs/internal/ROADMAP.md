@@ -44,7 +44,8 @@ implement, test, ship.
     tab stays open).
   - [x] Voice join / leave shown in the room activity, like pause / play (0.9.88).
   - [x] Bug: clicking myself in the "Together" card while in voice says "you are not in voice"; show my own controls (0.9.88).
-  - [ ] Extension toolbar icon: the owner still sees it only opening the extension page in a new tab.
+  - [x] Extension toolbar icon: the owner still sees it only opening the extension page in a new tab (0.9.89: "Odama
+    dön" switches to an open room tab).
 - **Feedback round 3** (owner, 28 Oct 2026):
   - [x] Avatar: a pick changes nothing until "Tamam" (0.9.87).
   - [x] Empty "Bu odada" / "Koleksiyonum" sticker tab: show it empty, never open the file picker (0.9.87).

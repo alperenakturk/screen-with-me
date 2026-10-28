@@ -71,3 +71,16 @@ p {
   font-size: 11px;
   text-align: center;
 }
+
+/* Second choice under the main button (0.9.89). */
+.btn.secondary {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.btn.secondary:hover {
+  background: var(--surface);
+}

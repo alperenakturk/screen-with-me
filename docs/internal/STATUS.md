@@ -47,10 +47,13 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
   are leaving this page" first and open in a new tab (our room tab stays); voice join / leave appear in the room
   activity like pause / play; clicking myself in the "Together" card while in voice said "you are not in voice" (bug)
   → show my own controls instead.
-- [ ] **0.9.89** extension toolbar icon: the owner still sees it only opening the extension page in a new tab (check
-  the popup when not in a room and when the extension is outdated); YouTube player on the site: controls stay visible
-  long after the mouse leaves; YouTube's own volume control doesn't work.
-- [ ] **0.9.90** YouTube search inside the app (owner gets a YouTube Data API key → GitHub Secrets; Claude writes the
+- [x] **0.9.89** extension toolbar icon: outside a room's film tab the popup only offered "Open ScreenWithMe" (home page
+  in a new tab) even with a room open; now "🏠 Odama dön" switches to the open room tab (home page as second button).
+  Test: `scripts/harness/popup/run.cjs`.
+- [ ] **0.9.90** YouTube player on the site: controls stay visible long after the mouse leaves; YouTube's own volume
+  control doesn't work. **Blocked here:** this sandbox can't reach `www.youtube.com` / `*.googlevideo.com` /
+  `*.ytimg.com`; the owner was asked to allow them (environment → Network access → Allowed domains).
+- [ ] **0.9.91** YouTube search inside the app (owner gets a YouTube Data API key → GitHub Secrets; Claude writes the
   guide and the code).
 - [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
 

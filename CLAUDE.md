@@ -287,7 +287,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   handle and grow upwards when it is near the bottom. In the extension's room view messages are in the chat panel.
 - **Back from the film to the room:** "🏠 Odaya dön" in the overlay → the tab goes to `/r/ROOM#back` (the site enters
   without asking the name), the overlay goes away. The **popup** (0.9.83) never navigates the film tab: "🏠 Odayı ayrı
-  sekmede aç" switches to an open tab of that room or opens `/r/ROOM#back` in a new tab next to the film.
+  sekmede aç" switches to an open tab of that room or opens `/r/ROOM#back` in a new tab next to the film. Outside a
+  film tab (0.9.89), if a room is open in another tab the main button is "🏠 Odama dön" (switches to it) and "ScreenWithMe'yi
+  aç" is the second button. Test: `scripts/harness/popup/run.cjs` (Playwright, `channel: 'chromium'` loads extensions).
 - **Dead extension bridge (0.9.83):** an extension updated/reloaded while our site tab is open leaves a site-bridge cut
   off from the extension (sendMessage throws). "Filme git" then gets `going ok:false` or no answer within 4 s and the
   card says "reload the page" (`extensionStale`) instead of the misleading "your extension is outdated".
