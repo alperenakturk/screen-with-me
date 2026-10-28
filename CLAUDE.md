@@ -257,7 +257,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   shown again. ⟳ calls `connection.reconnect()`. If a ping gets no answer for 15 s, `RoomConnection` reconnects (don't
   only look at "silent for long": Chrome throttles background-tab timers to once a minute).
 - **Ghost connections:** the server keeps each connection's last message time (`seen`); connections silent for 150 s
-  are closed and dropped (`pruneStale`, on join and at most every 20 s).
+  are closed and dropped (`pruneStale`, on join and at most every 20 s). **Reconnects (0.9.84):** `RoomConnection`
+  remembers its member id from `welcome` and sends it as `hello.prev`; the server closes that old connection at once
+  (`4005 replaced`) if it has the same `cid` — before, the old one stayed in the room (people count went up, a frozen
+  camera tile) until the stale check. The room title counts people (name + avatar), not connections.
 - **Avatars (`protocol.ts` `AVATAR_PAGES`):** 5 pages: themed drawn characters, parody film / series / anime / game
   (game: `speedster`). Animal emojis were removed in 0.9.57 (those who had one get a random themed character). The
   picker always opens on the "Temalı" tab. Picker tabs are `AVATAR_TABS` (Parody has sub-tabs; site `ui/avatar.ts`).
@@ -317,7 +320,13 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `ExtVoice` (`ui/voice-ext.ts`) (sends signal/rtc/"in voice" through its own connection), offscreen runs
   `P2pVoice`/`VoiceClient`, plays audio and sends levels (`LevelMeter`, `levels` + `me`). Without permission the
   background opens the `mic.html` tab (offscreen can't ask); when the film page reloads the new site sends `hello` →
-  `reset` (the mic stays). ExtVoice does not leave on `pagehide`; the background sends `end` when the tab closes / goes
+  `reset` (the mic stays). **Mic and camera survive reconnects (0.9.84):** `join(mic)` starts with the person's last
+  choice (the track is disabled before anyone hears it); site reconnect keeps mic and camera, a page reload uses
+  `voiceMic:<room>`; it used to come back with the microphone **on** (friends' "random mic"). A silent rejoin is
+  skipped when another tab of mine (same name + avatar) is already in voice; my other tab's audio is muted and its
+  camera never shown as someone else; if a person appears twice only their newest connection gets a tile. Lost
+  peer connections (`failed`, or `disconnected` > 5 s) are closed and the offerer calls again after 2 / 5 / 10 s;
+  only then "couldn't connect" is shown. ExtVoice does not leave on `pagehide`; the background sends `end` when the tab closes / goes
   back to the room. Being in voice is remembered with `voice:<room>`: moving between site and film rejoins silently if
   permission exists. While someone really speaks the film's volume is lowered (embed `duck`, ×0.35; untouched if the
   person changed the volume): **off by default since 0.9.83** (`opt:duck2`; the old `opt:duck` key defaulted to on),

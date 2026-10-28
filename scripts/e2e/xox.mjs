@@ -36,6 +36,27 @@ const ok = (c, m) => {
   console.log('ok  ' + m);
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** Waits until `fn()` is truthy (live network delays vary: fixed sleeps made the live run flaky). */
+async function until(fn, ms = 8000) {
+  for (let i = 0; i < ms / 50; i++) {
+    try {
+      if (fn()) return true;
+    } catch {
+      // state not there yet
+    }
+    await sleep(50);
+  }
+  return false;
+}
+/** Plays moves in order, each one only after the watcher has seen the previous one land. */
+async function play(watcher, moves, filled) {
+  for (const [who, cell] of moves) {
+    const before = watcher.state.game.board.filter((c) => c !== null).length;
+    who.send({ t: 'move', cell });
+    await until(() => watcher.state.game.board.filter((c) => c !== null).length > before);
+  }
+  return filled;
+}
 
 const ali = client('Ali', 'xoxAli0000001');
 await ali.wait((m) => m.t === 'welcome', 'welcome ali');
@@ -43,7 +64,7 @@ const ayse = client('Ayse', 'xoxAyse000001');
 await ayse.wait((m) => m.t === 'welcome', 'welcome ayse');
 const can = client('Can', 'xoxCan0000001');
 await can.wait((m) => m.t === 'welcome', 'welcome can');
-await sleep(300);
+await until(() => can.state?.seats[1]?.name === 'Ayse' && can.state.watchers.length === 1);
 const s0 = can.state;
 ok(s0.seats[0]?.name === 'Ali' && s0.seats[1]?.name === 'Ayse', 'İlk iki kişi X ve O koltuğunda');
 ok(s0.watchers.length === 1 && s0.watchers[0].name === 'Can', 'Üçüncü kişi izleyici');
@@ -57,11 +78,8 @@ await can.wait((m) => m.t === 'error' && m.code === 'not_player', 'not player');
 ok(true, 'İzleyici oynayamıyor');
 
 // X kazanır: 0,1,2.
-for (const [who, cell] of [[ali, 0], [ayse, 3], [ali, 1], [ayse, 4], [ali, 2]]) {
-  who.send({ t: 'move', cell });
-  await sleep(150);
-}
-await sleep(300);
+await play(can, [[ali, 0], [ayse, 3], [ali, 1], [ayse, 4], [ali, 2]]);
+await until(() => can.state.game.winner === 'X');
 const won = can.state;
 ok(won.kind === 'xox' && won.game.winner === 'X' && JSON.stringify(won.game.line) === '[0,1,2]', 'X üç taşı dizdi, kazandı (izleyici de gördü)');
 ok(won.score.X === 1 && won.score.O === 0, 'Skor tutuldu');
@@ -71,15 +89,15 @@ ok(true, 'Oyun bitince hamle yok');
 
 // Rövanş: başlayan değişir (O).
 ayse.send({ t: 'rematch' });
-await sleep(300);
+await until(() => can.state.game.board.every((c) => c === null));
 ok(can.state.game.board.every((c) => c === null) && can.state.game.turn === 'O', 'Rövanşta tahta temiz, bu el O başlıyor');
 
 // Ayşe çıkar: koltuğu ayrılı ama boş sayılır; Can oturur.
 ayse.ws.close();
-await sleep(500);
+await until(() => can.state.seats[1]?.online === false);
 ok(can.state.seats[1]?.online === false, 'Çıkan oyuncunun koltuğu "bağlı değil" görünüyor');
 can.send({ t: 'sit', seat: 1 });
-await sleep(300);
+await until(() => can.state.seats[1]?.name === 'Can');
 ok(can.state.seats[1]?.name === 'Can' && can.state.watchers.length === 0, 'İzleyici boşalan koltuğa oturdu');
 
 // Ali yenilerse (aynı tarayıcı kimliği) koltuğunda kalır.
@@ -87,7 +105,7 @@ ali.ws.close();
 await sleep(300);
 const ali2 = client('Ali', 'xoxAli0000001');
 await ali2.wait((m) => m.t === 'welcome', 'welcome ali2');
-await sleep(300);
+await until(() => ali2.state?.seats[0]?.online === true);
 ok(ali2.state.seats[0]?.name === 'Ali' && ali2.state.seats[0]?.online === true, 'Yenileyen oyuncu koltuğunda kaldı');
 
 // Emoji: sadece sabit listeden, herkese gider.
@@ -103,17 +121,14 @@ const red = client('Ali', 'fourAli000001', { id: fourId, kind: 'four' });
 await red.wait((m) => m.t === 'welcome', 'welcome red');
 const yellow = client('Ayse', 'fourAyse00001', { id: fourId, kind: 'four' });
 await yellow.wait((m) => m.t === 'welcome', 'welcome yellow');
-await sleep(300);
+await until(() => yellow.state?.kind === 'four');
 ok(yellow.state.kind === 'four' && yellow.state.game.board.length === 42, 'Dört Taş odası açıldı (7×6 tahta)');
 red.send({ t: 'move', cell: 3 });
-await sleep(250);
+await until(() => yellow.state.game.board[5 * 7 + 3] === 'X');
 ok(yellow.state.game.board[5 * 7 + 3] === 'X', 'Taş sütunun en altına düştü');
 // Yatay dört: kırmızı 0,1,2,3 (sarı üstlerine).
-for (const [who, col] of [[yellow, 3], [red, 0], [yellow, 0], [red, 1], [yellow, 1], [red, 2]]) {
-  who.send({ t: 'move', cell: col });
-  await sleep(150);
-}
-await sleep(300);
+await play(yellow, [[yellow, 3], [red, 0], [yellow, 0], [red, 1], [yellow, 1], [red, 2]]);
+await until(() => yellow.state.game.winner === 'X');
 ok(yellow.state.game.winner === 'X' && yellow.state.game.line.length === 4, 'Kırmızı yan yana dört taş dizdi, kazandı');
 yellow.send({ t: 'move', cell: 7 });
 const bad = await yellow.wait((m) => m.t === 'error', 'bad column');

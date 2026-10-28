@@ -92,7 +92,7 @@ export type VoiceUp =
   /** Bu sitenin (yeni bağlantının) haberi: ses sayfası durumunu söyler. */
   | { op: 'hello' }
   /** `quiet`: kendiliğinden yeniden katılma (izin yoksa izin sekmesi açılmaz, sessizce vazgeçilir). */
-  | { op: 'join'; mode: VoiceMode; myId: string; members: Member[]; quiet?: boolean }
+  | { op: 'join'; mode: VoiceMode; myId: string; members: Member[]; quiet?: boolean; mic?: boolean }
   /** Seste iken site yeniden bağlandı (yeni üye kimliği): bağlantılar baştan kurulur, mikrofon kalır. */
   | { op: 'reset'; myId: string; members: Member[] }
   | { op: 'leave' }

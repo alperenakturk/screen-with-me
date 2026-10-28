@@ -83,7 +83,7 @@ export class ExtVoice implements Voice {
     });
   }
 
-  join(quiet = false): Promise<void> {
+  join(quiet = false, mic = true): Promise<void> {
     if (this.state.active) return Promise.resolve();
     if (!this.myId) return Promise.reject(new Error('voice: bağlı değil'));
     this.joining?.reject(new Error('voice: yeniden'));
@@ -93,7 +93,7 @@ export class ExtVoice implements Voice {
         reject(new Error('voice: süre doldu'));
       }, JOIN_TIMEOUT_MS);
       this.joining = { resolve, reject, timer };
-      this.post({ op: 'join', mode: this.mode, myId: this.myId!, members: this.members, ...(quiet ? { quiet } : {}) });
+      this.post({ op: 'join', mode: this.mode, myId: this.myId!, members: this.members, ...(quiet ? { quiet } : {}), ...(mic ? {} : { mic: false }) });
     });
   }
 

@@ -634,7 +634,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   document.querySelector('.topbar .brand')?.after(el('div', { class: 'room-title' }, roomTitleDot, roomTitleStatus, roomTitleName, roomTitleCount));
   function drawRoomTitle(): void {
     roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : t('roomTitle', { code: roomId });
-    roomTitleCount.textContent = members.length ? `· ${t('peopleCount', { n: members.length })}` : '';
+    // People, not connections: the same person's site tab + film tab (same name and avatar) count once.
+    const people = new Set(members.map((m) => `${m.name}|${m.avatar ?? ''}`)).size;
+    roomTitleCount.textContent = people ? `· ${t('peopleCount', { n: people })}` : '';
   }
   addEventListener('langchange', drawRoomTitle);
   const amHost = () => myId !== null && myId === hostId;
