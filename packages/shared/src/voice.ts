@@ -11,7 +11,8 @@ import type { Member, RtcRequest, RtcResult } from './protocol.ts';
 export interface Voice {
   readonly active: boolean;
   readonly micEnabled: boolean;
-  join(): Promise<void>;
+  /** `mic`: start with the microphone on (default) or muted — a reconnect keeps the person's choice. */
+  join(mic?: boolean): Promise<void>;
   setMic(on: boolean): void;
   leave(): void;
   sync(members: Member[], myId: string | null): void;
@@ -63,14 +64,15 @@ export class VoiceClient implements Voice {
   }
 
   /** Sese katıl: mikrofonu al, odaya bildir, Cloudflare oturumu aç ve sesimi yayınla. */
-  async join(): Promise<void> {
+  async join(mic = true): Promise<void> {
     if (this.joined) return;
     // Önce mikrofon: izin verilmezse odaya hiç "seste" görünmeyiz.
     this.mic = await (this.options.getMic?.() ??
       navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false }));
     this.joined = true;
-    this.micOn = true;
-    this.options.announce(true, true);
+    this.micOn = mic;
+    for (const track of this.mic.getAudioTracks()) track.enabled = mic;
+    this.options.announce(true, mic);
     const pc = new RTCPeerConnection({ iceServers: ICE, bundlePolicy: 'max-bundle' });
     this.pc = pc;
     pc.ontrack = (event) => {

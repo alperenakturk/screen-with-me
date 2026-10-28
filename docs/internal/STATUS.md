@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.83**. The owner moved to a **new Claude
+> Last update: 28 Oct 2026. Site and extension **0.9.84**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -28,7 +28,7 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` Â
 - [x] **0.9.83** quick fixes: extension popup button opens a new tab (doesn't replace our room tab); "your extension
   is outdated" shown to an up-to-date extension (friend had to reinstall); film ducking off by default + only on real
   speech (clicks must not trigger it); film-page cover flash.
-- [ ] **0.9.84** voice/camera bugs: tiles drop and come back (maybe when a game is opened/closed); the same person
+- [x] **0.9.84** voice/camera bugs (+ friends' "random mic on": reconnect turned a muted mic back on): tiles drop and come back (maybe when a game is opened/closed); the same person
   appears with 2â€“3 camera tiles (one frozen); own camera visible in a slot even when hidden; small audio glitches.
 - [ ] **0.9.85** Meet/Discord-style controls: mic/camera toggles under the camera tiles while watching; per-person
   mute and volume; host can kick from the tile; pin a camera; hide my own camera; resize tiles horizontally and
@@ -46,6 +46,8 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` Â
 - Voice on the site 24/24 âœ… and voice on the film page 28/28 âœ…, **both only with `VOICE_A`/`VOICE_B`**: without them
   both Chromes use the same fake beep and the echo canceller removes it, so the "really hears" checks fail (not a
   code bug; the harness should default to two different sounds).
+- **0.9.84:** voice harness 29/29 (new: game open/close keeps cameras, reconnect keeps one tile, muted mic stays
+  muted), film-page voice 28/28, e2e 174 (new `prev` checks in handover.mjs).
 - **0.9.83:** embed harness 92/92 (flash fixed with `#swm-cover`), voice 24/24 and 28/28, unit 162/162.
 - Extension (embed harness, 0.9.82) 91/92: **"no flash when going from the site to the film page" failed in both runs**: the
   film page is visible for one frame (~60 ms) before the cover. Cause: on the first transition from the site the film
@@ -83,6 +85,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   result is still pending).
 - **0.9.80:** room UI pass (chat bubbles, settings dialog, reaction tray, clean top bar).
 - **0.9.81:** free camera windows (drag, resize, inside the video in fullscreen; also on the film page).
+- **0.9.84:** reconnect drops the old connection at once (`hello.prev`), keeps mic/camera state, lost voice
+  connections are rebuilt, one camera tile per person, people counted once.
 - **0.9.83:** popup opens the room in a new tab, "reload the page" instead of a false "outdated extension",
   film ducking off by default and only on real speech, film-page cover flash fixed.
 - **0.9.82:** copy pass: all site/extension/privacy/README/store texts rewritten (glossary in CLAUDE.md), the owner's

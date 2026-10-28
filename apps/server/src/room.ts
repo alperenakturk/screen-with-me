@@ -755,6 +755,20 @@ export class Room extends DurableObject<Env> {
     else delete attachment.avatar;
     ws.serializeAttachment(attachment);
 
+    // A reconnect replaces its previous connection right away (same browser id + the old member id): otherwise the
+    // old one stayed in the room — with its frozen camera tile — until the stale check (up to 150 s).
+    if (hello.prev && attachment.cid) {
+      for (const other of this.openSockets(ws)) {
+        const old = other.deserializeAttachment() as Attachment | null;
+        if (old?.id !== hello.prev || old.cid !== attachment.cid) continue;
+        try {
+          other.close(4005, 'replaced');
+        } catch {
+          // Already closing.
+        }
+        await this.onLeave(other);
+      }
+    }
     // Yeni gelen, aslında kopmuş birini odada görmesin.
     await this.pruneStale(Date.now());
     await this.settleHost(ws, attachment);

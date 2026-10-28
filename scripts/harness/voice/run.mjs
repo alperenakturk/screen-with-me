@@ -154,6 +154,24 @@ check(back.parent === 'body' && !back.fs && Math.abs(back.x - grown.x) < 6, 'tam
 await ayse.evaluate(`document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
 const docked = await ayse.evaluate(BOX);
 check(!docked.floating && docked.parent !== 'body', '⤓ ile karta geri döndü', JSON.stringify(docked));
+// Opening and closing a game must not drop the cameras (owner's friends saw tiles disappear and come back).
+const FLOW = `(async () => { const v = [...document.querySelectorAll('#voice-cams .cam-tile video')]; const a = v.map((x) => x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0); await new Promise((r) => setTimeout(r, 1200)); return { tiles: v.length, moving: v.every((x, i) => (x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0) - a[i] > 3) }; })()`;
+await ali.evaluate(`document.getElementById('game-btn').click(); 1`);
+await ali.sleep(300);
+await ali.evaluate(`document.querySelector('.game-menu-item').click(); 1`);
+await ali.sleep(2500);
+const withGame = await ayse.evaluate(FLOW);
+check(withGame.tiles === 1 && withGame.moving, 'oyun açılınca kameralar yerinde ve akıyor', JSON.stringify(withGame));
+await ali.evaluate(`document.querySelector('.game-end').click(); 1`);
+await ali.sleep(2500);
+const afterGame = await ayse.evaluate(FLOW);
+check(afterGame.tiles === 1 && afterGame.moving, 'oyun kapanınca kameralar yerinde ve akıyor', JSON.stringify(afterGame));
+// A reconnect must not leave a second (frozen) tile of the same person behind.
+await ali.evaluate(`document.getElementById('profile-reconnect').click(); 1`);
+await ali.sleep(6000);
+const afterReconnect = await ayse.evaluate(FLOW);
+const aliCount = await ayse.evaluate(`document.querySelectorAll('#people-list [data-member-id]').length`);
+check(afterReconnect.tiles === 1 && afterReconnect.moving, 'Ali yeniden bağlanınca Ayşe’de tek kamera kutusu var ve akıyor', JSON.stringify({ afterReconnect, aliCount }));
 await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
 const camGone = await until(() => ayse.evaluate(`document.getElementById('voice-cams').hidden`), 8000);
 check(!!camGone, 'Ali kamerasını kapatınca Ayşe\'de kutu kalktı');
@@ -164,6 +182,15 @@ await ali.sleep(2000);
 const muted = await ali.evaluate(LEVEL);
 const badge = await ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`);
 check(muted.rms < 0.005 && badge, 'Ayşe sessize alınca Ali onu duymuyor ve 🔇 görünüyor', JSON.stringify({ muted, badge }));
+// Reconnecting (network hiccup) must keep a muted microphone muted; it used to come back on by itself.
+await ayse.evaluate(`document.getElementById('profile-reconnect').click(); 1`);
+await ali.sleep(6000);
+const ayseRows = await ali.evaluate(`[...document.querySelectorAll('#voice-people [data-voice-id]')].length`);
+const stillMuted = await ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`);
+const afterLevel = await ali.evaluate(LEVEL);
+check(stillMuted && afterLevel.rms < 0.005, 'Ayşe yeniden bağlanınca mikrofonu yine kapalı (kendiliğinden açılmadı)', JSON.stringify({ stillMuted, afterLevel, ayseRows }));
+const roomTitle = await ali.evaluate(`document.querySelector('.room-title')?.textContent ?? ''`);
+check(/· 2 /.test(roomTitle), 'yeniden bağlanan kişi odada iki kez sayılmıyor', roomTitle);
 
 // Bas-konuş: Ayşe seçer (mikrofon kapalı durur), V'ye basılı tutunca Ali onu duyar, bırakınca susar.
 await ayse.evaluate(`(() => { const c = document.getElementById('voice-ptt'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);

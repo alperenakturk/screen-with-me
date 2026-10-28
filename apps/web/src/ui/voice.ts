@@ -120,6 +120,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const audio = el('audio', { autoplay: '' }) as HTMLAudioElement;
     audio.srcObject = stream;
     audio.hidden = true;
+    audio.muted = isMyOtherTab(memberId);
     document.body.append(audio);
     void audio.play().catch(() => {});
     audios.set(memberId, audio);
@@ -162,6 +163,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let client: Voice = makeClient();
   const wantKey = `voice:${roomId}`;
   const remember = (on: boolean) => save(wantKey, on ? '1' : '0');
+  const micKey = `voiceMic:${roomId}`;
+  /** Was my microphone on the last time I chose (default on)? With push-to-talk it always starts off (render). */
+  const micWanted = () => load(micKey) !== '0';
 
   let wasActive = false;
   function render(): void {
@@ -253,8 +257,16 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const shown: HTMLElement[] = [];
     const keep = new Set<string>();
     if (client.active) {
+      // One tile per person: my other tab (same name and avatar) is never shown as someone else, and if a person is
+      // in the list twice (an old connection not gone yet) only their newest connection gets a tile.
+      const self = members.find((m) => m.id === me);
+      const person = (m: Member) => `${m.name}|${m.avatar ?? ''}`;
+      const newest = new Map<string, Member>();
+      for (const member of members) if (member.voice?.cam) newest.set(person(member), member);
       for (const member of members) {
         if (!member.voice?.cam) continue;
+        if (member.id !== me && self && person(member) === person(self)) continue;
+        if (member.id !== me && newest.get(person(member)) !== member) continue;
         const stream = member.id === me ? (client.camera ?? null) : (videos.get(member.id) ?? null);
         if (!stream) continue;
         keep.add(member.id);
@@ -283,6 +295,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       client.sync(members, myId());
       await client.join();
       remember(true);
+      save(micKey, '1');
       // İlk katılışta kulaklık ipucu (film sesi hoparlörden karşıya gitmesin).
       hint.hidden = false;
       setTimeout(() => (hint.hidden = true), 9000);
@@ -298,6 +311,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   micButton.addEventListener('click', () => {
     if (ptt) return;
     client.setMic(!client.micEnabled);
+    // Remembered for this room: a reload or a reconnect must never switch a muted microphone back on.
+    save(micKey, client.micEnabled ? '1' : '0');
     render();
   });
   // Bas-konuş: tuş ya da 🎙 basılı tutulurken konuşulur; pencereden çıkınca (tuş bırakılmadan) kapanır.
@@ -372,14 +387,21 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (client instanceof ExtVoice) {
       // Eklenti katılmak için üye kimliğimi ve odadakileri bilmeli.
       client.sync(members, myId());
-      await client.join(true).catch(() => {});
+      await client.join(true, micWanted()).catch(() => {});
     } else {
       const state = await navigator.permissions?.query({ name: 'microphone' as PermissionName }).then((s) => s.state, () => 'prompt');
       if (state !== 'granted') return;
-      await client.join().catch(() => {});
+      await client.join(micWanted()).catch(() => {});
     }
     client.sync(members, myId());
     render();
+  }
+
+  /** Is this member another connection of mine (same name and avatar)? */
+  function isMyOtherTab(memberId: string): boolean {
+    const me = members.find((m) => m.id === myId());
+    const other = members.find((m) => m.id === memberId);
+    return !!me && !!other && other.id !== me.id && other.name === me.name && (other.avatar ?? '') === (me.avatar ?? '');
   }
 
   /** Is the same person (same name and avatar, another connection) already in voice? */
@@ -426,13 +448,24 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         return;
       }
       const wasActive = client.active;
+      const micWas = client.micEnabled;
+      const camWas = client.camEnabled === true;
       client.leave();
       if (nextMode !== mode) {
         mode = nextMode;
         client = makeClient();
       }
       // Yeniden bağlandık (yeni üye kimliği): seste idiysek sessizce yeniden katıl (izin zaten verilmiş).
-      if (wasActive && available) void client.join().then(() => client.sync(members, myId()), () => render());
+      // The camera comes back too (it used to stay off after a reconnect: "cameras come and go").
+      if (wasActive && available)
+        void client.join(micWas).then(
+          async () => {
+            client.sync(members, myId());
+            if (camWas) await client.setCam?.(true).catch(() => {});
+            render();
+          },
+          () => render(),
+        );
       else setTimeout(() => void rejoin(), 0);
       render();
     },
@@ -460,6 +493,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     members(next: Member[]): void {
       members = next;
       client.sync(members, myId());
+      // My other tab in voice must not play my own voice back here.
+      for (const [memberId, audio] of audios) audio.muted = isMyOtherTab(memberId);
       render();
     },
     rtc(message: Extract<ServerMessage, { t: 'rtc' }>): void {

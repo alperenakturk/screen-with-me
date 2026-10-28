@@ -337,7 +337,8 @@ export type ClientMessage =
    * oda yöneticisinin yenileyince yöneticiliği kaybetmemesi ve atılan kişinin
    * hemen geri girememesi için kullanılır. Hesap değildir, sadece rastgele bir kod.
    */
-  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; client?: ClientKind }
+  /** `prev`: my member id on the connection this one replaces (reconnect): the server drops that one at once. */
+  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; client?: ClientKind; prev?: string }
   /** İsim ya da avatar değiştir. */
   | { t: 'rename'; name: string; avatar?: Avatar }
   /** (Sadece oda yöneticisi) birini odadan çıkar; yönetici kaldırana kadar geri giremez. */
@@ -717,6 +718,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (isAvatar(m.avatar)) hello.avatar = m.avatar;
       if (typeof m.cid === 'string' && CLIENT_ID.test(m.cid)) hello.cid = m.cid;
       if (m.client === 'web' || m.client === 'ext') hello.client = m.client;
+      if (isItemId(m.prev)) hello.prev = m.prev;
       return hello;
     }
     case 'rename': {

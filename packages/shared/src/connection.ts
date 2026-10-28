@@ -42,6 +42,8 @@ const OPEN_TIMEOUT_MS = 10_000;
  */
 export class RoomConnection {
   private ws: WebSocket | null = null;
+  /** My member id from the last welcome: sent as `prev` on reconnect so the server drops the old connection. */
+  private memberId: string | null = null;
   private retries = 0;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private pingTimer: ReturnType<typeof setInterval> | null = null;
@@ -110,7 +112,8 @@ export class RoomConnection {
       this.options.onFailures?.(0);
       this.options.onStatus?.('open');
       const { name, avatar, cid, client } = this.options;
-      this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}), ...(client ? { client } : {}) });
+      const prev = this.memberId;
+      this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}), ...(client ? { client } : {}), ...(prev ? { prev } : {}) });
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
       this.lastHeard = Date.now();
       this.lastPingAt = 0;
@@ -143,6 +146,7 @@ export class RoomConnection {
         return;
       }
       if (message.t === 'pong') this.options.clock.addSample(message.c, message.s);
+      if (message.t === 'welcome') this.memberId = message.you;
       this.options.onMessage(message);
     });
 
