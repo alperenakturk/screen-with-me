@@ -421,7 +421,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         client.mode = mode;
         client.reconnected();
         render();
-        void rejoin();
+        // After this welcome's member list is in (room.ts sets it right after us): rejoin checks my other tabs.
+        setTimeout(() => void rejoin(), 0);
         return;
       }
       const wasActive = client.active;
@@ -432,7 +433,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       }
       // Yeniden bağlandık (yeni üye kimliği): seste idiysek sessizce yeniden katıl (izin zaten verilmiş).
       if (wasActive && available) void client.join().then(() => client.sync(members, myId()), () => render());
-      else void rejoin();
+      else setTimeout(() => void rejoin(), 0);
       render();
     },
     /** Kabuk: eklenti sesi destekliyor (shell.html söyler). */
