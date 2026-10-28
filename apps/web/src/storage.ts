@@ -160,10 +160,45 @@ export function sessionSave(key: string, value: string): void {
   }
 }
 
-/** İsim/avatar kaydeder. */
+/** Saves the default name/avatar: what the join step offers in a room I haven't been in yet. */
 export function saveIdentity(name: string, avatar?: string): void {
   save('name', name);
   if (avatar) save('avatar', avatar);
+}
+
+/**
+ * Rooms are independent (owner's decision, 0.9.88): the name and avatar I use in a room are kept for that room only
+ * (`me:<room>`), so changing them in one room never changes another room. The default above only fills the join step
+ * of a new room. The newest rooms are kept (`meRooms`, at most ROOM_IDENTITIES).
+ */
+const ROOM_IDENTITIES = 50;
+
+export function roomIdentity(roomId: string): { name: string; avatar: string } | null {
+  try {
+    const value = JSON.parse(load(`me:${roomId}`) ?? 'null') as unknown;
+    if (value && typeof value === 'object' && typeof (value as { name?: unknown }).name === 'string' && typeof (value as { avatar?: unknown }).avatar === 'string') {
+      return value as { name: string; avatar: string };
+    }
+  } catch {
+    // A broken record counts as none.
+  }
+  return null;
+}
+
+export function saveRoomIdentity(roomId: string, name: string, avatar: string): void {
+  const current = roomIdentity(roomId);
+  if (current?.name === name && current.avatar === avatar) return;
+  save(`me:${roomId}`, JSON.stringify({ name, avatar }));
+  let rooms: string[] = [];
+  try {
+    const list = JSON.parse(load('meRooms') ?? '[]') as unknown;
+    if (Array.isArray(list)) rooms = list.filter((x): x is string => typeof x === 'string');
+  } catch {
+    // Start a new list.
+  }
+  rooms = [...rooms.filter((r) => r !== roomId), roomId];
+  for (const old of rooms.slice(0, Math.max(0, rooms.length - ROOM_IDENTITIES))) save(`me:${old}`, '');
+  save('meRooms', JSON.stringify(rooms.slice(-ROOM_IDENTITIES)));
 }
 
 /**

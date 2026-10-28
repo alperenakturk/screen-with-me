@@ -407,7 +407,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   fullscreen, round 🎙 / 📷 buttons under the tiles (`.cam-controls`; they press the card's own buttons; red = off); the
   window resizes in both directions (`Spot.h`, `.sized`: tiles fill it); **M** toggles my mic on the site. Clicking a
   face in the "Birlikte" card or a camera tile (a still click, not a drag: `onTileClick`) opens the **person menu**
-  (`.person-pop`, an island in the shell): volume for me 0–100 % and "mute for me" (`localStorage` `voiceSound`, by
+  (`.person-pop`, an island in the shell; on myself (0.9.88): mic / camera on-off, leave or join voice, "change my name and
+  avatar"): volume for me 0–100 % and "mute for me" (`localStorage` `voiceSound`, by
   person = name + avatar; in the shell sent to offscreen as `{op:'volume'}`, old extensions ignore it), "📌 show
   their camera big" (`.cam-tile.pinned`, first and full width; this tab only), "🙈 hide myself" on my own tile
   (`opt:hideSelfCam`, others still see me), and for the host "🚪 remove from the room" (same kick + confirm as the
@@ -523,7 +524,20 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
 - **Hide the side panel (0.9.71):** ⇥ in the toolbar under the video (`#side-toggle`): `.room.side-hidden`, the video
   takes the full width, chat messages appear in the video corner as in fullscreen (`toasts`), unread count on the
   button; `localStorage` `opt:sideHidden`; not in the shell or on narrow screens (≤860 px).
-- **Room actions in chat:** always written but hidden by default; "Hareketleri göster (N)" at the top right of the
+- **Chat images and links (0.9.88, owner's feedback):** 🖼️ `#chat-attach` in the chat box, paste or drop → `fileToChatImage`
+  (≤1024 px WebP, smaller until it fits `STICKER_MAX_CHARS`; GIFs as they are without metadata) → confirm with preview
+  (typed text = caption) → `{t:'chat', text, image}` (text may be empty). The server keeps `chatimg:<id>` (+ order
+  `chatImages`; only images of messages still in the 50-message history, at most `MAX_CHAT_IMAGES` 12; per IP
+  `imageLimit`, `CHAT_IMAGES_PER_DAY` 100 per room), broadcasts `{t:'chat-image', id, data}` before the message and
+  sends the history's images one by one after `welcome`; `ChatMessage.image` is the id (placeholder until the data
+  arrives). Click = full-size viewer (`.image-viewer`, a `.dialog-backdrop`). Links: `ui/links.ts` `linkify` (http(s)
+  and `www.`, trailing punctuation left out, never HTML) → "Bu sayfadan ayrılıyorsun" confirm → `window.open` in a new
+  tab (in the shell `open-ok` first, so the extension doesn't close it as an ad). Test: `scripts/e2e/chatimage.mjs`.
+- **Rooms are independent (0.9.88, owner's decision):** my name and avatar are stored per room (`me:<room>`, newest 50
+  in `meRooms`; `storage.ts` `roomIdentity` / `saveRoomIdentity`); changing them in a room never changes another room.
+  `name`/`avatar` are only the default the join step of a new room offers. Shared between rooms only what the owner
+  names (e.g. the custom emoji collection).
+- **Room actions in chat:** always written but hidden by default; voice join / leave are room actions too (0.9.88); "Hareketleri göster (N)" at the top right of the
   chat (`localStorage` `opt:chatEvents`). The old setting was removed.
 - **Disable emojis (`settings.noReactions`):** host only; the server drops reactions (host included); site
   `.no-reactions`, extension `.no-react` hide the emoji bar.

@@ -41,7 +41,7 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
   with the time). Started in another session (WIP commit on `claude/focused-franklin-ye6g2g`), finished here (the WIP
   crashed the room: `$('#settings-open')` looked inside `app`). Also from round 3: avatar changes only on "Tamam";
   empty "Bu odada" sticker tab no longer opens the file picker; "Neden?" / hint bubbles close on click, Esc, scroll.
-- [ ] **0.9.88** feedback round 2–3 (owner, 28 Oct 2026): **rooms are independent** (name and avatar per room: changing
+- [x] **0.9.88** feedback round 2–3 (owner, 28 Oct 2026): **rooms are independent** (name and avatar per room: changing
   them in one room must never change another room; only things the owner names, like the sticker collection, are
   shared); send images in chat; links in chat are clickable, ask "you
   are leaving this page" first and open in a new tab (our room tab stays); voice join / leave appear in the room

@@ -407,6 +407,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
     const hasTile = tiles.has(member.id) || (isMe && hideSelf && client.camEnabled === true);
     if (hasTile && !isMe) items.push(button(pinned === key ? `📌 ${t('voice.unpin')}` : `📌 ${t('voice.pin')}`, () => (pinned = pinned === key ? null : key)));
+    if (isMe && client.active) {
+      // My own controls (owner's feedback, 0.9.88: clicking myself while in voice used to say "you're not in voice").
+      if (!ptt) items.push(button(client.micEnabled ? `🔇 ${t('voice.mute')}` : `🎙 ${t('voice.unmute')}`, () => micButton.click()));
+      if (!camButton.hidden) items.push(button(client.camEnabled ? `📷 ${t('voice.camOff')}` : `📷 ${t('voice.camOn')}`, () => camButton.click()));
+    }
     if (isMe && client.camEnabled) {
       items.push(
         button(hideSelf ? `👁 ${t('voice.showSelf')}` : `🙈 ${t('voice.hideSelf')}`, () => {
@@ -414,6 +419,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
           save('opt:hideSelfCam', hideSelf ? '1' : '0');
         }),
       );
+    }
+    if (isMe) {
+      if (client.active) items.push(button(`🚪 ${t('voice.leaveVoice')}`, () => leaveButton.click()));
+      else if (!joinButton.hidden) items.push(button(`🎙 ${t('voice.join')}`, () => joinButton.click()));
+      items.push(button(`👤 ${t('voice.editMe')}`, () => document.querySelector<HTMLElement>('.topbar-right .profile-btn')?.click()));
     }
     if (!isMe && room.isHost()) items.push(button(`🚪 ${t('voice.kick')}`, () => room.kick(member), 'danger'));
     if (items.length === 1) items.push(el('p', { class: 'person-pop-note' }, t(member.voice ? 'voice.menuNothing' : 'voice.notInVoice')));

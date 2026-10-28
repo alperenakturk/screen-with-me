@@ -317,10 +317,13 @@ export const SYSTEM_MEMBER_ID = 'system';
 
 export interface ChatMessage {
   id: string;
+  /** May be empty when the message is only an image. */
   text: string;
   by: Member;
   /** Sunucu saati (ms). */
   at: number;
+  /** Image sent with the message (0.9.88): its id; the data arrives separately as `chat-image`. */
+  image?: string;
 }
 
 export type PlaybackAction = 'load' | 'next' | 'play' | 'pause' | 'seek' | 'rate';
@@ -413,7 +416,8 @@ export type ClientMessage =
   | { t: 'pin'; note?: string }
   /** Pini kaldır (kendi pinin ya da yöneticiysen herhangi biri). */
   | { t: 'unpin'; id: string }
-  | { t: 'chat'; text: string };
+  /** `image`: a picture sent in chat (0.9.88, `isChatImageData`); then `text` may be empty. */
+  | { t: 'chat'; text: string; image?: string };
 
 export type ErrorCode =
   | 'bad_message'
@@ -501,6 +505,8 @@ export type ServerMessage =
   /** Açık videonun pinleri değişti (tam liste). */
   | { t: 'pins'; pins: PinList }
   | { t: 'chat'; message: ChatMessage }
+  /** Data of a chat image (sent before its message, and one by one after `welcome` for the history). */
+  | { t: 'chat-image'; id: string; data: string }
   | { t: 'error'; code: ErrorCode }
   | { t: 'recap'; recap: Recap; by: Member }
   | { t: 'recaps'; recaps: Recap[] };
@@ -567,8 +573,8 @@ export function cleanName(x: unknown): string | null {
  */
 export const STICKER_MAX_CHARS = 280_000;
 export const MAX_STICKERS = 24;
-/** sticker-add mesajının en fazla uzunluğu: resim + JSON kabuğu. */
-const STICKER_MESSAGE_MAX = STICKER_MAX_CHARS + 64;
+/** Largest raw client message: an image plus a full chat text (JSON-escaped). */
+const BIG_MESSAGE_MAX = STICKER_MAX_CHARS + 6 * CHAT_MAX_LENGTH + 64;
 const STICKER_DATA = /^data:image\/(?:png|gif|webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/;
 const STICKER_ID = /^[0-9a-f]{12}$/;
 
@@ -579,6 +585,17 @@ export interface Sticker {
 
 export function isStickerData(x: unknown): x is string {
   return typeof x === 'string' && x.length <= STICKER_MAX_CHARS && STICKER_DATA.test(x);
+}
+
+/**
+ * Images in chat (0.9.88): the same raster formats and size limit as custom emojis (photos are scaled to ≤1024 px WebP
+ * in the browser first, which also drops EXIF/GPS). Id = `stickerId(data)`. A room keeps the images of its chat history,
+ * at most MAX_CHAT_IMAGES; they are deleted with the room.
+ */
+export const MAX_CHAT_IMAGES = 12;
+
+export function isChatImageData(x: unknown): x is string {
+  return isStickerData(x);
 }
 
 export function isStickerId(x: unknown): x is string {
@@ -700,8 +717,8 @@ function cleanRtc(m: Record<string, unknown>): ClientMessage | null {
 }
 
 export function parseClientMessage(raw: string): ClientMessage | null {
-  // Özel emoji resmi taşıdığı için büyük olabilir; diğer her mesaj MAX_MESSAGE_BYTES ile sınırlı.
-  if (raw.length > STICKER_MESSAGE_MAX) return null;
+  // Only a custom emoji or a chat image is this big; their data length is checked again below.
+  if (raw.length > BIG_MESSAGE_MAX) return null;
   let m: unknown;
   try {
     m = JSON.parse(raw);
@@ -710,7 +727,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
   }
   if (!isObject(m)) return null;
   // Sadece özel emoji ve sesli sohbetin SDP'si büyük olabilir.
-  if (raw.length > MAX_MESSAGE_BYTES && m.t !== 'sticker-add' && !((m.t === 'rtc' || m.t === 'signal' || m.t === 'live-signal') && raw.length <= RTC_MESSAGE_MAX)) return null;
+  if (raw.length > MAX_MESSAGE_BYTES && m.t !== 'sticker-add' && !(m.t === 'chat' && m.image !== undefined) && !((m.t === 'rtc' || m.t === 'signal' || m.t === 'live-signal') && raw.length <= RTC_MESSAGE_MAX)) return null;
 
   switch (m.t) {
     case 'hello': {
@@ -824,6 +841,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case 'chat': {
       const text = cleanChatText(m.text);
+      if (m.image !== undefined) return isChatImageData(m.image) ? { t: 'chat', text: text ?? '', image: m.image } : null;
       return text ? { t: 'chat', text } : null;
     }
     default:

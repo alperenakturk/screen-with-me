@@ -43,6 +43,8 @@ import {
   postToExtension,
   save,
   saveIdentity,
+  roomIdentity,
+  saveRoomIdentity,
   sessionLoad,
   sessionSave,
 } from './storage.ts';
@@ -57,6 +59,7 @@ import { createPins } from './ui/pins.ts';
 import { showNextCard } from './ui/end-card.ts';
 import { renderRecapHistory, showRecap } from './ui/recap.ts';
 import { confirmDialog } from './ui/confirm.ts';
+import { openExternalLink } from './ui/links.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -78,9 +81,11 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
   // Film sayfasının üstündeki katman (kabuk): kişi siteden geliyor, isim/avatar sormadan girer.
   // (İsim hiç yoksa katman tam açılır, isim adımı görünsün.)
+  // My name and avatar in this room (rooms are independent, 0.9.88); a room I'm new to starts from the default.
+  const mine = roomIdentity(roomId);
   if (isShell) {
-    const name = cleanName(load('name'));
-    const avatar = load('avatar');
+    const name = cleanName(mine?.name ?? load('name'));
+    const avatar = mine?.avatar ?? load('avatar');
     if (name && isAvatar(avatar)) {
       startRoom(app, roomId, name, avatar, { resumed: true });
       return;
@@ -92,8 +97,8 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
   if (fromExtension) history.replaceState(null, '', location.pathname + location.search);
   // Bu sekmede odaya zaten girilmişse (sayfa yenilendi) ya da filmden dönüldüyse isim/avatar
   // adımlarını atla.
-  const savedName = cleanName(load('name'));
-  const savedAvatar = load('avatar');
+  const savedName = cleanName(mine?.name ?? load('name'));
+  const savedAvatar = mine?.avatar ?? load('avatar');
   if (savedName && isAvatar(savedAvatar) && (fromExtension || waited || sessionLoad(`in:${roomId}`) === '1')) {
     startRoom(app, roomId, savedName, savedAvatar, { resumed: true });
     return;
@@ -134,7 +139,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
   window.addEventListener('langchange', renderCode);
 
   const input = app.querySelector<HTMLInputElement>('#name')!;
-  input.value = load('name') ?? '';
+  input.value = mine?.name ?? load('name') ?? '';
   input.focus();
   input.select();
 
@@ -162,7 +167,7 @@ function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void 
   `;
   translate(app);
 
-  const savedAvatar = load('avatar');
+  const savedAvatar = roomIdentity(roomId)?.avatar ?? load('avatar');
   let avatar: Avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
   const picker = app.querySelector<HTMLElement>('#avatar-picker')!;
   const preview = app.querySelector<HTMLElement>('#avatar-preview')!;
@@ -240,6 +245,7 @@ function withAvatar(member: { name: string; avatar?: string }): string {
 function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false } = {}): void {
   // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
   sessionSave(`in:${roomId}`, '1');
+  saveRoomIdentity(roomId, myName, myAvatar);
   // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla. Film sayfasındaki katmanda
   // değil: orada film sayfanın kendi oynatıcısında, her film sayfası açılışında boşuna ~1 MB inerdi (gerekirse yine yüklenir).
   if (!isShell) loadYouTubeApi().catch(() => {});
@@ -450,6 +456,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="chat-form">
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
+              <button type="button" class="chat-attach" id="chat-attach" data-i18n-title="chatImage.add">🖼️</button>
               <button class="chat-send" id="chat-send" data-i18n-title="send">➤</button>
             </form>
           </div>
@@ -663,7 +670,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const chat = createChatPanel(app, send, () => myId, (count) => {
     chatBadge.hidden = count === 0;
     chatBadge.textContent = count > 9 ? '9+' : String(count);
-  });
+  }, (url) => void openExternalLink(url, () => isShell && postToExtension({ type: 'open-ok' })));
   const people = createPeoplePanel(app, send);
   /** Sağ üstteki profil düğmesi (kendi avatarım); kimlik değişince yeniden çizilir. */
   let drawProfileButton = () => {};
@@ -738,7 +745,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     myName = name;
     myAvatar = avatar;
     drawProfileButton();
-    saveIdentity(name, avatar);
+    // Only this room: another room keeps its own name and avatar.
+    saveRoomIdentity(roomId, name, avatar);
     connection.setIdentity(name, avatar);
     send({ t: 'rename', name, avatar });
   });
@@ -999,8 +1007,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (!shown || !seats.react(message.by, shown)) reactions.show(message.by, message.emoji, message.sticker);
         break;
       }
+      case 'chat-image':
+        chat.setImage(message.id, message.data);
+        break;
       case 'chat': {
-        const { by, text } = message.message;
+        const { by } = message.message;
+        // Shorts bubbles and corner messages show a picture as 🖼️ (+ its caption).
+        const text = message.message.image ? `🖼️ ${message.message.text}`.trim() : message.message.text;
         chat.add(message.message);
         // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
         if (shortsOn) seats.say(by, text);
@@ -2025,6 +2038,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // Atılan kişi için ayrıca "ayrıldı" yazma ("çıkardı" satırı zaten var).
       for (const m of members) if (!after.has(m.id) && !kickedIds.has(m.id)) addActivity(() => t('left', { name: withAvatar(m) }));
       if (nextHost !== hostId && nextHost === myId) addActivity(() => t('youAreHostNow'));
+      // Voice join / leave go into the room activity like play / pause (owner's feedback, 0.9.88). Someone who leaves
+      // the room while in voice only gets the "left" line.
+      const wasInVoice = new Set(members.filter((m) => m.voice).map((m) => m.id));
+      for (const m of next) {
+        if (m.voice && !wasInVoice.has(m.id) && before.has(m.id)) addActivity(() => t('voiceJoined', { name: displayName(m) }));
+        if (!m.voice && wasInVoice.has(m.id)) addActivity(() => t('voiceLeft', { name: displayName(m) }));
+      }
     }
     members = next;
     hostId = nextHost;

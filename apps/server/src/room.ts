@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import {
   MAX_PINS,
   MAX_STICKERS,
+  MAX_CHAT_IMAGES,
   PROTOCOL_VERSION,
   SYSTEM_MEMBER_ID,
   CLIENT_ID,
@@ -40,6 +41,8 @@ import { resolveTitle } from './titles.ts';
 const MAX_MEMBERS = 50;
 /** Custom emoji uploads per room and day (each can be ~280 KB and is kept with the room). */
 const STICKER_ADDS_PER_DAY = 60;
+/** Images sent in chat per room and day (0.9.88). */
+const CHAT_IMAGES_PER_DAY = 100;
 /** Kimse kalmayan oda bu süre sonra silinir. */
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 /** Kaydedilmiş oda boşken bu kadar saklanır. */
@@ -169,6 +172,14 @@ export class Room extends DurableObject<Env> {
    * anahtarda (`sticker:<id>`; tek değer en fazla 128 KB), sıra `stickers` listesinde.
    */
   private stickers = new Map<string, string>();
+  /**
+   * Images sent in chat (0.9.88): id → data URL, oldest first; storage `chatimg:<id>` + order `chatImages`. Only the
+   * images of messages still in the chat history are kept (at most MAX_CHAT_IMAGES); deleted with the room.
+   */
+  private chatImages = new Map<string, string>();
+  private chatImageDay: { day: number; count: number } = { day: 0, count: 0 };
+  /** Chat images per IP: a few at once, then one every 10 s. */
+  private readonly imageLimit = new RateLimiter(5, 0.1);
   /** Özel emojiyi ekleyenin kalıcı anahtarı (kaldırabilsin diye; istemcilere gitmez). */
   private stickerOwners: Record<string, string> = {};
   /** Sıradaki her öğeye oy verenlerin kalıcı anahtarları (istemcilere gitmez; sadece sayı gider). */
@@ -232,6 +243,13 @@ export class Room extends DurableObject<Env> {
         if (data) this.stickers.set(id, data);
       }
       this.stickerDay = (await ctx.storage.get<{ day: number; count: number }>('stickerDay')) ?? this.stickerDay;
+      const imageIds = (await ctx.storage.get<string[]>('chatImages')) ?? [];
+      const imageData = await ctx.storage.get<string>(imageIds.map((id) => `chatimg:${id}`));
+      for (const id of imageIds) {
+        const data = imageData.get(`chatimg:${id}`);
+        if (data) this.chatImages.set(id, data);
+      }
+      this.chatImageDay = (await ctx.storage.get<{ day: number; count: number }>('chatImageDay')) ?? this.chatImageDay;
       this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
       this.hostGoneAt = (await ctx.storage.get<number>('hostGoneAt')) ?? null;
       // Eski biçim (anahtar → bitiş zamanı, 10 dk'lık yasak) artık geçersiz; sadece yeni biçim okunur.
@@ -513,8 +531,16 @@ export class Room extends DurableObject<Env> {
           this.sendTo(ws, { t: 'error', code: 'rate_limited' });
           return;
         }
+        let image: string | undefined;
+        if (message.image !== undefined) {
+          if (!this.imageLimit.allow(attachment.ip ?? keyOf(attachment)) || !(await this.countChatImage())) {
+            this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+            return;
+          }
+          image = await this.storeChatImage(message.image);
+        }
         this.stats.chat(keyOf(attachment), me);
-        await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now() });
+        await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
         return;
       case 'rename':
         attachment.name = message.name;
@@ -629,6 +655,8 @@ export class Room extends DurableObject<Env> {
       this.stickers.clear();
       this.stickerOwners = {};
       this.stickerDay = { day: 0, count: 0 };
+      this.chatImages.clear();
+      this.chatImageDay = { day: 0, count: 0 };
       this.pins = { itemId: null, list: [] };
       this.hostKey = null;
       this.hostGoneAt = null;
@@ -693,6 +721,39 @@ export class Room extends DurableObject<Env> {
   }
 
   /** Ana sayfadan kayıt kaldırma: sadece yöneticinin tarayıcı kimliğiyle. */
+  /** Counts one chat image for today; false when the room's daily cap is used up. */
+  private async countChatImage(): Promise<boolean> {
+    const day = Math.floor(Date.now() / 86_400_000);
+    if (this.chatImageDay.day !== day) this.chatImageDay = { day, count: 0 };
+    if (this.chatImageDay.count >= CHAT_IMAGES_PER_DAY) return false;
+    this.chatImageDay.count++;
+    await this.ctx.storage.put('chatImageDay', this.chatImageDay);
+    return true;
+  }
+
+  /** Keeps a chat image and sends its data to everyone (before the message that shows it). Returns its id. */
+  private async storeChatImage(data: string): Promise<string> {
+    const id = await stickerId(data);
+    const known = this.chatImages.delete(id);
+    // Sent again: it moves to the newest end (everyone here already has the data).
+    this.chatImages.set(id, data);
+    await this.ctx.storage.put({ [`chatimg:${id}`]: data, chatImages: [...this.chatImages.keys()] });
+    if (!known) this.broadcast({ t: 'chat-image', id, data });
+    return id;
+  }
+
+  /** Drops images whose messages left the chat history, and the oldest ones beyond MAX_CHAT_IMAGES. */
+  private async pruneChatImages(): Promise<void> {
+    const used = new Set(this.chat.flatMap((m) => (m.image ? [m.image] : [])));
+    const drop = [...this.chatImages.keys()].filter((id) => !used.has(id));
+    const kept = [...this.chatImages.keys()].filter((id) => used.has(id));
+    drop.push(...kept.slice(0, Math.max(0, kept.length - MAX_CHAT_IMAGES)));
+    if (drop.length === 0) return;
+    for (const id of drop) this.chatImages.delete(id);
+    await this.ctx.storage.delete(drop.map((id) => `chatimg:${id}`));
+    await this.ctx.storage.put('chatImages', [...this.chatImages.keys()]);
+  }
+
   /** Counts one custom emoji upload for today; false when the room's daily cap is used up. */
   private async countStickerAdd(): Promise<boolean> {
     const day = Math.floor(Date.now() / 86_400_000);
@@ -838,6 +899,8 @@ export class Room extends DurableObject<Env> {
     for (const [id, data] of this.stickers) {
       this.sendTo(ws, { t: 'sticker', sticker: { id, data }, ...(this.stickerOwners[id] === myKey ? { mine: true } : {}) });
     }
+    // Chat images of the history, one per message (the 1 MB limit again).
+    for (const [id, data] of this.chatImages) this.sendTo(ws, { t: 'chat-image', id, data });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
   }
@@ -1290,6 +1353,7 @@ export class Room extends DurableObject<Env> {
     this.chat = [...this.chat, message].slice(-CHAT_HISTORY);
     await this.ctx.storage.put('chat', this.chat);
     this.broadcast({ t: 'chat', message });
+    if (message.image || this.chatImages.size) await this.pruneChatImages();
   }
 
   private async onLeave(leaving: WebSocket): Promise<void> {
