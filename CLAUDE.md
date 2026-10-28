@@ -13,6 +13,12 @@ A free, account-free tool for watching a video on any site together with friends
 
 ## Language and GitHub conventions (owner's decision, 28 Oct 2026)
 We are building a **global product**, so everything is professional, formal and consistent.
+- **Language priority for the product (owner's rule, 28 Oct 2026): English first, then Turkish, then other
+  languages.** Unless the owner explicitly asks for something Turkish, every product-facing choice is designed for
+  English speakers first: names (product, features, rooms, games), slogans, copy, wordmarks, store listing, domains and
+  handles, examples and defaults. Turkish comes second (translation, local flavour), other languages after that.
+  Turkish words or ideas are not the default; they need the owner's explicit request. (This does not change who we
+  talk to in Turkish: the conversation with the owner stays Turkish.)
 - **Talk to the user (Alperen) in Turkish.** Everything that lives on GitHub is **English**: commit messages, branch
   names, PR titles/descriptions, issues, review comments, release notes, `CLAUDE.md`, docs, workflow names and code
   comments.
