@@ -565,18 +565,16 @@ await a.sleep(1500);
   check(outside.length === 0, 'tam ekranda deliğin dışına taşan adacık yok (evenodd o bölgeyi katmandan keserdi)', JSON.stringify(outside));
   check(ctl.display !== 'none' && ctl.opacity === '1' && ctl.hit === 'fs-play' && ctlLit > 20, 'tam ekranda odanın kontrol çubuğu (▶ emoji sohbet ✕) görünüyor', `${JSON.stringify(ctl)} parlak:${ctlLit}`);
 
-  // Mesaj tutamağı ("💬 Mesajlar burada"): zemini %55 siyah → altında video görünmeli (B ≈ 0,45 × A), opak gri değil.
-  await a.evalFrame('shell=1', `document.getElementById('toast-handle').style.display = 'none'; 1`);
+  // 0.9.90.1: fullscreen messages flow up from the quick message box (the draggable handle is gone).
   await a.sleep(1500);
-  const noHandle = await a.pixels('9a-tutamaksiz');
-  await a.evalFrame('shell=1', `document.getElementById('toast-handle').style.display = ''; 1`);
-  await a.sleep(1500);
+  const noHandle = await a.pixels('9a-mesajsiz');
   bora.send({ t: 'chat', text: 'tam ekranda saydam mi' });
   await until(() => a.evalFrame('shell=1', `!!document.querySelector('#toasts .toast')`), 5000);
   await a.sleep(400);
-  const withHandle = await a.pixels('9b-tutamak-mesaj');
-  const h = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('toast-handle').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
+  const withHandle = await a.pixels('9b-mesaj');
   const toastR = await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const r = e?.getBoundingClientRect(); return r ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`);
+  const boxR = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-chat').getBoundingClientRect(); return { x: r.left, y: r.top }; })()`);
+  check(!!toastR && toastR.b <= boxR.y + 1 && Math.abs(toastR.x - boxR.x) < 4 && boxR.y - toastR.b < 90, 'tam ekranda mesaj, mesaj kutusunun hemen üstünde (sola hizalı)', JSON.stringify({ toastR, boxR }));
   /** Kutunun sol iç boşluğundaki noktalar (yazıdan uzak): beklenen B ≈ (1 − opaklık) × A. */
   const padSample = (r, keep, img) => {
     let ok = 0;
@@ -596,13 +594,12 @@ await a.sleep(1500);
     }
     return { n, ok, lit, flat };
   };
-  const hs = padSample(h, 0.45, withHandle);
-  console.log('     tutamak:', JSON.stringify(h), JSON.stringify(hs));
-  check(hs.n > 10 && hs.lit >= 3 && hs.ok / hs.n >= 0.8, 'tam ekranda mesaj tutamağının altında video görünüyor (saydam)', JSON.stringify(hs));
   if (toastR) {
     const ts = padSample(toastR, 0.3, withHandle);
     console.log('     mesaj:', JSON.stringify(toastR), JSON.stringify(ts));
-    check(ts.n > 10 && ts.lit >= 3 && ts.ok / ts.n >= 0.8, 'tam ekranda gelen mesajın altında video görünüyor (saydam)', JSON.stringify(ts));
+    // The message now sits just above the bar, where the film may be dark: "lit" can be 0 there; an opaque grey box
+    // would still show as flat dark pixels over bright ones.
+    check(ts.n > 10 && ts.ok / ts.n >= 0.8 && ts.flat === 0, 'tam ekranda gelen mesajın altında video görünüyor (saydam)', JSON.stringify(ts));
   } else check(false, 'tam ekranda gelen mesaj göründü');
 }
 await a.evalFrame('shell=1', `document.getElementById('fs-exit').click(); 1`);

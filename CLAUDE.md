@@ -26,7 +26,9 @@ We are building a **global product**, so everything is professional, formal and 
 - Branches: `claude/<short-english-slug>` (or the branch the session assigns). Commit messages: imperative English
   summary line, version in parentheses when it is a release (e.g. `Fix film-page cover flash (0.9.83)`), trailing
   `Co-Authored-By` line. Never put model names in commits/PRs.
-- Delete a branch on GitHub once its PR is merged (its commits live on `main`).
+- Delete a branch on GitHub once its PR is merged (its commits live on `main`). The owner allowed it on 29 Oct 2026:
+  `.claude/settings.json` permits `git push origin --delete <branch>` (only for merged branches; check first with
+  `git merge-base --is-ancestor`).
 
 ## Working with the user
 - Alperen is learning JS/HTML/CSS at school; keep explanations simple (in Turkish).
@@ -305,9 +307,20 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   marimba, music box, piano, rustle+bell, warm pad); the one playing is `INTRO_VARIANT` (the user chose F). All land on
   the animation beats (0 / 0.72 / 1.1–1.4 s) (site + extension). If the browser blocks audio it gives up within 250 ms
   (late sound feels odd). To listen, `scheduleIntroSound` can render to WAV with an offline context.
-- **Message position:** in fullscreen the "💬 Mesajlar burada" handle can be dragged (stored as a ratio: site
-  `localStorage` `toastPos`, extension `storage.local` `toastPos`; double-click resets). Messages align next to the
-  handle and grow upwards when it is near the bottom. In the extension's room view messages are in the chat panel.
+- **One remote (0.9.90.1, owner chose option A on https://claude.ai/artifact/Bz44cRGfCnExTPwtaZGtc7):** the site's own
+  players have no controls of their own: YouTube with `controls: 0, disablekb: 1, iv_load_policy: 3`, video files
+  without `controls`. Our `#fs-controls` bar is their only remote, in fullscreen and in the window
+  (`.theater.own-controls`: shown while the mouse is on the video, hidden at once when it leaves, stays while paused;
+  in the window only ▶, seek, time, volume, CC, ⛶ — emojis, pin, sync, speed live in the toolbar under the video).
+  Click on the video = play/pause, double click = fullscreen in/out (`#fs-catcher`). Volume is local (`opt:volume`,
+  `opt:muted`; `PlayerAdapter.getVolume/setVolume/isMuted/setMuted`), CC only when the video has captions
+  (`captions()` / `setCaptions`, YouTube's captions module). This also fixed YouTube's lingering controls and its
+  volume slider that didn't work under our layer. Film page (extension) part — hiding known players' bars with a
+  "⚙ Filmin ayarları" escape — is the next release.
+- **Message position (0.9.90.1):** in fullscreen chat messages flow up from the quick message box (`ui/toasts.ts`,
+  anchored to `#fs-chat`, above the seek line, left-aligned; newest closest to the box; they don't fade while the box
+  is focused). The old draggable "💬 Mesajlar burada" handle and `toastPos` are gone. With the side panel hidden (window)
+  they sit at the top right of the video. In the extension's room view messages are in the chat panel.
 - **Back from the film to the room:** "🏠 Odaya dön" in the overlay → the tab goes to `/r/ROOM#back` (the site enters
   without asking the name), the overlay goes away. The **popup** (0.9.83) never navigates the film tab: "🏠 Odayı ayrı
   sekmede aç" switches to an open tab of that room or opens `/r/ROOM#back` in a new tab next to the film. Outside a

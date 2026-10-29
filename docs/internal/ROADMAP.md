@@ -153,6 +153,7 @@ implement, test, ship.
 
 ### 7. 1.0 launch
 - [ ] Gate: phases 1–6 checked (or consciously deferred by the owner).
+- [ ] **Remind the owner first:** Brave + Edge test (owner's request, 29 Oct 2026; checklist in `STATUS.md`) 👤.
 - [ ] Version `1.0.0` → `npm run store` → submission from the owner's developer account 👤.
 - [ ] While in review: no `PROTOCOL_VERSION` bump.
 - [ ] After approval: install links point to the store, `eklenti.html` updated.

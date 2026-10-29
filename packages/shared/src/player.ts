@@ -36,6 +36,17 @@ export interface PlayerAdapter {
   /** Oynatıcının kendi olaylarını dinler (kullanıcı tıkladı mı, biz mi tetikledik ayırt etmez). */
   onEvent(listener: (event: PlayerEvent) => void): void;
   destroy(): void;
+  /**
+   * Our own volume control (0.9.90.1, the site's players have no controls of their own any more). Local only:
+   * never sent to the room. 0–1.
+   */
+  getVolume?(): number;
+  setVolume?(volume: number): void;
+  isMuted?(): boolean;
+  setMuted?(muted: boolean): void;
+  /** Captions: `null` = this video has none (the button stays hidden). */
+  captions?(): boolean | null;
+  setCaptions?(on: boolean): void;
 }
 
 export type PlayerEvent = 'play' | 'pause' | 'ratechange';

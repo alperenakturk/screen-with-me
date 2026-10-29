@@ -1,95 +1,61 @@
 import { el } from '../dom.ts';
-import { load, save } from '../storage.ts';
 
 const MAX_TOASTS = 4;
 const TOAST_MS = 5000;
 
 /**
- * Tam ekranda gelen sohbet mesajlarını videonun üstünde kısa süre gösterir. Fare oynayınca
- * "💬 Mesajlar burada" tutamağı görünür; sürükleyerek mesajların yeri değiştirilebilir
- * (çift tık: sağ üste geri). Seçilen yer hatırlanır; mesajlar tutamağın altında (alt
- * taraftaysa üstünde; kutu alttan sabit olduğu için yukarı doğru büyür) akar.
+ * Chat messages over the video (fullscreen, or the window with the side panel hidden), shown for a few seconds.
+ * In fullscreen they flow up from the quick message box (0.9.90.1, owner's choice): left-aligned to it, the newest
+ * closest to the box, like a live-stream chat, so the eye looks at one place. Elsewhere they sit at the top right.
+ * (The old draggable "💬 Mesajlar burada" handle is gone.)
  */
-export function createToasts(container: HTMLElement, handle: HTMLElement) {
-  let pos: { x: number; y: number } | null = null;
-  try {
-    const saved = JSON.parse(load('toastPos') ?? 'null') as { x?: unknown; y?: unknown } | null;
-    if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') pos = { x: saved.x, y: saved.y };
-  } catch {
-    // Bozuk kayıt: varsayılan yer.
-  }
+export function createToasts(container: HTMLElement, anchor: HTMLElement) {
+  const theater = container.closest<HTMLElement>('.theater');
+  const inFullscreen = () => !!theater?.matches(':fullscreen, .fake-fs');
 
   function layout(): void {
-    const parent = handle.parentElement;
-    if (!parent) return;
-    const w = parent.clientWidth;
-    const h = parent.clientHeight;
-    const hs = handle.style;
     const s = container.style;
-    if (!pos) {
-      hs.left = hs.top = '';
-      s.left = s.bottom = '';
-      s.right = '20px';
-      s.top = '58px';
-      container.classList.remove('left', 'up');
+    const parent = container.offsetParent as HTMLElement | null;
+    const box = anchor.getBoundingClientRect();
+    if (inFullscreen() && parent && box.width > 0) {
+      const p = parent.getBoundingClientRect();
+      // Above the whole bar (the seek line sits over the message box), lined up with the box's left edge.
+      const top = Math.min(box.top, anchor.closest('.fs-controls')?.querySelector('.fs-progress')?.getBoundingClientRect().top ?? box.top);
+      s.top = s.right = 'auto';
+      s.left = `${Math.round(box.left - p.left)}px`;
+      s.bottom = `${Math.round(p.bottom - top + 10)}px`;
+      container.classList.add('left', 'up');
       return;
     }
-    const hw = handle.offsetWidth || 200;
-    const hh = handle.offsetHeight || 30;
-    const x = Math.min(Math.max(pos.x * w, 8), Math.max(8, w - hw - 8));
-    const y = Math.min(Math.max(pos.y * h, 8), Math.max(8, h - hh - 8));
-    hs.right = 'auto';
-    hs.left = `${x}px`;
-    hs.top = `${y}px`;
-    const rightSide = x + hw / 2 > w / 2;
-    const up = y + hh / 2 > h * 0.6;
-    s.left = rightSide ? 'auto' : `${x}px`;
-    s.right = rightSide ? `${w - x - hw}px` : 'auto';
-    s.top = up ? 'auto' : `${y + hh + 8}px`;
-    s.bottom = up ? `${h - y + 8}px` : 'auto';
-    container.classList.toggle('left', !rightSide);
-    container.classList.toggle('up', up);
+    s.left = s.bottom = '';
+    s.right = '20px';
+    s.top = '58px';
+    container.classList.remove('left', 'up');
   }
 
-  handle.addEventListener('pointerdown', (event) => {
-    const parent = handle.parentElement;
-    if (!parent || event.button !== 0) return;
-    const pr = parent.getBoundingClientRect();
-    const hr = handle.getBoundingClientRect();
-    const startX = event.clientX;
-    const startY = event.clientY;
-    handle.setPointerCapture(event.pointerId);
-    const move = (ev: PointerEvent) => {
-      pos = { x: (hr.left - pr.left + ev.clientX - startX) / pr.width, y: (hr.top - pr.top + ev.clientY - startY) / pr.height };
-      layout();
-    };
-    const up = () => {
-      handle.removeEventListener('pointermove', move);
-      handle.removeEventListener('pointerup', up);
-      handle.removeEventListener('pointercancel', up);
-      if (pos) save('toastPos', JSON.stringify(pos));
-    };
-    handle.addEventListener('pointermove', move);
-    handle.addEventListener('pointerup', up);
-    handle.addEventListener('pointercancel', up);
-  });
-  handle.addEventListener('dblclick', () => {
-    pos = null;
-    save('toastPos', 'null');
-    layout();
-  });
   document.addEventListener('fullscreenchange', () => requestAnimationFrame(layout));
+  if (theater) new MutationObserver(() => requestAnimationFrame(layout)).observe(theater, { attributes: true, attributeFilter: ['class'] });
   addEventListener('resize', layout);
   layout();
 
   return {
     show(name: string, text: string, mine: boolean): void {
+      layout();
       while (container.childElementCount >= MAX_TOASTS) container.firstElementChild?.remove();
       const toast = el('div', { class: mine ? 'toast me' : 'toast' }, el('span', { class: 'toast-name' }, name), ' ', text);
       container.append(toast);
       setTimeout(() => {
-        toast.classList.add('leaving');
-        toast.addEventListener('animationend', () => toast.remove());
+        // While the message box is open the messages stay readable.
+        const hold = () => document.activeElement === anchor.querySelector('input');
+        const leave = () => {
+          if (hold()) {
+            setTimeout(leave, 1000);
+            return;
+          }
+          toast.classList.add('leaving');
+          toast.addEventListener('animationend', () => toast.remove());
+        };
+        leave();
       }, TOAST_MS);
     },
     layout,

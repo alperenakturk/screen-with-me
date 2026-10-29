@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.90**. The owner moved to a **new Claude
+> Last update: 28 Oct 2026. Site and extension **0.9.90.1**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -53,14 +53,18 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - [x] **0.9.90** film page (owner, 29 Oct 2026): 🏠 / 👁 / 🎯 in the middle of the top bar; scrolling the room view
   made the film video slide out of its frame → the room view now fits the window and doesn't scroll.
 Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release checklist").
-- [ ] **0.9.90.1 fullscreen "one remote" (owner chose option A, 29 Oct 2026; proposal page
+- [x] **0.9.90.1 fullscreen "one remote" — site part done; film-page part (hide known players' bars, "⚙ Filmin
+  ayarları") is the next release. (owner chose option A, 29 Oct 2026; proposal page
   https://claude.ai/artifact/Bz44cRGfCnExTPwtaZGtc7):** YouTube without its own controls (`controls=0`), our bar is the
   only one (adds YouTube quality/captions); on the film page the known players' control bars are hidden (JW Player,
   Video.js, Plyr, native) with "⚙ Filmin ayarları" to bring theirs back for subtitles/quality, unknown players fall
   back to "video above our bar"; fullscreen messages flow up from the message box (newest closest to it). Also fixes
   the two YouTube bugs (controls linger, YouTube volume doesn't work).
-- [ ] **Camera/voice design** (owner, 29 Oct 2026): more Meet-like (pin a friend or myself, hide myself or someone in
-  fullscreen, free size in both directions, join/leave). Proposal page with options first, owner chooses.
+- [ ] **Camera/voice: layout 2 "free tiles"** (owner chose it, 29 Oct 2026; proposal page
+  https://claude.ai/artifact/UPW29vM3kkGvWKD9hkBTrm): every person's camera is its own small window (drag anywhere,
+  resize both ways, show big, hide — for me only), "line them up" and "back to default" buttons, a switch to the strip
+  layout; person menu adds pin myself, hide anyone (for me), size presets; a pre-join check with mic / camera /
+  speaker choice and "join muted / with camera"; a person whose connection drops keeps a "reconnecting" tile.
 - [ ] **Sound effects** (separate session, owner, 29 Oct 2026): sounds for every place that needs one (game pieces,
   win/lose, voice join/leave, mic on/off, stream start/stop, notifications), nothing elsewhere; own file, generated with
   Web Audio; proposals first.
@@ -71,6 +75,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   account, the host's reel address followed by the others); grey area in their terms (no scraping/automation, only
   navigation), site-specific maintenance. Proposed: a separate research + prototype session before deciding.
 - [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
+- [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
+  Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
 - Typecheck ✅, unit 157/157 ✅, e2e 172 checks ✅ (only `room.mjs` hangs because YouTube is blocked here; known).
@@ -131,6 +137,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - **0.9.81:** free camera windows (drag, resize, inside the video in fullscreen; also on the film page).
 - **0.9.87–0.9.89:** ⚙️ next to the profile picture, Film time, rooms independent (name/avatar per room), images
   and links in chat, voice join/leave in activity, popup goes back to an open room tab.
+- **0.9.90.1:** one remote on the site (YouTube/video files without their own controls, our bar in the window and
+  fullscreen, volume + CC), fullscreen messages flow up from the message box; four-part version numbers start.
 - **0.9.90:** film-page tools in the middle of the top bar; the room view fits the window (no scrolling).
 - **0.9.86:** security review 1: room-only custom emojis + local collection, IP notice, CSP/headers, frame guard,
   `Origin` check, per-IP limits, GIF metadata stripped.
