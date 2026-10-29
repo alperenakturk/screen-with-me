@@ -57,12 +57,11 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91 (endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.1 (player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
-0. **The owner chooses a bottom-bar / player-controls design** from the proposal page (YouTube's own controls back or
-   ours, film page double bars and the shrinking video); build the chosen one next.
+0. ~~Player controls design~~: the owner chose A, built in 0.9.91.1 (see "Player controls").
 1. **Shorts step 2 (rest):** measure in a real browser (needs real YouTube playback, the cloud's headless Chromium
    can't) how far apart everyone lands on the next short, then decide on a hidden preload player; then the endless
    feed ("more Shorts about …", uses the YouTube search API). Paste many links + thumbnail warm-up shipped in 0.9.90.7.
@@ -242,11 +241,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   clicks and is removed on the first layout reported by the site (`fromSite`; not on the background's placeholder),
   at most 8 s). On first open the hole opens two frames after focus, and the top frame says `{type:'hole'}`: only then
   does the site turn on `shell-film` (transparency) (turning it on earlier showed the film site for one frame). If
-  nothing resembling a player exists in room view, the page stays hidden (`blank`). In fullscreen the video fills the
-  screen by default and controls fade when idle (mouse movement on the film page reaches the site as `activity` →
-  `fullscreen.poke()`; when they fade, their islands go too). Settings → "Tam ekranda video: kontrollerin üstünde
-  dursun" (`opt:fsFit` = `above`, only visible in the shell) ends the hole above `#fs-controls` and keeps the controls
-  visible (subtitles never covered); islands are always clipped to the hole. "👁 Sayfayı göster" (top, in the shell):
+  nothing resembling a player exists in room view, the page stays hidden (`blank`). In fullscreen the film fills the
+  screen with its own player bar and our dock sits on the right (see "Player controls"; mouse movement on the film page
+  reaches the site as `activity` → `fullscreen.poke()`); islands are always clipped to the hole. "👁 Sayfayı göster" (top, in the shell):
   the overlay becomes `bar` (48 px strip) and the film page is shown as is (to close ads/popups); "↩ Oda görünümü"
   goes back; if no video is found 10 s after the film opens, the button is suggested (`flashHint`). The focus box
   does not clip overflow and dispatches `resize` when its size changes (subtitles). If the video is in an inner frame,
@@ -337,24 +334,28 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   marimba, music box, piano, rustle+bell, warm pad); the one playing is `INTRO_VARIANT` (the user chose F). All land on
   the animation beats (0 / 0.72 / 1.1–1.4 s) (site + extension). If the browser blocks audio it gives up within 250 ms
   (late sound feels odd). To listen, `scheduleIntroSound` can render to WAV with an offline context.
-- **One remote (0.9.90.1, owner chose option A on https://claude.ai/artifact/Bz44cRGfCnExTPwtaZGtc7):** the site's own
-  players have no controls of their own: YouTube with `controls: 0, disablekb: 1, iv_load_policy: 3`, video files
-  without `controls`. Our `#fs-controls` bar is their only remote, in fullscreen and in the window
-  (`.theater.own-controls`: shown while the mouse is on the video, hidden at once when it leaves, stays while paused;
-  in the window only ▶, seek, time, volume, CC, ⛶ — emojis, pin, sync, speed live in the toolbar under the video).
-  Click on the video = play/pause, double click = fullscreen in/out (`#fs-catcher`). Volume is local (`opt:volume`,
-  `opt:muted`; `PlayerAdapter.getVolume/setVolume/isMuted/setMuted`), CC only when the video has captions
-  (`captions()` / `setCaptions`, YouTube's captions module). This also fixed YouTube's lingering controls and its
-  volume slider that didn't work under our layer. **Film page (0.9.90.3):** in fullscreen the site sends embed
-  `{action:'skin', hide}` (every second while it holds, `applyFilmSkin`; the film's frame may change) and the film
-  frame adds a style that makes `KNOWN_PLAYER_CONTROLS` (`embed.ts`: JW Player, Video.js, Plyr, MediaElement,
-  Flowplayer, Shaka, Clappr) invisible + unclickable (they keep their place, subtitles don't move) and hides native
-  controls (`::-webkit-media-controls-enclosure`); `status.skin` says `known` / `unknown`. While hidden, our
-  `#fs-catcher` is an island over the whole hole (click = play/pause, double click = leave fullscreen). Our volume
-  slider sets the film's volume (`{action:'volume'}`, `status.volume/muted`; not saved to `opt:volume`, the film's
-  level belongs to that site). "⚙ Filmin ayarları" (`#fs-film-skin`, `filmControls`) brings their bar back and the video
-  moves above ours (`fitAbove()` is the person's choice OR film skin not `known` OR `filmControls`); unknown players /
-  older extensions get that layout automatically. Leaving fullscreen or detaching restores everything.
+- **Player controls (option A, 0.9.91.1, owner's choice on https://claude.ai/artifact/SjcRcwoKd8n93W1cK4c6TC):**
+  YouTube and video files keep **their own** player bar (YouTube `controls: 1, fs: 0, iv_load_policy: 3`: quality,
+  caption language, chapters come back; video files `controls`), and so does the film page (the film is never made
+  smaller, nothing is hidden). In the window our buttons are the toolbar under the video. In fullscreen our buttons are
+  a **vertical dock on the right edge** (`#fs-dock`, `.theater.dock-mode`, `ui/fullscreen.ts`): talk (💬 message box,
+  😀 emojis — the flat 8-slot bar in a window to the dock's left, 📌 pin) · together (🎙 / 📷 / 🖥️, `#dock-voice`, the
+  same quick buttons as the Shorts bar in `ui/voice.ts`; not in voice: 🎙 joins) · watch (speed `#dock-speed-pop`,
+  ⏭, exit). Line icons (`ui/icons.ts`), each button named with its shortcut ("Mesaj yaz · Enter"); one window at a
+  time, lined up with its button, closed by a click elsewhere or Esc; Enter opens the message box. When idle the dock
+  fades to 30 % but never disappears (the page can't see the mouse over a YouTube frame). Messages flow up next to the
+  dock (`ui/toasts.ts`, right-aligned to its left edge). In the shell the dock and its open window are islands
+  (`reportLayout`); our catcher is never an island there (the film player takes the clicks). With the dock the camera
+  pill hides its 🎙 / 📷 / 🖥️ (no empty pill either, `keepEmpty` in `cam-float.ts`) and automatic camera tiles start
+  left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") stays only for players
+  it is the remote of (`current.own`): **Shorts** (YouTube `controls: 0, disablekb: 1`, needed for scrolling) and the
+  sync test; there click = play/pause, double click = fullscreen, volume is local (`opt:volume`, `opt:muted`), CC when
+  the video has captions. A YouTube player is reused for the next video only when both use the same remote (a Short
+  after a normal video opens a new player). The extension can still hide known film players' bars (embed
+  `{action:'skin'}`, `KNOWN_PLAYER_CONTROLS`) and set the film's volume (`{action:'volume'}`), but the site no longer
+  asks for it (the 0.9.90.3 "⚙ Filmin ayarları" and the "Tam ekranda video" setting are gone). Tests:
+  `scripts/harness/embed/run.mjs` (film page: their bar stays, film fills the screen, dock islands, messages by the
+  dock).
 - **Sound effects (0.9.90.2, owner's choice on the proposal page https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy):**
   no files, generated with Web Audio. `packages/shared/src/sound-policy.ts` (pure, `sound-policy.test.ts`): the
   registry `SOUNDS` (group voice / room / game, level, per-sound `gap`, `softDuringFilm`), families by group (voice +
@@ -379,7 +380,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   on/off, someone leaving, play / pause / seek, the everyone-ready wait, reactions, pins, kicks, strokes, my own
   messages / stream. New sound: add it to `SOUNDS` + a recipe in `scheduleSound` + the call site. Test:
   `scripts/harness/sound/run.mjs` (Playwright, two browsers, `npm run dev` first).
-- **Message position (0.9.90.1):** in fullscreen chat messages flow up from the quick message box (`ui/toasts.ts`,
+- **Message position (0.9.90.1; with the dock since 0.9.91.1 they flow up next to the dock):** in fullscreen with our own bar (Shorts, sync test) chat messages flow up from the quick message box (`ui/toasts.ts`,
   anchored to `#fs-chat`, above the seek line, left-aligned; newest closest to the box; they don't fade while the box
   is focused). The old draggable "💬 Mesajlar burada" handle and `toastPos` are gone. With the side panel hidden (window)
   they sit at the top right of the video. In the extension's room view messages are in the chat panel.

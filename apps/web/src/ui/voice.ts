@@ -68,21 +68,29 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   // Stream from the pill too (0.9.90.8): share my screen / stop my stream / watch someone's. It presses the stream
   // card's own buttons, so the IP notice, limits and "camera in the corner" choice stay in one place.
   const camLive = el('button', { type: 'button', class: 'cam-ctl cam-ctl-live' });
-  camLive.addEventListener('click', () => {
+  const pressLive = () => {
     const stop = root.querySelector<HTMLButtonElement>('#live-stop');
     const watch = root.querySelector<HTMLButtonElement>('#live-watch');
     if (stop && !stop.hidden) stop.click();
     else if (watch && !watch.hidden) watch.click();
     else root.querySelector<HTMLButtonElement>('#live-screen')?.click();
-  });
+  };
+  camLive.addEventListener('click', pressLive);
   const camControls = el('div', { class: 'cam-controls' }, camMic, camCam, camLive);
-  // Shorts view (0.9.90.9, owner's idea): no camera tiles there, just 🎙 and 📷 in the bottom bar; cameras show inside
-  // the seats' avatar circles. Not in voice yet: the 🎙 joins.
-  const shortsVoice = root.querySelector<HTMLElement>('#shorts-voice');
-  const shortsMic = root.querySelector<HTMLButtonElement>('#shorts-mic');
-  const shortsCam = root.querySelector<HTMLButtonElement>('#shorts-cam');
-  shortsMic?.addEventListener('click', () => (client.active ? micButton : joinButton).click());
-  shortsCam?.addEventListener('click', () => camButton.click());
+  // Quick voice buttons outside the card, pressing the card's own buttons: the Shorts bar (0.9.90.9, owner's idea: no
+  // camera tiles there, cameras show inside the seats' avatar circles) and the fullscreen dock (0.9.91.1, with the
+  // stream button too). Not in voice yet: the 🎙 joins.
+  const quick = (['shorts', 'dock'] as const).flatMap((id) => {
+    const box = root.querySelector<HTMLElement>(`#${id}-voice`);
+    const mic = root.querySelector<HTMLButtonElement>(`#${id}-mic`);
+    const cam = root.querySelector<HTMLButtonElement>(`#${id}-cam`);
+    if (!box || !mic || !cam) return [];
+    mic.addEventListener('click', () => (client.active ? micButton : joinButton).click());
+    cam.addEventListener('click', () => camButton.click());
+    const live = root.querySelector<HTMLButtonElement>(`#${id}-live`);
+    live?.addEventListener('click', pressLive);
+    return [{ box, mic, cam, live }];
+  });
   const camWindow = createCamWindow({
     box: camsBox,
     theater: root.querySelector<HTMLElement>('#theater')!,
@@ -328,20 +336,20 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     camCam.setAttribute('aria-label', camLabel);
     camControls.hidden = !active;
     renderLiveButton();
-    if (shortsVoice && shortsMic && shortsCam) {
-      shortsVoice.hidden = !available || (!active && joinButton.hidden);
+    for (const { box, mic, cam } of quick) {
+      box.hidden = !available || (!active && joinButton.hidden);
       const micText = active ? micLabel : t('voice.join');
-      if (shortsMic.textContent) shortsMic.textContent = '';
-      setIcon(shortsMic, !active || client.micEnabled ? 'mic' : 'mic-off');
-      shortsMic.classList.toggle('off', active && !client.micEnabled);
-      shortsMic.title = micText;
-      shortsMic.setAttribute('aria-label', micText);
-      shortsCam.hidden = !active || camButton.hidden;
-      if (shortsCam.textContent) shortsCam.textContent = '';
-      setIcon(shortsCam, camOn ? 'cam' : 'cam-off');
-      shortsCam.classList.toggle('off', !camOn);
-      shortsCam.title = camLabel;
-      shortsCam.setAttribute('aria-label', camLabel);
+      if (mic.textContent) mic.textContent = '';
+      setIcon(mic, !active || client.micEnabled ? 'mic' : 'mic-off');
+      mic.classList.toggle('off', active && !client.micEnabled);
+      mic.title = micText;
+      mic.setAttribute('aria-label', micText);
+      cam.hidden = !active || camButton.hidden;
+      if (cam.textContent) cam.textContent = '';
+      setIcon(cam, camOn ? 'cam' : 'cam-off');
+      cam.classList.toggle('off', !camOn);
+      cam.title = camLabel;
+      cam.setAttribute('aria-label', camLabel);
     }
     renderCams();
   }
@@ -385,13 +393,16 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const streamer = members.find((m) => m.live);
     const me = members.find((m) => m.id === myId());
     const canShare = !(root.querySelector<HTMLButtonElement>('#live-screen')?.hidden ?? true);
-    camLive.hidden = !liveCard || liveCard.hidden || (!streamer && !canShare);
     const mine = !!streamer && streamer.id === me?.id;
     const label = mine ? t('live.stop') : streamer ? t(me?.watching ? 'live.unwatch' : 'live.watch') : t('live.screen');
-    setIcon(camLive, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
-    camLive.classList.toggle('on', mine || !!me?.watching);
-    camLive.title = label;
-    camLive.setAttribute('aria-label', label);
+    for (const button of [camLive, ...quick.map((q) => q.live)]) {
+      if (!button) continue;
+      button.hidden = !liveCard || liveCard.hidden || (!streamer && !canShare);
+      setIcon(button, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
+      button.classList.toggle('on', mine || !!me?.watching);
+      button.title = label;
+      button.setAttribute('aria-label', label);
+    }
   }
 
   function renderCams(): void {

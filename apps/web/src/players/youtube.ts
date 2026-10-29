@@ -30,6 +30,8 @@ export async function createYouTubePlayer(
   container: HTMLElement,
   videoId: string,
   onError: (code: number) => void,
+  /** Our bar is this player's remote (Shorts): YouTube's own controls and keyboard shortcuts stay off. */
+  ownRemote = false,
 ): Promise<PlayerAdapter> {
   await loadYouTubeApi();
   const host = document.createElement('div');
@@ -51,10 +53,13 @@ export async function createYouTubePlayer(
       videoId,
       width: '100%',
       height: '100%',
-      // One remote (owner's choice, 0.9.90.1): YouTube's own controls are off (controls: 0, no keyboard shortcuts,
-      // no annotations); our bar does play/seek/volume/captions in the window and in fullscreen. Two control bars
-      // used to stack, YouTube's lingered after the mouse left and its volume slider didn't work under our layer.
-      playerVars: { playsinline: 1, rel: 0, fs: 0, controls: 0, disablekb: 1, iv_load_policy: 3 },
+      // Option A (owner's choice, 0.9.91.1): YouTube's own bar is back (quality, caption language, chapters…); our
+      // buttons live in the toolbar under the video and, in fullscreen, in the dock on the right. Only Shorts keep our
+      // bar as their remote (controls: 0, no keyboard shortcuts): there it drives the scrolling. `fs: 0`: YouTube's
+      // own fullscreen would show the bare video without the room; ours is the ⛶ under the video.
+      playerVars: ownRemote
+        ? { playsinline: 1, rel: 0, fs: 0, controls: 0, disablekb: 1, iv_load_policy: 3 }
+        : { playsinline: 1, rel: 0, fs: 0, controls: 1, iv_load_policy: 3 },
       events: {
         onReady: () => resolve(adapter),
         onStateChange: (event) => {

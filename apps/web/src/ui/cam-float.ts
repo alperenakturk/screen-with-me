@@ -154,6 +154,7 @@ export function createCamWindow(opts: {
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
   const mode = (): 'card' | 'float' | 'fs' => (isFs() ? 'fs' : floatOn ? 'float' : 'card');
+  const keepEmpty = () => keep && mode() !== 'card' && !(mode() === 'fs' && theater.classList.contains('dock-mode'));
   const isFree = () => layout === 'free' && mode() !== 'card';
   const where = (): 'normal' | 'fs' => (mode() === 'fs' ? 'fs' : 'normal');
   /** Size of what floating pieces live in: the page, or the video box in fullscreen. */
@@ -201,7 +202,12 @@ export function createCamWindow(opts: {
    * screen), in the container's coordinates.
    */
   function area(c: { w: number; h: number }): { top: number; right: number; bottom: number } {
-    if (mode() === 'fs') return { top: 0, right: c.w, bottom: c.h };
+    if (mode() === 'fs') {
+      // With the dock on the right (option A, 0.9.91.1) the column starts left of it.
+      const dock = theater.classList.contains('dock-mode') ? theater.querySelector<HTMLElement>('#fs-dock')?.getBoundingClientRect() : undefined;
+      const right = dock && dock.width > 0 ? dock.left - wrap.getBoundingClientRect().left - GAP : c.w;
+      return { top: 0, right: Math.min(c.w, right), bottom: c.h };
+    }
     const r = wrap.getBoundingClientRect();
     return r.width > 200 && r.height > 120 ? { top: Math.max(0, r.top), right: Math.min(c.w, r.right), bottom: Math.min(c.h, r.bottom) } : { top: 0, right: c.w, bottom: c.h };
   }
@@ -310,8 +316,9 @@ export function createCamWindow(opts: {
     } else if (bar.parentNode !== box) {
       box.replaceChildren(bar, grid, ...controls, resize, popButton);
     }
-    // The card has its own buttons: there an empty box goes away; floating, the pill stays while I'm in voice.
-    box.hidden = count === 0 && hiddenCount === 0 && !(keep && m !== 'card');
+    // The card has its own buttons: there an empty box goes away; floating, the pill stays while I'm in voice (in
+    // fullscreen with the dock, the dock has my mic and camera: no empty pill there).
+    box.hidden = count === 0 && hiddenCount === 0 && !keepEmpty();
     box.classList.toggle('floating', m !== 'card');
     box.classList.toggle('in-fs', m === 'fs');
     box.classList.toggle('free', free);
@@ -562,7 +569,7 @@ export function createCamWindow(opts: {
       keep = inVoice;
       markTiles();
       labels();
-      box.hidden = count === 0 && hiddenCount === 0 && !(keep && mode() !== 'card');
+      box.hidden = count === 0 && hiddenCount === 0 && !keepEmpty();
       if (wasHidden !== box.hidden) opts.onMove();
       if (mode() !== 'card') requestAnimationFrame(apply);
     },

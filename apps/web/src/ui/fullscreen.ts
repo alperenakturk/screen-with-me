@@ -1,7 +1,9 @@
 import { cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { formatTime } from '../media-info.ts';
+import { t } from '../i18n.ts';
 import { load, postToExtension, save } from '../storage.ts';
+import { setIcon } from './icons.ts';
 import { isTyping } from './reactions.ts';
 
 /** Tam ekrandaki hızlı mesaj kutusu kısa mesajlar içindir. */
@@ -15,11 +17,9 @@ interface FullscreenOptions {
    * uygulanır (video ve katman birlikte), oda kendi tam ekran görünümüne geçer (`fake-fs`).
    */
   shell?: boolean;
-  /** Kabukta: kontroller hiç kaybolmasın mı ("video kontrollerin üstünde" seçeneği). */
-  keepControls?: () => boolean;
-  /** Is the current player one the site plays itself (our bar is its only remote, also in the window)? */
+  /** Is our bar this player's remote (Shorts, the sync test; also in the window)? Otherwise the dock (option A). */
   ownControls?: () => boolean;
-  /** Fullscreen started / ended (the film page hides / shows its player's own bar). */
+  /** Fullscreen started / ended. */
   onActive?: (on: boolean) => void;
   theater: HTMLElement;
   getPlayer: () => PlayerAdapter | null;
@@ -37,7 +37,7 @@ interface FullscreenOptions {
  * videonun üstüne görünmez bir katman (catcher) konur: hareketi o yakalar,
  * tek tık oynat/durdur, çift tık tam ekrandan çıkış yapar.
  */
-export function createFullscreen({ shell = false, keepControls = () => false, ownControls = () => true, onActive, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
+export function createFullscreen({ shell = false, ownControls = () => true, onActive, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
   const q = <T extends HTMLElement>(selector: string) => theater.querySelector<T>(selector)!;
   const catcher = q('#fs-catcher');
   const controls = q('#fs-controls');
@@ -56,6 +56,28 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
   const ccButton = q<HTMLButtonElement>('#fs-cc');
   const enterButton = q<HTMLButtonElement>('#fs-enter');
   const wrap = q('.player-wrap');
+  // Option A (owner's choice, 0.9.91.1): players with their own controls (YouTube, video files, the film page) keep
+  // them in fullscreen too; our buttons are a vertical dock on the right edge (talk · together · watch), so the two
+  // never overlap and the film is never made smaller. Each button has a line icon and a name with its shortcut.
+  const dock = q('#fs-dock');
+  const dockChat = q<HTMLButtonElement>('#dock-chat');
+  const dockReact = q<HTMLButtonElement>('#dock-react');
+  const dockSpeed = q<HTMLButtonElement>('#dock-speed');
+  const dockSkip = q<HTMLButtonElement>('#dock-skip');
+  const dockExit = q<HTMLButtonElement>('#dock-exit');
+  const dockChatForm = q<HTMLFormElement>('#dock-chat-form');
+  const dockChatInput = q<HTMLInputElement>('#dock-chat-input');
+  dockChatInput.maxLength = QUICK_CHAT_MAX;
+  const pops = new Map<HTMLButtonElement, HTMLElement>([
+    [dockChat, dockChatForm],
+    [dockReact, q('#dock-react-pop')],
+    [dockSpeed, q('#dock-speed-pop')],
+  ]);
+  setIcon(dockChat, 'chat');
+  setIcon(dockReact, 'smile');
+  setIcon(q('#dock-pin'), 'pin');
+  setIcon(dockSkip, 'skip');
+  setIcon(dockExit, 'fs-exit');
 
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   let progressTimer: ReturnType<typeof setInterval> | null = null;
@@ -70,6 +92,70 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
    */
   let own = false;
   const shown = () => isActive() || own;
+  /** Fullscreen with a player that keeps its own controls: the dock instead of our bar. */
+  function renderDock(): void {
+    const docked = isActive() && !own;
+    theater.classList.toggle('dock-mode', docked);
+    if (!docked) openPop(null);
+  }
+  let openButton: HTMLButtonElement | null = null;
+  /** One small window next to the dock at a time (message box, emojis, speed), lined up with its button. */
+  function openPop(button: HTMLButtonElement | null): void {
+    openButton = button;
+    for (const [b, pop] of pops) {
+      const open = b === button;
+      pop.hidden = !open;
+      b.setAttribute('aria-expanded', String(open));
+      b.classList.toggle('on', open);
+      if (open) pop.style.top = `${Math.max(0, b.offsetTop + b.offsetHeight / 2 - pop.offsetHeight / 2)}px`;
+    }
+    if (button === dockChat) dockChatInput.focus();
+    else if (document.activeElement === dockChatInput) dockChatInput.blur();
+  }
+  const dockLabels = () => {
+    const label = (b: HTMLElement, text: string) => {
+      b.title = text;
+      b.setAttribute('aria-label', text);
+    };
+    dock.setAttribute('aria-label', t('dock.label'));
+    label(dockChat, t('dock.chat'));
+    label(dockReact, t('dock.react'));
+    label(q('#dock-pin'), t('dock.pin'));
+    label(dockSpeed, t('speed'));
+    label(dockSkip, t('skip'));
+    label(dockExit, t('dock.exit'));
+  };
+  dockLabels();
+  addEventListener('langchange', dockLabels);
+  for (const [button] of pops) button.addEventListener('click', () => openPop(openButton === button ? null : button));
+  for (const option of dock.querySelectorAll<HTMLButtonElement>('.dock-speed-opt')) {
+    option.addEventListener('click', () => {
+      onRate(Number(option.dataset.rate));
+      openPop(null);
+    });
+  }
+  dockSkip.addEventListener('click', onSkip);
+  dockExit.addEventListener('click', () => exit());
+  dockChatForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const text = cleanChatText(dockChatInput.value.slice(0, QUICK_CHAT_MAX));
+    if (text !== null) send({ t: 'chat', text });
+    dockChatInput.value = '';
+    openPop(null);
+    wake();
+  });
+  dockChatInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') openPop(null);
+  });
+  // A click anywhere else or Esc closes the open window (pressing inside it, e.g. several emojis, keeps it).
+  document.addEventListener('pointerdown', (event) => {
+    if (openButton && !dock.contains(event.target as Node)) openPop(null);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && openButton) openPop(null);
+  });
+  dock.addEventListener('mouseenter', () => (hoveringControls = true));
+  dock.addEventListener('mouseleave', () => (hoveringControls = false));
 
   // Volume is mine only (never sent to the room) and remembered in this browser.
   let wantVolume = Math.min(100, Math.max(1, Number(load('opt:volume') ?? '100') || 100));
@@ -105,6 +191,7 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     lastPlayer = player;
     own = !!player && ownControls();
     theater.classList.toggle('own-controls', own);
+    renderDock();
     volumeBox.hidden = !hasVolume(player);
     if (player && own) applyVolume(player);
     renderVolume();
@@ -138,7 +225,7 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     idleTimer = setTimeout(() => {
       // Yazı yazarken ya da kontrollerin üstündeyken gizleme. Kabukta fare film sayfasında oynayınca eklenti
       // haber verir (poke). "Video kontrollerin üstünde" seçiliyse çubuğun kendi yeri var: hep görünür.
-      if (hoveringControls || document.activeElement === chatInput || seeking || (shell && keepControls())) wake();
+      if (hoveringControls || openButton || document.activeElement === chatInput || seeking) wake();
       // In the window a paused video keeps its bar while the mouse is on it (like YouTube).
       else if (own && !isActive() && over && getPlayer()?.isPaused()) wake();
       else theater.classList.add('idle');
@@ -172,6 +259,7 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
   }
 
   function onActiveChange(): void {
+    renderDock();
     onActive?.(isActive());
     if (isActive()) {
       wake();
@@ -276,7 +364,8 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     } else if (event.key === 'Enter') {
       event.preventDefault();
       wake();
-      chatInput.focus();
+      if (theater.classList.contains('dock-mode')) openPop(dockChat);
+      else chatInput.focus();
     }
   });
 
@@ -311,9 +400,12 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     },
     setRate(rate: number): void {
       speed.value = String(rate);
+      dockSpeed.textContent = `${rate}×`;
+      for (const option of dock.querySelectorAll<HTMLElement>('.dock-speed-opt')) option.classList.toggle('on', Number(option.dataset.rate) === rate);
     },
     setSkipEnabled(enabled: boolean): void {
       skipButton.disabled = !enabled;
+      dockSkip.disabled = !enabled;
     },
   };
 }
