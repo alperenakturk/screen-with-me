@@ -65,9 +65,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   resize both ways, show big, hide — for me only), "line them up" and "back to default" buttons, a switch to the strip
   layout; person menu adds pin myself, hide anyone (for me), size presets; a pre-join check with mic / camera /
   speaker choice and "join muted / with camera"; a person whose connection drops keeps a "reconnecting" tile.
-- [ ] **Sound effects** (separate session, owner, 29 Oct 2026): sounds for every place that needs one (game pieces,
-  win/lose, voice join/leave, mic on/off, stream start/stop, notifications), nothing elsewhere; own file, generated with
-  Web Audio; proposals first.
+- [x] **0.9.90.2 sound effects** (owner, 29 Oct 2026; proposal page with three families
+  https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy): owner chose family A (warm pad, like the intro) for voice + room
+  events and family B (glass marimba) for games; rules as proposed (Settings → My screen switch + volume, on at 70 %;
+  room sounds at half volume while the film plays; one sound per burst; nothing queued before the first click) + quiet
+  extras for the Draw & Guess hint letter, wrong guesses and my locked quiz answer. Details: CLAUDE.md "Sound effects".
 - [ ] **YouTube search inside the app.** **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
   `YOUTUBE_API_KEY` (guide given on 29 Oct 2026; quota ≈ 100 searches/day, resets ~10:00 Turkey time; when it runs out
   the box says so and links still work; per-query cache, search on Enter only).

@@ -10,6 +10,7 @@ import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
+import { playSound } from '../sound.ts';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
@@ -80,6 +81,8 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
   let state: State | null = null;
   let me: string | null = null;
   let lastBoard = '';
+  /** The previous state's result (undefined before the first state: joining a finished game plays nothing). */
+  let lastWinner: Mark | 'draw' | null | undefined;
   /** Oyuncu işareti: XOX'ta harf, Dört Taş'ta renkli taş. */
   const markNode = (mark: Mark) => (four ? el('span', { class: `four-disc mark-${mark}`, 'aria-label': t(mark === 'X' ? 'games.red' : 'games.yellow') }) : el('span', { class: 'xox-mark' }, mark));
 
@@ -126,6 +129,14 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
       cell.disabled = !myTurn || (four ? dropRow(xox.board, colOf(i)) === -1 : value !== null);
     });
     lastBoard = boardKey;
+    // Sounds: every placed piece (mine and the opponent's: theirs means "your turn"), then the result.
+    const placed = changed && xox.last !== undefined && xox.board[xox.last] !== null;
+    if (placed) playSound(four ? 'drop' : 'place');
+    if (lastWinner === null && xox.winner !== null) {
+      const result = xox.winner === 'draw' ? 'tie' : seat === -1 || xox.winner === MARKS[seat] ? 'win' : 'lose';
+      setTimeout(() => playSound(result), placed ? 260 : 0);
+    }
+    lastWinner = xox.winner;
     board.classList.toggle('my-turn', myTurn);
     board.classList.toggle('done', xox.winner !== null);
     const nameOf = (mark: Mark) => seats[mark === 'X' ? 0 : 1]?.name ?? (four ? t(mark === 'X' ? 'games.red' : 'games.yellow') : mark);

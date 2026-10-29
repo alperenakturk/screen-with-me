@@ -7,6 +7,7 @@ import { createLogo } from '@swm/shared/logo';
 import { ROOM_GAME_KINDS, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
+import { playSound } from '../sound.ts';
 
 const ICONS: Record<RoomGameKind, string> = { xox: '❌⭕', four: '🔴🟡', draw: '✏️', quiz: '❓' };
 export const gameIcon = (kind: RoomGameKind): string => ICONS[kind];
@@ -215,6 +216,7 @@ export function createGameStage(opts: StageOptions) {
       mountedId = '';
       button.classList.add('game-waiting');
       invite(g.by, g.kind);
+      if (announce) playSound('gameInvite');
     },
     /** Sunucu oyunu açtırmadı (başkasının oyunu sürüyor). */
     busy(): void {

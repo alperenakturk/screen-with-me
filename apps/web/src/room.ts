@@ -26,6 +26,7 @@ import {
   type ServerMessage,
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
+import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { el } from './dom.ts';
 import { lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -70,6 +71,7 @@ import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
+import { playSound, setFilmPlaying } from './sound.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
@@ -547,6 +549,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.showReactions"></b><span data-i18n="settings.showReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-reactions" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
+              <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.closeAds"></b><span data-i18n="settings.closeAds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-closeads" /></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.duck"></b><span data-i18n="settings.duck.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-duck" /></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.fsFit"></b></span>
@@ -648,6 +652,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let status: ConnectionStatus = 'connecting';
   let errorText: (() => string) | null = null;
   let roomState: PlaybackState | null = null;
+  setFilmPlaying(() => !!roomState?.item && !roomState.paused);
+  const joinFilter = new JoinFilter();
 
   const send = (message: ClientMessage) => connection.send(message);
   // Üst çubukta odanın adı (kayıtlı odada adı, değilse kodu) ve kaç kişi olduğu.
@@ -967,10 +973,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         renderWaiting();
         break;
       }
-      case 'settings':
+      case 'settings': {
+        // "Film time" reached: the server clears the plan when the time comes (a host clearing it early is quiet).
+        const planned = roomSettings.startsAt;
+        if (planned !== undefined && message.settings.startsAt === undefined && clock.now() >= planned - 2000) playSound('filmTime');
         roomSettings = message.settings;
         renderWaiting();
         break;
+      }
       case 'bans':
         people.setBans(message.bans);
         break;
@@ -1025,6 +1035,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Tam ekranda (ya da sağ panel gizliyken) sohbet paneli görünmez; mesaj videonun köşesinde belirir.
         if (fullscreen.isActive() || sideHidden) toasts.show(withAvatar(by), text, by.id === myId);
         if (sideHidden && by.id !== myId) side.unread();
+        // A sound only when the message is nowhere on my screen (another tab, or another panel tab is open).
+        const seen = !document.hidden && (fullscreen.isActive() || sideHidden || shortsOn || tabs.active === 'chat');
+        if (by.id !== myId && !seen) playSound('chat');
         break;
       }
       case 'rtc':
@@ -1307,6 +1320,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     yes.addEventListener('click', returnToRoom);
     no.addEventListener('click', () => card.remove());
     $('.player-wrap').append(card);
+    playSound('homeCall');
     clearTimeout(homeAskTimer);
     homeAskTimer = window.setTimeout(() => card.remove(), 20_000);
   }
@@ -2108,7 +2122,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
 
   function setMembers(next: Member[], nextHost: string | null, announce: boolean): void {
-    if (announce) {
+    if (!announce) joinFilter.seed(next);
+    else {
+      membersSounds(next);
       const before = new Set(members.map((m) => m.id));
       const after = new Set(next.map((m) => m.id));
       for (const m of next) if (!before.has(m.id) && m.id !== myId) addActivity(() => t('joined', { name: withAvatar(m) }));
@@ -2126,6 +2142,32 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     members = next;
     hostId = nextHost;
     renderMembers();
+  }
+
+  /**
+   * Sounds of member changes (CLAUDE.md "Sound effects"): someone really new in the room; voice join / leave of others
+   * only while I'm in voice; someone else's stream starting, and the end of the stream I'm watching. My other tab
+   * (same name + avatar) never counts as someone else.
+   */
+  function membersSounds(next: Member[]): void {
+    if (joinFilter.update(next, myId, Date.now()) > 0) playSound('roomJoin');
+    const meNow = next.find((m) => m.id === myId);
+    const meBefore = members.find((m) => m.id === myId);
+    const mine = meNow ? personKey(meNow) : null;
+    const before = new Map(members.map((m) => [m.id, m]));
+    for (const m of next) {
+      const old = before.get(m.id);
+      if (!old || m.id === myId || personKey(m) === mine) continue;
+      if (meNow?.voice && meBefore?.voice) {
+        if (m.voice && !old.voice) playSound('voiceJoin');
+        if (!m.voice && old.voice) playSound('voiceLeave');
+      }
+      if (m.live && !old.live) playSound('streamStart');
+    }
+    for (const old of members) {
+      if (!old.live || old.id === myId || !meBefore?.watching) continue;
+      if (!next.find((m) => m.id === old.id)?.live) playSound('streamStop');
+    }
   }
 
   /** Odada benden başka kimse yok: senkron düğmeleri (herkesi eşitle, senkron testi) 2+ kişiyle anlamlı. */
