@@ -56,13 +56,14 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
-## Next up (saved 29 Oct 2026, after 0.9.90.6 — continue in this order)
-Live: 0.9.90.6 (pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+## Next up (saved 29 Oct 2026, after 0.9.90.7 — continue in this order)
+Live: 0.9.90.7 (paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
-1. **Shorts step 2:** preload the next short in a hidden player, everyone lands on the next short together (measure
-   the gap), paste many links at once; then the endless feed ("more Shorts about …", uses the YouTube search API).
+1. **Shorts step 2 (rest):** measure in a real browser (needs real YouTube playback, the cloud's headless Chromium
+   can't) how far apart everyone lands on the next short, then decide on a hidden preload player; then the endless
+   feed ("more Shorts about …", uses the YouTube search API). Paste many links + thumbnail warm-up shipped in 0.9.90.7.
 2. ~~YouTube search~~ done in 0.9.90.4 (see "YouTube search"). ~~Sound effects~~ done in 0.9.90.2. ~~Camera layout
    2~~ done in 0.9.90.5 + 0.9.90.6.
 3. **Before 1.0:** ROADMAP §2–7 (incl. the YouTube API compliance audit for a higher quota, by the owner, with the
@@ -165,7 +166,11 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   YouTube → YouTube switches reuse the same player (`PlayerAdapter.load` = `cueVideoById`; no new iframe, switching
   used to take 1–2 s), phones swipe up/down on the stage (≥60 px, mostly vertical, ≤0.8 s; not on chat / emoji bar),
   and the wheel works over the video too (our click catcher sits over the YouTube frame since "one remote"). Next
-  ideas in `STATUS.md`. Test: `scripts/e2e/shorts.mjs`.
+  ideas in `STATUS.md`. Test: `scripts/e2e/shorts.mjs`. **0.9.90.7:** many links pasted in the link box at once
+  (`parseMediaList` in `media.ts`: only tokens that look like links, YouTube / video files, no film pages, duplicates
+  dropped, at most `MEDIA_LIST_MAX` 30) go to the queue one by one 300 ms apart (the server's command limit is 4/s; with
+  "Şimdi aç" the first one opens now); while a Short plays the next queued YouTube item's thumbnail is fetched ahead
+  (`warmNextShort`) so the cued player shows it at once.
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `GET /api/youtube/search?q&hl` (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with

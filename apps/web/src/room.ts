@@ -2,7 +2,7 @@ import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { isForwardedKey, isRelayable } from '@swm/shared/embed';
-import { parseMediaInput, samePage } from '@swm/shared/media';
+import { parseMediaInput, parseMediaList, samePage } from '@swm/shared/media';
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
@@ -1779,8 +1779,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     return item?.media.kind === 'youtube' && item.media.short === true;
   }
 
+  /** Thumbnails of the next short already fetched (0.9.90.7): the cued player shows it at once after a scroll. */
+  const warmed = new Set<string>();
+  function warmNextShort(): void {
+    const next = queue.first?.media;
+    if (next?.kind !== 'youtube' || warmed.has(next.id)) return;
+    warmed.add(next.id);
+    new Image().src = `https://i.ytimg.com/vi/${encodeURIComponent(next.id)}/hqdefault.jpg`;
+  }
+
   function renderShorts(): void {
     const short = isShortItem(roomState?.item);
+    if (short) warmNextShort();
     const want = short && !shortsOff;
     $('#shorts-enter').hidden = !short || want;
     const left = queue.length;
@@ -2086,6 +2096,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const search = createSearch(mediaForm, mediaInput, (id, _title, mode) => addMedia({ kind: 'youtube', id }, mode));
   mediaForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    const mode = (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue';
+    // Many links at once (0.9.90.7): all of them go to the queue (with "Şimdi aç" the first one opens now).
+    const list = parseMediaList(mediaInput.value);
+    if (list.media.length >= 2) {
+      search.close();
+      addMany(list.media, list.skipped, mode);
+      return;
+    }
     const media = parseMediaInput(mediaInput.value);
     if (media === null) {
       if (mediaInput.value.trim()) void search.search(mediaInput.value);
@@ -2093,8 +2111,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     search.close();
     // Enter'a basılınca ilk buton ("Sıraya ekle") geçerli olur; izlenen video yanlışlıkla değişmez.
-    addMedia(media, (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue');
+    addMedia(media, mode);
   });
+
+  /** Sends the links one by one, a little apart (the server allows about 4 commands a second). */
+  function addMany(list: Media[], skipped: number, mode: 'load' | 'enqueue'): void {
+    mediaInput.value = '';
+    list.forEach((media, i) => setTimeout(() => send({ t: i === 0 && mode === 'load' ? 'load' : 'enqueue', media }), i * 300));
+    const done = $('#media-done');
+    done.textContent = t(skipped ? 'queuedManySkipped' : 'queuedMany', { n: list.length, skipped });
+    done.hidden = false;
+    setTimeout(() => (done.hidden = true), 4000);
+  }
 
   function addMedia(media: Media, mode: 'load' | 'enqueue'): void {
     const add = () => {

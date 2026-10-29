@@ -89,6 +89,10 @@ export function createQueuePanel(
     get length(): number {
       return items.length;
     },
+    /** What plays next ("Next" and the end of a video open the head of the queue). */
+    get first(): QueueItem | null {
+      return items[0] ?? null;
+    },
     render,
   };
 }

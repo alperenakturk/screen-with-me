@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseMediaInput, sameMedia, samePage } from './media.ts';
+import { parseMediaInput, parseMediaList, sameMedia, samePage } from './media.ts';
 
 describe('samePage', () => {
   it('ignores the #fragment and a trailing slash', () => {
@@ -58,5 +58,36 @@ describe('sameMedia', () => {
     expect(sameMedia({ kind: 'youtube', id: 'a' }, { kind: 'youtube', id: 'b' })).toBe(false);
     expect(sameMedia(null, null)).toBe(true);
     expect(sameMedia(null, { kind: 'html5', url: 'x' })).toBe(false);
+  });
+});
+
+describe('parseMediaList', () => {
+  it('reads many links separated by spaces, new lines or commas', () => {
+    const { media, skipped } = parseMediaList('https://youtu.be/aaaaaaaaaaa\nhttps://www.youtube.com/shorts/bbbbbbbbbbb, https://cdn.example/v.mp4');
+    expect(media).toEqual([
+      { kind: 'youtube', id: 'aaaaaaaaaaa' },
+      { kind: 'youtube', id: 'bbbbbbbbbbb', short: true },
+      { kind: 'html5', url: 'https://cdn.example/v.mp4' },
+    ]);
+    expect(skipped).toBe(0);
+  });
+
+  it('drops duplicates and film pages', () => {
+    const { media, skipped } = parseMediaList('https://youtu.be/aaaaaaaaaaa https://youtu.be/aaaaaaaaaaa https://film.example/watch https://youtu.be/ccccccccccc');
+    expect(media.map((m) => (m.kind === 'youtube' ? m.id : m.kind))).toEqual(['aaaaaaaaaaa', 'ccccccccccc']);
+    expect(skipped).toBe(1);
+  });
+
+  it('keeps searches and single links out', () => {
+    expect(parseMediaList('funny cats compilation').media).toEqual([]);
+    expect(parseMediaList('programming javascript').media).toEqual([]);
+    expect(parseMediaList('https://youtu.be/aaaaaaaaaaa').media).toEqual([]);
+  });
+
+  it('stops at the limit', () => {
+    const ids = Array.from({ length: 40 }, (_, i) => `https://youtu.be/${String(i).padStart(11, 'x')}`);
+    const { media, skipped } = parseMediaList(ids.join(' '));
+    expect(media).toHaveLength(30);
+    expect(skipped).toBe(10);
   });
 });
