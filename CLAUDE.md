@@ -57,7 +57,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.1 (player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.2 (phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -356,6 +356,23 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   asks for it (the 0.9.90.3 "⚙ Filmin ayarları" and the "Tam ekranda video" setting are gone). Tests:
   `scripts/harness/embed/run.mjs` (film page: their bar stays, film fills the screen, dock islands, messages by the
   dock).
+- **Phones (0.9.91.2, owner: "the phone experience should be great"; CSS at the end of `styles.css`):** at ≤ 700 px
+  wide every popover (profile, share, speed, games, emoji tray, person menu, Shorts feed, theme) is a **bottom sheet**
+  (`position: fixed` at the bottom, full width, handle, `!important` over JS positions). An upright phone (≤ 700 px,
+  portrait, ≥ 540 px tall) gets the **app layout**: body = 100dvh, the page never scrolls, the stage (video +
+  toolbar) on top, `.side` takes the rest and scrolls only if voice / cameras need more (the tabs card keeps ≥ 170 px,
+  the chat box stays on screen). While something plays (`.room.has-item`) the link box folds into ＋
+  (`#add-toggle`, `.room.adding`; closes after adding); toolbar in one row (😀 only, recents in the tray), "Birlikte"
+  in one row (faces without names + buttons), card cameras a swipeable row. **Fullscreen:** where there is no
+  element fullscreen (iPhone) `ui/fullscreen.ts` uses its own (`fake` + `.pseudo-fs`: the theater is fixed over
+  the window, Esc / dock exit leave it); on Android after a real fullscreen a landscape video locks the screen sideways
+  (`screen.orientation.lock`, not for Shorts, `landscape` option). Turning a touch phone sideways while a video plays
+  opens the pseudo fullscreen and upright closes it if it was opened that way (Settings → Ekranım "Yan çevirince tam
+  ekran", `opt:rotateFs`, `.touch-only` row, default on). Held sideways (≤ 500 px tall) the dock is compact. Shorts on
+  a phone fit 100dvh (bigger video, send ➤, 🔁 without text). Touch: inputs ≥ 16 px (no iOS zoom), `touch-action:
+  manipulation`, push-to-talk hidden, footer ad-block tip hidden; viewport `viewport-fit=cover,
+  interactive-widget=resizes-content` + safe-area paddings. Test: `scripts/harness/phone/run.cjs` (iPhone 13 /
+  Pixel 7 emulation, 19 checks).
 - **Sound effects (0.9.90.2, owner's choice on the proposal page https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy):**
   no files, generated with Web Audio. `packages/shared/src/sound-policy.ts` (pure, `sound-policy.test.ts`): the
   registry `SOUNDS` (group voice / room / game, level, per-sound `gap`, `softDuringFilm`), families by group (voice +

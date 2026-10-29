@@ -91,6 +91,7 @@ export function renderHome(app: HTMLElement): void {
         <span class="door-icon ext" aria-hidden="true">🧩</span>
         <h3 data-i18n="home.doorExt"></h3>
         <p class="muted" data-i18n="home.doorExtText"></p>
+        <p class="muted small mobile-only" data-i18n="home.doorExtMobile"></p>
         <a class="btn" href="/eklenti.html" data-i18n="home.doorExtGo"></a>
       </div>
       <div class="home-door">
