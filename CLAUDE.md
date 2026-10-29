@@ -377,8 +377,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   a phone fit 100dvh (bigger video, send ➤, 🔁 without text). Touch: inputs ≥ 16 px (no iOS zoom), `touch-action:
   manipulation`, push-to-talk hidden, footer ad-block tip hidden; viewport `viewport-fit=cover,
   interactive-widget=resizes-content` + safe-area paddings. Test: `scripts/harness/phone/run.cjs` (iPhone 13 /
-  Pixel 7 emulation, 19 checks). **TV version:** design proposals only (separate session, owner chooses later),
-  `docs/internal/tv-design.md` once that session merges it.
+  Pixel 7 emulation, 19 checks). **TV version:** to be built before 1.0 (owner), paused for now;
+  designs A–D in `docs/internal/tv-design.md`, the owner picks one when we resume.
 - **Sound effects (0.9.90.2, owner's choice on the proposal page https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy):**
   no files, generated with Web Audio. `packages/shared/src/sound-policy.ts` (pure, `sound-policy.test.ts`): the
   registry `SOUNDS` (group voice / room / game, level, per-sound `gap`, `softDuringFilm`), families by group (voice +

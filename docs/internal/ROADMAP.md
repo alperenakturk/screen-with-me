@@ -67,6 +67,10 @@ implement, test, ship.
 - [ ] **(added)** Performance budget: first load size, room join time (< 30 s from link to watching), CPU while
   watching (extension), memory on long sessions.
 - [ ] **(added)** Help / FAQ page on the site (TR + EN): how it works, extension permissions explained, troubleshooting.
+- [ ] **TV version (owner, 29 Oct 2026: "we will build it before 1.0"):** a basic room for TV browsers (Google TV via
+  TV Bro and similar): join, voice in / out, talk or type, emojis. Designs A–D in `docs/internal/tv-design.md`
+  (proposal https://claude.ai/artifact/MQkQqMfTreT9YFEfgyjmbc); the owner picks one, then: TV test page → TV room +
+  code / QR pairing → phone remote. Paused for now (owner).
 
 ### 2. Zero known bugs
 - [ ] Use **GitHub Issues** as the single bug list (labels: `bug`, `security`, `legal`, `polish`, `extension`,
