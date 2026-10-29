@@ -1548,6 +1548,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       });
     }).observe(wrap, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
     addEventListener('resize', reportLayout);
+    // If the room view scrolls anyway (very small window), the hole moves: follow it every frame while scrolling.
+    // The layout below is sized so that it normally fits the window and never scrolls (the film video can only
+    // follow the hole a few frames late, which looked like the video sliding out of its frame).
+    let scrollFrame = 0;
+    addEventListener(
+      'scroll',
+      () => {
+        if (scrollFrame) return;
+        scrollFrame = requestAnimationFrame(() => {
+          scrollFrame = 0;
+          reportLayout();
+        });
+      },
+      { passive: true },
+    );
     // Yüzen kamera penceresi sürüklenirken/boyutlanırken (cam-float.ts) adacık hemen yer değiştirsin.
     addEventListener('swm-layout', reportLayout);
     setInterval(reportLayout, 1000);
@@ -1565,12 +1580,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (tabs.active === 'queue') tabs.show('chat');
     // Sitenin pencereleri (avatar, tema, özet, onay) açılınca da bildirilsin: videonun arkasında kalmasınlar.
     new MutationObserver(() => reportLayout()).observe(document.body, { childList: true });
-    const homeButton = el('button', { type: 'button', class: 'nav-link shell-home' }, `🏠 ${t('shellBack')}`);
+    /** Icon + label (the label hides on phones). */
+    const toolLabel = (button: HTMLElement, icon: string, text: string) =>
+      button.replaceChildren(el('span', { 'aria-hidden': 'true' }, icon), el('span', { class: 'shell-tool-text' }, text));
+    const homeButton = el('button', { type: 'button', class: 'nav-link shell-home' });
+    toolLabel(homeButton, '🏠', t('shellBack'));
+    homeButton.title = t('shellBack');
     homeButton.addEventListener('click', goHome);
-    document.querySelector('.topbar-right')?.prepend(homeButton);
+    // The film-page tools sit together in the middle of the top bar (owner: easier to notice than among the buttons
+    // on the right). The group takes the free space between the room title and the right-hand buttons.
+    const shellTools = el('div', { class: 'shell-tools', role: 'toolbar' }, homeButton);
+    document.querySelector('.topbar-right')?.before(shellTools);
     // 👁 Sayfayı göster: geçiş reklamı, açılır pencere ya da videonun önünü kapatan bir şey varsa film sayfası olduğu
     // gibi görünür (üstte ince şerit kalır), kullanıcı kapatır, "Oda görünümü" ile geri gelir.
-    const peekButton = el('button', { type: 'button', class: 'nav-link shell-peek' }, `👁 ${t('peek')}`);
+    const peekButton = el('button', { type: 'button', class: 'nav-link shell-peek' });
     const peekBack = el('button', { type: 'button', class: 'btn small-btn primary' }, t('peekBack'));
     const peekText = el('span', { class: 'peek-text' }, t('peekStrip'));
     const peekStrip = el('div', { class: 'peek-strip' }, peekText, peekBack);
@@ -1578,7 +1601,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     document.body.append(peekStrip);
     // 🎯 Video seç: otomatik seçim yanlış videoyu (fragman, önizleme, reklam) tuttuysa film sayfası açılır, her videonun
     // üstünde "Bunu senkronla" düğmesi çıkar; seçilince oda görünümüne dönülür.
-    const pickButton = el('button', { type: 'button', class: 'nav-link shell-pick' }, `🎯 ${t('pick')}`);
+    const pickButton = el('button', { type: 'button', class: 'nav-link shell-pick' });
     const setPeek = (mode: typeof peek) => {
       if (peek === 'pick' && mode !== 'pick') postToExtension({ type: 'pick', on: false });
       peek = mode;
@@ -1601,18 +1624,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && peek) setPeek('');
     });
-    homeButton.after(peekButton, pickButton);
+    shellTools.append(peekButton, pickButton);
     const labelPeek = () => {
-      peekButton.textContent = `👁 ${t('peek')}`;
+      toolLabel(peekButton, '👁', t('peek'));
       peekButton.title = t('peekTitle');
-      pickButton.textContent = `🎯 ${t('pick')}`;
+      toolLabel(pickButton, '🎯', t('pick'));
       pickButton.title = t('pickTitle');
       peekBack.textContent = t(peek === 'pick' ? 'pickCancel' : 'peekBack');
       peekText.textContent = t(peek === 'pick' ? 'pickStrip' : 'peekStrip');
     };
     labelPeek();
     window.addEventListener('langchange', () => {
-      homeButton.textContent = `🏠 ${t('shellBack')}`;
+      toolLabel(homeButton, '🏠', t('shellBack'));
+      homeButton.title = t('shellBack');
       labelPeek();
     });
     // Film açıldı ama 10 sn'dir video bulunamadı: büyük ihtimalle önünde bir reklam/pencere var, düğmeyi öner.

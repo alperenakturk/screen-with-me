@@ -1746,6 +1746,27 @@ html:not(.shell) .shell-only {
   font-size: 46px;
 }
 
+/* The right rail fits the window: the Together card takes what it needs, the tabs card the rest (0.9.90; with the
+   card growing over time the rail ended below the window and the room page scrolled). 110 px = top bar + padding. */
+@media (min-width: 861px) {
+  .side {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 110px);
+  }
+
+  .side > .together-card {
+    flex: 0 0 auto;
+  }
+
+  .tabs-card {
+    flex: 1 1 auto;
+    height: auto;
+    max-height: 640px;
+    min-height: 300px;
+  }
+}
+
 @media (max-width: 860px) {
   .side {
     position: static;
@@ -4141,6 +4162,46 @@ html.shell .brand {
   white-space: nowrap;
 }
 
+/* Film page: 🏠 / 👁 / 🎯 grouped in the middle of the top bar (0.9.90) */
+.shell-tools {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.shell-tools .nav-link {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--text);
+  font-weight: 600;
+}
+
+.shell-tools .nav-link:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 26%, var(--surface));
+}
+
+.shell-tools .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 1100px) {
+  /* Narrow screens: icons only, the group still in the middle. */
+  .shell-tools .shell-tool-text {
+    display: none;
+  }
+
+  .shell-tools .nav-link {
+    padding: 6px 11px;
+  }
+}
+
 .nav-link.shell-pick[hidden] {
   display: none;
 }
@@ -4207,6 +4268,15 @@ html.shell-film .theater.fake-fs::before {
 
 html.shell-film .player-wrap {
   background: transparent;
+}
+
+/* Film page: the room view fits the window and doesn't scroll (scrolling moved the hole and the film video followed
+   a few frames late). The hole may be wider than 16:9; the film video keeps its shape inside it (black bars). */
+@media (min-width: 861px) {
+  html.shell-film .theater:not(.fake-fs) .player-wrap {
+    max-height: calc(100vh - 250px);
+    min-height: 240px;
+  }
 }
 
 /* Tam ekranda delik bütün ekran: arkadaki oda (sohbet paneli vb.) mesajların altından görünmesin */

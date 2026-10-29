@@ -55,14 +55,14 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 28 Oct 2026, after 0.9.89; the owner paused here — continue in this order)
-Live: 0.9.89. The same queue is in `docs/internal/STATUS.md` "Task queue".
-1. **0.9.90 YouTube player fixes** (owner's feedback): on the site the YouTube controls stay visible long after the
+Live: 0.9.90 (film-page tools in the middle of the top bar, room view no longer scrolls). YouTube is reachable from the cloud sandbox again (29 Oct 2026). The same queue is in `docs/internal/STATUS.md` "Task queue".
+1. **0.9.91 YouTube player fixes** (owner's feedback): on the site the YouTube controls stay visible long after the
    mouse leaves the video (windowed view), and YouTube's own volume control doesn't work. Our code never sets the
    volume (checked), so suspect something over/around the iframe or our seeks/rate changes. **Needs network access:**
    the cloud sandbox blocks `www.youtube.com`, `*.googlevideo.com`, `*.ytimg.com`; the owner was asked to add them under
    the environment's Network access → Allowed domains. Check with `curl https://www.youtube.com/iframe_api` first;
    if still blocked, say so and move on.
-2. **0.9.91 YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
+2. **0.9.92 YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
    owner: Google Cloud project (project e-mail) → enable "YouTube Data API v3" → API key restricted to that API →
    GitHub repo Secrets `YOUTUBE_API_KEY` (never pasted in chat). Plan: the Worker calls `search.list` (key stays on the
    server; the deploy job passes the secret to the Worker), results cached per query, a friendly "search is full for
@@ -219,7 +219,12 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   goes back; if no video is found 10 s after the film opens, the button is suggested (`flashHint`). The focus box
   does not clip overflow and dispatches `resize` when its size changes (subtitles). If the video is in an inner frame,
   the right frame grows through the `swm-focus-here` chain. In the shell the site skips the name step; the extension
-  link, main logo and footer are hidden; "🏠 Odaya dön" at the top (`navigate` → the room on the site, overlay goes
+  link, main logo and footer are hidden; "🏠 Odaya dön" + "👁 Sayfayı göster" + "🎯 Video seç" sit together in the
+  middle of the top bar (`.shell-tools`, 0.9.90; icons only under 1100 px). **The room view never scrolls on the film
+  page (0.9.90):** the right rail fits the window (`.side` flex column, `max-height: 100vh - 110px`, tabs card takes
+  the rest) and the hole has `max-height: 100vh - 250px` (it may be wider than 16:9; the film keeps its shape inside).
+  Scrolling moved the hole and the film video followed a few frames late (it "slid out of its frame"); if a tiny
+  window still scrolls, `scroll` reports the layout every frame. "🏠 Odaya dön" (`navigate` → the room on the site, overlay goes
   away). When another `page` opens in the room: "Filme git"; when something the site plays opens: the overlay opens
   and the film engine stops (`detach`, no "pause" goes to the room). Fullscreen: our ⛶ makes the whole film page
   fullscreen and the room switches to `.theater.fake-fs` (`:is(:fullscreen, .fake-fs)`); the film site's own ⛶ only

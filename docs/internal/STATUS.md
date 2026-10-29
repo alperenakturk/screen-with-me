@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.89**. The owner moved to a **new Claude
+> Last update: 28 Oct 2026. Site and extension **0.9.90**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -50,10 +50,14 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - [x] **0.9.89** extension toolbar icon: outside a room's film tab the popup only offered "Open ScreenWithMe" (home page
   in a new tab) even with a room open; now "🏠 Odama dön" switches to the open room tab (home page as second button).
   Test: `scripts/harness/popup/run.cjs`.
-- [ ] **0.9.90** YouTube player on the site: controls stay visible long after the mouse leaves; YouTube's own volume
-  control doesn't work. **Blocked here:** this sandbox can't reach `www.youtube.com` / `*.googlevideo.com` /
-  `*.ytimg.com`; the owner was asked to allow them (environment → Network access → Allowed domains).
-- [ ] **0.9.91** YouTube search inside the app. **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
+- [x] **0.9.90** film page (owner, 29 Oct 2026): 🏠 / 👁 / 🎯 in the middle of the top bar; scrolling the room view
+  made the film video slide out of its frame → the room view now fits the window and doesn't scroll.
+- [ ] **Fullscreen design** (owner, 29 Oct 2026): our controls over the film's / YouTube's own player look
+  unprofessional; options (hide theirs completely vs. our controls docked to the side) + messages flowing under the
+  message box. Proposal page first, owner chooses.
+- [ ] **0.9.91** YouTube player on the site: controls stay visible long after the mouse leaves; YouTube's own volume
+  control doesn't work. YouTube is reachable from the sandbox again (29 Oct 2026).
+- [ ] **0.9.92** YouTube search inside the app. **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
   `YOUTUBE_API_KEY` (steps and plan in CLAUDE.md "Next up"; guide given to the owner on 28 Oct 2026).
 - [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
 
@@ -114,6 +118,9 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   result is still pending).
 - **0.9.80:** room UI pass (chat bubbles, settings dialog, reaction tray, clean top bar).
 - **0.9.81:** free camera windows (drag, resize, inside the video in fullscreen; also on the film page).
+- **0.9.87–0.9.89:** ⚙️ next to the profile picture, Film time, rooms independent (name/avatar per room), images
+  and links in chat, voice join/leave in activity, popup goes back to an open room tab.
+- **0.9.90:** film-page tools in the middle of the top bar; the room view fits the window (no scrolling).
 - **0.9.86:** security review 1: room-only custom emojis + local collection, IP notice, CSP/headers, frame guard,
   `Origin` check, per-IP limits, GIF metadata stripped.
 - **0.9.85:** Meet/Discord-style voice: 🎙/📷 under the cameras, person menu (volume / mute for me, show camera
