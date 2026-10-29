@@ -112,7 +112,8 @@ await ayse.evalFrame('shell=1', `(async () => { document.getElementById('voice-j
 const ayseIn = await until(() => ayse.evalFrame('shell=1', `!document.getElementById('voice-on').hidden`), 15000);
 check(!!ayseIn, 'Ayşe film sayfasında seste (ses eklentinin görünmeyen sayfasında)');
 
-await ali.evaluate(`(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
+// On the site the pre-join check (0.9.90.6) follows the IP notice: "Sese katıl" with the default devices.
+await ali.evaluate(`(async () => { document.getElementById('voice-join').click(); for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 150)); const d = document.querySelector('.confirm-dialog'); if (!d) { if (i > 10) break; continue; } d.querySelector('.btn.primary').click(); } return 1; })()`);
 const bothIn = await until(async () => (await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face.in-voice').length`)) === 2, 15000);
 check(!!bothIn, 'ikisi de seste (Ali’nin kartında iki avatar)');
 const aliHears = await until(async () => (await ali.evaluate(`document.querySelectorAll('audio').length`)) >= 1, 20000);

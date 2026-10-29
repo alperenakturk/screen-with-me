@@ -78,11 +78,27 @@ if (!available) {
   ayse.close();
   process.exit(1);
 }
+// 0.9.90.6 pre-join check: after the IP notice a small window with my voice level, the device lists and "join muted".
 await ali.evaluate(`(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
+const checkWin = await until(
+  () =>
+    ali.evaluate(`(() => { const c = document.querySelector('.voice-check'); if (!c) return null; const w = parseFloat(c.querySelector('.voice-check-level i')?.style.width ?? '0'); const mics = c.querySelectorAll('.voice-check-select')[0].options.length; return w > 5 && mics >= 2 ? { w, mics } : null; })()`),
+  8000,
+);
+check(!!checkWin, 'sese katılmadan önce kontrol penceresi: ses çubuğu doluyor, mikrofon listesi var', JSON.stringify(checkWin));
+await ali.shot('ses-oncesi-kontrol');
+// "Kameram açık girsin" opens the preview (my own picture before anyone sees it).
+const camPreview = await ali.evaluate(`(async () => { const c = document.querySelector('.voice-check'); const box = [...c.querySelectorAll('.voice-check-toggle')].find((l) => l.textContent.includes('Kameram')).querySelector('input'); box.checked = true; box.dispatchEvent(new Event('change')); for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); const v = c.querySelector('video'); if (v.videoWidth > 0) { const w = v.videoWidth; box.checked = false; box.dispatchEvent(new Event('change')); return w; } } return JSON.stringify({ off: c.querySelector('.voice-check-off').textContent, offHidden: c.querySelector('.voice-check-off').hidden, src: !!c.querySelector('video').srcObject, ready: c.querySelector('video').readyState }); })()`);
+check(typeof camPreview === 'number' && camPreview > 0, '“Kameram açık girsin”: pencerede kendi kamera önizlemem', String(camPreview));
+await ali.evaluate(`(() => { const c = document.querySelector('.voice-check'); const muted = [...c.querySelectorAll('.voice-check-toggle')].find((l) => l.textContent.includes('kapalı')).querySelector('input'); muted.checked = true; document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
 await until(() => ali.evaluate(`!document.getElementById('voice-on').hidden`), 10000);
-await ayse.evaluate(`(async () => { document.getElementById('voice-join').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
+await ayse.evaluate(`(async () => { document.getElementById('voice-join').click(); for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 150)); const d = document.querySelector('.confirm-dialog'); if (!d) { if (i > 10) break; continue; } d.querySelector('.btn.primary').click(); } return 1; })()`);
 const bothIn = await until(async () => (await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face').length`)) === 2, 15000);
 check(!!bothIn, 'ikisi de seste (kartta iki avatar)');
+const joinedMuted = await until(() => ayse.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+check(!!joinedMuted, '“Mikrofonum kapalı girsin”: Ali seste ama mikrofonu kapalı');
+await ali.evaluate(`document.getElementById('voice-mic').click(); 1`);
+await until(() => ayse.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
 const aliHears = await until(async () => (await ali.evaluate(`document.querySelectorAll('audio').length`)) >= 1, 20000);
 const ayseHears = await until(async () => (await ayse.evaluate(`document.querySelectorAll('audio').length`)) >= 1, 20000);
 check(!!aliHears && !!ayseHears, 'ikisinde de karşı tarafın ses akışı geldi');
@@ -95,6 +111,20 @@ check(la.rms > 0.01 && lb.rms > 0.01, 'iki taraf da karşının sesini gerçekte
 // Kendi sesimin seviyesi: 🎙 düğmesinin altındaki çubuk sahte mikrofonun bip'iyle doluyor.
 const bar = await until(() => ali.evaluate(`(() => { const i = document.querySelector('#voice-mic .mic-level > i'); const w = parseFloat(i?.style.width ?? '0'); return w > 5 ? w : null; })()`), 8000);
 check(!!bar, 'kendi ses seviyesi göstergesi doluyor (' + bar + '%)');
+
+// "🎛" on myself (0.9.90.6): another microphone while in voice; it switches in place (no leave), the voice keeps coming.
+await ali.evaluate(`[...document.querySelectorAll('#voice-people .together-person')].find((p) => p.textContent.includes('Sen'))?.click(); 1`);
+await ali.sleep(300);
+await ali.evaluate(`[...document.querySelectorAll('.person-pop-item')].find((b) => b.textContent.includes('🎛'))?.click(); 1`);
+const devWin = await until(() => ali.evaluate(`(() => { const s = document.querySelector('.voice-check .voice-check-select'); return s && s.options.length >= 2 ? s.options.length : null; })()`), 6000);
+check(!!devWin, 'kendi menümde “🎛 Mikrofon ve kamera seç” pencereyi açıyor', String(devWin));
+await ali.evaluate(`(() => { const s = document.querySelector('.voice-check .voice-check-select'); s.value = s.options[s.options.length - 1].value; s.dispatchEvent(new Event('change')); return 1; })()`);
+await ali.sleep(600);
+await ali.evaluate(`document.querySelector('.confirm-dialog .btn.primary').click(); 1`);
+await ali.sleep(2000);
+const afterSwitch = await ayse.evaluate(LEVEL);
+const stillTwo = await ayse.evaluate(`document.querySelectorAll('#voice-people .voice-face').length`);
+check(!!(await ali.evaluate(`localStorage.getItem('opt:micDevice')`)) && afterSwitch.rms > 0.01 && stillTwo === 2, 'mikrofon değişti: Ali seste kaldı, Ayşe onu duymaya devam ediyor', JSON.stringify({ afterSwitch, stillTwo }));
 
 // Kamera: Ali 📷 → Ayşe'de Ali'nin kutusu, içinde gerçekten görüntü (kareler ilerliyor); Ali kendi önizlemesini görür.
 await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);

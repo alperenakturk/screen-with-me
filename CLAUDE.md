@@ -56,24 +56,23 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
-## Next up (saved 29 Oct 2026, after 0.9.90.5 — continue in this order)
-Live: 0.9.90.5 (camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+## Next up (saved 29 Oct 2026, after 0.9.90.6 — continue in this order)
+Live: 0.9.90.6 (pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
-1. **Pre-join voice check** (rest of camera layout 2): mic / camera / speaker choice, "join muted / with camera",
-   "don't ask again" (free tiles, hide, sizes, reconnecting tile shipped in 0.9.90.5).
-2. **Shorts step 2:** preload the next short in a hidden player, everyone lands on the next short together (measure
+1. **Shorts step 2:** preload the next short in a hidden player, everyone lands on the next short together (measure
    the gap), paste many links at once; then the endless feed ("more Shorts about …", uses the YouTube search API).
-3. ~~YouTube search~~ done in 0.9.90.4 (see "YouTube search"). ~~Sound effects~~ done in 0.9.90.2.
-4. **Before 1.0:** ROADMAP §2–7 (incl. the YouTube API compliance audit for a higher quota, by the owner, with the
+2. ~~YouTube search~~ done in 0.9.90.4 (see "YouTube search"). ~~Sound effects~~ done in 0.9.90.2. ~~Camera layout
+   2~~ done in 0.9.90.5 + 0.9.90.6.
+3. **Before 1.0:** ROADMAP §2–7 (incl. the YouTube API compliance audit for a higher quota, by the owner, with the
    domain and terms of use); remind the owner of the Brave/Edge test right before the store submission.
 
 ## Plan in one screen (details and checklists: `docs/internal/ROADMAP.md`)
 **Before 1.0** (we are at 0.9.8x; every version moves one of these forward):
 1. **Polish existing features** (the user will walk through each one). Owner's list for the full pass before 1.0
    (ROADMAP §1 "Full pass before 1.0"): **sound effects** (done in 0.9.90.2) and **camera window settings** (free tiles in
-   0.9.90.5; pre-join device check next).
+   0.9.90.5, pre-join device check in 0.9.90.6).
 2. **Zero known bugs:** every bug gets an issue + a regression test; flaky tests are fixed, not ignored.
 3. **Security hardening:** threat model, protocol/limits review, CSP and headers, extension permissions, dependency
    and secret scanning, `SECURITY.md`.
@@ -510,6 +509,16 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   "👁 N"). A person whose connection drops keeps their tile for 12 s with "📶 yeniden bağlanıyor" (`ghosts` in
   `ui/voice.ts`; only when the member left the room, not on camera off / leaving voice). In fullscreen, idle controls
   make tiles 85 % and the pill 30 % opaque. Tests: `voice/run.mjs` (53 checks), `voice/shell.mjs`.
+  **0.9.90.6 pre-join check (`ui/voice-check.ts`):** "Sese katıl" (after the IP notice, not in the shell) opens a
+  small window: camera preview (only when "Kameram açık girsin" is ticked), my voice level, mic / camera / speaker
+  selects (`enumerateDevices`; speaker only where `setSinkId` exists), "Mikrofonum kapalı girsin", "Kameram açık
+  girsin", "Sese katılmadan önce bunu sor". Saved in `opt:micDevice` / `opt:camDevice` / `opt:speakerDevice` /
+  `opt:joinMuted` / `opt:joinCam` / `opt:voiceCheck` (`skip`). P2pVoice / VoiceClient get `getMic` / `getCam` that
+  open the chosen device (exact id, falls back to the default when it is gone); voices play through `applySpeaker`.
+  "🎛 Mikrofon ve kamera seç" on myself opens the same window (settings mode); in voice a new mic switches in place
+  (`P2pVoice.switchMic`: `replaceTrack` on every connection, nobody sees me leave), a new camera re-opens it.
+  `joinVoice(mic, quiet)` hides that ExtVoice's `join` takes `(quiet, mic)` (calling `join(mic)` on the film page
+  turned a muted mic back on after a reconnect, fixed here). Tests: `voice/run.mjs` 58 checks.
   **On the film page (0.9.65):** cameras run in offscreen (`voice` `cam`; without permission `mic.html?cam=1`);
   incoming streams + my own preview (`me`) reach the site in the overlay through a **local WebRTC bridge**
   (`{op:'loop'}`: offscreen makes the offer, `cams` = mid → member; the bridge restarts on every change; no `data` = no

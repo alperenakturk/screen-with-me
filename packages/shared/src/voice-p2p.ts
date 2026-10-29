@@ -133,6 +133,23 @@ export class P2pVoice implements Voice {
     this.options.announce(true, on, this.camEnabled);
   }
 
+  /** Another microphone while in voice: every connection gets the new track in place (no one sees me leave). */
+  async switchMic(stream: MediaStream): Promise<void> {
+    const track = stream.getAudioTracks()[0];
+    if (!this.joined || !track) {
+      for (const t of stream.getTracks()) t.stop();
+      return;
+    }
+    track.enabled = this.micOn;
+    const old = this.mic;
+    this.mic = stream;
+    for (const peer of this.peers.values()) {
+      const transceiver = peer.pc.getTransceivers().find((t) => t.receiver.track.kind === 'audio');
+      await transceiver?.sender.replaceTrack(track).catch(() => {});
+    }
+    for (const t of old?.getTracks() ?? []) t.stop();
+  }
+
   leave(): void {
     if (!this.joined && !this.peers.size) return;
     this.joined = false;

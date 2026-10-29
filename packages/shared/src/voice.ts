@@ -23,6 +23,8 @@ export interface Voice {
   readonly camera?: MediaStream | null;
   /** Kendi mikrofonum (seviye göstergesi için; olmayan yolda yok). */
   readonly microphone?: MediaStream | null;
+  /** Another microphone while in voice, without leaving (peer-to-peer only; 0.9.90.6 device choice). */
+  switchMic?(stream: MediaStream): Promise<void>;
 }
 
 export interface VoiceOptions {

@@ -8339,3 +8339,114 @@ button.together-person:focus-visible .together-name {
 .theater:is(:fullscreen, .fake-fs).idle .voice-cams.free .cam-pill {
   opacity: 0.3;
 }
+
+/* ==== 0.9.90.6: pre-join voice check (ui/voice-check.ts) ==== */
+.confirm-dialog:has(.voice-check) {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.voice-check {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 12px;
+  text-align: left;
+}
+
+.voice-check-preview {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  max-height: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.voice-check-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: block;
+}
+
+.voice-check-off {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.voice-check-off[hidden] {
+  display: none;
+}
+
+/* My voice level, at the bottom of the preview (same idea as the 🎙 bar in the card). */
+.voice-check-level {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.18);
+  overflow: hidden;
+}
+
+.voice-check-level i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.08s linear;
+}
+
+.voice-check-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.voice-check-row[hidden],
+.voice-check-toggle[hidden] {
+  display: none;
+}
+
+.voice-check-select {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.voice-check-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-check-note:empty {
+  display: none;
+}
+
+.voice-check-note {
+  color: var(--danger);
+}
+
+.voice-check-preview.off {
+  aspect-ratio: auto;
+  height: 64px;
+}
+
+.voice-check-preview.off .voice-check-off {
+  place-items: start center;
+  padding-top: 10px;
+}
