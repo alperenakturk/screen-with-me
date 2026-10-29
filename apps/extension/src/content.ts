@@ -9,7 +9,7 @@
 // için bunlar da yakalanır.
 
 import { OffsetClock } from '@swm/shared/clock';
-import { isForwardedKey, isPushToTalkKey, type EmbedControl } from '@swm/shared/embed';
+import { isForwardedKey, isPushToTalkKey, KNOWN_PLAYER_CONTROLS, type EmbedControl } from '@swm/shared/embed';
 import type { PlaybackState } from '@swm/shared/protocol';
 import { holePath, type ShellLayout } from '@swm/shared/shell';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -313,10 +313,50 @@ function attachEngine(): void {
 
 function reportStatus(): void {
   if (!adapter) return;
+  const video = adapter.element;
   send({
     type: 'status',
-    status: { time: adapter.getTime(), duration: adapter.getDuration(), paused: adapter.isPaused(), rate: adapter.getRate() },
+    status: {
+      time: adapter.getTime(),
+      duration: adapter.getDuration(),
+      paused: adapter.isPaused(),
+      rate: adapter.getRate(),
+      // While ducked, report the person's own volume (our slider must not jump down while someone speaks).
+      volume: ducked?.video === video ? ducked.volume : video.volume,
+      muted: video.muted,
+      skin: skinOf(video),
+    },
   });
+}
+
+/** Can we hide this video's controls? Native controls or a known player around it (a few levels up). */
+function skinOf(video: HTMLVideoElement): 'known' | 'unknown' {
+  if (video.controls) return 'known';
+  const selector = KNOWN_PLAYER_CONTROLS.join(',');
+  let box: HTMLElement | null = video.parentElement;
+  for (let i = 0; box && i < 6; i++, box = box.parentElement) {
+    if (box.querySelector(selector)) return 'known';
+  }
+  return 'unknown';
+}
+
+let skinStyle: HTMLStyleElement | null = null;
+/**
+ * One remote in fullscreen: the film player's own bar is made invisible and unclickable (it keeps its place, so the
+ * player's subtitles stay where they were). Only known players and native controls; custom ones stay as they are.
+ */
+function skin(hide: boolean): void {
+  if (!hide) {
+    skinStyle?.remove();
+    skinStyle = null;
+    return;
+  }
+  if (skinStyle?.isConnected) return;
+  skinStyle = document.createElement('style');
+  skinStyle.textContent =
+    `${KNOWN_PLAYER_CONTROLS.join(',')}{opacity:0!important;pointer-events:none!important}` +
+    'video::-webkit-media-controls-enclosure{display:none!important}';
+  (document.head ?? document.documentElement).append(skinStyle);
 }
 
 /**
@@ -326,6 +366,20 @@ function reportStatus(): void {
 function onControl(control: EmbedControl): void {
   if (control.action === 'duck') {
     duck(control.on);
+    return;
+  }
+  if (control.action === 'skin') {
+    skin(control.hide);
+    return;
+  }
+  if (control.action === 'volume') {
+    const video = adapter?.element;
+    if (!video) return;
+    // The person chose a volume: a running duck must not put the old one back later.
+    ducked = null;
+    video.volume = Math.min(1, Math.max(0, control.volume));
+    video.muted = control.muted;
+    reportStatus();
     return;
   }
   if (!adapter || !engine) return;
@@ -372,6 +426,7 @@ function duck(on: boolean): void {
 
 function deactivate(): void {
   duck(false);
+  skin(false);
   active = false;
   // Bu çerçeve artık etkin değil: işareti site kaldırır (arka plan buradan bir şey iletmez).
   adReported = false;

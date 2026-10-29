@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.90.1**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.90.2**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -53,8 +53,8 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - [x] **0.9.90** film page (owner, 29 Oct 2026): 🏠 / 👁 / 🎯 in the middle of the top bar; scrolling the room view
   made the film video slide out of its frame → the room view now fits the window and doesn't scroll.
 Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release checklist").
-- [x] **0.9.90.1 fullscreen "one remote" — site part done; film-page part (hide known players' bars, "⚙ Filmin
-  ayarları") is the next release. (owner chose option A, 29 Oct 2026; proposal page
+- [x] **0.9.90.1 + 0.9.90.2 fullscreen "one remote" — site part 0.9.90.1, film-page part 0.9.90.2 (known players'
+  bars hidden in fullscreen, our catcher takes the clicks, our volume sets the film's, "⚙ Filmin ayarları"). (owner chose option A, 29 Oct 2026; proposal page
   https://claude.ai/artifact/Bz44cRGfCnExTPwtaZGtc7):** YouTube without its own controls (`controls=0`), our bar is the
   only one (adds YouTube quality/captions); on the film page the known players' control bars are hidden (JW Player,
   Video.js, Plyr, native) with "⚙ Filmin ayarları" to bring theirs back for subtitles/quality, unknown players fall
@@ -142,6 +142,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   and links in chat, voice join/leave in activity, popup goes back to an open room tab.
 - **0.9.90.1:** one remote on the site (YouTube/video files without their own controls, our bar in the window and
   fullscreen, volume + CC), fullscreen messages flow up from the message box; four-part version numbers start.
+- **0.9.90.2:** one remote on the film page in fullscreen (known players' bars + native controls hidden, our
+  click/volume, "⚙ Filmin ayarları" brings theirs back, unknown players: video above our bar). Embed harness 103/103.
 - **0.9.90:** film-page tools in the middle of the top bar; the room view fits the window (no scrolling).
 - **0.9.86:** security review 1: room-only custom emojis + local collection, IP notice, CSP/headers, frame guard,
   `Origin` check, per-IP limits, GIF metadata stripped.

@@ -56,23 +56,24 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
-## Next up (saved 28 Oct 2026, after 0.9.89; the owner paused here — continue in this order)
-Live: 0.9.90 (film-page tools in the middle of the top bar, room view no longer scrolls). YouTube is reachable from the cloud sandbox again (29 Oct 2026). The same queue is in `docs/internal/STATUS.md` "Task queue".
-1. **YouTube player fixes (ship with the fullscreen "one remote", 0.9.90.1)** (owner's feedback): on the site the YouTube controls stay visible long after the
-   mouse leaves the video (windowed view), and YouTube's own volume control doesn't work. Our code never sets the
-   volume (checked), so suspect something over/around the iframe or our seeks/rate changes. **Needs network access:**
-   the cloud sandbox blocks `www.youtube.com`, `*.googlevideo.com`, `*.ytimg.com`; the owner was asked to add them under
-   the environment's Network access → Allowed domains. Check with `curl https://www.youtube.com/iframe_api` first;
-   if still blocked, say so and move on.
-2. **YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
-   owner: Google Cloud project (project e-mail) → enable "YouTube Data API v3" → API key restricted to that API →
-   GitHub repo Secrets `YOUTUBE_API_KEY` (never pasted in chat). Plan: the Worker calls `search.list` (key stays on the
-   server; the deploy job passes the secret to the Worker), results cached per query, a friendly "search is full for
-   today, paste a link" when the quota (10 000 units/day, 100 per search ≈ 100 searches/day) runs out; privacy policy
-   gets the "uses YouTube API Services" + Google privacy policy link. Quota increase = Google's YouTube API compliance
-   audit, done by the owner before 1.0 together with the domain and terms of use.
-3. **Before 1.0 full pass** (owner's list, ROADMAP §1): sound effects (voice join/leave, game events, room events, with
-   volume/off), camera window settings (position, size, behaviour), Shorts/Reels scrolling test, then ROADMAP §2–7.
+## Next up (saved 29 Oct 2026, after 0.9.90.2 — continue in this order)
+Live: 0.9.90.2 (one remote: on the site since 0.9.90.1, on the film page in fullscreen since 0.9.90.2). YouTube is
+reachable from the cloud sandbox again (29 Oct 2026; `*.googlevideo.com` still blocked, headless Chromium can't decode
+YouTube's H.264 anyway). The same queue is in `docs/internal/STATUS.md` "Task queue".
+1. **Camera layout 2 "free tiles"** (owner's choice): person menu adds pin myself / hide anyone / size presets,
+   device choice before joining voice, a "reconnecting" tile.
+2. **Shorts step 2:** preload the next short in a hidden player, everyone lands on the next short together (measure
+   the gap), paste many links at once.
+3. **YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). The owner is
+   creating the key: Google Cloud project → enable "YouTube Data API v3" → API key restricted to that API → GitHub repo
+   Secrets `YOUTUBE_API_KEY` (never pasted in chat; the owner just says "ekledim"). Plan: the Worker calls `search.list`
+   (key stays on the server; the deploy job passes the secret to the Worker), results cached per query, a friendly
+   "search is full for today, paste a link" when the quota (10 000 units/day, 100 per search ≈ 100 searches/day) runs
+   out; privacy policy gets the "uses YouTube API Services" + Google privacy policy link. Quota increase = Google's
+   YouTube API compliance audit, done by the owner before 1.0 together with the domain and terms of use. Then the
+   Shorts endless feed ("more Shorts about …").
+4. **Sound effects** run in a separate session (branch `claude/sound-effects`), waiting for the owner's choice.
+5. **Before 1.0:** ROADMAP §2–7; remind the owner of the Brave/Edge test right before the store submission.
 
 ## Plan in one screen (details and checklists: `docs/internal/ROADMAP.md`)
 **Before 1.0** (we are at 0.9.8x; every version moves one of these forward):
@@ -319,8 +320,16 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   Click on the video = play/pause, double click = fullscreen in/out (`#fs-catcher`). Volume is local (`opt:volume`,
   `opt:muted`; `PlayerAdapter.getVolume/setVolume/isMuted/setMuted`), CC only when the video has captions
   (`captions()` / `setCaptions`, YouTube's captions module). This also fixed YouTube's lingering controls and its
-  volume slider that didn't work under our layer. Film page (extension) part — hiding known players' bars with a
-  "⚙ Filmin ayarları" escape — is the next release.
+  volume slider that didn't work under our layer. **Film page (0.9.90.2):** in fullscreen the site sends embed
+  `{action:'skin', hide}` (every second while it holds, `applyFilmSkin`; the film's frame may change) and the film
+  frame adds a style that makes `KNOWN_PLAYER_CONTROLS` (`embed.ts`: JW Player, Video.js, Plyr, MediaElement,
+  Flowplayer, Shaka, Clappr) invisible + unclickable (they keep their place, subtitles don't move) and hides native
+  controls (`::-webkit-media-controls-enclosure`); `status.skin` says `known` / `unknown`. While hidden, our
+  `#fs-catcher` is an island over the whole hole (click = play/pause, double click = leave fullscreen). Our volume
+  slider sets the film's volume (`{action:'volume'}`, `status.volume/muted`; not saved to `opt:volume`, the film's
+  level belongs to that site). "⚙ Filmin ayarları" (`#fs-film-skin`, `filmControls`) brings their bar back and the video
+  moves above ours (`fitAbove()` is the person's choice OR film skin not `known` OR `filmControls`); unknown players /
+  older extensions get that layout automatically. Leaving fullscreen or detaching restores everything.
 - **Message position (0.9.90.1):** in fullscreen chat messages flow up from the quick message box (`ui/toasts.ts`,
   anchored to `#fs-chat`, above the seek line, left-aligned; newest closest to the box; they don't fade while the box
   is focused). The old draggable "💬 Mesajlar burada" handle and `toastPos` are gone. With the side panel hidden (window)

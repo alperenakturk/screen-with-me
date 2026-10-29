@@ -7,7 +7,7 @@
 // eklentinin açtığı katmanın (kabuk) içinde çalışır; arka plan site ile film sayfasındaki
 // senkron motoru arasında mesaj taşır.
 
-import type { EmbedControl, EmbedReply, EmbedRequest } from '@swm/shared/embed';
+import type { EmbedControl, EmbedReply, EmbedRequest, EmbedStatus } from '@swm/shared/embed';
 import type { ClientMessage, PlaybackState } from '@swm/shared/protocol';
 import type { Rect, ShellLayout, VoiceDown, VoiceUp } from '@swm/shared/shell';
 
@@ -39,7 +39,7 @@ export type FrameMessage =
   /** `size` tanı içindir: en iyi videonun ekrandaki boyutu. */
   | { type: 'candidate'; score: number; size?: string }
   /** Videonun durumu (sitedeki ilerleme çubuğu ve pin şeridi için). */
-  | { type: 'status'; status: { time: number; duration: number; paused: boolean; rate: number } }
+  | { type: 'status'; status: EmbedStatus }
   /** Film sayfasında basılan kısayol ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
   | { type: 'key'; key: string; up?: boolean }
   | { type: 'fullscreen' }
