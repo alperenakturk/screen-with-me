@@ -6903,6 +6903,26 @@ html.in-room .topbar-right > .lang {
   display: none;
 }
 
+.sound-volume-row input[type='range'] {
+  flex: none;
+  width: 140px;
+  max-width: 40%;
+  accent-color: var(--accent);
+}
+
+.sound-volume-row input[type='range']:disabled {
+  opacity: 0.45;
+}
+
+.sound-volume-val {
+  flex: none;
+  min-width: 4ch;
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .set-row select {
   flex: none;
   max-width: 55%;
