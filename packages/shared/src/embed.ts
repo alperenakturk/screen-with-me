@@ -19,7 +19,14 @@ export type EmbedControl =
   | { action: 'rate'; rate: number }
   | { action: 'sync-all' }
   /** Sesli sohbette biri konuşuyor: film sesi kısılsın / eski hâline dönsün (odaya bir şey gitmez). */
-  | { action: 'duck'; on: boolean };
+  | { action: 'duck'; on: boolean }
+  /** My volume for the film (local; never sent to the room). 0–1. */
+  | { action: 'volume'; volume: number; muted: boolean }
+  /**
+   * One remote in fullscreen (0.9.90.3): hide the film player's own controls (known players + native `controls`),
+   * or bring them back ("⚙ Filmin ayarları", for subtitles / quality).
+   */
+  | { action: 'skin'; hide: boolean };
 
 /** Film videosunun durumu (sitedeki ilerleme çubuğu ve pin şeridi için). */
 export interface EmbedStatus {
@@ -27,7 +34,31 @@ export interface EmbedStatus {
   duration: number;
   paused: boolean;
   rate: number;
+  /** The film's volume (0–1) and mute, for our volume slider (older extensions don't send them). */
+  volume?: number;
+  muted?: boolean;
+  /**
+   * Whose controls the film player has: `known` = a player we can hide (JW Player, Video.js, Plyr, MediaElement,
+   * Flowplayer, Shaka, native controls); `unknown` = custom controls we can't hide (the site keeps the video above our
+   * bar in fullscreen so both stay usable).
+   */
+  skin?: 'known' | 'unknown';
 }
+
+/** Control bars of common web players (hidden in fullscreen so ours is the only remote). */
+export const KNOWN_PLAYER_CONTROLS = [
+  '.jw-controls',
+  '.jw-display',
+  '.vjs-control-bar',
+  '.vjs-big-play-button',
+  '.plyr__controls',
+  '.plyr__control--overlaid',
+  '.mejs__controls',
+  '.mejs__overlay-button',
+  '.fp-ui',
+  '.shaka-controls-container',
+  '.media-control',
+];
 
 /** Site → film çerçevesi. */
 export type EmbedRequest =

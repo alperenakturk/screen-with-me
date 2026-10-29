@@ -19,6 +19,8 @@ interface FullscreenOptions {
   keepControls?: () => boolean;
   /** Is the current player one the site plays itself (our bar is its only remote, also in the window)? */
   ownControls?: () => boolean;
+  /** Fullscreen started / ended (the film page hides / shows its player's own bar). */
+  onActive?: (on: boolean) => void;
   theater: HTMLElement;
   getPlayer: () => PlayerAdapter | null;
   send: (message: ClientMessage) => void;
@@ -35,7 +37,7 @@ interface FullscreenOptions {
  * videonun üstüne görünmez bir katman (catcher) konur: hareketi o yakalar,
  * tek tık oynat/durdur, çift tık tam ekrandan çıkış yapar.
  */
-export function createFullscreen({ shell = false, keepControls = () => false, ownControls = () => true, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
+export function createFullscreen({ shell = false, keepControls = () => false, ownControls = () => true, onActive, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
   const q = <T extends HTMLElement>(selector: string) => theater.querySelector<T>(selector)!;
   const catcher = q('#fs-catcher');
   const controls = q('#fs-controls');
@@ -76,6 +78,21 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     player.setVolume?.(wantVolume / 100);
     player.setMuted?.(wantMuted);
   }
+  /** Volume of the film page's player: it keeps its own level (per site), we only show and change it. */
+  function readVolume(player: PlayerAdapter): void {
+    if (own || !player.getVolume || document.activeElement === volume) return;
+    wantVolume = Math.round(player.getVolume() * 100);
+    wantMuted = player.isMuted?.() ?? false;
+    renderVolume();
+  }
+  const hasVolume = (player: PlayerAdapter | null) =>
+    !!player?.setVolume && (!('hasVolume' in player) || (player.hasVolume as () => boolean)());
+  /** Saved for the site's own players only (the film page's level belongs to that site). */
+  function saveVolume(): void {
+    if (!own) return;
+    save('opt:volume', String(wantVolume));
+    save('opt:muted', wantMuted ? '1' : '0');
+  }
   function renderVolume(): void {
     volume.value = String(wantMuted ? 0 : wantVolume);
     muteButton.textContent = wantMuted || wantVolume === 0 ? '🔇' : wantVolume < 50 ? '🔉' : '🔊';
@@ -88,8 +105,8 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     lastPlayer = player;
     own = !!player && ownControls();
     theater.classList.toggle('own-controls', own);
-    volumeBox.hidden = !player?.setVolume;
-    if (player) applyVolume(player);
+    volumeBox.hidden = !hasVolume(player);
+    if (player && own) applyVolume(player);
     renderVolume();
     if (own && !isActive()) theater.classList.add('idle');
     if (shown()) startProgress();
@@ -136,6 +153,8 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     const at = seeking && duration > 0 ? (Number(seek.value) / 1000) * duration : current;
     time.textContent = `${formatTime(at)} / ${formatTime(duration)}`;
     playButton.textContent = player && !player.isPaused() ? '⏸' : '▶';
+    volumeBox.hidden = !hasVolume(player);
+    if (player) readVolume(player);
     // Captions: only when the video has them (YouTube says so once it plays).
     const cc = player?.captions?.() ?? null;
     ccButton.hidden = cc === null;
@@ -153,6 +172,7 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
   }
 
   function onActiveChange(): void {
+    onActive?.(isActive());
     if (isActive()) {
       wake();
       startProgress();
@@ -211,15 +231,11 @@ export function createFullscreen({ shell = false, keepControls = () => false, ow
     if (player) applyVolume(player);
     muteButton.textContent = wantMuted ? '🔇' : wantVolume < 50 ? '🔉' : '🔊';
   });
-  volume.addEventListener('change', () => {
-    save('opt:volume', String(wantVolume));
-    save('opt:muted', wantMuted ? '1' : '0');
-  });
+  volume.addEventListener('change', saveVolume);
   muteButton.addEventListener('click', () => {
     wantMuted = !wantMuted;
     if (!wantMuted && wantVolume === 0) wantVolume = 50;
-    save('opt:volume', String(wantVolume));
-    save('opt:muted', wantMuted ? '1' : '0');
+    saveVolume();
     const player = getPlayer();
     if (player) applyVolume(player);
     renderVolume();

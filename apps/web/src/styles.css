@@ -8019,3 +8019,14 @@ button.together-person:focus-visible .together-name {
   border-color: var(--accent);
   color: var(--on-accent);
 }
+
+/* 0.9.90.3: "⚙ Filmin ayarları" in fullscreen on the film page (brings back the film player's own bar). */
+.fs-film-skin[hidden] {
+  display: none;
+}
+
+.fs-film-skin.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}

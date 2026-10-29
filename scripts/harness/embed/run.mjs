@@ -517,10 +517,41 @@ await a.sleep(1500);
   await a.sleep(400);
   const idleRects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`));
   const ctlTop = await a.evalFrame('shell=1', `document.getElementById('fs-controls').getBoundingClientRect().top`);
-  check(!!idle && !idleRects.slice(2).some((r) => r.b > ctlTop + 5), 'tam ekran: fare oynamayınca kontroller kayboluyor (adacıkları da kalkıyor)', JSON.stringify(idleRects));
+  // 0.9.90.3: our catcher over the whole hole is an island (ours is the film's only remote); every other island is
+  // above the bar.
+  const isHole = (r) => near(r.x, cover.x, 2) && near(r.y, cover.y, 2) && near(r.r, cover.r, 2) && near(r.b, cover.b, 2);
+  check(!!idle && !idleRects.slice(2).some((r) => !isHole(r) && r.b > ctlTop + 5), 'tam ekran: fare oynamayınca kontroller kayboluyor (adacıkları da kalkıyor)', JSON.stringify(idleRects));
   await a.evaluate(`dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 300 })); 1`);
   const woke = await until(() => a.evalFrame('shell=1', `!document.getElementById('theater').classList.contains('idle')`), 3000);
   check(!!woke, 'tam ekran: film sayfasında fare oynayınca kontroller geri geliyor');
+  // 0.9.90.3 one remote on the film page: the film player's own bar (native controls here) is hidden, our catcher
+  // takes the clicks (an island over the whole hole), our volume slider sets the film's volume.
+  const SKIN = `[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`;
+  check(!!(await until(() => a.evaluate(SKIN), 4000)), 'tam ekran: film oynatıcısının kendi çubuğu gizlendi (tek kumanda)');
+  const catcherIsland = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`)).slice(2).some(isHole);
+  check(catcherIsland, 'tam ekran: videoya tıklamayı odanın yakalayıcısı alıyor (deliğin tamamı adacık)');
+  const pausedBefore = await a.evaluate(`document.querySelector('video').paused`);
+  await a.click(400, 250);
+  check(!!(await until(async () => (await a.evaluate(`document.querySelector('video').paused`)) !== pausedBefore, 3000)), 'tam ekran: videoya tek tık = oynat/durdur (bizim kumandamız)', `önce paused:${pausedBefore}`);
+  await a.sleep(400);
+  await a.click(400, 250);
+  await until(async () => (await a.evaluate(`document.querySelector('video').paused`)) === pausedBefore, 3000);
+  await a.evalFrame('shell=1', `(() => { const v = document.getElementById('fs-volume'); v.value = '30'; v.dispatchEvent(new Event('input')); v.dispatchEvent(new Event('change')); return 1; })()`);
+  const vol = await until(async () => { const v = await a.evaluate(`document.querySelector('video').volume`); return Math.abs(v - 0.3) < 0.02 ? v : null; }, 3000);
+  check(vol !== null, 'tam ekran: ses çubuğumuz filmin sesini ayarlıyor', String(await a.evaluate(`document.querySelector('video').volume`)));
+  await a.evalFrame('shell=1', `(() => { const v = document.getElementById('fs-volume'); v.value = '100'; v.dispatchEvent(new Event('input')); return 1; })()`);
+  // "⚙ Filmin ayarları": their bar comes back, the video moves above our bar (both usable), again = hidden.
+  const skinBtn = await a.evalFrame('shell=1', `!document.getElementById('fs-film-skin').hidden`);
+  check(!!skinBtn, 'tam ekran: "⚙ Filmin ayarları" düğmesi görünüyor');
+  await a.evalFrame('shell=1', `document.getElementById('fs-film-skin').click(); 1`);
+  const shownBack = await until(async () => !(await a.evaluate(SKIN)), 3000);
+  await a.sleep(600);
+  const aboveRect = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
+  const barTop = await a.evalFrame('shell=1', `document.getElementById('fs-controls').getBoundingClientRect().top`);
+  check(!!shownBack && !!aboveRect && near(aboveRect.b, barTop, 2), '"⚙ Filmin ayarları": filmin çubuğu geri geldi, video bizim çubuğun üstünde', JSON.stringify({ shownBack, aboveRect, barTop }));
+  await a.shot('8a-filmin-ayarlari');
+  await a.evalFrame('shell=1', `document.getElementById('fs-film-skin').click(); 1`);
+  check(!!(await until(() => a.evaluate(SKIN), 3000)), '"⚙ Filmin ayarları" tekrar: filmin çubuğu yine gizli');
   // Altyazı kullananlar için: "kontrollerin üstünde dursun" → delik çubuğun üstünde biter, çubuk hep görünür.
   await a.evalFrame('shell=1', `(() => { const s = document.getElementById('opt-fsfit'); s.value = 'above'; s.dispatchEvent(new Event('change')); return 1; })()`);
   await a.sleep(1200);
@@ -604,6 +635,7 @@ await a.sleep(1500);
 }
 await a.evalFrame('shell=1', `document.getElementById('fs-exit').click(); 1`);
 await a.sleep(800);
+check(!!(await until(async () => !(await a.evaluate(`[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`)), 3000)), 'tam ekrandan çıkınca filmin kendi çubuğu geri geldi');
 
 // 8) Başkası odada sitenin oynattığı bir şey açar (senkron testi): katman tamamen açılır, film durur.
 bora.send({ t: 'load', media: { kind: 'test' } });
