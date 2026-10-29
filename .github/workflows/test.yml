@@ -64,6 +64,8 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # YouTube search in the link box (optional): uploaded as a Worker secret with every deploy.
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
     steps:
       - name: Check keys
         if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
@@ -86,7 +88,16 @@ jobs:
 
       - name: Deploy to Cloudflare
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
-        run: npm run deploy -w @swm/server
+        run: |
+          if [ -n "$YOUTUBE_API_KEY" ]; then
+            # The key goes from the environment into a temporary file outside the repo, never into the log.
+            node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({ YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY }))' "$RUNNER_TEMP/secrets.json"
+            npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json"
+            rm -f "$RUNNER_TEMP/secrets.json"
+          else
+            echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
+            npm run deploy -w @swm/server
+          fi
 
       - name: End-to-end tests against live
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''

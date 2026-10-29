@@ -68,9 +68,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] **Sound effects** (separate session, owner, 29 Oct 2026): sounds for every place that needs one (game pieces,
   win/lose, voice join/leave, mic on/off, stream start/stop, notifications), nothing elsewhere; own file, generated with
   Web Audio; proposals first.
-- [ ] **YouTube search inside the app.** **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
-  `YOUTUBE_API_KEY` (guide given on 29 Oct 2026; quota ≈ 100 searches/day, resets ~10:00 Turkey time; when it runs out
-  the box says so and links still work; per-query cache, search on Enter only).
+- [ ] **0.9.90.2 YouTube search inside the app** (key added by the owner to GitHub Secrets `YOUTUBE_API_KEY`,
+  29 Oct 2026; branch `claude/eager-gauss-lcd0t5`). Steps: [x] shared `youtube-search.ts` + tests · [x] Worker
+  `/api/youtube/search` (cache 24 h, quota flag 10 min, `SEARCH_LIMIT` 10/min/IP) · [x] deploy job passes the secret
+  (`--secrets-file`) · [ ] site results list under the link box · [ ] privacy policy, docs, version · [ ] tests, PR,
+  merge, live check. Quota ≈ 100 searches/day (101 units each), resets at midnight Pacific time; when it runs out the
+  box says so, links still work, search reopens by itself.
 - [ ] **Shorts scrolling, really good** (owner, 29 Oct 2026: "working is not enough, make it great"; Reels / TikTok are
   **not** planned for now): scrolling feel and speed, preloading the next short, an endless feed (filling the queue
   from Shorts links / a channel or playlist), phone swipe, timing so everyone lands on the same short together.
