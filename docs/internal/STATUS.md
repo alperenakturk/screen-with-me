@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.90.9**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.91**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -96,12 +96,20 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   it; no plain "camera stream" any more, a screen stream can show my camera in its corner instead.
 - [x] **0.9.90.9** owner's idea for Shorts: no camera tiles/grid there; a person's camera shows inside their seat's
   avatar circle; only 🎙 / 📷 in the bottom bar; seats a little bigger.
+- [x] **0.9.91** (owner's "go up one", 29 Oct 2026): right rail ends with the video card; endless Shorts feed on the
+  YouTube search API; line icons for mic / camera / stream instead of emojis.
+- [ ] **Bottom bar / player controls redesign — waiting for the owner's choice** (proposal page with alternatives:
+  YouTube's own controls back vs ours, the film page's two bars and the video that shrinks to make room for ours).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
+- **0.9.91:** unit 204/204 (page tokens, shorts-only, next in answers), e2e all files green except `room.mjs` (local
+  workerd can't fetch YouTube titles here, known), browser check of the feed with mocked search (search → "📱 Shorts
+  akışı" → Shorts view, 8 queued, next page only when < 3 left, no overfill, no page errors), rail = stage bottom at
+  1280/1366/1600 px, embed 103/103, voice 66/66.
 - **0.9.90.9:** voice on the site 66/66 (Shorts: Ali's camera in his seat circle, no tiles, bottom bar only 🎙 / 📷, 🎙
   mutes).
 - **0.9.90.8:** voice on the site 62/62 (pill stays with no camera, grows from its corner, has 🖥️; 3 buttons under

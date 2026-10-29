@@ -10,7 +10,13 @@ export type AddMode = 'enqueue' | 'load';
  * once when nothing is playing), "▶ Şimdi aç" opens it now. Answers are kept for this page so the same words never
  * reach the server twice.
  */
-export function createSearch(form: HTMLFormElement, input: HTMLInputElement, pick: (id: string, title: string, mode: AddMode) => void) {
+export function createSearch(
+  form: HTMLFormElement,
+  input: HTMLInputElement,
+  pick: (id: string, title: string, mode: AddMode) => void,
+  /** "📱 Shorts akışı": start the endless Shorts feed on these words (0.9.91). */
+  feed?: (query: string) => void,
+) {
   const panel = el('div', { class: 'search-results', id: 'search-results', role: 'region', hidden: '' });
   form.append(panel);
   const answers = new Map<string, SearchAnswer>();
@@ -28,8 +34,21 @@ export function createSearch(form: HTMLFormElement, input: HTMLInputElement, pic
       close();
       input.focus();
     });
-    return el('div', { class: 'search-head' }, el('span', { class: 'muted small' }, text), x);
+    const head = el('div', { class: 'search-head' }, el('span', { class: 'muted small' }, text));
+    if (feed && lastQuery) {
+      const query = lastQuery;
+      const start = el('button', { type: 'button', class: 'btn small-btn search-feed', title: t('feed.fromSearch') }, `📱 ${t('feed.short')}`);
+      start.addEventListener('click', () => {
+        close();
+        input.value = '';
+        feed(query);
+      });
+      head.append(start);
+    }
+    head.append(x);
+    return head;
   }
+  let lastQuery = '';
 
   function row(result: SearchResult): HTMLElement {
     const meta = [result.channel, result.live ? t('searchLive') : result.duration ? formatDuration(result.duration) : ''].filter(Boolean).join(' · ');
@@ -69,6 +88,7 @@ export function createSearch(form: HTMLFormElement, input: HTMLInputElement, pic
     const query = normalizeQuery(raw);
     if (query === null) return;
     const key = `${lang()}|${query}`;
+    lastQuery = raw.trim();
     const mine = ++current;
     const known = answers.get(key);
     if (known) return show(raw.trim(), known);

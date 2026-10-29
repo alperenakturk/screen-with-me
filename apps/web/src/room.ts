@@ -57,6 +57,7 @@ import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
 import { createSeats } from './ui/seats.ts';
+import { createShortsFeed } from './ui/shorts-feed.ts';
 import { createPins } from './ui/pins.ts';
 import { showNextCard } from './ui/end-card.ts';
 import { renderRecapHistory, showRecap } from './ui/recap.ts';
@@ -396,7 +397,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="reaction-bar shorts-reactions" role="group"></div>
           <div id="shorts-voice" class="shorts-voice" hidden>
             <button id="shorts-mic" type="button" class="cam-ctl"></button>
-            <button id="shorts-cam" type="button" class="cam-ctl">📷</button>
+            <button id="shorts-cam" type="button" class="cam-ctl"></button>
+          </div>
+          <div class="shorts-feed-wrap">
+            <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
+            <form id="shorts-feed-form" class="shorts-feed-pop card" hidden>
+              <label class="small" for="shorts-feed-topic" data-i18n="feed.topicLabel"></label>
+              <input id="shorts-feed-topic" autocomplete="off" maxlength="80" data-i18n-placeholder="feed.topic" />
+              <button class="btn primary small-btn" data-i18n="feed.start"></button>
+              <p class="muted small" data-i18n="feed.hint"></p>
+            </form>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
           <button id="shorts-exit" type="button" class="btn small-btn" data-i18n-title="shorts.roomViewHint">↩ <span data-i18n="shorts.roomView"></span></button>
@@ -413,17 +423,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div id="voice-people" class="voice-people"></div>
           <div class="together-actions">
             <div id="voice-card" class="voice-row" hidden>
-              <button id="voice-join" type="button" class="btn primary voice-join">🎙 <span data-i18n="voice.join"></span></button>
+              <button id="voice-join" type="button" class="btn primary voice-join"><span data-i18n="voice.join"></span></button>
               <div id="voice-on" class="voice-on" hidden>
                 <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
-                <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden>📷</button>
+                <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden></button>
                 <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
                 <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>
               </div>
             </div>
             <div class="live-card" id="live-card" hidden>
               <div class="live-share-wrap" id="live-share-wrap">
-                <button id="live-share" type="button" class="btn live-share" aria-haspopup="true" aria-expanded="false">🖥️ <span data-i18n="live.share"></span> <span class="live-caret" aria-hidden="true">▾</span></button>
+                <button id="live-share" type="button" class="btn live-share" aria-haspopup="true" aria-expanded="false"><span data-i18n="live.share"></span> <span class="live-caret" aria-hidden="true">▾</span></button>
                 <div id="live-menu" class="live-menu" role="menu" hidden>
                   <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true">🖥️</span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
                   <label class="live-menu-check small" id="live-with-cam-row"><input type="checkbox" id="live-with-cam" /> <span>📷 <span data-i18n="live.withCam"></span></span></label>
@@ -1778,6 +1788,46 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Shorts görünümü ("Oturma odası"): dikey video ortada, arkadaşlar iki yanında, altta mesaj + emoji.
   // Sıra, sohbet geçmişi ve ayarlar oda görünümünde kalır. ↑/↓ (▲▼, fare tekerleği) önceki/sonraki Shorts. ----
   const roomEl = $('.room');
+  // ---- Endless Shorts feed (0.9.91): a topic keeps the queue full of Shorts (YouTube search, Shorts only). ----
+  const feedButton = $<HTMLButtonElement>('#shorts-feed');
+  const feedForm = $<HTMLFormElement>('#shorts-feed-form');
+  const feedTopic = $<HTMLInputElement>('#shorts-feed-topic');
+  const feed = createShortsFeed({
+    roomId,
+    queueItems: () => queue.items,
+    current: () => roomState?.item ?? null,
+    canAdd: () => !(roomSettings.lockQueue && !amHost()),
+    add: (media) => send({ t: 'enqueue', media }),
+    note: (text) => flashHint(shortsOn ? feedButton : mediaInput, text, 5000),
+    changed: () => renderFeed(),
+  });
+  function renderFeed(): void {
+    const topic = feed.topic;
+    feedButton.classList.toggle('on', topic !== null);
+    feedButton.setAttribute('aria-pressed', String(topic !== null));
+    $('#shorts-feed-label').textContent = topic ?? t('feed.short');
+    feedButton.title = topic ? t('feed.stopHint', { topic }) : t('feed.hint');
+  }
+  feedButton.addEventListener('click', () => {
+    if (feed.topic) {
+      feed.stop();
+      return;
+    }
+    feedForm.hidden = !feedForm.hidden;
+    if (!feedForm.hidden) feedTopic.focus();
+  });
+  feedForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    feedForm.hidden = true;
+    feed.start(feedTopic.value);
+    feedTopic.value = '';
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (!feedForm.hidden && !(event.target as Element).closest?.('.shorts-feed-wrap')) feedForm.hidden = true;
+  });
+  addEventListener('langchange', renderFeed);
+  renderFeed();
+
   const seats = createSeats($('#seats-l'), $('#seats-r'));
   showSeatCams = (cams) => seats.setCams(cams, myId);
   showSeatCams(seatCams);
@@ -1804,6 +1854,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function renderShorts(): void {
     const short = isShortItem(roomState?.item);
     if (short) warmNextShort();
+    feed.tick();
     const want = short && !shortsOff;
     $('#shorts-enter').hidden = !short || want;
     const left = queue.length;
@@ -2106,7 +2157,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   const mediaForm = $<HTMLFormElement>('#media-form');
   // Words instead of a link: search YouTube (the results open under the box).
-  const search = createSearch(mediaForm, mediaInput, (id, _title, mode) => addMedia({ kind: 'youtube', id }, mode));
+  const search = createSearch(
+    mediaForm,
+    mediaInput,
+    (id, _title, mode) => addMedia({ kind: 'youtube', id }, mode),
+    // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
+    (query) => feed.start(query),
+  );
   mediaForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const mode = (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue';

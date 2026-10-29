@@ -5,6 +5,7 @@ import { load, save } from '../storage.ts';
 import { flashHint } from './hint.ts';
 import { confirmIpNotice } from './ip-notice.ts';
 import { composeScreenWithCamera, composeSupported, type Composed } from './live-compose.ts';
+import { setIcon } from './icons.ts';
 import { openCam } from './voice-check.ts';
 
 /**
@@ -47,6 +48,7 @@ export function createLive(
   // Boştayken tek "🖥️ Paylaş ▾" düğmesi: basınca ekran / kamera seçenekleri ve sınır notu küçük menüde.
   const shareWrap = root.querySelector<HTMLElement>('#live-share-wrap')!;
   const shareButton = root.querySelector<HTMLButtonElement>('#live-share')!;
+  setIcon(shareButton, 'screen');
   const menu = root.querySelector<HTMLElement>('#live-menu')!;
   const menuNote = root.querySelector<HTMLElement>('#live-menu-note')!;
   const row = root.querySelector<HTMLElement>('#live-row')!;

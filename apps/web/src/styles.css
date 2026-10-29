@@ -8566,3 +8566,135 @@ html.shorts-view .voice-cams {
     max-width: 60px;
   }
 }
+
+/* ==== 0.9.91: endless Shorts feed (ui/shorts-feed.ts) ==== */
+.shorts-feed-wrap {
+  position: relative;
+}
+
+.shorts-feed.on {
+  border-color: var(--accent);
+  color: var(--accent-hover);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shorts-feed-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+}
+
+.shorts-feed-pop[hidden] {
+  display: none;
+}
+
+.shorts-feed-pop p {
+  margin: 0;
+}
+
+.search-feed {
+  margin-left: auto;
+  margin-right: 6px;
+}
+
+/* ==== 0.9.91 (owner): the right rail ends exactly with the video card. The stage alone sets the row's height (the
+   rail counts as 0 tall, then stretches to 100 % of the row); the chat card takes what the Together card leaves. ==== */
+@media (min-width: 861px) {
+  .room:not(.shorts):not(.side-hidden) {
+    align-items: stretch;
+  }
+
+  .room:not(.shorts):not(.side-hidden) > .side {
+    position: static;
+    height: 0;
+    min-height: 100%;
+    max-height: none;
+  }
+
+  .room:not(.shorts):not(.side-hidden) > .side .tabs-card {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+  }
+}
+
+/* ==== 0.9.91: line icons (ui/icons.ts) instead of emojis on the voice / camera / stream buttons ==== */
+.ico {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: block;
+}
+
+.voice-join,
+.live-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.voice-mic,
+.voice-cam {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+}
+
+.mic-ico {
+  display: grid;
+  place-items: center;
+}
+
+/* Off = red line icon, like Meet (the round pill buttons turn red already). */
+.voice-mic.muted-mic .ico,
+.voice-cam:not(.on) .ico {
+  color: var(--danger);
+}
+
+.voice-cam.on {
+  color: var(--ok);
+}
+
+.cam-ctl .ico {
+  width: 18px;
+  height: 18px;
+}
+
+.voice-muted {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+}
+
+.voice-muted .ico {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2.6;
+}
+
+.cam-bar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cam-bar-title .ico {
+  width: 15px;
+  height: 15px;
+}

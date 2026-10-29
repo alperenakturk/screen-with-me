@@ -9,6 +9,7 @@ const search = (q, init) => fetch(`${http}/api/youtube/search?hl=en&q=${encodeUR
 ok((await search('   ')).status === 400, 'An empty query is refused');
 ok((await search('lofi', { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Another site may not use our search');
 ok((await fetch(`${http}/api/youtube/search?q=x`, { method: 'POST' })).status === 405, 'Only GET');
+ok((await fetch(`${http}/api/youtube/search?q=x&short=1&page=bad%20token`)).status === 400, 'Shorts feed: a broken page token is refused');
 
 const answer = await (await search('big buck bunny')).json();
 if (live) {

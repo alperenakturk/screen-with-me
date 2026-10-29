@@ -56,11 +56,13 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
-## Next up (saved 29 Oct 2026, after 0.9.90.9 — continue in this order)
-Live: 0.9.90.9 (Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
+Live: 0.9.91 (endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
+0. **The owner chooses a bottom-bar / player-controls design** from the proposal page (YouTube's own controls back or
+   ours, film page double bars and the shrinking video); build the chosen one next.
 1. **Shorts step 2 (rest):** measure in a real browser (needs real YouTube playback, the cloud's headless Chromium
    can't) how far apart everyone lands on the next short, then decide on a hidden preload player; then the endless
    feed ("more Shorts about …", uses the YouTube search API). Paste many links + thumbnail warm-up shipped in 0.9.90.7.
@@ -175,6 +177,13 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   a person's camera fills their seat's avatar circle (`seats.setCams`, fed by voice's `onCams` with the cameras on
   screen, hidden ones and "hide myself" left out; videos kept between redraws, mine mirrored, green ring); the bottom
   bar has only 🎙 / 📷 (`#shorts-voice`; not in voice yet, 🎙 joins); seats are bigger there (80 px, 52 px on phones).
+  **0.9.91 endless Shorts feed (`ui/shorts-feed.ts`):** "♾ Shorts akışı" in the Shorts bar (topic box) or "📱 Shorts
+  akışı" on a search's results starts it; when fewer than 3 are queued (and nothing but Shorts is playing) it asks
+  `/api/youtube/search?short=1&page=…` (Worker: `videoDuration=short`, "#shorts" added, 25 per page, `nextPageToken`
+  passed on as `next`, only ≤ 180 s non-live results; cached per words + page) and adds up to 8 unseen ones (rest kept
+  as `pending`), 300 ms apart, then pauses until they are in the queue. Runs in the tab that started it
+  (`sessionStorage` `feed:<room>`); stops on quota / off, when the topic runs dry or after 3 empty pages, and when only
+  the host may change the queue. Each page ≈ 1 % of the day's quota.
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `GET /api/youtube/search?q&hl` (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with
@@ -637,6 +646,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   tabs count once), voice buttons (`#voice-card` is now a row inside the card), below it the stream section
   `#live-card`) and the tabs. The old invite card is gone. On phones the room name and "Davet et" text are hidden in
   the top bar (only 🔗), ⟳ hidden while connected. If the room changes, update the `store/src/room.html` copy too.
+  **0.9.91 (owner):** on wide screens the right rail ends exactly with the video card (`.side` is 0 tall for the grid
+  row and stretches to 100 % of it; the tabs card takes what the Together card leaves) instead of hanging below it.
+  Voice / camera / stream buttons use line icons (`ui/icons.ts`, drawn in-house, `setIcon`), red when off.
 - **Home page "Showcase" (0.9.77, `home.ts`):** on the left a heading + one-step form (optional video link + "Oda
   oluştur"; the link travels via `sessionStorage` `start:<room>` and opens through the link-box path if the room is
   empty; with "Odayı kaydet" the name goes via `create:<room>`), on the right a room preview drawn in the theme's

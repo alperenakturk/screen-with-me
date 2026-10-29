@@ -7,6 +7,8 @@ import {
   parseDurations,
   parseIsoDuration,
   parseSearchAnswer,
+  cleanPageToken,
+  shortsOnly,
   parseSearchItems,
   SEARCH_QUERY_MAX,
   SEARCH_RESULTS,
@@ -93,5 +95,24 @@ describe('parseSearchAnswer', () => {
       items: [{ id: 'dQw4w9WgXcQ', title: 'T', channel: 'C', duration: 10, live: false }],
     });
     expect(parseSearchAnswer(null)).toEqual({ error: 'failed' });
+  });
+});
+
+describe('Shorts feed helpers', () => {
+  it('accepts only clean page tokens', () => {
+    expect(cleanPageToken('CBkQAA')).toBe('CBkQAA');
+    expect(cleanPageToken('a b')).toBeNull();
+    expect(cleanPageToken('x'.repeat(101))).toBeNull();
+    expect(cleanPageToken(5)).toBeNull();
+  });
+
+  it('keeps only real shorts', () => {
+    const item = (id: string, duration: number | null, live = false) => ({ id, title: id, channel: '', duration, live });
+    expect(shortsOnly([item('aaaaaaaaaaa', 45), item('bbbbbbbbbbb', 600), item('ccccccccccc', null), item('ddddddddddd', 30, true)]).map((i) => i.id)).toEqual(['aaaaaaaaaaa']);
+  });
+
+  it('carries the next page token through the answer', () => {
+    expect(parseSearchAnswer({ items: [], next: 'CBkQAA' })).toEqual({ items: [], next: 'CBkQAA' });
+    expect(parseSearchAnswer({ items: [], next: 'bad token!' })).toEqual({ items: [] });
   });
 });
