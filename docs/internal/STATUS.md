@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.91.1**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.91.2**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -104,6 +104,17 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   together · watch, line icons, named buttons, one 😀 button); our own bar stays only for Shorts and the sync test.
   Harnesses: embed 101/101 (new dock checks), voice 66, voice shell 28, live, sound; unit 204; e2e green except the
   local-only YouTube title check.
+- [x] **0.9.91.2 phones** (owner, 29 Oct 2026: "the phone experience should be great, everything in its place"):
+  app-like room on an upright phone (video on top, chat scrolls inside with its box on screen, link box folds into
+  ＋ while something plays, "Birlikte" in one row, cameras in a swipeable row), every menu a bottom sheet, iPhone
+  fullscreen without the browser's (`.pseudo-fs`), turning the phone sideways opens fullscreen (setting, on by
+  default; Android also locks landscape after ⛶), compact dock when held sideways, Shorts fit the screen, 16 px
+  inputs (no iOS zoom), push-to-talk hidden on touch, phone note on the home page's extension card. Harness
+  `scripts/harness/phone/run.cjs` 19/19. Built to grow: phone styles in `phone.css`, device facts in `device.ts`, the
+  store-app path in `docs/internal/apps.md` (Play TWA first, App Store needs report / block + push).
+- [ ] **TV version: design proposals** (owner, 29 Oct 2026; a separate session prepares them, design only: Google TV
+  browser, join, voice in / out, talk or type, emojis). The owner picks one, then maybe we build it.
+- [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
@@ -227,6 +238,7 @@ ffmpeg -loglevel error -f lavfi -i "sine=frequency=330:duration=20,tremolo=f=3:d
 ffmpeg -loglevel error -f lavfi -i "anoisesrc=color=pink:amplitude=0.4:duration=20,tremolo=f=2:d=0.8" -ac 1 -ar 48000 /tmp/b.wav
 VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/run.mjs http://localhost:5173
 VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/shell.mjs
+NODE_PATH=$(npm root -g) node scripts/harness/phone/run.cjs   # phones; needs the film-server's video on :5300
 # Pre-roll ad test: 12 s short video, FILM_AD=/tmp/ad.webm for film-server, FILM_AD=1 for run.mjs
 ```
 - Chromium: `/opt/pw-browsers/chromium` (as root `cdp.mjs` adds `--no-sandbox`).

@@ -77,6 +77,13 @@ export function createSettingsPanel(
     save('opt:actionNotice', notice.checked ? '1' : '0');
   });
 
+  // Phones (0.9.91.2): turning the phone sideways while a video plays opens our fullscreen (on by default).
+  const rotate = root.querySelector<HTMLInputElement>('#opt-rotatefs');
+  if (rotate) {
+    rotate.checked = load('opt:rotateFs') !== '0';
+    rotate.addEventListener('change', () => save('opt:rotateFs', rotate.checked ? '1' : '0'));
+  }
+
   // Sound effects: on/off and volume (the slider plays a sample when let go).
   const sounds = root.querySelector<HTMLInputElement>('#opt-sounds')!;
   const volume = root.querySelector<HTMLInputElement>('#opt-soundvolume')!;

@@ -1,6 +1,7 @@
 import { cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { formatTime } from '../media-info.ts';
+import { canElementFullscreen, isTouch, lockLandscape, onTurn, unlockOrientation } from '../device.ts';
 import { t } from '../i18n.ts';
 import { load, postToExtension, save } from '../storage.ts';
 import { setIcon } from './icons.ts';
@@ -21,6 +22,8 @@ interface FullscreenOptions {
   ownControls?: () => boolean;
   /** Fullscreen started / ended. */
   onActive?: (on: boolean) => void;
+  /** Is the video landscape (a phone turns sideways for it in fullscreen; not for Shorts)? */
+  landscape?: () => boolean;
   theater: HTMLElement;
   getPlayer: () => PlayerAdapter | null;
   send: (message: ClientMessage) => void;
@@ -37,7 +40,7 @@ interface FullscreenOptions {
  * videonun üstüne görünmez bir katman (catcher) konur: hareketi o yakalar,
  * tek tık oynat/durdur, çift tık tam ekrandan çıkış yapar.
  */
-export function createFullscreen({ shell = false, ownControls = () => true, onActive, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
+export function createFullscreen({ shell = false, ownControls = () => true, onActive, landscape = () => true, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
   const q = <T extends HTMLElement>(selector: string) => theater.querySelector<T>(selector)!;
   const catcher = q('#fs-catcher');
   const controls = q('#fs-controls');
@@ -85,7 +88,11 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   let hoveringControls = false;
 
   let fake = false;
-  const isActive = () => (shell ? fake : document.fullscreenElement === theater);
+  /**
+   * The room's own fullscreen without the browser's (iPhone has no fullscreen for page elements, 0.9.91.2): the theater
+   * covers the window (`.pseudo-fs`); in the shell `fake` is the film page's fullscreen instead.
+   */
+  const isActive = () => fake || document.fullscreenElement === theater;
   /**
    * The site plays this video itself (YouTube / video file / sync test; not the film page): our bar is its only
    * remote, also in the normal (windowed) view, shown while the mouse is over the video (0.9.90.1).
@@ -152,7 +159,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     if (openButton && !dock.contains(event.target as Node)) openPop(null);
   });
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && openButton) openPop(null);
+    if (event.key !== 'Escape') return;
+    if (openButton) openPop(null);
+    // Our own fullscreen has no browser to leave it with Esc.
+    else if (fake && !shell && !document.querySelector('.dialog-backdrop:not([hidden])')) exit();
   });
   dock.addEventListener('mouseenter', () => (hoveringControls = true));
   dock.addEventListener('mouseleave', () => (hoveringControls = false));
@@ -214,10 +224,45 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     if (fake === on) return;
     fake = on;
     theater.classList.toggle('fake-fs', on);
+    if (!shell) {
+      theater.classList.toggle('pseudo-fs', on);
+      document.documentElement.classList.toggle('pseudo-fs', on);
+    }
     onActiveChange();
     if (tellExtension) postToExtension({ type: 'fullscreen', on });
   }
-  const exit = () => (shell ? setFake(false, true) : void document.exitFullscreen());
+  /** A phone held upright turns sideways for a landscape video (not for Shorts). */
+  function turnSideways(on: boolean): void {
+    if (on && landscape()) lockLandscape();
+    else if (!on) unlockOrientation();
+  }
+  // Turning the phone sideways while a video plays opens our fullscreen (no browser fullscreen without a tap, so the
+  // room's own); upright again closes it, if it was opened this way (setting "Yan çevirince tam ekran").
+  let byTurning = false;
+  onTurn((sideways) => {
+    if (shell || !isTouch() || load('opt:rotateFs') === '0') return;
+    if (sideways && !isActive() && getPlayer() && landscape() && !document.querySelector('#game-stage:not([hidden])')) {
+      byTurning = true;
+      setFake(true, false);
+    } else if (!sideways && byTurning && fake) setFake(false, false);
+  });
+  function enter(): void {
+    if (shell) return setFake(true, true);
+    if (!canElementFullscreen()) return setFake(true, false);
+    theater.requestFullscreen().then(
+      () => turnSideways(true),
+      () => setFake(true, false),
+    );
+  }
+  function exit(): void {
+    byTurning = false;
+    if (shell) setFake(false, true);
+    else if (fake) setFake(false, false);
+    else {
+      turnSideways(false);
+      void document.exitFullscreen().catch(() => {});
+    }
+  }
 
   function wake(): void {
     theater.classList.remove('idle');
@@ -273,7 +318,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     }
   }
   document.addEventListener('fullscreenchange', () => {
-    if (!shell) onActiveChange();
+    if (shell) return;
+    if (!document.fullscreenElement) turnSideways(false);
+    onActiveChange();
   });
 
   for (const type of ['mousemove', 'mousedown', 'touchstart'] as const) {
@@ -382,9 +429,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   });
 
   function toggle(): void {
-    if (shell) setFake(!fake, true);
-    else if (isActive()) void document.exitFullscreen();
-    else void theater.requestFullscreen();
+    if (isActive()) exit();
+    else enter();
   }
 
   return {

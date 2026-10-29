@@ -28,6 +28,7 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
+import { canShareSheet } from './device.ts';
 import { el } from './dom.ts';
 import { lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -378,6 +379,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="toolbar">
             <div class="reaction-bar tray-bar" role="group"></div>
             <div class="toolbar-right">
+              <button id="add-toggle" type="button" class="tool-btn add-toggle" aria-expanded="false" data-i18n-title="addVideo"><span aria-hidden="true">＋</span></button>
               <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" hidden>📱 <span data-i18n="shorts.view"></span></button>
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <div class="game-menu-wrap">
@@ -584,6 +586,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.showReactions"></b><span data-i18n="settings.showReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-reactions" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
+              <label class="set-row touch-only"><span class="set-text"><b data-i18n="settings.rotateFs"></b><span data-i18n="settings.rotateFs.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-rotatefs" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
               <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.closeAds"></b><span data-i18n="settings.closeAds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-closeads" /></label>
@@ -1191,6 +1194,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     showError(null);
     engine.receive(state);
     emptyEl.hidden = state.item !== null;
+    // Phones hide the link box while something plays (the toolbar's ＋ brings it back).
+    $('.room').classList.toggle('has-item', state.item !== null);
     externalEl.hidden = state.item?.media.kind !== 'page';
     if (state.item === null) return;
 
@@ -2005,6 +2010,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // gets the dock in fullscreen.
     ownControls: () => current?.own === true,
     onActive: () => reportLayout(),
+    landscape: () => !isShortItem(roomState?.item),
     send,
     onSkip: skip,
     onRate: requestRate,
@@ -2117,6 +2123,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
     (query) => feed.start(query),
   );
+  // Phones (0.9.91.2): while something plays the link box folds into ＋ under the video, the video and chat get the room.
+  const addToggle = $<HTMLButtonElement>('#add-toggle');
+  const setAdding = (on: boolean) => {
+    roomEl.classList.toggle('adding', on);
+    addToggle.setAttribute('aria-expanded', String(on));
+    if (on) mediaInput.focus();
+  };
+  addToggle.addEventListener('click', () => setAdding(!roomEl.classList.contains('adding')));
   mediaForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const mode = (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue';
@@ -2140,6 +2154,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   /** Sends the links one by one, a little apart (the server allows about 4 commands a second). */
   function addMany(list: Media[], skipped: number, mode: 'load' | 'enqueue'): void {
     mediaInput.value = '';
+    setAdding(false);
     list.forEach((media, i) => setTimeout(() => send({ t: i === 0 && mode === 'load' ? 'load' : 'enqueue', media }), i * 300));
     const done = $('#media-done');
     done.textContent = t(skipped ? 'queuedManySkipped' : 'queuedMany', { n: list.length, skipped });
@@ -2151,6 +2166,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const add = () => {
       send({ t: mode, media });
       mediaInput.value = '';
+      setAdding(false);
       // Sıraya eklendiyse (video oynarken) sessiz kalmasın: kısa bir onay.
       if (mode === 'enqueue' && roomState?.item) {
         const done = $('#media-done');
@@ -2201,7 +2217,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Davet linki: üst çubukta "🔗 Davet et" (basınca link kopyalanır; telefonda paylaşım menüsü) ----
   const inviteUrl = `${location.origin}/r/${roomId}`;
   // Telefonda (dokunmatik + paylaşım menüsü varsa) "Paylaş": WhatsApp vb. doğrudan açılır.
-  const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
+  const canShare = canShareSheet();
   async function shareInvite(button: HTMLButtonElement, idleText: () => string, text: HTMLElement = button): Promise<void> {
     if (canShare) {
       try {
