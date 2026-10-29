@@ -70,8 +70,11 @@ ayse.send({ t: 'guess', text: word.toUpperCase() });
 const right = await can.wait((m) => m.t === 'correct', 'correct');
 await sleep(200);
 ok(right.name === 'Ayse' && right.points > 100 && !can.inbox.some((m) => m.t === 'guess' && m.text.toLowerCase() === word), 'Ayşe bildi (puan > 100), kelime kimseye yazılmadı');
-const scoreA = ali.state.players.find((p) => p.name === 'Ali').score;
-ok(scoreA === 25, 'Çizen her bilen için 25 puan aldı');
+// The scores come with the next state, after the server has saved the guess (on the live server that can take more than
+// 200 ms): wait for it instead of reading the last state at once.
+const scoreOf = () => ali.state.players.find((p) => p.name === 'Ali').score;
+for (let i = 0; i < 60 && scoreOf() !== 25; i++) await sleep(50);
+ok(scoreOf() === 25, 'Çizen her bilen için 25 puan aldı');
 
 // Bilenler kendi arasında: Ayşe'nin mesajı Can'a gitmez, Ali'ye gider.
 ayse.send({ t: 'guess', text: 'çok kolaydı' });
