@@ -1,0 +1,162 @@
+import type { Media, QueueItem } from '@swm/shared/protocol';
+import { parseSearchAnswer, FEED_RESULTS } from '@swm/shared/youtube-search';
+import { lang, t } from '../i18n.ts';
+
+/**
+ * Endless Shorts feed (0.9.91, owner: "make Shorts scrolling great, the API is there now"): pick a topic and the
+ * queue keeps filling with Shorts about it — when fewer than `LOW_WATER` are left, the next page of a Shorts-only
+ * search (`/api/youtube/search?short=1&page=…`, 25 per page, ≈ 1 % of the day's quota) adds the ones not seen yet.
+ * The person who started it runs it (remembered for this tab, `sessionStorage` `feed:<room>`); everyone just sees the
+ * queue grow. It stops by itself when the topic runs dry or the day's searches are used up.
+ */
+const LOW_WATER = 3;
+/** Added per round (the rest of the page waits for the next round). */
+const PER_ROUND = 8;
+const SEEN_MAX = 400;
+
+interface FeedState {
+  topic: string;
+  next: string | null;
+  seen: string[];
+  /** Found but not added yet (a page has more than one round's worth). */
+  pending: string[];
+  /** The topic has no more pages. */
+  done: boolean;
+}
+/** Pages in a row that brought nothing new before the feed gives up (each one costs a search). */
+const EMPTY_PAGES_MAX = 3;
+
+export interface FeedOptions {
+  roomId: string;
+  queueItems: () => QueueItem[];
+  current: () => QueueItem | null;
+  /** May I add to the queue (not "only the host" for me)? */
+  canAdd: () => boolean;
+  add: (media: Media) => void;
+  /** A short note to the person (feed started, stopped, quota). */
+  note: (text: string) => void;
+  /** The feed turned on / off (buttons follow). */
+  changed: () => void;
+}
+
+export function createShortsFeed(opts: FeedOptions) {
+  const key = `feed:${opts.roomId}`;
+  let state: FeedState | null = (() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(key) ?? 'null') as FeedState | null;
+      return saved && typeof saved.topic === 'string' && saved.topic
+        ? { ...saved, seen: Array.isArray(saved.seen) ? saved.seen : [], pending: Array.isArray(saved.pending) ? saved.pending : [] }
+        : null;
+    } catch {
+      return null;
+    }
+  })();
+  let loading = false;
+  let retryAt = 0;
+  let emptyPages = 0;
+  let later: ReturnType<typeof setTimeout> | undefined;
+
+  const persist = () => {
+    try {
+      if (state) sessionStorage.setItem(key, JSON.stringify({ ...state, seen: state.seen.slice(-SEEN_MAX) }));
+      else sessionStorage.removeItem(key);
+    } catch {
+      // Private mode: the feed just isn't remembered across reloads.
+    }
+  };
+
+  /** Spread out like a pasted list: the server allows about 4 commands a second. */
+  function add(ids: string[]): void {
+    ids.forEach((id, i) => setTimeout(() => opts.add({ kind: 'youtube', id, short: true }), i * 300));
+    // Until they reach the queue it still looks short: no new round before they are in (or it would overfill).
+    if (ids.length) retryAt = Date.now() + ids.length * 300 + 2000;
+  }
+
+  function stop(note?: string): void {
+    state = null;
+    persist();
+    if (note) opts.note(note);
+    opts.changed();
+  }
+
+  /** Called whenever the room's queue or video changes. */
+  async function tick(): Promise<void> {
+    if (!state || loading) return;
+    if (Date.now() < retryAt) {
+      // Look again when the pause is over (no queue change may come to wake us).
+      clearTimeout(later);
+      later = setTimeout(() => void tick(), retryAt - Date.now() + 50);
+      return;
+    }
+    const current = opts.current();
+    // The feed belongs to the Shorts session: if something else is playing now, it waits.
+    if (current && !(current.media.kind === 'youtube' && current.media.short)) return;
+    const queue = opts.queueItems();
+    if (queue.length >= LOW_WATER) return;
+    if (!opts.canAdd()) return stop(t('feed.locked'));
+    const have = new Set([...queue.map((item) => (item.media.kind === 'youtube' ? item.media.id : '')), current?.media.kind === 'youtube' ? current.media.id : '']);
+    // Leftovers of the last page first (no search needed).
+    const waiting = state.pending.filter((id) => !have.has(id));
+    if (waiting.length > 0) {
+      add(waiting.slice(0, PER_ROUND));
+      state.pending = waiting.slice(PER_ROUND);
+      persist();
+      return;
+    }
+    if (state.done) return stop(t('feed.end', { topic: state.topic }));
+    loading = true;
+    const topic = state.topic;
+    try {
+      const page = state.next ? `&page=${encodeURIComponent(state.next)}` : '';
+      const response = await fetch(`/api/youtube/search?short=1&hl=${lang()}&q=${encodeURIComponent(topic)}${page}`);
+      const answer = response.ok ? parseSearchAnswer(await response.json(), FEED_RESULTS) : ({ error: 'failed' } as const);
+      if (!state || state.topic !== topic) return;
+      if ('error' in answer) {
+        if (answer.error === 'busy' || answer.error === 'failed') {
+          retryAt = Date.now() + 30_000;
+          return;
+        }
+        return stop(t(answer.error === 'quota' ? 'feed.quota' : 'feed.off'));
+      }
+      const seen = new Set(state.seen);
+      const fresh = answer.items.map((item) => item.id).filter((id) => !seen.has(id) && !have.has(id));
+      state.seen.push(...fresh);
+      add(fresh.slice(0, PER_ROUND));
+      state.pending = fresh.slice(PER_ROUND);
+      state.next = answer.next ?? null;
+      state.done = !answer.next;
+      emptyPages = fresh.length === 0 ? emptyPages + 1 : 0;
+      if (fresh.length === 0 && (state.done || emptyPages >= EMPTY_PAGES_MAX)) return stop(t('feed.end', { topic }));
+      persist();
+      // A page with nothing new: try the next one shortly (bounded by EMPTY_PAGES_MAX).
+      if (fresh.length === 0) setTimeout(() => void tick(), 500);
+    } catch {
+      retryAt = Date.now() + 30_000;
+    } finally {
+      loading = false;
+    }
+  }
+
+  return {
+    get topic(): string | null {
+      return state?.topic ?? null;
+    },
+    start(topic: string): void {
+      const clean = topic.replace(/\s+/g, ' ').trim().slice(0, 80);
+      if (!clean) return;
+      if (!opts.canAdd()) {
+        opts.note(t('feed.locked'));
+        return;
+      }
+      state = { topic: clean, next: null, seen: [], pending: [], done: false };
+      retryAt = 0;
+      emptyPages = 0;
+      persist();
+      opts.note(t('feed.started', { topic: clean }));
+      opts.changed();
+      void tick();
+    },
+    stop: () => stop(),
+    tick: () => void tick(),
+  };
+}

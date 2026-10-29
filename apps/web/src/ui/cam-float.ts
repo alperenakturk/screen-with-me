@@ -1,6 +1,7 @@
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
+import { setIcon } from './icons.ts';
 
 /** A saved place and size, as a share of the container (window or video), so it survives size changes. */
 interface Spot {
@@ -161,7 +162,8 @@ export function createCamWindow(opts: {
   const personOf = (tile: HTMLElement) => tile.dataset.person ?? tile.dataset.voiceId ?? '';
 
   function labels(): void {
-    title.textContent = `📷 ${count}`;
+    title.textContent = String(count);
+    setIcon(title, 'cam');
     title.title = t('cam.title');
     const set = (button: HTMLElement, text: string) => {
       button.title = text;

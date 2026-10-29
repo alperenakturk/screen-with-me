@@ -1,9 +1,12 @@
 import {
+  cleanPageToken,
+  FEED_RESULTS,
   isQuotaError,
   normalizeQuery,
   parseDurations,
   parseSearchItems,
   SEARCH_RESULTS,
+  shortsOnly,
   type SearchAnswer,
 } from '@swm/shared/youtube-search';
 
@@ -55,10 +58,15 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   const query = normalizeQuery(url.searchParams.get('q') ?? '');
   if (query === null) return new Response('Missing query', { status: 400 });
   const lang = url.searchParams.get('hl') === 'en' ? 'en' : 'tr';
+  // Shorts feed (0.9.91): `short=1` asks for short videos only (25 per page), `page` continues an earlier answer.
+  const short = url.searchParams.get('short') === '1';
+  const rawPage = url.searchParams.get('page');
+  const page = rawPage === null ? null : cleanPageToken(rawPage);
+  if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
   if (!env.YOUTUBE_API_KEY) return json({ error: 'off' });
 
   const cache = caches.default;
-  const resultKey = cacheKey(url.origin, `yt-search?hl=${lang}&q=${encodeURIComponent(query)}`);
+  const resultKey = cacheKey(url.origin, `yt-search?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${page ? `&page=${page}` : ''}`);
   const quotaKey = cacheKey(url.origin, 'yt-quota');
   const cached = await cache.match(resultKey);
   if (cached) return cached;
@@ -75,10 +83,12 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
       // Only videos that may be played inside another site: everything else would fail in our player.
       videoEmbeddable: 'true',
       safeSearch: 'moderate',
-      maxResults: String(SEARCH_RESULTS),
+      maxResults: String(short ? FEED_RESULTS : SEARCH_RESULTS),
       relevanceLanguage: lang,
-      q: query,
-      fields: 'items(id/videoId,snippet(title,channelTitle,liveBroadcastContent))',
+      q: short ? `${query} #shorts` : query,
+      ...(short ? { videoDuration: 'short' } : {}),
+      ...(page ? { pageToken: page } : {}),
+      fields: 'nextPageToken,items(id/videoId,snippet(title,channelTitle,liveBroadcastContent))',
     },
     env.YOUTUBE_API_KEY,
   );
@@ -90,13 +100,17 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
     return json({ error: 'failed' });
   }
 
-  let items = parseSearchItems(search.body);
+  const limit = short ? FEED_RESULTS : SEARCH_RESULTS;
+  let items = parseSearchItems(search.body, new Map(), limit);
   if (items.length > 0) {
     // Durations are a nicety: if this call fails, the results still go out without them.
     const videos = await callYouTube('videos', { part: 'contentDetails', id: items.map((item) => item.id).join(','), fields: 'items(id,contentDetails/duration)' }, env.YOUTUBE_API_KEY);
-    if (videos.ok) items = parseSearchItems(search.body, parseDurations(videos.body));
+    if (videos.ok) items = parseSearchItems(search.body, parseDurations(videos.body), limit);
   }
-  const response = json({ items }, RESULT_TTL_S);
+  // The feed only takes real Shorts (YouTube's "short" filter means under 4 minutes).
+  if (short) items = shortsOnly(items);
+  const next = cleanPageToken((search.body as { nextPageToken?: unknown } | null)?.nextPageToken);
+  const response = json(next ? { items, next } : { items }, RESULT_TTL_S);
   await cache.put(resultKey, response.clone());
   return response;
 }

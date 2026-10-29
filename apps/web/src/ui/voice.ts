@@ -14,6 +14,7 @@ import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
 import { confirmIpNotice } from './ip-notice.ts';
 import { applySpeaker, openCam, openMic, voiceCheck } from './voice-check.ts';
+import { setIcon } from './icons.ts';
 import { ExtVoice } from './voice-ext.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
@@ -48,7 +49,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const onBox = root.querySelector<HTMLElement>('#voice-on')!;
   const micButton = root.querySelector<HTMLButtonElement>('#voice-mic')!;
   // Düğmenin içi: simge ve altında kendi sesimin seviye çubuğu ("mikrofonum sesimi alıyor mu").
-  const micIcon = el('span', {}, '🎙');
+  const micIcon = el('span', { class: 'mic-ico' });
+  setIcon(joinButton, 'mic');
   const micBar = el('i');
   micButton.replaceChildren(micIcon, el('span', { class: 'mic-level', 'aria-hidden': 'true' }, micBar));
   const leaveButton = root.querySelector<HTMLButtonElement>('#voice-leave')!;
@@ -60,12 +62,12 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   // Meet-style buttons under the cameras (floating window and fullscreen): my mic and camera without going back to
   // the card. They press the card's own buttons, so behaviour (push-to-talk, limits) stays in one place.
   const camMic = el('button', { type: 'button', class: 'cam-ctl cam-ctl-mic' });
-  const camCam = el('button', { type: 'button', class: 'cam-ctl cam-ctl-cam' }, '📷');
+  const camCam = el('button', { type: 'button', class: 'cam-ctl cam-ctl-cam' });
   camMic.addEventListener('click', () => micButton.click());
   camCam.addEventListener('click', () => camButton.click());
   // Stream from the pill too (0.9.90.8): share my screen / stop my stream / watch someone's. It presses the stream
   // card's own buttons, so the IP notice, limits and "camera in the corner" choice stay in one place.
-  const camLive = el('button', { type: 'button', class: 'cam-ctl cam-ctl-live' }, '🖥️');
+  const camLive = el('button', { type: 'button', class: 'cam-ctl cam-ctl-live' });
   camLive.addEventListener('click', () => {
     const stop = root.querySelector<HTMLButtonElement>('#live-stop');
     const watch = root.querySelector<HTMLButtonElement>('#live-watch');
@@ -254,7 +256,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     wasActive = active;
     joinButton.hidden = active;
     onBox.hidden = !active;
-    micIcon.textContent = client.micEnabled ? '🎙' : '🔇';
+    setIcon(micIcon, client.micEnabled ? 'mic' : 'mic-off');
     micButton.classList.toggle('ptt', ptt);
     micButton.classList.toggle('talking', ptt && talking);
     const micLabel = ptt ? t('voice.pttHold') : client.micEnabled ? t('voice.mute') : t('voice.unmute');
@@ -277,7 +279,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     peopleBox.replaceChildren(
       ...people.slice(0, PEOPLE_SHOWN).map((m) => {
         const face = el('span', { class: `voice-face${m.voice ? ' in-voice' : ''}`, 'data-voice-id': m.id }, avatarNode(m.avatar, 'voice-avatar'));
-        if (m.voice && !m.voice.mic) face.append(el('span', { class: 'voice-muted' }, '🔇'));
+        if (m.voice && !m.voice.mic) {
+          const badge = el('span', { class: 'voice-muted' });
+          setIcon(badge, 'mic-off');
+          face.append(badge);
+        }
         const label = m.id === me ? t('voice.me') : m.name;
         const person = el('button', { type: 'button', class: 'together-person', title: m.voice ? `${m.name} · ${t('voice.inVoice')}` : m.name }, face, el('span', { class: 'together-name' }, label));
         // Discord-style menu: volume / mute for me, pin the camera, hide myself, host: remove from the room.
@@ -308,7 +314,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const camLabel = camOn ? t('voice.camOff') : t('voice.camOn');
     camButton.title = camLabel;
     camButton.setAttribute('aria-label', camLabel);
-    camMic.textContent = client.micEnabled ? '🎙' : '🔇';
+    // Line icons (0.9.91): the picture says what will be (mic / mic struck through), red = off.
+    if (camButton.textContent) camButton.textContent = '';
+    setIcon(camButton, camOn ? 'cam' : 'cam-off');
+    setIcon(camMic, client.micEnabled ? 'mic' : 'mic-off');
+    setIcon(camCam, camOn ? 'cam' : 'cam-off');
     camMic.classList.toggle('off', !client.micEnabled);
     camMic.title = micLabel;
     camMic.setAttribute('aria-label', micLabel);
@@ -321,11 +331,14 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (shortsVoice && shortsMic && shortsCam) {
       shortsVoice.hidden = !available || (!active && joinButton.hidden);
       const micText = active ? micLabel : t('voice.join');
-      shortsMic.textContent = !active ? '🎙' : client.micEnabled ? '🎙' : '🔇';
+      if (shortsMic.textContent) shortsMic.textContent = '';
+      setIcon(shortsMic, !active || client.micEnabled ? 'mic' : 'mic-off');
       shortsMic.classList.toggle('off', active && !client.micEnabled);
       shortsMic.title = micText;
       shortsMic.setAttribute('aria-label', micText);
       shortsCam.hidden = !active || camButton.hidden;
+      if (shortsCam.textContent) shortsCam.textContent = '';
+      setIcon(shortsCam, camOn ? 'cam' : 'cam-off');
       shortsCam.classList.toggle('off', !camOn);
       shortsCam.title = camLabel;
       shortsCam.setAttribute('aria-label', camLabel);
@@ -375,7 +388,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     camLive.hidden = !liveCard || liveCard.hidden || (!streamer && !canShare);
     const mine = !!streamer && streamer.id === me?.id;
     const label = mine ? t('live.stop') : streamer ? t(me?.watching ? 'live.unwatch' : 'live.watch') : t('live.screen');
-    camLive.textContent = mine ? '⏹' : streamer && !me?.watching ? '▶' : '🖥️';
+    setIcon(camLive, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
     camLive.classList.toggle('on', mine || !!me?.watching);
     camLive.title = label;
     camLive.setAttribute('aria-label', label);

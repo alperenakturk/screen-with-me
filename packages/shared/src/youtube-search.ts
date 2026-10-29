@@ -8,6 +8,10 @@
 export const SEARCH_QUERY_MAX = 100;
 /** Results per search (search.list costs 100 units however many come back; 12 fit two rows of the list). */
 export const SEARCH_RESULTS = 12;
+/** Shorts feed (0.9.91): results per page (same 100 units as 12, so take the most YouTube gives). */
+export const FEED_RESULTS = 25;
+/** A Short is at most this long (YouTube allows up to 3 minutes since 2024). */
+export const SHORT_MAX_SECONDS = 180;
 
 export interface SearchResult {
   /** 11-character video id; the thumbnail is built from it (`i.ytimg.com`), no URL from the API reaches the page. */
@@ -27,7 +31,19 @@ export interface SearchResult {
  */
 export type SearchError = 'quota' | 'off' | 'busy' | 'failed';
 
-export type SearchAnswer = { items: SearchResult[] } | { error: SearchError };
+/** `next`: the token for the following page (Shorts feed: "more of the same" without repeating). */
+export type SearchAnswer = { items: SearchResult[]; next?: string } | { error: SearchError };
+
+const PAGE_TOKEN = /^[A-Za-z0-9_-]{1,100}$/;
+/** A page token as YouTube sends it (letters, digits, - and _); anything else is null. */
+export function cleanPageToken(value: unknown): string | null {
+  return typeof value === 'string' && PAGE_TOKEN.test(value) ? value : null;
+}
+
+/** Only real Shorts: known duration up to `SHORT_MAX_SECONDS`, not live. */
+export function shortsOnly(items: SearchResult[]): SearchResult[] {
+  return items.filter((item) => !item.live && item.duration !== null && item.duration <= SHORT_MAX_SECONDS);
+}
 
 /** Same words → same cache entry: trimmed, inner spaces collapsed, lower case. Null when nothing is left. */
 export function normalizeQuery(raw: string): string | null {
@@ -79,7 +95,7 @@ function clean(value: unknown, max: number): string {
  * search.list JSON (+ durations from videos.list) → our results. Anything unexpected is skipped, never trusted:
  * only well-formed video ids survive, texts are cut and cleaned.
  */
-export function parseSearchItems(search: unknown, durations: Map<string, number | null> = new Map()): SearchResult[] {
+export function parseSearchItems(search: unknown, durations: Map<string, number | null> = new Map(), limit = SEARCH_RESULTS): SearchResult[] {
   const items = typeof search === 'object' && search !== null ? (search as { items?: unknown }).items : null;
   if (!Array.isArray(items)) return [];
   const results: SearchResult[] = [];
@@ -98,7 +114,7 @@ export function parseSearchItems(search: unknown, durations: Map<string, number 
       duration: live ? null : (durations.get(id) ?? null),
       live,
     });
-    if (results.length >= SEARCH_RESULTS) break;
+    if (results.length >= limit) break;
   }
   return results;
 }
@@ -127,7 +143,7 @@ export function isQuotaError(body: unknown): boolean {
 }
 
 /** The client checks the server's answer the same way the server checks clients: unknown shapes become `failed`. */
-export function parseSearchAnswer(body: unknown): SearchAnswer {
+export function parseSearchAnswer(body: unknown, limit = SEARCH_RESULTS): SearchAnswer {
   if (typeof body !== 'object' || body === null) return { error: 'failed' };
   const error = (body as { error?: unknown }).error;
   if (error === 'quota' || error === 'off' || error === 'busy' || error === 'failed') return { error };
@@ -146,5 +162,6 @@ export function parseSearchAnswer(body: unknown): SearchAnswer {
       live: item.live === true,
     });
   }
-  return { items: results.slice(0, SEARCH_RESULTS) };
+  const next = cleanPageToken((body as { next?: unknown }).next);
+  return next ? { items: results.slice(0, limit), next } : { items: results.slice(0, limit) };
 }
