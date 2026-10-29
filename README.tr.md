@@ -23,7 +23,7 @@
 Link at, herkes aynı saniyeyi izlesin. Biri durdurur, sarar ya da hızı değiştirirse herkeste olur. Sohbet,
 emojiler, pinler ve ortak sıra videonun etrafında.
 
-- **YouTube ya da video dosyası** → doğrudan sitede oynar, kurulum yok.
+- **YouTube ya da video dosyası** → doğrudan sitede oynar, kurulum yok. Linkin yoksa aynı kutuya kelime yazıp YouTube'da ara.
 - **Başka herhangi bir site** (sayfada HTML5 `<video>` varsa, iframe içinde bile) → sekme o siteye gider ve
   tarayıcı eklentisiyle **odanın kendisi** (sitenin oda sayfasının aynısı) üstüne açılır, video odanın
   oynatıcı alanına oturur. Gömülmeyi yasaklayan sitelerde de çalışır.
@@ -47,6 +47,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 |---|---|
 | 🔗 **Tek link, hesap yok** | Bir kere isim + avatar (çizilmiş temalı karakterler ve film / dizi / anime / oyun parodileri), tarayıcı hatırlar. Sağ üstteki 👤 menüsünde ad, avatar, tema ve oturum özeti. |
 | 📱 **Shorts görünümü** | YouTube Shorts linki açılınca oda dikey olur: video ortada, arkadaşlar iki yanında oturur. Mesajlar yazanın avatarından baloncuk olarak çıkar, emojiler oradan yükselir. ↑ / ↓ (ya da ▲▼, fare tekerleği) herkes için önceki / sonraki Shorts; 🔁 döngü biten Shorts'u yeniden oynatır. Sıra, sohbet geçmişi ve ayarlar bir tık ötede, oda görünümünde. |
+| 🔎 **YouTube araması** | Link yerine kelime yazıp Enter'a bas: YouTube sonuçları kutunun altında açılır; birine dokununca sıraya eklenir (o an bir şey oynamıyorsa hemen başlar) ya da "▶ Şimdi aç". Arama anahtarı sadece bizim sunucumuzda durur. |
 | 🎵 **Sıra ve oylama** | Ekle, sırala, hemen aç; 👍 oylar sırayı değiştirir. Otomatik devam kapatılabilir (yerine "Sıradakini başlat" kartı). |
 | 🎙 **Sesli ve görüntülü sohbet** | "Sese katıl"a bas, izlerken konuş: tek tıkla sessize al ya da bas-konuş kullan (V'ye basılı tut). Konuşanın avatarı parlar, 🎙 altındaki küçük çubuk mikrofonunun seni duyduğunu gösterir. 📷 küçük bir kamera açar: arkadaşlarının kameraları ses kartında ya da sürükleyip iki yönde boyutlandırabildiğin, altında mikrofon ve kamera düğmeleri olan yüzen bir pencerede görünür; tam ekranda videonun üstüne gelir. Birine tıklayıp sesini sadece kendin için kısabilir ya da susturabilir, kamerasını büyütebilir, yöneticiysen odadan çıkarabilirsin. Eşler arası ve her zaman şifreli (sunucu sesi hiç duymaz), en fazla 6 kişi; seni sadece sese katılanlar duyar. Bağlantı doğrudan olduğu için seste olanlar birbirinin IP adresini görebilir; oda bunu sese katılmadan önce söyler. Film sayfalarında da çalışır: mikrofon ve kamera izni bir kez ScreenWithMe için sorulur (film sitesi için değil), sayfa yenilense de ses kopmaz, istersen Ayarlar'dan açtığında biri gerçekten konuşurken film sesi kısılır (tık gibi kısa sesler saymaz). |
 | 📺 **Ekran paylaşımı** | Ekranını, bir pencereyi, sekmeyi ya da kameranı odaya aç (oyun, fotoğraf, "şuna bak"; film için değil). Odada tek yayın, izlemeyi seçen en fazla 4 kişi, 720p, eşler arası. Videonun köşesinde açılır, büyütülebilir. "Yazı net" (sunum, site) ya da "akıcı" (oyun) seçilir. Sınırlar hep görünür ("İzleyen 3/4"). Yönetici yayını durdurabilir ya da yayını sadece kendisi açabilsin diyebilir. |

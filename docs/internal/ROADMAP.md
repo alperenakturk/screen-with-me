@@ -37,8 +37,8 @@ implement, test, ship.
     resize tiles in both directions.
   - [x] Scheduled start: currently meaningless; make it clear and well designed (0.9.87 "Film saati").
   - [x] ⚙️ next to the profile picture; remove the other settings entry points (tab row, profile menu) (0.9.87).
-  - [ ] YouTube player: controls linger after the mouse leaves; YouTube volume control doesn't work.
-  - [ ] **New feature:** YouTube search inside the app (like Watch2Gether): type in the top box, pick from results.
+  - [x] YouTube player: controls linger after the mouse leaves; YouTube volume control doesn't work (0.9.90.1, one remote).
+  - [x] **New feature (0.9.90.2):** YouTube search inside the app (like Watch2Gether): type in the top box, pick from results.
 - **Feedback round 2** (owner, 28 Oct 2026; scheduled as 0.9.88–0.9.89 in `STATUS.md`):
   - [x] Send images in chat (0.9.88).
   - [x] Links in chat are clickable (0.9.88); a "you are leaving this page" question first; they open in a new tab (our room

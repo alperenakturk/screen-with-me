@@ -20,6 +20,7 @@ import {
   type ReactionGap,
   type ClientMessage,
   type Member,
+  type Media,
   type PlaybackState,
   type QueueItem,
   type RoomSettings,
@@ -60,6 +61,7 @@ import { showNextCard } from './ui/end-card.ts';
 import { renderRecapHistory, showRecap } from './ui/recap.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
+import { createSearch } from './ui/search.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -258,7 +260,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <button class="btn primary" value="enqueue" data-i18n="addToQueue"></button>
           <button class="btn" value="load" data-i18n="playNow"></button>
         </form>
-        <p id="media-error" class="error" data-i18n="invalidMedia" hidden></p>
         <p id="media-done" class="muted small" role="status" hidden></p>
 
         <div id="schedule-banner" class="schedule-banner" role="status" hidden></div>
@@ -1972,7 +1973,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Video linki ----
   const mediaInput = $<HTMLInputElement>('#media-input');
-  const mediaError = $('#media-error');
   const extDialog = $<HTMLDialogElement>('#ext-dialog');
   let pendingAdd: (() => void) | null = null;
 
@@ -2001,13 +2001,22 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     pendingAdd = null;
   });
 
-  $<HTMLFormElement>('#media-form').addEventListener('submit', (event) => {
+  const mediaForm = $<HTMLFormElement>('#media-form');
+  // Words instead of a link: search YouTube (the results open under the box).
+  const search = createSearch(mediaForm, mediaInput, (id, _title, mode) => addMedia({ kind: 'youtube', id }, mode));
+  mediaForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const media = parseMediaInput(mediaInput.value);
-    mediaError.hidden = media !== null;
-    if (media === null) return;
+    if (media === null) {
+      if (mediaInput.value.trim()) void search.search(mediaInput.value);
+      return;
+    }
+    search.close();
     // Enter'a basılınca ilk buton ("Sıraya ekle") geçerli olur; izlenen video yanlışlıkla değişmez.
-    const mode = (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue';
+    addMedia(media, (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue');
+  });
+
+  function addMedia(media: Media, mode: 'load' | 'enqueue'): void {
     const add = () => {
       send({ t: mode, media });
       mediaInput.value = '';
@@ -2033,7 +2042,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       return;
     }
     add();
-  });
+  }
 
   // ---- Herkesi bana eşitle: kendi konumumu odaya yayar (biri kaydıysa tek tıkla düzelir). ----
   const syncAllEl = $<HTMLButtonElement>('#sync-all');

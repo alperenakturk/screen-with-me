@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 28 Oct 2026. Site and extension **0.9.90.1**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.90.2**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -68,12 +68,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] **Sound effects** (separate session, owner, 29 Oct 2026): sounds for every place that needs one (game pieces,
   win/lose, voice join/leave, mic on/off, stream start/stop, notifications), nothing elsewhere; own file, generated with
   Web Audio; proposals first.
-- [ ] **0.9.90.2 YouTube search inside the app** (key added by the owner to GitHub Secrets `YOUTUBE_API_KEY`,
-  29 Oct 2026; branch `claude/eager-gauss-lcd0t5`). Steps: [x] shared `youtube-search.ts` + tests · [x] Worker
-  `/api/youtube/search` (cache 24 h, quota flag 10 min, `SEARCH_LIMIT` 10/min/IP) · [x] deploy job passes the secret
-  (`--secrets-file`) · [ ] site results list under the link box · [ ] privacy policy, docs, version · [ ] tests, PR,
-  merge, live check. Quota ≈ 100 searches/day (101 units each), resets at midnight Pacific time; when it runs out the
-  box says so, links still work, search reopens by itself.
+- [x] **0.9.90.2 YouTube search inside the app** (key added by the owner to GitHub Secrets `YOUTUBE_API_KEY`,
+  29 Oct 2026): words + Enter in the link box → results under it (row = queue, "▶ Şimdi aç" = now). Worker
+  `/api/youtube/search` (24 h cache per words, quota flag 10 min, `SEARCH_LIMIT` 10/min/IP), deploy job uploads the
+  secret, privacy policy section. Quota ≈ 100 searches/day (101 units each), resets at midnight Pacific time; when
+  it runs out the box says so, links still work, search reopens by itself. A higher quota needs Google's compliance
+  audit (owner, before 1.0, with the domain and terms of use).
 - [ ] **Shorts scrolling, really good** (owner, 29 Oct 2026: "working is not enough, make it great"; Reels / TikTok are
   **not** planned for now): scrolling feel and speed, preloading the next short, an endless feed (filling the queue
   from Shorts links / a channel or playlist), phone swipe, timing so everyone lands on the same short together.
@@ -85,6 +85,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
+- **0.9.90.2:** unit 182/182, e2e 202 checks incl. new `search.mjs` (all files green, YouTube reachable), browser
+  check of the search list with mocked answers 24/24 (desktop + phone: results, Esc, outside click, arrows, page
+  cache, pick = play / queue, quota note, links don't search).
 - Typecheck ✅, unit 157/157 ✅, e2e 172 checks ✅ (only `room.mjs` hangs because YouTube is blocked here; known).
 - Voice on the site 24/24 ✅ and voice on the film page 28/28 ✅, **both only with `VOICE_A`/`VOICE_B`**: without them
   both Chromes use the same fake beep and the echo canceller removes it, so the "really hears" checks fail (not a
@@ -143,6 +146,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - **0.9.81:** free camera windows (drag, resize, inside the video in fullscreen; also on the film page).
 - **0.9.87–0.9.89:** ⚙️ next to the profile picture, Film time, rooms independent (name/avatar per room), images
   and links in chat, voice join/leave in activity, popup goes back to an open room tab.
+- **0.9.90.2:** YouTube search in the link box (key on the Worker, cached, quota-aware).
 - **0.9.90.1:** one remote on the site (YouTube/video files without their own controls, our bar in the window and
   fullscreen, volume + CC), fullscreen messages flow up from the message box; four-part version numbers start.
 - **0.9.90:** film-page tools in the middle of the top bar; the room view fits the window (no scrolling).
