@@ -112,7 +112,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   inputs (no iOS zoom), push-to-talk hidden on touch, phone note on the home page's extension card. Harness
   `scripts/harness/phone/run.cjs` 19/19. Built to grow: phone styles in `phone.css`, device facts in `device.ts`, the
   store-app path in `docs/internal/apps.md` (Play TWA first, App Store needs report / block + push).
-- [ ] **TV version: waiting for the owner's choice** (design only; proposal page
+- [ ] **TV version: to be built before 1.0, paused for now** (owner, 29 Oct 2026; ROADMAP §1; he picks the design
+  when we resume; proposal page
   https://claude.ai/artifact/MQkQqMfTreT9YFEfgyjmbc, research and options in `docs/internal/tv-design.md`: A big
   button bar, B side panel, C phone as remote, D plus menu; recommended A + C's phone remote for talking, since TV
   browsers usually can't use a microphone). Nothing is built until he chooses.
