@@ -61,7 +61,17 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const camCam = el('button', { type: 'button', class: 'cam-ctl cam-ctl-cam' }, '📷');
   camMic.addEventListener('click', () => micButton.click());
   camCam.addEventListener('click', () => camButton.click());
-  const camControls = el('div', { class: 'cam-controls' }, camMic, camCam);
+  // Stream from the pill too (0.9.90.8): share my screen / stop my stream / watch someone's. It presses the stream
+  // card's own buttons, so the IP notice, limits and "camera in the corner" choice stay in one place.
+  const camLive = el('button', { type: 'button', class: 'cam-ctl cam-ctl-live' }, '🖥️');
+  camLive.addEventListener('click', () => {
+    const stop = root.querySelector<HTMLButtonElement>('#live-stop');
+    const watch = root.querySelector<HTMLButtonElement>('#live-watch');
+    if (stop && !stop.hidden) stop.click();
+    else if (watch && !watch.hidden) watch.click();
+    else root.querySelector<HTMLButtonElement>('#live-screen')?.click();
+  });
+  const camControls = el('div', { class: 'cam-controls' }, camMic, camCam, camLive);
   const camWindow = createCamWindow({
     box: camsBox,
     theater: root.querySelector<HTMLElement>('#theater')!,
@@ -298,6 +308,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     camCam.title = camLabel;
     camCam.setAttribute('aria-label', camLabel);
     camControls.hidden = !active;
+    renderLiveButton();
     renderCams();
   }
 
@@ -334,6 +345,21 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     clearTimeout(ghost.timer);
     ghosts.delete(person);
   }
+  /** The pill's stream button follows the room: who streams, am I watching, can I share at all. */
+  function renderLiveButton(): void {
+    const liveCard = root.querySelector<HTMLElement>('#live-card');
+    const streamer = members.find((m) => m.live);
+    const me = members.find((m) => m.id === myId());
+    const canShare = !(root.querySelector<HTMLButtonElement>('#live-screen')?.hidden ?? true);
+    camLive.hidden = !liveCard || liveCard.hidden || (!streamer && !canShare);
+    const mine = !!streamer && streamer.id === me?.id;
+    const label = mine ? t('live.stop') : streamer ? t(me?.watching ? 'live.unwatch' : 'live.watch') : t('live.screen');
+    camLive.textContent = mine ? '⏹' : streamer && !me?.watching ? '▶' : '🖥️';
+    camLive.classList.toggle('on', mine || !!me?.watching);
+    camLive.title = label;
+    camLive.setAttribute('aria-label', label);
+  }
+
   function renderCams(): void {
     const me = myId();
     const shown: HTMLElement[] = [];
@@ -390,8 +416,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       else shown.push(ghost.box);
     }
     camWindow.grid.replaceChildren(...shown);
-    camsBox.hidden = shown.length === 0 && hidden === 0;
-    camWindow.update(shown.length, hidden);
+    camWindow.update(shown.length, hidden, client.active);
   }
 
   // ---- Per person, for me only (Discord-like): volume, mute, pinned camera, hide my own preview ----

@@ -165,7 +165,7 @@ const TILE = `(() => { const t = document.querySelector('#voice-cams .cam-tile:n
 const t0 = await until(() => ayse.evaluate(TILE));
 check(!!t0 && t0.free && t0.island && close(t0.r, t0.iw - 12), 'serbest kutular: Ali’nin kamerası kendi penceresinde, videonun sağ üst köşesinde sırada', JSON.stringify(t0));
 const pillCtls = await ayse.evaluate(`(() => { const c = document.querySelector('#voice-cams .cam-pill .cam-controls'); return c && getComputedStyle(c).display !== 'none' ? c.querySelectorAll('button:not([hidden])').length : 0; })()`);
-check(pillCtls === 2, 'serbest kutularda 🎙 ve 📷 küçük kontrol hapında', String(pillCtls));
+check(pillCtls === 3, 'serbest kutularda 🎙, 📷 ve 🖥️ küçük kontrol hapında', String(pillCtls));
 await drag({ x: t0.x + t0.w / 2, y: t0.y + t0.h / 2 }, -300, 150);
 const t1 = await ayse.evaluate(TILE);
 check(close(t1.x, t0.x - 300) && close(t1.y, t0.y + 150), 'kamera kutusu tek başına sürükleniyor', JSON.stringify({ önce: t0, sonra: t1 }));
@@ -220,7 +220,7 @@ const taller = await ayse.evaluate(BOX);
 check(taller.h - grown.h > 100, 'köşeden aşağı çekince yüksekliği de değişti (iki yönlü boyut)', `${grown.h} → ${taller.h}`);
 // Meet-style buttons under the cameras in the floating window.
 const ctls = await ayse.evaluate(`(() => { const c = document.querySelector('#voice-cams .cam-controls'); return c && getComputedStyle(c).display !== 'none' ? c.querySelectorAll('button:not([hidden])').length : 0; })()`);
-check(ctls === 2, 'yüzen pencerede kameraların altında 🎙 ve 📷 düğmeleri', String(ctls));
+check(ctls === 3, 'yüzen pencerede kameraların altında 🎙, 📷 ve 🖥️ düğmeleri', String(ctls));
 await ayse.evaluate(`document.querySelector('#voice-cams .cam-ctl-mic').click(); 1`);
 const mutedByCtl = await until(() => ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
 check(!!mutedByCtl, 'kamera altındaki 🎙 ile mikrofon kapandı');
@@ -302,9 +302,26 @@ await ali.sleep(1000);
 const afterReconnect = await ayse.evaluate(FLOW);
 const aliCount = await ayse.evaluate(`document.querySelectorAll('#people-list [data-member-id]').length`);
 check(afterReconnect.tiles === 1 && afterReconnect.moving, 'Ali yeniden bağlanınca Ayşe’de tek kamera kutusu var ve akıyor', JSON.stringify({ afterReconnect, aliCount }));
+// 0.9.90.8: floating, the pill stays while Ayşe is in voice even when no camera is on (mic, stream from the video).
+await ayse.evaluate(`document.querySelector('#voice-cams .cam-pop').click(); if (!document.getElementById('voice-cams').classList.contains('free')) document.querySelector('#voice-cams .cam-layout').click(); 1`);
+await ayse.sleep(300);
 await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
+const pillKept = await until(() => ayse.evaluate(`(() => { const b = document.getElementById('voice-cams'); const p = b.querySelector('.cam-pill'); return !b.hidden && !b.querySelector('.cam-tile') && p && p.getBoundingClientRect().width > 0 ? { mic: !!p.querySelector('.cam-ctl-mic:not([hidden])'), live: !!p.querySelector('.cam-ctl-live:not([hidden])') } : null; })()`), 8000);
+check(!!pillKept && pillKept.mic, 'Ali kamerasını kapatınca kutusu kalktı, Ayşe seste olduğu için küçük menü (🎙) yerinde', JSON.stringify(pillKept));
+check(!!pillKept?.live, 'küçük menüde yayın düğmesi (🖥️) var');
+const PILL = `(() => { const r = document.querySelector('#voice-cams .cam-pill').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })()`;
+const p0 = await ayse.evaluate(PILL);
+await ayse.evaluate(`(() => { const p = document.querySelector('#voice-cams .cam-pill'); p.style.left = '200px'; p.style.top = '200px'; return 1; })()`);
+const p1 = await ayse.evaluate(PILL);
+await drag({ x: p1.x + p1.w - 3, y: p1.y + p1.h - 3 }, 80, 30);
+const p2 = await ayse.evaluate(PILL);
+check(p2.w > p1.w * 1.2, 'küçük menü köşesinden çekince büyüyor', `${Math.round(p1.w)} → ${Math.round(p2.w)}`);
+check(Number(await ayse.evaluate(`localStorage.getItem('camPill:scale')`)) > 1, 'menünün boyu hatırlanıyor');
+await ayse.shot('kucuk-menu-buyuk');
+console.log('     menü:', JSON.stringify({ p0, p2 }));
+await ayse.evaluate(`document.querySelector('#voice-cams .cam-reset').click(); document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
 const camGone = await until(() => ayse.evaluate(`document.getElementById('voice-cams').hidden`), 8000);
-check(!!camGone, 'Ali kamerasını kapatınca Ayşe\'de kutu kalktı');
+check(!!camGone, 'karta geri konunca boş kamera kutusu kalktı (kartın kendi düğmeleri var)');
 
 // Sessize alma: Ayşe 🔇 → Ali'de sesi biter (akış kalır, enerji düşer), Ayşe'nin avatarında 🔇.
 await ayse.evaluate(`document.getElementById('voice-mic').click(); 1`);

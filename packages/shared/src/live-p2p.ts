@@ -18,7 +18,7 @@ const MAX_BITRATE: Record<LiveKind, number> = { screen: 2_500_000, camera: 1_200
  * `motion` (akıcı: oyun, video; 30 kare, ağ yetmezse çözünürlük düşer ama kare sayısı korunur).
  */
 export type LiveQuality = 'text' | 'motion';
-const FPS: Record<LiveQuality, number> = { text: 15, motion: 30 };
+export const FPS: Record<LiveQuality, number> = { text: 15, motion: 30 };
 
 export function screenConstraints(quality: LiveQuality): DisplayMediaStreamOptions {
   return {

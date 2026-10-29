@@ -422,7 +422,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="live-share" type="button" class="btn live-share" aria-haspopup="true" aria-expanded="false">🖥️ <span data-i18n="live.share"></span> <span class="live-caret" aria-hidden="true">▾</span></button>
                 <div id="live-menu" class="live-menu" role="menu" hidden>
                   <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true">🖥️</span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
-                  <button id="live-camera" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true">📹</span><b data-i18n="live.camera"></b><span class="muted small" data-i18n="live.cameraD"></span></button>
+                  <label class="live-menu-check small" id="live-with-cam-row"><input type="checkbox" id="live-with-cam" /> <span>📷 <span data-i18n="live.withCam"></span></span></label>
                   <p id="live-menu-note" class="muted small live-menu-note"></p>
                 </div>
               </div>
