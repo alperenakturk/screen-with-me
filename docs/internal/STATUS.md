@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.90.8**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.90.9**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -94,12 +94,16 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [x] **0.9.90.8** owner's feedback on the camera pill (screenshot, 29 Oct 2026): turning my camera off must not
   remove the pill while I'm in voice (mic etc. from inside the video); the pill grows / shrinks; a stream button in
   it; no plain "camera stream" any more, a screen stream can show my camera in its corner instead.
+- [x] **0.9.90.9** owner's idea for Shorts: no camera tiles/grid there; a person's camera shows inside their seat's
+  avatar circle; only 🎙 / 📷 in the bottom bar; seats a little bigger.
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
+- **0.9.90.9:** voice on the site 66/66 (Shorts: Ali's camera in his seat circle, no tiles, bottom bar only 🎙 / 📷, 🎙
+  mutes).
 - **0.9.90.8:** voice on the site 62/62 (pill stays with no camera, grows from its corner, has 🖥️; 3 buttons under
   the cameras), streams 19/19 (no camera stream option; screen + camera in the corner is a generated track, frames
   reach the viewer), film-page voice 28/28.

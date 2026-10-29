@@ -38,6 +38,8 @@ export interface VoiceRoom {
   isHost: () => boolean;
   /** Ask (confirm) and remove someone from the room. */
   kick: (member: Member) => void;
+  /** The cameras on screen right now (member → picture; hidden ones and "hide myself" left out): Shorts seats. */
+  onCams?: (cams: Map<string, MediaStream>) => void;
 }
 
 export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean, room: VoiceRoom) {
@@ -72,6 +74,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     else root.querySelector<HTMLButtonElement>('#live-screen')?.click();
   });
   const camControls = el('div', { class: 'cam-controls' }, camMic, camCam, camLive);
+  // Shorts view (0.9.90.9, owner's idea): no camera tiles there, just 🎙 and 📷 in the bottom bar; cameras show inside
+  // the seats' avatar circles. Not in voice yet: the 🎙 joins.
+  const shortsVoice = root.querySelector<HTMLElement>('#shorts-voice');
+  const shortsMic = root.querySelector<HTMLButtonElement>('#shorts-mic');
+  const shortsCam = root.querySelector<HTMLButtonElement>('#shorts-cam');
+  shortsMic?.addEventListener('click', () => (client.active ? micButton : joinButton).click());
+  shortsCam?.addEventListener('click', () => camButton.click());
   const camWindow = createCamWindow({
     box: camsBox,
     theater: root.querySelector<HTMLElement>('#theater')!,
@@ -309,6 +318,18 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     camCam.setAttribute('aria-label', camLabel);
     camControls.hidden = !active;
     renderLiveButton();
+    if (shortsVoice && shortsMic && shortsCam) {
+      shortsVoice.hidden = !available || (!active && joinButton.hidden);
+      const micText = active ? micLabel : t('voice.join');
+      shortsMic.textContent = !active ? '🎙' : client.micEnabled ? '🎙' : '🔇';
+      shortsMic.classList.toggle('off', active && !client.micEnabled);
+      shortsMic.title = micText;
+      shortsMic.setAttribute('aria-label', micText);
+      shortsCam.hidden = !active || camButton.hidden;
+      shortsCam.classList.toggle('off', !camOn);
+      shortsCam.title = camLabel;
+      shortsCam.setAttribute('aria-label', camLabel);
+    }
     renderCams();
   }
 
@@ -417,6 +438,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
     camWindow.grid.replaceChildren(...shown);
     camWindow.update(shown.length, hidden, client.active);
+    // The Shorts view shows the same cameras inside the seats' avatar circles (0.9.90.9).
+    const cams = new Map<string, MediaStream>();
+    for (const [id, box] of tiles) {
+      const stream = box.querySelector('video')?.srcObject;
+      if (stream instanceof MediaStream) cams.set(id, stream);
+    }
+    room.onCams?.(cams);
   }
 
   // ---- Per person, for me only (Discord-like): volume, mute, pinned camera, hide my own preview ----
