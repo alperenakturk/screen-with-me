@@ -13,6 +13,7 @@ import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
 import { confirmIpNotice } from './ip-notice.ts';
+import { applySpeaker, openCam, openMic, voiceCheck } from './voice-check.ts';
 import { ExtVoice } from './voice-ext.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
@@ -165,6 +166,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const audio = el('audio', { autoplay: '' }) as HTMLAudioElement;
     audio.srcObject = stream;
     audio.hidden = true;
+    applySpeaker(audio);
     setVolume(audio, memberId);
     document.body.append(audio);
     void audio.play().catch(() => {});
@@ -195,8 +197,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       ext.mode = mode;
       return ext;
     }
-    if (mode === 'sfu') return new VoiceClient({ rpc, announce, onRemote });
+    // The devices chosen in the pre-join check (the default ones if none or gone).
+    if (mode === 'sfu') return new VoiceClient({ rpc, announce, onRemote, getMic: () => openMic() });
     p2p = new P2pVoice({
+      getMic: () => openMic(),
+      getCam: () => openCam(),
       signal: (to, data) => send({ t: 'signal', to, data }),
       announce,
       onRemote,
@@ -206,6 +211,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     return p2p;
   };
   let client: Voice = makeClient();
+  /**
+   * Join with the microphone on or off. ExtVoice (film page) takes `(quiet, mic)`: `quiet` = no permission tab (silent
+   * rejoins). Calling it as `join(mic)` turned a muted microphone back on after a reconnect on the film page.
+   */
+  const joinVoice = (mic: boolean, quiet = false) => (client instanceof ExtVoice ? client.join(quiet, mic) : client.join(mic));
   const wantKey = `voice:${roomId}`;
   const remember = (on: boolean) => save(wantKey, on ? '1' : '0');
   const micKey = `voiceMic:${roomId}`;
@@ -507,6 +517,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (isMe) {
       if (client.active) items.push(button(`🚪 ${t('voice.leaveVoice')}`, () => leaveButton.click()));
       else if (!joinButton.hidden) items.push(button(`🎙 ${t('voice.join')}`, () => joinButton.click()));
+      if (!isShell) items.push(button(`🎛 ${t('voice.devices')}`, () => void changeDevices()));
       items.push(button(`👤 ${t('voice.editMe')}`, () => document.querySelector<HTMLElement>('.topbar-right .profile-btn')?.click()));
     }
     if (!isMe && room.isHost()) items.push(button(`🚪 ${t('voice.kick')}`, () => room.kick(member), 'danger'));
@@ -521,6 +532,34 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     menu.style.left = `${Math.round(left)}px`;
     menu.style.top = `${Math.round(top)}px`;
     dispatchEvent(new Event('swm-layout'));
+  }
+
+  /** "🎛 Microphone and camera" on myself: the same check window; while in voice the new devices apply at once. */
+  async function changeDevices(): Promise<void> {
+    const before = { mic: load('opt:micDevice') ?? '', cam: load('opt:camDevice') ?? '', speaker: load('opt:speakerDevice') ?? '' };
+    const result = await voiceCheck({ mode: 'settings', canCam: !!client.setCam });
+    if (!result) return;
+    if ((load('opt:speakerDevice') ?? '') !== before.speaker) for (const audio of audios.values()) applySpeaker(audio, load('opt:speakerDevice') ?? '');
+    if (!client.active) return;
+    try {
+      if ((load('opt:micDevice') ?? '') !== before.mic) {
+        if (client.switchMic) await client.switchMic(await openMic());
+        else {
+          // No in-place switch on this path: rejoin with the same microphone state.
+          const on = client.micEnabled;
+          client.leave();
+          await joinVoice(on);
+          client.sync(members, myId());
+        }
+      }
+      if ((load('opt:camDevice') ?? '') !== before.cam && client.camEnabled && client.setCam) {
+        await client.setCam(false);
+        await client.setCam(true);
+      }
+    } catch {
+      flashHint(camButton, t('voice.failed'), 6000);
+    }
+    render();
   }
 
   // M toggles my microphone while I'm in voice (not with push-to-talk; never while typing).
@@ -546,13 +585,23 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       const others = members.filter((m) => m.voice && m.id !== myId()).map((m) => m.name);
       if (!(await confirmIpNotice('voice', others))) return;
     }
+    // Pre-join check (0.9.90.6): devices, "join muted", "join with my camera on" (not on the film page: there the
+    // extension's offscreen page holds the microphone).
+    // The camera button only shows once in voice; the peer-to-peer path is what has cameras.
+    const canCam = !isShell && !!client.setCam;
+    const choice = isShell ? { mic: true, cam: false } : await voiceCheck({ mode: 'join', canCam });
+    if (!choice) return;
     joinButton.disabled = true;
     try {
       client.sync(members, myId());
-      await client.join();
+      await joinVoice(choice.mic);
       remember(true);
       playSound('meJoin');
-      save(micKey, '1');
+      save(micKey, choice.mic ? '1' : '0');
+      if (choice.cam && client.setCam) {
+        if (members.filter((m) => m.voice?.cam).length >= CAM_MAX) flashHint(camButton, t('voice.camFullHint', { n: CAM_MAX, max: CAM_MAX }), 7000);
+        else await client.setCam(true).catch(() => flashHint(camButton, t('voice.camDenied'), 6000));
+      }
       // İlk katılışta kulaklık ipucu (film sesi hoparlörden karşıya gitmesin).
       hint.hidden = false;
       setTimeout(() => (hint.hidden = true), 9000);
@@ -719,7 +768,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       // Yeniden bağlandık (yeni üye kimliği): seste idiysek sessizce yeniden katıl (izin zaten verilmiş).
       // The camera comes back too (it used to stay off after a reconnect: "cameras come and go").
       if (wasActive && available)
-        void client.join(micWas).then(
+        void joinVoice(micWas, true).then(
           async () => {
             client.sync(members, myId());
             if (camWas) await client.setCam?.(true).catch(() => {});

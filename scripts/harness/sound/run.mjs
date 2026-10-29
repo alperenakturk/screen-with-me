@@ -45,6 +45,7 @@ async function person(name, avatar) {
     localStorage.setItem('avatar', a);
     localStorage.setItem('lang', 'tr');
     localStorage.setItem('opt:ipNotice:voice', '1');
+    localStorage.setItem('opt:voiceCheck', 'skip');
   }, [name, avatar]);
   await page.goto(`${SITE}/r/${room}#back`);
   await page.waitForSelector('#people-count');

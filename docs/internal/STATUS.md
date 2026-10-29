@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.90.5**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.90.6**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -68,7 +68,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Done in 0.9.90.5: every camera its own window (drag / resize / double click back in line), ⊞ line up, ↺ default,
   ▣ one window, pill with 🎙 / 📷, size presets and "hide (for me only)" in the person menu, pin myself, a
   "reconnecting" tile, fullscreen fade. Still open: the pre-join check below.
-- [ ] **0.9.90.6 pre-join voice check** (rest of layout 2): small window before joining voice: camera preview, mic
+- [x] **0.9.90.6 pre-join voice check** (rest of layout 2): small window before joining voice: camera preview, mic
   level, which mic / camera / speaker, "join muted" / "join with camera", "don't ask again".
 - [x] **0.9.90.2 sound effects** (owner, 29 Oct 2026; proposal page with three families
   https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy): owner chose family A (warm pad, like the intro) for voice + room
@@ -92,6 +92,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
+- **0.9.90.6:** voice on the site 58/58 (pre-join window: level bar moves, device lists, camera preview, "join
+  muted" really joins muted, "🎛" switches the mic in voice and the other side keeps hearing), voice on the film page
+  28/28 (permission tab path still opens: caught a `join(quiet, mic)` mix-up there), sound effects harness green.
 - **0.9.90.5:** unit 197/197, voice on the site 53/53 (free tiles: own window, drag, resize both ways, place
   remembered per person, size presets, hide for me + "👁 1", line up, one-window switch, fullscreen corner, the tile
   never vanishes during a reconnect — fails without the fix), voice on the film page 28/28 (each tile an island),
