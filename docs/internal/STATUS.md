@@ -98,8 +98,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   avatar circle; only 🎙 / 📷 in the bottom bar; seats a little bigger.
 - [x] **0.9.91** (owner's "go up one", 29 Oct 2026): right rail ends with the video card; endless Shorts feed on the
   YouTube search API; line icons for mic / camera / stream instead of emojis.
-- [ ] **Bottom bar / player controls redesign — waiting for the owner's choice** (proposal page with alternatives:
-  YouTube's own controls back vs ours, the film page's two bars and the video that shrinks to make room for ours).
+- [ ] **Bottom bar / player controls redesign — waiting for the owner's choice** (proposal page
+  https://claude.ai/artifact/SjcRcwoKd8n93W1cK4c6TC: A = their own bar + our vertical dock on the right (recommended),
+  B = their bar at the bottom + ours as a top strip, C = keep the one remote and add what the API allows; plus a
+  redesigned bar grouped as Watch / Talk / Together with line icons. Shorts stays as it is).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and

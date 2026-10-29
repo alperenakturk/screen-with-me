@@ -61,7 +61,8 @@ Live: 0.9.91 (endless Shorts feed, line icons, right rail ends with the video ca
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
-0. **The owner chooses a bottom-bar / player-controls design** from the proposal page (YouTube's own controls back or
+0. **The owner chooses a bottom-bar / player-controls design** from the proposal page https://claude.ai/artifact/SjcRcwoKd8n93W1cK4c6TC (A their bar + our
+   dock on the right, recommended; B their bar + our top strip; C one remote + more API features; YouTube's own controls back or
    ours, film page double bars and the shrinking video); build the chosen one next.
 1. **Shorts step 2 (rest):** measure in a real browser (needs real YouTube playback, the cloud's headless Chromium
    can't) how far apart everyone lands on the next short, then decide on a hidden preload player; then the endless
