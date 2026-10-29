@@ -56,24 +56,18 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
-## Next up (saved 29 Oct 2026, after 0.9.90.3 — continue in this order)
-Live: 0.9.90.3 (sound effects 0.9.90.2; one remote: on the site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is
-reachable from the cloud sandbox again (29 Oct 2026; `*.googlevideo.com` still blocked, headless Chromium can't decode
-YouTube's H.264 anyway). The same queue is in `docs/internal/STATUS.md` "Task queue".
+## Next up (saved 29 Oct 2026, after 0.9.90.4 — continue in this order)
+Live: 0.9.90.4 (YouTube search in the link box; sound effects 0.9.90.2; one remote: on the site since 0.9.90.1, on the
+film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
+`*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
+`docs/internal/STATUS.md` "Task queue".
 1. **Camera layout 2 "free tiles"** (owner's choice): person menu adds pin myself / hide anyone / size presets,
    device choice before joining voice, a "reconnecting" tile.
 2. **Shorts step 2:** preload the next short in a hidden player, everyone lands on the next short together (measure
-   the gap), paste many links at once.
-3. **YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). The owner is
-   creating the key: Google Cloud project → enable "YouTube Data API v3" → API key restricted to that API → GitHub repo
-   Secrets `YOUTUBE_API_KEY` (never pasted in chat; the owner just says "ekledim"). Plan: the Worker calls `search.list`
-   (key stays on the server; the deploy job passes the secret to the Worker), results cached per query, a friendly
-   "search is full for today, paste a link" when the quota (10 000 units/day, 100 per search ≈ 100 searches/day) runs
-   out; privacy policy gets the "uses YouTube API Services" + Google privacy policy link. Quota increase = Google's
-   YouTube API compliance audit, done by the owner before 1.0 together with the domain and terms of use. Then the
-   Shorts endless feed ("more Shorts about …").
-4. ~~Sound effects~~ done in 0.9.90.2 (see "Sound effects").
-5. **Before 1.0:** ROADMAP §2–7; remind the owner of the Brave/Edge test right before the store submission.
+   the gap), paste many links at once; then the endless feed ("more Shorts about …", uses the YouTube search API).
+3. ~~YouTube search~~ done in 0.9.90.4 (see "YouTube search"). ~~Sound effects~~ done in 0.9.90.2.
+4. **Before 1.0:** ROADMAP §2–7 (incl. the YouTube API compliance audit for a higher quota, by the owner, with the
+   domain and terms of use); remind the owner of the Brave/Edge test right before the store submission.
 
 ## Plan in one screen (details and checklists: `docs/internal/ROADMAP.md`)
 **Before 1.0** (we are at 0.9.8x; every version moves one of these forward):
@@ -172,6 +166,20 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   used to take 1–2 s), phones swipe up/down on the stage (≥60 px, mostly vertical, ≤0.8 s; not on chat / emoji bar),
   and the wheel works over the video too (our click catcher sits over the YouTube frame since "one remote"). Next
   ideas in `STATUS.md`. Test: `scripts/e2e/shorts.mjs`.
+- **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
+  words instead of a link + Enter in the link box → `GET /api/youtube/search?q&hl` (only on Enter, never while
+  typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with
+  `wrangler deploy --secrets-file`; without it the answer is `{error:'off'}`, as locally and in CI), calls search.list
+  (`type=video`, `videoEmbeddable`, 12 results) + videos.list for durations = 101 of the 10 000 free daily units
+  (≈ 100 searches/day). Same words + language are answered from `caches.default` for 24 h; a quota error is remembered
+  for 10 min (refused calls cost nothing, so search reopens by itself after YouTube's midnight-Pacific reset); only
+  calls that reach YouTube count against `SEARCH_LIMIT` (10/min per IP hash); a foreign `Origin` gets 403. Answers:
+  `{items:[{id,title,channel,duration,live}]}` or `{error: quota|busy|off|failed}` (each has a friendly note; links
+  always still work). The thumbnail is built from the id (`i.ytimg.com`, already in the CSP); the page also caches
+  full answers in memory. A row adds to the queue (plays at once in an empty room), "▶ Şimdi aç" loads it. Privacy
+  policy has a "YouTube search" section (YouTube API Services, YouTube Terms, Google privacy policy). A quota increase
+  needs Google's API compliance audit (owner, before 1.0). Test: `scripts/e2e/search.mjs` (live: real results or
+  `quota`).
 - **Media kinds:** `youtube`, `html5` and `test` play on the site; `page` (any other web address) plays on the film
   site itself, everyone in their own tab, with the room overlay opened by the extension (see "Shell").
 - **Extension rules:** does nothing while not in a room (frames check `storage.session` `sessions`; sleeps if there is

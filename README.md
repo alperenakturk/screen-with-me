@@ -23,7 +23,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 Send a link, and everyone watches the same second. If anyone pauses, seeks or changes the speed, it happens
 for everyone. Chat, reactions, pins and a shared queue sit around the video.
 
-- **YouTube or a video file** → plays right on the site, nothing to install.
+- **YouTube or a video file** → plays right on the site, nothing to install. No link at hand? Type words and search YouTube from the same box.
 - **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → the tab goes to that site and,
   with the browser extension, the **room itself** (exactly the site's room page) opens over it, with the video
   sitting in the room's player area. Works on sites that forbid being framed, too.
@@ -47,6 +47,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 |---|---|
 | 🔗 **One link, no accounts** | Name + avatar once (drawn themed characters and film / series / anime / game parodies), remembered by the browser. The 👤 menu (top right) holds name, avatar, theme and the session recap. |
 | 📱 **Shorts view** | Open a YouTube Shorts link and the room turns vertical: the video in the middle, friends sitting on both sides. Messages pop up as bubbles from the sender's avatar, reactions rise from it. ↑ / ↓ (or ▲▼, mouse wheel) go to the previous / next short for everyone; 🔁 loop replays a finished short. Queue, chat history and settings stay one click away in the room view. |
+| 🔎 **YouTube search** | Type words instead of a link and press Enter: YouTube results open under the box; tap one to add it to the queue (it plays at once when nothing is playing) or "▶ Play now". The search key stays on our server. |
 | 🎵 **Queue & voting** | Add, reorder, play now; 👍 votes reorder the queue. Auto-next can be turned off ("Start next" card instead). |
 | 🎙 **Voice & video chat** | Press "Join voice" and talk while you watch: mute with one click or use push-to-talk (hold V). The speaker's avatar glows, and a small bar under 🎙 shows your microphone is picking you up. 📷 adds a small camera: friends' cameras show up in the voice card or in a floating window you can drag and resize in both directions, with mic and camera buttons under them; in fullscreen they move onto the video. Click anyone to change their volume or mute them just for you, show their camera big, or (host) remove them from the room. Peer-to-peer and always encrypted (the server never hears it), up to 6 people; only people who joined voice can hear you. Because it is direct, the people in voice can see each other's IP address, and the room says so before you join. Works on film pages too: microphone and camera are asked once for ScreenWithMe (not for the film site), voice survives a page reload, and, if you turn it on in Settings, the film gets quieter while someone really talks (clicks and short noises don't count). |
 | 📺 **Screen sharing** | Show your screen, a window, a tab or your camera to the room (games, photos, "look at this", not for films). One stream per room, up to 4 viewers who choose to watch, 720p, peer-to-peer. It opens in a corner of the video and can be enlarged. Choose "sharp text" (slides, sites) or "smooth" (games). The limits are always shown ("Watching 3/4"). The host can stop a stream or allow only themselves to stream. |

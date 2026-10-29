@@ -3,6 +3,7 @@ import { GAME_ID_PATTERN } from '@swm/shared/games/protocol';
 import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { IP_HEADER } from './ip.ts';
+import { youtubeSearch } from './youtube.ts';
 
 export { Draw } from './draw.ts';
 export { Game } from './game.ts';
@@ -55,6 +56,13 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/health') return new Response('ok');
+
+    // YouTube search from the room's link box (the API key never leaves the Worker). Pages of other sites may not
+    // use it as their free search: a browser sends their `Origin`.
+    if (url.pathname === '/api/youtube/search') {
+      if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
+      return youtubeSearch(request, url, env, () => ipKey(request));
+    }
 
     // Kayıtlı odalar listesi için küçük bilgi / kayıt kaldırma (Durable Object cevaplar).
     const info = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(info|unsave)$/);
