@@ -1412,6 +1412,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // Deliğin içinde yine görünmesi gerekenler: kartlar, tam ekran kontrolleri, uçuşan emojiler…
       for (const child of wrap.children) {
         if (child.id === 'player') continue;
+        // Free camera tiles (0.9.90.5): their box covers the video and lets clicks through; each tile and the pill is
+        // its own island.
+        if (child.classList.contains('free')) {
+          for (const node of child.querySelectorAll<HTMLElement>('[data-island]')) {
+            const r = node.getBoundingClientRect();
+            if (r.width > 0) add(islands, r.left, r.top, r.right, r.bottom);
+          }
+          continue;
+        }
         // Our catcher takes the clicks on the video only while ours is the film's only remote (click = play/pause,
         // double click = leave fullscreen); otherwise the film player is clicked through the hole.
         if (child.id === 'fs-catcher' && !(fake && filmRemote())) continue;

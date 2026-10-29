@@ -8150,3 +8150,192 @@ button.together-person:focus-visible .together-name {
   border-color: var(--accent);
   color: var(--on-accent);
 }
+
+/* ==== 0.9.90.5: camera layout 2 "free tiles" (owner's choice; ui/cam-float.ts). Every camera is its own small
+   window; the box covers the page (or the video in fullscreen) and lets clicks through, only the tiles and the pill
+   take them. ==== */
+.voice-cams.floating.free {
+  inset: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  pointer-events: none;
+  cursor: auto;
+}
+
+.voice-cams.floating.free.dragging {
+  opacity: 1;
+}
+
+.voice-cams.free .cam-grid {
+  display: contents;
+}
+
+.voice-cams.free.folded .cam-grid {
+  display: none;
+}
+
+.voice-cams.free .cam-tile {
+  position: absolute;
+  aspect-ratio: auto;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.14), 0 12px 30px rgb(0 0 0 / 0.5);
+}
+
+.voice-cams.free .cam-tile.speaking {
+  box-shadow: 0 0 0 2px var(--ok), 0 0 14px var(--ok), 0 12px 30px rgb(0 0 0 / 0.5);
+}
+
+.voice-cams.free .cam-tile.dragging {
+  cursor: grabbing;
+  opacity: 0.92;
+}
+
+.cam-tile-resize {
+  display: none;
+}
+
+.voice-cams.free .cam-tile-resize {
+  display: block;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background:
+    linear-gradient(135deg, transparent 55%, rgb(255 255 255 / 0.75) 55% 62%, transparent 62% 72%,
+      rgb(255 255 255 / 0.75) 72% 79%, transparent 79%);
+}
+
+.voice-cams.free .cam-tile:hover .cam-tile-resize,
+.voice-cams.free .cam-tile.dragging .cam-tile-resize {
+  opacity: 1;
+}
+
+/* The pill: count, hidden cameras, line up, default, one window, minimize, back to the card + mic / camera. */
+.voice-cams.free .cam-pill {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.45);
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.voice-cams.free .cam-pill.dragging {
+  cursor: grabbing;
+}
+
+.voice-cams.free .cam-pill .cam-bar {
+  display: flex;
+  padding: 0;
+}
+
+.voice-cams.free .cam-pill .cam-controls:not([hidden]) {
+  display: flex;
+  padding-top: 0;
+  gap: 6px;
+}
+
+.voice-cams.free .cam-pill .cam-ctl {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+}
+
+.voice-cams.free.folded .cam-pill .cam-controls {
+  display: none;
+}
+
+.voice-cams.free.in-fs .cam-dock-btn,
+.voice-cams:not(.free) :is(.cam-lineup, .cam-reset) {
+  display: none;
+}
+
+.cam-hidden-btn {
+  width: auto;
+  padding: 0 7px;
+  font-size: 12px;
+}
+
+.cam-hidden-btn[hidden] {
+  display: none;
+}
+
+/* A person whose connection dropped: the tile stays a moment. */
+.cam-tile.reconnecting video {
+  filter: grayscale(1) brightness(0.45);
+}
+
+.cam-note {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.8);
+}
+
+/* Person menu: size presets (free layout). */
+.person-pop-sizes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  font-size: 13px;
+}
+
+.person-pop-sizes > span {
+  flex: 1;
+}
+
+.person-pop-size {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.person-pop-size.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+/* In fullscreen, when the controls fade, the cameras get a little see-through (they never vanish). */
+.voice-cams.free :is(.cam-tile, .cam-pill) {
+  transition: opacity 0.3s;
+}
+
+.theater:is(:fullscreen, .fake-fs).idle .voice-cams.free .cam-tile {
+  opacity: 0.85;
+}
+
+.theater:is(:fullscreen, .fake-fs).idle .voice-cams.free .cam-pill {
+  opacity: 0.3;
+}

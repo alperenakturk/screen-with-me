@@ -56,13 +56,13 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
-## Next up (saved 29 Oct 2026, after 0.9.90.4 — continue in this order)
-Live: 0.9.90.4 (YouTube search in the link box; sound effects 0.9.90.2; one remote: on the site since 0.9.90.1, on the
-film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
+## Next up (saved 29 Oct 2026, after 0.9.90.5 — continue in this order)
+Live: 0.9.90.5 (camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
-1. **Camera layout 2 "free tiles"** (owner's choice): person menu adds pin myself / hide anyone / size presets,
-   device choice before joining voice, a "reconnecting" tile.
+1. **Pre-join voice check** (rest of camera layout 2): mic / camera / speaker choice, "join muted / with camera",
+   "don't ask again" (free tiles, hide, sizes, reconnecting tile shipped in 0.9.90.5).
 2. **Shorts step 2:** preload the next short in a hidden player, everyone lands on the next short together (measure
    the gap), paste many links at once; then the endless feed ("more Shorts about …", uses the YouTube search API).
 3. ~~YouTube search~~ done in 0.9.90.4 (see "YouTube search"). ~~Sound effects~~ done in 0.9.90.2.
@@ -72,7 +72,8 @@ film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud san
 ## Plan in one screen (details and checklists: `docs/internal/ROADMAP.md`)
 **Before 1.0** (we are at 0.9.8x; every version moves one of these forward):
 1. **Polish existing features** (the user will walk through each one). Owner's list for the full pass before 1.0
-   (ROADMAP §1 "Full pass before 1.0"): **sound effects** (done in 0.9.90.2) and **camera window settings** (position, size, behaviour of the tiles).
+   (ROADMAP §1 "Full pass before 1.0"): **sound effects** (done in 0.9.90.2) and **camera window settings** (free tiles in
+   0.9.90.5; pre-join device check next).
 2. **Zero known bugs:** every bug gets an issue + a regression test; flaky tests are fixed, not ignored.
 3. **Security hardening:** threat model, protocol/limits review, CSP and headers, extension permissions, dependency
    and secret scanning, `SECURITY.md`.
@@ -496,6 +497,19 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   (`opt:hideSelfCam`, others still see me), and for the host "🚪 remove from the room" (same kick + confirm as the
   people list). In the shell the floating window is `data-island` (visible over the hole); while
   dragging, the `swm-layout` event updates the island immediately. The old `#cam-dock` is gone.
+  **0.9.90.5 camera layout 2 "free tiles" (owner's choice, proposal https://claude.ai/artifact/UPW29vM3kkGvWKD9hkBTrm):**
+  floating / fullscreen cameras default to `opt:camLayout` = `free`: the box (`.voice-cams.free`) covers the page or
+  the video and lets clicks through; every tile is its own window (drag, corner `.cam-tile-resize` both ways, double
+  click = back in line, touched tile comes to the front); places per person (`tile.dataset.person` = name|avatar) in
+  `camTiles:spot` / `camTiles:fsSpot` (at most 30, no x/y = automatic column from the video's top-right corner). A
+  pill (`.cam-pill`, own spot `camPill:spot` / `camPill:fsSpot`) holds 📷 N, "👁 N" (hidden cameras), ⊞ line up (keeps
+  widths), ↺ reset, ▣ / ⊡ switch to the old single window (`group`), −, ⤓ and the 🎙 / 📷 buttons. In the shell the box
+  is not an island, each tile and the pill are (`room.ts` `reportLayout` reads `.free` children inside the hole). Person
+  menu: in the free layout size presets (small / medium / large, `camWindow.setSize`) instead of "show big"; "show
+  big" now also works on myself; "🙈 hide their camera (for me only)" (`localStorage` `camHidden`, back via the menu or
+  "👁 N"). A person whose connection drops keeps their tile for 12 s with "📶 yeniden bağlanıyor" (`ghosts` in
+  `ui/voice.ts`; only when the member left the room, not on camera off / leaving voice). In fullscreen, idle controls
+  make tiles 85 % and the pill 30 % opaque. Tests: `voice/run.mjs` (53 checks), `voice/shell.mjs`.
   **On the film page (0.9.65):** cameras run in offscreen (`voice` `cam`; without permission `mic.html?cam=1`);
   incoming streams + my own preview (`me`) reach the site in the overlay through a **local WebRTC bridge**
   (`{op:'loop'}`: offscreen makes the offer, `cams` = mid → member; the bridge restarts on every change; no `data` = no
