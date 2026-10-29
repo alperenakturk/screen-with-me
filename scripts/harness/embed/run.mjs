@@ -261,6 +261,13 @@ check(!!holed, 'video bulundu: katmanda videonun yeri delik');
   check(flash.frames > 0 && flash.worst < 0.3, 'siteden film sayfasına geçerken film sitesi hiçbir karede görünmedi (flaş yok)', JSON.stringify(flash));
 }
 check(await a.evaluate(`!!document.querySelector('[data-swm-focus]') && document.documentElement.classList.contains('swm-focus')`), 'film videosu deliğe yerleşti');
+{
+  // 0.9.90: the room view fits the window on the film page (scrolling moved the hole, the film lagged behind), and
+  // 🏠 / 👁 / 🎯 sit together in the middle of the top bar.
+  const fit = await a.evalFrame('shell=1', `(() => { const se = document.scrollingElement; const g = document.querySelector('.shell-tools')?.getBoundingClientRect(); const kids = [...document.querySelectorAll('.shell-tools .nav-link:not([hidden])')].map((b) => b.className); const mid = g ? (g.left + g.right) / 2 : 0; return { scroll: se.scrollHeight - innerHeight, kids, mid: Math.round(mid), w: innerWidth }; })()`);
+  check(fit && fit.scroll <= 1, 'film sayfasında oda görünümü pencereye sığıyor (kaymıyor)', JSON.stringify(fit));
+  check(fit && fit.kids.length >= 2 && Math.abs(fit.mid - fit.w / 2) < fit.w * 0.15, '🏠 / 👁 / 🎯 üst çubuğun ortasında', JSON.stringify(fit));
+}
 await a.sleep(800);
 await a.shot('1-oda-gorunumu');
 
