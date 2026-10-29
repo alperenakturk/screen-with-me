@@ -22,6 +22,7 @@ import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
+import { playSound } from '../sound.ts';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
@@ -182,6 +183,10 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   let offset = 0;
   let choices: string[] = [];
   let lastPhase = '';
+  let lastHint = '';
+  let lastTick = 0;
+  /** My guess was "close": its echo in the guess list plays no second sound. */
+  let closeAt = 0;
   const players = $('#draw-players');
   const overlay = $('#draw-overlay');
   const input = $<HTMLInputElement>('#draw-input');
@@ -248,6 +253,10 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
       );
     }
     input.placeholder = s.phase !== 'draw' ? t('draw.chat') : s.drawer === me || s.players.find((p) => p.id === me)?.guessed ? t('draw.secretChat') : t('draw.guessHere');
+    // Sounds: my turn to draw, and a new hint letter (not for the drawer, who sees the word).
+    if (lastPhase !== '' && s.phase !== lastPhase && s.phase === 'choose' && s.drawer === me) playSound('roundMine');
+    if (s.phase === 'draw' && lastPhase === 'draw' && !s.word && s.hint !== lastHint) playSound('hint');
+    lastHint = s.hint;
     if (s.phase !== lastPhase) {
       if (s.phase === 'draw') line('system', t('draw.isDrawing', { name: drawerName }));
       if (s.phase === 'reveal' && s.word) line('system', `${t('draw.wordWas')} ${s.word}`);
@@ -271,6 +280,10 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     bar.style.width = `${Math.min(100, (left / total) * 100)}%`;
     bar.classList.toggle('low', s.phase === 'draw' && left < 15_000);
     timer.textContent = `${Math.ceil(left / 1000)}`;
+    // The last 5 seconds of a drawing round tick once a second.
+    const secs = Math.ceil(left / 1000);
+    if (s.phase === 'draw' && secs >= 1 && secs <= 5 && secs !== lastTick) playSound('tick');
+    lastTick = s.phase === 'draw' && secs <= 5 ? secs : 0;
   }
   const ticker = window.setInterval(tick, 250);
 
@@ -335,12 +348,20 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
           break;
         case 'guess':
           line(m.secret ? 'secret' : '', el('b', {}, `${m.name}: `), m.text);
+          // Wrong guesses while drawing: mine quietly, others' very quietly (at most one every 2 s).
+          if (!m.secret && state?.phase === 'draw' && state.drawer !== m.from) {
+            if (m.from !== me) playSound('guessOther');
+            else if (Date.now() - closeAt > 1000) playSound('guessWrong');
+          }
           break;
         case 'correct':
           line('correct', t('draw.correct', { name: m.name, points: m.points }));
+          playSound(m.from === me ? 'guessRight' : 'otherRight');
           break;
         case 'close':
           line('close', t('draw.close', { text: m.text }));
+          closeAt = Date.now();
+          playSound('close');
           break;
         case 'error':
           if (m.code === 'version' || m.code === 'full') {

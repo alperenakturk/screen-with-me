@@ -7,6 +7,7 @@ import { SpeechDetector } from '@swm/shared/speech-detector';
 import { P2pVoice } from '@swm/shared/voice-p2p';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
+import { playSound } from '../sound.ts';
 import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
@@ -467,6 +468,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       client.sync(members, myId());
       await client.join();
       remember(true);
+      playSound('meJoin');
       save(micKey, '1');
       // İlk katılışta kulaklık ipucu (film sesi hoparlörden karşıya gitmesin).
       hint.hidden = false;
@@ -483,6 +485,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   micButton.addEventListener('click', () => {
     if (ptt) return;
     client.setMic(!client.micEnabled);
+    // Confirms what isn't visible when M is pressed while watching (privacy: is my microphone really off?).
+    playSound(client.micEnabled ? 'micOn' : 'micOff');
     // Remembered for this room: a reload or a reconnect must never switch a muted microphone back on.
     save(micKey, client.micEnabled ? '1' : '0');
     render();
@@ -492,6 +496,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (!ptt || !client.active || talking === on) return;
     talking = on;
     client.setMic(on);
+    playSound(on ? 'pttDown' : 'pttUp');
     render();
   }
   const typing = (target: EventTarget | null) =>
@@ -537,6 +542,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
   });
   leaveButton.addEventListener('click', () => {
+    if (client.active) playSound('meLeave');
     client.leave();
     remember(false);
     render();

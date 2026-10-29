@@ -38,7 +38,7 @@ implement, test, ship.
   - [x] Scheduled start: currently meaningless; make it clear and well designed (0.9.87 "Film saati").
   - [x] ⚙️ next to the profile picture; remove the other settings entry points (tab row, profile menu) (0.9.87).
   - [x] YouTube player: controls linger after the mouse leaves; YouTube volume control doesn't work (0.9.90.1, one remote).
-  - [x] **New feature (0.9.90.2):** YouTube search inside the app (like Watch2Gether): type in the top box, pick from results.
+  - [x] **New feature (0.9.90.4):** YouTube search inside the app (like Watch2Gether): type in the top box, pick from results.
 - **Feedback round 2** (owner, 28 Oct 2026; scheduled as 0.9.88–0.9.89 in `STATUS.md`):
   - [x] Send images in chat (0.9.88).
   - [x] Links in chat are clickable (0.9.88); a "you are leaving this page" question first; they open in a new tab (our room
@@ -53,7 +53,7 @@ implement, test, ship.
   - [x] "Neden?" bubble stayed too long; bubbles close on click / Esc (0.9.87).
   - [x] Rooms are independent: name and avatar set in one room never change another room (0.9.88).
 - **Full pass before 1.0** (owner's request, 28 Oct 2026: "we will go through all of it before 1.0"):
-  - [ ] **Sound effects:** voice join / leave, game events (moves, wins, round start, correct guess…), other room
+  - [x] **Sound effects** (0.9.90.2, CLAUDE.md "Sound effects"): voice join / leave, game events (moves, wins, round start, correct guess…), other room
     events; short, pleasant, generated or licensed, with a volume / off setting.
   - [ ] **Camera window settings:** position, size and behaviour of the camera tiles (presets, snap to corners,
     per-person sizes…); revisit everything about cameras together.

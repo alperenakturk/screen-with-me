@@ -27,6 +27,7 @@ import {
   type ServerMessage,
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
+import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { el } from './dom.ts';
 import { lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -72,6 +73,7 @@ import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
+import { playSound, setFilmPlaying } from './sound.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
@@ -304,6 +306,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                   <input id="fs-volume" type="range" min="0" max="100" step="1" value="100" />
                 </div>
                 <button id="fs-cc" type="button" class="fs-btn fs-cc" hidden>CC</button>
+                <button id="fs-film-skin" type="button" class="fs-btn fs-film-skin" aria-pressed="false" hidden>⚙</button>
                 <div class="reaction-bar fs-reactions" role="group"></div>
                 <form id="fs-chat" class="fs-chat">
                   <input id="fs-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" />
@@ -548,6 +551,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.showReactions"></b><span data-i18n="settings.showReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-reactions" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
+              <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.closeAds"></b><span data-i18n="settings.closeAds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-closeads" /></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.duck"></b><span data-i18n="settings.duck.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-duck" /></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.fsFit"></b></span>
@@ -649,6 +654,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let status: ConnectionStatus = 'connecting';
   let errorText: (() => string) | null = null;
   let roomState: PlaybackState | null = null;
+  setFilmPlaying(() => !!roomState?.item && !roomState.paused);
+  const joinFilter = new JoinFilter();
 
   const send = (message: ClientMessage) => connection.send(message);
   // Üst çubukta odanın adı (kayıtlı odada adı, değilse kodu) ve kaç kişi olduğu.
@@ -968,10 +975,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         renderWaiting();
         break;
       }
-      case 'settings':
+      case 'settings': {
+        // "Film time" reached: the server clears the plan when the time comes (a host clearing it early is quiet).
+        const planned = roomSettings.startsAt;
+        if (planned !== undefined && message.settings.startsAt === undefined && clock.now() >= planned - 2000) playSound('filmTime');
         roomSettings = message.settings;
         renderWaiting();
         break;
+      }
       case 'bans':
         people.setBans(message.bans);
         break;
@@ -1026,6 +1037,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Tam ekranda (ya da sağ panel gizliyken) sohbet paneli görünmez; mesaj videonun köşesinde belirir.
         if (fullscreen.isActive() || sideHidden) toasts.show(withAvatar(by), text, by.id === myId);
         if (sideHidden && by.id !== myId) side.unread();
+        // A sound only when the message is nowhere on my screen (another tab, or another panel tab is open).
+        const seen = !document.hidden && (fullscreen.isActive() || sideHidden || shortsOn || tabs.active === 'chat');
+        if (by.id !== myId && !seen) playSound('chat');
         break;
       }
       case 'rtc':
@@ -1250,9 +1264,49 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Film çerçevesindeki motor sunucu saatini sitenin ölçümünden alır.
   setInterval(() => film?.setClock(clock.now() - Date.now(), clock.synced), 2000);
 
-  /** Film sayfasında tam ekranda video kontrol çubuğunun üstünde mi dursun (altyazı hiç örtülmez)? Varsayılan: ekranı kaplar. */
-  function fitAbove(): boolean {
+  /** The person's choice: in fullscreen on the film page the video stays above our bar (subtitles never covered). */
+  function fitAbovePref(): boolean {
     return load('opt:fsFit') === 'above';
+  }
+  /**
+   * "⚙ Filmin ayarları" (0.9.90.3): in fullscreen the film player's own bar is shown again (subtitles, quality); our
+   * bar stays and the video sits above it so both can be used. Ends with the fullscreen.
+   */
+  let filmControls = false;
+  /** In fullscreen on the film page our bar is the film's only remote (its player's own bar is hidden). */
+  function filmRemote(): boolean {
+    return film !== null && $('#theater').classList.contains('fake-fs') && film.skin() === 'known' && !filmControls;
+  }
+  /**
+   * Video above our bar in fullscreen: the person's choice, or the film player's own bar is visible (a custom player
+   * we can't hide, an older extension, or "⚙ Filmin ayarları") — then neither bar covers the other.
+   */
+  function fitAbove(): boolean {
+    return fitAbovePref() || (film !== null && (film.skin() !== 'known' || filmControls));
+  }
+  let skinHidden = false;
+  /** Tell the film frame whether to hide its player's bar (again every second: the film's frame may change). */
+  function applyFilmSkin(force = false): void {
+    const hide = filmRemote();
+    if (hide === skinHidden && !(hide && force)) return;
+    skinHidden = hide;
+    film?.control({ action: 'skin', hide });
+  }
+  setInterval(() => {
+    if (film === null) return;
+    applyFilmSkin(true);
+    renderFilmSkinButton();
+    // The film's status may have changed what kind of player it is (hole above our bar or not).
+    if ($('#theater').classList.contains('fake-fs')) reportLayout();
+  }, 1000);
+  function renderFilmSkinButton(): void {
+    const button = $<HTMLButtonElement>('#fs-film-skin');
+    button.hidden = film === null || film.skin() !== 'known';
+    button.classList.toggle('on', filmControls);
+    button.setAttribute('aria-pressed', String(filmControls));
+    const text = t(filmControls ? 'filmSettingsOff' : 'filmSettings');
+    button.title = text;
+    button.setAttribute('aria-label', text);
   }
 
   /** Kabuktan sitedeki odaya dön (katman kalkar). Filmdeyken diğerlerine de haber gider: onlara "sen de dön" sorulur. */
@@ -1308,6 +1362,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     yes.addEventListener('click', returnToRoom);
     no.addEventListener('click', () => card.remove());
     $('.player-wrap').append(card);
+    playSound('homeCall');
     clearTimeout(homeAskTimer);
     homeAskTimer = window.setTimeout(() => card.remove(), 20_000);
   }
@@ -1356,7 +1411,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       };
       // Deliğin içinde yine görünmesi gerekenler: kartlar, tam ekran kontrolleri, uçuşan emojiler…
       for (const child of wrap.children) {
-        if (child.id === 'player' || child.id === 'fs-catcher') continue;
+        if (child.id === 'player') continue;
+        // Our catcher takes the clicks on the video only while ours is the film's only remote (click = play/pause,
+        // double click = leave fullscreen); otherwise the film player is clicked through the hole.
+        if (child.id === 'fs-catcher' && !(fake && filmRemote())) continue;
         if (idle && child.id === 'fs-controls') continue;
         if (child.id === 'reactions-layer') {
           // Uçuşan emoji yükselirken de görünsün: bütün yolu (yukarı ~240 px, yana biraz) tek adacık.
@@ -1555,7 +1613,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if ((event.target as Element | null)?.closest?.('a[href]')) postToExtension({ type: 'open-ok' });
     }, true);
     const fit = $<HTMLSelectElement>('#opt-fsfit');
-    fit.value = fitAbove() ? 'above' : 'cover';
+    fit.value = fitAbovePref() ? 'above' : 'cover';
     fit.addEventListener('change', () => {
       save('opt:fsFit', fit.value === 'above' ? 'above' : 'cover');
       fullscreen.poke();
@@ -1897,13 +1955,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     keepControls: fitAbove,
     theater: $('#theater'),
     getPlayer: () => current?.player ?? null,
-    // The film page's player keeps its own controls for now (next release); our remote is for the site's players.
+    // In the window the film page's player keeps its own controls; in fullscreen ours hides them (applyFilmSkin).
     ownControls: () => film === null,
+    onActive: (on) => {
+      if (!on) filmControls = false;
+      applyFilmSkin();
+      renderFilmSkinButton();
+      reportLayout();
+    },
     send,
     onSkip: skip,
     onRate: requestRate,
   });
   const toasts = createToasts($('#toasts'), $('#fs-chat'));
+  $('#fs-film-skin').addEventListener('click', () => {
+    filmControls = !filmControls;
+    applyFilmSkin();
+    renderFilmSkinButton();
+    fullscreen.poke();
+    reportLayout();
+  });
   let sideHidden = !isShell && load('opt:sideHidden') === '1';
   // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu
   // tarayıcıda hatırlanır. Film sayfasındaki katmanda yok (orada yerleşimi delik belirler).
@@ -2117,7 +2188,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
 
   function setMembers(next: Member[], nextHost: string | null, announce: boolean): void {
-    if (announce) {
+    if (!announce) joinFilter.seed(next);
+    else {
+      membersSounds(next);
       const before = new Set(members.map((m) => m.id));
       const after = new Set(next.map((m) => m.id));
       for (const m of next) if (!before.has(m.id) && m.id !== myId) addActivity(() => t('joined', { name: withAvatar(m) }));
@@ -2135,6 +2208,32 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     members = next;
     hostId = nextHost;
     renderMembers();
+  }
+
+  /**
+   * Sounds of member changes (CLAUDE.md "Sound effects"): someone really new in the room; voice join / leave of others
+   * only while I'm in voice; someone else's stream starting, and the end of the stream I'm watching. My other tab
+   * (same name + avatar) never counts as someone else.
+   */
+  function membersSounds(next: Member[]): void {
+    if (joinFilter.update(next, myId, Date.now()) > 0) playSound('roomJoin');
+    const meNow = next.find((m) => m.id === myId);
+    const meBefore = members.find((m) => m.id === myId);
+    const mine = meNow ? personKey(meNow) : null;
+    const before = new Map(members.map((m) => [m.id, m]));
+    for (const m of next) {
+      const old = before.get(m.id);
+      if (!old || m.id === myId || personKey(m) === mine) continue;
+      if (meNow?.voice && meBefore?.voice) {
+        if (m.voice && !old.voice) playSound('voiceJoin');
+        if (!m.voice && old.voice) playSound('voiceLeave');
+      }
+      if (m.live && !old.live) playSound('streamStart');
+    }
+    for (const old of members) {
+      if (!old.live || old.id === myId || !meBefore?.watching) continue;
+      if (!next.find((m) => m.id === old.id)?.live) playSound('streamStop');
+    }
   }
 
   /** Odada benden başka kimse yok: senkron düğmeleri (herkesi eşitle, senkron testi) 2+ kişiyle anlamlı. */

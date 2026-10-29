@@ -31,6 +31,8 @@
     "./sticker-file": "./src/sticker-file.ts",
     "./voice": "./src/voice.ts",
     "./voice-p2p": "./src/voice-p2p.ts",
+    "./sound-policy": "./src/sound-policy.ts",
+    "./sounds": "./src/sounds.ts",
     "./youtube-search": "./src/youtube-search.ts"
   },
   "scripts": {
