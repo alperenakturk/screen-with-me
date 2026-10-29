@@ -126,6 +126,19 @@ export async function createYouTubePlayer(
       },
       seek: (seconds) => player.seekTo(seconds, true),
       setRate: (rate) => player.setPlaybackRate(rate),
+      load: (id) =>
+        new Promise<void>((done) => {
+          wantsToPlay = false;
+          captionsOn = false;
+          player.cueVideoById(id);
+          const started = Date.now();
+          const timer = setInterval(() => {
+            if (destroyed || state() === YT.PlayerState.CUED || Date.now() - started > 4000) {
+              clearInterval(timer);
+              done();
+            }
+          }, 50);
+        }),
       getVolume: () => player.getVolume() / 100,
       setVolume: (volume) => player.setVolume(Math.round(Math.min(1, Math.max(0, volume)) * 100)),
       isMuted: () => player.isMuted(),

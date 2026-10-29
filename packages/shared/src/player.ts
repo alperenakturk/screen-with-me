@@ -44,6 +44,11 @@ export interface PlayerAdapter {
   setVolume?(volume: number): void;
   isMuted?(): boolean;
   setMuted?(muted: boolean): void;
+  /**
+   * Open another video in the same player (YouTube: `cueVideoById`) instead of building a new one: switching shorts
+   * took 1–2 s because every switch rebuilt the YouTube iframe. Resolves when the new video is cued.
+   */
+  load?(videoId: string): Promise<void>;
   /** Captions: `null` = this video has none (the button stays hidden). */
   captions?(): boolean | null;
   setCaptions?(on: boolean): void;

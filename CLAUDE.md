@@ -167,7 +167,11 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   (only the host when `hostOnly`). Short to Short: the new video slides in from below (going back: from above). Loop
   is `settings.loop` (host): when the video ends the client sends `{t:'next', end: true}`; if loop is on and the video
   is a Short the server applies `restart` (seeks to start; not again if position < 2 s, simultaneous "ended" messages
-  count once). A manual "Next" skips even in loop. Test: `scripts/e2e/shorts.mjs`.
+  count once). A manual "Next" skips even in loop. **0.9.90.1 (owner: "working is not enough, make it great"):**
+  YouTube → YouTube switches reuse the same player (`PlayerAdapter.load` = `cueVideoById`; no new iframe, switching
+  used to take 1–2 s), phones swipe up/down on the stage (≥60 px, mostly vertical, ≤0.8 s; not on chat / emoji bar),
+  and the wheel works over the video too (our click catcher sits over the YouTube frame since "one remote"). Next
+  ideas in `STATUS.md`. Test: `scripts/e2e/shorts.mjs`.
 - **Media kinds:** `youtube`, `html5` and `test` play on the site; `page` (any other web address) plays on the film
   site itself, everyone in their own tab, with the room overlay opened by the extension (see "Shell").
 - **Extension rules:** does nothing while not in a room (frames check `storage.session` `sessions`; sleeps if there is

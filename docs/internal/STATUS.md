@@ -75,6 +75,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   **not** planned for now): scrolling feel and speed, preloading the next short, an endless feed (filling the queue
   from Shorts links / a channel or playlist), phone swipe, timing so everyone lands on the same short together.
   First a real-browser pass of today's Shorts view with a list of problems, then fixes.
+  Done in 0.9.90.1: same YouTube player reused between shorts (no rebuild), phone swipe, wheel over the video.
+  Next: preload the following short in a hidden player; endless feed (needs the API key: "Shorts about …" fills the
+  queue; also paste many links at once); everyone lands on the new short together (measure the gap).
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 

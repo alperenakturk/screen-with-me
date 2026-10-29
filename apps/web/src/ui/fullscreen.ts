@@ -17,6 +17,8 @@ interface FullscreenOptions {
   shell?: boolean;
   /** Kabukta: kontroller hiç kaybolmasın mı ("video kontrollerin üstünde" seçeneği). */
   keepControls?: () => boolean;
+  /** Is the current player one the site plays itself (our bar is its only remote, also in the window)? */
+  ownControls?: () => boolean;
   theater: HTMLElement;
   getPlayer: () => PlayerAdapter | null;
   send: (message: ClientMessage) => void;
@@ -33,7 +35,7 @@ interface FullscreenOptions {
  * videonun üstüne görünmez bir katman (catcher) konur: hareketi o yakalar,
  * tek tık oynat/durdur, çift tık tam ekrandan çıkış yapar.
  */
-export function createFullscreen({ shell = false, keepControls = () => false, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
+export function createFullscreen({ shell = false, keepControls = () => false, ownControls = () => true, theater, getPlayer, send, onSkip, onRate }: FullscreenOptions) {
   const q = <T extends HTMLElement>(selector: string) => theater.querySelector<T>(selector)!;
   const catcher = q('#fs-catcher');
   const controls = q('#fs-controls');
@@ -84,7 +86,7 @@ export function createFullscreen({ shell = false, keepControls = () => false, th
     const player = getPlayer();
     if (player === lastPlayer) return;
     lastPlayer = player;
-    own = !!player;
+    own = !!player && ownControls();
     theater.classList.toggle('own-controls', own);
     volumeBox.hidden = !player?.setVolume;
     if (player) applyVolume(player);

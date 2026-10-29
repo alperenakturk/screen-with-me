@@ -1091,7 +1091,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Oynatıcı ----
   let currentItemId: string | null = null;
-  let current: { player: PlayerAdapter; slot: HTMLElement } | null = null;
+  let current: { player: PlayerAdapter; slot: HTMLElement; youtube: boolean } | null = null;
   let mediaToken = 0;
 
   async function applyState(state: PlaybackState): Promise<void> {
@@ -1117,6 +1117,23 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (!seenShorts.includes(state.item.id)) seenShorts.push(state.item.id);
     }
     const token = ++mediaToken;
+    // YouTube → YouTube (every scroll in Shorts): the same player opens the next video, no new iframe.
+    const next = state.item?.media;
+    if (current?.youtube && next?.kind === 'youtube' && current.player.load && !film) {
+      const { player } = current;
+      const load = current.player.load.bind(current.player);
+      engine.detach();
+      autoplayEl.hidden = true;
+      showError(null);
+      engine.receive(state);
+      emptyEl.hidden = true;
+      externalEl.hidden = true;
+      await load(next.id);
+      if (token !== mediaToken || current?.player !== player) return;
+      engine.attach(player);
+      reportLayout();
+      return;
+    }
     engine.detach();
     closeCurrent();
     autoplayEl.hidden = true;
@@ -1156,7 +1173,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       slot.remove();
       return;
     }
-    current = { player, slot };
+    current = { player, slot, youtube: media.kind === 'youtube' };
     engine.attach(player);
     reportLayout();
   }
@@ -1223,7 +1240,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
       onActivity: () => fullscreen.poke(),
     });
-    current = { player, slot };
+    current = { player, slot, youtube: false };
     film = player;
     if (roomState) player.setState(roomState);
     player.setClock(clock.now() - Date.now(), clock.synced);
@@ -1790,6 +1807,35 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
     { passive: false },
   );
+  // Phones: swipe up = next short, swipe down = previous (on the video or around it; not on the chat or emoji bar).
+  let touchStart: { x: number; y: number; at: number } | null = null;
+  $('.stage').addEventListener(
+    'touchstart',
+    (event) => {
+      const touch = event.touches[0];
+      touchStart =
+        shortsOn && !games.isOpen() && event.touches.length === 1 && touch && !(event.target as Element).closest('.reaction-bar, .shorts-chat, input, button')
+          ? { x: touch.clientX, y: touch.clientY, at: Date.now() }
+          : null;
+    },
+    { passive: true },
+  );
+  $('.stage').addEventListener(
+    'touchend',
+    (event) => {
+      const start = touchStart;
+      touchStart = null;
+      const touch = event.changedTouches[0];
+      if (!start || !touch || Date.now() - start.at > 800) return;
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      // A real vertical swipe: long enough and more up/down than sideways.
+      if (Math.abs(dy) < 60 || Math.abs(dy) < Math.abs(dx) * 1.5) return;
+      if (dy < 0) shortsNext($('#shorts-next'));
+      else shortsPrev($('#shorts-prev'));
+    },
+    { passive: true },
+  );
   $('#shorts-loop').addEventListener('click', (event) => {
     if (!amHost()) return flashHint(event.currentTarget as HTMLElement, t('shorts.loopHost'));
     send({ t: 'settings', loop: roomSettings.loop !== true });
@@ -1850,6 +1896,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     keepControls: fitAbove,
     theater: $('#theater'),
     getPlayer: () => current?.player ?? null,
+    // The film page's player keeps its own controls for now (next release); our remote is for the site's players.
+    ownControls: () => film === null,
     send,
     onSkip: skip,
     onRate: requestRate,
