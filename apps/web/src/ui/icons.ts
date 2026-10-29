@@ -3,7 +3,20 @@
  * fit the site"). Drawn here (24×24, 2 px rounded strokes in the text color), no icon package: nothing third-party
  * ships to users. Built with DOM calls, never innerHTML.
  */
-export type IconName = 'mic' | 'mic-off' | 'cam' | 'cam-off' | 'screen' | 'screen-stop' | 'screen-watch' | 'leave';
+export type IconName =
+  | 'mic'
+  | 'mic-off'
+  | 'cam'
+  | 'cam-off'
+  | 'screen'
+  | 'screen-stop'
+  | 'screen-watch'
+  | 'leave'
+  | 'chat'
+  | 'smile'
+  | 'pin'
+  | 'skip'
+  | 'fs-exit';
 
 type Shape = [tag: 'path' | 'rect' | 'line' | 'circle', attrs: Record<string, string | number>];
 
@@ -34,6 +47,17 @@ const ICONS: Record<IconName, Shape[]> = {
   'screen-stop': [...SCREEN, ['rect', { x: 9.5, y: 7.5, width: 5, height: 5, rx: 1, fill: 'currentColor' }]],
   // Someone streams: a play triangle inside the screen.
   'screen-watch': [...SCREEN, ['path', { d: 'M10.5 7.5v5l4-2.5z', fill: 'currentColor' }]],
+  // The fullscreen dock (0.9.91.1).
+  chat: [['path', { d: 'M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5v-3.5h-1A1.5 1.5 0 0 1 3 16V7a1.5 1.5 0 0 1 1.5-1.5z' }]],
+  smile: [
+    ['circle', { cx: 12, cy: 12, r: 9 }],
+    ['path', { d: 'M8.5 14.5a4.5 4.5 0 0 0 7 0' }],
+    ['line', { x1: 9, y1: 9.5, x2: 9, y2: 10 }],
+    ['line', { x1: 15, y1: 9.5, x2: 15, y2: 10 }],
+  ],
+  pin: [['path', { d: 'M9 3.5h6l-1 5 3.5 3.5v1.5h-11V12L10 8.5z' }], ['line', { x1: 12, y1: 13.5, x2: 12, y2: 20.5 }]],
+  skip: [['path', { d: 'M5.5 5.5v13l9.5-6.5z' }], ['line', { x1: 18.5, y1: 5.5, x2: 18.5, y2: 18.5 }]],
+  'fs-exit': [['path', { d: 'M9 3.5V9H3.5' }], ['path', { d: 'M15 3.5V9h5.5' }], ['path', { d: 'M9 20.5V15H3.5' }], ['path', { d: 'M15 20.5V15h5.5' }]],
   leave: [['path', { d: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3' }], ['path', { d: 'M10 17l-5-5 5-5' }], ['line', { x1: 5, y1: 12, x2: 15, y2: 12 }]],
 };
 

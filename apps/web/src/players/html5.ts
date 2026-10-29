@@ -5,8 +5,9 @@ import { wrapVideoElement } from '@swm/shared/video-element';
 export function createHtml5Player(container: HTMLElement, url: string, onError: () => void): PlayerAdapter {
   const video = document.createElement('video');
   video.src = url;
-  // Our bar is the only remote (0.9.90.1): no browser controls on top of it.
-  video.controls = false;
+  // Option A (0.9.91.1): the browser's own controls are the remote again; our buttons sit under the video and in the
+  // fullscreen dock.
+  video.controls = true;
   video.playsInline = true;
   video.preload = 'auto';
   // Tarayıcının kendi tam ekranı yerine bizimki kullanılsın (emojiler ve kontroller orada görünür).

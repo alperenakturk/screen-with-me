@@ -342,7 +342,7 @@ const fake = await until(() => a.evalFrame('shell=1', `document.getElementById('
 check(!!fake, 'film sitesinin ⛶ düğmesi → odanın tam ekranı');
 await a.sleep(800);
 await a.shot('1c-tam-ekran');
-await a.evalFrame('shell=1', `document.getElementById('fs-exit').click(); 1`);
+await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
 await a.sleep(800);
 
 // 3) Senkron: Bora oynatır / durdurur → film videosu uyar.
@@ -507,54 +507,39 @@ const fs2 = await a.center('#fs');
 if (fs2) await a.click(fs2.x, fs2.y);
 check(!!(await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`))), 'tam ekrana geçildi (altyazı/pin/mesaj testleri için)');
 await a.sleep(1500);
-// 7e-1) Varsayılan "ekranı kaplasın": delik ekranın altına kadar; fare oynamazsa kontroller kaybolur (adacıkları da),
-// film sayfasında fare oynayınca (eklenti haber verir) geri gelir.
+// 7e-1) Option A (0.9.91.1): the film keeps its own player bar and fills the screen; our buttons are a dock on the
+// right edge (an island), nothing of ours covers the bottom of the film.
 {
   const cover = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
   const screenH = await a.evaluate('innerHeight');
-  check(!!cover && near(cover.b, screenH, 2), 'tam ekran (varsayılan): video ekranı kaplıyor, delik ekranın altına kadar', `delik alt:${cover?.b} ekran:${screenH}`);
-  const idle = await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('idle')`), 6000);
-  await a.sleep(400);
-  const idleRects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`));
-  const ctlTop = await a.evalFrame('shell=1', `document.getElementById('fs-controls').getBoundingClientRect().top`);
-  // 0.9.90.3: our catcher over the whole hole is an island (ours is the film's only remote); every other island is
-  // above the bar.
+  check(!!cover && near(cover.b, screenH, 2), 'tam ekran: video ekranı kaplıyor, delik ekranın altına kadar', `delik alt:${cover?.b} ekran:${screenH}`);
+  const SKIN = `[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`;
+  await a.sleep(1500);
+  check(!(await a.evaluate(SKIN)), 'tam ekran: film oynatıcısının kendi çubuğu yerinde (gizlenmiyor)');
+  const dockR = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-dock').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
   const isHole = (r) => near(r.x, cover.x, 2) && near(r.y, cover.y, 2) && near(r.r, cover.r, 2) && near(r.b, cover.b, 2);
-  check(!!idle && !idleRects.slice(2).some((r) => !isHole(r) && r.b > ctlTop + 5), 'tam ekran: fare oynamayınca kontroller kayboluyor (adacıkları da kalkıyor)', JSON.stringify(idleRects));
+  const inside = (r, outer) => r.x >= outer.x - 2 && r.y >= outer.y - 2 && r.r <= outer.r + 2 && r.b <= outer.b + 2;
+  const rects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`)).slice(2);
+  check(dockR.r - dockR.x > 30 && rects.some((r) => inside(dockR, r)), 'tam ekran: sağdaki dock bir adacık (film sayfasının üstünde görünür)', JSON.stringify({ dockR, rects }));
+  check(!rects.some(isHole), 'tam ekran: videoya tıklamayı film oynatıcısı alıyor (deliğin tamamını kaplayan adacık yok)', JSON.stringify(rects));
+  check(!rects.some((r) => r.b > screenH - 60 && r.r - r.x > 300), 'tam ekran: filmin alt kısmında (kendi çubuğu) bizim bir şeyimiz yok', JSON.stringify(rects));
+  // Calm when idle: faint but still there (and still an island).
+  const idle = await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('idle')`), 6000);
+  await a.sleep(500);
+  const faint = await a.evalFrame('shell=1', `getComputedStyle(document.getElementById('fs-dock')).opacity`);
+  check(!!idle && Number(faint) < 0.5 && Number(faint) > 0, 'tam ekran: fare oynamayınca dock soluklaşıyor ama kaybolmuyor', `opaklık:${faint}`);
   await a.evaluate(`dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 300 })); 1`);
   const woke = await until(() => a.evalFrame('shell=1', `!document.getElementById('theater').classList.contains('idle')`), 3000);
-  check(!!woke, 'tam ekran: film sayfasında fare oynayınca kontroller geri geliyor');
-  // 0.9.90.3 one remote on the film page: the film player's own bar (native controls here) is hidden, our catcher
-  // takes the clicks (an island over the whole hole), our volume slider sets the film's volume.
-  const SKIN = `[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`;
-  check(!!(await until(() => a.evaluate(SKIN), 4000)), 'tam ekran: film oynatıcısının kendi çubuğu gizlendi (tek kumanda)');
-  const catcherIsland = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`)).slice(2).some(isHole);
-  check(catcherIsland, 'tam ekran: videoya tıklamayı odanın yakalayıcısı alıyor (deliğin tamamı adacık)');
-  const pausedBefore = await a.evaluate(`document.querySelector('video').paused`);
-  await a.click(400, 250);
-  check(!!(await until(async () => (await a.evaluate(`document.querySelector('video').paused`)) !== pausedBefore, 3000)), 'tam ekran: videoya tek tık = oynat/durdur (bizim kumandamız)', `önce paused:${pausedBefore}`);
+  check(!!woke, 'tam ekran: film sayfasında fare oynayınca dock yeniden belirginleşiyor');
+  // The emoji window opens to the left of the dock: also an island.
+  await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
+  await a.sleep(500);
+  const popR = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('dock-react-pop').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
+  const popRects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`)).slice(2);
+  check(popR.r - popR.x > 100 && popRects.some((r) => inside(popR, r)), 'tam ekran: dock\'un emoji penceresi de adacık', JSON.stringify({ popR, popRects }));
+  await a.shot('8a-dock-emoji');
+  await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
   await a.sleep(400);
-  await a.click(400, 250);
-  await until(async () => (await a.evaluate(`document.querySelector('video').paused`)) === pausedBefore, 3000);
-  await a.evalFrame('shell=1', `(() => { const v = document.getElementById('fs-volume'); v.value = '30'; v.dispatchEvent(new Event('input')); v.dispatchEvent(new Event('change')); return 1; })()`);
-  const vol = await until(async () => { const v = await a.evaluate(`document.querySelector('video').volume`); return Math.abs(v - 0.3) < 0.02 ? v : null; }, 3000);
-  check(vol !== null, 'tam ekran: ses çubuğumuz filmin sesini ayarlıyor', String(await a.evaluate(`document.querySelector('video').volume`)));
-  await a.evalFrame('shell=1', `(() => { const v = document.getElementById('fs-volume'); v.value = '100'; v.dispatchEvent(new Event('input')); return 1; })()`);
-  // "⚙ Filmin ayarları": their bar comes back, the video moves above our bar (both usable), again = hidden.
-  const skinBtn = await a.evalFrame('shell=1', `!document.getElementById('fs-film-skin').hidden`);
-  check(!!skinBtn, 'tam ekran: "⚙ Filmin ayarları" düğmesi görünüyor');
-  await a.evalFrame('shell=1', `document.getElementById('fs-film-skin').click(); 1`);
-  const shownBack = await until(async () => !(await a.evaluate(SKIN)), 3000);
-  await a.sleep(600);
-  const aboveRect = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
-  const barTop = await a.evalFrame('shell=1', `document.getElementById('fs-controls').getBoundingClientRect().top`);
-  check(!!shownBack && !!aboveRect && near(aboveRect.b, barTop, 2), '"⚙ Filmin ayarları": filmin çubuğu geri geldi, video bizim çubuğun üstünde', JSON.stringify({ shownBack, aboveRect, barTop }));
-  await a.shot('8a-filmin-ayarlari');
-  await a.evalFrame('shell=1', `document.getElementById('fs-film-skin').click(); 1`);
-  check(!!(await until(() => a.evaluate(SKIN), 3000)), '"⚙ Filmin ayarları" tekrar: filmin çubuğu yine gizli');
-  // Altyazı kullananlar için: "kontrollerin üstünde dursun" → delik çubuğun üstünde biter, çubuk hep görünür.
-  await a.evalFrame('shell=1', `(() => { const s = document.getElementById('opt-fsfit'); s.value = 'above'; s.dispatchEvent(new Event('change')); return 1; })()`);
-  await a.sleep(1200);
 }
 {
   const pinsHidden = await a.evalFrame(
@@ -564,26 +549,22 @@ await a.sleep(1500);
   check(pinsHidden.fs === 'none' && pinsHidden.strip === 'none', 'tam ekranda pin şeritleri gizli (#fs-pins, .pin-strip)', JSON.stringify(pinsHidden));
 
   const box = await a.evaluate(`(() => { const e = document.querySelector('[data-swm-focus]'); const r = e?.getBoundingClientRect(); return r ? { tag: e.tagName, id: e.id, top: r.top, bottom: r.bottom, h: r.height } : null; })()`);
-  const bar = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-controls').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: r.height }; })()`);
   const holeRect = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
+  const screenH = await a.evaluate('innerHeight');
   const cue = await a.evaluate(`(() => { const t = document.querySelector('video').textTracks[0]; return t ? { mode: t.mode, active: t.activeCues?.length ?? 0 } : null; })()`);
-  console.log('     tam ekran: oynatıcı', JSON.stringify(box), 'kontroller', JSON.stringify(bar), 'delik', JSON.stringify(holeRect), 'altyazı', JSON.stringify(cue));
+  console.log('     tam ekran: oynatıcı', JSON.stringify(box), 'delik', JSON.stringify(holeRect), 'altyazı', JSON.stringify(cue));
   check(cue?.mode === 'showing' && cue.active > 0, 'film videosunun altyazısı açık (WebVTT, aktif satır var)', JSON.stringify(cue));
-  check(
-    !!box && !!bar && box.bottom <= bar.top + 1 && box.h > 300,
-    'tam ekranda oynatıcının altı (altyazı) kontrol çubuğunun üstünde kalıyor',
-    `oynatıcı alt:${box?.bottom} çubuk üst:${bar?.top}`,
-  );
-  check(!!holeRect && near(holeRect.b, bar.top, 2), 'tam ekranda delik kontrol çubuğunun üstünde bitiyor', `delik alt:${holeRect?.b} çubuk üst:${bar?.top}`);
+  // The film is never made smaller for our bar any more: the player fills the screen.
+  check(!!box && near(box.bottom, screenH, 2) && box.h > screenH - 4, 'tam ekranda film küçülmüyor (oynatıcı ekranın altına kadar)', `oynatıcı:${JSON.stringify(box)} ekran:${screenH}`);
   const fsImg = await a.pixels('8-tam-ekran-altyazi');
-  // Kontrol çubuğu (▶, emojiler, sohbet, ✕) delik dışında kaldı: sitenin kendisi çizmeli, görünür olmalı.
-  const ctl = await a.evalFrame(
+  const dock = await a.evalFrame(
     'shell=1',
-    `(() => { const c = document.getElementById('fs-controls'); const cs = getComputedStyle(c); const p = document.getElementById('fs-play'); const r = p.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { display: cs.display, opacity: cs.opacity, visibility: cs.visibility, play: { x: r.left, y: r.top, w: r.width, h: r.height }, hit: hit ? hit.id || hit.className : null, idle: document.getElementById('theater').classList.contains('idle') }; })()`,
+    `(() => { const d = document.getElementById('fs-dock'); const b = document.getElementById('dock-chat'); const r = b.getBoundingClientRect(); const dr = d.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { display: getComputedStyle(d).display, hit: hit?.closest('button')?.id ?? null, x: dr.left, y: dr.top, r: dr.right, b: dr.bottom }; })()`,
   );
-  let ctlLit = 0;
-  for (let x = 10; x < 1270; x += 10) for (let y = bar.top + 10; y < bar.bottom - 5; y += 10) if (Math.max(...fsImg.at(x, y)) > 60) ctlLit++;
-  console.log('     tam ekran kontrolleri:', JSON.stringify(ctl), 'parlak nokta:', ctlLit);
+  let dockLit = 0;
+  for (let x = Math.ceil(dock.x) + 4; x < dock.r - 4; x += 4) for (let y = Math.ceil(dock.y) + 4; y < dock.b - 4; y += 6) if (Math.max(...fsImg.at(x, y)) > 150) dockLit++;
+  console.log('     dock:', JSON.stringify(dock), 'parlak nokta:', dockLit);
+  check(dock.display !== 'none' && dock.hit === 'dock-chat' && dockLit > 10, 'tam ekranda dock görünüyor (ikonlar çiziliyor, düğmeye basılabiliyor)', `${JSON.stringify(dock)} parlak:${dockLit}`);
   await a.press('1', 'Digit1', 49); // tam ekranda uçan emoji de adacık olsun
   await a.sleep(400);
   const fsFloat = await a.evalFrame('shell=1', `(() => { const r = [...document.querySelectorAll('#reactions-layer .r-float')].at(-1)?.getBoundingClientRect(); return r ? { y: r.top, b: r.bottom } : null; })()`);
@@ -594,9 +575,9 @@ await a.sleep(1500);
   const outside = fsRects.slice(2).filter((r) => r.b > fsRects[1].b + 1 || r.y < fsRects[1].y - 1 || r.x < fsRects[1].x - 1 || r.r > fsRects[1].r + 1);
   console.log('     tam ekran clip:', JSON.stringify(fsRects));
   check(outside.length === 0, 'tam ekranda deliğin dışına taşan adacık yok (evenodd o bölgeyi katmandan keserdi)', JSON.stringify(outside));
-  check(ctl.display !== 'none' && ctl.opacity === '1' && ctl.hit === 'fs-play' && ctlLit > 20, 'tam ekranda odanın kontrol çubuğu (▶ emoji sohbet ✕) görünüyor', `${JSON.stringify(ctl)} parlak:${ctlLit}`);
+  check(!!holeRect && near(holeRect.b, screenH, 2), 'tam ekranda delik ekranın altına kadar (filmin çubuğu açık)', `delik alt:${holeRect?.b}`);
 
-  // 0.9.90.1: fullscreen messages flow up from the quick message box (the draggable handle is gone).
+  // Messages flow up next to the dock (right-aligned to its left edge).
   await a.sleep(1500);
   const noHandle = await a.pixels('9a-mesajsiz');
   bora.send({ t: 'chat', text: 'tam ekranda saydam mi' });
@@ -604,8 +585,7 @@ await a.sleep(1500);
   await a.sleep(400);
   const withHandle = await a.pixels('9b-mesaj');
   const toastR = await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const r = e?.getBoundingClientRect(); return r ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`);
-  const boxR = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-chat').getBoundingClientRect(); return { x: r.left, y: r.top }; })()`);
-  check(!!toastR && toastR.b <= boxR.y + 1 && Math.abs(toastR.x - boxR.x) < 4 && boxR.y - toastR.b < 90, 'tam ekranda mesaj, mesaj kutusunun hemen üstünde (sola hizalı)', JSON.stringify({ toastR, boxR }));
+  check(!!toastR && toastR.r <= dock.x - 4 && dock.x - toastR.r < 30 && toastR.b <= dock.b + 2, 'tam ekranda mesaj dock\'un hemen solunda', JSON.stringify({ toastR, dock }));
   /** Kutunun sol iç boşluğundaki noktalar (yazıdan uzak): beklenen B ≈ (1 − opaklık) × A. */
   const padSample = (r, keep, img) => {
     let ok = 0;
@@ -628,14 +608,13 @@ await a.sleep(1500);
   if (toastR) {
     const ts = padSample(toastR, 0.3, withHandle);
     console.log('     mesaj:', JSON.stringify(toastR), JSON.stringify(ts));
-    // The message now sits just above the bar, where the film may be dark: "lit" can be 0 there; an opaque grey box
-    // would still show as flat dark pixels over bright ones.
+    // Where the film is dark "lit" can be 0; an opaque grey box would still show as flat dark pixels over bright ones.
     check(ts.n > 10 && ts.ok / ts.n >= 0.8 && ts.flat === 0, 'tam ekranda gelen mesajın altında video görünüyor (saydam)', JSON.stringify(ts));
   } else check(false, 'tam ekranda gelen mesaj göründü');
 }
-await a.evalFrame('shell=1', `document.getElementById('fs-exit').click(); 1`);
+await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
 await a.sleep(800);
-check(!!(await until(async () => !(await a.evaluate(`[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`)), 3000)), 'tam ekrandan çıkınca filmin kendi çubuğu geri geldi');
+check(!(await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`), 1500)), 'dock\'taki çıkış düğmesi tam ekrandan çıkardı');
 
 // 8) Başkası odada sitenin oynattığı bir şey açar (senkron testi): katman tamamen açılır, film durur.
 bora.send({ t: 'load', media: { kind: 'test' } });

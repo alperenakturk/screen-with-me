@@ -23,8 +23,6 @@ export interface ShellPlayer extends PlayerAdapter {
   setState(state: PlaybackState): void;
   setClock(offset: number, synced: boolean): void;
   control(control: EmbedControl): void;
-  /** Can the extension hide this film player's own controls? (`undefined`: older extension, it can't.) */
-  skin(): EmbedStatus['skin'];
   /** The film's volume, once the extension reports it (older extensions don't). */
   hasVolume(): boolean;
 }
@@ -99,7 +97,6 @@ export function createShellPlayer(options: ShellOptions): ShellPlayer {
       status = { ...status, muted };
       control({ action: 'volume', volume: status.volume ?? 1, muted });
     },
-    skin: () => status.skin,
     hasVolume: () => typeof status.volume === 'number',
     // Motor sitede çalışmaz (film çerçevesinde çalışır); olay dinlemeye gerek yok.
     onEvent() {},

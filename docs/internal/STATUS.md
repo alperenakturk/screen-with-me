@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.91**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.91.1**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -98,10 +98,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   avatar circle; only 🎙 / 📷 in the bottom bar; seats a little bigger.
 - [x] **0.9.91** (owner's "go up one", 29 Oct 2026): right rail ends with the video card; endless Shorts feed on the
   YouTube search API; line icons for mic / camera / stream instead of emojis.
-- [ ] **Bottom bar / player controls redesign — waiting for the owner's choice** (proposal page
-  https://claude.ai/artifact/SjcRcwoKd8n93W1cK4c6TC: A = their own bar + our vertical dock on the right (recommended),
-  B = their bar at the bottom + ours as a top strip, C = keep the one remote and add what the API allows; plus a
-  redesigned bar grouped as Watch / Talk / Together with line icons. Shorts stays as it is).
+- [x] **0.9.91.1 player controls, option A** (owner chose it on https://claude.ai/artifact/SjcRcwoKd8n93W1cK4c6TC,
+  29 Oct 2026): YouTube, video files and the film page keep their own player bar (quality, caption language,
+  chapters back; the film is never made smaller); in fullscreen our buttons are a vertical dock on the right (talk ·
+  together · watch, line icons, named buttons, one 😀 button); our own bar stays only for Shorts and the sync test.
+  Harnesses: embed 101/101 (new dock checks), voice 66, voice shell 28, live, sound; unit 204; e2e green except the
+  local-only YouTube title check.
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and

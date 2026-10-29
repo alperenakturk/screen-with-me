@@ -307,7 +307,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                   <input id="fs-volume" type="range" min="0" max="100" step="1" value="100" />
                 </div>
                 <button id="fs-cc" type="button" class="fs-btn fs-cc" hidden>CC</button>
-                <button id="fs-film-skin" type="button" class="fs-btn fs-film-skin" aria-pressed="false" hidden>⚙</button>
                 <div class="reaction-bar fs-reactions" role="group"></div>
                 <form id="fs-chat" class="fs-chat">
                   <input id="fs-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" />
@@ -318,6 +317,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="fs-enter" type="button" class="fs-btn fs-enter">⛶</button>
                 <button id="fs-exit" type="button" class="fs-btn">✕</button>
               </div>
+            </div>
+            <div id="fs-dock" class="fs-only fs-dock" role="toolbar" aria-orientation="vertical">
+              <div class="dock-group">
+                <button id="dock-chat" type="button" class="dock-btn" aria-expanded="false"></button>
+                <button id="dock-react" type="button" class="dock-btn" aria-expanded="false"></button>
+                <button id="dock-pin" type="button" class="dock-btn"></button>
+              </div>
+              <div id="dock-voice" class="dock-group" hidden>
+                <button id="dock-mic" type="button" class="dock-btn"></button>
+                <button id="dock-cam" type="button" class="dock-btn"></button>
+                <button id="dock-live" type="button" class="dock-btn"></button>
+              </div>
+              <div class="dock-group">
+                <button id="dock-speed" type="button" class="dock-btn dock-text" aria-expanded="false">1×</button>
+                <button id="dock-skip" type="button" class="dock-btn"></button>
+                <button id="dock-exit" type="button" class="dock-btn"></button>
+              </div>
+              <form id="dock-chat-form" class="dock-pop dock-chat" hidden><input id="dock-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" /></form>
+              <div id="dock-react-pop" class="dock-pop" hidden><div class="reaction-bar fs-reactions dock-reactions" role="group"></div></div>
+              <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
             </div>
             <div id="empty" class="empty">
               <div class="theme-mascot" aria-hidden="true"></div>
@@ -569,12 +588,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.closeAds"></b><span data-i18n="settings.closeAds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-closeads" /></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.duck"></b><span data-i18n="settings.duck.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-duck" /></label>
-              <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.fsFit"></b></span>
-                <select id="opt-fsfit">
-                  <option value="cover" data-i18n="settings.fsFit.cover"></option>
-                  <option value="above" data-i18n="settings.fsFit.above"></option>
-                </select>
-              </label>
             </div>
           </div>
           <div class="settings-sec host-box" data-sec="rules" hidden>
@@ -1127,7 +1140,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Oynatıcı ----
   let currentItemId: string | null = null;
-  let current: { player: PlayerAdapter; slot: HTMLElement; youtube: boolean } | null = null;
+  /** `own`: our bar is this player's remote (Shorts, the sync test); otherwise the player shows its own controls. */
+  let current: { player: PlayerAdapter; slot: HTMLElement; youtube: boolean; own: boolean } | null = null;
   let mediaToken = 0;
 
   async function applyState(state: PlaybackState): Promise<void> {
@@ -1153,9 +1167,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (!seenShorts.includes(state.item.id)) seenShorts.push(state.item.id);
     }
     const token = ++mediaToken;
-    // YouTube → YouTube (every scroll in Shorts): the same player opens the next video, no new iframe.
+    // YouTube → YouTube (every scroll in Shorts): the same player opens the next video, no new iframe. Only between
+    // two videos with the same remote: a Short has our bar, a normal video YouTube's own (set when the player opens).
     const next = state.item?.media;
-    if (current?.youtube && next?.kind === 'youtube' && current.player.load && !film) {
+    if (current?.youtube && next?.kind === 'youtube' && current.own === (next.short === true) && current.player.load && !film) {
       const { player } = current;
       const load = current.player.load.bind(current.player);
       engine.detach();
@@ -1195,7 +1210,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     try {
       player =
         media.kind === 'youtube'
-          ? await createYouTubePlayer(slot, media.id, onError)
+          ? await createYouTubePlayer(slot, media.id, onError, media.short === true)
           : media.kind === 'test'
             ? createTestPlayer(slot)
             : createHtml5Player(slot, media.url, onError);
@@ -1209,7 +1224,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       slot.remove();
       return;
     }
-    current = { player, slot, youtube: media.kind === 'youtube' };
+    current = { player, slot, youtube: media.kind === 'youtube', own: media.kind === 'test' || (media.kind === 'youtube' && media.short === true) };
     engine.attach(player);
     reportLayout();
   }
@@ -1276,7 +1291,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
       onActivity: () => fullscreen.poke(),
     });
-    current = { player, slot, youtube: false };
+    current = { player, slot, youtube: false, own: false };
     film = player;
     if (roomState) player.setState(roomState);
     player.setClock(clock.now() - Date.now(), clock.synced);
@@ -1284,51 +1299,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   // Film çerçevesindeki motor sunucu saatini sitenin ölçümünden alır.
   setInterval(() => film?.setClock(clock.now() - Date.now(), clock.synced), 2000);
-
-  /** The person's choice: in fullscreen on the film page the video stays above our bar (subtitles never covered). */
-  function fitAbovePref(): boolean {
-    return load('opt:fsFit') === 'above';
-  }
-  /**
-   * "⚙ Filmin ayarları" (0.9.90.3): in fullscreen the film player's own bar is shown again (subtitles, quality); our
-   * bar stays and the video sits above it so both can be used. Ends with the fullscreen.
-   */
-  let filmControls = false;
-  /** In fullscreen on the film page our bar is the film's only remote (its player's own bar is hidden). */
-  function filmRemote(): boolean {
-    return film !== null && $('#theater').classList.contains('fake-fs') && film.skin() === 'known' && !filmControls;
-  }
-  /**
-   * Video above our bar in fullscreen: the person's choice, or the film player's own bar is visible (a custom player
-   * we can't hide, an older extension, or "⚙ Filmin ayarları") — then neither bar covers the other.
-   */
-  function fitAbove(): boolean {
-    return fitAbovePref() || (film !== null && (film.skin() !== 'known' || filmControls));
-  }
-  let skinHidden = false;
-  /** Tell the film frame whether to hide its player's bar (again every second: the film's frame may change). */
-  function applyFilmSkin(force = false): void {
-    const hide = filmRemote();
-    if (hide === skinHidden && !(hide && force)) return;
-    skinHidden = hide;
-    film?.control({ action: 'skin', hide });
-  }
-  setInterval(() => {
-    if (film === null) return;
-    applyFilmSkin(true);
-    renderFilmSkinButton();
-    // The film's status may have changed what kind of player it is (hole above our bar or not).
-    if ($('#theater').classList.contains('fake-fs')) reportLayout();
-  }, 1000);
-  function renderFilmSkinButton(): void {
-    const button = $<HTMLButtonElement>('#fs-film-skin');
-    button.hidden = film === null || film.skin() !== 'known';
-    button.classList.toggle('on', filmControls);
-    button.setAttribute('aria-pressed', String(filmControls));
-    const text = t(filmControls ? 'filmSettingsOff' : 'filmSettings');
-    button.title = text;
-    button.setAttribute('aria-label', text);
-  }
 
   /** Kabuktan sitedeki odaya dön (katman kalkar). Filmdeyken diğerlerine de haber gider: onlara "sen de dön" sorulur. */
   function returnToRoom(): void {
@@ -1411,14 +1381,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     else {
       const wrap = $('.player-wrap');
       const box = wrap.getBoundingClientRect();
-      // Tam ekranda kontrol çubuğu (kabukta hep görünür) videonun altını örtüp film sitesinin altyazısını
-      // kapatıyordu: delik çubuğun üstünde biter, video ve altyazısı oraya sığar.
-      const theater = $('#theater');
-      const fake = theater.classList.contains('fake-fs');
-      const idle = theater.classList.contains('idle');
-      // "Video kontrollerin üstünde" (altyazı hiç örtülmesin): delik çubuğun üstünde biter. Varsayılan: video
-      // ekranı kaplar, çubuk üstünde durur ve bekleyince kaybolur (o zaman adacık da olmaz, video tıklanır).
-      const bottom = fake && fitAbove() ? box.bottom - $('#fs-controls').offsetHeight : box.bottom;
+      // Option A (0.9.91.1): the film always fills the hole with its own player bar; in fullscreen our dock on the
+      // right is an island, nothing of ours covers the bottom of the film.
+      const bottom = box.bottom;
       const islands: Rect[] = [];
       const floats: Rect[] = [];
       // Adacıklar deliğin içine kırpılır: deliğin dışı zaten katman; dışarı taşan parça evenodd'da iki kez
@@ -1442,10 +1407,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           }
           continue;
         }
-        // Our catcher takes the clicks on the video only while ours is the film's only remote (click = play/pause,
-        // double click = leave fullscreen); otherwise the film player is clicked through the hole.
-        if (child.id === 'fs-catcher' && !(fake && filmRemote())) continue;
-        if (idle && child.id === 'fs-controls') continue;
+        // The film player is clicked through the hole: our catcher and bar belong to the site's own players only.
+        if (child.id === 'fs-catcher' || child.id === 'fs-controls') continue;
+        // The dock and its open window (message box, emojis, speed) to its left.
+        if (child.id === 'fs-dock') {
+          for (const node of [child, ...child.querySelectorAll<HTMLElement>('.dock-pop:not([hidden])')]) {
+            const r = node.getBoundingClientRect();
+            if (r.width > 0) add(islands, r.left, r.top, r.right, r.bottom);
+          }
+          continue;
+        }
         if (child.id === 'reactions-layer') {
           // Uçuşan emoji yükselirken de görünsün: bütün yolu (yukarı ~240 px, yana biraz) tek adacık.
           for (const node of child.children) {
@@ -1642,13 +1613,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     document.addEventListener('auxclick', (event) => {
       if ((event.target as Element | null)?.closest?.('a[href]')) postToExtension({ type: 'open-ok' });
     }, true);
-    const fit = $<HTMLSelectElement>('#opt-fsfit');
-    fit.value = fitAbovePref() ? 'above' : 'cover';
-    fit.addEventListener('change', () => {
-      save('opt:fsFit', fit.value === 'above' ? 'above' : 'cover');
-      fullscreen.poke();
-      reportLayout();
-    });
     let queued = false;
     new MutationObserver(() => {
       if (queued) return;
@@ -2035,29 +1999,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Tam ekran: sadece video kalır, fare oynayınca kontroller ve hızlı mesaj belirir. ----
   const fullscreen = createFullscreen({
     shell: isShell,
-    keepControls: fitAbove,
     theater: $('#theater'),
     getPlayer: () => current?.player ?? null,
-    // In the window the film page's player keeps its own controls; in fullscreen ours hides them (applyFilmSkin).
-    ownControls: () => film === null,
-    onActive: (on) => {
-      if (!on) filmControls = false;
-      applyFilmSkin();
-      renderFilmSkinButton();
-      reportLayout();
-    },
+    // Our bar is the remote only for Shorts and the sync test; everything else keeps its own controls (option A) and
+    // gets the dock in fullscreen.
+    ownControls: () => current?.own === true,
+    onActive: () => reportLayout(),
     send,
     onSkip: skip,
     onRate: requestRate,
   });
-  const toasts = createToasts($('#toasts'), $('#fs-chat'));
-  $('#fs-film-skin').addEventListener('click', () => {
-    filmControls = !filmControls;
-    applyFilmSkin();
-    renderFilmSkinButton();
-    fullscreen.poke();
-    reportLayout();
-  });
+  const toasts = createToasts($('#toasts'), $('#fs-chat'), $('#fs-dock'));
   let sideHidden = !isShell && load('opt:sideHidden') === '1';
   // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu
   // tarayıcıda hatırlanır. Film sayfasındaki katmanda yok (orada yerleşimi delik belirler).
@@ -2094,7 +2046,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Önemli anları pinleme: video altında ve tam ekranda ilerleme çubuğunun üstünde işaretler.
   const pins = createPins({
     strips: [$('#pin-strip'), $('#fs-pins')],
-    buttons: [$('#pin-btn'), $('#fs-pin')],
+    buttons: [$('#pin-btn'), $('#fs-pin'), $('#dock-pin')],
     form: $<HTMLFormElement>('#pin-form'),
     getDuration: () => current?.player.getDuration() ?? 0,
     onSeek: (seconds) => current?.player.seek(seconds),
@@ -2119,6 +2071,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     badge.textContent = diff <= 300 ? t('syncGood', { ms: Math.round(diff) }) : t('syncBad', { ms: Math.round(diff) });
   }, 500);
   $('#fs-pin').addEventListener('click', () => pins.open());
+  $('#dock-pin').addEventListener('click', () => pins.open());
   // Süre video yüklenince belli olur; arada bir yeniden çiz.
   setInterval(() => pins.render(), 2000);
   const fullscreenEl = $<HTMLButtonElement>('#fullscreen');
