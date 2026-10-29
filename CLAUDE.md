@@ -71,14 +71,13 @@ Live: 0.9.90 (film-page tools in the middle of the top bar, room view no longer 
    today, paste a link" when the quota (10 000 units/day, 100 per search ≈ 100 searches/day) runs out; privacy policy
    gets the "uses YouTube API Services" + Google privacy policy link. Quota increase = Google's YouTube API compliance
    audit, done by the owner before 1.0 together with the domain and terms of use.
-3. **Before 1.0 full pass** (owner's list, ROADMAP §1): sound effects (voice join/leave, game events, room events, with
-   volume/off), camera window settings (position, size, behaviour), Shorts/Reels scrolling test, then ROADMAP §2–7.
+3. **Before 1.0 full pass** (owner's list, ROADMAP §1): ~~sound effects~~ (done in 0.9.90.2, see "Sound effects"),
+   camera window settings (position, size, behaviour), Shorts/Reels scrolling test, then ROADMAP §2–7.
 
 ## Plan in one screen (details and checklists: `docs/internal/ROADMAP.md`)
 **Before 1.0** (we are at 0.9.8x; every version moves one of these forward):
 1. **Polish existing features** (the user will walk through each one). Owner's list for the full pass before 1.0
-   (ROADMAP §1 "Full pass before 1.0"): **sound effects** (voice join/leave, game events, room events; with a volume /
-   off setting) and **camera window settings** (position, size, behaviour of the tiles).
+   (ROADMAP §1 "Full pass before 1.0"): **sound effects** (done in 0.9.90.2) and **camera window settings** (position, size, behaviour of the tiles).
 2. **Zero known bugs:** every bug gets an issue + a regression test; flaky tests are fixed, not ignored.
 3. **Security hardening:** threat model, protocol/limits review, CSP and headers, extension permissions, dependency
    and secret scanning, `SECURITY.md`.
@@ -321,6 +320,30 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   (`captions()` / `setCaptions`, YouTube's captions module). This also fixed YouTube's lingering controls and its
   volume slider that didn't work under our layer. Film page (extension) part — hiding known players' bars with a
   "⚙ Filmin ayarları" escape — is the next release.
+- **Sound effects (0.9.90.2, owner's choice on the proposal page https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy):**
+  no files, generated with Web Audio. `packages/shared/src/sound-policy.ts` (pure, `sound-policy.test.ts`): the
+  registry `SOUNDS` (group voice / room / game, level, per-sound `gap`, `softDuringFilm`), families by group (voice +
+  room → **A warm pad**, the intro's world; games → **B glass marimba**), `soundGain`, `SoundLimiter` (same sound at
+  most once per `gap`, e.g. 3 s for joins = one sound for a burst; at most 4 room/voice sounds per 2 s; game sounds
+  only per `gap`), `JoinFilter` (a person = name + avatar; a reload/reconnect within 30 s or a second tab is not a new
+  arrival). `packages/shared/src/sounds.ts` `scheduleSound` (the recipes, same F-major notes in both families; works
+  with an offline context). Site `apps/web/src/sound.ts` `playSound(id)`: one shared AudioContext created only after
+  the person touched the page (`userActivation`), a suspended context gets 300 ms then the sound is dropped (never
+  queued), a compressor as limiter, fires `swm-sound` (tests). Settings → Ekranım: "Sesler" (`opt:sounds`, default
+  on) + "Ses düzeyi" (`opt:soundVolume`, default 70, a sample plays when the slider is let go); room sounds at half
+  volume while the room's video plays (`setFilmPlaying`); "reduce motion" does not mute. Works on the film page as
+  the site is the overlay (iframes have `allow="autoplay"`). **Which events** (others' actions unless said): voice
+  join / leave (only while I'm in voice), my voice join / leave, my mic on / off (button or M), push-to-talk press /
+  release; someone new in the room (not leaving: reloads would be false alarms), a chat message only when it is
+  nowhere on my screen (page hidden, or another panel tab open; not in fullscreen / side hidden / Shorts where it shows
+  as a toast or bubble), stream start (others) / stop (the one I watch), film time reached, "back to the room?" card,
+  game invite; XOX / Connect Four every piece (both sides; the opponent's = "your turn"), win / lose / tie
+  (spectators: win); Draw & Guess my turn to draw, my correct guess, someone else's, "close", hint letter, my wrong
+  guess (quiet) and others' (very quiet, max one per 2 s), last 5 s ticks; Quiz new question, my answer locked
+  (quiet), right / wrong at the reveal, last 3 s ticks while I haven't answered, podium. **No sound** for: camera
+  on/off, someone leaving, play / pause / seek, the everyone-ready wait, reactions, pins, kicks, strokes, my own
+  messages / stream. New sound: add it to `SOUNDS` + a recipe in `scheduleSound` + the call site. Test:
+  `scripts/harness/sound/run.mjs` (Playwright, two browsers, `npm run dev` first).
 - **Message position (0.9.90.1):** in fullscreen chat messages flow up from the quick message box (`ui/toasts.ts`,
   anchored to `#fs-chat`, above the seek line, left-aligned; newest closest to the box; they don't fade while the box
   is focused). The old draggable "💬 Mesajlar burada" handle and `toastPos` are gone. With the side panel hidden (window)

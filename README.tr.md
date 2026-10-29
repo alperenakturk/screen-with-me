@@ -74,6 +74,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 |---|---|
 | 🎨 **11 tema** | Gece, Okyanus, Gün batımı, Neon; resimli Mehtaplı Geceler, Binbir Gece ve Art Deco afiş temaları (Sinema Sarayı, Opera Gecesi, Açık Hava Sineması, Transatlantik, Gece Ekspresi), her birinde kostümlü maskot. Ana sayfada tıklayınca bütün sayfa hemen o temaya geçer; resimsiz temaların arkasında yavaşça süzülen ışıklar var. |
 | 🎬 **Açılış** | Kısa logo animasyonu ve üretilmiş ses (Web Audio, dosya yok). |
+| 🔔 **Ses efektleri** | Gerektiği yerde kısa, yumuşak sesler, başka hiçbir yerde değil: biri odaya ya da sesli sohbetine katılınca, mikrofonun açılıp kapanınca, yayın başlayınca, film saati gelince, oyun davetinde, ekranda göremediğin bir mesajda; oyunlarda her taş, sıranın sana gelmesi, doğru / yakın / yanlış tahmin, son saniyeler, kazanma / kaybetme ve podyum. O an üretilir (dosya yok); film oynarken oda sesleri yarı sesle çalar ve üst üste binmez. ⚙️ Ayarlar → Ekranım'dan kapatılabilir ya da sesi ayarlanabilir. |
 | 🌍 **Diller** | Türkçe (varsayılan) ve İngilizce, sitede ve eklentide. |
 
 ## 🧠 Nasıl çalışır?
@@ -118,6 +119,7 @@ bildirir; üst çerçeve orada bir delik keser (`clip-path`) ve filmin oynatıc�
 | Birim testleri (sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, özet, video puanlama) | 157 geçiyor |
 | Uçtan uca (gerçek sunucu koduna karşı sahte kullanıcılar: sıra, sohbet, yönetici ve atma, devir, herkes hazır, pinler, özel emojiler, yönetici modları, emoji sıklığı, kayıtlı odalar, özet, Shorts) | `npm run e2e`, CI'da çalışır |
 | Eklentiyle gerçek Chrome (`scripts/harness/embed`) | 90 kontrol: oda katmanı, deliğe yerleşme, sayfanın hiç görünmemesi (ekran kaydı), saydam mesajlar (piksel ölçümü), tam ekranda altyazı ve kontroller, pinler, site ile eklenti arasında ayar eşitleme, video seçimi, reklam sekmeleri, yönlendirmeler, ön-reklamlar |
+| Ses efektleri (`scripts/harness/sound`) | Aynı odada iki tarayıcı: hangi sesler gerçekten çalıyor (katılma ve yenileme, ses, mikrofon, görünen ve görünmeyen mesaj, kapalıyken, XOX taşları ve sonuç) |
 | Gerçek ses (`scripts/harness/voice`) | Sahte mikrofonlu iki Chrome: gelen sesin enerjisi ölçülür; sitede ve film sayfalarında (eklenti), izin sekmesi ve yenileme dahil |
 | Gerçek oynatıcılar (herkese açık demo sayfalarında eklenti kodu) | **Plyr, hls.js, Video.js**: bulma ✓, uzaktan + yerel hareketler ✓, 26–100 ms fark |
 
