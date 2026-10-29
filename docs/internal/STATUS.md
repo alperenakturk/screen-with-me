@@ -52,6 +52,11 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
   Test: `scripts/harness/popup/run.cjs`.
 - [x] **0.9.90** film page (owner, 29 Oct 2026): 🏠 / 👁 / 🎯 in the middle of the top bar; scrolling the room view
   made the film video slide out of its frame → the room view now fits the window and doesn't scroll.
+- [ ] **Sound effects** (owner, 29 Oct 2026; branch `claude/sound-effects`): proposal page with three generated
+  sound families (A warm pad, B glass marimba, C soft clicks) + event list published
+  (https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy). **Waits for the owner's choice**, then: `sounds.ts` (one shared
+  AudioContext, registry, rate limit), Settings → Ekranım switch + volume, hooks in voice/room/games, tests, docs,
+  version 0.9.90.x, PR, merge, deploy check.
 - [ ] **Fullscreen design** (owner, 29 Oct 2026): our controls over the film's / YouTube's own player look
   unprofessional; options (hide theirs completely vs. our controls docked to the side) + messages flowing under the
   message box. Proposal page first, owner chooses.
