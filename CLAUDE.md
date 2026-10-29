@@ -56,13 +56,13 @@ We are building a **global product**, so everything is professional, formal and 
 
 ## Next up (saved 28 Oct 2026, after 0.9.89; the owner paused here — continue in this order)
 Live: 0.9.90 (film-page tools in the middle of the top bar, room view no longer scrolls). YouTube is reachable from the cloud sandbox again (29 Oct 2026). The same queue is in `docs/internal/STATUS.md` "Task queue".
-1. **0.9.91 YouTube player fixes** (owner's feedback): on the site the YouTube controls stay visible long after the
+1. **YouTube player fixes (ship with the fullscreen "one remote", 0.9.90.1)** (owner's feedback): on the site the YouTube controls stay visible long after the
    mouse leaves the video (windowed view), and YouTube's own volume control doesn't work. Our code never sets the
    volume (checked), so suspect something over/around the iframe or our seeks/rate changes. **Needs network access:**
    the cloud sandbox blocks `www.youtube.com`, `*.googlevideo.com`, `*.ytimg.com`; the owner was asked to add them under
    the environment's Network access → Allowed domains. Check with `curl https://www.youtube.com/iframe_api` first;
    if still blocked, say so and move on.
-2. **0.9.92 YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
+2. **YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
    owner: Google Cloud project (project e-mail) → enable "YouTube Data API v3" → API key restricted to that API →
    GitHub repo Secrets `YOUTUBE_API_KEY` (never pasted in chat). Plan: the Worker calls `search.list` (key stays on the
    server; the deploy job passes the secret to the Worker), results cached per query, a friendly "search is full for
@@ -596,6 +596,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
 
 ## Release checklist
+0. **Version numbers (owner's rule, 29 Oct 2026):** releases now count in a fourth part: 0.9.90.1, 0.9.90.2, … so we
+   don't run out of numbers before 1.0. The third part (0.9.91, 0.9.92…) moves **only when the owner says** "this one
+   is big, go up one". Chrome extensions accept up to four numeric parts; the site footer shows the same number.
 1. `npm run typecheck && npm test` (if the server changed: `wrangler dev` + `npm run e2e`; if the extension changed:
    the embed harness, see "Cloud sessions").
 2. Bump the site version in the footer (`apps/web/index.html` `.footer-version`). The extension version is kept at

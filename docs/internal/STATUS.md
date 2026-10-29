@@ -52,13 +52,24 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
   Test: `scripts/harness/popup/run.cjs`.
 - [x] **0.9.90** film page (owner, 29 Oct 2026): 🏠 / 👁 / 🎯 in the middle of the top bar; scrolling the room view
   made the film video slide out of its frame → the room view now fits the window and doesn't scroll.
-- [ ] **Fullscreen design** (owner, 29 Oct 2026): our controls over the film's / YouTube's own player look
-  unprofessional; options (hide theirs completely vs. our controls docked to the side) + messages flowing under the
-  message box. Proposal page first, owner chooses.
-- [ ] **0.9.91** YouTube player on the site: controls stay visible long after the mouse leaves; YouTube's own volume
-  control doesn't work. YouTube is reachable from the sandbox again (29 Oct 2026).
-- [ ] **0.9.92** YouTube search inside the app. **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
-  `YOUTUBE_API_KEY` (steps and plan in CLAUDE.md "Next up"; guide given to the owner on 28 Oct 2026).
+Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release checklist").
+- [ ] **0.9.90.1 fullscreen "one remote" (owner chose option A, 29 Oct 2026; proposal page
+  https://claude.ai/artifact/Bz44cRGfCnExTPwtaZGtc7):** YouTube without its own controls (`controls=0`), our bar is the
+  only one (adds YouTube quality/captions); on the film page the known players' control bars are hidden (JW Player,
+  Video.js, Plyr, native) with "⚙ Filmin ayarları" to bring theirs back for subtitles/quality, unknown players fall
+  back to "video above our bar"; fullscreen messages flow up from the message box (newest closest to it). Also fixes
+  the two YouTube bugs (controls linger, YouTube volume doesn't work).
+- [ ] **Camera/voice design** (owner, 29 Oct 2026): more Meet-like (pin a friend or myself, hide myself or someone in
+  fullscreen, free size in both directions, join/leave). Proposal page with options first, owner chooses.
+- [ ] **Sound effects** (separate session, owner, 29 Oct 2026): sounds for every place that needs one (game pieces,
+  win/lose, voice join/leave, mic on/off, stream start/stop, notifications), nothing elsewhere; own file, generated with
+  Web Audio; proposals first.
+- [ ] **YouTube search inside the app.** **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
+  `YOUTUBE_API_KEY` (guide given on 29 Oct 2026; quota ≈ 100 searches/day, resets ~10:00 Turkey time; when it runs out
+  the box says so and links still work; per-query cache, search on Enter only).
+- [ ] **Reels / TikTok together** (owner's question, 29 Oct 2026): possible with the extension (everyone in their own
+  account, the host's reel address followed by the others); grey area in their terms (no scraping/automation, only
+  navigation), site-specific maintenance. Proposed: a separate research + prototype session before deciding.
 - [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
