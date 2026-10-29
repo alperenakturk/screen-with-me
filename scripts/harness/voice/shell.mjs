@@ -162,17 +162,18 @@ check(!!aliSeesAyse, 'Ali sitede Ayşe’nin (film sayfasından açılan) kamera
 // Kameralar serbest (0.9.81) film sayfasında da: yüzen pencere deliğin üstüne gelince adacık olur (görünür kalır).
 const SHELL_CLIP = `getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath`;
 await ayse.evalFrame('shell=1', `document.querySelector('#voice-cams .cam-pop').click(); 1`);
-const floated = await until(() => ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); return b.classList.contains('floating') && b.hasAttribute('data-island'); })()`));
-check(!!floated, 'film sayfasında kameralar serbest bırakılabiliyor');
-await ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); b.style.left = w.right + 40 + 'px'; b.style.top = '120px'; dispatchEvent(new Event('swm-layout')); return 1; })()`);
+// 0.9.90.5 free tiles (default): the box lets clicks through, every tile (and the pill) is its own island.
+const floated = await until(() => ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); const t = b.querySelector('.cam-tile'); return b.classList.contains('floating') && b.classList.contains('free') && !b.hasAttribute('data-island') && !!t && t.hasAttribute('data-island'); })()`));
+check(!!floated, 'film sayfasında kameralar serbest bırakılabiliyor (her kutu ayrı adacık)');
+await ayse.evalFrame('shell=1', `(() => { const t = document.querySelector('#voice-cams .cam-tile'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); t.style.left = w.right + 40 + 'px'; t.style.top = '120px'; dispatchEvent(new Event('swm-layout')); return 1; })()`);
 await ayse.sleep(400);
 const clipOut = await ayse.evaluate(SHELL_CLIP);
-await ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); b.style.left = w.left + 30 + 'px'; b.style.top = w.top + 30 + 'px'; dispatchEvent(new Event('swm-layout')); return 1; })()`);
+await ayse.evalFrame('shell=1', `(() => { const t = document.querySelector('#voice-cams .cam-tile'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); t.style.left = w.left + 30 + 'px'; t.style.top = w.top + 30 + 'px'; dispatchEvent(new Event('swm-layout')); return 1; })()`);
 const clipOver = await until(async () => {
   const clip = await ayse.evaluate(SHELL_CLIP);
   return clip !== clipOut ? clip : null;
 }, 5000);
-check(!!clipOver, 'yüzen kamera penceresi deliğin üstündeyken adacık (film sayfasında görünüyor)');
+check(!!clipOver, 'kamera kutusu deliğin üstündeyken adacık (film sayfasında görünüyor)');
 await ayse.shot('kamera-film-serbest');
 await ayse.evalFrame('shell=1', `document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
 const dockedBack = await until(() => ayse.evalFrame('shell=1', `!document.getElementById('voice-cams').classList.contains('floating')`));

@@ -71,11 +71,27 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       const member = members.find((m) => m.id === tileEl.dataset.voiceId);
       if (member) openPersonMenu(member, tileEl);
     },
+    onShowHidden: () => {
+      hiddenCams = new Set();
+      save('camHidden', '[]');
+      renderCams();
+    },
   });
   /** Camera shown big (person key); only in this tab. */
   let pinned: string | null = null;
   /** Hide my own camera preview (others still see me). */
   let hideSelf = load('opt:hideSelfCam') === '1';
+  /** Cameras I hid (person keys; for me only, the others still see them), 0.9.90.5. */
+  let hiddenCams = new Set<string>(
+    (() => {
+      try {
+        const list = JSON.parse(load('camHidden') ?? '[]') as unknown;
+        return Array.isArray(list) ? list.filter((k): k is string => typeof k === 'string').slice(0, 50) : [];
+      } catch {
+        return [];
+      }
+    })(),
+  );
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
   // "People in voice can see your IP · Why?" (peer-to-peer only; Cloudflare's server hides addresses).
   const ipLine = root.querySelector<HTMLElement>('#voice-ip')!;
@@ -278,7 +294,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   // ---- Kameralar: tek kutu takımı; kartta, yüzen pencerede ya da tam ekranda videonun içinde (cam-float.ts) ----
   /** Üye → kutu (her çizimde yeniden yaratılmaz: görüntü titremesin). */
   const tiles = new Map<string, HTMLElement>();
-  function tile(memberId: string, name: string, stream: MediaStream, mine: boolean): HTMLElement {
+  function tile(memberId: string, name: string, person: string, stream: MediaStream, mine: boolean): HTMLElement {
     let box = tiles.get(memberId);
     if (!box) {
       const video = el('video', { autoplay: '', playsinline: '', 'aria-hidden': 'true' }) as HTMLVideoElement;
@@ -292,12 +308,27 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       void video.play().catch(() => {});
     }
     box.querySelector('.cam-name')!.textContent = name;
+    // The free layout remembers each camera's place by person (it survives reconnects).
+    box.dataset.person = person;
     return box;
+  }
+  /**
+   * Cameras of people whose connection dropped (0.9.90.5): the tile stays with "📶 reconnecting" for a while instead of
+   * vanishing and popping up again; their new connection's tile takes its place.
+   */
+  const RECONNECT_TILE_MS = 12_000;
+  const ghosts = new Map<string, { box: HTMLElement; timer: ReturnType<typeof setTimeout> }>();
+  function dropGhost(person: string): void {
+    const ghost = ghosts.get(person);
+    if (!ghost) return;
+    clearTimeout(ghost.timer);
+    ghosts.delete(person);
   }
   function renderCams(): void {
     const me = myId();
     const shown: HTMLElement[] = [];
     const keep = new Set<string>();
+    let hidden = 0;
     if (client.active) {
       // One tile per person: my other tab (same name and avatar) is never shown as someone else, and if a person is
       // in the list twice (an old connection not gone yet) only their newest connection gets a tile.
@@ -309,22 +340,48 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         if (!member.voice?.cam) continue;
         if (member.id !== me && self && person(member) === person(self)) continue;
         if (member.id !== me && newest.get(person(member)) !== member) continue;
-        // "Hide myself" only hides my own preview here; the others still see me.
+        // "Hide myself" only hides my own preview here; the others still see me. Hidden people: for me only.
         if (member.id === me && hideSelf) continue;
+        if (member.id !== me && hiddenCams.has(person(member))) {
+          hidden++;
+          continue;
+        }
         const stream = member.id === me ? (client.camera ?? null) : (videos.get(member.id) ?? null);
         if (!stream) continue;
         keep.add(member.id);
-        const box = tile(member.id, member.name, stream, member.id === me);
+        const box = tile(member.id, member.name, person(member), stream, member.id === me);
         box.classList.toggle('pinned', pinned === person(member));
         shown.push(box);
       }
       // The pinned camera comes first and spans the whole width.
       shown.sort((a, b) => Number(b.classList.contains('pinned')) - Number(a.classList.contains('pinned')));
     }
-    for (const id of [...tiles.keys()]) if (!keep.has(id)) tiles.delete(id);
+    const shownPeople = new Set(shown.map((box) => box.dataset.person));
+    for (const [id, box] of [...tiles]) {
+      if (keep.has(id)) continue;
+      tiles.delete(id);
+      // Gone from the room (not "camera off" or "left voice"): keep the tile for a moment, it may be a reconnect.
+      const person = box.dataset.person;
+      if (client.active && person && !box.classList.contains('mine') && !members.some((m) => m.id === id) && !shownPeople.has(person)) {
+        dropGhost(person);
+        box.classList.add('reconnecting');
+        box.append(el('span', { class: 'cam-note' }, `📶 ${t('voice.reconnecting')}`));
+        ghosts.set(person, {
+          box,
+          timer: setTimeout(() => {
+            ghosts.delete(person);
+            renderCams();
+          }, RECONNECT_TILE_MS),
+        });
+      }
+    }
+    for (const [person, ghost] of [...ghosts]) {
+      if (!client.active || shownPeople.has(person) || hiddenCams.has(person)) dropGhost(person);
+      else shown.push(ghost.box);
+    }
     camWindow.grid.replaceChildren(...shown);
-    camsBox.hidden = shown.length === 0;
-    camWindow.update(shown.length);
+    camsBox.hidden = shown.length === 0 && hidden === 0;
+    camWindow.update(shown.length, hidden);
   }
 
   // ---- Per person, for me only (Discord-like): volume, mute, pinned camera, hide my own preview ----
@@ -406,8 +463,34 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       items.push(el('label', { class: 'person-pop-volume' }, el('span', {}, `🔊 ${t('voice.volume')}`), range, value));
       items.push(button(s.m ? `🔊 ${t('voice.unmuteFor')}` : `🔇 ${t('voice.muteFor')}`, () => setSound(member, { m: !s.m })));
     }
-    const hasTile = tiles.has(member.id) || (isMe && hideSelf && client.camEnabled === true);
-    if (hasTile && !isMe) items.push(button(pinned === key ? `📌 ${t('voice.unpin')}` : `📌 ${t('voice.pin')}`, () => (pinned = pinned === key ? null : key)));
+    if (tiles.has(member.id) && camWindow.isFree()) {
+      // Every camera has its own window: small / medium / large instead of "show big".
+      const now = camWindow.sizeOf(key);
+      const sizes = (['small', 'medium', 'large'] as const).map((size) => {
+        const b = el('button', { type: 'button', class: size === now ? 'person-pop-size on' : 'person-pop-size', 'aria-pressed': String(size === now) }, t(`voice.size.${size}`));
+        b.addEventListener('click', () => {
+          camWindow.setSize(key, size);
+          closeMenu();
+        });
+        return b;
+      });
+      items.push(el('div', { class: 'person-pop-sizes', role: 'group', 'aria-label': t('voice.size') }, el('span', {}, `↔ ${t('voice.size')}`), ...sizes));
+    } else if (tiles.has(member.id)) {
+      // Me too (0.9.90.5): my own camera can be the big one.
+      items.push(button(pinned === key ? `📌 ${t('voice.unpin')}` : `📌 ${t('voice.pin')}`, () => (pinned = pinned === key ? null : key)));
+    }
+    // Hide anyone's camera, for me only (the others still see it); back from here or "👁 N".
+    if (!isMe && member.voice?.cam && client.active) {
+      const isHidden = hiddenCams.has(key);
+      items.push(
+        button(isHidden ? `👁 ${t('voice.showCam')}` : `🙈 ${t('voice.hideCam')}`, () => {
+          if (isHidden) hiddenCams.delete(key);
+          else hiddenCams.add(key);
+          save('camHidden', JSON.stringify([...hiddenCams]));
+          renderCams();
+        }),
+      );
+    }
     if (isMe && client.active) {
       // My own controls (owner's feedback, 0.9.88: clicking myself while in voice used to say "you're not in voice").
       if (!ptt) items.push(button(client.micEnabled ? `🔇 ${t('voice.mute')}` : `🎙 ${t('voice.unmute')}`, () => micButton.click()));

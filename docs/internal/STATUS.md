@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.90.4**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.90.5**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -60,11 +60,16 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Video.js, Plyr, native) with "⚙ Filmin ayarları" to bring theirs back for subtitles/quality, unknown players fall
   back to "video above our bar"; fullscreen messages flow up from the message box (newest closest to it). Also fixes
   the two YouTube bugs (controls linger, YouTube volume doesn't work).
-- [ ] **Camera/voice: layout 2 "free tiles"** (owner chose it, 29 Oct 2026; proposal page
+- [x] **0.9.90.5 camera/voice: layout 2 "free tiles"** (owner chose it, 29 Oct 2026; proposal page
   https://claude.ai/artifact/UPW29vM3kkGvWKD9hkBTrm): every person's camera is its own small window (drag anywhere,
   resize both ways, show big, hide — for me only), "line them up" and "back to default" buttons, a switch to the strip
   layout; person menu adds pin myself, hide anyone (for me), size presets; a pre-join check with mic / camera /
   speaker choice and "join muted / with camera"; a person whose connection drops keeps a "reconnecting" tile.
+  Done in 0.9.90.5: every camera its own window (drag / resize / double click back in line), ⊞ line up, ↺ default,
+  ▣ one window, pill with 🎙 / 📷, size presets and "hide (for me only)" in the person menu, pin myself, a
+  "reconnecting" tile, fullscreen fade. Still open: the pre-join check below.
+- [ ] **0.9.90.6 pre-join voice check** (rest of layout 2): small window before joining voice: camera preview, mic
+  level, which mic / camera / speaker, "join muted" / "join with camera", "don't ask again".
 - [x] **0.9.90.2 sound effects** (owner, 29 Oct 2026; proposal page with three families
   https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy): owner chose family A (warm pad, like the intro) for voice + room
   events and family B (glass marimba) for games; rules as proposed (Settings → My screen switch + volume, on at 70 %;
@@ -87,6 +92,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
+- **0.9.90.5:** unit 197/197, voice on the site 53/53 (free tiles: own window, drag, resize both ways, place
+  remembered per person, size presets, hide for me + "👁 1", line up, one-window switch, fullscreen corner, the tile
+  never vanishes during a reconnect — fails without the fix), voice on the film page 28/28 (each tile an island),
+  embed 103/103. Note: on 29 Oct the 0.9.90.3 deploy's live e2e failed once in `quiz.mjs` (the live 4 s reveal alarm
+  came > 9 s late twice, retry too); 0.9.90.4's run passed. Watch for it; if it repeats, look at alarm latency.
 - **0.9.90.4:** unit 182/182, e2e 202 checks incl. new `search.mjs` (all files green, YouTube reachable), browser
   check of the search list with mocked answers 24/24 (desktop + phone: results, Esc, outside click, arrows, page
   cache, pick = play / queue, quota note, links don't search).
