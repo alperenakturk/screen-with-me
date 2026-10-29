@@ -125,6 +125,16 @@ export function createCamWindow(opts: {
   const resize = el('span', { class: 'cam-resize', 'aria-hidden': 'true' });
   /** Free layout: the bar and the mic / camera buttons in one small draggable pill. */
   const pill = el('div', { class: 'cam-pill' });
+  /** Its corner makes the pill bigger or smaller (0.9.90.8, owner's request); remembered in this browser. */
+  const pillGrip = el('span', { class: 'cam-pill-resize', 'aria-hidden': 'true' });
+  const PILL_MIN = 0.7;
+  const PILL_MAX = 1.8;
+  let pillScale = Math.min(PILL_MAX, Math.max(PILL_MIN, Number(load('camPill:scale')) || 1));
+  const setPillScale = (scale: number) => {
+    pillScale = Math.min(PILL_MAX, Math.max(PILL_MIN, scale));
+    pill.style.transform = pillScale === 1 ? '' : `scale(${pillScale.toFixed(3)})`;
+  };
+  setPillScale(pillScale);
 
   let floatOn = load('opt:camFloat') === '1';
   let folded = load('opt:camFolded') === '1';
@@ -137,6 +147,8 @@ export function createCamWindow(opts: {
   };
   let count = 0;
   let hiddenCount = 0;
+  /** In voice: the pill stays on the page / in fullscreen even with no camera on (mic, stream; owner's request). */
+  let keep = false;
   let front = 1;
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
@@ -198,8 +210,9 @@ export function createCamWindow(opts: {
     const c = container();
     const map = tileSpots[at];
     const box = area(c);
-    const pw = pill.offsetWidth;
-    const ph = pill.offsetHeight;
+    // The pill is scaled from its top-left corner: its drawn size counts for the corner and the edges.
+    const pw = pill.offsetWidth * pillScale;
+    const ph = pill.offsetHeight * pillScale;
     // The pill sits in the corner, the column of tiles under it, a new column to the left when full.
     const startY = box.top + EDGE + ph + GAP;
     let right = box.right - EDGE;
@@ -289,12 +302,14 @@ export function createCamWindow(opts: {
     const controls = opts.controls ? [opts.controls] : [];
     if (free) {
       if (pill.parentNode !== box || bar.parentNode !== pill) {
-        pill.replaceChildren(bar, ...controls);
+        pill.replaceChildren(bar, ...controls, pillGrip);
         box.replaceChildren(pill, grid, popButton);
       }
     } else if (bar.parentNode !== box) {
       box.replaceChildren(bar, grid, ...controls, resize, popButton);
     }
+    // The card has its own buttons: there an empty box goes away; floating, the pill stays while I'm in voice.
+    box.hidden = count === 0 && hiddenCount === 0 && !(keep && m !== 'card');
     box.classList.toggle('floating', m !== 'card');
     box.classList.toggle('in-fs', m === 'fs');
     box.classList.toggle('free', free);
@@ -309,12 +324,16 @@ export function createCamWindow(opts: {
     opts.onMove();
   }
 
-  function remember(target: HTMLElement, kind: 'move' | 'size'): void {
+  function remember(target: HTMLElement, kind: 'move' | 'size' | 'scale'): void {
     const m = mode();
     if (m === 'card') return;
     const c = container();
     if (isFree()) {
       const at = where();
+      if (target === pill && kind === 'scale') {
+        save('camPill:scale', pillScale.toFixed(3));
+        return;
+      }
       if (target === pill) {
         const spot: Spot = { x: pill.offsetLeft / c.w, y: pill.offsetTop / c.h, w: 0 };
         pillSpots = { ...pillSpots, [at]: spot };
@@ -345,13 +364,14 @@ export function createCamWindow(opts: {
   let drag: {
     id: number;
     target: HTMLElement;
-    kind: 'move' | 'size';
+    kind: 'move' | 'size' | 'scale';
     x: number;
     y: number;
     left: number;
     top: number;
     width: number;
     height: number;
+    scale: number;
   } | null = null;
   /** The tile under a pointerdown and whether the pointer moved since: a still click opens the person menu. */
   let downTile: HTMLElement | null = null;
@@ -374,7 +394,7 @@ export function createCamWindow(opts: {
     const element = event.target as Element;
     if (element.closest('button')) return;
     let target: HTMLElement = box;
-    let kind: 'move' | 'size' = element === resize ? 'size' : 'move';
+    let kind: 'move' | 'size' | 'scale' = element === resize ? 'size' : 'move';
     if (isFree()) {
       const tile = element.closest<HTMLElement>('.cam-tile');
       if (tile) {
@@ -384,7 +404,7 @@ export function createCamWindow(opts: {
         tile.style.zIndex = String(++front);
       } else if (element.closest('.cam-pill')) {
         target = pill;
-        kind = 'move';
+        kind = element === pillGrip ? 'scale' : 'move';
       } else return;
     }
     drag = {
@@ -397,6 +417,7 @@ export function createCamWindow(opts: {
       top: target.offsetTop,
       width: target.offsetWidth,
       height: target.offsetHeight,
+      scale: pillScale,
     };
     box.setPointerCapture(event.pointerId);
     box.classList.add('dragging');
@@ -410,9 +431,13 @@ export function createCamWindow(opts: {
     const dx = event.clientX - drag.x;
     const dy = event.clientY - drag.y;
     if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
-    if (drag.kind === 'move') {
-      target.style.left = `${Math.round(Math.min(Math.max(0, drag.left + dx), Math.max(0, c.w - target.offsetWidth)))}px`;
-      target.style.top = `${Math.round(Math.min(Math.max(0, drag.top + dy), Math.max(0, c.h - target.offsetHeight)))}px`;
+    if (drag.kind === 'scale') {
+      // Pulling the corner right / down grows the pill, left / up shrinks it.
+      setPillScale(drag.scale * (1 + (dx + dy) / Math.max(120, drag.width + drag.height)));
+    } else if (drag.kind === 'move') {
+      const k = target === pill ? pillScale : 1;
+      target.style.left = `${Math.round(Math.min(Math.max(0, drag.left + dx), Math.max(0, c.w - target.offsetWidth * k)))}px`;
+      target.style.top = `${Math.round(Math.min(Math.max(0, drag.top + dy), Math.max(0, c.h - target.offsetHeight * k)))}px`;
     } else {
       const tile = target !== box;
       const max = Math.min(c.w * MAX_SHARE, c.w - drag.left);
@@ -473,6 +498,8 @@ export function createCamWindow(opts: {
     saveTiles(at);
     pillSpots = { ...pillSpots, [at]: null };
     save(at === 'fs' ? 'camPill:fsSpot' : 'camPill:spot', '');
+    setPillScale(1);
+    save('camPill:scale', '');
   }
 
   popButton.addEventListener('click', () => {
@@ -526,11 +553,15 @@ export function createCamWindow(opts: {
     /** Where the tiles go. */
     grid,
     /** The tiles changed: the count and the hidden count are written, places kept inside the container. */
-    update(n: number, hidden = 0): void {
+    update(n: number, hidden = 0, inVoice = false): void {
+      const wasHidden = box.hidden;
       count = n;
       hiddenCount = hidden;
+      keep = inVoice;
       markTiles();
       labels();
+      box.hidden = count === 0 && hiddenCount === 0 && !(keep && mode() !== 'card');
+      if (wasHidden !== box.hidden) opts.onMove();
       if (mode() !== 'card') requestAnimationFrame(apply);
     },
     /** Does every camera have its own window right now (person menu: size presets instead of "show big")? */

@@ -1,9 +1,11 @@
 import { LIVE_MAX_VIEWERS, type ClientMessage, type LiveKind, type Member, type Signal } from '@swm/shared/protocol';
-import { LiveP2p, type LiveQuality } from '@swm/shared/live-p2p';
+import { FPS, LiveP2p, screenConstraints, type LiveQuality } from '@swm/shared/live-p2p';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 import { flashHint } from './hint.ts';
 import { confirmIpNotice } from './ip-notice.ts';
+import { composeScreenWithCamera, composeSupported, type Composed } from './live-compose.ts';
+import { openCam } from './voice-check.ts';
 
 /**
  * Yayın kartı (sağ panelde, sesli sohbetin altında) ve yayın penceresi (videonun köşesinde, büyütülebilir).
@@ -24,7 +26,12 @@ export function createLive(
 ) {
   const card = root.querySelector<HTMLElement>('#live-card')!;
   const screenButton = root.querySelector<HTMLButtonElement>('#live-screen')!;
-  const cameraButton = root.querySelector<HTMLButtonElement>('#live-camera')!;
+  // 0.9.90.8 (owner): no separate camera stream any more (voice has cameras); a screen stream can show my camera in
+  // its corner instead. Remembered in this browser.
+  const withCamRow = root.querySelector<HTMLElement>('#live-with-cam-row')!;
+  const withCamBox = root.querySelector<HTMLInputElement>('#live-with-cam')!;
+  withCamBox.checked = load('opt:liveCam') === '1';
+  withCamBox.addEventListener('change', () => save('opt:liveCam', withCamBox.checked ? '1' : '0'));
   const watchButton = root.querySelector<HTMLButtonElement>('#live-watch')!;
   const stopButton = root.querySelector<HTMLButtonElement>('#live-stop')!;
   const status = root.querySelector<HTMLElement>('#live-status')!;
@@ -58,9 +65,20 @@ export function createLive(
   let incoming: MediaStream | null = null;
   // Telefonda ekran paylaşımı yok (mobil tarayıcıda getDisplayMedia yok); izlemek olur.
   const canShare = !isShell && typeof navigator.mediaDevices?.getDisplayMedia === 'function';
-  const canCamera = !isShell && typeof navigator.mediaDevices?.getUserMedia === 'function';
+  const canCamera = !isShell && typeof navigator.mediaDevices?.getUserMedia === 'function' && composeSupported;
+  /** The running "screen + my camera" picture (its camera and screen are stopped when the stream ends). */
+  let composed: Composed | null = null;
 
   const live = new LiveP2p({
+    capture: async (kind, q) => {
+      const screen = await navigator.mediaDevices.getDisplayMedia(screenConstraints(q));
+      if (kind !== 'screen' || !canCamera || !withCamBox.checked) return screen;
+      // The camera is optional: if it can't open, the screen goes out alone.
+      const camera = await openCam().catch(() => null);
+      if (!camera) return screen;
+      composed = composeScreenWithCamera(screen, camera);
+      return composed.stream;
+    },
     signal: (to, data) => send({ t: 'live-signal', to, data }),
     announce: (on, kind) => send(on && kind ? { t: 'live', on: true, kind } : { t: 'live', on: false }),
     watch: (on) => send({ t: 'live-watch', on }),
@@ -88,13 +106,18 @@ export function createLive(
     const idle = !host;
     const locked = hostOnly && !isHost();
     // Boşta ve paylaşamıyorsa (film sayfası, ekran paylaşımı olmayan telefon) kart hiç görünmez.
-    card.hidden = !available || (idle && !canShare && !canCamera);
+    card.hidden = !available || (idle && !canShare);
+    // The stream ended (by me, the browser's "Stop sharing", the host or a reconnect): free the camera too.
+    if (!live.broadcasting && composed) {
+      composed.close();
+      composed = null;
+    }
     card.classList.toggle('active', !idle);
     shareWrap.hidden = !idle;
     row.hidden = idle;
     if (!idle) setMenu(false);
     screenButton.hidden = !canShare;
-    cameraButton.hidden = !canCamera;
+    withCamRow.hidden = !canShare || !canCamera;
     // Yönetici kilitlediyse düğme soluk (basınca nedeni).
     shareButton.classList.toggle('is-full', locked);
     menuNote.textContent = t('live.limitIdle', { max: LIVE_MAX_VIEWERS });
@@ -170,10 +193,6 @@ export function createLive(
     setMenu(false);
     void start('screen', shareButton);
   });
-  cameraButton.addEventListener('click', () => {
-    setMenu(false);
-    void start('camera', shareButton);
-  });
   stopButton.addEventListener('click', () => {
     live.stop();
     render();
@@ -198,6 +217,8 @@ export function createLive(
   killButton.addEventListener('click', () => send({ t: 'live-stop' }));
   qualitySelect.addEventListener('change', () => {
     save('opt:liveQuality', quality());
+    // With my camera in the corner the picture follows the real screen's frames: the frame rate is set there.
+    void composed?.screen.applyConstraints({ frameRate: { ideal: FPS[quality()], max: FPS[quality()] } }).catch(() => {});
     void live.setQuality(quality());
   });
   bigButton.addEventListener('click', () => win.classList.toggle('big'));
