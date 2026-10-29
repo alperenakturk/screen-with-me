@@ -8502,3 +8502,67 @@ button.together-person:focus-visible .together-name {
 .live-menu-check[hidden] {
   display: none;
 }
+
+/* ==== 0.9.90.9: Shorts view, cameras in the seats (owner's idea). No camera tiles here: a person's camera fills
+   their avatar circle; the bottom bar has only 🎙 / 📷. Seats a little bigger so faces read well. ==== */
+html.shorts-view .voice-cams {
+  display: none !important;
+}
+
+.room.shorts .seat-who {
+  width: 100px;
+}
+
+.room.shorts .seat-av {
+  width: 80px;
+  height: 80px;
+  font-size: 42px;
+}
+
+.room.shorts .seat-name {
+  max-width: 100px;
+}
+
+.seat-cam {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #000;
+}
+
+.seat-cam.mine {
+  transform: scaleX(-1);
+}
+
+.seat.has-cam .seat-av {
+  border-color: var(--ok);
+}
+
+.shorts-voice {
+  display: flex;
+  gap: 6px;
+}
+
+.shorts-voice[hidden] {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .room.shorts .seat-who {
+    width: 60px;
+  }
+
+  .room.shorts .seat-av {
+    width: 52px;
+    height: 52px;
+    font-size: 28px;
+  }
+
+  .room.shorts .seat-name {
+    max-width: 60px;
+  }
+}

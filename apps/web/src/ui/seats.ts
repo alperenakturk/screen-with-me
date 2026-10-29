@@ -23,6 +23,38 @@ export function createSeats(left: HTMLElement, right: HTMLElement) {
   /** Ekranda koltuğu olan kişiler (üye ID'si → koltuk). */
   const seats = new Map<string, HTMLElement>();
   let more: HTMLElement | null = null;
+  /**
+   * Cameras in the seats (0.9.90.9, owner's idea): in the Shorts view a person's camera shows inside their avatar
+   * circle instead of tiles. The video elements are kept between redraws (no flicker); mine is mirrored.
+   */
+  let cams = new Map<string, MediaStream>();
+  const camVideos = new Map<string, HTMLVideoElement>();
+  function placeCams(): void {
+    for (const [id, video] of camVideos) {
+      if (!cams.has(id)) {
+        video.remove();
+        camVideos.delete(id);
+      }
+    }
+    for (const [id, seat] of seats) {
+      const stream = cams.get(id);
+      const av = seat.querySelector<HTMLElement>('.seat-av');
+      if (!stream || !av) continue;
+      let video = camVideos.get(id);
+      if (!video) {
+        video = el('video', { class: 'seat-cam', autoplay: '', playsinline: '', 'aria-hidden': 'true' }) as HTMLVideoElement;
+        video.muted = true;
+        camVideos.set(id, video);
+      }
+      if (video.srcObject !== stream) video.srcObject = stream;
+      video.classList.toggle('mine', id === myId);
+      if (video.parentElement !== av) {
+        av.prepend(video);
+        void video.play().catch(() => {});
+      }
+    }
+    for (const [id, seat] of seats) seat.classList.toggle('has-cam', cams.has(id));
+  }
   /** Açık baloncuklar: kişi listesi değişip koltuklar yeniden çizilince kaybolmasınlar. */
   const bubbles = new Map<string, { text: string; until: number; timer: number }>();
 
@@ -62,6 +94,7 @@ export function createSeats(left: HTMLElement, right: HTMLElement) {
     }
     left.replaceChildren(...l);
     right.replaceChildren(...r);
+    placeCams();
   }
 
   return {
@@ -71,6 +104,11 @@ export function createSeats(left: HTMLElement, right: HTMLElement) {
       render();
     },
     render,
+    setCams(next: Map<string, MediaStream>, me: string | null): void {
+      cams = next;
+      myId = me;
+      placeCams();
+    },
     /** Mesaj: yazanın koltuğunda baloncuk (koltuğu yoksa "+N"de, adıyla). */
     say(by: Member, text: string): void {
       const seat = seats.get(by.id);

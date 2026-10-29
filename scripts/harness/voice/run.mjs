@@ -323,6 +323,28 @@ await ayse.evaluate(`document.querySelector('#voice-cams .cam-reset').click(); d
 const camGone = await until(() => ayse.evaluate(`document.getElementById('voice-cams').hidden`), 8000);
 check(!!camGone, 'karta geri konunca boş kamera kutusu kalktı (kartın kendi düğmeleri var)');
 
+// 0.9.90.9 Shorts view (owner's idea): no camera tiles; Ali's camera fills his seat's avatar circle; only 🎙 / 📷 below.
+await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
+await ayse.evaluate(`(() => { const i = document.getElementById('media-input'); i.value = 'https://www.youtube.com/shorts/aqz-KE-bpKQ'; i.form.querySelector('button[value=load]').click(); return 1; })()`);
+const inShorts = await until(() => ayse.evaluate(`document.querySelector('.room.shorts') ? 1 : null`), 10000);
+check(!!inShorts, 'Shorts açıldı (oturma odası görünümü)');
+const seatCam = await until(
+  () =>
+    ayse.evaluate(`(() => { const v = [...document.querySelectorAll('.seat:not(.me) .seat-cam')].find((x) => x.videoWidth > 0); const r = v?.getBoundingClientRect(); return v ? { w: Math.round(r.width), h: Math.round(r.height), tiles: getComputedStyle(document.getElementById('voice-cams')).display } : null; })()`),
+  12000,
+);
+check(!!seatCam && seatCam.tiles === 'none' && seatCam.w >= 70, 'Shorts’ta Ali’nin kamerası profil yuvarlağının içinde, kamera kutuları yok', JSON.stringify(seatCam));
+const shortsCtl = await ayse.evaluate(`(() => { const v = document.getElementById('shorts-voice'); return v && !v.hidden ? [...v.querySelectorAll('button:not([hidden])')].map((b) => b.textContent) : null; })()`);
+check(!!shortsCtl && shortsCtl.length === 2, 'Shorts’un alt çubuğunda sadece 🎙 ve 📷', JSON.stringify(shortsCtl));
+await ayse.evaluate(`document.getElementById('shorts-mic').click(); 1`);
+check(!!(await until(() => ali.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000)), 'Shorts’taki 🎙 ile mikrofon kapandı');
+await ayse.evaluate(`document.getElementById('shorts-mic').click(); 1`);
+await until(() => ali.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
+await ayse.shot('shorts-kamera');
+for (const b of [ali, ayse]) await b.evaluate(`document.getElementById('shorts-exit')?.click(); 1`);
+await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
+await ali.sleep(800);
+
 // Sessize alma: Ayşe 🔇 → Ali'de sesi biter (akış kalır, enerji düşer), Ayşe'nin avatarında 🔇.
 await ayse.evaluate(`document.getElementById('voice-mic').click(); 1`);
 await ali.sleep(2000);

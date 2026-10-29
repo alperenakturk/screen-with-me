@@ -56,8 +56,8 @@ We are building a **global product**, so everything is professional, formal and 
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
-## Next up (saved 29 Oct 2026, after 0.9.90.8 — continue in this order)
-Live: 0.9.90.8 (camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+## Next up (saved 29 Oct 2026, after 0.9.90.9 — continue in this order)
+Live: 0.9.90.9 (Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -171,6 +171,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   dropped, at most `MEDIA_LIST_MAX` 30) go to the queue one by one 300 ms apart (the server's command limit is 4/s; with
   "Şimdi aç" the first one opens now); while a Short plays the next queued YouTube item's thumbnail is fetched ahead
   (`warmNextShort`) so the cued player shows it at once.
+  **0.9.90.9 (owner's idea):** in the Shorts view there are no camera tiles (`html.shorts-view .voice-cams` hidden);
+  a person's camera fills their seat's avatar circle (`seats.setCams`, fed by voice's `onCams` with the cameras on
+  screen, hidden ones and "hide myself" left out; videos kept between redraws, mine mirrored, green ring); the bottom
+  bar has only 🎙 / 📷 (`#shorts-voice`; not in voice yet, 🎙 joins); seats are bigger there (80 px, 52 px on phones).
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `GET /api/youtube/search?q&hl` (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with

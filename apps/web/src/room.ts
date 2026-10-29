@@ -394,6 +394,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button class="btn primary" data-i18n="send"></button>
           </form>
           <div class="reaction-bar shorts-reactions" role="group"></div>
+          <div id="shorts-voice" class="shorts-voice" hidden>
+            <button id="shorts-mic" type="button" class="cam-ctl"></button>
+            <button id="shorts-cam" type="button" class="cam-ctl">📷</button>
+          </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
           <button id="shorts-exit" type="button" class="btn small-btn" data-i18n-title="shorts.roomViewHint">↩ <span data-i18n="shorts.roomView"></span></button>
         </div>
@@ -779,7 +783,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }, 2600);
   }
   // Sesli sohbet (şimdilik sadece sitede; katmanda mikrofon izni film sitesinin adına sorulurdu).
+  /** Cameras for the Shorts seats (set once the seats exist; voice may report before that). */
+  let showSeatCams: (cams: Map<string, MediaStream>) => void = () => {};
+  let seatCams = new Map<string, MediaStream>();
   const voice = createVoice(app, send, () => myId, roomId, isShell, {
+    onCams: (cams) => {
+      seatCams = cams;
+      showSeatCams(cams);
+    },
     isHost: () => myId !== null && myId === hostId,
     kick: (member) => {
       if (confirm(t('kickConfirm', { name: member.name }))) send({ t: 'kick', id: member.id });
@@ -1768,6 +1779,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Sıra, sohbet geçmişi ve ayarlar oda görünümünde kalır. ↑/↓ (▲▼, fare tekerleği) önceki/sonraki Shorts. ----
   const roomEl = $('.room');
   const seats = createSeats($('#seats-l'), $('#seats-r'));
+  showSeatCams = (cams) => seats.setCams(cams, myId);
+  showSeatCams(seatCams);
   /** Shorts açıkken oda görünümünü seçtim (bu sekmede hatırlanır; "Shorts görünümü" ile geri dönülür). */
   let shortsOff = sessionLoad(`shortsOff:${roomId}`) === '1';
   /** Shorts görünümü açık mı (geçiş animasyonu sürerken bile yeni değer). */
