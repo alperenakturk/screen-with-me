@@ -14,6 +14,7 @@ import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
+import { playSound } from '../sound.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -45,12 +46,26 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let offset = 0;
   /** Bu soruda benim seçtiğim (sunucu açıklamaya kadar söylemez). */
   let myPick: { n: number; pick: number } | null = null;
+  /** The previous state (sounds play on changes only: joining mid-game is quiet). */
+  let lastKey = '';
+  let lastTick = 0;
   const body = $('#quiz-body');
+
+  function sounds(s: State, mine: State['players'][number] | undefined): void {
+    const key = `${s.phase}:${s.n}`;
+    if (lastKey !== '' && key !== lastKey && mine) {
+      if (s.phase === 'question') playSound('roundMine');
+      else if (s.phase === 'reveal') playSound(mine.gained ? 'guessRight' : 'wrong');
+      else if (s.phase === 'over') playSound('podium');
+    }
+    lastKey = key;
+  }
 
   function render(): void {
     if (!state) return;
     const s = state;
     const mine = s.players.find((p) => p.id === me);
+    sounds(s, mine);
     $('#quiz-players').replaceChildren(
       ...[...s.players]
         .sort((a, b) => b.score - a.score)
@@ -107,6 +122,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         b.addEventListener('click', () => {
           myPick = { n: s.n, pick: i };
           send({ t: 'answer', n: s.n, pick: i });
+          playSound('locked');
           render();
         });
         return b;
@@ -139,6 +155,11 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     bar.style.width = `${Math.min(100, (left / total) * 100)}%`;
     bar.classList.toggle('low', s.phase === 'question' && left < 5000);
     timer.textContent = s.phase === 'question' ? `${Math.ceil(left / 1000)}` : '';
+    // The last 3 seconds tick, only while I still have to answer.
+    const secs = Math.ceil(left / 1000);
+    const waitingForMe = s.phase === 'question' && !(myPick && myPick.n === s.n) && s.players.some((p) => p.id === me && !p.answered);
+    if (waitingForMe && secs >= 1 && secs <= 3 && secs !== lastTick) playSound('tick');
+    lastTick = waitingForMe && secs <= 3 ? secs : 0;
   }
   const ticker = window.setInterval(tick, 200);
 

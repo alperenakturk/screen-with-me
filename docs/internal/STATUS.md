@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.90.2**. The owner moved to a **new Claude
+> Last update: 29 Oct 2026. Site and extension **0.9.90.3**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -53,7 +53,7 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
 - [x] **0.9.90** film page (owner, 29 Oct 2026): 🏠 / 👁 / 🎯 in the middle of the top bar; scrolling the room view
   made the film video slide out of its frame → the room view now fits the window and doesn't scroll.
 Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release checklist").
-- [x] **0.9.90.1 + 0.9.90.2 fullscreen "one remote" — site part 0.9.90.1, film-page part 0.9.90.2 (known players'
+- [x] **0.9.90.1 + 0.9.90.3 fullscreen "one remote" — site part 0.9.90.1, film-page part 0.9.90.3 (known players'
   bars hidden in fullscreen, our catcher takes the clicks, our volume sets the film's, "⚙ Filmin ayarları"). (owner chose option A, 29 Oct 2026; proposal page
   https://claude.ai/artifact/Bz44cRGfCnExTPwtaZGtc7):** YouTube without its own controls (`controls=0`), our bar is the
   only one (adds YouTube quality/captions); on the film page the known players' control bars are hidden (JW Player,
@@ -65,9 +65,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   resize both ways, show big, hide — for me only), "line them up" and "back to default" buttons, a switch to the strip
   layout; person menu adds pin myself, hide anyone (for me), size presets; a pre-join check with mic / camera /
   speaker choice and "join muted / with camera"; a person whose connection drops keeps a "reconnecting" tile.
-- [ ] **Sound effects** (separate session, owner, 29 Oct 2026): sounds for every place that needs one (game pieces,
-  win/lose, voice join/leave, mic on/off, stream start/stop, notifications), nothing elsewhere; own file, generated with
-  Web Audio; proposals first.
+- [x] **0.9.90.2 sound effects** (owner, 29 Oct 2026; proposal page with three families
+  https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy): owner chose family A (warm pad, like the intro) for voice + room
+  events and family B (glass marimba) for games; rules as proposed (Settings → My screen switch + volume, on at 70 %;
+  room sounds at half volume while the film plays; one sound per burst; nothing queued before the first click) + quiet
+  extras for the Draw & Guess hint letter, wrong guesses and my locked quiz answer. Details: CLAUDE.md "Sound effects".
 - [ ] **YouTube search inside the app.** **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
   `YOUTUBE_API_KEY` (guide given on 29 Oct 2026; quota ≈ 100 searches/day, resets ~10:00 Turkey time; when it runs out
   the box says so and links still work; per-query cache, search on Enter only).
@@ -142,7 +144,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   and links in chat, voice join/leave in activity, popup goes back to an open room tab.
 - **0.9.90.1:** one remote on the site (YouTube/video files without their own controls, our bar in the window and
   fullscreen, volume + CC), fullscreen messages flow up from the message box; four-part version numbers start.
-- **0.9.90.2:** one remote on the film page in fullscreen (known players' bars + native controls hidden, our
+- **0.9.90.3:** one remote on the film page in fullscreen (known players' bars + native controls hidden, our
   click/volume, "⚙ Filmin ayarları" brings theirs back, unknown players: video above our bar). Embed harness 103/103.
 - **0.9.90:** film-page tools in the middle of the top bar; the room view fits the window (no scrolling).
 - **0.9.86:** security review 1: room-only custom emojis + local collection, IP notice, CSP/headers, frame guard,

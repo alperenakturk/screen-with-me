@@ -4,6 +4,7 @@ import { avatarNode, openAvatarDialog } from './avatar.ts';
 import { t } from '../i18n.ts';
 import { renderThemeSetting } from '../themes.ts';
 import { load, save } from '../storage.ts';
+import { previewSound, setSoundVolume, setSoundsOn, soundVolume, soundsOn } from '../sound.ts';
 
 export interface Options {
   /** Emojiler videonun üstünde uçuşsun mu? */
@@ -75,6 +76,28 @@ export function createSettingsPanel(
     options.actionNotice = notice.checked;
     save('opt:actionNotice', notice.checked ? '1' : '0');
   });
+
+  // Sound effects: on/off and volume (the slider plays a sample when let go).
+  const sounds = root.querySelector<HTMLInputElement>('#opt-sounds')!;
+  const volume = root.querySelector<HTMLInputElement>('#opt-soundvolume')!;
+  const volumeText = root.querySelector<HTMLOutputElement>('#opt-soundvolume-val')!;
+  const drawSound = () => {
+    sounds.checked = soundsOn();
+    volume.value = String(soundVolume());
+    volume.disabled = !sounds.checked;
+    volumeText.textContent = `${volume.value}%`;
+  };
+  drawSound();
+  sounds.addEventListener('change', () => {
+    setSoundsOn(sounds.checked);
+    drawSound();
+    if (sounds.checked) previewSound();
+  });
+  volume.addEventListener('input', () => {
+    setSoundVolume(Number(volume.value));
+    volumeText.textContent = `${volume.value}%`;
+  });
+  volume.addEventListener('change', previewSound);
 
   return {
     options,

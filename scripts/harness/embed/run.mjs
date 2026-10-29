@@ -517,14 +517,14 @@ await a.sleep(1500);
   await a.sleep(400);
   const idleRects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`));
   const ctlTop = await a.evalFrame('shell=1', `document.getElementById('fs-controls').getBoundingClientRect().top`);
-  // 0.9.90.2: our catcher over the whole hole is an island (ours is the film's only remote); every other island is
+  // 0.9.90.3: our catcher over the whole hole is an island (ours is the film's only remote); every other island is
   // above the bar.
   const isHole = (r) => near(r.x, cover.x, 2) && near(r.y, cover.y, 2) && near(r.r, cover.r, 2) && near(r.b, cover.b, 2);
   check(!!idle && !idleRects.slice(2).some((r) => !isHole(r) && r.b > ctlTop + 5), 'tam ekran: fare oynamayınca kontroller kayboluyor (adacıkları da kalkıyor)', JSON.stringify(idleRects));
   await a.evaluate(`dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 300 })); 1`);
   const woke = await until(() => a.evalFrame('shell=1', `!document.getElementById('theater').classList.contains('idle')`), 3000);
   check(!!woke, 'tam ekran: film sayfasında fare oynayınca kontroller geri geliyor');
-  // 0.9.90.2 one remote on the film page: the film player's own bar (native controls here) is hidden, our catcher
+  // 0.9.90.3 one remote on the film page: the film player's own bar (native controls here) is hidden, our catcher
   // takes the clicks (an island over the whole hole), our volume slider sets the film's volume.
   const SKIN = `[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`;
   check(!!(await until(() => a.evaluate(SKIN), 4000)), 'tam ekran: film oynatıcısının kendi çubuğu gizlendi (tek kumanda)');

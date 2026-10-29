@@ -74,6 +74,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 |---|---|
 | 🎨 **11 themes** | Night, Ocean, Sunset, Neon, plus illustrated Moonlit Nights, Arabian Nights and Art Deco poster themes (Picture Palace, Opera Night, Drive-In, Ocean Liner, Night Express), each with the mascot in costume. Pick one right on the home page and the whole page switches instantly; the plain themes have soft moving light in the background. |
 | 🎬 **Intro** | A short logo animation with a generated sound (Web Audio, no files). |
+| 🔔 **Sound effects** | Short, soft sounds where they help and nowhere else: someone joins the room or your voice chat, your mic turns on or off, a stream starts, the film time arrives, a game invite, a message you can't see on screen; in games every piece, your turn, right / close / wrong guesses, the last seconds, win / lose and the podium. Generated on the fly (no files); room sounds play at half volume while the film plays and never pile up. Turn them off or set the volume in ⚙️ Settings → My screen. |
 | 🌍 **Languages** | Turkish (default) and English, on the site and in the extension. |
 
 ## 🧠 How it works
@@ -119,6 +120,7 @@ player into it.
 | Unit tests (sync engine with fake clock & player, protocol validation, room rules, ready check, recap, video scoring) | 157 passing |
 | End-to-end (fake users against the real server code: queue, chat, host & kick, handover, ready check, pins, custom emojis, host modes, emoji rate, saved rooms, recap, Shorts) | `npm run e2e`, runs in CI |
 | Real Chrome with the extension (`scripts/harness/embed`) | 103 checks: room layer, hole placement, no page flash (screen recording), see-through messages (pixel sampling), fullscreen subtitles and controls, one remote (film's bar hidden, clicks and volume through ours), pins, settings sync between site and extension, video picker, ad tabs, redirects, pre-roll ads |
+| Sound effects (`scripts/harness/sound`) | Two browsers in one room: which sounds really play (join vs. reload, voice, mic, hidden vs. visible chat, switched off, XOX pieces and result) |
 | Real voice (`scripts/harness/voice`) | Two Chromes with fake microphones: the received audio's energy is measured, on the site and on film pages (extension), incl. the permission tab and reloads |
 | Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote + local actions ✓, 26–100 ms apart |
 

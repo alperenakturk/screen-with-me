@@ -23,7 +23,7 @@ export type EmbedControl =
   /** My volume for the film (local; never sent to the room). 0–1. */
   | { action: 'volume'; volume: number; muted: boolean }
   /**
-   * One remote in fullscreen (0.9.90.2): hide the film player's own controls (known players + native `controls`),
+   * One remote in fullscreen (0.9.90.3): hide the film player's own controls (known players + native `controls`),
    * or bring them back ("⚙ Filmin ayarları", for subtitles / quality).
    */
   | { action: 'skin'; hide: boolean };
