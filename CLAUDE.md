@@ -26,7 +26,9 @@ We are building a **global product**, so everything is professional, formal and 
 - Branches: `claude/<short-english-slug>` (or the branch the session assigns). Commit messages: imperative English
   summary line, version in parentheses when it is a release (e.g. `Fix film-page cover flash (0.9.83)`), trailing
   `Co-Authored-By` line. Never put model names in commits/PRs.
-- Delete a branch on GitHub once its PR is merged (its commits live on `main`).
+- Delete a branch on GitHub once its PR is merged (its commits live on `main`). The owner allowed it on 29 Oct 2026:
+  `.claude/settings.json` permits `git push origin --delete <branch>` (only for merged branches; check first with
+  `git merge-base --is-ancestor`).
 
 ## Working with the user
 - Alperen is learning JS/HTML/CSS at school; keep explanations simple (in Turkish).
@@ -56,13 +58,13 @@ We are building a **global product**, so everything is professional, formal and 
 
 ## Next up (saved 28 Oct 2026, after 0.9.89; the owner paused here — continue in this order)
 Live: 0.9.90 (film-page tools in the middle of the top bar, room view no longer scrolls). YouTube is reachable from the cloud sandbox again (29 Oct 2026). The same queue is in `docs/internal/STATUS.md` "Task queue".
-1. **0.9.91 YouTube player fixes** (owner's feedback): on the site the YouTube controls stay visible long after the
+1. **YouTube player fixes (ship with the fullscreen "one remote", 0.9.90.1)** (owner's feedback): on the site the YouTube controls stay visible long after the
    mouse leaves the video (windowed view), and YouTube's own volume control doesn't work. Our code never sets the
    volume (checked), so suspect something over/around the iframe or our seeks/rate changes. **Needs network access:**
    the cloud sandbox blocks `www.youtube.com`, `*.googlevideo.com`, `*.ytimg.com`; the owner was asked to add them under
    the environment's Network access → Allowed domains. Check with `curl https://www.youtube.com/iframe_api` first;
    if still blocked, say so and move on.
-2. **0.9.92 YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
+2. **YouTube search inside the app** (like Watch2Gether: type in the top box, pick from results). Waits for the
    owner: Google Cloud project (project e-mail) → enable "YouTube Data API v3" → API key restricted to that API →
    GitHub repo Secrets `YOUTUBE_API_KEY` (never pasted in chat). Plan: the Worker calls `search.list` (key stays on the
    server; the deploy job passes the secret to the Worker), results cached per query, a friendly "search is full for
@@ -165,7 +167,11 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   (only the host when `hostOnly`). Short to Short: the new video slides in from below (going back: from above). Loop
   is `settings.loop` (host): when the video ends the client sends `{t:'next', end: true}`; if loop is on and the video
   is a Short the server applies `restart` (seeks to start; not again if position < 2 s, simultaneous "ended" messages
-  count once). A manual "Next" skips even in loop. Test: `scripts/e2e/shorts.mjs`.
+  count once). A manual "Next" skips even in loop. **0.9.90.1 (owner: "working is not enough, make it great"):**
+  YouTube → YouTube switches reuse the same player (`PlayerAdapter.load` = `cueVideoById`; no new iframe, switching
+  used to take 1–2 s), phones swipe up/down on the stage (≥60 px, mostly vertical, ≤0.8 s; not on chat / emoji bar),
+  and the wheel works over the video too (our click catcher sits over the YouTube frame since "one remote"). Next
+  ideas in `STATUS.md`. Test: `scripts/e2e/shorts.mjs`.
 - **Media kinds:** `youtube`, `html5` and `test` play on the site; `page` (any other web address) plays on the film
   site itself, everyone in their own tab, with the room overlay opened by the extension (see "Shell").
 - **Extension rules:** does nothing while not in a room (frames check `storage.session` `sessions`; sleeps if there is
@@ -305,9 +311,20 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   marimba, music box, piano, rustle+bell, warm pad); the one playing is `INTRO_VARIANT` (the user chose F). All land on
   the animation beats (0 / 0.72 / 1.1–1.4 s) (site + extension). If the browser blocks audio it gives up within 250 ms
   (late sound feels odd). To listen, `scheduleIntroSound` can render to WAV with an offline context.
-- **Message position:** in fullscreen the "💬 Mesajlar burada" handle can be dragged (stored as a ratio: site
-  `localStorage` `toastPos`, extension `storage.local` `toastPos`; double-click resets). Messages align next to the
-  handle and grow upwards when it is near the bottom. In the extension's room view messages are in the chat panel.
+- **One remote (0.9.90.1, owner chose option A on https://claude.ai/artifact/Bz44cRGfCnExTPwtaZGtc7):** the site's own
+  players have no controls of their own: YouTube with `controls: 0, disablekb: 1, iv_load_policy: 3`, video files
+  without `controls`. Our `#fs-controls` bar is their only remote, in fullscreen and in the window
+  (`.theater.own-controls`: shown while the mouse is on the video, hidden at once when it leaves, stays while paused;
+  in the window only ▶, seek, time, volume, CC, ⛶ — emojis, pin, sync, speed live in the toolbar under the video).
+  Click on the video = play/pause, double click = fullscreen in/out (`#fs-catcher`). Volume is local (`opt:volume`,
+  `opt:muted`; `PlayerAdapter.getVolume/setVolume/isMuted/setMuted`), CC only when the video has captions
+  (`captions()` / `setCaptions`, YouTube's captions module). This also fixed YouTube's lingering controls and its
+  volume slider that didn't work under our layer. Film page (extension) part — hiding known players' bars with a
+  "⚙ Filmin ayarları" escape — is the next release.
+- **Message position (0.9.90.1):** in fullscreen chat messages flow up from the quick message box (`ui/toasts.ts`,
+  anchored to `#fs-chat`, above the seek line, left-aligned; newest closest to the box; they don't fade while the box
+  is focused). The old draggable "💬 Mesajlar burada" handle and `toastPos` are gone. With the side panel hidden (window)
+  they sit at the top right of the video. In the extension's room view messages are in the chat panel.
 - **Back from the film to the room:** "🏠 Odaya dön" in the overlay → the tab goes to `/r/ROOM#back` (the site enters
   without asking the name), the overlay goes away. The **popup** (0.9.83) never navigates the film tab: "🏠 Odayı ayrı
   sekmede aç" switches to an open tab of that room or opens `/r/ROOM#back` in a new tab next to the film. Outside a
@@ -596,6 +613,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
 
 ## Release checklist
+0. **Version numbers (owner's rule, 29 Oct 2026):** releases now count in a fourth part: 0.9.90.1, 0.9.90.2, … so we
+   don't run out of numbers before 1.0. The third part (0.9.91, 0.9.92…) moves **only when the owner says** "this one
+   is big, go up one". Chrome extensions accept up to four numeric parts; the site footer shows the same number.
 1. `npm run typecheck && npm test` (if the server changed: `wrangler dev` + `npm run e2e`; if the extension changed:
    the embed harness, see "Cloud sessions").
 2. Bump the site version in the footer (`apps/web/index.html` `.footer-version`). The extension version is kept at

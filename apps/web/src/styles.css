@@ -2807,35 +2807,6 @@ html:not(.shell) .shell-only {
   text-align: right;
 }
 
-/* Tam ekranda mesajların yerini gösteren, sürüklenebilir tutamak (fare oynayınca görünür) */
-.toast-handle {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  z-index: 3;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: rgb(0 0 0 / 0.55);
-  border: 1px dashed rgb(255 255 255 / 0.35);
-  color: #fff;
-  font-size: 13px;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-  transition: opacity 0.25s;
-}
-
-.toast-handle:active {
-  cursor: grabbing;
-}
-
-.theater:is(:fullscreen, .fake-fs).idle .toast-handle {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .toasts.left {
   align-items: flex-start;
   text-align: left;
@@ -7980,4 +7951,71 @@ button.together-person:focus-visible .together-name {
   color: var(--muted);
   overflow-wrap: anywhere;
   text-align: left;
+}
+
+/* ==== 0.9.90.1: one remote. The site's own players (YouTube, video files, sync test) have no controls of their own;
+   our bar is their remote in the window too, shown while the mouse is on the video (ui/fullscreen.ts `own`). ==== */
+.theater.own-controls:not(:fullscreen):not(.fake-fs) :is(.fs-catcher, .fs-controls) {
+  display: flex;
+}
+
+.theater.own-controls:not(:fullscreen):not(.fake-fs) .fs-controls {
+  padding: 36px 14px 10px;
+  gap: 6px;
+  border-radius: 0 0 calc(var(--radius) - 2px) calc(var(--radius) - 2px);
+}
+
+/* In the window the toolbar under the video already has emojis, pin, sync, speed and fullscreen. */
+.theater.own-controls:not(:fullscreen):not(.fake-fs) :is(.fs-reactions, .fs-chat, #fs-pin, #fs-skip, #fs-speed, #fs-exit, #fs-pins) {
+  display: none;
+}
+
+.theater.own-controls:not(:fullscreen):not(.fake-fs) .fs-row {
+  flex-wrap: nowrap;
+}
+
+.theater.own-controls:not(:fullscreen):not(.fake-fs) .fs-btn {
+  min-width: 34px;
+  height: 34px;
+  font-size: 16px;
+}
+
+/* ⛶ only in the window (fullscreen has ✕). */
+.theater:is(:fullscreen, .fake-fs) .fs-enter {
+  display: none;
+}
+
+.theater.own-controls:not(:fullscreen):not(.fake-fs) .fs-enter {
+  margin-left: auto;
+}
+
+.fs-volume {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fs-volume[hidden] {
+  display: none;
+}
+
+.fs-volume input[type='range'] {
+  width: 90px;
+  accent-color: var(--accent);
+}
+
+.fs-cc {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.fs-cc[hidden] {
+  display: none;
+}
+
+.fs-cc.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }

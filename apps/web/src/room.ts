@@ -290,7 +290,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div id="action-notice" class="action-notice" role="status" hidden></div>
             <div id="toasts" class="fs-only toasts" aria-live="polite"></div>
             <form id="pin-form" class="pin-form" hidden><span aria-hidden="true">📌</span><input id="pin-note" autocomplete="off" data-i18n-placeholder="pinPlaceholder" /><button class="btn small-btn primary" data-i18n="pinSave"></button></form>
-            <div id="toast-handle" class="fs-only toast-handle" data-i18n-title="toastHandleHint"><span data-i18n="toastHandle"></span></div>
             <div id="fs-controls" class="fs-only fs-controls">
               <div class="fs-progress">
                 <div class="fs-seek-wrap">
@@ -301,6 +300,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
               <div class="fs-row">
                 <button id="fs-play" type="button" class="fs-btn">▶</button>
+                <div class="fs-volume" id="fs-volume-box" hidden>
+                  <button id="fs-mute" type="button" class="fs-btn">🔊</button>
+                  <input id="fs-volume" type="range" min="0" max="100" step="1" value="100" />
+                </div>
+                <button id="fs-cc" type="button" class="fs-btn fs-cc" hidden>CC</button>
                 <div class="reaction-bar fs-reactions" role="group"></div>
                 <form id="fs-chat" class="fs-chat">
                   <input id="fs-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" />
@@ -308,6 +312,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="fs-pin" type="button" class="fs-btn">📌</button>
                 <button id="fs-skip" type="button" class="fs-btn">⏭</button>
                 <select id="fs-speed" class="fs-speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
+                <button id="fs-enter" type="button" class="fs-btn fs-enter">⛶</button>
                 <button id="fs-exit" type="button" class="fs-btn">✕</button>
               </div>
             </div>
@@ -1099,7 +1104,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Oynatıcı ----
   let currentItemId: string | null = null;
-  let current: { player: PlayerAdapter; slot: HTMLElement } | null = null;
+  let current: { player: PlayerAdapter; slot: HTMLElement; youtube: boolean } | null = null;
   let mediaToken = 0;
 
   async function applyState(state: PlaybackState): Promise<void> {
@@ -1125,6 +1130,23 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (!seenShorts.includes(state.item.id)) seenShorts.push(state.item.id);
     }
     const token = ++mediaToken;
+    // YouTube → YouTube (every scroll in Shorts): the same player opens the next video, no new iframe.
+    const next = state.item?.media;
+    if (current?.youtube && next?.kind === 'youtube' && current.player.load && !film) {
+      const { player } = current;
+      const load = current.player.load.bind(current.player);
+      engine.detach();
+      autoplayEl.hidden = true;
+      showError(null);
+      engine.receive(state);
+      emptyEl.hidden = true;
+      externalEl.hidden = true;
+      await load(next.id);
+      if (token !== mediaToken || current?.player !== player) return;
+      engine.attach(player);
+      reportLayout();
+      return;
+    }
     engine.detach();
     closeCurrent();
     autoplayEl.hidden = true;
@@ -1164,7 +1186,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       slot.remove();
       return;
     }
-    current = { player, slot };
+    current = { player, slot, youtube: media.kind === 'youtube' };
     engine.attach(player);
     reportLayout();
   }
@@ -1231,7 +1253,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
       onActivity: () => fullscreen.poke(),
     });
-    current = { player, slot };
+    current = { player, slot, youtube: false };
     film = player;
     if (roomState) player.setState(roomState);
     player.setClock(clock.now() - Date.now(), clock.synced);
@@ -1348,7 +1370,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // Deliğin içinde yine görünmesi gerekenler: kartlar, tam ekran kontrolleri, uçuşan emojiler…
       for (const child of wrap.children) {
         if (child.id === 'player' || child.id === 'fs-catcher') continue;
-        if (idle && (child.id === 'fs-controls' || child.id === 'toast-handle')) continue;
+        if (idle && child.id === 'fs-controls') continue;
         if (child.id === 'reactions-layer') {
           // Uçuşan emoji yükselirken de görünsün: bütün yolu (yukarı ~240 px, yana biraz) tek adacık.
           for (const node of child.children) {
@@ -1799,6 +1821,35 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
     { passive: false },
   );
+  // Phones: swipe up = next short, swipe down = previous (on the video or around it; not on the chat or emoji bar).
+  let touchStart: { x: number; y: number; at: number } | null = null;
+  $('.stage').addEventListener(
+    'touchstart',
+    (event) => {
+      const touch = event.touches[0];
+      touchStart =
+        shortsOn && !games.isOpen() && event.touches.length === 1 && touch && !(event.target as Element).closest('.reaction-bar, .shorts-chat, input, button')
+          ? { x: touch.clientX, y: touch.clientY, at: Date.now() }
+          : null;
+    },
+    { passive: true },
+  );
+  $('.stage').addEventListener(
+    'touchend',
+    (event) => {
+      const start = touchStart;
+      touchStart = null;
+      const touch = event.changedTouches[0];
+      if (!start || !touch || Date.now() - start.at > 800) return;
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      // A real vertical swipe: long enough and more up/down than sideways.
+      if (Math.abs(dy) < 60 || Math.abs(dy) < Math.abs(dx) * 1.5) return;
+      if (dy < 0) shortsNext($('#shorts-next'));
+      else shortsPrev($('#shorts-prev'));
+    },
+    { passive: true },
+  );
   $('#shorts-loop').addEventListener('click', (event) => {
     if (!amHost()) return flashHint(event.currentTarget as HTMLElement, t('shorts.loopHost'));
     send({ t: 'settings', loop: roomSettings.loop !== true });
@@ -1859,11 +1910,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     keepControls: fitAbove,
     theater: $('#theater'),
     getPlayer: () => current?.player ?? null,
+    // The film page's player keeps its own controls for now (next release); our remote is for the site's players.
+    ownControls: () => film === null,
     send,
     onSkip: skip,
     onRate: requestRate,
   });
-  const toasts = createToasts($('#toasts'), $('#toast-handle'));
+  const toasts = createToasts($('#toasts'), $('#fs-chat'));
   let sideHidden = !isShell && load('opt:sideHidden') === '1';
   // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu
   // tarayıcıda hatırlanır. Film sayfasındaki katmanda yok (orada yerleşimi delik belirler).
