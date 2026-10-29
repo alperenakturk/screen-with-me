@@ -71,10 +71,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] **YouTube search inside the app.** **Waits for the owner:** YouTube Data API v3 key in GitHub Secrets
   `YOUTUBE_API_KEY` (guide given on 29 Oct 2026; quota ≈ 100 searches/day, resets ~10:00 Turkey time; when it runs out
   the box says so and links still work; per-query cache, search on Enter only).
-- [ ] **Reels / TikTok together** (owner's question, 29 Oct 2026): possible with the extension (everyone in their own
-  account, the host's reel address followed by the others); grey area in their terms (no scraping/automation, only
-  navigation), site-specific maintenance. Proposed: a separate research + prototype session before deciding.
-- [ ] Before 1.0: try Shorts / Reels scrolling together end to end (ROADMAP §1).
+- [ ] **Shorts scrolling, really good** (owner, 29 Oct 2026: "working is not enough, make it great"; Reels / TikTok are
+  **not** planned for now): scrolling feel and speed, preloading the next short, an endless feed (filling the queue
+  from Shorts links / a channel or playlist), phone swipe, timing so everyone lands on the same short together.
+  First a real-browser pass of today's Shorts view with a list of problems, then fixes.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
 
