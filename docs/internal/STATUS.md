@@ -54,7 +54,11 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
   made the film video slide out of its frame → the room view now fits the window and doesn't scroll.
 - [ ] **Sound effects** (owner, 29 Oct 2026; branch `claude/sound-effects`): proposal page with three generated
   sound families (A warm pad, B glass marimba, C soft clicks) + event list published
-  (https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy). **Waits for the owner's choice**, then: `sounds.ts` (one shared
+  (https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy). **Owner chose (29 Oct 2026):** voice + room events → family A (warm pad), all games → family B (glass
+  marimba); rules OK as proposed (switch + volume default on 70 %, room sounds at half volume while the film plays,
+  one sound per burst / same event at most every 3 s / at most 4 sounds per 2 s, nothing queued before the first
+  click, "reduce motion" doesn't mute); extra quiet sounds for: Draw & Guess hint letter, my quiz answer locked,
+  wrong guess in Draw & Guess. Then: `sounds.ts` (one shared
   AudioContext, registry, rate limit), Settings → Ekranım switch + volume, hooks in voice/room/games, tests, docs,
   version 0.9.90.x, PR, merge, deploy check.
 - [ ] **Fullscreen design** (owner, 29 Oct 2026): our controls over the film's / YouTube's own player look
