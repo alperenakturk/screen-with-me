@@ -57,6 +57,36 @@ export function parseMediaInput(input: string): Media | null {
   return isValidMedia(media) ? media : null;
 }
 
+/** At most this many links from one paste go to the queue. */
+export const MEDIA_LIST_MAX = 30;
+
+/**
+ * Many links pasted at once (0.9.90.7, Shorts step 2: "paste many links"): a list of YouTube / video file links,
+ * separated by spaces, new lines or commas. Only tokens that really look like links count (a search such as
+ * "funny cats" stays a search; an 11-letter word is never taken for a video id here). Film pages are left out (each
+ * one moves everyone's tab, they are added one by one). Duplicates are dropped. Fewer than two links: `[]`.
+ */
+export function parseMediaList(input: string): { media: Media[]; skipped: number } {
+  const tokens = input.split(/[\s,]+/).filter((token) => /^(https?:\/\/|www\.|youtu\.be\/|(m\.)?youtube\.com\/)/i.test(token));
+  if (tokens.length < 2) return { media: [], skipped: 0 };
+  const media: Media[] = [];
+  let skipped = 0;
+  for (const token of tokens) {
+    const item = parseMediaInput(token);
+    if (!item || item.kind === 'page') {
+      skipped++;
+      continue;
+    }
+    if (media.some((m) => sameMedia(m, item))) continue;
+    if (media.length >= MEDIA_LIST_MAX) {
+      skipped++;
+      continue;
+    }
+    media.push(item);
+  }
+  return media.length >= 2 ? { media, skipped } : { media: [], skipped: 0 };
+}
+
 export function sameMedia(a: Media | null, b: Media | null): boolean {
   if (a === null || b === null) return a === b;
   if (a.kind === 'youtube' && b.kind === 'youtube') return a.id === b.id;
