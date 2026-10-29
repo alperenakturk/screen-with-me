@@ -480,7 +480,6 @@ const tr = {
   'error.others_watching':
     "Şimdi yeni video açılamaz: {names} hâlâ filmde. Herkes üstteki 🏠 Odaya dön'e basınca açabilirsin.",
   stillWatching: '🎬 Hâlâ filmde: {names}',
-  toastHandle: '💬 Mesajlar burada · sürükleyip taşı',
   stickerAdd: 'Özel emoji ekle: bilgisayarından GIF ya da resim seç (sadece bu odaya eklenir)',
   stickerOpen: 'Özel emojiler (kendi GIF ya da resmin): emojilerin devamındaki sayfaya geç',
   stickerBack: 'Normal emojilere dön',
@@ -498,7 +497,6 @@ const tr = {
   pinSave: 'Pinle',
   pinTitle: '{time} · {who} · tıkla, oraya git',
   pinRemove: 'Pini kaldır',
-  toastHandleHint: 'Sürükleyip mesajların yerini değiştir (çift tık: sağ üste geri)',
   inFilm: 'Eklentiyle filmi izliyor',
   inAd: 'reklamda',
   inAdTitle: 'Film sayfasında reklam oynuyor. Oda onu beklemiyor; reklam bitince yetişecek',
@@ -1169,7 +1167,6 @@ const en: Record<Key, string> = {
   'error.others_watching':
     "Can't open a new video yet: {names} still on the film. Once everyone presses 🏠 Back to the room at the top, you can.",
   stillWatching: '🎬 Still watching the film: {names}',
-  toastHandle: '💬 Messages show up here · drag to move',
   stickerAdd: 'Add a custom emoji: pick a GIF or image from your computer (added to this room only)',
   stickerOpen: 'Custom emojis (your own GIFs or images): go to the page after the emojis',
   stickerBack: 'Back to regular emojis',
@@ -1187,7 +1184,6 @@ const en: Record<Key, string> = {
   pinSave: 'Pin',
   pinTitle: '{time} · {who} · click to jump there',
   pinRemove: 'Remove pin',
-  toastHandleHint: 'Drag to move where messages appear (double-click: back to the top right)',
   inFilm: 'Watching the film with the extension',
   inAd: 'in an ad',
   inAdTitle: 'An ad is playing on their film page. The room isn’t waiting; they’ll catch up when it ends',

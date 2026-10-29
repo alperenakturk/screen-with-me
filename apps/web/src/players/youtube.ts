@@ -51,9 +51,10 @@ export async function createYouTubePlayer(
       videoId,
       width: '100%',
       height: '100%',
-      // fs: 0 → YouTube'un kendi tam ekran butonu gizlenir. Onun tam ekranında
-      // bizim emojilerimiz ve kontrollerimiz görünmez; herkes bizimkini kullansın.
-      playerVars: { playsinline: 1, rel: 0, fs: 0 },
+      // One remote (owner's choice, 0.9.90.1): YouTube's own controls are off (controls: 0, no keyboard shortcuts,
+      // no annotations); our bar does play/seek/volume/captions in the window and in fullscreen. Two control bars
+      // used to stack, YouTube's lingered after the mouse left and its volume slider didn't work under our layer.
+      playerVars: { playsinline: 1, rel: 0, fs: 0, controls: 0, disablekb: 1, iv_load_policy: 3 },
       events: {
         onReady: () => resolve(adapter),
         onStateChange: (event) => {
@@ -78,6 +79,10 @@ export async function createYouTubePlayer(
     });
 
     const state = () => player.getPlayerState();
+    let captionsOn = false;
+    /** Not part of the typed API, but stable for years: which modules (captions) this video offers. */
+    const options = () => ((player as unknown as { getOptions?: () => string[] }).getOptions?.() ?? []) as string[];
+    const modules = player as unknown as { loadModule?: (name: string) => void; unloadModule?: (name: string) => void };
 
     const adapter: PlayerAdapter = {
       fineRate: false,
@@ -121,6 +126,29 @@ export async function createYouTubePlayer(
       },
       seek: (seconds) => player.seekTo(seconds, true),
       setRate: (rate) => player.setPlaybackRate(rate),
+      load: (id) =>
+        new Promise<void>((done) => {
+          wantsToPlay = false;
+          captionsOn = false;
+          player.cueVideoById(id);
+          const started = Date.now();
+          const timer = setInterval(() => {
+            if (destroyed || state() === YT.PlayerState.CUED || Date.now() - started > 4000) {
+              clearInterval(timer);
+              done();
+            }
+          }, 50);
+        }),
+      getVolume: () => player.getVolume() / 100,
+      setVolume: (volume) => player.setVolume(Math.round(Math.min(1, Math.max(0, volume)) * 100)),
+      isMuted: () => player.isMuted(),
+      setMuted: (muted) => (muted ? player.mute() : player.unMute()),
+      captions: () => (options().some((name) => name === 'captions' || name === 'cc') ? captionsOn : null),
+      setCaptions: (on) => {
+        captionsOn = on;
+        if (on) modules.loadModule?.('captions');
+        else modules.unloadModule?.('captions');
+      },
       onEvent: (listener) => listeners.add(listener),
       destroy: () => {
         destroyed = true;

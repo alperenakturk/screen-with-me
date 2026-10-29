@@ -3,7 +3,8 @@
 _Owner's plan (Alperen, 28 Oct 2026), completed and structured by Claude. Current version: 0.9.82._
 Items marked **(added)** were not in the owner's original list; Claude proposed them. Items marked 👤 need the owner
 (money, accounts, legal commitments, final naming). Everything else Claude drives on its own initiative, one version
-at a time (0.9.83, 0.9.84, …; never 0.9.9 — Chrome compares version parts numerically).
+at a time. Since 29 Oct 2026 releases count in a fourth part (0.9.90.1, 0.9.90.2, …); the third part moves only when
+the owner calls a release big (never 0.9.9 — Chrome compares version parts numerically).
 
 Detailed background lives in older docs that are still in Turkish until migrated: `VIZYON.md` (vision, "v1.0" test
 list, big services, donations, going public), `BUYUME.md` (growth), `gelecek-fikirler.md` (ideas),
@@ -152,6 +153,7 @@ implement, test, ship.
 
 ### 7. 1.0 launch
 - [ ] Gate: phases 1–6 checked (or consciously deferred by the owner).
+- [ ] **Remind the owner first:** Brave + Edge test (owner's request, 29 Oct 2026; checklist in `STATUS.md`) 👤.
 - [ ] Version `1.0.0` → `npm run store` → submission from the owner's developer account 👤.
 - [ ] While in review: no `PROTOCOL_VERSION` bump.
 - [ ] After approval: install links point to the store, `eklenti.html` updated.
