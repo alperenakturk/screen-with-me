@@ -1,6 +1,7 @@
 import { cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { formatTime } from '../media-info.ts';
+import { canElementFullscreen, isTouch, lockLandscape, onTurn, unlockOrientation } from '../device.ts';
 import { t } from '../i18n.ts';
 import { load, postToExtension, save } from '../storage.ts';
 import { setIcon } from './icons.ts';
@@ -230,28 +231,24 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     onActiveChange();
     if (tellExtension) postToExtension({ type: 'fullscreen', on });
   }
-  /** A phone held upright turns sideways for a landscape video (Android; iPhone ignores it, the person rotates). */
-  const touch = matchMedia('(pointer: coarse)');
+  /** A phone held upright turns sideways for a landscape video (not for Shorts). */
   function turnSideways(on: boolean): void {
-    const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
-    if (!touch.matches || !orientation) return;
-    if (on && landscape()) orientation.lock?.('landscape').catch(() => {});
-    else if (!on) orientation.unlock?.();
+    if (on && landscape()) lockLandscape();
+    else if (!on) unlockOrientation();
   }
   // Turning the phone sideways while a video plays opens our fullscreen (no browser fullscreen without a tap, so the
   // room's own); upright again closes it, if it was opened this way (setting "Yan çevirince tam ekran").
-  const sideways = matchMedia('(orientation: landscape)');
   let byTurning = false;
-  sideways.addEventListener('change', () => {
-    if (shell || !touch.matches || load('opt:rotateFs') === '0') return;
-    if (sideways.matches && !isActive() && getPlayer() && landscape() && !document.querySelector('#game-stage:not([hidden])')) {
+  onTurn((sideways) => {
+    if (shell || !isTouch() || load('opt:rotateFs') === '0') return;
+    if (sideways && !isActive() && getPlayer() && landscape() && !document.querySelector('#game-stage:not([hidden])')) {
       byTurning = true;
       setFake(true, false);
-    } else if (!sideways.matches && byTurning && fake) setFake(false, false);
+    } else if (!sideways && byTurning && fake) setFake(false, false);
   });
   function enter(): void {
     if (shell) return setFake(true, true);
-    if (typeof theater.requestFullscreen !== 'function') return setFake(true, false);
+    if (!canElementFullscreen()) return setFake(true, false);
     theater.requestFullscreen().then(
       () => turnSideways(true),
       () => setFake(true, false),

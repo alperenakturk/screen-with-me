@@ -1,5 +1,9 @@
 import './styles.css';
+import './phone.css';
+import { markDevice } from './device.ts';
 import { isShell, syncStore } from './storage.ts';
+
+markDevice();
 
 // Film sayfasının üstündeki oda katmanında (kabuk) sitenin bazı parçaları (eklenti linki, ana sayfa
 // logosu, alt bilgi) gizlenir; sınıf en başta konur ki ilk karede görünmesin.

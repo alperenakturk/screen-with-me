@@ -110,7 +110,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   fullscreen without the browser's (`.pseudo-fs`), turning the phone sideways opens fullscreen (setting, on by
   default; Android also locks landscape after ⛶), compact dock when held sideways, Shorts fit the screen, 16 px
   inputs (no iOS zoom), push-to-talk hidden on touch, phone note on the home page's extension card. Harness
-  `scripts/harness/phone/run.cjs` 19/19.
+  `scripts/harness/phone/run.cjs` 19/19. Built to grow: phone styles in `phone.css`, device facts in `device.ts`, the
+  store-app path in `docs/internal/apps.md` (Play TWA first, App Store needs report / block + push).
+- [ ] **TV version: design proposals** (owner, 29 Oct 2026; a separate session prepares them, design only: Google TV
+  browser, join, voice in / out, talk or type, emojis). The owner picks one, then maybe we build it.
+- [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and

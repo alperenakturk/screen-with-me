@@ -1,0 +1,497 @@
+/*
+ * Phones and touch screens (0.9.91.2). Everything that only changes the site on a phone, a touch screen or a phone
+ * held sideways lives here, loaded after styles.css (main.ts), so the desktop layout stays in styles.css and phone work
+ * (and a future store app, docs/internal/apps.md) has one place to grow. Device facts that code needs are in device.ts.
+ * Breakpoints: ≤ 700 px wide = phone; + portrait + ≥ 540 px tall = the app layout; ≤ 500 px tall = held sideways;
+ * (pointer: coarse) = touch.
+ */
+
+/* ==== Menus as bottom sheets, touch polish, the app layout ==== */
+/* Menus open as bottom sheets: full width, from the bottom edge, never off the side of the screen. */
+@media (max-width: 700px) {
+  :is(.profile-pop, .live-menu, .speed-pop, .game-menu, .react-tray, .person-pop, .shorts-feed-pop, .theme-menu):not([hidden]) {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: 75dvh !important;
+    overflow-y: auto;
+    margin: 0 !important;
+    padding: 22px 16px calc(16px + env(safe-area-inset-bottom)) !important;
+    border-radius: 22px 22px 0 0 !important;
+    border-bottom: 0 !important;
+    z-index: 980 !important;
+    box-shadow: 0 -14px 44px rgb(0 0 0 / 0.55) !important;
+    animation: sheet-up 0.18s ease-out;
+  }
+
+  /* The little handle that says "this is a sheet". */
+  :is(.profile-pop, .live-menu, .speed-pop, .game-menu, .react-tray, .person-pop, .shorts-feed-pop, .theme-menu):not([hidden])::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--text) 30%, transparent);
+  }
+
+  /* Bigger targets inside the sheets. */
+  :is(.game-menu, .live-menu, .person-pop) :is(button, label) {
+    min-height: 44px;
+  }
+
+  .react-tray .reaction-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+
+  .speed-pop .speed {
+    justify-content: center;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.profile-pop, .live-menu, .speed-pop, .game-menu, .react-tray, .person-pop, .shorts-feed-pop, .theme-menu) {
+    animation: none !important;
+  }
+}
+
+/* Touch screens: no double-tap zoom on buttons, no zoom-in when a text box is focused (iOS zooms under 16 px), and
+   no keyboard-only things (push-to-talk is the V key). */
+@media (pointer: coarse), (hover: none), (max-width: 700px) {
+  button,
+  .btn,
+  a,
+  input[type='range'] {
+    touch-action: manipulation;
+  }
+
+  input:not([type='checkbox'], [type='radio'], [type='range']),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+
+  .voice-ptt {
+    display: none !important;
+  }
+}
+
+/* The room as an app on a phone held upright: the video stays at the top, the chat scrolls inside its own card and
+   its message box always sits at the bottom of the screen (the page itself never scrolls). */
+@media (max-width: 700px) {
+  html.in-room .footer {
+    display: none;
+  }
+
+  html.in-room main {
+    padding: 8px 10px 0;
+  }
+
+  /* One row: the box and two small buttons (＋ queue, ▶ play now). */
+  .room .media-form {
+    flex-wrap: nowrap;
+  }
+
+  .room .media-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .room .media-form > .btn {
+    flex: 0 0 auto;
+    width: 46px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .room .media-form > .btn::before {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .room .media-form > .btn[value='enqueue']::before {
+    content: '＋';
+  }
+
+  .room .media-form > .btn[value='load']::before {
+    content: '▶';
+  }
+
+  /* Under the video one row: 😀 opens the tray (the recent ones live in it), then the tools. */
+  .room .toolbar {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .room .toolbar .react-recent {
+    display: none;
+  }
+
+  .room .toolbar .react-open :is(.tool-label, .react-caret) {
+    display: none;
+  }
+
+  .room .toolbar-right {
+    gap: 4px;
+  }
+
+  .now-playing {
+    gap: 8px;
+  }
+
+  .now-playing .now-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 700px) and (min-height: 540px) and (orientation: portrait) {
+  html.in-room:not(.shorts-view) body {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  html.in-room:not(.shorts-view) main {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html.in-room:not(.shorts-view) .room {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  html.in-room:not(.shorts-view) .room > .stage {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  /* If voice and cameras need more room than there is, this part scrolls (the chat never gets too small to use). */
+  html.in-room:not(.shorts-view) .room > .side {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: static;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  html.in-room:not(.shorts-view) .side > .together-card {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  html.in-room:not(.shorts-view) .side > .tabs-card {
+    flex: 1 0 0;
+    min-height: 170px;
+    height: auto;
+    max-height: none;
+    margin: 0 0 calc(8px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ＋ under the video exists for phones only. */
+.add-toggle {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .room > .stage,
+  .room > .side {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .room .toolbar .tray-bar {
+    flex: 0 0 auto;
+  }
+
+  .room.has-item .add-toggle {
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+  }
+
+  .room.has-item.adding .add-toggle {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .room.has-item:not(.adding) > .stage > .media-form {
+    display: none;
+  }
+
+  /* "Şimdi oynuyor" in one slim line. */
+  .now-playing .now-text > .muted {
+    display: none;
+  }
+
+  .now-playing .now-title {
+    font-size: 14px;
+  }
+
+  .now-playing .small-btn {
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+
+  /* "Birlikte" in one row: faces, then the voice / share buttons; the title goes (the faces say it). */
+  .together-card {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 10px 12px;
+  }
+
+  .together-card .together-head {
+    display: none;
+  }
+
+  .together-card .voice-people {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    min-width: 0;
+    scrollbar-width: none;
+  }
+
+  .together-card .together-person {
+    width: 40px;
+  }
+
+  .together-card .together-name {
+    display: none;
+  }
+
+  .together-card .voice-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+  }
+
+  .together-card .together-actions {
+    flex: 0 1 auto;
+    margin-left: auto;
+  }
+
+  .together-card .voice-ip,
+  .together-card .voice-hint {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .together-card .voice-cams {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .room .toolbar-right {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+
+  .room .toolbar .tool-btn,
+  .room .toolbar .tool-btn.labeled {
+    width: auto;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 8px;
+    justify-content: center;
+  }
+
+  .room .toolbar .speed-btn [aria-hidden='true'] {
+    display: none;
+  }
+}
+
+/* Our own fullscreen where the browser has none for page elements (iPhone): the theater covers the window. */
+.theater.pseudo-fs {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  width: auto;
+  height: 100dvh;
+  margin: 0;
+}
+
+html.pseudo-fs,
+html.pseudo-fs body {
+  overflow: hidden;
+}
+
+/* Settings that only mean something on a touch screen. */
+.set-row.touch-only {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .set-row.touch-only {
+    display: flex;
+  }
+}
+
+/* A phone held sideways is short: a smaller dock that never runs off the screen. */
+@media (max-height: 500px) {
+  .fs-dock {
+    gap: 4px;
+    padding: 5px;
+    max-height: calc(100% - 12px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .dock-group {
+    gap: 0;
+  }
+
+  .dock-group + .dock-group {
+    padding-top: 4px;
+  }
+
+  .dock-btn {
+    width: 36px;
+    height: 32px;
+  }
+
+  .dock-btn .ico {
+    width: 19px;
+    height: 19px;
+  }
+}
+
+/* A phone held sideways out of fullscreen: one-row link box, like upright. */
+@media (max-height: 500px) and (pointer: coarse) {
+  .room .media-form {
+    flex-wrap: nowrap;
+  }
+
+  .room .media-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+/* Shorts on a phone (0.9.91.2): a bigger video, the bar in three slim rows (message · emojis · buttons), no page
+   scroll. */
+@media (max-width: 700px) {
+  html.shorts-view main {
+    padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .room.shorts .stage {
+    row-gap: 8px;
+  }
+
+  .room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
+    height: clamp(300px, calc(100dvh - 300px), calc((100vw - 24px) * 16 / 9));
+    border-radius: 14px;
+  }
+
+  .room.shorts .shorts-bar {
+    gap: 6px;
+  }
+
+  .room.shorts .shorts-chat {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .room.shorts .shorts-chat .btn {
+    flex: 0 0 auto;
+    width: 46px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .room.shorts .shorts-chat .btn::before {
+    content: '➤';
+    font-size: 18px;
+  }
+
+  .room.shorts .shorts-reactions {
+    flex: 1 1 100%;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  .room.shorts .shorts-bar > :is(.shorts-voice, .shorts-feed-wrap, .shorts-loop, #shorts-exit) {
+    flex: 0 0 auto;
+  }
+
+  .room.shorts .shorts-bar .small-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 700px) {
+  /* 🔁 says "loop" by itself here: the buttons stay on one row. */
+  .room.shorts #shorts-loop > span {
+    display: none;
+  }
+}
+
+/* Cameras in the card on a phone: one row of small tiles you can swipe through (tap one for the person menu). */
+@media (max-width: 700px) {
+  .voice-cams:not(.floating) .cam-grid {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .voice-cams:not(.floating) .cam-tile {
+    flex: 0 0 96px;
+  }
+
+  .voice-cams:not(.floating) .cam-pop {
+    margin-top: 4px;
+  }
+}
+
+/* iPhone notch / home bar: content stays inside the safe area (viewport-fit=cover). */
+.topbar {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+.theater:is(:fullscreen, .fake-fs) .fs-dock {
+  right: max(14px, env(safe-area-inset-right));
+}
+
+/* The ad-blocker tip is about desktop extensions: not on phones. */
+@media (pointer: coarse) {
+  .footer > span:first-child {
+    display: none;
+  }
+}

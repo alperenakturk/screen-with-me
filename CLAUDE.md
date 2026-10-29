@@ -356,7 +356,12 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   asks for it (the 0.9.90.3 "⚙ Filmin ayarları" and the "Tam ekranda video" setting are gone). Tests:
   `scripts/harness/embed/run.mjs` (film page: their bar stays, film fills the screen, dock islands, messages by the
   dock).
-- **Phones (0.9.91.2, owner: "the phone experience should be great"; CSS at the end of `styles.css`):** at ≤ 700 px
+- **Phones (0.9.91.2, owner: "the phone experience should be great, and easy to grow into a store app"):** phone-only
+  CSS lives in `apps/web/src/phone.css` (after `styles.css`), device facts in `apps/web/src/device.ts` (`isTouch`,
+  `isIOS`, `isStandalone`, `isApp`, `canElementFullscreen`, `canShareSheet`, `lockLandscape`, `onTurn`; `<html>`
+  classes `is-touch` / `is-ios` / `is-standalone` / `is-app`): ask there, never sniff in feature code. Store-app path
+  (Google Play TWA, App Store shell, what Apple requires: report / block for user content, push, universal links):
+  `docs/internal/apps.md`. At ≤ 700 px
   wide every popover (profile, share, speed, games, emoji tray, person menu, Shorts feed, theme) is a **bottom sheet**
   (`position: fixed` at the bottom, full width, handle, `!important` over JS positions). An upright phone (≤ 700 px,
   portrait, ≥ 540 px tall) gets the **app layout**: body = 100dvh, the page never scrolls, the stage (video +
@@ -372,7 +377,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   a phone fit 100dvh (bigger video, send ➤, 🔁 without text). Touch: inputs ≥ 16 px (no iOS zoom), `touch-action:
   manipulation`, push-to-talk hidden, footer ad-block tip hidden; viewport `viewport-fit=cover,
   interactive-widget=resizes-content` + safe-area paddings. Test: `scripts/harness/phone/run.cjs` (iPhone 13 /
-  Pixel 7 emulation, 19 checks).
+  Pixel 7 emulation, 19 checks). **TV version:** design proposals only (separate session, owner chooses later),
+  `docs/internal/tv-design.md` once that session merges it.
 - **Sound effects (0.9.90.2, owner's choice on the proposal page https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy):**
   no files, generated with Web Audio. `packages/shared/src/sound-policy.ts` (pure, `sound-policy.test.ts`): the
   registry `SOUNDS` (group voice / room / game, level, per-sound `gap`, `softDuringFilm`), families by group (voice +

@@ -28,6 +28,7 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
+import { canShareSheet } from './device.ts';
 import { el } from './dom.ts';
 import { lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -2216,7 +2217,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Davet linki: üst çubukta "🔗 Davet et" (basınca link kopyalanır; telefonda paylaşım menüsü) ----
   const inviteUrl = `${location.origin}/r/${roomId}`;
   // Telefonda (dokunmatik + paylaşım menüsü varsa) "Paylaş": WhatsApp vb. doğrudan açılır.
-  const canShare = typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches;
+  const canShare = canShareSheet();
   async function shareInvite(button: HTMLButtonElement, idleText: () => string, text: HTMLElement = button): Promise<void> {
     if (canShare) {
       try {
