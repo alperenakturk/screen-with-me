@@ -57,13 +57,16 @@ const page = (title, body) => `<!doctype html>
   main { max-width: 960px; margin: 16px auto; padding: 0 16px; }
   .player { position: relative; background: #000; aspect-ratio: 16/9; }
   .player video, .player iframe { width: 100%; height: 100%; border: 0; display: block; }
+  /* Like some real players: the box scrolls and the video sits on the text baseline (a few px gap below it), so
+     the box shows a scrollbar unless the extension stops it. */
+  .player.scrolly { overflow-y: auto; } .player.scrolly video { display: inline-block; }
   .fs { position: absolute; right: 8px; top: 8px; z-index: 2; } .pp { position: absolute; left: 8px; top: 8px; z-index: 2; }
   p.note { color: #555; }
 </style></head>
 <body><header><b>Örnek Video Sitesi</b><a href="#">Ana sayfa</a><a href="#">Filmler</a><a href="#">Hakkında</a></header>
 <main><h1>${title}</h1>${body}<p class="note">Test sayfası · Video: Big Buck Bunny (CC BY 3.0, Blender Foundation)</p></main></body></html>`;
 
-const videoTag = `<div class="player" id="box"><button class="fs" id="fs">⛶ Tam ekran</button><button class="pp" id="pp">⏯ Oynat/Durdur</button>
+const videoTag = `<div class="player scrolly" id="box"><button class="fs" id="fs">⛶ Tam ekran</button><button class="pp" id="pp">⏯ Oynat/Durdur</button>
 <video id="v" controls playsinline preload="auto" src="${VIDEO}"></video></div>
 <script>
 document.getElementById('fs').onclick = () => document.getElementById('box').requestFullscreen();

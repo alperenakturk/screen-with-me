@@ -3,6 +3,9 @@
 // sayfasının içindeki başka bir çerçevedeyse, üstteki sayfa o çerçeveyi büyütür.
 // Film sayfasının üstüne açılan oda katmanında (kabuk) video, sitenin bıraktığı deliğe yerleşir:
 // üst çerçevede deliğin kenarlarına kadar boşluk bırakılır, iç çerçeveler kendi alanını kaplar.
+// Some players' boxes (or a wrapper inside them) can scroll: grown to the hole, they showed a scrollbar on the right
+// edge of the film. Nothing in the box draws a scrollbar (menus still scroll with the wheel). The box's overflow is
+// left alone: clipping it cut off some players' subtitles.
 
 const MARK = 'data-swm-focus';
 const STYLE_ID = 'swm-focus-style';
@@ -17,6 +20,7 @@ html.swm-focus [${MARK}] { position: fixed !important;
   max-width: none !important; max-height: none !important; min-width: 0 !important; min-height: 0 !important; margin: 0 !important;
   padding: 0 !important; border: 0 !important; border-radius: var(--swm-radius, 0px) !important;
   transform: none !important; z-index: 2147483646 !important; background: #000 !important; }
+html.swm-focus [${MARK}], html.swm-focus [${MARK}] * { scrollbar-width: none !important; }
 html.swm-focus [${MARK}] video { object-fit: contain !important; }
 html.swm-focus video[${MARK}] { object-fit: contain !important; }
 `;

@@ -513,6 +513,26 @@ await a.sleep(1500);
   const cover = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
   const screenH = await a.evaluate('innerHeight');
   check(!!cover && near(cover.b, screenH, 2), 'tam ekran: video ekranı kaplıyor, delik ekranın altına kadar', `delik alt:${cover?.b} ekran:${screenH}`);
+  // No scrollbar on the right edge (owner's report): neither the room in the overlay nor the film page may scroll,
+  // and the hole reaches the right edge of the screen.
+  // `inner`: boxes in the film's player that would show a scrollbar (some players' boxes scroll). Headless Chrome
+  // draws no scrollbars, so this looks for a scrollable box whose content is bigger than the box.
+  const SCROLL = `(() => {
+    const se = document.scrollingElement;
+    const bars = (e) => {
+      const s = getComputedStyle(e);
+      if (s.scrollbarWidth === 'none') return false;
+      const y = /auto|scroll/.test(s.overflowY) && (s.overflowY === 'scroll' || e.scrollHeight > e.clientHeight + 1);
+      const x = /auto|scroll/.test(s.overflowX) && (s.overflowX === 'scroll' || e.scrollWidth > e.clientWidth + 1);
+      return y || x;
+    };
+    const inner = [...document.querySelectorAll('[data-swm-focus], [data-swm-focus] *')].filter(bars).map((e) => e.tagName + '#' + e.id);
+    return { over: se.scrollHeight - innerHeight, wide: se.scrollWidth - innerWidth, bar: innerWidth - document.documentElement.clientWidth, inner };
+  })()`;
+  const siteScroll = await a.evalFrame('shell=1', SCROLL);
+  const filmScroll = await a.evaluate(SCROLL);
+  const screenW = await a.evaluate('innerWidth');
+  check(siteScroll.over <= 0 && siteScroll.wide <= 0 && siteScroll.bar === 0 && filmScroll.bar === 0 && filmScroll.inner.length === 0 && near(cover.r, screenW, 2), 'tam ekran: sağda kaydırma çubuğu yok, delik ekranın sağ kenarına kadar', JSON.stringify({ siteScroll, filmScroll, holeRight: cover.r, screenW }));
   const SKIN = `[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`;
   await a.sleep(1500);
   check(!(await a.evaluate(SKIN)), 'tam ekran: film oynatıcısının kendi çubuğu yerinde (gizlenmiyor)');
