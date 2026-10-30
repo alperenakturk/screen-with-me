@@ -151,7 +151,10 @@ async function enter(page, room) {
     await page.route('**/api/youtube/search**', (route) => {
       const url = new URL(route.request().url());
       asked.push(url.searchParams.get('short') === '1' ? 'short' : 'all');
-      const items = url.searchParams.get('short') === '1'
+      const q = url.searchParams.get('q') ?? '';
+      // Feeds (0.9.91.13): each topic has its own Shorts.
+      const feed = (prefix) => Array.from({ length: 5 }, (_, i) => ({ id: `${prefix}${i}`.padEnd(11, 'x'), title: `${prefix} ${i}`, channel: 'K', duration: 30, live: false, short: true }));
+      const items = q === 'kediler' ? feed('kedi') : q === 'kopekler' ? feed('kopek') : url.searchParams.get('short') === '1'
         ? [{ id: '9bZkp7q5F8I', title: 'Bir Short', channel: 'K', duration: 30, live: false, short: true }, { id: 'kJQP7kiw5Fk', title: 'Başka Short', channel: 'K', duration: 40, live: false, short: true }]
         : [{ id: 'aqz-KE-bpKQ', title: 'Dikey video', channel: 'K', duration: 45, live: false, short: true }, { id: 'dQw4w9WgXcQ', title: 'Yatay video', channel: 'K', duration: 212, live: false }];
       route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items }) });
@@ -176,6 +179,21 @@ async function enter(page, room) {
     check(rows === 2 && added && queued >= 1 && asked.includes('short'), 'Shorts çubuğu: “＋ Ekle” kelimeyle sadece Shorts arıyor, sonuç tek tıkla sıraya giriyor', JSON.stringify({ rows, added, queued, asked }));
     const mic = await page.evaluate(() => ({ off: document.getElementById('shorts-mic').classList.contains('off'), cam: document.getElementById('shorts-cam').classList.contains('off') }));
     check(mic.off && mic.cam, 'sese katılmadan önce 🎙 ve 📷 ikisi de kapalı görünüyor', JSON.stringify(mic));
+    // A new Shorts feed takes the old feed's Shorts out of the queue (0.9.91.13).
+    const queueIds = () => page.evaluate(() => [...document.querySelectorAll('#queue li')].map((li) => li.textContent).join('|'));
+    const startFeed = async (topic) => {
+      // A running feed stops with the first press; the next one opens the topic box.
+      if ((await page.getAttribute('#shorts-feed', 'aria-pressed')) === 'true') await page.click('#shorts-feed');
+      await page.click('#shorts-feed');
+      await page.fill('#shorts-feed-topic', topic);
+      await page.press('#shorts-feed-topic', 'Enter');
+      await page.waitForTimeout(4500);
+    };
+    await startFeed('kediler');
+    const first = await queueIds();
+    await startFeed('kopekler');
+    const second = await queueIds();
+    check(first.includes('kedi') && second.includes('kopek') && !second.includes('kedi'), 'Shorts akışı: yeni akış başlayınca eski akışın videoları sıradan çıkıyor', JSON.stringify({ first: first.slice(0, 120), second: second.slice(0, 120) }));
     await ctx.close();
   }
 

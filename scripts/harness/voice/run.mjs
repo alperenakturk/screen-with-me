@@ -276,8 +276,9 @@ await ayse.shot('kamera-tam-ekran');
 // Free tiles in fullscreen too: inside the video, in its top-right corner, a separate place from the page.
 await ayse.evaluate(`document.querySelector('#voice-cams .cam-layout').click(); 1`);
 await ayse.sleep(400);
-const fsTile = await ayse.evaluate(`(() => { const t = document.querySelector('#voice-cams .cam-tile'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); const r = t.getBoundingClientRect(); return { inside: r.left >= w.left && r.right <= w.right && r.top >= w.top && r.bottom <= w.bottom, right: Math.round(w.right - r.right), parent: document.getElementById('voice-cams').parentElement.className }; })()`);
-check(fsTile.inside && fsTile.right <= 14 && fsTile.parent.includes('player-wrap'), 'tam ekranda serbest kutular videonun içinde, sağ üst köşede', JSON.stringify(fsTile));
+// Since 0.9.91.13 the sync test (our own player) has the dock in fullscreen too: the column starts left of it.
+const fsTile = await ayse.evaluate(`(() => { const t = document.querySelector('#voice-cams .cam-tile'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); const d = document.getElementById('fs-dock').getBoundingClientRect(); const edge = d.width > 0 ? d.left : w.right; const r = t.getBoundingClientRect(); return { inside: r.left >= w.left && r.right <= w.right && r.top >= w.top && r.bottom <= w.bottom, right: Math.round(edge - r.right), parent: document.getElementById('voice-cams').parentElement.className }; })()`);
+check(fsTile.inside && fsTile.right >= 0 && fsTile.right <= 30 && fsTile.parent.includes('player-wrap'), 'tam ekranda serbest kutular videonun içinde, sağ üstte (dock’un solunda)', JSON.stringify(fsTile));
 await ayse.shot('kamera-tam-ekran-serbest');
 await ayse.evaluate(`document.querySelector('#voice-cams .cam-layout').click(); 1`);
 await ayse.sleep(300);
