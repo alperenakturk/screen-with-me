@@ -29,6 +29,9 @@ const ok = (c, m) => {
   console.log('ok  ' + m);
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Waits for what the server's storage alarm moves on (the 6 s reveal): live alarms were seen running several seconds
+// late right after a deploy, so these get more room than plain replies.
+const ALARM_WAIT = 25_000;
 
 const ali = client('Ali', 'drawAli000001');
 const wa = await ali.wait((m) => m.t === 'welcome', 'welcome');
@@ -97,7 +100,7 @@ const average = Math.round((right.points + second.points + third.points) / 3);
 ok(drawerGain === average && reveal.players.find((p) => p.id === wa.you).score === drawerGain, 'The drawer got the guessers’ average (everyone guessed)');
 
 // Sıradaki çizen: Ayşe (geliş sırası).
-const next = await ayse.wait((m) => m.t === 'choices', 'next choices', 12000);
+const next = await ayse.wait((m) => m.t === 'choices', 'next choices', ALARM_WAIT);
 ok(next.words.length === 3 && ayse.state.drawer === wy.you, 'Sıra Ayşe’ye geçti, kelimeleri o seçiyor');
 
 // Sıfırla: lobi, puanlar 0. (Kutuda oyun başlamadan önceki "lobi" mesajları var: önce boşalt.)
@@ -122,14 +125,14 @@ eda.send({ t: 'settings', rounds: 1, lang: 'en' });
 await fat.wait((m) => m.t === 'state' && m.rounds === 1 && m.lang === 'en', 'settings');
 eda.send({ t: 'start' });
 for (const [drawer, guesser] of [[eda, fat], [fat, eda]]) {
-  const words = await drawer.wait((m) => m.t === 'choices', 'short choices', 12000);
+  const words = await drawer.wait((m) => m.t === 'choices', 'short choices', ALARM_WAIT);
   ok(words.words.every((w) => /^[a-z ]+$/.test(w)), 'English words');
   drawer.send({ t: 'choose', index: 0 });
   await guesser.wait((m) => m.t === 'state' && m.phase === 'draw', 'short draw');
   guesser.send({ t: 'guess', text: words.words[0] });
   await guesser.wait((m) => m.t === 'state' && m.phase === 'reveal', 'short reveal');
 }
-const end = await eda.wait((m) => m.t === 'state' && m.phase === 'over', 'over', 12000);
+const end = await eda.wait((m) => m.t === 'state' && m.phase === 'over', 'over', ALARM_WAIT);
 ok(end.players.every((p) => p.score > 0), 'Everyone drew once: podium');
 for (const c of [eda, fat]) c.ws.close();
 setTimeout(() => process.exit(0), 100);
