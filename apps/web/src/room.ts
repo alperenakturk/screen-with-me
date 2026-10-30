@@ -301,6 +301,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <video id="live-video" autoplay playsinline></video>
               <div class="live-bar">
                 <span id="live-title" class="live-title"></span>
+                <button id="live-hide-self" type="button" class="icon-btn" data-i18n-title="live.hideSelf" hidden>🙈</button>
                 <button id="live-big" type="button" class="icon-btn" data-i18n-title="live.bigger">⤢</button>
                 <button id="live-close" type="button" class="icon-btn" data-i18n-title="close">✕</button>
               </div>
@@ -497,6 +498,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="live-row" id="live-row">
                 <span id="live-status" class="live-status small"></span>
                 <button id="live-watch" type="button" class="btn small-btn primary" hidden></button>
+                <button id="live-preview" type="button" class="btn small-btn" data-i18n="live.showSelf" hidden></button>
                 <button id="live-stop" type="button" class="btn small-btn" data-i18n="live.stop" hidden></button>
                 <button id="live-kill" type="button" class="btn small-btn" data-i18n="live.kill" hidden></button>
                 <label class="live-quality small" id="live-quality-row" hidden><span data-i18n="live.quality"></span>

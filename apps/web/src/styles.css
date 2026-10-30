@@ -5757,9 +5757,12 @@ html.shorts-view .footer {
 
 .live-window {
   position: absolute;
-  right: 14px;
-  bottom: 14px;
+  /* Place and width come from ui/live-float.ts (dragged, resized, remembered). */
+  left: 14px;
+  top: 14px;
   z-index: 6;
+  cursor: grab;
+  touch-action: none;
   width: min(40%, 440px);
   aspect-ratio: 16 / 9;
   border-radius: 12px;
@@ -5779,6 +5782,42 @@ html.shorts-view .footer {
   width: auto;
   aspect-ratio: auto;
   border-radius: 0;
+}
+
+.live-window.big {
+  cursor: default;
+}
+
+.live-window.dragging {
+  cursor: grabbing;
+}
+
+/* Popped out: floats over the page (0.9.91.14), above the room like the camera windows. */
+.live-window.free {
+  position: fixed;
+  z-index: 820;
+}
+
+.live-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background:
+    linear-gradient(135deg, transparent 55%, rgb(255 255 255 / 0.8) 55% 62%, transparent 62% 72%,
+      rgb(255 255 255 / 0.8) 72% 79%, transparent 79%);
+}
+
+.live-window:hover .live-resize {
+  opacity: 1;
+}
+
+.live-window.big .live-resize {
+  display: none;
 }
 
 .live-window video {
@@ -5818,12 +5857,6 @@ html.shorts-view .footer {
 
 .live-bar .icon-btn {
   color: #fff;
-}
-
-@media (max-width: 560px) {
-  .live-window:not(.big) {
-    width: 55%;
-  }
 }
 
 /* ---- PlayWithMe Çiz-Bil: solda tuval (üstte ipucu ve süre, altta araçlar), sağda oyuncular + tahminler ---- */

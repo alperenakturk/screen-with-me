@@ -6,6 +6,7 @@ import { flashHint } from './hint.ts';
 import { confirmIpNotice } from './ip-notice.ts';
 import { composeScreenWithCamera, composeSupported, type Composed } from './live-compose.ts';
 import { setIcon } from './icons.ts';
+import { createLiveFloat } from './live-float.ts';
 import { openCam } from './voice-check.ts';
 
 /**
@@ -46,6 +47,16 @@ export function createLive(
   const bigButton = root.querySelector<HTMLButtonElement>('#live-big')!;
   const closeButton = root.querySelector<HTMLButtonElement>('#live-close')!;
   const killButton = root.querySelector<HTMLButtonElement>('#live-kill')!;
+  const hideSelfButton = root.querySelector<HTMLButtonElement>('#live-hide-self')!;
+  const previewButton = root.querySelector<HTMLButtonElement>('#live-preview')!;
+  const float = createLiveFloat({
+    win,
+    wrap: root.querySelector<HTMLElement>('.player-wrap')!,
+    theater: root.querySelector<HTMLElement>('#theater')!,
+    onMove: () => dispatchEvent(new Event('swm-layout')),
+  });
+  // 0.9.91.14 (owner): the streamer doesn't have to watch their own screen; remembered in this browser.
+  let selfHidden = load('opt:liveSelfHidden') === '1';
   const qualityRow = root.querySelector<HTMLElement>('#live-quality-row')!;
   const qualitySelect = root.querySelector<HTMLSelectElement>('#live-quality')!;
   // Boştayken tek "🖥️ Paylaş ▾" düğmesi: basınca ekran / kamera seçenekleri ve sınır notu küçük menüde.
@@ -144,8 +155,12 @@ export function createLive(
     limit.classList.toggle('near', !idle && !full && LIVE_MAX_VIEWERS - viewers === 1);
 
     // Pencere: yayıncıya kendi önizlemesi (sessiz), izleyiciye yayın.
-    const stream = mine ? live.preview : live.isWatching ? incoming : null;
+    const stream = mine ? (selfHidden ? null : live.preview) : live.isWatching ? incoming : null;
+    const shown = !!stream && win.hidden;
     win.hidden = !stream;
+    hideSelfButton.hidden = !mine;
+    previewButton.hidden = !mine || !selfHidden;
+    if (shown) float.apply();
     if (stream && video.srcObject !== stream) {
       video.srcObject = stream;
       video.muted = mine;
@@ -226,7 +241,14 @@ export function createLive(
     void composed?.screen.applyConstraints({ frameRate: { ideal: FPS[quality()], max: FPS[quality()] } }).catch(() => {});
     void live.setQuality(quality());
   });
-  bigButton.addEventListener('click', () => win.classList.toggle('big'));
+  bigButton.addEventListener('click', () => float.toggleBig());
+  const setSelfHidden = (hidden: boolean) => {
+    selfHidden = hidden;
+    save('opt:liveSelfHidden', hidden ? '1' : '0');
+    render();
+  };
+  hideSelfButton.addEventListener('click', () => setSelfHidden(true));
+  previewButton.addEventListener('click', () => setSelfHidden(false));
   closeButton.addEventListener('click', () => {
     if (live.broadcasting) live.stop();
     else live.stopWatching();
