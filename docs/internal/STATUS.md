@@ -116,11 +116,17 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   fullscreen on a film page): some players' boxes can scroll, and grown to the hole they drew a scrollbar over the
   film. The extension's focus CSS now hides scrollbars in the player box and inside it (menus still scroll
   with the wheel; the box's overflow stays unclipped, clipping it once cut off subtitles). The embed test page's player box scrolls like those players; embed harness 102/102.
-- [ ] **TV version: to be built before 1.0, paused for now** (owner, 29 Oct 2026; ROADMAP §1; he picks the design
-  when we resume; proposal page
-  https://claude.ai/artifact/MQkQqMfTreT9YFEfgyjmbc, research and options in `docs/internal/tv-design.md`: A big
-  button bar, B side panel, C phone as remote, D plus menu; recommended A + C's phone remote for talking, since TV
-  browsers usually can't use a microphone). Nothing is built until he chooses.
+- [ ] **TV version, owner chose A + C (30 Oct 2026):** the TV shows the room (video, messages, flying emojis, who is
+  speaking, cameras) and has only basic remote controls (big button bar A); the paired **phone** is the real
+  remote: typing, emojis, voice in / out, mic (push-to-talk by default: the phone mic hears the TV's speakers),
+  camera, leave, settings. Purpose: one friend watches on a computer, another on the TV. Friends' voices play on
+  the TV. Details `docs/internal/tv-design.md` "Decision". Steps:
+  - [x] **0.9.91.4** TV test page `/tv-test` (connection, YouTube, hearing voice, mic, sound, fullscreen, remote
+    keys; the owner opens it on his TV and sends a photo).
+  - [ ] Server: TV pairing (TV shows a 6-digit code + QR, a phone in the room types / scans it; the TV joins as the
+    same person's second device; phone → TV commands relayed) + e2e.
+  - [ ] Site: `/tv` pairing screen + TV room view (D-pad bar, listen-only voice, speaking faces, cameras).
+  - [ ] Site: phone "📺 TV'yi bağla" + remote mode while paired; harness (TV + phone), docs, release.
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.

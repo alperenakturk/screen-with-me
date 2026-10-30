@@ -163,7 +163,8 @@ Locally: `npx wrangler login` once, then `npm run deploy`.
 
 ## 🗺️ What's next
 
-Chrome Web Store release, more games, a short domain, Firefox.
+Chrome Web Store release, a TV version (the TV shows the room, a phone is its remote; check a TV browser now at
+`/tv-test`), more games, a short domain, Firefox.
 
 ## 📄 License & privacy
 

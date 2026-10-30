@@ -162,7 +162,8 @@ Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
 ## 🗺️ Sırada ne var?
 
-Chrome Web Store yayını, yeni oyunlar, kısa alan adı, Firefox.
+Chrome Web Store yayını, TV sürümü (TV odayı gösterir, telefon kumandası olur; bir TV tarayıcısını şimdiden
+`/tv-test` ile dene), yeni oyunlar, kısa alan adı, Firefox.
 
 ## 📄 Lisans ve gizlilik
 
