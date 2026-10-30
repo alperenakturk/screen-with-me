@@ -4,6 +4,7 @@ import {
   isQuotaError,
   normalizeQuery,
   parseDurations,
+  parseUpright,
   parseSearchItems,
   SEARCH_RESULTS,
   shortsOnly,
@@ -66,7 +67,7 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   if (!env.YOUTUBE_API_KEY) return json({ error: 'off' });
 
   const cache = caches.default;
-  const resultKey = cacheKey(url.origin, `yt-search?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${page ? `&page=${page}` : ''}`);
+  const resultKey = cacheKey(url.origin, `yt-search2?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${page ? `&page=${page}` : ''}`);
   const quotaKey = cacheKey(url.origin, 'yt-quota');
   const cached = await cache.match(resultKey);
   if (cached) return cached;
@@ -104,11 +105,20 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   let items = parseSearchItems(search.body, new Map(), limit);
   if (items.length > 0) {
     // Durations are a nicety: if this call fails, the results still go out without them.
-    const videos = await callYouTube('videos', { part: 'contentDetails', id: items.map((item) => item.id).join(','), fields: 'items(id,contentDetails/duration)' }, env.YOUTUBE_API_KEY);
-    if (videos.ok) items = parseSearchItems(search.body, parseDurations(videos.body), limit);
+    // `player` with a `maxWidth` tells the video's shape (upright = a Short, 0.9.91.12); still 1 unit.
+    const videos = await callYouTube(
+      'videos',
+      { part: 'contentDetails,player', maxWidth: '100', id: items.map((item) => item.id).join(','), fields: 'items(id,contentDetails/duration,player(embedWidth,embedHeight))' },
+      env.YOUTUBE_API_KEY,
+    );
+    if (videos.ok) items = parseSearchItems(search.body, parseDurations(videos.body), limit, parseUpright(videos.body));
   }
-  // The feed only takes real Shorts (YouTube's "short" filter means under 4 minutes).
-  if (short) items = shortsOnly(items);
+  // The feed only takes real Shorts (YouTube's "short" filter means under 4 minutes): short and, when the shapes
+  // came, upright.
+  if (short) {
+    items = shortsOnly(items);
+    if (items.some((item) => item.short)) items = items.filter((item) => item.short);
+  }
   const next = cleanPageToken((search.body as { nextPageToken?: unknown } | null)?.nextPageToken);
   const response = json(next ? { items, next } : { items }, RESULT_TTL_S);
   await cache.put(resultKey, response.clone());

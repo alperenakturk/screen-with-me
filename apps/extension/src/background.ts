@@ -495,8 +495,9 @@ async function openMicPage(cam: boolean): Promise<void> {
   }
   const url = cam ? `${MIC_PAGE}?cam=1` : MIC_PAGE;
   const base = active?.windowId !== undefined ? await chrome.windows.get(active.windowId).catch(() => null) : null;
-  const width = 460;
-  const height = 420;
+  // Wide: Chrome's question opens at the top left, our explanation sits on the right (they used to overlap).
+  const width = 820;
+  const height = 470;
   const place =
     base?.left !== undefined && base.top !== undefined && base.width && base.height
       ? { left: Math.round(base.left + (base.width - width) / 2), top: Math.round(base.top + (base.height - height) / 3) }
