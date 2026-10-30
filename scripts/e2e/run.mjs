@@ -11,7 +11,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 // bağlanmaz, takılır). Canlıda başarısız dosya bir kez daha denenir; gerçek hata iki kez de düşer. Yerelde tekrar yok.
 const live = !/localhost|127\.0\.0\.1/.test(base);
 let failed = 0;
-for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'roomgame.mjs', 'search.mjs']) {
+for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'roomgame.mjs', 'search.mjs', 'tv.mjs']) {
   console.log(`\n▶ ${test}`);
   let result = spawnSync(process.execPath, [join(here, test), base], { stdio: 'inherit' });
   if (result.status !== 0 && live) {

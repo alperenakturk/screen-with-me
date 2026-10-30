@@ -202,6 +202,8 @@ export interface Member {
   live?: LiveKind;
   /** Yayını izliyor. */
   watching?: boolean;
+  /** A TV paired to this person (same name and avatar): it shows the room, the person's phone is its remote. */
+  tv?: boolean;
 }
 
 /** Yayın türü: ekran/pencere/sekme paylaşımı ya da kamera. */
@@ -341,7 +343,12 @@ export type ClientMessage =
    * hemen geri girememesi için kullanılır. Hesap değildir, sadece rastgele bir kod.
    */
   /** `prev`: my member id on the connection this one replaces (reconnect): the server drops that one at once. */
-  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; client?: ClientKind; prev?: string }
+  /** `tv`: the link token a TV got when a phone paired it (the TV joins as that person's second device). */
+  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; client?: ClientKind; prev?: string; tv?: string }
+  /** Pair a TV that shows this code (`TV_CODE`) to me: the TV joins this room as my second device. */
+  | { t: 'tv-link'; code: string }
+  /** Between a person's phone / computer and their paired TV (the server relays it only within the same person). */
+  | { t: 'tv'; op: TvOp; value?: number | boolean }
   /** İsim ya da avatar değiştir. */
   | { t: 'rename'; name: string; avatar?: Avatar }
   /** (Sadece oda yöneticisi) birini odadan çıkar; yönetici kaldırana kadar geri giremez. */
@@ -446,7 +453,10 @@ export type ErrorCode =
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
-  | 'recap_empty';
+  | 'recap_empty'
+  /** No TV is waiting with that code (wrong, used or expired) / the TV's link token is no longer valid. */
+  | 'tv_code'
+  | 'tv_token';
 
 /** Sunucu → istemci. */
 export type ServerMessage =
@@ -508,6 +518,8 @@ export type ServerMessage =
   /** Data of a chat image (sent before its message, and one by one after `welcome` for the history). */
   | { t: 'chat-image'; id: string; data: string }
   | { t: 'error'; code: ErrorCode }
+  /** Relayed from my paired TV / my phone (`TvOp`); `present` comes from the server: my TV joined (true) or left. */
+  | { t: 'tv'; op: TvOp | 'present' | 'linked'; value?: number | boolean }
   | { t: 'recap'; recap: Recap; by: Member }
   | { t: 'recaps'; recaps: Recap[] };
 
@@ -526,6 +538,19 @@ const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const ITEM_ID = /^[A-Za-z0-9_-]{1,32}$/;
 /** Tarayıcının kalıcı kimliği (bkz. hello.cid). */
 export const CLIENT_ID = /^[A-Za-z0-9_-]{8,40}$/;
+
+// ---- TV (0.9.91.x): a TV shows the room, a paired phone is its remote ----
+/** The pairing code a TV shows (typed on the phone or read from its QR). */
+export const TV_CODE = /^\d{6}$/;
+/** The link token a TV gets when paired (random, from the room). */
+export const TV_TOKEN = /^[a-f0-9]{32}$/;
+/**
+ * Phone ⇄ TV operations: `unlink` (the TV leaves), `chat` (show messages on the TV: value boolean), `volume` (friends'
+ * voices on the TV, 0–100), `voice` (the TV listens to voice: boolean), `play` (play / pause toggle from the remote),
+ * `state` (the TV reports: value = its volume; sent when it joins and after each change).
+ */
+export const TV_OPS = ['unlink', 'chat', 'volume', 'voice', 'play', 'state'] as const;
+export type TvOp = (typeof TV_OPS)[number];
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null && !Array.isArray(x);
@@ -739,7 +764,17 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (typeof m.cid === 'string' && CLIENT_ID.test(m.cid)) hello.cid = m.cid;
       if (m.client === 'web' || m.client === 'ext') hello.client = m.client;
       if (isItemId(m.prev)) hello.prev = m.prev;
+      if (typeof m.tv === 'string' && TV_TOKEN.test(m.tv)) hello.tv = m.tv;
       return hello;
+    }
+    case 'tv-link':
+      return typeof m.code === 'string' && TV_CODE.test(m.code) ? { t: 'tv-link', code: m.code } : null;
+    case 'tv': {
+      if (!(TV_OPS as readonly unknown[]).includes(m.op)) return null;
+      const out: Extract<ClientMessage, { t: 'tv' }> = { t: 'tv', op: m.op as TvOp };
+      if (typeof m.value === 'boolean') out.value = m.value;
+      else if (typeof m.value === 'number' && Number.isFinite(m.value)) out.value = Math.max(0, Math.min(100, Math.round(m.value)));
+      return out;
     }
     case 'rename': {
       const name = cleanName(m.name);

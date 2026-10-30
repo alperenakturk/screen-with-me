@@ -1,0 +1,530 @@
+/* TV version (owner chose A + C, 30 Oct 2026). Sized in vh: a 1080p TV seen from the couch (1vh ≈ 10.8 px), text
+   ≥ 3vh, everything inside a 5 % safe area (some TVs cut the edges), the focused button always obvious. */
+
+/* ---- The room on the TV ---- */
+html.tv-mode .topbar,
+html.tv-mode .footer,
+html.tv-mode .side,
+html.tv-mode .media-form,
+html.tv-mode #fs-dock,
+html.tv-mode #fs-controls,
+html.tv-mode #fs-catcher,
+html.tv-mode .net-hint .btn,
+html.tv-mode .cam-pill,
+html.tv-mode .cam-controls,
+html.tv-mode .pin-strip,
+html.tv-mode #pin-form,
+html.tv-mode .now-playing {
+  display: none !important;
+}
+
+html.tv-mode,
+html.tv-mode body {
+  cursor: none;
+  background: #000;
+}
+
+html.tv-mode .theater {
+  background: #000;
+}
+
+.tv-top {
+  position: absolute;
+  top: 3vh;
+  left: 5vw;
+  right: 5vw;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2vh;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+.tv-title {
+  padding: 0.8vh 2vh;
+  border-radius: 999px;
+  background: rgb(10 12 30 / 0.72);
+  color: #fff;
+  font-size: 2.8vh;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tv-faces {
+  display: flex;
+  gap: 1.6vh;
+}
+
+.tv-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4vh;
+  width: 9vh;
+}
+
+.tv-face .tv-face-pic {
+  display: grid;
+  place-items: center;
+  width: 7vh;
+  height: 7vh;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgb(10 12 30 / 0.8);
+  border: 0.45vh solid transparent;
+  font-size: 4vh;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.tv-face .tv-face-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tv-face.in-voice .tv-face-pic {
+  border-color: rgb(61 220 132 / 0.6);
+}
+
+/* Speaking: the voice "moves" — a bright ring that breathes. */
+.tv-face.speaking .tv-face-pic {
+  border-color: #3ddc84;
+  box-shadow: 0 0 0 0.8vh rgb(61 220 132 / 0.35);
+  animation: tv-speak 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes tv-speak {
+  to {
+    box-shadow: 0 0 0 1.4vh rgb(61 220 132 / 0.12);
+  }
+}
+
+.tv-face-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 0.6vh;
+  border-radius: 0.6vh;
+  background: rgb(10 12 30 / 0.6);
+  color: #fff;
+  font-size: 1.8vh;
+}
+
+.tv-face.more {
+  justify-content: center;
+  height: 7vh;
+  color: #fff;
+  font-size: 2.6vh;
+  font-weight: 700;
+}
+
+.tv-hint {
+  position: absolute;
+  left: 5vw;
+  bottom: 4vh;
+  z-index: 30;
+  padding: 0.8vh 2vh;
+  border-radius: 999px;
+  background: rgb(10 12 30 / 0.72);
+  color: #fff;
+  font-size: 2.4vh;
+  transition: opacity 0.6s;
+}
+
+html.tv-idle .tv-hint,
+html.tv-idle .tv-top {
+  opacity: 0.35;
+}
+
+.tv-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 0 12vw;
+  color: #fff;
+  font-size: 4vh;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+  pointer-events: none;
+}
+
+.tv-bar,
+.tv-emojis {
+  position: absolute;
+  left: 5vw;
+  right: 5vw;
+  bottom: 5vh;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  gap: 2.4vh;
+  padding: 3vh;
+  border-radius: 4vh;
+  background: rgb(18 20 44 / 0.94);
+}
+
+.tv-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1vh;
+  min-width: 20vh;
+  min-height: 17vh;
+  padding: 1.6vh 2vh;
+  border: 0;
+  border-radius: 3vh;
+  background: rgb(40 44 86 / 0.95);
+  color: #fff;
+  font: inherit;
+  font-size: 2.6vh;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  outline: none;
+  transition:
+    transform 0.12s,
+    background 0.12s;
+}
+
+.tv-btn .tv-icon {
+  font-size: 6vh;
+  line-height: 1;
+}
+
+.tv-btn .tv-label {
+  max-width: 22vh;
+}
+
+.tv-btn.tv-red {
+  background: rgb(120 28 40 / 0.95);
+}
+
+.tv-btn:focus,
+.tv-btn:focus-visible {
+  outline: 0.7vh solid #fff;
+  outline-offset: 0.5vh;
+  transform: scale(1.07);
+  background: var(--accent, #8b6cff);
+  box-shadow: 0 0 5vh rgb(139 108 255 / 0.7);
+}
+
+.tv-emoji {
+  min-width: 14vh;
+  min-height: 14vh;
+  font-size: 8vh;
+}
+
+.tv-confirm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3vh;
+  padding: 5vh 6vh;
+  border-radius: 4vh;
+  background: rgb(18 20 44 / 0.97);
+  color: #fff;
+}
+
+.tv-confirm-text {
+  margin: 0;
+  font-size: 4vh;
+  font-weight: 700;
+}
+
+.tv-row {
+  display: flex;
+  gap: 3vh;
+}
+
+/* Messages flow up at the bottom right, big enough to read from the couch. */
+html.tv-mode #toasts {
+  top: auto !important;
+  left: auto !important;
+  right: 5vw !important;
+  bottom: 12vh !important;
+  max-width: 45vw;
+  font-size: 3vh;
+}
+
+/* A panel is open: the hint steps aside, messages move above the bar. */
+html.tv-panel .tv-hint {
+  display: none;
+}
+
+html.tv-mode.tv-panel #toasts {
+  bottom: 30vh !important;
+}
+
+html.tv-no-chat #toasts {
+  display: none !important;
+}
+
+/* ---- The TV's pairing screen (/tv) ---- */
+html.tv-pair-page .topbar-right,
+html.tv-pair-page .footer {
+  display: none;
+}
+
+.tvp {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 6vw;
+  min-height: calc(100vh - 140px);
+  padding: 4vh 6vw;
+}
+
+.tvp h1 {
+  margin: 0 0 2vh;
+  font-size: max(28px, 5.5vh);
+  line-height: 1.15;
+}
+
+.tvp-how {
+  margin: 0;
+  max-width: 34em;
+  font-size: max(17px, 3vh);
+  line-height: 1.4;
+}
+
+.tvp-code {
+  margin: 3vh 0 1vh;
+  white-space: nowrap;
+  font-size: max(48px, 11vh);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tvp-status {
+  margin: 0;
+  font-size: max(15px, 2.4vh);
+}
+
+.tvp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2vh;
+  margin-top: 4vh;
+}
+
+.tvp .tvp-btn {
+  font-size: max(16px, 2.6vh);
+  padding: 1.4vh 3vh;
+  text-decoration: none;
+}
+
+.tvp .tvp-btn:focus,
+.tvp .tvp-btn:focus-visible {
+  outline: 0.6vh solid #fff;
+  outline-offset: 0.4vh;
+  transform: scale(1.05);
+}
+
+.tvp-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5vh;
+  text-align: center;
+}
+
+.tvp-qr {
+  width: min(42vh, 100%);
+  aspect-ratio: 1;
+  border-radius: 2vh;
+  background: #fff;
+  image-rendering: pixelated;
+}
+
+@media (max-width: 760px) {
+  .tvp {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- The phone: choose the room for a TV (/tv/<code>) ---- */
+.tvc {
+  max-width: 520px;
+  margin: 6vh auto 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tvc h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.tvc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tvc-room {
+  justify-content: flex-start;
+  min-height: 52px;
+  font-size: 17px;
+  text-align: left;
+}
+
+/* ---- The phone / computer: pair dialog and the remote card ---- */
+.tv-pair-dialog {
+  position: relative;
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tv-pair-dialog h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.tv-pair-dialog .dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.tv-address {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-2, rgb(255 255 255 / 0.06));
+  font-size: 18px;
+  font-weight: 700;
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+.tv-pair-form {
+  display: flex;
+  gap: 8px;
+}
+
+.tv-code-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-pair-btn {
+  white-space: nowrap;
+}
+
+.tv-remote {
+  flex: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 12px;
+  border-color: var(--accent);
+}
+
+.tv-remote-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tv-remote-title {
+  font-weight: 700;
+}
+
+.tv-ptt {
+  width: 112px;
+  height: 112px;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #3ddc84, #1c5e3d);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  box-shadow: 0 0 0 8px rgb(61 220 132 / 0.18);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.tv-ptt[hidden] {
+  display: none;
+}
+
+.tv-ptt.idle {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+.tv-ptt.on {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 16px rgb(61 220 132 / 0.35);
+}
+
+.tv-r-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tv-ptt[hidden] + .tv-r-grid {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tv-r-btn {
+  min-height: 40px;
+  padding: 4px 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.tv-r-red {
+  color: var(--warn, #ff8a80);
+}
+
+.tv-ear {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+}
+
+/* Upright phone (the app layout, phone.css): the side part scrolls, the remote stays on top of it. */
+@media (max-width: 700px) and (min-height: 540px) and (orientation: portrait) {
+  html.in-room .side > .tv-remote {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: 0;
+    background: var(--surface);
+  }
+}
