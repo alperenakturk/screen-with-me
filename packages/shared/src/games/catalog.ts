@@ -33,6 +33,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.91.9',
+    kinds: ['xox', 'four'],
+    badge: 'updated',
+    tr: 'XOX ve Dört Taş yenilendi: işaretler çizilerek beliriyor, sıra sendeyken taşının ya da işaretinin önizlemesi görünüyor.',
+    en: 'Tic-tac-toe and Four in a Row got a new look: marks draw in, and you see a preview of your mark or disc on your turn.',
+  },
+  {
     v: '0.9.91.8',
     kinds: ['poker'],
     badge: 'new',

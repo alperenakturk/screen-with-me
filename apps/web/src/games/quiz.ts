@@ -62,6 +62,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   });
   /** The previous state (sounds play on changes only: joining mid-game is quiet). */
   let lastKey = '';
+  /** The question whose options already slid in (later renders of it don't replay that). */
+  let shownN = 0;
   let lastTick = 0;
   const body = $('#quiz-body');
 
@@ -133,6 +135,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       const reveal = s.phase === 'reveal';
       const picked = myPick && myPick.n === s.n ? myPick.pick : (mine?.pick ?? null);
       const hidden = fifty && fifty.n === s.n ? fifty.hide : [];
+      queueMicrotask(() => (shownN = s.n));
       const options = (s.options ?? []).map((text, i) => {
         const pickers = reveal ? s.players.filter((p) => p.pick === i) : [];
         const cls = ['quiz-option', `opt-${i}`];
@@ -167,7 +170,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         : picked !== null
           ? t('quiz.waiting')
           : '';
-      body.replaceChildren(el('h3', { class: 'quiz-question' }, s.question ?? ''), el('div', { class: `quiz-options${options.length === 2 ? ' two' : ''}` }, ...options), el('p', { class: `quiz-note${reveal && mine?.gained ? ' good' : ''}` }, note));
+      body.replaceChildren(el('h3', { class: 'quiz-question' }, s.question ?? ''), el('div', { class: `quiz-options${options.length === 2 ? ' two' : ''}${!reveal && shownN !== s.n ? ' fresh' : ''}` }, ...options), el('p', { class: `quiz-note${reveal && mine?.gained ? ' good' : ''}` }, note));
     }
     tick();
   }

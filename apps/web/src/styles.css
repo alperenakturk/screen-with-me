@@ -5427,6 +5427,204 @@ html.shorts-view .footer {
   }
 }
 
+/* ---- XOX marks drawn (0.9.91.9): X = two strokes that draw in, O = a ring; a faint preview of my mark on hover ---- */
+.xox-board:not(.four-board) {
+  --x: #ff7aa8;
+  --o: #6fc8ff;
+}
+
+.xox-board:not(.four-board) .xox-cell {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface));
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.04), inset 0 -3px 0 rgb(0 0 0 / 0.18);
+}
+
+.xox-board:not(.four-board) .xox-cell::before,
+.xox-board:not(.four-board) .xox-cell::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* X: two rounded bars crossing */
+.xox-board:not(.four-board) .xox-cell.mark-X::before,
+.xox-board:not(.four-board) .xox-cell.mark-X::after,
+.xox-board.my-turn[data-me='X'] .xox-cell:not(:disabled):hover::before,
+.xox-board.my-turn[data-me='X'] .xox-cell:not(:disabled):hover::after {
+  left: 20%;
+  right: 20%;
+  top: calc(50% - 6%);
+  height: 12%;
+  border-radius: 999px;
+  background: var(--x);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--x) 55%, transparent);
+  opacity: 1;
+}
+
+.xox-board:not(.four-board) .xox-cell.mark-X::before,
+.xox-board.my-turn[data-me='X'] .xox-cell:not(:disabled):hover::before {
+  transform: rotate(45deg);
+}
+
+.xox-board:not(.four-board) .xox-cell.mark-X::after,
+.xox-board.my-turn[data-me='X'] .xox-cell:not(:disabled):hover::after {
+  transform: rotate(-45deg);
+}
+
+/* O: a ring */
+.xox-board:not(.four-board) .xox-cell.mark-O::before,
+.xox-board.my-turn[data-me='O'] .xox-cell:not(:disabled):hover::before {
+  inset: 19%;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 54%, var(--o) 56%, var(--o) 98%, transparent 100%);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--o) 55%, transparent));
+  opacity: 1;
+}
+
+.xox-board.my-turn .xox-cell:not(:disabled):hover::before,
+.xox-board.my-turn .xox-cell:not(:disabled):hover::after {
+  opacity: 0.22 !important;
+}
+
+/* Drawing in: the X strokes grow, the O turns in */
+.xox-board:not(.four-board) .xox-cell.placed.mark-X::before {
+  animation: xox-stroke-a 0.18s ease-out both;
+}
+
+.xox-board:not(.four-board) .xox-cell.placed.mark-X::after {
+  animation: xox-stroke-b 0.18s 0.14s ease-out both;
+}
+
+.xox-board:not(.four-board) .xox-cell.placed.mark-O::before {
+  animation: xox-ring 0.3s ease-out both;
+}
+
+@keyframes xox-stroke-a {
+  from {
+    transform: rotate(45deg) scaleX(0);
+  }
+}
+
+@keyframes xox-stroke-b {
+  from {
+    transform: rotate(-45deg) scaleX(0);
+  }
+}
+
+@keyframes xox-ring {
+  from {
+    transform: rotate(-120deg) scale(0.4);
+    opacity: 0;
+  }
+}
+
+.xox-board:not(.four-board) .xox-cell.win.mark-X {
+  background: color-mix(in srgb, var(--x) 22%, var(--surface));
+  border-color: var(--x);
+}
+
+.xox-board:not(.four-board) .xox-cell.win.mark-O {
+  background: color-mix(in srgb, var(--o) 22%, var(--surface));
+  border-color: var(--o);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xox-board:not(.four-board) .xox-cell.placed::before,
+  .xox-board:not(.four-board) .xox-cell.placed::after {
+    animation: none;
+  }
+}
+
+/* Connect Four: a ghost disc of my color over the column under the mouse */
+.four-board.my-turn[data-me='X'] .four-cell.col-hover:not(.mark-X, .mark-O) {
+  background: radial-gradient(circle at 35% 30%, rgb(255 138 138 / 0.35), rgb(224 48 58 / 0.25) 60%, #0d1530 62%);
+}
+
+.four-board.my-turn[data-me='O'] .four-cell.col-hover:not(.mark-X, .mark-O) {
+  background: radial-gradient(circle at 35% 30%, rgb(255 241 160 / 0.35), rgb(245 196 0 / 0.25) 60%, #0d1530 62%);
+}
+
+/* Players and score */
+.xox-vs {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.xox-player.turn.mark-X {
+  border-color: #ff7aa8;
+  box-shadow: 0 0 0 4px rgb(255 122 168 / 0.2);
+}
+
+.xox-player.turn.mark-O {
+  border-color: #6fc8ff;
+  box-shadow: 0 0 0 4px rgb(111 200 255 / 0.2);
+}
+
+/* ---- Quiz and podium touches ---- */
+.quiz-options.fresh .quiz-option {
+  animation: quiz-in 0.28s ease-out both;
+}
+
+.quiz-options.fresh .quiz-option:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.quiz-options.fresh .quiz-option:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+.quiz-options.fresh .quiz-option:nth-child(4) {
+  animation-delay: 0.15s;
+}
+
+@keyframes quiz-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.quiz-option.correct {
+  animation: quiz-right 0.6s ease-out;
+}
+
+@keyframes quiz-right {
+  40% {
+    transform: scale(1.04);
+  }
+}
+
+.game-podium-step {
+  animation: podium-rise 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  transform-origin: bottom;
+}
+
+.place-1 .game-podium-step {
+  animation-delay: 0.25s;
+}
+
+.place-3 .game-podium-step {
+  animation-delay: 0.1s;
+}
+
+@keyframes podium-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quiz-options.fresh .quiz-option,
+  .quiz-option.correct,
+  .game-podium-step {
+    animation: none;
+  }
+}
+
 @keyframes xox-win {
   50% {
     transform: scale(1.07);
