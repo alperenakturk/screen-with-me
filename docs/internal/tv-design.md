@@ -112,7 +112,7 @@ Proposal page (Turkish): https://claude.ai/artifact/QZfFgLai4TmNSTwR1nevdN
 - **Needed from the owner:** the choice, his TV model, the browser he used and a photo of `/tv-test`.
 
 ## Outcome (owner, 30 Oct 2026): A, then hidden
-- **0.9.91.12:** A was built (calm sync profile on the TV, sync status line, TV button only on touch devices with a
+- **0.9.91.13:** A was built (calm sync profile on the TV, sync status line, TV button only on touch devices with a
   3-step explainer) and then the feature was **hidden**: only a device with the lab switch (`?tvlab=1`) reaches the TV
   button, `/tv`, `/tv/<code>` and `/tv-test`; the code, server pairing and tests stay (harness 37 checks with the
   switch on, plus checks that the pages are unreachable without it).

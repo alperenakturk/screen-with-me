@@ -67,8 +67,8 @@ implement, test, ship.
 - [ ] **(added)** Performance budget: first load size, room join time (< 30 s from link to watching), CPU while
   watching (extension), memory on long sessions.
 - [ ] **(added)** Help / FAQ page on the site (TR + EN): how it works, extension permissions explained, troubleshooting.
-- [x] **TV version via the TV's browser (A + C built in 0.9.91.4–0.9.91.5, simplified in 0.9.91.12, then hidden):**
-  the owner tried it on his TV (30 Oct 2026): sync was slow and TV browsers are a weak platform. 0.9.91.12 made it
+- [x] **TV version via the TV's browser (A + C built in 0.9.91.4–0.9.91.5, simplified in 0.9.91.13, then hidden):**
+  the owner tried it on his TV (30 Oct 2026): sync was slow and TV browsers are a weak platform. 0.9.91.13 made it
   calmer (TV sync profile, phone-only pairing with a 3-step explainer) and **hid it** (lab switch `?tvlab=1`; the
   code stays). The real TV version moves to Phase 2 ("TV version with Google Cast"). Details `docs/internal/tv-design.md`.
 
