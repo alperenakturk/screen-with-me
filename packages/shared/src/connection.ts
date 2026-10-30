@@ -13,6 +13,8 @@ export interface RoomConnectionOptions {
   cid?: string;
   /** Site mi eklenti mi (bkz. hello.client). */
   client?: ClientKind;
+  /** A paired TV's link token (hello.tv): the TV joins as its person's second device. */
+  tv?: string;
   clock: ServerClock;
   onMessage: (message: ServerMessage) => void;
   onStatus?: (status: ConnectionStatus) => void;
@@ -111,9 +113,9 @@ export class RoomConnection {
       this.failures = 0;
       this.options.onFailures?.(0);
       this.options.onStatus?.('open');
-      const { name, avatar, cid, client } = this.options;
+      const { name, avatar, cid, client, tv } = this.options;
       const prev = this.memberId;
-      this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}), ...(client ? { client } : {}), ...(prev ? { prev } : {}) });
+      this.send({ t: 'hello', v: PROTOCOL_VERSION, name, ...(avatar ? { avatar } : {}), ...(cid ? { cid } : {}), ...(client ? { client } : {}), ...(prev ? { prev } : {}), ...(tv ? { tv } : {}) });
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
       this.lastHeard = Date.now();
       this.lastPingAt = 0;

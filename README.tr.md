@@ -59,6 +59,7 @@ emojiler, pinler ve ortak sıra videonun etrafında.
 | 📊 **Oturum özeti** | Oturumun eğlenceli özeti kartlar hâlinde (izleme süresi, videolar, en konuşkan, en sevilen emoji…), indirilebilir görselli; özetler sonrası için kaydedilebilir. |
 | ⏰ **Film saati** | Filmin ne zaman başlayacağını belirle: tek dokunuşla "15 / 30 / 60 dk sonra" ya da "bu akşam 21:00", istersen herhangi bir tarih ve saat. Herkes geri sayımı görür, video herkeste aynı anda başlar; saati yazan bir davet de kopyalayabilirsin. |
 | 📱 **Telefona göre** | Telefonda oda bir uygulama gibi çalışır: video üstte kalır, sohbet altında kayar ve mesaj kutusu hep ekrandadır; bir şey oynarken link kutusu ＋ düğmesine saklanır. Menüler (emojiler, hız, oyunlar, paylaş, profil, bir kişinin menüsü) alttan açılır. Tam ekran iPhone'da da çalışır; video oynarken telefonu yan çevirince video ekranı kaplar (dik tutunca oda geri gelir; Ayarlar'dan kapatılabilir). Shorts kendiliğinden kendi görünümünde açılır, ekrana sığar ve parmakla kaydırılır; kameralar kaydırılabilen bir sırada durur. Film sayfaları dışında (bilgisayarda eklenti gerekir) her şey telefonda çalışır. |
+| 📺 **Televizyonda** | Televizyonun tarayıcısında (tarayıcı uygulamalı Google TV, Fire TV, akıllı TV'nin kendi tarayıcısı) siteyi `/tv` adresiyle aç: 6 haneli bir kod ve QR çıkar. Telefonda odadayken **📺 TV**'ye bas, kodu yaz (ya da QR'ı okut), TV odaya senin adınla girer. TV videoyu tam ekran, mesajları ve emojileri büyük gösterir; odadakilerin yüzleri üstte durur, konuşanın çevresinde yeşil halka yanar, seste olanların sesi TV'den gelir. Kumandada sadece temel işler var: OK büyük düğmeleri açar (oynat / durdur, emojiler, mesajlar açık / kapalı, ses düzeyi, TV'yi ayır), ▲ emojileri açar, Geri kapatır. Telefonun TV'nin kumandası olur: konuşmak için büyük düğmeyi basılı tut (TV'lerde web sayfalarına mikrofon yok, telefon mikrofonu da TV'nin hoparlörünü duyacağı için sadece basılıyken açık), kamera, yazı, sese gir / çık; kulaklık takılıysa "Kulaklık takılı"yı işaretle, mikrofon serbest kalır. `/tv-test` bir TV tarayıcısının neleri yapabildiğine bakar. |
 | 📱 **Ana ekrana ekle** | Site telefona ve bilgisayara uygulama gibi eklenebilir ("Ana ekrana ekle" / adres çubuğundaki yükle simgesi). Her açılışta en yeni sürüm gelir; internet yoksa bunu söyler. |
 | 🎮 **PlayWithMe** | Oyunlar odanın içinde, ayrı oyun odası yok: videonun altındaki 🎮'a bas, XOX, Dört Taş (iki kişi), Çiz-Bil ya da bilgi yarışması (2–8 kişi; 11 konuda 400'den çok soru, herkese bir 50:50 jokeri) seç. Çiz-Bil ve bilgi yarışmasında oyunu açan dili (Türkçe / İngilizce) ve uzunluğu seçer; ilk ve hızlı bilen en çok puanı alır, geç bilen ve çok yanlış deneyen daha az alır. Oyun videonun yerinde açılır; diğerlerine "Katıl" kartı gider, "Videoya dön" ile film geri gelir, oyun sürer. |
 | 🏠 **Odaya dönüş** | Biri film sayfasından odaya dönünce diğerlerine küçük bir "sen de dön?" kartı çıkar. |
@@ -162,8 +163,7 @@ Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
 ## 🗺️ Sırada ne var?
 
-Chrome Web Store yayını, TV sürümü (TV odayı gösterir, telefon kumandası olur; bir TV tarayıcısını şimdiden
-`/tv-test` ile dene), yeni oyunlar, kısa alan adı, Firefox.
+Chrome Web Store yayını, yeni oyunlar, kısa alan adı, Firefox.
 
 ## 📄 Lisans ve gizlilik
 

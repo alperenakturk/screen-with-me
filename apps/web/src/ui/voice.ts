@@ -484,11 +484,14 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
   })();
   const personOf = (m: Member) => `${m.name}|${m.avatar ?? ''}`;
+  /** TV version: a phone paired to my TV plays no voices (the TV does), and the TV's own volume for all voices. */
+  let silenced = false;
+  let master = 1;
   function volumeOf(memberId: string): number {
-    if (isMyOtherTab(memberId)) return 0;
+    if (isMyOtherTab(memberId) || silenced) return 0;
     const member = members.find((m) => m.id === memberId);
     const s = member ? sound[personOf(member)] : undefined;
-    return s?.m ? 0 : Math.min(1, Math.max(0, s?.v ?? 1));
+    return s?.m ? 0 : Math.min(1, Math.max(0, s?.v ?? 1)) * master;
   }
   function setVolume(audio: HTMLAudioElement, memberId: string): void {
     const volume = volumeOf(memberId);
@@ -913,5 +916,46 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       render();
     },
     relabel: render,
+    /** Am I in voice, with the microphone on? */
+    state(): { active: boolean; mic: boolean; cam: boolean } {
+      return { active: client.active, mic: client.active && client.micEnabled, cam: client.camEnabled === true };
+    },
+    /** TV: join voice without a microphone (hear and see the others; nothing is sent). Peer-to-peer voice only. */
+    async listen(): Promise<boolean> {
+      if (client.active || !available || mode !== 'p2p' || !p2p) return client.active;
+      await p2p.join(false, true);
+      client.sync(members, myId());
+      render();
+      return true;
+    },
+    /** Join (button) or leave voice from outside the card (the phone remote). */
+    toggleJoin(): void {
+      (client.active ? leaveButton : joinButton).click();
+    },
+    toggleCam(): void {
+      camButton.click();
+    },
+    /** Push-to-talk from the phone remote's big button. */
+    talk(on: boolean): void {
+      if (!client.active || client.micEnabled === on) return;
+      client.setMic(on);
+      playSound(on ? 'pttDown' : 'pttUp');
+      render();
+    },
+    /** My TV plays the voices: this device stays silent (`true`) or plays them again. */
+    silence(on: boolean): void {
+      silenced = on;
+      applyVolumes();
+    },
+    /** TV: volume of all voices, 0–1. */
+    setMaster(volume: number): void {
+      master = Math.min(1, Math.max(0, volume));
+      applyVolumes();
+    },
+    /** Who is speaking right now (member ids), for the TV's faces. */
+    speakers(): Set<string> {
+      const now = Date.now();
+      return new Set([...spokeAt].filter(([, at]) => now - at < SPEAK_HOLD_MS).map(([id]) => id));
+    },
   };
 }

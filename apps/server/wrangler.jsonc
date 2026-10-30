@@ -19,7 +19,9 @@
       // Çiz-Bil oyunları
       { "name": "DRAWS", "class_name": "Draw" },
       // Bilgi yarışmaları
-      { "name": "QUIZZES", "class_name": "Quiz" }
+      { "name": "QUIZZES", "class_name": "Quiz" },
+      // TVs waiting to be paired (one per 6-digit code, nothing stored)
+      { "name": "TVLINKS", "class_name": "TvLink" }
     ]
   },
   // Ücretsiz planda Durable Object'ler SQLite tabanlı olmak zorunda.
@@ -27,7 +29,8 @@
     { "tag": "v1", "new_sqlite_classes": ["Room"] },
     { "tag": "v2", "new_sqlite_classes": ["Game"] },
     { "tag": "v3", "new_sqlite_classes": ["Draw"] },
-    { "tag": "v4", "new_sqlite_classes": ["Quiz"] }
+    { "tag": "v4", "new_sqlite_classes": ["Quiz"] },
+    { "tag": "v5", "new_sqlite_classes": ["TvLink"] }
   ],
   // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
   // address joining at once must still fit, a script opening rooms in a loop must not.
