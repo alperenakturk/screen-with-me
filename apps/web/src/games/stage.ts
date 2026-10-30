@@ -1,11 +1,12 @@
 // The in-room games hub (PlayWithMe, concept D of docs/internal/games-hub.md). 🎮 opens the hub: what's new, the
 // room's tables (who is at each, Open / Join) and "new table". A room holds up to MAX_TABLES tables at once; each
 // table is one game running in its own server object (the room only lists them). I have at most one table open at a
-// time, in a game window with three placements (remembered per game, `gamePlace:<kind>`; defaults from the catalog):
-// "side" next to the video (the video shrinks, stays fully visible; on the film page the hole narrows and the film
-// refits), "float" a small window over the video (drag by its head; an island on the film page), "stage" in the
-// video's place. In fullscreen "side" floats. Narrow screens: "below" the video (the rest of the screen) or "large"
-// (the whole screen). "Back to video" minimizes it (still connected, still "at" the table), "Leave table" closes it
+// time, in a game window with two placements (remembered per game, `gamePlace:<kind>`; defaults from the catalog):
+// "float" a free window anywhere on the page (drag by its head, resize from its corner; in fullscreen it moves into
+// the fullscreen view and stays free there; an island on the film page) and "stage" in the video's place. The free
+// window opens at the game's own size (catalog `size`); smaller than the room the game's layout needs (`fit`) the
+// whole game is scaled down instead of squeezed. Narrow screens: "below" the video (the rest of the screen) or
+// "large" (the whole screen). "Back to video" minimizes it (still connected, still "at" the table), "Leave table" closes it
 // for me only.
 
 import { createLogo } from '@swm/shared/logo';
@@ -39,14 +40,32 @@ function playLogo(): HTMLElement {
 /** What's new I have seen (the newest note's version). */
 const SEEN_KEY = 'opt:gamesSeen';
 
-type Place = 'side' | 'float' | 'stage';
-const PLACES: readonly Place[] = ['side', 'float', 'stage'];
+type Place = 'float' | 'stage';
+const PLACES: readonly Place[] = ['float', 'stage'];
 const placeOf = (kind: RoomGameKind): Place => {
   const saved = load(`gamePlace:${kind}`);
+  // "side" (0.9.91.8–0.9.91.9) became the free window.
+  if (saved === 'side') return 'float';
   return PLACES.includes(saved as Place) ? (saved as Place) : GAME_CATALOG[kind].place;
 };
-/** The floating window's spot inside the video box, as a share of the free room (0–1). */
+/** The free window's spot on the screen, as a share of the free room (0–1). */
 const FLOAT_KEY = 'gameFloat:spot';
+/** The free window's size per game (what I last dragged it to; empty = the game's own size). */
+const sizeKey = (kind: RoomGameKind) => `gameFloat:size:${kind}`;
+/** Gap kept between the free window and the screen's edges. */
+const EDGE = 8;
+/** The smallest free window (px). */
+const MIN_W = 240;
+const MIN_H = 260;
+const readPair = (key: string): { x: number; y: number } | null => {
+  try {
+    const saved = JSON.parse(load(key) || 'null') as { x?: unknown; y?: unknown } | null;
+    if (saved && typeof saved.x === 'number' && typeof saved.y === 'number' && Number.isFinite(saved.x + saved.y)) return { x: saved.x, y: saved.y };
+  } catch {
+    // Fall back to the default.
+  }
+  return null;
+};
 
 interface StageOptions {
   /** The video's box (.player-wrap): the stage and invite cards go here (islands in the shell by themselves). */
@@ -88,12 +107,12 @@ export function createGameStage(opts: StageOptions) {
   const minimizeButton = headButton('▶');
   const leaveButton = headButton('↩');
   const endButton = headButton('✕', 'game-end');
-  // Placement switch: side / float / stage (narrow screens: below / large).
+  // Placement switch: free window / in the video's place (narrow screens: below / large).
   const placeButtons = PLACES.map((p) => {
     const b = el('button', { type: 'button', class: `game-place-btn place-${p}` });
     b.addEventListener('click', () => {
       if (!current) return;
-      // On a narrow screen "side" means below the video, "stage" the whole screen.
+      // On a narrow screen "float" means below the video, "stage" the whole screen.
       save(`gamePlace:${current.kind}`, p);
       place();
     });
@@ -102,7 +121,8 @@ export function createGameStage(opts: StageOptions) {
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
   const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), placeSwitch, hubButton.node, minimizeButton.node, leaveButton.node, endButton.node);
   const body = el('div', { class: 'game-stage-body' });
-  const stage = el('section', { id: 'game-stage', class: 'game-stage', 'aria-label': 'PlayWithMe' }, head, body);
+  const grip = el('span', { class: 'game-resize', 'aria-hidden': 'true' });
+  const stage = el('section', { id: 'game-stage', class: 'game-stage', 'aria-label': 'PlayWithMe' }, head, body, grip);
   stage.hidden = true;
   wrap.append(stage);
   const theater = (wrap.closest('.theater') as HTMLElement | null) ?? wrap;
@@ -114,22 +134,20 @@ export function createGameStage(opts: StageOptions) {
   /** Puts the game window where its placement says (moves the element only when its parent changes). */
   function place(): void {
     const want = current ? placeOf(current.kind) : 'stage';
-    mode = narrow.matches ? (want === 'stage' ? 'full' : 'below') : want === 'side' && inFullscreen() ? 'float' : want;
-    const parent = narrow.matches ? document.body : mode === 'side' ? theater : wrap;
-    if (stage.parentElement !== parent) {
-      if (mode === 'side') wrap.after(stage);
-      else parent.append(stage);
-    }
-    for (const m of ['side', 'float', 'stage', 'below', 'full'] as const) stage.classList.toggle(m, mode === m);
-    theater.classList.toggle('game-side', mode === 'side' && !stage.hidden);
+    mode = narrow.matches ? (want === 'stage' ? 'full' : 'below') : want;
+    // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
+    const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
+    if (stage.parentElement !== parent) parent.append(stage);
+    for (const m of ['float', 'stage', 'below', 'full'] as const) stage.classList.toggle(m, mode === m);
+    // On the film page the free window is a window of its own over the film (inside the video box it is one anyway).
+    stage.toggleAttribute('data-island', mode === 'float');
     document.documentElement.classList.toggle('game-below', mode === 'below' && !stage.hidden);
     if (mode === 'below') placeBelow();
     if (mode === 'float') placeFloat();
+    else for (const p of ['left', 'top', 'width', 'height', 'transform']) stage.style.removeProperty(p);
     placeButtons.forEach((b, i) => {
       const p = PLACES[i]!;
-      // Narrow screens offer two: below (side) and large (stage).
-      b.hidden = narrow.matches && p === 'float';
-      const on = narrow.matches ? (p === 'stage' ? mode === 'full' : mode === 'below' && p === 'side') : p === want;
+      const on = narrow.matches ? (p === 'stage' ? mode === 'full' : mode === 'below') : p === want;
       b.classList.toggle('on', on);
       b.setAttribute('aria-pressed', String(on));
       const name = narrow.matches ? (p === 'stage' ? 'large' : 'below') : p;
@@ -146,17 +164,41 @@ export function createGameStage(opts: StageOptions) {
     stage.style.setProperty('--game-top', `${Math.max(0, Math.round(wrap.getBoundingClientRect().bottom))}px`);
   }
 
-  // ---- The floating window: dragged by its head, kept inside the video box ----
-  function placeFloat(): void {
-    let spot = { x: 1, y: 1 };
-    try {
-      const saved = JSON.parse(load(FLOAT_KEY) ?? 'null') as { x?: unknown; y?: unknown } | null;
-      if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') spot = { x: saved.x, y: saved.y };
-    } catch {
-      // Keep the default corner.
+  // ---- The free window: dragged by its head anywhere on the screen, resized from its corner ----
+  /** Where it may go: the screen, or the fullscreen view. */
+  function area(): { left: number; top: number; width: number; height: number } {
+    if (inFullscreen()) {
+      const r = theater.getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width, height: r.height };
     }
-    stage.style.setProperty('--float-x', String(Math.min(1, Math.max(0, spot.x))));
-    stage.style.setProperty('--float-y', String(Math.min(1, Math.max(0, spot.y))));
+    return { left: 0, top: 0, width: innerWidth, height: innerHeight };
+  }
+  /** The window's size on screen: what I dragged it to, or the game's own size; never bigger than the screen. */
+  function floatSize(): { w: number; h: number } {
+    const kind = current?.kind ?? 'xox';
+    const saved = readPair(sizeKey(kind));
+    const [dw, dh] = GAME_CATALOG[kind].size;
+    const room = area();
+    return {
+      w: Math.round(Math.max(MIN_W, Math.min(saved?.x ?? dw, room.width - 2 * EDGE))),
+      h: Math.round(Math.max(MIN_H, Math.min(saved?.y ?? dh, room.height - 2 * EDGE))),
+    };
+  }
+  let spot = readPair(FLOAT_KEY) ?? { x: 1, y: 0.5 };
+  function placeFloat(size = floatSize()): void {
+    const kind = current?.kind ?? 'xox';
+    const [fw, fh] = GAME_CATALOG[kind].fit;
+    // Smaller than the room the game needs: the game keeps its layout and is scaled down as a whole.
+    const scale = Math.min(1, size.w / fw, size.h / fh);
+    const room = area();
+    const x = Math.min(1, Math.max(0, spot.x));
+    const y = Math.min(1, Math.max(0, spot.y));
+    stage.style.left = `${Math.round(room.left + EDGE + Math.max(0, room.width - 2 * EDGE - size.w) * x)}px`;
+    stage.style.top = `${Math.round(room.top + EDGE + Math.max(0, room.height - 2 * EDGE - size.h) * y)}px`;
+    stage.style.width = `${size.w / scale}px`;
+    stage.style.height = `${size.h / scale}px`;
+    stage.style.transform = scale < 1 ? `scale(${scale})` : '';
+    stage.classList.toggle('scaled', scale < 1);
   }
   let drag: { x: number; y: number; left: number; top: number } | null = null;
   head.addEventListener('pointerdown', (event) => {
@@ -167,27 +209,68 @@ export function createGameStage(opts: StageOptions) {
   });
   head.addEventListener('pointermove', (event) => {
     if (!drag) return;
-    const area = wrap.getBoundingClientRect();
+    const room = area();
     const box = stage.getBoundingClientRect();
-    const freeX = Math.max(1, area.width - box.width);
-    const freeY = Math.max(1, area.height - box.height);
-    const x = Math.min(1, Math.max(0, (drag.left + event.clientX - drag.x - area.left) / freeX));
-    const y = Math.min(1, Math.max(0, (drag.top + event.clientY - drag.y - area.top) / freeY));
-    stage.style.setProperty('--float-x', String(x));
-    stage.style.setProperty('--float-y', String(y));
+    const freeX = Math.max(1, room.width - 2 * EDGE - box.width);
+    const freeY = Math.max(1, room.height - 2 * EDGE - box.height);
+    spot = {
+      x: Math.min(1, Math.max(0, (drag.left + event.clientX - drag.x - room.left - EDGE) / freeX)),
+      y: Math.min(1, Math.max(0, (drag.top + event.clientY - drag.y - room.top - EDGE) / freeY)),
+    };
+    placeFloat();
     dispatchEvent(new Event('swm-layout'));
   });
   const endDrag = () => {
     if (!drag) return;
     drag = null;
-    save(FLOAT_KEY, JSON.stringify({ x: Number(stage.style.getPropertyValue('--float-x')), y: Number(stage.style.getPropertyValue('--float-y')) }));
+    save(FLOAT_KEY, JSON.stringify(spot));
   };
   head.addEventListener('pointerup', endDrag);
   head.addEventListener('pointercancel', endDrag);
+  // Double click on the head: back to the game's own size.
+  head.addEventListener('dblclick', (event) => {
+    if (mode !== 'float' || !current || (event.target as Element).closest('button')) return;
+    save(sizeKey(current.kind), '');
+    placeFloat();
+    dispatchEvent(new Event('swm-layout'));
+  });
+  // The corner: the top-left stays put, the window grows or shrinks (the game rescales when it gets small).
+  let sizing: { x: number; y: number; w: number; h: number; left: number; top: number } | null = null;
+  grip.addEventListener('pointerdown', (event) => {
+    if (mode !== 'float') return;
+    event.preventDefault();
+    const box = stage.getBoundingClientRect();
+    sizing = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, left: box.left, top: box.top };
+    grip.setPointerCapture(event.pointerId);
+  });
+  grip.addEventListener('pointermove', (event) => {
+    if (!sizing || !current) return;
+    const room = area();
+    const w = Math.round(Math.max(MIN_W, Math.min(sizing.w + event.clientX - sizing.x, room.left + room.width - EDGE - sizing.left)));
+    const h = Math.round(Math.max(MIN_H, Math.min(sizing.h + event.clientY - sizing.y, room.top + room.height - EDGE - sizing.top)));
+    // Keep the top-left corner where it is: the spot is a share of the room left free.
+    spot = {
+      x: room.width - 2 * EDGE - w > 0 ? (sizing.left - room.left - EDGE) / (room.width - 2 * EDGE - w) : 0,
+      y: room.height - 2 * EDGE - h > 0 ? (sizing.top - room.top - EDGE) / (room.height - 2 * EDGE - h) : 0,
+    };
+    save(sizeKey(current.kind), JSON.stringify({ x: w, y: h }));
+    placeFloat({ w, h });
+    dispatchEvent(new Event('swm-layout'));
+  });
+  const endSizing = () => {
+    if (!sizing) return;
+    sizing = null;
+    save(FLOAT_KEY, JSON.stringify(spot));
+  };
+  grip.addEventListener('pointerup', endSizing);
+  grip.addEventListener('pointercancel', endSizing);
 
   narrow.addEventListener('change', place);
   addEventListener('fullscreenchange', place);
-  addEventListener('resize', () => mode === 'below' && placeBelow());
+  addEventListener('resize', () => {
+    if (mode === 'below') placeBelow();
+    if (mode === 'float') placeFloat();
+  });
   // Fullscreen without the Fullscreen API (iPhone, the film page) is a class on the theater.
   new MutationObserver(() => {
     const fs = inFullscreen();

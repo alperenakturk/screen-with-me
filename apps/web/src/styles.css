@@ -7101,12 +7101,12 @@ html.shorts-view .footer {
   }
 
   .game-stage .xox-board {
-    width: min(100cqw - 8px, 100cqh - 150px, 420px);
+    width: min(100cqw - 8px, 100cqh - 230px, 420px);
     min-width: 180px;
   }
 
   .game-stage .four-board {
-    width: min(100cqw - 8px, (100cqh - 150px) * 7 / 6, 560px);
+    width: min(100cqw - 8px, (100cqh - 230px) * 7 / 6, 560px);
     min-width: 210px;
   }
 
@@ -7170,71 +7170,55 @@ html.shorts-view .footer {
   color: var(--text);
 }
 
-/* Side: the theater becomes two columns, the video (and the film page's hole) on the left, the game on the right. */
-.theater.game-side {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
-  align-items: start;
-}
-
-.theater.game-side > * {
-  grid-column: 1 / -1;
-}
-
-.theater.game-side > .player-wrap {
-  grid-column: 1;
-}
-
-.theater.game-side > .game-stage.side {
-  grid-column: 2;
-  align-self: stretch;
-}
-
-.game-stage.side {
-  position: relative;
-  inset: auto;
-  min-height: 380px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.game-stage.side .game-head-text,
-.game-stage.float .game-head-text {
-  display: none;
-}
-
-.game-stage.side .game-stage-title-text {
-  display: none;
-}
-
-.game-stage.side .pwm-logo,
-.game-stage.float .pwm-logo {
-  display: none;
-}
-
-/* Float: a small window over the video, dragged by its head, kept inside the video box. */
+/* Free window (0.9.91.10): anywhere on the page (fixed), or inside the fullscreen view while there is one; stage.ts
+   sets its spot and size. Smaller than the game needs, the whole window is scaled down (`transform`) so the game
+   keeps its layout instead of getting squeezed. */
 .game-stage.float {
-  --fw: min(400px, 58%);
-  --fh: min(460px, 82%);
+  position: fixed;
   inset: auto;
-  left: calc((100% - var(--fw)) * var(--float-x, 1));
-  top: calc((100% - var(--fh)) * var(--float-y, 1));
-  width: var(--fw);
-  height: var(--fh);
+  z-index: 950;
+  transform-origin: 0 0;
   border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 18px 40px rgb(0 0 0 / 0.5);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.55);
   overflow: hidden;
+}
+
+.game-stage.float .game-head-text,
+.game-stage.float .pwm-logo {
+  display: none;
 }
 
 .game-stage.float .game-stage-head {
   cursor: grab;
   touch-action: none;
+  user-select: none;
 }
 
 .game-stage.float .game-stage-head:active {
   cursor: grabbing;
+}
+
+.game-resize {
+  display: none;
+}
+
+.game-stage.float .game-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: block;
+  width: 22px;
+  height: 22px;
+  cursor: nwse-resize;
+  touch-action: none;
+  background: linear-gradient(135deg, transparent 0 52%, var(--muted) 52% 58%, transparent 58% 68%, var(--muted) 68% 74%, transparent 74%);
+  opacity: 0.7;
+}
+
+.game-stage.float .game-resize:hover {
+  opacity: 1;
 }
 
 /* Narrow screens: under the video (the rest of the screen) */
