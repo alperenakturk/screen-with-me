@@ -35,8 +35,8 @@ export const GAME_NEWS: readonly GameNews[] = [
     v: '0.9.91.7',
     kinds: [],
     badge: 'updated',
-    tr: 'Oyun salonu: aynı anda 4 masaya kadar oyun. İki kişi XOX oynarken diğerleri Bilgi yarışmasında olabilir; masalar arasında serbestçe geç.',
-    en: 'Game hall: up to 4 tables at once. Two can play tic-tac-toe while others are in a quiz; move freely between tables.',
+    tr: 'Oyun salonu: aynı anda 4 masaya kadar oyun, masalar arasında serbestçe geç. Oyun artık videonun yanında, üstünde küçük bir pencerede ya da yerinde açılabilir (başlıktaki düğmeler).',
+    en: 'Game hall: up to 4 tables at once, move freely between them. A game can now sit next to the video, in a small window over it, or in its place (the buttons in its head).',
   },
   {
     v: '0.9.91.6',

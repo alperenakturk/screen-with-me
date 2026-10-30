@@ -162,6 +162,12 @@ refunded" or "fold this hand for free"), in a version with jokers and one withou
    ✕, new-table grid with NEW / UPDATED badges; `opt:gamesSeen`, a yellow dot on 🎮 until the hub is closed once),
    stage head "Game hall · Back to video · Leave table · Close table", line icons `gamepad`, `game-*` in `ui/icons.ts`.
    Test: `scripts/e2e/roomgame.mjs` (rewritten for tables).
-3. Game window placements (side / floating / stage), film page, phones.
+3. ✅ **0.9.91.7 (same release) placements.** Head switch side / float / stage (`gamePlace:<kind>`, defaults from
+   `GAME_CATALOG.place`): side = `.theater.game-side` grid, the stage right after `.player-wrap` (outside the hole, so
+   on the film page the hole narrows and the film refits); float = absolute in `.player-wrap` (an island on the film
+   page), dragged by its head, spot `gameFloat:spot` as a share; stage = as before. Fullscreen turns side into float.
+   ≤ 860 px: below the video (`.below`, fixed from the video's bottom, `--game-top`) or full screen. Small windows use
+   a compact XOX / Connect Four layout (`@container game (max-width: 560px)`). Fixed: the empty seat's "?" used the
+   site-wide `.empty` class and jumped to the stage's corner (now `.vacant`).
 4. Life poker (with and without jokers), its own Durable Object and table design.
 5. Shared look for every game (player strip, timer, podium everywhere; XOX / Connect Four redrawn).

@@ -1,8 +1,12 @@
 // The in-room games hub (PlayWithMe, concept D of docs/internal/games-hub.md). 🎮 opens the hub: what's new, the
 // room's tables (who is at each, Open / Join) and "new table". A room holds up to MAX_TABLES tables at once; each
 // table is one game running in its own server object (the room only lists them). I have at most one table open at a
-// time: it shows on the "game stage" in the video's place (desktop) or over the page (narrow screens), "Back to video"
-// minimizes it (still connected, still "at" the table), "Leave table" closes it for me only.
+// time, in a game window with three placements (remembered per game, `gamePlace:<kind>`; defaults from the catalog):
+// "side" next to the video (the video shrinks, stays fully visible; on the film page the hole narrows and the film
+// refits), "float" a small window over the video (drag by its head; an island on the film page), "stage" in the
+// video's place. In fullscreen "side" floats. Narrow screens: "below" the video (the rest of the screen) or "large"
+// (the whole screen). "Back to video" minimizes it (still connected, still "at" the table), "Leave table" closes it
+// for me only.
 
 import { createLogo } from '@swm/shared/logo';
 import { GAME_CATALOG, LATEST_NEWS, unseenNews } from '@swm/shared/games/catalog';
@@ -34,6 +38,15 @@ function playLogo(): HTMLElement {
 
 /** What's new I have seen (the newest note's version). */
 const SEEN_KEY = 'opt:gamesSeen';
+
+type Place = 'side' | 'float' | 'stage';
+const PLACES: readonly Place[] = ['side', 'float', 'stage'];
+const placeOf = (kind: RoomGameKind): Place => {
+  const saved = load(`gamePlace:${kind}`);
+  return PLACES.includes(saved as Place) ? (saved as Place) : GAME_CATALOG[kind].place;
+};
+/** The floating window's spot inside the video box, as a share of the free room (0–1). */
+const FLOAT_KEY = 'gameFloat:spot';
 
 interface StageOptions {
   /** The video's box (.player-wrap): the stage and invite cards go here (islands in the shell by themselves). */
@@ -75,23 +88,115 @@ export function createGameStage(opts: StageOptions) {
   const minimizeButton = headButton('▶');
   const leaveButton = headButton('↩');
   const endButton = headButton('✕', 'game-end');
+  // Placement switch: side / float / stage (narrow screens: below / large).
+  const placeButtons = PLACES.map((p) => {
+    const b = el('button', { type: 'button', class: `game-place-btn place-${p}` });
+    b.addEventListener('click', () => {
+      if (!current) return;
+      // On a narrow screen "side" means below the video, "stage" the whole screen.
+      save(`gamePlace:${current.kind}`, p);
+      place();
+    });
+    return b;
+  });
+  const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
+  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), placeSwitch, hubButton.node, minimizeButton.node, leaveButton.node, endButton.node);
   const body = el('div', { class: 'game-stage-body' });
-  const stage = el(
-    'section',
-    { id: 'game-stage', class: 'game-stage', 'aria-label': 'PlayWithMe' },
-    el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), hubButton.node, minimizeButton.node, leaveButton.node, endButton.node),
-    body,
-  );
+  const stage = el('section', { id: 'game-stage', class: 'game-stage', 'aria-label': 'PlayWithMe' }, head, body);
   stage.hidden = true;
   wrap.append(stage);
-  // Narrow screens: the video is small, so the stage moves to the body and covers the page (inside the video's box it
-  // sat under the top bar and the toolbar).
+  const theater = (wrap.closest('.theater') as HTMLElement | null) ?? wrap;
   const narrow = matchMedia('(max-width: 860px)');
-  const place = () => {
-    stage.classList.toggle('full', narrow.matches);
-    (narrow.matches ? document.body : wrap).append(stage);
+  const inFullscreen = () => theater.matches(':fullscreen') || theater.classList.contains('fake-fs');
+  /** The placement in use now. */
+  let mode: Place | 'below' | 'full' = 'stage';
+
+  /** Puts the game window where its placement says (moves the element only when its parent changes). */
+  function place(): void {
+    const want = current ? placeOf(current.kind) : 'stage';
+    mode = narrow.matches ? (want === 'stage' ? 'full' : 'below') : want === 'side' && inFullscreen() ? 'float' : want;
+    const parent = narrow.matches ? document.body : mode === 'side' ? theater : wrap;
+    if (stage.parentElement !== parent) {
+      if (mode === 'side') wrap.after(stage);
+      else parent.append(stage);
+    }
+    for (const m of ['side', 'float', 'stage', 'below', 'full'] as const) stage.classList.toggle(m, mode === m);
+    theater.classList.toggle('game-side', mode === 'side' && !stage.hidden);
+    document.documentElement.classList.toggle('game-below', mode === 'below' && !stage.hidden);
+    if (mode === 'below') placeBelow();
+    if (mode === 'float') placeFloat();
+    placeButtons.forEach((b, i) => {
+      const p = PLACES[i]!;
+      // Narrow screens offer two: below (side) and large (stage).
+      b.hidden = narrow.matches && p === 'float';
+      const on = narrow.matches ? (p === 'stage' ? mode === 'full' : mode === 'below' && p === 'side') : p === want;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+      const name = narrow.matches ? (p === 'stage' ? 'large' : 'below') : p;
+      b.replaceChildren(icon(`place-${name === 'large' ? 'stage' : name}` as IconName));
+      b.title = t(`hub.place.${name}`);
+      b.setAttribute('aria-label', b.title);
+    });
+    // The film page's hole and islands follow at once.
+    dispatchEvent(new Event('swm-layout'));
+  }
+
+  /** Below the video (narrow screens): the window starts where the video ends. */
+  function placeBelow(): void {
+    stage.style.setProperty('--game-top', `${Math.max(0, Math.round(wrap.getBoundingClientRect().bottom))}px`);
+  }
+
+  // ---- The floating window: dragged by its head, kept inside the video box ----
+  function placeFloat(): void {
+    let spot = { x: 1, y: 1 };
+    try {
+      const saved = JSON.parse(load(FLOAT_KEY) ?? 'null') as { x?: unknown; y?: unknown } | null;
+      if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') spot = { x: saved.x, y: saved.y };
+    } catch {
+      // Keep the default corner.
+    }
+    stage.style.setProperty('--float-x', String(Math.min(1, Math.max(0, spot.x))));
+    stage.style.setProperty('--float-y', String(Math.min(1, Math.max(0, spot.y))));
+  }
+  let drag: { x: number; y: number; left: number; top: number } | null = null;
+  head.addEventListener('pointerdown', (event) => {
+    if (mode !== 'float' || (event.target as Element).closest('button')) return;
+    const box = stage.getBoundingClientRect();
+    drag = { x: event.clientX, y: event.clientY, left: box.left, top: box.top };
+    head.setPointerCapture(event.pointerId);
+  });
+  head.addEventListener('pointermove', (event) => {
+    if (!drag) return;
+    const area = wrap.getBoundingClientRect();
+    const box = stage.getBoundingClientRect();
+    const freeX = Math.max(1, area.width - box.width);
+    const freeY = Math.max(1, area.height - box.height);
+    const x = Math.min(1, Math.max(0, (drag.left + event.clientX - drag.x - area.left) / freeX));
+    const y = Math.min(1, Math.max(0, (drag.top + event.clientY - drag.y - area.top) / freeY));
+    stage.style.setProperty('--float-x', String(x));
+    stage.style.setProperty('--float-y', String(y));
+    dispatchEvent(new Event('swm-layout'));
+  });
+  const endDrag = () => {
+    if (!drag) return;
+    drag = null;
+    save(FLOAT_KEY, JSON.stringify({ x: Number(stage.style.getPropertyValue('--float-x')), y: Number(stage.style.getPropertyValue('--float-y')) }));
   };
+  head.addEventListener('pointerup', endDrag);
+  head.addEventListener('pointercancel', endDrag);
+
   narrow.addEventListener('change', place);
+  addEventListener('fullscreenchange', place);
+  addEventListener('resize', () => mode === 'below' && placeBelow());
+  // Fullscreen without the Fullscreen API (iPhone, the film page) is a class on the theater.
+  new MutationObserver(() => {
+    const fs = inFullscreen();
+    if (fs !== wasFs) {
+      wasFs = fs;
+      place();
+    }
+  }).observe(theater, { attributes: true, attributeFilter: ['class'] });
+  let wasFs = inFullscreen();
   place();
 
   const meId = () => opts.me().id;
@@ -228,11 +333,12 @@ export function createGameStage(opts: StageOptions) {
     document.getElementById('game-invite')?.remove();
     stage.hidden = false;
     button.classList.remove('game-waiting');
-    if (current?.id === table.id && unmount) return;
+    if (current?.id === table.id && unmount) return place();
     unmount?.();
     unmount = null;
     current = table;
     labels();
+    place();
     send({ t: 'at', table: table.id });
     body.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
     const { name, avatar } = opts.me();
@@ -252,6 +358,7 @@ export function createGameStage(opts: StageOptions) {
     unmount = null;
     current = null;
     stage.hidden = true;
+    place();
     body.replaceChildren();
     button.classList.remove('game-waiting');
     if (tell) send({ t: 'at', table: null });
@@ -259,6 +366,7 @@ export function createGameStage(opts: StageOptions) {
 
   function minimize(): void {
     stage.hidden = true;
+    place();
     if (current) button.classList.add('game-waiting');
   }
 

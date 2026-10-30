@@ -22,7 +22,11 @@ export type IconName =
   | 'game-four'
   | 'game-draw'
   | 'game-quiz'
-  | 'game-poker';
+  | 'game-poker'
+  | 'place-side'
+  | 'place-float'
+  | 'place-stage'
+  | 'place-below';
 
 type Shape = [tag: 'path' | 'rect' | 'line' | 'circle', attrs: Record<string, string | number>];
 
@@ -96,6 +100,11 @@ const ICONS: Record<IconName, Shape[]> = {
     ['path', { d: 'M10 9a2 2 0 1 1 2.8 1.8c-.6.3-.8.7-.8 1.2' }],
     ['line', { x1: 12, y1: 14, x2: 12, y2: 14.2 }],
   ],
+  // Where the game window sits: next to the video, floating over it, in its place, under it (phones).
+  'place-side': [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['line', { x1: 14, y1: 5, x2: 14, y2: 19 }]],
+  'place-float': [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['rect', { x: 12, y: 11, width: 7, height: 6, rx: 1 }]],
+  'place-stage': [['path', { d: 'M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4' }]],
+  'place-below': [['rect', { x: 5, y: 3, width: 14, height: 18, rx: 2 }], ['line', { x1: 5, y1: 10, x2: 19, y2: 10 }]],
   // Life poker: a heart on a card.
   'game-poker': [
     ['rect', { x: 5, y: 3, width: 14, height: 18, rx: 2.5 }],
