@@ -1,3 +1,4 @@
+import { isPhone } from './device.ts';
 import { el } from './dom.ts';
 import { t, type I18nKey } from './i18n.ts';
 import { load, save } from './storage.ts';
@@ -30,6 +31,18 @@ function isTheme(x: unknown): x is ThemeId {
 export function currentTheme(): ThemeId {
   const saved = load('theme');
   return isTheme(saved) ? saved : 'gece';
+}
+
+/**
+ * The plain themes (colors and a soft glow, no drawn scene). A phone offers only these (0.9.91.5, owner: the scenes
+ * don't fit a phone screen); tablets and computers keep all. A scene theme chosen on a computer stays saved (the
+ * settings are shared with the extension) and shows as Gece on a phone.
+ */
+const PLAIN_THEMES: readonly ThemeId[] = ['gece', 'okyanus', 'gunbatimi', 'neon'];
+const offered = () => (isPhone() ? THEMES.filter((theme) => PLAIN_THEMES.includes(theme.id)) : THEMES);
+/** The theme this screen shows for a choice. */
+function shown(id: ThemeId): ThemeId {
+  return isPhone() && !PLAIN_THEMES.includes(id) ? 'gece' : id;
 }
 
 /** Sahnesi (public/themes/<tema>.svg) olan temalar; diğerlerinin sadece maskotu var. */
@@ -72,14 +85,14 @@ export function applyTheme(id: ThemeId, { wait = true } = {}): void {
   const ticket = ++applying;
   const set = () => {
     if (ticket !== applying) return;
-    document.documentElement.dataset.theme = id;
+    document.documentElement.dataset.theme = shown(id);
     window.dispatchEvent(new Event('themechange'));
   };
   if (!wait) {
     set();
     return;
   }
-  void preload(themeImages(id), 1500).then(set);
+  void preload(themeImages(shown(id)), 1500).then(set);
 }
 
 /**
@@ -89,23 +102,25 @@ export function applyTheme(id: ThemeId, { wait = true } = {}): void {
 export function renderThemeStrip(container: HTMLElement, { all = false } = {}): void {
   // Dar bir şeritte hepsi yana kayan uzun bir sıra yapıyordu: orada seçili tema + rastgele birkaç tema (çoğu
   // resimli). Ana sayfanın tema bölümünde (`all`) hepsi, sarılarak.
-  const others = THEMES.filter((theme) => theme.id !== currentTheme())
+  const now = shown(currentTheme());
+  const others = offered()
+    .filter((theme) => theme.id !== now)
     .map((theme) => ({ theme, key: Math.random() + (SCENE_THEMES.includes(theme.id) ? 0 : 0.6) }))
     .sort((a, b) => a.key - b.key)
     .slice(0, STRIP_COUNT - 1)
     .map((x) => x.theme);
-  const shown = all ? THEMES : THEMES.filter((theme) => theme.id === currentTheme() || others.includes(theme));
+  const list = all ? offered() : offered().filter((theme) => theme.id === now || others.includes(theme));
   const draw = () =>
     container.replaceChildren(
       ...(all ? [] : [el('span', { class: 'theme-strip-label' }, t('settings.theme'))]),
-      ...shown.map((theme) => {
+      ...list.map((theme) => {
         const button = el(
           'button',
           {
             type: 'button',
             class: 'theme-chip',
             role: 'radio',
-            'aria-checked': String(theme.id === currentTheme()),
+            'aria-checked': String(theme.id === shown(currentTheme())),
             style: `--chip-a: ${theme.swatch[0]}; --chip-b: ${theme.swatch[1]}`,
           },
           el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '', loading: 'lazy' }),
@@ -124,10 +139,10 @@ export function renderThemeStrip(container: HTMLElement, { all = false } = {}): 
 export function renderThemePicker(container: HTMLElement): void {
   const draw = () =>
     container.replaceChildren(
-      ...THEMES.map((theme) => {
+      ...offered().map((theme) => {
         const button = el(
           'button',
-          { type: 'button', class: 'theme-option', role: 'radio', 'aria-checked': String(theme.id === currentTheme()) },
+          { type: 'button', class: 'theme-option', role: 'radio', 'aria-checked': String(theme.id === shown(currentTheme())) },
           el('span', { class: 'theme-swatch', style: `background: linear-gradient(135deg, ${theme.swatch[0]} 50%, ${theme.swatch[1]} 50%)` }),
           el('span', {}, t(`theme.${theme.id}` as I18nKey)),
         );
@@ -148,7 +163,7 @@ export function openThemeDialog(): void {
   const grid = el('div', { class: 'theme-cards', role: 'radiogroup' });
   const draw = () =>
     grid.replaceChildren(
-      ...THEMES.map((theme) => {
+      ...offered().map((theme) => {
         const scene = SCENE_THEMES.includes(theme.id) ? `url('/themes/${theme.id}.svg') center bottom / cover no-repeat, ` : '';
         const preview = el(
           'span',
@@ -157,7 +172,7 @@ export function openThemeDialog(): void {
         );
         const card = el(
           'button',
-          { type: 'button', class: 'theme-card', role: 'radio', 'aria-checked': String(theme.id === currentTheme()), style: `--chip-b: ${theme.swatch[1]}` },
+          { type: 'button', class: 'theme-card', role: 'radio', 'aria-checked': String(theme.id === shown(currentTheme())), style: `--chip-b: ${theme.swatch[1]}` },
           preview,
           el('span', { class: 'theme-card-name' }, t(`theme.${theme.id}` as I18nKey)),
         );
@@ -198,7 +213,7 @@ export function openThemeDialog(): void {
 /** Ayarlarda: şu anki tema küçük önizlemeyle + "Temayı değiştir" (büyük pencere açar). */
 export function renderThemeSetting(container: HTMLElement): void {
   const draw = () => {
-    const theme = THEMES.find((x) => x.id === currentTheme()) ?? THEMES[0];
+    const theme = THEMES.find((x) => x.id === shown(currentTheme())) ?? THEMES[0];
     const button = el('button', { type: 'button', class: 'btn' }, t('changeTheme'));
     button.addEventListener('click', openThemeDialog);
     container.replaceChildren(

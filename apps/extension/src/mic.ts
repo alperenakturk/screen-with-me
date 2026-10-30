@@ -1,6 +1,6 @@
 // Mikrofon / kamera izni sayfası (bir kerelik): film sayfasındaki sesli sohbet eklentinin görünmeyen sayfasında (offscreen)
-// çalışır, o sayfa izin isteyemez. İlk "Sese katıl"da arka plan bu sekmeyi açar; kişi düğmeye basar, Chrome izni
-// "ScreenWithMe" adına sorar (film sitesinin adına değil) ve hatırlar. Sonuç arka plana gider, sekme kapanır.
+// çalışır, o sayfa izin isteyemez. İlk "Sese katıl"da arka plan bu sayfayı küçük bir pencerede açar (0.9.91.5; önce sekmeydi), Chrome izni hemen
+// "ScreenWithMe" adına sorar (film sitesinin adına değil) ve hatırlar. Sonuç arka plana gider, pencere kapanır.
 
 import { langReady } from './i18n.ts';
 import { MIC_RESULT } from './messages.ts';
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
   const button = document.getElementById('allow') as HTMLButtonElement;
   const status = document.getElementById('status')!;
   button.textContent = cam ? dict.camAllow : dict.allow;
-  button.addEventListener('click', async () => {
+  const ask = async () => {
     button.disabled = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia(cam ? { video: true } : { audio: true });
@@ -51,6 +51,9 @@ async function main(): Promise<void> {
       status.hidden = false;
       button.disabled = false;
     }
-  });
+  };
+  button.addEventListener('click', () => void ask());
+  // Chrome's question comes at once (0.9.91.5): one click less; the button stays for a second try.
+  void ask();
 }
 void main();

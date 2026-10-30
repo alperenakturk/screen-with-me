@@ -427,7 +427,7 @@ let voicePort: chrome.runtime.Port | null = null;
 const voiceQueue: OffscreenIn[] = [];
 let creatingOffscreen: Promise<void> | null = null;
 /** Açık izin sekmesi ve izni isteyen film sekmesi. */
-let micTab: { id: number; filmTab: number | null } | null = null;
+let micTab: { id: number; filmTab: number | null; windowId: number | null } | null = null;
 
 function toVoice(message: OffscreenIn): void {
   if (voicePort) {
@@ -479,15 +479,37 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 });
 
-/** İlk sefer: mikrofon (ya da kamera) izni için küçük bir eklenti sekmesi (offscreen izin isteyemez). */
+/**
+ * İlk sefer: mikrofon (ya da kamera) izni (offscreen izin isteyemez). The permission must belong to the extension:
+ * asked from the overlay on the film page, Chrome would ask on behalf of the film site (again on every site) and the
+ * offscreen page could not use it. Since 0.9.91.5 (owner: "don't send me to another page") it is a small window in
+ * the middle of the film's window instead of a new tab; it asks at once and closes itself when allowed. Only once
+ * per browser: Chrome remembers the extension's permission.
+ */
 async function openMicPage(cam: boolean): Promise<void> {
   const [active] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => [] as chrome.tabs.Tab[]);
   if (micTab) {
-    await chrome.tabs.update(micTab.id, { active: true }).catch(() => {});
+    if (micTab.windowId !== null) await chrome.windows.update(micTab.windowId, { focused: true }).catch(() => {});
+    else await chrome.tabs.update(micTab.id, { active: true }).catch(() => {});
     return;
   }
-  const tab = await chrome.tabs.create({ url: cam ? `${MIC_PAGE}?cam=1` : MIC_PAGE, ...(active?.id !== undefined ? { openerTabId: active.id } : {}) }).catch(() => null);
-  if (tab?.id !== undefined) micTab = { id: tab.id, filmTab: active?.id ?? null };
+  const url = cam ? `${MIC_PAGE}?cam=1` : MIC_PAGE;
+  const base = active?.windowId !== undefined ? await chrome.windows.get(active.windowId).catch(() => null) : null;
+  const width = 460;
+  const height = 420;
+  const place =
+    base?.left !== undefined && base.top !== undefined && base.width && base.height
+      ? { left: Math.round(base.left + (base.width - width) / 2), top: Math.round(base.top + (base.height - height) / 3) }
+      : {};
+  const win = await chrome.windows.create({ url, type: 'popup', width, height, focused: true, ...place }).catch(() => null);
+  const tabId = win?.tabs?.[0]?.id;
+  if (win?.id !== undefined && tabId !== undefined) {
+    micTab = { id: tabId, filmTab: active?.id ?? null, windowId: win.id };
+    return;
+  }
+  // No popup windows (rare): a tab next to the film, as before.
+  const tab = await chrome.tabs.create({ url, ...(active?.id !== undefined ? { openerTabId: active.id } : {}) }).catch(() => null);
+  if (tab?.id !== undefined) micTab = { id: tab.id, filmTab: active?.id ?? null, windowId: null };
 }
 
 function micDone(granted: boolean): void {
@@ -495,8 +517,14 @@ function micDone(granted: boolean): void {
   micTab = null;
   toVoice({ type: 'permission', granted });
   if (!done) return;
-  if (granted) void chrome.tabs.remove(done.id).catch(() => {});
-  if (done.filmTab !== null) void chrome.tabs.update(done.filmTab, { active: true }).catch(() => {});
+  if (granted) {
+    if (done.windowId !== null) void chrome.windows.remove(done.windowId).catch(() => {});
+    else void chrome.tabs.remove(done.id).catch(() => {});
+  }
+  if (done.filmTab !== null) {
+    void chrome.tabs.update(done.filmTab, { active: true }).catch(() => {});
+    void chrome.tabs.get(done.filmTab).then((tab) => chrome.windows.update(tab.windowId, { focused: true })).catch(() => {});
+  }
 }
 
 chrome.runtime.onMessage.addListener((message: unknown, sender) => {

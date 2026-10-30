@@ -3583,6 +3583,22 @@ html:not(.shell) .shell-only {
   overflow-y: auto;
 }
 
+/* The add-a-GIF / photo line icon (0.9.91.5, instead of 🖼️). */
+.sticker-open .ico {
+  width: 20px;
+  height: 20px;
+}
+
+.tray-add .ico {
+  width: 16px;
+  height: 16px;
+}
+
+.chat-attach .ico {
+  width: 19px;
+  height: 19px;
+}
+
 .sticker-open[aria-expanded='true'] {
   border-color: var(--accent);
 }
@@ -7563,6 +7579,9 @@ html.in-room .topbar-right > .lang {
 }
 
 .tray-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 4px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -7698,8 +7717,9 @@ html.in-room .topbar-right > .lang {
 
 .live-menu-item {
   display: grid;
-  grid-template-columns: 26px 1fr;
-  gap: 1px 8px;
+  grid-template-columns: 34px 1fr;
+  align-items: center;
+  gap: 1px 10px;
   padding: 8px 10px;
   border: 0;
   border-radius: 10px;
@@ -7720,9 +7740,32 @@ html.in-room .topbar-right > .lang {
   display: none;
 }
 
+/* A line icon on a soft accent tile (0.9.91.5). */
 .live-menu-icon {
   grid-row: span 2;
-  font-size: 18px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.live-menu-icon .ico {
+  width: 19px;
+  height: 19px;
+}
+
+.live-menu-check .live-menu-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.live-menu-check .live-menu-icon .ico {
+  width: 16px;
+  height: 16px;
 }
 
 .live-menu-note {
@@ -7890,22 +7933,6 @@ button.together-person:focus-visible .together-name {
 
 .cam-tile {
   cursor: pointer;
-}
-
-/* Mic / camera under the tiles: only in the floating window and in fullscreen (the card has its own buttons). */
-.cam-controls {
-  display: none;
-  justify-content: center;
-  gap: 8px;
-  padding-top: 6px;
-}
-
-.voice-cams.floating .cam-controls:not([hidden]) {
-  display: flex;
-}
-
-.voice-cams.floating.folded .cam-controls {
-  display: none;
 }
 
 .cam-ctl {
@@ -8239,6 +8266,7 @@ button.together-person:focus-visible .together-name {
   border: 0;
   border-radius: 9px;
   background: none;
+  color: var(--text);
   font-size: 16px;
   cursor: pointer;
   display: grid;
@@ -8497,22 +8525,6 @@ button.together-person:focus-visible .together-name {
   padding: 0;
 }
 
-.voice-cams.free .cam-pill .cam-controls:not([hidden]) {
-  display: flex;
-  padding-top: 0;
-  gap: 6px;
-}
-
-.voice-cams.free .cam-pill .cam-ctl {
-  width: 30px;
-  height: 30px;
-  font-size: 14px;
-}
-
-.voice-cams.free.folded .cam-pill .cam-controls {
-  display: none;
-}
-
 .voice-cams.free.in-fs .cam-dock-btn,
 .voice-cams:not(.free) :is(.cam-lineup, .cam-reset) {
   display: none;
@@ -8739,13 +8751,19 @@ button.together-person:focus-visible .together-name {
   display: none;
 }
 
-/* Stream menu: "show my camera in the corner too" under "Share your screen". */
+/* Stream menu: "show my camera in the corner too" under "Share your screen": icon, text, switch. */
 .live-menu-check {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: 10px;
+  padding: 6px 10px 6px 13px;
+  font-size: 13px;
   cursor: pointer;
+}
+
+.live-check-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .live-menu-check[hidden] {
@@ -8817,8 +8835,18 @@ html.shorts-view .voice-cams {
 }
 
 /* ==== 0.9.91: endless Shorts feed (ui/shorts-feed.ts) ==== */
-.shorts-feed-wrap {
+.shorts-feed-wrap,
+.shorts-add-wrap {
   position: relative;
+}
+
+/* 0.9.91.5: add to the queue from the Shorts bar (the same small window as the feed's). */
+.shorts-add[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.shorts-add-pop {
+  width: 300px;
 }
 
 .shorts-feed.on {
@@ -8960,6 +8988,7 @@ html.shorts-view .voice-cams {
 }
 
 .fs-dock {
+  display: flex;
   position: absolute;
   right: 14px;
   top: 50%;
@@ -8978,9 +9007,47 @@ html.shorts-view .voice-cams {
   transition: opacity 0.3s;
 }
 
-/* Calm when idle: faint, never gone (over a YouTube frame the page can't see the mouse move). */
-.theater.dock-mode.idle .fs-dock:not(:hover, :has(:focus-visible)) {
+/* It hides with the player's own bar (0.9.91.5, ui/fullscreen.ts `dock-idle`): gone while the video plays and the
+   mouse rests, back on a move; still there under the mouse. Touch screens keep it faint (a tap on a YouTube frame
+   never reaches the page). */
+.theater.dock-mode.dock-idle .fs-dock:not(:hover, :has(:focus-visible)) {
+  opacity: 0;
+}
+
+html.is-touch .theater.dock-mode.dock-idle .fs-dock:not(:has(:focus-visible)) {
   opacity: 0.3;
+}
+
+/* In the window (0.9.91.5): a little smaller, inside the video's right edge. */
+.theater.dock-window .fs-dock {
+  right: 10px;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 16px;
+}
+
+.theater.dock-window .dock-group {
+  gap: 2px;
+}
+
+.theater.dock-window .dock-group + .dock-group {
+  padding-top: 6px;
+}
+
+.theater.dock-window .dock-btn {
+  width: 36px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.theater.dock-window .dock-btn .ico {
+  width: 19px;
+  height: 19px;
+}
+
+/* A game in the video's place: the dock is the video's, not the game's. */
+.player-wrap:has(> #game-stage:not([hidden])) .fs-dock {
+  display: none !important;
 }
 
 .dock-group {
@@ -9104,12 +9171,6 @@ html.shorts-view .voice-cams {
 .dock-speed-opt.on {
   background: var(--accent);
   color: var(--on-accent);
-}
-
-/* The dock has my mic and camera: the camera pill keeps only its layout buttons there. */
-.theater.dock-mode .voice-cams .cam-controls:not([hidden]),
-.theater.dock-mode .voice-cams.free .cam-pill .cam-controls:not([hidden]) {
-  display: none;
 }
 
 @media (max-width: 600px) {

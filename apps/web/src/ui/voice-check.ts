@@ -54,9 +54,10 @@ export interface VoiceChoice {
  * `join`: before joining (skipped after "don't ask again"; resolves null on "Vazgeç"). `settings`: from my person menu,
  * only the devices and whether to ask before joining.
  */
-export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: boolean }): Promise<VoiceChoice | null> {
+/** `cam`: joining from a 📷 button (the dock, the Shorts bar) ticks "join with my camera on" for this time only. */
+export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: boolean; cam?: boolean }): Promise<VoiceChoice | null> {
   const join = opts.mode === 'join';
-  const remembered = { mic: load('opt:joinMuted') !== '1', cam: opts.canCam && load('opt:joinCam') === '1' };
+  const remembered = { mic: load('opt:joinMuted') !== '1', cam: opts.canCam && (opts.cam ?? load('opt:joinCam') === '1') };
   if (join && load('opt:voiceCheck') === 'skip') return { ...remembered, changed: false };
 
   const before = { mic: load(MIC_KEY) ?? '', cam: load(CAM_KEY) ?? '', speaker: load(SPEAKER_KEY) ?? '' };
@@ -203,7 +204,7 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
   save('opt:voiceCheck', ask.input.checked ? '' : 'skip');
   if (join) {
     save('opt:joinMuted', muted.input.checked ? '1' : '0');
-    if (opts.canCam) save('opt:joinCam', withCam.input.checked ? '1' : '0');
+    if (opts.canCam && opts.cam === undefined) save('opt:joinCam', withCam.input.checked ? '1' : '0');
   }
   const changed = micSel.s.value !== before.mic || camSel.s.value !== before.cam || speakerSel.s.value !== before.speaker;
   return { mic: join ? !muted.input.checked : remembered.mic, cam: join ? opts.canCam && withCam.input.checked : remembered.cam, changed };

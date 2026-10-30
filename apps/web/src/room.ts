@@ -335,7 +335,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="fs-exit" type="button" class="fs-btn">✕</button>
               </div>
             </div>
-            <div id="fs-dock" class="fs-only fs-dock" role="toolbar" aria-orientation="vertical">
+            <div id="fs-dock" class="fs-dock" role="toolbar" aria-orientation="vertical">
               <div class="dock-group">
                 <button id="dock-chat" type="button" class="dock-btn" aria-expanded="false"></button>
                 <button id="dock-react" type="button" class="dock-btn" aria-expanded="false"></button>
@@ -431,10 +431,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <input id="shorts-input" autocomplete="off" maxlength="300" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
             <button class="btn primary" data-i18n="send"></button>
           </form>
-          <div class="reaction-bar shorts-reactions" role="group"></div>
+          <div class="reaction-bar tray-bar shorts-reactions" role="group"></div>
           <div id="shorts-voice" class="shorts-voice" hidden>
             <button id="shorts-mic" type="button" class="cam-ctl"></button>
             <button id="shorts-cam" type="button" class="cam-ctl"></button>
+          </div>
+          <div class="shorts-add-wrap">
+            <button id="shorts-add" type="button" class="btn small-btn shorts-add" aria-expanded="false" data-i18n-title="shorts.addHint">＋ <span data-i18n="shorts.add"></span></button>
+            <form id="shorts-add-form" class="shorts-feed-pop shorts-add-pop card" hidden>
+              <label class="small" for="shorts-add-input" data-i18n="shorts.addLabel"></label>
+              <input id="shorts-add-input" autocomplete="off" data-i18n-placeholder="shorts.addPlaceholder" />
+              <button class="btn primary small-btn" data-i18n="shorts.addButton"></button>
+              <p class="muted small" data-i18n="shorts.addNote"></p>
+            </form>
           </div>
           <div class="shorts-feed-wrap">
             <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
@@ -472,8 +481,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="live-share-wrap" id="live-share-wrap">
                 <button id="live-share" type="button" class="btn live-share" aria-haspopup="true" aria-expanded="false"><span data-i18n="live.share"></span> <span class="live-caret" aria-hidden="true">▾</span></button>
                 <div id="live-menu" class="live-menu" role="menu" hidden>
-                  <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true">🖥️</span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
-                  <label class="live-menu-check small" id="live-with-cam-row"><input type="checkbox" id="live-with-cam" /> <span>📷 <span data-i18n="live.withCam"></span></span></label>
+                  <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true"></span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
+                  <label class="live-menu-check" id="live-with-cam-row"><span class="live-menu-icon" aria-hidden="true"></span><span class="live-check-text" data-i18n="live.withCam"></span><input type="checkbox" class="switch" id="live-with-cam" /></label>
                   <p id="live-menu-note" class="muted small live-menu-note"></p>
                 </div>
               </div>
@@ -516,7 +525,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="chat-form">
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
-              <button type="button" class="chat-attach" id="chat-attach" data-i18n-title="chatImage.add">🖼️</button>
+              <button type="button" class="chat-attach" id="chat-attach" data-i18n-title="chatImage.add"></button>
               <button class="chat-send" id="chat-send" data-i18n-title="send">➤</button>
             </form>
           </div>
@@ -1465,6 +1474,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (child.id === 'fs-catcher' || child.id === 'fs-controls') continue;
         // The dock and its open window (message box, emojis, speed) to its left.
         if (child.id === 'fs-dock') {
+          // Hidden with the film's own bar (0.9.91.5): then the film takes the clicks there, and a mouse move on the
+          // film brings the dock back (the film page reports it).
+          if ($('#theater').classList.contains('dock-idle')) continue;
           for (const node of [child, ...child.querySelectorAll<HTMLElement>('.dock-pop:not([hidden])')]) {
             const r = node.getBoundingClientRect();
             if (r.width > 0) add(islands, r.left, r.top, r.right, r.bottom);
@@ -1709,6 +1721,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (tabs.active === 'queue') tabs.show('chat');
     // Sitenin pencereleri (avatar, tema, özet, onay) açılınca da bildirilsin: videonun arkasında kalmasınlar.
     new MutationObserver(() => reportLayout()).observe(document.body, { childList: true });
+    // Windows that stay in the page and only lose `hidden` (⚙️ settings, the person menu…) too, at once: otherwise the
+    // once-a-second check found them and the film covered the window for up to a second (owner's report).
+    const MODAL = '.dialog-backdrop, .recap-backdrop, dialog, .profile-pop';
+    new MutationObserver((mutations) => {
+      if (mutations.some((m) => m.target instanceof Element && m.target.matches(MODAL))) reportLayout();
+    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden', 'open'] });
     /** Icon + label (the label hides on phones). */
     const toolLabel = (button: HTMLElement, icon: string, text: string) =>
       button.replaceChildren(el('span', { 'aria-hidden': 'true' }, icon), el('span', { class: 'shell-tool-text' }, text));
@@ -1842,6 +1860,35 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   document.addEventListener('pointerdown', (event) => {
     if (!feedForm.hidden && !(event.target as Element).closest?.('.shorts-feed-wrap')) feedForm.hidden = true;
+    if (!shortsAddForm.hidden && !(event.target as Element).closest?.('.shorts-add-wrap')) setShortsAdd(false);
+  });
+  // Add to the queue from the Shorts bar (0.9.91.5, owner: without going back to the room view). Links only, one or
+  // many (searching is the ♾ feed's job); the same paths as the link box.
+  const shortsAdd = $<HTMLButtonElement>('#shorts-add');
+  const shortsAddForm = $<HTMLFormElement>('#shorts-add-form');
+  const shortsAddInput = $<HTMLInputElement>('#shorts-add-input');
+  const setShortsAdd = (open: boolean) => {
+    shortsAddForm.hidden = !open;
+    shortsAdd.setAttribute('aria-expanded', String(open));
+    if (open) {
+      feedForm.hidden = true;
+      shortsAddInput.focus();
+    }
+  };
+  shortsAdd.addEventListener('click', () => setShortsAdd(shortsAdd.getAttribute('aria-expanded') !== 'true'));
+  shortsAddForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const list = parseMediaList(shortsAddInput.value);
+    const one = list.media.length === 1 ? list.media[0]! : parseMediaInput(shortsAddInput.value);
+    if (list.media.length < 2 && one === null) {
+      flashHint(shortsAddInput, t('shorts.addNeedLink'), 4000);
+      return;
+    }
+    shortsAddInput.value = '';
+    setShortsAdd(false);
+    if (list.media.length >= 2) addMany(list.media, list.skipped, 'enqueue');
+    else addMedia(one!, 'enqueue');
+    flashHint(shortsAdd, list.media.length >= 2 ? t('queuedMany', { n: list.media.length, skipped: list.skipped }) : t('queuedNote'), 2500);
   });
   addEventListener('langchange', renderFeed);
   renderFeed();
@@ -2185,7 +2232,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // (ör. sekme başka pencerede kaldıysa) üstte "kurduysan yenile" bandı çıkar. Yenileyince
   // isim sormadan odaya dönülür ve uyarı kalkar.
   let wentToInstall = false;
-  app.addEventListener('click', (event) => {
+  // Every extension link opens in a new tab (the top bar's too), so the room tab never leaves the room.
+  document.addEventListener('click', (event) => {
     if ((event.target as HTMLElement).closest('a[href="/eklenti.html"]')) wentToInstall = true;
   });
   const extReload = $('#ext-reload');

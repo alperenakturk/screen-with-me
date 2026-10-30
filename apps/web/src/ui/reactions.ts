@@ -6,6 +6,7 @@ import { load, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 import { confirmDialog } from './confirm.ts';
 import { flashHint } from './hint.ts';
+import { icon } from './icons.ts';
 
 /** Ekranda aynı anda en fazla bu kadar uçuşan tepki. */
 const MAX_FLOATS = 12;
@@ -163,7 +164,7 @@ export function createReactions(
       // Yerler sabit: sayfada 8'den az şey varsa kalan yuvalar boş durur (yanındaki düğmeler kaymasın).
       while (buttons.length < SLOTS) buttons.push(el('span', { class: 'reaction-slot' }));
       // 🖼️: GIF / fotoğraf ekle (özel emoji sayfalarına ▲▼ ile gidilir).
-      const add = el('button', { type: 'button', class: 'reaction-btn sticker-open', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, '🖼️');
+      const add = el('button', { type: 'button', class: 'reaction-btn sticker-open', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, icon('image-add'));
       add.addEventListener('click', () => fire({ add: true }));
       bar.replaceChildren(...buttons, el('span', { class: 'reaction-pager' }, up, down), add);
     }
@@ -202,7 +203,7 @@ export function createReactions(
     const next = el('button', { type: 'button', class: 'tray-page', title: t('moreReactions'), 'aria-label': t('moreReactions') }, '›');
     prev.addEventListener('click', () => turn(-1));
     next.addEventListener('click', () => turn(1));
-    const add = el('button', { type: 'button', class: 'tray-add', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, '🖼️ ', t('reactTray.add'));
+    const add = el('button', { type: 'button', class: 'tray-add', title: t('stickerAdd'), 'aria-label': t('stickerAdd') }, icon('image-add'), t('reactTray.add'));
     add.addEventListener('click', () => fire({ add: true }));
     const head = el(
       'div',
