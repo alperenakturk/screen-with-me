@@ -31,11 +31,22 @@ export function createTvRemote(deps: TvRemoteDeps) {
   const codeInput = el('input', { id: 'tv-code', class: 'tv-code-input', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '7', placeholder: '123 456' });
   const pairButton = el('button', { type: 'submit', class: 'btn primary' });
   const pairTitle = el('h2', {});
-  const pairHow = el('p', { class: 'muted' });
+  // Three steps, so the person knows what happens before typing anything (owner's feedback, 30 Oct 2026).
+  const step1 = el('span', {});
+  const step2 = el('span', {});
+  const step3 = el('span', {});
   const pairAddress = el('p', { class: 'tv-address' });
+  const browserNote = el('p', { class: 'muted small' });
   const close = el('button', { type: 'button', class: 'icon-btn dialog-close' }, '✕');
   const form = el('form', { class: 'tv-pair-form' }, codeInput, pairButton);
-  const dialog = el('div', { class: 'dialog tv-pair-dialog', role: 'dialog', 'aria-modal': 'true' }, close, pairTitle, pairHow, pairAddress, form);
+  const step = (n: string, text: HTMLElement, ...extra: HTMLElement[]) => el('li', { class: 'tv-step' }, el('b', { class: 'tv-step-n' }, n), el('div', {}, text, ...extra));
+  const dialog = el(
+    'div',
+    { class: 'dialog tv-pair-dialog', role: 'dialog', 'aria-modal': 'true' },
+    close,
+    pairTitle,
+    el('ol', { class: 'tv-steps' }, step('1', step1, pairAddress, browserNote), step('2', step2, form), step('3', step3)),
+  );
   const backdrop = el('div', { class: 'dialog-backdrop', hidden: '' }, dialog);
   document.body.append(backdrop);
   const hide = () => {
@@ -139,8 +150,11 @@ export function createTvRemote(deps: TvRemoteDeps) {
     listen.textContent = `🎧 ${tvListening ? t('tv.listenOn') : t('tv.listenOff')}`;
     (earLabel.lastElementChild as HTMLElement).textContent = t('tv.earphones');
     unlink.textContent = `🚪 ${t('tv.unlink')}`;
-    pairTitle.textContent = `📺 ${t('tv.pairPhoneTitle')}`;
-    pairHow.textContent = t('tv.pairPhoneHow');
+    pairTitle.textContent = `📺 ${t('tv.explainTitle')}`;
+    step1.textContent = t('tv.explain1');
+    step2.textContent = t('tv.explain2');
+    step3.textContent = t('tv.explain3');
+    browserNote.textContent = t('tv.explainBrowser');
     pairAddress.textContent = `${location.host}/tv`;
     pairButton.textContent = t('tv.connect');
     close.title = t('close');

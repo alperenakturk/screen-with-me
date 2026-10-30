@@ -28,7 +28,7 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
-import { canShareSheet } from './device.ts';
+import { canShareSheet, isTouch } from './device.ts';
 import { el } from './dom.ts';
 import { lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -77,7 +77,7 @@ import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
-import { clearTvLink, tvLink } from './tv.ts';
+import { clearTvLink, tvLab, tvLink } from './tv.ts';
 import { createTvRemote } from './ui/tv-remote.ts';
 import { createTvRoom } from './ui/tv-room.ts';
 
@@ -90,7 +90,7 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
  */
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
   // TV version: this browser is a TV paired by a phone (`/tv`): it joins as that person, no name step.
-  if (new URLSearchParams(location.search).get('tv') === '1') {
+  if (new URLSearchParams(location.search).get('tv') === '1' && tvLab()) {
     const link = tvLink();
     if (!link || link.room !== roomId) {
       location.replace('/tv');
@@ -906,6 +906,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const engine = new SyncEngine({
     clock,
     send,
+    // A TV is a weak device: calmer drift correction, and it never makes the room wait (ui/tv-room.ts).
+    relaxed: tv !== undefined,
     onAutoplayBlocked: () => (autoplayEl.hidden = false),
     onEnded: (itemId) => {
       // Otomatik devam kapalıysa sıradaki kendiliğinden başlamaz: küçük "Sıradakini başlat" kartı.
@@ -2149,6 +2151,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       tell: (op, value) => send(value === undefined ? { t: 'tv', op } : { t: 'tv', op, value }),
       voice,
       myId: () => myId,
+      syncStats: () => engine.syncStats(),
       leave: () => {
         connection.close();
         voice.leave();
@@ -2156,7 +2159,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         location.replace('/tv');
       },
     });
-  } else if (!isShell) {
+  } else if (!isShell && tvLab()) {
     // This device as my TV's remote: "📺" pairs a TV, the card appears while my TV is in the room.
     tvRemote = createTvRemote({
       send,
@@ -2175,7 +2178,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     labelTv();
     addEventListener('langchange', labelTv);
     tvButton.addEventListener('click', () => tvRemote?.open());
-    document.querySelector('.topbar-right')?.prepend(tvButton);
+    // Pairing a TV is a phone's job (it becomes the remote, owner's feedback): no TV button on a computer.
+    if (isTouch()) document.querySelector('.topbar-right')?.prepend(tvButton);
   }
   let sideHidden = !isShell && load('opt:sideHidden') === '1';
   // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu

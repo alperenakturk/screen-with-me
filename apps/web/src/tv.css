@@ -535,3 +535,59 @@ html.tv-pair-page .footer {
     background: var(--surface);
   }
 }
+
+/* Sync status in the bottom-right corner (dim; red when the TV is far from the room). */
+.tv-status {
+  position: absolute;
+  right: 5vw;
+  bottom: 4vh;
+  z-index: 30;
+  padding: 0.5vh 1.4vh;
+  border-radius: 999px;
+  background: rgb(10 12 30 / 0.6);
+  color: rgb(255 255 255 / 0.75);
+  font-size: 1.8vh;
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-status.bad {
+  color: #ff8a80;
+}
+
+html.tv-panel .tv-status {
+  display: none;
+}
+
+/* The phone's "Watch on the TV" window: three numbered steps. */
+.tv-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tv-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.tv-step > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tv-step-n {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+}
