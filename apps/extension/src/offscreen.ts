@@ -13,10 +13,10 @@
 // bu yolla geçer (MediaStream sayfalar arasında başka türlü taşınamaz). Kamera her açılıp kapanınca köprü baştan.
 
 import type { Member, RtcRequest, RtcResult, Signal, VoiceMode } from '@swm/shared/protocol';
-import type { VoiceDown, VoiceUp } from '@swm/shared/shell';
+import type { DeviceInfo, DevicePicks, VoiceDown, VoiceUp } from '@swm/shared/shell';
 import { LevelMeter } from '@swm/shared/level-meter';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
-import { P2pVoice } from '@swm/shared/voice-p2p';
+import { CAM_CONSTRAINTS, P2pVoice } from '@swm/shared/voice-p2p';
 import { VOICE_PORT_NAME, type OffscreenIn, type OffscreenOut } from './messages.ts';
 
 const RPC_TIMEOUT_MS = 12_000;
@@ -131,11 +131,77 @@ async function setCam(on: boolean): Promise<void> {
   refreshLoop();
 }
 
+/**
+ * The devices chosen on the site (0.9.91.14), by name: this page used the default microphone, so a headset chosen on
+ * the site was not used on the film page ("my mic is quiet there"). Device ids differ per site; names don't.
+ */
+let picks: DevicePicks = { mic: '', cam: '', speaker: '' };
+const AUDIO: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+
+async function deviceByName(kind: MediaDeviceKind, label: string): Promise<string | null> {
+  if (!label) return null;
+  const list = await navigator.mediaDevices.enumerateDevices().catch(() => [] as MediaDeviceInfo[]);
+  return list.find((d) => d.kind === kind && d.label === label && d.deviceId !== 'default' && d.deviceId !== 'communications')?.deviceId ?? null;
+}
+
+/** getUserMedia with the chosen device; the default one if it is gone (an unplugged headset). */
+async function open(kind: 'audio' | 'video', base: MediaTrackConstraints, label: string): Promise<MediaStream> {
+  const other = kind === 'audio' ? 'video' : 'audio';
+  const id = await deviceByName(kind === 'audio' ? 'audioinput' : 'videoinput', label);
+  if (id) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ [kind]: { ...base, deviceId: { exact: id } }, [other]: false });
+    } catch {
+      // Fall back to the default one below.
+    }
+  }
+  return navigator.mediaDevices.getUserMedia({ [kind]: base, [other]: false });
+}
+
 const getMic = async (): Promise<MediaStream> => {
-  mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+  mic = await open('audio', AUDIO, picks.mic);
   meter.watch('me', mic);
   return mic;
 };
+const getCam = (): Promise<MediaStream> => open('video', CAM_CONSTRAINTS, picks.cam);
+
+type SinkAudio = HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
+/** Voices play through the chosen speaker. */
+async function applySpeaker(audio: HTMLAudioElement): Promise<void> {
+  const sink = audio as SinkAudio;
+  if (!sink.setSinkId) return;
+  const id = (await deviceByName('audiooutput', picks.speaker)) ?? '';
+  await sink.setSinkId(id).catch(() => {});
+}
+
+/** New choices: a new microphone switches in place, a new camera re-opens, voices move to the new speaker. */
+async function pick(next: DevicePicks): Promise<void> {
+  const before = picks;
+  picks = next;
+  if (next.speaker !== before.speaker) for (const audio of audios.values()) void applySpeaker(audio);
+  if (!client?.active) return;
+  if (next.mic !== before.mic && p2p) await p2p.switchMic(await getMic()).catch(() => {});
+  if (next.cam !== before.cam && client.camEnabled && client.setCam) {
+    await client.setCam(false).catch(() => {});
+    await client.setCam(true).catch(() => {});
+    sendState();
+    refreshLoop();
+  }
+}
+
+/** The devices there are, by name (this page has the permission, so the names are known). */
+async function listDevices(): Promise<DeviceInfo[]> {
+  const list = await navigator.mediaDevices.enumerateDevices().catch(() => [] as MediaDeviceInfo[]);
+  const out: DeviceInfo[] = [];
+  for (const d of list) {
+    if ((d.kind === 'audioinput' || d.kind === 'videoinput' || d.kind === 'audiooutput') && d.label && d.deviceId !== 'default' && d.deviceId !== 'communications') {
+      if (!out.some((x) => x.kind === d.kind && x.label === d.label)) out.push({ kind: d.kind, label: d.label.slice(0, 120) });
+    }
+  }
+  return out.slice(0, 40);
+}
+
+const clean = (value: unknown) => (typeof value === 'string' ? value.slice(0, 120) : '');
 
 function makeClient(mode: VoiceMode): Voice {
   const announce = (on: boolean, micOn?: boolean, cam?: boolean) =>
@@ -158,6 +224,7 @@ function makeClient(mode: VoiceMode): Voice {
     audio.volume = volumes[memberId] ?? 1;
     audio.muted = audio.volume === 0;
     document.body.append(audio);
+    if (picks.speaker) void applySpeaker(audio);
     void audio.play().catch(() => {});
     audios.set(memberId, audio);
     // Chrome uzaktan gelen sesi Web Audio'ya ancak bir <audio>'da çalarken verir: ölçüm çalmaya başladıktan sonra.
@@ -184,6 +251,7 @@ function makeClient(mode: VoiceMode): Voice {
     onRemoteVideo,
     onFailed: (memberId) => toSite({ op: 'failed', memberId }),
     getMic,
+    getCam,
   });
   return p2p;
 }
@@ -230,6 +298,16 @@ function leave(): void {
 }
 
 function handle(tabId: number, roomId: string, msg: VoiceUp): void {
+  // Device choices and the device list are for anyone asking (not tied to the tab that holds the voice).
+  if (msg.op === 'devices') {
+    void listDevices().then((list) => port?.postMessage({ tabId, msg: { op: 'devices', list } } satisfies OffscreenOut));
+    return;
+  }
+  if (msg.op === 'pick') {
+    const d = msg.devices as Partial<DevicePicks> | undefined;
+    void pick({ mic: clean(d?.mic), cam: clean(d?.cam), speaker: clean(d?.speaker) });
+    return;
+  }
   // Başka bir sekme/oda sesi istiyor: eskisi bırakılır (aynı anda tek oda).
   if (owner && (owner.tabId !== tabId || owner.roomId !== roomId)) {
     if (msg.op === 'hello') {

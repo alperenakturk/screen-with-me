@@ -190,6 +190,36 @@ const pttBack = await until(() => ali.evaluate(`!!document.querySelector('#voice
 check(!!pttMuted && !!pttTalk && !!pttBack, 'bas-konuş film sayfasında: V basılıyken mikrofon açık, bırakınca kapalı', JSON.stringify({ pttMuted, pttTalk, pttBack }));
 await ayse.evalFrame('shell=1', `(() => { const c = document.getElementById('voice-ptt'); c.checked = false; c.dispatchEvent(new Event('change')); return 1; })()`);
 
+// 0.9.91.14 (owner): on the film page I choose the microphone / camera / speaker myself: "🎛" on myself lists the
+// devices the extension knows (by name) and the choice goes to the extension.
+{
+  const listed = await ayse.evalFrame(
+    'shell=1',
+    `(async () => {
+      const me = [...document.querySelectorAll('#voice-people .together-person')].find((b) => b.querySelector('.voice-face.in-voice') && b.textContent.includes('${'Sen'}'))
+        ?? document.querySelector('#voice-people .together-person');
+      me.click();
+      await new Promise((r) => setTimeout(r, 300));
+      const item = [...document.querySelectorAll('.person-pop .person-pop-item')].find((b) => b.textContent.includes('🎛'));
+      if (!item) return { item: false };
+      item.click();
+      for (let i = 0; i < 30 && !document.querySelector('.confirm-dialog .voice-check-select'); i++) await new Promise((r) => setTimeout(r, 100));
+      const selects = [...document.querySelectorAll('.confirm-dialog .voice-check-select')];
+      const mics = selects[0] ? [...selects[0].options].map((o) => o.textContent) : [];
+      if (selects[0] && selects[0].options.length > 1) selects[0].value = selects[0].options[1].value;
+      document.querySelector('.confirm-dialog .btn.primary')?.click();
+      await new Promise((r) => setTimeout(r, 300));
+      return { item: true, mics, saved: localStorage.getItem('opt:micName') ?? null };
+    })()`,
+  );
+  check(!!listed?.item && listed.mics.length > 1, 'film sayfasında 🎛: mikrofonlar eklentiden geliyor (adlarıyla)', JSON.stringify(listed));
+  const stillHears = await until(async () => {
+    const l = await ali.evaluate(LEVEL);
+    return l && l.rms > 0.01 ? l : null;
+  }, 10000);
+  check(!!stillHears, 'film sayfasında mikrofon değişince ses kopmadı (Ali yine duyuyor)', JSON.stringify(stillHears));
+}
+
 // Film sayfası yenilenir: ses eklentide sürer, yeni bağlantıyla yeniden kurulur (Ali yine duyar).
 await ayse.evaluate('location.reload(); 1');
 await ayse.sleep(3000);

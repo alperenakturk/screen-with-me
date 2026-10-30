@@ -69,6 +69,68 @@ const viewers = await until(async () => {
 }, 8000);
 check(!!viewers, 'Ali’de "İzleyen 1/4"', String(viewers));
 await ayse.shot('izliyor');
+
+// 0.9.91.14 (owner): the stream window is free like the cameras. Drag it inside the video, pop it out onto the page,
+// resize it from its corner; places are remembered; in fullscreen it lives inside the video.
+const rect = (b) => b.evaluate(`(() => { const w = document.getElementById('live-window'); const r = w.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, inWrap: !!w.closest('.player-wrap'), free: w.classList.contains('free') }; })()`);
+const dragBy = async (b, x, y, dx, dy) => {
+  await b.mouse('mouseMoved', x, y, { button: 'none' });
+  await b.mouse('mousePressed', x, y);
+  for (let i = 1; i <= 6; i++) await b.mouse('mouseMoved', x + (dx * i) / 6, y + (dy * i) / 6);
+  await b.mouse('mouseReleased', x + dx, y + dy);
+  await b.sleep(200);
+};
+const before = await rect(ayse);
+await dragBy(ayse, before.x + before.w / 2, before.y + before.h / 2, -160, -60);
+const moved = await rect(ayse);
+check(moved.inWrap && moved.x < before.x - 100 && moved.y < before.y - 30, 'yayın penceresi videonun içinde sürüklenip taşındı', JSON.stringify({ before, moved }));
+await ayse.evaluate(`document.querySelector('#live-window .live-pop').click(); 1`);
+await ayse.sleep(200);
+const popped = await rect(ayse);
+check(!popped.inWrap && popped.free, '⧉ ile pencere sayfaya çıktı (serbest)', JSON.stringify(popped));
+await dragBy(ayse, popped.x + popped.w / 2, popped.y + popped.h / 2, -300, 120);
+const freeMoved = await rect(ayse);
+check(freeMoved.x < popped.x - 200 && freeMoved.y > popped.y + 80, 'serbest pencere sayfada istenen yere sürüklendi', JSON.stringify({ popped, freeMoved }));
+await dragBy(ayse, freeMoved.x + freeMoved.w - 6, freeMoved.y + freeMoved.h - 6, 120, 0);
+const grown = await rect(ayse);
+await ayse.mouse('mouseMoved', grown.x + 40, grown.y + 40, { button: 'none' });
+await ayse.sleep(300);
+await ayse.shot('serbest');
+check(grown.w > freeMoved.w + 80 && Math.abs(grown.w / grown.h - 16 / 9) < 0.05, 'köşeden büyütüldü (16:9 kaldı)', JSON.stringify({ freeMoved, grown }));
+// A real reload (navigating to the same address with a hash would not reload the page).
+await ayse.evaluate(`location.reload(); 1`);
+await ayse.sleep(1500);
+await until(() => ayse.evaluate(`!document.getElementById('live-watch').hidden && document.getElementById('live-watch').textContent.includes('izle')`), 15000);
+await ayse.sleep(1000);
+await ayse.evaluate(`document.getElementById('live-watch').click(); 1`);
+// The IP notice asks again after a reload (unless "don't show again" was ticked).
+await until(() => ayse.evaluate(`(() => { const b = document.querySelector('.ip-notice')?.closest('.confirm-dialog')?.querySelector('.btn.primary'); if (b) b.click(); return !!b; })()`), 5000);
+await until(() => ayse.evaluate(`!document.getElementById('live-window').hidden`), 15000);
+await ayse.sleep(300);
+const again = await rect(ayse);
+check(again.free && Math.abs(again.x - grown.x) < 4 && Math.abs(again.w - grown.w) < 4, 'yenileyince serbest yeri ve boyutu hatırlandı', JSON.stringify({ grown, again }));
+await ayse.evaluate(`document.querySelector('.theater').classList.add('fake-fs'); 1`);
+await ayse.sleep(300);
+const fs = await rect(ayse);
+check(fs.inWrap && !fs.free, 'tam ekranda pencere videonun (tam ekranın) içinde', JSON.stringify(fs));
+await ayse.evaluate(`document.querySelector('.theater').classList.remove('fake-fs'); 1`);
+await ayse.sleep(300);
+check((await rect(ayse)).free, 'tam ekrandan çıkınca yine serbest');
+await ayse.evaluate(`document.querySelector('#live-window .live-pop').click(); 1`);
+await ayse.sleep(200);
+check((await rect(ayse)).inWrap, '⤓ ile videonun içine geri döndü');
+
+// The streamer can hide their own preview (viewers still get the stream) and show it again.
+await ali.evaluate(`document.getElementById('live-hide-self').click(); 1`);
+await ali.sleep(300);
+const selfHidden = await ali.evaluate(`document.getElementById('live-window').hidden && !document.getElementById('live-preview').hidden`);
+check(!!selfHidden, 'Ali kendi yayınını gizledi, "👁 Yayınımı göster" çıktı');
+const stillFlowing = await frames(ayse);
+check(stillFlowing.n > 8, `Ali gizlese de Ayşe yayını görmeye devam ediyor (${stillFlowing.n} kare)`);
+await ali.evaluate(`document.getElementById('live-preview').click(); 1`);
+await ali.sleep(300);
+check(!!(await ali.evaluate(`!document.getElementById('live-window').hidden && document.getElementById('live-preview').hidden`)), 'Ali önizlemesini geri açtı');
+
 await ayse.evaluate(`document.getElementById('live-big').click(); 1`);
 await ayse.sleep(400);
 await ayse.shot('buyuk');
