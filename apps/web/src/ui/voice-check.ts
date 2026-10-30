@@ -2,6 +2,7 @@ import { CAM_CONSTRAINTS } from '@swm/shared/voice-p2p';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
+import type { DeviceInfo, DevicePicks } from '@swm/shared/shell';
 import { confirmDialog } from './confirm.ts';
 
 /**
@@ -14,6 +15,46 @@ import { confirmDialog } from './confirm.ts';
 const MIC_KEY = 'opt:micDevice';
 const CAM_KEY = 'opt:camDevice';
 const SPEAKER_KEY = 'opt:speakerDevice';
+/**
+ * The same choices by name (0.9.91.14): device ids differ per site, so the film page's voice (in the extension) finds
+ * the device with that name. Shared with the extension like every setting.
+ */
+const MIC_NAME = 'opt:micName';
+const CAM_NAME = 'opt:camName';
+const SPEAKER_NAME = 'opt:speakerName';
+
+const permission = (name: 'microphone' | 'camera'): Promise<PermissionState | 'unknown'> =>
+  navigator.permissions?.query({ name: name as PermissionName }).then((s) => s.state, () => 'unknown' as const) ?? Promise.resolve('unknown' as const);
+
+/**
+ * Choices made before names were kept (before 0.9.91.14): look the names up once (only possible with the permission,
+ * which a chosen device implies), so the film page uses the same devices.
+ */
+export function rememberDeviceNames(): void {
+  const pairs: [string, string, MediaDeviceKind][] = [
+    [MIC_KEY, MIC_NAME, 'audioinput'],
+    [CAM_KEY, CAM_NAME, 'videoinput'],
+    [SPEAKER_KEY, SPEAKER_NAME, 'audiooutput'],
+  ];
+  if (!pairs.some(([id, name]) => load(id) && load(name) === null)) return;
+  void navigator.mediaDevices
+    ?.enumerateDevices()
+    .then((list) => {
+      for (const [idKey, nameKey, kind] of pairs) {
+        const id = load(idKey);
+        if (!id || load(nameKey) !== null) continue;
+        const label = list.find((d) => d.kind === kind && d.deviceId === id)?.label;
+        if (label) save(nameKey, label);
+      }
+    })
+    .catch(() => {});
+}
+
+/** My chosen devices by name ('' = the default one). */
+export function devicePicks(): DevicePicks {
+  return { mic: load(MIC_NAME) ?? '', cam: load(CAM_NAME) ?? '', speaker: load(SPEAKER_NAME) ?? '' };
+}
+const chosenName = (s: HTMLSelectElement) => (s.value ? (s.selectedOptions[0]?.textContent ?? '') : '');
 const AUDIO: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 
 type SinkElement = HTMLMediaElement & { setSinkId?: (id: string) => Promise<void> };
@@ -178,6 +219,13 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
   camSel.s.addEventListener('change', () => void startCam());
   withCam.input.addEventListener('change', () => void startCam().then(fillDevices));
   void (async () => {
+    // Microphone and camera both still to be allowed: one question for both (Chrome asks once instead of twice).
+    if (opts.canCam && (join ? withCam.input.checked : true) && (await permission('microphone')) === 'prompt' && (await permission('camera')) === 'prompt') {
+      await navigator.mediaDevices
+        .getUserMedia({ audio: true, video: true })
+        .then((s) => s.getTracks().forEach((track) => track.stop()))
+        .catch(() => {});
+    }
     // Saved choices first, so the right device opens straight away.
     await fillDevices();
     await startMic();
@@ -201,6 +249,9 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
   save(MIC_KEY, micSel.s.value);
   save(CAM_KEY, camSel.s.value);
   save(SPEAKER_KEY, speakerSel.s.value);
+  save(MIC_NAME, chosenName(micSel.s));
+  save(CAM_NAME, chosenName(camSel.s));
+  save(SPEAKER_NAME, chosenName(speakerSel.s));
   save('opt:voiceCheck', ask.input.checked ? '' : 'skip');
   if (join) {
     save('opt:joinMuted', muted.input.checked ? '1' : '0');
@@ -208,4 +259,34 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
   }
   const changed = micSel.s.value !== before.mic || camSel.s.value !== before.cam || speakerSel.s.value !== before.speaker;
   return { mic: join ? !muted.input.checked : remembered.mic, cam: join ? opts.canCam && withCam.input.checked : remembered.cam, changed };
+}
+
+/**
+ * On the film page (0.9.91.14, owner: "I want to choose my mic, camera and headphones myself, not in Chrome's menu"):
+ * the voice runs in the extension, which has the permission and so knows the devices' names (`list`). The same three
+ * choices by name, without a preview (asking for the microphone from the film page would ask on the film site's
+ * behalf). Returns the new choices, or null on "Vazgeç".
+ */
+export async function shellDeviceCheck(list: DeviceInfo[]): Promise<DevicePicks | null> {
+  const now = devicePicks();
+  const select = (label: string, kind: DeviceInfo['kind'], saved: string) => {
+    const names = list.filter((d) => d.kind === kind).map((d) => d.label);
+    const s = el('select', { class: 'voice-check-select', 'aria-label': label }) as HTMLSelectElement;
+    s.replaceChildren(el('option', { value: '' }, t('voiceCheck.default')), ...names.map((name) => el('option', { value: name }, name)));
+    s.value = names.includes(saved) ? saved : '';
+    return { s, row: el('label', { class: 'voice-check-row' }, el('span', {}, label), s), empty: names.length === 0 };
+  };
+  const mic = select(`🎙 ${t('voiceCheck.mic')}`, 'audioinput', now.mic);
+  const cam = select(`📷 ${t('voiceCheck.cam')}`, 'videoinput', now.cam);
+  const speaker = select(`🔈 ${t('voiceCheck.speaker')}`, 'audiooutput', now.speaker);
+  cam.row.hidden = cam.empty;
+  speaker.row.hidden = speaker.empty;
+  const extra = el('div', { class: 'voice-check' }, mic.row, cam.row, speaker.row);
+  const ok = await confirmDialog({ icon: '🎛', title: t('voiceCheck.settingsTitle'), text: t('voiceCheck.shellText'), yes: t('voiceCheck.save'), extra });
+  if (!ok) return null;
+  const picks = { mic: mic.s.value, cam: cam.s.value, speaker: speaker.s.value };
+  save(MIC_NAME, picks.mic);
+  save(CAM_NAME, picks.cam);
+  save(SPEAKER_NAME, picks.speaker);
+  return picks;
 }

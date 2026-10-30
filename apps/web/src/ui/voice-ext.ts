@@ -1,5 +1,5 @@
 import type { Member, RtcRequest, Signal, VoiceMode } from '@swm/shared/protocol';
-import type { VoiceDown, VoiceUp } from '@swm/shared/shell';
+import type { DeviceInfo, DevicePicks, VoiceDown, VoiceUp } from '@swm/shared/shell';
 import type { Voice } from '@swm/shared/voice';
 
 /** İzin sekmesi açılırsa kişinin izin vermesi biraz sürebilir. */
@@ -14,6 +14,8 @@ export interface ExtVoiceHooks {
   changed: () => void;
   /** Birinin kamera görüntüsü geldi/gitti (köprüden). */
   onRemoteVideo: (memberId: string, stream: MediaStream | null) => void;
+  /** The devices I chose (by name), sent before every join. */
+  picks?: () => DevicePicks;
 }
 
 /**
@@ -41,6 +43,8 @@ export class ExtVoice implements Voice {
   private camming: { on: boolean; resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> } | null = null;
   /** Eklenti kamerayı destekliyorsa var (yoksa kamera düğmesi gizli). */
   setCam?: (on: boolean) => Promise<void>;
+  /** Waiting for the extension's device list. */
+  private listing: { resolve: (list: DeviceInfo[] | null) => void; timer: ReturnType<typeof setTimeout> } | null = null;
 
   constructor(
     private readonly post: (msg: VoiceUp) => void,
@@ -83,6 +87,27 @@ export class ExtVoice implements Voice {
     });
   }
 
+  /**
+   * The microphone / camera / speaker I chose (by name), for the extension's voice page (0.9.91.14, owner: "my mic is
+   * quiet on the film page": it used the default device). Sent before every join and whenever I change them.
+   */
+  pick(devices: DevicePicks): void {
+    this.post({ op: 'pick', devices });
+  }
+
+  /** The extension's list of devices (names known there); null when it doesn't answer (an old extension). */
+  devices(): Promise<DeviceInfo[] | null> {
+    this.listing?.resolve(null);
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        this.listing = null;
+        resolve(null);
+      }, 3000);
+      this.listing = { resolve, timer };
+      this.post({ op: 'devices' });
+    });
+  }
+
   join(quiet = false, mic = true): Promise<void> {
     if (this.state.active) return Promise.resolve();
     if (!this.myId) return Promise.reject(new Error('voice: bağlı değil'));
@@ -93,6 +118,8 @@ export class ExtVoice implements Voice {
         reject(new Error('voice: süre doldu'));
       }, JOIN_TIMEOUT_MS);
       this.joining = { resolve, reject, timer };
+      const picks = this.hooks.picks?.();
+      if (picks) this.pick(picks);
       this.post({ op: 'join', mode: this.mode, myId: this.myId!, members: this.members, ...(quiet ? { quiet } : {}), ...(mic ? {} : { mic: false }) });
     });
   }
@@ -191,6 +218,15 @@ export class ExtVoice implements Voice {
       case 'loop':
         void this.loopSignal(msg).catch(() => {});
         break;
+      case 'devices': {
+        const listing = this.listing;
+        this.listing = null;
+        if (listing) {
+          clearTimeout(listing.timer);
+          listing.resolve(msg.list);
+        }
+        break;
+      }
       case 'signal':
         this.hooks.signal(msg.to, msg.data);
         break;

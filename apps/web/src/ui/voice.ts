@@ -13,7 +13,7 @@ import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
 import { confirmIpNotice } from './ip-notice.ts';
-import { applySpeaker, openCam, openMic, voiceCheck } from './voice-check.ts';
+import { applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames, shellDeviceCheck, voiceCheck } from './voice-check.ts';
 import { setIcon } from './icons.ts';
 import { ExtVoice } from './voice-ext.ts';
 
@@ -213,6 +213,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const who = members.find((m) => m.id === memberId)?.name ?? '';
     flashHint(peopleBox, t('voice.p2pFailed', { name: who }), 7000);
   };
+  if (!isShell) rememberDeviceNames();
   const makeClient = (): Voice => {
     if (isShell) {
       ext ??= new ExtVoice((msg) => postToExtension({ type: 'voice', msg }), {
@@ -222,6 +223,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         failed,
         changed: () => render(),
         onRemoteVideo,
+        picks: devicePicks,
       });
       ext.mode = mode;
       return ext;
@@ -588,7 +590,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (isMe) {
       if (client.active) items.push(button(`🚪 ${t('voice.leaveVoice')}`, () => leaveButton.click()));
       else if (!joinButton.hidden) items.push(button(`🎙 ${t('voice.join')}`, () => joinButton.click()));
-      if (!isShell) items.push(button(`🎛 ${t('voice.devices')}`, () => void changeDevices()));
+      // On the film page too since 0.9.91.14: the extension lists the devices (it has the permission).
+      items.push(button(`🎛 ${t('voice.devices')}`, () => void (isShell ? changeShellDevices() : changeDevices())));
       items.push(button(`👤 ${t('voice.editMe')}`, () => document.querySelector<HTMLElement>('.topbar-right .profile-btn')?.click()));
     }
     if (!isMe && room.isHost()) items.push(button(`🚪 ${t('voice.kick')}`, () => room.kick(member), 'danger'));
@@ -603,6 +606,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     menu.style.left = `${Math.round(left)}px`;
     menu.style.top = `${Math.round(top)}px`;
     dispatchEvent(new Event('swm-layout'));
+  }
+
+  /** "🎛" on the film page: the extension's device list, choices by name; the extension switches them at once. */
+  async function changeShellDevices(): Promise<void> {
+    if (!(client instanceof ExtVoice)) return;
+    const list = await client.devices();
+    if (!list) return flashHint(peopleBox, t('voiceCheck.shellOld'), 6000);
+    const picks = await shellDeviceCheck(list);
+    if (picks) client.pick(picks);
   }
 
   /** "🎛 Microphone and camera" on myself: the same check window; while in voice the new devices apply at once. */

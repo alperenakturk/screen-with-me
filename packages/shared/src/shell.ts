@@ -105,7 +105,26 @@ export type VoiceUp =
   /** Kameramı aç/kapa (izin yoksa izin sekmesi kamerayı da sorar). */
   | { op: 'cam'; on: boolean }
   /** Görüntü köprüsünün cevabı / ağ adayı (ses sayfası ⇄ katmandaki site, aynı bilgisayarda). */
-  | { op: 'loop'; data: Signal };
+  | { op: 'loop'; data: Signal }
+  /**
+   * The devices I chose (0.9.91.14), by their names: device ids differ per site, so the extension finds the one with
+   * that name; '' = the default one. Sent with every join and when I change them. Old extensions ignore it.
+   */
+  | { op: 'pick'; devices: DevicePicks }
+  /** Which microphones / cameras / speakers there are (the extension has the permission that shows their names). */
+  | { op: 'devices' };
+
+/** Chosen devices by name ('' = the default one). */
+export interface DevicePicks {
+  mic: string;
+  cam: string;
+  speaker: string;
+}
+
+export interface DeviceInfo {
+  kind: 'audioinput' | 'videoinput' | 'audiooutput';
+  label: string;
+}
 
 /** Eklentinin ses sayfası → site. */
 export type VoiceDown =
@@ -126,7 +145,9 @@ export type VoiceDown =
    * Teklifle birlikte hangi kanalın (mid) kimin kamerası olduğu (`me`: kendi önizlemem). `data` yoksa: hiç kamera yok,
    * köprü kapandı.
    */
-  | { op: 'loop'; data?: Signal; cams?: [string, string][] };
+  | { op: 'loop'; data?: Signal; cams?: [string, string][] }
+  /** Answer to `devices`. */
+  | { op: 'devices'; list: DeviceInfo[] };
 
 /** Site ⇄ site-bridge / shell.html mesajlarındaki kaynak etiketleri. */
 export const SITE_SOURCE = 'screenwithme-site';

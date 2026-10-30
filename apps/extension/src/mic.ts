@@ -9,8 +9,8 @@ import { readValue } from './store.ts';
 const text = {
   tr: {
     ask: 'Chrome\'un sorusu burada açılır: "İzin ver"e bas. Kapandıysa adres çubuğundaki simgeye bas.',
-    title: 'Sesli sohbet için mikrofon izni',
-    text: 'Film sayfasında arkadaşlarınla konuşabilmen için ScreenWithMe mikrofonunu kullanmak istiyor. İzni bir kez verirsin; mikrofon sadece "Sese katıl"a bastığında açılır.',
+    title: 'Sesli ve görüntülü sohbet izni',
+    text: 'Film sayfasında arkadaşlarınla konuşabilmen için ScreenWithMe mikrofonunu (ve kameranı) kullanmak istiyor. İzni bir kez verirsin, bir daha sorulmaz; mikrofon sadece "Sese katıl"a, kamera sadece 📷 düğmesine bastığında açılır.',
     allow: '🎙 Mikrofon iznini ver',
     denied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden mikrofona izin verip tekrar dene.',
     camTitle: 'Görüntülü sohbet için kamera izni',
@@ -20,8 +20,8 @@ const text = {
   },
   en: {
     ask: 'Chrome\'s question opens here: press "Allow". If it closed, press the icon in the address bar.',
-    title: 'Microphone permission for voice chat',
-    text: 'ScreenWithMe wants to use your microphone so you can talk with friends on the video page. You only allow it once, and the microphone is only on after you press "Join voice".',
+    title: 'Voice and video chat permission',
+    text: 'ScreenWithMe wants to use your microphone (and camera) so you can talk with friends on the video page. You allow it once and it is not asked again; the microphone is only on after you press "Join voice", the camera only after you press 📷.',
     allow: '🎙 Allow microphone',
     denied: 'Permission wasn’t given. Allow the microphone from the lock/settings icon in the address bar and try again.',
     camTitle: 'Camera permission for video chat',
@@ -46,7 +46,11 @@ async function main(): Promise<void> {
   const ask = async () => {
     button.disabled = true;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(cam ? { video: true } : { audio: true });
+      // One question for both (0.9.91.14, owner: "Chrome asks for a lot of permissions"): the camera is asked together
+      // with the microphone, so turning the camera on later asks nothing. No camera: the microphone alone.
+      const stream = cam
+        ? await navigator.mediaDevices.getUserMedia({ video: true })
+        : await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).catch(() => navigator.mediaDevices.getUserMedia({ audio: true }));
       for (const track of stream.getTracks()) track.stop();
       await chrome.runtime.sendMessage({ type: MIC_RESULT, granted: true });
     } catch {

@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.13**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.14**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -125,10 +125,16 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   (`ext-update.ts`, compares `data-swm-extension` with `/extension-version.json`), and the extension page explains
   that ↻ only re-reads the old folder. Research session (Shorts sources, Reels, TikTok) merged as
   `docs/internal/short-video-research.md`. Harnesses: phone (feed switch), voice, embed; unit 231.
+- [x] **0.9.91.14 voice on film pages (owner, 30 Oct 2026: "my mic is not detected or very quiet on another site",
+  "Chrome asks many permissions", "I want to pick mic / camera / headphones myself, on the film page too"):** the
+  offscreen voice used the default device (device ids differ per origin), so a headset chosen on the site was ignored
+  there. Picks are now also saved by name (`opt:micName` / `opt:camName` / `opt:speakerName`) and sent to offscreen
+  (`{op:'pick'}`), which opens the device with that label (falls back to the default); 🎛 on myself on the film page
+  lists the extension's devices (`{op:'devices'}`) and switches in place. The permission window asks microphone and
+  camera in one prompt, and the site's pre-join check does too when both are still unanswered. Harnesses: voice 65,
+  voice shell (new 🎛 checks), embed 106.
 - [ ] **Next (owner, 30 Oct 2026):** stream windows free like the cameras (in the video / free on the page, inside
-  fullscreen, hide my own stream preview); voice on the film page uses the microphone I chose (offscreen took the
-  default: "my mic is quiet there"); choosing mic / camera / speaker on the film page too (devices listed by the
-  offscreen page); explain Chrome's permission prompts and cut the ones we cause.
+  fullscreen, hide my own stream preview).
 - [x] **0.9.91.12 owner's feedback round 2 (30 Oct 2026):** search results that are Shorts (videos.list `player` with
   `maxWidth`: taller than wide + ≤ 180 s, same 1-unit call) are marked 📱 and open in the Shorts view; the Shorts
   bar's "＋ Ekle" searches Shorts only on words (`ui/shorts-search.ts`, the feed's `short=1` search; the feed now keeps
