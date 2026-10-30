@@ -8868,3 +8868,95 @@ html.shorts-view .voice-cams {
     grid-template-columns: repeat(3, auto);
   }
 }
+
+/* ==== TV test (/tv-test): read from across the room, every button reachable with the remote's arrows. ==== */
+.tvt {
+  max-width: 1500px;
+  margin: 3vh auto 40px;
+  padding: 0 4vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: clamp(16px, 1.6vw, 26px);
+}
+.tvt h1 {
+  margin: 0;
+  font-size: 1.8em;
+}
+.tvt h2 {
+  margin: 8px 0 0;
+  font-size: 1.1em;
+}
+.tvt-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+}
+@media (max-width: 760px) {
+  .tvt-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.tvt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tvt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  overflow-wrap: anywhere;
+}
+.tvt-icon {
+  width: 1.4em;
+}
+.tvt-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.tvt-yt {
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+.tvt-yt > * {
+  width: 100%;
+  height: 100%;
+}
+.tvt-keys {
+  min-height: 6em;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--panel, rgba(255, 255, 255, 0.06));
+  font-family: ui-monospace, monospace;
+}
+.tvt-key {
+  opacity: 0.6;
+}
+.tvt-key.new {
+  opacity: 1;
+  font-weight: 700;
+}
+.tvt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.tvt .tvt-btn {
+  font-size: 1em;
+  padding: 0.6em 1.2em;
+}
+.tvt .tvt-btn:focus,
+.tvt .tvt-btn:focus-visible {
+  outline: 5px solid #fff;
+  outline-offset: 4px;
+  transform: scale(1.05);
+}

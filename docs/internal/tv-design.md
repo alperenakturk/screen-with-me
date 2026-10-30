@@ -63,3 +63,21 @@ voice, mic permission); (2) TV room (A) + code / QR pairing; (3) phone remote (p
 - Samsung TV web engine: https://developer.samsung.com/tv/develop/specifications/web-engine-specifications
 - Silk on Fire TV, remote mic not available to apps: https://www.aftvnews.com/?p=21954
 - Google TV Streamer remote (mic is for the Assistant): https://support.google.com/chromecast/answer/15323195
+
+## Decision (owner, 30 Oct 2026): A + C
+The owner chose **A + C** with this split: the **TV shows** everything (the video, messages, flying emojis, who is
+speaking with a moving voice ring, cameras) and keeps only **basic controls** on the remote (big button bar);
+the **phone does the real work**: typing, emojis, voice join / leave, mic, camera, leave the room, settings.
+Purpose: one friend watches on a computer, another wants to watch on the TV.
+
+Technical decisions (made in the build session):
+- Friends' voices play on the **TV** (that is the point of the living room); the phone does not play them while
+  paired. The phone mic would pick the TV's sound up again (its echo canceller doesn't know the TV's audio), so the
+  paired phone uses **push-to-talk** by default; with earphones the person can switch to an open mic (then voices
+  play on the phone).
+- The TV joins the room as the **same person's second device** (same name and avatar, same host rights; it is
+  counted once), never asks for a microphone, and joins voice **listen-only**.
+- Pairing: the TV shows a **6-digit code + QR** (single use, 10 minutes); a phone in the room types it ("📺 TV'yi
+  bağla") or scans the QR. Room ids are never typed on the TV.
+- Order: (1) `/tv-test` page (0.9.91.4) so the owner can check his TV browser; (2) server pairing; (3) TV room view;
+  (4) phone remote mode.

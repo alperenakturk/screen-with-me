@@ -41,6 +41,9 @@ if (/^\/oyun(\/|$)/.test(location.pathname)) history.replaceState(null, '', '/')
 if (/^\/(baglanti|connection-test)\/?$/.test(location.pathname)) {
   // Bağlantı testi: "Bağlanıyor…'da kalıyorum" diyenler için (sonuç ekranı yollanır).
   void import('./diag.ts').then(({ renderDiag }) => renderDiag(app));
+} else if (/^\/(tv-test|tv-testi)\/?$/.test(location.pathname)) {
+  // TV test: what works in this TV browser (connection, YouTube, hearing voice, microphone, remote keys).
+  void import('./tv-test.ts').then(({ renderTvTest }) => renderTvTest(app));
 } else if (roomId !== null && ROOM_ID_PATTERN.test(roomId)) {
   void import('./room.ts').then(({ renderRoom }) => {
     renderRoom(app, roomId);
