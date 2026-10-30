@@ -4,7 +4,7 @@
 
 import type { Mark } from '@swm/shared/games/board';
 import { COLS, dropRow } from '@swm/shared/games/four';
-import { GAME_EMOJIS, GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
+import { GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
@@ -35,7 +35,6 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
         <button id="xox-sit" type="button" class="btn primary" data-i18n="games.sit" hidden></button>
         <button id="xox-stand" type="button" class="btn small-btn" data-i18n="games.stand" hidden></button>
       </div>
-      <div id="xox-emojis" class="xox-emojis"></div>
       <section class="card xox-watchers">
         <h4 data-i18n="games.watchers"></h4>
         <ul id="xox-watchers"></ul>
@@ -71,12 +70,6 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
     const free = state?.seats.findIndex((s) => !s || !s.online) ?? -1;
     if (free === 0 || free === 1) send({ t: 'sit', seat: free });
   });
-  const emojis = app.querySelector<HTMLElement>('#xox-emojis')!;
-  for (const emoji of GAME_EMOJIS) {
-    const button = el('button', { type: 'button', class: 'reaction-btn' }, emoji);
-    button.addEventListener('click', () => send({ t: 'react', emoji }));
-    emojis.append(button);
-  }
 
   let state: State | null = null;
   let me: string | null = null;

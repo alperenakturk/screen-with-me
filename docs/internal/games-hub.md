@@ -204,10 +204,28 @@ window grows and shrinks in proportion only. Emojis I send must always show, eve
 Draw & Guess needs richer drawing (fill, …)."
 
 ### Task queue (continue from the first unfinished item)
-1. Fit every game on one screen with no scrollbars (auto-fit scaler for the game body in every placement), the free
-   window resizes in proportion; CLAUDE.md rule "no scrolling unless truly needed".
-2. Room emojis fly over games and in an empty room; XOX / Connect Four emoji bars removed.
-3. Quiz: the screen stops responding after the game ends (find and fix).
-4. Poker: new name, "How to play", clear turn / clock / move announcements, faster result; quiz joker announced.
-5. Draw & Guess: richer drawing tools (fill, colors, sizes, undo).
-6. Tests, release, PR, merge, deploy, report.
+All six ✅ in **0.9.91.11**:
+1. ✅ **Fit, no scrolling.** The game mounts into `.game-fit` inside the stage body; `refit` (stage.ts) sizes it to
+   frame / scale and scales it back (`transform`), starting from `min(1, frame / GAME_CATALOG.fit)` (desktop; phones
+   start at 1) and shrinking further while anything overflows (the box itself or the clipping boxes in `FIT_INSIDE`:
+   the drawing's overlay, the quiz card), down to 0.4. Runs on a ResizeObserver and on DOM changes (rAF-throttled).
+   Inner scrollers became `overflow: hidden` (only chat feeds scroll). The free window keeps the game's shape
+   (`size`) and only zooms (`gameFloat:zoom:<kind>`, 0.45–1.6, by the corner; double-click the head resets). The quiz
+   lobby / podium go side by side in a wide, short box. The head shows icons only under 820 px (`gstage` container).
+   CLAUDE.md got the owner's rule "no scrolling unless truly needed".
+2. ✅ **Emojis everywhere.** `.reactions-layer` is above a game in the video's place (z 7); with a free window open
+   the room's emojis fly inside it (`.game-reactions`). XOX / Connect Four lost their own emoji bars.
+3. ✅ **Quiz froze after the podium:** with 2 players the empty third step used the site-wide `.empty` class
+   (`position: absolute; inset: 0`) and covered the whole game, so nothing could be clicked. Now `.vacant`.
+4. ✅ **Last Heart** (was Life Poker; the owner asked for a proper name). Status strip on top (whose turn, street,
+   seconds left, timer bar; pulses on my turn; the result line at the showdown), a big announcement in the middle
+   for moves, raises, time-outs and the hand's result (`.pk-toast`), a 4-step "How to play" (goal + blinds, a hand
+   and the four actions, hand ranks, special moves; from the lobby and the `?` by the hand info). The showdown
+   pause is 5 s, 2.5 s when nothing is shown (everyone else folded) or the game is decided (`POKER_QUICK_MS`). The
+   quiz announces a used 50:50 joker to everyone (`.game-toast`).
+5. ✅ **Draw & Guess tools** (protocol 3): pen / paint bucket (`Stroke.f`, scanline flood fill on the 1000×750
+   canvas, tolerance `DRAW_FILL_TOLERANCE`), 20 colors and 5 sizes (appended, pickers ordered by
+   `DRAW_COLOR_ORDER` / `DRAW_SIZE_ORDER`), undo (`{t:'undo'}`, strokes carry their press group `g`, the server drops
+   the last group and sends everyone `strokes`; Ctrl+Z).
+6. ✅ Tests: e2e draw (fill, undo of a two-piece press), roomgame, quiz, poker; screenshots of every game in both
+   placements at 1360×860 / 1024×640 / 390×800, emojis in an empty room / over a game / in a free window.

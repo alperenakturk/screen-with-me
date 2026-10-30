@@ -77,7 +77,7 @@ export function podium(players: readonly { name: string; avatar?: Avatar; score:
     'ol',
     { class: 'game-podium' },
     ...order.map((p, i) => {
-      if (!p) return el('li', { class: 'empty', 'aria-hidden': 'true' });
+      if (!p) return el('li', { class: 'vacant', 'aria-hidden': 'true' });
       const place = [2, 1, 3][i]!;
       return el(
         'li',

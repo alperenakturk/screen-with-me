@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import {
   POKER_AWAY_TURN_MS,
   POKER_PROTOCOL_VERSION,
+  POKER_QUICK_MS,
   POKER_SHOWDOWN_MS,
   POKER_TURN_MS,
   PokerEngine,
@@ -229,7 +230,11 @@ export class Poker extends DurableObject<Env> {
   /** When the current turn or the showdown pause ends. */
   private deadline(): number | null {
     const t = this.data.table;
-    if (t.phase === 'showdown') return Date.now() + POKER_SHOWDOWN_MS;
+    if (t.phase === 'showdown') {
+      // Nothing to read (no hands shown) or the game is decided: move on quickly.
+      const quick = !t.result || Object.keys(t.result.shown).length === 0 || t.seats.filter((s) => s.life > 0).length <= 1;
+      return Date.now() + (quick ? POKER_QUICK_MS : POKER_SHOWDOWN_MS);
+    }
     const seat = t.seats[t.toAct];
     if (!seat || !this.engine.isBetting()) return null;
     return Date.now() + (this.online(seat.key) ? POKER_TURN_MS : POKER_AWAY_TURN_MS);
