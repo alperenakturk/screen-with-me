@@ -78,9 +78,11 @@ function readTiles(key: string): Map<string, TileSpot> {
  * - Floating (on the site, not fullscreen) or inside the video in fullscreen. There are two layouts (owner's choice
  *   "layout 2", 29 Oct 2026):
  *   - **free** (default): every camera is its own small window: drag it anywhere, resize it from its corner, double
- *     click puts it back in line. A small pill holds the count, mic / camera, "line up", "back to default", "one
- *     window" and "back to the card". Places are remembered per person (name + avatar), separately for the page and
- *     fullscreen.
+ *     click puts it back in line. A small pill holds the count, "line up", "back to default", "one window" and "back
+ *     to the card" (0.9.91.5, owner: only camera and placement there; mic / camera / stream are on the dock). The
+ *     cameras start attached under the pill and move with it; a camera dragged away is detached (double click or
+ *     "line up" attaches it again). Places are remembered per person (name + avatar), separately for the page and
+ *     fullscreen. The pill shows only while there is a camera.
  *   - **group**: the 0.9.81 window, all tiles in one box (dragged and resized as a whole).
  * The tiles are always the same elements: moving them never rebuilds the picture; moved videos are played again.
  * In the room view on the film page (shell) floating pieces are islands (`data-island`): visible over the hole.
@@ -89,8 +91,6 @@ export function createCamWindow(opts: {
   box: HTMLElement;
   theater: HTMLElement;
   wrap: HTMLElement;
-  /** Buttons under the tiles (mic / camera), shown in the floating window and in fullscreen. */
-  controls?: HTMLElement;
   onMove: () => void;
   /** A tile was clicked (not dragged): opens the person menu. */
   onTileClick?: (tile: HTMLElement) => void;
@@ -124,7 +124,7 @@ export function createCamWindow(opts: {
     dockButton,
   );
   const resize = el('span', { class: 'cam-resize', 'aria-hidden': 'true' });
-  /** Free layout: the bar and the mic / camera buttons in one small draggable pill. */
+  /** Free layout: the bar in one small draggable pill. */
   const pill = el('div', { class: 'cam-pill' });
   /** Its corner makes the pill bigger or smaller (0.9.90.8, owner's request); remembered in this browser. */
   const pillGrip = el('span', { class: 'cam-pill-resize', 'aria-hidden': 'true' });
@@ -148,13 +148,10 @@ export function createCamWindow(opts: {
   };
   let count = 0;
   let hiddenCount = 0;
-  /** In voice: the pill stays on the page / in fullscreen even with no camera on (mic, stream; owner's request). */
-  let keep = false;
   let front = 1;
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
   const mode = (): 'card' | 'float' | 'fs' => (isFs() ? 'fs' : floatOn ? 'float' : 'card');
-  const keepEmpty = () => keep && mode() !== 'card' && !(mode() === 'fs' && theater.classList.contains('dock-mode'));
   const isFree = () => layout === 'free' && mode() !== 'card';
   const where = (): 'normal' | 'fs' => (mode() === 'fs' ? 'fs' : 'normal');
   /** Size of what floating pieces live in: the page, or the video box in fullscreen. */
@@ -202,18 +199,25 @@ export function createCamWindow(opts: {
    * screen), in the container's coordinates.
    */
   function area(c: { w: number; h: number }): { top: number; right: number; bottom: number } {
+    // With the dock on the right (option A, 0.9.91.1; in the window too since 0.9.91.5) the column starts left of it.
+    const docked = theater.classList.contains('dock-mode') ? theater.querySelector<HTMLElement>('#fs-dock')?.getBoundingClientRect() : undefined;
+    const dock = docked && docked.width > 0 ? docked : undefined;
     if (mode() === 'fs') {
-      // With the dock on the right (option A, 0.9.91.1) the column starts left of it.
-      const dock = theater.classList.contains('dock-mode') ? theater.querySelector<HTMLElement>('#fs-dock')?.getBoundingClientRect() : undefined;
-      const right = dock && dock.width > 0 ? dock.left - wrap.getBoundingClientRect().left - GAP : c.w;
+      const right = dock ? dock.left - wrap.getBoundingClientRect().left - GAP : c.w;
       return { top: 0, right: Math.min(c.w, right), bottom: c.h };
     }
     const r = wrap.getBoundingClientRect();
-    return r.width > 200 && r.height > 120 ? { top: Math.max(0, r.top), right: Math.min(c.w, r.right), bottom: Math.min(c.h, r.bottom) } : { top: 0, right: c.w, bottom: c.h };
+    return r.width > 200 && r.height > 120
+      ? { top: Math.max(0, r.top), right: Math.min(c.w, dock ? dock.left - GAP : r.right), bottom: Math.min(c.h, r.bottom) }
+      : { top: 0, right: c.w, bottom: c.h };
   }
 
-  /** Free layout: places every tile (its own spot, or in the automatic column) and the pill. */
-  function applyFree(): void {
+  /**
+   * Free layout: places the pill and every tile: its own spot, or attached to the pill (a column under it, or above
+   * it when the pill sits in the lower half; a new column to the left when full). `pillAt` while the pill is dragged:
+   * the attached cameras follow it.
+   */
+  function applyFree(pillAt?: { left: number; top: number }): void {
     const at = where();
     const c = container();
     const map = tileSpots[at];
@@ -221,42 +225,47 @@ export function createCamWindow(opts: {
     // The pill is scaled from its top-left corner: its drawn size counts for the corner and the edges.
     const pw = pill.offsetWidth * pillScale;
     const ph = pill.offsetHeight * pillScale;
-    // The pill sits in the corner, the column of tiles under it, a new column to the left when full.
-    const startY = box.top + EDGE + ph + GAP;
-    let right = box.right - EDGE;
-    let top = startY;
+    let pillLeft: number;
+    let pillTop: number;
+    if (pillAt) ({ left: pillLeft, top: pillTop } = pillAt);
+    else {
+      const spot = pillSpots[at];
+      pillLeft = Math.round(Math.min(Math.max(0, spot ? spot.x * c.w : box.right - EDGE - pw), Math.max(0, c.w - pw)));
+      pillTop = Math.round(Math.min(Math.max(0, spot ? spot.y * c.h : box.top + EDGE), Math.max(0, c.h - ph)));
+      pill.style.left = `${pillLeft}px`;
+      pill.style.top = `${pillTop}px`;
+    }
+    const up = pillTop + ph / 2 > c.h / 2;
+    const startY = up ? pillTop - GAP : pillTop + ph + GAP;
+    let right = Math.max(pillLeft + pw, MIN_TILE_W);
+    let y = startY;
     let column = 0;
     for (const tile of tilesNow()) {
       const spot = map.get(personOf(tile)) ?? {};
       const width = Math.round(Math.min(Math.max((spot.w ?? TILE_W[at]) * c.w, MIN_TILE_W), c.w * MAX_SHARE));
       const height = Math.round(spot.h !== undefined ? Math.min(Math.max(spot.h * c.h, MIN_TILE_H), c.h * MAX_SHARE) : (width * 3) / 4);
       let left: number;
-      let y: number;
+      let top: number;
       if (spot.x !== undefined && spot.y !== undefined) {
         left = spot.x * c.w;
-        y = spot.y * c.h;
+        top = spot.y * c.h;
       } else {
-        if (top + height > box.bottom - EDGE && top > startY) {
+        const full = up ? y - height < EDGE && y < startY : y + height > c.h - EDGE && y > startY;
+        if (full) {
           right -= column + GAP;
-          top = startY;
+          y = startY;
           column = 0;
         }
         left = right - width;
-        y = top;
-        top += height + GAP;
+        top = up ? y - height : y;
+        y = up ? y - height - GAP : y + height + GAP;
         column = Math.max(column, width);
       }
       tile.style.width = `${width}px`;
       tile.style.height = `${height}px`;
       tile.style.left = `${Math.round(Math.min(Math.max(0, left), Math.max(0, c.w - width)))}px`;
-      tile.style.top = `${Math.round(Math.min(Math.max(0, y), Math.max(0, c.h - height)))}px`;
+      tile.style.top = `${Math.round(Math.min(Math.max(0, top), Math.max(0, c.h - height)))}px`;
     }
-    // The pill: its own spot, or in the corner above the column.
-    const spot = pillSpots[at];
-    const left = spot ? spot.x * c.w : box.right - EDGE - pw;
-    const y = spot ? spot.y * c.h : box.top + EDGE;
-    pill.style.left = `${Math.round(Math.min(Math.max(0, left), Math.max(0, c.w - pw)))}px`;
-    pill.style.top = `${Math.round(Math.min(Math.max(0, y), Math.max(0, c.h - ph)))}px`;
   }
 
   function clearTiles(): void {
@@ -306,19 +315,17 @@ export function createCamWindow(opts: {
       else parent.appendChild(box);
       for (const video of box.querySelectorAll('video')) void video.play().catch(() => {});
     }
-    // The same pieces in another order: the pill holds the bar and the buttons in the free layout.
-    const controls = opts.controls ? [opts.controls] : [];
+    // The same pieces in another order: the pill holds the bar in the free layout.
     if (free) {
       if (pill.parentNode !== box || bar.parentNode !== pill) {
-        pill.replaceChildren(bar, ...controls, pillGrip);
+        pill.replaceChildren(bar, pillGrip);
         box.replaceChildren(pill, grid, popButton);
       }
     } else if (bar.parentNode !== box) {
-      box.replaceChildren(bar, grid, ...controls, resize, popButton);
+      box.replaceChildren(bar, grid, resize, popButton);
     }
-    // The card has its own buttons: there an empty box goes away; floating, the pill stays while I'm in voice (in
-    // fullscreen with the dock, the dock has my mic and camera: no empty pill there).
-    box.hidden = count === 0 && hiddenCount === 0 && !keepEmpty();
+    // Only while there is a camera (owner: the pill comes with the camera; mic and camera are on the dock).
+    box.hidden = count === 0 && hiddenCount === 0;
     box.classList.toggle('floating', m !== 'card');
     box.classList.toggle('in-fs', m === 'fs');
     box.classList.toggle('free', free);
@@ -445,8 +452,12 @@ export function createCamWindow(opts: {
       setPillScale(drag.scale * (1 + (dx + dy) / Math.max(120, drag.width + drag.height)));
     } else if (drag.kind === 'move') {
       const k = target === pill ? pillScale : 1;
-      target.style.left = `${Math.round(Math.min(Math.max(0, drag.left + dx), Math.max(0, c.w - target.offsetWidth * k)))}px`;
-      target.style.top = `${Math.round(Math.min(Math.max(0, drag.top + dy), Math.max(0, c.h - target.offsetHeight * k)))}px`;
+      const left = Math.round(Math.min(Math.max(0, drag.left + dx), Math.max(0, c.w - target.offsetWidth * k)));
+      const top = Math.round(Math.min(Math.max(0, drag.top + dy), Math.max(0, c.h - target.offsetHeight * k)));
+      target.style.left = `${left}px`;
+      target.style.top = `${top}px`;
+      // The cameras attached to the pill come along.
+      if (target === pill) applyFree({ left, top });
     } else {
       const tile = target !== box;
       const max = Math.min(c.w * MAX_SHARE, c.w - drag.left);
@@ -562,14 +573,13 @@ export function createCamWindow(opts: {
     /** Where the tiles go. */
     grid,
     /** The tiles changed: the count and the hidden count are written, places kept inside the container. */
-    update(n: number, hidden = 0, inVoice = false): void {
+    update(n: number, hidden = 0): void {
       const wasHidden = box.hidden;
       count = n;
       hiddenCount = hidden;
-      keep = inVoice;
       markTiles();
       labels();
-      box.hidden = count === 0 && hiddenCount === 0 && !keepEmpty();
+      box.hidden = count === 0 && hiddenCount === 0;
       if (wasHidden !== box.hidden) opts.onMove();
       if (mode() !== 'card') requestAnimationFrame(apply);
     },

@@ -99,10 +99,21 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
    */
   let own = false;
   const shown = () => isActive() || own;
-  /** Fullscreen with a player that keeps its own controls: the dock instead of our bar. */
+  /**
+   * A player that keeps its own controls gets the dock instead of our bar: in fullscreen, and since 0.9.91.5 in the
+   * window too (owner: "always there, on the film page, YouTube, fullscreen, the window, a phone held sideways"), when
+   * the video is big enough for it (not on an upright phone: there the toolbar under the video has the same buttons).
+   * In the window its last button opens fullscreen instead of leaving it.
+   */
+  const WINDOW_DOCK = { w: 480, h: 360 };
   function renderDock(): void {
-    const docked = isActive() && !own;
+    const r = wrap.getBoundingClientRect();
+    const fits = r.width >= WINDOW_DOCK.w && r.height >= WINDOW_DOCK.h;
+    const docked = !!getPlayer() && !own && (isActive() || fits);
     theater.classList.toggle('dock-mode', docked);
+    theater.classList.toggle('dock-window', docked && !isActive());
+    setIcon(dockExit, isActive() ? 'fs-exit' : 'fs-enter');
+    dockLabels();
     if (!docked) openPop(null);
   }
   let openButton: HTMLButtonElement | null = null;
@@ -130,7 +141,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     label(q('#dock-pin'), t('dock.pin'));
     label(dockSpeed, t('speed'));
     label(dockSkip, t('skip'));
-    label(dockExit, t('dock.exit'));
+    label(dockExit, t(isActive() ? 'dock.exit' : 'dock.enter'));
   };
   dockLabels();
   addEventListener('langchange', dockLabels);
@@ -142,7 +153,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     });
   }
   dockSkip.addEventListener('click', onSkip);
-  dockExit.addEventListener('click', () => exit());
+  dockExit.addEventListener('click', () => toggle());
   dockChatForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const text = cleanChatText(dockChatInput.value.slice(0, QUICK_CHAT_MAX));
@@ -164,8 +175,33 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // Our own fullscreen has no browser to leave it with Esc.
     else if (fake && !shell && !document.querySelector('.dialog-backdrop:not([hidden])')) exit();
   });
-  dock.addEventListener('mouseenter', () => (hoveringControls = true));
+  dock.addEventListener('mouseenter', () => {
+    hoveringControls = true;
+    wakeDock();
+  });
   dock.addEventListener('mouseleave', () => (hoveringControls = false));
+
+  /**
+   * The dock shows and hides with the player's own bar (owner: "when one hides, the other hides too"): it shows on
+   * a mouse move over the video and while the video is paused, and hides after IDLE_MS without a move or when the
+   * mouse leaves the video. On the film page its frames report mouse moves (`poke`). A YouTube frame keeps its mouse
+   * moves to itself: there the dock shows when the mouse comes onto the video and hides after IDLE_MS, as YouTube's
+   * bar does when the mouse rests. Hovering the dock or an open window of it keeps it. On touch screens it only fades
+   * (a tap on a YouTube frame never reaches the page).
+   */
+  let dockTimer: ReturnType<typeof setTimeout> | null = null;
+  const dockBusy = () => hoveringControls || !!openButton || dock.contains(document.activeElement) || getPlayer()?.isPaused() === true;
+  function sleepDock(): void {
+    if (dockTimer !== null) clearTimeout(dockTimer);
+    dockTimer = null;
+    if (dockBusy()) dockTimer = setTimeout(sleepDock, IDLE_MS);
+    else theater.classList.add('dock-idle');
+  }
+  function wakeDock(): void {
+    theater.classList.remove('dock-idle');
+    if (dockTimer !== null) clearTimeout(dockTimer);
+    dockTimer = setTimeout(sleepDock, IDLE_MS);
+  }
 
   // Volume is mine only (never sent to the room) and remembered in this browser.
   let wantVolume = Math.min(100, Math.max(1, Number(load('opt:volume') ?? '100') || 100));
@@ -202,6 +238,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     own = !!player && ownControls();
     theater.classList.toggle('own-controls', own);
     renderDock();
+    wakeDock();
     volumeBox.hidden = !hasVolume(player);
     if (player && own) applyVolume(player);
     renderVolume();
@@ -209,7 +246,12 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     if (shown()) startProgress();
     else stopProgress();
   }
-  setInterval(checkPlayer, 300);
+  setInterval(() => {
+    checkPlayer();
+    // A paused video always shows the dock (its own bar shows too).
+    if (theater.classList.contains('dock-idle') && getPlayer()?.isPaused()) wakeDock();
+  }, 300);
+  new ResizeObserver(() => renderDock()).observe(wrap);
   function startProgress(): void {
     renderProgress();
     progressTimer ??= setInterval(renderProgress, 250);
@@ -265,6 +307,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   }
 
   function wake(): void {
+    wakeDock();
     theater.classList.remove('idle');
     if (idleTimer !== null) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
@@ -326,13 +369,29 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   for (const type of ['mousemove', 'mousedown', 'touchstart'] as const) {
     theater.addEventListener(type, () => isActive() && wake(), { passive: true });
     // In the window: only while the mouse is on the video itself.
-    wrap.addEventListener(type, () => own && !isActive() && wake(), { passive: true });
+    wrap.addEventListener(
+      type,
+      () => {
+        if (own && !isActive()) wake();
+        else if (!isActive()) wakeDock();
+      },
+      { passive: true },
+    );
   }
   let over = false;
-  wrap.addEventListener('mouseenter', () => (over = true));
+  wrap.addEventListener('mouseenter', () => {
+    over = true;
+    wakeDock();
+  });
   // Leaving the video hides our bar at once in the window (YouTube's used to linger for seconds).
   wrap.addEventListener('mouseleave', () => {
     over = false;
+    // The players' own bars hide when the mouse leaves a playing video: the dock too (not in fullscreen, where the
+    // mouse never leaves).
+    if (!isActive() && getPlayer()?.isPaused() === false && !openButton && !dock.contains(document.activeElement)) {
+      if (dockTimer !== null) clearTimeout(dockTimer);
+      theater.classList.add('dock-idle');
+    }
     if (!own || isActive() || seeking || document.activeElement === volume) return;
     if (idleTimer !== null) clearTimeout(idleTimer);
     theater.classList.add('idle');
@@ -438,6 +497,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     /** Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. */
     poke(): void {
       if (isActive()) wake();
+      else wakeDock();
     },
     toggle,
     /** Kabukta film sayfasının tam ekranı bitti/başladı (Esc vb.): görünüm de uysun. */

@@ -319,7 +319,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="fs-exit" type="button" class="fs-btn">✕</button>
               </div>
             </div>
-            <div id="fs-dock" class="fs-only fs-dock" role="toolbar" aria-orientation="vertical">
+            <div id="fs-dock" class="fs-dock" role="toolbar" aria-orientation="vertical">
               <div class="dock-group">
                 <button id="dock-chat" type="button" class="dock-btn" aria-expanded="false"></button>
                 <button id="dock-react" type="button" class="dock-btn" aria-expanded="false"></button>
@@ -456,8 +456,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="live-share-wrap" id="live-share-wrap">
                 <button id="live-share" type="button" class="btn live-share" aria-haspopup="true" aria-expanded="false"><span data-i18n="live.share"></span> <span class="live-caret" aria-hidden="true">▾</span></button>
                 <div id="live-menu" class="live-menu" role="menu" hidden>
-                  <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true">🖥️</span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
-                  <label class="live-menu-check small" id="live-with-cam-row"><input type="checkbox" id="live-with-cam" /> <span>📷 <span data-i18n="live.withCam"></span></span></label>
+                  <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true"></span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
+                  <label class="live-menu-check" id="live-with-cam-row"><span class="live-menu-icon" aria-hidden="true"></span><span class="live-check-text" data-i18n="live.withCam"></span><input type="checkbox" class="switch" id="live-with-cam" /></label>
                   <p id="live-menu-note" class="muted small live-menu-note"></p>
                 </div>
               </div>
@@ -500,7 +500,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="chat-form">
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
-              <button type="button" class="chat-attach" id="chat-attach" data-i18n-title="chatImage.add">🖼️</button>
+              <button type="button" class="chat-attach" id="chat-attach" data-i18n-title="chatImage.add"></button>
               <button class="chat-send" id="chat-send" data-i18n-title="send">➤</button>
             </form>
           </div>
@@ -1416,6 +1416,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (child.id === 'fs-catcher' || child.id === 'fs-controls') continue;
         // The dock and its open window (message box, emojis, speed) to its left.
         if (child.id === 'fs-dock') {
+          // Hidden with the film's own bar (0.9.91.5): then the film takes the clicks there, and a mouse move on the
+          // film brings the dock back (the film page reports it).
+          if ($('#theater').classList.contains('dock-idle')) continue;
           for (const node of [child, ...child.querySelectorAll<HTMLElement>('.dock-pop:not([hidden])')]) {
             const r = node.getBoundingClientRect();
             if (r.width > 0) add(islands, r.left, r.top, r.right, r.bottom);

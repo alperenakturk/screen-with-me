@@ -122,6 +122,34 @@ async function enter(page, room) {
     await ctx.close();
   }
 
+  // 3) Desktop, real fullscreen: the join-voice notice opens inside the fullscreen view (it used to open behind it).
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
+    const page = await ctx.newPage();
+    await enter(page, id());
+    await page.fill('#media-input', VIDEO);
+    await page.click('#media-form button[value=load]');
+    await page.waitForSelector('#player video');
+    await page.waitForTimeout(800);
+    await page.click('#fullscreen');
+    await page.waitForTimeout(600);
+    const fs = await page.evaluate(() => document.fullscreenElement?.id ?? null);
+    await page.mouse.move(640, 400);
+    await page.click('#dock-mic');
+    await page.waitForTimeout(600);
+    const seen = await page.evaluate(() => {
+      const d = document.querySelector('.confirm-dialog');
+      return { dialog: !!d, inside: !!d && !!document.fullscreenElement?.contains(d) };
+    });
+    check(fs === 'theater' && seen.dialog && seen.inside, 'tam ekran: sese katılırken çıkan uyarı tam ekranın içinde görünüyor', JSON.stringify({ fs, seen }));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    await page.evaluate(() => document.exitFullscreen?.().catch(() => {}));
+    await page.waitForTimeout(400);
+    check(!(await page.evaluate(() => document.querySelector('#theater .dialog-backdrop'))), 'tam ekrandan çıkınca pencereler yerine döndü');
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} kontrol başarısız` : '\n✓ Telefon testi geçti');
   process.exit(fails ? 1 : 0);

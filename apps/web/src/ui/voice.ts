@@ -59,15 +59,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const limitEl = root.querySelector<HTMLElement>('#voice-limit')!;
   const camsBox = root.querySelector<HTMLElement>('#voice-cams')!;
   // Kameralar kartta, sayfada yüzen pencerede ya da tam ekranda videonun içinde (sürüklenir, boyutlandırılır).
-  // Meet-style buttons under the cameras (floating window and fullscreen): my mic and camera without going back to
-  // the card. They press the card's own buttons, so behaviour (push-to-talk, limits) stays in one place.
-  const camMic = el('button', { type: 'button', class: 'cam-ctl cam-ctl-mic' });
-  const camCam = el('button', { type: 'button', class: 'cam-ctl cam-ctl-cam' });
-  camMic.addEventListener('click', () => micButton.click());
-  camCam.addEventListener('click', () => camButton.click());
-  // Stream from the pill too (0.9.90.8): share my screen / stop my stream / watch someone's. It presses the stream
-  // card's own buttons, so the IP notice, limits and "camera in the corner" choice stay in one place.
-  const camLive = el('button', { type: 'button', class: 'cam-ctl cam-ctl-live' });
+  // My mic, camera and stream outside the card are the dock's and the Shorts bar's quick buttons (0.9.91.5: no longer
+  // in the camera pill). The stream button presses the stream card's own buttons, so the IP notice, limits and
+  // "camera in the corner" choice stay in one place.
   const pressLive = () => {
     const stop = root.querySelector<HTMLButtonElement>('#live-stop');
     const watch = root.querySelector<HTMLButtonElement>('#live-watch');
@@ -75,18 +69,25 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     else if (watch && !watch.hidden) watch.click();
     else root.querySelector<HTMLButtonElement>('#live-screen')?.click();
   };
-  camLive.addEventListener('click', pressLive);
-  const camControls = el('div', { class: 'cam-controls' }, camMic, camCam, camLive);
   // Quick voice buttons outside the card, pressing the card's own buttons: the Shorts bar (0.9.90.9, owner's idea: no
   // camera tiles there, cameras show inside the seats' avatar circles) and the fullscreen dock (0.9.91.1, with the
   // stream button too). Not in voice yet: the 🎙 joins.
+  /** The next join comes from a quick 📷 button: join with the camera on. */
+  let joinWithCam = false;
   const quick = (['shorts', 'dock'] as const).flatMap((id) => {
     const box = root.querySelector<HTMLElement>(`#${id}-voice`);
     const mic = root.querySelector<HTMLButtonElement>(`#${id}-mic`);
     const cam = root.querySelector<HTMLButtonElement>(`#${id}-cam`);
     if (!box || !mic || !cam) return [];
     mic.addEventListener('click', () => (client.active ? micButton : joinButton).click());
-    cam.addEventListener('click', () => camButton.click());
+    // The 📷 shows before joining too (owner: both from the start); pressed outside voice it joins with the camera on.
+    cam.addEventListener('click', () => {
+      if (client.active) camButton.click();
+      else {
+        joinWithCam = true;
+        joinButton.click();
+      }
+    });
     const live = root.querySelector<HTMLButtonElement>(`#${id}-live`);
     live?.addEventListener('click', pressLive);
     return [{ box, mic, cam, live }];
@@ -95,7 +96,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     box: camsBox,
     theater: root.querySelector<HTMLElement>('#theater')!,
     wrap: root.querySelector<HTMLElement>('.player-wrap')!,
-    controls: camControls,
     onMove: () => dispatchEvent(new Event('swm-layout')),
     onTileClick: (tileEl) => {
       const member = members.find((m) => m.id === tileEl.dataset.voiceId);
@@ -325,16 +325,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     // Line icons (0.9.91): the picture says what will be (mic / mic struck through), red = off.
     if (camButton.textContent) camButton.textContent = '';
     setIcon(camButton, camOn ? 'cam' : 'cam-off');
-    setIcon(camMic, client.micEnabled ? 'mic' : 'mic-off');
-    setIcon(camCam, camOn ? 'cam' : 'cam-off');
-    camMic.classList.toggle('off', !client.micEnabled);
-    camMic.title = micLabel;
-    camMic.setAttribute('aria-label', micLabel);
-    camCam.hidden = camButton.hidden;
-    camCam.classList.toggle('off', !camOn);
-    camCam.title = camLabel;
-    camCam.setAttribute('aria-label', camLabel);
-    camControls.hidden = !active;
     renderLiveButton();
     for (const { box, mic, cam } of quick) {
       box.hidden = !available || (!active && joinButton.hidden);
@@ -344,7 +334,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       mic.classList.toggle('off', active && !client.micEnabled);
       mic.title = micText;
       mic.setAttribute('aria-label', micText);
-      cam.hidden = !active || camButton.hidden;
+      cam.hidden = active ? camButton.hidden : !client.setCam;
       if (cam.textContent) cam.textContent = '';
       setIcon(cam, camOn ? 'cam' : 'cam-off');
       cam.classList.toggle('off', !camOn);
@@ -395,7 +385,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const canShare = !(root.querySelector<HTMLButtonElement>('#live-screen')?.hidden ?? true);
     const mine = !!streamer && streamer.id === me?.id;
     const label = mine ? t('live.stop') : streamer ? t(me?.watching ? 'live.unwatch' : 'live.watch') : t('live.screen');
-    for (const button of [camLive, ...quick.map((q) => q.live)]) {
+    for (const button of quick.map((q) => q.live)) {
       if (!button) continue;
       button.hidden = !liveCard || liveCard.hidden || (!streamer && !canShare);
       setIcon(button, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
@@ -461,7 +451,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       else shown.push(ghost.box);
     }
     camWindow.grid.replaceChildren(...shown);
-    camWindow.update(shown.length, hidden, client.active);
+    camWindow.update(shown.length, hidden);
     // The Shorts view shows the same cameras inside the seats' avatar circles (0.9.90.9).
     const cams = new Map<string, MediaStream>();
     for (const [id, box] of tiles) {
@@ -653,6 +643,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   }
 
   joinButton.addEventListener('click', async () => {
+    const wantCam = joinWithCam;
+    joinWithCam = false;
     const inVoice = members.filter((m) => m.voice).length;
     if (inVoice >= voiceMax()) {
       flashHint(joinButton, t('voice.fullHint', { n: inVoice, max: voiceMax() }), 7000);
@@ -664,9 +656,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
     // Pre-join check (0.9.90.6): devices, "join muted", "join with my camera on" (not on the film page: there the
     // extension's offscreen page holds the microphone).
-    // The camera button only shows once in voice; the peer-to-peer path is what has cameras.
+    // The peer-to-peer path is what has cameras.
     const canCam = !isShell && !!client.setCam;
-    const choice = isShell ? { mic: true, cam: false } : await voiceCheck({ mode: 'join', canCam });
+    const choice = isShell ? { mic: true, cam: wantCam } : await voiceCheck({ mode: 'join', canCam, ...(wantCam ? { cam: true } : {}) });
     if (!choice) return;
     joinButton.disabled = true;
     try {
