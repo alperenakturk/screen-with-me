@@ -185,3 +185,13 @@ refunded" or "fold this hand for free"), in a version with jokers and one withou
    (`board.dataset.me`), winning cells in the mark's color, player cards glow in their color on their turn; quiz
    options slide in once per question (`.fresh`), the right one pulses at the reveal; podium steps rise. Shared
    pieces stay in `games/ui.ts` (settings rows, podium).
+6. ✅ **0.9.91.10 Free window (owner's feedback on 0.9.91.9: "side is too narrow, the small window must leave the
+   video's frame, come into fullscreen and fit each game").** Placements are now two: **float** and **stage** (a saved
+   `side` reads as float). The float window is `position: fixed` on `<body>` (inside the theater while it is
+   fullscreen, real or `.fake-fs`, so it stays visible and free there), dragged by its head anywhere on the screen
+   (`gameFloat:spot`, a share of the free room, 8 px from the edges), resized from its corner (`.game-resize`,
+   per game `gameFloat:size:<kind>`; a double click on the head resets it). Each game opens at its own size
+   (`GAME_CATALOG.size`, e.g. quiz 760×560) and needs `fit` (e.g. quiz 640×500): a smaller window keeps that layout
+   and scales the whole window down (`transform: scale`, `.scaled`) instead of squeezing it into scrollbars. On the
+   film page it carries `data-island` (the room's island loop picks it up where it covers the hole). Compact XOX /
+   Connect Four now leave 230 px for players, status, actions and emojis (the emoji row was cut off).

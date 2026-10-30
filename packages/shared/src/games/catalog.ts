@@ -8,16 +8,20 @@ export interface GameInfo {
   /** Players: least and most (two-player board games seat 2, everyone else watches). */
   min: number;
   max: number;
-  /** Where the game window opens by default: next to the video (small games) or in its place (big ones). */
-  place: 'side' | 'stage';
+  /** Where the game window opens by default: a free window (small games) or in the video's place (big ones). */
+  place: 'float' | 'stage';
+  /** The free window's size when it opens (px; shrunk to fit the screen). */
+  size: readonly [number, number];
+  /** The room the game's layout needs (px): a smaller window shows the game scaled down instead of cramped. */
+  fit: readonly [number, number];
 }
 
 export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
-  xox: { min: 2, max: 2, place: 'side' },
-  four: { min: 2, max: 2, place: 'side' },
-  draw: { min: 2, max: 8, place: 'stage' },
-  quiz: { min: 2, max: 8, place: 'stage' },
-  poker: { min: 2, max: 6, place: 'stage' },
+  xox: { min: 2, max: 2, place: 'float', size: [400, 600], fit: [340, 520] },
+  four: { min: 2, max: 2, place: 'float', size: [480, 600], fit: [400, 520] },
+  draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [760, 540] },
+  quiz: { min: 2, max: 8, place: 'stage', size: [760, 560], fit: [640, 500] },
+  poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [760, 540] },
 };
 
 export interface GameNews {
@@ -32,6 +36,13 @@ export interface GameNews {
 
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
+  {
+    v: '0.9.91.10',
+    kinds: [],
+    badge: 'updated',
+    tr: 'Serbest oyun penceresi: sayfanın her yerine sürükle, köşesinden boyutlandır. Her oyun kendi boyutunda açılır, küçültünce sıkışmaz; tam ekranda da yanında gelir.',
+    en: 'Free game window: drag it anywhere on the page and resize it from its corner. Each game opens at its own size and scales down instead of getting squeezed; it comes along into fullscreen too.',
+  },
   {
     v: '0.9.91.9',
     kinds: ['xox', 'four'],
