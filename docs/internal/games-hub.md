@@ -195,3 +195,19 @@ refunded" or "fold this hand for free"), in a version with jokers and one withou
    and scales the whole window down (`transform: scale`, `.scaled`) instead of squeezing it into scrollbars. On the
    film page it carries `data-island` (the room's island loop picks it up where it covers the hole). Compact XOX /
    Connect Four now leave 230 px for players, status, actions and emojis (the emoji row was cut off).
+
+## Phase 3 (owner's feedback on 0.9.91.10, 30 Oct 2026)
+"Never make me scroll inside a game: fit it on one screen (fullscreen, in the video's place, free window). The free
+window grows and shrinks in proportion only. Emojis I send must always show, even over a game or in an empty room
+(drop the extra emoji bars of XOX / Connect Four). The quiz froze after it ended. Poker needs a proper name, a
+'How to play' and must be clear and quick: whose turn, the clock, who used a move, no long waits for the result.
+Draw & Guess needs richer drawing (fill, …)."
+
+### Task queue (continue from the first unfinished item)
+1. Fit every game on one screen with no scrollbars (auto-fit scaler for the game body in every placement), the free
+   window resizes in proportion; CLAUDE.md rule "no scrolling unless truly needed".
+2. Room emojis fly over games and in an empty room; XOX / Connect Four emoji bars removed.
+3. Quiz: the screen stops responding after the game ends (find and fix).
+4. Poker: new name, "How to play", clear turn / clock / move announcements, faster result; quiz joker announced.
+5. Draw & Guess: richer drawing tools (fill, colors, sizes, undo).
+6. Tests, release, PR, merge, deploy, report.
