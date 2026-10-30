@@ -67,10 +67,10 @@ implement, test, ship.
 - [ ] **(added)** Performance budget: first load size, room join time (< 30 s from link to watching), CPU while
   watching (extension), memory on long sessions.
 - [ ] **(added)** Help / FAQ page on the site (TR + EN): how it works, extension permissions explained, troubleshooting.
-- [x] **TV version (owner, 29 Oct 2026: "we will build it before 1.0"; A + C built in 0.9.91.4–0.9.91.5, real-TV test by the owner pending):** a basic room for TV browsers (Google TV via
-  TV Bro and similar): join, voice in / out, talk or type, emojis. Designs A–D in `docs/internal/tv-design.md`
-  (proposal https://claude.ai/artifact/MQkQqMfTreT9YFEfgyjmbc); the owner picks one, then: TV test page → TV room +
-  code / QR pairing → phone remote. Paused for now (owner).
+- [x] **TV version via the TV's browser (A + C built in 0.9.91.4–0.9.91.5, simplified in 0.9.91.12, then hidden):**
+  the owner tried it on his TV (30 Oct 2026): sync was slow and TV browsers are a weak platform. 0.9.91.12 made it
+  calmer (TV sync profile, phone-only pairing with a 3-step explainer) and **hid it** (lab switch `?tvlab=1`; the
+  code stays). The real TV version moves to Phase 2 ("TV version with Google Cast"). Details `docs/internal/tv-design.md`.
 
 ### 2. Zero known bugs
 - [ ] Use **GitHub Issues** as the single bug list (labels: `bug`, `security`, `legal`, `polish`, `extension`,
@@ -171,6 +171,12 @@ implement, test, ship.
 
 ## Phase 2 — after 1.0
 - **Keep improving features** (owner's list + `gelecek-fikirler.md`, `oyun-fikirleri.md`).
+- **TV version with Google Cast** (owner's decision, 30 Oct 2026): the advanced TV version comes after 1.0, together
+  with the **Google Cast developer fee** (a one-time $5 registration, the owner's account). Chromecast / Google TV
+  run our TV page themselves (a Cast receiver app, no TV browser to install); the phone's "Cast" button starts it and
+  the phone stays the remote (microphone, camera, typing, emojis), as in the hidden browser version. Senders: Chrome on
+  Android (iPhone needs another path). Reuses the hidden 0.9.91.x code (TV room view, phone remote, pairing, calm sync
+  profile). First a research note: Cast receiver limits, latency, Google's terms. Plan: `docs/internal/tv-design.md`.
 - **Big services** (Netflix, Prime Video, Disney+, Spotify…): one service at a time; each starts with a research note
   (does the player accept commands, terms of service, regional differences). Everyone uses their own subscription;
   **DRM is never bypassed**; service names only in "works with …" form when it really works. Spotify is

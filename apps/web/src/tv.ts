@@ -10,6 +10,7 @@ import { el } from './dom.ts';
 import { t } from './i18n.ts';
 import { savedRooms } from './saved-rooms.ts';
 import { load, roomIdentity, save, sessionSave } from './storage.ts';
+export { tvLab } from './tv-lab.ts';
 
 /** A paired TV may come back to its room with the same token for this long (the server keeps it as long). */
 const LINK_TTL_MS = 12 * 60 * 60_000;

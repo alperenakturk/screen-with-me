@@ -395,8 +395,14 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   manipulation`, push-to-talk hidden, footer ad-block tip hidden; viewport `viewport-fit=cover,
   interactive-widget=resizes-content` + safe-area paddings. Test: `scripts/harness/phone/run.cjs` (iPhone 13 /
   Pixel 7 emulation, 19 checks). **TV version:** see "TV version" below.
-- **TV version (owner chose A + C, 30 Oct 2026; 0.9.91.4–0.9.91.5, `docs/internal/tv-design.md`):** the TV shows the
-  room, the paired phone is its remote. **Pairing:** `/tv` (`tv.ts`) picks a random 6-digit code (`TV_CODE`), shows
+- **TV version (owner chose A + C, 30 Oct 2026; 0.9.91.4, 0.9.91.5, 0.9.91.12, `docs/internal/tv-design.md`):** the TV
+  shows the room, the paired phone is its remote. **Hidden since 0.9.91.12** (owner: slow on his TV's browser; the
+  real version comes after 1.0 with Google Cast, ROADMAP Phase 2): the TV button and `/tv`, `/tv/<code>`, `/tv-test`
+  work only on a device with the lab switch (`tv-lab.ts`, open any page with `?tvlab=1`, `?tvlab=0` turns it off;
+  without it those pages fall back to home); the code, server pairing and tests stay. 0.9.91.12 also: the TV uses the
+  calm engine profile (`SyncEngine` `relaxed`: drift jump at 2.5 s, 10 s cooldown, no ±5 % nudging, never reports
+  stalls so it never makes the room wait; `syncStats()` feeds the TV's sync status line), and the TV button shows
+  only on touch devices, opening a 3-step explainer with the code box. **Pairing:** `/tv` (`tv.ts`) picks a random 6-digit code (`TV_CODE`), shows
   it big + a QR (`packages/shared/src/qr.ts`, in-house encoder, byte mode, level M, versions 1–6) of
   `/tv/<code>`, and waits on `/api/tv/<code>/ws` (Durable Object `TvLink`, binding `TVLINKS`, migration `v5`, nothing
   stored, 10 min then a new code; a second TV with the same code gets `taken`). A phone in the room sends

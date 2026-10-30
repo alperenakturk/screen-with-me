@@ -14,6 +14,13 @@ export const ACTION_SEEK_SECONDS = 0.3;
 export const DRIFT_SEEK_SECONDS = 1;
 /** Kayma düzeltmesi için atladıktan sonra bu kadar beklenir (sürekli atlayıp donmasın). */
 export const DRIFT_COOLDOWN_MS = 3000;
+/**
+ * The calm profile for weak devices (a TV, owner's report 30 Oct 2026): a TV that falls a little behind was jumped
+ * every 3 s, rebuffered and fell behind again. It jumps only at a bigger gap, waits longer between jumps, never
+ * nudges the rate and never makes the room wait for it.
+ */
+export const RELAXED_DRIFT_SEEK_SECONDS = 2.5;
+export const RELAXED_DRIFT_COOLDOWN_MS = 10_000;
 /** Hassas hız ayarı destekleyen oynatıcılarda bu farkta hafifçe hızlanıp yavaşlanır. */
 export const NUDGE_START_SECONDS = 0.15;
 export const NUDGE_STOP_SECONDS = 0.04;
@@ -43,6 +50,8 @@ export interface SyncEngineOptions {
   lockRate?: boolean;
   /** Hız kilidi bir değişikliği geri aldığında (arayüz "hızı çubuktan değiştir" diyebilir). */
   onRateLocked?: () => void;
+  /** Weak device (TV): see RELAXED_DRIFT_SEEK_SECONDS. */
+  relaxed?: boolean;
   /** Test için değiştirilebilir. */
   wallNow?: () => number;
 }
@@ -89,6 +98,9 @@ export class SyncEngine {
   /** "Herkes hazır": sunucuya en son ne dedik, video ne zamandan beri ilerlemiyor. */
   private readyReported = true;
   private stallSince: number | null = null;
+  /** Last measured gap to the room (s, + = ahead) and how many drift jumps so far: the TV's sync status line. */
+  private drift: number | null = null;
+  private jumps = 0;
   private readonly wallNow: () => number;
 
   constructor(private readonly options: SyncEngineOptions) {
@@ -307,11 +319,14 @@ export class SyncEngine {
     if (state.paused || !this.options.clock.synced || wall < this.driftCooldownUntil) return;
     const target = expectedPosition(state, this.options.clock.now());
     const diff = time - target;
-    if (Math.abs(diff) > DRIFT_SEEK_SECONDS) {
+    this.drift = diff;
+    const relaxed = this.options.relaxed === true;
+    if (Math.abs(diff) > (relaxed ? RELAXED_DRIFT_SEEK_SECONDS : DRIFT_SEEK_SECONDS)) {
       this.clearNudge(player, state);
       this.seekTo(target);
-      this.driftCooldownUntil = wall + DRIFT_COOLDOWN_MS;
-    } else if (player.fineRate) {
+      this.jumps++;
+      this.driftCooldownUntil = wall + (relaxed ? RELAXED_DRIFT_COOLDOWN_MS : DRIFT_COOLDOWN_MS);
+    } else if (player.fineRate && !relaxed) {
       if (Math.abs(diff) > NUDGE_START_SECONDS) {
         const rate = state.rate * (diff > 0 ? 1 - NUDGE_FACTOR : 1 + NUDGE_FACTOR);
         if (this.nudgeRate !== rate) {
@@ -323,6 +338,11 @@ export class SyncEngine {
         this.clearNudge(player, state);
       }
     }
+  }
+
+  /** Gap to the room (seconds, null before the first measurement) and drift jumps since start. */
+  syncStats(): { drift: number | null; jumps: number } {
+    return { drift: this.drift, jumps: this.jumps };
   }
 
   /**
@@ -357,7 +377,8 @@ export class SyncEngine {
       return;
     }
     this.stallSince ??= wall;
-    if (this.readyReported && wall - this.stallSince >= STALL_REPORT_MS) this.reportReady(false);
+    // A relaxed device (TV) never makes the room wait: it catches up on its own.
+    if (this.readyReported && !this.options.relaxed && wall - this.stallSince >= STALL_REPORT_MS) this.reportReady(false);
   }
 
   private reportReady(ready: boolean): void {

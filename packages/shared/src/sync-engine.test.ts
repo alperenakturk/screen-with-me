@@ -430,3 +430,59 @@ describe('review fixes', () => {
     expect(ended).toEqual(['item1', 'item1']);
   });
 });
+
+describe('relaxed profile (TV)', () => {
+  /** The player slowly falls behind (a weak device), not a seek: `seconds` over `seconds × 2` s. */
+  async function fallBehind(seconds: number): Promise<void> {
+    for (let i = 0; i < seconds * 20; i++) {
+      player.time -= 0.05;
+      await run(100);
+    }
+  }
+  function relaxedEngine(): void {
+    engine.destroy();
+    engine = new SyncEngine({
+      clock,
+      send: (message) => (message.t === 'ready' ? readyReports.push(message.ready) : sent.push(message)),
+      wallNow: () => Date.now(),
+      relaxed: true,
+    });
+  }
+
+  it('lets a small gap be instead of jumping, and never nudges the rate', async () => {
+    relaxedEngine();
+    player.fineRate = true;
+    engine.receive(state());
+    engine.attach(player);
+    await run(2000);
+    await fallBehind(1.5);
+    expect(player.rate).toBe(1);
+    expect(engine.syncStats().jumps).toBe(0);
+    expect(engine.syncStats().drift).toBeLessThan(-1);
+  });
+
+  it('jumps at a big gap, then waits 10 s before the next jump', async () => {
+    relaxedEngine();
+    engine.receive(state());
+    engine.attach(player);
+    await run(2000);
+    await fallBehind(3);
+    expect(engine.syncStats().jumps).toBe(1);
+    // Falls behind again right away: the next jump waits for the 10 s cooldown.
+    await fallBehind(3);
+    expect(engine.syncStats().jumps).toBe(1);
+    await run(5000);
+    expect(engine.syncStats().jumps).toBe(2);
+    expect(sent).toEqual([]);
+  });
+
+  it('never makes the room wait when it stalls', async () => {
+    relaxedEngine();
+    engine.receive(state());
+    engine.attach(player);
+    await run(1000);
+    player.stalled = true;
+    await run(5000);
+    expect(readyReports).toEqual([]);
+  });
+});

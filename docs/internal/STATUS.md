@@ -137,7 +137,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     from the overlay would give the permission to the film site.
   Harnesses: embed 106/106 (reload, windows in front, dock hides with the film's bar), voice 65/65, voice shell 28,
   live, sound, phone 22/22, TV 31/31, unit 211; e2e green except the local-only YouTube title check.
-- [ ] **TV version, owner chose A + C (30 Oct 2026):** the TV shows the room (video, messages, flying emojis, who is
+- [x] **TV version, owner chose A + C (30 Oct 2026; hidden in 0.9.91.12, comes back after 1.0 with Google Cast):** the TV shows the room (video, messages, flying emojis, who is
   speaking, cameras) and has only basic remote controls (big button bar A); the paired **phone** is the real
   remote: typing, emojis, voice in / out, mic (push-to-talk by default: the phone mic hears the TV's speakers),
   camera, leave, settings. Purpose: one friend watches on a computer, another on the TV. Friends' voices play on
@@ -150,10 +150,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     big messages), phone remote card (push-to-talk, camera, TV settings, earphones mode). Harness
     `scripts/harness/tv/run.cjs` 32 checks.
   - [x] Owner tried it on his TV (30 Oct 2026): sync very slow, the TV button on the laptop is confusing.
-  - [ ] **Round 2, waiting for the owner's choice** (proposal https://claude.ai/artifact/QZfFgLai4TmNSTwR1nevdN,
-    `docs/internal/tv-design.md` "Round 2"): A fix + simplify (TV sync profile, phone-only TV button with a 3-step
-    explainer) / B Google Cast receiver after 1.0 / C shelve. Also asked for his TV model, browser and a `/tv-test`
-    photo. Nothing is built until he chooses.
+  - [x] **Round 2** (proposal https://claude.ai/artifact/QZfFgLai4TmNSTwR1nevdN): the owner chose "A, then hide it".
+  - [x] **0.9.91.12** A: TV sync profile (`SyncEngine` `relaxed`: jump at 2.5 s, 10 s cooldown, no rate nudge, the TV
+    never makes the room wait; sync status line on the TV), TV button only on touch devices with a 3-step explainer;
+    then **hidden**: the TV button and `/tv`, `/tv/<code>`, `/tv-test` only work with the lab switch `?tvlab=1`
+    (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
+    Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.

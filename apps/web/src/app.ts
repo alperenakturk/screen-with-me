@@ -3,6 +3,7 @@ import { createLogo } from '@swm/shared/logo';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { lang, setLang, translate, type Lang } from './i18n.ts';
 import { applyTheme, currentTheme, openThemeDialog } from './themes.ts';
+import { readTvLabSwitch, tvLab } from './tv-lab.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
@@ -31,6 +32,11 @@ for (const button of langButtons) {
   });
 }
 markLang();
+
+// TV version: hidden behind a lab switch (tv.ts `tvLab`); without it its pages fall back to the home page.
+readTvLabSwitch();
+const tvPage = /^\/(tv|tv-test|tv-testi)(\/\d{6})?\/?$/.test(location.pathname);
+if (tvPage && !tvLab()) history.replaceState(null, '', '/');
 
 // Basit yönlendirme: /r/<oda> bir oda, geri kalan her şey ana sayfa. Oda ve ana sayfa ayrı parçalar: ana sayfa odanın
 // büyük kodunu (oynatıcılar, sohbet, ses…) indirmez, ilk açılış hızlanır.

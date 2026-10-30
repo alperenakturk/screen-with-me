@@ -38,10 +38,22 @@ async function enter(page, room, name) {
   const errors = [];
 
   // The TV: a big screen, keys only.
+  // Hidden feature (0.9.91.6): without the lab switch the TV pages fall back to the home page.
+  const plainCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  const plain = await plainCtx.newPage();
+  await plain.goto(`${SITE}/tv`);
+  await plain.waitForTimeout(800);
+  check(new URL(plain.url()).pathname === '/' && !(await plain.$('.tvp-code')), 'hidden: /tv opens the home page without the lab switch', plain.url());
+  await plain.goto(`${SITE}/tv-test`);
+  await plain.waitForTimeout(800);
+  check(new URL(plain.url()).pathname === '/', 'hidden: /tv-test opens the home page without the lab switch');
+  await plainCtx.close();
+
+  // The TV: a big screen, keys only (lab switch on).
   const tvCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   const tv = await tvCtx.newPage();
   tv.on('pageerror', (e) => errors.push(`tv: ${e.message}`));
-  await tv.goto(`${SITE}/tv`);
+  await tv.goto(`${SITE}/tv?tvlab=1`);
   const code = (await until(() => tv.evaluate(() => document.querySelector('.tvp-code')?.textContent?.replace(/\D/g, '') || null))) ?? '';
   check(/^\d{6}$/.test(code), 'TV: shows a 6-digit code', code);
   check(await tv.evaluate(() => document.querySelector('.tvp-qr')?.getAttribute('src')?.startsWith('data:image/svg+xml')), 'TV: shows a QR code');
@@ -50,10 +62,13 @@ async function enter(page, room, name) {
   const phoneCtx = await browser.newContext({ ...devices['iPhone 13'], permissions: ['camera', 'microphone'] });
   const phone = await phoneCtx.newPage();
   phone.on('pageerror', (e) => errors.push(`phone: ${e.message}`));
+  await phone.goto(`${SITE}/?tvlab=1`);
+  await phone.waitForFunction(() => localStorage.getItem('opt:tvLab') === '1');
   await enter(phone, room, 'Alp');
-  check(await phone.isVisible('#tv-btn'), 'phone: the 📺 TV button is in the top bar');
+  check(!!(await until(() => phone.isVisible('#tv-btn'))), 'phone: the 📺 TV button is in the top bar', await phone.evaluate(() => localStorage.getItem('opt:tvLab') + ' ' + location.href));
   await phone.click('#tv-btn');
   check(await phone.isVisible('.tv-pair-dialog'), 'phone: the pair dialog opens');
+  check((await phone.$$eval('.tv-step', (s) => s.length)) === 3, 'phone: the window explains it in 3 steps');
   await phone.fill('#tv-code', code);
   await phone.click('.tv-pair-form button');
   const inRoom = await until(() => tv.evaluate(() => document.documentElement.classList.contains('tv-mode') && location.pathname.includes('/r/')));
@@ -73,6 +88,8 @@ async function enter(page, room, name) {
     return { w: r.width, h: r.height };
   });
   check(theater.w === 1920 && Math.abs(theater.h - 1080) <= 1, 'TV: the room fills the screen', JSON.stringify(theater));
+  const status = await until(() => tv.evaluate(() => (document.querySelector('.tv-status:not([hidden])')?.textContent ?? '') || null));
+  check(!!status && /Senkron|Sync/.test(status), 'TV: shows the sync status line', status ?? '');
   check(!!(await until(() => phone.evaluate(() => document.querySelector('#player video')?.muted === true))), "phone: its own player is muted (the TV plays the film's sound)");
 
   // Remote keys: OK opens the bar, arrows move, Back closes; ↑ opens emojis and OK sends one.
@@ -113,11 +130,15 @@ async function enter(page, room, name) {
   const friendCtx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
   const friend = await friendCtx.newPage();
   friend.on('pageerror', (e) => errors.push(`friend: ${e.message}`));
+  await friend.goto(`${SITE}/?tvlab=1`);
+  await friend.waitForFunction(() => localStorage.getItem('opt:tvLab') === '1');
   await enter(friend, room, 'Ece');
+  check(!(await friend.$('#tv-btn')), 'computer: no TV button (pairing is a phone job), even with the lab switch');
   await friend.evaluate(`(async () => { document.getElementById('voice-join').click(); for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 150)); const d = document.querySelector('.confirm-dialog'); if (!d) { if (i > 10) break; continue; } d.querySelector('.btn.primary').click(); } return 1; })()`);
   check(!!(await until(() => tv.evaluate(() => !!document.querySelector('.tv-face.in-voice')), 15000)), 'TV: the friend in voice gets a green ring');
   check(!!(await until(() => tv.evaluate(() => [...document.querySelectorAll('audio')].some((a) => a.srcObject)), 15000)), 'TV: listens to voice without a microphone (audio arrives)');
-  check(!!(await until(() => tv.evaluate(() => !!document.querySelector('.tv-face.speaking')), 15000)), 'TV: the speaking face glows');
+  // The fake microphone beeps briefly about once a second; one glow in 25 s is enough (15 s missed it once in six runs).
+  check(!!(await until(() => tv.evaluate(() => !!document.querySelector('.tv-face.speaking')), 25000)), 'TV: the speaking face glows');
 
   // The phone in voice: push-to-talk (the microphone is off until the big button is held), voices not played here.
   await phone.evaluate(`(async () => { document.querySelector('.tv-ptt').click(); for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 150)); const d = document.querySelector('.confirm-dialog'); if (!d) { if (i > 10) break; continue; } d.querySelector('.btn.primary').click(); } return 1; })()`);
