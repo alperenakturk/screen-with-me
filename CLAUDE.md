@@ -57,7 +57,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.2 (phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.3 (no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -246,7 +246,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   reaches the site as `activity` → `fullscreen.poke()`); islands are always clipped to the hole. "👁 Sayfayı göster" (top, in the shell):
   the overlay becomes `bar` (48 px strip) and the film page is shown as is (to close ads/popups); "↩ Oda görünümü"
   goes back; if no video is found 10 s after the film opens, the button is suggested (`flashHint`). The focus box
-  does not clip overflow and dispatches `resize` when its size changes (subtitles). If the video is in an inner frame,
+  does not clip overflow (that cut off subtitles) but draws no scrollbars (0.9.91.3: a scrolling player box showed one on the film's right edge) and dispatches `resize` when its size changes (subtitles). If the video is in an inner frame,
   the right frame grows through the `swm-focus-here` chain. In the shell the site skips the name step; the extension
   link, main logo and footer are hidden; "🏠 Odaya dön" + "👁 Sayfayı göster" + "🎯 Video seç" sit together in the
   middle of the top bar (`.shell-tools`, 0.9.90; icons only under 1100 px). **The room view never scrolls on the film

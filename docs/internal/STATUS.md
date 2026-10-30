@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 29 Oct 2026. Site and extension **0.9.91.2**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.3**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -112,6 +112,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   inputs (no iOS zoom), push-to-talk hidden on touch, phone note on the home page's extension card. Harness
   `scripts/harness/phone/run.cjs` 19/19. Built to grow: phone styles in `phone.css`, device facts in `device.ts`, the
   store-app path in `docs/internal/apps.md` (Play TWA first, App Store needs report / block + push).
+- [x] **0.9.91.3 scrollbar on the film** (owner's friend, 30 Oct 2026: a scrollbar on the right edge of the film in
+  fullscreen on a film page): some players' boxes can scroll, and grown to the hole they drew a scrollbar over the
+  film. The extension's focus CSS now hides scrollbars in the player box and inside it (menus still scroll
+  with the wheel; the box's overflow stays unclipped, clipping it once cut off subtitles). The embed test page's player box scrolls like those players; embed harness 102/102.
 - [ ] **TV version: to be built before 1.0, paused for now** (owner, 29 Oct 2026; ROADMAP §1; he picks the design
   when we resume; proposal page
   https://claude.ai/artifact/MQkQqMfTreT9YFEfgyjmbc, research and options in `docs/internal/tv-design.md`: A big
