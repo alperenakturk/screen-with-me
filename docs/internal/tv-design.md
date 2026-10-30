@@ -81,3 +81,11 @@ Technical decisions (made in the build session):
   bağla") or scans the QR. Room ids are never typed on the TV.
 - Order: (1) `/tv-test` page (0.9.91.4) so the owner can check his TV browser; (2) server pairing; (3) TV room view;
   (4) phone remote mode.
+
+## Built (0.9.91.4 – 0.9.91.5)
+- 0.9.91.4: `/tv-test` page.
+- 0.9.91.5: pairing (`/tv` code + QR, `/tv/<code>` room chooser, `TvLink` Durable Object, link tokens), TV mode of
+  the room (big button bar, ▲ emojis, Back, listen-only voice, speaking faces, big messages) and the phone remote
+  card (push-to-talk, camera, TV settings, earphones mode). Technical summary in `CLAUDE.md` "TV version".
+- Waiting for: the owner's real-TV test (`/tv-test`, then `/tv`); remote key codes, audio autoplay and YouTube
+  playback differ between TV browsers, so fixes follow his photos.

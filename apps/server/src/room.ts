@@ -24,6 +24,7 @@ import {
   type RtcResult,
   VOICE_MAX,
   VOICE_MAX_P2P,
+  type TvOp,
   CAM_MAX,
   LIVE_MAX_VIEWERS,
   type LiveKind,
@@ -33,7 +34,7 @@ import {
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
-import { IP_HEADER } from './ip.ts';
+import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
@@ -93,7 +94,21 @@ interface Attachment {
   watching?: boolean;
   /** Short hash of the connection's IP (set by the Worker): abuse limits only; never stored or sent to clients. */
   ip?: string;
+  /** A paired TV: `cid` is its person's (so it is the same person: host rights, kicks, counted once). */
+  tv?: boolean;
 }
+
+/** A TV's link token: whose TV it is (`keyOf`) and the name / avatar it joins with. */
+interface TvToken {
+  key: string;
+  name: string;
+  avatar?: Avatar;
+  /** Last use; a token unused for `TV_TOKEN_TTL_MS` is dropped. */
+  at: number;
+}
+/** A paired TV may reconnect with its token for this long after its last use (a TV left on overnight re-pairs). */
+const TV_TOKEN_TTL_MS = 12 * 60 * 60_000;
+const MAX_TV_TOKENS = 50;
 
 /**
  * Bu kadar süredir hiç mesaj (ping dahil) gelmeyen bağlantı kopmuş sayılır ve kapatılır.
@@ -124,6 +139,7 @@ function memberOf(attachment: Joined): Member {
   if (attachment.ad) member.ad = true;
   if (attachment.live) member.live = attachment.live;
   if (attachment.watching) member.watching = true;
+  if (attachment.tv) member.tv = true;
   return member;
 }
 
@@ -227,6 +243,12 @@ export class Room extends DurableObject<Env> {
   private readonly rtcLimit = new RateLimiter(30, 3);
   /** Eşler arası seste bağlantı mesajları (her eş için teklif/cevap + birkaç ağ adayı). */
   private readonly signalLimit = new RateLimiter(80, 10);
+  /** TV pairing attempts per person: a wrong code costs one (6-digit codes can't be guessed this way). */
+  private readonly tvLinkLimit = new RateLimiter(5, 5 / 60);
+  private readonly tvLimit = new RateLimiter(20, 4);
+  private tvTokens: Record<string, TvToken> = {};
+  /** This room's id (from the Worker's header; a paired TV is told where to go). */
+  private roomId: string | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -265,6 +287,8 @@ export class Room extends DurableObject<Env> {
       this.recaps = (await ctx.storage.get<Recap[]>('recaps')) ?? [];
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
       this.game = (await ctx.storage.get<{ game: RoomGame; owner: string }>('game')) ?? null;
+      this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
+      this.roomId = (await ctx.storage.get<string>('roomId')) ?? null;
     });
   }
 
@@ -278,6 +302,11 @@ export class Room extends DurableObject<Env> {
     if (path.endsWith('/unsave') && request.method === 'POST') return this.unsaveFromHome(request);
     if (request.headers.get('Upgrade') !== 'websocket') {
       return new Response('Expected WebSocket', { status: 426 });
+    }
+    const roomId = request.headers.get(ROOM_HEADER);
+    if (roomId && roomId !== this.roomId) {
+      this.roomId = roomId;
+      await this.ctx.storage.put('roomId', roomId);
     }
     const { 0: client, 1: server } = new WebSocketPair();
     this.ctx.acceptWebSocket(server);
@@ -393,6 +422,12 @@ export class Room extends DurableObject<Env> {
           return;
         }
         await this.rtc(ws, message);
+        return;
+      case 'tv-link':
+        await this.linkTv(ws, attachment, joined, message.code);
+        return;
+      case 'tv':
+        await this.relayTv(ws, attachment, message.op, message.value);
         return;
       case 'home':
         // Sadece haber: filmdekilere "sen de dön" diye sorulur (sık basılıp kimseyi rahatsız etmesin).
@@ -543,9 +578,17 @@ export class Room extends DurableObject<Env> {
         await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
         return;
       case 'rename':
+        if (attachment.tv) return;
         attachment.name = message.name;
         if (message.avatar) attachment.avatar = message.avatar;
         ws.serializeAttachment(attachment);
+        // My TV keeps my name and avatar (it is me on another screen).
+        for (const tv of this.tvSockets(keyOf(attachment))) {
+          const a = tv.deserializeAttachment() as Attachment;
+          a.name = attachment.name;
+          if (attachment.avatar) a.avatar = attachment.avatar;
+          tv.serializeAttachment(a);
+        }
         this.broadcast(this.membersMessage());
         return;
       case 'kick':
@@ -840,6 +883,27 @@ export class Room extends DurableObject<Env> {
     if (hello.cid) attachment.cid = hello.cid;
     if (hello.client) attachment.client = hello.client;
     else delete attachment.client;
+    if (hello.tv) {
+      // A paired TV joins as its person's second device: their browser id (never sent to anyone), name and avatar.
+      const token = this.tvTokens[hello.tv];
+      if (!token || Date.now() - token.at > TV_TOKEN_TTL_MS) {
+        this.sendTo(ws, { t: 'error', code: 'tv_token' });
+        ws.close(4006, 'tv_token');
+        return;
+      }
+      token.at = Date.now();
+      const owner = this.joined(ws).find((a) => keyOf(a) === token.key && !a.tv);
+      if (owner) {
+        token.name = owner.name;
+        if (owner.avatar) token.avatar = owner.avatar;
+      }
+      await this.ctx.storage.put('tvTokens', this.tvTokens);
+      attachment.cid = token.key.slice(2);
+      attachment.tv = true;
+      hello = { ...hello, name: token.name, ...(token.avatar ? { avatar: token.avatar } : {}) };
+    } else {
+      delete attachment.tv;
+    }
     if (this.bans[keyOf(attachment)] || this.bans[banKey(attachment, hello.name)]) {
       this.sendTo(ws, { t: 'error', code: 'kicked' });
       ws.close(4003, 'kicked');
@@ -903,6 +967,78 @@ export class Room extends DurableObject<Env> {
     for (const [id, data] of this.chatImages) this.sendTo(ws, { t: 'chat-image', id, data });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
+    // My phone / computer learns that my TV is here (and a phone joining later learns it too).
+    if (attachment.tv) for (const other of this.personSockets(myKey, ws)) this.sendTo(other, { t: 'tv', op: 'present', value: true });
+    else if (this.tvSockets(myKey).length) this.sendTo(ws, { t: 'tv', op: 'present', value: true });
+  }
+
+  /** My TV connections (`key` = keyOf of the person). */
+  private tvSockets(key: string, except?: WebSocket): WebSocket[] {
+    return this.openSockets(except).filter((s) => {
+      const a = s.deserializeAttachment() as Attachment | null;
+      return !!a?.name && a.tv === true && keyOf(a) === key;
+    });
+  }
+
+  /** My other (not TV) connections: phone, computer, film page. */
+  private personSockets(key: string, except?: WebSocket): WebSocket[] {
+    return this.openSockets(except).filter((s) => {
+      const a = s.deserializeAttachment() as Attachment | null;
+      return !!a?.name && !a.tv && keyOf(a) === key;
+    });
+  }
+
+  /**
+   * Pair the TV showing `code` to me: a fresh link token goes to the TV through its waiting object (`TvLink`); the TV
+   * then joins this room with it. Only a person with a browser id can pair (the TV becomes "them").
+   */
+  private async linkTv(ws: WebSocket, attachment: Attachment, me: Joined, code: string): Promise<void> {
+    if (attachment.tv || !attachment.cid) return this.sendTo(ws, { t: 'error', code: 'tv_code' });
+    const key = keyOf(attachment);
+    if (!this.tvLinkLimit.allow(key)) return this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+    const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+    const now = Date.now();
+    for (const [old, entry] of Object.entries(this.tvTokens)) if (now - entry.at > TV_TOKEN_TTL_MS) delete this.tvTokens[old];
+    const keys = Object.keys(this.tvTokens);
+    if (keys.length >= MAX_TV_TOKENS) delete this.tvTokens[keys[0]!];
+    this.tvTokens[token] = { key, name: me.name, ...(me.avatar ? { avatar: me.avatar } : {}), at: now };
+    const room = this.roomId;
+    const delivered = room
+      ? await this.env.TVLINKS.get(this.env.TVLINKS.idFromName(code))
+          .fetch('https://tv/deliver', { method: 'POST', body: JSON.stringify({ room, token }) })
+          .then((r) => r.ok)
+          .catch(() => false)
+      : false;
+    if (!delivered) {
+      delete this.tvTokens[token];
+      return this.sendTo(ws, { t: 'error', code: 'tv_code' });
+    }
+    await this.ctx.storage.put('tvTokens', this.tvTokens);
+    this.sendTo(ws, { t: 'tv', op: 'linked' });
+  }
+
+  /**
+   * Phone ⇄ TV: from my phone / computer to my TV(s), from my TV to my other connections; never to anyone else.
+   * `unlink` from the phone also drops my link tokens (the TV can't come back without a new code).
+   */
+  private async relayTv(ws: WebSocket, attachment: Attachment, op: TvOp, value?: number | boolean): Promise<void> {
+    const key = keyOf(attachment);
+    if (!this.tvLimit.allow(attachment.id)) return;
+    const message: ServerMessage = value === undefined ? { t: 'tv', op } : { t: 'tv', op, value };
+    if (attachment.tv) {
+      for (const other of this.personSockets(key)) this.sendTo(other, message);
+      return;
+    }
+    if (op === 'unlink') {
+      let changed = false;
+      for (const [token, entry] of Object.entries(this.tvTokens)) {
+        if (entry.key !== key) continue;
+        delete this.tvTokens[token];
+        changed = true;
+      }
+      if (changed) await this.ctx.storage.put('tvTokens', this.tvTokens);
+    }
+    for (const tv of this.tvSockets(key)) this.sendTo(tv, message);
   }
 
   /**
@@ -1359,7 +1495,7 @@ export class Room extends DurableObject<Env> {
   private async onLeave(leaving: WebSocket): Promise<void> {
     const attachment = leaving.deserializeAttachment() as Attachment | null;
     if (attachment) {
-      for (const limiter of [this.commandLimit, this.chatLimit, this.rtcLimit, this.signalLimit]) limiter.forget(attachment.id);
+      for (const limiter of [this.commandLimit, this.chatLimit, this.rtcLimit, this.signalLimit, this.tvLimit]) limiter.forget(attachment.id);
       // Kişi başı tutulanlar: aynı tarayıcının başka bağlantısı kalmadıysa unutulur.
       const key = keyOf(attachment);
       if (!this.joined(leaving).some((other) => keyOf(other) === key)) {
@@ -1368,6 +1504,10 @@ export class Room extends DurableObject<Env> {
         this.lastReaction.delete(key);
       }
       this.waits.remove(attachment.id);
+      // My TV left: my phone / computer stops showing it as connected.
+      if (attachment.tv && attachment.name && !this.tvSockets(key, leaving).length) {
+        for (const other of this.personSockets(key, leaving)) this.sendTo(other, { t: 'tv', op: 'present', value: false });
+      }
       // Yayıncı çıktı: yayın biter, izleyiciler bırakılır.
       if (attachment.live) this.clearWatchers(leaving);
       // Yöneticinin son bağlantısı gittiyse saymaya başla (bkz. settleHost).
@@ -1454,7 +1594,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

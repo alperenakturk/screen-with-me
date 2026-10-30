@@ -115,14 +115,18 @@ export class P2pVoice implements Voice {
     }
   }
 
-  async join(mic = true): Promise<void> {
+  /** `listen`: join without a microphone (a TV): voices and cameras arrive, nothing is sent. */
+  async join(mic = true, listen = false): Promise<void> {
     if (this.joined) return;
-    this.mic = await (this.options.getMic?.() ??
-      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false }));
+    this.mic = listen
+      ? null
+      : await (this.options.getMic?.() ??
+          navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false }));
+    if (listen) mic = false;
     this.joined = true;
     // A muted person stays muted when voice is rebuilt after a reconnect (the track is disabled before anyone hears it).
     this.micOn = mic;
-    for (const track of this.mic.getAudioTracks()) track.enabled = mic;
+    for (const track of this.mic?.getAudioTracks() ?? []) track.enabled = mic;
     this.options.announce(true, mic);
   }
 
@@ -230,7 +234,8 @@ export class P2pVoice implements Voice {
   private async call(memberId: string): Promise<void> {
     const peer = this.peer(memberId);
     const track = this.mic?.getAudioTracks()[0];
-    if (track) peer.pc.addTransceiver(track, { direction: 'sendrecv' });
+    // Without a microphone (listening only) the audio channel still has to be there, or no voice would arrive.
+    peer.pc.addTransceiver(track ?? 'audio', { direction: track ? 'sendrecv' : 'recvonly' });
     // Görüntü kanalı hep açılır (kamera kapalıyken boş): sonradan açınca yeniden pazarlık gerekmez.
     const cam = this.cam?.getVideoTracks()[0];
     peer.pc.addTransceiver(cam ?? 'video', { direction: 'sendrecv' });

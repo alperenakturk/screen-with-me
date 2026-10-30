@@ -123,10 +123,13 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   the TV. Details `docs/internal/tv-design.md` "Decision". Steps:
   - [x] **0.9.91.4** TV test page `/tv-test` (connection, YouTube, hearing voice, mic, sound, fullscreen, remote
     keys; the owner opens it on his TV and sends a photo).
-  - [ ] Server: TV pairing (TV shows a 6-digit code + QR, a phone in the room types / scans it; the TV joins as the
-    same person's second device; phone → TV commands relayed) + e2e.
-  - [ ] Site: `/tv` pairing screen + TV room view (D-pad bar, listen-only voice, speaking faces, cameras).
-  - [ ] Site: phone "📺 TV'yi bağla" + remote mode while paired; harness (TV + phone), docs, release.
+  - [x] **0.9.91.5** the TV version itself: server pairing (`TvLink` object per 6-digit code, link token, the TV
+    joins as the same person, phone ⇄ TV relay; e2e `tv.mjs` 18 checks), `/tv` code + in-house QR, `/tv/<code>`
+    room chooser on the phone, TV mode of the room (D-pad bar, ▲ emojis, Back, listen-only voice, speaking faces,
+    big messages), phone remote card (push-to-talk, camera, TV settings, earphones mode). Harness
+    `scripts/harness/tv/run.cjs` 32 checks.
+  - [ ] Owner: open `/tv-test` and then `/tv` on his own TV (TV Bro on Google TV) and send photos; then we fix what
+    his TV browser does differently (key codes, audio autoplay, YouTube).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
