@@ -55,7 +55,7 @@ export function createLive(
     theater: root.querySelector<HTMLElement>('#theater')!,
     onMove: () => dispatchEvent(new Event('swm-layout')),
   });
-  // 0.9.91.14 (owner): the streamer doesn't have to watch their own screen; remembered in this browser.
+  // 0.9.91.15 (owner): the streamer doesn't have to watch their own screen; remembered in this browser.
   let selfHidden = load('opt:liveSelfHidden') === '1';
   const qualityRow = root.querySelector<HTMLElement>('#live-quality-row')!;
   const qualitySelect = root.querySelector<HTMLSelectElement>('#live-quality')!;

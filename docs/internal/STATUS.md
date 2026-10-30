@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.14**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.15**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -125,7 +125,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   (`ext-update.ts`, compares `data-swm-extension` with `/extension-version.json`), and the extension page explains
   that ↻ only re-reads the old folder. Research session (Shorts sources, Reels, TikTok) merged as
   `docs/internal/short-video-research.md`. Harnesses: phone (feed switch), voice, embed; unit 231.
-- [x] **0.9.91.14 voice on film pages (owner, 30 Oct 2026: "my mic is not detected or very quiet on another site",
+- [x] **0.9.91.15 voice on film pages (owner, 30 Oct 2026: "my mic is not detected or very quiet on another site",
   "Chrome asks many permissions", "I want to pick mic / camera / headphones myself, on the film page too"):** the
   offscreen voice used the default device (device ids differ per origin), so a headset chosen on the site was ignored
   there. Picks are now also saved by name (`opt:micName` / `opt:camName` / `opt:speakerName`) and sent to offscreen
@@ -133,8 +133,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   lists the extension's devices (`{op:'devices'}`) and switches in place. The permission window asks microphone and
   camera in one prompt, and the site's pre-join check does too when both are still unanswered. Harnesses: voice 65,
   voice shell (new 🎛 checks), embed 106.
-- [ ] **Next (owner, 30 Oct 2026):** stream windows free like the cameras (in the video / free on the page, inside
-  fullscreen, hide my own stream preview).
+- [x] **0.9.91.15 free stream window (owner, 30 Oct 2026):** the stream window is dragged anywhere in the video,
+  resized from its corner (16:9), popped out onto the page (⧉ / ⤓) and remembered per place (video / page /
+  fullscreen); in fullscreen it stays inside the video; the streamer can hide their own preview (🙈, viewers still see
+  it). `ui/live-float.ts`; harness `voice/live.mjs` 30/30.
 - [x] **0.9.91.12 owner's feedback round 2 (30 Oct 2026):** search results that are Shorts (videos.list `player` with
   `maxWidth`: taller than wide + ≤ 180 s, same 1-unit call) are marked 📱 and open in the Shorts view; the Shorts
   bar's "＋ Ekle" searches Shorts only on words (`ui/shorts-search.ts`, the feed's `short=1` search; the feed now keeps
@@ -162,7 +164,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     from the overlay would give the permission to the film site.
   Harnesses: embed 106/106 (reload, windows in front, dock hides with the film's bar), voice 65/65, voice shell 28,
   live, sound, phone 22/22, TV 31/31, unit 211; e2e green except the local-only YouTube title check.
-- [ ] **TV version, owner chose A + C (30 Oct 2026):** the TV shows the room (video, messages, flying emojis, who is
+- [x] **TV version, owner chose A + C (30 Oct 2026; hidden in 0.9.91.14, comes back after 1.0 with Google Cast):** the TV shows the room (video, messages, flying emojis, who is
   speaking, cameras) and has only basic remote controls (big button bar A); the paired **phone** is the real
   remote: typing, emojis, voice in / out, mic (push-to-talk by default: the phone mic hears the TV's speakers),
   camera, leave, settings. Purpose: one friend watches on a computer, another on the TV. Friends' voices play on
@@ -175,10 +177,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     big messages), phone remote card (push-to-talk, camera, TV settings, earphones mode). Harness
     `scripts/harness/tv/run.cjs` 32 checks.
   - [x] Owner tried it on his TV (30 Oct 2026): sync very slow, the TV button on the laptop is confusing.
-  - [ ] **Round 2, waiting for the owner's choice** (proposal https://claude.ai/artifact/QZfFgLai4TmNSTwR1nevdN,
-    `docs/internal/tv-design.md` "Round 2"): A fix + simplify (TV sync profile, phone-only TV button with a 3-step
-    explainer) / B Google Cast receiver after 1.0 / C shelve. Also asked for his TV model, browser and a `/tv-test`
-    photo. Nothing is built until he chooses.
+  - [x] **Round 2** (proposal https://claude.ai/artifact/QZfFgLai4TmNSTwR1nevdN): the owner chose "A, then hide it".
+  - [x] **0.9.91.14** A: TV sync profile (`SyncEngine` `relaxed`: jump at 2.5 s, 10 s cooldown, no rate nudge, the TV
+    never makes the room wait; sync status line on the TV), TV button only on touch devices with a 3-step explainer;
+    then **hidden**: the TV button and `/tv`, `/tv/<code>`, `/tv-test` only work with the lab switch `?tvlab=1`
+    (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
+    Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.

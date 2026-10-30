@@ -37,7 +37,7 @@ function readSpot(where: Where): Spot {
 }
 
 /**
- * The stream window (0.9.91.14, owner: "free like the cameras"): it sits in the video (default) or floats freely on
+ * The stream window (0.9.91.15, owner: "free like the cameras"): it sits in the video (default) or floats freely on
  * the page (⧉; ⤓ puts it back); drag it anywhere, resize it from its corner (it keeps 16:9), double click resets the
  * place. In fullscreen it always lives inside the video, with its own place. Places are remembered as shares of the
  * container, separately for the video, the page and fullscreen. On the film page (shell) a free window is an island.

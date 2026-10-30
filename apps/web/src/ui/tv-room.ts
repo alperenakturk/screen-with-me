@@ -19,6 +19,8 @@ export interface TvRoomDeps {
   tell: (op: TvOp, value?: number | boolean) => void;
   voice: { listen(): Promise<boolean>; toggleJoin(): void; state(): { active: boolean }; setMaster(volume: number): void; speakers(): Set<string> };
   myId: () => string | null;
+  /** Gap to the room and drift jumps (the sync status line). */
+  syncStats: () => { drift: number | null; jumps: number };
   /** The TV disconnects (goes back to its pairing screen). */
   leave: () => void;
 }
@@ -43,6 +45,8 @@ export function createTvRoom(deps: TvRoomDeps) {
   const title = el('div', { class: 'tv-title' });
   const top = el('div', { class: 'tv-top' }, title, faces);
   const hint = el('div', { class: 'tv-hint' });
+  // Sync status, small in the corner: how far this TV is from the room (shows remotely what a TV browser does).
+  const status = el('div', { class: 'tv-status', 'aria-hidden': 'true' });
   const empty = el('div', { class: 'tv-empty', hidden: '' });
 
   const button = (icon: string, cls = '') => {
@@ -67,7 +71,16 @@ export function createTvRoom(deps: TvRoomDeps) {
   const bye = button('🚪', 'tv-red');
   const confirmText = el('p', { class: 'tv-confirm-text' });
   const confirm = el('div', { class: 'tv-confirm', hidden: '' }, confirmText, el('div', { class: 'tv-row' }, stay.b, bye.b));
-  deps.theater.append(top, empty, hint, bar, emojis, confirm);
+  deps.theater.append(top, empty, hint, status, bar, emojis, confirm);
+  setInterval(() => {
+    const { drift, jumps } = deps.syncStats();
+    status.hidden = drift === null;
+    if (drift === null) return;
+    const ms = Math.round(Math.abs(drift) * 1000);
+    const where = ms < 150 ? t('tv.syncSame') : drift < 0 ? t('tv.syncBehind', { ms }) : t('tv.syncAhead', { ms });
+    status.textContent = `${where} · ${t('tv.syncJumps', { n: jumps })}`;
+    status.classList.toggle('bad', Math.abs(drift) > 1.5);
+  }, 1000);
 
   const panels = [bar, emojis, confirm];
   const openPanel = () => panels.find((p) => !p.hidden) ?? null;
