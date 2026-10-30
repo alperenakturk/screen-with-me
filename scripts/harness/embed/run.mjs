@@ -271,6 +271,17 @@ check(await a.evaluate(`!!document.querySelector('[data-swm-focus]') && document
 await a.sleep(800);
 await a.shot('1-oda-gorunumu');
 
+// 1b) Reloading the film page by mistake (F5) keeps the room view: the overlay comes back, the hole opens again and
+// Ayşe is still in the room once (owner's report, 0.9.91.4).
+{
+  await a.evaluate('location.reload(); 1').catch(() => {});
+  await a.sleep(1500);
+  const back = await until(() => a.evaluate(`!!document.querySelector('iframe[src^="chrome-extension://"]') && getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath.startsWith('path(')`), 15000);
+  const once = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Ayşe').length === 1, 12000);
+  check(!!back && !!once, 'film sayfası yenilenince oda görünümü geri geliyor (katman + delik, Ayşe odada tek kez)', JSON.stringify({ back, members: bora.members.map((m) => m.name) }));
+  await a.shot('1b-yenileme');
+}
+
 // 2a) Örtü (ilk geliş: sekmenin bu sitede örtü işareti yok, örtü depodaki oda listesiyle gelir).
 {
   const l = await coverLog();
@@ -832,10 +843,40 @@ if (process.env.FILM_AD) {
   await other.close();
 }
 
+// 9z) The site's windows are always in front of the film (owner's report: ⚙️ showed the film over the settings for a
+// second, "Odaya dön" only blurred the screen). Right after a window opens, the hole is covered by an island (the
+// overlay paints there) and the window's middle is our dialog, not the film.
+const holeCovered = async () => {
+  const rects = clipRects(await a.evaluate(SHELL_CLIP));
+  const hole = rects[1];
+  return !!hole && rects.slice(2).some((r) => r.x <= hole.x + 2 && r.y <= hole.y + 2 && r.r >= hole.r - 2 && r.b >= hole.b - 2);
+};
+const filmVisibleAt = async (selector) => {
+  const c = await a.evalFrame('shell=1', `(() => { const r = document.querySelector('${selector}')?.getBoundingClientRect(); return r && { x: r.left + r.width / 2, y: r.top + 20 }; })()`);
+  if (!c) return null;
+  const img = decodePng(Buffer.from((await a.cdp('Page.captureScreenshot', { format: 'png' })).result.data, 'base64'));
+  const frameAt = await a.evaluate(`(() => { const r = ${SHELL}.getBoundingClientRect(); return { x: r.left, y: r.top, s: devicePixelRatio }; })()`);
+  const [r, g, b] = img.at((frameAt.x + c.x) * frameAt.s, (frameAt.y + c.y) * frameAt.s);
+  return { r, g, b, inHole: !(await holeCovered()) };
+};
+{
+  await a.evalFrame('shell=1', `document.getElementById('settings-open').click(); 1`);
+  await a.sleep(150);
+  const fast = await holeCovered();
+  check(fast, 'film sayfası: ⚙️ ayarlar açılır açılmaz delik kapanıyor (film pencerenin üstüne binmiyor)');
+  await a.shot('9z-ayarlar');
+  await a.evalFrame('shell=1', `document.getElementById('settings-close').click(); 1`);
+  await a.sleep(400);
+}
 // 10) Odaya dön: sekme sitedeki odaya döner, katman kalkar, ayar (tema) ana sitede de geçerli.
 await a.evalFrame('shell=1', `document.querySelector('.shell-home').click()`);
-await a.sleep(400);
+await a.sleep(150);
 check(await a.evalFrame('shell=1', `!!document.querySelector('.confirm-dialog')`), 'Odaya dön önce soruyor');
+{
+  const seen = await filmVisibleAt('.confirm-dialog');
+  check(!!seen && !seen.inHole, '"Odaya dön" sorusu filmin önünde görünüyor (delik kapalı)', JSON.stringify(seen));
+  await a.shot('10-odaya-don-sorusu');
+}
 await a.evalFrame('shell=1', `document.querySelector('.confirm-dialog .btn.primary').click(); 1`);
 check(!!(await until(async () => String(await a.evaluate('location.href')).startsWith(`${SITE}/r/${room}`))), 'Odaya dön → sekme sitedeki odada');
 await a.sleep(2500);

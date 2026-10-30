@@ -1660,6 +1660,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (tabs.active === 'queue') tabs.show('chat');
     // Sitenin pencereleri (avatar, tema, özet, onay) açılınca da bildirilsin: videonun arkasında kalmasınlar.
     new MutationObserver(() => reportLayout()).observe(document.body, { childList: true });
+    // Windows that stay in the page and only lose `hidden` (⚙️ settings, the person menu…) too, at once: otherwise the
+    // once-a-second check found them and the film covered the window for up to a second (owner's report).
+    const MODAL = '.dialog-backdrop, .recap-backdrop, dialog, .profile-pop';
+    new MutationObserver((mutations) => {
+      if (mutations.some((m) => m.target instanceof Element && m.target.matches(MODAL))) reportLayout();
+    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden', 'open'] });
     /** Icon + label (the label hides on phones). */
     const toolLabel = (button: HTMLElement, icon: string, text: string) =>
       button.replaceChildren(el('span', { 'aria-hidden': 'true' }, icon), el('span', { class: 'shell-tool-text' }, text));
@@ -2093,7 +2099,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // (ör. sekme başka pencerede kaldıysa) üstte "kurduysan yenile" bandı çıkar. Yenileyince
   // isim sormadan odaya dönülür ve uyarı kalkar.
   let wentToInstall = false;
-  app.addEventListener('click', (event) => {
+  // Every extension link opens in a new tab (the top bar's too), so the room tab never leaves the room.
+  document.addEventListener('click', (event) => {
     if ((event.target as HTMLElement).closest('a[href="/eklenti.html"]')) wentToInstall = true;
   });
   const extReload = $('#ext-reload');
