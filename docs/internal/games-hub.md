@@ -1,0 +1,134 @@
+# PlayWithMe games hub: design proposal
+
+> 30 Oct 2026, phase 1 (design only, no feature code). Visual proposal with mock-ups (desktop, film page, phone):
+> https://claude.ai/artifact/X9SSF7WNJ8bU4dYAfwvZQF. **Status: waiting for the owner to pick a concept.** Phase 2
+> (building it) starts only after that choice. Existing system: `CLAUDE.md` "PlayWithMe"; game ideas and the shared
+> UI rules: `docs/internal/oyun-fikirleri.md`.
+
+## The owner's wishes
+
+1. **Take the game out of the video frame:** play while the video keeps playing (floating / docked / side window),
+   on the film page too (a friend's request).
+2. **Nicer game designs.**
+3. **Several sessions at once:** two people play XOX while others play something else; people move between games
+   freely.
+4. **New games fit in easily**, and an update or a new game is announced inside the games section ("what's new").
+5. **A small hub**, and everything works well on phones.
+
+Today: a room holds one game (`RoomGame`, `Room` DO field `game`), it opens in the video's place (`games/stage.ts`,
+`#game-stage` inside `.player-wrap`), others get an invite card, "▶ Videoya dön" minimizes it. The games themselves
+already run in their own Durable Objects (`Game` for XOX / Connect Four, `Draw`, `Quiz`) keyed by an id the room
+hands out. That last fact makes wish 3 cheap on the server.
+
+## Shared foundations (the same in every concept)
+
+### Tables (wish 3)
+- The room holds up to **4 tables** instead of one game. A table = one game instance = one existing game DO (its id).
+- Anyone may open a table (at most one open table per person, unless `settings.gamesHostOnly` later); the opener or
+  the host closes it. A table nobody is at for 2 min closes by itself (the room's single alarm, never `setTimeout`).
+- People sit or watch at any table and move between them freely; the hub shows who is where.
+
+### Game catalog + "What's new" (wish 4)
+- `packages/shared/src/games/catalog.ts`: one entry per game: `kind`, line icon, min / max players, the placements it
+  fits (see concept D) and its minimum size, `since` (version it arrived), `news: [{ version, tr, en }]`.
+- The 🎮 menu, the hub, invite cards and announcements are all drawn from the catalog. A new game = catalog entry +
+  rules file + mount function + its server DO (or a `kind` on an existing one).
+- What's new is client-only: the newest catalog version I have seen is `localStorage` `opt:gamesSeen`. Newer entries
+  → a yellow dot on 🎮, a short "Yeni / New" card at the top of the hub, a `NEW` / `UPDATED` badge on that game for
+  two releases. Seen once = gone. Nothing goes to the server.
+
+### Shared game look (wish 2)
+- Line icons for the games in the same style as `ui/icons.ts` (XOX grid, Connect Four board, pencil, question bubble)
+  instead of the emoji pairs.
+- One UI kit (`apps/web/src/games/ui.ts` + CSS, as planned in `oyun-fikirleri.md`): player strip (turn glows, score),
+  timer bar from server time, result / podium screen, the fixed emoji row. Colors from theme tokens.
+- Every game gets a **compact** layout (≈ 280–360 px wide) and a **large** one, chosen by the container's size
+  (container queries), so the same game works docked, floating, on the stage and on a phone.
+
+### Server and protocol (all concepts)
+```
+Room DO:   tables: RoomTable[]            // max 4, in storage
+           RoomTable { id, kind, by: Member, at, owner (persistent key, never sent) }
+Client →   { t: 'table', open: kind }     // new table
+           { t: 'table', close: id }      // opener or host
+           { t: 'at', table: id | null, play?: true }   // "I'm at this table" (for the hub)
+Server →   { t: 'tables', list }          // full list on every change
+           welcome.tables, Member.table?  // who is where
+Game DOs:  unchanged (each table id = its own object; seats stay inside the game DO)
+```
+- **No `PROTOCOL_VERSION` bump:** all fields are optional. For old clients the room keeps sending `game` = the newest
+  table, and an old `{t:'game', kind}` opens a table.
+- Limits: 4 tables, 1 open table per person, table messages count against a small separate limiter (not the
+  playback `commandLimit`). New error codes `tables_full`, `table_own`.
+- `freezeIfLongEmpty` closes all tables, as it closes the game today.
+- The room never talks to the game DOs (no DO-to-DO calls); "who sits where" in the hub comes from clients' `at`
+  messages, the game DO stays the source of truth for seats and moves.
+
+## Concept A: Games tab in the right rail
+A fourth tab next to Chat / Queue / People: **Games**. The hub (tables, what's new) and the game itself live in the
+320 px rail; "⤢" enlarges a game to the stage as today.
+- **Desktop:** the video never shrinks. **Film page:** the rail is the site's own area, no islands; but fullscreen
+  has no rail, so in fullscreen a game needs a dock button + a small window anyway. **Phone:** fits the app layout
+  (video on top, tabs below) very well.
+- **Effort:** 2/5. **Risks:** 320 px is too narrow for Draw & Guess; while the Games tab is open the chat is hidden;
+  hiding the side panel (⇥) hides the game.
+
+## Concept B: Floating game window
+The game is a free window over the page, like the camera windows (`ui/cam-float.ts`): drag, resize from the corner,
+"−" turns it into a pill ("Connect Four · your turn"); the hub is the window's first screen.
+- **Desktop:** the video keeps playing under / next to it. **Film page:** the window is an island; works in
+  fullscreen next to the dock. **Phone:** a half-height bottom sheet instead of dragging.
+- **Effort:** 3/5. **Risks:** the window covers part of the film (subtitles); with camera windows the screen gets
+  crowded; the island must update every frame while dragging in the shell.
+
+## Concept C: Tables lobby on the stage
+🎮 opens a stage in the video's place as today, but it is a **lobby**: table cards, "new table", what's new; the film
+keeps playing small in a corner (picture-in-picture). Strongest "game hall" feeling.
+- **Desktop:** good. **Film page:** we cannot shrink the film site's player into a corner, so the lobby covers the
+  film; wish 1 is not met there. **Phone:** full-screen lobby with a small video strip on top.
+- **Effort:** 3/5. **Risks:** the game still takes the video's place, which is exactly what the friend asked to change.
+
+## Concept D: Hub + placements (recommended)
+🎮 opens a small **hub** popover (bottom sheet on phones): what's new, the room's tables (who sits, whose turn,
+Sit / Watch / Open), "new table". Sitting down opens the game in a **game window** with three placements, switched
+from the window's header and remembered per game kind (`localStorage` `gamePlace:<kind>`):
+- **Side:** the stage splits: video on the left (smaller, fully visible), game on the right.
+- **Floating:** small window over the video (concept B's window).
+- **Stage:** large, in the video's place (today's behaviour).
+Defaults come from the catalog: XOX / Connect Four → side, Draw & Guess / Quiz → stage.
+- **Film page:** *side* narrows the hole (`.player-wrap` gets narrower, the game sits next to it in the site's own
+  area; `focus.ts` already fits the film video into whatever hole the site reports); *floating* is an island;
+  in **fullscreen** the dock gets a 🎮 button and the game opens floating left of the dock.
+- **Phone (upright):** *side* becomes **below**: video on top, game under it in the place of the chat (the app layout
+  from 0.9.91.2); "Large" makes the game full screen with the video as a strip. Sideways: video left, game right.
+  The hub is a bottom sheet. Touch targets ≥ 44 px.
+- **Effort:** 4/5, in safe steps. **Risks:** three placements = three times the testing (desktop, film page, phone);
+  the video gets smaller in side mode (hence the per-game defaults); resizing the hole can make the film site's
+  player jump for a frame (measure, as with the 0.9.90 scroll fix).
+
+## Comparison
+
+| Concept | With the video | Film page | Phone | Room for games | Effort |
+|---|---|---|---|---|---|
+| A Games tab | yes | not in fullscreen | very good | narrow (320 px) | 2/5 |
+| B Floating window | yes | yes (island) | bottom sheet | small window | 3/5 |
+| C Tables lobby | small film | film covered | good | plenty | 3/5 |
+| **D Hub + placements** | **yes** | **yes (side, floating, fullscreen)** | **best** | **per game** | **4/5** |
+
+## Recommendation: D
+The friend's request is "play while the video plays". D is the only concept that meets it everywhere: on the site,
+on the film page, in fullscreen and on phones. It combines the good parts of the others (B's floating window, C's
+hub of tables, A's phone layout), and every game opens at a size that suits it. It costs the most, but each step
+below ships as its own release.
+
+### Build order if D is chosen (each step a release, four-part versions)
+1. **Catalog + what's new + game line icons.** Works with today's single game; no risk.
+2. **Tables on the server.** Room holds up to 4 tables, backward compatible. e2e: XOX and Quiz at the same time,
+   moving between tables, closing, old-client `game` field (`scripts/e2e/roomgame.mjs` grows).
+3. **Hub popover.** Tables, who is where, Sit / Watch / Open, new table; invite card "Ali opened an XOX table · Sit".
+4. **Game window + placements.** Stage (today) + side first, then floating; film page hole narrowing; 🎮 in the
+   fullscreen dock. Embed harness checks.
+5. **Phones.** Below / large, sideways split, hub bottom sheet; new checks in `scripts/harness/phone/run.cjs`.
+6. **New game look.** Shared player strip, timer bar, podium; the four games redrawn in compact and large layouts.
+
+Tests to keep green on every step: `scripts/e2e/roomgame.mjs`, `xox.mjs`, `draw.mjs`, `quiz.mjs`, the phone harness.
