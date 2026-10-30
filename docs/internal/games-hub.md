@@ -145,7 +145,7 @@ chips, special moves such as "sacrifice 10 % of your life to disqualify a player
 refunded" or "fold this hand for free"), in a version with jokers and one without, at a table that is not a casino.
 
 ### Task queue (continue from the first unfinished item)
-1. ✅ **0.9.91.5 Quiz + Draw & Guess.** Host settings (first player still connected = host; language, quiz topic and
+1. ✅ **0.9.91.6 Quiz + Draw & Guess.** Host settings (first player still connected = host; language, quiz topic and
    length 5 / 10 / 15, Draw & Guess rounds 1 / 2 / 3, then a podium); quiz bank 98 → 406 questions in 11 topics
    (bilingual entries, true / false questions, recently asked ones skipped on rematches); 50:50 joker; points in
    `packages/shared/src/games/scoring.ts` (quiz: speed 50–150 + first three 50 / 25 / 10 + streak up to 30; draw:
