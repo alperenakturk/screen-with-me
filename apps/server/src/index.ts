@@ -1,5 +1,6 @@
 import { DRAW_ID_PATTERN } from '@swm/shared/games/draw';
 import { GAME_ID_PATTERN } from '@swm/shared/games/protocol';
+import { POKER_ID_PATTERN } from '@swm/shared/games/poker';
 import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
@@ -7,6 +8,7 @@ import { youtubeSearch } from './youtube.ts';
 
 export { Draw } from './draw.ts';
 export { Game } from './game.ts';
+export { Poker } from './poker.ts';
 export { Quiz } from './quiz.ts';
 export { Room } from './room.ts';
 export { TvLink } from './tv-link.ts';
@@ -115,6 +117,15 @@ export default {
       const guarded = await guardSocket(request, url, env);
       if (guarded instanceof Response) return guarded;
       return env.QUIZZES.get(env.QUIZZES.idFromName(quiz[1]!)).fetch(guarded);
+    }
+    // Life poker.
+    const poker = url.pathname.match(/^\/api\/poker\/([^/]+)\/ws$/);
+    if (poker) {
+      if (!POKER_ID_PATTERN.test(poker[1]!)) return new Response('Invalid game id', { status: 400 });
+      if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
+      const guarded = await guardSocket(request, url, env);
+      if (guarded instanceof Response) return guarded;
+      return env.POKERS.get(env.POKERS.idFromName(poker[1]!)).fetch(guarded);
     }
 
     // A TV waiting to be paired: it shows this code and listens here until a phone in a room types it.

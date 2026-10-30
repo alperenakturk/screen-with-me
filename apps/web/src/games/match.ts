@@ -98,7 +98,7 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
     box.className = `xox-player mark-${mark}${turn ? ' turn' : ''}${person && !person.online ? ' away' : ''}`;
     box.replaceChildren(
       markNode(mark),
-      person ? avatarNode(person.avatar, 'xox-avatar') : el('span', { class: 'xox-avatar empty' }, '?'),
+      person ? avatarNode(person.avatar, 'xox-avatar') : el('span', { class: 'xox-avatar vacant' }, '?'),
       el(
         'span',
         { class: 'xox-name' },

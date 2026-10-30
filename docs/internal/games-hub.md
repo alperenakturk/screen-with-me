@@ -152,7 +152,32 @@ refunded" or "fold this hand for free"), in a version with jokers and one withou
    `200 × time(0.3–1) × 0.8^(rank−1) × tries(−10 % per wrong guess after two free, ≥ 0.5)`, drawer = guessers'
    average × share who guessed); shared game pieces `apps/web/src/games/ui.ts` (settings rows, podium). Quiz and
    draw protocol versions 2.
-2. Hub step 1–3: catalog + what's new + line icons; tables on the server; hub popover.
-3. Game window placements (side / floating / stage), film page, phones.
-4. Life poker (with and without jokers), its own Durable Object and table design.
+2. ✅ **0.9.91.8 Hub step 1–3.** `packages/shared/src/games/catalog.ts` (`GAME_CATALOG`: players, default place;
+   `GAME_NEWS` newest first, `unseenNews`, `compareVersions`); the room holds `tables` (≤ `MAX_TABLES` 4, storage
+   `tables`, the old single `game` is read once), `{t:'table', open|close}`, `{t:'at', table}` (member field `table`),
+   `{t:'tables', tables, opened?, closed?, by?}`, `welcome.tables`; one table per person (a new one replaces my old one
+   when nobody else is at it, else `table_own`), `tables_full`, a table nobody has open closes after `TABLE_EMPTY_MS`
+   (2 min, the room's single alarm); old `{t:'game'}` messages still work (open a table / close my newest), `game` is
+   still sent (newest table). Site `games/stage.ts` = the hub (🎮 popover: what's new, tables with faces + Join / Show /
+   ✕, new-table grid with NEW / UPDATED badges; `opt:gamesSeen`, a yellow dot on 🎮 until the hub is closed once),
+   stage head "Game hall · Back to video · Leave table · Close table", line icons `gamepad`, `game-*` in `ui/icons.ts`.
+   Test: `scripts/e2e/roomgame.mjs` (rewritten for tables).
+3. ✅ **0.9.91.8 (same release) placements.** Head switch side / float / stage (`gamePlace:<kind>`, defaults from
+   `GAME_CATALOG.place`): side = `.theater.game-side` grid, the stage right after `.player-wrap` (outside the hole, so
+   on the film page the hole narrows and the film refits); float = absolute in `.player-wrap` (an island on the film
+   page), dragged by its head, spot `gameFloat:spot` as a share; stage = as before. Fullscreen turns side into float.
+   ≤ 860 px: below the video (`.below`, fixed from the video's bottom, `--game-top`) or full screen. Small windows use
+   a compact XOX / Connect Four layout (`@container game (max-width: 560px)`). Fixed: the empty seat's "?" used the
+   site-wide `.empty` class and jumped to the stage's corner (now `.vacant`).
+4. ✅ **0.9.91.8 (same release) Life poker.** Rules and engine in `packages/shared/src/games/poker.ts` (pure,
+   `poker.test.ts`: hand ranking incl. jokers as wild cards and five of a kind, side pots, the table engine
+   `PokerEngine`: blinds 2/4 rising every 5 hands, no-limit betting, short all-ins, the board running out, shields
+   at the showdown, the game ending with one player left). Moves once per game: disqualify (10 life burned, needs 3+
+   in the hand, refunds the target), free fold (own turn, refunds my bets), shield (5, a showdown loser gets half
+   back), peek (5, one of a rival's cards, only to me). Server object `Poker` (`apps/server/src/poker.ts`, binding
+   `POKERS`, migration `v6`, `/api/poker/:id/ws`): seats in the lobby (≤ 6, others watch, `sit`), host = first
+   connected seat (jokers on / off), private `cards` only to their owner, turn 30 s (4 s when the player is away),
+   showdown 6 s, timers via the storage alarm. Site `games/poker.ts`: a glass flask for the pot, life bars, paper
+   cards, move cards with costs, a raise slider with quick picks; two columns in a wide window. Test:
+   `scripts/e2e/poker.mjs`.
 5. Shared look for every game (player strip, timer, podium everywhere; XOX / Connect Four redrawn).

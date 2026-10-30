@@ -1,6 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
   MAX_PINS,
+  MAX_TABLES,
+  TABLE_EMPTY_MS,
   MAX_STICKERS,
   MAX_CHAT_IMAGES,
   PROTOCOL_VERSION,
@@ -92,6 +94,8 @@ interface Attachment {
   /** Yayın yapıyor (odada tek yayın) / yayını izliyor. */
   live?: LiveKind;
   watching?: boolean;
+  /** The game table this connection has open. */
+  table?: string;
   /** Short hash of the connection's IP (set by the Worker): abuse limits only; never stored or sent to clients. */
   ip?: string;
   /** A paired TV: `cid` is its person's (so it is the same person: host rights, kicks, counted once). */
@@ -121,6 +125,13 @@ const PRUNE_EVERY_MS = 20_000;
 
 type Joined = Attachment & { name: string };
 
+/** A game table: the game, its opener's persistent key (never sent to clients) and since when nobody has it open. */
+interface Table {
+  game: RoomGame;
+  owner: string;
+  emptyAt: number | null;
+}
+
 /** Bir yasak: yönetici kaldırana kadar (ya da oda silinene kadar) geçerli. */
 interface Ban {
   id: string;
@@ -140,6 +151,7 @@ function memberOf(attachment: Joined): Member {
   if (attachment.live) member.live = attachment.live;
   if (attachment.watching) member.watching = true;
   if (attachment.tv) member.tv = true;
+  if (attachment.table) member.table = attachment.table;
   return member;
 }
 
@@ -209,7 +221,8 @@ export class Room extends DurableObject<Env> {
   /** Daha önce oynayanlar (en yenisi sonda): "bir önceki" bunlardan gelir. */
   private played: QueueItem[] = [];
   /** Odada açık oyun ve açanın kalıcı anahtarı (anahtar istemcilere gitmez). */
-  private game: { game: RoomGame; owner: string } | null = null;
+  /** Game tables, oldest first: the game, its opener's key (never sent) and since when nobody has it open. */
+  private tables: Table[] = [];
   private hostKey: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
   private hostGoneAt: number | null = null;
@@ -286,9 +299,12 @@ export class Room extends DurableObject<Env> {
       this.stats = new StatsTracker(await ctx.storage.get<StatsData>('stats'));
       this.recaps = (await ctx.storage.get<Recap[]>('recaps')) ?? [];
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
-      this.game = (await ctx.storage.get<{ game: RoomGame; owner: string }>('game')) ?? null;
       this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
       this.roomId = (await ctx.storage.get<string>('roomId')) ?? null;
+      const tables = await ctx.storage.get<Table[]>('tables');
+      // Before tables a room held one game ('game').
+      const single = tables ? null : await ctx.storage.get<{ game: RoomGame; owner: string }>('game');
+      this.tables = tables ?? (single ? [{ ...single, emptyAt: Date.now() }] : []);
     });
   }
 
@@ -396,7 +412,19 @@ export class Room extends DurableObject<Env> {
         this.setWatch(ws, attachment, message.on);
         return;
       case 'game':
-        await this.setGame(ws, attachment, me, message.end ? null : (message.kind ?? null));
+        // Old clients: one game per room.
+        if (message.kind) await this.openTable(ws, attachment, me, message.kind);
+        else {
+          const mine = [...this.tables].reverse().find((t) => t.owner === keyOf(attachment)) ?? (this.isHost(ws) ? this.tables.at(-1) : undefined);
+          if (mine) await this.closeTable(ws, attachment, me, mine.game.id);
+        }
+        return;
+      case 'table':
+        if (message.open) await this.openTable(ws, attachment, me, message.open);
+        else if (message.close) await this.closeTable(ws, attachment, me, message.close);
+        return;
+      case 'at':
+        await this.setAt(ws, attachment, message.table);
         return;
       case 'live-signal': {
         // Yayın bağlantısı sadece yayıncı ile onu izleyen arasında (IP'ler sadece yayına katılanlara görünür).
@@ -712,9 +740,11 @@ export class Room extends DurableObject<Env> {
       this.recaps = [];
       this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
       this.emptySince = null;
+      this.tables = [];
       return;
     }
     if (this.waits.waitingSince !== null && now - this.waits.waitingSince >= WAIT_MAX_MS) await this.evaluateWait();
+    await this.closeEmptyTables(now);
     if (this.settings.startsAt !== undefined && now >= this.settings.startsAt) await this.startScheduled(now);
     await this.scheduleAlarm();
   }
@@ -759,6 +789,7 @@ export class Room extends DurableObject<Env> {
     if (this.waits.waitingSince !== null) times.push(this.waits.waitingSince + WAIT_MAX_MS + 50);
     if (this.emptySince !== null) times.push(this.emptySince + this.emptyTtl());
     if (this.settings.startsAt !== undefined) times.push(this.settings.startsAt);
+    for (const table of this.tables) if (table.emptyAt !== null) times.push(table.emptyAt + TABLE_EMPTY_MS);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -844,8 +875,11 @@ export class Room extends DurableObject<Env> {
    * (Kısa kopmalarda, ör. sayfa yenileme, oynamaya devam eder.)
    */
   private async freezeIfLongEmpty(): Promise<void> {
-    // Herkes çıkıp bir dakikadan uzun boş kalan odada açık oyun da biter (dönen kişi eski oyunu bulmasın).
-    if (this.game && this.emptySince !== null && Date.now() - this.emptySince >= FREEZE_AFTER_MS) await this.clearGame();
+    // Herkes çıkıp bir dakikadan uzun boş kalan odada açık oyunlar da biter (dönen kişi eski oyunu bulmasın).
+    if (this.tables.length && this.emptySince !== null && Date.now() - this.emptySince >= FREEZE_AFTER_MS) {
+      this.tables = [];
+      await this.ctx.storage.put('tables', this.tables);
+    }
     const state = this.room.state;
     if (this.emptySince === null || state.paused || !state.item || Date.now() - this.emptySince < FREEZE_AFTER_MS) return;
     const position = expectedPosition(state, this.emptySince);
@@ -955,7 +989,8 @@ export class Room extends DurableObject<Env> {
       pins: this.currentPins(),
       voice: this.env.VOICE !== 'off',
       voiceMode: realtimeConfig(this.env) ? 'sfu' : 'p2p',
-      ...(this.game ? { game: this.game.game } : {}),
+      ...(this.tables.length ? { game: this.tables.at(-1)!.game } : {}),
+      tables: this.tables.map((t) => t.game),
     });
     // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
     // The person who added an emoji gets `mine` so they can remove it after a reload (the owner key itself never leaves).
@@ -1042,26 +1077,91 @@ export class Room extends DurableObject<Env> {
   }
 
   /**
-   * Odada oyun aç (`kind`) ya da bitir (`null`). Aynı anda tek oyun: açık oyunu sadece açan ya da yönetici
-   * değiştirir/bitirir. Oyunun kendisi ayrı nesnede (Game/Draw/Quiz) yeni bir kimlikle yürür.
+   * Opens a game table (at most MAX_TABLES; the game itself runs in its own object under a new id). One table per
+   * person: opening another replaces my old one if nobody else has it open, otherwise `table_own`.
    */
-  private async setGame(ws: WebSocket, attachment: Attachment, me: Member, kind: RoomGameKind | null): Promise<void> {
-    const mine = this.game !== null && (this.game.owner === keyOf(attachment) || this.isHost(ws));
-    if (this.game && !mine) return this.sendTo(ws, { t: 'error', code: kind ? 'game_busy' : 'not_host' });
-    if (!kind) {
-      if (!this.game) return;
-      await this.clearGame(me);
-      return;
+  private async openTable(ws: WebSocket, attachment: Attachment, me: Member, kind: RoomGameKind): Promise<void> {
+    const key = keyOf(attachment);
+    const old = this.tables.find((t) => t.owner === key);
+    if (old) {
+      const others = this.joined().some((a) => a.table === old.game.id && keyOf(a) !== key);
+      if (others) return this.sendTo(ws, { t: 'error', code: 'table_own' });
+      this.dropTable(old.game.id);
     }
-    this.game = { game: { kind, id: newId(), by: me, at: Date.now() }, owner: keyOf(attachment) };
-    await this.ctx.storage.put('game', this.game);
-    this.broadcast({ t: 'game', game: this.game.game });
+    if (this.tables.length >= MAX_TABLES) return this.sendTo(ws, { t: 'error', code: 'tables_full' });
+    const game: RoomGame = { kind, id: newId(), by: me, at: Date.now() };
+    // Counts as empty until someone opens it (the opener does at once).
+    this.tables.push({ game, owner: key, emptyAt: Date.now() });
+    await this.saveTables();
+    this.broadcast({ t: 'tables', tables: this.tables.map((t) => t.game), opened: game.id, by: me });
+    // Old clients follow the newest table.
+    this.broadcast({ t: 'game', game });
   }
 
-  private async clearGame(by?: Member): Promise<void> {
-    this.game = null;
-    await this.ctx.storage.delete('game');
-    this.broadcast(by ? { t: 'game', game: null, by } : { t: 'game', game: null });
+  /** Closes a table: its opener or the host. People at it are sent back (their clients close the game). */
+  private async closeTable(ws: WebSocket, attachment: Attachment, me: Member, id: string): Promise<void> {
+    const table = this.tables.find((t) => t.game.id === id);
+    if (!table) return;
+    if (table.owner !== keyOf(attachment) && !this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+    this.dropTable(id);
+    await this.saveTables();
+    this.broadcast({ t: 'tables', tables: this.tables.map((t) => t.game), closed: id, by: me });
+    this.broadcast(this.tables.length ? { t: 'game', game: this.tables.at(-1)!.game } : { t: 'game', game: null, by: me });
+    this.broadcast(this.membersMessage());
+  }
+
+  /** Removes a table and the "at this table" marks (without saving or telling anyone). */
+  private dropTable(id: string): void {
+    this.tables = this.tables.filter((t) => t.game.id !== id);
+    for (const socket of this.openSockets()) {
+      const a = socket.deserializeAttachment() as Attachment | null;
+      if (a?.table !== id) continue;
+      delete a.table;
+      socket.serializeAttachment(a);
+    }
+  }
+
+  /** "I have this table open" (or none): shown in the hub; a table nobody has open closes after TABLE_EMPTY_MS. */
+  private async setAt(ws: WebSocket, attachment: Attachment, table: string | null): Promise<void> {
+    if (table !== null && !this.tables.some((t) => t.game.id === table)) return;
+    if ((attachment.table ?? null) === table) return;
+    if (table === null) delete attachment.table;
+    else attachment.table = table;
+    ws.serializeAttachment(attachment);
+    this.broadcast(this.membersMessage());
+    await this.markEmptyTables();
+  }
+
+  /** Updates when each table became empty (nobody has it open); saves and re-arms the alarm when that changed. */
+  private async markEmptyTables(except?: WebSocket): Promise<void> {
+    const used = new Set(this.joined(except).flatMap((a) => (a.table ? [a.table] : [])));
+    let changed = false;
+    for (const table of this.tables) {
+      const emptyAt = used.has(table.game.id) ? null : (table.emptyAt ?? Date.now());
+      if (emptyAt !== table.emptyAt) {
+        table.emptyAt = emptyAt;
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    await this.saveTables();
+    await this.scheduleAlarm();
+  }
+
+  /** Closes tables nobody has had open for TABLE_EMPTY_MS. */
+  private async closeEmptyTables(now: number): Promise<void> {
+    const old = this.tables.filter((t) => t.emptyAt !== null && now - t.emptyAt >= TABLE_EMPTY_MS);
+    if (!old.length) return;
+    for (const table of old) {
+      this.dropTable(table.game.id);
+      this.broadcast({ t: 'tables', tables: this.tables.map((t) => t.game), closed: table.game.id });
+    }
+    await this.saveTables();
+    this.broadcast(this.tables.length ? { t: 'game', game: this.tables.at(-1)!.game } : { t: 'game', game: null });
+  }
+
+  private async saveTables(): Promise<void> {
+    await this.ctx.storage.put('tables', this.tables);
   }
 
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa (bağlantı başına; herkese `members` gider). */
@@ -1516,6 +1616,7 @@ export class Room extends DurableObject<Env> {
       }
     }
     this.broadcast(this.membersMessage(leaving), leaving);
+    if (attachment?.table) await this.markEmptyTables(leaving);
     // Yönetici çıktıysa geçici yönetici listeyi alsın.
     this.sendBans(leaving);
     // Beklenen kişi çıktıysa oda beklemeyi bıraksın.
@@ -1594,7 +1695,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

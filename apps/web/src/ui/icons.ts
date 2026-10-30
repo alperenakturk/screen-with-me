@@ -17,6 +17,16 @@ export type IconName =
   | 'pin'
   | 'skip'
   | 'fs-exit'
+  | 'gamepad'
+  | 'game-xox'
+  | 'game-four'
+  | 'game-draw'
+  | 'game-quiz'
+  | 'game-poker'
+  | 'place-side'
+  | 'place-float'
+  | 'place-stage'
+  | 'place-below'
   | 'fs-enter'
   | 'image-add';
 
@@ -70,6 +80,47 @@ const ICONS: Record<IconName, Shape[]> = {
     ['line', { x1: 16.5, y1: 5.5, x2: 22.5, y2: 5.5 }],
   ],
   leave: [['path', { d: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3' }], ['path', { d: 'M10 17l-5-5 5-5' }], ['line', { x1: 5, y1: 12, x2: 15, y2: 12 }]],
+  // The games hub (0.9.91.8): the pad and one icon per game.
+  gamepad: [
+    ['path', { d: 'M7 7h10a5 5 0 0 1 5 5l.5 4a3 3 0 0 1-5.3 2.2L15.5 16h-7l-1.7 2.2A3 3 0 0 1 1.5 16l.5-4a5 5 0 0 1 5-5z' }],
+    ['line', { x1: 6.5, y1: 10.5, x2: 6.5, y2: 13.5 }],
+    ['line', { x1: 5, y1: 12, x2: 8, y2: 12 }],
+    ['circle', { cx: 16.5, cy: 11, r: 0.6 }],
+    ['circle', { cx: 18, cy: 13, r: 0.6 }],
+  ],
+  'game-xox': [
+    ['line', { x1: 9, y1: 3, x2: 9, y2: 21 }],
+    ['line', { x1: 15, y1: 3, x2: 15, y2: 21 }],
+    ['line', { x1: 3, y1: 9, x2: 21, y2: 9 }],
+    ['line', { x1: 3, y1: 15, x2: 21, y2: 15 }],
+    ['path', { d: 'M4.5 4.5l3 3M7.5 4.5l-3 3' }],
+    ['circle', { cx: 18, cy: 18, r: 1.6 }],
+  ],
+  'game-four': [
+    ['rect', { x: 3, y: 4, width: 18, height: 14, rx: 2.5 }],
+    ['circle', { cx: 8, cy: 9, r: 1.6 }],
+    ['circle', { cx: 8, cy: 13, r: 1.6 }],
+    ['circle', { cx: 12, cy: 13, r: 1.6 }],
+    ['circle', { cx: 16, cy: 13, r: 1.6 }],
+    ['line', { x1: 6, y1: 18, x2: 5, y2: 21 }],
+    ['line', { x1: 18, y1: 18, x2: 19, y2: 21 }],
+  ],
+  'game-draw': [['path', { d: 'M15.5 4.5l4 4L9 19l-5 1 1-5z' }], ['line', { x1: 13, y1: 7, x2: 17, y2: 11 }]],
+  'game-quiz': [
+    ['path', { d: 'M4.5 4.5h15A1.5 1.5 0 0 1 21 6v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5v-3.5h-2A1.5 1.5 0 0 1 3 15V6a1.5 1.5 0 0 1 1.5-1.5z' }],
+    ['path', { d: 'M10 9a2 2 0 1 1 2.8 1.8c-.6.3-.8.7-.8 1.2' }],
+    ['line', { x1: 12, y1: 14, x2: 12, y2: 14.2 }],
+  ],
+  // Where the game window sits: next to the video, floating over it, in its place, under it (phones).
+  'place-side': [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['line', { x1: 14, y1: 5, x2: 14, y2: 19 }]],
+  'place-float': [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['rect', { x: 12, y: 11, width: 7, height: 6, rx: 1 }]],
+  'place-stage': [['path', { d: 'M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4' }]],
+  'place-below': [['rect', { x: 5, y: 3, width: 14, height: 18, rx: 2 }], ['line', { x1: 5, y1: 10, x2: 19, y2: 10 }]],
+  // Life poker: a heart on a card.
+  'game-poker': [
+    ['rect', { x: 5, y: 3, width: 14, height: 18, rx: 2.5 }],
+    ['path', { d: 'M12 16s-3.5-2.2-3.5-4.6A1.9 1.9 0 0 1 12 10.3a1.9 1.9 0 0 1 3.5 1.1C15.5 13.8 12 16 12 16z' }],
+  ],
 };
 
 const NS = 'http://www.w3.org/2000/svg';
