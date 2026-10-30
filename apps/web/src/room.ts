@@ -2351,7 +2351,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Arayüz parçaları ----
   function displayName(member: Member): string {
-    const name = withAvatar(member);
+    // A paired TV is its person on another screen: marked so it doesn't read as a second person.
+    const name = `${withAvatar(member)}${member.tv ? ' 📺' : ''}`;
     return member.id === myId ? `${name} (${t('you')})` : name;
   }
 

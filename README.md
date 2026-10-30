@@ -59,6 +59,7 @@ for everyone. Chat, reactions, pins and a shared queue sit around the video.
 | 📊 **Session recap** | A playful set of cards about the session (time watched, videos, chattiest person, favorite emoji…) with a downloadable image; recaps can be saved for later. |
 | ⏰ **Film time** | Plan when the film starts: one tap for "in 15 / 30 / 60 minutes" or "tonight 9 pm", or pick any date and time. Everyone sees a countdown, the video starts for everyone at once, and you can copy an invite that says the time. |
 | 📱 **Made for phones** | On a phone the room works like an app: the video stays at the top, the chat scrolls below it with its message box always on screen, and while something plays the link box folds into a ＋ button. Menus (emojis, speed, games, share, profile, a person's menu) slide up from the bottom. Fullscreen works on iPhone too, and turning the phone sideways while a video plays fills the screen (upright brings the room back; can be turned off in Settings). Shorts open in their own view by themselves, fit the screen and scroll with a swipe; cameras sit in a row you can swipe through. Everything except film pages (they need the extension on a computer) works on a phone. |
+| 📺 **On the TV** | Open the site in your TV's browser (Google TV with a browser app, Fire TV, a smart TV's own browser) at `/tv`: it shows a 6-digit code and a QR. Press **📺 TV** in the room on your phone and type the code (or scan the QR), and the TV joins as you. The TV shows the video full screen, messages and emojis big, the faces of everyone in the room with a green ring around whoever is talking, and the voices of the people in voice. The remote only needs the basics: OK opens big buttons (play / pause, emojis, messages on / off, voice volume, disconnect), ▲ opens the emojis, Back closes. Your phone becomes the TV's remote: hold the big button to talk (TVs have no microphone for web pages, and the phone's microphone would hear the TV's speakers, so it is only on while you hold it), camera, typing, voice in / out; with earphones, tick "Earphones in" for an open mic. `/tv-test` checks what a TV's browser can do. |
 | 📱 **Add to home screen** | The website can be installed as an app on phones and computers ("Add to Home Screen" / the install icon in the address bar). It always loads the latest version; when you are offline it says so. |
 | 🎮 **PlayWithMe** | Games inside the room, no separate game room: press 🎮 under the video and pick tic-tac-toe, Four in a Row (two players), Draw & Guess or a general-knowledge quiz (2–8). The game opens in place of the video; everyone else gets a "Join" card, and "Back to video" brings the film back while the game keeps going. |
 | 🏠 **Back to the room** | When someone leaves the film page for the room, the others get a small "go back too?" card. |
@@ -163,8 +164,7 @@ Locally: `npx wrangler login` once, then `npm run deploy`.
 
 ## 🗺️ What's next
 
-Chrome Web Store release, a TV version (the TV shows the room, a phone is its remote; check a TV browser now at
-`/tv-test`), more games, a short domain, Firefox.
+Chrome Web Store release, more games, a short domain, Firefox.
 
 ## 📄 License & privacy
 

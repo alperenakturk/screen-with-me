@@ -377,10 +377,36 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   a phone fit 100dvh (bigger video, send ➤, 🔁 without text). Touch: inputs ≥ 16 px (no iOS zoom), `touch-action:
   manipulation`, push-to-talk hidden, footer ad-block tip hidden; viewport `viewport-fit=cover,
   interactive-widget=resizes-content` + safe-area paddings. Test: `scripts/harness/phone/run.cjs` (iPhone 13 /
-  Pixel 7 emulation, 19 checks). **TV version (owner chose A + C, 30 Oct 2026; being built):** the TV
-  shows the room, the paired phone is its remote (`docs/internal/tv-design.md` "Decision"). **TV test (0.9.91.4,
-  `tv-test.ts`, `/tv-test`):** connection, YouTube, hearing voice (local WebRTC loopback), mic, sound, fullscreen and
-  the remote's key names (Back caught via `popstate`); nothing stored.
+  Pixel 7 emulation, 19 checks). **TV version:** see "TV version" below.
+- **TV version (owner chose A + C, 30 Oct 2026; 0.9.91.4–0.9.91.5, `docs/internal/tv-design.md`):** the TV shows the
+  room, the paired phone is its remote. **Pairing:** `/tv` (`tv.ts`) picks a random 6-digit code (`TV_CODE`), shows
+  it big + a QR (`packages/shared/src/qr.ts`, in-house encoder, byte mode, level M, versions 1–6) of
+  `/tv/<code>`, and waits on `/api/tv/<code>/ws` (Durable Object `TvLink`, binding `TVLINKS`, migration `v5`, nothing
+  stored, 10 min then a new code; a second TV with the same code gets `taken`). A phone in the room sends
+  `{t:'tv-link', code}` ("📺 TV" button in the top bar → dialog, or `/tv/<code>` from the QR → pick a room →
+  `sessionStorage` `tvPair` → sent after `welcome`); the room makes a link token (`TV_TOKEN`, storage `tvTokens`:
+  person key + name + avatar, 12 h after last use, at most 50) and posts it to the `TvLink`, which hands
+  `{t:'paired', room, token}` to the TV (`localStorage` `tvLink`) → `/r/<room>?tv=1`. The Worker passes the room its
+  own id (`X-SWM-Room`). **The TV is the same person:** `hello.tv` = token → the server gives the connection the
+  person's cid (never sent), name and avatar, `Member.tv = true` (host rights, kicks, counted once; a rename on the
+  phone renames the TV; `tv_token` error → back to `/tv`). Phone ⇄ TV: `{t:'tv', op}` (`TV_OPS`: unlink, chat,
+  volume, voice, play, state) relayed only between the person's TV and their other connections; the server sends the
+  phone `present` true / false and `linked`. **TV mode** (`ui/tv-room.ts`, `tv.css`, `html.tv-mode`): the theater is
+  pinned in the room's own fullscreen (`fullscreen.pin()`), top bar / side / dock / our bar hidden; faces at the top
+  (people, not connections; green ring in voice, breathing ring while speaking via `voice.speakers()`), messages big
+  at the bottom right (`tv-no-chat` hides them), a note when nothing plays or a film page (can't play on a TV). Keys
+  in the capture phase (the room's own shortcuts never see them): OK = bar (⏯, 😀, 💬 on/off, 🔊 100/70/40/0 %, 🎧
+  listen on/off, 🚪), ▲ = emojis, ←/→ move, Back (Escape, GoBack, key codes 4/8/27/461/10009 or `popstate`) closes /
+  asks "leave?", media play/pause keys toggle. The first key press starts voice audio (autoplay). The TV joins voice
+  **listen-only** (`P2pVoice.join(false, true)`: a `recvonly` audio channel, no getUserMedia) while someone other than
+  me is in voice; p2p mode only. **Phone remote** (`ui/tv-remote.ts`): card at the top of the side (sticky on
+  upright phones) while my TV is present: big push-to-talk (the microphone is off between presses, the phone plays
+  no voices: `voice.silence`), leave voice, camera, play/pause, TV messages / volume / listening, "Kulaklık takılı"
+  (`tv:earphones`: open mic, voices on the phone), "TV'yi ayır" (`unlink` also drops the tokens); my own player is
+  muted (`mutedForTv`). **TV test (0.9.91.4, `tv-test.ts`, `/tv-test`):** connection, YouTube, hearing voice (local
+  WebRTC loopback), mic, sound, fullscreen and the remote's key names; nothing stored. Tests: e2e `tv.mjs`, harness
+  `scripts/harness/tv/run.cjs` (TV 1920×1080 + iPhone + a friend in voice, 32 checks; needs the built site on a
+  server and a local video, e.g. `python3 -m http.server 5300` in a folder with `video.webm`).
 - **Sound effects (0.9.90.2, owner's choice on the proposal page https://claude.ai/artifact/SPrx6qse6qiKJGJCynqdfy):**
   no files, generated with Web Audio. `packages/shared/src/sound-policy.ts` (pure, `sound-policy.test.ts`): the
   registry `SOUNDS` (group voice / room / game, level, per-sound `gap`, `softDuringFilm`), families by group (voice +

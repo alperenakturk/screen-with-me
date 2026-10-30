@@ -129,6 +129,8 @@ export function createTvRemote(deps: TvRemoteDeps) {
     ptt.textContent = voice.active ? t('tv.pttHold') : t('tv.pttJoin');
     ptt.classList.toggle('idle', !voice.active);
     join.textContent = voice.active ? `🔇 ${t('tv.voiceLeave')}` : `🎙 ${t('tv.voiceJoin')}`;
+    // Not in voice: the big button joins (no second "join" button); in voice this one leaves.
+    join.hidden = !voice.active && !earphones;
     cam.textContent = voice.cam ? `📷 ${t('tv.camOff')}` : `📷 ${t('tv.camOn')}`;
     cam.disabled = !voice.active;
     play.textContent = `⏯ ${t('tv.play')}`;

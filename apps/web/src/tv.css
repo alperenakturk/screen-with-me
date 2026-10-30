@@ -456,8 +456,8 @@ html.tv-pair-page .footer {
 }
 
 .tv-ptt {
-  width: 112px;
-  height: 112px;
+  width: 96px;
+  height: 96px;
   border: 0;
   border-radius: 50%;
   background: radial-gradient(circle, #3ddc84, #1c5e3d);
@@ -489,13 +489,20 @@ html.tv-pair-page .footer {
 
 .tv-r-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
 .tv-ptt[hidden] + .tv-r-grid {
   grid-column: 1 / -1;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tv-r-btn[hidden] {
+  display: none;
+}
+
+.tv-remote {
+  padding: 10px 12px;
 }
 
 .tv-r-btn {

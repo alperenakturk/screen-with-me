@@ -67,7 +67,7 @@ implement, test, ship.
 - [ ] **(added)** Performance budget: first load size, room join time (< 30 s from link to watching), CPU while
   watching (extension), memory on long sessions.
 - [ ] **(added)** Help / FAQ page on the site (TR + EN): how it works, extension permissions explained, troubleshooting.
-- [ ] **TV version (owner, 29 Oct 2026: "we will build it before 1.0"):** a basic room for TV browsers (Google TV via
+- [x] **TV version (owner, 29 Oct 2026: "we will build it before 1.0"; A + C built in 0.9.91.4–0.9.91.5, real-TV test by the owner pending):** a basic room for TV browsers (Google TV via
   TV Bro and similar): join, voice in / out, talk or type, emojis. Designs A–D in `docs/internal/tv-design.md`
   (proposal https://claude.ai/artifact/MQkQqMfTreT9YFEfgyjmbc); the owner picks one, then: TV test page → TV room +
   code / QR pairing → phone remote. Paused for now (owner).
