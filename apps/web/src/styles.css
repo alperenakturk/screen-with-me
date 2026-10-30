@@ -5704,7 +5704,8 @@ html.shorts-view .footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
+  overflow-y: auto;
   gap: 12px;
   padding: 20px;
   text-align: center;
@@ -5719,6 +5720,11 @@ html.shorts-view .footer {
 .draw-overlay h3 {
   margin: 0;
   font-size: 24px;
+}
+
+.draw-overlay .game-settings {
+  padding: 8px 10px;
+  gap: 6px;
 }
 
 .draw-overlay p {
@@ -6079,6 +6085,260 @@ html.shorts-view .footer {
 
 .quiz-medal {
   font-size: 24px;
+}
+
+/* ---- Shared game pieces (games/ui.ts): host settings and the podium ---- */
+.game-settings {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 460px);
+  padding: 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.game-setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.game-setting-label {
+  min-width: 110px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.game-setting-value {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.game-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.game-chip {
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: 600 14px/1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.game-chip:hover {
+  border-color: var(--accent);
+}
+
+.game-chip.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.game-setting-select {
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: 600 14px inherit;
+  font-family: inherit;
+}
+
+.game-setting-note {
+  margin: 2px 0 0;
+}
+
+.game-podium {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 110px));
+  align-items: end;
+  justify-content: center;
+  gap: 8px;
+}
+
+.game-podium li {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+
+.game-podium li b {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.game-podium-avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-size: 28px;
+  overflow: hidden;
+}
+
+.game-podium-avatar img {
+  width: 100%;
+  height: 100%;
+}
+
+.place-1 .game-podium-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 36px;
+  box-shadow: 0 0 0 3px var(--warn);
+}
+
+.game-podium-score {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.game-podium-step {
+  display: grid;
+  place-items: end center;
+  width: 100%;
+  border-radius: 10px 10px 0 0;
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
+  font-size: 22px;
+  padding-bottom: 6px;
+}
+
+.place-1 .game-podium-step {
+  height: 72px;
+  background: color-mix(in srgb, var(--warn) 30%, var(--surface-2));
+}
+
+.place-2 .game-podium-step {
+  height: 52px;
+}
+
+.place-3 .game-podium-step {
+  height: 38px;
+}
+
+/* ---- Quiz extras: topic, joker, streaks, true / false ---- */
+.quiz-cat {
+  justify-self: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quiz-cat:empty {
+  display: none;
+}
+
+.quiz-top-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quiz-joker {
+  min-height: 34px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--warn);
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
+  color: var(--text);
+  font: 800 13px inherit;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.quiz-joker:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.quiz-option.gone {
+  opacity: 0.18;
+  filter: grayscale(1);
+}
+
+.quiz-options.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quiz-streak,
+.quiz-joker-used {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--warn);
+}
+
+.quiz-joker-used {
+  color: var(--muted);
+}
+
+.quiz-rules,
+.draw-rules {
+  max-width: 520px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.quiz-body .quiz-center {
+  justify-content: safe center;
+}
+
+/* ---- Draw & Guess: this round's points ---- */
+.draw-gains {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  width: min(100%, 320px);
+}
+
+.draw-gains li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.08);
+  text-align: left;
+}
+
+.draw-gains li.drawer {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.draw-gains b {
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---- Oda içi oyun sahnesi: oyun videonun yerinde açılır (kabukta adacık); telefonda bütün ekranı kaplar ---- */

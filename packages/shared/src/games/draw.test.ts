@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DRAW_WORDS } from './draw-words.ts';
-import { DRAW_ROUND_MS, cleanStroke, guessPoints, isClose, isCorrect, maskWord, parseDrawMessage, revealOrder, revealTimes } from './draw.ts';
+import { DRAW_ROUND_MS, cleanStroke, isClose, isCorrect, maskWord, parseDrawMessage, revealOrder, revealTimes } from './draw.ts';
 
 describe('Çiz-Bil kuralları', () => {
   it('tahmin: büyük/küçük harf, Türkçe harfler ve boşluklar önemsiz', () => {
@@ -32,12 +32,6 @@ describe('Çiz-Bil kuralları', () => {
     expect(revealTimes(1000, 2)).toEqual([1000 + DRAW_ROUND_MS * 0.4, 1000 + DRAW_ROUND_MS * 0.6]);
   });
 
-  it('puan: erken bilen çok alır', () => {
-    expect(guessPoints(DRAW_ROUND_MS)).toBe(150);
-    expect(guessPoints(0)).toBe(50);
-    expect(guessPoints(DRAW_ROUND_MS / 2)).toBe(100);
-  });
-
   it('mesaj doğrulama', () => {
     expect(cleanStroke({ c: 0, w: 1, p: [0, 0, 1000, 750] })).toEqual({ c: 0, w: 1, p: [0, 0, 1000, 750] });
     expect(cleanStroke({ c: 99, w: 1, p: [0, 0] })).toBeNull();
@@ -47,6 +41,8 @@ describe('Çiz-Bil kuralları', () => {
     expect(parseDrawMessage(JSON.stringify({ t: 'guess', text: '   ' }))).toBeNull();
     expect(parseDrawMessage(JSON.stringify({ t: 'choose', index: 3 }))).toBeNull();
     expect(parseDrawMessage(JSON.stringify({ t: 'hello', v: 1, name: 'Ali', lang: 'xx' }))).toEqual({ t: 'hello', v: 1, name: 'Ali' });
+    expect(parseDrawMessage(JSON.stringify({ t: 'settings', lang: 'en', rounds: 3 }))).toEqual({ t: 'settings', lang: 'en', rounds: 3 });
+    expect(parseDrawMessage(JSON.stringify({ t: 'settings', rounds: 9 }))).toBeNull();
   });
 
   it('kelime listeleri: tekrar yok, kısa ve dolu', () => {

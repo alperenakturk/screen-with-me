@@ -1,13 +1,17 @@
-// Odanın içindeki Bilgi yarışması (oyun sahnesinde): soru, dört şık (2×2), süre çubuğu, oyuncular ve puanlar;
-// açıklamada doğru şık yeşil, kimin neyi seçtiği şıkların altında küçük avatarlarla; sonda kürsü.
+// The in-room Quiz (on the game stage): question, four options (2×2) or true / false, timer bar, players and
+// points; the reveal shows the right option and who picked what (small avatars), then a podium. In the lobby the
+// host picks the language, topic and length; everyone has one 50:50 joker per game.
 
 import {
   QUIZ_ANSWER_MS,
+  QUIZ_CATEGORIES,
+  QUIZ_COUNTS,
   QUIZ_MAX_PLAYERS,
   QUIZ_PROTOCOL_VERSION,
   QUIZ_REVEAL_MS,
   type QuizClientMessage,
   type QuizServerMessage,
+  type QuizTopic,
 } from '@swm/shared/games/quiz';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
@@ -15,6 +19,7 @@ import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
+import { langChoices, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -27,8 +32,11 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         <section class="card quiz-main">
           <div class="draw-top">
             <span id="quiz-n" class="muted small"></span>
-            <span></span>
-            <span id="quiz-timer" class="draw-timer"></span>
+            <span id="quiz-cat" class="quiz-cat"></span>
+            <span class="quiz-top-right">
+              <button id="quiz-joker" type="button" class="quiz-joker" hidden></button>
+              <span id="quiz-timer" class="draw-timer"></span>
+            </span>
           </div>
           <div class="draw-bar" aria-hidden="true"><i id="quiz-time"></i></div>
           <div id="quiz-body" class="quiz-body" aria-live="polite"></div>
@@ -46,6 +54,12 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let offset = 0;
   /** Bu soruda benim seçtiğim (sunucu açıklamaya kadar söylemez). */
   let myPick: { n: number; pick: number } | null = null;
+  /** Options my 50:50 hid on question `n`. */
+  let fifty: { n: number; hide: number[] } | null = null;
+  const joker = $<HTMLButtonElement>('#quiz-joker');
+  joker.addEventListener('click', () => {
+    if (state?.phase === 'question') send({ t: 'joker', n: state.n });
+  });
   /** The previous state (sounds play on changes only: joining mid-game is quiet). */
   let lastKey = '';
   let lastTick = 0;
@@ -76,11 +90,21 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
             avatarNode(p.avatar, 'draw-avatar'),
             el('span', { class: 'draw-pname' }, p.id === me ? `${p.name} (${t('games.you')})` : p.name),
             el('span', { class: 'draw-badge', 'aria-hidden': 'true' }, s.phase === 'question' && p.answered ? '✅' : s.phase === 'reveal' && p.gained ? `+${p.gained}` : ''),
+            p.streak >= 2 && s.phase !== 'lobby' ? el('span', { class: 'quiz-streak', title: t('quiz.streak', { n: p.streak }) }, `🔥${p.streak}`) : null,
+            p.joker && s.phase !== 'lobby' && s.phase !== 'over' ? el('span', { class: 'quiz-joker-used', title: t('quiz.joker') }, '½') : null,
             el('b', { class: 'draw-score' }, String(p.score)),
           ),
         ),
     );
     $('#quiz-n').textContent = s.phase === 'lobby' ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: QUIZ_MAX_PLAYERS }) : s.phase === 'over' ? '' : t('quiz.n', { n: s.n, total: s.total });
+    $('#quiz-cat').textContent = s.cat && (s.phase === 'question' || s.phase === 'reveal') ? t(`quiz.cat.${s.cat}`) : '';
+    // The joker: only while I can still answer a four-option question.
+    const asking = s.phase === 'question' && (s.options?.length ?? 0) === 4;
+    const answeredNow = (myPick && myPick.n === s.n) || !!mine?.answered;
+    joker.hidden = !asking || !mine;
+    joker.disabled = !!mine?.joker || !!answeredNow;
+    joker.textContent = `½ ${t('quiz.joker')}`;
+    joker.title = mine?.joker ? t('quiz.jokerUsed') : t('quiz.jokerTitle');
 
     if (s.phase === 'lobby' || s.phase === 'over') {
       const online = s.players.filter((p) => p.online).length;
@@ -88,26 +112,31 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       go.disabled = online < 2;
       go.addEventListener('click', () => send({ t: 'start' }));
       const parts: HTMLElement[] = [];
-      if (s.phase === 'over') {
-        // Kürsü: ilk üç.
-        const top = [...s.players].sort((a, b) => b.score - a.score).slice(0, 3);
-        parts.push(
-          el('h3', {}, t('quiz.over')),
-          el(
-            'ol',
-            { class: 'quiz-podium' },
-            ...top.map((p, i) => el('li', { class: `place-${i + 1}` }, el('span', { class: 'quiz-medal', 'aria-hidden': 'true' }, ['🥇', '🥈', '🥉'][i]!), avatarNode(p.avatar, 'draw-avatar'), el('b', {}, p.name), el('span', {}, String(p.score)))),
-          ),
-        );
-      } else parts.push(el('h3', {}, t('games.quiz.title')), el('p', {}, t('quiz.rules')));
+      if (s.phase === 'over') parts.push(el('h3', {}, t('games.over')), podium(s.players));
+      else parts.push(el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, t('quiz.rules', { count: s.count })));
+      const host = s.players.find((p) => p.id === s.host);
+      const topics: QuizTopic[] = ['mix', ...QUIZ_CATEGORIES];
+      parts.push(
+        settingsPanel(
+          [
+            { label: t('games.lang'), value: s.lang, choices: langChoices, pick: (lang) => send({ t: 'settings', lang: lang as 'tr' | 'en' }) },
+            { label: t('quiz.topic'), value: s.topic, select: true, choices: topics.map((topic) => ({ value: topic, label: t(`quiz.cat.${topic}`) })), pick: (topic) => send({ t: 'settings', topic: topic as QuizTopic }) },
+            { label: t('quiz.count'), value: s.count, choices: QUIZ_COUNTS.map((n) => ({ value: n, label: String(n) })), pick: (count) => send({ t: 'settings', count: count as 5 | 10 | 15 }) },
+          ],
+          s.host === me || !host ? null : host.name,
+        ),
+      );
+      if (s.phase === 'over') go.textContent = t('games.again');
       parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
       body.replaceChildren(el('div', { class: 'quiz-center' }, ...parts));
     } else {
       const reveal = s.phase === 'reveal';
       const picked = myPick && myPick.n === s.n ? myPick.pick : (mine?.pick ?? null);
+      const hidden = fifty && fifty.n === s.n ? fifty.hide : [];
       const options = (s.options ?? []).map((text, i) => {
         const pickers = reveal ? s.players.filter((p) => p.pick === i) : [];
         const cls = ['quiz-option', `opt-${i}`];
+        if (hidden.includes(i)) cls.push('gone');
         if (picked === i) cls.push('picked');
         if (reveal && i === s.correct) cls.push('correct');
         if (reveal && picked === i && i !== s.correct) cls.push('wrong');
@@ -118,7 +147,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
           el('span', { class: 'quiz-text' }, text),
           el('span', { class: 'quiz-pickers' }, ...pickers.map((p) => avatarNode(p.avatar, 'quiz-picker'))),
         );
-        b.disabled = reveal || picked !== null;
+        b.disabled = reveal || picked !== null || hidden.includes(i);
         b.addEventListener('click', () => {
           myPick = { n: s.n, pick: i };
           send({ t: 'answer', n: s.n, pick: i });
@@ -129,14 +158,16 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       });
       const note = reveal
         ? mine?.gained
-          ? t('quiz.right', { points: mine.gained })
+          ? mine.rank
+            ? t('quiz.rightRank', { rank: mine.rank, points: mine.gained })
+            : t('quiz.right', { points: mine.gained })
           : picked === null
             ? t('quiz.late')
             : t('quiz.wrongAnswer')
         : picked !== null
           ? t('quiz.waiting')
           : '';
-      body.replaceChildren(el('h3', { class: 'quiz-question' }, s.question ?? ''), el('div', { class: 'quiz-options' }, ...options), el('p', { class: `quiz-note${reveal && mine?.gained ? ' good' : ''}` }, note));
+      body.replaceChildren(el('h3', { class: 'quiz-question' }, s.question ?? ''), el('div', { class: `quiz-options${options.length === 2 ? ' two' : ''}` }, ...options), el('p', { class: `quiz-note${reveal && mine?.gained ? ' good' : ''}` }, note));
     }
     tick();
   }
@@ -189,7 +220,10 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         me = m.you;
         offset = m.now - Date.now();
       } else if (m.t === 'pong') offset = m.now + (performance.now() - pingAt) / 2 - Date.now();
-      else if (m.t === 'state') {
+      else if (m.t === 'fifty') {
+        fifty = { n: m.n, hide: m.hide };
+        render();
+      } else if (m.t === 'state') {
         state = m;
         render();
       } else if (m.t === 'error' && (m.code === 'version' || m.code === 'full')) {
