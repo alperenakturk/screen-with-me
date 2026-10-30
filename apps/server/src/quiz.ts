@@ -4,17 +4,21 @@ import {
   QUIZ_MAX_PLAYERS,
   QUIZ_PROTOCOL_VERSION,
   QUIZ_QUESTIONS,
+  QUIZ_RECENT,
   QUIZ_REVEAL_MS,
-  answerPoints,
+  fiftyFifty,
   parseQuizMessage,
   pickQuestions,
   type QuizClientMessage,
+  type QuizCount,
   type QuizLang,
   type QuizPhase,
   type QuizPlayer,
   type QuizQuestion,
   type QuizServerMessage,
+  type QuizTopic,
 } from '@swm/shared/games/quiz';
+import { quizPoints } from '@swm/shared/games/scoring';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 
@@ -43,13 +47,38 @@ interface Saved {
   questions: QuizQuestion[];
   /** Şu anki soru (0'dan). */
   index: number;
-  /** Bu sorudaki cevaplar: anahtar → şık ve puan. */
-  answers: Record<string, { pick: number; gained: number }>;
+  /** Bu sorudaki cevaplar: anahtar → şık, puan ve (doğruysa) kaçıncı doğru. */
+  answers: Record<string, { pick: number; gained: number; rank?: number }>;
   endsAt: number | null;
   emptySince: number | null;
+  topic: QuizTopic;
+  count: QuizCount;
+  /** Recently asked bank ids (a rematch asks new ones). */
+  recent: number[];
+  /** Keys that used their 50:50 this game, and what it hid (re-sent after a reconnect). */
+  jokers: string[];
+  fifty: Record<string, { n: number; hide: number[] }>;
+  /** Right answers in a row, per key. */
+  streak: Record<string, number>;
 }
 
-const fresh = (): Saved => ({ phase: 'lobby', lang: 'tr', order: [], people: {}, questions: [], index: 0, answers: {}, endsAt: null, emptySince: null });
+const fresh = (): Saved => ({
+  phase: 'lobby',
+  lang: 'tr',
+  order: [],
+  people: {},
+  questions: [],
+  index: 0,
+  answers: {},
+  endsAt: null,
+  emptySince: null,
+  topic: 'mix',
+  count: QUIZ_QUESTIONS,
+  recent: [],
+  jokers: [],
+  fifty: {},
+  streak: {},
+});
 
 /**
  * Bilgi yarışması odası: lobi → soru (15 sn) → açıklama (4 sn) → … → kürsü. Süreler depo alarmıyla yürür. Doğru şık
@@ -63,7 +92,8 @@ export class Quiz extends DurableObject<Env> {
     super(ctx, env);
     void ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get<Saved>('quiz');
-      if (saved && Array.isArray(saved.order)) this.data = saved;
+      // Older saves lack the newer fields.
+      if (saved && Array.isArray(saved.order)) this.data = { ...fresh(), ...saved };
     });
   }
 
@@ -154,26 +184,61 @@ export class Quiz extends DurableObject<Env> {
     ws.serializeAttachment(me);
     await this.save();
     this.sendTo(ws, { t: 'welcome', you: d.people[key]!.pid, now: Date.now() });
+    const fifty = d.fifty[key];
+    if (d.phase === 'question' && fifty && fifty.n === d.index + 1) this.sendTo(ws, { t: 'fifty', ...fifty });
     this.broadcastState();
+  }
+
+  /** The host: the first player (in arrival order) who is still connected. */
+  private hostKey(except?: WebSocket): string | null {
+    return this.data.order.find((k) => this.online(k, except)) ?? null;
   }
 
   private async apply(ws: WebSocket, key: string, message: QuizClientMessage): Promise<void> {
     const d = this.data;
     switch (message.t) {
+      case 'settings':
+        if (d.phase !== 'lobby' && d.phase !== 'over') return;
+        if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        if (message.lang) d.lang = message.lang;
+        if (message.topic) d.topic = message.topic;
+        if (message.count) d.count = message.count;
+        await this.save();
+        this.broadcastState();
+        return;
       case 'start':
         // Lobide ya da kürsüde (yeni oyun): puanlar sıfırlanır.
         if (d.phase !== 'lobby' && d.phase !== 'over') return;
         if (this.onlineKeys().length < 2) return this.sendTo(ws, { t: 'error', code: 'too_few' });
         for (const person of Object.values(d.people)) person.score = 0;
-        d.questions = pickQuestions(d.lang, QUIZ_QUESTIONS);
+        d.questions = pickQuestions(d.lang, d.count, Math.random, d.topic, d.recent);
+        d.recent = [...d.questions.map((q) => q.id), ...d.recent.filter((id) => !d.questions.some((q) => q.id === id))].slice(0, QUIZ_RECENT);
+        d.jokers = [];
+        d.fifty = {};
+        d.streak = {};
         d.index = -1;
         await this.next();
         return;
+      case 'joker': {
+        if (d.phase !== 'question' || message.n !== d.index + 1 || d.answers[key] || d.jokers.includes(key)) return;
+        const hide = fiftyFifty(d.questions[d.index]!);
+        if (!hide.length) return;
+        d.jokers.push(key);
+        d.fifty[key] = { n: message.n, hide };
+        await this.save();
+        this.sendTo(ws, { t: 'fifty', n: message.n, hide });
+        this.broadcastState();
+        return;
+      }
       case 'answer': {
         if (d.phase !== 'question' || message.n !== d.index + 1 || d.answers[key]) return;
         const q = d.questions[d.index]!;
-        const gained = message.pick === q.correct ? answerPoints((d.endsAt ?? Date.now()) - Date.now()) : 0;
-        d.answers[key] = { pick: message.pick, gained };
+        if (message.pick >= q.options.length || d.fifty[key]?.n === message.n && d.fifty[key]!.hide.includes(message.pick)) return;
+        if (message.pick === q.correct) {
+          const rank = Object.values(d.answers).filter((a) => a.rank).length + 1;
+          const streak = (d.streak[key] ?? 0) + 1;
+          d.answers[key] = { pick: message.pick, gained: quizPoints((d.endsAt ?? Date.now()) - Date.now(), QUIZ_ANSWER_MS, rank, streak), rank };
+        } else d.answers[key] = { pick: message.pick, gained: 0 };
         // Herkes cevapladıysa beklemeden açıkla.
         if (this.onlineKeys().every((k) => d.answers[k])) await this.reveal();
         else {
@@ -207,6 +272,8 @@ export class Quiz extends DurableObject<Env> {
   private async reveal(): Promise<void> {
     const d = this.data;
     for (const [key, answer] of Object.entries(d.answers)) if (d.people[key]) d.people[key]!.score += answer.gained;
+    // Streaks move at the reveal (earlier they would tell who was right): a wrong or missing answer breaks it.
+    for (const key of d.order) d.streak[key] = d.answers[key]?.rank ? (d.streak[key] ?? 0) + 1 : 0;
     d.phase = 'reveal';
     d.endsAt = Date.now() + QUIZ_REVEAL_MS;
     await this.save();
@@ -272,7 +339,9 @@ export class Quiz extends DurableObject<Env> {
         ...(p.avatar ? { avatar: p.avatar } : {}),
         score: p.score,
         answered: !!answer,
-        ...(reveal && answer ? { pick: answer.pick, gained: answer.gained } : {}),
+        ...(reveal && answer ? { pick: answer.pick, gained: answer.gained, ...(answer.rank ? { rank: answer.rank } : {}) } : {}),
+        streak: d.streak[k] ?? 0,
+        joker: d.jokers.includes(k),
         online: this.online(k, except),
       };
     });
@@ -282,11 +351,17 @@ export class Quiz extends DurableObject<Env> {
       phase: d.phase,
       players,
       n: d.phase === 'lobby' ? 0 : Math.min(d.index + 1, d.questions.length),
-      total: d.questions.length || QUIZ_QUESTIONS,
-      ...(q ? { question: q.question, options: q.options } : {}),
+      total: d.questions.length || d.count,
+      ...(q ? { question: q.question, options: q.options, cat: q.cat } : {}),
       ...(q && reveal ? { correct: q.correct } : {}),
       endsAt: d.endsAt,
       lang: d.lang,
+      topic: d.topic,
+      count: d.count,
+      host: (() => {
+        const hk = this.hostKey(except);
+        return hk ? d.people[hk]!.pid : null;
+      })(),
     };
   }
 

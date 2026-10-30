@@ -4,8 +4,8 @@
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'draw' + Math.random().toString(36).slice(2, 8);
 
-function client(name, cid) {
-  const ws = new WebSocket(`${base}/api/draw/${game}/ws`);
+function client(name, cid, id = game) {
+  const ws = new WebSocket(`${base}/api/draw/${id}/ws`);
   const inbox = [];
   let last = null;
   ws.addEventListener('message', (e) => {
@@ -13,7 +13,7 @@ function client(name, cid) {
     inbox.push(m);
     if (m.t === 'state') last = m;
   });
-  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, name, cid, lang: 'tr' })));
+  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 2, name, cid, lang: 'tr' })));
   const wait = async (pred, label, ms = 8000) => {
     for (let i = 0; i < ms / 50; i++) {
       const idx = inbox.findIndex(pred);
@@ -69,12 +69,7 @@ ok(wrong.text === 'yanlış kelime' && wrong.name === 'Ayse', 'Yanlış tahmin h
 ayse.send({ t: 'guess', text: word.toUpperCase() });
 const right = await can.wait((m) => m.t === 'correct', 'correct');
 await sleep(200);
-ok(right.name === 'Ayse' && right.points > 100 && !can.inbox.some((m) => m.t === 'guess' && m.text.toLowerCase() === word), 'Ayşe bildi (puan > 100), kelime kimseye yazılmadı');
-// The scores come with the next state, after the server has saved the guess (on the live server that can take more than
-// 200 ms): wait for it instead of reading the last state at once.
-const scoreOf = () => ali.state.players.find((p) => p.name === 'Ali').score;
-for (let i = 0; i < 60 && scoreOf() !== 25; i++) await sleep(50);
-ok(scoreOf() === 25, 'Çizen her bilen için 25 puan aldı');
+ok(right.name === 'Ayse' && right.rank === 1 && right.points > 150 && !can.inbox.some((m) => m.t === 'guess' && m.text.toLowerCase() === word), 'Ayşe guessed first (#1, > 150 points), the word was shown to nobody');
 
 // Bilenler kendi arasında: Ayşe'nin mesajı Can'a gitmez, Ali'ye gider.
 ayse.send({ t: 'guess', text: 'çok kolaydı' });
@@ -86,11 +81,20 @@ ok(secret.text === 'çok kolaydı' && !can.inbox.some((m) => m.t === 'guess' && 
 const deniz = client('Deniz', 'drawDeniz0001');
 const list = await deniz.wait((m) => m.t === 'strokes', 'late strokes');
 ok(list.list.length === 1, 'Geç gelen o ana kadarki çizimi aldı');
+// Can tries three wrong words first (two are free, the third costs 10 %).
+for (const w of ['xx1', 'xx2', 'xx3']) can.send({ t: 'guess', text: w });
+await sleep(400);
 deniz.send({ t: 'guess', text: word });
-await deniz.wait((m) => m.t === 'correct', 'deniz correct');
+const second = await deniz.wait((m) => m.t === 'correct' && m.name === 'Deniz', 'deniz correct');
+ok(second.rank === 2 && second.points < right.points, 'The second guesser gets less than the first');
 can.send({ t: 'guess', text: word });
+const third = await can.wait((m) => m.t === 'correct' && m.name === 'Can', 'can correct');
+ok(third.rank === 3 && third.points < second.points, 'The third guesser, after three wrong tries, gets less still');
 const reveal = await ayse.wait((m) => m.t === 'state' && m.phase === 'reveal', 'reveal', 6000);
-ok(reveal.word === word, 'Herkes bilince tur bitti, kelime herkese açıklandı');
+ok(reveal.word === word, 'Everyone guessed: the round ended, the word was shown to everyone');
+const drawerGain = reveal.players.find((p) => p.id === wa.you).gained;
+const average = Math.round((right.points + second.points + third.points) / 3);
+ok(drawerGain === average && reveal.players.find((p) => p.id === wa.you).score === drawerGain, 'The drawer got the guessers’ average (everyone guessed)');
 
 // Sıradaki çizen: Ayşe (geliş sırası).
 const next = await ayse.wait((m) => m.t === 'choices', 'next choices', 12000);
@@ -103,4 +107,29 @@ await can.wait((m) => m.t === 'state' && m.phase === 'lobby', 'lobby');
 ok(can.state.players.every((p) => p.score === 0), 'Sıfırla: lobiye dönüldü, puanlar sıfır');
 
 for (const c of [ali, ayse, can, deniz]) c.ws.close();
+
+// A short game: the host picks English and one round each; two turns, then the podium.
+const short = 'draw' + Math.random().toString(36).slice(2, 8);
+const eda = client('Eda', 'drawEda000001', short);
+const ew = await eda.wait((m) => m.t === 'welcome', 'welcome eda');
+const fat = client('Fat', 'drawFat000001', short);
+await fat.wait((m) => m.t === 'welcome', 'welcome fat');
+await sleep(300);
+ok(eda.state.host === ew.you && eda.state.rounds === 2, 'The first player is the host; default: everyone draws twice');
+fat.send({ t: 'settings', rounds: 1 });
+ok((await fat.wait((m) => m.t === 'error', 'not host')).code === 'not_host', 'Only the host changes the settings');
+eda.send({ t: 'settings', rounds: 1, lang: 'en' });
+await fat.wait((m) => m.t === 'state' && m.rounds === 1 && m.lang === 'en', 'settings');
+eda.send({ t: 'start' });
+for (const [drawer, guesser] of [[eda, fat], [fat, eda]]) {
+  const words = await drawer.wait((m) => m.t === 'choices', 'short choices', 12000);
+  ok(words.words.every((w) => /^[a-z ]+$/.test(w)), 'English words');
+  drawer.send({ t: 'choose', index: 0 });
+  await guesser.wait((m) => m.t === 'state' && m.phase === 'draw', 'short draw');
+  guesser.send({ t: 'guess', text: words.words[0] });
+  await guesser.wait((m) => m.t === 'state' && m.phase === 'reveal', 'short reveal');
+}
+const end = await eda.wait((m) => m.t === 'state' && m.phase === 'over', 'over', 12000);
+ok(end.players.every((p) => p.score > 0), 'Everyone drew once: podium');
+for (const c of [eda, fat]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

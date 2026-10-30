@@ -1,12 +1,10 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
-  DRAWER_POINTS,
   DRAW_CHOOSE_MS,
   DRAW_MAX_PLAYERS,
   DRAW_PROTOCOL_VERSION,
   DRAW_REVEAL_MS,
   DRAW_ROUND_MS,
-  guessPoints,
   isClose,
   isCorrect,
   maskWord,
@@ -17,10 +15,12 @@ import {
   type DrawLang,
   type DrawPhase,
   type DrawPlayer,
+  type DrawRounds,
   type DrawServerMessage,
   type Stroke,
 } from '@swm/shared/games/draw';
 import { DRAW_WORDS } from '@swm/shared/games/draw-words';
+import { drawGuessPoints, drawerPoints } from '@swm/shared/games/scoring';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 
@@ -67,6 +67,13 @@ interface Saved {
   revealed: number;
   recent: string[];
   emptySince: number | null;
+  /** How many times everyone draws; then the podium. */
+  rounds: DrawRounds;
+  /** Turns drawn per key in this game. */
+  drawn: Record<string, number>;
+  /** This round: wrong guesses per key, points per key (guessers, then the drawer at the end). */
+  wrong: Record<string, number>;
+  gains: Record<string, number>;
 }
 
 const fresh = (): Saved => ({
@@ -85,6 +92,10 @@ const fresh = (): Saved => ({
   revealed: 0,
   recent: [],
   emptySince: null,
+  rounds: 2,
+  drawn: {},
+  wrong: {},
+  gains: {},
 });
 
 /**
@@ -103,7 +114,8 @@ export class Draw extends DurableObject<Env> {
     super(ctx, env);
     void ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get<Saved>('draw');
-      if (saved && Array.isArray(saved.order)) this.data = saved;
+      // Older saves lack the newer fields.
+      if (saved && Array.isArray(saved.order)) this.data = { ...fresh(), ...saved };
     });
   }
 
@@ -217,12 +229,29 @@ export class Draw extends DurableObject<Env> {
     this.broadcastState();
   }
 
+  /** The host: the first player (in arrival order) who is still connected. */
+  private hostKey(except?: WebSocket): string | null {
+    return this.data.order.find((k) => this.online(k, except)) ?? null;
+  }
+
   private async apply(ws: WebSocket, key: string, message: DrawClientMessage): Promise<void> {
     const d = this.data;
     switch (message.t) {
+      case 'settings':
+        if (d.phase !== 'lobby' && d.phase !== 'over') return;
+        if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        if (message.lang) d.lang = message.lang;
+        if (message.rounds) d.rounds = message.rounds;
+        await this.save();
+        this.broadcastState();
+        return;
       case 'start':
-        if (d.phase !== 'lobby') return;
+        if (d.phase !== 'lobby' && d.phase !== 'over') return;
         if (this.onlineKeys().length < 2) return this.sendTo(ws, { t: 'error', code: 'too_few' });
+        for (const person of Object.values(d.people)) person.score = 0;
+        d.drawn = {};
+        d.round = 0;
+        d.drawer = null;
         await this.nextRound();
         return;
       case 'choose':
@@ -247,7 +276,7 @@ export class Draw extends DurableObject<Env> {
         await this.guess(ws, key, message.text);
         return;
       case 'reset':
-        this.data = { ...fresh(), lang: d.lang, order: d.order, people: d.people, recent: d.recent };
+        this.data = { ...fresh(), lang: d.lang, rounds: d.rounds, order: d.order, people: d.people, recent: d.recent };
         for (const person of Object.values(this.data.people)) person.score = 0;
         this.strokes = [];
         this.points = 0;
@@ -277,11 +306,12 @@ export class Draw extends DurableObject<Env> {
       return;
     }
     if (isCorrect(text, d.word, d.lang)) {
-      const points = guessPoints((d.endsAt ?? Date.now()) - Date.now());
+      const rank = d.guessed.length + 1;
+      const points = drawGuessPoints((d.endsAt ?? Date.now()) - Date.now(), DRAW_ROUND_MS, rank, d.wrong[key] ?? 0);
       person.score += points;
-      if (d.drawer && d.people[d.drawer]) d.people[d.drawer]!.score += DRAWER_POINTS;
+      d.gains[key] = points;
       d.guessed.push(key);
-      this.broadcast({ t: 'correct', from: person.pid, name: person.name, points });
+      this.broadcast({ t: 'correct', from: person.pid, name: person.name, points, rank });
       // Herkes bildiyse tur biter.
       if (this.onlineKeys().every((k) => k === d.drawer || d.guessed.includes(k))) await this.endRound();
       else {
@@ -290,24 +320,30 @@ export class Draw extends DurableObject<Env> {
       }
       return;
     }
+    d.wrong[key] = (d.wrong[key] ?? 0) + 1;
     if (isClose(text, d.word, d.lang)) this.sendTo(ws, { t: 'close', text });
     this.broadcast({ t: 'guess', from: person.pid, name: person.name, text });
   }
 
-  /** Sıradaki çizen (bağlı olanlar arasında, sırayla); 2 kişiden az kaldıysa lobiye. */
+  /** Sıradaki çizen (bağlı olanlar arasında, sırayla, `rounds` kez çizmemiş olan); kimse kalmadıysa kürsü, 2 kişiden
+   * az kaldıysa lobi. */
   private async nextRound(): Promise<void> {
     const d = this.data;
     const online = d.order.filter((k) => this.online(k));
     if (online.length < 2) return this.toLobby();
     const from = d.drawer ? d.order.indexOf(d.drawer) : -1;
-    let drawer = online[0]!;
+    let drawer: string | null = null;
     for (let i = 1; i <= d.order.length; i++) {
       const k = d.order[(from + i) % d.order.length]!;
-      if (online.includes(k)) {
+      if (online.includes(k) && (d.drawn[k] ?? 0) < d.rounds) {
         drawer = k;
         break;
       }
     }
+    if (!drawer) return this.gameOver();
+    d.drawn[drawer] = (d.drawn[drawer] ?? 0) + 1;
+    d.wrong = {};
+    d.gains = {};
     d.phase = 'choose';
     d.round += 1;
     d.drawer = drawer;
@@ -345,8 +381,32 @@ export class Draw extends DurableObject<Env> {
 
   private async endRound(): Promise<void> {
     const d = this.data;
+    // The drawer: the guessers' average × the share who guessed (everyone here but the drawer, plus those who
+    // guessed and left).
+    if (d.drawer && d.people[d.drawer] && d.word) {
+      const possible = new Set([...this.onlineKeys().filter((k) => k !== d.drawer), ...d.guessed]).size;
+      const points = drawerPoints(d.guessed.map((k) => d.gains[k] ?? 0), possible);
+      d.people[d.drawer]!.score += points;
+      d.gains[d.drawer] = points;
+    }
     d.phase = 'reveal';
     d.endsAt = Date.now() + DRAW_REVEAL_MS;
+    await this.save();
+    this.broadcastState();
+    await this.scheduleAlarm();
+  }
+
+  private async gameOver(): Promise<void> {
+    const d = this.data;
+    d.phase = 'over';
+    d.drawer = null;
+    d.word = null;
+    d.choices = [];
+    d.guessed = [];
+    d.gains = {};
+    d.endsAt = null;
+    this.strokes = [];
+    this.points = 0;
     await this.save();
     this.broadcastState();
     await this.scheduleAlarm();
@@ -394,7 +454,7 @@ export class Draw extends DurableObject<Env> {
     const key = (ws.deserializeAttachment() as Attachment | null)?.key;
     const stillHere = (k: string) => remaining.some((s) => (s.deserializeAttachment() as Attachment | null)?.key === k);
     const online = d.order.filter(stillHere);
-    if (d.phase !== 'lobby' && online.length < 2) return this.toLobby();
+    if (d.phase !== 'lobby' && d.phase !== 'over' && online.length < 2) return this.toLobby();
     // Çizen gitti: tur biter (kelime açıklanır, sıradakine geçilir).
     if (key && key === d.drawer && !stillHere(key) && (d.phase === 'choose' || d.phase === 'draw')) return this.endRound();
     // Kalanların hepsi bildiyse tur biter.
@@ -424,7 +484,16 @@ export class Draw extends DurableObject<Env> {
     const d = this.data;
     const players: DrawPlayer[] = d.order.map((k) => {
       const p = d.people[k]!;
-      return { id: p.pid, name: p.name, ...(p.avatar ? { avatar: p.avatar } : {}), score: p.score, guessed: d.guessed.includes(k), online: this.online(k, except) };
+      const gained = d.phase === 'reveal' ? d.gains[k] : undefined;
+      return {
+        id: p.pid,
+        name: p.name,
+        ...(p.avatar ? { avatar: p.avatar } : {}),
+        score: p.score,
+        guessed: d.guessed.includes(k),
+        ...(gained !== undefined ? { gained } : {}),
+        online: this.online(k, except),
+      };
     });
     const showWord = d.word !== null && (d.phase === 'reveal' || (d.phase === 'draw' && key === d.drawer));
     return {
@@ -437,6 +506,11 @@ export class Draw extends DurableObject<Env> {
       endsAt: d.endsAt,
       round: d.round,
       lang: d.lang,
+      rounds: d.rounds,
+      host: (() => {
+        const hk = this.hostKey(except);
+        return hk ? d.people[hk]!.pid : null;
+      })(),
     };
   }
 

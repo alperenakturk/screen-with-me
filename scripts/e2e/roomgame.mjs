@@ -48,7 +48,7 @@ ok(draw.game.kind === 'draw' && draw.game.id !== ga.game.id, 'Açan başka oyuna
 // Oyun nesnesi bu kimlikle açılıyor.
 const dws = new WebSocket(`${base}/api/draw/${draw.game.id}/ws`);
 const drawWelcome = await new Promise((resolve, reject) => {
-  dws.addEventListener('open', () => dws.send(JSON.stringify({ t: 'hello', v: 1, name: 'Ayse', cid: 'rgameAyse0001', lang: 'tr' })));
+  dws.addEventListener('open', () => dws.send(JSON.stringify({ t: 'hello', v: 2, name: 'Ayse', cid: 'rgameAyse0001', lang: 'tr' })));
   dws.addEventListener('message', (e) => {
     const m = JSON.parse(e.data);
     if (m.t === 'welcome' || m.t === 'error') resolve(m);

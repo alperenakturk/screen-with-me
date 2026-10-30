@@ -1,8 +1,8 @@
 # PlayWithMe games hub: design proposal
 
 > 30 Oct 2026, phase 1 (design only, no feature code). Visual proposal with mock-ups (desktop, film page, phone):
-> https://claude.ai/artifact/X9SSF7WNJ8bU4dYAfwvZQF. **Status: waiting for the owner to pick a concept.** Phase 2
-> (building it) starts only after that choice. Existing system: `CLAUDE.md` "PlayWithMe"; game ideas and the shared
+> https://claude.ai/artifact/X9SSF7WNJ8bU4dYAfwvZQF. **Status (30 Oct 2026): the owner picked D**, plus game
+> improvements and a new game (see "Phase 2" at the end). Existing system: `CLAUDE.md` "PlayWithMe"; game ideas and the shared
 > UI rules: `docs/internal/oyun-fikirleri.md`.
 
 ## The owner's wishes
@@ -132,3 +132,27 @@ below ships as its own release.
 6. **New game look.** Shared player strip, timer bar, podium; the four games redrawn in compact and large layouts.
 
 Tests to keep green on every step: `scripts/e2e/roomgame.mjs`, `xox.mjs`, `draw.mjs`, `quiz.mjs`, the phone harness.
+
+## Phase 2 (owner's choice: D, 30 Oct 2026)
+
+The owner also asked, in the same message: improve the existing games; in Quiz and Draw & Guess the person who sets
+the game up picks the language (Turkish / English); many more quiz questions and topics, so every game feels
+different; a one-time 50:50 joker per player in the quiz (the quiz stays everyone-for-themselves for now); in Quiz and
+Draw & Guess the first right answer is worth clearly more, drawer and guesser points are balanced mathematically,
+late answers and answers after many wrong tries score less; a nicer look for all games (XOX and Connect Four play
+fine as they are); and a basic **poker with "life" instead of money** (everyone starts at 100 %, spends it like
+chips, special moves such as "sacrifice 10 % of your life to disqualify a player this hand, their bets are
+refunded" or "fold this hand for free"), in a version with jokers and one without, at a table that is not a casino.
+
+### Task queue (continue from the first unfinished item)
+1. ✅ **0.9.91.5 Quiz + Draw & Guess.** Host settings (first player still connected = host; language, quiz topic and
+   length 5 / 10 / 15, Draw & Guess rounds 1 / 2 / 3, then a podium); quiz bank 98 → 406 questions in 11 topics
+   (bilingual entries, true / false questions, recently asked ones skipped on rematches); 50:50 joker; points in
+   `packages/shared/src/games/scoring.ts` (quiz: speed 50–150 + first three 50 / 25 / 10 + streak up to 30; draw:
+   `200 × time(0.3–1) × 0.8^(rank−1) × tries(−10 % per wrong guess after two free, ≥ 0.5)`, drawer = guessers'
+   average × share who guessed); shared game pieces `apps/web/src/games/ui.ts` (settings rows, podium). Quiz and
+   draw protocol versions 2.
+2. Hub step 1–3: catalog + what's new + line icons; tables on the server; hub popover.
+3. Game window placements (side / floating / stage), film page, phones.
+4. Life poker (with and without jokers), its own Durable Object and table design.
+5. Shared look for every game (player strip, timer, podium everywhere; XOX / Connect Four redrawn).
