@@ -9,6 +9,7 @@ import {
   DRAW_MAX_PLAYERS,
   DRAW_PROTOCOL_VERSION,
   DRAW_REVEAL_MS,
+  DRAW_ROUNDS,
   DRAW_ROUND_MS,
   DRAW_SIZES,
   DRAW_W,
@@ -23,6 +24,7 @@ import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
+import { langChoices, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
@@ -211,7 +213,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
           ),
         ),
     );
-    $('#draw-round').textContent = s.phase === 'lobby' ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: DRAW_MAX_PLAYERS }) : t('draw.round', { n: s.round });
+    $('#draw-round').textContent =
+      s.phase === 'lobby' || s.phase === 'over' ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: DRAW_MAX_PLAYERS }) : t('draw.turn', { n: s.round, rounds: s.rounds });
     // İpucu: çizene kelimenin kendisi, diğerlerine "_ _ a _".
     const hint = $('#draw-hint');
     hint.textContent = s.phase === 'draw' ? (s.word ?? s.hint) : s.phase === 'reveal' ? (s.word ?? '') : '';
@@ -223,12 +226,22 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     // Üstteki pencere (lobi, kelime seçimi, tur sonu).
     overlay.replaceChildren();
     overlay.hidden = s.phase === 'draw';
-    if (s.phase === 'lobby') {
+    if (s.phase === 'lobby' || s.phase === 'over') {
       const online = s.players.filter((p) => p.online).length;
-      const go = el('button', { type: 'button', class: 'btn primary' }, t('draw.start'));
+      const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'games.again' : 'draw.start'));
       go.disabled = online < 2;
       go.addEventListener('click', () => send({ t: 'start' }));
-      overlay.append(el('h3', {}, t('games.draw.title')), el('p', {}, t('draw.rules')), go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
+      const host = s.players.find((p) => p.id === s.host);
+      const settings = settingsPanel(
+        [
+          { label: t('games.lang'), value: s.lang, choices: langChoices, pick: (lang) => send({ t: 'settings', lang: lang as 'tr' | 'en' }) },
+          { label: t('draw.rounds'), value: s.rounds, choices: DRAW_ROUNDS.map((n) => ({ value: n, label: t('draw.roundsN', { n }) })), pick: (rounds) => send({ t: 'settings', rounds: rounds as 1 | 2 | 3 }) },
+        ],
+        s.host === me || !host ? null : host.name,
+      );
+      if (s.phase === 'over') overlay.append(el('h3', {}, t('games.over')), podium(s.players));
+      else overlay.append(el('h3', {}, t('games.draw.title')), el('p', { class: 'draw-rules' }, t('draw.rules')));
+      overlay.append(settings, go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
     } else if (s.phase === 'choose') {
       if (s.drawer === me && choices.length) {
         overlay.append(
@@ -245,11 +258,19 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
         );
       } else overlay.append(el('h3', {}, t('draw.choosing', { name: drawerName })));
     } else if (s.phase === 'reveal') {
-      const guessed = s.players.filter((p) => p.guessed).map((p) => p.name);
+      const gained = s.players.filter((p) => p.gained).sort((a, b) => (b.gained ?? 0) - (a.gained ?? 0));
       overlay.append(
         el('p', { class: 'muted' }, t('draw.wordWas')),
         el('h3', { class: 'draw-reveal' }, s.word ?? ''),
-        el('p', {}, guessed.length ? t('draw.whoGuessed', { names: guessed.join(', ') }) : t('draw.nobody')),
+        gained.length
+          ? el(
+              'ul',
+              { class: 'draw-gains', 'aria-label': t('draw.roundPoints') },
+              ...gained.map((p) =>
+                el('li', { class: p.id === s.drawer ? 'drawer' : '' }, avatarNode(p.avatar, 'draw-avatar'), el('span', {}, `${p.id === s.drawer ? '✏️ ' : ''}${p.name}`), el('b', {}, `+${p.gained}`)),
+              ),
+            )
+          : el('p', {}, t('draw.nobody')),
       );
     }
     input.placeholder = s.phase !== 'draw' ? t('draw.chat') : s.drawer === me || s.players.find((p) => p.id === me)?.guessed ? t('draw.secretChat') : t('draw.guessHere');
@@ -260,6 +281,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase !== lastPhase) {
       if (s.phase === 'draw') line('system', t('draw.isDrawing', { name: drawerName }));
       if (s.phase === 'reveal' && s.word) line('system', `${t('draw.wordWas')} ${s.word}`);
+      const drawer = s.players.find((p) => p.id === s.drawer);
+      if (s.phase === 'reveal' && drawer?.gained) line('system', t('draw.drawerGot', { name: drawer.name, points: drawer.gained }));
       lastPhase = s.phase;
     }
     tick();
@@ -355,7 +378,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
           }
           break;
         case 'correct':
-          line('correct', t('draw.correct', { name: m.name, points: m.points }));
+          line('correct', t('draw.correctRank', { name: m.name, rank: m.rank, points: m.points }));
           playSound(m.from === me ? 'guessRight' : 'otherRight');
           break;
         case 'close':

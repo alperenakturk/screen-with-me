@@ -1,5 +1,6 @@
 import './styles.css';
 import './phone.css';
+import './tv.css';
 import { markDevice } from './device.ts';
 import { isShell, syncStore } from './storage.ts';
 import { keepFloatingInFullscreen } from './ui/fs-layer.ts';

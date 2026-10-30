@@ -76,6 +76,9 @@ import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
+import { clearTvLink, tvLink } from './tv.ts';
+import { createTvRemote } from './ui/tv-remote.ts';
+import { createTvRoom } from './ui/tv-room.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
@@ -85,6 +88,16 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
  * tarayıcının sesli oynatma izni için gereken etkileşimdir.
  */
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
+  // TV version: this browser is a TV paired by a phone (`/tv`): it joins as that person, no name step.
+  if (new URLSearchParams(location.search).get('tv') === '1') {
+    const link = tvLink();
+    if (!link || link.room !== roomId) {
+      location.replace('/tv');
+      return;
+    }
+    startRoom(app, roomId, 'TV', 'wizard', { resumed: true, tv: link.token });
+    return;
+  }
   // Film sayfasının üstündeki katman (kabuk): kişi siteden geliyor, isim/avatar sormadan girer.
   // (İsim hiç yoksa katman tam açılır, isim adımı görünsün.)
   // My name and avatar in this room (rooms are independent, 0.9.88); a room I'm new to starts from the default.
@@ -248,10 +261,13 @@ function withAvatar(member: { name: string; avatar?: string }): string {
   return member.avatar ? `${avatarText(member.avatar)} ${member.name}` : member.name;
 }
 
-function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false } = {}): void {
+function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false, tv }: { resumed?: boolean; tv?: string } = {}): void {
   // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
-  sessionSave(`in:${roomId}`, '1');
-  saveRoomIdentity(roomId, myName, myAvatar);
+  // (A TV takes its person's name and avatar from the server: nothing of its own is saved.)
+  if (!tv) {
+    sessionSave(`in:${roomId}`, '1');
+    saveRoomIdentity(roomId, myName, myAvatar);
+  }
   // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla. Film sayfasındaki katmanda
   // değil: orada film sayfanın kendi oynatıcısında, her film sayfası açılışında boşuna ~1 MB inerdi (gerekirse yine yüklenir).
   if (!isShell) loadYouTubeApi().catch(() => {});
@@ -711,6 +727,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // People, not connections: the same person's site tab + film tab (same name and avatar) count once.
     const people = new Set(members.map((m) => `${m.name}|${m.avatar ?? ''}`)).size;
     roomTitleCount.textContent = people ? `· ${t('peopleCount', { n: people })}` : '';
+    tvRoom?.title(roomTitleName.textContent);
   }
   addEventListener('langchange', drawRoomTitle);
   const amHost = () => myId !== null && myId === hostId;
@@ -890,6 +907,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
     },
   });
+  /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */
+  let tvRoom: ReturnType<typeof createTvRoom> | null = null;
+  let tvRemote: ReturnType<typeof createTvRemote> | null = null;
+  /** My TV is here: my own player stays muted (the TV plays the film's sound). */
+  let mutedForTv = false;
   const connection = new RoomConnection({
     serverUrl: location.origin,
     roomId,
@@ -897,6 +919,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     avatar: myAvatar,
     cid: clientId(),
     client: 'web',
+    ...(tv ? { tv } : {}),
     clock,
     onMessage: handleMessage,
     onStatus: (next) => {
@@ -951,6 +974,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Özel emojiler welcome'dan sonra tek tek gelir. Nothing of mine is uploaded automatically (security review 1).
         reactions.clearStickers();
         send({ t: 'recaps' });
+        tvRoom?.reportState();
+        // Opened from a TV's QR (or a code typed before the room was open): pair it now.
+        try {
+          const pending = JSON.parse(sessionLoad('tvPair') ?? 'null') as { code: string; at: number } | null;
+          sessionSave('tvPair', '');
+          if (pending && Date.now() - pending.at < 10 * 60_000) tvRemote?.pairNow(pending.code);
+        } catch {
+          // Nothing waiting.
+        }
         // Ana sayfada "kaydedilen oda" seçilerek kurulduysa: ilk giren (yönetici) adıyla kaydeder.
         {
           const wanted = sessionLoad(`create:${roomId}`);
@@ -1008,6 +1040,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
       case 'members':
         setMembers(message.members, message.hostId, true);
+        break;
+      case 'tv':
+        tvRoom?.message(message);
+        tvRemote?.message(message);
         break;
       case 'waiting': {
         const before = waitingIds;
@@ -1133,6 +1169,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           if (film) film.setState(roomState);
           else engine.receive(roomState);
         }
+        if (message.code === 'tv_token') {
+          // This TV's link ended (unlinked, or expired): back to the pairing screen for a new code.
+          connection.close();
+          clearTvLink();
+          location.replace('/tv');
+          break;
+        }
+        if (message.code === 'tv_code' || (message.code === 'rate_limited' && tvRemote)) {
+          tvRemote?.error(t(message.code === 'tv_code' ? 'error.tv_code' : 'error.rate_limited'));
+          if (message.code === 'tv_code') break;
+        }
         if (message.code === 'recap_empty') {
           showError(() => t('error.recap_empty'));
           break;
@@ -1203,6 +1250,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     showError(null);
     engine.receive(state);
     emptyEl.hidden = state.item !== null;
+    tvRoom?.empty(state.item === null ? t('tv.emptyNone') : state.item.media.kind === 'page' ? t('tv.emptyPage') : null);
     // Phones hide the link box while something plays (the toolbar's ＋ brings it back).
     $('.room').classList.toggle('has-item', state.item !== null);
     externalEl.hidden = state.item?.media.kind !== 'page';
@@ -1240,6 +1288,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     current = { player, slot, youtube: media.kind === 'youtube', own: media.kind === 'test' || (media.kind === 'youtube' && media.short === true) };
     engine.attach(player);
+    if (mutedForTv) player.setMuted?.(true);
     reportLayout();
   }
 
@@ -2063,6 +2112,49 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onRate: requestRate,
   });
   const toasts = createToasts($('#toasts'), $('#fs-chat'), $('#fs-dock'));
+  if (tv) {
+    // The room on a TV: always "fullscreen", the remote's basics only (see ui/tv-room.ts).
+    fullscreen.pin();
+    tvRoom = createTvRoom({
+      theater: $('#theater'),
+      togglePlay: () => {
+        const player = current?.player;
+        if (!player) return;
+        if (player.isPaused()) void player.play();
+        else player.pause();
+      },
+      react: (emoji) => send({ t: 'react', emoji }),
+      tell: (op, value) => send(value === undefined ? { t: 'tv', op } : { t: 'tv', op, value }),
+      voice,
+      myId: () => myId,
+      leave: () => {
+        connection.close();
+        voice.leave();
+        clearTvLink();
+        location.replace('/tv');
+      },
+    });
+  } else if (!isShell) {
+    // This device as my TV's remote: "📺" pairs a TV, the card appears while my TV is in the room.
+    tvRemote = createTvRemote({
+      send,
+      voice,
+      onPresent: (present) => {
+        mutedForTv = present;
+        current?.player.setMuted?.(present);
+      },
+    });
+    $('.side').prepend(tvRemote.card);
+    const tvButton = el('button', { type: 'button', id: 'tv-btn', class: 'btn small-btn tv-pair-btn' }, el('span', { 'aria-hidden': 'true' }, '📺'), el('span', { class: 'invite-text' }));
+    const labelTv = () => {
+      (tvButton.lastElementChild as HTMLElement).textContent = t('tv.button');
+      tvButton.title = t('tv.buttonTitle');
+    };
+    labelTv();
+    addEventListener('langchange', labelTv);
+    tvButton.addEventListener('click', () => tvRemote?.open());
+    document.querySelector('.topbar-right')?.prepend(tvButton);
+  }
   let sideHidden = !isShell && load('opt:sideHidden') === '1';
   // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu
   // tarayıcıda hatırlanır. Film sayfasındaki katmanda yok (orada yerleşimi delik belirler).
@@ -2307,7 +2399,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Arayüz parçaları ----
   function displayName(member: Member): string {
-    const name = withAvatar(member);
+    // A paired TV is its person on another screen: marked so it doesn't read as a second person.
+    const name = `${withAvatar(member)}${member.tv ? ' 📺' : ''}`;
     return member.id === myId ? `${name} (${t('you')})` : name;
   }
 
@@ -2332,6 +2425,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     members = next;
     hostId = nextHost;
     renderMembers();
+    tvRoom?.members(members);
+    tvRemote?.voiceChanged();
   }
 
   /**

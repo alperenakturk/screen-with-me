@@ -1,12 +1,16 @@
-// Çiz-Bil: biri çizer, diğerleri tahmin eder. 2–8 kişi; sıra herkese gelir. Çizen üç kelimeden birini seçer, süre
-// içinde çizer; doğru bilen erken bildiyse çok, geç bildiyse az puan alır, çizen de her bilen için puan alır. Süre
-// ilerledikçe kelimenin birkaç harfi açılır. Sunucu (ayrı Durable Object `Draw`) her şeyi doğrular; kelime sadece
+// Draw & Guess: one draws, the others guess. 2–8 players; everyone draws 1–3 times (the host picks, and the
+// language), then a podium. The drawer picks one of three words and draws in time; points come from `scoring.ts`
+// (fast, first and few wrong tries are worth more; the drawer gets the guessers' average × the share who guessed).
+// A few letters of the word open as time goes by. Sunucu (ayrı Durable Object `Draw`) her şeyi doğrular; kelime sadece
 // çizene gider (tur bitince herkese). Bu dosya mesajlar, doğrulama ve saf kurallar (tahmin eşleştirme, ipucu, puan).
 
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
 
-/** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). */
-export const DRAW_PROTOCOL_VERSION = 1;
+/** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). 2: host settings, game end, new points. */
+export const DRAW_PROTOCOL_VERSION = 2;
+/** How many times everyone draws (host's choice). */
+export const DRAW_ROUNDS = [1, 2, 3] as const;
+export type DrawRounds = (typeof DRAW_ROUNDS)[number];
 export const DRAW_MAX_PLAYERS = 8;
 /** Çizim süresi, kelime seçme süresi, tur sonu gösterimi. */
 export const DRAW_ROUND_MS = 80_000;
@@ -22,7 +26,7 @@ export const DRAW_H = 750;
 export const STROKE_MAX_POINTS = 120;
 
 export type DrawLang = 'tr' | 'en';
-export type DrawPhase = 'lobby' | 'choose' | 'draw' | 'reveal';
+export type DrawPhase = 'lobby' | 'choose' | 'draw' | 'reveal' | 'over';
 
 /** Çizgi parçası: renk ve kalınlık sırası, noktalar [x0, y0, x1, y1, …]. */
 export interface Stroke {
@@ -38,6 +42,8 @@ export interface DrawPlayer {
   score: number;
   /** Bu turda bildi mi. */
   guessed: boolean;
+  /** In the reveal: points from this round (guess or drawing). */
+  gained?: number;
   online: boolean;
 }
 
@@ -45,6 +51,8 @@ export type DrawClientMessage =
   | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; lang?: DrawLang }
   /** Oyunu başlat (lobide, en az 2 kişi). */
   | { t: 'start' }
+  /** Host only, in the lobby or on the podium. */
+  | { t: 'settings'; lang?: DrawLang; rounds?: DrawRounds }
   /** Çizen kelimesini seçer (0–2). */
   | { t: 'choose'; index: number }
   | { t: 'stroke'; s: Stroke }
@@ -69,6 +77,9 @@ export type DrawServerMessage =
       endsAt: number | null;
       round: number;
       lang: DrawLang;
+      rounds: DrawRounds;
+      /** Who sets the language and rounds (the first player still here). */
+      host: string | null;
     }
   /** Sadece çizene: seçebileceği üç kelime. */
   | { t: 'choices'; words: string[] }
@@ -78,13 +89,14 @@ export type DrawServerMessage =
   | { t: 'clear' }
   /** Yanlış tahmin (herkese) ya da bilenlerin kendi aralarındaki mesajı (`secret`: sadece bilenlere ve çizene). */
   | { t: 'guess'; from: string; name: string; text: string; secret?: boolean }
-  | { t: 'correct'; from: string; name: string; points: number }
+  /** `rank`: 1 = first to guess this round. */
+  | { t: 'correct'; from: string; name: string; points: number; rank: number }
   /** Sadece tahmin edene: çok yaklaştın. */
   | { t: 'close'; text: string }
   | { t: 'error'; code: DrawErrorCode }
   | { t: 'pong'; now: number };
 
-export type DrawErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'not_drawer' | 'too_few';
+export type DrawErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'not_drawer' | 'too_few' | 'not_host';
 
 const isInt = (x: unknown, min: number, max: number): x is number => Number.isInteger(x) && (x as number) >= min && (x as number) <= max;
 
@@ -115,6 +127,12 @@ export function parseDrawMessage(raw: string): DrawClientMessage | null {
       if (typeof m.cid === 'string' && CLIENT_ID.test(m.cid)) hello.cid = m.cid;
       if (m.lang === 'tr' || m.lang === 'en') hello.lang = m.lang;
       return hello;
+    }
+    case 'settings': {
+      const out: Extract<DrawClientMessage, { t: 'settings' }> = { t: 'settings' };
+      if (m.lang === 'tr' || m.lang === 'en') out.lang = m.lang;
+      if ((DRAW_ROUNDS as readonly unknown[]).includes(m.rounds)) out.rounds = m.rounds as DrawRounds;
+      return Object.keys(out).length > 1 ? out : null;
     }
     case 'choose':
       return isInt(m.index, 0, 2) ? { t: 'choose', index: m.index } : null;
@@ -200,11 +218,6 @@ export function revealTimes(start: number, count: number): number[] {
   return [0.4, 0.6, 0.8].slice(0, count).map((k) => start + Math.round(DRAW_ROUND_MS * k));
 }
 
-/** Doğru bilenin puanı: erken bilen çok alır (50–150), çizen her bilen için 25. */
-export function guessPoints(remainingMs: number): number {
-  return 50 + Math.round((100 * Math.max(0, Math.min(remainingMs, DRAW_ROUND_MS))) / DRAW_ROUND_MS);
-}
-export const DRAWER_POINTS = 25;
 
 /** Oyun kodu: oda kimlikleriyle aynı biçim. */
 export const DRAW_ID_PATTERN = /^[A-Za-z0-9_-]{3,40}$/;

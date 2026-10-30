@@ -296,7 +296,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       () => setFake(true, false),
     );
   }
+  /** TV version: the room stays in its own fullscreen (no way out, the TV has nothing else to show). */
+  let pinned = false;
   function exit(): void {
+    if (pinned) return;
     byTurning = false;
     if (shell) setFake(false, true);
     else if (fake) setFake(false, false);
@@ -494,6 +497,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
 
   return {
     isActive,
+    pin(): void {
+      setFake(true, false);
+      pinned = true;
+    },
     /** Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. */
     poke(): void {
       if (isActive()) wake();
