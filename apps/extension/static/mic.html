@@ -8,14 +8,30 @@
       :root {
         color-scheme: dark;
       }
+      /* 0.9.91.11 (owner): Chrome's question opens at the window's top left and covered this text. The window is
+         wide: the left side is kept free for Chrome's question (an arrow points at it), our text sits on the right. */
       body {
         margin: 0;
         min-height: 100vh;
         display: grid;
-        place-items: center;
+        grid-template-columns: minmax(350px, 1fr) minmax(0, 420px);
+        align-items: center;
         background: radial-gradient(ellipse 70% 45% at 50% -5%, rgb(139 108 255 / 0.24), transparent 70%), linear-gradient(#171c40, #0c0e1e 60%);
         color: #eef0ff;
         font: 16px/1.5 system-ui, sans-serif;
+      }
+      .ask {
+        align-self: start;
+        margin: 10px 0 0 18px;
+        max-width: 300px;
+        color: #c9bcff;
+        font: 600 15px/1.45 system-ui, sans-serif;
+      }
+      .ask b {
+        display: block;
+        font-size: 30px;
+        line-height: 1;
+        margin-bottom: 6px;
       }
       main {
         max-width: 460px;
@@ -57,6 +73,7 @@
     </style>
   </head>
   <body>
+    <p class="ask" id="ask" aria-hidden="true"><b>↖</b><span id="ask-text"></span></p>
     <main>
       <img src="icon128.png" alt="" />
       <h1 id="title"></h1>

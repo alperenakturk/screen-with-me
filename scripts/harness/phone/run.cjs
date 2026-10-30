@@ -142,6 +142,43 @@ async function enter(page, room) {
     await desk.close();
   }
 
+  // 2c) Search (0.9.91.11, a stand-in search answer: the cloud has no YouTube key): a Short found by the link box's
+  // search opens in the Shorts view, and the Shorts bar's "＋ Ekle" searches Shorts only and queues them.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const page = await ctx.newPage();
+    const asked = [];
+    await page.route('**/api/youtube/search**', (route) => {
+      const url = new URL(route.request().url());
+      asked.push(url.searchParams.get('short') === '1' ? 'short' : 'all');
+      const items = url.searchParams.get('short') === '1'
+        ? [{ id: '9bZkp7q5F8I', title: 'Bir Short', channel: 'K', duration: 30, live: false, short: true }, { id: 'kJQP7kiw5Fk', title: 'Başka Short', channel: 'K', duration: 40, live: false, short: true }]
+        : [{ id: 'aqz-KE-bpKQ', title: 'Dikey video', channel: 'K', duration: 45, live: false, short: true }, { id: 'dQw4w9WgXcQ', title: 'Yatay video', channel: 'K', duration: 212, live: false }];
+      route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items }) });
+    });
+    await enter(page, id());
+    await page.fill('#media-input', 'komik kediler');
+    await page.press('#media-input', 'Enter');
+    await page.waitForSelector('.search-row');
+    const mark = await page.textContent('.search-row .search-meta');
+    await page.click('.search-row .search-main');
+    await page.waitForTimeout(2500);
+    check(mark.includes('Shorts') && (await page.evaluate(() => document.querySelector('.room').classList.contains('shorts'))), 'arama: Shorts sonucu işaretli ve seçilince Shorts görünümünde açılıyor', mark);
+    await page.click('#shorts-add');
+    await page.fill('#shorts-add-input', 'komik kediler');
+    await page.press('#shorts-add-input', 'Enter');
+    await page.waitForSelector('#shorts-add-results .shorts-result');
+    const rows = await page.$$eval('#shorts-add-results .shorts-result', (r) => r.length);
+    await page.click('#shorts-add-results .shorts-result');
+    await page.waitForTimeout(800);
+    const queued = await page.evaluate(() => document.querySelectorAll('#queue-list li, .queue-item').length);
+    const added = await page.evaluate(() => document.querySelector('#shorts-add-results .shorts-result')?.classList.contains('added'));
+    check(rows === 2 && added && queued >= 1 && asked.includes('short'), 'Shorts çubuğu: “＋ Ekle” kelimeyle sadece Shorts arıyor, sonuç tek tıkla sıraya giriyor', JSON.stringify({ rows, added, queued, asked }));
+    const mic = await page.evaluate(() => ({ off: document.getElementById('shorts-mic').classList.contains('off'), cam: document.getElementById('shorts-cam').classList.contains('off') }));
+    check(mic.off && mic.cam, 'sese katılmadan önce 🎙 ve 📷 ikisi de kapalı görünüyor', JSON.stringify(mic));
+    await ctx.close();
+  }
+
   // 3) Desktop, real fullscreen: the join-voice notice opens inside the fullscreen view (it used to open behind it).
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });

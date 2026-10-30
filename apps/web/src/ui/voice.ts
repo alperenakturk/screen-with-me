@@ -330,8 +330,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       box.hidden = !available || (!active && joinButton.hidden);
       const micText = active ? micLabel : t('voice.join');
       if (mic.textContent) mic.textContent = '';
-      setIcon(mic, !active || client.micEnabled ? 'mic' : 'mic-off');
-      mic.classList.toggle('off', active && !client.micEnabled);
+      // Not in voice yet: the mic looks off (red), like the camera (owner, 0.9.91.11); pressing it joins.
+      setIcon(mic, active && client.micEnabled ? 'mic' : 'mic-off');
+      mic.classList.toggle('off', !active || !client.micEnabled);
       mic.title = micText;
       mic.setAttribute('aria-label', micText);
       cam.hidden = active ? camButton.hidden : !client.setCam;

@@ -13,7 +13,8 @@ export type AddMode = 'enqueue' | 'load';
 export function createSearch(
   form: HTMLFormElement,
   input: HTMLInputElement,
-  pick: (id: string, title: string, mode: AddMode) => void,
+  /** `short`: the result is a YouTube Short (upright): it opens in the Shorts view, as a pasted Shorts link does. */
+  pick: (id: string, title: string, mode: AddMode, short: boolean) => void,
   /** "📱 Shorts akışı": start the endless Shorts feed on these words (0.9.91). */
   feed?: (query: string) => void,
 ) {
@@ -51,7 +52,7 @@ export function createSearch(
   let lastQuery = '';
 
   function row(result: SearchResult): HTMLElement {
-    const meta = [result.channel, result.live ? t('searchLive') : result.duration ? formatDuration(result.duration) : ''].filter(Boolean).join(' · ');
+    const meta = [result.short ? t('searchShort') : '', result.channel, result.live ? t('searchLive') : result.duration ? formatDuration(result.duration) : ''].filter(Boolean).join(' · ');
     const thumb = el('img', { class: 'search-thumb', src: `https://i.ytimg.com/vi/${result.id}/mqdefault.jpg`, alt: '', loading: 'lazy' });
     // No broken-image icon when the picture can't load: the empty grey box stays.
     thumb.addEventListener('error', () => (thumb.style.visibility = 'hidden'), { once: true });
@@ -70,7 +71,7 @@ export function createSearch(
   function choose(result: SearchResult, mode: AddMode): void {
     close();
     input.value = '';
-    pick(result.id, result.title, mode);
+    pick(result.id, result.title, mode, result.short === true);
   }
 
   function show(query: string, answer: SearchAnswer): void {

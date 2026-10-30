@@ -10,6 +10,7 @@ import {
   cleanPageToken,
   shortsOnly,
   parseSearchItems,
+  parseUpright,
   SEARCH_QUERY_MAX,
   SEARCH_RESULTS,
 } from './youtube-search.ts';
@@ -114,5 +115,31 @@ describe('Shorts feed helpers', () => {
   it('carries the next page token through the answer', () => {
     expect(parseSearchAnswer({ items: [], next: 'CBkQAA' })).toEqual({ items: [], next: 'CBkQAA' });
     expect(parseSearchAnswer({ items: [], next: 'bad token!' })).toEqual({ items: [] });
+  });
+});
+
+describe('Shorts in search results (0.9.91.11)', () => {
+  const search = { items: [{ id: { videoId: 'aqz-KE-bpKQ' }, snippet: { title: 'Upright' } }, { id: { videoId: 'dQw4w9WgXcQ' }, snippet: { title: 'Wide' } }, { id: { videoId: 'abcdefghijk' }, snippet: { title: 'Long upright' } }] };
+  const videos = {
+    items: [
+      { id: 'aqz-KE-bpKQ', contentDetails: { duration: 'PT45S' }, player: { embedWidth: '100', embedHeight: '178' } },
+      { id: 'dQw4w9WgXcQ', contentDetails: { duration: 'PT50S' }, player: { embedWidth: 100, embedHeight: 56 } },
+      { id: 'abcdefghijk', contentDetails: { duration: 'PT10M' }, player: { embedWidth: '100', embedHeight: '178' } },
+    ],
+  };
+  it('marks only upright videos of a Short’s length', () => {
+    const items = parseSearchItems(search, parseDurations(videos), 12, parseUpright(videos));
+    expect(items.map((i) => [i.id, i.short === true])).toEqual([
+      ['aqz-KE-bpKQ', true],
+      ['dQw4w9WgXcQ', false],
+      ['abcdefghijk', false],
+    ]);
+  });
+  it('ignores broken player sizes', () => {
+    expect([...parseUpright({ items: [{ id: 'aqz-KE-bpKQ', player: { embedWidth: 'x', embedHeight: '10' } }, { id: 'bad', player: { embedWidth: 1, embedHeight: 2 } }] })]).toEqual([]);
+  });
+  it('the client keeps the mark', () => {
+    const answer = parseSearchAnswer({ items: [{ id: 'aqz-KE-bpKQ', title: 'a', channel: 'b', duration: 45, live: false, short: true }, { id: 'dQw4w9WgXcQ', title: 'c', channel: 'd', duration: 50, live: false, short: 'yes' }] });
+    expect('items' in answer && answer.items.map((i) => i.short)).toEqual([true, undefined]);
   });
 });

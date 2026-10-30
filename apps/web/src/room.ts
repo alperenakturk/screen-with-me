@@ -65,6 +65,7 @@ import { renderRecapHistory, showRecap } from './ui/recap.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
+import { createShortsSearch } from './ui/shorts-search.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -442,6 +443,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="small" for="shorts-add-input" data-i18n="shorts.addLabel"></label>
               <input id="shorts-add-input" autocomplete="off" data-i18n-placeholder="shorts.addPlaceholder" />
               <button class="btn primary small-btn" data-i18n="shorts.addButton"></button>
+              <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
             </form>
           </div>
@@ -1881,14 +1883,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
   };
   shortsAdd.addEventListener('click', () => setShortsAdd(shortsAdd.getAttribute('aria-expanded') !== 'true'));
+  const shortsSearch = createShortsSearch($('#shorts-add-results'), (id) => {
+    addMedia({ kind: 'youtube', id, short: true }, 'enqueue');
+    flashHint(shortsAdd, t('queuedNote'), 2000);
+  });
   shortsAddForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const list = parseMediaList(shortsAddInput.value);
     const one = list.media.length === 1 ? list.media[0]! : parseMediaInput(shortsAddInput.value);
     if (list.media.length < 2 && one === null) {
-      flashHint(shortsAddInput, t('shorts.addNeedLink'), 4000);
+      // Words: a search of YouTube Shorts only (0.9.91.11); the box stays open to add from the list.
+      if (shortsAddInput.value.trim()) void shortsSearch.search(shortsAddInput.value);
       return;
     }
+    shortsSearch.clear();
     shortsAddInput.value = '';
     setShortsAdd(false);
     if (list.media.length >= 2) addMany(list.media, list.skipped, 'enqueue');
@@ -2264,7 +2272,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const search = createSearch(
     mediaForm,
     mediaInput,
-    (id, _title, mode) => addMedia({ kind: 'youtube', id }, mode),
+    (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode),
     // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
     (query) => feed.start(query),
   );
