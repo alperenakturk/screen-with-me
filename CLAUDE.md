@@ -52,6 +52,10 @@ We are building a **global product**, so everything is professional, formal and 
   "buton"). No technical terms in the UI ("WebSocket" → "odanın canlı bağlantısı", "peer-to-peer" → "sunucudan geçmez,
   doğrudan gider"). English UI uses the same concepts (room, host, film page, room view, react, queue…). Slogans are the
   user's choice (home page "Ayrı ekranlar, aynı an.", invite card "Sana bir koltuk ayırdım 🍿"); ask before changing.
+- **No scrolling inside a view unless it is truly needed (owner's rule, 30 Oct 2026):** a game, dialog or panel must fit
+  the space it gets (fullscreen, in the video's place, a free window, a phone) without scrollbars; scale or reflow it
+  instead. Only lists that grow without end (chat, a long queue) may scroll. Free windows resize in proportion, never
+  into a cramped or broken layout. Check every new screen at small sizes before shipping.
 - **Official/public texts** (README, store listing, site copy) never name specific films/series/piracy sites; the tool
   is described as "a neutral sync tool for any HTML5 video" (Chrome Web Store policy). Never open piracy sites for
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).

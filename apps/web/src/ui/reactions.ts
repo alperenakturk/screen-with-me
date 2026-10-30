@@ -370,7 +370,10 @@ export function createReactions(
       // Her tepki ayrı uçar (art arda basınca "×2" olmaz, yağmur gibi yükselir).
       const shown = content(emoji, sticker);
       if (!shown) return;
-      while (layer.childElementCount >= MAX_FLOATS) layer.firstElementChild?.remove();
+      // A game in a free window is where everyone looks: emojis fly over it (in the video's place they fly over the
+      // game anyway, the layer is above it).
+      const target = document.querySelector<HTMLElement>('#game-stage.float:not([hidden]) .reactions-layer') ?? layer;
+      while (target.childElementCount >= MAX_FLOATS) target.firstElementChild?.remove();
       const who = el('span', { class: 'r-who' }, avatarNode(by.avatar, 'r-avatar'), el('span', { class: 'r-name' }, by.name));
       const float = el('div', { class: 'r-float' }, shown, who);
       float.style.left = `${6 + Math.random() * 78}%`;
@@ -379,7 +382,7 @@ export function createReactions(
         if (event.target === float) float.remove();
       });
       setTimeout(() => float.remove(), FLOAT_MS + 200);
-      layer.append(float);
+      target.append(float);
     },
     /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir); `own`: I added it. */
     addSticker(sticker: Sticker, own = false): void {

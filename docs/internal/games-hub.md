@@ -195,3 +195,37 @@ refunded" or "fold this hand for free"), in a version with jokers and one withou
    and scales the whole window down (`transform: scale`, `.scaled`) instead of squeezing it into scrollbars. On the
    film page it carries `data-island` (the room's island loop picks it up where it covers the hole). Compact XOX /
    Connect Four now leave 230 px for players, status, actions and emojis (the emoji row was cut off).
+
+## Phase 3 (owner's feedback on 0.9.91.10, 30 Oct 2026)
+"Never make me scroll inside a game: fit it on one screen (fullscreen, in the video's place, free window). The free
+window grows and shrinks in proportion only. Emojis I send must always show, even over a game or in an empty room
+(drop the extra emoji bars of XOX / Connect Four). The quiz froze after it ended. Poker needs a proper name, a
+'How to play' and must be clear and quick: whose turn, the clock, who used a move, no long waits for the result.
+Draw & Guess needs richer drawing (fill, …)."
+
+### Task queue (continue from the first unfinished item)
+All six ✅ in **0.9.91.11**:
+1. ✅ **Fit, no scrolling.** The game mounts into `.game-fit` inside the stage body; `refit` (stage.ts) sizes it to
+   frame / scale and scales it back (`transform`), starting from `min(1, frame / GAME_CATALOG.fit)` (desktop; phones
+   start at 1) and shrinking further while anything overflows (the box itself or the clipping boxes in `FIT_INSIDE`:
+   the drawing's overlay, the quiz card), down to 0.4. Runs on a ResizeObserver and on DOM changes (rAF-throttled).
+   Inner scrollers became `overflow: hidden` (only chat feeds scroll). The free window keeps the game's shape
+   (`size`) and only zooms (`gameFloat:zoom:<kind>`, 0.45–1.6, by the corner; double-click the head resets). The quiz
+   lobby / podium go side by side in a wide, short box. The head shows icons only under 820 px (`gstage` container).
+   CLAUDE.md got the owner's rule "no scrolling unless truly needed".
+2. ✅ **Emojis everywhere.** `.reactions-layer` is above a game in the video's place (z 7); with a free window open
+   the room's emojis fly inside it (`.game-reactions`). XOX / Connect Four lost their own emoji bars.
+3. ✅ **Quiz froze after the podium:** with 2 players the empty third step used the site-wide `.empty` class
+   (`position: absolute; inset: 0`) and covered the whole game, so nothing could be clicked. Now `.vacant`.
+4. ✅ **Last Heart** (was Life Poker; the owner asked for a proper name). Status strip on top (whose turn, street,
+   seconds left, timer bar; pulses on my turn; the result line at the showdown), a big announcement in the middle
+   for moves, raises, time-outs and the hand's result (`.pk-toast`), a 4-step "How to play" (goal + blinds, a hand
+   and the four actions, hand ranks, special moves; from the lobby and the `?` by the hand info). The showdown
+   pause is 5 s, 2.5 s when nothing is shown (everyone else folded) or the game is decided (`POKER_QUICK_MS`). The
+   quiz announces a used 50:50 joker to everyone (`.game-toast`).
+5. ✅ **Draw & Guess tools** (protocol 3): pen / paint bucket (`Stroke.f`, scanline flood fill on the 1000×750
+   canvas, tolerance `DRAW_FILL_TOLERANCE`), 20 colors and 5 sizes (appended, pickers ordered by
+   `DRAW_COLOR_ORDER` / `DRAW_SIZE_ORDER`), undo (`{t:'undo'}`, strokes carry their press group `g`, the server drops
+   the last group and sends everyone `strokes`; Ctrl+Z).
+6. ✅ Tests: e2e draw (fill, undo of a two-piece press), roomgame, quiz, poker; screenshots of every game in both
+   placements at 1360×860 / 1024×640 / 390×800, emojis in an empty room / over a game / in a free window.

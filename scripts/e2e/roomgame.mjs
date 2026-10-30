@@ -64,7 +64,7 @@ ok((await a.wait((m) => m.t === 'error', 'own')).code === 'table_own', 'With som
 // The game object opens under the table id.
 const dws = new WebSocket(`${base}/api/draw/${draw.id}/ws`);
 const drawWelcome = await new Promise((resolve, reject) => {
-  dws.addEventListener('open', () => dws.send(JSON.stringify({ t: 'hello', v: 2, name: 'Ayse', cid: 'rgameAyse0001', lang: 'tr' })));
+  dws.addEventListener('open', () => dws.send(JSON.stringify({ t: 'hello', v: 3, name: 'Ayse', cid: 'rgameAyse0001', lang: 'tr' })));
   dws.addEventListener('message', (e) => {
     const m = JSON.parse(e.data);
     if (m.t === 'welcome' || m.t === 'error') resolve(m);

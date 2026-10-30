@@ -266,6 +266,17 @@ export class Draw extends DurableObject<Env> {
         this.strokes.push(message.s);
         this.broadcast({ t: 'stroke', s: message.s }, ws);
         return;
+      case 'undo': {
+        if (d.phase !== 'draw' || d.drawer !== key) return this.sendTo(ws, { t: 'error', code: 'not_drawer' });
+        // Take the last drawing action away (all pieces of one pen press share a group; old clients' pieces are each
+        // their own action), then everyone redraws the rest.
+        const last = this.strokes.pop();
+        if (!last) return;
+        if (last.g !== undefined) while (this.strokes.length && this.strokes[this.strokes.length - 1]!.g === last.g) this.strokes.pop();
+        this.points = this.strokes.reduce((n, x) => n + x.p.length / 2, 0);
+        this.broadcast({ t: 'strokes', list: this.strokes });
+        return;
+      }
       case 'clear':
         if (d.phase !== 'draw' || d.drawer !== key) return this.sendTo(ws, { t: 'error', code: 'not_drawer' });
         this.strokes = [];

@@ -5,6 +5,8 @@
 import {
   DRAW_CHOOSE_MS,
   DRAW_COLORS,
+  DRAW_COLOR_ORDER,
+  DRAW_FILL_TOLERANCE,
   DRAW_H,
   DRAW_MAX_PLAYERS,
   DRAW_PROTOCOL_VERSION,
@@ -12,6 +14,7 @@ import {
   DRAW_ROUNDS,
   DRAW_ROUND_MS,
   DRAW_SIZES,
+  DRAW_SIZE_ORDER,
   DRAW_W,
   STROKE_MAX_POINTS,
   type DrawClientMessage,
@@ -61,13 +64,70 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
 
   // ---- Tuval ----
   const canvas = $<HTMLCanvasElement>('#draw-canvas');
-  const ctx = canvas.getContext('2d')!;
+  // Fills read the pixels back: keep the canvas on the CPU.
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
   const clearCanvas = () => {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, DRAW_W, DRAW_H);
   };
   clearCanvas();
+  /** Flood fill from (x, y): every connected pixel close to the clicked one's color takes the new color. Everyone
+   *  replays the same strokes in the same order on the same 1000×750 canvas, so everyone gets the same picture. */
+  function fillAt(x: number, y: number, hex: string): void {
+    const W = DRAW_W;
+    const H = DRAW_H;
+    const sx = Math.min(W - 1, x);
+    const sy = Math.min(H - 1, y);
+    const img = ctx.getImageData(0, 0, W, H);
+    const d = img.data;
+    const at = (sy * W + sx) * 4;
+    const r0 = d[at]!;
+    const g0 = d[at + 1]!;
+    const b0 = d[at + 2]!;
+    const n = parseInt(hex.slice(1), 16);
+    const r = (n >> 16) & 255;
+    const g = (n >> 8) & 255;
+    const b = n & 255;
+    if (Math.max(Math.abs(r - r0), Math.abs(g - g0), Math.abs(b - b0)) < 6) return;
+    const seen = new Uint8Array(W * H);
+    const like = (p: number) => !seen[p] && Math.max(Math.abs(d[p * 4]! - r0), Math.abs(d[p * 4 + 1]! - g0), Math.abs(d[p * 4 + 2]! - b0)) <= DRAW_FILL_TOLERANCE;
+    const stack = [sx, sy];
+    while (stack.length) {
+      const py = stack.pop()!;
+      let px = stack.pop()!;
+      let p = py * W + px;
+      while (px > 0 && like(p - 1)) {
+        px--;
+        p--;
+      }
+      let up = false;
+      let down = false;
+      while (px < W && like(p)) {
+        seen[p] = 1;
+        d[p * 4] = r;
+        d[p * 4 + 1] = g;
+        d[p * 4 + 2] = b;
+        d[p * 4 + 3] = 255;
+        if (py > 0) {
+          if (like(p - W)) {
+            if (!up) stack.push(px, py - 1);
+            up = true;
+          } else up = false;
+        }
+        if (py < H - 1) {
+          if (like(p + W)) {
+            if (!down) stack.push(px, py + 1);
+            down = true;
+          } else down = false;
+        }
+        px++;
+        p++;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
   function paint(s: Stroke): void {
+    if (s.f) return fillAt(s.p[0]!, s.p[1]!, DRAW_COLORS[s.c] ?? '#000');
     ctx.strokeStyle = ctx.fillStyle = DRAW_COLORS[s.c] ?? '#000';
     const width = DRAW_SIZES[s.w] ?? 4;
     if (s.p.length === 2) {
@@ -85,13 +145,28 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     ctx.stroke();
   }
 
-  // ---- Araçlar (çizende) ----
+  // ---- Tools (for the drawer): pen / fill, colors, sizes, undo, clear ----
   let color = 0;
   let size = 1;
+  let tool: 'pen' | 'fill' = 'pen';
+  /** The drawing action pieces belong to (one press = one group, so "undo" takes back a whole line). */
+  let group = Math.floor(Math.random() * 1000) * 1000;
   const tools = $('#draw-tools');
-  const colorButtons = DRAW_COLORS.map((c, i) => {
+  const toolButton = (name: 'pen' | 'fill', glyph: string) => {
+    const b = el('button', { type: 'button', class: 'draw-tool', title: t(`draw.${name}`), 'aria-label': t(`draw.${name}`) }, glyph);
+    b.addEventListener('click', () => {
+      tool = name;
+      renderTools();
+    });
+    return b;
+  };
+  const penButton = toolButton('pen', '✏️');
+  const fillButton = toolButton('fill', '🪣');
+  const colorButtons = DRAW_COLOR_ORDER.map((i) => {
+    const c = DRAW_COLORS[i];
     const b = el('button', { type: 'button', class: 'draw-color', 'aria-label': t(i === 1 ? 'draw.eraser' : 'draw.color', { n: i + 1 }) });
     b.style.setProperty('--c', c);
+    b.dataset.i = String(i);
     if (i === 1) b.textContent = '⌫';
     b.addEventListener('click', () => {
       color = i;
@@ -99,26 +174,46 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     });
     return b;
   });
-  const sizeButtons = DRAW_SIZES.map((w, i) => {
+  const sizeButtons = DRAW_SIZE_ORDER.map((i) => {
+    const w = DRAW_SIZES[i];
     const b = el('button', { type: 'button', class: 'draw-size', 'aria-label': t('draw.size', { n: i + 1 }) }, el('i'));
-    b.style.setProperty('--w', `${Math.max(4, w * 0.6)}px`);
+    b.style.setProperty('--w', `${Math.max(3, Math.min(22, w * 0.55))}px`);
+    b.dataset.i = String(i);
     b.addEventListener('click', () => {
       size = i;
+      tool = 'pen';
       renderTools();
     });
     return b;
   });
+  const undoButton = el('button', { type: 'button', class: 'btn small-btn', title: `${t('draw.undo')} · Ctrl+Z` }, `↶ ${t('draw.undo')}`);
+  undoButton.addEventListener('click', () => send({ t: 'undo' }));
   const clearButton = el('button', { type: 'button', class: 'btn small-btn' }, t('draw.clear'));
   clearButton.addEventListener('click', () => {
     clearCanvas();
     send({ t: 'clear' });
   });
-  tools.append(el('div', { class: 'draw-colors' }, ...colorButtons), el('div', { class: 'draw-sizes' }, ...sizeButtons), clearButton);
+  tools.append(
+    el('div', { class: 'draw-tool-pick' }, penButton, fillButton),
+    el('div', { class: 'draw-colors' }, ...colorButtons),
+    el('div', { class: 'draw-sizes' }, ...sizeButtons),
+    el('div', { class: 'draw-tool-pick' }, undoButton, clearButton),
+  );
   function renderTools(): void {
-    colorButtons.forEach((b, i) => b.classList.toggle('on', i === color));
-    sizeButtons.forEach((b, i) => b.classList.toggle('on', i === size));
+    penButton.classList.toggle('on', tool === 'pen');
+    fillButton.classList.toggle('on', tool === 'fill');
+    colorButtons.forEach((b) => b.classList.toggle('on', Number(b.dataset.i) === color));
+    sizeButtons.forEach((b) => b.classList.toggle('on', tool === 'pen' && Number(b.dataset.i) === size));
+    canvas.classList.toggle('filling', tool === 'fill');
   }
   renderTools();
+  const onKey = (event: KeyboardEvent) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && iDraw()) {
+      event.preventDefault();
+      send({ t: 'undo' });
+    }
+  };
+  addEventListener('keydown', onKey);
 
   // Çizen fareyle/parmakla çizer: noktalar biriktirilir, 50 ms'de bir parça olarak gider (bir önceki parçanın son
   // noktasıyla başlar: çizgi kopmaz).
@@ -134,7 +229,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   };
   function flush(): void {
     if (pending.length < 2) return;
-    const s: Stroke = { c: color, w: size, p: pending };
+    const s: Stroke = { c: color, w: size, p: pending, g: group };
     send({ t: 'stroke', s });
     pending = lastPoint && drawing ? [...lastPoint] : [];
   }
@@ -144,6 +239,14 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const iDraw = () => !!state && state.phase === 'draw' && state.drawer === me;
   canvas.addEventListener('pointerdown', (event) => {
     if (!iDraw()) return;
+    group++;
+    if (tool === 'fill') {
+      const [x, y] = point(event);
+      const s: Stroke = { c: color, w: 0, p: [x, y], f: 1, g: group };
+      paint(s);
+      send({ t: 'stroke', s });
+      return;
+    }
     canvas.setPointerCapture(event.pointerId);
     drawing = true;
     const p = point(event);
@@ -420,5 +523,6 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     for (const timer of [flusher, ticker, ping]) clearInterval(timer);
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
+    removeEventListener('keydown', onKey);
   };
 }

@@ -1,15 +1,15 @@
-// Life poker in the room (game window). Not a casino table: the pot is a glass flask filling with red life, every
-// player has a game-style life bar, special moves are cards with their cost. My two cards come only to me
-// (`cards`); a peek shows one card of a rival on their seat (for me only, this hand).
+// Last Heart (life poker) in the room (game window). Not a casino table: the pot is a glass flask filling with red
+// life, every player has a game-style life bar, special moves are cards with their cost. My two cards come only to me
+// (`cards`); a peek shows one card of a rival on their seat (for me only, this hand). A status strip on top always
+// says whose turn it is and how many seconds are left; moves and hand results are announced to everyone in the
+// middle of the table; "How to play" walks through the game in four short steps.
 
 import {
   MOVE_COST,
   POKER_MAX_PLAYERS,
   POKER_MOVES,
   POKER_PROTOCOL_VERSION,
-  POKER_SHOWDOWN_MS,
   POKER_START_LIFE,
-  POKER_TURN_MS,
   isJoker,
   type Card,
   type PokerClientMessage,
@@ -81,6 +81,12 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   let lastTick = 0;
   let lastPhase = '';
   const feed: string[] = [];
+  /** The deadline the timer bar counts down to, and when it was set (the bar's full length). */
+  let clock = { endsAt: 0, from: 0 };
+  /** The last event announced in the middle of the table (moves, raises, results). */
+  let announced = '';
+  /** "How to play" open, on step n (0–3). */
+  let howto: number | null = null;
 
   const nameOf = (id: string | null | undefined) => state?.players.find((p) => p.id === id)?.name ?? '';
   const moveName = (m: PokerMove) => t(`poker.move.${m}`);
@@ -118,7 +124,14 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       feed.push(line);
       if (feed.length > 4) feed.shift();
     }
+    // Big announcements everyone sees: special moves, raises and time-outs, then the hand's result.
+    const big = s.phase === 'showdown' ? result(s) : s.last && (s.last.e === 'move' || s.last.e === 'timeout' || (s.last.e === 'act' && s.last.a === 'raise')) ? line : '';
+    const bigKey = `${s.hand}:${s.phase}:${big}`;
+    if (big && bigKey !== announced) announce(big, s.phase === 'showdown' ? 'result' : s.last?.e === 'move' ? 'move' : '');
+    announced = big ? bigKey : announced;
+    if (s.endsAt !== clock.endsAt) clock = { endsAt: s.endsAt ?? 0, from: Date.now() + offset };
 
+    if (howto !== null) return renderHowto();
     if (s.phase === 'lobby' || s.phase === 'over') return renderLobby(s, myPlayer);
     const total = s.players.reduce((sum, p) => sum + p.life, 0) + s.pot;
     const rivals = s.players.filter((p) => p.id !== me);
@@ -163,7 +176,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       el(
         'div',
         { class: 'pk-center' },
-        el('div', { class: 'pk-info' }, t('poker.hand', { n: s.hand }), ' · ', t('poker.blinds', { a: s.blinds[0], b: s.blinds[1] }), s.jokers ? ` · ${t('poker.jokers')}` : ''),
+        el('div', { class: 'pk-info' }, t('poker.hand', { n: s.hand }), ' · ', t('poker.blinds', { a: s.blinds[0], b: s.blinds[1] }), s.jokers ? ` · ${t('poker.jokers')}` : '', helpButton()),
         board,
         el('div', { class: 'pk-feed', 'aria-live': 'polite' }, ...feed.map((x, i) => el('p', { class: i === feed.length - 1 ? 'new' : '' }, x))),
       ),
@@ -190,9 +203,116 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     if (myPlayer && inHand(myPlayer)) {
       meBox.append(actions(s, myTurn), moves(s, myPlayer, myTurn));
     }
-    const timer = el('div', { class: 'pk-timer', 'aria-hidden': 'true' }, el('i', { id: 'pk-time' }));
-    root.replaceChildren(timer, seats, middle, meBox);
+    root.replaceChildren(statusStrip(s, myTurn), seats, middle, meBox, toast);
     tick();
+  }
+
+  /** On top, always: whose turn (or the result), the street, the seconds left and the timer bar. */
+  function statusStrip(s: State, myTurn: boolean): HTMLElement {
+    const who = s.players.find((p) => p.id === s.toAct);
+    const text =
+      s.phase === 'showdown' ? result(s) : myTurn ? t('poker.turn.mine') : who ? t('poker.turn.other', { name: who.name }) : '';
+    return el(
+      'div',
+      { class: `pk-status${myTurn ? ' mine' : ''}${s.phase === 'showdown' ? ' result' : ''}`, role: 'status', 'aria-live': 'polite' },
+      who && s.phase !== 'showdown' ? avatarNode(who.avatar, 'pk-avatar') : el('span', { class: 'pk-status-icon', 'aria-hidden': 'true' }, '♥'),
+      el('b', { class: 'pk-status-text' }, text),
+      el('span', { class: 'pk-street' }, t(`poker.street.${s.phase}`)),
+      el('span', { id: 'pk-secs', class: 'pk-secs' }),
+      el('span', { class: 'pk-timer', 'aria-hidden': 'true' }, el('i', { id: 'pk-time' })),
+    );
+  }
+
+  /** The hand's result in one line (who took how much, with which hand). */
+  function result(s: State): string {
+    const winners = s.players.filter((p) => (p.won ?? 0) > 0);
+    if (!winners.length) return '';
+    const shown = s.players.some((p) => p.cards);
+    if (winners.length > 1) return t('poker.result.split', { names: winners.map((p) => p.name).join(', ') });
+    const w = winners[0]!;
+    return shown && w.hand ? t('poker.result.win', { name: w.name, n: w.won ?? 0, hand: t(`poker.hands.${w.hand}`) }) : t('poker.result.fold', { name: w.name, n: w.won ?? 0 });
+  }
+
+  // The announcement in the middle of the table: stays 2.4 s, the newest replaces the last.
+  const toast = el('div', { class: 'pk-toast', 'aria-live': 'assertive' });
+  let toastTimer = 0;
+  function announce(text: string, kind: string): void {
+    toast.textContent = text;
+    toast.className = `pk-toast show ${kind}`;
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => (toast.className = 'pk-toast'), kind === 'result' ? 3000 : 2400);
+  }
+
+  function helpButton(): HTMLElement {
+    const b = el('button', { type: 'button', class: 'pk-help', title: t('poker.howto'), 'aria-label': t('poker.howto') }, '?');
+    b.addEventListener('click', () => {
+      howto = 0;
+      render();
+    });
+    return b;
+  }
+
+  /** "How to play": four short steps, each fits on one screen. */
+  function renderHowto(): void {
+    const step = howto ?? 0;
+    const pages: (() => HTMLElement[])[] = [
+      () => [el('p', {}, t('poker.howto.goal')), el('p', {}, t('poker.howto.blinds'))],
+      () => [
+        el('p', {}, t('poker.howto.hand')),
+        el(
+          'ul',
+          { class: 'pk-howto-acts' },
+          ...(['check', 'call', 'raise', 'fold'] as const).map((a) => el('li', {}, el('b', {}, t(`poker.howto.act.${a}`)), el('span', {}, t(`poker.howto.act.${a}.d`)))),
+        ),
+      ],
+      () => [
+        el('p', {}, t('poker.howto.ranks')),
+        el(
+          'ol',
+          { class: 'pk-howto-ranks' },
+          ...(['five', 'straightFlush', 'quads', 'fullHouse', 'flush', 'straight', 'trips', 'twoPair', 'pair', 'high'] as const).map((h) =>
+            el('li', { class: h === 'five' ? 'joker-only' : '' }, el('b', {}, t(`poker.hands.${h}`)), el('span', {}, t(`poker.howto.rank.${h}`))),
+          ),
+        ),
+      ],
+      () => [
+        el('p', {}, t('poker.howto.moves')),
+        el(
+          'ul',
+          { class: 'pk-moves-help' },
+          ...POKER_MOVES.map((m) => el('li', {}, el('span', { 'aria-hidden': 'true' }, MOVE_ICON[m]), el('b', {}, moveName(m)), el('small', {}, MOVE_COST[m] ? t('poker.cost', { n: MOVE_COST[m] }) : t('poker.costFree')), el('span', {}, t(`poker.moveText.${m}`)))),
+        ),
+      ],
+    ];
+    const back = el('button', { type: 'button', class: 'btn' }, t('poker.howto.back'));
+    back.disabled = step === 0;
+    back.addEventListener('click', () => {
+      howto = Math.max(0, step - 1);
+      render();
+    });
+    const last = step === pages.length - 1;
+    const next = el('button', { type: 'button', class: 'btn primary' }, t(last ? 'poker.howto.done' : 'poker.howto.next'));
+    next.addEventListener('click', () => {
+      howto = last ? null : step + 1;
+      render();
+    });
+    const close = el('button', { type: 'button', class: 'pk-howto-close', 'aria-label': t('poker.howto.done') }, '✕');
+    close.addEventListener('click', () => {
+      howto = null;
+      render();
+    });
+    root.replaceChildren(
+      el(
+        'div',
+        { class: 'pk-howto' },
+        close,
+        el('h3', {}, `${t('poker.howto')} · ${step + 1}/${pages.length}`),
+        el('h4', {}, t((['poker.howto.t1', 'poker.howto.t2', 'poker.howto.t3', 'poker.howto.t4'] as const)[step]!)),
+        ...pages[step]!(),
+        el('div', { class: 'pk-howto-nav' }, back, el('span', { class: 'pk-howto-dots' }, ...pages.map((_, i) => el('i', { class: i === step ? 'on' : '' }))), next),
+      ),
+      toast,
+    );
   }
 
   /** The cards of the winning five glow at the showdown. */
@@ -316,12 +436,13 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       parts.push(el('h3', {}, winner ? t('poker.winner', { name: winner.name }) : t('games.over')));
       if (winner) parts.push(el('div', { class: 'pk-champion' }, avatarNode(winner.avatar, 'pk-champion-avatar'), lifeBar(winner.life)));
     } else parts.push(el('h3', {}, t('games.poker.title')), el('p', { class: 'pk-rules' }, t('poker.rules')));
+    const learn = el('button', { type: 'button', class: 'btn pk-learn' }, `❔ ${t('poker.howto')}`);
+    learn.addEventListener('click', () => {
+      howto = 0;
+      render();
+    });
     parts.push(
-      el(
-        'ul',
-        { class: 'pk-moves-help' },
-        ...POKER_MOVES.map((m) => el('li', {}, el('span', { 'aria-hidden': 'true' }, MOVE_ICON[m]), el('b', {}, moveName(m)), el('small', {}, MOVE_COST[m] ? t('poker.cost', { n: MOVE_COST[m] }) : t('poker.costFree')), el('span', {}, t(`poker.moveText.${m}`)))),
-      ),
+      learn,
       settingsPanel(
         [
           {
@@ -347,20 +468,23 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     go.disabled = online < 2;
     go.addEventListener('click', () => send({ t: 'start' }));
     parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('poker.seats', { n: s.players.length, max: POKER_MAX_PLAYERS })));
-    root.replaceChildren(el('div', { class: 'pk-lobby' }, ...parts));
+    root.replaceChildren(el('div', { class: 'pk-lobby' }, ...parts), toast);
   }
 
   function tick(): void {
     const s = state;
     const bar = root.querySelector<HTMLElement>('#pk-time');
+    const secsBox = root.querySelector<HTMLElement>('#pk-secs');
     if (!s || !bar) return;
     if (s.endsAt === null) {
       bar.style.width = '0%';
+      if (secsBox) secsBox.textContent = '';
       return;
     }
     const left = Math.max(0, s.endsAt - (Date.now() + offset));
-    const total = s.phase === 'showdown' ? POKER_SHOWDOWN_MS : POKER_TURN_MS;
+    const total = Math.max(1000, clock.endsAt - clock.from);
     bar.style.width = `${Math.min(100, (left / total) * 100)}%`;
+    if (secsBox) secsBox.textContent = s.phase === 'showdown' ? '' : t('poker.secs', { n: Math.ceil(left / 1000) });
     const mineTurn = s.toAct === me && s.phase !== 'showdown';
     bar.classList.toggle('mine', mineTurn);
     bar.classList.toggle('low', mineTurn && left < 8000);
@@ -442,6 +566,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     close();
     clearInterval(ticker);
     clearInterval(ping);
+    clearTimeout(toastTimer);
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
   };

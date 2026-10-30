@@ -17,11 +17,11 @@ export interface GameInfo {
 }
 
 export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
-  xox: { min: 2, max: 2, place: 'float', size: [400, 600], fit: [340, 520] },
-  four: { min: 2, max: 2, place: 'float', size: [480, 600], fit: [400, 520] },
-  draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [760, 540] },
-  quiz: { min: 2, max: 8, place: 'stage', size: [760, 560], fit: [640, 500] },
-  poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [760, 540] },
+  xox: { min: 2, max: 2, place: 'float', size: [400, 560], fit: [300, 420] },
+  four: { min: 2, max: 2, place: 'float', size: [480, 560], fit: [360, 420] },
+  draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440] },
+  quiz: { min: 2, max: 8, place: 'stage', size: [760, 540], fit: [540, 380] },
+  poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440] },
 };
 
 export interface GameNews {
@@ -36,6 +36,27 @@ export interface GameNews {
 
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
+  {
+    v: '0.9.91.11',
+    kinds: ['poker'],
+    badge: 'updated',
+    tr: 'Can Pokeri’nin yeni adı Son Kalp: “Nasıl oynanır?” rehberi, üstte sıra kimde ve kaç saniye kaldı, herkesin gördüğü hamle duyuruları, el sonucu hemen.',
+    en: 'Life Poker is now Last Heart: a “How to play” guide, whose turn and the seconds left always on top, moves announced to everyone, hand results at once.',
+  },
+  {
+    v: '0.9.91.11',
+    kinds: ['draw'],
+    badge: 'updated',
+    tr: 'Çiz-Bil: boya kovası, 20 renk, 5 kalınlık ve geri al (Ctrl+Z).',
+    en: 'Draw & Guess: a paint bucket, 20 colors, 5 sizes and undo (Ctrl+Z).',
+  },
+  {
+    v: '0.9.91.11',
+    kinds: [],
+    badge: 'updated',
+    tr: 'Oyunlar artık her ekrana sığıyor, hiçbir yerde kaydırma yok; serbest pencere orantılı büyüyüp küçülüyor. Oda emojileri oyunun üstünde de uçuyor.',
+    en: 'Games now fit any screen with no scrolling; the free window grows and shrinks in proportion. Room emojis fly over the game too.',
+  },
   {
     v: '0.9.91.10',
     kinds: [],
