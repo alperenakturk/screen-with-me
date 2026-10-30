@@ -10976,3 +10976,52 @@ html.is-touch .theater.dock-mode.dock-idle .fs-dock:not(:has(:focus-visible)) {
 .shorts-result-note {
   padding: 6px 4px;
 }
+
+/* ==== 0.9.91.13: games in the Shorts view: 🎮 in the Shorts bar (the hub opens above it), the game is a free window
+   there (no "in the video's place" switch: the upright video has no room for it) ==== */
+.shorts-game-wrap .game-menu {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+html.shorts-view .game-stage .game-place {
+  display: none;
+}
+
+/* ==== 0.9.91.13: our own players (Shorts in the room view, the sync test) use the dock too: the old bar goes, our
+   click catcher stays (click = play / pause, double click = fullscreen, the wheel scrolls Shorts); ⏯ and the volume
+   sit on the dock. ==== */
+.theater.dock-mode.own-dock .fs-catcher {
+  display: block;
+}
+
+.theater.dock-mode.own-dock .fs-controls {
+  display: none !important;
+}
+
+.dock-vol {
+  padding: 10px 12px;
+}
+
+.dock-vol input {
+  width: 140px;
+  accent-color: var(--accent);
+}
+
+/* 0.9.91.13: a newer extension is out (ext-update.ts): a dot on the top bar's "Eklenti" link. */
+.nav-link.ext-update {
+  position: relative;
+}
+
+.nav-link.ext-update::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg);
+}

@@ -445,7 +445,7 @@ html.pseudo-fs body {
     flex-wrap: nowrap;
   }
 
-  .room.shorts .shorts-bar > :is(.shorts-voice, .shorts-add-wrap, .shorts-feed-wrap, .shorts-loop, #shorts-exit) {
+  .room.shorts .shorts-bar > :is(.shorts-voice, .shorts-add-wrap, .shorts-game-wrap, .shorts-feed-wrap, .shorts-loop, #shorts-exit) {
     flex: 0 0 auto;
   }
 
@@ -457,7 +457,7 @@ html.pseudo-fs body {
 
 @media (max-width: 700px) {
   /* 🔁 and ↩ say "loop" and "room view" by themselves here (their titles too): the buttons stay on one row. */
-  .room.shorts :is(#shorts-loop, #shorts-exit) > span {
+  .room.shorts :is(#shorts-loop, #shorts-exit, #shorts-game) > span {
     display: none;
   }
 }

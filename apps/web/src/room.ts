@@ -348,12 +348,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="dock-live" type="button" class="dock-btn"></button>
               </div>
               <div class="dock-group">
+                <button id="dock-play" type="button" class="dock-btn" hidden></button>
+                <button id="dock-vol" type="button" class="dock-btn" aria-expanded="false" hidden></button>
                 <button id="dock-speed" type="button" class="dock-btn dock-text" aria-expanded="false">1×</button>
                 <button id="dock-skip" type="button" class="dock-btn"></button>
                 <button id="dock-exit" type="button" class="dock-btn"></button>
               </div>
               <form id="dock-chat-form" class="dock-pop dock-chat" hidden><input id="dock-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" /></form>
               <div id="dock-react-pop" class="dock-pop" hidden><div class="reaction-bar fs-reactions dock-reactions" role="group"></div></div>
+              <div id="dock-vol-pop" class="dock-pop dock-vol" hidden><input id="dock-vol-range" type="range" min="0" max="100" step="1" value="100" /></div>
               <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
             </div>
             <div id="empty" class="empty">
@@ -446,6 +449,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
             </form>
+          </div>
+          <div class="game-menu-wrap shorts-game-wrap">
+            <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false">🎮 <span data-i18n="tool.game"></span></button>
           </div>
           <div class="shorts-feed-wrap">
             <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
@@ -856,6 +862,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     wrap: $('.player-wrap'),
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
+    // The Shorts bar's 🎮 (0.9.91.13): there a game opens as a free window.
+    extraButtons: [$<HTMLButtonElement>('#shorts-game')],
     send,
     me: () => ({ id: myId, name: myName, avatar: myAvatar }),
     amHost,
@@ -1841,6 +1849,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     current: () => roomState?.item ?? null,
     canAdd: () => !(roomSettings.lockQueue && !amHost()),
     add: (media) => send({ t: 'enqueue', media }),
+    remove: (itemId) => send({ t: 'dequeue', id: itemId }),
     note: (text) => flashHint(shortsOn ? feedButton : mediaInput, text, 5000),
     changed: () => renderFeed(),
   });

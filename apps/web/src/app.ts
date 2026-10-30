@@ -3,6 +3,7 @@ import { createLogo } from '@swm/shared/logo';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { lang, setLang, translate, type Lang } from './i18n.ts';
 import { applyTheme, currentTheme, openThemeDialog } from './themes.ts';
+import { checkExtensionVersion } from './ext-update.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
@@ -62,6 +63,7 @@ if (/^\/(baglanti|connection-test)\/?$/.test(location.pathname)) {
   });
 }
 translate();
+checkExtensionVersion();
 
 // Uygulama olarak eklenebilsin (PWA): sadece en üstteki pencerede (film sayfasındaki katmanda değil). Service worker
 // dosyaları önbelleğe almaz, sadece çevrimdışıyken "bağlantı yok" sayfası gösterir (public/sw.js).
