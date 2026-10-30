@@ -57,7 +57,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.3 (no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.7 (dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -176,6 +176,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   a person's camera fills their seat's avatar circle (`seats.setCams`, fed by voice's `onCams` with the cameras on
   screen, hidden ones and "hide myself" left out; videos kept between redraws, mine mirrored, green ring); the bottom
   bar has only 🎙 / 📷 (`#shorts-voice`; not in voice yet, 🎙 joins); seats are bigger there (80 px, 52 px on phones).
+  **0.9.91.7 (owner):** the Shorts bar's emojis are the room's "😀 Tepki" tray (`.tray-bar`: custom emojis, the three
+  recent) and "＋ Ekle" (`#shorts-add`) queues links (one or many, same paths as the link box; words point to the ♾
+  feed); on a phone Tepki shares a row with 🎙 / 📷 and ↩ / 🔁 lose their text.
   **0.9.91 endless Shorts feed (`ui/shorts-feed.ts`):** "♾ Shorts akışı" in the Shorts bar (topic box) or "📱 Shorts
   akışı" on a search's results starts it; when fewer than 3 are queued (and nothing but Shorts is playing) it asks
   `/api/youtube/search?short=1&page=…` (Worker: `videoDuration=short`, "#shorts" added, 25 per page, `nextPageToken`
@@ -338,16 +341,23 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   YouTube and video files keep **their own** player bar (YouTube `controls: 1, fs: 0, iv_load_policy: 3`: quality,
   caption language, chapters come back; video files `controls`), and so does the film page (the film is never made
   smaller, nothing is hidden). In the window our buttons are the toolbar under the video. In fullscreen our buttons are
-  a **vertical dock on the right edge** (`#fs-dock`, `.theater.dock-mode`, `ui/fullscreen.ts`): talk (💬 message box,
+  a **vertical dock on the right edge** (`#fs-dock`, `.theater.dock-mode`, `ui/fullscreen.ts`; since 0.9.91.7 in the
+  window too, `.dock-window`, when the video is ≥ 480×360 and not on an upright phone, its last button opening
+  fullscreen): talk (💬 message box,
   😀 emojis — the flat 8-slot bar in a window to the dock's left, 📌 pin) · together (🎙 / 📷 / 🖥️, `#dock-voice`, the
   same quick buttons as the Shorts bar in `ui/voice.ts`; not in voice: 🎙 joins) · watch (speed `#dock-speed-pop`,
   ⏭, exit). Line icons (`ui/icons.ts`), each button named with its shortcut ("Mesaj yaz · Enter"); one window at a
-  time, lined up with its button, closed by a click elsewhere or Esc; Enter opens the message box. When idle the dock
-  fades to 30 % but never disappears (the page can't see the mouse over a YouTube frame). Messages flow up next to the
+  time, lined up with its button, closed by a click elsewhere or Esc; Enter opens the message box. **The dock comes and goes with
+  the player's own bar (0.9.91.7, owner):** `.dock-idle` hides it (opacity 0, and no island on the film page) after
+  2.5 s without a mouse move or when the mouse leaves the video; a move on the video (on the film page reported by the
+  film frames as `activity` → `poke()`), hovering the dock, an open window of it or a paused video show it. A YouTube
+  frame keeps its mouse moves, so there it shows when the mouse comes onto the video and hides 2.5 s later (like
+  YouTube's bar at rest). Touch screens keep it at 30 %. Real fullscreen: windows / hints / the person menu added to
+  `<body>` move into the fullscreen element while it lasts (`ui/fs-layer.ts`). Messages flow up next to the
   dock (`ui/toasts.ts`, right-aligned to its left edge). In the shell the dock and its open window are islands
-  (`reportLayout`); our catcher is never an island there (the film player takes the clicks). With the dock the camera
-  pill hides its 🎙 / 📷 / 🖥️ (no empty pill either, `keepEmpty` in `cam-float.ts`) and automatic camera tiles start
-  left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") stays only for players
+  (`reportLayout`); our catcher is never an island there (the film player takes the clicks). The camera pill has no 🎙 / 📷 / 🖥️
+  any more (0.9.91.7: they are on the dock; the dock's and the Shorts bar's 📷 also shows outside voice and joins with
+  the camera on, `joinWithCam`) and automatic camera tiles start left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") stays only for players
   it is the remote of (`current.own`): **Shorts** (YouTube `controls: 0, disablekb: 1`, needed for scrolling) and the
   sync test; there click = play/pause, double click = fullscreen, volume is local (`opt:volume`, `opt:muted`), CC when
   the video has captions. A YouTube player is reused for the next video only when both use the same remote (a Short
@@ -359,7 +369,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
 - **Phones (0.9.91.2, owner: "the phone experience should be great, and easy to grow into a store app"):** phone-only
   CSS lives in `apps/web/src/phone.css` (after `styles.css`), device facts in `apps/web/src/device.ts` (`isTouch`,
   `isIOS`, `isStandalone`, `isApp`, `canElementFullscreen`, `canShareSheet`, `lockLandscape`, `onTurn`; `<html>`
-  classes `is-touch` / `is-ios` / `is-standalone` / `is-app`): ask there, never sniff in feature code. Store-app path
+  classes `is-touch` / `is-ios` / `is-standalone` / `is-app`; `isPhone()` = touch + ≤ 700 px wide or ≤ 500 px tall, not
+  tablets): ask there, never sniff in feature code. **Themes on phones (0.9.91.7, owner):** only the plain ones
+  (gece / okyanus / gunbatimi / neon) are offered; a saved scene theme shows as Gece there and stays saved
+  (`themes.ts` `shown`, `offered`). Store-app path
   (Google Play TWA, App Store shell, what Apple requires: report / block for user content, push, universal links):
   `docs/internal/apps.md`. At ≤ 700 px
   wide every popover (profile, share, speed, games, emoji tray, person menu, Shorts feed, theme) is a **bottom sheet**
@@ -494,7 +507,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   extension's offscreen document (`offscreen.ts`, permission `offscreen`): the site relays `{type:'voice', msg}` with
   `ExtVoice` (`ui/voice-ext.ts`) (sends signal/rtc/"in voice" through its own connection), offscreen runs
   `P2pVoice`/`VoiceClient`, plays audio and sends levels (`LevelMeter`, `levels` + `me`). Without permission the
-  background opens the `mic.html` tab (offscreen can't ask); when the film page reloads the new site sends `hello` →
+  background opens `mic.html` (offscreen can't ask; asked from the overlay the permission would go to the film site)
+  as a small popup window over the film's window that asks at once and closes itself (0.9.91.7; a tab before); when the film page reloads the new site sends `hello` →
   `reset` (the mic stays). **Mic and camera survive reconnects (0.9.84):** `join(mic)` starts with the person's last
   choice (the track is disabled before anyone hears it); site reconnect keeps mic and camera, a page reload uses
   `voiceMic:<room>`; it used to come back with the microphone **on** (friends' "random mic"). A silent rejoin is
@@ -570,7 +584,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   floating / fullscreen cameras default to `opt:camLayout` = `free`: the box (`.voice-cams.free`) covers the page or
   the video and lets clicks through; every tile is its own window (drag, corner `.cam-tile-resize` both ways, double
   click = back in line, touched tile comes to the front); places per person (`tile.dataset.person` = name|avatar) in
-  `camTiles:spot` / `camTiles:fsSpot` (at most 30, no x/y = automatic column from the video's top-right corner). A
+  `camTiles:spot` / `camTiles:fsSpot` (at most 30, no x/y = attached: since 0.9.91.7 the automatic column hangs under
+  the pill (above it when the pill is in the lower half) and follows it while the pill is dragged). A
   pill (`.cam-pill`, own spot `camPill:spot` / `camPill:fsSpot`) holds 📷 N, "👁 N" (hidden cameras), ⊞ line up (keeps
   widths), ↺ reset, ▣ / ⊡ switch to the old single window (`group`), −, ⤓ and the 🎙 / 📷 buttons. In the shell the box
   is not an island, each tile and the pill are (`room.ts` `reportLayout` reads `.free` children inside the hole). Person

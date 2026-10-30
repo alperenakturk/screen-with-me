@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.3**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.7**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -116,6 +116,27 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   fullscreen on a film page): some players' boxes can scroll, and grown to the hole they drew a scrollbar over the
   film. The extension's focus CSS now hides scrollbars in the player box and inside it (menus still scroll
   with the wheel; the box's overflow stays unclipped, clipping it once cut off subtitles). The embed test page's player box scrolls like those players; embed harness 102/102.
+- [x] **0.9.91.7 owner's feedback round (30 Oct 2026)** (the games hub design went to its own session, merged as
+  `docs/internal/games-hub.md`):
+  - Film page: ⚙️ settings and other windows that only lose `hidden` close the hole at once (they waited for the
+    1 s check); the extension's "İzlemeye başla" card sits one z-index under the overlay and follows the video (it
+    covered the "Odaya dön" question: only a blurred screen). Reloading the film page keeps the room view (tested;
+    the owner's report came from a removed extension).
+  - The "Eklenti" button, footer links and the home page's extension door open in a new tab.
+  - Real fullscreen: windows and hints added to `<body>` move into the fullscreen element (`ui/fs-layer.ts`).
+  - The dock shows in the window too (video ≥ 480×360, not an upright phone; last button = fullscreen) and hides with
+    the player's own bar (`dock-idle`: mouse move / paused shows it, 2.5 s rest or mouse leaving hides it; film
+    frames report moves; a YouTube frame hides its moves, so there it hides 2.5 s after the mouse comes in, like
+    YouTube's bar at rest; touch keeps it at 30 %). A hidden dock is no island on the film page.
+  - Camera pill: only camera / layout buttons, shows only while a camera is on, cameras start attached under it and
+    move with it. 📷 on the dock and the Shorts bar shows before joining and joins with the camera on.
+  - Line icons in the share menu (and a switch for "camera in the corner"), `image-add` instead of 🖼️.
+  - Shorts bar: 😀 Tepki tray (custom emojis + 3 recent) and "＋ Ekle" (links to the queue); fits a phone.
+  - Phones offer only the plain themes (a scene theme shows as Gece there and stays saved); `device.ts` `isPhone()`.
+  - Film-page microphone permission: a small popup window that asks at once and closes itself (not a tab); asking
+    from the overlay would give the permission to the film site.
+  Harnesses: embed 106/106 (reload, windows in front, dock hides with the film's bar), voice 65/65, voice shell 28,
+  live, sound, phone 22/22, TV 31/31, unit 211; e2e green except the local-only YouTube title check.
 - [ ] **TV version, owner chose A + C (30 Oct 2026):** the TV shows the room (video, messages, flying emojis, who is
   speaking, cameras) and has only basic remote controls (big button bar A); the paired **phone** is the real
   remote: typing, emojis, voice in / out, mic (push-to-talk by default: the phone mic hears the TV's speakers),
