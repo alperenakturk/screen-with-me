@@ -204,6 +204,8 @@ export interface Member {
   watching?: boolean;
   /** A TV paired to this person (same name and avatar): it shows the room, the person's phone is its remote. */
   tv?: boolean;
+  /** The game table (its id) this person has open, playing or watching (the games hub shows who is where). */
+  table?: string;
 }
 
 /** Yayın türü: ekran/pencere/sekme paylaşımı ya da kamera. */
@@ -211,10 +213,13 @@ export type LiveKind = 'screen' | 'camera';
 
 /** Odanın içinde oynanan oyunlar (PlayWithMe): XOX, Dört Taş, Çiz-Bil, Bilgi yarışması. */
 export const ROOM_GAME_KINDS = ['xox', 'four', 'draw', 'quiz'] as const;
+/** A table id (the room's `newId()`; game objects accept the same shape). */
+const TABLE_ID = /^[A-Za-z0-9_-]{3,40}$/;
 export type RoomGameKind = (typeof ROOM_GAME_KINDS)[number];
 /**
- * Odada açık oyun (aynı anda tek). Oyunun kendisi ayrı bir sunucu nesnesinde yürür (`id` onun kimliği; oda verir,
- * kimse ayrı oyun odası kurmaz); oda sadece hangi oyunun açık olduğunu ve kimin açtığını tutar.
+ * A game table in the room (the games hub holds up to `MAX_TABLES` at once). The game itself runs in its own server
+ * object (`id` is its id, handed out by the room; nobody sets up a separate game room); the room only keeps which
+ * tables are open and who opened them.
  */
 export interface RoomGame {
   kind: RoomGameKind;
@@ -223,6 +228,9 @@ export interface RoomGame {
   /** Açıldığı an (sunucu saati). */
   at: number;
 }
+/** Tables open at once in a room, and how long a table nobody has open stays. */
+export const MAX_TABLES = 4;
+export const TABLE_EMPTY_MS = 2 * 60_000;
 /**
  * Yayını aynı anda en fazla bu kadar kişi izler: yayıncı her izleyiciye ayrı kopya yollar (720p ~2 Mbit/s; 4 izleyici
  * ev internetinin yükleme hızının sınırı).
@@ -390,7 +398,12 @@ export type ClientMessage =
   /** Yayın bağlantı mesajı (sunucu sadece yayıncı ile izleyicisi arasında iletir). */
   | { t: 'live-signal'; to: string; data: Signal }
   /** Odada oyun aç (`kind`) ya da açık oyunu bitir (`end`; sadece açan ya da yönetici). */
+  /** Old clients (one game per room): opens a table / closes my newest one. */
   | { t: 'game'; kind?: RoomGameKind; end?: boolean }
+  /** Open a new game table, or close one (its opener or the host). */
+  | { t: 'table'; open?: RoomGameKind; close?: string }
+  /** The table I have open now (playing or watching), or none. */
+  | { t: 'at'; table: string | null }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
   /** Sıraya ekle. Oda boşsa hemen açılır. */
@@ -450,6 +463,10 @@ export type ErrorCode =
   | 'live_stopped'
   /** Odada başka biri oyun açmış (önce o bitmeli; açan ya da yönetici değiştirebilir). */
   | 'game_busy'
+  /** The room already has `MAX_TABLES` tables. */
+  | 'tables_full'
+  /** I already have a table with people at it (close it first). */
+  | 'table_own'
   /** Odada açık sayfayı (filmi) hâlâ izleyenler var: herkes odaya dönmeden yeni video açılamaz. */
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
@@ -479,8 +496,10 @@ export type ServerMessage =
       voice?: boolean;
       /** Sesin taşınma yolu (yoksa p2p). */
       voiceMode?: VoiceMode;
-      /** Odada açık oyun (yoksa yok). */
+      /** Odada açık oyun (yoksa yok). Old clients: the newest table. */
       game?: RoomGame;
+      /** The room's game tables, oldest first. */
+      tables?: RoomGame[];
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member; /** Kayıtlı odada video kaldığı yerden açıldıysa o saniye. */ resumed?: number }
@@ -507,6 +526,8 @@ export type ServerMessage =
   | { t: 'home'; by: Member }
   /** Odada oyun açıldı (`game`) ya da bitti (`null`); `by`: bitireni. */
   | { t: 'game'; game: RoomGame | null; by?: Member }
+  /** The tables changed: the full list, plus what happened (a table opened, or one closed and by whom). */
+  | { t: 'tables'; tables: RoomGame[]; opened?: string; closed?: string; by?: Member }
   /** Odaya bir özel emoji eklendi (girişte de odadakiler tek tek gelir). */
   /** `mine`: only in the copy sent to the person who added it (so they can remove it after a reload). */
   | { t: 'sticker'; sticker: Sticker; mine?: boolean }
@@ -832,6 +853,12 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'game':
       if (m.end === true) return { t: 'game', end: true };
       return (ROOM_GAME_KINDS as readonly unknown[]).includes(m.kind) ? { t: 'game', kind: m.kind as RoomGameKind } : null;
+    case 'table':
+      if ((ROOM_GAME_KINDS as readonly unknown[]).includes(m.open)) return { t: 'table', open: m.open as RoomGameKind };
+      return typeof m.close === 'string' && TABLE_ID.test(m.close) ? { t: 'table', close: m.close } : null;
+    case 'at':
+      if (m.table === null) return { t: 'at', table: null };
+      return typeof m.table === 'string' && TABLE_ID.test(m.table) ? { t: 'at', table: m.table } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

@@ -152,7 +152,16 @@ refunded" or "fold this hand for free"), in a version with jokers and one withou
    `200 × time(0.3–1) × 0.8^(rank−1) × tries(−10 % per wrong guess after two free, ≥ 0.5)`, drawer = guessers'
    average × share who guessed); shared game pieces `apps/web/src/games/ui.ts` (settings rows, podium). Quiz and
    draw protocol versions 2.
-2. Hub step 1–3: catalog + what's new + line icons; tables on the server; hub popover.
+2. ✅ **0.9.91.7 Hub step 1–3.** `packages/shared/src/games/catalog.ts` (`GAME_CATALOG`: players, default place;
+   `GAME_NEWS` newest first, `unseenNews`, `compareVersions`); the room holds `tables` (≤ `MAX_TABLES` 4, storage
+   `tables`, the old single `game` is read once), `{t:'table', open|close}`, `{t:'at', table}` (member field `table`),
+   `{t:'tables', tables, opened?, closed?, by?}`, `welcome.tables`; one table per person (a new one replaces my old one
+   when nobody else is at it, else `table_own`), `tables_full`, a table nobody has open closes after `TABLE_EMPTY_MS`
+   (2 min, the room's single alarm); old `{t:'game'}` messages still work (open a table / close my newest), `game` is
+   still sent (newest table). Site `games/stage.ts` = the hub (🎮 popover: what's new, tables with faces + Join / Show /
+   ✕, new-table grid with NEW / UPDATED badges; `opt:gamesSeen`, a yellow dot on 🎮 until the hub is closed once),
+   stage head "Game hall · Back to video · Leave table · Close table", line icons `gamepad`, `game-*` in `ui/icons.ts`.
+   Test: `scripts/e2e/roomgame.mjs` (rewritten for tables).
 3. Game window placements (side / floating / stage), film page, phones.
 4. Life poker (with and without jokers), its own Durable Object and table design.
 5. Shared look for every game (player strip, timer, podium everywhere; XOX / Connect Four redrawn).

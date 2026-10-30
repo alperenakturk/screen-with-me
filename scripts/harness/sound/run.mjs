@@ -152,7 +152,7 @@ await sleep(300);
 // XOX: invite, every piece, win / lose.
 await sounds(ayse);
 await ali.click('#game-btn');
-await ali.click('.game-menu-item >> nth=0');
+await ali.click('.hub-game >> nth=0');
 await until(async () => (await ayse.evaluate(() => window.__sounds.includes('gameInvite'))));
 b = await sounds(ayse);
 check(count(b, 'gameInvite') === 1, 'Ayşe hears the game invite', b.join());

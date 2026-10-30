@@ -1,16 +1,21 @@
-// Odanın içindeki oyunlar (PlayWithMe). Ayrı oyun odası/sayfası yok: video altındaki 🎮 ile odada bir oyun açılır,
-// oyun videonun yerinde "oyun sahnesi" olarak açılır (açana hemen, diğerlerine "Ali bir XOX açtı · Katıl" kartı).
-// Odada aynı anda tek oyun; oda sadece hangi oyunun açık olduğunu tutar (`RoomGame`), oyunun kendisi kendi sunucu
-// nesnesinde (Game/Draw/Quiz) yürür. Sahne "Videoya dön" ile küçülür (oyun sürer, bağlantı açık kalır); 🎮 geri açar.
+// The in-room games hub (PlayWithMe, concept D of docs/internal/games-hub.md). 🎮 opens the hub: what's new, the
+// room's tables (who is at each, Open / Join) and "new table". A room holds up to MAX_TABLES tables at once; each
+// table is one game running in its own server object (the room only lists them). I have at most one table open at a
+// time: it shows on the "game stage" in the video's place (desktop) or over the page (narrow screens), "Back to video"
+// minimizes it (still connected, still "at" the table), "Leave table" closes it for me only.
 
 import { createLogo } from '@swm/shared/logo';
-import { ROOM_GAME_KINDS, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
+import { GAME_CATALOG, LATEST_NEWS, unseenNews } from '@swm/shared/games/catalog';
+import { MAX_TABLES, ROOM_GAME_KINDS, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
-import { t } from '../i18n.ts';
+import { lang, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
+import { load, save } from '../storage.ts';
+import { avatarNode } from '../ui/avatar.ts';
+import { icon, type IconName } from '../ui/icons.ts';
 
-const ICONS: Record<RoomGameKind, string> = { xox: '❌⭕', four: '🔴🟡', draw: '✏️', quiz: '❓' };
-export const gameIcon = (kind: RoomGameKind): string => ICONS[kind];
+const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz' };
+export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
 
 const PAD = `<svg class="pwm-pad" viewBox="0 0 84 54" aria-hidden="true">
   <path d="M20 6h44a15 15 0 0 1 15 14l2 19a10 10 0 0 1-17.5 6.5L56 38H28l-7.5 7.5A10 10 0 0 1 3 39l2-19A15 15 0 0 1 20 6z" fill="#241a5c" stroke="#ffd166" stroke-width="3" stroke-linejoin="round"/>
@@ -19,7 +24,7 @@ const PAD = `<svg class="pwm-pad" viewBox="0 0 84 54" aria-hidden="true">
   <circle cx="52.5" cy="25.5" r="3.6" fill="#60a5fa"/><circle cx="60" cy="32" r="3.6" fill="#ffd166"/>
 </svg>`;
 
-/** PlayWithMe logosu (ScreenWithMe yüzü elinde oyun koluyla); sahnenin başında küçüğü. */
+/** PlayWithMe logo (the ScreenWithMe face holding a game pad); the small one heads the stage. */
 function playLogo(): HTMLElement {
   const box = el('span', { class: 'pwm-logo small', 'aria-hidden': 'true' });
   box.append(createLogo(document, { animated: true }));
@@ -27,53 +32,60 @@ function playLogo(): HTMLElement {
   return box;
 }
 
+/** What's new I have seen (the newest note's version). */
+const SEEN_KEY = 'opt:gamesSeen';
+
 interface StageOptions {
-  /** Videonun kutusu (.player-wrap): sahne ve davet kartı buraya girer (kabukta kendiliğinden adacık olur). */
+  /** The video's box (.player-wrap): the stage and invite cards go here (islands in the shell by themselves). */
   wrap: HTMLElement;
-  /** Video altındaki 🎮 düğmesi ve menüsü. */
+  /** 🎮 under the video, and the hub popover it opens. */
   button: HTMLButtonElement;
   menu: HTMLElement;
   send: (message: ClientMessage) => void;
   me: () => { id: string | null; name: string; avatar: Avatar };
-  /** Yönetici miyim (açık oyunu o da bitirebilir/değiştirebilir). */
+  /** Am I the host (the host can close any table). */
   amHost: () => boolean;
-  /** Sohbete gri satır (oda hareketleri). */
+  /** The room's people (who is at which table). */
+  members: () => readonly Member[];
+  /** A grey line in the chat (room actions). */
   activity: (text: () => string) => void;
-  /** Kısa not (balon). */
+  /** A short bubble by 🎮. */
   hint: (text: string) => void;
 }
 
 export function createGameStage(opts: StageOptions) {
   const { wrap, button, menu, send } = opts;
-  let game: RoomGame | null = null;
-  /** Sahnedeki oyunun kapatma işlevi (oyun bir kez açılınca küçültülse de bağlı kalır). */
+  let tables: RoomGame[] = [];
+  /** The table I have open (mounted even while minimized) and its close function. */
+  let current: RoomGame | null = null;
   let unmount: (() => void) | null = null;
-  let mountedId = '';
-  /** Menüden oyun açtım: sunucudan gelince sahne bana hemen açılsın. */
-  let wanted = false;
+  /** I asked for a new table: open it for me as soon as the room lists it. */
+  let wanted: RoomGameKind | null = null;
 
-  const title = el('b', { class: 'game-stage-title' });
-  // Düğmeler: simge + yazı (telefonda sadece simge).
-  const headButton = (icon: string, cls = '') => {
+  const titleText = el('b', { class: 'game-stage-title-text' });
+  const titleIcon = el('span', { class: 'game-stage-title-icon', 'aria-hidden': 'true' });
+  const title = el('span', { class: 'game-stage-title' }, titleIcon, titleText);
+  // Head buttons: icon + text (icon only on phones).
+  const headButton = (glyph: string, cls = '') => {
     const text = el('span', { class: 'game-head-text' });
-    const button = el('button', { type: 'button', class: `btn small-btn ${cls}` }, el('span', { 'aria-hidden': 'true' }, icon), text);
-    return { button, label: (value: string) => ((text.textContent = ` ${value}`), (button.title = value)) };
+    const node = el('button', { type: 'button', class: `btn small-btn ${cls}` }, el('span', { 'aria-hidden': 'true' }, glyph), text);
+    return { node, label: (value: string) => ((text.textContent = ` ${value}`), (node.title = value)) };
   };
+  const hubButton = headButton('🎮', 'game-hub-open');
   const minimizeButton = headButton('▶');
-  const changeButton = headButton('🎮');
+  const leaveButton = headButton('↩');
   const endButton = headButton('✕', 'game-end');
-  const [minimize, change, end] = [minimizeButton.button, changeButton.button, endButton.button];
   const body = el('div', { class: 'game-stage-body' });
   const stage = el(
     'section',
     { id: 'game-stage', class: 'game-stage', 'aria-label': 'PlayWithMe' },
-    el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), change, minimize, end),
+    el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), hubButton.node, minimizeButton.node, leaveButton.node, endButton.node),
     body,
   );
   stage.hidden = true;
   wrap.append(stage);
-  // Dar ekranda video küçük: sahne gövdeye taşınıp bütün ekranı kaplar (videonun kutusunda kalsa oranın katmanları
-  // arasında üst çubuğun ve araç çubuğunun altında kalıyordu).
+  // Narrow screens: the video is small, so the stage moves to the body and covers the page (inside the video's box it
+  // sat under the top bar and the toolbar).
   const narrow = matchMedia('(max-width: 860px)');
   const place = () => {
     stage.classList.toggle('full', narrow.matches);
@@ -82,146 +94,246 @@ export function createGameStage(opts: StageOptions) {
   narrow.addEventListener('change', place);
   place();
 
-  const mine = () => game !== null && (game.by.id === opts.me().id || opts.amHost());
+  const meId = () => opts.me().id;
+  const canClose = (table: RoomGame) => table.by.id === meId() || opts.amHost();
+  const titleOf = (kind: RoomGameKind) => t(`games.${kind}.title`);
+  /** People who have this table open (one entry per person: name + avatar). */
+  function peopleAt(id: string): Member[] {
+    const seen = new Set<string>();
+    return opts.members().filter((m) => {
+      if (m.table !== id || m.tv) return false;
+      const key = `${m.name}|${m.avatar ?? ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
 
   function labels(): void {
+    hubButton.label(t('hub.title'));
     minimizeButton.label(t('game.minimize'));
-    changeButton.label(t('game.change'));
-    endButton.label(t('game.end'));
-    button.title = t(game ? 'game.reopen' : 'game.button');
-    if (game) title.textContent = `${gameIcon(game.kind)} ${t(`games.${game.kind}.title`)} · ${t('game.by', { name: game.by.name })}`;
-    change.hidden = end.hidden = !mine();
-    drawMenu();
+    leaveButton.label(t('hub.leave'));
+    endButton.label(t('hub.close'));
+    button.title = t('hub.title');
+    if (current) {
+      titleIcon.replaceChildren(gameIcon(current.kind));
+      titleText.textContent = `${titleOf(current.kind)} · ${t('game.by', { name: current.by.name })}`;
+      endButton.node.hidden = !canClose(current);
+    }
+    button.classList.toggle('game-on', tables.length > 0);
+    button.classList.toggle('game-new', unseenNews(load(SEEN_KEY)).length > 0);
+    if (!menu.hidden) drawHub();
   }
 
-  function drawMenu(): void {
-    menu.replaceChildren(
-      el('p', { class: 'game-menu-title' }, t(game ? 'game.change' : 'game.menuTitle')),
-      ...ROOM_GAME_KINDS.map((kind) => {
-        const item = el(
-          'button',
-          { type: 'button', role: 'menuitem', class: 'game-menu-item' },
-          el('span', { class: 'game-menu-icon', 'aria-hidden': 'true' }, gameIcon(kind)),
-          el('span', {}, el('b', {}, t(`games.${kind}.title`)), el('small', {}, t(`games.${kind}.text`))),
-        );
-        item.addEventListener('click', () => {
-          wanted = true;
-          send({ t: 'game', kind });
-          setMenu(false);
-        });
-        return item;
-      }),
+  // ---- The hub ----
+  function drawHub(): void {
+    const news = unseenNews(load(SEEN_KEY));
+    const parts: HTMLElement[] = [
+      el('div', { class: 'hub-head' }, icon('gamepad'), el('b', {}, t('hub.title')), el('span', { class: 'hub-count' }, t('hub.count', { n: tables.length, max: MAX_TABLES }))),
+    ];
+    if (news.length) {
+      parts.push(
+        el(
+          'div',
+          { class: 'hub-news', role: 'note' },
+          el('b', {}, `✨ ${t('hub.news')}`),
+          el('ul', {}, ...news.map((n) => el('li', {}, lang() === 'en' ? n.en : n.tr))),
+        ),
+      );
+    }
+    if (tables.length) {
+      parts.push(
+        el('p', { class: 'hub-label' }, t('hub.tables')),
+        el(
+          'ul',
+          { class: 'hub-tables' },
+          ...tables.map((table) => {
+            const people = peopleAt(table.id);
+            const mine = current?.id === table.id;
+            const go = el('button', { type: 'button', class: `btn small-btn ${mine ? '' : 'primary'}` }, t(mine ? 'hub.show' : 'hub.join'));
+            go.addEventListener('click', () => {
+              setHub(false);
+              void open(table);
+            });
+            const row = el(
+              'li',
+              { class: `hub-table${mine ? ' mine' : ''}` },
+              el('span', { class: 'hub-icon' }, gameIcon(table.kind)),
+              el(
+                'span',
+                { class: 'hub-table-text' },
+                el('b', {}, titleOf(table.kind)),
+                el('small', {}, people.length ? people.map((p) => p.name).join(', ') : t('hub.empty', { name: table.by.name })),
+              ),
+              el('span', { class: 'hub-faces', 'aria-hidden': 'true' }, ...people.slice(0, 4).map((p) => avatarNode(p.avatar, 'hub-face'))),
+              go,
+            );
+            if (canClose(table)) {
+              const close = el('button', { type: 'button', class: 'hub-close', title: t('hub.close'), 'aria-label': t('hub.close') }, '✕');
+              close.addEventListener('click', () => send({ t: 'table', close: table.id }));
+              row.append(close);
+            }
+            return row;
+          }),
+        ),
+      );
+    }
+    const full = tables.length >= MAX_TABLES;
+    parts.push(
+      el('p', { class: 'hub-label' }, full ? t('hub.full') : t('hub.new')),
+      el(
+        'div',
+        { class: 'hub-games' },
+        ...ROOM_GAME_KINDS.map((kind) => {
+          const info = GAME_CATALOG[kind];
+          const badge = news.find((n) => n.kinds.includes(kind));
+          const item = el(
+            'button',
+            { type: 'button', role: 'menuitem', class: 'hub-game' },
+            el('span', { class: 'hub-icon' }, gameIcon(kind)),
+            el(
+              'span',
+              { class: 'hub-game-text' },
+              el('b', {}, titleOf(kind), badge ? el('span', { class: `hub-badge ${badge.badge}` }, t(`hub.badge.${badge.badge}`)) : null),
+              el('small', {}, t('hub.players', { min: info.min, max: info.max })),
+            ),
+          );
+          item.title = t(`games.${kind}.text`);
+          item.disabled = full;
+          item.addEventListener('click', () => {
+            wanted = kind;
+            send({ t: 'table', open: kind });
+            setHub(false);
+          });
+          return item;
+        }),
+      ),
     );
+    menu.replaceChildren(...parts);
   }
 
-  function setMenu(open: boolean): void {
-    menu.hidden = !open;
-    button.setAttribute('aria-expanded', String(open));
+  function setHub(show: boolean): void {
+    if (show) drawHub();
+    else if (!menu.hidden) {
+      // Closing the hub counts as having seen what's new.
+      save(SEEN_KEY, LATEST_NEWS);
+      button.classList.remove('game-new');
+    }
+    menu.hidden = !show;
+    button.setAttribute('aria-expanded', String(show));
   }
 
-  async function open(): Promise<void> {
-    if (!game) return;
+  // ---- My table ----
+  async function open(table: RoomGame): Promise<void> {
     document.getElementById('game-invite')?.remove();
     stage.hidden = false;
     button.classList.remove('game-waiting');
-    if (mountedId === game.id) return;
+    if (current?.id === table.id && unmount) return;
     unmount?.();
     unmount = null;
-    const current = game;
-    mountedId = current.id;
+    current = table;
+    labels();
+    send({ t: 'at', table: table.id });
     body.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
     const { name, avatar } = opts.me();
-    // Oyun kodları ayrı parçalarda: odaya girerken indirilmez.
+    // Game code lives in separate chunks: not downloaded when entering the room.
     let stop: () => void;
-    if (current.kind === 'draw') stop = (await import('./draw.ts')).mountDraw(body, current.id, name, avatar);
-    else if (current.kind === 'quiz') stop = (await import('./quiz.ts')).mountQuiz(body, current.id, name, avatar);
-    else stop = (await import('./match.ts')).mountMatch(body, current.kind, current.id, name, avatar);
-    // Yüklenirken oyun değiştiyse/bittiyse hemen kapat.
-    if (game?.id !== current.id) stop();
+    if (table.kind === 'draw') stop = (await import('./draw.ts')).mountDraw(body, table.id, name, avatar);
+    else if (table.kind === 'quiz') stop = (await import('./quiz.ts')).mountQuiz(body, table.id, name, avatar);
+    else stop = (await import('./match.ts')).mountMatch(body, table.kind, table.id, name, avatar);
+    // Switched or closed while loading: close at once.
+    if (current?.id !== table.id) stop();
     else unmount = stop;
   }
 
-  function close(): void {
+  /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */
+  function leave(tell = true): void {
+    unmount?.();
+    unmount = null;
+    current = null;
     stage.hidden = true;
-    if (game) button.classList.add('game-waiting');
+    body.replaceChildren();
+    button.classList.remove('game-waiting');
+    if (tell) send({ t: 'at', table: null });
   }
 
-  function invite(by: Member, kind: RoomGameKind): void {
+  function minimize(): void {
+    stage.hidden = true;
+    if (current) button.classList.add('game-waiting');
+  }
+
+  function invite(table: RoomGame): void {
     document.getElementById('game-invite')?.remove();
-    const join = el('button', { type: 'button', class: 'btn small-btn primary' }, `🎮 ${t('game.join')}`);
+    const join = el('button', { type: 'button', class: 'btn small-btn primary' }, t('hub.join'));
     const later = el('button', { type: 'button', class: 'btn small-btn' }, t('game.later'));
-    const text = el('span', {}, `${gameIcon(kind)} ${t('game.started', { name: by.name, game: t(`games.${kind}.title`) })}`);
-    const card = el('div', { id: 'game-invite', class: 'home-ask game-invite', role: 'status' }, text, join, later);
-    join.addEventListener('click', () => void open());
+    const text = el('span', { class: 'game-invite-text' }, gameIcon(table.kind), t('hub.opened', { name: table.by.name, game: titleOf(table.kind) }));
+    const card = el('div', { id: 'game-invite', class: 'home-ask game-invite', role: 'status', 'data-table': table.id }, text, join, later);
+    join.addEventListener('click', () => void open(table));
     later.addEventListener('click', () => card.remove());
     wrap.append(card);
     setTimeout(() => card.remove(), 20_000);
   }
 
-  minimize.addEventListener('click', close);
-  change.addEventListener('click', () => setMenu(true));
-  end.addEventListener('click', () => send({ t: 'game', end: true }));
+  minimizeButton.node.addEventListener('click', minimize);
+  leaveButton.node.addEventListener('click', () => leave());
+  endButton.node.addEventListener('click', () => current && send({ t: 'table', close: current.id }));
+  hubButton.node.addEventListener('click', () => setHub(!!menu.hidden));
   button.addEventListener('click', () => {
-    if (!menu.hidden) return setMenu(false);
-    if (game && stage.hidden) return void open();
-    if (game && !mine()) return close();
-    setMenu(true);
+    // A minimized table comes back first; the hub is one more press away (or the head's 🎮).
+    if (menu.hidden && current && stage.hidden) return void open(current);
+    setHub(!!menu.hidden);
   });
   document.addEventListener('pointerdown', (event) => {
     const target = event.target as Element | null;
-    if (!menu.hidden && target && !menu.contains(target) && !button.contains(target) && !change.contains(target)) setMenu(false);
+    if (!menu.hidden && target && !menu.contains(target) && !button.contains(target) && !hubButton.node.contains(target)) setHub(false);
   });
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') setMenu(false);
+    if (event.key === 'Escape' && !menu.hidden) setHub(false);
   });
   addEventListener('langchange', labels);
   labels();
 
   return {
-    /** Odanın oyun durumu: girişte (`welcome`, sohbete satır yazılmaz: `announce` false) ve her değişiklikte. */
-    set(next: RoomGame | null, by?: Member, announce = true): void {
-      const before = game;
-      game = next;
-      labels();
-      button.classList.toggle('game-on', game !== null);
-      if (!game) {
-        unmount?.();
-        unmount = null;
-        mountedId = '';
-        stage.hidden = true;
-        body.replaceChildren();
-        button.classList.remove('game-waiting');
-        document.getElementById('game-invite')?.remove();
-        if (before && announce) {
-          const who = by?.name ?? '';
-          opts.activity(() => (who ? t('game.ended', { name: who }) : t('game.endedAuto')));
-          opts.hint(who ? t('game.ended', { name: who }) : t('game.endedAuto'));
+    /**
+     * The room's tables: on entry (`announce` false: no chat line, no invite for tables already open) and on every
+     * change, with what happened (`opened` / `closed` and by whom).
+     */
+    setTables(next: RoomGame[], change: { opened?: string; closed?: string; by?: Member } = {}, announce = true): void {
+      tables = next;
+      // My table closed: back to the video.
+      if (current && !tables.some((x) => x.id === current!.id)) {
+        const who = change.by?.name;
+        leave(false);
+        opts.hint(who ? t('hub.closedBy', { name: who }) : t('hub.closed'));
+      }
+      const opened = change.opened ? tables.find((x) => x.id === change.opened) : undefined;
+      if (opened && announce) {
+        opts.activity(() => t('hub.opened', { name: opened.by.name, game: titleOf(opened.kind) }));
+        if (opened.by.id === meId() && wanted === opened.kind) {
+          wanted = null;
+          void open(opened);
+        } else if (opened.by.id !== meId() && !current) {
+          invite(opened);
+          playSound('gameInvite');
         }
-        return;
       }
-      const g = game;
-      if (g.id === before?.id) return;
-      if (announce) opts.activity(() => `${gameIcon(g.kind)} ${t('game.started', { name: g.by.name, game: t(`games.${g.kind}.title`) })}`);
-      // Kendi açtığım (ya da sahne açıkken değişen) oyun hemen açılır; başkasınınki davet kartıyla (odaya yeni
-      // girene de).
-      const opened = !stage.hidden;
-      if ((wanted && g.by.id === opts.me().id) || (opened && before !== null)) {
-        wanted = false;
-        void open();
-        return;
+      if (change.closed && announce && change.by) {
+        const who = change.by.name;
+        opts.activity(() => t('hub.closedBy', { name: who }));
       }
-      if (opened) close();
-      unmount?.();
-      unmount = null;
-      mountedId = '';
-      button.classList.add('game-waiting');
-      invite(g.by, g.kind);
-      if (announce) playSound('gameInvite');
+      // An invite for a table that is gone.
+      const card = document.getElementById('game-invite');
+      if (card && !tables.some((x) => x.id === card.dataset.table)) card.remove();
+      labels();
     },
-    /** Sunucu oyunu açtırmadı (başkasının oyunu sürüyor). */
-    busy(): void {
-      wanted = false;
-      opts.hint(t('game.busy'));
+    /** People moved between tables. */
+    membersChanged(): void {
+      if (!menu.hidden) drawHub();
+    },
+    /** The server refused to open a table. */
+    refused(code: 'tables_full' | 'table_own' | 'game_busy'): void {
+      wanted = null;
+      opts.hint(t(code === 'game_busy' ? 'game.busy' : `error.${code}`));
     },
     isOpen: () => !stage.hidden,
   };

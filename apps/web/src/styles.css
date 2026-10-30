@@ -6436,6 +6436,248 @@ html.shorts-view .footer {
   text-align: center;
 }
 
+/* ---- Games hub (0.9.91.7): what's new, the room's tables, new table ---- */
+.game-menu {
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  gap: 8px;
+  padding: 12px;
+}
+
+.game-btn.game-new::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warn);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.hub-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hub-head .ico {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+
+.hub-count {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hub-news {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  font-size: 13px;
+}
+
+.hub-news ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+}
+
+.hub-label {
+  margin: 4px 2px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hub-tables {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.hub-table {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+}
+
+.hub-table.mine {
+  border-color: var(--accent);
+}
+
+.hub-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.hub-icon .ico {
+  width: 20px;
+  height: 20px;
+}
+
+.hub-table-text,
+.hub-game-text {
+  display: grid;
+  min-width: 0;
+}
+
+.hub-table-text b,
+.hub-game-text b {
+  font-size: 14px;
+}
+
+.hub-table-text small,
+.hub-game-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hub-faces {
+  display: flex;
+}
+
+.hub-face {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: -6px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--surface-2);
+  font-size: 13px;
+}
+
+.hub-face img {
+  width: 100%;
+  height: 100%;
+}
+
+.hub-close {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.hub-close:hover {
+  background: var(--surface);
+  color: var(--danger);
+}
+
+.hub-games {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.hub-game {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.hub-game:hover:not(:disabled),
+.hub-game:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.hub-game:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.hub-badge {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--warn);
+  color: #2a1d00;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  vertical-align: 2px;
+}
+
+.hub-badge.updated {
+  background: #6fd3ff;
+  color: #00233a;
+}
+
+.game-stage-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.game-stage-title-icon .ico {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.game-stage-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-invite-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-invite-text .ico {
+  width: 18px;
+  height: 18px;
+}
+
 .game-stage {
   position: absolute;
   inset: 0;

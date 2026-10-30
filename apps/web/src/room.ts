@@ -848,6 +848,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send,
     me: () => ({ id: myId, name: myName, avatar: myAvatar }),
     amHost,
+    members: () => members,
     activity: (text) => addActivity(text),
     hint: (text) => flashHint($('#game-btn'), text),
   });
@@ -953,7 +954,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         voice.welcome(message.voice === true, message.voiceMode ?? 'p2p');
         live.welcome(message.voice === true);
         setMembers(message.members, message.hostId, false);
-        games.set(message.game ?? null, undefined, false);
+        games.setTables(message.tables ?? (message.game ? [message.game] : []), {}, false);
         chooseFirstTab();
         waitingIds = message.waiting ?? [];
         renderWaiting();
@@ -1031,6 +1032,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
       case 'members':
         setMembers(message.members, message.hostId, true);
+        games.membersChanged();
         break;
       case 'tv':
         tvRoom?.message(message);
@@ -1088,7 +1090,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (isShell && film !== null) askHome(message.by);
         break;
       case 'game':
-        games.set(message.game, message.by);
+        // Old single-game message: the room now sends `tables` too, which carries everything.
+        break;
+      case 'tables':
+        games.setTables(message.tables, { ...(message.opened ? { opened: message.opened } : {}), ...(message.closed ? { closed: message.closed } : {}), ...(message.by ? { by: message.by } : {}) });
         break;
       case 'reaction': {
         if (!settings.options.showReactions) break;
@@ -1129,8 +1134,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           voice.error(message.code);
           break;
         }
-        if (message.code === 'game_busy') {
-          games.busy();
+        if (message.code === 'game_busy' || message.code === 'tables_full' || message.code === 'table_own') {
+          games.refused(message.code);
           break;
         }
         if (message.code === 'cam_full') {

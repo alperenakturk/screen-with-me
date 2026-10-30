@@ -283,7 +283,7 @@ check(!docked.floating && docked.parent !== 'body', '⤓ ile karta geri döndü'
 const FLOW = `(async () => { const v = [...document.querySelectorAll('#voice-cams .cam-tile video')]; const a = v.map((x) => x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0); await new Promise((r) => setTimeout(r, 1200)); return { tiles: v.length, moving: v.every((x, i) => (x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0) - a[i] > 3) }; })()`;
 await ali.evaluate(`document.getElementById('game-btn').click(); 1`);
 await ali.sleep(300);
-await ali.evaluate(`document.querySelector('.game-menu-item').click(); 1`);
+await ali.evaluate(`document.querySelector('.hub-game').click(); 1`);
 await ali.sleep(2500);
 const withGame = await ayse.evaluate(FLOW);
 check(withGame.tiles === 1 && withGame.moving, 'oyun açılınca kameralar yerinde ve akıyor', JSON.stringify(withGame));
