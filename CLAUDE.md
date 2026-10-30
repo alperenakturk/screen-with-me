@@ -61,7 +61,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.12 (Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.13 (games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -184,7 +184,11 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   recent) and "＋ Ekle" (`#shorts-add`) queues links (one or many, same paths as the link box; words point to the ♾
   feed); on a phone Tepki shares a row with 🎙 / 📷 and ↩ / 🔁 lose their text. **0.9.91.12:** words in "＋ Ekle" search
   YouTube Shorts only (`ui/shorts-search.ts`, the feed's `short=1` search, ≈ 1 % of the day's quota per new query,
-  cached); a row's ＋ queues it as a Short; before joining voice 🎙 looks off (red) like 📷.
+  cached); a row's ＋ queues it as a Short; before joining voice 🎙 looks off (red) like 📷. **0.9.91.13:** a game in
+  the Shorts view is always a free window (`games/stage.ts` `shortsView`: opening the view with a game open saves
+  `gamePlace:<kind>` = float and sizes it to fit right of the video, `besideShorts`; it stays free back in the room
+  view); 🎮 in the Shorts bar (`#shorts-game`, `extraButtons`: the hub moves next to the button pressed); a new ♾ feed
+  dequeues the old feed's Shorts still waiting (`feedAdded:<room>`).
   **0.9.91 endless Shorts feed (`ui/shorts-feed.ts`):** "♾ Shorts akışı" in the Shorts bar (topic box) or "📱 Shorts
   akışı" on a search's results starts it; when fewer than 3 are queued (and nothing but Shorts is playing) it asks
   `/api/youtube/search?short=1&page=…` (Worker: `videoDuration=short`, "#shorts" added, 25 per page, `nextPageToken`
@@ -365,8 +369,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   dock (`ui/toasts.ts`, right-aligned to its left edge). In the shell the dock and its open window are islands
   (`reportLayout`); our catcher is never an island there (the film player takes the clicks). The camera pill has no 🎙 / 📷 / 🖥️
   any more (0.9.91.7: they are on the dock; the dock's and the Shorts bar's 📷 also shows outside voice and joins with
-  the camera on, `joinWithCam`) and automatic camera tiles start left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") stays only for players
-  it is the remote of (`current.own`): **Shorts** (YouTube `controls: 0, disablekb: 1`, needed for scrolling) and the
+  the camera on, `joinWithCam`) and automatic camera tiles start left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") is only for players
+  it is the remote of (`current.own`), and since 0.9.91.13 only in the Shorts view's window: elsewhere they get the
+  dock too (`.own-dock`: ⏯ `#dock-play`, volume `#dock-vol`, our catcher stays for click / wheel): **Shorts** (YouTube `controls: 0, disablekb: 1`, needed for scrolling) and the
   sync test; there click = play/pause, double click = fullscreen, volume is local (`opt:volume`, `opt:muted`), CC when
   the video has captions. A YouTube player is reused for the next video only when both use the same remote (a Short
   after a normal video opens a new player). The extension can still hide known film players' bars (embed
@@ -461,6 +466,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   sekmede aç" switches to an open tab of that room or opens `/r/ROOM#back` in a new tab next to the film. Outside a
   film tab (0.9.89), if a room is open in another tab the main button is "🏠 Odama dön" (switches to it) and "ScreenWithMe'yi
   aç" is the second button. Test: `scripts/harness/popup/run.cjs` (Playwright, `channel: 'chromium'` loads extensions).
+- **Outdated extension notice (0.9.91.13, `ext-update.ts`):** the site compares the bridge's `data-swm-extension` with
+  `/extension-version.json` (written by the extension build); older → a dot on the top bar's "Eklenti" link and a
+  one-time bubble (`extUpdateSeen`). The extension page explains that ↻ only re-reads the folder it was loaded from.
 - **Dead extension bridge (0.9.83):** an extension updated/reloaded while our site tab is open leaves a site-bridge cut
   off from the extension (sendMessage throws). "Filme git" then gets `going ok:false` or no answer within 4 s and the
   card says "reload the page" (`extensionStale`) instead of the misleading "your extension is outdated".
