@@ -20,6 +20,8 @@
       { "name": "DRAWS", "class_name": "Draw" },
       // Bilgi yarışmaları
       { "name": "QUIZZES", "class_name": "Quiz" },
+      // Life poker tables
+      { "name": "POKERS", "class_name": "Poker" },
       // TVs waiting to be paired (one per 6-digit code, nothing stored)
       { "name": "TVLINKS", "class_name": "TvLink" }
     ]
@@ -30,7 +32,8 @@
     { "tag": "v2", "new_sqlite_classes": ["Game"] },
     { "tag": "v3", "new_sqlite_classes": ["Draw"] },
     { "tag": "v4", "new_sqlite_classes": ["Quiz"] },
-    { "tag": "v5", "new_sqlite_classes": ["TvLink"] }
+    { "tag": "v5", "new_sqlite_classes": ["TvLink"] },
+    { "tag": "v6", "new_sqlite_classes": ["Poker"] }
   ],
   // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
   // address joining at once must still fit, a script opening rooms in a loop must not.

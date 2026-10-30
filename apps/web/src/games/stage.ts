@@ -18,7 +18,7 @@ import { load, save } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { icon, type IconName } from '../ui/icons.ts';
 
-const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz' };
+const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
 
 const PAD = `<svg class="pwm-pad" viewBox="0 0 84 54" aria-hidden="true">
@@ -346,6 +346,7 @@ export function createGameStage(opts: StageOptions) {
     let stop: () => void;
     if (table.kind === 'draw') stop = (await import('./draw.ts')).mountDraw(body, table.id, name, avatar);
     else if (table.kind === 'quiz') stop = (await import('./quiz.ts')).mountQuiz(body, table.id, name, avatar);
+    else if (table.kind === 'poker') stop = (await import('./poker.ts')).mountPoker(body, table.id, name, avatar);
     else stop = (await import('./match.ts')).mountMatch(body, table.kind, table.id, name, avatar);
     // Switched or closed while loading: close at once.
     if (current?.id !== table.id) stop();

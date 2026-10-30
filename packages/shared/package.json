@@ -22,6 +22,7 @@
     "./games/quiz-questions": "./src/games/quiz-questions.ts",
     "./games/scoring": "./src/games/scoring.ts",
     "./games/catalog": "./src/games/catalog.ts",
+    "./games/poker": "./src/games/poker.ts",
     "./games/protocol": "./src/games/protocol.ts",
     "./clock": "./src/clock.ts",
     "./player": "./src/player.ts",

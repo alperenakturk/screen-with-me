@@ -17,6 +17,7 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   four: { min: 2, max: 2, place: 'side' },
   draw: { min: 2, max: 8, place: 'stage' },
   quiz: { min: 2, max: 8, place: 'stage' },
+  poker: { min: 2, max: 6, place: 'stage' },
 };
 
 export interface GameNews {
@@ -31,6 +32,13 @@ export interface GameNews {
 
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
+  {
+    v: '0.9.91.8',
+    kinds: ['poker'],
+    badge: 'new',
+    tr: 'Yeni oyun: Can Pokeri. Para yerine can: herkes %100 canla başlar. Özel hamleler: bir oyuncuyu elden çıkar, bedelsiz çekil, kalkan, göz at. Jokerli ya da jokersiz.',
+    en: 'New game: Life Poker. Life instead of chips: everyone starts at 100 %. Special moves: disqualify a player, fold for free, shield, peek. With or without jokers.',
+  },
   {
     v: '0.9.91.7',
     kinds: [],
