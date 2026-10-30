@@ -34,6 +34,17 @@ const CAM_MAX_BITRATE = 280_000;
 /** Waits before rebuilding a lost connection (then gives up and says so). */
 const RETRY_DELAYS_MS = [2000, 5000, 10000];
 const DISCONNECTED_GRACE_MS = 5000;
+/**
+ * Someone who drops out of the voice list (their room connection broke, the server restarted) keeps our direct
+ * connection this long: they come back with the same member id and nothing is rebuilt (0.9.91.16, owner: "why does
+ * it throw me out of voice and put me back"). Someone who really left closed their side already.
+ */
+const RETURN_GRACE_MS = 15000;
+/**
+ * Still in the room but no longer in voice: they pressed "Leave" (closed fast), or their reconnect has not told the
+ * server yet that they are in voice (that takes one round trip).
+ */
+const LEFT_GRACE_MS = 2500;
 
 interface Peer {
   pc: RTCPeerConnection;
@@ -54,6 +65,8 @@ export class P2pVoice implements Voice {
   /** Failed connections are rebuilt a few times before giving up (network hiccup, Wi-Fi switch). */
   private readonly attempts = new Map<string, number>();
   private readonly retries = new Map<string, ReturnType<typeof setTimeout>>();
+  /** People out of the voice list, waiting for RETURN_GRACE_MS before their connection is closed. */
+  private readonly away = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(private readonly options: P2pVoiceOptions) {}
 
@@ -164,7 +177,17 @@ export class P2pVoice implements Voice {
     for (const timer of this.retries.values()) clearTimeout(timer);
     this.retries.clear();
     this.attempts.clear();
+    for (const timer of this.away.values()) clearTimeout(timer);
+    this.away.clear();
     this.options.announce(false);
+  }
+
+  /**
+   * My room connection came back with the same member id: the direct connections are still up, only the server has
+   * to learn again that I am in voice (with my microphone and camera as they are).
+   */
+  resume(): void {
+    if (this.joined) this.options.announce(true, this.micOn, this.camEnabled);
   }
 
   /** Seste olanlarla bağlantı kur (kimliği büyük olana ben teklif yaparım), gidenlerle bağlantıyı kapat. */
@@ -173,7 +196,23 @@ export class P2pVoice implements Voice {
     this.members = members;
     if (!this.joined || !myId) return;
     const inVoice = new Set(members.filter((m) => m.voice && m.id !== myId).map((m) => m.id));
-    for (const memberId of [...this.peers.keys()]) if (!inVoice.has(memberId)) this.close(memberId);
+    for (const memberId of [...this.peers.keys()]) {
+      if (inVoice.has(memberId)) {
+        clearTimeout(this.away.get(memberId));
+        this.away.delete(memberId);
+      } else if (!this.away.has(memberId)) {
+        const present = members.some((m) => m.id === memberId);
+        this.away.set(
+          memberId,
+          setTimeout(() => {
+            this.away.delete(memberId);
+            if (this.members.some((m) => m.id === memberId && m.voice)) return;
+            this.close(memberId);
+            if (this.joined) this.sync(this.members, this.myId);
+          }, present ? LEFT_GRACE_MS : RETURN_GRACE_MS),
+        );
+      }
+    }
     for (const memberId of [...this.retries.keys()]) {
       if (inVoice.has(memberId)) continue;
       clearTimeout(this.retries.get(memberId));
@@ -310,6 +349,8 @@ export class P2pVoice implements Voice {
   }
 
   private close(memberId: string): void {
+    clearTimeout(this.away.get(memberId));
+    this.away.delete(memberId);
     const peer = this.peers.get(memberId);
     if (!peer) return;
     this.peers.delete(memberId);

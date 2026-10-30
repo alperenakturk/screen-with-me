@@ -1957,6 +1957,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     loop.title = amHost() ? t('shorts.loopHint') : t('shorts.loopHost');
     if (want === shortsOn) return;
     shortsOn = want;
+    // Owner (30 Oct 2026): someone opened a Short while I watched in fullscreen; the Short played in fullscreen and
+    // I never noticed the Shorts view. Leave fullscreen so the view switches (the TV keeps its pinned fullscreen).
+    if (shortsOn && fullscreen.isActive() && !document.documentElement.classList.contains('tv-mode')) fullscreen.toggle();
     // Sınıflar o anki değere göre: art arda iki değişiklikte geç kalan geçiş eski hâli geri getirmesin.
     const apply = () => {
       roomEl.classList.toggle('shorts', shortsOn);
@@ -2462,8 +2465,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * only while I'm in voice; someone else's stream starting, and the end of the stream I'm watching. My other tab
    * (same name + avatar) never counts as someone else.
    */
+  /** People in voice whose connection just dropped (their reconnect keeps the id): coming back is no "join". */
+  const voiceAway = new Map<string, number>();
   function membersSounds(next: Member[]): void {
     if (joinFilter.update(next, myId, Date.now()) > 0) playSound('roomJoin');
+    const now = Date.now();
+    for (const old of members) if (old.voice && !next.some((m) => m.id === old.id)) voiceAway.set(old.id, now);
     const meNow = next.find((m) => m.id === myId);
     const meBefore = members.find((m) => m.id === myId);
     const mine = meNow ? personKey(meNow) : null;
@@ -2472,7 +2479,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       const old = before.get(m.id);
       if (!old || m.id === myId || personKey(m) === mine) continue;
       if (meNow?.voice && meBefore?.voice) {
-        if (m.voice && !old.voice) playSound('voiceJoin');
+        if (m.voice && !old.voice && now - (voiceAway.get(m.id) ?? 0) > 30_000) playSound('voiceJoin');
         if (!m.voice && old.voice) playSound('voiceLeave');
       }
       if (m.live && !old.live) playSound('streamStart');

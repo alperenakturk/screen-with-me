@@ -113,6 +113,9 @@ interface TvToken {
 /** A paired TV may reconnect with its token for this long after its last use (a TV left on overnight re-pairs). */
 const TV_TOKEN_TTL_MS = 12 * 60 * 60_000;
 const MAX_TV_TOKENS = 50;
+/** A reconnect keeps its member id for this long after it was last given out (see `memberIds`). */
+const MEMBER_ID_TTL_MS = 24 * 60 * 60_000;
+const MAX_MEMBER_IDS = 200;
 
 /**
  * Bu kadar süredir hiç mesaj (ping dahil) gelmeyen bağlantı kopmuş sayılır ve kapatılır.
@@ -260,6 +263,12 @@ export class Room extends DurableObject<Env> {
   private readonly tvLinkLimit = new RateLimiter(5, 5 / 60);
   private readonly tvLimit = new RateLimiter(20, 4);
   private tvTokens: Record<string, TvToken> = {};
+  /**
+   * Member ids given out, by browser id (0.9.91.16): a reconnect of the same browser keeps its member id, so the
+   * voice and camera connections between browsers (they don't pass through us) survive a dropped room connection or
+   * a server restart. Owner: "why does it throw me out of voice and put me back". Browser ids never leave the server.
+   */
+  private memberIds: Record<string, { cid: string; at: number }> = {};
   /** This room's id (from the Worker's header; a paired TV is told where to go). */
   private roomId: string | null = null;
 
@@ -300,6 +309,7 @@ export class Room extends DurableObject<Env> {
       this.recaps = (await ctx.storage.get<Recap[]>('recaps')) ?? [];
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
       this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
+      this.memberIds = (await ctx.storage.get<Record<string, { cid: string; at: number }>>('memberIds')) ?? {};
       this.roomId = (await ctx.storage.get<string>('roomId')) ?? null;
       const tables = await ctx.storage.get<Table[]>('tables');
       // Before tables a room held one game ('game').
@@ -963,7 +973,15 @@ export class Room extends DurableObject<Env> {
         }
         await this.onLeave(other);
       }
+      // Same browser as the one that had this id, and nobody holds it now: keep it.
+      const given = this.memberIds[hello.prev];
+      const taken = this.openSockets(ws).some((other) => (other.deserializeAttachment() as Attachment | null)?.id === hello.prev);
+      if (given?.cid === attachment.cid && Date.now() - given.at < MEMBER_ID_TTL_MS && !taken) {
+        attachment.id = hello.prev;
+        ws.serializeAttachment(attachment);
+      }
     }
+    await this.rememberMemberId(attachment);
     // Yeni gelen, aslında kopmuş birini odada görmesin.
     await this.pruneStale(Date.now());
     await this.settleHost(ws, attachment);
@@ -1005,6 +1023,17 @@ export class Room extends DurableObject<Env> {
     // My phone / computer learns that my TV is here (and a phone joining later learns it too).
     if (attachment.tv) for (const other of this.personSockets(myKey, ws)) this.sendTo(other, { t: 'tv', op: 'present', value: true });
     else if (this.tvSockets(myKey).length) this.sendTo(ws, { t: 'tv', op: 'present', value: true });
+  }
+
+  private async rememberMemberId(attachment: Attachment): Promise<void> {
+    if (!attachment.cid) return;
+    const now = Date.now();
+    for (const [id, entry] of Object.entries(this.memberIds)) if (now - entry.at > MEMBER_ID_TTL_MS) delete this.memberIds[id];
+    delete this.memberIds[attachment.id];
+    const ids = Object.keys(this.memberIds);
+    for (const id of ids.slice(0, Math.max(0, ids.length - MAX_MEMBER_IDS + 1))) delete this.memberIds[id];
+    this.memberIds[attachment.id] = { cid: attachment.cid, at: now };
+    await this.ctx.storage.put('memberIds', this.memberIds);
   }
 
   /** My TV connections (`key` = keyOf of the person). */

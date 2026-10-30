@@ -827,6 +827,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     for (const [memberId, level] of allLevels()) speech.push(memberId, level, now);
   }, 100);
 
+  /** My member id on the last welcome: the same id again means the server kept me (a reconnect, not a new join). */
+  let lastId: string | null = null;
+
   return {
     /** Sunucu sesli sohbeti destekliyor mu (yeni bağlantıda). Yeniden bağlanınca ses de yeniden kurulur. */
     welcome(voice: boolean, nextMode: VoiceMode = 'p2p'): void {
@@ -843,6 +846,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         return;
       }
       const wasActive = client.active;
+      // 0.9.91.16: the server gave me my member id back, so the direct connections to the others are still up.
+      // Keep them (microphone and camera stay as they are) and only tell the server again that I'm in voice.
+      if (wasActive && available && client instanceof P2pVoice && nextMode === mode && myId() !== null && myId() === lastId) {
+        client.resume();
+        client.sync(members, myId());
+        render();
+        return;
+      }
+      lastId = myId();
       const micWas = client.micEnabled;
       const camWas = client.camEnabled === true;
       client.leave();

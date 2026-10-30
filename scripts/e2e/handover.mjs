@@ -52,11 +52,19 @@ const d = client({ name: 'Dan', cid: 'handDan12345' });
 const wd = await d.wait((m) => m.t === 'welcome', 'welcome d');
 const d2 = client({ name: 'Dan', cid: 'handDan12345', prev: wd.you });
 const wd2 = await d2.wait((m) => m.t === 'welcome', 'welcome d2');
-ok(!wd2.members.some((m) => m.id === wd.you) && wd2.members.some((m) => m.id === wd2.you), 'Yeniden bağlanan Dan’in eski bağlantısı hemen düştü');
-// Someone else can't drop a connection by naming it.
+ok(wd2.members.filter((m) => m.name === 'Dan').length === 1, 'Yeniden bağlanan Dan’in eski bağlantısı hemen düştü');
+// 0.9.91.16: the reconnect keeps its member id (voice / camera connections between browsers survive it).
+ok(wd2.you === wd.you, 'Yeniden bağlanan Dan aynı üye kimliğiyle döndü');
+// Someone else can't drop a connection by naming it, nor take its id.
 const e = client({ name: 'Eve', cid: 'handEve12345', prev: wd2.you });
 const we = await e.wait((m) => m.t === 'welcome', 'welcome e');
-ok(we.members.some((m) => m.id === wd2.you), 'Başka tarayıcı kimliğiyle `prev` kimseyi düşürmez');
+ok(we.members.some((m) => m.id === wd2.you) && we.you !== wd2.you, 'Başka tarayıcı kimliğiyle `prev` kimseyi düşürmez, kimliğini alamaz');
+// The connection is already gone (like after a server restart): the same browser still gets its id back.
+d2.ws.close();
+await sleep(500);
+const d3 = client({ name: 'Dan', cid: 'handDan12345', prev: wd2.you });
+const wd3 = await d3.wait((m) => m.t === 'welcome', 'welcome d3');
+ok(wd3.you === wd.you, 'Bağlantısı tamamen kopmuş Dan de aynı kimlikle döndü');
 
-for (const x of [a3, b, c, d, d2, e]) x.ws.close();
+for (const x of [a3, b, c, d, d2, d3, e]) x.ws.close();
 setTimeout(() => process.exit(0), 100);

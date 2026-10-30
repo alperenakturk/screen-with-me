@@ -299,10 +299,16 @@ export function createCamWindow(opts: {
   /** Grips and island marks on the tiles (they come and go with the people in voice). */
   function markTiles(): void {
     const free = isFree();
-    for (const tile of tilesNow()) {
+    const tiles = tilesNow();
+    for (const tile of tiles) {
       if (!tile.querySelector('.cam-tile-resize')) tile.append(el('span', { class: 'cam-tile-resize', 'aria-hidden': 'true' }));
       tile.toggleAttribute('data-island', free);
     }
+    // A pinned camera in the one-window layout (owner: pinning made the window look broken, the others spilled out):
+    // it fills the left, the others share a strip on the right, everything inside the window.
+    const spotlight = !free && mode() !== 'card' && tiles.length > 1 && tiles.some((tile) => tile.classList.contains('pinned'));
+    grid.classList.toggle('spotlight', spotlight);
+    grid.style.setProperty('--cam-others', String(Math.max(1, tiles.length - 1)));
   }
 
   /** Moves the box between the card, the page and the video; moved videos pause, so they are played again. */
