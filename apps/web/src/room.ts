@@ -415,10 +415,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <input id="shorts-input" autocomplete="off" maxlength="300" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
             <button class="btn primary" data-i18n="send"></button>
           </form>
-          <div class="reaction-bar shorts-reactions" role="group"></div>
+          <div class="reaction-bar tray-bar shorts-reactions" role="group"></div>
           <div id="shorts-voice" class="shorts-voice" hidden>
             <button id="shorts-mic" type="button" class="cam-ctl"></button>
             <button id="shorts-cam" type="button" class="cam-ctl"></button>
+          </div>
+          <div class="shorts-add-wrap">
+            <button id="shorts-add" type="button" class="btn small-btn shorts-add" aria-expanded="false" data-i18n-title="shorts.addHint">＋ <span data-i18n="shorts.add"></span></button>
+            <form id="shorts-add-form" class="shorts-feed-pop shorts-add-pop card" hidden>
+              <label class="small" for="shorts-add-input" data-i18n="shorts.addLabel"></label>
+              <input id="shorts-add-input" autocomplete="off" data-i18n-placeholder="shorts.addPlaceholder" />
+              <button class="btn primary small-btn" data-i18n="shorts.addButton"></button>
+              <p class="muted small" data-i18n="shorts.addNote"></p>
+            </form>
           </div>
           <div class="shorts-feed-wrap">
             <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
@@ -1802,6 +1811,35 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   document.addEventListener('pointerdown', (event) => {
     if (!feedForm.hidden && !(event.target as Element).closest?.('.shorts-feed-wrap')) feedForm.hidden = true;
+    if (!shortsAddForm.hidden && !(event.target as Element).closest?.('.shorts-add-wrap')) setShortsAdd(false);
+  });
+  // Add to the queue from the Shorts bar (0.9.91.5, owner: without going back to the room view). Links only, one or
+  // many (searching is the ♾ feed's job); the same paths as the link box.
+  const shortsAdd = $<HTMLButtonElement>('#shorts-add');
+  const shortsAddForm = $<HTMLFormElement>('#shorts-add-form');
+  const shortsAddInput = $<HTMLInputElement>('#shorts-add-input');
+  const setShortsAdd = (open: boolean) => {
+    shortsAddForm.hidden = !open;
+    shortsAdd.setAttribute('aria-expanded', String(open));
+    if (open) {
+      feedForm.hidden = true;
+      shortsAddInput.focus();
+    }
+  };
+  shortsAdd.addEventListener('click', () => setShortsAdd(shortsAdd.getAttribute('aria-expanded') !== 'true'));
+  shortsAddForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const list = parseMediaList(shortsAddInput.value);
+    const one = list.media.length === 1 ? list.media[0]! : parseMediaInput(shortsAddInput.value);
+    if (list.media.length < 2 && one === null) {
+      flashHint(shortsAddInput, t('shorts.addNeedLink'), 4000);
+      return;
+    }
+    shortsAddInput.value = '';
+    setShortsAdd(false);
+    if (list.media.length >= 2) addMany(list.media, list.skipped, 'enqueue');
+    else addMedia(one!, 'enqueue');
+    flashHint(shortsAdd, list.media.length >= 2 ? t('queuedMany', { n: list.media.length, skipped: list.skipped }) : t('queuedNote'), 2500);
   });
   addEventListener('langchange', renderFeed);
   renderFeed();

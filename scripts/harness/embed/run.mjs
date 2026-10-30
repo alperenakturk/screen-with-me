@@ -316,6 +316,14 @@ check(
 );
 check((await a.evalFrame('shell=1', ACTIVE_TAB)) === 'chat', 'katmanda yönetici de 💬 Sohbet sekmesiyle açılıyor (Ayarlar değil)', String(await a.evalFrame('shell=1', ACTIVE_TAB)));
 const clipBefore = await a.evaluate(SHELL_CLIP);
+// The dock shows in the window too since 0.9.91.5 and comes and goes with the film's bar, so the clip path is compared
+// by meaning, not as text: is the hole covered by an island, and is there an island over a given box?
+const holeCoveredNow = async () => {
+  const rects = clipRects(await a.evaluate(SHELL_CLIP));
+  const hole = rects[1];
+  return !!hole && rects.slice(2).some((r) => r.x <= hole.x + 2 && r.y <= hole.y + 2 && r.r >= hole.r - 2 && r.b >= hole.b - 2);
+};
+const islandOver = async (box) => clipRects(await a.evaluate(SHELL_CLIP)).slice(2).some((r) => r.x <= box.x + 2 && r.y <= box.y + 2 && r.r >= box.r - 2 && r.b >= box.b - 2);
 await a.evalFrame('shell=1', `(async () => { const m = await import('/src/themes.ts'); m.openThemeDialog(); return 1; })()`);
 // Pencere açıkken delik tamamen kapanır: yolda ekran + delik + deliği kapatan adacık (3 parça).
 const covered = await until(async () => {
@@ -325,7 +333,7 @@ const covered = await until(async () => {
 check(!!covered, 'tema penceresi açıkken delik kapandı (pencere videonun önünde)');
 await a.shot('1b-pencere-onde');
 await a.evalFrame('shell=1', `document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click(); 1`);
-check(!!(await until(async () => (await a.evaluate(SHELL_CLIP)) === clipBefore)), 'pencere kapanınca delik geri açıldı');
+check(!!(await until(async () => !(await holeCoveredNow()))), 'pencere kapanınca delik geri açıldı');
 // ⚙️ Ayarlar penceresi de delikten önde.
 await a.evalFrame('shell=1', `document.getElementById('settings-open').click(); 1`);
 const settingsCovered = await until(async () => {
@@ -334,17 +342,16 @@ const settingsCovered = await until(async () => {
 });
 check(!!settingsCovered, 'ayarlar penceresi açıkken delik kapandı');
 await a.evalFrame('shell=1', `document.getElementById('settings-close').click(); 1`);
-check(!!(await until(async () => (await a.evaluate(SHELL_CLIP)) === clipBefore)), 'ayarlar kapanınca delik geri açıldı');
+check(!!(await until(async () => !(await holeCoveredNow()))), 'ayarlar kapanınca delik geri açıldı');
 // "😀 Tepki" tepsisi deliğin üstüne açılır: adacık olur (görünür, tıklanır).
 await a.evalFrame('shell=1', `document.querySelector('.react-open').click(); 1`);
-const trayIsland = await until(async () => {
-  const clip = await a.evaluate(SHELL_CLIP);
-  return clip !== clipBefore ? clip : null;
-});
-check(!!trayIsland, 'emoji tepsisi deliğin üstünde adacık (katmanda görünüyor)');
+const TRAY_BOX = `(() => { const t = document.querySelector('.toolbar .react-tray:not([hidden])'); const r = t?.getBoundingClientRect(); const h = document.querySelector('.player-wrap').getBoundingClientRect(); return r && { x: Math.max(r.left, h.left), y: Math.max(r.top, h.top), r: Math.min(r.right, h.right), b: Math.min(r.bottom, h.bottom) }; })()`;
+const trayBox = await until(() => a.evalFrame('shell=1', TRAY_BOX));
+const trayIsland = trayBox && (await until(() => islandOver(trayBox)));
+check(!!trayIsland, 'emoji tepsisi deliğin üstünde adacık (katmanda görünüyor)', JSON.stringify(trayBox));
 await a.shot('1d-tepki-tepsisi');
 await a.evalFrame('shell=1', `document.querySelector('.react-open').click(); 1`);
-check(!!(await until(async () => (await a.evaluate(SHELL_CLIP)) === clipBefore)), 'tepsi kapanınca adacık kalktı');
+check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'tepsi kapanınca adacık kalktı');
 
 // 2c) Film sitesinin kendi ⛶ düğmesi → odanın tam ekranı (sitenin kontrolleri görünür).
 const fsButton = await a.center('#fs');
@@ -554,14 +561,21 @@ await a.sleep(1500);
   check(dockR.r - dockR.x > 30 && rects.some((r) => inside(dockR, r)), 'tam ekran: sağdaki dock bir adacık (film sayfasının üstünde görünür)', JSON.stringify({ dockR, rects }));
   check(!rects.some(isHole), 'tam ekran: videoya tıklamayı film oynatıcısı alıyor (deliğin tamamını kaplayan adacık yok)', JSON.stringify(rects));
   check(!rects.some((r) => r.b > screenH - 60 && r.r - r.x > 300), 'tam ekran: filmin alt kısmında (kendi çubuğu) bizim bir şeyimiz yok', JSON.stringify(rects));
-  // Calm when idle: faint but still there (and still an island).
-  const idle = await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('idle')`), 6000);
+  // 0.9.91.5 (owner): the dock hides with the film's own bar: while the film plays and the mouse rests it is gone
+  // (and no island: the film takes the clicks there); a mouse move on the film page brings it back; paused it stays.
+  bora.send({ t: 'play', position: 60, at: Date.now() });
+  const DOCK_IDLE = `document.getElementById('theater').classList.contains('dock-idle')`;
+  const gone = await until(() => a.evalFrame('shell=1', DOCK_IDLE), 8000);
   await a.sleep(500);
   const faint = await a.evalFrame('shell=1', `getComputedStyle(document.getElementById('fs-dock')).opacity`);
-  check(!!idle && Number(faint) < 0.5 && Number(faint) > 0, 'tam ekran: fare oynamayınca dock soluklaşıyor ama kaybolmuyor', `opaklık:${faint}`);
+  const dockGoneR = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-dock').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
+  check(!!gone && Number(faint) < 0.05 && !(await islandOver(dockGoneR)), 'tam ekran: film oynarken fare durunca dock filmin çubuğuyla birlikte gizleniyor (adacık da değil)', `opaklık:${faint}`);
   await a.evaluate(`dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 300 })); 1`);
-  const woke = await until(() => a.evalFrame('shell=1', `!document.getElementById('theater').classList.contains('idle')`), 3000);
-  check(!!woke, 'tam ekran: film sayfasında fare oynayınca dock yeniden belirginleşiyor');
+  const woke = await until(() => a.evalFrame('shell=1', `!document.getElementById('theater').classList.contains('idle') && !${DOCK_IDLE}`), 3000);
+  check(!!woke, 'tam ekran: film sayfasında fare oynayınca dock yeniden görünüyor');
+  bora.send({ t: 'pause', position: 62, at: Date.now() });
+  await a.sleep(3500);
+  check(!(await a.evalFrame('shell=1', DOCK_IDLE)), 'tam ekran: film durunca dock gizlenmiyor');
   // The emoji window opens to the left of the dock: also an island.
   await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
   await a.sleep(500);

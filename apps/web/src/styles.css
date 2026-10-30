@@ -8575,8 +8575,18 @@ html.shorts-view .voice-cams {
 }
 
 /* ==== 0.9.91: endless Shorts feed (ui/shorts-feed.ts) ==== */
-.shorts-feed-wrap {
+.shorts-feed-wrap,
+.shorts-add-wrap {
   position: relative;
+}
+
+/* 0.9.91.5: add to the queue from the Shorts bar (the same small window as the feed's). */
+.shorts-add[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.shorts-add-pop {
+  width: 300px;
 }
 
 .shorts-feed.on {

@@ -122,6 +122,26 @@ async function enter(page, room) {
     await ctx.close();
   }
 
+  // 2b) Themes on a phone (0.9.91.5): only the plain ones are offered; a scene theme chosen on a computer shows as
+  // Gece here (and stays saved).
+  {
+    const ctx = await browser.newContext({ ...devices['Pixel 7'] });
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/`);
+    await page.evaluate(() => localStorage.setItem('theme', 'sinema'));
+    await page.goto(`${SITE}/`);
+    await page.waitForTimeout(1200);
+    const r = await page.evaluate(() => ({ chips: document.querySelectorAll('#theme-strip .theme-chip').length, shown: document.documentElement.dataset.theme, saved: localStorage.getItem('theme') }));
+    check(r.chips === 4 && r.shown === 'gece' && r.saved === 'sinema', 'telefon: sadece düz renk temaları, resimli tema telefonda Gece görünüyor', JSON.stringify(r));
+    await ctx.close();
+    const desk = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const dp = await desk.newPage();
+    await dp.goto(`${SITE}/`);
+    await dp.waitForTimeout(1200);
+    check((await dp.evaluate(() => document.querySelectorAll('#theme-strip .theme-chip').length)) === 11, 'bilgisayarda bütün temalar duruyor');
+    await desk.close();
+  }
+
   // 3) Desktop, real fullscreen: the join-voice notice opens inside the fullscreen view (it used to open behind it).
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
