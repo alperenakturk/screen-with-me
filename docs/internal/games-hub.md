@@ -180,4 +180,8 @@ refunded" or "fold this hand for free"), in a version with jokers and one withou
    showdown 6 s, timers via the storage alarm. Site `games/poker.ts`: a glass flask for the pot, life bars, paper
    cards, move cards with costs, a raise slider with quick picks; two columns in a wide window. Test:
    `scripts/e2e/poker.mjs`.
-5. Shared look for every game (player strip, timer, podium everywhere; XOX / Connect Four redrawn).
+5. ✅ **0.9.91.9 Look.** XOX marks drawn by CSS (two glowing strokes that draw in, a ring that turns in; the cell's
+   `aria-label` says the mark), a faint preview of my mark / disc on the cell or column under the mouse on my turn
+   (`board.dataset.me`), winning cells in the mark's color, player cards glow in their color on their turn; quiz
+   options slide in once per question (`.fresh`), the right one pulses at the reveal; podium steps rise. Shared
+   pieces stay in `games/ui.ts` (settings rows, podium).

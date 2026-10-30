@@ -122,7 +122,8 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
     xox.board.forEach((value, i) => {
       const cell = cells[i]!;
       const isNew = changed && value !== null && i === xox.last;
-      if (!four) cell.textContent = value ?? '';
+      // XOX marks are drawn by CSS (two strokes / a ring); the label says what is there.
+      if (!four) cell.setAttribute('aria-label', value ? `${cellLabel(i)}: ${value}` : cellLabel(i));
       cell.className = `xox-cell${four ? ' four-cell' : ''}${value ? ` mark-${value}` : ''}${xox.line?.includes(i) ? ' win' : ''}${isNew ? ' placed' : ''}`;
       // Dört Taş: taş sütunun tepesinden düşer (kaç satır düşeceği).
       if (four && isNew) cell.style.setProperty('--drop', String(Math.floor(i / COLS) + 1));
@@ -138,6 +139,9 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
     }
     lastWinner = xox.winner;
     board.classList.toggle('my-turn', myTurn);
+    // My mark, for the faint preview on the cell under the mouse.
+    if (seat === -1) delete board.dataset.me;
+    else board.dataset.me = MARKS[seat];
     board.classList.toggle('done', xox.winner !== null);
     const nameOf = (mark: Mark) => seats[mark === 'X' ? 0 : 1]?.name ?? (four ? t(mark === 'X' ? 'games.red' : 'games.yellow') : mark);
     if (!ready) status.textContent = t('games.waiting');
