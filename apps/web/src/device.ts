@@ -12,6 +12,14 @@ export function isTouch(): boolean {
   return coarse.matches;
 }
 
+/**
+ * A phone (a touch screen that is narrow upright or short sideways), not a tablet or a computer. Tablets get their
+ * own tuning later (owner, 0.9.91.5).
+ */
+export function isPhone(): boolean {
+  return matchMedia('(pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-height: 500px)').matches;
+}
+
 /** iPhone / iPad (iPadOS says "Macintosh" but has touch points). */
 export function isIOS(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);

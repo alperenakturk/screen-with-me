@@ -6,6 +6,7 @@ import { t, type I18nKey } from '../i18n.ts';
 import { confirmDialog } from './confirm.ts';
 import { load, save } from '../storage.ts';
 import { linkify } from './links.ts';
+import { setIcon } from './icons.ts';
 
 const MAX_LINES = 120;
 /** Aynı kişinin bu kadar süre içindeki art arda mesajları tek balon grubunda (isim/avatar bir kez). */
@@ -66,6 +67,7 @@ export function createChatPanel(
   // typed text as its caption, and goes to the room only after "Send".
   const images = new Map<string, string>();
   const attach = root.querySelector<HTMLButtonElement>('#chat-attach')!;
+  setIcon(attach, 'image-add');
   const fileInput = el('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif', hidden: '' }) as HTMLInputElement;
   form.append(fileInput);
   attach.addEventListener('click', () => fileInput.click());

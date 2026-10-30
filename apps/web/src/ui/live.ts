@@ -31,6 +31,9 @@ export function createLive(
   // its corner instead. Remembered in this browser.
   const withCamRow = root.querySelector<HTMLElement>('#live-with-cam-row')!;
   const withCamBox = root.querySelector<HTMLInputElement>('#live-with-cam')!;
+  // Line icons in the menu (0.9.91.5, owner: nicer than the emojis): share = the screen, the corner camera = the camera.
+  setIcon(screenButton.querySelector('.live-menu-icon')!, 'screen');
+  setIcon(withCamRow.querySelector('.live-menu-icon')!, 'cam');
   withCamBox.checked = load('opt:liveCam') === '1';
   withCamBox.addEventListener('change', () => save('opt:liveCam', withCamBox.checked ? '1' : '0'));
   const watchButton = root.querySelector<HTMLButtonElement>('#live-watch')!;

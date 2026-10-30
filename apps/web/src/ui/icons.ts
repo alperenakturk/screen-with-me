@@ -26,7 +26,9 @@ export type IconName =
   | 'place-side'
   | 'place-float'
   | 'place-stage'
-  | 'place-below';
+  | 'place-below'
+  | 'fs-enter'
+  | 'image-add';
 
 type Shape = [tag: 'path' | 'rect' | 'line' | 'circle', attrs: Record<string, string | number>];
 
@@ -68,8 +70,17 @@ const ICONS: Record<IconName, Shape[]> = {
   pin: [['path', { d: 'M9 3.5h6l-1 5 3.5 3.5v1.5h-11V12L10 8.5z' }], ['line', { x1: 12, y1: 13.5, x2: 12, y2: 20.5 }]],
   skip: [['path', { d: 'M5.5 5.5v13l9.5-6.5z' }], ['line', { x1: 18.5, y1: 5.5, x2: 18.5, y2: 18.5 }]],
   'fs-exit': [['path', { d: 'M9 3.5V9H3.5' }], ['path', { d: 'M15 3.5V9h5.5' }], ['path', { d: 'M9 20.5V15H3.5' }], ['path', { d: 'M15 20.5V15h5.5' }]],
+  'fs-enter': [['path', { d: 'M3.5 9V3.5H9' }], ['path', { d: 'M15 3.5h5.5V9' }], ['path', { d: 'M3.5 15v5.5H9' }], ['path', { d: 'M20.5 15v5.5H15' }]],
+  // Add a GIF / photo (custom emojis, chat pictures; 0.9.91.5 instead of 🖼️): a picture with a small plus.
+  'image-add': [
+    ['rect', { x: 2.5, y: 5.5, width: 15, height: 14, rx: 2.5 }],
+    ['circle', { cx: 7.5, cy: 10.5, r: 1.5 }],
+    ['path', { d: 'M17.5 15.5l-4-4-8.5 8' }],
+    ['line', { x1: 19.5, y1: 2.5, x2: 19.5, y2: 8.5 }],
+    ['line', { x1: 16.5, y1: 5.5, x2: 22.5, y2: 5.5 }],
+  ],
   leave: [['path', { d: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3' }], ['path', { d: 'M10 17l-5-5 5-5' }], ['line', { x1: 5, y1: 12, x2: 15, y2: 12 }]],
-  // The games hub (0.9.91.7): the pad and one icon per game.
+  // The games hub (0.9.91.8): the pad and one icon per game.
   gamepad: [
     ['path', { d: 'M7 7h10a5 5 0 0 1 5 5l.5 4a3 3 0 0 1-5.3 2.2L15.5 16h-7l-1.7 2.2A3 3 0 0 1 1.5 16l.5-4a5 5 0 0 1 5-5z' }],
     ['line', { x1: 6.5, y1: 10.5, x2: 6.5, y2: 13.5 }],

@@ -40,7 +40,7 @@ export const GAME_NEWS: readonly GameNews[] = [
     en: 'New game: Life Poker. Life instead of chips: everyone starts at 100 %. Special moves: disqualify a player, fold for free, shield, peek. With or without jokers.',
   },
   {
-    v: '0.9.91.7',
+    v: '0.9.91.8',
     kinds: [],
     badge: 'updated',
     tr: 'Oyun salonu: aynı anda 4 masaya kadar oyun, masalar arasında serbestçe geç. Oyun artık videonun yanında, üstünde küçük bir pencerede ya da yerinde açılabilir (başlıktaki düğmeler).',

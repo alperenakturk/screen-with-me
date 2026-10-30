@@ -122,6 +122,54 @@ async function enter(page, room) {
     await ctx.close();
   }
 
+  // 2b) Themes on a phone (0.9.91.5): only the plain ones are offered; a scene theme chosen on a computer shows as
+  // Gece here (and stays saved).
+  {
+    const ctx = await browser.newContext({ ...devices['Pixel 7'] });
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/`);
+    await page.evaluate(() => localStorage.setItem('theme', 'sinema'));
+    await page.goto(`${SITE}/`);
+    await page.waitForTimeout(1200);
+    const r = await page.evaluate(() => ({ chips: document.querySelectorAll('#theme-strip .theme-chip').length, shown: document.documentElement.dataset.theme, saved: localStorage.getItem('theme') }));
+    check(r.chips === 4 && r.shown === 'gece' && r.saved === 'sinema', 'telefon: sadece düz renk temaları, resimli tema telefonda Gece görünüyor', JSON.stringify(r));
+    await ctx.close();
+    const desk = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const dp = await desk.newPage();
+    await dp.goto(`${SITE}/`);
+    await dp.waitForTimeout(1200);
+    check((await dp.evaluate(() => document.querySelectorAll('#theme-strip .theme-chip').length)) === 11, 'bilgisayarda bütün temalar duruyor');
+    await desk.close();
+  }
+
+  // 3) Desktop, real fullscreen: the join-voice notice opens inside the fullscreen view (it used to open behind it).
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
+    const page = await ctx.newPage();
+    await enter(page, id());
+    await page.fill('#media-input', VIDEO);
+    await page.click('#media-form button[value=load]');
+    await page.waitForSelector('#player video');
+    await page.waitForTimeout(800);
+    await page.click('#fullscreen');
+    await page.waitForTimeout(600);
+    const fs = await page.evaluate(() => document.fullscreenElement?.id ?? null);
+    await page.mouse.move(640, 400);
+    await page.click('#dock-mic');
+    await page.waitForTimeout(600);
+    const seen = await page.evaluate(() => {
+      const d = document.querySelector('.confirm-dialog');
+      return { dialog: !!d, inside: !!d && !!document.fullscreenElement?.contains(d) };
+    });
+    check(fs === 'theater' && seen.dialog && seen.inside, 'tam ekran: sese katılırken çıkan uyarı tam ekranın içinde görünüyor', JSON.stringify({ fs, seen }));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    await page.evaluate(() => document.exitFullscreen?.().catch(() => {}));
+    await page.waitForTimeout(400);
+    check(!(await page.evaluate(() => document.querySelector('#theater .dialog-backdrop'))), 'tam ekrandan çıkınca pencereler yerine döndü');
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} kontrol başarısız` : '\n✓ Telefon testi geçti');
   process.exit(fails ? 1 : 0);
