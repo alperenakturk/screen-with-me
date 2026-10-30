@@ -89,3 +89,24 @@ Technical decisions (made in the build session):
   card (push-to-talk, camera, TV settings, earphones mode). Technical summary in `CLAUDE.md` "TV version".
 - Waiting for: the owner's real-TV test (`/tv-test`, then `/tv`); remote key codes, audio autoplay and YouTube
   playback differ between TV browsers, so fixes follow his photos.
+
+## Round 2 (owner's first real-TV try, 30 Oct 2026): design only, waiting for his choice
+Proposal page (Turkish): https://claude.ai/artifact/QZfFgLai4TmNSTwR1nevdN
+- **Owner's feedback:** sync on the TV is very slow (maybe the TV browser); the TV button / TV card on the laptop is
+  confusing: pairing should only happen from the phone, with an explanation of how to use it; maybe shelve it.
+- **Research:** Teleparty has no smart-TV support; Disney+ removed GroupWatch (2023); Prime Video Watch Party reached
+  TVs but is reported discontinued in 2024 (sources conflict); Rave has an Android TV app but needs an account and
+  friends added first; Apple SharePlay works on Apple TV with FaceTime (iPhone as camera, Apple-only, same
+  subscription); casting a Watch2Gether tab to a Chromecast stutters. An account-free browser TV path is rare, so
+  it is a real differentiator, but TV browsers are a weak platform (no Chrome on Google TV, users must install a
+  browser app first, weak SoCs).
+- **Likely cause of the slowness (to be confirmed on the device):** a weak TV falls behind → the engine jumps at 1 s
+  drift (`DRIFT_SEEK_SECONDS`) → the TV rebuffers and falls behind again → another jump after 3 s
+  (`DRIFT_COOLDOWN_MS`); every stall also makes the whole room wait ("everyone ready", `STALL_REPORT_MS` 1.5 s); ±5 %
+  rate nudging can stutter on weak devices.
+- **Options:** A (recommended) fix and simplify: a "TV profile" in the engine (jump at 2.5 s, 10 s cooldown, no rate
+  nudging, the TV's stalls don't make the room wait, a sync-status line on the TV, a sync measurement on `/tv-test`)
+  + the TV button only on phones with a 3-step explainer; if it is still slow on his TV → C. B: Google Cast receiver
+  (Chromecast / Google TV run our page themselves, no TV browser; $5 Google developer registration, Android Chrome
+  senders only), after 1.0. C: shelve (hide the TV button, keep the code), come back after 1.0 with B.
+- **Needed from the owner:** the choice, his TV model, the browser he used and a photo of `/tv-test`.
