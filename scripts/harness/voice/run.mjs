@@ -244,6 +244,15 @@ const menuItems = await until(() => ayse.evaluate(`(() => { const m = document.q
 check(!!menuItems && menuItems.some((x) => x.includes('📌')) && !!(await ayse.evaluate(`!!document.querySelector('.person-pop-range')`)), 'kameraya tıklayınca kişi menüsü: ses düzeyi ve büyüt', JSON.stringify(menuItems));
 await ayse.evaluate(`[...document.querySelectorAll('.person-pop-item')].find((b) => b.textContent.includes('📌')).click(); 1`);
 check(await ayse.evaluate(`!!document.querySelector('#voice-cams .cam-tile.pinned')`), '📌 ile Ali’nin kamerası büyüdü (sabitlendi)');
+// 0.9.91.16 (owner: pinning in the one-window layout looked broken, the other camera spilled out of the window).
+await ayse.evaluate(`document.getElementById('voice-cam').click(); 1`);
+await until(() => ayse.evaluate(`document.querySelectorAll('#voice-cams .cam-tile').length === 2`), 8000);
+await ayse.sleep(500);
+await ayse.shot('kamera-sabit-pencere');
+const spot = await ayse.evaluate(`(() => { const box = document.getElementById('voice-cams').getBoundingClientRect(); const tiles = [...document.querySelectorAll('#voice-cams .cam-tile')].map((t) => ({ pinned: t.classList.contains('pinned'), r: t.getBoundingClientRect() })); const p = tiles.find((t) => t.pinned)?.r; const o = tiles.find((t) => !t.pinned)?.r; return { inside: tiles.every(({ r }) => r.left >= box.left - 1 && r.right <= box.right + 1 && r.top >= box.top - 1 && r.bottom <= box.bottom + 1), bigger: !!p && !!o && p.width > o.width * 2, beside: !!p && !!o && o.left >= p.right - 1, n: tiles.length }; })()`);
+check(spot.inside && spot.bigger && spot.beside, 'tek pencerede sabitlenen kamera solda büyük, diğeri sağda; hepsi pencerenin içinde', JSON.stringify(spot));
+await ayse.evaluate(`document.getElementById('voice-cam').click(); 1`);
+await until(() => ayse.evaluate(`document.querySelectorAll('#voice-cams .cam-tile').length === 1`), 8000);
 await ayse.evaluate(`[...document.querySelectorAll('#voice-people .together-person')].find((p) => p.textContent.includes('Ali')).click(); 1`);
 await ayse.sleep(300);
 await ayse.evaluate(`[...document.querySelectorAll('.person-pop-item')].find((b) => b.textContent.includes('🔇')).click(); 1`);
@@ -303,6 +312,10 @@ const afterGame = await ayse.evaluate(FLOW);
 check(afterGame.tiles === 1 && afterGame.moving, 'oyun kapanınca kameralar yerinde ve akıyor', JSON.stringify(afterGame));
 // A reconnect must not leave a second (frozen) tile of the same person behind.
 // 0.9.90.5: while Ali reconnects his tile never vanishes (a "📶 reconnecting" tile holds his place).
+// 0.9.91.16 (owner: "why does it throw me out of voice and put me back"): a reconnect keeps the member id, so the
+// direct connection is not rebuilt: Ayşe keeps receiving the very same camera stream from Ali.
+const STREAM_ID = `(() => { const v = [...document.querySelectorAll('#voice-cams .cam-tile video')].find((x) => x.srcObject && !x.closest('.cam-tile.me')); return v ? v.srcObject.getVideoTracks()[0]?.id ?? null : null; })()`;
+const streamBefore = await ayse.evaluate(STREAM_ID);
 const watchTiles = ayse.evaluate(`(async () => { let min = 9; let note = false; for (let i = 0; i < 50; i++) { const t = document.querySelectorAll('#voice-cams .cam-tile'); min = Math.min(min, t.length); note ||= !!document.querySelector('#voice-cams .cam-tile.reconnecting'); await new Promise((r) => setTimeout(r, 100)); } return { min, note }; })()`);
 await ali.evaluate(`document.getElementById('profile-reconnect').click(); 1`);
 const during = await watchTiles;
@@ -312,6 +325,8 @@ await ali.sleep(1000);
 const afterReconnect = await ayse.evaluate(FLOW);
 const aliCount = await ayse.evaluate(`document.querySelectorAll('#people-list [data-member-id]').length`);
 check(afterReconnect.tiles === 1 && afterReconnect.moving, 'Ali yeniden bağlanınca Ayşe’de tek kamera kutusu var ve akıyor', JSON.stringify({ afterReconnect, aliCount }));
+const streamAfter = await ayse.evaluate(STREAM_ID);
+check(!!streamBefore && streamBefore === streamAfter, 'Ali yeniden bağlanınca ses / görüntü bağlantısı kopmadı (aynı akış sürüyor)', JSON.stringify({ streamBefore, streamAfter }));
 // The pill grows / shrinks from its corner (0.9.90.8).
 await ayse.evaluate(`document.querySelector('#voice-cams .cam-pop').click(); if (!document.getElementById('voice-cams').classList.contains('free')) document.querySelector('#voice-cams .cam-layout').click(); 1`);
 await ayse.sleep(300);

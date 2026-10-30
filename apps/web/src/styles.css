@@ -8398,6 +8398,12 @@ html.in-room .topbar-right > .lang {
   color: var(--muted);
 }
 
+/* The side panel is its own layer (sticky): while the share menu is open it is lifted over the floating camera
+   tiles (z-index 800), so the menu is never covered (owner, 30 Oct 2026). */
+.side:has(.live-menu:not([hidden])) {
+  z-index: 850;
+}
+
 .live-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -11057,4 +11063,36 @@ html.shorts-view .game-stage .game-place {
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* 0.9.91.16: a pinned camera in the one-window layout is a spotlight: big on the left, the others in a strip on the
+   right sharing its height (ui/cam-float.ts sets .spotlight and --cam-others). */
+.voice-cams .cam-grid.spotlight {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+  grid-template-rows: repeat(var(--cam-others, 1), minmax(0, 1fr));
+}
+
+.voice-cams .cam-grid.spotlight > .cam-tile {
+  grid-column: 2;
+  grid-row: auto;
+  align-self: center;
+  aspect-ratio: 4 / 3;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.voice-cams .cam-grid.spotlight > .cam-tile.pinned {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: stretch;
+  aspect-ratio: 4 / 3;
+  max-height: none;
+}
+
+.voice-cams.floating.sized .cam-grid.spotlight > .cam-tile:not(.pinned) {
+  aspect-ratio: 4 / 3;
+}
+
+.voice-cams.floating.sized .cam-grid.spotlight > .cam-tile.pinned {
+  aspect-ratio: auto;
 }

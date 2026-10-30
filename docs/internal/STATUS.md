@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.15**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.16**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -133,6 +133,13 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   lists the extension's devices (`{op:'devices'}`) and switches in place. The permission window asks microphone and
   camera in one prompt, and the site's pre-join check does too when both are still unanswered. Harnesses: voice 65,
   voice shell (new 🎛 checks), embed 106.
+- [x] **0.9.91.16 owner's feedback (30 Oct 2026):** voice and cameras no longer drop and come back when the room
+  connection breaks or a new version is deployed (the server gives a reconnect its member id back; the direct
+  connections stay; probably what the owner saw during the 0.9.91.15 deploy); a Short opened while someone watches
+  in fullscreen leaves fullscreen and shows the Shorts view; a pinned camera in the one-window layout is a spotlight
+  (big left, others in a strip, all inside the window); the share menu shows over the floating cameras;
+  `name-ideas.md` and the "English first" language rule (branch `claude/name-ideas`, never merged) brought to main.
+  Harnesses: voice 67, voice shell 30, embed 106, e2e handover (+3 checks).
 - [x] **0.9.91.15 free stream window (owner, 30 Oct 2026):** the stream window is dragged anywhere in the video,
   resized from its corner (16:9), popped out onto the page (⧉ / ⤓) and remembered per place (video / page /
   fullscreen); in fullscreen it stays inside the video; the streamer can hide their own preview (🙈, viewers still see

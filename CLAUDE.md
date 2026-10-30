@@ -13,6 +13,12 @@ A free, account-free tool for watching a video on any site together with friends
 
 ## Language and GitHub conventions (owner's decision, 28 Oct 2026)
 We are building a **global product**, so everything is professional, formal and consistent.
+- **Language priority for the product (owner's rule, 28 Oct 2026): English first, then Turkish, then other
+  languages.** Unless the owner explicitly asks for something Turkish, every product-facing choice is designed for
+  English speakers first: names (product, features, rooms, games), slogans, copy, wordmarks, store listing, domains and
+  handles, examples and defaults. Turkish comes second (translation, local flavour), other languages after that.
+  Turkish words or ideas are not the default; they need the owner's explicit request. (This does not change who we
+  talk to in Turkish: the conversation with the owner stays Turkish.)
 - **Talk to the user (Alperen) in Turkish.** Everything that lives on GitHub is **English**: commit messages, branch
   names, PR titles/descriptions, issues, review comments, release notes, `CLAUDE.md`, docs, workflow names and code
   comments.
@@ -61,7 +67,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.15 (film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.16 (voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -168,7 +174,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   is `settings.loop` (host): when the video ends the client sends `{t:'next', end: true}`; if loop is on and the video
   is a Short the server applies `restart` (seeks to start; not again if position < 2 s, simultaneous "ended" messages
   count once). A manual "Next" skips even in loop. **0.9.90.1 (owner: "working is not enough, make it great"):**
-  YouTube → YouTube switches reuse the same player (`PlayerAdapter.load` = `cueVideoById`; no new iframe, switching
+  A Short that starts while I'm in fullscreen leaves fullscreen so the Shorts view shows (0.9.91.16, owner; not on
+  the TV). YouTube → YouTube switches reuse the same player (`PlayerAdapter.load` = `cueVideoById`; no new iframe, switching
   used to take 1–2 s), phones swipe up/down on the stage (≥60 px, mostly vertical, ≤0.8 s; not on chat / emoji bar),
   and the wheel works over the video too (our click catcher sits over the YouTube frame since "one remote"). Next
   ideas in `STATUS.md`. Test: `scripts/e2e/shorts.mjs`. **0.9.90.7:** many links pasted in the link box at once
@@ -338,6 +345,13 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   remembers its member id from `welcome` and sends it as `hello.prev`; the server closes that old connection at once
   (`4005 replaced`) if it has the same `cid` — before, the old one stayed in the room (people count went up, a frozen
   camera tile) until the stale check. The room title counts people (name + avatar), not connections.
+  **Same member id on reconnect (0.9.91.16, owner: "why does it throw me out of voice and put me back"):** the server
+  keeps `memberIds` (id → cid, storage, 24 h, at most 200) and gives `hello.prev` back as the new connection's id when
+  the browser id matches and nobody holds it (also after a server restart / deploy, when the old socket is gone).
+  The site then keeps voice as it is (`P2pVoice.resume()`: only re-announces mic / camera; no leave + rejoin), and
+  `P2pVoice.sync` waits before closing a vanished person's connection (15 s if they left the list, 2.5 s if they are
+  still in the room without voice). Voice-join sounds skip people who come back within 30 s. The film page (ExtVoice)
+  still rebuilds. Tests: e2e `handover.mjs`, `voice/run.mjs` (the same camera track survives ⟳).
 - **Avatars (`protocol.ts` `AVATAR_PAGES`):** 5 pages: themed drawn characters, parody film / series / anime / game
   (game: `speedster`). Animal emojis were removed in 0.9.57 (those who had one get a random themed character). The
   picker always opens on the "Temalı" tab. Picker tabs are `AVATAR_TABS` (Parody has sub-tabs; site `ui/avatar.ts`).
@@ -620,6 +634,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   (`camWindow.update(n, hidden, inVoice)`: the pill with 🎙 / 📷 stays; in the card an empty box still goes away); the
   pill grows / shrinks from its corner (`.cam-pill-resize`, `transform: scale` 0.7–1.8, `camPill:scale`, ↺ resets it);
   a 🖥️ button in the pill presses the stream card's own buttons (share my screen / ⏹ stop mine / ▶ watch someone's).
+  **0.9.91.16 spotlight:** in the one-window (group) layout a pinned camera fills the left and the others sit in a
+  4:3 strip on the right (`.cam-grid.spotlight`, `--cam-others`, set in `cam-float.ts` `markTiles`); the old
+  "full width + span 2" pushed the others out of a sized window. The share menu lifts the side panel over the
+  floating cameras while it is open (`.side:has(.live-menu:not([hidden]))`).
   **0.9.90.6 pre-join check (`ui/voice-check.ts`):** "Sese katıl" (after the IP notice, not in the shell) opens a
   small window: camera preview (only when "Kameram açık girsin" is ticked), my voice level, mic / camera / speaker
   selects (`enumerateDevices`; speaker only where `setSinkId` exists), "Mikrofonum kapalı girsin", "Kameram açık
