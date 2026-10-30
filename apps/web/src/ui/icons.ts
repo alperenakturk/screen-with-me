@@ -27,7 +27,11 @@ export type IconName =
   | 'place-stage'
   | 'place-below'
   | 'fs-enter'
-  | 'image-add';
+  | 'image-add'
+  | 'play'
+  | 'pause'
+  | 'volume'
+  | 'volume-off';
 
 type Shape = [tag: 'path' | 'rect' | 'line' | 'circle', attrs: Record<string, string | number>];
 
@@ -70,6 +74,11 @@ const ICONS: Record<IconName, Shape[]> = {
   skip: [['path', { d: 'M5.5 5.5v13l9.5-6.5z' }], ['line', { x1: 18.5, y1: 5.5, x2: 18.5, y2: 18.5 }]],
   'fs-exit': [['path', { d: 'M9 3.5V9H3.5' }], ['path', { d: 'M15 3.5V9h5.5' }], ['path', { d: 'M9 20.5V15H3.5' }], ['path', { d: 'M15 20.5V15h5.5' }]],
   'fs-enter': [['path', { d: 'M3.5 9V3.5H9' }], ['path', { d: 'M15 3.5h5.5V9' }], ['path', { d: 'M3.5 15v5.5H9' }], ['path', { d: 'M20.5 15v5.5H15' }]],
+  // Our own players' remote on the dock (0.9.91.13: Shorts in the room view, the sync test).
+  play: [['path', { d: 'M7 4.5v15l12.5-7.5z', fill: 'currentColor' }]],
+  pause: [['rect', { x: 6, y: 4.5, width: 4, height: 15, rx: 1, fill: 'currentColor' }], ['rect', { x: 14, y: 4.5, width: 4, height: 15, rx: 1, fill: 'currentColor' }]],
+  volume: [['path', { d: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4z' }], ['path', { d: 'M15.5 9a4.5 4.5 0 0 1 0 6' }], ['path', { d: 'M18 6.5a8 8 0 0 1 0 11' }]],
+  'volume-off': [['path', { d: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4z' }], ['line', { x1: 16, y1: 9.5, x2: 21, y2: 14.5 }], ['line', { x1: 21, y1: 9.5, x2: 16, y2: 14.5 }]],
   // Add a GIF / photo (custom emojis, chat pictures; 0.9.91.5 instead of 🖼️): a picture with a small plus.
   'image-add': [
     ['rect', { x: 2.5, y: 5.5, width: 15, height: 14, rx: 2.5 }],

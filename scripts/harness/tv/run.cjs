@@ -138,7 +138,11 @@ async function enter(page, room, name) {
   check(!!(await until(() => tv.evaluate(() => !!document.querySelector('.tv-face.in-voice')), 15000)), 'TV: the friend in voice gets a green ring');
   check(!!(await until(() => tv.evaluate(() => [...document.querySelectorAll('audio')].some((a) => a.srcObject)), 15000)), 'TV: listens to voice without a microphone (audio arrives)');
   // The fake microphone beeps briefly about once a second; one glow in 25 s is enough (15 s missed it once in six runs).
-  check(!!(await until(() => tv.evaluate(() => !!document.querySelector('.tv-face.speaking')), 25000)), 'TV: the speaking face glows');
+  const glowed = !!(await until(() => tv.evaluate(() => !!document.querySelector('.tv-face.speaking')), 25000));
+  check(glowed, 'TV: the speaking face glows');
+  // Missed about once in seven runs on a loaded cloud machine (three browsers, a video, fake microphones): print what
+  // the friend and the TV had then, so the next miss says why.
+  if (!glowed || process.env.TV_DEBUG) console.log('debug', await friend.evaluate(() => JSON.stringify({ mic: document.querySelector('#voice-mic')?.className, joined: !document.querySelector('#voice-on')?.hidden })), await tv.evaluate(() => JSON.stringify([...document.querySelectorAll('audio')].map((a) => ({ muted: a.muted, vol: a.volume, paused: a.paused })))));
 
   // The phone in voice: push-to-talk (the microphone is off until the big button is held), voices not played here.
   await phone.evaluate(`(async () => { document.querySelector('.tv-ptt').click(); for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 150)); const d = document.querySelector('.confirm-dialog'); if (!d) { if (i > 10) break; continue; } d.querySelector('.btn.primary').click(); } return 1; })()`);

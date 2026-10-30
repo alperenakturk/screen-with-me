@@ -78,6 +78,8 @@ interface StageOptions {
   /** 🎮 under the video, and the hub popover it opens. */
   button: HTMLButtonElement;
   menu: HTMLElement;
+  /** More 🎮 buttons that open the same hub (the Shorts bar's, 0.9.91.13): the hub moves next to the one pressed. */
+  extraButtons?: HTMLButtonElement[];
   send: (message: ClientMessage) => void;
   me: () => { id: string | null; name: string; avatar: Avatar };
   /** Am I the host (the host can close any table). */
@@ -137,13 +139,19 @@ export function createGameStage(opts: StageOptions) {
   const theater = (wrap.closest('.theater') as HTMLElement | null) ?? wrap;
   const narrow = matchMedia('(max-width: 860px)');
   const inFullscreen = () => theater.matches(':fullscreen') || theater.classList.contains('fake-fs');
+  /**
+   * The Shorts view (0.9.91.13, owner): the upright video has no room for a game in its place, so a game there is a
+   * free window (on a phone: large). Opening the Shorts view with a game open moves it to the free window in the
+   * space right of the video and remembers that, so it stays free back in the room view until I pin it again.
+   */
+  const shortsView = () => document.documentElement.classList.contains('shorts-view');
   /** The placement in use now. */
   let mode: Place | 'below' | 'full' = 'stage';
 
   /** Puts the game window where its placement says (moves the element only when its parent changes). */
   function place(): void {
-    const want = current ? placeOf(current.kind) : 'stage';
-    mode = narrow.matches ? (want === 'stage' ? 'full' : 'below') : want;
+    const want = current ? (shortsView() ? 'float' : placeOf(current.kind)) : 'stage';
+    mode = narrow.matches ? (want === 'stage' || shortsView() ? 'full' : 'below') : want;
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
     const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
@@ -288,6 +296,29 @@ export function createGameStage(opts: StageOptions) {
     }
   }).observe(theater, { attributes: true, attributeFilter: ['class'] });
   let wasFs = inFullscreen();
+  let wasShorts = shortsView();
+  new MutationObserver(() => {
+    const now = shortsView();
+    if (now === wasShorts) return;
+    wasShorts = now;
+    if (now && current) besideShorts(current.kind);
+    place();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  /** The free space right of the upright Short: the window goes there, made small enough to fit beside it. */
+  function besideShorts(kind: RoomGameKind): void {
+    save(`gamePlace:${kind}`, 'float');
+    spot = { x: 1, y: 0.4 };
+    save(FLOAT_KEY, JSON.stringify(spot));
+    requestAnimationFrame(() => {
+      const [w] = GAME_CATALOG[kind].size;
+      const beside = innerWidth - wrap.getBoundingClientRect().right - 3 * EDGE;
+      if (beside > 0 && current?.kind === kind) {
+        save(zoomKey(kind), String(Math.round(Math.max(MIN_ZOOM, Math.min(floatZoom(), beside / w)) * 1000) / 1000));
+        if (mode === 'float') placeFloat();
+        dispatchEvent(new Event('swm-layout'));
+      }
+    });
+  }
   place();
 
   // ---- Fit the game to its box: no scrollbars, ever (owner's rule) ----
@@ -349,14 +380,16 @@ export function createGameStage(opts: StageOptions) {
     minimizeButton.label(t('game.minimize'));
     leaveButton.label(t('hub.leave'));
     endButton.label(t('hub.close'));
-    button.title = t('hub.title');
+    for (const b of triggers) b.title = t('hub.title');
     if (current) {
       titleIcon.replaceChildren(gameIcon(current.kind));
       titleText.textContent = `${titleOf(current.kind)} · ${t('game.by', { name: current.by.name })}`;
       endButton.node.hidden = !canClose(current);
     }
-    button.classList.toggle('game-on', tables.length > 0);
-    button.classList.toggle('game-new', unseenNews(load(SEEN_KEY)).length > 0);
+    for (const b of triggers) {
+      b.classList.toggle('game-on', tables.length > 0);
+      b.classList.toggle('game-new', unseenNews(load(SEEN_KEY)).length > 0);
+    }
     if (!menu.hidden) drawHub();
   }
 
@@ -452,22 +485,24 @@ export function createGameStage(opts: StageOptions) {
     else if (!menu.hidden) {
       // Closing the hub counts as having seen what's new.
       save(SEEN_KEY, LATEST_NEWS);
-      button.classList.remove('game-new');
+      for (const b of triggers) b.classList.remove('game-new');
     }
     menu.hidden = !show;
-    button.setAttribute('aria-expanded', String(show));
+    for (const b of triggers) b.setAttribute('aria-expanded', String(show && menu.parentElement === b.parentElement));
   }
+  const triggers = [button, ...(opts.extraButtons ?? [])];
 
   // ---- My table ----
   async function open(table: RoomGame): Promise<void> {
     document.getElementById('game-invite')?.remove();
     stage.hidden = false;
-    button.classList.remove('game-waiting');
+    for (const b of triggers) b.classList.remove('game-waiting');
     if (current?.id === table.id && unmount) return place();
     unmount?.();
     unmount = null;
     current = table;
     labels();
+    if (shortsView()) besideShorts(table.kind);
     place();
     send({ t: 'at', table: table.id });
     body.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
@@ -492,14 +527,14 @@ export function createGameStage(opts: StageOptions) {
     stage.hidden = true;
     place();
     body.replaceChildren();
-    button.classList.remove('game-waiting');
+    for (const b of triggers) b.classList.remove('game-waiting');
     if (tell) send({ t: 'at', table: null });
   }
 
   function minimize(): void {
     stage.hidden = true;
     place();
-    if (current) button.classList.add('game-waiting');
+    if (current) for (const b of triggers) b.classList.add('game-waiting');
   }
 
   function invite(table: RoomGame): void {
@@ -518,14 +553,21 @@ export function createGameStage(opts: StageOptions) {
   leaveButton.node.addEventListener('click', () => leave());
   endButton.node.addEventListener('click', () => current && send({ t: 'table', close: current.id }));
   hubButton.node.addEventListener('click', () => setHub(!!menu.hidden));
-  button.addEventListener('click', () => {
-    // A minimized table comes back first; the hub is one more press away (or the head's 🎮).
-    if (menu.hidden && current && stage.hidden) return void open(current);
-    setHub(!!menu.hidden);
-  });
+  for (const trigger of triggers) {
+    trigger.addEventListener('click', () => {
+      // A minimized table comes back first; the hub is one more press away (or the head's 🎮).
+      if (menu.hidden && current && stage.hidden) return void open(current);
+      // The hub opens next to the 🎮 that was pressed.
+      if (trigger.parentElement && menu.parentElement !== trigger.parentElement) {
+        trigger.parentElement.append(menu);
+        if (!menu.hidden) return setHub(true);
+      }
+      setHub(!!menu.hidden);
+    });
+  }
   document.addEventListener('pointerdown', (event) => {
     const target = event.target as Element | null;
-    if (!menu.hidden && target && !menu.contains(target) && !button.contains(target) && !hubButton.node.contains(target)) setHub(false);
+    if (!menu.hidden && target && !menu.contains(target) && !triggers.some((b) => b.contains(target)) && !hubButton.node.contains(target)) setHub(false);
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !menu.hidden) setHub(false);

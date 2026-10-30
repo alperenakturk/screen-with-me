@@ -33,6 +33,8 @@ export interface FeedOptions {
   /** May I add to the queue (not "only the host" for me)? */
   canAdd: () => boolean;
   add: (media: Media) => void;
+  /** Takes an item out of the queue (a new feed clears the old feed's Shorts, 0.9.91.13). */
+  remove: (itemId: string) => void;
   /** A short note to the person (feed started, stopped, quota). */
   note: (text: string) => void;
   /** The feed turned on / off (buttons follow). */
@@ -67,10 +69,29 @@ export function createShortsFeed(opts: FeedOptions) {
 
   /** Spread out like a pasted list: the server allows about 4 commands a second. */
   function add(ids: string[]): void {
+    writeAdded([...readAdded(), ...ids]);
     ids.forEach((id, i) => setTimeout(() => opts.add({ kind: 'youtube', id, short: true }), i * 300));
     // Until they reach the queue it still looks short: no new round before they are in (or it would overfill).
     if (ids.length) retryAt = Date.now() + ids.length * 300 + 2000;
   }
+
+  /** Shorts the feed put in the queue (also after it stopped): a new feed takes them out again. */
+  const addedKey = `feedAdded:${opts.roomId}`;
+  const readAdded = (): string[] => {
+    try {
+      const list = JSON.parse(sessionStorage.getItem(addedKey) ?? '[]') as unknown;
+      return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string').slice(-SEEN_MAX) : [];
+    } catch {
+      return [];
+    }
+  };
+  const writeAdded = (list: string[]) => {
+    try {
+      sessionStorage.setItem(addedKey, JSON.stringify(list.slice(-SEEN_MAX)));
+    } catch {
+      // Private mode: only this page knows.
+    }
+  };
 
   function stop(note?: string): void {
     state = null;
@@ -148,8 +169,15 @@ export function createShortsFeed(opts: FeedOptions) {
         opts.note(t('feed.locked'));
         return;
       }
+      // A new feed: the old feed's Shorts still waiting in the queue go (owner: "I don't want to see the feed I left");
+      // the one playing now finishes. Spread out like adding: the server allows about 4 commands a second.
+      const old = new Set(readAdded());
+      const leftovers = opts.queueItems().filter((item) => item.media.kind === 'youtube' && old.has(item.media.id));
+      leftovers.forEach((item, i) => setTimeout(() => opts.remove(item.id), i * 300));
+      writeAdded([]);
       state = { topic: clean, next: null, seen: [], pending: [], done: false };
-      retryAt = 0;
+      // The new Shorts come after the old ones are gone (or the queue looks full to the first round).
+      retryAt = leftovers.length ? Date.now() + leftovers.length * 300 + 800 : 0;
       emptyPages = 0;
       persist();
       opts.note(t('feed.started', { topic: clean }));

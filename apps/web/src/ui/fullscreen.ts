@@ -66,6 +66,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   const dockChat = q<HTMLButtonElement>('#dock-chat');
   const dockReact = q<HTMLButtonElement>('#dock-react');
   const dockSpeed = q<HTMLButtonElement>('#dock-speed');
+  // Our own players' remote on the dock (0.9.91.13: Shorts in the room view, the sync test): play / pause and volume.
+  const dockPlay = q<HTMLButtonElement>('#dock-play');
+  const dockVol = q<HTMLButtonElement>('#dock-vol');
+  const dockVolRange = q<HTMLInputElement>('#dock-vol-range');
   const dockSkip = q<HTMLButtonElement>('#dock-skip');
   const dockExit = q<HTMLButtonElement>('#dock-exit');
   const dockChatForm = q<HTMLFormElement>('#dock-chat-form');
@@ -74,6 +78,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   const pops = new Map<HTMLButtonElement, HTMLElement>([
     [dockChat, dockChatForm],
     [dockReact, q('#dock-react-pop')],
+    [dockVol, q('#dock-vol-pop')],
     [dockSpeed, q('#dock-speed-pop')],
   ]);
   setIcon(dockChat, 'chat');
@@ -109,8 +114,15 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   function renderDock(): void {
     const r = wrap.getBoundingClientRect();
     const fits = r.width >= WINDOW_DOCK.w && r.height >= WINDOW_DOCK.h;
-    const docked = !!getPlayer() && !own && (isActive() || fits);
+    // Our own players (Shorts, the sync test) get the dock too since 0.9.91.13 (owner: no more old bottom bar), with
+    // ⏯ and the volume on it and our click catcher kept (click = play / pause, the wheel scrolls Shorts). The Shorts
+    // view has its own bar under the video: there only fullscreen shows the dock.
+    const shortsView = document.documentElement.classList.contains('shorts-view');
+    const docked = !!getPlayer() && (isActive() || (fits && !(own && shortsView)));
     theater.classList.toggle('dock-mode', docked);
+    theater.classList.toggle('own-dock', docked && own);
+    dockPlay.hidden = !own;
+    dockVol.hidden = !own || !hasVolume(getPlayer());
     theater.classList.toggle('dock-window', docked && !isActive());
     setIcon(dockExit, isActive() ? 'fs-exit' : 'fs-enter');
     dockLabels();
@@ -141,6 +153,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     label(q('#dock-pin'), t('dock.pin'));
     label(dockSpeed, t('speed'));
     label(dockSkip, t('skip'));
+    label(dockPlay, t('dock.play'));
+    label(dockVol, t('dock.volume'));
     label(dockExit, t(isActive() ? 'dock.exit' : 'dock.enter'));
   };
   dockLabels();
@@ -153,6 +167,13 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     });
   }
   dockSkip.addEventListener('click', onSkip);
+  dockPlay.addEventListener('click', () => togglePlay());
+  dockVolRange.addEventListener('input', () => {
+    volume.value = dockVolRange.value;
+    volume.dispatchEvent(new Event('input'));
+  });
+  dockVolRange.addEventListener('change', saveVolume);
+  new MutationObserver(() => renderDock()).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   dockExit.addEventListener('click', () => toggle());
   dockChatForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -227,6 +248,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   }
   function renderVolume(): void {
     volume.value = String(wantMuted ? 0 : wantVolume);
+    dockVolRange.value = volume.value;
+    setIcon(dockVol, wantMuted || wantVolume === 0 ? 'volume-off' : 'volume');
     muteButton.textContent = wantMuted || wantVolume === 0 ? '🔇' : wantVolume < 50 ? '🔉' : '🔊';
   }
   let lastPlayer: PlayerAdapter | null = null;
@@ -331,6 +354,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     const at = seeking && duration > 0 ? (Number(seek.value) / 1000) * duration : current;
     time.textContent = `${formatTime(at)} / ${formatTime(duration)}`;
     playButton.textContent = player && !player.isPaused() ? '⏸' : '▶';
+    setIcon(dockPlay, player && !player.isPaused() ? 'pause' : 'play');
     volumeBox.hidden = !hasVolume(player);
     if (player) readVolume(player);
     // Captions: only when the video has them (YouTube says so once it plays).
