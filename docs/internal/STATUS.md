@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.7**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.12**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -116,6 +116,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   fullscreen on a film page): some players' boxes can scroll, and grown to the hole they drew a scrollbar over the
   film. The extension's focus CSS now hides scrollbars in the player box and inside it (menus still scroll
   with the wheel; the box's overflow stays unclipped, clipping it once cut off subtitles). The embed test page's player box scrolls like those players; embed harness 102/102.
+- [x] **0.9.91.12 owner's feedback round 2 (30 Oct 2026):** search results that are Shorts (videos.list `player` with
+  `maxWidth`: taller than wide + ≤ 180 s, same 1-unit call) are marked 📱 and open in the Shorts view; the Shorts
+  bar's "＋ Ekle" searches Shorts only on words (`ui/shorts-search.ts`, the feed's `short=1` search; the feed now keeps
+  only upright results when the shapes came); 🎙 looks off before joining voice, like 📷; the film-page permission
+  window is wide (Chrome's question opens at its top left, our text sits on the right; it overlapped before).
+  Harnesses: phone (search with a stand-in answer), voice, voice shell, embed; unit 231.
 - [x] **0.9.91.7 owner's feedback round (30 Oct 2026)** (the games hub design went to its own session, merged as
   `docs/internal/games-hub.md`):
   - Film page: ⚙️ settings and other windows that only lose `hidden` close the hole at once (they waited for the

@@ -8,6 +8,7 @@ import { readValue } from './store.ts';
 
 const text = {
   tr: {
+    ask: 'Chrome\'un sorusu burada açılır: "İzin ver"e bas. Kapandıysa adres çubuğundaki simgeye bas.',
     title: 'Sesli sohbet için mikrofon izni',
     text: 'Film sayfasında arkadaşlarınla konuşabilmen için ScreenWithMe mikrofonunu kullanmak istiyor. İzni bir kez verirsin; mikrofon sadece "Sese katıl"a bastığında açılır.',
     allow: '🎙 Mikrofon iznini ver',
@@ -18,6 +19,7 @@ const text = {
     camDenied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden kameraya izin verip tekrar dene.',
   },
   en: {
+    ask: 'Chrome\'s question opens here: press "Allow". If it closed, press the icon in the address bar.',
     title: 'Microphone permission for voice chat',
     text: 'ScreenWithMe wants to use your microphone so you can talk with friends on the video page. You only allow it once, and the microphone is only on after you press "Join voice".',
     allow: '🎙 Allow microphone',
@@ -35,6 +37,7 @@ async function main(): Promise<void> {
   document.documentElement.lang = dict === text.en ? 'en' : 'tr';
   // Kamera izni de aynı sayfadan (?cam=1): görüntülü sohbet eklentinin görünmeyen sayfasında, o da izin isteyemez.
   const cam = new URLSearchParams(location.search).get('cam') === '1';
+  document.getElementById('ask-text')!.textContent = dict.ask;
   document.getElementById('title')!.textContent = cam ? dict.camTitle : dict.title;
   document.getElementById('text')!.textContent = cam ? dict.camText : dict.text;
   const button = document.getElementById('allow') as HTMLButtonElement;

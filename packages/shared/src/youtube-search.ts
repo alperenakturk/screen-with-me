@@ -21,6 +21,8 @@ export interface SearchResult {
   /** Seconds; null when unknown (or a live stream). */
   duration: number | null;
   live: boolean;
+  /** A YouTube Short (0.9.91.12): an upright video of at most `SHORT_MAX_SECONDS`; it opens in the Shorts view. */
+  short?: boolean;
 }
 
 /**
@@ -95,7 +97,13 @@ function clean(value: unknown, max: number): string {
  * search.list JSON (+ durations from videos.list) → our results. Anything unexpected is skipped, never trusted:
  * only well-formed video ids survive, texts are cut and cleaned.
  */
-export function parseSearchItems(search: unknown, durations: Map<string, number | null> = new Map(), limit = SEARCH_RESULTS): SearchResult[] {
+export function parseSearchItems(
+  search: unknown,
+  durations: Map<string, number | null> = new Map(),
+  limit = SEARCH_RESULTS,
+  /** Ids of upright videos (from videos.list `player`): with a Short's length they are marked `short`. */
+  upright: ReadonlySet<string> = new Set(),
+): SearchResult[] {
   const items = typeof search === 'object' && search !== null ? (search as { items?: unknown }).items : null;
   if (!Array.isArray(items)) return [];
   const results: SearchResult[] = [];
@@ -107,16 +115,38 @@ export function parseSearchItems(search: unknown, durations: Map<string, number 
     if (typeof id !== 'string' || !VIDEO_ID.test(id) || seen.has(id)) continue;
     seen.add(id);
     const live = item.snippet?.liveBroadcastContent === 'live';
+    const duration = live ? null : (durations.get(id) ?? null);
+    const short = !live && upright.has(id) && duration !== null && duration <= SHORT_MAX_SECONDS;
     results.push({
       id,
       title: clean(item.snippet?.title, 200) || id,
       channel: clean(item.snippet?.channelTitle, 100),
-      duration: live ? null : (durations.get(id) ?? null),
+      duration,
       live,
+      ...(short ? { short: true } : {}),
     });
     if (results.length >= limit) break;
   }
   return results;
+}
+
+/**
+ * videos.list (`part=player` with `maxWidth`) JSON → ids of upright videos. The API has no "is a Short" field, but
+ * with a `maxWidth` it sizes the embed to the video's shape: taller than wide = upright (Shorts are upright). The
+ * sizes may come as strings (int64 in Google's JSON). Same call as the durations, so it costs nothing extra.
+ */
+export function parseUpright(videos: unknown): Set<string> {
+  const upright = new Set<string>();
+  const items = typeof videos === 'object' && videos !== null ? (videos as { items?: unknown }).items : null;
+  if (!Array.isArray(items)) return upright;
+  for (const raw of items) {
+    if (typeof raw !== 'object' || raw === null) continue;
+    const item = raw as { id?: unknown; player?: { embedWidth?: unknown; embedHeight?: unknown } };
+    const w = Number(item.player?.embedWidth);
+    const h = Number(item.player?.embedHeight);
+    if (typeof item.id === 'string' && VIDEO_ID.test(item.id) && w > 0 && h > w) upright.add(item.id);
+  }
+  return upright;
 }
 
 /** videos.list (`part=contentDetails`) JSON → id → seconds. */
@@ -160,6 +190,7 @@ export function parseSearchAnswer(body: unknown, limit = SEARCH_RESULTS): Search
       channel: clean(item.channel, 100),
       duration: typeof item.duration === 'number' && Number.isFinite(item.duration) && item.duration > 0 ? item.duration : null,
       live: item.live === true,
+      ...(item.short === true ? { short: true } : {}),
     });
   }
   const next = cleanPageToken((body as { next?: unknown }).next);
