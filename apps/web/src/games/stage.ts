@@ -4,8 +4,9 @@
 // time, in a game window with two placements (remembered per game, `gamePlace:<kind>`; defaults from the catalog):
 // "float" a free window anywhere on the page (drag by its head, resize from its corner; in fullscreen it moves into
 // the fullscreen view and stays free there; an island on the film page) and "stage" in the video's place. The free
-// window opens at the game's own size (catalog `size`); smaller than the room the game's layout needs (`fit`) the
-// whole game is scaled down instead of squeezed. Narrow screens: "below" the video (the rest of the screen) or
+// window keeps the game's own shape (catalog `size`) and only grows or shrinks in proportion. In every placement the
+// game is fitted to its box (`refit`): smaller than the room its layout needs (`fit`), or still overflowing, the
+// whole game is scaled down, so nothing ever scrolls. Narrow screens: "below" the video (the rest of the screen) or
 // "large" (the whole screen). "Back to video" minimizes it (still connected, still "at" the table), "Leave table" closes it
 // for me only.
 
@@ -50,13 +51,17 @@ const placeOf = (kind: RoomGameKind): Place => {
 };
 /** The free window's spot on the screen, as a share of the free room (0–1). */
 const FLOAT_KEY = 'gameFloat:spot';
-/** The free window's size per game (what I last dragged it to; empty = the game's own size). */
-const sizeKey = (kind: RoomGameKind) => `gameFloat:size:${kind}`;
+/** The free window's zoom per game (what I last dragged it to; empty = the game's own size). */
+const zoomKey = (kind: RoomGameKind) => `gameFloat:zoom:${kind}`;
 /** Gap kept between the free window and the screen's edges. */
 const EDGE = 8;
-/** The smallest free window (px). */
-const MIN_W = 240;
-const MIN_H = 260;
+/** The free window's zoom range (share of the game's own size). */
+const MIN_ZOOM = 0.45;
+const MAX_ZOOM = 1.6;
+/** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
+const MIN_FIT = 0.4;
+/** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
+const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit';
 const readPair = (key: string): { x: number; y: number } | null => {
   try {
     const saved = JSON.parse(load(key) || 'null') as { x?: unknown; y?: unknown } | null;
@@ -120,9 +125,13 @@ export function createGameStage(opts: StageOptions) {
   });
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
   const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), placeSwitch, hubButton.node, minimizeButton.node, leaveButton.node, endButton.node);
-  const body = el('div', { class: 'game-stage-body' });
+  // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
+  const body = el('div', { class: 'game-fit' });
+  const frame = el('div', { class: 'game-stage-body' }, body);
   const grip = el('span', { class: 'game-resize', 'aria-hidden': 'true' });
-  const stage = el('section', { id: 'game-stage', class: 'game-stage', 'aria-label': 'PlayWithMe' }, head, body, grip);
+  // The room's emojis fly over the free window too (ui/reactions.ts picks this layer while it is open).
+  const flying = el('div', { class: 'reactions-layer game-reactions', 'aria-hidden': 'true' });
+  const stage = el('section', { id: 'game-stage', class: 'game-stage', 'aria-label': 'PlayWithMe' }, head, frame, flying, grip);
   stage.hidden = true;
   wrap.append(stage);
   const theater = (wrap.closest('.theater') as HTMLElement | null) ?? wrap;
@@ -173,32 +182,27 @@ export function createGameStage(opts: StageOptions) {
     }
     return { left: 0, top: 0, width: innerWidth, height: innerHeight };
   }
-  /** The window's size on screen: what I dragged it to, or the game's own size; never bigger than the screen. */
-  function floatSize(): { w: number; h: number } {
+  /** The free window's zoom: what I dragged it to (1 = the game's own size), never bigger than the screen allows. */
+  function floatZoom(want?: number): number {
     const kind = current?.kind ?? 'xox';
-    const saved = readPair(sizeKey(kind));
-    const [dw, dh] = GAME_CATALOG[kind].size;
+    const [w, h] = GAME_CATALOG[kind].size;
+    const saved = Number(load(zoomKey(kind)) || '1');
     const room = area();
-    return {
-      w: Math.round(Math.max(MIN_W, Math.min(saved?.x ?? dw, room.width - 2 * EDGE))),
-      h: Math.round(Math.max(MIN_H, Math.min(saved?.y ?? dh, room.height - 2 * EDGE))),
-    };
+    const most = Math.min(MAX_ZOOM, (room.width - 2 * EDGE) / w, (room.height - 2 * EDGE) / h);
+    return Math.max(Math.min(MIN_ZOOM, most), Math.min(most, want ?? (Number.isFinite(saved) && saved > 0 ? saved : 1)));
   }
   let spot = readPair(FLOAT_KEY) ?? { x: 1, y: 0.5 };
-  function placeFloat(size = floatSize()): void {
-    const kind = current?.kind ?? 'xox';
-    const [fw, fh] = GAME_CATALOG[kind].fit;
-    // Smaller than the room the game needs: the game keeps its layout and is scaled down as a whole.
-    const scale = Math.min(1, size.w / fw, size.h / fh);
+  function placeFloat(zoom = floatZoom()): void {
+    const [w, h] = GAME_CATALOG[current?.kind ?? 'xox'].size;
+    const width = Math.round(w * zoom);
+    const height = Math.round(h * zoom);
     const room = area();
     const x = Math.min(1, Math.max(0, spot.x));
     const y = Math.min(1, Math.max(0, spot.y));
-    stage.style.left = `${Math.round(room.left + EDGE + Math.max(0, room.width - 2 * EDGE - size.w) * x)}px`;
-    stage.style.top = `${Math.round(room.top + EDGE + Math.max(0, room.height - 2 * EDGE - size.h) * y)}px`;
-    stage.style.width = `${size.w / scale}px`;
-    stage.style.height = `${size.h / scale}px`;
-    stage.style.transform = scale < 1 ? `scale(${scale})` : '';
-    stage.classList.toggle('scaled', scale < 1);
+    stage.style.left = `${Math.round(room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x)}px`;
+    stage.style.top = `${Math.round(room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y)}px`;
+    stage.style.width = `${width}px`;
+    stage.style.height = `${height}px`;
   }
   let drag: { x: number; y: number; left: number; top: number } | null = null;
   head.addEventListener('pointerdown', (event) => {
@@ -230,11 +234,11 @@ export function createGameStage(opts: StageOptions) {
   // Double click on the head: back to the game's own size.
   head.addEventListener('dblclick', (event) => {
     if (mode !== 'float' || !current || (event.target as Element).closest('button')) return;
-    save(sizeKey(current.kind), '');
+    save(zoomKey(current.kind), '');
     placeFloat();
     dispatchEvent(new Event('swm-layout'));
   });
-  // The corner: the top-left stays put, the window grows or shrinks (the game rescales when it gets small).
+  // The corner: the top-left stays put and the window grows or shrinks in proportion (the game keeps its shape).
   let sizing: { x: number; y: number; w: number; h: number; left: number; top: number } | null = null;
   grip.addEventListener('pointerdown', (event) => {
     if (mode !== 'float') return;
@@ -245,16 +249,20 @@ export function createGameStage(opts: StageOptions) {
   });
   grip.addEventListener('pointermove', (event) => {
     if (!sizing || !current) return;
+    const [w, h] = GAME_CATALOG[current.kind].size;
     const room = area();
-    const w = Math.round(Math.max(MIN_W, Math.min(sizing.w + event.clientX - sizing.x, room.left + room.width - EDGE - sizing.left)));
-    const h = Math.round(Math.max(MIN_H, Math.min(sizing.h + event.clientY - sizing.y, room.top + room.height - EDGE - sizing.top)));
-    // Keep the top-left corner where it is: the spot is a share of the room left free.
+    // Follow the mouse along the window's diagonal; keep the window on the screen.
+    const want = ((sizing.w + event.clientX - sizing.x) / w + (sizing.h + event.clientY - sizing.y) / h) / 2;
+    const fits = Math.min((room.left + room.width - EDGE - sizing.left) / w, (room.top + room.height - EDGE - sizing.top) / h);
+    const zoom = floatZoom(Math.min(want, fits));
+    const width = w * zoom;
+    const height = h * zoom;
     spot = {
-      x: room.width - 2 * EDGE - w > 0 ? (sizing.left - room.left - EDGE) / (room.width - 2 * EDGE - w) : 0,
-      y: room.height - 2 * EDGE - h > 0 ? (sizing.top - room.top - EDGE) / (room.height - 2 * EDGE - h) : 0,
+      x: room.width - 2 * EDGE - width > 0 ? (sizing.left - room.left - EDGE) / (room.width - 2 * EDGE - width) : 0,
+      y: room.height - 2 * EDGE - height > 0 ? (sizing.top - room.top - EDGE) / (room.height - 2 * EDGE - height) : 0,
     };
-    save(sizeKey(current.kind), JSON.stringify({ x: w, y: h }));
-    placeFloat({ w, h });
+    save(zoomKey(current.kind), String(Math.round(zoom * 1000) / 1000));
+    placeFloat(zoom);
     dispatchEvent(new Event('swm-layout'));
   });
   const endSizing = () => {
@@ -281,6 +289,45 @@ export function createGameStage(opts: StageOptions) {
   }).observe(theater, { attributes: true, attributeFilter: ['class'] });
   let wasFs = inFullscreen();
   place();
+
+  // ---- Fit the game to its box: no scrollbars, ever (owner's rule) ----
+  let fitting = false;
+  function refit(): void {
+    if (fitting || stage.hidden || !current) return;
+    const W = frame.clientWidth;
+    const H = frame.clientHeight;
+    if (!W || !H) return;
+    fitting = true;
+    // Phones have their own narrow layouts: only overflow shrinks the game there.
+    const [fw, fh] = narrow.matches ? [0, 0] : GAME_CATALOG[current.kind].fit;
+    let scale = Math.min(1, fw ? W / fw : 1, fh ? H / fh : 1);
+    for (let i = 0; i < 4; i++) {
+      body.style.width = `${W / scale}px`;
+      body.style.height = `${H / scale}px`;
+      body.style.transform = scale < 1 ? `scale(${scale})` : '';
+      let over = Math.max(body.scrollHeight / body.clientHeight, body.scrollWidth / body.clientWidth);
+      // Boxes that clip their own content (the drawing's overlay, the quiz card) must fit too.
+      for (const box of body.querySelectorAll<HTMLElement>(FIT_INSIDE)) {
+        if (box.clientHeight > 0 && !box.hidden) over = Math.max(over, box.scrollHeight / box.clientHeight);
+      }
+      if (over <= 1.005 || scale <= MIN_FIT) break;
+      scale = Math.max(MIN_FIT, scale / over);
+    }
+    stage.style.setProperty('--fit', String(scale));
+    fitting = false;
+  }
+  let fitQueued = false;
+  const queueFit = () => {
+    if (fitQueued) return;
+    fitQueued = true;
+    requestAnimationFrame(() => {
+      fitQueued = false;
+      refit();
+    });
+  };
+  new ResizeObserver(queueFit).observe(frame);
+  // A new phase (lobby → question → podium) changes what has to fit.
+  new MutationObserver(queueFit).observe(body, { childList: true, subtree: true, characterData: true });
 
   const meId = () => opts.me().id;
   const canClose = (table: RoomGame) => table.by.id === meId() || opts.amHost();
@@ -431,6 +478,7 @@ export function createGameStage(opts: StageOptions) {
     else if (table.kind === 'quiz') stop = (await import('./quiz.ts')).mountQuiz(body, table.id, name, avatar);
     else if (table.kind === 'poker') stop = (await import('./poker.ts')).mountPoker(body, table.id, name, avatar);
     else stop = (await import('./match.ts')).mountMatch(body, table.kind, table.id, name, avatar);
+    queueFit();
     // Switched or closed while loading: close at once.
     if (current?.id !== table.id) stop();
     else unmount = stop;

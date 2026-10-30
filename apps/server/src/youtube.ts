@@ -105,7 +105,7 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   let items = parseSearchItems(search.body, new Map(), limit);
   if (items.length > 0) {
     // Durations are a nicety: if this call fails, the results still go out without them.
-    // `player` with a `maxWidth` tells the video's shape (upright = a Short, 0.9.91.11); still 1 unit.
+    // `player` with a `maxWidth` tells the video's shape (upright = a Short, 0.9.91.12); still 1 unit.
     const videos = await callYouTube(
       'videos',
       { part: 'contentDetails,player', maxWidth: '100', id: items.map((item) => item.id).join(','), fields: 'items(id,contentDetails/duration,player(embedWidth,embedHeight))' },

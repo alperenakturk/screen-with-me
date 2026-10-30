@@ -13,7 +13,7 @@ function client(name, cid, id = game) {
     inbox.push(m);
     if (m.t === 'state') last = m;
   });
-  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 2, name, cid, lang: 'tr' })));
+  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, name, cid, lang: 'tr' })));
   const wait = async (pred, label, ms = 8000) => {
     for (let i = 0; i < ms / 50; i++) {
       const idx = inbox.findIndex(pred);
@@ -61,6 +61,17 @@ ok(ali.state.word === word && !('word' in ayse.state) && ayse.state.hint.replace
 ali.send({ t: 'stroke', s: { c: 2, w: 1, p: [100, 100, 200, 150, 300, 220] } });
 const st = await can.wait((m) => m.t === 'stroke', 'stroke');
 ok(st.s.p.length === 6 && st.s.c === 2, 'Çizgi diğerlerine ulaştı');
+// A fill and one pen press in two pieces (same group), then undo: the whole press goes, the earlier line and the
+// fill stay, and everyone gets the rest to redraw.
+ali.send({ t: 'stroke', s: { c: 5, w: 0, p: [500, 400], f: 1, g: 7 } });
+const fill = await can.wait((m) => m.t === 'stroke' && m.s.f === 1, 'fill');
+ok(fill.s.p.length === 2 && fill.s.g === 7, 'A fill reaches the others');
+ali.send({ t: 'stroke', s: { c: 0, w: 4, p: [10, 10, 50, 50], g: 8 } });
+ali.send({ t: 'stroke', s: { c: 0, w: 4, p: [50, 50, 90, 90], g: 8 } });
+await can.wait((m) => m.t === 'stroke' && m.s.g === 8 && m.s.p[0] === 50, 'second piece');
+ali.send({ t: 'undo' });
+const rest = await can.wait((m) => m.t === 'strokes', 'undo');
+ok(rest.list.length === 2 && rest.list[1].f === 1 && !rest.list.some((x) => x.g === 8), 'Undo took back the whole last press (both pieces), the rest is redrawn');
 ayse.send({ t: 'stroke', s: { c: 0, w: 0, p: [1, 1, 2, 2] } });
 const nd = await ayse.wait((m) => m.t === 'error', 'not drawer');
 ok(nd.code === 'not_drawer', 'Çizen olmayan çizemiyor');
@@ -83,7 +94,7 @@ ok(secret.text === 'çok kolaydı' && !can.inbox.some((m) => m.t === 'guess' && 
 // Geç gelen o ana kadarki çizimi alır.
 const deniz = client('Deniz', 'drawDeniz0001');
 const list = await deniz.wait((m) => m.t === 'strokes', 'late strokes');
-ok(list.list.length === 1, 'Geç gelen o ana kadarki çizimi aldı');
+ok(list.list.length === 2, 'Geç gelen o ana kadarki çizimi aldı');
 // Can tries three wrong words first (two are free, the third costs 10 %).
 for (const w of ['xx1', 'xx2', 'xx3']) can.send({ t: 'guess', text: w });
 await sleep(400);

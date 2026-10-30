@@ -142,7 +142,7 @@ async function enter(page, room) {
     await desk.close();
   }
 
-  // 2c) Search (0.9.91.11, a stand-in search answer: the cloud has no YouTube key): a Short found by the link box's
+  // 2c) Search (0.9.91.12, a stand-in search answer: the cloud has no YouTube key): a Short found by the link box's
   // search opens in the Shorts view, and the Shorts bar's "＋ Ekle" searches Shorts only and queues them.
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });

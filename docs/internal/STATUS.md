@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.7**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.12**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -116,6 +116,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   fullscreen on a film page): some players' boxes can scroll, and grown to the hole they drew a scrollbar over the
   film. The extension's focus CSS now hides scrollbars in the player box and inside it (menus still scroll
   with the wheel; the box's overflow stays unclipped, clipping it once cut off subtitles). The embed test page's player box scrolls like those players; embed harness 102/102.
+- [x] **0.9.91.12 owner's feedback round 2 (30 Oct 2026):** search results that are Shorts (videos.list `player` with
+  `maxWidth`: taller than wide + ≤ 180 s, same 1-unit call) are marked 📱 and open in the Shorts view; the Shorts
+  bar's "＋ Ekle" searches Shorts only on words (`ui/shorts-search.ts`, the feed's `short=1` search; the feed now keeps
+  only upright results when the shapes came); 🎙 looks off before joining voice, like 📷; the film-page permission
+  window is wide (Chrome's question opens at its top left, our text sits on the right; it overlapped before).
+  Harnesses: phone (search with a stand-in answer), voice, voice shell, embed; unit 231.
 - [x] **0.9.91.7 owner's feedback round (30 Oct 2026)** (the games hub design went to its own session, merged as
   `docs/internal/games-hub.md`):
   - Film page: ⚙️ settings and other windows that only lose `hidden` close the hole at once (they waited for the
@@ -149,8 +155,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     room chooser on the phone, TV mode of the room (D-pad bar, ▲ emojis, Back, listen-only voice, speaking faces,
     big messages), phone remote card (push-to-talk, camera, TV settings, earphones mode). Harness
     `scripts/harness/tv/run.cjs` 32 checks.
-  - [ ] Owner: open `/tv-test` and then `/tv` on his own TV (TV Bro on Google TV) and send photos; then we fix what
-    his TV browser does differently (key codes, audio autoplay, YouTube).
+  - [x] Owner tried it on his TV (30 Oct 2026): sync very slow, the TV button on the laptop is confusing.
+  - [ ] **Round 2, waiting for the owner's choice** (proposal https://claude.ai/artifact/QZfFgLai4TmNSTwR1nevdN,
+    `docs/internal/tv-design.md` "Round 2"): A fix + simplify (TV sync profile, phone-only TV button with a 3-step
+    explainer) / B Google Cast receiver after 1.0 / C shelve. Also asked for his TV model, browser and a `/tv-test`
+    photo. Nothing is built until he chooses.
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.

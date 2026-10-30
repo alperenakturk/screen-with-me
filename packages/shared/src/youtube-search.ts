@@ -21,7 +21,7 @@ export interface SearchResult {
   /** Seconds; null when unknown (or a live stream). */
   duration: number | null;
   live: boolean;
-  /** A YouTube Short (0.9.91.11): an upright video of at most `SHORT_MAX_SECONDS`; it opens in the Shorts view. */
+  /** A YouTube Short (0.9.91.12): an upright video of at most `SHORT_MAX_SECONDS`; it opens in the Shorts view. */
   short?: boolean;
 }
 

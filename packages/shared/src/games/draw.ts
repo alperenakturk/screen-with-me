@@ -7,7 +7,7 @@
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
 
 /** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). 2: host settings, game end, new points. */
-export const DRAW_PROTOCOL_VERSION = 2;
+export const DRAW_PROTOCOL_VERSION = 3;
 /** How many times everyone draws (host's choice). */
 export const DRAW_ROUNDS = [1, 2, 3] as const;
 export type DrawRounds = (typeof DRAW_ROUNDS)[number];
@@ -16,9 +16,17 @@ export const DRAW_MAX_PLAYERS = 8;
 export const DRAW_ROUND_MS = 80_000;
 export const DRAW_CHOOSE_MS = 15_000;
 export const DRAW_REVEAL_MS = 6_000;
-/** Kalem renkleri ve kalınlıkları (çizgide sadece sıra numarası gider). Beyaz silgi gibi kullanılır. */
-export const DRAW_COLORS = ['#1b1b1f', '#ffffff', '#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#6d4c41', '#ec407a'] as const;
-export const DRAW_SIZES = [4, 10, 24] as const;
+/** Pen colors and sizes (a stroke carries only their index, so new ones are only appended). White is the eraser. */
+export const DRAW_COLORS = [
+  '#1b1b1f', '#ffffff', '#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#6d4c41', '#ec407a',
+  '#9e9e9e', '#5d6470', '#f7c6a3', '#c62828', '#ffe082', '#9ccc65', '#1b5e20', '#81d4fa', '#0d47a1', '#ce93d8',
+] as const;
+export const DRAW_SIZES = [4, 10, 24, 2, 40] as const;
+/** The order the pickers show them in (by shade / by width). */
+export const DRAW_COLOR_ORDER = [0, 5, 1, 10, 11, 12, 6, 8, 2, 13, 3, 4, 14, 15, 16, 17, 18, 7, 19, 9] as const;
+export const DRAW_SIZE_ORDER = [3, 0, 1, 2, 4] as const;
+/** Fill: neighbouring pixels this close to the clicked color (largest channel difference) are filled too. */
+export const DRAW_FILL_TOLERANCE = 64;
 /** Tuval: 1000 × 750 (4:3) mantıksal birim; noktalar bu ızgarada tam sayı. */
 export const DRAW_W = 1000;
 export const DRAW_H = 750;
@@ -28,11 +36,14 @@ export const STROKE_MAX_POINTS = 120;
 export type DrawLang = 'tr' | 'en';
 export type DrawPhase = 'lobby' | 'choose' | 'draw' | 'reveal' | 'over';
 
-/** Çizgi parçası: renk ve kalınlık sırası, noktalar [x0, y0, x1, y1, …]. */
+/** Çizgi parçası: renk ve kalınlık sırası, noktalar [x0, y0, x1, y1, …]. `f`: a fill at the one point p instead of a
+ *  line. `g`: the drawing action it belongs to (one press of the pen = one group; "undo" takes the last group away). */
 export interface Stroke {
   c: number;
   w: number;
   p: number[];
+  f?: 1;
+  g?: number;
 }
 
 export interface DrawPlayer {
@@ -57,6 +68,7 @@ export type DrawClientMessage =
   | { t: 'choose'; index: number }
   | { t: 'stroke'; s: Stroke }
   | { t: 'clear' }
+  | { t: 'undo' }
   | { t: 'guess'; text: string }
   /** Oyunu bitirip lobiye dön, puanları sıfırla. */
   | { t: 'reset' }
@@ -105,7 +117,12 @@ export function cleanStroke(x: unknown): Stroke | null {
   if (!s || typeof s !== 'object' || !isInt(s.c, 0, DRAW_COLORS.length - 1) || !isInt(s.w, 0, DRAW_SIZES.length - 1)) return null;
   if (!Array.isArray(s.p) || s.p.length < 2 || s.p.length > STROKE_MAX_POINTS * 2 || s.p.length % 2 !== 0) return null;
   for (let i = 0; i < s.p.length; i += 2) if (!isInt(s.p[i], 0, DRAW_W) || !isInt(s.p[i + 1], 0, DRAW_H)) return null;
-  return { c: s.c, w: s.w, p: s.p.slice() };
+  if (s.f !== undefined && (s.f !== 1 || s.p.length !== 2)) return null;
+  if (s.g !== undefined && !isInt(s.g, 0, 1_000_000)) return null;
+  const out: Stroke = { c: s.c, w: s.w, p: s.p.slice() };
+  if (s.f) out.f = 1;
+  if (s.g !== undefined) out.g = s.g;
+  return out;
 }
 
 /** İstemciden gelen mesajı doğrular ve yeni nesneye kopyalar; geçersizse null. */
@@ -147,6 +164,7 @@ export function parseDrawMessage(raw: string): DrawClientMessage | null {
     }
     case 'start':
     case 'clear':
+    case 'undo':
     case 'reset':
     case 'ping':
       return { t: m.t };

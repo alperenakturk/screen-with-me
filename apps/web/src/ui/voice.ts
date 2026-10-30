@@ -330,7 +330,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       box.hidden = !available || (!active && joinButton.hidden);
       const micText = active ? micLabel : t('voice.join');
       if (mic.textContent) mic.textContent = '';
-      // Not in voice yet: the mic looks off (red), like the camera (owner, 0.9.91.11); pressing it joins.
+      // Not in voice yet: the mic looks off (red), like the camera (owner, 0.9.91.12); pressing it joins.
       setIcon(mic, active && client.micEnabled ? 'mic' : 'mic-off');
       mic.classList.toggle('off', !active || !client.micEnabled);
       mic.title = micText;

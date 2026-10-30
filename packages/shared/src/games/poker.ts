@@ -25,7 +25,9 @@ export const POKER_BLIND_EVERY = 5;
 export const POKER_TURN_MS = 30_000;
 /** A disconnected player's turn ends sooner. */
 export const POKER_AWAY_TURN_MS = 4_000;
-export const POKER_SHOWDOWN_MS = 6_000;
+export const POKER_SHOWDOWN_MS = 5_000;
+/** The pause when nothing has to be read: everyone else folded, or the game is decided (owner: "we waited ages"). */
+export const POKER_QUICK_MS = 2_500;
 export const MOVE_COST = { dq: 10, free: 0, shield: 5, peek: 5 } as const;
 export type PokerMove = keyof typeof MOVE_COST;
 export const POKER_MOVES = Object.keys(MOVE_COST) as PokerMove[];

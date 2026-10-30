@@ -1892,7 +1892,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const list = parseMediaList(shortsAddInput.value);
     const one = list.media.length === 1 ? list.media[0]! : parseMediaInput(shortsAddInput.value);
     if (list.media.length < 2 && one === null) {
-      // Words: a search of YouTube Shorts only (0.9.91.11); the box stays open to add from the list.
+      // Words: a search of YouTube Shorts only (0.9.91.12); the box stays open to add from the list.
       if (shortsAddInput.value.trim()) void shortsSearch.search(shortsAddInput.value);
       return;
     }

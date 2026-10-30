@@ -3,7 +3,7 @@ import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 
 /**
- * Shorts search in the Shorts bar's "＋ Ekle" box (0.9.91.11, owner): words + Enter list YouTube Shorts only (the same
+ * Shorts search in the Shorts bar's "＋ Ekle" box (0.9.91.12, owner): words + Enter list YouTube Shorts only (the same
  * `short=1` search as the ♾ feed: one search ≈ 1 % of the day's quota, answers cached for a day on the server and
  * for this page here). A row's ＋ adds that Short to the queue; the box stays open to add more.
  */

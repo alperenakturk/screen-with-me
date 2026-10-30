@@ -118,7 +118,7 @@ describe('Shorts feed helpers', () => {
   });
 });
 
-describe('Shorts in search results (0.9.91.11)', () => {
+describe('Shorts in search results (0.9.91.12)', () => {
   const search = { items: [{ id: { videoId: 'aqz-KE-bpKQ' }, snippet: { title: 'Upright' } }, { id: { videoId: 'dQw4w9WgXcQ' }, snippet: { title: 'Wide' } }, { id: { videoId: 'abcdefghijk' }, snippet: { title: 'Long upright' } }] };
   const videos = {
     items: [

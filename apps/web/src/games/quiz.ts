@@ -45,6 +45,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
           <ul id="quiz-players" class="draw-players"></ul>
         </aside>
       </div>
+      <div id="quiz-flash" class="game-toast" aria-live="polite"></div>
     </div>`;
   translate(app);
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;
@@ -66,6 +67,17 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let shownN = 0;
   let lastTick = 0;
   const body = $('#quiz-body');
+  /** Who had used their joker at the last state (a new one is announced to everyone). */
+  let jokers = new Set<string>();
+  let primed = false;
+  let flashTimer = 0;
+  function flash(text: string): void {
+    const box = $('#quiz-flash');
+    box.textContent = text;
+    box.classList.add('show');
+    clearTimeout(flashTimer);
+    flashTimer = window.setTimeout(() => box.classList.remove('show'), 2200);
+  }
 
   function sounds(s: State, mine: State['players'][number] | undefined): void {
     const key = `${s.phase}:${s.n}`;
@@ -82,6 +94,11 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     const s = state;
     const mine = s.players.find((p) => p.id === me);
     sounds(s, mine);
+    const used = new Set(s.players.filter((p) => p.joker).map((p) => p.id));
+    // Not on the first state (joining mid-game announces nothing).
+    if (primed) for (const p of s.players) if (used.has(p.id) && !jokers.has(p.id) && s.phase === 'question') flash(t('quiz.jokerBy', { name: p.id === me ? t('games.you') : p.name }));
+    jokers = used;
+    primed = true;
     $('#quiz-players').replaceChildren(
       ...[...s.players]
         .sort((a, b) => b.score - a.score)
@@ -113,9 +130,13 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'quiz.again' : 'draw.start'));
       go.disabled = online < 2;
       go.addEventListener('click', () => send({ t: 'start' }));
+      // Two halves: what this is (title + rules / podium) and the setup (settings + start); side by side when the
+      // box is wide and short.
+      const intro =
+        s.phase === 'over'
+          ? el('div', { class: 'quiz-intro' }, el('h3', {}, t('games.over')), podium(s.players))
+          : el('div', { class: 'quiz-intro' }, el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, t('quiz.rules', { count: s.count })));
       const parts: HTMLElement[] = [];
-      if (s.phase === 'over') parts.push(el('h3', {}, t('games.over')), podium(s.players));
-      else parts.push(el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, t('quiz.rules', { count: s.count })));
       const host = s.players.find((p) => p.id === s.host);
       const topics: QuizTopic[] = ['mix', ...QUIZ_CATEGORIES];
       parts.push(
@@ -130,7 +151,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       );
       if (s.phase === 'over') go.textContent = t('games.again');
       parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
-      body.replaceChildren(el('div', { class: 'quiz-center' }, ...parts));
+      body.replaceChildren(el('div', { class: 'quiz-center' }, intro, el('div', { class: 'quiz-setup' }, ...parts)));
     } else {
       const reveal = s.phase === 'reveal';
       const picked = myPick && myPick.n === s.n ? myPick.pick : (mine?.pick ?? null);
@@ -258,6 +279,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     close();
     clearInterval(ticker);
     clearInterval(ping);
+    clearTimeout(flashTimer);
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
   };
