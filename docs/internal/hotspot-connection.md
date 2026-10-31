@@ -3,7 +3,7 @@
 Owner's report (31 Oct 2026): sharing the phone's hotspot, the laptop can't get into the site / room ("it doesn't get
 in"); the phone itself on its own mobile data works. Earlier (0.9.79) the same hotspot showed the page loading but the
 room's WebSocket neither opening nor closing ("Bağlanıyor…" forever). The `/baglanti` result from the hotspot is
-still pending (asked again with 0.9.92; it now also tests the fallback and prints a `guess:` line).
+in below ("Owner's result").
 
 ## Why a hotspot differs from the phone itself
 The laptop's traffic takes a different path than the phone's own apps:
@@ -20,6 +20,13 @@ The laptop's traffic takes a different path than the phone's own apps:
 Most likely: the TCP path from the laptop through the phone is broken for full-size packets (MTU black hole or
 carrier tethering policy), while the page itself arrives over HTTP/3. We cannot change the carrier or the laptop's
 MTU, so the room must not depend on a raw TCP WebSocket.
+
+## Owner's result (31 Oct 2026, 0.9.92, laptop on the phone's hotspot, Mac, Chrome 156)
+Page loads; plain request 200; **200 kB answer over h3 in 116 ms**; the tiny WebSocket and the room WebSocket both hang
+for 10 s; **the fallback opens in 153 ms**, the room answers in 306 ms, round trip 183 ms. The room works (owner: "no
+problems"). So UDP / HTTP/3 passes and every new TCP connection hangs on the tether: the expected case. (The page row
+showed `?`: behind the service worker the navigation entry has no protocol; since 0.9.92.1 the guess uses any h3
+request.)
 
 ## Telling the causes apart (`/baglanti`, 0.9.92)
 Rows: page protocol (h3 = UDP, h2 = TCP) · plain request (+ its protocol) · a 200 kB answer · a tiny WebSocket

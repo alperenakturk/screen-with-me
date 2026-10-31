@@ -120,7 +120,8 @@ export function renderDiag(app: HTMLElement): void {
     const summary = [
       `ScreenWithMe ${t('diag.title')} · ${new Date().toISOString()} · ${document.querySelector('.footer-version')?.textContent?.trim() ?? ''}`,
       ...rows.map((row) => `${row.ok ? 'OK ' : 'ERR'} ${row.label}: ${row.detail}`),
-      `guess: ${guess(pageProtocol, http.ok === true, big.ok === true, probeOk, wsOk, fallbackOk)}`,
+      // The page's own entry is often empty (served via the service worker): any HTTP/3 request on the page counts.
+      `guess: ${guess(pageProtocol === 'h3' || performance.getEntries().some((e) => (e as PerformanceResourceTiming).nextHopProtocol === 'h3') ? 'h3' : pageProtocol, http.ok === true, big.ok === true, probeOk, wsOk, fallbackOk)}`,
       `net: ${net?.effectiveType ?? '?'}/${net?.type ?? '?'} · ${navigator.userAgent}`,
     ].join('\n');
     copy.removeAttribute('disabled');

@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 31 Oct 2026. Site and extension **0.9.92**. The owner moved to a **new Claude
+> Last update: 31 Oct 2026. Site and extension **0.9.92.1**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -199,7 +199,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   limits; games too), remembered for the tab, back to a WebSocket by itself when a probe opens. `/baglanti` now also
   tests a 200 kB answer, a tiny WebSocket and the fallback, and prints a `guess:`. A reload hands the member id to the
   next page (`swm:prev:<room>`). Tests: e2e `fallback.mjs`, unit `socket.test.ts`, harness `hotspot/run.mjs`.
-  **Waiting for the owner:** try it on the hotspot + paste the `/baglanti` result (hand tests below).
+  **Owner confirmed it works on his hotspot** (31 Oct 2026). **0.9.92.1:** `/baglanti`'s guess counts any HTTP/3
+  request (the page's own entry is empty behind the service worker); CLAUDE.md rule "speaking Turkish never makes the
+  work Turkish"; English test data in the new tests.
 - [x] **0.9.91.20 first-time path** (PDF item 1; partial until the extension is in the store): one join screen
   (who is waiting + what is playing from `/api/rooms/:id/info` `people` / `count` / `playing`, avatar button next to the
   name, no separate avatar step); 3 short tips the first time in a room (invite → add a link / search → join voice,
@@ -274,9 +276,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the card says "Filme git" by itself.
 
 **0.9.92 (phone hotspot):**
-- [ ] Laptop on the phone's hotspot: open the site and a room. It should get in within ~7 s (first time) and work:
+- [x] (owner, 31 Oct 2026: works, no problems) Laptop on the phone's hotspot: open the site and a room. It should get in within ~7 s (first time) and work:
   chat, a YouTube video in sync with a friend, voice. A reload should be quick.
-- [ ] On the same hotspot open `/baglanti`, press "Sonucu kopyala" and paste the text to Claude (tells which cause it
+- [x] (owner's result, 31 Oct 2026: page loads, 200 kB answer over h3 in 116 ms, every WebSocket hangs 10 s, fallback opens in 153 ms, room answers in 306 ms, round trip 183 ms → TCP path broken on the tether, UDP fine; Mac, Chrome 156) On the same hotspot open `/baglanti`, press "Sonucu kopyala" and paste the text to Claude (tells which cause it
   is: the `guess:` line).
 - [ ] If the site's home page itself doesn't open on the hotspot (not only the room), tell Claude: that is a
   different cause (DNS / filtering of workers.dev → own domain).

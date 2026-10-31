@@ -19,6 +19,14 @@ We are building a **global product**, so everything is professional, formal and 
   handles, examples and defaults. Turkish comes second (translation, local flavour), other languages after that.
   Turkish words or ideas are not the default; they need the owner's explicit request. (This does not change who we
   talk to in Turkish: the conversation with the owner stays Turkish.)
+- **IMPORTANT — speaking Turkish never makes the work Turkish (owner, 31 Oct 2026: "this is important").** Only the
+  chat with the owner is Turkish. Everything technical or public is **English**, even when the request came in Turkish:
+  branch names, commit messages, PR texts, code, comments, docs, test sites and test pages, test data (names, chat
+  lines, room names in e2e / harness scripts), example texts, file and route names, domain names and handles. Never
+  carry the owner's Turkish words into any of these; translate them. Turkish appears only where the product itself
+  shows Turkish to Turkish users (`i18n.ts` TR strings, Turkish page variants, `README.tr.md`). Older Turkish names
+  (e.g. `/baglanti`, `eklenti.html`, Ali / Ayşe in old tests) are migrated by ROADMAP "Consistency"; new work never adds
+  more.
 - **Talk to the user (Alperen) in Turkish.** Everything that lives on GitHub is **English**: commit messages, branch
   names, PR titles/descriptions, issues, review comments, release notes, `CLAUDE.md`, docs, workflow names and code
   comments.
@@ -70,7 +78,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.92 (rooms work on networks where WebSockets never open, e.g. the owner's phone hotspot: automatic HTTP
+Live: 0.9.92.1 (CLAUDE.md rule: everything technical in English; 0.9.92 rooms work on networks where WebSockets never open, e.g. the owner's phone hotspot: automatic HTTP
 fallback, `/baglanti` tells the causes apart; 0.9.91.20 first-time path: one join screen with who is waiting, 3 first tips, the install card notices a new
 extension; 0.9.91.19 TikTok links play in the Shorts view with TikTok's official player; 0.9.91.18 Shorts: YouTube's own bar and nothing of ours over the player, 🎲 Keşfet pools, ✨ Bunun gibi, `?olcum=1` switch measurement; 0.9.91.17 "your browser blocks direct connections" hint for voice / cameras / streams, Edge Add-ons prep, browser notes on the extension page; 0.9.91.16 voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
