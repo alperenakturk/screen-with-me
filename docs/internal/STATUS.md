@@ -191,6 +191,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
+- [ ] **Browser support research** (owner's priority, 31 Oct 2026): separate session
+  `session_015Fyri68eMHWNiGtk1pUdpw`, branch `claude/browser-support-research` (PR, then the owner decides what to
+  build). Then the feature plan to 1.0 in this order (ROADMAP §1 "Feature plan to 1.0"): first-time path → finish
+  Shorts → simplify the room → camera pass → help / FAQ → "send feedback".
 - [ ] **Shorts: do everyone land on the next short together?** Measure in the owner's Chrome (needs real YouTube
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
@@ -243,7 +247,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   (`content.ts` `checkSessions`) and the first paint wins the race. Timing-dependent. Fix planned for 0.9.83.
 
 Side sessions started 28 Oct 2026 (results come as PRs from their branches; integrate them here):
-- Name ideas: session `session_015Fyri2xNPa9YWMwBanhQXV`, branch `claude/name-ideas`.
+- Name ideas: session `session_015Fyri2xNPa9YWMwBanhQXV`, branch `claude/name-ideas` (merged into main with 0.9.91.16).
+- Browser support (31 Oct 2026): session `session_015Fyri68eMHWNiGtk1pUdpw`, branch `claude/browser-support-research`.
 - Security review 1: session `session_015Fyri6wwCuwDm697YF5dv6`, branch `claude/security-review-1` → shipped as
   0.9.86.
 
