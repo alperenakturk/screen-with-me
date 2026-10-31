@@ -70,7 +70,8 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.20 (first-time path: one join screen with who is waiting, 3 first tips, the install card notices a new
+Live: 0.9.92 (rooms work on networks where WebSockets never open, e.g. the owner's phone hotspot: automatic HTTP
+fallback, `/baglanti` tells the causes apart; 0.9.91.20 first-time path: one join screen with who is waiting, 3 first tips, the install card notices a new
 extension; 0.9.91.19 TikTok links play in the Shorts view with TikTok's official player; 0.9.91.18 Shorts: YouTube's own bar and nothing of ours over the player, 🎲 Keşfet pools, ✨ Bunun gibi, `?olcum=1` switch measurement; 0.9.91.17 "your browser blocks direct connections" hint for voice / cameras / streams, Edge Add-ons prep, browser notes on the extension page; 0.9.91.16 voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
@@ -361,12 +362,30 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
 - **Sleep resilience (DO):** the "everyone ready" state (`WaitTracker.snapshot`) and `emptySince` are written to
   storage; a single alarm covers both the 12 s wait and the 24 h room deletion (`scheduleAlarm`). Never rely on
   in-memory `setTimeout`.
+- **HTTP fallback for networks without WebSockets (0.9.92, owner's phone hotspot, `docs/internal/hotspot-connection.md`):**
+  every room / game connection goes through `openSocket` (`packages/shared/src/socket.ts`): a WebSocket first; not
+  open within 6 s (`WS_OPEN_MS`) or failed before opening → `HttpSocket` on the same address with `?http=open|send|poll|
+  close` (POST open → `{sid}`; POST send = JSON array of message strings, ≤ 40, ≤ 1.1 MB; GET poll held ≤ 20 s, answer =
+  messages one per line; `410 {code}` = closed). Server `apps/server/src/fallback.ts`: `PollHub` per Durable Object,
+  `PollSocket` shaped like a hibernatable WebSocket (send / close / readyState / attachments); the objects' socket lists
+  are `ctx.getWebSockets()` + `polls.sockets()` and every message goes through the same `webSocketMessage`; new
+  connections are set up in `admit()` (shared by both ways). The Worker's `connect()` routes both (only `open` counts
+  against `CONNECT_LIMIT`; origin checked; `X-SWM-Ip` / `X-SWM-Room` set only by the Worker). Sessions are in memory
+  (idle 45 s → closed; a restart → `410` → reconnect with `prev`). Once needed, the tab prefers it (`sessionStorage`
+  `swm:http`, 30 min); the room's socket probes `/api/probe` (Worker-only WebSocket, says "ok") after 1, 2, 4 … 10 min
+  and closes with `UPGRADE_CODE` 4100 to reconnect over a WebSocket. A closing page hands its member id to the next
+  page of the tab (`swm:prev:<room>`, 30 s) so a reload replaces the old connection at once; the fallback's close goes
+  as a beacon. The room's alarm never deletes a room with `emptySince === null` (starts counting instead). The site
+  marks `<html data-swm-transport="ws|http">`. The TV pairing socket stays WebSocket-only. Tests: e2e `fallback.mjs`,
+  unit `socket.test.ts`, harness `scripts/harness/hotspot/run.mjs` (proxy swallowing upgrades in front of
+  `wrangler dev` serving the built site).
 - **Networks that cannot connect (0.9.79):** on some mobile networks (the user's phone hotspot) the page loads but the
   room's WebSocket neither opens nor closes (stuck on "Bağlanıyor…"). `RoomConnection` closes a connection that does
-  not open within 10 s and retries (`OPEN_TIMEOUT_MS`, `onFailures`); after 2 failed attempts the room shows
+  not open in time and retries (`OPEN_TIMEOUT_MS`, 16 s since 0.9.92, `onFailures`); after 2 failed attempts the room shows
   "📶 Odaya bağlanılamıyor" (`.net-hint`, suggests another network / DNS 1.1.1.1). `/baglanti` (`diag.ts`): page
-  protocol (h3 = UDP), plain request, WebSocket open, welcome, ping; "Sonucu kopyala". Permanent fix candidates: own
-  domain (workers.dev may be filtered) or an HTTP fallback.
+  protocol (h3 = UDP), plain request, WebSocket open, welcome, ping; "Sonucu kopyala" (0.9.92: + a 200 kB answer, a tiny
+  WebSocket, the HTTP fallback and a `guess:` line). The HTTP fallback shipped in 0.9.92 (above); an own domain is still
+  recommended (workers.dev may be filtered).
 - **Site:** on reload (same tab, `sessionStorage` `in:<room>`) the name step is skipped and the intro animation is not
   shown again. ⟳ calls `connection.reconnect()`. If a ping gets no answer for 15 s, `RoomConnection` reconnects (don't
   only look at "silent for long": Chrome throttles background-tab timers to once a minute).

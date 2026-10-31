@@ -1,9 +1,12 @@
-// Bağlantı testi (/baglanti): "odada Bağlanıyor…'da kalıyorum" diyen biri bu sayfayı açar, sonuç ekranının görüntüsünü
-// ya da kopyaladığı metni yollar. Sayfa nasıl geldi (HTTP/3 = UDP mi, HTTP/2 = TCP mi), sunucuya düz istek gidiyor mu,
-// odanın canlı bağlantısı (WebSocket) açılıyor mu, sunucu cevap veriyor mu ölçülür. Hiçbir şey kaydedilmez.
+// Connection test (/baglanti): someone who says "the room stays on Bağlanıyor…" opens this page and sends a screenshot
+// or the copied text. It measures how the page arrived (HTTP/3 = UDP, HTTP/2 = TCP), a plain request, a larger
+// download, a tiny WebSocket (probe), the room's live connection (WebSocket: open, welcome, ping) and the HTTP fallback
+// (0.9.92, the same room over plain requests). Together they tell the likely cause apart
+// (`docs/internal/hotspot-connection.md` "Telling the causes apart"). Nothing is stored.
 
 import { PROTOCOL_VERSION } from '@swm/shared/protocol';
 import { newRoomId } from '@swm/shared/room-id';
+import { HttpSocket, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { el } from './dom.ts';
 import { t } from './i18n.ts';
 
@@ -14,6 +17,7 @@ interface Row {
 }
 
 const TIMEOUT_MS = 10_000;
+const BIG_BYTES = 200_000;
 
 export function renderDiag(app: HTMLElement): void {
   const list = el('ul', { class: 'diag-list' });
@@ -48,81 +52,141 @@ export function renderDiag(app: HTMLElement): void {
     row.detail = detail;
     draw();
   };
+  const ms = (since: number) => `${Math.round(performance.now() - since)} ms`;
+  const protocolOf = (url: string) => (performance.getEntriesByName(url).at(-1) as PerformanceResourceTiming | undefined)?.nextHopProtocol || '?';
 
   void (async () => {
-    // 1) Sayfa hangi yoldan geldi: h3 (HTTP/3, UDP) ya da h2/http/1.1 (TCP). Oda bağlantısı her zaman TCP'dir.
+    // 1) How the page came: h3 (HTTP/3, UDP) or h2 / http/1.1 (TCP). WebSockets always use a new TCP connection.
     const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
     const pageProtocol = nav?.nextHopProtocol || '?';
     done(add(t('diag.page')), true, pageProtocol);
 
-    // 2) Sunucuya düz istek (odanın bilgisi).
+    // 2) A plain request to the server (the room's info).
     const http = add(t('diag.http'));
     const id = `diag${newRoomId().slice(0, 8)}`;
-    const httpStart = performance.now();
+    let start = performance.now();
     try {
       const response = await fetch(`/api/rooms/${id}/info`, { cache: 'no-store', signal: AbortSignal.timeout(TIMEOUT_MS) });
-      const entry = performance.getEntriesByName(response.url).at(-1) as PerformanceResourceTiming | undefined;
-      done(http, response.ok, `${response.status} · ${Math.round(performance.now() - httpStart)} ms · ${entry?.nextHopProtocol || '?'}`);
+      done(http, response.ok, `${response.status} · ${ms(start)} · ${protocolOf(response.url)}`);
     } catch (error) {
       done(http, false, String((error as Error).name || error));
     }
 
-    // 3) Odanın canlı bağlantısı: açılıyor mu, sunucu "hoş geldin" diyor mu, ping'e cevap geliyor mu.
-    const open = add(t('diag.ws'));
-    const welcome = add(t('diag.welcome'));
-    const ping = add(t('diag.ping'));
-    const wsStart = performance.now();
-    const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/api/rooms/${id}/ws`);
-    const finish = (row: Row, ok: boolean, detail: string) => row.ok === null && done(row, ok, detail);
-    const timer = setTimeout(() => {
-      finish(open, false, t('diag.timeout', { s: TIMEOUT_MS / 1000 }));
-      finish(welcome, false, '—');
-      finish(ping, false, '—');
-      ws.close();
-      conclude();
-    }, TIMEOUT_MS);
-    let pingAt = 0;
-    ws.addEventListener('open', () => {
-      done(open, true, `${Math.round(performance.now() - wsStart)} ms`);
-      ws.send(JSON.stringify({ t: 'hello', v: PROTOCOL_VERSION, name: 'Test' }));
-    });
-    ws.addEventListener('message', (event) => {
-      const message = JSON.parse(String(event.data)) as { t: string };
-      if (message.t === 'welcome') {
-        done(welcome, true, `${Math.round(performance.now() - wsStart)} ms`);
-        pingAt = performance.now();
-        ws.send(JSON.stringify({ t: 'ping', c: Date.now() }));
-      } else if (message.t === 'pong' && pingAt) {
-        done(ping, true, `${Math.round(performance.now() - pingAt)} ms`);
-        clearTimeout(timer);
+    // 3) A larger answer (many full-size packets): hangs where big packets get lost (MTU problems on tethering).
+    const big = add(t('diag.big'));
+    start = performance.now();
+    try {
+      const response = await fetch(`/api/probe?bytes=${BIG_BYTES}`, { cache: 'no-store', signal: AbortSignal.timeout(TIMEOUT_MS) });
+      const size = (await response.text()).length;
+      done(big, response.ok && size === BIG_BYTES, `${Math.round(size / 1000)} kB · ${ms(start)} · ${protocolOf(response.url)}`);
+    } catch (error) {
+      done(big, false, String((error as Error).name || error));
+    }
+
+    // 4) A tiny WebSocket that only says "ok" (no room behind it).
+    const probe = add(t('diag.probe'));
+    start = performance.now();
+    const probeOk = await new Promise<boolean>((resolve) => {
+      const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/api/probe`);
+      const timer = setTimeout(() => {
+        done(probe, false, t('diag.timeout', { s: TIMEOUT_MS / 1000 }));
         ws.close();
-        conclude();
-      }
-    });
-    ws.addEventListener('close', (event) => {
-      if (open.ok === null) {
+        resolve(false);
+      }, TIMEOUT_MS);
+      ws.addEventListener('message', () => {
         clearTimeout(timer);
-        finish(open, false, `${t('diag.closed')} (${event.code})`);
-        finish(welcome, false, '—');
-        finish(ping, false, '—');
-        conclude();
-      }
+        done(probe, true, ms(start));
+        ws.send('bye');
+        resolve(true);
+      });
+      ws.addEventListener('close', (event) => {
+        if (probe.ok !== null) return;
+        clearTimeout(timer);
+        done(probe, false, `${t('diag.closed')} (${event.code})`);
+        resolve(false);
+      });
     });
 
-    function conclude(): void {
-      const wsOk = open.ok === true && ping.ok === true;
-      verdict.textContent = wsOk ? t('diag.allGood') : http.ok ? t('diag.blocked') : t('diag.noServer');
-      verdict.classList.toggle('bad', !wsOk);
-      const net = (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType;
-      const summary = [
-        `ScreenWithMe ${t('diag.title')} · ${new Date().toISOString()}`,
-        ...rows.map((row) => `${row.ok ? 'OK ' : 'ERR'} ${row.label}: ${row.detail}`),
-        `net: ${net ?? '?'} · ${navigator.userAgent}`,
-      ].join('\n');
-      copy.removeAttribute('disabled');
-      copy.onclick = () => {
-        void navigator.clipboard?.writeText(summary).then(() => (copy.textContent = t('copied')));
-      };
-    }
+    // 5) The room's live connection over a WebSocket, 6) the same over the HTTP fallback.
+    const wsRows = { open: add(t('diag.ws')), welcome: add(t('diag.welcome')), ping: add(t('diag.ping')) };
+    const wsOk = await roomTest(openSocket(`${location.origin.replace(/^http/, 'ws')}/api/rooms/${id}/ws`, { force: 'ws', wsOpenMs: TIMEOUT_MS + 1000 }), wsRows);
+    const fbRows = { open: add(t('diag.fallback')), welcome: add(t('diag.fallbackWelcome')), ping: add(t('diag.fallbackPing')) };
+    const fallbackOk = await roomTest(new HttpSocket(`${location.origin.replace(/^http/, 'ws')}/api/rooms/${id}/ws`), fbRows);
+
+    const verdictKey = wsOk ? 'diag.allGood' : fallbackOk ? 'diag.fallbackGood' : http.ok ? 'diag.blocked' : 'diag.noServer';
+    verdict.textContent = t(verdictKey);
+    verdict.classList.toggle('bad', !wsOk && !fallbackOk);
+    const net = (navigator as Navigator & { connection?: { effectiveType?: string; type?: string } }).connection;
+    const summary = [
+      `ScreenWithMe ${t('diag.title')} · ${new Date().toISOString()} · ${document.querySelector('.footer-version')?.textContent?.trim() ?? ''}`,
+      ...rows.map((row) => `${row.ok ? 'OK ' : 'ERR'} ${row.label}: ${row.detail}`),
+      `guess: ${guess(pageProtocol, http.ok === true, big.ok === true, probeOk, wsOk, fallbackOk)}`,
+      `net: ${net?.effectiveType ?? '?'}/${net?.type ?? '?'} · ${navigator.userAgent}`,
+    ].join('\n');
+    copy.removeAttribute('disabled');
+    copy.onclick = () => {
+      void navigator.clipboard?.writeText(summary).then(() => (copy.textContent = t('copied')));
+    };
   })();
+
+  /** Opens, says hello, waits for the welcome, measures one ping; closes. True when all three worked. */
+  function roomTest(socket: SwmSocket, row: { open: Row; welcome: Row; ping: Row }): Promise<boolean> {
+    return new Promise((resolve) => {
+      const start = performance.now();
+      let pingAt = 0;
+      let settled = false;
+      const end = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        for (const r of [row.open, row.welcome, row.ping]) if (r.ok === null) done(r, false, '—');
+        try {
+          socket.close();
+        } catch {
+          // Never opened.
+        }
+        resolve(ok);
+      };
+      const timer = setTimeout(() => {
+        if (row.open.ok === null) done(row.open, false, t('diag.timeout', { s: TIMEOUT_MS / 1000 }));
+        end(false);
+      }, TIMEOUT_MS);
+      socket.addEventListener('open', () => {
+        done(row.open, true, ms(start));
+        socket.send(JSON.stringify({ t: 'hello', v: PROTOCOL_VERSION, name: 'Test' }));
+      });
+      socket.addEventListener('message', (event) => {
+        let message: { t?: string };
+        try {
+          message = JSON.parse(event.data) as { t?: string };
+        } catch {
+          return;
+        }
+        if (message.t === 'welcome') {
+          done(row.welcome, true, ms(start));
+          pingAt = performance.now();
+          socket.send(JSON.stringify({ t: 'ping', c: Date.now() }));
+        } else if (message.t === 'pong' && pingAt) {
+          done(row.ping, true, ms(pingAt));
+          end(true);
+        }
+      });
+      socket.addEventListener('close', (event) => {
+        if (settled) return;
+        if (row.open.ok === null) done(row.open, false, `${t('diag.closed')} (${event.code})`);
+        end(false);
+      });
+    });
+  }
+}
+
+/** A short English guess for the copied text (the owner pastes it; `hotspot-connection.md` explains the cases). */
+function guess(page: string, http: boolean, big: boolean, probe: boolean, ws: boolean, fallback: boolean): string {
+  if (ws) return 'websocket ok';
+  if (!http) return 'server unreachable (no internet, or the address is filtered)';
+  if (!fallback) return 'plain requests work but the room does not answer over either way (server problem?)';
+  if (!probe && page === 'h3') return 'page over HTTP/3 (UDP), every WebSocket (TCP) hangs: TCP path broken (MTU/MSS black hole or TCP filtering on the tether); fallback used';
+  if (!probe) return `WebSockets do not open (${page}): upgrade blocked by a proxy/filter or TCP path broken; fallback used`;
+  if (!big) return 'small WebSocket ok, big answers lost: MTU black hole likely; fallback used';
+  return 'tiny WebSocket opens but the room one does not: intermittent; fallback used';
 }

@@ -36,6 +36,7 @@ import {
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
+import { PollHub } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
@@ -240,6 +241,12 @@ export class Room extends DurableObject<Env> {
   private emptySince: number | null = null;
   /** Hayalet ayıklamanın en son çalıştığı an (bkz. pruneStale). */
   private lastPrune = 0;
+  /** HTTP fallback connections (`fallback.ts`): the same messages and rules as the WebSockets. */
+  private readonly polls = new PollHub({
+    admit: (socket, request) => this.admit(socket, request),
+    message: (socket, raw) => this.webSocketMessage(socket, raw),
+    closed: (socket, code) => this.webSocketClose(socket, code),
+  });
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);
@@ -340,17 +347,25 @@ export class Room extends DurableObject<Env> {
     }
     // Yönetici odayı ana sayfadaki listeden çıkardı: kayıt kalkar (boşsa 24 saat sonra silinir).
     if (path.endsWith('/unsave') && request.method === 'POST') return this.unsaveFromHome(request);
-    if (request.headers.get('Upgrade') !== 'websocket') {
-      return new Response('Expected WebSocket', { status: 426 });
-    }
     const roomId = request.headers.get(ROOM_HEADER);
     if (roomId && roomId !== this.roomId) {
       this.roomId = roomId;
       await this.ctx.storage.put('roomId', roomId);
     }
+    // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
+    const polled = await this.polls.handle(request);
+    if (polled) return polled;
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      return new Response('Expected WebSocket', { status: 426 });
+    }
     const { 0: client, 1: server } = new WebSocketPair();
     this.ctx.acceptWebSocket(server);
+    await this.admit(server, request);
+    return new Response(null, { status: 101, webSocket: client });
+  }
 
+  /** A new connection (WebSocket or HTTP fallback): full room → closed, otherwise it waits for its hello. */
+  private async admit(server: WebSocket, request: Request): Promise<void> {
     if (this.openSockets().length > MAX_MEMBERS) {
       this.sendTo(server, { t: 'error', code: 'room_full' });
       server.close(4001, 'room_full');
@@ -362,7 +377,6 @@ export class Room extends DurableObject<Env> {
       this.statsTick(true);
       await this.setEmptySince(null);
     }
-    return new Response(null, { status: 101, webSocket: client });
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
@@ -742,8 +756,10 @@ export class Room extends DurableObject<Env> {
    */
   override async alarm(): Promise<void> {
     const now = Date.now();
-    // emptySince yoksa: eski sürümün kurduğu 24 saatlik alarm (o zaman da boşsa sil).
-    if (this.openSockets().length === 0 && (this.emptySince === null || now - this.emptySince >= this.emptyTtl())) {
+    // Empty but never marked empty: the object restarted while only HTTP fallback connections (kept in memory) were
+    // in (or an old version's alarm). Start counting now instead of deleting a room people were just in.
+    if (this.openSockets().length === 0 && this.emptySince === null) await this.setEmptySince(now);
+    if (this.openSockets().length === 0 && this.emptySince !== null && now - this.emptySince >= this.emptyTtl()) {
       await this.ctx.storage.deleteAll();
       this.room = initialRoom(now);
       this.chat = [];
@@ -1678,7 +1694,7 @@ export class Room extends DurableObject<Env> {
   }
 
   private openSockets(except?: WebSocket): WebSocket[] {
-    return this.ctx.getWebSockets().filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
+    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
   }
 
   private joined(except?: WebSocket): Joined[] {

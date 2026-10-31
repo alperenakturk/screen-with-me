@@ -2,6 +2,7 @@
 // oyuncular ve puanlar. Sunucu (Draw nesnesi) turları yürütür; burası gelen durumu çizer, çizeni dinler.
 // Çizim 1000×750'lik ızgarada tam sayı noktalar olarak, 50 ms'de bir parça parça gider.
 
+import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   DRAW_CHOOSE_MS,
   DRAW_COLORS,
@@ -422,16 +423,16 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   });
 
   // ---- Bağlantı (koparsa yeniden bağlanır) ----
-  let ws: WebSocket | null = null;
+  let ws: SwmSocket | null = null;
   let stopped = false;
   let pingAt = 0;
   function send(message: DrawClientMessage): void {
-    if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+    if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
     if (stopped) return;
     const url = `${location.origin.replace(/^http/, 'ws')}/api/draw/${encodeURIComponent(gameId)}/ws`;
-    const socket = new WebSocket(url);
+    const socket = openSocket(url);
     ws = socket;
     const lang = document.documentElement.lang === 'en' ? 'en' : 'tr';
     socket.addEventListener('open', () =>

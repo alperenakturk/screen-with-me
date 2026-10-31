@@ -2,6 +2,7 @@
 // points; the reveal shows the right option and who picked what (small avatars), then a podium. In the lobby the
 // host picks the language, topic and length; everyone has one 50:50 joker per game.
 
+import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   QUIZ_ANSWER_MS,
   QUIZ_CATEGORIES,
@@ -219,15 +220,15 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   const ticker = window.setInterval(tick, 200);
 
   // ---- Bağlantı ----
-  let ws: WebSocket | null = null;
+  let ws: SwmSocket | null = null;
   let stopped = false;
   let pingAt = 0;
   function send(message: QuizClientMessage): void {
-    if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+    if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
     if (stopped) return;
-    const socket = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/api/quiz/${encodeURIComponent(gameId)}/ws`);
+    const socket = openSocket(`${location.origin.replace(/^http/, 'ws')}/api/quiz/${encodeURIComponent(gameId)}/ws`);
     ws = socket;
     const lang = document.documentElement.lang === 'en' ? 'en' : 'tr';
     socket.addEventListener('open', () =>

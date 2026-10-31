@@ -4,6 +4,7 @@
 // says whose turn it is and how many seconds are left; moves and hand results are announced to everyone in the
 // middle of the table; "How to play" walks through the game in four short steps.
 
+import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   MOVE_COST,
   POKER_MAX_PLAYERS,
@@ -495,15 +496,15 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   const ticker = window.setInterval(tick, 250);
 
   // ---- Connection ----
-  let ws: WebSocket | null = null;
+  let ws: SwmSocket | null = null;
   let stopped = false;
   let pingAt = 0;
   function send(message: PokerClientMessage): void {
-    if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+    if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
     if (stopped) return;
-    const socket = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/api/poker/${encodeURIComponent(gameId)}/ws`);
+    const socket = openSocket(`${location.origin.replace(/^http/, 'ws')}/api/poker/${encodeURIComponent(gameId)}/ws`);
     ws = socket;
     socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'hello', v: POKER_PROTOCOL_VERSION, name, avatar, cid: clientId() } satisfies PokerClientMessage)));
     socket.addEventListener('message', (event) => {
