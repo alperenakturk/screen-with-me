@@ -97,8 +97,14 @@ class HangingSocket extends FakeSocket {
 }
 
 describe('RoomConnection open timeout', () => {
-  it('gives up on a socket that never opens, retries and counts the failures', async () => {
+  it('gives up on a socket that never opens, tries the HTTP fallback, retries and counts the failures', async () => {
     vi.stubGlobal('WebSocket', HangingSocket);
+    // The HTTP fallback cannot reach the server either.
+    const fetches: string[] = [];
+    vi.stubGlobal('fetch', (url: string) => {
+      fetches.push(url);
+      return Promise.reject(new TypeError('offline'));
+    });
     const failures: number[] = [];
     const conn = new RoomConnection({
       serverUrl: 'http://test',
@@ -109,9 +115,11 @@ describe('RoomConnection open timeout', () => {
       onFailures: (n) => failures.push(n),
     });
     conn.connect();
-    await vi.advanceTimersByTimeAsync(9_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(FakeSocket.all.length).toBe(1);
+    expect(fetches).toEqual([]);
     await vi.advanceTimersByTimeAsync(2_000);
+    expect(fetches[0]).toBe('http://test/api/rooms/abc123/ws?http=open');
     expect(failures).toEqual([1]);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(FakeSocket.all.length).toBeGreaterThanOrEqual(3);

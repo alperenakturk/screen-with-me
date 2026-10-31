@@ -1,5 +1,6 @@
 import type { ServerClock } from './clock.ts';
 import { PROTOCOL_VERSION, type Avatar, type ClientKind, type ClientMessage, type ServerMessage } from './protocol.ts';
+import { OPEN, UPGRADE_CODE, openSocket, type SwmSocket, type Transport } from './socket.ts';
 
 export type ConnectionStatus = 'connecting' | 'open' | 'reconnecting' | 'closed';
 
@@ -20,6 +21,8 @@ export interface RoomConnectionOptions {
   onStatus?: (status: ConnectionStatus) => void;
   /** Art arda kaç kez bağlanılamadığı (açıldıktan sonra kopanlar sayılmaz); açılınca 0. */
   onFailures?: (count: number) => void;
+  /** Which way the connection went: a WebSocket, or the HTTP fallback (`socket.ts`) on networks without WebSockets. */
+  onTransport?: (transport: Transport) => void;
 }
 
 const PING_INTERVAL_MS = 10_000;
@@ -32,10 +35,11 @@ const MAX_RETRY_DELAY_MS = 10_000;
  */
 const SILENCE_TIMEOUT_MS = 15_000;
 /**
- * Bağlantı bu sürede açılmazsa (bazı mobil ağlarda el sıkışma ne açılır ne kapanır, "Bağlanıyor…"da kalınıyordu)
- * vazgeçilip yeniden denenir.
+ * If the connection has not opened by then it is given up and tried again. Within it `openSocket` gives a hanging
+ * WebSocket `WS_OPEN_MS` (6 s; some mobile networks neither open nor close it, "Bağlanıyor…" forever) and then tries
+ * the HTTP fallback.
  */
-const OPEN_TIMEOUT_MS = 10_000;
+const OPEN_TIMEOUT_MS = 16_000;
 
 /**
  * Sunucuyla WebSocket bağlantısı. Bağlantı koparsa kendiliğinden, giderek
@@ -43,7 +47,7 @@ const OPEN_TIMEOUT_MS = 10_000;
  * durumunu tekrar yollar, böylece kopukluk sırasında kaçanlar telafi edilir.
  */
 export class RoomConnection {
-  private ws: WebSocket | null = null;
+  private ws: SwmSocket | null = null;
   /** My member id from the last welcome: sent as `prev` on reconnect so the server drops the old connection. */
   private memberId: string | null = null;
   private retries = 0;
@@ -57,7 +61,9 @@ export class RoomConnection {
   /** Art arda açılamayan bağlantı sayısı. */
   private failures = 0;
 
-  constructor(private readonly options: RoomConnectionOptions) {}
+  constructor(private readonly options: RoomConnectionOptions) {
+    this.memberId = takeHandover(options.roomId);
+  }
 
   connect(): void {
     this.stopped = false;
@@ -71,9 +77,14 @@ export class RoomConnection {
   }
 
   send(message: ClientMessage): boolean {
-    if (this.ws?.readyState !== WebSocket.OPEN) return false;
+    if (this.ws?.readyState !== OPEN) return false;
     this.ws.send(JSON.stringify(message));
     return true;
+  }
+
+  /** Which way the open connection goes (null while connecting). */
+  get transport(): Transport | null {
+    return this.ws?.readyState === OPEN ? this.ws.transport : null;
   }
 
   /** Bağlantıyı hemen baştan kurar (kullanıcının "bağlantıyı yenile" düğmesi). */
@@ -88,6 +99,10 @@ export class RoomConnection {
   }
 
   close(): void {
+    // A reload (or a quick trip to the film page) comes back as the same member: its hello carries `prev` and the
+    // server drops this connection if it is still there. A WebSocket closes with the page by itself; an HTTP fallback
+    // session's last request may not get out of a closing tab.
+    if (this.memberId) giveHandover(this.options.roomId, this.memberId);
     this.stopped = true;
     this.clearTimers();
     this.ws?.close(1000);
@@ -98,7 +113,7 @@ export class RoomConnection {
   private open(status: ConnectionStatus): void {
     this.options.onStatus?.(status);
     const base = this.options.serverUrl.replace(/^http/, 'ws').replace(/\/$/, '');
-    const ws = new WebSocket(`${base}/api/rooms/${encodeURIComponent(this.options.roomId)}/ws`);
+    const ws = openSocket(`${base}/api/rooms/${encodeURIComponent(this.options.roomId)}/ws`, { upgrade: true, onTransport: (transport) => this.options.onTransport?.(transport) });
     this.ws = ws;
     let opened = false;
     const openTimer = setTimeout(() => {
@@ -152,13 +167,14 @@ export class RoomConnection {
       this.options.onMessage(message);
     });
 
-    ws.addEventListener('close', () => {
+    ws.addEventListener('close', (event) => {
       if (this.ws !== ws) return;
       this.clearTimers();
       this.ws = null;
       if (this.stopped) return;
       if (!opened) this.options.onFailures?.(++this.failures);
-      const delay = Math.min(MAX_RETRY_DELAY_MS, 500 * 2 ** this.retries) + Math.random() * 300;
+      // The HTTP fallback found that WebSockets work again: switch over at once.
+      const delay = event.code === UPGRADE_CODE ? 0 : Math.min(MAX_RETRY_DELAY_MS, 500 * 2 ** this.retries) + Math.random() * 300;
       this.retries++;
       this.options.onStatus?.('reconnecting');
       this.timers.push(setTimeout(() => this.open('reconnecting'), delay));
@@ -174,5 +190,30 @@ export class RoomConnection {
     this.timers = [];
     if (this.pingTimer !== null) clearInterval(this.pingTimer);
     this.pingTimer = null;
+  }
+}
+
+/** How long a closed page's member id waits for the next page of the same tab (`close` → constructor). */
+const HANDOVER_MS = 30_000;
+const handoverKey = (roomId: string) => `swm:prev:${roomId}`;
+
+function giveHandover(roomId: string, id: string): void {
+  try {
+    sessionStorage.setItem(handoverKey(roomId), JSON.stringify({ id, at: Date.now() }));
+  } catch {
+    // No storage (tests, blocked): a reload simply joins as new.
+  }
+}
+
+/** The member id the tab's previous page of this room left (once; old entries are ignored). */
+function takeHandover(roomId: string): string | null {
+  try {
+    const raw = sessionStorage.getItem(handoverKey(roomId));
+    if (raw === null) return null;
+    sessionStorage.removeItem(handoverKey(roomId));
+    const saved = JSON.parse(raw) as { id?: unknown; at?: unknown };
+    return typeof saved.id === 'string' && typeof saved.at === 'number' && Date.now() - saved.at < HANDOVER_MS ? saved.id : null;
+  } catch {
+    return null;
   }
 }

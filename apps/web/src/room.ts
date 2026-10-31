@@ -941,6 +941,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onFailures: (count) => {
       netHint.hidden = count < 2;
     },
+    // Networks where WebSockets never open (phone hotspots): the room runs over the HTTP fallback (0.9.92). Nothing
+    // changes for the person; the page only notes it (tests, `/baglanti`).
+    onTransport: (transport) => {
+      document.documentElement.dataset.swmTransport = transport;
+      if (transport === 'http') console.info('[ScreenWithMe] WebSocket did not open on this network: using the HTTP fallback');
+    },
   });
   const netHint = el(
     'div',

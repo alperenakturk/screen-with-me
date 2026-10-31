@@ -105,6 +105,9 @@ flowchart LR
 - **Drift** above 1 s jumps back into place; smaller drift is closed by playing ±5 % faster/slower.
 - **One Durable Object per room**: rooms scale independently; with WebSocket Hibernation an idle room costs
   nothing. Timers that must survive sleep (ready-check timeout, scheduled start, room deletion) use one storage alarm.
+- **Networks without WebSockets** (some phone hotspots): if the WebSocket doesn't open within 6 s the client switches
+  by itself to an HTTP fallback (a held request for what the room says, small posts for what we say) with the very
+  same messages and rules, and moves back to a WebSocket once one opens again.
 
 ### Extension in one paragraph
 A Manifest V3 extension with no UI and no room connection of its own. When a page is opened in a room, the site
@@ -125,6 +128,7 @@ player into it.
 | Sound effects (`scripts/harness/sound`) | Two browsers in one room: which sounds really play (join vs. reload, voice, mic, hidden vs. visible chat, switched off, XOX pieces and result) |
 | Phones (`scripts/harness/phone`) | iPhone and Android sizes: nothing wider than the screen, the message box on screen, menus as bottom sheets, fullscreen without the browser's (iPhone) and by turning the phone, Shorts fitting the screen and the swipe to the next one |
 | TikTok (`scripts/harness/tiktok`) | Two people and a TikTok link, with a stand-in for TikTok's official player that speaks its message protocol: the Shorts view opens for both, play / pause go both ways, the speed stays 1×, nothing of ours over the player |
+| Phone hotspot (`scripts/harness/hotspot`) | A proxy that swallows WebSockets, like the owner's hotspot: the room opens over the HTTP fallback, chat and the sync test work, reloads and a network drop are survived, and it moves back to a WebSocket when they work again |
 | Real voice (`scripts/harness/voice`) | Two Chromes with fake microphones: the received audio's energy is measured, on the site and on film pages (extension), incl. the permission tab and reloads; and a browser that blocks direct connections gets the "how to fix it" note (`blocked.mjs`) |
 | Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote + local actions ✓, 26–100 ms apart |
 

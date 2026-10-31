@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 31 Oct 2026. Site and extension **0.9.91.20**. The owner moved to a **new Claude
+> Last update: 31 Oct 2026. Site and extension **0.9.92**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -191,9 +191,15 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
-- [ ] **Hotspot: the room doesn't connect over the owner's phone hotspot** (owner, 31 Oct 2026: "important"; the
-  phone's own data works). Separate session `session_015Fyri3uNqua3SD2mKBGEj1`: research, alternatives, build the
-  best one, ship as **0.9.92** (the owner allowed the third-part bump).
+- [x] **0.9.92 hotspot: the room didn't connect over the owner's phone hotspot** (owner, 31 Oct 2026: "important"; the
+  phone's own data works). Research + options + decision in `hotspot-connection.md`: most likely the tethered TCP path
+  loses full-size packets (MTU black hole / carrier tethering policy) while the page itself arrives over HTTP/3 (UDP);
+  WebSockets always need a new TCP connection. Built an **automatic HTTP fallback** (`socket.ts` + server
+  `fallback.ts`): WebSocket not open in 6 s → the same room over held GET + POST batches (same messages, rules and
+  limits; games too), remembered for the tab, back to a WebSocket by itself when a probe opens. `/baglanti` now also
+  tests a 200 kB answer, a tiny WebSocket and the fallback, and prints a `guess:`. A reload hands the member id to the
+  next page (`swm:prev:<room>`). Tests: e2e `fallback.mjs`, unit `socket.test.ts`, harness `hotspot/run.mjs`.
+  **Waiting for the owner:** try it on the hotspot + paste the `/baglanti` result (hand tests below).
 - [x] **0.9.91.20 first-time path** (PDF item 1; partial until the extension is in the store): one join screen
   (who is waiting + what is playing from `/api/rooms/:id/info` `people` / `count` / `playing`, avatar button next to the
   name, no separate avatar step); 3 short tips the first time in a room (invite → add a link / search → join voice,
@@ -266,6 +272,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.92 (phone hotspot):**
+- [ ] Laptop on the phone's hotspot: open the site and a room. It should get in within ~7 s (first time) and work:
+  chat, a YouTube video in sync with a friend, voice. A reload should be quick.
+- [ ] On the same hotspot open `/baglanti`, press "Sonucu kopyala" and paste the text to Claude (tells which cause it
+  is: the `guess:` line).
+- [ ] If the site's home page itself doesn't open on the hotspot (not only the room), tell Claude: that is a
+  different cause (DNS / filtering of workers.dev → own domain).
 
 **Accounts (owner only):** Microsoft Partner Center for Edge Add-ons (free, steps in `web-store.md`), with the Chrome
 Web Store submission at 1.0.

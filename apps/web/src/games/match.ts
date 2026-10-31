@@ -2,6 +2,7 @@
 // sonra gelenler izler; koltuk boşalınca (oyuncu çıktıysa) izleyiciler "Oyuncu ol" ile oturur. Hamleleri sunucu
 // doğrular; burası sadece gelen durumu çizer. Ad ve avatar odadakiyle aynı.
 
+import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import type { Mark } from '@swm/shared/games/board';
 import { COLS, dropRow } from '@swm/shared/games/four';
 import { GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
@@ -163,15 +164,15 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
   }
 
   // ---- Bağlantı (koparsa yeniden bağlanır) ----
-  let ws: WebSocket | null = null;
+  let ws: SwmSocket | null = null;
   let stopped = false;
   function send(message: GameClientMessage): void {
-    if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+    if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
     if (stopped) return;
     const url = `${location.origin.replace(/^http/, 'ws')}/api/games/${encodeURIComponent(gameId)}/ws`;
-    const socket = new WebSocket(url);
+    const socket = openSocket(url);
     ws = socket;
     socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'hello', v: GAME_PROTOCOL_VERSION, game: kind, name, avatar, cid: clientId() } satisfies GameClientMessage)));
     socket.addEventListener('message', (event) => {

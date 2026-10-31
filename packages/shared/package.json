@@ -38,7 +38,8 @@
     "./voice-p2p": "./src/voice-p2p.ts",
     "./sound-policy": "./src/sound-policy.ts",
     "./sounds": "./src/sounds.ts",
-    "./youtube-search": "./src/youtube-search.ts"
+    "./youtube-search": "./src/youtube-search.ts",
+    "./socket": "./src/socket.ts"
   },
   "scripts": {
     "test": "vitest run",

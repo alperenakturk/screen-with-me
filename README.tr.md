@@ -105,6 +105,9 @@ flowchart LR
 - **Kayma** 1 sn'den büyükse yerine atlar; küçüğü ±%5 hızlı/yavaş oynatarak kapanır.
 - **Oda başına bir Durable Object**: odalar birbirinden bağımsız büyür; WebSocket Hibernation ile boştaki oda
   maliyetsizdir. Uykudan sağ çıkması gereken zamanlayıcılar (bekleme süresi, planlı başlangıç, oda silme) tek bir depo alarmında.
+- **WebSocket geçirmeyen ağlar** (bazı telefon hotspot'ları): WebSocket 6 sn içinde açılmazsa istemci kendiliğinden
+  HTTP yedek bağlantısına geçer (odanın söyleyeceklerini bekleyen bir istek, bizimkiler için küçük gönderimler); mesajlar
+  ve kurallar aynıdır; WebSocket yeniden açılınca ona döner.
 
 ### Tek paragrafta eklenti
 Kendi arayüzü ve oda bağlantısı olmayan bir Manifest V3 eklentisi. Odada bir sayfa açılınca site sekmeyi oraya
@@ -124,6 +127,7 @@ bildirir; üst çerçeve orada bir delik keser (`clip-path`) ve filmin oynatıc�
 | Ses efektleri (`scripts/harness/sound`) | Aynı odada iki tarayıcı: hangi sesler gerçekten çalıyor (katılma ve yenileme, ses, mikrofon, görünen ve görünmeyen mesaj, kapalıyken, XOX taşları ve sonuç) |
 | Telefon (`scripts/harness/phone`) | iPhone ve Android boyutları: ekrandan geniş bir şey yok, mesaj kutusu ekranda, menüler alttan açılan panel, tarayıcının tam ekranı olmadan (iPhone) ve telefonu çevirince tam ekran, Shorts ekrana sığıyor ve kaydırınca sıradaki açılıyor |
 | TikTok (`scripts/harness/tiktok`) | İki kişi ve bir TikTok linki; TikTok'un resmi oynatıcısının yerine onun mesaj diliyle konuşan bir taklit: iki kişide de Shorts görünümü açılır, oynat / durdur iki yönde geçer, hız 1× kalır, oynatıcının üstünde bizden bir şey yok |
+| Telefon hotspot'u (`scripts/harness/hotspot`) | Sahibin hotspot'u gibi WebSocket'leri yutan bir ara sunucu: oda HTTP yedek bağlantısıyla açılıyor, sohbet ve senkron testi çalışıyor, yenileme ve ağ kopması atlatılıyor, WebSocket'ler düzelince yeniden ona geçiliyor |
 | Gerçek ses (`scripts/harness/voice`) | Sahte mikrofonlu iki Chrome: gelen sesin enerjisi ölçülür; sitede ve film sayfalarında (eklenti), izin sekmesi ve yenileme dahil; doğrudan bağlantıyı engelleyen tarayıcıya "nasıl düzeltilir" notu çıkıyor mu (`blocked.mjs`) |
 | Gerçek oynatıcılar (herkese açık demo sayfalarında eklenti kodu) | **Plyr, hls.js, Video.js**: bulma ✓, uzaktan + yerel hareketler ✓, 26–100 ms fark |
 

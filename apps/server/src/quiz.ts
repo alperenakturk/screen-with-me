@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { PollHub } from './fallback.ts';
 import {
   QUIZ_ANSWER_MS,
   QUIZ_MAX_PLAYERS,
@@ -97,10 +98,26 @@ export class Quiz extends DurableObject<Env> {
     });
   }
 
+  /** HTTP fallback connections (`fallback.ts`). */
+  private readonly polls = new PollHub({
+    admit: (socket) => this.admit(socket),
+    message: (socket, raw) => this.webSocketMessage(socket, raw),
+    closed: (socket, code) => this.webSocketClose(socket, code),
+  });
+
   override async fetch(request: Request): Promise<Response> {
+    // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
+    const polled = await this.polls.handle(request);
+    if (polled) return polled;
     if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
     const { 0: client, 1: server } = new WebSocketPair();
     this.ctx.acceptWebSocket(server);
+    await this.admit(server);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  /** A new connection (WebSocket or HTTP fallback). */
+  private async admit(server: WebSocket): Promise<void> {
     if (this.sockets().length > MAX_SOCKETS) {
       this.sendTo(server, { t: 'error', code: 'full' });
       server.close(4001, 'full');
@@ -111,7 +128,6 @@ export class Quiz extends DurableObject<Env> {
         await this.save();
       }
     }
-    return new Response(null, { status: 101, webSocket: client });
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
@@ -382,7 +398,7 @@ export class Quiz extends DurableObject<Env> {
   }
 
   private sockets(except?: WebSocket): WebSocket[] {
-    return this.ctx.getWebSockets().filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
+    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
   }
 
   private sendTo(ws: WebSocket, message: QuizServerMessage): void {
