@@ -424,10 +424,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         </div>
         <div id="seats-r" class="seats seats-r shorts-only"></div>
         <div id="shorts-bar" class="shorts-bar shorts-only">
-          <form id="shorts-chat" class="shorts-chat">
-            <input id="shorts-input" autocomplete="off" maxlength="300" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
-            <button class="btn primary" data-i18n="send"></button>
-          </form>
+          <div class="shorts-chat-wrap">
+            <button id="shorts-chat-btn" type="button" class="btn small-btn rail-only" aria-expanded="false" data-i18n-title="shorts.chatHint">💬</button>
+            <form id="shorts-chat" class="shorts-chat">
+              <input id="shorts-input" autocomplete="off" maxlength="300" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
+              <button class="btn primary" data-i18n="send"></button>
+            </form>
+          </div>
           <div class="reaction-bar tray-bar shorts-reactions" role="group"></div>
           <div id="shorts-voice" class="shorts-voice" hidden>
             <button id="shorts-mic" type="button" class="cam-ctl"></button>
@@ -444,10 +447,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             </form>
           </div>
           <div class="game-menu-wrap shorts-game-wrap">
-            <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false">🎮 <span data-i18n="tool.game"></span></button>
+            <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false" data-i18n-title="tool.game">🎮 <span data-i18n="tool.game"></span></button>
           </div>
           <div class="shorts-feed-wrap">
-            <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
+            <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false" data-i18n-title="feed.short">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
             <form id="shorts-feed-form" class="shorts-feed-pop card" hidden>
               <button id="shorts-like" type="button" class="feed-like" data-i18n-title="feed.likeHint"><b data-i18n="feed.like"></b><span class="muted small" data-i18n="feed.likeText"></span></button>
               <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span></p>
@@ -460,6 +463,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
           <button id="shorts-exit" type="button" class="btn small-btn" data-i18n-title="shorts.roomViewHint">↩ <span data-i18n="shorts.roomView"></span></button>
+          <button id="shorts-more" type="button" class="btn small-btn rail-more" aria-expanded="false" data-i18n-title="shorts.menu">⋯</button>
         </div>
         <p id="player-error" class="error" hidden></p>
       </div>
@@ -891,7 +895,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (event.target instanceof HTMLButtonElement || event.target instanceof HTMLAnchorElement) return;
     event.preventDefault();
     if (shortsOn) {
-      $('#shorts-input').focus();
+      setShortsChat(true);
       return;
     }
     tabs.show('chat');
@@ -2057,6 +2061,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const apply = () => {
       roomEl.classList.toggle('shorts', shortsOn);
       document.documentElement.classList.toggle('shorts-view', shortsOn);
+      if (!shortsOn) document.documentElement.classList.remove('topbar-peek');
     };
     // Görünümler arasında yumuşak geçiş (tarayıcı destekliyorsa): video yerinden süzülerek büyür/küçülür.
     // Sayfa çizilmiyorsa (arka plandaki sekme) geçiş hiç başlamayabilir: en geç 0,6 sn'de yine değişir.
@@ -2176,6 +2181,62 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   };
   $('#shorts-exit').addEventListener('click', () => setShortsOff(true));
   $('#shorts-enter').addEventListener('click', () => setShortsOff(false));
+  // ---- Shorts rail (0.9.92.2, owner chose C): on wide screens the bar is a column right of the video, so the message
+  // box is a small window opened by 💬 (or Enter), and on short screens the top bar folds away (⋯ brings it back). ----
+  const shortsChatWrap = $('.shorts-chat-wrap');
+  function setShortsChat(open: boolean): void {
+    shortsChatWrap.classList.toggle('open', open);
+    $('#shorts-chat-btn').setAttribute('aria-expanded', String(open));
+    if (open) $('#shorts-input').focus();
+  }
+  $('#shorts-chat-btn').addEventListener('click', () => setShortsChat(!shortsChatWrap.classList.contains('open')));
+  $('#shorts-input').addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    setShortsChat(false);
+    $('#shorts-input').blur();
+  });
+  const rootEl = document.documentElement;
+  const foldedTop = matchMedia('(min-width: 861px) and (max-height: 899px)');
+  const peekTop = (on: boolean) => {
+    rootEl.classList.toggle('topbar-peek', on);
+    $('#shorts-more').setAttribute('aria-expanded', String(on));
+  };
+  $('#shorts-more').addEventListener('click', () => peekTop(!rootEl.classList.contains('topbar-peek')));
+  document.addEventListener('pointerdown', (event) => {
+    const target = event.target as Element | null;
+    if (!target) return;
+    if (shortsChatWrap.classList.contains('open') && !shortsChatWrap.contains(target)) setShortsChat(false);
+    if (rootEl.classList.contains('topbar-peek') && !target.closest('.topbar, #shorts-more, .profile-pop, .dialog-backdrop, .recap-backdrop, dialog')) {
+      peekTop(false);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && rootEl.classList.contains('topbar-peek') && !document.querySelector('.profile-pop:not([hidden]), .dialog-backdrop:not([hidden])')) peekTop(false);
+  });
+  // The mouse at the very top of a folded screen shows the top bar too (as a fullscreen video's bar does).
+  document.addEventListener('pointermove', (event) => {
+    if (event.clientY <= 2 && shortsOn && foldedTop.matches && !rootEl.classList.contains('topbar-peek')) peekTop(true);
+  });
+  // A window opened from the rail (emojis, add, feed, games, the message box) stays on screen: it opens right of the
+  // rail and slides back in when the window is too small for it.
+  const shortsBar = $('#shorts-bar');
+  const RAIL_POPS = '.react-tray, .shorts-feed-pop, .game-menu, #shorts-chat';
+  let fitting = 0;
+  const fitRailPops = () => {
+    cancelAnimationFrame(fitting);
+    fitting = requestAnimationFrame(() => {
+      for (const pop of shortsBar.querySelectorAll<HTMLElement>(RAIL_POPS)) {
+        pop.style.translate = '';
+        if (!shortsOn || pop.offsetParent === null || getComputedStyle(pop).position !== 'absolute') continue;
+        const box = pop.getBoundingClientRect();
+        const dx = Math.min(0, innerWidth - 8 - box.right);
+        const dy = box.bottom > innerHeight - 8 ? Math.max(8 - box.top, innerHeight - 8 - box.bottom) : box.top < 8 ? 8 - box.top : 0;
+        if (dx || dy) pop.style.translate = `${dx}px ${dy}px`;
+      }
+    });
+  };
+  new MutationObserver(fitRailPops).observe(shortsBar, { subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
+  addEventListener('resize', fitRailPops);
   $<HTMLFormElement>('#shorts-chat').addEventListener('submit', (event) => {
     event.preventDefault();
     const input = $<HTMLInputElement>('#shorts-input');

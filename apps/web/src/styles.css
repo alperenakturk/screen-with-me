@@ -11291,3 +11291,168 @@ html.shorts-view .game-stage .game-place {
   top: 6px;
   right: 6px;
 }
+
+/* ==== 0.9.92.2: the Shorts rail (owner chose C on https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379: "too small on my
+   laptop"). On wide screens the bottom bar becomes a column of square buttons right of the video (▲▼ stay at its
+   foot), so the video takes the height the bar used; the message box is a small window opened by 💬 or Enter. On
+   screens under 900 px tall the top bar folds too: ⋯ at the end of the rail (or the mouse at the top edge) brings it
+   back over the page. Phones and narrow windows keep the bottom bar (≤ 860 px). ==== */
+.rail-only,
+.rail-more {
+  display: none;
+}
+
+.shorts-chat-wrap {
+  display: contents;
+}
+
+@media (min-width: 861px) {
+  html.shorts-view main {
+    padding-block: 12px;
+  }
+
+  .room.shorts .stage {
+    row-gap: 0;
+    column-gap: 14px;
+  }
+
+  .room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
+    height: clamp(320px, calc(100dvh - 103px), 1100px);
+  }
+
+  .room.shorts .shorts-bar {
+    grid-column: 3;
+    grid-row: 2;
+    align-self: start;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .room.shorts .shorts-nav {
+    align-self: end;
+  }
+
+  .room.shorts .shorts-bar .rail-only {
+    display: inline-flex;
+  }
+
+  .room.shorts .shorts-bar .rail-more {
+    display: none;
+  }
+
+  .room.shorts .shorts-bar > :is(div, form),
+  .room.shorts .shorts-chat-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .room.shorts .shorts-bar :is(.small-btn, .react-open, .cam-ctl):not(.shorts-chat .btn) {
+    width: 48px;
+    height: 48px;
+    max-width: none;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    border-radius: 14px;
+    font-size: 19px;
+    line-height: 1;
+  }
+
+  /* Icons only: the names are in the buttons' titles. */
+  .room.shorts .shorts-bar :is(.small-btn > span, .react-open > span:not(:first-child)),
+  .room.shorts .shorts-bar .react-recent {
+    display: none;
+  }
+
+  .room.shorts .shorts-bar .react-open > span:first-child {
+    font-size: 20px;
+  }
+
+  .room.shorts #shorts-chat-btn[aria-expanded='true'],
+  .room.shorts #shorts-more[aria-expanded='true'] {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 20%, var(--surface));
+  }
+
+  /* Windows open right of the rail (JS slides them back in when the window is small). */
+  .room.shorts .shorts-bar :is(.shorts-feed-pop, .react-tray, .game-menu) {
+    left: calc(100% + 12px);
+    right: auto;
+    top: 0;
+    bottom: auto;
+    transform: none;
+  }
+
+  .room.shorts .shorts-bar :is(.shorts-feed-wrap, .shorts-game-wrap) :is(.shorts-feed-pop, .game-menu) {
+    top: auto;
+    bottom: 0;
+  }
+
+  .room.shorts .shorts-chat-wrap .shorts-chat {
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 0;
+    z-index: 40;
+    width: 340px;
+    display: none;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+  }
+
+  .room.shorts .shorts-chat-wrap.open .shorts-chat {
+    display: flex;
+  }
+}
+
+@media (min-width: 861px) and (max-height: 899px) {
+  html.shorts-view .topbar {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 60;
+    transform: translateY(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  html.shorts-view.topbar-peek .topbar {
+    transform: none;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.4);
+  }
+
+  .room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
+    height: clamp(320px, calc(100dvh - 40px), 1100px);
+  }
+
+  .room.shorts .shorts-bar .rail-more {
+    display: inline-flex;
+  }
+}
+
+/* Short screens: a slimmer rail so its buttons and ▲▼ fit beside the video. */
+@media (min-width: 861px) and (max-height: 760px) {
+  .room.shorts .shorts-bar,
+  .room.shorts .shorts-bar > :is(div, form),
+  .room.shorts .shorts-nav {
+    gap: 6px;
+  }
+
+  .room.shorts .shorts-bar :is(.small-btn, .react-open, .cam-ctl):not(.shorts-chat .btn),
+  .room.shorts .shorts-arrow {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 861px) and (max-height: 899px) and (prefers-reduced-motion: reduce) {
+  html.shorts-view .topbar {
+    transition: none;
+  }
+}

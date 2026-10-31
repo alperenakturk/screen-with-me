@@ -69,7 +69,7 @@ implement, test, ship.
     share), TikTok links in the Shorts view via TikTok's official embed player, move our emojis and click catcher
     off the YouTube player (YouTube's "no overlays" rule, before the API audit), the "everyone lands together"
     measurement in the owner's Chrome. (`short-video-research.md`)
-  - [ ] **Bigger Shorts view on laptops** (owner, 31 Oct 2026: "too small on my laptop, fine on the big monitor"):
+  - [x] **Bigger Shorts view on laptops** (0.9.92.2, option C) (owner, 31 Oct 2026: "too small on my laptop, fine on the big monitor"):
     the bottom bar takes ~210 px; move our buttons into a side rail and let the video grow. Options A / B / C on
     https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379 (recommended C: right rail + the top bar folds on screens under
     900 px tall); the owner picks.
