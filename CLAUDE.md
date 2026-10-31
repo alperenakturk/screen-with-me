@@ -45,6 +45,9 @@ We are building a **global product**, so everything is professional, formal and 
   which step we are on and what is left. The same queue is written to `docs/internal/STATUS.md` "Task queue" and
   pushed: if the session or the usage limit stops the work, the next session (or the same one after "devam") reads
   that queue and continues from the first unfinished item without asking.
+- **"What should I test?"** (owner, 31 Oct 2026): the owner's hand tests live in `docs/internal/STATUS.md` "Owner's
+  hand tests" (Edge / Brave / Opera extension test, Firefox / Safari site test). When he asks, read that list, explain
+  the open items in simple Turkish and tick what he reports.
 - **Make technical decisions yourself**, briefly say why; the user asks for changes if they disagree. Only ask about
   things that belong to the user: accounts, money, publishing, legal commitments, the product name, slogans.
 - Move in safe steps; test every change, ship it, commit it.
@@ -67,7 +70,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.16 (voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.17 ("your browser blocks direct connections" hint for voice / cameras / streams, Edge Add-ons prep, browser notes on the extension page; 0.9.91.16 voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -597,6 +600,13 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   answered or time is up (4 s: correct option + who chose what), podium at the end; the correct option is not sent
   before the reveal. Piece `games/quiz.ts`. Test: `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
+- **Browser blocks direct connections (0.9.91.17, `packages/shared/src/ice-watch.ts`):** with Chromium's WebRTC policy
+  "Disable non-proxied UDP" (Brave / Vivaldi setting, uBlock Origin's WebRTC option, Opera's VPN) no ICE candidate is
+  gathered and a connection stays "new" forever (never "failed"). `watchIceBlocked` on every voice and stream peer
+  connection reports "gathering complete with zero candidates" → `onBlocked` → once per page a 15 s hint
+  (`voice.blocked`) with the fix per browser; on the film page offscreen sends `{op:'blocked'}`. Test:
+  `scripts/harness/voice/blocked.mjs` (Playwright's Chromium: the full Chrome binary ignores
+  `--force-webrtc-ip-handling-policy`; `POLICY=default` is the control run). Browser research: `browser-support.md`.
 - **Video chat (0.9.63, peer-to-peer only, on the site):** 📷 in voice → `P2pVoice.setCam` (320×240, 15 fps,
   ≤280 kbit/s; the video channel is always created with the connection, turning the camera on/off only does
   `replaceTrack`, no renegotiation; old versions' audio-only offers have no video). Member `voice.cam` (no version
@@ -884,5 +894,6 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   in Turkey). Never a donation prompt inside a room / over the video. Plan: `docs/internal/VIZYON.md` "Bağış / destek".
 - Bans are at the limit of an account-free design: another browser/incognito tab gets around them.
 - Growth plan and feature ideas: `docs/internal/BUYUME.md`, `docs/internal/gelecek-fikirler.md`.
-- Firefox is not supported (needs a separate manifest for the background).
-- User testing on Brave/Edge is pending.
+- Firefox / Safari: the website works there, the extension does not (no `offscreen`, the shell only accepts a
+  `chrome-extension://` parent); plan and effort in `docs/internal/browser-support.md` (after 1.0).
+- User testing on Brave/Edge/Opera is pending (`STATUS.md` "Owner's hand tests").

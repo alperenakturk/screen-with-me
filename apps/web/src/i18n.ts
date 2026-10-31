@@ -653,6 +653,8 @@ const tr = {
   'voice.lastSeat': 'son {n} yer',
   'voice.camFullHint': 'Şu an {n}/{max} kamera açık. Görüntü herkese ayrı gittiği için sınır var; biri kapatınca seninki açılabilir.',
   'voice.p2pFailed': '{name} ile ses bağlantısı kurulamadı (bazı okul/iş ağları ve mobil hatlar engelleyebilir).',
+  'voice.blocked':
+    'Tarayıcın doğrudan bağlantıları engelliyor, bu yüzden ses, kamera ve yayın kimseye ulaşmıyor. Brave / Vivaldi: Ayarlar → Gizlilik → "WebRTC IP handling policy" → Varsayılan (Default). uBlock Origin: "WebRTC yerel IP sızıntısını önle" kapalı olsun. Opera: VPN\'i kapat.',
   'error.voice_unavailable': 'Sesli sohbet şu an kapalı.',
   peek: 'Sayfayı göster',
   peekTitle: 'Film sayfasını olduğu gibi göster (videonun önündeki reklamı ya da pencereyi kapatmak, videoyu başlatmak için)',
@@ -1676,6 +1678,8 @@ const en: Record<Key, string> = {
   'voice.lastSeat': '{n} left',
   'voice.camFullHint': '{n}/{max} cameras are on. Video goes to everyone separately, so there is a limit; you can turn yours on when someone turns theirs off.',
   'voice.p2pFailed': 'Couldn’t connect voice with {name} (some school/work networks and mobile carriers block it).',
+  'voice.blocked':
+    'Your browser blocks direct connections, so voice, cameras and streams reach nobody. Brave / Vivaldi: Settings → Privacy → "WebRTC IP handling policy" → Default. uBlock Origin: turn off "Prevent WebRTC from leaking local IP addresses". Opera: turn off the VPN.',
   'error.voice_unavailable': 'Voice chat is off right now.',
   peek: 'Show page',
   peekTitle: 'Show the film page as it is (to close an ad or pop-up covering the video, or to start the video)',

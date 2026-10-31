@@ -85,6 +85,7 @@ export function createLive(
   /** The running "screen + my camera" picture (its camera and screen are stopped when the stream ends). */
   let composed: Composed | null = null;
 
+  let toldBlocked = false;
   const live = new LiveP2p({
     capture: async (kind, q) => {
       const screen = await navigator.mediaDevices.getDisplayMedia(screenConstraints(q));
@@ -106,6 +107,12 @@ export function createLive(
     onFailed: (memberId) => {
       const who = members.find((m) => m.id === memberId)?.name ?? '';
       flashHint(card, t('live.failed', { name: who }), 7000);
+    },
+    // The browser forbids direct connections (see `ice-watch.ts`): say how to fix it, once per page.
+    onBlocked: () => {
+      if (toldBlocked) return;
+      toldBlocked = true;
+      flashHint(card, t('voice.blocked'), 15000);
     },
   });
 

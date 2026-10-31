@@ -195,8 +195,46 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
-  Full checklist (Edge, Brave, Opera) and the browser research: `docs/internal/browser-support.md` (31 Oct 2026,
-  research only; owner decides what to build).
+  Full checklist: "Owner's hand tests" below; research: `docs/internal/browser-support.md`.
+- [x] **Browser support research** (31 Oct 2026, `browser-support.md`); owner: "do the recommendations" →
+  **0.9.91.17**: "your browser blocks direct connections" hint (`ice-watch.ts`, harness `voice/blocked.mjs`),
+  extension page lists Opera / Vivaldi and says the site works in Firefox / Safari + a "voice doesn't connect" FAQ,
+  Edge Add-ons steps in `web-store.md`. Left for the owner: the hand tests below, the Microsoft Partner Center account.
+- [ ] After 1.0 (owner decides): Firefox extension (L), TURN relay (Phase 2). Not planned: Safari extension, Opera's
+  own store.
+
+## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
+Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
+explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
+
+**Before the 1.0 store submission: the extension in Edge, Brave and Opera** (zip from the site, a friend in Chrome, a
+legal demo player page such as a Video.js or Plyr demo for the film page). For each browser:
+- [ ] Edge · [ ] Brave · [ ] Opera — 1. install: Developer mode → Load unpacked (`edge://extensions`,
+  `brave://extensions`, `opera://extensions`); the icon and popup appear.
+- [ ] 2. room on the site: friend joins; YouTube plays; play / pause / seek stay in sync both ways.
+- [ ] 3. voice: both hear each other; mic on / off; 🎛 lists my microphones (speakers too).
+- [ ] 4. camera on, both see each other. 5. share a tab with sound, friend sees and hears it.
+- [ ] 6. film page: open the demo link → "Filme git" → the room view appears, the video sits in its place, sync works.
+- [ ] 7. voice on the film page: the small permission window appears once, friend hears me.
+- [ ] 8. fullscreen on the site and on the film page; the dock on the right shows and hides.
+- [ ] 9. sound: someone joins voice → a soft sound.
+- [ ] Brave only: Shields on (default) for 2–8; then Settings → Privacy → "WebRTC IP handling policy" → "Disable
+  non-proxied UDP" → join voice → the room must say "Tarayıcın doğrudan bağlantıları engelliyor…"; set it back to
+  "Default".
+- [ ] Edge only: Settings → Privacy → Tracking prevention "Strict" → repeat 2 and 6.
+- [ ] Opera only: built-in ad blocker on → 2 and 6; Opera VPN on → join voice → the "blocks direct connections" note
+  should appear (tell Claude what happens); VPN off again. Opera GX: GX Control limits on, room tab 10 min in the
+  background, come back.
+- [ ] Write down each browser's version (`edge://version`, `brave://version`, `opera://about`).
+
+**Website without the extension in Firefox and Safari** (no rush; before 1.0 if a Mac / iPhone is at hand):
+- [ ] Firefox (PC): room, YouTube sync, chat, a game, voice + camera with a friend, screen share (picture only, no
+  sound expected), fullscreen, sounds.
+- [ ] Safari (Mac, if available): the same.
+- [ ] iPhone (any browser, they are all Safari inside): room, YouTube, voice, our fullscreen, "Add to Home Screen".
+
+**Accounts (owner only):** Microsoft Partner Center for Edge Add-ons (free, steps in `web-store.md`), with the Chrome
+Web Store submission at 1.0.
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
 - **0.9.91:** unit 204/204 (page tokens, shorts-only, next in answers), e2e all files green except `room.mjs` (local

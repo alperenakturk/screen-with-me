@@ -7,6 +7,7 @@
 
 import type { Member, Signal } from './protocol.ts';
 import type { Voice } from './voice.ts';
+import { watchIceBlocked } from './ice-watch.ts';
 
 export interface P2pVoiceOptions {
   /** Bir üyeye bağlantı mesajı yolla (sunucu iletir). */
@@ -19,6 +20,8 @@ export interface P2pVoiceOptions {
   getCam?: () => Promise<MediaStream>;
   /** Biriyle bağlantı kurulamadı (sıkı ağ: okul/şirket, bazı mobil hatlar). */
   onFailed?: (memberId: string) => void;
+  /** The browser gathered no network address at all (it forbids direct connections, see `ice-watch.ts`). */
+  onBlocked?: () => void;
   getMic?: () => Promise<MediaStream>;
 }
 
@@ -287,6 +290,7 @@ export class P2pVoice implements Voice {
     const pc = new RTCPeerConnection({ iceServers: ICE });
     const peer: Peer = { pc, pending: [], failed: false };
     this.peers.set(memberId, peer);
+    watchIceBlocked(pc, () => this.options.onBlocked?.());
     pc.onicecandidate = (event) => {
       if (!event.candidate) return;
       const { candidate, sdpMid, sdpMLineIndex } = event.candidate;

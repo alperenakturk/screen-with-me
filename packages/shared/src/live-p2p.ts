@@ -6,6 +6,7 @@
 // Teklifi hep yayıncı yapar (izleyici yeni gelince ya da yayın yeniden başlayınca).
 
 import type { LiveKind, Member, Signal } from './protocol.ts';
+import { watchIceBlocked } from './ice-watch.ts';
 
 // Cloudflare only: every STUN server learns the IP of each person in voice (security review 1, W3).
 const ICE: RTCIceServer[] = [{ urls: 'stun:stun.cloudflare.com:3478' }];
@@ -43,6 +44,8 @@ export interface LiveOptions {
   onEnded?: () => void;
   /** Biriyle bağlantı kurulamadı. */
   onFailed?: (memberId: string) => void;
+  /** The browser gathered no network address at all (it forbids direct connections, see `ice-watch.ts`). */
+  onBlocked?: () => void;
   /** Testte sahte akış verilebilir. */
   capture?: (kind: LiveKind, quality: LiveQuality) => Promise<MediaStream>;
 }
@@ -218,6 +221,7 @@ export class LiveP2p {
     const pc = new RTCPeerConnection({ iceServers: ICE });
     const peer: Peer = { pc, pending: [], failed: false };
     this.peers.set(memberId, peer);
+    watchIceBlocked(pc, () => this.options.onBlocked?.());
     pc.onicecandidate = (event) => {
       if (!event.candidate) return;
       const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
