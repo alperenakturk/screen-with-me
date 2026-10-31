@@ -202,7 +202,7 @@ async function searchShorts(params: Record<string, string>, key: string, limit: 
 }
 
 /**
- * `GET /api/youtube/pool?kind=popular|music|…&hl=tr|en&page=…` — "🎲 Keşfet" (0.9.91.17): the most watched Shorts
+ * `GET /api/youtube/pool?kind=popular|music|…&hl=tr|en&page=…` — "🎲 Keşfet" (0.9.91.18): the most watched Shorts
  * of the last two weeks in a category, one shared pool per language and day (the cache key carries the UTC day), so
  * every room draws from the same answer and a day costs one search per pool page. Rooms shuffle it themselves. Only
  * `safeSearch=strict` here: nobody chose a topic, the room just gets what the pool has.
@@ -237,7 +237,7 @@ export async function youtubePool(request: Request, url: URL, env: Env, ipKey: (
 const VIDEO_FIELDS = 'items(id,snippet(title,channelTitle,channelId,liveBroadcastContent),contentDetails/duration,player(embedWidth,embedHeight))';
 
 /**
- * `GET /api/youtube/like?id=<video>&hl=tr|en&page=…` — "✨ Bunun gibi" (0.9.91.17): more Shorts like the one playing.
+ * `GET /api/youtube/like?id=<video>&hl=tr|en&page=…` — "✨ Bunun gibi" (0.9.91.18): more Shorts like the one playing.
  * First the same channel's latest uploads (4 units: the video, the channel's uploads playlist, its items, their
  * shapes), then `next` switches to a search on the title's words (101 units a page). There is no official "related
  * videos" any more (YouTube removed `relatedToVideoId` in 2023).

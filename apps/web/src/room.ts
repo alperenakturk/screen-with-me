@@ -1126,7 +1126,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'reaction': {
         if (!settings.options.showReactions) break;
         // Shorts görünümünde emoji atanın avatarından yükselir (koltuğu yoksa videonun üstünde).
-        // In the Shorts view emojis rise from the seats beside the video, never over it (YouTube's rules, 0.9.91.17).
+        // In the Shorts view emojis rise from the seats beside the video, never over it (YouTube's rules, 0.9.91.18).
         if (shortsOn) {
           const shown = reactions.content(message.emoji, message.sticker);
           if (shown) seats.react(message.by, shown);
@@ -1255,7 +1255,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     const token = ++mediaToken;
     // YouTube → YouTube (every scroll in Shorts): the same player opens the next video, no new iframe. Since
-    // 0.9.91.17 every YouTube video (Shorts too) shows YouTube's own bar, so any YouTube player can be reused.
+    // 0.9.91.18 every YouTube video (Shorts too) shows YouTube's own bar, so any YouTube player can be reused.
     const next = state.item?.media;
     if (current?.youtube && next?.kind === 'youtube' && current.player.load && !film) {
       const { player } = current;
@@ -1315,7 +1315,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       slot.remove();
       return;
     }
-    // Our bar is the remote of the sync test only. YouTube (Shorts too, 0.9.91.17) keeps its own bar: YouTube's rules
+    // Our bar is the remote of the sync test only. YouTube (Shorts too, 0.9.91.18) keeps its own bar: YouTube's rules
     // forbid anything of ours in front of its player (owner: "in Shorts too, its player; our menu is at the bottom").
     current = { player, slot, youtube: media.kind === 'youtube', own: media.kind === 'test' };
     engine.attach(player);
@@ -1325,7 +1325,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
 
   /**
-   * "Does everyone land on the next Short together?" (0.9.91.17, ROADMAP; measured in the owner's Chrome, the cloud
+   * "Does everyone land on the next Short together?" (0.9.91.18, ROADMAP; measured in the owner's Chrome, the cloud
    * can't play YouTube): with `?olcum=1` once in this tab, the Shorts view shows how long after the room switched
    * (server time) this video really started moving. Two people compare their numbers; the difference is how far
    * apart they landed. Nothing is sent anywhere.
@@ -1921,7 +1921,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     feedForm.hidden = !feedForm.hidden;
     if (!feedForm.hidden) feedTopic.focus();
   });
-  // "🎲 Keşfet" (0.9.91.17): one tap starts an endless feed from today's shared pool of a category.
+  // "🎲 Keşfet" (0.9.91.18): one tap starts an endless feed from today's shared pool of a category.
   const pools = $('#shorts-pools');
   const renderPools = () =>
     pools.replaceChildren(

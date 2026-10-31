@@ -213,6 +213,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const who = members.find((m) => m.id === memberId)?.name ?? '';
     flashHint(peopleBox, t('voice.p2pFailed', { name: who }), 7000);
   };
+  // The browser forbids direct connections (Brave / uBlock Origin / VPN setting): say how to fix it, once per page.
+  let toldBlocked = false;
+  const blocked = () => {
+    if (toldBlocked) return;
+    toldBlocked = true;
+    flashHint(peopleBox, t('voice.blocked'), 15000);
+  };
   if (!isShell) rememberDeviceNames();
   const makeClient = (): Voice => {
     if (isShell) {
@@ -221,6 +228,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         signal: (to, data) => send({ t: 'signal', to, data }),
         rpc: (id, request) => void rpc(request).then((result) => ext?.rtcResult(id, result)),
         failed,
+        blocked,
         changed: () => render(),
         onRemoteVideo,
         picks: devicePicks,
@@ -238,6 +246,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       onRemote,
       onRemoteVideo,
       onFailed: failed,
+      onBlocked: blocked,
     });
     return p2p;
   };

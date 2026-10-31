@@ -165,6 +165,26 @@ Tabs that have not joined a room are not affected.
 - New version: bump `apps/extension/package.json` → `npm run store` → **Package** in the dashboard → upload the new
   zip → submit for review.
 
+## Edge Add-ons (second store, same package)
+
+Recommended in `browser-support.md` (owner said "do the recommendations", 31 Oct 2026). Edge can install from the
+Chrome Web Store too, but only after a one-time "Allow extensions from other stores" prompt; a listing on Edge's own
+store avoids it.
+1. 👤 The owner opens a free Microsoft Partner Center developer account (https://partner.microsoft.com/dashboard/microsoftedge/
+   → "Register"), individual, same publisher e-mail (screenwithme.app@gmail.com).
+2. "Create new extension" → upload the **same zip** as for the Chrome Web Store (`npm run store` → `store/`).
+3. Availability: public, all markets. Properties: category "Social", privacy policy URL
+   `https://screen-with-me.swm-server.workers.dev/privacy.html`, website = the site.
+4. Store listing (English + Turkish): copy the texts and screenshots from §1 (`store/screenshot-*.png` are 1280×800,
+   which Edge accepts). Edge also wants a square logo (300×300 recommended); `store/` only has 128 px today, so add a
+   300 px one to `npm run store` before submission day.
+5. Notes for certification: the same reviewer note as §4.
+6. Review takes a few business days. Submit together with the Chrome Web Store (1.0); later updates: upload the new
+   zip in both dashboards.
+
+Opera's own store (addons.opera.com) is **not** used: reviews take weeks to months; Opera installs from the Chrome
+Web Store ("Add to Opera"). Firefox / Safari: see `browser-support.md` (after 1.0).
+
 ## 1.0 readiness checklist
 
 Before submitting (Claude checks; ✅ items were done in 0.9.0):
@@ -175,7 +195,8 @@ Before submitting (Claude checks; ✅ items were done in 0.9.0):
 - ✅ No film/series/site names in the description; "a neutral sync tool for any HTML5 video".
 - ✅ Automated tests (GitHub Actions: typecheck, unit, build, end-to-end).
 - ✅ Screenshots up to date (`npm run store`).
-- ⬜ A real test with a friend on Brave/Edge.
+- ⬜ A real test with a friend on Brave/Edge/Opera (checklist: `STATUS.md` "Owner's hand tests").
+- ⬜ Edge Add-ons listing submitted together with the Chrome Web Store (section above).
 - ⬜ Version `1.0.0` → `npm run store` → upload the zip in the dashboard → fill in the form with this guide → submit
   (with the owner's account; Claude can't submit).
 - ⬜ Once approved: change the install links in `eklenti.html` and on the site to the store link.

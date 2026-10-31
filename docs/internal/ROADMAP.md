@@ -76,9 +76,9 @@ implement, test, ship.
   - [ ] **6. "Send feedback" button** in the product (closed beta and launch), see §7 "Feedback loop".
   - After 1.0 (owner agreed): TV with Google Cast, big services, Instagram Reels, new games, accounts / new languages /
     native apps (only if users ask).
-  - [ ] **Browser support** (owner's priority, 31 Oct 2026): research session `session_015Fyri68eMHWNiGtk1pUdpw`
-    (branch `claude/browser-support-research`, `browser-support.md`): Chromium browsers (Edge, Brave, Opera, Vivaldi…)
-    first, then Firefox / Safari; the owner decides what to build from the results.
+  - [x] **Browser support** (owner's priority, 31 Oct 2026): research in `browser-support.md` (#86); owner: "do the
+    recommendations" → 0.9.91.17 (blocked-connection hint, extension page notes, Edge Add-ons steps). Open: the
+    owner's hand tests (`STATUS.md` "Owner's hand tests"); Firefox extension after 1.0.
 - [ ] **(added)** First-time experience: someone who has never seen the site arrives with an invite link, installs
   the extension and watches — measure the steps and remove friction.
 - [ ] **(added)** Simplify the room for newcomers: rarely used features (scheduled start, voting, saved rooms, recap)

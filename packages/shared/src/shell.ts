@@ -136,6 +136,8 @@ export type VoiceDown =
   /** Dinlenenlerin ses seviyesi (0–1) ve kendi mikrofonumun seviyesi. */
   | { op: 'levels'; levels: [string, number][]; me: number }
   | { op: 'failed'; memberId: string }
+  /** The browser forbids direct connections (no network address gathered, `ice-watch.ts`; 0.9.91.17). */
+  | { op: 'blocked' }
   /** Katılamadı: `denied` mikrofon izni verilmedi. */
   | { op: 'error'; code: 'denied' | 'failed' }
   /** Kamera açılamadı. */

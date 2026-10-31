@@ -52,7 +52,7 @@ export async function createYouTubePlayer(
       width: '100%',
       height: '100%',
       // Option A (owner's choice, 0.9.91.1): YouTube's own bar is back (quality, caption language, chapters…); our
-      // buttons live in the toolbar under the video and, in fullscreen, in the dock on the right. Since 0.9.91.17
+      // buttons live in the toolbar under the video and, in fullscreen, in the dock on the right. Since 0.9.91.18
       // Shorts too (YouTube's rules: nothing of ours in front of its player; scrolling works around the video).
       // `fs: 0`: YouTube's own fullscreen would show the bare video without the room; ours is the ⛶ under the video.
       playerVars: { playsinline: 1, rel: 0, fs: 0, controls: 1, iv_load_policy: 3 },

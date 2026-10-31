@@ -128,7 +128,7 @@ export function createSeats(left: HTMLElement, right: HTMLElement) {
       bubbles.set(key, { text: shown, until: Date.now() + BUBBLE_MS, timer });
     },
     /**
-     * Emoji kişinin avatarından yükselir; koltuğu yoksa "+N"den (0.9.91.17: never over the video, YouTube's rules).
+     * Emoji kişinin avatarından yükselir; koltuğu yoksa "+N"den (0.9.91.18: never over the video, YouTube's rules).
      * False only when there is no seat at all.
      */
     react(by: Member, content: HTMLElement): boolean {

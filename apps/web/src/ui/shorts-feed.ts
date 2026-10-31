@@ -16,7 +16,7 @@ const SEEN_MAX = 400;
 
 /**
  * Where the Shorts come from: words (`topic`, a Shorts-only search), "🎲 Keşfet" (`pool`: today's shared pool of a
- * category, shuffled here) or "✨ Bunun gibi" (`like`: the playing Short's channel, then its title's words). 0.9.91.17.
+ * category, shuffled here) or "✨ Bunun gibi" (`like`: the playing Short's channel, then its title's words). 0.9.91.18.
  */
 export type FeedSource = { kind: 'topic' } | { kind: 'pool'; pool: PoolKind } | { kind: 'like'; id: string };
 
