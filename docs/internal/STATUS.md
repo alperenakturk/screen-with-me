@@ -191,6 +191,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
+- [ ] **Bigger Shorts view on laptops** (owner, 31 Oct 2026): design options A / B / C at
+  https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379 (recommended C); waiting for the owner's pick, then build.
+- [ ] **Tablet support** (owner, 31 Oct 2026, ROADMAP §1): own layout for iPad / Android tablets, separate from phones.
+- [x] **Owner's guide PDF** (31 Oct 2026): everything to try, the plan to 1.0, risks and never-tested areas were sent
+  to the owner as a PDF; the same items live in "Owner's hand tests" below and in ROADMAP.
 - [x] **0.9.92 hotspot: the room didn't connect over the owner's phone hotspot** (owner, 31 Oct 2026: "important"; the
   phone's own data works). Research + options + decision in `hotspot-connection.md`: most likely the tethered TCP path
   loses full-size packets (MTU black hole / carrier tethering policy) while the page itself arrives over HTTP/3 (UDP);
