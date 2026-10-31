@@ -10,6 +10,8 @@ export interface ExtVoiceHooks {
   signal: (to: string, data: Signal) => void;
   rpc: (id: number, request: RtcRequest) => void;
   failed: (memberId: string) => void;
+  /** The browser forbids direct connections (old extensions never send it). */
+  blocked?: () => void;
   /** Durum değişti (kart yeniden çizilsin). */
   changed: () => void;
   /** Birinin kamera görüntüsü geldi/gitti (köprüden). */
@@ -239,6 +241,9 @@ export class ExtVoice implements Voice {
         break;
       case 'failed':
         this.hooks.failed(msg.memberId);
+        break;
+      case 'blocked':
+        this.hooks.blocked?.();
         break;
       case 'error': {
         const joining = this.joining;

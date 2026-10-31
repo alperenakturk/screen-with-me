@@ -237,6 +237,12 @@ alternative L, test harness for Firefox M, AMO listing S).
 
 ## Recommendation
 
+**Status (31 Oct 2026, owner: "do the recommendations"):** done in 0.9.91.17: the WebRTC-blocked hint
+(`packages/shared/src/ice-watch.ts`, harness `scripts/harness/voice/blocked.mjs`), the extension page's browser notes
+and "voice doesn't connect" FAQ, Edge Add-ons steps (`web-store.md`). The hand tests are in `STATUS.md` "Owner's hand
+tests". Waiting for the owner: those tests and the Microsoft Partner Center account. Firefox / Safari site passes need
+a real Firefox / Safari (not available in the cloud).
+
 **Do now (small, safe, no new accounts):**
 1. Run the owner's Brave/Edge/Opera hand test (checklist below) — it is the cheapest way to raise "M" to "H".
 2. Allow `developer.mozilla.org`, Playwright's Firefox/WebKit download host and (optionally) `packages.microsoft.com`

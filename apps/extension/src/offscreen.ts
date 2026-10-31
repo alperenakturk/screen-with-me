@@ -250,6 +250,7 @@ function makeClient(mode: VoiceMode): Voice {
     onRemote,
     onRemoteVideo,
     onFailed: (memberId) => toSite({ op: 'failed', memberId }),
+    onBlocked: () => toSite({ op: 'blocked' }),
     getMic,
     getCam,
   });
