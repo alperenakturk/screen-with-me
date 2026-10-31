@@ -323,7 +323,20 @@ export class Room extends DurableObject<Env> {
     const path = new URL(request.url).pathname;
     // Ana sayfadaki kayıtlı odalar listesi: oda hâlâ kayıtlı mı, adı, içeride kaç kişi var.
     if (path.endsWith('/info')) {
-      return Response.json({ saved: this.settings.saved === true, name: this.settings.name ?? null, online: this.joined().length });
+      // The join screen (0.9.91.20) also shows who is waiting and what is on: the names of up to 3 people (one per
+      // person, TVs left out), how many people, and the playing item's title. Anyone with the link could join and see
+      // the same; nothing else (browser ids, IPs) ever leaves.
+      const people = new Map<string, string>();
+      for (const a of this.joined()) if (a.name && !a.tv && !people.has(keyOf(a))) people.set(keyOf(a), a.name);
+      const item = this.room.state.item;
+      return Response.json({
+        saved: this.settings.saved === true,
+        name: this.settings.name ?? null,
+        online: this.joined().length,
+        count: people.size,
+        people: [...people.values()].slice(0, 3),
+        playing: item ? (item.title ?? null) : null,
+      });
     }
     // Yönetici odayı ana sayfadaki listeden çıkardı: kayıt kalkar (boşsa 24 saat sonra silinir).
     if (path.endsWith('/unsave') && request.method === 'POST') return this.unsaveFromHome(request);

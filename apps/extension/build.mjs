@@ -47,7 +47,9 @@ const manifest = {
   // Simgeler: node scripts/make-icons.mjs ile üretilir (static/ içinde).
   icons: { 16: 'icon16.png', 32: 'icon32.png', 48: 'icon48.png', 128: 'icon128.png' },
   // offscreen: film sayfasındaki sesli sohbet görünmeyen bir eklenti sayfasında çalışır (izin eklentinin adına).
-  permissions: ['storage', 'offscreen'],
+  // scripting (0.9.91.20): right after a fresh install the site bridge goes into the open tabs of our site, so the
+  // room the person came from sees the extension without a reload (no new warning: host access is already asked).
+  permissions: ['storage', 'offscreen', 'scripting'],
   host_permissions: ['<all_urls>'],
   // Film sayfasının üstüne açılan oda katmanı (kabuk): içinde sitenin oda sayfası çalışır.
   web_accessible_resources: [{ resources: ['shell.html', 'shell.js'], matches: ['<all_urls>'] }],

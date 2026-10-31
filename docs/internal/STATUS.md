@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.19**. The owner moved to a **new Claude
+> Last update: 31 Oct 2026. Site and extension **0.9.91.20**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -191,6 +191,15 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
+- [ ] **Hotspot: the room doesn't connect over the owner's phone hotspot** (owner, 31 Oct 2026: "important"; the
+  phone's own data works). Separate session `session_015Fyri3uNqua3SD2mKBGEj1`: research, alternatives, build the
+  best one, ship as **0.9.92** (the owner allowed the third-part bump).
+- [x] **0.9.91.20 first-time path** (PDF item 1; partial until the extension is in the store): one join screen
+  (who is waiting + what is playing from `/api/rooms/:id/info` `people` / `count` / `playing`, avatar button next to the
+  name, no separate avatar step); 3 short tips the first time in a room (invite → add a link / search → join voice,
+  `ui/first-tips.ts`, `tipsSeen`); "Filme git" card notices a freshly installed extension by itself (the extension's
+  new `scripting` permission injects `site-bridge.js` into open site tabs on install; the card flips to "Filme git" with
+  "✓ Eklenti kuruldu!"). Left for the store version: one-click install link on that card.
 - [x] **0.9.91.19 TikTok links** (PDF item 2, part 2): TikTok video links (and vm. / vt. short links, resolved by the
   Worker) play in TikTok's official embed player in the Shorts view, synced through its postMessage API, at 1×, looping
   like a Short; titles from TikTok's oEmbed; privacy policy "TikTok videos" (+ Discover / More like this). Harness
@@ -200,7 +209,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   emojis rise from the seats; 🎲 Keşfet (shared daily pools per category) and ✨ Bunun gibi (same channel, then title
   words) in the ♾ popup; `?olcum=1` shows the switch time per Short (the owner measures with a friend; then decide on
   a hidden preload player); phones: the IP line is hidden in the Together card (it pushed the chat box off screen).
-  Next: TikTok links (0.9.91.19), then the first-time path (PDF item 1), then the room view's YouTube overlays.
+  Next: the room view's YouTube overlays (flying emojis / dock / toasts over YouTube, before the API audit), then PDF
+  items 3–6 (simplify the room, camera pass, help / FAQ, "send feedback") when the owner says.
 - [ ] **Browser support research** (owner's priority, 31 Oct 2026): separate session
   `session_015Fyri68eMHWNiGtk1pUdpw`, branch `claude/browser-support-research` (PR, then the owner decides what to
   build). Then the feature plan to 1.0 in this order (ROADMAP §1 "Feature plan to 1.0"): first-time path → finish
@@ -246,6 +256,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   sound expected), fullscreen, sounds.
 - [ ] Safari (Mac, if available): the same.
 - [ ] iPhone (any browser, they are all Safari inside): room, YouTube, voice, our fullscreen, "Add to Home Screen".
+
+**0.9.91.18–0.9.91.20 (Shorts + first-time path; real YouTube / TikTok needed, the cloud can't play them):**
+- [ ] ♾ → 🎲 Keşfet: each chip (Popüler, Müzik, Oyun, Komedi, Hayvanlar, Spor) fills the queue with Shorts.
+- [ ] ♾ → ✨ Bunun gibi while a Short plays: more Shorts from the same channel, later similar titles.
+- [ ] Shorts view: YouTube's own bar on the video, our bar only at the bottom; emojis rise from the seats.
+- [ ] With a friend, open the room once with `?olcum=1`, switch Shorts with ▲▼ ten times, tell Claude the ms numbers.
+- [ ] Paste a TikTok link (`tiktok.com/@…/video/…`) and a short `vm.tiktok.com/…` link: both play in sync, loop.
+- [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
+- [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
+  the card says "Filme git" by itself.
 
 **Accounts (owner only):** Microsoft Partner Center for Edge Add-ons (free, steps in `web-store.md`), with the Chrome
 Web Store submission at 1.0.
