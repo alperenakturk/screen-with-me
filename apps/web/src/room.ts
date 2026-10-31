@@ -2,7 +2,7 @@ import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { isForwardedKey, isRelayable } from '@swm/shared/embed';
-import { parseMediaInput, parseMediaList, samePage } from '@swm/shared/media';
+import { isTikTokShortLink, parseMediaInput, parseMediaList, samePage } from '@swm/shared/media';
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
@@ -12,7 +12,8 @@ import {
   cleanRoomName,
   expectedPosition,
   stepRate,
-  YOUTUBE_MAX_RATE,
+  maxRateFor,
+  isValidMedia,
   isAvatar,
   randomAvatar,
   REACTION_GAPS,
@@ -36,6 +37,7 @@ import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts'
 import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createTestPlayer } from './players/test.ts';
+import { createTikTokPlayer } from './players/tiktok.ts';
 import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
 import {
   clientId,
@@ -1302,9 +1304,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       player =
         media.kind === 'youtube'
           ? await createYouTubePlayer(slot, media.id, onError)
-          : media.kind === 'test'
-            ? createTestPlayer(slot)
-            : createHtml5Player(slot, media.url, onError);
+          : media.kind === 'tiktok'
+            ? await createTikTokPlayer(slot, media.id, onError)
+            : media.kind === 'test'
+              ? createTestPlayer(slot)
+              : createHtml5Player(slot, media.url, onError);
     } catch {
       onError();
       slot.remove();
@@ -1973,6 +1977,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   shortsAddForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (isTikTokShortLink(shortsAddInput.value)) {
+      void resolveTikTok(shortsAddInput.value, shortsAdd).then((media) => {
+        if (!media) return;
+        shortsAddInput.value = '';
+        setShortsAdd(false);
+        addMedia(media, 'enqueue');
+        flashHint(shortsAdd, t('queuedNote'), 2500);
+      });
+      return;
+    }
     const list = parseMediaList(shortsAddInput.value);
     const one = list.media.length === 1 ? list.media[0]! : parseMediaInput(shortsAddInput.value);
     if (list.media.length < 2 && one === null) {
@@ -2000,8 +2014,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   /** Bu sekmede oynayan Shorts'lar: yeni video bunlardan biriyse (↑ ile dönüldü) yukarıdan kayarak gelir. */
   const seenShorts: string[] = [];
 
+  /** Upright videos open the Shorts view: YouTube Shorts and every TikTok (0.9.91.18). */
   function isShortItem(item: QueueItem | null | undefined): boolean {
-    return item?.media.kind === 'youtube' && item.media.short === true;
+    return (item?.media.kind === 'youtube' && item.media.short === true) || item?.media.kind === 'tiktok';
   }
 
   /** Thumbnails of the next short already fetched (0.9.90.7): the cued player shows it at once after a scroll. */
@@ -2171,7 +2186,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Filmde motor film çerçevesinde çalışır: hız isteği oraya gider.
   // YouTube 2x'ten hızlı oynatmıyor: orada en fazla 2x istenir.
   const requestRate = (wanted: number) => {
-    const rate = roomState?.item?.media.kind === 'youtube' ? Math.min(wanted, YOUTUBE_MAX_RATE) : wanted;
+    const rate = Math.min(wanted, maxRateFor(roomState?.item?.media));
     if (film) film.control({ action: 'rate', rate });
     else engine.requestRate(rate);
   };
@@ -2383,6 +2398,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       addMany(list.media, list.skipped, mode);
       return;
     }
+    // TikTok app share links (vm.tiktok.com/…): the server follows them to the video first (0.9.91.18).
+    if (isTikTokShortLink(mediaInput.value)) {
+      void resolveTikTok(mediaInput.value, mediaInput).then((media) => {
+        if (!media) return;
+        search.close();
+        mediaInput.value = '';
+        addMedia(media, mode);
+      });
+      return;
+    }
     const media = parseMediaInput(mediaInput.value);
     if (media === null) {
       if (mediaInput.value.trim()) void search.search(mediaInput.value);
@@ -2392,6 +2417,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Enter'a basılınca ilk buton ("Sıraya ekle") geçerli olur; izlenen video yanlışlıkla değişmez.
     addMedia(media, mode);
   });
+
+  /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
+  async function resolveTikTok(link: string, anchor: HTMLElement): Promise<Media | null> {
+    try {
+      const response = await fetch(`/api/tiktok/resolve?u=${encodeURIComponent(link.trim())}`);
+      const body = (response.ok ? await response.json() : null) as { media?: unknown } | null;
+      if (body && isValidMedia(body.media)) return body.media;
+    } catch {
+      // network: the note below
+    }
+    flashHint(anchor, t('tiktokResolveFailed'), 5000);
+    return null;
+  }
 
   /** Sends the links one by one, a little apart (the server allows about 4 commands a second). */
   function addMany(list: Media[], skipped: number, mode: 'load' | 'enqueue'): void {

@@ -119,7 +119,7 @@ export function createShortsFeed(opts: FeedOptions) {
     }
     const current = opts.current();
     // The feed belongs to the Shorts session: if something else is playing now, it waits.
-    if (current && !(current.media.kind === 'youtube' && current.media.short)) return;
+    if (current && !((current.media.kind === 'youtube' && current.media.short) || current.media.kind === 'tiktok')) return;
     const queue = opts.queueItems();
     if (queue.length >= LOW_WATER) return;
     if (!opts.canAdd()) return stop(t('feed.locked'));

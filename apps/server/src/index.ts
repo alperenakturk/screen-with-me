@@ -4,6 +4,7 @@ import { POKER_ID_PATTERN } from '@swm/shared/games/poker';
 import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
+import { tiktokResolve } from './tiktok.ts';
 import { youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 
 export { Draw } from './draw.ts';
@@ -66,6 +67,10 @@ export default {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
       const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : youtubeSearch;
       return handler(request, url, env, () => ipKey(request));
+    }
+    if (url.pathname === '/api/tiktok/resolve') {
+      if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
+      return tiktokResolve(request, url, env, () => ipKey(request));
     }
 
     // Kayıtlı odalar listesi için küçük bilgi / kayıt kaldırma (Durable Object cevaplar).

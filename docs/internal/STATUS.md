@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 30 Oct 2026. Site and extension **0.9.91.18**. The owner moved to a **new Claude
+> Last update: 30 Oct 2026. Site and extension **0.9.91.19**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -191,6 +191,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
+- [x] **0.9.91.19 TikTok links** (PDF item 2, part 2): TikTok video links (and vm. / vt. short links, resolved by the
+  Worker) play in TikTok's official embed player in the Shorts view, synced through its postMessage API, at 1×, looping
+  like a Short; titles from TikTok's oEmbed; privacy policy "TikTok videos" (+ Discover / More like this). Harness
+  `tiktok/run.cjs` 8/8 with a stand-in player (the cloud can't reach tiktok.com): **the owner tests a real TikTok**.
 - [x] **0.9.91.18 finish Shorts, part 1** (owner, 31 Oct 2026: PDF item 2 "go all in"): YouTube's own bar in the
   Shorts view and nothing of ours over the player (owner: "its player; our menu is at the bottom"; YouTube's rules);
   emojis rise from the seats; 🎲 Keşfet (shared daily pools per category) and ✨ Bunun gibi (same channel, then title

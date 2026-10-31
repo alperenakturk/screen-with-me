@@ -14,6 +14,15 @@ export const MIN_RATE = 0.25;
 /** HTML5 videolar 4x'e kadar; YouTube en fazla 2x (YOUTUBE_MAX_RATE). */
 export const MAX_RATE = 4;
 export const YOUTUBE_MAX_RATE = 2;
+/** TikTok's embed player has no speed setting: a TikTok always plays at 1×. */
+export const TIKTOK_RATE = 1;
+
+/** The fastest a video of this kind can play. */
+export function maxRateFor(media: Media | null | undefined): number {
+  if (media?.kind === 'youtube') return YOUTUBE_MAX_RATE;
+  if (media?.kind === 'tiktok') return TIKTOK_RATE;
+  return MAX_RATE;
+}
 /** Bir mesajın en fazla kaç bayt olabileceği (kötü niyetli büyük mesajlara karşı). */
 export const MAX_MESSAGE_BYTES = 4096;
 /**
@@ -156,7 +165,12 @@ export type Media =
   /** Videonun içinde olduğu bir web sayfası; eklentiyle, herkes kendi sekmesinde açarak izler. */
   | { kind: 'page'; url: string }
   /** Senkron testi: sitenin çizdiği 12 sn'lik sayaç (dosya yok); iki ekran aynı sayıyı göstermeli. */
-  | { kind: 'test' };
+  | { kind: 'test' }
+  /**
+   * A TikTok video (0.9.91.18), played with TikTok's official embed player; always upright, so the room switches to
+   * the Shorts view. `user`: the @handle from the link (the title lookup and "open on TikTok" need it).
+   */
+  | { kind: 'tiktok'; id: string; user?: string };
 
 /** Sıradaki ya da şu an oynayan bir video. */
 export interface QueueItem {
@@ -556,6 +570,9 @@ export function expectedPosition(state: PlaybackState, serverNow: number): numbe
 // veriler de yeni nesnelere kopyalanır; böylece fazladan alanlar sızmaz.
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
+/** TikTok video ids are long numbers; handles are letters, digits, `.` and `_`. */
+export const TIKTOK_ID = /^\d{8,25}$/;
+export const TIKTOK_USER = /^[A-Za-z0-9._]{1,40}$/;
 const ITEM_ID = /^[A-Za-z0-9_-]{1,32}$/;
 /** Tarayıcının kalıcı kimliği (bkz. hello.cid). */
 export const CLIENT_ID = /^[A-Za-z0-9_-]{8,40}$/;
@@ -686,6 +703,10 @@ export function cleanMedia(x: unknown): Media | null {
   if (x.kind === 'youtube') {
     if (typeof x.id !== 'string' || !YOUTUBE_ID.test(x.id)) return null;
     return x.short === true ? { kind: 'youtube', id: x.id, short: true } : { kind: 'youtube', id: x.id };
+  }
+  if (x.kind === 'tiktok') {
+    if (typeof x.id !== 'string' || !TIKTOK_ID.test(x.id)) return null;
+    return typeof x.user === 'string' && TIKTOK_USER.test(x.user) ? { kind: 'tiktok', id: x.id, user: x.user } : { kind: 'tiktok', id: x.id };
   }
   if (x.kind === 'html5' || x.kind === 'page') {
     if (typeof x.url !== 'string' || x.url.length > 2048) return null;

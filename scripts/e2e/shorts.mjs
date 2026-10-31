@@ -57,6 +57,21 @@ guest.send({ t: 'next', from: back.state.item.id });
 const skipped = await guest.wait((m) => m.t === 'state' && m.action === 'next', 'skip in loop');
 ok(skipped.state.item.media.id === 'jNQXAC9IVRw', 'Döngüdeyken de sonrakine geçilebiliyor');
 
+// TikTok (0.9.91.18+): a TikTok item passes the server's checks, plays at 1× and loops like a Short.
+host.send({ t: 'rate', rate: 2, position: 0, at: Date.now() });
+await guest.wait((m) => m.t === 'state' && m.state.rate === 2, 'rate 2');
+host.send({ t: 'load', media: { kind: 'tiktok', id: '7000000000000000001', user: 'someone' } });
+const tiktok = await guest.wait((m) => m.t === 'state' && m.state.item?.media.kind === 'tiktok', 'tiktok loaded');
+ok(tiktok.state.item.media.id === '7000000000000000001' && tiktok.state.item.media.user === 'someone', 'TikTok öğesi sunucudan geçiyor');
+ok(tiktok.state.rate === 1, 'TikTok açılınca hız 1×');
+host.send({ t: 'load', media: { kind: 'tiktok', id: '12' } });
+host.send({ t: 'seek', position: 20, at: Date.now() });
+const after = await guest.wait((m) => m.t === 'state' && m.action === 'seek' && Math.round(m.state.position) === 20, 'seek 20');
+ok(after.state.item.media.kind === 'tiktok' && after.state.item.media.id === '7000000000000000001', 'Bozuk TikTok kimliği reddedildi');
+guest.send({ t: 'next', from: after.state.item.id, end: true });
+const ttLoop = await guest.wait((m) => m.t === 'state' && m.action === 'seek' && m.state.position === 0, 'tiktok looped');
+ok(ttLoop.state.item.media.kind === 'tiktok', 'Döngüde biten TikTok başa sardı');
+
 host.ws.close();
 guest.ws.close();
 process.exit(0);

@@ -9,6 +9,32 @@ const YOUTUBE_HOSTS = new Set([
   'www.youtube-nocookie.com',
 ]);
 
+const TIKTOK_HOSTS = new Set(['tiktok.com', 'www.tiktok.com', 'm.tiktok.com']);
+/** Short share links (`vm.tiktok.com/ZMxxxx/`): only the server can follow them to the video (`/api/tiktok/resolve`). */
+const TIKTOK_SHORT_HOSTS = new Set(['vm.tiktok.com', 'vt.tiktok.com']);
+
+/**
+ * A TikTok video link → `{kind:'tiktok'}` (0.9.91.18): `tiktok.com/@user/video/<id>`, `/v/<id>(.html)`,
+ * `/embed/v2/<id>`, `/player/v1/<id>`. Null for anything else (profiles, short links, photo posts).
+ */
+export function parseTikTok(url: URL): Media | null {
+  if (!TIKTOK_HOSTS.has(url.hostname.toLowerCase())) return null;
+  const video = url.pathname.match(/^\/@([A-Za-z0-9._]{1,40})\/video\/(\d{8,25})\b/);
+  if (video) return { kind: 'tiktok', id: video[2]!, user: video[1]! };
+  const other = url.pathname.match(/^\/(?:v|embed\/v2|embed|player\/v1)\/(\d{8,25})\b/);
+  return other ? { kind: 'tiktok', id: other[1]! } : null;
+}
+
+/** Is this a TikTok short share link (vm. / vt.tiktok.com) the server has to resolve first? */
+export function isTikTokShortLink(input: string): boolean {
+  try {
+    const url = new URL(/^[a-z]+:\/\//i.test(input.trim()) ? input.trim() : `https://${input.trim()}`);
+    return TIKTOK_SHORT_HOSTS.has(url.hostname.toLowerCase()) && /^\/[A-Za-z0-9]{5,20}\/?$/.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
 /** Doğrudan oynatılabilen video dosyası uzantıları. */
 const VIDEO_FILE = /\.(mp4|m4v|webm|ogv|ogg|mov)$/i;
 
@@ -50,6 +76,11 @@ export function parseMediaInput(input: string): Media | null {
     return isValidMedia(media) ? media : null;
   }
   if (YOUTUBE_HOSTS.has(host)) return null;
+  // TikTok videos play on our site through TikTok's official embed player (0.9.91.18), not as a film page.
+  if (TIKTOK_HOSTS.has(host)) {
+    const tiktok = parseTikTok(url);
+    return tiktok && isValidMedia(tiktok) ? tiktok : null;
+  }
   // "merhaba" gibi düz metinler adres sayılmasın: alan adında nokta olmalı.
   if (!host.includes('.') && host !== 'localhost') return null;
 
@@ -67,7 +98,7 @@ export const MEDIA_LIST_MAX = 30;
  * one moves everyone's tab, they are added one by one). Duplicates are dropped. Fewer than two links: `[]`.
  */
 export function parseMediaList(input: string): { media: Media[]; skipped: number } {
-  const tokens = input.split(/[\s,]+/).filter((token) => /^(https?:\/\/|www\.|youtu\.be\/|(m\.)?youtube\.com\/)/i.test(token));
+  const tokens = input.split(/[\s,]+/).filter((token) => /^(https?:\/\/|www\.|youtu\.be\/|(m\.)?youtube\.com\/|(www\.)?tiktok\.com\/)/i.test(token));
   if (tokens.length < 2) return { media: [], skipped: 0 };
   const media: Media[] = [];
   let skipped = 0;
@@ -90,8 +121,9 @@ export function parseMediaList(input: string): { media: Media[]; skipped: number
 export function sameMedia(a: Media | null, b: Media | null): boolean {
   if (a === null || b === null) return a === b;
   if (a.kind === 'youtube' && b.kind === 'youtube') return a.id === b.id;
+  if (a.kind === 'tiktok' || b.kind === 'tiktok') return a.kind === 'tiktok' && b.kind === 'tiktok' && a.id === b.id;
   if (a.kind === 'test' || b.kind === 'test') return a.kind === b.kind;
-  if (a.kind !== 'youtube' && b.kind === a.kind) return a.url === b.url;
+  if ((a.kind === 'html5' || a.kind === 'page') && b.kind === a.kind) return a.url === b.url;
   return false;
 }
 
