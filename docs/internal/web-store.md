@@ -107,6 +107,11 @@ Stores the website's settings (nickname, avatar, theme, language, saved rooms, t
 Voice chat while watching: on the film page the microphone is used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice" (after a notice that the people in voice can see their IP address) and turns off with "Leave". Nothing is recorded; audio goes peer-to-peer to the others in voice.
 ```
 
+`scripting` (since 0.9.91.20):
+```
+Used once, right after the extension is installed: the extension's own small bridge script (site-bridge.js, already part of the package) is injected into ScreenWithMe website tabs that were open before the install, so a room page that was waiting for the extension notices it at once instead of asking the user to reload. It is never used on other sites and injects no remote code.
+```
+
 Host permission (`<all_urls>`):
 ```
 Users watch videos on sites we cannot list in advance, and players are usually inside cross-origin iframes, so the content script must be able to run in every frame. activeTab is not enough: invited friends open the page through a link without clicking the extension icon, and players that load later in iframes must be detected automatically. Outside a tab that has joined a room the script stays dormant. Within that tab it only reads the <video> element's playback state (time, paused, rate) and shows our own website's room page as a layer over the page (a web-accessible extension page, shell.html, in an iframe), with a hole where the video sits. It never reads page text, forms or cookies. The page URL and title leave the device only when the user explicitly creates a room or shares that page with their room. To keep the watch party usable, a tab that the room's film tab opens to another site right after the user clicks the video (an ad pop-up) is closed locally and can be reopened with one click (tabs.onCreated openerTabId; can be turned off).
@@ -189,7 +194,8 @@ Web Store ("Add to Opera"). Firefox / Safari: see `browser-support.md` (after 1.
 
 Before submitting (Claude checks; ✅ items were done in 0.9.0):
 - ✅ Minimal permissions: `storage` + `<all_urls>` (to find the video on any site) + `offscreen` (voice chat on film
-  pages, 0.9.60; shows no warning); justifications above.
+  pages, 0.9.60; shows no warning) + `scripting` (0.9.91.20, bridge into our own open tabs on install; no extra
+  warning next to `<all_urls>`); justifications above.
 - ✅ The privacy policy describes every piece of data stored (name/avatar, room state, chat, browser ID, pins, custom
   emojis, IP addresses in voice).
 - ✅ No film/series/site names in the description; "a neutral sync tool for any HTML5 video".

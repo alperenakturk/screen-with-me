@@ -666,3 +666,15 @@ async function checkOpened(tabId: number, url: string): Promise<void> {
   shell.closed = [...shell.closed.slice(-9), url];
   post(shell.port, { type: 'tab-closed', url });
 }
+
+// A fresh install (0.9.91.20, PDF item 1 "first-time path"): the room tab that sent the person to install learns at
+// once that the extension is here, without "reload this page": the site bridge goes into our site's open tabs. Only
+// on "install": after an update the old bridge may still be alive in those tabs.
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason !== 'install') return;
+  void chrome.tabs.query({ url: `${SITE_ORIGIN}/*` }).then((tabs) => {
+    for (const tab of tabs) {
+      if (tab.id !== undefined) void chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['site-bridge.js'] }).catch(() => {});
+    }
+  });
+});

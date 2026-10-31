@@ -54,7 +54,8 @@ import {
   sessionLoad,
   sessionSave,
 } from './storage.ts';
-import { avatarNode, renderAvatarPicker } from './ui/avatar.ts';
+import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
+import { showFirstTips } from './ui/first-tips.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -132,14 +133,23 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
     return;
   }
 
+  // One screen (0.9.91.20, owner: "first-time path", PDF item 1): name, the avatar next to it (a tap changes it) and
+  // "Odaya gir". Above it, who is waiting and what is on, so an invited friend knows they are in the right place.
   app.innerHTML = `
     <section class="card join-card">
       <p class="muted step-label" id="room-code"></p>
+      <div id="join-invite" class="join-invite" hidden>
+        <p id="join-waiting" class="join-waiting"></p>
+        <p id="join-playing" class="muted small join-playing" hidden></p>
+      </div>
       <form id="name-form" class="stack">
         <label for="name" class="step-title" data-i18n="yourName"></label>
-        <input id="name" maxlength="32" required autocomplete="nickname" data-i18n-placeholder="namePlaceholder" />
-        <button class="btn primary big" data-i18n="continue"></button>
-        <p class="muted small" data-i18n="nameHint"></p>
+        <div class="join-row">
+          <button type="button" id="join-avatar" class="join-avatar" data-i18n-title="changeAvatar"></button>
+          <input id="name" maxlength="32" required autocomplete="nickname" data-i18n-placeholder="namePlaceholder" />
+        </div>
+        <button class="btn primary big" data-i18n="enterRoom"></button>
+        <p class="muted small" data-i18n="joinHint"></p>
       </form>
     </section>
   `;
@@ -147,16 +157,29 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
 
   const roomCode = app.querySelector<HTMLElement>('#room-code')!;
   let roomName: string | null = null;
-  const renderCode = () => (roomCode.textContent = roomName ? `💾 ${roomName}` : t('roomCode', { id: roomId }));
+  let info: { people?: string[]; count?: number; playing?: string | null } | null = null;
+  const renderCode = () => {
+    roomCode.textContent = roomName ? `💾 ${roomName}` : t('roomCode', { id: roomId });
+    const people = (info?.people ?? []).filter(Boolean);
+    const count = info?.count ?? 0;
+    app.querySelector<HTMLElement>('#join-invite')!.hidden = count === 0;
+    if (count > 0 && people.length) {
+      const others = count - 1;
+      app.querySelector('#join-waiting')!.textContent = others > 0 ? t('joinWaitingMany', { name: people[0]!, n: others }) : t('joinWaitingOne', { name: people[0]! });
+    }
+    const playing = app.querySelector<HTMLElement>('#join-playing')!;
+    playing.hidden = !info?.playing;
+    playing.textContent = info?.playing ? t('joinPlaying', { title: info.playing }) : '';
+  };
   renderCode();
-  // Kayıtlı odaysa adını göster.
+  // Saved room's name, who is inside and what is on (the room answers without a connection).
   void fetch(`/api/rooms/${roomId}/info`)
-    .then((r) => (r.ok ? (r.json() as Promise<{ saved: boolean; name: string | null }>) : null))
-    .then((info) => {
-      if (info?.saved && info.name) {
-        roomName = info.name;
-        renderCode();
-      }
+    .then((r) => (r.ok ? (r.json() as Promise<{ saved: boolean; name: string | null; people?: string[]; count?: number; playing?: string | null }>) : null))
+    .then((answer) => {
+      if (!answer) return;
+      if (answer.saved && answer.name) roomName = answer.name;
+      info = answer;
+      renderCode();
     })
     .catch(() => {});
   window.addEventListener('langchange', renderCode);
@@ -166,65 +189,30 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
   input.focus();
   input.select();
 
+  let avatar: Avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
+  const avatarButton = app.querySelector<HTMLButtonElement>('#join-avatar')!;
+  const renderAvatar = () => avatarButton.replaceChildren(avatarNode(avatar, 'avatar-glyph'), el('span', { class: 'join-avatar-edit', 'aria-hidden': 'true' }, '✎'));
+  renderAvatar();
+  avatarButton.addEventListener('click', () =>
+    openAvatarDialog(
+      () => avatar,
+      (picked) => {
+        avatar = picked;
+        renderAvatar();
+        input.focus();
+      },
+    ),
+  );
+
   app.querySelector('#name-form')!.addEventListener('submit', (event) => {
     event.preventDefault();
     const name = cleanName(input.value);
     if (name === null) return;
-    if (name !== load('name')) saveIdentity(name);
+    if (name !== load('name') || avatar !== load('avatar')) saveIdentity(name, avatar);
     window.removeEventListener('langchange', renderCode);
-    renderAvatarStep(app, roomId, name);
-  });
-}
-
-/** 2. adım: avatar seçimi. Daha önce seçilen işaretli gelir (yoksa rastgele biri). */
-function renderAvatarStep(app: HTMLElement, roomId: string, name: string): void {
-  app.innerHTML = `
-    <section class="card join-card avatar-card">
-      <p class="muted step-label" id="hello"></p>
-      <h2 class="step-title" data-i18n="pickAvatar"></h2>
-      <div id="avatar-picker" class="avatar-picker big"></div>
-      <div id="avatar-preview" class="avatar-preview"></div>
-      <button id="enter" type="button" class="btn primary big" data-i18n="enterRoom"></button>
-      <button id="back" type="button" class="link-btn" data-i18n="back"></button>
-    </section>
-  `;
-  translate(app);
-
-  const savedAvatar = roomIdentity(roomId)?.avatar ?? load('avatar');
-  let avatar: Avatar = isAvatar(savedAvatar) ? savedAvatar : randomAvatar();
-  const picker = app.querySelector<HTMLElement>('#avatar-picker')!;
-  const preview = app.querySelector<HTMLElement>('#avatar-preview')!;
-  const hello = app.querySelector<HTMLElement>('#hello')!;
-  const renderTexts = () => (hello.textContent = t('helloName', { name }));
-  const renderPreview = () => preview.replaceChildren(avatarNode(avatar, 'avatar-glyph'), ` ${name}`);
-  const drawPicker = renderAvatarPicker(
-    picker,
-    () => avatar,
-    (option) => {
-      avatar = option;
-      renderPreview();
-    },
-    () => enter(),
-  );
-  renderPreview();
-  renderTexts();
-  window.addEventListener('langchange', renderTexts);
-  window.addEventListener('langchange', drawPicker);
-
-  function enter(): void {
-    if (avatar !== load('avatar')) saveIdentity(name, avatar);
-    window.removeEventListener('langchange', renderTexts);
-    window.removeEventListener('langchange', drawPicker);
     startRoom(app, roomId, name, avatar);
-  }
-  app.querySelector('#enter')!.addEventListener('click', enter);
-  app.querySelector('#back')!.addEventListener('click', () => {
-    window.removeEventListener('langchange', renderTexts);
-    window.removeEventListener('langchange', drawPicker);
-    renderRoom(app, roomId);
   });
 }
-
 
 /** İsmin önüne avatarı koyar (varsa). */
 /** Kalan süre: "2 sa 13 dk", "4 dk 05 sn", "45 sn". */
@@ -972,6 +960,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
     }
     $('.player-wrap').append(createIntro(document, t('introText')));
+    // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
+    if (!isShell && !tv) showFirstTips();
   }
 
   function handleMessage(message: ServerMessage): void {
@@ -1603,7 +1593,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * Eklenti kuruluysa sekmeyi o götürür (oda orada devam eder); değilse kurulum
    * adımları gösterilir.
    */
+  /** The film card on screen, so it can be drawn again when the extension arrives (see below). */
+  let externalShown: { item: QueueItem; url: string } | null = null;
+  // Installed while this room was open (0.9.91.20): the extension's bridge comes into this tab by itself, and the card
+  // turns into "Go to the film" without a reload.
+  new MutationObserver(() => {
+    if (!hasExtension() || !externalShown || externalEl.hidden) return;
+    showExternal(externalShown.item, externalShown.url, false);
+    flashHint($('#external-go'), t('extensionArrived'), 5000);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-swm-extension'] });
+
   function showExternal(item: QueueItem, url: string, auto: boolean): void {
+    externalShown = { item, url };
     const ext = hasExtension();
     const shellOk = extensionSupportsShell();
     $('#external-title').textContent = itemTitle(item);

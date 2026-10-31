@@ -1788,6 +1788,89 @@ html:not(.shell) .shell-only {
   margin-top: 4vh;
 }
 
+/* 0.9.91.20: one join screen: who is waiting, then the avatar (tap to change) next to the name. */
+.join-invite {
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.join-invite p {
+  margin: 0;
+}
+
+.join-waiting {
+  font-weight: 700;
+}
+
+.join-playing {
+  margin-top: 2px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.join-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.join-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.join-avatar {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-size: 28px;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.join-avatar:hover {
+  border-color: var(--accent);
+}
+
+.join-avatar .avatar-glyph {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.join-avatar .avatar-glyph img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.join-avatar-edit {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+}
+
 .label {
   font-size: 14px;
 }
@@ -11155,4 +11238,56 @@ html.shorts-view .game-stage .game-place {
 
 .voice-cams.floating.sized .cam-grid.spotlight > .cam-tile.pinned {
   aspect-ratio: auto;
+}
+
+/* 0.9.91.20: first-visit tips (ui/first-tips.ts), a bubble pointing at its button. */
+.first-tip {
+  position: fixed;
+  z-index: 3100;
+  width: min(300px, calc(100vw - 16px));
+  padding: 12px 14px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+  animation: r-in 0.2s ease-out;
+}
+
+.first-tip::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: calc(var(--arrow-x, 50%) - 7px);
+  width: 12px;
+  height: 12px;
+  border-left: 1px solid var(--accent);
+  border-top: 1px solid var(--accent);
+  background: var(--surface-2);
+  transform: rotate(45deg);
+}
+
+.first-tip.above::before {
+  top: auto;
+  bottom: -7px;
+  transform: rotate(225deg);
+}
+
+.first-tip p {
+  margin: 0 18px 10px 0;
+}
+
+.first-tip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.first-tip-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
 }
