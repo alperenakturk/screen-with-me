@@ -173,6 +173,7 @@ implement, test, ship.
 - [ ] **(added)** Monitoring: uptime check, Cloudflare usage alerts, error rate; a simple status note when down.
 - [ ] **(added)** Capacity and cost: free-plan limits (Durable Objects 100k requests/day), load test with many rooms,
   a plan if we go viral (Workers Paid ~5 $/month 👤).
+- [ ] **(added)** Browser support: research and recommendations in `docs/internal/browser-support.md` (no decision yet).
 - [ ] **(added)** Privacy-friendly usage metrics to measure the success criteria (rooms with 2+ people for 10+ min,
   returning users) without cookies or personal data.
 
@@ -203,7 +204,7 @@ implement, test, ship.
   **DRM is never bypassed**; service names only in "works with …" form when it really works. Spotify is
   music-only: check whether its terms allow synced listening control from an extension before building anything.
 - **Apps:** PWA first (exists since 0.9.70); a native mobile app only if it brings something the PWA can't (owner
-  decides after real usage data). Browser add-on stores: Edge, Firefox (separate manifest), Safari (needs a Mac build).
+  decides after real usage data). Browser add-on stores: Edge, Firefox (separate manifest), Safari (needs a Mac build). Research: `browser-support.md`.
 - **Growth:** launch posts (Product Hunt, Reddit, Show HN once public), Instagram/TikTok content, Discord community;
   growth plan in `BUYUME.md`.
 - **Donations:** after the first real users (GitHub Sponsors / Patreon…), never inside a room.

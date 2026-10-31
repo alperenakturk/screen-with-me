@@ -199,6 +199,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   playback); then decide on a hidden preload player.
 - [ ] **Remind the owner before the 1.0 submission** (owner's request, 29 Oct 2026): test the extension in **Brave and
   Edge** (install the zip, one room with a friend: room view, play/pause, voice, fullscreen; Brave Shields on).
+  Full checklist (Edge, Brave, Opera) and the browser research: `docs/internal/browser-support.md` (31 Oct 2026,
+  research only; owner decides what to build).
 
 ## Last full test pass (28 Oct 2026, 0.9.82, cloud)
 - **0.9.91:** unit 204/204 (page tokens, shorts-only, next in answers), e2e all files green except `room.mjs` (local
