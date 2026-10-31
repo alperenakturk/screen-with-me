@@ -4739,6 +4739,22 @@ html.shorts-view .footer {
   color: var(--muted);
 }
 
+/* "?olcum=1": how long after the room switched this Short started (0.9.91.17, owner's measurement). */
+.shorts-measure {
+  max-width: 64px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text);
+}
+
+.shorts-measure[hidden] {
+  display: none !important;
+}
+
 .shorts-bar {
   justify-content: center;
   align-items: center;
@@ -9581,6 +9597,50 @@ html.shorts-view .voice-cams {
 
 .shorts-feed-pop p {
   margin: 0;
+}
+
+/* 0.9.91.17: "✨ Bunun gibi" and the "🎲 Keşfet" chips at the top of the ♾ popup (the topic box stays below). */
+#shorts-feed-form {
+  width: 300px;
+}
+
+.feed-like {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.feed-like:hover,
+.feed-pool:hover {
+  border-color: var(--accent);
+}
+
+.feed-pools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.feed-pool {
+  flex: 1 1 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .search-feed {

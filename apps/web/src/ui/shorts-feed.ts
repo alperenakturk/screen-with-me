@@ -1,5 +1,5 @@
 import type { Media, QueueItem } from '@swm/shared/protocol';
-import { parseSearchAnswer, FEED_RESULTS } from '@swm/shared/youtube-search';
+import { isPoolKind, isVideoId, parseSearchAnswer, POOL_RESULTS, type PoolKind } from '@swm/shared/youtube-search';
 import { lang, t } from '../i18n.ts';
 
 /**
@@ -14,8 +14,16 @@ const LOW_WATER = 3;
 const PER_ROUND = 8;
 const SEEN_MAX = 400;
 
+/**
+ * Where the Shorts come from: words (`topic`, a Shorts-only search), "🎲 Keşfet" (`pool`: today's shared pool of a
+ * category, shuffled here) or "✨ Bunun gibi" (`like`: the playing Short's channel, then its title's words). 0.9.91.17.
+ */
+export type FeedSource = { kind: 'topic' } | { kind: 'pool'; pool: PoolKind } | { kind: 'like'; id: string };
+
 interface FeedState {
+  /** What the person sees ("kediler", "🎵 Müzik", "✨ Bunun gibi"). */
   topic: string;
+  source?: FeedSource;
   next: string | null;
   seen: string[];
   /** Found but not added yet (a page has more than one round's worth). */
@@ -47,7 +55,7 @@ export function createShortsFeed(opts: FeedOptions) {
     try {
       const saved = JSON.parse(sessionStorage.getItem(key) ?? 'null') as FeedState | null;
       return saved && typeof saved.topic === 'string' && saved.topic
-        ? { ...saved, seen: Array.isArray(saved.seen) ? saved.seen : [], pending: Array.isArray(saved.pending) ? saved.pending : [] }
+        ? { ...saved, source: cleanSource(saved.source), seen: Array.isArray(saved.seen) ? saved.seen : [], pending: Array.isArray(saved.pending) ? saved.pending : [] }
         : null;
     } catch {
       return null;
@@ -129,8 +137,15 @@ export function createShortsFeed(opts: FeedOptions) {
     const topic = state.topic;
     try {
       const page = state.next ? `&page=${encodeURIComponent(state.next)}` : '';
-      const response = await fetch(`/api/youtube/search?short=1&hl=${lang()}&q=${encodeURIComponent(topic)}${page}`);
-      const answer = response.ok ? parseSearchAnswer(await response.json(), FEED_RESULTS) : ({ error: 'failed' } as const);
+      const source = state.source ?? { kind: 'topic' };
+      const path =
+        source.kind === 'pool'
+          ? `/api/youtube/pool?kind=${source.pool}`
+          : source.kind === 'like'
+            ? `/api/youtube/like?id=${source.id}`
+            : `/api/youtube/search?short=1&q=${encodeURIComponent(topic)}`;
+      const response = await fetch(`${path}&hl=${lang()}${page}`);
+      const answer = response.ok ? parseSearchAnswer(await response.json(), POOL_RESULTS) : ({ error: 'failed' } as const);
       if (!state || state.topic !== topic) return;
       if ('error' in answer) {
         if (answer.error === 'busy' || answer.error === 'failed') {
@@ -141,6 +156,8 @@ export function createShortsFeed(opts: FeedOptions) {
       }
       const seen = new Set(state.seen);
       const fresh = answer.items.map((item) => item.id).filter((id) => !seen.has(id) && !have.has(id));
+      // A pool is the same for every room today: each room plays it in its own random order.
+      if (source.kind === 'pool') shuffle(fresh);
       state.seen.push(...fresh);
       add(fresh.slice(0, PER_ROUND));
       state.pending = fresh.slice(PER_ROUND);
@@ -162,7 +179,7 @@ export function createShortsFeed(opts: FeedOptions) {
     get topic(): string | null {
       return state?.topic ?? null;
     },
-    start(topic: string): void {
+    start(topic: string, source: FeedSource = { kind: 'topic' }): void {
       const clean = topic.replace(/\s+/g, ' ').trim().slice(0, 80);
       if (!clean) return;
       if (!opts.canAdd()) {
@@ -175,7 +192,8 @@ export function createShortsFeed(opts: FeedOptions) {
       const leftovers = opts.queueItems().filter((item) => item.media.kind === 'youtube' && old.has(item.media.id));
       leftovers.forEach((item, i) => setTimeout(() => opts.remove(item.id), i * 300));
       writeAdded([]);
-      state = { topic: clean, next: null, seen: [], pending: [], done: false };
+      // "More like this" never brings back the Short it started from.
+      state = { topic: clean, source, next: null, seen: source.kind === 'like' ? [source.id] : [], pending: [], done: false };
       // The new Shorts come after the old ones are gone (or the queue looks full to the first round).
       retryAt = leftovers.length ? Date.now() + leftovers.length * 300 + 800 : 0;
       emptyPages = 0;
@@ -187,4 +205,18 @@ export function createShortsFeed(opts: FeedOptions) {
     stop: () => stop(),
     tick: () => void tick(),
   };
+}
+
+function cleanSource(value: unknown): FeedSource {
+  const source = (typeof value === 'object' && value !== null ? value : {}) as { kind?: unknown; pool?: unknown; id?: unknown };
+  if (source.kind === 'pool' && isPoolKind(source.pool)) return { kind: 'pool', pool: source.pool };
+  if (source.kind === 'like' && isVideoId(source.id)) return { kind: 'like', id: source.id };
+  return { kind: 'topic' };
+}
+
+function shuffle<T>(list: T[]): void {
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j]!, list[i]!];
+  }
 }

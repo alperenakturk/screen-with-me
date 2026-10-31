@@ -252,7 +252,11 @@ await ayse.shot('kamera-sabit-pencere');
 const spot = await ayse.evaluate(`(() => { const box = document.getElementById('voice-cams').getBoundingClientRect(); const tiles = [...document.querySelectorAll('#voice-cams .cam-tile')].map((t) => ({ pinned: t.classList.contains('pinned'), r: t.getBoundingClientRect() })); const p = tiles.find((t) => t.pinned)?.r; const o = tiles.find((t) => !t.pinned)?.r; return { inside: tiles.every(({ r }) => r.left >= box.left - 1 && r.right <= box.right + 1 && r.top >= box.top - 1 && r.bottom <= box.bottom + 1), bigger: !!p && !!o && p.width > o.width * 2, beside: !!p && !!o && o.left >= p.right - 1, n: tiles.length }; })()`);
 check(spot.inside && spot.bigger && spot.beside, 'tek pencerede sabitlenen kamera solda büyük, diğeri sağda; hepsi pencerenin içinde', JSON.stringify(spot));
 await ayse.evaluate(`document.getElementById('voice-cam').click(); 1`);
-await until(() => ayse.evaluate(`document.querySelectorAll('#voice-cams .cam-tile').length === 1`), 8000);
+// Back to Ali's camera alone, and its picture moving again, before the fullscreen checks below.
+await until(async () => {
+  const f = await ayse.evaluate(`(async () => { const v = [...document.querySelectorAll('#voice-cams .cam-tile video')]; const a = v.map((x) => x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0); await new Promise((r) => setTimeout(r, 800)); return { tiles: v.length, moving: v.every((x, i) => (x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0) - a[i] > 2) }; })()`);
+  return f.tiles === 1 && f.moving;
+}, 10000);
 await ayse.evaluate(`[...document.querySelectorAll('#voice-people .together-person')].find((p) => p.textContent.includes('Ali')).click(); 1`);
 await ayse.sleep(300);
 await ayse.evaluate(`[...document.querySelectorAll('.person-pop-item')].find((b) => b.textContent.includes('🔇')).click(); 1`);

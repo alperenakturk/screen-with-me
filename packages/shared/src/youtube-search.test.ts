@@ -13,6 +13,11 @@ import {
   parseUpright,
   SEARCH_QUERY_MAX,
   SEARCH_RESULTS,
+  isPoolKind,
+  POOL_CATEGORY,
+  poolWindow,
+  parseVideoItems,
+  titleWords,
 } from './youtube-search.ts';
 
 describe('normalizeQuery', () => {
@@ -141,5 +146,38 @@ describe('Shorts in search results (0.9.91.12)', () => {
   it('the client keeps the mark', () => {
     const answer = parseSearchAnswer({ items: [{ id: 'aqz-KE-bpKQ', title: 'a', channel: 'b', duration: 45, live: false, short: true }, { id: 'dQw4w9WgXcQ', title: 'c', channel: 'd', duration: 50, live: false, short: 'yes' }] });
     expect('items' in answer && answer.items.map((i) => i.short)).toEqual([true, undefined]);
+  });
+});
+
+describe('Discover pools and "more like this" (0.9.91.17)', () => {
+  it('knows its pool kinds and their categories', () => {
+    expect(isPoolKind('music')).toBe(true);
+    expect(isPoolKind('cats')).toBe(false);
+    expect(POOL_CATEGORY.popular).toBeNull();
+    expect(POOL_CATEGORY.animals).toBe('15');
+  });
+  it('uses the same UTC day for every room', () => {
+    const w = poolWindow(Date.UTC(2026, 9, 31, 23, 59));
+    expect(w.day).toBe('2026-10-31');
+    expect(w.publishedAfter).toBe('2026-10-17T00:00:00Z');
+    expect(poolWindow(Date.UTC(2026, 9, 31, 0, 1)).day).toBe('2026-10-31');
+  });
+  it('reads videos.list items like search results (shape and duration)', () => {
+    const body = {
+      items: [
+        { id: 'aaaaaaaaaaa', snippet: { title: 'Up &amp; down', channelTitle: 'Ch' }, contentDetails: { duration: 'PT45S' }, player: { embedWidth: '56', embedHeight: '100' } },
+        { id: 'bbbbbbbbbbb', snippet: { title: 'Wide', channelTitle: 'Ch' }, contentDetails: { duration: 'PT45S' }, player: { embedWidth: 100, embedHeight: 56 } },
+        { id: 'bad id', snippet: { title: 'x' } },
+      ],
+    };
+    const items = parseVideoItems(body);
+    expect(items.map((i) => i.id)).toEqual(['aaaaaaaaaaa', 'bbbbbbbbbbb']);
+    expect(items[0]).toMatchObject({ title: 'Up & down', duration: 45, short: true });
+    expect(items[1]!.short).toBeUndefined();
+  });
+  it('takes plain words from a title', () => {
+    expect(titleWords('Funniest cat ever 😂 #shorts #cats @someone')).toBe('Funniest cat ever');
+    expect(titleWords('Kediler çok komik! Bölüm 2', 3)).toBe('Kediler çok komik');
+    expect(titleWords('#shorts 😂')).toBeNull();
   });
 });

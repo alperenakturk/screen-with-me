@@ -108,7 +108,9 @@ async function enter(page, room) {
     const before = await page.textContent('#now-title');
     const box = await rect(page, '.player-wrap');
     const cdp = await ctx.newCDPSession(page);
-    const x = box.x + box.w / 2;
+    // 0.9.91.17: YouTube's own bar is on the video (YouTube's rules: nothing of ours over its player), so the swipe
+    // is beside the video (the stage's margin), not on it.
+    const x = Math.max(4, box.x / 2);
     const y = box.y + box.h / 2;
     const touch = (type, at) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y: at }] });
     await touch('touchStart', y + 120);

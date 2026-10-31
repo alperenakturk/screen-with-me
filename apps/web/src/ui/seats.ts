@@ -127,9 +127,12 @@ export function createSeats(left: HTMLElement, right: HTMLElement) {
       }, BUBBLE_MS);
       bubbles.set(key, { text: shown, until: Date.now() + BUBBLE_MS, timer });
     },
-    /** Emoji kişinin avatarından yükselir. Koltuğu yoksa false (o zaman videonun üstünde uçar). */
+    /**
+     * Emoji kişinin avatarından yükselir; koltuğu yoksa "+N"den (0.9.91.17: never over the video, YouTube's rules).
+     * False only when there is no seat at all.
+     */
     react(by: Member, content: HTMLElement): boolean {
-      const av = seats.get(by.id)?.querySelector<HTMLElement>('.seat-av');
+      const av = (seats.get(by.id) ?? more)?.querySelector<HTMLElement>('.seat-av');
       if (!av) return false;
       while (av.querySelectorAll('.seat-fly').length >= MAX_FLIES) av.querySelector('.seat-fly')?.remove();
       const fly = el('span', { class: 'seat-fly' }, content);

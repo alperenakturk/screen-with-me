@@ -4,7 +4,7 @@ import { POKER_ID_PATTERN } from '@swm/shared/games/poker';
 import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
-import { youtubeSearch } from './youtube.ts';
+import { youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 
 export { Draw } from './draw.ts';
 export { Game } from './game.ts';
@@ -62,9 +62,10 @@ export default {
 
     // YouTube search from the room's link box (the API key never leaves the Worker). Pages of other sites may not
     // use it as their free search: a browser sends their `Origin`.
-    if (url.pathname === '/api/youtube/search') {
+    if (url.pathname === '/api/youtube/search' || url.pathname === '/api/youtube/pool' || url.pathname === '/api/youtube/like') {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
-      return youtubeSearch(request, url, env, () => ipKey(request));
+      const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : youtubeSearch;
+      return handler(request, url, env, () => ipKey(request));
     }
 
     // Kayıtlı odalar listesi için küçük bilgi / kayıt kaldırma (Durable Object cevaplar).

@@ -67,7 +67,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.91.16 (voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
+Live: 0.9.91.17 (Shorts: YouTube's own bar and nothing of ours over the player, 🎲 Keşfet pools, ✨ Bunun gibi, `?olcum=1` switch measurement; 0.9.91.16 voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
 site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is reachable from the cloud sandbox again (29 Oct 2026;
 `*.googlevideo.com` still blocked, headless Chromium can't decode YouTube's H.264 anyway). The same queue is in
 `docs/internal/STATUS.md` "Task queue".
@@ -177,7 +177,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   A Short that starts while I'm in fullscreen leaves fullscreen so the Shorts view shows (0.9.91.16, owner; not on
   the TV). YouTube → YouTube switches reuse the same player (`PlayerAdapter.load` = `cueVideoById`; no new iframe, switching
   used to take 1–2 s), phones swipe up/down on the stage (≥60 px, mostly vertical, ≤0.8 s; not on chat / emoji bar),
-  and the wheel works over the video too (our click catcher sits over the YouTube frame since "one remote"). Next
+  and the wheel scrolls (since 0.9.91.17 beside the video, not on it: YouTube's own bar is there; phones swipe on the
+  stage's margins or use ▲▼). Next
   ideas in `STATUS.md`. Test: `scripts/e2e/shorts.mjs`. **0.9.90.7:** many links pasted in the link box at once
   (`parseMediaList` in `media.ts`: only tokens that look like links, YouTube / video files, no film pages, duplicates
   dropped, at most `MEDIA_LIST_MAX` 30) go to the queue one by one 300 ms apart (the server's command limit is 4/s; with
@@ -196,6 +197,19 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `gamePlace:<kind>` = float and sizes it to fit right of the video, `besideShorts`; it stays free back in the room
   view); 🎮 in the Shorts bar (`#shorts-game`, `extraButtons`: the hub moves next to the button pressed); a new ♾ feed
   dequeues the old feed's Shorts still waiting (`feedAdded:<room>`).
+  **0.9.91.17 (owner: "finish Shorts"):** nothing of ours over the YouTube player in the Shorts view (YouTube's
+  Required Minimum Functionality, checked in the API audit): no catcher, no own bar, emojis rise from the seats
+  (`seats.react`, the "+N" seat for people without one), never `reactions.show` there. The room view (flying emojis,
+  dock, toasts over YouTube) is a separate job before the audit. **🎲 Keşfet** in the ♾ popup: chips Popüler / Müzik
+  / Oyun / Komedi / Hayvanlar / Spor (`POOL_KINDS`) start a feed from `/api/youtube/pool?kind&hl&page` (Worker
+  `youtubePool`: the most watched Shorts of the last 14 days, `videoCategoryId`, `order=viewCount`, region TR / US,
+  `safeSearch=strict`, 50 per page; one shared answer per kind + language + UTC day in `caches.default`, `yt-pool1`;
+  rooms shuffle it). **✨ Bunun gibi** (top of the ♾ popup): `/api/youtube/like?id&hl&page` (`youtubeLike`: the
+  video's channel → uploads playlist → its Shorts, 4 units; `next` = `LIKE_SEARCH_PAGE` switches to a search on the
+  title's words, `titleWords`, 101 units a page; `yt-like1`). Feed sources are `FeedSource` (`topic` / `pool` /
+  `like`, `sessionStorage` with the feed). **Switch measurement:** `?olcum=1` once in a tab → `#shorts-measure` by
+  ▲▼ shows how many ms after the room switched (server time, `state.updatedAt`) this Short started moving, and the
+  average of the last 5 (`measureSwitch`; nothing is sent).
   **0.9.91 endless Shorts feed (`ui/shorts-feed.ts`):** "♾ Shorts akışı" in the Shorts bar (topic box) or "📱 Shorts
   akışı" on a search's results starts it; when fewer than 3 are queued (and nothing but Shorts is playing) it asks
   `/api/youtube/search?short=1&page=…` (Worker: `videoDuration=short`, "#shorts" added, 25 per page, `nextPageToken`
@@ -385,10 +399,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   any more (0.9.91.7: they are on the dock; the dock's and the Shorts bar's 📷 also shows outside voice and joins with
   the camera on, `joinWithCam`) and automatic camera tiles start left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") is only for players
   it is the remote of (`current.own`), and since 0.9.91.13 only in the Shorts view's window: elsewhere they get the
-  dock too (`.own-dock`: ⏯ `#dock-play`, volume `#dock-vol`, our catcher stays for click / wheel): **Shorts** (YouTube `controls: 0, disablekb: 1`, needed for scrolling) and the
-  sync test; there click = play/pause, double click = fullscreen, volume is local (`opt:volume`, `opt:muted`), CC when
-  the video has captions. A YouTube player is reused for the next video only when both use the same remote (a Short
-  after a normal video opens a new player). The extension can still hide known film players' bars (embed
+  dock too (`.own-dock`: ⏯ `#dock-play`, volume `#dock-vol`, our catcher stays for click / wheel): only the sync test
+  since 0.9.91.17 (Shorts use YouTube's own bar, `controls: 1`: YouTube's rules forbid anything of ours in front of
+  its player, owner: "in Shorts too, its player; our menu is at the bottom"); there click = play/pause, double click =
+  fullscreen, volume is local (`opt:volume`, `opt:muted`). Every YouTube player is reused for the next YouTube video. The extension can still hide known film players' bars (embed
   `{action:'skin'}`, `KNOWN_PLAYER_CONTROLS`) and set the film's volume (`{action:'volume'}`), but the site no longer
   asks for it (the 0.9.90.3 "⚙ Filmin ayarları" and the "Tam ekranda video" setting are gone). Tests:
   `scripts/harness/embed/run.mjs` (film page: their bar stays, film fills the screen, dock islands, messages by the

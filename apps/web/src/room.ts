@@ -28,6 +28,7 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
+import { POOL_KINDS } from '@swm/shared/youtube-search';
 import { canShareSheet, isTouch } from './device.ts';
 import { el } from './dom.ts';
 import { lang, t, translate, type I18nKey } from './i18n.ts';
@@ -429,6 +430,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <button id="shorts-prev" type="button" class="shorts-arrow" data-i18n-title="shorts.prev">▲</button>
           <span id="shorts-left" class="shorts-left"></span>
           <button id="shorts-next" type="button" class="shorts-arrow" data-i18n-title="shorts.next">▼</button>
+          <span id="shorts-measure" class="shorts-measure" data-i18n-title="shorts.measureHint" hidden></span>
         </div>
         <div id="seats-r" class="seats seats-r shorts-only"></div>
         <div id="shorts-bar" class="shorts-bar shorts-only">
@@ -457,6 +459,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="shorts-feed-wrap">
             <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
             <form id="shorts-feed-form" class="shorts-feed-pop card" hidden>
+              <button id="shorts-like" type="button" class="feed-like" data-i18n-title="feed.likeHint"><b data-i18n="feed.like"></b><span class="muted small" data-i18n="feed.likeText"></span></button>
+              <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span></p>
+              <div id="shorts-pools" class="feed-pools" role="group"></div>
               <label class="small" for="shorts-feed-topic" data-i18n="feed.topicLabel"></label>
               <input id="shorts-feed-topic" autocomplete="off" maxlength="80" data-i18n-placeholder="feed.topic" />
               <button class="btn primary small-btn" data-i18n="feed.start"></button>
@@ -1121,8 +1126,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'reaction': {
         if (!settings.options.showReactions) break;
         // Shorts görünümünde emoji atanın avatarından yükselir (koltuğu yoksa videonun üstünde).
-        const shown = shortsOn ? reactions.content(message.emoji, message.sticker) : null;
-        if (!shown || !seats.react(message.by, shown)) reactions.show(message.by, message.emoji, message.sticker);
+        // In the Shorts view emojis rise from the seats beside the video, never over it (YouTube's rules, 0.9.91.17).
+        if (shortsOn) {
+          const shown = reactions.content(message.emoji, message.sticker);
+          if (shown) seats.react(message.by, shown);
+        }
+        else reactions.show(message.by, message.emoji, message.sticker);
         break;
       }
       case 'chat-image':
@@ -1218,7 +1227,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // ---- Oynatıcı ----
   let currentItemId: string | null = null;
-  /** `own`: our bar is this player's remote (Shorts, the sync test); otherwise the player shows its own controls. */
+  /** `own`: our bar is this player's remote (the sync test); otherwise the player shows its own controls. */
   let current: { player: PlayerAdapter; slot: HTMLElement; youtube: boolean; own: boolean } | null = null;
   let mediaToken = 0;
 
@@ -1245,10 +1254,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (!seenShorts.includes(state.item.id)) seenShorts.push(state.item.id);
     }
     const token = ++mediaToken;
-    // YouTube → YouTube (every scroll in Shorts): the same player opens the next video, no new iframe. Only between
-    // two videos with the same remote: a Short has our bar, a normal video YouTube's own (set when the player opens).
+    // YouTube → YouTube (every scroll in Shorts): the same player opens the next video, no new iframe. Since
+    // 0.9.91.17 every YouTube video (Shorts too) shows YouTube's own bar, so any YouTube player can be reused.
     const next = state.item?.media;
-    if (current?.youtube && next?.kind === 'youtube' && current.own === (next.short === true) && current.player.load && !film) {
+    if (current?.youtube && next?.kind === 'youtube' && current.player.load && !film) {
       const { player } = current;
       const load = current.player.load.bind(current.player);
       engine.detach();
@@ -1260,6 +1269,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       await load(next.id);
       if (token !== mediaToken || current?.player !== player) return;
       engine.attach(player);
+      measureSwitch(state, player, token);
       reportLayout();
       return;
     }
@@ -1291,7 +1301,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     try {
       player =
         media.kind === 'youtube'
-          ? await createYouTubePlayer(slot, media.id, onError, media.short === true)
+          ? await createYouTubePlayer(slot, media.id, onError)
           : media.kind === 'test'
             ? createTestPlayer(slot)
             : createHtml5Player(slot, media.url, onError);
@@ -1305,10 +1315,49 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       slot.remove();
       return;
     }
-    current = { player, slot, youtube: media.kind === 'youtube', own: media.kind === 'test' || (media.kind === 'youtube' && media.short === true) };
+    // Our bar is the remote of the sync test only. YouTube (Shorts too, 0.9.91.17) keeps its own bar: YouTube's rules
+    // forbid anything of ours in front of its player (owner: "in Shorts too, its player; our menu is at the bottom").
+    current = { player, slot, youtube: media.kind === 'youtube', own: media.kind === 'test' };
     engine.attach(player);
     if (mutedForTv) player.setMuted?.(true);
+    measureSwitch(state, player, token);
     reportLayout();
+  }
+
+  /**
+   * "Does everyone land on the next Short together?" (0.9.91.17, ROADMAP; measured in the owner's Chrome, the cloud
+   * can't play YouTube): with `?olcum=1` once in this tab, the Shorts view shows how long after the room switched
+   * (server time) this video really started moving. Two people compare their numbers; the difference is how far
+   * apart they landed. Nothing is sent anywhere.
+   */
+  const measureOn = (() => {
+    try {
+      if (new URLSearchParams(location.search).has('olcum')) sessionStorage.setItem('olcum', '1');
+      return sessionStorage.getItem('olcum') === '1';
+    } catch {
+      return false;
+    }
+  })();
+  const measured: number[] = [];
+  function measureSwitch(state: PlaybackState, player: PlayerAdapter, token: number): void {
+    if (!measureOn || !state.item || state.paused) return;
+    const from = player.getTime();
+    const started = Date.now();
+    const look = () => {
+      if (token !== mediaToken) return;
+      if (!player.isPaused() && player.getTime() > from + 0.05) {
+        const lag = Math.max(0, Math.round(clock.now() - state.updatedAt));
+        measured.push(lag);
+        if (measured.length > 5) measured.shift();
+        const average = Math.round(measured.reduce((a, b) => a + b, 0) / measured.length);
+        const badge = $('#shorts-measure');
+        badge.hidden = false;
+        badge.textContent = `⏱ ${lag} ms · ø ${average}`;
+        return;
+      }
+      if (Date.now() - started < 15_000) setTimeout(look, 40);
+    };
+    look();
   }
 
   // ---- Film (kabuk): film kendi sekmesinde oynar, video bu katmanın deliğinde ----
@@ -1871,6 +1920,28 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     feedForm.hidden = !feedForm.hidden;
     if (!feedForm.hidden) feedTopic.focus();
+  });
+  // "🎲 Keşfet" (0.9.91.17): one tap starts an endless feed from today's shared pool of a category.
+  const pools = $('#shorts-pools');
+  const renderPools = () =>
+    pools.replaceChildren(
+      ...POOL_KINDS.map((kind) => {
+        const chip = el('button', { type: 'button', class: 'feed-pool', 'data-pool': kind }, t(`pool.${kind}`));
+        chip.addEventListener('click', () => {
+          feedForm.hidden = true;
+          feed.start(t(`pool.${kind}`), { kind: 'pool', pool: kind });
+        });
+        return chip;
+      }),
+    );
+  renderPools();
+  window.addEventListener('langchange', renderPools);
+  // "✨ Bunun gibi": more from the playing Short's channel, then Shorts with similar titles.
+  $('#shorts-like').addEventListener('click', () => {
+    const media = roomState?.item?.media;
+    feedForm.hidden = true;
+    if (media?.kind !== 'youtube' || !media.short) return flashHint(feedButton, t('feed.likeNone'), 4000);
+    feed.start(t('feed.likeLabel'), { kind: 'like', id: media.id });
   });
   feedForm.addEventListener('submit', (event) => {
     event.preventDefault();
