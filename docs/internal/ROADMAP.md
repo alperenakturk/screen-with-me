@@ -58,6 +58,27 @@ implement, test, ship.
   - [ ] **Camera window settings:** position, size and behaviour of the camera tiles (presets, snap to corners,
     per-person sizes…); revisit everything about cameras together.
 - [ ] **Before 1.0:** try Shorts / Reels scrolling together end to end (owner's request).
+- **Feature plan to 1.0 (owner agreed 31 Oct 2026; PDF sent to the owner):** few features with big impact, in this
+  order (each a few 0.9.91.x releases), then a closed beta and 1.0. Security, bugs, policies and operations are the
+  other sections.
+  - [ ] **1. First-time path** (most important): invite link → name → extension install → film page; measure each
+    step and cut friction (in-room 3-step "install and come back" card, 10 s first-visit tips); goal < 30 s from link
+    to watching. Design options page first, the owner picks.
+  - [ ] **2. Finish Shorts:** random / popular Shorts feed with category buttons (research: build it, small quota
+    share), TikTok links in the Shorts view via TikTok's official embed player, move our emojis and click catcher
+    off the YouTube player (YouTube's "no overlays" rule, before the API audit), the "everyone lands together"
+    measurement in the owner's Chrome. (`short-video-research.md`)
+  - [ ] **3. Simplify the room:** rarely used features (film time, voting, saved room, recap) under "More"; the
+    owner decides which, from a proposal page.
+  - [ ] **4. Camera pass:** snap to corners, preset layouts (right strip, bottom strip, grid), one full review of
+    everything about cameras (the open "Camera window settings" item above).
+  - [ ] **5. Help / FAQ page** (TR + EN), see the item below.
+  - [ ] **6. "Send feedback" button** in the product (closed beta and launch), see §7 "Feedback loop".
+  - After 1.0 (owner agreed): TV with Google Cast, big services, Instagram Reels, new games, accounts / new languages /
+    native apps (only if users ask).
+  - [ ] **Browser support** (owner's priority, 31 Oct 2026): research session `session_015Fyri68eMHWNiGtk1pUdpw`
+    (branch `claude/browser-support-research`, `browser-support.md`): Chromium browsers (Edge, Brave, Opera, Vivaldi…)
+    first, then Firefox / Safari; the owner decides what to build from the results.
 - [ ] **(added)** First-time experience: someone who has never seen the site arrives with an invite link, installs
   the extension and watches — measure the steps and remove friction.
 - [ ] **(added)** Simplify the room for newcomers: rarely used features (scheduled start, voting, saved rooms, recap)
