@@ -8,7 +8,7 @@ import {
   PROTOCOL_VERSION,
   SYSTEM_MEMBER_ID,
   CLIENT_ID,
-  YOUTUBE_MAX_RATE,
+  maxRateFor,
   expectedPosition,
   parseClientMessage,
   stickerId,
@@ -170,6 +170,7 @@ function banKey(attachment: Attachment, name: string | null): string {
 
 function titleKey(media: Media): string {
   if (media.kind === 'test') return 'test';
+  if (media.kind === 'tiktok') return `tt:${media.id}`;
   return media.kind === 'youtube' ? `yt:${media.id}` : media.url;
 }
 
@@ -686,7 +687,7 @@ export class Room extends DurableObject<Env> {
       case 'next': {
         // Döngü açıkken biten Shorts sıradakine geçmez, başa sarar ("Sonraki"ye basmak yine geçer).
         const item = this.room.state.item;
-        const loop = message.end && this.settings.loop && item?.media.kind === 'youtube' && item.media.short;
+        const loop = message.end && this.settings.loop && ((item?.media.kind === 'youtube' && item.media.short) || item?.media.kind === 'tiktok');
         await this.apply(ws, me, loop ? { t: 'restart', from: message.from } : { t: 'next', from: message.from });
         return;
       }
@@ -1519,10 +1520,9 @@ export class Room extends DurableObject<Env> {
     const opened = this.room.state.item;
     if (opened && opened.id !== before.item?.id) {
       this.stats.video(opened.id, opened.title);
-      // YouTube 2x'ten hızlı oynatmaz: önceki videodan kalan yüksek hız düşürülür.
-      if (opened.media.kind === 'youtube' && this.room.state.rate > YOUTUBE_MAX_RATE) {
-        this.room = { ...this.room, state: { ...this.room.state, rate: YOUTUBE_MAX_RATE } };
-      }
+      // YouTube 2x'ten hızlı oynatmaz, TikTok hep 1×: önceki videodan kalan yüksek hız düşürülür.
+      const max = maxRateFor(opened.media);
+      if (this.room.state.rate > max) this.room = { ...this.room, state: { ...this.room.state, rate: max } };
     }
     if (before.item && before.item.id !== this.room.state.item?.id) {
       // "Bir önceki" listesi: geri dönülen listeden çıkar, geçilen listeye girer.

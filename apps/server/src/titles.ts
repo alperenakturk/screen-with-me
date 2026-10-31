@@ -14,6 +14,7 @@ export async function resolveTitle(media: Media): Promise<string | null> {
   // Sayfaların başlığını sunucu çekmez (rastgele sitelere istek atmamak için);
   // eklenti sekme başlığını yollar, yoksa alan adı gösterilir.
   if (media.kind === 'page') return hostOf(media.url);
+  if (media.kind === 'tiktok') return tiktokTitle(media.id, media.user);
 
   const videoUrl = `https://www.youtube.com/watch?v=${media.id}`;
   try {
@@ -45,5 +46,24 @@ function titleFromUrl(raw: string): string | null {
     return name.slice(0, MAX_TITLE_LENGTH);
   } catch {
     return null;
+  }
+}
+
+/**
+ * TikTok's official oEmbed (no key): the caption, or "@user" when there is none. It needs the full link with the
+ * @handle; links without one get no title (the queue shows "TikTok · …").
+ */
+async function tiktokTitle(id: string, user?: string): Promise<string | null> {
+  if (!user) return null;
+  try {
+    const link = `https://www.tiktok.com/@${user}/video/${id}`;
+    const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(link)}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (!response.ok) return `@${user}`;
+    const data: unknown = await response.json();
+    const title = typeof data === 'object' && data !== null ? (data as { title?: unknown }).title : null;
+    const text = typeof title === 'string' ? title.replace(/\s+/g, ' ').trim() : '';
+    return (text || `@${user}`).slice(0, MAX_TITLE_LENGTH);
+  } catch {
+    return `@${user}`;
   }
 }

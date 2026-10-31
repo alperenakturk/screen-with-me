@@ -13,6 +13,7 @@ export function itemTitle(item: QueueItem): string {
   const title = item.title ?? lateTitles.get(item.id);
   if (title) return title;
   if (item.media.kind === 'test') return t('syncTestTitle');
+  if (item.media.kind === 'tiktok') return item.media.user ? `TikTok · @${item.media.user}` : 'TikTok';
   return item.media.kind === 'youtube' ? `YouTube · ${item.media.id}` : item.media.url;
 }
 
@@ -33,5 +34,6 @@ export function formatTime(seconds: number): string {
 export function mediaUrl(media: QueueItem['media']): string | null {
   if (media.kind === 'youtube') return `https://www.youtube.com/watch?v=${media.id}`;
   if (media.kind === 'test') return null;
+  if (media.kind === 'tiktok') return media.user ? `https://www.tiktok.com/@${media.user}/video/${media.id}` : `https://www.tiktok.com/embed/v2/${media.id}`;
   return media.url;
 }
