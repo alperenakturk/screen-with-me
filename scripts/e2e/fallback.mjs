@@ -83,111 +83,111 @@ async function httpClient(name, path = `/api/rooms/${room}/ws`) {
 }
 
 // 1) WebSocket person and HTTP person in one room.
-const ali = wsClient('Ali');
-await ali.opened;
-ali.send({ t: 'hello', v: V, name: 'Ali', cid: 'cid-ali-fb-0001' });
-const wa = await ali.next((m) => m.t === 'welcome', 'welcome');
+const alice = wsClient('Alice');
+await alice.opened;
+alice.send({ t: 'hello', v: V, name: 'Alice', cid: 'cid-alice-fb-0001' });
+const wa = await alice.next((m) => m.t === 'welcome', 'welcome');
 
-const ayse = await httpClient('Ayse');
-ok(/^[0-9a-f]{32}$/.test(ayse.sid), 'Fallback session opened');
-await ayse.send({ t: 'hello', v: V, name: 'Ayse', cid: 'cid-ayse-fb-001' });
-const wb = await ayse.next((m) => m.t === 'welcome', 'welcome');
-ok(wb.members.some((m) => m.name === 'Ali') && wb.members.some((m) => m.name === 'Ayse'), 'Ayşe joined over HTTP and sees Ali');
-const seen = await ali.next((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ayse'), 'members');
-ok(seen.members.length === 2, 'Ali (WebSocket) sees Ayşe (HTTP) in the room');
+const bob = await httpClient('Bob');
+ok(/^[0-9a-f]{32}$/.test(bob.sid), 'Fallback session opened');
+await bob.send({ t: 'hello', v: V, name: 'Bob', cid: 'cid-bob-fb-001' });
+const wb = await bob.next((m) => m.t === 'welcome', 'welcome');
+ok(wb.members.some((m) => m.name === 'Alice') && wb.members.some((m) => m.name === 'Bob'), 'Bob joined over HTTP and sees Alice');
+const seen = await alice.next((m) => m.t === 'members' && m.members.some((x) => x.name === 'Bob'), 'members');
+ok(seen.members.length === 2, 'Alice (WebSocket) sees Bob (HTTP) in the room');
 
 // 2) Clock, chat both ways, sync both ways.
 const c = Date.now();
-await ayse.send({ t: 'ping', c });
-const pong = await ayse.next((m) => m.t === 'pong', 'pong');
+await bob.send({ t: 'ping', c });
+const pong = await bob.next((m) => m.t === 'pong', 'pong');
 ok(pong.c === c && typeof pong.s === 'number', `Ping / pong over HTTP (${Date.now() - c} ms)`);
 
-await ayse.send({ t: 'chat', text: 'merhaba http' });
-const chat1 = await ali.next((m) => m.t === 'chat' && m.message.text === 'merhaba http', 'chat from Ayse');
-ok(chat1.message.by.name === 'Ayse', 'Chat HTTP → WebSocket');
+await bob.send({ t: 'chat', text: 'hello over http' });
+const chat1 = await alice.next((m) => m.t === 'chat' && m.message.text === 'hello over http', 'chat from Bob');
+ok(chat1.message.by.name === 'Bob', 'Chat HTTP → WebSocket');
 const sentAt = Date.now();
-ali.send({ t: 'chat', text: 'merhaba ws' });
-await ayse.next((m) => m.t === 'chat' && m.message.text === 'merhaba ws', 'chat from Ali');
+alice.send({ t: 'chat', text: 'hello over ws' });
+await bob.next((m) => m.t === 'chat' && m.message.text === 'hello over ws', 'chat from Alice');
 ok(true, `Chat WebSocket → HTTP (held poll answered in ${Date.now() - sentAt} ms)`);
 
-ali.send({ t: 'load', media: { kind: 'youtube', id: 'aqz-KE-bpKQ' } });
-const load = await ayse.next((m) => m.t === 'state' && m.action === 'load', 'load');
-ok(load.state.item?.media.id === 'aqz-KE-bpKQ', 'Ali opened a video, Ayşe (HTTP) got it');
-await ayse.send({ t: 'pause', position: 42, at: Date.now() });
-const paused = await ali.next((m) => m.t === 'state' && m.action === 'pause', 'pause');
-ok(paused.state.paused && Math.abs(paused.state.position - 42) < 0.5 && paused.by.name === 'Ayse', 'Ayşe paused at 42 s, Ali followed');
-await ayse.send({ t: 'seek', position: 100, at: Date.now() });
-const seek = await ali.next((m) => m.t === 'state' && m.action === 'seek', 'seek');
-ok(Math.abs(seek.state.position - 100) < 0.5, 'Ayşe seeked, Ali followed');
+alice.send({ t: 'load', media: { kind: 'youtube', id: 'aqz-KE-bpKQ' } });
+const load = await bob.next((m) => m.t === 'state' && m.action === 'load', 'load');
+ok(load.state.item?.media.id === 'aqz-KE-bpKQ', 'Alice opened a video, Bob (HTTP) got it');
+await bob.send({ t: 'pause', position: 42, at: Date.now() });
+const paused = await alice.next((m) => m.t === 'state' && m.action === 'pause', 'pause');
+ok(paused.state.paused && Math.abs(paused.state.position - 42) < 0.5 && paused.by.name === 'Bob', 'Bob paused at 42 s, Alice followed');
+await bob.send({ t: 'seek', position: 100, at: Date.now() });
+const seek = await alice.next((m) => m.t === 'state' && m.action === 'seek', 'seek');
+ok(Math.abs(seek.state.position - 100) < 0.5, 'Bob seeked, Alice followed');
 
 // 3) Several messages in one request keep their order; rate limits still apply.
-await ayse.post([JSON.stringify({ t: 'chat', text: 'bir' }), JSON.stringify({ t: 'chat', text: 'iki' }), JSON.stringify({ t: 'chat', text: 'üç' })]);
+await bob.post([JSON.stringify({ t: 'chat', text: 'one' }), JSON.stringify({ t: 'chat', text: 'two' }), JSON.stringify({ t: 'chat', text: 'three' })]);
 const order = [];
-for (let i = 0; i < 3; i++) order.push((await ali.next((m) => m.t === 'chat' && ['bir', 'iki', 'üç'].includes(m.message.text), 'batch')).message.text);
-ok(order.join() === 'bir,iki,üç', 'A batch of messages arrives in order');
-const bad = await ayse.post([12]);
+for (let i = 0; i < 3; i++) order.push((await alice.next((m) => m.t === 'chat' && ['one', 'two', 'three'].includes(m.message.text), 'batch')).message.text);
+ok(order.join() === 'one,two,three', 'A batch of messages arrives in order');
+const bad = await bob.post([12]);
 ok(bad.status === 204, 'A non-text message is accepted as a request…');
-const badMsg = await ayse.next((m) => m.t === 'error' && m.code === 'bad_message', 'bad_message');
+const badMsg = await bob.next((m) => m.t === 'error' && m.code === 'bad_message', 'bad_message');
 ok(!!badMsg, '…and answered like a binary frame (bad_message)');
-const notArray = await ayse.post({ t: 'chat' });
+const notArray = await bob.post({ t: 'chat' });
 ok(notArray.status === 400, 'A body that is not a list is refused (400)');
-const tooMany = await ayse.post(Array.from({ length: 41 }, () => '{"t":"ping","c":1}'));
+const tooMany = await bob.post(Array.from({ length: 41 }, () => '{"t":"ping","c":1}'));
 ok(tooMany.status === 400, 'More than 40 messages in one request are refused');
 
 // 4) Voice signalling between a WebSocket and an HTTP person.
-ali.send({ t: 'voice', on: true, mic: true });
-await ayse.send({ t: 'voice', on: true, mic: true });
-await ali.next((m) => m.t === 'members' && m.members.find((x) => x.name === 'Ayse')?.voice, 'Ayse in voice');
-await ayse.send({ t: 'signal', to: wa.you, data: { candidate: { candidate: 'candidate:http', sdpMid: '0', sdpMLineIndex: 0 } } });
-const sig = await ali.next((m) => m.t === 'signal', 'signal');
+alice.send({ t: 'voice', on: true, mic: true });
+await bob.send({ t: 'voice', on: true, mic: true });
+await alice.next((m) => m.t === 'members' && m.members.find((x) => x.name === 'Bob')?.voice, 'Bob in voice');
+await bob.send({ t: 'signal', to: wa.you, data: { candidate: { candidate: 'candidate:http', sdpMid: '0', sdpMLineIndex: 0 } } });
+const sig = await alice.next((m) => m.t === 'signal', 'signal');
 ok(sig.from === wb.you && sig.data.candidate.candidate === 'candidate:http', 'Voice signal HTTP → WebSocket');
-ali.send({ t: 'signal', to: wb.you, data: { candidate: { candidate: 'candidate:ws', sdpMid: '0', sdpMLineIndex: 0 } } });
-const sig2 = await ayse.next((m) => m.t === 'signal', 'signal back');
+alice.send({ t: 'signal', to: wb.you, data: { candidate: { candidate: 'candidate:ws', sdpMid: '0', sdpMLineIndex: 0 } } });
+const sig2 = await bob.next((m) => m.t === 'signal', 'signal back');
 ok(sig2.data.candidate.candidate === 'candidate:ws', 'Voice signal WebSocket → HTTP');
 
 // 5) Reconnect: the same browser comes back with `prev` and keeps its member id; the old session is closed.
-const ayse2 = await httpClient('Ayse2');
-await ayse2.send({ t: 'hello', v: V, name: 'Ayse', cid: 'cid-ayse-fb-001', prev: wb.you });
-const wb2 = await ayse2.next((m) => m.t === 'welcome', 'welcome 2');
+const bob2 = await httpClient('Bob2');
+await bob2.send({ t: 'hello', v: V, name: 'Bob', cid: 'cid-bob-fb-001', prev: wb.you });
+const wb2 = await bob2.next((m) => m.t === 'welcome', 'welcome 2');
 ok(wb2.you === wb.you, 'Reconnect over HTTP keeps the member id');
-for (let i = 0; i < 50 && ayse.closed() === null; i++) await new Promise((r) => setTimeout(r, 100));
-ok(ayse.closed() === 4005, 'The replaced session learns it was replaced (410, 4005)');
-const members2 = await ali.next((m) => m.t === 'members' && m.members.filter((x) => x.name === 'Ayse').length === 1, 'one Ayse');
-ok(members2.members.length === 2, 'Ayşe appears once after reconnecting');
+for (let i = 0; i < 50 && bob.closed() === null; i++) await new Promise((r) => setTimeout(r, 100));
+ok(bob.closed() === 4005, 'The replaced session learns it was replaced (410, 4005)');
+const members2 = await alice.next((m) => m.t === 'members' && m.members.filter((x) => x.name === 'Bob').length === 1, 'one Bob');
+ok(members2.members.length === 2, 'Bob appears once after reconnecting');
 
 // 6) Unknown or finished sessions answer 410.
 const unknown = await fetch(`${http}/api/rooms/${room}/ws?http=poll&sid=${'0'.repeat(32)}`);
 ok(unknown.status === 410 && (await unknown.json()).code === 1006, 'Unknown session → 410');
 
 // 7) Kick: the host removes the HTTP person; they get the error, then the close code.
-ali.send({ t: 'kick', id: wb2.you });
-const kicked = await ayse2.next((m) => m.t === 'error' && m.code === 'kicked', 'kicked');
-for (let i = 0; i < 50 && ayse2.closed() === null; i++) await new Promise((r) => setTimeout(r, 100));
-ok(!!kicked && ayse2.closed() === 4003, 'Kicked over HTTP: error, then 410 with 4003');
-await ali.next((m) => m.t === 'members' && !m.members.some((x) => x.name === 'Ayse'), 'Ayse gone');
-ok(true, 'Ali no longer sees Ayşe');
+alice.send({ t: 'kick', id: wb2.you });
+const kicked = await bob2.next((m) => m.t === 'error' && m.code === 'kicked', 'kicked');
+for (let i = 0; i < 50 && bob2.closed() === null; i++) await new Promise((r) => setTimeout(r, 100));
+ok(!!kicked && bob2.closed() === 4003, 'Kicked over HTTP: error, then 410 with 4003');
+await alice.next((m) => m.t === 'members' && !m.members.some((x) => x.name === 'Bob'), 'Bob gone');
+ok(true, 'Alice no longer sees Bob');
 
-// 8) Leaving: Can joins over HTTP and leaves with `close`; Ali sees him go.
-const can = await httpClient('Can');
-await can.send({ t: 'hello', v: V, name: 'Can', cid: 'cid-can-fb-0001' });
-await can.next((m) => m.t === 'welcome', 'welcome');
-await ali.next((m) => m.t === 'members' && m.members.some((x) => x.name === 'Can'), 'Can in');
-const left = await can.leave();
+// 8) Leaving: Carl joins over HTTP and leaves with `close`; Alice sees him go.
+const carl = await httpClient('Carl');
+await carl.send({ t: 'hello', v: V, name: 'Carl', cid: 'cid-can-fb-0001' });
+await carl.next((m) => m.t === 'welcome', 'welcome');
+await alice.next((m) => m.t === 'members' && m.members.some((x) => x.name === 'Carl'), 'Carl in');
+const left = await carl.leave();
 ok(left.status === 204, 'Close request accepted');
-await ali.next((m) => m.t === 'members' && !m.members.some((x) => x.name === 'Can'), 'Can gone');
-ok(true, 'Ali sees Can leave');
-const after = await can.send({ t: 'chat', text: 'still here?' });
+await alice.next((m) => m.t === 'members' && !m.members.some((x) => x.name === 'Carl'), 'Carl gone');
+ok(true, 'Alice sees Carl leave');
+const after = await carl.send({ t: 'chat', text: 'still here?' });
 ok(after.status === 410, 'A closed session cannot send any more');
 
 // 9) Nothing to say: a poll is held and answered empty (204), not at once.
-const dan = await httpClient('Dan');
-await dan.send({ t: 'hello', v: V, name: 'Dan', cid: 'cid-dan-fb-0001' });
-await dan.next((m) => m.t === 'welcome', 'welcome');
+const dave = await httpClient('Dave');
+await dave.send({ t: 'hello', v: V, name: 'Dave', cid: 'cid-dan-fb-0001' });
+await dave.next((m) => m.t === 'welcome', 'welcome');
 const heldStart = Date.now();
-ali.send({ t: 'chat', text: 'late' });
-await dan.next((m) => m.t === 'chat' && m.message.text === 'late', 'late chat');
+alice.send({ t: 'chat', text: 'late' });
+await dave.next((m) => m.t === 'chat' && m.message.text === 'late', 'late chat');
 ok(Date.now() - heldStart < 2000, 'A held poll answers as soon as there is news');
-await dan.leave();
+await dave.leave();
 
 // 10) A game over the fallback (XOX on its own object).
 const gid = 'g' + Math.random().toString(36).slice(2, 10);

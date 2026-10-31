@@ -1,8 +1,8 @@
 // "Phone hotspot" in a real Chromium (0.9.92, docs/internal/hotspot-connection.md): a small proxy in front of the
 // local server lets plain HTTP through but swallows every WebSocket upgrade (the connection neither opens nor
-// closes, exactly what the owner's hotspot did). Ayşe opens the room through the proxy, Ali directly.
+// closes, exactly what the owner's hotspot did). Bob opens the room through the proxy, Alice directly.
 //
-// Checks: Ayşe gets into the room over the HTTP fallback (no WebSocket), chat both ways, the sync test plays for her in
+// Checks: Bob gets into the room over the HTTP fallback (no WebSocket), chat both ways, the sync test plays for her in
 // step, a reload goes straight to the fallback, a network drop is survived, and once WebSockets work again she
 // switches back to a WebSocket by herself (upgrade probe), keeping the same member id.
 //
@@ -89,7 +89,7 @@ async function person(site, name, avatar, probeMs) {
   await page.evaluate(([n, a]) => {
     localStorage.setItem('name', n);
     localStorage.setItem('avatar', a);
-    localStorage.setItem('lang', 'tr');
+    localStorage.setItem('lang', 'en');
   }, [name, avatar]);
   await page.goto(`${site}/r/${room}#back`);
   await page.waitForSelector('#people-count');
@@ -103,36 +103,36 @@ const say = async (page, text) => {
 };
 const hasChat = (page, text) => page.evaluate((t) => [...document.querySelectorAll('#chat-list li')].some((li) => li.textContent?.includes(t)), text);
 
-const ali = await person(TARGET.origin, 'Ali', 'wizard');
-check((await until(() => transport(ali))) === 'ws', 'Ali (normal network) uses a WebSocket');
+const alice = await person(TARGET.origin, 'Alice', 'wizard');
+check((await until(() => transport(alice))) === 'ws', 'Alice (normal network) uses a WebSocket');
 
 const started = Date.now();
 // The upgrade probe would normally wait a minute; the test shortens it.
-const ayse = await person(PROXY, 'Ayse', 'elf', 4000);
-const joinedIn = await until(async () => (await people(ali)) === '2' && (await transport(ayse)) === 'http', 20000);
-check(!!joinedIn, `Ayşe (WebSockets swallowed) is in the room over the HTTP fallback (${((Date.now() - started) / 1000).toFixed(1)} s)`);
+const bob = await person(PROXY, 'Bob', 'elf', 4000);
+const joinedIn = await until(async () => (await people(alice)) === '2' && (await transport(bob)) === 'http', 20000);
+check(!!joinedIn, `Bob (WebSockets swallowed) is in the room over the HTTP fallback (${((Date.now() - started) / 1000).toFixed(1)} s)`);
 check(roomUpgrades === 1, `her WebSocket really hung (${roomUpgrades} swallowed)`);
-check(!(await ayse.isVisible('.net-hint')), 'no "cannot connect" warning for her');
+check(!(await bob.isVisible('.net-hint')), 'no "cannot connect" warning for her');
 
-await say(ayse, 'selam, hotspottayım');
-check(!!(await until(() => hasChat(ali, 'selam, hotspottayım'))), 'Chat HTTP → WebSocket');
-await say(ali, 'hoş geldin');
-check(!!(await until(() => hasChat(ayse, 'hoş geldin'))), 'Chat WebSocket → HTTP');
+await say(bob, 'hi, I am on a hotspot');
+check(!!(await until(() => hasChat(alice, 'hi, I am on a hotspot'))), 'Chat HTTP → WebSocket');
+await say(alice, 'welcome');
+check(!!(await until(() => hasChat(bob, 'welcome'))), 'Chat WebSocket → HTTP');
 
-// Sync: Ali starts the sync test, Ayşe's counter runs in step.
-await ali.click('#sync-test');
+// Sync: Alice starts the sync test, Bob's counter runs in step.
+await alice.click('#sync-test');
 const badge = await until(async () => {
-  const text = await ayse.textContent('#sync-badge');
-  const visible = await ayse.isVisible('#sync-badge');
-  return visible && text && !(await ayse.evaluate(() => document.getElementById('sync-badge')?.classList.contains('bad'))) ? text : null;
+  const text = await bob.textContent('#sync-badge');
+  const visible = await bob.isVisible('#sync-badge');
+  return visible && text && !(await bob.evaluate(() => document.getElementById('sync-badge')?.classList.contains('bad'))) ? text : null;
 }, 20000);
-check(!!badge, `the sync test plays in step for Ayşe: "${badge}"`);
+check(!!badge, `the sync test plays in step for Bob: "${badge}"`);
 
 // A reload goes straight to the fallback (the tab remembers it) instead of waiting for the WebSocket again.
 const before = roomUpgrades;
 const reloadAt = Date.now();
 if (process.env.DEBUG)
-  await ayse.evaluate(() => {
+  await bob.evaluate(() => {
     const log = (x) => localStorage.setItem('dbg', (localStorage.getItem('dbg') ?? '') + ' | ' + x);
     const beacon = navigator.sendBeacon.bind(navigator);
     navigator.sendBeacon = (u, d) => {
@@ -143,12 +143,12 @@ if (process.env.DEBUG)
     addEventListener('pagehide', () => log('pagehide'), { capture: true });
     addEventListener('error', (e) => log('error ' + e.message));
   });
-await ayse.reload();
-if (process.env.DEBUG) console.log('  dbg:', await ayse.evaluate(() => localStorage.getItem('dbg')));
-await ayse.waitForSelector('#people-count');
+await bob.reload();
+if (process.env.DEBUG) console.log('  dbg:', await bob.evaluate(() => localStorage.getItem('dbg')));
+await bob.waitForSelector('#people-count');
 const back = await until(async () => {
-  if (process.env.DEBUG) console.log(`  [t+${Date.now() - reloadAt}] online=${(await (await fetch(`${TARGET.origin}/api/rooms/${room}/info`)).json()).online} ${await transport(ayse)} ${await people(ayse)} ${await ayse.evaluate(() => document.querySelector('.room-title-dot')?.getAttribute('data-status'))}`);
-  return (await transport(ayse)) === 'http' && (await people(ayse)) === '2';
+  if (process.env.DEBUG) console.log(`  [t+${Date.now() - reloadAt}] online=${(await (await fetch(`${TARGET.origin}/api/rooms/${room}/info`)).json()).online} ${await transport(bob)} ${await people(bob)} ${await bob.evaluate(() => document.querySelector('.room-title-dot')?.getAttribute('data-status'))}`);
+  return (await transport(bob)) === 'http' && (await people(bob)) === '2';
 });
 const reloadMs = Date.now() - reloadAt;
 check(!!back && reloadMs < 5000, `after a reload she is back in ${(reloadMs / 1000).toFixed(1)} s, over HTTP right away`);
@@ -160,32 +160,34 @@ for (const socket of open) socket.destroy();
 await sleep(6000);
 mode = 'blackhole';
 const status = (page) => page.evaluate(() => document.querySelector('.room-title-dot')?.getAttribute('data-status'));
-check(!!(await until(async () => (await status(ayse)) !== 'open', 10000)), 'she notices the drop');
-const recovered = await until(async () => (await status(ayse)) === 'open' && (await people(ali)) === '2' && (await transport(ayse)) === 'http', 40000);
+check(!!(await until(async () => (await status(bob)) !== 'open', 10000)), 'she notices the drop');
+const recovered = await until(async () => (await status(bob)) === 'open' && (await people(alice)) === '2' && (await transport(bob)) === 'http', 40000);
 check(!!recovered, 'after a 6 s network drop she is back in the room');
-await say(ayse, 'yine buradayım');
-check(!!(await until(() => hasChat(ali, 'yine buradayım'))), 'chat works again after the drop');
+await say(bob, 'back again');
+check(!!(await until(() => hasChat(alice, 'back again'))), 'chat works again after the drop');
 
 // The connection test page on the "hotspot": the WebSockets fail, the backup connection works, the verdict says so.
 const diag = await (await browser.newContext()).newPage();
+await diag.goto(`${PROXY}/`);
+await diag.evaluate(() => localStorage.setItem('lang', 'en'));
 await diag.goto(`${PROXY}/baglanti`);
 const verdict = await until(async () => {
   const text = await diag.textContent('.diag-verdict');
   return text && text.length > 5 ? text : null;
 }, 40000);
 const rowsOk = await diag.evaluate(() => [...document.querySelectorAll('.diag-row')].map((li) => li.querySelector('.diag-icon')?.textContent).join(''));
-check(!!verdict && verdict.includes('yedek'), `/baglanti: "${verdict}"`);
+check(!!verdict && verdict.includes('backup'), `/baglanti: "${verdict}"`);
 check(rowsOk === '✅✅✅❌❌❌❌✅✅✅', `/baglanti rows: ${rowsOk} (page, request, big answer ok; probe + room WebSocket fail; fallback ok)`);
 await diag.close();
 
 // WebSockets start working: the probe notices and she moves to a WebSocket by herself, still one person in the room.
 mode = 'pass';
-const upgraded = await until(async () => (await transport(ayse)) === 'ws', 40000);
+const upgraded = await until(async () => (await transport(bob)) === 'ws', 40000);
 check(!!upgraded, 'once WebSockets work again she switches to a WebSocket by herself');
 await sleep(1500);
-check((await people(ali)) === '2', 'still two people in the room after the switch');
-await say(ali, 'artık websocket');
-check(!!(await until(() => hasChat(ayse, 'artık websocket'))), 'chat over the new WebSocket');
+check((await people(alice)) === '2', 'still two people in the room after the switch');
+await say(alice, 'now over a websocket');
+check(!!(await until(() => hasChat(bob, 'now over a websocket'))), 'chat over the new WebSocket');
 
 await browser.close();
 for (const socket of swallowed) socket.destroy();
