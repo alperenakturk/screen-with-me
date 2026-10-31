@@ -61,17 +61,30 @@ implement, test, ship.
 - **Feature plan to 1.0 (owner agreed 31 Oct 2026; PDF sent to the owner):** few features with big impact, in this
   order (each a few 0.9.91.x releases), then a closed beta and 1.0. Security, bugs, policies and operations are the
   other sections.
-  - [ ] **1. First-time path** (most important): invite link → name → extension install → film page; measure each
+  - [x] **1. First-time path** (most important; 0.9.91.20, store link on the install card left for the store version): invite link → name → extension install → film page; measure each
     step and cut friction (in-room 3-step "install and come back" card, 10 s first-visit tips); goal < 30 s from link
     to watching. Design options page first, the owner picks.
-  - [ ] **2. Finish Shorts:** random / popular Shorts feed with category buttons (research: build it, small quota
+  - [x] **2. Finish Shorts** (0.9.91.18 + 0.9.91.19; the owner's real-YouTube / TikTok checks and the switch
+    measurement are in `STATUS.md` "Owner's hand tests"): random / popular Shorts feed with category buttons (research: build it, small quota
     share), TikTok links in the Shorts view via TikTok's official embed player, move our emojis and click catcher
     off the YouTube player (YouTube's "no overlays" rule, before the API audit), the "everyone lands together"
     measurement in the owner's Chrome. (`short-video-research.md`)
+  - [ ] **Bigger Shorts view on laptops** (owner, 31 Oct 2026: "too small on my laptop, fine on the big monitor"):
+    the bottom bar takes ~210 px; move our buttons into a side rail and let the video grow. Options A / B / C on
+    https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379 (recommended C: right rail + the top bar folds on screens under
+    900 px tall); the owner picks.
+  - [ ] **Room view YouTube overlays:** flying emojis / dock / toasts off the YouTube player in the room view too (as in
+    the Shorts view, 0.9.91.18), before the YouTube API audit.
   - [ ] **3. Simplify the room:** rarely used features (film time, voting, saved room, recap) under "More"; the
     owner decides which, from a proposal page.
   - [ ] **4. Camera pass:** snap to corners, preset layouts (right strip, bottom strip, grid), one full review of
     everything about cameras (the open "Camera window settings" item above).
+  - [ ] **Tablet support** (owner, 31 Oct 2026: "separate from phones"): iPad and Android tablets, upright and
+    sideways, get their own layout (today `isPhone()` leaves tablets on the desktop layout with touch, never tried):
+    side panel, Shorts view, games, cameras, dock and fullscreen sized for a touch screen of 768–1366 px; iPad
+    fullscreen (no element fullscreen on iPhone, partial on iPad), split view / Slide Over, keyboard covers. No
+    extension on tablets (site only). Harness like `scripts/harness/phone` with iPad / Galaxy Tab emulation; the
+    owner tries a real tablet.
   - [ ] **5. Help / FAQ page** (TR + EN), see the item below.
   - [ ] **6. "Send feedback" button** in the product (closed beta and launch), see §7 "Feedback loop".
   - After 1.0 (owner agreed): TV with Google Cast, big services, Instagram Reels, new games, accounts / new languages /
