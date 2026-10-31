@@ -311,7 +311,10 @@ export function createGameStage(opts: StageOptions) {
     save(FLOAT_KEY, JSON.stringify(spot));
     requestAnimationFrame(() => {
       const [w] = GAME_CATALOG[kind].size;
-      const beside = innerWidth - wrap.getBoundingClientRect().right - 3 * EDGE;
+      // Right of the video's column: since 0.9.92.2 the Shorts rail (and ▲▼) sit between the video and this space.
+      const rail = document.getElementById('shorts-nav')?.getBoundingClientRect();
+      const right = Math.max(wrap.getBoundingClientRect().right, rail && rail.width ? rail.right : 0);
+      const beside = innerWidth - right - 3 * EDGE;
       if (beside > 0 && current?.kind === kind) {
         save(zoomKey(kind), String(Math.round(Math.max(MIN_ZOOM, Math.min(floatZoom(), beside / w)) * 1000) / 1000));
         if (mode === 'float') placeFloat();

@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 31 Oct 2026. Site and extension **0.9.92.1**. The owner moved to a **new Claude
+> Last update: 31 Oct 2026. Site and extension **0.9.92.2**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -191,8 +191,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
-- [ ] **Bigger Shorts view on laptops** (owner, 31 Oct 2026): design options A / B / C at
-  https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379 (recommended C); waiting for the owner's pick, then build.
+- [x] **0.9.92.2 bigger Shorts view on laptops** (owner chose C on https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379):
+  the Shorts bar is a rail right of the video above 860 px wide, the top bar folds under 900 px tall (⋯ or the top
+  edge shows it); laptop 1366×768: video 410×728 (was 314×558), no page scroll at 1024×640 … 2560×1440; phones keep
+  the bottom bar. Harnesses: phone, TikTok 8/8, voice 67/67.
 - [ ] **Tablet support** (owner, 31 Oct 2026, ROADMAP §1): own layout for iPad / Android tablets, separate from phones.
 - [x] **Owner's guide PDF** (31 Oct 2026): everything to try, the plan to 1.0, risks and never-tested areas were sent
   to the owner as a PDF; the same items live in "Owner's hand tests" below and in ROADMAP.
@@ -279,6 +281,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.92.2 (Shorts rail):**
+- [ ] On the laptop open a Short: the buttons are a column right of the video, the top bar is gone, the video fills
+  the height. 💬 (or Enter) opens the message box, ⋯ (or the mouse at the very top) shows the top bar.
+- [ ] On the big monitor: the top bar stays, the rail is there too, the video is taller than before.
 
 **0.9.92 (phone hotspot):**
 - [x] (owner, 31 Oct 2026: works, no problems) Laptop on the phone's hotspot: open the site and a room. It should get in within ~7 s (first time) and work:
