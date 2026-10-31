@@ -308,6 +308,11 @@
     font-size: 12px;
   }
 
+  /* The IP line costs the chat box its place on an upright phone (0.9.91.17); the notice before joining says it. */
+  .together-card .voice-ip {
+    display: none !important;
+  }
+
   .together-card .voice-cams {
     flex-basis: 100%;
   }

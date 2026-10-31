@@ -1,7 +1,15 @@
 import {
   cleanPageToken,
   FEED_RESULTS,
+  isPoolKind,
   isQuotaError,
+  isVideoId,
+  LIKE_SEARCH_PAGE,
+  parseVideoItems,
+  POOL_CATEGORY,
+  POOL_RESULTS,
+  poolWindow,
+  titleWords,
   normalizeQuery,
   parseDurations,
   parseUpright,
@@ -9,6 +17,7 @@ import {
   SEARCH_RESULTS,
   shortsOnly,
   type SearchAnswer,
+  type SearchResult,
 } from '@swm/shared/youtube-search';
 
 const API = 'https://www.googleapis.com/youtube/v3';
@@ -123,4 +132,163 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   const response = json(next ? { items, next } : { items }, RESULT_TTL_S);
   await cache.put(resultKey, response.clone());
   return response;
+}
+
+type Call = Awaited<ReturnType<typeof callYouTube>>;
+
+/**
+ * The shared steps of the Shorts answers: the cache, the "quota used up" memory and the per-address limit around
+ * `work`, which makes the real calls. Only calls that reach YouTube count against the address's limit.
+ */
+async function cached(request: Request, url: URL, env: Env, ipKey: () => Promise<string>, path: string, work: (key: string) => Promise<SearchAnswer | Call>): Promise<Response> {
+  if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
+  if (!env.YOUTUBE_API_KEY) return json({ error: 'off' });
+  const cache = caches.default;
+  const resultKey = cacheKey(url.origin, path);
+  const quotaKey = cacheKey(url.origin, 'yt-quota');
+  const hit = await cache.match(resultKey);
+  if (hit) return hit;
+  if (await cache.match(quotaKey)) return json({ error: 'quota' });
+  if (env.SEARCH_LIMIT && !(await env.SEARCH_LIMIT.limit({ key: await ipKey() })).success) return json({ error: 'busy' });
+  const answer = await work(env.YOUTUBE_API_KEY);
+  if ('ok' in answer) {
+    if (answer.ok) return json({ error: 'failed' });
+    if (answer.quota) {
+      await cache.put(quotaKey, json({ error: 'quota' }, QUOTA_TTL_S));
+      return json({ error: 'quota' });
+    }
+    return json({ error: 'failed' });
+  }
+  if ('error' in answer) return json(answer);
+  const response = json(answer, RESULT_TTL_S);
+  await cache.put(resultKey, response.clone());
+  return response;
+}
+
+/** Only real Shorts: short, and upright when the shapes came. */
+function keepShorts(items: SearchResult[]): SearchResult[] {
+  const shorts = shortsOnly(items);
+  return shorts.some((item) => item.short) ? shorts.filter((item) => item.short) : shorts;
+}
+
+/** search.list for Shorts + videos.list for their length and shape (101 units). */
+async function searchShorts(params: Record<string, string>, key: string, limit: number): Promise<SearchAnswer | Call> {
+  const search = await callYouTube(
+    'search',
+    {
+      part: 'snippet',
+      type: 'video',
+      videoEmbeddable: 'true',
+      videoDuration: 'short',
+      maxResults: String(limit),
+      fields: 'nextPageToken,items(id/videoId,snippet(title,channelTitle,liveBroadcastContent))',
+      ...params,
+    },
+    key,
+  );
+  if (!search.ok) return search;
+  let items = parseSearchItems(search.body, new Map(), limit);
+  if (items.length > 0) {
+    const videos = await callYouTube(
+      'videos',
+      { part: 'contentDetails,player', maxWidth: '100', id: items.map((item) => item.id).join(','), fields: 'items(id,contentDetails/duration,player(embedWidth,embedHeight))' },
+      key,
+    );
+    if (videos.ok) items = parseSearchItems(search.body, parseDurations(videos.body), limit, parseUpright(videos.body));
+  }
+  items = keepShorts(items);
+  const next = cleanPageToken((search.body as { nextPageToken?: unknown } | null)?.nextPageToken);
+  return next ? { items, next } : { items };
+}
+
+/**
+ * `GET /api/youtube/pool?kind=popular|music|…&hl=tr|en&page=…` — "🎲 Keşfet" (0.9.91.18): the most watched Shorts
+ * of the last two weeks in a category, one shared pool per language and day (the cache key carries the UTC day), so
+ * every room draws from the same answer and a day costs one search per pool page. Rooms shuffle it themselves. Only
+ * `safeSearch=strict` here: nobody chose a topic, the room just gets what the pool has.
+ */
+export async function youtubePool(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
+  const kind = url.searchParams.get('kind');
+  if (!isPoolKind(kind)) return new Response('Bad kind', { status: 400 });
+  const lang = url.searchParams.get('hl') === 'en' ? 'en' : 'tr';
+  const rawPage = url.searchParams.get('page');
+  const page = rawPage === null ? null : cleanPageToken(rawPage);
+  if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
+  const { day, publishedAfter } = poolWindow(Date.now());
+  const category = POOL_CATEGORY[kind];
+  return cached(request, url, env, ipKey, `yt-pool1?kind=${kind}&hl=${lang}&day=${day}${page ? `&page=${page}` : ''}`, (key) =>
+    searchShorts(
+      {
+        q: '#shorts',
+        order: 'viewCount',
+        publishedAfter,
+        regionCode: lang === 'en' ? 'US' : 'TR',
+        relevanceLanguage: lang,
+        safeSearch: 'strict',
+        ...(category ? { videoCategoryId: category } : {}),
+        ...(page ? { pageToken: page } : {}),
+      },
+      key,
+      POOL_RESULTS,
+    ),
+  );
+}
+
+const VIDEO_FIELDS = 'items(id,snippet(title,channelTitle,channelId,liveBroadcastContent),contentDetails/duration,player(embedWidth,embedHeight))';
+
+/**
+ * `GET /api/youtube/like?id=<video>&hl=tr|en&page=…` — "✨ Bunun gibi" (0.9.91.18): more Shorts like the one playing.
+ * First the same channel's latest uploads (4 units: the video, the channel's uploads playlist, its items, their
+ * shapes), then `next` switches to a search on the title's words (101 units a page). There is no official "related
+ * videos" any more (YouTube removed `relatedToVideoId` in 2023).
+ */
+export async function youtubeLike(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
+  const id = url.searchParams.get('id');
+  if (!isVideoId(id)) return new Response('Bad id', { status: 400 });
+  const lang = url.searchParams.get('hl') === 'en' ? 'en' : 'tr';
+  const rawPage = url.searchParams.get('page');
+  const page = rawPage === null ? null : cleanPageToken(rawPage);
+  if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
+  return cached(request, url, env, ipKey, `yt-like1?id=${id}&hl=${lang}${page ? `&page=${page}` : ''}`, async (key) => {
+    const source = await callYouTube('videos', { part: 'snippet', id, fields: 'items(snippet(title,channelId))' }, key);
+    if (!source.ok) return source;
+    const snippet = ((source.body as { items?: { snippet?: { title?: unknown; channelId?: unknown } }[] } | null)?.items ?? [])[0]?.snippet;
+    const words = typeof snippet?.title === 'string' ? titleWords(snippet.title) : null;
+    const bySearch = (token: string | null) =>
+      words
+        ? searchShorts({ q: `${words} #shorts`, relevanceLanguage: lang, safeSearch: 'moderate', ...(token ? { pageToken: token } : {}) }, key, FEED_RESULTS)
+        : Promise.resolve<SearchAnswer>({ items: [] });
+    if (page) {
+      const answer = await bySearch(page === LIKE_SEARCH_PAGE ? null : page);
+      return 'items' in answer ? { ...answer, items: answer.items.filter((item) => item.id !== id) } : answer;
+    }
+    const channelId = typeof snippet?.channelId === 'string' && /^UC[A-Za-z0-9_-]{22}$/.test(snippet.channelId) ? snippet.channelId : null;
+    let items: SearchResult[] = [];
+    if (channelId) {
+      const channel = await callYouTube('channels', { part: 'contentDetails', id: channelId, fields: 'items/contentDetails/relatedPlaylists/uploads' }, key);
+      if (!channel.ok) return channel;
+      const uploads = ((channel.body as { items?: { contentDetails?: { relatedPlaylists?: { uploads?: unknown } } }[] } | null)?.items ?? [])[0]?.contentDetails?.relatedPlaylists?.uploads;
+      if (typeof uploads === 'string' && /^UU[A-Za-z0-9_-]{22}$/.test(uploads)) {
+        const list = await callYouTube('playlistItems', { part: 'contentDetails', playlistId: uploads, maxResults: '50', fields: 'items/contentDetails/videoId' }, key);
+        if (!list.ok) return list;
+        const ids = ((list.body as { items?: { contentDetails?: { videoId?: unknown } }[] } | null)?.items ?? [])
+          .map((item) => item.contentDetails?.videoId)
+          .filter((x): x is string => isVideoId(x) && x !== id);
+        if (ids.length) {
+          const videos = await callYouTube('videos', { part: 'snippet,contentDetails,player', maxWidth: '100', id: ids.join(','), fields: VIDEO_FIELDS }, key);
+          if (!videos.ok) return videos;
+          items = keepShorts(parseVideoItems(videos.body));
+        }
+      }
+    }
+    // Too few from the channel: start with the title's words at once.
+    if (items.length < 4) {
+      const answer = await bySearch(null);
+      if (!('items' in answer)) return answer;
+      const seen = new Set(items.map((item) => item.id));
+      items = [...items, ...answer.items.filter((item) => item.id !== id && !seen.has(item.id))];
+      return answer.next ? { items, next: answer.next } : { items };
+    }
+    return words ? { items, next: LIKE_SEARCH_PAGE } : { items };
+  });
 }

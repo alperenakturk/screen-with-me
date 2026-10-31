@@ -196,3 +196,66 @@ export function parseSearchAnswer(body: unknown, limit = SEARCH_RESULTS): Search
   const next = cleanPageToken((body as { next?: unknown }).next);
   return next ? { items: results.slice(0, limit), next } : { items: results.slice(0, limit) };
 }
+
+/**
+ * Discover (0.9.91.17, "🎲 Keşfet"): Shorts without a topic. Each kind is one shared pool per language and day on the
+ * server (`/api/youtube/pool`): the most watched Shorts of the last `POOL_DAYS` days in a YouTube category, so a
+ * whole day of rooms costs one search per pool page. `popular` has no category filter.
+ */
+export const POOL_KINDS = ['popular', 'music', 'gaming', 'comedy', 'animals', 'sports'] as const;
+export type PoolKind = (typeof POOL_KINDS)[number];
+/** YouTube video category ids (the same in TR and US). */
+export const POOL_CATEGORY: Record<PoolKind, string | null> = { popular: null, music: '10', gaming: '20', comedy: '23', animals: '15', sports: '17' };
+/** A pool page is one search (100 units) whatever its size: take the most YouTube gives. */
+export const POOL_RESULTS = 50;
+export const POOL_DAYS = 14;
+
+export function isPoolKind(value: unknown): value is PoolKind {
+  return typeof value === 'string' && (POOL_KINDS as readonly string[]).includes(value);
+}
+
+/** The same day for every room (UTC): the pool's cache key and the start of its time window. */
+export function poolWindow(now: number): { day: string; publishedAfter: string } {
+  const day = new Date(now).toISOString().slice(0, 10);
+  const start = new Date(`${day}T00:00:00Z`).getTime() - POOL_DAYS * 86_400_000;
+  return { day, publishedAfter: new Date(start).toISOString().replace('.000Z', 'Z') };
+}
+
+export function isVideoId(value: unknown): value is string {
+  return typeof value === 'string' && VIDEO_ID.test(value);
+}
+
+/**
+ * videos.list JSON (`snippet`, `contentDetails`, `player` with `maxWidth`) → our results ("More like this" reads a
+ * channel's uploads this way). Same cleaning as search results.
+ */
+export function parseVideoItems(videos: unknown, limit = POOL_RESULTS): SearchResult[] {
+  const items = typeof videos === 'object' && videos !== null ? (videos as { items?: unknown }).items : null;
+  if (!Array.isArray(items)) return [];
+  const durations = parseDurations(videos);
+  const upright = parseUpright(videos);
+  const asSearch = {
+    items: items.map((raw) => {
+      const item = (typeof raw === 'object' && raw !== null ? raw : {}) as { id?: unknown; snippet?: unknown };
+      return { id: { videoId: item.id }, snippet: item.snippet };
+    }),
+  };
+  return parseSearchItems(asSearch, durations, limit, upright);
+}
+
+/**
+ * Words for "more like this" when the channel has no more Shorts: the first few words of the title, without
+ * hashtags, mentions or punctuation. Null when nothing useful is left.
+ */
+export function titleWords(title: string, max = 4): string | null {
+  const words = title
+    .replace(/[#@]\S+/g, ' ')
+    .replace(/[^\p{L}\p{N}\s'-]/gu, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 1)
+    .slice(0, max);
+  return words.length ? words.join(' ') : null;
+}
+
+/** "More like this": the page token that switches from the channel's uploads to a search on the title's words. */
+export const LIKE_SEARCH_PAGE = 'words';
