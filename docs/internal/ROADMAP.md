@@ -79,6 +79,11 @@ implement, test, ship.
     owner decides which, from a proposal page.
   - [ ] **4. Camera pass:** snap to corners, preset layouts (right strip, bottom strip, grid), one full review of
     everything about cameras (the open "Camera window settings" item above).
+  - [ ] **Phone version from scratch** (owner, 1 Nov 2026): app-like, fast, every feature fitting the phone screen;
+    design page with options per part first, the owner picks.
+  - [ ] **Shorts: feed from one channel** (type a channel name or link → its Shorts) and **Discover by region** (the
+    chips bring the viewer's country's popular Shorts, e.g. Turkey, instead of a mixed list) (owner, 1 Nov 2026).
+  - [ ] **Thanks page** (owner, 1 Nov 2026): credits for the people who helped by testing (names only with consent).
   - [ ] **Tablet support** (owner, 31 Oct 2026: "separate from phones"): iPad and Android tablets, upright and
     sideways, get their own layout (today `isPhone()` leaves tablets on the desktop layout with touch, never tried):
     side panel, Shorts view, games, cameras, dock and fullscreen sized for a touch screen of 768–1366 px; iPad
