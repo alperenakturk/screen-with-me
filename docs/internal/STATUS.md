@@ -191,6 +191,13 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
+- [ ] **Phone version from scratch** (owner, 1 Nov 2026: "I don't like the phone version; it feels like the PC page
+  squeezed onto a phone. Make it feel like an app, every feature fitting the screen, and fast"). First a design page
+  with options per part (join, watching, Shorts together, chat, voice / cameras, queue / add, games, menus, speed),
+  the owner picks, then the phone layer is rewritten without breaking features or the design principles.
+  Options page: https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu (11 parts + speed plan; waiting for the picks).
+- [ ] **Shorts: a feed from one channel; Discover by region** (owner, 1 Nov 2026, before 1.0).
+- [ ] **Thanks page** (owner, 1 Nov 2026): the people who helped by testing; names only with their permission.
 - [x] **0.9.92.2 bigger Shorts view on laptops** (owner chose C on https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379):
   the Shorts bar is a rail right of the video above 860 px wide, the top bar folds under 900 px tall (⋯ or the top
   edge shows it); laptop 1366×768: video 410×728 (was 314×558), no page scroll at 1024×640 … 2560×1440; phones keep
@@ -273,6 +280,8 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] iPhone (any browser, they are all Safari inside): room, YouTube, voice, our fullscreen, "Add to Home Screen".
 
 **0.9.91.18–0.9.91.20 (Shorts + first-time path; real YouTube / TikTok needed, the cloud can't play them):**
+- [x] Shorts view tried by the owner (1 Nov 2026): all fine (the new rail of 0.9.92.2 still to try).
+- [x] ♾ → 🎲 Keşfet works (owner, 1 Nov 2026). Wanted before 1.0: a feed from one channel, Discover by region (ROADMAP §1).
 - [ ] ♾ → 🎲 Keşfet: each chip (Popüler, Müzik, Oyun, Komedi, Hayvanlar, Spor) fills the queue with Shorts.
 - [ ] ♾ → ✨ Bunun gibi while a Short plays: more Shorts from the same channel, later similar titles.
 - [ ] Shorts view: YouTube's own bar on the video, our bar only at the bottom; emojis rise from the seats.
