@@ -585,6 +585,10 @@ await a.sleep(1500);
   await a.shot('8a-dock-emoji');
   await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
   await a.sleep(400);
+  // 0.9.93.6 (owner: "the rail never goes away"): a pressed rail button kept its focus and held the dock out for good.
+  await a.evalFrame('shell=1', `document.getElementById('dock-react').focus(); 1`);
+  bora.send({ t: 'play', position: 64, at: Date.now() });
+  check(!!(await until(() => a.evalFrame('shell=1', DOCK_IDLE), 8000)), 'tam ekran: rayda bir düğmeye basıldıktan sonra da film oynarken dock gizleniyor');
 }
 {
   const pinsHidden = await a.evalFrame(

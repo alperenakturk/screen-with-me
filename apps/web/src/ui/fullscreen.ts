@@ -1,7 +1,7 @@
 import { cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { formatTime } from '../media-info.ts';
-import { canElementFullscreen, isPhoneLayout, isTouch, lockLandscape, onTurn, unlockOrientation } from '../device.ts';
+import { canElementFullscreen, hasMouse, isPhoneLayout, isTouch, lockLandscape, onTurn, unlockOrientation } from '../device.ts';
 import { t } from '../i18n.ts';
 import { load, postToExtension, save } from '../storage.ts';
 import { setIcon } from './icons.ts';
@@ -305,17 +305,19 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
    * "Keep the controls open" (⋯ and Settings → My screen, `opt:railPin`) pins it. Touch screens keep it faint as before.
    */
   let railPin = load('opt:railPin') === '1';
-  const edgeMode = () => !shell && !isTouch() && !railPin;
+  const edgeMode = () => !shell && (!isTouch() || hasMouse()) && !railPin;
   let nearEdge = false;
   /** Mouse on the rail, one of its windows open (emojis, message box, ⋯, the games hall) or a key focus in it. */
   const railBusy = () =>
-    hoveringControls ||
+    // The flag can miss a mouseleave (a window opened over the rail under the mouse): ask the page too.
+    (hoveringControls && dock.matches(':hover')) ||
     !!openButton ||
     !!dock.querySelector('.game-menu:not([hidden])') ||
     (tabbing && !!dock.querySelector(':focus-visible')) ||
     document.activeElement === dockChatInput;
-  const dockBusy = () =>
-    edgeMode() ? nearEdge || railBusy() : hoveringControls || !!openButton || dock.contains(document.activeElement) || getPlayer()?.isPaused() === true;
+  // Without the edge (film page, touch screens) a paused video keeps it too. A button's focus after a click no longer
+  // does (0.9.93.6: after 🎙 / 📷 / ⋯ the rail stayed for good), only a keyboard user's (railBusy).
+  const dockBusy = () => (edgeMode() ? nearEdge || railBusy() : railBusy() || getPlayer()?.isPaused() === true);
   function sleepDock(): void {
     if (dockTimer !== null) clearTimeout(dockTimer);
     dockTimer = null;
@@ -587,7 +589,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // The players' own bars hide when the mouse leaves a playing video: the dock too (not in fullscreen, where the
     // mouse never leaves).
     if (edgeMode()) setNear(false);
-    else if (!isActive() && getPlayer()?.isPaused() === false && !openButton && !dock.contains(document.activeElement)) {
+    else if (!isActive() && getPlayer()?.isPaused() === false && !railBusy()) {
       if (dockTimer !== null) clearTimeout(dockTimer);
       theater.classList.add('dock-idle');
     }

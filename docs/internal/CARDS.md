@@ -23,16 +23,6 @@ Card format:
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
-### 1. Fix: the rail never hides in YouTube fullscreen (0.9.93 "Now" 1, owner's bug)
-- Why: owner, 2 Nov 2026 (screenshot, after 0.9.93.5): in fullscreen, with the mouse moved to the middle of the video,
-  the right rail (💬 😀 📌 🎮 🎙 📷 ⋯ ⛶, mic and camera red because not in voice) stays however long he waits.
-- Done when: in fullscreen and in the window the rail rests (`.dock-idle`) `HIDE_MS` after the mouse leaves the right
-  edge, whatever was pressed before (rail buttons, Esc, shortcuts, emoji, the message box empty); root cause written in
-  `STATUS.md`; the same check on the film page's rail.
-- Tests: a `yt-room` harness check that fails on 0.9.93.5 first (enter fullscreen, move to the centre, wait 1 s →
-  rail hidden), also after pressing 🎙 / 📷 outside voice and after ⋯ → Esc; owner's hand test.
-- Owner's pick: none needed.
-
 ### 1a. Security: the HTTP fallback must not be able to crash a room (H1, M1; Planner: right after card 1)
 - Severity: high
 - Why: one person with the room link can reset the room's Durable Object (everyone drops) with a chunked POST body
@@ -475,6 +465,21 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 1. Fix: the rail never hides in YouTube fullscreen (0.9.93 "Now" 1, owner's bug)
+- Why: owner, 2 Nov 2026 (screenshot, after 0.9.93.5): in fullscreen, with the mouse moved to the middle of the video,
+  the right rail (💬 😀 📌 🎮 🎙 📷 ⋯ ⛶, mic and camera red because not in voice) stays however long he waits.
+- Done when: in fullscreen and in the window the rail rests (`.dock-idle`) `HIDE_MS` after the mouse leaves the right
+  edge, whatever was pressed before (rail buttons, Esc, shortcuts, emoji, the message box empty); root cause written in
+  `STATUS.md`; the same check on the film page's rail.
+- Tests: a `yt-room` harness check that fails on 0.9.93.5 first (enter fullscreen, move to the centre, wait 1 s →
+  rail hidden), also after pressing 🎙 / 📷 outside voice and after ⋯ → Esc; owner's hand test.
+- Owner's pick: none needed.
+- Done: 0.9.93.7 (PR below). Root cause: a touch-screen laptop reports a coarse primary pointer, so the room took it
+  for a tablet (rail always on screen by CSS, and a pressed rail button's focus held it in the non-edge mode). A mouse
+  anywhere now keeps the computer behaviour (`hasMouse()`), focus only holds the rail for keyboard users, the hover
+  flag is double-checked. `yt-room` (simulated touch laptop, fails on 0.9.93.6) and `embed/run.mjs` checks pass.
+
 
 ### Phone: next speed steps (0.9.93 "Now" 2)
 - Why: the phone room should open and react fast on mid-range phones.

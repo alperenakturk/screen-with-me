@@ -203,6 +203,60 @@ const box = (page, selector) =>
   await alex.waitForTimeout(300);
   check(await alex.evaluate(() => document.querySelector('#waiting-banner')?.parentElement?.classList.contains('player-wrap')), 'a video file: the note is back on the video');
 
+  // 0.9.93.6 (owner's bug: "in YouTube fullscreen the rail never goes away"): a touch-screen laptop can report its
+  // primary pointer as coarse, which made the room treat it as a tablet and keep the rail on screen for good. With a
+  // mouse there it waits for the right edge like any computer. The device is simulated by answering the two media
+  // queries the way such a laptop does.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      localStorage.setItem('tipsSeen', '1');
+      localStorage.setItem('lang', 'en');
+      const real = window.matchMedia.bind(window);
+      window.matchMedia = (q) => {
+        const answer = q === '(pointer: coarse)' || q === '(any-pointer: fine) and (any-hover: hover)' ? true : null;
+        if (answer === null) return real(q);
+        return { matches: answer, media: q, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false };
+      };
+    });
+    const touchRoom = `yt${Math.random().toString(36).slice(2, 7)}`;
+    await page.goto(`${SITE}/r/${touchRoom}`);
+    await page.fill('#name', 'Lee');
+    await page.click('#name-form button.primary');
+    await page.waitForSelector('.room');
+    await page.waitForTimeout(1200);
+    await page.fill('#media-input', 'https://www.youtube.com/watch?v=M7lc1UVf-VE');
+    await page.press('#media-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#theater')?.classList.contains('yt-rail'), null, { timeout: 15000 });
+    const shown = () => page.evaluate(() => {
+      const dock = document.querySelector('#fs-dock');
+      const css = getComputedStyle(dock);
+      return css.visibility !== 'hidden' && Number(css.opacity) > 0.05;
+    });
+    const w = await box(page, '.player-wrap');
+    await page.mouse.move(w.x, w.y, { steps: 4 });
+    await page.waitForTimeout(3200);
+    check(!(await shown()), 'touch-screen laptop (window): with the mouse on the video the rail is not on screen');
+    await page.mouse.move(w.r - 12, w.y, { steps: 4 });
+    await page.waitForTimeout(400);
+    check(await shown(), 'touch-screen laptop: the right edge opens it');
+    await page.click('#dock-exit');
+    await page.waitForTimeout(1200);
+    if (await page.evaluate(() => document.fullscreenElement?.id === 'theater')) {
+      const v = await page.evaluate(() => ({ w: innerWidth, h: innerHeight }));
+      await page.mouse.move(v.w - 8, v.h / 2, { steps: 4 });
+      await page.waitForTimeout(300);
+      await page.click('#dock-mic');
+      await page.waitForTimeout(600);
+      await page.keyboard.press('Escape');
+      await page.mouse.move(v.w / 2, v.h / 2, { steps: 6 });
+      await page.waitForTimeout(1500);
+      check(!(await shown()), 'touch-screen laptop, fullscreen: 🎙 (outside voice), Esc, mouse to the middle: the rail goes');
+    } else check(false, 'touch-screen laptop: fullscreen opened');
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ YouTube room: notes in the chat, emojis on the video, the rail at the edge');
   process.exit(fails ? 1 : 0);
