@@ -1,7 +1,7 @@
 import { cleanChatText, type ClientMessage } from '@swm/shared/protocol';
 import type { PlayerAdapter } from '@swm/shared/player';
 import { formatTime } from '../media-info.ts';
-import { canElementFullscreen, isTouch, lockLandscape, onTurn, unlockOrientation } from '../device.ts';
+import { canElementFullscreen, isPhoneLayout, isTouch, lockLandscape, onTurn, unlockOrientation } from '../device.ts';
 import { t } from '../i18n.ts';
 import { load, postToExtension, save } from '../storage.ts';
 import { setIcon } from './icons.ts';
@@ -75,6 +75,31 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   // A phone turned sideways opens our own fullscreen (no tap, so no browser fullscreen): the browser's address bar
   // stays. This button makes it the real one (0.9.92.6, owner: "a proper fullscreen, no bar on top").
   const dockFull = q<HTMLButtonElement>('#dock-full');
+  // 0.9.92.8 one remote (owner's picks 2A / 3A): the toolbar under the video goes; the rail holds the common buttons
+  // and ⋯ the rest (speed, sync, next, the side panel, hiding the rail). 🎮 opens the games hall next to it.
+  const dockMore = q<HTMLButtonElement>('#dock-more');
+  const dockGame = q<HTMLButtonElement>('#dock-game');
+  /** The rail hidden by hand (window only): the video keeps its full width until "Show the controls" above it. */
+  let railOff = load('opt:railOff') === '1';
+  const railShow = q<HTMLButtonElement>('#rail-show');
+  function setRailOff(off: boolean): void {
+    railOff = off;
+    save('opt:railOff', off ? '1' : '0');
+    theater.classList.toggle('rail-off', off);
+    railShow.hidden = !off || shell;
+    openPop(null);
+  }
+  theater.classList.toggle('rail-off', railOff);
+  railShow.hidden = !railOff || shell;
+  railShow.addEventListener('click', () => setRailOff(false));
+  q('#rail-hide').addEventListener('click', () => setRailOff(true));
+  dockMore.addEventListener('click', () => dockLabels());
+  for (const item of q('#dock-more-pop').querySelectorAll<HTMLButtonElement>('[data-press]')) {
+    item.addEventListener('click', () => {
+      openPop(null);
+      document.querySelector<HTMLButtonElement>(item.dataset.press!)?.click();
+    });
+  }
   const dockChatForm = q<HTMLFormElement>('#dock-chat-form');
   const dockChatInput = q<HTMLInputElement>('#dock-chat-input');
   dockChatInput.maxLength = QUICK_CHAT_MAX;
@@ -83,6 +108,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     [dockReact, q('#dock-react-pop')],
     [dockVol, q('#dock-vol-pop')],
     [dockSpeed, q('#dock-speed-pop')],
+    [dockMore, q('#dock-more-pop')],
   ]);
   setIcon(dockChat, 'chat');
   setIcon(dockReact, 'smile');
@@ -90,6 +116,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   setIcon(dockSkip, 'skip');
   setIcon(dockExit, 'fs-exit');
   setIcon(dockFull, 'fs-enter');
+  dockMore.textContent = '⋯';
+  dockGame.textContent = '🎮';
 
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   let progressTimer: ReturnType<typeof setInterval> | null = null;
@@ -162,6 +190,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     label(dockVol, t('dock.volume'));
     label(dockExit, t(isActive() ? 'dock.exit' : 'dock.enter'));
     label(dockFull, t('dock.realFull'));
+    label(dockMore, t('dock.more'));
+    label(dockGame, t('tool.game'));
+    const sideLabel = q('#dock-more-side');
+    sideLabel.textContent = t(document.querySelector('.room.side-hidden') ? 'sideShow' : 'sideHide');
   };
   dockLabels();
   addEventListener('langchange', dockLabels);
@@ -312,7 +344,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   // room's own); upright again closes it, if it was opened this way (setting "Yan çevirince tam ekran").
   let byTurning = false;
   onTurn((sideways) => {
-    if (shell || !isTouch() || load('opt:rotateFs') === '0') return;
+    // Phones (0.9.92.8, owner: "turning sideways must not do things by itself"): no automatic fullscreen; the
+    // sideways room offers one big ⛶ instead (phone.css `ph-turn`). Tablets keep the setting.
+    if (shell || !isTouch() || isPhoneLayout() || load('opt:rotateFs') === '0') return;
     if (sideways && !isActive() && getPlayer() && landscape() && !document.querySelector('#game-stage:not([hidden])')) {
       byTurning = true;
       setFake(true, false);

@@ -1,7 +1,8 @@
 import { el } from '../dom.ts';
-import { canShareSheet, isPhoneLayout, onPhoneLayout } from '../device.ts';
+import { canShareSheet, isPhoneLayout, onPhoneLayout, onTurn } from '../device.ts';
 import { t } from '../i18n.ts';
 import { flashHint } from './hint.ts';
+import { phoneCamSize } from './phone-cams.ts';
 
 /**
  * The room on a phone (0.9.92.3, owner's picks on https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu: 1A live layout,
@@ -175,7 +176,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     const hasItem = !!$('.room.has-item');
     const tiles = [
       tile('🎬', t('phone.plus.video'), () => openAdd()),
-      tile('🎮', t('tool.game'), press('#game-btn')),
       tile('🖼️', t('phone.plus.image'), press('#chat-attach')),
     ];
     if (hasItem) {
@@ -224,7 +224,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     const headLine = el('div', { class: 'ph-room-line' }, el('span', { class: 'ph-dot', 'data-status': dot?.dataset.status ?? 'connected' }), el('b', {}, name), el('span', { class: 'muted' }, ` ${count} ${status}`.trimEnd()));
     const nodes: Element[] = [headLine];
     if (playing) nodes.push(el('p', { class: 'ph-playing muted small' }, `▶ ${playing}`));
-    const lang = html.lang === 'en' ? 'tr' : 'en';
     const inviteButton = $<HTMLButtonElement>('#invite-btn');
     nodes.push(
       el(
@@ -248,13 +247,23 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
           closeSheet();
           deps.openSettings();
         }),
-        tile('🌐', lang === 'en' ? 'English' : 'Türkçe', () => {
-          closeSheet();
-          document.querySelector<HTMLButtonElement>(`.topbar [data-lang="${lang}"]`)?.click();
-        }),
+        // "Language" asks which one (0.9.92.8, owner: it used to switch at once, which was confusing).
+        tile('🌐', t('phone.more.language'), () => openLanguage()),
       ),
     );
     openSheet({ name: 'more', nodes });
+  }
+
+  function openLanguage(): void {
+    const choice = (code: 'en' | 'tr', label: string) => {
+      const button = el('button', { type: 'button', class: `ph-lang${html.lang === code ? ' on' : ''}`, 'aria-pressed': String(html.lang === code) }, label);
+      button.addEventListener('click', () => {
+        closeSheet();
+        if (html.lang !== code) document.querySelector<HTMLButtonElement>(`.topbar [data-lang="${code}"]`)?.click();
+      });
+      return button;
+    };
+    openSheet({ name: 'language', title: t('phone.more.language'), nodes: [el('div', { class: 'ph-langs' }, choice('en', 'English'), choice('tr', 'Türkçe'))] });
   }
 
   function openPeople(): void {
@@ -330,6 +339,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
         });
       }
       if (tile.parentElement !== camRow) camRow.append(tile);
+      tile.dataset.size = phoneCamSize(id);
       const person = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`)?.closest<HTMLElement>('.together-person');
       const name = id === deps.myId() ? t('voice.me') : (person?.title.split(' · ')[0] ?? '');
       tile.querySelector('.ph-cam-name')!.textContent = name;
@@ -340,6 +350,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const people = $('#voice-people');
   // The voice card redraws the faces on every change: put the pictures back each time.
   if (people) new MutationObserver(placeCams).observe(people, { childList: true });
+  addEventListener('swm-phcam-size', () => placeCams());
 
   // Tapping a face opens the person menu (a bottom sheet here): their camera goes on top of it, big.
   let lastFace: string | null = null;
@@ -488,13 +499,11 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     event.stopPropagation();
     gameMinimize()?.click();
   }, true);
-  // A minimized table: 🎮 with a dot in the faces strip brings it back (the toolbar's 🎮 is out of sight here).
+  // Games live only in ⋯ (owner, 0.9.92.8: "once, not in ＋, ⋯ and the strip"): a minimized table puts a dot on ⋯,
+  // and ⋯ → Games brings it back.
   const gameButton = $<HTMLButtonElement>('#game-btn');
-  const stripGame = el('button', { type: 'button', id: 'strip-game', class: 'cam-ctl phone-only', hidden: '', title: t('game.back'), 'aria-label': t('game.back') }, '🎮');
-  stripGame.addEventListener('click', () => gameButton?.click());
-  $('#strip-more')?.before(stripGame);
   if (gameButton) {
-    const sync = () => (stripGame.hidden = !gameButton.classList.contains('game-waiting'));
+    const sync = () => $('#strip-more')?.classList.toggle('game-waiting', gameButton.classList.contains('game-waiting'));
     new MutationObserver(sync).observe(gameButton, { attributes: true, attributeFilter: ['class'] });
     sync();
   }
@@ -532,6 +541,33 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
       if (list) list.scrollTop = list.scrollHeight;
     }
   }
+  // Sideways without fullscreen (0.9.92.8, owner: "use it upright, or sideways in fullscreen; nothing by itself"): the
+  // video big on the left, and on the right only one big ⛶ (the browser's fullscreen, which also locks the phone
+  // sideways) or "hold the phone upright". No chat, faces or camera boxes there.
+  const turnFs = el('button', { type: 'button', class: 'btn primary ph-turn-fs' }, `⛶ ${t('phone.turn.fs')}`);
+  // Opened from here: turning the phone upright again leaves it (Android locks the phone sideways meanwhile).
+  let fsFromTurn = false;
+  turnFs.addEventListener('click', () => {
+    fsFromTurn = true;
+    $<HTMLButtonElement>('#fullscreen')?.click();
+  });
+  onTurn((sideways) => {
+    if (sideways || !fsFromTurn) return;
+    fsFromTurn = false;
+    if (inFs()) $<HTMLButtonElement>('#fullscreen')?.click();
+  });
+  const turnText = el('p', { class: 'muted' });
+  const turn = el('div', { class: 'ph-turn' }, turnFs, turnText);
+  $('.room')?.append(turn);
+  const drawTurn = () => {
+    const playing = !!$('.room.has-item');
+    turnFs.hidden = !playing;
+    turnText.textContent = t(playing ? 'phone.turn.or' : 'phone.turn.upright');
+  };
+  const roomBox = $('.room');
+  if (roomBox) new MutationObserver(drawTurn).observe(roomBox, { attributes: true, attributeFilter: ['class'] });
+  addEventListener('langchange', drawTurn);
+  drawTurn();
   $('#dock-chat')?.addEventListener(
     'click',
     (event) => {

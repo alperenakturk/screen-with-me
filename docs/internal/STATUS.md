@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.92.7**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.92.8**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -202,7 +202,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   as they are (owner: Watch2Gether shows cameras over YouTube too; cameras / the stream window / the game preview are
   the owner's accepted risk at the audit); 8B film pages and video files keep today's dock over the film, hiding when
   idle. Also: the desktop room bigger (less empty space, bigger video even in the window, like Shorts), the join card
-  (name + avatar) bigger. Steps: [x] 0.9.92.7 bigger room + join card; [ ] 0.9.92.8 one rail (2A 3A 4A); [ ] 0.9.92.9
+  (name + avatar) bigger. Steps: [x] 0.9.92.7 bigger room + join card; [x] 0.9.92.8 one rail (2A 3A 4A); [ ] 0.9.92.9
   emojis from faces (1B) + notices in the chat (5B).
 - [x] **0.9.92.6 phone feedback:** recap fits, Shorts chat half height, feed window (♾ opens it, Stop inside), camera
   row (no cameras in faces, no camera windows), real fullscreen + ⛶ in the strip + side panel in fullscreen, keyboard
@@ -315,6 +315,18 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.92.8 (computer + phone):**
+- [ ] Computer, a YouTube video: no bar under the video; move the mouse onto the video: the button column appears
+  beside it and the video makes room; rest the mouse: the column goes, the video is full size again. ⋯ has speed,
+  sync, next, hide/show the side panel and "Hide the controls" (then "Controls" above the video brings it back).
+- [ ] A video file: the buttons sit over the video's edge as before; also no bar under the video.
+- [ ] 🔍 Search next to the link box (words → YouTube results).
+- [ ] Phone sideways (no fullscreen): video left, one big ⛶ right; ⛶ → fullscreen; upright again → back. Games only in
+  ⋯ (a dot on ⋯ when a game is minimized). ⋯ → Dil asks English / Türkçe. Person sheet → small / medium / large changes
+  the camera picture size.
+- [ ] Turn off Wi-Fi / data in a room: the "can't reach the room" card has "Try again" and "Test the connection"; the
+  test page has "Back to the room".
 
 **0.9.92.7 (computer):**
 - [ ] Open a room on the laptop and the big monitor: the video fills much more of the screen, less empty space on

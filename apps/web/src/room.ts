@@ -271,6 +271,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       <div class="stage">
         <form id="media-form" class="media-form">
           <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
+          <button class="btn media-search" value="search" data-i18n-title="searchButton"><span aria-hidden="true">🔍</span> <span data-i18n="searchButton"></span></button>
           <button class="btn primary" value="enqueue" data-i18n="addToQueue"></button>
           <button class="btn" value="load" data-i18n="playNow"></button>
         </form>
@@ -284,6 +285,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
+            <button id="rail-show" type="button" class="btn small-btn rail-show" hidden><span aria-hidden="true">⇠</span> <span data-i18n="rail.show"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
           <div class="player-wrap">
@@ -335,6 +337,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="dock-chat" type="button" class="dock-btn" aria-expanded="false"></button>
                 <button id="dock-react" type="button" class="dock-btn" aria-expanded="false"></button>
                 <button id="dock-pin" type="button" class="dock-btn"></button>
+                <button id="dock-game" type="button" class="dock-btn" aria-haspopup="true" aria-expanded="false"></button>
               </div>
               <div id="dock-voice" class="dock-group" hidden>
                 <button id="dock-mic" type="button" class="dock-btn"></button>
@@ -346,12 +349,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="dock-vol" type="button" class="dock-btn" aria-expanded="false" hidden></button>
                 <button id="dock-speed" type="button" class="dock-btn dock-text" aria-expanded="false">1×</button>
                 <button id="dock-skip" type="button" class="dock-btn"></button>
+                <button id="dock-more" type="button" class="dock-btn dock-more" aria-expanded="false"></button>
                 <button id="dock-full" type="button" class="dock-btn" hidden></button>
                 <button id="dock-exit" type="button" class="dock-btn"></button>
               </div>
               <form id="dock-chat-form" class="dock-pop dock-chat" hidden><input id="dock-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" /></form>
               <div id="dock-react-pop" class="dock-pop" hidden><div class="reaction-bar fs-reactions dock-reactions" role="group"></div></div>
               <div id="dock-vol-pop" class="dock-pop dock-vol" hidden><input id="dock-vol-range" type="range" min="0" max="100" step="1" value="100" /></div>
+              <div id="dock-more-pop" class="dock-pop dock-more-pop" hidden>
+                <div class="dock-more-speeds" role="group">${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
+                <button type="button" class="dock-more-item" data-press="#sync-all"><span aria-hidden="true">🔄</span><span data-i18n="syncAll"></span></button>
+                <button type="button" class="dock-more-item" data-press="#skip"><span aria-hidden="true">⏭</span><span data-i18n="skip"></span></button>
+                <button type="button" class="dock-more-item" data-press="#side-toggle"><span aria-hidden="true">⇥</span><span id="dock-more-side"></span></button>
+                <button type="button" class="dock-more-item rail-hide-item" id="rail-hide"><span aria-hidden="true">⇢</span><span data-i18n="rail.hide"></span></button>
+              </div>
               <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
             </div>
             <div id="empty" class="empty">
@@ -885,7 +896,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
     // The Shorts bar's 🎮 (0.9.91.13): there a game opens as a free window.
-    extraButtons: [$<HTMLButtonElement>('#shorts-game')],
+    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game')],
     send,
     me: () => ({ id: myId, name: myName, avatar: myAvatar }),
     amHost,
@@ -973,12 +984,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (transport === 'http') console.info('[ScreenWithMe] WebSocket did not open on this network: using the HTTP fallback');
     },
   });
+  const retryButton = el('button', { type: 'button', class: 'btn small-btn primary' }, `⟳ ${t('netHint.retry')}`);
+  retryButton.addEventListener('click', () => connection.reconnect());
   const netHint = el(
     'div',
     { class: 'net-hint card', role: 'alert' },
     el('b', {}, `📶 ${t('netHint.title')}`),
     el('span', {}, t('netHint.text')),
-    el('a', { class: 'btn small-btn', href: '/baglanti', target: '_blank', rel: 'noopener' }, t('netHint.test')),
+    // 0.9.92.8 (owner): try again right here, or run the connection test, which links back to this room.
+    el('div', { class: 'row net-hint-actions' }, retryButton, el('a', { class: 'btn small-btn', href: `/baglanti?room=${encodeURIComponent(roomId)}` }, t('netHint.test'))),
   );
   netHint.hidden = true;
   document.body.append(netHint);
@@ -1344,6 +1358,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Our bar is the remote of the sync test only. YouTube (Shorts too, 0.9.91.18) keeps its own bar: YouTube's rules
     // forbid anything of ours in front of its player (owner: "in Shorts too, its player; our menu is at the bottom").
     current = { player, slot, youtube: media.kind === 'youtube', own: media.kind === 'test' };
+    // YouTube: our rail sits beside the video, never on it (0.9.92.8, YouTube's rule, owner's pick 2A / 4A).
+    $('#theater').classList.toggle('yt-rail', media.kind === 'youtube');
     engine.attach(player);
     if (mutedForTv) player.setMuted?.(true);
     measureSwitch(state, player, token);
@@ -1413,6 +1429,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       current.player.destroy();
       current.slot.remove();
       current = null;
+      $('#theater').classList.remove('yt-rail');
     }
     // Film sayfasındaki motor dursun (video orada kendiliğinden durur; odaya "durdur" gitmez).
     if (film) postToExtension({ type: 'embed', request: { type: 'detach' } });
@@ -1449,6 +1466,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       onActivity: () => fullscreen.poke(),
     });
     current = { player, slot, youtube: false, own: false };
+    $('#theater').classList.remove('yt-rail');
     film = player;
     if (roomState) player.setState(roomState);
     player.setClock(clock.now() - Date.now(), clock.synced);
@@ -2515,10 +2533,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const media = parseMediaInput(mediaInput.value);
     if (media === null) {
       if (mediaInput.value.trim()) void search.search(mediaInput.value);
+      // 🔍 with an empty box (0.9.92.8): it says what to type.
+      else mediaInput.focus();
       return;
     }
     search.close();
-    // Enter'a basılınca ilk buton ("Sıraya ekle") geçerli olur; izlenen video yanlışlıkla değişmez.
+    // Enter counts as the first button (🔍): words search, a link goes to the queue; the playing video never changes by
+    // accident (only "Şimdi aç" loads it).
     addMedia(media, mode);
   });
 
