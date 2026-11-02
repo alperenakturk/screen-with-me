@@ -81,7 +81,7 @@ implement, test, ship.
     everything about cameras (the open "Camera window settings" item above).
   - [ ] **Phone version from scratch** (owner, 1 Nov 2026): app-like, fast, every feature fitting the phone screen;
     design page with options per part first, the owner picks. Picks 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A (2 Nov 2026);
-    step 1 shipped in 0.9.92.3 (the room as an app screen); steps 2 (Shorts, sideways) and 3 (games, start page, speed) next.
+    step 1 shipped in 0.9.92.3 (the room as an app screen), step 2 in 0.9.92.4 (Shorts full screen, sideways dock); step 3 (games, start page, speed) next.
   - [ ] **Shorts: feed from one channel** (type a channel name or link → its Shorts) and **Discover by region** (the
     chips bring the viewer's country's popular Shorts, e.g. Turkey, instead of a mixed list) (owner, 1 Nov 2026).
   - [ ] **Thanks page** (owner, 1 Nov 2026): credits for the people who helped by testing (names only with consent).

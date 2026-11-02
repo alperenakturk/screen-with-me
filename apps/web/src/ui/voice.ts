@@ -403,6 +403,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       button.hidden = !liveCard || liveCard.hidden || (!streamer && (!canShare || button.id === 'strip-live'));
       setIcon(button, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
       button.classList.toggle('on', mine || !!me?.watching);
+      // Phones held sideways show it only while someone streams (phone.css, 4B dock).
+      button.dataset.idle = String(!streamer);
       button.title = label;
       button.setAttribute('aria-label', label);
     }

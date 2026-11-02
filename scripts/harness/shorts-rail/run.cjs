@@ -1,7 +1,7 @@
 // The Shorts rail (0.9.92.2, owner chose C): on wide screens the Shorts bar is a column right of the video and the
-// top bar folds on screens under 900 px tall; phones keep the bottom bar. Checks at laptop, monitor, big and short
+// top bar folds on screens under 900 px tall; phones have their own slim bar (phone harness). Checks at laptop, monitor, big and short
 // screens: the page never scrolls, the rail sits right of the video and fits beside it, ⋯ shows only when the top bar
-// is folded and brings it back, Enter / 💬 open the message box; on a phone the bar stays under the video.
+// is folded and brings it back, Enter / 💬 open the message box; on a phone the phone bar stays under the video.
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-rail/run.cjs [site]
 const { chromium, devices } = require('playwright');
@@ -88,8 +88,9 @@ const box = (page, sel) =>
   const phone = await browser.newContext({ ...devices['Pixel 7'] });
   const { page, errors } = await openShort(phone);
   const video = await box(page, '.player-wrap');
-  const bar = await box(page, '#shorts-bar');
-  check(bar.y >= video.b && (await page.isVisible('#shorts-input')) && !(await page.isVisible('#shorts-chat-btn')), 'phone: the bar stays under the video with the message box', { video, bar });
+  // Phones have their own slim bar under the video (0.9.92.4, `ui/phone-room.ts`), not the rail.
+  const bar = await box(page, '.ph-shorts-bar');
+  check(!!bar && bar.y >= video.b - 1 && bar.h > 30 && (await page.isVisible('#ph-shorts-chat')) && !(await page.isVisible('#shorts-chat-btn')), 'phone: the phone bar stays under the video, no rail', { video, bar });
   check(errors.length === 0, 'phone: no page errors', errors);
   await phone.close();
   await browser.close();
