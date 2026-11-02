@@ -152,6 +152,16 @@ const box = (page, selector) =>
     await alex.waitForTimeout(600);
     check(await idle(), 'fullscreen: moving left closes it');
     await leaveWithWindow('fullscreen', vw.w / 2, vw.h / 2, vw.w);
+    // 0.9.93.4 (owner: "messages from the side like normal, not from the bottom"): a message comes down from the top
+    // right, left of the rail, never over the player's own bar at the bottom.
+    await sam.fill('#chat-input', 'hello from the side');
+    await sam.press('#chat-input', 'Enter');
+    await sam.evaluate(() => document.activeElement?.blur());
+    await alex.waitForSelector('#toasts .toast', { timeout: 4000 }).catch(() => {});
+    const toast = await box(alex, '#toasts .toast');
+    const rail = await box(alex, '#fs-dock');
+    check(toast && rail && toast.r <= rail.l - 4 && toast.r > vw.w - 200, 'fullscreen: a message sits just left of the rail', JSON.stringify({ toast, rail }));
+    check(toast && toast.t < vw.h / 3, 'fullscreen: it comes from the top, not over the player\'s bar', JSON.stringify(toast));
     await alex.evaluate(() => document.exitFullscreen());
     await alex.waitForTimeout(800);
   }
