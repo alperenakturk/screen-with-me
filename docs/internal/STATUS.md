@@ -254,6 +254,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   the keys; (3) hand the host role to someone from the person menu; (4) a "3-2-1, together" countdown before the first
   play; (5) a "who joined" note in the tab's title too; (6) the invite window also offering "invite with the film
   time" when a film time is set; (7) a "continue watching" row on the home page for the last room.
+  (8) **Debug panel** (owner, 3 Nov 2026): one hidden panel (e.g. `?debug=1`, never shown to normal users, no personal
+  data) that gathers the existing pieces (`/baglanti` connection test, `?olcum=1` Shorts measurement, `?tvlab=1`) plus
+  version / environment / transport, sync stats, recent errors with a "copy" button, feature switches and "start as a
+  first-time visitor", so the owner can test from the phone without a computer. Fits with the kill switch (ROADMAP §6).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,
@@ -324,6 +328,13 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
+
+**Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
+owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
+start, dark mode, largest text, keyboard on every field, first open, back button, sideways, delete confirmation,
+offline actions, error texts, permission reasons, data deletion, close buttons, heat / battery over 10 minutes,
+storage, phone language, hand it to someone, remove and reinstall the PWA. When asked "what should I test?", turn
+these into a ScreenWithMe-specific list.
 
 **Before the 1.0 store submission: the extension in Edge, Brave and Opera** (zip from the site, a friend in Chrome, a
 legal demo player page such as a Video.js or Plyr demo for the film page). For each browser:
