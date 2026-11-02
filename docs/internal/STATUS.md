@@ -258,6 +258,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   data) that gathers the existing pieces (`/baglanti` connection test, `?olcum=1` Shorts measurement, `?tvlab=1`) plus
   version / environment / transport, sync stats, recent errors with a "copy" button, feature switches and "start as a
   first-time visitor", so the owner can test from the phone without a computer. Fits with the kill switch (ROADMAP §6).
+  **Planner, 2 Nov 2026:** (1), (2), (3), (4), (7) were built in 0.9.93.2. Proposed to the owner on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: (8) debug
+  panel → 0.9.94 (card under "Proposed" in `CARDS.md`); (6) → 0.9.95; (5) → not planned (the "(3)" unread count is
+  already in the tab title). Waiting for his answer.
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,

@@ -33,41 +33,78 @@ Card format:
 - Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
 - Owner's pick: none needed.
 
+### Simplify the room (0.9.94 "Next" 1) ⏳ owner's pick first
+- Why: a newcomer on a computer sees too many places at once; film time, save room, recap, shortcuts, sync test and
+  room rules are spread over the settings dialog, the profile menu and the toolbar.
+- Done when: the option the owner picked is built on computer + phone (recommended C: one "⋯ More" menu in the top
+  bar with the same items and order as the phone's ⋯ sheet; the settings dialog keeps "My screen" only); nothing is
+  lost (every feature still reachable in ≤ 2 clicks); Research's option D (a "first view" until the first
+  video plays: add a video, invite, chat, join voice) is on the option page too (`research/newcomers-help-shorts.md` §1); `store/src/room.html` copy updated; no scrollbars at 1024×640.
+- Tests: new harness checks (every moved item opens from the new place, computer + phone); `phone/run.cjs`,
+  `yt-room/run.cjs`, `room-extras/run.cjs`, `invite/run.cjs` still pass; owner's hand test on his laptop.
+- Owner's pick: question 1 on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw (A light touch / B newcomer mode / C one "More" menu / D first view until something plays). Waiting.
+
+### Help / FAQ page, English + Turkish (0.9.94 "Next" 2)
+- Why: newcomers and store reviewers need one place for "how does it work", the extension's permissions and
+  troubleshooting (voice does not connect, hotspot, Brave shields, autoplay).
+- Done when: `/help` (EN, `?lang=tr` for Turkish, like `privacy.html`) with sections: how it works, the extension and
+  why it asks each permission, voice / camera / streams, phones, troubleshooting (links to `/baglanti`), privacy
+  summary, in the order users ask first (Research §2–3: 3 steps, who needs the extension, what it can and cannot
+  see, "not in sync / video not found" checklist, connection, phones, voice and IP); in-product hints link to their
+  answer; linked from the footer, the profile menu, the phone ⋯ sheet and the extension page; same numbers as the
+  code (limits, retention); a non-Turkish reader understands the English text (0.9.94 gate).
+- Tests: static page check in a harness (loads, both languages, every in-page link resolves, CSP has no errors);
+  a "same numbers" spot check against `protocol.ts` limits.
+- Owner's pick: none needed (Claude writes it; the owner reads the Turkish version).
+
+### "Send feedback" button (0.9.94 "Next" 3) ⏳ owner's pick first
+- Why: the closed beta and the launch need an easy way for people to tell us what broke (ROADMAP §2 closed beta, §7
+  feedback loop).
+- Done when: a "Send feedback" entry in the ⋯ menu, the profile menu and the Help page opens a short form (what
+  happened, optional e-mail, an unticked "attach technical info" box: site + extension version, browser, transport,
+  last `/baglanti` result; never room id, names or chat; Research §2) and the message reaches the place the
+  owner picked; per-IP rate limit, no IP stored; privacy policy updated (EN + TR).
+- Tests: unit test for the validation; e2e for the endpoint (accepts, rejects too long / too many); harness opens the
+  form on computer + phone.
+- Owner's pick: question 2 on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw (A in-site form → a `feedback` issue in the private repo, needs a GitHub token
+  secret from the owner / B e-mail only / C Google Form). Waiting.
+
+### Shorts: a feed from one channel + Discover by region (0.9.94 "Next" 4) ⏳ owner's pick first (region)
+- Why: owner, 1 Nov 2026: type a channel name or link and get its Shorts; Discover should show the viewer's country's
+  popular Shorts instead of a mixed list.
+- Done when: the ♾ window accepts a channel link / @handle / name and starts a feed of that channel's Shorts (uploads
+  playlist, the `like` path's code reused; cached per channel and day); Discover uses the region the owner picked
+  (recommended A: the connection's country from Cloudflare, not stored, with a "🌍 Country ▾" chip of about 10
+  countries + "World"; one pool per kind + country + day); quota cost per new query written down; privacy policy
+  mentions the country use.
+- Tests: unit tests for channel input parsing; Worker unit / e2e with `YOUTUBE_API_KEY` off (`off` answer) and the
+  region parameter validated; `shorts-rail/run.cjs` still passes; owner's hand test with a real channel.
+- Owner's pick: question 4 on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw (A viewer's country, changeable / B by site language / C ask every time). Waiting.
+
+### Thanks page (0.9.94 "Next" 5) ⏳ owner's pick first
+- Why: owner, 1 Nov 2026: credit the people who helped by testing.
+- Done when: `/thanks` (EN, `?lang=tr` Turkish) with the names the owner sends (only people who said yes) and a short
+  thank-you text; linked from the footer and the Help page; if the owner picks A, the feedback form later gets an
+  unticked "Credit me on the Thanks page" box (with the beta).
+- Tests: static page check in the same harness as Help.
+- Owner's pick: question 3 on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw (A hand-made list now + opt-in box in the beta / B no names). Waiting; the owner
+  also sends the list of names.
+
+### Shorts scrolling, really good: measure and preload (0.9.94, alongside)
+- Why: owner, 29 Oct 2026: "working is not enough, make it great"; the 0.9.94 gate needs the switch measurement
+  written down (preload if > 300 ms).
+- Done when: the owner and a friend measured the switch gap with `?olcum=1` in real Chrome (5+ switches, numbers in
+  `STATUS.md`); if the average is > 300 ms a hidden preload player for the next Short is built (YouTube's rules
+  checked: nothing of ours over the player); otherwise the measurement is recorded and the card closes.
+- Tests: owner's hand measurement first; for a preload player a harness with a fake YouTube player (like the TikTok
+  stand-in) checks the next Short is cued before the switch; `shorts-rail/run.cjs` still passes.
+- Owner's pick: none needed for the code; the owner's measurement is the first step (hand test).
+
 ## Proposed
 
 (Security and Research add cards here.)
 
-### Simplify the room: a "first view" until something plays (Research, 0.9.94 "Next" 1)
-- Why: every competitor's first room view is player + add a video + invite (+ chat); ours shows the full dock, the
-  Together card, three tabs, pins, film time, votes, recap. Details: `research/newcomers-help-shorts.md` §1.
-- Done when: until the room's first video plays, a computer and a phone show only: add a video (search / link), invite,
-  chat, join voice; games, pins, film time, votes, recap, saved room, speed sit under ⋯ (or appear once something
-  plays). The owner picks the exact list on an option page (ROADMAP §1 item 3).
-- Tests: harness check per layout (computer, phone) that only those controls are visible in an empty room and the rest
-  appear after play; first-tips still find their anchors.
-- Owner's pick: needed (which features stay visible; option page by the Planner).
-
-### Help / FAQ page, ordered by what users ask first (Research, 0.9.94 "Next" 2)
-- Why: competitors' help starts with "how to start", "who needs the extension", "it doesn't sync", "permissions";
-  nobody explains permissions well. Details: `research/newcomers-help-shorts.md` §2–3.
-- Done when: `/help` (EN first, TR variant) answers in this order: 3 steps; who needs the extension (only film pages;
-  YouTube / TikTok / links and phones need nothing); what the extension can and cannot see; "not in sync / video not
-  found" checklist (update, other video extensions / VPN, reload, 🎯 Pick video, 👁 Show the page, Sync everyone to me);
-  connection problems → `/baglanti`; phones; voice, cameras and IP; ads inside YouTube come from YouTube; privacy link.
-  In-product hints (`.net-hint`, video not found, blocked WebRTC) link to their answer. No film / service names.
-- Tests: e2e / harness that `/help` loads in EN and TR and every in-product help link lands on an existing anchor; a
-  non-Turkish reader check (owner).
-- Owner's pick: none needed for the order; copy follows the slogan rules.
-
-### "Send feedback" with opt-in diagnostics (Research, 0.9.94 "Next" 3)
-- Why: every support thread starts with "which browser / version?"; Teleparty's e-mail-only support ends up on
-  Trustpilot; Discord's form is one-way. Details: `research/newcomers-help-shorts.md` §2.
-- Done when: "Send feedback" in the profile menu / ⋯ and on `/help` opens a small form (text, optional e-mail, an
-  unticked "attach technical info": site + extension version, browser, transport ws/http, last `/baglanti` result; no
-  room id, names or chat); a Worker endpoint stores it with a rate limit; the owner can read the list; the privacy
-  policy names it.
-- Tests: e2e (send, rate limit, nothing attached when unticked); unit for the payload builder.
-- Owner's pick: where the owner reads them (stored list vs. e-mail), and whether GitHub issue templates come too.
+_Planner, 2 Nov 2026: Research's "Simplify the room: a first view", "Help / FAQ ordered by what users ask first" and "Send feedback with opt-in diagnostics" were folded into the Ready cards above (their details are in `research/newcomers-help-shorts.md`)._
 
 ### Extension permission explainer (Research)
 - Why: scanners rate "all websites" access as critical; users and guides struggle with "read and change site data";
@@ -86,6 +123,12 @@ Card format:
   straight into the Shorts view with 🎲 Discover; no service is named beyond YouTube Shorts / TikTok.
 - Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
 - Owner's pick: copy and whether it is a page or only a home door.
+### Hidden test panel `?debug=1` (Planner's proposal, from the ideas list; owner decides)
+- Why: the owner tests from his phone without a computer; it gathers `/baglanti`, `?olcum=1`, `?tvlab=1`, version,
+  transport, sync stats, recent errors (copy button), feature switches and "start as a first-time visitor".
+- Done when: `?debug=1` once in a tab shows the panel; normal users never see it; no personal data in it.
+- Tests: harness opens it and checks each part; a normal visit shows nothing.
+- Owner's pick: proposed for 0.9.94 before the Shorts measurement card (https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw, "Ideas"). Waiting.
 
 Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe first. Each card names its finding id
 (H = high, M = medium, L = low); the details, file:line references and attack scenarios are in the review.
