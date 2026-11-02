@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 31 Oct 2026. Site and extension **0.9.92.2**. The owner moved to a **new Claude
+> Last update: 31 Oct 2026. Site and extension **0.9.92.3**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -191,7 +191,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
 - [ ] **Another new thing after the phone version** (the owner will describe it).
-- [ ] **Phone version from scratch** (owner, 1 Nov 2026: "I don't like the phone version; it feels like the PC page
+- [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
+  our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,
+  😀 / ＋ message box, ＋ / ⋯ / Add-a-video / People sheets, settings full page, back button closes sheets; phone
+  harness rewritten, 40 checks). [ ] step 2: Shorts full height (5A) + sideways fullscreen dock (4B). [ ] step 3:
+  full-screen games (10A), app start page (11A), speed (lazy loading, light phone CSS, YouTube only when needed).
+- [ ] (original request) **Phone version from scratch** (owner, 1 Nov 2026: "I don't like the phone version; it feels like the PC page
   squeezed onto a phone. Make it feel like an app, every feature fitting the screen, and fast"). First a design page
   with options per part (join, watching, Shorts together, chat, voice / cameras, queue / add, games, menus, speed),
   the owner picks, then the phone layer is rewritten without breaking features or the design principles.
@@ -290,6 +295,18 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.92.3 (phone room as an app, on your phone):**
+- [ ] Open the site in a fresh browser (or a private window): it starts in English; TR in the menu switches and is
+  remembered (owner, 2 Nov 2026: English first everywhere).
+- [ ] Open a room on the phone: no top bar, the video at the top edge to edge, faces under it, chat, message box with
+  😀 and ＋ at the bottom; nothing slides or scrolls except the chat.
+- [ ] ＋ → Video ekle: paste a link or search, "Şimdi aç" plays it; the queue is in the same sheet.
+- [ ] ⋯: invite, queue, people, games, recap, film time, profile, settings, language all open.
+- [ ] Join voice with 📷: your face in the strip shows your camera; a friend's camera shows in their face; tap a face
+  → their camera big.
+- [ ] Android back button closes an open sheet instead of leaving the room.
+- [ ] Turn the phone sideways while a video plays: fullscreen with the dock; upright: the room again.
 
 **0.9.92.2 (Shorts rail):**
 - [ ] On the laptop open a Short: the buttons are a column right of the video, the top bar is gone, the video fills

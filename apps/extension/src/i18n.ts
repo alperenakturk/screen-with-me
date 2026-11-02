@@ -34,11 +34,12 @@ const en: typeof tr = {
 };
 
 export type Key = keyof typeof tr;
-let dict: typeof tr = tr;
+let dict: typeof tr = en;
 
 export const langReady: Promise<void> = readValue('lang')
   .then((lang) => {
-    dict = lang === 'en' ? en : tr;
+    // English unless Turkish was chosen on the site (owner, 2 Nov 2026).
+    dict = lang === 'tr' ? tr : en;
   })
   .catch(() => {});
 

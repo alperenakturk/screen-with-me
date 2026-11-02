@@ -83,6 +83,7 @@ import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv.ts';
 import { createTvRemote } from './ui/tv-remote.ts';
+import { createPhoneRoom } from './ui/phone-room.ts';
 import { createTvRoom } from './ui/tv-room.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
@@ -474,7 +475,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <h3 class="together-title" data-i18n="together"></h3>
             <span id="voice-limit" class="voice-limit muted small"></span>
           </div>
-          <div id="voice-people" class="voice-people"></div>
+          <div class="together-strip">
+            <div id="voice-people" class="voice-people"></div>
+            <div id="strip-voice" class="strip-voice phone-only" hidden>
+              <button id="strip-live" type="button" class="cam-ctl" hidden></button>
+              <button id="strip-mic" type="button" class="cam-ctl"></button>
+              <button id="strip-cam" type="button" class="cam-ctl"></button>
+            </div>
+            <button id="strip-more" type="button" class="cam-ctl strip-more phone-only" aria-haspopup="dialog" data-i18n-title="phone.more">⋯</button>
+          </div>
           <div class="together-actions">
             <div id="voice-card" class="voice-row" hidden>
               <button id="voice-join" type="button" class="btn primary voice-join"><span data-i18n="voice.join"></span></button>
@@ -533,8 +542,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="chat-events" type="button" class="chat-events" aria-pressed="false"></button>
             <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
             <form id="chat-form" class="chat-form">
+              <button type="button" id="chat-react" class="chat-tool phone-only" aria-haspopup="dialog" data-i18n-title="reactTray.hint">😀</button>
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
               <button type="button" class="chat-attach" id="chat-attach" data-i18n-title="chatImage.add"></button>
+              <button type="button" id="chat-plus" class="chat-tool phone-only" aria-haspopup="dialog" data-i18n-title="phone.plus">＋</button>
               <button class="chat-send" id="chat-send" data-i18n-title="send">➤</button>
             </form>
           </div>
@@ -851,6 +862,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onCams: (cams) => {
       seatCams = cams;
       showSeatCams(cams);
+      phoneRoom?.setCams(cams);
     },
     isHost: () => myId !== null && myId === hostId,
     kick: (member) => {
@@ -858,6 +870,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   const live = createLive(app, send, () => myId, isShell, () => amHost());
+  // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels.
+  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({ root: app, openSettings: (section) => settingsDialog.open(section), myId: () => myId });
+  phoneRoom?.setCams(seatCams);
   // Odanın içindeki oyunlar: 🎮 → oyun seç → oyun videonun yerinde açılır (ayrı oyun odası yok).
   const games = createGameStage({
     wrap: $('.player-wrap'),
