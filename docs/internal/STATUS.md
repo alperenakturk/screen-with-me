@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.92.5**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.92.6**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -190,6 +190,13 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     then **hidden**: the TV button and `/tv`, `/tv/<code>`, `/tv-test` only work with the lab switch `?tvlab=1`
     (`tv-lab.ts`), the code stays. README rows removed. ROADMAP Phase 2: "TV version with Google Cast" (with the $5
     Cast developer fee, after 1.0).
+- [ ] **YouTube rule + one remote** (owner, 2 Nov 2026): nothing of ours over the YouTube player (overlays, a hidden
+  player and players under 200 × 200 are against YouTube's Required Minimum Functionality); one remote instead of the
+  toolbar + dock. Design page with 8 decisions: https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG (waiting for the
+  owner's picks). Includes the phone game preview (10A) for YouTube videos.
+- [x] **0.9.92.6 phone feedback:** recap fits, Shorts chat half height, feed window (♾ opens it, Stop inside), camera
+  row (no cameras in faces, no camera windows), real fullscreen + ⛶ in the strip + side panel in fullscreen, keyboard
+  is not "sideways", one share sheet.
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,
@@ -298,6 +305,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.92.6 (your phone feedback, on your phone):**
+- [ ] Today's recap fits the screen; the Shorts chat covers about half the screen.
+- [ ] ♾ while a feed runs opens the feed window with "On now: … · Stop"; it only stops with Stop.
+- [ ] Turn on your camera: one picture in a row under the faces (your face stays your avatar), no floating camera
+  window; tap the picture: it opens big.
+- [ ] ⛶ next to ⋯ opens a real fullscreen (no address bar) and turns the phone sideways. In fullscreen 💬 on the right
+  opens / closes the side panel (faces, chat, message box). Turned sideways by hand, the extra ⛶ on the right column
+  hides the address bar.
+- [ ] Type a message (keyboard open): nothing jumps, no fullscreen. Invite: only the phone's share sheet, no grey box.
 
 **0.9.92.5 (phone step 3, on your phone):**
 - [ ] Open the site: an app start screen (Create room, Join with a code, your saved rooms); "How does it work?" opens
