@@ -86,10 +86,11 @@ export default {
 
     if (url.pathname === '/api/health') return new Response('ok');
 
-    // Which version of the code answers: the Worker and one Durable Object (objects restart on the new code a while
-    // after a deploy, closing their connections). The deploy job runs the live e2e only once both say the new id.
+    // Which version of the code answers: the Worker and a freshly started Durable Object, as a new test room would be
+    // (objects restart on the new code a while after a deploy, closing their connections). The deploy job runs the
+    // live e2e only once both say the new id. TvLink stores nothing, so these probe objects leave nothing behind.
     if (url.pathname === '/api/version') {
-      const probe = env.TVLINKS.get(env.TVLINKS.idFromName('version'));
+      const probe = env.TVLINKS.get(env.TVLINKS.idFromName(`version-${crypto.randomUUID()}`));
       const object = await (await probe.fetch('https://version/version')).text();
       return Response.json({ worker: env.CF_VERSION_METADATA?.id ?? '', object }, { headers: { 'Cache-Control': 'no-store' } });
     }

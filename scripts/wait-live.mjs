@@ -3,7 +3,7 @@
 // Cloudflare spreads a new version over a minute or two, and a Durable Object that started on the old code is
 // restarted on the new one later, closing its connections. A test room that started in that window lost its
 // connections mid-test (live e2e "timeout waiting d" in wait.mjs, reproduced locally by reloading the server at the same
-// moment). `/api/version` answers the Worker's version and one Durable Object's; both must say the new id
+// moment). `/api/version` answers the Worker's version and that of a freshly started Durable Object; both must say the new id
 // `STABLE` times in a row, a few seconds apart. Gives up after `LIMIT_MS` with a warning (the e2e then shows the rest).
 const [base, want] = process.argv.slice(2);
 if (!base || !want) {
