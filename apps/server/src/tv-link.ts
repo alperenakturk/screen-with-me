@@ -11,6 +11,8 @@ const CODE_TTL_MS = 10 * 60_000;
  */
 export class TvLink extends DurableObject<Env> {
   override async fetch(request: Request): Promise<Response> {
+    // `/api/version` asks one object which version of the code it runs (see index.ts).
+    if (new URL(request.url).pathname === '/version') return new Response(this.env.CF_VERSION_METADATA?.id ?? '');
     if (new URL(request.url).pathname === '/deliver' && request.method === 'POST') {
       const tv = this.ctx.getWebSockets().find((ws) => ws.readyState === WebSocket.OPEN);
       if (!tv) return new Response('No TV', { status: 404 });
