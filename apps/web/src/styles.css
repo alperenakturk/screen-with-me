@@ -11495,3 +11495,66 @@ html.shorts-view .game-stage .game-place {
     transition: none;
   }
 }
+
+/* ==== A bigger room on a computer (0.9.92.7, owner: "too much empty space; make the video bigger even in the window,
+   like Shorts"). The content is no longer capped at 1280 px: the video's card is as wide as the screen's height
+   allows for a 16:9 picture (everything above and below it is ~250 px), the side panel grows with the screen, and the
+   pair sits in the middle. Not on the film page (its hole has its own sizes), in the Shorts view, on a TV or a phone. */
+@media (min-width: 861px) {
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) main {
+    max-width: none;
+    padding: 12px clamp(12px, 1.6vw, 28px);
+  }
+
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room {
+    --side-w: clamp(300px, 21vw, 400px);
+    --stage-w: calc((100dvh - 252px) * 16 / 9 + 28px);
+    grid-template-columns: minmax(0, max(var(--stage-w), 560px)) var(--side-w);
+    justify-content: center;
+    gap: 16px;
+  }
+
+  /* Side panel hidden (⇥): the video's card alone, as big as the height allows. */
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room.side-hidden {
+    grid-template-columns: minmax(0, max(var(--stage-w), 560px));
+  }
+
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room .stage {
+    gap: 10px;
+  }
+
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room .theater:not(:fullscreen, .fake-fs) {
+    gap: 8px;
+    padding: 10px 12px 12px;
+  }
+}
+
+/* The join card (name + avatar) is bigger on a computer (0.9.92.7, owner: "too small"). */
+@media (min-width: 700px) {
+  .join-card:not(.avatar-card) {
+    max-width: 580px;
+    margin-top: 9vh;
+    padding: 32px 34px;
+    font-size: 17px;
+  }
+
+  .join-card:not(.avatar-card) .step-title {
+    font-size: 30px;
+  }
+
+  .join-card .join-avatar {
+    width: 84px;
+    height: 84px;
+    font-size: 44px;
+  }
+
+  .join-card .join-row input {
+    min-height: 58px;
+    font-size: 19px;
+  }
+
+  .join-card .btn.big {
+    min-height: 54px;
+    font-size: 18px;
+  }
+}

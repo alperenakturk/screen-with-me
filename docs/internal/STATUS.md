@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.92.6**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.92.7**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -202,7 +202,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   as they are (owner: Watch2Gether shows cameras over YouTube too; cameras / the stream window / the game preview are
   the owner's accepted risk at the audit); 8B film pages and video files keep today's dock over the film, hiding when
   idle. Also: the desktop room bigger (less empty space, bigger video even in the window, like Shorts), the join card
-  (name + avatar) bigger. Steps: [ ] 0.9.92.7 bigger room + join card; [ ] 0.9.92.8 one rail (2A 3A 4A); [ ] 0.9.92.9
+  (name + avatar) bigger. Steps: [x] 0.9.92.7 bigger room + join card; [ ] 0.9.92.8 one rail (2A 3A 4A); [ ] 0.9.92.9
   emojis from faces (1B) + notices in the chat (5B).
 - [x] **0.9.92.6 phone feedback:** recap fits, Shorts chat half height, feed window (♾ opens it, Stop inside), camera
   row (no cameras in faces, no camera windows), real fullscreen + ⛶ in the strip + side panel in fullscreen, keyboard
@@ -315,6 +315,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.92.7 (computer):**
+- [ ] Open a room on the laptop and the big monitor: the video fills much more of the screen, less empty space on
+  the sides; the chat panel is a bit wider on big screens. ⇥ (hide the side panel) still works.
+- [ ] The first screen of a room (name + avatar) is bigger.
 
 **0.9.92.6 (your phone feedback, on your phone):**
 - [ ] Today's recap fits the screen; the Shorts chat covers about half the screen.
