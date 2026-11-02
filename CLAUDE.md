@@ -78,7 +78,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.92.7 (a bigger room on a computer: the video as big as the screen's height allows, wider side panel, bigger join card; 0.9.92.6 phone fixes from the owner's phone: camera row instead of cameras in faces, real fullscreen + side panel, the keyboard no longer counts as turning the phone, Shorts feed window, recap fits, one share sheet; 0.9.92.5 phone step 3: games full screen with the video as a small preview, the home page as an app start screen, lighter phones; 0.9.92.4 phone step 2: Shorts take the phone's screen with one slim bar, sideways fullscreen gets a slim dock beside the video; 0.9.92.3 phone room rebuilt as an app screen, owner's picks; 0.9.92.2 Shorts rail: on wide screens the Shorts bar is a column right of the video and the top bar folds on short
+Live: 0.9.92.8 (one remote on a computer: no toolbar, the rail + ⋯, YouTube's rail beside the video coming and going with the mouse; phones: sideways = video + one ⛶, games only in ⋯, camera sizes, language asks; 🔍 Search button; "Try again" + connection test with the way back; 0.9.92.7 a bigger room on a computer: the video as big as the screen's height allows, wider side panel, bigger join card; 0.9.92.6 phone fixes from the owner's phone: camera row instead of cameras in faces, real fullscreen + side panel, the keyboard no longer counts as turning the phone, Shorts feed window, recap fits, one share sheet; 0.9.92.5 phone step 3: games full screen with the video as a small preview, the home page as an app start screen, lighter phones; 0.9.92.4 phone step 2: Shorts take the phone's screen with one slim bar, sideways fullscreen gets a slim dock beside the video; 0.9.92.3 phone room rebuilt as an app screen, owner's picks; 0.9.92.2 Shorts rail: on wide screens the Shorts bar is a column right of the video and the top bar folds on short
 screens, so the video is ~30 % taller on a laptop; 0.9.92.1 CLAUDE.md rule: everything technical in English; 0.9.92 rooms work on networks where WebSockets never open, e.g. the owner's phone hotspot: automatic HTTP
 fallback, `/baglanti` tells the causes apart; 0.9.91.20 first-time path: one join screen with who is waiting, 3 first tips, the install card notices a new
 extension; 0.9.91.19 TikTok links play in the Shorts view with TikTok's official player; 0.9.91.18 Shorts: YouTube's own bar and nothing of ours over the player, 🎲 Keşfet pools, ✨ Bunun gibi, `?olcum=1` switch measurement; 0.9.91.17 "your browser blocks direct connections" hint for voice / cameras / streams, Edge Add-ons prep, browser notes on the extension page; 0.9.91.16 voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
@@ -544,7 +544,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   footer); the link box is hidden (videos are added in the room). Speed: no `backdrop-filter` and no drifting
   `body::before` on `html.phone`; the YouTube API is not preloaded on a phone (loads with the first video);
   `ui/recap.ts` is a lazy chunk. Next speed steps: lazy voice / live / TV code, a phone-only stylesheet, an automatic
-  phone speed test (4× CPU) against the built site. Test: `scripts/harness/phone/run.cjs` (65 checks).
+  phone speed test (4× CPU) against the built site. Test: `scripts/harness/phone/run.cjs` (71 checks).
 - **TV version (owner chose A + C, 30 Oct 2026; 0.9.91.4, 0.9.91.5, 0.9.91.14, `docs/internal/tv-design.md`):** the TV
   shows the room, the paired phone is its remote. **Hidden since 0.9.91.14** (owner: slow on his TV's browser; the
   real version comes after 1.0 with Google Cast, ROADMAP Phase 2): the TV button and `/tv`, `/tv/<code>`, `/tv-test`
@@ -918,6 +918,27 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `--side-w` (`clamp(300px, 21vw, 400px)`), centred, where `--stage-w = (100dvh − 252px) × 16 / 9 + 28px`: the video's
   card is as wide as the height allows (1920×1080: 1422 px wide video, was 878). The join card (name + avatar) is
   bigger above 700 px (580 px card, 84 px avatar, 58 px field).
+- **One remote (0.9.92.8, owner's picks 2A / 3A / 4A changed on https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG):**
+  on a computer (not the film page, phones or the Shorts view) the toolbar under the video is hidden whenever the
+  dock is shown in the window (`.dock-window`); the dock is the only remote: 💬 (only in fullscreen or with the side
+  panel hidden), 😀, 📌, 🎮 `#dock-game` (an `extraButtons` of the games stage, its hall opens left of the rail), 🎙 / 📷,
+  🖥️ only while someone streams, ⋯ `#dock-more` (`#dock-more-pop`: speed chips, sync, next, side panel, "hide the
+  controls"), ⛶. `#dock-speed` / `#dock-skip` are hidden there. YouTube (`.theater.yt-rail`, set when the player is
+  YouTube): the rail is a 58 px column beside the video, never on it: `.player` / `.fs-catcher` end at its edge while
+  it shows (a mouse move, hovering it, an open window of it, a paused video, always on touch screens) and fill the
+  width when it rests (`.dock-idle`), in the window and in fullscreen. "Hide the controls" (`opt:railOff`,
+  `.rail-off`, window only) keeps it away; `#rail-show` above the video brings it back. Video files and film pages
+  keep the dock over the film's edge (8B). Picks still to build: 1B emojis from the sender's face, 5B notices in the
+  chat panel; 6 / 7 stay as they are (the owner accepts that risk). **🔍 Search** (`.media-search`, the first submit
+  button, so Enter keeps working): words search YouTube, a link goes to the queue, an empty box gets the focus.
+  **Phones (0.9.92.8):** turning sideways no longer opens fullscreen by itself (`fullscreen.ts` skips `rotateFs` on
+  `isPhoneLayout`); sideways without fullscreen the room shows the video left and `.ph-turn` right (one big ⛶ "Watch
+  fullscreen", or "hold the phone upright"; no chat / faces / cameras); a fullscreen opened there closes when the phone
+  turns upright. Games live only in ⋯ (not in ＋, no `#strip-game`; a minimized table puts a dot on ⋯). ⋯ → Language
+  opens a small sheet (English / Türkçe). The person sheet's small / medium / large size the phone's camera row tile
+  (`ui/phone-cams.ts`, `phCamSizes`). **Can't reach the room:** the `.net-hint` card has "⟳ Try again"
+  (`connection.reconnect()`) and "Test the connection" → `/baglanti?room=<id>` (same tab), whose first button is
+  "← Back to the room" (`/r/<id>#back`) and "⟳ Run it again".
 - **Hide the side panel (0.9.71):** ⇥ in the toolbar under the video (`#side-toggle`): `.room.side-hidden`, the video
   takes the full width, chat messages appear in the video corner as in fullscreen (`toasts`), unread count on the
   button; `localStorage` `opt:sideHidden`; not in the shell or on narrow screens (≤860 px).

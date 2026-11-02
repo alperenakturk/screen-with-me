@@ -6,6 +6,7 @@
 
 import { PROTOCOL_VERSION } from '@swm/shared/protocol';
 import { newRoomId } from '@swm/shared/room-id';
+import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { HttpSocket, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { el } from './dom.ts';
 import { t } from './i18n.ts';
@@ -19,6 +20,15 @@ interface Row {
 const TIMEOUT_MS = 10_000;
 const BIG_BYTES = 200_000;
 
+/** Opened from a room's "can't reach the room" note (0.9.92.8, owner): the way back to that room comes first. */
+function backButtons(): HTMLElement[] {
+  const room = new URLSearchParams(location.search).get('room') ?? '';
+  const again = el('button', { type: 'button', class: 'btn' }, `⟳ ${t('diag.again')}`);
+  again.addEventListener('click', () => location.reload());
+  if (ROOM_ID_PATTERN.test(room)) return [el('a', { class: 'btn primary', href: `/r/${room}#back` }, `← ${t('diag.backRoom')}`), again];
+  return [el('a', { class: 'btn primary', href: '/' }, t('diag.home')), again];
+}
+
 export function renderDiag(app: HTMLElement): void {
   const list = el('ul', { class: 'diag-list' });
   const copy = el('button', { type: 'button', class: 'btn', disabled: '' }, t('diag.copy'));
@@ -31,7 +41,7 @@ export function renderDiag(app: HTMLElement): void {
       el('p', { class: 'muted' }, t('diag.intro')),
       list,
       verdict,
-      el('div', { class: 'row' }, copy, el('a', { class: 'btn primary', href: '/' }, t('diag.home'))),
+      el('div', { class: 'row' }, ...backButtons(), copy),
     ),
   );
   const rows: Row[] = [];

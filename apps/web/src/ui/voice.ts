@@ -16,6 +16,8 @@ import { confirmIpNotice } from './ip-notice.ts';
 import { applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames, shellDeviceCheck, voiceCheck } from './voice-check.ts';
 import { setIcon } from './icons.ts';
 import { ExtVoice } from './voice-ext.ts';
+import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
+import { isPhoneLayout } from '../device.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
 const RPC_TIMEOUT_MS = 12_000;
@@ -558,7 +560,19 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       items.push(el('label', { class: 'person-pop-volume' }, el('span', {}, `🔊 ${t('voice.volume')}`), range, value));
       items.push(button(s.m ? `🔊 ${t('voice.unmuteFor')}` : `🔇 ${t('voice.muteFor')}`, () => setSound(member, { m: !s.m })));
     }
-    if (tiles.has(member.id) && camWindow.isFree()) {
+    if (isPhoneLayout() && member.voice?.cam) {
+      // A phone (0.9.92.8, owner: "the sizes did nothing"): the presets size this person's picture in the camera row.
+      const now = phoneCamSize(member.id);
+      const sizes = (['small', 'medium', 'large'] as const).map((size) => {
+        const b = el('button', { type: 'button', class: size === now ? 'person-pop-size on' : 'person-pop-size', 'aria-pressed': String(size === now) }, t(`voice.size.${size}`));
+        b.addEventListener('click', () => {
+          setPhoneCamSize(member.id, size);
+          closeMenu();
+        });
+        return b;
+      });
+      items.push(el('div', { class: 'person-pop-sizes', role: 'group', 'aria-label': t('voice.size') }, el('span', {}, `↔ ${t('voice.size')}`), ...sizes));
+    } else if (tiles.has(member.id) && camWindow.isFree()) {
       // Every camera has its own window: small / medium / large instead of "show big".
       const now = camWindow.sizeOf(key);
       const sizes = (['small', 'medium', 'large'] as const).map((size) => {

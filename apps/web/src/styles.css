@@ -11558,3 +11558,164 @@ html.shorts-view .game-stage .game-place {
     font-size: 18px;
   }
 }
+
+/* ==== One remote (0.9.92.8, owner's picks 2A / 3A / 4A on https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG) ====
+   On a computer the toolbar under the video goes: the dock (rail) is the only remote, in the window and in fullscreen.
+   It holds the common buttons (💬 only in fullscreen or with the side panel hidden, 😀, 📌, 🎮, 🎙, 📷, 🖥️ only while
+   someone streams, ⋯, ⛶); ⋯ holds speed, sync, next, the side panel and "hide the controls". Not on the film page
+   (8B: today's dock over the film), on phones (own layout) or in the Shorts view (own rail). */
+html:not(.shell, .phone, .shorts-view) .theater.dock-window:not(:fullscreen, .fake-fs) .toolbar {
+  display: none;
+}
+
+html:not(.shell, .phone) .theater.dock-mode :is(#dock-speed, #dock-skip, #dock-live[data-idle='true']) {
+  display: none;
+}
+
+html.shell .theater :is(#dock-more, #dock-game) {
+  display: none;
+}
+
+.room:not(.side-hidden) .theater.dock-window:not(:fullscreen, .fake-fs) #dock-chat {
+  display: none;
+}
+
+.dock-more-pop {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 230px;
+}
+
+.dock-more-speeds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 2px 6px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.12);
+  margin-bottom: 4px;
+}
+
+.dock-more-speeds .dock-speed-opt {
+  flex: 1 0 auto;
+}
+
+.dock-more-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dock-more-item:hover,
+.dock-more-item:focus-visible {
+  background: rgb(255 255 255 / 0.1);
+}
+
+/* "Hide the controls" is for the window only (fullscreen always has its rail). */
+.theater:is(:fullscreen, .fake-fs) .rail-hide-item {
+  display: none;
+}
+
+/* The games hall opens left of the rail. */
+.fs-dock .game-menu {
+  right: calc(100% + 10px);
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+}
+
+.rail-show {
+  margin-left: auto;
+}
+
+/* YouTube (4A changed, owner): the rail is a column beside the video, never on it. It comes with a mouse move (the
+   video shrinks to make room) and goes when the mouse rests (the video grows back), in the window and in fullscreen.
+   "Hide the controls" keeps it away in the window. Touch screens (tablets) keep it out all the time. */
+html:not(.shell, .phone) .theater.yt-rail.dock-mode {
+  --rail-w: 58px;
+}
+
+html:not(.shell, .phone) .theater.yt-rail.dock-mode :is(.player, .fs-catcher) {
+  width: auto;
+  transition: right 0.22s ease;
+}
+
+html:not(.shell, .phone) .theater.yt-rail.dock-mode:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))) :is(.player, .fs-catcher),
+html.is-touch:not(.shell, .phone) .theater.yt-rail.dock-mode :is(.player, .fs-catcher) {
+  right: var(--rail-w);
+}
+
+html:not(.shell, .phone) .theater.yt-rail.dock-mode .fs-dock {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--rail-w);
+  max-height: none;
+  overflow: visible;
+  transform: none;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  border-left: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 0;
+  box-shadow: none;
+  background: rgb(12 14 22 / 0.94);
+  transition: opacity 0.22s ease, visibility 0.22s;
+}
+
+html:not(.shell, .phone) .theater.yt-rail.dock-mode.dock-idle:not(:has(.fs-dock:hover, .dock-pop:not([hidden]))) .fs-dock {
+  opacity: 0;
+  visibility: hidden;
+}
+
+html.is-touch:not(.shell, .phone) .theater.yt-rail.dock-mode .fs-dock {
+  opacity: 1;
+  visibility: visible;
+}
+
+html:not(.shell, .phone) .theater.yt-rail.dock-mode .dock-group {
+  gap: 4px;
+}
+
+html:not(.shell, .phone) .theater.yt-rail.dock-mode .dock-group + .dock-group {
+  padding-top: 6px;
+}
+
+/* Hidden by hand: the video keeps its full width in the window. */
+html:not(.shell) .theater.rail-off.dock-window:not(:fullscreen, .fake-fs) .fs-dock {
+  display: none;
+}
+
+html:not(.shell) .theater.yt-rail.rail-off.dock-window:not(:fullscreen, .fake-fs) :is(.player, .fs-catcher) {
+  right: 0;
+}
+
+/* 🔍 Search in the link box (0.9.92.8, owner: "people won't know Enter searches"). Icon only on narrower screens. */
+.media-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 1180px) {
+  .media-search span:last-child {
+    display: none;
+  }
+}
+
+html.phone .media-search span:last-child {
+  display: none;
+}

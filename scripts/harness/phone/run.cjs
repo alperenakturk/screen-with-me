@@ -76,7 +76,7 @@ const sheetName = (page) => page.evaluate(() => {
     check(!(await page.isVisible('.voice-ptt')), 'phone: push-to-talk (V key) hidden');
     // ＋ → Add a video: the link box and the queue in one sheet; "Play now" plays and closes it.
     await page.click('#chat-plus');
-    check((await sheetName(page)) === 'plus' && (await page.$$('.ph-sheet .ph-tile')).length >= 4, 'phone: ＋ opens a sheet of actions');
+    check((await sheetName(page)) === 'plus' && (await page.$$('.ph-sheet .ph-tile')).length >= 3, 'phone: ＋ opens a sheet of actions');
     await page.click('.ph-sheet .ph-tile >> nth=0');
     check((await sheetName(page)) === 'add' && (await page.isVisible('.ph-sheet #media-input')) && (await page.isVisible('.ph-sheet [data-panel="queue"]')), 'phone: Add a video = link box + queue in one sheet');
     await page.fill('#media-input', VIDEO);
@@ -100,6 +100,14 @@ const sheetName = (page) => page.evaluate(() => {
     await page.evaluate(() => history.back());
     await page.waitForTimeout(400);
     check((await sheetName(page)) === null && (await page.evaluate(() => !!document.querySelector('.tabs-card [data-panel="people"]'))), 'phone: back closes the sheet, the panel is back in the room');
+    // ⋯ → Language asks which one (0.9.92.8): two choices, nothing switches by itself.
+    await page.click('#strip-more');
+    await page.click('.ph-sheet .ph-tile:has-text("Dil")');
+    await page.waitForTimeout(300);
+    const langs = await page.evaluate(() => ({ sheet: document.querySelector('.ph-sheet:not([hidden])')?.dataset.sheet, n: document.querySelectorAll('.ph-sheet .ph-lang').length, lang: document.documentElement.lang }));
+    check(langs.sheet === 'language' && langs.n === 2 && langs.lang === 'tr', 'phone: ⋯ → Language asks which one (no switch by itself)', JSON.stringify(langs));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
     // 😀 opens the emoji tray as a bottom sheet; 😀 again closes it.
     await page.click('#chat-react');
     await page.waitForTimeout(300);
@@ -115,8 +123,8 @@ const sheetName = (page) => page.evaluate(() => {
     check(!(await page.isVisible('.toolbar .react-tray')), 'phone: a tap outside closes it');
     // The toolbar's windows still open as sheets (games, speed) and the profile menu too.
     for (const [open, tileIndex, pop, label] of [
-      ['#chat-plus', 1, '#game-menu', 'games'],
-      ['#chat-plus', 4, '#speed-pop', 'speed'],
+      ['#strip-more', 3, '#game-menu', 'games (only in ⋯)'],
+      ['#chat-plus', 3, '#speed-pop', 'speed'],
       ['#strip-more', 6, '.profile-pop', 'profile'],
     ]) {
       await page.click(open);
@@ -164,10 +172,19 @@ const sheetName = (page) => page.evaluate(() => {
     await page.click('#dock-exit');
     await page.waitForTimeout(400);
     check(!(await page.evaluate(() => document.getElementById('theater').classList.contains('fake-fs'))), 'iPhone: the dock\'s exit leaves fullscreen');
-    // Turning the phone sideways opens it, upright closes it.
+    // Turning the phone sideways does nothing by itself (0.9.92.8, owner): the video left, one big ⛶ on the right,
+    // no chat / faces there; ⛶ opens the fullscreen.
     await page.setViewportSize({ width: 844, height: 390 });
     await page.waitForTimeout(600);
-    check(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs')), 'phone turned sideways opens fullscreen');
+    const turned = await page.evaluate(() => ({
+      fs: document.getElementById('theater').classList.contains('pseudo-fs'),
+      button: !!document.querySelector('.ph-turn-fs') && document.querySelector('.ph-turn-fs').getBoundingClientRect().width > 100,
+      chat: document.querySelector('.room [data-panel="chat"]').getBoundingClientRect().width,
+    }));
+    check(!turned.fs && turned.button && turned.chat === 0, 'phone turned sideways: no automatic fullscreen, one big ⛶, no chat beside', JSON.stringify(turned));
+    await page.click('.ph-turn-fs');
+    await page.waitForTimeout(600);
+    check(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs')), 'sideways: ⛶ opens the fullscreen');
     const dock = await rect(page, '#fs-dock');
     check(!!dock && dock.y >= 0 && dock.b <= 390, 'sideways: the dock fits the screen', JSON.stringify(dock));
     // 4B: a slim column beside the video (never on it), only 💬 😀 🎙 📷 and exit.
@@ -201,9 +218,15 @@ const sheetName = (page) => page.evaluate(() => {
     await page.waitForTimeout(400);
     check(!typing.sideways && !typing.fs, 'phone: the keyboard opening does not count as turning sideways (no fullscreen, no layout jump)', JSON.stringify(typing));
     await page.evaluate(() => document.activeElement?.blur());
-    // 10A: a game takes the whole screen; the video keeps playing as a small preview in its head.
+    // 10A: a game takes the whole screen; the video keeps playing as a small preview in its head. Games are in ⋯ only.
+    check(!(await page.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile')].length)), 'no sheet open');
     await page.click('#chat-plus');
-    await page.click('.ph-sheet .ph-tile >> nth=1');
+    const plusTiles = await page.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile')].map((x) => x.textContent).join('|'));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    check(!plusTiles.includes('🎮'), 'games are not in ＋ (only in ⋯)', plusTiles);
+    await page.click('#strip-more');
+    await page.click('.ph-sheet .ph-tile >> nth=3');
     await page.waitForTimeout(400);
     await page.click('.hub-game >> nth=0');
     await page.waitForTimeout(1500);
@@ -215,13 +238,14 @@ const sheetName = (page) => page.evaluate(() => {
     await page.mouse.click(thumb.x + thumb.w / 2, thumb.y + thumb.h / 2);
     await page.waitForTimeout(500);
     const back = await rect(page, '#theater');
-    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && back.w >= vw - 1 && (await page.isVisible('#strip-game')), 'game: a tap on the preview goes back to the video, 🎮 waits in the strip', JSON.stringify(back));
-    await page.click('#strip-game');
+    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && back.w >= vw - 1 && (await page.evaluate(() => document.getElementById('strip-more').classList.contains('game-waiting'))), 'game: a tap on the preview goes back to the video, a dot on ⋯', JSON.stringify(back));
+    await page.click('#strip-more');
+    await page.click('.ph-sheet .ph-tile >> nth=3');
     await page.waitForTimeout(500);
-    check(await page.evaluate(() => document.documentElement.classList.contains('ph-game')), 'game: 🎮 in the strip brings the game back');
+    check(await page.evaluate(() => document.documentElement.classList.contains('ph-game')), 'game: ⋯ → Games brings the game back');
     await page.click('#game-stage .game-stage-head button:has-text("↩")');
     await page.waitForTimeout(500);
-    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && (await page.evaluate(() => !!document.querySelector('.together-strip #strip-voice'))) && !(await page.isVisible('#strip-game')), 'game: leaving the table puts the room back as it was');
+    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && (await page.evaluate(() => !!document.querySelector('.together-strip #strip-voice'))) && !(await page.evaluate(() => document.getElementById('strip-more').classList.contains('game-waiting'))), 'game: leaving the table puts the room back as it was');
     check(errors.length === 0, 'phone: no page errors', errors.join(' | '));
     await ctx.close();
   }
@@ -251,6 +275,17 @@ const sheetName = (page) => page.evaluate(() => {
     const page = await ctx.newPage();
     await enter(page, id());
     check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-room'))) && (await page.isVisible('.topbar')) && (await page.isVisible('.tabs')) && !(await page.isVisible('#strip-more')) && !(await page.isVisible('#chat-plus')), 'desktop: the desktop room, no phone parts');
+    check(await page.isVisible('#media-form .media-search'), 'desktop: 🔍 Search next to the link box');
+    // One remote (0.9.92.8): with a video the toolbar under it goes, the rail has ⋯ (speed, sync, next, panel).
+    await addMedia(page, VIDEO, 'load');
+    await page.waitForSelector('#player video');
+    await page.hover('.player-wrap');
+    await page.waitForTimeout(300);
+    const remote = await page.evaluate(() => ({ toolbar: document.querySelector('.toolbar').getBoundingClientRect().height, more: !!document.getElementById('dock-more').offsetParent, speed: !!document.getElementById('dock-speed').offsetParent }));
+    await page.click('#dock-more');
+    await page.waitForTimeout(300);
+    const morePop = await page.evaluate(() => [...document.querySelectorAll('#dock-more-pop .dock-more-item')].filter((b) => b.offsetParent).length);
+    check(remote.toolbar === 0 && remote.more && !remote.speed && morePop >= 4, 'desktop: one remote: no toolbar, ⋯ on the rail holds speed / sync / next / panel', JSON.stringify({ remote, morePop }));
     await ctx.close();
   }
 
@@ -418,7 +453,9 @@ const sheetName = (page) => page.evaluate(() => {
     await addMedia(page, VIDEO, 'load');
     await page.waitForSelector('#player video');
     await page.waitForTimeout(800);
-    await page.click('#fullscreen');
+    // The toolbar under the video is gone on a computer (0.9.92.8): the rail's last button opens fullscreen.
+    await page.hover('.player-wrap');
+    await page.click('#dock-exit');
     await page.waitForTimeout(600);
     const fs = await page.evaluate(() => document.fullscreenElement?.id ?? null);
     await page.mouse.move(640, 400);
