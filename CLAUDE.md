@@ -1051,6 +1051,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
 
 ## Release checklist
+Milestone gates to 1.0 (what must be fully done before the third version part moves, and "live e2e green on the
+first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates to 1.0".
 0. **Version numbers (owner's rule, 29 Oct 2026):** releases now count in a fourth part: 0.9.90.1, 0.9.90.2, … so we
    don't run out of numbers before 1.0. The third part (0.9.91, 0.9.92…) moves **only when the owner says** "this one
    is big, go up one". Chrome extensions accept up to four numeric parts; the site footer shows the same number.
