@@ -225,16 +225,50 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // Our own fullscreen has no browser to leave it with Esc.
     else if (fake && !shell && !document.querySelector('.dialog-backdrop:not([hidden])')) exit();
   });
+  /**
+   * The rail's windows (emojis, ⋯, speed, the games hall; not the message box while it holds text) close when the
+   * mouse goes off the rail onto the video, or when the video is clicked (0.9.93.2, owner: "in fullscreen it opens at
+   * the right but doesn't go away when I move left"): an open window used to keep the rail out, and a click on a
+   * YouTube frame never reaches the page to close it. The same "outside press" the page's own windows listen for.
+   */
+  const keepChat = () => openButton === dockChat && dockChatInput.value.trim() !== '';
+  function closeRailWindows(): void {
+    if (keepChat()) return;
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  }
+  const LEAVE_MS = 450;
+  let leaveTimer: ReturnType<typeof setTimeout> | null = null;
   dock.addEventListener('mouseenter', () => {
     hoveringControls = true;
+    if (leaveTimer !== null) clearTimeout(leaveTimer);
+    leaveTimer = null;
     wakeDock();
   });
   dock.addEventListener('mouseleave', () => {
     hoveringControls = false;
     // Off the rail onto a YouTube frame no move reaches the page: the mouse has left the edge.
     nearEdge = false;
-    if (edgeMode()) hideRailSoon();
+    if (!edgeMode()) return;
+    hideRailSoon();
+    if (leaveTimer !== null) clearTimeout(leaveTimer);
+    leaveTimer = setTimeout(() => {
+      leaveTimer = null;
+      if (hoveringControls || nearEdge) return;
+      closeRailWindows();
+      hideRailSoon();
+    }, LEAVE_MS);
   });
+  // A click on the YouTube video: the page only learns that its focus went into the frame.
+  addEventListener('blur', () =>
+    setTimeout(() => {
+      if (!(document.activeElement instanceof HTMLIFrameElement) || !theater.contains(document.activeElement)) return;
+      closeRailWindows();
+      if (edgeMode()) {
+        nearEdge = false;
+        hideRailSoon();
+      }
+    }),
+  );
 
   /**
    * The dock shows and hides with the player's own bar (owner: "when one hides, the other hides too"): it shows on

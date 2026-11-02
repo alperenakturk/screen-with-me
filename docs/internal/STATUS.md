@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.1**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.2**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -222,6 +222,17 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   enter a room nobody else is in (the first-time tips wait for it) and from 🔗 Invite; a link **pasted anywhere** in
   the room or dropped on the page goes to the queue; messages that came while the tab was in the background show as
   "(3)" in the tab's title. Test: `scripts/harness/invite/run.cjs` (22 checks), `shorts-rail` (+ window checks).
+- [ ] **0.9.93.2 (owner's picks from the ideas, 2 Nov 2026; continue from the first open item):**
+  [x] the YouTube rail in fullscreen (and the window): a rail window (😀, ⋯, speed, games hall) kept the rail out when
+  the mouse went left onto the video, and a click on a YouTube frame never closed it → it closes 450 ms after the mouse
+  leaves (not the message box with text) and when the page loses focus to the frame;
+  [x] live e2e `draw.mjs` failed twice right after the 0.9.93.1 deploy (the reveal → over alarm late by > 25 s; a re-run
+  passed) → Draw & Guess and Quiz move an overdue phase on with any message (the pages ping; Draw & Guess also pings
+  once the time is up), the test pings like the pages;
+  [x] friendly room names instead of "Room swky86r" (`friendlyRoomName`); [x] "? Shortcuts" card; [x] hand the host
+  role to someone (👑 in People / the person menu); [x] "3-2-1, together" countdown before a new video; [x] "continue
+  where you left off" on the home page. Not wanted now: the invite with the film time. Tests: `room-extras` harness
+  (24 checks), e2e `countdown.mjs`, `host.mjs` (+ handing on), `yt-room` (+ rail windows, fullscreen).
 - [ ] **Ideas waiting for the owner's pick** (Claude's proposals, 2 Nov 2026; small ones were built above): (1) a
   friendly room name by default instead of "Room swky86r" (the owner names things); (2) "? Shortcuts" card listing
   the keys; (3) hand the host role to someone from the person menu; (4) a "3-2-1, together" countdown before the first
@@ -335,6 +346,17 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.2 (computer):**
+- [ ] YouTube, also in fullscreen: open the rail at the right edge, open 😀, move the mouse onto the video: the emoji
+  window and the rail close. Click the video while a rail window is open: they close too.
+- [ ] A new room has a nice name ("Velvet Lounge"…) in the top bar and the tab, the same for your friend.
+- [ ] Press ? in the room: the keyboard shortcuts card (also in ⋯ and the profile menu).
+- [ ] With a friend: People tab → 👑 next to them → confirm: they are the host, you are a guest; they can hand it back.
+- [ ] With a friend: start a new (non-Shorts) YouTube video or file: both screens count 3, 2, 1, then it plays for both
+  at once. Settings → Room rules → "3-2-1 countdown" turns it off.
+- [ ] Leave the room, open the home page: "Continue where you left off" with the room's name, who is inside and what
+  plays; its button takes you back, ✕ hides it.
 
 **0.9.93.1 (computer + phone):**
 - [ ] Create a room from the home page: the invite window opens by itself (link, Copy, WhatsApp, QR code; on the

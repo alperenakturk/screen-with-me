@@ -411,7 +411,14 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     const secs = Math.ceil(left / 1000);
     if (s.phase === 'draw' && secs >= 1 && secs <= 5 && secs !== lastTick) playSound('tick');
     lastTick = s.phase === 'draw' && secs <= 5 ? secs : 0;
+    // Time is up but the phase hasn't moved: nudge the server (any message makes it catch up, 0.9.93.2).
+    const now = Date.now();
+    if (left === 0 && s.endsAt + 1500 < now + offset && now - nudgedAt > 3000) {
+      nudgedAt = now;
+      send({ t: 'ping' });
+    }
   }
+  let nudgedAt = 0;
   const ticker = window.setInterval(tick, 250);
 
   $('#draw-form').addEventListener('submit', (event) => {

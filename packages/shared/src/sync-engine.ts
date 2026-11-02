@@ -102,6 +102,8 @@ export class SyncEngine {
   private drift: number | null = null;
   private jumps = 0;
   private readonly wallNow: () => number;
+  /** Fires when a "3-2-1" countdown's start comes (see `current`). */
+  private holdTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly options: SyncEngineOptions) {
     this.wallNow = options.wallNow ?? (() => performance.now());
@@ -134,7 +136,28 @@ export class SyncEngine {
     const rateChanged = this.state !== null && this.state.rate !== state.rate;
     this.state = state;
     if (rateChanged) this.nudgeRate = null;
+    if (this.holdTimer !== null) clearTimeout(this.holdTimer);
+    this.holdTimer = null;
+    const hold = this.holdLeft();
+    if (hold > 0) this.holdTimer = setTimeout(() => this.enforce(ACTION_SEEK_SECONDS), hold + 10);
     this.enforce(ACTION_SEEK_SECONDS);
+  }
+
+  /**
+   * "3-2-1, together" (0.9.93.2): the server starts a new video a few seconds ahead (`updatedAt` in the future while
+   * playing). Until then the room is held at its start: the player waits paused there (and buffers), it reports no
+   * stall, and everyone starts at the same moment. Milliseconds left, 0 when not holding.
+   */
+  holdLeft(): number {
+    const s = this.state;
+    if (s === null || s.paused || s.item === null) return 0;
+    return Math.max(0, s.updatedAt - this.options.clock.now());
+  }
+
+  /** The room's state as the player should follow it now: a held start counts as paused at its position. */
+  private current(): PlaybackState | null {
+    const s = this.state;
+    return s !== null && this.holdLeft() > 0 ? { ...s, paused: true } : s;
   }
 
   getState(): PlaybackState | null {
@@ -166,6 +189,8 @@ export class SyncEngine {
 
   destroy(): void {
     this.detach();
+    if (this.holdTimer !== null) clearTimeout(this.holdTimer);
+    this.holdTimer = null;
     this.state = null;
   }
 
@@ -175,7 +200,7 @@ export class SyncEngine {
    */
   private enforce(seekThreshold: number): void {
     const player = this.player;
-    const state = this.state;
+    const state = this.current();
     if (player === null || state === null || state.item === null) return;
 
     // Kayma için hafifçe hızlanıyorsak (nudge) bu bilerek yapılan bir fark; bozma.
@@ -208,7 +233,7 @@ export class SyncEngine {
   }
 
   private handlePlayerEvent(player: PlayerAdapter, event: PlayerEvent): void {
-    const state = this.state;
+    const state = this.current();
     if (player !== this.player || state === null) return;
     // Bizim komutumuzun beklenen sonucu mu? Öyleyse yok say.
     if (this.wallNow() < this.programmaticUntil && this.expected[event] > 0) {
@@ -225,7 +250,7 @@ export class SyncEngine {
       case 'pause': {
         if (state.paused || this.pauseTimer !== null) break;
         const sendPause = () => {
-          const current = this.state;
+          const current = this.current();
           if (this.player === player && current !== null && !current.paused && player.isPaused() && !player.isEnded()) {
             this.localChange('pause', { paused: true, position: player.getTime() });
           }
@@ -269,7 +294,7 @@ export class SyncEngine {
 
   private tick(): void {
     const player = this.player;
-    const state = this.state;
+    const state = this.current();
     if (player === null || state === null || state.item === null) return;
 
     const wall = this.wallNow();

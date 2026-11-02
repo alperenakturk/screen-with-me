@@ -134,6 +134,12 @@ export class Quiz extends DurableObject<Env> {
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parseQuizMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
+    // A phase whose time is up moves on now, whatever the alarm does (live alarms can run late right after a deploy;
+    // 0.9.93.2): every message checks, so a late answer also finds the question already closed.
+    if (this.data.endsAt !== null && Date.now() >= this.data.endsAt) {
+      await this.advance(Date.now());
+      await this.scheduleAlarm();
+    }
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
     if (!this.limit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
     if (message.t === 'hello') return this.hello(ws, me, message);
@@ -154,13 +160,19 @@ export class Quiz extends DurableObject<Env> {
     await this.left(ws);
   }
 
-  override async alarm(): Promise<void> {
-    const now = Date.now();
+  /** Moves the game on to whatever its clock says now (from the alarm, or a message that found it overdue). */
+  private async advance(now: number): Promise<void> {
     const d = this.data;
     if (d.endsAt !== null && now >= d.endsAt) {
       if (d.phase === 'question') await this.reveal();
       else if (d.phase === 'reveal') await this.next();
     }
+  }
+
+  override async alarm(): Promise<void> {
+    const now = Date.now();
+    await this.advance(now);
+    const d = this.data;
     if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();

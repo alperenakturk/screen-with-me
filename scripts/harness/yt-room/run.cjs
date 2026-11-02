@@ -112,6 +112,50 @@ const box = (page, selector) =>
   check(await idle(), 'unpinned in Settings: it rests again');
   check(await alex.evaluate(() => localStorage.getItem('opt:railPin') === '0'), 'remembered');
 
+  // 0.9.93.2 (owner: "in fullscreen it opens at the right but doesn't go away when I move left"): a window of the
+  // rail (😀) closes when the mouse goes off onto the video, or when the video is clicked, and the rail goes with it.
+  const popOpen = () => alex.evaluate(() => !document.querySelector('#dock-react-pop').hidden);
+  async function leaveWithWindow(where, x, y, right) {
+    await alex.mouse.move(right - 12, y, { steps: 4 });
+    await alex.waitForTimeout(350);
+    await alex.click('#dock-react');
+    await alex.waitForTimeout(250);
+    const opened = await popOpen();
+    await alex.mouse.move(x, y, { steps: 5 });
+    await alex.waitForTimeout(1100);
+    check(opened && !(await popOpen()) && (await idle()), `${where}: 😀 open, the mouse goes onto the video: window and rail close`);
+    await alex.mouse.move(right - 12, y, { steps: 4 });
+    await alex.waitForTimeout(350);
+    await alex.click('#dock-react');
+    await alex.waitForTimeout(250);
+    await alex.mouse.click(x, y);
+    await alex.waitForTimeout(900);
+    check(!(await popOpen()) && (await idle()), `${where}: a click on the video closes them too`);
+  }
+  await leaveWithWindow('window', wrapBox.x, wrapBox.y, wrapBox.r);
+  // Fullscreen with the rail's ⛶.
+  await alex.mouse.move(wrapBox.r - 12, wrapBox.y, { steps: 4 });
+  await alex.waitForTimeout(350);
+  await alex.click('#dock-exit');
+  await alex.waitForTimeout(1200);
+  const inFs = await alex.evaluate(() => document.fullscreenElement?.id === 'theater');
+  check(inFs, 'the rail\'s ⛶ opens fullscreen');
+  if (inFs) {
+    const vw = await alex.evaluate(() => ({ w: innerWidth, h: innerHeight }));
+    await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 4 });
+    await alex.waitForTimeout(3000);
+    check(await idle(), 'fullscreen: the rail rests');
+    await alex.mouse.move(vw.w - 8, vw.h / 2, { steps: 4 });
+    await alex.waitForTimeout(350);
+    check(!(await idle()), 'fullscreen: the right edge opens it');
+    await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 5 });
+    await alex.waitForTimeout(600);
+    check(await idle(), 'fullscreen: moving left closes it');
+    await leaveWithWindow('fullscreen', vw.w / 2, vw.h / 2, vw.w);
+    await alex.evaluate(() => document.exitFullscreen());
+    await alex.waitForTimeout(800);
+  }
+
   // Side panel hidden: the note sits above the video, emojis still fly over the video.
   await alex.click('#side-toggle').catch(() => alex.evaluate(() => document.querySelector('#side-toggle')?.click()));
   await alex.waitForTimeout(3500);

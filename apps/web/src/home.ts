@@ -1,9 +1,9 @@
-import { extractRoomId, newRoomId } from '@swm/shared/room-id';
+import { extractRoomId, friendlyRoomName, newRoomId } from '@swm/shared/room-id';
 import { parseMediaInput } from '@swm/shared/media';
 import { el } from './dom.ts';
 import { cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
 import { forgetSaved, isFull, MAX_SAVED, savedRooms, type SavedRoom } from './saved-rooms.ts';
-import { load, sessionSave } from './storage.ts';
+import { forgetLastRoom, lastRoom, load, sessionSave } from './storage.ts';
 import { t, translate } from './i18n.ts';
 import { renderThemeStrip } from './themes.ts';
 
@@ -19,6 +19,7 @@ export function renderHome(app: HTMLElement): void {
         <span class="home-pill" data-i18n="home.pill"></span>
         <h1 class="home-title" data-i18n="home.title"></h1>
         <p class="home-lead" data-i18n="home.lead"></p>
+        <div id="continue" class="home-continue card" hidden></div>
         <form id="start-form" class="start-form">
           <input id="start-link" autocomplete="off" data-i18n-placeholder="home.linkPlaceholder" data-i18n-title="home.linkPlaceholder" />
           <button class="btn primary big" data-i18n="createRoom"></button>
@@ -173,7 +174,51 @@ export function renderHome(app: HTMLElement): void {
   });
 
   renderRecent(app);
-  window.addEventListener('langchange', () => renderRecent(app));
+  renderContinue(app);
+  window.addEventListener('langchange', () => {
+    renderRecent(app);
+    renderContinue(app);
+  });
+}
+
+/** Rooms are deleted a day after they empty unless saved: an older unsaved room isn't offered. */
+const CONTINUE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * "Continue where you left off" (0.9.93.2, owner): the last room this browser was in, with its name, who is there and
+ * what is on now (`/api/rooms/:id/info`), one button back in; ✕ forgets it. Saved by the room (`lastRoom`).
+ */
+function renderContinue(app: HTMLElement): void {
+  const box = app.querySelector<HTMLElement>('#continue')!;
+  const last = lastRoom();
+  if (!last) return void (box.hidden = true);
+  const fresh = Date.now() - last.at < CONTINUE_MS;
+  const name = el('b', { class: 'continue-name' }, last.name ?? friendlyRoomName(last.id));
+  const status = el('span', { class: 'muted small continue-status' }, ago(last.at));
+  const go = el('a', { class: 'btn primary', href: `/r/${last.id}` }, t('home.continueGo'));
+  const forget = el('button', { type: 'button', class: 'icon-btn', title: t('close'), 'aria-label': t('close') }, '✕');
+  forget.addEventListener('click', () => {
+    forgetLastRoom();
+    box.hidden = true;
+  });
+  box.replaceChildren(
+    el('div', { class: 'continue-text' }, el('span', { class: 'muted small' }, `↩ ${t('home.continue')}`), name, status),
+    go,
+    forget,
+  );
+  box.hidden = !fresh;
+  void fetch(`/api/rooms/${last.id}/info`)
+    .then((r) => (r.ok ? (r.json() as Promise<{ saved: boolean; name: string | null; count?: number; playing?: string | null }>) : null))
+    .then((info) => {
+      if (!info) return;
+      if (!fresh && !info.saved) return;
+      if (info.saved && info.name) name.textContent = info.name;
+      const parts = [info.count ? `🟢 ${t('onlineNow', { n: info.count })}` : ago(last.at)];
+      if (info.playing) parts.push(t('home.continueNow', { title: info.playing }));
+      status.textContent = parts.join(' · ');
+      box.hidden = false;
+    })
+    .catch(() => {});
 }
 
 /**

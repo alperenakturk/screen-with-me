@@ -135,6 +135,11 @@ ok((await fat.wait((m) => m.t === 'error', 'not host')).code === 'not_host', 'On
 eda.send({ t: 'settings', rounds: 1, lang: 'en' });
 await fat.wait((m) => m.t === 'state' && m.rounds === 1 && m.lang === 'en', 'settings');
 eda.send({ t: 'start' });
+// Like the game pages, ping now and then: a phase whose time is up moves on with any message even when the server's
+// alarm runs late (live, right after a deploy, it was seen late by more than 25 s twice in a row; 0.9.93.2).
+const pinger = setInterval(() => {
+  for (const c of [eda, fat]) if (c.ws.readyState === WebSocket.OPEN) c.send({ t: 'ping' });
+}, 2000);
 for (const [drawer, guesser] of [[eda, fat], [fat, eda]]) {
   const words = await drawer.wait((m) => m.t === 'choices', 'short choices', ALARM_WAIT);
   ok(words.words.every((w) => /^[a-z ]+$/.test(w)), 'English words');
@@ -145,5 +150,6 @@ for (const [drawer, guesser] of [[eda, fat], [fat, eda]]) {
 }
 const end = await eda.wait((m) => m.t === 'state' && m.phase === 'over', 'over', ALARM_WAIT);
 ok(end.players.every((p) => p.score > 0), 'Everyone drew once: podium');
+clearInterval(pinger);
 for (const c of [eda, fat]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

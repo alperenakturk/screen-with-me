@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractRoomId, newRoomId, pageInviteUrl, roomIdFromHash } from './room-id.ts';
+import { extractRoomId, friendlyRoomName, newRoomId, pageInviteUrl, roomIdFromHash } from './room-id.ts';
 
 describe('room ids', () => {
   it('generates valid, unambiguous ids', () => {
@@ -34,5 +34,18 @@ describe('page invites', () => {
     expect(roomIdFromHash('#t=40&swm=abc12345')).toBe('abc12345');
     expect(roomIdFromHash('#swm=no')).toBeNull();
     expect(roomIdFromHash('#other=1')).toBeNull();
+  });
+});
+
+describe('friendlyRoomName', () => {
+  it('gives every id one stable two-word name', () => {
+    const name = friendlyRoomName('swky86r2ab');
+    expect(name).toBe(friendlyRoomName('swky86r2ab'));
+    expect(name).toMatch(/^[A-Z][a-z]+ [A-Z][a-z]+$/);
+  });
+
+  it('spreads ids over many names', () => {
+    const names = new Set(Array.from({ length: 400 }, () => friendlyRoomName(newRoomId())));
+    expect(names.size).toBeGreaterThan(250);
   });
 });
