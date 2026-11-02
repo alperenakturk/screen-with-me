@@ -452,6 +452,40 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   }
   toast.addEventListener('click', () => openShortsChat());
 
+  // ---- Games on a phone (0.9.92.5, pick 10A): full screen, the video a small preview in the game's head ----
+  // games/stage.ts sets `ph-game`; here the strip's 🎙 / 📷 move into the game's head and back, and a tap on the
+  // preview (the theater, shrunk by phone.css) goes back to the video.
+  const stripVoice = $('#strip-voice');
+  const stripVoiceHome = stripVoice ? { parent: stripVoice.parentElement!, next: stripVoice.nextSibling } : null;
+  const gameMinimize = () => document.querySelector<HTMLButtonElement>('#game-stage .game-minimize');
+  let inGame = false;
+  new MutationObserver(() => {
+    const now = html.classList.contains('ph-game');
+    if (now === inGame) return;
+    inGame = now;
+    if (now) closeSheet();
+    const head = document.querySelector('#game-stage .game-stage-head');
+    if (!stripVoice || !stripVoiceHome) return;
+    if (now && head) head.querySelector('.game-hub-open')?.before(stripVoice);
+    else if (!now && stripVoice.parentElement !== stripVoiceHome.parent) stripVoiceHome.parent.insertBefore(stripVoice, stripVoiceHome.next);
+  }).observe(html, { attributes: true, attributeFilter: ['class'] });
+  $('#theater')?.addEventListener('click', (event) => {
+    if (!inGame) return;
+    event.preventDefault();
+    event.stopPropagation();
+    gameMinimize()?.click();
+  }, true);
+  // A minimized table: 🎮 with a dot in the faces strip brings it back (the toolbar's 🎮 is out of sight here).
+  const gameButton = $<HTMLButtonElement>('#game-btn');
+  const stripGame = el('button', { type: 'button', id: 'strip-game', class: 'cam-ctl phone-only', hidden: '', title: t('game.back'), 'aria-label': t('game.back') }, '🎮');
+  stripGame.addEventListener('click', () => gameButton?.click());
+  $('#strip-more')?.before(stripGame);
+  if (gameButton) {
+    const sync = () => (stripGame.hidden = !gameButton.classList.contains('game-waiting'));
+    new MutationObserver(sync).observe(gameButton, { attributes: true, attributeFilter: ['class'] });
+    sync();
+  }
+
   decide();
 
   return {

@@ -13,6 +13,7 @@
 import { createLogo } from '@swm/shared/logo';
 import { GAME_CATALOG, LATEST_NEWS, unseenNews } from '@swm/shared/games/catalog';
 import { MAX_TABLES, ROOM_GAME_KINDS, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
+import { isPhoneLayout, onPhoneLayout } from '../device.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
@@ -111,7 +112,7 @@ export function createGameStage(opts: StageOptions) {
     return { node, label: (value: string) => ((text.textContent = ` ${value}`), (node.title = value)) };
   };
   const hubButton = headButton('🎮', 'game-hub-open');
-  const minimizeButton = headButton('▶');
+  const minimizeButton = headButton('▶', 'game-minimize');
   const leaveButton = headButton('↩');
   const endButton = headButton('✕', 'game-end');
   // Placement switch: free window / in the video's place (narrow screens: below / large).
@@ -151,7 +152,8 @@ export function createGameStage(opts: StageOptions) {
   /** Puts the game window where its placement says (moves the element only when its parent changes). */
   function place(): void {
     const want = current ? (shortsView() ? 'float' : placeOf(current.kind)) : 'stage';
-    mode = narrow.matches ? (want === 'stage' || shortsView() ? 'full' : 'below') : want;
+    // A phone always plays full screen (0.9.92.5, pick 10A): the video shrinks to a thumbnail in the head.
+    mode = narrow.matches ? (want === 'stage' || shortsView() || isPhoneLayout() ? 'full' : 'below') : want;
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
     const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
@@ -159,6 +161,8 @@ export function createGameStage(opts: StageOptions) {
     // On the film page the free window is a window of its own over the film (inside the video box it is one anyway).
     stage.toggleAttribute('data-island', mode === 'float');
     document.documentElement.classList.toggle('game-below', mode === 'below' && !stage.hidden);
+    // phone.css: the room's video becomes a small preview in the game's head (it keeps playing, a tap goes back).
+    document.documentElement.classList.toggle('ph-game', isPhoneLayout() && mode === 'full' && !stage.hidden && !shortsView());
     if (mode === 'below') placeBelow();
     if (mode === 'float') placeFloat();
     else for (const p of ['left', 'top', 'width', 'height', 'transform']) stage.style.removeProperty(p);
@@ -282,6 +286,7 @@ export function createGameStage(opts: StageOptions) {
   grip.addEventListener('pointercancel', endSizing);
 
   narrow.addEventListener('change', place);
+  onPhoneLayout(() => place());
   addEventListener('fullscreenchange', place);
   addEventListener('resize', () => {
     if (mode === 'below') placeBelow();

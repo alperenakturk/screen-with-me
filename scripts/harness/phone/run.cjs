@@ -184,7 +184,47 @@ const sheetName = (page) => page.evaluate(() => {
     await page.setViewportSize({ width: 390, height: 664 });
     await page.waitForTimeout(600);
     check(!(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs'))), 'phone upright again: the room comes back');
+    // 10A: a game takes the whole screen; the video keeps playing as a small preview in its head.
+    await page.click('#chat-plus');
+    await page.click('.ph-sheet .ph-tile >> nth=1');
+    await page.waitForTimeout(400);
+    await page.click('.hub-game >> nth=0');
+    await page.waitForTimeout(1500);
+    const game = await rect(page, '#game-stage');
+    const thumb = await rect(page, '#theater');
+    const inHead = await page.evaluate(() => !!document.querySelector('#game-stage .game-stage-head #strip-voice'));
+    check(!!game && game.w >= vw - 1 && game.h >= vh - 1, 'game: it takes the whole screen', JSON.stringify(game));
+    check(!!thumb && thumb.w <= 110 && thumb.w >= 60 && thumb.y < 40 && thumb.x < 30 && inHead, 'game: the video is a small preview in its head, 🎙 beside it', JSON.stringify(thumb));
+    await page.mouse.click(thumb.x + thumb.w / 2, thumb.y + thumb.h / 2);
+    await page.waitForTimeout(500);
+    const back = await rect(page, '#theater');
+    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && back.w >= vw - 1 && (await page.isVisible('#strip-game')), 'game: a tap on the preview goes back to the video, 🎮 waits in the strip', JSON.stringify(back));
+    await page.click('#strip-game');
+    await page.waitForTimeout(500);
+    check(await page.evaluate(() => document.documentElement.classList.contains('ph-game')), 'game: 🎮 in the strip brings the game back');
+    await page.click('#game-stage .game-stage-head button:has-text("↩")');
+    await page.waitForTimeout(500);
+    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && (await page.evaluate(() => !!document.querySelector('.together-strip #strip-voice'))) && !(await page.isVisible('#strip-game')), 'game: leaving the table puts the room back as it was');
     check(errors.length === 0, 'phone: no page errors', errors.join(' | '));
+    await ctx.close();
+  }
+
+  // 1a) The home page on a phone (11A): an app start screen, no scrolling; "How does it work?" opens the rest.
+  {
+    const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+    const page = await ctx.newPage();
+    await page.goto(SITE + '/');
+    await page.waitForSelector('#home-how');
+    await page.waitForTimeout(600);
+    const size = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, inner: innerHeight }));
+    const create = await rect(page, '#start-form .btn');
+    const join = await rect(page, '#join-toggle');
+    check(size.scroll <= size.inner + 1 && create?.w > 300 && join?.w > 300 && !(await page.isVisible('#start-link')), 'home: an app start screen (two big buttons, no scrolling)', JSON.stringify({ size, create, join }));
+    await page.click('#join-toggle');
+    check(await page.isVisible('#join-input'), 'home: "Join with a code" opens the code box');
+    await page.click('#home-how');
+    await page.waitForTimeout(600);
+    check((await page.isVisible('.home-steps')) && (await page.isVisible('.home-preview')), 'home: "How does it work?" opens the introduction');
     await ctx.close();
   }
 
