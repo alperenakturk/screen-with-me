@@ -17,6 +17,31 @@ list, big services, donations, going public), `BUYUME.md` (growth), `gelecek-fik
 - **English on GitHub, Turkish with the owner** (see `CLAUDE.md` "Language and GitHub conventions").
 - **Consistency:** one name, one vocabulary, one set of numbers across code, UI, policy and docs.
 
+## Milestone gates to 1.0 (owner's request, 2 Nov 2026: "be sure each version step is fully done")
+The owner's guide PDF (3rd edition, "1.0'a kadar kontrol rehberi") follows this. The third version part still moves
+only when the owner says so; Claude only reports "the gate is full" or names what is missing.
+
+**Every release (incl. 0.9.x.y):** typecheck + unit tests; a test for every change (a fixed bug's test is first shown
+failing on the old code); the harnesses for the touched area; docs (CLAUDE.md, STATUS hand tests, README TR + EN);
+same version in the footer and the extension. After the merge: deploy green and **live e2e green on the first
+attempt** (a pass on the retry counts as red until its cause is found).
+
+**Every milestone step (0.9.93 → 0.9.94 …), on top of its own gate:** no open bug the owner reported in that step
+(or deferred in writing with his OK); that step's STATUS hand-test boxes ticked or noted; live e2e first-attempt green
+on 3 deploys in a row; phone + computer each tried on a real device; every new string has its English; a one-paragraph
+summary (STATUS history until `CHANGELOG.md` exists).
+
+| Step | Goal | Gate (must be true to move on) |
+|---|---|---|
+| 0.9.93 | One remote, YouTube rule, phone | Owner's 0.9.92.3–0.9.93.5 hand tests done; phone walkthrough; `wait.mjs` live flake root-caused |
+| 0.9.94 | Finish features (§1): room simplification, help / FAQ, feedback button, Shorts channel feed + regional Discover, thanks page, Shorts switch measurement | each shipped with its test; a non-Turkish reader understands the EN FAQ; measurement written down (preload if > 300 ms); link → watching < 30 s |
+| 0.9.95 | Tablet, accessibility, speed | real tablet portrait + landscape; contrast test passes; keyboard tour; agreed size / time budgets met |
+| 0.9.96 | Name, domain, move (§4, §6, owner) | new address live, old one redirects, live e2e green there, owner's hotspot works, no old name left |
+| 0.9.97 | Security (§3) | threat model risks closed or accepted by the owner; protocol fuzz test in CI; no high `npm audit`; permission justifications ready |
+| 0.9.98 | Legal + consistency (§4, §5) | terms + policy approved and linked; "same numbers" test passes; YouTube quota application sent; CHANGELOG + EN glossary |
+| 0.9.99 | Zero known bugs, operations, closed beta (§2, §6) | 0 open `bug` issues (or deferred by the owner); no new serious bug in the beta's last 7 days; browser table complete; test night done |
+| 1.0.0 | Launch (§7) | Brave / Edge reminder, store submission, no protocol bump during review |
+
 ---
 
 ## Phase 1 — to 1.0 (Chrome Web Store launch)
