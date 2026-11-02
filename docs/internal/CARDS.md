@@ -18,13 +18,6 @@ Card format:
 
 ## In progress
 
-### Phone: next speed steps (0.9.93 "Now" 2)
-- Why: the phone room should open and react fast on mid-range phones.
-- Done when: voice / stream / TV code loads only when needed, phones get a lighter stylesheet, and an automatic phone
-  speed test (4× slower CPU) runs against the built site with agreed budgets.
-- Tests: the speed test itself in CI; `scripts/harness/phone/run.cjs` still passes.
-- Owner's pick: none needed.
-
 ## Ready
 
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
@@ -383,6 +376,18 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed only for the GitHub settings (branch protection, secret scanning).
 
 ## Done
+
+### Phone: next speed steps (0.9.93 "Now" 2)
+- Why: the phone room should open and react fast on mid-range phones.
+- Done when: voice / stream / TV code loads only when needed, phones get a lighter stylesheet, and an automatic phone
+  speed test (4× slower CPU) runs against the built site with agreed budgets.
+- Tests: the speed test itself in CI; `scripts/harness/phone/run.cjs` still passes.
+- Owner's pick: none needed.
+- Done: 0.9.93.6 (PR below). Lazy: TV room + remote + `tv.css`, invite window + QR, first-time tips, image tools. Room
+  page JS 142.1 → 134.5 kB, CSS 35.7 → 34.0 kB gzipped; `scripts/size-budget.mjs` in CI; phone speed test
+  `scripts/harness/phone-speed/run.cjs` (4× CPU, 4G): home 556 / join 478 / in room 369 ms. Voice / live stay in the
+  room chunk; a phone-only stylesheet was not worth it (most rules shared). Phone harness passes.
+
 
 ### Root cause of the live e2e first-attempt failures
 - Done: https://github.com/alperenakturk/screen-with-me/pull/113, https://github.com/alperenakturk/screen-with-me/pull/114
