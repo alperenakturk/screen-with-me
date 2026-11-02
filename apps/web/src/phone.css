@@ -757,6 +757,134 @@ html.pseudo-fs body {
   }
 }
 
+/* ==== Games on a phone (0.9.92.5, pick 10A): the game takes the whole screen (games/stage.ts `full`, `ph-game`). The
+   room's video keeps playing as a small preview at the left of the game's head (the theater itself, moved with CSS
+   only so the player is never reloaded); a tap on it goes back to the video. The head: "‹ Back to video", the faces
+   strip's 🎙 / 📷 (borrowed by ui/phone-room.ts), the games hall, leave and end. */
+html.phone .game-stage .game-place {
+  display: none;
+}
+
+html.phone .game-stage.full {
+  inset: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+html.ph-game .game-stage-head {
+  min-height: calc(64px + env(safe-area-inset-top));
+  padding: calc(6px + env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left));
+  gap: 6px;
+}
+
+html.ph-game:has(.room.has-item) .game-stage-head {
+  padding-left: calc(8px + 92px + 10px + env(safe-area-inset-left));
+}
+
+html.ph-game .game-stage-head .game-stage-title {
+  display: none;
+}
+
+html.ph-game .game-stage-head .btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+}
+
+html.ph-game .game-stage .game-minimize {
+  flex: 0 1 auto;
+  min-width: 0;
+  height: auto;
+  min-height: 36px;
+  padding: 3px 10px 3px 6px;
+  white-space: normal;
+  font-size: 12.5px;
+  line-height: 1.15;
+  text-align: left;
+}
+
+html.ph-game .game-stage .game-minimize > span[aria-hidden] {
+  display: none;
+}
+
+html.ph-game .game-stage .game-minimize .game-head-text {
+  display: inline;
+  white-space: normal;
+}
+
+html.ph-game .game-stage .game-minimize .game-head-text::before {
+  content: '‹ ';
+  font-size: 15px;
+}
+
+html.ph-game .game-stage-head #strip-voice:not([hidden]) {
+  display: flex;
+  gap: 6px;
+}
+
+html.ph-game .game-stage-head #strip-voice .cam-ctl {
+  width: 36px;
+  height: 36px;
+}
+
+/* Only 🎙 here (the camera and the stream stay in the room's strip). */
+html.ph-game .game-stage-head :is(#strip-cam, #strip-live) {
+  display: none;
+}
+
+html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs) {
+  position: fixed;
+  z-index: 1101;
+  top: calc(10px + env(safe-area-inset-top));
+  left: calc(8px + env(safe-area-inset-left));
+  width: 92px;
+  height: 52px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18);
+  cursor: pointer;
+}
+
+html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+html.ph-game .room .theater > :not(.player-wrap),
+html.ph-game .room .player-wrap > :not(.player) {
+  visibility: hidden !important;
+}
+
+/* Over the player: a tap reaches the page (not the YouTube frame) and goes back to the video. */
+html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+html.ph-game .room:not(.has-item) .theater {
+  visibility: hidden;
+}
+
+/* A minimized table waits behind 🎮 in the faces strip (a dot until I am back). */
+html.ph-room .room #strip-game:not([hidden]) {
+  display: grid;
+  position: relative;
+}
+
+#strip-game::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
 /* ==== Shorts on a phone (0.9.92.4, pick 5A): the video takes the screen; one slim bar under it holds the seats
    (faces, cameras inside), the newest message for a moment and 💬 😀 ▲ ▼ ⋯ (ui/phone-room.ts `ph-shorts`). No top bar.
    The desktop Shorts bar stays in the page out of sight; its windows open as bottom sheets. ==== */
