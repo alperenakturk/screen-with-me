@@ -40,6 +40,29 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   rail hidden), also after pressing 🎙 / 📷 outside voice and after ⋯ → Esc; owner's hand test.
 - Owner's pick: none needed.
 
+### 1a. Security: the HTTP fallback must not be able to crash a room (H1, M1; Planner: right after card 1)
+- Severity: high
+- Why: one person with the room link can reset the room's Durable Object (everyone drops) with a chunked POST body
+  that is read uncapped, or with fallback sessions that never poll while repeated `hello`s queue every sticker and
+  chat image (16 MB allowed per session).
+- Done when: fallback POST bodies are read as a stream and stopped at `SEND_BODY_BYTES` (no body read for
+  `open` / `close`); `QUEUE_BYTES` is 2–4 MB and the total per `PollHub` is capped; a session that does not poll within
+  ~10 s of `open` is closed; a second `hello` on a joined connection is refused (or may not change the `cid`).
+- Tests: e2e (chunked oversize POST → 413 and the room still answers; a session that never polls is closed; a second
+  `hello` is refused), `fallback.mjs` and the hotspot harness still pass.
+- Owner's pick: none needed.
+
+
+### 1b. Security: cap queue votes (M1; with 1a)
+- Severity: medium
+- Why: `voters` grows without a cap and without checking the voter is present; with rotated browser ids it can pass
+  the storage value limit and freeze the room's queue.
+- Done when: voters per item are capped (e.g. `MAX_MEMBERS`) and only people in the room count; the second-`hello`
+  fix from the card above is in.
+- Tests: e2e (many votes from one connection with changing ids count once / stay capped).
+- Owner's pick: none needed.
+
+
 ### 2. One rail everywhere: empty room and the film page (0.9.93 "Now" 1, owner's request)
 - Why: owner, 2 Nov 2026: an empty room still shows the old bar under the video (😀 React, Games, Sync, 1×, ⇥, ⛶), and
   the extension's film page shows that bar and a rail at the same time. He wants the same right rail on every page:
@@ -52,8 +75,10 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   video's size, never covering the video; phones unchanged; `store/src/room.html` copy updated.
 - Tests: `yt-room`, `embed/run.mjs` (film page: no toolbar, rail islands), `phone/run.cjs` still pass; new checks for
   the empty room; owner's hand test on the site and the film page.
-- Owner's pick: done (one rail everywhere). **Blocked until Research's verdict** (asked 2 Nov 2026); the empty-room
-  part can start at once with today's YouTube formula.
+- Owner's pick: done (one rail everywhere). Research verdict (2 Nov 2026, `research/youtube-overlay-rail.md`): an
+  overlay on the YouTube player is **not allowed** (Required Minimum Functionality "Overlays and frames"), so the owner's
+  rule applies: everywhere, the film page too, the rail opens and closes beside the video, placed by the video's size,
+  never covering it. Extra test: `embed/run.mjs` checks the rail's box never intersects the film video's box.
 
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
@@ -90,6 +115,17 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: harness checks (every moved item opens from its new place; empty vs playing room, computer + phone);
   `phone`, `yt-room`, `room-extras`, `invite` harnesses still pass; owner's hand test.
 - Owner's pick: C + D (2 Nov 2026, https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw).
+
+### 6a. Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2; 0.9.94, before the Help page)
+- Severity: high
+- Why: the player uses `www.youtube.com` and the API is preloaded on every room page, so YouTube sets cookies before
+  anyone chose a video, while the policy says "none of their cookies"; this also matters for the YouTube API audit.
+- Done when: `YT.Player` uses `host: 'https://www.youtube-nocookie.com'`, `iframe_api` loads only when a YouTube item
+  is about to play, and the policy describes the YouTube embed like the TikTok one.
+- Tests: harness (no request to `www.youtube.com` on a room page with nothing playing; YouTube plays from the
+  no-cookie host); existing room / Shorts harnesses; owner's hand test of YouTube playback.
+- Owner's pick: none needed.
+
 
 ### 7. Help / FAQ page, English + Turkish (0.9.94 "Next" 2)
 - Why: newcomers and store reviewers need one place for "how does it work", the extension's permissions and
@@ -200,6 +236,10 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 
 (Security and Research add cards here.)
 
+_Planner, 2 Nov 2026: Security review 2 (`security-review-2.md`): H1 + M1 became Ready 1a / 1b, H2 became 6a. M3, M5,
+M6 and the policy card go before the YouTube API audit (0.9.97 / 0.9.98); M8 before the TV leaves the lab; the rest
+before 1.0. Owner questions (policy details, branch protection, names before joining) are being asked._
+
 _Planner, 2 Nov 2026: Research's "first view", "Help / FAQ order" and "Send feedback with diagnostics" were folded
 into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the debug panel became card 12._
 
@@ -214,37 +254,6 @@ into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the
 
 Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe first. Each card names its finding id
 (H = high, M = medium, L = low); the details, file:line references and attack scenarios are in the review.
-
-### Security: the HTTP fallback must not be able to crash a room (H1, M1)
-- Severity: high
-- Why: one person with the room link can reset the room's Durable Object (everyone drops) with a chunked POST body
-  that is read uncapped, or with fallback sessions that never poll while repeated `hello`s queue every sticker and
-  chat image (16 MB allowed per session).
-- Done when: fallback POST bodies are read as a stream and stopped at `SEND_BODY_BYTES` (no body read for
-  `open` / `close`); `QUEUE_BYTES` is 2–4 MB and the total per `PollHub` is capped; a session that does not poll within
-  ~10 s of `open` is closed; a second `hello` on a joined connection is refused (or may not change the `cid`).
-- Tests: e2e (chunked oversize POST → 413 and the room still answers; a session that never polls is closed; a second
-  `hello` is refused), `fallback.mjs` and the hotspot harness still pass.
-- Owner's pick: none needed.
-
-### Security: cap queue votes (M1)
-- Severity: medium
-- Why: `voters` grows without a cap and without checking the voter is present; with rotated browser ids it can pass
-  the storage value limit and freeze the room's queue.
-- Done when: voters per item are capped (e.g. `MAX_MEMBERS`) and only people in the room count; the second-`hello`
-  fix from the card above is in.
-- Tests: e2e (many votes from one connection with changing ids count once / stay capped).
-- Owner's pick: none needed.
-
-### Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2)
-- Severity: high
-- Why: the player uses `www.youtube.com` and the API is preloaded on every room page, so YouTube sets cookies before
-  anyone chose a video, while the policy says "none of their cookies"; this also matters for the YouTube API audit.
-- Done when: `YT.Player` uses `host: 'https://www.youtube-nocookie.com'`, `iframe_api` loads only when a YouTube item
-  is about to play, and the policy describes the YouTube embed like the TikTok one.
-- Tests: harness (no request to `www.youtube.com` on a room page with nothing playing; YouTube plays from the
-  no-cookie host); existing room / Shorts harnesses; owner's hand test of YouTube playback.
-- Owner's pick: none needed.
 
 ### Privacy: rewrite the privacy policy for KVKK + GDPR (H3, M7)
 - Severity: high
