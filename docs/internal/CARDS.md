@@ -80,6 +80,23 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   rule applies: everywhere, the film page too, the rail opens and closes beside the video, placed by the video's size,
   never covering it. Extra test: `embed/run.mjs` checks the rail's box never intersects the film video's box.
 
+### 2a. Nothing of ours over the YouTube player by itself (owner picked D, 2 Nov 2026; with card 2)
+- Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
+  video in the room view, the "3-2-1" countdown and notes over the video, and the dock / toasts / cameras over a YouTube
+  player in fullscreen. Details and a recommendation per item (split layout: cameras and messages in a column
+  beside the player, also in fullscreen): `research/youtube-overlay-rail.md` "Follow-up (Job 3)".
+- Done when: the owner's D below is built; a harness asserts that, with nobody dragging anything, no element of ours
+  intersects the YouTube iframe's box in the room view, Shorts view and fullscreen (popups only while open).
+- Tests: harness overlap check in the room view, Shorts view and fullscreen.
+- Owner's pick (2 Nov 2026, https://claude.ai/artifact/S9PHD4qRh8uaM2ehzHka6T): **D, like Watch2Gether**: on YouTube
+  nothing of ours sits over the player by itself: `#rail-edge` goes (the edge is found from a thin gutter beside the
+  player + document mousemove), flying emojis rise beside the video from the sender's face, the 3-2-1 countdown and
+  notes sit above the video or in `.yt-notices`, in fullscreen the player shrinks for a side column with the camera
+  strip (1–4 tiles) and the newest messages; automatic tile columns and reset positions never land on the player.
+  Allowed: the person drags a camera window over the player themselves, and our popups (emojis, ⋯, settings) may
+  open over it while open. The small remaining audit risk is accepted in writing (this card). Video files and film
+  pages keep today's behaviour.
+
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
 - Done when: every box in `STATUS.md` "Owner's hand tests" for these versions is ticked or turned into a bug card.
@@ -212,7 +229,7 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   arrive as toasts; no page scroll at 1366×768 and 1920×1080; owner's hand test.
 - Owner's pick: Claude designs (owner, 2 Nov 2026); the design above is shown to him in the report.
 
-### 15. Home page, nicer and "works on your phone" (0.9.94, owner's request) ⏳ option page first
+### 15. Home page, nicer and "works on your phone" (0.9.94, owner's request)
 - Why: owner, 2 Nov 2026: improve the home page; it should show it works on a phone too and feel less like a
   screenshot.
 - Done when: the direction the owner picks is built (Planner prepares an option page with 2–3 directions); the hero
@@ -220,8 +237,12 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   1366×768; the phone home (0.9.92.5 app start screen) is unchanged unless the pick says so; Lighthouse performance
   not worse than today.
 - Tests: harness screenshots at 1920, 1366, 1024, 390 px; no console errors; owner's hand test.
-- Owner's pick: waiting; option page https://claude.ai/artifact/FVzrwoffrJPB5atVv2xQfn (hero A / B / C, motion,
-  what comes below, where the continue card sits).
+- Owner's pick (2 Nov 2026, https://claude.ai/artifact/FVzrwoffrJPB5atVv2xQfn): hero **A "two screens, one moment"**
+  (a laptop and a phone side by side, the same video moving at the same second, a sync line between them, chat bubbles
+  passing from one to the other; the slogan stays); **gently alive** motion (the video runs, bubbles drift; still with
+  `prefers-reduced-motion`); right under it **a strip of 3 short features** ("No app" · "Together in voice and
+  camera" · "Games in the room"), the theme picker after it; **"Continue where you left off" as one thin line above
+  the title** (card 5's overflow fix goes with it).
 
 ### 16. Design bug sweep (0.9.94, end of the step)
 - Why: owner, 2 Nov 2026: go through the whole design for mistakes; the owner should not have to find each one.
@@ -388,18 +409,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   branch protection / rulesets and secret scanning are not available (paid plans, or free once the repo is public);
   the owner turns on the free parts (Dependabot alerts + security updates) now; branch rules come with the public repo
   or a GitHub Pro decision.
-
-### Things still drawn over the YouTube player: decide before the API audit (Research)
-- Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
-  video in the room view, the "3-2-1" countdown and notes over the video, and the dock / toasts / cameras over a YouTube
-  player in fullscreen. Details and a recommendation per item (split layout: cameras and messages in a column
-  beside the player, also in fullscreen): `research/youtube-overlay-rail.md` "Follow-up (Job 3)".
-- Done when: for each item the owner chose "move beside / outside the player" or "accept the audit risk" in writing,
-  and the moved ones are built; a harness asserts no element of ours intersects the YouTube iframe's box (outside the
-  accepted list).
-- Tests: harness overlap check in the room view, Shorts view and fullscreen.
-- Owner's pick: waiting (question 5 on https://claude.ai/artifact/S9PHD4qRh8uaM2ehzHka6T: A strict / D like Watch2Gether, recommended / A+B / C). Research: D is a
-  reasonable bet if nothing lands over the player by itself and `#rail-edge` goes.
 
 ### 🍿 Snack Bar: first solo side game (0.9.95; owner picked it, 2 Nov 2026)
 - Why: the owner wants something to play alone while watching with friends; an idle game fits low attention and
