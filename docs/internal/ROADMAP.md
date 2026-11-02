@@ -236,6 +236,13 @@ implement, test, ship.
   invite links, store listing.
 - [ ] **(added)** Support e-mail on the domain (e.g. hello@…), used in the store listing, policies and `SECURITY.md`.
 - [ ] **(added)** Monitoring: uptime check, Cloudflare usage alerts, error rate; a simple status note when down.
+- [ ] **(added, owner 3 Nov 2026)** Staging environment: today every merge to `main` goes straight to production. Add
+  a `staging` Worker environment (`wrangler deploy --env staging`, its own Durable Objects and secrets, its own
+  `workers.dev` address) that CI deploys and live-tests first; production deploys only after staging is green. Before
+  the closed beta.
+- [ ] **(added, owner 3 Nov 2026)** Kill switch: a server-side switch per risky feature (voice, streams, games, YouTube
+  search, TikTok…) read from a Worker variable / KV at runtime, so a broken feature can be turned off for everyone
+  without a new release (today only `VOICE=off` and the `?tvlab` lab switch exist). Before the closed beta.
 - [ ] **(added)** Capacity and cost: free-plan limits (Durable Objects 100k requests/day), load test with many rooms,
   a plan if we go viral (Workers Paid ~5 $/month 👤).
 - [ ] **(added)** Browser support: research and recommendations in `docs/internal/browser-support.md` (no decision yet).
