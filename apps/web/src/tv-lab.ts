@@ -1,4 +1,5 @@
 // Tiny on purpose: loaded with every page (app.ts), while the TV code itself (tv.ts, QR) loads only when used.
+import { ROOM_ID_PATTERN, TV_TOKEN } from '@swm/shared/protocol';
 import { load, save } from './storage.ts';
 
 /**
@@ -20,3 +21,33 @@ export function readTvLabSwitch(): void {
   const rest = params.toString();
   history.replaceState(null, '', `${location.pathname}${rest ? `?${rest}` : ''}${location.hash}`);
 }
+
+// The TV's pairing record lives here (not in tv.ts) so the room can read it without loading the TV pages.
+/** A paired TV may come back to its room with the same token for this long (the server keeps it as long). */
+const LINK_TTL_MS = 12 * 60 * 60_000;
+
+export interface TvLink {
+  room: string;
+  token: string;
+  at: number;
+}
+
+/** This TV's last pairing (the room it may return to). */
+export function tvLink(): TvLink | null {
+  try {
+    const link = JSON.parse(load('tvLink') ?? 'null') as TvLink | null;
+    if (link && ROOM_ID_PATTERN.test(link.room) && TV_TOKEN.test(link.token) && Date.now() - link.at < LINK_TTL_MS) return link;
+  } catch {
+    // A broken record counts as none.
+  }
+  return null;
+}
+
+export function saveTvLink(room: string, token: string): void {
+  save('tvLink', JSON.stringify({ room, token, at: Date.now() }));
+}
+
+export function clearTvLink(): void {
+  save('tvLink', '');
+}
+

@@ -1,5 +1,4 @@
 import { REACTION_PAGES, stickerId, type ClientMessage, type Member, type Sticker } from '@swm/shared/protocol';
-import { fileToSticker } from '@swm/shared/sticker-file';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 import { load, save } from '../storage.ts';
@@ -293,7 +292,7 @@ export function createReactions(
     fileInput.value = '';
     if (!file) return;
     try {
-      const data = await fileToSticker(file);
+      const data = await (await import('@swm/shared/sticker-file')).fileToSticker(file);
       // Say clearly where the image goes; keeping a copy for other rooms is an explicit, unchecked choice.
       const keep = el('input', { type: 'checkbox', class: 'sticker-keep-box' }) as HTMLInputElement;
       const extra = el(

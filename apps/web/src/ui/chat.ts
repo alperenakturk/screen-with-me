@@ -1,5 +1,4 @@
 import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } from '@swm/shared/protocol';
-import { fileToChatImage } from '@swm/shared/sticker-file';
 import { el } from '../dom.ts';
 import { avatarNode } from './avatar.ts';
 import { t, type I18nKey } from '../i18n.ts';
@@ -100,7 +99,7 @@ export function createChatPanel(
   async function sendImage(file: File): Promise<void> {
     let data: string;
     try {
-      data = await fileToChatImage(file);
+      data = await (await import('@swm/shared/sticker-file')).fileToChatImage(file);
     } catch (error) {
       const code = error instanceof Error && ['type', 'too_big'].includes(error.message) ? error.message : 'broken';
       alert(t(`chatImageError.${code}` as I18nKey));

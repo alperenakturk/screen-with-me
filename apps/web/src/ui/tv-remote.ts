@@ -1,3 +1,4 @@
+import '../tv.css';
 // The phone (or computer) side of the TV version: "📺 TV'yi bağla" pairs a TV showing a 6-digit code, and while my TV
 // is in the room this device becomes its remote. The TV plays the video and the voices; here: push-to-talk (the
 // phone's microphone would hear the TV's speakers, so it is only on while the big button is held), camera, voice in

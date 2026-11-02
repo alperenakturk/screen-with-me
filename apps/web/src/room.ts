@@ -57,8 +57,7 @@ import {
   sessionSave,
 } from './storage.ts';
 import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
-import { showFirstTips } from './ui/first-tips.ts';
-import { autoInviteOn, openInviteDialog } from './ui/invite.ts';
+import { autoInviteOn } from './ui/invite-option.ts';
 import { listenForShortcutsKey, openShortcuts } from './ui/shortcuts.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
@@ -84,12 +83,27 @@ import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
-import { clearTvLink, tvLab, tvLink } from './tv.ts';
-import { createTvRemote } from './ui/tv-remote.ts';
+import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
+import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
-import { createTvRoom } from './ui/tv-room.ts';
+import type { createTvRoom } from './ui/tv-room.ts';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+
+/** The invite window and its QR encoder load when it is first opened (phone speed, 0.9.93.6). */
+function openInvite(url: string): void {
+  void import('./ui/invite.ts').then(({ openInviteDialog }) => openInviteDialog(url));
+}
+
+/**
+ * The TV version (hidden behind the lab switch since 0.9.91.14) loads only on a device with that switch: the TV's room
+ * and the phone remote, with their stylesheet. Loaded before the room starts, so no message is missed.
+ */
+let tvModules: { room: typeof import('./ui/tv-room.ts'); remote: typeof import('./ui/tv-remote.ts') } | null = null;
+async function loadTv(): Promise<void> {
+  const [room, remote] = await Promise.all([import('./ui/tv-room.ts'), import('./ui/tv-remote.ts')]);
+  tvModules = { room, remote };
+}
 
 /**
  * Odaya giriş iki adımlıdır: önce isim, sonra avatar. İkisi de tarayıcıda
@@ -97,6 +111,10 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
  * tarayıcının sesli oynatma izni için gereken etkileşimdir.
  */
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
+  if (tvLab() && !tvModules) {
+    void loadTv().then(() => renderRoom(app, roomId, waited));
+    return;
+  }
   // TV version: this browser is a TV paired by a phone (`/tv`): it joins as that person, no name step.
   if (new URLSearchParams(location.search).get('tv') === '1' && tvLab()) {
     const link = tvLink();
@@ -1025,7 +1043,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     $('.player-wrap').append(createIntro(document, t('introText')));
     // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
-    if (!isShell && !tv) showFirstTips();
+    if (!isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
   }
 
   function handleMessage(message: ServerMessage): void {
@@ -2380,7 +2398,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   if (tv) {
     // The room on a TV: always "fullscreen", the remote's basics only (see ui/tv-room.ts).
     fullscreen.pin();
-    tvRoom = createTvRoom({
+    tvRoom = tvModules!.room.createTvRoom({
       theater: $('#theater'),
       togglePlay: () => {
         const player = current?.player;
@@ -2400,9 +2418,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         location.replace('/tv');
       },
     });
-  } else if (!isShell && tvLab()) {
+  } else if (!isShell && tvModules) {
     // This device as my TV's remote: "📺" pairs a TV, the card appears while my TV is in the room.
-    tvRemote = createTvRemote({
+    tvRemote = tvModules!.remote.createTvRemote({
       send,
       voice,
       onPresent: (present) => {
@@ -2804,7 +2822,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ? opens the keyboard shortcuts card (0.9.93.2; not on a TV, whose remote has its own keys).
   if (!tv) listenForShortcutsKey();
   // 0.9.93.1: 🔗 Invite opens the invite window (link, copy, share, WhatsApp, QR); ⋯ → Invite on a phone presses it too.
-  copyEl.addEventListener('click', () => openInviteDialog(inviteUrl));
+  copyEl.addEventListener('click', () => openInvite(inviteUrl));
   /**
    * Alone in the room on entering it (not after a reload, the film page or a TV): the invite window opens by itself
    * once the opening animation is over (owner: "like other watch sites, even a QR code"). "Show this when I'm alone in
@@ -2822,7 +2840,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       document.documentElement.classList.remove('invite-pending');
       // Someone came in meanwhile, or another window is already open (name, avatar, a confirm): not now.
       if (members.some((m) => m.id !== myId && !m.tv) || document.querySelector('.dialog-backdrop:not([hidden])')) return;
-      openInviteDialog(inviteUrl);
+      openInvite(inviteUrl);
     }, 1700);
   }
   const emptyInviteEl = $<HTMLButtonElement>('#empty-invite');

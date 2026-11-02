@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.5**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.6**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -382,6 +382,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.6 (phone + computer, nothing should look different):**
+- [ ] On the phone open the home page and a room: it should open at least as fast as before; the invite window (🔗 /
+  ⋯ → Invite) with its QR code, the first-time tips in a fresh browser, adding a custom emoji or a chat image all still
+  work (they now load when first used).
+- Note for Claude: `scripts/harness/tv/run.cjs` (TV version, frozen) is stale after the phone redesign: the TV button
+  is not on screen on a phone (no top bar since 0.9.92.3) and the link box sits behind ＋. 0.9.93.6 fixed the first
+  steps (TV mode opens with the lazy TV code); the rest waits until the TV version is unfrozen.
 
 **0.9.93.5 (computer):**
 - [ ] YouTube in fullscreen: open ⋯ or 😀 on the right, press Esc (or send an emoji), move the mouse onto the video
