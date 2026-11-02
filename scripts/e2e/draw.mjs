@@ -20,7 +20,11 @@ function client(name, cid, id = game) {
       if (idx >= 0) return inbox.splice(idx, 1)[0];
       await new Promise((r) => setTimeout(r, 50));
     }
-    throw new Error(`${name}: timeout ${label}`);
+    // Say where the game stood (live failures are otherwise blind): the last state, and the server's clock from the
+    // newest pong.
+    const pong = [...inbox].reverse().find((m) => m.t === 'pong');
+    const seen = last && { phase: last.phase, endsAt: last.endsAt, round: last.round, rounds: last.rounds, players: last.players?.map((p) => `${p.name}:${p.online ? 'on' : 'off'}`) };
+    throw new Error(`${name}: timeout ${label} · last state ${JSON.stringify(seen)} · server now ${pong?.now ?? '?'} · pongs ${inbox.filter((m) => m.t === 'pong').length} · open ${ws.readyState === WebSocket.OPEN}`);
   };
   return { ws, wait, inbox, send: (m) => ws.send(JSON.stringify(m)), get state() { return last; } };
 }
