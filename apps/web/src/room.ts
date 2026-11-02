@@ -1599,7 +1599,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     } else if (peek) layout = { mode: 'bar', height: PEEK_HEIGHT };
     else {
       const wrap = $('.player-wrap');
-      const box = wrap.getBoundingClientRect();
+      // Card 2: the rail is a column beside the film, so the film is fitted into the player's box left of it (never
+      // under the rail); islands are clipped to that box too (the rail outside it is part of the overlay anyway).
+      const box = $('#theater').classList.contains('side-rail') ? $('#player').getBoundingClientRect() : wrap.getBoundingClientRect();
       // Option A (0.9.91.1): the film always fills the hole with its own player bar; in fullscreen our dock on the
       // right is an island, nothing of ours covers the bottom of the film.
       const bottom = box.bottom;

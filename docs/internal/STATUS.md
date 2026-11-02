@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.8**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.9**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -382,6 +382,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.9 (computer + the film page with the extension; update the extension):**
+- [ ] An empty room: no bar under the video any more; the button column is on the right of the video (😀, 🎮, 🎙, 📷,
+  ⋯, ⛶ dimmed until something plays) and stays there.
+- [ ] A video file (or YouTube): the column comes when the mouse reaches the video's right edge, the video gets a little
+  narrower so nothing covers it, and it goes when the mouse leaves; the same in fullscreen.
+- [ ] The film page (extension): no bar under the video either, only the column on the right of the film, always there,
+  never over the film (in fullscreen too). ⋯ has speed, sync, next. The film's own bar works as before.
 
 **0.9.93.8 (nothing to see: a server security fix):**
 - [ ] Rooms, chat and votes work as before, also on the phone hotspot. (Fixed: one person with the room link could

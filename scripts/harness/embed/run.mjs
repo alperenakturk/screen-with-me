@@ -343,15 +343,25 @@ const settingsCovered = await until(async () => {
 check(!!settingsCovered, 'ayarlar penceresi açıkken delik kapandı');
 await a.evalFrame('shell=1', `document.getElementById('settings-close').click(); 1`);
 check(!!(await until(async () => !(await holeCoveredNow()))), 'ayarlar kapanınca delik geri açıldı');
-// "😀 Tepki" tepsisi deliğin üstüne açılır: adacık olur (görünür, tıklanır).
-await a.evalFrame('shell=1', `document.querySelector('.react-open').click(); 1`);
-const TRAY_BOX = `(() => { const t = document.querySelector('.toolbar .react-tray:not([hidden])'); const r = t?.getBoundingClientRect(); const h = document.querySelector('.player-wrap').getBoundingClientRect(); return r && { x: Math.max(r.left, h.left), y: Math.max(r.top, h.top), r: Math.min(r.right, h.right), b: Math.min(r.bottom, h.bottom) }; })()`;
-const trayBox = await until(() => a.evalFrame('shell=1', TRAY_BOX));
+// Card 2: no toolbar under the video on the film page; the rail is a column beside the film (never over the film's
+// video), and its emoji window opens over the hole as an island (visible, clickable).
+check(await a.evalFrame('shell=1', `getComputedStyle(document.querySelector('.toolbar')).display === 'none'`), 'film sayfası: videonun altında araç çubuğu yok (tek ray)');
+const RAIL_VS_FILM = async () => {
+  const dock = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-dock').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
+  const hole = clipRects(await a.evaluate(SHELL_CLIP))[1];
+  const film = await a.evaluate(`(() => { const r = document.querySelector('video').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
+  return { dock, hole, film, apart: dock.x >= film.r - 1 && dock.x >= hole.r - 1 };
+};
+const railRoom = await RAIL_VS_FILM();
+check(railRoom.apart, 'film sayfası: ray filmin yanında, filmin videosunun üstünde değil', JSON.stringify(railRoom));
+await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
+const POP_BOX = `(() => { const r = document.getElementById('dock-react-pop').getBoundingClientRect(); return r.width ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`;
+const trayBox = await until(() => a.evalFrame('shell=1', POP_BOX));
 const trayIsland = trayBox && (await until(() => islandOver(trayBox)));
-check(!!trayIsland, 'emoji tepsisi deliğin üstünde adacık (katmanda görünüyor)', JSON.stringify(trayBox));
+check(!!trayIsland, 'rayın emoji penceresi deliğin üstünde adacık (katmanda görünüyor)', JSON.stringify(trayBox));
 await a.shot('1d-tepki-tepsisi');
-await a.evalFrame('shell=1', `document.querySelector('.react-open').click(); 1`);
-check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'tepsi kapanınca adacık kalktı');
+await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
+check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'pencere kapanınca adacık kalktı');
 
 // 2c) Film sitesinin kendi ⛶ düğmesi → odanın tam ekranı (sitenin kontrolleri görünür).
 const fsButton = await a.center('#fs');
@@ -550,7 +560,8 @@ await a.sleep(1500);
   const siteScroll = await a.evalFrame('shell=1', SCROLL);
   const filmScroll = await a.evaluate(SCROLL);
   const screenW = await a.evaluate('innerWidth');
-  check(siteScroll.over <= 0 && siteScroll.wide <= 0 && siteScroll.bar === 0 && filmScroll.bar === 0 && filmScroll.inner.length === 0 && near(cover.r, screenW, 2), 'tam ekran: sağda kaydırma çubuğu yok, delik ekranın sağ kenarına kadar', JSON.stringify({ siteScroll, filmScroll, holeRight: cover.r, screenW }));
+  const railLeft = await a.evalFrame('shell=1', `document.getElementById('fs-dock').getBoundingClientRect().left`);
+check(siteScroll.over <= 0 && siteScroll.wide <= 0 && siteScroll.bar === 0 && filmScroll.bar === 0 && filmScroll.inner.length === 0 && near(cover.r, railLeft, 2) && screenW - railLeft < 80, 'tam ekran: sağda kaydırma çubuğu yok, delik rayın sol kenarına kadar (ray ekranın sağında)', JSON.stringify({ siteScroll, filmScroll, holeRight: cover.r, railLeft, screenW }));
   const SKIN = `[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`;
   await a.sleep(1500);
   check(!(await a.evaluate(SKIN)), 'tam ekran: film oynatıcısının kendi çubuğu yerinde (gizlenmiyor)');
@@ -558,24 +569,19 @@ await a.sleep(1500);
   const isHole = (r) => near(r.x, cover.x, 2) && near(r.y, cover.y, 2) && near(r.r, cover.r, 2) && near(r.b, cover.b, 2);
   const inside = (r, outer) => r.x >= outer.x - 2 && r.y >= outer.y - 2 && r.r <= outer.r + 2 && r.b <= outer.b + 2;
   const rects = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`)).slice(2);
-  check(dockR.r - dockR.x > 30 && rects.some((r) => inside(dockR, r)), 'tam ekran: sağdaki dock bir adacık (film sayfasının üstünde görünür)', JSON.stringify({ dockR, rects }));
+  check(dockR.r - dockR.x > 30 && dockR.x >= cover.r - 2 && !rects.some((r) => r.r > cover.r + 2), 'tam ekran: sağdaki ray deliğin dışında bir sütun (katmanın kendisi, adacık gerekmez)', JSON.stringify({ dockR, cover, rects }));
+const railFs = await RAIL_VS_FILM();
+check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.stringify(railFs));
   check(!rects.some(isHole), 'tam ekran: videoya tıklamayı film oynatıcısı alıyor (deliğin tamamını kaplayan adacık yok)', JSON.stringify(rects));
   check(!rects.some((r) => r.b > screenH - 60 && r.r - r.x > 300), 'tam ekran: filmin alt kısmında (kendi çubuğu) bizim bir şeyimiz yok', JSON.stringify(rects));
-  // 0.9.91.5 (owner): the dock hides with the film's own bar: while the film plays and the mouse rests it is gone
-  // (and no island: the film takes the clicks there); a mouse move on the film page brings it back; paused it stays.
+  // Card 2: the rail is a column beside the film, so it stays out while the film plays (it covers nothing); the
+  // film's own bar is untouched.
   bora.send({ t: 'play', position: 60, at: Date.now() });
   const DOCK_IDLE = `document.getElementById('theater').classList.contains('dock-idle')`;
-  const gone = await until(() => a.evalFrame('shell=1', DOCK_IDLE), 8000);
-  await a.sleep(500);
-  const faint = await a.evalFrame('shell=1', `getComputedStyle(document.getElementById('fs-dock')).opacity`);
-  const dockGoneR = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-dock').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
-  check(!!gone && Number(faint) < 0.05 && !(await islandOver(dockGoneR)), 'tam ekran: film oynarken fare durunca dock filmin çubuğuyla birlikte gizleniyor (adacık da değil)', `opaklık:${faint}`);
-  await a.evaluate(`dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 300 })); 1`);
-  const woke = await until(() => a.evalFrame('shell=1', `!document.getElementById('theater').classList.contains('idle') && !${DOCK_IDLE}`), 3000);
-  check(!!woke, 'tam ekran: film sayfasında fare oynayınca dock yeniden görünüyor');
+  await a.sleep(4000);
+  check(!(await a.evalFrame('shell=1', DOCK_IDLE)) && Number(await a.evalFrame('shell=1', `getComputedStyle(document.getElementById('fs-dock')).opacity`)) > 0.9, 'tam ekran: film oynarken ray yanda kalıyor (filmin üstünde değil, bir şey kapatmıyor)');
   bora.send({ t: 'pause', position: 62, at: Date.now() });
-  await a.sleep(3500);
-  check(!(await a.evalFrame('shell=1', DOCK_IDLE)), 'tam ekran: film durunca dock gizlenmiyor');
+  await a.sleep(800);
   // The emoji window opens to the left of the dock: also an island.
   await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
   await a.sleep(500);
@@ -585,10 +591,7 @@ await a.sleep(1500);
   await a.shot('8a-dock-emoji');
   await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
   await a.sleep(400);
-  // 0.9.93.6 (owner: "the rail never goes away"): a pressed rail button kept its focus and held the dock out for good.
-  await a.evalFrame('shell=1', `document.getElementById('dock-react').focus(); 1`);
   bora.send({ t: 'play', position: 64, at: Date.now() });
-  check(!!(await until(() => a.evalFrame('shell=1', DOCK_IDLE), 8000)), 'tam ekran: rayda bir düğmeye basıldıktan sonra da film oynarken dock gizleniyor');
 }
 {
   const pinsHidden = await a.evalFrame(

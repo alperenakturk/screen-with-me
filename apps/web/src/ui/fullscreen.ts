@@ -138,8 +138,18 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // ⏯ and the volume on it and our click catcher kept (click = play / pause, the wheel scrolls Shorts). The Shorts
     // view has its own bar under the video: there only fullscreen shows the dock.
     const shortsView = document.documentElement.classList.contains('shorts-view');
-    const docked = !!getPlayer() && (isActive() || (fits && !(own && shortsView)));
+    const player = getPlayer();
+    // One rail everywhere on a computer (card 2, owner): the empty room (or a film card on the site) gets it too, so the
+    // old toolbar under the video is never needed there; phones keep their own layout.
+    const bare = !player && !shell && !document.documentElement.classList.contains('phone') && !shortsView;
+    const docked = (!!player || bare) && (isActive() || (fits && !(own && shortsView)));
     theater.classList.toggle('dock-mode', docked);
+    // Beside the video, never on it (Research: no overlay on the YouTube player; owner: the same rail everywhere, the
+    // film page too). CSS keeps phones out of it.
+    theater.classList.toggle('side-rail', docked);
+    theater.classList.toggle('rail-bare', docked && !player);
+    q<HTMLButtonElement>('#dock-pin').disabled = !player;
+    dockExit.disabled = !player && !isActive();
     theater.classList.toggle('own-dock', docked && own);
     dockPlay.hidden = !own;
     dockVol.hidden = !own || !hasVolume(getPlayer());
@@ -317,7 +327,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     document.activeElement === dockChatInput;
   // Without the edge (film page, touch screens) a paused video keeps it too. A button's focus after a click no longer
   // does (0.9.93.6: after 🎙 / 📷 / ⋯ the rail stayed for good), only a keyboard user's (railBusy).
-  const dockBusy = () => (edgeMode() ? nearEdge || railBusy() : railBusy() || getPlayer()?.isPaused() === true);
+  // Always out (card 2): with nothing playing (nothing to cover) and on the film page, where the rail is a column beside
+  // the film (the film is fitted once, not every time the mouse reaches the edge).
+  const railFixed = () => shell || !getPlayer();
+  const dockBusy = () => railFixed() || (edgeMode() ? nearEdge || railBusy() : railBusy() || getPlayer()?.isPaused() === true);
   function sleepDock(): void {
     if (dockTimer !== null) clearTimeout(dockTimer);
     dockTimer = null;
@@ -433,7 +446,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   setInterval(() => {
     checkPlayer();
     // A paused video always shows the dock (its own bar shows too).
-    if (theater.classList.contains('dock-idle') && !edgeMode() && getPlayer()?.isPaused()) wakeDock();
+    if (theater.classList.contains('dock-idle') && (railFixed() || (!edgeMode() && getPlayer()?.isPaused()))) wakeDock();
   }, 300);
   new ResizeObserver(() => renderDock()).observe(wrap);
   function startProgress(): void {
