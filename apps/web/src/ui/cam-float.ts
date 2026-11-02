@@ -23,7 +23,13 @@ interface TileSpot {
 export type CamSize = 'small' | 'medium' | 'large';
 
 const NORMAL_DEFAULT: Spot = { x: 0.74, y: 0.58, w: 0.2 };
-const FS_DEFAULT: Spot = { x: 0.82, y: 0.08, w: 0.15 };
+const FS_DEFAULT: Spot = { x: 0.7, y: 0.08, w: 0.26 };
+/**
+ * The one window keeps its cameras side by side (owner, 0.9.93.2: in fullscreen it was narrow and stacked them): at
+ * least this wide per camera (up to three in a row), but never more than this share of its container.
+ */
+const ROW_TILE_W = 150;
+const ROW_MAX_SHARE = 0.5;
 const MIN_WIDTH = 140;
 const MIN_HEIGHT = 110;
 /** A window may grow to at most this share of its container (it must not cover the whole video). */
@@ -285,7 +291,9 @@ export function createCamWindow(opts: {
     clearTiles();
     const spot = m === 'fs' ? spots.fs : spots.normal;
     const c = container();
-    const width = Math.round(Math.min(Math.max(spot.w * c.w, MIN_WIDTH), c.w * MAX_SHARE));
+    const inRow = Math.min(3, tilesNow().length);
+    const row = inRow > 1 ? Math.min(inRow * ROW_TILE_W + (inRow - 1) * 6 + 16, c.w * ROW_MAX_SHARE) : 0;
+    const width = Math.round(Math.min(Math.max(spot.w * c.w, MIN_WIDTH, row), c.w * MAX_SHARE));
     box.style.width = `${width}px`;
     // A set height: the tiles fill it (CSS .sized); folded shows only the title strip.
     const sized = spot.h !== undefined && !folded;
