@@ -144,13 +144,17 @@ eda.send({ t: 'start' });
 const pinger = setInterval(() => {
   for (const c of [eda, fat]) if (c.ws.readyState === WebSocket.OPEN) c.send({ t: 'ping' });
 }, 2000);
-for (const [drawer, guesser] of [[eda, fat], [fat, eda]]) {
+// Wait by round: the first turn's drawer never read that turn's own "draw" / "reveal" states, and on its turn as the
+// guesser they were still in its inbox. Matched first, they made it guess before the word was chosen (the guess was
+// lost) and then wait for a podium while the second turn ran its 80 s (live, a few ms slower than local: 4 of 5 runs
+// after 0.9.93.5).
+for (const [round, drawer, guesser] of [[1, eda, fat], [2, fat, eda]]) {
   const words = await drawer.wait((m) => m.t === 'choices', 'short choices', ALARM_WAIT);
   ok(words.words.every((w) => /^[a-z ]+$/.test(w)), 'English words');
   drawer.send({ t: 'choose', index: 0 });
-  await guesser.wait((m) => m.t === 'state' && m.phase === 'draw', 'short draw');
+  await guesser.wait((m) => m.t === 'state' && m.phase === 'draw' && m.round === round, 'short draw');
   guesser.send({ t: 'guess', text: words.words[0] });
-  await guesser.wait((m) => m.t === 'state' && m.phase === 'reveal', 'short reveal');
+  await guesser.wait((m) => m.t === 'state' && m.phase === 'reveal' && m.round === round, 'short reveal');
 }
 const end = await eda.wait((m) => m.t === 'state' && m.phase === 'over', 'over', ALARM_WAIT);
 ok(end.players.every((p) => p.score > 0), 'Everyone drew once: podium');
