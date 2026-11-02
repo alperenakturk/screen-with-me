@@ -56,7 +56,11 @@ plays after a user tap on phones. A player kind is a `PlayerAdapter` like `playe
 the privacy policy (each third-party player sets its own cookies), a harness with a fake player speaking the same
 protocol (the cloud can't reach these sites; the TikTok harness is the model), and the owner's real-browser check.
 
-## Cards proposed (in `CARDS.md` → Proposed)
-1. Vimeo player (links).
-2. Podcasts: search and play episodes together.
-3. SoundCloud player (links).
+## Suggested cards (for the Planner to fold into the "More players without the extension" card from PR #121)
+1. **Vimeo player (links):** `players/vimeo.ts` on `player.js`; 1× lock unless `getPlaybackRate` works; CSP
+   `player.vimeo.com`; fake-player harness; owner's real check (computer + phone).
+2. **Podcasts together:** iTunes Search via the Worker (cached, rate-limited), RSS → episode list, episode = `html5`
+   audio item with show art; privacy policy line.
+3. **SoundCloud player (links):** `players/soundcloud.ts` on the Widget API; 1× lock; CSP `w.soundcloud.com`.
+Later: Dailymotion (needs a Player ID in the owner's account), Twitch (after the domain move: `parent=`), web radio
+(needs `media-src https:` in the CSP, security review first).
