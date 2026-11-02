@@ -262,6 +262,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   panel → 0.9.94 (card under "Proposed" in `CARDS.md`); (6) → 0.9.95; (5) → not planned (the "(3)" unread count is
   already in the tab title). **Owner agreed (2 Nov 2026):** (8) → card 12, (6) → 0.9.95, (5) not planned. His new thing after the phone version is
   **cinema mode** (card 14).
+  (9) **More players without the extension** (owner, 2 Nov 2026, from Watch2Gether's source menu): besides YouTube,
+  play other services' official embeds on the site itself (no extension): e.g. Vimeo, Dailymotion, Twitch, SoundCloud /
+  Mixcloud, podcasts, web radio, Coub, a GIF search; a source picker next to the search box ("Search in: YouTube ▾").
+  Each one needs its embed / player API, terms and sync support checked first (Research). Planner: after 1.0 or
+  0.9.95+, owner decides once the research is in.
 - [x] **Another new thing after the phone version:** cinema mode (owner, 2 Nov 2026; card 14 in `CARDS.md`).
 - [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,

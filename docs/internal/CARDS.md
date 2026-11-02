@@ -382,6 +382,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: CI green; `npm audit` 0.
 - Owner's pick: needed only for the GitHub settings (branch protection, secret scanning).
 
+<<<<<<< HEAD
 ### Things still drawn over the YouTube player: decide before the API audit (Research)
 - Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
   video in the room view, the "3-2-1" countdown and notes over the video, and the dock / toasts / cameras over a YouTube
@@ -420,6 +421,21 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   1.0) / E (e-mail accounts), recorded in ROADMAP; research recommends A now, B next, D only if users ask.
 - Tests: none (decision).
 - Owner's pick: needed (accounts are the owner's call per CLAUDE.md).
+=======
+### More players without the extension: which services and how (Research first; owner's idea, 2 Nov 2026)
+- Why: Watch2Gether's search box has a source picker (YouTube, Vimeo, Dailymotion, SoundCloud-like audio, podcasts,
+  web radio…); embeds play on our site for everyone without the extension.
+- Done when: Research lists candidate services with: official embed / player API, can we play / pause / seek / read the
+  time (sync), search API and its cost, terms (overlays, commercial use, audits), CSP hosts, and a ranked shortlist;
+  the owner picks which to build and when (not before 0.9.95).
+- Tests: none (research); each built service later gets its harness like `tiktok/run.cjs`.
+- Research (2 Nov 2026, `research/more-players.md`), ranked: 1 Vimeo (player.js, full control, rate only on PRO
+  videos → 1×), 2 podcasts (iTunes Search → RSS → audio file in today's `html5` kind), 3 SoundCloud (Widget API, links
+  only, 1×), 4 Dailymotion (needs a Player ID from the owner's free account), 5 Twitch (after the domain move:
+  `parent=`), 6 web radio (CSP `media-src https:` needs a security look). Not recommended: Spotify, Apple Music,
+  Streamable, Kick, Mixcloud, Bilibili.
+- Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
+>>>>>>> e436f8f (Record the owner's idea: more players without the extension)
 
 ## Done
 
