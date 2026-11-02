@@ -55,7 +55,10 @@ host.send({ t: 'settings', saved: false });
 await guest.wait((m) => m.t === 'settings' && !m.settings.saved, 'unsaved');
 host.send({ t: 'load', media: { kind: 'youtube', id: 'jNQXAC9IVRw' } });
 const fresh = await guest.wait((m) => m.t === 'state' && m.state.item?.media.id === 'jNQXAC9IVRw' && m.action === 'load', 'loaded 2 again');
-ok(fresh.resumed === undefined && fresh.state.position === 0, 'Kayıt kapalıyken video baştan açılıyor');
+// With two people in the room the "3-2-1, together" start (0.9.93.2) holds the new video at its start: the server's
+// countdown takes its own clock a moment after the load stamped the state, so the held position can read 0.001 s.
+// It failed about one run in three on exactly 0.
+ok(fresh.resumed === undefined && fresh.state.position < 0.05, 'Kayıt kapalıyken video baştan açılıyor');
 
 // Oda adı ve ana sayfadaki liste için bilgi / kayıt kaldırma (HTTP)
 const http = base.replace(/^ws/, 'http');
