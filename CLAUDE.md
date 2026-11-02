@@ -60,7 +60,20 @@ We are building a **global product**, so everything is professional, formal and 
   things that belong to the user: accounts, money, publishing, legal commitments, the product name, slogans.
 - Move in safe steps; test every change, ship it, commit it.
 - The user will connect more repositories and add skills (privacy testing, bug finding, productivity) before 1.0;
-  when they appear, use them and record how in this file.
+  when they appear, use them and record how in this file. Added 2 Nov 2026 (installed for the owner's account on his
+  computer, not in cloud sessions unless added there):
+  - `kvkk-gdpr-denetim` (privacy audit, KVKK + GDPR): run it read-only before 0.9.97 / 0.9.98 and the store
+    submission; results go to ROADMAP §3 / §4.
+  - `karpathy-guidelines`: think before coding, simplest change, surgical edits, verifiable goals (fits the rules
+    here; it applies by itself while coding).
+  - `llm-council` ("council this"): five-advisor decision review for big owner decisions (name, domain, what to cut
+    before 1.0). Costs many sub-agents; only for real decisions.
+  - `agent-reach`: reads Reddit / X / YouTube / web for market and competitor research (read-only).
+  - Agentation (click-to-annotate for coding agents) needs React; this site is plain TypeScript, so it is not used here.
+- **Focus (owner, 2 Nov 2026):** before starting anything, check `ROADMAP.md` "Focus: now / next / frozen" and work
+  only on "Now". Build a new feature for computer + phone first; tablet layouts and missing translations are a batch at
+  the end of the milestone step. An idea that comes up mid-task goes to `STATUS.md` "Ideas waiting for the owner's
+  pick", not into the current work.
 - **UI terminology (Turkish UI, 0.9.82 copy pass):** oda (room), kayıtlı / tek seferlik oda (saved / one-time room),
   (oda) yöneticisi (host), odadan çıkar / yasak (kick / ban), **film sayfası** (film page; never "video sayfası"),
   **oda görünümü** (room view; the word "katman" never appears in the UI), Filme git / 🏠 Odaya dön, emoji (sent) /

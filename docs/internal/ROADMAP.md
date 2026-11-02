@@ -17,6 +17,24 @@ list, big services, donations, going public), `BUYUME.md` (growth), `gelecek-fik
 - **English on GitHub, Turkish with the owner** (see `CLAUDE.md` "Language and GitHub conventions").
 - **Consistency:** one name, one vocabulary, one set of numbers across code, UI, policy and docs.
 
+## Focus: now / next / frozen (owner agreed, 2 Nov 2026)
+The task queue in `STATUS.md` had about twelve open items at once, and every new feature was built for two languages
+and four screen sizes at the same time. From now on work follows this list; anything not in "Now" waits.
+- **Core first, multipliers later:** a new feature is built and tested in English + Turkish strings as they come, on
+  computer + phone. Tablet layouts and any missing translations are done as one batch at the end of each milestone
+  step (the "every new string has its English" gate below), not inside every feature.
+- **New ideas go to a list, not into the work:** an idea that comes up mid-task is written under "Ideas waiting for
+  the owner's pick" in `STATUS.md` and ordered at the next planning, never started on the spot.
+- **At most 2–3 parallel sessions:** one planning session (owner + Claude, no code) and one building session working
+  on one item at a time on its own branch; a review / research session only now and then.
+
+| | Items (in this order) |
+|---|---|
+| **Now** (close the 0.9.93 gate, at most 3) | 1. YouTube rule + one remote (finish the open STATUS item) · 2. Phone version, next speed steps · 3. Owner's hand tests 0.9.92.3–0.9.93.5 + root cause of the `wait.mjs` live flake |
+| **Next** (0.9.94) | Simplify the room → Help / FAQ (TR + EN) → "Send feedback" button → Shorts channel feed + Discover by region → Thanks page; "Shorts scrolling, really good" alongside |
+| **Frozen** (not before 0.9.95) | Tablet layout, accessibility pass, camera window settings pass, new ideas and games |
+| **Owner's decisions to make early** 👤 | Final name and domain (0.9.96 depends on them; a good case for a multi-advisor "council" decision session) |
+
 ## Milestone gates to 1.0 (owner's request, 2 Nov 2026: "be sure each version step is fully done")
 The owner's guide PDF (3rd edition, "1.0'a kadar kontrol rehberi") follows this. The third version part still moves
 only when the owner says so; Claude only reports "the gate is full" or names what is missing.
@@ -174,7 +192,10 @@ implement, test, ship.
   the voice row, policy updated). Hiding the IP is a Phase 2 goal (below).
 - [ ] Dependency audit (`npm audit`, Dependabot), secret scanning, branch protection on `main` (PR + green CI).
 - [ ] **(added)** `SECURITY.md` with a disclosure contact (needed once the repo is public anyway).
-- [ ] Owner will add security/privacy testing skills and repos 👤 → run them, record results here.
+- [ ] Owner will add security/privacy testing skills and repos 👤 → run them, record results here. Added 2 Nov 2026:
+  the `kvkk-gdpr-denetim` skill (KVKK + GDPR audit: privacy notice, consent, cookies, open databases, transfers
+  abroad, breach readiness, marketing e-mail consent, Chrome Web Store user data) → run it at 0.9.97 / 0.9.98 and
+  before the store submission.
 
 ### 4. Legal: name, law, policies
 - [ ] **Final product name** 👤: research is in `name-research.md` (no registered "ScreenWithMe" mark found, but the

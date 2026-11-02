@@ -18,6 +18,9 @@
 **The 1.0 plan is in `ROADMAP.md`** (owner's plan, 28 Oct 2026): polish existing features, zero known bugs,
 security hardening, legal/name/policies, consistency (English-first repo), operations, then 1.0 in the Chrome Web
 Store together with the domain and the final name. New feature areas wait until then unless the owner asks.
+**Focus (2 Nov 2026): `ROADMAP.md` "Focus: now / next / frozen" decides what to pick from the queue below.** Work
+only on its "Now" items (in order); "Next" items wait for 0.9.94, "Frozen" ones for 0.9.95; new ideas go to "Ideas
+waiting for the owner's pick", never straight into the work.
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` §1 "Feedback round 1".
