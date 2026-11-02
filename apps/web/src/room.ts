@@ -1169,6 +1169,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           const shown = reactions.content(message.emoji, message.sticker);
           if (shown) seats.react(message.by, shown);
         }
+        else if ($('#theater').classList.contains('yt-rail')) reactions.showFrom(reactionAnchor(message.by), message.by, message.emoji, message.sticker);
         else reactions.show(message.by, message.emoji, message.sticker);
         break;
       }
@@ -2394,6 +2395,30 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Pairing a TV is a phone's job (it becomes the remote, owner's feedback): no TV button on a computer.
     if (isTouch()) document.querySelector('.topbar-right')?.prepend(tvButton);
   }
+  // 5B (0.9.92.9, owner's pick): with YouTube the room's notes and cards (everyone-ready wait, sync badge, game
+  // invite, "start the next one") sit in the chat panel just above the message box (next to the newest lines), or
+  // above the video while the side panel is hidden, never over the player. Fullscreen, the Shorts view, video files and film pages keep them on the video.
+  const noticeChat = el('div', { class: 'yt-notices' });
+  $('#chat-list').after(noticeChat);
+  const noticeTop = el('div', { class: 'yt-notices yt-notices-top' });
+  $('.player-wrap').before(noticeTop);
+  const NOTICES = '#waiting-banner, #sync-badge, #game-invite, .end-card';
+  function placeNotices(): void {
+    const wrap = $('.player-wrap');
+    const youtube = $('#theater').classList.contains('yt-rail') && !isShell && !fullscreen.isActive() && !document.documentElement.classList.contains('shorts-view');
+    const target = !youtube ? wrap : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
+    for (const box of [wrap, noticeChat, noticeTop]) {
+      if (box === target) continue;
+      for (const node of box.querySelectorAll<HTMLElement>(`:scope > :is(${NOTICES})`)) target.append(node);
+    }
+  }
+  const watchNotices = new MutationObserver(placeNotices);
+  watchNotices.observe($('.player-wrap'), { childList: true });
+  watchNotices.observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
+  watchNotices.observe(roomEl, { attributes: true, attributeFilter: ['class'] });
+  watchNotices.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('fullscreenchange', placeNotices);
+
   let sideHidden = !isShell && load('opt:sideHidden') === '1';
   // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu
   // tarayıcıda hatırlanır. Film sayfasındaki katmanda yok (orada yerleşimi delik belirler).
@@ -2542,6 +2567,22 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // accident (only "Şimdi aç" loads it).
     addMedia(media, mode);
   });
+
+  /**
+   * Where a YouTube emoji rises from (pick 1B): the sender's face when the faces are on screen; in fullscreen or with
+   * the side panel hidden, the rail's 😀 (the rail shows for a moment); otherwise the faces row itself.
+   */
+  function reactionAnchor(by: Member): HTMLElement {
+    const visible = (node: HTMLElement | null) => (node && node.getBoundingClientRect().width > 0 ? node : null);
+    const dockReact = visible($('#dock-react'));
+    if (fullscreen.isActive() || sideHidden) {
+      fullscreen.poke();
+      const react = visible($('#dock-react'));
+      if (react) return react;
+    }
+    const face = visible(document.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(by.id)}"]`));
+    return face ?? visible($('#voice-people')) ?? dockReact ?? $('.player-wrap');
+  }
 
   /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
   async function resolveTikTok(link: string, anchor: HTMLElement): Promise<Media | null> {

@@ -11719,3 +11719,84 @@ html:not(.shell) .theater.yt-rail.rail-off.dock-window:not(:fullscreen, .fake-fs
 html.phone .media-search span:last-child {
   display: none;
 }
+
+/* YouTube emojis rise from the sender's face / the rail's 😀, beside the video (0.9.92.9, pick 1B). */
+.r-float.r-from {
+  position: fixed;
+  bottom: auto;
+  z-index: 1300;
+  translate: -50% -70%;
+  pointer-events: none;
+  animation-name: r-rise-short;
+}
+
+.r-float.r-from .r-emoji {
+  font-size: 34px;
+}
+
+@keyframes r-rise-short {
+  0% {
+    transform: translate(0, 12px) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift, 0px), -120px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* YouTube: the room's notes and cards sit at the top of the chat panel (or above the video with the side panel
+   hidden), never over the player (0.9.92.9, pick 5B). */
+.yt-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yt-notices:not(:has(> :not([hidden]))) {
+  display: none;
+}
+
+.yt-notices > * {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  translate: none !important;
+  max-width: 100% !important;
+  width: auto !important;
+  max-height: none !important;
+  white-space: normal !important;
+}
+
+.yt-notices > .home-ask {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  border-radius: 14px;
+  backdrop-filter: none;
+}
+
+.yt-notices > .end-card {
+  padding: 12px 14px;
+  box-shadow: none;
+}
+
+.yt-notices-top {
+  margin: 0 0 8px;
+}
+
+[data-panel='chat'] > .yt-notices {
+  flex: none;
+  padding: 0 8px 8px;
+}
+
+/* "Who paused" is already in the chat's room actions; with YouTube nothing goes over the player. */
+.theater.yt-rail:not(:fullscreen, .fake-fs) .action-notice {
+  display: none;
+}
