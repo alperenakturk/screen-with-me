@@ -265,7 +265,10 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   dated change line; `docs/internal/web-store.md` lists voice / camera / chat images and `scripting`; a one-page breach
   plan exists in `docs/internal/`; the owner has had it read by a lawyer before the store submission.
 - Tests: review against the stored-data table in `security-review-2.md`; owner's read-through.
-- Owner's pick: needed (controller name / address, minimum age, contact address, lawyer).
+- Owner's pick (2 Nov 2026, https://claude.ai/artifact/S9PHD4qRh8uaM2ehzHka6T): controller "Alperen Aktürk", contact screenwithme.app@gmail.com (the support
+  address of the own domain later; no postal address); minimum age 13+, with "under 16 you need a parent's
+  permission"; a lawyer reads policy + terms before the store submission if the owner can find one (not blocking);
+  the up-to-3 names on the join card stay and the policy says so (M7). Planner: before the YouTube API audit (0.9.98).
 
 ### Privacy: a secret in the IP hash (M5)
 - Severity: medium
@@ -380,7 +383,10 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   `permissions: contents: read` in `test.yml`; `SECURITY.md` with the contact address; owner turns on branch
   protection and secret scanning for `main`.
 - Tests: CI green; `npm audit` 0.
-- Owner's pick: needed only for the GitHub settings (branch protection, secret scanning).
+- Owner's pick: needed only for the GitHub settings. Planner, 2 Nov 2026: on a private repo with GitHub Free,
+  branch protection / rulesets and secret scanning are not available (paid plans, or free once the repo is public);
+  the owner turns on the free parts (Dependabot alerts + security updates) now; branch rules come with the public repo
+  or a GitHub Pro decision.
 
 ### Things still drawn over the YouTube player: decide before the API audit (Research)
 - Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
@@ -391,9 +397,10 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   and the moved ones are built; a harness asserts no element of ours intersects the YouTube iframe's box (outside the
   accepted list).
 - Tests: harness overlap check in the room view, Shorts view and fullscreen.
-- Owner's pick: needed (per item; option page by the Planner).
+- Owner's pick: waiting (question 5 on https://claude.ai/artifact/S9PHD4qRh8uaM2ehzHka6T: A strict / D like Watch2Gether, recommended / A+B / C). Research: D is a
+  reasonable bet if nothing lands over the player by itself and `#rail-edge` goes.
 
-### 🍿 Snack Bar: first solo side game (Research)
+### 🍿 Snack Bar: first solo side game (0.9.95; owner picked it, 2 Nov 2026)
 - Why: the owner wants something to play alone while watching with friends; an idle game fits low attention and
   "progress over time". Details: `research/solo-games-accounts.md` Part A.
 - Done when: 🎮 has a "Play on the side" entry that opens Snack Bar in a free window / side panel / phone sheet without
@@ -402,7 +409,30 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   one versioned JSON in `localStorage`; lazy chunk; EN + TR strings; original look, no film names.
 - Tests: unit (economy: income per watched second, cap, together bonus, prestige, save migration); harness (fits at
   phone / small free window sizes without scrollbars, room keys 1–8 / Enter still reach the room).
-- Owner's pick: needed (theme and name; it is a new feature, frozen until 0.9.95 per ROADMAP "Focus").
+- Owner's pick (2 Nov 2026): yes, the flagship, "detailed, sweet and on our theme; I'm excited about it". Not silent:
+  it gets its own cute sounds (game family in `sounds.ts`, the Sounds setting and volume apply; never during speech
+  ducking). Name "Snack Bar" works in English first; TR label "Büfe". Build in 0.9.95 (Focus: new features frozen
+  until then); the Planner makes a clickable look-and-feel option page first.
+
+### 🌱 Window Garden: cozy collection game (0.9.95, after Snack Bar; owner, 2 Nov 2026)
+- Why: owner: "basic but meaningful, a collection feel, sweet and cozy, with sweet sounds".
+- Done when: a second "Play on the side" game: plants grow over watched minutes, water now and then, seeds / rare
+  plants after a film ends or a full evening together, an album of every plant found (the collection); silent-ish
+  cozy sounds; same rules as Snack Bar (free window / sheet without scrolling, never takes the room's keys, one
+  versioned save in `localStorage`, lazy chunk, EN + TR).
+- Tests: unit (growth, seed drops, album, save migration); harness (fits small windows and phones, no scrollbars).
+- Owner's pick: done (idea); the look comes on the same option page as Snack Bar.
+
+### 🔤 Daily word game, English + Turkish (0.9.95, third; owner, 2 Nov 2026) ⏳ word lists first
+- Why: owner: instead of random logic puzzles, a word game like the popular daily five-letter one, in English and
+  Turkish; "or something similar that is easier to make".
+- Done when: our own name and look (never the original's name, colours or layout: trademark); a daily word the same
+  for everyone (seed by date), 6 tries, letter hints, on-screen keyboard with Turkish letters, a share line without
+  spoilers; works offline. Word lists: Research finds openly licensed EN and TR lists (answers ~1–2k common words,
+  allowed guesses larger) with licenses we may ship (MIT / CC0 / CC BY); if no good TR list exists, the fallback is a
+  word-free daily game of the same shape (e.g. a colour / emoji code breaker), owner picks.
+- Tests: unit (scoring with repeated letters, Turkish İ/ı and other letters, date seed); harness (fits a phone).
+- Owner's pick: done (idea); word-list research pending.
 
 ### Move my things to another device (Research)
 - Why: browser-only saves (game progress, saved rooms, emoji collection) are lost on a new phone; accounts are costly.
@@ -411,15 +441,29 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   blob once via a short-lived Durable Object (TV pairing pattern, nothing stored, 10 min expiry, rate-limited); the
   privacy policy mentions it.
 - Tests: e2e (code → transfer → expiry, wrong code, rate limit); unit (blob versioning / merge).
-- Owner's pick: needed (whether to build it before or after 1.0).
+- Owner's pick: part of accounts A (2 Nov 2026): next after the side games (0.9.95+), before 1.0 if time allows.
 
-### Accounts: owner's decision (Research)
+### Accounts: owner's decision (decided 2 Nov 2026)
 - Why: idle games and cross-device saves raise accounts; they touch the "no account" promise, GDPR / KVKK, Apple's
   in-app deletion rule and security. Details: `research/solo-games-accounts.md` Part B.
 - Done when: the owner picked on an option page: A (browser only) / B (move code) / D (optional passkey account after
   1.0) / E (e-mail accounts), recorded in ROADMAP; research recommends A now, B next, D only if users ask.
 - Tests: none (decision).
-- Owner's pick: needed (accounts are the owner's call per CLAUDE.md).
+- Owner's pick (2 Nov 2026): **A, step by step, no account now**: progress in the browser, then the move-to-device
+  code, an optional passkey account only after 1.0 and only if users ask; "no account" stays on the home page.
+### More players without the extension: which services and how (Research first; owner's idea, 2 Nov 2026)
+- Why: Watch2Gether's search box has a source picker (YouTube, Vimeo, Dailymotion, SoundCloud-like audio, podcasts,
+  web radio…); embeds play on our site for everyone without the extension.
+- Done when: Research lists candidate services with: official embed / player API, can we play / pause / seek / read the
+  time (sync), search API and its cost, terms (overlays, commercial use, audits), CSP hosts, and a ranked shortlist;
+  the owner picks which to build and when (not before 0.9.95).
+- Tests: none (research); each built service later gets its harness like `tiktok/run.cjs`.
+- Research (2 Nov 2026, `research/more-players.md`), ranked: 1 Vimeo (player.js, full control, rate only on PRO
+  videos → 1×), 2 podcasts (iTunes Search → RSS → audio file in today's `html5` kind), 3 SoundCloud (Widget API, links
+  only, 1×), 4 Dailymotion (needs a Player ID from the owner's free account), 5 Twitch (after the domain move:
+  `parent=`), 6 web radio (CSP `media-src https:` needs a security look). Not recommended: Spotify, Apple Music,
+  Streamable, Kick, Mixcloud, Bilibili.
+- Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
 
