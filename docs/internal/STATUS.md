@@ -501,6 +501,9 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   film ducking off by default and only on real speech, film-page cover flash fixed.
 - **0.9.82:** copy pass: all site/extension/privacy/README/store texts rewritten (glossary in CLAUDE.md), the owner's
   slogans, privacy policy aligned with the code.
+- **README refresh (2 Nov 2026, docs only):** `README.md` + `README.tr.md` rewritten as a short "What's inside"
+  overview (0.9.90 → 0.9.92.x features: one remote, Shorts / TikTok, search, phones, HTTP fallback, games) instead of a
+  release log; Quality table shortened (251 unit tests).
 - Design canvases (claude.ai artifacts, old account — may not be accessible any more): room alternatives
   https://claude.ai/artifact/Beiq1ueBUUHjUkRbL5LTHL, room UI options https://claude.ai/artifact/3v3MennhEPMFedeW9bNDQQ.
 
