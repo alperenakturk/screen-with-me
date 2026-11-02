@@ -235,7 +235,24 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   function closeRailWindows(): void {
     if (keepChat()) return;
     document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    letGoOfRail();
   }
+  /**
+   * 0.9.93.5 (owner's screenshot: in fullscreen the rail stayed while the video's own bar had gone): a rail button
+   * keeps the focus after a click (⋯, 😀, an emoji), and after any key press (Esc closing its window, a shortcut) the
+   * browser counts it as keyboard focus (`:focus-visible`), which held the rail out for good. Once the mouse leaves
+   * the rail, the rail lets go of the focus (not the message box while it holds text); keyboard users who Tab into it
+   * still keep it.
+   */
+  function letGoOfRail(): void {
+    const focused = document.activeElement;
+    if (!(focused instanceof HTMLElement) || !dock.contains(focused) || keepChat() || tabbing) return;
+    focused.blur();
+  }
+  let tabbing = false;
+  addEventListener('keydown', (event) => event.key === 'Tab' && (tabbing = true), true);
+  addEventListener('pointerdown', () => (tabbing = false), true);
+  addEventListener('mousemove', () => (tabbing = false), { capture: true, passive: true });
   const LEAVE_MS = 450;
   let leaveTimer: ReturnType<typeof setTimeout> | null = null;
   dock.addEventListener('mouseenter', () => {
@@ -249,6 +266,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // Off the rail onto a YouTube frame no move reaches the page: the mouse has left the edge.
     nearEdge = false;
     if (!edgeMode()) return;
+    if (!openButton) letGoOfRail();
     hideRailSoon();
     if (leaveTimer !== null) clearTimeout(leaveTimer);
     leaveTimer = setTimeout(() => {
@@ -291,7 +309,11 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   let nearEdge = false;
   /** Mouse on the rail, one of its windows open (emojis, message box, ⋯, the games hall) or a key focus in it. */
   const railBusy = () =>
-    hoveringControls || !!openButton || !!dock.querySelector(':focus-visible, .game-menu:not([hidden])') || document.activeElement === dockChatInput;
+    hoveringControls ||
+    !!openButton ||
+    !!dock.querySelector('.game-menu:not([hidden])') ||
+    (tabbing && !!dock.querySelector(':focus-visible')) ||
+    document.activeElement === dockChatInput;
   const dockBusy = () =>
     edgeMode() ? nearEdge || railBusy() : hoveringControls || !!openButton || dock.contains(document.activeElement) || getPlayer()?.isPaused() === true;
   function sleepDock(): void {

@@ -152,6 +152,17 @@ const box = (page, selector) =>
     await alex.waitForTimeout(600);
     check(await idle(), 'fullscreen: moving left closes it');
     await leaveWithWindow('fullscreen', vw.w / 2, vw.h / 2, vw.w);
+    // 0.9.93.5 (owner's screenshot: the rail stayed in fullscreen): ⋯ open, Esc, then the mouse onto the video. The
+    // key press made the focused ⋯ count as keyboard focus and held the rail out.
+    await alex.mouse.move(vw.w - 8, vw.h / 2, { steps: 4 });
+    await alex.waitForTimeout(300);
+    await alex.click('#dock-more');
+    await alex.waitForTimeout(250);
+    await alex.keyboard.press('Escape');
+    await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 6 });
+    await alex.waitForTimeout(1200);
+    check(await idle(), 'fullscreen: ⋯, Esc, mouse onto the video: the rail goes');
+    check(await alex.evaluate(() => !document.querySelector('#fs-dock')?.contains(document.activeElement)), 'fullscreen: the rail let go of the focus');
     // 0.9.93.4 (owner: "messages from the side like normal, not from the bottom"): a message comes down from the top
     // right, left of the rail, never over the player's own bar at the bottom.
     await sam.fill('#chat-input', 'hello from the side');
