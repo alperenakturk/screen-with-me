@@ -214,3 +214,29 @@ export function clientId(): string {
   save('cid', id);
   return id;
 }
+
+/** The last room this browser was in, for "Continue where you left off" on the home page (0.9.93.2). */
+export interface LastRoom {
+  id: string;
+  /** The saved room's name; null for a room without one (the home page shows its friendly name). */
+  name: string | null;
+  at: number;
+}
+
+export function lastRoom(): LastRoom | null {
+  try {
+    const value = JSON.parse(load('lastRoom') ?? 'null') as Partial<LastRoom> | null;
+    if (!value || typeof value.id !== 'string' || typeof value.at !== 'number') return null;
+    return { id: value.id, name: typeof value.name === 'string' && value.name ? value.name : null, at: value.at };
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastRoom(id: string, name: string | null): void {
+  save('lastRoom', JSON.stringify({ id, name, at: Date.now() }));
+}
+
+export function forgetLastRoom(): void {
+  save('lastRoom', '');
+}

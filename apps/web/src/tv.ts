@@ -5,7 +5,7 @@
 
 import { qrSvg } from '@swm/shared/qr';
 import { ROOM_ID_PATTERN, TV_CODE, TV_TOKEN } from '@swm/shared/protocol';
-import { newRoomId } from '@swm/shared/room-id';
+import { friendlyRoomName, newRoomId } from '@swm/shared/room-id';
 import { el } from './dom.ts';
 import { t } from './i18n.ts';
 import { savedRooms } from './saved-rooms.ts';
@@ -47,7 +47,7 @@ export function rememberPairing(code: string): void {
 }
 
 function roomLabel(id: string): string {
-  return savedRooms().find((r) => r.id === id)?.name ?? t('roomCode', { id });
+  return savedRooms().find((r) => r.id === id)?.name ?? friendlyRoomName(id);
 }
 
 function newCode(): string {

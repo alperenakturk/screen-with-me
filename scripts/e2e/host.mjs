@@ -97,5 +97,23 @@ a4.send({ t: 'react', emoji: '🤮' });
 const react = await b3.wait((m) => m.t === 'reaction', 'reaction');
 ok(react.emoji === '🤮', 'Yeni emojiler (2. sayfa) herkese gidiyor');
 
+// Handing the host role on (0.9.93.2): only the host may, it goes to that person (all their tabs) for good.
+b3.inbox.length = 0;
+a4.inbox.length = 0;
+b3.send({ t: 'make-host', id: wa4.you });
+ok((await b3.wait((m) => m.t === 'error', 'not_host make-host')).code === 'not_host', 'A guest cannot hand the host role on');
+// Find Ayşe's member id from Ali's view.
+a4.send({ t: 'rename', name: 'Ali' });
+const roster = await a4.wait((m) => m.t === 'members', 'roster');
+const ayse = roster.members.find((m) => m.name.startsWith('Ay'));
+a4.send({ t: 'make-host', id: ayse.id });
+const handed = await b3.wait((m) => m.t === 'members' && m.hostId === ayse.id, 'host handed');
+ok(handed.hostId === ayse.id, 'The host hands the role to Ayşe; everyone sees the new host');
+a4.send({ t: 'kick', id: ayse.id });
+ok((await a4.wait((m) => m.t === 'error', 'old host kick')).code === 'not_host', 'The old host is a guest now');
+b3.send({ t: 'make-host', id: wa4.you });
+const backAgain = await a4.wait((m) => m.t === 'members' && m.hostId !== ayse.id, 'host back');
+ok(backAgain.hostId !== ayse.id, 'Ayşe can hand it back');
+
 for (const c of [a2, b3, a4]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

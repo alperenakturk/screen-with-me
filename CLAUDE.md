@@ -78,7 +78,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.93.1 (bug sweep: the Shorts rail's windows fixed (＋ Add, ♾), "1 person", roomier search results; the invite window with a QR code opens by itself in an empty room; paste / drop a link anywhere; "(3)" unread in the tab title; 0.9.93 the rail beside the video opens at the video's right edge and closes when the mouse leaves, "Keep the controls open" pin instead of "Hide the controls", emojis fly over the video again; 0.9.92.9 YouTube: emojis rise from the sender's face, the room's notes in the chat panel; 0.9.92.8 one remote on a computer: no toolbar, the rail + ⋯, YouTube's rail beside the video coming and going with the mouse; phones: sideways = video + one ⛶, games only in ⋯, camera sizes, language asks; 🔍 Search button; "Try again" + connection test with the way back; 0.9.92.7 a bigger room on a computer: the video as big as the screen's height allows, wider side panel, bigger join card; 0.9.92.6 phone fixes from the owner's phone: camera row instead of cameras in faces, real fullscreen + side panel, the keyboard no longer counts as turning the phone, Shorts feed window, recap fits, one share sheet; 0.9.92.5 phone step 3: games full screen with the video as a small preview, the home page as an app start screen, lighter phones; 0.9.92.4 phone step 2: Shorts take the phone's screen with one slim bar, sideways fullscreen gets a slim dock beside the video; 0.9.92.3 phone room rebuilt as an app screen, owner's picks; 0.9.92.2 Shorts rail: on wide screens the Shorts bar is a column right of the video and the top bar folds on short
+Live: 0.9.93.2 (the rail's windows close when the mouse goes onto the video, also in fullscreen; friendly room names; "?" shortcuts card; hand the host role on; "3-2-1, together" before a new video; "continue where you left off" on the home page; Draw & Guess / Quiz phases move on even when the alarm is late; 0.9.93.1 bug sweep: the Shorts rail's windows fixed (＋ Add, ♾), "1 person", roomier search results; the invite window with a QR code opens by itself in an empty room; paste / drop a link anywhere; "(3)" unread in the tab title; 0.9.93 the rail beside the video opens at the video's right edge and closes when the mouse leaves, "Keep the controls open" pin instead of "Hide the controls", emojis fly over the video again; 0.9.92.9 YouTube: emojis rise from the sender's face, the room's notes in the chat panel; 0.9.92.8 one remote on a computer: no toolbar, the rail + ⋯, YouTube's rail beside the video coming and going with the mouse; phones: sideways = video + one ⛶, games only in ⋯, camera sizes, language asks; 🔍 Search button; "Try again" + connection test with the way back; 0.9.92.7 a bigger room on a computer: the video as big as the screen's height allows, wider side panel, bigger join card; 0.9.92.6 phone fixes from the owner's phone: camera row instead of cameras in faces, real fullscreen + side panel, the keyboard no longer counts as turning the phone, Shorts feed window, recap fits, one share sheet; 0.9.92.5 phone step 3: games full screen with the video as a small preview, the home page as an app start screen, lighter phones; 0.9.92.4 phone step 2: Shorts take the phone's screen with one slim bar, sideways fullscreen gets a slim dock beside the video; 0.9.92.3 phone room rebuilt as an app screen, owner's picks; 0.9.92.2 Shorts rail: on wide screens the Shorts bar is a column right of the video and the top bar folds on short
 screens, so the video is ~30 % taller on a laptop; 0.9.92.1 CLAUDE.md rule: everything technical in English; 0.9.92 rooms work on networks where WebSockets never open, e.g. the owner's phone hotspot: automatic HTTP
 fallback, `/baglanti` tells the causes apart; 0.9.91.20 first-time path: one join screen with who is waiting, 3 first tips, the install card notices a new
 extension; 0.9.91.19 TikTok links play in the Shorts view with TikTok's official player; 0.9.91.18 Shorts: YouTube's own bar and nothing of ours over the player, 🎲 Keşfet pools, ✨ Bunun gibi, `?olcum=1` switch measurement; 0.9.91.17 "your browser blocks direct connections" hint for voice / cameras / streams, Edge Add-ons prep, browser notes on the extension page; 0.9.91.16 voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
@@ -166,6 +166,13 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   - Drift: >1 s → jump (3 s cooldown); smaller → close it with ±5% rate on `fineRate` players.
   - Play retry at most once every 3 s (so we don't fight the user during loading/ads).
   - If you change it, add a scenario to `sync-engine.test.ts` (fake clock + fake player).
+  - **"3-2-1, together" (0.9.93.2):** a playing state whose `updatedAt` lies in the future is a held start: the engine
+    treats it as paused at `position` (`current()`, `holdLeft()`), reports no stall, and a timer enforces the play at
+    `updatedAt`; everyone starts at the same server moment (measured 5 ms apart in the harness). The server sets it in
+    `RoomObject.countdown`: the first time an item starts playing from ≤ 1 s with ≥ 2 people (by browser, no TVs),
+    `COUNTDOWN_MS` (3 s) ahead; not for Shorts / TikTok / film pages / the sync test (`countdownMedia`), a resumed saved
+    video, or with `settings.countdown === false` (Room rules, host); once per item (`counted`, storage). The page shows
+    the seconds over the video (`showCountdown`, `.countdown`). A user's play during the hold starts the room at once.
 - **Everyone ready (`waiting.ts` + engine):** while the room plays, a client whose video has not advanced for 1.5 s
   sends `{t:'ready', ready:false}`; the server (`WaitTracker`) pauses the room as `SYSTEM` and broadcasts the
   `waiting` list. It resumes when everyone is ready or after at most 12 s; the same person cannot make the room wait
@@ -378,6 +385,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   main site the bridge is site-bridge; in the shell it is shell.html (the shell site's own storage may be separate or
   blocked; then in memory). Shell mode only if the top frame really is `chrome-extension://` (so another site can't
   read settings with `?shell`).
+- **Handing the host role on (0.9.93.2):** `{t:'make-host', id}` (host only, not to a TV): `hostKey` becomes that
+  person's key for good (all their tabs), the old host is a guest; everyone gets `members` and the chat says "X is now
+  the host". UI: 👑 next to each person in People (`people.ts`) and "👑 Make host" in the person menu (`voice.ts`), both
+  after a confirm (`askMakeHost`). Test: e2e `host.mjs`.
 - **Host handover:** when the host's last connection leaves, `hostGoneAt` is written; if they return within 20 s
   (`HOST_GRACE_MS`) they stay host (page reload); otherwise on the next join hosting moves permanently to the oldest
   person in the room (`settleHost`); the old host cannot take it back.
@@ -719,7 +730,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer
   gets 25 per correct guesser), words `draw-words.ts` (TR/EN, room language from the first arrival). 2–8 players
   (persistent `cid`), round: lobby → choose (15 s, words only to the drawer) → draw (80 s) → reveal (6 s) → next.
-  Timers via storage alarm; the drawing only in memory (1000×750 grid, 50 ms chunks, latecomers get `strokes`).
+  Timers via storage alarm, and since 0.9.93.2 any message (the page pings every 15 s, and once the time is up) moves
+  an overdue phase on (`overdue` / `advance`; Quiz the same): live alarms ran > 25 s late right after a deploy. The drawing only in memory (1000×750 grid, 50 ms chunks, latecomers get `strokes`).
   Guessers/drawer chat privately with `secret`. Piece `games/draw.ts`. Test: `scripts/e2e/draw.mjs`.
   **Quiz (0.9.74):** object `Quiz` (`apps/server/src/quiz.ts`, binding `QUIZZES`, migration `v4`, `/api/quiz/:id/ws`),
   `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` (general knowledge, TR/EN, no film/series names; options
@@ -935,7 +947,11 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `EDGE_IN` (72 px) inside / `EDGE_OUT` (28 px) outside the video's right edge (document `mousemove`) or on
   `#rail-edge` (a see-through strip over the right edge, clear of YouTube's own top / bottom buttons, only while the
   dock rests: a YouTube frame keeps its mouse moves), and closes it `HIDE_MS` (250 ms) after the mouse leaves (the
-  dock, the edge, the video) unless one of its windows is open; a new video shows it for 2.5 s. "Keep the controls
+  dock, the edge, the video) unless one of its windows is open; a new video shows it for 2.5 s. Since 0.9.93.2 a rail
+  window (emojis, ⋯, speed, the games hall; not the message box while it holds text) closes `LEAVE_MS` (450 ms) after
+  the mouse leaves the rail, and when the page loses focus to a frame inside the theater (a click on the YouTube video
+  never reaches the page), by the same synthetic outside `pointerdown` the windows listen for (`closeRailWindows`); in
+  0.9.93 an open window kept the rail out in fullscreen (owner). "Keep the controls
   open" (`opt:railPin`, `.rail-pin`; ⋯ `#rail-pin` and Settings → My screen `#opt-railpin`, `RAIL_PIN_EVENT` keeps
   both in step) never lets it rest. "Hide the controls" (`opt:railOff`, `#rail-show`) is gone and no longer read. Video files and film pages
   keep the dock over the film's edge (8B). 6 / 7 stay as they are (the owner accepts that risk). **0.9.92.9 (5B,
@@ -962,7 +978,14 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   or on a TV; skipped if someone arrived or another dialog is open); while it is pending `html.invite-pending` holds the
   first-time tips back. 🔗 Invite (and ⋯ → Invite on a phone, which presses it) opens it; the empty room's "Copy invite
   link" still copies at once. Automated browsers (`navigator.webdriver`) only get the automatic window with
-  `opt:autoInvite` = '1' (the harnesses would be covered). **Paste / drop a link (0.9.93.1):** Ctrl+V outside a text
+  `opt:autoInvite` = '1' (the harnesses would be covered). **0.9.93.2 (owner's picks):** rooms without a saved name
+  show a friendly name worked out from the id (`room-id.ts` `friendlyRoomName`, 32 × 32 English words, the same for
+  everyone; top bar, tab title, join card, saved-name placeholder); "Continue where you left off" on the home page
+  (`home.ts` `renderContinue`: `lastRoom` = {id, saved name, at} written on `welcome` and `pagehide` (not on a TV);
+  shown for 24 h, or longer while the room is saved; name / who is inside / what plays from `/api/rooms/:id/info`; ✕
+  forgets it); the keyboard shortcuts card (`ui/shortcuts.ts`, `?` outside a text box, ⋯ and the profile menu's ⌨️,
+  computers only; its rows are the room's real keys). Test: `scripts/harness/room-extras/run.cjs` (24 checks; needs a
+  local video on :5300). **Paste / drop a link (0.9.93.1):** Ctrl+V outside a text
   box or a dropped link (`text/uri-list`, no files) goes through the link box's submit (`takeLink`; not in the shell,
   not while a dialog is open). **Unread in the tab title:** chat from others while `document.hidden` → "(n) title",
   cleared on `visibilitychange` (`drawTabTitle`, `baseTitle` from `renderSaved`). Test: `scripts/harness/invite/run.cjs`

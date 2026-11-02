@@ -34,11 +34,11 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 ### Watching together
 | | |
 |---|---|
-| ⏯️ **Tight sync** | Play / pause / seek / speed (0.25×–4×, YouTube up to 2×) for everyone. Server-time based, measured **30–100 ms** apart on real players; small drift is closed silently by playing ±5 % faster or slower. |
+| ⏯️ **Tight sync** | Play / pause / seek / speed (0.25×–4×, YouTube up to 2×) for everyone. Server-time based, measured **30–100 ms** apart on real players; small drift is closed silently by playing ±5 % faster or slower. A new video starts with a short "3, 2, 1, together!" so everyone begins at the same moment (the host can turn it off). |
 | ⏳ **Everyone ready** | If someone's video stalls, the room waits for them (at most 12 s). Someone watching an ad never holds the room up. |
 | 🧩 **Any website** | The extension finds the right video, also inside iframes and in players that load late or switch sources, and skips typical ads (short, muted looping or small corner videos). Wrong video? **🎯 Pick video** lets you choose. Pop-up ad tabs are closed and redirects keep the room open (both can be undone). |
 | 🖼️ **Room over the film page** | The site's own room page opens as a layer over the film page, with a hole where the video goes. **👁 Show page** steps the room aside to close a pop-up covering the video. |
-| 🖥️ **One remote** | Every player keeps its own bar (quality, captions, chapters), and the video is as big as the screen allows. Our buttons live in one slim rail: message, emojis, pin, game, mic, camera, screen share, ⋯ (speed, sync, next, side panel) and fullscreen. With YouTube the rail sits beside the video, never on it: it opens when the mouse reaches the video's right edge and closes when it leaves ("Keep the controls open" in ⋯ or Settings pins it), and the room's notes appear in the chat panel instead of on the video. |
+| 🖥️ **One remote** | Every player keeps its own bar (quality, captions, chapters), and the video is as big as the screen allows. Our buttons live in one slim rail: message, emojis, pin, game, mic, camera, screen share, ⋯ (speed, sync, next, side panel) and fullscreen. With YouTube the rail sits beside the video, never on it: it opens when the mouse reaches the video's right edge and closes when it leaves, in the window and in fullscreen, a window opened from it too ("Keep the controls open" in ⋯ or Settings pins it), and the room's notes appear in the chat panel instead of on the video. Press ? for the keyboard shortcuts. |
 | 📱 **Shorts view** | A Shorts or TikTok link turns the room vertical: the video in the middle, friends seated on both sides, messages as bubbles and reactions rising from their avatars, cameras inside the avatar circles. ↑ / ↓, the mouse wheel or a swipe move everyone to the previous / next short; 🔁 loops. ♾ **Shorts feed** keeps the queue full on a topic, **🎲 Discover** picks popular categories and **✨ More like this** follows the playing short. TikTok plays in TikTok's official player. |
 | 🔎 **YouTube search** | Type words and press 🔍 Search (or Enter): results open under the box; add one to the queue or play it now. Shorts are marked 📱 and open in the Shorts view. The API key stays on our server. |
 | 🧪 **Sync test** | A built-in 12-second counter; a badge shows how far apart you are. |
@@ -46,7 +46,7 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 ### Together
 | | |
 |---|---|
-| 🔗 **One link, no accounts** | Open a room and the invite window is already there: the link with Copy, Share or WhatsApp, and a QR code a friend next to you can scan with their phone. The invite opens one short screen for them: who is waiting and what is playing, their name and avatar, one button in. Three small tips show the way the first time. Paste a link anywhere in the room (or drop it on the page) and it goes to the queue. Name and avatar are kept per room. |
+| 🔗 **One link, no accounts** | Open a room and the invite window is already there: the link with Copy, Share or WhatsApp, and a QR code a friend next to you can scan with their phone. The invite opens one short screen for them: who is waiting and what is playing, their name and avatar, one button in. Three small tips show the way the first time. Paste a link anywhere in the room (or drop it on the page) and it goes to the queue. Every room gets a friendly name (like "Velvet Lounge"), and the home page offers "Continue where you left off". Name and avatar are kept per room. |
 | 🎙 **Voice & cameras** | Join voice and talk while you watch: mute, push-to-talk (hold V), see who speaks. Cameras as free windows you drag and resize, a spotlight layout, or one window; in fullscreen they move onto the video. Per-person volume, mute and hide just for you; a pre-join check to pick microphone, camera and speaker. Voice survives reloads and short connection drops. Peer-to-peer and encrypted (the server never hears it), up to 6 people and 4 cameras; the room says before you join that people in voice can see each other's IP address. Works on film pages too. |
 | 📺 **Screen sharing** | Share a screen, window or tab (with your camera in the corner if you like) to up to 4 viewers, 720p, peer-to-peer. The picture sits in the video or floats anywhere; "sharp text" or "smooth" quality. Not for re-broadcasting films. |
 | 💬 **Chat & reactions** | Messaging-app bubbles, images (paste or drop), safe clickable links. A 😀 React tray with emoji pages and custom emojis (images / GIFs added to one room, optionally kept in your own collection); reactions rise with the sender's name. 📌 Pins mark moments with a note. |
@@ -66,7 +66,7 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 ### Host & safety
 | | |
 |---|---|
-| 👑 **Room host** | The first person in is the host and sets the rules in ⚙️ Settings: host-only playback, locked queue, emoji limits, host-only streams, ready check. If the host is gone for more than 20 s, hosting passes to whoever has been in the room longest. The host can remove and ban people. |
+| 👑 **Room host** | The first person in is the host and sets the rules in ⚙️ Settings: host-only playback, locked queue, emoji limits, host-only streams, ready check. If the host is gone for more than 20 s, hosting passes to whoever has been in the room longest. The host can hand the role to someone else (👑 in People), remove and ban people. |
 | 🔐 **Private by design** | Video plays in each person's own browser; the server only relays small "pause at 12:34" messages and the room's chat. The extension is dormant outside a room, and the film page can't read which room you are in. User text is never written as HTML; rate limits (also per IP), an origin check, a strict Content-Security-Policy and a frame guard protect the site. |
 
 ## 🧠 How it works
@@ -112,7 +112,7 @@ player into it.
 
 | Check | What it covers |
 |---|---|
-| Unit tests (`npm test`) | 251 passing: sync engine with a fake clock and player, protocol validation, room rules, ready check, game rules, sound policy, the HTTP fallback, recap, video scoring |
+| Unit tests (`npm test`) | 256 passing: sync engine with a fake clock and player, protocol validation, room rules, ready check, game rules, sound policy, the HTTP fallback, recap, video scoring |
 | End-to-end (`npm run e2e`, in CI against a local and then the live server) | Fake users against the real server code: queue, chat, images, host and kick, handover, ready check, pins, custom emojis, host modes, saved rooms, recap, Shorts, search, voice / stream signalling, every game, the HTTP fallback |
 | Real Chrome with the extension (`scripts/harness/embed`) | The room layer over a film page: hole placement, no page flash, see-through messages, the film's own bar kept, the dock, video picker, ad tabs, redirects, pre-roll ads |
 | Real voice, cameras and streams (`scripts/harness/voice`) | Two Chromes with fake devices: received audio energy and camera frames are measured, on the site and on film pages; free camera / stream windows; browsers that block direct connections |

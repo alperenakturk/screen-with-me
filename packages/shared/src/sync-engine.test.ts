@@ -303,6 +303,45 @@ describe('slow start', () => {
   });
 });
 
+describe('"3-2-1, together" (a start held a few seconds ahead)', () => {
+  it('waits paused at the start, reports no stall, and plays when the start comes', async () => {
+    engine.attach(player);
+    engine.receive(state({ position: 0, updatedAt: Date.now() + 3000 }));
+    expect(engine.holdLeft()).toBeGreaterThan(2900);
+    await run(2500);
+    expect(player.paused).toBe(true);
+    expect(player.time).toBe(0);
+    expect(readyReports).toEqual([]);
+    expect(sent).toEqual([]);
+    await run(1000);
+    expect(engine.holdLeft()).toBe(0);
+    expect(player.paused).toBe(false);
+    expect(player.time).toBeGreaterThan(0.2);
+    expect(player.time).toBeLessThan(0.8);
+    expect(sent).toEqual([]);
+  });
+
+  it('a player that was already playing goes back to the start and waits', async () => {
+    engine.receive(state({ position: 0 }));
+    engine.attach(player);
+    await run(1000);
+    engine.receive(state({ item: { id: 'item2', media: { kind: 'youtube', id: 'aqz-KE-bpKQ' }, title: null, by: 'Ali' }, position: 0, updatedAt: Date.now() + 3000 }));
+    await run(1500);
+    expect(player.paused).toBe(true);
+    expect(player.time).toBeLessThan(0.1);
+    expect(sent).toEqual([]);
+  });
+
+  it('the user pressing play during the countdown starts the room now', async () => {
+    engine.attach(player);
+    engine.receive(state({ position: 0, updatedAt: Date.now() + 3000 }));
+    await run(500);
+    void player.play();
+    await run(300);
+    expect(sent.some((m) => m.t === 'play')).toBe(true);
+  });
+});
+
 describe('ready check ("herkes hazır")', () => {
   it('reports not-ready when the video stalls while the room plays, and ready once it moves again', async () => {
     engine.receive(state());

@@ -13,6 +13,16 @@ export const QUEUE_MAX_LENGTH = 100;
 export const MIN_RATE = 0.25;
 /** HTML5 videolar 4x'e kadar; YouTube en fazla 2x (YOUTUBE_MAX_RATE). */
 export const MAX_RATE = 4;
+/**
+ * "3-2-1, together" (0.9.93.2): a video that starts from its beginning for the first time, with two or more people,
+ * starts this much later for everyone (the state's `updatedAt` lies ahead; engines hold at the start until then).
+ */
+export const COUNTDOWN_MS = 3000;
+
+/** Videos that get the countdown: not Shorts / TikTok (they flow one into the next), film pages or the sync test. */
+export function countdownMedia(media: Media): boolean {
+  return (media.kind === 'youtube' && media.short !== true) || media.kind === 'html5';
+}
 export const YOUTUBE_MAX_RATE = 2;
 /** TikTok's embed player has no speed setting: a TikTok always plays at 1×. */
 export const TIKTOK_RATE = 1;
@@ -327,6 +337,8 @@ export interface RoomSettings {
   loop?: boolean;
   /** Yayını (ekran paylaşımı / kamera) sadece yönetici açabilsin. */
   liveHostOnly?: boolean;
+  /** "3-2-1, together" before a new video (default on; false turns it off). */
+  countdown?: boolean;
 }
 
 /** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
@@ -375,6 +387,8 @@ export type ClientMessage =
   | { t: 'rename'; name: string; avatar?: Avatar }
   /** (Sadece oda yöneticisi) birini odadan çıkar; yönetici kaldırana kadar geri giremez. */
   | { t: 'kick'; id: string }
+  /** (Host only, 0.9.93.2) hand the host role to this person (their member id); it stays with them. */
+  | { t: 'make-host'; id: string }
   /** (Sadece oda yöneticisi) bir yasağı kaldır (`id`: BanEntry.id). */
   | { t: 'unban'; id: string }
   /**
@@ -385,7 +399,7 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean; ad?: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; countdown?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
@@ -824,6 +838,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isAvatar(m.avatar) ? { t: 'rename', name, avatar: m.avatar } : { t: 'rename', name };
     }
     case 'kick':
+    case 'make-host':
     case 'unban':
     case 'unpin':
       return isItemId(m.id) ? { t: m.t, id: m.id } : null;
@@ -832,7 +847,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return typeof m.ad === 'boolean' ? { t: 'ready', ready: m.ready, ad: m.ad } : { t: 'ready', ready: m.ready };
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
-      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly'] as const) {
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly', 'countdown'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
       if ((REACTION_GAPS as readonly unknown[]).includes(m.reactionGap)) out.reactionGap = m.reactionGap as ReactionGap;

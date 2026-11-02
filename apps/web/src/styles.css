@@ -11668,7 +11668,7 @@ html.shell .theater :is(#dock-more, #dock-game) {
 
 html.shell .rail-pin-item,
 html.is-touch .rail-pin-item,
-html.is-touch .set-row.desk-only {
+html.is-touch .desk-only {
   display: none;
 }
 
@@ -11914,5 +11914,157 @@ html.phone .media-search span:last-child {
 @media (max-height: 500px) {
   .invite-qr-box {
     display: none;
+  }
+}
+
+/* ==== "Continue where you left off" on the home page (0.9.93.2, home.ts `renderContinue`) ==== */
+.home-continue {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 14px;
+  padding: 12px 12px 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.home-continue[hidden] {
+  display: none;
+}
+
+.continue-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.continue-name {
+  font-size: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.continue-status {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-continue .btn {
+  flex: none;
+  text-decoration: none;
+}
+
+/* ==== Keyboard shortcuts card (0.9.93.2, ui/shortcuts.ts) ==== */
+.shortcuts-dialog {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shortcuts-dialog p {
+  margin: 0;
+}
+
+.shortcuts-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  align-items: center;
+  margin: 0;
+}
+
+.shortcuts-list dt {
+  white-space: nowrap;
+  color: var(--muted);
+  text-align: right;
+}
+
+.shortcuts-list dd {
+  margin: 0;
+}
+
+.shortcuts-list kbd {
+  display: inline-block;
+  min-width: 26px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* ==== "3-2-1, together" (0.9.93.2, room.ts `showCountdown`): big seconds over the video while everyone waits. ==== */
+.countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.15) 60%, transparent 80%);
+  color: #fff;
+  text-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
+  transition: opacity 0.4s;
+}
+
+.countdown.go {
+  background: none;
+}
+
+.countdown-n {
+  font-size: clamp(56px, 14vmin, 140px);
+  line-height: 1;
+}
+
+.countdown.go .countdown-n {
+  font-size: clamp(34px, 8vmin, 72px);
+}
+
+.countdown-n.pop {
+  animation: countdown-pop 0.5s ease-out;
+}
+
+.countdown-sub {
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.countdown.go .countdown-sub {
+  display: none;
+}
+
+@keyframes countdown-pop {
+  0% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.95);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown-n.pop {
+    animation: none;
   }
 }

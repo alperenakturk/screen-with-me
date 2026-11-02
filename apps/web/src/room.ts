@@ -1,3 +1,4 @@
+import { friendlyRoomName } from '@swm/shared/room-id';
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
@@ -51,12 +52,14 @@ import {
   saveIdentity,
   roomIdentity,
   saveRoomIdentity,
+  saveLastRoom,
   sessionLoad,
   sessionSave,
 } from './storage.ts';
 import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
 import { showFirstTips } from './ui/first-tips.ts';
 import { autoInviteOn, openInviteDialog } from './ui/invite.ts';
+import { listenForShortcutsKey, openShortcuts } from './ui/shortcuts.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -160,7 +163,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
   let roomName: string | null = null;
   let info: { people?: string[]; count?: number; playing?: string | null } | null = null;
   const renderCode = () => {
-    roomCode.textContent = roomName ? `💾 ${roomName}` : t('roomCode', { id: roomId });
+    roomCode.textContent = roomName ? `💾 ${roomName}` : friendlyRoomName(roomId);
     const people = (info?.people ?? []).filter(Boolean);
     const count = info?.count ?? 0;
     app.querySelector<HTMLElement>('#join-invite')!.hidden = count === 0;
@@ -361,6 +364,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" class="dock-more-item" data-press="#sync-all"><span aria-hidden="true">🔄</span><span data-i18n="syncAll"></span></button>
                 <button type="button" class="dock-more-item" data-press="#skip"><span aria-hidden="true">⏭</span><span data-i18n="skip"></span></button>
                 <button type="button" class="dock-more-item" data-press="#side-toggle"><span aria-hidden="true">⇥</span><span id="dock-more-side"></span></button>
+                <button type="button" class="dock-more-item desk-only" data-press="#profile-keys"><span aria-hidden="true">⌨️</span><span data-i18n="keys.open"></span></button>
                 <button type="button" class="dock-more-item rail-pin-item" id="rail-pin" aria-pressed="false"><span class="rail-pin-box" aria-hidden="true"></span><span data-i18n="rail.pin"></span></button>
               </div>
               <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
@@ -596,6 +600,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" data-set-lang="en">EN</button>
               </div>
               <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
+              <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open">⌨️ ?</button>
             </div>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
@@ -667,6 +672,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="set-row"><span class="set-text"><b data-i18n="settings.waitForAll"></b><span data-i18n="settings.waitForAll.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-wait" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.hostOnlyMode"></b><span data-i18n="settings.hostOnlyMode.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-hostonly" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.countdown"></b><span data-i18n="settings.countdown.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-countdown" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
               <div class="set-row"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
@@ -765,7 +771,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const roomTitleStatus = el('span', { class: 'room-title-status' });
   document.querySelector('.topbar .brand')?.after(el('div', { class: 'room-title' }, roomTitleDot, roomTitleStatus, roomTitleName, roomTitleCount));
   function drawRoomTitle(): void {
-    roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : t('roomTitle', { code: roomId });
+    // An unsaved room shows its friendly name (0.9.93.2; the same for everyone, worked out from the id).
+    roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId);
     // People, not connections: the same person's site tab + film tab (same name and avatar) count once.
     const people = new Set(members.map((m) => `${m.name}|${m.avatar ?? ''}`)).size;
     roomTitleCount.textContent = people ? `· ${t(people === 1 ? 'peopleOne' : 'peopleCount', { n: people })}` : '';
@@ -782,7 +789,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     chatBadge.hidden = count === 0;
     chatBadge.textContent = count > 9 ? '9+' : String(count);
   }, (url) => void openExternalLink(url, () => isShell && postToExtension({ type: 'open-ok' })));
-  const people = createPeoplePanel(app, send);
+  const people = createPeoplePanel(app, send, (member) => void askMakeHost(member));
   /** Sağ üstteki profil düğmesi (kendi avatarım); kimlik değişince yeniden çizilir. */
   let drawProfileButton = () => {};
   // 👤 Profil sağ üstte (en sağda); basınca ad, avatar, tema ve özet düğmenin altında açılan menüde.
@@ -812,6 +819,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       drawLang();
     });
     drawLang();
+    $('#profile-keys').addEventListener('click', () => openShortcuts());
     $('#profile-reconnect').addEventListener('click', () => {
       setOpen(false);
       reconnectNow();
@@ -890,7 +898,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     kick: (member) => {
       if (confirm(t('kickConfirm', { name: member.name }))) send({ t: 'kick', id: member.id });
     },
+    makeHost: (member) => void askMakeHost(member),
   });
+  /** Hand the host role to someone (0.9.93.2): asked first, it can't be taken back. */
+  async function askMakeHost(member: Member): Promise<void> {
+    const yes = await confirmDialog({ icon: '👑', title: t('makeHostTitle', { name: member.name }), text: t('makeHostText'), yes: t('makeHost') });
+    if (yes) send({ t: 'make-host', id: member.id });
+  }
   const live = createLive(app, send, () => myId, isShell, () => amHost());
   // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels.
   const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({ root: app, openSettings: (section) => settingsDialog.open(section), myId: () => myId });
@@ -1025,6 +1039,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         live.welcome(message.voice === true);
         setMembers(message.members, message.hostId, false);
         maybeAutoInvite(message.members);
+        rememberRoom();
         games.setTables(message.tables ?? (message.game ? [message.game] : []), {}, false);
         chooseFirstTab();
         waitingIds = message.waiting ?? [];
@@ -1066,6 +1081,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'state': {
         lastBy = message.by;
         void applyState(message.state);
+        showCountdown(message.state);
         pins.reset(message.state.item?.id ?? null);
         const { action, by, state } = message;
         if (message.resumed !== undefined) {
@@ -2624,6 +2640,57 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     drawTabTitle();
   });
 
+  /**
+   * "3-2-1, together" (0.9.93.2): the server started this video a few seconds ahead (`updatedAt` in the future); the
+   * engine holds the player at the start meanwhile and this shows the seconds over the video, then "Together!".
+   */
+  let countdownEl: HTMLElement | null = null;
+  let countdownTimer: ReturnType<typeof setInterval> | null = null;
+  function showCountdown(state: PlaybackState): void {
+    const stop = () => {
+      if (countdownTimer !== null) clearInterval(countdownTimer);
+      countdownTimer = null;
+    };
+    const left = () => (state.paused || !state.item ? 0 : state.updatedAt - clock.now());
+    if (left() <= 0) {
+      stop();
+      countdownEl?.remove();
+      countdownEl = null;
+      return;
+    }
+    stop();
+    countdownEl?.remove();
+    const number = el('b', { class: 'countdown-n' });
+    const box = el('div', { class: 'countdown', role: 'status', 'aria-live': 'polite' }, number, el('span', { class: 'countdown-sub' }, t('countdown.sub')));
+    countdownEl = box;
+    $('.player-wrap').append(box);
+    let shown = '';
+    const draw = () => {
+      const ms = left();
+      const text = ms > 0 ? String(Math.ceil(ms / 1000)) : t('countdown.go');
+      if (text !== shown) {
+        shown = text;
+        number.textContent = text;
+        number.classList.remove('pop');
+        void number.offsetWidth;
+        number.classList.add('pop');
+        box.classList.toggle('go', ms <= 0);
+      }
+      if (ms <= -900) {
+        stop();
+        box.remove();
+        if (countdownEl === box) countdownEl = null;
+      }
+    };
+    draw();
+    countdownTimer = setInterval(draw, 100);
+  }
+
+  /** "Continue where you left off" on the home page (0.9.93.2): this room, with its saved name if it has one. */
+  function rememberRoom(): void {
+    if (!tv) saveLastRoom(roomId, roomSettings.saved && roomSettings.name ? roomSettings.name : null);
+  }
+
   /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
   async function resolveTikTok(link: string, anchor: HTMLElement): Promise<Media | null> {
     try {
@@ -2734,6 +2801,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const inviteText = el('span', { class: 'invite-text' }, inviteLabel());
   const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, el('span', { 'aria-hidden': 'true' }, '🔗'), inviteText);
   document.querySelector('.topbar-right')?.prepend(copyEl);
+  // ? opens the keyboard shortcuts card (0.9.93.2; not on a TV, whose remote has its own keys).
+  if (!tv) listenForShortcutsKey();
   // 0.9.93.1: 🔗 Invite opens the invite window (link, copy, share, WhatsApp, QR); ⋯ → Invite on a phone presses it too.
   copyEl.addEventListener('click', () => openInviteDialog(inviteUrl));
   /**
@@ -2783,6 +2852,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // Atılan kişi için ayrıca "ayrıldı" yazma ("çıkardı" satırı zaten var).
       for (const m of members) if (!after.has(m.id) && !kickedIds.has(m.id)) addActivity(() => t('left', { name: withAvatar(m) }));
       if (nextHost !== hostId && nextHost === myId) addActivity(() => t('youAreHostNow'));
+      else if (nextHost !== hostId && hostId !== null && nextHost) {
+        const host = next.find((m) => m.id === nextHost);
+        if (host) addActivity(() => t('hostChanged', { name: withAvatar(host) }));
+      }
       // Voice join / leave go into the room activity like play / pause (owner's feedback, 0.9.88). Someone who leaves
       // the room while in voice only gets the "left" line.
       const wasInVoice = new Set(members.filter((m) => m.voice).map((m) => m.id));
@@ -2896,8 +2969,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#save-submit').textContent = saved ? t('rename') : t('saveRoom');
     const input = $<HTMLInputElement>('#save-name');
     if (document.activeElement !== input) input.value = name;
+    input.placeholder = friendlyRoomName(roomId);
     drawRoomTitle();
-    baseTitle = saved && name ? `${name} · ScreenWithMe` : 'ScreenWithMe';
+    baseTitle = `${saved && name ? name : friendlyRoomName(roomId)} · ScreenWithMe`;
     drawTabTitle();
     // Ana sayfadaki "Kaydedilen odalar" listesi: sadece sunucudan ayarlar geldikten sonra (önce varsayılan ayarla
     // "kayıtlı değil" sanılıp liste siliniyordu; bağlantı hiç kurulmazsa oda listeden kayboluyordu) ve sadece değişince
@@ -2920,11 +2994,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     lockQueue.checked = roomSettings.lockQueue === true;
     renderSaved(host);
     $<HTMLInputElement>('#opt-noreactions').checked = roomSettings.noReactions === true;
+    $<HTMLInputElement>('#opt-countdown').checked = roomSettings.countdown !== false;
     $<HTMLInputElement>('#opt-livehost').checked = roomSettings.liveHostOnly === true;
     live.settings(roomSettings.liveHostOnly === true);
     $<HTMLSelectElement>('#opt-reactiongap').value = String(roomSettings.reactionGap ?? 0);
     app.classList.toggle('no-reactions', roomSettings.noReactions === true);
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-noreactions', '#opt-livehost', '#opt-clear-stickers', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-countdown', '#opt-noreactions', '#opt-livehost', '#opt-clear-stickers', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     // Yönetici olmayana kuralların kısa özeti.
@@ -2935,6 +3010,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       rule(roomSettings.waitForAll, 'settings.waitForAll'),
       rule(roomSettings.hostOnly === true, 'settings.hostOnlyMode'),
       rule(roomSettings.lockQueue === true, 'settings.lockQueue'),
+      rule(roomSettings.countdown !== false, 'settings.countdown'),
       rule(roomSettings.noReactions === true, 'settings.noReactions'),
       rule(roomSettings.liveHostOnly === true, 'settings.liveHostOnly'),
       el('li', { class: gap ? 'on' : '' }, el('span', { 'aria-hidden': 'true' }, '⏱'), `${t('settings.reactionGap')}: ${t(`settings.reactionGap.${gap}` as I18nKey)}`),
@@ -2990,6 +3066,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     send({ t: 'settings', hostOnly: (event.target as HTMLInputElement).checked });
   });
   $('#recap-open').addEventListener('click', () => send({ t: 'recap' }));
+  $<HTMLInputElement>('#opt-countdown').addEventListener('change', (event) => {
+    send({ t: 'settings', countdown: (event.target as HTMLInputElement).checked });
+  });
   $<HTMLInputElement>('#opt-noreactions').addEventListener('change', (event) => {
     send({ t: 'settings', noReactions: (event.target as HTMLInputElement).checked });
   });
@@ -3088,6 +3167,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Sayfadan çıkarken (film sayfasına gidiş, odaya dönüş) bağlantıyı hemen kapat: tarayıcı sayfayı
   // önbellekte açık tutarsa kişi odada bir süre iki kez görünüyordu. Geri gelinirse sayfa yenilenir.
   addEventListener('pagehide', () => {
+    rememberRoom();
     voice.leave();
     live.leave();
     connection.close();

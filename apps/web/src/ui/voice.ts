@@ -41,6 +41,8 @@ export interface VoiceRoom {
   isHost: () => boolean;
   /** Ask (confirm) and remove someone from the room. */
   kick: (member: Member) => void;
+  /** Ask (confirm) and hand them the host role (0.9.93.2). */
+  makeHost?: (member: Member) => void;
   /** The cameras on screen right now (member → picture; hidden ones and "hide myself" left out): Shorts seats. */
   onCams?: (cams: Map<string, MediaStream>) => void;
 }
@@ -620,6 +622,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       items.push(button(`🎛 ${t('voice.devices')}`, () => void (isShell ? changeShellDevices() : changeDevices())));
       items.push(button(`👤 ${t('voice.editMe')}`, () => document.querySelector<HTMLElement>('.topbar-right .profile-btn')?.click()));
     }
+    if (!isMe && room.isHost() && room.makeHost && !member.tv) items.push(button(`👑 ${t('makeHost')}`, () => room.makeHost!(member)));
     if (!isMe && room.isHost()) items.push(button(`🚪 ${t('voice.kick')}`, () => room.kick(member), 'danger'));
     if (items.length === 1) items.push(el('p', { class: 'person-pop-note' }, t(member.voice ? 'voice.menuNothing' : 'voice.notInVoice')));
     menu = el('div', { class: 'person-pop', role: 'menu', 'data-island': '', 'data-member': member.id }, ...items);

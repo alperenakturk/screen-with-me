@@ -7,7 +7,7 @@ import { t } from '../i18n.ts';
  * Kişiler sekmesi: odadakiler, oda yöneticisi (👑), yönetici için "çıkar" butonu
  * ve çıkarılanlar listesi (yasağı kaldırmak için).
  */
-export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessage) => void) {
+export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessage) => void, makeHost: (member: Member) => void = () => {}) {
   const list = root.querySelector<HTMLUListElement>('#members')!;
   const hint = root.querySelector<HTMLElement>('#host-hint')!;
   const bansBox = root.querySelector<HTMLElement>('#bans')!;
@@ -26,6 +26,9 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
         kick.addEventListener('click', () => {
           if (confirm(t('kickConfirm', { name: member.name }))) send({ t: 'kick', id: member.id });
         });
+        // Hand the host role to them (0.9.93.2).
+        const crown = el('button', { type: 'button', class: 'icon-btn make-host', title: t('makeHost'), 'aria-label': t('makeHost') }, '👑');
+        crown.addEventListener('click', () => makeHost(member));
         return el(
           'li',
           { class: isMe ? 'person me' : 'person', 'data-id': member.id },
@@ -36,6 +39,7 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
           member.ad ? el('span', { class: 'host-badge ad-badge', title: t('inAdTitle') }, `📺 ${t('inAd')}`) : '',
           member.live ? el('span', { class: 'host-badge', title: t('live.badge') }, '🔴') : '',
           member.voice ? el('span', { class: 'host-badge', title: t('voice.inVoice') }, member.voice.mic ? '🎙' : '🔇') : '',
+          iAmHost && !isMe && !member.tv ? crown : '',
           iAmHost && !isMe ? kick : '',
         );
       }),

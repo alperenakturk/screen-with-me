@@ -9,6 +9,8 @@ import {
   SYSTEM_MEMBER_ID,
   CLIENT_ID,
   maxRateFor,
+  countdownMedia,
+  COUNTDOWN_MS,
   expectedPosition,
   parseClientMessage,
   stickerId,
@@ -229,6 +231,8 @@ export class Room extends DurableObject<Env> {
   /** Game tables, oldest first: the game, its opener's key (never sent) and since when nobody has it open. */
   private tables: Table[] = [];
   private hostKey: string | null = null;
+  /** The last item that started playing (it got its "3-2-1" then, or didn't need one): no second countdown. */
+  private counted: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
   private hostGoneAt: number | null = null;
   /** Atılanlar: kişi anahtarı (keyOf) → yasak. */
@@ -304,6 +308,7 @@ export class Room extends DurableObject<Env> {
       this.chatImageDay = (await ctx.storage.get<{ day: number; count: number }>('chatImageDay')) ?? this.chatImageDay;
       this.hostKey = (await ctx.storage.get<string>('host')) ?? null;
       this.hostGoneAt = (await ctx.storage.get<number>('hostGoneAt')) ?? null;
+      this.counted = (await ctx.storage.get<string>('counted')) ?? null;
       // Eski biçim (anahtar → bitiş zamanı, 10 dk'lık yasak) artık geçersiz; sadece yeni biçim okunur.
       const bans = (await ctx.storage.get<Record<string, Ban | number>>('bans')) ?? {};
       for (const [key, ban] of Object.entries(bans)) if (typeof ban === 'object') this.bans[key] = ban;
@@ -660,6 +665,9 @@ export class Room extends DurableObject<Env> {
       case 'kick':
         await this.kick(ws, me, message.id);
         return;
+      case 'make-host':
+        await this.makeHost(ws, message.id);
+        return;
       case 'unban':
         await this.unban(ws, message.id);
         return;
@@ -692,6 +700,7 @@ export class Room extends DurableObject<Env> {
         if (message.saved !== undefined) next.saved = message.saved;
         if (message.noReactions !== undefined) next.noReactions = message.noReactions;
         if (message.liveHostOnly !== undefined) next.liveHostOnly = message.liveHostOnly;
+        if (message.countdown !== undefined) next.countdown = message.countdown;
         if (message.reactionGap !== undefined) next.reactionGap = message.reactionGap;
         if (message.name !== undefined) next.name = message.name;
         // Kayıt kapanınca hatırlananlar da silinir.
@@ -1408,6 +1417,20 @@ export class Room extends DurableObject<Env> {
     else await this.ctx.storage.put('hostGoneAt', at);
   }
 
+  /**
+   * The host hands the role to someone in the room (0.9.93.2, owner): it goes to that person (all their tabs, by
+   * browser), for good, as if they had made the room; the old host becomes a guest. Not to a TV (it is its person).
+   */
+  private async makeHost(ws: WebSocket, targetId: string): Promise<void> {
+    if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+    const target = this.joined().find((a) => a.id === targetId);
+    if (!target || target.tv || keyOf(target) === this.hostKey) return;
+    this.hostKey = keyOf(target);
+    await this.ctx.storage.put('host', this.hostKey);
+    await this.setHostGone(null);
+    this.broadcast(this.membersMessage());
+  }
+
   private async kick(ws: WebSocket, me: Member, targetId: string): Promise<void> {
     if (!this.isHost(ws)) {
       this.sendTo(ws, { t: 'error', code: 'not_host' });
@@ -1581,6 +1604,7 @@ export class Room extends DurableObject<Env> {
       }
       await this.ctx.storage.put('history', this.history);
     }
+    await this.countdown(now, resumed !== undefined);
     await this.ctx.storage.put('room', this.room);
     await this.saveStats();
     if (update.queueChanged) {
@@ -1599,6 +1623,25 @@ export class Room extends DurableObject<Env> {
     }
     // Pinler video mesajından sonra gitsin (istemci yeni videoda pin listesini sıfırlıyor).
     if (restoredPins) await this.savePins();
+  }
+
+  /**
+   * "3-2-1, together" (0.9.93.2, owner): the first time an item starts playing from its beginning, with two or more
+   * people (by browser, TVs aside), it starts COUNTDOWN_MS later for everyone: `updatedAt` lies ahead, the engines hold
+   * the player at the start until then (it buffers meanwhile) and every page shows the countdown. Not for Shorts /
+   * TikTok / film pages / the sync test (`countdownMedia`), a video that resumes where it was left, or when the host
+   * turned it off. Each item gets it once (`counted`).
+   */
+  private async countdown(now: number, resumed: boolean): Promise<void> {
+    const state = this.room.state;
+    const item = state.item;
+    if (!item || state.paused || item.id === this.counted) return;
+    this.counted = item.id;
+    await this.ctx.storage.put('counted', item.id);
+    if (resumed || this.settings.countdown === false || !countdownMedia(item.media) || expectedPosition(state, now) > 1) return;
+    const people = new Set(this.joined().filter((a) => !a.tv).map((a) => keyOf(a)));
+    if (people.size < 2) return;
+    this.room = { ...this.room, state: { ...state, position: Math.max(0, expectedPosition(state, now)), updatedAt: now + COUNTDOWN_MS } };
   }
 
   /**
@@ -1753,7 +1796,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;
