@@ -156,6 +156,12 @@ export class Draw extends DurableObject<Env> {
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parseDrawMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
+    // A phase whose time is up moves on now, whatever the alarm does (live alarms were seen running tens of seconds
+    // late right after a deploy, leaving everyone on the reveal screen): every message (the pages ping) checks.
+    if (this.overdue()) {
+      await this.advance(Date.now());
+      await this.scheduleAlarm();
+    }
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
     const limiter = message.t === 'stroke' ? this.strokeLimit : message.t === 'guess' ? this.guessLimit : this.limit;
     if (!limiter.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
@@ -177,8 +183,30 @@ export class Draw extends DurableObject<Env> {
     await this.left(ws);
   }
 
+  /** Is a phase's time (or a hint letter's) already up? */
+  private overdue(): boolean {
+    const d = this.data;
+    const now = Date.now();
+    if (d.phase === 'lobby' || d.phase === 'over') return false;
+    if (d.endsAt !== null && now >= d.endsAt) return true;
+    return d.phase === 'draw' && d.revealed < d.revealAt.length && now >= d.revealAt[d.revealed]!;
+  }
+
   override async alarm(): Promise<void> {
     const now = Date.now();
+    await this.advance(now);
+    const d = this.data;
+    if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
+      await this.ctx.storage.deleteAll();
+      this.data = fresh();
+      this.strokes = [];
+      return;
+    }
+    await this.scheduleAlarm();
+  }
+
+  /** Moves the game on to whatever its clock says now (from the alarm, or a message that found it overdue). */
+  private async advance(now: number): Promise<void> {
     const d = this.data;
     if (d.phase === 'choose' && d.endsAt !== null && now >= d.endsAt) {
       // Süre doldu, seçmedi: ilk kelime.
@@ -197,13 +225,6 @@ export class Draw extends DurableObject<Env> {
     } else if (d.phase === 'reveal' && d.endsAt !== null && now >= d.endsAt) {
       await this.nextRound();
     }
-    if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
-      await this.ctx.storage.deleteAll();
-      this.data = fresh();
-      this.strokes = [];
-      return;
-    }
-    await this.scheduleAlarm();
   }
 
   private async hello(ws: WebSocket, me: Attachment, message: Extract<DrawClientMessage, { t: 'hello' }>): Promise<void> {

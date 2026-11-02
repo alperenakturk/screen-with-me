@@ -222,6 +222,16 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   enter a room nobody else is in (the first-time tips wait for it) and from 🔗 Invite; a link **pasted anywhere** in
   the room or dropped on the page goes to the queue; messages that came while the tab was in the background show as
   "(3)" in the tab's title. Test: `scripts/harness/invite/run.cjs` (22 checks), `shorts-rail` (+ window checks).
+- [ ] **0.9.93.2 (owner's picks from the ideas, 2 Nov 2026; continue from the first open item):**
+  [x] the YouTube rail in fullscreen (and the window): a rail window (😀, ⋯, speed, games hall) kept the rail out when
+  the mouse went left onto the video, and a click on a YouTube frame never closed it → it closes 450 ms after the mouse
+  leaves (not the message box with text) and when the page loses focus to the frame;
+  [x] live e2e `draw.mjs` failed twice right after the 0.9.93.1 deploy (the reveal → over alarm late by > 25 s; a re-run
+  passed) → Draw & Guess and Quiz move an overdue phase on with any message (the pages ping; Draw & Guess also pings
+  once the time is up), the test pings like the pages;
+  [ ] friendly room names instead of "Room swky86r"; [ ] "? Shortcuts" card; [ ] hand the host role to someone;
+  [ ] "3-2-1, together" countdown before the first play; [ ] "continue where you left off" on the home page.
+  Not wanted now: the invite with the film time.
 - [ ] **Ideas waiting for the owner's pick** (Claude's proposals, 2 Nov 2026; small ones were built above): (1) a
   friendly room name by default instead of "Room swky86r" (the owner names things); (2) "? Shortcuts" card listing
   the keys; (3) hand the host role to someone from the person menu; (4) a "3-2-1, together" countdown before the first
