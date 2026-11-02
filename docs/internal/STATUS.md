@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.92.9**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -203,7 +203,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   the owner's accepted risk at the audit); 8B film pages and video files keep today's dock over the film, hiding when
   idle. Also: the desktop room bigger (less empty space, bigger video even in the window, like Shorts), the join card
   (name + avatar) bigger. Steps: [x] 0.9.92.7 bigger room + join card; [x] 0.9.92.8 one rail (2A 3A 4A); [x] 0.9.92.9
-  emojis from faces (1B) + notices in the chat (5B).
+  emojis from faces (1B) + notices in the chat (5B); [x] 0.9.93 owner's follow-up (2 Nov 2026): the rail opens when the
+  mouse reaches the video's right edge and closes as soon as it leaves (not on every move), "Keep the controls open"
+  pin in ⋯ + Settings → My screen replaces "Hide the controls" (the owner couldn't find the way back), emojis fly over
+  the video again (1B undone: "they don't touch the content"); the notes stay in the chat (5B).
 - [x] **0.9.92.6 phone feedback:** recap fits, Shorts chat half height, feed window (♾ opens it, Stop inside), camera
   row (no cameras in faces, no camera windows), real fullscreen + ⛶ in the strip + side panel in fullscreen, keyboard
   is not "sideways", one share sheet.
@@ -316,9 +319,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.93 (computer, YouTube):**
+- [ ] Move the mouse to the video's right edge: the button column opens at once (the video makes room); move away: it
+  closes almost at once. A mouse move in the middle of the video does not bring it. Same in fullscreen.
+- [ ] ⋯ → "Keep the controls open": the column stays; Settings → My screen shows the same switch, turning it off there
+  lets it hide again. (If you hid the controls in 0.9.92.8, they are back.)
+- [ ] With a friend: their emoji flies over the video again.
+
 **0.9.92.9 (computer, YouTube):**
-- [ ] With a friend on a YouTube video: their emoji rises from their face in the Together card (or from the 😀 on the
-  button column when the side panel is hidden / in fullscreen), never over the video.
 - [ ] "Everyone ready" wait, a game invite or "start the next one" shows above the message box in the chat (above the
   video when the side panel is hidden), not on the video. A video file still shows them on the video.
 
@@ -326,6 +334,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Computer, a YouTube video: no bar under the video; move the mouse onto the video: the button column appears
   beside it and the video makes room; rest the mouse: the column goes, the video is full size again. ⋯ has speed,
   sync, next, hide/show the side panel and "Hide the controls" (then "Controls" above the video brings it back).
+  (0.9.93: replaced by the right edge + "Keep the controls open", see above.)
 - [ ] A video file: the buttons sit over the video's edge as before; also no bar under the video.
 - [ ] 🔍 Search next to the link box (words → YouTube results).
 - [ ] Phone sideways (no fullscreen): video left, one big ⛶ right; ⛶ → fullscreen; upright again → back. Games only in

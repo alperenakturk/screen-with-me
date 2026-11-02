@@ -1,8 +1,9 @@
-// YouTube room on a computer (0.9.92.9, owner's picks 1B and 5B on https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG):
-// nothing of ours over the YouTube player. Emojis rise from the sender's face (or the rail's 😀 with the side panel
-// hidden), the room's notes (everyone-ready wait …) sit in the chat panel above the message box, or above the video
-// with the side panel hidden. The YouTube player only has to be created, not to play (the cloud's headless Chromium
-// can't decode it). Needs Playwright and `npm run dev`:
+// YouTube room on a computer (0.9.92.9 pick 5B on https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG; 0.9.93): the room's
+// notes (everyone-ready wait …) sit in the chat panel above the message box, or above the video with the side panel
+// hidden; emojis fly over the video again (0.9.93, owner: "they don't harm the content"). The rail beside the video
+// comes when the mouse reaches the video's right edge and goes as soon as it leaves; "Keep the controls open" (⋯ or
+// Settings) pins it, and an old "hide the controls" choice no longer hides it. The YouTube player only has to be
+// created, not to play (the cloud's headless Chromium can't decode it). Needs Playwright and `npm run dev`:
 //   NODE_PATH=$(npm root -g) node scripts/harness/yt-room/run.cjs [http://localhost:5173]
 const { chromium } = require('playwright');
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -28,6 +29,8 @@ const box = (page, selector) =>
     await page.addInitScript(() => {
       localStorage.setItem('tipsSeen', '1');
       localStorage.setItem('lang', 'en');
+      // 0.9.92.8's "hide the controls": gone in 0.9.93, the rail must come back for people who used it.
+      localStorage.setItem('opt:railOff', '1');
     });
     await page.goto(`${SITE}/r/${room}`);
     await page.fill('#name', name);
@@ -57,22 +60,59 @@ const box = (page, selector) =>
   check(note && form && note.b <= form.t + 1 && note.t > form.t - 120, 'just above the message box', JSON.stringify({ note, form }));
   check(note && video && note.l >= video.r, 'not over the video');
 
-  // 1B: Sam's emoji rises from Sam's face on Alex's screen, none over the player.
+  // 0.9.93: Sam's emoji flies over the video on Alex's screen again.
   await sam.keyboard.press('1');
-  await alex.waitForSelector('.r-from', { timeout: 3000 }).catch(() => {});
-  const face = await alex.evaluate(() => {
-    const person = [...document.querySelectorAll('#voice-people .together-person')].find((n) => n.textContent.includes('Sam'));
-    const own = person?.querySelector('.voice-face');
-    if (!own) return null;
-    const r = own.getBoundingClientRect();
-    return { x: r.left + r.width / 2, t: r.top };
-  });
-  const float = await box(alex, '.r-from');
-  check(!!float, 'an emoji came');
-  check(float && face && Math.abs(float.x - face.x) < 30, 'it rises from Sam\'s face', JSON.stringify({ float, face }));
-  check(await alex.evaluate(() => document.querySelectorAll('.reactions-layer .r-float').length === 0), 'nothing flies over the player');
+  await alex.waitForSelector('.reactions-layer .r-float', { timeout: 3000 }).catch(() => {});
+  const float = await box(alex, '.reactions-layer .r-float');
+  check(!!float, 'an emoji flies over the video');
+  check(float && video && float.x > video.l && float.x < video.r, 'inside the video', JSON.stringify({ float, video }));
 
-  // Side panel hidden: the note sits above the video, the emoji rises from the rail's 😀.
+  // The right edge (0.9.93): the rail shows for a moment with a new video, then waits for the mouse at the edge.
+  const idle = () => alex.evaluate(() => document.querySelector('#theater').classList.contains('dock-idle'));
+  const playerRight = async () => (await box(alex, '.player')).r;
+  const wrapBox = await box(alex, '.player-wrap');
+  check(await alex.evaluate(() => !document.querySelector('#theater').classList.contains('rail-off') && !document.querySelector('#rail-show')), 'an old "hide the controls" no longer hides the rail');
+  await alex.mouse.move(wrapBox.x, wrapBox.y);
+  await alex.waitForTimeout(3000);
+  check(await idle(), 'mouse in the middle: the rail rests');
+  const wide = await playerRight();
+  check(Math.abs(wide - wrapBox.r) < 2, 'resting rail: the video takes the full width', JSON.stringify({ wide, wrap: wrapBox.r }));
+  await alex.mouse.move(wrapBox.x + 40, wrapBox.y + 10, { steps: 3 });
+  await alex.waitForTimeout(400);
+  check(await idle(), 'a mouse move in the middle does not bring it');
+  await alex.mouse.move(wrapBox.r - 12, wrapBox.y, { steps: 4 });
+  await alex.waitForTimeout(350);
+  check(!(await idle()), 'mouse at the right edge: the rail opens at once');
+  const narrow = await playerRight();
+  check(narrow < wrapBox.r - 40, 'the video makes room beside the rail', JSON.stringify({ narrow }));
+  await alex.mouse.move(wrapBox.r - 30, wrapBox.y + 60, { steps: 2 });
+  await alex.waitForTimeout(800);
+  check(!(await idle()), 'on the rail: it stays');
+  await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 4 });
+  await alex.waitForTimeout(600);
+  check(await idle(), 'mouse leaves: it closes quickly');
+
+  // Pin it from ⋯.
+  await alex.mouse.move(wrapBox.r - 12, wrapBox.y, { steps: 4 });
+  await alex.waitForTimeout(350);
+  await alex.click('#dock-more');
+  await alex.click('#rail-pin');
+  await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 4 });
+  await alex.waitForTimeout(3200);
+  check(!(await idle()) && (await alex.evaluate(() => document.querySelector('#rail-pin').getAttribute('aria-pressed'))) === 'true', 'pinned from ⋯: it stays open');
+  check(await alex.evaluate(() => document.querySelector('#opt-railpin').checked), 'Settings shows it pinned');
+  // Unpin from Settings → My screen.
+  await alex.evaluate(() => {
+    const box = document.querySelector('#opt-railpin');
+    box.checked = false;
+    box.dispatchEvent(new Event('change'));
+  });
+  await alex.mouse.move(wrapBox.x + 20, wrapBox.y, { steps: 2 });
+  await alex.waitForTimeout(800);
+  check(await idle(), 'unpinned in Settings: it rests again');
+  check(await alex.evaluate(() => localStorage.getItem('opt:railPin') === '0'), 'remembered');
+
+  // Side panel hidden: the note sits above the video, emojis still fly over the video.
   await alex.click('#side-toggle').catch(() => alex.evaluate(() => document.querySelector('#side-toggle')?.click()));
   await alex.waitForTimeout(3500);
   check(await alex.evaluate(() => !!document.querySelector('.yt-notices-top > #waiting-banner')), 'side panel hidden: the note is above the video');
@@ -80,11 +120,11 @@ const box = (page, selector) =>
   const top = await box(alex, '#waiting-banner');
   const video2 = await box(alex, '.player');
   check(top && video2 && top.w > 0 && top.b <= video2.t + 1, 'above, not on it', JSON.stringify({ top, video2 }));
+  await alex.evaluate(() => document.querySelectorAll('.reactions-layer .r-float').forEach((n) => n.remove()));
   await sam.keyboard.press('2');
   await alex.waitForTimeout(300);
-  const float2 = await box(alex, '.r-from');
-  const react = await box(alex, '#dock-react');
-  check(float2 && react && Math.abs(float2.x - react.x) < 30, 'side panel hidden: the emoji rises from the rail\'s 😀', JSON.stringify({ float2, react }));
+  const float2 = await box(alex, '.reactions-layer .r-float');
+  check(float2 && float2.x > video2.l && float2.x < video2.r, 'side panel hidden: the emoji flies over the video', JSON.stringify({ float2, video2 }));
 
   // Back with the side panel: the note returns to the chat panel.
   await alex.evaluate(() => document.querySelector('#side-toggle')?.click());
@@ -99,6 +139,6 @@ const box = (page, selector) =>
   check(await alex.evaluate(() => document.querySelector('#waiting-banner')?.parentElement?.classList.contains('player-wrap')), 'a video file: the note is back on the video');
 
   await browser.close();
-  console.log(fails ? `\n✗ ${fails} failed` : '\n✓ YouTube room keeps the player clear');
+  console.log(fails ? `\n✗ ${fails} failed` : '\n✓ YouTube room: notes in the chat, emojis on the video, the rail at the edge');
   process.exit(fails ? 1 : 0);
 })();

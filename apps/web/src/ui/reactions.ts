@@ -384,28 +384,6 @@ export function createReactions(
       setTimeout(() => float.remove(), FLOAT_MS + 200);
       target.append(float);
     },
-    /**
-     * YouTube (0.9.92.9, owner's pick 1B): the emoji rises from a place beside the video, never over it: the sender's
-     * face (the "Together" card, the phone's faces strip) or the rail's 😀. Drawn in a fixed layer over the page (in
-     * fullscreen inside the fullscreen element, the only part shown then).
-     */
-    showFrom(anchor: HTMLElement, by: Member, emoji?: string, sticker?: string): void {
-      const shown = content(emoji, sticker);
-      const box = anchor.getBoundingClientRect();
-      if (!shown || box.width === 0) return;
-      const host = (document.fullscreenElement as HTMLElement | null) ?? document.body;
-      const who = el('span', { class: 'r-who' }, avatarNode(by.avatar, 'r-avatar'), el('span', { class: 'r-name' }, by.name));
-      const float = el('div', { class: 'r-float r-from' }, shown, who);
-      float.style.left = `${box.left + box.width / 2}px`;
-      float.style.top = `${box.top}px`;
-      float.style.setProperty('--drift', `${Math.round((Math.random() - 0.5) * 40)}px`);
-      float.addEventListener('animationend', (event) => {
-        if (event.target === float) float.remove();
-      });
-      setTimeout(() => float.remove(), FLOAT_MS + 200);
-      while (host.querySelectorAll(':scope > .r-from').length >= MAX_FLOATS) host.querySelector(':scope > .r-from')?.remove();
-      host.append(float);
-    },
     /** Odaya özel emoji eklendi (girişte de odadakiler tek tek gelir); `own`: I added it. */
     addSticker(sticker: Sticker, own = false): void {
       stickers.set(sticker.id, sticker.data);

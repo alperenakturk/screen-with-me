@@ -11,6 +11,8 @@ import { isTyping } from './reactions.ts';
 export const QUICK_CHAT_MAX = 120;
 /** Fare bu kadar süre hareketsiz kalınca kontroller gizlenir. */
 const IDLE_MS = 2500;
+/** "Keep the controls open" changed (the rail's ⋯ or Settings → My screen); the new value is in `opt:railPin`. */
+export const RAIL_PIN_EVENT = 'swm-railpin';
 
 interface FullscreenOptions {
   /**
@@ -79,20 +81,6 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   // and ⋯ the rest (speed, sync, next, the side panel, hiding the rail). 🎮 opens the games hall next to it.
   const dockMore = q<HTMLButtonElement>('#dock-more');
   const dockGame = q<HTMLButtonElement>('#dock-game');
-  /** The rail hidden by hand (window only): the video keeps its full width until "Show the controls" above it. */
-  let railOff = load('opt:railOff') === '1';
-  const railShow = q<HTMLButtonElement>('#rail-show');
-  function setRailOff(off: boolean): void {
-    railOff = off;
-    save('opt:railOff', off ? '1' : '0');
-    theater.classList.toggle('rail-off', off);
-    railShow.hidden = !off || shell;
-    openPop(null);
-  }
-  theater.classList.toggle('rail-off', railOff);
-  railShow.hidden = !railOff || shell;
-  railShow.addEventListener('click', () => setRailOff(false));
-  q('#rail-hide').addEventListener('click', () => setRailOff(true));
   dockMore.addEventListener('click', () => dockLabels());
   for (const item of q('#dock-more-pop').querySelectorAll<HTMLButtonElement>('[data-press]')) {
     item.addEventListener('click', () => {
@@ -174,6 +162,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     }
     if (button === dockChat) dockChatInput.focus();
     else if (document.activeElement === dockChatInput) dockChatInput.blur();
+    // A window closed: the rail goes too unless the mouse is still on it or at the edge.
+    if (!button && edgeMode()) hideRailSoon();
   }
   const dockLabels = () => {
     const label = (b: HTMLElement, text: string) => {
@@ -239,7 +229,12 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     hoveringControls = true;
     wakeDock();
   });
-  dock.addEventListener('mouseleave', () => (hoveringControls = false));
+  dock.addEventListener('mouseleave', () => {
+    hoveringControls = false;
+    // Off the rail onto a YouTube frame no move reaches the page: the mouse has left the edge.
+    nearEdge = false;
+    if (edgeMode()) hideRailSoon();
+  });
 
   /**
    * The dock shows and hides with the player's own bar (owner: "when one hides, the other hides too"): it shows on
@@ -250,10 +245,25 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
    * (a tap on a YouTube frame never reaches the page).
    */
   let dockTimer: ReturnType<typeof setTimeout> | null = null;
-  const dockBusy = () => hoveringControls || !!openButton || dock.contains(document.activeElement) || getPlayer()?.isPaused() === true;
+  /**
+   * 0.9.93 (owner: "not on every mouse move: open when the mouse reaches the right side, close at once when it
+   * leaves"): on a computer (the site, not the film page) the rail comes when the mouse is at the video's right edge
+   * and goes HIDE_MS after it leaves. A YouTube frame keeps its mouse moves to itself, so a see-through strip on the
+   * right edge (`#rail-edge`, clear of YouTube's own buttons at the top and bottom) notices the mouse there.
+   * "Keep the controls open" (⋯ and Settings → My screen, `opt:railPin`) pins it. Touch screens keep it faint as before.
+   */
+  let railPin = load('opt:railPin') === '1';
+  const edgeMode = () => !shell && !isTouch() && !railPin;
+  let nearEdge = false;
+  /** Mouse on the rail, one of its windows open (emojis, message box, ⋯, the games hall) or a key focus in it. */
+  const railBusy = () =>
+    hoveringControls || !!openButton || !!dock.querySelector(':focus-visible, .game-menu:not([hidden])') || document.activeElement === dockChatInput;
+  const dockBusy = () =>
+    edgeMode() ? nearEdge || railBusy() : hoveringControls || !!openButton || dock.contains(document.activeElement) || getPlayer()?.isPaused() === true;
   function sleepDock(): void {
     if (dockTimer !== null) clearTimeout(dockTimer);
     dockTimer = null;
+    if (railPin) return;
     if (dockBusy()) dockTimer = setTimeout(sleepDock, IDLE_MS);
     else theater.classList.add('dock-idle');
   }
@@ -262,6 +272,59 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     if (dockTimer !== null) clearTimeout(dockTimer);
     dockTimer = setTimeout(sleepDock, IDLE_MS);
   }
+  /** A mouse move on the video (or the film page's): brings the rail only where it doesn't wait for the edge. */
+  function moved(): void {
+    if (!edgeMode()) wakeDock();
+  }
+  const HIDE_MS = 250;
+  function hideRailSoon(): void {
+    if (dockTimer !== null) clearTimeout(dockTimer);
+    dockTimer = setTimeout(sleepDock, HIDE_MS);
+  }
+  function setNear(near: boolean): void {
+    if (near === nearEdge) return;
+    nearEdge = near;
+    if (!near) return hideRailSoon();
+    if (dockTimer !== null) clearTimeout(dockTimer);
+    dockTimer = null;
+    theater.classList.remove('dock-idle');
+  }
+  /** How far into the video (and past its right edge, the gap beside it) counts as "the right side". */
+  const EDGE_IN = 72;
+  const EDGE_OUT = 28;
+  document.addEventListener(
+    'mousemove',
+    (event) => {
+      if (!edgeMode() || !theater.classList.contains('dock-mode')) return;
+      const r = wrap.getBoundingClientRect();
+      setNear(event.clientY >= r.top && event.clientY <= r.bottom && event.clientX >= r.right - EDGE_IN && event.clientX <= r.right + EDGE_OUT);
+    },
+    { passive: true },
+  );
+  const railEdge = q('#rail-edge');
+  railEdge.addEventListener('mouseenter', () => edgeMode() && setNear(true));
+  railEdge.addEventListener('mouseleave', (event) => {
+    if (!edgeMode() || dock.contains(event.relatedTarget as Node)) return;
+    setNear(false);
+  });
+  const railPinButton = q<HTMLButtonElement>('#rail-pin');
+  function renderPin(): void {
+    railPin = load('opt:railPin') === '1';
+    theater.classList.toggle('rail-pin', railPin);
+    theater.classList.toggle('rail-edge-mode', edgeMode());
+    railPinButton.setAttribute('aria-pressed', String(railPin));
+    // Pinned, the edge is not watched: the next move after unpinning says where the mouse is.
+    nearEdge = false;
+    if (railPin) wakeDock();
+    else if (edgeMode()) hideRailSoon();
+  }
+  railPinButton.addEventListener('click', () => {
+    openPop(null);
+    save('opt:railPin', railPin ? '0' : '1');
+    dispatchEvent(new Event(RAIL_PIN_EVENT));
+  });
+  addEventListener(RAIL_PIN_EVENT, renderPin);
+  renderPin();
 
   // Volume is mine only (never sent to the room) and remembered in this browser.
   let wantVolume = Math.min(100, Math.max(1, Number(load('opt:volume') ?? '100') || 100));
@@ -300,6 +363,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     own = !!player && ownControls();
     theater.classList.toggle('own-controls', own);
     renderDock();
+    // A new video shows the rail for a moment (so people know it is there), then it waits for the edge.
     wakeDock();
     volumeBox.hidden = !hasVolume(player);
     if (player && own) applyVolume(player);
@@ -311,7 +375,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   setInterval(() => {
     checkPlayer();
     // A paused video always shows the dock (its own bar shows too).
-    if (theater.classList.contains('dock-idle') && getPlayer()?.isPaused()) wakeDock();
+    if (theater.classList.contains('dock-idle') && !edgeMode() && getPlayer()?.isPaused()) wakeDock();
   }, 300);
   new ResizeObserver(() => renderDock()).observe(wrap);
   function startProgress(): void {
@@ -384,7 +448,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   }
 
   function wake(): void {
-    wakeDock();
+    moved();
     theater.classList.remove('idle');
     if (idleTimer !== null) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
@@ -451,7 +515,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       type,
       () => {
         if (own && !isActive()) wake();
-        else if (!isActive()) wakeDock();
+        else if (!isActive()) moved();
       },
       { passive: true },
     );
@@ -459,14 +523,15 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   let over = false;
   wrap.addEventListener('mouseenter', () => {
     over = true;
-    wakeDock();
+    moved();
   });
   // Leaving the video hides our bar at once in the window (YouTube's used to linger for seconds).
   wrap.addEventListener('mouseleave', () => {
     over = false;
     // The players' own bars hide when the mouse leaves a playing video: the dock too (not in fullscreen, where the
     // mouse never leaves).
-    if (!isActive() && getPlayer()?.isPaused() === false && !openButton && !dock.contains(document.activeElement)) {
+    if (edgeMode()) setNear(false);
+    else if (!isActive() && getPlayer()?.isPaused() === false && !openButton && !dock.contains(document.activeElement)) {
       if (dockTimer !== null) clearTimeout(dockTimer);
       theater.classList.add('dock-idle');
     }
@@ -579,7 +644,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     /** Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. */
     poke(): void {
       if (isActive()) wake();
-      else wakeDock();
+      else moved();
     },
     toggle,
     /** Kabukta film sayfasının tam ekranı bitti/başladı (Esc vb.): görünüm de uysun. */
