@@ -547,6 +547,9 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   moment). The deploy job now waits for the new version on the Worker and a Durable Object (`/api/version`,
   `scripts/wait-live.mjs`) instead of a fixed 30 s; a pass on the retry is a CI warning. The owner's ordered checklist
   to 1.0 lives at https://claude.ai/artifact/EtqKiBo8k5vgR422rq14K5 (ticks are saved; Claude ticks its own rows).
+  The first deploy with the wait (#113) still had two first-attempt failures after the version settled (host.mjs
+  "timeout roster", xox.mjs "timeout not player"), so the probe now starts a fresh object each time and every e2e file
+  logs server-closed sockets (`trace.mjs`): the next deploy shows whether those were restarts or something else.
 - **0.9.60:** manual video pick ("🎯 Video seç"), ads step 2 (ad tabs closed with "Geri aç", "Filme geri dön" after ad
   redirects, "📺 reklamda" doesn't make the room wait), voice chat on the film page (offscreen document, ducking).
 - **0.9.61:** site audit (11 bugs, phone layout, first load ~55 → ~24 KB).

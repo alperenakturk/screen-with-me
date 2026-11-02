@@ -1035,7 +1035,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `wrangler deploy` → `scripts/wait-live.mjs` (waits until `/api/version` answers the deployed version id from the
   Worker and a Durable Object 8 times in a row: objects started on the old code restart later and close every
   connection, which made live e2e files fail on the first attempt, e.g. wait.mjs "timeout waiting d") → e2e against
-  live (a file passing only on its retry prints a `::warning::`). Keys are in repo Secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`);
+  live (a file passing only on its retry prints a `::warning::`; every e2e file runs with `scripts/e2e/trace.mjs`, which
+  logs each socket the server or network closed with its code and time). Keys are in repo Secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`);
   without them the job is skipped with a warning. Private repo: 2000 free minutes/month.
 - **Scene top space and sides:** the scene (1600×900) is bottom-aligned and covers the screen; on wide screens the top
   is cropped and also covered by the top bar: don't put decorations above y≈200. Room content is centered, at most
