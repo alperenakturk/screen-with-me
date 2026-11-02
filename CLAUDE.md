@@ -103,6 +103,9 @@ We are building a **global product**, so everything is professional, formal and 
     link, open questions, anything the owner must decide or test), never ask the owner themselves; the Planner turns
     it into cards / questions, asks the owner, and sends his answers back to them as feedback. The Planner's session
     id is in its title "ScreenWithMe · 🧭 Planner" (`list_sessions`, tag `role:planner`).
+  - **Option pages are clickable (owner, 2 Nov 2026):** every decision page the Planner makes lets the owner click an
+    option per question (the recommended one marked, never preselected), shows his picks live at the bottom as ready
+    text ("… seçimlerim: 7: A …", an optional note) with a Copy button; he pastes that text back into the chat.
   - Rules for all: every change goes through a branch + PR (never push to `main`); a docs-only PR may be merged by its
     session once CI is green. Each role edits only its own files above, so two sessions never change the same lines.
     Talk to the owner in Turkish; everything written to the repo stays English.
