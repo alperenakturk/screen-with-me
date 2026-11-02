@@ -220,7 +220,8 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   1366×768; the phone home (0.9.92.5 app start screen) is unchanged unless the pick says so; Lighthouse performance
   not worse than today.
 - Tests: harness screenshots at 1920, 1366, 1024, 390 px; no console errors; owner's hand test.
-- Owner's pick: waiting for the Planner's option page.
+- Owner's pick: waiting; option page https://claude.ai/artifact/FVzrwoffrJPB5atVv2xQfn (hero A / B / C, motion,
+  what comes below, where the continue card sits).
 
 ### 16. Design bug sweep (0.9.94, end of the step)
 - Why: owner, 2 Nov 2026: go through the whole design for mistakes; the owner should not have to find each one.
@@ -432,7 +433,13 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   allowed guesses larger) with licenses we may ship (MIT / CC0 / CC BY); if no good TR list exists, the fallback is a
   word-free daily game of the same shape (e.g. a colour / emoji code breaker), owner picks.
 - Tests: unit (scoring with repeated letters, Turkish İ/ı and other letters, date seed); harness (fits a phone).
-- Owner's pick: done (idea); word-list research pending.
+- Research (2 Nov 2026, `research/word-game.md`): EN guesses = ENABLE (public domain), EN answers = 12dicts common
+  words (public domain) ∩ 5 letters + a hand pass; TR = Zemberek-NLP lexicon (Apache 2.0, 4,619 five-letter lemmas,
+  ~1–1.5k hand-picked answers, rule "no suffixes"); no TDK lists; credits line + `THIRD-PARTY-NOTICES`. To stay clear of
+  the original's trademark and its "copyrighted gameplay" claims: own name (no "-dle"), no 5×6 square grid (e.g. a
+  ticket / film-strip row per guess, 7 tries), theme colours + ✓ / • instead of green / yellow, no QWERTY strip right
+  under the board, share text without coloured squares ("🍿 Word of the day #12 · 4/7"); tr-locale İ/ı handling.
+- Owner's pick: done (idea); name and board look on the side-games option page (Planner, before 0.9.95).
 
 ### Move my things to another device (Research)
 - Why: browser-only saves (game progress, saved rooms, emoji collection) are lost on a new phone; accounts are costly.
