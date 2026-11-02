@@ -82,6 +82,28 @@ const box = (page, sel) =>
     await page.waitForTimeout(300);
     const feed = await box(page, '#shorts-feed-form');
     check(feed.r <= width && feed.b <= height && feed.y >= 0, `${name}: the ♾ window stays on screen`, feed);
+    // 0.9.93.1: the rail's square-button rule used to squeeze the windows' own buttons into 48 px squares.
+    const start = await box(page, '#shorts-feed-form .feed-topic-row .btn');
+    check(start.w > 60 && start.r <= feed.r, `${name}: "Start the feed" keeps its size inside the window`, { start, feed });
+    await page.keyboard.press('Escape');
+    await page.mouse.click(5, height / 2);
+    // ＋ Add with search results (faked) stays on screen and its button is a normal button.
+    await page.route('**/api/youtube/search**', (route) =>
+      route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ items: Array.from({ length: 10 }, (_, i) => ({ id: `abcdefghij${i}`, title: `Result ${i}`, channel: 'C', duration: 30, live: false, short: true })) }),
+      }),
+    );
+    await page.click('#shorts-add');
+    await page.fill('#shorts-add-input', 'dogs');
+    await page.press('#shorts-add-input', 'Enter');
+    await page.waitForSelector('#shorts-add-results li');
+    await page.waitForTimeout(300);
+    const add = await box(page, '#shorts-add-form');
+    const addButton = await box(page, '#shorts-add-form .feed-topic-row .btn');
+    check(add.r <= width && add.b <= height && add.y >= 0, `${name}: the ＋ window with results stays on screen`, add);
+    check(addButton.w > 40 && addButton.r <= add.r && Math.abs(addButton.y - (await box(page, '#shorts-add-input')).y) < 12, `${name}: ＋ Add's button sits beside the box`, addButton);
+    check(await page.evaluate(() => document.querySelector('#player-error')?.hidden !== false || document.querySelector('#player-error').getBoundingClientRect().right < document.querySelector('.player-wrap').getBoundingClientRect().left), `${name}: a player note never covers the video`);
     check(errors.length === 0, `${name}: no page errors`, errors);
     await ctx.close();
   }

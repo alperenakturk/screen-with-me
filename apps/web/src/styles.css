@@ -2330,7 +2330,7 @@ html:not(.shell) .shell-only {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
   gap: 4px;
 }
 
@@ -11114,7 +11114,33 @@ html.is-touch .theater.dock-mode.dock-idle .fs-dock:not(:has(:focus-visible)) {
 
 /* ==== 0.9.91.12: Shorts search in the Shorts bar's "＋ Ekle" box (ui/shorts-search.ts) ==== */
 .shorts-add-pop {
-  width: min(340px, calc(100vw - 24px));
+  width: min(360px, calc(100vw - 24px));
+}
+
+/* The player's "can't be played here" note in the Shorts view (0.9.93.1): a small card in the empty bottom left corner
+   (clear of the video and the rail) instead of a red line lost at the top. */
+html.shorts-view .room #player-error:not([hidden]) {
+  position: fixed;
+  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 45;
+  width: max-content;
+  /* Only the empty space left of the video (the video sits a little left of the middle, the rail beside it). */
+  max-width: max(180px, min(320px, calc(50vw - 230px)));
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border));
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+  text-align: center;
+}
+
+html.ph-shorts .room #player-error:not([hidden]) {
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  max-width: min(440px, calc(100vw - 32px));
+  transform: translateX(-50%);
 }
 
 .shorts-results {
@@ -11390,7 +11416,7 @@ html.shorts-view .game-stage .game-place {
     gap: 8px;
   }
 
-  .room.shorts .shorts-bar :is(.small-btn, .react-open, .cam-ctl):not(.shorts-chat .btn) {
+  .room.shorts .shorts-bar :is(.small-btn, .react-open, .cam-ctl):not(.shorts-chat .btn, .shorts-feed-pop *, .react-tray *, .game-menu *) {
     width: 48px;
     height: 48px;
     max-width: none;
@@ -11403,7 +11429,7 @@ html.shorts-view .game-stage .game-place {
   }
 
   /* Icons only: the names are in the buttons' titles. */
-  .room.shorts .shorts-bar :is(.small-btn > span, .react-open > span:not(:first-child)),
+  .room.shorts .shorts-bar :is(.small-btn > span, .react-open > span:not(:first-child)):not(.shorts-feed-pop *, .react-tray *, .game-menu *),
   .room.shorts .shorts-bar .react-recent {
     display: none;
   }
@@ -11430,6 +11456,12 @@ html.shorts-view .game-stage .game-place {
   .room.shorts .shorts-bar :is(.shorts-feed-wrap, .shorts-game-wrap) :is(.shorts-feed-pop, .game-menu) {
     top: auto;
     bottom: 0;
+  }
+
+  /* 0.9.93.1: a window never runs off the screen (results came in after it was placed). */
+  .room.shorts .shorts-bar :is(.shorts-feed-pop, .game-menu) {
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
   }
 
   .room.shorts .shorts-chat-wrap .shorts-chat {
@@ -11482,7 +11514,7 @@ html.shorts-view .game-stage .game-place {
     gap: 6px;
   }
 
-  .room.shorts .shorts-bar :is(.small-btn, .react-open, .cam-ctl):not(.shorts-chat .btn),
+  .room.shorts .shorts-bar :is(.small-btn, .react-open, .cam-ctl):not(.shorts-chat .btn, .shorts-feed-pop *, .react-tray *, .game-menu *),
   .room.shorts .shorts-arrow {
     width: 40px;
     height: 40px;
@@ -11787,4 +11819,100 @@ html.phone .media-search span:last-child {
 /* "Who paused" is already in the chat's room actions; with YouTube nothing goes over the player. */
 .theater.yt-rail:not(:fullscreen, .fake-fs) .action-notice {
   display: none;
+}
+
+/* ==== Invite window (0.9.93.1, ui/invite.ts): the link with Copy, share / WhatsApp, a QR code, "show when alone". ==== */
+.invite-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invite-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.invite-head h3 {
+  font-size: 18px;
+  color: var(--text);
+}
+
+.invite-head h3,
+.invite-sub,
+.invite-qr-box p {
+  margin: 0;
+}
+
+.invite-row {
+  display: flex;
+  gap: 8px;
+}
+
+.invite-link {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  text-overflow: ellipsis;
+}
+
+.invite-copy {
+  flex: none;
+  min-width: 96px;
+  justify-content: center;
+}
+
+.invite-copy.done {
+  background: var(--ok);
+  color: #06281a;
+  border-color: transparent;
+}
+
+.invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.invite-actions .btn {
+  flex: 1 1 140px;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.invite-qr-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.invite-qr {
+  flex: none;
+  width: 116px;
+  height: 116px;
+  border-radius: 8px;
+  image-rendering: pixelated;
+}
+
+.invite-auto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Short screens (a phone held sideways): no room for the QR code. */
+@media (max-height: 500px) {
+  .invite-qr-box {
+    display: none;
+  }
 }

@@ -1385,6 +1385,11 @@ html.phone .feed-head {
   font-size: 17px;
 }
 
+/* The ＋ Add window the same way (0.9.93.1): the title in the head, so the label above the box goes. */
+html.phone .shorts-add-pop .desk-label {
+  display: none;
+}
+
 html.phone #shorts-feed-form:not([hidden]) {
   gap: 12px;
 }

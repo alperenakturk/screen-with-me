@@ -56,6 +56,7 @@ import {
 } from './storage.ts';
 import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
 import { showFirstTips } from './ui/first-tips.ts';
+import { autoInviteOn, openInviteDialog } from './ui/invite.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -453,9 +454,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="shorts-add-wrap">
             <button id="shorts-add" type="button" class="btn small-btn shorts-add" aria-expanded="false" data-i18n-title="shorts.addHint">＋ <span data-i18n="shorts.add"></span></button>
             <form id="shorts-add-form" class="shorts-feed-pop shorts-add-pop card" hidden>
-              <label class="small" for="shorts-add-input" data-i18n="shorts.addLabel"></label>
-              <input id="shorts-add-input" autocomplete="off" data-i18n-placeholder="shorts.addPlaceholder" />
-              <button class="btn primary small-btn" data-i18n="shorts.addButton"></button>
+              <div class="feed-head phone-only"><b data-i18n="shorts.addLabel"></b><button id="shorts-add-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
+              <label class="small desk-label" for="shorts-add-input" data-i18n="shorts.addLabel"></label>
+              <div class="feed-topic-row">
+                <input id="shorts-add-input" autocomplete="off" data-i18n-placeholder="shorts.addPlaceholder" />
+                <button class="btn primary small-btn" data-i18n="shorts.addButton"></button>
+              </div>
               <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
             </form>
@@ -764,7 +768,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : t('roomTitle', { code: roomId });
     // People, not connections: the same person's site tab + film tab (same name and avatar) count once.
     const people = new Set(members.map((m) => `${m.name}|${m.avatar ?? ''}`)).size;
-    roomTitleCount.textContent = people ? `· ${t('peopleCount', { n: people })}` : '';
+    roomTitleCount.textContent = people ? `· ${t(people === 1 ? 'peopleOne' : 'peopleCount', { n: people })}` : '';
     tvRoom?.title(roomTitleName.textContent);
   }
   addEventListener('langchange', drawRoomTitle);
@@ -1020,6 +1024,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         voice.welcome(message.voice === true, message.voiceMode ?? 'p2p');
         live.welcome(message.voice === true);
         setMembers(message.members, message.hostId, false);
+        maybeAutoInvite(message.members);
         games.setTables(message.tables ?? (message.game ? [message.game] : []), {}, false);
         chooseFirstTab();
         waitingIds = message.waiting ?? [];
@@ -1189,6 +1194,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // A sound only when the message is nowhere on my screen (another tab, or another panel tab is open).
         const seen = !document.hidden && (fullscreen.isActive() || sideHidden || shortsOn || tabs.active === 'chat');
         if (by.id !== myId && !seen) playSound('chat');
+        if (by.id !== myId && document.hidden) {
+          hiddenUnread++;
+          drawTabTitle();
+        }
         break;
       }
       case 'rtc':
@@ -2030,6 +2039,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
   };
   shortsAdd.addEventListener('click', () => setShortsAdd(shortsAdd.getAttribute('aria-expanded') !== 'true'));
+  $('#shorts-add-close').addEventListener('click', () => setShortsAdd(false));
   // Like the ♾ window: a press elsewhere or Esc closes it (on a phone its button is in the ⋯ sheet, 0.9.92.4).
   document.addEventListener('pointerdown', (event) => {
     if (!shortsAddForm.hidden && !(event.target as Element).closest?.('.shorts-add-wrap')) setShortsAdd(false);
@@ -2290,7 +2300,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
     });
   };
-  new MutationObserver(fitRailPops).observe(shortsBar, { subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
+  // childList too: search results arrive after the window opened and make it taller.
+  new MutationObserver(fitRailPops).observe(shortsBar, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class'] });
   addEventListener('resize', fitRailPops);
   $<HTMLFormElement>('#shorts-chat').addEventListener('submit', (event) => {
     event.preventDefault();
@@ -2568,6 +2579,51 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     addMedia(media, mode);
   });
 
+  /**
+   * A link pasted anywhere in the room (Ctrl+V outside a text box) or dropped on the page goes to the queue the same
+   * way as through the link box (0.9.93.1): no need to find the box first. A dropped link used to navigate the tab
+   * away from the room. Not on the film page (no link box there).
+   */
+  function takeLink(text: string): boolean {
+    if (isShell || (!parseMediaInput(text) && parseMediaList(text).media.length < 2 && !isTikTokShortLink(text))) return false;
+    mediaInput.value = text.trim();
+    mediaForm.requestSubmit(mediaForm.querySelector<HTMLButtonElement>('button[value=enqueue]'));
+    return true;
+  }
+  document.addEventListener('paste', (event) => {
+    if (isTyping(event.target) || document.querySelector('.dialog-backdrop:not([hidden])')) return;
+    const text = event.clipboardData?.getData('text/plain') ?? '';
+    if (text && takeLink(text)) event.preventDefault();
+  });
+  const draggingLink = (event: DragEvent) => {
+    const types = event.dataTransfer?.types ?? [];
+    return types.includes('text/uri-list') && !types.includes('Files');
+  };
+  document.addEventListener('dragover', (event) => {
+    if (!isShell && draggingLink(event) && !isTyping(event.target)) event.preventDefault();
+  });
+  document.addEventListener('drop', (event) => {
+    if (isShell || !draggingLink(event) || isTyping(event.target)) return;
+    const text = event.dataTransfer?.getData('text/uri-list').split('\n').find((line) => line && !line.startsWith('#')) ?? '';
+    event.preventDefault();
+    takeLink(text);
+  });
+
+  /**
+   * Messages that came while this tab was in the background show in its title, "(3) …" (0.9.93.1), so a friend's
+   * message is noticed from another tab; back on the tab the count goes.
+   */
+  let baseTitle = document.title;
+  let hiddenUnread = 0;
+  function drawTabTitle(): void {
+    document.title = hiddenUnread ? `(${hiddenUnread}) ${baseTitle}` : baseTitle;
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !hiddenUnread) return;
+    hiddenUnread = 0;
+    drawTabTitle();
+  });
+
   /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
   async function resolveTikTok(link: string, anchor: HTMLElement): Promise<Media | null> {
     try {
@@ -2673,12 +2729,33 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       button.classList.remove('done');
     }, 1500);
   }
-  const inviteLabel = () => t(canShare ? 'share' : 'inviteButton');
+  const inviteLabel = () => t('inviteButton');
   const emptyInviteLabel = () => t(canShare ? 'share' : 'copyInvite');
   const inviteText = el('span', { class: 'invite-text' }, inviteLabel());
   const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, el('span', { 'aria-hidden': 'true' }, '🔗'), inviteText);
   document.querySelector('.topbar-right')?.prepend(copyEl);
-  copyEl.addEventListener('click', () => void shareInvite(copyEl, inviteLabel, inviteText));
+  // 0.9.93.1: 🔗 Invite opens the invite window (link, copy, share, WhatsApp, QR); ⋯ → Invite on a phone presses it too.
+  copyEl.addEventListener('click', () => openInviteDialog(inviteUrl));
+  /**
+   * Alone in the room on entering it (not after a reload, the film page or a TV): the invite window opens by itself
+   * once the opening animation is over (owner: "like other watch sites, even a QR code"). "Show this when I'm alone in
+   * a room" in the window turns it off.
+   */
+  let invitedOnce = false;
+  function maybeAutoInvite(present: Member[]): void {
+    if (invitedOnce) return;
+    invitedOnce = true;
+    if (resumed || isShell || tv || !autoInviteOn()) return;
+    if (present.some((m) => m.id !== myId && !m.tv)) return;
+    // The first-time tips wait for it (they start with "invite" too).
+    document.documentElement.classList.add('invite-pending');
+    setTimeout(() => {
+      document.documentElement.classList.remove('invite-pending');
+      // Someone came in meanwhile, or another window is already open (name, avatar, a confirm): not now.
+      if (members.some((m) => m.id !== myId && !m.tv) || document.querySelector('.dialog-backdrop:not([hidden])')) return;
+      openInviteDialog(inviteUrl);
+    }, 1700);
+  }
   const emptyInviteEl = $<HTMLButtonElement>('#empty-invite');
   emptyInviteEl.textContent = emptyInviteLabel();
   emptyInviteEl.addEventListener('click', () => void shareInvite(emptyInviteEl, emptyInviteLabel));
@@ -2820,7 +2897,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const input = $<HTMLInputElement>('#save-name');
     if (document.activeElement !== input) input.value = name;
     drawRoomTitle();
-    document.title = saved && name ? `${name} · ScreenWithMe` : 'ScreenWithMe';
+    baseTitle = saved && name ? `${name} · ScreenWithMe` : 'ScreenWithMe';
+    drawTabTitle();
     // Ana sayfadaki "Kaydedilen odalar" listesi: sadece sunucudan ayarlar geldikten sonra (önce varsayılan ayarla
     // "kayıtlı değil" sanılıp liste siliniyordu; bağlantı hiç kurulmazsa oda listeden kayboluyordu) ve sadece değişince
     // (her kişi değişiminde depoya yazıp eklentiye yolluyordu).

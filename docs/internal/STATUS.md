@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.1**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -210,6 +210,23 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [x] **0.9.92.6 phone feedback:** recap fits, Shorts chat half height, feed window (♾ opens it, Stop inside), camera
   row (no cameras in faces, no camera windows), real fullscreen + ⛶ in the strip + side panel in fullscreen, keyboard
   is not "sideways", one share sheet.
+- [x] **0.9.93.1 bug sweep + easier start** (owner, 2 Nov 2026: "a general bug test, things that make it easier for
+  users, an invite screen when I enter the room with a QR code like other watch sites; fix visual breakages; check
+  Shorts, the add-to-queue part looked bad"). Screenshot sweep (home, join, room, search, settings, Shorts and its
+  windows at 1920×1080, 1366×768 and a phone). Fixed: the Shorts rail's square-button rule squeezed the buttons inside
+  its windows ("Add to the queue", "Start the feed" overflowed); ＋ Add ran off the screen once results came; ＋ Add is
+  now box + button on one row, with a title and ✕ as a phone sheet; the "can't be played here" note sat lost at the
+  top left of the Shorts view (now a small card in the empty bottom left / above the phone bar); "1 people"; the room's
+  YouTube results were three cramped columns on a laptop (now two). New: the **invite window** (`ui/invite.ts`: link +
+  Copy, share sheet on phones, WhatsApp, QR code, "show this when I'm alone in a room"), opening by itself when you
+  enter a room nobody else is in (the first-time tips wait for it) and from 🔗 Invite; a link **pasted anywhere** in
+  the room or dropped on the page goes to the queue; messages that came while the tab was in the background show as
+  "(3)" in the tab's title. Test: `scripts/harness/invite/run.cjs` (22 checks), `shorts-rail` (+ window checks).
+- [ ] **Ideas waiting for the owner's pick** (Claude's proposals, 2 Nov 2026; small ones were built above): (1) a
+  friendly room name by default instead of "Room swky86r" (the owner names things); (2) "? Shortcuts" card listing
+  the keys; (3) hand the host role to someone from the person menu; (4) a "3-2-1, together" countdown before the first
+  play; (5) a "who joined" note in the tab's title too; (6) the invite window also offering "invite with the film
+  time" when a film time is set; (7) a "continue watching" row on the home page for the last room.
 - [ ] **Another new thing after the phone version** (the owner will describe it).
 - [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,
@@ -318,6 +335,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.1 (computer + phone):**
+- [ ] Create a room from the home page: the invite window opens by itself (link, Copy, WhatsApp, QR code; on the
+  phone also "Share"). Scan the QR code with the phone: it opens the room. Untick "show this when I'm alone": a new
+  room opens without it; 🔗 Invite still opens it.
+- [ ] Shorts view: ＋ (Add) and ♾ windows look right (box and button on one row, nothing overflowing, results scroll
+  inside the window). On the phone the ＋ sheet has a title and ✕.
+- [ ] Copy a YouTube link, click an empty spot in the room and press Ctrl+V: it goes to the queue (plays if nothing
+  plays). Dragging a link onto the page does the same.
+- [ ] With a friend: switch to another tab, let them write: the room's tab title shows "(1) …".
 
 **0.9.93 (computer, YouTube):**
 - [ ] Move the mouse to the video's right edge: the button column opens at once (the video makes room); move away: it
