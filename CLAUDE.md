@@ -513,7 +513,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   a big `.person-cam`. Settings is a full page on a phone. Sideways out of fullscreen: video left, strip + chat right.
   `first-tips` anchors fall back to ⋯ / ＋ / strip 🎙. Next: step 2 Shorts full height (5A) + sideways dock (4B),
   step 3 full-screen games (10A), app start page (11A), speed (lazy loading, light phone CSS). Test:
-  `scripts/harness/phone/run.cjs` (39 checks).
+  `scripts/harness/phone/run.cjs` (40 checks).
 - **TV version (owner chose A + C, 30 Oct 2026; 0.9.91.4, 0.9.91.5, 0.9.91.14, `docs/internal/tv-design.md`):** the TV
   shows the room, the paired phone is its remote. **Hidden since 0.9.91.14** (owner: slow on his TV's browser; the
   real version comes after 1.0 with Google Cast, ROADMAP Phase 2): the TV button and `/tv`, `/tv/<code>`, `/tv-test`

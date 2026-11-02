@@ -80,6 +80,13 @@ const sheetName = (page) => page.evaluate(() => {
     await page.waitForSelector('#player video');
     await page.waitForTimeout(1200);
     check((await sheetName(page)) === null && (await page.evaluate(() => !!document.querySelector('.stage #media-form'))), '"Play now" closes the sheet; the link box is back in its place');
+    // Several links at once into the queue from the sheet (the room's code must still find its note and queue).
+    await addMedia(page, 'https://www.youtube.com/watch?v=aqz-KE-bpKQ https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'enqueue');
+    await page.waitForTimeout(1500);
+    const many = await page.evaluate(() => ({ queued: document.querySelectorAll('#queue li').length, note: document.getElementById('media-done')?.textContent ?? '' }));
+    check(many.queued === 2 && many.note.length > 0, 'phone: two links at once go to the queue from the Add sheet', JSON.stringify(many));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
     // ⋯ More: invite, queue, people, games, recap, film time, profile, settings, language.
     await page.click('#strip-more');
     check((await sheetName(page)) === 'more' && (await page.$$('.ph-sheet .ph-tile')).length === 9, 'phone: ⋯ opens the More sheet (9 tiles)');

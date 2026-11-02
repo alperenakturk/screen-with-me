@@ -64,7 +64,8 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const head = el('div', { class: 'ph-sheet-head' });
   const body = el('div', { class: 'ph-sheet-body' });
   sheet.append(grip, head, body);
-  document.body.append(backdrop, sheet);
+  // Inside the room's root: the room's code finds the panels a sheet borrows (it searches the root, not the page).
+  root.append(backdrop, sheet);
   let borrowed: Borrowed[] = [];
   let onSheetClose: (() => void) | null = null;
   /** A history entry while a sheet is open: the phone's back button closes it. */

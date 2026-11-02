@@ -194,7 +194,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,
   😀 / ＋ message box, ＋ / ⋯ / Add-a-video / People sheets, settings full page, back button closes sheets; phone
-  harness rewritten, 39 checks). [ ] step 2: Shorts full height (5A) + sideways fullscreen dock (4B). [ ] step 3:
+  harness rewritten, 40 checks). [ ] step 2: Shorts full height (5A) + sideways fullscreen dock (4B). [ ] step 3:
   full-screen games (10A), app start page (11A), speed (lazy loading, light phone CSS, YouTube only when needed).
 - [ ] (original request) **Phone version from scratch** (owner, 1 Nov 2026: "I don't like the phone version; it feels like the PC page
   squeezed onto a phone. Make it feel like an app, every feature fitting the screen, and fast"). First a design page
