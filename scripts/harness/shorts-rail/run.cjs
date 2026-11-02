@@ -22,7 +22,11 @@ async function openShort(ctx) {
   await page.fill('#name', 'Alex');
   await page.click('#name-form button.primary');
   await page.waitForSelector('#media-input, #add-toggle', { state: 'attached' });
-  if (await page.$('#add-toggle:visible')) await page.click('#add-toggle');
+  // On a phone the link box is in ＋ → Add a video (0.9.92.3).
+  if (!(await page.isVisible('#media-input'))) {
+    await page.click('#chat-plus');
+    await page.click('.ph-sheet .ph-tile >> nth=0');
+  }
   await page.fill('#media-input', 'https://www.youtube.com/shorts/aqz-KE-bpKQ');
   await page.click('#media-form button[value=load]');
   await page.waitForFunction(() => document.documentElement.classList.contains('shorts-view'));

@@ -74,7 +74,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   // stream button too). Not in voice yet: the 🎙 joins.
   /** The next join comes from a quick 📷 button: join with the camera on. */
   let joinWithCam = false;
-  const quick = (['shorts', 'dock'] as const).flatMap((id) => {
+  const quick = (['shorts', 'dock', 'strip'] as const).flatMap((id) => {
     const box = root.querySelector<HTMLElement>(`#${id}-voice`);
     const mic = root.querySelector<HTMLButtonElement>(`#${id}-mic`);
     const cam = root.querySelector<HTMLButtonElement>(`#${id}-cam`);
@@ -399,7 +399,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const label = mine ? t('live.stop') : streamer ? t(me?.watching ? 'live.unwatch' : 'live.watch') : t('live.screen');
     for (const button of quick.map((q) => q.live)) {
       if (!button) continue;
-      button.hidden = !liveCard || liveCard.hidden || (!streamer && !canShare);
+      // The phone's faces strip only shows it while someone streams (sharing a screen from a phone is rare).
+      button.hidden = !liveCard || liveCard.hidden || (!streamer && (!canShare || button.id === 'strip-live'));
       setIcon(button, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
       button.classList.toggle('on', mine || !!me?.watching);
       button.title = label;

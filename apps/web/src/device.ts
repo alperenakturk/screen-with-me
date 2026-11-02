@@ -20,6 +20,20 @@ export function isPhone(): boolean {
   return matchMedia('(pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-height: 500px)').matches;
 }
 
+/**
+ * The phone layout (0.9.92.3, owner's "app-like phone" redesign): a phone held either way, or any window as narrow as
+ * a phone. `<html class="phone">` follows it live (phone.css and ui/phone-room.ts use it).
+ */
+const phoneQuery = matchMedia('(max-width: 700px), (pointer: coarse) and (max-height: 500px)');
+export function isPhoneLayout(): boolean {
+  return phoneQuery.matches;
+}
+
+/** Calls `listener` when the window enters or leaves the phone layout. */
+export function onPhoneLayout(listener: (phone: boolean) => void): void {
+  phoneQuery.addEventListener('change', () => listener(phoneQuery.matches));
+}
+
 /** iPhone / iPad (iPadOS says "Macintosh" but has touch points). */
 export function isIOS(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
@@ -72,4 +86,6 @@ export function markDevice(): void {
   root.toggle('is-standalone', isStandalone());
   root.toggle('is-app', isApp());
   coarse.addEventListener('change', () => root.toggle('is-touch', isTouch()));
+  root.toggle('phone', isPhoneLayout());
+  onPhoneLayout((phone) => root.toggle('phone', phone));
 }
