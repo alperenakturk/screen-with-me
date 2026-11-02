@@ -209,11 +209,68 @@ ok(probeAnswer === 'ok', 'WebSocket probe answers "ok"');
 const big = await fetch(`${http}/api/probe?bytes=200000`);
 ok((await big.text()).length === 200000, 'Probe download of 200 kB (diagnostics)');
 
-// 12) Limits on the request itself (last: the refused upload ends this HTTP connection).
+// 12) One hello per connection; votes count people in the room once (security review 2, H1 / M1).
+alice.send({ t: 'hello', v: V, name: 'Mallory', cid: 'cid-rotated-00001' });
+await alice.next((m) => m.t === 'error' && m.code === 'bad_message', 'second hello refused');
+ok(true, 'A second hello on a joined connection is refused');
+alice.send({ t: 'enqueue', media: { kind: 'youtube', id: 'M7lc1UVf-VE' } });
+const queued = await alice.next((m) => m.t === 'queue' && m.queue.some((q) => q.media.id === 'M7lc1UVf-VE'), 'queued');
+const itemId = queued.queue.find((q) => q.media.id === 'M7lc1UVf-VE').id;
+for (let i = 0; i < 5; i++) {
+  alice.send({ t: 'hello', v: V, name: 'Alice', cid: `cid-vote-rot-${i}0000` });
+  alice.send({ t: 'vote', id: itemId, up: true });
+  await new Promise((r) => setTimeout(r, 350)); // under the command limit (4 / s)
+}
+let votes = 0;
+for (let i = 0; i < 5; i++) votes = (await alice.next((m) => m.t === 'queue', 'vote queue')).queue.find((q) => q.id === itemId).votes;
+ok(votes === 1, `Votes with "changed" browser ids count once (${votes})`);
+const hal = await httpClient('Hal');
+await hal.send({ t: 'hello', v: V, name: 'Hal', cid: 'cid-hal-fb-00001' });
+await hal.next((m) => m.t === 'welcome', 'welcome Hal');
+await hal.send({ t: 'vote', id: itemId, up: true });
+const twoVotes = await alice.next((m) => m.t === 'queue' && m.queue.find((q) => q.id === itemId)?.votes === 2, 'second voter');
+ok(!!twoVotes, 'A second person in the room adds a second vote');
+await hal.leave();
+alice.send({ t: 'vote', id: itemId, up: true });
+const present = await alice.next((m) => m.t === 'queue' && m.queue.find((q) => q.id === itemId)?.votes === 1, 'votes of people present');
+ok(!!present, 'Only people in the room count (Hal left: back to 1)');
+
+// 13) A fallback session that never polls is closed within seconds (its queue would only grow).
+const silentOpen = await fetch(`${http}/api/rooms/${room}/ws?http=open`, { method: 'POST' });
+const { sid: silentSid } = await silentOpen.json();
+await fetch(`${http}/api/rooms/${room}/ws?http=send&sid=${silentSid}`, { method: 'POST', body: JSON.stringify([JSON.stringify({ t: 'hello', v: V, name: 'Silent', cid: 'cid-silent-fb-01' })]) });
+await alice.next((m) => m.t === 'members' && m.members.some((x) => x.name === 'Silent'), 'Silent in');
+alice.inbox.length = 0; // older member lists (Hal leaving) must not count as Silent leaving
+const silentAt = Date.now();
+await alice.next((m) => m.t === 'members' && !m.members.some((x) => x.name === 'Silent'), 'Silent closed', 25000);
+ok(true, `A session that never polls is closed (${((Date.now() - silentAt) / 1000).toFixed(1)} s after joining)`);
+
+// 14) Limits on the request itself (last: the refused upload ends this HTTP connection).
 const eve = await httpClient('Eve');
 const huge = await fetch(eve.url('send', eve.sid), { method: 'POST', body: 'x'.repeat(1_200_000) }).catch(() => null);
 ok(!huge || huge.status === 413, 'A body over the limit is refused (413)');
 await eve.leave().catch(() => {});
+// A chunked body has no Content-Length: it is read as a stream and stopped at the limit, the room keeps running.
+const frank = await httpClient('Frank');
+const chunk = new TextEncoder().encode('x'.repeat(64_000));
+let sentChunks = 0;
+const stream = new ReadableStream({
+  pull(controller) {
+    if (sentChunks++ >= 40) controller.close(); // ≈ 2.5 MB
+    else controller.enqueue(chunk);
+  },
+});
+const chunked = await fetch(frank.url('send', frank.sid), { method: 'POST', body: stream, duplex: 'half' }).catch(() => null);
+ok(!chunked || chunked.status === 413, `A chunked body over the limit is refused (${chunked?.status ?? 'connection ended'})`);
+await frank.leave().catch(() => {});
+const ping2 = Date.now();
+alice.send({ t: 'ping', c: ping2 });
+await alice.next((m) => m.t === 'pong' && m.c === ping2, 'pong after chunked');
+const after2 = await httpClient('Gina');
+await after2.send({ t: 'hello', v: V, name: 'Gina', cid: 'cid-gina-fb-0001' });
+const wg = await after2.next((m) => m.t === 'welcome', 'welcome Gina');
+ok(wg.members.some((m) => m.name === 'Alice'), 'The room still answers after it (same object, Alice still in)');
+await after2.leave().catch(() => {});
 
 console.log('\n✓ HTTP fallback works');
 process.exit(0);

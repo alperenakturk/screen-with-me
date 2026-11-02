@@ -23,29 +23,6 @@ Card format:
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
-### 1a. Security: the HTTP fallback must not be able to crash a room (H1, M1; Planner: right after card 1)
-- Severity: high
-- Why: one person with the room link can reset the room's Durable Object (everyone drops) with a chunked POST body
-  that is read uncapped, or with fallback sessions that never poll while repeated `hello`s queue every sticker and
-  chat image (16 MB allowed per session).
-- Done when: fallback POST bodies are read as a stream and stopped at `SEND_BODY_BYTES` (no body read for
-  `open` / `close`); `QUEUE_BYTES` is 2–4 MB and the total per `PollHub` is capped; a session that does not poll within
-  ~10 s of `open` is closed; a second `hello` on a joined connection is refused (or may not change the `cid`).
-- Tests: e2e (chunked oversize POST → 413 and the room still answers; a session that never polls is closed; a second
-  `hello` is refused), `fallback.mjs` and the hotspot harness still pass.
-- Owner's pick: none needed.
-
-
-### 1b. Security: cap queue votes (M1; with 1a)
-- Severity: medium
-- Why: `voters` grows without a cap and without checking the voter is present; with rotated browser ids it can pass
-  the storage value limit and freeze the room's queue.
-- Done when: voters per item are capped (e.g. `MAX_MEMBERS`) and only people in the room count; the second-`hello`
-  fix from the card above is in.
-- Tests: e2e (many votes from one connection with changing ids count once / stay capped).
-- Owner's pick: none needed.
-
-
 ### 2. One rail everywhere: empty room and the film page (0.9.93 "Now" 1, owner's request)
 - Why: owner, 2 Nov 2026: an empty room still shows the old bar under the video (😀 React, Games, Sync, 1×, ⇥, ⛶), and
   the extension's film page shows that bar and a rail at the same time. He wants the same right rail on every page:
@@ -465,6 +442,37 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 1a. Security: the HTTP fallback must not be able to crash a room (H1, M1; Planner: right after card 1)
+- Severity: high
+- Why: one person with the room link can reset the room's Durable Object (everyone drops) with a chunked POST body
+  that is read uncapped, or with fallback sessions that never poll while repeated `hello`s queue every sticker and
+  chat image (16 MB allowed per session).
+- Done when: fallback POST bodies are read as a stream and stopped at `SEND_BODY_BYTES` (no body read for
+  `open` / `close`); `QUEUE_BYTES` is 2–4 MB and the total per `PollHub` is capped; a session that does not poll within
+  ~10 s of `open` is closed; a second `hello` on a joined connection is refused (or may not change the `cid`).
+- Tests: e2e (chunked oversize POST → 413 and the room still answers; a session that never polls is closed; a second
+  `hello` is refused), `fallback.mjs` and the hotspot harness still pass.
+- Owner's pick: none needed.
+- Done: 0.9.93.8 (PR below). `send` bodies are read as a stream and stopped at `SEND_BODY_BYTES` (`readCapped`; other
+  bodies are cancelled unread); a session may queue 11 M characters (one full join into a room with 24 custom emojis +
+  12 chat images is ≈ 10.1 M, so 2–4 MB would have closed real joins) and all sessions of an object 24 M together
+  (`HUB_BYTES`); a session that has not polled 10 s after `open` is closed (sweep every 5 s); a second `hello` on a
+  joined connection gets `bad_message`. Tests: `fallback.mjs` (chunked 2.5 MB body → 413 and the room still answers,
+  a never-polling session closed after 10 s, second hello refused), hotspot harness.
+
+
+### 1b. Security: cap queue votes (M1; with 1a)
+- Severity: medium
+- Why: `voters` grows without a cap and without checking the voter is present; with rotated browser ids it can pass
+  the storage value limit and freeze the room's queue.
+- Done when: voters per item are capped (e.g. `MAX_MEMBERS`) and only people in the room count; the second-`hello`
+  fix from the card above is in.
+- Tests: e2e (many votes from one connection with changing ids count once / stay capped).
+- Owner's pick: none needed.
+- Done: 0.9.93.8 (same PR). Votes keep only people in the room (pruned on every vote) and at most `MAX_MEMBERS` per
+  item. Test: `fallback.mjs` (rotated ids count once, a second person adds one, back to 1 when they leave).
+
 
 ### 1. Fix: the rail never hides in YouTube fullscreen (0.9.93 "Now" 1, owner's bug)
 - Why: owner, 2 Nov 2026 (screenshot, after 0.9.93.5): in fullscreen, with the mouse moved to the middle of the video,

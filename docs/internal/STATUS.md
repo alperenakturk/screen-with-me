@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.7**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.8**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -382,6 +382,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.8 (nothing to see: a server security fix):**
+- [ ] Rooms, chat and votes work as before, also on the phone hotspot. (Fixed: one person with the room link could
+  reset a room for everyone through the backup connection; votes count only people in the room.)
 
 **0.9.93.7 (computer; especially a laptop with a touch screen):**
 - [ ] YouTube in fullscreen: move the mouse to the right edge (the button column comes), press 🎙 or 📷 without being in

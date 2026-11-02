@@ -403,6 +403,13 @@ export class Room extends DurableObject<Env> {
     }
 
     if (message.t === 'hello') {
+      // One hello per connection (security review 2, H1 / M1): a second one could change the browser id at will (every
+      // per-person limit bypassed) and re-sent every custom emoji and chat image (a memory flood over the fallback).
+      // Clients never send it twice; a reconnect is a new connection.
+      if (attachment.name !== null) {
+        this.sendTo(ws, { t: 'error', code: 'bad_message' });
+        return;
+      }
       // Her hello herkese yayın tetikler; art arda hello ile odayı boğmasınlar.
       if (!this.commandLimit.allow(attachment.id)) {
         this.sendTo(ws, { t: 'error', code: 'rate_limited' });
@@ -1650,10 +1657,13 @@ export class Room extends DurableObject<Env> {
    */
   private async vote(key: string, itemId: string, up: boolean): Promise<void> {
     if (!this.room.queue.some((q) => q.id === itemId)) return;
-    const list = new Set(this.voters[itemId] ?? []);
+    // Only people in the room count, at most `MAX_MEMBERS` per item (security review 2, M1: the list used to grow
+    // without a cap until the storage value limit froze the queue).
+    const present = new Set(this.joined().map((a) => keyOf(a)));
+    const list = new Set((this.voters[itemId] ?? []).filter((k) => present.has(k)));
     if (up) list.add(key);
     else list.delete(key);
-    this.voters[itemId] = [...list];
+    this.voters[itemId] = [...list].slice(-MAX_MEMBERS);
     const order = new Map(this.room.queue.map((q, i) => [q.id, i]));
     const queue = this.room.queue
       .map((q) => ({ ...q, votes: this.voters[q.id]?.length ?? 0 }))
