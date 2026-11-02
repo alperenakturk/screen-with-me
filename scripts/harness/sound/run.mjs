@@ -151,7 +151,7 @@ await sleep(300);
 
 // XOX: invite, every piece, win / lose.
 await sounds(ayse);
-await ali.click('#game-btn');
+await ali.click('#dock-game'); // card 2: the rail holds 🎮 on a computer
 await ali.click('.hub-game >> nth=0');
 await until(async () => (await ayse.evaluate(() => window.__sounds.includes('gameInvite'))));
 b = await sounds(ayse);

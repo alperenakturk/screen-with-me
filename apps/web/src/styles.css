@@ -11596,16 +11596,23 @@ html.shorts-view .game-stage .game-place {
    It holds the common buttons (💬 only in fullscreen or with the side panel hidden, 😀, 📌, 🎮, 🎙, 📷, 🖥️ only while
    someone streams, ⋯, ⛶); ⋯ holds speed, sync, next, the side panel and "keep the controls open". Not on the film page
    (8B: today's dock over the film), on phones (own layout) or in the Shorts view (own rail). */
-html:not(.shell, .phone, .shorts-view) .theater.dock-window:not(:fullscreen, .fake-fs) .toolbar {
+html:not(.phone, .shorts-view) .theater.dock-window:not(:fullscreen, .fake-fs) .toolbar {
   display: none;
 }
 
-html:not(.shell, .phone) .theater.dock-mode :is(#dock-speed, #dock-skip, #dock-live[data-idle='true']) {
+/* Card 2: the film page has the same rail as the site (⋯ holds speed, sync, next); the side panel stays (no ⇥ there). */
+html:not(.phone) .theater.dock-mode :is(#dock-speed, #dock-skip, #dock-live[data-idle='true']) {
   display: none;
 }
 
-html.shell .theater :is(#dock-more, #dock-game) {
+html.shell .dock-more-item[data-press='#side-toggle'] {
   display: none;
+}
+
+/* Nothing playing: what needs a video is dimmed (📌, ⛶). */
+.theater.rail-bare .fs-dock .dock-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .room:not(.side-hidden) .theater.dock-window:not(:fullscreen, .fake-fs) #dock-chat {
@@ -11699,25 +11706,28 @@ html.is-touch .desk-only {
   overflow-y: auto;
 }
 
-/* YouTube (4A changed, owner): the rail is a column beside the video, never on it. It comes when the mouse reaches the
+/* The rail is a column beside the video, never on it: YouTube since 4A (owner), every player, the empty room and the
+   film page since card 2 (one rail everywhere). It comes when the mouse reaches the
    video's right edge (the video shrinks to make room) and goes as soon as it leaves (the video grows back), in the
    window and in fullscreen (0.9.93). "Keep the controls open" pins it. Touch screens (tablets) keep it out all the
    time. */
-html:not(.shell, .phone) .theater.yt-rail.dock-mode {
+html:not(.phone) .theater.side-rail.dock-mode {
   --rail-w: 58px;
 }
 
-html:not(.shell, .phone) .theater.yt-rail.dock-mode :is(.player, .fs-catcher) {
+html:not(.phone) .theater.side-rail.dock-mode :is(.player, .fs-catcher, .empty, .overlay) {
   width: auto;
   transition: right 0.22s ease;
 }
 
-html:not(.shell, .phone) .theater.yt-rail.dock-mode:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))) :is(.player, .fs-catcher),
-html.is-touch:not(.shell, .phone, .has-mouse) .theater.yt-rail.dock-mode :is(.player, .fs-catcher) {
+html:not(.phone) .theater.side-rail.dock-mode:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))) :is(.player, .fs-catcher, .empty, .overlay),
+html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode :is(.player, .fs-catcher, .empty, .overlay),
+html.shell .theater.side-rail.dock-mode :is(.player, .empty, .overlay),
+.theater.side-rail.rail-bare.dock-mode :is(.player, .fs-catcher, .empty, .overlay) {
   right: var(--rail-w);
 }
 
-html:not(.shell, .phone) .theater.yt-rail.dock-mode .fs-dock {
+html:not(.phone) .theater.side-rail.dock-mode .fs-dock {
   top: 0;
   right: 0;
   bottom: 0;
@@ -11737,21 +11747,21 @@ html:not(.shell, .phone) .theater.yt-rail.dock-mode .fs-dock {
   transition: opacity 0.22s ease, visibility 0.22s;
 }
 
-html:not(.shell, .phone) .theater.yt-rail.dock-mode.dock-idle:not(:has(.fs-dock:hover, .dock-pop:not([hidden]))) .fs-dock {
+html:not(.phone) .theater.side-rail.dock-mode.dock-idle:not(:has(.fs-dock:hover, .dock-pop:not([hidden]))) .fs-dock {
   opacity: 0;
   visibility: hidden;
 }
 
-html.is-touch:not(.shell, .phone, .has-mouse) .theater.yt-rail.dock-mode .fs-dock {
+html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode .fs-dock {
   opacity: 1;
   visibility: visible;
 }
 
-html:not(.shell, .phone) .theater.yt-rail.dock-mode .dock-group {
+html:not(.phone) .theater.side-rail.dock-mode .dock-group {
   gap: 4px;
 }
 
-html:not(.shell, .phone) .theater.yt-rail.dock-mode .dock-group + .dock-group {
+html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   padding-top: 6px;
 }
 

@@ -23,23 +23,6 @@ Card format:
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
-### 2. One rail everywhere: empty room and the film page (0.9.93 "Now" 1, owner's request)
-- Why: owner, 2 Nov 2026: an empty room still shows the old bar under the video (😀 React, Games, Sync, 1×, ⇥, ⛶), and
-  the extension's film page shows that bar and a rail at the same time. He wants the same right rail on every page:
-  empty room, YouTube, video files, the film page; no bar under the video anywhere on a computer.
-- Done when: on a computer the toolbar under the video is gone in every state (empty room, YouTube, file, test, film
-  page in the shell); everything it held is in the rail or its ⋯ (Games, Pin, Sync, speed, Next, side panel / cinema
-  mode, fullscreen); the empty room's rail shows only what makes sense with no video (😀, 🎮, 🎙 / 📷, ⋯, ⛶ dimmed);
-  the rail's look follows Research's verdict "Rail look on YouTube": allowed → the film page's translucent rail over
-  the video's edge everywhere; not allowed → everywhere (film page too) a rail that opens and closes, placed by the
-  video's size, never covering the video; phones unchanged; `store/src/room.html` copy updated.
-- Tests: `yt-room`, `embed/run.mjs` (film page: no toolbar, rail islands), `phone/run.cjs` still pass; new checks for
-  the empty room; owner's hand test on the site and the film page.
-- Owner's pick: done (one rail everywhere). Research verdict (2 Nov 2026, `research/youtube-overlay-rail.md`): an
-  overlay on the YouTube player is **not allowed** (Required Minimum Functionality "Overlays and frames"), so the owner's
-  rule applies: everywhere, the film page too, the rail opens and closes beside the video, placed by the video's size,
-  never covering it. Extra test: `embed/run.mjs` checks the rail's box never intersects the film video's box.
-
 ### 2a. Nothing of ours over the YouTube player by itself (owner picked D, 2 Nov 2026; with card 2)
 - Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
   video in the room view, the "3-2-1" countdown and notes over the video, and the dock / toasts / cameras over a YouTube
@@ -442,6 +425,34 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 2. One rail everywhere: empty room and the film page (0.9.93 "Now" 1, owner's request)
+- Why: owner, 2 Nov 2026: an empty room still shows the old bar under the video (😀 React, Games, Sync, 1×, ⇥, ⛶), and
+  the extension's film page shows that bar and a rail at the same time. He wants the same right rail on every page:
+  empty room, YouTube, video files, the film page; no bar under the video anywhere on a computer.
+- Done when: on a computer the toolbar under the video is gone in every state (empty room, YouTube, file, test, film
+  page in the shell); everything it held is in the rail or its ⋯ (Games, Pin, Sync, speed, Next, side panel / cinema
+  mode, fullscreen); the empty room's rail shows only what makes sense with no video (😀, 🎮, 🎙 / 📷, ⋯, ⛶ dimmed);
+  the rail's look follows Research's verdict "Rail look on YouTube": allowed → the film page's translucent rail over
+  the video's edge everywhere; not allowed → everywhere (film page too) a rail that opens and closes, placed by the
+  video's size, never covering the video; phones unchanged; `store/src/room.html` copy updated.
+- Tests: `yt-room`, `embed/run.mjs` (film page: no toolbar, rail islands), `phone/run.cjs` still pass; new checks for
+  the empty room; owner's hand test on the site and the film page.
+- Owner's pick: done (one rail everywhere). Research verdict (2 Nov 2026, `research/youtube-overlay-rail.md`): an
+  overlay on the YouTube player is **not allowed** (Required Minimum Functionality "Overlays and frames"), so the owner's
+  rule applies: everywhere, the film page too, the rail opens and closes beside the video, placed by the video's size,
+  never covering it. Extra test: `embed/run.mjs` checks the rail's box never intersects the film video's box.
+- Done: 0.9.93.9 (PR below). The rail (`fs-dock`) is now on every computer page: `renderDock` also docks with no player
+  (`rail-bare`: the empty room or a film card on the site, always out, 📌 / ⛶ dimmed) and marks every docked theater
+  `side-rail`, so the YouTube column rules apply to all players (the video / empty card / overlays end at the rail,
+  never under it). The toolbar under the video is hidden on the film page too; there the rail is a column that stays
+  out (`railFixed`: the film is fitted once, left of it, instead of on every edge visit), ⋯ is back (speed, sync, next;
+  not the side-panel item) and 🎮 is on it; the hole and its islands are the `#player` box left of the rail. Video files
+  and the sync test follow YouTube: the rail comes at the right edge and the video makes room. Tests: new
+  `scripts/harness/one-rail/run.cjs` (13 checks: empty room, file, fullscreen, sync test), `embed/run.mjs` (no toolbar,
+  rail beside the film's video box in the room view and fullscreen, stays out while the film plays), `phone/run.cjs`,
+  `yt-room`, `sound`. `store/src/room.html` shows the rail.
+
 
 ### 1a. Security: the HTTP fallback must not be able to crash a room (H1, M1; Planner: right after card 1)
 - Severity: high

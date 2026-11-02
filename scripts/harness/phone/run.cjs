@@ -458,7 +458,10 @@ const sheetName = (page) => page.evaluate(() => {
     await page.click('#dock-exit');
     await page.waitForTimeout(600);
     const fs = await page.evaluate(() => document.fullscreenElement?.id ?? null);
+    // Card 2: a video file's rail is a column beside the video too; it comes when the mouse reaches the right edge.
     await page.mouse.move(640, 400);
+    await page.mouse.move(1270, 400, { steps: 4 });
+    await page.waitForTimeout(400);
     await page.click('#dock-mic');
     await page.waitForTimeout(600);
     const seen = await page.evaluate(() => {

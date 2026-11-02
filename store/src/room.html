@@ -143,23 +143,19 @@
               <button class="btn primary">Add to queue</button>
               <button class="btn">Play now</button>
             </form>
-            <div class="theater">
+            <div class="theater dock-mode dock-window side-rail">
               <div class="now-playing">
                 <div class="now-text"><span class="muted small">Now playing</span><span class="now-title">Sunset Hills · Part 3</span></div>
                 <button type="button" class="btn small-btn">Next ⏭</button>
               </div>
-              <div class="player-wrap${view === 'external' ? '' : ' filming'}">${playerInner}</div>
-              ${pins}
-              <div class="toolbar">
-                <div class="reaction-bar tray-bar"><div class="react-tray-wrap"><button type="button" class="btn react-open"><span>😀</span><span class="tool-label">React</span><span class="react-caret">▴</span></button></div><div class="react-recent">${REACTIONS.slice(0, 3).map((e) => `<button type="button" class="reaction-btn">${e}</button>`).join('')}</div></div>
-                <div class="toolbar-right">
-                  <button type="button" class="tool-btn labeled"><span>🎮</span><span class="tool-label">Games</span></button>
-                  <button type="button" class="tool-btn labeled"><span>📌</span><span class="tool-label">Pin</span></button>
-                  <button type="button" class="tool-btn labeled"><span>🔄</span><span class="tool-label">Sync</span></button>
-                  <button type="button" class="tool-btn labeled speed-btn"><span>⏩</span><span class="speed-label">${rate}×</span></button>
-                  <button type="button" class="icon-btn tool-btn">⛶</button>
+              <div class="player-wrap${view === 'external' ? '' : ' filming'}">${playerInner}
+                <div class="fs-dock" role="toolbar" aria-orientation="vertical">
+                  <div class="dock-group"><button type="button" class="dock-btn">😀</button><button type="button" class="dock-btn">📌</button><button type="button" class="dock-btn">🎮</button></div>
+                  <div class="dock-group"><button type="button" class="dock-btn">🎙</button><button type="button" class="dock-btn">📷</button></div>
+                  <div class="dock-group"><button type="button" class="dock-btn dock-more">⋯</button><button type="button" class="dock-btn">⛶</button></div>
                 </div>
               </div>
+              ${pins}
             </div>
           </div>
           <aside class="side">
