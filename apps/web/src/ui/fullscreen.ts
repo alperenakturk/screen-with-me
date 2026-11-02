@@ -72,6 +72,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   const dockVolRange = q<HTMLInputElement>('#dock-vol-range');
   const dockSkip = q<HTMLButtonElement>('#dock-skip');
   const dockExit = q<HTMLButtonElement>('#dock-exit');
+  // A phone turned sideways opens our own fullscreen (no tap, so no browser fullscreen): the browser's address bar
+  // stays. This button makes it the real one (0.9.92.6, owner: "a proper fullscreen, no bar on top").
+  const dockFull = q<HTMLButtonElement>('#dock-full');
   const dockChatForm = q<HTMLFormElement>('#dock-chat-form');
   const dockChatInput = q<HTMLInputElement>('#dock-chat-input');
   dockChatInput.maxLength = QUICK_CHAT_MAX;
@@ -86,6 +89,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   setIcon(q('#dock-pin'), 'pin');
   setIcon(dockSkip, 'skip');
   setIcon(dockExit, 'fs-exit');
+  setIcon(dockFull, 'fs-enter');
 
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   let progressTimer: ReturnType<typeof setInterval> | null = null;
@@ -125,6 +129,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     dockVol.hidden = !own || !hasVolume(getPlayer());
     theater.classList.toggle('dock-window', docked && !isActive());
     setIcon(dockExit, isActive() ? 'fs-exit' : 'fs-enter');
+    dockFull.hidden = !(fake && !shell && isTouch() && canElementFullscreen());
     dockLabels();
     if (!docked) openPop(null);
   }
@@ -156,6 +161,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     label(dockPlay, t('dock.play'));
     label(dockVol, t('dock.volume'));
     label(dockExit, t(isActive() ? 'dock.exit' : 'dock.enter'));
+    label(dockFull, t('dock.realFull'));
   };
   dockLabels();
   addEventListener('langchange', dockLabels);
@@ -175,6 +181,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   dockVolRange.addEventListener('change', saveVolume);
   new MutationObserver(() => renderDock()).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   dockExit.addEventListener('click', () => toggle());
+  dockFull.addEventListener('click', () => upgrade());
   dockChatForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const text = cleanChatText(dockChatInput.value.slice(0, QUICK_CHAT_MAX));
@@ -314,6 +321,16 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   function enter(): void {
     if (shell) return setFake(true, true);
     if (!canElementFullscreen()) return setFake(true, false);
+    theater.requestFullscreen().then(
+      () => turnSideways(true),
+      () => setFake(true, false),
+    );
+  }
+  /** Our own fullscreen → the browser's (a tap is needed for that): no address bar, and a landscape video turns. */
+  function upgrade(): void {
+    if (!fake || shell || !canElementFullscreen()) return;
+    byTurning = false;
+    setFake(false, false);
     theater.requestFullscreen().then(
       () => turnSideways(true),
       () => setFake(true, false),

@@ -301,27 +301,40 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     video.classList.toggle('mine', id === deps.myId());
     return video;
   }
+  // A simple row of cameras under the faces strip (owner, 0.9.92.6: one picture per person, the face stays a face;
+  // no free camera windows on a phone). A tap opens that person's sheet with the camera big.
+  const camRow = el('div', { class: 'ph-cams', hidden: '' });
+  $('.together-strip')?.after(camRow);
   function placeCams(): void {
     const on = html.classList.contains('ph-room');
     for (const [id, video] of videos) {
       if (!cams.has(id) || !on) {
-        video.remove();
+        video.closest('.ph-cam')?.remove();
         if (!cams.has(id)) {
           video.srcObject = null;
           videos.delete(id);
         }
       }
     }
+    camRow.hidden = !on || cams.size === 0;
     if (!on) return;
     for (const [id, stream] of cams) {
-      const face = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`);
-      if (!face) continue;
       const video = camVideo(id, stream);
-      if (video.parentElement !== face) {
-        face.append(video);
-        void video.play().catch(() => {});
+      let tile = video.closest<HTMLElement>('.ph-cam');
+      if (!tile) {
+        tile = el('button', { type: 'button', class: 'ph-cam' }, video, el('span', { class: 'ph-cam-name' }));
+        tile.addEventListener('click', () => {
+          const person = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`)?.closest<HTMLElement>('.together-person');
+          lastFace = id;
+          person?.click();
+        });
       }
-      face.classList.add('has-cam');
+      if (tile.parentElement !== camRow) camRow.append(tile);
+      const person = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`)?.closest<HTMLElement>('.together-person');
+      const name = id === deps.myId() ? t('voice.me') : (person?.title.split(' · ')[0] ?? '');
+      tile.querySelector('.ph-cam-name')!.textContent = name;
+      tile.setAttribute('aria-label', name);
+      if (video.paused) void video.play().catch(() => {});
     }
   }
   const people = $('#voice-people');
@@ -394,7 +407,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   function openShortsChat(): void {
     const panel = $('[data-panel="chat"]');
     if (!panel) return;
-    openSheet({ name: 'shorts-chat', title: t('chat'), nodes: [panel], borrow: [panel], tall: true });
+    openSheet({ name: 'shorts-chat', title: t('chat'), nodes: [panel], borrow: [panel] });
     requestAnimationFrame(() => {
       const list = $('#chat-list');
       if (list) list.scrollTop = list.scrollHeight;
@@ -485,6 +498,55 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     new MutationObserver(sync).observe(gameButton, { attributes: true, attributeFilter: ['class'] });
     sync();
   }
+
+  // ---- Fullscreen on a phone (0.9.92.6, owner) ----
+  // ⛶ in the faces strip while something plays (fullscreen was hidden in ＋): the browser's own fullscreen, a landscape
+  // video turns the phone sideways by itself.
+  const stripFs = el('button', { type: 'button', id: 'strip-fs', class: 'cam-ctl phone-only', title: t('phone.plus.fullscreen'), 'aria-label': t('phone.plus.fullscreen') }, '⛶');
+  stripFs.addEventListener('click', () => $<HTMLButtonElement>('#fullscreen')?.click());
+  $('#strip-more')?.before(stripFs);
+  // Sideways in fullscreen, 💬 opens and closes a side panel (the faces, cameras, chat and the message box): open, the
+  // video and the panel share the screen; closed, the video fills it. Its nodes are the room's own, borrowed and put
+  // back (the browser's fullscreen only shows the theater, so they move into it).
+  const theaterEl = $('#theater');
+  const side = el('aside', { class: 'ph-fs-side', hidden: '' });
+  theaterEl?.append(side);
+  let sideBorrowed: Borrowed[] = [];
+  const inFs = () => !!theaterEl && (document.fullscreenElement === theaterEl || theaterEl.classList.contains('fake-fs'));
+  const sideOpen = () => !side.hidden;
+  function setSide(open: boolean): void {
+    if (!theaterEl || open === sideOpen()) return;
+    if (open) {
+      const nodes = ['.together-strip', '.ph-cams', '[data-panel="chat"]', '#chat-form'].map((sel) => $(sel)).filter((n): n is HTMLElement => !!n);
+      sideBorrowed = nodes.map((node) => ({ node, parent: node.parentNode!, next: node.nextSibling }));
+      side.append(...nodes);
+    } else {
+      for (const { node, parent, next } of sideBorrowed.reverse()) parent.insertBefore(node, next && next.parentNode === parent ? next : null);
+      sideBorrowed = [];
+    }
+    side.hidden = !open;
+    theaterEl.classList.toggle('ph-side-open', open);
+    $('#dock-chat')?.classList.toggle('on', open);
+    if (open) {
+      const list = $('#chat-list');
+      if (list) list.scrollTop = list.scrollHeight;
+    }
+  }
+  $('#dock-chat')?.addEventListener(
+    'click',
+    (event) => {
+      if (!html.classList.contains('phone') || !html.classList.contains('sideways') || !inFs()) return;
+      event.stopImmediatePropagation();
+      setSide(!sideOpen());
+    },
+    true,
+  );
+  const closeSideOutsideFs = () => {
+    if (sideOpen() && (!inFs() || !html.classList.contains('sideways'))) setSide(false);
+  };
+  if (theaterEl) new MutationObserver(closeSideOutsideFs).observe(theaterEl, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('fullscreenchange', closeSideOutsideFs);
+  new MutationObserver(closeSideOutsideFs).observe(html, { attributes: true, attributeFilter: ['class'] });
 
   decide();
 

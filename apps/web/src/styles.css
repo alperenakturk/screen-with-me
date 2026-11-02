@@ -4103,6 +4103,8 @@ html:not(.shell) .shell-only {
   inset: 0;
   z-index: 1000;
   display: grid;
+  /* One column no wider than the screen: a wide row of buttons used to stretch the card past a phone's edge. */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   padding: 16px;
   background: rgb(0 0 0 / 0.7);
@@ -4242,6 +4244,8 @@ html:not(.shell) .shell-only {
 
 .recap-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -9711,6 +9715,41 @@ html.shorts-view .voice-cams {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* 0.9.92.6: the running feed on top of its window, with a stop button; the topic box and its button side by side. */
+.feed-now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.feed-now[hidden] {
+  display: none;
+}
+
+.feed-now span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-topic-row {
+  display: flex;
+  gap: 6px;
+}
+
+.feed-topic-row input {
+  flex: 1;
+  min-width: 0;
 }
 
 .feed-pool {

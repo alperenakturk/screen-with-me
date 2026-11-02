@@ -141,12 +141,17 @@ const sheetName = (page) => page.evaluate(() => {
       const button = await page.$('.dialog-backdrop:not([hidden]) button.primary');
       if (button) await button.click().catch(() => {});
     }
-    await page.waitForFunction(() => document.querySelector('#voice-people .face-cam')?.readyState >= 2, null, { timeout: 15000 }).catch(() => {});
-    const faceCam = await page.evaluate(() => ({ cam: document.querySelector('#voice-people .face-cam')?.readyState ?? -1, playing: !document.querySelector('#voice-people .face-cam')?.paused }));
-    check(faceCam.cam >= 2 && faceCam.playing, 'phone: camera on → my face in the strip shows the live picture', JSON.stringify(faceCam));
-    await page.click('#voice-people .together-person');
+    // 0.9.92.6 (owner): one picture per person: a camera row under the faces, the face stays a face, no free windows.
+    await page.waitForFunction(() => document.querySelector('.ph-cams .ph-cam video')?.readyState >= 2, null, { timeout: 15000 }).catch(() => {});
+    const camRow = await page.evaluate(() => ({
+      cam: document.querySelector('.ph-cams .ph-cam video')?.readyState ?? -1,
+      inFace: !!document.querySelector('#voice-people video'),
+      windows: [...document.querySelectorAll('#voice-cams, .voice-cams, .cam-pill')].some((e) => e.getBoundingClientRect().width > 0),
+    }));
+    check(camRow.cam >= 2 && !camRow.inFace && !camRow.windows, 'phone: camera on → one tile in the camera row, the face stays a face, no camera windows', JSON.stringify(camRow));
+    await page.click('.ph-cams .ph-cam');
     await page.waitForTimeout(500);
-    check(await page.evaluate(() => !!document.querySelector('.person-pop .person-cam')), 'phone: tapping a face opens their sheet with the camera big');
+    check(await page.evaluate(() => !!document.querySelector('.person-pop .person-cam')), 'phone: tapping a camera opens their sheet with the camera big');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
     // Fullscreen without the browser's: the theater covers the window, the dock is there, its exit works.
@@ -170,20 +175,32 @@ const sheetName = (page) => page.evaluate(() => {
     const shown = await page.evaluate(() => [...document.querySelectorAll('#fs-dock .dock-btn')].filter((b) => b.offsetParent).map((b) => b.id).join(','));
     check(!!dock && !!player && dock.x >= player.r - 1 && dock.r >= 843 && dock.w <= 70 && dock.h >= 380, 'sideways: the dock is a column beside the video', JSON.stringify({ dock, player }));
     check(shown === 'dock-chat,dock-react,dock-mic,dock-cam,dock-exit', 'sideways: the dock holds 💬 😀 🎙 📷 and exit', shown);
+    // 💬 opens the side panel (faces, chat, message box) right of the dock; closed again, the video fills the screen.
     await page.click('#dock-chat');
     await page.waitForTimeout(300);
-    const pop = await rect(page, '#dock-chat-form');
-    const popVisible = await page.evaluate(() => {
-      const f = document.getElementById('dock-chat-form');
-      const r = f.getBoundingClientRect();
-      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('#dock-chat-form') === f;
-    });
-    check(!!pop && popVisible && pop.r <= dock.x + 1, 'sideways: 💬 opens the message box left of the dock', JSON.stringify(pop));
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
+    const sidePanel = await rect(page, '.ph-fs-side');
+    const sidePlayer = await rect(page, '#player');
+    const sideDock = await rect(page, '#fs-dock');
+    const inSide = await page.evaluate(() => !!document.querySelector('.ph-fs-side [data-panel="chat"]') && !!document.querySelector('.ph-fs-side #chat-form'));
+    check(!!sidePanel && sidePanel.w > 200 && sidePanel.r >= 843 && inSide && sidePlayer.r <= sideDock.x + 1 && sideDock.r <= sidePanel.x + 1, 'sideways: 💬 opens the side panel with the chat, video and dock beside it', JSON.stringify({ sidePanel, sidePlayer, sideDock }));
+    await page.click('#dock-chat');
+    await page.waitForTimeout(300);
+    const closed = await page.evaluate(() => document.querySelector('.ph-fs-side')?.hidden === true && !!document.querySelector('.room [data-panel="chat"]') && !document.querySelector('#theater [data-panel="chat"]'));
+    check(closed, 'sideways: 💬 again closes it, the chat goes back to the room');
     await page.setViewportSize({ width: 390, height: 664 });
     await page.waitForTimeout(600);
     check(!(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs'))), 'phone upright again: the room comes back');
+    // ⛶ in the faces strip while something plays.
+    check(await page.isVisible('#strip-fs'), 'phone: ⛶ in the faces strip while a video plays');
+    // The keyboard makes the page short and wide-ish: that is not "turned sideways" (0.9.92.6, owner's screenshots).
+    await page.focus('#chat-input');
+    await page.setViewportSize({ width: 390, height: 330 });
+    await page.waitForTimeout(600);
+    const typing = await page.evaluate(() => ({ sideways: document.documentElement.classList.contains('sideways'), fs: document.getElementById('theater').classList.contains('pseudo-fs') }));
+    await page.setViewportSize({ width: 390, height: 664 });
+    await page.waitForTimeout(400);
+    check(!typing.sideways && !typing.fs, 'phone: the keyboard opening does not count as turning sideways (no fullscreen, no layout jump)', JSON.stringify(typing));
+    await page.evaluate(() => document.activeElement?.blur());
     // 10A: a game takes the whole screen; the video keeps playing as a small preview in its head.
     await page.click('#chat-plus');
     await page.click('.ph-sheet .ph-tile >> nth=1');
@@ -371,9 +388,9 @@ const sheetName = (page) => page.evaluate(() => {
     // A new Shorts feed takes the old feed's Shorts out of the queue (0.9.91.13).
     const queueIds = () => page.evaluate(() => [...document.querySelectorAll('#queue li')].map((li) => li.textContent).join('|'));
     const startFeed = async (topic) => {
-      // A running feed stops with the first press; the next one opens the topic box.
-      if ((await page.getAttribute('#shorts-feed', 'aria-pressed')) === 'true') await page.click('#shorts-feed');
+      // ♾ always opens the window (0.9.92.6); a running feed shows on top of it with a stop button.
       await page.click('#shorts-feed');
+      await page.waitForTimeout(200);
       await page.fill('#shorts-feed-topic', topic);
       await page.press('#shorts-feed-topic', 'Enter');
       await page.waitForTimeout(4500);
@@ -383,6 +400,13 @@ const sheetName = (page) => page.evaluate(() => {
     await startFeed('kopekler');
     const second = await queueIds();
     check(first.includes('kedi') && second.includes('kopek') && !second.includes('kedi'), 'Shorts akışı: yeni akış başlayınca eski akışın videoları sıradan çıkıyor', JSON.stringify({ first: first.slice(0, 120), second: second.slice(0, 120) }));
+    await page.click('#shorts-feed');
+    await page.waitForTimeout(300);
+    const now = await page.evaluate(() => ({ open: !document.getElementById('shorts-feed-form').hidden, now: document.getElementById('shorts-feed-now').hidden ? '' : document.getElementById('shorts-feed-now-text').textContent }));
+    await page.click('#shorts-feed-stop');
+    await page.waitForTimeout(300);
+    const stopped = (await page.getAttribute('#shorts-feed', 'aria-pressed')) === 'false';
+    check(now.open && now.now.includes('kopek') && stopped, 'Shorts akışı: açıkken ♾ akış penceresini açıyor (üstte açık akış), Durdur durduruyor', JSON.stringify({ now, stopped }));
     await ctx.close();
   }
 

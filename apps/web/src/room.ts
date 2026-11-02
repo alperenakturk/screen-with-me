@@ -346,6 +346,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="dock-vol" type="button" class="dock-btn" aria-expanded="false" hidden></button>
                 <button id="dock-speed" type="button" class="dock-btn dock-text" aria-expanded="false">1×</button>
                 <button id="dock-skip" type="button" class="dock-btn"></button>
+                <button id="dock-full" type="button" class="dock-btn" hidden></button>
                 <button id="dock-exit" type="button" class="dock-btn"></button>
               </div>
               <form id="dock-chat-form" class="dock-pop dock-chat" hidden><input id="dock-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" /></form>
@@ -454,12 +455,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="shorts-feed-wrap">
             <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false" data-i18n-title="feed.short">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
             <form id="shorts-feed-form" class="shorts-feed-pop card" hidden>
+              <div class="feed-head phone-only"><b data-i18n="feed.short"></b><button id="shorts-feed-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
+              <div id="shorts-feed-now" class="feed-now" hidden><span id="shorts-feed-now-text"></span><button id="shorts-feed-stop" type="button" class="btn small-btn" data-i18n="feed.stop"></button></div>
               <button id="shorts-like" type="button" class="feed-like" data-i18n-title="feed.likeHint"><b data-i18n="feed.like"></b><span class="muted small" data-i18n="feed.likeText"></span></button>
               <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span></p>
               <div id="shorts-pools" class="feed-pools" role="group"></div>
               <label class="small" for="shorts-feed-topic" data-i18n="feed.topicLabel"></label>
-              <input id="shorts-feed-topic" autocomplete="off" maxlength="80" data-i18n-placeholder="feed.topic" />
-              <button class="btn primary small-btn" data-i18n="feed.start"></button>
+              <div class="feed-topic-row">
+                <input id="shorts-feed-topic" autocomplete="off" maxlength="80" data-i18n-placeholder="feed.topic" />
+                <button class="btn primary small-btn" data-i18n="feed.start"></button>
+              </div>
               <p class="muted small" data-i18n="feed.hint"></p>
             </form>
           </div>
@@ -1944,15 +1949,22 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     feedButton.setAttribute('aria-pressed', String(topic !== null));
     $('#shorts-feed-label').textContent = topic ?? t('feed.short');
     feedButton.title = topic ? t('feed.stopHint', { topic }) : t('feed.hint');
+    // A running feed is shown at the top of its window with a stop button (0.9.92.6, owner: pressing ♾ used to stop
+    // it without a word; now it always opens the window, the feed stops only from there).
+    $('#shorts-feed-now').hidden = topic === null;
+    $('#shorts-feed-now-text').textContent = topic ? t('feed.now', { topic }) : '';
   }
   feedButton.addEventListener('click', () => {
-    if (feed.topic) {
-      feed.stop();
-      return;
-    }
     feedForm.hidden = !feedForm.hidden;
-    if (!feedForm.hidden) feedTopic.focus();
+    renderFeed();
+    // Not on a phone: the keyboard would cover the window before the person chose anything.
+    if (!feedForm.hidden && !isPhoneLayout()) feedTopic.focus();
   });
+  $('#shorts-feed-stop').addEventListener('click', () => {
+    feed.stop();
+    feedForm.hidden = true;
+  });
+  $('#shorts-feed-close').addEventListener('click', () => (feedForm.hidden = true));
   // "🎲 Keşfet" (0.9.91.18): one tap starts an endless feed from today's shared pool of a category.
   const pools = $('#shorts-pools');
   const renderPools = () =>
@@ -2595,15 +2607,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       try {
         await navigator.share({ title: 'ScreenWithMe', text: t('inviteShareText'), url: inviteUrl });
         return;
-      } catch {
-        // Vazgeçildi ya da desteklenmiyor: kopyalamaya düş.
+      } catch (error) {
+        // Closed, or shared and then the phone came back here (Android reports that as an abort too): nothing else
+        // should pop up (0.9.92.6: the grey "Davet linki" box used to follow the share sheet).
+        if ((error as DOMException)?.name === 'AbortError') return;
       }
     }
     try {
       await navigator.clipboard.writeText(inviteUrl);
     } catch {
-      // Pano kapalı (izin yok): link elle kopyalansın.
-      window.prompt(t('invite'), inviteUrl);
+      // No clipboard: on a computer the link is shown to copy by hand; a phone already had its share sheet.
+      if (!canShare) window.prompt(t('invite'), inviteUrl);
       return;
     }
     text.textContent = t('copied');

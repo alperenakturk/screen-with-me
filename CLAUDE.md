@@ -78,7 +78,7 @@ We are building a **global product**, so everything is professional, formal and 
   testing; use legal demos of the same player stacks (JW Player, Plyr, Video.js, hls.js).
 
 ## Next up (saved 29 Oct 2026, after 0.9.91 — continue in this order)
-Live: 0.9.92.5 (phone step 3: games full screen with the video as a small preview, the home page as an app start screen, lighter phones; 0.9.92.4 phone step 2: Shorts take the phone's screen with one slim bar, sideways fullscreen gets a slim dock beside the video; 0.9.92.3 phone room rebuilt as an app screen, owner's picks; 0.9.92.2 Shorts rail: on wide screens the Shorts bar is a column right of the video and the top bar folds on short
+Live: 0.9.92.6 (phone fixes from the owner's phone: camera row instead of cameras in faces, real fullscreen + side panel, the keyboard no longer counts as turning the phone, Shorts feed window, recap fits, one share sheet; 0.9.92.5 phone step 3: games full screen with the video as a small preview, the home page as an app start screen, lighter phones; 0.9.92.4 phone step 2: Shorts take the phone's screen with one slim bar, sideways fullscreen gets a slim dock beside the video; 0.9.92.3 phone room rebuilt as an app screen, owner's picks; 0.9.92.2 Shorts rail: on wide screens the Shorts bar is a column right of the video and the top bar folds on short
 screens, so the video is ~30 % taller on a laptop; 0.9.92.1 CLAUDE.md rule: everything technical in English; 0.9.92 rooms work on networks where WebSockets never open, e.g. the owner's phone hotspot: automatic HTTP
 fallback, `/baglanti` tells the causes apart; 0.9.91.20 first-time path: one join screen with who is waiting, 3 first tips, the install card notices a new
 extension; 0.9.91.19 TikTok links play in the Shorts view with TikTok's official player; 0.9.91.18 Shorts: YouTube's own bar and nothing of ours over the player, 🎲 Keşfet pools, ✨ Bunun gibi, `?olcum=1` switch measurement; 0.9.91.17 "your browser blocks direct connections" hint for voice / cameras / streams, Edge Add-ons prep, browser notes on the extension page; 0.9.91.16 voice and cameras survive a dropped room connection or a deploy: the server keeps the member id; a Short opened during fullscreen leaves fullscreen for the Shorts view; pinned camera = spotlight in the one-window layout; share menu over the cameras; 0.9.91.15 film page uses my chosen mic / camera / speaker + 🎛 there, one permission prompt; the stream window is free: drag, resize, pop out, hide my own; 0.9.91.14 TV version calmed and hidden behind `?tvlab=1`, Google Cast version after 1.0; 0.9.91.13 games in the Shorts view are free windows + 🎮 in the Shorts bar, dock for Shorts in the room view, a new feed clears the old one, extension update notice; 0.9.91.12 Shorts from search open as Shorts, Shorts search in the Shorts bar, mic looks off before voice, wide permission window; 0.9.91.8–0.9.91.11 games and TV rounds; 0.9.91.7 dock in the window too, hiding with the player's bar; camera pill only for cameras; Shorts bar tray + add box; plain themes on phones; windows in front of the film; 0.9.91.6 games; 0.9.91.5 TV version; 0.9.91.3 no scrollbar on the film in the room view / fullscreen; 0.9.91.2 phones: app-like room, bottom-sheet menus, iPhone fullscreen, sideways = fullscreen; 0.9.91.1 player controls option A: their own bar + our dock on the right in fullscreen; 0.9.91 endless Shorts feed, line icons, right rail ends with the video card; 0.9.90.9 Shorts: cameras in the seats; 0.9.90.8 camera pill stays in voice + stream button, screen share with camera; 0.9.90.7 paste many links; 0.9.90.6 pre-join voice check; 0.9.90.5 camera free tiles; 0.9.90.4 YouTube search in the link box; sound effects 0.9.90.2; one remote: on the
@@ -239,7 +239,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   passed on as `next`, only ≤ 180 s non-live results; cached per words + page) and adds up to 8 unseen ones (rest kept
   as `pending`), 300 ms apart, then pauses until they are in the queue. Runs in the tab that started it
   (`sessionStorage` `feed:<room>`); stops on quota / off, when the topic runs dry or after 3 empty pages, and when only
-  the host may change the queue. Each page ≈ 1 % of the day's quota.
+  the host may change the queue. Each page ≈ 1 % of the day's quota. Since 0.9.92.6 ♾ always opens its window; a running
+  feed shows on top (`#shorts-feed-now`, "On now: …" + Stop) and stops only from there (it used to stop on the press).
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `GET /api/youtube/search?q&hl` (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with
@@ -511,7 +512,16 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   People (borrows the people panel). Borrowed nodes go back on close. Cameras: `setCams` (room's `onCams`) puts a
   `<video class="face-cam">` into the face (`.voice-face.has-cam`, re-placed after each redraw); the person menu gets
   a big `.person-cam`. Settings is a full page on a phone. Sideways out of fullscreen: video left, strip + chat right.
-  `first-tips` anchors fall back to ⋯ / ＋ / strip 🎙. **Step 2 (0.9.92.4):** Shorts on a phone = `ph-shorts` (phone +
+  `first-tips` anchors fall back to ⋯ / ＋ / strip 🎙. **0.9.92.6 (owner's phone feedback):** cameras are a row
+  `.ph-cams` under the strip (tile = video + name, tap = that person's sheet with `.person-cam`); faces never show a
+  camera (the Shorts seats still do) and the computer's camera windows / pill are hidden on phones. "Sideways" is
+  `device.ts` `isSideways` / `onTurn` / `<html class="sideways">`, worked out only when the page's width changes (the
+  keyboard only changes the height and used to open fullscreen); phone.css uses `html.sideways`, never
+  `(orientation: landscape)`. `#strip-fs` ⛶ (while something plays) presses `#fullscreen`: the browser's fullscreen +
+  landscape lock; `#dock-full` upgrades the turned-sideways pseudo fullscreen to the real one (Android, a tap is
+  needed). Sideways in fullscreen `#dock-chat` toggles `.ph-fs-side` (borrows the strip, `.ph-cams`, the chat panel and
+  `#chat-form` into the theater; `.ph-side-open` moves the player and the dock left). The Shorts chat sheet is 56dvh.
+  **Step 2 (0.9.92.4):** Shorts on a phone = `ph-shorts` (phone +
   Shorts view): no top bar, the video takes the screen (`width: min(100%, (100dvh − 60px − safe areas) × 9/16)`), one
   slim `.ph-shorts-bar` under it: `.ph-faces` (the `#seats-l` / `#seats-r` nodes moved in, put back when it ends),
   `.ph-toast` (someone else's newest chat line for 4 s, tap = chat), 💬 `#ph-shorts-chat` (chat sheet borrowing the chat
@@ -534,7 +544,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   footer); the link box is hidden (videos are added in the room). Speed: no `backdrop-filter` and no drifting
   `body::before` on `html.phone`; the YouTube API is not preloaded on a phone (loads with the first video);
   `ui/recap.ts` is a lazy chunk. Next speed steps: lazy voice / live / TV code, a phone-only stylesheet, an automatic
-  phone speed test (4× CPU) against the built site. Test: `scripts/harness/phone/run.cjs` (61 checks).
+  phone speed test (4× CPU) against the built site. Test: `scripts/harness/phone/run.cjs` (65 checks).
 - **TV version (owner chose A + C, 30 Oct 2026; 0.9.91.4, 0.9.91.5, 0.9.91.14, `docs/internal/tv-design.md`):** the TV
   shows the room, the paired phone is its remote. **Hidden since 0.9.91.14** (owner: slow on his TV's browser; the
   real version comes after 1.0 with Google Cast, ROADMAP Phase 2): the TV button and `/tv`, `/tv/<code>`, `/tv-test`

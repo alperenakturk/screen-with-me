@@ -72,10 +72,35 @@ export function unlockOrientation(): void {
   screen.orientation?.unlock?.();
 }
 
+/**
+ * Sideways or upright (0.9.92.6). Not `(orientation: landscape)`: a phone's keyboard makes the page short and wide, and
+ * the room took that for "turned sideways" (fullscreen opened, the layout jumped while typing). Turning the phone
+ * changes the page's width; the keyboard (and the browser's bars) only change its height. So the answer is only
+ * worked out again when the width changes. `<html class="sideways">` follows it (phone.css uses it, never the
+ * orientation media query).
+ */
+let sidewaysNow = innerWidth > innerHeight;
+let lastWidth = innerWidth;
+const turnListeners = new Set<(sideways: boolean) => void>();
+function checkTurn(): void {
+  if (innerWidth === lastWidth) return;
+  lastWidth = innerWidth;
+  const next = innerWidth > innerHeight;
+  if (next === sidewaysNow) return;
+  sidewaysNow = next;
+  document.documentElement.classList.toggle('sideways', next);
+  for (const listener of turnListeners) listener(next);
+}
+addEventListener('resize', checkTurn);
+screen.orientation?.addEventListener('change', () => setTimeout(checkTurn, 120));
+
+export function isSideways(): boolean {
+  return sidewaysNow;
+}
+
 /** Calls `listener` when the phone is turned (true = sideways). */
 export function onTurn(listener: (sideways: boolean) => void): void {
-  const sideways = matchMedia('(orientation: landscape)');
-  sideways.addEventListener('change', () => listener(sideways.matches));
+  turnListeners.add(listener);
 }
 
 /** Marks <html> once at start-up. */
@@ -86,6 +111,7 @@ export function markDevice(): void {
   root.toggle('is-standalone', isStandalone());
   root.toggle('is-app', isApp());
   coarse.addEventListener('change', () => root.toggle('is-touch', isTouch()));
+  root.toggle('sideways', sidewaysNow);
   root.toggle('phone', isPhoneLayout());
   onPhoneLayout((phone) => root.toggle('phone', phone));
 }
