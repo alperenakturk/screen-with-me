@@ -7,6 +7,16 @@
 
 const coarse = matchMedia('(pointer: coarse)');
 
+/**
+ * A mouse or touchpad is there (also on a touch-screen laptop, whose primary pointer can be reported as coarse): the
+ * room's rail then waits for the mouse at the video's edge instead of staying on screen (0.9.93.6, owner's bug: on his
+ * laptop the rail never went away in YouTube fullscreen).
+ */
+const mouse = matchMedia('(any-pointer: fine) and (any-hover: hover)');
+export function hasMouse(): boolean {
+  return mouse.matches;
+}
+
 /** A finger, not a mouse (phones, tablets). */
 export function isTouch(): boolean {
   return coarse.matches;
@@ -107,10 +117,12 @@ export function onTurn(listener: (sideways: boolean) => void): void {
 export function markDevice(): void {
   const root = document.documentElement.classList;
   root.toggle('is-touch', isTouch());
+  root.toggle('has-mouse', hasMouse());
   root.toggle('is-ios', isIOS());
   root.toggle('is-standalone', isStandalone());
   root.toggle('is-app', isApp());
   coarse.addEventListener('change', () => root.toggle('is-touch', isTouch()));
+  mouse.addEventListener('change', () => root.toggle('has-mouse', hasMouse()));
   root.toggle('sideways', sidewaysNow);
   root.toggle('phone', isPhoneLayout());
   onPhoneLayout((phone) => root.toggle('phone', phone));

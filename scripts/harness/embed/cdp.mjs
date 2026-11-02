@@ -136,6 +136,7 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await sleep(1500);
   const loaded = await send('Extensions.loadUnpacked', { path: ext });
+  if (loaded.error) console.error('Extensions.loadUnpacked failed:', JSON.stringify(loaded.error));
   const target = await send('Target.createTarget', { url: 'about:blank' });
   const attached = await send('Target.attachToTarget', { targetId: target.result.targetId, flatten: true });
   const sid = attached.result.sessionId;

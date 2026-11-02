@@ -9898,7 +9898,7 @@ html.shorts-view .voice-cams {
   opacity: 0;
 }
 
-html.is-touch .theater.dock-mode.dock-idle .fs-dock:not(:has(:focus-visible)) {
+html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:focus-visible)) {
   opacity: 0.3;
 }
 
@@ -11667,7 +11667,7 @@ html.shell .theater :is(#dock-more, #dock-game) {
 }
 
 html.shell .rail-pin-item,
-html.is-touch .rail-pin-item,
+html.is-touch:not(.has-mouse) .rail-pin-item,
 html.is-touch .desk-only {
   display: none;
 }
@@ -11713,7 +11713,7 @@ html:not(.shell, .phone) .theater.yt-rail.dock-mode :is(.player, .fs-catcher) {
 }
 
 html:not(.shell, .phone) .theater.yt-rail.dock-mode:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))) :is(.player, .fs-catcher),
-html.is-touch:not(.shell, .phone) .theater.yt-rail.dock-mode :is(.player, .fs-catcher) {
+html.is-touch:not(.shell, .phone, .has-mouse) .theater.yt-rail.dock-mode :is(.player, .fs-catcher) {
   right: var(--rail-w);
 }
 
@@ -11742,7 +11742,7 @@ html:not(.shell, .phone) .theater.yt-rail.dock-mode.dock-idle:not(:has(.fs-dock:
   visibility: hidden;
 }
 
-html.is-touch:not(.shell, .phone) .theater.yt-rail.dock-mode .fs-dock {
+html.is-touch:not(.shell, .phone, .has-mouse) .theater.yt-rail.dock-mode .fs-dock {
   opacity: 1;
   visibility: visible;
 }
