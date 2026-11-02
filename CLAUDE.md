@@ -98,6 +98,11 @@ We are building a **global product**, so everything is professional, formal and 
     and proposed cards under "Proposed" in `CARDS.md`. Never fixes code itself.
   - 🔎 **Research** (when needed, read-only): market, competitors, users, technical questions; writes
     `docs/internal/research/<topic>.md` and proposed cards under "Proposed". Never edits code.
+  - **The Planner is the hub (owner, 2 Nov 2026: "be the brain").** The owner talks only to the Planner. Developer,
+    Security and Research send their result to the Planner session when a job ends (`send_message`: what was done, PR
+    link, open questions, anything the owner must decide or test), never ask the owner themselves; the Planner turns
+    it into cards / questions, asks the owner, and sends his answers back to them as feedback. The Planner's session
+    id is in its title "ScreenWithMe · 🧭 Planner" (`list_sessions`, tag `role:planner`).
   - Rules for all: every change goes through a branch + PR (never push to `main`); a docs-only PR may be merged by its
     session once CI is green. Each role edits only its own files above, so two sessions never change the same lines.
     Talk to the owner in Turkish; everything written to the repo stays English.

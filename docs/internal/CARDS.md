@@ -27,70 +27,20 @@ Card format:
 
 ## Ready
 
-### Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
-- Why: the 0.9.93 gate needs them.
-- Done when: every box in `STATUS.md` "Owner's hand tests" for these versions is ticked or turned into a bug card.
-- Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
+_Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
+rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
+
+### 1. Fix: the rail never hides in YouTube fullscreen (0.9.93 "Now" 1, owner's bug)
+- Why: owner, 2 Nov 2026 (screenshot, after 0.9.93.5): in fullscreen, with the mouse moved to the middle of the video,
+  the right rail (💬 😀 📌 🎮 🎙 📷 ⋯ ⛶, mic and camera red because not in voice) stays however long he waits.
+- Done when: in fullscreen and in the window the rail rests (`.dock-idle`) `HIDE_MS` after the mouse leaves the right
+  edge, whatever was pressed before (rail buttons, Esc, shortcuts, emoji, the message box empty); root cause written in
+  `STATUS.md`; the same check on the film page's rail.
+- Tests: a `yt-room` harness check that fails on 0.9.93.5 first (enter fullscreen, move to the centre, wait 1 s →
+  rail hidden), also after pressing 🎙 / 📷 outside voice and after ⋯ → Esc; owner's hand test.
 - Owner's pick: none needed.
 
-## Proposed
-
-(Security and Research add cards here.)
-
-### Simplify the room: a "first view" until something plays (Research, 0.9.94 "Next" 1)
-- Why: every competitor's first room view is player + add a video + invite (+ chat); ours shows the full dock, the
-  Together card, three tabs, pins, film time, votes, recap. Details: `research/newcomers-help-shorts.md` §1.
-- Done when: until the room's first video plays, a computer and a phone show only: add a video (search / link), invite,
-  chat, join voice; games, pins, film time, votes, recap, saved room, speed sit under ⋯ (or appear once something
-  plays). The owner picks the exact list on an option page (ROADMAP §1 item 3).
-- Tests: harness check per layout (computer, phone) that only those controls are visible in an empty room and the rest
-  appear after play; first-tips still find their anchors.
-- Owner's pick: needed (which features stay visible; option page by the Planner).
-
-### Help / FAQ page, ordered by what users ask first (Research, 0.9.94 "Next" 2)
-- Why: competitors' help starts with "how to start", "who needs the extension", "it doesn't sync", "permissions";
-  nobody explains permissions well. Details: `research/newcomers-help-shorts.md` §2–3.
-- Done when: `/help` (EN first, TR variant) answers in this order: 3 steps; who needs the extension (only film pages;
-  YouTube / TikTok / links and phones need nothing); what the extension can and cannot see; "not in sync / video not
-  found" checklist (update, other video extensions / VPN, reload, 🎯 Pick video, 👁 Show the page, Sync everyone to me);
-  connection problems → `/baglanti`; phones; voice, cameras and IP; ads inside YouTube come from YouTube; privacy link.
-  In-product hints (`.net-hint`, video not found, blocked WebRTC) link to their answer. No film / service names.
-- Tests: e2e / harness that `/help` loads in EN and TR and every in-product help link lands on an existing anchor; a
-  non-Turkish reader check (owner).
-- Owner's pick: none needed for the order; copy follows the slogan rules.
-
-### "Send feedback" with opt-in diagnostics (Research, 0.9.94 "Next" 3)
-- Why: every support thread starts with "which browser / version?"; Teleparty's e-mail-only support ends up on
-  Trustpilot; Discord's form is one-way. Details: `research/newcomers-help-shorts.md` §2.
-- Done when: "Send feedback" in the profile menu / ⋯ and on `/help` opens a small form (text, optional e-mail, an
-  unticked "attach technical info": site + extension version, browser, transport ws/http, last `/baglanti` result; no
-  room id, names or chat); a Worker endpoint stores it with a rate limit; the owner can read the list; the privacy
-  policy names it.
-- Tests: e2e (send, rate limit, nothing attached when unticked); unit for the payload builder.
-- Owner's pick: where the owner reads them (stored list vs. e-mail), and whether GitHub issue templates come too.
-
-### Extension permission explainer (Research)
-- Why: scanners rate "all websites" access as critical; users and guides struggle with "read and change site data";
-  trust is a top complaint (Teleparty, Rave). Details: `research/newcomers-help-shorts.md` §3.
-- Done when: the extension page and the "Filme git" card say in two plain lines why the extension asks for every site,
-  that it does nothing outside a room, and link to the FAQ answer; the same text is ready for the store's permission
-  justifications (ROADMAP 0.9.97).
-- Tests: harness / e2e that the text and link are present (EN + TR).
-- Owner's pick: none needed.
-
-### "Scroll Shorts together" page / home-page door (Research)
-- Why: people search for "watch YouTube Shorts / TikTok together"; the only competitor with pages for it (TandemParty)
-  needs a host computer + extension and only the host scrolls; ours works on phones, no install, anyone swipes.
-  Details: `research/newcomers-help-shorts.md` §4.
-- Done when: a home-page door (and a small English-first page) "Scroll Shorts together" creates a room that opens
-  straight into the Shorts view with 🎲 Discover; no service is named beyond YouTube Shorts / TikTok.
-- Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
-- Owner's pick: copy and whether it is a page or only a home door.
-
-Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe first. Each card names its finding id
-(H = high, M = medium, L = low); the details, file:line references and attack scenarios are in the review.
-
-### Security: the HTTP fallback must not be able to crash a room (H1, M1)
+### 1a. Security: the HTTP fallback must not be able to crash a room (H1, M1; Planner: right after card 1)
 - Severity: high
 - Why: one person with the room link can reset the room's Durable Object (everyone drops) with a chunked POST body
   that is read uncapped, or with fallback sessions that never poll while repeated `hello`s queue every sticker and
@@ -102,7 +52,8 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   `hello` is refused), `fallback.mjs` and the hotspot harness still pass.
 - Owner's pick: none needed.
 
-### Security: cap queue votes (M1)
+
+### 1b. Security: cap queue votes (M1; with 1a)
 - Severity: medium
 - Why: `voters` grows without a cap and without checking the voter is present; with rotated browser ids it can pass
   the storage value limit and freeze the room's queue.
@@ -111,7 +62,61 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: e2e (many votes from one connection with changing ids count once / stay capped).
 - Owner's pick: none needed.
 
-### Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2)
+
+### 2. One rail everywhere: empty room and the film page (0.9.93 "Now" 1, owner's request)
+- Why: owner, 2 Nov 2026: an empty room still shows the old bar under the video (😀 React, Games, Sync, 1×, ⇥, ⛶), and
+  the extension's film page shows that bar and a rail at the same time. He wants the same right rail on every page:
+  empty room, YouTube, video files, the film page; no bar under the video anywhere on a computer.
+- Done when: on a computer the toolbar under the video is gone in every state (empty room, YouTube, file, test, film
+  page in the shell); everything it held is in the rail or its ⋯ (Games, Pin, Sync, speed, Next, side panel / cinema
+  mode, fullscreen); the empty room's rail shows only what makes sense with no video (😀, 🎮, 🎙 / 📷, ⋯, ⛶ dimmed);
+  the rail's look follows Research's verdict "Rail look on YouTube": allowed → the film page's translucent rail over
+  the video's edge everywhere; not allowed → everywhere (film page too) a rail that opens and closes, placed by the
+  video's size, never covering the video; phones unchanged; `store/src/room.html` copy updated.
+- Tests: `yt-room`, `embed/run.mjs` (film page: no toolbar, rail islands), `phone/run.cjs` still pass; new checks for
+  the empty room; owner's hand test on the site and the film page.
+- Owner's pick: done (one rail everywhere). Research verdict (2 Nov 2026, `research/youtube-overlay-rail.md`): an
+  overlay on the YouTube player is **not allowed** (Required Minimum Functionality "Overlays and frames"), so the owner's
+  rule applies: everywhere, the film page too, the rail opens and closes beside the video, placed by the video's size,
+  never covering it. Extra test: `embed/run.mjs` checks the rail's box never intersects the film video's box.
+
+### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
+- Why: the 0.9.93 gate needs them.
+- Done when: every box in `STATUS.md` "Owner's hand tests" for these versions is ticked or turned into a bug card.
+  The owner works from the ordered PDF checklist (2 Nov 2026) and sends results to the Planner.
+- Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
+- Owner's pick: none needed.
+
+### 4. Invite window: a real WhatsApp button and a QR tab (0.9.93, owner's feedback)
+- Why: owner, 2 Nov 2026: the WhatsApp button shows a speech-bubble emoji; the QR text "A friend next to you can scan
+  it with their phone's camera" reads badly.
+- Done when: the WhatsApp button carries WhatsApp's own glyph (inline SVG, green as in WhatsApp's brand guidelines for
+  share buttons, text "WhatsApp"); the window has two tabs "Link" and "QR"; the QR tab shows only the QR code (big)
+  with "Copy image" (PNG to the clipboard, falls back to download) and no explanation sentence; EN + TR; fits without
+  scrolling at 1024×640 and on a phone.
+- Tests: `invite/run.cjs` updated (+ tab switch, copy image, no scroll); owner's hand test.
+- Owner's pick: done (owner's words); the WhatsApp glyph follows WhatsApp's brand rules.
+
+### 5. Home page: "Continue where you left off" overflows (0.9.93, owner's bug)
+- Why: owner, 2 Nov 2026 (screenshot): a long video title runs out of the card under the room preview.
+- Done when: the card's lines are one line each with an ellipsis (full title in `title`), the card never overlaps the
+  preview at any width from 860 px up, and on phones.
+- Tests: a harness check with a 200-character title at 1920, 1366, 1024 and 390 px; owner's hand test.
+- Owner's pick: none needed.
+
+### 6. Simplify the room (0.9.94 "Next" 1)
+- Why: a newcomer sees too much at once; Research found every competitor's first room view is player + add a video +
+  invite (`research/newcomers-help-shorts.md` §1).
+- Done when (owner picked C + D): one "⋯ More" menu with the same items and order as the phone's ⋯ sheet (film time,
+  save room, recap, shortcuts, sync test, room rules); the settings dialog keeps "My screen"; until the room's first
+  video plays the room shows only add a video, invite, chat and join voice (the rest appears for everyone when
+  something plays, or under ⋯); every feature reachable in ≤ 2 clicks; built after card 2 (the rail is the base);
+  `store/src/room.html` updated; no scrollbars at 1024×640; first-tips still find their anchors.
+- Tests: harness checks (every moved item opens from its new place; empty vs playing room, computer + phone);
+  `phone`, `yt-room`, `room-extras`, `invite` harnesses still pass; owner's hand test.
+- Owner's pick: C + D (2 Nov 2026, https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw).
+
+### 6a. Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2; 0.9.94, before the Help page)
 - Severity: high
 - Why: the player uses `www.youtube.com` and the API is preloaded on every room page, so YouTube sets cookies before
   anyone chose a video, while the policy says "none of their cookies"; this also matters for the YouTube API audit.
@@ -120,6 +125,135 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: harness (no request to `www.youtube.com` on a room page with nothing playing; YouTube plays from the
   no-cookie host); existing room / Shorts harnesses; owner's hand test of YouTube playback.
 - Owner's pick: none needed.
+
+
+### 7. Help / FAQ page, English + Turkish (0.9.94 "Next" 2)
+- Why: newcomers and store reviewers need one place for "how does it work", the extension's permissions and
+  troubleshooting (voice does not connect, hotspot, Brave shields, autoplay).
+- Done when: `/help` (EN, `?lang=tr` for Turkish, like `privacy.html`) with sections: how it works, the extension and
+  why it asks each permission, voice / camera / streams, phones, troubleshooting (links to `/baglanti`), privacy
+  summary, in the order users ask first (Research §2–3: 3 steps, who needs the extension, what it can and cannot
+  see, "not in sync / video not found" checklist, connection, phones, voice and IP); in-product hints link to their
+  answer; linked from the footer, the profile menu, the phone ⋯ sheet and the extension page; same numbers as the
+  code (limits, retention); a non-Turkish reader understands the English text (0.9.94 gate).
+- Tests: static page check in a harness (loads, both languages, every in-page link resolves, CSP has no errors);
+  a "same numbers" spot check against `protocol.ts` limits.
+- Owner's pick: none needed (Claude writes it; the owner reads the Turkish version).
+
+
+### 8. Extension permission explainer (0.9.94, with the Help page; from Research)
+- Why: scanners rate "all websites" access as critical; users and guides struggle with "read and change site data";
+  trust is a top complaint (Teleparty, Rave). Details: `research/newcomers-help-shorts.md` §3.
+- Done when: the extension page and the "Filme git" card say in two plain lines why the extension asks for every site,
+  that it does nothing outside a room, and link to the FAQ answer; the same text is ready for the store's permission
+  justifications (ROADMAP 0.9.97).
+- Tests: harness / e2e that the text and link are present (EN + TR).
+- Owner's pick: none needed. Owner agreed 2 Nov 2026.
+
+
+### 9. "Send feedback" button (0.9.94 "Next" 3)
+- Why: the closed beta and the launch need an easy way for people to tell us what broke (ROADMAP §2, §7).
+- Done when: "Send feedback" in ⋯, the profile menu and the Help page opens a short form (what happened, optional
+  e-mail, an unticked "attach technical info" box: site + extension version, browser, transport, last `/baglanti`
+  result; never room id, names or chat); a Worker endpoint opens a `feedback`-labelled issue in the private repo with
+  a fine-grained token (`FEEDBACK_GITHUB_TOKEN` secret, issues: write on this repo only); per-IP rate limit, no IP
+  stored; e-mail addresses only in the issue body; privacy policy (EN + TR) names it.
+- Tests: unit (payload builder, validation); e2e for the endpoint with the token off (`off` answer) and limits;
+  harness opens the form on computer + phone; owner's hand test after the token is set.
+- Owner's pick: A, in-site form → GitHub issue (2 Nov 2026). **Owner action:** create the token and add it as a repo
+  secret when the Developer asks (steps in the PR).
+
+### 10. Shorts: a feed from one channel + Discover by region (0.9.94 "Next" 4)
+- Why: owner, 1 Nov 2026: type a channel and get its Shorts; Discover should show the viewer's country.
+- Done when: the ♾ window accepts a channel link / @handle / name and starts that channel's Shorts feed (uploads
+  playlist, reusing the `like` path; cached per channel and day); Discover uses the connection's country from
+  Cloudflare (`cf.country`, never stored) with a "🌍 Country ▾" chip of about 10 countries + "World" (one pool per
+  kind + country + day); quota cost per new query written down; privacy policy mentions the country use.
+- Tests: unit tests for channel input parsing; Worker e2e with `YOUTUBE_API_KEY` off and the region validated;
+  `shorts-rail/run.cjs` still passes; owner's hand test with a real channel.
+- Owner's pick: A, viewer's country, changeable (2 Nov 2026).
+
+### 11. Thanks page (0.9.94 "Next" 5)
+- Why: owner, 1 Nov 2026: credit the people who helped by testing.
+- Done when: `/thanks` (EN, `?lang=tr`) with the names the owner sends (only people who said yes) and a short
+  thank-you; linked from the footer and the Help page; the feedback form gets an unticked "Credit me on the Thanks
+  page" box when the closed beta starts.
+- Tests: static page check in the same harness as Help.
+- Owner's pick: A (2 Nov 2026). **Owner action:** send the list of names who said yes.
+
+### 12. Hidden test panel `?debug=1` (0.9.94, before the Shorts measurement)
+- Why: the owner tests from his phone without a computer; it gathers `/baglanti`, `?olcum=1`, `?tvlab=1`, version,
+  transport, sync stats, recent errors (copy button), feature switches and "start as a first-time visitor".
+- Done when: `?debug=1` once in a tab shows the panel; `?debug=0` hides it; normal users never see it; no personal data.
+- Tests: harness opens it and checks each part; a normal visit shows nothing.
+- Owner's pick: agreed 2 Nov 2026 (ideas list).
+
+### 13. Shorts scrolling, really good: measure and preload (0.9.94, alongside)
+- Why: owner, 29 Oct 2026: "working is not enough, make it great"; the 0.9.94 gate needs the switch measurement
+  written down (preload if > 300 ms).
+- Done when: the owner and a friend measured the switch gap with `?olcum=1` in real Chrome (5+ switches, numbers in
+  `STATUS.md`); if the average is > 300 ms a hidden preload player for the next Short is built (YouTube's rules
+  checked: nothing of ours over the player); otherwise the measurement is recorded and the card closes.
+- Tests: owner's hand measurement first; for a preload player a harness with a fake YouTube player (like the TikTok
+  stand-in) checks the next Short is cued before the switch; `shorts-rail/run.cjs` still passes.
+- Owner's pick: none needed for the code; the owner's measurement is the first step (hand test).
+
+### 14. Cinema mode (0.9.94, owner's new feature)
+- Why: owner, 2 Nov 2026: the ⇥ "hide the side panel" button should be a real cinema mode: the page around the video
+  goes dark, like YouTube. He asked Claude to design it (it was a Phase 2 idea; now pulled into 0.9.94).
+- Done when (Planner's design, the owner may change it): ⇥ becomes "Cinema mode" (rail ⋯ and shortcut **T**, like
+  YouTube's theater key; also in the shortcuts card); entering it fades the page around the video to near-black in
+  300 ms (theme scene, aura and side panel hidden; `prefers-reduced-motion`: no fade), the video grows to the largest
+  16:9 that fits the window, the top bar slides away and returns when the mouse reaches the top edge, the rail stays
+  beside the video, chat comes in as the existing top-right messages with an unread count on 💬, and the "everyone
+  ready" / invite cards keep working; Esc (when nothing else is open) or T or the button leaves; remembered per tab;
+  computer only (phones already watch edge to edge); not on the film page in this card.
+- Tests: harness: enter / leave with the button, T and Esc; nothing but the video and the rail visible; messages
+  arrive as toasts; no page scroll at 1366×768 and 1920×1080; owner's hand test.
+- Owner's pick: Claude designs (owner, 2 Nov 2026); the design above is shown to him in the report.
+
+### 15. Home page, nicer and "works on your phone" (0.9.94, owner's request) ⏳ option page first
+- Why: owner, 2 Nov 2026: improve the home page; it should show it works on a phone too and feel less like a
+  screenshot.
+- Done when: the direction the owner picks is built (Planner prepares an option page with 2–3 directions); the hero
+  shows a computer and a phone in the same room; EN first, TR; fits without scrolling on the first screen at
+  1366×768; the phone home (0.9.92.5 app start screen) is unchanged unless the pick says so; Lighthouse performance
+  not worse than today.
+- Tests: harness screenshots at 1920, 1366, 1024, 390 px; no console errors; owner's hand test.
+- Owner's pick: waiting for the Planner's option page.
+
+### 16. Design bug sweep (0.9.94, end of the step)
+- Why: owner, 2 Nov 2026: go through the whole design for mistakes; the owner should not have to find each one.
+- Done when: the Developer screenshots every screen (home, join, empty room, YouTube, file, Shorts, games, settings,
+  dialogs, invite, film page, `/baglanti`, privacy) at 1920×1080, 1366×768, 1024×640, 390×844 and sideways, in EN and
+  TR, in a plain and a scene theme; every problem found (overflow, cut text, overlap, scrollbars, misalignment,
+  contrast, mixed languages, inconsistent icons) is listed in `STATUS.md` and fixed or turned into a card; the list
+  of screenshots is attached to the PR.
+- Tests: the screenshot harness itself, kept for later sweeps; all harnesses pass.
+- Owner's pick: none needed.
+
+## Proposed
+
+(Security and Research add cards here.)
+
+_Planner, 2 Nov 2026: Security review 2 (`security-review-2.md`): H1 + M1 became Ready 1a / 1b, H2 became 6a. M3, M5,
+M6 and the policy card go before the YouTube API audit (0.9.97 / 0.9.98); M8 before the TV leaves the lab; the rest
+before 1.0. Owner questions (policy details, branch protection, names before joining) are being asked._
+
+_Planner, 2 Nov 2026: Research's "first view", "Help / FAQ order" and "Send feedback with diagnostics" were folded
+into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the debug panel became card 12._
+
+### "Scroll Shorts together" page / home-page door (Research)
+- Why: people search for "watch YouTube Shorts / TikTok together"; the only competitor with pages for it (TandemParty)
+  needs a host computer + extension and only the host scrolls; ours works on phones, no install, anyone swipes.
+  Details: `research/newcomers-help-shorts.md` §4.
+- Done when: a home-page door (and a small English-first page) "Scroll Shorts together" creates a room that opens
+  straight into the Shorts view with 🎲 Discover; no service is named beyond YouTube Shorts / TikTok.
+- Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
+- Owner's pick: copy and whether it is a page or only a home door. Planner: 0.9.95 (owner agreed 2 Nov 2026).
+
+Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe first. Each card names its finding id
+(H = high, M = medium, L = low); the details, file:line references and attack scenarios are in the review.
 
 ### Privacy: rewrite the privacy policy for KVKK + GDPR (H3, M7)
 - Severity: high
