@@ -285,7 +285,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
-            <button id="rail-show" type="button" class="btn small-btn rail-show" hidden><span aria-hidden="true">⇠</span> <span data-i18n="rail.show"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
           <div class="player-wrap">
@@ -361,10 +360,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" class="dock-more-item" data-press="#sync-all"><span aria-hidden="true">🔄</span><span data-i18n="syncAll"></span></button>
                 <button type="button" class="dock-more-item" data-press="#skip"><span aria-hidden="true">⏭</span><span data-i18n="skip"></span></button>
                 <button type="button" class="dock-more-item" data-press="#side-toggle"><span aria-hidden="true">⇥</span><span id="dock-more-side"></span></button>
-                <button type="button" class="dock-more-item rail-hide-item" id="rail-hide"><span aria-hidden="true">⇢</span><span data-i18n="rail.hide"></span></button>
+                <button type="button" class="dock-more-item rail-pin-item" id="rail-pin" aria-pressed="false"><span class="rail-pin-box" aria-hidden="true"></span><span data-i18n="rail.pin"></span></button>
               </div>
               <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
             </div>
+            <div id="rail-edge" class="rail-edge" aria-hidden="true"></div>
             <div id="empty" class="empty">
               <div class="theme-mascot" aria-hidden="true"></div>
               <h2 data-i18n="emptyTitle"></h2>
@@ -647,6 +647,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="muted small" data-i18n="settings.view"></p>
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.showReactions"></b><span data-i18n="settings.showReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-reactions" /></label>
+              <label class="set-row desk-only"><span class="set-text"><b data-i18n="settings.railPin"></b><span data-i18n="settings.railPin.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-railpin" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
               <label class="set-row touch-only"><span class="set-text"><b data-i18n="settings.rotateFs"></b><span data-i18n="settings.rotateFs.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-rotatefs" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
@@ -1169,7 +1170,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           const shown = reactions.content(message.emoji, message.sticker);
           if (shown) seats.react(message.by, shown);
         }
-        else if ($('#theater').classList.contains('yt-rail')) reactions.showFrom(reactionAnchor(message.by), message.by, message.emoji, message.sticker);
         else reactions.show(message.by, message.emoji, message.sticker);
         break;
       }
@@ -1584,7 +1584,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           continue;
         }
         // The film player is clicked through the hole: our catcher and bar belong to the site's own players only.
-        if (child.id === 'fs-catcher' || child.id === 'fs-controls') continue;
+        if (child.id === 'fs-catcher' || child.id === 'fs-controls' || child.id === 'rail-edge') continue;
         // The dock and its open window (message box, emojis, speed) to its left.
         if (child.id === 'fs-dock') {
           // Hidden with the film's own bar (0.9.91.5): then the film takes the clicks there, and a mouse move on the
@@ -2567,22 +2567,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // accident (only "Şimdi aç" loads it).
     addMedia(media, mode);
   });
-
-  /**
-   * Where a YouTube emoji rises from (pick 1B): the sender's face when the faces are on screen; in fullscreen or with
-   * the side panel hidden, the rail's 😀 (the rail shows for a moment); otherwise the faces row itself.
-   */
-  function reactionAnchor(by: Member): HTMLElement {
-    const visible = (node: HTMLElement | null) => (node && node.getBoundingClientRect().width > 0 ? node : null);
-    const dockReact = visible($('#dock-react'));
-    if (fullscreen.isActive() || sideHidden) {
-      fullscreen.poke();
-      const react = visible($('#dock-react'));
-      if (react) return react;
-    }
-    const face = visible(document.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(by.id)}"]`));
-    return face ?? visible($('#voice-people')) ?? dockReact ?? $('.player-wrap');
-  }
 
   /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
   async function resolveTikTok(link: string, anchor: HTMLElement): Promise<Media | null> {

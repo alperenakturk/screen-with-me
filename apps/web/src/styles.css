@@ -11562,7 +11562,7 @@ html.shorts-view .game-stage .game-place {
 /* ==== One remote (0.9.92.8, owner's picks 2A / 3A / 4A on https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG) ====
    On a computer the toolbar under the video goes: the dock (rail) is the only remote, in the window and in fullscreen.
    It holds the common buttons (💬 only in fullscreen or with the side panel hidden, 😀, 📌, 🎮, 🎙, 📷, 🖥️ only while
-   someone streams, ⋯, ⛶); ⋯ holds speed, sync, next, the side panel and "hide the controls". Not on the film page
+   someone streams, ⋯, ⛶); ⋯ holds speed, sync, next, the side panel and "keep the controls open". Not on the film page
    (8B: today's dock over the film), on phones (own layout) or in the Shorts view (own rail). */
 html:not(.shell, .phone, .shorts-view) .theater.dock-window:not(:fullscreen, .fake-fs) .toolbar {
   display: none;
@@ -11620,9 +11620,41 @@ html.shell .theater :is(#dock-more, #dock-game) {
   background: rgb(255 255 255 / 0.1);
 }
 
-/* "Hide the controls" is for the window only (fullscreen always has its rail). */
-.theater:is(:fullscreen, .fake-fs) .rail-hide-item {
+/* "Keep the controls open" (0.9.93): a small box, ticked while the rail is pinned. */
+.rail-pin-box {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(255 255 255 / 0.6);
+  border-radius: 4px;
+}
+
+.rail-pin-item[aria-pressed='true'] .rail-pin-box {
+  border-color: var(--accent, #7c5cff);
+  background: var(--accent, #7c5cff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat;
+}
+
+html.shell .rail-pin-item,
+html.is-touch .rail-pin-item,
+html.is-touch .set-row.desk-only {
   display: none;
+}
+
+/* The right edge (0.9.93): a see-through strip over the video's right edge notices the mouse there (a YouTube frame
+   keeps its mouse moves) and brings the rail. It leaves YouTube's own buttons at the top and bottom free and sits
+   under the rail. */
+.rail-edge {
+  display: none;
+  position: absolute;
+  top: 56px;
+  right: 0;
+  bottom: 64px;
+  width: 36px;
+  z-index: 3;
+}
+
+.theater.rail-edge-mode.dock-mode.dock-idle .rail-edge {
+  display: block;
 }
 
 /* The games hall opens left of the rail. */
@@ -11635,13 +11667,10 @@ html.shell .theater :is(#dock-more, #dock-game) {
   overflow-y: auto;
 }
 
-.rail-show {
-  margin-left: auto;
-}
-
-/* YouTube (4A changed, owner): the rail is a column beside the video, never on it. It comes with a mouse move (the
-   video shrinks to make room) and goes when the mouse rests (the video grows back), in the window and in fullscreen.
-   "Hide the controls" keeps it away in the window. Touch screens (tablets) keep it out all the time. */
+/* YouTube (4A changed, owner): the rail is a column beside the video, never on it. It comes when the mouse reaches the
+   video's right edge (the video shrinks to make room) and goes as soon as it leaves (the video grows back), in the
+   window and in fullscreen (0.9.93). "Keep the controls open" pins it. Touch screens (tablets) keep it out all the
+   time. */
 html:not(.shell, .phone) .theater.yt-rail.dock-mode {
   --rail-w: 58px;
 }
@@ -11694,15 +11723,6 @@ html:not(.shell, .phone) .theater.yt-rail.dock-mode .dock-group + .dock-group {
   padding-top: 6px;
 }
 
-/* Hidden by hand: the video keeps its full width in the window. */
-html:not(.shell) .theater.rail-off.dock-window:not(:fullscreen, .fake-fs) .fs-dock {
-  display: none;
-}
-
-html:not(.shell) .theater.yt-rail.rail-off.dock-window:not(:fullscreen, .fake-fs) :is(.player, .fs-catcher) {
-  right: 0;
-}
-
 /* 🔍 Search in the link box (0.9.92.8, owner: "people won't know Enter searches"). Icon only on narrower screens. */
 .media-search {
   display: inline-flex;
@@ -11718,38 +11738,6 @@ html:not(.shell) .theater.yt-rail.rail-off.dock-window:not(:fullscreen, .fake-fs
 
 html.phone .media-search span:last-child {
   display: none;
-}
-
-/* YouTube emojis rise from the sender's face / the rail's 😀, beside the video (0.9.92.9, pick 1B). */
-.r-float.r-from {
-  position: fixed;
-  bottom: auto;
-  z-index: 1300;
-  translate: -50% -70%;
-  pointer-events: none;
-  animation-name: r-rise-short;
-}
-
-.r-float.r-from .r-emoji {
-  font-size: 34px;
-}
-
-@keyframes r-rise-short {
-  0% {
-    transform: translate(0, 12px) scale(0.6);
-    opacity: 0;
-  }
-  12% {
-    transform: translate(0, 0) scale(1.1);
-    opacity: 1;
-  }
-  75% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(var(--drift, 0px), -120px) scale(1);
-    opacity: 0;
-  }
 }
 
 /* YouTube: the room's notes and cards sit at the top of the chat panel (or above the video with the side panel

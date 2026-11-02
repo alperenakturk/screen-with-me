@@ -4,6 +4,7 @@ import { avatarNode, openAvatarDialog } from './avatar.ts';
 import { t } from '../i18n.ts';
 import { renderThemeSetting } from '../themes.ts';
 import { load, save } from '../storage.ts';
+import { RAIL_PIN_EVENT } from './fullscreen.ts';
 import { previewSound, setSoundVolume, setSoundsOn, soundVolume, soundsOn } from '../sound.ts';
 
 export interface Options {
@@ -76,6 +77,18 @@ export function createSettingsPanel(
     options.actionNotice = notice.checked;
     save('opt:actionNotice', notice.checked ? '1' : '0');
   });
+
+  // "Keep the controls open" (0.9.93): the rail beside the video stays instead of waiting for the mouse at the edge.
+  const railPin = root.querySelector<HTMLInputElement>('#opt-railpin');
+  if (railPin) {
+    const drawPin = () => (railPin.checked = load('opt:railPin') === '1');
+    drawPin();
+    railPin.addEventListener('change', () => {
+      save('opt:railPin', railPin.checked ? '1' : '0');
+      dispatchEvent(new Event(RAIL_PIN_EVENT));
+    });
+    addEventListener(RAIL_PIN_EVENT, drawPin);
+  }
 
   // Phones (0.9.91.2): turning the phone sideways while a video plays opens our fullscreen (on by default).
   const rotate = root.querySelector<HTMLInputElement>('#opt-rotatefs');
