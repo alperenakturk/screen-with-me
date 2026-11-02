@@ -152,6 +152,16 @@ export class PollHub {
     const op = url.searchParams.get('http');
     if (op === null) return null;
     this.sweep();
+    // Every POST body is read before any answer: an answer sent while the body is still unread made the dev
+    // server's proxy throw ("Can't read from request stream after response has been sent") and drop the object's
+    // next request (CI: a session that sent after it was closed broke the next `open` with a 500).
+    const length = Number(request.headers.get('Content-Length') ?? 0);
+    if (length > SEND_BODY_BYTES) {
+      // Too large to read: drop the stream first, for the same reason.
+      await request.body?.cancel().catch(() => {});
+      return new Response('Too large', { status: 413 });
+    }
+    const body = request.method === 'POST' ? await request.text() : '';
     if (op === 'open') {
       if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
       const socket = new PollSocket(newSid(), (s, code) => queueMicrotask(() => void this.finish(s, code)));
@@ -184,9 +194,6 @@ export class PollHub {
       return new Response(null, { status: 204 });
     }
     if (op !== 'send') return new Response('Unknown operation', { status: 400 });
-    const length = Number(request.headers.get('Content-Length') ?? 0);
-    if (length > SEND_BODY_BYTES) return new Response('Too large', { status: 413 });
-    const body = await request.text();
     if (body.length > SEND_BODY_BYTES) return new Response('Too large', { status: 413 });
     let messages: unknown;
     try {
