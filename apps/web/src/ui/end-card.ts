@@ -8,7 +8,8 @@ const AUTO_CLOSE_MS = 60_000;
  * "▶ Sıradakini başlat". (İstatistikler artık video sonunda değil, oturum özetinde.)
  */
 export function showNextCard(container: HTMLElement, title: string, url: string | null, startNext: () => void): void {
-  container.querySelector('.end-card')?.remove();
+  // The card may have moved to the chat panel (YouTube, 0.9.92.9): look for it everywhere.
+  document.querySelector('.end-card')?.remove();
   const close = el('button', { type: 'button', class: 'btn small-btn' }, t('close'));
   const next = el('button', { type: 'button', class: 'btn small-btn primary' }, t('startNext'));
   const card = el(
