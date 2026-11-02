@@ -36,8 +36,9 @@ Card format:
 ### Simplify the room (0.9.94 "Next" 1) ⏳ owner's pick first
 - Why: a newcomer on a computer sees too many places at once; film time, save room, recap, shortcuts, sync test and
   room rules are spread over the settings dialog, the profile menu and the toolbar.
-- Done when: the option the owner picked is built on computer + phone (recommended C: one "⋯ More" menu in the top
-  bar with the same items and order as the phone's ⋯ sheet; the settings dialog keeps "My screen" only); nothing is
+- Done when: the option the owner picked is built on computer + phone (recommended C + D: one "⋯ More" menu in the top
+  bar with the same items and order as the phone's ⋯ sheet, the settings dialog keeps "My screen" only, and an empty
+  room shows only add a video, invite, chat and join voice until the first video plays); nothing is
   lost (every feature still reachable in ≤ 2 clicks); Research's option D (a "first view" until the first
   video plays: add a video, invite, chat, join voice) is on the option page too (`research/newcomers-help-shorts.md` §1); `store/src/room.html` copy updated; no scrollbars at 1024×640.
 - Tests: new harness checks (every moved item opens from the new place, computer + phone); `phone/run.cjs`,
@@ -113,7 +114,7 @@ _Planner, 2 Nov 2026: Research's "Simplify the room: a first view", "Help / FAQ 
   that it does nothing outside a room, and link to the FAQ answer; the same text is ready for the store's permission
   justifications (ROADMAP 0.9.97).
 - Tests: harness / e2e that the text and link are present (EN + TR).
-- Owner's pick: none needed.
+- Owner's pick: none needed. Planner: proposed for 0.9.94 together with the Help card (owner confirms on the option page).
 
 ### "Scroll Shorts together" page / home-page door (Research)
 - Why: people search for "watch YouTube Shorts / TikTok together"; the only competitor with pages for it (TandemParty)
@@ -122,7 +123,7 @@ _Planner, 2 Nov 2026: Research's "Simplify the room: a first view", "Help / FAQ 
 - Done when: a home-page door (and a small English-first page) "Scroll Shorts together" creates a room that opens
   straight into the Shorts view with 🎲 Discover; no service is named beyond YouTube Shorts / TikTok.
 - Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
-- Owner's pick: copy and whether it is a page or only a home door.
+- Owner's pick: copy and whether it is a page or only a home door. Planner: proposed for 0.9.95.
 ### Hidden test panel `?debug=1` (Planner's proposal, from the ideas list; owner decides)
 - Why: the owner tests from his phone without a computer; it gathers `/baglanti`, `?olcum=1`, `?tvlab=1`, version,
   transport, sync stats, recent errors (copy button), feature switches and "start as a first-time visitor".
