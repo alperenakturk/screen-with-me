@@ -89,19 +89,28 @@ jobs:
       - name: Deploy to Cloudflare
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: |
+          set -o pipefail
           if [ -n "$YOUTUBE_API_KEY" ]; then
             # The key goes from the environment into a temporary file outside the repo, never into the log.
             node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({ YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY }))' "$RUNNER_TEMP/secrets.json"
-            npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json"
+            npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json" | tee "$RUNNER_TEMP/deploy.log"
             rm -f "$RUNNER_TEMP/secrets.json"
           else
             echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
-            npm run deploy -w @swm/server
+            npm run deploy -w @swm/server | tee "$RUNNER_TEMP/deploy.log"
           fi
+          # The new version's id, for the live e2e's wait below.
+          echo "SWM_VERSION=$(grep -oE 'Current Version ID: [0-9a-f-]+' "$RUNNER_TEMP/deploy.log" | awk '{print $4}')" >> "$GITHUB_ENV"
 
       - name: End-to-end tests against live
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: |
-          # The new version may take a minute or two to propagate (and objects to restart with new code).
-          sleep 30
+          # The new version takes a minute or two to spread, and objects started on the old code restart later (closing
+          # their connections mid-test). Wait until the Worker and a Durable Object both answer with the new id.
+          if [ -n "$SWM_VERSION" ]; then
+            node scripts/wait-live.mjs https://screen-with-me.swm-server.workers.dev "$SWM_VERSION"
+          else
+            echo "::warning::No version id in the deploy output; waiting 30 s instead."
+            sleep 30
+          fi
           npm run e2e -- wss://screen-with-me.swm-server.workers.dev

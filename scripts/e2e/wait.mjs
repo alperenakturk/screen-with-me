@@ -2,19 +2,25 @@
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const room = 'wait' + Math.random().toString(36).slice(2, 8);
 const V = Number(process.env.SWM_V ?? 3);
+const clients = [];
 function client(hello) {
   const ws = new WebSocket(`${base}/api/rooms/${room}/ws`);
   const inbox = [];
+  let closed = null;
   ws.addEventListener('message', (e) => inbox.push(JSON.parse(e.data)));
   ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: V, ...hello })));
+  ws.addEventListener('close', (e) => (closed = `${e.code}${e.reason ? ' ' + e.reason : ''}`));
   const wait = async (pred, label, ms = 10000) => {
     for (let i = 0; i < ms / 100; i++) {
       const idx = inbox.findIndex(pred);
       if (idx >= 0) return inbox.splice(idx, 1)[0];
       await new Promise((r) => setTimeout(r, 100));
     }
-    throw new Error('timeout ' + label);
+    // Say whether the connections were still open: a server restart (a deploy reaching the room) closes them all.
+    const sockets = clients.map((c) => `${c.name}: ${c.closed() ?? 'open'}`).join(', ');
+    throw new Error(`${hello.name}: timeout ${label} · connections ${sockets}`);
   };
+  clients.push({ name: hello.name, closed: () => closed });
   return { ws, wait, inbox, send: (m) => ws.send(JSON.stringify(m)) };
 }
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };

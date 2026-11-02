@@ -86,6 +86,14 @@ export default {
 
     if (url.pathname === '/api/health') return new Response('ok');
 
+    // Which version of the code answers: the Worker and one Durable Object (objects restart on the new code a while
+    // after a deploy, closing their connections). The deploy job runs the live e2e only once both say the new id.
+    if (url.pathname === '/api/version') {
+      const probe = env.TVLINKS.get(env.TVLINKS.idFromName('version'));
+      const object = await (await probe.fetch('https://version/version')).text();
+      return Response.json({ worker: env.CF_VERSION_METADATA?.id ?? '', object }, { headers: { 'Cache-Control': 'no-store' } });
+    }
+
     // Connection probe (HTTP fallback, `/baglanti`): does a WebSocket open on this network at all? Answers "ok" and
     // waits for the client to close. `?bytes=N` on a plain request answers N bytes (diagnostics: large answers).
     if (url.pathname === '/api/probe') {
