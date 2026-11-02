@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.2**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.3**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -233,6 +233,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   role to someone (👑 in People / the person menu); [x] "3-2-1, together" countdown before a new video; [x] "continue
   where you left off" on the home page. Not wanted now: the invite with the film time. Tests: `room-extras` harness
   (24 checks), e2e `countdown.mjs`, `host.mjs` (+ handing on), `yt-room` (+ rail windows, fullscreen).
+- [x] **0.9.93.3** (owner's screenshots, 2 Nov 2026): the one camera window in fullscreen was narrow (15 % of the screen)
+  and stacked the cameras; it is now at least wide enough for up to three side by side (150 px each, at most half the
+  screen), in the window too, and the fullscreen default is wider (26 %). The "1.00" on each camera in the owner's
+  screenshots is not ours (no such text in the code): most likely a video speed extension in the owner's browser that
+  labels every video. Test: `scripts/harness/cam-fs/run.cjs` (fails on 0.9.93.2 with the owner's stacked layout).
 - [ ] **Ideas waiting for the owner's pick** (Claude's proposals, 2 Nov 2026; small ones were built above): (1) a
   friendly room name by default instead of "Room swky86r" (the owner names things); (2) "? Shortcuts" card listing
   the keys; (3) hand the host role to someone from the person menu; (4) a "3-2-1, together" countdown before the first
@@ -346,6 +351,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.3 (computer):**
+- [ ] In voice with a friend's camera, cameras in one window (▣), fullscreen: the window is wide and the cameras sit
+  side by side, as outside fullscreen.
 
 **0.9.93.2 (computer):**
 - [ ] YouTube, also in fullscreen: open the rail at the right edge, open 😀, move the mouse onto the video: the emoji
