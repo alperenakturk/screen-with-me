@@ -212,6 +212,8 @@ implement, test, ship.
 
 ## Phase 2 — after 1.0
 - **Keep improving features** (owner's list + `gelecek-fikirler.md`, `oyun-fikirleri.md`).
+- **Cinema mode** (owner, 2 Nov 2026): a mode for watching with nothing else on screen (beyond today's sideways /
+  side-panel-hidden view); designed after 1.0.
 - **TV version with Google Cast** (owner's decision, 30 Oct 2026): the advanced TV version comes after 1.0, together
   with the **Google Cast developer fee** (a one-time $5 registration, the owner's account). Chromecast / Google TV
   run our TV page themselves (a Cast receiver app, no TV browser to install); the phone's "Cast" button starts it and
