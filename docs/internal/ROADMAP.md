@@ -30,8 +30,8 @@ and four screen sizes at the same time. From now on work follows this list; anyt
 
 | | Items (in this order) |
 |---|---|
-| **Now** (close the 0.9.93 gate, at most 3) | 1. YouTube rule + one remote (finish the open STATUS item) · 2. Phone version, next speed steps · 3. Owner's hand tests 0.9.92.3–0.9.93.5 + root cause of the `wait.mjs` live flake |
-| **Next** (0.9.94) | Simplify the room → Help / FAQ (TR + EN) → "Send feedback" button → Shorts channel feed + Discover by region → Thanks page; "Shorts scrolling, really good" alongside |
+| **Now** (close the 0.9.93 gate, at most 3) | 1. YouTube rule + one remote everywhere (owner, 2 Nov 2026: the rail must hide in fullscreen, one rail in the empty room and on the film page, Research verdict on the YouTube look; small owner bugs: invite window, home "continue" card) · 2. Phone version, next speed steps · 3. Owner's hand tests 0.9.92.3–0.9.93.5 + root cause of the `wait.mjs` live flake |
+| **Next** (0.9.94) | Simplify the room (C + D) → Help / FAQ (EN + TR) + permission explainer → "Send feedback" (→ GitHub issues) → Shorts channel feed + Discover by country → Thanks page → debug panel → Shorts measurement → cinema mode → home page redesign → design bug sweep (cards 6–16 in `CARDS.md`) |
 | **Frozen** (not before 0.9.95) | Tablet layout, accessibility pass, camera window settings pass, new ideas and games |
 | **Owner's decisions to make early** 👤 | Final name and domain (0.9.96 depends on them; a good case for a multi-advisor "council" decision session) |
 
@@ -265,8 +265,7 @@ implement, test, ship.
 
 ## Phase 2 — after 1.0
 - **Keep improving features** (owner's list + `gelecek-fikirler.md`, `oyun-fikirleri.md`).
-- **Cinema mode** (owner, 2 Nov 2026): a mode for watching with nothing else on screen (beyond today's sideways /
-  side-panel-hidden view); designed after 1.0.
+- **Cinema mode** (owner, 2 Nov 2026): pulled into 0.9.94 by the owner the same day (card 14 in `CARDS.md`).
 - **TV version with Google Cast** (owner's decision, 30 Oct 2026): the advanced TV version comes after 1.0, together
   with the **Google Cast developer fee** (a one-time $5 registration, the owner's account). Chromecast / Google TV
   run our TV page themselves (a Cast receiver app, no TV browser to install); the phone's "Cast" button starts it and
