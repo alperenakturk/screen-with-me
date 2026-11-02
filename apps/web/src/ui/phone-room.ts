@@ -47,11 +47,18 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   };
   addEventListener('langchange', drawEmptyStep);
   const decide = () => {
-    const on = isPhoneLayout() && !html.classList.contains('shorts-view') && !html.classList.contains('tv-mode');
+    const phone = isPhoneLayout() && !html.classList.contains('tv-mode');
+    const shorts = phone && html.classList.contains('shorts-view');
+    if (shorts !== html.classList.contains('ph-shorts')) {
+      html.classList.toggle('ph-shorts', shorts);
+      placeShortsBar(shorts);
+      if (!shorts && sheet.dataset.sheet?.startsWith('shorts')) closeSheet();
+    }
+    const on = phone && !shorts;
     if (on === html.classList.contains('ph-room')) return;
     html.classList.toggle('ph-room', on);
     drawEmptyStep();
-    if (!on) closeSheet();
+    if (!on && !sheet.dataset.sheet?.startsWith('shorts')) closeSheet();
     placeCams();
   };
   onPhoneLayout(decide);
@@ -137,6 +144,19 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     handle.addEventListener('pointerup', end);
     handle.addEventListener('pointercancel', end);
   }
+
+  // The room's own small windows (emoji tray, add, feed, games, speed) are bottom sheets on a phone too, but a tap on
+  // the video never reaches the page (YouTube's frame takes it), so they get a backdrop: a tap on it is a press
+  // outside them, which closes them by their own rules.
+  const popBackdrop = el('div', { class: 'ph-backdrop ph-pop-backdrop', hidden: '' });
+  root.append(popBackdrop);
+  const POPS = '.toolbar :is(.react-tray, .game-menu, .speed-pop), .shorts-bar :is(.react-tray, .shorts-feed-pop, .game-menu)';
+  const watchPops = () => {
+    const open = (html.classList.contains('ph-room') || html.classList.contains('ph-shorts')) && !!root.querySelector(`:is(${POPS}):not([hidden])`);
+    // Only on a change: setting the attribute is itself a mutation this observer sees.
+    if (popBackdrop.hidden === open) popBackdrop.hidden = !open;
+  };
+  new MutationObserver(watchPops).observe(root, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
   const tile = (icon: string, label: string, action: () => void, extra?: HTMLElement) => {
     const button = el('button', { type: 'button', class: 'ph-tile' }, el('span', { class: 'ph-tile-ico', 'aria-hidden': 'true' }, icon), el('span', { class: 'ph-tile-label' }, label));
@@ -329,6 +349,108 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
       }
     }
   }).observe(document.body, { childList: true });
+
+  // ---- Shorts on a phone (0.9.92.4, pick 5A): the video takes the screen; one slim bar under it holds the seats
+  // (faces, cameras inside), the newest message for a moment, and 💬 😀 ▲ ▼ ⋯. The desktop Shorts bar stays in the
+  // page out of sight: its windows (emoji tray, add, feed, games) open as sheets from the ⋯ / 😀 buttons. ----
+  const shortsBar = el('div', { class: 'ph-shorts-bar' });
+  const faces = el('div', { class: 'ph-faces' });
+  const toast = el('div', { class: 'ph-toast', role: 'status', hidden: '' });
+  const barButton = (icon: string, label: string, action: () => void, id: string) => {
+    const button = el('button', { type: 'button', class: 'chat-tool ph-bar-btn', id, title: label, 'aria-label': label }, icon);
+    button.addEventListener('click', action);
+    return button;
+  };
+  const count = el('span', { class: 'ph-left', 'aria-hidden': 'true' });
+  shortsBar.append(
+    faces,
+    toast,
+    barButton('💬', t('chat'), () => openShortsChat(), 'ph-shorts-chat'),
+    barButton('😀', t('reactTray.hint'), () => $<HTMLButtonElement>('#shorts-bar .react-open')?.click(), 'ph-shorts-react'),
+    el('span', { class: 'ph-nav' }, barButton('▲', t('shorts.prev'), () => $<HTMLButtonElement>('#shorts-prev')?.click(), 'ph-shorts-prev'), count, barButton('▼', t('shorts.next'), () => $<HTMLButtonElement>('#shorts-next')?.click(), 'ph-shorts-next')),
+    barButton('⋯', t('phone.more'), () => openShortsMore(), 'ph-shorts-more'),
+  );
+  const seatsL = $('#seats-l');
+  const seatsR = $('#seats-r');
+  const seatsHome = seatsL ? { parent: seatsL.parentElement!, next: seatsL } : null;
+  const stage = $('.stage');
+  /** Moves the seats into the bar while the phone shows Shorts, and back after. */
+  function placeShortsBar(on: boolean): void {
+    if (!seatsL || !seatsR || !stage || !seatsHome) return;
+    if (on) {
+      faces.append(seatsL, seatsR);
+      stage.append(shortsBar);
+      count.textContent = $('#shorts-left')?.textContent ?? '';
+    } else if (shortsBar.isConnected) {
+      seatsHome.parent.insertBefore(seatsL, seatsHome.parent.querySelector('#theater'));
+      // seats-r sits after the ▲▼ column on a computer.
+      $('#shorts-nav')?.after(seatsR);
+      shortsBar.remove();
+    }
+  }
+  const left = $('#shorts-left');
+  if (left) new MutationObserver(() => (count.textContent = left.textContent ?? '')).observe(left, { childList: true, characterData: true, subtree: true });
+
+  function openShortsChat(): void {
+    const panel = $('[data-panel="chat"]');
+    if (!panel) return;
+    openSheet({ name: 'shorts-chat', title: t('chat'), nodes: [panel], borrow: [panel], tall: true });
+    requestAnimationFrame(() => {
+      const list = $('#chat-list');
+      if (list) list.scrollTop = list.scrollHeight;
+    });
+  }
+
+  function openShortsMore(): void {
+    const tiles: HTMLElement[] = [];
+    if (!$('#shorts-voice')?.hidden) {
+      const mic = $('#shorts-mic');
+      const cam = $('#shorts-cam');
+      tiles.push(tile('🎙', mic?.title || t('voice.join'), press('#shorts-mic')));
+      if (cam && !cam.hidden) tiles.push(tile('📷', cam.title || t('voice.camOn'), press('#shorts-cam')));
+    }
+    tiles.push(
+      tile('＋', t('shorts.add'), press('#shorts-add')),
+      tile('♾', $('#shorts-feed-label')?.textContent || t('feed.short'), press('#shorts-feed')),
+      tile('🎮', t('tool.game'), press('#shorts-game')),
+      tile(roomLoop() ? '🔁✓' : '🔁', t('shorts.loop'), press('#shorts-loop')),
+      tile('🔗', t('phone.more.invite'), () => {
+        closeSheet();
+        $<HTMLButtonElement>('#invite-btn')?.click();
+        if (!canShareSheet()) flashHint($('#ph-shorts-more')!, t('phone.more.copied'));
+      }),
+      tile('⚙️', t('tab.settings'), () => {
+        closeSheet();
+        deps.openSettings();
+      }),
+      tile('↩', t('shorts.roomView'), press('#shorts-exit')),
+    );
+    openSheet({ name: 'shorts-more', nodes: [el('div', { class: 'ph-grid' }, ...tiles)] });
+  }
+  const roomLoop = () => $('#shorts-loop')?.getAttribute('aria-pressed') === 'true';
+
+  // The newest message from someone else shows in the bar for a few seconds (the chat itself is one tap away).
+  let toastTimer = 0;
+  const chatList = $('#chat-list');
+  if (chatList) {
+    new MutationObserver((records) => {
+      if (!html.classList.contains('ph-shorts') || !sheet.hidden) return;
+      // A full redraw (language change, history) adds many lines at once: only a single new line is a new message.
+      if (records.length !== 1 || records[0]!.addedNodes.length !== 1) return;
+      const line = records[0]!.addedNodes[0];
+      if (!(line instanceof HTMLElement) || !line.classList.contains('chat-line') || line.classList.contains('me')) return;
+      let name = line.querySelector('.chat-name')?.textContent ?? '';
+      // A follow-up line from the same person has no name: take it from the line above.
+      for (let prev = line.previousElementSibling; !name && prev; prev = prev.previousElementSibling) name = prev.querySelector('.chat-name')?.textContent ?? '';
+      const text = line.querySelector('.chat-text')?.textContent ?? (line.querySelector('.chat-image-btn, .chat-image-missing') ? '🖼️' : '');
+      if (!text) return;
+      toast.textContent = name ? `${name}: ${text}` : text;
+      toast.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => (toast.hidden = true), 4000);
+    }).observe(chatList, { childList: true });
+  }
+  toast.addEventListener('click', () => openShortsChat());
 
   decide();
 

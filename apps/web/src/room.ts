@@ -1997,6 +1997,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
   };
   shortsAdd.addEventListener('click', () => setShortsAdd(shortsAdd.getAttribute('aria-expanded') !== 'true'));
+  // Like the ♾ window: a press elsewhere or Esc closes it (on a phone its button is in the ⋯ sheet, 0.9.92.4).
+  document.addEventListener('pointerdown', (event) => {
+    if (!shortsAddForm.hidden && !(event.target as Element).closest?.('.shorts-add-wrap')) setShortsAdd(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !shortsAddForm.hidden) setShortsAdd(false);
+  });
   const shortsSearch = createShortsSearch($('#shorts-add-results'), (id) => {
     addMedia({ kind: 'youtube', id, short: true }, 'enqueue');
     flashHint(shortsAdd, t('queuedNote'), 2000);

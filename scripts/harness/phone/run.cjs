@@ -165,6 +165,22 @@ const sheetName = (page) => page.evaluate(() => {
     check(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs')), 'phone turned sideways opens fullscreen');
     const dock = await rect(page, '#fs-dock');
     check(!!dock && dock.y >= 0 && dock.b <= 390, 'sideways: the dock fits the screen', JSON.stringify(dock));
+    // 4B: a slim column beside the video (never on it), only 💬 😀 🎙 📷 and exit.
+    const player = await rect(page, '#player');
+    const shown = await page.evaluate(() => [...document.querySelectorAll('#fs-dock .dock-btn')].filter((b) => b.offsetParent).map((b) => b.id).join(','));
+    check(!!dock && !!player && dock.x >= player.r - 1 && dock.r >= 843 && dock.w <= 70 && dock.h >= 380, 'sideways: the dock is a column beside the video', JSON.stringify({ dock, player }));
+    check(shown === 'dock-chat,dock-react,dock-mic,dock-cam,dock-exit', 'sideways: the dock holds 💬 😀 🎙 📷 and exit', shown);
+    await page.click('#dock-chat');
+    await page.waitForTimeout(300);
+    const pop = await rect(page, '#dock-chat-form');
+    const popVisible = await page.evaluate(() => {
+      const f = document.getElementById('dock-chat-form');
+      const r = f.getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('#dock-chat-form') === f;
+    });
+    check(!!pop && popVisible && pop.r <= dock.x + 1, 'sideways: 💬 opens the message box left of the dock', JSON.stringify(pop));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
     await page.setViewportSize({ width: 390, height: 664 });
     await page.waitForTimeout(600);
     check(!(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs'))), 'phone upright again: the room comes back');
@@ -185,7 +201,8 @@ const sheetName = (page) => page.evaluate(() => {
   {
     const ctx = await browser.newContext({ ...devices['Pixel 7'] });
     const page = await ctx.newPage();
-    await enter(page, id());
+    const roomId = id();
+    await enter(page, roomId);
     await addMedia(page, 'https://www.youtube.com/shorts/aqz-KE-bpKQ https://www.youtube.com/shorts/dQw4w9WgXcQ https://www.youtube.com/shorts/9bZkp7q5F8I', 'load');
     await page.waitForTimeout(4000);
     check(await page.evaluate(() => document.querySelector('.room').classList.contains('shorts')), 'Shorts: Short açılınca Shorts görünümü kendiliğinden');
@@ -195,9 +212,10 @@ const sheetName = (page) => page.evaluate(() => {
     const box = await rect(page, '.player-wrap');
     const cdp = await ctx.newCDPSession(page);
     // 0.9.91.17: YouTube's own bar is on the video (YouTube's rules: nothing of ours over its player), so the swipe
-    // is beside the video (the stage's margin), not on it.
-    const x = Math.max(4, box.x / 2);
-    const y = box.y + box.h / 2;
+    // is beside it; on a phone (0.9.92.4) the video fills the width: the swipe starts on the bar under it.
+    const strip = await rect(page, '.ph-shorts-bar');
+    const x = strip ? 20 : Math.max(4, box.x / 2);
+    const y = strip ? strip.y + strip.h / 2 - 120 : box.y + box.h / 2;
     const touch = (type, at) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y: at }] });
     await touch('touchStart', y + 120);
     for (let i = 1; i <= 6; i++) {
@@ -207,6 +225,49 @@ const sheetName = (page) => page.evaluate(() => {
     await touch('touchEnd');
     await page.waitForTimeout(2500);
     check((await page.textContent('#now-title')) !== before, 'Shorts: yukarı kaydırınca sıradaki açılıyor');
+    // 0.9.92.4 (pick 5A): the video takes the screen, one slim bar under it; no top bar.
+    const vh2 = await page.evaluate(() => innerHeight);
+    const video = await rect(page, '.player-wrap');
+    const bar = await rect(page, '.ph-shorts-bar');
+    check((await page.evaluate(() => document.documentElement.classList.contains('ph-shorts'))) && !(await page.isVisible('.topbar')) && video.h >= vh2 - 110 && Math.abs(bar.b - vh2) <= 1 && bar.y >= video.b - 1 && bar.y - video.b <= 30, 'Shorts: the video takes the screen, one bar under it, no top bar', JSON.stringify({ video, bar, vh2 }));
+    check(await page.evaluate(() => ['#ph-shorts-chat', '#ph-shorts-react', '#ph-shorts-prev', '#ph-shorts-next', '#ph-shorts-more'].every((s) => !!document.querySelector(s)?.offsetWidth) && document.querySelectorAll('.ph-faces .seat').length >= 1), 'Shorts: the bar has the seats and 💬 😀 ▲ ▼ ⋯');
+    // A friend writes: the message shows in the bar for a moment; 💬 opens the chat.
+    const friend = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const fp = await friend.newPage();
+    await enter(fp, roomId);
+    await fp.keyboard.press('Enter');
+    await fp.fill('#shorts-input', 'what a great one');
+    await fp.press('#shorts-input', 'Enter');
+    const toast = await page.waitForFunction(() => { const t = document.querySelector('.ph-toast'); return t && !t.hidden ? t.textContent : null; }, null, { timeout: 8000 }).then((h) => h.jsonValue()).catch(() => null);
+    check(!!toast && toast.includes('what a great one'), 'Shorts: a friend\'s message shows in the bar', String(toast));
+    await page.click('#ph-shorts-chat');
+    await page.waitForTimeout(300);
+    check((await sheetName(page)) === 'shorts-chat' && (await page.isVisible('.ph-sheet #chat-input')) && (await page.textContent('.ph-sheet #chat-list')).includes('what a great one'), 'Shorts: 💬 opens the chat with the message box');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    // ⋯ → Add: the Shorts add window opens as a sheet; a tap on its backdrop (over the video) closes it.
+    await page.click('#ph-shorts-more');
+    check((await sheetName(page)) === 'shorts-more' && (await page.$$('.ph-sheet .ph-tile')).length >= 7, 'Shorts: ⋯ opens the Shorts menu');
+    await page.click('.ph-sheet .ph-tile:has-text("Ekle")');
+    await page.waitForTimeout(400);
+    const add = await rect(page, '#shorts-add-form');
+    check(!!add && Math.abs(add.b - vh2) <= 1 && (await page.isVisible('.ph-pop-backdrop')), 'Shorts: ⋯ → Add opens as a bottom sheet with a backdrop', JSON.stringify(add));
+    await page.mouse.click(30, 60);
+    await page.waitForTimeout(300);
+    check(!(await page.isVisible('#shorts-add-form')) && !(await page.isVisible('.ph-pop-backdrop')), 'Shorts: a tap over the video closes it');
+    // Sideways: the bar becomes a column right of the video.
+    await page.setViewportSize({ width: 915, height: 412 });
+    await page.waitForTimeout(500);
+    const side = { video: await rect(page, '.player-wrap'), bar: await rect(page, '.ph-shorts-bar') };
+    check(side.bar.x >= side.video.r - 1 && side.video.h >= 400 && side.bar.h >= 400, 'Shorts sideways: the bar is a column right of the video', JSON.stringify(side));
+    await page.setViewportSize({ width: 412, height: 839 });
+    await page.waitForTimeout(400);
+    // ↩ Room view: back to the phone room, the seats back in place.
+    await page.click('#ph-shorts-more');
+    await page.click('.ph-sheet .ph-tile:has-text("Oda görünümü")');
+    await page.waitForTimeout(900);
+    check((await page.evaluate(() => document.documentElement.classList.contains('ph-room') && !!document.querySelector('.stage > #seats-l') && !document.querySelector('.ph-shorts-bar'))), 'Shorts: ↩ Room view brings the phone room back');
+    await friend.close();
     await ctx.close();
   }
 
