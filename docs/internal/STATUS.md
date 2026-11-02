@@ -192,8 +192,18 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     Cast developer fee, after 1.0).
 - [ ] **YouTube rule + one remote** (owner, 2 Nov 2026): nothing of ours over the YouTube player (overlays, a hidden
   player and players under 200 × 200 are against YouTube's Required Minimum Functionality); one remote instead of the
-  toolbar + dock. Design page with 8 decisions: https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG (waiting for the
-  owner's picks). Includes the phone game preview (10A) for YouTube videos.
+  toolbar + dock. Design page with 8 decisions: https://claude.ai/artifact/LP8aB9RzKFZh3N6sAkEDvG. **Owner's picks
+  (2 Nov 2026):** 1B emojis rise from the sender's face (Together card, phone strip; small faces in the fullscreen
+  rail); 2A one rail beside the video (window + fullscreen), the toolbar under the video goes, a small "hide the rail"
+  button gives the video its full size back; 3A the rail holds the common buttons, details (speed, sync, next, side
+  panel…) always in ⋯; 4A changed: the rail appears when the mouse moves and the video shrinks to make room, when the
+  mouse rests the rail hides and the video grows back (in fullscreen); 5B notices (who paused, waits, invites, cards)
+  go to the chat panel, not over the video ("who paused" is not important: it is in the chat's activity); 6 and 7 stay
+  as they are (owner: Watch2Gether shows cameras over YouTube too; cameras / the stream window / the game preview are
+  the owner's accepted risk at the audit); 8B film pages and video files keep today's dock over the film, hiding when
+  idle. Also: the desktop room bigger (less empty space, bigger video even in the window, like Shorts), the join card
+  (name + avatar) bigger. Steps: [ ] 0.9.92.7 bigger room + join card; [ ] 0.9.92.8 one rail (2A 3A 4A); [ ] 0.9.92.9
+  emojis from faces (1B) + notices in the chat (5B).
 - [x] **0.9.92.6 phone feedback:** recap fits, Shorts chat half height, feed window (♾ opens it, Stop inside), camera
   row (no cameras in faces, no camera windows), real fullscreen + ⛶ in the strip + side panel in fullscreen, keyboard
   is not "sideways", one share sheet.
