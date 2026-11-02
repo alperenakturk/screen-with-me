@@ -40,7 +40,7 @@ async function enter(page, room, name) {
   // The TV: a big screen, keys only.
   // Hidden feature (0.9.91.6): without the lab switch the TV pages fall back to the home page.
   const plainCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  await plainCtx.addInitScript(() => { if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
+  await plainCtx.addInitScript(() => { localStorage.setItem('tipsSeen', '1'); if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
   const plain = await plainCtx.newPage();
   await plain.goto(`${SITE}/tv`);
   await plain.waitForTimeout(800);
@@ -52,7 +52,7 @@ async function enter(page, room, name) {
 
   // The TV: a big screen, keys only (lab switch on).
   const tvCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  await tvCtx.addInitScript(() => { if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
+  await tvCtx.addInitScript(() => { localStorage.setItem('tipsSeen', '1'); if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
   const tv = await tvCtx.newPage();
   tv.on('pageerror', (e) => errors.push(`tv: ${e.message}`));
   await tv.goto(`${SITE}/tv?tvlab=1`);
@@ -62,14 +62,16 @@ async function enter(page, room, name) {
 
   // The phone pairs it.
   const phoneCtx = await browser.newContext({ ...devices['iPhone 13'], permissions: ['camera', 'microphone'] });
-  await phoneCtx.addInitScript(() => { if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
+  await phoneCtx.addInitScript(() => { localStorage.setItem('tipsSeen', '1'); if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
   const phone = await phoneCtx.newPage();
   phone.on('pageerror', (e) => errors.push(`phone: ${e.message}`));
   await phone.goto(`${SITE}/?tvlab=1`);
   await phone.waitForFunction(() => localStorage.getItem('opt:tvLab') === '1');
   await enter(phone, room, 'Alp');
-  check(!!(await until(() => phone.isVisible('#tv-btn'))), 'phone: the 📺 TV button is in the top bar', await phone.evaluate(() => localStorage.getItem('opt:tvLab') + ' ' + location.href));
-  await phone.click('#tv-btn');
+  // Since 0.9.92.3 a phone has no top bar, so the button exists but is not on screen (the TV version is frozen until
+  // the Google Cast version; a way to it on a phone is an open idea). The harness presses it directly.
+  check(!!(await until(() => phone.$('#tv-btn'))), 'phone: the 📺 TV button exists (lab switch on; TV code loaded on demand)', await phone.evaluate(() => localStorage.getItem('opt:tvLab') + ' ' + location.href));
+  await phone.evaluate(() => document.querySelector('#tv-btn').click());
   check(await phone.isVisible('.tv-pair-dialog'), 'phone: the pair dialog opens');
   check((await phone.$$eval('.tv-step', (s) => s.length)) === 3, 'phone: the window explains it in 3 steps');
   await phone.fill('#tv-code', code);
@@ -131,7 +133,7 @@ async function enter(page, room, name) {
 
   // A friend joins voice: the TV listens (no microphone) and her face glows while she speaks.
   const friendCtx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
-  await friendCtx.addInitScript(() => { if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
+  await friendCtx.addInitScript(() => { localStorage.setItem('tipsSeen', '1'); if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
   const friend = await friendCtx.newPage();
   friend.on('pageerror', (e) => errors.push(`friend: ${e.message}`));
   await friend.goto(`${SITE}/?tvlab=1`);

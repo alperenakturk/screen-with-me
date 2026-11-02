@@ -4,13 +4,7 @@ import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 
-/** "Show this when I'm alone in a room" (on by default). */
-export const AUTO_INVITE_KEY = 'opt:autoInvite';
-/**
- * Automated browsers (the test harnesses) only get it when they ask for it (`opt:autoInvite` = '1'): a window that
- * opens by itself would cover what they click.
- */
-export const autoInviteOn = () => (navigator.webdriver ? load(AUTO_INVITE_KEY) === '1' : load(AUTO_INVITE_KEY) !== '0');
+import { AUTO_INVITE_KEY, autoInviteOn } from './invite-option.ts';
 
 /**
  * The invite window (0.9.93.1, owner: "an invite screen when I enter the room, with a QR code, like other watch

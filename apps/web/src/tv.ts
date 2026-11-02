@@ -10,36 +10,10 @@ import { el } from './dom.ts';
 import { t } from './i18n.ts';
 import { savedRooms } from './saved-rooms.ts';
 import { load, roomIdentity, save, sessionSave } from './storage.ts';
-export { tvLab } from './tv-lab.ts';
+import { saveTvLink, tvLink } from './tv-lab.ts';
+export { clearTvLink, saveTvLink, tvLab, tvLink, type TvLink } from './tv-lab.ts';
 
-/** A paired TV may come back to its room with the same token for this long (the server keeps it as long). */
-const LINK_TTL_MS = 12 * 60 * 60_000;
 const KEEPALIVE_MS = 30_000;
-
-export interface TvLink {
-  room: string;
-  token: string;
-  at: number;
-}
-
-/** This TV's last pairing (the room it may return to). */
-export function tvLink(): TvLink | null {
-  try {
-    const link = JSON.parse(load('tvLink') ?? 'null') as TvLink | null;
-    if (link && ROOM_ID_PATTERN.test(link.room) && TV_TOKEN.test(link.token) && Date.now() - link.at < LINK_TTL_MS) return link;
-  } catch {
-    // A broken record counts as none.
-  }
-  return null;
-}
-
-export function saveTvLink(room: string, token: string): void {
-  save('tvLink', JSON.stringify({ room, token, at: Date.now() }));
-}
-
-export function clearTvLink(): void {
-  save('tvLink', '');
-}
 
 /** A code typed or scanned on the phone, waiting for the room to connect (sent after the room's welcome). */
 export function rememberPairing(code: string): void {
@@ -57,6 +31,7 @@ function newCode(): string {
 
 /** The TV's pairing screen. */
 export function renderTvPair(app: HTMLElement): void {
+  void import('./tv.css'); // the TV pages' styles load with them (phone speed, 0.9.93.6)
   document.documentElement.classList.add('tv-pair-page');
   const codeEl = el('div', { class: 'tvp-code', 'aria-live': 'polite' });
   const qr = el('img', { class: 'tvp-qr', alt: '' });
@@ -129,6 +104,7 @@ export function renderTvPair(app: HTMLElement): void {
 
 /** On the phone, opened from the TV's QR: which room should the TV join? */
 export function renderTvChooser(app: HTMLElement, code: string): void {
+  void import('./tv.css'); // the TV pages' styles load with them (phone speed, 0.9.93.6)
   if (!TV_CODE.test(code)) {
     location.replace('/');
     return;

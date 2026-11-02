@@ -1,3 +1,4 @@
+import '../tv.css';
 // The room on a TV (owner chose A + C, 30 Oct 2026): the video fills the screen, messages and emojis fly over it, the
 // faces of the people in the room sit at the top (a green ring while someone speaks), and the remote has only the
 // basics. OK opens a bar of big buttons: play / pause, emojis, messages on / off, voice volume, disconnect the TV.
