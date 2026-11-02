@@ -81,6 +81,26 @@ We are building a **global product**, so everything is professional, formal and 
   `kvkk-gdpr-denetim`). Likely fits for this project: `kvkk-gdpr-denetim` (privacy policy, store data form),
   `llm-council` (name / domain / what to cut), `agent-reach` (competitor and user research), `hyperframes` /
   `video-use` / `earshot` (launch video and store promo), `humanizer` (store listing and launch copy).
+- **Sessions as an office (owner, 2 Nov 2026; plan in `my-awesome-list` `is-akislari/ajan-ofisi.md`).** Several
+  Claude sessions work on this repo, each with one role. Find yours in your first message or session title; if none
+  is given you are the **Developer**. The board is `docs/internal/CARDS.md` (job cards: Ready → In progress → Done);
+  the owner's tick view is the checklist page https://claude.ai/artifact/EtqKiBo8k5vgR422rq14K5.
+  - 🧭 **Planner** (with the owner, no code): keeps `ROADMAP.md` "Focus: now / next / frozen", the "Ideas waiting for
+    the owner's pick" list in `STATUS.md` and the cards in `CARDS.md`; turns ideas into cards (what, why, done when,
+    tests); prepares option pages for design / preference questions and records the owner's pick on the card; runs
+    `llm-council` for big decisions on the owner's computer. Never edits code.
+  - 🔨 **Developer** (one at a time): takes the top Ready card, moves it to In progress, builds + tests it, PR, merge,
+    checks the deploy and live e2e, adds "Done: PR link" under the card, ticks the checklist page. Owns the code,
+    `STATUS.md` "Task queue" / hand tests and the technical notes in this file. Never starts work that has no card;
+    an idea that comes up goes to "Ideas waiting for the owner's pick". A fresh Developer session per milestone step.
+  - 🛡️ **Security** (now and then, read-only): reviews `main` for bugs, security and privacy (KVKK / GDPR via
+    `kvkk-gdpr-denetim`'s `SKILL.md` in `my-awesome-list`); writes a report `docs/internal/security-review-<n>.md`
+    and proposed cards under "Proposed" in `CARDS.md`. Never fixes code itself.
+  - 🔎 **Research** (when needed, read-only): market, competitors, users, technical questions; writes
+    `docs/internal/research/<topic>.md` and proposed cards under "Proposed". Never edits code.
+  - Rules for all: every change goes through a branch + PR (never push to `main`); a docs-only PR may be merged by its
+    session once CI is green. Each role edits only its own files above, so two sessions never change the same lines.
+    Talk to the owner in Turkish; everything written to the repo stays English.
 - **Focus (owner, 2 Nov 2026):** before starting anything, check `ROADMAP.md` "Focus: now / next / frozen" and work
   only on "Now". Build a new feature for computer + phone first; tablet layouts and missing translations are a batch at
   the end of the milestone step. An idea that comes up mid-task goes to `STATUS.md` "Ideas waiting for the owner's
