@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.4**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.5**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -242,6 +242,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   fullscreen chat messages over the video sat at the rail's foot, over YouTube's own bar (settings / fullscreen
   buttons). They now come down from the top right, just left of the rail, as in the window. Test: `yt-room` harness
   (+ 2 fullscreen message checks).
+- [x] **0.9.93.5** (owner's screenshot, 2 Nov 2026: in fullscreen the rail stayed while YouTube's bar had gone): after
+  a click on a rail button (⋯, 😀) and any key press (Esc, a shortcut) the button counted as keyboard focus and held
+  the rail out for good. The rail now lets go of the focus when the mouse leaves it; only Tab users keep it. Test:
+  `yt-room` harness (+ 2 checks, both fail on 0.9.93.4).
 - [ ] **Ideas waiting for the owner's pick** (Claude's proposals, 2 Nov 2026; small ones were built above): (1) a
   friendly room name by default instead of "Room swky86r" (the owner names things); (2) "? Shortcuts" card listing
   the keys; (3) hand the host role to someone from the person menu; (4) a "3-2-1, together" countdown before the first
@@ -355,6 +359,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.5 (computer):**
+- [ ] YouTube in fullscreen: open ⋯ or 😀 on the right, press Esc (or send an emoji), move the mouse onto the video
+  and leave it still: the button column goes away together with YouTube's bar.
 
 **0.9.93.4 (computer):**
 - [ ] YouTube in fullscreen, a friend writes: the message appears at the top right, left of the button column, not
