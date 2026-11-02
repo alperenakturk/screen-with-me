@@ -61,6 +61,9 @@ export function showFirstTips(): void {
   }
 
   function show(): void {
+    // A window is open (the invite window opens by itself in an empty room): the tips wait until it closes.
+    const waiting = document.documentElement.classList.contains('invite-pending') || document.querySelector('.dialog-backdrop:not([hidden])');
+    if (step === 0 && !bubble && waiting) return void setTimeout(show, 700);
     const tips = shown();
     if (step >= tips.length) return finish();
     const tip = tips[step]!;
