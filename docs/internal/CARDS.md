@@ -382,6 +382,45 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: CI green; `npm audit` 0.
 - Owner's pick: needed only for the GitHub settings (branch protection, secret scanning).
 
+### Things still drawn over the YouTube player: decide before the API audit (Research)
+- Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
+  video in the room view, the "3-2-1" countdown and notes over the video, and the dock / toasts / cameras over a YouTube
+  player in fullscreen. Details and a recommendation per item (split layout: cameras and messages in a column
+  beside the player, also in fullscreen): `research/youtube-overlay-rail.md` "Follow-up (Job 3)".
+- Done when: for each item the owner chose "move beside / outside the player" or "accept the audit risk" in writing,
+  and the moved ones are built; a harness asserts no element of ours intersects the YouTube iframe's box (outside the
+  accepted list).
+- Tests: harness overlap check in the room view, Shorts view and fullscreen.
+- Owner's pick: needed (per item; option page by the Planner).
+
+### 🍿 Snack Bar: first solo side game (Research)
+- Why: the owner wants something to play alone while watching with friends; an idle game fits low attention and
+  "progress over time". Details: `research/solo-games-accounts.md` Part A.
+- Done when: 🎮 has a "Play on the side" entry that opens Snack Bar in a free window / side panel / phone sheet without
+  scrolling; income only while the room's video plays, capped "while you were away" bonus, +10 % per other person in
+  the room (more in voice), prestige "new cinema"; silent by default; never takes the room's keys or focus; save is
+  one versioned JSON in `localStorage`; lazy chunk; EN + TR strings; original look, no film names.
+- Tests: unit (economy: income per watched second, cap, together bonus, prestige, save migration); harness (fits at
+  phone / small free window sizes without scrollbars, room keys 1–8 / Enter still reach the room).
+- Owner's pick: needed (theme and name; it is a new feature, frozen until 0.9.95 per ROADMAP "Focus").
+
+### Move my things to another device (Research)
+- Why: browser-only saves (game progress, saved rooms, emoji collection) are lost on a new phone; accounts are costly.
+  Details: `research/solo-games-accounts.md` Part B, option B.
+- Done when: "Move to another device" shows a 6-digit code + QR; the other device enters / scans it and receives the
+  blob once via a short-lived Durable Object (TV pairing pattern, nothing stored, 10 min expiry, rate-limited); the
+  privacy policy mentions it.
+- Tests: e2e (code → transfer → expiry, wrong code, rate limit); unit (blob versioning / merge).
+- Owner's pick: needed (whether to build it before or after 1.0).
+
+### Accounts: owner's decision (Research)
+- Why: idle games and cross-device saves raise accounts; they touch the "no account" promise, GDPR / KVKK, Apple's
+  in-app deletion rule and security. Details: `research/solo-games-accounts.md` Part B.
+- Done when: the owner picked on an option page: A (browser only) / B (move code) / D (optional passkey account after
+  1.0) / E (e-mail accounts), recorded in ROADMAP; research recommends A now, B next, D only if users ask.
+- Tests: none (decision).
+- Owner's pick: needed (accounts are the owner's call per CLAUDE.md).
+
 ## Done
 
 ### Root cause of the live e2e first-attempt failures
