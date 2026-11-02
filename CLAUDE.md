@@ -70,6 +70,17 @@ We are building a **global product**, so everything is professional, formal and 
     before 1.0). Costs many sub-agents; only for real decisions.
   - `agent-reach`: reads Reddit / X / YouTube / web for market and competitor research (read-only).
   - Agentation (click-to-annotate for coding agents) needs React; this site is plain TypeScript, so it is not used here.
+- **The owner's skill and tool catalogue (owner, 2 Nov 2026): `alperenakturk/my-awesome-list`** (private; attach it
+  with `add_repo` when needed). `skills/<name>/` (`SKILL.md` = the skill, `REHBER.md` = the owner's Turkish guide with
+  the install command; skills with their own marketplace have only `REHBER.md`), `araclar/` (tools: agent-reach,
+  gitdiagram, gitingest, headroom, hyperframes, video-use, earshot…), `is-akislari/` (workflows), `GELEN-KUTUSU.md`
+  (inbox of things not sorted yet). **Rule:** whenever a task would go better with a skill or tool from that catalogue
+  that this session does not have (most are installed only on the owner's computer), say so before or while doing the
+  task: which one, why it fits, and how to run it ("run it on your computer: …" with the command from its `REHBER.md`,
+  or "I can follow its `SKILL.md` here by reading it", which works for plain instruction skills such as
+  `kvkk-gdpr-denetim`). Likely fits for this project: `kvkk-gdpr-denetim` (privacy policy, store data form),
+  `llm-council` (name / domain / what to cut), `agent-reach` (competitor and user research), `hyperframes` /
+  `video-use` / `earshot` (launch video and store promo), `humanizer` (store listing and launch copy).
 - **Focus (owner, 2 Nov 2026):** before starting anything, check `ROADMAP.md` "Focus: now / next / frozen" and work
   only on "Now". Build a new feature for computer + phone first; tablet layouts and missing translations are a batch at
   the end of the milestone step. An idea that comes up mid-task goes to `STATUS.md` "Ideas waiting for the owner's
