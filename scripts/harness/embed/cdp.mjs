@@ -141,6 +141,8 @@ export async function launch({ ext, out, width = 1280, height = 860, headless = 
   const sid = attached.result.sessionId;
   const cdp = (method, params) => send(method, params, sid);
   await cdp('Page.enable');
+  // The site starts in English (0.9.92.3); these harnesses check Turkish texts, so a fresh browser picks Turkish.
+  await cdp('Page.addScriptToEvaluateOnNewDocument', { source: "try { if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); } catch (e) {}" });
   await cdp('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: false, flatten: true });
   await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
   const evaluate = async (expression) =>

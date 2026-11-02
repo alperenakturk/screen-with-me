@@ -297,6 +297,8 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the card says "Filme git" by itself.
 
 **0.9.92.3 (phone room as an app, on your phone):**
+- [ ] Open the site in a fresh browser (or a private window): it starts in English; TR in the menu switches and is
+  remembered (owner, 2 Nov 2026: English first everywhere).
 - [ ] Open a room on the phone: no top bar, the video at the top edge to edge, faces under it, chat, message box with
   😀 and ＋ at the bottom; nothing slides or scrolls except the chat.
 - [ ] ＋ → Video ekle: paste a link or search, "Şimdi aç" plays it; the queue is in the same sheet.

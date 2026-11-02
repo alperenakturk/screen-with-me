@@ -2145,13 +2145,12 @@ const en: Record<Key, string> = {
 const dictionaries: Record<Lang, Record<Key, string>> = { tr, en };
 
 /**
- * Varsayılan dil Türkçe (kullanıcı EN seçerse o hatırlanır). Seçim tarayıcıda 'lang' anahtarıyla saklanır ve
- * aynı adresteki tüm sayfalar (site, eklenti sayfası, gizlilik) bunu paylaşır;
- * eklenti de site-bridge üzerinden aynı dili alır.
+ * The default language is English on every device, whatever the browser's language (owner, 2 Nov 2026: "English
+ * first"); a chosen language (TR / EN in the profile menu or the top bar) is remembered under 'lang', shared by every
+ * page of the site (site, extension page, privacy) and passed to the extension through site-bridge.
  */
 function detect(): Lang {
-  const saved = load('lang');
-  return saved === 'en' ? 'en' : 'tr';
+  return load('lang') === 'tr' ? 'tr' : 'en';
 }
 
 let current: Lang = detect();

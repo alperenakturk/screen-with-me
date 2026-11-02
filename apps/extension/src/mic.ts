@@ -33,7 +33,7 @@ const text = {
 
 async function main(): Promise<void> {
   await langReady;
-  const dict = (await readValue('lang').catch(() => null)) === 'en' ? text.en : text.tr;
+  const dict = (await readValue('lang').catch(() => null)) === 'tr' ? text.tr : text.en;
   document.documentElement.lang = dict === text.en ? 'en' : 'tr';
   // Kamera izni de aynı sayfadan (?cam=1): görüntülü sohbet eklentinin görünmeyen sayfasında, o da izin isteyemez.
   const cam = new URLSearchParams(location.search).get('cam') === '1';

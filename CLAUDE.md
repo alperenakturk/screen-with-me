@@ -906,7 +906,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   🖼️ = add GIF/photo; custom emoji pages via ▲▼ (fullscreen and Shorts; under the video it's the tray, see 0.9.80).
 - **Rate:** `MAX_RATE` 4 (HTML5), YouTube at most 2 (`YOUTUBE_MAX_RATE`; the site clamps the request, the server lowers
   the rate to 2 when a YouTube video opens).
-- **Default language is Turkish** (site + extension); if EN is chosen it is remembered.
+- **Default language is English** on every device, whatever the browser's language (owner, 2 Nov 2026; 0.9.92.3;
+  site `i18n.ts` `detect`, extension `i18n.ts` / `mic.ts`, `offline.js`); a chosen TR / EN is remembered (`lang`).
+  The UI harnesses read Turkish labels, so they pick Turkish in a fresh browser (`embed/cdp.mjs`, phone, TV).
 - **Avatar choice:** on the site "Avatarı değiştir" → a large centered dialog (`openAvatarDialog`); since 0.9.87 a pick
   is only applied (and seen by others) with "Tamam" or a double-click; ✕ / Esc / outside cancel. In the extension a
   panel covering the whole window. Hover wobbles, the selected one floats (CSS; off with `prefers-reduced-motion`).

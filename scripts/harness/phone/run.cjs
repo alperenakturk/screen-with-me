@@ -22,7 +22,11 @@ const rect = (page, selector) =>
   }, selector);
 
 async function enter(page, room) {
-  await page.addInitScript(() => localStorage.setItem('tipsSeen', '1'));
+  await page.addInitScript(() => {
+    localStorage.setItem('tipsSeen', '1');
+    // The site starts in English (0.9.92.3); these checks read Turkish labels.
+    if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr');
+  });
   await page.goto(`${SITE}/r/${room}`);
   await page.fill('#name', 'Alex');
   await page.click('#name-form button.primary');
@@ -101,9 +105,14 @@ const sheetName = (page) => page.evaluate(() => {
     await page.waitForTimeout(300);
     const tray = await rect(page, '.toolbar .react-tray');
     check(!!tray && tray.x >= -1 && Math.abs(tray.r - vw) <= 1 && Math.abs(tray.b - vh) <= 1 && tray.h > 40, 'phone: 😀 opens the emoji tray from the bottom', JSON.stringify(tray));
-    await page.click('#chat-react');
+    const onTop = await page.evaluate(() => {
+      const r = document.querySelector('.toolbar .react-tray').getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width / 2, r.bottom - 10)?.closest('.react-tray') !== null;
+    });
+    check(onTop, 'phone: the tray covers the message box (not under it)');
+    await page.mouse.click(vw / 2, 120);
     await page.waitForTimeout(300);
-    check(!(await page.isVisible('.toolbar .react-tray')), 'phone: 😀 again closes it');
+    check(!(await page.isVisible('.toolbar .react-tray')), 'phone: a tap outside closes it');
     // The toolbar's windows still open as sheets (games, speed) and the profile menu too.
     for (const [open, tileIndex, pop, label] of [
       ['#chat-plus', 1, '#game-menu', 'games'],
