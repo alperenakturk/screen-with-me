@@ -161,3 +161,22 @@ non-embed products differ.
 **Which design keeps cameras usable while watching YouTube:** the split layout: video + a camera column beside it
 (window and fullscreen), with tile sizes from the person menu (small / medium / large) changing the column width, not
 covering the video. It matches W2G / Kosmi and is the only form that passes the audit.
+
+### Owner's hand finding in Watch2Gether (2 Nov 2026) and the risk of design "D"
+- **Finding (owner, by hand):** in W2G he could **drag a webcam tile over the YouTube player**, and W2G's **settings
+  menu opens over the player**. So in practice W2G tolerates user-moved windows and short-lived menus over the player
+  (it also contradicts the 2020 forum picture above, which is older).
+- **Design "D":** our defaults never put anything over the player (the four recommendations in (5)), but the user may
+  drag cameras over it, and our popups (emoji tray, ⋯, speed, games hall) may open over it briefly.
+- **Read of the risk: grey, low to medium.** The rule's text has no exception for user-moved windows or short menus, so
+  D is still not literally compliant. But: (a) an auditor judges the product as it ships and is demoed: with D the
+  default screens are clean; (b) a long-running, popular product with a YouTube search key (W2G) does the same, which
+  suggests it is not what audits fail on (we have no public proof W2G was audited: weak); (c) the user choosing to
+  cover their own video is the closest thing to "not our overlay". The risk is concentrated in two places: anything
+  that **lands over the player by itself** (a reset position, an automatic tile column, a popup that stays open) and
+  **click-catching** layers (III.I.6 "block any portion or functionality").
+- **To keep D on the safe side:** default and reset positions never intersect the player; automatic camera columns
+  live beside it; popups over the player close on any click outside / when the mouse leaves (they already do, 0.9.93.2)
+  and never stay open by themselves; no invisible click catchers over the player (removes `#rail-edge`); in the audit
+  submission, screenshots and the demo show the defaults. If YouTube ever flags it, D falls back to "snap out of the
+  player's box" with one change.
