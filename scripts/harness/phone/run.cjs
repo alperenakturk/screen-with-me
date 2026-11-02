@@ -209,6 +209,25 @@ const sheetName = (page) => page.evaluate(() => {
     await ctx.close();
   }
 
+  // 1a) The home page on a phone (11A): an app start screen, no scrolling; "How does it work?" opens the rest.
+  {
+    const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+    const page = await ctx.newPage();
+    await page.goto(SITE + '/');
+    await page.waitForSelector('#home-how');
+    await page.waitForTimeout(600);
+    const size = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, inner: innerHeight }));
+    const create = await rect(page, '#start-form .btn');
+    const join = await rect(page, '#join-toggle');
+    check(size.scroll <= size.inner + 1 && create?.w > 300 && join?.w > 300 && !(await page.isVisible('#start-link')), 'home: an app start screen (two big buttons, no scrolling)', JSON.stringify({ size, create, join }));
+    await page.click('#join-toggle');
+    check(await page.isVisible('#join-input'), 'home: "Join with a code" opens the code box');
+    await page.click('#home-how');
+    await page.waitForTimeout(600);
+    check((await page.isVisible('.home-steps')) && (await page.isVisible('.home-preview')), 'home: "How does it work?" opens the introduction');
+    await ctx.close();
+  }
+
   // 1b) A desktop window keeps the desktop room (top bar, side panel, no phone strip).
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });

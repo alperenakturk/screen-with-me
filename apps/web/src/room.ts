@@ -30,7 +30,7 @@ import {
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { POOL_KINDS } from '@swm/shared/youtube-search';
-import { canShareSheet, isTouch } from './device.ts';
+import { canShareSheet, isPhoneLayout, isTouch } from './device.ts';
 import { el } from './dom.ts';
 import { lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -65,7 +65,6 @@ import { createSeats } from './ui/seats.ts';
 import { createShortsFeed } from './ui/shorts-feed.ts';
 import { createPins } from './ui/pins.ts';
 import { showNextCard } from './ui/end-card.ts';
-import { renderRecapHistory, showRecap } from './ui/recap.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
@@ -263,7 +262,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla. Film sayfasındaki katmanda
   // değil: orada film sayfanın kendi oynatıcısında, her film sayfası açılışında boşuna ~1 MB inerdi (gerekirse yine yüklenir).
-  if (!isShell) loadYouTubeApi().catch(() => {});
+  // Not on a phone either (0.9.92.5, speed): ~1 MB over a phone's network before anything plays; it loads with the
+  // first YouTube video.
+  if (!isShell && !isPhoneLayout()) loadYouTubeApi().catch(() => {});
 
   app.innerHTML = `
     <div class="room">
@@ -1124,12 +1125,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'recap': {
         // Bugünün özeti (oturumun başından şimdiye; sadece isteyene gelir). Son kartta "Kaydet".
         const { recap } = message;
-        showRecap(recap, { onSave: () => send({ t: 'recap-save' }) });
+        // The recap's code is loaded when it is first needed (0.9.92.5, speed).
+        void import('./ui/recap.ts').then(({ showRecap }) => showRecap(recap, { onSave: () => send({ t: 'recap-save' }) }));
         break;
       }
       case 'recaps':
         recaps = message.recaps;
-        renderRecapHistory($('#recap-history'), recaps);
+        void import('./ui/recap.ts').then(({ renderRecapHistory }) => renderRecapHistory($('#recap-history'), recaps));
         break;
       case 'home':
         if (isShell && film !== null) askHome(message.by);

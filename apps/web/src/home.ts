@@ -72,6 +72,8 @@ export function renderHome(app: HTMLElement): void {
       <p class="muted small" data-i18n="savedRoomsHint"></p>
     </section>
 
+    <p class="home-how-row phone-only"><button id="home-how" type="button" class="link-btn" aria-expanded="false" data-i18n="home.how"></button></p>
+
     <section class="home-steps">
       <h2 data-i18n="home.steps"></h2>
       <ol>
@@ -113,6 +115,15 @@ export function renderHome(app: HTMLElement): void {
   `;
   translate(app);
   renderThemeStrip(app.querySelector<HTMLElement>('#theme-strip')!, { all: true });
+  // On a phone the home page is an app start screen (0.9.92.5, pick 11A, phone.css `in-home`): create, join with a
+  // code and the saved rooms; the introduction opens with "How does it work?".
+  document.documentElement.classList.add('in-home');
+  const how = app.querySelector<HTMLButtonElement>('#home-how')!;
+  how.addEventListener('click', () => {
+    const open = document.documentElement.classList.toggle('home-intro-open');
+    how.setAttribute('aria-expanded', String(open));
+    if (open) app.querySelector('.home-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 
   // Oda kur: link isteğe bağlı (odada ilk açılan video olur); "kaydet" seçiliyse ad zorunlu.
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;

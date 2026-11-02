@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.92.4**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.92.5**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -195,8 +195,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,
   😀 / ＋ message box, ＋ / ⋯ / Add-a-video / People sheets, settings full page, back button closes sheets; phone
   harness rewritten, 40 checks). [x] **0.9.92.4 step 2:** Shorts full height (5A: one slim bar with faces, the newest
-  message, 💬 😀 ▲▼ ⋯) + sideways fullscreen dock (4B: a slim column beside the video); phone harness 53 checks. [ ] step 3:
-  full-screen games (10A), app start page (11A), speed (lazy loading, light phone CSS, YouTube only when needed).
+  message, 💬 😀 ▲▼ ⋯) + sideways fullscreen dock (4B: a slim column beside the video); phone harness 53 checks. [x] **0.9.92.5 step 3:**
+  full-screen games (10A), app start page (11A), first speed steps (no blur / drifting background on phones, YouTube only
+  with the first video, the recap loaded when needed); phone harness 61 checks. [ ] Speed, next: lazy voice / stream
+  code, a phone-only stylesheet, an automatic phone speed test (4× slower CPU) against the built site.
 - [ ] (original request) **Phone version from scratch** (owner, 1 Nov 2026: "I don't like the phone version; it feels like the PC page
   squeezed onto a phone. Make it feel like an app, every feature fitting the screen, and fast"). First a design page
   with options per part (join, watching, Shorts together, chat, voice / cameras, queue / add, games, menus, speed),
@@ -296,6 +298,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.92.5 (phone step 3, on your phone):**
+- [ ] Open the site: an app start screen (Create room, Join with a code, your saved rooms); "How does it work?" opens
+  the rest. Nothing scrolls until you open it.
+- [ ] In a room with a video, ＋ → Game → a game: it takes the whole screen; the video keeps playing small at the top
+  left with 🎙 next to it. Tap the small video: back to the video, and 🎮 with a dot waits in the faces row; tap it:
+  back to the game.
+- [ ] The room should feel lighter (no blur behind menus); the first YouTube video may take a moment longer to start.
 
 **0.9.92.4 (phone step 2, on your phone):**
 - [ ] Open a Short on the phone: the video takes almost the whole screen; under it one slim bar with the faces, 💬 😀

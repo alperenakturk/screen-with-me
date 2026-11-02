@@ -1152,3 +1152,118 @@ html.ph-shorts .room.shorts .shorts-bar :is(.react-tray, .shorts-feed-pop, .game
     display: none;
   }
 }
+
+/* ==== The home page on a phone (0.9.92.5, pick 11A): an app start screen, not a long page. Big "Create a room" and
+   "Join with a code", the saved rooms, and "How does it work?" opening the introduction below (home.ts `in-home`,
+   `home-intro-open`). The link box stays on a computer: on a phone a video is added in the room (＋). ==== */
+html.phone.in-home main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px max(16px, env(safe-area-inset-left)) calc(18px + env(safe-area-inset-bottom));
+}
+
+html.phone.in-home main > * {
+  order: 3;
+  margin: 0;
+}
+
+html.phone.in-home main > .home-hero {
+  order: 0;
+  display: block;
+  margin: 2vh 0 0;
+}
+
+html.phone.in-home main > #recent {
+  order: 1;
+}
+
+html.phone.in-home .home-how-row {
+  order: 2;
+  display: block;
+  text-align: center;
+}
+
+html.phone.in-home:not(.home-intro-open) main > :is(.home-themes, .home-steps, .home-doors, .home-features),
+html.phone.in-home:not(.home-intro-open) .home-preview,
+html.phone.in-home:not(.home-intro-open) .footer {
+  display: none;
+}
+
+html.phone.in-home .home-preview {
+  margin-top: 24px;
+}
+
+html.phone.in-home .home-intro {
+  align-items: stretch;
+  gap: 12px;
+}
+
+html.phone.in-home .home-pill {
+  align-self: flex-start;
+}
+
+html.phone.in-home .home-title {
+  font-size: clamp(30px, 9vw, 40px);
+}
+
+html.phone.in-home :is(.home-lead, #start-link) {
+  display: none;
+}
+
+html.phone.in-home .start-form {
+  display: block;
+}
+
+html.phone.in-home .start-form .btn,
+html.phone.in-home #join-toggle {
+  width: 100%;
+  min-height: 54px;
+  font-size: 17px;
+  border-radius: 16px;
+}
+
+/* "Join with a code" is a second big button (the "Got an invite?" words stay on a computer). */
+html.phone.in-home .start-join > span {
+  display: none;
+}
+
+html.phone.in-home .start-join {
+  margin: 0;
+}
+
+html.phone.in-home #join-toggle {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+
+html.phone.in-home .join-form:not([hidden]) {
+  display: flex;
+  gap: 8px;
+}
+
+html.phone.in-home .join-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+html.phone.in-home #home-how {
+  font-size: 15px;
+}
+
+/* ==== Speed on a phone (0.9.92.5, speed plan): no frosted glass and no drifting background. Both keep a phone's GPU
+   busy on every frame (blur repaints whatever moves behind it, the video included). Panels keep their colours. ==== */
+html.phone *,
+html.phone *::before,
+html.phone *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html.phone body::before {
+  animation: none !important;
+}
