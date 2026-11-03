@@ -628,6 +628,9 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Done when: `make-host` is refused unless the sender's key is `hostKey`.
 - Tests: e2e `host.mjs` (host reloads, oldest guest's `make-host` → `not_host`, host returns as host).
 - Owner's pick: none needed.
+- Done: 0.9.96.16 (PR below). `makeHost` in the room object also needs the sender's key to be `hostKey`, so the guest
+  who acts as host during the 20 s reload grace gets `not_host`; after the grace a join settles the role as before.
+  e2e `host.mjs` covers it (fails on the old code).
 
 ### Security: TV link hardening before the TV leaves the lab (M8)
 - Severity: medium (only while `?tvlab=1` hides the TV)

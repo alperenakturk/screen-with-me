@@ -1440,7 +1440,10 @@ export class Room extends DurableObject<Env> {
    * browser), for good, as if they had made the room; the old host becomes a guest. Not to a TV (it is its person).
    */
   private async makeHost(ws: WebSocket, targetId: string): Promise<void> {
-    if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+    // Security M2: only the real host may hand the role on. During the host's reload grace (HOST_GRACE_MS) the oldest
+    // guest acts as host, but must not be able to make that permanent for themselves.
+    const me = ws.deserializeAttachment() as Attachment | null;
+    if (!this.isHost(ws) || !me || keyOf(me) !== this.hostKey) return this.sendTo(ws, { t: 'error', code: 'not_host' });
     const target = this.joined().find((a) => a.id === targetId);
     if (!target || target.tv || keyOf(target) === this.hostKey) return;
     this.hostKey = keyOf(target);
