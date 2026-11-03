@@ -12359,6 +12359,17 @@ html.phone .media-search span:last-child {
   display: none;
 }
 
+/* Card 6b (owner's bug): alone, the section is the whole dialog. The two-column grid used to give it the hidden list's
+   210 px column (every row wrapped word by word and the list scrolled); the dialog is one column, as tall as its
+   content up to the window. */
+#settings-dialog.solo .settings-window {
+  width: min(620px, 100%);
+  height: auto;
+  max-height: calc(100dvh - 32px);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
 /* What moved into "⋯ More" leaves the profile menu (the buttons stay in the page for the menus to press). */
 .profile-pop :is(#recap-open, #profile-keys) {
   display: none;

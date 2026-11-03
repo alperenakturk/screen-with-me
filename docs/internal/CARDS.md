@@ -354,6 +354,17 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 
 ## Done
 
+### 6b. Settings sections opened alone are squeezed (owner's bug, 3 Nov 2026; after card 2b)
+- Why: since 0.9.93.13 (card 6) ⚙️ → My screen and the ⋯ More sections (film time, save, rules) put the section into
+  the hidden section list's narrow column: rows wrapped word by word, the right side of the dialog was empty and the
+  list scrolled inside (owner's screenshot).
+- Done when: alone, the section uses the whole dialog, rows keep the title + description + switch layout, nothing
+  scrolls inside at 1366×768; a harness measures it and fails on the old main first.
+- Done: 0.9.93.18 (PR below). `#settings-dialog.solo .settings-window` is one column (620 px wide, as tall as its
+  content up to the window). Test: new `scripts/harness/settings-solo/run.cjs` (48 checks: every solo section, EN + TR,
+  1366×768 and 1920×1080: the section's width, no row title over 2 lines, no inner scroll; 36 of them failed on the old
+  main).
+
 ### 2b. Film page: the rail opens and closes at the edge (owner's B, 3 Nov 2026; after card 8)
 - Why: the owner's pick on https://claude.ai/artifact/AKcDGhoFsNjhQryjhukfeD (B, his original wish): the film page's rail
   should come and go like the site's, never over the film.
