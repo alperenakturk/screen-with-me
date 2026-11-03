@@ -277,6 +277,18 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Done when: `?debug=1` once in a tab shows the panel; `?debug=0` hides it; normal users never see it; no personal data.
 - Tests: harness opens it and checks each part; a normal visit shows nothing.
 - Owner's pick: agreed 2 Nov 2026 (ideas list).
+- Done: 0.9.96.3 (PR below). `apps/web/src/debug-lab.ts` (tiny, loaded by `app.ts`): `?debug=1` → `sessionStorage`
+  `swm:debug` (this tab, survives reloads), `?debug=0` or "Turn the panel off" clears it; the word leaves the address; not
+  in the film-page overlay. Only then are errors recorded (`error` / `unhandledrejection`, newest 20 in `swm:debugErrors`)
+  and the lazy chunk `ui/debug-panel.ts` + `debug-panel.css` loaded: a 🐞 button bottom left (red ring after an error)
+  opening the panel: site / extension version, connection (WebSocket / HTTP fallback), browser · OS, screen, device
+  classes, language; in a room the sync numbers (`setDebugRoom` in `room.ts`: behind the room, jumps, people, what plays);
+  switches TV lab (`opt:tvLab`) and Shorts switch timing (`olcum`, this tab), ⟳ Reload, 📶 Connection test
+  (`/baglanti?room=`), 🌱 Start as a first-time visitor (after a confirm: name, avatar, every room's name, tips, "continue
+  where you left off", the extension-update and sticker notes, this tab's `in:` / `tab:` marks; never the browser id
+  `cid`); recent errors with Clear; "📋 Copy report" (versions, device, connection, sync, last connection test, errors;
+  never names, ids or chat). EN + TR texts in the chunk; Esc closes it. Normal visits download nothing (+0.5 kB on the
+  room page for the switch). Test: `scripts/harness/debug/run.cjs` (35 checks).
 
 ### 13. Shorts scrolling, really good: measure and preload (0.9.94, alongside)
 - Why: owner, 29 Oct 2026: "working is not enough, make it great"; the 0.9.94 gate needs the switch measurement

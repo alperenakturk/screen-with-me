@@ -5,6 +5,8 @@ import { lang, setLang, translate, type Lang } from './i18n.ts';
 import { applyTheme, currentTheme, openThemeDialog } from './themes.ts';
 import { readTvLabSwitch, tvLab } from './tv-lab.ts';
 import { checkExtensionVersion } from './ext-update.ts';
+import { startDebugLab } from './debug-lab.ts';
+import { isShell } from './storage.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
@@ -36,6 +38,8 @@ markLang();
 
 // TV version: hidden behind a lab switch (tv.ts `tvLab`); without it its pages fall back to the home page.
 readTvLabSwitch();
+// Hidden test panel (card 12): `?debug=1` once in a tab; nothing loads or is recorded otherwise.
+startDebugLab(isShell);
 const tvPage = /^\/(tv|tv-test|tv-testi)(\/\d{6})?\/?$/.test(location.pathname);
 if (tvPage && !tvLab()) history.replaceState(null, '', '/');
 
