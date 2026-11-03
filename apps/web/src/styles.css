@@ -12397,3 +12397,9 @@ html.in-room .room-title-dot {
   width: 13px;
   height: 13px;
 }
+
+/* A rail woken by a Tab press appears at once (ui/fullscreen.ts `tab-wake`): mid-fade it is still hidden and the
+   very press that woke it would skip it. */
+.theater.tab-wake .fs-dock {
+  transition: none !important;
+}

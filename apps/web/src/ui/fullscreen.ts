@@ -292,7 +292,15 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       tabbing = true;
       // Card A11y (K2): a resting rail is out of the tab order (hidden); a Tab press brings it out so its buttons are
       // reachable right after the video, and it rests again once the focus has moved on (railBusy holds it meanwhile).
-      if (theater.classList.contains('dock-idle') && !theater.matches(':fullscreen, .fake-fs')) wakeDock();
+      if (theater.classList.contains('dock-idle') && !theater.matches(':fullscreen, .fake-fs')) {
+        // The rail's visibility fades (a transition), and at the start of a fade it still counts as hidden: the Tab
+        // that woke it could skip it (CI saw the walk jump from the empty room to the Together card). Woken by a key,
+        // it appears at once, so the focus can land on it with this very press.
+        theater.classList.add('tab-wake');
+        wakeDock();
+        void dock.offsetWidth;
+        requestAnimationFrame(() => requestAnimationFrame(() => theater.classList.remove('tab-wake')));
+      }
     },
     true,
   );
