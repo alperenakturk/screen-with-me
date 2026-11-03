@@ -115,6 +115,7 @@
     radial-gradient(34% 28% at 70% 25%, rgb(255 43 214 / 0.12), transparent 70%),
     radial-gradient(34% 28% at 25% 75%, rgb(25 245 240 / 0.1), transparent 70%);
   --mascot: url('/themes/neon-maskot.svg');
+  --on-accent: #2a0524;
 }
 /* ---- Çizimli temalar. Üç katman:
    --art       sayfanın kendi arka planı (yıldız, desen, ışık; CSS degradeleri)
@@ -609,15 +610,21 @@ main {
   border-color: var(--muted);
 }
 
+/* Gece: behind white text on primary buttons #8b6cff was 3.7:1, this is 5.4:1 (AA, sweep-1 #13); Neon got dark text. */
+:root:not([data-theme]),
+:root[data-theme='gece'] {
+  --accent-btn: #6a4cf2;
+}
+
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-btn, var(--accent));
+  border-color: var(--accent-btn, var(--accent));
   color: var(--on-accent);
   box-shadow: var(--glow);
 }
 
 .btn.primary:hover {
-  background: var(--accent-hover);
+  background: color-mix(in srgb, var(--accent-btn, var(--accent)) 88%, #fff);
 }
 
 .btn.big {
@@ -1200,7 +1207,8 @@ button.nav-link {
   z-index: 2;
   padding: 8px 12px;
   border-radius: 14px 14px 14px 4px;
-  background: var(--surface-2);
+  /* Opaque (sweep-1 #10 / #12: the see-through grey was 1.4:1 over the preview). */
+  background: linear-gradient(var(--surface-2), var(--surface-2)), var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 13px;
@@ -7976,15 +7984,26 @@ html.shorts-view .footer {
   gap: 8px;
 }
 
+/* One grid per row: the icon in its own column, the value always on a small line under the name (sweep-1 #2). */
 .diag-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
   align-items: baseline;
-  gap: 4px 10px;
+  gap: 0 8px;
+}
+
+.diag-row > .muted {
+  grid-column: 2;
+  font-size: 0.9em;
 }
 
 .diag-icon {
   width: 22px;
+}
+
+/* The buttons wrap instead of running off a phone's card (sweep-1 #1). */
+.diag .row {
+  flex-wrap: wrap;
 }
 
 .diag-verdict {
@@ -12918,4 +12937,20 @@ html.cinema-on:not(.cinema-peek, .phone, .shell):has(.room.cinema:not(.shorts)) 
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Sweep-1 #9: in scene themes the room's side cards are see-through (`--surface` at 86 %) and the scene's decorations
+   behind the panel showed through like a smudge; the same colour laid over the theme's solid background is opaque. */
+html.in-room .side .card {
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
+}
+
+/* Sweep-1 small things: the ad-blocker tip belongs on the home page, not under every room; the invite window's line
+   wraps without leaving one word alone. */
+html.in-room .footer > span:first-child {
+  display: none;
+}
+
+.invite-sub {
+  text-wrap: pretty;
 }

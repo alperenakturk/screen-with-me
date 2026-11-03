@@ -63,12 +63,13 @@ export function renderDiag(app: HTMLElement): void {
     draw();
   };
   const ms = (since: number) => `${Math.round(performance.now() - since)} ms`;
-  const protocolOf = (url: string) => (performance.getEntriesByName(url).at(-1) as PerformanceResourceTiming | undefined)?.nextHopProtocol || '?';
+  const protocolOf = (url: string) => (performance.getEntriesByName(url).at(-1) as PerformanceResourceTiming | undefined)?.nextHopProtocol || '—';
 
   void (async () => {
     // 1) How the page came: h3 (HTTP/3, UDP) or h2 / http/1.1 (TCP). WebSockets always use a new TCP connection.
     const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    const pageProtocol = nav?.nextHopProtocol || '?';
+    // Unknown on some hosts (localhost, some proxies): a dash, not a bare "?" that reads like a bug (sweep-1 #3).
+    const pageProtocol = nav?.nextHopProtocol || '—';
     done(add(t('diag.page')), true, pageProtocol);
 
     // 2) A plain request to the server (the room's info).
