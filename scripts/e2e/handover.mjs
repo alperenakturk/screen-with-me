@@ -3,10 +3,31 @@
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const room = 'hand' + Math.random().toString(36).slice(2, 8);
 function client(hello) {
-  const ws = new WebSocket(`${base}/api/rooms/${room}/ws`);
   const inbox = [];
-  ws.addEventListener('message', (e) => inbox.push(JSON.parse(e.data)));
-  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, ...hello })));
+  // Like the site's RoomConnection: a connection the server or network drops (1006) before `welcome` is opened once
+  // more. Right after a deploy Cloudflare can restart the room's object, which drops a fresh socket (0.9.96.13's live
+  // run: the first attempt failed on "welcome a2" after a 1006 at 502 ms).
+  let welcomed = false;
+  let retried = false;
+  const handle = { ws: null };
+  const open = () => {
+    const ws = new WebSocket(`${base}/api/rooms/${room}/ws`);
+    handle.ws = ws;
+    ws.addEventListener('message', (e) => {
+      const m = JSON.parse(e.data);
+      if (m.t === 'welcome') welcomed = true;
+      inbox.push(m);
+    });
+    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, ...hello })));
+    ws.addEventListener('close', (e) => {
+      if (!welcomed && !retried && e.code === 1006) {
+        retried = true;
+        console.log('· the socket dropped before welcome (1006): opening it once more, as the site does');
+        setTimeout(open, 500);
+      }
+    });
+  };
+  open();
   const wait = async (pred, label) => {
     for (let i = 0; i < 100; i++) {
       const idx = inbox.findIndex(pred);
@@ -15,7 +36,7 @@ function client(hello) {
     }
     throw new Error('timeout ' + label);
   };
-  return { ws, wait };
+  return { get ws() { return handle.ws; }, wait };
 }
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
