@@ -98,6 +98,9 @@ We are building a **global product**, so everything is professional, formal and 
     and proposed cards under "Proposed" in `CARDS.md`. Never fixes code itself.
   - 🔎 **Research** (when needed, read-only): market, competitors, users, technical questions; writes
     `docs/internal/research/<topic>.md` and proposed cards under "Proposed". Never edits code.
+  - 🎨 **Design** (when needed, owner's request 3 Nov 2026; session "ScreenWithMe · 🎨 Design", tag `role:design`): logo,
+    mascot, brand and screen design explorations as clickable option pages (Artifacts) for the owner; design notes in
+    `docs/internal/design/<topic>.md`. Never edits product code; a picked design becomes a card for the Developer.
   - **The Planner is the hub (owner, 2 Nov 2026: "be the brain").** The owner talks only to the Planner. Developer,
     Security and Research send their result to the Planner session when a job ends (`send_message`: what was done, PR
     link, open questions, anything the owner must decide or test), never ask the owner themselves; the Planner turns

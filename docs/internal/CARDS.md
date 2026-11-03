@@ -343,6 +343,15 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   Streamable, Kick, Mixcloud, Bilibili.
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
+### Logo: direction C "Sidelit, light from the side" + mascot family (Design session; owner, 3 Nov 2026)
+- Why: owner picked direction C on https://claude.ai/artifact/5dAZoG6shDuxN454YBm6ZZ and "the mascot's eyes stay in
+  every case"; he wants many versions of C (small to big changes), the mascot fitted to it, and usage examples.
+- Done when: the owner picked a version and a mascot variant on the Design session's page; then a Developer card
+  updates `logo.ts`, `make-icons.mjs` (icons, favicon, small 16–32 px version), the store tile and `store/src` shots.
+- Tests: the Developer's card: icons regenerate, favicon readable at 16 px, harness screenshots of the top bar.
+- Owner's pick: waiting (Design session working). Replaces the "touch up today's mascot" pick if he chooses a C
+  version; works with either name (Sidelit or ScreenWithMe).
+
 ## Done
 
 ### 2b. Film page: the rail opens and closes at the edge (owner's B, 3 Nov 2026; after card 8)
