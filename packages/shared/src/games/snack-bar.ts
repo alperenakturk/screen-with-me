@@ -11,7 +11,8 @@
 export const SNACK_KEY = 'snackBar';
 export const SNACK_VERSION = 1;
 
-export type StandId = 'popcorn' | 'drinks' | 'nachos' | 'candy' | 'hotdog' | 'icecream';
+/** The Design session's upgrades (`docs/internal/design/side-games/snack-bar/items/<id>.svg`, scene groups). */
+export type StandId = 'popcorn' | 'soda' | 'nachos' | 'candy' | 'second-counter';
 
 export interface StandInfo {
   id: StandId;
@@ -24,11 +25,10 @@ export interface StandInfo {
 /** In unlock order; each one costs ~11× the one before and earns ~8× more. */
 export const STANDS: readonly StandInfo[] = [
   { id: 'popcorn', cost: 10, rate: 0.5 },
-  { id: 'drinks', cost: 120, rate: 4 },
+  { id: 'soda', cost: 120, rate: 4 },
   { id: 'nachos', cost: 1_300, rate: 30 },
   { id: 'candy', cost: 14_000, rate: 220 },
-  { id: 'hotdog', cost: 150_000, rate: 1_600 },
-  { id: 'icecream', cost: 1_600_000, rate: 12_000 },
+  { id: 'second-counter', cost: 150_000, rate: 1_600 },
 ];
 export const STAND_IDS = STANDS.map((s) => s.id);
 
