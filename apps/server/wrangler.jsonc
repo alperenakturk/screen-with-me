@@ -29,7 +29,9 @@
       // Two devices moving my things (one per 6-digit code, nothing stored)
       { "name": "MOVELINKS", "class_name": "MoveLink" },
       // YouTube usage counters for the quota form (card Y3): one instance, counts per day, no people data
-      { "name": "USAGE", "class_name": "YoutubeUsage" }
+      { "name": "USAGE", "class_name": "YoutubeUsage" },
+      // The day's random key for the IP hash (security M5): one instance, today's key only
+      { "name": "IPKEYS", "class_name": "IpKeys" }
     ]
   },
   // Ücretsiz planda Durable Object'ler SQLite tabanlı olmak zorunda.
@@ -42,7 +44,8 @@
     { "tag": "v6", "new_sqlite_classes": ["Poker"] },
     { "tag": "v7", "new_sqlite_classes": ["FeedbackGate"] },
     { "tag": "v8", "new_sqlite_classes": ["MoveLink"] },
-    { "tag": "v9", "new_sqlite_classes": ["YoutubeUsage"] }
+    { "tag": "v9", "new_sqlite_classes": ["YoutubeUsage"] },
+    { "tag": "v10", "new_sqlite_classes": ["IpKeys"] }
   ],
   // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
   // address joining at once must still fit, a script opening rooms in a loop must not.
