@@ -415,13 +415,17 @@ export function createGameStage(opts: StageOptions) {
     leaveButton.label(t('hub.leave'));
     endButton.label(t('hub.close'));
     for (const b of triggers) b.title = t('hub.title');
+    stage.classList.toggle('solo-game', !current && !!solo);
     if (current) {
       titleIcon.replaceChildren(gameIcon(current.kind));
       titleText.textContent = `${titleOf(current.kind)} · ${t('game.by', { name: current.by.name })}`;
+      title.title = '';
       endButton.node.hidden = !canClose(current);
     } else if (solo) {
       titleIcon.replaceChildren(soloIcon(solo));
-      titleText.textContent = `${t(`games.${solo}.title`)} · ${t('hub.solo')}`;
+      // Card GP: just the game's name, so it shows in full in the narrow window; "just you, on the side" is its tooltip.
+      titleText.textContent = t(`games.${solo}.title`);
+      title.title = `${t(`games.${solo}.title`)} · ${t('hub.solo')}`;
       endButton.node.hidden = true;
       leaveButton.label(t('solo.close'));
     }

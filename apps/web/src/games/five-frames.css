@@ -1,87 +1,116 @@
-/* 🎟️ Five Frames (games/five-frames.ts): the Design session's "ticket row" (docs/internal/design/side-games/README.md).
-   Loaded with the game's chunk only; fits its box without scrolling. No green / yellow anywhere. */
+/* 🎟️ Five Frames (games/five-frames.ts): the Design session's "ticket row" (docs/internal/design/side-games/README.md),
+   polished in card GP (`side-games-polish.md` §3–4): green ✓ right place, gold • in the word, grey not in it (the marks
+   stay for colour-blind players), a legend until the first guess, a row turning over cell by cell. Loaded with the
+   game's chunk only; fits its box without scrolling. */
 .ff {
   --ff-night: #14102b;
   --ff-panel: #1d1740;
   --ff-cream: #fff3d6;
   --ff-gold: #ffc65a;
   --ff-ink: #1a1036;
-  --ff-muted: #a79fc4;
+  --ff-muted: #b9b0dc;
+  --ff-hit: #3fcf8e;
+  --ff-near: #ffc65a;
+  --ff-miss: #3a3458;
+  --ff-miss-text: #cfc8ea;
+  position: relative;
   box-sizing: border-box;
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 7px;
-  padding: 9px 11px 8px;
+  padding: 9px 12px 10px;
   background: linear-gradient(180deg, var(--ff-panel), var(--ff-night));
   color: var(--ff-cream);
-  font: 13px/1.25 system-ui, sans-serif;
+  font: 15px/1.35 system-ui, sans-serif;
   border-radius: 12px;
   overflow: hidden;
   user-select: none;
 }
 .ff button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
 
-.ff-head { display: flex; align-items: center; gap: 8px; min-height: 26px; }
-.ff-title { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; }
+.ff-head { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+.ff-title { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
 .ff-day { color: var(--ff-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.ff-streak { font-size: 12px; font-weight: 700; color: var(--ff-gold); }
+.ff-streak { font-size: 13px; font-weight: 700; color: var(--ff-gold); }
 .ff-gap { flex: 1; }
-.ff-langs { display: inline-flex; gap: 3px; }
-.ff-lang { padding: 3px 8px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 800; background: rgba(255, 255, 255, 0.08); color: var(--ff-muted); }
+.ff-langs { display: inline-flex; gap: 4px; }
+.ff-lang { min-height: 28px; padding: 3px 10px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, 0.08); color: var(--ff-muted); }
 .ff-lang.on { background: var(--ff-gold); color: var(--ff-ink); }
 
 .ff-board { display: flex; flex-direction: column; gap: 4px; padding: 3px; border-radius: 10px; outline: none; }
 .ff-board:focus-visible, .ff-board:focus { box-shadow: 0 0 0 1.5px rgba(255, 198, 90, 0.55); }
 /* One guess = one ticket: a stub, a dashed tear line with two notches, five letter cells. */
 .ff-row {
-  position: relative; display: grid; grid-template-columns: 26px 1fr; height: 30px; border-radius: 7px;
+  position: relative; display: grid; grid-template-columns: 30px 1fr; height: 43px; border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
 }
 .ff-row::before, .ff-row::after {
-  content: ''; position: absolute; left: 22px; width: 8px; height: 8px; border-radius: 50%; background: var(--ff-panel);
+  content: ''; position: absolute; left: 26px; width: 8px; height: 8px; border-radius: 50%; background: var(--ff-panel);
 }
 .ff-row::before { top: -4px; }
 .ff-row::after { bottom: -4px; }
 .ff-row.current { box-shadow: inset 0 0 0 1.5px rgba(255, 243, 214, 0.45); }
-.ff-row.future { opacity: 0.35; }
-.ff-row.shake { animation: ff-shake 0.32s; }
-@keyframes ff-shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.ff-row.future { opacity: 0.4; }
+.ff-row.shake { animation: ff-shake 0.3s; }
+@keyframes ff-shake { 17%, 50%, 83% { transform: translateX(-6px); } 33%, 67% { transform: translateX(6px); } }
+.ff-row.bad { box-shadow: inset 0 0 0 2px #ff6b6b; }
 .ff-stub {
-  display: grid; place-items: center; font-size: 11px; font-weight: 800; color: var(--ff-muted);
+  display: grid; place-items: center; font-size: 13px; font-weight: 800; color: var(--ff-muted);
   border-right: 1.5px dashed rgba(255, 243, 214, 0.3);
 }
-.ff-cells { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 3px 4px 3px 6px; }
+.ff-cells { display: grid; grid-template-columns: repeat(5, 37px); justify-content: center; gap: 6px; padding: 3px 4px; }
 .ff-cell {
-  position: relative; display: grid; place-items: center; border-radius: 5px; font-size: 15px; font-weight: 800;
-  text-transform: none; background: rgba(255, 255, 255, 0.04);
+  position: relative; display: grid; place-items: center; border-radius: 6px; font-size: 21px; font-weight: 800;
+  text-transform: none; background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.1);
 }
-.ff-row.done .ff-cell { background: transparent; }
-.ff-cell.hit { background: var(--ff-gold) !important; color: var(--ff-ink); }
-.ff-cell.near { box-shadow: inset 0 0 0 2.5px var(--ff-gold); color: var(--ff-gold); }
-.ff-cell.miss { color: rgba(255, 243, 214, 0.3); }
-.ff-cell.hit::after, .ff-cell.near::after { position: absolute; top: 1px; right: 3px; font-size: 8px; font-weight: 800; }
+.ff-cell.typed { background: #2a2350; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.33); color: var(--ff-cream); }
+.ff-cell.hit { background: var(--ff-hit); box-shadow: none; color: var(--ff-ink); }
+.ff-cell.near { background: var(--ff-near); box-shadow: none; color: var(--ff-ink); }
+.ff-cell.miss { background: var(--ff-miss); box-shadow: none; color: var(--ff-miss-text); }
+.ff-cell.hit::after, .ff-cell.near::after { position: absolute; top: 0; right: 3px; font-size: 11px; font-weight: 900; line-height: 1.2; }
 .ff-cell.hit::after { content: '✓'; }
-.ff-cell.near::after { content: '•'; font-size: 11px; top: -1px; }
+.ff-cell.near::after { content: '•'; font-size: 14px; top: -2px; }
+/* A typed letter pops in; a scored row turns over cell by cell (110 + 110 ms, 80 ms apart), a solved one hops. */
+.ff-cell.pop { animation: ff-pop 0.1s ease-out; }
+@keyframes ff-pop { 50% { transform: scale(1.12); } }
+.ff-cell.turn { animation: ff-turn 0.22s linear both; }
+@keyframes ff-turn {
+  0% { transform: rotateX(0); animation-timing-function: ease-in; }
+  50% { transform: rotateX(90deg); animation-timing-function: ease-out; }
+  100% { transform: rotateX(0); }
+}
+.ff-row.hop .ff-cell { animation: ff-hop 0.12s ease-out both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes ff-hop { 50% { transform: translateY(-6px); } }
 
-.ff-result { display: flex; align-items: center; gap: 8px; min-height: 26px; }
-.ff-message { flex: 1; margin: 0; font-size: 12px; font-weight: 700; color: var(--ff-cream); }
+.ff-result { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.ff-message { flex: 1; margin: 0; font-size: 15px; font-weight: 700; color: var(--ff-cream); line-height: 1.25; }
+.ff-message:empty { display: none; }
 .ff-message.flash { color: var(--ff-gold); }
-.ff-share { padding: 4px 10px; border-radius: 8px; border: 0; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 12px; white-space: nowrap; }
+.ff-share { min-height: 36px; padding: 4px 12px; border-radius: 8px; border: 0; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 15px; white-space: nowrap; }
 .ff-share[hidden] { display: none; }
+.ff-legend { flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 13px; color: var(--ff-muted); white-space: nowrap; }
+.ff-legend[hidden] { display: none; }
+.ff-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.ff-cell.ff-swatch { width: 22px; height: 22px; font-size: 13px; border-radius: 5px; }
+.ff-cell.ff-swatch::after { font-size: 9px; right: 1px; }
+.ff-cell.ff-swatch.near::after { font-size: 11px; }
 
 /* Alphabetical letters, ten a row, ⌫ and a gold Enter at the end (never a keyboard strip). */
-.ff-tray { display: grid; grid-template-columns: repeat(var(--ff-cols, 10), minmax(0, 1fr)); gap: 3px; margin-top: auto; }
+.ff-tray { display: grid; grid-template-columns: repeat(var(--ff-cols, 10), minmax(0, 1fr)); gap: 4px; margin-top: auto; }
 .ff-key {
-  min-height: 28px; padding: 0; border: 0; border-radius: 6px; background: rgba(255, 255, 255, 0.1); font-weight: 700;
-  font-size: 13px;
+  min-height: 40px; padding: 0; border: 0; border-radius: 7px; background: rgba(255, 255, 255, 0.1); font-weight: 700;
+  font-size: 17px;
 }
-.ff-key.hit { background: var(--ff-gold); color: var(--ff-ink); }
-.ff-key.near { box-shadow: inset 0 0 0 2px var(--ff-gold); color: var(--ff-gold); }
-.ff-key.miss { opacity: 0.3; }
-.ff-key.back { grid-column: span 2; }
-.ff-key.enter { grid-column: span 2; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; }
-.ff-credits { font-size: 10px; color: var(--ff-muted); white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .ff-row.shake { animation: none; } }
-html.phone .ff-row { height: 40px; }
-html.phone .ff-key { min-height: 40px; }
+.ff-key.hit { background: var(--ff-hit); color: var(--ff-ink); }
+.ff-key.near { background: var(--ff-near); color: var(--ff-ink); }
+.ff-key.miss { background: var(--ff-miss); color: rgba(207, 200, 234, 0.6); }
+.ff-key.back { grid-column: span 2; font-size: 15px; font-weight: 800; }
+.ff-key.enter { grid-column: span 2; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 15px; }
+@media (prefers-reduced-motion: reduce) {
+  .ff-row.shake, .ff-cell.pop, .ff-cell.turn, .ff-row.hop .ff-cell { animation: none; }
+  .ff-cell, .ff-key { transition: background-color 0.15s, color 0.15s; }
+}
+html.phone .ff-row { height: 44px; }
+html.phone .ff-cells { grid-template-columns: repeat(5, 38px); }
+html.phone .ff-key { min-height: 44px; }

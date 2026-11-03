@@ -6,18 +6,18 @@
   --wg-cream: #fff3d6;
   --wg-gold: #ffc65a;
   --wg-ink: #1a1036;
-  --wg-muted: #a79fc4;
+  --wg-muted: #b9b0dc;
   --wg-leaf: #4fbf8f;
   position: relative;
   box-sizing: border-box;
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding: 9px 11px 10px;
+  gap: 8px;
+  padding: 10px 12px 12px;
   background: linear-gradient(180deg, var(--wg-panel), var(--wg-night));
   color: var(--wg-cream);
-  font: 13px/1.25 system-ui, sans-serif;
+  font: 15px/1.35 system-ui, sans-serif;
   border-radius: 12px;
   overflow: hidden;
   user-select: none;
@@ -25,11 +25,11 @@
 .wg button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
 .wg button:disabled { cursor: default; }
 
-.wg-bar { display: flex; align-items: center; gap: 6px; min-height: 24px; }
+.wg-bar { display: flex; align-items: center; gap: 8px; min-height: 28px; }
 .wg-gap { flex: 1; }
-.wg-pill { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--wg-muted); }
+.wg-pill { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--wg-muted); }
 .wg-state.on { background: var(--wg-leaf); color: #0d2a20; }
-.wg-seeds { font-size: 12px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; }
+.wg-seeds { font-size: 13px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; }
 
 .wg-scene { position: relative; flex: 1 1 auto; min-height: 120px; border-radius: 10px; overflow: hidden; background: #120e27; }
 .wg-scene-art, .wg-scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -49,25 +49,25 @@
 .wg-empty-pot { height: 43%; opacity: 0.85; }
 .wg-pot.bloom .wg-plant { filter: drop-shadow(0 0 6px rgba(255, 198, 90, 0.55)); animation: wg-sway 3.2s ease-in-out infinite; }
 @keyframes wg-sway { 50% { transform: rotate(2deg); } }
-.wg-drop, .wg-spark { position: absolute; top: 2px; right: 6px; font-size: 14px; pointer-events: none; }
+.wg-drop, .wg-spark { position: absolute; top: 2px; right: 6px; font-size: 16px; pointer-events: none; }
 .wg-spark { color: var(--wg-gold); font-weight: 800; }
 
 .wg-action {
-  display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 5px 6px 5px 9px; border-radius: 10px;
+  display: flex; align-items: center; gap: 10px; min-height: 64px; box-sizing: border-box; padding: 6px 8px 6px 10px; border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
 }
-.wg-action-words { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.wg-action-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wg-action-text { font-size: 11px; color: var(--wg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wg-action-words { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wg-action-title { font-size: 15px; font-weight: 700; line-height: 1.25; }
+.wg-action-text { font-size: 13px; line-height: 1.3; color: var(--wg-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .wg-action-buttons { display: flex; gap: 5px; flex-wrap: nowrap; }
 .wg-btn {
-  min-height: 30px; padding: 4px 10px; border-radius: 8px; border: 1.5px solid rgba(255, 198, 90, 0.5);
-  background: transparent; color: var(--wg-gold); font-weight: 700; font-size: 12px; white-space: nowrap;
+  min-height: 40px; padding: 4px 12px; border-radius: 8px; border: 1.5px solid rgba(255, 198, 90, 0.5);
+  background: transparent; color: var(--wg-gold); font-weight: 700; font-size: 15px; white-space: nowrap;
 }
 .wg-btn.main { border-color: var(--wg-gold); background: var(--wg-gold); color: var(--wg-ink); }
 .wg-btn:disabled { opacity: 0.45; }
 
-.wg-album { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.wg-album { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
 .wg-album-cell { aspect-ratio: 34 / 44; border-radius: 7px; background: rgba(255, 255, 255, 0.04); display: block; }
 .wg-album-art, .wg-album-art svg { display: block; width: 100%; height: 100%; }
 .wg-album-cell:not(.found) .wg-album-art { opacity: 0.35; filter: grayscale(1) brightness(0.6); }

@@ -22,10 +22,23 @@ import soda from './art/snack-bar/soda.svg?raw';
 import nachos from './art/snack-bar/nachos.svg?raw';
 import candy from './art/snack-bar/candy.svg?raw';
 import second from './art/snack-bar/second-counter.svg?raw';
+import how1 from './art/tutorial/snack-1-earn.svg?raw';
+import how2 from './art/tutorial/snack-2-tap.svg?raw';
+import how3 from './art/tutorial/snack-3-stands.svg?raw';
+import how4 from './art/tutorial/snack-4-friends.svg?raw';
+import { howToPlay } from './how-to-play.ts';
 
 /** Snack Bar's own words (in its chunk, not the room page's): English first, Turkish second. */
 const TEXT = {
   en: {
+    how1Title: 'Earn while the room watches',
+    how1: "Your snack bar makes coins while the room's video plays.",
+    how2Title: 'Tap to serve',
+    how2: 'Tap the counter for an extra coin.',
+    how3Title: 'Buy and level up stands',
+    how3: 'Levels 10, 25, 50, 100 and 200 double a stand.',
+    how4Title: 'Friends make it faster',
+    how4: '+10% for each person in the room, +5% for each one in voice with you.',
     'coinsTitle': 'Your coins',
     'rate': '+{n}/s',
     'playing': '▶ Film on',
@@ -57,6 +70,14 @@ const TEXT = {
     'playHere': 'Play here',
   },
   tr: {
+    how1Title: 'Oda izlerken kazan',
+    how1: 'Odanın videosu oynarken büfen para kazanır.',
+    how2Title: 'Dokun, servis yap',
+    how2: 'Fazladan bir jeton için tezgâha dokun.',
+    how3Title: 'Stant al, seviye atlat',
+    how3: '10, 25, 50, 100 ve 200. seviyeler standı iki katına çıkarır.',
+    how4Title: 'Arkadaşlar hızlandırır',
+    how4: 'Odadaki her kişi %10, seste seninle olan her kişi %5 ekler.',
     'coinsTitle': 'Paran',
     'rate': '+{n}/sn',
     'playing': '▶ Film açık',
@@ -99,7 +120,7 @@ const ART: Record<StandId, string> = { popcorn, soda, nachos, candy, 'second-cou
 /** Scene groups shown once their stand has a level (the second counter has no group: a badge instead). */
 const SCENE_GROUP: Partial<Record<StandId, string>> = { popcorn: 'popcorn-machine', soda: 'soda', nachos: 'nachos', candy: 'candy' };
 /** Below this height (in the game's own pixels) only three upgrade rows show. */
-const COMPACT_H = 380;
+const COMPACT_H = 470;
 const ROWS_COMPACT = 3;
 /** One tab plays at a time (two tabs would earn twice and overwrite each other's save). */
 const LOCK_KEY = 'snackBar:tab';
@@ -180,6 +201,13 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
   elsewhere.hidden = true;
   const box = el('div', { class: 'sb' }, head, sceneBox, list, more, foot, note, elsewhere);
   root.replaceChildren(box);
+  const how = howToPlay(box, 'snackBar:howSeen', () => [
+    { art: how1, title: t('how1Title'), line: t('how1') },
+    { art: how2, title: t('how2Title'), line: t('how2') },
+    { art: how3, title: t('how3Title'), line: t('how3') },
+    { art: how4, title: t('how4Title'), line: t('how4') },
+  ]);
+  head.append(how.button);
 
   // Buttons never keep the focus: the room's keys and the message box stay as they were.
   box.addEventListener('mousedown', (event) => {
@@ -364,6 +392,7 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
   draw();
 
   return () => {
+    how.destroy();
     if (stopped) return;
     stopped = true;
     clearInterval(timer);

@@ -7179,6 +7179,26 @@ html.shorts-view .footer {
   opacity: 1;
 }
 
+/* Card GP: a side game's narrow window keeps its full title ("🍿 Snack Bar · just you"): 36 px head buttons, 4 px apart. */
+@container gstage (max-width: 440px) {
+  .game-stage.float.solo-game .game-stage-head {
+    gap: 4px;
+    padding: 8px 10px;
+  }
+
+  .game-stage.float.solo-game .game-stage-head .btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .game-stage.float.solo-game .game-place-btn {
+    width: 30px;
+    height: 32px;
+  }
+}
+
 /* Narrow screens: under the video (the rest of the screen) */
 .game-stage.below {
   position: fixed;

@@ -35,6 +35,7 @@ async function person(ctx, name, avatar) {
     localStorage.setItem('lang', 'en');
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
+    for (const k of ['snackBar', 'windowGarden', 'fiveFrames']) localStorage.setItem(k + ':howSeen', '1');
     localStorage.setItem('opt:hubTab', 'side');
   }, [name, avatar]);
   await page.goto(`${SITE}/r/${room}#back`);
@@ -98,10 +99,13 @@ const row = (page, i) => page.evaluate((n) => [...document.querySelectorAll('#ga
   check(/word list/.test(refused), 'an unknown word is refused', refused);
   for (let i = 0; i < 5; i++) await alex.evaluate(() => document.querySelector('#game-stage .ff-key[data-key="Backspace"]').click());
   await tap(alex, en.wrong);
+  // The row turns over cell by cell (≈ 540 ms, card GP).
+  await alex.waitForTimeout(700);
   const marks = await row(alex, 0);
   check(JSON.stringify(marks) === JSON.stringify(en.marks), `a wrong guess gets the right marks (${en.wrong})`, `${marks} vs ${en.marks}`);
-  const colours = await alex.evaluate(() => getComputedStyle(document.querySelector('#game-stage .ff-cell.hit, #game-stage .ff-cell.near') ?? document.body).backgroundColor);
-  check(!/rgb\((10[0-9]|1[0-9]{2}), (1[5-9][0-9]|2[0-5][0-9]), /.test(colours) || true, 'no green tiles', colours);
+  const colours = await alex.evaluate(() => ['hit', 'near', 'miss'].map((m) => { const c = document.querySelector(`#game-stage .ff-board .ff-cell.${m}`); return c ? getComputedStyle(c).backgroundColor : null; }));
+  const want = { hit: 'rgb(63, 207, 142)', near: 'rgb(255, 198, 90)', miss: 'rgb(58, 52, 88)' };
+  check(['hit', 'near', 'miss'].every((m, i) => colours[i] === null || colours[i] === want[m]), 'green = right place, gold = in the word, grey = not in it (card GP)', colours.join(' | '));
 
   // Keys typed while the message box has the focus stay the room's; on the focused board they are the game's.
   await alex.evaluate(() => document.getElementById('chat-input')?.focus());
