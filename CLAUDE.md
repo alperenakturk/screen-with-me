@@ -89,7 +89,7 @@ We are building a **global product**, so everything is professional, formal and 
     the owner's pick" list in `STATUS.md` and the cards in `CARDS.md`; turns ideas into cards (what, why, done when,
     tests); prepares option pages for design / preference questions and records the owner's pick on the card; runs
     `llm-council` for big decisions on the owner's computer. Never edits code.
-  - 🔨 **Developer** (one at a time): takes the top Ready card, moves it to In progress, builds + tests it, PR, merge,
+  - 🔨 **Developer** (one at a time; since 3 Nov 2026 two lanes when the Planner opens them, see `CARDS.md` "Run order", each lane on its own cards and files): takes the top Ready card, moves it to In progress, builds + tests it, PR, merge,
     checks the deploy and live e2e, adds "Done: PR link" under the card, ticks the checklist page. Owns the code,
     `STATUS.md` "Task queue" / hand tests and the technical notes in this file. Never starts work that has no card;
     an idea that comes up goes to "Ideas waiting for the owner's pick". A fresh Developer session per milestone step.
