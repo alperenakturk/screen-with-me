@@ -285,8 +285,11 @@ export class PollHub {
   }
 }
 
-/** Reads a request body as text, or returns null (and stops reading) once it passes `max` bytes. */
-async function readCapped(request: Request, max: number): Promise<string | null> {
+/**
+ * Reads a request body as text, or returns null (and stops reading) once it passes `max` bytes. The rule (security
+ * reviews 2 H1 and 3 R3-1): no Durable Object reads a request body without a cap; use this, never `request.json()`.
+ */
+export async function readCapped(request: Request, max: number): Promise<string | null> {
   const reader = request.body?.getReader();
   if (!reader) return '';
   const chunks: Uint8Array[] = [];

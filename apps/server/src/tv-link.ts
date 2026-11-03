@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { readCapped } from './fallback.ts';
 
 /** A waiting TV's code is good for this long; then the TV shows a new one. */
 const CODE_TTL_MS = 10 * 60_000;
@@ -16,7 +17,15 @@ export class TvLink extends DurableObject<Env> {
     if (new URL(request.url).pathname === '/deliver' && request.method === 'POST') {
       const tv = this.ctx.getWebSockets().find((ws) => ws.readyState === WebSocket.OPEN);
       if (!tv) return new Response('No TV', { status: 404 });
-      const body = (await request.json()) as { room: string; token: string };
+      // Only the room object calls this (never reachable from outside), still capped like every body an object reads.
+      const text = await readCapped(request, 2048).catch(() => null);
+      let body: { room?: unknown; token?: unknown } = {};
+      try {
+        body = text ? (JSON.parse(text) as typeof body) : {};
+      } catch {
+        // ignored: answered below
+      }
+      if (typeof body.room !== 'string' || typeof body.token !== 'string') return new Response('Bad body', { status: 400 });
       tv.send(JSON.stringify({ t: 'paired', room: body.room, token: body.token }));
       tv.close(1000, 'paired');
       return new Response('ok');

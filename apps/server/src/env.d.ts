@@ -12,6 +12,8 @@ interface Env {
   YOUTUBE_API_KEY?: string;
   /** YouTube searches per IP and minute that reach YouTube (cache hits are free). */
   SEARCH_LIMIT?: RateLimit;
+  /** Saved-room lookups (`/info`, `unsave`) per IP and minute. */
+  ROOM_INFO_LIMIT?: RateLimit;
   /** The running version's metadata (`version_metadata` binding; answered by `/api/version`). */
   CF_VERSION_METADATA?: WorkerVersionMetadata;
 }

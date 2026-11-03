@@ -245,6 +245,11 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   states the rule "no Durable Object reads a request body without a cap".
 - Tests: e2e (chunked oversize `unsave` → refused and the room still answers; a normal unsave by the host still works).
 - Owner's pick: none needed.
+- Done: 0.9.95.1 (PR below). Worker: an `unsave` POST without `Content-Length` → 411, above 1 KB → 413, any other method
+  → 405; `/info` + `unsave` share the new `ROOM_INFO_LIMIT` binding (60 per IP and minute, Workers Free); an `unsave`
+  POST without an `Origin` → 403 (browsers always send one on a POST). Room object:
+  `readCapped(request, 1024)` (exported from `fallback.ts`, its comment states the rule); `TvLink /deliver` capped too.
+  Test: e2e `saved.mjs` (chunked body refused, 4 KB body refused, the room still answers; the host's unsave still works).
 
 ### Security: secrets only in the deploy step (R3-2)
 - Severity: medium
