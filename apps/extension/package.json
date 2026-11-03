@@ -1,7 +1,7 @@
 {
   "name": "@swm/extension",
   "private": true,
-  "version": "0.9.96.13",
+  "version": "0.9.96.14",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",

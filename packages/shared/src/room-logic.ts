@@ -41,8 +41,8 @@ export interface RoomUpdate {
 }
 
 /** Sonradan bulunan başlığı, öğe hâlâ oynuyorsa ya da sıradaysa yerine yazar. Bulamazsa null. */
-export function setItemTitle(data: RoomData, itemId: string, title: string): RoomData | null {
-  const named = (item: QueueItem): QueueItem => (item.id === itemId ? { ...item, title } : item);
+export function setItemTitle(data: RoomData, itemId: string, title: string, at?: number): RoomData | null {
+  const named = (item: QueueItem): QueueItem => (item.id === itemId ? { ...item, title, ...(at === undefined ? {} : { titleAt: at }) } : item);
   const playing = data.state.item?.id === itemId;
   const queued = data.queue.some((q) => q.id === itemId);
   if (!playing && !queued) return null;
@@ -50,6 +50,33 @@ export function setItemTitle(data: RoomData, itemId: string, title: string): Roo
     state: playing && data.state.item ? { ...data.state, item: named(data.state.item) } : data.state,
     queue: queued ? data.queue.map(named) : data.queue,
   };
+}
+
+/**
+ * YouTube's Developer Policies let us keep data from YouTube (here: video titles) at most 30 days (card Y2). A stored
+ * YouTube title without a lookup time, or older than this, is dropped; the room looks it up again when the item is in
+ * use, and meanwhile the page shows its neutral fallback.
+ */
+export const TITLE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Is this item's title from YouTube and too old (or of unknown age) to keep? */
+export function staleTitle(item: QueueItem, now: number): boolean {
+  return item.media.kind === 'youtube' && item.title !== null && (item.titleAt === undefined || now - item.titleAt > TITLE_MAX_AGE_MS);
+}
+
+/** The item without a stale YouTube title (the same object when nothing changes). */
+export function freshItem(item: QueueItem, now: number): QueueItem {
+  if (!staleTitle(item, now)) return item;
+  const { titleAt: _old, ...rest } = item;
+  return { ...rest, title: null };
+}
+
+/** The room without stale YouTube titles (the same object when nothing changes). */
+export function freshRoom(data: RoomData, now: number): RoomData {
+  const item = data.state.item ? freshItem(data.state.item, now) : null;
+  const queue = data.queue.map((q) => freshItem(q, now));
+  if (item === data.state.item && queue.every((q, i) => q === data.queue[i])) return data;
+  return { state: item === data.state.item ? data.state : { ...data.state, item }, queue };
 }
 
 export function initialRoom(now: number): RoomData {

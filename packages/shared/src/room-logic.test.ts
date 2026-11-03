@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { QueueItem } from './protocol.ts';
-import { applyRoomAction, initialRoom, setItemTitle, type RoomData } from './room-logic.ts';
+import { applyRoomAction, freshItem, freshRoom, initialRoom, setItemTitle, type RoomData } from './room-logic.ts';
 
 const now = 2_000_000;
 const item = (id: string): QueueItem => ({ id, media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: id, by: 'Ali' });
@@ -149,5 +149,42 @@ describe('playback', () => {
   it('ignores playback commands when nothing is loaded', () => {
     const update = applyRoomAction(roomWith(null, []), { t: 'play', position: 5, at: now }, now);
     expect(update.stateAction).toBeNull();
+  });
+});
+
+describe('stored YouTube titles (card Y2: at most 30 days)', () => {
+  const day = 24 * 60 * 60 * 1000;
+  const now = 100 * day;
+  const yt = (title: string | null, titleAt?: number): QueueItem => ({ id: `i${titleAt ?? 'x'}`, media: { kind: 'youtube', id: 'aqz-KE-bpKQ' }, title, by: 'Alex', ...(titleAt === undefined ? {} : { titleAt }) });
+
+  it('keeps a 29-day-old title and drops a 31-day-old one', () => {
+    expect(freshItem(yt('Kept', now - 29 * day), now).title).toBe('Kept');
+    const old = freshItem(yt('Old', now - 31 * day), now);
+    expect(old.title).toBeNull();
+    expect(old.titleAt).toBeUndefined();
+  });
+
+  it('drops a YouTube title of unknown age (stored before card Y2)', () => {
+    expect(freshItem(yt('Unknown'), now).title).toBeNull();
+  });
+
+  it('leaves other kinds and empty titles alone', () => {
+    const file: QueueItem = { id: 'f', media: { kind: 'html5', url: 'https://example.com/a.mp4' }, title: 'a.mp4', by: 'Alex' };
+    expect(freshItem(file, now)).toBe(file);
+    const none = yt(null);
+    expect(freshItem(none, now)).toBe(none);
+  });
+
+  it('cleans the playing item and the queue, and returns the same room when nothing is stale', () => {
+    const room = { state: { item: yt('Old', now - 40 * day), paused: true, position: 0, rate: 1, updatedAt: now }, queue: [yt('Fresh', now - day), yt('Old2', now - 31 * day)] };
+    const next = freshRoom(room, now);
+    expect(next.state.item?.title).toBeNull();
+    expect(next.queue.map((q) => q.title)).toEqual(['Fresh', null]);
+    expect(freshRoom(next, now)).toBe(next);
+  });
+
+  it('setItemTitle records when the title was looked up', () => {
+    const room = { state: { item: yt(null), paused: true, position: 0, rate: 1, updatedAt: now }, queue: [] };
+    expect(setItemTitle(room, room.state.item!.id, 'New', now)?.state.item).toMatchObject({ title: 'New', titleAt: now });
   });
 });
