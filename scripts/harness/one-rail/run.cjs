@@ -40,16 +40,9 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
   await page.waitForSelector('.room');
   await page.waitForTimeout(1500);
 
-  // 1) Empty room: the rail, no toolbar; the empty card ends where the rail starts.
-  check(await page.evaluate(() => document.querySelector('#theater').classList.contains('dock-mode')), 'empty room: the rail is there');
-  check(!(await rect(page, '.toolbar')).shown, 'empty room: no toolbar under the video');
-  await page.mouse.move(200, 450);
-  await page.waitForTimeout(3200);
-  const dock0 = await rect(page, '#fs-dock');
-  check(dock0.shown, 'empty room: the rail stays out (nothing to cover)');
-  check(!overlap(dock0, await rect(page, '#empty')), 'empty room: the rail is beside the empty card, not on it');
-  check(await page.evaluate(() => document.querySelector('#dock-pin').disabled && document.querySelector('#dock-exit').disabled), 'empty room: 📌 and ⛶ dimmed');
-  check((await rect(page, '#dock-game')).shown && (await rect(page, '#dock-react')).shown && (await rect(page, '#dock-more')).shown, 'empty room: 🎮 😀 ⋯ on the rail');
+  // 1) A fresh room (card 6, owner's pick D): no toolbar and no rail yet; add a video, invite, chat and voice only.
+  check(!(await rect(page, '.toolbar')).shown, 'fresh room: no toolbar under the video');
+  check(!(await rect(page, '#fs-dock')).shown, 'fresh room: no rail yet (it comes with the first video)');
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/empty.png` });
 
   // 2) A video file: the rail beside the video, resting until the mouse reaches the right edge.
@@ -81,17 +74,6 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/fullscreen.png` });
   await page.keyboard.press('Escape');
   await page.waitForTimeout(600);
-
-  // 4) The sync test (our own player) in a new empty room: the rail, no toolbar.
-  await page.goto(`${SITE}/r/${room}x`);
-  await page.fill('#name', 'Alex');
-  await page.click('#name-form button.primary');
-  await page.waitForSelector('#sync-test');
-  await page.waitForTimeout(1000);
-  await page.click('#sync-test');
-  await page.waitForTimeout(1500);
-  check(!(await rect(page, '.toolbar')).shown, 'sync test: no toolbar under the video');
-  check(await page.evaluate(() => document.querySelector('#theater').classList.contains('dock-mode')), 'sync test (alone: only a hint): the rail is still there');
 
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ One rail everywhere');

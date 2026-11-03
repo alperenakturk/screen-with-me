@@ -40,9 +40,14 @@ export function createSettingsDialog(root: HTMLElement, isHost: () => boolean) {
     show(active);
   }
 
-  function open(section?: Section): void {
+  /**
+   * `solo` (card 6, owner's pick C): only that section, no list of sections beside it. ⚙️ opens "My screen" so; the
+   * room's other sections open from "⋯ More".
+   */
+  function open(section?: Section, solo = false): void {
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     backdrop.hidden = false;
+    backdrop.classList.toggle('solo', solo);
     render();
     if (section) show(section);
     close.focus();
