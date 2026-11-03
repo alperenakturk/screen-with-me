@@ -11947,6 +11947,19 @@ html.is-touch:not(.has-mouse) .theater.yt-fs {
   right: calc(var(--side-right) + var(--fs-side-w)) !important;
 }
 
+/* Card 6d (owner's bug): with nothing to show (no note, camera or message) the column steps aside and the player is
+   full width beside the resting rail, as before card 2a. */
+.theater.yt-fs:not(.fs-side-open) :is(.player, .fs-catcher) {
+  right: var(--side-right) !important;
+}
+
+.theater.yt-fs:not(.fs-side-open) .fs-side {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(18px);
+  pointer-events: none;
+}
+
 .theater.yt-fs .fs-side {
   display: flex;
   position: absolute;
@@ -11961,7 +11974,7 @@ html.is-touch:not(.has-mouse) .theater.yt-fs {
   box-sizing: border-box;
   background: rgb(12 14 22 / 0.94);
   border-left: 1px solid rgb(255 255 255 / 0.08);
-  transition: right 0.22s ease;
+  transition: right 0.22s ease, opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
 }
 
 .theater.yt-fs .fs-side-notices {

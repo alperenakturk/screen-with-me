@@ -2510,6 +2510,49 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   document.addEventListener('fullscreenchange', placeNotices);
 
   /**
+   * Card 6d (owner's bug): the YouTube fullscreen column (card 2a) takes room only while it has something to show: a
+   * note, the cameras or a message. Otherwise the player is full width beside the resting rail. A message keeps it open
+   * SIDE_LINGER_MS after the last one, so a chat doesn't make the video jump back and forth.
+   */
+  const SIDE_LINGER_MS = 8000;
+  let sideLinger = 0;
+  let sideTimer: ReturnType<typeof setTimeout> | null = null;
+  function updateFsSide(): void {
+    const theater = $('#theater');
+    if (sideTimer !== null) clearTimeout(sideTimer);
+    sideTimer = null;
+    if (!theater.classList.contains('yt-fs')) {
+      // Only touch the class when it is there: even a no-op classList change rewrites the attribute, and the observer
+      // below would call this again for ever.
+      if (theater.classList.contains('fs-side-open')) theater.classList.remove('fs-side-open');
+      return;
+    }
+    const notes = [...fsSideNotices.children].some((node) => node instanceof HTMLElement && !node.hidden && getComputedStyle(node).display !== 'none');
+    // By id on the document: the camera box can float on <body>, outside the room page.
+    const cams = document.getElementById('voice-cams')?.hidden === false;
+    const toast = (document.getElementById('toasts')?.childElementCount ?? 0) > 0;
+    if (toast) sideLinger = Date.now() + SIDE_LINGER_MS;
+    const open = notes || cams || toast || Date.now() < sideLinger;
+    if (open !== theater.classList.contains('fs-side-open')) {
+      theater.classList.toggle('fs-side-open', open);
+      // The cameras are placed in the column: place them again once it moved.
+      setTimeout(() => dispatchEvent(new Event('resize')), 260);
+    }
+    if (open && !notes && !cams) sideTimer = setTimeout(updateFsSide, Math.max(200, sideLinger - Date.now() + 50));
+  }
+  const watchSide = new MutationObserver(updateFsSide);
+  watchSide.observe(fsSideNotices, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+  const sideWatch: Array<[string, MutationObserverInit]> = [
+    ['voice-cams', { attributes: true, attributeFilter: ['hidden'] }],
+    ['toasts', { childList: true }],
+  ];
+  for (const [id, options] of sideWatch) {
+    const node = document.getElementById(id);
+    if (node) watchSide.observe(node, options);
+  }
+  watchSide.observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
+
+  /**
    * Where a YouTube emoji rises from (card 2a): the sender's face when the faces are on screen; in fullscreen or with
    * the side panel hidden, the rail's 😀 (the rail shows for a moment); otherwise the faces row itself.
    */
