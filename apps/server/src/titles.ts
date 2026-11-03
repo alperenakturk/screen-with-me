@@ -1,4 +1,4 @@
-import type { Media } from '@swm/shared/protocol';
+import { cleanTitle, type Media } from '@swm/shared/protocol';
 
 const TIMEOUT_MS = 2500;
 const MAX_TITLE_LENGTH = 200;
@@ -9,6 +9,12 @@ const MAX_TITLE_LENGTH = 200;
  * Bulunamazsa null döner; başlık sadece süs, hiçbir şey ona bağlı değil.
  */
 export async function resolveTitle(media: Media): Promise<string | null> {
+  // Security L1: titles from oEmbed answers and file names go through the same cleaner as typed text.
+  const raw = await lookUpTitle(media);
+  return raw === null ? null : cleanTitle(raw);
+}
+
+async function lookUpTitle(media: Media): Promise<string | null> {
   if (media.kind === 'test') return null;
   if (media.kind === 'html5') return titleFromUrl(media.url);
   // Sayfaların başlığını sunucu çekmez (rastgele sitelere istek atmamak için);

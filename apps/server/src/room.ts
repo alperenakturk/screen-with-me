@@ -19,6 +19,8 @@ import {
   type RoomSettings,
   type ChatMessage,
   type ClientMessage,
+  cleanTitle,
+  isPublicMedia,
   type Media,
   type Member,
   type Pin,
@@ -234,6 +236,8 @@ export class Room extends DurableObject<Env> {
   /** Game tables, oldest first: the game, its opener's key (never sent) and since when nobody has it open. */
   private tables: Table[] = [];
   private hostKey: string | null = null;
+  /** True on a local test server (`wrangler dev`): local media links are allowed there (security L4). */
+  private devHost = false;
   /** The last item that started playing (it got its "3-2-1" then, or didn't need one): no second countdown. */
   private counted: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
@@ -336,6 +340,8 @@ export class Room extends DurableObject<Env> {
 
   override async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
+    // A room on a local test server (`wrangler dev`) may queue local video files and film pages (harnesses).
+    if (/^(localhost|127\.0\.0\.1)$/.test(new URL(request.url).hostname)) this.devHost = true;
     // Ana sayfadaki kayıtlı odalar listesi: oda hâlâ kayıtlı mı, adı, içeride kaç kişi var.
     if (path.endsWith('/info')) {
       // The join screen (0.9.91.20) also shows who is waiting and what is on: the names of up to 3 people (one per
@@ -744,6 +750,8 @@ export class Room extends DurableObject<Env> {
       }
       case 'load':
       case 'enqueue': {
+        // Security L4: only public addresses go into a room (a local test server may use its own).
+        if (!this.devHost && !isPublicMedia(message.media)) return this.sendTo(ws, { t: 'error', code: 'bad_link' });
         // Video beklemeden herkese gider; başlık (biliniyorsa hemen, yoksa) sonradan eklenir.
         const item = this.makeItem(message.media, me, message.title ?? null);
         await this.apply(ws, me, { t: message.t, item });
@@ -1718,7 +1726,7 @@ export class Room extends DurableObject<Env> {
 
   private makeItem(media: Media, me: Member, givenTitle: string | null): QueueItem {
     const cached = this.titles.get(titleKey(media));
-    if (givenTitle !== null) return { id: newId(), media, title: givenTitle, by: me.name };
+    if (givenTitle !== null) return { id: newId(), media, title: withHost(media, givenTitle), by: me.name };
     if (cached && Date.now() - cached.at <= TITLE_MAX_AGE_MS) return { id: newId(), media, title: cached.title, titleAt: cached.at, by: me.name };
     return { id: newId(), media, title: null, by: me.name };
   }
@@ -1863,3 +1871,19 @@ type _Handled = Exclude<
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;
+
+/**
+ * Security L4: a film page's title is chosen by the person who opened it, so its site's name goes with it ("Title ·
+ * site.example"), and nobody can make a page look like it is somewhere else.
+ */
+function withHost(media: Media, title: string): string {
+  if (media.kind !== 'page') return title;
+  let host = '';
+  try {
+    host = new URL(media.url).hostname.replace(/^www\./, '');
+  } catch {
+    return title;
+  }
+  if (!host || title.toLowerCase().includes(host.toLowerCase())) return title;
+  return cleanTitle(`${title} · ${host}`) ?? title;
+}

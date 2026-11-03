@@ -162,7 +162,8 @@ async function join(page) {
     // ⚙️ Settings: focus stays inside while tabbing, Esc gives it back to ⚙️.
     await page.focus('#settings-open');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => !!document.activeElement?.closest('#settings-dialog'), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(200);
     let outside = 0;
     for (let i = 0; i < 20; i++) {
       await page.keyboard.press('Tab');
@@ -176,7 +177,9 @@ async function join(page) {
     // 🔗 Invite: same.
     await page.focus('#invite-btn');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    // The invite window is a lazy chunk: on a slow machine it opens well after 500 ms. Wait until it holds the focus.
+    await page.waitForFunction(() => !!document.activeElement?.closest('.dialog-backdrop:not([hidden])'), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(200);
     outside = 0;
     for (let i = 0; i < 15; i++) {
       await page.keyboard.press('Tab');
@@ -190,7 +193,7 @@ async function join(page) {
     // ⋯ More: Enter opens it on the first item, ↓ moves, Esc closes and returns to ⋯.
     await page.focus('#room-more');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => document.activeElement?.getAttribute('role') === 'menuitem', null, { timeout: 8000 }).catch(() => {});
     const firstItem = await page.evaluate(() => document.activeElement?.getAttribute('role'));
     await page.keyboard.press('ArrowDown');
     const moved = await page.evaluate(() => {

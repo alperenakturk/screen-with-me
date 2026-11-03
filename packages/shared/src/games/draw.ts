@@ -4,7 +4,7 @@
 // A few letters of the word open as time goes by. Sunucu (ayrı Durable Object `Draw`) her şeyi doğrular; kelime sadece
 // çizene gider (tur bitince herkese). Bu dosya mesajlar, doğrulama ve saf kurallar (tahmin eşleştirme, ipucu, puan).
 
-import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
+import { CLIENT_ID, cleanName, cleanText, isAvatar, type Avatar } from '../protocol.ts';
 
 /** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). 2: host settings, game end, new points. */
 export const DRAW_PROTOCOL_VERSION = 3;
@@ -159,7 +159,7 @@ export function parseDrawMessage(raw: string): DrawClientMessage | null {
     }
     case 'guess': {
       if (typeof m.text !== 'string') return null;
-      const text = m.text.replace(/\s+/g, ' ').trim().slice(0, 40);
+      const text = cleanText(m.text, 40);
       return text ? { t: 'guess', text } : null;
     }
     case 'start':
