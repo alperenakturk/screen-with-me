@@ -2,7 +2,7 @@
 
 _Design session, 3 Nov 2026. These are the owner's picks on the side-games page
 (https://claude.ai/artifact/WSxxSneo6NT5Y5JcVKXxLi): **Snack Bar A "counter scene"**, **Window Garden A "window
-sill"**, **word game board A "ticket row"** (the word game's name is still open). The 🎮 games gallery covers and its
+sill"**, **word game board A "ticket row"**; the word game is named **Five Frames** (TR "Beş Kare"). The 🎮 games gallery covers and its
 window layout are on https://claude.ai/artifact/XsUvwg9YL6KugDVP6VggMR (layout pick pending). Brand rules (colours,
 Glowbeam shapes): `../logo-sidelit.md`._
 
@@ -49,7 +49,7 @@ income), `-wow` (a new cinema, a rare seed), `-watching` (eyes to the left, whil
   seed → sprout → grown). `pot.svg` is the pot alone. `plants-sheet.svg` previews them all.
 - A thirsty plant gets a 💧 above it; "Water" is the main (gold) button; the album count and seeds sit in the bar.
 
-## Word game: ticket row (`word/ticket-row.svg`, 320 × 52 + notches)
+## Five Frames (word game): ticket row (`word/ticket-row.svg`, 320 × 52 + notches)
 One guess = one ticket: a numbered stub (26 px) left of a dashed tear line with two round notches, then 5 letter cells.
 - ✓ right place: gold `#ffc65a` filled cell, ink letter, small ✓ top right.
 - • in the word, wrong place: 2.5 px gold outline, gold letter, small • top right.
@@ -61,6 +61,6 @@ In HTML this is easiest as CSS (the mock used a grid `26px repeat(5, 1fr)`, heig
 `::before` / `::after` circles in the window's background colour); the SVG is the reference.
 
 ## Game covers (`covers/*.svg`, 320 × 200, shown at 160 × 100 and down to 96 × 60)
-`xox`, `four`, `draw`, `quiz`, `snack-bar`, `garden`, `word`. Same world: night gradient, warm light from the left,
+`xox`, `four`, `draw`, `quiz`, `snack-bar`, `garden`, `word` (Five Frames / Beş Kare). Same world: night gradient, warm light from the left,
 Glowbeam in most of them. Titles and the "Together · 2 players" / "On the side · just you" line are HTML under the
 cover, never inside the image (so they translate). Use them in the 🎮 gallery window once the owner picks its layout.
