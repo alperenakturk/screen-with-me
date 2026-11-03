@@ -35,8 +35,16 @@ who takes a card below also ticks the matching hand tests in `STATUS.md`.
 and try after the next deploy). The feedback form works (an issue came in). Dependabot #216 / #217: the owner asked the
 Planner to merge them once main is green.
 
-**Run order:** lane B: R1 → R2 → R3 → R4 → R5 → R6 → R7 → R8 → R9 → R10, then its bug-hunt list. Lane A: R3-6 → R3-8
-→ R11 → R12 → R14 (avatars, from Design) → R13. Design: R14 (then R14 becomes a Developer card). R1 and R2 are urgent.
+**Run order (rebalanced 4 Nov 2026, 00:00 UTC):** lane B: R1 ✅ → R2 ✅ → R3 → R4 → R5 → R8, then its bug-hunt list.
+Lane A: R3-6 ✅ → R3-8 ✅ → R11 ✅ → R12 ✅ → R14 ✅ → R13 → R6 → R7 → R9 → R10 → BH1. Design: R14 ✅. Main's runs cancel
+each other: never merge into main while another deploy runs.
+
+### BH1. Bug hunt: stale voice-harness checks + one retry warning (lane A)
+- Why: `scripts/harness/voice/run.mjs` has two checks that fail on main too (the sine-wav energy check and the pre-6g
+  "free tiles" check); `handover.mjs` once passed only on its retry in live e2e.
+- Done when: each has a written root cause and a fix in the test or the code (no skips); the voice harness passes;
+  handover passes on the first attempt three deploys in a row.
+- Tests: the voice harness, live e2e.
 
 ### R1. Fix: opening a game throws people out of the room / the stream (owner's bug, urgent; lane B)
 - Why: owner: pressing a game can throw you out of the site and out of a running stream; back in, the game opens only
