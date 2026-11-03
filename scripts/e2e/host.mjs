@@ -1,8 +1,8 @@
 // Oda yöneticisi, atma ve isim değiştirme.
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const room = 'host' + Math.random().toString(36).slice(2, 8);
-function client(hello) {
-  const ws = new WebSocket(`${base}/api/rooms/${room}/ws`);
+function client(hello, where = room) {
+  const ws = new WebSocket(`${base}/api/rooms/${where}/ws`);
   const inbox = [];
   let closed = null;
   ws.addEventListener('message', (e) => inbox.push(JSON.parse(e.data)));
@@ -116,4 +116,24 @@ const backAgain = await a4.wait((m) => m.t === 'members' && m.hostId !== ayse.id
 ok(backAgain.hostId !== ayse.id, 'Ayşe can hand it back');
 
 for (const c of [a2, b3, a4]) c.ws.close();
+
+// Security M2: while the host reloads (20 s grace) the oldest guest acts as host, but may not hand the role to
+// themselves for good; the host comes back as host.
+{
+  const graceRoom = 'grace' + Math.random().toString(36).slice(2, 8);
+  const host = client({ name: 'Alex', cid: 'alexCid12345' }, graceRoom);
+  const hw = await host.wait((m) => m.t === 'welcome', 'grace host welcome');
+  const guest = client({ name: 'Sam', cid: 'samCid123456' }, graceRoom);
+  const gw = await guest.wait((m) => m.t === 'welcome', 'grace guest welcome');
+  ok(gw.hostId === hw.you, 'Grace room: Alex is the host');
+  host.ws.close();
+  await guest.wait((m) => m.t === 'members' && m.hostId === gw.you, 'guest acts as host');
+  guest.inbox.length = 0;
+  guest.send({ t: 'make-host', id: gw.you });
+  ok((await guest.wait((m) => m.t === 'error', 'grace make-host')).code === 'not_host', 'During the host\'s reload the acting guest cannot make themselves host');
+  const back = client({ name: 'Alex', cid: 'alexCid12345' }, graceRoom);
+  const bw = await back.wait((m) => m.t === 'welcome', 'host back welcome');
+  ok(bw.hostId === bw.you, 'The host comes back within 20 s and is the host again');
+  for (const c of [guest, back]) c.ws.close();
+}
 setTimeout(() => process.exit(0), 100);
