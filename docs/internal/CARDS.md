@@ -43,6 +43,14 @@ who takes a card below also ticks the matching hand tests in `STATUS.md`.
   written on the card.
 - Tests: e2e (a game opened while another member streams: no close event on any room socket; `trace.mjs` logs
   closes), harness for the first-press open, owner's hand test with a friend.
+- Done: 0.9.97.8 (https://github.com/alperenakturk/screen-with-me/pull/225). **Root cause:** opening a game never closed a room connection (two people, voice + a
+  stream, all five room games, locally: no close). What closed them was the deploys: each one restarts the room's
+  object and closes every room connection (the owner tested while ~10 versions went live). Voice came back with the
+  same member id (0.9.91.16), but the page ended the stream and the watching on every welcome ("randomly gone, or
+  thrown out and straight back"), and a game pressed while the connection was down was lost (`send` dropped it), so it
+  opened only on the second press. Now the stream and the watching resume (`LiveP2p.resume`, grace for a missing
+  member), and a table asked for meanwhile goes out after the welcome. Not the 15 s no-hello rule (the room's hello
+  goes out on open) nor the one-hello rule (game pages send one hello per socket).
 
 ### R2. Fix: Enter opens the chat at once (owner's bug, important; lane B)
 - Why: owner: in the room, the first Enter opens an empty side panel, only the second opens the message box.
