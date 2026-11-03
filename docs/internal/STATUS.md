@@ -391,6 +391,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.95.3 🎮 Games gallery: 🎮 (rail, ⋯ → Games, phone ⋯) opens one window with two tabs, "👥 Together" (a
+  picture card per game: a press opens a new table, your friend gets the invite) and "🍿 On the side" (Snack Bar with
+  your coins; Window Garden and Five Frames say "Soon"). It opens on the tab you used last and never needs scrolling,
+  also on the phone. Do the pictures look right?
 - [ ] 0.9.95.1 🍿 Snack Bar: 🎮 → "Play on the side" → Snack Bar opens in a small window (and as a sheet on the
   phone). With nothing playing the coins stand still; play a video with a friend: coins come in, "👥 +10 %" shows (more
   when you are both in voice). Buy the soda fountain: it appears on the counter. Tap the counter: +coins. Type a chat
