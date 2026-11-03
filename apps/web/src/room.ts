@@ -1,4 +1,5 @@
 import { friendlyRoomName } from '@swm/shared/room-id';
+import { createRoomMoreMenu, roomMoreItems } from './ui/room-more.ts';
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { INTRO_CSS, createIntro } from '@swm/shared/intro';
@@ -289,7 +290,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   if (!isShell && !isPhoneLayout()) loadYouTubeApi().catch(() => {});
 
   app.innerHTML = `
-    <div class="room">
+    <div class="room fresh">
       <div class="stage">
         <form id="media-form" class="media-form">
           <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
@@ -878,7 +879,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ⚙️ Settings (top right, next to the profile picture) opens the centered dialog.
   const settingsDialog = createSettingsDialog(app, amHost);
   // The button lives in the top bar, outside `app`.
-  document.getElementById('settings-open')?.addEventListener('click', () => settingsDialog.open());
+  // Card 6 (owner's pick C): ⚙️ is "My screen" only; the room's own settings open from "⋯ More".
+  document.getElementById('settings-open')?.addEventListener('click', () => settingsDialog.open('view', true));
+  const moreItems = (desktop: boolean) =>
+    roomMoreItems({
+      openSettings: (section) => settingsDialog.open(section, true),
+      press: (selector) => requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(selector)?.click()),
+      games: () => requestAnimationFrame(() => (desktop ? pressMoreGame() : document.querySelector<HTMLButtonElement>('#game-btn')?.click())),
+      isHost: amHost,
+      hasItem: () => roomEl.classList.contains('has-item'),
+      desktop,
+    });
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
     myAvatar = avatar;
@@ -926,15 +937,28 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   const live = createLive(app, send, () => myId, isShell, () => amHost());
   // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels.
-  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({ root: app, openSettings: (section) => settingsDialog.open(section), myId: () => myId });
+  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({ root: app, openSettings: (section) => settingsDialog.open(section, true), myId: () => myId, moreItems: () => moreItems(false) });
   phoneRoom?.setCams(seatCams);
   // Odanın içindeki oyunlar: 🎮 → oyun seç → oyun videonun yerinde açılır (ayrı oyun odası yok).
+  // "⋯ More → Games" on a computer (card 6): the games hall opens next to the 🎮 pressed, so an invisible one waits
+  // under ⋯ More (the toolbar's 🎮 is hidden on a computer and the rail is not out in a fresh room).
+  const moreGameButton = el('button', { type: 'button', id: 'more-game', class: 'more-game-btn', tabindex: '-1', 'aria-hidden': 'true' });
+  const moreGameWrap = el('div', { class: 'game-menu-wrap more-game-wrap' }, moreGameButton);
+  document.body.append(moreGameWrap);
+  function pressMoreGame(): void {
+    const r = document.getElementById('room-more')?.getBoundingClientRect();
+    if (r) {
+      moreGameWrap.style.top = `${Math.round(r.bottom + 6)}px`;
+      moreGameWrap.style.right = `${Math.max(8, Math.round(innerWidth - r.right))}px`;
+    }
+    moreGameButton.click();
+  }
   const games = createGameStage({
     wrap: $('.player-wrap'),
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
     // The Shorts bar's 🎮 (0.9.91.13): there a game opens as a free window.
-    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game')],
+    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game'), moreGameButton],
     send,
     me: () => ({ id: myId, name: myName, avatar: myAvatar }),
     amHost,
@@ -1368,6 +1392,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     tvRoom?.empty(state.item === null ? t('tv.emptyNone') : state.item.media.kind === 'page' ? t('tv.emptyPage') : null);
     // Phones hide the link box while something plays (the toolbar's ＋ brings it back).
     $('.room').classList.toggle('has-item', state.item !== null);
+    // Card 6 (owner's pick D): until the room's first video plays, only add a video, invite, chat and join voice show.
+    if (state.item !== null) $('.room').classList.remove('fresh');
     externalEl.hidden = state.item?.media.kind !== 'page';
     if (state.item === null) return;
 
@@ -2843,6 +2869,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const inviteText = el('span', { class: 'invite-text' }, inviteLabel());
   const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, el('span', { 'aria-hidden': 'true' }, '🔗'), inviteText);
   document.querySelector('.topbar-right')?.prepend(copyEl);
+  // Card 6 (owner's pick C): "⋯ More" right of Invite holds the room's less-used things (the phone's ⋯ has the same).
+  if (!tv) {
+    const moreButton = el('button', { type: 'button', id: 'room-more', class: 'nav-link room-more-btn', 'aria-haspopup': 'true', 'aria-expanded': 'false', title: t('more.button'), 'aria-label': t('more.button') }, '⋯');
+    copyEl.after(moreButton);
+    createRoomMoreMenu(moreButton, () => moreItems(true));
+  }
   // ? opens the keyboard shortcuts card (0.9.93.2; not on a TV, whose remote has its own keys).
   if (!tv) listenForShortcutsKey();
   // 0.9.93.1: 🔗 Invite opens the invite window (link, copy, share, WhatsApp, QR); ⋯ → Invite on a phone presses it too.

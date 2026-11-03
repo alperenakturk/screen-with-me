@@ -12263,3 +12263,97 @@ html.phone .media-search span:last-child {
     animation: none;
   }
 }
+
+/* ==== Card 6 (owner's picks C + D): one "⋯ More" menu, ⚙️ = My screen, a fresh room's first view ==== */
+.room-more-btn {
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.room-more-pop {
+  position: fixed;
+  z-index: 1200;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+}
+
+.room-more-pop[hidden] {
+  display: none;
+}
+
+.room-more-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.room-more-item:hover,
+.room-more-item:focus-visible {
+  background: var(--surface-2);
+}
+
+.room-more-item[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The settings dialog opened for one section ("⋯ More" items, ⚙️ = My screen): no list of sections beside it. */
+#settings-dialog.solo .settings-nav {
+  display: none;
+}
+
+/* What moved into "⋯ More" leaves the profile menu (the buttons stay in the page for the menus to press). */
+.profile-pop :is(#recap-open, #profile-keys) {
+  display: none;
+}
+
+/* A fresh room on a computer (nothing has played yet): add a video, invite, chat and join voice; the rest comes for
+   everyone with the first video, or from "⋯ More". */
+html:not(.phone) .room.fresh :is(.fs-dock, #live-card, .tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
+  display: none !important;
+}
+
+html:not(.phone) .room.fresh .theater.rail-bare :is(.player, .fs-catcher, .empty, .overlay) {
+  right: 0 !important;
+}
+
+/* The games hall under "⋯ More" (card 6): an invisible anchor below the top bar's ⋯. */
+.more-game-wrap {
+  position: fixed;
+  z-index: 1200;
+  width: 0;
+  height: 0;
+}
+
+.more-game-btn {
+  position: absolute;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.more-game-wrap .game-menu {
+  top: 0;
+  bottom: auto;
+  right: 0;
+}

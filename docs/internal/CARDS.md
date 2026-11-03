@@ -30,18 +30,6 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
 - Owner's pick: none needed.
 
-### 6. Simplify the room (0.9.94 "Next" 1)
-- Why: a newcomer sees too much at once; Research found every competitor's first room view is player + add a video +
-  invite (`research/newcomers-help-shorts.md` §1).
-- Done when (owner picked C + D): one "⋯ More" menu with the same items and order as the phone's ⋯ sheet (film time,
-  save room, recap, shortcuts, sync test, room rules); the settings dialog keeps "My screen"; until the room's first
-  video plays the room shows only add a video, invite, chat and join voice (the rest appears for everyone when
-  something plays, or under ⋯); every feature reachable in ≤ 2 clicks; built after card 2 (the rail is the base);
-  `store/src/room.html` updated; no scrollbars at 1024×640; first-tips still find their anchors.
-- Tests: harness checks (every moved item opens from its new place; empty vs playing room, computer + phone);
-  `phone`, `yt-room`, `room-extras`, `invite` harnesses still pass; owner's hand test.
-- Owner's pick: C + D (2 Nov 2026, https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw).
-
 ### 6a. Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2; 0.9.94, before the Help page)
 - Severity: high
 - Why: the player uses `www.youtube.com` and the API is preloaded on every room page, so YouTube sets cookies before
@@ -391,6 +379,30 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 6. Simplify the room (0.9.94 "Next" 1)
+- Why: a newcomer sees too much at once; Research found every competitor's first room view is player + add a video +
+  invite (`research/newcomers-help-shorts.md` §1).
+- Done when (owner picked C + D): one "⋯ More" menu with the same items and order as the phone's ⋯ sheet (film time,
+  save room, recap, shortcuts, sync test, room rules); the settings dialog keeps "My screen"; until the room's first
+  video plays the room shows only add a video, invite, chat and join voice (the rest appears for everyone when
+  something plays, or under ⋯); every feature reachable in ≤ 2 clicks; built after card 2 (the rail is the base);
+  `store/src/room.html` updated; no scrollbars at 1024×640; first-tips still find their anchors.
+- Tests: harness checks (every moved item opens from its new place; empty vs playing room, computer + phone);
+  `phone`, `yt-room`, `room-extras`, `invite` harnesses still pass; owner's hand test.
+- Owner's pick: C + D (2 Nov 2026, https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw).
+- Done: 0.9.93.13 (PR below). C: `ui/room-more.ts` `roomMoreItems` is the one list (🎮 games, ⏰ film time for the host,
+  💾 save, ✨ recap, ⌨️ shortcuts on a computer, 🧪 sync test (dimmed while something plays: it would replace it), 👑
+  rules); the computer's `#room-more` ⋯ right of Invite opens it as a menu (`createRoomMoreMenu`), the phone's ⋯ sheet
+  shows the same tiles in the same order after its invite / queue / people; the settings dialog opens one section
+  alone (`open(section, solo)`, `#settings-dialog.solo` hides the section list), ⚙️ = "My screen" only; recap and
+  shortcuts left the profile menu; ⋯ → Games opens the games hall under ⋯ through an invisible `#more-game` anchor (an
+  `extraButtons` of the games stage). D: `.room.fresh` until the room's first item (any `state.item`), on a computer
+  the rail, Share, the queue / people tabs and the empty card's sync test are hidden. Tests: new
+  `scripts/harness/room-more/run.cjs` (fresh vs playing, every ⋯ item opens, ⚙️ solo, 1024×640, phone order);
+  `one-rail` (a fresh room has no rail), `phone` (tiles by name), `yt-room`, `room-extras`, `invite` pass;
+  `store/src/room.html` has the ⋯.
+
 
 ### 5. Home page: "Continue where you left off" overflows (0.9.93, owner's bug)
 - Why: owner, 2 Nov 2026 (screenshot): a long video title runs out of the card under the room preview.

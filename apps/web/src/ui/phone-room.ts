@@ -16,11 +16,15 @@ import { phoneCamSize } from './phone-cams.ts';
  * back when they close. A face whose camera is on shows the live picture in its circle; tapping it opens the person
  * sheet with the camera big.
  */
+import type { MoreItem } from './room-more.ts';
+
 export interface PhoneRoomDeps {
   root: HTMLElement;
   /** The settings dialog (a section may be named). */
   openSettings: (section?: 'view' | 'rules' | 'save' | 'schedule') => void;
   myId: () => string | null;
+  /** The room's "⋯ More" list, shared with the computer's menu (card 6). */
+  moreItems: () => MoreItem[];
 }
 
 type Borrowed = { node: Element; parent: Node; next: Node | null };
@@ -236,16 +240,20 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
         }),
         tile('🎵', t('tab.queue'), () => openAdd(), el('span', { class: 'ph-tile-count' }, $('#queue-count')?.textContent ?? '')),
         tile('👥', t('tab.people'), () => openPeople(), el('span', { class: 'ph-tile-count' }, $('#people-count')?.textContent ?? '')),
-        tile('🎮', t('phone.more.games'), press('#game-btn')),
-        tile('✨', t('phone.more.recap'), press('#recap-open')),
-        tile('⏰', t('phone.more.filmTime'), () => {
-          closeSheet();
-          deps.openSettings('schedule');
+        // The same list and order as the computer's "⋯ More" (card 6, owner's pick C).
+        ...deps.moreItems().map((item) => {
+          const button = tile(item.icon, t(item.label), () => {
+            if (item.dimmed) return flashHint(button, item.dimmed);
+            closeSheet();
+            item.run();
+          });
+          if (item.dimmed) button.classList.add('dimmed');
+          return button;
         }),
         tile('👤', t('tab.profile'), press('.profile-btn')),
         tile('⚙️', t('tab.settings'), () => {
           closeSheet();
-          deps.openSettings();
+          deps.openSettings('view');
         }),
         // "Language" asks which one (0.9.92.8, owner: it used to switch at once, which was confusing).
         tile('🌐', t('phone.more.language'), () => openLanguage()),
