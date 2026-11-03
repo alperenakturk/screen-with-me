@@ -60,7 +60,7 @@ kameralar, emojiler, oyunlar ve ortak sıra videonun etrafında.
 ### Her yerde
 | | |
 |---|---|
-| 📱 **Telefon için** | Telefonda oda bir uygulama ekranıdır: video kenardan kenara, altında herkesin yüzü ve kameraları, sonra sohbet. ＋ ve ⋯ alttan açılan sayfalar (video ekle, oyunlar, davet, ayarlar…), geri tuşu onları kapatır; ⛶ gerçek tam ekran verir (iPhone'da da), videonun yanında ince bir düğme sütunuyla. Shorts ve oyunlar tüm ekranı alır. Film sayfaları dışında her şey telefonda çalışır. |
+| 📱 **Telefon için** | Telefonda oda bir uygulama ekranıdır: video kenardan kenara, altında herkesin yüzü ve kameraları, sonra sohbet. ＋ ve ⋯ alttan açılan sayfalar (video ekle, oyunlar, davet, ayarlar…), geri tuşu onları kapatır; ⛶ gerçek tam ekran verir (iPhone'da da), videonun yanında ince bir düğme sütunuyla. Shorts ve oyunlar tüm ekranı alır. Film sayfaları dışında her şey telefonda çalışır. **Tablet:** dik tutunca video üstte, düğmeleri yanında, altında iki sütun (sohbet; Birlikte, Sıra ve Kişiler), sayfa hiç kaymaz; yatay tutunca oda bilgisayardaki gibi görünür. |
 | 📶 **Zor ağlar** | WebSocket'lerin hiç açılmadığı ağlarda (bazı telefon hotspot'ları) oda kendiliğinden HTTP yedeğine geçer, mümkün olunca geri döner. Odaya ulaşılamazsa "Tekrar dene" ve bağlantı testi bir dokunuş uzakta. |
 | 📲 **Uygulama olarak kur** | Site telefonlarda ve bilgisayarlarda uygulama olarak kurulur ve her zaman en son sürümü yükler. |
 | 🎨 **Görünüm ve ses** | 11 tema (sade ve resimli), kısa bir açılış, yumuşak üretilmiş ses efektleri (dosya yok; ayarlanabilir ya da kapatılabilir). Sitede ve eklentide İngilizce ve Türkçe (varsayılan İngilizce). |

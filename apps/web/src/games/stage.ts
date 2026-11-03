@@ -13,7 +13,7 @@
 import { createLogo } from '@swm/shared/logo';
 import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
-import { isPhoneLayout, onPhoneLayout } from '../device.ts';
+import { isPhoneLayout, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
@@ -152,7 +152,13 @@ export function createGameStage(opts: StageOptions) {
   stage.hidden = true;
   wrap.append(stage);
   const theater = (wrap.closest('.theater') as HTMLElement | null) ?? wrap;
-  const narrow = matchMedia('(max-width: 860px)');
+  const narrowQuery = matchMedia('(max-width: 860px)');
+  // An upright tablet (card T) is narrow but plays like a computer: the game in the video's place.
+  const narrow = {
+    get matches(): boolean {
+      return narrowQuery.matches && !document.documentElement.classList.contains('tablet-up');
+    },
+  };
   const inFullscreen = () => theater.matches(':fullscreen') || theater.classList.contains('fake-fs');
   /**
    * The Shorts view (0.9.91.13, owner): the upright video has no room for a game in its place, so a game there is a
@@ -302,7 +308,8 @@ export function createGameStage(opts: StageOptions) {
   grip.addEventListener('pointerup', endSizing);
   grip.addEventListener('pointercancel', endSizing);
 
-  narrow.addEventListener('change', place);
+  narrowQuery.addEventListener('change', place);
+  onTabletUpright(place);
   onPhoneLayout(() => place());
   addEventListener('fullscreenchange', place);
   addEventListener('resize', () => {

@@ -374,14 +374,17 @@ const sheetName = (page) => page.evaluate(() => {
     await page.evaluate(() => localStorage.setItem('theme', 'sinema'));
     await page.goto(`${SITE}/`);
     await page.waitForTimeout(1200);
-    const r = await page.evaluate(() => ({ chips: document.querySelectorAll('#theme-strip .theme-chip').length, shown: document.documentElement.dataset.theme, saved: localStorage.getItem('theme') }));
-    check(r.chips === 4 && r.shown === 'gece' && r.saved === 'sinema', 'telefon: sadece düz renk temaları, resimli tema telefonda Gece görünüyor', JSON.stringify(r));
+    // The home page has no theme picker since card 6g; the saved scene theme still shows as Gece on a phone.
+    const r = await page.evaluate(() => ({ shown: document.documentElement.dataset.theme, saved: localStorage.getItem('theme') }));
+    check(r.shown === 'gece' && r.saved === 'sinema', 'telefon: resimli tema telefonda Gece görünüyor (kayıtlı kalıyor)', JSON.stringify(r));
     await ctx.close();
     const desk = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const dp = await desk.newPage();
     await dp.goto(`${SITE}/`);
+    await dp.evaluate(() => localStorage.setItem('theme', 'sinema'));
+    await dp.goto(`${SITE}/`);
     await dp.waitForTimeout(1200);
-    check((await dp.evaluate(() => document.querySelectorAll('#theme-strip .theme-chip').length)) === 11, 'bilgisayarda bütün temalar duruyor');
+    check((await dp.evaluate(() => document.documentElement.dataset.theme)) === 'sinema', 'bilgisayarda resimli tema duruyor');
     await desk.close();
   }
 

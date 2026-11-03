@@ -540,8 +540,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   let byTurning = false;
   onTurn((sideways) => {
     // Phones (0.9.92.8, owner: "turning sideways must not do things by itself"): no automatic fullscreen; the
-    // sideways room offers one big ⛶ instead (phone.css `ph-turn`). Tablets keep the setting.
-    if (shell || !isTouch() || isPhoneLayout() || load('opt:rotateFs') === '0') return;
+    // sideways room offers one big ⛶ instead (phone.css `ph-turn`). Tablets (card T): sideways is the computer layout,
+    // so the setting is off unless the person turned it on.
+    if (shell || !isTouch() || isPhoneLayout() || load('opt:rotateFs') !== '1') return;
     if (sideways && !isActive() && getPlayer() && landscape() && !document.querySelector('#game-stage:not([hidden])')) {
       byTurning = true;
       setFake(true, false);

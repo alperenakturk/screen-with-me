@@ -184,6 +184,17 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Owner's pick (3 Nov 2026, https://claude.ai/artifact/GXitrW7UaKsiWHBtWzk4Mw): upright tablet = **B**, a tablet
   layout: the video on top, two columns below (chat; Together + Queue / People), no page scroll, the rail beside the
   video, never over it.
+- Done: 0.9.96.10 (PR below). `device.ts` `isTabletUpright()` (touch, no mouse, not the phone layout, upright by width
+  like `sideways`, ≥ 701 px) → `<html class="tablet-up">`; `tablet.css` is a lazy stylesheet loaded only on a touch
+  screen without a mouse. Upright: the page never scrolls, the link box on one row, the video card as wide as the
+  window but ≤ 52 % of the height, the rail beside it; below, `.side` is a grid (chat 1.5 fr with its own card; Together,
+  then the Queue / People tabs in 1 fr; `.tabs-card` is `display: contents`, no Chat tab). `ui/tabs.ts` has a split mode
+  (the chat always shown, the tabs pick Queue / People; `chatShown` for the chat sound). Games open in the video's place
+  (`games/stage.ts` treats an upright tablet as wide). Sideways and upright: the rail at full opacity (the idle rule
+  hid it on Android tablets) with 44 px buttons; the Shorts bar is icons only on one row. "Fullscreen when turned
+  sideways" is now off unless chosen (sideways is the computer layout). Cameras keep card 6g's one window (the design
+  note predates it). Room JS budget raised to 145 kB (140.1). Harness `scripts/harness/tablet/run.cjs` (iPad 820×1180 ↔
+  1180×820, Android 768×1024: 90 checks); `phone` harness's theme checks updated for 6g.
 
 ### A11y. Accessibility pass (lane A; 0.9.95 gate)
 - Why: ROADMAP §1 "Accessibility": WCAG AA contrast (with the new Sidelit colours), keyboard tour, focus states,

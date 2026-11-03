@@ -1,0 +1,167 @@
+/* ==== Tablets (card T, owner's pick B on https://claude.ai/artifact/GXitrW7UaKsiWHBtWzk4Mw, notes in
+   docs/internal/design/tablet.md). Loaded only on a touch screen without a mouse (device.ts), so computers and phones
+   don't carry it.
+
+   Upright (`html.tablet-up`): the page never scrolls. The video sits on top with the rail beside it (never over it),
+   as big as the width allows but leaving at least 45 % of the height below; under it two columns: the chat (1.5 fr,
+   always shown) and a side column with the Together card and the Queue / People tabs. The desktop DOM stays:
+   `.tabs-card` is `display: contents`, so its tabs and panels are placed in `.side`'s grid directly.
+   Sideways tablets keep the computer layout (rail at full opacity, 44 px buttons below). ==== */
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) body {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior: none;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .footer {
+  display: none;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) main {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: none;
+  width: 100%;
+  padding: 8px max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .room {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .stage {
+  gap: 8px;
+  min-height: 0;
+}
+
+/* The video's card: full width, unless that would take more than 52 % of the height. */
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .theater:not(:fullscreen, .fake-fs) {
+  width: min(100%, calc(52dvh * 16 / 9 + 82px));
+  align-self: center;
+  padding: 8px 10px 10px;
+  gap: 6px;
+}
+
+/* ---- Under the video: chat | Together + Queue / People ---- */
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .room > .side {
+  position: static;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0 10px;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .side .tabs-card {
+  display: contents;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .side .chat-panel {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .side .together-card {
+  grid-column: 2;
+  grid-row: 1;
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .side .tabs {
+  grid-column: 2;
+  grid-row: 2;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .side .tabs [data-tab='chat'] {
+  display: none;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .side .tab-panel:not(.chat-panel) {
+  grid-column: 2;
+  grid-row: 3;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-top: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
+}
+
+/* The Together card's rows wrap in the narrower column. */
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .together-actions {
+  flex-wrap: wrap;
+}
+
+/* ---- Touch targets (upright and sideways): the rail at full opacity with 44 px buttons ---- */
+html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode .fs-dock {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode .fs-dock :is(button, .dock-btn) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode .fs-dock {
+  gap: 4px;
+}
+
+html.is-touch:not(.phone, .has-mouse) :is(.chat-send, .chat-attach, .tab, .media-form .btn) {
+  min-height: 44px;
+}
+
+/* ---- Shorts on an upright tablet: the bottom bar on one row (names only in the titles) ---- */
+html.tablet-up .room.shorts .shorts-bar {
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+
+html.tablet-up .room.shorts .shorts-bar :is(.small-btn > span, .react-open > span:not(:first-child)):not(.shorts-feed-pop *, .react-tray *, .game-menu *),
+html.tablet-up .room.shorts .shorts-bar .react-recent {
+  display: none;
+}
+
+html.tablet-up .room.shorts .shorts-bar .shorts-chat {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html.tablet-up .room.shorts .shorts-bar .shorts-chat input {
+  min-width: 0;
+}
+
+/* The link box on one row (the narrow-screen rule puts the box on its own line). */
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .media-form {
+  flex-wrap: nowrap;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .media-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .media-form > .btn {
+  flex: none;
+}
