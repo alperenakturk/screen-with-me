@@ -146,6 +146,29 @@ describe('openSocket', () => {
     expect(socket.readyState).toBe(3);
   });
 
+  it('waits on a 429 and sends the same batch again, never closing (security M4)', async () => {
+    const socket = new HttpSocket('ws://test/api/rooms/abc/ws');
+    await vi.advanceTimersByTimeAsync(10);
+    const real = server.fetch;
+    let limited = 0;
+    vi.stubGlobal('fetch', (input: string, init?: RequestInit) => {
+      const op = new URL(input).searchParams.get('http');
+      if ((op === 'send' || op === 'poll') && limited < 6) {
+        limited++;
+        return Promise.resolve(new Response('Too many requests', { status: 429 }));
+      }
+      return real(input, init);
+    });
+    const closes: number[] = [];
+    socket.addEventListener('close', (e) => closes.push(e.code));
+    socket.send('{"t":"chat","text":"hi"}');
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(closes).toEqual([]);
+    expect(socket.readyState).toBe(1);
+    expect(server.sent).toEqual(['{"t":"chat","text":"hi"}']);
+    socket.close();
+  });
+
   it('says it is closed after repeated failed polls', async () => {
     const socket = new HttpSocket('ws://test/api/rooms/abc/ws');
     await vi.advanceTimersByTimeAsync(10);

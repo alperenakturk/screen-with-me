@@ -40,6 +40,9 @@ function allowedOrigin(request: Request, url: URL): boolean {
   }
 }
 
+/** The HTTP fallback's session ids (`fallback.ts` `newSid`: 16 random bytes in hex). */
+const SID_PATTERN = /^[0-9a-f]{32}$/;
+
 async function ipKey(request: Request): Promise<string> {
   const ip = request.headers.get('CF-Connecting-IP') ?? 'local';
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`swm-ip:${ip}`));
@@ -75,6 +78,11 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
     forwarded = await guardSocket(request, url, env);
   } else {
     if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
+    // Security M4: only a known step with a well-formed session id reaches the object, and at most FALLBACK_LIMIT
+    // such requests per IP and minute (a loop of made-up ids used to wake objects for free).
+    if (op !== 'send' && op !== 'poll' && op !== 'close') return new Response('Bad step', { status: 400 });
+    if (!SID_PATTERN.test(url.searchParams.get('sid') ?? '')) return new Response('Bad session', { status: 400 });
+    if (env.FALLBACK_LIMIT && !(await env.FALLBACK_LIMIT.limit({ key: await ipKey(request) })).success) return new Response('Too many requests', { status: 429 });
     forwarded = new Request(request);
     forwarded.headers.delete(IP_HEADER);
   }
@@ -100,6 +108,10 @@ export default {
     // (objects restart on the new code a while after a deploy, closing their connections). The deploy job runs the
     // live e2e only once both say the new id. TvLink stores nothing, so these probe objects leave nothing behind.
     if (url.pathname === '/api/version') {
+      // Security M4: each call starts a fresh object, so it shares the saved-room lookups' limit (its own key).
+      if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: `version:${await ipKey(request)}` })).success) {
+        return new Response('Too many requests', { status: 429 });
+      }
       const probe = env.TVLINKS.get(env.TVLINKS.idFromName(`version-${crypto.randomUUID()}`));
       const object = await (await probe.fetch('https://version/version')).text();
       return Response.json({ worker: env.CF_VERSION_METADATA?.id ?? '', object }, { headers: { 'Cache-Control': 'no-store' } });
