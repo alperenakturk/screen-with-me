@@ -7156,6 +7156,16 @@ html.shorts-view .footer {
   height: 20px;
 }
 
+/* Solo games on the side (Snack Bar): an emoji until the games gallery gives them covers. */
+.hub-glyph {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.hub-game.mine {
+  outline: 1px solid var(--accent);
+}
+
 .hub-table-text,
 .hub-game-text {
   display: grid;

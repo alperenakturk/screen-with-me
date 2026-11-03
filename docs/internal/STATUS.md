@@ -391,6 +391,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.95.1 🍿 Snack Bar: 🎮 → "Play on the side" → Snack Bar opens in a small window (and as a sheet on the
+  phone). With nothing playing the coins stand still; play a video with a friend: coins come in, "👥 +10 %" shows (more
+  when you are both in voice). Buy the soda fountain: it appears on the counter. Tap the counter: +coins. Type a chat
+  message while it is open: keys 1–8 / Enter still work for the room. Close it, come back after 10 minutes: "While you
+  were away". Two tabs: the second says "open in another tab". Does it feel sweet? Sounds OK?
 - [ ] 0.9.93.21 Vimeo: paste a Vimeo link (`vimeo.com/<number>`, also an unlisted `vimeo.com/<number>/<code>`) with a
   friend: it plays in Vimeo's own player on computer + phone, pause / play / jumping in Vimeo's bar follows for both,
   the queue shows the real title, speed stays 1×.

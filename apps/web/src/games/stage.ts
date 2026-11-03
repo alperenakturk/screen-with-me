@@ -11,7 +11,8 @@
 // for me only.
 
 import { createLogo } from '@swm/shared/logo';
-import { GAME_CATALOG, LATEST_NEWS, unseenNews } from '@swm/shared/games/catalog';
+import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, SOLO_KINDS, isSoloKind, unseenNews, type SoloKind } from '@swm/shared/games/catalog';
+import type { SnackContext } from '@swm/shared/games/snack-bar';
 import { MAX_TABLES, ROOM_GAME_KINDS, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { isPhoneLayout, onPhoneLayout } from '../device.ts';
 import { el } from '../dom.ts';
@@ -23,6 +24,13 @@ import { icon, type IconName } from '../ui/icons.ts';
 
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
+/** Solo games have an emoji until the games gallery (card GG) gives every game its cover. */
+const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿' };
+const soloIcon = (kind: SoloKind): HTMLElement => el('span', { class: 'hub-glyph', 'aria-hidden': 'true' }, SOLO_GLYPH[kind]);
+
+/** A game the window can show: a room game (a table) or a solo game played on the side. */
+type Kind = RoomGameKind | SoloKind;
+const catalogOf = (kind: Kind) => (isSoloKind(kind) ? SOLO_CATALOG[kind] : GAME_CATALOG[kind]);
 
 const PAD = `<svg class="pwm-pad" viewBox="0 0 84 54" aria-hidden="true">
   <path d="M20 6h44a15 15 0 0 1 15 14l2 19a10 10 0 0 1-17.5 6.5L56 38H28l-7.5 7.5A10 10 0 0 1 3 39l2-19A15 15 0 0 1 20 6z" fill="#241a5c" stroke="#ffd166" stroke-width="3" stroke-linejoin="round"/>
@@ -44,16 +52,16 @@ const SEEN_KEY = 'opt:gamesSeen';
 
 type Place = 'float' | 'stage';
 const PLACES: readonly Place[] = ['float', 'stage'];
-const placeOf = (kind: RoomGameKind): Place => {
+const placeOf = (kind: Kind): Place => {
   const saved = load(`gamePlace:${kind}`);
   // "side" (0.9.91.8–0.9.91.9) became the free window.
   if (saved === 'side') return 'float';
-  return PLACES.includes(saved as Place) ? (saved as Place) : GAME_CATALOG[kind].place;
+  return PLACES.includes(saved as Place) ? (saved as Place) : catalogOf(kind).place;
 };
 /** The free window's spot on the screen, as a share of the free room (0–1). */
 const FLOAT_KEY = 'gameFloat:spot';
 /** The free window's zoom per game (what I last dragged it to; empty = the game's own size). */
-const zoomKey = (kind: RoomGameKind) => `gameFloat:zoom:${kind}`;
+const zoomKey = (kind: Kind) => `gameFloat:zoom:${kind}`;
 /** Gap kept between the free window and the screen's edges. */
 const EDGE = 8;
 /** The free window's zoom range (share of the game's own size). */
@@ -62,7 +70,7 @@ const MAX_ZOOM = 1.6;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
-const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit';
+const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit, .sb, .sb-rows';
 const readPair = (key: string): { x: number; y: number } | null => {
   try {
     const saved = JSON.parse(load(key) || 'null') as { x?: unknown; y?: unknown } | null;
@@ -91,6 +99,8 @@ interface StageOptions {
   activity: (text: () => string) => void;
   /** A short bubble by 🎮. */
   hint: (text: string) => void;
+  /** What a solo game needs from the room: is the video playing, how many others are here / in voice with me. */
+  room: () => SnackContext;
 }
 
 export function createGameStage(opts: StageOptions) {
@@ -101,6 +111,10 @@ export function createGameStage(opts: StageOptions) {
   let unmount: (() => void) | null = null;
   /** I asked for a new table: open it for me as soon as the room lists it. */
   let wanted: RoomGameKind | null = null;
+  /** The solo game I have open instead of a table (mounted even while minimized: it keeps earning). */
+  let solo: SoloKind | null = null;
+  /** The game the window shows now. */
+  const shownKind = (): Kind | null => current?.kind ?? solo;
 
   const titleText = el('b', { class: 'game-stage-title-text' });
   const titleIcon = el('span', { class: 'game-stage-title-icon', 'aria-hidden': 'true' });
@@ -119,9 +133,10 @@ export function createGameStage(opts: StageOptions) {
   const placeButtons = PLACES.map((p) => {
     const b = el('button', { type: 'button', class: `game-place-btn place-${p}` });
     b.addEventListener('click', () => {
-      if (!current) return;
+      const kind = shownKind();
+      if (!kind) return;
       // On a narrow screen "float" means below the video, "stage" the whole screen.
-      save(`gamePlace:${current.kind}`, p);
+      save(`gamePlace:${kind}`, p);
       place();
     });
     return b;
@@ -151,7 +166,8 @@ export function createGameStage(opts: StageOptions) {
 
   /** Puts the game window where its placement says (moves the element only when its parent changes). */
   function place(): void {
-    const want = current ? (shortsView() ? 'float' : placeOf(current.kind)) : 'stage';
+    const kind = shownKind();
+    const want = kind ? (shortsView() ? 'float' : placeOf(kind)) : 'stage';
     // A phone always plays full screen (0.9.92.5, pick 10A): the video shrinks to a thumbnail in the head.
     mode = narrow.matches ? (want === 'stage' || shortsView() || isPhoneLayout() ? 'full' : 'below') : want;
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
@@ -196,8 +212,8 @@ export function createGameStage(opts: StageOptions) {
   }
   /** The free window's zoom: what I dragged it to (1 = the game's own size), never bigger than the screen allows. */
   function floatZoom(want?: number): number {
-    const kind = current?.kind ?? 'xox';
-    const [w, h] = GAME_CATALOG[kind].size;
+    const kind = shownKind() ?? 'xox';
+    const [w, h] = catalogOf(kind).size;
     const saved = Number(load(zoomKey(kind)) || '1');
     const room = area();
     const most = Math.min(MAX_ZOOM, (room.width - 2 * EDGE) / w, (room.height - 2 * EDGE) / h);
@@ -205,7 +221,7 @@ export function createGameStage(opts: StageOptions) {
   }
   let spot = readPair(FLOAT_KEY) ?? { x: 1, y: 0.5 };
   function placeFloat(zoom = floatZoom()): void {
-    const [w, h] = GAME_CATALOG[current?.kind ?? 'xox'].size;
+    const [w, h] = catalogOf(shownKind() ?? 'xox').size;
     const width = Math.round(w * zoom);
     const height = Math.round(h * zoom);
     const room = area();
@@ -245,8 +261,9 @@ export function createGameStage(opts: StageOptions) {
   head.addEventListener('pointercancel', endDrag);
   // Double click on the head: back to the game's own size.
   head.addEventListener('dblclick', (event) => {
-    if (mode !== 'float' || !current || (event.target as Element).closest('button')) return;
-    save(zoomKey(current.kind), '');
+    const kind = shownKind();
+    if (mode !== 'float' || !kind || (event.target as Element).closest('button')) return;
+    save(zoomKey(kind), '');
     placeFloat();
     dispatchEvent(new Event('swm-layout'));
   });
@@ -260,8 +277,9 @@ export function createGameStage(opts: StageOptions) {
     grip.setPointerCapture(event.pointerId);
   });
   grip.addEventListener('pointermove', (event) => {
-    if (!sizing || !current) return;
-    const [w, h] = GAME_CATALOG[current.kind].size;
+    const kind = shownKind();
+    if (!sizing || !kind) return;
+    const [w, h] = catalogOf(kind).size;
     const room = area();
     // Follow the mouse along the window's diagonal; keep the window on the screen.
     const want = ((sizing.w + event.clientX - sizing.x) / w + (sizing.h + event.clientY - sizing.y) / h) / 2;
@@ -273,7 +291,7 @@ export function createGameStage(opts: StageOptions) {
       x: room.width - 2 * EDGE - width > 0 ? (sizing.left - room.left - EDGE) / (room.width - 2 * EDGE - width) : 0,
       y: room.height - 2 * EDGE - height > 0 ? (sizing.top - room.top - EDGE) / (room.height - 2 * EDGE - height) : 0,
     };
-    save(zoomKey(current.kind), String(Math.round(zoom * 1000) / 1000));
+    save(zoomKey(kind), String(Math.round(zoom * 1000) / 1000));
     placeFloat(zoom);
     dispatchEvent(new Event('swm-layout'));
   });
@@ -306,21 +324,22 @@ export function createGameStage(opts: StageOptions) {
     const now = shortsView();
     if (now === wasShorts) return;
     wasShorts = now;
-    if (now && current) besideShorts(current.kind);
+    const kind = shownKind();
+    if (now && kind) besideShorts(kind);
     place();
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   /** The free space right of the upright Short: the window goes there, made small enough to fit beside it. */
-  function besideShorts(kind: RoomGameKind): void {
+  function besideShorts(kind: Kind): void {
     save(`gamePlace:${kind}`, 'float');
     spot = { x: 1, y: 0.4 };
     save(FLOAT_KEY, JSON.stringify(spot));
     requestAnimationFrame(() => {
-      const [w] = GAME_CATALOG[kind].size;
+      const [w] = catalogOf(kind).size;
       // Right of the video's column: since 0.9.92.2 the Shorts rail (and ▲▼) sit between the video and this space.
       const rail = document.getElementById('shorts-nav')?.getBoundingClientRect();
       const right = Math.max(wrap.getBoundingClientRect().right, rail && rail.width ? rail.right : 0);
       const beside = innerWidth - right - 3 * EDGE;
-      if (beside > 0 && current?.kind === kind) {
+      if (beside > 0 && shownKind() === kind) {
         save(zoomKey(kind), String(Math.round(Math.max(MIN_ZOOM, Math.min(floatZoom(), beside / w)) * 1000) / 1000));
         if (mode === 'float') placeFloat();
         dispatchEvent(new Event('swm-layout'));
@@ -332,13 +351,14 @@ export function createGameStage(opts: StageOptions) {
   // ---- Fit the game to its box: no scrollbars, ever (owner's rule) ----
   let fitting = false;
   function refit(): void {
-    if (fitting || stage.hidden || !current) return;
+    const kind = shownKind();
+    if (fitting || stage.hidden || !kind) return;
     const W = frame.clientWidth;
     const H = frame.clientHeight;
     if (!W || !H) return;
     fitting = true;
     // Phones have their own narrow layouts: only overflow shrinks the game there.
-    const [fw, fh] = narrow.matches ? [0, 0] : GAME_CATALOG[current.kind].fit;
+    const [fw, fh] = narrow.matches ? [0, 0] : catalogOf(kind).fit;
     let scale = Math.min(1, fw ? W / fw : 1, fh ? H / fh : 1);
     for (let i = 0; i < 4; i++) {
       body.style.width = `${W / scale}px`;
@@ -393,6 +413,11 @@ export function createGameStage(opts: StageOptions) {
       titleIcon.replaceChildren(gameIcon(current.kind));
       titleText.textContent = `${titleOf(current.kind)} · ${t('game.by', { name: current.by.name })}`;
       endButton.node.hidden = !canClose(current);
+    } else if (solo) {
+      titleIcon.replaceChildren(soloIcon(solo));
+      titleText.textContent = `${t(`games.${solo}.title`)} · ${t('hub.solo')}`;
+      endButton.node.hidden = true;
+      leaveButton.label(t('solo.close'));
     }
     for (const b of triggers) {
       b.classList.toggle('game-on', tables.length > 0);
@@ -454,6 +479,28 @@ export function createGameStage(opts: StageOptions) {
         ),
       );
     }
+    // Solo games on the side: always open, no table (the games gallery, card GG, gives them their own tab).
+    parts.push(
+      el('p', { class: 'hub-label' }, t('hub.side')),
+      el(
+        'div',
+        { class: 'hub-games hub-solo' },
+        ...SOLO_KINDS.map((kind) => {
+          const item = el(
+            'button',
+            { type: 'button', role: 'menuitem', class: `hub-game${solo === kind ? ' mine' : ''}`, 'data-solo': kind },
+            el('span', { class: 'hub-icon' }, soloIcon(kind)),
+            el('span', { class: 'hub-game-text' }, el('b', {}, t(`games.${kind}.title`)), el('small', {}, t('hub.solo'))),
+          );
+          item.title = t(`games.${kind}.text`);
+          item.addEventListener('click', () => {
+            setHub(false);
+            void openSolo(kind);
+          });
+          return item;
+        }),
+      ),
+    );
     const full = tables.length >= MAX_TABLES;
     parts.push(
       el('p', { class: 'hub-label' }, full ? t('hub.full') : t('hub.new')),
@@ -508,6 +555,7 @@ export function createGameStage(opts: StageOptions) {
     if (current?.id === table.id && unmount) return place();
     unmount?.();
     unmount = null;
+    solo = null;
     current = table;
     labels();
     if (shortsView()) besideShorts(table.kind);
@@ -529,9 +577,12 @@ export function createGameStage(opts: StageOptions) {
 
   /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */
   function leave(tell = true): void {
+    // A solo game closes for me only: the room never knew about it.
+    if (!current) tell = false;
     unmount?.();
     unmount = null;
     current = null;
+    solo = null;
     stage.hidden = true;
     place();
     body.replaceChildren();
@@ -542,7 +593,29 @@ export function createGameStage(opts: StageOptions) {
   function minimize(): void {
     stage.hidden = true;
     place();
-    if (current) for (const b of triggers) b.classList.add('game-waiting');
+    if (current || solo) for (const b of triggers) b.classList.add('game-waiting');
+  }
+
+  /** Opens a solo game on the side; my table (if any) is left first: the window shows one game at a time. */
+  async function openSolo(kind: SoloKind): Promise<void> {
+    document.getElementById('game-invite')?.remove();
+    stage.hidden = false;
+    for (const b of triggers) b.classList.remove('game-waiting');
+    if (solo === kind && unmount) return place();
+    if (current) leave();
+    unmount?.();
+    unmount = null;
+    solo = kind;
+    labels();
+    if (shortsView()) besideShorts(kind);
+    stage.hidden = false;
+    place();
+    body.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
+    // Its code and stylesheet are a separate chunk: not downloaded when entering the room.
+    const stop = (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
+    queueFit();
+    if (solo !== kind) stop();
+    else unmount = stop;
   }
 
   function invite(table: RoomGame): void {
@@ -565,6 +638,7 @@ export function createGameStage(opts: StageOptions) {
     trigger.addEventListener('click', () => {
       // A minimized table comes back first; the hub is one more press away (or the head's 🎮).
       if (menu.hidden && current && stage.hidden) return void open(current);
+      if (menu.hidden && solo && stage.hidden) return void openSolo(solo);
       // The hub opens next to the 🎮 that was pressed.
       if (trigger.parentElement && menu.parentElement !== trigger.parentElement) {
         trigger.parentElement.append(menu);
@@ -626,5 +700,7 @@ export function createGameStage(opts: StageOptions) {
       opts.hint(t(code === 'game_busy' ? 'game.busy' : `error.${code}`));
     },
     isOpen: () => !stage.hidden,
+    /** Opens a solo game (the room's ⋯ menu or a test). */
+    openSolo: (kind: SoloKind) => void openSolo(kind),
   };
 }

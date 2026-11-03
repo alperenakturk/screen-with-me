@@ -953,6 +953,22 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     moreGameButton.click();
   }
+  /**
+   * What a solo side game needs (Snack Bar): is the room's video playing, how many other people are here (by name +
+   * avatar, my other tabs and TVs left out) and how many of them are in voice with me.
+   */
+  function soloContext(): { playing: boolean; others: number; voiceOthers: number } {
+    const self = `${myName}|${myAvatar}`;
+    const mine = members.find((m) => m.id === myId);
+    const others = new Map<string, boolean>();
+    for (const m of members) {
+      const key = `${m.name}|${m.avatar ?? ''}`;
+      if (m.tv || m.id === myId || key === self) continue;
+      others.set(key, (others.get(key) ?? false) || !!m.voice);
+    }
+    const playing = !!roomState?.item && !roomState.paused && roomState.updatedAt <= clock.now();
+    return { playing, others: others.size, voiceOthers: mine?.voice ? [...others.values()].filter(Boolean).length : 0 };
+  }
   const games = createGameStage({
     wrap: $('.player-wrap'),
     button: $<HTMLButtonElement>('#game-btn'),
@@ -965,6 +981,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     members: () => members,
     activity: (text) => addActivity(text),
     hint: (text) => flashHint($('#game-btn'), text),
+    room: soloContext,
   });
   const reactions = createReactions(
     app,
