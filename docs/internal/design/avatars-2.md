@@ -48,3 +48,48 @@ working, and the test "every drawn avatar is on exactly one page" still holds.
 - Regenerate with `node scripts/avatars.mjs`.
 - Check the avatar picker, the chat at 28 px, the faces strip and the Shorts seats at 52 / 80 px.
 - Themed avatars (page 0) are not part of R14. If B is picked, they can follow later for one family look.
+
+## Owner's pick (3 Nov 2026) and the full set
+The owner picked **1: A** and **2: A**. His note: "it should fit our style, but still look like the character, not
+something unrelated." Review sheet, one section per picker tab with today's face beside each:
+https://claude.ai/artifact/FsBkvfQUPZ6w2yscbX18cd (copy: `avatars-2/review.html`).
+
+**The set:** `avatars-2/full/<id>.svg`, 33 files: the 31 parody ids plus `notebookgenius` and `sweetsleuth`, all
+64 × 64 and self-contained.
+- Ids are prefixed per avatar, so several can be inlined on one page.
+- `avatars-2/full.mjs` makes them. It is a copy of `scripts/avatars.mjs` with these changes:
+  - refined helpers: light on the face, a nose shade, irises with two highlights, a rim light on the shoulders, a
+    shade under the chin, a thin inner ring;
+  - one small motif per avatar (`MOTIF`);
+  - the hand-drawn files in `avatars-2/A/` used as they are (hacker, wizardboy, scientist, sponge, strawhat,
+    speedster and the two new ones).
+
+**The near-copies, made our own but recognisable:**
+
+| id | What changed |
+|---|---|
+| `sponge` | sailor cap instead of shirt and tie |
+| `starfish` | striped shorts with a gold button instead of the flower print |
+| `squid` | a purple striped jumper instead of the brown shirt |
+| `pinecap` | a compass instead of the tree on the cap |
+| `speedster` | our own drawing |
+
+The others were already style hints and keep their silhouettes, hair, colours and props.
+
+## For the Developer (card from the Planner)
+1. Copy `docs/internal/design/avatars-2/full/*.svg` over `apps/web/public/avatars/` and
+   `apps/extension/static/avatars/` (if that folder is still written).
+2. In `scripts/avatars.mjs`, let the parody ids come from the design folder, the way `theme-art.mjs` copies the
+   costumed Glowbeams. That way a later `node scripts/avatars.mjs` doesn't undo the redraw. The themed page (0) stays
+   as it is.
+3. In `packages/shared/src/protocol.ts`:
+   - `DRAWN_AVATARS`: add `notebookgenius: '📓'` and `sweetsleuth: '🍰'`.
+   - `AVATAR_PAGES`: add both ids to page 3 (Anime); move `hunter` from page 2 (Series) to page 4 (Game). The ids stay,
+     so saved avatars keep working, and the "exactly one page" test holds.
+4. In `i18n.ts`, add `avatar.notebookgenius` ("Notebook genius" / "Defterli dahi") and `avatar.sweetsleuth`
+   ("Sweet-tooth sleuth" / "Tatlıcı dedektif").
+5. Check:
+   - the avatar picker's Parody tabs (8 / 14 / 9 / 2 faces);
+   - the chat at 28 px, the faces strip, the Shorts seats at 52 / 80 px, the join card at 84 px;
+   - the unit test for avatar pages;
+   - the size budget (SVGs are static files, not in the JS budget).
