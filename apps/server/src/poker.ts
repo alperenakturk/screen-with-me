@@ -101,6 +101,10 @@ export class Poker extends DurableObject<Env> {
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parsePokerMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
+    // A turn or showdown pause whose time is up moves on now, whatever the alarm does: live alarms can run late right
+    // after a deploy (the 0.9.95.2 deploy's first poker.mjs waited 12 s for hand 2; Draw / Quiz do the same since
+    // 0.9.93.2). The page pings every 15 s, so a late alarm costs at most that.
+    await this.advance(Date.now());
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
     if (!this.limit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
     if (message.t === 'hello') return this.hello(ws, me, message);
@@ -121,15 +125,21 @@ export class Poker extends DurableObject<Env> {
     await this.left(ws);
   }
 
+  /** Moves the game on when its clock says so (from the alarm, or a message that found it overdue). */
+  private async advance(now: number): Promise<boolean> {
+    const d = this.data;
+    if (d.endsAt === null || now < d.endsAt) return false;
+    const engine = this.engine;
+    if (d.table.phase === 'showdown') engine.nextHand();
+    else if (engine.isBetting()) engine.timeout();
+    await this.changed();
+    return true;
+  }
+
   override async alarm(): Promise<void> {
     const now = Date.now();
     const d = this.data;
-    if (d.endsAt !== null && now >= d.endsAt) {
-      const engine = this.engine;
-      if (d.table.phase === 'showdown') engine.nextHand();
-      else if (engine.isBetting()) engine.timeout();
-      await this.changed();
-    }
+    await this.advance(now);
     if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();

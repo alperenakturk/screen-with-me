@@ -627,6 +627,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open">⌨️ ?</button>
               <a class="btn small-btn" id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link>❔ <span data-i18n="help"></span></a>
               <button type="button" class="btn small-btn" id="profile-feedback">💌 <span data-i18n="feedback"></span></button>
+              <button type="button" class="btn small-btn" id="profile-move">📲 <span data-i18n="move.open"></span></button>
             </div>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
@@ -847,6 +848,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     drawLang();
     $('#profile-keys').addEventListener('click', () => openShortcuts());
     $('#profile-feedback').addEventListener('click', () => openFeedbackDialog($('#profile-feedback')));
+    // Move my things to another device (its window is a lazy chunk).
+    $('#profile-move').addEventListener('click', () => {
+      setOpen(false);
+      void import('./ui/move-device.ts').then(({ openMoveDialog }) => openMoveDialog());
+    });
     $('#profile-reconnect').addEventListener('click', () => {
       setOpen(false);
       reconnectNow();

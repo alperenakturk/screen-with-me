@@ -104,8 +104,13 @@ const total = sd.players.reduce((sum, p) => sum + p.life, 0);
 ok(total === 300 - 10 - 5, 'No life was created or lost (only the 10 + 5 spent on moves)');
 ok(sd.players.some((p) => p.won > 0), 'Someone won the pot');
 
-// The next hand after the pause, with new cards.
+// The next hand after the pause, with new cards. Like the game page, ping now and then: a pause whose time is up moves
+// on with any message even when the server's alarm runs late (live, right after a deploy).
+const pinger = setInterval(() => {
+  for (const c of [ali, ayse, can]) if (c.ws.readyState === WebSocket.OPEN) c.send({ t: 'ping' });
+}, 1000);
 const next = await ali.wait((m) => m.t === 'cards' && m.hand === 2, 'hand 2', 12000);
+clearInterval(pinger);
 ok(next.cards.length === 2, 'The next hand is dealt after the showdown');
 
 for (const c of [ali, ayse, can]) c.ws.close();

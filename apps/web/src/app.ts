@@ -75,6 +75,16 @@ if (/^\/(baglanti|connection-test)\/?$/.test(location.pathname)) {
 translate();
 checkExtensionVersion();
 
+// "Move to another device": the other device's QR leads here (`/#move=<code>`) and opens the receive window.
+function openMoveFromHash(): void {
+  const code = /^#move=(\d{6})$/.exec(location.hash)?.[1];
+  if (!code || window.top !== window) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  void import('./ui/move-device.ts').then(({ openMoveDialog }) => openMoveDialog(code));
+}
+openMoveFromHash();
+addEventListener('hashchange', openMoveFromHash);
+
 // Uygulama olarak eklenebilsin (PWA): sadece en üstteki pencerede (film sayfasındaki katmanda değil). Service worker
 // dosyaları önbelleğe almaz, sadece çevrimdışıyken "bağlantı yok" sayfası gösterir (public/sw.js).
 // (Bu dosya main.ts'ten sonra yüklenir; sayfanın "load"u çoktan geçmiş olabilir.)

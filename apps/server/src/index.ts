@@ -3,6 +3,7 @@ import { GAME_ID_PATTERN } from '@swm/shared/games/protocol';
 import { POKER_ID_PATTERN } from '@swm/shared/games/poker';
 import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
+import { MOVE_CODE } from '@swm/shared/move';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { sendFeedback } from './feedback.ts';
 import { tiktokResolve } from './tiktok.ts';
@@ -15,6 +16,7 @@ export { Poker } from './poker.ts';
 export { Quiz } from './quiz.ts';
 export { Room } from './room.ts';
 export { TvLink } from './tv-link.ts';
+export { MoveLink } from './move-link.ts';
 
 /**
  * Browsers always send `Origin` with a WebSocket; only our own site (and local development) may open connections, so
@@ -194,6 +196,16 @@ export default {
       const guarded = await guardSocket(request, url, env);
       if (guarded instanceof Response) return guarded;
       return env.TVLINKS.get(env.TVLINKS.idFromName(tv[1]!)).fetch(guarded);
+    }
+
+    // Moving my things to another device: the sender shows this code and waits here; the receiver types it.
+    const move = url.pathname.match(/^\/api\/move\/([^/]+)\/ws$/);
+    if (move) {
+      if (!MOVE_CODE.test(move[1]!)) return new Response('Invalid code', { status: 400 });
+      if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
+      const guarded = await guardSocket(request, url, env);
+      if (guarded instanceof Response) return guarded;
+      return env.MOVELINKS.get(env.MOVELINKS.idFromName(move[1]!)).fetch(guarded);
     }
 
     return new Response('Not found', { status: 404 });
