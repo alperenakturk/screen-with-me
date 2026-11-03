@@ -86,7 +86,16 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
      profile menu), which already exists. A saved theme still applies.
   5. **Glowbeam's costumes sit right:** apply the Design session's fixed `glowbeam-<theme>.svg` files (the Gece
      nightcap sits too far right; Design checks all 11) when they land.
-- Tests: room-more harness (no Games on a computer, Games on a phone); yt-room / embed (empty room rail rests and
+  6. **🔍 Search is an icon only:** a well-drawn search icon in our line-icon style (`ui/icons.ts`), no "Search"
+     text, so the link box keeps its width; the button keeps its name for screen readers ("Search", `aria-label`).
+  7. **Cameras start in the frame (one window), like Meet** (owner, 3 Nov 2026): no camera tiles and no "Pop out"
+     button inside the Together card any more (the chat keeps its height); when the first camera turns on, the
+     cameras open in the one window (`group` layout, the default for everyone, `opt:camLayout`), sized for its
+     cameras side by side. The window's top buttons switch to the free layout; in the free layout the tiles start
+     attached under the pill (the top bar of the cameras) and the person pulls one off by hand. An old saved `free`
+     choice is kept only if the person picked it themselves (otherwise the new default applies once).
+- Tests: voice harness (first camera opens the one window, no tiles in the card, switching to free keeps the tiles
+  attached under the pill); room-more harness (no Games on a computer, Games on a phone); yt-room / embed (empty room rail rests and
   opens at the edge); home harness (no theme strip, Gece on a fresh browser); unit or harness for the random themed
   avatar; screenshots of the 11 mascots.
 - Owner's pick: none needed.
