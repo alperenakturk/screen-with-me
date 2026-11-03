@@ -612,6 +612,15 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   own logs and their retention.
 - Tests: e2e `search.mjs`; a local check that the logged URL has no `q`.
 - Owner's pick: none needed.
+- Done: 0.9.96.20 (PR below). `POST /api/youtube/search` and `POST /api/podcasts/search` take the words as a form body
+  (`q`, at most `WORDS_BODY_MAX` 2 KB, `readWords` in `youtube.ts`); a GET is 405, words only in the address count as
+  none (400). Language, `short` and `page` stay in the address (no words). The site sends them with shared
+  `wordsRequest(q)` (link-box search, Shorts ＋ Add, the ♾ topic feed, podcasts). Cache keys unchanged. Discover /
+  More like this / channel carry no typed words (a category, a video id, a channel link or @handle) and stay GET.
+  Privacy policy (EN + TR): our own Workers Logs (time, address, status, errors) kept at most 7 days, never with search
+  words. Tests: e2e `search.mjs` + `podcasts.mjs` (GET with `q` → 405, `q` only in the address → 400, too large body
+  → 400), harness `phone/run.cjs` checks the page's search request is a POST with no `q` in the address, harness
+  `podcasts/run.cjs` reads the words from the body.
 
 ### Security: a daily YouTube quota budget (M3)
 - Severity: medium

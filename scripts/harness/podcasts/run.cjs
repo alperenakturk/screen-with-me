@@ -42,7 +42,7 @@ async function person(browser, name, avatar) {
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('pageerror', name, e.message));
-  await page.route('**/api/podcasts/search*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(r.request().url().includes('nothing') ? { items: [] } : SHOWS) }));
+  await page.route('**/api/podcasts/search*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify((r.request().postData() ?? '').includes('nothing') ? { items: [] } : SHOWS) }));
   await page.route('**/api/podcasts/episodes*', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(r.request().url().includes('id=124') ? { error: 'failed' } : EPISODES) }));
   await page.route('https://podcast.example/**', (r) => r.fulfill({ contentType: 'audio/wav', body: wav() }));
   await page.route('https://is1-ssl.mzstatic.com/**', (r) => r.fulfill({ contentType: 'image/png', body: PNG }));

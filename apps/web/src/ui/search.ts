@@ -1,4 +1,4 @@
-import { formatDuration, normalizeQuery, parseSearchAnswer, type SearchAnswer, type SearchResult } from '@swm/shared/youtube-search';
+import { formatDuration, normalizeQuery, parseSearchAnswer, type SearchAnswer, type SearchResult, wordsRequest } from '@swm/shared/youtube-search';
 import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
@@ -121,7 +121,7 @@ export function createSearch(
     panel.hidden = false;
     let answer: SearchAnswer;
     try {
-      const response = await fetch(`/api/youtube/search?hl=${lang()}&q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/youtube/search?hl=${lang()}`, wordsRequest(query));
       answer = response.ok ? parseSearchAnswer(await response.json()) : { error: 'failed' };
     } catch {
       answer = { error: 'failed' };

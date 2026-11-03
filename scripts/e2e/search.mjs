@@ -4,12 +4,15 @@ const base = process.argv[2] ?? 'ws://localhost:8787';
 const http = base.replace(/^ws/, 'http');
 const live = !/localhost|127\.0\.0\.1/.test(base);
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
-const search = (q, init) => fetch(`${http}/api/youtube/search?hl=en&q=${encodeURIComponent(q)}`, init);
+// Security M6: the words go in the POST body, never in the address.
+const search = (q, init = {}) => fetch(`${http}/api/youtube/search?hl=en`, { method: 'POST', body: new URLSearchParams({ q }), ...init });
 
 ok((await search('   ')).status === 400, 'An empty query is refused');
 ok((await search('lofi', { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Another site may not use our search');
-ok((await fetch(`${http}/api/youtube/search?q=x`, { method: 'POST' })).status === 405, 'Only GET');
-ok((await fetch(`${http}/api/youtube/search?q=x&short=1&page=bad%20token`)).status === 400, 'Shorts feed: a broken page token is refused');
+ok((await fetch(`${http}/api/youtube/search?hl=en&q=lofi`)).status === 405, 'Only POST: words in the address are refused (they would be logged)');
+ok((await fetch(`${http}/api/youtube/search?hl=en&q=lofi`, { method: 'POST' })).status === 400, 'Words only in the address, not in the body, count as no words');
+ok((await fetch(`${http}/api/youtube/search?short=1&page=bad%20token`, { method: 'POST', body: new URLSearchParams({ q: 'x' }) })).status === 400, 'Shorts feed: a broken page token is refused');
+ok((await search('x'.repeat(4000))).status === 400, 'A body above the limit gives no words (400)');
 
 const answer = await (await search('big buck bunny')).json();
 if (live) {

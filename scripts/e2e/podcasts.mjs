@@ -6,12 +6,15 @@ const ok = (c, m) => {
   console.log('ok  ' + m);
 };
 const get = (path, headers = {}) => fetch(base + path, { headers });
+// Security M6: a search sends its words in the POST body.
+const find = (q, headers = {}) => fetch(`${base}/api/podcasts/search?hl=en`, { method: 'POST', body: new URLSearchParams({ q }), headers });
 
-ok((await get('/api/podcasts/search')).status === 400, 'A search without words is refused (400)');
+ok((await find('')).status === 400, 'A search without words is refused (400)');
+ok((await get('/api/podcasts/search?q=news')).status === 405, 'Words in the address are refused (405, they would be logged)');
 ok((await get('/api/podcasts/episodes?id=abc')).status === 400, 'An episodes call with a bad id is refused (400)');
 ok((await get('/api/podcasts/episodes?url=http://169.254.169.254/')).status === 400, 'No address can be passed in (400)');
-ok((await get('/api/podcasts/search?q=news', { Origin: 'https://evil.example' })).status === 403, 'Another site can’t use it (403)');
-const search = await (await get('/api/podcasts/search?q=science&hl=en')).json();
+ok((await find('news', { Origin: 'https://evil.example' })).status === 403, 'Another site can’t use it (403)');
+const search = await (await find('science')).json();
 ok(Array.isArray(search.items) || ['failed', 'busy'].includes(search.error), `Search answers in shape (${search.items ? `${search.items.length} shows` : search.error})`);
 if (search.items?.length) {
   const episodes = await (await get(`/api/podcasts/episodes?id=${search.items[0].id}`)).json();

@@ -5,7 +5,7 @@
 // row classes (arrow keys and Esc work the same).
 
 import { parseEpisodesAnswer, parseShowsAnswer, type EpisodesAnswer, type PodcastShow, type ShowsAnswer } from '@swm/shared/podcasts';
-import { formatDuration } from '@swm/shared/youtube-search';
+import { formatDuration, wordsRequest } from '@swm/shared/youtube-search';
 import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
@@ -47,9 +47,9 @@ function t(key: TextKey, values: Record<string, string | number> = {}): string {
 type Pick = (media: Media, title: string, mode: 'enqueue' | 'load') => void;
 const shows = new Map<string, Promise<ShowsAnswer>>();
 const episodes = new Map<string, Promise<EpisodesAnswer>>();
-async function getJson<T>(url: string, parse: (body: unknown) => T, fallback: T): Promise<T> {
+async function getJson<T>(url: string, parse: (body: unknown) => T, fallback: T, init?: RequestInit): Promise<T> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, init);
     return response.ok ? parse(await response.json()) : fallback;
   } catch {
     return fallback;
@@ -83,7 +83,7 @@ export function showPodcasts(panel: HTMLElement, query: string, close: HTMLEleme
     panel.replaceChildren(head(t('for', { q: query })), note(t('searching')));
     panel.hidden = false;
     const key = `${lang()}|${query.toLowerCase()}`;
-    if (!shows.has(key)) shows.set(key, getJson(`/api/podcasts/search?hl=${lang()}&q=${encodeURIComponent(query)}`, parseShowsAnswer, { error: 'failed' } as ShowsAnswer));
+    if (!shows.has(key)) shows.set(key, getJson(`/api/podcasts/search?hl=${lang()}`, parseShowsAnswer, { error: 'failed' } as ShowsAnswer, wordsRequest(query)));
     const answer = await shows.get(key)!;
     if (mine !== token) return;
     if ('error' in answer) {

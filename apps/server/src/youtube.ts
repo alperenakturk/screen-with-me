@@ -21,7 +21,9 @@ import {
   shortsOnly,
   type SearchAnswer,
   type SearchResult,
+  WORDS_BODY_MAX,
 } from '@swm/shared/youtube-search';
+import { readCapped } from './fallback.ts';
 import type { UsageKind } from '@swm/shared/yt-usage';
 import { recordUsage, spendBudget } from './usage.ts';
 import { EXPECTED_UNITS } from '@swm/shared/yt-usage';
@@ -76,9 +78,18 @@ async function callYouTube(path: string, params: Record<string, string>, api: Ap
  * The API key stays here (Worker secret `YOUTUBE_API_KEY`); one search costs 101 of the 10 000 free daily units
  * (search.list 100 + videos.list 1 for the durations), so the cache and the per-IP limit matter.
  */
+/**
+ * Security M6: the words of a search (`q`) come in the POST body (form encoded, at most WORDS_BODY_MAX bytes), never in
+ * the address, so the Worker's request logs never hold them. A missing or too large body gives no words.
+ */
+export async function readWords(request: Request): Promise<string> {
+  const text = await readCapped(request, WORDS_BODY_MAX).catch(() => null);
+  return text ? (new URLSearchParams(text).get('q') ?? '') : '';
+}
+
 export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
-  if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
-  const query = normalizeQuery(url.searchParams.get('q') ?? '');
+  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+  const query = normalizeQuery(await readWords(request));
   if (query === null) return new Response('Missing query', { status: 400 });
   const lang = url.searchParams.get('hl') === 'en' ? 'en' : 'tr';
   // Shorts feed (0.9.91): `short=1` asks for short videos only (25 per page), `page` continues an earlier answer.
