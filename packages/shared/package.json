@@ -25,6 +25,7 @@
     "./games/poker": "./src/games/poker.ts",
     "./games/snack-bar": "./src/games/snack-bar.ts",
     "./games/garden": "./src/games/garden.ts",
+    "./games/five-frames": "./src/games/five-frames.ts",
     "./games/protocol": "./src/games/protocol.ts",
     "./clock": "./src/clock.ts",
     "./player": "./src/player.ts",
