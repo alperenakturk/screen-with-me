@@ -388,6 +388,10 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Done: 0.9.96.8 (sweep-1 fixes) and 0.9.96.9 (sweep-2 fixes + `scripts/harness/sweep/run.cjs`, 100 screenshots, all
   checks pass); the full list with what happened to each item is in `STATUS.md` "Design sweep (card 16)". Open small
   items there (XOX board height on a phone, the film page's hole size, Snack Bar's smallest text for lane B).
+- Done: part 3, 0.9.96.11 (Planner, 3 Nov 2026): XOX / Connect Four centred on a phone, the film page's room view
+  grows like the bigger room, a sideways phone's empty room keeps faces + chat, and a 0.9.96.9 regression fixed (the
+  black loading background painted the film page's hole: islands over the film were black boxes). Embed harness under
+  xvfb 111/111, phone harness + a sideways empty-room check, sweep 100 screens pass.
 
 ## Proposed
 
