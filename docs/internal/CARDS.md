@@ -30,6 +30,11 @@ two lines, the popup's logo, film-page fullscreen emojis / messages. Both repo s
 feedback form and the usage command). Not yet tried: games, move to another device, phone-only, together tests. The Developer
 who takes a card below also ticks the matching hand tests in `STATUS.md`.
 
+**Owner's open items from this round (try later, he asked to note them):** the YouTube usage command answered 403
+(the value he typed is likely not the stored `USAGE_TOKEN`; he will make a new one once, save it, update the secret,
+and try after the next deploy). The feedback form works (an issue came in). Dependabot #216 / #217: the owner asked the
+Planner to merge them once main is green.
+
 **Run order:** lane B: R1 → R2 → R3 → R4 → R5 → R6 → R7 → R8 → R9 → R10, then its bug-hunt list. Lane A: R3-6 → R3-8
 → R11 → R12 → R13. Design: R14 (then R14 becomes a Developer card). R1 and R2 are urgent.
 
@@ -160,7 +165,9 @@ who takes a card below also ticks the matching hand tests in `STATUS.md`.
   real actors' likeness; the ids and labels stay generic.
 - Done when: Design's option page shows the redrawn set; the owner picks; a Developer card ships them
   (`scripts/avatars.mjs`, `DRAWN_AVATARS`, `AVATAR_PAGES`, i18n labels).
-- Owner's pick: Design's page (to come).
+- Owner's pick (3 Nov 2026, https://claude.ai/artifact/Akp2qt2WPXzxVENiAZ8Hha): **1: A** (today's line, more detail;
+  not the sticker style) · **2: A** (near-copies made our own). Note: "fit our style, but still look like the character,
+  not something unrelated": recognisable by silhouette, hair, colours and props; the distinctive costume parts are ours.
 
 ## Run order to the owner's test round (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end")
 
