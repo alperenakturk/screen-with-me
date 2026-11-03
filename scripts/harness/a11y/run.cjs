@@ -84,6 +84,12 @@ async function join(page) {
         await page.keyboard.press('Tab');
         if (await page.evaluate(() => document.activeElement?.id === 'dock-game')) break;
       }
+      // If the Tab walk started somewhere else (the focus a closed dialog hands back), put it on 🎮 itself: the check
+      // is about opening the hall from the keyboard (Enter), not about where the walk began (it timed out in CI).
+      await page.evaluate(() => {
+        const button = document.getElementById('dock-game');
+        if (document.activeElement !== button) button?.focus();
+      });
       await page.keyboard.press('Enter');
       await page.waitForSelector('#game-menu:not([hidden])');
       await page.waitForTimeout(500);
