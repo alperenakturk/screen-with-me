@@ -1,6 +1,7 @@
 // Card 15 (owner's pick A, "two screens, one moment"): the home page's hero shows a laptop and a phone in the same room,
 // the same video moving at the same second on both (one shared animation), a sync line between them and a message
-// passing from one to the other; three short features right under it, the theme picker after them. At 1920, 1366 and
+// passing from one to the other; three short features right under it; no theme picker (card 6g.4: Gece by default,
+// the theme is changed inside the room). At 1920, 1366 and
 // 1024 px the hero fits the first screen; at 390 px (a phone) the home stays the app start screen (no hero picture, no
 // strip). No console errors; screenshots in the output folder.
 //
@@ -54,11 +55,13 @@ const check = (ok, label, detail) => {
           sync: box('.ts-sync'),
           strip: box('.home-strip'),
           themes: box('.home-themes'),
+          theme: document.documentElement.dataset.theme,
           strips: [...document.querySelectorAll('.home-strip > div')].map((d) => d.innerText.trim().split('\n')[0]),
           bars,
         };
       });
       check(m.scrollW <= m.vw, `${where}: no sideways scroll`, { scrollW: m.scrollW, vw: m.vw });
+      check(!m.themes && m.theme === 'gece', `${where}: no theme picker on the home page, Gece in a fresh browser (card 6g.4)`, m.theme);
       if (name === '390') {
         check(!m.laptop.shown && !m.strip.shown, `${where}: the phone home stays the app start screen (no hero picture, no strip)`, { laptop: m.laptop.shown, strip: m.strip.shown });
       } else {
@@ -66,7 +69,7 @@ const check = (ok, label, detail) => {
         check(m.sync.shown && m.sync.x >= m.laptop.r - 8 && m.sync.r <= m.phone.x + 8, `${where}: the sync line runs between them`, m.sync);
         check(m.bars.length === 2 && m.bars[0] !== null && Math.abs(m.bars[0] - m.bars[1]) < 50, `${where}: the same video at the same second on both screens`, m.bars);
         check(m.hero.b <= m.vh, `${where}: the hero fits the first screen`, { heroBottom: m.hero.b, vh: m.vh });
-        check(m.strip.shown && m.strips.length === 3 && m.strip.y >= m.hero.b && m.themes.y >= m.strip.b, `${where}: three features right under the hero, the theme picker after them`, m.strips);
+        check(m.strip.shown && m.strips.length === 3 && m.strip.y >= m.hero.b, `${where}: three features right under the hero`, m.strips);
       }
       check(errors.length === 0, `${where}: no console errors`, errors);
       await page.screenshot({ path: `${OUT}/home-${lang}-${name}.png` });

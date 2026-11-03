@@ -162,8 +162,9 @@ check(!!aliSeesAyse, 'Ali sitede Ayşe’nin (film sayfasından açılan) kamera
 
 // Kameralar serbest (0.9.81) film sayfasında da: yüzen pencere deliğin üstüne gelince adacık olur (görünür kalır).
 const SHELL_CLIP = `getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath`;
-await ayse.evalFrame('shell=1', `document.querySelector('#voice-cams .cam-pop').click(); 1`);
-// 0.9.90.5 free tiles (default): the box lets clicks through, every tile (and the pill) is its own island.
+// Card 6g.7: cameras start in their own window (one window); switch it to free tiles here: the box lets clicks
+// through, every tile (and the pill) is its own island.
+await ayse.evalFrame('shell=1', `(() => { if (!document.getElementById('voice-cams').classList.contains('free')) document.querySelector('#voice-cams .cam-layout').click(); return 1; })()`);
 const floated = await until(() => ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); const t = b.querySelector('.cam-tile'); return b.classList.contains('floating') && b.classList.contains('free') && !b.hasAttribute('data-island') && !!t && t.hasAttribute('data-island'); })()`));
 check(!!floated, 'film sayfasında kameralar serbest bırakılabiliyor (her kutu ayrı adacık)');
 await ayse.evalFrame('shell=1', `(() => { const t = document.querySelector('#voice-cams .cam-tile'); const w = document.querySelector('.player-wrap').getBoundingClientRect(); t.style.left = w.right + 40 + 'px'; t.style.top = '120px'; dispatchEvent(new Event('swm-layout')); return 1; })()`);
@@ -176,9 +177,9 @@ const clipOver = await until(async () => {
 }, 5000);
 check(!!clipOver, 'kamera kutusu deliğin üstündeyken adacık (film sayfasında görünüyor)');
 await ayse.shot('kamera-film-serbest');
-await ayse.evalFrame('shell=1', `document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
-const dockedBack = await until(() => ayse.evalFrame('shell=1', `!document.getElementById('voice-cams').classList.contains('floating')`));
-check(!!dockedBack, 'kameralar karta geri döndü');
+await ayse.evalFrame('shell=1', `document.querySelector('#voice-cams .cam-layout').click(); 1`);
+const grouped = await until(() => ayse.evalFrame('shell=1', `(() => { const b = document.getElementById('voice-cams'); return b.classList.contains('floating') && !b.classList.contains('free') && b.hasAttribute('data-island'); })()`));
+check(!!grouped, 'back to the one window (an island on the film page)');
 
 // Bas-konuş film sayfasında: V tuşu film sitesine gösterilmeden katmana gider (basınca ve bırakınca).
 await ayse.evalFrame('shell=1', `(() => { const c = document.getElementById('voice-ptt'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);

@@ -110,8 +110,6 @@ export function createCamWindow(opts: {
 
   const grid = el('div', { class: 'cam-grid' });
   const title = el('span', { class: 'cam-bar-title' });
-  const popButton = el('button', { type: 'button', class: 'btn small-btn cam-pop' });
-  const dockButton = el('button', { type: 'button', class: 'cam-btn cam-dock-btn' }, '⤓');
   const foldButton = el('button', { type: 'button', class: 'cam-btn cam-fold' });
   const hiddenButton = el('button', { type: 'button', class: 'cam-btn cam-hidden-btn' });
   const lineUpButton = el('button', { type: 'button', class: 'cam-btn cam-lineup' }, '⊞');
@@ -127,7 +125,6 @@ export function createCamWindow(opts: {
     resetButton,
     layoutButton,
     foldButton,
-    dockButton,
   );
   const resize = el('span', { class: 'cam-resize', 'aria-hidden': 'true' });
   /** Free layout: the bar in one small draggable pill. */
@@ -143,9 +140,11 @@ export function createCamWindow(opts: {
   };
   setPillScale(pillScale);
 
-  let floatOn = load('opt:camFloat') === '1';
+  // Card 6g.7 (owner, like Meet): cameras start in their own window, never as tiles in the Together card (the chat keeps
+  // its height), in the one-window layout. A saved "free" is only ever written by the person pressing the switch (the
+  // old default was never saved), so it is kept.
   let folded = load('opt:camFolded') === '1';
-  let layout: 'free' | 'group' = load('opt:camLayout') === 'group' ? 'group' : 'free';
+  let layout: 'free' | 'group' = load('opt:camLayout') === 'free' ? 'free' : 'group';
   let spots = { normal: readSpot('camFloat:spot', NORMAL_DEFAULT), fs: readSpot('camFloat:fsSpot', FS_DEFAULT) };
   const tileSpots = { normal: readTiles('camTiles:spot'), fs: readTiles('camTiles:fsSpot') };
   let pillSpots: { normal: Spot | null; fs: Spot | null } = {
@@ -157,7 +156,7 @@ export function createCamWindow(opts: {
   let front = 1;
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
-  const mode = (): 'card' | 'float' | 'fs' => (isFs() ? 'fs' : floatOn ? 'float' : 'card');
+  const mode = (): 'card' | 'float' | 'fs' => (isFs() ? 'fs' : 'float');
   const isFree = () => layout === 'free' && mode() !== 'card';
   const where = (): 'normal' | 'fs' => (mode() === 'fs' ? 'fs' : 'normal');
   /** Size of what floating pieces live in: the page, or the video box in fullscreen. */
@@ -173,9 +172,6 @@ export function createCamWindow(opts: {
       button.title = text;
       button.setAttribute('aria-label', text);
     };
-    set(popButton, t('cam.float'));
-    popButton.textContent = `⧉ ${t('cam.popShort')}`;
-    set(dockButton, t('cam.dock'));
     foldButton.textContent = folded ? '＋' : '−';
     set(foldButton, t(folded ? 'cam.expand' : 'cam.collapse'));
     hiddenButton.hidden = hiddenCount === 0;
@@ -354,10 +350,10 @@ export function createCamWindow(opts: {
     if (free) {
       if (pill.parentNode !== box || bar.parentNode !== pill) {
         pill.replaceChildren(bar, pillGrip);
-        box.replaceChildren(pill, grid, popButton);
+        box.replaceChildren(pill, grid);
       }
     } else if (bar.parentNode !== box) {
-      box.replaceChildren(bar, grid, resize, popButton);
+      box.replaceChildren(bar, grid, resize);
     }
     // Only while there is a camera (owner: the pill comes with the camera; mic and camera are on the dock).
     box.hidden = count === 0 && hiddenCount === 0;
@@ -557,16 +553,6 @@ export function createCamWindow(opts: {
     save('camPill:scale', '');
   }
 
-  popButton.addEventListener('click', () => {
-    floatOn = true;
-    save('opt:camFloat', '1');
-    place();
-  });
-  dockButton.addEventListener('click', () => {
-    floatOn = false;
-    save('opt:camFloat', '0');
-    place();
-  });
   foldButton.addEventListener('click', () => {
     folded = !folded;
     save('opt:camFolded', folded ? '1' : '0');

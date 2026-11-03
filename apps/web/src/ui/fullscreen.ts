@@ -359,7 +359,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   // Without the edge (film page, touch screens) a paused video keeps it too. A button's focus after a click no longer
   // does (0.9.93.6: after 🎙 / 📷 / ⋯ the rail stayed for good), only a keyboard user's (railBusy).
   // Always out with nothing playing (card 2: nothing to cover). The film page waits for the edge since card 2b.
-  const railFixed = () => !getPlayer();
+  // Card 6g.1 (owner: "it should not behave differently in each place"): the empty room's rail waits at the edge like
+  // the rail with a video; it stays out only where there is no edge mode (touch screens without a mouse).
+  const railFixed = () => !getPlayer() && !edgeMode();
   const dockBusy = () => railFixed() || (edgeMode() ? nearEdge || railBusy() : railBusy() || getPlayer()?.isPaused() === true);
   function sleepDock(): void {
     if (dockTimer !== null) clearTimeout(dockTimer);
