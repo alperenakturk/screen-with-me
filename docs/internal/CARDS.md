@@ -30,13 +30,6 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
 - Owner's pick: none needed.
 
-### 5. Home page: "Continue where you left off" overflows (0.9.93, owner's bug)
-- Why: owner, 2 Nov 2026 (screenshot): a long video title runs out of the card under the room preview.
-- Done when: the card's lines are one line each with an ellipsis (full title in `title`), the card never overlaps the
-  preview at any width from 860 px up, and on phones.
-- Tests: a harness check with a 200-character title at 1920, 1366, 1024 and 390 px; owner's hand test.
-- Owner's pick: none needed.
-
 ### 6. Simplify the room (0.9.94 "Next" 1)
 - Why: a newcomer sees too much at once; Research found every competitor's first room view is player + add a video +
   invite (`research/newcomers-help-shorts.md` §1).
@@ -398,6 +391,18 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 5. Home page: "Continue where you left off" overflows (0.9.93, owner's bug)
+- Why: owner, 2 Nov 2026 (screenshot): a long video title runs out of the card under the room preview.
+- Done when: the card's lines are one line each with an ellipsis (full title in `title`), the card never overlaps the
+  preview at any width from 860 px up, and on phones.
+- Tests: a harness check with a 200-character title at 1920, 1366, 1024 and 390 px; owner's hand test.
+- Owner's pick: none needed.
+- Done: 0.9.93.12 (PR below), in the shape the Planner gave (so card 15 only restyles around it): one thin line above
+  the title (`.home-continue`, a pill; the whole line `a.continue-link` back into the room, cut with an ellipsis, the
+  full text in its `title`; ✕ forgets it). Test: `room-extras` checks a 200-character title and room name at 1920, 1366,
+  1024 and 390 px (one line, inside the left column, above the title, never over the preview).
+
 
 ### 4. Invite window: a real WhatsApp button and a QR tab (0.9.93, owner's feedback)
 - Why: owner, 2 Nov 2026: the WhatsApp button shows a speech-bubble emoji; the QR text "A friend next to you can scan
