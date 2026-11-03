@@ -551,6 +551,13 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   youtube-nocookie.com; the two CSP hosts are dropped if the YouTube harness still plays without them.
 - Tests: `scripts/harness/yt-privacy/run.cjs` + `yt-room` with the trimmed CSP, no CSP violations in the console.
 - Owner's pick: none needed.
+- Done (0.9.97.5): the privacy policy (EN + TR) says the video frame comes from youtube-nocookie.com and the player code
+  (IFrame Player API) from youtube.com, which may carry youtube.com cookies where third-party cookies are allowed;
+  `_headers` drops `https://s.ytimg.com` from `script-src` and `https://www.youtube.com` from `frame-src`. The
+  `yt-privacy` harness now records every `securitypolicyviolation` and checks there is none with the player loaded
+  (run against `wrangler dev`, which serves `_headers`: green). With it, a live-e2e fix: `callYouTube` retries once
+  after 400 ms on a 5xx or no answer and logs only the call's name and status (`search.mjs` failed its first live
+  attempt on the 0.9.97.3 deploy with YouTube's "failed").
 
 ### Security: fallback sessions per IP (R3-6)
 - Severity: low
