@@ -25,6 +25,15 @@ ok((await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=ZZ`)).status =
 ok((await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=de`)).status === 400, 'Discover: a lower-case region is refused');
 ok((await fetch(`${http}/api/youtube/channel?c=cats&hl=en`)).status === 400, 'Channel feed: words are not a channel');
 ok((await fetch(`${http}/api/youtube/channel?c=${encodeURIComponent('@<script>')}&hl=en`)).status === 400, 'Channel feed: a broken handle is refused');
+// Card Y3: the usage counters are the owner's only (a header with his key), never public.
+ok((await fetch(`${http}/api/youtube/usage`)).status === 403, 'Usage counters: refused without the owner\'s key');
+ok((await fetch(`${http}/api/youtube/usage`, { headers: { 'X-Usage-Token': 'not-the-key' } })).status === 403, 'Usage counters: refused with a wrong key');
+if (process.env.USAGE_TOKEN) {
+  // With the key (the live run gets it): {YYYY-MM-DD: {search: {requests, calls, units}, …}}.
+  const usage = await fetch(`${http}/api/youtube/usage`, { headers: { 'X-Usage-Token': process.env.USAGE_TOKEN } });
+  const book = usage.status === 200 ? await usage.json() : null;
+  ok(!!book && typeof book === 'object' && Object.values(book).every((day) => Object.values(day).every((k) => typeof k.units === 'number')), 'Usage counters: the owner\'s key reads them');
+}
 ok((await fetch(`${http}/api/youtube/channel?c=@abc&hl=en`, { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Channel feed: another site may not use it');
 if (!live) {
   ok((await (await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=world`)).json()).error === 'off', 'Discover: "world" is accepted (off without a key)');

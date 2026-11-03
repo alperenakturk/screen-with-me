@@ -44,6 +44,7 @@
     "./youtube-search": "./src/youtube-search.ts",
     "./socket": "./src/socket.ts",
     "./feedback": "./src/feedback.ts",
+    "./yt-usage": "./src/yt-usage.ts",
     "./move": "./src/move.ts",
     "./podcasts": "./src/podcasts.ts"
   },

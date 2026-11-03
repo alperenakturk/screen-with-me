@@ -20,6 +20,8 @@ interface Env {
   FEEDBACK_LIMIT?: RateLimit;
   /** Saved-room lookups (`/info`, `unsave`) per IP and minute. */
   ROOM_INFO_LIMIT?: RateLimit;
+  /** Card Y3: the owner's key for `GET /api/youtube/usage` (header `X-Usage-Token`); without it the route is refused. */
+  USAGE_TOKEN?: string;
   /** The running version's metadata (`version_metadata` binding; answered by `/api/version`). */
   CF_VERSION_METADATA?: WorkerVersionMetadata;
 }
