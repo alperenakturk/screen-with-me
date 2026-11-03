@@ -30,16 +30,6 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
 - Owner's pick: none needed.
 
-### 8. Extension permission explainer (0.9.94, with the Help page; from Research)
-- Why: scanners rate "all websites" access as critical; users and guides struggle with "read and change site data";
-  trust is a top complaint (Teleparty, Rave). Details: `research/newcomers-help-shorts.md` §3.
-- Done when: the extension page and the "Filme git" card say in two plain lines why the extension asks for every site,
-  that it does nothing outside a room, and link to the FAQ answer; the same text is ready for the store's permission
-  justifications (ROADMAP 0.9.97).
-- Tests: harness / e2e that the text and link are present (EN + TR).
-- Owner's pick: none needed. Owner agreed 2 Nov 2026.
-
-
 ### 9. "Send feedback" button (0.9.94 "Next" 3)
 - Why: the closed beta and the launch need an easy way for people to tell us what broke (ROADMAP §2, §7).
 - Done when: "Send feedback" in ⋯, the profile menu and the Help page opens a short form (what happened, optional
@@ -354,6 +344,21 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 8. Extension permission explainer (0.9.94, with the Help page; from Research)
+- Why: scanners rate "all websites" access as critical; users and guides struggle with "read and change site data";
+  trust is a top complaint (Teleparty, Rave). Details: `research/newcomers-help-shorts.md` §3.
+- Done when: the extension page and the "Filme git" card say in two plain lines why the extension asks for every site,
+  that it does nothing outside a room, and link to the FAQ answer; the same text is ready for the store's permission
+  justifications (ROADMAP 0.9.97).
+- Tests: harness / e2e that the text and link are present (EN + TR).
+- Owner's pick: none needed. Owner agreed 2 Nov 2026.
+- Done: 0.9.93.16 (PR below). Two plain lines (EN + TR) with a link to `help.html#permissions` ("What it can and
+  cannot see"): on the extension page under "What does it do?" (`#why-all-sites`, `#why-all-sites-tr`) and on the "Go
+  to the film" install card (`.external-why`, i18n `externalWhy` / `externalWhyMore`; under 760 px tall only the link,
+  so the card never overflows its box). The same text is ready as the store's short permission note
+  (`docs/internal/web-store.md`, next to the `<all_urls>` justification). Test: `scripts/harness/help/run.cjs` (now 37
+  checks: both languages on the extension page and the card, the link, the card fits at 1366×768 and 1024×640).
 
 ### 7. Help / FAQ page, English + Turkish (0.9.94 "Next" 2)
 - Why: newcomers and store reviewers need one place for "how does it work", the extension's permissions and

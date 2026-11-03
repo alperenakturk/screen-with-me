@@ -415,6 +415,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                   <li data-i18n="externalStep2"></li>
                   <li data-i18n="externalStep3"></li>
                 </ol>
+                <p class="external-why desktop-only"><span data-i18n="externalWhy"></span> <a id="external-why-more" target="_blank" rel="noopener" data-help-link="permissions" data-i18n="externalWhyMore"></a></p>
                 <a id="external-alone" class="muted small" target="_blank" rel="noopener noreferrer" data-i18n="externalOpenAlone"></a>
               </div>
             </div>

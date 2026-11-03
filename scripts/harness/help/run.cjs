@@ -1,7 +1,8 @@
 // The help page (card 7): served with the site's real security headers (apps/web/public/_headers), it loads with no
 // CSP or page errors in both languages, every in-page link resolves to a section of the shown language, a section
 // link in Turkish lands on the Turkish section, the numbers it states match the code, and the room links to it
-// (footer, profile menu, ⋯ More, the "can't reach the room" card) in the room's language.
+// (footer, profile menu, ⋯ More, the "can't reach the room" card) in the room's language; card 8: the extension page and
+// the "Go to the film" card say why the extension asks for every website and link the answer.
 //
 //   NODE_PATH=$(npm root -g) node scripts/harness/help/run.cjs [site]   (site: `npm run dev`, for the room checks)
 const fs = require('fs');
@@ -161,11 +162,46 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
       check(!!popup && popup.url().includes(`/help.html?lang=${lang}`), `room ${lang}: ⋯ More → ${label} opens the help page in a new tab`, popup?.url());
       if (popup) await popup.close();
       check(page.url().includes('/r/help'), `room ${lang}: the room tab stays in the room`);
+      // Card 8: the "Go to the film" card (no extension here) says why the extension asks for every website.
+      await page.fill('#media-input', 'https://example.com/films/demo.html');
+      await page.press('#media-input', 'Enter');
+      await page.click(lang === 'en' ? 'button:has-text("Add anyway")' : 'button:has-text("Yine de ekle")');
+      await page.waitForSelector('#external:not([hidden]) #external-noext');
+      const why = await page.evaluate(() => {
+        const box = document.querySelector('#external');
+        return {
+          text: document.querySelector('.external-why')?.innerText ?? '',
+          href: document.querySelector('#external-why-more')?.getAttribute('href'),
+          fits: box.scrollHeight <= box.clientHeight + 1,
+        };
+      });
+      const whyText = lang === 'en' ? /Why every website\?.*does nothing outside a room/s : /Neden her site\?.*hiçbir şey yapmaz/s;
+      check(whyText.test(why.text) && why.href === `/help.html?lang=${lang}#permissions`, `room ${lang}: the film card says why every website and links the answer`, why);
+      check(why.fits, `room ${lang}: the film card fits its box`, why.fits);
+      await page.setViewportSize({ width: 1024, height: 640 });
+      await page.waitForTimeout(300);
+      const short = await page.evaluate(() => {
+        const box = document.querySelector('#external');
+        return { fits: box.scrollHeight <= box.clientHeight + 1, link: document.querySelector('#external-why-more').getBoundingClientRect().height > 0 };
+      });
+      check(short.fits && short.link, `room ${lang}: on a short screen the card still fits and keeps the link`, short);
       await room.close();
     }
   }
   const ext = fs.readFileSync(path.join(PUBLIC, 'eklenti.html'), 'utf8');
   check(/href="\/help\.html"/.test(ext), 'the extension page links the help page');
+  // Card 8: the extension page says why it asks for every website, in both languages, with a link to the answer.
+  const extPage = await ctx.newPage();
+  for (const lang of ['en', 'tr']) {
+    await extPage.goto(`${base}/eklenti.html?lang=${lang}`);
+    const note = await extPage.evaluate((lang) => {
+      const el = document.querySelector(`[data-lang-block="${lang}"] .note[id^="why-all-sites"]`);
+      return el && { shown: el.getBoundingClientRect().height > 0, text: el.innerText, href: el.querySelector('a')?.getAttribute('href') };
+    }, lang);
+    const re = lang === 'en' ? /all websites.*does nothing while you are not in a room/s : /tüm web sitelerindeki.*hiçbir şey yapmaz/s;
+    check(!!note && note.shown && re.test(note.text) && note.href === `/help.html?lang=${lang}#permissions`, `extension page ${lang}: why every website, with the link to the answer`, note && note.href);
+  }
+  await extPage.close();
 
   await browser.close();
   server.close();
