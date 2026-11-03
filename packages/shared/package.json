@@ -42,7 +42,8 @@
     "./sound-policy": "./src/sound-policy.ts",
     "./sounds": "./src/sounds.ts",
     "./youtube-search": "./src/youtube-search.ts",
-    "./socket": "./src/socket.ts"
+    "./socket": "./src/socket.ts",
+    "./feedback": "./src/feedback.ts"
   },
   "scripts": {
     "test": "vitest run",
