@@ -31,6 +31,14 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: harness check (content width, a row title wraps ≤ 2 lines at 1366×768 and 1920×1080), failing on 0.9.93.17 first.
 - Owner's pick: none needed. Order (Planner): 6b, then card 15 (home hero A), then 10–14.
 
+### 6d. Fix: an empty side column in YouTube fullscreen (owner's bug, 3 Nov 2026; after 6b, before 6c)
+- Why: owner's screenshot: in YouTube fullscreen the column from card 2a (`#fs-side`) stays as a wide empty strip
+  when there are no notes, cameras or messages, pushing the video left.
+- Done when: the column takes space only while it has something to show (notes / camera tiles; messages without making
+  the video jump on every toast), else the player is full width beside the resting rail; still nothing over the player.
+- Tests: harness: fullscreen with nothing to show → player ≈ full width; camera on → column appears; fails first.
+- Owner's pick: none needed.
+
 ### 6c. Rename the product to Sidelit + the new logo and mascot (owner's decision, 3 Nov 2026; after 6b, before 15)
 - Why: owner: "change it straight to Sidelit now: the notes, the READMEs, the logo, the site, everything". The name
   is his call (council + research: `name-ideas.md` round 3, `research/name-sidelit-check.md` 🟡, trademark / domain
