@@ -5,7 +5,7 @@
 //
 // Parodiler sadece tarzı andırır: isim, logo, birebir kostüm yok.
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 
 const OUTS = [new URL('../apps/web/public/avatars/', import.meta.url)];
 for (const out of OUTS) mkdirSync(out, { recursive: true });
@@ -596,6 +596,13 @@ ${eyes(30.6, 4.7)}
 <ellipse cx="32" cy="33.8" rx="2.2" ry="1.6" fill="#1a1a1a"/><circle cx="31.4" cy="33.3" r=".5" fill="#fff" opacity=".7"/>
 <path d="M27.4 37.2 Q33 40.6 37.6 35.8" stroke="#6b2f2f" stroke-width="1.5" fill="none" stroke-linecap="round"/>`),
 });
+
+// Card R14: the parodies are Design's redraw (docs/internal/design/avatars-2/full/<id>.svg, generator full.mjs); they
+// replace the drawings above (kept for the themed page) and add the new ones, so running this script never undoes it.
+const REDRAW = new URL('../docs/internal/design/avatars-2/full/', import.meta.url);
+for (const file of readdirSync(REDRAW).filter((f) => f.endsWith('.svg'))) {
+  AVATARS[file.slice(0, -4)] = readFileSync(new URL(file, REDRAW), 'utf8');
+}
 
 for (const [id, content] of Object.entries(AVATARS)) {
   for (const out of OUTS) writeFileSync(new URL(`${id}.svg`, out), content.replace(/\n\s*\n/g, '\n'));

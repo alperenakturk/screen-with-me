@@ -421,6 +421,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.10 (redrawn parody avatars, card R14):**
+- [ ] Avatar picker → Parody: every face is the new drawing; Anime has the notebook genius and the sweet-tooth sleuth,
+  the white-haired hunter is under Game. Pick one: it looks right in the chat, the faces and the join card.
+
 **0.9.97.9 (ask before letting people in, card R12):**
 - [ ] In your room: 🔗 Invite → turn on "Ask before letting people in" (also in ⋯ More → Room rules). A friend opens
   the link: they see "Waiting for the host to let you in…", you get a card with their name and picture → Let in. Try

@@ -102,6 +102,8 @@ export const DRAWN_AVATARS = {
   captain: '⚓',
   conductor: '🚂',
   speedster: '💨',
+  notebookgenius: '📓',
+  sweetsleuth: '🍰',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
@@ -119,11 +121,11 @@ export const AVATAR_PAGES = [
   ],
   ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
   [
-    'scientist', 'sidekick', 'chemist', 'lawyer', 'hunter', 'dragonqueen', 'goth',
+    'scientist', 'sidekick', 'chemist', 'lawyer', 'dragonqueen', 'goth',
     'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler',
   ],
-  ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl'],
-  ['speedster'],
+  ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl', 'notebookgenius', 'sweetsleuth'],
+  ['speedster', 'hunter'],
 ] as const;
 
 /**
