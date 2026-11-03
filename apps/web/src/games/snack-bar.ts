@@ -11,7 +11,7 @@ import {
   togetherFactor, unlocked, type SnackContext, type SnackSave, type StandId,
 } from '@swm/shared/games/snack-bar';
 import { el } from '../dom.ts';
-import { t } from '../i18n.ts';
+import { lang } from '../i18n.ts';
 import { playSound } from '../sound.ts';
 import { load, save } from '../storage.ts';
 import { confirmDialog } from '../ui/confirm.ts';
@@ -22,6 +22,78 @@ import soda from './art/snack-bar/soda.svg?raw';
 import nachos from './art/snack-bar/nachos.svg?raw';
 import candy from './art/snack-bar/candy.svg?raw';
 import second from './art/snack-bar/second-counter.svg?raw';
+
+/** Snack Bar's own words (in its chunk, not the room page's): English first, Turkish second. */
+const TEXT = {
+  en: {
+    'coinsTitle': 'Your coins',
+    'rate': '+{n}/s',
+    'playing': '▶ Film on',
+    'paused': '⏸ Paused',
+    'closed': 'Customers come while the film plays',
+    'together': '👥 +{n} %',
+    'togetherTitle': 'Together bonus: +10 % for each other person in the room, +5 % more for each one in voice with you',
+    'serve': 'Serve a customer',
+    'stand.popcorn': 'Popcorn machine',
+    'stand.soda': 'Soda fountain',
+    'stand.nachos': 'Nachos',
+    'stand.candy': 'Candy jar',
+    'stand.second-counter': 'Second counter',
+    'level': 'Lv {n} · +{rate}/s',
+    'new': 'New · +{rate}/s',
+    'locked': '🔒 Opens with the {name}',
+    'buy': 'Buy for {price}',
+    'milestone': 'Lv {n}: income ×2',
+    'more': '+{n} more when the window is bigger',
+    'cinema': 'Cinema #{n} · ★ {stars}',
+    'newCinema': '🎬 Open a new cinema',
+    'newCinemaStars': '🎬 New cinema · +{stars} ★',
+    'newCinemaWhen': 'Earn {min} in this cinema to open a new one',
+    'newCinemaAsk': 'Your coins and stands start over; you get {stars} ★, each one +{bonus} % income for good.',
+    'newCinemaYes': 'Open the new cinema',
+    'newCinemaDone': 'Cinema #{n} is open · ★ {stars} in all',
+    'away': 'While you were away: +{n}',
+    'otherTab': 'Snack Bar is open in another tab.',
+    'playHere': 'Play here',
+  },
+  tr: {
+    'coinsTitle': 'Paran',
+    'rate': '+{n}/sn',
+    'playing': '▶ Film açık',
+    'paused': '⏸ Durdu',
+    'closed': 'Müşteriler film oynarken gelir',
+    'together': '👥 +%{n}',
+    'togetherTitle': 'Birlikte bonusu: odadaki her kişi +%10, seste olanlar +%5 daha',
+    'serve': 'Müşteriye servis yap',
+    'stand.popcorn': 'Patlamış mısır makinesi',
+    'stand.soda': 'Gazoz',
+    'stand.nachos': 'Nachos',
+    'stand.candy': 'Şeker kavanozu',
+    'stand.second-counter': 'İkinci tezgâh',
+    'level': 'Sv {n} · +{rate}/sn',
+    'new': 'Yeni · +{rate}/sn',
+    'locked': '🔒 {name} ile açılır',
+    'buy': '{price} karşılığında al',
+    'milestone': 'Sv {n}: gelir ×2',
+    'more': 'Pencere büyüyünce +{n} tane daha',
+    'cinema': '{n}. sinema · ★ {stars}',
+    'newCinema': '🎬 Yeni sinema aç',
+    'newCinemaStars': '🎬 Yeni sinema · +{stars} ★',
+    'newCinemaWhen': 'Yeni sinema için bu sinemada {min} kazan',
+    'newCinemaAsk': 'Paran ve tezgâhların sıfırlanır; {stars} ★ alırsın, her biri gelirine kalıcı +%{bonus} katar.',
+    'newCinemaYes': 'Yeni sinemayı aç',
+    'newCinemaDone': '{n}. sinema açıldı · toplam ★ {stars}',
+    'away': 'Sen yokken: +{n}',
+    'otherTab': 'Büfe başka bir sekmede açık.',
+    'playHere': 'Burada oyna',
+  },
+} as const;
+type TextKey = keyof (typeof TEXT)['en'];
+/** A Snack Bar text in the page's language, with `{name}` filled in. */
+function t(key: TextKey, values: Record<string, string | number> = {}): string {
+  const table: Record<string, string> = lang() === 'tr' ? TEXT.tr : TEXT.en;
+  return (table[key] ?? TEXT.en[key]).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
+}
 
 const ART: Record<StandId, string> = { popcorn, soda, nachos, candy, 'second-counter': second };
 /** Scene groups shown once their stand has a level (the second counter has no group: a badge instead). */
@@ -127,7 +199,7 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
     const ctx = room();
     const got = serve(game, ctx);
     if (!got) {
-      flash(t('snack.closed'), 2500);
+      flash(t('closed'), 2500);
       return;
     }
     playSound('snackServe');
@@ -144,12 +216,12 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
   prestige.addEventListener('click', async () => {
     const stars = starsFor(game);
     if (blocked || stars < 1) return;
-    const yes = await confirmDialog({ icon: '🎬', title: t('snack.newCinema'), text: t('snack.newCinemaAsk', { stars, bonus: Math.round(STAR_BONUS * 100) }), yes: t('snack.newCinemaYes') });
+    const yes = await confirmDialog({ icon: '🎬', title: t('newCinema'), text: t('newCinemaAsk', { stars, bonus: Math.round(STAR_BONUS * 100) }), yes: t('newCinemaYes') });
     if (!yes || stopped || !newCinema(game)) return;
     playSound('snackCinema');
     persist();
     draw();
-    flash(t('snack.newCinemaDone', { n: game.cinemas + 1, stars: game.stars }));
+    flash(t('newCinemaDone', { n: game.cinemas + 1, stars: game.stars }));
   });
 
   /** Which rows show in a small window: the newest stand I can buy and its neighbours (the next locked one too). */
@@ -167,16 +239,16 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
     const income = incomeRate(game, ctx);
     const bonus = Math.round((togetherFactor(ctx) - 1) * 100);
     coins.textContent = formatCoins(game.coins);
-    coins.title = t('snack.coinsTitle');
-    rate.textContent = t('snack.rate', { n: fmtRate(income) });
-    state.textContent = ctx.playing ? t('snack.playing') : t('snack.paused');
+    coins.title = t('coinsTitle');
+    rate.textContent = t('rate', { n: fmtRate(income) });
+    state.textContent = ctx.playing ? t('playing') : t('paused');
     state.classList.toggle('on', ctx.playing);
-    together.textContent = t('snack.together', { n: bonus });
+    together.textContent = t('together', { n: bonus });
     together.hidden = bonus <= 0;
-    together.title = t('snack.togetherTitle');
-    state.title = ctx.playing ? t('snack.playing') : t('snack.closed');
-    sceneButton.setAttribute('aria-label', t('snack.serve'));
-    sceneButton.title = ctx.playing ? t('snack.serve') : t('snack.closed');
+    together.title = t('togetherTitle');
+    state.title = ctx.playing ? t('playing') : t('closed');
+    sceneButton.setAttribute('aria-label', t('serve'));
+    sceneButton.title = ctx.playing ? t('serve') : t('closed');
     box.classList.toggle('sb-idle', !ctx.playing);
     for (const stand of STANDS) {
       const name = SCENE_GROUP[stand.id];
@@ -194,27 +266,27 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
       const last = [0, ...MILESTONES].filter((m) => m <= level).pop() ?? 0;
       row.node.hidden = !shown.has(stand.id);
       row.node.classList.toggle('locked', !open);
-      row.name.textContent = t(`snack.stand.${stand.id}`);
+      row.name.textContent = t(`stand.${stand.id}`);
       row.level.textContent = open
         ? level > 0
-          ? t('snack.level', { n: level, rate: fmtRate(standRate(stand, level) * starFactor(game)) })
-          : t('snack.new', { rate: fmtRate(standRate(stand, 1) * starFactor(game)) })
-        : t('snack.locked', { name: t(`snack.stand.${STANDS[i - 1]?.id ?? stand.id}`) });
+          ? t('level', { n: level, rate: fmtRate(standRate(stand, level) * starFactor(game)) })
+          : t('new', { rate: fmtRate(standRate(stand, 1) * starFactor(game)) })
+        : t('locked', { name: t(`stand.${STANDS[i - 1]?.id ?? stand.id}`) });
       row.bar.style.width = `${next ? Math.round(((level - last) / (next - last)) * 100) : 100}%`;
-      row.bar.parentElement!.title = next ? t('snack.milestone', { n: next }) : '';
+      row.bar.parentElement!.title = next ? t('milestone', { n: next }) : '';
       row.price.replaceChildren(art(coin, 'sb-coin small'), formatCoins(price));
       const can = open && affordable(game, stand.id, 1) > 0 && !blocked;
       row.price.disabled = !can;
-      row.price.title = open ? t('snack.buy', { price: formatCoins(price) }) : t('snack.locked', { name: t(`snack.stand.${STANDS[i - 1]?.id ?? stand.id}`) });
+      row.price.title = open ? t('buy', { price: formatCoins(price) }) : t('locked', { name: t(`stand.${STANDS[i - 1]?.id ?? stand.id}`) });
     });
     const hidden = STANDS.length - shown.size;
     more.hidden = hidden < 1;
-    more.textContent = t('snack.more', { n: hidden });
-    cinema.textContent = t('snack.cinema', { n: game.cinemas + 1, stars: game.stars });
+    more.textContent = t('more', { n: hidden });
+    cinema.textContent = t('cinema', { n: game.cinemas + 1, stars: game.stars });
     const stars = starsFor(game);
-    prestige.textContent = stars > 0 ? t('snack.newCinemaStars', { stars }) : t('snack.newCinema');
+    prestige.textContent = stars > 0 ? t('newCinemaStars', { stars }) : t('newCinema');
     prestige.disabled = stars < 1 || blocked;
-    prestige.title = stars > 0 ? t('snack.newCinemaAsk', { stars, bonus: Math.round(STAR_BONUS * 100) }) : t('snack.newCinemaWhen', { min: formatCoins(PRESTIGE_MIN) });
+    prestige.title = stars > 0 ? t('newCinemaAsk', { stars, bonus: Math.round(STAR_BONUS * 100) }) : t('newCinemaWhen', { min: formatCoins(PRESTIGE_MIN) });
   }
 
   // ---- One tab at a time ----
@@ -232,8 +304,8 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
     elsewhere.hidden = !on;
     box.classList.toggle('sb-blocked', on);
     if (on) {
-      elsewhere.querySelector('p')!.textContent = t('snack.otherTab');
-      elsewhere.querySelector('button')!.textContent = t('snack.playHere');
+      elsewhere.querySelector('p')!.textContent = t('otherTab');
+      elsewhere.querySelector('button')!.textContent = t('playHere');
     }
   }
   elsewhere.querySelector('button')!.addEventListener('click', () => {
@@ -253,7 +325,7 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
   else {
     takeLock();
     const away = collectAway(game);
-    if (away.coins > 0) flash(t('snack.away', { n: formatCoins(away.coins) }), 7000);
+    if (away.coins > 0) flash(t('away', { n: formatCoins(away.coins) }), 7000);
     persist();
   }
   let last = performance.now();

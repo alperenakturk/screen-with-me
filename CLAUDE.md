@@ -836,7 +836,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   cinema" from 1M earned (stars +5 % each); a tap on the scene serves; one tab at a time (`snackBar:tab` heartbeat,
   "Play here" takes over); its buttons never keep the focus (`mousedown` preventDefault), no key handlers; sounds
   `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). Below 380 px of game height three
-  upgrade rows show (+ "N more"). Harness `scripts/harness/snack-bar/run.cjs` (25 checks).
+  upgrade rows show (+ "N more"). Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
+  JS budget (`scripts/size-budget.mjs`) is nearly full. Harness `scripts/harness/snack-bar/run.cjs` (25 checks).
 - **Browser blocks direct connections (0.9.91.17, `packages/shared/src/ice-watch.ts`):** with Chromium's WebRTC policy
   "Disable non-proxied UDP" (Brave / Vivaldi setting, uBlock Origin's WebRTC option, Opera's VPN) no ICE candidate is
   gathered and a connection stays "new" forever (never "failed"). `watchIceBlocked` on every voice and stream peer
