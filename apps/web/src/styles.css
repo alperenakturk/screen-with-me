@@ -11829,8 +11829,8 @@ html.shell .dock-more-item[data-press='#side-toggle'] {
   display: none;
 }
 
-/* Nothing playing: what needs a video is dimmed (📌, ⛶). */
-.theater.rail-bare .fs-dock .dock-btn:disabled {
+/* Nothing playing: what needs a video is dimmed (📌, ⛶, speed, sync, next); pressing it says "add a video first". */
+.theater.rail-bare .fs-dock [aria-disabled='true'] {
   opacity: 0.35;
   cursor: default;
 }
@@ -12594,12 +12594,8 @@ html.phone .media-search span:last-child {
 
 /* A fresh room on a computer (nothing has played yet): add a video, invite, chat and join voice; the rest comes for
    everyone with the first video, or from "⋯ More". */
-html:not(.phone) .room.fresh :is(.fs-dock, #live-card, .tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
+html:not(.phone) .room.fresh :is(#live-card, .tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
   display: none !important;
-}
-
-html:not(.phone) .room.fresh .theater.rail-bare :is(.player, .fs-catcher, .empty, .overlay) {
-  right: 0 !important;
 }
 
 /* The games hall under "⋯ More" (card 6): an invisible anchor below the top bar's ⋯. */

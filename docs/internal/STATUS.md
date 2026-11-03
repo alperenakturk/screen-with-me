@@ -383,6 +383,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.95.3 (computer):**
+- [ ] A new empty room: the rail is beside the empty video. 😀, 🎮, 🎙 and 📷 work before any video; ⛶ and the speed
+  in ⋯ are dimmed and say "Add a video first". After the first video everything works as before.
+
 **0.9.95 (Sidelit, computer + phone):**
 - [ ] Home, a room, the extension popup and the film page say **Sidelit** with the new night-gold logo; the browser
   tab's icon is readable; the empty room shows the little golden mascot.

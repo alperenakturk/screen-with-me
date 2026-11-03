@@ -90,6 +90,14 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   sync, ⛶) are dimmed and only show "add a video first" when pressed. Changes card 6's "D" on this point only.
 - Tests: room-more / fresh harness: rail visible in an empty room, 🎮 opens the games, 🎙 joins, play / speed disabled.
 - Owner's pick: done.
+- Done: 0.9.95.3 (PR below). `.room.fresh` no longer hides `#fs-dock`: the empty room has the rail (😀, 🎮, 🎙, 📷, ⋯, ⛶);
+  the controls that need a video (⛶, speed chips, sync, next, ⏯, 📌 once a video has a length) carry `aria-disabled`, are
+  dimmed and answer a press with "Add a video first" (`NEEDS_VIDEO` in `fullscreen.ts`, a capture-phase click). Found
+  on the way: the rail's "mouse left the rail" timer sent its outside press even when no rail window was open, so a
+  window opened elsewhere within 450 ms (⋯ More → Games) closed again; it now fires only with a rail window open.
+  Tests: `room-more` (rail and its buttons in the fresh room, ⛶ / 2× answer "Add a video first" and change nothing, 🎮
+  opens the games, 🎙 starts joining voice, ⋯ → Games stays open; failed before), `one-rail`, `yt-room`, `phone`,
+  `room-extras`, `embed` (headful).
 
 ### GG. Games gallery window with covers (owner, 3 Nov 2026; lane B, after Snack Bar)
 - Why: owner: pressing games should open its own window where every game shows as a card with its cover, and the

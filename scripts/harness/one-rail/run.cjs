@@ -40,9 +40,10 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
   await page.waitForSelector('.room');
   await page.waitForTimeout(1500);
 
-  // 1) A fresh room (card 6, owner's pick D): no toolbar and no rail yet; add a video, invite, chat and voice only.
+  // 1) A fresh room: no toolbar (card 6, owner's pick D), but the rail is there (card 6e, owner: voice, cameras, games
+  // and emojis before any video).
   check(!(await rect(page, '.toolbar')).shown, 'fresh room: no toolbar under the video');
-  check(!(await rect(page, '#fs-dock')).shown, 'fresh room: no rail yet (it comes with the first video)');
+  check((await rect(page, '#fs-dock')).shown, 'fresh room: the rail is there (card 6e)');
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/empty.png` });
 
   // 2) A video file: the rail beside the video, resting until the mouse reaches the right edge.
