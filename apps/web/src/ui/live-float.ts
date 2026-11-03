@@ -57,7 +57,10 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
   const narrow = () => innerWidth <= NARROW;
-  const where = (): Where => (isFs() ? 'fs' : place === 'free' && !narrow() && !win.classList.contains('big') ? 'free' : 'video');
+  // The Shorts view's upright video is narrower than the window's smallest width, so there it always floats on the page
+  // (sweep-2 #2: inside the video it ran off the screen's right edge).
+  const shorts = () => document.documentElement.classList.contains('shorts-view');
+  const where = (): Where => (isFs() ? 'fs' : (place === 'free' || shorts()) && !narrow() && !win.classList.contains('big') ? 'free' : 'video');
   const container = (w: Where) => (w === 'free' ? { w: innerWidth, h: innerHeight } : { w: wrap.clientWidth, h: wrap.clientHeight });
 
   function labels(): void {
@@ -182,6 +185,13 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
     wasFs = isFs();
     apply();
   }).observe(theater, { attributes: true, attributeFilter: ['class'] });
+  // Entering or leaving the Shorts view moves it between the video and the page.
+  let wasShorts = shorts();
+  new MutationObserver(() => {
+    if (shorts() === wasShorts) return;
+    wasShorts = shorts();
+    if (!win.hidden) apply();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
   return {
     apply,
