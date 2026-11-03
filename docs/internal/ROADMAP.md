@@ -58,7 +58,8 @@ summary (STATUS history until `CHANGELOG.md` exists).
 | 0.9.94 | (skipped as a number: its cards ship inside 0.9.93.x and 0.9.95–0.9.96) | — |
 | 0.9.95 | **Sidelit**: the rename, logo D1, mascot N1 (card 6c) | no user-facing "ScreenWithMe" left (except "formerly"); icons readable at 16 px; live e2e first-attempt green |
 | 0.9.96 | Finish the room features: feedback button, Shorts channel + country, thanks page, debug panel, cinema mode | each shipped with its test; hand tests in STATUS |
-| 0.9.97 | Side games + more players: Snack Bar, games gallery, Window Garden, Five Frames, move code, Vimeo, podcasts | each with unit tests + harness; no scrolling at 340×300 / 360×460 |
+| 0.9.97 | Side games + more players: Snack Bar, games gallery, Window Garden, Five Frames, move code, Vimeo, podcasts | each with unit tests + harness; no scrolling at 340×300 / 360×460 
+| | **Owner approved 0.9.97 (3 Nov 2026):** the side games polish (card GP) ships as **0.9.97**; until then releases stay 0.9.96.x, after it 0.9.97.x. Proposed next (owner's OK later): 0.9.98 when the security block is done (its design / tablet / a11y work already shipped as 0.9.96.x), 0.9.99 after the council review + bug hunt. | |
 | 0.9.98 | Design sweep, tablet, accessibility | screenshot sweep fixed; tablet harness; contrast + keyboard harness pass |
 | 0.9.99 | **Feature complete**: security cards (reviews 2–3), council review fixes, bug hunt | no known high / medium security finding open; council's must-fix list done; owner's big test round starts |
 | 0.9.99.x → 1.0 | Owner's test round + bug fixes, Security final pass, privacy policy (KVKK + GDPR) + terms + lawyer if possible, trademark / domain checks, own domain + move (security review 3 R3-3), YouTube quota application, store texts and images, design fixes | 0 open bugs (or deferred by the owner); policy + terms linked; domain live; store package ready |
