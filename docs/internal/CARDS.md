@@ -62,6 +62,12 @@ Planner to merge them once main is green.
 - Done when: one Enter puts the cursor in the message box wherever the chat lives (side panel, side panel hidden,
   fullscreen, cinema mode, Shorts); never an empty panel.
 - Tests: harness (one key press → `document.activeElement` is the message box in each view).
+- Done: 0.9.97.11 (https://github.com/alperenakturk/screen-with-me/pull/231). Two causes: in cinema mode the side panel is off screen, and Enter focused its hidden chat
+  box (nothing happened); in fullscreen and cinema the rail's message window opened while the resting rail was still
+  `visibility: hidden`, so its box could not take the focus (an empty window, the second Enter put the cursor in). Now
+  Enter opens the rail's message window where the panel is not on screen (`fullscreen.openChat()`), and that window
+  focuses its box again a frame / 120 ms later. Harness `scripts/harness/enter-chat/run.cjs` (8 checks; 2 fail on
+  0.9.97.8). Shorts keep their own message box (unchanged).
 
 ### R3. Fix: YouTube fullscreen shows a big black strip on the right (owner's bug; lane B)
 - Why: a friend's YouTube fullscreen had a wide black strip from the side column (screenshot in the Planner's

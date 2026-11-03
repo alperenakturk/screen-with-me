@@ -533,6 +533,8 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.11 R2: in a room press Enter once: the cursor is in the message box. Also with a video playing, after
+  pressing a rail button, in cinema mode (T) and in fullscreen: one Enter, never an empty window first.
 - [ ] 0.9.97.8 R1: with a friend, both in voice, the friend shares the screen and you watch. Open a game (XOX, then
   Draw & Guess), let the friend join it, close it: nobody is thrown out, the stream and voice keep going, every game opens
   on the first press. If a new version goes live while you watch (the room reconnects for a moment), the stream comes
