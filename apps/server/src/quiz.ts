@@ -142,7 +142,8 @@ export class Quiz extends DurableObject<Env> {
     }
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
     if (!this.limit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
-    if (message.t === 'hello') return this.hello(ws, me, message);
+    // One hello per connection, as in the room (review 3, R3-8).
+    if (message.t === 'hello') return me.name === null ? this.hello(ws, me, message) : this.sendTo(ws, { t: 'error', code: 'bad' });
     if (me.name === null || !me.key || !this.data.people[me.key]) return this.sendTo(ws, { t: 'error', code: 'bad' });
     await this.apply(ws, me.key, message);
   }
@@ -237,6 +238,7 @@ export class Quiz extends DurableObject<Env> {
       case 'start':
         // Lobide ya da kürsüde (yeni oyun): puanlar sıfırlanır.
         if (d.phase !== 'lobby' && d.phase !== 'over') return;
+        if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         if (this.onlineKeys().length < 2) return this.sendTo(ws, { t: 'error', code: 'too_few' });
         for (const person of Object.values(d.people)) person.score = 0;
         d.questions = pickQuestions(d.lang, d.count, Math.random, d.topic, d.recent);
@@ -249,7 +251,9 @@ export class Quiz extends DurableObject<Env> {
         return;
       case 'joker': {
         if (d.phase !== 'question' || message.n !== d.index + 1 || d.answers[key] || d.jokers.includes(key)) return;
-        const hide = fiftyFifty(d.questions[d.index]!);
+        // One hidden pair per question for everyone: a fresh pair per person let two identities' jokers together
+        // show the answer (security review 2, L6).
+        const hide = Object.values(d.fifty).find((f) => f.n === message.n)?.hide ?? fiftyFifty(d.questions[d.index]!);
         if (!hide.length) return;
         d.jokers.push(key);
         d.fifty[key] = { n: message.n, hide };

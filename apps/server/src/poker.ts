@@ -20,6 +20,8 @@ import { RateLimiter } from './rate-limit.ts';
 
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_SOCKETS = 40;
+/** People remembered by the table (names and ids of those who came by). */
+const MAX_PEOPLE = 60;
 
 interface Attachment {
   id: string;
@@ -107,7 +109,8 @@ export class Poker extends DurableObject<Env> {
     await this.advance(Date.now());
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
     if (!this.limit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
-    if (message.t === 'hello') return this.hello(ws, me, message);
+    // One hello per connection, as in the room (review 3, R3-8).
+    if (message.t === 'hello') return me.name === null ? this.hello(ws, me, message) : this.sendTo(ws, { t: 'error', code: 'bad' });
     if (me.name === null || !me.key || !this.data.people[me.key]) return this.sendTo(ws, { t: 'error', code: 'bad' });
     await this.apply(ws, me.key, message);
   }
@@ -159,7 +162,9 @@ export class Poker extends DurableObject<Env> {
     const person = d.people[key] ?? { pid: crypto.randomUUID().slice(0, 8), name: message.name };
     person.name = message.name;
     if (message.avatar) person.avatar = message.avatar;
+    delete d.people[key];
     d.people[key] = person;
+    this.trimPeople();
     // A seat in the lobby (or between games) if one is free.
     const seat = d.table.seats.find((s) => s.key === key);
     if (seat) {
@@ -174,6 +179,20 @@ export class Poker extends DurableObject<Env> {
     this.sendCards(key);
     this.broadcastState();
     await this.scheduleAlarm();
+  }
+
+  /** Keeps `people` small: past `MAX_PEOPLE`, the longest-unseen people who hold no seat and are not connected go
+   * (every new browser id used to add one for good; security review 2, L6). `hello` re-inserts a person last. */
+  private trimPeople(): void {
+    const d = this.data;
+    const keys = Object.keys(d.people);
+    let extra = keys.length - MAX_PEOPLE;
+    for (const k of keys) {
+      if (extra <= 0) break;
+      if (d.table.seats.some((s) => s.key === k) || this.online(k)) continue;
+      delete d.people[k];
+      extra--;
+    }
   }
 
   /** Seats `key` in the lobby; a full table frees the seat of someone who is not connected. */
@@ -210,6 +229,7 @@ export class Poker extends DurableObject<Env> {
         return;
       case 'start': {
         if (t.phase !== 'lobby' && t.phase !== 'over') return;
+        if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         // Seats of people who left are freed before dealing.
         t.seats = t.seats.filter((s) => this.online(s.key));
         if (t.seats.length < 2) {

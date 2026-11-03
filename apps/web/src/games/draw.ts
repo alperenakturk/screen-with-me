@@ -333,9 +333,10 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase === 'lobby' || s.phase === 'over') {
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'games.again' : 'draw.start'));
-      go.disabled = online < 2;
-      go.addEventListener('click', () => send({ t: 'start' }));
       const host = s.players.find((p) => p.id === s.host);
+      // Only the host starts (the server checks too).
+      go.disabled = online < 2 || (!!host && s.host !== me);
+      go.addEventListener('click', () => send({ t: 'start' }));
       const settings = settingsPanel(
         [
           { label: t('games.lang'), value: s.lang, choices: langChoices, pick: (lang) => send({ t: 'settings', lang: lang as 'tr' | 'en' }) },

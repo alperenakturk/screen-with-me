@@ -129,7 +129,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase === 'lobby' || s.phase === 'over') {
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'quiz.again' : 'draw.start'));
-      go.disabled = online < 2;
+      const lead = s.players.find((p) => p.id === s.host);
+      // Only the host starts (the server checks too).
+      go.disabled = online < 2 || (!!lead && s.host !== me);
       go.addEventListener('click', () => send({ t: 'start' }));
       // Two halves: what this is (title + rules / podium) and the setup (settings + start); side by side when the
       // box is wide and short.

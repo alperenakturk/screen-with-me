@@ -44,8 +44,12 @@ ali.send({ t: 'settings', lang: 'en', topic: 'general', count: 5 });
 await ayse.wait((m) => m.t === 'state' && m.count === 5 && m.lang === 'en' && m.topic === 'general', 'settings');
 ok(true, 'Host picked English, general knowledge, 5 questions; everyone sees it');
 
-ali.inbox.length = 0;
 ayse.send({ t: 'start' });
+ok((await ayse.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host starts the game');
+ayse.send({ t: 'hello', v: 2, name: 'Other', cid: 'quizOther0001', lang: 'tr' });
+ok((await ayse.wait((m) => m.t === 'error', 'second hello')).code === 'bad', 'A second hello on the same connection is refused');
+ali.inbox.length = 0;
+ali.send({ t: 'start' });
 const q1 = await ali.wait((m) => m.t === 'state' && m.phase === 'question', 'q1');
 ok(q1.n === 1 && q1.total === 5 && q1.cat === 'general' && q1.options.length >= 2 && !('correct' in q1), 'First question: general knowledge, right option hidden');
 ok(/^[\x00-\x7F’…“”°×−]+$/.test(q1.question), 'The question is in English');
@@ -61,10 +65,14 @@ if (q1.options.length === 4) {
   ali.send({ t: 'joker', n: 1 });
   await new Promise((r) => setTimeout(r, 300));
   ok(!ali.inbox.some((m) => m.t === 'fifty'), 'The joker works once per game');
+  // A second person's joker on the same question hides the same pair (two identities can't corner the answer).
+  ayse.send({ t: 'joker', n: 1 });
+  const fiftyY = await ayse.wait((m) => m.t === 'fifty', 'fifty ayse');
+  ok([...fiftyY.hide].sort().join() === [...fiftyHide].sort().join(), '50:50 hides one pair per question for everyone');
 }
 // Ali picks an option the joker left (or 0), Ayşe the next one; the reveal shows the right option and the points.
 const aliPick = [0, 1, 2, 3].find((i) => i < q1.options.length && !(fiftyHide ?? []).includes(i));
-const aysePick = aliPick === 0 ? 1 : 0;
+const aysePick = [0, 1, 2, 3].find((i) => i < q1.options.length && i !== aliPick && !(fiftyHide ?? []).includes(i));
 ali.send({ t: 'answer', n: 1, pick: aliPick });
 const mid = await ayse.wait((m) => m.t === 'state' && m.phase === 'question' && m.players.some((p) => p.answered), 'answered');
 ok(mid.players.every((p) => !('pick' in p)), 'Kimin neyi seçtiği açıklamaya kadar gizli');

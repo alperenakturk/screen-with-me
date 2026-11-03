@@ -738,6 +738,14 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   Review 3 (R3-8): game, draw, quiz and poker objects accept `hello` only once per connection, as the room does.
 - Tests: e2e `draw.mjs`, `quiz.mjs` and a Poker e2e case.
 - Owner's pick: none needed.
+- Done (0.9.96.25): Draw & Guess `start` / `reset`, Quiz `start` and Poker `start` only from the game's host (the first
+  player / seat still connected; the same person who picks the settings, `not_host` otherwise; the Start button is
+  dimmed for the others and the note says "X picks the settings and starts the game"); Draw `undo` has its own limiter
+  (`RateLimiter(3, 1)`); the Quiz 50/50 reuses the pair already hidden for that question; Poker keeps at most
+  `MAX_PEOPLE` 60 people (the longest-unseen without a seat or a connection go); game, draw, quiz and poker objects
+  answer a second `hello` on a connection with `bad` (R3-8). Not done (optional in the card): a room ticket for game
+  objects. Tests: e2e `draw.mjs` (host start / reset, second hello, undo burst), `quiz.mjs` (host start, second hello,
+  one 50/50 pair), `poker.mjs` (host deals).
 
 ### Security: small hygiene fixes (L7, L8)
 - Severity: low

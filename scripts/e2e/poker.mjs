@@ -47,6 +47,8 @@ await can.wait((m) => m.t === 'state' && m.jokers === true, 'jokers');
 ok(true, 'The host turned jokers on');
 
 ayse.send({ t: 'start' });
+ok((await ayse.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host deals');
+ali.send({ t: 'start' });
 const cardsA = await ali.wait((m) => m.t === 'cards', 'cards ali');
 const cardsY = await ayse.wait((m) => m.t === 'cards', 'cards ayse');
 await can.wait((m) => m.t === 'cards', 'cards can');

@@ -50,6 +50,10 @@ await sleep(300);
 ok(can.state.phase === 'lobby' && can.state.players.length === 3, 'Üç kişi lobide');
 
 ayse.send({ t: 'start' });
+ok((await ayse.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host (the first player still here) starts');
+ayse.send({ t: 'hello', v: 3, name: 'Other', cid: 'drawOther0001', lang: 'tr' });
+ok((await ayse.wait((m) => m.t === 'error', 'second hello')).code === 'bad', 'A second hello on the same connection is refused');
+ali.send({ t: 'start' });
 const choices = await ali.wait((m) => m.t === 'choices', 'choices');
 ok(choices.words.length === 3, 'İlk çizen (ilk gelen Ali) üç kelime aldı');
 await sleep(200);
@@ -99,6 +103,10 @@ ok(secret.text === 'çok kolaydı' && !can.inbox.some((m) => m.t === 'guess' && 
 const deniz = client('Deniz', 'drawDeniz0001');
 const list = await deniz.wait((m) => m.t === 'strokes', 'late strokes');
 ok(list.list.length === 2, 'Geç gelen o ana kadarki çizimi aldı');
+// Undo re-sends the whole drawing to everyone, so it is limited to about one a second: a burst gets "rate".
+ali.inbox.length = 0;
+for (let i = 0; i < 6; i++) ali.send({ t: 'undo' });
+ok((await ali.wait((m) => m.t === 'error', 'undo rate')).code === 'rate', 'A burst of undos is cut (about one a second)');
 // Can tries three wrong words first (two are free, the third costs 10 %).
 for (const w of ['xx1', 'xx2', 'xx3']) can.send({ t: 'guess', text: w });
 await sleep(400);
@@ -122,8 +130,10 @@ const choosing = await ayse.wait((m) => m.t === 'state' && m.phase === 'choose' 
 ok(next.words.length === 3 && choosing.drawer === wy.you, 'Sıra Ayşe’ye geçti, kelimeleri o seçiyor');
 
 // Sıfırla: lobi, puanlar 0. (Kutuda oyun başlamadan önceki "lobi" mesajları var: önce boşalt.)
-can.inbox.length = 0;
 can.send({ t: 'reset' });
+ok((await can.wait((m) => m.t === 'error', 'not host reset')).code === 'not_host', 'Only the host resets the game');
+can.inbox.length = 0;
+ali.send({ t: 'reset' });
 await can.wait((m) => m.t === 'state' && m.phase === 'lobby', 'lobby');
 ok(can.state.players.every((p) => p.score === 0), 'Sıfırla: lobiye dönüldü, puanlar sıfır');
 

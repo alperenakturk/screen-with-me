@@ -110,6 +110,8 @@ export class Draw extends DurableObject<Env> {
   private readonly limit = new RateLimiter(20, 8);
   private readonly strokeLimit = new RateLimiter(80, 40);
   private readonly guessLimit = new RateLimiter(6, 2);
+  /** `undo` re-sends the whole drawing to everyone: about once a second (security review 2, L6). */
+  private readonly undoLimit = new RateLimiter(3, 1);
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -163,9 +165,10 @@ export class Draw extends DurableObject<Env> {
       await this.scheduleAlarm();
     }
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
-    const limiter = message.t === 'stroke' ? this.strokeLimit : message.t === 'guess' ? this.guessLimit : this.limit;
+    const limiter = message.t === 'stroke' ? this.strokeLimit : message.t === 'guess' ? this.guessLimit : message.t === 'undo' ? this.undoLimit : this.limit;
     if (!limiter.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
-    if (message.t === 'hello') return this.hello(ws, me, message);
+    // One hello per connection, as in the room (review 3, R3-8): a second one could rename or re-key a live socket.
+    if (message.t === 'hello') return me.name === null ? this.hello(ws, me, message) : this.sendTo(ws, { t: 'error', code: 'bad' });
     if (me.name === null || !me.key || !this.data.people[me.key]) return this.sendTo(ws, { t: 'error', code: 'bad' });
     await this.apply(ws, me.key, message);
   }
@@ -284,6 +287,7 @@ export class Draw extends DurableObject<Env> {
         return;
       case 'start':
         if (d.phase !== 'lobby' && d.phase !== 'over') return;
+        if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         if (this.onlineKeys().length < 2) return this.sendTo(ws, { t: 'error', code: 'too_few' });
         for (const person of Object.values(d.people)) person.score = 0;
         d.drawn = {};
@@ -324,6 +328,7 @@ export class Draw extends DurableObject<Env> {
         await this.guess(ws, key, message.text);
         return;
       case 'reset':
+        if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         this.data = { ...fresh(), lang: d.lang, rounds: d.rounds, order: d.order, people: d.people, recent: d.recent };
         for (const person of Object.values(this.data.people)) person.score = 0;
         this.strokes = [];
