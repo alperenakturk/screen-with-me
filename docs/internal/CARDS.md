@@ -124,7 +124,12 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Done when: room, Shorts view, games, cameras, rail and fullscreen fit 768–1366 px touch screens upright and sideways
   without scrolling; iPad fullscreen and split view handled; no extension on tablets (site only).
 - Tests: a `scripts/harness/tablet` (iPad + Galaxy Tab emulation, both orientations); owner's real tablet later.
-- Owner's pick: none needed.
+- Design: `docs/internal/design/tablet.md` (Design session, PR #173): sideways keeps the computer layout (taller video,
+  games in the video's place, 44 px touch targets); the Shorts bar in one row; check the Android tablet's resting rail
+  (opacity 0, the touch 30 % rule does not apply). Accessibility notes for card A11y: `docs/internal/design/a11y-1.md`.
+- Owner's pick (3 Nov 2026, https://claude.ai/artifact/GXitrW7UaKsiWHBtWzk4Mw): upright tablet = **B**, a tablet
+  layout: the video on top, two columns below (chat; Together + Queue / People), no page scroll, the rail beside the
+  video, never over it.
 
 ### A11y. Accessibility pass (lane A; 0.9.95 gate)
 - Why: ROADMAP §1 "Accessibility": WCAG AA contrast (with the new Sidelit colours), keyboard tour, focus states,
