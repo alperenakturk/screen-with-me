@@ -52,6 +52,11 @@ export const SOUNDS = {
   locked: { group: 'game', level: 0.5, gap: 300 },
   guessWrong: { group: 'game', level: 0.45, gap: 300 },
   guessOther: { group: 'game', level: 0.25, gap: 2000 },
+  // Snack Bar (solo, on the side): soft and short, a tap never hides the film's sound.
+  snackServe: { group: 'game', level: 0.3, gap: 90 },
+  snackBuy: { group: 'game', level: 0.5, gap: 120 },
+  snackMilestone: { group: 'game', level: 0.65, gap: 600 },
+  snackCinema: { group: 'game', level: 0.8, gap: 3000 },
 } as const satisfies Record<string, SoundSpec>;
 
 export type SoundId = keyof typeof SOUNDS;
