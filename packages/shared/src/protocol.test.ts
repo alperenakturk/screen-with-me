@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, expectedPosition, parseClientMessage, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, parseClientMessage, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -216,5 +216,42 @@ describe('parseClientMessage', () => {
   it('truncates long names and chat messages', () => {
     expect(parse({ t: 'hello', v: 1, name: 'x'.repeat(100) })).toEqual({ t: 'hello', v: 1, name: 'x'.repeat(32) });
     expect(cleanChatText('ğ'.repeat(400))).toBe('ğ'.repeat(300));
+  });
+});
+
+describe('One text cleaner (security L1)', () => {
+  it('removes zero-width and direction characters, so names cannot look like someone else', () => {
+    expect(cleanName('Al​ex')).toBe('Alex');
+    expect(cleanName('‮Alex')).toBe('Alex');
+    expect(cleanName('Alex⁦ (host)⁩')).toBe('Alex (host)');
+    expect(cleanName('﻿Alex')).toBe('Alex');
+    expect(cleanName('​​')).toBeNull();
+  });
+
+  it('a right-to-left override can no longer reverse a chat line', () => {
+    expect(cleanChatText('see ‮gnp.exe')).toBe('see gnp.exe');
+    expect(cleanChatText('tab\there\nand line')).toBe('tab here and line');
+  });
+
+  it('keeps emoji built with a zero-width joiner and flag tags', () => {
+    expect(cleanText('👨‍👩‍👧 family', 40)).toBe('👨‍👩‍👧 family');
+    const england = '🏴\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}';
+    expect(cleanText(england, 40)).toBe(england);
+    // A joiner between letters is not an emoji: it goes.
+    expect(cleanText('a‍b', 40)).toBe('ab');
+  });
+
+  it('drops a split surrogate pair and cuts by code point, never inside an emoji', () => {
+    expect(cleanText('ok\ud83d', 40)).toBe('ok');
+    expect(cleanText('\ude00ok', 40)).toBe('ok');
+    expect(cleanText('😀😀😀', 2)).toBe('😀😀');
+  });
+
+  it('titles go through the same cleaner', () => {
+    expect(cleanTitle('A‮ title​')).toBe('A title');
+  });
+
+  it('pin notes and guesses are cleaned too', () => {
+    expect(parseClientMessage(JSON.stringify({ t: 'pin', note: 'great‮ scene' }))).toEqual({ t: 'pin', note: 'great scene' });
   });
 });

@@ -685,6 +685,12 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   point) is used for names, room names, chat, pin notes, titles (also URL file names and oEmbed) and guesses.
 - Tests: unit in `protocol.test.ts` (U+200B, U+202E, U+2066, split surrogate pair).
 - Owner's pick: none needed.
+- Done: 0.9.96.21 (PR below). `protocol.ts` `cleanText(x, max)`: `\p{Cc}` → space, `\p{Cf}` removed except a ZWJ
+  between two pictographs and flag tag characters after 🏴, lone surrogates dropped, spaces collapsed, cut by code
+  point. Used by `cleanName`, `cleanRoomName`, `cleanChatText`, `cleanTitle`, pin notes and Draw & Guess guesses;
+  the server's `resolveTitle` (oEmbed answers, file names) runs its result through `cleanTitle`. Tests: unit
+  `protocol.test.ts` (6: U+200B, U+202E, U+2066/2069, BOM, ZWJ emoji and the England flag kept, split surrogates,
+  code-point cut, titles, pin notes); local full e2e green.
 
 ### Security: safer media links (L4)
 - Severity: low

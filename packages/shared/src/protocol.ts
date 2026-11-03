@@ -646,16 +646,47 @@ export function isReaction(x: unknown): x is Reaction {
 
 export const ROOM_NAME_MAX = 40;
 
+const PICTO = /\p{Extended_Pictographic}/u;
+/**
+ * Security L1: one cleaner for every text a person types that others see (names, room names, chat, pin notes, titles,
+ * guesses). Control characters become spaces; invisible format characters (zero-width spaces, right-to-left and other
+ * direction marks and isolates, the BOM…) are removed, so nobody can look exactly like someone else or turn a
+ * message around. Kept: the zero-width joiner between two emoji (👨‍👩‍👧) and the tag characters of a flag emoji
+ * (🏴 + tags). Lone surrogates are dropped; spaces collapse; the result is cut to `max` code points.
+ */
+export function cleanText(x: string, max: number): string {
+  const chars = Array.from(x.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, ''));
+  const out: string[] = [];
+  for (let i = 0; i < chars.length; i++) {
+    const c = chars[i]!;
+    if (/\p{Cc}/u.test(c)) {
+      out.push(' ');
+      continue;
+    }
+    if (/\p{Cf}/u.test(c)) {
+      const cp = c.codePointAt(0)!;
+      const prev = out[out.length - 1] ?? '';
+      const next = chars[i + 1] ?? '';
+      const joiner = cp === 0x200d && PICTO.test(prev) && PICTO.test(next);
+      const tag = cp >= 0xe0020 && cp <= 0xe007f && (prev === '\u{1F3F4}' || (prev.codePointAt(0) ?? 0) >= 0xe0020);
+      if (joiner || tag) out.push(c);
+      continue;
+    }
+    out.push(c);
+  }
+  return Array.from(out.join('').replace(/\s+/g, ' ').trim()).slice(0, max).join('').trim();
+}
+
 /** Oda adı: boşluklar sadeleşir, en fazla ROOM_NAME_MAX karakter. */
 export function cleanRoomName(x: unknown): string | null {
   if (typeof x !== 'string') return null;
-  const name = x.replace(/\s+/g, ' ').trim().slice(0, ROOM_NAME_MAX);
+  const name = cleanText(x, ROOM_NAME_MAX);
   return name.length > 0 ? name : null;
 }
 
 export function cleanName(x: unknown): string | null {
   if (typeof x !== 'string') return null;
-  const name = x.replace(/\s+/g, ' ').trim().slice(0, NAME_MAX_LENGTH);
+  const name = cleanText(x, NAME_MAX_LENGTH);
   return name.length > 0 ? name : null;
 }
 
@@ -721,10 +752,8 @@ export interface PinList {
 
 export function cleanChatText(x: unknown): string | null {
   if (typeof x !== 'string') return null;
-  // Kontrol karakterlerini at, boşlukları sadeleştir.
-  const text = x.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (text.length === 0) return null;
-  return Array.from(text).slice(0, CHAT_MAX_LENGTH).join('');
+  const text = cleanText(x, CHAT_MAX_LENGTH);
+  return text.length > 0 ? text : null;
 }
 
 /** A podcast episode's cover art: only from Apple's image servers (the same rule as `podcasts.ts` `PODCAST_ART`). */
@@ -761,8 +790,8 @@ export function cleanMedia(x: unknown): Media | null {
 
 export function cleanTitle(x: unknown): string | null {
   if (typeof x !== 'string') return null;
-  const title = x.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
-  return title ? Array.from(title).slice(0, TITLE_MAX_LENGTH).join('') : null;
+  const title = cleanText(x, TITLE_MAX_LENGTH);
+  return title ? title : null;
 }
 
 export function isValidMedia(x: unknown): x is Media {
@@ -959,8 +988,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return { t: 'sticker-clear' };
     case 'pin': {
       if (m.note === undefined) return { t: 'pin' };
-      const note = cleanChatText(m.note);
-      return note ? { t: 'pin', note: Array.from(note).slice(0, PIN_NOTE_MAX).join('') } : { t: 'pin' };
+      const note = typeof m.note === 'string' ? cleanText(m.note, PIN_NOTE_MAX) : '';
+      return note ? { t: 'pin', note } : { t: 'pin' };
     }
     case 'chat': {
       const text = cleanChatText(m.text);
