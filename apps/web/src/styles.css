@@ -11733,6 +11733,31 @@ html:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.yt-rail.side-rail.dock
   display: none !important;
 }
 
+/* Card 2b (owner's B): on the film page the rail opens and closes too. The resting film leaves the same thin gutter
+   (part of our overlay, so the site sees the mouse there) and the film narrows while the rail is out; the extension
+   refits it as the hole changes, which the player's `right` transition makes smooth. */
+html.shell:not(.phone) .theater.side-rail.dock-mode {
+  --edge-gutter: 14px;
+}
+
+/* On the film page the overlay may never hear the mouse leave the rail (it jumps into the film's hole), so a stale
+   :hover must not hold the rail out: there the script's state (dock-idle) alone decides. */
+html.shell:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.side-rail.rail-edge-mode.dock-mode.dock-idle:not(:has(.dock-pop:not([hidden]))) :is(.player, .empty, .overlay) {
+  right: var(--edge-gutter);
+}
+
+html.shell:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.side-rail.rail-edge-mode.dock-mode.dock-idle:not(:has(.dock-pop:not([hidden]))) .fs-dock {
+  opacity: 0;
+  visibility: hidden;
+}
+
+html.shell .theater.side-rail.rail-edge-mode.dock-mode.dock-idle .rail-edge {
+  display: block !important;
+  top: 0;
+  bottom: 0;
+  width: var(--edge-gutter, 14px);
+}
+
 /* YouTube fullscreen on a computer (card 2a, owner's D, like Watch2Gether): the player makes room for a column beside
    it, left of the rail (or of the thin edge gutter while the rail rests). The column holds the room's notes at the top,
    the cameras (placed by cam-float.ts) and the newest messages at the bottom. */
@@ -11869,7 +11894,6 @@ html:not(.phone) .theater.side-rail.dock-mode :is(.player, .fs-catcher, .empty, 
 
 html:not(.phone) .theater.side-rail.dock-mode:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))) :is(.player, .fs-catcher, .empty, .overlay),
 html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode :is(.player, .fs-catcher, .empty, .overlay),
-html.shell .theater.side-rail.dock-mode :is(.player, .empty, .overlay),
 .theater.side-rail.rail-bare.dock-mode :is(.player, .fs-catcher, .empty, .overlay) {
   right: var(--rail-w);
 }

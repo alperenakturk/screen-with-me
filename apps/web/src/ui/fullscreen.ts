@@ -268,13 +268,17 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   addEventListener('mousemove', () => (tabbing = false), { capture: true, passive: true });
   const LEAVE_MS = 450;
   let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+  /** When the mouse last reached the rail or its edge (a film move reported just before it is old news). */
+  let edgeAt = 0;
   dock.addEventListener('mouseenter', () => {
     hoveringControls = true;
+    edgeAt = Date.now();
     if (leaveTimer !== null) clearTimeout(leaveTimer);
     leaveTimer = null;
     wakeDock();
   });
-  dock.addEventListener('mouseleave', () => {
+  dock.addEventListener('mouseleave', leftRail);
+  function leftRail(): void {
     hoveringControls = false;
     // Off the rail onto a YouTube frame no move reaches the page: the mouse has left the edge.
     nearEdge = false;
@@ -288,7 +292,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       closeRailWindows();
       hideRailSoon();
     }, LEAVE_MS);
-  });
+  }
   // A click on the YouTube video: the page only learns that its focus went into the frame.
   addEventListener('blur', () =>
     setTimeout(() => {
@@ -318,7 +322,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
    * "Keep the controls open" (⋯ and Settings → My screen, `opt:railPin`) pins it. Touch screens keep it faint as before.
    */
   let railPin = load('opt:railPin') === '1';
-  const edgeMode = () => !shell && (!isTouch() || hasMouse()) && !railPin;
+  // Card 2b (owner's B, 3 Nov 2026): the film page too. There the gutter beside the film is part of our overlay, so
+  // the site sees the mouse reach it; the film narrows while the rail is out and widens again when it goes.
+  const edgeMode = () => (!isTouch() || hasMouse()) && !railPin;
   let nearEdge = false;
   /** Mouse on the rail, one of its windows open (emojis, message box, ⋯, the games hall) or a key focus in it. */
   const railBusy = () =>
@@ -330,9 +336,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     document.activeElement === dockChatInput;
   // Without the edge (film page, touch screens) a paused video keeps it too. A button's focus after a click no longer
   // does (0.9.93.6: after 🎙 / 📷 / ⋯ the rail stayed for good), only a keyboard user's (railBusy).
-  // Always out (card 2): with nothing playing (nothing to cover) and on the film page, where the rail is a column beside
-  // the film (the film is fitted once, not every time the mouse reaches the edge).
-  const railFixed = () => shell || !getPlayer();
+  // Always out with nothing playing (card 2: nothing to cover). The film page waits for the edge since card 2b.
+  const railFixed = () => !getPlayer();
   const dockBusy = () => railFixed() || (edgeMode() ? nearEdge || railBusy() : railBusy() || getPlayer()?.isPaused() === true);
   function sleepDock(): void {
     if (dockTimer !== null) clearTimeout(dockTimer);
@@ -350,7 +355,14 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   function moved(): void {
     if (!edgeMode()) wakeDock();
   }
-  const HIDE_MS = 250;
+  /**
+   * How long after the mouse leaves the rail goes. On the film page a little longer, and it opens only after the mouse
+   * stays at the edge for a moment (card 2b): every open or close refits the film, so a mouse passing by must not make
+   * it jump.
+   */
+  const HIDE_MS = shell ? 450 : 250;
+  const OPEN_MS = shell ? 140 : 0;
+  let openTimer: ReturnType<typeof setTimeout> | null = null;
   function hideRailSoon(): void {
     if (dockTimer !== null) clearTimeout(dockTimer);
     dockTimer = setTimeout(sleepDock, HIDE_MS);
@@ -358,17 +370,38 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   function setNear(near: boolean): void {
     if (near === nearEdge) return;
     nearEdge = near;
+    if (near) edgeAt = Date.now();
+    if (openTimer !== null) clearTimeout(openTimer);
+    openTimer = null;
     if (!near) return hideRailSoon();
     if (dockTimer !== null) clearTimeout(dockTimer);
     dockTimer = null;
-    theater.classList.remove('dock-idle');
+    if (!OPEN_MS || !theater.classList.contains('dock-idle')) return theater.classList.remove('dock-idle');
+    openTimer = setTimeout(() => {
+      openTimer = null;
+      if (nearEdge) theater.classList.remove('dock-idle');
+    }, OPEN_MS);
   }
   /** How far into the video (and past its right edge, the gap beside it) counts as "the right side". */
   const EDGE_IN = 72;
   const EDGE_OUT = 28;
+  /**
+   * Where our page last saw the mouse, and a position the film page has since reported the mouse away from. When the
+   * film widens, Chrome replays the last position in our overlay as a move (the mouse is long gone onto the film): that
+   * replay must not bring the rail back (card 2b).
+   */
+  let lastXY = { x: -1, y: -1 };
+  let staleXY: { x: number; y: number } | null = null;
+  const replayed = (event: MouseEvent): boolean => {
+    if (staleXY && Math.abs(event.clientX - staleXY.x) < 2 && Math.abs(event.clientY - staleXY.y) < 2) return true;
+    staleXY = null;
+    lastXY = { x: event.clientX, y: event.clientY };
+    return false;
+  };
   document.addEventListener(
     'mousemove',
     (event) => {
+      if (replayed(event)) return;
       if (!edgeMode() || !theater.classList.contains('dock-mode')) return;
       const r = wrap.getBoundingClientRect();
       setNear(event.clientY >= r.top && event.clientY <= r.bottom && event.clientX >= r.right - EDGE_IN && event.clientX <= r.right + EDGE_OUT);
@@ -376,7 +409,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     { passive: true },
   );
   const railEdge = q('#rail-edge');
-  railEdge.addEventListener('mouseenter', () => edgeMode() && setNear(true));
+  railEdge.addEventListener('mouseenter', (event) => !replayed(event) && edgeMode() && setNear(true));
   railEdge.addEventListener('mouseleave', (event) => {
     if (!edgeMode() || dock.contains(event.relatedTarget as Node)) return;
     setNear(false);
@@ -721,6 +754,13 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     },
     /** Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. */
     poke(): void {
+      // Card 2b: a move reported by the film's frames means the mouse is on the film, not on the rail or at the edge. On
+      // the film page the overlay may never hear the mouse leave (it jumps from our rail into the film's hole), so this
+      // counts as leaving; a move reported right after the mouse reached the edge is from before it.
+      if (shell && edgeMode() && Date.now() - edgeAt > 300) {
+        staleXY = lastXY;
+        leftRail();
+      }
       if (isActive()) wake();
       else moved();
     },
