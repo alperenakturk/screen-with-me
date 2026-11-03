@@ -35,7 +35,6 @@ const TEXT = {
     'garden.growing': '{n} growing',
     'games.garden.text': 'A little garden on the window sill: plants grow only while the film plays, seeds come when a film ends or after a long evening with friends, every plant goes into your album.',
     'games.garden.short': 'Plants grow over watched minutes. Water now and then.',
-    'games.word.title': 'Five Frames',
     'games.word.short': 'One word a day, the same for everyone. 7 tries.',
     'games.word.text': 'Find the five-letter word of the day in 7 tries; English or Turkish, the same word for everyone.',
     'hub.playersExact': '{n} players',
@@ -49,7 +48,6 @@ const TEXT = {
     'garden.growing': '{n} büyüyor',
     'games.garden.text': 'Pencere önünde küçük bir bahçe: bitkiler sadece film oynarken büyür, film bitince ya da arkadaşlarla uzun bir akşamdan sonra tohum gelir, her bitki albümüne girer.',
     'games.garden.short': 'Bitkiler izlenen dakikalarla büyür. Arada bir sula.',
-    'games.word.title': 'Beş Kare',
     'games.word.short': 'Her gün bir kelime, herkese aynı. 7 hak.',
     'games.word.text': 'Günün beş harfli kelimesini 7 denemede bul; Türkçe ya da İngilizce, herkese aynı kelime.',
     'hub.playersExact': '{n} kişi',
@@ -84,9 +82,9 @@ type SideKind = 'snack' | 'garden' | 'word';
 const SIDE_GAMES: readonly { kind: SideKind; solo: SoloKind | null }[] = [
   { kind: 'snack', solo: 'snack' },
   { kind: 'garden', solo: 'garden' },
-  { kind: 'word', solo: null },
+  { kind: 'word', solo: 'word' },
 ];
-const sideTitle = (kind: SideKind) => (kind === 'word' ? g('games.word.title') : t(`games.${kind}.title`));
+const sideTitle = (kind: SideKind) => t(`games.${kind}.title`);
 const sideText = (kind: SideKind) => (kind === 'snack' ? t('games.snack.text') : g(`games.${kind}.text`));
 
 /** A one-line "how far am I" for a solo game, from its save in this browser. */
@@ -98,6 +96,15 @@ function progressOf(kind: SideKind): string | null {
       const growing = saved.pots.filter((p) => p && typeof p === 'object').length;
       const found = saved.album && typeof saved.album === 'object' ? Object.keys(saved.album).length : 0;
       return `🌱 ${g('garden.growing', { n: growing })} · 📖 ${found}/${PLANT_IDS.length}`;
+    } catch {
+      return null;
+    }
+  }
+  if (kind === 'word') {
+    try {
+      const saved = JSON.parse(load('fiveFrames') || 'null') as { stats?: Record<string, { streak?: unknown; last?: unknown }> } | null;
+      const best = Object.values(saved?.stats ?? {}).reduce((n, s) => Math.max(n, typeof s.streak === 'number' ? s.streak : 0), 0);
+      return best > 0 ? `🔥 ${best}` : null;
     } catch {
       return null;
     }
