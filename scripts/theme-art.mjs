@@ -7,7 +7,11 @@
 // Sahnelerde ortası (içeriğin durduğu yer) boş bırakılır; süsler kenarlarda.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { LOGO_FROM, LOGO_INK, LOGO_TO } from '../packages/shared/src/logo.ts';
+// The costumed theme mascots still wear the old purple face (before the Sidelit logo, card 6c); turning them into the
+// new mascot N1 Glowbeam is a follow-up card. Its colours live here so a re-run keeps them.
+const LOGO_FROM = '#8f74ff';
+const LOGO_TO = '#5b3cf0';
+const LOGO_INK = '#1f1450';
 
 const OUT = new URL('../apps/web/public/themes/', import.meta.url);
 mkdirSync(OUT, { recursive: true });
@@ -406,7 +410,7 @@ function lokumPattern() {
 }
 
 function lokumMascot() {
-  // Padişah ScreenWithMe: kocaman beyaz kavuk (önünde mücevherli sorguç ve tüyler), burma bıyık, kürk yakalı
+  // Padişah Sidelit: kocaman beyaz kavuk (önünde mücevherli sorguç ve tüyler), burma bıyık, kürk yakalı
   // kırmızı kaftan (altın kaytan ilikler), yanında lale. (Eski renkli şeritli sarık "Arap" gibi duruyordu.)
   return svg(240, 240, `
 <defs>${LOGO_DEFS}

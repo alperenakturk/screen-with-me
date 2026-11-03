@@ -1,6 +1,6 @@
 // Mikrofon / kamera izni sayfası (bir kerelik): film sayfasındaki sesli sohbet eklentinin görünmeyen sayfasında (offscreen)
 // çalışır, o sayfa izin isteyemez. İlk "Sese katıl"da arka plan bu sayfayı küçük bir pencerede açar (0.9.91.5; önce sekmeydi), Chrome izni hemen
-// "ScreenWithMe" adına sorar (film sitesinin adına değil) ve hatırlar. Sonuç arka plana gider, pencere kapanır.
+// "Sidelit" adına sorar (film sitesinin adına değil) ve hatırlar. Sonuç arka plana gider, pencere kapanır.
 
 import { langReady } from './i18n.ts';
 import { MIC_RESULT } from './messages.ts';
@@ -10,22 +10,22 @@ const text = {
   tr: {
     ask: 'Chrome\'un sorusu burada açılır: "İzin ver"e bas. Kapandıysa adres çubuğundaki simgeye bas.',
     title: 'Sesli ve görüntülü sohbet izni',
-    text: 'Film sayfasında arkadaşlarınla konuşabilmen için ScreenWithMe mikrofonunu (ve kameranı) kullanmak istiyor. İzni bir kez verirsin, bir daha sorulmaz; mikrofon sadece "Sese katıl"a, kamera sadece 📷 düğmesine bastığında açılır.',
+    text: 'Film sayfasında arkadaşlarınla konuşabilmen için Sidelit mikrofonunu (ve kameranı) kullanmak istiyor. İzni bir kez verirsin, bir daha sorulmaz; mikrofon sadece "Sese katıl"a, kamera sadece 📷 düğmesine bastığında açılır.',
     allow: '🎙 Mikrofon iznini ver',
     denied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden mikrofona izin verip tekrar dene.',
     camTitle: 'Görüntülü sohbet için kamera izni',
-    camText: 'Film sayfasında arkadaşların seni görebilsin diye ScreenWithMe kameranı kullanmak istiyor. İzni bir kez verirsin; kamera sadece 📷 düğmesine bastığında açılır.',
+    camText: 'Film sayfasında arkadaşların seni görebilsin diye Sidelit kameranı kullanmak istiyor. İzni bir kez verirsin; kamera sadece 📷 düğmesine bastığında açılır.',
     camAllow: '📷 Kamera iznini ver',
     camDenied: 'İzin verilmedi. Adres çubuğundaki kilit/ayarlar simgesinden kameraya izin verip tekrar dene.',
   },
   en: {
     ask: 'Chrome\'s question opens here: press "Allow". If it closed, press the icon in the address bar.',
     title: 'Voice and video chat permission',
-    text: 'ScreenWithMe wants to use your microphone (and camera) so you can talk with friends on the video page. You allow it once and it is not asked again; the microphone is only on after you press "Join voice", the camera only after you press 📷.',
+    text: 'Sidelit wants to use your microphone (and camera) so you can talk with friends on the video page. You allow it once and it is not asked again; the microphone is only on after you press "Join voice", the camera only after you press 📷.',
     allow: '🎙 Allow microphone',
     denied: 'Permission wasn’t given. Allow the microphone from the lock/settings icon in the address bar and try again.',
     camTitle: 'Camera permission for video chat',
-    camText: 'ScreenWithMe wants to use your camera so friends can see you on the video page. You only allow it once, and the camera is only on after you press 📷.',
+    camText: 'Sidelit wants to use your camera so friends can see you on the video page. You only allow it once, and the camera is only on after you press 📷.',
     camAllow: '📷 Allow camera',
     camDenied: 'Permission wasn’t given. Allow the camera from the lock/settings icon in the address bar and try again.',
   },

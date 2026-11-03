@@ -227,15 +227,15 @@ function downloadImage(recap: Recap): void {
     summaryLines(recap).forEach((line, i) => ctx.fillText(line, 70 + (i % 2) * 540, 270 + Math.floor(i / 2) * 80));
     ctx.fillStyle = '#c9b8ff';
     ctx.font = '800 30px system-ui, sans-serif';
-    ctx.fillText('ScreenWithMe', 70, 580);
+    ctx.fillText('Sidelit', 70, 580);
     canvas.toBlob((blob) => {
       if (!blob) return;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'screenwithme-ozet.png';
+      a.download = 'sidelit-recap.png';
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     }, 'image/png');
   };
-  logo.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(logoSvg({ gradientId: 'recap-logo' }))}`;
+  logo.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(logoSvg({ id: 'recap-logo' }))}`;
 }

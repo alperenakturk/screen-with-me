@@ -19,7 +19,7 @@ const check = (ok, label, extra = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} 
   let popup = await ctx.newPage();
   await popup.goto(`chrome-extension://${id}/popup.html`);
   await popup.waitForTimeout(500);
-  check((await popup.textContent('#action')).includes('ScreenWithMe') && (await popup.isHidden('#action2')), 'no room: "Open ScreenWithMe" only');
+  check((await popup.textContent('#action')).includes('Sidelit') && (await popup.isHidden('#action2')), 'no room: "Open Sidelit" only');
   await popup.close();
   // 2) A room open in another tab: "Back to my room" switches to it.
   const room = await ctx.newPage();

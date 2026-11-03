@@ -24,7 +24,7 @@ function openSite(roomId: string): void {
   frame = document.createElement('iframe');
   frame.src = `${SITE_URL}/r/${roomId}?shell=1`;
   frame.allow = 'autoplay; clipboard-write';
-  frame.title = 'ScreenWithMe';
+  frame.title = 'Sidelit';
   document.body.append(frame);
 }
 

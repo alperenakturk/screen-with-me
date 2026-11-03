@@ -1,6 +1,6 @@
 {
-  "name": "ScreenWithMe",
-  "short_name": "ScreenWithMe",
+  "name": "Sidelit",
+  "short_name": "Sidelit",
   "description": "Watch videos together with friends, perfectly in sync. Free, no account needed.",
   "id": "/",
   "start_url": "/?source=app",

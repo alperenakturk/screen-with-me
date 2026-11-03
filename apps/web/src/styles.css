@@ -388,6 +388,16 @@ body::before {
   --mascot-size: 110px;
 }
 
+/* Card 6c: the home page's preview and the empty room show the brand's mascot N1 Glowbeam (public/mascot*.svg; the
+   empty room with its "waiting" face). The costumed mascots stay in the theme pickers until their own card. */
+.theme-mascot {
+  --mascot: url('/mascot.svg');
+}
+
+.empty .theme-mascot {
+  --mascot: url('/mascot-waiting.svg');
+}
+
 @media (prefers-reduced-motion: reduce) {
   .theme-mascot {
     animation: none;
@@ -421,6 +431,15 @@ textarea {
   z-index: 2;
 }
 
+/* Card 6c: the Sidelit wordmark, Bricolage Grotesque ExtraBold (SIL OFL, self-hosted: public/fonts, no outside
+   request), tracking −1.5 %. Only the latin letters of "Sidelit" are needed. */
+@font-face {
+  font-family: 'Sidelit Wordmark';
+  src: url('/fonts/bricolage-grotesque-800.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -428,6 +447,13 @@ textarea {
   color: var(--text);
   font-weight: 700;
   text-decoration: none;
+}
+
+.wordmark {
+  font-family: 'Sidelit Wordmark', var(--font, system-ui), sans-serif;
+  font-weight: 800;
+  font-size: 1.12em;
+  letter-spacing: -0.015em;
 }
 
 .logo {

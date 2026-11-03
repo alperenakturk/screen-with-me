@@ -76,7 +76,7 @@ const HOST_GRACE_MS = 20_000;
 /** Yasaklı listesi en fazla bu kadar kişi tutar (en eskisi düşer). */
 const MAX_BANS = 200;
 /** Oda adına yapılan hareketler (otomatik bekleme) bu "kişi" adına duyurulur. */
-const SYSTEM: Member = { id: SYSTEM_MEMBER_ID, name: 'ScreenWithMe' };
+const SYSTEM: Member = { id: SYSTEM_MEMBER_ID, name: 'Sidelit' };
 
 /** Her WebSocket bağlantısına iliştirilen bilgi. Sunucu uykuya geçse bile korunur. */
 interface Attachment {

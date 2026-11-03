@@ -246,7 +246,7 @@ export function renderTvTest(app: HTMLElement): void {
   micBtn.focus();
 
   copyBtn.addEventListener('click', () => {
-    const summary = [`ScreenWithMe ${t('tvtest.title')} · ${new Date().toISOString()}`, ...rows.map((row) => `${icon(row.ok)} ${row.label}: ${row.detail}`), `keys: ${seen.join(' | ')}`].join('\n');
+    const summary = [`Sidelit ${t('tvtest.title')} · ${new Date().toISOString()}`, ...rows.map((row) => `${icon(row.ok)} ${row.label}: ${row.detail}`), `keys: ${seen.join(' | ')}`].join('\n');
     void navigator.clipboard?.writeText(summary).then(() => (copyBtn.textContent = t('copied')), () => {});
   });
 }

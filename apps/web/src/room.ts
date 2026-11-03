@@ -1043,7 +1043,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // changes for the person; the page only notes it (tests, `/baglanti`).
     onTransport: (transport) => {
       document.documentElement.dataset.swmTransport = transport;
-      if (transport === 'http') console.info('[ScreenWithMe] WebSocket did not open on this network: using the HTTP fallback');
+      if (transport === 'http') console.info('[Sidelit] WebSocket did not open on this network: using the HTTP fallback');
     },
   });
   const retryButton = el('button', { type: 'button', class: 'btn small-btn primary' }, `⟳ ${t('netHint.retry')}`);
@@ -2898,7 +2898,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   async function shareInvite(button: HTMLButtonElement, idleText: () => string, text: HTMLElement = button): Promise<void> {
     if (canShare) {
       try {
-        await navigator.share({ title: 'ScreenWithMe', text: t('inviteShareText'), url: inviteUrl });
+        await navigator.share({ title: 'Sidelit', text: t('inviteShareText'), url: inviteUrl });
         return;
       } catch (error) {
         // Closed, or shared and then the phone came back here (Android reports that as an abort too): nothing else
@@ -3101,7 +3101,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (document.activeElement !== input) input.value = name;
     input.placeholder = friendlyRoomName(roomId);
     drawRoomTitle();
-    baseTitle = `${saved && name ? name : friendlyRoomName(roomId)} · ScreenWithMe`;
+    baseTitle = `${saved && name ? name : friendlyRoomName(roomId)} · Sidelit`;
     drawTabTitle();
     // Ana sayfadaki "Kaydedilen odalar" listesi: sadece sunucudan ayarlar geldikten sonra (önce varsayılan ayarla
     // "kayıtlı değil" sanılıp liste siliniyordu; bağlantı hiç kurulmazsa oda listeden kayboluyordu) ve sadece değişince

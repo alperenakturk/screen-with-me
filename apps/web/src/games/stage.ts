@@ -31,7 +31,7 @@ const PAD = `<svg class="pwm-pad" viewBox="0 0 84 54" aria-hidden="true">
   <circle cx="52.5" cy="25.5" r="3.6" fill="#60a5fa"/><circle cx="60" cy="32" r="3.6" fill="#ffd166"/>
 </svg>`;
 
-/** PlayWithMe logo (the ScreenWithMe face holding a game pad); the small one heads the stage. */
+/** PlayWithMe logo (the Sidelit face holding a game pad); the small one heads the stage. */
 function playLogo(): HTMLElement {
   const box = el('span', { class: 'pwm-logo small', 'aria-hidden': 'true' });
   box.append(createLogo(document, { animated: true }));

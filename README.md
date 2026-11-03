@@ -1,6 +1,8 @@
 <div align="center">
 
-# ▶ ScreenWithMe
+# ▶ Sidelit
+
+_Formerly ScreenWithMe._
 
 **Watch any video together, in perfect sync.**<br/>
 Free · no accounts · no ads · works on YouTube and on (almost) any website.
@@ -170,4 +172,4 @@ Questions and troubleshooting: [help page](https://screen-with-me.swm-server.wor
 - DRM-protected streaming services are not supported yet.
 - The extension is not in the Chrome Web Store yet (manual install, about a minute).
 - The extension works in Chromium-based desktop browsers (Chrome, Edge, Brave, Opera, Vivaldi). The website also opens in Firefox and Safari (rooms with YouTube or video files, chat, games, voice); pages from other sites need a desktop Chromium browser with the extension.
-- ScreenWithMe never hosts or relays video content; it only synchronizes players that each person opens themselves.
+- Sidelit never hosts or relays video content; it only synchronizes players that each person opens themselves.
