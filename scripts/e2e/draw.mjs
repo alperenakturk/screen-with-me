@@ -116,7 +116,10 @@ ok(drawerGain === average && reveal.players.find((p) => p.id === wa.you).score =
 
 // Sıradaki çizen: Ayşe (geliş sırası).
 const next = await ayse.wait((m) => m.t === 'choices', 'next choices', ALARM_WAIT);
-ok(next.words.length === 3 && ayse.state.drawer === wy.you, 'Sıra Ayşe’ye geçti, kelimeleri o seçiyor');
+// The server sends the words just before the new state; live, they can arrive in separate packets (0.9.93.9 deploy:
+// the check read the reveal's state, drawer still Ali), so wait for the "choose" state itself.
+const choosing = await ayse.wait((m) => m.t === 'state' && m.phase === 'choose' && m.round === reveal.round + 1, 'choose state');
+ok(next.words.length === 3 && choosing.drawer === wy.you, 'Sıra Ayşe’ye geçti, kelimeleri o seçiyor');
 
 // Sıfırla: lobi, puanlar 0. (Kutuda oyun başlamadan önceki "lobi" mesajları var: önce boşalt.)
 can.inbox.length = 0;

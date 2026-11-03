@@ -12,6 +12,23 @@ const check = (ok, label, extra = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${extra ? ' → ' + extra : ''}`);
   if (!ok) fails++;
 };
+// Card 2a (owner's D): nothing of ours over the YouTube player by itself. Lists our visible things whose box meets the
+// YouTube frame's box (popups only count while open, so the caller closes them first).
+const OURS = '.r-float, .rail-edge, .countdown, .waiting-banner, .sync-badge, .action-notice, #toasts .toast, .cam-tile, .cam-pill, .live-window, .fs-dock, .fs-catcher, .game-invite, .end-card';
+const overPlayer = (page) =>
+  page.evaluate((ours) => {
+    const frame = document.querySelector('#player iframe');
+    if (!frame) return ['no YouTube frame'];
+    const f = frame.getBoundingClientRect();
+    const hits = [];
+    for (const node of document.querySelectorAll(ours)) {
+      const r = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      if (r.width < 1 || r.height < 1 || style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.05) continue;
+      if (r.left < f.right - 1 && f.left < r.right - 1 && r.top < f.bottom - 1 && f.top < r.bottom - 1) hits.push(`${node.className || node.id} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)}`);
+    }
+    return hits;
+  }, OURS);
 const box = (page, selector) =>
   page.evaluate((s) => {
     const e = document.querySelector(s);
@@ -60,12 +77,15 @@ const box = (page, selector) =>
   check(note && form && note.b <= form.t + 1 && note.t > form.t - 120, 'just above the message box', JSON.stringify({ note, form }));
   check(note && video && note.l >= video.r, 'not over the video');
 
-  // 0.9.93: Sam's emoji flies over the video on Alex's screen again.
+  // Card 2a (owner's D): Sam's emoji rises from Sam's face beside the video, not over the YouTube player.
   await sam.keyboard.press('1');
-  await alex.waitForSelector('.reactions-layer .r-float', { timeout: 3000 }).catch(() => {});
-  const float = await box(alex, '.reactions-layer .r-float');
-  check(!!float, 'an emoji flies over the video');
-  check(float && video && float.x > video.l && float.x < video.r, 'inside the video', JSON.stringify({ float, video }));
+  await alex.waitForSelector('.r-float.r-from', { timeout: 3000 }).catch(() => {});
+  const float = await box(alex, '.r-float.r-from');
+  const face = await box(alex, '#voice-people .voice-face:not(.me)');
+  check(!!float, 'an emoji rises (from the sender\'s face)');
+  check(float && video && float.l >= video.r, 'beside the video, not over it', JSON.stringify({ float, video, face }));
+  const hits1 = await overPlayer(alex);
+  check(hits1.length === 0, 'room view: nothing of ours over the YouTube player', hits1.join(' | '));
 
   // The right edge (0.9.93): the rail shows for a moment with a new video, then waits for the mouse at the edge.
   const idle = () => alex.evaluate(() => document.querySelector('#theater').classList.contains('dock-idle'));
@@ -76,7 +96,11 @@ const box = (page, selector) =>
   await alex.waitForTimeout(3000);
   check(await idle(), 'mouse in the middle: the rail rests');
   const wide = await playerRight();
-  check(Math.abs(wide - wrapBox.r) < 2, 'resting rail: the video takes the full width', JSON.stringify({ wide, wrap: wrapBox.r }));
+  check(Math.abs(wide - (wrapBox.r - 14)) < 3, 'resting rail: the video takes the width but a thin gutter for the edge', JSON.stringify({ wide, wrap: wrapBox.r }));
+  const edge = await box(alex, '#rail-edge');
+  check(edge && edge.l >= wide - 1, 'the edge strip is in the gutter beside the player, not on it', JSON.stringify({ edge, wide }));
+  const hits0 = await overPlayer(alex);
+  check(hits0.length === 0, 'resting: nothing of ours over the YouTube player', hits0.join(' | '));
   await alex.mouse.move(wrapBox.x + 40, wrapBox.y + 10, { steps: 3 });
   await alex.waitForTimeout(400);
   check(await idle(), 'a mouse move in the middle does not bring it');
@@ -169,10 +193,29 @@ const box = (page, selector) =>
     await sam.press('#chat-input', 'Enter');
     await sam.evaluate(() => document.activeElement?.blur());
     await alex.waitForSelector('#toasts .toast', { timeout: 4000 }).catch(() => {});
+    // Card 2a (owner's D): YouTube fullscreen has a column beside the player for the notes, cameras and messages.
     const toast = await box(alex, '#toasts .toast');
-    const rail = await box(alex, '#fs-dock');
-    check(toast && rail && toast.r <= rail.l - 4 && toast.r > vw.w - 200, 'fullscreen: a message sits just left of the rail', JSON.stringify({ toast, rail }));
-    check(toast && toast.t < vw.h / 3, 'fullscreen: it comes from the top, not over the player\'s bar', JSON.stringify(toast));
+    const side = await box(alex, '#fs-side');
+    const fsPlayer = await box(alex, '.player');
+    check(side && fsPlayer && side.w > 150 && fsPlayer.r <= side.l + 1, 'fullscreen: a column beside the player (the player ends where it starts)', JSON.stringify({ side, fsPlayer }));
+    check(toast && side && toast.l >= side.l - 1 && toast.r <= side.r + 1, 'fullscreen: a message sits in the column, not on the player', JSON.stringify({ toast, side }));
+    await alex.evaluate(() => {
+      const banner = document.querySelector('#waiting-banner');
+      banner.textContent = 'Waiting for Sam…';
+      banner.hidden = false;
+    });
+    await alex.waitForTimeout(300);
+    check(await alex.evaluate(() => !!document.querySelector('#fs-side-notices > #waiting-banner')), 'fullscreen: the wait note is in the column');
+    await alex.evaluate(() => (document.querySelector('#waiting-banner').hidden = true));
+    await sam.keyboard.press('3');
+    await alex.waitForTimeout(400);
+    const fsFloat = await box(alex, '.r-float.r-from');
+    const fsPlayer2 = await box(alex, '.player');
+    check(fsFloat && fsPlayer2 && fsFloat.x >= fsPlayer2.r, 'fullscreen: an emoji rises beside the player', JSON.stringify({ fsFloat, fsPlayer2 }));
+    await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 4 });
+    await alex.waitForTimeout(3200);
+    const hitsFs = await overPlayer(alex);
+    check(hitsFs.length === 0, 'fullscreen: nothing of ours over the YouTube player', hitsFs.join(' | '));
     await alex.evaluate(() => document.exitFullscreen());
     await alex.waitForTimeout(800);
   }
@@ -185,11 +228,12 @@ const box = (page, selector) =>
   const top = await box(alex, '#waiting-banner');
   const video2 = await box(alex, '.player');
   check(top && video2 && top.w > 0 && top.b <= video2.t + 1, 'above, not on it', JSON.stringify({ top, video2 }));
-  await alex.evaluate(() => document.querySelectorAll('.reactions-layer .r-float').forEach((n) => n.remove()));
+  await alex.evaluate(() => document.querySelectorAll('.r-float').forEach((n) => n.remove()));
   await sam.keyboard.press('2');
-  await alex.waitForTimeout(300);
-  const float2 = await box(alex, '.reactions-layer .r-float');
-  check(float2 && float2.x > video2.l && float2.x < video2.r, 'side panel hidden: the emoji flies over the video', JSON.stringify({ float2, video2 }));
+  await alex.waitForTimeout(400);
+  const float2 = await box(alex, '.r-float.r-from');
+  const video3 = await box(alex, '.player');
+  check(float2 && video3 && float2.x >= video3.r, 'side panel hidden: the emoji rises from the rail\'s 😀, beside the video', JSON.stringify({ float2, video3 }));
 
   // Back with the side panel: the note returns to the chat panel.
   await alex.evaluate(() => document.querySelector('#side-toggle')?.click());
@@ -257,7 +301,20 @@ const box = (page, selector) =>
     await ctx.close();
   }
 
+  // Card 2a: the Shorts view keeps everything of ours beside the YouTube player too (seats, rail, emojis from seats).
+  {
+    await alex.fill('#media-input', 'https://www.youtube.com/shorts/aqz-KE-bpKQ');
+    await alex.click('#media-form button[value="load"]');
+    await alex.waitForFunction(() => document.documentElement.classList.contains('shorts-view') && document.querySelector('#player iframe'), null, { timeout: 15000 }).catch(() => {});
+    await alex.waitForTimeout(1500);
+    await sam.keyboard.press('1');
+    await alex.waitForTimeout(400);
+    const hitsShorts = await overPlayer(alex);
+    check(await alex.evaluate(() => document.documentElement.classList.contains('shorts-view')), 'a Short opens the Shorts view');
+    check(hitsShorts.length === 0, 'Shorts view: nothing of ours over the YouTube player', hitsShorts.join(' | '));
+  }
+
   await browser.close();
-  console.log(fails ? `\n✗ ${fails} failed` : '\n✓ YouTube room: notes in the chat, emojis on the video, the rail at the edge');
+  console.log(fails ? `\n✗ ${fails} failed` : '\n✓ YouTube room: nothing of ours over the player (notes, emojis, edge, fullscreen column)');
   process.exit(fails ? 1 : 0);
 })();

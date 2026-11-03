@@ -388,6 +388,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
             </div>
             <div id="rail-edge" class="rail-edge" aria-hidden="true"></div>
+            <div id="fs-side" class="fs-side"><div id="fs-side-notices" class="yt-notices fs-side-notices"></div></div>
             <div id="empty" class="empty">
               <div class="theme-mascot" aria-hidden="true"></div>
               <h2 data-i18n="emptyTitle"></h2>
@@ -1209,6 +1210,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           const shown = reactions.content(message.emoji, message.sticker);
           if (shown) seats.react(message.by, shown);
         }
+        // YouTube (card 2a, owner's D): nothing of ours over the player by itself, so the emoji rises from the sender's
+        // face beside the video (or the rail's 😀). Video files and film pages keep emojis over the video.
+        else if ($('#theater').classList.contains('yt-rail') && !isShell) reactions.showFrom(reactionAnchor(message.by), message.by, message.emoji, message.sticker);
         else reactions.show(message.by, message.emoji, message.sticker);
         break;
       }
@@ -2449,12 +2453,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#chat-list').after(noticeChat);
   const noticeTop = el('div', { class: 'yt-notices yt-notices-top' });
   $('.player-wrap').before(noticeTop);
-  const NOTICES = '#waiting-banner, #sync-badge, #game-invite, .end-card';
+  const fsSideNotices = $('#fs-side-notices');
+  const NOTICES = '#waiting-banner, #sync-badge, #game-invite, .end-card, .countdown';
   function placeNotices(): void {
     const wrap = $('.player-wrap');
-    const youtube = $('#theater').classList.contains('yt-rail') && !isShell && !fullscreen.isActive() && !document.documentElement.classList.contains('shorts-view');
-    const target = !youtube ? wrap : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
-    for (const box of [wrap, noticeChat, noticeTop]) {
+    const youtube = $('#theater').classList.contains('yt-rail') && !isShell && !document.documentElement.classList.contains('shorts-view');
+    // YouTube fullscreen on a computer (card 2a): the column beside the player; phones keep them on the video.
+    const fsSide = $('#theater').classList.contains('yt-fs');
+    const target = !youtube || (fullscreen.isActive() && !fsSide) ? wrap : fullscreen.isActive() ? fsSideNotices : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
+    for (const box of [wrap, noticeChat, noticeTop, fsSideNotices]) {
       if (box === target) continue;
       for (const node of box.querySelectorAll<HTMLElement>(`:scope > :is(${NOTICES})`)) target.append(node);
     }
@@ -2465,6 +2472,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   watchNotices.observe(roomEl, { attributes: true, attributeFilter: ['class'] });
   watchNotices.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   document.addEventListener('fullscreenchange', placeNotices);
+
+  /**
+   * Where a YouTube emoji rises from (card 2a): the sender's face when the faces are on screen; in fullscreen or with
+   * the side panel hidden, the rail's 😀 (the rail shows for a moment); otherwise the faces row itself.
+   */
+  function reactionAnchor(by: Member): HTMLElement {
+    const visible = (node: HTMLElement | null) => (node && node.getBoundingClientRect().width > 0 ? node : null);
+    if (fullscreen.isActive() || sideHidden) {
+      fullscreen.showRail();
+      const react = visible($('#dock-react'));
+      if (react) return react;
+    }
+    const face = visible(document.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(by.id)}"]`));
+    return face ?? visible($('#voice-people')) ?? visible($('#dock-react')) ?? $('.together-card');
+  }
 
   let sideHidden = !isShell && load('opt:sideHidden') === '1';
   // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu

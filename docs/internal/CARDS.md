@@ -23,23 +23,6 @@ Card format:
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
-### 2a. Nothing of ours over the YouTube player by itself (owner picked D, 2 Nov 2026; with card 2)
-- Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
-  video in the room view, the "3-2-1" countdown and notes over the video, and the dock / toasts / cameras over a YouTube
-  player in fullscreen. Details and a recommendation per item (split layout: cameras and messages in a column
-  beside the player, also in fullscreen): `research/youtube-overlay-rail.md` "Follow-up (Job 3)".
-- Done when: the owner's D below is built; a harness asserts that, with nobody dragging anything, no element of ours
-  intersects the YouTube iframe's box in the room view, Shorts view and fullscreen (popups only while open).
-- Tests: harness overlap check in the room view, Shorts view and fullscreen.
-- Owner's pick (2 Nov 2026, https://claude.ai/artifact/S9PHD4qRh8uaM2ehzHka6T): **D, like Watch2Gether**: on YouTube
-  nothing of ours sits over the player by itself: `#rail-edge` goes (the edge is found from a thin gutter beside the
-  player + document mousemove), flying emojis rise beside the video from the sender's face, the 3-2-1 countdown and
-  notes sit above the video or in `.yt-notices`, in fullscreen the player shrinks for a side column with the camera
-  strip (1–4 tiles) and the newest messages; automatic tile columns and reset positions never land on the player.
-  Allowed: the person drags a camera window over the player themselves, and our popups (emojis, ⋯, settings) may
-  open over it while open. The small remaining audit risk is accepted in writing (this card). Video files and film
-  pages keep today's behaviour.
-
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
 - Done when: every box in `STATUS.md` "Owner's hand tests" for these versions is ticked or turned into a bug card.
@@ -425,6 +408,36 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 2a. Nothing of ours over the YouTube player by itself (owner picked D, 2 Nov 2026; with card 2)
+- Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
+  video in the room view, the "3-2-1" countdown and notes over the video, and the dock / toasts / cameras over a YouTube
+  player in fullscreen. Details and a recommendation per item (split layout: cameras and messages in a column
+  beside the player, also in fullscreen): `research/youtube-overlay-rail.md` "Follow-up (Job 3)".
+- Done when: the owner's D below is built; a harness asserts that, with nobody dragging anything, no element of ours
+  intersects the YouTube iframe's box in the room view, Shorts view and fullscreen (popups only while open).
+- Tests: harness overlap check in the room view, Shorts view and fullscreen.
+- Owner's pick (2 Nov 2026, https://claude.ai/artifact/S9PHD4qRh8uaM2ehzHka6T): **D, like Watch2Gether**: on YouTube
+  nothing of ours sits over the player by itself: `#rail-edge` goes (the edge is found from a thin gutter beside the
+  player + document mousemove), flying emojis rise beside the video from the sender's face, the 3-2-1 countdown and
+  notes sit above the video or in `.yt-notices`, in fullscreen the player shrinks for a side column with the camera
+  strip (1–4 tiles) and the newest messages; automatic tile columns and reset positions never land on the player.
+  Allowed: the person drags a camera window over the player themselves, and our popups (emojis, ⋯, settings) may
+  open over it while open. The small remaining audit risk is accepted in writing (this card). Video files and film
+  pages keep today's behaviour.
+- Done: 0.9.93.10 (PR below). YouTube only (video files and film pages unchanged): `#rail-edge` moved off the player
+  into a 14 px gutter beside it (`--edge-gutter`, the resting player ends there); emojis rise from the sender's face
+  (`reactions.showFrom` + `reactionAnchor`, brought back from 0.9.92.9; with the side panel hidden or in fullscreen from
+  the rail's 😀, which opens for a moment via `fullscreen.showRail()`); the 3-2-1 countdown is one of the notes
+  (`NOTICES`, a card above the message box); fullscreen on a computer (`.theater.yt-fs`) has a column `#fs-side`
+  between the player and the rail with the notes (`#fs-side-notices`), the cameras (`cam-float.ts` `sideColumn()`:
+  automatic tile places, the pill and the one window default there; a place the person dragged is kept) and the
+  newest messages at its bottom; "who paused" is hidden there. Tests: `yt-room` checks nothing of ours meets the
+  YouTube frame resting, in the room view, fullscreen and the Shorts view (plus emojis, notes, messages, the gutter);
+  `cam-fs` checks both camera layouts sit in the column in YouTube fullscreen. Also: `draw.mjs` waited for the words
+  but read the previous state (the server sends `choices` just before `state`; live they can arrive apart): it now
+  waits for the next round's "choose" state (0.9.93.9 deploy, first-attempt failure).
+
 
 ### 2. One rail everywhere: empty room and the film page (0.9.93 "Now" 1, owner's request)
 - Why: owner, 2 Nov 2026: an empty room still shows the old bar under the video (😀 React, Games, Sync, 1×, ⇥, ⛶), and

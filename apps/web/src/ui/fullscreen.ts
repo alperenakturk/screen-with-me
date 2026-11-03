@@ -148,6 +148,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // film page too). CSS keeps phones out of it.
     theater.classList.toggle('side-rail', docked);
     theater.classList.toggle('rail-bare', docked && !player);
+    // YouTube in fullscreen on a computer (card 2a, owner's D): a column beside the player holds the notes, cameras and
+    // the newest messages, so nothing of ours sits over the player by itself.
+    theater.classList.toggle('yt-fs', docked && isActive() && !shell && theater.classList.contains('yt-rail') && !document.documentElement.classList.contains('phone'));
     q<HTMLButtonElement>('#dock-pin').disabled = !player;
     dockExit.disabled = !player && !isActive();
     theater.classList.toggle('own-dock', docked && own);
@@ -711,6 +714,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     pin(): void {
       setFake(true, false);
       pinned = true;
+    },
+    /** Shows the rail for a moment even where it waits for the edge (an emoji rises from its 😀, card 2a). */
+    showRail(): void {
+      if (theater.classList.contains('dock-mode')) wakeDock();
     },
     /** Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. */
     poke(): void {
