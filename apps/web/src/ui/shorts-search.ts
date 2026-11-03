@@ -1,4 +1,4 @@
-import { FEED_RESULTS, formatDuration, normalizeQuery, parseSearchAnswer, type SearchAnswer } from '@swm/shared/youtube-search';
+import { FEED_RESULTS, formatDuration, normalizeQuery, parseSearchAnswer, type SearchAnswer, wordsRequest } from '@swm/shared/youtube-search';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 
@@ -54,7 +54,7 @@ export function createShortsSearch(list: HTMLElement, add: (id: string) => void)
     note(t('searching'));
     let answer: SearchAnswer;
     try {
-      const response = await fetch(`/api/youtube/search?short=1&hl=${lang()}&q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/youtube/search?short=1&hl=${lang()}`, wordsRequest(query));
       answer = response.ok ? parseSearchAnswer(await response.json(), FEED_RESULTS) : { error: 'failed' };
     } catch {
       answer = { error: 'failed' };

@@ -1,3 +1,4 @@
+import { readWords } from './youtube.ts';
 import {
   PODCAST_EPISODES,
   PODCAST_ID,
@@ -58,12 +59,14 @@ async function readFeed(url: string): Promise<string | null> {
 }
 
 export async function podcasts(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
-  if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
+  // Security M6: a search sends its words in a POST body (never in the logged address); a show's episodes are a GET.
+  const search = url.pathname.endsWith('/search');
+  if (request.method !== (search ? 'POST' : 'GET')) return new Response('Method not allowed', { status: 405 });
   const cache = caches.default;
   const allowed = async () => !env.SEARCH_LIMIT || (await env.SEARCH_LIMIT.limit({ key: await ipKey() })).success;
 
-  if (url.pathname.endsWith('/search')) {
-    const query = normalizeQuery(url.searchParams.get('q') ?? '');
+  if (search) {
+    const query = normalizeQuery(await readWords(request));
     if (query === null) return new Response('Missing query', { status: 400 });
     const country = url.searchParams.get('hl') === 'tr' ? 'TR' : 'US';
     const key = cacheKey(url.origin, `pod-search1?c=${country}&q=${encodeURIComponent(query)}`);

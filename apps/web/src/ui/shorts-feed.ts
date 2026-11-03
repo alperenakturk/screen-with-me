@@ -1,5 +1,5 @@
 import type { Media, QueueItem } from '@swm/shared/protocol';
-import { isPoolKind, isPoolRegionChoice, isVideoId, parseChannelParam, parseSearchAnswer, POOL_RESULTS, type PoolKind, type PoolRegionChoice } from '@swm/shared/youtube-search';
+import { isPoolKind, isPoolRegionChoice, isVideoId, parseChannelParam, parseSearchAnswer, POOL_RESULTS, type PoolKind, type PoolRegionChoice, wordsRequest } from '@swm/shared/youtube-search';
 import { lang, t } from '../i18n.ts';
 
 /**
@@ -150,8 +150,9 @@ export function createShortsFeed(opts: FeedOptions) {
             ? `/api/youtube/like?id=${source.id}`
             : source.kind === 'channel'
               ? `/api/youtube/channel?c=${encodeURIComponent(source.c)}`
-              : `/api/youtube/search?short=1&q=${encodeURIComponent(topic)}`;
-      const response = await fetch(`${path}&hl=${lang()}${page}`);
+              : `/api/youtube/search?short=1`;
+      // Security M6: a topic's words go in the body, never in the address.
+      const response = await fetch(`${path}&hl=${lang()}${page}`, source.kind === 'topic' ? wordsRequest(topic) : undefined);
       const answer = response.ok ? parseSearchAnswer(await response.json(), POOL_RESULTS) : ({ error: 'failed' } as const);
       if (!state || state.topic !== topic) return;
       if ('error' in answer) {

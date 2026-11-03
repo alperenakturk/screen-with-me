@@ -326,3 +326,14 @@ export function parseChannelParam(value: unknown): ChannelRef | null {
   if (value.startsWith('@') && HANDLE.test(value.slice(1))) return { handle: value.slice(1) };
   return null;
 }
+
+/** Security M6: the largest body a search may send (the words are cut to a short length anyway). */
+export const WORDS_BODY_MAX = 2048;
+
+/**
+ * Security M6: search words travel in a POST body, never in the address, so the server's request logs never see what
+ * someone searched. Other parameters (language, page) stay in the address.
+ */
+export function wordsRequest(q: string): RequestInit {
+  return { method: 'POST', body: new URLSearchParams({ q }) };
+}
