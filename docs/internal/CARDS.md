@@ -345,6 +345,17 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: harness: enter / leave with the button, T and Esc; nothing but the video and the rail visible; messages
   arrive as toasts; no page scroll at 1366×768 and 1920×1080; owner's hand test.
 - Owner's pick: Claude designs (owner, 2 Nov 2026); the design above is shown to him in the report.
+- Done: 0.9.96.7 (PR below), built from Design's `docs/internal/design/cinema-mode.md`. ⇥ became 🎞 Cinema mode (rail ⋯,
+  **T**, the shortcuts card; Esc leaves when nothing else is open, caught in the capture phase so a window's own Esc
+  goes first). `.room.cinema` (+ `.side-hidden` kept as an alias) and `html.cinema-on`; remembered per tab
+  (`sessionStorage` `cinema:<room>`, `opt:sideHidden` no longer read); computer only (`hasMouse()`, not `html.phone`),
+  not in the shell or the Shorts view. The theater is fixed over the page on a near-black layer
+  (`color-mix(var(--bg) 18 %, #000)` at 94 %, 300 ms fade, none with reduced motion); the video is the largest 16:9 beside
+  the rail (`--cw: min(100vw − 110px, (100dvh − 80px) × 16/9)`: 1366×768 → 1223×688, 1920×1080 → 1778×1000); top bar and
+  footer hidden, the top bar comes back while the mouse is on `#cinema-edge` (8 px at the top) or on it, 400 ms grace;
+  chat comes as a strip of at most two pills under the video (toasts with `top: 100% + 8px`, never on the player) and a
+  count on 💬 (`#dock-chat .cinema-badge`); "everyone ready" / the game invite sit at the strip's left end; a 1.8 s hint
+  the first two times (`cinemaHint`). Test: `scripts/harness/cinema/run.cjs` (25 checks); yt-room updated.
 
 ### 16. Design bug sweep (0.9.94, end of the step)
 - Why: owner, 2 Nov 2026: go through the whole design for mistakes; the owner should not have to find each one.

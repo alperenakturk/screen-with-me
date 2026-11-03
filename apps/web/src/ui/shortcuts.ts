@@ -10,6 +10,7 @@ const ROWS: ReadonlyArray<readonly [keys: string[], what: I18nKey]> = [
   [['M'], 'keys.mic'],
   [['V'], 'keys.ptt'],
   [['Space', '/', 'K'], 'keys.play'],
+  [['T'], 'keys.cinema'],
   [['↑', '/', '↓'], 'keys.shorts'],
   [['Esc'], 'keys.close'],
   [['?'], 'keys.help'],

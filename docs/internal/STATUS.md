@@ -383,6 +383,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.7 (cinema mode, computer):**
+- [ ] In a room with a video press **T** (or rail ⋯ → 🎞 Cinema mode): everything around the video goes dark, the video
+  grows, the top bar hides (move the mouse to the very top to get it back). A friend's message shows under the video
+  with a number on 💬. **T** or **Esc** leaves; a reload in the same tab keeps it.
+
 **0.9.96.6 (card 6g, computer):**
 - [ ] An empty room: the rail on the right is hidden until the mouse reaches the video's right edge, like with a video.
 - [ ] ⋯ More has no "Games" any more (🎮 on the rail opens them); on the phone ⋯ still has Games.
