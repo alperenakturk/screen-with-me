@@ -421,6 +421,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.9 (ask before letting people in, card R12):**
+- [ ] In your room: 🔗 Invite → turn on "Ask before letting people in" (also in ⋯ More → Room rules). A friend opens
+  the link: they see "Waiting for the host to let you in…", you get a card with their name and picture → Let in. Try
+  again with another friend (or a private window) → Refuse: they are out and cannot come back. A friend who was let in
+  and reloads passes straight in.
+
 **0.9.97.7 (two people with the same name, card R11):**
 - [ ] Join your own room from a second browser (or a private window) with the same name and avatar: the room says
   "2 people", two faces in Together; your two tabs in the same browser still count once.

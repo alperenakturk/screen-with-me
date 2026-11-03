@@ -68,7 +68,7 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 ### Host & safety
 | | |
 |---|---|
-| 👑 **Room host** | The first person in is the host and sets the rules in ⚙️ Settings: host-only playback, locked queue, emoji limits, host-only streams, ready check. If the host is gone for more than 20 s, hosting passes to whoever has been in the room longest. The host can hand the role to someone else (👑 in People), remove and ban people. |
+| 👑 **Room host** | The first person in is the host and sets the rules in ⚙️ Settings: host-only playback, locked queue, emoji limits, host-only streams, ready check. If the host is gone for more than 20 s, hosting passes to whoever has been in the room longest. The host can hand the role to someone else (👑 in People), remove and ban people, and turn on "Ask before letting people in": someone new waits at the door until the host lets them in or refuses. |
 | 🔐 **Private by design** | Video plays in each person's own browser; the server only relays small "pause at 12:34" messages and the room's chat. The extension is dormant outside a room, and the film page can't read which room you are in. User text is never written as HTML; rate limits (also per IP), an origin check, a strict Content-Security-Policy and a frame guard protect the site. |
 
 ## 🧠 How it works

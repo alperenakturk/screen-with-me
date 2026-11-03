@@ -148,6 +148,13 @@ Planner to merge them once main is green.
   (with a note), never let in by default. Server-side check (nothing joins before the host's yes); limits so a flood of
   knocks cannot spam the host.
 - Tests: e2e (knock → let in / refuse / host away), harness for the cards, owner's hand test with a friend.
+- Done (0.9.97.9): `settings.knock` (host; Room rules `#opt-knock` and the invite window's `#invite-door`). The server
+  decides in `join()` before anyone gets a name or a seat (`mustKnock`): a browser id not in `admitted` (24 h after it
+  was last in, ≤ 500, storage) waits as a knocker (no `welcome`, no member); turning the switch on admits everyone
+  present. The host's tabs get `{t:'knocks', list}` (name + avatar, cleaned) and answer `{t:'knock-answer', id,
+  allow}`: yes → admitted + joined, no → banned like a kick (4003). Knockers get `{t:'knock-wait', hostHere}`; nobody
+  is let in without the host; ≤ 8 at the door and ≤ 2 per IP hash (`knock_busy`, 4010), each waits ≤ 10 min (4011).
+  Tests: e2e `knock.mjs` (12), harness `scripts/harness/knock/run.cjs` (6).
 
 ### R13. Private messages in the chat (owner's idea; lane A, after R12)
 - Why: owner: sometimes you want to tell one friend something without the whole room.

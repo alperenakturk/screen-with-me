@@ -12398,6 +12398,42 @@ html.in-room .room-title-dot {
   height: 13px;
 }
 
+/* R12 "Ask before letting people in": the host's cards, top right under the top bar; one per person at the door. */
+.knock-cards {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+.knock-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.knock-avatar {
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+.knock-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.knock-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.knock-wait .card {
+  max-width: 440px;
+}
+
 /* A rail woken by a Tab press appears at once (ui/fullscreen.ts `tab-wake`): mid-fade it is still hidden and the
    very press that woke it would skip it. */
 .theater.tab-wake .fs-dock {
