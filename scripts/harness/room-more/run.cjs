@@ -8,6 +8,7 @@ const { chromium, devices } = require('playwright');
 const SITE = process.argv[2] || 'http://localhost:8787';
 const VIDEO = process.argv[3] || 'http://localhost:5300/video.webm';
 let fails = 0;
+let privacyChecked = false;
 const check = (ok, label, extra = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${extra ? ' → ' + extra : ''}`);
   if (!ok) fails++;
@@ -36,6 +37,11 @@ const shown = (page, selector) =>
     await page.goto(`${SITE}/r/${at}`);
     await page.waitForSelector('#join-avatar img');
     if (!joinAvatars.length) joinAvatars.push(await page.evaluate(() => document.querySelector('#join-avatar img')?.getAttribute('src') ?? ''));
+    if (!privacyChecked) {
+      privacyChecked = true;
+      const href = await page.evaluate(() => document.querySelector('#join-privacy')?.getAttribute('href'));
+      check(href === '/privacy.html?lang=en' && (await page.isVisible('#join-privacy')), 'the join card links the privacy policy in the page language (L9)', String(href));
+    }
     await page.fill('#name', name);
     await page.click('#name-form button.primary');
     await page.waitForSelector('.room');
@@ -97,7 +103,7 @@ const shown = (page, selector) =>
     return page.evaluate(() => [...document.querySelectorAll('.room-more-pop:not([hidden]) .room-more-item')].map((b) => b.textContent.trim()));
   };
   const list = await items();
-  check(JSON.stringify(list) === JSON.stringify(['⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules', '💌Send feedback', '❔Help and FAQ']), '⋯ More lists film time, save, recap, shortcuts, sync test, rules, feedback (card 9), help (card 7); no Games on a computer (card 6g.2: the rail\'s 🎮)', JSON.stringify(list));
+  check(JSON.stringify(list) === JSON.stringify(['⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules', '💌Send feedback', '❔Help and FAQ', '🔒Privacy']), '⋯ More lists film time, save, recap, shortcuts, sync test, rules, feedback (card 9), help (card 7), privacy (L9); no Games on a computer (card 6g.2: the rail\'s 🎮)', JSON.stringify(list));
   const pop = await page.evaluate(() => { const r = document.querySelector('.room-more-pop').getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth; });
   check(pop, '1024×640: the menu fits the screen');
   const pick = async (label) => {

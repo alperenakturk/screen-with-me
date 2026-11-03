@@ -96,6 +96,8 @@ const sheetName = (page) => page.evaluate(() => {
     await page.click('#strip-more');
     const moreTiles = (await page.$$('.ph-sheet .ph-tile')).length;
     check((await sheetName(page)) === 'more' && moreTiles >= 11, 'phone: ⋯ opens the More sheet', String(moreTiles));
+    const tileText = await page.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile')].map((b) => b.textContent ?? '').join('|'));
+    check(/Gizlilik|Privacy/.test(tileText), 'phone: ⋯ links the privacy policy (L9; the footer is hidden on phones)', tileText);
     await page.click('.ph-sheet .ph-tile >> nth=2');
     check((await sheetName(page)) === 'people' && (await page.isVisible('.ph-sheet #members')), 'phone: More → People shows the people list');
     // The phone's back button closes a sheet.

@@ -767,6 +767,10 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Done when: the join card and the settings / ⋯ menu link to `privacy.html` in the page's language.
 - Tests: phone harness check for the link.
 - Owner's pick: none needed.
+- Done (0.9.97.2): "🔒 Privacy" (`data-privacy-link`, `/privacy.html?lang=<page language>`) under the join card's
+  button (`#join-privacy`), in the profile menu next to Help (`#profile-privacy`) and last in ⋯ More (computer and
+  phone, `room-more.ts`, presses `#profile-privacy`, an anchor, so the film page's overlay lets it open). Tests:
+  harness `room-more` (join link + ⋯ list + phone order), `phone` (⋯ has the privacy tile).
 
 ### Repo: dependency and workflow hygiene (L10)
 - Severity: low
