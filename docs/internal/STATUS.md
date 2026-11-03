@@ -358,8 +358,15 @@ From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's o
   floats on the page in the Shorts view (it ran off the right edge) (#2); the room no longer scrolls by 1 px (#10); on the
   film page in fullscreen our notes and messages start below the film's own top bar (#12); a calmer stream frame.
 - Already fixed by card 6g: #1 (cameras squeezing the chat: they start in their own window now).
-- Open: #9 XOX board on a phone could use more of the height; #11 the film page's hole could grow to the room's free
-  height (needs the embed harness under xvfb); Snack Bar's smallest text in a free window (#6, lane B's game).
+- Open after sweep 2: Snack Bar's smallest text in a free window (#6, lane B's GP card).
+**Part 3 (0.9.96.11):** #9 the XOX / Connect Four page sits in the middle of a phone's height (the board already used
+the full width; the empty band under it is gone); #11 the film page's room view grows like the site's "bigger room"
+(no 1280 px cap, the side panel grows with the screen, the video card up to the hole's height cap); a sideways phone
+in an empty room keeps the faces and the chat on the right (Design's sweep-1 idea, Planner approved); and a regression
+from 0.9.96.9 that the embed harness under xvfb caught: the black loading background on `.player` also painted the
+film page's hole, so a flying emoji or a fullscreen message over the film was a black box (fixed: not in
+`shell-film`; embed 111/111). Found on the way: a video link that fails to load shows its error card and the room
+then scrolls by 7–34 px on a computer (minor, proposed for the next sweep).
 **Sweep harness:** `scripts/harness/sweep/run.cjs` (home, join, empty room, room with a video, settings, invite,
 `/baglanti`, help, privacy, thanks × 1920×1080 / 1366×768 / 1024×640 / 390×844 / 844×390 × EN + Gece / TR + Sinema (phones
 Okyanus): 100 screenshots, checks for sideways scroll, nothing past the right edge, console errors, and no page scroll
@@ -413,6 +420,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.96.11 (card 16 part 3):**
+- [ ] Film page (extension): send an emoji and a chat message in fullscreen: both float over the film, no black box.
+- [ ] Phone: open XOX in a room: the board sits in the middle of the screen. Hold the phone sideways in an empty room:
+  faces and chat on the right.
 
 **0.9.96.10 (tablets, card T):**
 - [ ] On a tablet held upright, open a room with a video: the video on top with its buttons beside it, the chat on the

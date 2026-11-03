@@ -1442,11 +1442,18 @@ html.phone #shorts-feed-form .feed-topic-row .btn {
   display: none;
 }
 
-html.sideways.ph-room .room :is(.together-strip, .ph-cams, [data-panel='chat'], #chat-form, .pin-strip):not(.ph-fs-side *) {
+html.sideways.ph-room .room.has-item :is(.together-strip, .ph-cams, [data-panel='chat'], #chat-form, .pin-strip):not(.ph-fs-side *) {
   display: none !important;
 }
 
-html.sideways.ph-room .room .ph-turn {
+/* Card 16 part 3 (Design's sweep-1 idea, Planner approved): before the first video there is nothing to watch
+   fullscreen, so a sideways phone keeps the faces and the chat on the right (the layout above) instead of "hold the
+   phone upright". */
+html.sideways.ph-room .room:not(.has-item) {
+  grid-template-columns: minmax(0, 1fr) min(46%, 380px);
+}
+
+html.sideways.ph-room .room.has-item .ph-turn {
   grid-column: 2;
   grid-row: 1 / -1;
   display: flex;
@@ -1458,7 +1465,7 @@ html.sideways.ph-room .room .ph-turn {
   text-align: center;
 }
 
-html.sideways.ph-room .room .ph-turn-fs {
+html.sideways.ph-room .room.has-item .ph-turn-fs {
   min-height: 64px;
   padding: 0 22px;
   border-radius: 18px;
@@ -1535,4 +1542,11 @@ html.phone .game-menu.gallery {
 /* Sweep-1 #5: "Fullscreen when turned sideways" does nothing on a phone since 0.9.92.8 (tablets only). */
 html.phone .rotate-row {
   display: none;
+}
+
+/* Sweep-2 #9: on a phone the XOX / Connect Four board already takes the full width; the page stood at the top and left
+   an empty band under it. The players, status, board and actions sit in the middle of the height instead. */
+html.ph-game .game-stage .xox-page:not(.draw-page) {
+  height: 100%;
+  align-content: center;
 }

@@ -365,6 +365,24 @@ const sheetName = (page) => page.evaluate(() => {
     await ctx.close();
   }
 
+  // 2a) Sideways before the first video (card 16 part 3): nothing to watch fullscreen yet, so the faces and the chat stay
+  // on the right instead of "hold the phone upright".
+  {
+    const ctx = await browser.newContext({ ...devices['iPhone 13 landscape'] });
+    const page = await ctx.newPage();
+    await enter(page, `phs${Math.random().toString(36).slice(2, 7)}`);
+    const r = await page.evaluate(() => {
+      const shown = (s) => {
+        const e = document.querySelector(s);
+        return !!e && e.getBoundingClientRect().width > 0 && getComputedStyle(e).display !== 'none';
+      };
+      const input = document.querySelector('#chat-input')?.getBoundingClientRect();
+      return { strip: shown('.together-strip'), chat: shown('[data-panel="chat"]'), turn: shown('.ph-turn'), inputOn: !!input && input.bottom <= innerHeight && input.width > 120, sh: document.documentElement.scrollHeight, vh: innerHeight };
+    });
+    check(r.strip && r.chat && r.inputOn && !r.turn && r.sh <= r.vh + 1, 'phone sideways, empty room: faces + chat on the right, no "hold upright", no scroll', JSON.stringify(r));
+    await ctx.close();
+  }
+
   // 2b) Themes on a phone (0.9.91.5): only the plain ones are offered; a scene theme chosen on a computer shows as
   // Gece here (and stays saved).
   {

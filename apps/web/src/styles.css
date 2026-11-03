@@ -12976,13 +12976,32 @@ html.in-room .footer > span:first-child {
   color: var(--text);
 }
 
-/* Sweep-2 #3: a player that is still loading (or cannot load) is dark, never a white slab in the dark room. */
-.player,
-.player iframe {
+/* Sweep-2 #3: a player that is still loading (or cannot load) is dark, never a white slab in the dark room. Not on
+   the film page: there `#player` is the hole the film shows through (0.9.96.9 painted it black, and every island over
+   the film, such as a flying emoji or a message in fullscreen, became a black box; the embed harness caught it). */
+html:not(.shell-film) :is(.player, .player iframe) {
   background: #000;
 }
 
 /* Sweep-2 #12: on the film page in fullscreen our notes start below a typical player's own top bar. */
 html.shell .theater:is(:fullscreen, .fake-fs) .action-notice {
   top: 64px;
+}
+
+/* Sweep-2 #11: the film page's room view grows like the site's "bigger room" (0.9.92.7): no 1280 px cap, the side
+   panel grows with the screen and the video's card is as wide as the hole's height cap (100vh − 250 px) allows for a
+   16:9 film plus the rail (58 px) and the card's padding. */
+@media (min-width: 861px) {
+  html.shell-film.in-room:not(:has(.theater.fake-fs)) main {
+    max-width: none;
+    padding: 12px clamp(12px, 1.6vw, 28px);
+  }
+
+  html.shell-film.in-room:not(:has(.theater.fake-fs)) .room:not(.side-hidden) {
+    --side-w: clamp(300px, 21vw, 400px);
+    --stage-w: calc((100vh - 250px) * 16 / 9 + 86px);
+    grid-template-columns: minmax(0, max(var(--stage-w), 560px)) var(--side-w);
+    justify-content: center;
+    gap: 16px;
+  }
 }
