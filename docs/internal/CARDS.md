@@ -215,6 +215,20 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   room, settings, help; every control reachable and visible with the keyboard; reduced motion respected everywhere.
 - Tests: the axe harness in CI; a keyboard-tour harness.
 - Owner's pick: none needed.
+- Done: 0.9.96.13 (PR below), from Design's `a11y-1.md`. Keyboard: a "Skip to the content / the video" link first
+  (K1); a Tab press wakes the resting rail so its buttons come right after the video (K2, `fullscreen.ts`); the ⋯ More
+  menu follows the menu-button pattern (`ui/menu-keys.ts`: first item focused, ↑ ↓ Home End, Esc back to ⋯) (K3);
+  every `.dialog-backdrop` dialog keeps Tab inside and gives the focus back to its button (`ui/dialog-focus.ts`) (K4);
+  a focus ring on the video (K5); the first tips are named and their "Next" takes the focus unless you are typing
+  (K6). Names / roles: the games hall is a named dialog of buttons (S1), the XOX board a "Game board" group whose cells
+  say "Row 1, column 2, empty" (S2), the chat list a real list with a polite live region (S4), the room name is the
+  page's `h1` (S6). Contrast: the primary button's hover gets darker (4.3:1 → over 4.5:1; Neon, with dark text,
+  lighter). Targets: the connection dot 24 px, "Show activity" 28 px. Kept on purpose: the mic / camera buttons name
+  the action ("Mute" / "Unmute"), so no `aria-pressed` (S8), and red = off stays the owner's pick. Also the
+  Planner-approved fix: a "can't be played" note sits above the message box on a computer and no longer makes the room
+  scroll (a new `room-error` screen in the sweep). Harness `scripts/harness/a11y/run.cjs` (axe on home, help, join,
+  room, settings, invite, games hall, tic-tac-toe, first tips, computer + phone; keyboard tour) runs in CI (axe-core
+  and Playwright installed for that step only).
 
 ### P1. Vimeo player without the extension (lane B)
 - Why: owner's idea (2 Nov 2026), Research's #1 (`research/more-players.md`): full control via player.js.

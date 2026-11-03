@@ -52,6 +52,14 @@ jobs:
       - name: End-to-end tests
         run: npm run e2e
 
+      # Card A11y: axe-core (WCAG 2.1 A + AA) on home, help, join, room, settings, invite, games hall, tic-tac-toe and
+      # the first tips, plus a keyboard tour. axe-core and Playwright are installed for this step only (not site deps).
+      - name: Accessibility (axe + keyboard tour)
+        run: |
+          npm i --no-save --no-audit --no-fund axe-core@4.10.2 playwright@1.63.0
+          npx playwright install --with-deps chromium
+          node scripts/harness/a11y/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: cat wrangler.log || true

@@ -421,6 +421,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.13 (accessibility, card A11y):**
+- [ ] On a computer, without the mouse: Tab from the top of a room (first "Skip to the video"), reach the buttons beside
+  the video, open ⚙️ and 🔗 Invite (Tab stays inside, Esc comes back to the button), ⋯ More with the arrow keys.
+- [ ] Optional: with a screen reader (NVDA on Windows or VoiceOver on a Mac / iPhone) the room name, the buttons and the
+  XOX squares are read out with sensible names.
+
 **0.9.96.12 (the new home page, card 15b):**
 - [ ] Open the home page on the computer, a tablet (both ways) and the phone: Glowbeam shines on the screen, the slogan,
   two buttons and three small cards all fit without scrolling; "How it works" is below. Create a saved room; join one

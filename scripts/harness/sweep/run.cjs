@@ -61,6 +61,21 @@ const SCREENS = [
     true,
   ],
   [
+    // A link that can't be played: its note must not make the room scroll (card A11y / sweep, 0.9.96.13).
+    'room-error',
+    () => `/r/${room()}`,
+    async (p) => {
+      await join(p);
+      await p.evaluate((v) => {
+        const i = document.querySelector('#media-input');
+        i.value = v.replace(/[^/]+$/, 'missing-video.webm');
+        i.form.requestSubmit();
+      }, VIDEO);
+      await p.waitForTimeout(3000);
+    },
+    true,
+  ],
+  [
     'settings',
     () => `/r/${room()}`,
     async (p) => {

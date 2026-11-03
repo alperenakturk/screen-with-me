@@ -73,10 +73,11 @@ export function showFirstTips(): void {
     const next = el('button', { type: 'button', class: 'btn primary small-btn' }, t(last ? 'tips.done' : 'tips.next'));
     const close = el('button', { type: 'button', class: 'icon-btn first-tip-close', 'aria-label': t('close') }, '✕');
     bubble?.remove();
+    // Card A11y (K6): the tip is named by its text, and its "Next" takes the focus unless the person is typing.
     bubble = el(
       'div',
-      { class: 'first-tip', role: 'dialog', 'aria-live': 'polite' },
-      el('p', {}, t(tip.text)),
+      { class: 'first-tip', role: 'dialog', 'aria-live': 'polite', 'aria-labelledby': 'first-tip-text' },
+      el('p', { id: 'first-tip-text' }, t(tip.text)),
       el('div', { class: 'first-tip-row' }, el('span', { class: 'muted small' }, `${step + 1}/${tips.length}`), next),
       close,
     );
@@ -87,6 +88,7 @@ export function showFirstTips(): void {
     });
     close.addEventListener('click', finish);
     place();
+    if (!document.activeElement?.matches('input, textarea, [contenteditable]')) next.focus({ preventScroll: true });
   }
 
   addEventListener('resize', place);

@@ -28,7 +28,7 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
       </section>
       <p id="xox-status" class="xox-status" role="status" aria-live="polite"></p>
       <div class="xox-board-wrap">
-        <div id="xox-board" class="${four ? 'xox-board four-board' : 'xox-board'}" role="grid"></div>
+        <div id="xox-board" class="${four ? 'xox-board four-board' : 'xox-board'}" role="group" aria-label="${t('games.board')}"></div>
         <div id="xox-floats" class="xox-floats" aria-hidden="true"></div>
       </div>
       <div class="xox-actions">
@@ -47,9 +47,10 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
   // XOX: 9 hücre, tıklanan hücreye. Dört Taş: 42 hücre; bir hücreye tıklamak o sütuna taş atar (taş en alta düşer),
   // fare hangi sütundaysa o sütun belirginleşir.
   const colOf = (i: number) => i % COLS;
-  const cellLabel = (i: number) => (four ? t('games.column', { n: colOf(i) + 1 }) : t('games.cell', { n: i + 1 }));
+  // Card A11y (S2): a cell says where it is ("Row 1, column 2"), and what is in it (filled in on each state).
+  const cellLabel = (i: number) => (four ? t('games.column', { n: colOf(i) + 1 }) : t('games.cell', { r: Math.floor(i / 3) + 1, c: (i % 3) + 1 }));
   const cells = Array.from({ length: four ? 42 : 9 }, (_, i) => {
-    const cell = el('button', { type: 'button', class: four ? 'xox-cell four-cell' : 'xox-cell', role: 'gridcell', 'aria-label': cellLabel(i) });
+    const cell = el('button', { type: 'button', class: four ? 'xox-cell four-cell' : 'xox-cell', 'aria-label': cellLabel(i) });
     cell.addEventListener('click', () => send({ t: 'move', cell: four ? colOf(i) : i }));
     if (four) {
       cell.addEventListener('pointerenter', () => hoverCol(colOf(i)));
@@ -118,7 +119,7 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
       const cell = cells[i]!;
       const isNew = changed && value !== null && i === xox.last;
       // XOX marks are drawn by CSS (two strokes / a ring); the label says what is there.
-      if (!four) cell.setAttribute('aria-label', value ? `${cellLabel(i)}: ${value}` : cellLabel(i));
+      if (!four) cell.setAttribute('aria-label', `${cellLabel(i)}, ${value || t('games.cellEmpty')}`);
       cell.className = `xox-cell${four ? ' four-cell' : ''}${value ? ` mark-${value}` : ''}${xox.line?.includes(i) ? ' win' : ''}${isNew ? ' placed' : ''}`;
       // Dört Taş: taş sütunun tepesinden düşer (kaç satır düşeceği).
       if (four && isNew) cell.style.setProperty('--drop', String(Math.floor(i / COLS) + 1));

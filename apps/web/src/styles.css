@@ -624,6 +624,12 @@ main {
 }
 
 .btn.primary:hover {
+  /* Card A11y: darker on hover, so white text stays ≥ 4.5:1 (lighter was 4.3:1 on Gece). */
+  background: color-mix(in srgb, var(--accent-btn, var(--accent)) 86%, #000);
+}
+
+/* Neon's buttons carry dark text: there the hover gets lighter. */
+:root[data-theme='neon'] .btn.primary:hover {
   background: color-mix(in srgb, var(--accent-btn, var(--accent)) 88%, #fff);
 }
 
@@ -7221,6 +7227,9 @@ html.shorts-view .footer {
 }
 
 .room-title-name {
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -12292,4 +12301,56 @@ html.shell .theater:is(:fullscreen, .fake-fs) .action-notice {
     justify-content: center;
     gap: 16px;
   }
+}
+
+/* ==== Accessibility (card A11y; Design's findings docs/internal/design/a11y-1.md) ==== */
+/* K1: "Skip to the content / video", the first Tab stop, visible only while focused. */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+  outline: 3px solid var(--accent-hover);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+main:focus,
+#theater:focus {
+  outline: none;
+}
+
+/* K5: the video's first stop shows a ring. */
+.player video:focus-visible {
+  outline: 3px solid var(--accent-hover);
+  outline-offset: -3px;
+}
+
+/* T2 / T3 (WCAG 2.5.8, 24 × 24 px targets): the connection dot and "Show activity". (The footer's links sit in a line
+   of text, which the rule exempts; padding them made the room 7 px taller than the window.) */
+html.in-room .room-title-dot {
+  width: 24px;
+  height: 24px;
+}
+
+.chat-events {
+  min-height: 28px;
 }
