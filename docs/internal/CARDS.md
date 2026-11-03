@@ -78,11 +78,20 @@ Planner to merge them once main is green.
   or the friend's window size changed).
 - Tests: `yt-room` harness: fullscreen with nothing, after a message (8 s), after cameras off; screenshot check of the
   right edge.
+- Done: 0.9.97.12 (PR below). Cause: the column opened for the camera box whenever it was on screen, also when the
+  person had dragged the cameras onto the player (a place they chose: the cameras stayed there and the column beside
+  stayed open and empty, a black strip) and when the box held only cameras hidden "for me". Now only camera tiles that
+  show count, and once the column had time to place them (700 ms) cameras sitting outside it don't hold it open (until
+  the cameras or their places change); the camera box's tiles are watched too. Harness
+  `scripts/harness/yt-fs-side/run.cjs` (6 checks; the dragged-camera one fails on 0.9.97.9).
 
 ### R4. Fix: T (cinema mode) works in fullscreen too (owner; lane B)
 - Why: owner: in fullscreen T switches cinema mode on behind the fullscreen, so nothing visible happens.
 - Done when: T in fullscreen leaves fullscreen and opens cinema mode; T / Esc in cinema mode leave it as before.
 - Tests: cinema harness.
+- Done: 0.9.97.12 (PR below). The T key (and the rail's ⋯ → Cinema mode) did nothing visible in fullscreen: the key
+  handler skipped fullscreen, the menu turned cinema on behind it. Now turning cinema on from fullscreen leaves
+  fullscreen first, and T in fullscreen always means "cinema mode". Cinema harness: a new check (fails on 0.9.97.11).
 
 ### R5. Film page: the rail's edge a little wider (owner; lane B)
 - Why: owner: on the film page out of fullscreen the mouse has to go very far right to open the rail.
