@@ -1,0 +1,87 @@
+/* 🌱 Window Garden (games/garden.ts): the Design session's "window sill" (docs/internal/design/side-games/README.md).
+   Loaded with the game's chunk only; fits its box without scrolling (the game window scales the rest). */
+.wg {
+  --wg-night: #14102b;
+  --wg-panel: #1d1740;
+  --wg-cream: #fff3d6;
+  --wg-gold: #ffc65a;
+  --wg-ink: #1a1036;
+  --wg-muted: #a79fc4;
+  --wg-leaf: #4fbf8f;
+  position: relative;
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 11px 10px;
+  background: linear-gradient(180deg, var(--wg-panel), var(--wg-night));
+  color: var(--wg-cream);
+  font: 13px/1.25 system-ui, sans-serif;
+  border-radius: 12px;
+  overflow: hidden;
+  user-select: none;
+}
+.wg button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+.wg button:disabled { cursor: default; }
+
+.wg-bar { display: flex; align-items: center; gap: 6px; min-height: 24px; }
+.wg-gap { flex: 1; }
+.wg-pill { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--wg-muted); }
+.wg-state.on { background: var(--wg-leaf); color: #0d2a20; }
+.wg-seeds { font-size: 12px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; }
+
+.wg-scene { position: relative; flex: 1 1 auto; min-height: 120px; border-radius: 10px; overflow: hidden; background: #120e27; }
+.wg-scene-art, .wg-scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.wg-idle .wg-scene-art { filter: saturate(0.6) brightness(0.8); }
+/* A pot stands on the sill: the sill's top is 168 of 226 in the scene (bottom-aligned slice), the soil line 154. */
+.wg-pot {
+  position: absolute; bottom: calc(100% * (226 - 154 - 18) / 226); transform: translateX(-50%);
+  width: 23%; aspect-ratio: 48 / 70; padding: 0; border: 0; border-radius: 12px; background: transparent;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.wg-pot.on { background: rgba(255, 198, 90, 0.12); box-shadow: inset 0 0 0 1.5px rgba(255, 198, 90, 0.6); }
+.wg-pot:not(.on):hover:not(:disabled) { background: rgba(255, 255, 255, 0.05); }
+.wg-plant, .wg-plant svg { display: block; width: 100%; height: 100%; }
+.wg-plant { transform-origin: 50% 100%; }
+.wg-plant.stage-2 svg { transform: scale(0.72); transform-origin: 50% 74%; }
+.wg-plant.stage-3 svg { transform: scale(0.86); transform-origin: 50% 74%; }
+.wg-empty-pot { height: 43%; opacity: 0.85; }
+.wg-pot.bloom .wg-plant { filter: drop-shadow(0 0 6px rgba(255, 198, 90, 0.55)); animation: wg-sway 3.2s ease-in-out infinite; }
+@keyframes wg-sway { 50% { transform: rotate(2deg); } }
+.wg-drop, .wg-spark { position: absolute; top: 2px; right: 6px; font-size: 14px; pointer-events: none; }
+.wg-spark { color: var(--wg-gold); font-weight: 800; }
+
+.wg-action {
+  display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 5px 6px 5px 9px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.wg-action-words { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wg-action-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wg-action-text { font-size: 11px; color: var(--wg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wg-action-buttons { display: flex; gap: 5px; flex-wrap: nowrap; }
+.wg-btn {
+  min-height: 30px; padding: 4px 10px; border-radius: 8px; border: 1.5px solid rgba(255, 198, 90, 0.5);
+  background: transparent; color: var(--wg-gold); font-weight: 700; font-size: 12px; white-space: nowrap;
+}
+.wg-btn.main { border-color: var(--wg-gold); background: var(--wg-gold); color: var(--wg-ink); }
+.wg-btn:disabled { opacity: 0.45; }
+
+.wg-album { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.wg-album-cell { aspect-ratio: 34 / 44; border-radius: 7px; background: rgba(255, 255, 255, 0.04); display: block; }
+.wg-album-art, .wg-album-art svg { display: block; width: 100%; height: 100%; }
+.wg-album-cell:not(.found) .wg-album-art { opacity: 0.35; filter: grayscale(1) brightness(0.6); }
+
+.wg-note {
+  position: absolute; left: 12px; right: 12px; top: 38px; margin: 0; padding: 8px 10px; border-radius: 10px;
+  background: var(--wg-gold); color: var(--wg-ink); font-weight: 700; text-align: center; box-shadow: 0 6px 18px #0008;
+}
+.wg-note[hidden] { display: none; }
+.wg-elsewhere {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 16px; text-align: center; background: rgba(20, 16, 43, 0.92);
+}
+.wg-elsewhere[hidden] { display: none; }
+.wg-elsewhere p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .wg-pot.bloom .wg-plant { animation: none; } }
+html.phone .wg-scene { min-height: 260px; }

@@ -11,9 +11,8 @@
 // for me only.
 
 import { createLogo } from '@swm/shared/logo';
-import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, SOLO_KINDS, isSoloKind, unseenNews, type SoloKind } from '@swm/shared/games/catalog';
-import type { SnackContext } from '@swm/shared/games/snack-bar';
-import { MAX_TABLES, ROOM_GAME_KINDS, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
+import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
+import { type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { isPhoneLayout, onPhoneLayout } from '../device.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
@@ -25,7 +24,7 @@ import { icon, type IconName } from '../ui/icons.ts';
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
 /** Solo games have an emoji until the games gallery (card GG) gives every game its cover. */
-const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿' };
+const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿', garden: '🌱', word: '🎟️' };
 const soloIcon = (kind: SoloKind): HTMLElement => el('span', { class: 'hub-glyph', 'aria-hidden': 'true' }, SOLO_GLYPH[kind]);
 
 /** A game the window can show: a room game (a table) or a solo game played on the side. */
@@ -70,7 +69,7 @@ const MAX_ZOOM = 1.6;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
-const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit, .sb, .sb-rows';
+const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit, .sb, .sb-rows, .wg, .ff';
 const readPair = (key: string): { x: number; y: number } | null => {
   try {
     const saved = JSON.parse(load(key) || 'null') as { x?: unknown; y?: unknown } | null;
@@ -100,7 +99,7 @@ interface StageOptions {
   /** A short bubble by 🎮. */
   hint: (text: string) => void;
   /** What a solo game needs from the room: is the video playing, how many others are here / in voice with me. */
-  room: () => SnackContext;
+  room: () => SoloRoom;
 }
 
 export function createGameStage(opts: StageOptions) {
@@ -426,117 +425,77 @@ export function createGameStage(opts: StageOptions) {
     if (!menu.hidden) drawHub();
   }
 
-  // ---- The hub ----
+  // ---- The hub: the games gallery (card GG, owner's pick B "two tabs"), drawn by its own chunk ----
+  const TAB_KEY = 'opt:hubTab';
+  let gallery: typeof import('./gallery.ts') | null = null;
+  let galleryLoading = false;
   function drawHub(): void {
-    const news = unseenNews(load(SEEN_KEY));
-    const parts: HTMLElement[] = [
-      el('div', { class: 'hub-head' }, icon('gamepad'), el('b', {}, t('hub.title')), el('span', { class: 'hub-count' }, t('hub.count', { n: tables.length, max: MAX_TABLES }))),
-    ];
-    if (news.length) {
-      parts.push(
-        el(
-          'div',
-          { class: 'hub-news', role: 'note' },
-          el('b', {}, `✨ ${t('hub.news')}`),
-          el('ul', {}, ...news.map((n) => el('li', {}, lang() === 'en' ? n.en : n.tr))),
-        ),
-      );
+    if (!gallery) {
+      if (!menu.childElementCount) menu.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
+      if (!galleryLoading) {
+        galleryLoading = true;
+        void import('./gallery.ts').then((m) => {
+          gallery = m;
+          if (!menu.hidden) drawHub();
+        });
+      }
+      return;
     }
-    if (tables.length) {
-      parts.push(
-        el('p', { class: 'hub-label' }, t('hub.tables')),
-        el(
-          'ul',
-          { class: 'hub-tables' },
-          ...tables.map((table) => {
-            const people = peopleAt(table.id);
-            const mine = current?.id === table.id;
-            const go = el('button', { type: 'button', class: `btn small-btn ${mine ? '' : 'primary'}` }, t(mine ? 'hub.show' : 'hub.join'));
-            go.addEventListener('click', () => {
-              setHub(false);
-              void open(table);
-            });
-            const row = el(
-              'li',
-              { class: `hub-table${mine ? ' mine' : ''}` },
-              el('span', { class: 'hub-icon' }, gameIcon(table.kind)),
-              el(
-                'span',
-                { class: 'hub-table-text' },
-                el('b', {}, titleOf(table.kind)),
-                el('small', {}, people.length ? people.map((p) => p.name).join(', ') : t('hub.empty', { name: table.by.name })),
-              ),
-              el('span', { class: 'hub-faces', 'aria-hidden': 'true' }, ...people.slice(0, 4).map((p) => avatarNode(p.avatar, 'hub-face'))),
-              go,
-            );
-            if (canClose(table)) {
-              const close = el('button', { type: 'button', class: 'hub-close', title: t('hub.close'), 'aria-label': t('hub.close') }, '✕');
-              close.addEventListener('click', () => send({ t: 'table', close: table.id }));
-              row.append(close);
-            }
-            return row;
-          }),
-        ),
-      );
-    }
-    // Solo games on the side: always open, no table (the games gallery, card GG, gives them their own tab).
-    parts.push(
-      el('p', { class: 'hub-label' }, t('hub.side')),
-      el(
-        'div',
-        { class: 'hub-games hub-solo' },
-        ...SOLO_KINDS.map((kind) => {
-          const item = el(
-            'button',
-            { type: 'button', role: 'menuitem', class: `hub-game${solo === kind ? ' mine' : ''}`, 'data-solo': kind },
-            el('span', { class: 'hub-icon' }, soloIcon(kind)),
-            el('span', { class: 'hub-game-text' }, el('b', {}, t(`games.${kind}.title`)), el('small', {}, t('hub.solo'))),
-          );
-          item.title = t(`games.${kind}.text`);
-          item.addEventListener('click', () => {
-            setHub(false);
-            void openSolo(kind);
-          });
-          return item;
-        }),
-      ),
+    menu.replaceChildren(
+      ...gallery.renderGallery({
+        tab: load(TAB_KEY) === 'side' ? 'side' : 'together',
+        setTab: (id) => {
+          save(TAB_KEY, id);
+          drawHub();
+        },
+        news: unseenNews(load(SEEN_KEY)),
+        tables,
+        currentId: current?.id ?? null,
+        solo,
+        peopleAt,
+        canClose,
+        titleOf,
+        soloIcon,
+        gameIcon,
+        avatarNode,
+        redraw: () => {
+          if (!menu.hidden) drawHub();
+        },
+        join: (table) => {
+          setHub(false);
+          void open(table);
+        },
+        close: (id) => send({ t: 'table', close: id }),
+        openTable: (kind) => {
+          wanted = kind;
+          send({ t: 'table', open: kind });
+          setHub(false);
+        },
+        openSolo: (kind) => {
+          setHub(false);
+          void openSolo(kind);
+        },
+      }),
     );
-    const full = tables.length >= MAX_TABLES;
-    parts.push(
-      el('p', { class: 'hub-label' }, full ? t('hub.full') : t('hub.new')),
-      el(
-        'div',
-        { class: 'hub-games' },
-        ...ROOM_GAME_KINDS.map((kind) => {
-          const info = GAME_CATALOG[kind];
-          const badge = news.find((n) => n.kinds.includes(kind));
-          const item = el(
-            'button',
-            { type: 'button', role: 'menuitem', class: 'hub-game' },
-            el('span', { class: 'hub-icon' }, gameIcon(kind)),
-            el(
-              'span',
-              { class: 'hub-game-text' },
-              el('b', {}, titleOf(kind), badge ? el('span', { class: `hub-badge ${badge.badge}` }, t(`hub.badge.${badge.badge}`)) : null),
-              el('small', {}, t('hub.players', { min: info.min, max: info.max })),
-            ),
-          );
-          item.title = t(`games.${kind}.text`);
-          item.disabled = full;
-          item.addEventListener('click', () => {
-            wanted = kind;
-            send({ t: 'table', open: kind });
-            setHub(false);
-          });
-          return item;
-        }),
-      ),
-    );
-    menu.replaceChildren(...parts);
+    menu.classList.add('gallery');
+    requestAnimationFrame(keepHubOnScreen);
+  }
+
+  /** Slides the gallery back onto the screen when its button sits near an edge (phones: a bottom sheet). */
+  function keepHubOnScreen(): void {
+    menu.style.removeProperty('translate');
+    if (menu.hidden || isPhoneLayout()) return;
+    const r = menu.getBoundingClientRect();
+    const dx = r.left < EDGE ? EDGE - r.left : r.right > innerWidth - EDGE ? innerWidth - EDGE - r.right : 0;
+    const dy = r.top < EDGE ? EDGE - r.top : r.bottom > innerHeight - EDGE ? innerHeight - EDGE - r.bottom : 0;
+    if (dx || dy) menu.style.translate = `${Math.round(dx)}px ${Math.round(dy)}px`;
   }
 
   function setHub(show: boolean): void {
-    if (show) drawHub();
+    if (show) {
+      drawHub();
+      requestAnimationFrame(keepHubOnScreen);
+    }
     else if (!menu.hidden) {
       // Closing the hub counts as having seen what's new.
       save(SEEN_KEY, LATEST_NEWS);
@@ -612,7 +571,12 @@ export function createGameStage(opts: StageOptions) {
     place();
     body.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
     // Its code and stylesheet are a separate chunk: not downloaded when entering the room.
-    const stop = (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
+    const stop =
+      kind === 'garden'
+        ? (await import('./garden.ts')).mountGarden(body, opts.room)
+        : kind === 'word'
+          ? (await import('./five-frames.ts')).mountFiveFrames(body)
+          : (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
     queueFit();
     if (solo !== kind) stop();
     else unmount = stop;

@@ -57,6 +57,13 @@ export const SOUNDS = {
   snackBuy: { group: 'game', level: 0.5, gap: 120 },
   snackMilestone: { group: 'game', level: 0.65, gap: 600 },
   snackCinema: { group: 'game', level: 0.8, gap: 3000 },
+  // Window Garden (solo, on the side): cozy and quiet.
+  gardenPlant: { group: 'game', level: 0.4, gap: 200 },
+  gardenWater: { group: 'game', level: 0.35, gap: 200 },
+  gardenSeed: { group: 'game', level: 0.55, gap: 1500 },
+  gardenBloom: { group: 'game', level: 0.5, gap: 1500 },
+  gardenPick: { group: 'game', level: 0.5, gap: 300 },
+  gardenNew: { group: 'game', level: 0.7, gap: 1500 },
 } as const satisfies Record<string, SoundSpec>;
 
 export type SoundId = keyof typeof SOUNDS;

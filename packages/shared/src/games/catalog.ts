@@ -28,14 +28,30 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
  * Games played on the side, alone, while the room watches (no server, no table; saves stay in the browser). They open
  * in the same game window as the room games.
  */
-export const SOLO_KINDS = ['snack'] as const;
+export const SOLO_KINDS = ['snack', 'garden', 'word'] as const;
 export type SoloKind = (typeof SOLO_KINDS)[number];
 export const isSoloKind = (kind: string): kind is SoloKind => (SOLO_KINDS as readonly string[]).includes(kind);
+
+/** What a solo game may know about the room, read on my screen only (nothing is sent anywhere). */
+export interface SoloRoom {
+  /** The room's video is playing (an item, not paused, past the "3-2-1" hold). */
+  playing: boolean;
+  /** Other people in the room (by person: my other tabs and TVs left out). */
+  others: number;
+  /** Of them, those in voice while I am in voice too. */
+  voiceOthers: number;
+  /** The room's item now: its id, its length (0 = not known yet) and where the room is in it (seconds). */
+  item: { id: string; duration: number; position: number } | null;
+}
 
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
   // Design session's mock: a free window of 340 × 300 (+ the window's head and room for the room's own bar), the
   // phone sheet 360 × 460. Smaller windows scale it down (stage.ts `refit`).
   snack: { place: 'float', size: [360, 380], fit: [330, 330] },
+  // The window-sill scene (340 × 226) + the action bar and the album strip; the phone sheet shows it 296 px tall.
+  garden: { place: 'float', size: [360, 400], fit: [330, 350] },
+  // Seven ticket rows + the letter tray.
+  word: { place: 'float', size: [360, 500], fit: [320, 440] },
 };
 
 export interface GameNews {

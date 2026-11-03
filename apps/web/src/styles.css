@@ -7263,6 +7263,176 @@ html.shorts-view .footer {
   color: #00233a;
 }
 
+/* ---- Games gallery (card GG, owner's pick B "two tabs"): covers from the Design session ---- */
+.game-menu.gallery {
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(86vh, 620px);
+  gap: 8px;
+}
+
+.hub-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.hub-tab {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.hub-tab i {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.hub-tab.on {
+  background: #ffc65a;
+  color: #1a1036;
+}
+
+.hub-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.hub-panel[hidden] {
+  display: none;
+}
+
+.hub-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: 9px;
+  background: linear-gradient(160deg, #1d1740, #08061a);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: #ffc65a;
+}
+
+.hub-cover svg:not(.ico) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hub-cover-icon .ico {
+  width: 30px;
+  height: 30px;
+}
+
+.hub-cover-icon .hub-glyph {
+  font-size: 28px;
+}
+
+.hub-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hub-card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-height: 0;
+  padding: 5px;
+}
+
+.hub-card .hub-game-text {
+  padding: 0 2px 2px;
+}
+
+.hub-cards.compact .hub-cover {
+  aspect-ratio: 16 / 8;
+}
+
+.hub-sides {
+  display: grid;
+  gap: 8px;
+}
+
+.hub-side {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.hub-side:hover:not(:disabled),
+.hub-side:focus-visible,
+.hub-side.mine {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.hub-side:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.hub-side-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hub-side-text small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.hub-progress {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(255 198 90 / 0.14);
+  color: #ffc65a;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hub-news-line {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.hub-news-line > span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hub-badge.soon {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
 .game-stage-title {
   display: inline-flex;
   align-items: center;

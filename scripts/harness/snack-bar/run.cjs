@@ -77,11 +77,11 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
     document.getElementById('game-btn').click();
     await new Promise((r) => setTimeout(r, 150));
     const menu = document.getElementById('game-menu');
-    const result = { side: menu.textContent.includes('Play on the side'), entry: !!menu.querySelector('[data-solo="snack"]') };
+    const result = { side: !!menu.querySelector('[data-tab="side"]'), entry: !!menu.querySelector('[data-solo="snack"]') };
     document.getElementById('game-btn').click();
     return result;
   });
-  check(hub.side && hub.entry, '🎮 shows "Play on the side" with Snack Bar', JSON.stringify(hub));
+  check(hub.side && hub.entry, '🎮 has an "On the side" tab with Snack Bar', JSON.stringify(hub));
 
   check((await openSnack(alex)) === 'ok', 'Snack Bar opens in the game window');
   const away = await until(() => alex.evaluate(() => { const n = document.querySelector('.sb-note'); return n && !n.hidden ? n.textContent : null; }), 3000);

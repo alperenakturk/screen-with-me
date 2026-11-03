@@ -383,7 +383,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.95.5 (computer + phone):**
+**0.9.95.6 (computer + phone):**
 - [ ] Enter a room: the intro looks like Design's preview: the logo pops in dark, the light beam comes out of the
   triangle and bursts, the eyes open and blink, the little golden mascot springs out of the light, "Enjoy the show!".
 - [ ] Pick a few themes (home page strip): each one shows the golden mascot in that theme's costume.
@@ -398,6 +398,18 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.95.5 🎟️ Five Frames: 🎮 → "On the side" → Five Frames. Tap letters (or click the board and type) to
+  guess today's five-letter word in 7 tries; gold ✓ = right place, gold outline • = in the word. EN / TR switch at the
+  top (Turkish has its own word and Ç Ğ I İ Ö Ş Ü). When solved, "Copy result" gives a line without the word. Are the
+  words fair (too rare? any you would remove)? Same word for a friend on the same day?
+- [ ] 0.9.95.4 🌱 Window Garden: 🎮 → "On the side" → Window Garden. A small fern seedling waits on the sill. Play a
+  video with a friend: it grows (only while the video plays), a 💧 shows when it is thirsty, "Water" fills it again.
+  When it blooms, "Pick it": it goes into your album (the strip of 8 plants at the bottom). A seed comes every 30
+  watched minutes and when a film of 20+ minutes ends; plant it in an empty pot. Cozy enough? Sounds OK?
+- [ ] 0.9.95.3 🎮 Games gallery: 🎮 (rail, ⋯ → Games, phone ⋯) opens one window with two tabs, "👥 Together" (a
+  picture card per game: a press opens a new table, your friend gets the invite) and "🍿 On the side" (Snack Bar with
+  your coins; Window Garden and Five Frames say "Soon"). It opens on the tab you used last and never needs scrolling,
+  also on the phone. Do the pictures look right?
 - [ ] 0.9.95.1 🍿 Snack Bar: 🎮 → "Play on the side" → Snack Bar opens in a small window (and as a sheet on the
   phone). With nothing playing the coins stand still; play a video with a friend: coins come in, "👥 +10 %" shows (more
   when you are both in voice). Buy the soda fountain: it appears on the counter. Tap the counter: +coins. Type a chat
