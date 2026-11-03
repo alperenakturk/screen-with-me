@@ -421,6 +421,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.2 (privacy link, security L9):**
+- [ ] On a phone: the join screen (name + avatar) has "🔒 Privacy" under the button; ⋯ in the room has "Privacy" near
+  the end; both open the privacy page in the site's language (switch TR / EN and try again). On a computer: ⋯ More and
+  the profile menu have it too.
+
+**0.9.96.25 (game rules, security L6):**
+- [ ] With a friend, open Draw & Guess or the Quiz: only the first one in (the one who picks the settings) can press
+  Start; the friend sees Start dimmed and "<name> picks the settings and starts the game". If the first one leaves,
+  the friend can start.
+
 **0.9.96.23 (owner bug: the stream button was gone):**
 - [ ] In a room with no video yet, alone or with a friend, in voice or not: "🖥️ Paylaş ▾" (Share) is in the Together card;
   sharing your screen works, the friend's "▶ Watch the stream" works. The camera count next to "Seste 1/6" shows a small

@@ -180,6 +180,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
         </div>
         <button class="btn primary big" data-i18n="enterRoom"></button>
         <p class="muted small" data-i18n="joinHint"></p>
+        <p class="muted small join-privacy"><a href="/privacy.html" target="_blank" rel="noopener" id="join-privacy" data-privacy-link>🔒 <span data-i18n="privacy"></span></a></p>
       </form>
     </section>
   `;
@@ -629,6 +630,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
               <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open">⌨️ ?</button>
               <a class="btn small-btn" id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link>❔ <span data-i18n="help"></span></a>
+              <a class="btn small-btn" id="profile-privacy" href="/privacy.html" target="_blank" rel="noopener" data-privacy-link>🔒 <span data-i18n="privacy"></span></a>
               <button type="button" class="btn small-btn" id="profile-feedback">💌 <span data-i18n="feedback"></span></button>
               <button type="button" class="btn small-btn" id="profile-move">📲 <span data-i18n="move.open"></span></button>
             </div>

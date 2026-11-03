@@ -44,6 +44,8 @@ export function roomMoreItems(deps: {
     { icon: '💌', label: 'more.feedback', run: deps.feedback },
     // Card 7: the help page in a new tab (an anchor, so the film-page overlay tells the extension it is no ad).
     { icon: '❔', label: 'more.help', run: () => deps.press('#profile-help') },
+    // Security L9: the privacy policy wherever the footer is hidden (phones, the film page, the Shorts view).
+    { icon: '🔒', label: 'privacy', run: () => deps.press('#profile-privacy') },
   );
   return items;
 }
