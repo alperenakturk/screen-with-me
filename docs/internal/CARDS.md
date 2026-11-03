@@ -124,7 +124,10 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Done when: the Design session's clickable options page → the owner's pick → built for computer, tablet (upright +
   sideways) and phone, EN + TR, no scroll inside sections, reduced motion respected.
 - Tests: home harness at 1920×1080, 1366×768, 1180×820, 820×1180, 390×844; phone-speed budget.
-- Owner's pick: needed (Design prepares the page).
+- Owner's pick (3 Nov 2026, https://claude.ai/artifact/AMuQiAM7itZuXchbzKDRUS): **1 A** "light beam" (Glowbeam
+  shines its light on the shared screen), **2 A** a short intro section under the first screen, **3 A** no video link
+  box on the home page anywhere (videos are added in the room). Build notes: `docs/internal/design/home-15b.md`
+  (Design session), including sweep-1 #10 (beam over the heading) and #11 (empty phone space).
 
 ### 6f. Glowbeam mascots per theme + the Sidelit intro (lane A, right after 6c; from the Design session)
 - Why: card 6c brings the new name and logo; the theme mascots and the intro animation still show the old face and
