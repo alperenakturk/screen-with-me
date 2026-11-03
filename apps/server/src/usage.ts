@@ -93,8 +93,10 @@ export async function recordUsage(env: Env, kind: UsageKind, calls: Record<strin
  * secret `USAGE_TOKEN` (refused without the secret too).
  */
 export async function youtubeUsage(request: Request, env: Env): Promise<Response> {
-  const given = request.headers.get('X-Usage-Token') ?? '';
-  if (!env.USAGE_TOKEN || !env.USAGE || !(await sameText(given, env.USAGE_TOKEN))) return new Response('Forbidden', { status: 403 });
+  // Both sides trimmed: an HTTP header loses spaces / a newline at its ends, a pasted GitHub secret may keep them.
+  const given = (request.headers.get('X-Usage-Token') ?? '').trim();
+  const key = (env.USAGE_TOKEN ?? '').trim();
+  if (!key || !env.USAGE || !(await sameText(given, key))) return new Response('Forbidden', { status: 403 });
   return env.USAGE.get(env.USAGE.idFromName('usage')).fetch('https://usage/read');
 }
 

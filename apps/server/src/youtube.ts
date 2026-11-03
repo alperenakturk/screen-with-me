@@ -30,6 +30,8 @@ import { EXPECTED_UNITS } from '@swm/shared/yt-usage';
 
 const API = 'https://www.googleapis.com/youtube/v3';
 const TIMEOUT_MS = 5000;
+/** The pause before the one retry of a YouTube call that got a 5xx or no answer. */
+const RETRY_MS = 400;
 /** Same words in the same language are answered from the cache for a day (YouTube allows keeping results ≤ 30 days). */
 const RESULT_TTL_S = 24 * 3600;
 /**
@@ -62,14 +64,28 @@ async function callYouTube(path: string, params: Record<string, string>, api: Ap
   const url = new URL(`${API}/${path}`);
   for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
   url.searchParams.set('key', api.key);
-  api.calls[path] = (api.calls[path] ?? 0) + 1;
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    const body: unknown = await response.json().catch(() => null);
-    if (response.ok) return { ok: true, body };
-    return { ok: false, quota: response.status === 403 && isQuotaError(body) };
-  } catch {
-    return { ok: false, quota: false };
+  // One more try after a short pause when YouTube answers 5xx or does not answer in time (a live e2e saw one such
+  // "failed" right after a deploy, 3 Nov 2026). Each try is counted; a 4xx never repeats.
+  for (let attempt = 0; ; attempt++) {
+    api.calls[path] = (api.calls[path] ?? 0) + 1;
+    let status: number | 'no answer' = 'no answer';
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+      status = response.status;
+      const body: unknown = await response.json().catch(() => null);
+      if (response.ok) return { ok: true, body };
+      if (response.status < 500 || attempt > 0) {
+        // Only the call's name and status reach the Worker's logs (never the key, the words or an address).
+        console.warn(`youtube: ${path} answered ${status}`);
+        return { ok: false, quota: response.status === 403 && isQuotaError(body) };
+      }
+    } catch {
+      if (attempt > 0) {
+        console.warn(`youtube: ${path} answered ${status}`);
+        return { ok: false, quota: false };
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
   }
 }
 
