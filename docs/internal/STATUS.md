@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.18**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.19**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -382,6 +382,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.19 (computer):**
+- [ ] Home page: on the right a laptop and a phone show the same video moving together, a dotted line between them, a
+  message drifting over to the phone; under the hero three short features (No app · Together in voice and camera ·
+  Games in the room), then the themes. Does it feel right? On the phone the home page looks as before.
 
 **0.9.93.18 (computer + phone):**
 - [ ] ⚙️ Settings (My screen), and ⋯ → Film time / Save the room / Room rules: each opens as one clean window, rows

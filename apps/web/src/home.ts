@@ -38,25 +38,33 @@ export function renderHome(app: HTMLElement): void {
         </form>
         <p id="join-error" class="error" data-i18n="invalidRoom" hidden></p>
       </div>
-      <div class="home-preview" aria-hidden="true">
+      <!-- Card 15 (owner's pick A, "two screens, one moment"): a laptop and a phone in the same room, the same video at the
+           same second (one shared animation), a sync line between them and a message passing from one to the other. -->
+      <div class="home-preview two-screens" aria-hidden="true">
         <div class="theme-mascot preview-mascot"></div>
-        <div class="preview-card">
-          <div class="preview-video">
+        <div class="ts-laptop">
+          <div class="ts-screen">
             <span class="preview-sync" data-i18n="home.demoSync"></span>
-            <i class="preview-sun"></i><i class="preview-hill h1"></i><i class="preview-hill h2"></i>
-            <span class="preview-emoji e1">😂</span><span class="preview-emoji e2">🔥</span><span class="preview-emoji e3">😍</span>
-            <span class="preview-bar"><i></i></span>
+            <i class="preview-sun"></i><i class="preview-hill h1"></i><i class="preview-hill h2"></i><span class="ts-bar"><i></i></span>
+            <span class="preview-emoji e1">😂</span><span class="preview-emoji e3">😍</span>
           </div>
-          <div class="preview-people">
-            <img src="/avatars/wizard.svg" alt="" class="talking" /><img src="/avatars/elf.svg" alt="" /><img src="/avatars/captain.svg" alt="" /><img src="/avatars/sorceress.svg" alt="" />
-            <span data-i18n="home.demoPeople"></span>
-          </div>
+          <div class="ts-base"></div>
         </div>
-        <div class="preview-bubbles">
-          <span class="preview-bubble mine" data-i18n="home.demoChat"></span>
-          <span class="preview-bubble"><b>Deniz</b> <span data-i18n="home.demoPause"></span></span>
+        <div class="ts-phone">
+          <div class="ts-screen"><i class="preview-sun"></i><i class="preview-hill h1"></i><i class="preview-hill h2"></i><span class="ts-bar"><i></i></span><span class="preview-emoji e2">🔥</span></div>
         </div>
+        <span class="ts-sync"></span>
+        <span class="ts-bubble mine" data-i18n="home.demoChat"></span>
+        <span class="ts-bubble other"><b>Sam</b> <span data-i18n="home.demoSame"></span></span>
+        <span class="ts-people"><img src="/avatars/wizard.svg" alt="" class="talking" /><img src="/avatars/elf.svg" alt="" /><img src="/avatars/captain.svg" alt="" /><span data-i18n="home.demoPeople"></span></span>
       </div>
+    </section>
+
+    <!-- Card 15: three short features right under the hero, the theme picker after them. -->
+    <section class="home-strip">
+      <div><span class="strip-icon" aria-hidden="true">📱</span><b data-i18n="home.s.noApp"></b><span class="muted" data-i18n="home.s.noAppText"></span></div>
+      <div><span class="strip-icon" aria-hidden="true">🎙</span><b data-i18n="home.s.voice"></b><span class="muted" data-i18n="home.s.voiceText"></span></div>
+      <div><span class="strip-icon" aria-hidden="true">🎮</span><b data-i18n="home.s.games"></b><span class="muted" data-i18n="home.s.gamesText"></span></div>
     </section>
 
     <section class="home-themes">

@@ -973,24 +973,6 @@ button.nav-link {
   filter: drop-shadow(0 12px 24px rgb(0 0 0 / 0.45));
 }
 
-.preview-card {
-  padding: 12px;
-  border-radius: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: 0 30px 80px rgb(0 0 0 / 0.45), 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
-  transform: rotate(-1.5deg);
-}
-
-.preview-video {
-  position: relative;
-  display: block;
-  aspect-ratio: 16 / 9;
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(#ff9a6b, #ffb37d 32%, #ffd59a 50%, #6d5ba8 50.5%, #3c2f7a);
-}
-
 .preview-sun {
   position: absolute;
   left: 60%;
@@ -1072,79 +1054,265 @@ button.nav-link {
   }
 }
 
-.preview-bar {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 10px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 0.3);
+/* Card 15 (owner's pick A, "two screens, one moment"): a laptop and a phone in the same room. Both screens draw the same
+   scene and run the same progress animation, so the video moves at the same second on both; a dashed sync line runs
+   between them and a friend's message drifts from one to the other. Gently alive; still with reduced motion. */
+.home-preview.two-screens {
+  aspect-ratio: 16 / 11;
+  padding: 0;
 }
 
-.preview-bar i {
+.ts-screen {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(#ff9a6b, #ffb37d 32%, #ffd59a 50%, #6d5ba8 50.5%, #3c2f7a);
+}
+
+.ts-laptop {
+  position: absolute;
+  left: 2%;
+  top: 9%;
+  width: 72%;
+}
+
+.ts-laptop .ts-screen {
+  aspect-ratio: 16 / 10;
+  border: 9px solid #0d0b18;
+  border-bottom-width: 12px;
+  border-radius: 14px 14px 4px 4px;
+}
+
+.ts-base {
+  height: 11px;
+  margin: 0 -7%;
+  border-radius: 0 0 14px 14px;
+  background: linear-gradient(#34304a, #15131f);
+  box-shadow: 0 26px 50px rgb(0 0 0 / 0.45);
+}
+
+.ts-phone {
+  position: absolute;
+  right: 2%;
+  top: 30%;
+  width: 21%;
+  filter: drop-shadow(0 22px 34px rgb(0 0 0 / 0.5));
+}
+
+.ts-phone .ts-screen {
+  aspect-ratio: 9 / 19;
+  border: 6px solid #0d0b18;
+  border-radius: 22px;
+}
+
+/* The phone's scene is upright: the sun and hills sit a little differently. */
+.ts-phone .preview-sun {
+  left: 45%;
+  top: 22%;
+  width: 34%;
+}
+
+.ts-phone .preview-hill.h1 {
+  top: 47%;
+  width: 120%;
+}
+
+.ts-phone .preview-hill.h2 {
+  top: 55%;
+  left: 10%;
+  width: 140%;
+}
+
+.ts-bar {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 6%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.32);
+}
+
+.ts-bar i {
   display: block;
-  width: 42%;
+  width: 12%;
   height: 100%;
   border-radius: 2px;
   background: var(--accent);
+  animation: ts-progress 12s linear infinite;
 }
 
-.preview-people {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 4px 2px;
-  color: var(--muted);
-  font-size: 13px;
+@keyframes ts-progress {
+  from {
+    width: 12%;
+  }
+
+  to {
+    width: 88%;
+  }
 }
 
-.preview-people img {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--surface-2);
-}
-
-.preview-people img.talking {
-  box-shadow: 0 0 0 2px var(--ok), 0 0 12px var(--ok);
-}
-
-.preview-bubbles {
+.ts-sync {
   position: absolute;
-  left: -14px;
-  bottom: 22%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  left: 74.5%;
+  top: 52%;
+  width: 3.5%;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 11px);
 }
 
-.preview-bubble {
-  padding: 9px 13px;
+.ts-sync::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  animation: ts-pulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes ts-pulse {
+  to {
+    left: calc(100% - 8px);
+  }
+}
+
+.ts-bubble {
+  position: absolute;
+  z-index: 2;
+  padding: 8px 12px;
   border-radius: 14px 14px 14px 4px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
 }
 
-.preview-bubble.mine {
+.ts-bubble.mine {
+  left: -2%;
+  top: 0;
   border-radius: 14px 14px 4px 14px;
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
+  animation: ts-drift 5s ease-in-out infinite;
 }
 
-.preview-bubble b {
+.ts-bubble b {
   color: color-mix(in srgb, var(--ok) 70%, var(--text));
+}
+
+/* A friend's answer drifts from the laptop over to the phone. */
+.ts-bubble.other {
+  right: 0;
+  top: 18%;
+  animation: ts-pass 7s ease-in-out infinite;
+}
+
+@keyframes ts-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes ts-pass {
+  0% {
+    transform: translateX(-70%);
+    opacity: 0;
+  }
+
+  15%,
+  80% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(0) translateY(-8px);
+    opacity: 0;
+  }
+}
+
+.ts-people {
+  position: absolute;
+  left: 4%;
+  bottom: 1%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ts-people img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-2);
+}
+
+.ts-people img.talking {
+  box-shadow: 0 0 0 2px var(--ok), 0 0 10px var(--ok);
+}
+
+.two-screens .preview-sync {
+  font-size: 11px;
+}
+
+.two-screens .preview-mascot {
+  top: -26px;
+  right: 3%;
+  --mascot-size: 86px;
+}
+
+.home-strip {
+  max-width: 1180px;
+  margin: 44px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.home-strip > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--border);
+}
+
+.home-strip .strip-icon {
+  grid-row: span 2;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.home-strip .muted {
+  font-size: 14px;
+}
+
+@media (max-width: 860px) {
+  .home-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Tema seçici: bütün temalar; tıklayınca sayfa hemen değişir */
 .home-themes {
   max-width: 1180px;
-  margin: 64px auto 0;
+  margin: 28px auto 0;
   padding: 24px;
   border-radius: 20px;
   background: color-mix(in srgb, var(--surface) 70%, transparent);
@@ -1331,10 +1499,6 @@ button.nav-link {
     width: 100%;
     margin: 0 auto;
   }
-
-  .preview-bubbles {
-    left: 4px;
-  }
 }
 
 @media (max-width: 680px) {
@@ -1355,13 +1519,17 @@ button.nav-link {
     padding: 16px;
   }
 
-  .preview-bubbles {
+  .ts-bubble {
     display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .preview-emoji {
+  .preview-emoji,
+  .ts-bar i,
+  .ts-bubble.mine,
+  .ts-bubble.other,
+  .ts-sync::after {
     animation: none;
   }
 }

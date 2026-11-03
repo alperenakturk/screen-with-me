@@ -166,21 +166,6 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   arrive as toasts; no page scroll at 1366×768 and 1920×1080; owner's hand test.
 - Owner's pick: Claude designs (owner, 2 Nov 2026); the design above is shown to him in the report.
 
-### 15. Home page, nicer and "works on your phone" (0.9.94, owner's request)
-- Why: owner, 2 Nov 2026: improve the home page; it should show it works on a phone too and feel less like a
-  screenshot.
-- Done when: the direction the owner picks is built (Planner prepares an option page with 2–3 directions); the hero
-  shows a computer and a phone in the same room; EN first, TR; fits without scrolling on the first screen at
-  1366×768; the phone home (0.9.92.5 app start screen) is unchanged unless the pick says so; Lighthouse performance
-  not worse than today.
-- Tests: harness screenshots at 1920, 1366, 1024, 390 px; no console errors; owner's hand test.
-- Owner's pick (2 Nov 2026, https://claude.ai/artifact/FVzrwoffrJPB5atVv2xQfn): hero **A "two screens, one moment"**
-  (a laptop and a phone side by side, the same video moving at the same second, a sync line between them, chat bubbles
-  passing from one to the other; the slogan stays); **gently alive** motion (the video runs, bubbles drift; still with
-  `prefers-reduced-motion`); right under it **a strip of 3 short features** ("No app" · "Together in voice and
-  camera" · "Games in the room"), the theme picker after it; **"Continue where you left off" as one thin line above
-  the title** (card 5's overflow fix goes with it).
-
 ### 16. Design bug sweep (0.9.94, end of the step)
 - Why: owner, 2 Nov 2026: go through the whole design for mistakes; the owner should not have to find each one.
 - Done when: the Developer screenshots every screen (home, join, empty room, YouTube, file, Shorts, games, settings,
@@ -438,6 +423,30 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: agreed (3 Nov 2026).
 
 ## Done
+
+### 15. Home page, nicer and "works on your phone" (0.9.94, owner's request)
+- Why: owner, 2 Nov 2026: improve the home page; it should show it works on a phone too and feel less like a
+  screenshot.
+- Done when: the direction the owner picks is built (Planner prepares an option page with 2–3 directions); the hero
+  shows a computer and a phone in the same room; EN first, TR; fits without scrolling on the first screen at
+  1366×768; the phone home (0.9.92.5 app start screen) is unchanged unless the pick says so; Lighthouse performance
+  not worse than today.
+- Tests: harness screenshots at 1920, 1366, 1024, 390 px; no console errors; owner's hand test.
+- Owner's pick (2 Nov 2026, https://claude.ai/artifact/FVzrwoffrJPB5atVv2xQfn): hero **A "two screens, one moment"**
+  (a laptop and a phone side by side, the same video moving at the same second, a sync line between them, chat bubbles
+  passing from one to the other; the slogan stays); **gently alive** motion (the video runs, bubbles drift; still with
+  `prefers-reduced-motion`); right under it **a strip of 3 short features** ("No app" · "Together in voice and
+  camera" · "Games in the room"), the theme picker after it; **"Continue where you left off" as one thin line above
+  the title** (card 5's overflow fix goes with it).
+- Done: 0.9.93.19 (PR below). `home.ts` `.home-preview.two-screens`: a laptop (`.ts-laptop`) and a phone (`.ts-phone`)
+  draw the same scene and run one shared progress animation (the same second on both), a dashed sync line with a moving
+  dot between them (`.ts-sync`), my message drifting over the laptop and a friend's answer passing over to the phone
+  (`.ts-bubble`), faces under the laptop; everything stands still with `prefers-reduced-motion`. `.home-strip`: "No app"
+  · "Together in voice and camera" · "Games in the room" (EN + TR) between the hero and the theme picker. The phone
+  home (app start screen) is unchanged: the strip is hidden there like the rest of the introduction. No new images
+  or scripts (CSS only), so the page weighs the same. Test: new `scripts/harness/home/run.cjs` (49 checks: 1920, 1366,
+  1024 and 390 px in EN + TR, hero fits the first screen, laptop + phone + sync line, the two progress bars in step,
+  strip under the hero, phone home unchanged, no sideways scroll, no console errors, reduced motion).
 
 ### 6b. Settings sections opened alone are squeezed (owner's bug, 3 Nov 2026; after card 2b)
 - Why: since 0.9.93.13 (card 6) ⚙️ → My screen and the ⋯ More sections (film time, save, rules) put the section into
