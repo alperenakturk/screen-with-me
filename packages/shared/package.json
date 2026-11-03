@@ -43,7 +43,8 @@
     "./sounds": "./src/sounds.ts",
     "./youtube-search": "./src/youtube-search.ts",
     "./socket": "./src/socket.ts",
-    "./feedback": "./src/feedback.ts"
+    "./feedback": "./src/feedback.ts",
+    "./move": "./src/move.ts"
   },
   "scripts": {
     "test": "vitest run",

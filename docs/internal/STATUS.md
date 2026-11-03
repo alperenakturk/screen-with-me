@@ -417,6 +417,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.96.4 📲 Move to another device: on the computer, in a room: profile picture → 📲 Move to another device →
+  Send. Scan the QR code with the phone: the phone asks the computer, press "Send" on the computer; the phone says
+  what moved (play a bit of Snack Bar first so there is something to move). Reload the phone: your coins, saved rooms
+  and name are there. Also try a wrong code and "No".
 - [ ] 0.9.95.5 🎟️ Five Frames: 🎮 → "On the side" → Five Frames. Tap letters (or click the board and type) to
   guess today's five-letter word in 7 tries; gold ✓ = right place, gold outline • = in the word. EN / TR switch at the
   top (Turkish has its own word and Ç Ğ I İ Ö Ş Ü). When solved, "Copy result" gives a line without the word. Are the

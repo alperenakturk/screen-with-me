@@ -25,7 +25,9 @@
       // TVs waiting to be paired (one per 6-digit code, nothing stored)
       { "name": "TVLINKS", "class_name": "TvLink" },
       // Feedback counters (card 9): one instance, a day's and an hour's counts, no texts
-      { "name": "FEEDBACK", "class_name": "FeedbackGate" }
+      { "name": "FEEDBACK", "class_name": "FeedbackGate" },
+      // Two devices moving my things (one per 6-digit code, nothing stored)
+      { "name": "MOVELINKS", "class_name": "MoveLink" }
     ]
   },
   // Ücretsiz planda Durable Object'ler SQLite tabanlı olmak zorunda.
@@ -36,7 +38,8 @@
     { "tag": "v4", "new_sqlite_classes": ["Quiz"] },
     { "tag": "v5", "new_sqlite_classes": ["TvLink"] },
     { "tag": "v6", "new_sqlite_classes": ["Poker"] },
-    { "tag": "v7", "new_sqlite_classes": ["FeedbackGate"] }
+    { "tag": "v7", "new_sqlite_classes": ["FeedbackGate"] },
+    { "tag": "v8", "new_sqlite_classes": ["MoveLink"] }
   ],
   // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
   // address joining at once must still fit, a script opening rooms in a loop must not.

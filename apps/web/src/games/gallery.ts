@@ -33,6 +33,7 @@ const TEXT = {
     'hub.soon': 'SOON',
     'games.snack.short': 'Run the room’s snack bar while the film plays.',
     'garden.growing': '{n} growing',
+    'games.snack.text': 'Run the room’s snack bar: it earns only while the video plays, more with friends. Your save stays in this browser.',
     'games.garden.text': 'A little garden on the window sill: plants grow only while the film plays, seeds come when a film ends or after a long evening with friends, every plant goes into your album.',
     'games.garden.short': 'Plants grow over watched minutes. Water now and then.',
     'games.word.short': 'One word a day, the same for everyone. 7 tries.',
@@ -46,6 +47,7 @@ const TEXT = {
     'hub.soon': 'YAKINDA',
     'games.snack.short': 'Film oynarken odanın büfesini işlet.',
     'garden.growing': '{n} büyüyor',
+    'games.snack.text': 'Odanın büfesini işlet: sadece video oynarken kazanır, arkadaşlarla daha çok. Kaydın bu tarayıcıda kalır.',
     'games.garden.text': 'Pencere önünde küçük bir bahçe: bitkiler sadece film oynarken büyür, film bitince ya da arkadaşlarla uzun bir akşamdan sonra tohum gelir, her bitki albümüne girer.',
     'games.garden.short': 'Bitkiler izlenen dakikalarla büyür. Arada bir sula.',
     'games.word.short': 'Her gün bir kelime, herkese aynı. 7 hak.',
@@ -85,7 +87,7 @@ const SIDE_GAMES: readonly { kind: SideKind; solo: SoloKind | null }[] = [
   { kind: 'word', solo: 'word' },
 ];
 const sideTitle = (kind: SideKind) => t(`games.${kind}.title`);
-const sideText = (kind: SideKind) => (kind === 'snack' ? t('games.snack.text') : g(`games.${kind}.text`));
+const sideText = (kind: SideKind) => g(`games.${kind}.text`);
 
 /** A one-line "how far am I" for a solo game, from its save in this browser. */
 function progressOf(kind: SideKind): string | null {
