@@ -40,7 +40,7 @@ import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createTestPlayer } from './players/test.ts';
 import { createTikTokPlayer } from './players/tiktok.ts';
-import { createYouTubePlayer, loadYouTubeApi } from './players/youtube.ts';
+import { createYouTubePlayer } from './players/youtube.ts';
 import {
   clientId,
   extensionSupportsShell,
@@ -283,11 +283,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     sessionSave(`in:${roomId}`, '1');
     saveRoomIdentity(roomId, myName, myAvatar);
   }
-  // İlk video eklendiğinde beklememek için YouTube oynatıcısını şimdiden indirmeye başla. Film sayfasındaki katmanda
-  // değil: orada film sayfanın kendi oynatıcısında, her film sayfası açılışında boşuna ~1 MB inerdi (gerekirse yine yüklenir).
-  // Not on a phone either (0.9.92.5, speed): ~1 MB over a phone's network before anything plays; it loads with the
-  // first YouTube video.
-  if (!isShell && !isPhoneLayout()) loadYouTubeApi().catch(() => {});
+  // YouTube's player API is no longer loaded ahead (card 6a, privacy: no request to YouTube before a YouTube video is
+  // chosen); it loads with the first YouTube item.
 
   app.innerHTML = `
     <div class="room fresh">

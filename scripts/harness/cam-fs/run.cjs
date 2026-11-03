@@ -3,6 +3,7 @@
 // file playing; in the window and in fullscreen the two tiles sit side by side. Needs Playwright, `npm run dev` and a
 // local video (e.g. `python3 -m http.server 5300` in a folder with `video.webm`):
 //   NODE_PATH=$(npm root -g) node scripts/harness/cam-fs/run.cjs [http://localhost:5173] [http://localhost:5300/video.webm]
+const { viaYouTube } = require('../via-youtube.cjs');
 const { chromium } = require('playwright');
 const SITE = process.argv[2] || 'http://localhost:5173';
 const VIDEO = process.argv[3] || 'http://localhost:5300/video.webm';
@@ -16,6 +17,7 @@ const check = (ok, label, extra = '') => {
   const room = `cam${Math.random().toString(36).slice(2, 7)}`;
   async function enter(name) {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['camera', 'microphone'] });
+    await viaYouTube(ctx);
     await ctx.addInitScript(() => {
       for (const [k, v] of Object.entries({ tipsSeen: '1', lang: 'en', 'opt:camLayout': 'group', 'opt:camFloat': '1', 'opt:voiceCheck': 'skip', 'opt:joinCam': '1', 'opt:ipNotice:voice': '1' })) localStorage.setItem(k, v);
     });
