@@ -30,17 +30,6 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
 - Owner's pick: none needed.
 
-### 6a. Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2; 0.9.94, before the Help page)
-- Severity: high
-- Why: the player uses `www.youtube.com` and the API is preloaded on every room page, so YouTube sets cookies before
-  anyone chose a video, while the policy says "none of their cookies"; this also matters for the YouTube API audit.
-- Done when: `YT.Player` uses `host: 'https://www.youtube-nocookie.com'`, `iframe_api` loads only when a YouTube item
-  is about to play, and the policy describes the YouTube embed like the TikTok one.
-- Tests: harness (no request to `www.youtube.com` on a room page with nothing playing; YouTube plays from the
-  no-cookie host); existing room / Shorts harnesses; owner's hand test of YouTube playback.
-- Owner's pick: none needed.
-
-
 ### 7. Help / FAQ page, English + Turkish (0.9.94 "Next" 2)
 - Why: newcomers and store reviewers need one place for "how does it work", the extension's permissions and
   troubleshooting (voice does not connect, hotspot, Brave shields, autoplay).
@@ -379,6 +368,24 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 6a. Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2; 0.9.94, before the Help page)
+- Severity: high
+- Why: the player uses `www.youtube.com` and the API is preloaded on every room page, so YouTube sets cookies before
+  anyone chose a video, while the policy says "none of their cookies"; this also matters for the YouTube API audit.
+- Done when: `YT.Player` uses `host: 'https://www.youtube-nocookie.com'`, `iframe_api` loads only when a YouTube item
+  is about to play, and the policy describes the YouTube embed like the TikTok one.
+- Tests: harness (no request to `www.youtube.com` on a room page with nothing playing; YouTube plays from the
+  no-cookie host); existing room / Shorts harnesses; owner's hand test of YouTube playback.
+- Owner's pick: none needed.
+- Done: 0.9.93.14 (PR below). `players/youtube.ts`: `YT.Player` with `host: 'https://www.youtube-nocookie.com'`; the
+  room no longer preloads `iframe_api` (it loads with the first YouTube item; the TV test page still loads it when it
+  tests YouTube). Privacy policy: a "YouTube videos" section (EN + TR, like TikTok's), date 3 November 2026. Test: new
+  `scripts/harness/yt-privacy/run.cjs` (no request to youtube.com / ytimg.com in a room with nothing playing, computer
+  and phone; the player iframe is youtube-nocookie.com/embed; the API loads with the first video). The cloud's proxy
+  blocks youtube-nocookie.com, so the YouTube harnesses route it to www.youtube.com (`scripts/harness/via-youtube.cjs`);
+  real browsers use the no-cookie host.
+
 
 ### 6. Simplify the room (0.9.94 "Next" 1)
 - Why: a newcomer sees too much at once; Research found every competitor's first room view is player + add a video +

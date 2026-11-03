@@ -2,7 +2,10 @@ import type { PlayerAdapter, PlayerEvent } from '@swm/shared/player';
 
 let apiReady: Promise<void> | null = null;
 
-/** YouTube'un resmi oynatıcı API'sini bir kez yükler. Odaya girerken önden çağrılır, ilk video hızlı açılsın. */
+/**
+ * Loads YouTube's official player API once, only when a YouTube video is about to play (card 6a: a room page with
+ * nothing from YouTube on it makes no request to YouTube).
+ */
 export function loadYouTubeApi(): Promise<void> {
   if ('YT' in window && typeof YT.Player === 'function') return Promise.resolve();
   apiReady ??= new Promise<void>((resolve, reject) => {
@@ -48,6 +51,9 @@ export async function createYouTubePlayer(
     let onBlocked: (() => void) | null = null;
 
     const player: YT.Player = new YT.Player(host, {
+      // Privacy-enhanced mode (card 6a, security review 2 H2): the player comes from youtube-nocookie.com, so YouTube
+      // stores nothing in the browser until the person plays the video.
+      host: 'https://www.youtube-nocookie.com',
       videoId,
       width: '100%',
       height: '100%',

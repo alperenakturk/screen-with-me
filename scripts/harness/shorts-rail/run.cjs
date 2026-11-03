@@ -4,6 +4,7 @@
 // is folded and brings it back, Enter / 💬 open the message box; on a phone the phone bar stays under the video.
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-rail/run.cjs [site]
+const { viaYouTube } = require('../via-youtube.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -17,7 +18,12 @@ async function openShort(ctx) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.addInitScript(() => localStorage.setItem('tipsSeen', '1'));
+  await page.addInitScript(() => {
+    // Also runs in the YouTube frame, where storage is off limits.
+    try {
+      localStorage.setItem('tipsSeen', '1');
+    } catch {}
+  });
   await page.goto(`${SITE}/r/rail${Math.random().toString(36).slice(2, 7)}`);
   await page.fill('#name', 'Alex');
   await page.click('#name-form button.primary');
@@ -50,6 +56,7 @@ const box = (page, sel) =>
   ];
   for (const [name, width, height, folded] of sizes) {
     const ctx = await browser.newContext({ viewport: { width, height } });
+    await viaYouTube(ctx);
     const { page, errors } = await openShort(ctx);
     const video = await box(page, '.player-wrap');
     const bar = await box(page, '#shorts-bar');
@@ -108,6 +115,7 @@ const box = (page, sel) =>
     await ctx.close();
   }
   const phone = await browser.newContext({ ...devices['Pixel 7'] });
+  await viaYouTube(phone);
   const { page, errors } = await openShort(phone);
   const video = await box(page, '.player-wrap');
   // Phones have their own slim bar under the video (0.9.92.4, `ui/phone-room.ts`), not the rail.
