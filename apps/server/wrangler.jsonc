@@ -23,7 +23,9 @@
       // Life poker tables
       { "name": "POKERS", "class_name": "Poker" },
       // TVs waiting to be paired (one per 6-digit code, nothing stored)
-      { "name": "TVLINKS", "class_name": "TvLink" }
+      { "name": "TVLINKS", "class_name": "TvLink" },
+      // Feedback counters (card 9): one instance, a day's and an hour's counts, no texts
+      { "name": "FEEDBACK", "class_name": "FeedbackGate" }
     ]
   },
   // Ücretsiz planda Durable Object'ler SQLite tabanlı olmak zorunda.
@@ -33,7 +35,8 @@
     { "tag": "v3", "new_sqlite_classes": ["Draw"] },
     { "tag": "v4", "new_sqlite_classes": ["Quiz"] },
     { "tag": "v5", "new_sqlite_classes": ["TvLink"] },
-    { "tag": "v6", "new_sqlite_classes": ["Poker"] }
+    { "tag": "v6", "new_sqlite_classes": ["Poker"] },
+    { "tag": "v7", "new_sqlite_classes": ["FeedbackGate"] }
   ],
   // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
   // address joining at once must still fit, a script opening rooms in a loop must not.
@@ -43,7 +46,9 @@
     { "name": "SEARCH_LIMIT", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } },
     // Saved-room lookups (`/api/rooms/:id/info` + `unsave`) per IP and minute: each wakes a room object. The home page
     // asks once per saved room (at most 20) + the "continue" line, so 60 leaves room for a few reloads (R3-1, M4).
-    { "name": "ROOM_INFO_LIMIT", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } }
+    { "name": "ROOM_INFO_LIMIT", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
+    // Feedback bursts per IP and minute (card 9); the hourly / daily caps live in the FeedbackGate object.
+    { "name": "FEEDBACK_LIMIT", "namespace_id": "1004", "simple": { "limit": 3, "period": 60 } }
   ],
   // The deployed version's id (`/api/version`): after a deploy the live e2e waits until the Worker and a Durable Object
   // both answer with it, so no test room starts on the old code and gets restarted mid-test.
