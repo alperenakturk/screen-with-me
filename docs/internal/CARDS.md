@@ -212,6 +212,9 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Owner's pick: none needed.
 - Planner (3 Nov 2026): the Design session prepares a first list from the live site in
   `docs/internal/design/sweep-1.md`; start from it, then add your own screenshots.
+- Owner's pick (3 Nov 2026) on sweep-1 item 8 (https://claude.ai/artifact/7GjPa4yVqDrYWAJ4fqe1fS): **A**, one English
+  friendly room name for everyone, in every language ("the same name for everyone"). No change to `friendlyRoomName`;
+  item 8 is closed.
 
 ## Proposed
 
