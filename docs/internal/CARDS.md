@@ -169,6 +169,11 @@ Planner to merge them once main is green.
   stored 50-message history, never to other members, the host or a TV; same limits and `cleanText` as chat. Phone +
   computer.
 - Tests: e2e (a third member never receives it, not in the history after a reload), harness.
+- Done (0.9.97.12): `{t:'chat', text, to}` (text only). The server sends it to the recipient's connections (not their
+  TV) and the sender's, never into the history or to anyone else, `private_gone` for myself / someone gone. In the chat a
+  press on someone's name, on a private bubble's label or "🔒 Message privately" in the person menu writes to them only
+  (bar "🔒 Only Alex will see this", ✕ / Esc back); bubbles say "🔒 Private · to / from Alex". Tests: e2e `private.mjs`
+  (9), harness `scripts/harness/private/run.cjs` (13, computer + iPhone).
 
 ### R14. Better parody avatars + two new anime characters (owner; Design, then a Developer card)
 - Why: owner wants every parody avatar redrawn more detailed and cuter, two new anime parodies (a calm genius student
