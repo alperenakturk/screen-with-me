@@ -35,7 +35,7 @@ import {
   type RoomGame,
   type RoomGameKind,
 } from '@swm/shared/protocol';
-import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
+import { applyRoomAction, freshItem, freshRoom, initialRoom, setItemTitle, TITLE_MAX_AGE_MS, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
@@ -220,7 +220,8 @@ export class Room extends DurableObject<Env> {
   private stickerOwners: Record<string, string> = {};
   /** Sıradaki her öğeye oy verenlerin kalıcı anahtarları (istemcilere gitmez; sadece sayı gider). */
   private voters: Record<string, string[]> = {};
-  private titles = new Map<string, string>();
+  /** Looked-up titles by video, with when (card Y2: a YouTube title is kept at most 30 days). */
+  private titles = new Map<string, { title: string; at: number }>();
   /** Oturum özeti sayaçları (son özetten beri) ve önceki özetler. */
   private stats = new StatsTracker();
   private recaps: Recap[] = [];
@@ -1045,6 +1046,7 @@ export class Room extends DurableObject<Env> {
       await this.ctx.storage.put('host', this.hostKey);
     }
 
+    await this.freshenTitles();
     const { members, hostId } = this.membersMessage();
     this.stats.people(members.length);
     await this.saveStats();
@@ -1681,21 +1683,58 @@ export class Room extends DurableObject<Env> {
     this.broadcast({ t: 'queue', queue: this.room.queue, change: null });
   }
 
+  /**
+   * Card Y2 (YouTube Developer Policies: non-authorized data at most 30 days): drops stored YouTube titles older than
+   * 30 days (or of unknown age) from the room, the recently played list and saved recaps, then looks the playing item's
+   * and the next few queued items' titles up again. Runs when someone joins; a room nobody joins keeps nothing visible.
+   */
+  private async freshenTitles(): Promise<void> {
+    const now = Date.now();
+    const room = freshRoom(this.room, now);
+    const played = this.played.map((p) => freshItem(p, now));
+    const playedChanged = played.some((p, i) => p !== this.played[i]);
+    const recaps = this.recaps.map((r) => (now - r.to > TITLE_MAX_AGE_MS && r.titles.length ? { ...r, titles: [] } : r));
+    const recapsChanged = recaps.some((r, i) => r !== this.recaps[i]);
+    if (room !== this.room) {
+      this.room = room;
+      await this.ctx.storage.put('room', this.room);
+    }
+    if (playedChanged) {
+      this.played = played;
+      await this.ctx.storage.put('played', this.played);
+    }
+    if (recapsChanged) {
+      this.recaps = recaps;
+      await this.ctx.storage.put('recaps', this.recaps);
+    }
+    for (const [key, value] of this.titles) if (now - value.at > TITLE_MAX_AGE_MS) this.titles.delete(key);
+    const refill = [this.room.state.item, ...this.room.queue.slice(0, 10)].filter((i): i is QueueItem => !!i && i.media.kind === 'youtube' && i.title === null);
+    for (const item of refill) void this.fillTitle(item);
+  }
+
   private makeItem(media: Media, me: Member, givenTitle: string | null): QueueItem {
-    return { id: newId(), media, title: givenTitle ?? this.titles.get(titleKey(media)) ?? null, by: me.name };
+    const cached = this.titles.get(titleKey(media));
+    if (givenTitle !== null) return { id: newId(), media, title: givenTitle, by: me.name };
+    if (cached && Date.now() - cached.at <= TITLE_MAX_AGE_MS) return { id: newId(), media, title: cached.title, titleAt: cached.at, by: me.name };
+    return { id: newId(), media, title: null, by: me.name };
   }
 
   /** Başlığı bulur, odadaki öğeye yazar ve herkese bildirir. */
   private async fillTitle(item: QueueItem): Promise<void> {
     const key = titleKey(item.media);
-    if (this.titles.has(key)) return;
-    const title = await resolveTitle(item.media);
+    const cached = this.titles.get(key);
+    const fresh = cached && Date.now() - cached.at <= TITLE_MAX_AGE_MS ? cached : null;
+    if (fresh && item.title === fresh.title) return;
+    const title = fresh?.title ?? (await resolveTitle(item.media));
     // Bulunamadıysa hatırlama: geçici bir ağ sorunu olabilir, bir dahaki sefere tekrar denensin.
     if (title === null) return;
-    if (this.titles.size > 500) this.titles.clear();
-    this.titles.set(key, title);
+    const at = fresh?.at ?? Date.now();
+    if (!fresh) {
+      if (this.titles.size > 500) this.titles.clear();
+      this.titles.set(key, { title, at });
+    }
     // Beklerken oda değişmiş olabilir; güncel duruma uygula.
-    const next = setItemTitle(this.room, item.id, title);
+    const next = setItemTitle(this.room, item.id, title, at);
     if (next === null) return;
     this.room = next;
     await this.ctx.storage.put('room', this.room);

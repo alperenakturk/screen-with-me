@@ -199,6 +199,8 @@ export interface QueueItem {
   media: Media;
   /** Sunucunun bulduğu başlık (bulamazsa null). */
   title: string | null;
+  /** When the title was looked up (card Y2: a YouTube title older than 30 days is dropped and looked up again). */
+  titleAt?: number;
   /** Ekleyen kişinin adı. */
   by: string;
   /** Sıradakiler için 👍 sayısı (sıra buna göre dizilir; yoksa 0). */

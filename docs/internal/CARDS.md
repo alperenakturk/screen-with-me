@@ -493,6 +493,17 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
 - Tests: unit (a 31-day-old title is refreshed or dropped, a 29-day one kept); e2e on a saved room with a fake clock or
   a seeded old record.
 - Owner's pick: none needed.
+- Done: 0.9.96.14 (PR below). `QueueItem.titleAt` (optional, no protocol bump) records when a title was looked up;
+  `room-logic.ts` `TITLE_MAX_AGE_MS` (30 days), `staleTitle`, `freshItem`, `freshRoom`. The room object's
+  `freshenTitles()` runs when someone joins (before `welcome`): YouTube titles older than 30 days or of unknown age
+  are dropped from the room, the played list and its title cache, saved recaps older than 30 days lose their titles,
+  and the playing item plus the next 10 queued are looked up again (oEmbed); meanwhile the page shows "YouTube · id".
+  Search / pool / like caches were already ≤ 24 h. Privacy policy (EN + TR) says so. Tests: unit (29-day kept, 31-day
+  and unknown-age dropped, other kinds untouched, `setItemTitle` records the time); a seeded e2e is not possible (e2e
+  can't write a room's storage), local full e2e passes.
+  With it: `scripts/e2e/handover.mjs`'s test clients open a socket once more when it drops with 1006 before
+  `welcome`, as the site does (0.9.96.13's live run failed on its first attempt there: Cloudflare restarted the room's
+  object right after the deploy).
 
 ### Y3. Usage counters for the YouTube quota form (audit prep, from Research)
 - Why: the quota increase form asks for real daily usage; we have no numbers today.
