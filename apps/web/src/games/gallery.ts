@@ -14,6 +14,7 @@ import word from './art/covers/word.svg?raw';
 import poker from './art/covers/poker.svg?raw';
 import { GAME_CATALOG, type SoloKind } from '@swm/shared/games/catalog';
 import { formatCoins } from '@swm/shared/games/snack-bar';
+import { PLANT_IDS } from '@swm/shared/games/garden';
 import { MAX_TABLES, ROOM_GAME_KINDS, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import type { GameNews } from '@swm/shared/games/catalog';
 import { el } from '../dom.ts';
@@ -31,9 +32,9 @@ const TEXT = {
     'hub.sideNote': 'Just you · the film keeps going · saved in this browser',
     'hub.soon': 'SOON',
     'games.snack.short': 'Run the room’s snack bar while the film plays.',
-    'games.garden.title': 'Window Garden',
-    'games.garden.short': 'Plants grow over watched minutes. Water now and then.',
+    'garden.growing': '{n} growing',
     'games.garden.text': 'A little garden on the window sill: plants grow only while the film plays, seeds come when a film ends or after a long evening with friends, every plant goes into your album.',
+    'games.garden.short': 'Plants grow over watched minutes. Water now and then.',
     'games.word.title': 'Five Frames',
     'games.word.short': 'One word a day, the same for everyone. 7 tries.',
     'games.word.text': 'Find the five-letter word of the day in 7 tries; English or Turkish, the same word for everyone.',
@@ -45,9 +46,9 @@ const TEXT = {
     'hub.sideNote': 'Sadece sen · film devam eder · kaydın bu tarayıcıda',
     'hub.soon': 'YAKINDA',
     'games.snack.short': 'Film oynarken odanın büfesini işlet.',
-    'games.garden.title': 'Pencere Bahçesi',
-    'games.garden.short': 'Bitkiler izlenen dakikalarla büyür. Arada bir sula.',
+    'garden.growing': '{n} büyüyor',
     'games.garden.text': 'Pencere önünde küçük bir bahçe: bitkiler sadece film oynarken büyür, film bitince ya da arkadaşlarla uzun bir akşamdan sonra tohum gelir, her bitki albümüne girer.',
+    'games.garden.short': 'Bitkiler izlenen dakikalarla büyür. Arada bir sula.',
     'games.word.title': 'Beş Kare',
     'games.word.short': 'Her gün bir kelime, herkese aynı. 7 hak.',
     'games.word.text': 'Günün beş harfli kelimesini 7 denemede bul; Türkçe ya da İngilizce, herkese aynı kelime.',
@@ -82,14 +83,25 @@ type SideKind = 'snack' | 'garden' | 'word';
 /** Solo games in the gallery: the ones built so far open, the others are announced. */
 const SIDE_GAMES: readonly { kind: SideKind; solo: SoloKind | null }[] = [
   { kind: 'snack', solo: 'snack' },
-  { kind: 'garden', solo: null },
+  { kind: 'garden', solo: 'garden' },
   { kind: 'word', solo: null },
 ];
-const sideTitle = (kind: SideKind) => (kind === 'snack' ? t('games.snack.title') : g(`games.${kind}.title`));
+const sideTitle = (kind: SideKind) => (kind === 'word' ? g('games.word.title') : t(`games.${kind}.title`));
 const sideText = (kind: SideKind) => (kind === 'snack' ? t('games.snack.text') : g(`games.${kind}.text`));
 
 /** A one-line "how far am I" for a solo game, from its save in this browser. */
 function progressOf(kind: SideKind): string | null {
+  if (kind === 'garden') {
+    try {
+      const saved = JSON.parse(load('windowGarden') || 'null') as { pots?: unknown; album?: unknown } | null;
+      if (!saved || !Array.isArray(saved.pots)) return null;
+      const growing = saved.pots.filter((p) => p && typeof p === 'object').length;
+      const found = saved.album && typeof saved.album === 'object' ? Object.keys(saved.album).length : 0;
+      return `🌱 ${g('garden.growing', { n: growing })} · 📖 ${found}/${PLANT_IDS.length}`;
+    } catch {
+      return null;
+    }
+  }
   if (kind !== 'snack') return null;
   try {
     const saved = JSON.parse(load('snackBar') || 'null') as { coins?: unknown; cinemas?: unknown } | null;

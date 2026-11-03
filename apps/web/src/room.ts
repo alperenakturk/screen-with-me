@@ -80,6 +80,7 @@ import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
 import { createSettingsDialog } from './ui/settings-dialog.ts';
 import { createGameStage } from './games/stage.ts';
+import type { SoloRoom } from '@swm/shared/games/catalog';
 import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
@@ -957,7 +958,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * What a solo side game needs (Snack Bar): is the room's video playing, how many other people are here (by name +
    * avatar, my other tabs and TVs left out) and how many of them are in voice with me.
    */
-  function soloContext(): { playing: boolean; others: number; voiceOthers: number } {
+  function soloContext(): SoloRoom {
     const self = `${myName}|${myAvatar}`;
     const mine = members.find((m) => m.id === myId);
     const others = new Map<string, boolean>();
@@ -967,7 +968,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       others.set(key, (others.get(key) ?? false) || !!m.voice);
     }
     const playing = !!roomState?.item && !roomState.paused && roomState.updatedAt <= clock.now();
-    return { playing, others: others.size, voiceOthers: mine?.voice ? [...others.values()].filter(Boolean).length : 0 };
+    const state = roomState;
+    const item = state?.item
+      ? {
+          id: state.item.id,
+          duration: current?.player.getDuration() ?? 0,
+          position: state.position + (state.paused ? 0 : Math.max(0, (clock.now() - state.updatedAt) / 1000) * state.rate),
+        }
+      : null;
+    return { playing, others: others.size, voiceOthers: mine?.voice ? [...others.values()].filter(Boolean).length : 0, item };
   }
   const games = createGameStage({
     wrap: $('.player-wrap'),

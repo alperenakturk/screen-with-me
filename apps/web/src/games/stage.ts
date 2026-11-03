@@ -11,8 +11,7 @@
 // for me only.
 
 import { createLogo } from '@swm/shared/logo';
-import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind } from '@swm/shared/games/catalog';
-import type { SnackContext } from '@swm/shared/games/snack-bar';
+import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { isPhoneLayout, onPhoneLayout } from '../device.ts';
 import { el } from '../dom.ts';
@@ -25,7 +24,7 @@ import { icon, type IconName } from '../ui/icons.ts';
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
 /** Solo games have an emoji until the games gallery (card GG) gives every game its cover. */
-const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿' };
+const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿', garden: '🌱' };
 const soloIcon = (kind: SoloKind): HTMLElement => el('span', { class: 'hub-glyph', 'aria-hidden': 'true' }, SOLO_GLYPH[kind]);
 
 /** A game the window can show: a room game (a table) or a solo game played on the side. */
@@ -100,7 +99,7 @@ interface StageOptions {
   /** A short bubble by 🎮. */
   hint: (text: string) => void;
   /** What a solo game needs from the room: is the video playing, how many others are here / in voice with me. */
-  room: () => SnackContext;
+  room: () => SoloRoom;
 }
 
 export function createGameStage(opts: StageOptions) {
@@ -572,7 +571,10 @@ export function createGameStage(opts: StageOptions) {
     place();
     body.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
     // Its code and stylesheet are a separate chunk: not downloaded when entering the room.
-    const stop = (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
+    const stop =
+      kind === 'garden'
+        ? (await import('./garden.ts')).mountGarden(body, opts.room)
+        : (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
     queueFit();
     if (solo !== kind) stop();
     else unmount = stop;

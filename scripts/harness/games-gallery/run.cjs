@@ -88,7 +88,7 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
   await tab(alex, 'side');
   const s = await gallery(alex);
   check(s.on === 'side', 'the last tab is remembered', String(s.on));
-  check(s.sides.join() === 'snack:on,-:off,-:off', 'On the side: Snack Bar open, two coming', s.sides.join());
+  check(s.sides.join() === 'snack:on,garden:on,-:off', 'On the side: Snack Bar and Window Garden open, Five Frames coming', s.sides.join());
   check(/12\.4K/.test(s.progress), 'Snack Bar shows my progress', s.progress);
   check(!s.scroll && s.onScreen, 'the side tab fits too', s.size);
   await alex.screenshot({ path: __dirname + '/gallery-side.png' });

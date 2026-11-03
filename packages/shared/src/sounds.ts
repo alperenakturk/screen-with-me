@@ -170,6 +170,12 @@ export function scheduleSound(ctx: Ctx, destination: AudioNode, id: SoundId, gai
     case 'snackServe': C(0, 0.35); N(0.003, 19, 0.07, 0.3); break;
     case 'snackBuy': N(0, 12, 0.08, 0.5); N(s * 0.7, 16, 0.14, 0.5); break;
     case 'snackMilestone': [12, 16, 19].forEach((n, i) => N(i * s * 0.8, n, 0.16, 0.6)); break;
+    case 'gardenPlant': N(0, 0, 0.12, 0.4); N(s * 0.6, 7, 0.18, 0.35); break;
+    case 'gardenWater': [19, 16, 14].forEach((n, i) => N(i * 0.05, n, 0.08, 0.3)); break;
+    case 'gardenSeed': N(0, 12, 0.12, 0.5); N(s * 0.8, 19, 0.3, 0.45); break;
+    case 'gardenBloom': [7, 12, 16].forEach((n, i) => N(i * s * 1.2, n, 0.4, 0.45)); break;
+    case 'gardenPick': N(0, 16, 0.1, 0.45); N(s * 0.7, 12, 0.2, 0.4); break;
+    case 'gardenNew': [0, 4, 7, 12, 16].forEach((n, i) => N(i * s * 0.9, n, 0.35, 0.55)); break;
     case 'snackCinema': [0, 7, 12, 16, 19].forEach((n, i) => N(i * s, n, 0.3, 0.7)); [12, 16, 19].forEach((n) => N(s * 5.2, n, 0.9, 0.4)); break;
   }
 }
