@@ -34,6 +34,7 @@ and four screen sizes at the same time. From now on work follows this list; anyt
 | **Next** (0.9.94) | Simplify the room (C + D) → Help / FAQ (EN + TR) + permission explainer → "Send feedback" (→ GitHub issues) → Shorts channel feed + Discover by country → Thanks page → debug panel → Shorts measurement → cinema mode → home page redesign → design bug sweep (cards 6–16 in `CARDS.md`) |
 | **Frozen** (not before 0.9.95) | Tablet layout, accessibility pass, camera window settings pass, new ideas and games |
 | **0.9.95 additions (owner, 2 Nov 2026)** | Side games: 🍿 Snack Bar (idle) → 🌱 Window Garden (cozy collection) → daily word game (EN + TR); then the move-to-device code. Accounts: none now (option A; passkey account only after 1.0 if users ask) |
+| **Name (owner, 3 Nov 2026)** | **Sidelit** from now on (card 6c); trademark + domain checks by the owner before 1.0 (`research/name-sidelit-check.md`) |
 | **Owner's decisions to make early** 👤 | Final name and domain (0.9.96 depends on them; a good case for a multi-advisor "council" decision session) |
 
 ## Milestone gates to 1.0 (owner's request, 2 Nov 2026: "be sure each version step is fully done")

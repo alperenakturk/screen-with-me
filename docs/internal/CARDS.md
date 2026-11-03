@@ -31,6 +31,25 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: harness check (content width, a row title wraps ≤ 2 lines at 1366×768 and 1920×1080), failing on 0.9.93.17 first.
 - Owner's pick: none needed. Order (Planner): 6b, then card 15 (home hero A), then 10–14.
 
+### 6c. Rename the product to Sidelit + the new logo and mascot (owner's decision, 3 Nov 2026; after 6b, before 15)
+- Why: owner: "change it straight to Sidelit now: the notes, the READMEs, the logo, the site, everything". The name
+  is his call (council + research: `name-ideas.md` round 3, `research/name-sidelit-check.md` 🟡, trademark / domain
+  checks still to do by the owner before 1.0). Logo D1 "night gold", mid-tone T1 deep teal (only where a second colour
+  helps; if two colours confuse, the main logo alone), mascot N1 Glowbeam: `docs/internal/design/logo-sidelit.md`
+  (Design session).
+- Done when: every user-facing text says Sidelit (site pages, titles, meta / Open Graph, manifest + PWA name, i18n EN
+  + TR, help / privacy / extension pages, invite texts, the extension's name, popup, store texts in `web-store.md`,
+  `store/src` shots, README.md + README.tr.md); `logo.ts` + `make-icons.mjs` draw D1 (with the ≤ 32 px simple cut),
+  icons / favicon / apple-touch / maskable regenerated, the mascot N1 replaces the old face where the mascot appears
+  (home preview, empty states, theme mascots only if cheap, else a follow-up card); docs and CLAUDE.md say Sidelit
+  for the product ("formerly ScreenWithMe" once in README / CLAUDE.md). **Unchanged on purpose:** the live address
+  (`screen-with-me.swm-server.workers.dev` until the own domain), the repo name, storage keys, message `source`
+  strings, protocol, the extension id: nothing a user has saved breaks.
+- Tests: all harnesses / e2e pass; a grep check in CI (or a unit test) that no user-facing string says "ScreenWithMe"
+  except the "formerly" lines; icons readable at 16 px (screenshot); owner's hand test (home, room, extension popup,
+  phone home-screen icon).
+- Owner's pick: done (Sidelit, D1, T1, N1). Bump: owner decides whether this is 0.9.94.
+
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
 - Done when: every box in `STATUS.md` "Owner's hand tests" for these versions is ticked or turned into a bug card.
@@ -66,7 +85,8 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   thank-you; linked from the footer and the Help page; the feedback form gets an unticked "Credit me on the Thanks
   page" box when the closed beta starts.
 - Tests: static page check in the same harness as Help.
-- Owner's pick: A (2 Nov 2026). **Owner action:** send the list of names who said yes.
+- Owner's pick: A (2 Nov 2026). Names who said yes (owner, 3 Nov 2026): Tecem Öztürk, Feyza Hacıalioğlu, Ömer Tuğrul
+  Bakan, Ahmet Faruk Uğurluoğlu, Nevin Senem Kanar, Mert Arı (exactly as written, Turkish letters kept).
 
 ### 12. Hidden test panel `?debug=1` (0.9.94, before the Shorts measurement)
 - Why: the owner tests from his phone without a computer; it gathers `/baglanti`, `?olcum=1`, `?tvlab=1`, version,
@@ -357,7 +377,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Done when: the owner picked a version and a mascot variant on the Design session's page; then a Developer card
   updates `logo.ts`, `make-icons.mjs` (icons, favicon, small 16–32 px version), the store tile and `store/src` shots.
 - Tests: the Developer's card: icons regenerate, favicon readable at 16 px, harness screenshots of the top bar.
-- Owner's pick: waiting (Design session working). Replaces the "touch up today's mascot" pick if he chooses a C
+- Owner's pick (3 Nov 2026, round 2): D1 night gold + T1 deep teal + N1 Glowbeam; built by card 6c. Replaced the "touch up today's mascot" pick if he chooses a C
   version; works with either name (Sidelit or ScreenWithMe).
 
 ## Done
