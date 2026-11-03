@@ -6,7 +6,7 @@ import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { sendFeedback } from './feedback.ts';
 import { tiktokResolve } from './tiktok.ts';
-import { youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
+import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 
 export { Draw } from './draw.ts';
 export { FeedbackGate } from './feedback.ts';
@@ -121,9 +121,9 @@ export default {
 
     // YouTube search from the room's link box (the API key never leaves the Worker). Pages of other sites may not
     // use it as their free search: a browser sends their `Origin`.
-    if (url.pathname === '/api/youtube/search' || url.pathname === '/api/youtube/pool' || url.pathname === '/api/youtube/like') {
+    if (url.pathname === '/api/youtube/search' || url.pathname === '/api/youtube/pool' || url.pathname === '/api/youtube/like' || url.pathname === '/api/youtube/channel') {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
-      const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : youtubeSearch;
+      const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : url.pathname.endsWith('/channel') ? youtubeChannel : youtubeSearch;
       return handler(request, url, env, () => ipKey(request));
     }
     if (url.pathname === '/api/tiktok/resolve') {

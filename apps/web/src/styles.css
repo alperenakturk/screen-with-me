@@ -10097,6 +10097,20 @@ html.shorts-view .voice-cams {
   gap: 6px;
 }
 
+/* Card 10: Discover's country (🌍 my country / 🌐 world / one of about ten). */
+.feed-region {
+  display: block;
+  margin-top: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
 /* 0.9.92.6: the running feed on top of its window, with a stop button; the topic box and its button side by side. */
 .feed-now {
   display: flex;

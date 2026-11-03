@@ -188,6 +188,18 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: unit tests for channel input parsing; Worker e2e with `YOUTUBE_API_KEY` off and the region validated;
   `shorts-rail/run.cjs` still passes; owner's hand test with a real channel.
 - Owner's pick: A, viewer's country, changeable (2 Nov 2026).
+- Done: 0.9.96.1 (PR below). Shared `youtube-search.ts`: `parseChannelInput` (channel links `youtube.com/@name`,
+  `/channel/UC…`, also with `/shorts`; bare `@name`; bare `UC…`), `channelParam` / `parseChannelParam`, `POOL_REGIONS` (12
+  countries), `isPoolRegionChoice`, `poolRegion` (auto → `cf.country`, else en → US / tr → TR; `world` = no region).
+  Worker: `/api/youtube/pool` takes `region` (auto / world / a code; the pool's cache key is per kind + region + language
+  + day, `yt-pool2`; the country is never stored), new `/api/youtube/channel?c=UC…|@handle` (channels.list by id or
+  `forHandle` → uploads playlist → playlistItems → videos.list: **3 units a page**, cached per channel + day, `yt-chan1`;
+  `next` = the playlist's page token). Pool pages stay 101 units per new kind + region + day. Site: ♾ window — a channel
+  link / @handle starts that channel's feed (`FeedSource` `channel`), words stay a topic search; Discover has a 🌍 country
+  select (my country / world / 12, names from `Intl.DisplayNames`, `opt:poolRegion`). A plain channel name is not taken
+  as a channel on purpose: it can't be told from a topic and a channel-name search costs 100 units. Privacy policy:
+  the country use under "YouTube search". Tests: unit `youtube-channel.test.ts`, e2e `search.mjs` (region / channel input
+  checks; local `off`), `shorts-rail` harness.
 
 ### 11. Thanks page (0.9.94 "Next" 5)
 - Why: owner, 1 Nov 2026: credit the people who helped by testing.

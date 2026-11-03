@@ -383,6 +383,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.1 (Shorts):**
+- [ ] ♾ window: paste a channel's link (or type its @name) → that channel's Shorts fill the queue.
+- [ ] ♾ → Discover: the country box says "My country"; pick another country or "World", tap a category: the Shorts change.
+
 **0.9.96 (computer + phone), after you add the token (steps in PR "Send feedback"):**
 - [ ] ⋯ More → 💌 Send feedback (also in the profile menu and on the Help page): pick a type, write a line, send.
   "Thanks! We got it." shows and an issue labelled `feedback` appears in the repository. Before the token: the form
