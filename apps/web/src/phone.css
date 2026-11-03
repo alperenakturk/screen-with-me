@@ -1496,3 +1496,43 @@ html.sideways.ph-room .room .ph-turn-fs[hidden] {
 html.phone .game-menu.gallery {
   max-height: none;
 }
+
+/* Sweep-1 #4: the join card on a sideways phone fits the screen (no scroll): the room line and the hint go, the title is
+   smaller and the button sits beside the name. */
+@media (max-height: 500px) {
+  .join-card:not(.avatar-card) {
+    padding: 14px 18px;
+  }
+
+  .join-card:not(.avatar-card) .step-label,
+  .join-card:not(.avatar-card) .join-playing,
+  .join-card:not(.avatar-card) [data-i18n='joinHint'] {
+    display: none;
+  }
+
+  .join-card:not(.avatar-card) .join-waiting {
+    margin: 0 0 4px;
+    font-size: 1rem;
+  }
+
+  .join-card:not(.avatar-card) #name-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 6px 10px;
+  }
+
+  .join-card:not(.avatar-card) #name-form > .step-title {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  .join-card:not(.avatar-card) #name-form > .btn.big {
+    padding: 12px 18px;
+  }
+}
+
+/* Sweep-1 #5: "Fullscreen when turned sideways" does nothing on a phone since 0.9.92.8 (tablets only). */
+html.phone .rotate-row {
+  display: none;
+}

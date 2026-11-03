@@ -334,6 +334,21 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] After 1.0 (owner decides): Firefox extension (L), TURN relay (Phase 2). Not planned: Safari extension, Opera's
   own store.
 
+## Design sweep (card 16): what was found and what happened
+From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
+**Sweep 1 (0.9.96.8):**
+- Fixed: `/baglanti` buttons wrap on a phone (#1); each check is a grid row, its value on its own line (#2); a bare
+  "?" is now "—" (#3); the join card fits a sideways phone (#4); "Fullscreen when turned sideways" is hidden on phones
+  where it does nothing (#5); the link box placeholder is short enough not to be cut ("Search YouTube or paste a
+  link") (#6); the EN example name is "Alex paused" (#7); the room's side cards are opaque in scene themes (#9); the
+  home preview's bubbles are opaque (#10 / #12, contrast); primary buttons pass AA in Gece (#6a4cf2 behind white,
+  5.4:1) and Neon (dark text) (#13); no ad-blocker tip under the room; the invite line wraps without a lone word.
+- Closed by the owner: #8 one English room name for everyone (pick A).
+- Moved: #11 (empty space under the phone home) and the Sinema beam over the home heading (#10) go to card 15b (new home).
+- Kept on purpose: 🎙 / 📷 red before joining voice (owner's choice, 0.9.91.12). #14 ("You" under my face) reads fine
+  by eye.
+- Idea for the owner's list: a sideways phone in an empty room could keep faces / chat until a video starts.
+
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
