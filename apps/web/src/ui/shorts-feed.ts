@@ -1,5 +1,5 @@
 import type { Media, QueueItem } from '@swm/shared/protocol';
-import { isPoolKind, isVideoId, parseSearchAnswer, POOL_RESULTS, type PoolKind } from '@swm/shared/youtube-search';
+import { isPoolKind, isPoolRegionChoice, isVideoId, parseChannelParam, parseSearchAnswer, POOL_RESULTS, type PoolKind, type PoolRegionChoice } from '@swm/shared/youtube-search';
 import { lang, t } from '../i18n.ts';
 
 /**
@@ -18,7 +18,12 @@ const SEEN_MAX = 400;
  * Where the Shorts come from: words (`topic`, a Shorts-only search), "🎲 Keşfet" (`pool`: today's shared pool of a
  * category, shuffled here) or "✨ Bunun gibi" (`like`: the playing Short's channel, then its title's words). 0.9.91.18.
  */
-export type FeedSource = { kind: 'topic' } | { kind: 'pool'; pool: PoolKind } | { kind: 'like'; id: string };
+export type FeedSource =
+  | { kind: 'topic' }
+  | { kind: 'pool'; pool: PoolKind; region?: PoolRegionChoice }
+  | { kind: 'like'; id: string }
+  /** Card 10: one channel's Shorts (`c` = `UC…` or `@handle`, see `channelParam`). */
+  | { kind: 'channel'; c: string };
 
 interface FeedState {
   /** What the person sees ("kediler", "🎵 Müzik", "✨ Bunun gibi"). */
@@ -140,10 +145,12 @@ export function createShortsFeed(opts: FeedOptions) {
       const source = state.source ?? { kind: 'topic' };
       const path =
         source.kind === 'pool'
-          ? `/api/youtube/pool?kind=${source.pool}`
+          ? `/api/youtube/pool?kind=${source.pool}&region=${source.region ?? 'auto'}`
           : source.kind === 'like'
             ? `/api/youtube/like?id=${source.id}`
-            : `/api/youtube/search?short=1&q=${encodeURIComponent(topic)}`;
+            : source.kind === 'channel'
+              ? `/api/youtube/channel?c=${encodeURIComponent(source.c)}`
+              : `/api/youtube/search?short=1&q=${encodeURIComponent(topic)}`;
       const response = await fetch(`${path}&hl=${lang()}${page}`);
       const answer = response.ok ? parseSearchAnswer(await response.json(), POOL_RESULTS) : ({ error: 'failed' } as const);
       if (!state || state.topic !== topic) return;
@@ -208,9 +215,10 @@ export function createShortsFeed(opts: FeedOptions) {
 }
 
 function cleanSource(value: unknown): FeedSource {
-  const source = (typeof value === 'object' && value !== null ? value : {}) as { kind?: unknown; pool?: unknown; id?: unknown };
-  if (source.kind === 'pool' && isPoolKind(source.pool)) return { kind: 'pool', pool: source.pool };
+  const source = (typeof value === 'object' && value !== null ? value : {}) as { kind?: unknown; pool?: unknown; id?: unknown; region?: unknown; c?: unknown };
+  if (source.kind === 'pool' && isPoolKind(source.pool)) return { kind: 'pool', pool: source.pool, region: isPoolRegionChoice(source.region) ? source.region : 'auto' };
   if (source.kind === 'like' && isVideoId(source.id)) return { kind: 'like', id: source.id };
+  if (source.kind === 'channel' && typeof source.c === 'string' && parseChannelParam(source.c)) return { kind: 'channel', c: source.c };
   return { kind: 'topic' };
 }
 

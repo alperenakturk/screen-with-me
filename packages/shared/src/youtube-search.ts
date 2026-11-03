@@ -259,3 +259,70 @@ export function titleWords(title: string, max = 4): string | null {
 
 /** "More like this": the page token that switches from the channel's uploads to a search on the title's words. */
 export const LIKE_SEARCH_PAGE = 'words';
+
+/**
+ * Discover by region (card 10, owner's pick A: the viewer's country, changeable). `auto` = the connection's country as
+ * Cloudflare sees it (never stored), `world` = no region filter, or one of these. One pool per kind + region + day.
+ */
+export const POOL_REGIONS = ['US', 'GB', 'CA', 'AU', 'IN', 'DE', 'FR', 'ES', 'BR', 'MX', 'TR', 'JP'] as const;
+export type PoolRegionChoice = 'auto' | 'world' | (typeof POOL_REGIONS)[number];
+
+export function isPoolRegionChoice(value: unknown): value is PoolRegionChoice {
+  return value === 'auto' || value === 'world' || (typeof value === 'string' && (POOL_REGIONS as readonly string[]).includes(value));
+}
+
+/**
+ * The region a pool is fetched for: an explicit choice, or for `auto` the connection's country when it is a plain
+ * two-letter code (YouTube takes any ISO 3166-1 alpha-2 code), else the language's old default (en → US, tr → TR).
+ * `world` means no `regionCode`.
+ */
+export function poolRegion(choice: PoolRegionChoice, country: unknown, lang: 'en' | 'tr'): string {
+  if (choice !== 'auto') return choice;
+  if (typeof country === 'string' && /^[A-Z]{2}$/.test(country) && country !== 'XX' && country !== 'T1') return country;
+  return lang === 'en' ? 'US' : 'TR';
+}
+
+/** A channel the ♾ feed can follow (card 10): its id (`UC…`) or its @handle. */
+export type ChannelRef = { id: string } | { handle: string };
+
+const CHANNEL_ID = /^UC[A-Za-z0-9_-]{22}$/;
+const HANDLE = /^[A-Za-z0-9._-]{3,30}$/;
+
+/**
+ * What someone typed into the ♾ window, read as a channel: a channel link (`youtube.com/channel/UC…`,
+ * `youtube.com/@name`, also with `/shorts` or `/videos` after it), a bare `@name` or a bare `UC…` id. Anything else
+ * (words) stays a topic search, so a plain name is never guessed as a channel. Null when it is not a channel.
+ */
+export function parseChannelInput(text: string): ChannelRef | null {
+  const raw = text.trim();
+  if (!raw) return null;
+  if (CHANNEL_ID.test(raw)) return { id: raw };
+  if (raw.startsWith('@')) return HANDLE.test(raw.slice(1)) ? { handle: raw.slice(1) } : null;
+  let url: URL;
+  try {
+    url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+  } catch {
+    return null;
+  }
+  if (!/^(www\.|m\.)?youtube\.com$/i.test(url.hostname)) return null;
+  const [first, second] = url.pathname.split('/').filter(Boolean);
+  if (first?.startsWith('@')) {
+    const handle = decodeURIComponent(first.slice(1));
+    return HANDLE.test(handle) ? { handle } : null;
+  }
+  if (first === 'channel' && second && CHANNEL_ID.test(second)) return { id: second };
+  return null;
+}
+
+/** The query value for `/api/youtube/channel?c=…`: `UC…` or `@handle`. */
+export function channelParam(ref: ChannelRef): string {
+  return 'id' in ref ? ref.id : `@${ref.handle}`;
+}
+
+/** Back from the query value (the Worker validates with it). */
+export function parseChannelParam(value: unknown): ChannelRef | null {
+  if (typeof value !== 'string') return null;
+  if (CHANNEL_ID.test(value)) return { id: value };
+  if (value.startsWith('@') && HANDLE.test(value.slice(1))) return { handle: value.slice(1) };
+  return null;
+}

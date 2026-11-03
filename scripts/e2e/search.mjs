@@ -18,3 +18,15 @@ if (live) {
 } else {
   ok(answer.error === 'off' || Array.isArray(answer.items), `Local answer has a known shape (${answer.error ?? 'items'})`);
 }
+
+// Card 10: Discover by region and the ♾ feed from one channel. Only input checks live (no YouTube call is made for
+// a refused request); locally without a key the valid ones answer `off`.
+ok((await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=ZZ`)).status === 400, 'Discover: an unknown region is refused');
+ok((await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=de`)).status === 400, 'Discover: a lower-case region is refused');
+ok((await fetch(`${http}/api/youtube/channel?c=cats&hl=en`)).status === 400, 'Channel feed: words are not a channel');
+ok((await fetch(`${http}/api/youtube/channel?c=${encodeURIComponent('@<script>')}&hl=en`)).status === 400, 'Channel feed: a broken handle is refused');
+ok((await fetch(`${http}/api/youtube/channel?c=@abc&hl=en`, { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Channel feed: another site may not use it');
+if (!live) {
+  ok((await (await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=world`)).json()).error === 'off', 'Discover: "world" is accepted (off without a key)');
+  ok((await (await fetch(`${http}/api/youtube/channel?c=@somechannel&hl=en`)).json()).error === 'off', 'Channel feed: an @handle is accepted (off without a key)');
+}

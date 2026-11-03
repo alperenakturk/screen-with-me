@@ -30,7 +30,7 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
-import { POOL_KINDS } from '@swm/shared/youtube-search';
+import { channelParam, isPoolRegionChoice, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice } from '@swm/shared/youtube-search';
 import { canShareSheet, isPhoneLayout, isTouch } from './device.ts';
 import { el } from './dom.ts';
 import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
@@ -500,7 +500,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="feed-head phone-only"><b data-i18n="feed.short"></b><button id="shorts-feed-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
               <div id="shorts-feed-now" class="feed-now" hidden><span id="shorts-feed-now-text"></span><button id="shorts-feed-stop" type="button" class="btn small-btn" data-i18n="feed.stop"></button></div>
               <button id="shorts-like" type="button" class="feed-like" data-i18n-title="feed.likeHint"><b data-i18n="feed.like"></b><span class="muted small" data-i18n="feed.likeText"></span></button>
-              <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span></p>
+              <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span> <select id="shorts-region" class="feed-region" data-i18n-title="feed.region"></select></p>
               <div id="shorts-pools" class="feed-pools" role="group"></div>
               <label class="small" for="shorts-feed-topic" data-i18n="feed.topicLabel"></label>
               <div class="feed-topic-row">
@@ -2106,17 +2106,34 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#shorts-feed-close').addEventListener('click', () => (feedForm.hidden = true));
   // "🎲 Keşfet" (0.9.91.18): one tap starts an endless feed from today's shared pool of a category.
   const pools = $('#shorts-pools');
-  const renderPools = () =>
+  // Card 10 (owner's pick A): Discover shows the viewer's country by default ("🌍 Auto": the server uses the
+  // connection's country, never stored), or a chosen one, or the whole world. Remembered in this browser.
+  const regionSelect = $<HTMLSelectElement>('#shorts-region');
+  const savedRegion = load('opt:poolRegion');
+  let poolRegion: PoolRegionChoice = isPoolRegionChoice(savedRegion) ? savedRegion : 'auto';
+  regionSelect.addEventListener('change', () => {
+    poolRegion = isPoolRegionChoice(regionSelect.value) ? regionSelect.value : 'auto';
+    save('opt:poolRegion', poolRegion);
+  });
+  const renderPools = () => {
+    const names = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames([lang()], { type: 'region' }) : null;
+    regionSelect.replaceChildren(
+      el('option', { value: 'auto' }, `🌍 ${t('feed.regionAuto')}`),
+      el('option', { value: 'world' }, `🌐 ${t('feed.regionWorld')}`),
+      ...POOL_REGIONS.map((code) => el('option', { value: code }, names?.of(code) ?? code)),
+    );
+    regionSelect.value = poolRegion;
     pools.replaceChildren(
       ...POOL_KINDS.map((kind) => {
         const chip = el('button', { type: 'button', class: 'feed-pool', 'data-pool': kind }, t(`pool.${kind}`));
         chip.addEventListener('click', () => {
           feedForm.hidden = true;
-          feed.start(t(`pool.${kind}`), { kind: 'pool', pool: kind });
+          feed.start(t(`pool.${kind}`), { kind: 'pool', pool: kind, region: poolRegion });
         });
         return chip;
       }),
     );
+  };
   renderPools();
   window.addEventListener('langchange', renderPools);
   // "✨ Bunun gibi": more from the playing Short's channel, then Shorts with similar titles.
@@ -2129,7 +2146,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   feedForm.addEventListener('submit', (event) => {
     event.preventDefault();
     feedForm.hidden = true;
-    feed.start(feedTopic.value);
+    // Card 10: a channel link or @handle follows that channel's Shorts; words stay a topic search.
+    const channel = parseChannelInput(feedTopic.value);
+    if (channel) feed.start('id' in channel ? t('feed.channel') : `@${channel.handle}`, { kind: 'channel', c: channelParam(channel) });
+    else feed.start(feedTopic.value);
     feedTopic.value = '';
   });
   document.addEventListener('pointerdown', (event) => {
