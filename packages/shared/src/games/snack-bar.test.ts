@@ -85,12 +85,12 @@ describe('Snack Bar economy', () => {
 
   it('buying: stands unlock one after another, never below zero', () => {
     const save = freshSnack();
-    expect(unlocked(save, 'drinks')).toBe(true);
+    expect(unlocked(save, 'soda')).toBe(true);
     expect(unlocked(save, 'nachos')).toBe(false);
-    expect(buy(save, 'drinks')).toBe(false);
+    expect(buy(save, 'soda')).toBe(false);
     save.coins = 200;
-    expect(buy(save, 'drinks')).toBe(true);
-    expect(save.levels.drinks).toBe(1);
+    expect(buy(save, 'soda')).toBe(true);
+    expect(save.levels.soda).toBe(1);
     expect(save.coins).toBeCloseTo(80);
     expect(unlocked(save, 'nachos')).toBe(true);
     expect(buy(save, 'nachos')).toBe(false);
@@ -130,11 +130,11 @@ describe('Snack Bar economy', () => {
     save.earned = 4_000_000;
     save.lifetime = 5_000_000;
     save.coins = 123;
-    save.levels.drinks = 40;
+    save.levels.soda = 40;
     expect(starsFor(save)).toBe(6);
     expect(newCinema(save)).toBe(true);
     expect(save).toMatchObject({ coins: 0, earned: 0, lifetime: 5_000_000, stars: 6, cinemas: 1 });
-    expect(save.levels.drinks).toBe(0);
+    expect(save.levels.soda).toBe(0);
     expect(save.levels.popcorn).toBe(1);
     expect(baseRate(save)).toBeCloseTo(0.5 * 1.3);
   });
@@ -165,7 +165,7 @@ describe('Snack Bar save', () => {
       earned: 'lots',
       lifetime: 10,
       watched: Infinity,
-      levels: { popcorn: 0, drinks: 2.7, nachos: -1, candy: '9', unknown: 4 },
+      levels: { popcorn: 0, soda: 2.7, nachos: -1, candy: '9', unknown: 4 },
       stars: 1.9,
       cinemas: NaN,
       seen: 1234,
@@ -175,7 +175,7 @@ describe('Snack Bar save', () => {
     expect(save.earned).toBe(0);
     expect(save.lifetime).toBe(10);
     expect(save.watched).toBe(0);
-    expect(save.levels).toEqual({ popcorn: 1, drinks: 2, nachos: 0, candy: 0, hotdog: 0, icecream: 0 });
+    expect(save.levels).toEqual({ popcorn: 1, soda: 2, nachos: 0, candy: 0, 'second-counter': 0 });
     expect(save.stars).toBe(1);
     expect(save.cinemas).toBe(0);
     expect(save.seen).toBe(1234);
