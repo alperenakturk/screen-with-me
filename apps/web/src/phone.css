@@ -1491,3 +1491,8 @@ html.sideways.ph-room .room .ph-turn-fs[hidden] {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
 }
+
+/* Games gallery on a phone (card GG): the sheet is as tall as its content, never scrolls. */
+html.phone .game-menu.gallery {
+  max-height: none;
+}
