@@ -10,6 +10,7 @@ import { tiktokResolve } from './tiktok.ts';
 import { podcasts } from './podcasts.ts';
 import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 import { youtubeUsage } from './usage.ts';
+import { ipKey } from './ip-key.ts';
 
 export { Draw } from './draw.ts';
 export { FeedbackGate } from './feedback.ts';
@@ -20,6 +21,7 @@ export { Room } from './room.ts';
 export { TvLink } from './tv-link.ts';
 export { MoveLink } from './move-link.ts';
 export { YoutubeUsage } from './usage.ts';
+export { IpKeys } from './ip-key.ts';
 
 /**
  * Browsers always send `Origin` with a WebSocket; only our own site (and local development) may open connections, so
@@ -43,11 +45,6 @@ function allowedOrigin(request: Request, url: URL): boolean {
 /** The HTTP fallback's session ids (`fallback.ts` `newSid`: 16 random bytes in hex). */
 const SID_PATTERN = /^[0-9a-f]{32}$/;
 
-async function ipKey(request: Request): Promise<string> {
-  const ip = request.headers.get('CF-Connecting-IP') ?? 'local';
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`swm-ip:${ip}`));
-  return Array.from(new Uint8Array(digest).slice(0, 8), (b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 /**
  * Checks every new connection (a WebSocket upgrade or an HTTP fallback `open`): right origin, and at most
@@ -56,7 +53,7 @@ async function ipKey(request: Request): Promise<string> {
  */
 async function guardSocket(request: Request, url: URL, env: Env): Promise<Request | Response> {
   if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
-  const key = await ipKey(request);
+  const key = await ipKey(request, env);
   if (env.CONNECT_LIMIT && !(await env.CONNECT_LIMIT.limit({ key })).success) return new Response('Too many connections', { status: 429 });
   const forwarded = new Request(request);
   forwarded.headers.set(IP_HEADER, key);
@@ -82,7 +79,7 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
     // such requests per IP and minute (a loop of made-up ids used to wake objects for free).
     if (op !== 'send' && op !== 'poll' && op !== 'close') return new Response('Bad step', { status: 400 });
     if (!SID_PATTERN.test(url.searchParams.get('sid') ?? '')) return new Response('Bad session', { status: 400 });
-    if (env.FALLBACK_LIMIT && !(await env.FALLBACK_LIMIT.limit({ key: await ipKey(request) })).success) return new Response('Too many requests', { status: 429 });
+    if (env.FALLBACK_LIMIT && !(await env.FALLBACK_LIMIT.limit({ key: await ipKey(request, env) })).success) return new Response('Too many requests', { status: 429 });
     forwarded = new Request(request);
     forwarded.headers.delete(IP_HEADER);
   }
@@ -109,7 +106,7 @@ export default {
     // live e2e only once both say the new id. TvLink stores nothing, so these probe objects leave nothing behind.
     if (url.pathname === '/api/version') {
       // Security M4: each call starts a fresh object, so it shares the saved-room lookups' limit (its own key).
-      if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: `version:${await ipKey(request)}` })).success) {
+      if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: `version:${await ipKey(request, env)}` })).success) {
         return new Response('Too many requests', { status: 429 });
       }
       const probe = env.TVLINKS.get(env.TVLINKS.idFromName(`version-${crypto.randomUUID()}`));
@@ -134,7 +131,7 @@ export default {
     }
 
     // "Send feedback" (card 9): a GitHub issue in the private repository, see feedback.ts.
-    if (url.pathname === '/api/feedback') return sendFeedback(request, url, env, () => ipKey(request));
+    if (url.pathname === '/api/feedback') return sendFeedback(request, url, env, () => ipKey(request, env));
 
     // Card Y3: the owner's YouTube usage counters (secret header), for the quota form.
     if (url.pathname === '/api/youtube/usage') return youtubeUsage(request, env);
@@ -144,16 +141,16 @@ export default {
     if (url.pathname === '/api/youtube/search' || url.pathname === '/api/youtube/pool' || url.pathname === '/api/youtube/like' || url.pathname === '/api/youtube/channel') {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
       const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : url.pathname.endsWith('/channel') ? youtubeChannel : youtubeSearch;
-      return handler(request, url, env, () => ipKey(request));
+      return handler(request, url, env, () => ipKey(request, env));
     }
     // Podcasts from the link box (Apple's iTunes Search + the show's RSS feed, card P2).
     if (url.pathname === '/api/podcasts/search' || url.pathname === '/api/podcasts/episodes') {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
-      return podcasts(request, url, env, () => ipKey(request));
+      return podcasts(request, url, env, () => ipKey(request, env));
     }
     if (url.pathname === '/api/tiktok/resolve') {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
-      return tiktokResolve(request, url, env, () => ipKey(request));
+      return tiktokResolve(request, url, env, () => ipKey(request, env));
     }
 
     // Kayıtlı odalar listesi için küçük bilgi / kayıt kaldırma (Durable Object cevaplar).
@@ -171,7 +168,7 @@ export default {
         if (!Number.isFinite(size)) return new Response('Length required', { status: 411 });
         if (size > UNSAVE_BODY_BYTES) return new Response('Too large', { status: 413 });
       }
-      if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: await ipKey(request) })).success) {
+      if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: await ipKey(request, env) })).success) {
         return new Response('Too many requests', { status: 429 });
       }
       return env.ROOMS.get(env.ROOMS.idFromName(info[1]!)).fetch(request);

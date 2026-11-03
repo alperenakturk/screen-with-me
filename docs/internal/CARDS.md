@@ -594,6 +594,15 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   and the policy describes it as it is (incl. chat images counted per IP).
 - Tests: unit (same IP same day → same key, different day → different key), e2e emoji / image limits still pass.
 - Owner's pick: none needed.
+- Done: 0.9.96.19 (PR below). Shared `ip-hash.ts` (`hashIp` = HMAC-SHA-256 of the IP, 16 hex digits; `ipHashKey`,
+  `newIpHashKey`); the `IpKeys` object (binding `IPKEYS`, migration `v10`, one instance) makes a random 32-byte key
+  per UTC day and overwrites the old one, so no owner secret is needed and past days' hashes can't be matched to an
+  address by anyone. The Worker (`ip-key.ts` `ipKey`) fetches it once per isolate and day; if the object can't be
+  reached it hashes with an isolate-local random key for that moment (the site keeps working). Every rate limit and
+  `X-SWM-Ip` use it; per-day counts keyed by it (emoji / image uploads, the YouTube share) restart with the new key at
+  00:00 UTC. Privacy policy (EN + TR): what is counted (connections, emoji and chat images, searches) and how the
+  daily keyed code works. Tests: unit `ip-hash.test.ts` (same day same code, another key another code, not the plain
+  SHA-256); local full e2e (emoji / image limits) green.
 
 ### Privacy: no search words in our logs (M6)
 - Severity: medium

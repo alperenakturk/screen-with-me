@@ -45,6 +45,7 @@
     "./socket": "./src/socket.ts",
     "./feedback": "./src/feedback.ts",
     "./yt-usage": "./src/yt-usage.ts",
+    "./ip-hash": "./src/ip-hash.ts",
     "./move": "./src/move.ts",
     "./podcasts": "./src/podcasts.ts"
   },
