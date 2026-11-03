@@ -383,6 +383,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.2 (Thanks page, computer + phone):**
+- [ ] Footer → "Thanks" (and Help → the thank-you line): the six names, Glowbeam, "Send feedback" opens the form;
+  TR / EN switch at the top works, nothing scrolls on the phone.
+
 **0.9.96.1 (Shorts):**
 - [ ] ♾ window: paste a channel's link (or type its @name) → that channel's Shorts fill the queue.
 - [ ] ♾ → Discover: the country box says "My country"; pick another country or "World", tap a category: the Shorts change.
