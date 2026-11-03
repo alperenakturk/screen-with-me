@@ -99,6 +99,24 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   opens at the edge); home harness (no theme strip, Gece on a fresh browser); unit or harness for the random themed
   avatar; screenshots of the 11 mascots.
 - Owner's pick: none needed.
+- Done: 0.9.96.6 (PR below).
+  1. The empty room's rail rests and comes at the right edge like the rail with a video (`fullscreen.ts` `railFixed` is
+     now only "no video and no edge mode", i.e. touch screens without a mouse; the CSS rule that kept `.rail-bare` out
+     is gone). Video-only buttons stay dimmed.
+  2. ⋯ More on a computer has no Games (`room-more.ts`: `desktop` → no 🎮); phones keep it.
+  3. The join card already gives a browser without a saved avatar a random one from the "Themed" page
+     (`randomAvatar`, `AVATAR_PAGES[0]`); now covered by the room-more harness.
+  4. No theme picker on the home page (`home.ts`; its texts `home.themes*` removed); Gece stays the default
+     (`currentTheme`), a saved theme still applies; the home harness checks both.
+  5. Design's fixed `glowbeam-<theme>.svg` (PR #182) copied by `theme-art.mjs` (8 changed); all 11 checked in a
+     screenshot.
+  6. 🔍 is a drawn lens only (`icons.ts` `search`), no text; `aria-label` / title "Search" stay.
+  7. Cameras start in their own one window on the page (like Meet): no tiles and no "Pop out" / "⤓ back to the card"
+     in the Together card (`cam-float.ts` never uses the card place; `opt:camFloat` is no longer read); the layout
+     defaults to the one window (`group`), a saved `free` is kept (it was only ever saved by the person's own press);
+     the window's switch goes to free tiles, which start attached under the pill.
+  Tests: room-more, home, one-rail, cam-fs (cameras start in the one window, none in the card), yt-room,
+  games-gallery, garden; the voice harnesses' pop-out / put-back steps changed to the new flow.
 
 ### 15b. New home page, tablet too (owner, 3 Nov 2026: "redo the home page; today's is okay, but it must look right on a tablet"; lane A, after 16)
 - Why: the owner wants a fresh home design that works on computer, tablet and phone; the theme picker goes away
