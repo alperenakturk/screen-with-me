@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>ScreenWithMe — Help</title>
+    <meta name="title-en" content="ScreenWithMe — Help" />
+    <meta name="title-tr" content="ScreenWithMe — Yardım" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <script src="/lang.js"></script>
+    <style>
+      :root { --bg: #0f1014; --surface: #181a21; --surface-2: #22252e; --border: #2c303b; --text: #ecedf1; --muted: #9a9fad; --accent: #8f74ff; }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      main { max-width: 760px; margin: 0 auto; padding: 24px 16px 72px; }
+      a { color: var(--accent); }
+      h1 { margin: 16px 0 4px; }
+      h2 { margin-top: 32px; font-size: 20px; }
+      .muted { color: var(--muted); }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-top: 16px; }
+      ul { padding-left: 22px; }
+      li { margin: 6px 0; }
+      .top { display: flex; justify-content: space-between; align-items: center; }
+      .lang { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+      .lang button { background: transparent; color: var(--muted); border: 0; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+      .lang button[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
+      nav.toc { columns: 2; column-gap: 24px; }
+      nav.toc a { display: block; margin: 4px 0; }
+      h2 { scroll-margin-top: 16px; }
+      @media (max-width: 560px) { nav.toc { columns: 1; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="top">
+        <a href="/">← ScreenWithMe</a>
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-set-lang="tr">TR</button>
+          <button type="button" data-set-lang="en">EN</button>
+        </div>
+      </div>
+
+      <div data-lang-block="en">
+        <h1>Help</h1>
+        <p class="muted">ScreenWithMe lets friends watch the same video at the same moment, each on their own screen. Free, no account.</p>
+        <nav class="toc card" aria-label="Contents">
+          <a href="#how">How it works</a>
+          <a href="#extension">Who needs the extension</a>
+          <a href="#permissions">What the extension can and cannot see</a>
+          <a href="#sync">Not in sync, or the video isn't found</a>
+          <a href="#connection">Can't connect to the room</a>
+          <a href="#voice">Voice, cameras and screen sharing</a>
+          <a href="#phones">Phones and tablets</a>
+          <a href="#privacy">Privacy in short</a>
+        </nav>
+
+        <h2 id="how">How it works</h2>
+        <ol>
+          <li><b>Create a room</b> on the home page. You get a link.</li>
+          <li><b>Send the link</b> to your friends (🔗 Invite: copy, WhatsApp or a QR code). They open it, type a name and they are in. No account.</li>
+          <li><b>Add a video</b>: search YouTube or paste a link (YouTube, a Short, TikTok, a video file, or a film page). It plays for everyone at the same moment; when anyone pauses, seeks or changes the speed, everyone follows.</li>
+        </ol>
+        <p>Sync is kept by our server's clock, not by your computers' clocks: if someone drifts more than a second, they jump back; small gaps are closed by playing a little faster or slower. If someone's video is still loading, the room waits for them for a few seconds. To see it for yourself, use ⋯ → 🧪 Sync test with a friend.</p>
+
+        <h2 id="extension">Who needs the extension</h2>
+        <ul>
+          <li><b>YouTube, Shorts, TikTok and direct video links</b> play right on our site: <b>nobody needs the extension</b>, and phones work too.</li>
+          <li><b>A film page</b> (a video on another website) plays on that website itself, in everyone's own tab. For that, <b>everyone watching needs the extension</b> on a computer (Chrome, Edge, Brave or Opera). The extension then shows the room (chat, voice, the rail) around that site's own player.</li>
+        </ul>
+        <p>Ads inside a YouTube video come from YouTube, not from us. ScreenWithMe itself has no ads and no time limit.</p>
+
+        <h2 id="permissions">What the extension can and cannot see</h2>
+        <p>Chrome describes the extension's access as "read and change data on all websites". In plain words, here is why it asks for each thing and what it does with it:</p>
+        <ul>
+          <li><b>All websites</b>: a film can be on any site, so the extension must be able to find the video there and keep it in sync. It <b>does nothing while you are not in a room</b>: no page is read, nothing is sent anywhere. In a room it only looks for video players on the film tab you opened from the room, and it sends the room only play / pause / position / speed. It never reads what you type, your passwords or other tabs.</li>
+          <li><b>Storage</b>: remembers your name, avatar and settings, the same as on our site.</li>
+          <li><b>Offscreen document</b>: keeps voice chat running while you are on a film page (the microphone is used only after you join voice).</li>
+          <li><b>Scripting</b>: right after you install it, it tells an already open ScreenWithMe tab that the extension is there, so you don't have to reload. It only runs on our own site.</li>
+        </ul>
+        <p>Details: <a href="/privacy.html">privacy policy</a>.</p>
+
+        <h2 id="sync">Not in sync, or the video isn't found</h2>
+        <ul>
+          <li>On a film page, if the room can't find the right video: press <b>🎯 Pick video</b> at the top and choose it.</li>
+          <li>An ad or a pop-up covers the film: <b>👁 Show the page</b> shows the film site as it is, close the ad, then <b>↩ Room view</b>.</li>
+          <li>Someone seems behind: ⋯ → <b>🔄 Sync everyone to me</b>.</li>
+          <li>Update the extension (the site shows a dot on "Extension" when yours is old) and your browser.</li>
+          <li>Other video or speed extensions, VPNs and strong ad blockers can get in the way: try a window with only ScreenWithMe on.</li>
+          <li>Everyone must open the same film page (the same episode and, on region-locked sites, the same region).</li>
+        </ul>
+
+        <h2 id="connection">Can't connect to the room</h2>
+        <p>If the room says it can't connect, press <b>⟳ Try again</b>, then <b>Test the connection</b> (<a href="/baglanti">connection test</a>). Some mobile hotspots and company networks block the room's live connection; the site then switches to a slower backup connection by itself, and the test tells you what is going on. Changing the network or the DNS (for example to 1.1.1.1) often helps.</p>
+
+        <h2 id="voice">Voice, cameras and screen sharing</h2>
+        <ul>
+          <li>Up to <b>6 people</b> in voice, up to <b>4 cameras</b> at once, one screen share watched by up to <b>4 people</b>.</li>
+          <li>Voice and cameras go directly between the people in voice, not through our server. That is why <b>the others in voice can see your IP address</b> (the room tells you before you join). People who are not in voice see nothing.</li>
+          <li>If voice never connects: some browsers and add-ons block direct connections (Brave's "WebRTC IP handling", uBlock Origin's WebRTC option, a VPN). The room shows a hint with the fix when it notices.</li>
+          <li>Choose your microphone, camera and speaker with 🎛 in your own person menu.</li>
+        </ul>
+
+        <h2 id="phones">Phones and tablets</h2>
+        <p>On a phone the room is an app-like screen: the video on top, your friends' faces, the chat. YouTube, Shorts, TikTok and video links work; voice and cameras work too. Film pages need a computer, because phone browsers have no extensions. Turn the phone sideways and press ⛶ to watch fullscreen.</p>
+
+        <h2 id="privacy">Privacy in short</h2>
+        <ul>
+          <li>No account, no ads, no tracking tools.</li>
+          <li>A room is deleted a day after the last person leaves; a saved room is kept for 30 days after it empties.</li>
+          <li>The chat keeps the last 50 messages of a room.</li>
+          <li>The full text: <a href="/privacy.html">privacy policy</a>.</li>
+        </ul>
+
+        <h2 id="contact">Contact</h2>
+        <p>Something not answered here? Write to <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a>.</p>
+      </div>
+
+      <div data-lang-block="tr" hidden>
+        <h1>Yardım</h1>
+        <p class="muted">ScreenWithMe ile arkadaşlarınla aynı videoyu, herkes kendi ekranında, aynı anda izlersin. Ücretsiz, hesap gerekmez.</p>
+        <nav class="toc card" aria-label="İçindekiler">
+          <a href="#how-tr">Nasıl çalışır</a>
+          <a href="#extension-tr">Eklenti kime gerekli</a>
+          <a href="#permissions-tr">Eklenti neyi görür, neyi görmez</a>
+          <a href="#sync-tr">Senkron kayıyor ya da video bulunamıyor</a>
+          <a href="#connection-tr">Odaya bağlanılamıyor</a>
+          <a href="#voice-tr">Ses, kamera ve ekran paylaşımı</a>
+          <a href="#phones-tr">Telefon ve tablet</a>
+          <a href="#privacy-tr">Kısaca gizlilik</a>
+        </nav>
+
+        <h2 id="how-tr">Nasıl çalışır</h2>
+        <ol>
+          <li>Ana sayfada <b>oda oluştur</b>. Bir link alırsın.</li>
+          <li><b>Linki arkadaşlarına gönder</b> (🔗 Davet et: kopyala, WhatsApp ya da QR kod). Linki açıp bir ad yazarlar ve odadadırlar. Hesap yok.</li>
+          <li><b>Video ekle</b>: YouTube'da ara ya da bir link yapıştır (YouTube, Short, TikTok, bir video dosyası ya da bir film sayfası). Herkeste aynı anda oynar; biri durdurursa, ileri sararsa ya da hızı değiştirirse herkes ona uyar.</li>
+        </ol>
+        <p>Senkronu bilgisayarlarınızın saati değil, sunucumuzun saati tutar: biri bir saniyeden fazla kayarsa geri atlar; küçük farklar biraz hızlı ya da yavaş oynatılarak kapanır. Birinin videosu hâlâ yükleniyorsa oda onu birkaç saniye bekler. Kendin görmek için bir arkadaşınla ⋯ → 🧪 Senkron testi'ni dene.</p>
+
+        <h2 id="extension-tr">Eklenti kime gerekli</h2>
+        <ul>
+          <li><b>YouTube, Shorts, TikTok ve doğrudan video linkleri</b> sitemizde oynar: <b>kimsenin eklentiye ihtiyacı yok</b>, telefonda da çalışır.</li>
+          <li><b>Film sayfası</b> (başka bir sitedeki video) o sitenin kendisinde, herkesin kendi sekmesinde oynar. Bunun için <b>izleyen herkesin bilgisayarında eklenti olmalı</b> (Chrome, Edge, Brave ya da Opera). Eklenti o zaman odayı (sohbet, ses, sağdaki düğmeler) o sitenin kendi oynatıcısının çevresinde gösterir.</li>
+        </ul>
+        <p>YouTube videosunun içindeki reklamlar YouTube'dan gelir, bizden değil. ScreenWithMe'nin kendisinde reklam ve süre sınırı yoktur.</p>
+
+        <h2 id="permissions-tr">Eklenti neyi görür, neyi görmez</h2>
+        <p>Chrome eklentinin iznini "tüm web sitelerindeki verileri okuma ve değiştirme" diye yazar. Sade bir dille, her şeyi neden istediği ve onunla ne yaptığı:</p>
+        <ul>
+          <li><b>Tüm siteler</b>: film herhangi bir sitede olabilir, bu yüzden eklentinin oradaki videoyu bulup senkronda tutabilmesi gerekir. <b>Bir odada değilken hiçbir şey yapmaz</b>: hiçbir sayfayı okumaz, hiçbir yere bir şey göndermez. Odadayken sadece odadan açtığın film sekmesindeki video oynatıcılarına bakar ve odaya sadece oynat / durdur / konum / hız gönderir. Yazdıklarını, şifrelerini ya da diğer sekmeleri asla okumaz.</li>
+          <li><b>Depolama</b>: adını, avatarını ve ayarlarını hatırlar, sitemizdeki gibi.</li>
+          <li><b>Ekran dışı belge</b>: film sayfasındayken sesli sohbetin çalışmasını sağlar (mikrofon sadece sese katıldıktan sonra kullanılır).</li>
+          <li><b>Betik çalıştırma</b>: kurduğun anda, açık olan ScreenWithMe sekmesine eklentinin geldiğini söyler, sayfayı yenilemen gerekmez. Sadece kendi sitemizde çalışır.</li>
+        </ul>
+        <p>Ayrıntılar: <a href="/privacy.html?lang=tr">gizlilik politikası</a>.</p>
+
+        <h2 id="sync-tr">Senkron kayıyor ya da video bulunamıyor</h2>
+        <ul>
+          <li>Film sayfasında oda doğru videoyu bulamazsa: üstteki <b>🎯 Video seç</b>'e bas ve videoyu seç.</li>
+          <li>Bir reklam ya da açılır pencere filmi kapatıyorsa: <b>👁 Sayfayı göster</b> film sitesini olduğu gibi gösterir, reklamı kapat, sonra <b>↩ Oda görünümü</b>.</li>
+          <li>Biri geride görünüyorsa: ⋯ → <b>🔄 Herkesi bana eşitle</b>.</li>
+          <li>Eklentiyi güncelle (seninki eskiyse site "Eklenti"nin yanında bir nokta gösterir) ve tarayıcını da.</li>
+          <li>Başka video ya da hız eklentileri, VPN'ler ve sert reklam engelleyiciler sorun çıkarabilir: sadece ScreenWithMe'nin açık olduğu bir pencerede dene.</li>
+          <li>Herkes aynı film sayfasını açmalı (aynı bölüm ve bölgeye kilitli sitelerde aynı bölge).</li>
+        </ul>
+
+        <h2 id="connection-tr">Odaya bağlanılamıyor</h2>
+        <p>Oda bağlanamadığını söylerse önce <b>⟳ Yeniden dene</b>'ye, sonra <b>Bağlantıyı test et</b>'e bas (<a href="/baglanti">bağlantı testi</a>). Bazı telefon hotspot'ları ve şirket ağları odanın canlı bağlantısını engeller; site o zaman kendiliğinden daha yavaş bir yedek bağlantıya geçer, test de neler olduğunu söyler. Ağı ya da DNS'i değiştirmek (örneğin 1.1.1.1) çoğu zaman işe yarar.</p>
+
+        <h2 id="voice-tr">Ses, kamera ve ekran paylaşımı</h2>
+        <ul>
+          <li>Seste en fazla <b>6 kişi</b>, aynı anda en fazla <b>4 kamera</b>, bir ekran paylaşımını en fazla <b>4 kişi</b> izleyebilir.</li>
+          <li>Ses ve kamera sunucumuzdan geçmez, sesteki kişiler arasında doğrudan gider. Bu yüzden <b>sesteki diğer kişiler IP adresini görebilir</b> (oda bunu katılmadan önce söyler). Seste olmayanlar hiçbir şey görmez.</li>
+          <li>Ses hiç bağlanmıyorsa: bazı tarayıcılar ve eklentiler doğrudan bağlantıları engeller (Brave'in "WebRTC IP handling" ayarı, uBlock Origin'in WebRTC seçeneği, bir VPN). Oda bunu fark edince çözümüyle bir ipucu gösterir.</li>
+          <li>Mikrofonunu, kameranı ve hoparlörünü kendi kişi menündeki 🎛 ile seç.</li>
+        </ul>
+
+        <h2 id="phones-tr">Telefon ve tablet</h2>
+        <p>Telefonda oda bir uygulama ekranı gibidir: üstte video, arkadaşlarının yüzleri, sohbet. YouTube, Shorts, TikTok ve video linkleri çalışır; ses ve kamera da çalışır. Film sayfaları bilgisayar ister, çünkü telefon tarayıcılarında eklenti yoktur. Tam ekran izlemek için telefonu yan çevir ve ⛶'ye bas.</p>
+
+        <h2 id="privacy-tr">Kısaca gizlilik</h2>
+        <ul>
+          <li>Hesap yok, reklam yok, takip aracı yok.</li>
+          <li>Son kişi çıktıktan bir gün sonra oda silinir; kayıtlı bir oda boşaldıktan sonra 30 gün tutulur.</li>
+          <li>Sohbet bir odanın son 50 mesajını tutar.</li>
+          <li>Tam metin: <a href="/privacy.html?lang=tr">gizlilik politikası</a>.</li>
+        </ul>
+
+        <h2 id="contact-tr">İletişim</h2>
+        <p>Burada cevabını bulamadığın bir şey mi var? <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a> adresine yaz.</p>
+      </div>
+    </main>
+  </body>
+</html>

@@ -38,5 +38,12 @@
       });
     });
     apply(current, false);
+    // A section link (help.html#connection): the Turkish block's ids end in -tr, and a section inside a block that was
+    // hidden while the page loaded was never scrolled to.
+    var id = decodeURIComponent(location.hash.slice(1));
+    if (id) {
+      var target = document.getElementById(current === 'tr' && !/-tr$/.test(id) ? id + '-tr' : id) || document.getElementById(id);
+      if (target) target.scrollIntoView();
+    }
   });
 })();

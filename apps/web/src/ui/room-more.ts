@@ -36,6 +36,8 @@ export function roomMoreItems(deps: {
     // The sync test replaces what plays for everyone, so only from an empty room.
     { icon: '🧪', label: 'more.syncTest', run: () => deps.press('#sync-test'), dimmed: deps.hasItem() ? t('more.syncTestBusy') : null },
     { icon: '👑', label: 'more.rules', run: () => deps.openSettings('rules') },
+    // Card 7: the help page in a new tab (an anchor, so the film-page overlay tells the extension it is no ad).
+    { icon: '❔', label: 'more.help', run: () => deps.press('#profile-help') },
   );
   return items;
 }

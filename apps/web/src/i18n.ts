@@ -67,6 +67,7 @@ const tr = {
   continue: 'Devam',
   extensionNav: 'Eklenti',
   privacy: 'Gizlilik',
+  help: 'Yardım',
   'tab.chat': 'Sohbet',
   'tab.queue': 'Sıra',
   'tab.people': 'Kişiler',
@@ -857,6 +858,7 @@ const tr = {
   'more.syncTest': 'Senkron testi',
   'more.syncTestBusy': 'Senkron testi boş odada açılır',
   'more.rules': 'Oda kuralları',
+  'more.help': 'Yardım ve SSS',
   'phone.more.games': 'Oyunlar',
   'phone.more.recap': 'Özet',
   'phone.more.filmTime': 'Film saati',
@@ -912,6 +914,7 @@ const tr = {
   'netHint.title': 'Odaya bağlanılamıyor',
   'netHint.text': 'Bu ağ odanın canlı bağlantısını engelliyor olabilir (bazı mobil hatlar ve okul/iş ağları). Başka bir ağ (ör. Wi-Fi) dene ya da cihazının DNS ayarını 1.1.1.1 yap.',
   'netHint.test': 'Bağlantıyı test et',
+  'netHint.help': 'Yardım',
   'netHint.retry': 'Yeniden dene',
   searchButton: 'Ara',
   'diag.title': 'Bağlantı testi',
@@ -1198,6 +1201,7 @@ const en: Record<Key, string> = {
   continue: 'Continue',
   extensionNav: 'Extension',
   privacy: 'Privacy',
+  help: 'Help',
   'tab.chat': 'Chat',
   'tab.queue': 'Queue',
   'tab.people': 'People',
@@ -1988,6 +1992,7 @@ const en: Record<Key, string> = {
   'more.syncTest': 'Sync test',
   'more.syncTestBusy': 'The sync test opens in an empty room',
   'more.rules': 'Room rules',
+  'more.help': 'Help and FAQ',
   'phone.more.games': 'Games',
   'phone.more.recap': 'Recap',
   'phone.more.filmTime': 'Film time',
@@ -2043,6 +2048,7 @@ const en: Record<Key, string> = {
   'netHint.title': "Can't reach the room",
   'netHint.text': "This network may be blocking the room's live connection (some mobile carriers and school/work networks do). Try another network (e.g. Wi-Fi) or set your device's DNS to 1.1.1.1.",
   'netHint.test': 'Test the connection',
+  'netHint.help': 'Help',
   'netHint.retry': 'Try again',
   searchButton: 'Search',
   'diag.title': 'Connection test',
@@ -2289,10 +2295,17 @@ export function isKey(key: string): key is Key {
   return key in tr;
 }
 
+/** The help page in the site's language, optionally at a section (card 7; the page maps ids to its Turkish block). */
+export function helpHref(section?: string): string {
+  return `/help.html?lang=${current}${section ? `#${section}` : ''}`;
+}
+
 /** data-i18n="anahtar" ve data-i18n-placeholder="anahtar" olan öğelerin metnini günceller. */
 export function translate(root: ParentNode = document): void {
   // Gizlilik sayfası sitenin o anki dilinde açılsın.
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-privacy-link]')) link.href = `/privacy.html?lang=${current}`;
+  // The help page too (card 7), keeping a section anchor such as #connection.
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-help-link]')) link.href = helpHref(link.dataset.helpLink);
   for (const el of root.querySelectorAll<HTMLElement>('[data-i18n]')) {
     const key = el.dataset.i18n!;
     if (isKey(key)) el.textContent = t(key);
