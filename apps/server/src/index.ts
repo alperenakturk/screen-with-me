@@ -9,6 +9,7 @@ import { sendFeedback } from './feedback.ts';
 import { tiktokResolve } from './tiktok.ts';
 import { podcasts } from './podcasts.ts';
 import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
+import { youtubeUsage } from './usage.ts';
 
 export { Draw } from './draw.ts';
 export { FeedbackGate } from './feedback.ts';
@@ -18,6 +19,7 @@ export { Quiz } from './quiz.ts';
 export { Room } from './room.ts';
 export { TvLink } from './tv-link.ts';
 export { MoveLink } from './move-link.ts';
+export { YoutubeUsage } from './usage.ts';
 
 /**
  * Browsers always send `Origin` with a WebSocket; only our own site (and local development) may open connections, so
@@ -121,6 +123,9 @@ export default {
 
     // "Send feedback" (card 9): a GitHub issue in the private repository, see feedback.ts.
     if (url.pathname === '/api/feedback') return sendFeedback(request, url, env, () => ipKey(request));
+
+    // Card Y3: the owner's YouTube usage counters (secret header), for the quota form.
+    if (url.pathname === '/api/youtube/usage') return youtubeUsage(request, env);
 
     // YouTube search from the room's link box (the API key never leaves the Worker). Pages of other sites may not
     // use it as their free search: a browser sends their `Origin`.

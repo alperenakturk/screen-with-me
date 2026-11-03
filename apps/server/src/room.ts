@@ -43,6 +43,7 @@ import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
+import { recordUsage } from './usage.ts';
 
 const MAX_MEMBERS = 50;
 /** Custom emoji uploads per room and day (each can be ~280 KB and is kept with the room). */
@@ -1726,6 +1727,8 @@ export class Room extends DurableObject<Env> {
     const fresh = cached && Date.now() - cached.at <= TITLE_MAX_AGE_MS ? cached : null;
     if (fresh && item.title === fresh.title) return;
     const title = fresh?.title ?? (await resolveTitle(item.media));
+    // Card Y3: a YouTube title lookup that reached YouTube's oEmbed counts for the quota form (0 units).
+    if (!fresh && item.media.kind === 'youtube') void recordUsage(this.env, 'oembed', { oembed: 1 });
     // Bulunamadıysa hatırlama: geçici bir ağ sorunu olabilir, bir dahaki sefere tekrar denensin.
     if (title === null) return;
     const at = fresh?.at ?? Date.now();

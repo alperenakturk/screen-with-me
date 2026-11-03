@@ -513,6 +513,16 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
 - Tests: unit (counter adds the right units per call kind); e2e: a search raises the counter, the route without the
   header is refused.
 - Owner's pick: none needed.
+- Done: 0.9.96.15 (PR below). Shared `yt-usage.ts` (`UNIT_COST`: search.list 100, videos / channels / playlistItems 1,
+  oEmbed 0; `addUsage`, `pruneUsage` (90 days), `cleanUsage`); the `YoutubeUsage` Durable Object (binding `USAGE`,
+  migration `v9`, one instance `usage`) keeps per UTC day and kind (search / pool / like / channel / oembed) the
+  requests that reached YouTube, the API calls by method and their units. `youtube.ts` counts every `callYouTube`
+  (cache hits and refused requests count nothing), the room object counts its oEmbed title lookups. The owner reads
+  `GET /api/youtube/usage` with the header `X-Usage-Token: <USAGE_TOKEN>` (a repo secret uploaded with the deploy;
+  without it the route always answers 403). No words, ids, IPs or rooms are stored. Privacy policy (EN + TR) says so.
+  Tests: unit `yt-usage.test.ts`; e2e `search.mjs` (refused without / with a wrong key; with the key in the live run,
+  the counters read). A search raising the counter is not checked live: the e2e search is cached 24 h, and a fresh
+  query would spend 101 units per deploy.
 
 ### Security: custom-domain hardening checklist (R3-3)
 - Severity: medium (do it together with the domain purchase)

@@ -421,6 +421,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.15 (YouTube usage counters, card Y3):**
+- [ ] GitHub → the repo → Settings → Secrets and variables → Actions → New repository secret `USAGE_TOKEN`: any long
+  random text (a password manager can make one; never paste it in a chat). The next deploy uploads it.
+- [ ] Read the counters (PowerShell): `irm https://screen-with-me.swm-server.workers.dev/api/youtube/usage -Headers
+  @{"X-Usage-Token"="<your token>"}` → per day: searches, Discover, More like this, channel feeds, title lookups, and
+  the units. These are the numbers the YouTube quota form asks for.
+
 **0.9.96.13 (accessibility, card A11y):**
 - [ ] On a computer, without the mouse: Tab from the top of a room (first "Skip to the video"), reach the buttons beside
   the video, open ⚙️ and 🔗 Invite (Tab stays inside, Esc comes back to the button), ⋯ More with the arrow keys.
