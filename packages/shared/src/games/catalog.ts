@@ -24,6 +24,20 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440] },
 };
 
+/**
+ * Games played on the side, alone, while the room watches (no server, no table; saves stay in the browser). They open
+ * in the same game window as the room games.
+ */
+export const SOLO_KINDS = ['snack'] as const;
+export type SoloKind = (typeof SOLO_KINDS)[number];
+export const isSoloKind = (kind: string): kind is SoloKind => (SOLO_KINDS as readonly string[]).includes(kind);
+
+export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
+  // Design session's mock: a free window of 340 × 300 (+ the window's head and room for the room's own bar), the
+  // phone sheet 360 × 460. Smaller windows scale it down (stage.ts `refit`).
+  snack: { place: 'float', size: [360, 380], fit: [330, 330] },
+};
+
 export interface GameNews {
   /** The release that brought it. */
   v: string;

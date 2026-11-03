@@ -167,5 +167,9 @@ export function scheduleSound(ctx: Ctx, destination: AudioNode, id: SoundId, gai
     case 'locked': C(0, 0.45); N(0.004, 7, 0.08, 0.35); break;
     case 'guessWrong': N(0, 4, 0.1, 0.35); N(s, 2, 0.14, 0.3); break;
     case 'guessOther': N(0, 9, 0.08, 0.3); break;
+    case 'snackServe': C(0, 0.35); N(0.003, 19, 0.07, 0.3); break;
+    case 'snackBuy': N(0, 12, 0.08, 0.5); N(s * 0.7, 16, 0.14, 0.5); break;
+    case 'snackMilestone': [12, 16, 19].forEach((n, i) => N(i * s * 0.8, n, 0.16, 0.6)); break;
+    case 'snackCinema': [0, 7, 12, 16, 19].forEach((n, i) => N(i * s, n, 0.3, 0.7)); [12, 16, 19].forEach((n) => N(s * 5.2, n, 0.9, 0.4)); break;
   }
 }
