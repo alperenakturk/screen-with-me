@@ -58,6 +58,17 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   phone home-screen icon).
 - Owner's pick: done (Sidelit, D1, T1, N1). **Release it as 0.9.95** (owner, 3 Nov 2026: "make it official, I'm
   speeding up the launch"); the remaining 0.9.94 cards keep their place after it.
+- Done: 0.9.95 (PR below). Sidelit in every user-facing text (site, help / privacy / extension pages, i18n EN + TR,
+  manifest, the extension's name and pages, store texts, `store/src`, READMEs with one "formerly" line); `logo.ts` draws
+  D1 (`small` ≤ 32 px, `bleed`, the animated pause bars) and N1 (`mascotSvg` / `createMascot`, five moods);
+  `make-icons.mjs` renders the PNGs with Chromium (16 / 32 simple cut, 48 / 128 full, PWA, maskable + apple-touch bleed
+  on night) and writes `logo.svg`, `logo-small.svg` (favicon), `mascot.svg`, `mascot-waiting.svg`; the wordmark is
+  Bricolage Grotesque ExtraBold self-hosted (`public/fonts/`, OFL licence beside it, no Google Fonts call); N1 on the
+  home preview and (waiting) in the empty room. `scripts/check-name.mjs` runs in CI. Kept: the live address, repo,
+  storage keys, `source` strings, protocol, extension id, publisher e-mail, and the zip / folder name
+  `screenwithme-extension` (an unpacked extension's id comes from its folder; renaming it would lose people's
+  settings). Follow-up for the Planner: the costumed theme mascots (`theme-art.mjs`, theme pickers) still wear the old
+  purple face; N1 in costume would be its own card. Tests: all site harnesses, popup, embed (112 checks, headful).
 
 ### T. Tablet layout (lane A; 0.9.95 gate)
 - Why: ROADMAP §1 "Tablet support": iPad / Android tablets upright and sideways get their own layout (today tablets
@@ -492,7 +503,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   the video jump on every toast), else the player is full width beside the resting rail; still nothing over the player.
 - Tests: harness: fullscreen with nothing to show → player ≈ full width; camera on → column appears; fails first.
 - Owner's pick: none needed.
-- Done: 0.9.93.20 (PR below). `room.ts` `updateFsSide`: `.theater.fs-side-open` only while `#fs-side-notices` shows
+- Done: 0.9.93.20 (https://github.com/alperenakturk/screen-with-me/pull/150). `room.ts` `updateFsSide`: `.theater.fs-side-open` only while `#fs-side-notices` shows
   a note, the camera box is up or a message toast is on screen (a message keeps it `SIDE_LINGER_MS` 8 s, so a chat
   doesn't make the video jump); closed, the player's `right` is just the rail's gutter and the column fades out (0.22 s).
   Test: `scripts/harness/yt-room/run.cjs` (fullscreen with nothing to show: no column, player full width; a message

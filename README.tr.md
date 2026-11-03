@@ -1,6 +1,8 @@
 <div align="center">
 
-# ▶ ScreenWithMe
+# ▶ Sidelit
+
+_Eski adıyla ScreenWithMe._
 
 **Herhangi bir videoyu birlikte, tam senkron izle.**<br/>
 Ücretsiz · hesap yok · reklam yok · YouTube'da ve (neredeyse) her sitede çalışır.
@@ -169,4 +171,4 @@ Sorular ve sorun giderme: [yardım sayfası](https://screen-with-me.swm-server.w
 - DRM korumalı yayın servisleri henüz desteklenmiyor.
 - Eklenti henüz Chrome Web Store'da değil (elle kurulum, yaklaşık bir dakika).
 - Eklenti Chromium tabanlı masaüstü tarayıcılarda çalışır (Chrome, Edge, Brave, Opera, Vivaldi). Site Firefox ve Safari'de de açılır (YouTube ya da video dosyası olan odalar, sohbet, oyunlar, sesli sohbet); başka sitelerdeki sayfalar için eklentili bir masaüstü Chromium tarayıcı gerekir.
-- ScreenWithMe hiçbir video içeriğini barındırmaz ya da aktarmaz; sadece herkesin kendi açtığı oynatıcıları eşitler.
+- Sidelit hiçbir video içeriğini barındırmaz ya da aktarmaz; sadece herkesin kendi açtığı oynatıcıları eşitler.

@@ -460,7 +460,7 @@ function openShell(roomId: string): void {
   // girmesin. shell.html kimliği arka plandan ister (arka plan sekmenin gerçekten odada olduğuna bakar).
   shell.src = chrome.runtime.getURL('shell.html');
   shell.allow = 'autoplay; clipboard-write';
-  shell.setAttribute('aria-label', 'ScreenWithMe');
+  shell.setAttribute('aria-label', 'Sidelit');
   // Sayfanın CSS'i katmanı bozmasın: her şey satır içi ve !important.
   shell.style.cssText = [
     'position:fixed',

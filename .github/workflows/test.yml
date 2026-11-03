@@ -27,6 +27,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Name check (Sidelit)
+        run: node scripts/check-name.mjs
+
       - name: Unit tests
         run: npm test
 

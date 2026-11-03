@@ -52,7 +52,7 @@ if (framedElsewhere()) {
   link.href = location.href;
   link.target = '_blank';
   link.rel = 'noopener';
-  link.textContent = 'ScreenWithMe ↗';
+  link.textContent = 'Sidelit ↗';
   document.body.replaceChildren(link);
 } else {
   // Önce ayarlar eklentiyle eşitlenir (dil, tema, isim ilk karede doğru gelsin), sonra site çizilir.

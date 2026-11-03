@@ -37,8 +37,8 @@ const siteMatches = dev
 const manifest = {
   manifest_version: 3,
   // Mağazadaki başlık ve özet buradan gelir (özet en fazla 132 karakter).
-  name: dev ? 'ScreenWithMe (dev)' : 'ScreenWithMe – Watch Videos Together in Sync',
-  short_name: 'ScreenWithMe',
+  name: dev ? 'Sidelit (dev)' : 'Sidelit – Watch Videos Together in Sync',
+  short_name: 'Sidelit',
   version: pkg.version,
   description: "A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.",
   // WebSocket trafiğinin service worker'ı açık tutması Chrome 116'dan beri var.
@@ -56,7 +56,7 @@ const manifest = {
   background: { service_worker: 'background.js', type: 'module' },
   action: {
     default_popup: 'popup.html',
-    default_title: 'ScreenWithMe',
+    default_title: 'Sidelit',
     default_icon: { 16: 'icon16.png', 32: 'icon32.png' },
   },
   content_scripts: [

@@ -7,7 +7,7 @@ Turkish paragraph.
 **File to upload:** `store/screenwithme-<version>.zip` (made by `npm run store`).
 
 **Title and summary come from the zip** (manifest, `apps/extension/build.mjs`):
-- Title: `ScreenWithMe – Watch Videos Together in Sync`
+- Title: `Sidelit – Watch Videos Together in Sync`
 - Summary: `A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.`
 
 > The repo is private for now. The texts don't say "open source"; that can be added once the repo is public (before
@@ -22,7 +22,7 @@ Turkish paragraph.
 ```
 Watch videos together with friends, perfectly in sync.
 
-Create a room on the ScreenWithMe website and share the link. Paste the link of a page with a video into the room: everyone goes to that page, and the extension opens your room around the video (chat, reactions, voice chat, controls). When anyone plays, pauses, seeks or changes the speed, it happens for everyone, and anyone who falls behind quietly catches up.
+Create a room on the Sidelit website and share the link. Paste the link of a page with a video into the room: everyone goes to that page, and the extension opens your room around the video (chat, reactions, voice chat, controls). When anyone plays, pauses, seeks or changes the speed, it happens for everyone, and anyone who falls behind quietly catches up.
 
 HOW IT WORKS
 1. Create a room on the website (no account needed) and share the invite link.
@@ -56,7 +56,7 @@ PRIVATE BY DESIGN
 
 NOTES
 • DRM-protected streaming services are not supported.
-• ScreenWithMe does not host or provide any video. Only watch content you have the right to access.
+• Sidelit does not host or provide any video. Only watch content you have the right to access.
 • Free.
 
 —
@@ -92,7 +92,7 @@ site's real `styles.css`, so keep its markup in step with `room.ts` when the sit
 **Single purpose description:**
 
 ```
-ScreenWithMe has a single purpose: watch parties. It keeps one HTML5 video, in the tab where the user joined a room, playing in sync (play, pause, seek position, playback speed) for everyone in that room. Reactions, short chat messages and voice chat with the people in the room are part of that shared-watching experience.
+Sidelit has a single purpose: watch parties. It keeps one HTML5 video, in the tab where the user joined a room, playing in sync (play, pause, seek position, playback speed) for everyone in that room. Reactions, short chat messages and voice chat with the people in the room are part of that shared-watching experience.
 ```
 
 **Permission justifications:**
@@ -109,7 +109,7 @@ Voice chat while watching: on the film page the microphone is used in the extens
 
 `scripting` (since 0.9.91.20):
 ```
-Used once, right after the extension is installed: the extension's own small bridge script (site-bridge.js, already part of the package) is injected into ScreenWithMe website tabs that were open before the install, so a room page that was waiting for the extension notices it at once instead of asking the user to reload. It is never used on other sites and injects no remote code.
+Used once, right after the extension is installed: the extension's own small bridge script (site-bridge.js, already part of the package) is injected into Sidelit website tabs that were open before the install, so a room page that was waiting for the extension notices it at once instead of asking the user to reload. It is never used on other sites and injects no remote code.
 ```
 
 Short version (card 8, 0.9.93.16; the same two lines are on the extension page, the "Go to the film" card and in the

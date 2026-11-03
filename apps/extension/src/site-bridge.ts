@@ -1,4 +1,4 @@
-// Sadece ScreenWithMe sitesinin kendi sayfasında (üst çerçeve) çalışır.
+// Sadece Sidelit sitesinin kendi sayfasında (üst çerçeve) çalışır.
 // 1) Siteye "eklenti kurulu, kabuğu biliyor" der (data-swm-extension / data-swm-shell).
 // 2) Sitenin ayarlarını eklentinin deposuyla eşitler (isim, avatar, tema, dil, kalıcı kimlik,
 //    kayıtlı odalar…): film sitesinin üstündeki katmanda da aynı ayarlar geçerli olsun.

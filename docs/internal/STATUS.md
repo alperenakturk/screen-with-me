@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.20**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.95** (renamed to Sidelit). The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -50,7 +50,7 @@ Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` �
   are leaving this page" first and open in a new tab (our room tab stays); voice join / leave appear in the room
   activity like pause / play; clicking myself in the "Together" card while in voice said "you are not in voice" (bug)
   → show my own controls instead.
-- [x] **0.9.89** extension toolbar icon: outside a room's film tab the popup only offered "Open ScreenWithMe" (home page
+- [x] **0.9.89** extension toolbar icon: outside a room's film tab the popup only offered "Open Sidelit" (home page
   in a new tab) even with a room open; now "🏠 Odama dön" switches to the open room tab (home page as second button).
   Test: `scripts/harness/popup/run.cjs`.
 - [x] **0.9.90** film page (owner, 29 Oct 2026): 🏠 / 👁 / 🎯 in the middle of the top bar; scrolling the room view
@@ -343,7 +343,7 @@ owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik
 start, dark mode, largest text, keyboard on every field, first open, back button, sideways, delete confirmation,
 offline actions, error texts, permission reasons, data deletion, close buttons, heat / battery over 10 minutes,
 storage, phone language, hand it to someone, remove and reinstall the PWA. When asked "what should I test?", turn
-these into a ScreenWithMe-specific list.
+these into a Sidelit-specific list.
 
 **Before the 1.0 store submission: the extension in Edge, Brave and Opera** (zip from the site, a friend in Chrome, a
 legal demo player page such as a Video.js or Plyr demo for the film page). For each browser:
@@ -382,6 +382,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.95 (Sidelit, computer + phone):**
+- [ ] Home, a room, the extension popup and the film page say **Sidelit** with the new night-gold logo; the browser
+  tab's icon is readable; the empty room shows the little golden mascot.
+- [ ] Update the extension: extract the new zip **into the same `screenwithme-extension` folder** and press ↻ (a new
+  folder would be a new extension and lose its settings); the toolbar icon is the new logo.
+- [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **0.9.93.20 (computer):**
 - [ ] YouTube in fullscreen with nothing going on: no dark empty strip on the right, the video uses the whole width
@@ -644,7 +651,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   0.9.86.
 
 ## Pending decisions (owner's)
-- **Product name** (keep "ScreenWithMe" or rename): research in `name-research.md` (no registered mark found in web
+- **Product name** (keep "Sidelit" or rename): research in `name-research.md` (no registered mark found in web
   searches; descriptive name, crowded category; best alternatives Sofaloop / Yanyana / Seyirdaş). The owner should
   run the 30-minute database check described there. Decide before the store submission and the domain.
 - **Domain:** e.g. `screenwithme.app` (~14 $/year), bought together with the final name.

@@ -17,7 +17,7 @@ addEventListener('pageshow', (event) => {
 });
 
 // Üst çubuktaki logo: üzerine gelince ağızdaki oynat düğmesi duraklata döner.
-document.querySelector('.brand .logo')?.append(createLogo(document, { animated: true }));
+document.querySelector('.brand .logo')?.append(createLogo(document, { animated: true, small: true }));
 
 // Üst menüdeki 🎨: önizlemeli büyük tema penceresi.
 document.querySelector<HTMLButtonElement>('#theme-button')!.addEventListener('click', openThemeDialog);

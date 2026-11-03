@@ -73,7 +73,7 @@ export function openInviteDialog(url: string): void {
   const actions = el('div', { class: 'invite-actions' });
   if (canShareSheet()) {
     const share = el('button', { type: 'button', class: 'btn' }, `📤 ${t('share')}`);
-    share.addEventListener('click', () => void navigator.share({ title: 'ScreenWithMe', text: t('invite.shareText'), url }).catch(() => {}));
+    share.addEventListener('click', () => void navigator.share({ title: 'Sidelit', text: t('invite.shareText'), url }).catch(() => {}));
     actions.append(share);
   }
   actions.append(
@@ -93,7 +93,7 @@ export function openInviteDialog(url: string): void {
       setTimeout(() => (copyImageText.textContent = t('invite.copyImage')), 1600);
     } catch {
       // No image clipboard (Firefox, blocked): save it instead.
-      const link = el('a', { href: URL.createObjectURL(png), download: 'screenwithme-invite-qr.png' });
+      const link = el('a', { href: URL.createObjectURL(png), download: 'sidelit-invite-qr.png' });
       link.click();
       setTimeout(() => URL.revokeObjectURL(link.href), 4000);
       copyImageText.textContent = t('invite.saved');

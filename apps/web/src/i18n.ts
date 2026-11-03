@@ -407,7 +407,7 @@ const tr = {
   syncAlone: 'Odada şimdilik yalnızsın 🙂 Eşitlenecek kimse yok; davet linkini paylaş.',
   'extDialog.title': 'Bu link bir web sayfası',
   'extDialog.text':
-    'YouTube ya da bir video dosyası değil. Böyle sayfaları birlikte izlemek için herkeste ScreenWithMe eklentisi olmalı (bir kez kurulur, 1 dakika sürer).',
+    'YouTube ya da bir video dosyası değil. Böyle sayfaları birlikte izlemek için herkeste Sidelit eklentisi olmalı (bir kez kurulur, 1 dakika sürer).',
   'extDialog.install': '🧩 Eklentiyi kur',
   'extDialog.addAnyway': 'Yine de ekle',
   'extDialog.cancel': 'Vazgeç',
@@ -712,7 +712,7 @@ const tr = {
   homeAskYes: 'Ben de döneyim',
   homeAskNo: 'Filmde kal',
   goFilmTitle: 'Film başka bir sitede açılacak',
-  goFilmText: 'Bu sekme o siteye gider; ScreenWithMe eklentisi odanı (sohbet, emojiler, kontroller) filmin üstüne getirir. Arkadaşların "Filme git"e basıp gelir. Gidelim mi?',
+  goFilmText: 'Bu sekme o siteye gider; Sidelit eklentisi odanı (sohbet, emojiler, kontroller) filmin üstüne getirir. Arkadaşların "Filme git"e basıp gelir. Gidelim mi?',
   goFilmYes: '🎬 Gidelim',
   cancel: 'Vazgeç',
   'tab.profile': 'Profil',
@@ -721,7 +721,7 @@ const tr = {
   extensionStale: 'Eklentiyle bağlantı kurulamadı. Eklenti yeni güncellendiyse bu olur: sayfayı yenilemen yeterli.',
   reloadPage: 'Sayfayı yenile',
   externalGoing: 'Filme gidiliyor…',
-  externalNoExt: 'Bu video sitemizde oynatılamıyor. Kendi sitesinde birlikte izlemek için ScreenWithMe eklentisi gerekiyor (bir kez kurulur, 1 dakika sürer):',
+  externalNoExt: 'Bu video sitemizde oynatılamıyor. Kendi sitesinde birlikte izlemek için Sidelit eklentisi gerekiyor (bir kez kurulur, 1 dakika sürer):',
   externalStep1: 'Eklentiyi kur',
   externalStep2: 'Bu sekmeye geri dön (kendiliğinden fark eder)',
   externalStep3: '"Filme git ve birlikte izle" düğmesine bas',
@@ -809,7 +809,7 @@ const tr = {
   share: 'Paylaş',
   inviteShareText: 'Gel birlikte izleyelim 🍿',
   externalMobile:
-    'Böyle sayfalar sadece bilgisayarda (Chrome, Edge ya da Brave + ScreenWithMe eklentisi) birlikte izlenebilir. Bu arada odayı sohbetten takip edebilirsin.',
+    'Böyle sayfalar sadece bilgisayarda (Chrome, Edge ya da Brave + Sidelit eklentisi) birlikte izlenebilir. Bu arada odayı sohbetten takip edebilirsin.',
   noBans: 'Kimse çıkarılmadı.',
   savedNote: 'Kaydedildi ✓',
   queue: 'Sıradakiler ({n})',
@@ -1141,7 +1141,7 @@ const tr = {
   'error.not_joined': 'Odaya henüz katılmadın.',
   home: 'Ana sayfa',
   adblockTip: 'Reklamsız izlemek istersen önerimiz:',
-  adblockNote: "(ücretsiz, ayrı bir eklenti; ScreenWithMe'nin parçası değil, sadece öneri)",
+  adblockNote: "(ücretsiz, ayrı bir eklenti; Sidelit'in parçası değil, sadece öneri)",
 };
 
 type Key = keyof typeof tr;
@@ -1551,7 +1551,7 @@ const en: Record<Key, string> = {
   syncAlone: 'It’s just you for now 🙂 Nobody to sync with yet; share the invite link.',
   'extDialog.title': 'This link is a web page',
   'extDialog.text':
-    "It isn't YouTube or a video file. To watch pages like this together, everyone needs the ScreenWithMe extension (a one-time install, about a minute).",
+    "It isn't YouTube or a video file. To watch pages like this together, everyone needs the Sidelit extension (a one-time install, about a minute).",
   'extDialog.install': '🧩 Get the extension',
   'extDialog.addAnyway': 'Add anyway',
   'extDialog.cancel': 'Cancel',
@@ -1856,7 +1856,7 @@ const en: Record<Key, string> = {
   homeAskYes: 'Go back too',
   homeAskNo: 'Stay on the film',
   goFilmTitle: 'The film opens on another website',
-  goFilmText: 'This tab goes to that site, and the ScreenWithMe extension brings your room (chat, emojis, controls) over the film. Friends join by pressing "Go to the film". Shall we?',
+  goFilmText: 'This tab goes to that site, and the Sidelit extension brings your room (chat, emojis, controls) over the film. Friends join by pressing "Go to the film". Shall we?',
   goFilmYes: "🎬 Let's go",
   cancel: 'Cancel',
   'tab.profile': 'Profile',
@@ -1865,7 +1865,7 @@ const en: Record<Key, string> = {
   extensionStale: 'Couldn’t reach the extension. This happens right after it was updated: just reload this page.',
   reloadPage: 'Reload the page',
   externalGoing: 'Taking you to the film…',
-  externalNoExt: "This video can't play on our site. To watch it together on its own site, you need the ScreenWithMe extension (a one-time install, about a minute):",
+  externalNoExt: "This video can't play on our site. To watch it together on its own site, you need the Sidelit extension (a one-time install, about a minute):",
   externalStep1: 'Install the extension',
   externalStep2: 'Come back to this tab (it notices by itself)',
   externalStep3: 'Press "Go to the film and watch together"',
@@ -1953,7 +1953,7 @@ const en: Record<Key, string> = {
   share: 'Share',
   inviteShareText: "Let's watch together 🍿",
   externalMobile:
-    'Pages like this can only be watched together on a computer (Chrome, Edge or Brave + the ScreenWithMe extension). You can still follow the room in the chat.',
+    'Pages like this can only be watched together on a computer (Chrome, Edge or Brave + the Sidelit extension). You can still follow the room in the chat.',
   noBans: 'Nobody has been removed.',
   savedNote: 'Saved ✓',
   queue: 'Up next ({n})',
@@ -2285,7 +2285,7 @@ const en: Record<Key, string> = {
   'error.not_joined': "You haven't joined the room yet.",
   home: 'Home',
   adblockTip: 'Want to watch without ads? We recommend',
-  adblockNote: "(free, a separate extension; not part of ScreenWithMe, just a suggestion)",
+  adblockNote: "(free, a separate extension; not part of Sidelit, just a suggestion)",
 };
 
 const dictionaries: Record<Lang, Record<Key, string>> = { tr, en };

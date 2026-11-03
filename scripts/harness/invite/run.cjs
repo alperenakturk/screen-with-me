@@ -5,6 +5,7 @@
 // Needs Playwright and `npm run dev`:
 //   NODE_PATH=$(npm root -g) node scripts/harness/invite/run.cjs [http://localhost:5173]
 const { chromium, devices } = require('playwright');
+const { viaYouTube } = require('../via-youtube.cjs');
 const SITE = process.argv[2] || 'http://localhost:5173';
 let fails = 0;
 const check = (ok, label, extra = '') => {
@@ -17,6 +18,7 @@ const check = (ok, label, extra = '') => {
   const room = `inv${Math.random().toString(36).slice(2, 7)}`;
   async function enter(name, opts = { viewport: { width: 1366, height: 768 } }, init = {}) {
     const ctx = await browser.newContext({ ...opts, permissions: ['clipboard-read', 'clipboard-write'] });
+    await viaYouTube(ctx);
     await ctx.addInitScript((values) => {
       localStorage.setItem('lang', 'en');
       // Automated browsers only get the window when they ask for it (ui/invite.ts).

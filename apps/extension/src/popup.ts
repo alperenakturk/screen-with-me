@@ -1,6 +1,6 @@
 // Eklenti simgesine tıklanınca açılan küçük pencere. Ayar yok: eklentinin tek işi, odada açılan
 // film sayfasının üstüne sitenin oda görünümünü getirmek. Burada sadece kısa bilgi ve tek düğme var:
-// odadaki bir film sekmesindeysek odayı ayrı sekmede aç, değilse "ScreenWithMe'yi aç".
+// odadaki bir film sekmesindeysek odayı ayrı sekmede aç, değilse "Sidelit'i aç".
 
 import { SITE_URL } from './config.ts';
 import { langReady, t } from './i18n.ts';
