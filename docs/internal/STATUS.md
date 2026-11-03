@@ -391,6 +391,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.95.4 🌱 Window Garden: 🎮 → "On the side" → Window Garden. A small fern seedling waits on the sill. Play a
+  video with a friend: it grows (only while the video plays), a 💧 shows when it is thirsty, "Water" fills it again.
+  When it blooms, "Pick it": it goes into your album (the strip of 8 plants at the bottom). A seed comes every 30
+  watched minutes and when a film of 20+ minutes ends; plant it in an empty pot. Cozy enough? Sounds OK?
 - [ ] 0.9.95.3 🎮 Games gallery: 🎮 (rail, ⋯ → Games, phone ⋯) opens one window with two tabs, "👥 Together" (a
   picture card per game: a press opens a new table, your friend gets the invite) and "🍿 On the side" (Snack Bar with
   your coins; Window Garden and Five Frames say "Soon"). It opens on the tab you used last and never needs scrolling,
