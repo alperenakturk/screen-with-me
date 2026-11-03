@@ -25,11 +25,11 @@ Card format:
 Two Developer lanes so the work moves faster; lane B lives mostly in new files (games, players) and rebases on lane A.
 Each card still ships with its tests; hand tests go to `STATUS.md` for the owner's one big test round at the end.
 
-**Lane A (Developer, `session_015Fyri2WkmxwEfieZ1jto4L`):** 6d → 6c Sidelit (0.9.95) → 9 feedback button → 10 Shorts
+**Lane A (Developer, `session_015Fyri2WkmxwEfieZ1jto4L`):** 6d → 6e empty-room rail → 6c Sidelit (0.9.95) → 9 feedback button → 10 Shorts
 channel + country → 11 thanks page → 12 debug panel → 14 cinema mode → 16 design sweep → T tablet → A11y accessibility
 → security cards (M2, M3, M4, M5, M6, L1, L4, L2+L3+L5, L6, L7+L8, L9, L10; M8 stays with the frozen TV) → the Security
 session's new findings → bug-hunt findings.
-**Lane B (Developer B, games + players):** 🍿 Snack Bar (after the owner's look pick) → 🌱 Window Garden → 🔤 daily word
+**Lane B (Developer B, `session_015Fyri6bkmZm4WdgzAWHpMc`):** 🍿 Snack Bar → GG games gallery window → 🌱 Window Garden → 🔤 daily word
 game → move-to-device code → P1 Vimeo → P2 podcasts.
 **Not in this round:** 13 Shorts measurement (needs the owner's real Chrome; part of his test round), Shorts door
 (0.9.95+ growth), G1–G5 (launch), the privacy policy rewrite + terms (the "official work" step after the test round).
@@ -58,6 +58,24 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   phone home-screen icon).
 - Owner's pick: done (Sidelit, D1, T1, N1). **Release it as 0.9.95** (owner, 3 Nov 2026: "make it official, I'm
   speeding up the launch"); the remaining 0.9.94 cards keep their place after it.
+
+### 6e. The rail in the empty room too (owner, 3 Nov 2026; lane A, after 6d)
+- Why: owner: before any video, people should already be able to open the camera, join voice, open a game or emojis.
+- Done when: in `.room.fresh` the right rail shows 😀, 🎮, 🎙, 📷, ⋯; video controls (play / pause, speed, next, pin,
+  sync, ⛶) are dimmed and only show "add a video first" when pressed. Changes card 6's "D" on this point only.
+- Tests: room-more / fresh harness: rail visible in an empty room, 🎮 opens the games, 🎙 joins, play / speed disabled.
+- Owner's pick: done.
+
+### GG. Games gallery window with covers (owner, 3 Nov 2026; lane B, after Snack Bar)
+- Why: owner: pressing games should open its own window where every game shows as a card with its cover, and the
+  player picks from there.
+- Done when: 🎮 opens a window (free window / side panel / phone sheet, no scrolling) with cards + covers for XOX,
+  Connect Four, Draw & Guess, Quiz (room games) and Snack Bar, Window Garden, the word game ("play on the side"); a
+  card opens its game the same way as today; covers from the Design session.
+- Tests: harness: the gallery opens from the rail, the phone ⋯ and the Shorts bar; every card opens its game; fits at
+  340×300 and 360×460.
+- Owner's pick (3 Nov 2026, https://claude.ai/artifact/XsUvwg9YL6KugDVP6VggMR): layout **B, two tabs** ("Together" / "On the
+  side"), covers ~160 px, the side tab shows each game's progress, reopens on the last tab.
 
 ### T. Tablet layout (lane A; 0.9.95 gate)
 - Why: ROADMAP §1 "Tablet support": iPad / Android tablets upright and sideways get their own layout (today tablets
@@ -402,6 +420,8 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   one versioned JSON in `localStorage`; lazy chunk; EN + TR strings; original look, no film names.
 - Tests: unit (economy: income per watched second, cap, together bonus, prestige, save migration); harness (fits at
   phone / small free window sizes without scrollbars, room keys 1–8 / Enter still reach the room).
+- Look (owner, 3 Nov 2026, https://claude.ai/artifact/WSxxSneo6NT5Y5JcVKXxLi): **A "counter scene"** (illustrated counter
+  lit from the left, Glowbeam as cashier, bought items appear on the counter, upgrade rows with level bars).
 - Owner's pick (2 Nov 2026): yes, the flagship, "detailed, sweet and on our theme; I'm excited about it". Not silent:
   it gets its own cute sounds (game family in `sounds.ts`, the Sounds setting and volume apply; never during speech
   ducking). Name "Snack Bar" works in English first; TR label "Büfe". Build in 0.9.95 (Focus: new features frozen
@@ -414,7 +434,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   cozy sounds; same rules as Snack Bar (free window / sheet without scrolling, never takes the room's keys, one
   versioned save in `localStorage`, lazy chunk, EN + TR).
 - Tests: unit (growth, seed drops, album, save migration); harness (fits small windows and phones, no scrollbars).
-- Owner's pick: done (idea); the look comes on the same option page as Snack Bar.
+- Owner's pick: done (idea); look **A "window sill"** (3 Nov 2026).
 
 ### 🔤 Daily word game, English + Turkish (0.9.95, third; owner, 2 Nov 2026) ⏳ word lists first
 - Why: owner: instead of random logic puzzles, a word game like the popular daily five-letter one, in English and
@@ -431,7 +451,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   the original's trademark and its "copyrighted gameplay" claims: own name (no "-dle"), no 5×6 square grid (e.g. a
   ticket / film-strip row per guess, 7 tries), theme colours + ✓ / • instead of green / yellow, no QWERTY strip right
   under the board, share text without coloured squares ("🍿 Word of the day #12 · 4/7"); tr-locale İ/ı handling.
-- Owner's pick: done (idea); name and board look on the side-games option page (Planner, before 0.9.95).
+- Owner's pick: board **A "ticket row"** (3 Nov 2026); name **Five Frames** (TR **Beş Kare**), owner 3 Nov 2026.
 
 ### Move my things to another device (Research)
 - Why: browser-only saves (game progress, saved rooms, emoji collection) are lost on a new phone; accounts are costly.
