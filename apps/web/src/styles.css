@@ -388,16 +388,6 @@ body::before {
   --mascot-size: 110px;
 }
 
-/* Card 6c: the home page's preview and the empty room show the brand's mascot N1 Glowbeam (public/mascot*.svg; the
-   empty room with its "waiting" face). The costumed mascots stay in the theme pickers until their own card. */
-.theme-mascot {
-  --mascot: url('/mascot.svg');
-}
-
-.empty .theme-mascot {
-  --mascot: url('/mascot-waiting.svg');
-}
-
 @media (prefers-reduced-motion: reduce) {
   .theme-mascot {
     animation: none;

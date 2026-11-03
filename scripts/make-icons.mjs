@@ -6,7 +6,7 @@
 //   NODE_PATH=$(npm root -g) node --experimental-strip-types scripts/make-icons.mjs
 //     → apps/extension/static/icon{16,32,48,128}.png
 //       apps/web/public/icons/ (PWA: 192, 512, maskable, apple-touch)
-//       apps/web/public/logo.svg, logo-small.svg, mascot.svg, mascot-waiting.svg (empty room)
+//       apps/web/public/logo.svg, logo-small.svg, mascot.svg
 //
 // Sizes follow the design spec (docs/internal/design/logo-sidelit.md): the simple cut at 32 px and below, the full
 // drawing from 33 px, the bleed version (no rounded corners) for maskable / apple-touch icons, which the phone masks.
@@ -69,5 +69,4 @@ await browser.close();
 writeFileSync(new URL('logo.svg', PUBLIC), full + '\n');
 writeFileSync(new URL('logo-small.svg', PUBLIC), small + '\n');
 writeFileSync(new URL('mascot.svg', PUBLIC), mascotSvg({ id: 'slm' }) + '\n');
-writeFileSync(new URL('mascot-waiting.svg', PUBLIC), mascotSvg({ id: 'slm', mood: 'waiting' }) + '\n');
-console.log('✓ logo.svg, logo-small.svg, mascot.svg, mascot-waiting.svg');
+console.log('✓ logo.svg, logo-small.svg, mascot.svg');

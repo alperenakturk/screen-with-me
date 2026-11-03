@@ -83,6 +83,14 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: home + theme harness screenshots of all 11 themes; an intro harness checks the parts appear on the beats and
   that reduced motion shows no movement; size budget still green.
 - Owner's pick: none needed (direction picked: D1 + N1).
+- Done: 0.9.95.3 (PR below, together with 6e). Intro: `intro.ts` rebuilt from `preview.html` 1:1 (same timings and
+  curves, classes prefixed `swm-intro-`, sizes scaled from the logo's `--s`); the logo's `logo-light` (cone + bloom) and
+  `logo-eyes` groups from `logo.ts` animate; Glowbeam is `createMascot` (happy; default in the reduced-motion still);
+  no pause bars any more. Themes: `theme-art.mjs` copies `docs/internal/design/themes/glowbeam-<theme>.svg` to
+  `<theme>-maskot.svg` (the old purple-face drawing code is gone), so the home preview, theme strip, theme dialog and the
+  empty room show each theme's Glowbeam; 6c's single-mascot override is removed. Test: `scripts/harness/intro/run.cjs`
+  (light off at 0.3 s, burst + eyes by 1.15 s, Glowbeam out and logo slid by 1.5 s, line by 1.8 s, faded by 2.65 s,
+  removes itself; reduced motion: only the frame fades, every part in place). The film page uses the same site intro.
 
 ### 6e. The rail in the empty room too (owner, 3 Nov 2026; lane A, after 6d)
 - Why: owner: before any video, people should already be able to open the camera, join voice, open a game or emojis.
