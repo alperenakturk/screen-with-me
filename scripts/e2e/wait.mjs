@@ -73,6 +73,19 @@ c.send({ t: 'ready', ready: true });
 c.send({ t: 'ready', ready: false });
 await sleep(800);
 ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Can hemen tekrar bekletemiyor (bekleme arası)');
+// Security L3: the cooldown belongs to the person; reconnecting (a new member id, same browser) does not reset it.
+{
+  c.ws.close();
+  await sleep(300);
+  const c2 = client({ name: 'Can', cid: 'waitCan000001' });
+  await c2.wait((m) => m.t === 'welcome', 'welcome c2');
+  a.inbox.length = 0;
+  c2.send({ t: 'ready', ready: false });
+  await sleep(800);
+  ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Can reconnecting does not reset the cooldown (security L3)');
+  c2.send({ t: 'ready', ready: true });
+  c2.ws.close();
+}
 
 // Elle hareket beklemeyi iptal eder. (Ayşe ve Can bekleme arasında; yeni biri gelir.)
 const d = client({ name: 'Deniz', cid: 'waitDeniz0001' });

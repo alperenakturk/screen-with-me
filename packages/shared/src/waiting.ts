@@ -58,6 +58,16 @@ export class WaitTracker {
     else this.notReady.add(id);
   }
 
+  /** Security L3: this member may not make the room wait before `until` (a person's cooldown carried to a new id). */
+  holdOff(id: string, until: number): void {
+    if (until > (this.cooldownUntil.get(id) ?? 0)) this.cooldownUntil.set(id, until);
+  }
+
+  /** The members that may not make the room wait yet, with until when. */
+  cooldowns(): [string, number][] {
+    return [...this.cooldownUntil];
+  }
+
   remove(id: string): void {
     this.notReady.delete(id);
     this.cooldownUntil.delete(id);
