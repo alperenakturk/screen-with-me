@@ -504,6 +504,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97 🎮 Side games polish: in a room, 🎮 → "On the side" → Snack Bar, then Window Garden, then Five Frames.
+  Each one opens with "How to play" picture cards the first time (Next / Let's play; ✕ or Esc skips); the "?" in the
+  game's top bar shows them again; they don't come back on the next open. Each window opens big enough that the text
+  is easy to read and nothing is squeezed; the window's title shows the game's full name. Five Frames: green ✓ = right
+  place, yellow • = in the word, grey = not in it; the three are explained under the board until your first guess;
+  after Enter the row turns over letter by letter. The footer and the Help page have a "Licenses" link (the word list
+  credits are no longer inside the game). Try it on the phone too and in Turkish.
 - [ ] 0.9.96.5 🎧 Podcasts: type words (e.g. a topic you like) in the link box and press Enter, then "🎧 Podcasts" on
   the results: shows with their pictures; open one, "▶ Play now" on an episode: a friend hears it at the same moment,
   the cover art shows in place of the video, pause / seek follow. Try a Turkish and an English show.

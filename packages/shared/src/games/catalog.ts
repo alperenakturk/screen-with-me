@@ -45,13 +45,11 @@ export interface SoloRoom {
 }
 
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
-  // Design session's mock: a free window of 340 × 300 (+ the window's head and room for the room's own bar), the
-  // phone sheet 360 × 460. Smaller windows scale it down (stage.ts `refit`).
-  snack: { place: 'float', size: [360, 380], fit: [330, 330] },
-  // The window-sill scene (340 × 226) + the action bar and the album strip; the phone sheet shows it 296 px tall.
-  garden: { place: 'float', size: [360, 400], fit: [330, 350] },
-  // Seven ticket rows + the letter tray.
-  word: { place: 'float', size: [360, 500], fit: [320, 440] },
+  // Card GP (Design's `side-games-polish.md` §2): each opens at the size its content needs, so its scale (`--fit`) is 1
+  // at 1366 × 768 and the text never shrinks below 13 px (the window is the fit + its 55 px head and border); smaller windows scale it down (stage.ts `refit`).
+  snack: { place: 'float', size: [400, 575], fit: [380, 520] },
+  garden: { place: 'float', size: [400, 555], fit: [380, 500] },
+  word: { place: 'float', size: [400, 635], fit: [380, 580] },
 };
 
 export interface GameNews {

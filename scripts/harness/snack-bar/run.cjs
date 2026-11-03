@@ -34,6 +34,7 @@ async function person(ctx, name, avatar, extra = {}) {
     localStorage.setItem('lang', 'en');
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
+    for (const k of ['snackBar', 'windowGarden', 'fiveFrames']) localStorage.setItem(k + ':howSeen', '1');
     for (const [k, v] of Object.entries(more)) localStorage.setItem(k, v);
   }, [name, avatar, extra]);
   await page.goto(`${SITE}/r/${room}#back`);
