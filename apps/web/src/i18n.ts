@@ -582,7 +582,7 @@ const tr = {
   'tips.voice': '🎙 İzlerken konuşmak için sese katıl; kameranı da açabilirsin.',
   'tips.next': 'Sonraki',
   'tips.done': 'Anladım',
-  mediaPlaceholder: 'YouTube’da ara ya da bir link yapıştır (YouTube, video dosyası, film sayfası)',
+  mediaPlaceholder: 'YouTube’da ara ya da bir link yapıştır (YouTube, Vimeo, video dosyası, film sayfası)',
   externalTitle: 'Bu video başka bir sitede',
   externalHasExt:
     'Film kendi sitesinde açılır; eklenti odayı (sohbet, emojiler, kontroller) videonun etrafına getirir.',
@@ -1726,7 +1726,7 @@ const en: Record<Key, string> = {
   'tips.voice': '🎙 Join voice to talk while you watch; you can turn your camera on too.',
   'tips.next': 'Next',
   'tips.done': 'Got it',
-  mediaPlaceholder: 'Search YouTube or paste a link (YouTube, a video file, a film page)',
+  mediaPlaceholder: 'Search YouTube or paste a link (YouTube, Vimeo, a video file, a film page)',
   externalTitle: 'This video is on another site',
   externalHasExt:
     'The film opens on its own site, and the extension brings the room (chat, emojis, controls) around the video.',

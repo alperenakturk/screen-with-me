@@ -25,6 +25,27 @@ export function parseTikTok(url: URL): Media | null {
   return other ? { kind: 'tiktok', id: other[1]! } : null;
 }
 
+const VIMEO_HOSTS = new Set(['vimeo.com', 'www.vimeo.com', 'player.vimeo.com']);
+
+/**
+ * A Vimeo video link → `{kind:'vimeo'}` (card P1): `vimeo.com/<id>`, `vimeo.com/<id>/<hash>` (unlisted),
+ * `vimeo.com/channels/<name>/<id>`, `/groups/<name>/videos/<id>`, `/showcase/<n>/video/<id>`, `/album/<n>/video/<id>`,
+ * `player.vimeo.com/video/<id>?h=<hash>`. Null for anything else (profiles, showcases, live events).
+ */
+export function parseVimeo(url: URL): Media | null {
+  const host = url.hostname.toLowerCase();
+  if (!VIMEO_HOSTS.has(host)) return null;
+  const path = url.pathname.replace(/\/+$/, '');
+  const match =
+    host === 'player.vimeo.com'
+      ? path.match(/^\/video\/(\d{1,12})()$/)
+      : path.match(/^\/(?:channels\/[\w-]+\/|groups\/[\w-]+\/videos\/|(?:showcase|album)\/\d+\/video\/)?(\d{1,12})(?:\/([0-9a-f]{6,20}))?$/i);
+  if (!match) return null;
+  const hash = match[2] || url.searchParams.get('h') || '';
+  const media: Media = /^[0-9a-f]{6,20}$/i.test(hash) ? { kind: 'vimeo', id: match[1]!, hash } : { kind: 'vimeo', id: match[1]! };
+  return isValidMedia(media) ? media : null;
+}
+
 /** Is this a TikTok short share link (vm. / vt.tiktok.com) the server has to resolve first? */
 export function isTikTokShortLink(input: string): boolean {
   try {
@@ -81,6 +102,11 @@ export function parseMediaInput(input: string): Media | null {
     const tiktok = parseTikTok(url);
     return tiktok && isValidMedia(tiktok) ? tiktok : null;
   }
+  // Vimeo videos play on our site through Vimeo's own player (card P1); other Vimeo pages stay film pages.
+  if (VIMEO_HOSTS.has(host)) {
+    const vimeo = parseVimeo(url);
+    if (vimeo) return vimeo;
+  }
   // "merhaba" gibi düz metinler adres sayılmasın: alan adında nokta olmalı.
   if (!host.includes('.') && host !== 'localhost') return null;
 
@@ -98,7 +124,7 @@ export const MEDIA_LIST_MAX = 30;
  * one moves everyone's tab, they are added one by one). Duplicates are dropped. Fewer than two links: `[]`.
  */
 export function parseMediaList(input: string): { media: Media[]; skipped: number } {
-  const tokens = input.split(/[\s,]+/).filter((token) => /^(https?:\/\/|www\.|youtu\.be\/|(m\.)?youtube\.com\/|(www\.)?tiktok\.com\/)/i.test(token));
+  const tokens = input.split(/[\s,]+/).filter((token) => /^(https?:\/\/|www\.|youtu\.be\/|(m\.)?youtube\.com\/|(www\.)?tiktok\.com\/|(www\.)?vimeo\.com\/)/i.test(token));
   if (tokens.length < 2) return { media: [], skipped: 0 };
   const media: Media[] = [];
   let skipped = 0;
@@ -122,6 +148,7 @@ export function sameMedia(a: Media | null, b: Media | null): boolean {
   if (a === null || b === null) return a === b;
   if (a.kind === 'youtube' && b.kind === 'youtube') return a.id === b.id;
   if (a.kind === 'tiktok' || b.kind === 'tiktok') return a.kind === 'tiktok' && b.kind === 'tiktok' && a.id === b.id;
+  if (a.kind === 'vimeo' || b.kind === 'vimeo') return a.kind === 'vimeo' && b.kind === 'vimeo' && a.id === b.id;
   if (a.kind === 'test' || b.kind === 'test') return a.kind === b.kind;
   if ((a.kind === 'html5' || a.kind === 'page') && b.kind === a.kind) return a.url === b.url;
   return false;

@@ -383,6 +383,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.93.21 Vimeo: paste a Vimeo link (`vimeo.com/<number>`, also an unlisted `vimeo.com/<number>/<code>`) with a
+  friend: it plays in Vimeo's own player on computer + phone, pause / play / jumping in Vimeo's bar follows for both,
+  the queue shows the real title, speed stays 1×.
+
 **0.9.93.20 (computer):**
 - [ ] YouTube in fullscreen with nothing going on: no dark empty strip on the right, the video uses the whole width
   (only the rail's thin edge). A message, the "waiting" note or a camera opens the side column; a few seconds after

@@ -18,3 +18,4 @@ store/*.zip
 shell-test-*.png
 # Gerçek ses testinin ekran görüntüleri (scripts/harness/voice)
 scripts/harness/voice/*.png
+scripts/harness/vimeo/*.png

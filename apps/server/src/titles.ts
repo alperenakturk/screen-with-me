@@ -15,6 +15,7 @@ export async function resolveTitle(media: Media): Promise<string | null> {
   // eklenti sekme başlığını yollar, yoksa alan adı gösterilir.
   if (media.kind === 'page') return hostOf(media.url);
   if (media.kind === 'tiktok') return tiktokTitle(media.id, media.user);
+  if (media.kind === 'vimeo') return vimeoTitle(media.id, media.hash);
 
   const videoUrl = `https://www.youtube.com/watch?v=${media.id}`;
   try {
@@ -25,6 +26,20 @@ export async function resolveTitle(media: Media): Promise<string | null> {
     const data: unknown = await response.json();
     const title = typeof data === 'object' && data !== null ? (data as { title?: unknown }).title : null;
     return typeof title === 'string' ? title.slice(0, MAX_TITLE_LENGTH) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Vimeo's official oEmbed (no key); an unlisted video needs its hash in the link. */
+async function vimeoTitle(id: string, hash?: string): Promise<string | null> {
+  try {
+    const link = `https://vimeo.com/${id}${hash ? `/${hash}` : ''}`;
+    const response = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(link)}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (!response.ok) return null;
+    const data: unknown = await response.json();
+    const title = typeof data === 'object' && data !== null ? (data as { title?: unknown }).title : null;
+    return typeof title === 'string' && title.trim() ? title.trim().slice(0, MAX_TITLE_LENGTH) : null;
   } catch {
     return null;
   }

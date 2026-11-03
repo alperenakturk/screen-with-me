@@ -23,7 +23,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 Send a link, and everyone watches the same second. If anyone pauses, seeks or changes the speed, it happens
 for everyone. Chat, voice, cameras, reactions, games and a shared queue sit around the video.
 
-- **YouTube, YouTube Shorts, TikTok links or a video file** → plays right on the site, nothing to install. No link at
+- **YouTube, YouTube Shorts, TikTok, Vimeo links or a video file** → plays right on the site, nothing to install. No link at
   hand? Type words and search YouTube from the same box.
 - **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → the tab goes to that site and,
   with the browser extension, the **room itself** opens over it, with the video sitting in the room's player area.

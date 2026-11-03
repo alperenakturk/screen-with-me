@@ -174,6 +174,7 @@ function banKey(attachment: Attachment, name: string | null): string {
 function titleKey(media: Media): string {
   if (media.kind === 'test') return 'test';
   if (media.kind === 'tiktok') return `tt:${media.id}`;
+  if (media.kind === 'vimeo') return `vm:${media.id}`;
   return media.kind === 'youtube' ? `yt:${media.id}` : media.url;
 }
 
