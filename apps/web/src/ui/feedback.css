@@ -1,0 +1,211 @@
+/* "Send feedback" dialog (card 9; docs/internal/design/feedback-and-thanks.md §1). Loaded with its lazy chunk. */
+.feedback-dialog {
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 16px;
+}
+
+.feedback-dialog .invite-head h3 {
+  margin: 0;
+}
+
+.fb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.fb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fb-chip {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.fb-chip[aria-checked='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
+  font-weight: 600;
+}
+
+.fb-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.feedback-dialog textarea,
+.feedback-dialog input[type='email'] {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  padding: 9px 11px;
+}
+
+.feedback-dialog textarea {
+  height: 96px;
+  resize: none;
+}
+
+.fb-counter {
+  align-self: flex-end;
+  margin-top: -6px;
+}
+
+.fb-attach {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.fb-attach input {
+  margin-top: 3px;
+}
+
+.fb-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.fb-preview {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 110px;
+  overflow: auto;
+}
+
+.fb-note {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  font-size: 13px;
+}
+
+.fb-contact {
+  user-select: all;
+  font-weight: 600;
+}
+
+.fb-privacy {
+  margin: 0;
+  font-size: 12px;
+}
+
+.fb-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#fb-send.sending::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: fb-spin 0.8s linear infinite;
+}
+
+@keyframes fb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fb-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 8px 0 4px;
+}
+
+.fb-sent h4 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.fb-sent p {
+  margin: 0 0 6px;
+}
+
+.fb-glow {
+  width: 72px;
+  height: 72px;
+}
+
+.fb-glow svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 8px 18px rgb(255 198 90 / 0.35));
+}
+
+/* Phone: a bottom sheet like the room's other sheets; the details stay folded. */
+html.phone .feedback-backdrop {
+  align-items: flex-end;
+  padding: 0;
+}
+
+html.phone .feedback-dialog {
+  width: 100%;
+  max-width: none;
+  border-radius: 18px 18px 0 0;
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+html.phone .feedback-dialog::before {
+  content: '';
+  align-self: center;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin-bottom: -4px;
+}
+
+html.phone .feedback-dialog textarea {
+  height: 72px;
+}
+
+html.phone .fb-buttons > * {
+  flex: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #fb-send.sending::before {
+    animation: none;
+  }
+}

@@ -166,6 +166,18 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   harness opens the form on computer + phone; owner's hand test after the token is set.
 - Owner's pick: A, in-site form → GitHub issue (2 Nov 2026). **Owner action:** create the token and add it as a repo
   secret when the Developer asks (steps in the PR).
+- Done: 0.9.96 (PR below). Built from Design's `feedback-and-thanks.md` §1 and R3-7. Shared `feedback.ts` (validation:
+  a type 🐞 / 💡 / 💬, 3–2000 characters, optional e-mail, whitelisted details; `neutralise` for `@`, `#123`, `GH-1` and
+  fences; `buildIssue`: text in a ```` ```text ```` fence, labels `feedback` + `feedback:<type>`, the e-mail line with
+  the 90-day note). Worker `POST /api/feedback` (`apps/server/src/feedback.ts`): own Origin required (403 without),
+  body read as a stream ≤ 8 KB (413), `FEEDBACK_LIMIT` burst binding (3 / min / IP), then `FeedbackGate` (one Durable
+  Object, migration `v7`: 3 per IP hash per hour, 50 per UTC day, hashes kept an hour) → `{error:'off'}` without
+  `FEEDBACK_GITHUB_TOKEN`, else a GitHub issue. Site: `ui/feedback.ts` + `feedback.css` (lazy chunk with its own EN / TR
+  texts) from ⋯ More (computer + phone, before Help), the profile menu (`#profile-feedback`) and the Help page
+  (`/#feedback` opens it over the home page); details unticked by default with the exact lines shown; `/baglanti`
+  keeps its last short result in `diagLast` for it. Privacy policy `#feedback` / `#feedback-tr` (90 days). The deploy
+  step alone gets the token (R3-2 style). Tests: unit `feedback.test.ts`, e2e `feedback.mjs` (live: refusals only, never
+  creates an issue; local: `off` + the hourly limit), harness `scripts/harness/feedback/run.cjs` (19 checks).
 
 ### 10. Shorts: a feed from one channel + Discover by region (0.9.94 "Next" 4)
 - Why: owner, 1 Nov 2026: type a channel and get its Shorts; Discover should show the viewer's country.

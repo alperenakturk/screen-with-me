@@ -134,6 +134,12 @@ export function renderDiag(app: HTMLElement): void {
       `guess: ${guess(pageProtocol === 'h3' || performance.getEntries().some((e) => (e as PerformanceResourceTiming).nextHopProtocol === 'h3') ? 'h3' : pageProtocol, http.ok === true, big.ok === true, probeOk, wsOk, fallbackOk)}`,
       `net: ${net?.effectiveType ?? '?'}/${net?.type ?? '?'} · ${navigator.userAgent}`,
     ].join('\n');
+    // The feedback dialog (card 9) can attach this short line when the person ticks "attach technical details".
+    try {
+      localStorage.setItem('diagLast', `${new Date().toISOString().slice(0, 16)}Z · ws ${wsOk ? 'ok' : 'fail'} · fallback ${fallbackOk ? 'ok' : 'fail'} · ${summary.split('\n').find((l) => l.startsWith('guess:')) ?? ''}`.slice(0, 300));
+    } catch {
+      // No storage: nothing to attach later.
+    }
     copy.removeAttribute('disabled');
     copy.onclick = () => {
       void navigator.clipboard?.writeText(summary).then(() => (copy.textContent = t('copied')));

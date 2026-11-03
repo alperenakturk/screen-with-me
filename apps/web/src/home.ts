@@ -187,6 +187,11 @@ export function renderHome(app: HTMLElement): void {
     renderRecent(app);
     renderContinue(app);
   });
+  // The Help page's "Send feedback" (card 9) comes here as `/#feedback`: the dialog opens over the home page.
+  if (location.hash === '#feedback') {
+    history.replaceState(null, '', location.pathname + location.search);
+    void import('./ui/feedback.ts').then(({ openFeedback }) => openFeedback(null));
+  }
 }
 
 /** Rooms are deleted a day after they empty unless saved: an older unsaved room isn't offered. */

@@ -94,15 +94,21 @@ jobs:
 
       - name: Deploy to Cloudflare
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        env:
+          # "Send feedback" (card 9, optional): a fine-grained token, Issues: write on this repository only. Only this
+          # step sees it (security review 3 R3-2); it goes to the Worker as a secret like the YouTube key.
+          FEEDBACK_GITHUB_TOKEN: ${{ secrets.FEEDBACK_GITHUB_TOKEN }}
         run: |
           set -o pipefail
-          if [ -n "$YOUTUBE_API_KEY" ]; then
-            # The key goes from the environment into a temporary file outside the repo, never into the log.
-            node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({ YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY }))' "$RUNNER_TEMP/secrets.json"
+          [ -n "$YOUTUBE_API_KEY" ] || echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
+          [ -n "$FEEDBACK_GITHUB_TOKEN" ] || echo "::warning::FEEDBACK_GITHUB_TOKEN is missing, feedback answers 'off'."
+          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN" ]; then
+            # The keys go from the environment into a temporary file outside the repo, never into the log; only the
+            # ones that are set (an empty value would overwrite a working secret).
+            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
             npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json" | tee "$RUNNER_TEMP/deploy.log"
             rm -f "$RUNNER_TEMP/secrets.json"
           else
-            echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
             npm run deploy -w @swm/server | tee "$RUNNER_TEMP/deploy.log"
           fi
           # The new version's id, for the live e2e's wait below.
