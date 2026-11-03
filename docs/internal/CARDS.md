@@ -466,6 +466,12 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
 - Tests: CI green on a PR; the next merge deploys and the live e2e passes; the install / build steps' environment has
   no `CLOUDFLARE_*` / `YOUTUBE_*` (a quick `env | grep -c` step that prints 0, removed afterwards).
 - Owner's pick: none needed now (the environment part later).
+- Done (0.9.97.4): the deploy job has no job-level `env:`; `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and
+  `YOUTUBE_API_KEY` (with `FEEDBACK_GITHUB_TOKEN` / `USAGE_TOKEN`) are set only on "Deploy to Cloudflare" (the live
+  e2e keeps `USAGE_TOKEN` for its read check). "Check keys" turns `secrets.X != ''` into an output (`steps.keys.outputs.ok`)
+  that the later steps' `if:` read. Instead of a one-off `env | grep -c` step, "Install and build" keeps a permanent
+  guard: it fails if any deploy secret is in its environment. `permissions: contents: read` came with L10.
+  The `production` environment waits for a public / paid repo.
 
 ### Y1. YouTube branding + Terms link next to search results (audit prep, from Research)
 - Why: YouTube Developer Policies III.F.2 / III.A.1: every feature showing YouTube API results must make clear they come
