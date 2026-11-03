@@ -173,8 +173,11 @@ export const TITLE_MAX_LENGTH = 200;
 export type Media =
   /** `short`: YouTube Shorts linkinden (youtube.com/shorts/…) geldi; oda dikey "Shorts görünümüne" geçer. */
   | { kind: 'youtube'; id: string; short?: true }
-  /** Doğrudan video dosyası (.mp4 vb.); sitede oynar. */
-  | { kind: 'html5'; url: string }
+  /**
+   * Doğrudan video dosyası (.mp4 vb.); sitede oynar. `poster`: a podcast episode's cover art (card P2; an audio file
+   * shows it instead of a black video box), only from Apple's image servers (`PODCAST_ART`).
+   */
+  | { kind: 'html5'; url: string; poster?: string }
   /** Videonun içinde olduğu bir web sayfası; eklentiyle, herkes kendi sekmesinde açarak izler. */
   | { kind: 'page'; url: string }
   /** Senkron testi: sitenin çizdiği 12 sn'lik sayaç (dosya yok); iki ekran aynı sayıyı göstermeli. */
@@ -722,6 +725,9 @@ export function cleanChatText(x: unknown): string | null {
   return Array.from(text).slice(0, CHAT_MAX_LENGTH).join('');
 }
 
+/** A podcast episode's cover art: only from Apple's image servers (the same rule as `podcasts.ts` `PODCAST_ART`). */
+const POSTER = /^https:\/\/[a-z0-9-]+\.mzstatic\.com\/[^\s"'<>]{1,500}$/;
+
 export function cleanMedia(x: unknown): Media | null {
   if (!isObject(x)) return null;
   if (x.kind === 'test') return { kind: 'test' };
@@ -742,6 +748,7 @@ export function cleanMedia(x: unknown): Media | null {
     try {
       const url = new URL(x.url);
       if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+      if (x.kind === 'html5' && typeof x.poster === 'string' && POSTER.test(x.poster)) return { kind: 'html5', url: url.toString(), poster: x.poster };
       return { kind: x.kind, url: url.toString() };
     } catch {
       return null;
@@ -916,7 +923,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'enqueue': {
       const media = cleanMedia(m.media);
       if (!media) return null;
-      const title = media.kind === 'page' ? cleanTitle(m.title) : null;
+      // A film page's tab title, or a podcast episode's "show · episode" (an audio file with cover art, card P2).
+      const title = media.kind === 'page' || (media.kind === 'html5' && media.poster) ? cleanTitle(m.title) : null;
       return title ? { t: m.t, media, title } : { t: m.t, media };
     }
     case 'dequeue':

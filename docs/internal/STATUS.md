@@ -417,6 +417,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.96.5 🎧 Podcasts: type words (e.g. a topic you like) in the link box and press Enter, then "🎧 Podcasts" on
+  the results: shows with their pictures; open one, "▶ Play now" on an episode: a friend hears it at the same moment,
+  the cover art shows in place of the video, pause / seek follow. Try a Turkish and an English show.
 - [ ] 0.9.96.4 📲 Move to another device: on the computer, in a room: profile picture → 📲 Move to another device →
   Send. Scan the QR code with the phone: the phone asks the computer, press "Send" on the computer; the phone says
   what moved (play a bit of Snack Bar first so there is something to move). Reload the phone: your coins, saved rooms

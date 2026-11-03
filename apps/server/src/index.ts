@@ -7,6 +7,7 @@ import { MOVE_CODE } from '@swm/shared/move';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { sendFeedback } from './feedback.ts';
 import { tiktokResolve } from './tiktok.ts';
+import { podcasts } from './podcasts.ts';
 import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 
 export { Draw } from './draw.ts';
@@ -127,6 +128,11 @@ export default {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
       const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : url.pathname.endsWith('/channel') ? youtubeChannel : youtubeSearch;
       return handler(request, url, env, () => ipKey(request));
+    }
+    // Podcasts from the link box (Apple's iTunes Search + the show's RSS feed, card P2).
+    if (url.pathname === '/api/podcasts/search' || url.pathname === '/api/podcasts/episodes') {
+      if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
+      return podcasts(request, url, env, () => ipKey(request));
     }
     if (url.pathname === '/api/tiktok/resolve') {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
