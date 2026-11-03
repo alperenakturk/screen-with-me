@@ -112,6 +112,13 @@ Voice chat while watching: on the film page the microphone is used in the extens
 Used once, right after the extension is installed: the extension's own small bridge script (site-bridge.js, already part of the package) is injected into ScreenWithMe website tabs that were open before the install, so a room page that was waiting for the extension notices it at once instead of asking the user to reload. It is never used on other sites and injects no remote code.
 ```
 
+Short version (card 8, 0.9.93.16; the same two lines are on the extension page, the "Go to the film" card and in the
+Help page's "What the extension can and cannot see"): use it in the listing's description or a reviewer note.
+```
+Why does Chrome say it can "read and change all your data on all websites"? A film can be on any site, so the extension has to be able to find the video there.
+It does nothing while you are not in a room; in a room it only follows the film's play, pause, position and speed in the tab you opened from the room.
+```
+
 Host permission (`<all_urls>`):
 ```
 Users watch videos on sites we cannot list in advance, and players are usually inside cross-origin iframes, so the content script must be able to run in every frame. activeTab is not enough: invited friends open the page through a link without clicking the extension icon, and players that load later in iframes must be detected automatically. Outside a tab that has joined a room the script stays dormant. Within that tab it only reads the <video> element's playback state (time, paused, rate) and shows our own website's room page as a layer over the page (a web-accessible extension page, shell.html, in an iframe), with a hole where the video sits. It never reads page text, forms or cookies. The page URL and title leave the device only when the user explicitly creates a room or shares that page with their room. To keep the watch party usable, a tab that the room's film tab opens to another site right after the user clicks the video (an ad pop-up) is closed locally and can be reopened with one click (tabs.onCreated openerTabId; can be turned off).

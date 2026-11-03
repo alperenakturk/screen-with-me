@@ -2622,6 +2622,22 @@ html:not(.shell) .shell-only {
   line-height: 1.8;
 }
 
+/* Card 8: why the extension asks for every website, in two plain lines under the install steps. */
+.external-box .external-why {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: left;
+}
+/* On a short screen the card would overflow its box: only the link stays. */
+@media (max-height: 760px) {
+  .external-box .external-why {
+    text-align: center;
+  }
+  .external-box .external-why > span {
+    display: none;
+  }
+}
+
 /* Kişiler sekmesi: çıkarılanlar */
 .bans h4 {
   margin: 16px 0 6px;

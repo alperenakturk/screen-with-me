@@ -719,6 +719,9 @@ const tr = {
   externalStep2: 'Bu sekmeye geri dön (kendiliğinden fark eder)',
   externalStep3: '"Filme git ve birlikte izle" düğmesine bas',
   externalOpenAlone: 'Sayfayı eklentisiz aç (senkron olmaz)',
+  externalWhy:
+    'Neden her site? Film herhangi bir sitede olabilir, eklentinin videoyu orada bulması gerekir. Bir odada değilken hiçbir şey yapmaz; odadayken sadece filmin oynat, durdur, konum ve hızını izler.',
+  externalWhyMore: 'Neyi görür, neyi görmez →',
   bansTitle: 'Çıkarılanlar',
   bansHint: 'Çıkardığın kişiler, sen yasağı kaldırana kadar bu odaya giremez. Kişiler tarayıcılarından tanınır; başka bir tarayıcıdan girebilirler.',
   unban: 'Yasağı kaldır',
@@ -1853,6 +1856,9 @@ const en: Record<Key, string> = {
   externalStep2: 'Come back to this tab (it notices by itself)',
   externalStep3: 'Press "Go to the film and watch together"',
   externalOpenAlone: 'Open the page without the extension (no sync)',
+  externalWhy:
+    'Why every website? A film can be on any site, so the extension has to find the video there. It does nothing outside a room; in a room it only follows the film’s play, pause, position and speed.',
+  externalWhyMore: 'What it can and cannot see →',
   bansTitle: 'Removed',
   bansHint: "People you removed can't rejoin this room until you lift the ban. People are recognized by their browser, so they could still join from another one.",
   unban: 'Unban',

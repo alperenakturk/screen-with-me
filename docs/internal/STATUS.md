@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.15**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.16**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -382,6 +382,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.16 (computer):**
+- [ ] The extension page (top, under "What does it do?") and the "Go to the film" card (in a room, a film page without
+  the extension) explain in two lines why the extension asks for every website; the link opens the help page's answer.
 
 **0.9.93.15 (computer + phone):**
 - [ ] Read the Turkish help page (footer "Yardım", the profile menu's ❔, or ⋯ → "Yardım ve SSS"): is anything unclear
