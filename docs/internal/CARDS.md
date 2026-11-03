@@ -48,7 +48,8 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: all harnesses / e2e pass; a grep check in CI (or a unit test) that no user-facing string says "ScreenWithMe"
   except the "formerly" lines; icons readable at 16 px (screenshot); owner's hand test (home, room, extension popup,
   phone home-screen icon).
-- Owner's pick: done (Sidelit, D1, T1, N1). Bump: owner decides whether this is 0.9.94.
+- Owner's pick: done (Sidelit, D1, T1, N1). **Release it as 0.9.95** (owner, 3 Nov 2026: "make it official, I'm
+  speeding up the launch"); the remaining 0.9.94 cards keep their place after it.
 
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
@@ -379,6 +380,16 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: the Developer's card: icons regenerate, favicon readable at 16 px, harness screenshots of the top bar.
 - Owner's pick (3 Nov 2026, round 2): D1 night gold + T1 deep teal + N1 Glowbeam; built by card 6c. Replaced the "touch up today's mascot" pick if he chooses a C
   version; works with either name (Sidelit or ScreenWithMe).
+
+### G1–G5. Growth after 1.0 (owner agreed 3 Nov 2026; ROADMAP §7 "Growth plan")
+- G1 Store listing for search words + reviews from the first 20 users (with the store submission).
+- G2 Search pages (EN first): Shorts together, W2G without ads, free Teleparty alternative, TikTok with friends.
+- G3 A weekly 15–30 s clip (TikTok / Reels / Shorts); tools: `hyperframes` / `video-use` / `earshot` on the owner's
+  computer (his catalogue).
+- G4 Communities + a Product Hunt day; copy polished with `humanizer`.
+- G5 Every room a referral: shareable recap image, one-click "Add to Chrome" on the film card (store link once listed).
+- Done when / tests: each becomes its own Ready card when 1.0 is near; the Planner details them then.
+- Owner's pick: agreed (3 Nov 2026).
 
 ## Done
 
