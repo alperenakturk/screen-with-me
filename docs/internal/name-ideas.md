@@ -150,3 +150,152 @@ Sofaloop and Matinee carry over (re-listed above).
   LANTERNA https://www.notebookcheck.net/Panasonic-LANTERNA-smart-light-with-video-projection-unveiled.728404.0.html ·
   Kinora Home https://dev.to/kinora/kinora-home-5aj7 · Emberly https://apps.apple.com/us/app/-/id6754562096 ·
   Popcorn Time https://en.wikipedia.org/wiki/Popcorn_Time
+
+
+## Round 3: decision council (3 Nov 2026)
+
+Owner asked for an LLM-Council style review of the name and logo. Method: 2 scouts (21 new names + 10 old ones
+re-checked by web search; no trademark / domain registry lookups were possible from the cloud), 1 logo review, five
+advisors (contrarian, first principles, expansionist, outsider, executor), an anonymous peer review and a chair.
+Owner's option page: https://claude.ai/artifact/YD2JcnYBE83ZrP46eqpVyP (private). **Nothing is decided** until the
+owner picks and the registry checks pass.
+
+### The chair's verdict
+
+**Council verdict: the product name and logo**
+
+**1) Where the council agrees**
+- Retire ScreenWithMe as the final name. It is long, it only describes the product, and it sounds like a screen-sharing tool. That makes it a weak trademark.
+- Sidelit is the only name all five advisors put in their top 3, and nobody rejected it.
+- These names are out: Nighto (the "nig" reading), Nestlit (Google Nest, Nestlé) and Duolo (Duolingo). Seatsy, Velvo, Paira, Tovi, Sideby, Ovio and Glimmo are already taken. Snug and Spool are crowded.
+- Yanyana can be Turkish flavour inside the product, but not the main name.
+- Keep the purple face and fix its shapes now, whatever name wins.
+
+**2) Where it clashes**
+- **Growth or warmth.** Advisor C wants a name that still fits when the product grows into games and TV, so it rejects names about seats, nights or furniture. A, D and E like Armrest and Nightseat because they match "I saved you a seat".
+- **Samely.** It is the slogan in one word, but "samely" is already a dictionary word for "monotonous". It is out.
+- **Twinlit.** It is a coined word and easy to own, but said aloud it sounds like "Twilight", a film series, and "twin" suggests only two people. It is out.
+- **Second face or seat** for the logo. The council splits on this; see section 6.
+
+**3) Blind spots**
+- **Sidelit is not a coined word.** It is a real lighting and photography term, so search results will be crowded for years and the trademark is weaker. People will also type "Sidelight".
+- **No shortlisted name says "same moment".** They are about seats, sides or nights. The slogan has to carry that meaning.
+- **"Clean" only means a limited web search found nothing.** No trademark, domain or app-store lookups could be done here.
+- **Nobody tested the names on real people.** That means 5 English speakers and 5 Turkish speakers.
+- **Renaming has a cost.** The workers.dev address, the store e-mail, the extension listing and the social handles all change.
+- **No fallback order was set.** One is set in section 5.
+
+**4) Final shortlist**
+
+**Sidelit**
+- **Pitch:** the seat next to you, lit by the same screen.
+- **Tagline:** "Sidelit. Different screens, same moment."
+- **Evidence:** no app or company with this name was found. No trademark or domain check has been done.
+- **Risks:**
+  - Common lighting word, so it is weaker in search and as a trademark.
+  - The "Sidelight" misspelling.
+  - A Turkish reader may first say "si-de-lit".
+
+**Nightseat**
+- **Pitch:** your seat for movie night, saved by a friend.
+- **Tagline:** "Nightseat. Different screens, same moment. Your seat is saved."
+- **Evidence:** a coined word, and nothing with this name was found. Its domains are more likely to be free. Not checked.
+- **Risks:**
+  - It sounds like a ticketing or nightlife brand.
+  - It suggests watching at night only, which limits growth.
+
+**Armrest**
+- **Pitch:** the shared armrest, because you're right next to me.
+- **Tagline:** "Armrest. Different screens, same moment."
+- **Evidence:** no app in this field found. armrest.com is almost certainly taken, so it would need getarmrest.com or armrest.app.
+- **Risks:**
+  - A dictionary word cannot be owned online.
+  - It feels flat, like a furniture part.
+  - Turkish users won't know the meaning.
+
+**Worth one real check:** Sitwith (Advisor B's idea). It turns "come sit with us" into a name and keeps the "with" from ScreenWithMe. It has not been checked at all.
+
+**5) Recommendation: Sidelit**
+
+- It passes the four ways a name gets used:
+  - Said once, people can spell it.
+  - It reads as an invitation in a link.
+  - It is not a crowded app word.
+  - It works as the tooltip next to the face in the toolbar.
+- It means "next to you" without tying the product to furniture, night or two people, so it still fits games and TV.
+- It sounds warm and current.
+- The lighting-word weakness can be handled: buy the "sidelight" domain as a redirect if it is cheap, and always show the name with the face and the slogan.
+
+**Fallback order** if Sidelit fails the trademark or domain checks:
+1. Sitwith, if it comes back clean
+2. Nightseat
+3. Armrest
+
+The name must be fixed before the Chrome Web Store submission.
+
+**6) Logo**
+
+**Keep the mascot.** Its eyes are the one thing that is truly ours, and it does not depend on the name.
+
+**The one improvement to make now** is tighter shapes plus a separate small-size version:
+- Smaller eyes with at least 6 units between them.
+- Pupils looking forward or at the same point. The current side-glance looks shifty.
+- A bigger mouth, placed lower, so the bottom third is not empty.
+- A separate 16–32 px version with no highlights, bigger pupils and a bold mouth.
+
+This is a small change in `logo.ts` + `make-icons.mjs`. A second face or a seat outline can come later, and only for the store and promo images, never the 16 px icon.
+
+**7) The one thing to do next**
+
+On the owner's computer, run these checks for **Sidelit, Sitwith, Nightseat and Armrest** in one evening:
+
+1. **Domains** (.com, .app, plus sidelight.com):
+   - https://rdap.org/domain/sidelit.com (change the name for each)
+   - or https://www.namecheap.com/domains/
+2. **Trademarks**, exact and similar names, classes 9, 38, 41 and 42:
+   - TÜRKPATENT: https://www.turkpatent.gov.tr/arastirma-yap
+   - TMview (EU and national offices): https://www.tmdn.org/tmview
+   - USPTO: https://tmsearch.uspto.gov
+   - WIPO Global Brand Database: https://branddb.wipo.int
+3. **Stores and social handles:**
+   - Chrome Web Store, Google Play and the App Store
+   - https://namechk.com for Instagram, TikTok, X and YouTube
+4. **Ear test:** say each name once to 5 English speakers and 5 Turkish speakers, then ask them to spell it and say how it feels.
+
+The first name to pass all four is the one to file, first with TÜRKPATENT, which is the cheapest.
+
+### Every candidate checked in round 3
+
+| Name | Status | Meaning | Evidence (web search) |
+|---|---|---|---|
+| Sidelit | `clean` | 'side' + 'lit': two people side by side, lit by the same screen glow at night. Says 'the seat next to you' and 'cozy night in' without any crowded word. Real-ish English, still unusual enough to own. | WebSearch '"Sidelit" app' found no app with this name (only Sideline, Sideloadly, Sidus Link). '"sidelit.com" OR Sidelit company' found no company: nearest are Sidel (packaging), SideLights (bike lights) and the Slidelit |
+| Twinlit | `clean` | Two lights, one glow: two screens lit at the same moment. Fits the slogan 'Different screens, same moment.' Invented compound, so it is distinctive. | WebSearch '"Twinlit" app' found nothing exact (TinLit, Twinline, Twinr). The brand search found only TWINLITE, a cancelled 1992 US trademark for fluorescent fixtures, plus Twin Lights soda. No social or video app uses th |
+| Samely | `clean` | 'Same' + '-ly': in the same way, at the same moment. Echoes the slogan's 'same moment' directly. It is a rare real English adverb, not a common brand word. | WebSearch '"Samely" app' found nothing exact; the nearest is Samly (GPS tracker). The company/brand search found nothing exact; nearby names are SAMY (a marketing agency), Samy (hair care) and Seamly Systems. Note: the o |
+| Nighto | `clean` | A playful 'night-oh!': the friendly sign for 'movie night, let's go'. Cozy-night-in feeling, cartoonish, and it fits the mascot. | WebSearch '"Nighto" app' found nothing exact; nearby names are Nocto, Nightro and Nightly, all in nightlife or sleep, not watching together. The brand/company search found nothing exact. |
+| Moviva | `caution` | 'Movie' + 'viva': long live movie night together. Lively and warm, and it sounds good in many languages. | WebSearch '"Moviva" app' found no exact match. Close names exist: Movivo (a defunct London phone-top-up startup), MoviVue (an iOS indie-movie app) and Moviso (a movie watchlist). Being close to MoviVue, which is also a m |
+| Hushlit | `caution` | The room goes quiet ('hush') and the screen lights up ('lit'): the moment a film starts together. Soft and cozy. | WebSearch '"Hushlit" OR "Hushlight" app' found no exact match. Nearby names: Hushli (an AI confidant and journal app, a chat-like product), Hushly (white noise), Hush (several sleep and focus apps) and Hushed (phone numb |
+| Rowmo | `clean` | Built on 'row', as in a row of cinema seats: everyone in the same row. Short, round and cartoonish, fits the mascot. | WebSearch '"Rowmo" app' found nothing exact; nearby are Rowmote (a remote-control app), RowMate and Row Nation (rowing fitness). Nothing social or video. |
+| Cozeen | `caution` | 'Cozy' + 'screen': a cozy screen shared with friends. Easy to guess, fun to say. | WebSearch '"Cozeen" app' found no exact match. Nearby names: Cozee (an interior-design game with a community), Cozi (a big family-organizer brand) and Zeeën (a social nearby-people app). Cozi is well known, so it is a mo |
+| Tandi | `caution` | From 'tandem': two people doing the same thing at the same time. Soft, friendly, and short (5 letters, 2 syllables). | WebSearch '"Tandi" app' found no exact app. Similar names are crowded: TANDA (savings app), Tanda (workforce software), TeamTANDA (a queer community platform), Tandoo (a Vietnamese video-chat app) and Google's former Tan |
+| Nestlit | `risky` | Curled up in a nest, lit by the screen: a cozy night in together. | WebSearch '"Nestlit" app' found no exact match; the nearest is NestList (an AI grocery list). But 'Nest' is a strong Google brand (Nest app) and the word is close to Nestlé. Both are large trademark owners who defend the |
+| Lumiro | `caution` | From 'lumi' (light): the screen's glow everyone shares. Soft and international. | WebSearch '"Lumiro" app' found an existing iOS app called Lumiro (developer Rigo Rigo, $0.99, a screen-light tool for photographers, few or no ratings, last updated 2021–2024) and a Product Hunt listing. It is a small pr |
+| Evenfall | `caution` | An old poetic English word for dusk: the hour when movie night begins. Elegant and calm. | WebSearch '"Evenfall" app' found no app. '"Evenfall" game OR brand' found several entertainment products: Evenfall (a board game by Nanox / dlp Games), Evenfall (an itch.io visual novel) and Tales From Evenfall (a Steam  |
+| Elbo | `caution` | 'Elbow to elbow': sitting right next to each other. Short and cute (dropped from the 12; listed for transparency). | WebSearch '"Elbo" app watch together' found no watch-together product with this name. '"Elbo" app OR elbo.app OR elbo.com' found ELBO ML Tracker (a small 2022 Product Hunt app; elbo.ai). ELBO is also a well-known machine |
+| Seatsy | `taken` | Seat + -sy: the seat saved for you (dropped). | WebSearch found 'Seatsy: Seating Chart Planner' on the Apple App Store (apps.apple.com/us/app/id6754024790), plus Seaty (seaty.co.uk) and seats.io in the same area. |
+| Velvo | `taken` | Velvet cinema seats (dropped). | WebSearch found Velvo, an AI companion and chat app on the App Store (mwm.ai/apps/velvo/6757386260, 20k+ users). That is a social/chat product, and the name is also close to Volvo. |
+| Paira | `taken` | A pair watching together (dropped). | WebSearch found 'Paira: Couples & Relationship' on the App Store (apps.apple.com/us/app/id6755090790), a social app for couples. |
+| Tovi | `taken` | Short, friendly 'together' sound (dropped). | WebSearch found several apps named Tovi: a social connection app (SourceForge listing), a photo community (mwm.ai/apps/tovi/6774532792), TOVI Healthy Habits on the App Store and Tovi Games. |
+| Sideby | `taken` | Side by side (dropped). | WebSearch found Sideby, a companionship app on the App Store ('feel less alone', apps.apple.com/app/id6758774814), plus a Sideby vinyl organizer and a Sideby co-parenting waitlist. |
+| Ovio | `taken` | Short and round, like the mascot (dropped). | WebSearch found Ovio, a Home Assistant companion app on Product Hunt (launched Oct 2024; producthunt.com/products/ovio-2), plus Ovia and Oviva health apps. |
+| Glimmo | `taken` | The glimmer of a shared screen (dropped). | WebSearch found 'Glimmo – AI Journal & Diary' on the App Store (developer Wanderlab; you chat with characters you invent), plus Glimmer and Glimo apps. |
+| Duolo | `risky` | Duo: two together (dropped). | WebSearch '"Duolo" app' found no app, but every result was Duolingo. The name would be confused with Duolingo, and Duolingo is known to defend its brand. |
+| Armrest | `clean` | The shared armrest between two cinema seats: sitting next to someone. It fits the 'I saved you a seat' line. | Web search on 3 Nov 2026 ('Armrest app watch together', 'Armrest app App Store OR Google Play OR extension') found no app, extension or startup named Armrest in social viewing, video or chat. The only results were physic |
+| Sofaloop | `clean` | Sofa + loop: the same couch, joined in a loop across distances. | An exact-phrase search for "Sofaloop" returned no product, app or company. The only hits were near-misses: the Arper 'Loop' modular sofa, a 'Loopy' 3D sofa model, the 'Souloop' album, and looper software (SooperLooper, S |
+| Nightseat | `clean` | Your seat for movie night. | An exact search for "Nightseat" app found nothing with that name. Near-misses: Nightstay (hotel booking), Night Square, Night Cap and NightOwl (nightlife), Pogoseat (stadium seats). None is in social viewing. Weak eviden |
+| Twinseat | `caution` | Two seats side by side. | Today's search for "Twinseat" app / startup found no product with that exact name (near-misses: Twinr app builder, Twinzapp, Seatfrog, Seateroo). The earlier caution stays: Air New Zealand's 'Twin-Seat' / Skycouch-style  |
+| Glowroom | `caution` | A room lit by the screen's glow. | Today's searches ("Glowroom" app, "Glowroom" iOS App Store) found no listing named exactly Glowroom. The earlier research had flagged an iOS photo app; today's near-misses are crowded 'Glow' apps: Glowrium (lighting), Gl |
+| Elbowroom | `caution` | Room to stretch out; a relaxed shared space. | Searching "Elbowroom" app / software / startup found Elbow Room Studios (a small app-development studio) and a Wix site 'elbowroom1'. 'Elbow Room' is also a very common name for bars and venues, and it is a novel title ( |
+| Snug | `taken` | Cozy and close together. | Snug Safety is a well-known app (App Store id1122758716, 'Snug', 20M+ check-ins, featured by AARP and Forbes; site snugsafe.com) for daily check-ins of people living alone. The name 'Snug' is strongly tied to it in app s |
+| Spool | `risky` | A film reel, cinema heritage. | Many existing 'Spool' products, several in video: Spool (2012, offline video caching and sending to friends, acquired by Facebook), Spool – Music Video Editor (Pixite, active iOS app), Spool: 360 & VR (a video app on RuS |
+| Yanyana | `clean` | Turkish 'side by side'. | An exact search for "Yanyana" app found no app with that exact name. The closest is 'Yana', an AI emotional-companion app (YANA APP S.A.P.I. de C.V.), plus Turkish 'Yanımda' apps (Vodafone Yanımda, Parkinson'da Yanımda). |
+| ScreenWithMe | `clean` | Current name: watch the screen with me. | Searching "ScreenWithMe" OR "Screen With Me" app found no other product with that name. Close names in screen sharing: Getscreen.me (remote screen sharing), Screen (multiplayer screen sharing), join.me, ScreenMeets. So i |
