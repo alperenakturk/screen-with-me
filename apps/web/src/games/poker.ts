@@ -466,7 +466,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       parts.push(sit);
     }
     const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'games.again' : 'draw.start'));
-    go.disabled = online < 2;
+    // Only the host starts (the server checks too).
+    go.disabled = online < 2 || (!!host && s.host !== me);
     go.addEventListener('click', () => send({ t: 'start' }));
     parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('poker.seats', { n: s.players.length, max: POKER_MAX_PLAYERS })));
     root.replaceChildren(el('div', { class: 'pk-lobby' }, ...parts), toast);

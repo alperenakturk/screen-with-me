@@ -105,7 +105,8 @@ export class Game extends DurableObject<Env> {
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong' });
     if (!this.limit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
-    if (message.t === 'hello') return this.hello(ws, me, message);
+    // One hello per connection, as in the room (review 3, R3-8).
+    if (message.t === 'hello') return me.name === null ? this.hello(ws, me, message) : this.sendTo(ws, { t: 'error', code: 'bad' });
     if (me.name === null) return this.sendTo(ws, { t: 'error', code: 'bad' });
     await this.apply(ws, me as Attachment & { name: string }, message);
   }
