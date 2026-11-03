@@ -30,16 +30,6 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
 - Owner's pick: none needed.
 
-### 4. Invite window: a real WhatsApp button and a QR tab (0.9.93, owner's feedback)
-- Why: owner, 2 Nov 2026: the WhatsApp button shows a speech-bubble emoji; the QR text "A friend next to you can scan
-  it with their phone's camera" reads badly.
-- Done when: the WhatsApp button carries WhatsApp's own glyph (inline SVG, green as in WhatsApp's brand guidelines for
-  share buttons, text "WhatsApp"); the window has two tabs "Link" and "QR"; the QR tab shows only the QR code (big)
-  with "Copy image" (PNG to the clipboard, falls back to download) and no explanation sentence; EN + TR; fits without
-  scrolling at 1024×640 and on a phone.
-- Tests: `invite/run.cjs` updated (+ tab switch, copy image, no scroll); owner's hand test.
-- Owner's pick: done (owner's words); the WhatsApp glyph follows WhatsApp's brand rules.
-
 ### 5. Home page: "Continue where you left off" overflows (0.9.93, owner's bug)
 - Why: owner, 2 Nov 2026 (screenshot): a long video title runs out of the card under the room preview.
 - Done when: the card's lines are one line each with an ellipsis (full title in `title`), the card never overlaps the
@@ -408,6 +398,23 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 4. Invite window: a real WhatsApp button and a QR tab (0.9.93, owner's feedback)
+- Why: owner, 2 Nov 2026: the WhatsApp button shows a speech-bubble emoji; the QR text "A friend next to you can scan
+  it with their phone's camera" reads badly.
+- Done when: the WhatsApp button carries WhatsApp's own glyph (inline SVG, green as in WhatsApp's brand guidelines for
+  share buttons, text "WhatsApp"); the window has two tabs "Link" and "QR"; the QR tab shows only the QR code (big)
+  with "Copy image" (PNG to the clipboard, falls back to download) and no explanation sentence; EN + TR; fits without
+  scrolling at 1024×640 and on a phone.
+- Tests: `invite/run.cjs` updated (+ tab switch, copy image, no scroll); owner's hand test.
+- Owner's pick: done (owner's words); the WhatsApp glyph follows WhatsApp's brand rules.
+- Done: 0.9.93.11 (PR below). `ui/invite.ts`: tabs "Link" / "QR code" (`.invite-tabs`, `role=tablist`); the WhatsApp
+  button carries WhatsApp's glyph (Simple Icons path, CC0, inline SVG) on WhatsApp green #25D366 with dark text for
+  contrast; the QR tab shows the code big (`min(240px, 42dvh, 70vw)`, white frame) and "Copy image" (`qrPng`: 512 px
+  PNG via a canvas → `ClipboardItem`; without an image clipboard it downloads `screenwithme-invite-qr.png`); the old
+  explanation sentence (`invite.qr`) is gone; EN + TR. Test: `invite/run.cjs` (glyph + green, tabs, the QR tab's only
+  text is "Copy image", a PNG on the clipboard, both tabs without scrolling at 1024×640, the QR tab on an iPhone 13).
+
 
 ### 2a. Nothing of ours over the YouTube player by itself (owner picked D, 2 Nov 2026; with card 2)
 - Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
