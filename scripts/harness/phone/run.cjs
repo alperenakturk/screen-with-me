@@ -91,9 +91,11 @@ const sheetName = (page) => page.evaluate(() => {
     check(many.queued === 2 && many.note.length > 0, 'phone: two links at once go to the queue from the Add sheet', JSON.stringify(many));
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
-    // ⋯ More: invite, queue, people, games, recap, film time, profile, settings, language.
+    // ⋯ More (card 6: the computer's "⋯ More" list in the same order): invite, queue, people, games, (film time,) save,
+    // recap, sync test, rules, profile, settings, language.
     await page.click('#strip-more');
-    check((await sheetName(page)) === 'more' && (await page.$$('.ph-sheet .ph-tile')).length === 9, 'phone: ⋯ opens the More sheet (9 tiles)');
+    const moreTiles = (await page.$$('.ph-sheet .ph-tile')).length;
+    check((await sheetName(page)) === 'more' && moreTiles >= 11, 'phone: ⋯ opens the More sheet', String(moreTiles));
     await page.click('.ph-sheet .ph-tile >> nth=2');
     check((await sheetName(page)) === 'people' && (await page.isVisible('.ph-sheet #members')), 'phone: More → People shows the people list');
     // The phone's back button closes a sheet.
@@ -125,10 +127,10 @@ const sheetName = (page) => page.evaluate(() => {
     for (const [open, tileIndex, pop, label] of [
       ['#strip-more', 3, '#game-menu', 'games (only in ⋯)'],
       ['#chat-plus', 3, '#speed-pop', 'speed'],
-      ['#strip-more', 6, '.profile-pop', 'profile'],
+      ['#strip-more', 'Profil', '.profile-pop', 'profile'],
     ]) {
       await page.click(open);
-      await page.click(`.ph-sheet .ph-tile >> nth=${tileIndex}`);
+      await page.click(typeof tileIndex === 'number' ? `.ph-sheet .ph-tile >> nth=${tileIndex}` : `.ph-sheet .ph-tile:has-text("${tileIndex}")`);
       await page.waitForTimeout(400);
       const r = await rect(page, pop);
       check(!!r && r.x >= -1 && Math.abs(r.r - vw) <= 1 && Math.abs(r.b - vh) <= 1 && r.h > 40, `phone: ${label} opens as a bottom sheet`, JSON.stringify(r));
@@ -136,7 +138,7 @@ const sheetName = (page) => page.evaluate(() => {
       await page.waitForTimeout(300);
     }
     await page.click('#strip-more');
-    await page.click('.ph-sheet .ph-tile >> nth=7');
+    await page.click('.ph-sheet .ph-tile:has-text("Ayarlar")');
     await page.waitForTimeout(300);
     const settings = await rect(page, '#settings-dialog .settings-window');
     check(!!settings && settings.w >= vw - 1 && settings.h >= vh - 1, 'phone: settings is a full page', JSON.stringify(settings));
