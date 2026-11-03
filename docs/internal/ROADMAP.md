@@ -30,10 +30,11 @@ and four screen sizes at the same time. From now on work follows this list; anyt
 
 | | Items (in this order) |
 |---|---|
-| **Now** (close the 0.9.93 gate, at most 3) | 1. YouTube rule + one remote everywhere (owner, 2 Nov 2026: the rail must hide in fullscreen, one rail in the empty room and on the film page, Research verdict on the YouTube look; small owner bugs: invite window, home "continue" card) · 2. Phone version, next speed steps · 3. Owner's hand tests 0.9.92.3–0.9.93.5 + root cause of the `wait.mjs` live flake |
+| **Now** (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end") | The run order in `CARDS.md`: bugs → Sidelit 0.9.95 → feedback, Shorts, thanks, debug panel, cinema mode, design sweep, tablet, accessibility, security cards (lane A); side games + Vimeo / podcasts (lane B); then council review, security pass, bug hunt → owner's test round → official work (policy, KVKK, applications) → store submission |
 | **Next** (0.9.94) | Simplify the room (C + D) → Help / FAQ (EN + TR) + permission explainer → "Send feedback" (→ GitHub issues) → Shorts channel feed + Discover by country → Thanks page → debug panel → Shorts measurement → cinema mode → home page redesign → design bug sweep (cards 6–16 in `CARDS.md`) |
 | **Frozen** (not before 0.9.95) | Tablet layout, accessibility pass, camera window settings pass, new ideas and games |
 | **0.9.95 additions (owner, 2 Nov 2026)** | Side games: 🍿 Snack Bar (idle) → 🌱 Window Garden (cozy collection) → daily word game (EN + TR); then the move-to-device code. Accounts: none now (option A; passkey account only after 1.0 if users ask) |
+| **Name (owner, 3 Nov 2026)** | **Sidelit** from now on (card 6c); trademark + domain checks by the owner before 1.0 (`research/name-sidelit-check.md`) |
 | **Owner's decisions to make early** 👤 | Final name and domain (0.9.96 depends on them; a good case for a multi-advisor "council" decision session) |
 
 ## Milestone gates to 1.0 (owner's request, 2 Nov 2026: "be sure each version step is fully done")
@@ -263,6 +264,15 @@ implement, test, ship.
 - [ ] **(added)** Feedback loop: in-product "send feedback" link, GitHub issue templates, reply within a few days.
 
 ---
+
+- [ ] **Growth plan for the first 3 months after 1.0** (owner agreed 3 Nov 2026; from
+  `research/market-and-competitors-2026.md`): (1) a store listing written for what people search ("watch together",
+  "YouTube together", "sync any video") + "no account, no ads", screenshots, a promo video, reviews from the first 20
+  users; (2) honest search pages for the searches rivals leave ("watch YouTube Shorts together", "Watch2Gether
+  without ads", "free Teleparty alternative, no account", "watch TikTok with friends"), English first; (3) one 15–30 s
+  clip a week on TikTok / Reels / Shorts; (4) communities where the need is (long-distance couples, student Discords,
+  Turkish forums) + a Product Hunt launch day; (5) every room as a referral (invite card / QR / WhatsApp, a shareable
+  recap image, one-click "Add to Chrome" on the "Go to the film" card). Cards G1–G5 in `CARDS.md`.
 
 ## Phase 2 — after 1.0
 - **Keep improving features** (owner's list + `gelecek-fikirler.md`, `oyun-fikirleri.md`).
