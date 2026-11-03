@@ -11696,6 +11696,137 @@ html.is-touch .desk-only {
   display: block;
 }
 
+/* Card 2a (owner's D): nothing of ours over a YouTube player by itself. The resting YouTube player leaves a thin gutter
+   on its right and the edge strip lives there, beside the player, not on it. Other players get the document's mouse
+   moves (no frame swallows them), so they need no strip. */
+html:not(.phone) .theater.yt-rail.side-rail.dock-mode {
+  --edge-gutter: 14px;
+}
+
+html:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.yt-rail.side-rail.dock-mode.dock-idle:not(:has(.fs-dock:hover, .dock-pop:not([hidden]))) :is(.player, .fs-catcher) {
+  right: var(--edge-gutter);
+}
+
+.theater.yt-rail.side-rail .rail-edge {
+  top: 0;
+  bottom: 0;
+  width: var(--edge-gutter, 14px);
+}
+
+.theater.side-rail:not(.yt-rail) .rail-edge {
+  display: none !important;
+}
+
+/* YouTube fullscreen on a computer (card 2a, owner's D, like Watch2Gether): the player makes room for a column beside
+   it, left of the rail (or of the thin edge gutter while the rail rests). The column holds the room's notes at the top,
+   the cameras (placed by cam-float.ts) and the newest messages at the bottom. */
+.fs-side {
+  display: none;
+}
+
+.theater.yt-fs {
+  --fs-side-w: clamp(220px, 17vw, 320px);
+  --side-right: var(--edge-gutter, 14px);
+}
+
+.theater.yt-fs:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))),
+html.is-touch:not(.has-mouse) .theater.yt-fs {
+  --side-right: var(--rail-w, 58px);
+}
+
+.theater.yt-fs :is(.player, .fs-catcher) {
+  right: calc(var(--side-right) + var(--fs-side-w)) !important;
+}
+
+.theater.yt-fs .fs-side {
+  display: flex;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: var(--side-right);
+  width: var(--fs-side-w);
+  z-index: 2;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  box-sizing: border-box;
+  background: rgb(12 14 22 / 0.94);
+  border-left: 1px solid rgb(255 255 255 / 0.08);
+  transition: right 0.22s ease;
+}
+
+.theater.yt-fs .fs-side-notices {
+  font-size: 14px;
+}
+
+.theater.yt-fs .toasts {
+  top: auto !important;
+  left: auto !important;
+  bottom: 14px !important;
+  right: calc(var(--side-right) + 10px) !important;
+  width: calc(var(--fs-side-w) - 20px);
+  max-width: none;
+  align-items: stretch;
+  text-align: left;
+  z-index: 3;
+}
+
+.theater.yt-fs .action-notice {
+  display: none !important;
+}
+
+/* YouTube emojis rise from the sender's face / the rail's 😀, beside the video (card 2a; first in 0.9.92.9). */
+.r-float.r-from {
+  position: fixed;
+  bottom: auto;
+  z-index: 1300;
+  translate: -50% -70%;
+  pointer-events: none;
+  animation-name: r-rise-short;
+}
+
+.r-float.r-from .r-emoji {
+  font-size: 34px;
+}
+
+@keyframes r-rise-short {
+  0% {
+    transform: translate(0, 12px) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift, 0px), -120px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* The 3-2-1 countdown with YouTube: a card in the notes beside the video (card 2a), not big numbers on the player. */
+.yt-notices > .countdown {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface-2, rgb(255 255 255 / 0.06));
+  border: 1px solid var(--border);
+  text-shadow: none;
+}
+
+.yt-notices > .countdown .countdown-n {
+  font-size: 34px;
+}
+
+.yt-notices > .countdown.go .countdown-n {
+  font-size: 22px;
+}
+
 /* The games hall opens left of the rail. */
 .fs-dock .game-menu {
   right: calc(100% + 10px);

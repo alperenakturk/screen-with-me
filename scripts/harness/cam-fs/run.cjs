@@ -52,6 +52,45 @@ const check = (ok, label, extra = '') => {
   check(fs.fs, 'the rail\'s ⛶ opens fullscreen');
   check(fs.tiles.length >= 2 && Math.abs(fs.tiles[0].y - fs.tiles[1].y) < 4, 'fullscreen: the two cameras sit side by side too', JSON.stringify(fs));
   check(fs.box.w > fs.box.h, 'fullscreen: the window is wider than tall', JSON.stringify(fs.box));
+  // Card 2a (owner's D): with YouTube in fullscreen the cameras live in the column beside the player, never on it, in
+  // the one-window layout and in the free layout.
+  await a.evaluate(() => document.exitFullscreen?.().catch(() => {}));
+  await a.waitForTimeout(800);
+  await a.fill('#media-input', 'https://www.youtube.com/watch?v=M7lc1UVf-VE');
+  await a.click('#media-form button[value=load]');
+  await a.waitForFunction(() => document.querySelector('#theater')?.classList.contains('yt-rail') && document.querySelector('#player iframe'), null, { timeout: 15000 }).catch(() => {});
+  await a.waitForTimeout(1500);
+  const inColumn = () => a.evaluate(() => {
+    const frame = document.querySelector('#player iframe')?.getBoundingClientRect();
+    const side = document.querySelector('#fs-side')?.getBoundingClientRect();
+    const pieces = [...document.querySelectorAll('#voice-cams .cam-tile, #voice-cams .cam-pill, #voice-cams:not(.free)')].map((n) => n.getBoundingClientRect()).filter((r) => r.width > 0);
+    const over = pieces.filter((r) => frame && r.left < frame.right - 1 && frame.left < r.right - 1 && r.top < frame.bottom - 1 && frame.top < r.bottom - 1);
+    const outside = pieces.filter((r) => side && (r.left < side.left - 1 || r.right > side.right + 1));
+    return { n: pieces.length, over: over.length, outside: outside.length, side: side && Math.round(side.width) };
+  });
+  for (const layout of ['group', 'free']) {
+    await a.evaluate((l) => {
+      localStorage.setItem('opt:camLayout', l);
+      for (const k of ['camFloat:fsSpot', 'camTiles:fsSpot', 'camPill:fsSpot']) localStorage.removeItem(k);
+    }, layout);
+    await a.reload();
+    await a.waitForSelector('.room');
+    await a.waitForFunction(() => document.querySelector('#player iframe') && document.querySelectorAll('#voice-cams .cam-tile video').length >= 2, null, { timeout: 20000 }).catch(() => {});
+    await a.waitForTimeout(1200);
+    const w2 = await a.evaluate(() => { const r = document.querySelector('.player-wrap').getBoundingClientRect(); return { r: r.right, y: r.top + r.height / 2 }; });
+    await a.mouse.move(w2.r - 8, w2.y, { steps: 3 });
+    await a.waitForTimeout(400);
+    await a.click('#dock-exit');
+    await a.waitForTimeout(1500);
+    await a.mouse.move(400, 400, { steps: 3 });
+    await a.waitForTimeout(3000);
+    const col = await inColumn();
+    if (process.env.SHOTS) await a.screenshot({ path: `${process.env.SHOTS}/yt-fs-${layout}.png` });
+    check(col.n >= 2 && col.over === 0 && col.outside === 0, `YouTube fullscreen (${layout}): the cameras are in the column beside the player`, JSON.stringify(col));
+    await a.evaluate(() => document.exitFullscreen?.().catch(() => {}));
+    await a.waitForTimeout(600);
+  }
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ Camera window keeps its cameras side by side');
   process.exit(fails ? 1 : 0);
