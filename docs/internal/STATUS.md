@@ -348,6 +348,20 @@ From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's o
 - Kept on purpose: 🎙 / 📷 red before joining voice (owner's choice, 0.9.91.12). #14 ("You" under my face) reads fine
   by eye.
 - Idea for the owner's list: a sideways phone in an empty room could keep faces / chat until a video starts.
+**Sweep 2 (0.9.96.9):**
+- Fixed: XOX and Connect Four open in the video's place on a computer (they opened as a free window over the chat) (#6,
+  room games); the game head: no play-logo with its badge, the title takes the free width and the buttons go icon-only
+  first (#4, #7); empty seat "Waiting…" with a dashed circle instead of "… ? O", names use the free width (#5); the
+  Draw & Guess lobby / podium on a solid card (#8); a loading player is black, never white (#3); the stream window
+  floats on the page in the Shorts view (it ran off the right edge) (#2); the room no longer scrolls by 1 px (#10); on the
+  film page in fullscreen our notes and messages start below the film's own top bar (#12); a calmer stream frame.
+- Already fixed by card 6g: #1 (cameras squeezing the chat: they start in their own window now).
+- Open: #9 XOX board on a phone could use more of the height; #11 the film page's hole could grow to the room's free
+  height (needs the embed harness under xvfb); Snack Bar's smallest text in a free window (#6, lane B's game).
+**Sweep harness:** `scripts/harness/sweep/run.cjs` (home, join, empty room, room with a video, settings, invite,
+`/baglanti`, help, privacy, thanks × 1920×1080 / 1366×768 / 1024×640 / 390×844 / 844×390 × EN + Gece / TR + Sinema (phones
+Okyanus): 100 screenshots, checks for sideways scroll, nothing past the right edge, console errors, and no page scroll
+where a screen must fit). It found the Thanks page scrolling on a sideways phone: fixed.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude

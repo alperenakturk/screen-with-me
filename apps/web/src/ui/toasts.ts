@@ -26,7 +26,8 @@ export function createToasts(container: HTMLElement, anchor: HTMLElement, dock?:
       const p = parent.getBoundingClientRect();
       s.bottom = s.left = 'auto';
       s.right = `${Math.max(20, Math.round(p.right - docked.left + 14))}px`;
-      s.top = inFullscreen() ? '20px' : '58px';
+      // On the film page in fullscreen the film site's own top bar (title, back, cast) sits at the top (sweep-2 #12).
+      s.top = inFullscreen() ? (document.documentElement.classList.contains('shell') ? '64px' : '20px') : '58px';
       container.classList.remove('left', 'up');
       return;
     }

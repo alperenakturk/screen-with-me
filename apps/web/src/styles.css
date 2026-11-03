@@ -5567,12 +5567,18 @@ html.shorts-view .footer {
   background: var(--surface-2);
 }
 
+.xox-avatar.vacant {
+  background: none;
+  border: 2px dashed var(--border);
+}
+
 .xox-avatar img {
   width: 100%;
   height: 100%;
 }
 
 .xox-name {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -6080,7 +6086,8 @@ html.shorts-view .footer {
   overflow: hidden;
   background: #000;
   box-shadow: 0 10px 40px rgb(0 0 0 / 0.6);
-  border: 2px solid #ff4d6d;
+  /* A calm frame (sweep-2: the bright pink outline read as an error); the red dot already says "live". */
+  border: 2px solid color-mix(in srgb, #ff4d6d 40%, var(--border));
 }
 
 .live-window.mine {
@@ -7490,11 +7497,15 @@ html.shorts-view .footer {
   container: gstage / inline-size;
 }
 
-@container gstage (max-width: 820px) {
-  .game-stage .game-head-text,
-  .game-stage .pwm-logo {
+@container gstage (max-width: 1100px) {
+  .game-stage .game-head-text {
     display: none;
   }
+}
+
+/* Sweep-2 #7: the play-logo with its 🎮 badge hung out of the head; the title already names the game. */
+.game-stage .pwm-logo {
+  display: none;
 }
 
 .game-stage-head {
@@ -7506,7 +7517,9 @@ html.shorts-view .footer {
   background: var(--surface);
 }
 
+/* Sweep-2 #4: the title takes the free width (the buttons go icon-only first), so it is no longer cut by them. */
 .game-stage-title {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -7514,7 +7527,7 @@ html.shorts-view .footer {
 }
 
 .game-stage-gap {
-  flex: 1;
+  display: none;
 }
 
 .game-stage-head .btn {
@@ -11953,7 +11966,8 @@ html.shorts-view .game-stage .game-place {
 
   html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room {
     --side-w: clamp(300px, 21vw, 400px);
-    --stage-w: calc((100dvh - 252px) * 16 / 9 + 28px);
+    /* 254, not 252: with the footer the room was 1 px taller than the window (sweep-2 #10). */
+    --stage-w: calc((100dvh - 254px) * 16 / 9 + 28px);
     grid-template-columns: minmax(0, max(var(--stage-w), 560px)) var(--side-w);
     justify-content: center;
     gap: 16px;
@@ -12953,4 +12967,22 @@ html.in-room .footer > span:first-child {
 
 .invite-sub {
   text-wrap: pretty;
+}
+
+/* Sweep-2 #8: the Draw & Guess lobby (and the final podium) sat on a see-through dark layer over the white canvas: a grey
+   card whose muted text was 2.5:1. With the settings shown it is the same solid card as the other games' lobbies. */
+.draw-overlay:has(> .game-settings) {
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
+  color: var(--text);
+}
+
+/* Sweep-2 #3: a player that is still loading (or cannot load) is dark, never a white slab in the dark room. */
+.player,
+.player iframe {
+  background: #000;
+}
+
+/* Sweep-2 #12: on the film page in fullscreen our notes start below a typical player's own top bar. */
+html.shell .theater:is(:fullscreen, .fake-fs) .action-notice {
+  top: 64px;
 }

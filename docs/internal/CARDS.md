@@ -371,6 +371,9 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Owner's pick (3 Nov 2026) on sweep-1 item 8 (https://claude.ai/artifact/7GjPa4yVqDrYWAJ4fqe1fS): **A**, one English
   friendly room name for everyone, in every language ("the same name for everyone"). No change to `friendlyRoomName`;
   item 8 is closed.
+- Done: 0.9.96.8 (sweep-1 fixes) and 0.9.96.9 (sweep-2 fixes + `scripts/harness/sweep/run.cjs`, 100 screenshots, all
+  checks pass); the full list with what happened to each item is in `STATUS.md` "Design sweep (card 16)". Open small
+  items there (XOX board height on a phone, the film page's hole size, Snack Bar's smallest text for lane B).
 
 ## Proposed
 

@@ -92,11 +92,12 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
     box.className = `xox-player mark-${mark}${turn ? ' turn' : ''}${person && !person.online ? ' away' : ''}`;
     box.replaceChildren(
       markNode(mark),
-      person ? avatarNode(person.avatar, 'xox-avatar') : el('span', { class: 'xox-avatar vacant' }, '?'),
+      // An empty seat: a dashed empty circle and "Waiting…" (sweep-2 #5: "… ? O" looked broken).
+      person ? avatarNode(person.avatar, 'xox-avatar') : el('span', { class: 'xox-avatar vacant' }),
       el(
         'span',
         { class: 'xox-name' },
-        person ? `${person.name}${person.id === me ? ` (${t('games.you')})` : ''}` : '…',
+        person ? `${person.name}${person.id === me ? ` (${t('games.you')})` : ''}` : el('span', { class: 'muted' }, t('games.seatEmpty')),
         person && !person.online ? el('small', {}, ` · ${t('games.offline')}`) : '',
       ),
     );

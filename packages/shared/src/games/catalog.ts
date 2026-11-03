@@ -17,8 +17,8 @@ export interface GameInfo {
 }
 
 export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
-  xox: { min: 2, max: 2, place: 'float', size: [400, 560], fit: [300, 420] },
-  four: { min: 2, max: 2, place: 'float', size: [480, 560], fit: [360, 420] },
+  xox: { min: 2, max: 2, place: 'stage', size: [400, 560], fit: [300, 420] },
+  four: { min: 2, max: 2, place: 'stage', size: [480, 560], fit: [360, 420] },
   draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440] },
   quiz: { min: 2, max: 8, place: 'stage', size: [760, 540], fit: [540, 380] },
   poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440] },
