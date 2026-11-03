@@ -168,9 +168,28 @@ const box = (page, selector) =>
   check(inFs, 'the rail\'s ⛶ opens fullscreen');
   if (inFs) {
     const vw = await alex.evaluate(() => ({ w: innerWidth, h: innerHeight }));
+    // Owner (a plain mouse laptop, no touch screen): right after the rail's ⛶, without moving the mouse, it rests.
+    await alex.waitForTimeout(3000);
+    check(await idle(), 'fullscreen (plain mouse): right after ⛶, no mouse move, the rail rests');
     await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 4 });
     await alex.waitForTimeout(3000);
     check(await idle(), 'fullscreen: the rail rests');
+    // 🎙 / 📷 outside voice open the IP note; cancelled with the mouse (not Esc), the rail still goes.
+    for (const id of ['dock-mic', 'dock-cam']) {
+      await alex.mouse.move(vw.w - 8, vw.h / 2, { steps: 4 });
+      await alex.waitForTimeout(300);
+      await alex.click(`#${id}`);
+      await alex.waitForTimeout(500);
+      const cancel = await alex.evaluate(() => {
+        const button = [...document.querySelectorAll('.dialog-backdrop:not([hidden]) button')][0];
+        const r = button?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+      });
+      if (cancel) await alex.mouse.click(cancel.x, cancel.y);
+      await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 6 });
+      await alex.waitForTimeout(1500);
+      check(!!cancel && (await idle()), `fullscreen (plain mouse): ${id} outside voice, its note cancelled with the mouse, mouse to the middle: the rail goes`);
+    }
     await alex.mouse.move(vw.w - 8, vw.h / 2, { steps: 4 });
     await alex.waitForTimeout(350);
     check(!(await idle()), 'fullscreen: the right edge opens it');
