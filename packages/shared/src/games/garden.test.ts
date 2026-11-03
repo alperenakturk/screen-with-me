@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DRY_SPEED, EVENING_GAP_MS, EVENING_S, FILM_MIN_S, GARDEN_VERSION, PLANTS, PLANT_IDS, POTS_MAX, POTS_START,
+  DRY_SPEED, EVENING_GAP_MS, EVENING_S, FILM_MIN_S, GARDEN_VERSION, PLANTS, PLANT_IDS, POTS,
   SEEDS_MAX, SEED_EVERY_S, WATER_LAST_S,
-  filmEnded, found, freshGarden, inBloom, loadGarden, minutesLeft, pick, plant, potCount, rarityOf, saveGarden,
+  filmEnded, found, freshGarden, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
   stageOf, tickGarden, water, type GardenSave,
 } from './garden.ts';
 
@@ -15,17 +15,16 @@ function watch(garden: GardenSave, seconds: number, ctx = play, start = 1_000_00
 const seq = (...values: number[]) => () => values.shift() ?? 0;
 
 describe('Window Garden growth', () => {
-  it('starts with a growing daisy, a seed and three pots', () => {
+  it('starts with a growing fern, a seed and three pots', () => {
     const garden = freshGarden();
-    expect(garden.pots).toHaveLength(POTS_START);
-    expect(garden.pots[0]).toMatchObject({ plant: 'daisy' });
+    expect(garden.pots).toHaveLength(POTS);
+    expect(garden.pots[0]).toMatchObject({ plant: 'fern' });
     expect(garden.seeds.common).toBe(1);
-    expect(potCount(garden)).toBe(3);
   });
 
   it('grows only while the video plays; a watered common plant blooms in 20 min', () => {
     const garden = freshGarden();
-    garden.pots[0] = { plant: 'daisy', growth: 0, water: 1 };
+    garden.pots[0] = { plant: 'mint', growth: 0, water: 1 };
     tickGarden(garden, 5, { playing: false, others: 3 });
     expect(garden.pots[0]!.growth).toBe(0);
     watch(garden, 10 * 60);
@@ -40,7 +39,7 @@ describe('Window Garden growth', () => {
 
   it('a dry pot never dies, it only grows slower; watering brings full speed back', () => {
     const garden = freshGarden();
-    garden.pots[0] = { plant: 'fern', growth: 0, water: 0 };
+    garden.pots[0] = { plant: 'night-tulip', growth: 0, water: 0 };
     watch(garden, 600);
     expect(garden.pots[0]!.growth).toBeCloseTo((600 * DRY_SPEED) / (45 * 60));
     expect(garden.pots[0]!.water).toBe(0);
@@ -55,7 +54,7 @@ describe('Window Garden growth', () => {
 
   it('a tick that runs out of water half-way grows partly fast, partly slow', () => {
     const garden = freshGarden();
-    garden.pots[0] = { plant: 'daisy', growth: 0, water: 2 / WATER_LAST_S };
+    garden.pots[0] = { plant: 'mint', growth: 0, water: 2 / WATER_LAST_S };
     tickGarden(garden, 4, play);
     expect(garden.pots[0]!.growth).toBeCloseTo((2 + 2 * DRY_SPEED) / (20 * 60));
     expect(garden.pots[0]!.water).toBe(0);
@@ -120,14 +119,14 @@ describe('Window Garden seeds', () => {
 describe('Window Garden planting and the album', () => {
   it('plants a seed in an empty pot, preferring plants not found yet', () => {
     const garden = freshGarden();
-    garden.album = { daisy: 1, basil: 2 };
+    garden.album = { fern: 1, mint: 2 };
     expect(plant(garden, 0, 'common')).toBeNull(); // pot 0 is taken
     expect(plant(garden, 9, 'common')).toBeNull();
     expect(plant(garden, 1, 'rare')).toBeNull(); // no rare seed
     // random: 0.5 → fresh pool (< 0.75), 0 → its first plant.
-    expect(plant(garden, 1, 'common', seq(0.5, 0))).toBe('tulip');
+    expect(plant(garden, 1, 'common', seq(0.5, 0))).toBe('sunbell');
     expect(garden.seeds.common).toBe(0);
-    expect(garden.pots[1]).toEqual({ plant: 'tulip', growth: 0, water: 1 });
+    expect(garden.pots[1]).toEqual({ plant: 'sunbell', growth: 0, water: 1 });
     expect(plant(garden, 2, 'common')).toBeNull(); // out of seeds
   });
 
@@ -138,24 +137,18 @@ describe('Window Garden planting and the album', () => {
     expect(rarityOf(plant(garden, 2, 'rare', seq(0.5, 0.5, 0.99))!)).toBe('rare');
   });
 
-  it('picking a plant in bloom fills the album and earns pots, up to six', () => {
+  it('picking a plant in bloom fills the album and frees the pot', () => {
     const garden = freshGarden();
     expect(pick(garden, 0)).toBeNull(); // not in bloom yet
+    expect(pick(garden, 1)).toBeNull(); // empty
     garden.pots[0]!.growth = 1;
-    expect(pick(garden, 0)).toEqual({ plant: 'daisy', first: true, pots: 0 });
+    expect(pick(garden, 0)).toEqual({ plant: 'fern', first: true });
     expect(garden.pots[0]).toBeNull();
-    garden.pots[0] = { plant: 'daisy', growth: 1, water: 0 };
-    expect(pick(garden, 0)).toMatchObject({ first: false });
-    expect(garden.album.daisy).toBe(2);
-    garden.album.basil = 1;
-    garden.pots[1] = { plant: 'tulip', growth: 1, water: 1 };
-    expect(pick(garden, 1)).toEqual({ plant: 'tulip', first: true, pots: 1 });
-    expect(garden.pots).toHaveLength(4);
-    for (const id of PLANT_IDS) garden.album[id] = 1;
-    garden.pots[0] = { plant: 'mint', growth: 1, water: 1 };
-    pick(garden, 0);
-    expect(garden.pots).toHaveLength(POTS_MAX);
-    expect(found(garden)).toBe(PLANT_IDS.length);
+    garden.pots[0] = { plant: 'fern', growth: 1, water: 0 };
+    expect(pick(garden, 0)).toEqual({ plant: 'fern', first: false });
+    expect(garden.album.fern).toBe(2);
+    expect(found(garden)).toBe(1);
+    expect(garden.pots).toHaveLength(POTS);
   });
 
   it('every plant has one rarity and a unique id', () => {
@@ -169,8 +162,8 @@ describe('Window Garden planting and the album', () => {
 describe('Window Garden save', () => {
   it('round-trips as one versioned JSON', () => {
     const garden = freshGarden();
-    garden.album = { daisy: 2, orchid: 1, basil: 1 };
-    garden.pots.push(null);
+    garden.album = { fern: 2, moonbloom: 1, mint: 1 };
+    garden.pots[2] = { plant: 'reel-vine', growth: 0.4, water: 0.5 };
     garden.seeds.rare = 3;
     garden.ended = ['item1'];
     const text = saveGarden(garden);
@@ -185,9 +178,9 @@ describe('Window Garden save', () => {
   it('cleans wrong fields one by one', () => {
     const garden = loadGarden({
       v: GARDEN_VERSION,
-      pots: [{ plant: 'daisy', growth: 7, water: -1 }, { plant: 'weed', growth: 0.5, water: 1 }, 'x', { plant: 'mint' }, { plant: 'mint' }],
+      pots: [{ plant: 'fern', growth: 7, water: -1 }, { plant: 'weed', growth: 0.5, water: 1 }, 'x', { plant: 'mint' }],
       seeds: { common: 1e9, rare: 'two', legendary: 1.7 },
-      album: { daisy: 3, fake: 9, mint: -1 },
+      album: { fern: 3, fake: 9, mint: -1 },
       watched: -5,
       seedClock: 1e9,
       together: 'long',
@@ -195,9 +188,9 @@ describe('Window Garden save', () => {
       seen: 99,
       ended: ['a', 5, 'x'.repeat(100), 'b'],
     });
-    expect(garden.pots).toEqual([{ plant: 'daisy', growth: 1, water: 0 }, null, null]);
+    expect(garden.pots).toEqual([{ plant: 'fern', growth: 1, water: 0 }, null, null]);
     expect(garden.seeds).toEqual({ common: SEEDS_MAX, uncommon: 0, rare: 0, legendary: 1 });
-    expect(garden.album).toEqual({ daisy: 3 });
+    expect(garden.album).toEqual({ fern: 3 });
     expect(garden.watched).toBe(0);
     expect(garden.seedClock).toBe(SEED_EVERY_S);
     expect(garden.together).toBe(0);

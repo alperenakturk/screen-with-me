@@ -7,7 +7,7 @@
 // - Nothing ever dies: a dry pot only grows slower until it is watered again.
 // - Seeds: a common one every 30 watched minutes, a better one when a film (≥ 20 min) ends, a rare one after a full
 //   evening together (90 min watched with someone else in the room).
-// - A plant in bloom is picked into the album (every plant found, with how many times): the collection.
+// - A plant in bloom is picked into the album (every plant found, with how many times): the collection. Three pots.
 
 export const GARDEN_KEY = 'windowGarden';
 export const GARDEN_VERSION = 1;
@@ -18,12 +18,15 @@ export const RARITIES: readonly Rarity[] = ['common', 'uncommon', 'rare', 'legen
 /** Watched minutes from seed to bloom (watered all the way). */
 export const GROW_MINUTES: Record<Rarity, number> = { common: 20, uncommon: 45, rare: 90, legendary: 180 };
 
-/** Our own plants (no film or brand names). The album shows them in this order. */
+/**
+ * Our own plants, the Design session's first album (`docs/internal/design/side-games/garden/plants/<id>.svg`). The
+ * album shows them in this order; more can join later (an id never changes, saves keep counting it).
+ */
 export const PLANTS: Record<Rarity, readonly string[]> = {
-  common: ['daisy', 'basil', 'tulip', 'clover', 'mint', 'pansy'],
-  uncommon: ['sunflower', 'lavender', 'fern', 'cactus', 'poppy'],
-  rare: ['orchid', 'bonsai', 'lotus', 'moonflower'],
-  legendary: ['starbloom', 'popcorn-tree'],
+  common: ['fern', 'mint', 'sunbell'],
+  uncommon: ['night-tulip', 'lantern-cactus'],
+  rare: ['moonbloom', 'reel-vine'],
+  legendary: ['popcorn-shrub'],
 };
 export type PlantId = string;
 export const PLANT_IDS: readonly PlantId[] = RARITIES.flatMap((r) => PLANTS[r]);
@@ -42,10 +45,8 @@ export const FILM_MIN_S = 20 * 60;
 export const EVENING_S = 90 * 60;
 /** A break this long starts a new evening. */
 export const EVENING_GAP_MS = 4 * 3600_000;
-/** Pots: this many at the start, one more for every `POT_EVERY` plants found, at most `POTS_MAX`. */
-export const POTS_START = 3;
-export const POT_EVERY = 3;
-export const POTS_MAX = 6;
+/** Pots on the sill (the scene has three slots). */
+export const POTS = 3;
 /** Ticks longer than this are ignored (a sleeping laptop is not watching). */
 export const MAX_TICK_S = 5;
 /** Seeds kept at most per rarity (an old forgotten tab cannot pile up thousands). */
@@ -88,8 +89,8 @@ export interface GardenContext {
 export type Random = () => number;
 
 export function freshGarden(): GardenSave {
-  const pots: (Pot | null)[] = Array.from({ length: POTS_START }, () => null);
-  pots[0] = { plant: 'daisy', growth: 0.1, water: 1 };
+  const pots: (Pot | null)[] = Array.from({ length: POTS }, () => null);
+  pots[0] = { plant: 'fern', growth: 0.1, water: 1 };
   return {
     v: GARDEN_VERSION,
     pots,
@@ -131,7 +132,7 @@ export function loadGarden(raw: unknown): GardenSave {
     if (count > 0) garden.album[id] = count;
   }
   const pots = Array.isArray(record.pots) ? record.pots : [];
-  garden.pots = Array.from({ length: potCount(garden) }, (_, i) => {
+  garden.pots = Array.from({ length: POTS }, (_, i) => {
     const pot = pots[i] as Record<string, unknown> | null | undefined;
     if (!pot || typeof pot !== 'object' || typeof pot.plant !== 'string' || !rarityOf(pot.plant)) return null;
     return { plant: pot.plant, growth: unit(pot.growth), water: unit(pot.water) };
@@ -151,21 +152,6 @@ export const saveGarden = (garden: GardenSave): string => JSON.stringify(garden)
 
 /** Different plants found so far. */
 export const found = (garden: GardenSave): number => Object.keys(garden.album).length;
-
-/** How many pots I have: more as the album grows. */
-export function potCount(garden: GardenSave): number {
-  return Math.min(POTS_MAX, POTS_START + Math.floor(found(garden) / POT_EVERY));
-}
-
-/** Adds the pots the album earned (never takes any away). Returns how many were added. */
-function growPots(garden: GardenSave): number {
-  let added = 0;
-  while (garden.pots.length < potCount(garden)) {
-    garden.pots.push(null);
-    added++;
-  }
-  return added;
-}
 
 const addSeed = (garden: GardenSave, rarity: Rarity): void => {
   garden.seeds[rarity] = Math.min(SEEDS_MAX, garden.seeds[rarity] + 1);
@@ -259,14 +245,14 @@ export function plant(garden: GardenSave, pot: number, rarity: Rarity, random: R
   return id;
 }
 
-/** Picks a plant in bloom into the album. `first`: a new plant in the album; `pots`: pots it earned. */
-export function pick(garden: GardenSave, pot: number): { plant: PlantId; first: boolean; pots: number } | null {
+/** Picks a plant in bloom into the album. `first`: a new plant in the album. */
+export function pick(garden: GardenSave, pot: number): { plant: PlantId; first: boolean } | null {
   const target = garden.pots[pot];
   if (!target || target.growth < 1) return null;
   const first = !garden.album[target.plant];
   garden.album[target.plant] = (garden.album[target.plant] ?? 0) + 1;
   garden.pots[pot] = null;
-  return { plant: target.plant, first, pots: growPots(garden) };
+  return { plant: target.plant, first };
 }
 
 /** Watched minutes left until this pot blooms, if it is kept watered. */
