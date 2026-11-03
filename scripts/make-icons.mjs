@@ -69,4 +69,6 @@ await browser.close();
 writeFileSync(new URL('logo.svg', PUBLIC), full + '\n');
 writeFileSync(new URL('logo-small.svg', PUBLIC), small + '\n');
 writeFileSync(new URL('mascot.svg', PUBLIC), mascotSvg({ id: 'slm' }) + '\n');
-console.log('✓ logo.svg, logo-small.svg, mascot.svg');
+// The Thanks page's Glowbeam (card 11, Design: happy).
+writeFileSync(new URL('mascot-happy.svg', PUBLIC), mascotSvg({ id: 'slh', mood: 'happy' }) + '\n');
+console.log('✓ logo.svg, logo-small.svg, mascot.svg, mascot-happy.svg');

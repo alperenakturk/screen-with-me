@@ -209,6 +209,12 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: static page check in the same harness as Help.
 - Owner's pick: A (2 Nov 2026). Names who said yes (owner, 3 Nov 2026): Tecem Öztürk, Feyza Hacıalioğlu, Ömer Tuğrul
   Bakan, Ahmet Faruk Uğurluoğlu, Nevin Senem Kanar, Mert Arı (exactly as written, Turkish letters kept).
+- Done: 0.9.96.2 (PR below). `apps/web/public/thanks.html` (`/thanks`, EN + TR blocks via `lang.js`, `?lang=tr`): the
+  night-gold page with a happy Glowbeam (`mascot-happy.svg`, written by `make-icons.mjs`; still with reduced motion), a
+  short thank-you, the six names in the owner's order (`lang="tr"`, letters kept) and "Want to help too? Send feedback"
+  → `/#feedback`. Linked from the footer (`data-thanks-link`, follows the language) and a line on the Help page. Fits
+  1366×768 and 390×844 without scrolling. The "Credit me" box in the feedback form waits for the closed beta. Test:
+  `scripts/harness/help/run.cjs` (Thanks checks, EN + TR, computer + phone).
 
 ### 12. Hidden test panel `?debug=1` (0.9.94, before the Shorts measurement)
 - Why: the owner tests from his phone without a computer; it gathers `/baglanti`, `?olcum=1`, `?tvlab=1`, version,
