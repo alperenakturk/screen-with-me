@@ -421,6 +421,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.23 (owner bug: the stream button was gone):**
+- [ ] In a room with no video yet, alone or with a friend, in voice or not: "🖥️ Paylaş ▾" (Share) is in the Together card;
+  sharing your screen works, the friend's "▶ Watch the stream" works. The camera count next to "Seste 1/6" shows a small
+  camera drawing, not an empty box (Windows).
+
 **0.9.96.15 (YouTube usage counters, card Y3):**
 - [ ] GitHub → the repo → Settings → Secrets and variables → Actions → New repository secret `USAGE_TOKEN`: any long
   random text (a password manager can make one; never paste it in a chat). The next deploy uploads it.
