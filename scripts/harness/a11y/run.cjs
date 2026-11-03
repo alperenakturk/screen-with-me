@@ -146,6 +146,9 @@ async function join(page) {
     let ring = null;
     for (let i = 0; i < 40 && !ring; i++) {
       await page.keyboard.press('Tab');
+      if (!(await page.evaluate(() => !!document.activeElement?.closest?.('#fs-dock')))) continue;
+      // The rail fades in over 0.22 s (a slower CI machine measured it mid-fade).
+      await page.waitForTimeout(500);
       ring = await page.evaluate(() => {
         const b = document.activeElement;
         if (!b?.closest?.('#fs-dock')) return null;

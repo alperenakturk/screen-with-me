@@ -491,6 +491,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
               <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
+              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
             </form>
           </div>
           <div class="game-menu-wrap shorts-game-wrap">
@@ -510,6 +511,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button class="btn primary small-btn" data-i18n="feed.start"></button>
               </div>
               <p class="muted small" data-i18n="feed.hint"></p>
+              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
             </form>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>

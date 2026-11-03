@@ -12354,3 +12354,13 @@ html.in-room .room-title-dot {
 .chat-events {
   min-height: 28px;
 }
+
+/* Card Y1: "Results from YouTube · YouTube Terms of Service" under every list of YouTube API results. */
+.yt-attrib {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.yt-attrib a {
+  color: var(--accent-hover);
+}

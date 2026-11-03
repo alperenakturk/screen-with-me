@@ -475,6 +475,14 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   "YouTube Terms of Service" link (opens in a new tab); EN + TR; computer + phone; the Help page says the same.
 - Tests: harness or e2e checks the mark + link exist in each of the four places; screenshot at phone width.
 - Owner's pick: none needed.
+- Done: 0.9.96.13 (with A11y, PR #197). "Results from YouTube · YouTube Terms of Service" (link to
+  https://www.youtube.com/t/terms, new tab) under the link box's search results (`ui/search.ts` `attribution()`), in the
+  Shorts view's ＋ Add window and in the ♾ window that holds 🎲 Discover and ✨ More like this (`room.ts`, `.yt-attrib`);
+  EN + TR; the Help page says the same. Text attribution for now: YouTube's own logo file (brand guidelines: unchanged)
+  is not in the repo; Design can add it from YouTube's brand resources if the audit asks for the logo. Planner's small
+  fix with it: `scripts/e2e/room.mjs` no longer fails when YouTube's oEmbed doesn't answer (it waits 8 s, then says the
+  room kept its fallback title). Harness `scripts/harness/yt-attrib/run.cjs` (stubbed search; computer + phone, EN +
+  TR, 13 checks).
 
 ### Y2. Stored YouTube titles never older than 30 days (audit prep, from Research)
 - Why: YouTube allows keeping non-authorized API data (titles) at most 30 days; a saved room's queue, `history` and

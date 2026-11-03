@@ -424,6 +424,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 **0.9.96.13 (accessibility, card A11y):**
 - [ ] On a computer, without the mouse: Tab from the top of a room (first "Skip to the video"), reach the buttons beside
   the video, open ⚙️ and 🔗 Invite (Tab stays inside, Esc comes back to the button), ⋯ More with the arrow keys.
+- [ ] YouTube search, Shorts ＋ Add and the ♾ window show "Results from YouTube · YouTube Terms of Service"; the link opens YouTube's terms in a new tab.
 - [ ] Optional: with a screen reader (NVDA on Windows or VoiceOver on a Mac / iPhone) the room name, the buttons and the
   XOX squares are read out with sensible names.
 

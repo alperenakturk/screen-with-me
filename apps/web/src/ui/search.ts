@@ -68,6 +68,11 @@ export function createSearch(
     head.append(x);
     return head;
   }
+  /** Card Y1 (YouTube Developer Policies III.F.2): the results say where they come from and link YouTube's Terms. */
+  function attribution(): HTMLElement {
+    const terms = el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms'));
+    return el('p', { class: 'yt-attrib small' }, `${t('yt.from')} · `, terms);
+  }
   let lastQuery = '';
 
   function row(result: SearchResult): HTMLElement {
@@ -99,7 +104,7 @@ export function createSearch(
     } else if (answer.items.length === 0) {
       panel.replaceChildren(header(t('searchFor', { q: query })), el('p', { class: 'search-note' }, t('searchNone')));
     } else {
-      panel.replaceChildren(header(t('searchFor', { q: query })), el('ol', { class: 'search-list' }, ...answer.items.map(row)));
+      panel.replaceChildren(header(t('searchFor', { q: query })), el('ol', { class: 'search-list' }, ...answer.items.map(row)), attribution());
     }
     panel.hidden = false;
   }
