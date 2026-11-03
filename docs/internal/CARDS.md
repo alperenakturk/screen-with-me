@@ -82,7 +82,8 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   card opens its game the same way as today; covers from the Design session.
 - Tests: harness: the gallery opens from the rail, the phone ⋯ and the Shorts bar; every card opens its game; fits at
   340×300 and 360×460.
-- Owner's pick: done (idea); layout option page from Design pending.
+- Owner's pick (3 Nov 2026, https://claude.ai/artifact/XsUvwg9YL6KugDVP6VggMR): layout **B, two tabs** ("Together" / "On the
+  side"), covers ~160 px, the side tab shows each game's progress, reopens on the last tab.
 
 ### T. Tablet layout (lane A; 0.9.95 gate)
 - Why: ROADMAP §1 "Tablet support": iPad / Android tablets upright and sideways get their own layout (today tablets
