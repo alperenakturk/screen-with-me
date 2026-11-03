@@ -81,3 +81,16 @@ Owner's pick for the daily word game. Web search only (registries not reachable 
   frames) and moves us further from the original.
 - **Verdict: 🟢/🟡 usable.** No collision found; mind "Framed" (expectation, not law) and keep the board a film strip,
   not a square grid. Registry check (TÜRKPATENT / TMview / USPTO, class 9 / 41) still the owner's step before 1.0.
+
+## Shipped lists (Developer B, 3 Nov 2026, Five Frames 0.9.95.5)
+- **English guesses:** ENABLE `enable1.txt` (copy from github.com/dolph/dictionary), every word of exactly five
+  letters a–z: 8,636. **Answers:** 977 common words picked by hand (our selection, checked to be in ENABLE; no
+  plurals, no grim words such as death / abuse / tumor). 12dicts could not be downloaded from the cloud session, so it
+  was not used.
+- **Turkish guesses:** Zemberek-NLP `master-dictionary.dict`, five-letter lemmas without proper nouns, abbreviations
+  or punctuation, lower-cased the Turkish way, â / î / û written a / i / u: 4,793. **Answers:** 1,606 common words
+  picked by hand from that list (lemmas only, "no suffixes"; grim words left out).
+- Both ship in the game's lazy chunks (`apps/web/src/games/words/`), answers as base-36 positions (not plain text).
+  Credits and the full Apache 2.0 text: `apps/web/public/third-party-notices.txt`, linked from the game.
+- To change a list: edit the picks, regenerate the two modules (all guesses glued, answers as positions). Changing the
+  answers changes the daily word for everyone on the same day (everyone gets the new list together after a deploy).

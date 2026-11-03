@@ -24,7 +24,7 @@ import { icon, type IconName } from '../ui/icons.ts';
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
 /** Solo games have an emoji until the games gallery (card GG) gives every game its cover. */
-const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿', garden: '🌱' };
+const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿', garden: '🌱', word: '🎟️' };
 const soloIcon = (kind: SoloKind): HTMLElement => el('span', { class: 'hub-glyph', 'aria-hidden': 'true' }, SOLO_GLYPH[kind]);
 
 /** A game the window can show: a room game (a table) or a solo game played on the side. */
@@ -69,7 +69,7 @@ const MAX_ZOOM = 1.6;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
-const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit, .sb, .sb-rows';
+const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit, .sb, .sb-rows, .wg, .ff';
 const readPair = (key: string): { x: number; y: number } | null => {
   try {
     const saved = JSON.parse(load(key) || 'null') as { x?: unknown; y?: unknown } | null;
@@ -574,7 +574,9 @@ export function createGameStage(opts: StageOptions) {
     const stop =
       kind === 'garden'
         ? (await import('./garden.ts')).mountGarden(body, opts.room)
-        : (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
+        : kind === 'word'
+          ? (await import('./five-frames.ts')).mountFiveFrames(body)
+          : (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
     queueFit();
     if (solo !== kind) stop();
     else unmount = stop;

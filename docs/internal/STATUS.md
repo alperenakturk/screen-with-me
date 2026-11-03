@@ -391,6 +391,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.95.5 🎟️ Five Frames: 🎮 → "On the side" → Five Frames. Tap letters (or click the board and type) to
+  guess today's five-letter word in 7 tries; gold ✓ = right place, gold outline • = in the word. EN / TR switch at the
+  top (Turkish has its own word and Ç Ğ I İ Ö Ş Ü). When solved, "Copy result" gives a line without the word. Are the
+  words fair (too rare? any you would remove)? Same word for a friend on the same day?
 - [ ] 0.9.95.4 🌱 Window Garden: 🎮 → "On the side" → Window Garden. A small fern seedling waits on the sill. Play a
   video with a friend: it grows (only while the video plays), a 💧 shows when it is thirsty, "Water" fills it again.
   When it blooms, "Pick it": it goes into your album (the strip of 8 plants at the bottom). A seed comes every 30
