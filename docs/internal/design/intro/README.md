@@ -3,7 +3,7 @@
 _Design session, 3 Nov 2026. Replaces today's intro (`packages/shared/src/intro.ts`: the purple face pops, blinks and
 its play mouth turns into pause) with logo D1 + Glowbeam, on the same sound beats (`intro-sound.ts`, variant F:
 0 / 0.72 / 1.1–1.4 s) and the same total time `INTRO_MS` 2700. Live prototype with replay and a reduced-motion switch:
-https://claude.ai/artifact/6Ce98qjeANVeUota34uLec. Keyframes: `frame-*.svg` (480 × 270, the video's place) and `reduced-motion.svg`._
+https://claude.ai/artifact/6Ce98qjeANVeUota34uLec. **`preview.html` is the reference the build must match 1:1** (owner, 3 Nov 2026: "the light beam coming out and bursting"). Keyframes: `frame-*.svg` (480 × 270, the video's place) and `reduced-motion.svg`._
 
 ## Beats
 | Time | Sound (F, warm pad) | Picture |
@@ -32,3 +32,46 @@ curve. The sound plays as today (reduced motion does not mute).
 
 ## The film page (extension overlay)
 Same element (`createIntro`), inside the closed shadow DOM; nothing changes there except the drawing.
+
+## The light burst, exactly (what the owner liked)
+- The cone and its bloom are **one group** (`g.light`: the cone path `M29 27 L64 8 L64 56 L29 37 Z` with the cream → gold
+  → amber gradient, plus the bloom circle at (31, 32) r 13, radial cream 70 % → 0). The group grows **from the
+  triangle's tip** (`transform-box: view-box; transform-origin: 29px 32px`), `scaleX(0 → 1)`, 0.38 s from 0.72 s, easing
+  `cubic-bezier(.2,.9,.3,1)`: very fast at the start, soft at the end, so it reads as a burst out of the triangle. Its
+  opacity reaches 1 at 60 % of that time. Because the bloom sits inside the group, the glow at the tip flares with the
+  cone (it starts squeezed and opens out).
+- The eyes (`g.eyes`, `transform-box: fill-box`) fade in 0.2 s from 0.78 s (inside the fresh light) and blink once at
+  0.95 s (`scaleY(.12)` at 50 %, 0.28 s).
+- Glowbeam springs **out of the light**: from `translateX(-70px) scale(.35)`, opacity 0, to its place, 0.34 s from
+  1.1 s, easing `cubic-bezier(.2,1.5,.4,1)` (overshoots a little and settles), with a gold drop shadow
+  `drop-shadow(0 10px 24px rgb(255 198 90 / .35))`. At the same moment the logo slides 62 px left (0.3 s, ease).
+- The logo's entry at 0 s overshoots too: `scale(.35) rotate(-8deg) → none`, 0.7 s, `cubic-bezier(.2,1.4,.4,1)`.
+- Sizes in the preview (720 px wide stage): the pair box 260 × 120; logo 120 × 120 at left 70 (8 after the slide);
+  Glowbeam 108 × 108 at left 150, top 6; the line 18–28 px Bricolage ExtraBold, 16 px under the pair.
+
+## Exact CSS from `preview.html`
+```css
+.intro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+ background:radial-gradient(circle at center,rgb(43 30 110 / .9),rgb(8 8 14 / .95) 70%);animation:fade 2.7s ease forwards}
+.pair{position:relative;width:260px;height:120px}
+.logo{position:absolute;left:70px;top:0;width:120px;height:120px;animation:pop .7s cubic-bezier(.2,1.4,.4,1) both,slideL .3s ease 1.1s forwards}
+.logo svg,.glow svg{display:block;width:100%;height:100%}
+.logo .light{transform-box:view-box;transform-origin:29px 32px;animation:on .38s cubic-bezier(.2,.9,.3,1) .72s both}
+.logo .eyes{transform-box:fill-box;transform-origin:center;animation:eyesIn .2s ease .78s both,blink .28s ease .95s}
+.glow{position:absolute;left:150px;top:6px;width:108px;height:108px;opacity:0;animation:out .34s cubic-bezier(.2,1.5,.4,1) 1.1s forwards}
+.glow svg{filter:drop-shadow(0 10px 24px rgb(255 198 90 / .35))}
+.txt{color:#fff;font:800 clamp(18px,3.4vw,28px) var(--display);opacity:0;transform:translateY(12px);animation:txt .5s ease 1.25s forwards}
+@keyframes fade{0%{opacity:0}6%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes pop{from{transform:scale(.35) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes slideL{to{transform:translateX(-62px)}}
+@keyframes on{from{transform:scaleX(0);opacity:0}60%{opacity:1}to{transform:scaleX(1);opacity:1}}
+@keyframes eyesIn{from{opacity:0}to{opacity:1}}
+@keyframes blink{50%{transform:scaleY(.12)}}
+@keyframes out{from{opacity:0;transform:translateX(-70px) scale(.35)}to{opacity:1;transform:none}}
+@keyframes txt{to{opacity:1;transform:none}}
+.reduced .logo,.reduced .logo .light,.reduced .logo .eyes,.reduced .glow,.reduced .txt{animation:none;opacity:1;transform:none}
+.reduced .logo{transform:translateX(-62px)}
+@media (prefers-reduced-motion: reduce){.logo,.logo .light,.logo .eyes,.glow,.txt{animation:none!important;opacity:1!important}.logo{transform:translateX(-62px)!important}.glow,.txt{transform:none!important}}
+```
+In the product, prefix the classes (`.swm-intro …`) as `intro.ts` does today; the timings and curves stay exactly these.
+The SVG markup of the logo with its `light` and `eyes` groups is in `preview.html` (inside `<template id="tpl">`).

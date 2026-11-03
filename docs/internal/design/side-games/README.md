@@ -61,6 +61,6 @@ In HTML this is easiest as CSS (the mock used a grid `26px repeat(5, 1fr)`, heig
 `::before` / `::after` circles in the window's background colour); the SVG is the reference.
 
 ## Game covers (`covers/*.svg`, 320 × 200, shown at 160 × 100 and down to 96 × 60)
-`xox`, `four`, `draw`, `quiz`, `snack-bar`, `garden`, `word` (Five Frames / Beş Kare). Same world: night gradient, warm light from the left,
+`xox`, `four`, `draw`, `quiz`, `poker` (Last Heart, green felt), `snack-bar`, `garden`, `word` (Five Frames / Beş Kare). Same world: night gradient, warm light from the left,
 Glowbeam in most of them. Titles and the "Together · 2 players" / "On the side · just you" line are HTML under the
 cover, never inside the image (so they translate). Use them in the 🎮 gallery window once the owner picks its layout.
