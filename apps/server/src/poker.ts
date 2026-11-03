@@ -101,6 +101,9 @@ export class Poker extends DurableObject<Env> {
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parsePokerMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
+    // A timer whose time is up runs now, whatever the alarm does (live alarms run tens of seconds late right after a
+    // deploy; Draw & Guess and Quiz do the same since 0.9.93.2): every message (the page pings) checks.
+    await this.due(Date.now());
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
     if (!this.limit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
     if (message.t === 'hello') return this.hello(ws, me, message);
@@ -121,15 +124,21 @@ export class Poker extends DurableObject<Env> {
     await this.left(ws);
   }
 
+  /** Runs a timer whose time is up (the next hand after a showdown, or a turn that ran out); true if one ran. */
+  private async due(now: number): Promise<boolean> {
+    const d = this.data;
+    if (d.endsAt === null || now < d.endsAt) return false;
+    const engine = this.engine;
+    if (d.table.phase === 'showdown') engine.nextHand();
+    else if (engine.isBetting()) engine.timeout();
+    await this.changed();
+    return true;
+  }
+
   override async alarm(): Promise<void> {
     const now = Date.now();
     const d = this.data;
-    if (d.endsAt !== null && now >= d.endsAt) {
-      const engine = this.engine;
-      if (d.table.phase === 'showdown') engine.nextHand();
-      else if (engine.isBetting()) engine.timeout();
-      await this.changed();
-    }
+    await this.due(now);
     if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
