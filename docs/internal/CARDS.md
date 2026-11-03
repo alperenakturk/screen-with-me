@@ -571,6 +571,11 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
 - Tests: e2e `fallback.mjs` (a 4th session from one IP refused; a second IP still joins a full-emoji room);
   hotspot harness still passes.
 - Owner's pick: none needed.
+- Done (0.9.97.6): `PollHub` keeps each session's IP hash (`X-SWM-Ip`, set only by the Worker) and refuses a 4th open
+  session from one address in one object with `429 {code:'busy'}` (`FALLBACK_PER_IP` 3; the client's open fails and the
+  room reconnects as after any failed open). Tests: e2e `fallback.mjs` (3 open, the 4th 429, again after one closes);
+  harness `hotspot` green again (it had broken with card 6: it waited for the hidden people count and clicked the
+  hidden sync-test button). R3-8 was done with L6.
 
 ### Security: requirements for the feedback endpoint (R3-7, with card 9)
 - Severity: low (preventive)

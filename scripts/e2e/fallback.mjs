@@ -249,6 +249,23 @@ const silentAt = Date.now();
 await alice.next((m) => m.t === 'members' && !m.members.some((x) => x.name === 'Silent'), 'Silent closed', 25000);
 ok(true, `A session that never polls is closed (${((Date.now() - silentAt) / 1000).toFixed(1)} s after joining)`);
 
+// 13b) Security R3-6: one address holds at most 3 open fallback sessions in one object; a 4th is refused (429) and
+// fits again once one of them is closed.
+const capRoom = 'fbcap' + Math.random().toString(36).slice(2, 8);
+const capUrl = (op, sid) => `${http}/api/rooms/${capRoom}/ws?http=${op}${sid ? `&sid=${sid}` : ''}`;
+const capSids = [];
+for (let i = 0; i < 3; i++) {
+  const opened = await fetch(capUrl('open'), { method: 'POST' });
+  capSids.push((await opened.json()).sid);
+}
+const fourth = await fetch(capUrl('open'), { method: 'POST' });
+ok(fourth.status === 429 && (await fourth.json()).code === 'busy', 'A 4th fallback session from one address is refused (429 busy)');
+await fetch(capUrl('close', capSids.shift()), { method: 'POST' });
+await new Promise((r) => setTimeout(r, 300));
+const again = await fetch(capUrl('open'), { method: 'POST' });
+ok(again.ok && typeof (await again.json()).sid === 'string', 'After one closes, the address may open another');
+for (const sid of capSids) await fetch(capUrl('close', sid), { method: 'POST' });
+
 // 14) Limits on the request itself (last: the refused upload ends this HTTP connection).
 const eve = await httpClient('Eve');
 const huge = await fetch(eve.url('send', eve.sid), { method: 'POST', body: 'x'.repeat(1_200_000) }).catch(() => null);
