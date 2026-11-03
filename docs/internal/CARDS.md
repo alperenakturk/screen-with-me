@@ -179,6 +179,10 @@ Planner to merge them once main is green.
   `docs/internal/design/avatars-2/full/`, steps in `avatars-2.md` "For the Developer". **Developer part: lane A, right
   after R12, before R13** (copy via `scripts/avatars.mjs`, `DRAWN_AVATARS` notebookgenius 📓 / sweetsleuth 🍰,
   `AVATAR_PAGES` both on page 3 and hunter to page 4, i18n labels; check the picker, 28 px chat, seats, join card).
+- Done (0.9.97.10): `scripts/avatars.mjs` copies `docs/internal/design/avatars-2/full/*.svg` over its parody drawings
+  (31 redrawn + 2 new in `apps/web/public/avatars/`; the extension has no avatar copies since the shell), `DRAWN_AVATARS`
+  + `AVATAR_PAGES` (Film 8 · Series 14 · Anime 9 · Game 2), EN + TR labels. Checked in Chromium: the picker's four
+  Parody tabs and a sheet at 28 / 52 / 84 px.
 
 ## Run order to the owner's test round (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end")
 
