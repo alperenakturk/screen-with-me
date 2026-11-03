@@ -421,6 +421,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.3 (repo hygiene, security L10):**
+- [ ] GitHub → the repo → Settings → Code security (or "Advanced Security"): turn on **Dependabot alerts** and
+  **Dependabot security updates** (free on a private repo). Weekly update PRs then come by themselves; Claude merges
+  them when CI is green.
+
 **0.9.97.2 (privacy link, security L9):**
 - [ ] On a phone: the join screen (name + avatar) has "🔒 Privacy" under the button; ⋯ in the room has "Privacy" near
   the end; both open the privacy page in the site's language (switch TR / EN and try again). On a computer: ⋯ More and

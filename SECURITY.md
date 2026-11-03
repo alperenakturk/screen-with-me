@@ -1,0 +1,29 @@
+# Security policy
+
+Sidelit is a free, account-free tool for watching videos together. It has a website, a browser extension and a
+Cloudflare server. This page explains how to report a security or privacy problem in any of them.
+
+## Reporting a problem
+
+E-mail **screenwithme.app@gmail.com** with the subject "Security". Please include:
+
+- what you found and where (site page, extension, server endpoint);
+- the steps to see it, and the browser and version you used;
+- what someone could do with it.
+
+Please do not open a public issue for a security problem, and do not test against other people's rooms. Use rooms
+you created yourself.
+
+We aim to answer within 7 days and to fix confirmed problems as soon as we can. When a fix ships, we will say so in
+the release notes (and credit you if you want).
+
+## Supported versions
+
+Only the live site (https://screen-with-me.swm-server.workers.dev) and the latest extension version get fixes.
+
+## Scope
+
+In scope: the website, the server's API and WebSocket endpoints, the browser extension.
+
+Out of scope: third-party services we embed or link to (YouTube, Vimeo, TikTok, Apple Podcasts, Cloudflare itself),
+denial of service by sheer volume, and reports that need a compromised device or browser.

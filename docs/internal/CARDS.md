@@ -784,6 +784,10 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   branch protection / rulesets and secret scanning are not available (paid plans, or free once the repo is public);
   the owner turns on the free parts (Dependabot alerts + security updates) now; branch rules come with the public repo
   or a GitHub Pro decision.
+- Done (0.9.97.3): `npm audit fix` (wrangler 4.151 → 4.157, its miniflare / undici with it), `npm audit` 0;
+  `.github/dependabot.yml` (npm with dev tools grouped, GitHub Actions, weekly); `permissions: contents: read` at the top
+  of `test.yml`; `SECURITY.md` (the publisher address, what to send, 7-day answer, scope). Left for the owner: Dependabot
+  alerts + security updates in the repo settings (STATUS hand tests).
 
 ### 🍿 Snack Bar: first solo side game (0.9.95; owner picked it, 2 Nov 2026)
 - Why: the owner wants something to play alone while watching with friends; an idle game fits low attention and
