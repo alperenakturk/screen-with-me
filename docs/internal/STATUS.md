@@ -383,7 +383,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.95.3 (computer + phone):**
+**0.9.95.5 (computer + phone):**
 - [ ] Enter a room: the intro looks like Design's preview: the logo pops in dark, the light beam comes out of the
   triangle and bursts, the eyes open and blink, the little golden mascot springs out of the light, "Enjoy the show!".
 - [ ] Pick a few themes (home page strip): each one shows the golden mascot in that theme's costume.

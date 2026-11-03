@@ -83,7 +83,7 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: home + theme harness screenshots of all 11 themes; an intro harness checks the parts appear on the beats and
   that reduced motion shows no movement; size budget still green.
 - Owner's pick: none needed (direction picked: D1 + N1).
-- Done: 0.9.95.3 (PR below, together with 6e). Intro: `intro.ts` rebuilt from `preview.html` 1:1 (same timings and
+- Done: 0.9.95.5 (https://github.com/alperenakturk/screen-with-me/pull/168, together with 6e). Intro: `intro.ts` rebuilt from `preview.html` 1:1 (same timings and
   curves, classes prefixed `swm-intro-`, sizes scaled from the logo's `--s`); the logo's `logo-light` (cone + bloom) and
   `logo-eyes` groups from `logo.ts` animate; Glowbeam is `createMascot` (happy; default in the reduced-motion still);
   no pause bars any more. Themes: `theme-art.mjs` copies `docs/internal/design/themes/glowbeam-<theme>.svg` to
@@ -98,7 +98,7 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   sync, ⛶) are dimmed and only show "add a video first" when pressed. Changes card 6's "D" on this point only.
 - Tests: room-more / fresh harness: rail visible in an empty room, 🎮 opens the games, 🎙 joins, play / speed disabled.
 - Owner's pick: done.
-- Done: 0.9.95.3 (PR below). `.room.fresh` no longer hides `#fs-dock`: the empty room has the rail (😀, 🎮, 🎙, 📷, ⋯, ⛶);
+- Done: 0.9.95.5 (https://github.com/alperenakturk/screen-with-me/pull/168, together with 6f). `.room.fresh` no longer hides `#fs-dock`: the empty room has the rail (😀, 🎮, 🎙, 📷, ⋯, ⛶);
   the controls that need a video (⛶, speed chips, sync, next, ⏯, 📌 once a video has a length) carry `aria-disabled`, are
   dimmed and answer a press with "Add a video first" (`NEEDS_VIDEO` in `fullscreen.ts`, a capture-phase click). Found
   on the way: the rail's "mouse left the rail" timer sent its outside press even when no rail window was open, so a
