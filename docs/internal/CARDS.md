@@ -23,6 +23,42 @@ Card format:
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
+### 6b. Fix: ⚙️ "My screen" squeezed into a narrow column (owner's bug, 3 Nov 2026; next after card 9)
+- Why: owner's screenshot on the live site: since 0.9.93.13 the solo section fills only the old nav column (~350 px),
+  rows wrap word by word, the right side of the dialog is empty and the list scrolls inside the dialog.
+- Done when: solo sections (My screen, film time, save, rules) are one clean column, rows in the normal title +
+  description + toggle layout, no inner scroll at 1366×768; also on the phone.
+- Tests: harness check (content width, a row title wraps ≤ 2 lines at 1366×768 and 1920×1080), failing on 0.9.93.17 first.
+- Owner's pick: none needed. Order (Planner): 6b, then card 15 (home hero A), then 10–14.
+
+### 6d. Fix: an empty side column in YouTube fullscreen (owner's bug, 3 Nov 2026; after 6b, before 6c)
+- Why: owner's screenshot: in YouTube fullscreen the column from card 2a (`#fs-side`) stays as a wide empty strip
+  when there are no notes, cameras or messages, pushing the video left.
+- Done when: the column takes space only while it has something to show (notes / camera tiles; messages without making
+  the video jump on every toast), else the player is full width beside the resting rail; still nothing over the player.
+- Tests: harness: fullscreen with nothing to show → player ≈ full width; camera on → column appears; fails first.
+- Owner's pick: none needed.
+
+### 6c. Rename the product to Sidelit + the new logo and mascot (owner's decision, 3 Nov 2026; after 6b, before 15)
+- Why: owner: "change it straight to Sidelit now: the notes, the READMEs, the logo, the site, everything". The name
+  is his call (council + research: `name-ideas.md` round 3, `research/name-sidelit-check.md` 🟡, trademark / domain
+  checks still to do by the owner before 1.0). Logo D1 "night gold", mid-tone T1 deep teal (only where a second colour
+  helps; if two colours confuse, the main logo alone), mascot N1 Glowbeam: `docs/internal/design/logo-sidelit.md`
+  (Design session).
+- Done when: every user-facing text says Sidelit (site pages, titles, meta / Open Graph, manifest + PWA name, i18n EN
+  + TR, help / privacy / extension pages, invite texts, the extension's name, popup, store texts in `web-store.md`,
+  `store/src` shots, README.md + README.tr.md); `logo.ts` + `make-icons.mjs` draw D1 (with the ≤ 32 px simple cut),
+  icons / favicon / apple-touch / maskable regenerated, the mascot N1 replaces the old face where the mascot appears
+  (home preview, empty states, theme mascots only if cheap, else a follow-up card); docs and CLAUDE.md say Sidelit
+  for the product ("formerly ScreenWithMe" once in README / CLAUDE.md). **Unchanged on purpose:** the live address
+  (`screen-with-me.swm-server.workers.dev` until the own domain), the repo name, storage keys, message `source`
+  strings, protocol, the extension id: nothing a user has saved breaks.
+- Tests: all harnesses / e2e pass; a grep check in CI (or a unit test) that no user-facing string says "ScreenWithMe"
+  except the "formerly" lines; icons readable at 16 px (screenshot); owner's hand test (home, room, extension popup,
+  phone home-screen icon).
+- Owner's pick: done (Sidelit, D1, T1, N1). **Release it as 0.9.95** (owner, 3 Nov 2026: "make it official, I'm
+  speeding up the launch"); the remaining 0.9.94 cards keep their place after it.
+
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
 - Done when: every box in `STATUS.md` "Owner's hand tests" for these versions is ticked or turned into a bug card.
@@ -58,7 +94,8 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   thank-you; linked from the footer and the Help page; the feedback form gets an unticked "Credit me on the Thanks
   page" box when the closed beta starts.
 - Tests: static page check in the same harness as Help.
-- Owner's pick: A (2 Nov 2026). **Owner action:** send the list of names who said yes.
+- Owner's pick: A (2 Nov 2026). Names who said yes (owner, 3 Nov 2026): Tecem Öztürk, Feyza Hacıalioğlu, Ömer Tuğrul
+  Bakan, Ahmet Faruk Uğurluoğlu, Nevin Senem Kanar, Mert Arı (exactly as written, Turkish letters kept).
 
 ### 12. Hidden test panel `?debug=1` (0.9.94, before the Shorts measurement)
 - Why: the owner tests from his phone without a computer; it gathers `/baglanti`, `?olcum=1`, `?tvlab=1`, version,
@@ -349,8 +386,18 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Done when: the owner picked a version and a mascot variant on the Design session's page; then a Developer card
   updates `logo.ts`, `make-icons.mjs` (icons, favicon, small 16–32 px version), the store tile and `store/src` shots.
 - Tests: the Developer's card: icons regenerate, favicon readable at 16 px, harness screenshots of the top bar.
-- Owner's pick: waiting (Design session working). Replaces the "touch up today's mascot" pick if he chooses a C
+- Owner's pick (3 Nov 2026, round 2): D1 night gold + T1 deep teal + N1 Glowbeam; built by card 6c. Replaced the "touch up today's mascot" pick if he chooses a C
   version; works with either name (Sidelit or ScreenWithMe).
+
+### G1–G5. Growth after 1.0 (owner agreed 3 Nov 2026; ROADMAP §7 "Growth plan")
+- G1 Store listing for search words + reviews from the first 20 users (with the store submission).
+- G2 Search pages (EN first): Shorts together, W2G without ads, free Teleparty alternative, TikTok with friends.
+- G3 A weekly 15–30 s clip (TikTok / Reels / Shorts); tools: `hyperframes` / `video-use` / `earshot` on the owner's
+  computer (his catalogue).
+- G4 Communities + a Product Hunt day; copy polished with `humanizer`.
+- G5 Every room a referral: shareable recap image, one-click "Add to Chrome" on the film card (store link once listed).
+- Done when / tests: each becomes its own Ready card when 1.0 is near; the Planner details them then.
+- Owner's pick: agreed (3 Nov 2026).
 
 ## Done
 
