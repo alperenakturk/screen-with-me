@@ -113,6 +113,37 @@ export function onTurn(listener: (sideways: boolean) => void): void {
   turnListeners.add(listener);
 }
 
+/**
+ * An upright tablet (card T, owner's pick B on https://claude.ai/artifact/GXitrW7UaKsiWHBtWzk4Mw): a touch screen
+ * without a mouse, not in the phone layout, held upright (by width, like `sideways`: the keyboard never flips it) and
+ * at least 701 px wide. `<html class="tablet-up">` follows it: the room puts the video on top and two columns below
+ * (chat; Together + Queue / People). Sideways tablets keep the computer layout.
+ */
+export function isTabletUpright(): boolean {
+  return isTouch() && !hasMouse() && !isPhoneLayout() && !sidewaysNow && innerWidth >= 701;
+}
+
+const tabletListeners = new Set<(upright: boolean) => void>();
+let tabletNow = false;
+let tabletCss = false;
+function checkTablet(): void {
+  // The tablet styles (tablet.css) load only on a touch screen without a mouse that is not in the phone layout.
+  if (!tabletCss && isTouch() && !hasMouse() && !isPhoneLayout()) {
+    tabletCss = true;
+    void import('./tablet.css');
+  }
+  const next = isTabletUpright();
+  if (next === tabletNow) return;
+  tabletNow = next;
+  document.documentElement.classList.toggle('tablet-up', next);
+  for (const listener of tabletListeners) listener(next);
+}
+
+/** Calls `listener` when the window enters or leaves the upright-tablet layout. */
+export function onTabletUpright(listener: (upright: boolean) => void): void {
+  tabletListeners.add(listener);
+}
+
 /** Marks <html> once at start-up. */
 export function markDevice(): void {
   const root = document.documentElement.classList;
@@ -126,4 +157,10 @@ export function markDevice(): void {
   root.toggle('sideways', sidewaysNow);
   root.toggle('phone', isPhoneLayout());
   onPhoneLayout((phone) => root.toggle('phone', phone));
+  checkTablet();
+  onPhoneLayout(checkTablet);
+  onTurn(checkTablet);
+  addEventListener('resize', checkTablet);
+  coarse.addEventListener('change', checkTablet);
+  mouse.addEventListener('change', checkTablet);
 }

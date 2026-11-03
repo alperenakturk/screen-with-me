@@ -10,7 +10,10 @@ import { gzipSync } from 'node:zlib';
 const dist = process.argv[2] ?? 'apps/web/dist';
 const assets = join(dist, 'assets');
 // Budgets in kB (gzip). Measured 2 Nov 2026 after the lazy split: JS 135.6, CSS 35.0.
-const BUDGET = { js: 140, css: 37 };
+// JS raised to 145 by card T (tablets, 3 Nov 2026; the Planner's rule): the upright-tablet check has to run before the
+// room lays out (device.ts), and the split chat / tabs and the game placement live in modules the room loads anyway,
+// so JS reached 140.1. The tablet styles themselves are a lazy stylesheet (tablet.css) and are not counted.
+const BUDGET = { js: 145, css: 37 };
 
 const gz = (file) => gzipSync(readFileSync(join(assets, file))).length / 1024;
 const html = readFileSync(join(dist, 'index.html'), 'utf8');

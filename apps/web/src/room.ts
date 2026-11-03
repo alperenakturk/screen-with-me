@@ -31,7 +31,7 @@ import {
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { channelParam, isPoolRegionChoice, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice } from '@swm/shared/youtube-search';
-import { canShareSheet, hasMouse, isPhoneLayout, isTouch } from './device.ts';
+import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onTabletUpright } from './device.ts';
 import { el } from './dom.ts';
 import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -878,11 +878,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   /** İlk girişte açılacak sekme seçildi mi (önce sekmeler varsayılan sohbetle kurulur; o hatırlanmaz). */
   let tabChosen = false;
-  const tabs = createTabs(app, (tab) => {
-    chat.setVisible(tab === 'chat');
+  const tabs = createTabs(
+    app,
+    (tab, chatShown) => {
+      chat.setVisible(chatShown);
     // Aynı sekmede yenileyince kalınan sekme korunur.
-    if (tabChosen) sessionSave(`tab:${roomId}`, tab);
-  });
+      if (tabChosen) sessionSave(`tab:${roomId}`, tab);
+    },
+    () => document.documentElement.classList.contains('tablet-up'),
+  );
+  onTabletUpright(() => tabs.refresh());
   /** İlk girişte açılacak sekme: bu sekmede daha önce açılan, yoksa Sohbet (ayarlar artık ⚙️ penceresinde). */
   function chooseFirstTab(): void {
     if (tabChosen) return;
@@ -1303,7 +1308,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (fullscreen.isActive() || roomEl.classList.contains('cinema')) toasts.show(withAvatar(by), text, by.id === myId);
         if (roomEl.classList.contains('cinema') && by.id !== myId) side.unread();
         // A sound only when the message is nowhere on my screen (another tab, or another panel tab is open).
-        const seen = !document.hidden && (fullscreen.isActive() || roomEl.classList.contains('cinema') || shortsOn || tabs.active === 'chat');
+        const seen = !document.hidden && (fullscreen.isActive() || roomEl.classList.contains('cinema') || shortsOn || tabs.chatShown);
         if (by.id !== myId && !seen) playSound('chat');
         if (by.id !== myId && document.hidden) {
           hiddenUnread++;

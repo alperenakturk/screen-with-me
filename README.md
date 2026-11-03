@@ -60,7 +60,7 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 ### Everywhere
 | | |
 |---|---|
-| 📱 **Made for phones** | On a phone the room is an app screen: the video edge to edge, everyone's faces and cameras under it, then the chat. ＋ and ⋯ open bottom sheets (add a video, games, invite, settings…), the back button closes them, ⛶ gives a real fullscreen (iPhone too) with a slim column of buttons beside the video. Shorts and games take the whole screen. Everything except film pages works on a phone. |
+| 📱 **Made for phones** | On a phone the room is an app screen: the video edge to edge, everyone's faces and cameras under it, then the chat. ＋ and ⋯ open bottom sheets (add a video, games, invite, settings…), the back button closes them, ⛶ gives a real fullscreen (iPhone too) with a slim column of buttons beside the video. Shorts and games take the whole screen. Everything except film pages works on a phone. **Tablets:** upright, the video sits on top with its buttons beside it and two columns below (the chat; Together, Queue and People), with no scrolling; sideways, the room looks like it does on a computer. |
 | 📶 **Hard networks** | On networks where WebSockets never open (some phone hotspots) the room switches by itself to an HTTP fallback and back again when it can. If a room can't be reached, "Try again" and a connection test are one tap away. |
 | 📲 **Install as an app** | The site installs as an app on phones and computers and always loads the latest version. |
 | 🎨 **Look & sound** | 11 themes (plain and illustrated), a short intro, soft generated sound effects (no files; adjustable or off). English and Turkish, on the site and in the extension (English by default). |

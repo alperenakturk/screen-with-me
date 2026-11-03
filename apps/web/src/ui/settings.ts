@@ -93,7 +93,7 @@ export function createSettingsPanel(
   // Phones (0.9.91.2): turning the phone sideways while a video plays opens our fullscreen (on by default).
   const rotate = root.querySelector<HTMLInputElement>('#opt-rotatefs');
   if (rotate) {
-    rotate.checked = load('opt:rotateFs') !== '0';
+    rotate.checked = load('opt:rotateFs') === '1';
     rotate.addEventListener('change', () => save('opt:rotateFs', rotate.checked ? '1' : '0'));
   }
 

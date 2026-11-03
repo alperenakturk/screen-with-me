@@ -287,7 +287,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   the Shorts bar is a rail right of the video above 860 px wide, the top bar folds under 900 px tall (⋯ or the top
   edge shows it); laptop 1366×768: video 410×728 (was 314×558), no page scroll at 1024×640 … 2560×1440; phones keep
   the bottom bar. Harnesses: phone, TikTok 8/8, voice 67/67.
-- [ ] **Tablet support** (owner, 31 Oct 2026, ROADMAP §1): own layout for iPad / Android tablets, separate from phones.
+- [x] **Tablet support** (owner, 31 Oct 2026, ROADMAP §1): own layout for iPad / Android tablets, separate from phones.
+  Done in 0.9.96.10 (card T, owner's B): upright = video on top, chat | Together + Queue / People below, no scroll;
+  sideways = the computer layout. Harness `scripts/harness/tablet/run.cjs`. The owner's real tablet is a hand test.
 - [x] **Owner's guide PDF** (31 Oct 2026): everything to try, the plan to 1.0, risks and never-tested areas were sent
   to the owner as a PDF; the same items live in "Owner's hand tests" below and in ROADMAP.
 - [x] **0.9.92 hotspot: the room didn't connect over the owner's phone hotspot** (owner, 31 Oct 2026: "important"; the
@@ -411,6 +413,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.96.10 (tablets, card T):**
+- [ ] On a tablet held upright, open a room with a video: the video on top with its buttons beside it, the chat on the
+  left below, Together and Queue / People on the right; nothing scrolls. Type a message (the keyboard must not change
+  the layout), tap People / Queue, open XOX (it opens where the video was).
+- [ ] Turn the tablet sideways: the computer layout, the video keeps playing; turn back: the tablet layout again.
+- [ ] Open a Short on the upright tablet: the bottom bar is one row of icons.
 
 **0.9.96.7 (cinema mode, computer):**
 - [ ] In a room with a video press **T** (or rail ⋯ → 🎞 Cinema mode): everything around the video goes dark, the video
