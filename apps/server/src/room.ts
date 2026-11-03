@@ -51,6 +51,13 @@ const MAX_MEMBERS = 50;
 /** Security L5: a connection that never says `hello` is closed after this long, and at most this many may wait. */
 const UNJOINED_MS = 15_000;
 const MAX_UNJOINED = 30;
+/** R12 "Ask before letting people in": at most this many people wait at the door at once, this many per address, and
+ * each waits this long before the door closes on them; someone let in (or in the room) passes straight in for a day. */
+const MAX_KNOCKS = 8;
+const KNOCKS_PER_IP = 2;
+const KNOCK_MAX_MS = 10 * 60_000;
+const ADMIT_TTL_MS = 24 * 3600_000;
+const MAX_ADMITTED = 500;
 /** Custom emoji uploads per room and day (each can be ~280 KB and is kept with the room). */
 const STICKER_ADDS_PER_DAY = 60;
 /** Images sent in chat per room and day (0.9.88). */
@@ -109,6 +116,8 @@ interface Attachment {
   table?: string;
   /** R11: the opaque per-room person key sent to clients (`personKeyFor`), from the browser id. */
   pk?: string;
+  /** R12: waiting at the door for the host (name, avatar, when, and the hello to finish joining with once let in). */
+  knock?: { name: string; avatar?: Avatar; at: number; hello: Extract<ClientMessage, { t: 'hello' }> };
   /** Short hash of the connection's IP (set by the Worker): abuse limits only; never stored or sent to clients. */
   ip?: string;
   /** A paired TV: `cid` is its person's (so it is the same person: host rights, kicks, counted once). */
@@ -307,6 +316,8 @@ export class Room extends DurableObject<Env> {
   private memberIds: Record<string, { cid: string; at: number }> = {};
   /** R11: the salt of this room's person keys (storage `personSalt`, made on first use). */
   private personSalt: string | null = null;
+  /** R12: person key → when they were last in (or let in); they pass the door for `ADMIT_TTL_MS` (storage `admitted`). */
+  private admitted: Record<string, number> = {};
   /** This room's id (from the Worker's header; a paired TV is told where to go). */
   private roomId: string | null = null;
 
@@ -350,6 +361,7 @@ export class Room extends DurableObject<Env> {
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
       this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
       this.memberIds = (await ctx.storage.get<Record<string, { cid: string; at: number }>>('memberIds')) ?? {};
+      this.admitted = (await ctx.storage.get<Record<string, number>>('admitted')) ?? {};
       this.roomId = (await ctx.storage.get<string>('roomId')) ?? null;
       const tables = await ctx.storage.get<Table[]>('tables');
       // Before tables a room held one game ('game').
@@ -442,7 +454,7 @@ export class Room extends DurableObject<Env> {
       // One hello per connection (security review 2, H1 / M1): a second one could change the browser id at will (every
       // per-person limit bypassed) and re-sent every custom emoji and chat image (a memory flood over the fallback).
       // Clients never send it twice; a reconnect is a new connection.
-      if (attachment.name !== null) {
+      if (attachment.name !== null || attachment.knock) {
         this.sendTo(ws, { t: 'error', code: 'bad_message' });
         return;
       }
@@ -710,6 +722,9 @@ export class Room extends DurableObject<Env> {
       case 'kick':
         await this.kick(ws, me, message.id);
         return;
+      case 'knock-answer':
+        await this.answerKnock(ws, message.id, message.allow);
+        return;
       case 'make-host':
         await this.makeHost(ws, message.id);
         return;
@@ -752,6 +767,11 @@ export class Room extends DurableObject<Env> {
         if (message.noReactions !== undefined) next.noReactions = message.noReactions;
         if (message.liveHostOnly !== undefined) next.liveHostOnly = message.liveHostOnly;
         if (message.countdown !== undefined) next.countdown = message.countdown;
+        if (message.knock !== undefined) {
+          next.knock = message.knock;
+          // Everyone in the room now may come back without knocking.
+          if (message.knock) for (const a of this.joined()) await this.admit24h(keyOf(a));
+        }
         if (message.reactionGap !== undefined) next.reactionGap = message.reactionGap;
         if (message.name !== undefined) next.name = message.name;
         // Kayıt kapanınca hatırlananlar da silinir.
@@ -848,6 +868,7 @@ export class Room extends DurableObject<Env> {
       this.memberIds = {};
       this.counted = null;
       this.personSalt = null;
+      this.admitted = {};
       return;
     }
     await this.pruneRecaps(now);
@@ -855,6 +876,100 @@ export class Room extends DurableObject<Env> {
     await this.closeEmptyTables(now);
     if (this.settings.startsAt !== undefined && now >= this.settings.startsAt) await this.startScheduled(now);
     await this.scheduleAlarm();
+  }
+
+  /**
+   * R12: does this hello have to wait at the door? Not when the setting is off, for the host, for someone already in
+   * the room (another tab) or let in within a day. A full door (too many waiting, or too many from one address)
+   * refuses the knock. A TV is its person's second device and never knocks (it came with a token).
+   */
+  private async mustKnock(ws: WebSocket, attachment: Attachment, hello: Extract<ClientMessage, { t: 'hello' }>): Promise<boolean> {
+    if (!this.settings.knock || attachment.tv || this.hostKey === null) return false;
+    const key = keyOf(attachment);
+    if (key === this.hostKey || this.joined(ws).some((a) => keyOf(a) === key)) return false;
+    const seen = this.admitted[key];
+    if (seen !== undefined && Date.now() - seen < ADMIT_TTL_MS) return false;
+    const waiting = this.knockers(ws);
+    if (waiting.length >= MAX_KNOCKS || (attachment.ip && waiting.filter((a) => a.ip === attachment.ip).length >= KNOCKS_PER_IP)) {
+      this.sendTo(ws, { t: 'error', code: 'knock_busy' });
+      ws.close(4010, 'knock_busy');
+      return true;
+    }
+    attachment.knock = { name: hello.name, ...(hello.avatar ? { avatar: hello.avatar } : {}), at: Date.now(), hello };
+    ws.serializeAttachment(attachment);
+    this.sendKnocks();
+    return true;
+  }
+
+  /** R12: the connections waiting at the door, oldest first. */
+  private knockers(except?: WebSocket): Attachment[] {
+    return this.openSockets(except)
+      .map((s) => s.deserializeAttachment() as Attachment | null)
+      .filter((a): a is Attachment => !!a?.knock && !a.name)
+      .sort((a, b) => a.knock!.at - b.knock!.at);
+  }
+
+  /** R12: the host's tabs get the list of who waits; everyone waiting learns whether a host is there to answer. */
+  private sendKnocks(except?: WebSocket): void {
+    const waiting = this.knockers(except);
+    const list = waiting.map((a) => ({ id: a.id, name: a.knock!.name, ...(a.knock!.avatar ? { avatar: a.knock!.avatar } : {}) }));
+    let hostHere = false;
+    for (const ws of this.openSockets(except)) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (!a?.name || keyOf(a) !== this.hostKey || a.tv) continue;
+      hostHere = true;
+      this.sendTo(ws, { t: 'knocks', list });
+    }
+    for (const ws of this.openSockets(except)) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (a?.knock && !a.name) this.sendTo(ws, { t: 'knock-wait', hostHere });
+    }
+  }
+
+  /** R12: the host lets someone in (they finish joining now) or refuses them (banned like a kick). */
+  private async answerKnock(ws: WebSocket, id: string, allow: boolean): Promise<void> {
+    if (!this.isHost(ws)) {
+      this.sendTo(ws, { t: 'error', code: 'not_host' });
+      return;
+    }
+    const target = this.openSockets().find((s) => {
+      const a = s.deserializeAttachment() as Attachment | null;
+      return a?.id === id && !!a.knock && !a.name;
+    });
+    if (target) {
+      const a = target.deserializeAttachment() as Attachment;
+      const knock = a.knock!;
+      if (allow) {
+        await this.admit24h(keyOf(a));
+        delete a.knock;
+        target.serializeAttachment(a);
+        await this.join(target, a, knock.hello);
+      } else {
+        const keys = Object.keys(this.bans);
+        if (keys.length >= MAX_BANS) delete this.bans[keys[0]!];
+        this.bans[keyOf(a)] = { id: newId(), name: knock.name, ...(knock.avatar ? { avatar: knock.avatar } : {}) };
+        await this.ctx.storage.put('bans', this.bans);
+        this.sendTo(target, { t: 'error', code: 'kicked' });
+        try {
+          target.close(4003, 'kicked');
+        } catch {
+          // Already closed.
+        }
+        this.sendBans();
+      }
+    }
+    this.sendKnocks(target && !allow ? target : undefined);
+  }
+
+  /** R12: this person may pass the door for a day (also refreshed whenever they join or leave). */
+  private async admit24h(key: string): Promise<void> {
+    const now = Date.now();
+    for (const [k, at] of Object.entries(this.admitted)) if (now - at > ADMIT_TTL_MS) delete this.admitted[k];
+    delete this.admitted[key];
+    this.admitted[key] = now;
+    const keys = Object.keys(this.admitted);
+    for (const k of keys.slice(0, Math.max(0, keys.length - MAX_ADMITTED))) delete this.admitted[k];
+    await this.ctx.storage.put('admitted', this.admitted);
   }
 
   /**
@@ -923,8 +1038,9 @@ export class Room extends DurableObject<Env> {
       if (ws === keep) continue;
       const a = ws.deserializeAttachment() as Attachment | null;
       if (!a || a.name || a.openedAt === undefined || now - a.openedAt <= UNJOINED_MS) continue;
+      if (a.knock && now - a.knock.at <= KNOCK_MAX_MS) continue;
       try {
-        ws.close(4008, 'no_hello');
+        ws.close(a.knock ? 4011 : 4008, a.knock ? 'knock_timeout' : 'no_hello');
       } catch {
         // Already closed.
       }
@@ -1114,6 +1230,10 @@ export class Room extends DurableObject<Env> {
       return;
     }
 
+    // R12: with "Ask before letting people in", a newcomer waits at the door until the host lets them in.
+    if (await this.mustKnock(ws, attachment, hello)) return;
+    await this.admit24h(keyOf(attachment));
+
     attachment.name = hello.name;
     attachment.pk = await this.personKeyFor(attachment);
     attachment.joinedAt ??= Date.now();
@@ -1182,6 +1302,8 @@ export class Room extends DurableObject<Env> {
     for (const [id, data] of this.chatImages) this.sendTo(ws, { t: 'chat-image', id, data });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
+    // R12: the host (any of their tabs) sees who is waiting at the door; those waiting learn a host is here.
+    if (this.settings.knock || this.knockers().length) this.sendKnocks();
     // My phone / computer learns that my TV is here (and a phone joining later learns it too).
     if (attachment.tv) for (const other of this.personSockets(myKey, ws)) this.sendTo(other, { t: 'tv', op: 'present', value: true });
     else if (this.tvSockets(myKey).length) this.sendTo(ws, { t: 'tv', op: 'present', value: true });
@@ -1889,6 +2011,9 @@ export class Room extends DurableObject<Env> {
       }
     }
     this.broadcast(this.membersMessage(leaving), leaving);
+    // R12: a knocker gave up, or the host left (those waiting learn nobody can answer now).
+    if (attachment?.knock || (attachment?.name && keyOf(attachment) === this.hostKey)) this.sendKnocks(leaving);
+    if (attachment?.name && this.settings.knock) await this.admit24h(keyOf(attachment));
     if (attachment?.table) await this.markEmptyTables(leaving);
     // Yönetici çıktıysa geçici yönetici listeyi alsın.
     this.sendBans(leaving);
@@ -1968,7 +2093,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

@@ -361,6 +361,15 @@ export interface RoomSettings {
   liveHostOnly?: boolean;
   /** "3-2-1, together" before a new video (default on; false turns it off). */
   countdown?: boolean;
+  /** R12: "Ask before letting people in": a newcomer waits until the host lets them in (default off). */
+  knock?: boolean;
+}
+
+/** R12: someone waiting at the door (to the host only). `id` is their connection's member id. */
+export interface KnockEntry {
+  id: string;
+  name: string;
+  avatar?: Avatar;
 }
 
 /** Odadan çıkarılmış (yasaklı) biri. `id` yasağı kaldırmak içindir; tarayıcı kimliği gizli kalır. */
@@ -413,6 +422,8 @@ export type ClientMessage =
   | { t: 'make-host'; id: string }
   /** (Sadece oda yöneticisi) bir yasağı kaldır (`id`: BanEntry.id). */
   | { t: 'unban'; id: string }
+  /** (Host only, R12) let someone waiting at the door in, or refuse them (refused = banned like a kick). */
+  | { t: 'knock-answer'; id: string; allow: boolean }
   /**
    * "Herkes hazır": videom takıldı (ready=false) ya da tekrar oynayabilir (ready=true).
    * Sunucu takılan biri olduğunda odayı kısa süre bekletir. `ad`: film sayfasında reklam oynuyor; oda bu kişiyi
@@ -421,7 +432,7 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean; ad?: boolean }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; countdown?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; countdown?: boolean; knock?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
@@ -498,6 +509,8 @@ export type ErrorCode =
   | 'queue_full'
   /** Oda yöneticisi seni çıkardı (ya da kısa süre önce çıkarılmıştın). */
   | 'kicked'
+  /** R12: too many people are already waiting at the door; try again later. */
+  | 'knock_busy'
   /** Bu işlem sadece oda yöneticisine açık. */
   | 'not_host'
   /** Sesli sohbet dolu (VOICE_MAX) ya da bu sunucuda kapalı. */
@@ -569,6 +582,10 @@ export type ServerMessage =
   | { t: 'kicked'; who: Member; by: Member }
   /** Yasaklılar listesi (sadece yöneticiye; değişince ve yönetici değişince gelir). */
   | { t: 'bans'; bans: BanEntry[] }
+  /** R12: to someone at the door: waiting for the host (`hostHere`: a host is connected and can answer). */
+  | { t: 'knock-wait'; hostHere: boolean }
+  /** R12: to the host: who is waiting at the door (all of them, oldest first; empty = nobody). */
+  | { t: 'knocks'; list: KnockEntry[] }
   /** Oda takılan birini bekliyor (boş liste: bekleme bitti). */
   | { t: 'waiting'; ids: string[] }
   | { t: 'settings'; settings: RoomSettings }
@@ -922,6 +939,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (name === null) return null;
       return isAvatar(m.avatar) ? { t: 'rename', name, avatar: m.avatar } : { t: 'rename', name };
     }
+    case 'knock-answer':
+      return isItemId(m.id) && typeof m.allow === 'boolean' ? { t: 'knock-answer', id: m.id, allow: m.allow } : null;
     case 'kick':
     case 'make-host':
     case 'unban':
@@ -932,7 +951,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return typeof m.ad === 'boolean' ? { t: 'ready', ready: m.ready, ad: m.ad } : { t: 'ready', ready: m.ready };
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
-      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly', 'countdown'] as const) {
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly', 'countdown', 'knock'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
       if ((REACTION_GAPS as readonly unknown[]).includes(m.reactionGap)) out.reactionGap = m.reactionGap as ReactionGap;

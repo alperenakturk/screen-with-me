@@ -45,7 +45,7 @@ async function qrPng(img: HTMLImageElement, size = 512): Promise<Blob | null> {
  * alone in a room". Opens by itself when someone enters a room where nobody else is (room.ts, once per page) and from
  * 🔗 Invite. Esc, ✕ or a click outside closes it.
  */
-export function openInviteDialog(url: string): void {
+export function openInviteDialog(url: string, door?: { on: boolean; set: (on: boolean) => void }): void {
   if (document.querySelector('.invite-dialog')) return;
   const message = t('invite.message', { url });
 
@@ -125,6 +125,8 @@ export function openInviteDialog(url: string): void {
     { class: 'invite-dialog card', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('invite.title') },
     el('div', { class: 'invite-head' }, el('h3', {}, `🍿 ${t('invite.title')}`), close),
     el('div', { class: 'invite-tabs', role: 'tablist' }, tabLink, tabQr),
+    // R12 (host only): "Ask before letting people in", the same switch as in Room rules.
+    ...(door ? [doorRow(door)] : []),
     linkPane,
     qrPane,
     el('label', { class: 'invite-auto small muted' }, auto, el('span', {}, t('invite.auto'))),
@@ -144,4 +146,12 @@ export function openInviteDialog(url: string): void {
   document.addEventListener('keydown', onKey);
   document.body.append(backdrop);
   copy.focus();
+}
+
+/** R12: the host's "Ask before letting people in" switch in the invite window. */
+function doorRow(door: { on: boolean; set: (on: boolean) => void }): HTMLElement {
+  const box = el('input', { type: 'checkbox', role: 'switch', class: 'switch', id: 'invite-door' }) as HTMLInputElement;
+  box.checked = door.on;
+  box.addEventListener('change', () => door.set(box.checked));
+  return el('label', { class: 'set-row invite-door' }, el('span', { class: 'set-text' }, el('b', {}, t('settings.knock')), el('span', {}, t('settings.knock.d'))), box);
 }
