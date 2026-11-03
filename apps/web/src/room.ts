@@ -440,7 +440,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <div class="game-menu-wrap">
                 <button id="game-btn" type="button" class="tool-btn labeled game-btn" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">🎮</span><span class="tool-label" data-i18n="tool.game"></span></button>
-                <div id="game-menu" class="game-menu" role="menu" data-island hidden></div>
+                <div id="game-menu" class="game-menu" role="dialog" data-i18n-title="tool.game" data-island hidden></div>
               </div>
               <button id="pin-btn" type="button" class="tool-btn labeled" data-i18n-title="pin"><span aria-hidden="true">📌</span><span class="tool-label" data-i18n="tool.pin"></span></button>
               <button id="sync-all" type="button" class="tool-btn labeled" data-i18n-title="syncAll"><span aria-hidden="true">🔄</span><span class="tool-label" data-i18n="tool.sync"></span></button>
@@ -491,6 +491,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
               <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
+              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
             </form>
           </div>
           <div class="game-menu-wrap shorts-game-wrap">
@@ -510,6 +511,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button class="btn primary small-btn" data-i18n="feed.start"></button>
               </div>
               <p class="muted small" data-i18n="feed.hint"></p>
+              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
             </form>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
@@ -590,7 +592,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
           <div class="tab-panel chat-panel" data-panel="chat">
             <button id="chat-events" type="button" class="chat-events" aria-pressed="false"></button>
-            <ul id="chat-list" class="chat-list" role="log" aria-live="polite"></ul>
+            <ul id="chat-list" class="chat-list" aria-live="polite" aria-relevant="additions"></ul>
             <form id="chat-form" class="chat-form">
               <button type="button" id="chat-react" class="chat-tool phone-only" aria-haspopup="dialog" data-i18n-title="reactTray.hint">😀</button>
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
@@ -793,11 +795,25 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Odadayken üst çubuk sade: bağlantı durumu oda adının noktasında (basınca yeniden bağlanır), tema/dil/⟳ profil
   // menüsünde (styles.css `in-room`).
   document.documentElement.classList.add('in-room');
-  const roomTitleName = el('b', { class: 'room-title-name' });
+  // The room's name is the page's heading (card A11y, S6).
+  const roomTitleName = el('h1', { class: 'room-title-name' });
   const roomTitleCount = el('span', { class: 'room-title-count' });
   const roomTitleDot = el('button', { type: 'button', class: 'room-title-dot' });
   const roomTitleStatus = el('span', { class: 'room-title-status' });
   document.querySelector('.topbar .brand')?.after(el('div', { class: 'room-title' }, roomTitleDot, roomTitleStatus, roomTitleName, roomTitleCount));
+  // Card A11y (K1): in the room the first Tab stop skips to the video (the top bar, link box and video follow).
+  const skipLink = document.querySelector<HTMLAnchorElement>('#skip-link');
+  if (skipLink) {
+    skipLink.dataset.i18n = 'skipToVideo';
+    skipLink.textContent = t('skipToVideo');
+    skipLink.href = '#theater';
+    skipLink.onclick = (event) => {
+      event.preventDefault();
+      const target = document.getElementById('theater');
+      target?.setAttribute('tabindex', '-1');
+      target?.focus();
+    };
+  }
   function drawRoomTitle(): void {
     // An unsaved room shows its friendly name (0.9.93.2; the same for everyone, worked out from the id).
     roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId);
@@ -2571,7 +2587,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (box === target) continue;
       for (const node of box.querySelectorAll<HTMLElement>(`:scope > :is(${NOTICES})`)) target.append(node);
     }
+    // Card A11y / sweep (Planner-approved): on a computer with the side panel the "can't be played" line sits above
+    // the message box too; under the video it made the room scroll by its height.
+    const errInChat = !isShell && !isPhoneLayout() && innerWidth > 860 && !roomEl.classList.contains('side-hidden') && !fullscreen.isActive() && !shortsOn;
+    if (errInChat && playerErrorEl.parentElement !== noticeChat) noticeChat.append(playerErrorEl);
+    else if (!errInChat && playerErrorEl.parentElement !== errHome) errHome.insertBefore(playerErrorEl, errNext);
   }
+  const errHome = playerErrorEl.parentElement!;
+  const errNext = playerErrorEl.nextSibling;
+  addEventListener('resize', placeNotices);
   const watchNotices = new MutationObserver(placeNotices);
   watchNotices.observe($('.player-wrap'), { childList: true });
   watchNotices.observe($('#theater'), { attributes: true, attributeFilter: ['class'] });

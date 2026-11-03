@@ -215,6 +215,20 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   room, settings, help; every control reachable and visible with the keyboard; reduced motion respected everywhere.
 - Tests: the axe harness in CI; a keyboard-tour harness.
 - Owner's pick: none needed.
+- Done: 0.9.96.13 (PR below), from Design's `a11y-1.md`. Keyboard: a "Skip to the content / the video" link first
+  (K1); a Tab press wakes the resting rail so its buttons come right after the video (K2, `fullscreen.ts`); the ⋯ More
+  menu follows the menu-button pattern (`ui/menu-keys.ts`: first item focused, ↑ ↓ Home End, Esc back to ⋯) (K3);
+  every `.dialog-backdrop` dialog keeps Tab inside and gives the focus back to its button (`ui/dialog-focus.ts`) (K4);
+  a focus ring on the video (K5); the first tips are named and their "Next" takes the focus unless you are typing
+  (K6). Names / roles: the games hall is a named dialog of buttons (S1), the XOX board a "Game board" group whose cells
+  say "Row 1, column 2, empty" (S2), the chat list a real list with a polite live region (S4), the room name is the
+  page's `h1` (S6). Contrast: the primary button's hover gets darker (4.3:1 → over 4.5:1; Neon, with dark text,
+  lighter). Targets: the connection dot 24 px, "Show activity" 28 px. Kept on purpose: the mic / camera buttons name
+  the action ("Mute" / "Unmute"), so no `aria-pressed` (S8), and red = off stays the owner's pick. Also the
+  Planner-approved fix: a "can't be played" note sits above the message box on a computer and no longer makes the room
+  scroll (a new `room-error` screen in the sweep). Harness `scripts/harness/a11y/run.cjs` (axe on home, help, join,
+  room, settings, invite, games hall, tic-tac-toe, first tips, computer + phone; keyboard tour) runs in CI (axe-core
+  and Playwright installed for that step only).
 
 ### P1. Vimeo player without the extension (lane B)
 - Why: owner's idea (2 Nov 2026), Research's #1 (`research/more-players.md`): full control via player.js.
@@ -461,6 +475,14 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   "YouTube Terms of Service" link (opens in a new tab); EN + TR; computer + phone; the Help page says the same.
 - Tests: harness or e2e checks the mark + link exist in each of the four places; screenshot at phone width.
 - Owner's pick: none needed.
+- Done: 0.9.96.13 (with A11y, PR #197). "Results from YouTube · YouTube Terms of Service" (link to
+  https://www.youtube.com/t/terms, new tab) under the link box's search results (`ui/search.ts` `attribution()`), in the
+  Shorts view's ＋ Add window and in the ♾ window that holds 🎲 Discover and ✨ More like this (`room.ts`, `.yt-attrib`);
+  EN + TR; the Help page says the same. Text attribution for now: YouTube's own logo file (brand guidelines: unchanged)
+  is not in the repo; Design can add it from YouTube's brand resources if the audit asks for the logo. Planner's small
+  fix with it: `scripts/e2e/room.mjs` no longer fails when YouTube's oEmbed doesn't answer (it waits 8 s, then says the
+  room kept its fallback title). Harness `scripts/harness/yt-attrib/run.cjs` (stubbed search; computer + phone, EN +
+  TR, 13 checks).
 
 ### Y2. Stored YouTube titles never older than 30 days (audit prep, from Research)
 - Why: YouTube allows keeping non-authorized API data (titles) at most 30 days; a saved room's queue, `history` and

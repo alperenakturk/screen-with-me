@@ -149,7 +149,7 @@ implement, test, ship.
   the extension and watches — measure the steps and remove friction.
 - [ ] **(added)** Simplify the room for newcomers: rarely used features (scheduled start, voting, saved rooms, recap)
   could move under "More" (owner decides).
-- [ ] **(added)** Accessibility: WCAG AA contrast (primary button purple #8b6cff with white text is ~3.8:1, proposal
+- [x] **(added)** Accessibility (done in 0.9.96.13, card A11y): WCAG AA contrast (primary button purple #8b6cff with white text is ~3.8:1, proposal
   #6a4cf2), keyboard navigation, focus states, screen-reader labels, `prefers-reduced-motion`.
 - [ ] **(added)** Performance budget: first load size, room join time (< 30 s from link to watching), CPU while
   watching (extension), memory on long sessions.

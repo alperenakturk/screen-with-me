@@ -1,3 +1,4 @@
+import { menuKeys } from './menu-keys.ts';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 
@@ -49,7 +50,7 @@ export function roomMoreItems(deps: {
 
 /** The computer's "⋯ More" menu under its top-bar button. */
 export function createRoomMoreMenu(button: HTMLButtonElement, items: () => MoreItem[]) {
-  const pop = el('div', { class: 'room-more-pop', role: 'menu', hidden: 'hidden' });
+  const pop = el('div', { class: 'room-more-pop', role: 'menu', 'aria-label': t('more.button'), hidden: 'hidden' });
   document.body.append(pop);
   const close = () => {
     pop.hidden = true;
@@ -76,7 +77,9 @@ export function createRoomMoreMenu(button: HTMLButtonElement, items: () => MoreI
     pop.style.right = `${Math.max(8, Math.round(innerWidth - r.right))}px`;
     pop.hidden = false;
     button.setAttribute('aria-expanded', 'true');
+    keys.focusFirst();
   };
+  const keys = menuKeys(pop, button, () => close());
   button.addEventListener('click', () => (pop.hidden ? open() : close()));
   document.addEventListener('pointerdown', (event) => {
     if (!pop.hidden && !pop.contains(event.target as Node) && !button.contains(event.target as Node)) close();

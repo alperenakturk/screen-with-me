@@ -19,8 +19,17 @@ function client(name) {
       waiters.push({ pred, resolve });
       setTimeout(() => reject(new Error(`${name}: timeout waiting for ${label}`)), 10000);
     });
+  // Like next, but resolves null after `ms` and forgets the wait (for things an outside service decides).
+  const maybe = (pred, ms) =>
+    new Promise((resolve) => {
+      const found = inbox.find(pred);
+      if (found) { inbox.splice(inbox.indexOf(found), 1); return resolve(found); }
+      const w = { pred, resolve };
+      waiters.push(w);
+      setTimeout(() => { const i = waiters.indexOf(w); if (i >= 0) { waiters.splice(i, 1); resolve(null); } }, ms);
+    });
   const opened = new Promise((r, j) => { ws.addEventListener('open', r); ws.addEventListener('error', j); });
-  return { ws, next, opened, inbox, send: (m) => ws.send(JSON.stringify(m)) };
+  return { ws, next, maybe, opened, inbox, send: (m) => ws.send(JSON.stringify(m)) };
 }
 
 const ok = (cond, msg) => { if (!cond) throw new Error('FAIL: ' + msg); console.log('ok  ' + msg); };
@@ -42,8 +51,12 @@ const sentAt = Date.now();
 a.send({ t: 'enqueue', media: YT('aqz-KE-bpKQ') });
 const first = await b.next((m) => m.t === 'state' && m.action === 'load', 'load');
 ok(first.state.item.media.id === 'aqz-KE-bpKQ' && !first.state.paused, `Boş odada sıraya eklenen video hemen başladı (${Date.now() - sentAt} ms)`);
-const tt = await b.next((m) => m.t === 'title', 'title');
-ok(tt.itemId === first.state.item.id && typeof tt.title === 'string', `Başlık sonradan geldi: "${tt.title}" (${Date.now() - sentAt} ms)`);
+// The title comes from YouTube's oEmbed, an outside service: when it doesn't answer in time the room keeps its fallback
+// (no title message) and the test says which happened instead of failing (Planner, card Y1: an outside service must
+// not decide "live e2e green on the first attempt").
+const tt = await b.maybe((m) => m.t === 'title', 8000);
+if (tt) ok(tt.itemId === first.state.item.id && typeof tt.title === 'string', `Başlık sonradan geldi: "${tt.title}" (${Date.now() - sentAt} ms)`);
+else console.log("ok  YouTube's title service didn't answer in 8 s: the room keeps the fallback title (no title message)");
 
 b.send({ t: 'enqueue', media: YT('dQw4w9WgXcQ') });
 const q1 = await a.next((m) => m.t === 'queue', 'queue add');

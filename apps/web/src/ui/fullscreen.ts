@@ -285,7 +285,17 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     focused.blur();
   }
   let tabbing = false;
-  addEventListener('keydown', (event) => event.key === 'Tab' && (tabbing = true), true);
+  addEventListener(
+    'keydown',
+    (event) => {
+      if (event.key !== 'Tab') return;
+      tabbing = true;
+      // Card A11y (K2): a resting rail is out of the tab order (hidden); a Tab press brings it out so its buttons are
+      // reachable right after the video, and it rests again once the focus has moved on (railBusy holds it meanwhile).
+      if (theater.classList.contains('dock-idle') && !theater.matches(':fullscreen, .fake-fs')) wakeDock();
+    },
+    true,
+  );
   addEventListener('pointerdown', () => (tabbing = false), true);
   addEventListener('mousemove', () => (tabbing = false), { capture: true, passive: true });
   const LEAVE_MS = 450;

@@ -210,7 +210,7 @@ export function renderGallery(s: GalleryState): HTMLElement[] {
           const badge = news.find((n) => n.kinds.includes(kind));
           const item = el(
             'button',
-            { type: 'button', role: 'menuitem', class: 'hub-game hub-card', 'data-kind': kind },
+            { type: 'button', class: 'hub-game hub-card', 'data-kind': kind },
             cover(kind, () => el('span', { class: 'hub-cover-icon' }, s.gameIcon(kind))),
             el(
               'span',
@@ -239,7 +239,7 @@ export function renderGallery(s: GalleryState): HTMLElement[] {
           const progress = soloKind ? progressOf(kind) : null;
           const item = el(
             'button',
-            { type: 'button', role: 'menuitem', class: `hub-side${soloKind && s.solo === soloKind ? ' mine' : ''}`, ...(soloKind ? { 'data-solo': soloKind } : {}) },
+            { type: 'button', class: `hub-side${soloKind && s.solo === soloKind ? ' mine' : ''}`, ...(soloKind ? { 'data-solo': soloKind } : {}) },
             cover(kind, () => el('span', { class: 'hub-cover-icon' }, soloKind ? s.soloIcon(soloKind) : '✨')),
             el(
               'span',

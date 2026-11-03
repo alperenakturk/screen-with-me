@@ -6,6 +6,7 @@ import { applyTheme, currentTheme, openThemeDialog } from './themes.ts';
 import { readTvLabSwitch, tvLab } from './tv-lab.ts';
 import { checkExtensionVersion } from './ext-update.ts';
 import { startDebugLab } from './debug-lab.ts';
+import { startDialogFocus } from './ui/dialog-focus.ts';
 import { isShell } from './storage.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
@@ -40,6 +41,7 @@ markLang();
 readTvLabSwitch();
 // Hidden test panel (card 12): `?debug=1` once in a tab; nothing loads or is recorded otherwise.
 startDebugLab(isShell);
+startDialogFocus();
 const tvPage = /^\/(tv|tv-test|tv-testi)(\/\d{6})?\/?$/.test(location.pathname);
 if (tvPage && !tvLab()) history.replaceState(null, '', '/');
 
