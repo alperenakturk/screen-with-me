@@ -842,8 +842,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   chunk with the Design session's covers (`games/art/covers/`, inlined with unique ids) and its own texts (`TEXT`);
   `stage.ts` keeps the state and passes it in (`renderGallery`, also `gameIcon` / `avatarNode`, so the chunk shares no
   module with the room page's split; importing them made Rollup split `sound` / `avatar` chunks and broke the budget).
-  "👥 Together": a two-line "What's new" note, the room's tables, a cover card per room game (3 a row; Last Heart has no
-  cover yet: its icon); "🍿 On the side": Snack Bar (cover, line, progress "🪙 12.4K"), Window Garden and Five Frames as
+  "👥 Together": a two-line "What's new" note, the room's tables, a cover card per room game (3 a row; Last Heart's cover
+  came with #166); "🍿 On the side": Snack Bar (cover, line, progress "🪙 12.4K"), Window Garden and Five Frames as
   "Soon" until built. The last tab is remembered (`opt:hubTab`); `keepHubOnScreen` slides the window back on screen
   (`translate`) when its button sits near an edge; phones: a bottom sheet as tall as its content. Harness
   `scripts/harness/games-gallery/run.cjs` (24 checks). Harness `scripts/harness/snack-bar/run.cjs` (25 checks).

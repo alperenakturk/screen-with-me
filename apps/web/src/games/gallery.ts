@@ -11,6 +11,7 @@ import quiz from './art/covers/quiz.svg?raw';
 import snack from './art/covers/snack-bar.svg?raw';
 import garden from './art/covers/garden.svg?raw';
 import word from './art/covers/word.svg?raw';
+import poker from './art/covers/poker.svg?raw';
 import { GAME_CATALOG, type SoloKind } from '@swm/shared/games/catalog';
 import { formatCoins } from '@swm/shared/games/snack-bar';
 import { MAX_TABLES, ROOM_GAME_KINDS, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
@@ -20,7 +21,7 @@ import { lang, t } from '../i18n.ts';
 import { load } from '../storage.ts';
 import { icon } from '../ui/icons.ts';
 
-const COVERS: Record<string, string> = { xox, four, draw, quiz, snack, garden, word };
+const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, snack, garden, word };
 
 /** The gallery's own words (English first, Turkish second). */
 const TEXT = {
