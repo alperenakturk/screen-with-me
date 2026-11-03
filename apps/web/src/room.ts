@@ -1069,8 +1069,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       setShortsChat(true);
       return;
     }
+    // Card R2: where the side panel is off screen (cinema mode) the rail's message box is the chat; focusing the hidden
+    // chat box did nothing, so a second Enter was needed.
+    const input = app.querySelector<HTMLInputElement>('#chat-input');
+    const panelShown = !!input && input.getClientRects().length > 0 && !roomEl.classList.contains('cinema');
+    if (!panelShown && fullscreen.openChat()) return;
     tabs.show('chat');
-    app.querySelector<HTMLInputElement>('#chat-input')?.focus();
+    input?.focus();
   });
 
   // ---- Senkron ----
