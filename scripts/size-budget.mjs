@@ -10,10 +10,7 @@ import { gzipSync } from 'node:zlib';
 const dist = process.argv[2] ?? 'apps/web/dist';
 const assets = join(dist, 'assets');
 // Budgets in kB (gzip). Measured 2 Nov 2026 after the lazy split: JS 135.6, CSS 35.0.
-// 145 since 0.9.96.5 (the Planner's rule: the first PR that crosses 140 raises it to 145 and says why; above 145, ask
-// the Planner). The side games, the gallery, move-to-device and podcasts each left a small entry in the room page
-// (their own code is in lazy chunks); podcasts crossed 140.
-const BUDGET = { js: 145, css: 37 };
+const BUDGET = { js: 140, css: 37 };
 
 const gz = (file) => gzipSync(readFileSync(join(assets, file))).length / 1024;
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
