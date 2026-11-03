@@ -558,6 +558,9 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   (run against `wrangler dev`, which serves `_headers`: green). With it, a live-e2e fix: `callYouTube` retries once
   after 400 ms on a 5xx or no answer and logs only the call's name and status (`search.mjs` failed its first live
   attempt on the 0.9.97.3 deploy with YouTube's "failed").
+  Also: the 0.9.97.4 deploy (the first with the owner's `USAGE_TOKEN`) failed `search.mjs` "the owner's key reads them"
+  on both attempts although the Worker had the secret; most likely whitespace around the pasted secret (a header loses
+  it, the stored value keeps it). `youtubeUsage` now trims both sides, and the check prints the status.
 
 ### Security: fallback sessions per IP (R3-6)
 - Severity: low
