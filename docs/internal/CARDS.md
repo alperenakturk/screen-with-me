@@ -717,6 +717,17 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   keyed by person / IP hash; "full" counts joined members and unjoined sockets close after ~15 s.
 - Tests: e2e (`voice.mjs`, `wait.mjs` additions; unjoined sockets closed).
 - Owner's pick: none needed.
+- Done: 0.9.96.24 (PR below). L2: besides the old per-connection limit, signals (`signal`, `live-signal`) count per
+  person (browser, `personSignalLimit` 120 burst / 12 a second) and per pair of people (`pairSignalLimit` 40 / 2 a
+  second), so a reconnect no longer refills the budget; `RateLimiter` remembers at most 4000 keys. L3: the 30 s "don't
+  make the room wait again" is copied to the person (`waitCooldowns`, from `WaitTracker.cooldowns()` when a wait ends or
+  a member leaves) and handed to a new member id of the same browser (`holdOff`). L5: "full" counts joined people
+  (`MAX_MEMBERS`) and at most 30 connections waiting for `hello` (`MAX_UNJOINED`); one that has not said `hello`
+  15 s after opening (`UNJOINED_MS`) is closed with 4008 `no_hello` on the next arrival and in `pruneStale`. Tests:
+  e2e `abuse.mjs` (a burst of 100 signals cut to 40, a reconnect gets 3; a silent socket closed with 4008), `wait.mjs`
+  (a reconnect does not reset the cooldown); harness `voice/live.mjs` green; `voice/run.mjs` passes its connection
+  checks (its two failing checks fail on main too: the fake-mic energy check with a sine wav and the "free tiles" check
+  that predates 6g's one-window default; for the bug hunt).
 
 ### Security: game rules for every player (L6)
 - Severity: low

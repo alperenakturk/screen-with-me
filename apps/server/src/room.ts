@@ -48,6 +48,9 @@ import { resolveTitle } from './titles.ts';
 import { recordUsage } from './usage.ts';
 
 const MAX_MEMBERS = 50;
+/** Security L5: a connection that never says `hello` is closed after this long, and at most this many may wait. */
+const UNJOINED_MS = 15_000;
+const MAX_UNJOINED = 30;
 /** Custom emoji uploads per room and day (each can be ~280 KB and is kept with the room). */
 const STICKER_ADDS_PER_DAY = 60;
 /** Images sent in chat per room and day (0.9.88). */
@@ -91,6 +94,8 @@ interface Attachment {
   joinedAt?: number;
   /** Bu bağlantıdan en son mesaj (ping dahil) geldiği an; hayalet bağlantıları ayıklamak için. */
   seen?: number;
+  /** When the connection was accepted (security L5: an unjoined one is closed after UNJOINED_MS). */
+  openedAt?: number;
   /** 'ext': eklentiyle film sayfasında. */
   client?: ClientKind;
   /** Sesli sohbette: mikrofon açık mı, yayınladığı akış ve Cloudflare oturumu (oturum istemcilere gitmez). */
@@ -238,6 +243,8 @@ export class Room extends DurableObject<Env> {
   private hostKey: string | null = null;
   /** True on a local test server (`wrangler dev`): local media links are allowed there (security L4). */
   private devHost = false;
+  /** Security L3: person key → until when they may not make the room wait (memory only; at most a minute old). */
+  private readonly waitCooldowns = new Map<string, number>();
   /** The last item that started playing (it got its "3-2-1" then, or didn't need one): no second countdown. */
   private counted: string | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
@@ -278,6 +285,13 @@ export class Room extends DurableObject<Env> {
   private readonly rtcLimit = new RateLimiter(30, 3);
   /** Eşler arası seste bağlantı mesajları (her eş için teklif/cevap + birkaç ağ adayı). */
   private readonly signalLimit = new RateLimiter(80, 10);
+  /**
+   * Security L2: signals per person (browser) and per pair of people, so a reconnect (a new member id) no longer
+   * resets the flood limit and one person cannot hammer one other person. A real call needs an offer, an answer and
+   * some ICE candidates per pair; a camera on/off or a reconnect adds a few more.
+   */
+  private readonly personSignalLimit = new RateLimiter(120, 12);
+  private readonly pairSignalLimit = new RateLimiter(40, 2);
   /** TV pairing attempts per person: a wrong code costs one (6-digit codes can't be guessed this way). */
   private readonly tvLinkLimit = new RateLimiter(5, 5 / 60);
   private readonly tvLimit = new RateLimiter(20, 4);
@@ -380,12 +394,19 @@ export class Room extends DurableObject<Env> {
 
   /** A new connection (WebSocket or HTTP fallback): full room → closed, otherwise it waits for its hello. */
   private async admit(server: WebSocket, request: Request): Promise<void> {
-    if (this.openSockets().length > MAX_MEMBERS) {
+    // Security L5: "full" counts people who joined; sockets that never said hello are closed after UNJOINED_MS and
+    // only MAX_UNJOINED may wait at once (51 silent sockets used to make a room "full" for 150 s).
+    const now = Date.now();
+    this.closeUnjoined(now, server);
+    const others = this.openSockets().filter((s) => s !== server).map((s) => s.deserializeAttachment() as Attachment | null);
+    const joined = others.filter((a) => a?.name).length;
+    const waiting = others.length - joined;
+    if (joined >= MAX_MEMBERS || waiting >= MAX_UNJOINED) {
       this.sendTo(server, { t: 'error', code: 'room_full' });
       server.close(4001, 'room_full');
     } else {
       const ip = request.headers.get(IP_HEADER);
-      const attachment: Attachment = { id: newId().slice(0, 8), name: null, ...(ip ? { ip } : {}) };
+      const attachment: Attachment = { id: newId().slice(0, 8), name: null, openedAt: now, ...(ip ? { ip } : {}) };
       server.serializeAttachment(attachment);
       await this.freezeIfLongEmpty();
       this.statsTick(true);
@@ -490,6 +511,7 @@ export class Room extends DurableObject<Env> {
         if (!this.signalLimit.allow(me.id)) return;
         const target = this.openSockets().find((c) => (c.deserializeAttachment() as Attachment | null)?.id === message.to);
         const other = target?.deserializeAttachment() as Attachment | null;
+        if (other && !this.signalAllowed(attachment, other)) return;
         const paired = (attachment.live && other?.watching) || (attachment.watching && other?.live);
         if (target && paired) this.sendTo(target, { t: 'live-signal', from: me.id, data: message.data });
         return;
@@ -500,6 +522,7 @@ export class Room extends DurableObject<Env> {
         if (!this.signalLimit.allow(me.id) || !attachment.voice) return;
         const target = this.openSockets().find((c) => (c.deserializeAttachment() as Attachment | null)?.id === message.to);
         const other = target?.deserializeAttachment() as Attachment | null;
+        if (other && !this.signalAllowed(attachment, other)) return;
         if (target && other?.voice) this.sendTo(target, { t: 'signal', from: me.id, data: message.data });
         return;
       }
@@ -697,6 +720,12 @@ export class Room extends DurableObject<Env> {
           ws.serializeAttachment(attachment);
           this.broadcast(this.membersMessage());
         }
+        // Security L3: the 30 s "don't make the room wait again" belongs to the person (browser), so a reconnect with
+        // a new member id does not reset it.
+        if (!message.ready && !ad) {
+          const until = this.waitCooldowns.get(keyOf(attachment)) ?? 0;
+          if (until > Date.now()) this.waits.holdOff(me.id, until);
+        }
         this.waits.setReady(me.id, message.ready || ad);
         await this.evaluateWait();
         await this.saveWaits();
@@ -836,8 +865,39 @@ export class Room extends DurableObject<Env> {
    * sunucu bağlantıyı açık sanmaya devam edebilir. O kişi odada görünür, kendisi ise kimseyi
    * görmez ve hareketleri gitmez. Uzun süredir sessiz olanları kapatıp listeden düşürürüz.
    */
+  /** Security L2: one signal from `from` to `to`, counted per person and per pair (by browser, not connection). */
+  private signalAllowed(from: Attachment, to: Attachment): boolean {
+    return this.personSignalLimit.allow(keyOf(from)) && this.pairSignalLimit.allow(`${keyOf(from)}>${keyOf(to)}`);
+  }
+
+  /** Security L3: copies the members' wait cooldowns to their people (browsers). */
+  private rememberWaitCooldowns(): void {
+    const now = Date.now();
+    for (const [key, until] of this.waitCooldowns) if (until <= now) this.waitCooldowns.delete(key);
+    for (const [id, until] of this.waits.cooldowns()) {
+      if (until <= now) continue;
+      const a = this.joined().find((m) => m.id === id);
+      if (a) this.waitCooldowns.set(keyOf(a), Math.max(until, this.waitCooldowns.get(keyOf(a)) ?? 0));
+    }
+  }
+
+  /** Security L5: closes connections that have not said `hello` within UNJOINED_MS (except `keep`). */
+  private closeUnjoined(now: number, keep?: WebSocket): void {
+    for (const ws of this.openSockets()) {
+      if (ws === keep) continue;
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (!a || a.name || a.openedAt === undefined || now - a.openedAt <= UNJOINED_MS) continue;
+      try {
+        ws.close(4008, 'no_hello');
+      } catch {
+        // Already closed.
+      }
+    }
+  }
+
   private async pruneStale(now: number): Promise<void> {
     this.lastPrune = now;
+    this.closeUnjoined(now);
     for (const ws of this.openSockets()) {
       const a = ws.deserializeAttachment() as Attachment | null;
       if (!a?.name || a.seen === undefined || now - a.seen <= STALE_MS) continue;
@@ -1571,6 +1631,7 @@ export class Room extends DurableObject<Env> {
         this.broadcast({ t: 'state', state: this.room.state, action: 'play', by: SYSTEM });
       }
       this.broadcast({ t: 'waiting', ids: [] });
+      this.rememberWaitCooldowns();
     }
     if (decision.kind === 'start' || decision.kind === 'resume') {
       await this.saveWaits();
@@ -1775,6 +1836,9 @@ export class Room extends DurableObject<Env> {
         this.homeLimit.forget(key);
         this.lastReaction.delete(key);
       }
+      // Security L3: their wait cooldown stays with the person after they leave.
+      const until = this.waits.cooldowns().find(([id]) => id === attachment.id)?.[1] ?? 0;
+      if (until > Date.now()) this.waitCooldowns.set(keyOf(attachment), Math.max(until, this.waitCooldowns.get(keyOf(attachment)) ?? 0));
       this.waits.remove(attachment.id);
       // My TV left: my phone / computer stops showing it as connected.
       if (attachment.tv && attachment.name && !this.tvSockets(key, leaving).length) {
