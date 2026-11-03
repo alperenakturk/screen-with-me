@@ -92,7 +92,7 @@ async function person(site, name, avatar, probeMs) {
     localStorage.setItem('lang', 'en');
   }, [name, avatar]);
   await page.goto(`${site}/r/${room}#back`);
-  await page.waitForSelector('#people-count');
+  await page.waitForSelector('#people-count', { state: 'attached' });
   return page;
 }
 const transport = (page) => page.evaluate(() => document.documentElement.dataset.swmTransport ?? null);
@@ -120,7 +120,8 @@ await say(alice, 'welcome');
 check(!!(await until(() => hasChat(bob, 'welcome'))), 'Chat WebSocket → HTTP');
 
 // Sync: Alice starts the sync test, Bob's counter runs in step.
-await alice.click('#sync-test');
+// The sync test lives in ⋯ More since card 6 (hidden button): press it directly.
+await alice.evaluate(() => document.getElementById('sync-test').click());
 const badge = await until(async () => {
   const text = await bob.textContent('#sync-badge');
   const visible = await bob.isVisible('#sync-badge');
@@ -145,7 +146,7 @@ if (process.env.DEBUG)
   });
 await bob.reload();
 if (process.env.DEBUG) console.log('  dbg:', await bob.evaluate(() => localStorage.getItem('dbg')));
-await bob.waitForSelector('#people-count');
+await bob.waitForSelector('#people-count', { state: 'attached' });
 const back = await until(async () => {
   if (process.env.DEBUG) console.log(`  [t+${Date.now() - reloadAt}] online=${(await (await fetch(`${TARGET.origin}/api/rooms/${room}/info`)).json()).online} ${await transport(bob)} ${await people(bob)} ${await bob.evaluate(() => document.querySelector('.room-title-dot')?.getAttribute('data-status'))}`);
   return (await transport(bob)) === 'http' && (await people(bob)) === '2';
