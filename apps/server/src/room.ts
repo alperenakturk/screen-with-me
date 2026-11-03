@@ -38,7 +38,7 @@ import {
 import { applyRoomAction, initialRoom, setItemTitle, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
-import { PollHub } from './fallback.ts';
+import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
@@ -896,7 +896,14 @@ export class Room extends DurableObject<Env> {
   }
 
   private async unsaveFromHome(request: Request): Promise<Response> {
-    const body = (await request.json().catch(() => null)) as { cid?: unknown } | null;
+    // Capped like every body a room object reads (the Worker already refuses > 1 KB; this holds even without it).
+    const text = await readCapped(request, 1024).catch(() => null);
+    let body: { cid?: unknown } | null = null;
+    try {
+      body = text ? (JSON.parse(text) as { cid?: unknown }) : null;
+    } catch {
+      body = null;
+    }
     const cid = typeof body?.cid === 'string' && CLIENT_ID.test(body.cid) ? body.cid : null;
     if (!cid || `c:${cid}` !== this.hostKey) return new Response('forbidden', { status: 403 });
     if (this.settings.saved) {

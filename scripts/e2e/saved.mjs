@@ -67,10 +67,29 @@ const named = await guest.wait((m) => m.t === 'settings' && m.settings.saved && 
 ok(named.settings.name === 'Cuma film gecesi', 'Oda adı sadeleşerek kaydedildi');
 const info = await (await fetch(`${http}/api/rooms/${room}/info`)).json();
 ok(info.saved === true && info.name === 'Cuma film gecesi' && info.online === 2, 'Bilgi: kayıtlı, adı, içeride 2 kişi');
-const denied = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', body: JSON.stringify({ cid: 'saveAyse1234' }) });
+// A browser sends its Origin with the POST (the Worker refuses an unsave without one, R3-1).
+const origin = { Origin: http };
+const noOrigin = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', body: JSON.stringify({ cid: 'saveAli12345' }) });
+ok(noOrigin.status === 403, 'An unsave without an Origin is refused');
+const denied = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', headers: origin, body: JSON.stringify({ cid: 'saveAyse1234' }) });
 ok(denied.status === 403, 'Yönetici olmayan ana sayfadan kaydı kaldıramıyor');
-const done = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', body: JSON.stringify({ cid: 'saveAli12345' }) });
+const done = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', headers: origin, body: JSON.stringify({ cid: 'saveAli12345' }) });
 ok(done.status === 200 && (await guest.wait((m) => m.t === 'settings' && !m.settings.saved, 'unsaved via http')), 'Yönetici ana sayfadan kaydı kaldırdı, odadakiler gördü');
+
+// Security review 3 R3-1: an unsave body without a declared size (chunked) or above 1 KB never reaches the room object,
+// and the room keeps answering.
+const chunked = new ReadableStream({
+  start(controller) {
+    for (let i = 0; i < 64; i++) controller.enqueue(new Uint8Array(64 * 1024).fill(32));
+    controller.close();
+  },
+});
+const chunkedRes = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', headers: origin, body: chunked, duplex: 'half' }).catch(() => null);
+ok(chunkedRes !== null && chunkedRes.status === 411, 'A chunked unsave body (no Content-Length) is refused', chunkedRes?.status);
+const bigRes = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', headers: origin, body: JSON.stringify({ cid: 'saveAli12345', pad: 'x'.repeat(4000) }) });
+ok(bigRes.status === 413, 'An unsave body above 1 KB is refused', bigRes.status);
+const after = await (await fetch(`${http}/api/rooms/${room}/info`)).json();
+ok(after.online === 2, 'The room still answers after the refused bodies', JSON.stringify(after));
 
 for (const c of [host, guest]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

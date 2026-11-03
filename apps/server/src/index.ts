@@ -19,6 +19,9 @@ export { TvLink } from './tv-link.ts';
  * another website can't make its visitors join or spam rooms (security review 1, O1). Without `Origin` it is not a
  * browser (tests, tools), and such a client could fake the header anyway.
  */
+/** The largest `unsave` body (`{"cid":"…"}` is ~40 bytes). */
+const UNSAVE_BODY_BYTES = 1024;
+
 function allowedOrigin(request: Request, url: URL): boolean {
   const origin = request.headers.get('Origin');
   if (origin === null || origin === url.origin) return true;
@@ -128,6 +131,19 @@ export default {
     if (info) {
       if (!ROOM_ID_PATTERN.test(info[1]!)) return new Response('Invalid room id', { status: 400 });
       if (request.method !== 'GET' && !allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
+      // `unsave` carries a tiny JSON body ({cid}): refuse a body without a declared size or above 1 KB here, before it
+      // reaches the room object (a chunked 100 MB body used to reset the room, security review 3 R3-1).
+      if (info[2] === 'unsave') {
+        if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+        // A browser always sends `Origin` on a POST; a script without one has no business here.
+        if (request.headers.get('Origin') === null) return new Response('Forbidden origin', { status: 403 });
+        const size = Number(request.headers.get('Content-Length') ?? NaN);
+        if (!Number.isFinite(size)) return new Response('Length required', { status: 411 });
+        if (size > UNSAVE_BODY_BYTES) return new Response('Too large', { status: 413 });
+      }
+      if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: await ipKey(request) })).success) {
+        return new Response('Too many requests', { status: 429 });
+      }
       return env.ROOMS.get(env.ROOMS.idFromName(info[1]!)).fetch(request);
     }
 
