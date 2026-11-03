@@ -280,3 +280,8 @@ export function chooseFacts(recap: Recap, random: () => number = Math.random, co
 export const RECAPS_KEEP = 5;
 export const RECAPS_KEEP_SAVED = 20;
 export const RECAP_MAX_AGE_MS = 90 * 86_400_000;
+
+/** The saved recaps still inside `RECAP_MAX_AGE_MS` (a recap's age counts from its end, `to`). */
+export function freshRecaps<T extends { to: number }>(recaps: readonly T[], now: number): T[] {
+  return recaps.filter((r) => now - r.to < RECAP_MAX_AGE_MS);
+}

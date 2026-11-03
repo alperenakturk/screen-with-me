@@ -1,4 +1,4 @@
-import { isTikTokShortLink, parseTikTok } from '@swm/shared/media';
+import { isTikTokHop, isTikTokShortLink, parseTikTok } from '@swm/shared/media';
 import { isValidMedia } from '@swm/shared/protocol';
 
 const TIMEOUT_MS = 4000;
@@ -41,6 +41,8 @@ export async function tiktokResolve(request: Request, url: URL, env: Env, ipKey:
       return json({ error: 'failed' });
     }
     const location = response.headers.get('location');
+    // Only the Location header is read: drop the body at once.
+    await response.body?.cancel().catch(() => undefined);
     if (!location) break;
     try {
       at = new URL(location, at);
@@ -53,8 +55,8 @@ export async function tiktokResolve(request: Request, url: URL, env: Env, ipKey:
       await cache.put(key, answer.clone());
       return answer;
     }
-    // Only TikTok's own addresses are followed.
-    if (!/(^|\.)tiktok\.com$/.test(at.hostname)) break;
+    // Only TikTok's own addresses are followed: https, the default port, no user-info.
+    if (!isTikTokHop(at)) break;
   }
   return json({ error: 'failed' });
 }

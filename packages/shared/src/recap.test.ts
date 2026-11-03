@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chooseFacts, StatsTracker } from './recap.ts';
+import { chooseFacts, freshRecaps, RECAP_MAX_AGE_MS, StatsTracker } from './recap.ts';
 
 const ali = { name: 'Ali' };
 const ayse = { name: 'Ayşe', avatar: 'elf' as const };
@@ -76,5 +76,15 @@ describe('oturum', () => {
     s.activity(8 * 3600_000); // 5 saat ara: yeni oturum
     expect(s.data.since).toBe(8 * 3600_000);
     expect(s.isEmpty()).toBe(true);
+  });
+});
+
+describe('freshRecaps', () => {
+  it('drops recaps that ended more than 90 days ago', () => {
+    const now = 1_000 * 86_400_000;
+    const old = { to: now - RECAP_MAX_AGE_MS - 1 };
+    const edge = { to: now - RECAP_MAX_AGE_MS };
+    const recent = { to: now - 86_400_000 };
+    expect(freshRecaps([old, edge, recent], now)).toEqual([recent]);
   });
 });

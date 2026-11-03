@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage } from './media.ts';
+import { isTikTokHop, isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage } from './media.ts';
 import { cleanMedia, countdownMedia, isValidMedia, maxRateFor } from './protocol.ts';
 
 describe('samePage', () => {
@@ -154,5 +154,17 @@ describe('Vimeo links (card P1)', () => {
     expect(parseMediaList('https://vimeo.com/1 vimeo.com/2 https://youtu.be/dQw4w9WgXcQ').media).toHaveLength(3);
     expect(maxRateFor({ kind: 'vimeo', id: '1' })).toBe(1);
     expect(countdownMedia({ kind: 'vimeo', id: '1' })).toBe(true);
+  });
+});
+
+describe('isTikTokHop', () => {
+  it('follows only https TikTok addresses on the default port without user-info', () => {
+    expect(isTikTokHop(new URL('https://www.tiktok.com/@a/video/123'))).toBe(true);
+    expect(isTikTokHop(new URL('https://vm.tiktok.com/ZMabc/'))).toBe(true);
+    expect(isTikTokHop(new URL('http://www.tiktok.com/@a/video/123'))).toBe(false);
+    expect(isTikTokHop(new URL('https://www.tiktok.com:8443/x'))).toBe(false);
+    expect(isTikTokHop(new URL('https://user:pw@www.tiktok.com/x'))).toBe(false);
+    expect(isTikTokHop(new URL('https://tiktok.com.evil.example/x'))).toBe(false);
+    expect(isTikTokHop(new URL('https://nottiktok.com/x'))).toBe(false);
   });
 });
