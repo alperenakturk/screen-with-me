@@ -18,9 +18,11 @@ import {
   isAvatar,
   randomAvatar,
   REACTION_GAPS,
+  personOf,
   type Avatar,
   type ReactionGap,
   type ClientMessage,
+  type KnockEntry,
   type Member,
   type Media,
   type PlaybackState,
@@ -99,8 +101,8 @@ function openFeedbackDialog(opener: HTMLElement | null): void {
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
 /** The invite window and its QR encoder load when it is first opened (phone speed, 0.9.93.6). */
-function openInvite(url: string): void {
-  void import('./ui/invite.ts').then(({ openInviteDialog }) => openInviteDialog(url));
+function openInvite(url: string, door?: { on: boolean; set: (on: boolean) => void }): void {
+  void import('./ui/invite.ts').then(({ openInviteDialog }) => openInviteDialog(url, door));
 }
 
 /**
@@ -705,6 +707,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="set-row"><span class="set-text"><b data-i18n="settings.hostOnlyMode"></b><span data-i18n="settings.hostOnlyMode.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-hostonly" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.countdown"></b><span data-i18n="settings.countdown.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-countdown" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.knock"></b><span data-i18n="settings.knock.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-knock" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
               <div class="set-row"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
@@ -748,6 +751,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       </section>
     </div>
 
+    <div id="knock-wait" class="kicked-screen knock-wait" hidden role="status" aria-live="polite">
+      <div class="card">
+        <div class="kicked-icon">🚪</div>
+        <h2 data-i18n="knock.waitTitle"></h2>
+        <p class="muted" data-i18n="knock.waitText"></p>
+        <p class="muted small" id="knock-away" data-i18n="knock.hostAway" hidden></p>
+        <a class="btn big" href="/" data-i18n="home"></a>
+      </div>
+    </div>
+    <div id="knock-cards" class="knock-cards" aria-live="polite"></div>
     <div id="kicked" class="kicked-screen" hidden>
       <div class="card">
         <div class="kicked-icon">🚪</div>
@@ -819,8 +832,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function drawRoomTitle(): void {
     // An unsaved room shows its friendly name (0.9.93.2; the same for everyone, worked out from the id).
     roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId);
-    // People, not connections: the same person's site tab + film tab (same name and avatar) count once.
-    const people = new Set(members.map((m) => `${m.name}|${m.avatar ?? ''}`)).size;
+    // People, not connections: the same person's site tab + film tab count once; two people with the same name and
+    // avatar count twice (R11: the server's person key).
+    const people = new Set(members.map(personOf)).size;
     roomTitleCount.textContent = people ? `· ${t(people === 1 ? 'peopleOne' : 'peopleCount', { n: people })}` : '';
     tvRoom?.title(roomTitleName.textContent);
   }
@@ -996,11 +1010,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * avatar, my other tabs and TVs left out) and how many of them are in voice with me.
    */
   function soloContext(): SoloRoom {
-    const self = `${myName}|${myAvatar}`;
     const mine = members.find((m) => m.id === myId);
+    const self = mine ? personOf(mine) : personOf({ name: myName, avatar: myAvatar });
     const others = new Map<string, boolean>();
     for (const m of members) {
-      const key = `${m.name}|${m.avatar ?? ''}`;
+      const key = personOf(m);
       if (m.tv || m.id === myId || key === self) continue;
       others.set(key, (others.get(key) ?? false) || !!m.voice);
     }
@@ -1079,7 +1093,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   // Hidden test panel (card 12): its live numbers; never names or ids.
-  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map((m) => `${m.name}|${m.avatar ?? ''}`)).size, kind: roomState?.item?.media.kind ?? null }));
+  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null }));
   /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */
   let tvRoom: ReturnType<typeof createTvRoom> | null = null;
   let tvRemote: ReturnType<typeof createTvRemote> | null = null;
@@ -1143,10 +1157,35 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (!isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
   }
 
+  /** R12: one card per person waiting at the door (host only): who it is, Let in / Refuse. */
+  function drawKnocks(list: KnockEntry[]): void {
+    const box = $('#knock-cards');
+    const fresh = list.some((k) => !box.querySelector(`[data-knock="${k.id}"]`));
+    box.replaceChildren(
+      ...list.map((k) => {
+        const answer = (allow: boolean) => () => send({ t: 'knock-answer', id: k.id, allow });
+        const allow = el('button', { type: 'button', class: 'btn primary small-btn knock-allow' }, t('knock.allow'));
+        const refuse = el('button', { type: 'button', class: 'btn small-btn knock-refuse' }, t('knock.refuse'));
+        allow.addEventListener('click', answer(true));
+        refuse.addEventListener('click', answer(false));
+        return el(
+          'div',
+          { class: 'knock-card card', 'data-knock': k.id, role: 'group', 'aria-label': t('knock.asks', { name: k.name }) },
+          avatarNode(k.avatar, 'knock-avatar'),
+          el('span', { class: 'knock-text' }, t('knock.asks', { name: k.name })),
+          el('span', { class: 'knock-actions' }, allow, refuse),
+        );
+      }),
+    );
+    if (fresh) playSound('roomJoin');
+  }
+
   function handleMessage(message: ServerMessage): void {
     switch (message.t) {
       case 'welcome':
         myId = message.you;
+        // R12: let in (or no door at all): the waiting card goes.
+        $('#knock-wait').hidden = true;
         // Ayarlar önce: kişi listesi çizilirken kayıt durumu (kaydedilen odalar listesi) doğru bilinsin.
         if (message.settings) roomSettings = message.settings;
         settingsKnown = true;
@@ -1156,6 +1195,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         maybeAutoInvite(message.members);
         rememberRoom();
         games.setTables(message.tables ?? (message.game ? [message.game] : []), {}, false);
+        games.rejoined();
         chooseFirstTab();
         waitingIds = message.waiting ?? [];
         renderWaiting();
@@ -1262,6 +1302,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
       case 'bans':
         people.setBans(message.bans);
+        break;
+      case 'knock-wait':
+        // R12: this room asks first; wait at the door until the host answers.
+        $('#knock-wait').hidden = false;
+        $('#knock-away').hidden = message.hostHere;
+        break;
+      case 'knocks':
+        drawKnocks(message.list);
         break;
       case 'kicked': {
         const { who, by } = message;
@@ -1400,7 +1448,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           break;
         }
         showError(() => t(`error.${message.code}`));
-        if (message.code === 'version' || message.code === 'room_full') connection.close();
+        if (message.code === 'version' || message.code === 'room_full' || message.code === 'knock_busy') connection.close();
         break;
       case 'pong':
         break;
@@ -3081,7 +3129,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ? opens the keyboard shortcuts card (0.9.93.2; not on a TV, whose remote has its own keys).
   if (!tv) listenForShortcutsKey();
   // 0.9.93.1: 🔗 Invite opens the invite window (link, copy, share, WhatsApp, QR); ⋯ → Invite on a phone presses it too.
-  copyEl.addEventListener('click', () => openInvite(inviteUrl));
+  // R12: the host also gets "Ask before letting people in" in the invite window.
+  const door = () => (amHost() ? { on: roomSettings.knock === true, set: (on: boolean) => send({ t: 'settings', knock: on }) } : undefined);
+  copyEl.addEventListener('click', () => openInvite(inviteUrl, door()));
   /**
    * Alone in the room on entering it (not after a reload, the film page or a TV): the invite window opens by itself
    * once the opening animation is over (owner: "like other watch sites, even a QR code"). "Show this when I'm alone in
@@ -3099,7 +3149,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       document.documentElement.classList.remove('invite-pending');
       // Someone came in meanwhile, or another window is already open (name, avatar, a confirm): not now.
       if (members.some((m) => m.id !== myId && !m.tv) || document.querySelector('.dialog-backdrop:not([hidden])')) return;
-      openInvite(inviteUrl);
+      openInvite(inviteUrl, door());
     }, 1700);
   }
   const emptyInviteEl = $<HTMLButtonElement>('#empty-invite');
@@ -3272,11 +3322,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     renderSaved(host);
     $<HTMLInputElement>('#opt-noreactions').checked = roomSettings.noReactions === true;
     $<HTMLInputElement>('#opt-countdown').checked = roomSettings.countdown !== false;
+    $<HTMLInputElement>('#opt-knock').checked = roomSettings.knock === true;
     $<HTMLInputElement>('#opt-livehost').checked = roomSettings.liveHostOnly === true;
     live.settings(roomSettings.liveHostOnly === true);
     $<HTMLSelectElement>('#opt-reactiongap').value = String(roomSettings.reactionGap ?? 0);
     app.classList.toggle('no-reactions', roomSettings.noReactions === true);
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-countdown', '#opt-noreactions', '#opt-livehost', '#opt-clear-stickers', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-countdown', '#opt-knock', '#opt-noreactions', '#opt-livehost', '#opt-clear-stickers', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     // Yönetici olmayana kuralların kısa özeti.
@@ -3286,6 +3337,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#rules-summary').replaceChildren(
       rule(roomSettings.waitForAll, 'settings.waitForAll'),
       rule(roomSettings.hostOnly === true, 'settings.hostOnlyMode'),
+      rule(roomSettings.knock === true, 'settings.knock'),
       rule(roomSettings.lockQueue === true, 'settings.lockQueue'),
       rule(roomSettings.countdown !== false, 'settings.countdown'),
       rule(roomSettings.noReactions === true, 'settings.noReactions'),
@@ -3345,6 +3397,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#recap-open').addEventListener('click', () => send({ t: 'recap' }));
   $<HTMLInputElement>('#opt-countdown').addEventListener('change', (event) => {
     send({ t: 'settings', countdown: (event.target as HTMLInputElement).checked });
+  });
+  $<HTMLInputElement>('#opt-knock').addEventListener('change', (event) => {
+    send({ t: 'settings', knock: (event.target as HTMLInputElement).checked });
   });
   $<HTMLInputElement>('#opt-noreactions').addEventListener('change', (event) => {
     send({ t: 'settings', noReactions: (event.target as HTMLInputElement).checked });

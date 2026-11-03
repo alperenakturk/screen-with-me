@@ -32,6 +32,10 @@ const ANSWER_BYTES = 1_000_000;
 const QUEUE_BYTES = 11_000_000;
 /** All sessions of one object together (the object's memory is 128 MB; the messages are ASCII JSON). */
 const HUB_BYTES = 24_000_000;
+/** Open fallback sessions one address may hold in one object (security review 3, R3-6): a few idle sessions from one IP
+ * could otherwise keep `HUB_BYTES` full (a room with every emoji and chat image queues ~10 M characters per join) and
+ * get real hotspot users closed with "overflow". A household behind one hotspot still fits. */
+export const FALLBACK_PER_IP = 3;
 /** A session that has not polled this long after `open` is closed (a real client polls at once). */
 const FIRST_POLL_MS = 10_000;
 /** Limits for one `send` request. */
@@ -51,6 +55,8 @@ export class PollSocket {
   /** Whether the client has polled at least once. */
   polled = false;
   readonly openedAt = Date.now();
+  /** The address's short hash (`X-SWM-Ip`, set only by the Worker), for `FALLBACK_PER_IP`. */
+  ip = '';
   private queue: string[] = [];
   private queued = 0;
   private attachment: unknown = null;
@@ -192,6 +198,10 @@ export class PollHub {
     }
     if (op === 'open') {
       if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+      const ip = request.headers.get('X-SWM-Ip') ?? '';
+      if (ip && [...this.sessions.values()].filter((s) => s.ip === ip && s.readyState === OPEN).length >= FALLBACK_PER_IP) {
+        return json({ code: 'busy' }, 429);
+      }
       const socket = new PollSocket(
         newSid(),
         (s, code) => queueMicrotask(() => void this.finish(s, code)),
@@ -201,6 +211,7 @@ export class PollHub {
           return true;
         },
       );
+      socket.ip = ip;
       this.sessions.set(socket.sid, socket);
       this.startSweeper();
       await this.handlers.admit(socket as unknown as WebSocket, request);

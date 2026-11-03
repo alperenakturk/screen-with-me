@@ -86,6 +86,8 @@ export function createLive(
   let composed: Composed | null = null;
 
   let toldBlocked = false;
+  /** My member id at the last welcome (a reconnect with the same id keeps the stream). */
+  let lastId: string | null = null;
   const live = new LiveP2p({
     capture: async (kind, q) => {
       const screen = await navigator.mediaDevices.getDisplayMedia(screenConstraints(q));
@@ -265,9 +267,16 @@ export function createLive(
   return {
     welcome(enabled: boolean): void {
       available = enabled;
-      // Yeniden bağlanınca (yeni üye kimliği) yayın da izleme de biter: sunucu eski kimliği tanımaz.
-      live.stop();
-      live.stopWatching();
+      const id = myId();
+      // Card R1: the server gave me my member id back (a deploy or a network blip closed the room connection), so the
+      // direct connections are still up: keep streaming / watching and only tell the server again. With a new id the
+      // server doesn't know the old one, so the stream and the watching end.
+      if (enabled && id !== null && id === lastId && (live.broadcasting || live.isWatching)) live.resume();
+      else {
+        live.stop();
+        live.stopWatching();
+      }
+      lastId = id;
       render();
     },
     members(next: Member[]): void {

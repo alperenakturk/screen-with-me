@@ -1,7 +1,7 @@
 // YouTube privacy (card 6a, security review 2 H2): a room page with nothing from YouTube on it makes no request to
 // www.youtube.com (the player API loads only when a YouTube item is about to play), and the YouTube player comes from
 // the privacy-enhanced host youtube-nocookie.com. Needs Playwright and the site:
-//   npm run dev   (or the built site on wrangler dev)
+//   npm run dev   (or the built site on wrangler dev, which serves _headers: use that for the CSP check)
 //   node scripts/harness/yt-privacy/run.cjs [http://localhost:5173]
 const { chromium } = require('playwright');
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -19,6 +19,9 @@ const check = (ok, label, extra = '') => {
       localStorage.setItem('tipsSeen', '1');
       localStorage.setItem('lang', 'en');
       localStorage.setItem('opt:autoInvite', '0');
+      // R3-5: every CSP refusal is kept, so the trimmed policy (no s.ytimg.com, no www.youtube.com frames) is checked.
+      window.__csp = [];
+      document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
     });
     const page = await ctx.newPage();
     const youtube = [];
@@ -39,6 +42,9 @@ const check = (ok, label, extra = '') => {
       const src = await page.evaluate(() => document.querySelector('#player iframe')?.src ?? '');
       check(src.startsWith('https://www.youtube-nocookie.com/embed/M7lc1UVf-VE'), 'a YouTube video plays from youtube-nocookie.com', src.slice(0, 80));
       check(youtube.some((u) => u.includes('/iframe_api')), 'the player API loaded with the first YouTube video');
+      await page.waitForTimeout(3000);
+      const refused = await page.evaluate(() => window.__csp);
+      check(refused.length === 0, 'no CSP refusals with the YouTube player (R3-5: s.ytimg.com and www.youtube.com frames dropped)', refused.join(' | '));
     }
     await ctx.close();
   }

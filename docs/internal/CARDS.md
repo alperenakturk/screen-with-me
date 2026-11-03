@@ -20,6 +20,166 @@ Card format:
 
 ## Ready
 
+## Owner's test round 1 (3 Nov 2026, 0.9.97.5): results and new cards
+
+The owner tested the solo list (home, join, empty room, YouTube, film page, popup). Passed: the home page, the continue
+line, the footer links, English first + remembered TR, the intro, the 🔒 Privacy link, friendly room names, the invite
+window + QR, the empty room's rail, Share, ⋯ More windows, `?`, 🔍 + YouTube attribution, paste / drop a link, the
+rail at the edge (window + fullscreen), YouTube captions / quality, keyboard Tab + dialog focus, the extension page's
+two lines, the popup's logo, film-page fullscreen emojis / messages. Both repo secrets are added (live in 0.9.97.5; the owner still tries the
+feedback form and the usage command). Not yet tried: games, move to another device, phone-only, together tests. The Developer
+who takes a card below also ticks the matching hand tests in `STATUS.md`.
+
+**Owner's open items from this round (try later, he asked to note them):** the YouTube usage command answered 403
+(the value he typed is likely not the stored `USAGE_TOKEN`; he will make a new one once, save it, update the secret,
+and try after the next deploy). The feedback form works (an issue came in). Dependabot #216 / #217: the owner asked the
+Planner to merge them once main is green.
+
+**Run order:** lane B: R1 → R2 → R3 → R4 → R5 → R6 → R7 → R8 → R9 → R10, then its bug-hunt list. Lane A: R3-6 → R3-8
+→ R11 → R12 → R14 (avatars, from Design) → R13. Design: R14 (then R14 becomes a Developer card). R1 and R2 are urgent.
+
+### R1. Fix: opening a game throws people out of the room / the stream (owner's bug, urgent; lane B)
+- Why: owner: pressing a game can throw you out of the site and out of a running stream; back in, the game opens only
+  on the second try. Friends also saw someone "randomly gone, or thrown out and straight back" while streaming:
+  probably the same root (a room connection closed and reopened). Check 0.9.96.24's "close a connection without
+  hello after 15 s" and 0.9.96.25's "one hello per game object" first.
+- Done when: opening, joining and closing each game (Together + On the side) with two people, one streaming and both
+  in voice, never drops a room connection, the stream or voice; the game opens on the first press. The root cause is
+  written on the card.
+- Tests: e2e (a game opened while another member streams: no close event on any room socket; `trace.mjs` logs
+  closes), harness for the first-press open, owner's hand test with a friend.
+- Done: 0.9.97.8 (https://github.com/alperenakturk/screen-with-me/pull/225). **Root cause:** opening a game never closed a room connection (two people, voice + a
+  stream, all five room games, locally: no close). What closed them was the deploys: each one restarts the room's
+  object and closes every room connection (the owner tested while ~10 versions went live). Voice came back with the
+  same member id (0.9.91.16), but the page ended the stream and the watching on every welcome ("randomly gone, or
+  thrown out and straight back"), and a game pressed while the connection was down was lost (`send` dropped it), so it
+  opened only on the second press. Now the stream and the watching resume (`LiveP2p.resume`, grace for a missing
+  member), and a table asked for meanwhile goes out after the welcome. Not the 15 s no-hello rule (the room's hello
+  goes out on open) nor the one-hello rule (game pages send one hello per socket).
+
+### R2. Fix: Enter opens the chat at once (owner's bug, important; lane B)
+- Why: owner: in the room, the first Enter opens an empty side panel, only the second opens the message box.
+- Done when: one Enter puts the cursor in the message box wherever the chat lives (side panel, side panel hidden,
+  fullscreen, cinema mode, Shorts); never an empty panel.
+- Tests: harness (one key press → `document.activeElement` is the message box in each view).
+
+### R3. Fix: YouTube fullscreen shows a big black strip on the right (owner's bug; lane B)
+- Why: a friend's YouTube fullscreen had a wide black strip from the side column (screenshot in the Planner's
+  session; the owner also still sees a dark strip with nothing going on). 0.9.93.20 / card 6d meant the column opens
+  only for a note, cameras or a message.
+- Done when: in YouTube fullscreen the player fills the width beside the resting rail unless the side column really
+  shows something; the column never stays open empty (also after a camera / message / note went away, a stream ended,
+  or the friend's window size changed).
+- Tests: `yt-room` harness: fullscreen with nothing, after a message (8 s), after cameras off; screenshot check of the
+  right edge.
+
+### R4. Fix: T (cinema mode) works in fullscreen too (owner; lane B)
+- Why: owner: in fullscreen T switches cinema mode on behind the fullscreen, so nothing visible happens.
+- Done when: T in fullscreen leaves fullscreen and opens cinema mode; T / Esc in cinema mode leave it as before.
+- Tests: cinema harness.
+
+### R5. Film page: the rail's edge a little wider (owner; lane B)
+- Why: owner: on the film page out of fullscreen the mouse has to go very far right to open the rail.
+- Done when: the rail opens when the mouse reaches about the last 40 px of the film (Developer picks the number; still
+  no jump when the mouse only passes); fullscreen unchanged.
+- Tests: embed harness under `xvfb-run`.
+
+### R6. Invite window: "show this when I'm alone" moves to Settings (owner; lane B)
+- Why: owner: the invite window should always open by itself; the tick box does not belong in it. Whoever wants it
+  off finds it in Settings.
+- Done when: no tick box in the invite window; ⚙️ My screen has "Open the invite window when I'm alone in a room"
+  (default on, the same `opt:autoInvite`).
+- Tests: invite harness.
+
+### R7. The intro for invited people too (owner; lane B)
+- Why: owner: people who open an invite link should also see the Sidelit intro (light burst + Glowbeam).
+- Done when: the intro plays once for everyone who enters a room from its link (first entry in that tab), not only for
+  the one who created it; still not on a reload, in the shell or on a TV; reduced motion as before.
+- Tests: intro harness (a fresh browser opening `/r/<id>` sees it).
+
+### R8. Faster games tutorial and theme previews (owner; lane B)
+- Why: owner: the "How to play" cards appear late, and the theme picker's previews load slowly.
+- Done when: the how-to-play cards show with the game window (preload the chunk / art when the games window opens);
+  the theme previews appear at once when the theme window opens (small preview images or preload on hover / open).
+  The room page's JS / CSS budgets still pass.
+- Tests: harness timing (cards visible ≤ 150 ms after the game opens; previews painted when the window opens).
+
+### R9. One place for each thing: ⋯ More and the profile menu (owner: "you choose"; lane B)
+- Why: owner: Feedback, Help, Privacy, Recap show in both menus; rarely used things can live in Settings.
+- Planner's pick (the owner left it to us): **⋯ More = the room** (Film time (host), Save the room, Room rules, Today's
+  recap, Sync test, Keyboard shortcuts). **Profile = me** (name, avatar, theme, language, Move to another device, then
+  one small line: Help · Feedback · Privacy). "⟳ Reconnect" leaves the profile menu (the room-name dot and the "can't
+  reach the room" card already reconnect). Nothing shows twice on a computer. On a phone ⋯ keeps its own one list
+  (it is the only menu there), but without doubles. The 🔒 Privacy link stays reachable from the join card and the
+  profile (L9).
+- Done when: as above; Help / room-more / phone harnesses updated.
+- Tests: room-more harness, phone harness.
+
+### R10. Room games: the window title is not cut in a narrow window (lane B, small)
+- Why: B noticed "Tic-tac-… · started by Alex" in a narrow free window (outside GP's scope).
+- Done when: the game's name always shows in full; "started by …" shortens or goes first.
+- Tests: games harness at the smallest free-window size.
+
+### R11. Fix: two people with the same name and avatar count as one (owner's bug; lane A)
+- Why: owner: joining his own room from a second browser with the same name and avatar showed one person. Two people
+  may share a name and a picture.
+- Done when: people are told apart by their browser id (`cid`, never sent to clients; the server can send each member
+  an opaque per-room person key), not by name + avatar: the people count, Together faces, People list, camera tiles,
+  join sounds, "+N", per-person volume and the solo games' "others" all count two people; the same person's two tabs
+  (same cid) still count once. Stored per-person settings keyed by name + avatar keep working (fall back to them).
+- Tests: e2e (two cids, same name + avatar → count 2; one cid, two tabs → 1), unit for the person key.
+- Done (0.9.97.7): the server gives every member `pk`, an opaque per-room person key (the first 8 bytes of SHA-256 of a
+  random per-room salt, storage `personSalt`, and the browser key; the same for one browser's tabs and its paired TV,
+  different in another room, never the cid). Shared `personOf(m)` (pk, else name + avatar as before) and `personKey`
+  (the join sounds' `JoinFilter`) group people: the room title's count, the Together faces, the camera tiles' "one per
+  person" and "my other tab", the games hub's "who is at this table", the solo games' others, the TV faces and the
+  debug panel. What is stored per person (volume, hidden / pinned cameras, tile places) stays keyed by name + avatar.
+  The People list shows connections as before. Tests: e2e `people.mjs` (two browsers, same name + avatar → two keys;
+  one browser's two tabs → one; no cid on the wire; another room → another key), unit `personOf`, `JoinFilter`.
+
+### R12. "Ask before letting people in" (owner's idea; Planner: yes; lane A)
+- Why: owner asked for room security options. A room link can leak (a screenshot, a group chat); a knock really helps.
+  A room password does not add much (it travels with the link through the same chat, and adds friction), so no
+  password.
+- Done when: a host switch "Ask before letting people in" (default off) in the invite window and in Room rules. When
+  on, a newcomer (a browser id not seen in this room before) waits on the join card ("Waiting for the host to let you
+  in…") and the host gets a card with name + avatar: Let in / Refuse. Refused = the same as a kick (ban by cid). People
+  already in, the host's own tabs and reconnects within 24 h pass straight in. No host connected → the newcomer waits
+  (with a note), never let in by default. Server-side check (nothing joins before the host's yes); limits so a flood of
+  knocks cannot spam the host.
+- Tests: e2e (knock → let in / refuse / host away), harness for the cards, owner's hand test with a friend.
+- Done (0.9.97.9): `settings.knock` (host; Room rules `#opt-knock` and the invite window's `#invite-door`). The server
+  decides in `join()` before anyone gets a name or a seat (`mustKnock`): a browser id not in `admitted` (24 h after it
+  was last in, ≤ 500, storage) waits as a knocker (no `welcome`, no member); turning the switch on admits everyone
+  present. The host's tabs get `{t:'knocks', list}` (name + avatar, cleaned) and answer `{t:'knock-answer', id,
+  allow}`: yes → admitted + joined, no → banned like a kick (4003). Knockers get `{t:'knock-wait', hostHere}`; nobody
+  is let in without the host; ≤ 8 at the door and ≤ 2 per IP hash (`knock_busy`, 4010), each waits ≤ 10 min (4011).
+  Tests: e2e `knock.mjs` (12), harness `scripts/harness/knock/run.cjs` (6).
+
+### R13. Private messages in the chat (owner's idea; lane A, after R12)
+- Why: owner: sometimes you want to tell one friend something without the whole room.
+- Done when: in the chat (and the person menu) "Message privately" sends `{t:'chat', to}` only to that person's
+  connections and back to me; it shows in both chats marked "🔒 Private · to Alex" / "from Alex"; never in the room's
+  stored 50-message history, never to other members, the host or a TV; same limits and `cleanText` as chat. Phone +
+  computer.
+- Tests: e2e (a third member never receives it, not in the history after a reload), harness.
+
+### R14. Better parody avatars + two new anime characters (owner; Design, then a Developer card)
+- Why: owner wants every parody avatar redrawn more detailed and cuter, two new anime parodies (a calm genius student
+  with a notebook; a messy-haired detective crouching in a chair with sweets), and the white-haired monster hunter
+  (`hunter`) moved from Series to Game.
+- Rules (CLAUDE.md "Avatars", store + copyright): parodies only hint at a style: no names, logos, exact costumes or
+  real actors' likeness; the ids and labels stay generic.
+- Done when: Design's option page shows the redrawn set; the owner picks; a Developer card ships them
+  (`scripts/avatars.mjs`, `DRAWN_AVATARS`, `AVATAR_PAGES`, i18n labels).
+- Owner's pick (3 Nov 2026, https://claude.ai/artifact/Akp2qt2WPXzxVENiAZ8Hha): **1: A** (today's line, more detail;
+  not the sticker style) · **2: A** (near-copies made our own). Note: "fit our style, but still look like the character,
+  not something unrelated": recognisable by silhouette, hair, colours and props; the distinctive costume parts are ours.
+- Design done (PR #229, review sheet https://claude.ai/artifact/FsBkvfQUPZ6w2yscbX18cd): 33 SVGs in
+  `docs/internal/design/avatars-2/full/`, steps in `avatars-2.md` "For the Developer". **Developer part: lane A, right
+  after R12, before R13** (copy via `scripts/avatars.mjs`, `DRAWN_AVATARS` notebookgenius 📓 / sweetsleuth 🍰,
+  `AVATAR_PAGES` both on page 3 and hunter to page 4, i18n labels; check the picker, 28 px chat, seats, join card).
+
 ## Run order to the owner's test round (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end")
 
 Two Developer lanes so the work moves faster; lane B lives mostly in new files (games, players) and rebases on lane A.
@@ -551,6 +711,16 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   youtube-nocookie.com; the two CSP hosts are dropped if the YouTube harness still plays without them.
 - Tests: `scripts/harness/yt-privacy/run.cjs` + `yt-room` with the trimmed CSP, no CSP violations in the console.
 - Owner's pick: none needed.
+- Done (0.9.97.5): the privacy policy (EN + TR) says the video frame comes from youtube-nocookie.com and the player code
+  (IFrame Player API) from youtube.com, which may carry youtube.com cookies where third-party cookies are allowed;
+  `_headers` drops `https://s.ytimg.com` from `script-src` and `https://www.youtube.com` from `frame-src`. The
+  `yt-privacy` harness now records every `securitypolicyviolation` and checks there is none with the player loaded
+  (run against `wrangler dev`, which serves `_headers`: green). With it, a live-e2e fix: `callYouTube` retries once
+  after 400 ms on a 5xx or no answer and logs only the call's name and status (`search.mjs` failed its first live
+  attempt on the 0.9.97.3 deploy with YouTube's "failed").
+  Also: the 0.9.97.4 deploy (the first with the owner's `USAGE_TOKEN`) failed `search.mjs` "the owner's key reads them"
+  on both attempts although the Worker had the secret; most likely whitespace around the pasted secret (a header loses
+  it, the stored value keeps it). `youtubeUsage` now trims both sides, and the check prints the status.
 
 ### Security: fallback sessions per IP (R3-6)
 - Severity: low
@@ -561,6 +731,11 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
 - Tests: e2e `fallback.mjs` (a 4th session from one IP refused; a second IP still joins a full-emoji room);
   hotspot harness still passes.
 - Owner's pick: none needed.
+- Done (0.9.97.6): `PollHub` keeps each session's IP hash (`X-SWM-Ip`, set only by the Worker) and refuses a 4th open
+  session from one address in one object with `429 {code:'busy'}` (`FALLBACK_PER_IP` 3; the client's open fails and the
+  room reconnects as after any failed open). Tests: e2e `fallback.mjs` (3 open, the 4th 429, again after one closes);
+  harness `hotspot` green again (it had broken with card 6: it waited for the hidden people count and clicked the
+  hidden sync-test button). R3-8 was done with L6.
 
 ### Security: requirements for the feedback endpoint (R3-7, with card 9)
 - Severity: low (preventive)

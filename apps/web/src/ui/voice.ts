@@ -1,4 +1,4 @@
-import { CAM_MAX, VOICE_MAX, VOICE_MAX_P2P, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
+import { CAM_MAX, VOICE_MAX, VOICE_MAX_P2P, personOf, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
 import { isPushToTalkKey } from '@swm/shared/embed';
 import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
@@ -293,7 +293,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const people = [...members]
       .sort((a, b) => Number(!!b.voice) - Number(!!a.voice))
       .filter((m) => {
-        const key = `${m.name}|${m.avatar ?? ''}`;
+        const key = personOf(m);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -429,13 +429,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       // One tile per person: my other tab (same name and avatar) is never shown as someone else, and if a person is
       // in the list twice (an old connection not gone yet) only their newest connection gets a tile.
       const self = members.find((m) => m.id === me);
+      // `person` (name + avatar) keys what is stored (hidden, pinned, tile places); `who` (R11: the server's person key)
+      // tells people apart, so two people with the same name and avatar both get a tile.
       const person = (m: Member) => `${m.name}|${m.avatar ?? ''}`;
       const newest = new Map<string, Member>();
-      for (const member of members) if (member.voice?.cam) newest.set(person(member), member);
+      for (const member of members) if (member.voice?.cam) newest.set(personOf(member), member);
       for (const member of members) {
         if (!member.voice?.cam) continue;
-        if (member.id !== me && self && person(member) === person(self)) continue;
-        if (member.id !== me && newest.get(person(member)) !== member) continue;
+        if (member.id !== me && self && personOf(member) === personOf(self)) continue;
+        if (member.id !== me && newest.get(personOf(member)) !== member) continue;
         // "Hide myself" only hides my own preview here; the others still see me. Hidden people: for me only.
         if (member.id === me && hideSelf) continue;
         if (member.id !== me && hiddenCams.has(person(member))) {
@@ -831,13 +833,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   function isMyOtherTab(memberId: string): boolean {
     const me = members.find((m) => m.id === myId());
     const other = members.find((m) => m.id === memberId);
-    return !!me && !!other && other.id !== me.id && other.name === me.name && (other.avatar ?? '') === (me.avatar ?? '');
+    return !!me && !!other && other.id !== me.id && personOf(other) === personOf(me);
   }
 
   /** Is the same person (same name and avatar, another connection) already in voice? */
   function myOtherTabInVoice(): boolean {
     const me = members.find((m) => m.id === myId());
-    return !!me && members.some((m) => m.voice && m.id !== me.id && m.name === me.name && (m.avatar ?? '') === (me.avatar ?? ''));
+    return !!me && members.some((m) => m.voice && m.id !== me.id && personOf(m) === personOf(me));
   }
 
   // Kim konuşuyor: dinlediklerimin ses seviyesi (kendi sesim için mikrofon açıksa da göstermeyiz; yankı hissi olmasın).

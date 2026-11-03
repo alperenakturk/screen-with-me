@@ -421,6 +421,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.9 (ask before letting people in, card R12):**
+- [ ] In your room: 🔗 Invite → turn on "Ask before letting people in" (also in ⋯ More → Room rules). A friend opens
+  the link: they see "Waiting for the host to let you in…", you get a card with their name and picture → Let in. Try
+  again with another friend (or a private window) → Refuse: they are out and cannot come back. A friend who was let in
+  and reloads passes straight in.
+
+**0.9.97.7 (two people with the same name, card R11):**
+- [ ] Join your own room from a second browser (or a private window) with the same name and avatar: the room says
+  "2 people", two faces in Together; your two tabs in the same browser still count once.
+
 **0.9.97.3 (repo hygiene, security L10):**
 - [ ] GitHub → the repo → Settings → Code security (or "Advanced Security"): turn on **Dependabot alerts** and
   **Dependabot security updates** (free on a private repo). Weekly update PRs then come by themselves; Claude merges
@@ -437,7 +447,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the friend can start.
 
 **0.9.96.23 (owner bug: the stream button was gone):**
-- [ ] In a room with no video yet, alone or with a friend, in voice or not: "🖥️ Paylaş ▾" (Share) is in the Together card;
+- [x] In a room with no video yet, alone or with a friend, in voice or not: "🖥️ Paylaş ▾" (Share) is in the Together card;
   sharing your screen works, the friend's "▶ Watch the stream" works. The camera count next to "Seste 1/6" shows a small
   camera drawing, not an empty box (Windows).
 
@@ -449,9 +459,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the units. These are the numbers the YouTube quota form asks for.
 
 **0.9.96.13 (accessibility, card A11y):**
-- [ ] On a computer, without the mouse: Tab from the top of a room (first "Skip to the video"), reach the buttons beside
+- [x] On a computer, without the mouse: Tab from the top of a room (first "Skip to the video"), reach the buttons beside
   the video, open ⚙️ and 🔗 Invite (Tab stays inside, Esc comes back to the button), ⋯ More with the arrow keys.
-- [ ] YouTube search, Shorts ＋ Add and the ♾ window show "Results from YouTube · YouTube Terms of Service"; the link opens YouTube's terms in a new tab.
+- [x] YouTube search, Shorts ＋ Add and the ♾ window show "Results from YouTube · YouTube Terms of Service"; the link opens YouTube's terms in a new tab.
 - [ ] Optional: with a screen reader (NVDA on Windows or VoiceOver on a Mac / iPhone) the room name, the buttons and the
   XOX squares are read out with sensible names.
 
@@ -461,7 +471,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   with a code.
 
 **0.9.96.11 (card 16 part 3):**
-- [ ] Film page (extension): send an emoji and a chat message in fullscreen: both float over the film, no black box.
+- [x] Film page (extension): send an emoji and a chat message in fullscreen: both float over the film, no black box.
 - [ ] Phone: open XOX in a room: the board sits in the middle of the screen. Hold the phone sideways in an empty room:
   faces and chat on the right.
 
@@ -478,7 +488,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   with a number on 💬. **T** or **Esc** leaves; a reload in the same tab keeps it.
 
 **0.9.96.6 (card 6g, computer):**
-- [ ] An empty room: the rail on the right is hidden until the mouse reaches the video's right edge, like with a video.
+- [x] An empty room: the rail on the right is hidden until the mouse reaches the video's right edge, like with a video.
 - [ ] ⋯ More has no "Games" any more (🎮 on the rail opens them); on the phone ⋯ still has Games.
 - [ ] Home page: no theme picker; change the theme in the room (⚙️ My screen or the profile menu).
 - [ ] Turn your camera on with a friend: the cameras open in one window on the page, side by side; the Together card
@@ -491,7 +501,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   `?debug=0` (or "Turn the panel off") hides it.
 
 **0.9.96.2 (Thanks page, computer + phone):**
-- [ ] Footer → "Thanks" (and Help → the thank-you line): the six names, Glowbeam, "Send feedback" opens the form;
+- [x] Footer → "Thanks" (and Help → the thank-you line): the six names, Glowbeam, "Send feedback" opens the form;
   TR / EN switch at the top works, nothing scrolls on the phone.
 
 **0.9.96.1 (Shorts):**
@@ -505,7 +515,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Tick "Attach technical details", open "See what is sent": only versions, browser and connection; no room or names.
 
 **0.9.95.6 (computer + phone):**
-- [ ] Enter a room: the intro looks like Design's preview: the logo pops in dark, the light beam comes out of the
+- [x] Enter a room: the intro looks like Design's preview: the logo pops in dark, the light beam comes out of the
   triangle and bursts, the eyes open and blink, the little golden mascot springs out of the light, "Enjoy the show!".
 - [ ] Pick a few themes (home page strip): each one shows the golden mascot in that theme's costume.
 - [ ] A new empty room: the rail is beside the empty video. 😀, 🎮, 🎙 and 📷 work before any video; ⛶ and the speed
@@ -519,6 +529,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.8 R1: with a friend, both in voice, the friend shares the screen and you watch. Open a game (XOX, then
+  Draw & Guess), let the friend join it, close it: nobody is thrown out, the stream and voice keep going, every game opens
+  on the first press. If a new version goes live while you watch (the room reconnects for a moment), the stream comes
+  back by itself.
 - [ ] 0.9.97 🎮 Side games polish: in a room, 🎮 → "On the side" → Snack Bar, then Window Garden, then Five Frames.
   Each one opens with "How to play" picture cards the first time (Next / Let's play; ✕ or Esc skips); the "?" in the
   game's top bar shows them again; they don't come back on the next open. Each window opens big enough that the text
@@ -565,7 +579,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   Games in the room), then the themes. Does it feel right? On the phone the home page looks as before.
 
 **0.9.93.18 (computer + phone):**
-- [ ] ⚙️ Settings (My screen), and ⋯ → Film time / Save the room / Room rules: each opens as one clean window, rows
+- [x] ⚙️ Settings (My screen), and ⋯ → Film time / Save the room / Room rules: each opens as one clean window, rows
   read on one line (title + short description + switch), nothing scrolls inside on your laptop.
 
 **0.9.93.17 (computer, with the extension):**
@@ -574,7 +588,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   closes, the film widening again. A mouse just passing the edge doesn't make the film jump. The rail's buttons work.
 
 **0.9.93.16 (computer):**
-- [ ] The extension page (top, under "What does it do?") and the "Go to the film" card (in a room, a film page without
+- [x] The extension page (top, under "What does it do?") and the "Go to the film" card (in a room, a film page without
   the extension) explain in two lines why the extension asks for every website; the link opens the help page's answer.
 
 **Card 1, "the rail never goes away in YouTube fullscreen" (owner's laptop has no touch screen; Claude could not
@@ -591,7 +605,7 @@ reproduce it with a plain mouse, see `yt-room` harness):**
 - [ ] On the phone, ⋯ → "Yardım ve SSS" opens the help page in a new tab and the room stays open.
 
 **0.9.93.14 (computer + phone):**
-- [ ] A YouTube video still plays normally (the player now comes from youtube-nocookie.com, YouTube's privacy mode):
+- [x] A YouTube video still plays normally (the player now comes from youtube-nocookie.com, YouTube's privacy mode):
   play, pause, seek, captions and quality in YouTube's bar, a Short in the Shorts view. The very first YouTube video
   in a room may take a moment longer to appear (YouTube's code now loads only then).
 
@@ -603,7 +617,7 @@ reproduce it with a plain mouse, see `yt-room` harness):**
 - [ ] On the phone, ⋯ has the same items in the same order.
 
 **0.9.93.12 (computer + phone):**
-- [ ] Home page after being in a room: "Continue where you left off" is one thin line above the big title (room name,
+- [x] Home page after being in a room: "Continue where you left off" is one thin line above the big title (room name,
   who is inside, what plays), cut with "…" when long; click it to go back in, ✕ forgets it.
 
 **0.9.93.11 (computer + phone):**
