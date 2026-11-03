@@ -755,6 +755,11 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   the alarm / on load; `deleteAll` also clears `tvTokens`, `memberIds`, `counted`.
 - Tests: unit for the TikTok URL check; e2e recap test.
 - Owner's pick: none needed.
+- Done (0.9.97.1): every TikTok redirect hop must pass `isTikTokHop` (shared `media.ts`: `https:`, no port, no
+  user-info, a `tiktok.com` host) and each answer's body is cancelled; saved recaps past `RECAP_MAX_AGE_MS` leave
+  storage when the room object loads and on every alarm (`pruneRecaps`, shared `freshRecaps`); the empty-room reset also
+  clears `tvTokens`, `memberIds` and `counted`. Tests: unit `media.test.ts` (`isTikTokHop`), `recap.test.ts`
+  (`freshRecaps`; a live 90-day e2e is not practical); full local e2e green.
 
 ### Privacy: a privacy link where people join (L9)
 - Severity: low

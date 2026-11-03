@@ -56,6 +56,12 @@ export function isTikTokShortLink(input: string): boolean {
   }
 }
 
+/** May the server follow a TikTok redirect to this address? Only https on TikTok's own hosts, the default port and
+ * no user-info (security review 2, L7). */
+export function isTikTokHop(url: URL): boolean {
+  return url.protocol === 'https:' && url.port === '' && url.username === '' && url.password === '' && /(^|\.)tiktok\.com$/.test(url.hostname.toLowerCase());
+}
+
 /** Doğrudan oynatılabilen video dosyası uzantıları. */
 const VIDEO_FILE = /\.(mp4|m4v|webm|ogv|ogg|mov)$/i;
 

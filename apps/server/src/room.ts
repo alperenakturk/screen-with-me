@@ -39,7 +39,7 @@ import {
 } from '@swm/shared/protocol';
 import { applyRoomAction, freshItem, freshRoom, initialRoom, setItemTitle, TITLE_MAX_AGE_MS, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
-import { RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
+import { freshRecaps, RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { RateLimiter } from './rate-limit.ts';
@@ -341,6 +341,7 @@ export class Room extends DurableObject<Env> {
       this.history = (await ctx.storage.get<Record<string, HistoryEntry>>('history')) ?? {};
       this.stats = new StatsTracker(await ctx.storage.get<StatsData>('stats'));
       this.recaps = (await ctx.storage.get<Recap[]>('recaps')) ?? [];
+      await this.pruneRecaps(Date.now());
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
       this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
       this.memberIds = (await ctx.storage.get<Record<string, { cid: string; at: number }>>('memberIds')) ?? {};
@@ -837,12 +838,26 @@ export class Room extends DurableObject<Env> {
       this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
       this.emptySince = null;
       this.tables = [];
+      // In-memory records the next write would otherwise put back (security review 2, L8).
+      this.tvTokens = {};
+      this.memberIds = {};
+      this.counted = null;
       return;
     }
+    await this.pruneRecaps(now);
     if (this.waits.waitingSince !== null && now - this.waits.waitingSince >= WAIT_MAX_MS) await this.evaluateWait();
     await this.closeEmptyTables(now);
     if (this.settings.startsAt !== undefined && now >= this.settings.startsAt) await this.startScheduled(now);
     await this.scheduleAlarm();
+  }
+
+  /** Saved recaps live at most `RECAP_MAX_AGE_MS` (90 days): older ones leave storage on load and on each alarm, not
+   * only when someone reads or saves one (security review 2, L8). */
+  private async pruneRecaps(now: number): Promise<void> {
+    const kept = freshRecaps(this.recaps, now);
+    if (kept.length === this.recaps.length) return;
+    this.recaps = kept;
+    await this.ctx.storage.put('recaps', this.recaps);
   }
 
   /** Planlı saat geldi: plan kalkar, durmuş bir video varsa oda herkes için oynar. */
