@@ -1,0 +1,379 @@
+<title>Sidelit Home Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: an options page in Sidelit's night-gold world; each direction is a row of four real-size device frames scaled down. */
+:root{
+  --night:#0d0a22; --night-2:#171236; --line:#2e2757; --ink:#f3efff; --muted:#b4abd6;
+  --gold:#ffc65a; --gold-2:#ff9440; --cream:#fff3d6; --violet:#6a4cf2; --teal:#1a8088;
+  --display:"Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html{background:var(--night)}
+body{background:var(--night);color:var(--ink);font:15px/1.55 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 140px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:28px}
+h1{font:800 clamp(28px,4vw,40px)/1.1 var(--display);margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--gold)}
+.lead{color:var(--muted);max-width:70ch;margin:8px 0 0}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.facts span{font-size:13px;padding:5px 11px;border-radius:999px;background:#ffffff0d;border:1px solid var(--line);color:var(--muted)}
+.lang{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.lang button{font:600 13px var(--body);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--gold);color:#1a1036;border-color:var(--gold)}
+section.q{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#171236,#100c28);padding:22px clamp(14px,2.5vw,26px);display:grid;gap:18px}
+.q h2{font:700 22px/1.2 var(--display);margin:0}
+.q h2 small{display:block;font:500 14px var(--body);color:var(--muted);margin-top:6px}
+.opt{border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:14px;background:#0f0b26;position:relative}
+.opt.picked{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 40px #ffc65a22}
+.opt-head{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-start;justify-content:space-between}
+.opt-head h3{margin:0;font:800 20px/1.2 var(--display)}
+.opt-head p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+.badge{display:inline-block;font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;background:#ffc65a22;color:var(--gold);border:1px solid #ffc65a55;padding:3px 8px;border-radius:999px;margin-left:8px;vertical-align:3px}
+.pick{font:700 15px var(--body);padding:10px 18px;border-radius:12px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;white-space:nowrap}
+.pick[aria-pressed="true"]{background:var(--gold);color:#1a1036}
+.pick:focus-visible,.lang button:focus-visible,.chip:focus-visible,#copy:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+.pros{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 18px;font-size:14px;color:var(--muted);margin:0;padding:0;list-style:none}
+.pros li::before{content:"＋ ";color:var(--gold)}
+.pros li.con::before{content:"− ";color:#ff8a7a}
+/* device row: tabs + one big frame */
+.devs{display:grid;gap:10px;justify-items:center}
+.dtabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.dtabs button{font:600 13px var(--body);padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.dtabs button[aria-selected="true"]{background:#ffffff14;color:var(--ink);border-color:#ffffff40}
+.dtabs button:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+.shot{margin:0;max-width:100%}
+.frame{position:relative;overflow:hidden;border-radius:12px;border:2px solid #3a3366;background:#000;max-width:100%}
+.frame>.dev{position:absolute;left:0;top:0;transform-origin:0 0}
+.answers{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font:600 14px var(--body);padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:#0f0b26;color:var(--ink);cursor:pointer;text-align:left;display:grid;gap:3px;flex:1 1 260px}
+.chip small{font-weight:400;color:var(--muted);font-size:13px}
+.chip[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);background:#1c1636}
+.summary{position:fixed;left:0;right:0;bottom:0;background:#0b0820f2;border-top:1px solid var(--line);backdrop-filter:blur(8px);padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:5}
+.summary .in{max-width:1240px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#out{flex:1 1 320px;min-width:0;font:600 14px var(--body);background:#ffffff0a;border:1px solid var(--line);border-radius:10px;padding:10px 12px;user-select:all;word-break:break-word}
+#note{flex:1 1 220px;min-width:0;font:14px var(--body);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0f0b26;color:var(--ink)}
+#copy{font:700 15px var(--body);padding:11px 18px;border-radius:12px;border:0;background:var(--gold);color:#1a1036;cursor:pointer}
+
+/* ================= THE MOCK SITE (inside each device frame) ================= */
+.dev{container:dev/size;font:16px/1.5 var(--body);color:#f1edff;overflow:hidden;
+  background:radial-gradient(ellipse at 15% 70%,#ffc65a1f,transparent 55%),linear-gradient(160deg,#22174f,#0b0822 70%)}
+.dev *{box-sizing:border-box}
+.site{position:absolute;inset:0;display:flex;flex-direction:column}
+.top{height:56px;flex:none;display:flex;align-items:center;gap:10px;padding:0 22px;border-bottom:1px solid #ffffff14}
+.brand{display:flex;align-items:center;gap:8px;font:800 21px var(--display);letter-spacing:-.01em}
+.brand svg{width:28px;height:28px}
+.top .sp{flex:1}
+.tbtn{font:600 14px var(--body);padding:6px 12px;border:1px solid #ffffff22;border-radius:9px;color:#e8e2ff}
+.tl{display:flex;border:1px solid #ffffff22;border-radius:9px;overflow:hidden;font:600 13px var(--body)}
+.tl span{padding:6px 9px}.tl span.on{background:#ffffff1a}
+.main{flex:1;min-height:0;display:flex;padding:0 56px}
+.pill{display:inline-block;font:600 14px var(--body);padding:5px 12px;border-radius:999px;background:#ffc65a17;border:1px solid #ffc65a44;color:var(--gold)}
+.slogan{font:800 64px/1.02 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.slogan b{color:var(--gold);font-weight:800}
+.sub{color:#c9c0ea;font-size:19px;max-width:30ch;margin:0}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{font:700 18px var(--body);padding:15px 26px;border-radius:14px;white-space:nowrap}
+.btn.pri{background:linear-gradient(180deg,#ffd27a,#ffb347);color:#1a1036;box-shadow:0 8px 24px #ffb34733}
+.btn.sec{border:1px solid #ffffff2e;color:#f1edff;background:#ffffff0a}
+.save{display:flex;align-items:center;gap:9px;font-size:15px;color:#c9c0ea}
+.save i{width:20px;height:20px;border:2px solid #ffffff55;border-radius:5px;display:inline-block}
+.cont{font-size:15px;color:#c9c0ea;display:flex;gap:8px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cont b{color:#fff}.cont u{color:var(--gold);text-decoration:none;font-weight:700}
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.feat div{border:1px solid #ffffff17;background:#ffffff08;border-radius:14px;padding:12px 14px;font-size:14px;color:#c9c0ea;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center}
+.feat div span{grid-row:span 2;font-size:22px}
+.feat div b{color:#fff;font-size:15px}.feat div em{font-style:normal}
+.how{font:600 15px var(--body);color:#c9c0ea;text-decoration:underline;text-underline-offset:4px}
+.peek{font-size:13px;color:#8e85b5;text-align:center;padding:8px 0 10px;flex:none}
+.peek::after{content:" ↓"}
+.scene{width:100%;height:auto;display:block}
+
+/* ---- A: Spotlight ---- */
+.dA .main{align-items:center;gap:40px}
+.dA .txt{flex:1 1 46%;display:grid;gap:22px;align-content:center}
+.dA .art{flex:1 1 54%;display:grid;align-content:center}
+.dA .foot{flex:none;padding:0 56px 12px}
+@container dev (orientation:portrait) and (min-width:600px){
+  .dA .main{flex-direction:column;justify-content:center;gap:28px;padding:16px 64px}
+  .dA .art{order:-1;width:100%;flex:none}
+  .dA .txt{text-align:center;justify-items:center;flex:none}
+  .dA .slogan{font-size:72px}
+  .dA .sub{max-width:34ch}
+  .dA .foot{padding:0 64px 16px}
+}
+@container dev (max-width:599px){
+  .dA .top{padding:0 16px}.dA .tbtn{display:none}
+  .dA .main{flex-direction:column;justify-content:center;gap:16px;padding:8px 20px}
+  .dA .art{order:-1;flex:none;margin:0 -6px}
+  .dA .txt{flex:none;gap:14px}
+  .dA .slogan{font-size:40px}.dA .sub{font-size:16px}
+  .dA .cta{flex-direction:column}.dA .btn{text-align:center;padding:14px}
+  .dA .foot{padding:0 20px 10px}
+  .dA .feat{grid-template-columns:repeat(3,1fr);gap:6px}
+  .dA .feat div{grid-template-columns:1fr;text-align:center;padding:8px 4px;font-size:0;justify-items:center}
+  .dA .feat div span{grid-row:auto;font-size:20px}.dA .feat div b{font-size:12px;line-height:1.2}
+  .dA .save,.dA .peek{display:none}
+}
+/* ---- B: Two screens, tidied ---- */
+.dB .main{flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:10px 56px}
+.dB .txt{display:grid;gap:16px;justify-items:center}
+.dB .slogan{font-size:58px}
+.dB .sub{max-width:44ch}
+.dB .art{width:min(640px,100%);flex:0 1 auto;min-height:0}
+.dB .art svg{max-height:100%}
+.dB .foot{flex:none;padding:0 56px 12px}
+@container dev (orientation:landscape) and (min-width:900px) and (max-height:830px){
+  .dB .main{flex-direction:row;text-align:left;gap:36px}
+  .dB .txt{justify-items:start;flex:1 1 44%}
+  .dB .art{flex:1 1 56%;width:auto}
+}
+@container dev (orientation:portrait) and (min-width:600px){
+  .dB .slogan{font-size:68px}.dB .art{width:100%}
+}
+@container dev (max-width:599px){
+  .dB .top{padding:0 16px}.dB .tbtn{display:none}
+  .dB .main{padding:8px 20px;gap:16px}
+  .dB .slogan{font-size:40px}.dB .sub{font-size:16px}
+  .dB .cta{flex-direction:column;width:100%}.dB .btn{text-align:center;padding:14px}
+  .dB .foot{display:none}.dB .save{display:none}
+}
+/* ---- C: Start screen ---- */
+.dC .main{align-items:center;justify-content:center;padding:24px}
+.dC .card{position:relative;width:min(560px,100%);border-radius:28px;background:linear-gradient(180deg,#1d1640f0,#120d2cf0);border:1px solid #ffffff1c;box-shadow:0 30px 80px #0008,0 0 0 1px #ffc65a14;padding:64px 40px 30px;display:grid;gap:18px;text-align:center;justify-items:center}
+.dC .mascot{position:absolute;top:-58px;left:50%;transform:translateX(-50%);width:120px}
+.dC .slogan{font-size:46px}
+.dC .sub{font-size:17px;max-width:32ch}
+.dC .cta{flex-direction:column;width:100%}.dC .btn{text-align:center}
+.dC .code{display:flex;width:100%;gap:8px}
+.dC .code i{flex:1;font-style:normal;border:1px solid #ffffff2a;border-radius:14px;padding:14px 16px;color:#8e85b5;text-align:left;font-size:17px;background:#0b0822}
+.dC .code i+span{padding:14px 18px}
+.dC .cont{border-top:1px solid #ffffff14;padding-top:14px;width:100%;justify-content:center}
+.dC .side{position:absolute;inset:0;pointer-events:none}
+.dC .beam{position:absolute;left:50%;top:22%;width:900px;height:600px;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 30%,#ffc65a24,transparent 60%)}
+@container dev (orientation:portrait) and (min-width:600px){.dC .card{width:600px;padding:80px 48px 36px}.dC .slogan{font-size:54px}.dC .mascot{width:140px;top:-68px}}
+@container dev (max-width:599px){
+  .dC .top{padding:0 16px}.dC .tbtn{display:none}
+  .dC .main{padding:60px 14px 16px;align-items:center}
+  .dC .card{padding:52px 20px 20px;gap:14px;border-radius:24px}
+  .dC .mascot{width:96px;top:-46px}
+  .dC .slogan{font-size:36px}.dC .sub{font-size:15px}
+  .dC .btn{padding:14px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .dev .prog{animation:prog 6s linear infinite}
+  .dev .glow{animation:glow 3.2s ease-in-out infinite}
+}
+@keyframes prog{from{width:12px}to{width:250px}}
+@keyframes glow{50%{opacity:.6}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gb" x1="4" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff3d6"/><stop offset=".45" stop-color="#ffc65a"/><stop offset="1" stop-color="#ff9440"/></linearGradient>
+    <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22174f"/><stop offset="1" stop-color="#08061a"/></linearGradient>
+    <radialGradient id="halo" cx=".6" cy=".5" r=".5"><stop offset="0" stop-color="#ffc65a" stop-opacity=".45"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></radialGradient><linearGradient id="beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd27a" stop-opacity=".75"/><stop offset="1" stop-color="#ffc65a" stop-opacity=".06"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb070"/><stop offset="1" stop-color="#ff7a5a"/></linearGradient>
+    <symbol id="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="url(#lg)"/><path d="M29 27 L64 8 L64 56 L29 37 Z" fill="#ffc65a" opacity=".55"/><path d="M12 20 L31 32 L12 44 Z" fill="#ffc65a"/><circle cx="18" cy="30" r="1.8" fill="#140d33"/><circle cx="23" cy="31" r="1.8" fill="#140d33"/></symbol>
+    <symbol id="glow" viewBox="0 0 64 64"><circle cx="38" cy="32" r="30" fill="url(#halo)"/><path d="M5 32 L28 17.5 A17 17 0 1 1 28 46.5 Z" fill="url(#gb)" stroke="url(#gb)" stroke-width="2" stroke-linejoin="round"/><path d="M35.4 30.5 Q38 28 40.6 30.5 M44.4 30.5 Q47 28 49.6 30.5" fill="none" stroke="#1a1036" stroke-width="1.6" stroke-linecap="round"/><path d="M38.5 37.5 Q42.5 42 46.5 37.5" fill="none" stroke="#1a1036" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <!-- A: Glowbeam's light falls on the shared screen -->
+    <symbol id="sceneA" viewBox="0 0 640 380">
+      <path class="glow" d="M120 190 L600 40 L600 340 Z" fill="url(#beam)"/>
+      <g transform="translate(250 66)">
+        <rect width="350" height="220" rx="16" fill="#140f30" stroke="#ffffff22" stroke-width="2"/>
+        <rect x="12" y="12" width="326" height="170" rx="10" fill="url(#sky)"/>
+        <circle cx="250" cy="70" r="28" fill="#fff3d6" opacity=".85"/>
+        <path d="M12 140 Q90 100 170 132 T338 118 V182 H12Z" fill="#4b2f8f"/>
+        <path d="M12 158 Q120 130 220 160 T338 150 V182 H12Z" fill="#2c1c63"/>
+        <rect x="30" y="196" width="290" height="5" rx="2.5" fill="#ffffff22"/>
+        <rect class="prog" x="30" y="196" width="120" height="5" rx="2.5" fill="#ffc65a"/>
+        <rect x="24" y="24" width="138" height="26" rx="13" fill="#0f5a3c"/>
+        <text x="93" y="42" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#c9ffe6">In sync · 30 ms</text>
+      </g>
+      <g transform="translate(470 252)">
+        <rect width="150" height="44" rx="22" fill="#6a4cf2"/>
+        <text x="75" y="28" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#fff">this part! 😄</text>
+      </g>
+      <g transform="translate(270 300)">
+        <circle cx="0" cy="22" r="18" fill="#2fb3a3" stroke="#3ee08f" stroke-width="3"/><circle cx="40" cy="22" r="18" fill="#ff8a7a" stroke="#3ee08f" stroke-width="3"/><circle cx="80" cy="22" r="18" fill="#7c5cff"/>
+        <text x="110" y="28" font-family="Inter,sans-serif" font-size="15" fill="#c9c0ea">3 watching · 2 in voice</text>
+      </g>
+      <use href="#glow" x="10" y="100" width="180" height="180"/>
+    </symbol>
+    <!-- B: today's two screens, tidied -->
+    <symbol id="sceneB" viewBox="0 0 640 380">
+      <g transform="translate(20 30)">
+        <rect width="430" height="270" rx="16" fill="#140f30" stroke="#ffffff26" stroke-width="2"/>
+        <rect x="14" y="14" width="402" height="242" rx="10" fill="url(#sky)"/>
+        <circle cx="300" cy="90" r="34" fill="#fff3d6" opacity=".85"/>
+        <path d="M14 190 Q110 140 210 180 T416 168 V256 H14Z" fill="#4b2f8f"/>
+        <rect x="40" y="232" width="350" height="5" rx="2.5" fill="#ffffff22"/><rect class="prog" x="40" y="232" width="120" height="5" rx="2.5" fill="#ffc65a"/>
+        <path d="M-20 286 H470 L455 298 H-5Z" fill="#2a2450"/>
+      </g>
+      <g transform="translate(480 70)">
+        <rect width="140" height="270" rx="24" fill="#140f30" stroke="#ffffff26" stroke-width="2"/>
+        <rect x="10" y="12" width="120" height="246" rx="16" fill="url(#sky)"/>
+        <circle cx="70" cy="80" r="20" fill="#fff3d6" opacity=".85"/>
+        <path d="M10 170 Q60 140 130 165 V258 H10Z" fill="#4b2f8f"/>
+        <rect x="22" y="238" width="96" height="4" rx="2" fill="#ffffff22"/><rect class="prog" x="22" y="238" width="40" height="4" rx="2" fill="#ffc65a"/>
+      </g>
+      <path d="M452 190 H478" stroke="#ffc65a" stroke-width="3" stroke-dasharray="5 5"/>
+      <g transform="translate(40 4)"><rect width="206" height="40" rx="20" fill="#6a4cf2"/><text x="103" y="26" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" font-weight="600" fill="#fff">this scene is so good 😄</text></g>
+      <use href="#glow" x="540" y="-6" width="96" height="96"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <h1>Yeni ana sayfa: <em>hangisi?</em></h1>
+    <p class="lead">Kart 15b. Bugünkü ana sayfa bilgisayarda iyi duruyor ama tablette uzun bir sütun oluyor (dik tablette sayfa 2400 px, iki buçuk ekran) ve telefonda ekranın alt yarısı boş kalıyor. Aşağıda üç yön var. Her biri aynı sayfanın dört ekrandaki hali: bilgisayar 1366×768, dik tablet 820×1180, yan tablet 1180×820, telefon 390×844. Tema seçici yok (herkes Gece ile başlar). Slogan senin: "Ayrı ekranlar, aynı an." / "Different screens, same moment."</p>
+    <div class="facts"><span>3 soru · her soruda bir seçim</span><span>Önerdiğim seçenekte "Önerilen" yazıyor</span><span>Seçimlerin en altta hazır metin olur; kopyalayıp sohbete yapıştır</span></div>
+    <div class="lang" style="margin-top:14px">Önizlemedeki dil: <button type="button" id="l-en" aria-pressed="true">English</button><button type="button" id="l-tr" aria-pressed="false">Türkçe</button></div>
+  </header>
+
+  <section class="q" id="q1">
+    <h2>1. Ana sayfanın ilk ekranı hangi yönde olsun?<small>Üçü de her ekranda kaydırmadan sığar. Farkları neyi öne çıkardıkları.</small></h2>
+    <div class="opt" data-q="1" data-v="A">
+      <div class="opt-head"><div><h3>A · Işık hüzmesi <span class="badge">Önerilen</span></h3><p>Glowbeam yeni markanın kendisi: ışığını ortak ekrana tutuyor, ekranda herkesin aynı saniyede izlediği video ve yüzler var. Geniş ekranda yan yana, dik tablette ve telefonda resim üstte, yazı altta ortalı. Altta üç kısa özellik.</p></div><button class="pick" type="button" aria-pressed="false">A'yı seç</button></div>
+      <ul class="pros"><li>Logo ve maskot ilk bakışta tanıtılıyor</li><li>Dik tablet ve telefonda ekranı dolduruyor, boşluk yok</li><li>Tek resim, hafif: telefonda hızlı açılır</li><li class="con">Telefon görüntüsü (bugünkü "telefonda da çalışır" mesajı) yok, onu özellik satırı söylüyor</li></ul>
+      <div class="devs" data-dir="A"></div>
+    </div>
+    <div class="opt" data-q="1" data-v="B">
+      <div class="opt-head"><div><h3>B · İki ekran, toparlanmış</h3><p>Bugünkü fikir (dizüstü + telefon aynı anda) kalıyor, ama her şey ortada ve resim büyük. Yan tablette ve bilgisayarda yazı solda, resim sağda; dik tablette alt alta, ortalı. Glowbeam köşede küçük.</p></div><button class="pick" type="button" aria-pressed="false">B'yi seç</button></div>
+      <ul class="pros"><li>En az değişiklik, 15'te seçtiğin "iki ekran, bir an" kalıyor</li><li>"Telefonda da çalışır" resimle anlatılıyor</li><li class="con">Glowbeam ve yeni marka geri planda</li><li class="con">Telefonda resim küçülüyor, özellik satırına yer kalmıyor</li></ul>
+      <div class="devs" data-dir="B"></div>
+    </div>
+    <div class="opt" data-q="1" data-v="C">
+      <div class="opt-head"><div><h3>C · Başlangıç ekranı</h3><p>Bir uygulamanın açılış ekranı gibi: ortada tek bir kart, Glowbeam kartın üstünden bakıyor. Oda oluştur, kodla katıl kutusu ve "kaldığın yerden devam" aynı kartta. Tanıtım "Nasıl çalışır?" bağlantısının arkasında.</p></div><button class="pick" type="button" aria-pressed="false">C'yi seç</button></div>
+      <ul class="pros"><li>Her ekranda aynı görünüm, tablette kusursuz</li><li>Odaya en hızlı giriş, telefondaki uygulama hissi her yerde</li><li class="con">İlk kez gelen biri ne olduğunu daha az görüyor (resim yok)</li></ul>
+      <div class="devs" data-dir="C"></div>
+    </div>
+  </section>
+
+  <section class="q" id="q2">
+    <h2>2. İlk ekranın altında ne olsun?<small>Bugün altında tema seçici, üç adım, üç kapı (link / eklenti / oyunlar) ve "Odada neler var" satırı var. Tema seçici zaten gidiyor.</small></h2>
+    <div class="answers" data-q="2">
+      <button class="chip" type="button" data-v="A" aria-pressed="false">A · Kısa tanıtım, tek bölüm <span class="badge">Önerilen</span><small>Üç adım + eklenti kartı + Yardım bağlantısı. Bilgisayarda bir ekrana sığar.</small></button>
+      <button class="chip" type="button" data-v="B" aria-pressed="false">B · Hiçbir şey<small>Sadece "Nasıl çalışır?" bağlantısı; basınca tanıtım açılır (telefonda bugün böyle).</small></button>
+      <button class="chip" type="button" data-v="C" aria-pressed="false">C · Bugünkü gibi her şey<small>Üç adım, üç kapı, "Odada neler var" satırı, yeni yüzle.</small></button>
+    </div>
+  </section>
+
+  <section class="q" id="q3">
+    <h2>3. Ana sayfada "YouTube ya da video linki" kutusu kalsın mı?<small>Bugün bilgisayarda "Oda oluştur"un yanında isteğe bağlı bir link kutusu var; telefonda yok. Odada arama, yapıştırma ve sürükleme zaten var.</small></h2>
+    <div class="answers" data-q="3">
+      <button class="chip" type="button" data-v="A" aria-pressed="false">A · Kaldır, her yerde aynı <span class="badge">Önerilen</span><small>İlk ekran sadeleşir; video odada eklenir (önizlemeler böyle).</small></button>
+      <button class="chip" type="button" data-v="B" aria-pressed="false">B · Bilgisayar ve tablette kalsın<small>Linkle gelen biri odayı videoyla açar; telefonda yine yok.</small></button>
+    </div>
+  </section>
+</div>
+
+<div class="summary" role="region" aria-label="Seçimlerin">
+  <div class="in">
+    <div id="out" aria-live="polite">Ana sayfa seçimlerim: henüz seçim yok</div>
+    <input id="note" type="text" placeholder="Not (isteğe bağlı)" aria-label="Not">
+    <button id="copy" type="button">Kopyala</button>
+  </div>
+</div>
+
+<template id="tpl-A">
+  <div class="site dA">
+    <div class="top"><div class="brand"><svg><use href="#logo"/></svg>Sidelit</div><div class="sp"></div><span class="tbtn" data-t="ext"></span><span class="tl"><span>TR</span><span class="on">EN</span></span></div>
+    <div class="main">
+      <div class="txt">
+        <div><span class="pill" data-t="pill"></span></div>
+        <h2 class="slogan" data-t="slogan"></h2>
+        <p class="sub" data-t="sub"></p>
+        <div class="cta"><span class="btn pri" data-t="create"></span><span class="btn sec" data-t="join"></span></div>
+        <div class="save"><i></i><span data-t="save"></span></div>
+        <div class="cont" data-t="cont"></div>
+      </div>
+      <div class="art"><svg class="scene" viewBox="0 0 640 380"><use href="#sceneA"/></svg></div>
+    </div>
+    <div class="foot"><div class="feat"><div><span>📱</span><b data-t="f1"></b><em data-t="f1s"></em></div><div><span>🎙</span><b data-t="f2"></b><em data-t="f2s"></em></div><div><span>🎮</span><b data-t="f3"></b><em data-t="f3s"></em></div></div></div>
+    <div class="peek" data-t="peek"></div>
+  </div>
+</template>
+<template id="tpl-B">
+  <div class="site dB">
+    <div class="top"><div class="brand"><svg><use href="#logo"/></svg>Sidelit</div><div class="sp"></div><span class="tbtn" data-t="ext"></span><span class="tl"><span>TR</span><span class="on">EN</span></span></div>
+    <div class="main">
+      <div class="txt">
+        <span class="pill" data-t="pill"></span>
+        <h2 class="slogan" data-t="slogan"></h2>
+        <p class="sub" data-t="sub"></p>
+        <div class="cta"><span class="btn pri" data-t="create"></span><span class="btn sec" data-t="join"></span></div>
+        <div class="save"><i></i><span data-t="save"></span></div>
+      </div>
+      <div class="art"><svg class="scene" viewBox="0 0 640 380"><use href="#sceneB"/></svg></div>
+    </div>
+    <div class="foot"><div class="feat"><div><span>📱</span><b data-t="f1"></b><em data-t="f1s"></em></div><div><span>🎙</span><b data-t="f2"></b><em data-t="f2s"></em></div><div><span>🎮</span><b data-t="f3"></b><em data-t="f3s"></em></div></div></div>
+    <div class="peek" data-t="peek"></div>
+  </div>
+</template>
+<template id="tpl-C">
+  <div class="site dC">
+    <div class="side"><div class="beam"></div></div>
+    <div class="top"><div class="brand"><svg><use href="#logo"/></svg>Sidelit</div><div class="sp"></div><span class="tbtn" data-t="ext"></span><span class="tl"><span>TR</span><span class="on">EN</span></span></div>
+    <div class="main">
+      <div class="card">
+        <svg class="mascot" viewBox="0 0 64 64"><use href="#glow"/></svg>
+        <h2 class="slogan" data-t="slogan"></h2>
+        <p class="sub" data-t="subC"></p>
+        <div class="cta"><span class="btn pri" data-t="create"></span></div>
+        <div class="code"><i data-t="code"></i><span class="btn sec" data-t="joinS"></span></div>
+        <div class="save"><i></i><span data-t="save"></span></div>
+        <div class="cont" data-t="cont"></div>
+        <span class="how" data-t="how"></span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+const T={
+ en:{ext:"🧩 Extension",pill:"Free · no account · no ads",slogan:"Different screens, <b>same moment.</b>",sub:"Watch a video with friends anywhere, in sync. Talk, see each other and play in the same room.",subC:"Watch together, in sync, from anywhere. No account.",create:"Create room",join:"Join with a code",joinS:"Join",code:"Room code",save:"Save the room (a name and a link that stays)",cont:"↺ Continue: <b>Velvet Otter</b> · 3 inside · <u>Open</u>",f1:"No app",f1s:"A link, on a computer or a phone",f2:"Voice and camera",f2s:"Talk while you watch",f3:"Games in the room",f3s:"XOX, Draw & Guess, quiz",peek:"How it works",how:"How does it work?"},
+ tr:{ext:"🧩 Eklenti",pill:"Ücretsiz · hesap yok · reklam yok",slogan:"Ayrı ekranlar, <b>aynı an.</b>",sub:"Arkadaşlarınla nerede olursanız olun aynı videoyu aynı anda izle. Aynı odada konuş, birbirinizi gör, oyna.",subC:"Nerede olursanız olun, aynı anda izleyin. Hesap yok.",create:"Oda oluştur",join:"Kodla katıl",joinS:"Katıl",code:"Oda kodu",save:"Odayı kaydet (adı ve linki hep aynı kalır)",cont:"↺ Devam et: <b>Velvet Otter</b> · içeride 3 kişi · <u>Aç</u>",f1:"Uygulama yok",f1s:"Bir link; bilgisayarda ya da telefonda",f2:"Ses ve kamera",f2s:"İzlerken konuşun",f3:"Odada oyunlar",f3s:"XOX, Çiz-Bil, bilgi yarışması",peek:"Nasıl çalışır",how:"Nasıl çalışır?"}
+};
+const SIZES=[[1366,768,"Bilgisayar 1366×768"],[820,1180,"Dik tablet 820×1180"],[1180,820,"Yan tablet 1180×820"],[390,844,"Telefon 390×844"]];
+let lang="en";
+function fill(root){root.querySelectorAll("[data-t]").forEach(e=>{e.innerHTML=T[lang][e.dataset.t]})}
+document.querySelectorAll(".devs").forEach(row=>{
+  const dir=row.dataset.dir;const tabs=document.createElement("div");tabs.className="dtabs";tabs.setAttribute("role","tablist");row.append(tabs);
+  SIZES.forEach(([w,h,label],i)=>{
+    const tb=document.createElement("button");tb.type="button";tb.setAttribute("role","tab");tb.textContent=label;tb.setAttribute("aria-selected",i===0);tabs.append(tb);
+    const fig=document.createElement("figure");fig.className="shot";fig.hidden=i!==0;
+    const fr=document.createElement("div");fr.className="frame";fr.dataset.w=w;fr.dataset.h=h;
+    const dev=document.createElement("div");dev.className="dev";dev.style.width=w+"px";dev.style.height=h+"px";
+    dev.append(document.getElementById("tpl-"+dir).content.cloneNode(true));dev.setAttribute("aria-hidden","true");
+    fr.append(dev);fig.append(fr);row.append(fig);
+    tb.onclick=()=>{tabs.querySelectorAll("button").forEach(x=>x.setAttribute("aria-selected",x===tb));row.querySelectorAll(".shot").forEach(f=>f.hidden=f!==fig);fill(dev);scale()};
+  });
+});
+function scale(){document.querySelectorAll(".frame").forEach(fr=>{if(fr.parentNode.hidden)return;const w=+fr.dataset.w,h=+fr.dataset.h;const avail=fr.closest(".devs").clientWidth;const maxH=Math.min(680,innerHeight*0.72);const fw=Math.min(avail,maxH*w/h,w);fr.style.width=fw+"px";fr.style.height=(fw*h/w)+"px";fr.firstChild.style.transform="scale("+(fw/w)+")"})}
+addEventListener("resize",scale);
+function setLang(l){lang=l;document.getElementById("l-en").setAttribute("aria-pressed",l==="en");document.getElementById("l-tr").setAttribute("aria-pressed",l==="tr");document.querySelectorAll(".dev").forEach(fill)}
+document.getElementById("l-en").onclick=()=>setLang("en");document.getElementById("l-tr").onclick=()=>setLang("tr");
+setLang("en");scale();
+const picks={};
+function draw(){
+  const parts=[1,2,3].map(q=>picks[q]?q+": "+picks[q]:null).filter(Boolean);
+  const n=document.getElementById("note").value.trim();
+  document.getElementById("out").textContent="Ana sayfa seçimlerim: "+(parts.length?parts.join(" · "):"henüz seçim yok")+(n?" · Not: "+n:"");
+}
+document.querySelectorAll(".opt .pick").forEach(b=>b.onclick=()=>{
+  const o=b.closest(".opt");picks[1]=o.dataset.v;
+  document.querySelectorAll('.opt').forEach(x=>{const on=x===o;x.classList.toggle("picked",on);x.querySelector(".pick").setAttribute("aria-pressed",on)});draw();
+});
+document.querySelectorAll(".answers").forEach(g=>g.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+  picks[g.dataset.q]=c.dataset.v;g.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));draw();
+}));
+document.getElementById("note").addEventListener("input",draw);
+document.getElementById("copy").onclick=async()=>{
+  const t=document.getElementById("out").textContent;
+  try{await navigator.clipboard.writeText(t);document.getElementById("copy").textContent="Kopyalandı ✓";setTimeout(()=>document.getElementById("copy").textContent="Kopyala",1800)}
+  catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById("out"));const s=getSelection();s.removeAllRanges();s.addRange(r)}
+};
+</script>
