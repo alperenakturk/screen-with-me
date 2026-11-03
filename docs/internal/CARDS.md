@@ -404,7 +404,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   the original's trademark and its "copyrighted gameplay" claims: own name (no "-dle"), no 5×6 square grid (e.g. a
   ticket / film-strip row per guess, 7 tries), theme colours + ✓ / • instead of green / yellow, no QWERTY strip right
   under the board, share text without coloured squares ("🍿 Word of the day #12 · 4/7"); tr-locale İ/ı handling.
-- Owner's pick: board **A "ticket row"** (3 Nov 2026); name still open (Word Reel / Admit One / Five Frames).
+- Owner's pick: board **A "ticket row"** (3 Nov 2026); name **Five Frames** (TR **Beş Kare**), owner 3 Nov 2026.
 
 ### Move my things to another device (Research)
 - Why: browser-only saves (game progress, saved rooms, emoji collection) are lost on a new phone; accounts are costly.
