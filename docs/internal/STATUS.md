@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.17**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.18**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -382,6 +382,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.18 (computer + phone):**
+- [ ] ⚙️ Settings (My screen), and ⋯ → Film time / Save the room / Room rules: each opens as one clean window, rows
+  read on one line (title + short description + switch), nothing scrolls inside on your laptop.
 
 **0.9.93.17 (computer, with the extension):**
 - [ ] On a film page (room view and fullscreen): the rail on the right is hidden while you watch; bring the mouse to
