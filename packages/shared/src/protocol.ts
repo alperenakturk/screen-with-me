@@ -21,16 +21,19 @@ export const COUNTDOWN_MS = 3000;
 
 /** Videos that get the countdown: not Shorts / TikTok (they flow one into the next), film pages or the sync test. */
 export function countdownMedia(media: Media): boolean {
-  return (media.kind === 'youtube' && media.short !== true) || media.kind === 'html5';
+  return (media.kind === 'youtube' && media.short !== true) || media.kind === 'html5' || media.kind === 'vimeo';
 }
 export const YOUTUBE_MAX_RATE = 2;
 /** TikTok's embed player has no speed setting: a TikTok always plays at 1×. */
 export const TIKTOK_RATE = 1;
+/** Vimeo's player changes speed only on videos from paid Vimeo accounts: a Vimeo video always plays at 1×. */
+export const VIMEO_RATE = 1;
 
 /** The fastest a video of this kind can play. */
 export function maxRateFor(media: Media | null | undefined): number {
   if (media?.kind === 'youtube') return YOUTUBE_MAX_RATE;
   if (media?.kind === 'tiktok') return TIKTOK_RATE;
+  if (media?.kind === 'vimeo') return VIMEO_RATE;
   return MAX_RATE;
 }
 /** Bir mesajın en fazla kaç bayt olabileceği (kötü niyetli büyük mesajlara karşı). */
@@ -180,7 +183,12 @@ export type Media =
    * A TikTok video (0.9.91.18), played with TikTok's official embed player; always upright, so the room switches to
    * the Shorts view. `user`: the @handle from the link (the title lookup and "open on TikTok" need it).
    */
-  | { kind: 'tiktok'; id: string; user?: string };
+  | { kind: 'tiktok'; id: string; user?: string }
+  /**
+   * A Vimeo video (card P1), played with Vimeo's own embed player. `hash`: the private key of an unlisted video
+   * (`vimeo.com/<id>/<hash>` or `?h=`), needed to embed it.
+   */
+  | { kind: 'vimeo'; id: string; hash?: string };
 
 /** Sıradaki ya da şu an oynayan bir video. */
 export interface QueueItem {
@@ -587,6 +595,9 @@ const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 /** TikTok video ids are long numbers; handles are letters, digits, `.` and `_`. */
 export const TIKTOK_ID = /^\d{8,25}$/;
 export const TIKTOK_USER = /^[A-Za-z0-9._]{1,40}$/;
+/** Vimeo video ids are numbers; an unlisted video's hash is hex. */
+export const VIMEO_ID = /^\d{1,12}$/;
+export const VIMEO_HASH = /^[0-9a-f]{6,20}$/i;
 const ITEM_ID = /^[A-Za-z0-9_-]{1,32}$/;
 /** Tarayıcının kalıcı kimliği (bkz. hello.cid). */
 export const CLIENT_ID = /^[A-Za-z0-9_-]{8,40}$/;
@@ -721,6 +732,10 @@ export function cleanMedia(x: unknown): Media | null {
   if (x.kind === 'tiktok') {
     if (typeof x.id !== 'string' || !TIKTOK_ID.test(x.id)) return null;
     return typeof x.user === 'string' && TIKTOK_USER.test(x.user) ? { kind: 'tiktok', id: x.id, user: x.user } : { kind: 'tiktok', id: x.id };
+  }
+  if (x.kind === 'vimeo') {
+    if (typeof x.id !== 'string' || !VIMEO_ID.test(x.id)) return null;
+    return typeof x.hash === 'string' && VIMEO_HASH.test(x.hash) ? { kind: 'vimeo', id: x.id, hash: x.hash } : { kind: 'vimeo', id: x.id };
   }
   if (x.kind === 'html5' || x.kind === 'page') {
     if (typeof x.url !== 'string' || x.url.length > 2048) return null;

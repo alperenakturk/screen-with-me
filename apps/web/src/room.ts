@@ -40,6 +40,7 @@ import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
 import { createTestPlayer } from './players/test.ts';
 import { createTikTokPlayer } from './players/tiktok.ts';
+import { createVimeoPlayer } from './players/vimeo.ts';
 import { createYouTubePlayer } from './players/youtube.ts';
 import {
   clientId,
@@ -1422,9 +1423,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           ? await createYouTubePlayer(slot, media.id, onError)
           : media.kind === 'tiktok'
             ? await createTikTokPlayer(slot, media.id, onError)
-            : media.kind === 'test'
-              ? createTestPlayer(slot)
-              : createHtml5Player(slot, media.url, onError);
+            : media.kind === 'vimeo'
+              ? await createVimeoPlayer(slot, media.id, media.hash, onError)
+              : media.kind === 'test'
+                ? createTestPlayer(slot)
+                : createHtml5Player(slot, media.url, onError);
     } catch {
       onError();
       slot.remove();

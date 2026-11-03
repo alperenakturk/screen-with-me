@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, sameMedia, samePage } from './media.ts';
-import { cleanMedia, isValidMedia, maxRateFor } from './protocol.ts';
+import { isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage } from './media.ts';
+import { cleanMedia, countdownMedia, isValidMedia, maxRateFor } from './protocol.ts';
 
 describe('samePage', () => {
   it('ignores the #fragment and a trailing slash', () => {
@@ -123,5 +123,36 @@ describe('TikTok links (0.9.91.18)', () => {
     expect(cleanMedia({ kind: 'tiktok', id: '7000000000000000001', user: 'bad user!' })).toEqual({ kind: 'tiktok', id: '7000000000000000001' });
     expect(maxRateFor({ kind: 'tiktok', id: '7000000000000000001' })).toBe(1);
     expect(maxRateFor({ kind: 'youtube', id: 'dQw4w9WgXcQ' })).toBe(2);
+  });
+});
+
+describe('Vimeo links (card P1)', () => {
+  it('reads video links, with the unlisted hash when there is one', () => {
+    expect(parseMediaInput('https://vimeo.com/76979871')).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(parseMediaInput('vimeo.com/76979871/')).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(parseMediaInput('https://www.vimeo.com/76979871?share=copy')).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(parseMediaInput('https://vimeo.com/123456789/abcdef1234')).toEqual({ kind: 'vimeo', id: '123456789', hash: 'abcdef1234' });
+    expect(parseMediaInput('https://vimeo.com/channels/staffpicks/76979871')).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(parseMediaInput('https://vimeo.com/groups/shortfilms/videos/76979871')).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(parseMediaInput('https://vimeo.com/showcase/1234/video/76979871')).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(parseMediaInput('https://player.vimeo.com/video/76979871')).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(parseMediaInput('https://player.vimeo.com/video/123456789?h=abcdef1234&badge=0')).toEqual({ kind: 'vimeo', id: '123456789', hash: 'abcdef1234' });
+    expect(parseVimeo(new URL('https://evil.com/76979871'))).toBeNull();
+  });
+  it('leaves other Vimeo pages as film pages', () => {
+    expect(parseMediaInput('https://vimeo.com/staffpicks')?.kind).toBe('page');
+    expect(parseMediaInput('https://vimeo.com/showcase/1234')?.kind).toBe('page');
+    expect(parseMediaInput('https://vimeo.com/123/not-a-hash!')?.kind).toBe('page');
+  });
+  it('is validated, compared, listed, 1× and counted down like a normal video', () => {
+    expect(cleanMedia({ kind: 'vimeo', id: '76979871', hash: 'abcdef12', extra: 1 })).toEqual({ kind: 'vimeo', id: '76979871', hash: 'abcdef12' });
+    expect(cleanMedia({ kind: 'vimeo', id: '76979871', hash: '<script>' })).toEqual({ kind: 'vimeo', id: '76979871' });
+    expect(isValidMedia({ kind: 'vimeo', id: 'abc' })).toBe(false);
+    expect(isValidMedia({ kind: 'vimeo', id: '1234567890123' })).toBe(false);
+    expect(sameMedia({ kind: 'vimeo', id: '1' }, { kind: 'vimeo', id: '1', hash: 'abcdef' })).toBe(true);
+    expect(sameMedia({ kind: 'vimeo', id: '1' }, { kind: 'tiktok', id: '1' })).toBe(false);
+    expect(parseMediaList('https://vimeo.com/1 vimeo.com/2 https://youtu.be/dQw4w9WgXcQ').media).toHaveLength(3);
+    expect(maxRateFor({ kind: 'vimeo', id: '1' })).toBe(1);
+    expect(countdownMedia({ kind: 'vimeo', id: '1' })).toBe(true);
   });
 });

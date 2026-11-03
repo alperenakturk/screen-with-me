@@ -34,6 +34,7 @@ and four screen sizes at the same time. From now on work follows this list; anyt
 | **Next** (0.9.94) | Simplify the room (C + D) → Help / FAQ (EN + TR) + permission explainer → "Send feedback" (→ GitHub issues) → Shorts channel feed + Discover by country → Thanks page → debug panel → Shorts measurement → cinema mode → home page redesign → design bug sweep (cards 6–16 in `CARDS.md`) |
 | **Frozen** (not before 0.9.95) | Tablet layout, accessibility pass, camera window settings pass, new ideas and games |
 | **0.9.95 additions (owner, 2 Nov 2026)** | Side games: 🍿 Snack Bar (idle) → 🌱 Window Garden (cozy collection) → daily word game (EN + TR); then the move-to-device code. Accounts: none now (option A; passkey account only after 1.0 if users ask) |
+| **Version plan (owner, 3 Nov 2026)** | All current work lands by **0.9.99** (feature complete); 0.9.99 → 1.0 is bug fixes, security, KVKK / legal, design fixes and the official work; then the store submission. Cloudflare: Workers **Free** (paid only with income and users) |
 | **Name (owner, 3 Nov 2026)** | **Sidelit** from now on (card 6c); trademark + domain checks by the owner before 1.0 (`research/name-sidelit-check.md`) |
 | **Owner's decisions to make early** 👤 | Final name and domain (0.9.96 depends on them; a good case for a multi-advisor "council" decision session) |
 
@@ -54,13 +55,14 @@ summary (STATUS history until `CHANGELOG.md` exists).
 | Step | Goal | Gate (must be true to move on) |
 |---|---|---|
 | 0.9.93 | One remote, YouTube rule, phone | Owner's 0.9.92.3–0.9.93.5 hand tests done; phone walkthrough; `wait.mjs` live flake root-caused |
-| 0.9.94 | Finish features (§1): room simplification, help / FAQ, feedback button, Shorts channel feed + regional Discover, thanks page, Shorts switch measurement | each shipped with its test; a non-Turkish reader understands the EN FAQ; measurement written down (preload if > 300 ms); link → watching < 30 s |
-| 0.9.95 | Tablet, accessibility, speed | real tablet portrait + landscape; contrast test passes; keyboard tour; agreed size / time budgets met |
-| 0.9.96 | Name, domain, move (§4, §6, owner) | new address live, old one redirects, live e2e green there, owner's hotspot works, no old name left |
-| 0.9.97 | Security (§3) | threat model risks closed or accepted by the owner; protocol fuzz test in CI; no high `npm audit`; permission justifications ready |
-| 0.9.98 | Legal + consistency (§4, §5) | terms + policy approved and linked; "same numbers" test passes; YouTube quota application sent; CHANGELOG + EN glossary |
-| 0.9.99 | Zero known bugs, operations, closed beta (§2, §6) | 0 open `bug` issues (or deferred by the owner); no new serious bug in the beta's last 7 days; browser table complete; test night done |
-| 1.0.0 | Launch (§7) | Brave / Edge reminder, store submission, no protocol bump during review |
+| 0.9.94 | (skipped as a number: its cards ship inside 0.9.93.x and 0.9.95–0.9.96) | — |
+| 0.9.95 | **Sidelit**: the rename, logo D1, mascot N1 (card 6c) | no user-facing "ScreenWithMe" left (except "formerly"); icons readable at 16 px; live e2e first-attempt green |
+| 0.9.96 | Finish the room features: feedback button, Shorts channel + country, thanks page, debug panel, cinema mode | each shipped with its test; hand tests in STATUS |
+| 0.9.97 | Side games + more players: Snack Bar, games gallery, Window Garden, Five Frames, move code, Vimeo, podcasts | each with unit tests + harness; no scrolling at 340×300 / 360×460 |
+| 0.9.98 | Design sweep, tablet, accessibility | screenshot sweep fixed; tablet harness; contrast + keyboard harness pass |
+| 0.9.99 | **Feature complete**: security cards (reviews 2–3), council review fixes, bug hunt | no known high / medium security finding open; council's must-fix list done; owner's big test round starts |
+| 0.9.99.x → 1.0 | Owner's test round + bug fixes, Security final pass, privacy policy (KVKK + GDPR) + terms + lawyer if possible, trademark / domain checks, own domain + move (security review 3 R3-3), YouTube quota application, store texts and images, design fixes | 0 open bugs (or deferred by the owner); policy + terms linked; domain live; store package ready |
+| 1.0.0 | Launch (§7): Chrome Web Store submission (owner, 3 Nov 2026: "then we apply") | Brave / Edge reminder, store submission, no protocol bump during review |
 
 ---
 
