@@ -229,6 +229,11 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   everyone with an audio-only view (cover art, no video box); CSP `media-src` widened only as needed (security review).
 - Tests: unit (RSS parsing), harness with a local RSS + mp3; owner's real check.
 - Owner's pick: done.
+- Done: 0.9.96.5 (https://github.com/alperenakturk/screen-with-me/pull/185). "🎧 Podcasts" on the link box's YouTube
+  results → shows (Worker `/api/podcasts/search`, iTunes Search) → newest 30 episodes (`/api/podcasts/episodes`: Apple
+  lookup → the feed address from Apple's answer only, read ≤ 4 MB) → ▶ Play now / queue. An episode is `html5` with an
+  optional `poster` (only `*.mzstatic.com`), shown as the player's poster; CSP `img-src` + `*.mzstatic.com` only
+  (`media-src` was already open). Unit `podcasts.test.ts`, e2e `podcasts.mjs`, harness `podcasts/run.cjs` (11).
 
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
@@ -666,6 +671,11 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   privacy policy mentions it.
 - Tests: e2e (code → transfer → expiry, wrong code, rate limit); unit (blob versioning / merge).
 - Owner's pick: part of accounts A (2 Nov 2026): next after the side games (0.9.95+), before 1.0 if time allows.
+- Done: 0.9.96.4 (https://github.com/alperenakturk/screen-with-me/pull/174). Profile menu → 📲 or `/#move=<code>`;
+  `MoveLink` (migration v8, `guardSocket` / `CONNECT_LIMIT`, 10 min, nothing stored; the sender presses Send first);
+  `move.ts` pack / merge (games keep the save that got further). e2e `move.mjs`, unit `move.test.ts`, harness
+  `move/run.cjs` (13). The same PR fixed poker.mjs's first-attempt live failure (the next hand now also moves on with
+  any message).
 
 ### Accounts: owner's decision (decided 2 Nov 2026)
 - Why: idle games and cross-device saves raise accounts; they touch the "no account" promise, GDPR / KVKK, Apple's
