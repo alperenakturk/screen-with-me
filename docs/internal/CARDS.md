@@ -196,6 +196,74 @@ into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the
 - Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
 - Owner's pick: copy and whether it is a page or only a home door. Planner: 0.9.95 (owner agreed 2 Nov 2026).
 
+Cards from `security-review-3.md` (3 Nov 2026, `main` at 0.9.93.18), most severe first (R3 = review 3). Details,
+file:line references, scenarios and the owner's Cloudflare / GitHub / Google steps are in the review.
+
+### Security: no uncapped request body in a room (R3-1)
+- Severity: high
+- Why: `POST /api/rooms/:id/unsave` reads the whole body inside the room object; one chunked ~100 MB request from
+  anyone with the room link resets the room and drops everyone (the H1 crash through another door).
+- Done when: the Worker refuses an `unsave` POST without `Content-Length` or above ~1 KB; the object reads it with a
+  capped reader (shared with `fallback.ts`); a per-IP limit on `/info` + `/unsave` (with the M4 card); a code comment
+  states the rule "no Durable Object reads a request body without a cap".
+- Tests: e2e (chunked oversize `unsave` → refused and the room still answers; a normal unsave by the host still works).
+- Owner's pick: none needed.
+
+### Security: secrets only in the deploy step (R3-2)
+- Severity: medium
+- Why: the Cloudflare token and the YouTube key sit in the environment of `npm ci`, the build and the live e2e, so a
+  compromised dependency's install script or build plugin could read them and deploy to the account.
+- Done when: the three secrets are set only on the "Deploy to Cloudflare" step, read from a GitHub Environment
+  `production` (deploy branch `main` only, created by the owner); the key check uses `secrets` in an `if:`; the
+  workflow has `permissions: contents: read`.
+- Tests: CI green on a PR; the next merge deploys and the live e2e passes; the install / build steps' environment has
+  no `CLOUDFLARE_*` / `YOUTUBE_*` (a quick `env | grep -c` step that prints 0, removed afterwards).
+- Owner's pick: needed only for the owner action (create the `production` environment and move the secrets).
+
+### Security: custom-domain hardening checklist (R3-3)
+- Severity: medium (do it together with the domain purchase)
+- Why: on `workers.dev` there is no WAF, rate-limiting rule, bot protection or HSTS setting; when the domain comes,
+  the old address and preview URLs must not stay open beside it.
+- Done when: `wrangler.jsonc` has the custom domain, `"workers_dev": false`, `"preview_urls": false`;
+  `allowedOrigin`, the extension's `SITE_URL` and the CSP name the new origin; production `localhost` origins are
+  gone; `_headers` sends HSTS; the owner has turned on Always Use HTTPS, minimum TLS 1.2, DNSSEC and one rate-limiting
+  rule on `/api/*` (Bot Fight Mode only after a test that WebSockets, the fallback and the extension still connect).
+- Tests: live e2e against the new domain; the old `workers.dev` address no longer answers (or redirects); embed
+  harness with the extension built for the new origin.
+- Owner's pick: needed (the domain itself, and the zone settings in the dashboard).
+
+### Privacy: YouTube leftovers (R3-5)
+- Severity: low
+- Why: the YouTube API script still comes from `www.youtube.com` (with the person's YouTube cookies where third-party
+  cookies are allowed) while the policy says the player is "loaded from youtube-nocookie.com"; the CSP keeps
+  `frame-src https://www.youtube.com` and `script-src https://s.ytimg.com`, probably unused.
+- Done when: the policy (EN + TR) says the player code comes from youtube.com and the video frame from
+  youtube-nocookie.com; the two CSP hosts are dropped if the YouTube harness still plays without them.
+- Tests: `scripts/harness/yt-privacy/run.cjs` + `yt-room` with the trimmed CSP, no CSP violations in the console.
+- Owner's pick: none needed.
+
+### Security: fallback sessions per IP (R3-6)
+- Severity: low
+- Why: in a room with many custom emojis and chat images, two or three idle fallback sessions from one IP keep the
+  object's 24 M budget full, so real hotspot users are closed with `1009 overflow`.
+- Done when: at most ~3 fallback sessions per IP hash per object; a broadcast string counts once across sessions (or
+  join images are sent after the first poll, in pages).
+- Tests: e2e `fallback.mjs` (a 4th session from one IP refused; a second IP still joins a full-emoji room);
+  hotspot harness still passes.
+- Owner's pick: none needed.
+
+### Security: requirements for the feedback endpoint (R3-7, with card 9)
+- Severity: low (preventive)
+- Why: card 9 writes user text into GitHub issues with a token; without limits it can flood the repo, ping people with
+  `@` mentions or leak more than intended.
+- Done when: fine-grained token = Issues: write on this repo only, with an expiry; `Origin` required; per-IP limit
+  (≈ 3 / hour) and a global daily cap (≈ 50); body size capped while reading; text in a code block, `@` / `#123`
+  neutralised; no IP, room id, names or chat stored; the optional e-mail and its retention named in the privacy
+  policy; Turnstile only if spam appears.
+- Tests: unit (payload builder escapes `@user`, `#1`, long text cut); e2e with the token off (`off`), limits, oversize
+  body refused.
+- Owner's pick: none needed (the owner creates the token when card 9 asks).
+
 Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe first. Each card names its finding id
 (H = high, M = medium, L = low); the details, file:line references and attack scenarios are in the review.
 
@@ -300,6 +368,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   50/50 joker leaks the answer with a second identity, Poker's `people` grows without a cap and anyone can deal.
 - Done when: host / opener checks on Draw `reset` / `start` and Poker `start`; `undo` ≤ 1/s; one hidden 50/50 pair
   per question; Poker `people` capped; (optional) game objects accept only a short-lived ticket from the room.
+  Review 3 (R3-8): game, draw, quiz and poker objects accept `hello` only once per connection, as the room does.
 - Tests: e2e `draw.mjs`, `quiz.mjs` and a Poker e2e case.
 - Owner's pick: none needed.
 
