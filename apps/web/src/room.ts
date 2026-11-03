@@ -31,7 +31,7 @@ import {
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { channelParam, isPoolRegionChoice, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice } from '@swm/shared/youtube-search';
-import { canShareSheet, isPhoneLayout, isTouch } from './device.ts';
+import { canShareSheet, hasMouse, isPhoneLayout, isTouch } from './device.ts';
 import { el } from './dom.ts';
 import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -386,7 +386,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <div class="dock-more-speeds" role="group">${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
                 <button type="button" class="dock-more-item" data-press="#sync-all"><span aria-hidden="true">🔄</span><span data-i18n="syncAll"></span></button>
                 <button type="button" class="dock-more-item" data-press="#skip"><span aria-hidden="true">⏭</span><span data-i18n="skip"></span></button>
-                <button type="button" class="dock-more-item" data-press="#side-toggle"><span aria-hidden="true">⇥</span><span id="dock-more-side"></span></button>
+                <button type="button" class="dock-more-item" data-press="#side-toggle"><span aria-hidden="true">🎞</span><span id="dock-more-side"></span></button>
                 <button type="button" class="dock-more-item desk-only" data-press="#profile-keys"><span aria-hidden="true">⌨️</span><span data-i18n="keys.open"></span></button>
                 <button type="button" class="dock-more-item rail-pin-item" id="rail-pin" aria-pressed="false"><span class="rail-pin-box" aria-hidden="true"></span><span data-i18n="rail.pin"></span></button>
               </div>
@@ -455,7 +455,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                   </div>
                 </div>
               </div>
-              <button id="side-toggle" type="button" class="icon-btn tool-btn side-toggle"><span id="side-icon" aria-hidden="true">⇥</span><span id="side-badge" class="badge" hidden></span></button>
+              <button id="side-toggle" type="button" class="icon-btn tool-btn side-toggle"><span id="side-icon" aria-hidden="true">🎞</span><span id="side-badge" class="badge" hidden></span></button>
               <button id="fullscreen" type="button" class="icon-btn tool-btn">⛶</button>
             </div>
           </div>
@@ -1300,10 +1300,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
         if (shortsOn) seats.say(by, text);
         // Tam ekranda (ya da sağ panel gizliyken) sohbet paneli görünmez; mesaj videonun köşesinde belirir.
-        if (fullscreen.isActive() || sideHidden) toasts.show(withAvatar(by), text, by.id === myId);
-        if (sideHidden && by.id !== myId) side.unread();
+        if (fullscreen.isActive() || roomEl.classList.contains('cinema')) toasts.show(withAvatar(by), text, by.id === myId);
+        if (roomEl.classList.contains('cinema') && by.id !== myId) side.unread();
         // A sound only when the message is nowhere on my screen (another tab, or another panel tab is open).
-        const seen = !document.hidden && (fullscreen.isActive() || sideHidden || shortsOn || tabs.active === 'chat');
+        const seen = !document.hidden && (fullscreen.isActive() || roomEl.classList.contains('cinema') || shortsOn || tabs.active === 'chat');
         if (by.id !== myId && !seen) playSound('chat');
         if (by.id !== myId && document.hidden) {
           hiddenUnread++;
@@ -2623,7 +2623,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    */
   function reactionAnchor(by: Member): HTMLElement {
     const visible = (node: HTMLElement | null) => (node && node.getBoundingClientRect().width > 0 ? node : null);
-    if (fullscreen.isActive() || sideHidden) {
+    if (fullscreen.isActive() || roomEl.classList.contains('cinema')) {
       fullscreen.showRail();
       const react = visible($('#dock-react'));
       if (react) return react;
@@ -2632,37 +2632,88 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     return face ?? visible($('#voice-people')) ?? visible($('#dock-react')) ?? $('.together-card');
   }
 
-  let sideHidden = !isShell && load('opt:sideHidden') === '1';
-  // Sağ paneli gizle: video büyür (geniş ekranda), mesajlar videonun köşesinde belirir, düğmede okunmamış sayısı. Bu
-  // tarayıcıda hatırlanır. Film sayfasındaki katmanda yok (orada yerleşimi delik belirler).
+  // Cinema mode (card 14, Design's notes `docs/internal/design/cinema-mode.md`): the old ⇥ "hide the side panel". The
+  // page around the video goes dark, the video takes the largest 16:9 beside the rail, the top bar waits at the top
+  // edge, chat comes as a strip under the video with a count on 💬. Rail ⋯ / T toggle it, Esc leaves; this tab only;
+  // computers only (phones already watch edge to edge), not on the film page or in the Shorts view.
+  const cinemaKey = `cinema:${roomId}`;
+  const cinemaOk = () => !isShell && !isPhoneLayout() && hasMouse() && !shortsOn;
+  let sideHidden = !isShell && sessionLoad(cinemaKey) === '1';
   const side = (() => {
     const button = $<HTMLButtonElement>('#side-toggle');
-    const badge = $('#side-badge');
+    const badge = el('span', { class: 'badge cinema-badge' });
+    $('#dock-chat').append(badge);
+    const edge = el('div', { id: 'cinema-edge', class: 'cinema-edge', 'aria-hidden': 'true' });
+    const topbar = document.querySelector<HTMLElement>('.topbar');
+    document.body.append(edge);
     let unread = 0;
+    let peekTimer = 0;
     button.hidden = isShell;
     const render = () => {
-      roomEl.classList.toggle('side-hidden', sideHidden);
-      $('#side-icon').textContent = sideHidden ? '⇤' : '⇥';
-      const label = t(sideHidden ? 'sideShow' : 'sideHide');
+      const on = sideHidden && cinemaOk();
+      roomEl.classList.toggle('side-hidden', on);
+      roomEl.classList.toggle('cinema', on);
+      document.documentElement.classList.toggle('cinema-on', on);
+      $('#side-icon').textContent = '🎞';
+      const label = t(on ? 'sideShow' : 'sideHide');
       button.title = label;
       button.setAttribute('aria-label', label);
-      button.setAttribute('aria-pressed', String(sideHidden));
-      badge.hidden = !sideHidden || unread === 0;
+      button.setAttribute('aria-pressed', String(on));
+      badge.hidden = !on || unread === 0;
       badge.textContent = unread > 9 ? '9+' : String(unread);
+      $('#dock-more-side').textContent = label;
     };
-    button.addEventListener('click', () => {
-      sideHidden = !sideHidden;
+    const set = (on: boolean) => {
+      if (on && !cinemaOk()) return;
+      sideHidden = on;
       unread = 0;
-      save('opt:sideHidden', sideHidden ? '1' : '0');
+      sessionSave(cinemaKey, on ? '1' : '0');
+      render();
+      const seen = Number(load('cinemaHint') ?? 0);
+      if (on && seen < 2) {
+        save('cinemaHint', String(seen + 1));
+        flashHint($('.player-wrap'), t('cinemaHint'), 1800);
+      }
+    };
+    button.addEventListener('click', () => set(!sideHidden));
+    $('#dock-chat').addEventListener('click', () => {
+      unread = 0;
       render();
     });
+    const busy = () => document.querySelector('.dialog-backdrop:not([hidden]), .dock-pop:not([hidden]), .profile-pop:not([hidden]), .room-more-pop:not([hidden]), .react-tray:not([hidden]), .game-menu:not([hidden])') !== null;
+    // Capture phase: Esc leaves only when nothing else is open (a window's own Esc runs after and closes it first).
+    addEventListener('keydown', (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target) || fullscreen.isActive()) return;
+      if (event.key.toLowerCase() === 't' && !event.repeat && cinemaOk() && !busy()) {
+        event.preventDefault();
+        set(!sideHidden);
+      } else if (event.key === 'Escape' && sideHidden && roomEl.classList.contains('cinema') && !busy()) {
+        event.preventDefault();
+        set(false);
+      }
+    }, true);
+    const peek = (on: boolean) => {
+      clearTimeout(peekTimer);
+      if (on) document.documentElement.classList.add('cinema-peek');
+      else
+        peekTimer = window.setTimeout(() => {
+          if (topbar?.matches(':hover') || document.querySelector('.profile-pop:not([hidden]), .room-more-pop:not([hidden])')) peek(false);
+          else document.documentElement.classList.remove('cinema-peek');
+        }, 400);
+    };
+    edge.addEventListener('mouseenter', () => peek(true));
+    topbar?.addEventListener('mouseenter', () => peek(true));
+    topbar?.addEventListener('mouseleave', () => peek(false));
+    edge.addEventListener('mouseleave', () => peek(false));
     addEventListener('langchange', render);
+    addEventListener('resize', render);
     render();
     return {
       unread(): void {
         unread++;
         render();
       },
+      render,
     };
   })();
   // Önemli anları pinleme: video altında ve tam ekranda ilerleme çubuğunun üstünde işaretler.

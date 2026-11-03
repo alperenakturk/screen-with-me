@@ -256,14 +256,15 @@ const box = (page, selector) =>
     await alex.waitForTimeout(800);
   }
 
-  // Side panel hidden: the note sits above the video, emojis still fly over the video.
+  // Cinema mode (card 14, the old "side panel hidden"): the note sits under the video at the strip's left end, never on
+  // the player; emojis rise from the rail's 😀 beside the video.
   await alex.click('#side-toggle').catch(() => alex.evaluate(() => document.querySelector('#side-toggle')?.click()));
   await alex.waitForTimeout(3500);
-  check(await alex.evaluate(() => !!document.querySelector('.yt-notices-top > #waiting-banner')), 'side panel hidden: the note is above the video');
+  check(await alex.evaluate(() => !!document.querySelector('.yt-notices-top > #waiting-banner')), 'cinema mode: the note leaves the chat panel');
   await alex.evaluate(() => (document.querySelector('#waiting-banner').hidden = false));
   const top = await box(alex, '#waiting-banner');
   const video2 = await box(alex, '.player');
-  check(top && video2 && top.w > 0 && top.b <= video2.t + 1, 'above, not on it', JSON.stringify({ top, video2 }));
+  check(top && video2 && top.w > 0 && (top.t >= video2.b - 1 || top.b <= video2.t + 1), 'cinema mode: the note is not on the video', JSON.stringify({ top, video2 }));
   await alex.evaluate(() => document.querySelectorAll('.r-float').forEach((n) => n.remove()));
   await sam.keyboard.press('2');
   await alex.waitForTimeout(400);

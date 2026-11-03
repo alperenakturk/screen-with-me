@@ -12791,3 +12791,131 @@ html:not(.phone) .room.fresh :is(#live-card, .tab[data-tab='queue'], .tab[data-t
   bottom: auto;
   right: 0;
 }
+
+/* Cinema mode (card 14, docs/internal/design/cinema-mode.md): on a computer the page around the video goes near-black,
+   the video takes the largest 16:9 that fits beside the rail (1366×768 → 1223×688), the top bar hides until the mouse
+   reaches the top edge, and chat comes as a strip under the video (never on it). `.side-hidden` stays as an alias. */
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) {
+  --cw: min(100vw - 110px, (100dvh - 80px) * 16 / 9);
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 20px 20px 60px;
+  justify-content: center;
+  align-items: center;
+  border: 0;
+  border-radius: 0;
+  background: color-mix(in srgb, color-mix(in srgb, var(--bg) 18%, #000) 94%, transparent);
+  animation: cinema-in 0.3s ease;
+}
+
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) > :not(.player-wrap, .yt-notices-top) {
+  display: none;
+}
+
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .player-wrap {
+  flex: none;
+  width: calc(var(--cw) + 58px);
+  height: calc(var(--cw) * 9 / 16);
+  aspect-ratio: auto;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  transition: width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* The message strip: one line under the video, right-aligned to the video's edge, at most two pills. */
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .toasts {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  top: calc(100% + 8px) !important;
+  bottom: auto !important;
+  right: 58px !important;
+  left: auto !important;
+  max-width: calc(100% - 58px);
+  height: 28px;
+}
+
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .toast {
+  max-width: 46ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  border: 1px solid var(--border);
+}
+
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .toast:nth-last-child(n + 3) {
+  display: none;
+}
+
+/* "Everyone ready" and the game invite sit at the strip's left end. */
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .yt-notices-top {
+  position: fixed;
+  left: 20px;
+  bottom: 12px;
+  max-width: 40vw;
+  margin: 0;
+}
+
+/* The top bar comes back while the mouse is at the top edge (`#cinema-edge`) or on the bar. */
+html.cinema-on:not(.phone, .shell):has(.room.cinema:not(.shorts)) .cinema-edge {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 31;
+}
+
+html.cinema-on.cinema-peek:not(.phone, .shell) .topbar {
+  z-index: 32;
+  animation: cinema-bar 0.25s ease;
+}
+
+html.cinema-on:not(.phone, .shell):has(.room.cinema:not(.shorts)) footer,
+html.cinema-on:not(.cinema-peek, .phone, .shell):has(.room.cinema:not(.shorts)) .topbar {
+  visibility: hidden;
+}
+
+.cinema-edge {
+  display: none;
+}
+
+#dock-chat {
+  position: relative;
+}
+
+#dock-chat .cinema-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+@keyframes cinema-in {
+  from {
+    background: transparent;
+  }
+}
+
+@keyframes cinema-bar {
+  from {
+    transform: translateY(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.cinema-on .room.cinema .theater,
+  html.cinema-on .room.cinema .player-wrap,
+  html.cinema-on.cinema-peek .topbar {
+    animation: none !important;
+    transition: none !important;
+  }
+}
