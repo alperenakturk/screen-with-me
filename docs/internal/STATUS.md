@@ -383,6 +383,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.3 (test panel, phone first):**
+- [ ] Open the site once with `?debug=1` at the end of the address: a 🐞 appears bottom left; tap it: versions,
+  connection, and in a room the sync numbers. "📋 Copy report" and paste it to Claude when something breaks.
+  `?debug=0` (or "Turn the panel off") hides it.
+
 **0.9.96.2 (Thanks page, computer + phone):**
 - [ ] Footer → "Thanks" (and Help → the thank-you line): the six names, Glowbeam, "Send feedback" opens the form;
   TR / EN switch at the top works, nothing scrolls on the phone.

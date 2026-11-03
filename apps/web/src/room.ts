@@ -86,6 +86,7 @@ import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
+import { setDebugRoom } from './debug-lab.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
 import type { createTvRoom } from './ui/tv-room.ts';
@@ -1047,6 +1048,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
     },
   });
+  // Hidden test panel (card 12): its live numbers; never names or ids.
+  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map((m) => `${m.name}|${m.avatar ?? ''}`)).size, kind: roomState?.item?.media.kind ?? null }));
   /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */
   let tvRoom: ReturnType<typeof createTvRoom> | null = null;
   let tvRemote: ReturnType<typeof createTvRemote> | null = null;
