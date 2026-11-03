@@ -421,6 +421,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.7 (two people with the same name, card R11):**
+- [ ] Join your own room from a second browser (or a private window) with the same name and avatar: the room says
+  "2 people", two faces in Together; your two tabs in the same browser still count once.
+
 **0.9.97.3 (repo hygiene, security L10):**
 - [ ] GitHub → the repo → Settings → Code security (or "Advanced Security"): turn on **Dependabot alerts** and
   **Dependabot security updates** (free on a private repo). Weekly update PRs then come by themselves; Claude merges

@@ -18,6 +18,7 @@ import {
   isAvatar,
   randomAvatar,
   REACTION_GAPS,
+  personOf,
   type Avatar,
   type ReactionGap,
   type ClientMessage,
@@ -819,8 +820,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   function drawRoomTitle(): void {
     // An unsaved room shows its friendly name (0.9.93.2; the same for everyone, worked out from the id).
     roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId);
-    // People, not connections: the same person's site tab + film tab (same name and avatar) count once.
-    const people = new Set(members.map((m) => `${m.name}|${m.avatar ?? ''}`)).size;
+    // People, not connections: the same person's site tab + film tab count once; two people with the same name and
+    // avatar count twice (R11: the server's person key).
+    const people = new Set(members.map(personOf)).size;
     roomTitleCount.textContent = people ? `· ${t(people === 1 ? 'peopleOne' : 'peopleCount', { n: people })}` : '';
     tvRoom?.title(roomTitleName.textContent);
   }
@@ -996,11 +998,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * avatar, my other tabs and TVs left out) and how many of them are in voice with me.
    */
   function soloContext(): SoloRoom {
-    const self = `${myName}|${myAvatar}`;
     const mine = members.find((m) => m.id === myId);
+    const self = mine ? personOf(mine) : personOf({ name: myName, avatar: myAvatar });
     const others = new Map<string, boolean>();
     for (const m of members) {
-      const key = `${m.name}|${m.avatar ?? ''}`;
+      const key = personOf(m);
       if (m.tv || m.id === myId || key === self) continue;
       others.set(key, (others.get(key) ?? false) || !!m.voice);
     }
@@ -1079,7 +1081,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   // Hidden test panel (card 12): its live numbers; never names or ids.
-  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map((m) => `${m.name}|${m.avatar ?? ''}`)).size, kind: roomState?.item?.media.kind ?? null }));
+  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null }));
   /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */
   let tvRoom: ReturnType<typeof createTvRoom> | null = null;
   let tvRemote: ReturnType<typeof createTvRemote> | null = null;
