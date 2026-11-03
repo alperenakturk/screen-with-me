@@ -514,7 +514,9 @@ export type ErrorCode =
   | 'recap_empty'
   /** No TV is waiting with that code (wrong, used or expired) / the TV's link token is no longer valid. */
   | 'tv_code'
-  | 'tv_token';
+  | 'tv_token'
+  /** Security L4: a video file / film page link that is not a public https address. */
+  | 'bad_link';
 
 /** Sunucu → istemci. */
 export type ServerMessage =
@@ -792,6 +794,27 @@ export function cleanTitle(x: unknown): string | null {
   if (typeof x !== 'string') return null;
   const title = cleanText(x, TITLE_MAX_LENGTH);
   return title ? title : null;
+}
+
+/**
+ * Security L4: a video file or film page link that every viewer's browser will open must point to the public web:
+ * no user name / password in it, no IP address, no `localhost`, `.local`, `.internal` or single-label host (a device
+ * on the viewer's own network). A video file must also be `https:` (an `http:` file on our https site is blocked by the
+ * browser anyway). The room applies it to new `load` / `enqueue`, except on a local test server.
+ */
+export function isPublicMedia(media: Media): boolean {
+  if (media.kind !== 'html5' && media.kind !== 'page') return true;
+  let url: URL;
+  try {
+    url = new URL(media.url);
+  } catch {
+    return false;
+  }
+  if (url.username || url.password) return false;
+  if (media.kind === 'html5' && url.protocol !== 'https:') return false;
+  const host = url.hostname.toLowerCase().replace(/\.$/, '');
+  if (!host.includes('.') || host.startsWith('[') || /^[\d.]+$/.test(host)) return false;
+  return !/(^|\.)(localhost|local|internal|lan|home\.arpa|intranet)$/.test(host);
 }
 
 export function isValidMedia(x: unknown): x is Media {

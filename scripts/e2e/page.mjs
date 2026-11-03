@@ -17,10 +17,15 @@ ws.send(JSON.stringify({ t: 'hello', v: 3, name: 'Ali' }));
 await wait((m) => m.t === 'welcome');
 ws.send(JSON.stringify({ t: 'load', media: { kind: 'page', url: 'https://film.example/dizi/bolum-1' }, title: 'Dizi – 1. Bölüm' }));
 const s = await wait((m) => m.t === 'state');
-console.log(s.state.item.media.kind === 'page' && s.state.item.title === 'Dizi – 1. Bölüm' ? 'ok  sayfa + sekme başlığı kabul edildi' : 'FAIL ' + JSON.stringify(s));
+// Security L4: a page title chosen by the client carries its site's name.
+const check = (pass, label, detail) => {
+  if (!pass) throw new Error('FAIL: ' + label + ' ' + JSON.stringify(detail));
+  console.log('ok  ' + label);
+};
+check(s.state.item.media.kind === 'page' && s.state.item.title === 'Dizi – 1. Bölüm · film.example', 'A film page with its tab title is accepted, with the site name next to it', s);
 ws.send(JSON.stringify({ t: 'enqueue', media: { kind: 'page', url: 'https://film.example/dizi/bolum-2' } }));
 const q = await wait((m) => m.t === 'queue');
 const t = await wait((m) => m.t === 'title');
-console.log(q.queue[0].media.kind === 'page' && t.title === 'film.example' ? 'ok  başlıksız sayfaya alan adı yazıldı' : 'FAIL ' + JSON.stringify([q, t]));
+check(q.queue[0].media.kind === 'page' && t.title === 'film.example', 'A film page without a title gets its site name', [q, t]);
 ws.close();
 setTimeout(() => process.exit(0), 100);

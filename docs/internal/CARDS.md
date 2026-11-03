@@ -700,6 +700,14 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   page's host is shown next to a client-given title.
 - Tests: unit (`cleanMedia` cases); e2e queue tests still pass.
 - Owner's pick: none needed.
+- Done: 0.9.96.22 (PR below). `protocol.ts` `isPublicMedia`: `html5` needs `https:`; `html5` and `page` refuse
+  user-info, IP literals (v4 / v6, also hex forms the URL parser turns into dotted ones), single-label hosts and
+  `localhost` / `.local` / `.internal` / `.lan` / `.home.arpa` / `.intranet`. The room refuses such a `load` /
+  `enqueue` with the new error `bad_link` (EN + TR text), except on a local test server (`devHost`: the request's
+  host is `localhost` / `127.0.0.1`, so the harnesses keep playing files from localhost). A film page's client-given
+  title gets its site's name (`withHost`: "Title · site.example"). Tests: unit `protocol.test.ts` (3), e2e `links.mjs`
+  (live: private address, http file, user-info refused, a public https file queued; local: local links still taken);
+  locally checked the refusal through the HTTP fallback with another `Host`.
 
 ### Security: room abuse limits (L2, L3, L5)
 - Severity: low

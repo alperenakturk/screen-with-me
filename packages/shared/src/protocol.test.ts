@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, parseClientMessage, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -253,5 +253,26 @@ describe('One text cleaner (security L1)', () => {
 
   it('pin notes and guesses are cleaned too', () => {
     expect(parseClientMessage(JSON.stringify({ t: 'pin', note: 'great‮ scene' }))).toEqual({ t: 'pin', note: 'great scene' });
+  });
+});
+
+describe('Safer media links (security L4)', () => {
+  const file = (url: string) => isPublicMedia({ kind: 'html5', url });
+  const page = (url: string) => isPublicMedia({ kind: 'page', url });
+  it('a video file must be a public https address', () => {
+    expect(file('https://cdn.example.com/film.mp4')).toBe(true);
+    expect(file('http://cdn.example.com/film.mp4')).toBe(false);
+    expect(file('https://user:secret@cdn.example.com/film.mp4')).toBe(false);
+  });
+  it('no device on the viewer\'s own network', () => {
+    for (const url of ['https://192.168.1.1/a.mp4', 'https://10.0.0.5/a.mp4', 'https://127.0.0.1/a.mp4', 'https://[::1]/a.mp4', 'https://localhost/a.mp4', 'https://printer.local/a.mp4', 'https://nas/a.mp4', 'https://router.home.arpa/a.mp4', 'https://0x7f.1/a.mp4']) {
+      expect(file(url), url).toBe(false);
+    }
+  });
+  it('film pages may be http but follow the same host rules; other kinds are not touched', () => {
+    expect(page('http://films.example.org/watch/1')).toBe(true);
+    expect(page('http://192.168.0.10/')).toBe(false);
+    expect(page('https://admin:pw@films.example.org/')).toBe(false);
+    expect(isPublicMedia({ kind: 'youtube', id: 'aqz-KE-bpKQ' })).toBe(true);
   });
 });
