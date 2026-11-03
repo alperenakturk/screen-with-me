@@ -43,7 +43,14 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
   // 1) A fresh room: no toolbar (card 6, owner's pick D), but the rail is there (card 6e, owner: voice, cameras, games
   // and emojis before any video).
   check(!(await rect(page, '.toolbar')).shown, 'fresh room: no toolbar under the video');
-  check((await rect(page, '#fs-dock')).shown, 'fresh room: the rail is there (card 6e)');
+  // Card 6g.1: it rests like the rail with a video and comes at the video's right edge.
+  {
+    const w = await rect(page, '.player-wrap');
+    await page.mouse.move(w.r - 220, w.t + w.h / 2);
+    await page.mouse.move(w.r - 20, w.t + w.h / 2, { steps: 5 });
+    await page.waitForTimeout(400);
+  }
+  check((await rect(page, '#fs-dock')).shown, 'fresh room: the rail is there at the right edge (card 6e, 6g.1)');
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/empty.png` });
 
   // 2) A video file: the rail beside the video, resting until the mouse reaches the right edge.

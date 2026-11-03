@@ -12284,8 +12284,7 @@ html:not(.phone) .theater.side-rail.dock-mode :is(.player, .fs-catcher, .empty, 
 }
 
 html:not(.phone) .theater.side-rail.dock-mode:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))) :is(.player, .fs-catcher, .empty, .overlay),
-html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode :is(.player, .fs-catcher, .empty, .overlay),
-.theater.side-rail.rail-bare.dock-mode :is(.player, .fs-catcher, .empty, .overlay) {
+html.is-touch:not(.phone, .has-mouse) .theater.side-rail.dock-mode :is(.player, .fs-catcher, .empty, .overlay) {
   right: var(--rail-w);
 }
 
@@ -12328,20 +12327,17 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
 }
 
 /* 🔍 Search in the link box (0.9.92.8, owner: "people won't know Enter searches"). Icon only on narrower screens. */
+/* Card 6g.6 (owner): a drawn lens only, so the link box keeps its width; its name stays for screen readers. */
 .media-search {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  padding-inline: 12px;
 }
 
-@media (max-width: 1180px) {
-  .media-search span:last-child {
-    display: none;
-  }
-}
-
-html.phone .media-search span:last-child {
-  display: none;
+.media-search svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* YouTube: the room's notes and cards sit at the top of the chat panel (or above the video with the side panel

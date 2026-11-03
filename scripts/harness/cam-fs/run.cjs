@@ -19,7 +19,7 @@ const check = (ok, label, extra = '') => {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['camera', 'microphone'] });
     await viaYouTube(ctx);
     await ctx.addInitScript(() => {
-      for (const [k, v] of Object.entries({ tipsSeen: '1', lang: 'en', 'opt:camLayout': 'group', 'opt:camFloat': '1', 'opt:voiceCheck': 'skip', 'opt:joinCam': '1', 'opt:ipNotice:voice': '1' })) localStorage.setItem(k, v);
+      for (const [k, v] of Object.entries({ tipsSeen: '1', lang: 'en', 'opt:voiceCheck': 'skip', 'opt:joinCam': '1', 'opt:ipNotice:voice': '1' })) localStorage.setItem(k, v);
     });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => check(false, `${name}: no page errors`, e.message));
@@ -42,6 +42,10 @@ const check = (ok, label, extra = '') => {
     const box = document.querySelector('#voice-cams').getBoundingClientRect();
     return { box: { w: Math.round(box.width), h: Math.round(box.height), x: Math.round(box.x) }, tiles: [...document.querySelectorAll('#voice-cams .cam-tile')].map((t) => { const r = t.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) }; }), fs: !!document.fullscreenElement };
   });
+  // Card 6g.7 (owner, like Meet): with no saved choice the cameras start in their own one window on the page, never as
+  // tiles in the Together card (the chat keeps its height), with no pop-out button.
+  const start = await a.evaluate(() => { const b = document.querySelector('#voice-cams'); return { body: b.parentElement === document.body, free: b.classList.contains('free'), inCard: !!document.querySelector('.together-card .cam-tile'), pop: !!document.querySelector('.cam-pop') }; });
+  check(start.body && !start.free && !start.inCard && !start.pop, 'cameras start in the one window on the page (none in the Together card, no pop-out)', JSON.stringify(start));
   const win = await tiles(a);
   check(win.tiles.length >= 2 && Math.abs(win.tiles[0].y - win.tiles[1].y) < 4, 'window: the two cameras sit side by side', JSON.stringify(win));
   // Fullscreen with the rail's ⛶.

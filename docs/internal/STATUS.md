@@ -383,6 +383,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.6 (card 6g, computer):**
+- [ ] An empty room: the rail on the right is hidden until the mouse reaches the video's right edge, like with a video.
+- [ ] ⋯ More has no "Games" any more (🎮 on the rail opens them); on the phone ⋯ still has Games.
+- [ ] Home page: no theme picker; change the theme in the room (⚙️ My screen or the profile menu).
+- [ ] Turn your camera on with a friend: the cameras open in one window on the page, side by side; the Together card
+  has no camera tiles; the window's top switch makes free tiles that start under the small menu.
+- [ ] 🔍 next to the link box is just a lens; the Glowbeam costumes (Gece nightcap etc.) sit on the head.
+
 **0.9.96.3 (test panel, phone first):**
 - [ ] Open the site once with `?debug=1` at the end of the address: a 🐞 appears bottom left; tap it: versions,
   connection, and in a room the sync numbers. "📋 Copy report" and paste it to Claude when something breaks.

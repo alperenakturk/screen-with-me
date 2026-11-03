@@ -140,12 +140,14 @@ check(frames > 5, 'kamera görüntüsü akıyor (1,5 sn\'de ' + frames + ' kare)
 await ayse.shot('kamera-kart');
 // Kameralar serbest (0.9.81): ⧉ → sayfada yüzen pencere; sürüklenir, köşesinden büyür, görüntü kesilmez.
 const BOX = `(() => { const b = document.getElementById('voice-cams'); const r = b.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), floating: b.classList.contains('floating'), fs: b.classList.contains('in-fs'), parent: b.parentElement === document.body ? 'body' : b.parentElement.className, t: b.querySelector('video')?.currentTime ?? 0 }; })()`;
-await ayse.evaluate(`document.querySelector('#voice-cams .cam-pop').click(); 1`);
+// Card 6g.7 (owner, like Meet): the first camera opens its own window (one window, the default); no tiles in the
+// Together card, no pop-out button.
 const popped = await until(async () => {
   const box = await ayse.evaluate(BOX);
   return box.floating && box.parent === 'body' ? box : null;
 });
-check(!!popped, '⧉ ile kameralar sayfada yüzen pencereye çıktı', JSON.stringify(popped));
+check(!!popped, 'the first camera opens in its own window on the page (not in the Together card)', JSON.stringify(popped));
+check(await ayse.evaluate(`!document.getElementById('voice-cams').classList.contains('free') && !document.querySelector('#voice-cams .cam-pop, #voice-cams .cam-dock-btn') && !document.querySelector('.together-card #voice-cams')`), 'one window by default, no pop-out / put-back buttons, no tiles in the card');
 const drag = async (from, dx, dy) => {
   await ayse.mouse('mouseMoved', from.x, from.y);
   await ayse.mouse('mousePressed', from.x, from.y);
@@ -299,9 +301,8 @@ await ayse.evaluate(`document.fullscreenElement ? document.exitFullscreen().then
 await ayse.sleep(700);
 const back = await ayse.evaluate(BOX);
 check(back.parent === 'body' && !back.fs && Math.abs(back.x - grown.x) < 6, 'tam ekrandan çıkınca sayfadaki yerine döndü', JSON.stringify(back));
-await ayse.evaluate(`document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
 const docked = await ayse.evaluate(BOX);
-check(!docked.floating && docked.parent !== 'body', '⤓ ile karta geri döndü', JSON.stringify(docked));
+check(docked.floating && docked.parent === 'body', 'the window stays on the page (there is no card place any more)', JSON.stringify(docked));
 // Opening and closing a game must not drop the cameras (owner's friends saw tiles disappear and come back).
 const FLOW = `(async () => { const v = [...document.querySelectorAll('#voice-cams .cam-tile video')]; const a = v.map((x) => x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0); await new Promise((r) => setTimeout(r, 1200)); return { tiles: v.length, moving: v.every((x, i) => (x.getVideoPlaybackQuality?.().totalVideoFrames ?? 0) - a[i] > 3) }; })()`;
 await ali.evaluate(`document.getElementById('game-btn').click(); 1`);
@@ -332,7 +333,7 @@ check(afterReconnect.tiles === 1 && afterReconnect.moving, 'Ali yeniden bağlan�
 const streamAfter = await ayse.evaluate(STREAM_ID);
 check(!!streamBefore && streamBefore === streamAfter, 'Ali yeniden bağlanınca ses / görüntü bağlantısı kopmadı (aynı akış sürüyor)', JSON.stringify({ streamBefore, streamAfter }));
 // The pill grows / shrinks from its corner (0.9.90.8).
-await ayse.evaluate(`document.querySelector('#voice-cams .cam-pop').click(); if (!document.getElementById('voice-cams').classList.contains('free')) document.querySelector('#voice-cams .cam-layout').click(); 1`);
+await ayse.evaluate(`if (!document.getElementById('voice-cams').classList.contains('free')) document.querySelector('#voice-cams .cam-layout').click(); 1`);
 await ayse.sleep(300);
 const PILL = `(() => { const r = document.querySelector('#voice-cams .cam-pill').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })()`;
 const p0 = await ayse.evaluate(PILL);
@@ -349,7 +350,6 @@ await ayse.evaluate(`document.querySelector('#voice-cams .cam-reset').click(); 1
 await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);
 const camGone = await until(() => ayse.evaluate(`document.getElementById('voice-cams').hidden`), 8000);
 check(!!camGone, 'Ali kamerasını kapatınca kutusu da küçük menü de kalktı (Ayşe seste olsa da)');
-await ayse.evaluate(`document.querySelector('#voice-cams .cam-dock-btn').click(); 1`);
 
 // 0.9.90.9 Shorts view (owner's idea): no camera tiles; Ali's camera fills his seat's avatar circle; only 🎙 / 📷 below.
 await ali.evaluate(`document.getElementById('voice-cam').click(); 1`);

@@ -5,7 +5,6 @@ import { cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
 import { forgetSaved, isFull, MAX_SAVED, savedRooms, type SavedRoom } from './saved-rooms.ts';
 import { forgetLastRoom, lastRoom, load, sessionSave } from './storage.ts';
 import { t, translate } from './i18n.ts';
-import { renderThemeStrip } from './themes.ts';
 
 /**
  * Ana sayfa ("Vitrin"): solda başlık ve tek adımlık form (isteğe bağlı video linki + Oda oluştur), sağda temanın
@@ -67,14 +66,6 @@ export function renderHome(app: HTMLElement): void {
       <div><span class="strip-icon" aria-hidden="true">🎮</span><b data-i18n="home.s.games"></b><span class="muted" data-i18n="home.s.gamesText"></span></div>
     </section>
 
-    <section class="home-themes">
-      <div class="home-themes-head">
-        <h2 data-i18n="home.themes"></h2>
-        <p class="muted" data-i18n="home.themesText"></p>
-      </div>
-      <nav id="theme-strip" class="theme-strip all" role="radiogroup" aria-label="Theme"></nav>
-    </section>
-
     <section id="recent" class="recent home-recent" hidden>
       <h3 data-i18n="savedRooms"></h3>
       <ul id="recent-list"></ul>
@@ -123,7 +114,6 @@ export function renderHome(app: HTMLElement): void {
     </section>
   `;
   translate(app);
-  renderThemeStrip(app.querySelector<HTMLElement>('#theme-strip')!, { all: true });
   // On a phone the home page is an app start screen (0.9.92.5, pick 11A, phone.css `in-home`): create, join with a
   // code and the saved rooms; the introduction opens with "How does it work?".
   document.documentElement.classList.add('in-home');

@@ -27,7 +27,8 @@ export function roomMoreItems(deps: {
   hasItem: () => boolean;
   desktop: boolean;
 }): MoreItem[] {
-  const items: MoreItem[] = [{ icon: '🎮', label: 'more.games', run: deps.games }];
+  // Card 6g.2 (owner: "not in two places"): on a computer the rail's 🎮 is the one way to the games; phones have no rail.
+  const items: MoreItem[] = deps.desktop ? [] : [{ icon: '🎮', label: 'more.games', run: deps.games }];
   if (deps.isHost()) items.push({ icon: '⏰', label: 'more.filmTime', run: () => deps.openSettings('schedule') });
   items.push(
     { icon: '💾', label: 'more.save', run: () => deps.openSettings('save') },

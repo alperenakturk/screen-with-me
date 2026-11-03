@@ -87,6 +87,7 @@ import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
 import { setDebugRoom } from './debug-lab.ts';
+import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
 import type { createTvRoom } from './ui/tv-room.ts';
@@ -297,7 +298,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       <div class="stage">
         <form id="media-form" class="media-form">
           <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
-          <button class="btn media-search" value="search" data-i18n-title="searchButton"><span aria-hidden="true">🔍</span> <span data-i18n="searchButton"></span></button>
+          <button class="btn media-search" value="search" data-i18n-title="searchButton"></button>
           <button class="btn primary" value="enqueue" data-i18n="addToQueue"></button>
           <button class="btn" value="load" data-i18n="playNow"></button>
         </form>
@@ -2731,6 +2732,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
 
   const mediaForm = $<HTMLFormElement>('#media-form');
+  mediaForm.querySelector('.media-search')?.append(icon('search'));
   // Words instead of a link: search YouTube (the results open under the box).
   const search = createSearch(
     mediaForm,

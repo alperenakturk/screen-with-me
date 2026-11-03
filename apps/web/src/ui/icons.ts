@@ -31,7 +31,8 @@ export type IconName =
   | 'play'
   | 'pause'
   | 'volume'
-  | 'volume-off';
+  | 'volume-off'
+  | 'search';
 
 type Shape = [tag: 'path' | 'rect' | 'line' | 'circle', attrs: Record<string, string | number>];
 
@@ -78,6 +79,8 @@ const ICONS: Record<IconName, Shape[]> = {
   play: [['path', { d: 'M7 4.5v15l12.5-7.5z', fill: 'currentColor' }]],
   pause: [['rect', { x: 6, y: 4.5, width: 4, height: 15, rx: 1, fill: 'currentColor' }], ['rect', { x: 14, y: 4.5, width: 4, height: 15, rx: 1, fill: 'currentColor' }]],
   volume: [['path', { d: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4z' }], ['path', { d: 'M15.5 9a4.5 4.5 0 0 1 0 6' }], ['path', { d: 'M18 6.5a8 8 0 0 1 0 11' }]],
+  // Search in the link box (card 6g.6): a lens with a short handle.
+  search: [['circle', { cx: 10.5, cy: 10.5, r: 6.5 }], ['line', { x1: 15.3, y1: 15.3, x2: 20.5, y2: 20.5 }]],
   'volume-off': [['path', { d: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4z' }], ['line', { x1: 16, y1: 9.5, x2: 21, y2: 14.5 }], ['line', { x1: 21, y1: 9.5, x2: 16, y2: 14.5 }]],
   // Add a GIF / photo (custom emojis, chat pictures; 0.9.91.5 instead of 🖼️): a picture with a small plus.
   'image-add': [

@@ -24,6 +24,7 @@ const shown = (page, selector) =>
 (async () => {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
   const room = `more${Math.random().toString(36).slice(2, 7)}`;
+  const joinAvatars = [];
   async function enter(opts, name, at = room) {
     const ctx = await browser.newContext(opts);
     await ctx.addInitScript(() => {
@@ -33,6 +34,8 @@ const shown = (page, selector) =>
     });
     const page = await ctx.newPage();
     await page.goto(`${SITE}/r/${at}`);
+    await page.waitForSelector('#join-avatar img');
+    if (!joinAvatars.length) joinAvatars.push(await page.evaluate(() => document.querySelector('#join-avatar img')?.getAttribute('src') ?? ''));
     await page.fill('#name', name);
     await page.click('#name-form button.primary');
     await page.waitForSelector('.room');
@@ -41,6 +44,10 @@ const shown = (page, selector) =>
   }
   const page = await enter({ viewport: { width: 1024, height: 640 } }, 'Alex');
 
+  // Card 6g.3: someone who never chose an avatar gets a random one from the "Themed" page on the join card.
+  const THEMED = ['wizard', 'sorceress', 'warrior', 'elf', 'dwarf', 'janissary', 'horseman', 'veiled', 'director', 'diva', 'driver', 'captain', 'conductor'];
+  check(THEMED.some((id) => joinAvatars[0].endsWith(`/avatars/${id}.svg`)), 'join card: a fresh browser gets a themed avatar', joinAvatars[0]);
+
   // D: the fresh room's first view.
   for (const [sel, what] of [['#media-input', 'add a video'], ['#invite-btn', 'invite'], ['.tab[data-tab="chat"]', 'chat'], ['#voice-join', 'join voice']]) check(await shown(page, sel), `fresh room: ${what} is there`);
   for (const [sel, what] of [['#live-card', 'share'], ['.tab[data-tab="queue"]', 'the queue tab'], ['.tab[data-tab="people"]', 'the people tab'], ['#sync-test', 'the sync test button']]) check(!(await shown(page, sel)), `fresh room: no ${what} yet`);
@@ -48,7 +55,16 @@ const shown = (page, selector) =>
 
   // 6e (owner): the rail is there in the empty room; voice, cameras, games and emojis work, the video controls are
   // dimmed and only say "add a video first".
-  check(await shown(page, '#fs-dock'), 'fresh room: the rail is there');
+  // Card 6g.1 (owner: "it should not behave differently in each place"): like the rail with a video, it rests and
+  // comes when the mouse reaches the video's right edge.
+  await page.mouse.move(200, 300);
+  await page.waitForTimeout(3200);
+  check(!(await shown(page, '#fs-dock')), 'fresh room: the rail rests (not always out)');
+  const edge = await page.evaluate(() => { const r = document.querySelector('.player-wrap').getBoundingClientRect(); return { x: r.right - 20, y: r.top + r.height / 2 }; });
+  await page.mouse.move(edge.x - 200, edge.y);
+  await page.mouse.move(edge.x, edge.y, { steps: 5 });
+  await page.waitForTimeout(400);
+  check(await shown(page, '#fs-dock'), 'fresh room: the rail comes at the right edge');
   for (const [sel, what] of [['#dock-react', '😀'], ['#dock-game', '🎮'], ['#dock-mic', '🎙'], ['#dock-cam', '📷'], ['#dock-more', '⋯']]) check(await shown(page, sel), `fresh room: ${what} on the rail`);
   // 📌 is hidden until a video has a length (pins.ts); ⛶ stays, dimmed.
   const dim = await page.evaluate(() => { const b = document.querySelector('#dock-exit'); return { exit: b.getAttribute('aria-disabled') === 'true' && Number(getComputedStyle(b).opacity) < 0.5, pin: document.querySelector('#dock-pin').hidden }; });
@@ -80,7 +96,7 @@ const shown = (page, selector) =>
     return page.evaluate(() => [...document.querySelectorAll('.room-more-pop:not([hidden]) .room-more-item')].map((b) => b.textContent.trim()));
   };
   const list = await items();
-  check(JSON.stringify(list) === JSON.stringify(['🎮Games', '⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules', '💌Send feedback', '❔Help and FAQ']), '⋯ More lists games, film time, save, recap, shortcuts, sync test, rules, feedback (card 9), help (card 7)', JSON.stringify(list));
+  check(JSON.stringify(list) === JSON.stringify(['⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules', '💌Send feedback', '❔Help and FAQ']), '⋯ More lists film time, save, recap, shortcuts, sync test, rules, feedback (card 9), help (card 7); no Games on a computer (card 6g.2: the rail\'s 🎮)', JSON.stringify(list));
   const pop = await page.evaluate(() => { const r = document.querySelector('.room-more-pop').getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth; });
   check(pop, '1024×640: the menu fits the screen');
   const pick = async (label) => {
@@ -93,8 +109,6 @@ const shown = (page, selector) =>
     return !d.hidden && d.classList.contains('solo') && getComputedStyle(d.querySelector('.settings-nav')).display === 'none' && visible.join() === s;
   }, sec);
   const closeDialog = () => page.evaluate(() => document.querySelector('#settings-close')?.click());
-  await pick('Games');
-  check(await shown(page, '#game-menu:not([hidden]), .game-menu:not([hidden])'), '⋯ → Games opens the games hall');
   await page.keyboard.press('Escape');
   await page.mouse.click(5, 300);
   for (const [label, sec] of [['Film time', 'schedule'], ['Save the room', 'save'], ['Room rules', 'rules']]) {
@@ -129,6 +143,10 @@ const shown = (page, selector) =>
 
   // 6e: 🎙 on the rail of an empty room starts joining voice (another tab, so this page's dialogs stay out of the way).
   const voicePage = await enter({ viewport: { width: 1024, height: 640 } }, 'Sam', `${room}v`);
+  const vEdge = await voicePage.evaluate(() => { const r = document.querySelector('.player-wrap').getBoundingClientRect(); return { x: r.right - 20, y: r.top + r.height / 2 }; });
+  await voicePage.mouse.move(vEdge.x - 200, vEdge.y);
+  await voicePage.mouse.move(vEdge.x, vEdge.y, { steps: 5 });
+  await voicePage.waitForTimeout(400);
   await voicePage.click('#dock-mic');
   const voiced = await voicePage.waitForFunction(() => document.querySelector('.voice-check, .ip-notice') || document.querySelector('#voice-leave:not([hidden])'), null, { timeout: 5000 }).then(() => true, () => false);
   check(voiced, '🎙 on the rail of an empty room starts joining voice (check window or in voice)');
@@ -140,7 +158,7 @@ const shown = (page, selector) =>
   const tiles = await phone.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile .ph-tile-label')].map((n) => n.textContent.trim()));
   const shared = ['Games', 'Save the room', "Today's recap", 'Sync test', 'Room rules'];
   const order = shared.map((l) => tiles.indexOf(l));
-  check(order.every((i, n) => i >= 0 && (n === 0 || i > order[n - 1])), 'phone ⋯: the same items in the same order', JSON.stringify(tiles));
+  check(order.every((i, n) => i >= 0 && (n === 0 || i > order[n - 1])), 'phone ⋯: the same items in the same order, Games included (no rail on a phone)', JSON.stringify(tiles));
 
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ The room is simpler (⋯ More, fresh room)');
