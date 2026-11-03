@@ -96,11 +96,42 @@ const check = (ok, label, extra = '') => {
   check((await alex.textContent('#continue .continue-name')) === title, 'with the room\'s name', await alex.textContent('#continue .continue-name').catch(() => ''));
   await alex.waitForTimeout(800);
   check((await alex.textContent('#continue .continue-status')).includes('inside'), 'and who is inside now', await alex.textContent('#continue .continue-status'));
-  check((await alex.getAttribute('#continue a.btn', 'href')) === `/r/${room}`, 'its button goes back in');
+  check((await alex.getAttribute('#continue a.continue-link', 'href')) === `/r/${room}`, 'the line goes back in');
   await alex.click('#continue .icon-btn');
   await alex.reload();
   await alex.waitForTimeout(500);
   check(await alex.evaluate(() => document.querySelector('#continue')?.hidden === true), '✕ forgets it');
+
+  // Card 5 (owner's bug: a long title ran out of the card): one thin line above the title at every width, cut with an
+  // ellipsis, never over the room preview, the full text in its title.
+  {
+    const long = 'A very long video title '.repeat(9).slice(0, 200);
+    const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+    await ctx.addInitScript((id) => {
+      localStorage.setItem('lang', 'en');
+      localStorage.setItem('lastRoom', JSON.stringify({ id, name: 'Room '.repeat(40), at: Date.now() }));
+    }, room);
+    const page = await ctx.newPage();
+    await page.route('**/api/rooms/*/info', (route) => route.fulfill({ json: { saved: false, name: null, count: 2, people: ['Sam'], playing: long } }));
+    for (const [w, h] of [[1920, 1080], [1366, 768], [1024, 700], [390, 844]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.goto(SITE);
+      await page.waitForSelector('#continue:not([hidden])', { timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => {
+        const box = document.querySelector('#continue');
+        if (!box || box.hidden) return null;
+        const b = box.getBoundingClientRect();
+        const intro = document.querySelector('.home-intro').getBoundingClientRect();
+        const preview = document.querySelector('.home-preview')?.getBoundingClientRect();
+        const title = document.querySelector('.home-title').getBoundingClientRect();
+        const over = preview && preview.width > 0 && b.left < preview.right && preview.left < b.right && b.top < preview.bottom && preview.top < b.bottom;
+        return { h: Math.round(b.height), inIntro: b.left >= intro.left - 1 && b.right <= intro.right + 1, inScreen: b.right <= innerWidth, over: !!over, above: b.bottom <= title.top + 1, full: document.querySelector('#continue .continue-link').title.includes('A very long video title') };
+      });
+      check(!!r && r.h <= 40 && r.inIntro && r.inScreen && !r.over && r.above && r.full, `home ${w} px: a 200-character title stays one line above the title, inside its column`, JSON.stringify(r));
+    }
+    await ctx.close();
+  }
 
   check(errors.length === 0, 'no page errors', errors.join(' | '));
   await browser.close();

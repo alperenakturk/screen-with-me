@@ -17,9 +17,9 @@ export function renderHome(app: HTMLElement): void {
     <section class="home-hero">
       <div class="home-intro">
         <span class="home-pill" data-i18n="home.pill"></span>
+        <div id="continue" class="home-continue" hidden></div>
         <h1 class="home-title" data-i18n="home.title"></h1>
         <p class="home-lead" data-i18n="home.lead"></p>
-        <div id="continue" class="home-continue card" hidden></div>
         <form id="start-form" class="start-form">
           <input id="start-link" autocomplete="off" data-i18n-placeholder="home.linkPlaceholder" data-i18n-title="home.linkPlaceholder" />
           <button class="btn primary big" data-i18n="createRoom"></button>
@@ -186,7 +186,9 @@ const CONTINUE_MS = 24 * 60 * 60 * 1000;
 
 /**
  * "Continue where you left off" (0.9.93.2, owner): the last room this browser was in, with its name, who is there and
- * what is on now (`/api/rooms/:id/info`), one button back in; ✕ forgets it. Saved by the room (`lastRoom`).
+ * what is on now (`/api/rooms/:id/info`); ✕ forgets it. Saved by the room (`lastRoom`). Card 5 (owner's bug: a long
+ * title ran out of the card): one thin line above the title, the whole line a link back in, cut with an ellipsis, the
+ * full text in `title`.
  */
 function renderContinue(app: HTMLElement): void {
   const box = app.querySelector<HTMLElement>('#continue')!;
@@ -194,18 +196,16 @@ function renderContinue(app: HTMLElement): void {
   if (!last) return void (box.hidden = true);
   const fresh = Date.now() - last.at < CONTINUE_MS;
   const name = el('b', { class: 'continue-name' }, last.name ?? friendlyRoomName(last.id));
-  const status = el('span', { class: 'muted small continue-status' }, ago(last.at));
-  const go = el('a', { class: 'btn primary', href: `/r/${last.id}` }, t('home.continueGo'));
+  const status = el('span', { class: 'continue-status' }, ago(last.at));
+  const go = el('a', { class: 'continue-link', href: `/r/${last.id}` }, el('span', { class: 'continue-label' }, `↩ ${t('home.continue')}:`), ' ', name, el('span', { class: 'continue-sep' }, ' · '), status);
+  const sync = () => (go.title = `${t('home.continueGo')}: ${go.textContent?.replace(/^↩ /, '') ?? ''}`);
+  sync();
   const forget = el('button', { type: 'button', class: 'icon-btn', title: t('close'), 'aria-label': t('close') }, '✕');
   forget.addEventListener('click', () => {
     forgetLastRoom();
     box.hidden = true;
   });
-  box.replaceChildren(
-    el('div', { class: 'continue-text' }, el('span', { class: 'muted small' }, `↩ ${t('home.continue')}`), name, status),
-    go,
-    forget,
-  );
+  box.replaceChildren(go, forget);
   box.hidden = !fresh;
   void fetch(`/api/rooms/${last.id}/info`)
     .then((r) => (r.ok ? (r.json() as Promise<{ saved: boolean; name: string | null; count?: number; playing?: string | null }>) : null))
@@ -216,6 +216,7 @@ function renderContinue(app: HTMLElement): void {
       const parts = [info.count ? `🟢 ${t('onlineNow', { n: info.count })}` : ago(last.at)];
       if (info.playing) parts.push(t('home.continueNow', { title: info.playing }));
       status.textContent = parts.join(' · ');
+      sync();
       box.hidden = false;
     })
     .catch(() => {});
