@@ -22,9 +22,9 @@ const shown = (page, selector) =>
   }, selector);
 
 (async () => {
-  const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
+  const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
   const room = `more${Math.random().toString(36).slice(2, 7)}`;
-  async function enter(opts, name) {
+  async function enter(opts, name, at = room) {
     const ctx = await browser.newContext(opts);
     await ctx.addInitScript(() => {
       localStorage.setItem('tipsSeen', '1');
@@ -32,7 +32,7 @@ const shown = (page, selector) =>
       localStorage.setItem('opt:autoInvite', '0');
     });
     const page = await ctx.newPage();
-    await page.goto(`${SITE}/r/${room}`);
+    await page.goto(`${SITE}/r/${at}`);
     await page.fill('#name', name);
     await page.click('#name-form button.primary');
     await page.waitForSelector('.room');
@@ -43,8 +43,35 @@ const shown = (page, selector) =>
 
   // D: the fresh room's first view.
   for (const [sel, what] of [['#media-input', 'add a video'], ['#invite-btn', 'invite'], ['.tab[data-tab="chat"]', 'chat'], ['#voice-join', 'join voice']]) check(await shown(page, sel), `fresh room: ${what} is there`);
-  for (const [sel, what] of [['#fs-dock', 'the rail'], ['#live-card', 'share'], ['.tab[data-tab="queue"]', 'the queue tab'], ['.tab[data-tab="people"]', 'the people tab'], ['#sync-test', 'the sync test button']]) check(!(await shown(page, sel)), `fresh room: no ${what} yet`);
+  for (const [sel, what] of [['#live-card', 'share'], ['.tab[data-tab="queue"]', 'the queue tab'], ['.tab[data-tab="people"]', 'the people tab'], ['#sync-test', 'the sync test button']]) check(!(await shown(page, sel)), `fresh room: no ${what} yet`);
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '1024×640: no sideways scrolling');
+
+  // 6e (owner): the rail is there in the empty room; voice, cameras, games and emojis work, the video controls are
+  // dimmed and only say "add a video first".
+  check(await shown(page, '#fs-dock'), 'fresh room: the rail is there');
+  for (const [sel, what] of [['#dock-react', '😀'], ['#dock-game', '🎮'], ['#dock-mic', '🎙'], ['#dock-cam', '📷'], ['#dock-more', '⋯']]) check(await shown(page, sel), `fresh room: ${what} on the rail`);
+  // 📌 is hidden until a video has a length (pins.ts); ⛶ stays, dimmed.
+  const dim = await page.evaluate(() => { const b = document.querySelector('#dock-exit'); return { exit: b.getAttribute('aria-disabled') === 'true' && Number(getComputedStyle(b).opacity) < 0.5, pin: document.querySelector('#dock-pin').hidden }; });
+  check(dim.exit && dim.pin, 'fresh room: ⛶ is dimmed, no 📌 yet', JSON.stringify(dim));
+  const rail = await page.evaluate(() => { const d = document.querySelector('#fs-dock').getBoundingClientRect(); const v = document.querySelector('.player-wrap').getBoundingClientRect(); return { d: d.left, v: v.right }; });
+  check(rail.d >= rail.v - 80, 'fresh room: the rail sits at the video\'s right edge', JSON.stringify(rail));
+  await page.hover('#dock-react');
+  await page.click('#dock-exit', { force: true }); // aria-disabled: Playwright won't press it otherwise; people can
+  await page.waitForTimeout(150);
+  const exitHint = await page.evaluate(() => ({ hint: [...document.querySelectorAll('.hint-bubble')].map((b) => b.textContent), fs: !!document.fullscreenElement || document.querySelector('#theater').classList.contains('fake-fs') }));
+  check(exitHint.hint.includes('Add a video first') && !exitHint.fs, '⛶ says "add a video first", no fullscreen', JSON.stringify(exitHint));
+  await page.click('#dock-more');
+  await page.waitForTimeout(150);
+  await page.click('#dock-more-pop .dock-speed-opt[data-rate="2"]', { force: true });
+  await page.waitForTimeout(150);
+  const speed = await page.evaluate(() => ({ hint: [...document.querySelectorAll('.hint-bubble')].some((b) => b.textContent === 'Add a video first'), on: document.querySelector('.dock-speed-opt[data-rate="2"]').classList.contains('on') }));
+  check(speed.hint && !speed.on, 'speed 2× says "add a video first" and changes nothing', JSON.stringify(speed));
+  await page.keyboard.press('Escape');
+  await page.click('#dock-game');
+  await page.waitForTimeout(300);
+  check(await shown(page, '#game-menu'), '🎮 on the rail opens the games');
+  await page.click('#dock-game');
+  await page.waitForTimeout(150);
 
   // C: "⋯ More" items, each opening from there.
   const items = async () => {
@@ -99,6 +126,12 @@ const shown = (page, selector) =>
   const after = await items();
   check(after.includes('🧪Sync test') && (await page.evaluate(() => [...document.querySelectorAll('.room-more-item')].find((b) => b.textContent.includes('Sync test'))?.getAttribute('aria-disabled') === 'true')), 'with a video the sync test is dimmed (it would replace the video)');
   await page.keyboard.press('Escape');
+
+  // 6e: 🎙 on the rail of an empty room starts joining voice (another tab, so this page's dialogs stay out of the way).
+  const voicePage = await enter({ viewport: { width: 1024, height: 640 } }, 'Sam', `${room}v`);
+  await voicePage.click('#dock-mic');
+  const voiced = await voicePage.waitForFunction(() => document.querySelector('.voice-check, .ip-notice') || document.querySelector('#voice-leave:not([hidden])'), null, { timeout: 5000 }).then(() => true, () => false);
+  check(voiced, '🎙 on the rail of an empty room starts joining voice (check window or in voice)');
 
   // Phone: ⋯ lists the same things in the same order (after the phone's own invite / queue / people).
   const phone = await enter(devices['iPhone 13'], 'Pat');

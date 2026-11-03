@@ -183,7 +183,7 @@ function mascotTree(o: MascotOptions): SvgNode {
     for (const cx of [38, 47]) {
       if (mood === 'happy' || mood === 'waiting') {
         const q = mood === 'happy' ? 28 : 32.6;
-        face.push(['path', { d: `M${cx - 2.6} 30.5 Q${cx} ${q} ${cx + 2.6} 30.5`, fill: 'none', stroke: MASCOT_INK, 'stroke-width': 1.8, 'stroke-linecap': 'round' }]);
+        face.push(['path', { d: `M${cx - 2.6} 30.5 Q${cx} ${q} ${cx + 2.6} 30.5`, fill: 'none', stroke: MASCOT_INK, 'stroke-width': 1.6, 'stroke-linecap': 'round' }]);
       } else {
         face.push(['ellipse', { cx: cx + shift, cy: 30, rx: 2.8, ry: 3.9, fill: MASCOT_INK }]);
         face.push(['circle', { cx: cx - 0.8 + shift, cy: 28.52, r: 0.84, fill: '#fff', opacity: 0.9 }]);

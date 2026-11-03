@@ -85,9 +85,12 @@ const chunked = new ReadableStream({
   },
 });
 const chunkedRes = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', headers: origin, body: chunked, duplex: 'half' }).catch(() => null);
-ok(chunkedRes !== null && chunkedRes.status === 411, 'A chunked unsave body (no Content-Length) is refused', chunkedRes?.status);
+// Locally the body arrives chunked (no length: 411); through Cloudflare's edge it arrives buffered with its real length
+// (4 MB: 413). Either way the Worker refuses it before the room object.
+console.log(`chunked unsave answered ${chunkedRes?.status}`);
+ok(chunkedRes !== null && [411, 413].includes(chunkedRes.status), 'A chunked unsave body (no Content-Length) is refused');
 const bigRes = await fetch(`${http}/api/rooms/${room}/unsave`, { method: 'POST', headers: origin, body: JSON.stringify({ cid: 'saveAli12345', pad: 'x'.repeat(4000) }) });
-ok(bigRes.status === 413, 'An unsave body above 1 KB is refused', bigRes.status);
+ok(bigRes.status === 413, 'An unsave body above 1 KB is refused');
 const after = await (await fetch(`${http}/api/rooms/${room}/info`)).json();
 ok(after.online === 2, 'The room still answers after the refused bodies', JSON.stringify(after));
 

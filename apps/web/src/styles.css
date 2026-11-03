@@ -388,16 +388,6 @@ body::before {
   --mascot-size: 110px;
 }
 
-/* Card 6c: the home page's preview and the empty room show the brand's mascot N1 Glowbeam (public/mascot*.svg; the
-   empty room with its "waiting" face). The costumed mascots stay in the theme pickers until their own card. */
-.theme-mascot {
-  --mascot: url('/mascot.svg');
-}
-
-.empty .theme-mascot {
-  --mascot: url('/mascot-waiting.svg');
-}
-
 @media (prefers-reduced-motion: reduce) {
   .theme-mascot {
     animation: none;
@@ -11999,8 +11989,8 @@ html.shell .dock-more-item[data-press='#side-toggle'] {
   display: none;
 }
 
-/* Nothing playing: what needs a video is dimmed (📌, ⛶). */
-.theater.rail-bare .fs-dock .dock-btn:disabled {
+/* Nothing playing: what needs a video is dimmed (📌, ⛶, speed, sync, next); pressing it says "add a video first". */
+.theater.rail-bare .fs-dock [aria-disabled='true'] {
   opacity: 0.35;
   cursor: default;
 }
@@ -12764,12 +12754,8 @@ html.phone .media-search span:last-child {
 
 /* A fresh room on a computer (nothing has played yet): add a video, invite, chat and join voice; the rest comes for
    everyone with the first video, or from "⋯ More". */
-html:not(.phone) .room.fresh :is(.fs-dock, #live-card, .tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
+html:not(.phone) .room.fresh :is(#live-card, .tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
   display: none !important;
-}
-
-html:not(.phone) .room.fresh .theater.rail-bare :is(.player, .fs-catcher, .empty, .overlay) {
-  right: 0 !important;
 }
 
 /* The games hall under "⋯ More" (card 6): an invisible anchor below the top bar's ⋯. */

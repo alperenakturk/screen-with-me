@@ -4,6 +4,7 @@ import { formatTime } from '../media-info.ts';
 import { canElementFullscreen, hasMouse, isPhoneLayout, isTouch, lockLandscape, onTurn, unlockOrientation } from '../device.ts';
 import { t } from '../i18n.ts';
 import { load, postToExtension, save } from '../storage.ts';
+import { flashHint } from './hint.ts';
 import { setIcon } from './icons.ts';
 import { isTyping } from './reactions.ts';
 
@@ -82,6 +83,21 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   const dockMore = q<HTMLButtonElement>('#dock-more');
   const dockGame = q<HTMLButtonElement>('#dock-game');
   dockMore.addEventListener('click', () => dockLabels());
+  // Card 6e (owner): the empty room has the rail too, so voice, cameras, games and emojis work before any video; the
+  // video controls stay on it dimmed and say "add a video first" when pressed (capture phase: before their own handler).
+  const NEEDS_VIDEO = '#dock-pin, #dock-exit, #dock-play, #dock-speed, #dock-skip, .dock-speed-opt, .dock-more-item[data-press="#sync-all"], .dock-more-item[data-press="#skip"]';
+  dock.addEventListener(
+    'click',
+    (event) => {
+      if (!theater.classList.contains('rail-bare')) return;
+      const button = (event.target as Element | null)?.closest<HTMLButtonElement>('button');
+      if (!button?.matches(NEEDS_VIDEO) || (button === dockExit && isActive())) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      flashHint(button, t('rail.needVideo'));
+    },
+    true,
+  );
   for (const item of q('#dock-more-pop').querySelectorAll<HTMLButtonElement>('[data-press]')) {
     item.addEventListener('click', () => {
       openPop(null);
@@ -151,8 +167,11 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // YouTube in fullscreen on a computer (card 2a, owner's D): a column beside the player holds the notes, cameras and
     // the newest messages, so nothing of ours sits over the player by itself.
     theater.classList.toggle('yt-fs', docked && isActive() && !shell && theater.classList.contains('yt-rail') && !document.documentElement.classList.contains('phone'));
-    q<HTMLButtonElement>('#dock-pin').disabled = !player;
-    dockExit.disabled = !player && !isActive();
+    // Without a video these only explain themselves (see NEEDS_VIDEO): dimmed, announced as unavailable, still pressable.
+    for (const button of dock.querySelectorAll<HTMLElement>(NEEDS_VIDEO)) {
+      if (!player && !(button === dockExit && isActive())) button.setAttribute('aria-disabled', 'true');
+      else button.removeAttribute('aria-disabled');
+    }
     theater.classList.toggle('own-dock', docked && own);
     dockPlay.hidden = !own;
     dockVol.hidden = !own || !hasVolume(getPlayer());
@@ -247,7 +266,10 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   const keepChat = () => openButton === dockChat && dockChatInput.value.trim() !== '';
   function closeRailWindows(): void {
     if (keepChat()) return;
-    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    // Only when one of the rail's own windows is open: a window opened elsewhere since (⋯ More → Games in the top bar,
+    // 450 ms after the mouse left the rail) must not get the "outside press" (card 6e harness found it).
+    const railWindowOpen = openButton !== null || dock.querySelector('.game-menu:not([hidden]), .react-tray:not([hidden])') !== null;
+    if (railWindowOpen) document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     letGoOfRail();
   }
   /**

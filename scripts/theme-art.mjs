@@ -6,12 +6,7 @@
 //
 // Sahnelerde ortası (içeriğin durduğu yer) boş bırakılır; süsler kenarlarda.
 
-import { mkdirSync, writeFileSync } from 'node:fs';
-// The costumed theme mascots still wear the old purple face (before the Sidelit logo, card 6c); turning them into the
-// new mascot N1 Glowbeam is a follow-up card. Its colours live here so a re-run keeps them.
-const LOGO_FROM = '#8f74ff';
-const LOGO_TO = '#5b3cf0';
-const LOGO_INK = '#1f1450';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const OUT = new URL('../apps/web/public/themes/', import.meta.url);
 mkdirSync(OUT, { recursive: true });
@@ -128,26 +123,6 @@ function scene() {
 /** Arkadan görülen, yüzsüz seyirci başı ve omuzları; (x, y) omuz hizası. */
 function head(x, y, r, fill, rim) {
   return `<path d="M${f(x - r * 2.1)} ${f(y + r)} Q${f(x - r * 2)} ${f(y - r * 0.6)} ${f(x)} ${f(y - r * 0.7)} Q${f(x + r * 2)} ${f(y - r * 0.6)} ${f(x + r * 2.1)} ${f(y + r)}Z" fill="${fill}"/><circle cx="${f(x)}" cy="${f(y - r * 1.5)}" r="${f(r)}" fill="${fill}"${rim ? ` stroke="${rim}" stroke-width="1.4" stroke-opacity=".6"` : ''}/>`;
-}
-
-// ---- Maskot (logo): 64'lük ızgarada, istenen yere ve boyuta ----
-
-const LOGO_DEFS = `<linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${LOGO_FROM}"/><stop offset="1" stop-color="${LOGO_TO}"/></linearGradient>`;
-
-function eye(cx, look = [2.5, -1.5]) {
-  const px = cx + look[0];
-  const py = 25.5 + look[1];
-  return `<ellipse cx="${cx}" cy="25.5" rx="8.5" ry="11" fill="#fff"/><circle cx="${px}" cy="${py}" r="4.8" fill="${LOGO_INK}"/><circle cx="${f(px + 1.55)}" cy="${f(py - 1.6)}" r="1.6" fill="#fff"/>`;
-}
-
-/** Logo; `face: false` ise gözleri çizme (gözlüklü maskot kendi çizer). */
-function logo(x, y, size, { face = true, look, mouth = true } = {}) {
-  const k = size / 64;
-  return `<g transform="translate(${f(x)} ${f(y)}) scale(${f(k * 1000) / 1000})">
-<rect width="64" height="64" rx="16" fill="url(#lg)"/>
-${face ? eye(22, look) + eye(42, look) : ''}
-${mouth ? '<path d="M28.5 38.5 L38 44 L28.5 49.5 Z" fill="#fff" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>' : ''}
-</g>`;
 }
 
 // =====================================================================
@@ -409,45 +384,6 @@ function lokumPattern() {
 </g>`);
 }
 
-function lokumMascot() {
-  // Padişah Sidelit: kocaman beyaz kavuk (önünde mücevherli sorguç ve tüyler), burma bıyık, kürk yakalı
-  // kırmızı kaftan (altın kaytan ilikler), yanında lale. (Eski renkli şeritli sarık "Arap" gibi duruyordu.)
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}
-<linearGradient id="kaftan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8322a"/><stop offset="1" stop-color="#7c1418"/></linearGradient>
-<linearGradient id="kavuk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3dccb"/></linearGradient>
-<linearGradient id="kurk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3ead8"/><stop offset="1" stop-color="#cbbd9e"/></linearGradient>
-</defs>
-<ellipse cx="120" cy="231" rx="84" ry="7" fill="#000" opacity=".25"/>
-<!-- Kaftan: kırmızı, altın kaytan ilikler; kürk yaka iki yandan iner -->
-<path d="M54 178 Q38 208 36 234 H204 Q202 208 186 178Z" fill="url(#kaftan)"/>
-<path d="M66 196 l4 6 l-4 6 l-4 -6Z M174 196 l4 6 l-4 6 l-4 -6Z M60 220 l4 6 l-4 6 l-4 -6Z M180 220 l4 6 l-4 6 l-4 -6Z" fill="#e6b84e" opacity=".7"/>
-${[194, 206, 218].map((y) => `<path d="M104 ${y} H136" stroke="#e6b84e" stroke-width="4" stroke-linecap="round"/><circle cx="104" cy="${y}" r="3.4" fill="#f6d27a"/><circle cx="136" cy="${y}" r="3.4" fill="#f6d27a"/>`).join('')}
-<path d="M70 180 Q84 182 98 186 L92 234 H62 Q64 204 70 180Z M170 180 Q156 182 142 186 L148 234 H178 Q176 204 170 180Z" fill="url(#kurk)"/>
-<path d="M74 196 l3 4 M80 210 l3 4 M72 222 l3 4 M84 226 l3 4 M166 196 l-3 4 M160 210 l-3 4 M168 222 l-3 4 M156 226 l-3 4" stroke="#a8977a" stroke-width="2" stroke-linecap="round"/>
-${logo(72, 98, 96, { look: [2, 0] })}
-<!-- Burma bıyık (ağzın hemen üstünde) -->
-<path d="M120 152 C112 148 102 148 96 152 C91 155 88 152 89 148 C86 154 92 160 100 157 C108 155 114 155 120 157 C126 155 132 155 140 157 C148 160 154 154 151 148 C152 152 149 155 144 152 C138 148 128 148 120 152Z" fill="#2b1a10"/>
-<!-- Kavuk: yuvarlak, sarık kumaşı çapraz kıvrımlı; tepede kırmızı külah görünür -->
-<path d="M108 36 Q120 22 132 36Z" fill="#c8322a"/>
-<path d="M60 112 C48 70 76 34 120 33 C164 34 192 70 180 112 Q120 126 60 112Z" fill="url(#kavuk)" stroke="#cfc6b2" stroke-width="2"/>
-<path d="M64 96 C92 66 140 50 172 58 M60 82 C86 52 124 40 150 40 M70 108 C102 84 150 72 178 88 M98 116 C126 100 160 98 180 106" stroke="#d4cbb6" stroke-width="3" fill="none" stroke-linecap="round"/>
-<!-- Sorguç: altın broş, zümrüt, yakut damlalar; arkaya kıvrılan tüyler -->
-<path d="M122 76 C116 52 122 26 140 8 C132 30 130 52 128 76Z" fill="#1d1a2a"/>
-<path d="M128 76 C130 50 142 30 162 18 C148 38 140 56 134 78Z" fill="#f4efe4" stroke="#cfc6b2" stroke-width="1.5"/>
-<path d="M116 78 C108 58 108 38 118 22 C116 42 118 60 122 78Z" fill="#f4efe4" stroke="#cfc6b2" stroke-width="1.5"/>
-<circle cx="122" cy="86" r="13" fill="#e6b84e" stroke="#a87a22" stroke-width="2"/>
-<circle cx="122" cy="86" r="7" fill="#1f9a6a" stroke="#0f5a3c" stroke-width="1.5"/>
-<circle cx="119.5" cy="83.5" r="2" fill="#c9f5df"/>
-<path d="M112 98 q-2 6 0 9 q2 -3 0 -9Z M122 100 q-2.5 7 0 10 q2.5 -3 0 -10Z M132 98 q-2 6 0 9 q2 -3 0 -9Z" fill="#d22a3a" stroke="#8a1424" stroke-width="1"/>
-<!-- Lale (sağda): sapı, iki yaprağı, üç taç yapraklı kırmızı çiçek -->
-<path d="M200 230 C200 206 198 186 196 168" stroke="#3f8a4a" stroke-width="4" fill="none" stroke-linecap="round"/>
-<path d="M199 222 C186 214 180 200 182 188 C190 198 196 208 199 222Z M200 214 C212 204 218 192 216 180 C208 190 202 200 200 214Z" fill="#4f9c58"/>
-<path d="M196 170 C184 168 178 156 180 140 C186 146 190 148 192 140 C194 134 198 134 200 140 C202 148 206 146 212 140 C214 156 208 168 196 170Z" fill="#d8302e" stroke="#8a1424" stroke-width="2" stroke-linejoin="round"/>
-<path d="M196 168 C192 158 192 148 196 140" stroke="#ff8a7a" stroke-width="2" fill="none" opacity=".7"/>
-`);
-}
-
 // =====================================================================
 // BİNBİR GECE: ay ışığında çöl, kumullar, kervan, vaha, uzak saray
 // =====================================================================
@@ -533,26 +469,6 @@ ${sand}
 <ellipse cx="150" cy="790" rx="120" ry="16" fill="url(#pond)"/>
 <line x1="120" y1="786" x2="180" y2="786" stroke="#fff1c9" stroke-width="2.5" opacity=".6" stroke-linecap="round"/>
 ${palm(70, 792, 1)}${palm(185, 796, 0.8)}${palm(250, 794, 0.6)}
-`);
-}
-
-function binbirMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 3)}
-<linearGradient id="carpet" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a1f4b"/><stop offset="1" stop-color="#b8325a"/></linearGradient>
-</defs>
-<!-- Uçan halı -->
-<path d="M18 196 Q60 180 120 196 Q180 212 222 190 L210 220 Q168 238 120 222 Q66 206 30 222Z" fill="url(#carpet)" stroke="#e8b85c" stroke-width="3" stroke-linejoin="round"/>
-<path d="M40 204 Q80 194 120 206 Q164 218 198 204" stroke="#e8b85c" stroke-width="2" fill="none" stroke-dasharray="6 5"/>
-<path d="M14 198 l-8 4 M16 206 l-9 3 M26 222 l-6 7 M34 224 l-4 8 M214 192 l9 -2 M210 202 l9 0 M206 222 l6 6 M198 226 l4 8" stroke="#e8b85c" stroke-width="2.5" stroke-linecap="round"/>
-${logo(76, 108, 88, { look: [2, -1] })}
-<!-- Sarık -->
-<path d="M70 118 Q72 70 120 66 Q168 70 170 118 Q152 102 120 104 Q88 102 70 118Z" fill="#f4efe4" stroke="#d6cdb8" stroke-width="3"/>
-<path d="M78 104 Q120 84 162 104 M82 92 Q120 72 158 92" stroke="#d6cdb8" stroke-width="3" fill="none"/>
-<circle cx="120" cy="96" r="8" fill="#2fb5a8" stroke="#e8b85c" stroke-width="3"/>
-<path d="M124 90 Q136 56 150 50 Q140 70 130 92Z" fill="#ff8fb8"/>
-<!-- Parıltı izi -->
-${[[226, 172, 7], [236, 150, 4], [206, 160, 4], [12, 176, 5]].map(([x, y, s]) => `<g filter="url(#g)">${sparkle(x, y, s, '#ffe8a8')}</g>`).join('')}
 `);
 }
 
@@ -650,28 +566,6 @@ ${grain(0.24)}
 `);
 }
 
-function sinemaMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 4)}
-<linearGradient id="beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff1c8" stop-opacity=".55"/><stop offset="1" stop-color="#fff1c8" stop-opacity="0"/></linearGradient>
-</defs>
-<path d="M30 60 L240 10 L240 150Z" fill="url(#beam)"/>
-<!-- Film makarası -->
-<g transform="translate(46 186)">
-  <circle r="38" fill="#1c2238" stroke="#d4a23e" stroke-width="5"/>
-  ${[0, 1, 2, 3, 4].map((i) => { const a = rad(i * 72 - 90); return `<circle cx="${f(Math.cos(a) * 20)}" cy="${f(Math.sin(a) * 20)}" r="9" fill="#0b0e1c"/>`; }).join('')}
-  <circle r="6" fill="#d4a23e"/>
-</g>
-<path d="M78 206 Q120 226 170 214 Q206 206 230 222" stroke="#141826" stroke-width="18" fill="none"/>
-<path d="M78 206 Q120 226 170 214 Q206 206 230 222" stroke="#d4a23e" stroke-width="12" stroke-dasharray="3 5" fill="none" opacity=".8"/>
-<path d="M78 206 Q120 226 170 214 Q206 206 230 222" stroke="#1d2236" stroke-width="6" fill="none"/>
-${logo(76, 84, 96, { look: [2, -1] })}
-<!-- Bere (eğik) -->
-<path d="M72 102 Q66 70 104 60 Q150 50 170 78 Q176 90 166 96 Q120 84 72 102Z" fill="#b8283a" stroke="#7a1020" stroke-width="3" stroke-linejoin="round"/>
-<path d="M120 58 l4 -12" stroke="#7a1020" stroke-width="5" stroke-linecap="round"/>
-`);
-}
-
 // =====================================================================
 // OPERA GECESİ (orta): iki yanda üç kat altın yaldızlı localar, ortada koyu
 //    kadife perde ve kristal avize, en altta orkestra çukuru ışıkları
@@ -750,28 +644,6 @@ ${drops}
 <rect x="0" y="800" width="${W}" height="5" fill="url(#gold)"/>
 ${pit}
 ${grain(0.22)}
-`);
-}
-
-function operaMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 3)}
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6a6"/><stop offset="1" stop-color="#b8862f"/></linearGradient>
-</defs>
-<path d="M0 208 Q60 196 120 210 Q180 196 240 208 V240 H0Z" fill="#7a1a28"/>
-<path d="M0 208 Q60 196 120 210 Q180 196 240 208" stroke="#d9a94a" stroke-width="4" fill="none"/>
-${logo(70, 96, 100, { look: [2, -1] })}
-<!-- Tüylü altın taç bandı -->
-<rect x="70" y="100" width="100" height="10" rx="5" fill="url(#gold)"/>
-<circle cx="146" cy="104" r="9" fill="#2fb5a8" stroke="url(#gold)" stroke-width="3"/>
-<path d="M150 98 Q160 52 196 34 Q182 64 172 92 Q188 72 206 68 Q186 90 160 104Z" fill="#3ab0a8" stroke="#1f6e68" stroke-width="2" stroke-linejoin="round"/>
-<!-- Sapli opera dürbünü -->
-<g transform="translate(46 168) rotate(-14)">
-  <circle cx="-12" cy="0" r="11" fill="#1a2a2c" stroke="url(#gold)" stroke-width="4"/><circle cx="14" cy="0" r="11" fill="#1a2a2c" stroke="url(#gold)" stroke-width="4"/>
-  <rect x="-2" y="-3" width="4" height="6" fill="url(#gold)"/><line x1="14" y1="11" x2="22" y2="48" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="-15" cy="-3" r="3" fill="#fff" opacity=".6"/><circle cx="11" cy="-3" r="3" fill="#fff" opacity=".6"/>
-</g>
-${sparkle(206, 150, 7, '#ffe6a6')}${sparkle(30, 70, 6, '#ffe6a6')}
 `);
 }
 
@@ -857,29 +729,6 @@ ${grain(0.24)}
 `);
 }
 
-function acikhavaMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 4)}
-<linearGradient id="car" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a6b"/><stop offset="1" stop-color="#b8322a"/></linearGradient>
-</defs>
-${sparkle(30, 40, 7, '#fff2d0')}${sparkle(210, 60, 5, '#fff2d0')}
-${logo(70, 70, 100, { face: false })}
-<!-- Kırmızı-mavi 3B gözlük -->
-<g transform="translate(70 70) scale(1.5625)">
-  <path d="M4 18 H60" stroke="#f4efe4" stroke-width="3"/>
-  <rect x="7" y="15" width="22" height="16" rx="3" fill="#ff3b4a" fill-opacity=".85" stroke="#f4efe4" stroke-width="2.5"/>
-  <rect x="35" y="15" width="22" height="16" rx="3" fill="#2ec5e8" fill-opacity=".85" stroke="#f4efe4" stroke-width="2.5"/>
-</g>
-<!-- Arabanın önü: logo arabada oturuyor -->
-<path d="M14 196 Q16 160 50 156 L190 156 Q224 160 226 196 V222 H14Z" fill="url(#car)"/>
-<path d="M40 156 L64 132 H176 L200 156" fill="#9fd8ff" fill-opacity=".35" stroke="#f4efe4" stroke-width="3"/>
-<rect x="70" y="190" width="100" height="18" rx="6" fill="#3a1010"/>
-${[82, 98, 114, 130, 146].map((x) => `<rect x="${x}" y="193" width="10" height="12" rx="2" fill="#c9c4d8"/>`).join('')}
-<circle cx="40" cy="190" r="12" fill="#fff2d0" filter="url(#g)"/><circle cx="200" cy="190" r="12" fill="#fff2d0" filter="url(#g)"/>
-<rect x="10" y="220" width="220" height="8" rx="4" fill="#c9c4d8"/>
-`);
-}
-
 // =====================================================================
 // TRANSATLANTİK (şafak, aydınlık): sağda yükselen dev gemi burnu, kırmızı
 //    bacalar, solda ufuktan doğan güneş ve ışınlar, kâğıt bulutlar, martılar
@@ -955,26 +804,6 @@ ${sea}
 ${sail(640, 742, 0.9)}${sail(980, 744, 0.7)}
 ${ship}
 ${grain(0.2)}
-`);
-}
-
-function gemiMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}</defs>
-<path d="M0 214 Q30 202 60 214 T120 214 T180 214 T240 214 V240 H0Z" fill="#3a8290"/>
-<path d="M0 226 Q30 214 60 226 T120 226 T180 226 T240 226 V240 H0Z" fill="#143843"/>
-<path d="M200 60 l-12 -6 M206 70 l-14 0" stroke="#24364a" stroke-width="2.5" stroke-linecap="round"/>
-${logo(70, 100, 100, { look: [2, -1] })}
-<!-- Kaptan şapkası -->
-<path d="M70 108 Q66 72 120 66 Q176 70 172 104 Q152 96 120 98 Q88 98 70 108Z" fill="#fbf8f2" stroke="#d8d2c4" stroke-width="2.5"/>
-<path d="M72 104 Q120 92 170 102 L170 112 Q120 102 72 114Z" fill="#141a22"/>
-<path d="M76 116 Q120 102 166 112 Q150 126 120 124 Q92 124 76 116Z" fill="#1e2630"/>
-<g transform="translate(120 86)" fill="none" stroke="#d9a94a" stroke-width="2.5"><circle cy="-6" r="2.5"/><line y1="-3" y2="7"/><line x1="-5" y1="0" x2="5" y2="0"/><path d="M-6 4 Q0 10 6 4"/></g>
-<!-- Can simidi -->
-<g transform="translate(196 186)">
-  <circle r="28" fill="none" stroke="#f4efe4" stroke-width="14"/>
-  <circle r="28" fill="none" stroke="#e8584a" stroke-width="14" stroke-dasharray="22 22"/>
-</g>
 `);
 }
 
@@ -1098,141 +927,33 @@ ${grain(0.24)}
 `);
 }
 
-function trenMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 5)}
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2d68c"/><stop offset="1" stop-color="#a8822c"/></linearGradient>
-</defs>
-${sparkle(34, 44, 7, '#fff2d0')}${sparkle(208, 30, 5, '#fff2d0')}
-<rect x="0" y="222" width="240" height="6" fill="#6a7090"/>${[10, 50, 90, 130, 170, 210].map((x) => `<rect x="${x}" y="228" width="22" height="6" fill="#2a3050"/>`).join('')}
-${logo(70, 100, 100, { look: [2, -1] })}
-<!-- Kondüktör şapkası -->
-<path d="M76 108 V80 Q120 66 164 80 V108Z" fill="#1e2a4a" stroke="#141a32" stroke-width="2.5"/>
-<rect x="76" y="94" width="88" height="10" fill="url(#gold)"/>
-<path d="M70 108 Q120 100 172 108 Q160 122 120 120 Q82 122 70 108Z" fill="#0c1020"/>
-<circle cx="120" cy="84" r="6" fill="url(#gold)"/>
-<!-- Fener -->
-<g transform="translate(196 170)">
-  <path d="M-10 -40 Q0 -54 10 -40" stroke="#6a7090" stroke-width="3" fill="none"/>
-  <rect x="-15" y="-40" width="30" height="8" rx="2" fill="#2a3050"/>
-  <rect x="-12" y="-32" width="24" height="34" rx="4" fill="#ffe2a0" filter="url(#g)"/>
-  <path d="M-12 -32 V2 M12 -32 V2 M0 -32 V2" stroke="#2a3050" stroke-width="2"/>
-  <rect x="-15" y="2" width="30" height="8" rx="2" fill="#2a3050"/>
-</g>
-`);
-}
-
 // =====================================================================
 // Sade temaların maskotları (sahne yok; boş odada ve ana sayfa başlığında görünür)
 // =====================================================================
 
 /** Gece: uyku başlıklı, patlamış mısırlı, yanında hilal ve yıldızlar. */
-function geceMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('g', 3)}</defs>
-<path d="M196 40 a26 26 0 1 0 22 40 a20 20 0 1 1 -22 -40Z" fill="#f4efff" filter="url(#g)"/>
-${sparkle(40, 60, 8, '#fff6c8')}${sparkle(170, 30, 5, '#fff6c8')}${sparkle(60, 120, 5, '#fff6c8')}
-${logo(70, 92, 100, { look: [2, -1] })}
-<!-- Uyku başlığı -->
-<path d="M72 106 Q74 60 120 56 Q168 58 172 84 Q186 104 204 112 Q186 122 170 104 Q150 94 72 106Z" fill="#7c5cff" stroke="#4b33b8" stroke-width="3" stroke-linejoin="round"/>
-<circle cx="206" cy="113" r="10" fill="#fff"/>
-<path d="M70 108 Q120 92 172 104" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/>
-<!-- Patlamış mısır kovası -->
-<g transform="translate(176 170)">
-  <path d="M-22 -10 L22 -10 L16 40 L-16 40Z" fill="#fff"/>
-  <path d="M-14 -10 L-10 40 M0 -10 L0 40 M14 -10 L10 40" stroke="#ff4d6d" stroke-width="6"/>
-  <circle cx="-14" cy="-14" r="9" fill="#fff4d6"/><circle cx="0" cy="-20" r="10" fill="#fff4d6"/><circle cx="14" cy="-14" r="9" fill="#fff4d6"/><circle cx="-5" cy="-10" r="7" fill="#ffe7a8"/>
-</g>
-`);
-}
 
 /** Okyanus: şnorkel ve maske, kabarcıklar, dalga. */
-function okyanusMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}</defs>
-<path d="M0 212 Q30 196 60 212 T120 212 T180 212 T240 212 V240 H0Z" fill="#22c3e6" opacity=".55"/>
-<path d="M0 224 Q30 208 60 224 T120 224 T180 224 T240 224 V240 H0Z" fill="#0f7fa3"/>
-${logo(70, 84, 100, { look: [1, 0] })}
-<!-- Dalış maskesi -->
-<g transform="translate(70 84) scale(1.5625)">
-  <rect x="6" y="13" width="52" height="25" rx="11" fill="#9cf0ff" fill-opacity=".28" stroke="#ffb347" stroke-width="3.5"/>
-  <path d="M6 22 H-2 M58 22 H66" stroke="#2b2f42" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M14 18 Q18 15 22 17" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>
-</g>
-<!-- Şnorkel -->
-<path d="M176 132 V60 Q176 48 188 48" stroke="#ff6f91" stroke-width="9" fill="none" stroke-linecap="round"/>
-<path d="M176 132 Q176 148 158 150" stroke="#ff6f91" stroke-width="9" fill="none" stroke-linecap="round"/>
-<g fill="none" stroke="#bff6ff" stroke-width="3"><circle cx="198" cy="34" r="7"/><circle cx="212" cy="16" r="5"/><circle cx="40" cy="70" r="6"/><circle cx="54" cy="46" r="4"/></g>
-`);
-}
 
 /** Gün batımı: güneş gözlüğü, şemsiye, buzlu içecek. */
-function gunbatimiMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}
-<linearGradient id="sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff6b4a"/></linearGradient>
-</defs>
-<circle cx="190" cy="62" r="36" fill="url(#sun)" opacity=".9"/>
-<path d="M0 218 Q120 200 240 218 V240 H0Z" fill="#e8b27a"/>
-<!-- Şemsiye -->
-<line x1="44" y1="214" x2="58" y2="92" stroke="#f3e2c4" stroke-width="4"/>
-<path d="M4 104 Q56 56 112 90 Q84 86 70 98 Q56 88 40 96 Q24 90 4 104Z" fill="#ff6b4a"/>
-<path d="M40 96 Q48 70 58 66 M70 98 Q66 72 58 66" stroke="#fff" stroke-width="3" fill="none" opacity=".7"/>
-${logo(80, 100, 96, { face: false })}
-<!-- Güneş gözlüğü -->
-<g transform="translate(80 100) scale(1.5)">
-  <path d="M6 18 H58" stroke="#1b1446" stroke-width="3"/>
-  <rect x="7" y="17" width="21" height="14" rx="6" fill="#1b1446"/><rect x="36" y="17" width="21" height="14" rx="6" fill="#1b1446"/>
-  <path d="M11 21 l6 0 M40 21 l6 0" stroke="#ff9f7a" stroke-width="2" stroke-linecap="round"/>
-</g>
-<!-- İçecek -->
-<g transform="translate(196 168)">
-  <path d="M-16 -18 L16 -18 L10 30 L-10 30Z" fill="#ffb3c7" fill-opacity=".9" stroke="#fff" stroke-width="2"/>
-  <line x1="6" y1="-18" x2="16" y2="-44" stroke="#22c3e6" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="-12" cy="-20" r="7" fill="#9be15d"/>
-</g>
-`);
-}
 
 /** Neon: kulaklık, neon parıltılı çerçeve, nota. */
-function neonMascot() {
-  return svg(240, 240, `
-<defs>${LOGO_DEFS}${GLOW('n', 4)}</defs>
-<rect x="66" y="88" width="108" height="108" rx="28" fill="none" stroke="#ff2bd6" stroke-width="4" filter="url(#n)"/>
-${logo(70, 92, 100, { look: [2, -1] })}
-<!-- Kulaklık -->
-<path d="M62 126 Q62 60 120 60 Q178 60 178 126" stroke="#19f5a0" stroke-width="8" fill="none" stroke-linecap="round" filter="url(#n)"/>
-<rect x="50" y="118" width="22" height="40" rx="10" fill="#151527" stroke="#19f5a0" stroke-width="4"/>
-<rect x="168" y="118" width="22" height="40" rx="10" fill="#151527" stroke="#19f5a0" stroke-width="4"/>
-<!-- Notalar -->
-<g fill="#ff5ce0" filter="url(#n)">
-  <path d="M200 70 V40 L222 34 V64" stroke="#ff5ce0" stroke-width="4" fill="none"/><circle cx="196" cy="72" r="6"/><circle cx="218" cy="66" r="6"/>
-  <path d="M30 70 V48" stroke="#ff5ce0" stroke-width="4"/><circle cx="26" cy="72" r="6"/>
-</g>
-`);
-}
 
 const files = {
-  'gece-maskot.svg': geceMascot(),
-  'okyanus-maskot.svg': okyanusMascot(),
-  'gunbatimi-maskot.svg': gunbatimiMascot(),
-  'neon-maskot.svg': neonMascot(),
   'lokum.svg': lokumScene(),
-  'lokum-maskot.svg': lokumMascot(),
   'lokum-desen.svg': lokumPattern(),
   'binbirgece.svg': binbirScene(),
-  'binbirgece-maskot.svg': binbirMascot(),
   'sinema.svg': sinemaScene(),
-  'sinema-maskot.svg': sinemaMascot(),
   'opera.svg': operaScene(),
-  'opera-maskot.svg': operaMascot(),
   'acikhava.svg': acikhavaScene(),
-  'acikhava-maskot.svg': acikhavaMascot(),
   'gemi.svg': gemiScene(),
-  'gemi-maskot.svg': gemiMascot(),
   'tren.svg': trenScene(),
-  'tren-maskot.svg': trenMascot(),
 };
+// The theme mascots are Glowbeam in costume since card 6f (the Design session's drawings, 240 × 240, drop-in names):
+// copied from docs/internal/design/themes/glowbeam-<theme>.svg as <theme>-maskot.svg.
+for (const theme of ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'opera', 'acikhava', 'gemi', 'tren']) {
+  files[`${theme}-maskot.svg`] = readFileSync(new URL(`../docs/internal/design/themes/glowbeam-${theme}.svg`, import.meta.url), 'utf8');
+}
 for (const [name, content] of Object.entries(files)) {
   writeFileSync(new URL(name, OUT), content.replace(/\n\s*\n/g, '\n'));
   console.log(`✓ themes/${name} (${(content.length / 1024).toFixed(1)} KB)`);

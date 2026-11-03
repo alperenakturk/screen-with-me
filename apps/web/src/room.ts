@@ -2,7 +2,6 @@ import { friendlyRoomName } from '@swm/shared/room-id';
 import { createRoomMoreMenu, roomMoreItems } from './ui/room-more.ts';
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
-import { INTRO_CSS, createIntro } from '@swm/shared/intro';
 import { isForwardedKey, isRelayable } from '@swm/shared/embed';
 import { isTikTokShortLink, parseMediaInput, parseMediaList, samePage } from '@swm/shared/media';
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
@@ -1093,13 +1092,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   document.body.append(netHint);
   connection.connect();
 
-  // Açılış: logo belirir, duraklat → oynat olur, "İyi seyirler!" (oda arkada hazırlanırken).
-  // Yenileyip geri dönünce tekrar gösterme.
+  // The Sidelit intro (card 6f) while the room gets ready; not again after a reload. Its own small chunk (loaded right
+  // after joining, it starts its sound with the picture), so the room page stays within its size budget.
   if (!resumed) {
-    if (!document.getElementById('swm-intro-css')) {
-      document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
-    }
-    $('.player-wrap').append(createIntro(document, t('introText')));
+    void import('@swm/shared/intro').then(({ INTRO_CSS, createIntro }) => {
+      if (!document.getElementById('swm-intro-css')) document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
+      $('.player-wrap').append(createIntro(document, t('introText')));
+    });
     // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
     if (!isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
   }
