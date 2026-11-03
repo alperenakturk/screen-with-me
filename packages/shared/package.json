@@ -44,7 +44,8 @@
     "./youtube-search": "./src/youtube-search.ts",
     "./socket": "./src/socket.ts",
     "./feedback": "./src/feedback.ts",
-    "./move": "./src/move.ts"
+    "./move": "./src/move.ts",
+    "./podcasts": "./src/podcasts.ts"
   },
   "scripts": {
     "test": "vitest run",

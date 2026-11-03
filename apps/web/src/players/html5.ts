@@ -2,9 +2,14 @@ import type { PlayerAdapter } from '@swm/shared/player';
 import { wrapVideoElement } from '@swm/shared/video-element';
 
 /** Doğrudan video linkleri (.mp4, .webm) için tarayıcının kendi oynatıcısı. */
-export function createHtml5Player(container: HTMLElement, url: string, onError: () => void): PlayerAdapter {
+export function createHtml5Player(container: HTMLElement, url: string, onError: () => void, poster?: string): PlayerAdapter {
   const video = document.createElement('video');
   video.src = url;
+  // A podcast episode (card P2): an audio file shows its cover art instead of a black box.
+  if (poster) {
+    video.poster = poster;
+    video.classList.add('audio-cover');
+  }
   // Option A (0.9.91.1): the browser's own controls are the remote again; our buttons sit under the video and in the
   // fullscreen dock.
   video.controls = true;

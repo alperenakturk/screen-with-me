@@ -25,7 +25,7 @@ _Eski adıyla ScreenWithMe._
 Link at, herkes aynı saniyeyi izlesin. Biri durdurur, sarar ya da hızı değiştirirse herkeste olur. Sohbet, ses,
 kameralar, emojiler, oyunlar ve ortak sıra videonun etrafında.
 
-- **YouTube, YouTube Shorts, TikTok, Vimeo linkleri ya da video dosyası** → doğrudan sitede oynar, kurulum yok. Linkin
+- **YouTube, YouTube Shorts, TikTok, Vimeo linkleri, bir podcast bölümü (arama sonuçlarında 🎧 Podcastler) ya da video dosyası** → doğrudan sitede oynar, kurulum yok. Linkin
   yoksa aynı kutuya kelime yazıp YouTube'da ara.
 - **Başka herhangi bir site** (sayfada HTML5 `<video>` varsa, iframe içinde bile) → sekme o siteye gider ve
   tarayıcı eklentisiyle **odanın kendisi** üstüne açılır, video odanın oynatıcı alanına oturur. Gömülmeyi
