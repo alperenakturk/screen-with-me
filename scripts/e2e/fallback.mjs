@@ -158,6 +158,10 @@ ok(members2.members.length === 2, 'Bob appears once after reconnecting');
 // 6) Unknown or finished sessions answer 410.
 const unknown = await fetch(`${http}/api/rooms/${room}/ws?http=poll&sid=${'0'.repeat(32)}`);
 ok(unknown.status === 410 && (await unknown.json()).code === 1006, 'Unknown session → 410');
+// Security M4: a malformed session id or an unknown step never reaches the room (the Worker answers 400).
+ok((await fetch(`${http}/api/rooms/${room}/ws?http=poll&sid=nothex`)).status === 400, 'Malformed session id → 400 from the Worker');
+ok((await fetch(`${http}/api/rooms/${room}/ws?http=poll`)).status === 400, 'Missing session id → 400');
+ok((await fetch(`${http}/api/rooms/${room}/ws?http=dance&sid=${'0'.repeat(32)}`, { method: 'POST' })).status === 400, 'Unknown step → 400');
 
 // 7) Kick: the host removes the HTTP person; they get the error, then the close code.
 alice.send({ t: 'kick', id: wb2.you });

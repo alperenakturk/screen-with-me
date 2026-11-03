@@ -53,6 +53,8 @@ const SEND_TIMEOUT_MS = 15_000;
 /** Failed requests in a row before the fallback connection counts as closed. */
 const MAX_ERRORS = 3;
 const SEND_BATCH = 40;
+/** How long to wait after a 429 (the Worker's per-address limit for fallback requests, security M4). */
+const LIMITED_WAIT_MS = 1500;
 const SEND_BATCH_BYTES = 900_000;
 
 let preferHttpUntil = 0;
@@ -183,6 +185,11 @@ export class HttpSocket extends Emitter implements SwmSocket {
       try {
         const response = await fetch(fallbackUrl(this.url, 'poll', this.sid), { cache: 'no-store', signal: timed(this.abort.signal, POLL_TIMEOUT_MS) });
         if (response.status === 410) return this.finish(...(await closeOf(response)));
+        // Too many requests from this address for a moment (the Worker's FALLBACK_LIMIT): wait, it is not a failure.
+        if (response.status === 429) {
+          await sleep(LIMITED_WAIT_MS);
+          continue;
+        }
         if (!response.ok && response.status !== 204) throw new Error(String(response.status));
         this.errors = 0;
         if (response.status === 204) continue;
@@ -217,6 +224,11 @@ export class HttpSocket extends Emitter implements SwmSocket {
             signal: timed(this.abort.signal, SEND_TIMEOUT_MS),
           });
           if (response.status === 410) return this.finish(...(await closeOf(response)));
+          // Rate limited for a moment: keep the batch and send it again a little later.
+          if (response.status === 429) {
+            await sleep(LIMITED_WAIT_MS);
+            continue;
+          }
           // A refused batch (too large, bad) is dropped like a message the server ignores; the connection stays.
           this.outbox.splice(0, count);
           this.errors = 0;

@@ -54,7 +54,11 @@
     // asks once per saved room (at most 20) + the "continue" line, so 60 leaves room for a few reloads (R3-1, M4).
     { "name": "ROOM_INFO_LIMIT", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
     // Feedback bursts per IP and minute (card 9); the hourly / daily caps live in the FeedbackGate object.
-    { "name": "FEEDBACK_LIMIT", "namespace_id": "1004", "simple": { "limit": 3, "period": 60 } }
+    { "name": "FEEDBACK_LIMIT", "namespace_id": "1004", "simple": { "limit": 3, "period": 60 } },
+    // HTTP fallback requests (send / poll / close) per IP and minute (security M4). A room polls about every 20 s and
+    // sends one batch at a time (the next waits for the answer, so a fast network may send ~10 a second while drawing);
+    // 1200 leaves room for a room plus a game in two tabs. A 429 only makes the client wait 1.5 s (socket.ts).
+    { "name": "FALLBACK_LIMIT", "namespace_id": "1005", "simple": { "limit": 1200, "period": 60 } }
   ],
   // The deployed version's id (`/api/version`): after a deploy the live e2e waits until the Worker and a Durable Object
   // both answer with it, so no test room starts on the old code and gets restarted mid-test.

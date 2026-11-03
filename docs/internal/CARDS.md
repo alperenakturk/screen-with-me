@@ -630,6 +630,14 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   requests have per-IP limits, the Worker checks `sid` against `^[0-9a-f]{32}$` before forwarding.
 - Tests: e2e (bad `sid` answered by the Worker; `/info` limit), deploy job's `wait-live.mjs` still works.
 - Owner's pick: none needed.
+- Done: 0.9.96.18 (PR below). `/info` + `unsave` already counted against `ROOM_INFO_LIMIT` (R3-1). `/api/version` now
+  counts against it too (its own key `version:<ip hash>`, 60 a minute; `wait-live.mjs` asks every 3 s = 20). The HTTP
+  fallback's `send` / `poll` / `close` are checked by the Worker before any object wakes: a known step (else 400), a
+  `sid` matching `^[0-9a-f]{32}$` (else 400), and the new `FALLBACK_LIMIT` (1200 per IP and minute; one batch is in
+  flight at a time, so a fast network sends at most ~10 a second while drawing). The client (`socket.ts`) treats a 429
+  as "wait 1.5 s and try again", keeping the batch, never as a failure. Tests: unit `socket.test.ts` (429 on send and
+  poll: the message arrives, the socket stays open; fails on the old code), e2e `fallback.mjs` (malformed / missing
+  `sid`, unknown step → 400).
 
 ### Security: make-host only by the real host (M2)
 - Severity: medium
