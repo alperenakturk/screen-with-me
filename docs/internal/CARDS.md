@@ -30,20 +30,6 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
 - Tests: the owner's own (computer, phone, Shorts, first-time path, hotspot).
 - Owner's pick: none needed.
 
-### 7. Help / FAQ page, English + Turkish (0.9.94 "Next" 2)
-- Why: newcomers and store reviewers need one place for "how does it work", the extension's permissions and
-  troubleshooting (voice does not connect, hotspot, Brave shields, autoplay).
-- Done when: `/help` (EN, `?lang=tr` for Turkish, like `privacy.html`) with sections: how it works, the extension and
-  why it asks each permission, voice / camera / streams, phones, troubleshooting (links to `/baglanti`), privacy
-  summary, in the order users ask first (Research §2–3: 3 steps, who needs the extension, what it can and cannot
-  see, "not in sync / video not found" checklist, connection, phones, voice and IP); in-product hints link to their
-  answer; linked from the footer, the profile menu, the phone ⋯ sheet and the extension page; same numbers as the
-  code (limits, retention); a non-Turkish reader understands the English text (0.9.94 gate).
-- Tests: static page check in a harness (loads, both languages, every in-page link resolves, CSP has no errors);
-  a "same numbers" spot check against `protocol.ts` limits.
-- Owner's pick: none needed (Claude writes it; the owner reads the Turkish version).
-
-
 ### 8. Extension permission explainer (0.9.94, with the Help page; from Research)
 - Why: scanners rate "all websites" access as critical; users and guides struggle with "read and change site data";
   trust is a top complaint (Teleparty, Rave). Details: `research/newcomers-help-shorts.md` §3.
@@ -368,6 +354,28 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
 
 ## Done
+
+### 7. Help / FAQ page, English + Turkish (0.9.94 "Next" 2)
+- Why: newcomers and store reviewers need one place for "how does it work", the extension's permissions and
+  troubleshooting (voice does not connect, hotspot, Brave shields, autoplay).
+- Done when: `/help` (EN, `?lang=tr` for Turkish, like `privacy.html`) with sections: how it works, the extension and
+  why it asks each permission, voice / camera / streams, phones, troubleshooting (links to `/baglanti`), privacy
+  summary, in the order users ask first (Research §2–3: 3 steps, who needs the extension, what it can and cannot
+  see, "not in sync / video not found" checklist, connection, phones, voice and IP); in-product hints link to their
+  answer; linked from the footer, the profile menu, the phone ⋯ sheet and the extension page; same numbers as the
+  code (limits, retention); a non-Turkish reader understands the English text (0.9.94 gate).
+- Tests: static page check in a harness (loads, both languages, every in-page link resolves, CSP has no errors);
+  a "same numbers" spot check against `protocol.ts` limits.
+- Owner's pick: none needed (Claude writes it; the owner reads the Turkish version).
+- Done: 0.9.93.15 (PR below). `apps/web/public/help.html` (EN, Turkish with `?lang=tr` or the saved language, like
+  `privacy.html`): how it works (3 steps), who needs the extension, what the extension can and cannot see (each
+  permission), not in sync / video not found, can't connect (links `/baglanti`), voice / cameras / streams and the IP
+  note, phones, privacy in short, contact. Linked from the footer, the profile menu (❔ `#profile-help`), ⋯ More on
+  the computer and the phone ("Help and FAQ"), the extension page's footer and the "can't reach the room" card
+  (`#connection`). `lang.js` maps a section link to the Turkish block's `-tr` id. Test: new
+  `scripts/harness/help/run.cjs` (29 checks: served with the real `_headers` CSP, no errors in both languages, every
+  contents link resolves and scrolls, no sideways scroll on a phone, the numbers match `protocol.ts` / `room.ts`, the
+  room's links in both languages, ⋯ opens it in a new tab).
 
 ### 6a. Privacy: YouTube privacy-enhanced embed, loaded only when needed (H2; 0.9.94, before the Help page)
 - Severity: high

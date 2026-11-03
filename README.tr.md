@@ -162,6 +162,7 @@ kumanda olur).
 [MIT](LICENSE) © 2026 Alperen Aktürk. Kullanıcıya giden bütün kod (site, sunucu, eklenti) bizim; derleme araçları
 MIT / Apache-2.0. Gizlilik politikası: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=tr)
 (hesap yok, takip yok; tek seferlik oda boşaldıktan 24 saat sonra, kayıtlı oda 30 gün sonra silinir).
+Sorular ve sorun giderme: [yardım sayfası](https://screen-with-me.swm-server.workers.dev/help.html?lang=tr).
 
 ## ⚠️ Sınırlar
 

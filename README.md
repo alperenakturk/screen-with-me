@@ -163,6 +163,7 @@ as the remote).
 [MIT](LICENSE) © 2026 Alperen Aktürk. All shipped code (site, server, extension) is our own; build tools are
 MIT / Apache-2.0. Privacy policy: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=en)
 (no accounts, no tracking; a one-off room is deleted 24 h after it is empty, a saved room after 30 days).
+Questions and troubleshooting: [help page](https://screen-with-me.swm-server.workers.dev/help.html?lang=en).
 
 ## ⚠️ Limitations
 

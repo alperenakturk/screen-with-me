@@ -34,7 +34,7 @@ import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { POOL_KINDS } from '@swm/shared/youtube-search';
 import { canShareSheet, isPhoneLayout, isTouch } from './device.ts';
 import { el } from './dom.ts';
-import { lang, t, translate, type I18nKey } from './i18n.ts';
+import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
 import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
@@ -618,6 +618,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
               <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
               <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open">⌨️ ?</button>
+              <a class="btn small-btn" id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link>❔ <span data-i18n="help"></span></a>
             </div>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
@@ -1051,7 +1052,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     el('b', {}, `📶 ${t('netHint.title')}`),
     el('span', {}, t('netHint.text')),
     // 0.9.92.8 (owner): try again right here, or run the connection test, which links back to this room.
-    el('div', { class: 'row net-hint-actions' }, retryButton, el('a', { class: 'btn small-btn', href: `/baglanti?room=${encodeURIComponent(roomId)}` }, t('netHint.test'))),
+    el(
+      'div',
+      { class: 'row net-hint-actions' },
+      retryButton,
+      el('a', { class: 'btn small-btn', href: `/baglanti?room=${encodeURIComponent(roomId)}` }, t('netHint.test')),
+      // Card 7: the help page's connection section, in a new tab so the room keeps trying.
+      el('a', { class: 'btn small-btn', href: helpHref('connection'), target: '_blank', rel: 'noopener', id: 'net-hint-help' }, t('netHint.help')),
+    ),
   );
   netHint.hidden = true;
   document.body.append(netHint);
