@@ -20,16 +20,24 @@ Card format:
 
 ## Ready
 
+## Run order to the owner's test round (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end")
+
+Two Developer lanes so the work moves faster; lane B lives mostly in new files (games, players) and rebases on lane A.
+Each card still ships with its tests; hand tests go to `STATUS.md` for the owner's one big test round at the end.
+
+**Lane A (Developer, `session_015Fyri2WkmxwEfieZ1jto4L`):** 6d → 6c Sidelit (0.9.95) → 9 feedback button → 10 Shorts
+channel + country → 11 thanks page → 12 debug panel → 14 cinema mode → 16 design sweep → T tablet → A11y accessibility
+→ security cards (M2, M3, M4, M5, M6, L1, L4, L2+L3+L5, L6, L7+L8, L9, L10; M8 stays with the frozen TV) → the Security
+session's new findings → bug-hunt findings.
+**Lane B (Developer B, games + players):** 🍿 Snack Bar (after the owner's look pick) → 🌱 Window Garden → 🔤 daily word
+game → move-to-device code → P1 Vimeo → P2 podcasts.
+**Not in this round:** 13 Shorts measurement (needs the owner's real Chrome; part of his test round), Shorts door
+(0.9.95+ growth), G1–G5 (launch), the privacy policy rewrite + terms (the "official work" step after the test round).
+**After both lanes:** Planner runs the council review (harsh feedback on the whole app), then a bug hunt.
+
+
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
-
-### 6b. Fix: ⚙️ "My screen" squeezed into a narrow column (owner's bug, 3 Nov 2026; next after card 9)
-- Why: owner's screenshot on the live site: since 0.9.93.13 the solo section fills only the old nav column (~350 px),
-  rows wrap word by word, the right side of the dialog is empty and the list scrolls inside the dialog.
-- Done when: solo sections (My screen, film time, save, rules) are one clean column, rows in the normal title +
-  description + toggle layout, no inner scroll at 1366×768; also on the phone.
-- Tests: harness check (content width, a row title wraps ≤ 2 lines at 1366×768 and 1920×1080), failing on 0.9.93.17 first.
-- Owner's pick: none needed. Order (Planner): 6b, then card 15 (home hero A), then 10–14.
 
 ### 6d. Fix: an empty side column in YouTube fullscreen (owner's bug, 3 Nov 2026; after 6b, before 6c)
 - Why: owner's screenshot: in YouTube fullscreen the column from card 2a (`#fs-side`) stays as a wide empty strip
@@ -58,6 +66,36 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   phone home-screen icon).
 - Owner's pick: done (Sidelit, D1, T1, N1). **Release it as 0.9.95** (owner, 3 Nov 2026: "make it official, I'm
   speeding up the launch"); the remaining 0.9.94 cards keep their place after it.
+
+### T. Tablet layout (lane A; 0.9.95 gate)
+- Why: ROADMAP §1 "Tablet support": iPad / Android tablets upright and sideways get their own layout (today tablets
+  fall between phone and computer).
+- Done when: room, Shorts view, games, cameras, rail and fullscreen fit 768–1366 px touch screens upright and sideways
+  without scrolling; iPad fullscreen and split view handled; no extension on tablets (site only).
+- Tests: a `scripts/harness/tablet` (iPad + Galaxy Tab emulation, both orientations); owner's real tablet later.
+- Owner's pick: none needed.
+
+### A11y. Accessibility pass (lane A; 0.9.95 gate)
+- Why: ROADMAP §1 "Accessibility": WCAG AA contrast (with the new Sidelit colours), keyboard tour, focus states,
+  screen-reader labels, reduced motion.
+- Done when: an automated contrast + label check (axe-core in a harness, dev-only dependency) passes on home, join,
+  room, settings, help; every control reachable and visible with the keyboard; reduced motion respected everywhere.
+- Tests: the axe harness in CI; a keyboard-tour harness.
+- Owner's pick: none needed.
+
+### P1. Vimeo player without the extension (lane B)
+- Why: owner's idea (2 Nov 2026), Research's #1 (`research/more-players.md`): full control via player.js.
+- Done when: Vimeo links play on the site in sync (play / pause / seek / time; rate fixed at 1× unless PRO), CSP +
+  privacy policy updated, title from oEmbed.
+- Tests: a harness with a fake player speaking player.js's postMessage protocol (like `tiktok/run.cjs`); owner's real check.
+- Owner's pick: done (owner: "do all of 1–11").
+
+### P2. Podcasts (lane B)
+- Why: Research's #2: iTunes Search (free, no key) → RSS → the episode is an audio file our `html5` kind already syncs.
+- Done when: a podcast search (words in the link box with a "Podcasts" source) lists episodes; one plays in sync for
+  everyone with an audio-only view (cover art, no video box); CSP `media-src` widened only as needed (security review).
+- Tests: unit (RSS parsing), harness with a local RSS + mp3; owner's real check.
+- Owner's pick: done.
 
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
