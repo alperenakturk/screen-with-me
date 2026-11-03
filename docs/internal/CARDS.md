@@ -39,14 +39,6 @@ game → move-to-device code → P1 Vimeo → P2 podcasts.
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
-### 6d. Fix: an empty side column in YouTube fullscreen (owner's bug, 3 Nov 2026; after 6b, before 6c)
-- Why: owner's screenshot: in YouTube fullscreen the column from card 2a (`#fs-side`) stays as a wide empty strip
-  when there are no notes, cameras or messages, pushing the video left.
-- Done when: the column takes space only while it has something to show (notes / camera tiles; messages without making
-  the video jump on every toast), else the player is full width beside the resting rail; still nothing over the player.
-- Tests: harness: fullscreen with nothing to show → player ≈ full width; camera on → column appears; fails first.
-- Owner's pick: none needed.
-
 ### 6c. Rename the product to Sidelit + the new logo and mascot (owner's decision, 3 Nov 2026; after 6b, before 15)
 - Why: owner: "change it straight to Sidelit now: the notes, the READMEs, the logo, the site, everything". The name
   is his call (council + research: `name-ideas.md` round 3, `research/name-sidelit-check.md` 🟡, trademark / domain
@@ -423,6 +415,20 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: agreed (3 Nov 2026).
 
 ## Done
+
+### 6d. Fix: an empty side column in YouTube fullscreen (owner's bug, 3 Nov 2026; after 6b, before 6c)
+- Why: owner's screenshot: in YouTube fullscreen the column from card 2a (`#fs-side`) stays as a wide empty strip
+  when there are no notes, cameras or messages, pushing the video left.
+- Done when: the column takes space only while it has something to show (notes / camera tiles; messages without making
+  the video jump on every toast), else the player is full width beside the resting rail; still nothing over the player.
+- Tests: harness: fullscreen with nothing to show → player ≈ full width; camera on → column appears; fails first.
+- Owner's pick: none needed.
+- Done: 0.9.93.20 (PR below). `room.ts` `updateFsSide`: `.theater.fs-side-open` only while `#fs-side-notices` shows
+  a note, the camera box is up or a message toast is on screen (a message keeps it `SIDE_LINGER_MS` 8 s, so a chat
+  doesn't make the video jump); closed, the player's `right` is just the rail's gutter and the column fades out (0.22 s).
+  Test: `scripts/harness/yt-room/run.cjs` (fullscreen with nothing to show: no column, player full width; a message
+  opens it; when the messages are gone it closes again; failed on 0.9.93.17) and `cam-fs` (YouTube fullscreen: the
+  cameras are in the column).
 
 ### 15. Home page, nicer and "works on your phone" (0.9.94, owner's request)
 - Why: owner, 2 Nov 2026: improve the home page; it should show it works on a phone too and feel less like a

@@ -174,6 +174,13 @@ const box = (page, selector) =>
     await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 4 });
     await alex.waitForTimeout(3000);
     check(await idle(), 'fullscreen: the rail rests');
+    // Card 6d (owner's bug): with nothing to show (no note, camera or message) there is no empty column: the player is
+    // full width beside the resting rail's thin gutter.
+    // (The 5B check above left the wait note up: take it down first.)
+    await alex.evaluate(() => (document.querySelector('#waiting-banner').hidden = true));
+    await alex.waitForTimeout(500);
+    const bare = await alex.evaluate(() => ({ open: document.querySelector('#theater').classList.contains('fs-side-open'), right: Math.round(document.querySelector('.player').getBoundingClientRect().right), vw: innerWidth }));
+    check(!bare.open && bare.right >= bare.vw - 16, 'fullscreen, nothing to show: no empty column, the player is full width', JSON.stringify(bare));
     // 🎙 / 📷 outside voice open the IP note; cancelled with the mouse (not Esc), the rail still goes.
     for (const id of ['dock-mic', 'dock-cam']) {
       await alex.mouse.move(vw.w - 8, vw.h / 2, { steps: 4 });
@@ -215,6 +222,7 @@ const box = (page, selector) =>
     await sam.evaluate(() => document.activeElement?.blur());
     await alex.waitForSelector('#toasts .toast', { timeout: 4000 }).catch(() => {});
     // Card 2a (owner's D): YouTube fullscreen has a column beside the player for the notes, cameras and messages.
+    await alex.waitForTimeout(400); // the column slides in (0.22 s)
     const toast = await box(alex, '#toasts .toast');
     const side = await box(alex, '#fs-side');
     const fsPlayer = await box(alex, '.player');
@@ -237,6 +245,13 @@ const box = (page, selector) =>
     await alex.waitForTimeout(3200);
     const hitsFs = await overPlayer(alex);
     check(hitsFs.length === 0, 'fullscreen: nothing of ours over the YouTube player', hitsFs.join(' | '));
+    // Card 6d: once the messages are gone (and a few seconds more) the column steps aside again.
+    const closed = await alex
+      .waitForFunction(() => !document.querySelector('#theater').classList.contains('fs-side-open'), null, { timeout: 30000 })
+      .then(() => true, () => false);
+    await alex.waitForTimeout(400);
+    const after = await alex.evaluate(() => ({ right: Math.round(document.querySelector('.player').getBoundingClientRect().right), vw: innerWidth }));
+    check(closed && after.right >= after.vw - 16, 'fullscreen: when the messages are gone the column steps aside, the player is full width again', JSON.stringify(after));
     await alex.evaluate(() => document.exitFullscreen());
     await alex.waitForTimeout(800);
   }
