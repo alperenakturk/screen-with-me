@@ -26,13 +26,13 @@ Two Developer lanes so the work moves faster; lane B lives mostly in new files (
 Each card still ships with its tests; hand tests go to `STATUS.md` for the owner's one big test round at the end.
 
 **Lane A (Developer, `session_015Fyri2WkmxwEfieZ1jto4L`):** 6d → 6e empty-room rail → **R3-1** (high, right after 6e) →
-6c Sidelit (0.9.95) → 6f Glowbeam mascots + intro → 9 feedback button (with R3-7) → 10 Shorts channel + country → 11 thanks page → 12 debug panel →
-14 cinema mode → 16 design sweep → T tablet → A11y accessibility → **Y1 → Y2 → Y3** (YouTube audit prep) → security
+6c Sidelit (0.9.95) → 6f Glowbeam mascots + intro → 9 feedback button (with R3-7) → 10 Shorts channel + country → 11 thanks page → 12 debug panel → **6g owner's feedback batch** →
+14 cinema mode → 16 design sweep → **15b new home page** (after the owner's pick) → T tablet → A11y accessibility → **Y1 → Y2 → Y3** (YouTube audit prep) → security
 cards (M2, M3, M4, M5, M6, L1, L4, L2+L3+L5, L6, L7+L8, L9, L10, R3-2, R3-5, R3-6, R3-8; M8 stays with the frozen TV;
 R3-3 goes with the domain) → the Security session's new findings → bug-hunt findings. Everything here lands by
 **0.9.99** (owner, 3 Nov 2026: version plan in `ROADMAP.md`).
 **Lane B (Developer B, `session_015Fyri6bkmZm4WdgzAWHpMc`):** 🍿 Snack Bar → GG games gallery window → 🌱 Window Garden → 🔤 Five
-Frames (the daily word game) → move-to-device code → P1 Vimeo → P2 podcasts.
+Frames (the daily word game) → move-to-device code → **GP side games polish** → P2 podcasts (P1 Vimeo done in 0.9.93.21).
 **Not in this round:** 13 Shorts measurement (needs the owner's real Chrome; part of his test round), Shorts door
 (0.9.95+ growth), G1–G5 (launch), the privacy policy rewrite + terms (the "official work" step after the test round).
 **After both lanes:** Planner runs the council review (harsh feedback on the whole app), then a bug hunt.
@@ -71,6 +71,33 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   `screenwithme-extension` (an unpacked extension's id comes from its folder; renaming it would lose people's
   settings). Follow-up for the Planner: the costumed theme mascots (`theme-art.mjs`, theme pickers) still wear the old
   purple face; N1 in costume would be its own card. Tests: all site harnesses, popup, embed (112 checks, headful).
+
+### 6g. Owner's feedback batch (owner, 3 Nov 2026; lane A, right after 12)
+- Why: the owner's screenshots and notes after 0.9.96.2.
+- Done when:
+  1. **The empty room's rail behaves like the rail with a video:** it opens when the mouse reaches the right edge and
+     closes when it leaves (edge mode, the same timings), on the site and the film page; never "always out" anywhere
+     on a computer (the owner: "it should not behave differently in each place"). Video-only buttons stay dimmed.
+  2. **No "Games" in ⋯ More on a computer:** the rail's 🎮 is the one way in (owner: "not in two places"). Phones keep
+     Games in ⋯ (they have no rail).
+  3. **The join card picks a random themed avatar** (from the "Themed" page) for someone who has never chosen one;
+     a chosen or saved avatar is kept.
+  4. **No theme picker on the home page:** everyone starts on Gece; the theme is changed inside (⚙️ My screen / the
+     profile menu), which already exists. A saved theme still applies.
+  5. **Glowbeam's costumes sit right:** apply the Design session's fixed `glowbeam-<theme>.svg` files (the Gece
+     nightcap sits too far right; Design checks all 11) when they land.
+- Tests: room-more harness (no Games on a computer, Games on a phone); yt-room / embed (empty room rail rests and
+  opens at the edge); home harness (no theme strip, Gece on a fresh browser); unit or harness for the random themed
+  avatar; screenshots of the 11 mascots.
+- Owner's pick: none needed.
+
+### 15b. New home page, tablet too (owner, 3 Nov 2026: "redo the home page; today's is okay, but it must look right on a tablet"; lane A, after 16)
+- Why: the owner wants a fresh home design that works on computer, tablet and phone; the theme picker goes away
+  (6g.4).
+- Done when: the Design session's clickable options page → the owner's pick → built for computer, tablet (upright +
+  sideways) and phone, EN + TR, no scroll inside sections, reduced motion respected.
+- Tests: home harness at 1920×1080, 1366×768, 1180×820, 820×1180, 390×844; phone-speed budget.
+- Owner's pick: needed (Design prepares the page).
 
 ### 6f. Glowbeam mascots per theme + the Sidelit intro (lane A, right after 6c; from the Design session)
 - Why: card 6c brings the new name and logo; the theme mascots and the intro animation still show the old face and
@@ -145,6 +172,29 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   privacy policy updated, title from oEmbed.
 - Tests: a harness with a fake player speaking player.js's postMessage protocol (like `tiktok/run.cjs`); owner's real check.
 - Owner's pick: done (owner: "do all of 1–11").
+
+### GP. Side games polish (owner, 3 Nov 2026; lane B, after the move code, before P2)
+- Why: owner, on Snack Bar / Window Garden / Five Frames: "make them sweeter and more polished", "the fonts feel
+  small", "give a visual tutorial when each game starts, this is important", "each game should open at its ideal
+  size", and Five Frames "is not clear".
+- Done when:
+  1. **Ideal size:** every game opened in the side window (solo games and the room games) opens at the size its
+     content needs (`SOLO_CATALOG` size / fit, room games too), never with a large empty area or a cut layout; it
+     stays resizable in proportion.
+  2. **Bigger, clearer text:** body text ≥ 15 px, numbers and titles larger; checked at 1366×768 and on a phone.
+  3. **Visual tutorial on first open:** 2–4 short cards with simple pictures (Design draws them) the first time a game
+     opens (per game, `localStorage`), "?" in the game's head shows it again; skippable; EN + TR.
+  4. **Sweeter look:** the Design session's polish for the three games (motion, small sounds kept quiet, rewards).
+  5. **Five Frames:** green = right letter in the right place, yellow = in the word but elsewhere, grey = not in the
+     word (owner's request; our own shades that fit the theme + a ✓ / • mark for colour-blind players, a small
+     legend under the board); a row flips letter by letter, fast (about 250 ms per letter), like the familiar daily
+     games, after Enter; typing pops each letter; reduced motion = no flip. Own name and board shape stay.
+  6. **Credits out of the game:** the word-list credits link leaves the game; the credits stay in
+     `/third-party-notices.txt` (Apache 2.0 for the Zemberek list needs them) and get a small "Licenses" link in the
+     footer and on the Help page.
+- Tests: harnesses per game (opening size at 1366×768 and 1920×1080, tutorial once, no scroll); Five Frames unit
+  tests for colours with repeated letters; reduced motion; owner's hand test.
+- Owner's pick: none needed (Design delivers the look; the colours are the owner's request).
 
 ### P2. Podcasts (lane B)
 - Why: Research's #2: iTunes Search (free, no key) → RSS → the episode is an audio file our `html5` kind already syncs.
