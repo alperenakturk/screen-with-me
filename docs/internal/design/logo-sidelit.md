@@ -2,9 +2,9 @@
 
 _Design session, 3 Nov 2026. Status: **owner picked** the main logo **D1 "Night gold"** and the mascot **N1
 "Glowbeam"** (Turkish UI name "Işıkçık") on the round 2 page https://claude.ai/artifact/JvAkJKL7p44pWLe1JGvP9v.
-The mid-tone colourway is **pending: T1 deep teal recommended**. The product name is not final (Sidelit is the lead
-candidate, `name-ideas.md` "Round 3"); whether the Developer applies this now or after the name decision is the
-owner's call._
+The secondary (mid-tone) colour is **T1 deep teal**, for store / social / promo only (owner: "if two colours
+confuse, stay with the main logo"). The owner decided to rename to Sidelit now; the Developer applies this spec
+(card 6c)._
 
 History: direction C "Sidelit: light from the side" was picked on https://claude.ai/artifact/5dAZoG6shDuxN454YBm6ZZ.
 Round 1 had 14 versions and 4 mascots built on today's purple (https://claude.ai/artifact/Ep81ucBirYmLvZioEAMURQ;
@@ -82,7 +82,7 @@ Motion (when used): a slow 2.4 s bob of 6 px; the glow may breathe between 35 % 
 | Light amber | `#ff8f3a` (logo) / `#ff9440` (mascot) | light end |
 | Triangle warm tip | `#fff0d0` | triangle gradient end |
 | White | `#ffffff` | triangle |
-| Mid-tone (pending) | T1 deep teal `#1a8088` → `#0b4750`, eyes `#05333a`, light `#fff6dc` / `#ffd27a` / `#ffad4a` | store tiles, social, promo (only if the owner confirms) |
+| Secondary: T1 deep teal | background `#1a8088` → `#0b4750`, eyes `#05333a`, light `#fff6dc` / `#ffd27a` / `#ffad4a`, vignette 0.25 | store tiles, social posts, promo backgrounds only |
 
 Wordmark: "Sidelit" in **Bricolage Grotesque ExtraBold** (Google Fonts, SIL OFL, free to embed), tracking −1.5 %,
 cream `#fff3d6` on dark, night `#08061a` on light. Lockup: icon height = 1.4 × cap height; gap = 25 % of the icon.
@@ -91,6 +91,9 @@ cream `#fff3d6` on dark, night `#08061a` on light. Lockup: icon height = 1.4 × 
 - **Clear space:** at least ¼ of the icon's width on every side (16 units on the 64 grid).
 - **Minimum sizes:** logo 16 px (simple cut up to 32 px, full drawing from 33 px); wordmark lockup ≥ 20 px tall;
   mascot ≥ 24 px (smaller → use the logo).
+- **Secondary colour (T1 teal):** a background colour for promo surfaces (Web Store tile, social posts, launch
+  images), on which the D1 logo or the mascot sits. It is **never a second logo**: no teal app icon, favicon,
+  toolbar icon or avatar. When in doubt, use D1 on night.
 - **Light surfaces:** the logo keeps its night square; it is never redrawn light-on-white (the owner rejected
   washed-out / white tones). The mascot works on light surfaces as it is.
 - **Don't:** flip the light to the left (it always falls to the right, the eyes are always in it); stretch or rotate;
@@ -106,4 +109,4 @@ cream `#fff3d6` on dark, night `#08061a` on light. Lockup: icon height = 1.4 × 
   from the full drawing, PWA `maskable` + apple-touch from the bleed version.
 - The current mascot (purple face) appears in themes and the intro animation; replace it with N1 in the same card or a
   follow-up (`scripts/theme-art.mjs`, intro).
-- Store screenshots (`store/src`) and the Web Store tile follow once the name is final.
+- Store screenshots (`store/src`) and the Web Store tile: D1 / N1 on night, or on the T1 teal background.
