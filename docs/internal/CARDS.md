@@ -36,7 +36,7 @@ and try after the next deploy). The feedback form works (an issue came in). Depe
 Planner to merge them once main is green.
 
 **Run order:** lane B: R1 → R2 → R3 → R4 → R5 → R6 → R7 → R8 → R9 → R10, then its bug-hunt list. Lane A: R3-6 → R3-8
-→ R11 → R12 → R13. Design: R14 (then R14 becomes a Developer card). R1 and R2 are urgent.
+→ R11 → R12 → R14 (avatars, from Design) → R13. Design: R14 (then R14 becomes a Developer card). R1 and R2 are urgent.
 
 ### R1. Fix: opening a game throws people out of the room / the stream (owner's bug, urgent; lane B)
 - Why: owner: pressing a game can throw you out of the site and out of a running stream; back in, the game opens only
@@ -168,6 +168,10 @@ Planner to merge them once main is green.
 - Owner's pick (3 Nov 2026, https://claude.ai/artifact/Akp2qt2WPXzxVENiAZ8Hha): **1: A** (today's line, more detail;
   not the sticker style) · **2: A** (near-copies made our own). Note: "fit our style, but still look like the character,
   not something unrelated": recognisable by silhouette, hair, colours and props; the distinctive costume parts are ours.
+- Design done (PR #229, review sheet https://claude.ai/artifact/FsBkvfQUPZ6w2yscbX18cd): 33 SVGs in
+  `docs/internal/design/avatars-2/full/`, steps in `avatars-2.md` "For the Developer". **Developer part: lane A, right
+  after R12, before R13** (copy via `scripts/avatars.mjs`, `DRAWN_AVATARS` notebookgenius 📓 / sweetsleuth 🍰,
+  `AVATAR_PAGES` both on page 3 and hunter to page 4, i18n labels; check the picker, 28 px chat, seats, join card).
 
 ## Run order to the owner's test round (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end")
 
