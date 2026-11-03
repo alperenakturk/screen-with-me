@@ -25,6 +25,11 @@ import lanternCactus from './art/garden/lantern-cactus.svg?raw';
 import moonbloom from './art/garden/moonbloom.svg?raw';
 import reelVine from './art/garden/reel-vine.svg?raw';
 import popcornShrub from './art/garden/popcorn-shrub.svg?raw';
+import how1 from './art/tutorial/garden-1-plant.svg?raw';
+import how2 from './art/tutorial/garden-2-water.svg?raw';
+import how3 from './art/tutorial/garden-3-album.svg?raw';
+import how4 from './art/tutorial/garden-4-film.svg?raw';
+import { howToPlay } from './how-to-play.ts';
 
 const PLANT_ART: Record<string, string> = {
   fern, mint, sunbell, 'night-tulip': nightTulip, 'lantern-cactus': lanternCactus, moonbloom, 'reel-vine': reelVine, 'popcorn-shrub': popcornShrub,
@@ -33,6 +38,14 @@ const PLANT_ART: Record<string, string> = {
 /** Window Garden's own words (in its chunk): English first, Turkish second. */
 const TEXT = {
   en: {
+    how1Title: 'Plant a seed',
+    how1: 'Pick a pot and plant one of your seeds.',
+    how2Title: 'Water it, then watch',
+    how2: "Plants grow while the room's video plays. Water them when you see 💧.",
+    how3Title: 'Pick the flower',
+    how3: 'Every bloom goes into your album. Find all 8 plants.',
+    how4Title: 'Films give seeds',
+    how4: 'Watch a film of 20 minutes or more to the end for a new seed.',
     growing: '▶ Growing',
     paused: '⏸ Resting',
     restingTitle: 'Plants grow while the film plays',
@@ -72,6 +85,14 @@ const TEXT = {
     playHere: 'Play here',
   },
   tr: {
+    how1Title: 'Tohum ek',
+    how1: 'Bir saksı seç, tohumlarından birini ek.',
+    how2Title: 'Sula, sonra izle',
+    how2: 'Bitkiler odanın videosu oynarken büyür. 💧 görünce sula.',
+    how3Title: 'Çiçeği topla',
+    how3: 'Her çiçek albümüne girer. 8 bitkinin hepsini bul.',
+    how4Title: 'Filmler tohum verir',
+    how4: '20 dakikalık ya da daha uzun bir filmi sonuna kadar izle, yeni tohum kazan.',
     growing: '▶ Büyüyor',
     paused: '⏸ Dinleniyor',
     restingTitle: 'Bitkiler film oynarken büyür',
@@ -187,6 +208,13 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
   elsewhere.hidden = true;
   const box = el('div', { class: 'wg' }, bar, sceneBox, action, album, note, elsewhere);
   root.replaceChildren(box);
+  const how = howToPlay(box, 'windowGarden:howSeen', () => [
+    { art: how1, title: t('how1Title'), line: t('how1') },
+    { art: how2, title: t('how2Title'), line: t('how2') },
+    { art: how3, title: t('how3Title'), line: t('how3') },
+    { art: how4, title: t('how4Title'), line: t('how4') },
+  ]);
+  bar.append(how.button);
   box.addEventListener('mousedown', (event) => {
     if ((event.target as Element).closest('button')) event.preventDefault();
   });
@@ -379,6 +407,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
   draw();
 
   return () => {
+    how.destroy();
     if (stopped) return;
     stopped = true;
     clearInterval(timer);

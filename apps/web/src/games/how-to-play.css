@@ -1,0 +1,48 @@
+/* "How to play" layer of the side games (games/how-to-play.ts, card GP): covers the game, picture on top, title,
+   one line, dots, Back / Next. Loaded with the games' chunks only. */
+.htp {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 16px 14px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #221a4a, #14102b);
+  color: #fff3d6;
+  font: 15px/1.35 system-ui, sans-serif;
+  text-align: center;
+  outline: none;
+  animation: htp-in 0.2s ease-out;
+}
+.htp[hidden] { display: none; }
+@keyframes htp-in { from { opacity: 0; } }
+.htp-picture { width: 100%; max-width: 420px; }
+.htp-art, .htp-art svg { display: block; width: 100%; height: auto; border-radius: 12px; }
+.htp-words { display: flex; flex-direction: column; gap: 6px; max-width: 340px; }
+.htp-title { font-size: 17px; font-weight: 800; }
+.htp-line { margin: 0; color: #b9b0dc; }
+.htp-dots { display: flex; gap: 6px; }
+.htp-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); }
+.htp-dot.on { background: #ffc65a; }
+.htp-actions { display: flex; gap: 8px; margin-top: auto; width: 100%; justify-content: center; }
+.htp .htp-btn {
+  min-height: 40px; min-width: 110px; padding: 6px 16px; border-radius: 10px; border: 1.5px solid rgba(255, 198, 90, 0.55);
+  background: transparent; color: #ffc65a; font: 700 15px/1.2 system-ui, sans-serif; cursor: pointer; touch-action: manipulation;
+}
+.htp .htp-btn[hidden] { display: none; }
+.htp .htp-next { background: #ffc65a; border-color: #ffc65a; color: #1a1036; }
+.htp .htp-skip {
+  position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08); color: #fff3d6; font-size: 15px; cursor: pointer;
+}
+button.htp-open {
+  flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.1);
+  color: #fff3d6; font: 800 15px/1 system-ui, sans-serif; cursor: pointer; touch-action: manipulation;
+}
+button.htp-open:hover { background: rgba(255, 255, 255, 0.18); }
+@media (prefers-reduced-motion: reduce) { .htp { animation: none; } }
+html.phone .htp .htp-btn { min-height: 44px; }
