@@ -64,3 +64,7 @@ In HTML this is easiest as CSS (the mock used a grid `26px repeat(5, 1fr)`, heig
 `xox`, `four`, `draw`, `quiz`, `poker` (Last Heart, green felt), `snack-bar`, `garden`, `word` (Five Frames / Beş Kare). Same world: night gradient, warm light from the left,
 Glowbeam in most of them. Titles and the "Together · 2 players" / "On the side · just you" line are HTML under the
 cover, never inside the image (so they translate). Use them in the 🎮 gallery window once the owner picks its layout.
+
+## How to play cards (card GP)
+`tutorial/<game>-<n>-<topic>.svg`, 320 × 180, no words inside (numbers and symbols only), ids prefixed per file.
+Texts, sizes and the Five Frames flip: `../side-games-polish.md`; build reference: `polish-preview.html`.
