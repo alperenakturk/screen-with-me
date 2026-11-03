@@ -252,22 +252,20 @@ const sheetName = (page) => page.evaluate(() => {
     await ctx.close();
   }
 
-  // 1a) The home page on a phone (11A): an app start screen, no scrolling; "How does it work?" opens the rest.
+  // 1a) The home page on a phone (card 15b): the art on top, two full-width buttons, the feature tiles at the foot of
+  // the first screen, no link box.
   {
-    const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+    const ctx = await browser.newContext({ ...devices['iPhone 13'], viewport: { width: 390, height: 844 } });
     const page = await ctx.newPage();
     await page.goto(SITE + '/');
-    await page.waitForSelector('#home-how');
+    await page.waitForSelector('.hm-first');
     await page.waitForTimeout(600);
-    const size = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, inner: innerHeight }));
-    const create = await rect(page, '#start-form .btn');
+    const size = await page.evaluate(() => ({ feat: document.querySelector('.hm-feat').getBoundingClientRect().bottom, inner: innerHeight }));
+    const create = await rect(page, '#start-form .hm-btn.primary');
     const join = await rect(page, '#join-toggle');
-    check(size.scroll <= size.inner + 1 && create?.w > 300 && join?.w > 300 && !(await page.isVisible('#start-link')), 'home: an app start screen (two big buttons, no scrolling)', JSON.stringify({ size, create, join }));
+    check(size.feat <= size.inner && create?.w > 300 && join?.w > 300 && !(await page.isVisible('#start-link')), 'home: the first screen fits with two big buttons and no link box', JSON.stringify({ size, create, join }));
     await page.click('#join-toggle');
     check(await page.isVisible('#join-input'), 'home: "Join with a code" opens the code box');
-    await page.click('#home-how');
-    await page.waitForTimeout(600);
-    check((await page.isVisible('.home-steps')) && (await page.isVisible('.home-preview')), 'home: "How does it work?" opens the introduction');
     await ctx.close();
   }
 

@@ -421,6 +421,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.96.12 (the new home page, card 15b):**
+- [ ] Open the home page on the computer, a tablet (both ways) and the phone: Glowbeam shines on the screen, the slogan,
+  two buttons and three small cards all fit without scrolling; "How it works" is below. Create a saved room; join one
+  with a code.
+
 **0.9.96.11 (card 16 part 3):**
 - [ ] Film page (extension): send an emoji and a chat message in fullscreen: both float over the film, no black box.
 - [ ] Phone: open XOX in a room: the board sits in the middle of the screen. Hold the phone sideways in an empty room:
