@@ -393,6 +393,11 @@ export interface ChatMessage {
   at: number;
   /** Image sent with the message (0.9.88): its id; the data arrives separately as `chat-image`. */
   image?: string;
+  /**
+   * R13: a private message to this person. It goes only to their connections (not their TV) and to the sender's, is
+   * never kept in the room's history and never reaches anyone else, the host included.
+   */
+  to?: Member;
 }
 
 export type PlaybackAction = 'load' | 'next' | 'play' | 'pause' | 'seek' | 'rate';
@@ -500,7 +505,7 @@ export type ClientMessage =
   /** Pini kaldır (kendi pinin ya da yöneticiysen herhangi biri). */
   | { t: 'unpin'; id: string }
   /** `image`: a picture sent in chat (0.9.88, `isChatImageData`); then `text` may be empty. */
-  | { t: 'chat'; text: string; image?: string };
+  | { t: 'chat'; text: string; image?: string; /** R13: a private message to this member id (text only). */ to?: string };
 
 export type ErrorCode =
   | 'bad_message'
@@ -513,6 +518,8 @@ export type ErrorCode =
   | 'kicked'
   /** R12: too many people are already waiting at the door; try again later. */
   | 'knock_busy'
+  /** R13: the person a private message was for is not in the room any more. */
+  | 'private_gone'
   /** Bu işlem sadece oda yöneticisine açık. */
   | 'not_host'
   /** Sesli sohbet dolu (VOICE_MAX) ya da bu sunucuda kapalı. */
@@ -1046,6 +1053,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case 'chat': {
       const text = cleanChatText(m.text);
+      if (m.to !== undefined) return isItemId(m.to) && text && m.image === undefined ? { t: 'chat', text, to: m.to } : null;
       if (m.image !== undefined) return isChatImageData(m.image) ? { t: 'chat', text: text ?? '', image: m.image } : null;
       return text ? { t: 'chat', text } : null;
     }
