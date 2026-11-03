@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.16**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.17**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -383,9 +383,22 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.93.17 (computer, with the extension):**
+- [ ] On a film page (room view and fullscreen): the rail on the right is hidden while you watch; bring the mouse to
+  the film's right edge and it opens, the film getting a little narrower; move the mouse back onto the film and it
+  closes, the film widening again. A mouse just passing the edge doesn't make the film jump. The rail's buttons work.
+
 **0.9.93.16 (computer):**
 - [ ] The extension page (top, under "What does it do?") and the "Go to the film" card (in a room, a film page without
   the extension) explain in two lines why the extension asks for every website; the link opens the help page's answer.
+
+**Card 1, "the rail never goes away in YouTube fullscreen" (owner's laptop has no touch screen; Claude could not
+reproduce it with a plain mouse, see `yt-room` harness):**
+- [ ] ⋯ on the rail (or Settings → My screen): is "Keep the controls open" ticked? Ticked, the rail never hides (by design).
+- [ ] After Ctrl+F5 the footer shows 0.9.93.15 or later.
+- [ ] Fullscreen opened with our ⛶ (not F11: F11 is the browser's fullscreen and keeps the room's window layout).
+- [ ] Browser + version and OS, sent to the Planner.
+- [ ] If it still stays: a 10 s screen recording (YouTube fullscreen, mouse in the middle).
 
 **0.9.93.15 (computer + phone):**
 - [ ] Read the Turkish help page (footer "Yardım", the profile menu's ❔, or ⋯ → "Yardım ve SSS"): is anything unclear

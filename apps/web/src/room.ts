@@ -1846,6 +1846,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // Yerleşim değişince (pencere, tam ekran, kartlar) deliği yeniden bildir.
     const wrap = $('.player-wrap');
     new ResizeObserver(() => reportLayout()).observe(wrap);
+    // Card 2b: the film's box narrows and widens with the rail (a CSS transition): report every step, so the film follows.
+    new ResizeObserver(() => reportLayout()).observe($('#player'));
+    // …and once more when the slide ends, so the last step is never lost.
+    $('#player').addEventListener('transitionend', () => reportLayout());
     // Tam ekran kontrolleri bekleyince kaybolur (theater.idle): adacıkları da kalksın, video tıklanabilsin.
     new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
     // Araç çubuğundan açılan pencereler (tepsi, hız, oyun menüsü) deliğin üstüne biner: açılınca hemen bildir.

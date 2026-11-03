@@ -345,6 +345,19 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 
 ## Done
 
+### 2b. Film page: the rail opens and closes at the edge (owner's B, 3 Nov 2026; after card 8)
+- Why: the owner's pick on https://claude.ai/artifact/AKcDGhoFsNjhQryjhukfeD (B, his original wish): the film page's rail
+  should come and go like the site's, never over the film.
+- Done when: the mouse at the film's right edge opens the column and the film narrows to make room; the mouse leaving
+  closes it and the film widens again; smooth, and a mouse passing by doesn't make the film jump.
+- Done: 0.9.93.17 (PR below). Resting film = a 14 px gutter of our overlay (`#rail-edge` hears the mouse there); opens
+  after 140 ms at the edge, closes 450 ms after leaving; the film follows the player's `right` transition (layout
+  reported every step and at `transitionend`). Film-page specifics: the overlay often never hears the mouse leave, so
+  the film frames' moves count as leaving, a stale `:hover` no longer holds the rail, and Chrome's replayed last
+  position after the film widens is ignored. Test: `scripts/harness/embed/run.mjs` under `xvfb-run -a` (headful, real
+  mouse: opens at the edge, film narrows, closes on the film and widens, a passing mouse doesn't open it, the rail's
+  windows still work); headless runs pin the rail and skip those checks (headless Chrome misroutes the mouse there).
+
 ### 8. Extension permission explainer (0.9.94, with the Help page; from Research)
 - Why: scanners rate "all websites" access as critical; users and guides struggle with "read and change site data";
   trust is a top complaint (Teleparty, Rave). Details: `research/newcomers-help-shorts.md` §3.

@@ -130,7 +130,12 @@ async function until(fn, ms = 10000) {
 }
 
 const room = 'shl' + Math.random().toString(36).slice(2, 7);
-const a = await launch({ ext: EXT, out: OUT });
+// Card 2b: with a display (`xvfb-run -a node scripts/harness/embed/run.mjs`) Chrome runs headful and the real mouse
+// opens and closes the film page's rail; headless Chrome routes mouse events wrongly between the film page and our overlay
+// (it even reports moves on the film while the mouse is on the overlay), so there the rail is pinned out and only the
+// open / close checks are skipped.
+const HEADFUL = !!process.env.DISPLAY;
+const a = await launch({ ext: EXT, out: OUT, headless: !HEADFUL });
 check(!a.loaded.error, 'eklenti yüklendi', JSON.stringify(a.loaded.error));
 await a.cdp('Page.addScriptToEvaluateOnNewDocument', { source: COVER_SCRIPT });
 const coverLog = () =>
@@ -346,6 +351,32 @@ check(!!(await until(async () => !(await holeCoveredNow()))), 'ayarlar kapanınc
 // Card 2: no toolbar under the video on the film page; the rail is a column beside the film (never over the film's
 // video), and its emoji window opens over the hole as an island (visible, clickable).
 check(await a.evalFrame('shell=1', `getComputedStyle(document.querySelector('.toolbar')).display === 'none'`), 'film sayfası: videonun altında araç çubuğu yok (tek ray)');
+// Card 2b: the film page's rail waits for the mouse at the film's right edge (a thin gutter of our overlay). Headless
+// Chrome does not route mouse events into the overlay while the film page is fullscreen (headful Chrome does: run with
+// HEADFUL=1 under `xvfb-run -a` to try the real mouse), so headless runs tell the site the mouse reached the edge.
+const EDGE_BOX = `(() => { const r = document.getElementById('rail-edge').getBoundingClientRect(); return r.width ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null; })()`;
+const IN_FS = `document.getElementById('theater').classList.contains('fake-fs')`;
+async function toEdge() {
+  const edge = await a.evalFrame('shell=1', EDGE_BOX);
+  if (edge) await a.mouse('mouseMoved', edge.x, edge.y);
+}
+/** The mouse passes the edge and goes straight back onto the film. */
+async function passBy(back) {
+  const edge = await a.evalFrame('shell=1', EDGE_BOX);
+  if (!edge) return;
+  await a.mouse('mouseMoved', edge.x, edge.y);
+  await a.sleep(40);
+  await a.mouse('mouseMoved', back.x, back.y);
+}
+const RAIL_OUT = `!document.getElementById('theater').classList.contains('dock-idle')`;
+if (HEADFUL) {
+  await toEdge();
+  check(!!(await until(() => a.evalFrame('shell=1', RAIL_OUT), 2000)), 'film sayfası: fare filmin sağ kenarına gelince ray açılıyor');
+} else {
+  console.log('skip film sayfası: rayın açılıp kapanması (headless; xvfb-run ile gerçek fare)');
+  await a.evalFrame('shell=1', `document.getElementById('rail-pin').click(); 1`);
+}
+await a.sleep(400);
 const RAIL_VS_FILM = async () => {
   const dock = await a.evalFrame('shell=1', `(() => { const r = document.getElementById('fs-dock').getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; })()`);
   const hole = clipRects(await a.evaluate(SHELL_CLIP))[1];
@@ -560,6 +591,24 @@ await a.sleep(1500);
   const siteScroll = await a.evalFrame('shell=1', SCROLL);
   const filmScroll = await a.evaluate(SCROLL);
   const screenW = await a.evaluate('innerWidth');
+  // Card 2b (owner's B): the rail rests until the mouse reaches the film's right edge; the film then narrows to make room.
+  const DOCK_IDLE = `document.getElementById('theater').classList.contains('dock-idle')`;
+  const holeRight = async () => clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1]?.r;
+  let wideRight = screenW - 14;
+  if (HEADFUL) {
+    await a.mouse('mouseMoved', screenW / 2, screenH / 2);
+    const rested = await until(() => a.evalFrame('shell=1', DOCK_IDLE), 4000);
+    await a.sleep(400);
+    wideRight = await holeRight();
+    check(!!rested && near(wideRight, screenW - 14, 3), 'tam ekran: ray beklerken film neredeyse tüm genişlikte (sağda ince bir kenar)', JSON.stringify({ rested, wideRight, screenW }));
+    await toEdge();
+    const opened = await until(async () => !(await a.evalFrame('shell=1', DOCK_IDLE)), 2000);
+    await a.sleep(500);
+    const narrowRight = await holeRight();
+    check(!!opened && narrowRight < wideRight - 40, 'tam ekran: fare sağ kenara gelince ray açılıyor, film ona yer açıyor', JSON.stringify({ opened, narrowRight, wideRight }));
+  } else await a.sleep(500);
+  const cover2 = clipRects(await a.evaluate(`getComputedStyle(${SHELL}).clipPath`))[1];
+  Object.assign(cover, cover2);
   const railLeft = await a.evalFrame('shell=1', `document.getElementById('fs-dock').getBoundingClientRect().left`);
 check(siteScroll.over <= 0 && siteScroll.wide <= 0 && siteScroll.bar === 0 && filmScroll.bar === 0 && filmScroll.inner.length === 0 && near(cover.r, railLeft, 2) && screenW - railLeft < 80, 'tam ekran: sağda kaydırma çubuğu yok, delik rayın sol kenarına kadar (ray ekranın sağında)', JSON.stringify({ siteScroll, filmScroll, holeRight: cover.r, railLeft, screenW }));
   const SKIN = `[...document.querySelectorAll('style')].some((s) => s.textContent.includes('-webkit-media-controls-enclosure'))`;
@@ -574,14 +623,28 @@ const railFs = await RAIL_VS_FILM();
 check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.stringify(railFs));
   check(!rects.some(isHole), 'tam ekran: videoya tıklamayı film oynatıcısı alıyor (deliğin tamamını kaplayan adacık yok)', JSON.stringify(rects));
   check(!rects.some((r) => r.b > screenH - 60 && r.r - r.x > 300), 'tam ekran: filmin alt kısmında (kendi çubuğu) bizim bir şeyimiz yok', JSON.stringify(rects));
-  // Card 2: the rail is a column beside the film, so it stays out while the film plays (it covers nothing); the
-  // film's own bar is untouched.
+  // Card 2b: the mouse goes back onto the film (its frames report the move): the rail goes and the film widens again.
   bora.send({ t: 'play', position: 60, at: Date.now() });
-  const DOCK_IDLE = `document.getElementById('theater').classList.contains('dock-idle')`;
-  await a.sleep(4000);
-  check(!(await a.evalFrame('shell=1', DOCK_IDLE)) && Number(await a.evalFrame('shell=1', `getComputedStyle(document.getElementById('fs-dock')).opacity`)) > 0.9, 'tam ekran: film oynarken ray yanda kalıyor (filmin üstünde değil, bir şey kapatmıyor)');
-  bora.send({ t: 'pause', position: 62, at: Date.now() });
-  await a.sleep(800);
+  if (HEADFUL) {
+    await a.mouse('mouseMoved', screenW / 2, screenH / 2);
+    await a.sleep(150);
+    await a.mouse('mouseMoved', screenW / 2 - 20, screenH / 2);
+    const closed = await until(() => a.evalFrame('shell=1', DOCK_IDLE), 2500);
+    await a.sleep(500);
+    check(!!closed && near(await holeRight(), wideRight, 3), 'tam ekran: fare filme dönünce ray kapanıyor, film yine genişliyor', JSON.stringify({ closed, right: await holeRight(), wideRight }));
+    // A mouse passing by the edge (shorter than the open delay) doesn't make the film jump.
+    await passBy({ x: screenW / 2, y: screenH / 2 });
+    await a.sleep(400);
+    check(!!(await a.evalFrame('shell=1', DOCK_IDLE)) && near(await holeRight(), wideRight, 3), 'tam ekran: kenardan geçip giden fare rayı açmıyor (film zıplamıyor)');
+    bora.send({ t: 'pause', position: 62, at: Date.now() });
+    await a.sleep(800);
+    await toEdge();
+    await until(async () => !(await a.evalFrame('shell=1', DOCK_IDLE)), 2000);
+    await a.sleep(400);
+  } else {
+    bora.send({ t: 'pause', position: 62, at: Date.now() });
+    await a.sleep(800);
+  }
   // The emoji window opens to the left of the dock: also an island.
   await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
   await a.sleep(500);
