@@ -23,7 +23,8 @@ import {
   type SearchResult,
 } from '@swm/shared/youtube-search';
 import type { UsageKind } from '@swm/shared/yt-usage';
-import { recordUsage } from './usage.ts';
+import { recordUsage, spendBudget } from './usage.ts';
+import { EXPECTED_UNITS } from '@swm/shared/yt-usage';
 
 const API = 'https://www.googleapis.com/youtube/v3';
 const TIMEOUT_MS = 5000;
@@ -96,6 +97,8 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
 
   // Only real calls to YouTube count against the address's limit (answers from the cache are free).
   if (env.SEARCH_LIMIT && !(await env.SEARCH_LIMIT.limit({ key: await ipKey() })).success) return json({ error: 'busy' });
+  const budget = await budgetAnswer(env, await ipKey(), EXPECTED_UNITS.search);
+  if (budget) return budget;
 
   const api: ApiKey = { key: env.YOUTUBE_API_KEY, calls: {} };
   try {
@@ -161,7 +164,15 @@ type Call = Awaited<ReturnType<typeof callYouTube>>;
  * The shared steps of the Shorts answers: the cache, the "quota used up" memory and the per-address limit around
  * `work`, which makes the real calls. Only calls that reach YouTube count against the address's limit.
  */
-async function cached(request: Request, url: URL, env: Env, ipKey: () => Promise<string>, kind: UsageKind, path: string, work: (api: ApiKey) => Promise<SearchAnswer | Call>): Promise<Response> {
+/** Security M3: the daily budget's answer, or null when the request may go to YouTube. */
+async function budgetAnswer(env: Env, ip: string, cost: number): Promise<Response | null> {
+  const verdict = await spendBudget(env, ip, cost);
+  if (verdict === 'day') return json({ error: 'quota' });
+  if (verdict === 'ip') return json({ error: 'busy' });
+  return null;
+}
+
+async function cached(request: Request, url: URL, env: Env, ipKey: () => Promise<string>, kind: UsageKind, cost: number, path: string, work: (api: ApiKey) => Promise<SearchAnswer | Call>): Promise<Response> {
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
   if (!env.YOUTUBE_API_KEY) return json({ error: 'off' });
   const cache = caches.default;
@@ -171,6 +182,8 @@ async function cached(request: Request, url: URL, env: Env, ipKey: () => Promise
   if (hit) return hit;
   if (await cache.match(quotaKey)) return json({ error: 'quota' });
   if (env.SEARCH_LIMIT && !(await env.SEARCH_LIMIT.limit({ key: await ipKey() })).success) return json({ error: 'busy' });
+  const budget = await budgetAnswer(env, await ipKey(), cost);
+  if (budget) return budget;
   const api: ApiKey = { key: env.YOUTUBE_API_KEY, calls: {} };
   const answer = await work(api).finally(() => recordUsage(env, kind, api.calls));
   if ('ok' in answer) {
@@ -243,7 +256,7 @@ export async function youtubePool(request: Request, url: URL, env: Env, ipKey: (
   const region = poolRegion(choice, (request as Request & { cf?: { country?: unknown } }).cf?.country, lang);
   const { day, publishedAfter } = poolWindow(Date.now());
   const category = POOL_CATEGORY[kind];
-  return cached(request, url, env, ipKey, 'pool', `yt-pool2?kind=${kind}&hl=${lang}&region=${region}&day=${day}${page ? `&page=${page}` : ''}`, (key) =>
+  return cached(request, url, env, ipKey, 'pool', EXPECTED_UNITS.pool, `yt-pool2?kind=${kind}&hl=${lang}&region=${region}&day=${day}${page ? `&page=${page}` : ''}`, (key) =>
     searchShorts(
       {
         q: '#shorts',
@@ -276,7 +289,7 @@ export async function youtubeLike(request: Request, url: URL, env: Env, ipKey: (
   const rawPage = url.searchParams.get('page');
   const page = rawPage === null ? null : cleanPageToken(rawPage);
   if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
-  return cached(request, url, env, ipKey, 'like', `yt-like1?id=${id}&hl=${lang}${page ? `&page=${page}` : ''}`, async (key) => {
+  return cached(request, url, env, ipKey, 'like', page ? EXPECTED_UNITS.likeSearch : EXPECTED_UNITS.like, `yt-like1?id=${id}&hl=${lang}${page ? `&page=${page}` : ''}`, async (key) => {
     const source = await callYouTube('videos', { part: 'snippet', id, fields: 'items(snippet(title,channelId))' }, key);
     if (!source.ok) return source;
     const snippet = ((source.body as { items?: { snippet?: { title?: unknown; channelId?: unknown } }[] } | null)?.items ?? [])[0]?.snippet;
@@ -336,7 +349,7 @@ export async function youtubeChannel(request: Request, url: URL, env: Env, ipKey
   if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
   const { day } = poolWindow(Date.now());
   const label = 'id' in ref ? ref.id : `@${ref.handle.toLowerCase()}`;
-  return cached(request, url, env, ipKey, 'channel', `yt-chan1?c=${encodeURIComponent(label)}&hl=${lang}&day=${day}${page ? `&page=${page}` : ''}`, async (key) => {
+  return cached(request, url, env, ipKey, 'channel', EXPECTED_UNITS.channel, `yt-chan1?c=${encodeURIComponent(label)}&hl=${lang}&day=${day}${page ? `&page=${page}` : ''}`, async (key) => {
     const channel = await callYouTube(
       'channels',
       { part: 'contentDetails', ...('id' in ref ? { id: ref.id } : { forHandle: `@${ref.handle}` }), fields: 'items/contentDetails/relatedPlaylists/uploads' },

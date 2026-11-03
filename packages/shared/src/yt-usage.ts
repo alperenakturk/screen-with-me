@@ -67,3 +67,32 @@ export function cleanUsage(x: unknown): { kind: UsageKind; calls: Record<string,
   }
   return { kind: kind as UsageKind, calls: clean };
 }
+
+/**
+ * Security M3: a daily budget for the YouTube API key. YouTube gives 10 000 units a day; we spend at most
+ * DAILY_UNIT_BUDGET of them (the rest is headroom for counting gaps), and one address (its scrambled hash, in memory
+ * only) at most IP_DAILY_UNITS (≈ 20 searches), so one script can no longer turn search off for everyone.
+ */
+export const DAILY_UNIT_BUDGET = 9000;
+export const IP_DAILY_UNITS = 2000;
+
+/** What a request is expected to cost before it is made (the real cost is counted afterwards). */
+export const EXPECTED_UNITS = { search: 101, pool: 101, like: 4, likeSearch: 101, channel: 3 } as const;
+
+/** All units counted today (UTC). */
+export function unitsToday(book: UsageBook, now: number): number {
+  let units = 0;
+  for (const usage of Object.values(book[usageDay(now)] ?? {})) units += usage?.units ?? 0;
+  return units;
+}
+
+/**
+ * May a request of `cost` units go to YouTube? `spent` = units counted today, `pending` = units allowed but not yet
+ * counted, `ipSpent` = what this address was allowed today. 'day' = the budget is out (answer "quota"), 'ip' = this
+ * address had its share (answer "busy").
+ */
+export function budgetCheck(spent: number, pending: number, ipSpent: number, cost: number): 'ok' | 'day' | 'ip' {
+  if (spent + pending + cost > DAILY_UNIT_BUDGET) return 'day';
+  if (ipSpent + cost > IP_DAILY_UNITS) return 'ip';
+  return 'ok';
+}

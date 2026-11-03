@@ -612,6 +612,15 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   and like; the "quota" answer is used when the budget is out.
 - Tests: unit for the budget logic; e2e `search.mjs` still passes.
 - Owner's pick: none needed (the per-IP number can be tuned later).
+- Done: 0.9.96.17 (PR below). Shared `yt-usage.ts`: `DAILY_UNIT_BUDGET` 9000 of YouTube's 10 000 units a day,
+  `IP_DAILY_UNITS` 2000 per address (≈ 20 searches), `EXPECTED_UNITS` per request kind, `unitsToday`, `budgetCheck`.
+  The `YoutubeUsage` object answers `POST /spend {ip, cost}` before each uncached request to YouTube (search, Discover,
+  More like this, channel): today's counted units + units allowed but not yet counted + the cost must fit the budget
+  (else `quota`), and the address's share today (else `busy`). The per-address numbers live in the object's memory
+  only (the same scrambled IP hash as the rate limits, never stored), reset each UTC day. If the object can't be
+  reached the request goes (YouTube's own quota is the backstop). Tests: unit `yt-usage.test.ts` (budget, per-address
+  share, today's sum); e2e `search.mjs` unchanged and green (no key locally / in CI, so the budget path is not reached
+  there; live searches go through it).
 
 ### Security: rate-limit the cheap routes that wake Durable Objects (M4)
 - Severity: medium
