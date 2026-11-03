@@ -26,8 +26,8 @@ The owner tested the solo list (home, join, empty room, YouTube, film page, popu
 line, the footer links, English first + remembered TR, the intro, the 🔒 Privacy link, friendly room names, the invite
 window + QR, the empty room's rail, Share, ⋯ More windows, `?`, 🔍 + YouTube attribution, paste / drop a link, the
 rail at the edge (window + fullscreen), YouTube captions / quality, keyboard Tab + dialog focus, the extension page's
-two lines, the popup's logo, film-page fullscreen emojis / messages, the feedback form and the usage counters (both
-secrets added, 0.9.97.5). Not yet tried: games, move to another device, phone-only, together tests. The Developer
+two lines, the popup's logo, film-page fullscreen emojis / messages. Both repo secrets are added (live in 0.9.97.5; the owner still tries the
+feedback form and the usage command). Not yet tried: games, move to another device, phone-only, together tests. The Developer
 who takes a card below also ticks the matching hand tests in `STATUS.md`.
 
 **Run order:** lane B: R1 → R2 → R3 → R4 → R5 → R6 → R7 → R8 → R9 → R10, then its bug-hunt list. Lane A: R3-6 → R3-8
