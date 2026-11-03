@@ -1182,7 +1182,7 @@ html.phone.in-home .home-how-row {
   text-align: center;
 }
 
-html.phone.in-home:not(.home-intro-open) main > :is(.home-themes, .home-steps, .home-doors, .home-features),
+html.phone.in-home:not(.home-intro-open) main > :is(.home-strip, .home-themes, .home-steps, .home-doors, .home-features),
 html.phone.in-home:not(.home-intro-open) .home-preview,
 html.phone.in-home:not(.home-intro-open) .footer {
   display: none;
