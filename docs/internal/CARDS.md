@@ -25,12 +25,14 @@ Card format:
 Two Developer lanes so the work moves faster; lane B lives mostly in new files (games, players) and rebases on lane A.
 Each card still ships with its tests; hand tests go to `STATUS.md` for the owner's one big test round at the end.
 
-**Lane A (Developer, `session_015Fyri2WkmxwEfieZ1jto4L`):** 6d → 6e empty-room rail → 6c Sidelit (0.9.95) → 9 feedback button → 10 Shorts
-channel + country → 11 thanks page → 12 debug panel → 14 cinema mode → 16 design sweep → T tablet → A11y accessibility
-→ security cards (M2, M3, M4, M5, M6, L1, L4, L2+L3+L5, L6, L7+L8, L9, L10; M8 stays with the frozen TV) → the Security
-session's new findings → bug-hunt findings.
-**Lane B (Developer B, `session_015Fyri6bkmZm4WdgzAWHpMc`):** 🍿 Snack Bar → GG games gallery window → 🌱 Window Garden → 🔤 daily word
-game → move-to-device code → P1 Vimeo → P2 podcasts.
+**Lane A (Developer, `session_015Fyri2WkmxwEfieZ1jto4L`):** 6d → 6e empty-room rail → **R3-1** (high, right after 6e) →
+6c Sidelit (0.9.95) → 6f Glowbeam mascots + intro → 9 feedback button (with R3-7) → 10 Shorts channel + country → 11 thanks page → 12 debug panel →
+14 cinema mode → 16 design sweep → T tablet → A11y accessibility → **Y1 → Y2 → Y3** (YouTube audit prep) → security
+cards (M2, M3, M4, M5, M6, L1, L4, L2+L3+L5, L6, L7+L8, L9, L10, R3-2, R3-5, R3-6, R3-8; M8 stays with the frozen TV;
+R3-3 goes with the domain) → the Security session's new findings → bug-hunt findings. Everything here lands by
+**0.9.99** (owner, 3 Nov 2026: version plan in `ROADMAP.md`).
+**Lane B (Developer B, `session_015Fyri6bkmZm4WdgzAWHpMc`):** 🍿 Snack Bar → GG games gallery window → 🌱 Window Garden → 🔤 Five
+Frames (the daily word game) → move-to-device code → P1 Vimeo → P2 podcasts.
 **Not in this round:** 13 Shorts measurement (needs the owner's real Chrome; part of his test round), Shorts door
 (0.9.95+ growth), G1–G5 (launch), the privacy policy rewrite + terms (the "official work" step after the test round).
 **After both lanes:** Planner runs the council review (harsh feedback on the whole app), then a bug hunt.
@@ -69,6 +71,18 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   `screenwithme-extension` (an unpacked extension's id comes from its folder; renaming it would lose people's
   settings). Follow-up for the Planner: the costumed theme mascots (`theme-art.mjs`, theme pickers) still wear the old
   purple face; N1 in costume would be its own card. Tests: all site harnesses, popup, embed (112 checks, headful).
+
+### 6f. Glowbeam mascots per theme + the Sidelit intro (lane A, right after 6c; from the Design session)
+- Why: card 6c brings the new name and logo; the theme mascots and the intro animation still show the old face and
+  logo. Design delivered both (PR #161): `docs/internal/design/themes/` (11 `glowbeam-<theme>.svg`, drop-in for
+  `<id>-maskot.svg`, steps for `theme-art.mjs` in its README) and `docs/internal/design/intro/` (storyboard with timings,
+  easings, keyframe SVGs and a reduced-motion still). Preview: https://claude.ai/artifact/6Ce98qjeANVeUota34uLec
+- Done when: every theme shows its Glowbeam (eyes always visible); the intro follows the storyboard on the existing
+  sound beats (0 / 0.72 / 1.1–1.4 s, `INTRO_MS` 2700) on the site and in the extension; `logo.ts` has `light` and `eyes`
+  as separate parts; reduced motion = the still frame fading in and out; "Enjoy the show!" in EN + TR.
+- Tests: home + theme harness screenshots of all 11 themes; an intro harness checks the parts appear on the beats and
+  that reduced motion shows no movement; size budget still green.
+- Owner's pick: none needed (direction picked: D1 + N1).
 
 ### 6e. The rail in the empty room too (owner, 3 Nov 2026; lane A, after 6d)
 - Why: owner: before any video, people should already be able to open the camera, join voice, open a game or emojis.
@@ -196,6 +210,8 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   of screenshots is attached to the PR.
 - Tests: the screenshot harness itself, kept for later sweeps; all harnesses pass.
 - Owner's pick: none needed.
+- Planner (3 Nov 2026): the Design session prepares a first list from the live site in
+  `docs/internal/design/sweep-1.md`; start from it, then add your own screenshots.
 
 ## Proposed
 
@@ -234,12 +250,42 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
 - Severity: medium
 - Why: the Cloudflare token and the YouTube key sit in the environment of `npm ci`, the build and the live e2e, so a
   compromised dependency's install script or build plugin could read them and deploy to the account.
-- Done when: the three secrets are set only on the "Deploy to Cloudflare" step, read from a GitHub Environment
-  `production` (deploy branch `main` only, created by the owner); the key check uses `secrets` in an `if:`; the
-  workflow has `permissions: contents: read`.
+- Done when: the three secrets are set only on the "Deploy to Cloudflare" step (step-level `env:`, never job- or
+  workflow-level); the key check uses `secrets` in an `if:`; the workflow has `permissions: contents: read`.
+  Planner note (3 Nov 2026): the repo is private on GitHub Free, which has no Environments with branch rules for private
+  repos, so the `production` environment part waits until the repo is public or paid; step-level secrets need no owner
+  action.
 - Tests: CI green on a PR; the next merge deploys and the live e2e passes; the install / build steps' environment has
   no `CLOUDFLARE_*` / `YOUTUBE_*` (a quick `env | grep -c` step that prints 0, removed afterwards).
-- Owner's pick: needed only for the owner action (create the `production` environment and move the secrets).
+- Owner's pick: none needed now (the environment part later).
+
+### Y1. YouTube branding + Terms link next to search results (audit prep, from Research)
+- Why: YouTube Developer Policies III.F.2 / III.A.1: every feature showing YouTube API results must make clear they come
+  from YouTube and link YouTube's Terms of Service; the audit (`research/store-and-youtube-audit.md`) marks it 🟡.
+- Done when: the link-box search results, Shorts search (＋ Add), 🎲 Discover and ✨ More like this show a small
+  "from YouTube" mark per YouTube's brand guidelines (their logo file unchanged, never altered or recoloured) and a
+  "YouTube Terms of Service" link (opens in a new tab); EN + TR; computer + phone; the Help page says the same.
+- Tests: harness or e2e checks the mark + link exist in each of the four places; screenshot at phone width.
+- Owner's pick: none needed.
+
+### Y2. Stored YouTube titles never older than 30 days (audit prep, from Research)
+- Why: YouTube allows keeping non-authorized API data (titles) at most 30 days; a saved room's queue, `history` and
+  `lastRoom` can live longer while the room is used.
+- Done when: every stored YouTube title carries the time it was fetched; older than 30 days → refreshed on next use
+  (oEmbed / videos.list) or dropped to a neutral "YouTube video"; search / pool / like caches stay ≤ 24 h (already);
+  the privacy policy line about retention matches.
+- Tests: unit (a 31-day-old title is refreshed or dropped, a 29-day one kept); e2e on a saved room with a fake clock or
+  a seeded old record.
+- Owner's pick: none needed.
+
+### Y3. Usage counters for the YouTube quota form (audit prep, from Research)
+- Why: the quota increase form asks for real daily usage; we have no numbers today.
+- Done when: the Worker counts per UTC day the search / pool / like / oEmbed calls that reached YouTube and the units
+  they cost (no query text, no IP, no room id), readable by the owner (e.g. `/api/youtube/usage` behind a secret header,
+  or Workers Analytics Engine if free); kept ≤ 90 days.
+- Tests: unit (counter adds the right units per call kind); e2e: a search raises the counter, the route without the
+  header is refused.
+- Owner's pick: none needed.
 
 ### Security: custom-domain hardening checklist (R3-3)
 - Severity: medium (do it together with the domain purchase)
