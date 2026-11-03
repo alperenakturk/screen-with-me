@@ -63,3 +63,21 @@ English: allowed guesses = ENABLE 5-letter (filtered); answers = 12dicts common 
 Turkish: allowed guesses = Zemberek 5-letter lemmas; answers = a hand-picked common subset; rules say "no suffixes".
 Our own name, board, marks, keyboard placement and share text; credits for both lists. The daily word comes from a
 seeded shuffle (same for everyone, works offline, no server), the answer list is shipped obfuscated, not plain.
+
+## Name check: "Five Frames" (TR "Beş Kare"), 3 Nov 2026
+Owner's pick for the daily word game. Web search only (registries not reachable from the cloud).
+- **No game, app or word game called "Five Frames" was found.** "Five frame(s)" is a common early-maths teaching tool
+  (a 5-box counting grid; printables, edx Education counter sets, [classplayground](https://classplayground.com/five-frame/)):
+  harmless, but it crowds search results.
+- **Nearest neighbour: "Framed"** ([framed.wtf](https://alternativeto.net/software/framed-wtf/about)), a well-known
+  daily *movie* guessing game since March 2022 (guess the film from up to 6 frames, Wordle-style sharing;
+  [GameSpot](https://www.gamespot.com/articles/framed-is-a-wordle-like-with-scenes-from-movies/1100-6501819/)). A
+  daily game named "…Frames" inside a film-watching product may make people expect a movie-still game. Different name,
+  different mechanic: low legal risk, some confusion risk.
+- **Original word game's trade dress:** the name does not copy that game's name or "-dle" pattern, so it is not a
+  problem by itself. The risk sits in the board: "five frames" read as five square tiles in a row could pull the
+  design back towards the 5 × 6 square grid. Keep the earlier rule (§2): film-strip / ticket rows, our own marks and
+  colours, no green / yellow squares, our own share text. A film-strip look actually fits the name ("frames" = film
+  frames) and moves us further from the original.
+- **Verdict: 🟢/🟡 usable.** No collision found; mind "Framed" (expectation, not law) and keep the board a film strip,
+  not a square grid. Registry check (TÜRKPATENT / TMview / USPTO, class 9 / 41) still the owner's step before 1.0.
