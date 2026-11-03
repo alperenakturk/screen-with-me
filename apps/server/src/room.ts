@@ -107,6 +107,8 @@ interface Attachment {
   watching?: boolean;
   /** The game table this connection has open. */
   table?: string;
+  /** R11: the opaque per-room person key sent to clients (`personKeyFor`), from the browser id. */
+  pk?: string;
   /** Short hash of the connection's IP (set by the Worker): abuse limits only; never stored or sent to clients. */
   ip?: string;
   /** A paired TV: `cid` is its person's (so it is the same person: host rights, kicks, counted once). */
@@ -166,6 +168,7 @@ function memberOf(attachment: Joined): Member {
   if (attachment.watching) member.watching = true;
   if (attachment.tv) member.tv = true;
   if (attachment.table) member.table = attachment.table;
+  if (attachment.pk) member.pk = attachment.pk;
   return member;
 }
 
@@ -302,6 +305,8 @@ export class Room extends DurableObject<Env> {
    * a server restart. Owner: "why does it throw me out of voice and put me back". Browser ids never leave the server.
    */
   private memberIds: Record<string, { cid: string; at: number }> = {};
+  /** R11: the salt of this room's person keys (storage `personSalt`, made on first use). */
+  private personSalt: string | null = null;
   /** This room's id (from the Worker's header; a paired TV is told where to go). */
   private roomId: string | null = null;
 
@@ -842,6 +847,7 @@ export class Room extends DurableObject<Env> {
       this.tvTokens = {};
       this.memberIds = {};
       this.counted = null;
+      this.personSalt = null;
       return;
     }
     await this.pruneRecaps(now);
@@ -849,6 +855,21 @@ export class Room extends DurableObject<Env> {
     await this.closeEmptyTables(now);
     if (this.settings.startsAt !== undefined && now >= this.settings.startsAt) await this.startScheduled(now);
     await this.scheduleAlarm();
+  }
+
+  /**
+   * R11: a person's key for the other clients, the same for every tab (and paired TV) of one browser, different for two
+   * browsers even with the same name and avatar. A hash of the browser id with a random salt kept by this room, so it
+   * can't be turned back into the id or linked to the same person in another room.
+   */
+  private async personKeyFor(attachment: Attachment): Promise<string> {
+    this.personSalt ??= (await this.ctx.storage.get<string>('personSalt')) ?? null;
+    if (!this.personSalt) {
+      this.personSalt = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+      await this.ctx.storage.put('personSalt', this.personSalt);
+    }
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${this.personSalt}|${keyOf(attachment)}`));
+    return [...new Uint8Array(digest).slice(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   /** Saved recaps live at most `RECAP_MAX_AGE_MS` (90 days): older ones leave storage on load and on each alarm, not
@@ -1094,6 +1115,7 @@ export class Room extends DurableObject<Env> {
     }
 
     attachment.name = hello.name;
+    attachment.pk = await this.personKeyFor(attachment);
     attachment.joinedAt ??= Date.now();
     if (hello.avatar) attachment.avatar = hello.avatar;
     else delete attachment.avatar;

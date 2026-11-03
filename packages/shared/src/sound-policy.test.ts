@@ -103,3 +103,14 @@ describe('JoinFilter', () => {
     expect(f.update([me, ali, { ...ali, id: 'a2' }, ayse], 'm', 1000)).toBe(1);
   });
 });
+
+describe('JoinFilter with person keys (R11)', () => {
+  it('counts a second person with the same name and avatar as a new arrival', () => {
+    const filter = new JoinFilter();
+    filter.seed([{ id: 'a', pk: 'k1', name: 'Alex', avatar: 'wizard' }]);
+    const fresh = filter.update([{ id: 'a', pk: 'k1', name: 'Alex', avatar: 'wizard' }, { id: 'b', pk: 'k2', name: 'Alex', avatar: 'wizard' }], 'a', 1000);
+    expect(fresh).toBe(1);
+    const tab = filter.update([{ id: 'a', pk: 'k1', name: 'Alex', avatar: 'wizard' }, { id: 'b', pk: 'k2', name: 'Alex', avatar: 'wizard' }, { id: 'c', pk: 'k1', name: 'Alex', avatar: 'wizard' }], 'a', 2000);
+    expect(tab).toBe(0);
+  });
+});

@@ -12,7 +12,7 @@
 
 import { createLogo } from '@swm/shared/logo';
 import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
-import { type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
+import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { isPhoneLayout, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
@@ -397,12 +397,12 @@ export function createGameStage(opts: StageOptions) {
   const meId = () => opts.me().id;
   const canClose = (table: RoomGame) => table.by.id === meId() || opts.amHost();
   const titleOf = (kind: RoomGameKind) => t(`games.${kind}.title`);
-  /** People who have this table open (one entry per person: name + avatar). */
+  /** People who have this table open (one entry per person, R11: by the server's person key). */
   function peopleAt(id: string): Member[] {
     const seen = new Set<string>();
     return opts.members().filter((m) => {
       if (m.table !== id || m.tv) return false;
-      const key = `${m.name}|${m.avatar ?? ''}`;
+      const key = personOf(m);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

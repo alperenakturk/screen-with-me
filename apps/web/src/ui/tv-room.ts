@@ -6,7 +6,7 @@ import '../tv.css';
 // rest happen on the paired phone (its remote mode), which also sends commands here (`{t:'tv', op}`).
 
 import type { Member, Reaction, ServerMessage, TvOp } from '@swm/shared/protocol';
-import { REACTIONS } from '@swm/shared/protocol';
+import { REACTIONS, personOf } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { avatarNode } from './avatar.ts';
 import { t } from '../i18n.ts';
@@ -150,7 +150,7 @@ export function createTvRoom(deps: TvRoomDeps) {
   /** Listen to voice while someone else (not me on my phone) is in it; leave when nobody is. */
   function syncVoice(): void {
     const me = members.find((m) => m.id === deps.myId());
-    const others = members.some((m) => m.voice && m.id !== me?.id && !(me && m.name === me.name && (m.avatar ?? '') === (me.avatar ?? '')));
+    const others = members.some((m) => m.voice && m.id !== me?.id && !(me && personOf(m) === personOf(me)));
     const active = deps.voice.state().active;
     if (listening && others && !active) void deps.voice.listen().catch(() => {});
     else if ((!listening || !others) && active) deps.voice.toggleJoin();
@@ -162,7 +162,7 @@ export function createTvRoom(deps: TvRoomDeps) {
     const people: Member[] = [];
     for (const m of members) {
       if (m.tv) continue;
-      const key = `${m.name}|${m.avatar ?? ''}`;
+      const key = personOf(m);
       if (seen.has(key)) continue;
       seen.add(key);
       people.push(m);
@@ -170,8 +170,8 @@ export function createTvRoom(deps: TvRoomDeps) {
     faces.replaceChildren(
       ...people.slice(0, 8).map((m) => {
         const img = avatarNode(m.avatar, 'tv-face-pic');
-        const face = el('div', { class: m.voice ? 'tv-face in-voice' : 'tv-face', 'data-person': `${m.name}|${m.avatar ?? ''}` }, img, el('span', { class: 'tv-face-name' }, m.name));
-        if (me && m.name === me.name && (m.avatar ?? '') === (me.avatar ?? '')) face.classList.add('me');
+        const face = el('div', { class: m.voice ? 'tv-face in-voice' : 'tv-face', 'data-person': personOf(m) }, img, el('span', { class: 'tv-face-name' }, m.name));
+        if (me && personOf(m) === personOf(me)) face.classList.add('me');
         return face;
       }),
       ...(people.length > 8 ? [el('div', { class: 'tv-face more' }, `+${people.length - 8}`)] : []),
@@ -179,7 +179,7 @@ export function createTvRoom(deps: TvRoomDeps) {
   }
   // Who is speaking: any connection of a person (their phone) glows on that person's face.
   setInterval(() => {
-    const speaking = new Set([...deps.voice.speakers()].map((id) => members.find((m) => m.id === id)).filter((m): m is Member => !!m).map((m) => `${m.name}|${m.avatar ?? ''}`));
+    const speaking = new Set([...deps.voice.speakers()].map((id) => members.find((m) => m.id === id)).filter((m): m is Member => !!m).map(personOf));
     for (const face of faces.querySelectorAll<HTMLElement>('.tv-face[data-person]')) face.classList.toggle('speaking', speaking.has(face.dataset.person!));
   }, 250);
 

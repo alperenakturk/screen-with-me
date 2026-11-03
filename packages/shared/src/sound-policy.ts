@@ -119,8 +119,9 @@ export class SoundLimiter {
 }
 
 /** A person's key for "the same person again" (a reload or a second tab has a new member id). */
-export function personKey(m: { name: string; avatar?: string | null }): string {
-  return `${m.name}\u0000${m.avatar ?? ''}`;
+export function personKey(m: { pk?: string; name: string; avatar?: string | null }): string {
+  // R11: the server's per-room person key tells two people with the same name and avatar apart.
+  return m.pk ? `p:${m.pk}` : `${m.name}\u0000${m.avatar ?? ''}`;
 }
 
 /**
@@ -135,7 +136,7 @@ export class JoinFilter {
   private current = new Map<string, string>();
 
   /** Call with every member list; returns how many really new people arrived (others than me). */
-  update(members: ReadonlyArray<{ id: string; name: string; avatar?: string | null }>, myId: string | null, now: number): number {
+  update(members: ReadonlyArray<{ id: string; pk?: string; name: string; avatar?: string | null }>, myId: string | null, now: number): number {
     const next = new Map(members.map((m) => [m.id, personKey(m)]));
     // Whoever was here until now (also those who just left) was seen now.
     for (const key of this.current.values()) this.seen.set(key, now);
@@ -153,7 +154,7 @@ export class JoinFilter {
   }
 
   /** The first list (welcome): remembered, nobody counts as an arrival. */
-  seed(members: ReadonlyArray<{ id: string; name: string; avatar?: string | null }>): void {
+  seed(members: ReadonlyArray<{ id: string; pk?: string; name: string; avatar?: string | null }>): void {
     this.current = new Map(members.map((m) => [m.id, personKey(m)]));
   }
 }

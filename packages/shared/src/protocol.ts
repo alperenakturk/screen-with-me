@@ -243,6 +243,15 @@ export interface Member {
   tv?: boolean;
   /** The game table (its id) this person has open, playing or watching (the games hub shows who is where). */
   table?: string;
+  /** Owner's test round 1, R11: an opaque per-room person key (from the browser id, never the id itself). Two people
+   * with the same name and avatar differ here; the same person's tabs (and paired TV) share it. Old servers send none. */
+  pk?: string;
+}
+
+/** Who a member is, for counting and grouping people (not for stored settings): the person key when the server sent
+ * one, else name + avatar as before. */
+export function personOf(m: { pk?: string; name: string; avatar?: string | null }): string {
+  return m.pk ? `p:${m.pk}` : `n:${m.name}|${m.avatar ?? ''}`;
 }
 
 /** Yayın türü: ekran/pencere/sekme paylaşımı ya da kamera. */

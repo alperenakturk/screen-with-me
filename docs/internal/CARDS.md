@@ -115,6 +115,14 @@ who takes a card below also ticks the matching hand tests in `STATUS.md`.
   join sounds, "+N", per-person volume and the solo games' "others" all count two people; the same person's two tabs
   (same cid) still count once. Stored per-person settings keyed by name + avatar keep working (fall back to them).
 - Tests: e2e (two cids, same name + avatar → count 2; one cid, two tabs → 1), unit for the person key.
+- Done (0.9.97.7): the server gives every member `pk`, an opaque per-room person key (the first 8 bytes of SHA-256 of a
+  random per-room salt, storage `personSalt`, and the browser key; the same for one browser's tabs and its paired TV,
+  different in another room, never the cid). Shared `personOf(m)` (pk, else name + avatar as before) and `personKey`
+  (the join sounds' `JoinFilter`) group people: the room title's count, the Together faces, the camera tiles' "one per
+  person" and "my other tab", the games hub's "who is at this table", the solo games' others, the TV faces and the
+  debug panel. What is stored per person (volume, hidden / pinned cameras, tile places) stays keyed by name + avatar.
+  The People list shows connections as before. Tests: e2e `people.mjs` (two browsers, same name + avatar → two keys;
+  one browser's two tabs → one; no cid on the wire; another room → another key), unit `personOf`, `JoinFilter`.
 
 ### R12. "Ask before letting people in" (owner's idea; Planner: yes; lane A)
 - Why: owner asked for room security options. A room link can leak (a screenshot, a group chat); a knock really helps.
