@@ -35,7 +35,7 @@ R3-3 goes with the domain) → the Security session's new findings → bug-hunt 
 Frames (the daily word game) → move-to-device code → **GP side games polish** → P2 podcasts (P1 Vimeo done in 0.9.93.21).
 **Not in this round:** 13 Shorts measurement (needs the owner's real Chrome; part of his test round), Shorts door
 (0.9.95+ growth), G1–G5 (launch), the privacy policy rewrite + terms (the "official work" step after the test round).
-**After both lanes:** Planner runs the council review (harsh feedback on the whole app), then a bug hunt.
+**After both lanes:** Planner runs the council review (harsh feedback on the whole app), then a bug hunt. **Gate (owner, 3 Nov 2026):** the council waits until the owner has done his solo hand tests (the Planner's list of things that will not change) and added the two repo secrets `FEEDBACK_GITHUB_TOKEN` and `USAGE_TOKEN`; his test results go into the council's brief.
 
 
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
