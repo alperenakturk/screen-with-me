@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { addUsage, cleanUsage, pruneUsage, type UsageBook, type UsageKind } from '@swm/shared/yt-usage';
+import { addUsage, budgetCheck, cleanUsage, pruneUsage, unitsOf, unitsToday, usageDay, type UsageBook, type UsageKind } from '@swm/shared/yt-usage';
 import { readCapped } from './fallback.ts';
 
 /**
@@ -8,10 +8,39 @@ import { readCapped } from './fallback.ts';
  * people: no words, no IP, no room id. `POST /add {kind, calls}` (from the Worker and the room objects), `GET /read`.
  */
 export class YoutubeUsage extends DurableObject<Env> {
+  /** Security M3: units allowed today but not counted yet, and what each address was allowed today. In memory only. */
+  private budgetDay = '';
+  private pending = 0;
+  private ips = new Map<string, number>();
+
   override async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
     const now = Date.now();
     const book = (await this.ctx.storage.get<UsageBook>('book')) ?? {};
+    if (usageDay(now) !== this.budgetDay) {
+      this.budgetDay = usageDay(now);
+      this.pending = 0;
+      this.ips.clear();
+    }
+    if (path === '/spend' && request.method === 'POST') {
+      const body = await readCapped(request, 256).catch(() => null);
+      let ask: { ip?: unknown; cost?: unknown } = {};
+      try {
+        ask = body ? JSON.parse(body) : {};
+      } catch {
+        ask = {};
+      }
+      const ip = typeof ask.ip === 'string' ? ask.ip.slice(0, 64) : '';
+      const cost = typeof ask.cost === 'number' && Number.isInteger(ask.cost) && ask.cost > 0 && ask.cost <= 1000 ? ask.cost : null;
+      if (cost === null) return new Response('bad', { status: 400 });
+      const verdict = budgetCheck(unitsToday(book, now), this.pending, this.ips.get(ip) ?? 0, cost);
+      if (verdict === 'ok') {
+        this.pending += cost;
+        if (this.ips.size >= 50_000 && !this.ips.has(ip)) this.ips.clear();
+        this.ips.set(ip, (this.ips.get(ip) ?? 0) + cost);
+      }
+      return new Response(verdict);
+    }
     if (path === '/read' && request.method === 'GET') {
       return new Response(JSON.stringify(pruneUsage(book, now)), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
@@ -26,7 +55,25 @@ export class YoutubeUsage extends DurableObject<Env> {
     const usage = cleanUsage(parsed);
     if (!usage) return new Response('bad', { status: 400 });
     await this.ctx.storage.put('book', addUsage(book, usage.kind, usage.calls, now));
+    // Counted now: what was allowed for it is no longer pending.
+    this.pending = Math.max(0, this.pending - unitsOf(usage.calls));
     return new Response('ok');
+  }
+}
+
+/**
+ * Security M3: asks the budget before a request goes to YouTube. 'day' = today's budget is spent, 'ip' = this address
+ * had its share. Without the object (tests) or when it can't be reached, the request may go (YouTube's own quota still
+ * stops it; a broken counter must not turn search off).
+ */
+export async function spendBudget(env: Env, ip: string, cost: number): Promise<'ok' | 'day' | 'ip'> {
+  if (!env.USAGE) return 'ok';
+  try {
+    const stub = env.USAGE.get(env.USAGE.idFromName('usage'));
+    const answer = await (await stub.fetch('https://usage/spend', { method: 'POST', body: JSON.stringify({ ip, cost }) })).text();
+    return answer === 'day' || answer === 'ip' ? answer : 'ok';
+  } catch {
+    return 'ok';
   }
 }
 
