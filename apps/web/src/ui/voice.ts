@@ -321,13 +321,19 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const max = voiceMax();
     const cams = members.filter((m) => m.voice?.cam).length;
     const camsShown = mode === 'p2p' && !!client.setCam && inVoice.length > 0;
-    limitEl.textContent = t('voice.limit', { n: inVoice.length, max }) + (camsShown ? ` · ${t('voice.camLimit', { n: cams, max: CAM_MAX })}` : '');
+    // The camera count carries our line icon, not the 📷 emoji (Windows drew it as an empty box).
+    limitEl.replaceChildren(t('voice.limit', { n: inVoice.length, max }));
+    if (camsShown) {
+      const camCount = el('span', { class: 'voice-limit-cam' }, t('voice.camLimit', { n: cams, max: CAM_MAX }));
+      setIcon(camCount, 'cam');
+      limitEl.append(' · ', camCount);
+    }
     limitEl.title = t('voice.limitTitle', { max }) + (camsShown ? `\n${t('voice.camLimitTitle', { max: CAM_MAX })}` : '');
     const full = !active && inVoice.length >= max;
     const left = max - inVoice.length;
     limitEl.classList.toggle('full', inVoice.length >= max);
     limitEl.classList.toggle('near', !full && left === 1 && !active);
-    if (!active && !full && left === 1) limitEl.textContent += ` · ${t('voice.lastSeat', { n: left })}`;
+    if (!active && !full && left === 1) limitEl.append(` · ${t('voice.lastSeat', { n: left })}`);
     joinButton.classList.toggle('is-full', full);
     // Kamera düğmesi sadece eşler arası seste (Cloudflare yolunda ve eski eklentinin film sayfasında görüntü yok).
     camButton.hidden = !active || !client.setCam;

@@ -49,8 +49,9 @@ const shown = (page, selector) =>
   check(THEMED.some((id) => joinAvatars[0].endsWith(`/avatars/${id}.svg`)), 'join card: a fresh browser gets a themed avatar', joinAvatars[0]);
 
   // D: the fresh room's first view.
-  for (const [sel, what] of [['#media-input', 'add a video'], ['#invite-btn', 'invite'], ['.tab[data-tab="chat"]', 'chat'], ['#voice-join', 'join voice']]) check(await shown(page, sel), `fresh room: ${what} is there`);
-  for (const [sel, what] of [['#live-card', 'share'], ['.tab[data-tab="queue"]', 'the queue tab'], ['.tab[data-tab="people"]', 'the people tab'], ['#sync-test', 'the sync test button']]) check(!(await shown(page, sel)), `fresh room: no ${what} yet`);
+  // 0.9.96.23 (owner: "where did the stream go"): Share (screen share) needs no video, so it is there from the start.
+  for (const [sel, what] of [['#media-input', 'add a video'], ['#invite-btn', 'invite'], ['.tab[data-tab="chat"]', 'chat'], ['#voice-join', 'join voice'], ['#live-share', 'share (screen share)']]) check(await shown(page, sel), `fresh room: ${what} is there`);
+  for (const [sel, what] of [['.tab[data-tab="queue"]', 'the queue tab'], ['.tab[data-tab="people"]', 'the people tab'], ['#sync-test', 'the sync test button']]) check(!(await shown(page, sel)), `fresh room: no ${what} yet`);
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '1024×640: no sideways scrolling');
 
   // 6e (owner): the rail is there in the empty room; voice, cameras, games and emojis work, the video controls are

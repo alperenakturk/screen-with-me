@@ -12094,7 +12094,8 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
 
 /* A fresh room on a computer (nothing has played yet): add a video, invite, chat and join voice; the rest comes for
    everyone with the first video, or from "⋯ More". */
-html:not(.phone) .room.fresh :is(#live-card, .tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
+/* The Share card (screen share) stays: it needs no video, and the owner missed it in an empty room (0.9.96.23). */
+html:not(.phone) .room.fresh :is(.tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
   display: none !important;
 }
 
@@ -12363,4 +12364,16 @@ html.in-room .room-title-dot {
 
 .yt-attrib a {
   color: var(--accent-hover);
+}
+
+/* The camera count in "In voice 1/6 · [camera] 1/4" uses our line icon (0.9.96.23). */
+.voice-limit-cam {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.voice-limit-cam .ico {
+  width: 13px;
+  height: 13px;
 }
