@@ -88,7 +88,8 @@ interface StageOptions {
   menu: HTMLElement;
   /** More 🎮 buttons that open the same hub (the Shorts bar's, 0.9.91.13): the hub moves next to the one pressed. */
   extraButtons?: HTMLButtonElement[];
-  send: (message: ClientMessage) => void;
+  /** Sends on the room connection; false when it is not open (the message is lost). */
+  send: (message: ClientMessage) => boolean | void;
   me: () => { id: string | null; name: string; avatar: Avatar };
   /** Am I the host (the host can close any table). */
   amHost: () => boolean;
@@ -110,6 +111,10 @@ export function createGameStage(opts: StageOptions) {
   let unmount: (() => void) | null = null;
   /** I asked for a new table: open it for me as soon as the room lists it. */
   let wanted: RoomGameKind | null = null;
+  /** When I asked (a request older than WANTED_MS is forgotten), and whether it still has to go out. */
+  let wantedAt = 0;
+  let wantedUnsent = false;
+  const WANTED_MS = 20_000;
   /** The solo game I have open instead of a table (mounted even while minimized: it keeps earning). */
   let solo: SoloKind | null = null;
   /** The game the window shows now. */
@@ -479,7 +484,10 @@ export function createGameStage(opts: StageOptions) {
         close: (id) => send({ t: 'table', close: id }),
         openTable: (kind) => {
           wanted = kind;
-          send({ t: 'table', open: kind });
+          wantedAt = Date.now();
+          // Card R1: pressed while the room connection was reconnecting (a deploy, a network blip) the request used to
+          // be lost and the game opened only on the second press: it goes out again once the room is back.
+          wantedUnsent = send({ t: 'table', open: kind }) === false;
           setHub(false);
         },
         openSolo: (kind) => {
@@ -639,6 +647,15 @@ export function createGameStage(opts: StageOptions) {
      */
     setTables(next: RoomGame[], change: { opened?: string; closed?: string; by?: Member } = {}, announce = true): void {
       tables = next;
+      if (wanted && Date.now() - wantedAt > WANTED_MS) wanted = null;
+      // Card R1: my table opened while the room connection was down (its "opened" never reached me): open it now.
+      if (wanted && !change.opened && !current) {
+        const mine = tables.find((x) => x.kind === wanted && x.by.id === meId());
+        if (mine) {
+          wanted = null;
+          void open(mine);
+        }
+      }
       // My table closed: back to the video.
       if (current && !tables.some((x) => x.id === current!.id)) {
         const who = change.by?.name;
@@ -664,6 +681,11 @@ export function createGameStage(opts: StageOptions) {
       const card = document.getElementById('game-invite');
       if (card && !tables.some((x) => x.id === card.dataset.table)) card.remove();
       labels();
+    },
+    /** The room connection is back (after its welcome): a table asked for while it was down goes out now. */
+    rejoined(): void {
+      if (!wanted || Date.now() - wantedAt > WANTED_MS) return void (wanted = null);
+      if (wantedUnsent || !tables.some((x) => x.kind === wanted && x.by.id === meId())) wantedUnsent = send({ t: 'table', open: wanted }) === false;
     },
     /** People moved between tables. */
     membersChanged(): void {

@@ -56,6 +56,15 @@ interface Peer {
   failed: boolean;
 }
 
+/**
+ * After a dropped room connection (a deploy restarts the room's object, a network blip) the server gives me my member id
+ * back, but for a moment the member list lacks my stream / my watching, or the streamer's: the direct connections are
+ * kept this long before a missing streamer or viewer counts as gone (owner's test round 1, card R1).
+ */
+export const LIVE_RETURN_MS = 15000;
+/** Listed again but not (yet) streaming / watching: the re-announce follows the welcome at once, so wait less. */
+export const LIVE_FLAG_MS = 4000;
+
 export class LiveP2p {
   /** Yayıncıysam: yayınladığım akış ve türü. */
   private stream: MediaStream | null = null;
@@ -64,6 +73,12 @@ export class LiveP2p {
   /** Yayıncıysam izleyicilerle, izleyiciysem yayıncıyla bağlantılar. */
   private readonly peers = new Map<string, Peer>();
   private watching = false;
+  /** Members missing from the list since (see LIVE_RETURN_MS), and the timer that looks again. */
+  private readonly missing = new Map<string, number>();
+  private recheck: ReturnType<typeof setTimeout> | undefined;
+  private lastMembers: Member[] = [];
+  private lastId: string | null = null;
+  private rewatchAt = 0;
 
   constructor(private readonly options: LiveOptions) {}
 
@@ -117,6 +132,25 @@ export class LiveP2p {
     }
   }
 
+  /**
+   * The room connection came back with the same member id: tell the server again that I stream / watch. The direct
+   * connections were never touched, so the picture keeps flowing.
+   */
+  resume(): void {
+    if (this.stream && this.kind) this.options.announce(true, this.kind);
+    else if (this.watching) this.options.watch(true);
+  }
+
+  /** True while `memberId` has been missing for less than `ms` (then its connection is kept). */
+  private stillComing(memberId: string, ms: number, now = Date.now()): boolean {
+    const since = this.missing.get(memberId) ?? now;
+    this.missing.set(memberId, since);
+    if (now - since >= ms) return false;
+    clearTimeout(this.recheck);
+    this.recheck = setTimeout(() => this.sync(this.lastMembers, this.lastId), ms - (now - since) + 50);
+    return true;
+  }
+
   stop(): void {
     if (!this.stream) return;
     for (const track of this.stream.getTracks()) track.stop();
@@ -142,15 +176,39 @@ export class LiveP2p {
 
   /** Odadakiler değişti: yayıncıysam yeni izleyicilere teklif yap, gidenleri bırak; izleyiciysem yayın bitti mi bak. */
   sync(members: Member[], myId: string | null): void {
+    this.lastMembers = members;
+    this.lastId = myId;
     if (this.stream && myId) {
       const viewers = new Set(members.filter((m) => m.watching && m.id !== myId).map((m) => m.id));
-      for (const memberId of [...this.peers.keys()]) if (!viewers.has(memberId)) this.close(memberId);
+      for (const memberId of [...this.peers.keys()]) {
+        if (viewers.has(memberId)) this.missing.delete(memberId);
+        // A viewer that is no longer in the room at all may be reconnecting: keep their connection a while.
+        else if (!this.stillComing(memberId, members.some((m) => m.id === memberId) ? LIVE_FLAG_MS : LIVE_RETURN_MS)) {
+          this.missing.delete(memberId);
+          this.close(memberId);
+        }
+      }
       for (const memberId of viewers) if (!this.peers.has(memberId)) void this.offer(memberId);
       return;
     }
     if (this.watching) {
       const streamer = members.find((m) => m.live && m.id !== myId);
       const me = members.find((m) => m.id === myId);
+      const lastStreamer = [...this.peers.keys()][0];
+      // The same streamer is back, but the server let go of my watching while their connection was gone: ask again.
+      if (streamer && streamer.id === lastStreamer && me && !me.watching && this.stillComing(lastStreamer, LIVE_RETURN_MS)) {
+        if (Date.now() - this.rewatchAt > 2000) {
+          this.rewatchAt = Date.now();
+          this.options.watch(true);
+        }
+        return;
+      }
+      // The streamer (or I) dropped and is reconnecting: the picture keeps coming, wait for them to be listed again.
+      if ((!streamer || (me && !me.watching)) && lastStreamer) {
+        const listed = members.some((m) => m.id === lastStreamer) && (!myId || members.some((m) => m.id === myId));
+        if (this.stillComing(lastStreamer, listed ? LIVE_FLAG_MS : LIVE_RETURN_MS)) return;
+      }
+      if (lastStreamer) this.missing.delete(lastStreamer);
       // Yayın bitti ya da sunucu izleyiciliğimi kaldırdı.
       if (!streamer || (me && !me.watching)) {
         this.watching = false;

@@ -1158,6 +1158,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         maybeAutoInvite(message.members);
         rememberRoom();
         games.setTables(message.tables ?? (message.game ? [message.game] : []), {}, false);
+        games.rejoined();
         chooseFirstTab();
         waitingIds = message.waiting ?? [];
         renderWaiting();
