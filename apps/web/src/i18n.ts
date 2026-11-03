@@ -76,6 +76,7 @@ const tr = {
   privacy: 'Gizlilik',
   help: 'Yardım',
   feedback: 'Geri bildirim',
+  thanks: 'Teşekkürler',
   'tab.chat': 'Sohbet',
   'tab.queue': 'Sıra',
   'tab.people': 'Kişiler',
@@ -1234,6 +1235,7 @@ const en: Record<Key, string> = {
   privacy: 'Privacy',
   help: 'Help',
   feedback: 'Feedback',
+  thanks: 'Thanks',
   'tab.chat': 'Chat',
   'tab.queue': 'Queue',
   'tab.people': 'People',
@@ -2354,6 +2356,8 @@ export function translate(root: ParentNode = document): void {
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-privacy-link]')) link.href = `/privacy.html?lang=${current}`;
   // The help page too (card 7), keeping a section anchor such as #connection.
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-help-link]')) link.href = helpHref(link.dataset.helpLink);
+  // And the Thanks page (card 11).
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-thanks-link]')) link.href = `/thanks.html?lang=${current}`;
   for (const el of root.querySelectorAll<HTMLElement>('[data-i18n]')) {
     const key = el.dataset.i18n!;
     if (isKey(key)) el.textContent = t(key);

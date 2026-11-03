@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Sidelit — Thank you</title>
+    <meta name="title-en" content="Sidelit — Thank you" />
+    <meta name="title-tr" content="Sidelit — Teşekkürler" />
+    <link rel="icon" type="image/svg+xml" href="/logo-small.svg" />
+    <script src="/lang.js"></script>
+    <!-- Card 11 (Design: docs/internal/design/feedback-and-thanks.md §2): the people who tested Sidelit first. One screen,
+         no scroll; the names exactly as the owner gave them, in his order, the same in both languages. -->
+    <style>
+      @font-face { font-family: 'Sidelit Wordmark'; src: url('/fonts/bricolage-grotesque-800.woff2') format('woff2'); font-weight: 800; font-display: swap; }
+      :root { --text: #fff3d6; --muted: #b9b2d6; --gold: #ffc65a; }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html, body { height: 100%; }
+      body {
+        margin: 0; color: var(--text); font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background: radial-gradient(circle at 12% 60%, rgb(255 198 90 / 0.2), transparent 45%), linear-gradient(160deg, #22174f, #08061a);
+        background-attachment: fixed;
+      }
+      .top { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; }
+      .top a { color: var(--gold); text-decoration: none; font-weight: 600; }
+      .lang { display: flex; border: 1px solid rgb(255 255 255 / 0.18); border-radius: 8px; overflow: hidden; }
+      .lang button { background: transparent; color: var(--muted); border: 0; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+      .lang button[aria-pressed='true'] { background: rgb(255 255 255 / 0.1); color: var(--text); }
+      main { min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 64px 16px 32px; }
+      .thanks { width: min(560px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
+      .glow { width: 112px; height: 112px; filter: drop-shadow(0 10px 24px rgb(255 198 90 / 0.35)); animation: bob 2.4s ease-in-out infinite; }
+      h1 { margin: 0; font: 800 30px/1.15 'Sidelit Wordmark', system-ui, sans-serif; letter-spacing: -0.01em; }
+      .line { margin: 0; max-width: 42ch; color: var(--muted); font-size: 14.5px; }
+      .names { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-height: 50vh; overflow: auto; }
+      .names li { white-space: nowrap; padding: 6px 14px; border-radius: 999px; background: rgb(255 198 90 / 0.12); border: 1px solid rgb(255 198 90 / 0.33); font-weight: 700; font-size: 14.5px; }
+      .more { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+      .more a { color: var(--gold); font-weight: 600; }
+      @keyframes bob { 50% { transform: translateY(-6px); } }
+      @media (max-width: 560px) { .glow { width: 96px; height: 96px; } h1 { font-size: 24px; } }
+      @media (prefers-reduced-motion: reduce) { .glow { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <a href="/">← Sidelit</a>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-set-lang="tr">TR</button>
+        <button type="button" data-set-lang="en">EN</button>
+      </div>
+    </div>
+    <main>
+      <div class="thanks">
+        <img class="glow" src="/mascot-happy.svg" alt="" />
+        <div data-lang-block="en">
+          <h1>Thank you</h1>
+          <p class="line">These people tested Sidelit before anyone else, found the bugs and told us what felt wrong. The room is better because of them.</p>
+        </div>
+        <div data-lang-block="tr" hidden>
+          <h1>Teşekkürler</h1>
+          <p class="line">Bu insanlar Sidelit'i herkesten önce denedi, hataları buldu ve neyin yanlış hissettirdiğini söyledi. Oda onlar sayesinde daha iyi.</p>
+        </div>
+        <ul class="names" lang="tr" id="thanks-names">
+          <li>Tecem Öztürk</li>
+          <li>Feyza Hacıalioğlu</li>
+          <li>Ömer Tuğrul Bakan</li>
+          <li>Ahmet Faruk Uğurluoğlu</li>
+          <li>Nevin Senem Kanar</li>
+          <li>Mert Arı</li>
+        </ul>
+        <p class="more" data-lang-block="en">Want to help too? <a href="/#feedback">Send feedback</a></p>
+        <p class="more" data-lang-block="tr" hidden>Sen de yardım etmek ister misin? <a href="/#feedback">Geri bildirim gönder</a></p>
+      </div>
+    </main>
+  </body>
+</html>

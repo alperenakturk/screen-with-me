@@ -203,6 +203,37 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
   }
   await extPage.close();
 
+  // Card 11: the Thanks page, the six names exactly as the owner gave them, in his order; one screen without a scroll on
+  // a computer and a phone, in both languages; linked from the footer and the Help page.
+  const NAMES = ['Tecem Öztürk', 'Feyza Hacıalioğlu', 'Ömer Tuğrul Bakan', 'Ahmet Faruk Uğurluoğlu', 'Nevin Senem Kanar', 'Mert Arı'];
+  for (const [label, viewport] of [['1366×768', { width: 1366, height: 768 }], ['390×844', { width: 390, height: 844 }]]) {
+    const thanksCtx = await browser.newContext({ viewport });
+    const page = await thanksCtx.newPage();
+    const problems = [];
+    page.on('pageerror', (e) => problems.push(e.message));
+    page.on('console', (m) => m.type() === 'error' && problems.push(m.text()));
+    for (const lang of ['en', 'tr']) {
+      await page.goto(`${base}/thanks.html?lang=${lang}`);
+      await page.waitForTimeout(150);
+      const info = await page.evaluate((lang) => ({
+        names: [...document.querySelectorAll('#thanks-names li')].map((li) => li.textContent),
+        listLang: document.getElementById('thanks-names').lang,
+        title: document.querySelector(`[data-lang-block="${lang}"] h1`)?.textContent,
+        shown: !document.querySelector(`[data-lang-block="${lang}"]`).hidden,
+        scroll: document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1,
+        feedback: document.querySelector(`.more[data-lang-block="${lang}"] a`)?.getAttribute('href'),
+        mascot: document.querySelector('.glow')?.naturalWidth > 0,
+      }), lang);
+      check(JSON.stringify(info.names) === JSON.stringify(NAMES) && info.listLang === 'tr', `thanks ${lang} ${label}: the six names exactly, in order (lang="tr")`, info.names.join(', '));
+      check(info.shown && info.title === (lang === 'en' ? 'Thank you' : 'Teşekkürler') && !info.scroll && info.mascot && info.feedback === '/#feedback', `thanks ${lang} ${label}: one screen, no scroll, Glowbeam, "send feedback" link`, JSON.stringify({ scroll: info.scroll, mascot: info.mascot }));
+    }
+    check(problems.length === 0, `thanks ${label}: no errors (CSP included)`, problems.join(' | '));
+    await thanksCtx.close();
+  }
+  const helpHtml = fs.readFileSync(path.join(PUBLIC, 'help.html'), 'utf8');
+  const index = fs.readFileSync(path.join(PUBLIC, '..', 'index.html'), 'utf8');
+  check(/href="\/thanks\.html\?lang=en"/.test(helpHtml) && /href="\/thanks\.html\?lang=tr"/.test(helpHtml) && /data-thanks-link/.test(index), 'the Help page (EN + TR) and the footer link the Thanks page');
+
   await browser.close();
   server.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Help page works');
