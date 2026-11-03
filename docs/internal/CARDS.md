@@ -26,7 +26,7 @@ Two Developer lanes so the work moves faster; lane B lives mostly in new files (
 Each card still ships with its tests; hand tests go to `STATUS.md` for the owner's one big test round at the end.
 
 **Lane A (Developer, `session_015Fyri2WkmxwEfieZ1jto4L`):** 6d → 6e empty-room rail → **R3-1** (high, right after 6e) →
-6c Sidelit (0.9.95) → 9 feedback button (with R3-7) → 10 Shorts channel + country → 11 thanks page → 12 debug panel →
+6c Sidelit (0.9.95) → 6f Glowbeam mascots + intro → 9 feedback button (with R3-7) → 10 Shorts channel + country → 11 thanks page → 12 debug panel →
 14 cinema mode → 16 design sweep → T tablet → A11y accessibility → **Y1 → Y2 → Y3** (YouTube audit prep) → security
 cards (M2, M3, M4, M5, M6, L1, L4, L2+L3+L5, L6, L7+L8, L9, L10, R3-2, R3-5, R3-6, R3-8; M8 stays with the frozen TV;
 R3-3 goes with the domain) → the Security session's new findings → bug-hunt findings. Everything here lands by
@@ -60,6 +60,18 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   phone home-screen icon).
 - Owner's pick: done (Sidelit, D1, T1, N1). **Release it as 0.9.95** (owner, 3 Nov 2026: "make it official, I'm
   speeding up the launch"); the remaining 0.9.94 cards keep their place after it.
+
+### 6f. Glowbeam mascots per theme + the Sidelit intro (lane A, right after 6c; from the Design session)
+- Why: card 6c brings the new name and logo; the theme mascots and the intro animation still show the old face and
+  logo. Design delivered both (PR #161): `docs/internal/design/themes/` (11 `glowbeam-<theme>.svg`, drop-in for
+  `<id>-maskot.svg`, steps for `theme-art.mjs` in its README) and `docs/internal/design/intro/` (storyboard with timings,
+  easings, keyframe SVGs and a reduced-motion still). Preview: https://claude.ai/artifact/6Ce98qjeANVeUota34uLec
+- Done when: every theme shows its Glowbeam (eyes always visible); the intro follows the storyboard on the existing
+  sound beats (0 / 0.72 / 1.1–1.4 s, `INTRO_MS` 2700) on the site and in the extension; `logo.ts` has `light` and `eyes`
+  as separate parts; reduced motion = the still frame fading in and out; "Enjoy the show!" in EN + TR.
+- Tests: home + theme harness screenshots of all 11 themes; an intro harness checks the parts appear on the beats and
+  that reduced motion shows no movement; size budget still green.
+- Owner's pick: none needed (direction picked: D1 + N1).
 
 ### 6e. The rail in the empty room too (owner, 3 Nov 2026; lane A, after 6d)
 - Why: owner: before any video, people should already be able to open the camera, join voice, open a game or emojis.
@@ -187,6 +199,8 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   of screenshots is attached to the PR.
 - Tests: the screenshot harness itself, kept for later sweeps; all harnesses pass.
 - Owner's pick: none needed.
+- Planner (3 Nov 2026): the Design session prepares a first list from the live site in
+  `docs/internal/design/sweep-1.md`; start from it, then add your own screenshots.
 
 ## Proposed
 
