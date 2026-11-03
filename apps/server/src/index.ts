@@ -4,10 +4,12 @@ import { POKER_ID_PATTERN } from '@swm/shared/games/poker';
 import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
+import { sendFeedback } from './feedback.ts';
 import { tiktokResolve } from './tiktok.ts';
 import { youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 
 export { Draw } from './draw.ts';
+export { FeedbackGate } from './feedback.ts';
 export { Game } from './game.ts';
 export { Poker } from './poker.ts';
 export { Quiz } from './quiz.ts';
@@ -113,6 +115,9 @@ export default {
       server.addEventListener('message', () => server.close(1000, 'done'));
       return new Response(null, { status: 101, webSocket: client });
     }
+
+    // "Send feedback" (card 9): a GitHub issue in the private repository, see feedback.ts.
+    if (url.pathname === '/api/feedback') return sendFeedback(request, url, env, () => ipKey(request));
 
     // YouTube search from the room's link box (the API key never leaves the Worker). Pages of other sites may not
     // use it as their free search: a browser sends their `Origin`.

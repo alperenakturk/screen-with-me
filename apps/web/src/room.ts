@@ -89,6 +89,10 @@ import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
 import type { createTvRoom } from './ui/tv-room.ts';
+/** "Send feedback" (card 9): its own lazy chunk (texts, styles), so the room page stays within its size budget. */
+function openFeedbackDialog(opener: HTMLElement | null): void {
+  void import('./ui/feedback.ts').then(({ openFeedback }) => openFeedback(opener));
+}
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
@@ -621,6 +625,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
               <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open">⌨️ ?</button>
               <a class="btn small-btn" id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link>❔ <span data-i18n="help"></span></a>
+              <button type="button" class="btn small-btn" id="profile-feedback">💌 <span data-i18n="feedback"></span></button>
             </div>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
@@ -840,6 +845,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     });
     drawLang();
     $('#profile-keys').addEventListener('click', () => openShortcuts());
+    $('#profile-feedback').addEventListener('click', () => openFeedbackDialog($('#profile-feedback')));
     $('#profile-reconnect').addEventListener('click', () => {
       setOpen(false);
       reconnectNow();
@@ -886,6 +892,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       openSettings: (section) => settingsDialog.open(section, true),
       press: (selector) => requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(selector)?.click()),
       games: () => requestAnimationFrame(() => (desktop ? pressMoreGame() : document.querySelector<HTMLButtonElement>('#game-btn')?.click())),
+      feedback: () => openFeedbackDialog(document.getElementById(desktop ? 'room-more' : 'strip-more')),
       isHost: amHost,
       hasItem: () => roomEl.classList.contains('has-item'),
       desktop,

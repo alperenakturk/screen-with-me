@@ -21,6 +21,8 @@ export function roomMoreItems(deps: {
   press: (selector: string) => void;
   /** Opens the games hall (the computer's own anchor under ⋯ More; the phone presses its sheet's 🎮). */
   games: () => void;
+  /** Opens the "Send feedback" dialog (card 9, a lazy chunk). */
+  feedback: () => void;
   isHost: () => boolean;
   hasItem: () => boolean;
   desktop: boolean;
@@ -36,6 +38,8 @@ export function roomMoreItems(deps: {
     // The sync test replaces what plays for everyone, so only from an empty room.
     { icon: '🧪', label: 'more.syncTest', run: () => deps.press('#sync-test'), dimmed: deps.hasItem() ? t('more.syncTestBusy') : null },
     { icon: '👑', label: 'more.rules', run: () => deps.openSettings('rules') },
+    // Card 9: the "Send feedback" dialog, right before Help (Design's order).
+    { icon: '💌', label: 'more.feedback', run: deps.feedback },
     // Card 7: the help page in a new tab (an anchor, so the film-page overlay tells the extension it is no ad).
     { icon: '❔', label: 'more.help', run: () => deps.press('#profile-help') },
   );

@@ -80,7 +80,7 @@ const shown = (page, selector) =>
     return page.evaluate(() => [...document.querySelectorAll('.room-more-pop:not([hidden]) .room-more-item')].map((b) => b.textContent.trim()));
   };
   const list = await items();
-  check(JSON.stringify(list) === JSON.stringify(['🎮Games', '⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules', '❔Help and FAQ']), '⋯ More lists games, film time, save, recap, shortcuts, sync test, rules, help (card 7)', JSON.stringify(list));
+  check(JSON.stringify(list) === JSON.stringify(['🎮Games', '⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules', '💌Send feedback', '❔Help and FAQ']), '⋯ More lists games, film time, save, recap, shortcuts, sync test, rules, feedback (card 9), help (card 7)', JSON.stringify(list));
   const pop = await page.evaluate(() => { const r = document.querySelector('.room-more-pop').getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth; });
   check(pop, '1024×640: the menu fits the screen');
   const pick = async (label) => {
