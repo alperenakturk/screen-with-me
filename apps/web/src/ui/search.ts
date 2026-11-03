@@ -1,4 +1,5 @@
 import { formatDuration, normalizeQuery, parseSearchAnswer, type SearchAnswer, type SearchResult } from '@swm/shared/youtube-search';
+import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 
@@ -17,6 +18,8 @@ export function createSearch(
   pick: (id: string, title: string, mode: AddMode, short: boolean) => void,
   /** "📱 Shorts akışı": start the endless Shorts feed on these words (0.9.91). */
   feed?: (query: string) => void,
+  /** "🎧 Podcasts": the same words searched as podcasts (card P2; its list is a lazy chunk). */
+  podcast?: (media: Media, title: string, mode: AddMode) => void,
 ) {
   const panel = el('div', { class: 'search-results', id: 'search-results', role: 'region', hidden: '' });
   form.append(panel);
@@ -45,6 +48,22 @@ export function createSearch(
         feed(query);
       });
       head.append(start);
+    }
+    if (podcast && lastQuery) {
+      const query = lastQuery;
+      const pods = el('button', { type: 'button', class: 'btn small-btn search-podcasts' }, t('searchPodcasts'));
+      pods.addEventListener('click', () => {
+        const mine = ++current;
+        void import('./podcasts.ts').then(({ showPodcasts }) => {
+          if (mine !== current) return;
+          showPodcasts(panel, query, x, (media, title, mode) => {
+            close();
+            input.value = '';
+            podcast(media, title, mode);
+          });
+        });
+      });
+      head.append(pods);
     }
     head.append(x);
     return head;

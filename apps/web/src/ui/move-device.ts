@@ -224,8 +224,11 @@ export function openMoveDialog(code?: string): void {
             // The end of this try: another code can be typed at once.
             line.textContent = t(m.t === 'none' ? 'none' : m.t === 'busy' ? 'busy' : 'refused');
             go.disabled = false;
+            // The server closes it too, but that close can come seconds later; this try is over now.
+            socket?.close();
           } else if (m.t === 'blob') {
             finished = true;
+            socket?.close();
             const blob = decodeMove(m.data);
             if (!blob) {
               line.textContent = t('bad');

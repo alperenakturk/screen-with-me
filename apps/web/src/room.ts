@@ -1468,7 +1468,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               ? await createVimeoPlayer(slot, media.id, media.hash, onError)
               : media.kind === 'test'
                 ? createTestPlayer(slot)
-                : createHtml5Player(slot, media.url, onError);
+                : createHtml5Player(slot, media.url, onError, media.poster);
     } catch {
       onError();
       slot.remove();
@@ -2738,6 +2738,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode),
     // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
     (query) => feed.start(query),
+    // "🎧 Podcasts" on the results (card P2): an episode is an audio file with its cover art.
+    (media, title, mode) => addMedia(media, mode, title),
   );
   // Phones (0.9.91.2): while something plays the link box folds into ＋ under the video, the video and chat get the room.
   const addToggle = $<HTMLButtonElement>('#add-toggle');
@@ -2900,9 +2902,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     setTimeout(() => (done.hidden = true), 4000);
   }
 
-  function addMedia(media: Media, mode: 'load' | 'enqueue'): void {
+  function addMedia(media: Media, mode: 'load' | 'enqueue', title?: string): void {
     const add = () => {
-      send({ t: mode, media });
+      send(title ? { t: mode, media, title } : { t: mode, media });
       mediaInput.value = '';
       setAdding(false);
       // Sıraya eklendiyse (video oynarken) sessiz kalmasın: kısa bir onay.
