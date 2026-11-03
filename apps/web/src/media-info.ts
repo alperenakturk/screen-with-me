@@ -14,6 +14,7 @@ export function itemTitle(item: QueueItem): string {
   if (title) return title;
   if (item.media.kind === 'test') return t('syncTestTitle');
   if (item.media.kind === 'tiktok') return item.media.user ? `TikTok · @${item.media.user}` : 'TikTok';
+  if (item.media.kind === 'vimeo') return `Vimeo · ${item.media.id}`;
   return item.media.kind === 'youtube' ? `YouTube · ${item.media.id}` : item.media.url;
 }
 
@@ -35,5 +36,6 @@ export function mediaUrl(media: QueueItem['media']): string | null {
   if (media.kind === 'youtube') return `https://www.youtube.com/watch?v=${media.id}`;
   if (media.kind === 'test') return null;
   if (media.kind === 'tiktok') return media.user ? `https://www.tiktok.com/@${media.user}/video/${media.id}` : `https://www.tiktok.com/embed/v2/${media.id}`;
+  if (media.kind === 'vimeo') return `https://vimeo.com/${media.id}${media.hash ? `/${media.hash}` : ''}`;
   return media.url;
 }
