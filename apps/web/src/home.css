@@ -1,0 +1,590 @@
+/* ==== The home page (card 15b, the owner's 1A "Light beam" · 2A · 3A; Design's notes docs/internal/design/home-15b.md,
+   reference home-15b/options.html direction A). Loaded with home.ts only (a lazy chunk, not in the room's budget).
+   First screen: text + Glowbeam's light on a shared screen, the feature row at its foot; then "How it works". ==== */
+
+/* No theme picker on the home page (card 6g.4; the theme is changed inside the room). */
+html.in-home #theme-button {
+  display: none;
+}
+
+html.in-home main {
+  max-width: none;
+  padding: 0;
+}
+
+.hm-first {
+  --hm-gold: #ffc65a;
+  min-height: calc(100dvh - var(--hm-top, 64px));
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.hm-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  padding: 16px 56px;
+}
+
+.hm-text {
+  flex: 1 1 46%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  align-content: center;
+  justify-items: start;
+  position: relative;
+}
+
+.hm-art {
+  flex: 1 1 54%;
+  min-width: 0;
+  display: grid;
+  align-content: center;
+}
+
+.hm-scene {
+  width: 100%;
+  height: auto;
+  display: block;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.hm-pill {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgb(255 198 90 / 0.09);
+  border: 1px solid rgb(255 198 90 / 0.27);
+  color: var(--hm-gold);
+}
+
+.hm-slogan {
+  margin: 0;
+  font: 800 64px/1.02 'Bricolage Grotesque', var(--font, system-ui), sans-serif;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.hm-slogan b {
+  display: block;
+  color: var(--hm-gold);
+  font-weight: 800;
+}
+
+.hm-sub {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 19px;
+  line-height: 1.5;
+  color: #c9c0ea;
+}
+
+.hm-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+}
+
+.hm-btn {
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 15px 26px;
+  border-radius: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.hm-btn.primary {
+  border: 0;
+  background: linear-gradient(180deg, #ffd27a, #ffb347);
+  color: #1a1036;
+  box-shadow: 0 8px 24px rgb(255 179 71 / 0.2);
+}
+
+.hm-btn.primary:hover {
+  filter: brightness(1.05);
+}
+
+.hm-btn.secondary {
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.04);
+  color: var(--text);
+}
+
+.hm-btn.secondary:hover,
+.hm-btn.secondary[aria-expanded='true'] {
+  background: rgb(255 255 255 / 0.09);
+}
+
+.hm-btn:focus-visible {
+  outline: 3px solid #fff3d6;
+  outline-offset: 2px;
+}
+
+.hm-join:not([hidden]) {
+  display: flex;
+  gap: 8px;
+  width: min(100%, 460px);
+}
+
+.hm-join input {
+  flex: 1;
+  min-width: 0;
+}
+
+.hm-save {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  color: #c9c0ea;
+  cursor: pointer;
+}
+
+.hm-save input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--hm-gold);
+}
+
+.hm-name {
+  width: min(100%, 420px);
+}
+
+.hm-text .error {
+  margin: 0;
+}
+
+/* "↺ Continue: Velvet Otter · 3 inside · Open": one line, cut with an ellipsis. */
+.hm-cont {
+  justify-self: stretch;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-size: 15px;
+  color: #c9c0ea;
+}
+
+.hm-cont[hidden] {
+  display: none;
+}
+
+.hm-cont .continue-link {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hm-cont .continue-name {
+  color: var(--text);
+}
+
+.hm-cont .continue-go {
+  color: var(--hm-gold);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hm-cont .continue-link:hover .continue-go {
+  text-decoration: underline;
+}
+
+.hm-cont .icon-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+
+/* Feature row at the foot of the first screen. */
+.hm-feat {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 56px;
+}
+
+.hm-feat > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  /* Opaque enough over a scene theme's picture (the white-3 % of the reference sits on its own art there). */
+  background: linear-gradient(rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.03)), color-mix(in srgb, var(--bg) 88%, transparent);
+  font-size: 14px;
+  color: #c9c0ea;
+}
+
+.hm-feat span {
+  grid-row: span 2;
+  font-size: 22px;
+}
+
+.hm-feat b {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.hm-feat em {
+  font-style: normal;
+}
+
+.hm-peek {
+  flex: none;
+  align-self: center;
+  padding: 8px 0 12px;
+  font-size: 13px;
+  color: #8e85b5;
+  text-decoration: none;
+}
+
+.hm-peek:hover {
+  color: var(--text);
+}
+
+/* ---- Section 2: How it works ---- */
+.hm-how {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 56px 32px;
+  display: grid;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.hm-how > h2 {
+  margin: 0;
+  font: 800 32px/1.1 'Bricolage Grotesque', var(--font, system-ui), sans-serif;
+}
+
+.hm-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hm-steps li,
+.hm-ext {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
+}
+
+.hm-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgb(255 198 90 / 0.14);
+  color: #ffc65a;
+  font-size: 17px;
+}
+
+.hm-steps h3,
+.hm-ext h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.hm-steps p,
+.hm-ext p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.hm-ext {
+  align-items: center;
+}
+
+.hm-ext > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.hm-ext-icon {
+  font-size: 28px;
+}
+
+.hm-ext .btn {
+  flex: none;
+}
+
+.hm-help {
+  margin: 0;
+  color: var(--muted);
+}
+
+.hm-help a {
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+
+.hm-how .home-recent {
+  margin: 0;
+}
+
+/* ---- Motion: the bar on the art's screen runs, the beam breathes; nothing else moves ---- */
+.hm-prog {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  animation: hm-prog 6s linear infinite;
+}
+
+.hm-beam {
+  animation: hm-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes hm-prog {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes hm-breathe {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-prog {
+    animation: none;
+    transform: scaleX(0.4);
+  }
+
+  .hm-beam {
+    animation: none;
+  }
+}
+
+/* A scene theme with its own light (Sinema's projector) gets a soft backdrop behind the text (sweep 1 #10). */
+:root[data-theme='sinema'] .hm-text::before {
+  content: '';
+  position: absolute;
+  inset: -70px -100px;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgb(10 8 30 / 0.8), rgb(10 8 30 / 0.55) 60%, transparent);
+  pointer-events: none;
+}
+
+/* ---- Wide screens ---- */
+@media (min-width: 1700px) and (min-height: 1000px) {
+  .hm-slogan {
+    font-size: 72px;
+  }
+}
+
+/* ---- Upright tablet: one centred column, the art on top ---- */
+@media (orientation: portrait) and (min-width: 600px) {
+  .hm-main {
+    flex-direction: column;
+    justify-content: center;
+    gap: 28px;
+    padding: 16px 64px;
+  }
+
+  .hm-art {
+    order: -1;
+    width: 100%;
+    flex: none;
+  }
+
+  .hm-text {
+    flex: none;
+    text-align: center;
+    justify-items: center;
+  }
+
+  .hm-slogan {
+    font-size: 72px;
+  }
+
+  .hm-sub {
+    max-width: 34ch;
+  }
+
+  .hm-cta {
+    justify-content: center;
+  }
+
+  .hm-feat {
+    padding: 0 64px 16px;
+  }
+
+  .hm-how {
+    padding: 40px 64px 32px;
+  }
+}
+
+/* ---- Narrow landscape windows (a computer window under 900 px): stack too ---- */
+@media (orientation: landscape) and (max-width: 899px) {
+  .hm-main {
+    padding: 16px 28px;
+    gap: 24px;
+  }
+
+  .hm-slogan {
+    font-size: 48px;
+  }
+
+  .hm-feat,
+  .hm-how {
+    padding-inline: 28px;
+  }
+}
+
+/* ---- Phone: art on top, buttons full width, compact feature tiles (replaces 0.9.92.5's start screen) ---- */
+html.phone .hm-first {
+  min-height: calc(100dvh - var(--hm-top, 56px));
+}
+
+html.phone .hm-main {
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 16px;
+  padding: 8px 20px;
+}
+
+html.phone .hm-art {
+  order: -1;
+  flex: none;
+  margin: 0 -6px;
+}
+
+html.phone .hm-text {
+  flex: none;
+  gap: 14px;
+  text-align: left;
+  justify-items: stretch;
+}
+
+html.phone .hm-pill {
+  justify-self: start;
+}
+
+html.phone .hm-slogan {
+  font-size: 40px;
+}
+
+html.phone .hm-sub {
+  font-size: 16px;
+}
+
+html.phone .hm-cta {
+  flex-direction: column;
+}
+
+html.phone .hm-btn {
+  width: 100%;
+  padding: 14px;
+  text-align: center;
+}
+
+html.phone .hm-join:not([hidden]),
+html.phone .hm-name {
+  width: 100%;
+}
+
+html.phone .hm-feat {
+  gap: 6px;
+  padding: 0 20px 10px;
+}
+
+html.phone .hm-feat > div {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  padding: 8px 4px;
+}
+
+html.phone .hm-feat span {
+  grid-row: auto;
+  font-size: 20px;
+}
+
+html.phone .hm-feat b {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+html.phone .hm-feat em {
+  display: none;
+}
+
+html.phone .hm-how {
+  padding: 28px 20px 24px;
+}
+
+html.phone .hm-steps {
+  grid-template-columns: 1fr;
+}
+
+html.phone .hm-ext {
+  flex-wrap: wrap;
+}
+
+/* A sideways phone (short): the art beside the text, smaller. */
+html.phone.sideways .hm-main {
+  flex-direction: row;
+  align-items: center;
+}
+
+html.phone.sideways .hm-art {
+  order: 0;
+  flex: 1 1 45%;
+}
+
+html.phone.sideways .hm-text {
+  flex: 1 1 55%;
+}
+
+html.phone.sideways .hm-slogan {
+  font-size: 32px;
+}
+
+html.phone.sideways .hm-cta {
+  flex-direction: row;
+}
+
+html.phone.sideways .hm-btn {
+  width: auto;
+}

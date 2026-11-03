@@ -102,7 +102,7 @@ const check = (ok, label, extra = '') => {
   await alex.waitForTimeout(500);
   check(await alex.evaluate(() => document.querySelector('#continue')?.hidden === true), '✕ forgets it');
 
-  // Card 5 (owner's bug: a long title ran out of the card): one thin line above the title at every width, cut with an
+  // Card 5 (owner's bug: a long title ran out of the card): (card 15b: one line under the save box) at every width, cut with an
   // ellipsis, never over the room preview, the full text in its title.
   {
     const long = 'A very long video title '.repeat(9).slice(0, 200);
@@ -122,13 +122,12 @@ const check = (ok, label, extra = '') => {
         const box = document.querySelector('#continue');
         if (!box || box.hidden) return null;
         const b = box.getBoundingClientRect();
-        const intro = document.querySelector('.home-intro').getBoundingClientRect();
-        const preview = document.querySelector('.home-preview')?.getBoundingClientRect();
-        const title = document.querySelector('.home-title').getBoundingClientRect();
-        const over = preview && preview.width > 0 && b.left < preview.right && preview.left < b.right && b.top < preview.bottom && preview.top < b.bottom;
-        return { h: Math.round(b.height), inIntro: b.left >= intro.left - 1 && b.right <= intro.right + 1, inScreen: b.right <= innerWidth, over: !!over, above: b.bottom <= title.top + 1, full: document.querySelector('#continue .continue-link').title.includes('A very long video title') };
+        const intro = document.querySelector('.hm-text').getBoundingClientRect();
+        const art = document.querySelector('.hm-art')?.getBoundingClientRect();
+        const over = art && art.width > 0 && b.left < art.right && art.left < b.right && b.top < art.bottom && art.top < b.bottom;
+        return { h: Math.round(b.height), inIntro: b.left >= intro.left - 1 && b.right <= intro.right + 1, inScreen: b.right <= innerWidth, over: !!over, full: document.querySelector('#continue .continue-link').title.includes('A very long video title') };
       });
-      check(!!r && r.h <= 40 && r.inIntro && r.inScreen && !r.over && r.above && r.full, `home ${w} px: a 200-character title stays one line above the title, inside its column`, JSON.stringify(r));
+      check(!!r && r.h <= 40 && r.inIntro && r.inScreen && !r.over && r.full, `home ${w} px: a 200-character title stays one line inside the text column (card 15b: under the save box)`, JSON.stringify(r));
     }
     await ctx.close();
   }

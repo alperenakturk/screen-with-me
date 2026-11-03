@@ -128,6 +128,15 @@ rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZ
   shines its light on the shared screen), **2 A** a short intro section under the first screen, **3 A** no video link
   box on the home page anywhere (videos are added in the room). Build notes: `docs/internal/design/home-15b.md`
   (Design session), including sweep-1 #10 (beam over the heading) and #11 (empty phone space).
+- Done: 0.9.96.12 (PR below). `home.ts` + a lazy `home.css` built from Design's direction A: first screen (pill, slogan,
+  line, Create room / Join with a code, save box, continue line; Glowbeam's light on the shared screen; three feature
+  cards), then "How it works" (steps, extension card, saved rooms, Help). No link box, theme strip, doors or chips; no
+  🎨 on the home page. Computer / sideways tablet two columns, upright tablet centred with the art on top, phone (this
+  replaces 0.9.92.5's start screen). Sinema gets the text backdrop; reduced motion stills the bar and the beam. The home
+  texts moved out of `i18n.ts` (room JS 140.1 → 138.3 kB, CSS 36.8 → 34.8 kB). Home harness rewritten (5 sizes × EN +
+  TR, create with a saved name, join box, continue line, contrast, reduced motion, Sinema); room-extras and phone home
+  checks updated; phone speed, sweep pass. Found and fixed on the way: a 200-character video title pushed the continue
+  line out of the column.
 
 ### 6f. Glowbeam mascots per theme + the Sidelit intro (lane A, right after 6c; from the Design session)
 - Why: card 6c brings the new name and logo; the theme mascots and the intro animation still show the old face and
