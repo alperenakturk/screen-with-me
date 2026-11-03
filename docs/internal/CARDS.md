@@ -23,6 +23,14 @@ Card format:
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
+### 6b. Fix: ⚙️ "My screen" squeezed into a narrow column (owner's bug, 3 Nov 2026; next after card 9)
+- Why: owner's screenshot on the live site: since 0.9.93.13 the solo section fills only the old nav column (~350 px),
+  rows wrap word by word, the right side of the dialog is empty and the list scrolls inside the dialog.
+- Done when: solo sections (My screen, film time, save, rules) are one clean column, rows in the normal title +
+  description + toggle layout, no inner scroll at 1366×768; also on the phone.
+- Tests: harness check (content width, a row title wraps ≤ 2 lines at 1366×768 and 1920×1080), failing on 0.9.93.17 first.
+- Owner's pick: none needed. Order (Planner): 6b, then card 15 (home hero A), then 10–14.
+
 ### 3. Owner's hand tests 0.9.92.3 – 0.9.93.5 (0.9.93 "Now" 3)
 - Why: the 0.9.93 gate needs them.
 - Done when: every box in `STATUS.md` "Owner's hand tests" for these versions is ticked or turned into a bug card.
