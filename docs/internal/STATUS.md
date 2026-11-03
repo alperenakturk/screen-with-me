@@ -1,6 +1,6 @@
 # Status: where we are (every session reads this first)
 
-> Last update: 2 Nov 2026. Site and extension **0.9.93.10**. The owner moved to a **new Claude
+> Last update: 2 Nov 2026. Site and extension **0.9.93.11**. The owner moved to a **new Claude
 > account** on 28 Oct 2026: the old account's sessions and memory are gone, everything needed is here, in
 > `ROADMAP.md` and in `CLAUDE.md`. The owner mostly works from **cloud sessions** (claude.ai/code). Update this file
 > (keep it short) whenever a task is finished.
@@ -382,6 +382,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.93.11 (computer + phone):**
+- [ ] 🔗 Invite: two tabs. "Link": the link with Copy and a green WhatsApp button with WhatsApp's own logo. "QR code":
+  only a big QR code and "Copy image" (paste it into a chat to check). No scrolling, also on the phone.
 
 **0.9.93.10 (computer, YouTube):**
 - [ ] A friend's emoji rises from their face in the "Together" card, not over the YouTube video (with the side panel

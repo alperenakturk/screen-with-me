@@ -11985,8 +11985,7 @@ html.phone .media-search span:last-child {
 }
 
 .invite-head h3,
-.invite-sub,
-.invite-qr-box p {
+.invite-sub {
   margin: 0;
 }
 
@@ -12026,21 +12025,76 @@ html.phone .media-search span:last-child {
   text-decoration: none;
 }
 
-.invite-qr-box {
+.invite-tabs {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px;
-  border: 1px solid var(--border);
+  gap: 4px;
+  padding: 4px;
   border-radius: 12px;
   background: var(--surface-2);
 }
 
-.invite-qr {
+.invite-tab {
+  flex: 1;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.invite-tab[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+}
+
+.invite-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invite-pane[hidden] {
+  display: none;
+}
+
+/* WhatsApp's own glyph and green (card 4, brand colour #25D366); dark text keeps it readable. */
+.btn.invite-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #25d366;
+  border-color: #25d366;
+  color: #052e16;
+  font-weight: 700;
+}
+
+.btn.invite-wa:hover {
+  background: #2ee072;
+}
+
+.wa-glyph {
+  width: 20px;
+  height: 20px;
   flex: none;
-  width: 116px;
-  height: 116px;
-  border-radius: 8px;
+}
+
+/* The QR tab: only the code, big, and "Copy image" (card 4: no explanation sentence). */
+.invite-qr-pane {
+  align-items: center;
+}
+
+.invite-qr {
+  width: min(240px, 42dvh, 70vw);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fff;
   image-rendering: pixelated;
 }
 
@@ -12049,13 +12103,6 @@ html.phone .media-search span:last-child {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-}
-
-/* Short screens (a phone held sideways): no room for the QR code. */
-@media (max-height: 500px) {
-  .invite-qr-box {
-    display: none;
-  }
 }
 
 /* ==== "Continue where you left off" on the home page (0.9.93.2, home.ts `renderContinue`) ==== */
