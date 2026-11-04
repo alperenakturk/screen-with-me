@@ -1,3 +1,6 @@
+// Card R21 (owner: "bigger, and from a clearly visible place on the right side, not the very top right"): the message
+// sits on the right, 15–40 % down the video, ≥ 20 px text at 1920 × 1080 and ≥ 16 px at 1366 × 768; many in a row stay
+// above YouTube's bar. Each check runs at 1440 × 900, 1920 × 1080 and 1366 × 768.
 // Card R15 (owner's test round 2: "never open a stupid menu on the side like this"): YouTube fullscreen on a computer
 // has no column beside the player any more (it was card 2a's `#fs-side`). Messages come down over the video from the
 // top right, left of the rail, like with other players, never over YouTube's own bottom bar; the room's notes sit on
@@ -18,9 +21,24 @@ const args = ['--autoplay-policy=no-user-gesture-required', '--use-fake-ui-for-m
 // YouTube's own bar (seek line + buttons) lives in the player's bottom ~60 px.
 const YT_BAR = 64;
 
+const SIZES = [
+  { width: 1440, height: 900, font: 18 },
+  { width: 1920, height: 1080, font: 20 },
+  { width: 1366, height: 768, font: 16 },
+];
+
 (async () => {
   const browser = await chromium.launch({ args });
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone', 'camera'] });
+  for (const size of SIZES) await run(browser, size);
+  await browser.close();
+  console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ YouTube fullscreen without a column: harness passed');
+  process.exit(failed ? 1 : 0);
+})();
+
+async function run(browser, { width, height, font }) {
+  console.log(`\n— ${width} × ${height}`);
+  const mid = { x: Math.round(width * 0.35), y: Math.round(height / 2) };
+  const ctx = await browser.newContext({ viewport: { width, height }, permissions: ['microphone', 'camera'] });
   await viaYouTube(ctx);
   const page = await ctx.newPage();
   await page.addInitScript(() => {
@@ -34,7 +52,7 @@ const YT_BAR = 64;
   await page.waitForFunction(() => document.querySelector('#theater')?.classList.contains('yt-rail'), null, { timeout: 20000 });
   await page.evaluate(() => document.getElementById('fullscreen')?.click());
   await page.waitForFunction(() => !!document.fullscreenElement, null, { timeout: 8000 });
-  await page.mouse.move(500, 450);
+  await page.mouse.move(mid.x, mid.y);
   await page.waitForTimeout(1500);
 
   const look = () =>
@@ -71,18 +89,21 @@ const YT_BAR = 64;
   await page.waitForTimeout(600);
   const withToast = await fullWidth('a message');
   const toast = await page.evaluate(() => {
-    const r = document.querySelector('#toasts .toast')?.getBoundingClientRect();
-    return r ? { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), b: Math.round(r.bottom) } : null;
+    const e = document.querySelector('#toasts .toast');
+    const r = e?.getBoundingClientRect();
+    return r ? { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), b: Math.round(r.bottom), font: parseFloat(getComputedStyle(e).fontSize) } : null;
   });
   const p = withToast.player;
+  const down = toast && p ? Math.round(((toast.t - p.t) / (p.b - p.t)) * 100) : -1;
   check(
-    !!toast && !!p && toast.t < p.t + p.b / 3 && toast.r > (p.l + p.r) / 2 && toast.b < p.b - YT_BAR && (!withToast.dock || toast.r <= withToast.dock.l + 1 || withToast.dock.r - withToast.dock.l === 0),
-    'the message comes down at the top right of the video, left of the rail, clear of YouTube\'s bottom bar',
-    JSON.stringify({ toast, player: p, dock: withToast.dock }),
+    !!toast && !!p && down >= 15 && down <= 40 && toast.r > (p.l + p.r) / 2 && toast.b < p.b - YT_BAR && (!withToast.dock || toast.r <= withToast.dock.l + 1 || withToast.dock.r - withToast.dock.l === 0),
+    'the message comes in on the right side, 15–40 % down the video, left of the rail, clear of YouTube\'s bottom bar',
+    JSON.stringify({ toast, player: p, dock: withToast.dock, down }),
   );
+  check(!!toast && toast.font >= font, `its text is at least ${font} px`, JSON.stringify(toast));
 
   // The rail comes out (mouse at the right edge): the message is still left of it, never under it.
-  await page.mouse.move(1430, 450, { steps: 4 });
+  await page.mouse.move(width - 10, mid.y, { steps: 4 });
   await page.waitForTimeout(500);
   const out = await page.evaluate(() => {
     const t = document.querySelector('#toasts .toast')?.getBoundingClientRect();
@@ -90,7 +111,21 @@ const YT_BAR = 64;
     return { toastR: t ? Math.round(t.right) : null, dockL: Math.round(d.left), idle: document.getElementById('theater').classList.contains('dock-idle') };
   });
   check(out.toastR !== null && !out.idle && out.toastR <= out.dockL + 1, 'with the rail out, the message is still left of it', JSON.stringify(out));
-  await page.mouse.move(500, 450, { steps: 4 });
+  await page.mouse.move(mid.x, mid.y, { steps: 4 });
+  await page.waitForTimeout(800);
+
+  // Many messages in a row (through the real chat; my own show too): they stack, the newest stays above YouTube's bar.
+  for (let i = 0; i < 6; i++) {
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    await page.keyboard.type(`message number ${i} with a few more words so that it wraps onto a second line here`);
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(450);
+  }
+  const stack = await page.evaluate(() => [...document.querySelectorAll('#toasts .toast')].map((e) => Math.round(e.getBoundingClientRect().bottom)));
+  check(stack.length >= 2 && Math.max(...stack) < p.b - YT_BAR, 'six messages in a row stack and stay above YouTube\'s bar', JSON.stringify({ stack, bar: p.b - YT_BAR }));
+  await page.keyboard.press('Escape');
+  await page.mouse.move(mid.x, mid.y);
   await page.waitForTimeout(800);
 
   // A room note (the everyone-ready wait): on the video, as for video files.
@@ -114,19 +149,17 @@ const YT_BAR = 64;
   // My camera: its one window floats over the video; the player keeps the width.
   await page.evaluate(() => document.getElementById('dock-cam')?.click());
   await page.waitForFunction(() => !!document.querySelector('#voice-cams .cam-tile video'), null, { timeout: 15000 }).catch(() => {});
-  await page.mouse.move(500, 450);
+  await page.mouse.move(mid.x, mid.y);
   await page.waitForTimeout(2000);
   const withCam = await fullWidth('my camera on');
   const cam = await page.evaluate(() => {
     const tile = document.querySelector('#voice-cams .cam-tile')?.getBoundingClientRect();
     return tile ? { l: Math.round(tile.left), r: Math.round(tile.right), t: Math.round(tile.top), b: Math.round(tile.bottom) } : null;
   });
-  check(!!cam && cam.l >= withCam.player.l && cam.r <= withCam.player.r + 1 && cam.b <= 900, 'my camera floats over the video', JSON.stringify({ cam, player: withCam.player }));
+  check(!!cam && cam.l >= withCam.player.l && cam.r <= withCam.player.r + 1 && cam.b <= height, 'my camera floats over the video', JSON.stringify({ cam, player: withCam.player }));
   await page.evaluate(() => document.getElementById('dock-cam')?.click());
   await page.waitForTimeout(1500);
   await fullWidth('camera off again');
 
-  await browser.close();
-  console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ YouTube fullscreen without a column: harness passed');
-  process.exit(failed ? 1 : 0);
-})();
+  await ctx.close();
+}
