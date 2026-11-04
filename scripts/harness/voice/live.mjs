@@ -143,7 +143,7 @@ check(!!(await until(() => sam.evaluate(`document.getElementById('live-window').
 check(!!(await alex.evaluate(`document.getElementById('live-quality-row').hidden`)), 'yayın yokken kalite seçimi gizli (sadece kendi ekran yayınında)');
 await alex.evaluate(`(() => { const s = document.getElementById('live-quality'); s.value = 'text'; s.dispatchEvent(new Event('change')); const c = document.getElementById('live-with-cam'); c.checked = false; c.dispatchEvent(new Event('change')); return 1; })()`);
 await alex.evaluate(`(async () => { document.getElementById('live-screen').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
-const screen = await until(() => alex.evaluate(`(() => { const s = document.getElementById('live-status').textContent; return s.includes('paylaşıyorsun') ? s : null; })()`), 8000);
+const screen = await until(() => alex.evaluate(`(() => { const e = document.getElementById('live-status'); const s = e.title + ' ' + e.textContent; return s.includes('paylaşıyorsun') ? s : null; })()`), 8000);
 if (screen) {
   await sam.evaluate(`(async () => { document.getElementById('live-watch').click(); await new Promise((r) => setTimeout(r, 400)); if (document.querySelector('.ip-notice')) document.querySelector('.confirm-dialog .btn.primary').click(); return 1; })()`);
   // Başsız Chrome'da "tüm ekran" değişmediği için kare üretmeyebilir: görüntü akışının izleyiciye bağlandığına bakılır,

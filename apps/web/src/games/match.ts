@@ -19,6 +19,8 @@ import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
+import { debugHooks } from '../debug-lab.ts';
+import { LAB_POSITIONS } from '@swm/shared/games/lab-positions';
 import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
@@ -582,7 +584,19 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   };
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
+  // Test Lab (DL3b): a ready-made position, set by the server only when it runs as a local lab server.
+  const offLab = debugHooks.register('table.classics', () => ({
+    commands: Object.values(LAB_POSITIONS).flat().map((position) => ({
+      id: `classics.position.${position}`,
+      title: `Classics: set the "${position}" position`,
+      help: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.',
+      tab: 'games' as const,
+      where: 'at a Classics table, seated',
+      run: () => send({ t: 'lab', position }),
+    })),
+  }));
   return () => {
+    offLab();
     setGameLive(false);
     close();
     clearInterval(ping);

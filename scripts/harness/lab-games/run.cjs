@@ -117,6 +117,14 @@ const until = async (fn, ms = 6000) => {
   const dayAfter = await page.evaluate(() => document.querySelector('#game-stage .ff-day')?.textContent);
   check(next.dir === 'lab' && dayAfter !== dayBefore, 'Five Frames: another day', `${dayBefore} → ${dayAfter}`);
 
+  // ---- A Classics table on the lab server (DL3b; the local server runs with SWM_LAB_SERVER) ----
+  const table = await run('games.open.classics');
+  const seated = await until(async () => (await page.evaluate(() => !!document.querySelector('#game-stage .cl-shelf, #game-stage #cl-shelf-open'))) || null, 10000);
+  check(table.dir === 'lab' && !!seated, 'lab: open a Classics table', table.text);
+  const pos = await until(async () => { const l = await run('classics.position.mate1'); return l.dir === 'lab' ? l : null; }, 8000);
+  const chess = await until(async () => (await page.evaluate(() => document.querySelectorAll('#game-stage .chess-board .dama-cell, #game-stage .chess-board [data-cell]').length)) || null, 8000);
+  check(!!pos && !!chess, 'Classics: the server sets the chess mate-in-one position (the chess board shows)', `${pos?.text} cells ${chess}`);
+
   // A closed game's command is gone; the room keeps working.
   const gone = await page.evaluate(() => window.__swmLab.run('snackBar.coins', '5').then(() => 'ran', (e) => String(e.message)));
   check(/no command/.test(gone) && !!(await page.$('#game-btn')), "a closed game's command is gone, the room still works", gone);

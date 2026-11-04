@@ -57,7 +57,7 @@ export function renderTvPair(app: HTMLElement): void {
   const last = tvLink();
   if (last) {
     const back = el('button', { type: 'button', class: 'btn primary tvp-btn' }, `↩ ${t('tv.backTo', { room: roomLabel(last.room) })}`);
-    back.addEventListener('click', () => location.assign(`/r/${last.room}?tv=1`));
+    back.addEventListener('click', () => location.assign(`/r/${encodeURIComponent(last.room)}?tv=1`));
     actions.append(back);
   }
   const test = el('a', { class: 'btn tvp-btn', href: '/tv-test' }, `🔎 ${t('tvtest.title')}`);
@@ -119,7 +119,7 @@ export function renderTvChooser(app: HTMLElement, code: string): void {
   for (const saved of savedRooms()) if (!ids.includes(saved.id)) ids.push(saved.id);
   const go = (room: string) => {
     rememberPairing(code);
-    location.assign(`/r/${room}`);
+    location.assign(`/r/${encodeURIComponent(room)}`);
   };
   const list = el('div', { class: 'tvc-list' });
   for (const id of ids.slice(0, 8)) {

@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
+import { labServer } from './lab.ts';
 import {
   DRAW_CHOOSE_MS,
   DRAW_MAX_PLAYERS,
@@ -108,6 +109,8 @@ const fresh = (): Saved => ({
  */
 export class Draw extends DurableObject<Env> {
   private data: Saved = fresh();
+  /** A local lab server (`lab.ts`, Test Lab DL3b): only then does a `lab` message do anything. */
+  private lab = false;
   private strokes: Stroke[] = [];
   /** Drawing actions taken away with undo, newest last (redo puts them back; a new stroke forgets them). */
   private undone: Stroke[][] = [];
@@ -132,9 +135,11 @@ export class Draw extends DurableObject<Env> {
     admit: (socket) => this.admit(socket),
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
+    schedule: () => this.scheduleAlarm(),
   });
 
   override async fetch(request: Request): Promise<Response> {
+    this.lab ||= labServer(this.env, request);
     // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
     const polled = await this.polls.handle(request);
     if (polled) return polled;
@@ -202,6 +207,7 @@ export class Draw extends DurableObject<Env> {
 
   override async alarm(): Promise<void> {
     const now = Date.now();
+    await this.polls.sweepDue(now);
     await this.advance(now);
     const d = this.data;
     if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
@@ -283,6 +289,14 @@ export class Draw extends DurableObject<Env> {
   private async apply(ws: WebSocket, key: string, message: DrawClientMessage): Promise<void> {
     const d = this.data;
     switch (message.t) {
+      case 'lab':
+        // Test Lab (DL3b): the current phase ends now, on a local lab server only (`lab.ts`).
+        if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
+        if (this.data.endsAt !== null) {
+          this.data.endsAt = Date.now();
+          await this.advance(this.data.endsAt);
+        }
+        return;
       case 'settings':
         if (d.phase !== 'lobby' && d.phase !== 'over') return;
         if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
@@ -546,6 +560,9 @@ export class Draw extends DurableObject<Env> {
     if (d.endsAt !== null && d.phase !== 'lobby') times.push(d.endsAt);
     if (d.phase === 'draw' && d.revealed < d.revealAt.length) times.push(d.revealAt[d.revealed]!);
     if (d.emptySince !== null) times.push(d.emptySince + EMPTY_TTL_MS);
+    // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
+    const due = this.polls.nextDue();
+    if (due !== null) times.push(due);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }

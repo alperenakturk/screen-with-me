@@ -119,7 +119,7 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   const resultKey = cacheKey(url.origin, `yt-search2?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${page ? `&page=${page}` : ''}`);
   const quotaKey = cacheKey(url.origin, 'yt-quota');
   const cached = await cache.match(resultKey);
-  if (cached) return cached;
+  if (cached) return markHit(cached);
   if (await cache.match(quotaKey)) return json({ error: 'quota' });
 
   // Only real calls to YouTube count against the address's limit (answers from the cache are free).
@@ -206,7 +206,7 @@ async function cached(request: Request, url: URL, env: Env, ipKey: () => Promise
   const resultKey = cacheKey(url.origin, path);
   const quotaKey = cacheKey(url.origin, 'yt-quota');
   const hit = await cache.match(resultKey);
-  if (hit) return hit;
+  if (hit) return markHit(hit);
   if (await cache.match(quotaKey)) return json({ error: 'quota' });
   if (env.SEARCH_LIMIT && !(await env.SEARCH_LIMIT.limit({ key: await ipKey() })).success) return json({ error: 'busy' });
   const budget = await budgetAnswer(env, await ipKey(), cost);
@@ -400,4 +400,14 @@ export async function youtubeChannel(request: Request, url: URL, env: Env, ipKey
     const items = keepShorts(parseVideoItems(videos.body));
     return next ? { items, next } : { items };
   });
+}
+
+/**
+ * Security R4-9: an answer from `caches.default` says so (`X-SWM-Cache: hit`), so the live e2e can tell whether the
+ * Cache API works on this address (it may do nothing on `*.workers.dev`; then every repeated search spends quota).
+ */
+function markHit(response: Response): Response {
+  const out = new Response(response.body, response);
+  out.headers.set('X-SWM-Cache', 'hit');
+  return out;
 }

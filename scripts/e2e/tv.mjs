@@ -44,6 +44,16 @@ await friend.wait((m) => m.t === 'welcome', 'welcome friend');
 phone.send({ t: 'tv-link', code: code() });
 ok((await phone.wait((m) => m.t === 'error', 'wrong code')).code === 'tv_code', 'A code no TV shows is refused');
 
+// Security R4-10: the TV's server side runs only with `TV=on` (a local `wrangler dev --var TV:on`); off, the pairing
+// route answers 404 and a TV token never joins. Then only that is checked.
+const http = base.replace(/^ws/, 'http');
+if ((await fetch(`${http}/api/tv/${code()}/ws`)).status === 404) {
+  const stray = client({ name: 'TV', cid: 'tvBox1234567', tv: 'a'.repeat(32) });
+  ok((await stray.wait((m) => m.t === 'error', 'tv off')).code === 'tv_token', 'TV off: the pairing route is 404 and a TV token never joins');
+  console.log('tv: off on this server (run with --var TV:on for the full test)');
+  process.exit(0);
+}
+
 // The TV waits; a second TV with the same code is turned away.
 const tvCode = code();
 const waiting = socket(`/api/tv/${tvCode}/ws`);

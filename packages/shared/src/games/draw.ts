@@ -77,6 +77,8 @@ export type DrawClientMessage =
   | { t: 'guess'; text: string }
   /** Oyunu bitirip lobiye dön, puanları sıfırla. */
   | { t: 'reset' }
+  /** Test Lab (DL3b): end the current phase now; only a local lab server acts on it. */
+  | { t: 'lab'; op: 'skip' }
   | { t: 'ping' };
 
 export type DrawServerMessage =
@@ -115,7 +117,7 @@ export type DrawServerMessage =
   | { t: 'error'; code: DrawErrorCode }
   | { t: 'pong'; now: number };
 
-export type DrawErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'not_drawer' | 'too_few' | 'not_host';
+export type DrawErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'not_drawer' | 'too_few' | 'not_host' | 'lab_off';
 
 const isInt = (x: unknown, min: number, max: number): x is number => Number.isInteger(x) && (x as number) >= min && (x as number) <= max;
 
@@ -170,6 +172,8 @@ export function parseDrawMessage(raw: string): DrawClientMessage | null {
       const text = cleanText(m.text, 40);
       return text ? { t: 'guess', text } : null;
     }
+    case 'lab':
+      return m.op === 'skip' ? { t: 'lab', op: 'skip' } : null;
     case 'start':
     case 'clear':
     case 'undo':
