@@ -460,9 +460,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   alien, samurai, fairy, spy, armadillo) without scrolling; pick one and check it in the chat and the faces strip. If
   you had a parody avatar saved, you now have a themed one instead (once; your other rooms too).
 
-**0.9.97.29 (the owner's test board on our site):**
-- [ ] Open the board's address (the Planner has it), tick a test ✅ and write a note: the ticket at the bottom shows
-  both; 📋 Copy puts it on the clipboard; reload: your ticks are still there. Works on the phone too.
+**0.9.97.29 (the owner's test board on our site):** removed in 0.9.97.39 (card R24); nothing to test.
 
 **0.9.97.28 (home art bigger, themed Glowbeam, 🎨 back, card 15d):**
 - [ ] On the home page (computer + phone): the laptop, tablet and phone look bigger; 🎨 is at the top right and opens
