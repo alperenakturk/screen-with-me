@@ -51,7 +51,10 @@ jobs:
       - name: Room page size budget
         run: node scripts/size-budget.mjs
 
+      # CI diet (a), owner's pick: on main the PR already ran the local suite on the same code, so a push to main runs
+      # only the checks above before the deploy; the full e2e still runs against live after it.
       - name: Start local server
+        if: github.event_name != 'push'
         working-directory: apps/server
         run: |
           # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
@@ -63,6 +66,7 @@ jobs:
           echo "server did not start"; cat ../../wrangler.log; exit 1
 
       - name: End-to-end tests
+        if: github.event_name != 'push'
         env:
           SWM_E2E_UNPACED: '1'
         run: npm run e2e
@@ -71,12 +75,14 @@ jobs:
       # the first tips, plus a keyboard tour. axe-core and Playwright are installed for this step only (not site deps).
       # The browser download is cached between runs (its system libraries are still installed each time).
       - name: Cache Playwright's browser
+        if: github.event_name != 'push'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-1.63.0-chromium
 
       - name: Accessibility (axe + keyboard tour)
+        if: github.event_name != 'push'
         run: |
           npm i --no-save --no-audit --no-fund axe-core@4.10.2 playwright@1.63.0
           npx playwright install --with-deps chromium

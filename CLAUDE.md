@@ -1355,6 +1355,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   live (a file passing only on its retry prints a `::warning::`; every e2e file runs with `scripts/e2e/trace.mjs`, which
   logs each socket the server or network closed with its code and time). Keys are in repo Secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`);
   without them the job is skipped with a warning. Private repo: 2000 free minutes/month.
+  **CI diet (Nov 2026, the owner's pick after the Actions billing stop):** docs-only changes (`docs/**`, `**/*.md`) run
+  **nothing** (`paths-ignore`, PRs and main: a docs-only PR is merged without a run); a new push to a PR cancels its
+  older run (`concurrency`, PR runs only); a push to main runs only typecheck, the name check, unit tests, the build
+  and the size budget before the deploy (the PR already ran the local suite on the same code) and the full e2e against
+  live after it; CI's local server runs `wrangler dev --var SWM_LOCAL_UNPACED:1` (the Worker skips the per-IP
+  connection limit only with that flag and a localhost address; never set it in `wrangler.jsonc` or live) and e2e runs
+  with `SWM_E2E_UNPACED=1` (no waits between files: local e2e 463 s → ≈ 205 s); Playwright's browser is cached. Billed
+  minutes: a PR ≈ 9 → ≈ 5 (+ ≈ 1.5 with the Test Lab harnesses), main ≈ 19 → ≈ 11.5, docs-only 9 + 19 → 0. Every
+  new step in the test job that needs the local server gets `if: github.event_name != 'push'`.
 - **Scene top space and sides:** the scene (1600×900) is bottom-aligned and covers the screen; on wide screens the top
   is cropped and also covered by the top bar: don't put decorations above y≈200. Room content is centered, at most
   1280 px; the user mostly looks at it while watching, so main decorations (moon, castle, dragon, caravan) stay at the
