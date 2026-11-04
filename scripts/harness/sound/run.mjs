@@ -96,6 +96,13 @@ b = await sounds(sam);
 check(b.join() === 'micOff,micOn', 'mic off / on sounds', b.join());
 
 // Chat: no sound while the chat is on screen, a sound when another tab is open.
+// A fresh room shows only the chat (card 6): the sync test makes it a room with a video, so the Queue tab exists.
+await alex.evaluate(() => document.getElementById('sync-test').click());
+await sam.waitForSelector('.room:not(.fresh)');
+await alex.waitForSelector('.room:not(.fresh)');
+await sleep(600);
+await sounds(sam);
+await sounds(alex);
 await alex.fill('#chat-input', 'merhaba');
 await alex.press('#chat-input', 'Enter');
 await sleep(800);
@@ -151,7 +158,8 @@ await sleep(300);
 
 // XOX: invite, every piece, win / lose.
 await sounds(sam);
-await alex.click('#dock-game'); // card 2: the rail holds 🎮 on a computer
+// card 2: the rail holds 🎮 on a computer; with the sync test playing it rests until the mouse comes to the edge.
+await alex.evaluate(() => document.getElementById('dock-game').click());
 await alex.click('.hub-game >> nth=0');
 await until(async () => (await sam.evaluate(() => window.__sounds.includes('gameInvite'))));
 b = await sounds(sam);
