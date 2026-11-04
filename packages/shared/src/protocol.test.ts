@@ -113,8 +113,8 @@ describe('parseClientMessage', () => {
 
   it('accepts drawn avatars from every avatar page, and shows them as emoji in text', () => {
     expect(parse({ t: 'rename', name: 'Ali', avatar: 'wizard' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'wizard' });
-    expect(parse({ t: 'rename', name: 'Ali', avatar: 'swordsman' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'swordsman' });
-    expect(parse({ t: 'rename', name: 'Ali', avatar: 'speedster' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'speedster' });
+    expect(parse({ t: 'rename', name: 'Ali', avatar: 'armadillo' })).toEqual({ t: 'rename', name: 'Ali', avatar: 'armadillo' });
+    expect(parse({ t: 'rename', name: 'Ali', avatar: 'speedster' })).toEqual({ t: 'rename', name: 'Ali' });
     expect(parse({ t: 'rename', name: 'Ali', avatar: 'toString' })).toEqual({ t: 'rename', name: 'Ali' });
     expect(avatarText('wizard')).toBe('🧙');
     expect(avatarText('🦊')).toBe('🦊');
@@ -133,6 +133,9 @@ describe('parseClientMessage', () => {
     expect(replaceRemovedAvatar('wizard')).toBeNull();
     expect(replaceRemovedAvatar(undefined)).toBeNull();
     expect(replaceRemovedAvatar('squid', () => 'elf')).toBe('elf');
+    // Card R20 with the IP audit: no parody page is left, only Themed and Genres.
+    expect(AVATAR_TABS.map((tab) => tab.key)).toEqual(['theme', 'genres']);
+    expect(REMOVED_AVATARS).toHaveLength(32);
   });
 
   it('puts every drawn avatar on exactly one page, and every tab page exists', () => {
@@ -140,9 +143,8 @@ describe('parseClientMessage', () => {
     for (const id of Object.keys(DRAWN_AVATARS)) expect(all.filter((a) => a === id)).toHaveLength(1);
     expect(new Set(all).size).toBe(all.length);
     expect(AVATAR_TABS.flatMap((tab) => tab.pages).sort()).toEqual(AVATAR_PAGES.map((_, i) => i));
-    expect(avatarPageOf('chemist')).toBe(2);
-    expect(avatarPageOf('cavecreature')).toBe(1);
-    expect(avatarPageOf('airmonk')).toBe(3);
+    expect(avatarPageOf('armadillo')).toBe(1);
+    expect(avatarPageOf('chemist')).toBe(0);
     expect(avatarPageOf('nope')).toBe(0);
   });
 
