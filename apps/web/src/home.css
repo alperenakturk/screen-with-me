@@ -43,7 +43,7 @@ html.in-home main {
 }
 
 .hm-art {
-  flex: 0 1 min(52vw, 1000px, (100dvh - var(--hm-top, 64px) - 230px) * 890 / 314);
+  flex: 0 1 min(52vw, 1000px, (100dvh - var(--hm-top, 64px) - 230px) * 865 / 314);
   min-width: 0;
   display: grid;
   align-content: center;
