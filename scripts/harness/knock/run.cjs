@@ -59,6 +59,34 @@ const check = (ok, label, extra = '') => {
   await friend.waitForSelector('.first-tip', { timeout: 6000 }).catch(() => {});
   check(await friend.evaluate(() => !!document.querySelector('.first-tip') && document.documentElement.dataset.swmJoined === '1'), 'R18: once let in, the first-time tips come (after the door, not before)');
   check(await host.evaluate(() => !document.querySelector('.knock-card')), "the host's card goes once answered");
+
+  // BH5 "removed from the room": the home page never offers to continue in a room that removed me (also after the
+  // page closes, when the room is remembered on pagehide).
+  check(await friend.evaluate(() => !!localStorage.getItem('lastRoom')), 'in the room: the room is remembered for "Continue"');
+  host.once('dialog', (d) => d.accept());
+  await host.evaluate(() => document.querySelector('.people-list .kick, .kick')?.click());
+  await friend.waitForSelector('#kicked:not([hidden])', { timeout: 8000 }).catch(() => {});
+  await friend.goto(`${SITE}/`);
+  await friend.waitForTimeout(1500);
+  const after = await friend.evaluate(() => ({ last: localStorage.getItem('lastRoom'), line: !!document.querySelector('#continue:not([hidden])') }));
+  check(!after.last && !after.line, 'BH5: removed: no "Continue" to that room on the home page', JSON.stringify(after));
+
+  // BH5 "refused at the door": one screen (the refusal), never the waiting card behind it, and nothing of the room.
+  const turned = await enter('Robin', true);
+  await host.waitForSelector('.knock-card', { timeout: 8000 }).catch(() => {});
+  await host.click('.knock-refuse');
+  await turned.waitForSelector('#kicked:not([hidden])', { timeout: 8000 }).catch(() => {});
+  await turned.waitForTimeout(1500);
+  const refused = await turned.evaluate(() => ({
+    kicked: !document.getElementById('kicked').hidden,
+    waiting: !document.getElementById('knock-wait').hidden,
+    tips: !!document.querySelector('.first-tip'),
+    intro: !!document.querySelector('.swm-intro'),
+    joined: document.documentElement.dataset.swmJoined ?? '',
+    last: localStorage.getItem('lastRoom'),
+  }));
+  check(refused.kicked && !refused.waiting, 'BH5: refused at the door: the refusal screen alone, the waiting card goes', JSON.stringify(refused));
+  check(!refused.tips && !refused.intro && !refused.joined && !refused.last, 'BH5: refused: no intro, no tips, no "last room"', JSON.stringify(refused));
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ Ask before letting people in');
   process.exit(fails ? 1 : 0);
