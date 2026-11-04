@@ -38,7 +38,8 @@ async function until(fn, ms = 8000) {
 }
 
 async function person(browser, room, name, avatar) {
-  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  // bypassCSP: axe is injected as a script, which the built site's CSP (served by wrangler, as in CI) refuses.
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, bypassCSP: true });
   await ctx.addInitScript(([name, avatar]) => {
     for (const [k, v] of Object.entries({ lang: 'en', name, avatar, 'opt:autoInvite': '0', tipsSeen: '1', 'opt:leaveWarn': '1' })) localStorage.setItem(k, v);
     window.__sounds = [];
