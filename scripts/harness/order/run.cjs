@@ -72,6 +72,28 @@ const RECORD = () => {
   check(!r.some((e) => /^(intro|invite|tip)\+/.test(e.what)), 'a reload brings no intro, invite window or tips', r.map((e) => e.what).join(' '));
   check(r.some((e) => e.what === 'joined+'), 'a reload still marks the tab as in the room after its welcome');
 
+  // BH6, path 11: an old client (older PROTOCOL_VERSION) gets "reload the page" and nothing of the room.
+  const oldCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await oldCtx.addInitScript(() => {
+    localStorage.setItem('lang', 'en');
+    localStorage.setItem('opt:autoInvite', '1');
+    const send = WebSocket.prototype.send;
+    WebSocket.prototype.send = function (data) {
+      if (typeof data === 'string' && data.includes('"t":"hello"')) data = data.replace(/"v":\d+/, '"v":1');
+      return send.call(this, data);
+    };
+  });
+  await oldCtx.addInitScript(RECORD);
+  const old = await oldCtx.newPage();
+  await old.goto(`${SITE}/r/${room}x`);
+  await old.fill('#name', 'Sam');
+  await old.click('#name-form button.primary');
+  await old.waitForSelector('#player-error:not([hidden])', { timeout: 10000 }).catch(() => {});
+  await old.waitForTimeout(3500);
+  const o = await old.evaluate(() => ({ error: document.getElementById('player-error').hidden ? '' : document.getElementById('player-error').textContent, order: window.__order.map((e) => e.what), last: localStorage.getItem('lastRoom') }));
+  check(/reload/i.test(o.error), 'BH6: an old client is told to reload the page', o.error);
+  check(o.order.length === 0 && !o.last, 'BH6: an old client gets no intro, invite window, tips or "Continue" record', JSON.stringify(o));
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ Order of things');
   process.exit(fails ? 1 : 0);

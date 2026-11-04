@@ -15,7 +15,8 @@ export interface SavedRoom {
   name: string;
   /** Son girilme zamanı (ms). */
   at: number;
-  /** Bu tarayıcı odanın yöneticisi mi (listeden çıkarınca oda kaydı da kalkar). */
+  /** Whether this browser is the room's host (removing the row then also unsaves the room). BH6: it follows the host:
+   * a room entered gives its current answer, so after "Make host" the old host's row is no longer theirs. */
   mine?: boolean;
 }
 
@@ -54,7 +55,7 @@ export function rememberSaved(room: SavedRoom, force = false): boolean {
   if (!old && !force && dismissed().includes(room.id)) return false;
   if (!old && list.length >= MAX_SAVED) return false;
   const entry: SavedRoom = { id: room.id, name: room.name, at: room.at };
-  if (room.mine || old?.mine) entry.mine = true;
+  if (room.mine ?? old?.mine) entry.mine = true;
   write([entry, ...list.filter((r) => r.id !== room.id)]);
   if (force) save(DISMISSED_KEY, JSON.stringify(dismissed().filter((id) => id !== room.id)));
   return true;
