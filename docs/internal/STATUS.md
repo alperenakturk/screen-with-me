@@ -432,6 +432,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.23 (home art with three devices, card 15c):**
+- [ ] Open the home page on your computer and your phone: Glowbeam's light falls on a laptop, a tablet and a phone; all three bars move together; the three faces are drawn avatars (others after a reload); the phone shows no small words in the art.
+
 **0.9.97.21 (English addresses, card C1):**
 - [ ] Open an old saved link `/baglanti` and `/eklenti.html`: they land on `/connection` and `/extension.html`.
 

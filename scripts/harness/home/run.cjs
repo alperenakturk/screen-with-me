@@ -11,6 +11,12 @@ const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const OUT = process.argv[3] || '.';
+// The Themed avatar page (AVATAR_PAGES[0]) as the code has it: the art's faces must come from there (card 15c).
+const THEMED = (() => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../../../packages/shared/src/protocol.ts'), 'utf8');
+  const first = src.slice(src.indexOf('export const AVATAR_PAGES')).match(/\[\s*\[([^\]]*)\]/)[1];
+  return [...first.matchAll(/'([a-z]+)'/g)].map((m) => m[1]);
+})();
 let failed = 0;
 const check = (ok, label, detail) => {
   if (!ok) failed++;
@@ -74,6 +80,27 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
       check(m.slogan >= want && m.slogan <= want + 8, `${where}: slogan ${want} px`, m.slogan);
       check(m.how, `${where}: "How it works" has the steps and the extension card`);
       check(errors.length === 0, `${where}: no console errors`, errors);
+      // Card 15c: a laptop, a tablet and a phone showing the same moment; three different themed faces, two in voice.
+      const art = await page.evaluate(() => {
+        const svg = document.querySelector('.hm-scene');
+        const faces = [...svg.querySelectorAll('.hm-face')];
+        const ids = faces.map((f) => f.getAttribute('data-avatar'));
+        const loaded = faces.map((f) => f.getAttribute('href'));
+        const textShown = [...svg.querySelectorAll('[data-art], .hm-bubble')].filter((e) => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 0).length;
+        return {
+          devices: [...svg.querySelectorAll('.hm-device')].map((d) => d.dataset.device).join(','),
+          screens: svg.querySelectorAll('.hm-screen').length,
+          bars: svg.querySelectorAll('.hm-prog').length,
+          ids,
+          hrefs: loaded,
+          rings: svg.querySelectorAll('.hm-ring.voice').length,
+          textShown,
+          artW: Math.round(document.querySelector('.hm-art').getBoundingClientRect().width),
+        };
+      });
+      check(art.devices === 'laptop,tablet,phone' && art.screens === 3 && art.bars === 3, `${where}: three devices, three screens, three progress bars`, art);
+      check(new Set(art.ids).size === 3 && art.ids.every((id) => THEMED.includes(id)) && art.hrefs.every((h, i) => h === `/avatars/${art.ids[i]}.svg`) && art.rings === 2, `${where}: three different themed avatars, two in voice rings`, art.ids);
+      check(name === '390' ? art.textShown === 0 : art.textShown === 4, `${where}: ${name === '390' ? 'no art text on a phone' : 'pill, chat bubble and people line show'}`, art.textShown);
       await page.screenshot({ path: `${OUT}/home-${lang}-${name}.png` });
       if (lang === 'en' && name === '1366') {
         // The chat bubble's contrast: white on #6a4cf2.
