@@ -90,6 +90,7 @@ import { debugHooks, debugTap, setDebugRoom } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
+import { loadChunk } from './ui/lazy.ts';
 import type { createTvRoom } from './ui/tv-room.ts';
 /** "Send feedback" (card 9): its own lazy chunk (texts, styles), so the room page stays within its size budget. */
 function openFeedbackDialog(opener: HTMLElement | null): void {
@@ -114,7 +115,7 @@ async function loadTv(): Promise<void> {
 }
 
 /** The keyboard shortcuts card (card SZ: a lazy chunk, opened by ⌨️ or ?). */
-const openShortcuts = () => void import('./ui/shortcuts.ts').then((m) => m.openShortcuts());
+const openShortcuts = () => void loadChunk(() => import('./ui/shortcuts.ts')).then((m) => m?.openShortcuts());
 
 /**
  * Card SZ: the film page's voice relay (`ExtVoice`, voice in the extension's offscreen page) is only needed in the
@@ -129,12 +130,10 @@ let extVoiceModule: typeof import('./ui/voice-ext.ts') | null | undefined;
  */
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
   if (isShell && extVoiceModule === undefined) {
-    void import('./ui/voice-ext.ts')
-      .catch(() => null)
-      .then((m) => {
-        extVoiceModule = m;
-        renderRoom(app, roomId, waited);
-      });
+    void loadChunk(() => import('./ui/voice-ext.ts')).then((m) => {
+      extVoiceModule = m;
+      renderRoom(app, roomId, waited);
+    });
     return;
   }
   if (tvLab() && !tvModules) {
@@ -2376,16 +2375,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let shortsSearchMade: Promise<{ search: (q: string) => Promise<void> | void; clear: () => void }> | null = null;
   const shortsSearch = {
     search: (q: string) => {
-      shortsSearchMade ??= import('./ui/shorts-search.ts').then((m) =>
-        m.createShortsSearch($('#shorts-add-results'), (id) => {
+      shortsSearchMade ??= loadChunk(() => import('./ui/shorts-search.ts')).then((m) => {
+        if (!m) {
+          shortsSearchMade = null;
+          throw new Error('shorts-search did not load');
+        }
+        return m.createShortsSearch($('#shorts-add-results'), (id) => {
           addMedia({ kind: 'youtube', id, short: true }, 'enqueue');
           flashHint(shortsAdd, t('queuedNote'), 2000);
-        }),
-      ).catch((error: unknown) => {
-        shortsSearchMade = null;
-        throw error;
+        });
       });
-      return shortsSearchMade.then((made) => made.search(q));
+      return shortsSearchMade.then((made) => made.search(q)).catch(() => flashHint(shortsAdd, t('searchError.failed'), 4000));
     },
     clear: () => void shortsSearchMade?.then((made) => made.clear()),
   };

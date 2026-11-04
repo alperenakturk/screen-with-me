@@ -8,10 +8,16 @@ import type { Composed } from './live-compose.ts';
 import { setIcon } from './icons.ts';
 import { openCam } from './voice-devices.ts';
 import { debugHooks } from '../debug-lab.ts';
-import { whenIdle } from './idle.ts';
+import { loadChunk, whenIdle } from './lazy.ts';
 
 type Engine = typeof import('./live-engine.ts');
-const ipNotice = (kind: IpNoticeKind) => import('./ip-notice.ts').then((m) => m.confirmIpNotice(kind, []));
+/** The IP notice is a privacy gate: if its chunk can't load the answer is "no" (fail closed) and the person is told. */
+async function ipNotice(kind: IpNoticeKind, anchor: HTMLElement): Promise<boolean> {
+  const m = await loadChunk(() => import('./ip-notice.ts'));
+  if (m) return m.confirmIpNotice(kind, []);
+  flashHint(anchor, t('live.startFailed'), 6000);
+  return false;
+}
 /** Can the browser draw my camera into the screen's corner (`live-compose.ts`; checked here so the card needs no chunk)? */
 const scope = globalThis as { MediaStreamTrackProcessor?: unknown; MediaStreamTrackGenerator?: unknown };
 const composeSupported = typeof scope.MediaStreamTrackProcessor === 'function' && typeof scope.MediaStreamTrackGenerator === 'function' && typeof OffscreenCanvas === 'function';
@@ -98,9 +104,13 @@ export function createLive(
   let float: ReturnType<Engine['createLiveFloat']> | null = null;
   let loading: Promise<LiveP2p> | null = null;
   function ensure(): Promise<LiveP2p> {
-    loading ??= import('./live-engine.ts').then(
-      (m) => {
-        engine = m;
+    loading ??= (async () => {
+      const m = await loadChunk(() => import('./live-engine.ts'));
+      if (!m) {
+        loading = null;
+        throw new Error('live-engine did not load');
+      }
+      engine = m;
         float = m.createLiveFloat({
           win,
           wrap: root.querySelector<HTMLElement>('.player-wrap')!,
@@ -109,14 +119,9 @@ export function createLive(
         });
         live = makeLive(m);
         live.sync(members, myId());
-        render();
-        return live;
-      },
-      (error: unknown) => {
-        loading = null;
-        throw error;
-      },
-    );
+      render();
+      return live;
+    })();
     return loading;
   }
   const warm = () => void ensure().catch(() => {});
@@ -242,7 +247,7 @@ export function createLive(
       return;
     }
     // Streams are always peer-to-peer: viewers and the streamer see each other's IP (security review 1).
-    if (!(await ipNotice('stream'))) return;
+    if (!(await ipNotice('stream', button))) return;
     button.disabled = true;
     try {
       await (await ensure()).start(kind, quality());
@@ -289,7 +294,7 @@ export function createLive(
       flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
       return;
     }
-    void ipNotice('watch')
+    void ipNotice('watch', watchButton)
       .then(async (yes) => {
         if (!yes) return;
         (await ensure()).watch();

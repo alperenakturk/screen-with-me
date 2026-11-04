@@ -125,6 +125,12 @@ jobs:
           node scripts/harness/test-lab/run.cjs http://localhost:8787
           node scripts/harness/lab-friends/run.cjs http://localhost:8787
 
+      # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and the IP notice
+      # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
+      - name: Lazy chunks and their gates
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+        run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: cat wrangler.log || true

@@ -5,6 +5,7 @@
 import { SOUND_DEFAULT_ON, SoundLimiter, parseVolume, soundGain, type SoundId } from '@swm/shared/sound-policy';
 import type * as Recipes from '@swm/shared/sounds';
 import { load, save } from './storage.ts';
+import { loadChunk } from './ui/lazy.ts';
 
 let ctx: AudioContext | null = null;
 let output: AudioNode | null = null;
@@ -19,13 +20,14 @@ const limiter = new SoundLimiter();
 let recipes: typeof Recipes | null = null;
 let recipesLoading: Promise<typeof Recipes> | null = null;
 function loadRecipes(): Promise<typeof Recipes> {
-  recipesLoading ??= import('@swm/shared/sounds').then(
-    (m) => (recipes = m),
-    (error: unknown) => {
+  recipesLoading ??= (async () => {
+    const m = await loadChunk(() => import('@swm/shared/sounds'));
+    if (!m) {
       recipesLoading = null;
-      throw error;
-    },
-  );
+      throw new Error('sounds did not load');
+    }
+    return (recipes = m);
+  })();
   return recipesLoading;
 }
 /** Runs `play` with the recipes; a sound whose recipes come later than 300 ms after `asked` is dropped (never late). */

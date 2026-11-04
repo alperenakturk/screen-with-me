@@ -695,8 +695,12 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   live-compose; `live.ts` makes it on `ensure()`: someone streams, a hover / focus / touch on Share or Watch, a press,
   a signal; until then "not streaming, not watching"), the TikTok / Vimeo / sync-test players, the sound recipes
   (`@swm/shared/sounds`, loaded on the first press; a sound whose recipes come > 300 ms late is dropped, as before),
-  the shortcuts card and the Shorts search list. First presses stay instant: `ui/idle.ts` `whenIdle` fetches the voice
-  windows and the stream engine 4 s after the room starts, when the browser is idle. Measure a module's share of the
+  the shortcuts card and the Shorts search list. First presses stay instant: `ui/lazy.ts` `whenIdle` fetches the voice
+  windows and the stream engine 4 s after the room starts, when the browser is idle. **Load a lazy chunk with
+  `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`:** main.ts handles a failed chunk
+  (`vite:preloadError`, one reload "for the new version") and Vite then resolves the import to nothing, and a `.then`
+  chained onto `import()` runs inside Vite's wrapper, so its errors vanish too. The IP notice fails closed (no voice,
+  stream or watching without it; harness `scripts/harness/lazy-gates/run.cjs` in CI blocks its chunk). Measure a module's share of the
   room chunk with a sourcemap build (`npx vite build --sourcemap`; gzip of separate files overstates the saving).
 - **Accessibility (card A11y, 0.9.96.13, Design's `docs/internal/design/a11y-1.md`):** `#skip-link` is the first Tab stop
   (index.html; in the room `room.ts` turns it into "Skip to the video" → `#theater`). A Tab press wakes the resting

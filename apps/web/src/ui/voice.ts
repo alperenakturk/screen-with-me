@@ -19,7 +19,7 @@ import type { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
 import { debugHooks } from '../debug-lab.ts';
-import { whenIdle } from './idle.ts';
+import { loadChunk, whenIdle } from './lazy.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
 const RPC_TIMEOUT_MS = 12_000;
@@ -42,13 +42,28 @@ const PEOPLE_SHOWN = 8;
  * Card SZ: windows opened only after a press are lazy chunks: the IP notice and the pre-join check. `warmVoice` fetches
  * them when a voice button is hovered or focused, so the first press opens them at once.
  */
-const ipNotice = (kind: IpNoticeKind, people: string[]) => import('./ip-notice.ts').then((m) => m.confirmIpNotice(kind, people));
-const checkWindow = () => import('./voice-check.ts');
+/**
+ * The IP notice is a privacy gate (security review 1, W1): if its chunk can't load (offline, a deploy replaced it) the
+ * answer is "no" (fail closed) and the person is told; nothing joins without it.
+ */
+async function ipNotice(kind: IpNoticeKind, people: string[], anchor: HTMLElement): Promise<boolean> {
+  const m = await loadChunk(() => import('./ip-notice.ts'));
+  if (m) return m.confirmIpNotice(kind, people);
+  flashHint(anchor, t('voice.failed'), 6000);
+  return false;
+}
+async function checkWindow() {
+  const m = await loadChunk(() => import('./voice-check.ts'));
+  if (!m) throw new Error('voice-check did not load');
+  return m;
+}
 let warmed = false;
 export function warmVoice(): void {
   if (warmed) return;
   warmed = true;
-  void Promise.all([import('./ip-notice.ts'), checkWindow()]).catch(() => (warmed = false));
+  void Promise.all([loadChunk(() => import('./ip-notice.ts')), loadChunk(() => import('./voice-check.ts'))]).then((chunks) => {
+    if (chunks.includes(null)) warmed = false;
+  });
 }
 
 export interface VoiceRoom {
@@ -687,14 +702,18 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (!isExt(client)) return;
     const list = await client.devices();
     if (!list) return flashHint(peopleBox, t('voiceCheck.shellOld'), 6000);
-    const picks = await (await checkWindow()).shellDeviceCheck(list);
+    const check = await checkWindow().catch(() => null);
+    if (!check) return flashHint(peopleBox, t('voice.failed'), 6000);
+    const picks = await check.shellDeviceCheck(list);
     if (picks) client.pick(picks);
   }
 
   /** "🎛 Microphone and camera" on myself: the same check window; while in voice the new devices apply at once. */
   async function changeDevices(): Promise<void> {
     const before = { mic: load('opt:micDevice') ?? '', cam: load('opt:camDevice') ?? '', speaker: load('opt:speakerDevice') ?? '' };
-    const result = await (await checkWindow()).voiceCheck({ mode: 'settings', canCam: !!client.setCam });
+    const check = await checkWindow().catch(() => null);
+    if (!check) return flashHint(peopleBox, t('voice.failed'), 6000);
+    const result = await check.voiceCheck({ mode: 'settings', canCam: !!client.setCam });
     if (!result) return;
     if ((load('opt:speakerDevice') ?? '') !== before.speaker) for (const audio of audios.values()) applySpeaker(audio, load('opt:speakerDevice') ?? '');
     if (!client.active) return;
@@ -742,13 +761,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
     if (mode === 'p2p') {
       const others = members.filter((m) => m.voice && m.id !== myId()).map((m) => m.name);
-      if (!(await ipNotice('voice', others))) return;
+      if (!(await ipNotice('voice', others, joinButton))) return;
     }
     // Pre-join check (0.9.90.6): devices, "join muted", "join with my camera on" (not on the film page: there the
     // extension's offscreen page holds the microphone).
     // The peer-to-peer path is what has cameras.
     const canCam = !isShell && !!client.setCam;
-    const choice = isShell ? { mic: true, cam: wantCam } : await (await checkWindow()).voiceCheck({ mode: 'join', canCam, ...(wantCam ? { cam: true } : {}) });
+    const check = isShell ? null : await checkWindow().catch(() => null);
+    if (!isShell && !check) return flashHint(joinButton, t('voice.failed'), 6000);
+    const choice = check ? await check.voiceCheck({ mode: 'join', canCam, ...(wantCam ? { cam: true } : {}) }) : { mic: true, cam: wantCam };
     if (!choice) return;
     joinButton.disabled = true;
     try {
