@@ -16,7 +16,7 @@ _Eski adıyla ScreenWithMe._
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
 ![Testler](https://img.shields.io/badge/test-251%20birim%20%2B%20u%C3%A7tan%20uca%20%2B%20ger%C3%A7ek%20Chrome-3ccf8e)
 ![Sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.9.81-7c5cff)
-![Lisans](https://img.shields.io/badge/lisans-MIT-blue)
+![Lisans](https://img.shields.io/badge/lisans-t%C3%BCm%20haklar%C4%B1%20sakl%C4%B1d%C4%B1r-lightgrey)
 
 </div>
 
@@ -161,8 +161,9 @@ kumanda olur).
 
 ## 📄 Lisans ve gizlilik
 
-[MIT](LICENSE) © 2026 Alperen Aktürk. Kullanıcıya giden bütün kod (site, sunucu, eklenti) bizim; derleme araçları
-MIT / Apache-2.0. Gizlilik politikası: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=tr)
+© 2026 Alperen Aktürk. Tüm hakları saklıdır ([LICENSE](LICENSE)). Kaynak kod yalnızca okunsun diye yayımlanır;
+yazılı izin olmadan kopyalanamaz, değiştirilemez, dağıtılamaz ve kullanılamaz. Üçüncü taraf parçalar (kelime listeleri,
+derleme araçları) kendi lisanslarını korur: [third-party-notices.txt](apps/web/public/third-party-notices.txt). Gizlilik politikası: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=tr)
 (hesap yok, takip yok; tek seferlik oda boşaldıktan 24 saat sonra, kayıtlı oda 30 gün sonra silinir).
 Sorular ve sorun giderme: [yardım sayfası](https://screen-with-me.swm-server.workers.dev/help.html?lang=tr).
 
