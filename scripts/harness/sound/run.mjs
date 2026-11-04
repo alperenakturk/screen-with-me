@@ -3,13 +3,14 @@
 // and an XOX game. The sounds themselves are not judged here, only when they play.
 //
 //   npm run dev   (other terminal)
-//   node scripts/harness/sound/run.mjs [http://localhost:5173]
+//   node scripts/harness/sound/run.mjs [http://localhost:5173] [video url, default film-server.mjs's http://localhost:5300/video.webm]
 import { createRequire } from 'node:module';
 
 // Playwright is installed globally in cloud sessions (require works from anywhere, ESM import does not).
 const { chromium } = createRequire(import.meta.url)('playwright');
 
 const SITE = process.argv[2] ?? 'http://localhost:5173';
+const VIDEO = process.argv[3] ?? 'http://localhost:5300/video.webm';
 const room = 'snd' + Math.random().toString(36).slice(2, 8);
 const browser = await chromium.launch({
   executablePath: process.env.CHROME || undefined,
@@ -48,7 +49,7 @@ async function person(name, avatar) {
     localStorage.setItem('opt:voiceCheck', 'skip');
   }, [name, avatar]);
   await page.goto(`${SITE}/r/${room}#back`);
-  await page.waitForSelector('#people-count');
+  await page.waitForSelector('#people-count', { state: 'attached' });
   // A real click: browsers only allow sound after the person has touched the page.
   await page.mouse.click(5, 300);
   return page;
@@ -67,12 +68,20 @@ check(count(a, 'roomJoin') === 1, 'Alex hears Sam joining the room', a.join());
 
 // A reload is not a new arrival.
 await sam.reload();
-await sam.waitForSelector('#people-count');
+await sam.waitForSelector('#people-count', { state: 'attached' });
 await sam.mouse.click(5, 300);
 await until(async () => (await alex.textContent('#people-count')) === '2');
 await sleep(1500);
 a = await sounds(alex);
 check(count(a, 'roomJoin') === 0, 'a reload plays no join sound', a.join());
+
+// A video in the room (a fresh room shows no Queue / People tabs, card 6); a local file, e.g. film-server.mjs's.
+await alex.fill('#media-input', VIDEO);
+await alex.press('#media-input', 'Enter');
+await until(async () => (await alex.evaluate(() => document.querySelector('.room.has-item') !== null)) && (await sam.evaluate(() => document.querySelector('.room.has-item') !== null)));
+await sleep(500);
+await sounds(alex);
+await sounds(sam);
 
 // Voice: my own join confirms; others' join only while I'm in voice.
 await alex.click('#voice-join');
@@ -151,8 +160,13 @@ await sleep(300);
 
 // XOX: invite, every piece, win / lose.
 await sounds(sam);
-await alex.click('#dock-game'); // card 2: the rail holds 🎮 on a computer
-await alex.click('.hub-game >> nth=0');
+// The Classics table (0.9.97.35) opens on XOX.
+await alex.evaluate(() => document.getElementById('game-btn').click());
+await until(() => alex.evaluate(() => !!document.querySelector('#game-menu [data-kind="classics"]')));
+await alex.evaluate(() => {
+  document.querySelector('#game-menu [data-tab="together"]')?.click();
+  document.querySelector('#game-menu [data-kind="classics"]').click();
+});
 await until(async () => (await sam.evaluate(() => window.__sounds.includes('gameInvite'))));
 b = await sounds(sam);
 check(count(b, 'gameInvite') === 1, 'Sam hears the game invite', b.join());
@@ -162,6 +176,11 @@ const seated = await until(async () => {
   return s && !s.includes('…') && (await alex.$$('#xox-board .xox-cell')).length === 9 ? s : null;
 }, 15000);
 check(!!seated, 'both are seated', String(seated));
+// Each player's game shelf shows first: both pick XOX from it (it is already the table's board).
+for (const page of [alex, sam]) {
+  await until(() => page.evaluate(() => { const box = document.querySelector('#game-stage .cl-box[data-board="xox"]'); return !!box && !box.disabled; }));
+  await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="xox"]').click());
+}
 await sounds(alex);
 await sounds(sam);
 // Whoever starts plays 0, 1, 2 (top row); the other 3, 4.
