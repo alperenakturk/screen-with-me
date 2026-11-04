@@ -133,6 +133,7 @@ reports if a drop happens again over time.
   extension get the new files (no id change, nothing to migrate).
 - Done when: the owner OKs the two new faces on Design's preview; they are live in the picker.
 - Tests: the avatar sweep screenshot of the series page.
+- Owner's pick (4 Nov 2026, Design's page https://claude.ai/artifact/6GRmQNs9ntXHJr6cQ6bs9s, round 2): **Sponge C** (waving, both hands up) · **Squid D** (bored, lids half down, soft blue). Design ships the files in #250, lane A copies them.
 
 ### BH6. Small bug batch: saved-room "yours" mark + the untested order paths (lane A, after BH5)
 - From BH4 (STATUS idea 11): after "Make host" (or after acting as host while the host was away) the old host's saved-
