@@ -135,6 +135,21 @@ const row = (page, i) => page.evaluate((n) => [...document.querySelectorAll('#ga
   const kept = await until(() => alex.evaluate(() => /Solved in 2\/7/.test(document.querySelector('#game-stage .ff-message')?.textContent ?? '')), 4000);
   check(!!kept, 'after a reload the day is still solved');
 
+  // BH2: a streak with a missed day since its last win shows 🔥 0, not the old number.
+  await alex.evaluate((d) => {
+    const save = JSON.parse(localStorage.getItem('fiveFrames'));
+    save.stats.en.streak = 3;
+    save.stats.en.last = d - 2;
+    delete save.games.en;
+    localStorage.setItem('fiveFrames', JSON.stringify(save));
+  }, en.day);
+  await alex.reload();
+  await until(() => alex.evaluate(() => !!document.querySelector('#game-btn')));
+  await alex.waitForTimeout(1200);
+  await open(alex);
+  const shown = await until(() => alex.evaluate(() => document.querySelector('#game-stage .ff-streak')?.textContent || null), 4000);
+  check(shown === '🔥 0', 'a missed day breaks the streak shown (🔥 0, not the old 🔥 3)', String(shown));
+
   // Turkish: its own alphabet and its own game.
   await alex.evaluate(() => document.querySelector('#game-stage .ff-lang[data-lang="tr"]').click());
   const tr = await until(() => alex.evaluate(() => { const keys = [...document.querySelectorAll('#game-stage .ff-key')].map((k) => k.dataset.key); return keys.length > 30 ? keys : null; }), 5000);

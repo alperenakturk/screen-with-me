@@ -15,6 +15,7 @@ import poker from './art/covers/poker.svg?raw';
 import { GAME_CATALOG, type SoloKind } from '@swm/shared/games/catalog';
 import { formatCoins } from '@swm/shared/games/snack-bar';
 import { PLANT_IDS } from '@swm/shared/games/garden';
+import { dayNumber, liveStreak } from '@swm/shared/games/five-frames';
 import { MAX_TABLES, ROOM_GAME_KINDS, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import type { GameNews } from '@swm/shared/games/catalog';
 import { el } from '../dom.ts';
@@ -105,7 +106,11 @@ function progressOf(kind: SideKind): string | null {
   if (kind === 'word') {
     try {
       const saved = JSON.parse(load('fiveFrames') || 'null') as { stats?: Record<string, { streak?: unknown; last?: unknown }> } | null;
-      const best = Object.values(saved?.stats ?? {}).reduce((n, s) => Math.max(n, typeof s.streak === 'number' ? s.streak : 0), 0);
+      const day = dayNumber();
+      const best = Object.values(saved?.stats ?? {}).reduce(
+        (n, s) => Math.max(n, typeof s.streak === 'number' && typeof s.last === 'number' ? liveStreak({ streak: s.streak, last: s.last }, day) : 0),
+        0,
+      );
       return best > 0 ? `🔥 ${best}` : null;
     } catch {
       return null;

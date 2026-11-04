@@ -185,6 +185,14 @@ export function record(save: FramesSave, lang: Lang, game: DayGame, answer: stri
   return true;
 }
 
+/**
+ * The streak to show on `day` (BH2): a day without a win since the last one breaks it, even before the next finished
+ * game records that (a player who won on day 5 and skipped day 6 sees 🔥 0 on day 7, not 🔥 3).
+ */
+export function liveStreak(stats: { streak: number; last: number }, day: number): number {
+  return stats.last >= day - 1 ? stats.streak : 0;
+}
+
 /** Today's game in this language: the saved one if it is today's, else a new empty one. */
 export function today(save: FramesSave, lang: Lang, day: number): DayGame {
   const game = save.games[lang];
