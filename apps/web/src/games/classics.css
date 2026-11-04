@@ -163,3 +163,13 @@
 .game-stage .dama-board { width: min(100cqh - 4px, 52cqw, 440px); }
 .game-stage .bg-board { width: min((100cqh - 52px) * 1.45, 54cqw, 560px); }
 .game-stage .cl-shelf-row { gap: 6px; }
+
+/* A narrow window (phones, a small float; BHG): everything stacks, so the board takes the full width, and a seat's
+   name wraps onto a second line instead of ending in "Ro…". */
+@container game (max-width: 560px) {
+  .game-stage .dama-board { width: min(100%, 100cqh - 330px, 440px); min-width: min(100%, 260px); }
+  .game-stage .bg-board { width: min(100%, 560px); }
+  .game-stage .xox-players { gap: 6px; }
+  .game-stage .xox-player { gap: 6px; padding: 8px; }
+  .game-stage .xox-name { white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
+}

@@ -138,6 +138,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
           ),
         ),
     );
+    app.firstElementChild!.classList.toggle('draw-lobby', s.phase === 'lobby' || s.phase === 'over');
     $('#quiz-n').textContent = s.phase === 'lobby' ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: QUIZ_MAX_PLAYERS }) : s.phase === 'over' ? '' : t('quiz.n', { n: s.n, total: s.total });
     // The topic, and the question's difficulty as stars (P9: the bank's `d`, easy questions first).
     const level = typeof s.qid === 'number' ? (QUIZ_BANK[s.qid]?.d ?? 2) : 0;

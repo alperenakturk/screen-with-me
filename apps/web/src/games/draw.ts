@@ -352,6 +352,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     // Üstteki pencere (lobi, kelime seçimi, tur sonu).
     overlay.replaceChildren();
     overlay.hidden = s.phase === 'draw';
+    // Lobby and podium need no canvas: the card takes the canvas's place at its own height (BHG: it was shrunk to fit).
+    app.firstElementChild!.classList.toggle('draw-lobby', s.phase === 'lobby' || s.phase === 'over');
     if (s.phase === 'lobby' || s.phase === 'over') {
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'games.again' : 'draw.start'));
