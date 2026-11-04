@@ -119,6 +119,11 @@ Planner to merge them once main is green.
 - Done when: the intro plays once for everyone who enters a room from its link (first entry in that tab), not only for
   the one who created it; still not on a reload, in the shell or on a TV; reduced motion as before.
 - Tests: intro harness (a fresh browser opening `/r/<id>` sees it).
+- Done (0.9.97.15, built by lane B, shipped by lane A): the intro played only when the join step was not skipped, and
+  from the start of the room page, so since R12 someone waiting at the door ran it out behind the waiting card, and a
+  first entry through `#back` (the extension's "open the room") never got it. Now `startRoom` works out `introDue`
+  (not a TV, not the shell, `in:<room>` not yet set in this tab) and plays it on the first `welcome`. Intro harness: an
+  invited fresh browser sees it, a reload doesn't, a `#back` first entry does once, a knocker sees it after being let in.
 
 ### R8. Faster games tutorial and theme previews (owner; lane B)
 - Why: owner: the "How to play" cards appear late, and the theme picker's previews load slowly.

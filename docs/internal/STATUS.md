@@ -421,6 +421,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.15 (the intro for everyone, card R7):**
+- [ ] Send the invite link to a friend: when they enter, they see the Sidelit intro (light + Glowbeam) once; a reload
+  doesn't show it again. With "Ask before letting people in" on, they see it right after you let them in.
+
 **0.9.97.14 (private messages, card R13):**
 - [ ] With two friends in a room: press a friend's name in the chat (or their face → "🔒 Message privately"), write
   something. Only that friend gets it ("🔒 Private · from …"), the other friend sees nothing; ✕ over the box goes back
