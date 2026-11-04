@@ -4,6 +4,9 @@ _Design session. After Research's IP audit (`research/ip-audit.md`) the owner re
 our own genre archetypes in their place. Pick page (all 18 at real size, EN + TR names, multi-select, Turkish paste
 text "Tür avatarları seçimim: …"): https://claude.ai/artifact/Gv2uDG8EWX8XE23ALk47gB (copy: `avatars-3/preview.html`)._
 
+**Owner's pick (4 Nov 2026): all except merfolk (17).** Developer A wired them in with card R20 (0.9.97.30, #262).
+`scripts/avatars.mjs` ships every file in `avatars-3/svg/`, so the merfolk drawing lives in `avatars-3/unused/`.
+
 ## Rules followed
 - Each avatar is a genre type, never a character. No character's exact colours, outfit, signature prop or name.
   - The hero wears our own teal suit, orange cape and a gold Glowbeam-like spark in a diamond, not a letter, a shield
@@ -47,11 +50,11 @@ picture: it falls back the way the removal card says.
 
 ## Files
 - `avatars-3/draw.mjs` is the generator. `node docs/internal/design/avatars-3/draw.mjs` writes `avatars-3/svg/<id>.svg`
-  and exports `GENRES` and `NAMES`.
-- `avatars-3/svg/*.svg` are the 18 drawings.
+  for the picked ones and `avatars-3/unused/<id>.svg` for `NOT_PICKED`; it exports `GENRES`, `NAMES` and `NOT_PICKED`.
+- `avatars-3/svg/*.svg` are the 17 shipped drawings; `avatars-3/unused/mermaid.svg` is the one not picked.
 - `avatars-3/preview.mjs` builds the pick page `preview.html`.
 
-## For Developer A (after the owner's OK)
+## For Developer A (done in #262)
 1. Copy the picked `svg/<id>.svg` files the way `scripts/avatars.mjs` copies `avatars-2/full/`, or point it at this
    folder.
 2. Add each id to `DRAWN_AVATARS`, using the emoji above.

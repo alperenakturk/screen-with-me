@@ -252,5 +252,13 @@ export const NAMES = {
   alien: ['Alien', 'Uzaylı'], samurai: ['Samurai', 'Samuray'], fairy: ['Fairy', 'Peri'], spy: ['Spy', 'Casus'],
 };
 
-for (const [id, svg] of Object.entries(GENRES)) writeFileSync(new URL(`${id}.svg`, OUT), svg.replaceAll('K-', `${id}-`).replace(/\n\s*\n/g, '\n'));
-console.log(`✓ ${Object.keys(GENRES).length} genre avatars → docs/internal/design/avatars-3/svg`);
+// The owner's pick (4 Nov 2026): all but `mermaid`. scripts/avatars.mjs ships every file in ./svg/, so a drawing that
+// was not picked goes to ./unused/ instead.
+export const NOT_PICKED = ['mermaid'];
+const UNUSED = new URL('./unused/', import.meta.url);
+mkdirSync(UNUSED, { recursive: true });
+for (const [id, svg] of Object.entries(GENRES)) {
+  const dir = NOT_PICKED.includes(id) ? UNUSED : OUT;
+  writeFileSync(new URL(`${id}.svg`, dir), svg.replaceAll('K-', `${id}-`).replace(/\n\s*\n/g, '\n'));
+}
+console.log(`✓ ${Object.keys(GENRES).length - NOT_PICKED.length} genre avatars → avatars-3/svg, ${NOT_PICKED.length} → avatars-3/unused`);

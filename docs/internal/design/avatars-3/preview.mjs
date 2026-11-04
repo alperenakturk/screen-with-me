@@ -1,7 +1,7 @@
 // Builds preview.html: the owner's pick page for the genre avatars (Turkish UI, all 18, real sizes, multi-select).
 import { readFileSync, writeFileSync } from 'node:fs';
-import { GENRES, NAMES } from './draw.mjs';
-const uri = (id) => 'data:image/svg+xml;base64,' + Buffer.from(readFileSync(new URL(`./svg/${id}.svg`, import.meta.url))).toString('base64');
+import { GENRES, NAMES, NOT_PICKED } from './draw.mjs';
+const uri = (id) => 'data:image/svg+xml;base64,' + Buffer.from(readFileSync(new URL(`./${NOT_PICKED.includes(id) ? 'unused' : 'svg'}/${id}.svg`, import.meta.url))).toString('base64');
 const ids = Object.keys(GENRES);
 const cards = ids.map((id) => `<label class="card"><input type="checkbox" id="g-${id}" value="${id}" data-tr="${NAMES[id][1]}">
 <img src="${uri(id)}" alt="${NAMES[id][1]}" width="96" height="96"><span class="nm"><b>${NAMES[id][1]}</b><i>${NAMES[id][0]}</i></span>
