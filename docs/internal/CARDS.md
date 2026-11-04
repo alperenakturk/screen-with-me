@@ -1006,6 +1006,82 @@ into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the
 - Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
 - Owner's pick: copy and whether it is a page or only a home door. Planner: 0.9.95 (owner agreed 2 Nov 2026).
 
+Cards from `security-review-4.md` (4 Nov 2026, `main` at 0.9.97.39, after the repository went public), most severe
+first (R4 = review 4). Details, file:line references and the owner's GitHub settings are in the review. Shipped cards of
+reviews 2 and 3 below are still listed here; only H3 + M7, M8 and R3-3 of them are open.
+
+### Security: an upload budget across rooms (R4-1; lane A)
+- Severity: medium
+- Why: emoji and chat-image limits live inside each room, and room ids are free to invent, so one address can spread
+  uploads over many fresh rooms (~150 MB a minute) and fill the account's Durable Object storage within the hour.
+- Done when: a small counter object keeps a per-IP-hash daily byte budget across all rooms and an account-wide daily
+  byte cap; a room asks it before storing a sticker or chat image and answers the existing "slow down" error otherwise.
+- Tests: unit for the budget logic; e2e: uploads from one address across several new rooms stop at the budget, a second
+  address still uploads.
+- Owner's pick: none needed.
+
+### Security: no promise shared between requests in the IP key (R4-2; lane A)
+- Severity: medium
+- Why: `ip-key.ts` caches the day's key as a promise made inside one request; if that request is cancelled the promise
+  can stay pending and every later connection in the isolate waits (Cloudflare: no request-scoped state in globals).
+- Done when: only the resolved key is cached (set after `await`), each request fetches while it is empty, the fetch has a
+  timeout with the isolate-key fallback.
+- Tests: unit with a fake object whose first fetch never answers: the second call still resolves (via the timeout /
+  fallback); e2e unchanged.
+- Owner's pick: none needed.
+
+### Security: protect the daily request quota (R4-3; lane A, the rest with R3-3)
+- Severity: medium (high if the account is on Workers Free and gets targeted)
+- Why: `/api/probe` (plain GET up to 512 KB) has no limit, and on the free plan every `/api/*` call counts toward the
+  daily request allowance even when our limiter says 429, so a loop can stop all rooms until midnight UTC.
+- Done when: the probe's GET counts against a per-IP limit and its size is capped lower; the R3-3 card gains a WAF
+  rate-limiting rule for `/api/*` (runs before the Worker) as a required step; the owner's Free / Paid answer is noted.
+- Tests: e2e: the probe answers 429 past the limit; `/connection` still works.
+- Owner's pick: none needed (the Free / Paid answer through the Planner).
+
+### Repo: public-repository hardening, code side (R4-5; lane B)
+- Severity: medium (together with the owner's settings in `security-review-4.md` §5)
+- Why: the repository is public; actions pinned by tag can change under us, and CodeQL / private vulnerability reporting
+  are free now.
+- Done when: third-party actions in `test.yml` are pinned by commit SHA with the version in a comment (Dependabot keeps
+  them current); once the owner turns on private vulnerability reporting, `SECURITY.md` names GitHub's "Report a
+  vulnerability" next to the e-mail; once the owner creates the `production` environment, the deploy job uses it.
+- Tests: CI green; a Dependabot Actions PR still opens for the pinned SHAs.
+- Owner's pick: needed only for the settings (§5 of the review).
+
+### Security: Worker and Durable Object hygiene (R4-6, R4-7, R4-8; lane A)
+- Severity: low
+- Why: small gaps against Cloudflare's best practices: the usage book loses updates under concurrent requests, some abuse
+  buckets live only in memory, failed feedback sends burn the daily cap, `/api/youtube/usage` is unlimited, the poker
+  deck uses `Math.random`, the probe WebSocket never closes, one floating promise, a heavy room constructor, API answers
+  without `nosniff` / `no-store`, observability without traces.
+- Done when: `usage.ts` reads the body before `get`/`put`; feedback checks the token before the gate and has fetch
+  timeouts; `/api/youtube/usage` has a limit; the server shuffles with crypto randomness; the probe socket closes after
+  10 s; `fallback.ts:271` goes through `finish()`; the room loads small keys in one `get([...])` and images at join time;
+  a JSON helper sets `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`; `observability.traces.enabled`.
+- Tests: unit (usage book under two interleaved adds, shuffle source); e2e existing suites; a header check in e2e for
+  one `/api/*` answer.
+- Owner's pick: none needed.
+
+### Security: confirm the result cache works on the live address (R4-9; lane A)
+- Severity: low (verify)
+- Why: Cloudflare's Cache API may do nothing on `*.workers.dev`; then the 24 h search cache and the quota memo are off on
+  live and repeated searches spend quota.
+- Done when: a live e2e step searches the same words twice and sees a cache hit (a debug header on the answer); if it
+  never hits, the card notes that the custom domain (R3-3) is needed and, until then, a small cache in the
+  `YoutubeUsage` object or KV keeps repeated words free.
+- Tests: the live e2e step itself.
+- Owner's pick: none needed.
+
+### Security: TV routes off until the TV ships (R4-10; lane A)
+- Severity: low
+- Why: the TV is hidden only on the client; the server's pairing routes run for anyone, and the public review 2 describes
+  their open weaknesses (M8).
+- Done when: a server switch `TV=off` (default while the TV is frozen) answers `/api/tv/*` with 404 and the room refuses
+  `tv-link` / `hello.tv`; turning it on is part of the M8 card.
+- Tests: e2e `tv.mjs` runs with `TV=on` locally; a new e2e check that `TV=off` refuses pairing.
+- Owner's pick: none needed.
+
 Cards from `security-review-3.md` (3 Nov 2026, `main` at 0.9.93.18), most severe first (R3 = review 3). Details,
 file:line references, scenarios and the owner's Cloudflare / GitHub / Google steps are in the review.
 
