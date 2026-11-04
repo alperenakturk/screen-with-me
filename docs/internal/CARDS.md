@@ -4,7 +4,20 @@ Owner's rule (2 Nov 2026): one board for every session. The **Planner** writes a
 the top **Ready** card, moves it to **In progress**, and when it is live adds `Done: <PR link>` and moves it to
 **Done**. **Security** and **Research** add their suggestions under **Proposed**; the Planner and the owner decide
 whether they become Ready. Roles and rules: `CLAUDE.md` "Sessions as an office". The order follows `ROADMAP.md`
-"Focus: now / next / frozen"; the owner's tick view is https://claude.ai/artifact/EtqKiBo8k5vgR422rq14K5.
+"Focus: now / next / frozen". The owner's tick view is the hidden test board page on our site (its data file
+`board.data.js`, kept by the Planner); the old checklist Artifact is retired.
+
+**How the owner is asked (owner, 4 Nov 2026):** no more option pages or other web pages for him. The only page he uses
+is the test board (the Planner keeps it current with what he tested and what is next). Every preference or design
+question is asked **in the Planner's chat** with clickable choices (the chat's question tool, the recommended choice
+first, with a side preview of each option: a short sketch or description). Design, Game Studio, Research and the
+Developers therefore send the Planner the questions as text: question, 2–4 options (one marked recommended), and a
+short preview per option. They do not publish Artifacts for the owner.
+
+**The test board stays current by itself (owner, 4 Nov 2026):** the Planner adds, updates and removes board items
+without asking: a fix that went live becomes a test, a test the owner reported passing is removed or marked, a
+question he answered disappears. Then the Planner tells him in a line what changed. **Everyone talks to the owner in
+Turkish** (all sessions; among themselves English is fine; everything written to the repo stays English).
 
 Card format:
 
@@ -94,7 +107,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B next: R21 (fullscreen messages bigger and lower). Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -155,6 +168,21 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### R21. Chat messages over a fullscreen video: bigger text, lower on the right side (owner, 4 Nov 2026; lane B)
+- Owner (screenshot, a video in fullscreen with a message "Alperen selam basılsın ya" in the very top right corner):
+  "the text should be bigger, and it should come out from a clearly visible place on the right side of the screen,
+  not the very top right".
+- What: in fullscreen (YouTube, video files and the film page) a chat message over the video uses bigger text (about
+  1.5× today's toast: name + text ≥ 20 px on 1920×1080, scaling with the screen, ≥ 16 px on a 1366×768 laptop) on a
+  slightly larger, readable card; it appears on the right side, vertically around the upper-middle of the video (about
+  25–40 % down from the top), left of the rail, not in the corner; newer messages stack below or above it without
+  covering the player's own bottom bar; same fade timing. Window mode with the side panel hidden follows the same
+  place. Phones keep their own layouts.
+- Done when: at 1920×1080 and 1366×768, in YouTube fullscreen and in video-file fullscreen, a message shows at the
+  new place with the bigger text, never in the top 15 % or over the bottom bar, and never under the rail.
+- Tests: `yt-fs-side` / `yt-room` (toast box position and font size at both sizes), the embed harness for the film page.
+- Owner's pick: none needed.
 
 ### R20. Redraw two sea-cartoon parody avatars (owner, 4 Nov 2026; Design, then lane A)
 - Owner (screenshot of the series parody page), first "remove these completely, they aren't nice", then changed his
