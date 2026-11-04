@@ -433,6 +433,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.36 (the film page keeps a new name, BH7):**
+- [ ] In a room on the main site change your name (profile → name), then open a film page in the room with the
+  extension: your friend sees you with the new name on the film page, never the old one.
+
 **0.9.97.34 (bigger chat messages in fullscreen, card R21):**
 - [ ] On a computer, open a YouTube video and a video file in fullscreen; from a second tab write a message: it comes
   in on the right side, about a quarter down the video (not in the very top corner), with clearly bigger text, left of
