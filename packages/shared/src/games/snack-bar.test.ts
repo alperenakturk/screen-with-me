@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AWAY_CAP_S, AWAY_SHARE, MAX_TICK_S, PRESTIGE_MIN, SNACK_VERSION, STANDS,
-  affordable, awayBonus, baseRate, buy, collectAway, costOf, formatCoins, freshSnack, incomeRate, loadSnack,
+  MAX_TICK_S, PRESTIGE_MIN, SNACK_VERSION, STANDS,
+  affordable, baseRate, buy, costOf, formatCoins, freshSnack, incomeRate, loadSnack,
   milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick, togetherFactor, unlocked,
 } from './snack-bar.ts';
 
@@ -51,21 +51,15 @@ describe('Snack Bar economy', () => {
     expect(serve(save, alone)).toBe(4.5);
   });
 
-  it('away bonus: a capped share of the base income, nothing for short breaks or a new game', () => {
+  it('only in a room: time away pays nothing, a long gap between ticks is ignored', () => {
     const save = freshSnack();
-    expect(awayBonus(save, 10_000_000).coins).toBe(0);
+    save.coins = 100;
     save.seen = 1_000_000;
-    expect(awayBonus(save, 1_000_000 + 30_000).coins).toBe(0);
-    expect(awayBonus(save, 1_000_000 + 600_000)).toEqual({ seconds: 600, coins: 0.5 * 600 * AWAY_SHARE });
-    const day = awayBonus(save, 1_000_000 + 24 * 3600_000);
-    expect(day.seconds).toBe(AWAY_CAP_S);
-    expect(day.coins).toBe(0.5 * AWAY_CAP_S * AWAY_SHARE);
-    // A clock that went backwards pays nothing.
-    expect(awayBonus(save, 0).coins).toBe(0);
-    const paid = collectAway(save, 1_000_000 + 600_000);
-    expect(save.coins).toBe(paid.coins);
-    expect(save.seen).toBe(1_600_000);
-    expect(collectAway(save, 1_600_000).coins).toBe(0);
+    // Coming back hours later: the first tick after reopening measures from the page's own clock, never from `seen`.
+    expect(tick(save, 3 * 3600, alone, 1_000_000 + 3 * 3600_000)).toBe(0);
+    expect(save.coins).toBe(100);
+    expect(save.seen).toBe(1_000_000 + 3 * 3600_000);
+    expect(tick(save, 1, alone)).toBeCloseTo(0.5);
   });
 
   it('prices grow 15 % a level; bulk cost and what the coins afford agree', () => {

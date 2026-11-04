@@ -590,6 +590,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.28 Side games only in a room: open Snack Bar and Window Garden in a room with nothing playing: the scene
+  says "Closed until the film plays" / "Resting until the film plays" and "Nothing changes while you're away". Play a
+  video: the sign goes, coins come, plants grow. Leave the room for a while and come back: no "while you were away"
+  coins, the plants are exactly as you left them.
 - [ ] 0.9.97.26 R15: YouTube in fullscreen, a friend writes a message: it comes down over the video at the top right,
   left of the rail; the video never gets narrower, no dark column on the right; your camera floats over the video.
 - [ ] 0.9.97.20 BH2: Five Frames: skip a day after a win; the next day the 🔥 next to the day number (and in the games

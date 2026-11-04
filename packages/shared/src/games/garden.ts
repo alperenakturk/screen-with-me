@@ -4,6 +4,8 @@
 //
 // Rules (owner, 2 Nov 2026: "basic but meaningful, a collection feel, sweet and cozy"):
 // - Plants in pots on a windowsill grow only while the room's video plays, faster when they were watered.
+// - Only in a room (owner, 4 Nov 2026): it moves only while its window is open (or minimized) in a room and the room's
+//   video plays; nothing grows, dries or seeds while the person is away.
 // - Nothing ever dies: a dry pot only grows slower until it is watered again.
 // - Seeds: a common one every 30 watched minutes, a better one when a film (≥ 20 min) ends, a rare one after a full
 //   evening together (90 min watched with someone else in the room).

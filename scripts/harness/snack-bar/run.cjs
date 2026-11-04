@@ -1,7 +1,7 @@
 // 🍿 Snack Bar in the room (card "Snack Bar"): two people, Alex opens it from 🎮 → "Play on the side".
 // Checks: the hub entry, the window fits without scrollbars (default, smallest free window, phone sheet), no income
 // while nothing plays, income + the together bonus while the sync test plays, a tap serves, buying a stand, the
-// "while you were away" note, buttons never take the focus (the message box keeps it), one tab plays at a time,
+// nothing paid for the time away (only in a room, 0.9.97.28) and the "closed until the film plays" sign, buttons never take the focus (the message box keeps it), one tab plays at a time,
 // closing saves.
 //
 //   npm run dev, then: node scripts/harness/snack-bar/run.cjs [site]
@@ -85,10 +85,11 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   check(hub.side && hub.entry, '🎮 has an "On the side" tab with Snack Bar', JSON.stringify(hub));
 
   check((await openSnack(alex)) === 'ok', 'Snack Bar opens in the game window');
-  const away = await until(() => alex.evaluate(() => { const n = document.querySelector('.sb-note'); return n && !n.hidden ? n.textContent : null; }), 3000);
-  check(!!away && /away/i.test(away), '"While you were away" pays a capped bonus on opening', String(away));
+  await wait(1500);
   const afterAway = await coins(alex);
-  check(afterAway > 500 && afterAway <= 500 + 0.5 * 600 * 0.25 + 1, 'the away bonus is 25 % of the base income for 10 min', String(afterAway));
+  check(afterAway === 500, 'nothing is paid for the 10 min away (only in a room)', String(afterAway));
+  const rest = await alex.evaluate(() => { const n = document.querySelector('.sb-rest'); return n && !n.hidden ? n.textContent : null; });
+  check(!!rest && /Closed until the film plays/.test(rest) && /away/.test(rest), 'the scene says it is closed until the film plays', String(rest));
   const place = await alex.evaluate(() => document.getElementById('game-stage').className);
   check(/float/.test(place), 'it opens as a free window', place);
   check((await fits(alex)).length === 0, 'fits without scrollbars at its own size', (await fits(alex)).join('; '));
@@ -125,6 +126,7 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   await alex.evaluate(() => document.getElementById('sync-test')?.click());
   const playing = await until(() => alex.evaluate(() => /Film on/.test(document.querySelector('.sb-state').textContent)), 10000);
   check(!!playing, 'the pill turns to "Film on" when the room plays');
+  check(await alex.evaluate(() => document.querySelector('.sb-rest').hidden), 'the "closed" sign goes away while the film plays');
   check(/\+10 %/.test(await text(alex, '.sb-together')), 'together bonus +10 % with one other person', await text(alex, '.sb-together'));
   const p0 = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')).coins);
   await wait(5600);

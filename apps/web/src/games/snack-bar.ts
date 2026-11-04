@@ -6,7 +6,7 @@
 
 import './snack-bar.css';
 import {
-  MILESTONES, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, collectAway, costOf, formatCoins, incomeRate,
+  MILESTONES, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, costOf, formatCoins, incomeRate,
   loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, standRate, starsFor, starFactor, tick,
   togetherFactor, unlocked, type SnackContext, type SnackSave, type StandId,
 } from '@swm/shared/games/snack-bar';
@@ -32,7 +32,7 @@ import { howToPlay } from './how-to-play.ts';
 const TEXT = {
   en: {
     how1Title: 'Earn while the room watches',
-    how1: "Your snack bar makes coins while the room's video plays.",
+    how1: "Your snack bar makes coins only in a room while its video plays. Nothing changes while you're away.",
     how2Title: 'Tap to serve',
     how2: 'Tap the counter for an extra coin.',
     how3Title: 'Buy and level up stands',
@@ -65,13 +65,14 @@ const TEXT = {
     'newCinemaAsk': 'Your coins and stands start over; you get {stars} ★, each one +{bonus} % income for good.',
     'newCinemaYes': 'Open the new cinema',
     'newCinemaDone': 'Cinema #{n} is open · ★ {stars} in all',
-    'away': 'While you were away: +{n}',
+    rest: '⏸ Closed until the film plays',
+    restLine: "Nothing changes while you're away",
     'otherTab': 'Snack Bar is open in another tab.',
     'playHere': 'Play here',
   },
   tr: {
     how1Title: 'Oda izlerken kazan',
-    how1: 'Odanın videosu oynarken büfen para kazanır.',
+    how1: 'Büfen yalnızca bir odadayken, odanın videosu oynarken kazanır. Sen yokken hiçbir şey değişmez.',
     how2Title: 'Dokun, servis yap',
     how2: 'Fazladan bir jeton için tezgâha dokun.',
     how3Title: 'Stant al, seviye atlat',
@@ -104,7 +105,8 @@ const TEXT = {
     'newCinemaAsk': 'Paran ve tezgâhların sıfırlanır; {stars} ★ alırsın, her biri gelirine kalıcı +%{bonus} katar.',
     'newCinemaYes': 'Yeni sinemayı aç',
     'newCinemaDone': '{n}. sinema açıldı · toplam ★ {stars}',
-    'away': 'Sen yokken: +{n}',
+    rest: '⏸ Film oynayınca açılır',
+    restLine: 'Sen yokken hiçbir şey değişmez',
     'otherTab': 'Büfe başka bir sekmede açık.',
     'playHere': 'Burada oyna',
   },
@@ -158,7 +160,11 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
   const secondBadge = el('span', { class: 'sb-second', 'aria-hidden': 'true' }, '×2');
   const sceneButton = el('button', { type: 'button', class: 'sb-scene' }, sceneArt, secondBadge);
   const pops = el('div', { class: 'sb-pops', 'aria-hidden': 'true' });
-  const sceneBox = el('div', { class: 'sb-scene-box' }, sceneButton, pops);
+  // While the room's film does not play the counter is closed, and says so on the scene (owner, 4 Nov 2026).
+  const restTitle = el('b', {});
+  const restLine = el('small', {});
+  const rest = el('span', { class: 'sb-rest', 'aria-hidden': 'true' }, restTitle, restLine);
+  const sceneBox = el('div', { class: 'sb-scene-box' }, sceneButton, rest, pops);
   const group = (name: string) => sceneArt.querySelector<SVGGElement>(`#${sceneArt.dataset.prefix}${name}`);
 
   // ---- Upgrade rows ----
@@ -278,6 +284,9 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
     sceneButton.setAttribute('aria-label', t('serve'));
     sceneButton.title = ctx.playing ? t('serve') : t('closed');
     box.classList.toggle('sb-idle', !ctx.playing);
+    rest.hidden = ctx.playing || blocked;
+    restTitle.textContent = t('rest');
+    restLine.textContent = t('restLine');
     for (const stand of STANDS) {
       const name = SCENE_GROUP[stand.id];
       const node = name ? group(name) : null;
@@ -348,12 +357,11 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
     if (!blocked) save(SNACK_KEY, saveSnack(game));
   }
 
-  // ---- Start: the away bonus, then a tick a second ----
+  // ---- Start, then a tick a second (nothing is paid for the time the game was closed) ----
   if (lockedByOther()) setBlocked(true);
   else {
     takeLock();
-    const away = collectAway(game);
-    if (away.coins > 0) flash(t('away', { n: formatCoins(away.coins) }), 7000);
+    game.seen = Date.now();
     persist();
   }
   let last = performance.now();

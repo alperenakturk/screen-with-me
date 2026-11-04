@@ -71,6 +71,20 @@ describe('Window Garden growth', () => {
   });
 });
 
+describe('Window Garden only in a room', () => {
+  it('time away neither grows nor dries anything, and gives no seed', () => {
+    const garden = freshGarden();
+    garden.pots[0] = { plant: 'mint', growth: 0.3, water: 0.6 };
+    garden.seen = 1_000_000;
+    const seeds = { ...garden.seeds };
+    // The first tick after a day away: the page measures from its own clock, so a whole day is never one tick.
+    tickGarden(garden, 24 * 3600, withFriend, 1_000_000 + 24 * 3600_000);
+    expect(garden.pots[0]).toEqual({ plant: 'mint', growth: 0.3, water: 0.6 });
+    expect(garden.seeds).toEqual(seeds);
+    expect(garden.watched).toBe(0);
+  });
+});
+
 describe('Window Garden seeds', () => {
   it('a common seed every 30 watched minutes', () => {
     const garden = freshGarden();

@@ -74,7 +74,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
     pots: [{ plant: 'mint', growth: 0.9985, water: 1 }, { plant: 'fern', growth: 0.6, water: 0.1 }, null],
     seeds: { common: 2, uncommon: 0, rare: 0, legendary: 0 },
     album: { fern: 1 },
-    watched: 0, seedClock: 0, together: 0, eveningSeed: false, seen: 0, ended: [],
+    watched: 0, seedClock: 0, together: 0, eveningSeed: false, seen: Date.now() - 3 * 3600_000, ended: [],
   });
   const alex = await person(ctxA, 'Alex', 'wizard', { windowGarden: seed });
   const sam = await person(ctxS, 'Sam', 'elf');
@@ -90,6 +90,10 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   await wait(6000);
   check((await saved(alex)).pots[0].growth === g0, 'no growth while nothing plays');
   check(/Resting/.test(await alex.evaluate(() => document.querySelector('.wg-state').textContent)), 'the pill says resting');
+  const back = (await saved(alex)).pots[1];
+  check(back.growth === 0.6 && back.water === 0.1, 'three hours away: nothing grew or dried (only in a room)', JSON.stringify(back));
+  const rest = await alex.evaluate(() => { const n = document.querySelector('.wg-rest'); return n && !n.hidden ? n.textContent : null; });
+  check(!!rest && /Resting until the film plays/.test(rest) && /away/.test(rest), 'the scene says it rests until the film plays', String(rest));
 
   // Water the thirsty fern, keeping the focus in the message box.
   await alex.evaluate(() => document.getElementById('chat-input')?.focus());
@@ -110,6 +114,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   await alex.evaluate(() => document.getElementById('sync-test').click());
   const growing = await until(() => alex.evaluate(() => /Growing/.test(document.querySelector('.wg-state').textContent)), 8000);
   check(!!growing, 'the pill turns to "Growing" when the room plays');
+  check(await alex.evaluate(() => document.querySelector('.wg-rest').hidden), 'the resting sign goes away while the film plays');
   const bloomed = await until(() => alex.evaluate(() => document.querySelector('.wg-pot[data-pot="0"]').classList.contains('bloom')), 10000);
   check(!!bloomed, 'the mint blooms while the video plays');
   await alex.click('.wg-pot[data-pot="0"]');

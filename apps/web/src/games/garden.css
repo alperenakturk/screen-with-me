@@ -34,6 +34,14 @@
 .wg-scene { position: relative; flex: 1 1 auto; min-height: 120px; border-radius: 10px; overflow: hidden; background: #120e27; }
 .wg-scene-art, .wg-scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .wg-idle .wg-scene-art { filter: saturate(0.6) brightness(0.8); }
+.wg-rest {
+  position: absolute; left: 50%; top: 8px; transform: translateX(-50%); max-width: calc(100% - 16px); box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 12px; border-radius: 10px;
+  background: rgba(20, 16, 43, 0.88); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12); text-align: center; pointer-events: none;
+}
+.wg-rest[hidden] { display: none; }
+.wg-rest b { font-size: 14px; line-height: 1.25; white-space: nowrap; }
+.wg-rest small { font-size: 13px; line-height: 1.25; color: var(--wg-muted); white-space: nowrap; }
 /* A pot stands on the sill: the sill's top is 168 of 226 in the scene (bottom-aligned slice), the soil line 154. */
 .wg-pot {
   position: absolute; bottom: calc(100% * (226 - 154 - 18) / 226); transform: translateX(-50%);

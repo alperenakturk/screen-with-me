@@ -5,7 +5,8 @@
 // Rules (owner, 2 Nov 2026):
 // - Income only while the room's video plays (`ctx.playing`); a paused or empty room earns nothing.
 // - Together bonus: +10 % per other person in the room, +5 % more for each of them who is in voice with me.
-// - "While you were away": coming back pays a share of the base income for the time away, capped.
+// - Only in a room (owner, 4 Nov 2026): the game moves only while its window is open (or minimized) in a room and the
+//   room's video plays. Nothing is paid for the time away (the old "while you were away" share is gone, 0.9.97.28).
 // - Prestige "open a new cinema": restart with stars, each star a lasting income bonus.
 
 export const SNACK_KEY = 'snackBar';
@@ -42,11 +43,6 @@ export const TOGETHER_BONUS = 0.1;
 export const VOICE_BONUS = 0.05;
 /** Others beyond this many add nothing (a big room should not break the economy). */
 export const TOGETHER_MAX = 9;
-
-/** Away: at least this long counts, at most this long is paid, at this share of the base income. */
-export const AWAY_MIN_S = 60;
-export const AWAY_CAP_S = 2 * 3600;
-export const AWAY_SHARE = 0.25;
 
 /** A tap on the counter ("serve") pays this many seconds of income, at least 1 coin; only while the video plays. */
 export const SERVE_SECONDS = 1;
@@ -144,7 +140,7 @@ export function standRate(stand: StandInfo, level: number): number {
 
 export const starFactor = (save: SnackSave): number => 1 + STAR_BONUS * save.stars;
 
-/** Coins per second without the together bonus (the away bonus uses this). */
+/** Coins per second without the together bonus. */
 export function baseRate(save: SnackSave): number {
   return STANDS.reduce((sum, stand) => sum + standRate(stand, save.levels[stand.id]), 0) * starFactor(save);
 }
@@ -183,22 +179,6 @@ export function serve(save: SnackSave, ctx: SnackContext): number {
   const coins = Math.max(1, incomeRate(save, ctx) * SERVE_SECONDS);
   earn(save, coins);
   return coins;
-}
-
-/** What coming back after being away pays (not added yet: `collectAway` does that). */
-export function awayBonus(save: SnackSave, now = Date.now()): { seconds: number; coins: number } {
-  if (!save.seen) return { seconds: 0, coins: 0 };
-  const away = (now - save.seen) / 1000;
-  if (!(away >= AWAY_MIN_S)) return { seconds: 0, coins: 0 };
-  const seconds = Math.min(away, AWAY_CAP_S);
-  return { seconds, coins: baseRate(save) * seconds * AWAY_SHARE };
-}
-
-export function collectAway(save: SnackSave, now = Date.now()): { seconds: number; coins: number } {
-  const bonus = awayBonus(save, now);
-  if (bonus.coins > 0) earn(save, bonus.coins);
-  save.seen = now;
-  return bonus;
 }
 
 const standOf = (id: StandId): StandInfo => STANDS.find((s) => s.id === id)!;

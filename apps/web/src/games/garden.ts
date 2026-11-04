@@ -41,7 +41,7 @@ const TEXT = {
     how1Title: 'Plant a seed',
     how1: 'Pick a pot and plant one of your seeds.',
     how2Title: 'Water it, then watch',
-    how2: "Plants grow while the room's video plays. Water them when you see 💧.",
+    how2: "Plants grow only in a room while its video plays, and never dry out while you're away. Water them when you see 💧.",
     how3Title: 'Pick the flower',
     how3: 'Every bloom goes into your album. Find all 8 plants.',
     how4Title: 'Films give seeds',
@@ -49,6 +49,8 @@ const TEXT = {
     growing: '▶ Growing',
     paused: '⏸ Resting',
     restingTitle: 'Plants grow while the film plays',
+    rest: '⏸ Resting until the film plays',
+    restLine: "Nothing grows or dries while you're away",
     album: 'Album {n}/{all}',
     seeds: 'Seeds',
     water: '💧 Water',
@@ -88,7 +90,7 @@ const TEXT = {
     how1Title: 'Tohum ek',
     how1: 'Bir saksı seç, tohumlarından birini ek.',
     how2Title: 'Sula, sonra izle',
-    how2: 'Bitkiler odanın videosu oynarken büyür. 💧 görünce sula.',
+    how2: 'Bitkiler yalnızca bir odada, video oynarken büyür; sen yokken kurumaz. 💧 görünce sula.',
     how3Title: 'Çiçeği topla',
     how3: 'Her çiçek albümüne girer. 8 bitkinin hepsini bul.',
     how4Title: 'Filmler tohum verir',
@@ -96,6 +98,8 @@ const TEXT = {
     growing: '▶ Büyüyor',
     paused: '⏸ Dinleniyor',
     restingTitle: 'Bitkiler film oynarken büyür',
+    rest: '⏸ Film oynayınca büyür',
+    restLine: 'Sen yokken ne büyür ne kurur',
     album: 'Albüm {n}/{all}',
     seeds: 'Tohumlar',
     water: '💧 Sula',
@@ -191,7 +195,11 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     });
     return button;
   });
-  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, ...pots);
+  // While the room's film does not play the garden rests, and says so on the scene (owner, 4 Nov 2026).
+  const restTitle = el('b', {});
+  const restLine = el('small', {});
+  const rest = el('span', { class: 'wg-rest', 'aria-hidden': 'true' }, restTitle, restLine);
+  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, ...pots, rest);
 
   // ---- What the selected pot can do ----
   const actionTitle = el('b', { class: 'wg-action-title' });
@@ -304,6 +312,9 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     seedsLine.textContent = seedText.length ? seedText.join(' ') : '🌰 0';
     seedsLine.title = `${t('seeds')}: ${RARITIES.map((r) => `${rarityName(r)} ${garden.seeds[r]}`).join(' · ')}`;
     box.classList.toggle('wg-idle', !ctx.playing);
+    rest.hidden = ctx.playing || blocked;
+    restTitle.textContent = t('rest');
+    restLine.textContent = t('restLine');
     pots.forEach((button, i) => {
       const p = garden.pots[i] ?? null;
       const key = p ? `${p.plant}|${stageOf(p)}|${p.water < THIRSTY}|${blocked}` : `-|${blocked}`;
