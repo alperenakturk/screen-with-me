@@ -7,10 +7,12 @@ import { readTvLabSwitch, tvLab } from './tv-lab.ts';
 import { checkExtensionVersion } from './ext-update.ts';
 import { startDebugLab } from './debug-lab.ts';
 import { startDialogFocus } from './ui/dialog-focus.ts';
-import { isShell } from './storage.ts';
+import { isShell, replaceRemovedAvatars } from './storage.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
+// Card R20: a saved avatar that was removed becomes a random themed one (after syncStore, so the extension's copy counts).
+replaceRemovedAvatars();
 applyTheme(currentTheme(), { wait: false });
 
 // Geri tuşuyla dönülünce tarayıcı sayfayı önbellekten "donmuş" haliyle getirebilir (bağlantı

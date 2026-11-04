@@ -65,45 +65,30 @@ export const DRAWN_AVATARS = {
   janissary: '🎖️',
   horseman: '🏹',
   veiled: '🧕',
-  scientist: '🧪',
-  sidekick: '😰',
-  chemist: '⚗️',
-  lawyer: '⚖️',
-  swordsman: '🗡️',
   sorceress: '🧙‍♀️',
-  strawhat: '👒',
-  cook: '🍳',
-  greenblade: '🍃',
-  hunter: '🐺',
-  hacker: '💻',
-  dragonqueen: '🐉',
-  jester: '🃏',
-  nightguard: '🦇',
-  catburglar: '🐈‍⬛',
-  goth: '🖤',
-  cavecreature: '💍',
-  earthgirl: '🪨',
-  airmonk: '🌀',
-  waterfriend: '💧',
-  sponge: '🧽',
-  starfish: '⭐',
-  squid: '🦑',
-  pinecap: '🌲',
-  sweaterkid: '🧶',
-  cartoonist: '✏️',
+  detective: '🕵️',
+  pirate: '🏴‍☠️',
+  astronaut: '🧑‍🚀',
+  inventor: '🔧',
+  ninja: '🥷',
+  cowboy: '🤠',
+  vampire: '🧛',
+  robot: '🤖',
+  hero: '🦸',
+  explorer: '🧭',
+  chef: '🧑‍🍳',
+  rocker: '🎸',
+  ghost: '👻',
+  alien: '👽',
+  samurai: '⚔️',
+  fairy: '🧚',
+  spy: '🕶️',
   armadillo: '🐾',
-  timetraveler: '⏳',
-  wizardboy: '⚡',
-  redhead: '🍫',
-  wizardgirl: '📚',
   director: '🎬',
   diva: '🎭',
   driver: '🚗',
   captain: '⚓',
   conductor: '🚂',
-  speedster: '💨',
-  notebookgenius: '📓',
-  sweetsleuth: '🍰',
 } as const;
 
 export type DrawnAvatar = keyof typeof DRAWN_AVATARS;
@@ -119,13 +104,9 @@ export const AVATAR_PAGES = [
     'wizard', 'sorceress', 'warrior', 'elf', 'dwarf',
     'janissary', 'horseman', 'veiled', 'director', 'diva', 'driver', 'captain', 'conductor',
   ],
-  ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
-  [
-    'scientist', 'sidekick', 'chemist', 'lawyer', 'dragonqueen', 'goth',
-    'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler',
-  ],
-  ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl', 'notebookgenius', 'sweetsleuth'],
-  ['speedster', 'hunter'],
+  // Card R20: the parody pages are gone (copyright audit, docs/internal/research/ip-audit.md); "Genres" holds our own
+  // genre archetypes (Design's avatars-3, the owner's 17 of 18).
+  ['detective', 'pirate', 'astronaut', 'inventor', 'ninja', 'cowboy', 'vampire', 'robot', 'hero', 'explorer', 'chef', 'rocker', 'ghost', 'alien', 'samurai', 'fairy', 'spy', 'armadillo'],
 ] as const;
 
 /**
@@ -134,7 +115,7 @@ export const AVATAR_PAGES = [
  */
 export const AVATAR_TABS = [
   { key: 'theme', pages: [0] },
-  { key: 'parody', pages: [1, 2, 3, 4], subs: ['film', 'series', 'anime', 'game'] },
+  { key: 'genres', pages: [1] },
 ] as const;
 
 /** Avatarın bulunduğu sayfa (yoksa 0). */
@@ -158,6 +139,22 @@ export function isDrawnAvatar(x: unknown): x is DrawnAvatar {
 export function avatarText(avatar: string | undefined | null): string {
   if (!avatar) return '';
   return isDrawnAvatar(avatar) ? DRAWN_AVATARS[avatar] : avatar;
+}
+
+/**
+ * Card R20 (owner, 4 Nov 2026): parody avatars removed because they read as one exact character (copyright and store
+ * risk; the IP audit's high and medium ones, `docs/internal/research/ip-audit.md`). The server treats them as unknown (not in `AVATARS`); a saved one is replaced once by `replaceRemovedAvatar`.
+ */
+export const REMOVED_AVATARS: readonly string[] = [
+  'sponge', 'starfish', 'squid', 'nightguard', 'speedster', 'scientist', 'sidekick', 'chemist',
+  'cavecreature', 'greenblade', 'strawhat', 'cook', 'notebookgenius', 'sweetsleuth', 'airmonk', 'waterfriend',
+  'earthgirl', 'pinecap', 'sweaterkid', 'timetraveler', 'wizardboy', 'redhead', 'wizardgirl', 'hunter',
+  'jester', 'dragonqueen', 'catburglar', 'goth', 'hacker', 'cartoonist', 'lawyer', 'swordsman',
+];
+
+/** A removed avatar → a random themed one (the 0.9.57 rule); anything else → null (keep it). */
+export function replaceRemovedAvatar(value: unknown, pick: () => Avatar = randomAvatar): Avatar | null {
+  return typeof value === 'string' && REMOVED_AVATARS.includes(value) ? pick() : null;
 }
 
 /** Yeni gelen için rastgele: temalı karakterlerden. */
