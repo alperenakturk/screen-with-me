@@ -147,7 +147,83 @@ def squid_C():
             + '<ellipse cx="33.2" cy="37.6" rx="1.6" ry="1.2" fill="#8a3a4a"/>' + clar)
     return badge(pid, '#ffe8b0', '#2f8a7c', body, notes)
 
-for name, fn in [('sponge-A', sponge_A), ('sponge-B', sponge_B), ('sponge-C', sponge_C), ('squid-A', squid_A), ('squid-B', squid_B), ('squid-C', squid_C)]:
+
+def sponge_cheer():
+    pid = 'sponge'
+    # owner's pick C, round 2: both hands up in the air, cheering
+    # arms out of the sides, hands up beside the head (kept inside the badge)
+    def arm(x0, xc, xh):
+        return (f'<path d="M{x0} 34 Q{xc} 31 {xh} 21.6" stroke="#ffe55c" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
+                f'<circle cx="{xh}" cy="19.6" r="2.9" fill="#ffe55c" stroke="#d6b92a" stroke-width=".6"/>'
+                f'<path d="M{xh-1.8} 17.4 v-1.6 M{xh} 16.8 v-1.8 M{xh+1.8} 17.4 v-1.6" stroke="#ffe55c" stroke-width="1.3" stroke-linecap="round"/>')
+    arms = arm(13, 6.4, 7.6) + arm(51, 57.6, 56.4)
+    cheer = ('<g stroke="#fff" stroke-width=".9" fill="none" stroke-linecap="round" opacity=".85">'
+             '<path d="M4.4 15.4 l-1.6 -.8 M6.4 12.4 l-.8 -1.6 M10.6 12.6 l.6 -1.6"/><path d="M53.4 12.6 l-.6 -1.6 M57.6 12.4 l.8 -1.6 M59.6 15.4 l1.6 -.8"/></g>')
+    clothes = ('<rect x="12.8" y="46" width="38.4" height="18" fill="#a3683a"/>'
+               '<path d="M12.8 49.4 H51.2" stroke="#3a2414" stroke-width="1.5" stroke-dasharray="3.4 2.6"/>'
+               '<path d="M12.8 44.6 H51.2 V47 H12.8Z" fill="#fff"/>')
+    few = ('<g fill="none" stroke="#e6faff" stroke-width=".9" opacity=".6"><circle cx="6" cy="40" r="1.6"/><circle cx="58" cy="38" r="2"/><circle cx="5" cy="27" r="1.1"/></g>')
+    return badge(pid, '#8ae6ff', '#2280c0', arms + sponge_face(pid) + clothes + cheer, few)
+
+# ---------- squid, round 2: faithful, deadpan, soft light ----------
+SQ_SKIN, SQ_LINE, SQ_LID = '#a9d4c6', '#7aa89a', '#93c2b3'
+SQ_HEAD = 'M15.6 21 Q14.6 3.6 32 3.4 Q49.4 3.6 48.4 21 Q47.6 31 42.4 37.6 Q38.4 42 32 42 Q25.6 42 21.6 37.6 Q16.4 31 15.6 21Z'
+
+def sq_shirt(pid):
+    return ('<path d="M7 64 Q9 46.6 32 45 Q55 46.6 57 64Z" fill="#8f5d34"/>'
+            '<path d="M9.4 62 Q13 48.6 32 47" stroke="#fff" stroke-opacity=".16" stroke-width="1.4" fill="none"/>'
+            '<path d="M26.4 45.6 Q32 49.4 37.6 45.6" stroke="#6e4424" stroke-width="1.4" fill="none"/>'
+            f'<rect x="28.4" y="39" width="7.2" height="8" fill="{SQ_SKIN}"/><rect x="28.4" y="39" width="7.2" height="2.4" fill="#000" opacity=".1"/>')
+
+def sq_head(pid):
+    return (f'<path d="{SQ_HEAD}" fill="{SQ_SKIN}" stroke="{SQ_LINE}" stroke-width=".8"/>'
+            f'<path d="{SQ_HEAD}" fill="url(#{pid}-sk)"/>'
+            '<path d="M22 8.6 Q26 6 31 5.8" stroke="#fff" stroke-opacity=".35" stroke-width="1.6" fill="none" stroke-linecap="round"/>')
+
+def sq_eye(x, y=24, lid=0.5, look=0.0, pup_y=1.6):
+    """lid: share of the eye covered from the top (0..1)."""
+    rx, ry = 5.2, 5.8
+    top = y - ry
+    edge = top + 2 * ry * lid
+    s = (f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#f6f2d2" stroke="{SQ_LINE}" stroke-width=".6"/>'
+         f'<circle cx="{x+look}" cy="{y+pup_y}" r="1.45" fill="#2e2a26"/><circle cx="{x+look+.5}" cy="{y+pup_y-.5}" r=".45" fill="#fff"/>')
+    # the lid: the top of the eye down to `edge`, slightly curved
+    s += (f'<path d="M{x-rx-.3} {edge} Q{x-rx-.3} {top-.6} {x} {top-.6} Q{x+rx+.3} {top-.6} {x+rx+.3} {edge} Q{x} {edge+.9} {x-rx-.3} {edge}Z" fill="{SQ_LID}"/>'
+          f'<path d="M{x-rx} {edge} Q{x} {edge+.9} {x+rx} {edge}" stroke="#4e7468" stroke-width="1.1" fill="none" stroke-linecap="round"/>')
+    return s
+
+def sq_nose():
+    return (f'<path d="M29.8 25.6 Q28.4 33 28.8 38.6 Q29.2 45 32.2 45 Q35.4 45 35.2 38.8 Q35.6 33 34.2 25.6Z" fill="{SQ_SKIN}" stroke="{SQ_LINE}" stroke-width=".7"/>'
+            '<ellipse cx="31" cy="40" rx=".9" ry="1.6" fill="#fff" opacity=".3"/>'
+            '<path d="M29.4 41.2 Q32.2 43.4 35 41.2" stroke="#000" stroke-opacity=".08" stroke-width="1" fill="none"/>')
+
+def squid_D():
+    pid = 'squid'
+    # bored: both lids half down, pupils low, a flat mouth half hidden by the nose
+    mouth = '<path d="M24.8 38.6 Q27 39.4 29 39 M35 39 Q37 39.4 39.2 38.6" stroke="#4e5a52" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
+    body = sq_shirt(pid) + sq_head(pid) + sq_eye(26.4, lid=.5) + sq_eye(37.6, lid=.5) + mouth + sq_nose()
+    return badge(pid, '#d4ecf2', '#4f8aa6', body)
+
+def squid_E():
+    pid = 'squid'
+    # unimpressed: one lid lower than the other, eyes looking aside, a small sideways frown
+    mouth = '<path d="M25 39.4 Q27.4 38.4 29 38.8 M35 38.6 Q37.2 38.8 39 38" stroke="#4e5a52" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
+    body = sq_shirt(pid) + sq_head(pid) + sq_eye(26.4, lid=.58, look=1.4) + sq_eye(37.6, lid=.38, look=1.4) + mouth + sq_nose()
+    return badge(pid, '#f4e6cc', '#a07a50', body)
+
+def squid_F():
+    pid = 'squid'
+    # deadpan with his clarinet, lids heavy, soft lilac light
+    mouth = '<path d="M25 38.8 Q27 39.4 29 39 M35 39 Q37 39.4 39 38.8" stroke="#4e5a52" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
+    clar = ('<path d="M35.6 41.6 L47.4 60.6" stroke="#2a2236" stroke-width="3" stroke-linecap="round"/>'
+            '<path d="M45.8 58 L49.8 64.6 L45.2 66Z" fill="#2a2236"/>'
+            '<g fill="#d8dce8"><circle cx="39.2" cy="47.4" r=".8"/><circle cx="41.2" cy="50.6" r=".8"/><circle cx="43.2" cy="53.8" r=".8"/></g>'
+            )
+    note = '<g fill="#fff" opacity=".45"><path d="M54 18 v-7" stroke="#fff" stroke-width=".9"/><ellipse cx="53.2" cy="18.2" rx="1.5" ry="1.1"/></g>'
+    body = sq_shirt(pid) + sq_head(pid) + sq_eye(26.4, lid=.56) + sq_eye(37.6, lid=.56) + mouth + sq_nose() + clar
+    return badge(pid, '#e8e0f6', '#6f62a6', body, note)
+
+for name, fn in [('sponge', sponge_cheer), ('squid-D', squid_D), ('squid-E', squid_E), ('squid-F', squid_F)]:
     with open(os.path.join(HERE, name + '.svg'), 'w', encoding='utf-8') as f:
         f.write(fn())
-print('6 options written')
+print('round 2 written')

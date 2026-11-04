@@ -3,28 +3,26 @@ import base64, os
 H = os.path.dirname(os.path.abspath(__file__))
 def uri(p): return 'data:image/svg+xml;base64,' + base64.b64encode(open(p, 'rb').read()).decode()
 old = {k: uri(os.path.join(H, '..', 'full', k + '.svg')) for k in ('sponge', 'squid')}
-opt = {f'{k}-{c}': uri(os.path.join(H, f'{k}-{c}.svg')) for k in ('sponge', 'squid') for c in 'ABC'}
-Q = [
-  ('1', 'sponge', 'Sünger', 'Sadece süngeri değiştir dedin. Hepsinde aynı yüz: kirpikli kocaman gözler, iki ön diş, çilli yanaklar, dalgalı kenar.', 'A', {
-    'A': ('Yaka + kahve şort', 'Beyaz yaka ve kahve şort; kravat yok. En tanıdık hali.'),
-    'B': ('Denizci şapkası', 'Küçük beyaz şapka, gövde aşağıya kadar; kıyafet yok.'),
-    'C': ('El sallıyor', 'A ile aynı, bir eliyle "merhaba" diyor.')}),
-  ('2', 'squid', 'Ahtapot', '"Çok ürkünç" dedin. Kırmızı gözbebekleri ve somurtkan ağız gitti; sıcak renkler, yumuşak gözler, gülümseme geldi.', 'B', {
-    'A': ('Sakin ve sıcak', 'Hafif kapaklı ama yumuşak bakan gözler, küçük gülümseme, şeftali zemin.'),
-    'B': ('Bereli sanatçı', 'Kocaman dost gözler, açık gülüş, mercan rengi bere. En sevimlisi.'),
-    'C': ('Klarnet çalıyor', 'Mutlu kapalı gözler, elinde küçük bir klarnet, notalar uçuşuyor.')}),
-]
-cards = ''
-for num, key, name, intro, rec, opts in Q:
-    items = f'<figure class="old"><img src="{old[key]}" alt="Şimdiki {name}" width="120" height="120"><figcaption><b>Şimdiki</b><span>Değişecek olan</span></figcaption></figure>'
-    for c, (t, d) in opts.items():
-        star = '<em class="rec">Önerim</em>' if c == rec else ''
-        items += (f'<label class="opt"><input type="radio" name="q{num}" value="{c}" id="q{num}{c}">'
-                  f'<img src="{opt[key+"-"+c]}" alt="{name} {c}: {t}" width="120" height="120">'
-                  f'<span class="t"><b>{c} · {t}</b>{star}</span><span class="d">{d}</span></label>')
-    tiny = ''.join(f'<span><img src="{u}" alt="" width="32" height="32"><i>{l}</i></span>' for l, u in [('Şimdiki', old[key])] + [(c, opt[key+'-'+c]) for c in 'ABC'])
-    cards += (f'<section class="q"><header><span class="n">{num}</span><div><h2>{name}</h2><p>{intro}</p></div></header>'
-              f'<div class="row">{items}</div><div class="tiny" aria-label="Uygulamadaki gerçek boyut"><small>Uygulamadaki boyutu:</small>{tiny}</div></section>')
+final_sponge = uri(os.path.join(H, 'sponge.svg'))
+sq = {c: uri(os.path.join(H, f'squid-{c}.svg')) for c in 'DEF'}
+SQ = {'D': ('Sıkılmış', 'İki göz kapağı yarıya kadar inik, ağız düz. Klasik, dümdüz bakış; yumuşak mavi ışık.'),
+      'E': ('Hiç etkilenmemiş', 'Bir kapak daha aşağıda, gözler yana kaymış, hafif yan ağız. Kum rengi zemin.'),
+      'F': ('Klarnetiyle', 'D gibi ağır kapaklı, elinde klarneti. Açık leylak zemin.')}
+fig = lambda u, t, d, cls='old': f'<figure class="{cls}"><img src="{u}" alt="{t}" width="120" height="120"><figcaption><b>{t}</b><span>{d}</span></figcaption></figure>'
+cards = ('<section class="q"><header><span class="n">✓</span><div><h2>Sünger: C, iki eli havada</h2>'
+         '<p>Seçtiğin C, dediğin gibi iki eli havada sevinirken. Seçecek bir şey yok, sadece son hali.</p></div></header>'
+         f'<div class="row two">{fig(old["sponge"], "Şimdiki", "Değişecek olan")}{fig(final_sponge, "Yeni", "Bunu kuracağız", "done")}</div></section>')
+items = fig(old['squid'], 'Şimdiki', 'Ürkünç olan')
+for c, (t, d) in SQ.items():
+    star = '<em class="rec">Önerim</em>' if c == 'D' else ''
+    items += (f'<label class="opt"><input type="radio" name="q2" value="{c}" id="q2{c}">'
+              f'<img src="{sq[c]}" alt="Ahtapot {c}: {t}" width="120" height="120">'
+              f'<span class="t"><b>{c} · {t}</b>{star}</span><span class="d">{d}</span></label>')
+tiny = ''.join(f'<span><img src="{u}" alt="" width="32" height="32"><i>{l}</i></span>' for l, u in [('Şimdiki', old['squid'])] + [(c, sq[c]) for c in 'DEF'])
+cards += ('<section class="q"><header><span class="n">2</span><div><h2>Ahtapot, ikinci tur</h2>'
+          '<p>"Hiç gerçekçi değil" dedin. Bu sefer karakterin kendisine yakın: uzun sarkık kafa, büyük sarkık burun, '
+          'ağır yarı kapalı göz kapakları, kahve tişört, soluk yeşil ten. Ama kırmızı göz yok, karanlık yok: sadece canı sıkılmış.</p></div></header>'
+          f'<div class="row">{items}</div><div class="tiny" aria-label="Uygulamadaki gerçek boyut"><small>Uygulamadaki boyutu:</small>{tiny}</div></section>')
 
 page = f'''<title>Sünger ve Ahtapot</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -43,11 +41,12 @@ h1{{font:800 clamp(28px,5vw,40px)/1.05 var(--display);letter-spacing:-.02em;marg
 .q header{{display:flex;gap:12px;align-items:flex-start}}
 .n{{flex:none;width:34px;height:34px;border-radius:50%;background:var(--gold-soft);color:var(--gold);font:800 18px/34px var(--display);text-align:center}}
 h2{{font:800 22px/1.1 var(--display);margin:2px 0 4px}} .q p{{margin:0;color:var(--muted);max-width:62ch}}
-.row{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}}
+.row{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}} .row.two{{grid-template-columns:repeat(2,minmax(0,200px))}}
+figure.done{{border:1.5px solid var(--gold)}}
 @media (max-width:640px){{.row{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
 figure,.opt{{margin:0;display:grid;justify-items:center;align-content:start;gap:6px;padding:12px 8px;border-radius:14px;text-align:center;min-width:0}}
 figure.old{{opacity:.8;border:1.5px dashed var(--line)}}
-figure.old figcaption{{display:grid;gap:2px;font-size:14px}} figure.old span{{color:var(--muted);font-size:13px}}
+figure figcaption{{display:grid;gap:2px;font-size:14px}} figure span{{color:var(--muted);font-size:13px}}
 .opt{{border:1.5px solid var(--line);cursor:pointer;position:relative}}
 .opt:hover{{border-color:var(--pick)}}
 .opt input{{position:absolute;opacity:0;pointer-events:none}}
@@ -68,19 +67,19 @@ button{{font:700 15px var(--body);border:0;border-radius:12px;padding:11px 18px;
 button:focus-visible{{outline:3px solid var(--gold);outline-offset:2px}}
 </style>
 <main>
-<div><h1>Sünger ve Ahtapot</h1><p class="lede">İki avatarı yeniden çizdim. Soldaki şimdiki hali, yanındakiler yeni seçenekler. Her biri için bir tane seç; denizyıldızı olduğu gibi kalıyor.</p></div>
+<div><h1>Sünger ve Ahtapot</h1><p class="lede">İkinci tur. Sünger senin seçtiğin C, iki eli havada. Ahtapotu baştan çizdim: üç yeni seçenekten birini seç. Denizyıldızı olduğu gibi kalıyor.</p></div>
 {cards}
-<label class="note" for="note">İstersen bir not ekle (ör. "B ama şapkasız"):</label>
-<textarea id="note" placeholder="İsteğe bağlı"></textarea>
+<label class="note" for="note">İstersen bir not ekle:</label>
+<textarea id="note" placeholder="İsteğe bağlı, ör. D ama biraz daha somurtkan"></textarea>
 </main>
 <div class="bar"><div><span id="summary">Henüz seçim yok</span><button id="copy" type="button">Kopyala</button></div></div>
 <script>
 const sum=document.getElementById('summary'),note=document.getElementById('note'),btn=document.getElementById('copy');
 function text(){{const p=[];for(const n of ['1','2']){{const c=document.querySelector('input[name=q'+n+']:checked');if(c)p.push(n+': '+c.value)}}
-if(!p.length)return '';let t='Avatar (R20) seçimlerim: '+p.join(' · ');if(note.value.trim())t+=' — Not: '+note.value.trim();return t}}
+if(!p.length)return '';let t='Avatar (R20) ikinci tur: Sünger C (iki el havada) · Ahtapot '+p.join(' · ').replace('2: ','');if(note.value.trim())t+=' — Not: '+note.value.trim();return t}}
 function draw(){{sum.textContent=text()||'Henüz seçim yok'}}
 document.addEventListener('change',draw);note.addEventListener('input',draw);
-btn.addEventListener('click',async()=>{{const t=text()||'Avatar (R20) seçimlerim: (seçim yok)';try{{await navigator.clipboard.writeText(t);btn.textContent='Kopyalandı ✓'}}catch(e){{const r=document.createRange();r.selectNodeContents(sum);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Seçili, kopyala'}}setTimeout(()=>btn.textContent='Kopyala',1800)}});
+btn.addEventListener('click',async()=>{{const t=text()||'Avatar (R20) ikinci tur: (ahtapot seçilmedi)';try{{await navigator.clipboard.writeText(t);btn.textContent='Kopyalandı ✓'}}catch(e){{const r=document.createRange();r.selectNodeContents(sum);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Seçili, kopyala'}}setTimeout(()=>btn.textContent='Kopyala',1800)}});
 draw();
 </script>
 '''
