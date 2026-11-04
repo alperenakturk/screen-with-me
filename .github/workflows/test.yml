@@ -37,7 +37,7 @@ jobs:
       code: ${{ steps.diff.outputs.code }}
       web: ${{ steps.diff.outputs.web }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -57,9 +57,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -106,7 +106,7 @@ jobs:
       # The browser download is cached between runs (its system libraries are still installed each time).
       - name: Cache Playwright's browser
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-1.63.0-chromium
@@ -137,6 +137,10 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Security R4-5: the deploy runs in the `production` environment. Its secrets (Cloudflare, YouTube, feedback, usage)
+    # can live there instead of the repository, so no other job or branch can read them. Repository secrets still reach
+    # it until the owner moves them; GitHub creates the environment on first use if it doesn't exist yet.
+    environment: production
     # Two quick pushes must not deploy at the same time; the next one waits.
     concurrency:
       group: deploy
@@ -153,10 +157,10 @@ jobs:
           if [ "$HAVE_TOKEN" = true ] && [ "$HAVE_ACCOUNT" = true ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
           else echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are missing, deploy skipped."; fi
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.keys.outputs.ok == 'true'
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.keys.outputs.ok == 'true'
         with:
           node-version: 24

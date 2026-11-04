@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.47 (security review 4: R4-2, R4-3, R4-5):**
+- [ ] Nothing to see in the room: rooms open and join as before; `/connection` still runs all its rows ("200 kB answer"
+  included).
+- [ ] Owner's settings (review §5): create the `production` environment (Settings → Environments) and move the deploy
+  secrets there; turn on private vulnerability reporting. The deploy keeps working before and after.
+
 **0.9.97.45 (🐞 Test Lab, step DL2: fake friends):**
 - [ ] In a room with `?debug=1` on: 🐞 → 👥 → ＋ Add three times: three 🤖 people join (faces in Together). Press their
   buttons: 💬 say, 😀, Pause / Play, +30 s, ⏳ stall (the room waits for them), ↺ leave & back, 👑 host. 🗣 Chatty: they
