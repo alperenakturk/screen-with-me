@@ -55,7 +55,7 @@ const openSnack = (page) =>
 const fits = (page) =>
   page.evaluate(() => {
     const out = [];
-    for (const sel of ['#game-stage .game-stage-body', '#game-stage .sb', '#game-stage .sb-rows']) {
+    for (const sel of ['#game-stage .game-stage-body', '#game-stage .sb', '#game-stage .sb-rows', '#game-stage .sb-panel', '#game-stage .sb-badge-grid']) {
       const e = document.querySelector(sel);
       if (e && (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1)) out.push(`${sel} ${e.scrollWidth}×${e.scrollHeight} in ${e.clientWidth}×${e.clientHeight}`);
     }
@@ -70,8 +70,8 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   const browser = await chromium.launch();
   const ctxA = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   const ctxS = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-  const seed = JSON.stringify({ v: 1, coins: 500, earned: 500, lifetime: 500, watched: 0, levels: { popcorn: 1 }, stars: 0, cinemas: 0, seen: Date.now() - 600_000 });
-  const alex = await person(ctxA, 'Alex', 'wizard', { snackBar: seed });
+  const seed = JSON.stringify({ v: 1, coins: 500, earned: 500, lifetime: 500, watched: 0, levels: { popcorn: 1 }, stars: 0, cinemas: 0, seen: Date.now() - 600_000, film: { item: 'film-x', watched: 400, served: 3, coins: 60 } });
+  const alex = await person(ctxA, 'Alex', 'wizard', { snackBar: seed, 'snackBar:testGuests': '1', sideFilms: JSON.stringify([{ id: 'film-x', duration: 1500, at: Date.now() }]) });
   const sam = await person(ctxS, 'Sam', 'elf');
 
   const hub = await alex.evaluate(async () => {
@@ -88,6 +88,17 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   await wait(1500);
   const afterAway = await coins(alex);
   check(afterAway === 500, 'nothing is paid for the 10 min away (only in a room)', String(afterAway));
+
+  // Pick 2 B: a film that ended while the game was closed: Glowbeam's receipt waits, with a golden bucket.
+  await wait(400);
+  await alex.screenshot({ path: __dirname + '/snack-receipt.png' });
+  const receipt = await alex.evaluate(() => { const p = document.querySelector('.sb-panel.sb-panel-receipt'); return p && !p.hidden ? p.textContent : null; });
+  check(!!receipt && /Receipt/.test(receipt) && /Customersserved3/.test(receipt.replace(/\s+/g, '')) && /Golden bucket/.test(receipt), 'the film\'s receipt waits (served 3, golden bucket)', String(receipt));
+  await alex.evaluate(() => document.querySelector('.sb-collect').click());
+  await wait(600);
+  const afterBucket = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')));
+  check(afterBucket.coins === 530 && afterBucket.stats.films === 1 && afterBucket.badges.includes('film-1'), 'Collect pays the bucket (60 s of income) and earns the "First receipt" badge', JSON.stringify({ coins: afterBucket.coins, films: afterBucket.stats.films, badges: afterBucket.badges }));
+  check(await alex.evaluate(() => document.querySelector('.sb-panel').hidden), 'the receipt goes away after Collect');
   const rest = await alex.evaluate(() => { const n = document.querySelector('.sb-rest'); return n && !n.hidden ? n.textContent : null; });
   check(!!rest && /Closed until the film plays/.test(rest) && /away/.test(rest), 'the scene says it is closed until the film plays', String(rest));
   const place = await alex.evaluate(() => document.getElementById('game-stage').className);
@@ -138,6 +149,29 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
     return !!document.querySelector('.sb-pop') && before !== null;
   });
   check(served, 'a tap on the counter serves a customer (+coins pops up)');
+
+  // Pick 1: a customer walks up with a line; a tap serves them for more.
+  const guest = await until(() => alex.evaluate(() => { const g = document.querySelector('.sb-guest'); return g ? g.textContent : null; }), 8000);
+  check(!!guest && guest.length > 3, 'a customer walks up to the counter with a line', String(guest));
+  await wait(700);
+  await alex.screenshot({ path: __dirname + '/snack-customer.png' });
+  const g0 = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')).stats?.customers ?? 0);
+  await alex.evaluate(() => document.querySelector('.sb-guest').click());
+  await wait(900);
+  const g1 = await alex.evaluate(() => { const s = JSON.parse(localStorage.getItem('snackBar')); return { customers: s.stats.customers, badges: s.badges }; });
+  check(g1.customers === g0 + 1 && !(await alex.evaluate(() => document.querySelector('.sb-guest:not(.sb-guest-happy)'))), 'a tap serves the customer, who leaves happy', JSON.stringify(g1));
+  check(g1.badges.includes('first-sale'), 'the "First sale" badge comes', JSON.stringify(g1.badges));
+
+  // Pick 4: the badge wall.
+  await alex.evaluate(() => document.querySelector('.sb-badges-open').click());
+  const wall = await alex.evaluate(() => ({ all: document.querySelectorAll('.sb-badge').length, got: document.querySelectorAll('.sb-badge.got').length, shown: !document.querySelector('.sb-panel').hidden }));
+  check(wall.shown && wall.all === 30 && wall.got >= 2, 'the badge wall shows 30 badges, the earned ones lit', JSON.stringify(wall));
+  check((await fits(alex)).length === 0, 'the badge wall fits without scrollbars', (await fits(alex)).join('; '));
+  await alex.evaluate(() => document.querySelectorAll('.sb-badge')[1].click());
+  check(/Serve 10/.test(await text(alex, '.sb-badge-detail')), 'a tap on a badge says how to earn it', await text(alex, '.sb-badge-detail'));
+  await wait(400);
+  await alex.screenshot({ path: __dirname + '/snack-badges.png' });
+  await alex.evaluate(() => document.querySelector('.sb-panel-close').click());
 
   // One tab at a time.
   const second = await ctxA.newPage();

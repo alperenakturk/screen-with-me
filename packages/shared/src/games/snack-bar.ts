@@ -8,6 +8,9 @@
 // - Only in a room (owner, 4 Nov 2026): the game moves only while its window is open (or minimized) in a room and the
 //   room's video plays. Nothing is paid for the time away (the old "while you were away" share is gone, 0.9.97.29).
 // - Prestige "open a new cinema": restart with stars, each star a lasting income bonus.
+// - Side games 2 (owner's picks 1, 2, 4; 4 Nov 2026): customers walk up with a line and a tap serves them for more
+//   (missing one costs nothing); at a film's end Glowbeam hands over a receipt with a golden bucket; badges, each worth
+//   +1 % income (a few silly ones give nothing).
 
 export const SNACK_KEY = 'snackBar';
 export const SNACK_VERSION = 1;
@@ -55,6 +58,41 @@ export const STAR_UNIT = 100_000;
 /** Each star: +5 % income for good. */
 export const STAR_BONUS = 0.05;
 
+/** A customer served: this many seconds of income (at least `CUSTOMER_MIN` coins). */
+export const CUSTOMER_SECONDS = 5;
+export const CUSTOMER_MIN = 3;
+/** A receipt needs this much of the film watched with the game going. */
+export const RECEIPT_MIN_S = 5 * 60;
+/** The golden bucket: this many seconds of base income (at least `BUCKET_MIN`). */
+export const BUCKET_SECONDS = 60;
+export const BUCKET_MIN = 25;
+/** Each badge with a bonus: +1 % income for good. */
+export const BADGE_BONUS = 0.01;
+const RECEIPTS_KEEP = 20;
+
+export interface SnackStats {
+  /** Serves (taps and customers) over every cinema. */
+  served: number;
+  /** Customers served. */
+  customers: number;
+  /** Seconds the game went while someone else was in the room. */
+  together: number;
+  /** Serves while someone else was in voice with me. */
+  voiceServed: number;
+  /** Receipts collected (films watched with the game going). */
+  films: number;
+  /** Seconds of film watched with the game going (all cinemas). */
+  watched: number;
+}
+
+/** This film so far (for its receipt). */
+export interface SnackFilm {
+  item: string;
+  watched: number;
+  served: number;
+  coins: number;
+}
+
 export interface SnackSave {
   v: typeof SNACK_VERSION;
   /** Coins to spend. */
@@ -72,6 +110,13 @@ export interface SnackSave {
   cinemas: number;
   /** Wall-clock time (ms) the game last ticked or was closed; 0 = never. */
   seen: number;
+  stats: SnackStats;
+  /** Badges earned (ids from `BADGES`), in the order they came. */
+  badges: string[];
+  /** The film (room item) the game is going in now. */
+  film: SnackFilm | null;
+  /** Room items whose receipt was already given. */
+  receipts: string[];
 }
 
 export interface SnackContext {
@@ -81,12 +126,18 @@ export interface SnackContext {
   others: number;
   /** Other people in voice while I am in voice too (0 when I am not in voice). */
   voiceOthers: number;
+  /** The room's item now (its receipt counts this film). */
+  item?: { id: string } | null;
 }
 
 export function freshSnack(): SnackSave {
   const levels = Object.fromEntries(STAND_IDS.map((id) => [id, 0])) as Record<StandId, number>;
   levels.popcorn = 1;
-  return { v: SNACK_VERSION, coins: 0, earned: 0, lifetime: 0, watched: 0, levels, stars: 0, cinemas: 0, seen: 0 };
+  return {
+    v: SNACK_VERSION, coins: 0, earned: 0, lifetime: 0, watched: 0, levels, stars: 0, cinemas: 0, seen: 0,
+    stats: { served: 0, customers: 0, together: 0, voiceServed: 0, films: 0, watched: 0 },
+    badges: [], film: null, receipts: [],
+  };
 }
 
 const num = (value: unknown, max = Number.MAX_VALUE): number =>
@@ -120,6 +171,18 @@ export function loadSnack(raw: unknown): SnackSave {
   save.stars = int(record.stars, 1_000_000);
   save.cinemas = int(record.cinemas, 1_000_000);
   save.seen = num(record.seen);
+  const stats = (record.stats && typeof record.stats === 'object' ? record.stats : {}) as Record<string, unknown>;
+  for (const key of Object.keys(save.stats) as (keyof SnackStats)[]) save.stats[key] = num(stats[key]);
+  const ids = new Set(BADGES.map((b) => b.id));
+  save.badges = Array.isArray(record.badges) ? [...new Set(record.badges.filter((id): id is string => typeof id === 'string' && ids.has(id)))] : [];
+  const film = record.film as Record<string, unknown> | null | undefined;
+  save.film =
+    film && typeof film === 'object' && typeof film.item === 'string' && film.item.length <= 64
+      ? { item: film.item, watched: num(film.watched), served: Math.floor(num(film.served)), coins: num(film.coins) }
+      : null;
+  save.receipts = Array.isArray(record.receipts)
+    ? record.receipts.filter((id): id is string => typeof id === 'string' && id.length <= 64).slice(-RECEIPTS_KEEP)
+    : [];
   return save;
 }
 
@@ -140,9 +203,13 @@ export function standRate(stand: StandInfo, level: number): number {
 
 export const starFactor = (save: SnackSave): number => 1 + STAR_BONUS * save.stars;
 
+/** Badges with a bonus: +1 % each. */
+export const badgeFactor = (save: SnackSave): number =>
+  1 + BADGE_BONUS * save.badges.filter((id) => BADGES.find((b) => b.id === id)?.bonus).length;
+
 /** Coins per second without the together bonus. */
 export function baseRate(save: SnackSave): number {
-  return STANDS.reduce((sum, stand) => sum + standRate(stand, save.levels[stand.id]), 0) * starFactor(save);
+  return STANDS.reduce((sum, stand) => sum + standRate(stand, save.levels[stand.id]), 0) * starFactor(save) * badgeFactor(save);
 }
 
 /** The together bonus: 1 alone, 1.1 with one other person, 1.15 when that person is in voice with me. */
@@ -164,21 +231,147 @@ function earn(save: SnackSave, coins: number): void {
 }
 
 /** Moves the game on by `seconds` of wall time. Returns the coins earned. */
+/** This film's record (a new one when the room's item changed). */
+function filmOf(save: SnackSave, ctx: SnackContext): SnackFilm | null {
+  const id = ctx.item?.id;
+  if (!id) return null;
+  if (save.film?.item !== id) save.film = { item: id, watched: 0, served: 0, coins: 0 };
+  return save.film;
+}
+
 export function tick(save: SnackSave, seconds: number, ctx: SnackContext, now = Date.now()): number {
   save.seen = now;
   if (!(seconds > 0) || seconds > MAX_TICK_S || !ctx.playing) return 0;
   save.watched += seconds;
+  save.stats.watched += seconds;
+  if (ctx.others > 0) save.stats.together += seconds;
   const coins = incomeRate(save, ctx) * seconds;
   earn(save, coins);
+  const film = filmOf(save, ctx);
+  if (film) {
+    film.watched += seconds;
+    film.coins += coins;
+  }
   return coins;
+}
+
+function served(save: SnackSave, ctx: SnackContext, coins: number): void {
+  earn(save, coins);
+  save.stats.served += 1;
+  if (ctx.voiceOthers > 0) save.stats.voiceServed += 1;
+  const film = filmOf(save, ctx);
+  if (film) {
+    film.served += 1;
+    film.coins += coins;
+  }
 }
 
 /** A tap on the counter. Returns the coins earned (0 while the video is not playing). */
 export function serve(save: SnackSave, ctx: SnackContext): number {
   if (!ctx.playing) return 0;
   const coins = Math.max(1, incomeRate(save, ctx) * SERVE_SECONDS);
-  earn(save, coins);
+  served(save, ctx, coins);
   return coins;
+}
+
+/** A tap on a waiting customer: more than a plain tap. 0 while the video is not playing. */
+export function serveCustomer(save: SnackSave, ctx: SnackContext): number {
+  if (!ctx.playing) return 0;
+  const coins = Math.max(CUSTOMER_MIN, incomeRate(save, ctx) * CUSTOMER_SECONDS);
+  served(save, ctx, coins);
+  save.stats.customers += 1;
+  return coins;
+}
+
+/** What a customer says: a pool of lines picked by the room's moment (the page has the words). */
+export type CustomerMood = 'long' | 'short' | 'friends' | 'voice' | 'any';
+export function customerMood(ctx: SnackContext & { duration?: number }, random: () => number = Math.random): CustomerMood {
+  const moods: CustomerMood[] = ['any', 'any'];
+  if ((ctx.duration ?? 0) >= 90 * 60) moods.push('long', 'long');
+  else if ((ctx.duration ?? 0) > 0 && (ctx.duration ?? 0) < 20 * 60) moods.push('short');
+  if (ctx.others > 0) moods.push('friends');
+  if (ctx.voiceOthers > 0) moods.push('voice');
+  return moods[Math.min(moods.length - 1, Math.floor(random() * moods.length))]!;
+}
+
+export interface Receipt {
+  item: string;
+  watched: number;
+  served: number;
+  coins: number;
+  /** The golden bucket's coins. */
+  bucket: number;
+  /** The stand earning the most now. */
+  best: StandId;
+}
+
+/** The receipt for a film that ended (null: too little of it went with the game, or already given). */
+export function receiptFor(save: SnackSave, itemId: string): Receipt | null {
+  const film = save.film;
+  if (!film || film.item !== itemId || film.watched < RECEIPT_MIN_S || save.receipts.includes(itemId)) return null;
+  const best = [...STANDS].sort((a, b) => standRate(b, save.levels[b.id]) - standRate(a, save.levels[a.id]))[0]!.id;
+  return { item: itemId, watched: film.watched, served: film.served, coins: film.coins, bucket: Math.max(BUCKET_MIN, baseRate(save) * BUCKET_SECONDS), best };
+}
+
+/** Takes the golden bucket of a film's receipt. Returns the coins (0 when there is none). */
+export function collectReceipt(save: SnackSave, itemId: string): number {
+  const receipt = receiptFor(save, itemId);
+  if (!receipt) return 0;
+  earn(save, receipt.bucket);
+  save.receipts = [...save.receipts, itemId].slice(-RECEIPTS_KEEP);
+  save.stats.films += 1;
+  return receipt.bucket;
+}
+
+export interface Badge {
+  id: string;
+  /** Its picture on the badge wall. */
+  glyph: string;
+  /** +1 % income when earned (false: just for fun). */
+  bonus: boolean;
+  /** Earned now? */
+  test: (save: SnackSave) => boolean;
+}
+const lv = (id: StandId, n: number) => (save: SnackSave) => save.levels[id] >= n;
+/** The badge wall (owner's pick 4): thirty, three of them just for fun. An id never changes (saves keep it). */
+export const BADGES: readonly Badge[] = [
+  { id: 'first-sale', glyph: '🪙', bonus: true, test: (s) => s.stats.served >= 1 },
+  { id: 'regular', glyph: '🙋', bonus: true, test: (s) => s.stats.customers >= 10 },
+  { id: 'full-house', glyph: '👥', bonus: true, test: (s) => s.stats.customers >= 100 },
+  { id: 'rush-hour', glyph: '🔥', bonus: true, test: (s) => s.stats.served >= 500 },
+  { id: 'popcorn-10', glyph: '🍿', bonus: true, test: lv('popcorn', 10) },
+  { id: 'popcorn-50', glyph: '🍿', bonus: true, test: lv('popcorn', 50) },
+  { id: 'popcorn-100', glyph: '🍿', bonus: true, test: lv('popcorn', 100) },
+  { id: 'soda-1', glyph: '🥤', bonus: true, test: lv('soda', 1) },
+  { id: 'soda-25', glyph: '🥤', bonus: true, test: lv('soda', 25) },
+  { id: 'nachos-1', glyph: '🌮', bonus: true, test: lv('nachos', 1) },
+  { id: 'nachos-25', glyph: '🌮', bonus: true, test: lv('nachos', 25) },
+  { id: 'candy-1', glyph: '🍬', bonus: true, test: lv('candy', 1) },
+  { id: 'candy-25', glyph: '🍬', bonus: true, test: lv('candy', 25) },
+  { id: 'second-1', glyph: '🏪', bonus: true, test: lv('second-counter', 1) },
+  { id: 'second-25', glyph: '🏪', bonus: true, test: lv('second-counter', 25) },
+  { id: 'coins-1k', glyph: '💰', bonus: true, test: (s) => s.lifetime >= 1_000 },
+  { id: 'coins-1m', glyph: '💰', bonus: true, test: (s) => s.lifetime >= 1_000_000 },
+  { id: 'coins-1b', glyph: '💎', bonus: true, test: (s) => s.lifetime >= 1_000_000_000 },
+  { id: 'film-1', glyph: '🎬', bonus: true, test: (s) => s.stats.films >= 1 },
+  { id: 'film-10', glyph: '🎞️', bonus: true, test: (s) => s.stats.films >= 10 },
+  { id: 'film-50', glyph: '🏆', bonus: true, test: (s) => s.stats.films >= 50 },
+  { id: 'together-1h', glyph: '🤝', bonus: true, test: (s) => s.stats.together >= 3600 },
+  { id: 'together-10h', glyph: '💞', bonus: true, test: (s) => s.stats.together >= 36_000 },
+  { id: 'voice-100', glyph: '🎙️', bonus: true, test: (s) => s.stats.voiceServed >= 100 },
+  { id: 'star-1', glyph: '⭐', bonus: true, test: (s) => s.stars >= 1 },
+  { id: 'cinema-3', glyph: '🏛️', bonus: true, test: (s) => s.cinemas >= 3 },
+  { id: 'all-stands', glyph: '🧺', bonus: true, test: (s) => STAND_IDS.every((id) => s.levels[id] >= 10) },
+  { id: 'just-looking', glyph: '👀', bonus: false, test: (s) => s.stats.watched >= 3600 && s.stats.served === 0 },
+  { id: 'tap-happy', glyph: '👆', bonus: false, test: (s) => s.stats.served >= 2_000 },
+  { id: 'popcorn-purist', glyph: '🌽', bonus: false, test: (s) => s.lifetime >= 10_000 && s.levels.soda === 0 },
+];
+
+/** Adds the badges earned now; returns the new ones. */
+export function checkBadges(save: SnackSave): Badge[] {
+  const fresh = BADGES.filter((b) => !save.badges.includes(b.id) && b.test(save));
+  for (const b of fresh) save.badges.push(b.id);
+  return fresh;
 }
 
 const standOf = (id: StandId): StandInfo => STANDS.find((s) => s.id === id)!;

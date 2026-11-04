@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MAX_TICK_S, PRESTIGE_MIN, SNACK_VERSION, STANDS,
-  affordable, baseRate, buy, costOf, formatCoins, freshSnack, incomeRate, loadSnack,
+  BADGES, BUCKET_MIN, BUCKET_SECONDS, CUSTOMER_MIN, CUSTOMER_SECONDS, MAX_TICK_S, RECEIPT_MIN_S, PRESTIGE_MIN, SNACK_VERSION, STANDS,
+  affordable, badgeFactor, baseRate, buy, checkBadges, collectReceipt, costOf, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate, loadSnack,
   milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick, togetherFactor, unlocked,
 } from './snack-bar.ts';
 
@@ -192,5 +192,72 @@ describe('formatCoins', () => {
     expect(formatCoins(2_000_000)).toBe('2M');
     expect(formatCoins(1.5e12)).toBe('1.5T');
     expect(formatCoins(1e40)).toBe('1.00e40');
+  });
+});
+
+describe('Snack Bar: customers, receipts, badges (side games 2)', () => {
+  const film = { playing: true, others: 1, voiceOthers: 1, item: { id: 'film-a' } };
+
+  it('a customer pays five seconds of income (at least 3), only while playing', () => {
+    const save = freshSnack();
+    expect(serveCustomer(save, { ...film, playing: false })).toBe(0);
+    expect(serveCustomer(save, film)).toBe(CUSTOMER_MIN);
+    save.levels.popcorn = 20;
+    const got = serveCustomer(save, film);
+    expect(got).toBeCloseTo(incomeRate(save, film) * CUSTOMER_SECONDS);
+    expect(save.stats).toMatchObject({ served: 2, customers: 2, voiceServed: 2 });
+  });
+
+  it('a receipt after 5 min of a film with the game going, once, with a golden bucket', () => {
+    const save = freshSnack();
+    for (let s = 0; s < 4 * 60; s++) tick(save, 1, film);
+    expect(receiptFor(save, 'film-a')).toBeNull();
+    for (let s = 0; s < 60; s++) tick(save, 1, film);
+    serve(save, film);
+    const receipt = receiptFor(save, 'film-a')!;
+    expect(receipt).toMatchObject({ item: 'film-a', served: 1, best: 'popcorn' });
+    expect(receipt.watched).toBeCloseTo(RECEIPT_MIN_S);
+    expect(receipt.bucket).toBe(Math.max(BUCKET_MIN, 0.5 * BUCKET_SECONDS));
+    const before = save.coins;
+    expect(collectReceipt(save, 'film-a')).toBe(receipt.bucket);
+    expect(save.coins).toBeCloseTo(before + receipt.bucket);
+    expect(collectReceipt(save, 'film-a')).toBe(0);
+    expect(save.stats.films).toBe(1);
+    // Another film starts a new record.
+    tick(save, 1, { ...film, item: { id: 'film-b' } });
+    expect(save.film).toMatchObject({ item: 'film-b', served: 0 });
+    expect(receiptFor(save, 'film-a')).toBeNull();
+  });
+
+  it('badges: earned once, +1 % each, the fun ones give nothing', () => {
+    const save = freshSnack();
+    expect(checkBadges(save)).toEqual([]);
+    serve(save, film);
+    expect(checkBadges(save).map((b) => b.id)).toEqual(['first-sale']);
+    expect(checkBadges(save)).toEqual([]);
+    expect(badgeFactor(save)).toBeCloseTo(1.01);
+    save.badges.push('tap-happy');
+    expect(badgeFactor(save)).toBeCloseTo(1.01);
+    expect(baseRate(save)).toBeCloseTo(0.5 * 1.01);
+    expect(BADGES).toHaveLength(30);
+    expect(new Set(BADGES.map((b) => b.id)).size).toBe(30);
+  });
+
+  it('round-trips the new fields; unknown badges and broken records are dropped', () => {
+    const save = freshSnack();
+    serve(save, film);
+    checkBadges(save);
+    const back = loadSnack(saveSnack(save));
+    expect(back.stats).toEqual(save.stats);
+    expect(back.badges).toEqual(['first-sale']);
+    expect(back.film).toEqual(save.film);
+    const broken = loadSnack({ ...JSON.parse(saveSnack(save)), badges: ['first-sale', 'nope', 3], film: { item: 7 }, receipts: 'x' });
+    expect(broken.badges).toEqual(['first-sale']);
+    expect(broken.film).toBeNull();
+    expect(broken.receipts).toEqual([]);
+    // An old save without the new fields loads with fresh ones.
+    const old = loadSnack({ v: 1, coins: 5, levels: { popcorn: 2 } });
+    expect(old.stats.served).toBe(0);
+    expect(old.badges).toEqual([]);
   });
 });
