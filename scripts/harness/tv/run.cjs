@@ -52,7 +52,8 @@ async function enter(page, room, name) {
 
   // The TV: a big screen, keys only (lab switch on).
   const tvCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  await tvCtx.addInitScript(() => { localStorage.setItem('tipsSeen', '1'); if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
+  // No tipsSeen here: the TV must not show the first-time tips by itself (BH6, order-of-things path 6).
+  await tvCtx.addInitScript(() => { if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); localStorage.setItem('opt:autoInvite', '1'); });
   const tv = await tvCtx.newPage();
   tv.on('pageerror', (e) => errors.push(`tv: ${e.message}`));
   await tv.goto(`${SITE}/tv?tvlab=1`);
@@ -78,6 +79,14 @@ async function enter(page, room, name) {
   await phone.click('.tv-pair-form button');
   const inRoom = await until(() => tv.evaluate(() => document.documentElement.classList.contains('tv-mode') && location.pathname.includes('/r/')));
   check(!!inRoom, 'TV: opens the room in TV mode after pairing', await tv.url());
+  await tv.waitForTimeout(3500);
+  const tvFirst = await tv.evaluate(() => ({
+    intro: !!document.querySelector('.swm-intro'),
+    tips: !!document.querySelector('.first-tip'),
+    invite: !!document.querySelector('.invite-dialog:not([hidden])'),
+    last: localStorage.getItem('lastRoom'),
+  }));
+  check(!tvFirst.intro && !tvFirst.tips && !tvFirst.invite && !tvFirst.last, 'BH6: the TV shows no intro, tips or invite window and keeps no "Continue" record', JSON.stringify(tvFirst));
   check(await until(() => phone.isVisible('.tv-remote')), 'phone: the remote card appears');
   check(!(await phone.isVisible('.tv-pair-dialog')), 'phone: the pair dialog closes');
   const faces = await until(() => tv.evaluate(() => [...document.querySelectorAll('.tv-face-name')].map((e) => e.textContent).join(',') || null));

@@ -34,12 +34,12 @@ Each row names the harness check that holds it. Code: `apps/web/src/room.ts` (`p
 | 3 | Reload of the same tab | Room straight away (no join card), no intro, no invite window, no tips; `data-swm-joined` after `welcome` | `harness/order` |
 | 4 | `#back` from the film page | As 3 | `harness/embed` |
 | 5 | Film page (shell) | The room overlay only: no intro, no invite window, no tips | `harness/embed` |
-| 6 | TV (`?tv=1`) | TV mode only: no join card, intro, invite window, tips or `lastRoom` | code only (`tv` guards); `harness/tv` checks TV mode itself |
+| 6 | TV (`?tv=1`) | TV mode only: no join card, intro, invite window, tips or `lastRoom` | `harness/tv` (BH6; the rest of that harness has stopped at the phone's link box since the 0.9.92.3 phone room, a known gap) |
 | 7 | Room asks first, let in | Join card → waiting card (nothing of the room, no `lastRoom`) → `welcome` → intro → tips | `harness/knock` |
 | 8 | Room asks first, refused | Join card → waiting card → refusal screen alone; no intro, tips or `lastRoom` | `harness/knock` (BH5) |
 | 9 | Waiting longer than 10 min | The server closes the knock (4011) and the page reconnects and knocks again: the waiting card stays | — |
 | 10 | Too many knocks from one address (`knock_busy`) or a full room (`room_full`) | An error note; the connection closes; nothing of the room | e2e `knock.mjs` (`knock_busy`), `room.mjs` (`room_full`) |
-| 11 | Old client (`version`) | "Refresh the page" note; the connection closes | not covered by a test yet |
+| 11 | Old client (`version`) | "Refresh the page" note; the connection closes; no intro, invite window, tips or `lastRoom` | `harness/order` (BH6) |
 | 12 | Dropped connection / deploy | The same member id comes back (`hello.prev`): voice, stream and games carry on; no intro, tips or invite window again | e2e `handover.mjs`, harness `game-drop` |
 | 13 | Networks without WebSockets | As any path above, over the HTTP fallback | harness `hotspot`, e2e `fallback.mjs` |
 | 14 | Two names in one browser (two tabs) | Two people: each tab keeps its own name over reloads, both see each other | harness `same-browser` (R17) |
@@ -53,6 +53,12 @@ Each row names the harness check that holds it. Code: `apps/web/src/room.ts` (`p
 | C | Go to the film page | The tab goes to the film site; the shell keeps the room | `harness/embed` |
 | D | "🏠 Back to the room" on the film page | `#back`: path 3 | `harness/embed` |
 | E | The host leaves | After 20 s the oldest person becomes the host (`settleHost`); knock cards move to whoever acts as host | e2e `host.mjs`, `knock.mjs` |
+
+## Saved rooms follow the host (BH6)
+
+A saved room's row is "mine" in my saved-rooms list only while I am its host: entering the room writes the current
+answer (`rememberSaved` takes `mine` as given). After "Make host" the old host's row stops being theirs, so its ✕ no
+longer warns about unsaving a room they can no longer unsave. Harness `saved-host`.
 
 ## Fixed in BH5
 

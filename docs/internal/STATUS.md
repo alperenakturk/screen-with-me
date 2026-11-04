@@ -275,6 +275,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   after acting as host while the host was away) the old host's saved-room row stays marked as theirs (`mine` is
   sticky), so its ✕ warns "removing also unsaves the room" while the server rightly refuses that unsave. Planner: a
   small fix card for the next lane slot (clear `mine` on a `members` update that names another host, without flicker).
+  **Done in 0.9.97.27 (BH6):** `mine` follows the host each time the room is entered; harness `saved-host`.
   (12) **A TV can keep the host role** (Developer A, BH4; TV lab only, frozen): if the host's TV stays connected after
   their phone / computer leaves, the TV holds the role and knock cards / host actions reach nobody. Planner: fix with
   the Google Cast TV version after 1.0 (ROADMAP Phase 2), not now.
@@ -431,6 +432,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.97.27 (saved rooms follow the host, BH6):**
+- [ ] Save a room, let a friend in, "Make host" them. On your home page the room's ✕ no longer says it will also
+  unsave the room; on the friend's home page it does.
 
 **0.9.97.25 (order of things, BH5):**
 - [ ] Open a brand-new room alone in a fresh browser: the intro plays first, the invite window opens only after it,
