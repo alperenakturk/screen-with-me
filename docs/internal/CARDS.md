@@ -134,6 +134,7 @@ reports if a drop happens again over time.
 - Done when: the owner OKs the two new faces on Design's preview; they are live in the picker.
 - Tests: the avatar sweep screenshot of the series page.
 - Owner's pick (4 Nov 2026, Design's page https://claude.ai/artifact/6GRmQNs9ntXHJr6cQ6bs9s, round 2): **Sponge C** (waving, both hands up) · **Squid D** (bored, lids half down, soft blue). Design ships the files in #250, lane A copies them.
+- **Changed again (4 Nov 2026):** Developer A flagged that Sponge C and Squid D read as the exact original characters at avatar size (store impersonation / copyright risk). Owner: "if they look that close and there will be copyright trouble, remove them completely." So R20 = **remove** `sponge`, `squid` and `starfish` (same show, same risk; Planner's call for the set), with the one-time themed replacement for saved ones; A also sweeps the other parody avatars for the same risk and lists any for softening.
 
 ### BH6. Small bug batch: saved-room "yours" mark + the untested order paths (lane A, after BH5)
 - From BH4 (STATUS idea 11): after "Make host" (or after acting as host while the host was away) the old host's saved-
