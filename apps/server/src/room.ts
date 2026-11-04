@@ -47,6 +47,7 @@ import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
 import { recordUsage } from './usage.ts';
+import { allowUpload } from './upload-gate.ts';
 
 const MAX_MEMBERS = 50;
 /** Security L5: a connection that never says `hello` is closed after this long, and at most this many may wait. */
@@ -619,8 +620,10 @@ export class Room extends DurableObject<Env> {
       case 'sticker-add': {
         const id = await stickerId(message.data);
         if (this.stickers.has(id)) return;
-        // Per IP (a new browser id doesn't reset it) and a daily cap per room: images are big and kept for days.
-        if (!this.stickerLimit.allow(attachment.ip ?? keyOf(attachment)) || !(await this.countStickerAdd())) {
+        // Per IP (a new browser id doesn't reset it), a daily cap per room and the daily byte budget across all rooms
+        // (R4-1, `UploadGate`): images are big and kept for days.
+        const uploader = attachment.ip ?? keyOf(attachment);
+        if (!this.stickerLimit.allow(uploader) || !(await this.countStickerAdd()) || !(await allowUpload(this.env, uploader, message.data.length))) {
           this.sendTo(ws, { t: 'error', code: 'rate_limited' });
           return;
         }
@@ -728,7 +731,10 @@ export class Room extends DurableObject<Env> {
         }
         let image: string | undefined;
         if (message.image !== undefined) {
-          if (!this.imageLimit.allow(attachment.ip ?? keyOf(attachment)) || !(await this.countChatImage())) {
+          const uploader = attachment.ip ?? keyOf(attachment);
+          // A picture this room already keeps is not stored again, so only a new one counts against the budget (R4-1).
+          const fresh = !this.chatImages.has(await stickerId(message.image));
+          if (!this.imageLimit.allow(uploader) || !(await this.countChatImage()) || (fresh && !(await allowUpload(this.env, uploader, message.image.length)))) {
             this.sendTo(ws, { t: 'error', code: 'rate_limited' });
             return;
           }

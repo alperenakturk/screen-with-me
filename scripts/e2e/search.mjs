@@ -36,7 +36,7 @@ if (process.env.USAGE_TOKEN) {
   const usage = await fetch(`${http}/api/youtube/usage`, { headers: { 'X-Usage-Token': process.env.USAGE_TOKEN.trim() } });
   const book = usage.status === 200 ? await usage.json() : null;
   // The status (never the key) goes into the message, so a failure says whether the key or the answer was wrong.
-  ok(!!book && typeof book === 'object' && Object.values(book).every((day) => Object.values(day).every((k) => typeof k.units === 'number')), `Usage counters: the owner's key reads them (${usage.status}${book ? '' : ', no book'})`);
+  ok(!!book && typeof book === 'object' && Object.values(book).every((day) => Object.values(day).every((k) => typeof k.units === 'number')), `Usage counters: the owner's key reads them (${usage.status}${book ? '' : ', no book'}${process.env.USAGE_TOKEN.trim().length < 32 ? '; the USAGE_TOKEN secret is shorter than 32 characters, which the server refuses since R4-7' : ''})`);
 }
 ok((await fetch(`${http}/api/youtube/channel?c=@abc&hl=en`, { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Channel feed: another site may not use it');
 if (!live) {

@@ -27,7 +27,8 @@ const noKind = await fetch(url, { method: 'POST', headers: own, body: JSON.strin
 ok(noKind.status === 400, 'A message without a type is refused', noKind.status);
 
 if (!live) {
-  // No token on a local server: valid messages are counted, then answered `off`; the fourth within the hour is `busy`.
+  // No token on a local server: valid messages are answered `off` (not counted against the hour since R4-7); the
+  // fourth within a minute is `busy` (the per-minute burst limit).
   const answers = [];
   for (let i = 0; i < 4; i++) {
     const res = await fetch(url, { method: 'POST', headers: own, body: JSON.stringify({ ...good, text: `${good.text} #${i}` }) });

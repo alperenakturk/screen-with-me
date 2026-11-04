@@ -11,6 +11,8 @@ interface Env {
    * localhost run skip the per-IP connection limit, so the e2e files need no minute-long pauses between them.
    */
   SWM_LOCAL_UNPACED?: string;
+  /** Security R4-1, local tests only (`wrangler dev --var UPLOAD_IP_BYTES:<n>`): a lower per-address daily image budget. */
+  UPLOAD_IP_BYTES?: string;
   /** Connections per IP and minute (Workers rate limiting binding; missing in old configs = no limit). */
   CONNECT_LIMIT?: RateLimit;
   /** YouTube Data API v3 key (repo secret, passed by the deploy job): without it the link box only takes links. */
