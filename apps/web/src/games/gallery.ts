@@ -12,6 +12,7 @@ import snack from './art/covers/snack-bar.svg?raw';
 import garden from './art/covers/garden.svg?raw';
 import word from './art/covers/word.svg?raw';
 import poker from './art/covers/poker.svg?raw';
+import classics from './art/covers/classics.svg?raw';
 import { GAME_CATALOG, type SoloKind } from '@swm/shared/games/catalog';
 import { formatCoins } from '@swm/shared/games/snack-bar';
 import { PLANT_IDS } from '@swm/shared/games/garden';
@@ -23,7 +24,9 @@ import { lang, t } from '../i18n.ts';
 import { load } from '../storage.ts';
 import { icon } from '../ui/icons.ts';
 
-const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, snack, garden, word };
+const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, classics, snack, garden, word };
+/** Tic-tac-toe and Four in a Row live inside 🎲 Classics now (old tables of theirs still open). */
+const HALL_KINDS = ROOM_GAME_KINDS.filter((kind) => kind !== 'xox' && kind !== 'four');
 
 /** The gallery's own words (English first, Turkish second). */
 const TEXT = {
@@ -158,7 +161,7 @@ export function renderGallery(s: GalleryState): HTMLElement[] {
   };
   const parts: HTMLElement[] = [
     el('div', { class: 'hub-head' }, icon('gamepad'), el('b', {}, t('hub.title')), el('span', { class: 'hub-count' }, t('hub.count', { n: tables.length, max: MAX_TABLES }))),
-    el('div', { class: 'hub-tabs', role: 'tablist' }, tabButton('together', '👥', ROOM_GAME_KINDS.length), tabButton('side', '🍿', SIDE_GAMES.length)),
+    el('div', { class: 'hub-tabs', role: 'tablist' }, tabButton('together', '👥', HALL_KINDS.length), tabButton('side', '🍿', SIDE_GAMES.length)),
   ];
     // ---- Together: the room's tables, then a card per game (a card opens a new table) ----
     const together = el('div', { class: 'hub-panel', role: 'tabpanel', 'data-panel': 'together' });
@@ -211,7 +214,7 @@ export function renderGallery(s: GalleryState): HTMLElement[] {
       el(
         'div',
         { class: `hub-games hub-cards${tables.length || news.length ? ' compact' : ''}` },
-        ...ROOM_GAME_KINDS.map((kind) => {
+        ...HALL_KINDS.map((kind) => {
           const info = GAME_CATALOG[kind];
           const badge = news.find((n) => n.kinds.includes(kind));
           const item = el(

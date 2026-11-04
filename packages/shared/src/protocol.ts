@@ -260,7 +260,9 @@ export function personOf(m: { pk?: string; name: string; avatar?: string | null 
 export type LiveKind = 'screen' | 'camera';
 
 /** Odanın içinde oynanan oyunlar (PlayWithMe): XOX, Dört Taş, Çiz-Bil, Bilgi yarışması. */
-export const ROOM_GAME_KINDS = ['xox', 'four', 'draw', 'quiz', 'poker'] as const;
+/** `classics`: 🎲 Classics, one table with a shelf of boards (XOX, Connect Four, dama…); `xox` / `four` tables still
+ * open for older pages but the hall offers Classics. */
+export const ROOM_GAME_KINDS = ['xox', 'four', 'draw', 'quiz', 'poker', 'classics'] as const;
 /** A table id (the room's `newId()`; game objects accept the same shape). */
 const TABLE_ID = /^[A-Za-z0-9_-]{3,40}$/;
 export type RoomGameKind = (typeof ROOM_GAME_KINDS)[number];
