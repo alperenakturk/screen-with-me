@@ -112,6 +112,7 @@ badge as `full.mjs`, and their ids are already prefixed `sponge-` / `squid-`.
   - B: wide friendly eyes, an open smile and a coral beret (recommended).
   - C: happy closed eyes, playing a small clarinet.
 
-**After the owner's pick:** copy the chosen file to `avatars-2/full/<id>.svg` (sponge to `avatars-2/A/sponge.svg`
-too, because `full.mjs` takes the hand-drawn file from `A/` first). Then Developer A runs `node scripts/avatars.mjs`.
+**After the owner's pick:** copy the chosen file to both `avatars-2/A/<id>.svg` and `avatars-2/full/<id>.svg`.
+`full.mjs` takes a hand-drawn file from `A/` first, so the pick survives a re-run. Then Developer A runs
+`node scripts/avatars.mjs`.
 The ids and avatar pages are unchanged.
