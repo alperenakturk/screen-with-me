@@ -62,6 +62,8 @@ window.SIDELIT_BOARD = {
       steps: ['Five Frames\'te bir tahmin gir: doğru harf düz çerçeve ✓, yeri yanlış kesik çizgili çerçeve •, olmayan soluk ×.', 'Yeşil/sarı/gri dolgu yok; nasıl oynanır kartı da yeni işaretleri gösteriyor.'] },
     { group: 'Oyunlar', filter: 'soon', id: 'tipjar', title: 'Odanın bahşiş kavanozu ve arkadaşa çelik', version: '0.9.97.32', soon: true,
       steps: ['Film oynarken iki kişi Büfe\'de servis yapsın: başlıktaki 🫙 doluyor; dolunca o film boyunca herkese +%10.', 'Bitkide açan bir çiçekte "🎁 Çelik ver" → arkadaşını seç: onun boş saksısında "🎁" olarak çıkıyor.'] },
+    { group: 'Tam ekran', filter: 'soon', id: 'fsmsg2', title: 'Tam ekranda mesajlar daha büyük ve sağda daha aşağıda', version: 'yakında', soon: true,
+      steps: ['İki sekmede aynı odaya gir, birinde videoyu tam ekran yap, diğerinden mesaj yaz.', 'Mesaj daha büyük yazıyla, sağ tarafta üst köşede değil biraz aşağıda (düğme sütununun solunda) çıkıyor; videonun alt çubuğunu kapatmıyor.'] },
     { group: 'Ana sayfa', filter: 'soon', id: 'home15e', title: 'Işık üç ekrana da düşüyor, sayfa dengeli', version: 'yakında', soon: true,
       steps: ['Ana sayfada Glowbeam\'in ışığı laptop, tablet ve telefon ekranlarına yumuşakça düşüyor; arkada gri şerit ya da keskin kenar yok.', 'Cihazlar birbirinin ekranını kapatmıyor; çizim daha büyük ve yazıya daha yakın, sağ ve sol boşluk eşit.'] },
     { group: 'Arkadaşla', filter: 'friend', id: 'nodrop', title: 'Oyun ve yayın sırasında düşme olmuyor', version: '0.9.97.8+',
