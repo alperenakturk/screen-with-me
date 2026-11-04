@@ -82,7 +82,7 @@ import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
 import { createSettingsDialog } from './ui/settings-dialog.ts';
-import { watchFilmEnds } from './games/film-end.ts';
+import { rememberGift, watchFilmEnds } from './games/film-end.ts';
 import { createGameStage } from './games/stage.ts';
 import type { SoloRoom } from '@swm/shared/games/catalog';
 import { createLive } from './ui/live.ts';
@@ -1013,6 +1013,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * What a solo side game needs (Snack Bar): is the room's video playing, how many other people are here (by name +
    * avatar, my other tabs and TVs left out) and how many of them are in voice with me.
    */
+  let tipJar: { fill: number; size: number; boost: string | null } | null = null;
+  /** Where a side-game note points: the games button that shows (the rail's 🎮 on a computer, else the toolbar's / ⋯). */
+  const gamesAnchor = (): HTMLElement =>
+    ['#dock-game', '#game-btn', '#strip-more', '#ph-shorts-more'].map((sel) => document.querySelector<HTMLElement>(sel)).find((e) => e && e.getBoundingClientRect().width > 0) ?? $('#game-btn');
   function soloContext(): SoloRoom {
     const mine = members.find((m) => m.id === myId);
     const self = mine ? personOf(mine) : personOf({ name: myName, avatar: myAvatar });
@@ -1033,7 +1037,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         }
       : null;
     const names = [...new Set(members.filter((m) => !m.tv && m.id !== myId && personOf(m) !== self).map((m) => m.name))];
-    return { playing, others: others.size, voiceOthers: mine?.voice ? [...others.values()].filter(Boolean).length : 0, item, names };
+    // Side games 2: the tip jar and cuttings for friends (people by member id, my other tabs and TVs left out).
+    const people = members.filter((m) => !m.tv && m.id !== myId && personOf(m) !== self).map((m) => ({ id: m.id, name: m.name }));
+    return {
+      playing,
+      others: others.size,
+      voiceOthers: mine?.voice ? [...others.values()].filter(Boolean).length : 0,
+      item,
+      names,
+      people,
+      tipJar: tipJar && { fill: tipJar.fill, size: tipJar.size, boost: !!state?.item && tipJar.boost === state.item.id },
+      tip: () => void send({ t: 'tip' }),
+      gift: (to: string, plant: string) => send({ t: 'gift', to, plant }) !== false,
+    };
   }
   const games = createGameStage({
     wrap: $('.player-wrap'),
@@ -1390,6 +1406,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         break;
       case 'home':
         if (isShell && film !== null) askHome(message.by);
+        break;
+      case 'tipjar':
+        // Side games 2 (pick 5): the room's shared tip jar; Snack Bar reads it through `soloContext`.
+        tipJar = { fill: message.fill, size: message.size, boost: message.boost };
+        if (message.by) flashHint(gamesAnchor(), t('tipJarFull', { name: message.by.name }), 5000);
+        break;
+      case 'gift':
+        // Side games 2 (pick 8): a cutting for my Window Garden; it waits in this browser until the garden takes it.
+        rememberGift(message.plant, message.from.name);
+        flashHint(gamesAnchor(), t('giftCame', { name: message.from.name }), 6000);
         break;
       case 'game':
         // Old single-game message: the room now sends `tables` too, which carries everything.

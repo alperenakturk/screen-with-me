@@ -6,7 +6,7 @@
 // - Income only while the room's video plays (`ctx.playing`); a paused or empty room earns nothing.
 // - Together bonus: +10 % per other person in the room, +5 % more for each of them who is in voice with me.
 // - Only in a room (owner, 4 Nov 2026): the game moves only while its window is open (or minimized) in a room and the
-//   room's video plays. Nothing is paid for the time away (the old "while you were away" share is gone, 0.9.97.29).
+//   room's video plays. Nothing is paid for the time away (the old "while you were away" share is gone, 0.9.97.31).
 // - Prestige "open a new cinema": restart with stars, each star a lasting income bonus.
 // - Side games 2 (owner's picks 1, 2, 4; 4 Nov 2026): customers walk up with a line and a tap serves them for more
 //   (missing one costs nothing); at a film's end Glowbeam hands over a receipt with a golden bucket; badges, each worth
@@ -168,7 +168,12 @@ export interface SnackContext {
   voiceOthers: number;
   /** The room's item now (its receipt counts this film). */
   item?: { id: string } | null;
+  /** The room's tip jar filled during this film: +10 % (pick 5). */
+  boost?: boolean;
 }
+
+/** The room's full tip jar: this much more income for everyone until the film ends. */
+export const TIP_BOOST = 0.1;
 
 export function freshSnack(): SnackSave {
   const levels = Object.fromEntries(STAND_IDS.map((id) => [id, 0])) as Record<StandId, number>;
@@ -263,7 +268,7 @@ export function togetherFactor(ctx: SnackContext): number {
 
 /** Coins per second right now (0 while the room's video is not playing). */
 export function incomeRate(save: SnackSave, ctx: SnackContext): number {
-  return ctx.playing ? baseRate(save) * togetherFactor(ctx) : 0;
+  return ctx.playing ? baseRate(save) * togetherFactor(ctx) * (ctx.boost ? 1 + TIP_BOOST : 1) : 0;
 }
 
 function earn(save: SnackSave, coins: number): void {
