@@ -90,12 +90,20 @@ function measure(mayScroll) {
       if (clipped) cut.push(`${name(el)} [${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)}] "${el.textContent.trim().slice(0, 18)}"`);
     }
   }
+  // A board is the game: it must be there and take a fair share of the window (a CSS slip once made it 0 wide).
+  let board = '';
+  const b = stage.querySelector('.dama-board, .bg-board, .xox-board, .four-board');
+  if (b) {
+    const r = b.getBoundingClientRect();
+    if (r.width < Math.min(260, box.width * 0.6) || r.height < 150) board = `${name(b)} ${Math.round(r.width)}×${Math.round(r.height)} in ${Math.round(box.width)}`;
+  }
   const page = document.scrollingElement;
   return {
     stage: [Math.round(box.width), Math.round(box.height)],
     scrollers: [...new Set(scrollers)].slice(0, 6),
     small: [...new Set(small)].slice(0, 6),
     cut: [...new Set(cut)].slice(0, 6),
+    board,
     pageScroll: page.scrollHeight > innerHeight + 2 ? `${page.scrollHeight}>${innerHeight}` : '',
   };
 }
@@ -147,6 +155,7 @@ function measure(mayScroll) {
         check(m.scrollers.length === 0, `${label}: no scrollbar inside (${m.stage.join('×')})`, m.scrollers.join(' | '));
         check(m.small.length === 0, `${label}: no text under 13 px`, m.small.join(' | '));
         check(m.cut.length === 0, `${label}: nothing cut off`, m.cut.join(' | '));
+        check(!m.board, `${label}: the board is a fair size`, m.board);
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
       }
       await ctx.close();
