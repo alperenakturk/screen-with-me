@@ -73,6 +73,10 @@ picks on the option page https://claude.ai/artifact/59grFQzivbrh1HZ6NUthdK. **No
 10. **Memories and weather.** Each album page remembers the film it bloomed during and who was in the room ("seen
     together" stamp); the sky outside the window follows the room's theme and the real time of day (dusk, night,
     rain on the glass), decoration only.
+11. **The "film ended" seed** (STATUS idea 10, asked by the Planner): today it comes only when the garden window is
+    open in a ≥ 20 min film's last 10 s, and skipping to the end earns it too. A: keep. B: whenever a ≥ 20 min film
+    ends while I am in the room, game open or not (recommended: it matches "only in a room" and never asks to keep a
+    window open). C: only when most of the film was really watched.
 
 ## Not proposed (and why)
 
