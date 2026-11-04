@@ -883,6 +883,14 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   connection and timers; name/avatar/cid come from the room). In Shorts, while a game is open, arrows/wheel don't
   change the video. In a room empty for more than 1 min the game closes (`freezeIfLongEmpty`). Old `/oyun…` URLs fall
   back to the home page. Test: `scripts/e2e/roomgame.mjs`.
+  **Games quality (card BHG):** a tab remembers the table or side game it has open and whether it is minimized
+  (`sessionStorage` `swm:table:<path>`, `rememberAt` in `stage.ts`) and reopens it from the entry list after a reload;
+  Quiz and Draw & Guess wait `FEW_GRACE_MS` (20 s, `fewSince`) with fewer than two players online before a running game
+  goes back to the lobby (one player's reload used to end it for both). Harnesses `games-sweep` (every game × 4 sizes ×
+  EN / TR: no inner scrollbar, text ≥ 13 px on screen (the fit scale counted), nothing cut off, a fair-sized board, no
+  page scroll; `FRIENDS=n` adds fake friends) and `games-resume` (move + sound, named buttons, axe, minimize / restore,
+  reload for every Classics board, the side games, Quiz and Draw), both in CI's "Games quality" step (the sweep on
+  laptop + iPhone there). Run the sweep after every game layout change.
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code
