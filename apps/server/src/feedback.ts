@@ -41,10 +41,11 @@ export async function sendFeedback(request: Request, url: URL, env: Env, ipKey: 
   if (!feedback) return answer({ error: 'bad' }, 400);
   const key = await ipKey();
   if (env.FEEDBACK_LIMIT && !(await env.FEEDBACK_LIMIT.limit({ key })).success) return answer({ error: 'busy' }, 429);
+  // Security R4-7: without the token nothing is counted (an "off" answer must not use up the day's slots).
+  if (!env.FEEDBACK_GITHUB_TOKEN) return answer({ error: 'off' });
   const gate = env.FEEDBACK.get(env.FEEDBACK.idFromName('gate'));
   const allowed = await gate.fetch('https://gate/take', { method: 'POST', body: key });
   if (allowed.status !== 200) return answer({ error: 'busy' }, 429);
-  if (!env.FEEDBACK_GITHUB_TOKEN) return answer({ error: 'off' });
   const issue = buildIssue(feedback);
   const github = await fetch(`https://api.github.com/repos/${env.FEEDBACK_REPO || DEFAULT_REPO}/issues`, {
     method: 'POST',
@@ -56,13 +57,19 @@ export async function sendFeedback(request: Request, url: URL, env: Env, ipKey: 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(issue),
+    signal: AbortSignal.timeout(FEEDBACK_GITHUB_TIMEOUT_MS),
   }).catch(() => null);
   if (!github || !github.ok) {
-    console.log(`feedback: GitHub answered ${github?.status ?? 'nothing'}`);
+    console.error(JSON.stringify({ msg: 'feedback: GitHub refused or did not answer', status: github?.status ?? null }));
+    // Not the sender's fault (GitHub down or slow): the slot goes back, so a retry later still fits the hour.
+    if (!github || github.status >= 500) await gate.fetch('https://gate/give', { method: 'POST', body: key }).catch(() => null);
     return answer({ error: 'failed' }, 502);
   }
   return answer({ ok: true });
 }
+
+/** How long GitHub may take to open the issue (R4-7: a hanging call must not hold the request). */
+const FEEDBACK_GITHUB_TIMEOUT_MS = 8000;
 
 interface GateState {
   /** UTC day number and how many were let through that day. */
@@ -78,13 +85,25 @@ interface GateState {
  */
 export class FeedbackGate extends DurableObject<Env> {
   override async fetch(request: Request): Promise<Response> {
-    if (new URL(request.url).pathname !== '/take' || request.method !== 'POST') return new Response('Not found', { status: 404 });
+    const path = new URL(request.url).pathname;
+    if ((path !== '/take' && path !== '/give') || request.method !== 'POST') return new Response('Not found', { status: 404 });
     const key = (await readCapped(request, 64).catch(() => null)) ?? '';
     if (!/^[0-9a-f]{1,32}$/.test(key)) return new Response('bad', { status: 400 });
     const now = Date.now();
     const day = Math.floor(now / 86_400_000);
     const saved = (await this.ctx.storage.get<GateState>('gate')) ?? { day, count: 0, recent: {} };
     const state: GateState = saved.day === day ? saved : { day, count: 0, recent: saved.recent };
+    if (path === '/give') {
+      // A send that failed on GitHub's side: its slot goes back (the newest time of that address, and one of the day).
+      const times = state.recent[key];
+      if (times?.length) {
+        times.pop();
+        if (!times.length) delete state.recent[key];
+        state.count = Math.max(0, state.count - 1);
+        await this.ctx.storage.put('gate', state);
+      }
+      return new Response('ok');
+    }
     for (const [hash, times] of Object.entries(state.recent)) {
       const fresh = times.filter((t) => now - t < 3_600_000);
       if (fresh.length) state.recent[hash] = fresh;

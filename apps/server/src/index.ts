@@ -29,6 +29,9 @@ export { UploadGate } from './upload-gate.ts';
  * another website can't make its visitors join or spam rooms (security review 1, O1). Without `Origin` it is not a
  * browser (tests, tools), and such a client could fake the header anyway.
  */
+/** How long the probe WebSocket may stay open (R4-7). */
+const PROBE_MS = 10_000;
+
 /** The largest `unsave` body (`{"cid":"…"}` is ~40 bytes). */
 const UNSAVE_BODY_BYTES = 1024;
 
@@ -100,6 +103,25 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
  */
 export default {
   async fetch(request, env): Promise<Response> {
+    const response = await route(request, env);
+    return withApiHeaders(request, response);
+  },
+} satisfies ExportedHandler<Env>;
+
+/**
+ * Security R4-8: the `_headers` file only covers the static files, so every `/api/*` answer gets `nosniff` here, and
+ * `Cache-Control: no-store` unless it chose its own (answers are per person / per moment; the caches we use live in the
+ * Worker, not in browsers). A WebSocket upgrade (101) is passed through untouched.
+ */
+function withApiHeaders(request: Request, response: Response): Response {
+  if (response.status === 101 || !new URL(request.url).pathname.startsWith('/api/')) return response;
+  const out = new Response(response.body, response);
+  out.headers.set('X-Content-Type-Options', 'nosniff');
+  if (!out.headers.has('Cache-Control')) out.headers.set('Cache-Control', 'no-store');
+  return out;
+}
+
+async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/health') return new Response('ok');
@@ -130,6 +152,16 @@ export default {
       server.accept();
       server.send('ok');
       server.addEventListener('message', () => server.close(1000, 'done'));
+      // R4-7: this socket is not hibernatable, so it never stays open for long: closed after PROBE_MS if the client
+      // didn't (a client that only opens it to hold a connection gets nothing).
+      const timer = setTimeout(() => {
+        try {
+          server.close(1000, 'time');
+        } catch {
+          // Already closed.
+        }
+      }, PROBE_MS);
+      server.addEventListener('close', () => clearTimeout(timer));
       return new Response(null, { status: 101, webSocket: client });
     }
 
@@ -137,7 +169,7 @@ export default {
     if (url.pathname === '/api/feedback') return sendFeedback(request, url, env, () => ipKey(request, env));
 
     // Card Y3: the owner's YouTube usage counters (secret header), for the quota form.
-    if (url.pathname === '/api/youtube/usage') return youtubeUsage(request, env);
+    if (url.pathname === '/api/youtube/usage') return youtubeUsage(request, env, () => ipKey(request, env));
 
     // YouTube search from the room's link box (the API key never leaves the Worker). Pages of other sites may not
     // use it as their free search: a browser sends their `Origin`.
@@ -232,5 +264,4 @@ export default {
     }
 
     return new Response('Not found', { status: 404 });
-  },
-} satisfies ExportedHandler<Env>;
+}

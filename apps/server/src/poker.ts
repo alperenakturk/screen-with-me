@@ -64,7 +64,7 @@ export class Poker extends DurableObject<Env> {
   }
 
   private get engine(): PokerEngine {
-    return new PokerEngine(this.data.table);
+    return new PokerEngine(this.data.table, secureRandom);
   }
 
   /** HTTP fallback connections (`fallback.ts`). */
@@ -413,4 +413,12 @@ export class Poker extends DurableObject<Env> {
       // Closed.
     }
   }
+}
+
+/**
+ * Security R4-7: the deck is shuffled with the platform's secure random numbers, not `Math.random` (whose sequence can
+ * be guessed from enough outputs). A float in [0, 1) from 32 random bits, the shape `shuffle` expects.
+ */
+function secureRandom(): number {
+  return crypto.getRandomValues(new Uint32Array(1))[0]! / 0x1_0000_0000;
 }
