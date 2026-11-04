@@ -9,7 +9,7 @@
 
 import './five-frames.css';
 import {
-  ALPHABET, FRAMES_KEY, MAX_TRIES, WORD_LENGTH, answerFor, dayNumber, finished, guess, letters, loadFrames, normalize,
+  ALPHABET, FRAMES_KEY, MAX_TRIES, WORD_LENGTH, answerFor, dayNumber, finished, liveStreak, guess, letters, loadFrames, normalize,
   record, saveFrames, score, shareLine, solved, today, trayMarks, upper, type FramesSave, type Lang, type Mark,
 } from '@swm/shared/games/five-frames';
 import { el } from '../dom.ts';
@@ -323,7 +323,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     title.textContent = t('title');
     dayLabel.textContent = t('day', { n: day });
     const stats = state.stats[wordLang];
-    streak.textContent = t('streak', { n: stats.streak });
+    streak.textContent = t('streak', { n: liveStreak(stats, day) });
     streak.title = `${t('streakTitle')} · ${t('played', { won: stats.won, played: stats.played, best: stats.best })}`;
     langButtons.forEach((b) => {
       b.classList.toggle('on', b.dataset.lang === wordLang);
