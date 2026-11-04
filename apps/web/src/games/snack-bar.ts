@@ -49,6 +49,10 @@ const TEXT = {
     'closed': 'Customers come while the film plays',
     'together': '👥 +{n} %',
     'togetherTitle': 'Together bonus: +10 % for each other person in the room, +5 % more for each one in voice with you',
+    'jar': '🫙 {n} %',
+    'jarBoost': '🫙 +10 %',
+    'jarTitle': 'The room\'s tip jar: everyone\'s serves fill it. When it is full, everyone playing Snack Bar gets +10 % until the film ends.',
+    'jarFull': '🫙 The tip jar is full: +10 % for everyone until the film ends!',
     'serve': 'Serve a customer',
     'stand.popcorn': 'Popcorn machine',
     'stand.soda': 'Soda fountain',
@@ -137,6 +141,10 @@ const TEXT = {
     'closed': 'Müşteriler film oynarken gelir',
     'together': '👥 +%{n}',
     'togetherTitle': 'Birlikte bonusu: odadaki her kişi +%10, seste olanlar +%5 daha',
+    'jar': '🫙 %{n}',
+    'jarBoost': '🫙 +%10',
+    'jarTitle': 'Odanın bahşiş kavanozu: herkesin servisi onu doldurur. Dolunca Büfe oynayan herkes film bitene kadar +%10 kazanır.',
+    'jarFull': '🫙 Bahşiş kavanozu doldu: film bitene kadar herkese +%10!',
     'serve': 'Müşteriye servis yap',
     'stand.popcorn': 'Patlamış mısır makinesi',
     'stand.soda': 'Gazoz',
@@ -351,7 +359,12 @@ const DECOR_ART: Record<DecorId, string> = {
 
 const fmtRate = (rate: number) => formatCoins(rate < 10 ? Math.round(rate * 10) / 10 : rate);
 
-export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => void {
+export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () => void {
+  /** The room as the rules see it: a full tip jar this film adds its +10 % (pick 5). */
+  const room = (): SoloRoom & { boost: boolean } => {
+    const r = roomNow();
+    return { ...r, boost: !!r.tipJar?.boost };
+  };
   const tabId = Math.random().toString(36).slice(2);
   let game: SnackSave = loadSnack(load(SNACK_KEY));
   let stopped = false;
@@ -362,7 +375,10 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
   const rate = el('span', { class: 'sb-rate' });
   const state = el('span', { class: 'sb-pill sb-state' });
   const together = el('span', { class: 'sb-pill sb-together' });
-  const head = el('div', { class: 'sb-head' }, art(coin, 'sb-coin'), coins, rate, el('span', { class: 'sb-gap' }), state, together);
+  // The room's shared tip jar (pick 5): every serve drops a coin; full = +10 % for everyone this film.
+  const jar = el('span', { class: 'sb-pill sb-jar' });
+  let boosted = false;
+  const head = el('div', { class: 'sb-head' }, art(coin, 'sb-coin'), coins, rate, el('span', { class: 'sb-gap' }), state, together, jar);
 
   // ---- The scene: a tap serves a customer ----
   const decorated = scene
@@ -470,6 +486,7 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
     }
     playSound('snackServe');
     popAt(got, event.clientX, event.clientY);
+    ctx.tip?.();
     badges();
     draw();
   });
@@ -507,8 +524,10 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
     node.addEventListener('click', (event) => {
       event.stopPropagation();
       if (blocked || !guest || guest.node !== node) return;
-      const got = serveCustomer(game, room());
+      const ctx = room();
+      const got = serveCustomer(game, ctx);
       if (!got) return;
+      ctx.tip?.();
       playSound('snackServe');
       popAt(got, event.clientX, event.clientY);
       guestLeaves(true);
@@ -675,6 +694,18 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
     together.textContent = t('together', { n: bonus });
     together.hidden = bonus <= 0;
     together.title = t('togetherTitle');
+    const tipJar = ctx.tipJar;
+    jar.hidden = !tipJar;
+    if (tipJar) {
+      jar.textContent = tipJar.boost ? t('jarBoost') : t('jar', { n: Math.min(99, Math.round((tipJar.fill / tipJar.size) * 100)) });
+      jar.title = t('jarTitle');
+      jar.classList.toggle('on', tipJar.boost);
+    }
+    if (tipJar?.boost && !boosted) {
+      flash(t('jarFull'));
+      playSound('snackMilestone');
+    }
+    boosted = !!tipJar?.boost;
     state.title = ctx.playing ? t('playing') : t('closed');
     sceneButton.setAttribute('aria-label', t('serve'));
     sceneButton.title = ctx.playing ? t('serve') : t('closed');

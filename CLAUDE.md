@@ -901,6 +901,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). Below 380 px of game height three
   upgrade rows show (+ "N more"). Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
   JS budget (`scripts/size-budget.mjs`) is nearly full.
+  **Tip jar and cuttings (side games 2, picks 5 + 8):** the room's only side-game messages. `{t:'tip'}` (Snack Bar's serve
+  and customer serve, `SoloRoom.tip`) counts only while an item plays and not paused, ≤ 1 per 2 s per person
+  (`tipLimit`); the room object keeps `tipJar {fill, boost}` in memory (`TIP_JAR_SIZE` 60), broadcasts `{t:'tipjar',
+  fill, size, boost, by?}` every 5 coins and when full (boost = the item id: +10 % `TIP_BOOST` for that film, the 🫙 pill
+  `.sb-jar`), and sends it after `welcome`. `{t:'gift', to, plant}` (Window Garden "🎁 Give a cutting" on a bloom, one per
+  bloom `Pot.gifted`, ≤ 1 per 30 s per person) goes only to the recipient person's connections (not myself, not TVs,
+  only `PLANT_IDS`); the page keeps it in `windowGarden:gifts` (`rememberGift`) until the garden takes it into
+  `giftSeeds` (≤ 9, planted with `plantGift`, "🎁 Mint" on an empty pot). Tests: e2e `sidegames.mjs`, harness
+  `scripts/harness/side-gifts/run.cjs` (15).
   **🎮 Games gallery (card GG, owner's pick B "two tabs", 0.9.95.3):** `#game-menu` is drawn by `games/gallery.ts`, a lazy
   chunk with the Design session's covers (`games/art/covers/`, inlined with unique ids) and its own texts (`TEXT`);
   `stage.ts` keeps the state and passes it in (`renderGallery`, also `gameIcon` / `avatarNode`, so the chunk shares no
