@@ -512,8 +512,20 @@ export function createGameStage(opts: StageOptions) {
     if (dx || dy) menu.style.translate = `${Math.round(dx)}px ${Math.round(dy)}px`;
   }
 
+  // Card R8: the side games' chunks (their pictures and "How to play" cards are inlined in them) start loading as soon
+  // as the hall opens, so a game picked from it shows its cards at once instead of after a network round trip.
+  let soloWarm = false;
+  function warmSolo(): void {
+    if (soloWarm) return;
+    soloWarm = true;
+    void import('./snack-bar.ts').catch(() => (soloWarm = false));
+    void import('./garden.ts').catch(() => (soloWarm = false));
+    void import('./five-frames.ts').catch(() => (soloWarm = false));
+  }
+
   function setHub(show: boolean): void {
     if (show) {
+      warmSolo();
       drawHub();
       requestAnimationFrame(keepHubOnScreen);
     }

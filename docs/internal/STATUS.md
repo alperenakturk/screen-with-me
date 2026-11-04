@@ -421,16 +421,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.97.15 (game titles in a small window, card R10):**
+**0.9.97.16 (game titles in a small window, card R10):**
 - [ ] Open XOX, put it in a free window and drag it small: the title still says "Tic-tac-toe" in full (the buttons go to
   a second row), only "· started by …" gets cut.
 
-**0.9.97.15 (one place for each thing, card R9):**
+**0.9.97.16 (one place for each thing, card R9):**
 - [ ] Computer: ⋯ More shows only the room's things (film time, save, recap, shortcuts, sync test, rules). The profile
   menu shows you (language, move, name, avatar, theme) and one small line "Help · Feedback · Privacy"; nothing is in both.
 - [ ] Phone: ⋯ shows each tile once; ⋯ → Profile has the language (TR / EN) and the small Help · Feedback · Privacy line.
 
-**0.9.97.15 (the intro for everyone, card R7):**
+**0.9.97.16 (the intro for everyone, card R7):**
 - [ ] Send the invite link to a friend: when they enter, they see the Sidelit intro (light + Glowbeam) once; a reload
   doesn't show it again. With "Ask before letting people in" on, they see it right after you let them in.
 
@@ -551,6 +551,8 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.15 R8: 🎮 → On the side → pick a game you never opened: the "How to play" cards are there at once. Open the
+  profile menu, then "Change theme": every preview picture is already there.
 - [ ] 0.9.97.13 R6: the invite window has no "show this when I'm alone" tick box; ⚙️ My screen has "Open the invite
   window when I'm alone in a room" (on); turn it off: a new empty room opens without the window.
 - [ ] 0.9.97.13 R5 (update the extension first): on a film page, out of fullscreen, move the mouse slowly to the right
