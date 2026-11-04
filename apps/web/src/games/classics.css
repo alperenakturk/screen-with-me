@@ -38,7 +38,7 @@
 .cl-box-four { --box: #4f7fd0; min-height: 98px; }
 .cl-box-dama { --box: #3f9f7a; min-height: 90px; }
 .cl-box-chess { --box: #8a6ad8; min-height: 96px; }
-.cl-box-tavla { --box: #d8772f; min-height: 88px; }
+.cl-box-backgammon { --box: #d8772f; min-height: 88px; }
 .cl-box-lid { position: absolute; left: 0; right: 0; top: 0; height: 12px; border-radius: 8px 8px 3px 3px; background: #0003; transform-origin: 0 100%; transition: transform 0.25s; }
 .cl-box-glyph { font-size: 22px; line-height: 1; }
 .cl-box b { font-size: 13px; line-height: 1.15; text-align: center; }
@@ -106,7 +106,53 @@
 .cl-promo-piece.piece-O { color: #1a1622; text-shadow: 0 0 1px #fff, 0 1px 0 #fff8, 0 -1px 0 #fff8, 1px 0 0 #fff8, -1px 0 0 #fff8; }
 .cl-promo-piece:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
+/* Backgammon (P8): two rows of twelve points (wooden triangles), the bar in the middle, the borne-off tray on the right;
+   checkers stack from the edge, the fifth one shows the count. The dice and "Roll" sit under the board. */
+.bg-board {
+  display: grid; grid-template-columns: repeat(6, 1fr) 0.75fr repeat(6, 1fr) 0.9fr; grid-template-rows: 1fr 1fr; gap: 0 2px;
+  width: min(100%, 560px); aspect-ratio: 1.45; margin: 0 auto; padding: 8px; box-sizing: border-box; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 18%, #4a2c1a); box-shadow: inset 0 0 0 3px #0005; container-type: inline-size;
+}
+.bg-point, .bg-bar, .bg-off {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; min-height: 0; padding: 2px 0;
+  border: 0; border-radius: 0; background: transparent; cursor: default; color: #fff;
+}
+.bg-point.top { justify-content: flex-start; }
+.bg-point:not(.top) { flex-direction: column-reverse; justify-content: flex-start; }
+.bg-point::before {
+  content: ''; position: absolute; left: 4%; right: 4%; top: 0; height: 88%; z-index: 0;
+  background: #c9a46b; clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.bg-point:not(.top)::before { top: auto; bottom: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.bg-point.alt::before { background: color-mix(in srgb, var(--accent) 45%, #7a3d22); }
+.bg-checker {
+  position: relative; z-index: 1; display: grid; place-items: center; width: min(86%, 7cqw); aspect-ratio: 1; flex: none; border-radius: 50%;
+  font-size: 3cqw; font-weight: 700; box-shadow: inset 0 -2px 0 #0004, 0 1px 2px #0008;
+}
+.bg-checker.piece-X { background: radial-gradient(circle at 35% 30%, #ffffff, #e9dfc8); color: #2a2030; }
+.bg-checker.piece-O { background: radial-gradient(circle at 35% 30%, #5a5a6a, #16141f); color: #fff; }
+.xox-player .bg-checker { width: 18px; font-size: 0; }
+.bg-bar { justify-content: space-between; background: #0003; border-radius: 6px; }
+.bg-bar-o, .bg-bar-x { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; }
+.bg-bar-x { flex-direction: column-reverse; }
+.bg-off { justify-content: space-between; padding: 6px 0; border-radius: 6px; background: #0003; font-size: 12px; font-weight: 700; }
+.bg-point.movable, .bg-bar.movable, .bg-point.target, .bg-off.target { cursor: pointer; }
+.bg-point.movable .bg-checker:last-of-type, .bg-bar.movable .bg-checker { box-shadow: inset 0 -2px 0 #0004, 0 0 0 2px rgba(255, 198, 90, 0.8); }
+.bg-point.picked::before, .bg-bar.picked { filter: brightness(1.35); box-shadow: 0 0 0 2px #ffc65a; }
+.bg-point.target::after, .bg-off.target::after {
+  content: ''; position: absolute; left: 30%; right: 30%; aspect-ratio: 1; border-radius: 50%; background: rgba(255, 198, 90, 0.8); z-index: 2; top: 40%;
+}
+.bg-point.placed .bg-checker:last-of-type { animation: cl-place 0.25s ease-out; }
+.bg-point:disabled, .bg-bar:disabled, .bg-off:disabled { opacity: 1; }
+.bg-point:focus-visible, .bg-bar:focus-visible, .bg-off:focus-visible { outline: 3px solid var(--accent); outline-offset: -2px; }
+.bg-tray { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 6px; min-height: 36px; }
+.bg-tray[hidden] { display: none; }
+.bg-dice { display: inline-flex; gap: 4px; font-size: 30px; line-height: 1; color: #fff8ea; }
+.bg-die.used { opacity: 0.3; }
+.bg-pips { font-size: 13px; opacity: 0.8; }
+
 @media (prefers-reduced-motion: reduce) {
+  .bg-point.placed .bg-checker:last-of-type { animation: none; }
   .chess-board .dama-cell.placed { animation: none; }
   .cl-ref-mascot.cheer, .dama-board .dama-cell.placed::before { animation: none; }
   .cl-box, .cl-box-lid { transition: none; }
@@ -115,4 +161,5 @@
 /* In the game window: the referee row takes the status line's place; the dama board is as big as the window allows. */
 .game-stage .cl-ref { grid-area: status; }
 .game-stage .dama-board { width: min(100cqh - 4px, 52cqw, 440px); }
+.game-stage .bg-board { width: min((100cqh - 52px) * 1.45, 54cqw, 560px); }
 .game-stage .cl-shelf-row { gap: 6px; }

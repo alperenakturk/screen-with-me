@@ -630,7 +630,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] 0.9.97.42 Chess: open 🎮 → Classics → Chess on the shelf. Alone, pick "Medium": Glowbeam plays black. Tap a piece:
   the squares it can reach light up; tap one to move. Try castling, and walk a pawn to the last row (a chooser asks
   queen / rook / bishop / knight). A king in check glows red; checkmate ends the game with "Checkmate!". With a friend:
-  one plays white, the other black.
+  one plays white, the other black. Backgammon (same release): Classics → Backgammon, "Medium". Press 🎲 Roll: the
+  server rolls; your checkers that can move light up; tap one, then a lit point. A double gives four moves. Hit a
+  lone black checker: it goes to the bar and must come back in. Glowbeam rolls and plays its own turn.
 - [ ] 0.9.97.37 Quiz bank: play two or three quizzes in a row with a friend. Questions start easy and get harder within a
   game (stars next to the category), and the same questions don't come back game after game (the help page says
   "Almost 1200 questions").

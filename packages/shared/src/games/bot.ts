@@ -5,11 +5,12 @@
 import type { BoardState, Mark } from './board.ts';
 import { other } from './board.ts';
 import { COLS, ROWS, dropRow, play as playFour } from './four.ts';
+import { ROLL, legalMoves as bgMoves, pips, play as playBg, type BackgammonState } from './backgammon.ts';
 import { legalMoves as chessMoves, play as playChess, type ChessState } from './chess.ts';
 import { legalMoves as damaMoves, play as playDama, type DamaState } from './dama.ts';
 import { LINES, play as playXox } from './xox.ts';
 
-export type BotKind = 'xox' | 'four' | 'dama' | 'chess';
+export type BotKind = 'xox' | 'four' | 'dama' | 'chess' | 'backgammon';
 export type BotLevel = 1 | 2;
 
 /** Every legal move of the side to play. */
@@ -18,10 +19,11 @@ export function movesOf(kind: BotKind, state: BoardState): number[] {
   if (kind === 'xox') return state.board.flatMap((c, i) => (c === null ? [i] : []));
   if (kind === 'four') return Array.from({ length: COLS }, (_, c) => c).filter((c) => dropRow(state.board, c) !== -1);
   if (kind === 'chess') return chessMoves(state as ChessState);
+  if (kind === 'backgammon') return bgMoves(state as BackgammonState);
   return damaMoves(state as DamaState);
 }
 
-const PLAY = { xox: playXox, four: playFour, dama: playDama, chess: playChess } as const;
+const PLAY = { xox: playXox, four: playFour, dama: playDama, chess: playChess, backgammon: playBg } as const;
 const apply = (kind: BotKind, state: BoardState, move: number) => PLAY[kind](state, state.turn, move);
 
 /** How good the position is for `me` (positive = good), when nobody has won yet. */
@@ -118,14 +120,43 @@ function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha
   return best;
 }
 
-const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 2 } };
+const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 2 }, backgammon: { 1: 1, 2: 1 } };
 /** Easy Glowbeam plays a random move this often. */
 const EASY_RANDOM = 0.35;
+
+/** Backgammon: one checker step judged by the position it leaves (dice make deep search pointless here). */
+function backgammonValue(s: BackgammonState, me: Mark): number {
+  const them = other(me);
+  const mine = (n: number) => (me === 'X' ? n > 0 : n < 0);
+  let score = (pips(s, them) - pips(s, me)) * 0.1 + s.bar[them] * 3 - s.bar[me] * 3 + s.off[me] * 0.5;
+  s.pts.forEach((n, i) => {
+    if (!mine(n)) return;
+    const k = Math.abs(n);
+    // A made point (2+) is safe and blocks; a blot can be hit (worse the deeper in my own half it would be sent back).
+    if (k >= 2) score += 0.6 + ((me === 'X' ? i <= 5 : i >= 18) ? 0.4 : 0);
+    else score -= 0.8 + (me === 'X' ? (23 - i) / 24 : i / 24) * 0.8;
+  });
+  return score;
+}
 
 /** Glowbeam's move for the side to play, or null when there is none. */
 export function botMove(kind: BotKind, state: BoardState, level: BotLevel, random: () => number = Math.random): number | null {
   const moves = movesOf(kind, state);
   if (!moves.length) return null;
+  if (kind === 'backgammon') {
+    if (moves[0] === ROLL) return ROLL;
+    if (level === 1 && random() < 0.5) return moves[Math.floor(random() * moves.length)]!;
+    const me = state.turn;
+    let best = moves[0]!;
+    let bestValue = -Infinity;
+    for (const move of moves) {
+      const next = playBg(state, me, move, random);
+      if (!next) continue;
+      const value = next.winner === me ? Infinity : backgammonValue(next, me);
+      if (value > bestValue) (bestValue = value), (best = move);
+    }
+    return best;
+  }
   if (level === 1 && random() < EASY_RANDOM) return moves[Math.floor(random() * moves.length)]!;
   const me = state.turn;
   let best: number[] = [];

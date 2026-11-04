@@ -99,6 +99,17 @@ for (const [who, from, to] of plies) {
 }
 ok(alex.state.game.winner === 'O' && alex.state.game.end === 'mate' && alex.state.score.O === 1, "fool's mate: black wins by checkmate, the score counts it");
 
+// Backgammon (P8): the server rolls the dice; a client can't send its own dice, only a roll and checker steps.
+alex.send({ t: 'switch', game: 'backgammon' });
+ok(await until(() => alex.state.kind === 'backgammon' && alex.state.game.pts?.length === 24 && alex.state.game.dice.length === 0), 'backgammon from the shelf: 24 points, nobody has rolled');
+const ROLL = 1000;
+sam.send({ t: 'move', cell: ROLL });
+ok(await until(() => sam.inbox.some((m) => m.t === 'error' && m.code === 'not_your_turn')), 'only the player to move may roll');
+alex.send({ t: 'move', cell: ROLL });
+ok(await until(() => alex.state.game.rolled.length === 2 && alex.state.game.rolled.every((d) => d >= 1 && d <= 6)), `the server rolls two dice (${alex.state.game.rolled?.join('–')})`);
+const g = alex.state.game;
+ok(g.dice.length > 0 || g.passed === 'X', 'the roll leaves dice to use (or passes the turn when none fit)');
+
 alex.ws.close();
 sam.ws.close();
 console.log('✓ Classics passed');

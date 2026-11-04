@@ -1,4 +1,4 @@
-// 🎲 Classics in the room (P6): the hall offers one Classics card (no separate XOX / Four in a Row cards); it opens the
+// 🎲 Classics in the room (P6–P8): the hall offers one Classics card (no separate XOX / Four in a Row cards); it opens the
 // game shelf; Dama from the shelf; alone, "Play against Glowbeam" (easy) seats the bot; a dama move by click (a man,
 // then a highlighted square); Glowbeam answers and referees; screenshots of the shelf and the board.
 //
@@ -46,7 +46,7 @@ async function until(fn, ms = 6000) {
   check(hall.includes('classics') && !hall.includes('xox') && !hall.includes('four'), 'the hall has one Classics card, no separate XOX / Four in a Row', JSON.stringify(hall));
   await page.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]').click());
   const shelf = await until(() => page.evaluate(() => { const s = document.querySelector('#game-stage .cl-shelf'); return s && !s.hidden ? [...s.querySelectorAll('.cl-box')].map((b) => `${b.dataset.board}:${b.disabled}`) : null; }), 8000);
-  check(!!shelf && shelf.length === 5 && shelf.includes('dama:false') && shelf.includes('chess:false') && shelf.includes('tavla:true'), 'the game shelf: XOX, Four in a Row, Dama, Chess to play; backgammon "soon"', JSON.stringify(shelf));
+  check(!!shelf && shelf.length === 5 && shelf.every((b) => b.endsWith(':false')) && shelf.includes('chess:false') && shelf.includes('backgammon:false'), 'the game shelf: XOX, Four in a Row, Dama, Chess and Backgammon, all to play', JSON.stringify(shelf));
   await wait(400);
   await page.screenshot({ path: __dirname + '/classics-shelf.png' });
 
@@ -114,6 +114,48 @@ async function until(fn, ms = 6000) {
   check(chessFit, 'the chess board fits the game window without scrollbars');
   const promoHidden = await page.evaluate(() => document.querySelector('#game-stage .cl-promo')?.hidden === true);
   check(promoHidden, 'the promotion chooser stays hidden until a pawn reaches the last row');
+
+  // Backgammon (P8): another fresh room, backgammon from the shelf, Glowbeam (medium); the server rolls the dice.
+  await page.goto(`${SITE}/r/${room}b#back`);
+  await page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 15000 });
+  await wait(3200);
+  await page.evaluate(async () => {
+    document.getElementById('game-btn').click();
+    await new Promise((r) => setTimeout(r, 400));
+    document.querySelector('#game-menu [data-tab="together"]')?.click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.querySelector('#game-menu [data-kind="classics"]').click();
+  });
+  await until(() => page.evaluate(() => { const b = document.querySelector('#game-stage .cl-box[data-board="backgammon"]'); return b && !b.disabled; }), 5000);
+  await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="backgammon"]').click());
+  const start = await until(() => page.evaluate(() => { const p = document.querySelectorAll('#game-stage .bg-board .bg-point'); return p.length === 24 ? document.querySelectorAll('#game-stage .bg-board .bg-checker.piece-X').length : null; }), 6000);
+  check(start === 15, 'backgammon is on the table: 24 points, 15 white checkers shown', String(start));
+  await page.evaluate(() => [...document.querySelectorAll('#game-stage .cl-bot-level')][1].click());
+  await until(() => page.evaluate(() => document.querySelector('#game-stage #seat-1')?.classList.contains('bot')), 5000);
+  const rollShown = await until(() => page.evaluate(() => { const r = document.getElementById('bg-roll'); return r && !r.hidden; }), 5000);
+  check(!!rollShown, 'my turn: a Roll button under the board');
+  await page.evaluate(() => document.getElementById('bg-roll').click());
+  const rolled = await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .bg-die').length >= 2 && document.querySelector('#game-stage .bg-point.movable, #game-stage .bg-bar.movable') ? document.querySelectorAll('#game-stage .bg-die').length : null), 6000);
+  check(!!rolled, 'the server rolls: dice show, my checkers that can move light up', String(rolled));
+  await page.screenshot({ path: __dirname + '/classics-backgammon.png' });
+  // Play my whole turn by clicks (a movable point, then its first target), then Glowbeam takes its turn.
+  for (let i = 0; i < 4; i++) {
+    const stepped = await page.evaluate(async () => {
+      const from = document.querySelector('#game-stage .bg-point.movable, #game-stage .bg-bar.movable');
+      if (!from) return false;
+      from.click();
+      await new Promise((r) => setTimeout(r, 120));
+      const to = document.querySelector('#game-stage .bg-point.target, #game-stage .bg-off.target');
+      to?.click();
+      await new Promise((r) => setTimeout(r, 400));
+      return !!to;
+    });
+    if (!stepped) break;
+  }
+  const back = await until(() => page.evaluate(() => { const r = document.getElementById('bg-roll'); return r && !r.hidden && document.querySelectorAll('#game-stage .bg-board .bg-checker.piece-O').length >= 13; }), 15000);
+  check(!!back, 'Glowbeam rolls and plays its turn; then the Roll button is mine again');
+  const bgFit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });
+  check(bgFit, 'the backgammon board fits the game window without scrollbars');
 
   await browser.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Classics harness passed');

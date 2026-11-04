@@ -17,6 +17,7 @@
     "./games/four": "./src/games/four.ts",
     "./games/dama": "./src/games/dama.ts",
     "./games/chess": "./src/games/chess.ts",
+    "./games/backgammon": "./src/games/backgammon.ts",
     "./games/bot": "./src/games/bot.ts",
     "./games/board": "./src/games/board.ts",
     "./games/draw": "./src/games/draw.ts",

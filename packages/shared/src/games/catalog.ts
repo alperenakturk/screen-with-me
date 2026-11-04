@@ -80,8 +80,8 @@ export const GAME_NEWS: readonly GameNews[] = [
     v: '0.9.97.42',
     kinds: ['classics'],
     badge: 'updated',
-    tr: 'Klasiklerde satranç: rok, geçerken alma, terfi, şah mat ve pat. Yalnızsan Glowbeam’e karşı oyna.',
-    en: 'Chess joins the Classics: castling, en passant, promotion, checkmate and stalemate. Alone? Play Glowbeam.',
+    tr: 'Klasiklere satranç ve tavla geldi: rok, terfi, şah mat; tavlada zarı sunucu atar. Yalnızsan Glowbeam’e karşı oyna.',
+    en: 'Chess and backgammon join the Classics: castling, promotion, checkmate; in backgammon the server rolls the dice. Alone? Play Glowbeam.',
   },
   {
     v: '0.9.97.35',
