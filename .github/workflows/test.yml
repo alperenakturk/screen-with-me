@@ -66,7 +66,9 @@ jobs:
 
       # Card DL: the 🐞 Test Lab (drawer, command box, status, log, bug text) and that with it off nothing of it loads.
       - name: Test Lab
-        run: node scripts/harness/test-lab/run.cjs http://localhost:8787
+        run: |
+          node scripts/harness/test-lab/run.cjs http://localhost:8787
+          node scripts/harness/lab-friends/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()

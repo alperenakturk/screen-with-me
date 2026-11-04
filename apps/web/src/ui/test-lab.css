@@ -407,3 +407,48 @@ html.phone .lab-drawer {
   padding: 8px;
   resize: vertical;
 }
+
+/* 👥 Fake friends (DL2) */
+.lab-friends {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.lab-friend {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lab-friend-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lab-friend-head img {
+  border-radius: 50%;
+}
+
+.lab-friend-head .lab-tag {
+  margin-left: auto;
+}
+
+/* The room's windows pinned to the window's right edge move left of the open drawer (the page itself makes room with
+   its padding; fixed things don't follow padding). */
+html.lab-open:not(.phone) .knock-cards {
+  right: calc(var(--lab-w) + 16px);
+}
+
+html.lab-open:not(.phone) .profile-pop {
+  right: calc(var(--lab-w) + 12px);
+}
+
+html.lab-open:not(.phone) .recap-invite {
+  right: calc(var(--lab-w) + 16px);
+}

@@ -1141,6 +1141,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       ['Members', String(members.length)],
       ['Host', myId && hostId === myId ? 'me' : hostId ? 'someone else' : '—'],
     ],
+    commands: [
+      {
+        id: 'room.makeHost',
+        title: 'Room: make someone the host',
+        help: 'Hands the host role to the member id given (the same path as 👑 Make host). The fake friends use it.',
+        tab: 'friends',
+        where: 'host only',
+        available: () => (myId !== null && hostId === myId) || 'only the host can hand the role on',
+        run: (id) => {
+          if (!id || !members.some((m) => m.id === id)) throw new Error('no such member in the room');
+          send({ t: 'make-host', id });
+          return 'asked';
+        },
+      },
+    ],
   }));
   /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */
   let tvRoom: ReturnType<typeof createTvRoom> | null = null;
