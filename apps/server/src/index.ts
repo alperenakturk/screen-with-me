@@ -22,6 +22,7 @@ export { TvLink } from './tv-link.ts';
 export { MoveLink } from './move-link.ts';
 export { YoutubeUsage } from './usage.ts';
 export { IpKeys } from './ip-key.ts';
+export { UploadGate } from './upload-gate.ts';
 
 /**
  * Browsers always send `Origin` with a WebSocket; only our own site (and local development) may open connections, so
