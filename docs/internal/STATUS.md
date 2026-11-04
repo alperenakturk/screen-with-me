@@ -432,6 +432,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.25 (order of things, BH5):**
+- [ ] Open a brand-new room alone in a fresh browser: the intro plays first, the invite window opens only after it,
+  and the 3 tips come after you close the invite window. Reload: none of them again.
+- [ ] Remove a friend from the room: on their home page there is no "Continue" line for that room.
+
 **0.9.97.24 (two names in one browser, R16 + R17; nothing before you are in, R18):**
 - [ ] In one Chrome open the room twice, as "alperen" and "alperen 2": the room says 2 people, each tab sees the other;
   a private message from one to the other arrives (no "not in the room" note). Reload either tab: it keeps its own

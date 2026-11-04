@@ -56,6 +56,8 @@ import {
   roomIdentity,
   saveRoomIdentity,
   saveLastRoom,
+  forgetLastRoom,
+  lastRoom,
   sessionLoad,
   sessionSave,
 } from './storage.ts';
@@ -1166,24 +1168,38 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // instead of it running out behind the waiting screen. The chunk is fetched now so it starts at once.
   let introPending = introDue;
   const intro = introDue ? import('@swm/shared/intro') : null;
+  // BH5: the invite window and the first-time tips wait for the intro to be gone (it is over the video, they would
+  // sit on top of it).
+  let introOver: Promise<void> = Promise.resolve();
   const playIntro = () => {
     if (!introPending || !intro) return;
     introPending = false;
-    void intro.then(({ INTRO_CSS, createIntro }) => {
+    introOver = intro.then(({ INTRO_CSS, createIntro }) => {
       if (!document.getElementById('swm-intro-css')) document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
-      $('.player-wrap').append(createIntro(document, t('introText')));
+      const node = createIntro(document, t('introText'));
+      $('.player-wrap').append(node);
+      return new Promise<void>((done) => {
+        const gone = new MutationObserver(() => {
+          if (node.isConnected) return;
+          gone.disconnect();
+          done();
+        });
+        gone.observe(node.parentElement ?? document.body, { childList: true });
+      });
     });
   };
   // R18: everything that belongs to being in the room waits for the first welcome (never while waiting at the door, or
   // for someone refused, kicked or turned away by a full room).
   let joinedOnce = false;
+  /** BH5: this tab was removed from the room (kicked or refused at the door). */
+  let removedHere = false;
   const firstJoined = () => {
     if (joinedOnce) return;
     joinedOnce = true;
     document.documentElement.dataset.swmJoined = '1';
     dispatchEvent(new Event('swm-joined'));
     // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
-    if (!resumed && !isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
+    if (!resumed && !isShell && !tv) void introOver.then(() => import('./ui/first-tips.ts')).then(({ showFirstTips }) => showFirstTips());
   };
 
   /** R12: one card per person waiting at the door (host only): who it is, Let in / Refuse. */
@@ -1450,6 +1466,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           // Filmi durdurmak odayı durdururdu (oradaki motor yayardı); sadece bağı kopar.
           if (film) closeCurrent();
           else current?.player.pause();
+          // BH5: refused at the door is one screen, never the waiting card behind it; and the home page never offers
+          // to continue in a room that removed me (pagehide would remember it again).
+          $('#knock-wait').hidden = true;
+          removedHere = true;
+          if (lastRoom()?.id === roomId) forgetLastRoom();
           $('#kicked').hidden = false;
           break;
         }
@@ -3073,7 +3094,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   /** "Continue where you left off" on the home page (0.9.93.2): this room, with its saved name if it has one. */
   function rememberRoom(): void {
-    if (!tv) saveLastRoom(roomId, roomSettings.saved && roomSettings.name ? roomSettings.name : null);
+    if (!tv && !removedHere) saveLastRoom(roomId, roomSettings.saved && roomSettings.name ? roomSettings.name : null);
   }
 
   /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
@@ -3211,12 +3232,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (present.some((m) => m.id !== myId && !m.tv)) return;
     // The first-time tips wait for it (they start with "invite" too).
     document.documentElement.classList.add('invite-pending');
-    setTimeout(() => {
+    const soonest = new Promise((done) => setTimeout(done, 1700));
+    void Promise.all([soonest, introOver]).then(() => {
       document.documentElement.classList.remove('invite-pending');
       // Someone came in meanwhile, or another window is already open (name, avatar, a confirm): not now.
       if (members.some((m) => m.id !== myId && !m.tv) || document.querySelector('.dialog-backdrop:not([hidden])')) return;
       openInvite(inviteUrl, door());
-    }, 1700);
+    });
   }
   const emptyInviteEl = $<HTMLButtonElement>('#empty-invite');
   emptyInviteEl.textContent = emptyInviteLabel();
