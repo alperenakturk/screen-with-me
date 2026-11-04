@@ -104,6 +104,8 @@ export class SyncEngine {
   private readonly wallNow: () => number;
   /** Fires when a "3-2-1" countdown's start comes (see `current`). */
   private holdTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 🐞 Test Lab (card DL4) only: until this wall time the video counts as stuck (see `labStall`). */
+  private labStallUntil = 0;
 
   constructor(private readonly options: SyncEngineOptions) {
     this.wallNow = options.wallNow ?? (() => performance.now());
@@ -365,6 +367,25 @@ export class SyncEngine {
     }
   }
 
+  /**
+   * 🐞 Test Lab: moves my video `seconds` away from the room as if it had drifted (our own seek, so it is not taken for
+   * the user's): the drift correction has to bring it back. False without a player.
+   */
+  labDrift(seconds: number): boolean {
+    const player = this.player;
+    if (player === null) return false;
+    this.seekTo(Math.max(0, player.getTime() + seconds));
+    return true;
+  }
+
+  /**
+   * 🐞 Test Lab: for `ms` my video counts as stuck, as when it buffers: after `STALL_REPORT_MS` the room hears "not
+   * ready" and waits (at most its own limit), and "ready" again once the time is over.
+   */
+  labStall(ms: number): void {
+    this.labStallUntil = this.wallNow() + Math.max(0, ms);
+  }
+
   /** Gap to the room (seconds, null before the first measurement) and drift jumps since start. */
   syncStats(): { drift: number | null; jumps: number } {
     return { drift: this.drift, jumps: this.jumps };
@@ -391,11 +412,11 @@ export class SyncEngine {
     }
     if (state.paused) {
       this.stallSince = null;
-      if (!this.readyReported && (player.canPlayThrough?.() ?? true)) this.reportReady(true);
+      if (!this.readyReported && wall >= this.labStallUntil && (player.canPlayThrough?.() ?? true)) this.reportReady(true);
       return;
     }
     if (player.isEnded()) return;
-    const advancing = last !== null && Math.abs(time - last.time) > 0.05;
+    const advancing = wall >= this.labStallUntil && last !== null && Math.abs(time - last.time) > 0.05;
     if (advancing) {
       this.stallSince = null;
       if (!this.readyReported) this.reportReady(true);
