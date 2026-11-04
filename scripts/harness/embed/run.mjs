@@ -393,6 +393,13 @@ if (HEADFUL) {
   await a.mouse('mouseMoved', chatBox.x, chatBox.y);
   await a.sleep(3200);
   check(!!(await a.evalFrame('shell=1', RAIL_OUT)), 'film sayfası: "Kumanda hep açık" iken fare filmden 3 sn uzakta, ray açık kalıyor');
+  // Unpinned again (the fullscreen edge checks below need a rail that rests), the mouse back at the film's right edge
+  // so the rail is out for the next check, as after R5.
+  await a.evalFrame('shell=1', `document.getElementById('rail-pin').click(); 1`);
+  await a.mouse('mouseMoved', film.r - 20, (film.y + film.b) / 2);
+  await a.sleep(60);
+  await a.mouse('mouseMoved', film.r - 18, (film.y + film.b) / 2);
+  await until(() => a.evalFrame('shell=1', RAIL_OUT), 2000);
 } else {
   console.log('skip film sayfası: rayın açılıp kapanması (headless; xvfb-run ile gerçek fare)');
   await a.evalFrame('shell=1', `document.getElementById('rail-pin').click(); 1`);
