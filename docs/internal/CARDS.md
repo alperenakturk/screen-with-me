@@ -107,7 +107,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B next: R21 (fullscreen messages bigger and lower). Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B next: R21 (fullscreen messages bigger and lower) → BH7 (name on the film page). Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -168,6 +168,17 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### BH7. A name changed on the main site does not reach the film page (lane B, after R21)
+- Found by B while building R21: the embed harness check "a name changed on the main site also applies on the film
+  page" fails on main too (the film page still shows the old name: "Sam" instead of "Riley"). Not related to R21.
+- What: find why the overlay site on the film page does not pick up the new name (suspects: the shared settings sync
+  `site:name`, and the per-room / per-tab `me:<room>` copies since R17 being read before the synced default) and fix
+  it so that a rename in the room on the main site shows on the film page for everyone, for that room only (rooms stay
+  independent, 0.9.88).
+- Done when: the embed harness check passes again; same-browser and tab-name harnesses stay green.
+- Tests: embed harness (the existing check), `same-browser`.
+- Owner's pick: none needed.
 
 ### R21. Chat messages over a fullscreen video: bigger text, lower on the right side (owner, 4 Nov 2026; lane B)
 - Owner (screenshot, a video in fullscreen with a message "Alperen selam basılsın ya" in the very top right corner):
