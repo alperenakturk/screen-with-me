@@ -11,8 +11,12 @@ interface Env {
    * localhost run skip the per-IP connection limit, so the e2e files need no minute-long pauses between them.
    */
   SWM_LOCAL_UNPACED?: string;
+  /** Test Lab DL3b: `wrangler dev --var SWM_LAB_SERVER:1` (local test servers only, never live) turns on the server's lab messages. */
+  SWM_LAB_SERVER?: string;
   /** Security R4-1, local tests only (`wrangler dev --var UPLOAD_IP_BYTES:<n>`): a lower per-address daily image budget. */
   UPLOAD_IP_BYTES?: string;
+  /** Security R4-10: "on" turns the hidden TV version's server side on (pairing, `tv-link`, a TV's hello); off otherwise. */
+  TV?: string;
   /** Connections per IP and minute (Workers rate limiting binding; missing in old configs = no limit). */
   CONNECT_LIMIT?: RateLimit;
   /** YouTube Data API v3 key (repo secret, passed by the deploy job): without it the link box only takes links. */

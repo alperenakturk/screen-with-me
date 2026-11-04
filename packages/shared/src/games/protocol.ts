@@ -57,6 +57,8 @@ export type GameClientMessage =
   /** Koltuktan kalk, izleyici ol. */
   | { t: 'stand' }
   | { t: 'react'; emoji: GameEmoji }
+  /** Test Lab (DL3b): set a ready-made position (`LAB_POSITIONS`); only a local lab server acts on it. */
+  | { t: 'lab'; position: string }
   | { t: 'ping' };
 
 export type GameServerMessage =
@@ -67,7 +69,7 @@ export type GameServerMessage =
   | { t: 'pong' };
 
 /** `kind`: bu kodla başka bir oyun sürüyor (adres elle değiştirildi). */
-export type GameErrorCode = 'version' | 'bad' | 'full' | 'kind' | 'not_player' | 'not_your_turn' | 'seat_taken' | 'rate' | 'in_progress';
+export type GameErrorCode = 'version' | 'bad' | 'full' | 'kind' | 'not_player' | 'not_your_turn' | 'seat_taken' | 'rate' | 'in_progress' | 'lab_off';
 
 /** Odada en fazla bu kadar kişi (2 oyuncu + izleyiciler). */
 export const GAME_MAX_PEOPLE = 30;
@@ -103,6 +105,8 @@ export function parseGameMessage(raw: string): GameClientMessage | null {
       return m.seat === 0 || m.seat === 1 ? { t: 'sit', seat: m.seat } : null;
     case 'react':
       return (GAME_EMOJIS as readonly unknown[]).includes(m.emoji) ? { t: 'react', emoji: m.emoji as GameEmoji } : null;
+    case 'lab':
+      return typeof m.position === 'string' && /^[a-z0-9]{1,12}$/.test(m.position) ? { t: 'lab', position: m.position } : null;
     case 'rematch':
     case 'stand':
     case 'ping':

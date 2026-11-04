@@ -42,12 +42,14 @@ import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting
 import { freshRecaps, RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
+import { labServer } from './lab.ts';
 import { PLANT_IDS } from '@swm/shared/games/garden';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
 import { recordUsage } from './usage.ts';
 import { allowUpload } from './upload-gate.ts';
+import { tvOn } from './tv-switch.ts';
 
 const MAX_MEMBERS = 50;
 /** Security L5: a connection that never says `hello` is closed after this long, and at most this many may wait. */
@@ -260,6 +262,8 @@ export class Room extends DurableObject<Env> {
   private hostKey: string | null = null;
   /** True on a local test server (`wrangler dev`): local media links are allowed there (security L4). */
   private devHost = false;
+  /** A local lab server (`lab.ts`, Test Lab DL3b): only then does a `lab` message do anything. */
+  private lab = false;
   /** Security L3: person key → until when they may not make the room wait (memory only; at most a minute old). */
   private readonly waitCooldowns = new Map<string, number>();
   /** The last item that started playing (it got its "3-2-1" then, or didn't need one): no second countdown. */
@@ -281,6 +285,7 @@ export class Room extends DurableObject<Env> {
     admit: (socket, request) => this.admit(socket, request),
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
+    schedule: () => this.scheduleAlarm(),
   });
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
@@ -384,6 +389,7 @@ export class Room extends DurableObject<Env> {
     const path = new URL(request.url).pathname;
     // A room on a local test server (`wrangler dev`) may queue local video files and film pages (harnesses).
     if (/^(localhost|127\.0\.0\.1)$/.test(new URL(request.url).hostname)) this.devHost = true;
+    this.lab ||= labServer(this.env, request);
     // Ana sayfadaki kayıtlı odalar listesi: oda hâlâ kayıtlı mı, adı, içeride kaç kişi var.
     if (path.endsWith('/info')) {
       // The join screen (0.9.91.20) also shows who is waiting and what is on: the names of up to 3 people (one per
@@ -579,6 +585,13 @@ export class Room extends DurableObject<Env> {
         }
         return;
       }
+      case 'lab':
+        // Test Lab (DL3b): fill the tip jar for the film now, on a local lab server only (`lab.ts`).
+        if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'bad_message' });
+        if (!this.room.state.item) return;
+        this.tipJar = { fill: 0, boost: this.room.state.item.id };
+        this.broadcast({ t: 'tipjar', fill: 0, size: TIP_JAR_SIZE, boost: this.tipJar.boost, by: me });
+        return;
       case 'gift': {
         // A cutting goes to one person in the room (by person, not to myself); its plant is checked against the album.
         const mine = attachment.pk;
@@ -896,6 +909,7 @@ export class Room extends DurableObject<Env> {
    */
   override async alarm(): Promise<void> {
     const now = Date.now();
+    await this.polls.sweepDue(now);
     // Empty but never marked empty: the object restarted while only HTTP fallback connections (kept in memory) were
     // in (or an old version's alarm). Start counting now instead of deleting a room people were just in.
     if (this.openSockets().length === 0 && this.emptySince === null) await this.setEmptySince(now);
@@ -1148,6 +1162,9 @@ export class Room extends DurableObject<Env> {
     if (this.emptySince !== null) times.push(this.emptySince + this.emptyTtl());
     if (this.settings.startsAt !== undefined) times.push(this.settings.startsAt);
     for (const table of this.tables) if (table.emptyAt !== null) times.push(table.emptyAt + TABLE_EMPTY_MS);
+    // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
+    const due = this.polls.nextDue();
+    if (due !== null) times.push(due);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -1284,7 +1301,8 @@ export class Room extends DurableObject<Env> {
     else delete attachment.client;
     if (hello.tv) {
       // A paired TV joins as its person's second device: their browser id (never sent to anyone), name and avatar.
-      const token = this.tvTokens[hello.tv];
+      // R4-10: only while the TV is switched on (`TV=on`).
+      const token = tvOn(this.env) ? this.tvTokens[hello.tv] : undefined;
       if (!token || Date.now() - token.at > TV_TOKEN_TTL_MS) {
         this.sendTo(ws, { t: 'error', code: 'tv_token' });
         ws.close(4006, 'tv_token');
@@ -1421,7 +1439,7 @@ export class Room extends DurableObject<Env> {
    * then joins this room with it. Only a person with a browser id can pair (the TV becomes "them").
    */
   private async linkTv(ws: WebSocket, attachment: Attachment, me: Joined, code: string): Promise<void> {
-    if (attachment.tv || !attachment.cid) return this.sendTo(ws, { t: 'error', code: 'tv_code' });
+    if (attachment.tv || !attachment.cid || !tvOn(this.env)) return this.sendTo(ws, { t: 'error', code: 'tv_code' });
     const key = keyOf(attachment);
     if (!this.tvLinkLimit.allow(key)) return this.sendTo(ws, { t: 'error', code: 'rate_limited' });
     const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
@@ -2198,7 +2216,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'tip' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

@@ -4,7 +4,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "dev": "node -e \"require('fs').mkdirSync('../web/dist',{recursive:true})\" && wrangler dev --port 8787",
+    "dev": "node -e \"require('fs').mkdirSync('../web/dist',{recursive:true})\" && wrangler dev --port 8787 --var SWM_LAB_SERVER:1",
     "deploy": "wrangler deploy",
     "types": "wrangler types",
     "typecheck": "tsc --noEmit"

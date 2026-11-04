@@ -61,9 +61,17 @@ security and promotion now that it is public"; lane A after 15f + R27, Design fo
   issue + PR templates; SECURITY.md fit for a public repo; a 1280 × 640 social preview image for the owner to upload;
   no film / series / piracy names, never "open source"; copy follows the `humanizer` skill.
 - Tests: the README looks right on GitHub in light and dark (screenshot), every link answers.
-- Owner's steps (Settings, he alone can): repository description + topics, social preview, secret scanning + push
-  protection, Dependabot alerts + security updates, private vulnerability reporting, code scanning (CodeQL default
-  setup), branch protection for `main` (require the CI check), Actions → fork PR workflows need approval.
+- Owner's steps (Settings, he alone can), state on 4 Nov 2026 (checked through the API where it can read):
+  - Done: description + website; Dependabot alerts, security updates (grouped) and malware alerts; private
+    vulnerability reporting; CodeQL default setup; ruleset `main` (active on the default branch: no deletion, no force
+    push, a PR with 0 approvals, required checks `changes` + `test`, not "up to date"); Actions: approval for all
+    external contributors, read-only workflow token; environment `production` limited to `main`; account e-mail
+    private + pushes exposing it blocked; GitHub 2FA with recovery codes.
+  - Open: secret scanning + push protection (the API still says disabled); social preview upload (not readable here);
+    Google accounts 2FA; Cloudflare 2FA skipped for now (he signs in through GitHub); deploy secrets move into
+    `production` when a key is renewed (values cannot be read back, the repo secrets keep working until then).
+  - Rule for sessions: with the ruleset, every change to `main` goes through a PR whose `changes` + `test` checks
+    passed (docs-only PRs pass because skipped jobs report success); nobody pushes to `main`.
 
 ### SZ. Slim the room chunk (Planner's technical decision, 4 Nov 2026; lane B)
 - Why: the room page's JS is 144.9 / 145 kB gzipped after DL2; the next room feature would cross the budget.

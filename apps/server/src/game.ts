@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
+import { labServer } from './lab.ts';
 import type { BoardState, Mark } from '@swm/shared/games/board';
 import {
   GAME_MAX_PEOPLE,
@@ -15,6 +16,7 @@ import {
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 import { botMove } from '@swm/shared/games/bot';
+import { LAB_POSITIONS, isLabPosition, labPosition, type LabPositionKind } from '@swm/shared/games/lab-positions';
 import type { BotLevel } from '@swm/shared/games/protocol';
 
 /** Oyun odası boş kaldıktan bu kadar sonra silinir. */
@@ -67,6 +69,8 @@ const MARKS: readonly [Mark, Mark] = ['X', 'O'];
  */
 export class Game extends DurableObject<Env> {
   private data: Saved = fresh();
+  /** A local lab server (`lab.ts`, Test Lab DL3b): only then does a `lab` message do anything. */
+  private lab = false;
   private readonly limit = new RateLimiter(20, 8);
   private readonly reactLimit = new RateLimiter(6, 2);
 
@@ -88,9 +92,11 @@ export class Game extends DurableObject<Env> {
     admit: (socket) => this.admit(socket),
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
+    schedule: () => this.scheduleAlarm(),
   });
 
   override async fetch(request: Request): Promise<Response> {
+    this.lab ||= labServer(this.env, request);
     // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
     const polled = await this.polls.handle(request);
     if (polled) return polled;
@@ -141,13 +147,23 @@ export class Game extends DurableObject<Env> {
   }
 
   override async alarm(): Promise<void> {
-    if (this.sockets().length > 0 || this.data.emptySince === null) return;
-    if (Date.now() - this.data.emptySince >= EMPTY_TTL_MS) {
+    await this.polls.sweepDue();
+    if (this.sockets().length === 0 && this.data.emptySince !== null && Date.now() - this.data.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
-    } else {
-      await this.ctx.storage.setAlarm(this.data.emptySince + EMPTY_TTL_MS);
     }
+    await this.scheduleAlarm();
+  }
+
+  /** The empty game's deletion and (BH8) the HTTP fallback sessions that stop polling. */
+  private async scheduleAlarm(): Promise<void> {
+    const times: number[] = [];
+    // A join clears `emptySince`; past its time while a connection is still here (one that never said hello), look again
+    // in a minute instead of firing at once.
+    if (this.data.emptySince !== null) times.push(Math.max(this.data.emptySince + EMPTY_TTL_MS, Date.now() + 60_000));
+    const due = this.polls.nextDue();
+    if (due !== null) times.push(due);
+    if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
   }
 
   private async hello(ws: WebSocket, me: Attachment, message: Extract<GameClientMessage, { t: 'hello' }>): Promise<void> {
@@ -251,6 +267,19 @@ export class Game extends DurableObject<Env> {
         }
         break;
       }
+      case 'lab': {
+        // Test Lab (DL3b): a ready-made position, on a local lab server only (`lab.ts`); a player sets it.
+        if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
+        if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
+        const kind = (Object.keys(LAB_POSITIONS) as LabPositionKind[]).find((k) => isLabPosition(k, message.position));
+        if (!kind || (kind !== this.data.kind && !this.data.classics)) return this.sendTo(ws, { t: 'error', code: 'kind' });
+        const state = labPosition(kind, message.position);
+        if (!state) return this.sendTo(ws, { t: 'error', code: 'bad' });
+        this.data.kind = kind;
+        this.data.state = state;
+        this.data.started = true;
+        break;
+      }
       case 'stand':
         if (seat === -1) return;
         this.data.seats[seat] = null;
@@ -299,7 +328,7 @@ export class Game extends DurableObject<Env> {
     if (this.sockets(ws).length === 0) {
       this.data.emptySince = Date.now();
       await this.save();
-      await this.ctx.storage.setAlarm(this.data.emptySince + EMPTY_TTL_MS);
+      await this.scheduleAlarm();
     }
   }
 

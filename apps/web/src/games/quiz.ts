@@ -24,6 +24,7 @@ import { clientId, load, save } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
+import { debugHooks } from '../debug-lab.ts';
 import { langChoices, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
@@ -303,7 +304,14 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   };
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
+  // Test Lab (DL3b): the current phase ends now (local lab server only).
+  const offLab = debugHooks.register('table.quiz', () => ({
+    commands: [
+      { id: 'quiz.skip', title: 'Quiz: end this phase now', help: 'Local lab server only: the question / round / reveal ends at once.', tab: 'games', where: 'at a Quiz table', run: () => send({ t: 'lab', op: 'skip' }) },
+    ],
+  }));
   return () => {
+    offLab();
     setGameLive(false);
     close();
     clearInterval(ticker);

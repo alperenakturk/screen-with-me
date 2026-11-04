@@ -29,6 +29,7 @@ import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
+import { debugHooks } from '../debug-lab.ts';
 import { langChoices, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
@@ -555,7 +556,14 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   };
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
+  // Test Lab (DL3b): the current phase ends now (local lab server only).
+  const offLab = debugHooks.register('table.draw', () => ({
+    commands: [
+      { id: 'draw.skip', title: 'Draw & Guess: end this phase now', help: 'Local lab server only: the question / round / reveal ends at once.', tab: 'games', where: 'at a Draw & Guess table', run: () => send({ t: 'lab', op: 'skip' }) },
+    ],
+  }));
   return () => {
+    offLab();
     setGameLive(false);
     close();
     for (const timer of [flusher, ticker, ping]) clearInterval(timer);
