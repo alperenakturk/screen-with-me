@@ -50,6 +50,9 @@ for n in "${names[@]}"; do
   fi
   rm -f "$log"
 done
+# Screenshots belong in a temp folder, never in the repository (#254 committed some by mistake).
+stray="$(git status --porcelain -- '*.png' 2>/dev/null)"
+[ -n "$stray" ] && { echo; echo "note: screenshots changed in the repository, do not commit them:"; echo "$stray"; }
 echo
 echo "${#pass[@]} passed, ${#fail[@]} failed${fail:+: ${fail[*]}}"
 [ ${#fail[@]} -eq 0 ]
