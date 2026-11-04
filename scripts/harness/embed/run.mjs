@@ -731,6 +731,9 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   check(!!holeRect && near(holeRect.b, screenH, 2), 'tam ekranda delik ekranın altına kadar (filmin çubuğu açık)', `delik alt:${holeRect?.b}`);
 
   // Messages flow up next to the dock (right-aligned to its left edge).
+  // The film is paused for these two pictures: its moving bar crossed the message's place between them (R25 moved the
+  // message lower, into its path), which made a see-through box look different.
+  riley.send({ t: 'pause', position: 75, at: Date.now() });
   await a.sleep(1500);
   const noHandle = await a.pixels('9a-mesajsiz');
   riley.send({ t: 'chat', text: 'tam ekranda saydam mi' });
@@ -739,10 +742,10 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   const withHandle = await a.pixels('9b-mesaj');
   const toastR = await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const r = e?.getBoundingClientRect(); return r ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`);
   check(!!toastR && toastR.r <= dock.x - 4 && dock.x - toastR.r < 30 && toastR.b <= dock.b + 2, 'tam ekranda mesaj dock\'un hemen solunda', JSON.stringify({ toastR, dock }));
-  // Card R21: on the right side, 15–40 % down the screen (not the very top corner), with big text, visible.
+  // Cards R21 + R25: on the right side, below the rail's message box (40–60 % down), with big text, visible.
   const look = JSON.parse(await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const c = getComputedStyle(e); return JSON.stringify({ font: parseFloat(c.fontSize), vis: c.visibility }); })()`));
   const down = toastR ? Math.round((toastR.y / screenH) * 100) : -1;
-  check(down >= 15 && down <= 40 && look.font >= 16 && look.vis === 'visible', 'tam ekranda mesaj sağda, ekranın %15–40 aşağısında, büyük yazıyla görünüyor (R21)', JSON.stringify({ down, ...look }));
+  check(down >= 40 && down <= 60 && look.font >= 16 && look.vis === 'visible', 'tam ekranda mesaj sağda, mesaj kutusunun altında (ekranın %40–60 aşağısında), büyük yazıyla görünüyor (R21, R25)', JSON.stringify({ down, ...look }));
   /** Kutunun sol iç boşluğundaki noktalar (yazıdan uzak): beklenen B ≈ (1 − opaklık) × A. */
   const padSample = (r, keep, img) => {
     let ok = 0;
@@ -768,6 +771,7 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
     // Where the film is dark "lit" can be 0; an opaque grey box would still show as flat dark pixels over bright ones.
     check(ts.n > 10 && ts.ok / ts.n >= 0.8 && ts.flat === 0, 'tam ekranda gelen mesajın altında video görünüyor (saydam)', JSON.stringify(ts));
   } else check(false, 'tam ekranda gelen mesaj göründü');
+  riley.send({ t: 'play', position: 75, at: Date.now() });
 }
 await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
 await a.sleep(800);

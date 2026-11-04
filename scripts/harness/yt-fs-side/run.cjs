@@ -96,8 +96,8 @@ async function run(browser, { width, height, font }) {
   const p = withToast.player;
   const down = toast && p ? Math.round(((toast.t - p.t) / (p.b - p.t)) * 100) : -1;
   check(
-    !!toast && !!p && down >= 15 && down <= 40 && toast.r > (p.l + p.r) / 2 && toast.b < p.b - YT_BAR && (!withToast.dock || toast.r <= withToast.dock.l + 1 || withToast.dock.r - withToast.dock.l === 0),
-    'the message comes in on the right side, 15–40 % down the video, left of the rail, clear of YouTube\'s bottom bar',
+    !!toast && !!p && down >= 40 && down <= 60 && toast.r > (p.l + p.r) / 2 && toast.b < p.b - YT_BAR && (!withToast.dock || toast.r <= withToast.dock.l + 1 || withToast.dock.r - withToast.dock.l === 0),
+    'the message comes in on the right side, 40–60 % down the video (below the message box), left of the rail, clear of YouTube\'s bottom bar',
     JSON.stringify({ toast, player: p, dock: withToast.dock, down }),
   );
   check(!!toast && toast.font >= font, `its text is at least ${font} px`, JSON.stringify(toast));
@@ -113,6 +113,30 @@ async function run(browser, { width, height, font }) {
   check(out.toastR !== null && !out.idle && out.toastR <= out.dockL + 1, 'with the rail out, the message is still left of it', JSON.stringify(out));
   await page.mouse.move(mid.x, mid.y, { steps: 4 });
   await page.waitForTimeout(800);
+
+  // Card R25: with the rail's message box open, a message starts below the box and its 💬, never over them.
+  await page.mouse.move(width - 10, mid.y, { steps: 4 });
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  await page.evaluate(() => {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = 'Sam: while you type';
+    document.getElementById('toasts')?.append(t);
+    setTimeout(() => t.remove(), 4000);
+  });
+  await page.waitForTimeout(300);
+  const typing = await page.evaluate(() => {
+    const r = (e) => { const b = e?.getBoundingClientRect(); return b && b.height > 0 ? { l: Math.round(b.left), r: Math.round(b.right), t: Math.round(b.top), b: Math.round(b.bottom) } : null; };
+    return { box: r(document.getElementById('dock-chat-form')), btn: r(document.getElementById('dock-chat')), toasts: [...document.querySelectorAll('#toasts .toast')].map(r), focused: document.activeElement?.id };
+  });
+  const overlaps = (a, b) => !!a && !!b && a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+  check(!!typing.box && typing.toasts.length > 0 && typing.toasts.every((t) => t && !overlaps(t, typing.box) && !overlaps(t, typing.btn) && t.t >= typing.box.b && t.b < p.b - YT_BAR),
+    'with the message box open, messages sit below it and its 💬, never over them (R25)', JSON.stringify(typing));
+  await page.keyboard.press('Escape');
+  await page.mouse.move(mid.x, mid.y, { steps: 4 });
+  await page.waitForTimeout(600);
 
   // Many messages in a row (through the real chat; my own show too): they stack, the newest stays above YouTube's bar.
   for (let i = 0; i < 6; i++) {

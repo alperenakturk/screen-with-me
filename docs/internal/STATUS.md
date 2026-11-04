@@ -438,6 +438,17 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   both still appear for a friend. (The new limit, about 70 full-size pictures per address and day across all rooms,
   only stops scripts.)
 
+**0.9.97.44 (🐞 Test Lab, step DL1):**
+- [ ] Open any page with `?debug=1`: 🐞 bottom left; Ctrl+Shift+D (or 🐞) opens the lab on the right, the room makes
+  room for it. In a room: 📊 Status shows the versions, the connection, the clock offset and a drift line; 📜 Log shows
+  your messages going out and coming back. Ctrl+K: type "mark", Enter, then Undo. "🐞 This is a bug" shows a text;
+  Copy and paste it to the Planner. On the phone it is a sheet from the bottom. `?debug=0` turns it off.
+
+**0.9.97.43 (messages below the message box in fullscreen, card R25):**
+- [ ] In fullscreen (YouTube, a video file, a film page), press Enter to open the message box and leave it open; let a
+  friend write a few messages: they come in below the box and its 💬 button (about half way down the video), stack
+  downward, and never cover the box, the button or the player's bottom bar. Size as before.
+
 **0.9.97.42 (shortcuts right after a click in the player, card R26):**
 - [ ] In a room with a YouTube video, click on the video (play / pause), then press Enter at once: the cursor is in the
   message box. The same with 1 (an emoji), P (pin) and T; in fullscreen too. YouTube's seek bar, ⚙ settings and

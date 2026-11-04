@@ -53,6 +53,11 @@ export class ServerClock implements Clock {
     this.offset = best.offset;
   }
 
+  /** Server time minus local time (ms), for the 🐞 Test Lab's status. */
+  get offsetMs(): number {
+    return this.offset;
+  }
+
   get synced(): boolean {
     return this.samples.length > 0;
   }
