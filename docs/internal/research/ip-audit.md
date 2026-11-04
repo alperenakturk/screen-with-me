@@ -12,8 +12,9 @@ outfit / prop, often helped by the name); **medium** = a strong hint that a fan 
 "look"; **low** = a genre archetype or factual / licensed use.
 
 ## Headline
-- **Avatars are the only big risk.** Of the 33 parody avatars, **26 read as one specific character** (high), 5 more are
-  strong hints (medium). Our own rule (CLAUDE.md "Avatars": "parodies only hint at a style: no names, logos, exact
+- **Avatars are the only big risk.** Of the 33 parody avatars, **28 read as one specific character** (high), 4 more are
+  strong hints (medium). (Updated after Developer A's independent pass on the same files: `catburglar` and `goth` moved
+  up to high, `cartoonist` from low to medium.) Our own rule (CLAUDE.md "Avatars": "parodies only hint at a style: no names, logos, exact
   costumes") is broken by most of them. "Parody" is a weak defence here: an avatar does not comment on the original,
   it just reuses the character. The 13 themed avatars are fine.
 - **Five Frames:** green / gold / grey tiles + a keyboard strip under the board are two of the four elements the NYT's
@@ -53,20 +54,22 @@ outfit / prop, often helped by the name); **medium** = a strong hint that a fan 
 | `hunter` · Monster hunter | Geralt (The Witcher) | white hair, scar, yellow eyes, two swords | remove |
 | `jester` · Chaos jester | Harley Quinn (DC) | pink-blue pigtails, red / black split outfit, diamonds | remove |
 | `dragonqueen` · Dragon queen | Daenerys (Game of Thrones, HBO) | silver braided hair, blue dress, black dragon | remove or redesign (hair colour, no dragon) |
+| `catburglar` · Cat burglar | Catwoman (DC) | full black cat-ear cowl, green eyes, black suit | remove, or a plain eye mask without cat ears |
+| `goth` · Goth girl | Wednesday Addams | black braids + white collar + black dress together | remove, or drop the braids + collar pair |
 
 ### Medium risk (strong hint)
 | Avatar | What it resembles | Why | Suggested fix |
 |---|---|---|---|
-| `goth` · Goth girl | Wednesday Addams | black braids, white collar, black dress | soften: no braids + collar together, change palette |
 | `hacker` · Black-coat hacker | Neo (The Matrix) | small black sunglasses, black coat, green code | soften: drop the green rain code or the coat |
-| `catburglar` · Cat burglar | Catwoman (DC) | black cat-ear mask, black suit | soften: a plain eye mask, no cat ears |
+| `cartoonist` · Cartoonist | The Simpsons look (and its creator's self-caricature) | yellow skin, spiky hair, glasses, overbite; the name "cartoonist" points at a cartoon creator | soften: a normal skin tone, different hair |
 | `lawyer` · Sly lawyer | Saul Goodman (Better Call Saul) | light-blue suit, loud orange tie, grin | soften: a normal suit / tie |
 | `swordsman` · Black swordsman | an anime swordsman (Guts / Ichigo style) | spiky black hair, scar, huge sword | soften: smaller sword, different hair |
 
 ### Low risk (genre archetypes, keep)
 `wizard` (generic pointed-hat wizard; long white beard is the archetype), `warrior`, `elf`, `dwarf`, `janissary`,
-`horseman`, `veiled`, `director`, `diva`, `driver` (3D glasses), `captain`, `conductor`, `sorceress`, `armadillo`,
-`cartoonist` (no clear single source found; keep, but re-check if someone names one).
+`horseman`, `veiled`, `director`, `diva`, `driver` (3D glasses), `captain`, `conductor`, `sorceress`, `armadillo`.
+Developer A rated `waterfriend`, `earthgirl`, `notebookgenius` medium and `swordsman` low; this report keeps the
+stricter rating (the "-bending" names and the Death Note pair make them read as the characters).
 
 **Recommendation:** before the store submission, ship only the themed tab + the low / softened medium ones. Either
 remove the parody tab completely, or replace it with our own "genre" archetypes (space captain, pirate, detective,
@@ -108,8 +111,8 @@ Saved users with a removed avatar get a random themed one (the 0.9.57 path).
 | Design source files in `docs/internal/design/` | the avatars above | low now / medium if the repo goes public | they hold the same characters | delete with the avatars before the repo is made public |
 
 ## What the owner decides
-1. Remove the 26 high-risk parody avatars (3 already decided) and either drop the parody tab or replace it with own
+1. Remove the 28 high-risk parody avatars (3 already removed in PR #262, card R20) and either drop the parody tab or replace it with own
    genre archetypes.
-2. Soften or remove the 5 medium avatars.
+2. Soften or remove the 4 medium avatars.
 3. Five Frames: change tile colours + keyboard position, and the cover's example words.
 After his picks the Planner writes the cards; no file is touched before that.
