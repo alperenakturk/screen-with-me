@@ -179,9 +179,17 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     if (!docked) openPop(null);
   }
   let openButton: HTMLButtonElement | null = null;
+  /** The rail's "mouse left" timer: closes its windows LEAVE_MS after the mouse went off it. */
+  let leaveTimer: ReturnType<typeof setTimeout> | null = null;
   /** One small window next to the dock at a time (message box, emojis, speed), lined up with its button. */
   function openPop(button: HTMLButtonElement | null): void {
     openButton = button;
+    // Card R26: a window opened (Enter right after a click on the film) is not closed by the "mouse left the rail" timer
+    // that click started.
+    if (button && leaveTimer !== null) {
+      clearTimeout(leaveTimer);
+      leaveTimer = null;
+    }
     for (const [b, pop] of pops) {
       const open = b === button;
       pop.hidden = !open;
@@ -268,7 +276,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
    * the right but doesn't go away when I move left"): an open window used to keep the rail out, and a click on a
    * YouTube frame never reaches the page to close it. The same "outside press" the page's own windows listen for.
    */
-  const keepChat = () => openButton === dockChat && dockChatInput.value.trim() !== '';
+  // The message box stays while it holds text or the cursor (R26: Enter, then a mouse move on the film, closed it).
+  const keepChat = () => openButton === dockChat && (dockChatInput.value.trim() !== '' || document.activeElement === dockChatInput);
   function closeRailWindows(): void {
     if (keepChat()) return;
     // Only when one of the rail's own windows is open: a window opened elsewhere since (⋯ More → Games in the top bar,
@@ -312,7 +321,6 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   addEventListener('pointerdown', () => (tabbing = false), true);
   addEventListener('mousemove', () => (tabbing = false), { capture: true, passive: true });
   const LEAVE_MS = 450;
-  let leaveTimer: ReturnType<typeof setTimeout> | null = null;
   /** When the mouse last reached the rail or its edge (a film move reported just before it is old news). */
   let edgeAt = 0;
   dock.addEventListener('mouseenter', () => {
@@ -341,7 +349,13 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   // A click on the YouTube video: the page only learns that its focus went into the frame.
   addEventListener('blur', () =>
     setTimeout(() => {
-      if (!(document.activeElement instanceof HTMLIFrameElement) || !theater.contains(document.activeElement)) return;
+      const frame = document.activeElement;
+      if (!(frame instanceof HTMLIFrameElement) || !theater.contains(frame)) return;
+      // Card R26 (owner: "after a click on the video Enter no longer opens the message box"): the keys went into the
+      // player's frame, so none of the room's shortcuts (Enter, 1–8, P, M, T…) worked until a click on our page. The
+      // page takes the focus back at once; the click itself, YouTube's seek bar, settings and captions still work,
+      // only the player's own keyboard shortcuts are given up. Someone who Tabbed into the player keeps it.
+      if (!tabbing) frame.blur();
       closeRailWindows();
       if (edgeMode()) {
         nearEdge = false;

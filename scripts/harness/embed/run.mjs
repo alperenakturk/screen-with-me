@@ -450,6 +450,19 @@ check(typeof t === 'number' && t > 40, 'katmandaki site film videosunun yerini b
 riley.clear();
 await a.press('1', 'Digit1', 49);
 check(!!(await riley.wait((m) => m.t === 'reaction', 5000)), '1 tuşu (odak film sayfasında) → emoji odaya gitti');
+// 6b) Card R26 (owner: "after a click on the video Enter no longer opens the message box"): a click in the film,
+// then Enter: the room's message box gets the focus (the film page forwards the key to the room view).
+{
+  const v = await a.evaluate(`(() => { const r = document.querySelector('video').getBoundingClientRect(); return { x: r.left + r.width / 3, y: r.top + r.height / 2 }; })()`);
+  await a.click(v.x, v.y);
+  await a.sleep(400);
+  await a.press('Enter', 'Enter', 13);
+  const typed = await until(() => a.evalFrame('shell=1', `['chat-input', 'dock-chat-input'].includes(document.activeElement?.id) ? document.activeElement.id : ''`), 3000);
+  check(!!typed, 'filme tıklayınca Enter odanın mesaj kutusunu açıyor (R26)', String(typed));
+  await a.press('Escape', 'Escape', 27);
+  await a.click(v.x, v.y);
+  await a.sleep(600);
+}
 await a.evalFrame('shell=1', `(() => { const i = document.getElementById('chat-input'); i.value = 'katmandan selam'; i.form.requestSubmit(); return 1; })()`);
 check(!!(await riley.wait((m) => m.t === 'chat' && m.message.text === 'katmandan selam', 5000)), 'katmandaki sohbet odaya gitti');
 
@@ -579,6 +592,18 @@ const fs2 = await a.center('#fs');
 if (fs2) await a.click(fs2.x, fs2.y);
 check(!!(await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`))), 'tam ekrana geçildi (altyazı/pin/mesaj testleri için)');
 await a.sleep(1500);
+// R26 in fullscreen: a click in the film, then Enter opens the rail's message box.
+{
+  const v = await a.evaluate(`(() => { const r = document.querySelector('video').getBoundingClientRect(); return { x: r.left + r.width / 3, y: r.top + r.height / 2 }; })()`);
+  await a.click(v.x, v.y);
+  await a.sleep(400);
+  await a.press('Enter', 'Enter', 13);
+  const typed = await until(() => a.evalFrame('shell=1', `document.activeElement?.id === 'dock-chat-input'`), 3000);
+  check(!!typed, 'tam ekranda filme tıklayınca Enter mesaj kutusunu açıyor (R26)');
+  await a.press('Escape', 'Escape', 27);
+  await a.click(v.x, v.y);
+  await a.sleep(800);
+}
 // 7e-1) Option A (0.9.91.1): the film keeps its own player bar and fills the screen; our buttons are a dock on the
 // right edge (an island), nothing of ours covers the bottom of the film.
 {

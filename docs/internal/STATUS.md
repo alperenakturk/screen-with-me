@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.42 (shortcuts right after a click in the player, card R26):**
+- [ ] In a room with a YouTube video, click on the video (play / pause), then press Enter at once: the cursor is in the
+  message box. The same with 1 (an emoji), P (pin) and T; in fullscreen too. YouTube's seek bar, ⚙ settings and
+  captions still work by mouse. On a film page with the extension: click on the film, press Enter: the message box
+  opens (also in fullscreen) and stays open while you type.
+
 **0.9.97.41 (home screens filled, avatar picker without tabs, cards 15f + R27):**
 - [ ] Home page: each screen's orange picture reaches its frame (no dark band along the top or left), and there is no
   empty strip left of Glowbeam; the text and the art still look balanced.

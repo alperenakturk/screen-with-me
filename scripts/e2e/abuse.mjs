@@ -29,6 +29,7 @@ function client(hello) {
 // L5: a silent socket is closed once another connection arrives after ~15 s.
 const silent = client(null);
 await new Promise((r) => silent.ws.addEventListener('open', r, { once: true }));
+const silentAt = Date.now();
 const a = client({ name: 'Alex', cid: 'abuseAlex0001' });
 const wa = await a.wait((m) => m.t === 'welcome', 'welcome a');
 const b = client({ name: 'Sam', cid: 'abuseSam00001' });
@@ -58,11 +59,18 @@ await sleep(1000);
 const second = b.inbox.filter((m) => m.t === 'signal').length;
 ok(second <= 10, `A reconnect does not refill the signal budget (${second} arrived)`);
 
-// L5 again: after 15 s a new arrival closes the silent socket.
-await sleep(Math.max(0, 16_000 - 2_800));
+// L5 again: a new arrival once the silent socket is over 15 s old closes it. Timed from when it opened (plus a margin), not
+// from a fixed sleep: on a busy runner the steps above take a different time each run (PR #282's flake).
+await sleep(Math.max(0, silentAt + 17_000 - Date.now()));
 const c = client({ name: 'Kim', cid: 'abuseKim00001' });
 await c.wait((m) => m.t === 'welcome', 'welcome c');
 for (let t = 0; t < 100 && silent.closed() === null; t++) await sleep(100);
+// A second arrival if the first one's join ran before the server's clock passed 15 s (a slow welcome).
+if (silent.closed() === null) {
+  const d = client({ name: 'Lee', cid: 'abuseLee00001' });
+  await d.wait((m) => m.t === 'welcome', 'welcome d');
+  for (let t = 0; t < 100 && silent.closed() === null; t++) await sleep(100);
+}
 ok(silent.closed() === 4008, `A connection that never said hello is closed after ~15 s (code ${silent.closed()}, security L5)`);
 ok(!!wa, 'The room still works for people who joined');
 
