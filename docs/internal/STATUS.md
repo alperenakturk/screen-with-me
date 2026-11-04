@@ -596,6 +596,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] Five Frames, our own look (IP audit): open 🎮 → On the side → Five Frames and guess a word. A letter in the right
+  place gets a solid gold frame and ✓, one in the word a dashed gold frame and •, one not in it fades with ×; no green,
+  yellow or grey fills anywhere (board, letter tray, legend, "How to play", the gallery cover with CLOSE / STAGE /
+  SCENE). Readable for colour-blind players (line and sign differ, not only colour).
 - [ ] 0.9.97.26 R15: YouTube in fullscreen, a friend writes a message: it comes down over the video at the top right,
   left of the rail; the video never gets narrower, no dark column on the right; your camera floats over the video.
 - [ ] 0.9.97.20 BH2: Five Frames: skip a day after a win; the next day the 🔥 next to the day number (and in the games

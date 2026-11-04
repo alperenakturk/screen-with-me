@@ -1,6 +1,6 @@
 // Side games polish (card GP, Design's `docs/internal/design/side-games-polish.md`): Snack Bar, Window Garden and
 // Five Frames open at their ideal size, with readable text, a full window title, "How to play" cards and (Five Frames)
-// green / gold / grey cells with a legend and a row that turns over cell by cell.
+// ticket-mark cells (solid ✓ / dashed • / faded ×) with a legend and a row that turns over cell by cell.
 // Checks per game at 1366×768 and 1920×1080: the scale (`--fit`) is 1 when it opens, no visible text in the game below
 // 13 px after the scale, the window head shows the full title; on a phone (iPhone 13) nothing scrolls inside.
 // "How to play": shows on the first open, not on the second, "?" brings it back, Esc closes it, Snack Bar keeps
