@@ -20,6 +20,14 @@ without asking: a fix that went live becomes a test, a test the owner reported p
 question he answered disappears. Then the Planner tells him in a line what changed. **Everyone talks to the owner in
 Turkish** (all sessions; among themselves English is fine; everything written to the repo stays English).
 
+**Resources and tests (owner, 4 Nov 2026):** whenever tokens, a usage limit, Actions minutes, an API quota or anything
+else is running out, every session tells the Planner at once and the Planner tells the owner. Run as many tests as a
+change needs, none on unrelated parts, and never give up quality (the CI diet, card CI, follows this rule).
+
+**The repo is public since 4 Nov 2026** (owner: no money for Actions minutes; private-repo minutes ran out after
+≈ 3500 min in four days). The license is "All rights reserved" (card LIC, PR #287). Never commit a secret, never say
+"open source" in public texts; MIT or not is decided at 1.0.
+
 Card format:
 
 ```
@@ -33,6 +41,35 @@ Card format:
 ## In progress
 
 ## Ready
+
+### CI. CI diet (owner's pick "safe + short main", 4 Nov 2026; lane B, first in the queue)
+- Why: 478 runs / ≈ 3500 min in four days; docs-only PRs ran the whole suite.
+- Done when: a superseded PR run is cancelled; docs-only changes run only a tiny "changes" job whose check still
+  reports (so branch protection can require it); e2e without the local connection pacing; Playwright cached; main runs
+  only typecheck + unit + build before the deploy and the FULL live e2e after it; the lab / a11y harnesses only when
+  `apps/web` or `packages/shared` change. PR ≈ 9 → 5 min, main ≈ 19 → 11.5 min, docs-only ≈ 0.
+- Tests: the workflow's own runs on the PR and on main. PR #286.
+
+### LIC. Source-available license before going public (owner, 4 Nov 2026; lane B) ✅
+- Done: PR #287 (`LICENSE` all rights reserved, `UNLICENSED` package.json, READMEs, CLAUDE.md).
+
+### GH. A GitHub page worth visiting (owner, 4 Nov 2026: "more current, better designed, better descriptions; more
+security and promotion now that it is public"; lane A after 15f + R27, Design for the art)
+- Why: the repo is public; the README is its front page and still reads like a dev note.
+- Done when: README.md + README.tr.md rewritten together (hero with Design's banner, what it is, features with real
+  screenshots / a GIF in legal test content, how it works, privacy, security, stack, license line, badges); `.github/`
+  issue + PR templates; SECURITY.md fit for a public repo; a 1280 × 640 social preview image for the owner to upload;
+  no film / series / piracy names, never "open source"; copy follows the `humanizer` skill.
+- Tests: the README looks right on GitHub in light and dark (screenshot), every link answers.
+- Owner's steps (Settings, he alone can): repository description + topics, social preview, secret scanning + push
+  protection, Dependabot alerts + security updates, private vulnerability reporting, code scanning (CodeQL default
+  setup), branch protection for `main` (require the CI check), Actions → fork PR workflows need approval.
+
+### SEC4. Security review 4: Cloudflare best practices + public-repo exposure (owner, 4 Nov 2026; Security, read-only)
+- Why: the owner asked to review the code and the site with the Cloudflare skill (cloudflare/skills:
+  workers-best-practices, durable-objects, wrangler, web-perf) and fix the security side, now that the repo is public.
+- Done when: `docs/internal/security-review-4.md` + proposed cards; the Planner routes them to lanes A / B.
+- Tests: each fix card carries its own.
 
 ### 15e. Home art: the light lands on every screen; a bigger, balanced first screen (owner, 4 Nov 2026; lane A)
 - Owner (screenshot of the live 0.9.97.28 home art): "the bright part should cover the tablet screen, the phone screen
@@ -108,7 +145,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 → R26 (important) → R25 → DL1 → DL2 → DL4 → DL5. Game Studio: … → DL3. Lane A: 15e ✅ → R22 + R23 → 15f → R27. Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI → R26 (important) → R25 → DL1 → DL2 → DL4 → DL5 → SEC4 fixes. Game Studio: Draw & Guess → chess + backgammon → DL3. Lane A: 15e ✅ → R22 + R23 ✅ → 15f → R27 → GH. Security: SEC4. Design: GH art. Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
