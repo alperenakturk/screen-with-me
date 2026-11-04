@@ -168,7 +168,12 @@ export interface SnackContext {
   voiceOthers: number;
   /** The room's item now (its receipt counts this film). */
   item?: { id: string } | null;
+  /** The room's tip jar filled during this film: +10 % (pick 5). */
+  boost?: boolean;
 }
+
+/** The room's full tip jar: this much more income for everyone until the film ends. */
+export const TIP_BOOST = 0.1;
 
 export function freshSnack(): SnackSave {
   const levels = Object.fromEntries(STAND_IDS.map((id) => [id, 0])) as Record<StandId, number>;
@@ -263,7 +268,7 @@ export function togetherFactor(ctx: SnackContext): number {
 
 /** Coins per second right now (0 while the room's video is not playing). */
 export function incomeRate(save: SnackSave, ctx: SnackContext): number {
-  return ctx.playing ? baseRate(save) * togetherFactor(ctx) : 0;
+  return ctx.playing ? baseRate(save) * togetherFactor(ctx) * (ctx.boost ? 1 + TIP_BOOST : 1) : 0;
 }
 
 function earn(save: SnackSave, coins: number): void {

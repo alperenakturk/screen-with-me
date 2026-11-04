@@ -125,7 +125,16 @@ export interface Pot {
   color?: HybridColor;
   /** Where it bloomed (set when it blooms). */
   bloomed?: Memory;
+  /** A cutting of this bloom went to a friend already (one per bloom). */
+  gifted?: boolean;
 }
+
+/** A cutting a friend gave me (pick 8): plants that plant, with the giver's name. */
+export interface GiftSeed {
+  plant: PlantId;
+  from: string;
+}
+export const GIFT_SEEDS_MAX = 9;
 
 export interface GardenSave {
   v: typeof GARDEN_VERSION;
@@ -155,6 +164,8 @@ export interface GardenSave {
   decor: GardenDecorId[];
   /** Night visitors seen (album extras). */
   visitors: VisitorId[];
+  /** Cuttings from friends, waiting to be planted. */
+  giftSeeds: GiftSeed[];
 }
 
 export interface GardenContext {
@@ -189,6 +200,7 @@ export function freshGarden(): GardenSave {
     petals: 0,
     decor: [],
     visitors: [],
+    giftSeeds: [],
   };
 }
 
@@ -226,6 +238,10 @@ export function loadGarden(raw: unknown): GardenSave {
   garden.petals = Math.floor(num(record.petals, 9_999));
   garden.decor = Array.isArray(record.decor) ? [...new Set(record.decor.filter((id): id is GardenDecorId => GARDEN_DECOR.some((d) => d.id === id)))] : [];
   garden.visitors = Array.isArray(record.visitors) ? [...new Set(record.visitors.filter((id): id is VisitorId => VISITORS.some((v) => v.id === id)))] : [];
+  garden.giftSeeds = (Array.isArray(record.giftSeeds) ? record.giftSeeds : [])
+    .filter((g): g is GiftSeed => !!g && typeof g === 'object' && typeof (g as GiftSeed).plant === 'string' && !!rarityOf((g as GiftSeed).plant) && typeof (g as GiftSeed).from === 'string')
+    .map((g) => ({ plant: g.plant, from: g.from.slice(0, 40) }))
+    .slice(0, GIFT_SEEDS_MAX);
   garden.colorSeeds = (Array.isArray(record.colorSeeds) ? record.colorSeeds : [])
     .filter((c): c is ColorSeed => !!c && typeof c === 'object' && isColor((c as ColorSeed).plant, (c as ColorSeed).color))
     .map((c) => ({ plant: c.plant, color: c.color }))
@@ -236,6 +252,7 @@ export function loadGarden(raw: unknown): GardenSave {
     if (!pot || typeof pot !== 'object' || typeof pot.plant !== 'string' || !rarityOf(pot.plant)) return null;
     const clean: Pot = { plant: pot.plant, growth: unit(pot.growth), water: unit(pot.water) };
     if (isColor(pot.plant, pot.color)) clean.color = pot.color as HybridColor;
+    if (pot.gifted === true) clean.gifted = true;
     const memory = cleanMemory(pot.bloomed);
     if (memory) clean.bloomed = memory;
     return clean;
@@ -444,4 +461,30 @@ export function seeVisitor(garden: GardenSave, id: VisitorId): boolean {
   if (garden.visitors.includes(id)) return false;
   garden.visitors.push(id);
   return true;
+}
+
+/** A bloom whose cutting can still go to a friend. */
+export const canGift = (garden: GardenSave, pot: number): boolean => inBloom(garden.pots[pot] ?? null) && !garden.pots[pot]!.gifted;
+
+/** Marks the cutting of this bloom as given; returns its plant (null when it cannot be given). */
+export function giveCutting(garden: GardenSave, pot: number): PlantId | null {
+  if (!canGift(garden, pot)) return null;
+  garden.pots[pot]!.gifted = true;
+  return garden.pots[pot]!.plant;
+}
+
+/** A friend's cutting arrived (false when the tray is full or the plant unknown). */
+export function receiveCutting(garden: GardenSave, plant: PlantId, from: string): boolean {
+  if (!rarityOf(plant) || garden.giftSeeds.length >= GIFT_SEEDS_MAX) return false;
+  garden.giftSeeds.push({ plant, from: from.slice(0, 40) });
+  return true;
+}
+
+/** Plants a friend's cutting (the `index`th waiting) in an empty pot. */
+export function plantGift(garden: GardenSave, pot: number, index: number): GiftSeed | null {
+  const seed = garden.giftSeeds[index];
+  if (!seed || pot < 0 || pot >= garden.pots.length || garden.pots[pot]) return null;
+  garden.giftSeeds.splice(index, 1);
+  garden.pots[pot] = { plant: seed.plant, growth: 0, water: 1 };
+  return seed;
 }

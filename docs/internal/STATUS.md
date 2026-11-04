@@ -433,11 +433,17 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.97.32 (bigger chat messages in fullscreen, card R21):**
+**0.9.97.34 (bigger chat messages in fullscreen, card R21):**
 - [ ] On a computer, open a YouTube video and a video file in fullscreen; from a second tab write a message: it comes
   in on the right side, about a quarter down the video (not in the very top corner), with clearly bigger text, left of
   the button column. Send five or six quick ones: they stack and never cover the player's bottom bar. Same on a film
   page in fullscreen. A phone looks as before.
+
+**0.9.97.33 (home art: one soft light, a tidy device row, card 15e):**
+- [ ] Open the home page on your computer (and at 1366 × 768 if you can): Glowbeam's one cone of light falls on the
+  laptop, the tablet and the phone, the laptop brightest; no slab behind them and no line where the light ends; the
+  three devices stand in one row with equal gaps, none covering another; the space left of the text, between the text
+  and the art, and right of the art looks the same; the phone: the art on top, the phone device not cut off.
 
 **0.9.97.30 (parody avatars removed after the IP audit, card R20):**
 - [ ] In a room, open the avatar picker: two tabs, "Themed" and "Genres" ("Temalı" / "Türler"), no Parody tab. Genres
@@ -612,6 +618,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.32 Tip jar and cuttings (side games 2, picks 5 + 8), with a friend: both open Snack Bar while a video plays
+  and serve: a 🫙 pill shows how full the room's jar is; when it fills, both get a note and the pill says +10 % until the
+  film ends. Then open Window Garden with a plant in bloom: "🎁 Give a cutting" → your friend's name. Your friend gets a
+  note with the garden closed; in their Window Garden an empty pot offers "🎁 <plant>" and plants it. A bloom gives only one.
 - [ ] 0.9.97.31 Snack Bar, side games 2: play a video and open Snack Bar. Within a minute a customer walks up with a
   line; tap them: coins pop and they leave happy. Let a 20-min-or-longer video end: Glowbeam's receipt shows (watched,
   served, best stand) with a golden bucket; "Collect" pays it. 🏅 in the footer opens the badge wall (tap a badge to see
