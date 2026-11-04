@@ -28,6 +28,7 @@ const overPlayer = (page) =>
       if (r.width < 1 || r.height < 1 || style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.05) continue;
       if (r.left < f.right - 1 && f.left < r.right - 1 && r.top < f.bottom - 1 && f.top < r.bottom - 1) hits.push(`${node.className || node.id} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)}`);
     }
+    if (hits.length) hits.push(`frame ${Math.round(f.left)},${Math.round(f.top)} ${Math.round(f.width)}×${Math.round(f.height)} theater ${document.querySelector('#theater').className}`);
     return hits;
   }, OURS);
 const box = (page, selector) =>
@@ -248,14 +249,14 @@ const box = (page, selector) =>
     await sam.evaluate(() => document.activeElement?.blur());
     await alex.waitForSelector('#toasts .toast', { timeout: 4000 }).catch(() => {});
     // Card R15 (owner: "never open a stupid menu on the side"): no column in YouTube fullscreen any more. The message
-    // comes down over the video at the top right, left of the rail, clear of YouTube's own bottom bar; the player keeps
-    // its width.
+    // comes in over the video on the right, left of the rail, clear of YouTube's own bottom bar; the player keeps its
+    // width. Since R25 it starts at least `SIDE_TOP` (45 %) down, below the rail's message box (`toasts.ts`).
     await alex.waitForTimeout(400);
     const toast = await box(alex, '#toasts .toast');
     const fsPlayer = await box(alex, '.player');
     const fsDock = await box(alex, '#fs-dock');
     check(!(await alex.evaluate(() => !!document.getElementById('fs-side'))) && fsPlayer && fsPlayer.r >= vw.w - 80, 'fullscreen: no column beside the player, it keeps the width', JSON.stringify({ fsPlayer }));
-    check(toast && fsPlayer && toast.t < fsPlayer.t + (fsPlayer.b - fsPlayer.t) / 3 && toast.b < fsPlayer.b - 64 && (!fsDock || fsDock.w === 0 || toast.r <= fsDock.l + 1), 'fullscreen: the message comes down at the top right, left of the rail, clear of YouTube\'s bar', JSON.stringify({ toast, fsPlayer, fsDock }));
+    check(toast && fsPlayer && toast.t >= fsPlayer.t + (fsPlayer.b - fsPlayer.t) * 0.4 && toast.b < fsPlayer.b - 64 && (!fsDock || fsDock.w === 0 || toast.r <= fsDock.l + 1), 'fullscreen: the message comes in on the right, below the rail\'s message box (R25, ≥ 40 % down), left of the rail, clear of YouTube\'s bar', JSON.stringify({ toast, fsPlayer, fsDock }));
     await alex.evaluate(() => {
       const banner = document.querySelector('#waiting-banner');
       banner.textContent = 'Waiting for Sam…';
