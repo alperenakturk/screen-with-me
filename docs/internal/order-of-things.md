@@ -34,7 +34,7 @@ Each row names the harness check that holds it. Code: `apps/web/src/room.ts` (`p
 | 3 | Reload of the same tab | Room straight away (no join card), no intro, no invite window, no tips; `data-swm-joined` after `welcome` | `harness/order` |
 | 4 | `#back` from the film page | As 3 | `harness/embed` |
 | 5 | Film page (shell) | The room overlay only: no intro, no invite window, no tips | `harness/embed` |
-| 6 | TV (`?tv=1`) | TV mode only: no join card, intro, invite window, tips or `lastRoom` | `harness/tv` (BH6; the rest of that harness has stopped at the phone's link box since the 0.9.92.3 phone room, a known gap) |
+| 6 | TV (`?tv=1`) | TV mode only: no join card, intro, invite window, tips or `lastRoom` | `harness/tv` (BH6) |
 | 7 | Room asks first, let in | Join card → waiting card (nothing of the room, no `lastRoom`) → `welcome` → intro → tips | `harness/knock` |
 | 8 | Room asks first, refused | Join card → waiting card → refusal screen alone; no intro, tips or `lastRoom` | `harness/knock` (BH5) |
 | 9 | Waiting longer than 10 min | The server closes the knock (4011) and the page reconnects and knocks again: the waiting card stays | — |

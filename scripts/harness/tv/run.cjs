@@ -94,6 +94,11 @@ async function enter(page, room, name) {
   check(await tv.evaluate(() => getComputedStyle(document.querySelector('.topbar')).display === 'none'), 'TV: no top bar, no side panel');
 
   // A video from the phone plays on the TV (fills the screen); the phone's own player is muted.
+  // Since the 0.9.92.3 phone room the link box lives in ＋ → Add a video (as in harness/phone `addMedia`).
+  if (!(await phone.isVisible('#media-input'))) {
+    await phone.click('#chat-plus');
+    await phone.click('.ph-sheet .ph-tile >> nth=0');
+  }
   await phone.fill('#media-input', VIDEO);
   await phone.click('#media-form button[value=load]');
   check(!!(await until(() => tv.evaluate(() => (document.querySelector('#player video')?.currentTime ?? 0) > 0.3))), 'TV: the video plays');
