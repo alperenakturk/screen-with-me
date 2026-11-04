@@ -4,6 +4,8 @@
 
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
+  QUIZ_SEEN_KEEP,
+  encodeSeen,
   QUIZ_ANSWER_MS,
   QUIZ_CATEGORIES,
   QUIZ_COUNTS,
@@ -14,10 +16,11 @@ import {
   type QuizServerMessage,
   type QuizTopic,
 } from '@swm/shared/games/quiz';
+import { QUIZ_BANK } from '@swm/shared/games/quiz-questions';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
-import { clientId } from '../storage.ts';
+import { clientId, load, save } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
@@ -27,6 +30,22 @@ type State = Extract<QuizServerMessage, { t: 'state' }>;
 const LETTERS = ['A', 'B', 'C', 'D'];
 
 /** Oyunu `app`'in içine kurar; dönen işlev bağlantıyı ve zamanlayıcıları kapatır. */
+/** Questions this browser has seen (newest last), so the next games pick others (P9). */
+const SEEN_KEY = 'quiz:seen';
+function seenIds(): number[] {
+  try {
+    const list = JSON.parse(load(SEEN_KEY) || '[]') as unknown;
+    return Array.isArray(list) ? list.filter((id): id is number => Number.isInteger(id) && id >= 0).slice(-QUIZ_SEEN_KEEP) : [];
+  } catch {
+    return [];
+  }
+}
+function rememberSeen(id: number): void {
+  const list = seenIds();
+  if (list.includes(id)) return;
+  save(SEEN_KEY, JSON.stringify([...list, id].slice(-QUIZ_SEEN_KEEP)));
+}
+
 export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
     <div class="xox-page draw-page quiz-page">
@@ -119,7 +138,10 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         ),
     );
     $('#quiz-n').textContent = s.phase === 'lobby' ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: QUIZ_MAX_PLAYERS }) : s.phase === 'over' ? '' : t('quiz.n', { n: s.n, total: s.total });
-    $('#quiz-cat').textContent = s.cat && (s.phase === 'question' || s.phase === 'reveal') ? t(`quiz.cat.${s.cat}`) : '';
+    // The topic, and the question's difficulty as stars (P9: the bank's `d`, easy questions first).
+    const level = typeof s.qid === 'number' ? (QUIZ_BANK[s.qid]?.d ?? 2) : 0;
+    $('#quiz-cat').textContent =
+      s.cat && (s.phase === 'question' || s.phase === 'reveal') ? `${t(`quiz.cat.${s.cat}`)}${level ? ` · ${'★'.repeat(level)}${'☆'.repeat(3 - level)}` : ''}` : '';
     // The joker: only while I can still answer a four-option question.
     const asking = s.phase === 'question' && (s.options?.length ?? 0) === 4;
     const answeredNow = (myPick && myPick.n === s.n) || !!mine?.answered;
@@ -236,7 +258,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     ws = socket;
     const lang = document.documentElement.lang === 'en' ? 'en' : 'tr';
     socket.addEventListener('open', () =>
-      socket.send(JSON.stringify({ t: 'hello', v: QUIZ_PROTOCOL_VERSION, name, avatar, cid: clientId(), lang } satisfies QuizClientMessage)),
+      socket.send(JSON.stringify({ t: 'hello', v: QUIZ_PROTOCOL_VERSION, name, avatar, cid: clientId(), lang, seen: encodeSeen(seenIds()) } satisfies QuizClientMessage)),
     );
     socket.addEventListener('message', (event) => {
       let m: QuizServerMessage;
@@ -254,6 +276,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         render();
       } else if (m.t === 'state') {
         state = m;
+        if (typeof m.qid === 'number') rememberSeen(m.qid);
         render();
       } else if (m.t === 'error' && (m.code === 'version' || m.code === 'full')) {
         stopped = true;
