@@ -5,7 +5,14 @@ Cloudflare server. This page explains how to report a security or privacy proble
 
 ## Reporting a problem
 
-E-mail **screenwithme.app@gmail.com** with the subject "Security". Please include:
+Report it privately, in one of two ways:
+
+- GitHub's private vulnerability reporting:
+  [Report a vulnerability](https://github.com/alperenakturk/screen-with-me/security/advisories/new) (only you and the
+  maintainer see it);
+- or e-mail **screenwithme.app@gmail.com** with the subject "Security".
+
+Please include:
 
 - what you found and where (site page, extension, server endpoint);
 - the steps to see it, and the browser and version you used;

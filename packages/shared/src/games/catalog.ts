@@ -84,6 +84,13 @@ export const GAME_NEWS: readonly GameNews[] = [
     en: 'Chess and backgammon join the Classics: castling, promotion, checkmate; in backgammon the server rolls the dice. Alone? Play Glowbeam.',
   },
   {
+    v: '0.9.97.40',
+    kinds: ['draw'],
+    badge: 'updated',
+    tr: 'Çiz-Bil’de 12 kelime kategorisi: masayı açan birini (ya da hepsini) seçer. Yeni 🧽 silgi ve “yinele” (Ctrl+Y).',
+    en: 'Draw & Guess has 12 word categories: the table’s host picks one (or all). A new 🧽 eraser and redo (Ctrl+Y).',
+  },
+  {
     v: '0.9.97.35',
     kinds: ['classics'],
     badge: 'new',

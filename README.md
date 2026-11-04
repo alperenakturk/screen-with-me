@@ -1,37 +1,49 @@
-<div align="center">
+<p align="center"><img src="docs/internal/design/github/banner-en.svg" width="100%" alt="Sidelit: Different screens, same moment."></p>
 
-# ▶ Sidelit
+<p align="center">
+  <a href="https://screen-with-me.swm-server.workers.dev"><b>Open Sidelit</b></a> ·
+  <a href="https://screen-with-me.swm-server.workers.dev/extension.html">Get the extension</a> ·
+  <a href="https://screen-with-me.swm-server.workers.dev/help.html?lang=en">Help</a> ·
+  <a href="README.tr.md">🇹🇷 Türkçe</a>
+</p>
 
-_Formerly ScreenWithMe._
+<p align="center">
+  <a href="https://github.com/alperenakturk/screen-with-me/actions/workflows/test.yml"><img src="https://github.com/alperenakturk/screen-with-me/actions/workflows/test.yml/badge.svg?branch=main" alt="CI"></a>
+  <img src="https://img.shields.io/badge/version-0.9.97-e9b949" alt="Version 0.9.97">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey" alt="License: all rights reserved"></a>
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white" alt="TypeScript strict">
+  <img src="https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white" alt="Cloudflare Workers + Durable Objects">
+</p>
 
-**Watch any video together, in perfect sync.**<br/>
-Free · no accounts · no ads · works on YouTube and on (almost) any website.
+Sidelit lets friends watch the same video at the same second, each on their own screen. Send a link and everyone is
+in the room. When someone pauses, seeks or changes the speed, it happens for everyone. Chat, voice, cameras, reactions,
+games and a shared queue sit around the video. It is free, there are no accounts and no ads.
 
-[**Live site**](https://screen-with-me.swm-server.workers.dev) ·
-[**Get the extension**](https://screen-with-me.swm-server.workers.dev/extension.html) ·
-[🇹🇷 Türkçe](README.tr.md)
+- **YouTube, YouTube Shorts, TikTok, Vimeo, podcast episodes and video files** play right on the site. Nothing to
+  install. No link at hand? Type a few words and search YouTube from the same box.
+- **Any other website** with an HTML5 video (even inside an iframe) works with the browser extension: the tab goes to
+  that site and the room opens over it, with the site's own player sitting in the room's video area.
 
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
-![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
-![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-251%20unit%20%2B%20e2e%20%2B%20real%20Chrome-3ccf8e)
-![Version](https://img.shields.io/badge/version-0.9.81-7c5cff)
-![License](https://img.shields.io/badge/license-MIT-blue)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/readme/room.jpg" alt="A room: the sync test playing for three people, the rail beside the video, the chat on the right"></td>
+    <td width="50%"><img src="docs/readme/games.jpg" alt="The game hall open over the video: Draw &amp; Guess, Quiz, Last Heart and Classics"></td>
+  </tr>
+  <tr>
+    <td>A room with three people. The sync badge says how far apart they are.</td>
+    <td>The game hall. Games open next to the video, which keeps playing.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/readme/home.jpg" alt="The home page: Create room, Join with a code and Glowbeam lighting a laptop, a tablet and a phone"></td>
+    <td align="center"><img src="docs/readme/phone.jpg" width="230" alt="The room on a phone: the video on top, faces and voice buttons, then the chat"></td>
+  </tr>
+  <tr>
+    <td>The home page. One button makes a room.</td>
+    <td>On a phone the room is an app screen.</td>
+  </tr>
+</table>
 
-</div>
-
----
-
-Send a link, and everyone watches the same second. If anyone pauses, seeks or changes the speed, it happens
-for everyone. Chat, voice, cameras, reactions, games and a shared queue sit around the video.
-
-- **YouTube, YouTube Shorts, TikTok, Vimeo links, a podcast episode (🎧 Podcasts on the search results) or a video file** → plays right on the site, nothing to install. No link at
-  hand? Type words and search YouTube from the same box.
-- **Any other site** (the page has an HTML5 `<video>`, even inside an iframe) → the tab goes to that site and,
-  with the browser extension, the **room itself** opens over it, with the video sitting in the room's player area.
-  Works on sites that forbid being framed, too.
-
-## ✨ What's inside
+## Features
 
 ### Watching together
 | | |
@@ -52,7 +64,7 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 | 🎙 **Voice & cameras** | Join voice and talk while you watch: mute, push-to-talk (hold V), see who speaks. Cameras as free windows you drag and resize, a spotlight layout, or one window; in fullscreen they move onto the video. Per-person volume, mute and hide just for you; a pre-join check to pick microphone, camera and speaker. Voice survives reloads and short connection drops. Peer-to-peer and encrypted (the server never hears it), up to 6 people and 4 cameras; the room says before you join that people in voice can see each other's IP address. Works on film pages too. |
 | 📺 **Screen sharing** | Share a screen, window or tab (with your camera in the corner if you like) to up to 4 viewers, 720p, peer-to-peer. The picture sits in the video or floats anywhere; "sharp text" or "smooth" quality. Not for re-broadcasting films. |
 | 💬 **Chat & reactions** | Messaging-app bubbles, images (paste or drop), safe clickable links, private messages to one person (🔒, never kept in the room's history). A 😀 React tray with emoji pages and custom emojis (images / GIFs added to one room, optionally kept in your own collection); reactions rise with the sender's name. 📌 Pins mark moments with a note. |
-| 🎮 **Games in the room** | Classics (one table with a shelf of board games: tic-tac-toe, Four in a Row, Turkish draughts (dama), chess and backgammon, against a friend or against Glowbeam (easy or medium) when you're alone), Last Heart (a 2–6 player card game where you bet life instead of chips), Draw & Guess and a quiz (almost 1,200 questions in 11 topics, easy to hard, the ones you have seen rarely come back; Turkish / English). A games gallery with a picture card per game ("Together" / "On the side"), up to 4 tables at once; games open in a free window or in the video's place while the film keeps going. **Play on the side:** 🍿 Snack Bar, a little idle game of your own that earns only while you are in a room and its video plays (nothing while you are away) (more with friends, more in voice; everyone's serves fill the room's shared tip jar for +10 %), and 🌱 Window Garden, plants on a window sill that grow while you watch and fill an album (a bloom can give a cutting to a friend in the room), and 🎟️ Five Frames, one five-letter word a day in English or Turkish (a solid frame ✓ right place, a dashed frame • in the word, a faded × not in it); each one starts with a few "How to play" picture cards; a game window's ✕ only puts it away (a game is never lost by it, and the browser asks before you close the tab mid-game); your progress stays in your browser (📲 "Move to another device" takes it to your phone once with a 6-digit code). |
+| 🎮 **Games in the room** | Classics (one table with a shelf of board games: tic-tac-toe, Four in a Row, Turkish draughts (dama), chess and backgammon, against a friend or against Glowbeam (easy or medium) when you're alone), Last Heart (a 2–6 player card game where you bet life instead of chips), Draw & Guess (pick one of 12 word categories; eraser, undo and redo) and a quiz (almost 1,200 questions in 11 topics, easy to hard, the ones you have seen rarely come back; Turkish / English). A games gallery with a picture card per game ("Together" / "On the side"), up to 4 tables at once; games open in a free window or in the video's place while the film keeps going. **Play on the side:** 🍿 Snack Bar, a little idle game of your own that earns only while you are in a room and its video plays (nothing while you are away) (more with friends, more in voice; everyone's serves fill the room's shared tip jar for +10 %), and 🌱 Window Garden, plants on a window sill that grow while you watch and fill an album (a bloom can give a cutting to a friend in the room), and 🎟️ Five Frames, one five-letter word a day in English or Turkish (a solid frame ✓ right place, a dashed frame • in the word, a faded × not in it); each one starts with a few "How to play" picture cards; a game window's ✕ only puts it away (a game is never lost by it, and the browser asks before you close the tab mid-game); your progress stays in your browser (📲 "Move to another device" takes it to your phone once with a 6-digit code). |
 | 🎵 **Queue & voting** | Add, reorder, play now; paste up to 30 links at once. 👍 votes reorder the queue; auto-next can be turned off. |
 | ⏰ **Film time** | Plan the start ("in 30 minutes", "tonight 9 pm" or any time); everyone sees a countdown and the video starts for all at once. |
 | 💾 **Saved rooms & recap** | One-off or named saved rooms (kept 30 days) that remember where each video stopped. A playful recap of the session with a downloadable image. |
@@ -63,7 +75,7 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 | 📱 **Made for phones** | On a phone the room is an app screen: the video edge to edge, everyone's faces and cameras under it, then the chat. ＋ and ⋯ open bottom sheets (add a video, games, invite, settings…), the back button closes them, ⛶ gives a real fullscreen (iPhone too) with a slim column of buttons beside the video. Shorts and games take the whole screen. Everything except film pages works on a phone. **Tablets:** upright, the video sits on top with its buttons beside it and two columns below (the chat; Together, Queue and People), with no scrolling; sideways, the room looks like it does on a computer. |
 | 📶 **Hard networks** | On networks where WebSockets never open (some phone hotspots) the room switches by itself to an HTTP fallback and back again when it can. If a room can't be reached, "Try again" and a connection test are one tap away. |
 | 📲 **Install as an app** | The site installs as an app on phones and computers and always loads the latest version. |
-| 🎨 **Look & sound** | 11 themes (plain and illustrated), a short intro, soft generated sound effects (no files; adjustable or off). English and Turkish, on the site and in the extension (English by default). |
+| 🎨 **Look & sound** | 10 themes (plain and illustrated), a short intro, soft generated sound effects (no files; adjustable or off). English and Turkish, on the site and in the extension (English by default). |
 
 ### Host & safety
 | | |
@@ -71,7 +83,7 @@ for everyone. Chat, voice, cameras, reactions, games and a shared queue sit arou
 | 👑 **Room host** | The first person in is the host and sets the rules in ⚙️ Settings: host-only playback, locked queue, emoji limits, host-only streams, ready check. If the host is gone for more than 20 s, hosting passes to whoever has been in the room longest. The host can hand the role to someone else (👑 in People), remove and ban people, and turn on "Ask before letting people in": someone new waits at the door until the host lets them in or refuses. |
 | 🔐 **Private by design** | Video plays in each person's own browser; the server only relays small "pause at 12:34" messages and the room's chat. The extension is dormant outside a room, and the film page can't read which room you are in. User text is never written as HTML; rate limits (also per IP), an origin check, a strict Content-Security-Policy and a frame guard protect the site. |
 
-## 🧠 How it works
+## How it works
 
 ```mermaid
 flowchart LR
@@ -110,18 +122,37 @@ winner and the same sync engine as the site runs there, playback messages go to 
 The site reports where its player area is; the top frame clips a hole there (`clip-path`) and moves the film's
 player into it.
 
-## 🧪 Quality
+## Privacy
+
+- **No accounts.** You pick a name and an avatar for each room. They stay in your browser.
+- **Video never passes through us.** Each person plays the video in their own browser. The server only relays small
+  messages such as "pause at 12:34", the room's chat and its queue.
+- **Short retention.** A one-off room is deleted 24 hours after it is empty, a saved room after 30 days. Voice,
+  cameras and screen sharing go directly between browsers and are never stored.
+- **The extension sleeps outside a room.** It does nothing on a page until you open that page from a room, and the
+  film site cannot read which room you are in.
+
+Everything we store and why is in the [privacy policy](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=en).
+
+## Security
+
+Found a security or privacy problem? Please don't open a public issue. Use
+[private vulnerability reporting](https://github.com/alperenakturk/screen-with-me/security/advisories/new) or e-mail
+the address in [SECURITY.md](SECURITY.md).
+
+## Quality
 
 | Check | What it covers |
 |---|---|
-| Unit tests (`npm test`) | 256 passing: sync engine with a fake clock and player, protocol validation, room rules, ready check, game rules, sound policy, the HTTP fallback, recap, video scoring |
+| Unit tests (`npm test`) | 391 passing: sync engine with a fake clock and player, protocol validation, room rules, ready check, game rules, sound policy, the HTTP fallback, recap, video scoring |
 | End-to-end (`npm run e2e`, in CI against a local and then the live server) | Fake users against the real server code: queue, chat, images, host and kick, handover, ready check, pins, custom emojis, host modes, saved rooms, recap, Shorts, search, voice / stream signalling, every game, the HTTP fallback |
 | Real Chrome with the extension (`scripts/harness/embed`) | The room layer over a film page: hole placement, no page flash, see-through messages, the film's own bar kept, the dock, video picker, ad tabs, redirects, pre-roll ads |
 | Real voice, cameras and streams (`scripts/harness/voice`) | Two Chromes with fake devices: received audio energy and camera frames are measured, on the site and on film pages; free camera / stream windows; browsers that block direct connections |
 | Phones, Shorts, YouTube room, TikTok, sounds, hotspot (`scripts/harness/*`) | iPhone and Android layouts, the Shorts rail at many screen sizes, nothing over the YouTube player, a stand-in for TikTok's player protocol, which sounds really play, a proxy that swallows WebSockets |
 | Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote and local actions ✓, 26–100 ms apart |
 
-## 🛠️ Tech
+
+## Tech
 
 TypeScript (strict) everywhere, no front-end framework · Vite · Cloudflare Workers + Durable Objects
 (SQLite-backed, WebSocket Hibernation) · Chrome Manifest V3 + esbuild · Vitest · GitHub Actions.
@@ -136,7 +167,7 @@ scripts/          end-to-end tests, real-Chrome extension harness, icon / theme 
 store/            Chrome Web Store package and screenshots
 ```
 
-## 🚀 Development
+## Development
 
 Requires Node.js 20+ (CI uses 24).
 
@@ -155,19 +186,13 @@ Deploy: every push to `main` is tested and then deployed by GitHub Actions (need
 `CLOUDFLARE_ACCOUNT_ID` repository secrets), followed by the end-to-end tests against the live server.
 Locally: `npx wrangler login` once, then `npm run deploy`.
 
-## 🗺️ What's next
+## License
 
-Chrome Web Store release, more games, a short domain, Firefox; after 1.0 a TV version with Google Cast (the phone
-as the remote).
+© 2026 Alperen Aktürk. All rights reserved ([LICENSE](LICENSE)). The source is published so it can be read. It may not
+be copied, modified, distributed or used without written permission. Third-party parts (the word lists, build tools)
+keep their own licences: [third-party-notices.txt](apps/web/public/third-party-notices.txt).
 
-## 📄 License & privacy
-
-[MIT](LICENSE) © 2026 Alperen Aktürk. All shipped code (site, server, extension) is our own; build tools are
-MIT / Apache-2.0. Privacy policy: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=en)
-(no accounts, no tracking; a one-off room is deleted 24 h after it is empty, a saved room after 30 days).
-Questions and troubleshooting: [help page](https://screen-with-me.swm-server.workers.dev/help.html?lang=en).
-
-## ⚠️ Limitations
+## Limitations
 
 - DRM-protected streaming services are not supported yet.
 - The extension is not in the Chrome Web Store yet (manual install, about a minute).

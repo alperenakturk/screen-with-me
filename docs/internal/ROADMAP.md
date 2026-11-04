@@ -259,6 +259,8 @@ implement, test, ship.
 - [ ] **Remind the owner first:** Brave + Edge test (owner's request, 29 Oct 2026; checklist in `STATUS.md`) 👤.
 - [ ] Version `1.0.0` → `npm run store` → submission from the owner's developer account 👤.
 - [ ] While in review: no `PROTOCOL_VERSION` bump.
+- [ ] **(owner, 4 Nov 2026) Lock the 🐞 Test Lab with a code** before the app / store release (today anyone with
+  `?debug=1` opens it; card DL).
 - [ ] After approval: install links point to the store, `eklenti.html` updated.
 - [ ] **(added)** Reserve social handles under the final name 👤 (Instagram, TikTok, X, YouTube, GitHub org, Product
   Hunt) as soon as the name is final — before announcing anything.
@@ -299,7 +301,9 @@ implement, test, ship.
 - **Growth:** launch posts (Product Hunt, Reddit, Show HN once public), Instagram/TikTok content, Discord community;
   growth plan in `BUYUME.md`.
 - **Donations:** after the first real users (GitHub Sponsors / Patreon…), never inside a room.
-- **Making the repo public:** right after store approval, as a new repo with clean history (plan in `VIZYON.md`).
+- **The repo is public since 4 Nov 2026** (owner: private Actions minutes ran out; public repos run free), license "All
+  rights reserved" (card LIC). At 1.0 the owner decides whether it becomes MIT; the old "new repo with clean history"
+  plan in `VIZYON.md` is dropped.
 - **More languages**, optional accounts (persistent rooms, friends) only if users ask for them.
 - **Hide IP addresses in voice, camera and streams** (owner's decision, 28 Oct 2026: later, together with the card
   decision). Moving only voice to Cloudflare's media server (SFU) is not enough, because camera and streams would stay

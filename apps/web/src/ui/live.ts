@@ -8,6 +8,7 @@ import { composeScreenWithCamera, composeSupported, type Composed } from './live
 import { setIcon } from './icons.ts';
 import { createLiveFloat } from './live-float.ts';
 import { openCam } from './voice-check.ts';
+import { debugHooks } from '../debug-lab.ts';
 
 /**
  * Yayın kartı (sağ panelde, sesli sohbetin altında) ve yayın penceresi (videonun köşesinde, büyütülebilir).
@@ -117,6 +118,13 @@ export function createLive(
       flashHint(card, t('voice.blocked'), 15000);
     },
   });
+  // 🐞 Test Lab: each stream connection's state (ids shortened; read only).
+  debugHooks.register('live', () => ({
+    status: () => {
+      const peers = live.peerStates();
+      return [['Stream peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : 'none']];
+    },
+  }));
 
   function streamer(): Member | undefined {
     return members.find((m) => m.live);
@@ -154,12 +162,17 @@ export function createLive(
     watchButton.textContent = live.isWatching ? t('live.unwatch') : t('live.watch');
     watchButton.classList.toggle('primary', !live.isWatching);
     watchButton.classList.toggle('is-full', !live.isWatching && full);
+    // Card R23: while streaming the status sits beside the faces in a narrow column: a short line, the full one as its title.
+    status.title = '';
     if (idle) status.textContent = isShell ? t('live.shellIdle') : locked ? t('live.hostOnly') : t('live.idle');
-    else if (mine) status.textContent = `🔴 ${t(host.live === 'camera' ? 'live.youCamera' : 'live.youScreen')}`;
-    else status.textContent = `🔴 ${t(host.live === 'camera' ? 'live.theyCamera' : 'live.theyScreen', { name: host.name })}`;
+    else {
+      status.textContent = `🔴 ${mine ? t('live.youShort') : t('live.theyShort', { name: host.name })}`;
+      status.title = mine ? t(host.live === 'camera' ? 'live.youCamera' : 'live.youScreen') : t(host.live === 'camera' ? 'live.theyCamera' : 'live.theyScreen', { name: host.name });
+    }
     // Sınır hep görünür.
-    limit.textContent = idle ? t('live.limitIdle', { max: LIVE_MAX_VIEWERS }) : t('live.viewers', { n: viewers, max: LIVE_MAX_VIEWERS });
-    limit.title = t('live.limitTitle', { max: LIVE_MAX_VIEWERS });
+    // R23: beside the faces the count is short ("👁 2/4"); the full line is its title.
+    limit.textContent = idle ? t('live.limitIdle', { max: LIVE_MAX_VIEWERS }) : `👁 ${viewers}/${LIVE_MAX_VIEWERS}`;
+    limit.title = idle ? t('live.limitTitle', { max: LIVE_MAX_VIEWERS }) : `${t('live.viewers', { n: viewers, max: LIVE_MAX_VIEWERS })} · ${t('live.limitTitle', { max: LIVE_MAX_VIEWERS })}`;
     limit.classList.toggle('full', !idle && full);
     limit.classList.toggle('near', !idle && !full && LIVE_MAX_VIEWERS - viewers === 1);
 

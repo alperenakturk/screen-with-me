@@ -49,7 +49,22 @@ describe('Çiz-Bil kuralları', () => {
     for (const list of Object.values(DRAW_WORDS)) {
       expect(list.length).toBeGreaterThan(100);
       expect(new Set(list).size).toBe(list.length);
-      expect(list.every((w) => w.length >= 2 && w.length <= 16)).toBe(true);
+      expect(list.every((w) => w.length >= 2 && w.length <= 18)).toBe(true);
     }
+  });
+});
+
+describe('Draw & Guess 2 (P10)', () => {
+  it('12 categories of 45 words a language, no duplicates; the topic and redo messages', async () => {
+    const { DRAW_CATEGORIES, DRAW_WORD_SETS, DRAW_WORDS } = await import('./draw-words.ts');
+    expect(DRAW_CATEGORIES).toHaveLength(12);
+    for (const lang of ['tr', 'en'] as const) {
+      for (const c of DRAW_CATEGORIES) expect(DRAW_WORD_SETS[lang][c].length).toBeGreaterThanOrEqual(40);
+      expect(new Set(DRAW_WORDS[lang]).size).toBe(DRAW_WORDS[lang].length);
+    }
+    const { parseDrawMessage } = await import('./draw.ts');
+    expect(parseDrawMessage(JSON.stringify({ t: 'settings', topic: 'cinema' }))).toEqual({ t: 'settings', topic: 'cinema' });
+    expect(parseDrawMessage(JSON.stringify({ t: 'settings', topic: 'spaceships' }))).toBeNull();
+    expect(parseDrawMessage(JSON.stringify({ t: 'redo' }))).toEqual({ t: 'redo' });
   });
 });

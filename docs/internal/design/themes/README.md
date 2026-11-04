@@ -18,7 +18,6 @@ drawn in the same 64 grid (hats over the head, glasses over the eyes) or in canv
 | `lokum` | Moonlit Nights | default | fez with tassel, moon over the water, tulip | `glowbeam-lokum.svg` |
 | `binbirgece` | Arabian Nights | happy | small cap with a feather, flying carpet, oil lamp, stars | `glowbeam-binbirgece.svg` |
 | `sinema` | Cinema | watching | beret, projector beam, film reel | `glowbeam-sinema.svg` |
-| `opera` | Opera Night | default | top hat with a rose, red curtains | `glowbeam-opera.svg` |
 | `acikhava` | Drive-In | wow | see-through 3D glasses, popcorn box, a road strip | `glowbeam-acikhava.svg` |
 | `gemi` | Ocean Liner | happy | captain's cap, life ring, waves | `glowbeam-gemi.svg` |
 | `tren` | Night Express | default | conductor's cap, lantern, rails | `glowbeam-tren.svg` |
@@ -35,7 +34,6 @@ centre ≈ 36.9, 32, radius 17, 18 with the outline). Fixed so every hat sits on
   far out at x 67).
 - `gemi`, `tren`: caps 2–3 units left and down; their right ends used to hang in the air past the head.
 - `lokum`: fez tilted 6° with the head, base on the head (it hovered on the right).
-- `opera`: top hat centred on the head and tilted 5° (the brim stuck out right).
 - `sinema`, `binbirgece`: beret / cap moved left, base following the head.
 - `gunbatimi`: sunglasses pushed up *onto* the forehead (they sat above the head line), strap replaced by a short arm.
 - `acikhava`, `neon`, `okyanus`: fine as they were.
