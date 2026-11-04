@@ -72,6 +72,23 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
   check(!overlap(dock1, player1), 'video file: the rail is beside the video, never on it', JSON.stringify({ dock1, player1 }));
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/file.png` });
 
+  // BH10 (owner): "Keep the controls open" keeps the rail out in the window too while the video plays, also when the
+  // mouse leaves the video (it rested there with the player's bar; only fullscreen kept it).
+  await page.click('#dock-more');
+  await page.click('#rail-pin');
+  const chat = await rect(page, '.chat-panel');
+  await page.mouse.move(wrap.l + wrap.w / 2, wrap.t + wrap.h / 2, { steps: 3 });
+  await page.mouse.move(chat.l + chat.w / 2, chat.t + chat.h / 2, { steps: 6 });
+  await page.waitForTimeout(3200);
+  const playing = await page.evaluate(() => { const v = document.querySelector('#player video'); return !!v && !v.paused; });
+  const pinDock = await rect(page, '#fs-dock');
+  check(playing && pinDock.shown && !(await page.evaluate(() => document.querySelector('#theater').classList.contains('dock-idle'))), 'pinned, window: the video plays, the mouse is away for 3 s, the rail stays open', JSON.stringify({ playing, pinDock }));
+  check(!overlap(pinDock, await rect(page, '.player')), 'pinned, window: the rail is still beside the video');
+  await page.evaluate(() => {
+    localStorage.setItem('opt:railPin', '0');
+    dispatchEvent(new Event('swm-railpin'));
+  });
+
   // 3) Fullscreen: the same column.
   await page.click('#dock-exit');
   await page.waitForTimeout(800);

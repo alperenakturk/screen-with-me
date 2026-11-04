@@ -159,6 +159,16 @@ const box = (page, selector) =>
   await alex.waitForTimeout(3200);
   check(!(await idle()) && (await alex.evaluate(() => document.querySelector('#rail-pin').getAttribute('aria-pressed'))) === 'true', 'pinned from ⋯: it stays open');
   check(await alex.evaluate(() => document.querySelector('#opt-railpin').checked), 'Settings shows it pinned');
+  // BH10 (owner): pinned, it stays open in the window too when the mouse leaves the video (it used to rest with the
+  // player's bar on mouseleave; only fullscreen kept it).
+  const side = await box(alex, '.chat-panel');
+  await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 2 });
+  await alex.mouse.move(side.x, side.y, { steps: 6 });
+  await alex.waitForTimeout(3200);
+  const pinnedFrame = await box(alex, '#player iframe');
+  const pinnedDock = await box(alex, '#fs-dock');
+  check(!(await idle()), 'pinned, window: the mouse leaves the video for 3 s, the rail stays open');
+  check(pinnedFrame && pinnedDock && pinnedFrame.r <= pinnedDock.l + 1, 'pinned, window: the YouTube player ends at the rail\'s edge', JSON.stringify({ pinnedFrame, pinnedDock }));
   // Unpin from Settings → My screen.
   await alex.evaluate(() => {
     const box = document.querySelector('#opt-railpin');

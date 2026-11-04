@@ -460,8 +460,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the card says "Filme git" by itself.
 
 **0.9.97.56 (BH10: every harness on main, the owner's next round):**
-- [ ] Nothing new to see: this release only updates test scripts. Start the next round from "Next round, start here" at
-  the top of this list.
+- [ ] Your bug: ⋯ → "Keep the controls open" (or Settings → My screen). In the normal window (not fullscreen) play a
+  video (YouTube, a video file, the sync test, a film page with the extension), move the mouse onto the chat and wait:
+  the rail on the right stays open, the video ends at its edge. Turn it off again: the rail rests as before.
+- [ ] The rest only updates test scripts. Start the next round from "Next round, start here" at the top of this list.
 
 **0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
 - [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
