@@ -551,6 +551,8 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.18 BH2: start a YouTube video and move the mouse to the video's right edge and away: the rail slides in and
+  out beside the video, never fading in over it.
 - [ ] 0.9.97.17 BH2: a friend shares the screen, you press Watch, then reload your page and press Watch again: the picture
   comes back (it used to stay black).
 - [ ] 0.9.97.15 R8: 🎮 → On the side → pick a game you never opened: the "How to play" cards are there at once. Open the
