@@ -4,6 +4,26 @@
 // `npm run dev`) and a local video:
 //   NODE_PATH=$(npm root -g) node scripts/harness/tv/run.cjs [http://localhost:8787] [http://localhost:5300/video.webm]
 const { chromium, devices } = require('playwright');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+/** A 10 s mono WAV of a 440 Hz tone, 0.6 s on and 0.3 s off (speech-like), for the friend's fake microphone. */
+function writeSpeechWav() {
+  const rate = 16000;
+  const n = rate * 10;
+  const buf = Buffer.alloc(44 + n * 2);
+  buf.write('RIFF', 0); buf.writeUInt32LE(36 + n * 2, 4); buf.write('WAVE', 8); buf.write('fmt ', 12);
+  buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22); buf.writeUInt32LE(rate, 24);
+  buf.writeUInt32LE(rate * 2, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write('data', 36); buf.writeUInt32LE(n * 2, 40);
+  for (let i = 0; i < n; i++) {
+    const on = (i / rate) % 0.9 < 0.6;
+    buf.writeInt16LE(on ? Math.round(Math.sin((2 * Math.PI * 440 * i) / rate) * 12000) : 0, 44 + i * 2);
+  }
+  const file = path.join(os.tmpdir(), `swm-tv-speech-${process.pid}.wav`);
+  fs.writeFileSync(file, buf);
+  return file;
+}
 const SITE = process.argv[2] || 'http://localhost:8787';
 const VIDEO = process.argv[3] || 'http://localhost:5300/video.webm';
 let fails = 0;
@@ -146,7 +166,11 @@ async function enter(page, room, name) {
   check(!!(await until(() => phone.evaluate(() => document.querySelector('.tv-remote')?.textContent?.includes('kapalı') || document.querySelector('.tv-remote')?.textContent?.includes('off')))), 'phone: the card shows the TV state');
 
   // A friend joins voice: the TV listens (no microphone) and her face glows while she speaks.
-  const friendCtx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
+  // BH10: the friend speaks with a steady tone (0.6 s on, 0.3 s off) from a file of their own: Chrome's default fake
+  // microphone only beeps briefly once a second, and on a loaded machine the 250 ms level samples kept missing it.
+  const speech = writeSpeechWav();
+  const friendBrowser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-audio-capture=${speech}`, '--autoplay-policy=no-user-gesture-required'] });
+  const friendCtx = await friendBrowser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
   await friendCtx.addInitScript(() => { localStorage.setItem('tipsSeen', '1'); if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'tr'); });
   const friend = await friendCtx.newPage();
   friend.on('pageerror', (e) => errors.push(`friend: ${e.message}`));
@@ -176,6 +200,7 @@ async function enter(page, room, name) {
   check(!!(await until(() => phone.evaluate(() => document.querySelector('.tv-remote')?.hidden === true))), 'phone: the remote card goes away');
 
   check(errors.length === 0, 'no page errors', errors.join(' | '));
+  await friendBrowser.close();
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ all TV checks passed');
   process.exit(fails ? 1 : 0);
