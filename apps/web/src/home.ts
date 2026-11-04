@@ -116,7 +116,7 @@ function scene(): string {
   const [a, b, c] = artFaces();
   const face = (x: number, id: string | undefined, voice: boolean) =>
     `<g transform="translate(${x} 18)"><image class="hm-face" href="/avatars/${id}.svg" data-avatar="${id}" x="-15" y="-15" width="30" height="30" clip-path="url(#hm-face)"/><circle class="hm-ring${voice ? ' voice' : ''}" r="16" fill="none" stroke="${voice ? '#3ee08f' : '#ffffff26'}" stroke-width="${voice ? 3 : 2}"/></g>`;
-  return `<svg class="hm-scene" viewBox="0 0 640 380" aria-hidden="true" focusable="false">
+  return `<svg class="hm-scene" viewBox="0 0 690 380" aria-hidden="true" focusable="false">
     <defs>
       <linearGradient id="hm-beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd27a" stop-opacity=".7"/><stop offset="1" stop-color="#ffc65a" stop-opacity=".05"/></linearGradient>
       <linearGradient id="hm-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb070"/><stop offset="1" stop-color="#ff7a5a"/></linearGradient>
@@ -132,7 +132,8 @@ function scene(): string {
       <clipPath id="hm-clip-p"><rect x="6" y="12" width="52" height="96" rx="7"/></clipPath>
       <clipPath id="hm-face"><circle r="15"/></clipPath>
     </defs>
-    <path class="hm-beam" d="M118 190 L640 20 L640 370 Z" fill="url(#hm-beam)"/>
+    <path class="hm-beam" d="M118 190 L690 10 L690 375 Z" fill="url(#hm-beam)"/>
+    <g class="hm-devices" transform="translate(192 36) scale(1.26) translate(-214 -46)">
     <g class="hm-device" data-device="laptop" transform="translate(214 46)">
       <rect width="290" height="180" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
       <use class="hm-screen" href="#hm-pic" x="12" y="12" width="266" height="156" clip-path="url(#hm-clip-l)"/>
@@ -155,16 +156,73 @@ function scene(): string {
       <rect class="hm-prog" x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffc65a"/>
       <rect x="25" y="5" width="14" height="3" rx="1.5" fill="#ffffff26"/>
     </g>
-    <g class="hm-bubble" transform="translate(470 326)">
-      <rect width="156" height="40" rx="20" fill="#6a4cf2"/>
-      <text x="78" y="25.5" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" data-art="artChat"></text>
     </g>
-    <g class="hm-faces" transform="translate(200 300)">
+    <g class="hm-bubble" transform="translate(548 332)">
+      <rect width="140" height="40" rx="20" fill="#6a4cf2"/>
+      <text x="70" y="25.5" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" data-art="artChat"></text>
+    </g>
+    <g class="hm-faces" transform="translate(188 306)">
       ${face(16, a, true)}${face(52, b, true)}${face(88, c, false)}
       <text x="112" y="23" font-size="14" fill="#c9c0ea" data-art="artPeople"></text>
     </g>
     <circle cx="100" cy="190" r="92" fill="url(#hm-halo)"/>
   </svg>`;
+}
+
+/**
+ * Card 15d: the art's Glowbeam wears the shown theme's costume: the Glowbeam group (body + hat / glasses, Design's
+ * `docs/internal/design/themes/`, the 64 grid at `translate(26 58) scale(2.6)`) of `/themes/<theme>-maskot.svg`,
+ * without the theme's canvas props (moon, popcorn…). Until it arrives (or if it fails) the plain happy Glowbeam shows.
+ */
+const GLOW_GROUP = '<g transform="translate(26 58) scale(2.6)">';
+const costumes = new Map<string, Promise<string | null>>();
+function costume(theme: string): Promise<string | null> {
+  let found = costumes.get(theme);
+  if (!found) {
+    found = fetch(`/themes/${theme}-maskot.svg`)
+      .then((r) => (r.ok ? r.text() : null))
+      .then((svg) => (svg ? glowGroup(svg, theme) : null))
+      .catch(() => null);
+    costumes.set(theme, found);
+  }
+  return found;
+}
+/** The Glowbeam group of a theme mascot, its ids made unique for the page. */
+function glowGroup(svg: string, theme: string): string | null {
+  const start = svg.indexOf(GLOW_GROUP);
+  if (start < 0) return null;
+  let depth = 0;
+  for (const m of svg.slice(start).matchAll(/<(\/?)g[\s>]/g)) {
+    depth += m[1] ? -1 : 1;
+    if (depth === 0) {
+      const end = svg.indexOf('>', start + m.index!) + 1;
+      return svg.slice(start, end).replace(/\bid="([^"]+)"/g, `id="hmg-${theme}-$1"`).replace(/url\(#([^)]+)\)/g, `url(#hmg-${theme}-$1)`).replace(/href="#([^"]+)"/g, `href="#hmg-${theme}-$1"`);
+    }
+  }
+  return null;
+}
+let glowTicket = 0;
+function placeGlowbeam(app: HTMLElement): void {
+  const scene = app.querySelector('.hm-scene');
+  if (!scene) return;
+  const theme = document.documentElement.dataset.theme || 'gece';
+  const ticket = ++glowTicket;
+  if (!scene.querySelector('.hm-glow')) {
+    const glow = createMascot(document, { mood: 'happy' });
+    glow.classList.add('hm-glow');
+    for (const [k, v] of Object.entries({ x: '22', y: '112', width: '156', height: '156' })) glow.setAttribute(k, v);
+    scene.append(glow);
+  }
+  void costume(theme).then((group) => {
+    if (!group || ticket !== glowTicket || !scene.isConnected) return;
+    // The 64 grid plus room for hats above it: grid (-6, -14) to (70, 62) in the mascot's 240 canvas.
+    const svg = new DOMParser().parseFromString(
+      `<svg xmlns="http://www.w3.org/2000/svg" class="hm-glow" data-costume="${theme}" viewBox="10.4 21.6 197.6 197.6" x="7.4" y="77.9" width="185.3" height="185.3">${group}</svg>`,
+      'image/svg+xml',
+    ).documentElement;
+    if (svg.nodeName !== 'svg') return;
+    scene.querySelector('.hm-glow')?.replaceWith(document.importNode(svg, true));
+  });
 }
 
 export function renderHome(app: HTMLElement): void {
@@ -219,10 +277,9 @@ export function renderHome(app: HTMLElement): void {
       <p class="hm-help"><span data-h="help"></span> <a id="hm-help" data-h="helpGo"></a></p>
     </section>
   `;
-  // Glowbeam (happy) at the source of the light, in the art's own coordinates.
-  const glow = createMascot(document, { mood: 'happy' });
-  for (const [k, v] of Object.entries({ x: '22', y: '112', width: '156', height: '156' })) glow.setAttribute(k, v);
-  app.querySelector('.hm-scene')?.append(glow);
+  // Glowbeam at the source of the light, in the art's own coordinates (card 15d: in the shown theme's costume).
+  placeGlowbeam(app);
+  window.addEventListener('themechange', () => placeGlowbeam(app));
   const draw = () => {
     for (const node of app.querySelectorAll<HTMLElement>('[data-h]')) node.textContent = h(node.dataset.h as TextKey);
     for (const node of app.querySelectorAll<SVGTextElement>('[data-art]')) node.textContent = h(node.dataset.art as TextKey);

@@ -2,11 +2,6 @@
    reference home-15b/options.html direction A). Loaded with home.ts only (a lazy chunk, not in the room's budget).
    First screen: text + Glowbeam's light on a shared screen, the feature row at its foot; then "How it works". ==== */
 
-/* No theme picker on the home page (card 6g.4; the theme is changed inside the room). */
-html.in-home #theme-button {
-  display: none;
-}
-
 html.in-home main {
   max-width: none;
   padding: 0;

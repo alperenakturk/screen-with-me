@@ -93,3 +93,34 @@ The others were already style hints and keep their silhouettes, hair, colours an
    - the chat at 28 px, the faces strip, the Shorts seats at 52 / 80 px, the join card at 84 px;
    - the unit test for avatar pages;
    - the size budget (SVGs are static files, not in the JS budget).
+
+## R20: a new sponge and a friendlier squid (owner, 4 Nov 2026)
+The owner asked for two faces to change and kept the others: "change only the sponge, the others are okay" and, for the
+squid, "change it too, it's very creepy now". `starfish` stays as it is. Pick page (round 2: the final sponge, then
+the squid options with the recommended one marked): https://claude.ai/artifact/6GRmQNs9ntXHJr6cQ6bs9s (copy: `avatars-2/r20/preview.html`).
+
+Files are in `avatars-2/r20/`. They are made by `r20/draw.py` with the same badge as `full.mjs`, and their ids are already
+prefixed `sponge-` / `squid-`.
+
+**Round 1** (three options each, not kept) was answered as:
+- Sponge: C, the waving one, "with both hands in the air".
+- Squid: none. They "went too far into cute"; the owner wants the character clearly recognisable, without being creepy.
+
+**Round 2:**
+- **Sponge (final): `r20/sponge.svg`.** It keeps the round 1 face: a wavy yellow body with pores, big blue eyes with
+  lashes, two front teeth, freckled cheeks, a collar and short brown shorts (no tie). Both hands are up beside the head,
+  cheering.
+- **Squid (owner to pick): `r20/squid-D|E|F.svg`.** All three are faithful to the character: a long drooping head, a
+  large hanging bulbous nose over a flat mouth, heavy half-closed lids, pale teal-green skin and a brown shirt.
+  They avoid the creepy parts: no red eyes, small dark pupils with a highlight, and soft light backgrounds.
+  - D: bored, both lids half down, on soft blue (recommended).
+  - E: unimpressed, one lid lower and the eyes to the side, on sand.
+  - F: D with his clarinet, on light lilac.
+
+**Owner's pick (4 Nov 2026): "Sponge C (both hands up) · Squid D".** `r20/sponge.svg` and `r20/squid-D.svg` are
+copied to `A/sponge.svg`, `A/squid.svg`, `full/sponge.svg` and `full/squid.svg`. Running `full.mjs` again keeps them.
+
+**After the owner's pick:** copy the chosen file to both `avatars-2/A/<id>.svg` and `avatars-2/full/<id>.svg`.
+`full.mjs` takes a hand-drawn file from `A/` first, so the pick survives a re-run. Then Developer A runs
+`node scripts/avatars.mjs`.
+The ids and avatar pages are unchanged.
