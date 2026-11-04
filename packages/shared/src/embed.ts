@@ -77,8 +77,14 @@ export type EmbedReply =
   | { type: 'key'; key: string; up?: boolean }
   /** Film sitesinin kendi tam ekran düğmesine basıldı: site kendi tam ekranını açsın. */
   | { type: 'fullscreen' }
-  /** Fare film sayfasında oynadı: tam ekran kontrolleri belirsin (yoksa site fareyi hiç görmez). */
-  | { type: 'activity' };
+  /**
+   * Fare film sayfasında oynadı: tam ekran kontrolleri belirsin (yoksa site fareyi hiç görmez). `edge` (card R5): the
+   * mouse is within FILM_EDGE px of the film's right edge (true), or left that band (false).
+   */
+  | { type: 'activity'; edge?: boolean };
+
+/** Card R5: how close to the film's right edge (px) the mouse brings the rail on the film page. */
+export const FILM_EDGE = 40;
 
 /** Bas-konuş tuşu: basılı tutulunca mikrofon açılır (sesli sohbette "bas-konuş" seçiliyse). */
 export function isPushToTalkKey(key: string): boolean {

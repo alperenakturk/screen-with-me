@@ -372,6 +372,19 @@ const RAIL_OUT = `!document.getElementById('theater').classList.contains('dock-i
 if (HEADFUL) {
   await toEdge();
   check(!!(await until(() => a.evalFrame('shell=1', RAIL_OUT), 2000)), 'film sayfası: fare filmin sağ kenarına gelince ray açılıyor');
+  // Card R5: the last 40 px of the film itself bring the rail too (the film's frame tells the site), not only the thin
+  // gutter beside it; a mouse in the middle of the film lets it rest again.
+  const hole = clipRects(await a.evaluate(SHELL_CLIP))[1];
+  await a.mouse('mouseMoved', (hole.x + hole.r) / 2, (hole.y + hole.b) / 2);
+  await a.sleep(150);
+  await a.mouse('mouseMoved', (hole.x + hole.r) / 2 - 10, (hole.y + hole.b) / 2);
+  const rested = await until(async () => !(await a.evalFrame('shell=1', RAIL_OUT)), 3000);
+  const film = clipRects(await a.evaluate(SHELL_CLIP))[1];
+  for (let x = (film.x + film.r) / 2; x < film.r - 20; x += 60) await a.mouse('mouseMoved', x, (film.y + film.b) / 2);
+  await a.mouse('mouseMoved', film.r - 20, (film.y + film.b) / 2);
+  await a.sleep(60);
+  await a.mouse('mouseMoved', film.r - 18, (film.y + film.b) / 2);
+  check(!!rested && !!(await until(() => a.evalFrame('shell=1', RAIL_OUT), 2000)), 'film sayfası: filmin son 40 px\'i de rayı açıyor (R5)', JSON.stringify({ rested, film }));
 } else {
   console.log('skip film sayfası: rayın açılıp kapanması (headless; xvfb-run ile gerçek fare)');
   await a.evalFrame('shell=1', `document.getElementById('rail-pin').click(); 1`);

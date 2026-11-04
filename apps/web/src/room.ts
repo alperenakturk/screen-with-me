@@ -690,6 +690,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="muted small" data-i18n="settings.view"></p>
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.showReactions"></b><span data-i18n="settings.showReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-reactions" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="invite.auto"></b><span data-i18n="invite.auto.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-autoinvite" /></label>
               <label class="set-row desk-only"><span class="set-text"><b data-i18n="settings.railPin"></b><span data-i18n="settings.railPin.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-railpin" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
               <label class="set-row touch-only rotate-row"><span class="set-text"><b data-i18n="settings.rotateFs"></b><span data-i18n="settings.rotateFs.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-rotatefs" /></label>
@@ -1664,7 +1665,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       onFullscreen: () => {
         if (!fullscreen.isActive()) fullscreen.toggle();
       },
-      onActivity: () => fullscreen.poke(),
+      onActivity: (edge) => fullscreen.poke(edge),
     });
     current = { player, slot, youtube: false, own: false };
     $('#theater').classList.remove('yt-rail');
