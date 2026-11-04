@@ -1164,6 +1164,27 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (!media) throw new Error(`not a link: ${url}`);
       addMedia(media, 'enqueue');
     },
+    playback: () => ({ item: !!roomState?.item, paused: roomState?.paused ?? true }),
+    memberId: () => myId,
+    members: () => members.map((m) => ({ id: m.id, name: m.name })),
+    syncTest: () => $<HTMLButtonElement>('#sync-test').click(),
+    isHost: () => amHost(),
+    knockOn: () => roomSettings.knock === true,
+    knock: (on) => {
+      if (!amHost()) return false;
+      send({ t: 'settings', knock: on });
+      return true;
+    },
+    openPrivate: (id) => {
+      const member = members.find((m) => m.id === id);
+      if (member) openPrivate(member);
+      return !!member;
+    },
+    write: (text) => {
+      const input = $<HTMLInputElement>('#chat-input');
+      input.value = text;
+      input.closest('form')?.requestSubmit();
+    },
   };
   setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }), lab: roomLab }));
   // 🐞 Test Lab (card DL): the room's own status lines (the factory only runs while the lab is open).

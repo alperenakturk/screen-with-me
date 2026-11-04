@@ -1043,6 +1043,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   film-server's `/preroll` page, local server only). The connection / engine hooks are inert unless the lab calls them;
   turning the lab off resets latency and a forced fallback, and removes `window.__swmLab` (it used to stay). Harness
   `scripts/harness/lab-video/run.cjs` (27, in CI).
+  **🧪 Scenarios (DL5, `ui/lab-scenarios.ts`, part of the lab chunk):** one-click scripted checks with ✓ / ✗ per step, run
+  with the fake friends and the 🎬 accidents: `basics` (a friend joins, writes, pauses / plays the sync test, leaves),
+  `wait` (a stuck friend: the room waits and plays on), `knock` (host only: the door on, a friend knocks, Let in on their
+  card), `private` (a private line reaches the first of two friends only), `reconnect` (my connection drops while a friend
+  writes: back with the same member id, the line arrives), `selfTest` (fails on purpose). A scenario stops at its first ✗
+  (the rest "–"), a failed one is a red log line, and it always cleans up (its friends leave, a setting goes back).
+  New scenario: a `Scenario` in `SCENARIOS` with steps that throw on failure (`ctx.until`, `ctx.memo`, `ctx.cleanup`);
+  they use only `DebugRoom.lab`, the friends (`FakeFriend.heard` keeps the chat they received) and the page. Harness
+  `scripts/harness/lab-scenarios/run.cjs` (in CI).
   **Games (DL3a, Game Studio):** `games/lab-tools.ts` is loaded only with the lab on (the games stage imports it
   dynamically when `swm:debug` is set, so it is not in the room page's budget; the side games' chunks import it). The hall's
   commands (`games.open.<kind>` for every table and side game, `games.speed` ×10 side-game time (each tick runs `labTicks()`
