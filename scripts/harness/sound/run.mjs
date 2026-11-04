@@ -48,7 +48,7 @@ async function person(name, avatar) {
     localStorage.setItem('opt:voiceCheck', 'skip');
   }, [name, avatar]);
   await page.goto(`${SITE}/r/${room}#back`);
-  await page.waitForSelector('#people-count');
+  await page.waitForSelector('#people-count', { state: 'attached' });
   // A real click: browsers only allow sound after the person has touched the page.
   await page.mouse.click(5, 300);
   return page;
@@ -67,7 +67,7 @@ check(count(a, 'roomJoin') === 1, 'Alex hears Sam joining the room', a.join());
 
 // A reload is not a new arrival.
 await sam.reload();
-await sam.waitForSelector('#people-count');
+await sam.waitForSelector('#people-count', { state: 'attached' });
 await sam.mouse.click(5, 300);
 await until(async () => (await alex.textContent('#people-count')) === '2');
 await sleep(1500);
