@@ -20,7 +20,10 @@ writeFileSync(connectLog, '');
 process.env.SWM_CONNECT_LOG = connectLog;
 const CONNECT_ROOM = 20;
 const WINDOW_MS = 62_000;
+// CI's local server runs with SWM_LOCAL_UNPACED (no connection limit there): then nothing to wait for. Never live.
+const unpaced = process.env.SWM_E2E_UNPACED === '1' && /localhost|127\.0\.0\.1/.test(base);
 async function paceConnects() {
+  if (unpaced) return;
   for (;;) {
     const now = Date.now();
     const recent = existsSync(connectLog)
