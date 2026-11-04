@@ -35,9 +35,27 @@ who takes a card below also ticks the matching hand tests in `STATUS.md`.
 and try after the next deploy). The feedback form works (an issue came in). Dependabot #216 / #217: the owner asked the
 Planner to merge them once main is green.
 
-**Run order (rebalanced 4 Nov 2026, 00:00 UTC):** lane B: R1 ✅ → R2 ✅ → R3 ✅ → R4 ✅ → R5 → R6 → R8, then its bug-hunt list.
-Lane A: R3-6 ✅ → R3-8 ✅ → R11 ✅ → R12 ✅ → R14 ✅ → R13 → R7 → R9 → R10 → BH1. Design: R14 ✅. Main's runs cancel
+**Run order (rebalanced 4 Nov 2026, 00:00 UTC):** lane B: R1 ✅ → R2 ✅ → R3 ✅ → R4 ✅ → R5 ✅ → R6 ✅ → R8 → BH2.
+Lane A: R3-6 ✅ → R3-8 ✅ → R11 ✅ → R12 ✅ → R14 ✅ → R13 ✅ → BH1 ✅ → R7 → R9 → R10 → BH3. Design: R14 ✅. Main's runs cancel
 each other: never merge into main while another deploy runs.
+
+### BH2. Bug hunt: lane B's harness pass + feature sweep (lane B, after R8)
+- Why: before the council review and 1.0, every harness must be green on main and lane B's features read against their
+  cards for edge cases.
+- Done when: sweep (100 screens), phone, tablet, a11y, yt-room, cinema, embed (headful), voice, live, games-gallery,
+  side-games-polish, room-more and invite all pass on main; each regression is root-caused and fixed (no skips); the
+  side games, stream resume, rail, film-page edge and games hall are swept for edge cases; the ~200 ms rail-before-the-
+  player item (low). Findings that change owner-picked behaviour go to "Proposed".
+- Tests: the harnesses themselves, new regression checks per fix.
+
+### BH3. Consistency + server-side bug hunt (lane A, after R7 / R9 / R10)
+- Why: ROADMAP §5 "Consistency": the same numbers in code, privacy policy, help page, UI and store texts; the new
+  server paths (knock, private messages, person key, stream / game resume, fallback pacing) need edge-case cover.
+- Done when: every user-readable limit and retention matches the code (EN + TR policy and help, UI, `web-store.md`); the
+  help harness also checks the privacy policy's numbers; edge cases (reconnect during a knock, a private message to
+  someone who left, host handover while people knock, TV + knock…) each have a test and a fix if broken; old Turkish
+  names in English-first places are listed (not renamed yet).
+- Tests: help harness, new e2e checks.
 
 ### BH1. Bug hunt: stale voice-harness checks + one retry warning (lane A)
 - Why: `scripts/harness/voice/run.mjs` has two checks that fail on main too (the sine-wav energy check and the pre-6g
