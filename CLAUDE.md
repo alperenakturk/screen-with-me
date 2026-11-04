@@ -1318,6 +1318,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   names (e.g. the custom emoji collection).
   Since R17 (0.9.97.24) each tab also keeps its own copy in `sessionStorage` `me:<room>` and reads it first: two tabs of one
   browser with two names keep their names over reloads (the shared `localStorage` copy is only the default for a new tab).
+  BH7: never in the film page's overlay (`isShell`): its session storage is its own partition kept for the whole tab, so it
+  held the name of the last film-page visit after a rename on the main site; the overlay reads the shared record only.
 - **Room actions in chat:** always written but hidden by default; voice join / leave are room actions too (0.9.88); "Hareketleri göster (N)" at the top right of the
   chat (`localStorage` `opt:chatEvents`). The old setting was removed.
 - **Disable emojis (`settings.noReactions`):** host only; the server drops reactions (host included); site
