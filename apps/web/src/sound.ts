@@ -3,14 +3,40 @@
 // @swm/shared/sound-policy. Runs in the room view on the film page too (the site is the overlay there).
 
 import { SOUND_DEFAULT_ON, SoundLimiter, parseVolume, soundGain, type SoundId } from '@swm/shared/sound-policy';
-import { scheduleSound } from '@swm/shared/sounds';
+import type * as Recipes from '@swm/shared/sounds';
 import { load, save } from './storage.ts';
+import { loadChunk } from './ui/lazy.ts';
 
 let ctx: AudioContext | null = null;
 let output: AudioNode | null = null;
 let gestured = false;
 let filmPlaying: () => boolean = () => false;
 const limiter = new SoundLimiter();
+
+/**
+ * Card SZ: the recipes (`@swm/shared/sounds`) are a lazy chunk. No sound can play before the person's first press, so
+ * they load on that press and are there when the first sound comes.
+ */
+let recipes: typeof Recipes | null = null;
+let recipesLoading: Promise<typeof Recipes> | null = null;
+function loadRecipes(): Promise<typeof Recipes> {
+  recipesLoading ??= (async () => {
+    const m = await loadChunk(() => import('@swm/shared/sounds'));
+    if (!m) {
+      recipesLoading = null;
+      throw new Error('sounds did not load');
+    }
+    return (recipes = m);
+  })();
+  return recipesLoading;
+}
+/** Runs `play` with the recipes; a sound whose recipes come later than 300 ms after `asked` is dropped (never late). */
+function withRecipes(asked: number, play: (r: typeof Recipes) => void): void {
+  if (recipes) return play(recipes);
+  void loadRecipes().then((r) => {
+    if (performance.now() - asked < 300) play(r);
+  }, () => {});
+}
 
 /** Browsers only allow sound after the person has interacted with the page; until then sounds are skipped. */
 function hasActivation(): boolean {
@@ -44,6 +70,7 @@ for (const type of ['pointerdown', 'keydown'] as const) {
     type,
     () => {
       gestured = true;
+      void loadRecipes().catch(() => {});
       if (ctx?.state === 'suspended') void ctx.resume().catch(() => {});
     },
     { capture: true },
@@ -79,18 +106,19 @@ export function playSound(id: SoundId): void {
   const audio = context();
   if (!audio || !output || !limiter.allow(id, performance.now())) return;
   const out = output;
-  const start = () => {
-    try {
-      scheduleSound(audio, out, id, gain);
-    } catch {
-      // An old browser without some node: no sound.
-    }
-    // For tests (scripts/harness/sound): which sound really played.
-    dispatchEvent(new CustomEvent('swm-sound', { detail: id }));
-  };
+  const asked = performance.now();
+  const start = () =>
+    withRecipes(asked, (r) => {
+      try {
+        r.scheduleSound(audio, out, id, gain);
+      } catch {
+        // An old browser without some node: no sound.
+      }
+      // For tests (scripts/harness/sound): which sound really played.
+      dispatchEvent(new CustomEvent('swm-sound', { detail: id }));
+    });
   if (audio.state === 'running') return start();
   // Suspended: try once; a sound that comes late feels odd, so give up after 300 ms.
-  const asked = performance.now();
   void audio.resume().then(() => {
     if (performance.now() - asked < 300) start();
   }, () => {});
@@ -101,5 +129,6 @@ export function previewSound(): void {
   const audio = context();
   if (!audio || !output || !soundsOn()) return;
   const out = output;
-  void audio.resume().then(() => scheduleSound(audio, out, 'voiceJoin', soundGain('voiceJoin', { on: true, volume: soundVolume(), filmPlaying: false })), () => {});
+  const asked = performance.now();
+  void audio.resume().then(() => withRecipes(asked, (r) => r.scheduleSound(audio, out, 'voiceJoin', soundGain('voiceJoin', { on: true, volume: soundVolume(), filmPlaying: false }))), () => {});
 }

@@ -452,3 +452,44 @@ html.lab-open:not(.phone) .profile-pop {
 html.lab-open:not(.phone) .recap-invite {
   right: calc(var(--lab-w) + 16px);
 }
+
+/* 🧪 Scenarios (DL5): each scenario with its last result, step by step. */
+.lab-scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lab-scenario {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.lab-scenario.ok {
+  border-color: rgb(90 200 120 / 0.6);
+}
+.lab-scenario.fail {
+  border-color: rgb(240 90 90 / 0.7);
+}
+.lab-scenario-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.lab-scenario p {
+  margin: 4px 0;
+}
+.lab-steps {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.lab-step.ok {
+  color: #8fe0a6;
+}
+.lab-step.fail {
+  color: #ff9a9a;
+}
+.lab-step.skip {
+  opacity: 0.6;
+}

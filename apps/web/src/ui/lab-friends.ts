@@ -17,7 +17,7 @@ const PACES = [2, 5, 10] as const;
 
 type Log = (line: { dir: 'lab' | 'error'; type: string; text: string }) => void;
 
-class FakeFriend {
+export class FakeFriend {
   readonly name: string;
   readonly avatar: Avatar;
   readonly cid: string;
@@ -27,6 +27,8 @@ class FakeFriend {
   state: PlaybackState | null = null;
   hostId: string | null = null;
   members: Member[] = [];
+  /** 🧪 Scenarios (DL5): the last chat lines this friend received (text, sender's name, private or not). */
+  heard: { text: string; by: string; private: boolean }[] = [];
   private conn: RoomConnection;
   private back: ReturnType<typeof setTimeout> | undefined;
   private stall: ReturnType<typeof setTimeout> | undefined;
@@ -79,6 +81,10 @@ class FakeFriend {
         this.members = message.members;
         this.hostId = message.hostId;
         break;
+      case 'chat':
+        this.heard.push({ text: message.message.text, by: message.message.by.name, private: !!message.message.to });
+        if (this.heard.length > 30) this.heard.shift();
+        return;
       case 'kicked':
         this.status = 'gone';
         this.log({ dir: 'lab', type: 'friends', text: `${this.name} was removed from the room` });
@@ -307,6 +313,10 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
       return () => listeners.delete(fn);
     },
     count: () => friends.length,
+    /** 🧪 Scenarios (DL5): the friends themselves, adding and removing them. */
+    list: (): readonly FakeFriend[] => friends,
+    add,
+    removeAll,
     close: () => {
       removeAll();
       removeEventListener('pagehide', removeAll);

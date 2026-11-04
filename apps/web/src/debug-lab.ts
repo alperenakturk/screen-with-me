@@ -18,6 +18,43 @@ export interface DebugRoom {
   kind: string | null;
   /** The room's 👑 Make host message (the lab's fake friends, DL2); the server refuses anyone but the host. */
   makeHost?: (id: string) => void;
+  /** 🎬 Video & network (DL4): this tab's own connection and player only (never the server). */
+  lab?: RoomLab;
+}
+
+/** What the lab's 🎬 tab may do to this tab (card DL4): accidents on my side only, every one of them undoable. */
+export interface RoomLab {
+  /** My connection drops and stays down `ms` (then the room's normal reconnect). */
+  drop(ms: number): void;
+  /** Reconnect now with my member id, the way the room comes back after a deploy. */
+  restart(): void;
+  /** Every room message in and out waits `ms` (0 = off). */
+  latency(ms: number): void;
+  latencyMs(): number;
+  /** New connections over the HTTP fallback (true) or the normal way (false); reconnects now. */
+  forceHttp(on: boolean): void;
+  forcedHttp(): boolean;
+  transport(): string | null;
+  /** My video `seconds` off the room (the drift correction must bring it back); false without a video. */
+  drift(seconds: number): boolean;
+  /** My video counts as stuck for `ms` (the room waits for me); false without a video. */
+  stall(ms: number): boolean;
+  /** Adds a link to the queue like the link box does. */
+  addLink(url: string): void;
+  // 🧪 Scenarios (DL5): what the room shows, and the room's own UI paths.
+  playback(): { item: boolean; paused: boolean };
+  memberId(): string | null;
+  members(): { id: string; name: string }[];
+  /** Presses 🧪 Sync test (an empty room plays it). */
+  syncTest(): void;
+  isHost(): boolean;
+  knockOn(): boolean;
+  /** "Ask before letting people in" (host only; false when I'm not the host). */
+  knock(on: boolean): boolean;
+  /** The person menu's "🔒 Message privately" (false when that member is not here). */
+  openPrivate(memberId: string): boolean;
+  /** Writes in the chat box and sends it (to the private person when the box is private). */
+  write(text: string): void;
 }
 
 let roomSource: (() => DebugRoom) | null = null;

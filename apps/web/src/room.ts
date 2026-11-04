@@ -39,9 +39,6 @@ import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
 import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
-import { createTestPlayer } from './players/test.ts';
-import { createTikTokPlayer } from './players/tiktok.ts';
-import { createVimeoPlayer } from './players/vimeo.ts';
 import { createYouTubePlayer } from './players/youtube.ts';
 import {
   clientId,
@@ -63,7 +60,6 @@ import {
 } from './storage.ts';
 import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
 import { autoInviteOn } from './ui/invite-option.ts';
-import { listenForShortcutsKey, openShortcuts } from './ui/shortcuts.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -76,7 +72,6 @@ import { showNextCard } from './ui/end-card.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
-import { createShortsSearch } from './ui/shorts-search.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -91,10 +86,11 @@ import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
-import { debugHooks, debugTap, setDebugRoom } from './debug-lab.ts';
+import { debugHooks, debugTap, setDebugRoom, type RoomLab } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
+import { loadChunk } from './ui/lazy.ts';
 import type { createTvRoom } from './ui/tv-room.ts';
 /** "Send feedback" (card 9): its own lazy chunk (texts, styles), so the room page stays within its size budget. */
 function openFeedbackDialog(opener: HTMLElement | null): void {
@@ -118,12 +114,28 @@ async function loadTv(): Promise<void> {
   tvModules = { room, remote };
 }
 
+/** The keyboard shortcuts card (card SZ: a lazy chunk, opened by ⌨️ or ?). */
+const openShortcuts = () => void loadChunk(() => import('./ui/shortcuts.ts')).then((m) => m?.openShortcuts());
+
+/**
+ * Card SZ: the film page's voice relay (`ExtVoice`, voice in the extension's offscreen page) is only needed in the
+ * shell, so it is a lazy chunk there, loaded before the room starts like the TV's modules. `null` if it failed to load.
+ */
+let extVoiceModule: typeof import('./ui/voice-ext.ts') | null | undefined;
+
 /**
  * Odaya giriş iki adımlıdır: önce isim, sonra avatar. İkisi de tarayıcıda
  * saklanır ve bir dahakine hazır gelir. "Odaya gir" tıklaması aynı zamanda
  * tarayıcının sesli oynatma izni için gereken etkileşimdir.
  */
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
+  if (isShell && extVoiceModule === undefined) {
+    void loadChunk(() => import('./ui/voice-ext.ts')).then((m) => {
+      extVoiceModule = m;
+      renderRoom(app, roomId, waited);
+    });
+    return;
+  }
   if (tvLab() && !tvModules) {
     void loadTv().then(() => renderRoom(app, roomId, waited));
     return;
@@ -988,7 +1000,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
     makeHost: (member) => void askMakeHost(member),
     messagePrivately: (member) => openPrivate(member),
-  });
+  }, extVoiceModule?.ExtVoice ?? null);
   /** Hand the host role to someone (0.9.93.2): asked first, it can't be taken back. */
   async function askMakeHost(member: Member): Promise<void> {
     const yes = await confirmDialog({ icon: '👑', title: t('makeHostTitle', { name: member.name }), text: t('makeHostText'), yes: t('makeHost') });
@@ -1132,7 +1144,49 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   // Hidden test panel (card 12): its live numbers; never names or ids.
-  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }) }));
+  // 🎬 Video & network (card DL4): accidents on this tab's own connection and player, for the lab only.
+  const roomLab: RoomLab = {
+    drop: (ms) => connection.labDrop(ms),
+    restart: () => connection.reconnect(),
+    latency: (ms) => connection.labLatency(ms),
+    latencyMs: () => connection.labLatencyMs,
+    forceHttp: (on) => connection.labForce(on ? 'http' : null),
+    forcedHttp: () => connection.labForced === 'http',
+    transport: () => connection.transport,
+    drift: (seconds) => engine.labDrift(seconds),
+    stall: (ms) => {
+      if (!roomState?.item) return false;
+      engine.labStall(ms);
+      return true;
+    },
+    addLink: (url) => {
+      const media = parseMediaInput(url);
+      if (!media) throw new Error(`not a link: ${url}`);
+      addMedia(media, 'enqueue');
+    },
+    playback: () => ({ item: !!roomState?.item, paused: roomState?.paused ?? true }),
+    memberId: () => myId,
+    members: () => members.map((m) => ({ id: m.id, name: m.name })),
+    syncTest: () => $<HTMLButtonElement>('#sync-test').click(),
+    isHost: () => amHost(),
+    knockOn: () => roomSettings.knock === true,
+    knock: (on) => {
+      if (!amHost()) return false;
+      send({ t: 'settings', knock: on });
+      return true;
+    },
+    openPrivate: (id) => {
+      const member = members.find((m) => m.id === id);
+      if (member) openPrivate(member);
+      return !!member;
+    },
+    write: (text) => {
+      const input = $<HTMLInputElement>('#chat-input');
+      input.value = text;
+      input.closest('form')?.requestSubmit();
+    },
+  };
+  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }), lab: roomLab }));
   // 🐞 Test Lab (card DL): the room's own status lines (the factory only runs while the lab is open).
   debugHooks.register('room', () => ({
     status: () => [
@@ -1631,12 +1685,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       player =
         media.kind === 'youtube'
           ? await createYouTubePlayer(slot, media.id, onError)
-          : media.kind === 'tiktok'
-            ? await createTikTokPlayer(slot, media.id, onError)
+          : // Card SZ: the TikTok, Vimeo and sync-test players are lazy chunks (most rooms never play one).
+            media.kind === 'tiktok'
+            ? await (await import('./players/tiktok.ts')).createTikTokPlayer(slot, media.id, onError)
             : media.kind === 'vimeo'
-              ? await createVimeoPlayer(slot, media.id, media.hash, onError)
+              ? await (await import('./players/vimeo.ts')).createVimeoPlayer(slot, media.id, media.hash, onError)
               : media.kind === 'test'
-                ? createTestPlayer(slot)
+                ? (await import('./players/test.ts')).createTestPlayer(slot)
                 : createHtml5Player(slot, media.url, onError, media.poster);
     } catch {
       onError();
@@ -2358,10 +2413,24 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !shortsAddForm.hidden) setShortsAdd(false);
   });
-  const shortsSearch = createShortsSearch($('#shorts-add-results'), (id) => {
-    addMedia({ kind: 'youtube', id, short: true }, 'enqueue');
-    flashHint(shortsAdd, t('queuedNote'), 2000);
-  });
+  // Card SZ: the Shorts search list is a lazy chunk, made on the first search.
+  let shortsSearchMade: Promise<{ search: (q: string) => Promise<void> | void; clear: () => void }> | null = null;
+  const shortsSearch = {
+    search: (q: string) => {
+      shortsSearchMade ??= loadChunk(() => import('./ui/shorts-search.ts')).then((m) => {
+        if (!m) {
+          shortsSearchMade = null;
+          throw new Error('shorts-search did not load');
+        }
+        return m.createShortsSearch($('#shorts-add-results'), (id) => {
+          addMedia({ kind: 'youtube', id, short: true }, 'enqueue');
+          flashHint(shortsAdd, t('queuedNote'), 2000);
+        });
+      });
+      return shortsSearchMade.then((made) => made.search(q)).catch(() => flashHint(shortsAdd, t('searchError.failed'), 4000));
+    },
+    clear: () => void shortsSearchMade?.then((made) => made.clear()),
+  };
   shortsAddForm.addEventListener('submit', (event) => {
     event.preventDefault();
     if (isTikTokShortLink(shortsAddInput.value)) {
@@ -3188,7 +3257,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     createRoomMoreMenu(moreButton, () => moreItems(true));
   }
   // ? opens the keyboard shortcuts card (0.9.93.2; not on a TV, whose remote has its own keys).
-  if (!tv) listenForShortcutsKey();
+  if (!tv) {
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== '?' || event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
+      if (document.querySelector('.dialog-backdrop:not([hidden])')) return;
+      event.preventDefault();
+      openShortcuts();
+    });
+  }
   // 0.9.93.1: 🔗 Invite opens the invite window (link, copy, share, WhatsApp, QR); ⋯ → Invite on a phone presses it too.
   // R12: the host also gets "Ask before letting people in" in the invite window.
   const door = () => (amHost() ? { on: roomSettings.knock === true, set: (on: boolean) => send({ t: 'settings', knock: on }) } : undefined);

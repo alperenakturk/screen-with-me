@@ -459,6 +459,27 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
+- [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
+  ready", "Knock", "A private message", "My connection drops". Each line turns ✓ (the self-test turns ✗ on purpose);
+  the fake friends leave by themselves afterwards. Tell the Planner any ✗ with its reason.
+
+**0.9.97.54 (🐞 Test Lab, step DL4: 🎬 Video & network):**
+- [ ] In a room with `?debug=1` on, add a fake friend (👥) and start the sync test. Then 🐞 → 🎬: "drop my connection"
+  (the room dot turns yellow, after 6 s it is green again and the friend is still there), "the server restarted"
+  (reconnects at once), "slow (latency)" (a message you write arrives late; Undo), "force the HTTP fallback"
+  (still works; "back to normal"), "drift +3 s" (the counter jumps, then comes back in step), "stall for N s" (the
+  room waits for you, then plays on).
+
+**0.9.97.53 (card BH8: the backup connection's idle sessions):**
+- [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
+  while someone on the backup connection closes their tab.
+
+**0.9.97.52 (card SZ: a lighter room page):**
+- [ ] Nothing new to see: in a room join voice (the IP notice and the pre-join window open at once), share your screen,
+  a friend watches it; a TikTok / Vimeo link and the sync test still play; sounds still play; ? opens the shortcuts card.
+  On the film page voice still works.
+
 **0.9.97.50 (security R4-9 + R4-10):**
 - [ ] Nothing to see: search YouTube twice for the same words; both work (the second comes from the server's cache
   when the address allows it). The hidden TV pairing stays off on the live site.

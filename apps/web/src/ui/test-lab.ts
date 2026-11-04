@@ -22,6 +22,8 @@ import {
   type LabTab,
 } from '../debug-lab.ts';
 import { createFriends } from './lab-friends.ts';
+import { createVideoLab } from './lab-video.ts';
+import { createScenarios } from './lab-scenarios.ts';
 import './test-lab.css';
 
 const TEXT = {
@@ -433,6 +435,12 @@ export function mountDebugPanel(): void {
     commands: friends.commands,
     status: () => (friends.count() ? [['Fake friends', String(friends.count())]] : []),
   }));
+  // 🎬 Video & network (DL4): accidents on this tab's own connection and player.
+  const video = createVideoLab();
+  const unregisterVideo = debugHooks.register('video', () => ({ commands: video.commands, status: video.status }));
+  // 🧪 Scenarios (DL5): scripted two-person checks with the fake friends.
+  const scenarios = createScenarios(friends, runById);
+  const unregisterScenarios = debugHooks.register('scenarios', () => ({ commands: scenarios.commands }));
 
   // ---- head, tabs, body, foot ----
   const closeButton = el('button', { type: 'button', class: 'icon-btn debug-close', 'aria-label': tx.close }, '✕');
@@ -596,7 +604,12 @@ export function mountDebugPanel(): void {
                 const c = allCommands().find((x) => x.id === id);
                 if (c) void runAndShow(c, arg);
               }), el('h4', {}, tx.commands), commandView(tab))
-            : commandView(tab);
+            : tab === 'scenarios'
+              ? el('div', { class: 'lab-view', 'data-view': 'scenarios' }, scenarios.view((id) => {
+                  const c = allCommands().find((x) => x.id === id);
+                  if (c) void runAndShow(c);
+                }))
+              : commandView(tab);
     const commands = tab === 'status' || tab === 'log' ? commandView(tab) : null;
     body.replaceChildren(view, ...(commands && commands.querySelector('.lab-commands') ? [el('h4', {}, tx.commands), commands] : []), undoBar);
     draw();
@@ -769,6 +782,9 @@ export function mountDebugPanel(): void {
     if (!panel.hidden && current === 'log') drawLog();
   };
   logListeners.add(onLog);
+  const offScenarios = scenarios.onChange(() => {
+    if (!panel.hidden && current === 'scenarios') show('scenarios');
+  });
   const offFriends = friends.onChange(() => {
     if (!panel.hidden && current === 'friends') show('friends');
   });
@@ -818,6 +834,10 @@ export function mountDebugPanel(): void {
     friends.close();
     offFriends();
     unregisterFriends();
+    video.close();
+    unregisterVideo();
+    offScenarios();
+    unregisterScenarios();
     clearInterval(timer);
     clearInterval(sampler);
     sampler = 0;
@@ -828,9 +848,11 @@ export function mountDebugPanel(): void {
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('fullscreenchange', onFullscreen);
     document.documentElement.classList.remove('lab-open');
+    // The harness / console handle exists only while the lab is on.
+    delete (window as unknown as { __swmLab?: unknown }).__swmLab;
     debugOff();
   }
   offButton.addEventListener('click', turnOff);
   // For the lab's harness (and the owner's console): the same safe paths as the buttons.
-  (window as unknown as { __swmLab?: unknown }).__swmLab = { run: (id: string, arg?: string) => { const c = allCommands().find((x) => x.id === id); return c ? runCommand(c, arg) : Promise.reject(new Error(`no command ${id}`)); }, log: () => log.slice(), bugText: () => bugText(tx) };
+  (window as unknown as { __swmLab?: unknown }).__swmLab = { run: (id: string, arg?: string) => { const c = allCommands().find((x) => x.id === id); return c ? runCommand(c, arg) : Promise.reject(new Error(`no command ${id}`)); }, log: () => log.slice(), bugText: () => bugText(tx), status: () => hookStatus(), sync: () => { const r = debugRoom(); return r ? { drift: r.drift, jumps: r.jumps } : null; } };
 }

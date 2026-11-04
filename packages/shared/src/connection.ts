@@ -65,6 +65,13 @@ export class RoomConnection {
   private lastPingAt = 0;
   /** Art arda açılamayan bağlantı sayısı. */
   private failures = 0;
+  /**
+   * 🐞 Test Lab (card DL4) only, inert otherwise: the network is "down" until this time (no new connection opens), every
+   * message waits this long each way, and the transport forced for new connections.
+   */
+  private offlineUntil = 0;
+  private latencyMs = 0;
+  private forced: Transport | null = null;
 
   constructor(private readonly options: RoomConnectionOptions) {
     this.memberId = options.handover === false ? null : takeHandover(options.roomId);
@@ -83,8 +90,37 @@ export class RoomConnection {
 
   send(message: ClientMessage): boolean {
     if (this.ws?.readyState !== OPEN) return false;
-    this.ws.send(JSON.stringify(message));
+    const ws = this.ws;
+    const data = JSON.stringify(message);
+    // Lab latency: the same delay for every message keeps their order.
+    if (this.latencyMs > 0) setTimeout(() => ws.readyState === OPEN && ws.send(data), this.latencyMs);
+    else ws.send(data);
     return true;
+  }
+
+  /** 🐞 Test Lab: the connection drops (as on a network blip) and none opens again for `downMs`. */
+  labDrop(downMs: number): void {
+    this.offlineUntil = Date.now() + Math.max(0, downMs);
+    this.ws?.close(4000, 'lab drop');
+  }
+
+  /** 🐞 Test Lab: every message in and out waits `ms` (0 = off). */
+  labLatency(ms: number): void {
+    this.latencyMs = Math.max(0, Math.min(10_000, Math.round(ms)));
+  }
+
+  get labLatencyMs(): number {
+    return this.latencyMs;
+  }
+
+  /** 🐞 Test Lab: new connections go this way (`null` = the normal choice); reconnects now. */
+  labForce(transport: Transport | null): void {
+    this.forced = transport;
+    this.reconnect();
+  }
+
+  get labForced(): Transport | null {
+    return this.forced;
   }
 
   /** Which way the open connection goes (null while connecting). */
@@ -117,8 +153,20 @@ export class RoomConnection {
 
   private open(status: ConnectionStatus): void {
     this.options.onStatus?.(status);
+    // Lab "network down": try again once it is back.
+    const down = this.offlineUntil - Date.now();
+    if (down > 0) {
+      this.options.onStatus?.('reconnecting');
+      this.timers.push(setTimeout(() => this.open('reconnecting'), down));
+      return;
+    }
     const base = this.options.serverUrl.replace(/^http/, 'ws').replace(/\/$/, '');
-    const ws = openSocket(`${base}/api/rooms/${encodeURIComponent(this.options.roomId)}/ws`, { upgrade: true, onTransport: (transport) => this.options.onTransport?.(transport) });
+    const forced = this.forced;
+    const ws = openSocket(`${base}/api/rooms/${encodeURIComponent(this.options.roomId)}/ws`, {
+      upgrade: forced === null,
+      ...(forced ? { force: forced } : {}),
+      onTransport: (transport) => this.options.onTransport?.(transport),
+    });
     this.ws = ws;
     let opened = false;
     const openTimer = setTimeout(() => {
@@ -159,7 +207,7 @@ export class RoomConnection {
       }, PING_INTERVAL_MS);
     });
 
-    ws.addEventListener('message', (event) => {
+    const receive = (event: { data: unknown }) => {
       this.lastHeard = Date.now();
       let message: ServerMessage;
       try {
@@ -170,6 +218,11 @@ export class RoomConnection {
       if (message.t === 'pong') this.options.clock.addSample(message.c, message.s);
       if (message.t === 'welcome') this.memberId = message.you;
       this.options.onMessage(message);
+    };
+    ws.addEventListener('message', (event) => {
+      // Lab latency: the message arrives `latencyMs` later (still in order, and only from this connection).
+      if (this.latencyMs > 0) setTimeout(() => this.ws === ws && receive(event), this.latencyMs);
+      else receive(event);
     });
 
     ws.addEventListener('close', (event) => {
