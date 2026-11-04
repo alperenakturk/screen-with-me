@@ -15,6 +15,8 @@
     "./live-p2p": "./src/live-p2p.ts",
     "./games/xox": "./src/games/xox.ts",
     "./games/four": "./src/games/four.ts",
+    "./games/dama": "./src/games/dama.ts",
+    "./games/bot": "./src/games/bot.ts",
     "./games/board": "./src/games/board.ts",
     "./games/draw": "./src/games/draw.ts",
     "./games/draw-words": "./src/games/draw-words.ts",

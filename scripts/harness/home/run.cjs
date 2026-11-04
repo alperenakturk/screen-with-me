@@ -1,3 +1,6 @@
+// Card 15e: one soft cone from Glowbeam's lamp lights all three screens (the nearest brightest, no hard edge, nothing left
+// at the edges); laptop, tablet and phone stand in one row with even gaps and cover nothing; at 1920 and 1366 the text
+// and the art share a centre line with the same space left, between and right (± 24 px), the art ≥ 15 % bigger than 15d.
 // Card 15b (the owner's 1A "Light beam" · 2A · 3A; Design's notes docs/internal/design/home-15b.md): the home page's
 // first screen fits (the feature row's foot is on screen, nothing sideways) at 1920×1080, 1366×768, 1180×820 (a
 // sideways tablet), 820×1180 (an upright tablet) and 390×844 (a phone), in English and Turkish; there is no video link
@@ -98,8 +101,6 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
           rings: svg.querySelectorAll('.hm-ring.voice').length,
           textShown,
           artW: Math.round(document.querySelector('.hm-art').getBoundingClientRect().width),
-          // Card 15d: the laptop's drawn width as a share of the art (15c: 290 of 640 = 0.453).
-          laptopShare: svg.querySelector('[data-device="laptop"] rect').getBoundingClientRect().width / svg.getBoundingClientRect().width,
           // Card 15d: nothing in the art may be an empty box: no img / video / iframe / foreignObject, every <image> has
           // a picture that loaded, and every drawn shape has a fill or a stroke that is not black.
           empty: [...svg.querySelectorAll('*')].filter((e) => {
@@ -119,7 +120,86 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
       });
       check(art.devices === 'laptop,tablet,phone' && art.screens === 3 && art.bars === 3, `${where}: three devices, three screens, three progress bars`, art);
       check(new Set(art.ids).size === 3 && art.ids.every((id) => THEMED.includes(id)) && art.hrefs.every((h, i) => h === `/avatars/${art.ids[i]}.svg`) && art.rings === 2, `${where}: three different themed avatars, two in voice rings`, art.ids);
-      check(art.laptopShare >= 0.453 * 1.15, `${where}: the devices are ≥ 15 % bigger than in 15c`, art.laptopShare.toFixed(3));
+      // Card 15e: one tidy device row under one cone of light; text and art on one centre line with even margins.
+      const lay = await page.evaluate(() => {
+        const box = (e) => e.getBoundingClientRect();
+        const svg = document.querySelector('.hm-scene');
+        // A device's footprint: its body and (the laptop) its base; the <use> pictures overflow their clips, so not them.
+        const foot = [...svg.querySelectorAll('.hm-device')].map((d) => {
+          const parts = [d.querySelector(':scope > rect'), d.querySelector(':scope > path')].filter(Boolean).map(box);
+          return { l: Math.min(...parts.map((r) => r.left)), r: Math.max(...parts.map((r) => r.right)), t: Math.min(...parts.map((r) => r.top)), b: Math.max(...parts.map((r) => r.bottom)) };
+        });
+        const overlap = (a, b) => a.l < b.r - 0.5 && b.l < a.r - 0.5 && a.t < b.b - 0.5 && b.t < a.b - 0.5;
+        const beam = svg.querySelector('.hm-beam');
+        const inv = beam.getScreenCTM().inverse();
+        // Every screen's four corners (its sheen has the screen's exact shape) lie inside the cone.
+        const sheens = [...svg.querySelectorAll('.hm-sheen')];
+        const lit = sheens.every((sh) => {
+          const r = box(sh);
+          return [[r.left + 1, r.top + 1], [r.right - 1, r.top + 1], [r.left + 1, r.bottom - 1], [r.right - 1, r.bottom - 1]].every(([x, y]) => beam.isPointInFill(new DOMPoint(x, y).matrixTransform(inv)));
+        });
+        const scene = box(svg);
+        const text = box(document.querySelector('.hm-text'));
+        return {
+          gaps: [foot[1].l - foot[0].r, foot[2].l - foot[1].r].map((g) => Math.round(g * 10) / 10),
+          overlaps: foot.some((a, i) => foot.some((b, j) => i < j && overlap(a, b))),
+          sameLine: Math.round(Math.max(...foot.map((f) => f.b)) - Math.min(...foot.map((f) => f.b))),
+          lit,
+          sheen: sheens.map((sh) => Number(sh.getAttribute('opacity'))),
+          blurred: !!beam.getAttribute('filter') && !!beam.closest('[mask]'),
+          margins: [text.left, scene.left - text.right, innerWidth - scene.right].map(Math.round),
+          centres: Math.round(Math.abs((text.top + text.bottom) / 2 - (scene.top + scene.bottom) / 2)),
+          artW: Math.round(scene.width),
+          inArt: foot.every((f) => f.l >= scene.left - 1 && f.r <= scene.right + 1),
+        };
+      });
+      check(lay.gaps.every((g) => g > 4) && Math.abs(lay.gaps[0] - lay.gaps[1]) <= 2 && !lay.overlaps && lay.sameLine <= 1 && lay.inArt, `${where}: laptop, tablet and phone in one row on one line, even gaps, none covering another, all inside the art`, lay);
+      check(lay.lit && lay.blurred && lay.sheen[0] > lay.sheen[1] && lay.sheen[1] > lay.sheen[2], `${where}: one soft cone lights all three screens, the nearest brightest`, { lit: lay.lit, sheen: lay.sheen });
+      if (wide && name !== '1180') {
+        const spread = Math.max(...lay.margins) - Math.min(...lay.margins);
+        check(spread <= 24 && lay.centres <= 12, `${where}: equal margins left, between and right (± 24 px), one centre line`, { margins: lay.margins, centres: lay.centres });
+        // 15d's art was 588 px wide at 1366 and 1920.
+        check(lay.artW >= 588 * 1.15, `${where}: the art is ≥ 15 % bigger than in 15d`, lay.artW);
+      }
+      if (lang === 'en' && wide && name !== '1180') {
+        // No hard edge: only the light on a plain background, then no step between neighbouring pixels and nothing left
+        // of it at the edges of a frame 100 px around the art.
+        await page.addStyleTag({ content: `html, body { background: #120e2a !important } body::before, body::after { display: none !important }
+          .hm-text, .hm-feat, .hm-peek, .topbar, .hm-scene > :not(.hm-light):not(defs) { visibility: hidden !important } .hm-beam { animation: none !important }` });
+        await page.waitForTimeout(200);
+        const sb = await page.evaluate(() => { const r = document.querySelector('.hm-scene').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+        const vp = page.viewportSize();
+        const clip = { x: Math.max(0, sb.x - 100), y: Math.max(0, sb.y - 100) };
+        clip.width = Math.min(vp.width, sb.x + sb.w + 100) - clip.x;
+        clip.height = Math.min(vp.height, sb.y + sb.h + 100) - clip.y;
+        const png = (await page.screenshot({ clip })).toString('base64');
+        const edge = await page.evaluate(async (data) => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${data}`;
+          await img.decode();
+          const c = document.createElement('canvas');
+          c.width = img.width;
+          c.height = img.height;
+          const g = c.getContext('2d');
+          g.drawImage(img, 0, 0);
+          const px = g.getImageData(0, 0, c.width, c.height).data;
+          const v = (x, y) => { const i = (y * c.width + x) * 4; return (px[i] + px[i + 1] + px[i + 2]) / 3; };
+          const bg = (18 + 14 + 42) / 3;
+          let step = 0, rim = 0, peak = 0;
+          for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+            const here = v(x, y);
+            peak = Math.max(peak, here - bg);
+            if (x) step = Math.max(step, Math.abs(here - v(x - 1, y)));
+            if (y) step = Math.max(step, Math.abs(here - v(x, y - 1)));
+            if (x === 0 || y === 0 || x === c.width - 1 || y === c.height - 1) rim = Math.max(rim, here - bg);
+          }
+          return { step: Math.round(step * 10) / 10, rim: Math.round(rim * 10) / 10, peak: Math.round(peak) };
+        }, png);
+        check(edge.peak >= 40 && edge.step <= 8 && edge.rim <= 6, `${where}: the light has no hard edge and fades out before the art's surroundings end`, edge);
+        await page.reload();
+        await page.waitForSelector('.hm-glow[data-costume]');
+        await page.waitForTimeout(500);
+      }
       check(art.empty.length === 0, `${where}: no empty box in the art`, art.empty);
       check(art.costume === art.theme, `${where}: Glowbeam wears the shown theme's costume`, { costume: art.costume, theme: art.theme });
       check(name === '390' ? art.textShown === 0 : art.textShown === 4, `${where}: ${name === '390' ? 'no art text on a phone' : 'pill, chat bubble and people line show'}`, art.textShown);

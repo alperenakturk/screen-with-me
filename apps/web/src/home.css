@@ -14,21 +14,25 @@ html.in-home main {
   flex-direction: column;
   box-sizing: border-box;
   width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
+  /* Card 15e: the art's soft light may spill past its box; never into a sideways scroll. */
+  overflow-x: clip;
 }
 
+/* Card 15e: text and art share one centre line, and the space left of the text, between the two and right of the art
+   is the same (space-evenly over a 40 px minimum). The art is ~15 % bigger than 15d's at 1366 (52vw), at most 1000 px
+   and never taller than the first screen leaves room for. */
 .hm-main {
   flex: 1;
   min-height: 0;
   display: flex;
   align-items: center;
+  justify-content: space-evenly;
   gap: 40px;
-  padding: 16px 56px;
+  padding: 16px 40px;
 }
 
 .hm-text {
-  flex: 1 1 46%;
+  flex: 0 0 500px;
   min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -39,7 +43,7 @@ html.in-home main {
 }
 
 .hm-art {
-  flex: 1 1 54%;
+  flex: 0 1 min(52vw, 1000px, (100dvh - var(--hm-top, 64px) - 230px) * 890 / 314);
   min-width: 0;
   display: grid;
   align-content: center;
@@ -49,6 +53,7 @@ html.in-home main {
   width: 100%;
   height: auto;
   display: block;
+  overflow: visible;
   font-family: Inter, system-ui, sans-serif;
 }
 
@@ -215,6 +220,10 @@ html.in-home main {
 /* Feature row at the foot of the first screen. */
 .hm-feat {
   flex: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
@@ -405,6 +414,10 @@ html.in-home main {
   .hm-slogan {
     font-size: 72px;
   }
+
+  .hm-text {
+    flex-basis: 560px;
+  }
 }
 
 /* ---- Upright tablet: one centred column, the art on top ---- */
@@ -460,6 +473,14 @@ html.in-home main {
     font-size: 48px;
   }
 
+  .hm-text {
+    flex: 1 1 46%;
+  }
+
+  .hm-art {
+    flex: 1 1 54%;
+  }
+
   .hm-feat,
   .hm-how {
     padding-inline: 28px;
@@ -489,7 +510,6 @@ html.phone .hm-scene .hm-pill-art {
 html.phone .hm-art {
   order: -1;
   flex: none;
-  margin: 0 -6px;
 }
 
 html.phone .hm-text {

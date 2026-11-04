@@ -22,6 +22,8 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440] },
   quiz: { min: 2, max: 8, place: 'stage', size: [760, 540], fit: [540, 380] },
   poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440] },
+  // 🎲 Classics (P6): two players, or one against Glowbeam.
+  classics: { min: 1, max: 2, place: 'stage', size: [480, 620], fit: [360, 480] },
 };
 
 /**
@@ -74,6 +76,13 @@ export interface GameNews {
 
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
+  {
+    v: '0.9.97.35',
+    kinds: ['classics'],
+    badge: 'new',
+    tr: 'Yeni: 🎲 Klasikler. XOX, Dört Taş ve yeni dama tek masada, raftan seç. Yalnızsan Glowbeam’e karşı oyna (kolay / orta); Glowbeam hakemlik de yapıyor.',
+    en: 'New: 🎲 Classics. Tic-tac-toe, Four in a Row and the new dama at one table, picked from a shelf. Alone? Play Glowbeam (easy / medium); it referees too.',
+  },
   {
     v: '0.9.91.11',
     kinds: ['poker'],

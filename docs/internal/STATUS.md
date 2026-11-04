@@ -433,6 +433,22 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.36 (the film page keeps a new name, BH7):**
+- [ ] In a room on the main site change your name (profile → name), then open a film page in the room with the
+  extension: your friend sees you with the new name on the film page, never the old one.
+
+**0.9.97.34 (bigger chat messages in fullscreen, card R21):**
+- [ ] On a computer, open a YouTube video and a video file in fullscreen; from a second tab write a message: it comes
+  in on the right side, about a quarter down the video (not in the very top corner), with clearly bigger text, left of
+  the button column. Send five or six quick ones: they stack and never cover the player's bottom bar. Same on a film
+  page in fullscreen. A phone looks as before.
+
+**0.9.97.33 (home art: one soft light, a tidy device row, card 15e):**
+- [ ] Open the home page on your computer (and at 1366 × 768 if you can): Glowbeam's one cone of light falls on the
+  laptop, the tablet and the phone, the laptop brightest; no slab behind them and no line where the light ends; the
+  three devices stand in one row with equal gaps, none covering another; the space left of the text, between the text
+  and the art, and right of the art looks the same; the phone: the art on top, the phone device not cut off.
+
 **0.9.97.30 (parody avatars removed after the IP audit, card R20):**
 - [ ] In a room, open the avatar picker: two tabs, "Themed" and "Genres" ("Temalı" / "Türler"), no Parody tab. Genres
   shows 18 (detective, pirate, astronaut, inventor, ninja, cowboy, vampire, robot, hero, explorer, chef, rocker, ghost,
@@ -606,6 +622,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.35 Classics: open 🎮 → Together: there is one "Classics" card (no separate XOX / Four in a Row). Open it: a
+  shelf of boxes (XOX, Four in a Row, Dama; chess and backgammon say "soon"). Pick Dama alone: "Play against Glowbeam"
+  offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
+  stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
+  shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
 - [ ] 0.9.97.37 Quiz bank: play two or three quizzes in a row with a friend. Questions start easy and get harder within a
   game (stars next to the category), and the same questions don't come back game after game (the help page says
   "Almost 1200 questions").

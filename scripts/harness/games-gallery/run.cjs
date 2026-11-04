@@ -80,7 +80,7 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
   const g = await gallery(alex);
   check(g.open && g.tabs.join() === 'together,side', 'the gallery opens with two tabs', JSON.stringify(g));
   check(g.on === 'together', 'it starts on Together', String(g.on));
-  check(g.cards.join() === 'xox,four,draw,quiz,poker', 'Together has a card per room game', g.cards.join());
+  check(g.cards.join() === 'draw,quiz,poker,classics', 'Together has a card per room game', g.cards.join());
   check(g.covers >= 4, 'covers are drawn on the cards', String(g.covers));
   check(!g.scroll && g.onScreen, 'fits without scrollbars on a laptop', g.size);
   await alex.screenshot({ path: __dirname + '/gallery-together.png' });
@@ -99,7 +99,7 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
 
   // Every Together card opens its table (the window switches from Snack Bar to the table; Sam gets the invite).
   await tab(alex, 'together').catch(() => {});
-  for (const kind of ['xox', 'four', 'draw', 'quiz', 'poker']) {
+  for (const kind of ['classics', 'draw', 'quiz', 'poker']) {
     await gallery(alex);
     await alex.evaluate(() => document.querySelector('#game-menu .hub-tab[data-tab="together"]').click());
     await alex.evaluate((k) => document.querySelector(`#game-menu .hub-card[data-kind="${k}"]`).click(), kind);
@@ -107,7 +107,7 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
     check(!!opened, `the ${kind} card opens its table`, String(opened));
     const invited = await until(() => sam.evaluate(() => !!document.getElementById('game-invite')), 4000);
     check(!!invited, `Sam gets the ${kind} invite`);
-    if (kind === 'xox') {
+    if (kind === 'classics') {
       // R10: in a narrow window the game's name stays whole; only "· started by …" gets cut.
       const narrow = await alex.evaluate(async () => {
         const st = document.getElementById('game-stage');
