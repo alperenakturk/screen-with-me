@@ -9,7 +9,7 @@
 // için bunlar da yakalanır.
 
 import { OffsetClock } from '@swm/shared/clock';
-import { isForwardedKey, isPushToTalkKey, KNOWN_PLAYER_CONTROLS, type EmbedControl } from '@swm/shared/embed';
+import { FILM_EDGE, isForwardedKey, isPushToTalkKey, KNOWN_PLAYER_CONTROLS, type EmbedControl } from '@swm/shared/embed';
 import type { PlaybackState } from '@swm/shared/protocol';
 import { holePath, type ShellLayout } from '@swm/shared/shell';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -627,17 +627,34 @@ document.addEventListener('swm-fullscreen-request', () => {
 // Fare film sayfasında (deliğin içinde) oynayınca site bunu göremez: tam ekran kontrolleri bekleyince
 // kaybolur, fare oynayınca geri gelsin diye siteye haber verilir (en fazla 0,4 sn'de bir).
 let lastActivity = 0;
+/** Card R5: the mouse was in the last FILM_EDGE px of the film (the synced video) at the last move. */
+let atEdge = false;
 for (const type of ['mousemove', 'mousedown', 'wheel', 'touchstart'] as const) {
   addEventListener(
     type,
-    () => {
+    (event) => {
       if (!port || layout?.mode !== 'full') return;
       const now = Date.now();
       // Tıklama hep bildirilir: hemen ardından sekme başka siteye giderse arka plan bunu reklam yönlendirmesi sayar.
       const click = type === 'mousedown' || type === 'touchstart';
+      // Card R5: the film page's rail opens when the mouse reaches the film's right edge. Our overlay only hears the
+      // thin gutter beside the film, so the film's own frame says when the mouse enters / leaves its last FILM_EDGE px
+      // (at once, not throttled: a mouse passing by goes in and out before the site's short wait ends).
+      const video = watched ?? best;
+      let edge: boolean | undefined;
+      if (type === 'mousemove' && video && event instanceof MouseEvent) {
+        const r = video.getBoundingClientRect();
+        edge = r.width > 0 && event.clientY >= r.top && event.clientY <= r.bottom && event.clientX >= r.right - FILM_EDGE && event.clientX <= r.right + 2;
+        if (edge !== atEdge) {
+          atEdge = edge;
+          lastActivity = now;
+          send({ type: 'activity', edge });
+          return;
+        }
+      }
       if (!click && now - lastActivity < 400) return;
       lastActivity = now;
-      send(click ? { type: 'activity', click: true } : { type: 'activity' });
+      send(click ? { type: 'activity', click: true } : atEdge ? { type: 'activity', edge: true } : { type: 'activity' });
     },
     { capture: true, passive: true },
   );

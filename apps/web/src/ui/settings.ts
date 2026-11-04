@@ -5,6 +5,7 @@ import { t } from '../i18n.ts';
 import { renderThemeSetting } from '../themes.ts';
 import { load, save } from '../storage.ts';
 import { RAIL_PIN_EVENT } from './fullscreen.ts';
+import { AUTO_INVITE_KEY, autoInviteOn } from './invite-option.ts';
 import { previewSound, setSoundVolume, setSoundsOn, soundVolume, soundsOn } from '../sound.ts';
 
 export interface Options {
@@ -77,6 +78,13 @@ export function createSettingsPanel(
     options.actionNotice = notice.checked;
     save('opt:actionNotice', notice.checked ? '1' : '0');
   });
+
+  // Card R6 (owner): "Open the invite window when I'm alone in a room" lives here, not in the window itself.
+  const autoInvite = root.querySelector<HTMLInputElement>('#opt-autoinvite');
+  if (autoInvite) {
+    autoInvite.checked = autoInviteOn();
+    autoInvite.addEventListener('change', () => save(AUTO_INVITE_KEY, autoInvite.checked ? '1' : '0'));
+  }
 
   // "Keep the controls open" (0.9.93): the rail beside the video stays instead of waiting for the mouse at the edge.
   const railPin = root.querySelector<HTMLInputElement>('#opt-railpin');

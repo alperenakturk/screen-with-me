@@ -98,6 +98,12 @@ Planner to merge them once main is green.
 - Done when: the rail opens when the mouse reaches about the last 40 px of the film (Developer picks the number; still
   no jump when the mouse only passes); fullscreen unchanged.
 - Tests: embed harness under `xvfb-run`.
+- Done: 0.9.97.13 (PR below). The overlay only hears the thin 14 px gutter beside the film (the film's own frames get the
+  mouse inside it), so the extension's film frame now tells the site when the mouse enters / leaves the last 40 px of
+  the synced video (`FILM_EDGE`, `{type:'activity', edge}`, sent at once on the change, not throttled); the site treats
+  it like its own edge strip (`fullscreen.poke(edge)` → `setNear`, still after OPEN_MS 140 ms, so a mouse passing by
+  doesn't make the film jump). Fullscreen unchanged (the same signal there). Older extensions send no `edge`: the
+  gutter as before. Embed harness (headful, `xvfb-run`): a new check, fails on 0.9.97.12.
 
 ### R6. Invite window: "show this when I'm alone" moves to Settings (owner; lane B)
 - Why: owner: the invite window should always open by itself; the tick box does not belong in it. Whoever wants it
@@ -105,6 +111,8 @@ Planner to merge them once main is green.
 - Done when: no tick box in the invite window; ⚙️ My screen has "Open the invite window when I'm alone in a room"
   (default on, the same `opt:autoInvite`).
 - Tests: invite harness.
+- Done: 0.9.97.13 (PR below). The tick box left the invite window; ⚙️ My screen has "Open the invite window when I'm alone
+  in a room" (`#opt-autoinvite`, the same `opt:autoInvite`, on by default). Invite harness updated.
 
 ### R7. The intro for invited people too (owner; lane B)
 - Why: owner: people who open an invite link should also see the Sidelit intro (light burst + Glowbeam).
@@ -178,7 +186,7 @@ Planner to merge them once main is green.
   stored 50-message history, never to other members, the host or a TV; same limits and `cleanText` as chat. Phone +
   computer.
 - Tests: e2e (a third member never receives it, not in the history after a reload), harness.
-- Done (0.9.97.13): `{t:'chat', text, to}` (text only). The server sends it to the recipient's connections (not their
+- Done (0.9.97.14): `{t:'chat', text, to}` (text only). The server sends it to the recipient's connections (not their
   TV) and the sender's, never into the history or to anyone else, `private_gone` for myself / someone gone. In the chat a
   press on someone's name, on a private bubble's label or "🔒 Message privately" in the person menu writes to them only
   (bar "🔒 Only Alex will see this", ✕ / Esc back); bubbles say "🔒 Private · to / from Alex". Tests: e2e `private.mjs`

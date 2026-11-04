@@ -104,12 +104,17 @@ const check = (ok, label, extra = '') => {
   });
   check(!(await alex.title()).startsWith('('), 'back on the tab the count goes', await alex.title());
 
-  // Turned off in the window: a new empty room doesn't open it.
+  // Card R6: no tick box in the window; it is turned off in ⚙️ My screen, and a new empty room doesn't open it.
   await alex.click('#invite-btn');
   await alex.waitForSelector('.invite-dialog');
-  await alex.uncheck('#invite-auto');
-  check((await alex.evaluate(() => localStorage.getItem('opt:autoInvite'))) === '0', '"show when alone" off is remembered');
+  check(!(await alex.$('#invite-auto, .invite-auto')), 'the invite window has no "show when alone" tick box');
   await alex.click('.invite-close');
+  await alex.click('#settings-open');
+  await alex.waitForSelector('#opt-autoinvite');
+  check(await alex.isChecked('#opt-autoinvite'), '⚙️ My screen: "Open the invite window when I\'m alone" is on');
+  await alex.uncheck('#opt-autoinvite');
+  check((await alex.evaluate(() => localStorage.getItem('opt:autoInvite'))) === '0', '"show when alone" off is remembered');
+  await alex.keyboard.press('Escape');
   await alex.goto(`${SITE}/r/${room}x`);
   await alex.fill('#name', 'Alex');
   await alex.click('#name-form button.primary');

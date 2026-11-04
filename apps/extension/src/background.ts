@@ -248,7 +248,7 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       break;
     case 'activity':
       if (message.click) shell.lastClick = Date.now();
-      reply(shell, { type: 'activity' });
+      reply(shell, message.edge === undefined ? { type: 'activity' } : { type: 'activity', edge: message.edge });
       break;
     case 'hole':
       if (frameId === 0) post(shell.port, { type: 'hole' });
