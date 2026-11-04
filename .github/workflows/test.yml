@@ -134,6 +134,15 @@ jobs:
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: node scripts/harness/lab-games/run.cjs http://localhost:8787
 
+      # Card BHG: every game fits its window (no inner scrollbar, text >= 13 px, nothing cut off, a fair-sized board) on
+      # a laptop and a phone in English and Turkish (the four sizes locally: drop SIZES), and minimize / restore / a
+      # reload mid-game keep the game (Classics, Quiz, Draw & Guess, side games).
+      - name: Games quality
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+        run: |
+          SIZES=laptop,iphone node scripts/harness/games-sweep/run.cjs http://localhost:8787
+          node scripts/harness/games-resume/run.cjs http://localhost:8787
+
       # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and the IP notice
       # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
       - name: Lazy chunks and their gates

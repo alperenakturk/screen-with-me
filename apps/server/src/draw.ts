@@ -29,6 +29,9 @@ import { RateLimiter } from './rate-limit.ts';
 
 /** Oda boş kaldıktan bu kadar sonra silinir. */
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
+/** BHG: with fewer than two players online a running game waits this long before it goes back to the lobby, so one
+ * player's reload or short drop no longer ends the game for both (as the room's host keeps the role for 20 s). */
+const FEW_GRACE_MS = 20_000;
 /** Odada en fazla bağlantı (aynı kişinin birkaç sekmesi dahil). */
 const MAX_SOCKETS = 40;
 /** Bir turdaki çizimin üst sınırı (nokta sayısı): geç gelen hepsini tek mesajda alır. */
@@ -72,6 +75,8 @@ interface Saved {
   /** The word category (P10). */
   topic?: DrawTopic;
   emptySince: number | null;
+  /** Since when fewer than two players are online in a running game (`FEW_GRACE_MS`). */
+  fewSince?: number | null;
   /** How many times everyone draws; then the podium. */
   rounds: DrawRounds;
   /** Turns drawn per key in this game. */
@@ -208,6 +213,7 @@ export class Draw extends DurableObject<Env> {
     const now = Date.now();
     await this.advance(now);
     const d = this.data;
+    if (d.phase !== 'lobby' && d.phase !== 'over' && d.fewSince && this.tooFew(now)) await this.toLobby();
     if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
@@ -416,7 +422,7 @@ export class Draw extends DurableObject<Env> {
   private async nextRound(): Promise<void> {
     const d = this.data;
     const online = d.order.filter((k) => this.online(k));
-    if (online.length < 2) return this.toLobby();
+    if (this.tooFew(Date.now())) return this.toLobby();
     const from = d.drawer ? d.order.indexOf(d.drawer) : -1;
     let drawer: string | null = null;
     for (let i = 1; i <= d.order.length; i++) {
@@ -500,8 +506,20 @@ export class Draw extends DurableObject<Env> {
     await this.scheduleAlarm();
   }
 
+  /** Fewer than two players online for longer than the grace (`FEW_GRACE_MS`)? Starts or clears the count. */
+  private tooFew(now: number, except?: WebSocket): boolean {
+    const d = this.data;
+    if (this.onlineKeys(except).length >= 2) {
+      d.fewSince = null;
+      return false;
+    }
+    d.fewSince ??= now;
+    return now - d.fewSince >= FEW_GRACE_MS;
+  }
+
   private async toLobby(): Promise<void> {
     const d = this.data;
+    d.fewSince = null;
     d.phase = 'lobby';
     d.drawer = null;
     d.word = null;
@@ -544,7 +562,11 @@ export class Draw extends DurableObject<Env> {
     const key = (ws.deserializeAttachment() as Attachment | null)?.key;
     const stillHere = (k: string) => remaining.some((s) => (s.deserializeAttachment() as Attachment | null)?.key === k);
     const online = d.order.filter(stillHere);
-    if (d.phase !== 'lobby' && d.phase !== 'over' && online.length < 2) return this.toLobby();
+    if (d.phase !== 'lobby' && d.phase !== 'over' && this.tooFew(Date.now(), ws)) return this.toLobby();
+    if (d.fewSince) {
+      await this.save();
+      await this.scheduleAlarm();
+    }
     // Çizen gitti: tur biter (kelime açıklanır, sıradakine geçilir).
     if (key && key === d.drawer && !stillHere(key) && (d.phase === 'choose' || d.phase === 'draw')) return this.endRound();
     // Kalanların hepsi bildiyse tur biter.
@@ -556,6 +578,7 @@ export class Draw extends DurableObject<Env> {
     const d = this.data;
     const times: number[] = [];
     if (d.endsAt !== null && d.phase !== 'lobby') times.push(d.endsAt);
+    if (d.fewSince && d.phase !== 'lobby' && d.phase !== 'over') times.push(d.fewSince + FEW_GRACE_MS);
     if (d.phase === 'draw' && d.revealed < d.revealAt.length) times.push(d.revealAt[d.revealed]!);
     if (d.emptySince !== null) times.push(d.emptySince + EMPTY_TTL_MS);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));

@@ -559,8 +559,28 @@ export function createGameStage(opts: StageOptions) {
   const triggers = [button, ...(opts.extraButtons ?? [])];
 
   // ---- My table ----
+  // BHG: the tab remembers the table I am at (and whether it was minimized), so a reload mid-game takes me back to it.
+  const atKey = `swm:table:${location.pathname}`;
+  const rememberAt = (at: { id: string; min: boolean } | null) => {
+    try {
+      if (at) sessionStorage.setItem(atKey, JSON.stringify(at));
+      else sessionStorage.removeItem(atKey);
+    } catch {
+      /* storage blocked: a reload simply leaves the table */
+    }
+  };
+  const rememberedAt = (): { id: string; min: boolean } | null => {
+    try {
+      const at = JSON.parse(sessionStorage.getItem(atKey) ?? 'null') as { id?: unknown; min?: unknown } | null;
+      return at && typeof at.id === 'string' ? { id: at.id, min: at.min === true } : null;
+    } catch {
+      return null;
+    }
+  };
+
   async function open(table: RoomGame): Promise<void> {
     document.getElementById('game-invite')?.remove();
+    rememberAt({ id: table.id, min: false });
     stage.hidden = false;
     for (const b of triggers) b.classList.remove('game-waiting');
     if (current?.id === table.id && unmount) return place();
@@ -594,6 +614,7 @@ export function createGameStage(opts: StageOptions) {
     unmount = null;
     current = null;
     solo = null;
+    rememberAt(null);
     stage.hidden = true;
     place();
     body.replaceChildren();
@@ -602,6 +623,7 @@ export function createGameStage(opts: StageOptions) {
   }
 
   function minimize(): void {
+    if (current || solo) rememberAt({ id: current ? current.id : `solo:${solo}`, min: true });
     stage.hidden = true;
     place();
     if (current || solo) for (const b of triggers) b.classList.add('game-waiting');
@@ -614,6 +636,7 @@ export function createGameStage(opts: StageOptions) {
     for (const b of triggers) b.classList.remove('game-waiting');
     if (solo === kind && unmount) return place();
     if (current) leave();
+    rememberAt({ id: `solo:${kind}`, min: false });
     unmount?.();
     unmount = null;
     solo = kind;
@@ -705,6 +728,14 @@ export function createGameStage(opts: StageOptions) {
     setTables(next: RoomGame[], change: { opened?: string; closed?: string; by?: Member } = {}, announce = true): void {
       tables = next;
       if (wanted && Date.now() - wantedAt > WANTED_MS) wanted = null;
+      // Entering the room (a reload, a dropped connection): back to the table this tab was at, as it was.
+      const at = !announce && !current && !solo ? rememberedAt() : null;
+      const back = at && tables.find((x) => x.id === at.id);
+      const sideKind = at?.id.startsWith('solo:') ? at.id.slice(5) : '';
+      const side = isSoloKind(sideKind) ? sideKind : undefined;
+      if (at && !back && !side) rememberAt(null);
+      if (back) void open(back).then(() => at!.min && current?.id === back.id && minimize());
+      else if (side) void openSolo(side).then(() => at!.min && solo === side && minimize());
       // Card R1: my table opened while the room connection was down (its "opened" never reached me): open it now.
       if (wanted && !change.opened && !current) {
         const mine = tables.find((x) => x.kind === wanted && x.by.id === meId());
