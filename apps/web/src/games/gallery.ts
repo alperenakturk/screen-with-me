@@ -195,7 +195,8 @@ export function renderGallery(s: GalleryState): HTMLElement[] {
               go,
             );
             if (s.canClose(table)) {
-              const close = el('button', { type: 'button', class: 'hub-close', title: t('hub.close'), 'aria-label': t('hub.close') }, '✕');
+              // A text button, never a ✕: a game's ✕ only minimizes (owner, 4 Nov 2026); ending asks first.
+              const close = el('button', { type: 'button', class: 'hub-close', title: t('hub.close') }, t('hub.end'));
               close.addEventListener('click', () => s.close(table.id));
               row.append(close);
             }

@@ -103,9 +103,15 @@ const row = (page, i) => page.evaluate((n) => [...document.querySelectorAll('#ga
   await alex.waitForTimeout(700);
   const marks = await row(alex, 0);
   check(JSON.stringify(marks) === JSON.stringify(en.marks), `a wrong guess gets the right marks (${en.wrong})`, `${marks} vs ${en.marks}`);
-  const colours = await alex.evaluate(() => ['hit', 'near', 'miss'].map((m) => { const c = document.querySelector(`#game-stage .ff-board .ff-cell.${m}`); return c ? getComputedStyle(c).backgroundColor : null; }));
-  const want = { hit: 'rgb(63, 207, 142)', near: 'rgb(255, 198, 90)', miss: 'rgb(58, 52, 88)' };
-  check(['hit', 'near', 'miss'].every((m, i) => colours[i] === null || colours[i] === want[m]), 'green = right place, gold = in the word, grey = not in it (card GP)', colours.join(' | '));
+  // IP audit ("make it ours"): marks differ by line and sign, never by a green / gold / grey fill.
+  const looks = await alex.evaluate(() => ['hit', 'near', 'miss'].map((m) => {
+    const c = document.querySelector(`#game-stage .ff-board .ff-cell.${m}`);
+    if (!c) return null;
+    const s = getComputedStyle(c);
+    return { m, bg: s.backgroundColor, shadow: s.boxShadow, outline: s.outlineStyle, sign: getComputedStyle(c, '::after').content };
+  }));
+  const ok = looks.every((l) => !l || (!/63, 207, 142|58, 52, 88/.test(l.bg) && (l.m !== 'hit' || (/3px/.test(l.shadow) && /✓/.test(l.sign))) && (l.m !== 'near' || (l.outline === 'dashed' && /•/.test(l.sign))) && (l.m !== 'miss' || /×/.test(l.sign))));
+  check(ok, 'ticket marks: solid frame ✓, dashed frame •, faded × (no green / gold / grey fills)', JSON.stringify(looks));
 
   // Keys typed while the message box has the focus stay the room's; on the focused board they are the game's.
   await alex.evaluate(() => document.getElementById('chat-input')?.focus());

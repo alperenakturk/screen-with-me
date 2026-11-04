@@ -1,7 +1,7 @@
 // 🍿 Snack Bar in the room (card "Snack Bar"): two people, Alex opens it from 🎮 → "Play on the side".
 // Checks: the hub entry, the window fits without scrollbars (default, smallest free window, phone sheet), no income
 // while nothing plays, income + the together bonus while the sync test plays, a tap serves, buying a stand, the
-// "while you were away" note, buttons never take the focus (the message box keeps it), one tab plays at a time,
+// nothing paid for the time away (only in a room, 0.9.97.31) and the "closed until the film plays" sign, buttons never take the focus (the message box keeps it), one tab plays at a time,
 // closing saves.
 //
 //   npm run dev, then: node scripts/harness/snack-bar/run.cjs [site]
@@ -55,7 +55,7 @@ const openSnack = (page) =>
 const fits = (page) =>
   page.evaluate(() => {
     const out = [];
-    for (const sel of ['#game-stage .game-stage-body', '#game-stage .sb', '#game-stage .sb-rows']) {
+    for (const sel of ['#game-stage .game-stage-body', '#game-stage .sb', '#game-stage .sb-rows', '#game-stage .sb-panel', '#game-stage .sb-badge-grid']) {
       const e = document.querySelector(sel);
       if (e && (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1)) out.push(`${sel} ${e.scrollWidth}×${e.scrollHeight} in ${e.clientWidth}×${e.clientHeight}`);
     }
@@ -70,8 +70,8 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   const browser = await chromium.launch();
   const ctxA = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   const ctxS = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-  const seed = JSON.stringify({ v: 1, coins: 500, earned: 500, lifetime: 500, watched: 0, levels: { popcorn: 1 }, stars: 0, cinemas: 0, seen: Date.now() - 600_000 });
-  const alex = await person(ctxA, 'Alex', 'wizard', { snackBar: seed });
+  const seed = JSON.stringify({ v: 1, coins: 500, earned: 500, lifetime: 500, watched: 0, levels: { popcorn: 1 }, stars: 0, cinemas: 0, seen: Date.now() - 600_000, film: { item: 'film-x', watched: 400, served: 3, coins: 60 } });
+  const alex = await person(ctxA, 'Alex', 'wizard', { snackBar: seed, 'snackBar:testGuests': '1', sideFilms: JSON.stringify([{ id: 'film-x', duration: 1500, at: Date.now() }]) });
   const sam = await person(ctxS, 'Sam', 'elf');
 
   const hub = await alex.evaluate(async () => {
@@ -85,10 +85,22 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   check(hub.side && hub.entry, '🎮 has an "On the side" tab with Snack Bar', JSON.stringify(hub));
 
   check((await openSnack(alex)) === 'ok', 'Snack Bar opens in the game window');
-  const away = await until(() => alex.evaluate(() => { const n = document.querySelector('.sb-note'); return n && !n.hidden ? n.textContent : null; }), 3000);
-  check(!!away && /away/i.test(away), '"While you were away" pays a capped bonus on opening', String(away));
+  await wait(1500);
   const afterAway = await coins(alex);
-  check(afterAway > 500 && afterAway <= 500 + 0.5 * 600 * 0.25 + 1, 'the away bonus is 25 % of the base income for 10 min', String(afterAway));
+  check(afterAway === 500, 'nothing is paid for the 10 min away (only in a room)', String(afterAway));
+
+  // Pick 2 B: a film that ended while the game was closed: Glowbeam's receipt waits, with a golden bucket.
+  await wait(400);
+  await alex.screenshot({ path: __dirname + '/snack-receipt.png' });
+  const receipt = await alex.evaluate(() => { const p = document.querySelector('.sb-panel.sb-panel-receipt'); return p && !p.hidden ? p.textContent : null; });
+  check(!!receipt && /Receipt/.test(receipt) && /Customersserved3/.test(receipt.replace(/\s+/g, '')) && /Golden bucket/.test(receipt), 'the film\'s receipt waits (served 3, golden bucket)', String(receipt));
+  await alex.evaluate(() => document.querySelector('.sb-collect').click());
+  await wait(600);
+  const afterBucket = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')));
+  check(afterBucket.coins === 530 && afterBucket.stats.films === 1 && afterBucket.badges.includes('film-1'), 'Collect pays the bucket (60 s of income) and earns the "First receipt" badge', JSON.stringify({ coins: afterBucket.coins, films: afterBucket.stats.films, badges: afterBucket.badges }));
+  check(await alex.evaluate(() => document.querySelector('.sb-panel').hidden), 'the receipt goes away after Collect');
+  const rest = await alex.evaluate(() => { const n = document.querySelector('.sb-rest'); return n && !n.hidden ? n.textContent : null; });
+  check(!!rest && /Closed until the film plays/.test(rest) && /away/.test(rest), 'the scene says it is closed until the film plays', String(rest));
   const place = await alex.evaluate(() => document.getElementById('game-stage').className);
   check(/float/.test(place), 'it opens as a free window', place);
   check((await fits(alex)).length === 0, 'fits without scrollbars at its own size', (await fits(alex)).join('; '));
@@ -125,6 +137,7 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   await alex.evaluate(() => document.getElementById('sync-test')?.click());
   const playing = await until(() => alex.evaluate(() => /Film on/.test(document.querySelector('.sb-state').textContent)), 10000);
   check(!!playing, 'the pill turns to "Film on" when the room plays');
+  check(await alex.evaluate(() => document.querySelector('.sb-rest').hidden), 'the "closed" sign goes away while the film plays');
   check(/\+10 %/.test(await text(alex, '.sb-together')), 'together bonus +10 % with one other person', await text(alex, '.sb-together'));
   const p0 = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')).coins);
   await wait(5600);
@@ -136,6 +149,29 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
     return !!document.querySelector('.sb-pop') && before !== null;
   });
   check(served, 'a tap on the counter serves a customer (+coins pops up)');
+
+  // Pick 1: a customer walks up with a line; a tap serves them for more.
+  const guest = await until(() => alex.evaluate(() => { const g = document.querySelector('.sb-guest'); return g ? g.textContent : null; }), 8000);
+  check(!!guest && guest.length > 3, 'a customer walks up to the counter with a line', String(guest));
+  await wait(700);
+  await alex.screenshot({ path: __dirname + '/snack-customer.png' });
+  const g0 = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')).stats?.customers ?? 0);
+  await alex.evaluate(() => document.querySelector('.sb-guest').click());
+  await wait(900);
+  const g1 = await alex.evaluate(() => { const s = JSON.parse(localStorage.getItem('snackBar')); return { customers: s.stats.customers, badges: s.badges }; });
+  check(g1.customers === g0 + 1 && !(await alex.evaluate(() => document.querySelector('.sb-guest:not(.sb-guest-happy)'))), 'a tap serves the customer, who leaves happy', JSON.stringify(g1));
+  check(g1.badges.includes('first-sale'), 'the "First sale" badge comes', JSON.stringify(g1.badges));
+
+  // Pick 4: the badge wall.
+  await alex.evaluate(() => document.querySelector('.sb-badges-open').click());
+  const wall = await alex.evaluate(() => ({ all: document.querySelectorAll('.sb-badge').length, got: document.querySelectorAll('.sb-badge.got').length, shown: !document.querySelector('.sb-panel').hidden }));
+  check(wall.shown && wall.all === 30 && wall.got >= 2, 'the badge wall shows 30 badges, the earned ones lit', JSON.stringify(wall));
+  check((await fits(alex)).length === 0, 'the badge wall fits without scrollbars', (await fits(alex)).join('; '));
+  await alex.evaluate(() => document.querySelectorAll('.sb-badge')[1].click());
+  check(/Serve 10/.test(await text(alex, '.sb-badge-detail')), 'a tap on a badge says how to earn it', await text(alex, '.sb-badge-detail'));
+  await wait(400);
+  await alex.screenshot({ path: __dirname + '/snack-badges.png' });
+  await alex.evaluate(() => document.querySelector('.sb-panel-close').click());
 
   // One tab at a time.
   const second = await ctxA.newPage();
@@ -160,12 +196,56 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   check(rowsShown >= 3, 'at least three upgrade rows show', String(rowsShown));
   await alex.screenshot({ path: __dirname + '/snack-window.png' });
 
-  // Close: saved, window gone.
-  await alex.evaluate(() => [...document.querySelectorAll('#game-stage .game-stage-head button')].find((b) => b.title === 'Close')?.click());
-  const closed = await until(() => alex.evaluate(() => document.getElementById('game-stage').hidden && !document.querySelector('.sb')), 3000);
-  check(!!closed, 'Close shuts the game');
+  // Game window rules (owner, 4 Nov 2026): no Close for a solo game, ✕ only minimizes, ↺ Start over asks first.
+  const head = await alex.evaluate(() => [...document.querySelectorAll('#game-stage .game-stage-head button')].filter((b) => !b.hidden && b.offsetParent).map((b) => b.className + '|' + b.title));
+  check(!head.some((h) => /game-leave|game-end|\|Close$/.test(h)), 'a solo game has no close or leave button', JSON.stringify(head));
+  await alex.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
+  const minimized = await until(() => alex.evaluate(() => document.getElementById('game-stage').hidden && !!document.querySelector('#game-stage .sb')), 3000);
+  check(!!minimized, '✕ only minimizes: the game stays mounted behind 🎮');
   const lock = await alex.evaluate(() => localStorage.getItem('snackBar:tab'));
-  check(!lock, 'closing lets go of the one-tab lock', String(lock));
+  check(!!lock, 'minimized, it keeps its one-tab lock (it still plays)', String(lock));
+  await alex.evaluate(() => document.getElementById('game-btn').click());
+  check(!!(await until(() => alex.evaluate(() => !document.getElementById('game-stage').hidden), 3000)), '🎮 brings the minimized game back');
+  await alex.evaluate(() => document.querySelector('.sg-restart').click());
+  await wait(300);
+  await alex.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
+  await wait(1200);
+  const reset = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')));
+  check(reset.coins < 20 && reset.levels.soda === 0 && reset.levels.popcorn === 1, '↺ Start over (after its question) starts from zero', JSON.stringify(reset.levels));
+
+  // Picks 3 + 6: a later cinema is another place (here the rooftop), decorations are bought from the badge wall.
+  await alex.goto(`${SITE}/`);
+  await alex.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('snackBar'));
+    localStorage.setItem('snackBar', JSON.stringify({ ...s, coins: 10_000, cinemas: 2, stars: 3 }));
+    localStorage.removeItem('snackBar:tab');
+  });
+  await alex.goto(`${SITE}/r/${room}#back`);
+  await until(() => alex.evaluate(() => !!document.querySelector('#game-btn')));
+  await alex.waitForTimeout(1500);
+  await openSnack(alex);
+  await wait(800);
+  const spot = await alex.evaluate(() => {
+    const art = document.querySelector('.sb-scene-art');
+    const prefix = art.dataset.prefix;
+    const shown = (id) => getComputedStyle(art.querySelector('#' + prefix + id)).display !== 'none';
+    return { sign: art.querySelector('#' + prefix + 'sign text').textContent, rooftop: shown('place-rooftop'), drive: shown('place-drive-in'), foot: document.querySelector('.sb-cinema').textContent };
+  });
+  check(spot.sign === 'ROOFTOP' && spot.rooftop && !spot.drive && /🌃/.test(spot.foot), 'cinema #3 is the rooftop: its sign, its skyline, its icon', JSON.stringify(spot));
+  await alex.evaluate(() => document.querySelector('.sb-badges-open').click());
+  await alex.evaluate(() => document.querySelector('.sb-decor-buy').click());
+  await wait(500);
+  const decor = await alex.evaluate(() => {
+    const art = document.querySelector('.sb-scene-art');
+    return { saved: JSON.parse(localStorage.getItem('snackBar')).decor, shown: getComputedStyle(art.querySelector('#' + art.dataset.prefix + 'decor-marquee')).display !== 'none', owned: document.querySelector('.sb-decor-buy')?.textContent };
+  });
+  check(decor.saved.includes('marquee') && decor.shown && /Yours/.test(decor.owned), 'a decoration is bought once and shows on the counter', JSON.stringify(decor));
+  check((await fits(alex)).length === 0, 'the wall with decorations fits without scrollbars', (await fits(alex)).join('; '));
+  await wait(300);
+  await alex.screenshot({ path: __dirname + '/snack-decor.png' });
+  await alex.evaluate(() => document.querySelector('.sb-panel-close').click());
+  await wait(400);
+  await alex.screenshot({ path: __dirname + '/snack-rooftop.png' });
 
   // Phone: the sheet fits, all five rows.
   const phone = await browser.newContext({ ...devices['iPhone 13'] });

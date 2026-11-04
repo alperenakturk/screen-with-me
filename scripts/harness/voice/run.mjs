@@ -367,6 +367,8 @@ await alex.sleep(2500);
 const withGame = await sam.evaluate(FLOW);
 check(withGame.tiles === 1 && withGame.moving, 'oyun açılınca kameralar yerinde ve akıyor', JSON.stringify(withGame));
 await alex.evaluate(`document.querySelector('.game-end').click(); 1`);
+await alex.sleep(300);
+await alex.evaluate(`document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click(); 1`);
 await alex.sleep(2500);
 const afterGame = await sam.evaluate(FLOW);
 check(afterGame.tiles === 1 && afterGame.moving, 'oyun kapanınca kameralar yerinde ve akıyor', JSON.stringify(afterGame));

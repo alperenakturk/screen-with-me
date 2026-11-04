@@ -128,6 +128,8 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
     }
     // Close it again so the hall never fills up.
     await alex.evaluate(() => document.querySelector('#game-stage .game-end')?.click());
+    await alex.waitForTimeout(300);
+    await alex.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
     await until(() => alex.evaluate(() => document.getElementById('game-stage').hidden), 4000);
   }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DRY_SPEED, EVENING_GAP_MS, EVENING_S, FILM_MIN_S, GARDEN_VERSION, PLANTS, PLANT_IDS, POTS,
   SEEDS_MAX, SEED_EVERY_S, WATER_LAST_S,
-  filmEnded, found, freshGarden, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
+  ALBUM_IDS, COLOR_SEEDS_MAX, PETALS_NEW, PETALS_PICK, buyGardenDecor, seeVisitor, visitorFor, HYBRID_COLORS, LAMP_BONUS, plantColor, filmEnded, found, freshGarden, lampFree, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
   stageOf, tickGarden, water, type GardenSave,
 } from './garden.ts';
 
@@ -68,6 +68,42 @@ describe('Window Garden growth', () => {
     tickGarden(garden, -3, play);
     expect(garden.pots[0]!.growth).toBe(growth);
     expect(garden.watched).toBe(0);
+  });
+});
+
+describe('Window Garden only in a room', () => {
+  it('time away neither grows nor dries anything, and gives no seed', () => {
+    const garden = freshGarden();
+    garden.pots[0] = { plant: 'mint', growth: 0.3, water: 0.6 };
+    garden.seen = 1_000_000;
+    const seeds = { ...garden.seeds };
+    // The first tick after a day away: the page measures from its own clock, so a whole day is never one tick.
+    tickGarden(garden, 24 * 3600, withFriend, 1_000_000 + 24 * 3600_000);
+    expect(garden.pots[0]).toEqual({ plant: 'mint', growth: 0.3, water: 0.6 });
+    expect(garden.seeds).toEqual(seeds);
+    expect(garden.watched).toBe(0);
+  });
+});
+
+describe('Window Garden: Glowbeam the grow lamp', () => {
+  it('once per film, +25 % growth for its pot while that film plays', () => {
+    const garden = freshGarden();
+    garden.pots[0] = { plant: 'mint', growth: 0, water: 1 };
+    garden.pots[1] = { plant: 'fern', growth: 0, water: 1 };
+    expect(placeLamp(garden, 2, 'film-a')).toBe(false); // an empty pot
+    expect(placeLamp(garden, 0, null)).toBe(false); // no film
+    expect(placeLamp(garden, 0, 'film-a')).toBe(true);
+    expect(placeLamp(garden, 1, 'film-a')).toBe(false); // once per film
+    const film = { playing: true, others: 0, item: { id: 'film-a' } };
+    tickGarden(garden, 4, film);
+    expect(garden.pots[0]!.growth).toBeCloseTo((4 * (1 + LAMP_BONUS)) / (20 * 60));
+    expect(garden.pots[1]!.growth).toBeCloseTo(4 / (20 * 60));
+    // The next film: the lamp is off until it is placed again.
+    tickGarden(garden, 4, { ...film, item: { id: 'film-b' } });
+    expect(garden.pots[0]!.growth).toBeCloseTo((4 * (1 + LAMP_BONUS) + 4) / (20 * 60));
+    expect(lampFree(garden, 'film-b')).toBe(true);
+    expect(loadGarden(saveGarden(garden)).lamp).toEqual({ pot: 0, item: 'film-a' });
+    expect(loadGarden({ ...garden, lamp: { pot: 9, item: 'x' } }).lamp).toBeNull();
   });
 });
 
@@ -197,5 +233,79 @@ describe('Window Garden save', () => {
     expect(garden.eveningSeed).toBe(false);
     expect(garden.seen).toBe(99);
     expect(garden.ended).toEqual(['a', 'b']);
+  });
+});
+
+describe('Window Garden: hybrid colours and memories (side games 2)', () => {
+  const film = { playing: true, others: 1, item: { id: 'f1', title: 'Night Train' }, names: ['Sam'] };
+  const always = () => 0;
+
+  it('a bloom beside a bloom drops a colour seed; the rarer neighbour gives the second colour', () => {
+    const garden = freshGarden();
+    garden.pots = [
+      { plant: 'mint', growth: 1, water: 1 },
+      { plant: 'fern', growth: 0.9999, water: 1 },
+      { plant: 'moonbloom', growth: 1, water: 1 },
+    ];
+    const result = tickGarden(garden, 1, film, 1_000_000, always);
+    expect(result.bloomed).toEqual([1]);
+    // Fern's left neighbour (mint, common) is found first: same rank → the first colour.
+    expect(result.hybrids).toEqual([{ plant: 'fern', color: HYBRID_COLORS.fern![0] }]);
+    expect(garden.pots[1]!.bloomed).toEqual({ title: 'Night Train', with: ['Sam'], at: 1_000_000 });
+    // Nothing more drops while nothing new blooms.
+    expect(tickGarden(garden, 1, film, 1_001_000, always).hybrids).toEqual([]);
+  });
+
+  it('a colour seed grows a coloured plant; picking it adds a new album entry with its memory', () => {
+    const garden = freshGarden();
+    garden.pots = [null, null, null];
+    garden.colorSeeds = [{ plant: 'mint', color: 'sky' }];
+    expect(plantColor(garden, 0, 0)).toEqual({ plant: 'mint', color: 'sky' });
+    expect(garden.colorSeeds).toEqual([]);
+    garden.pots[0]!.growth = 0.9999;
+    tickGarden(garden, 1, film, 5_000, always);
+    const got = pick(garden, 0)!;
+    expect(got).toEqual({ plant: 'mint', color: 'sky', first: true });
+    expect(garden.album['mint:sky']).toBe(1);
+    expect(garden.memories['mint:sky']).toMatchObject({ title: 'Night Train', with: ['Sam'] });
+    expect(found(garden)).toBe(1);
+    expect(ALBUM_IDS).toHaveLength(24);
+  });
+
+  it('colour seeds stop at the cap and round-trip; bad colours are dropped', () => {
+    const garden = freshGarden();
+    garden.colorSeeds = Array.from({ length: COLOR_SEEDS_MAX }, () => ({ plant: 'fern', color: 'gold' as const }));
+    garden.pots = [{ plant: 'mint', growth: 1, water: 1 }, { plant: 'fern', growth: 0.9999, water: 1 }, null];
+    expect(tickGarden(garden, 1, film, 1, always).hybrids).toEqual([]);
+    const back = loadGarden({ ...JSON.parse(saveGarden(garden)), colorSeeds: [{ plant: 'fern', color: 'rose' }, { plant: 'fern', color: 'gold' }], pots: [{ plant: 'fern', growth: 0.5, water: 1, color: 'sky' }] });
+    expect(back.colorSeeds).toEqual([{ plant: 'fern', color: 'gold' }]);
+    expect(back.pots[0]!.color).toBeUndefined();
+  });
+});
+
+describe('Window Garden: decorations and night visitors (side games 2)', () => {
+  it('petals come from picking; decorations are bought once', () => {
+    const garden = freshGarden();
+    garden.pots = [{ plant: 'fern', growth: 1, water: 1 }, { plant: 'fern', growth: 1, water: 1 }, null];
+    pick(garden, 0);
+    pick(garden, 1);
+    expect(garden.petals).toBe(PETALS_NEW + PETALS_PICK);
+    expect(buyGardenDecor(garden, 'lantern')).toBe(false);
+    expect(buyGardenDecor(garden, 'curtains')).toBe(true);
+    expect(buyGardenDecor(garden, 'curtains')).toBe(false);
+    expect(garden.petals).toBe(PETALS_NEW + PETALS_PICK - 2);
+  });
+
+  it('visitors only come at dusk or night, and only with their decoration', () => {
+    const garden = freshGarden();
+    const lucky = () => 0;
+    expect(visitorFor(garden, 'night', lucky)).toBeNull();
+    garden.decor = ['lantern'];
+    expect(visitorFor(garden, 'day', lucky)).toBeNull();
+    expect(visitorFor(garden, 'night', lucky)).toBe('firefly');
+    expect(visitorFor(garden, 'night', () => 0.99)).toBeNull();
+    expect(seeVisitor(garden, 'firefly')).toBe(true);
+    expect(seeVisitor(garden, 'firefly')).toBe(false);
+    expect(loadGarden({ ...JSON.parse(saveGarden(garden)), visitors: ['firefly', 'dragon'], decor: ['lantern', 'pool'] })).toMatchObject({ visitors: ['firefly'], decor: ['lantern'] });
   });
 });

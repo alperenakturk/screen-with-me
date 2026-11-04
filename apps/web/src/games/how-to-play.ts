@@ -123,3 +123,26 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
     },
   };
 }
+
+/**
+ * The only reset a solo idle game has (owner, 4 Nov 2026: Snack Bar and Window Garden have no "close", at most a
+ * reset to zero): a small ↺ beside "?" in the game's top bar that asks first, then calls `reset`.
+ */
+export function restartButton(texts: () => { label: string; title: string; text: string; yes: string }, reset: () => void): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'htp-open sg-restart';
+  button.textContent = '↺';
+  const label = () => {
+    button.title = texts().label;
+    button.setAttribute('aria-label', texts().label);
+  };
+  label();
+  addEventListener('langchange', label);
+  button.addEventListener('click', async () => {
+    const { confirmDialog } = await import('../ui/confirm.ts');
+    const words = texts();
+    if (await confirmDialog({ icon: '↺', title: words.title, text: words.text, yes: words.yes })) reset();
+  });
+  return button;
+}

@@ -12,6 +12,7 @@ import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
+import { setGameLive } from './live.ts';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
@@ -113,6 +114,7 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
     app.querySelector('#xox-score')!.textContent = `${score.X} – ${score.O}${score.draw ? ` · ${score.draw}=` : ''}`;
     const ready = seats.every((s) => s !== null);
     const myTurn = seat !== -1 && ready && xox.winner === null && xox.turn === MARKS[seat];
+    setGameLive(seat !== -1 && ready && xox.winner === null && xox.board.some((v) => v !== null));
     const boardKey = xox.board.join(',');
     const changed = lastBoard !== '' && boardKey !== lastBoard;
     xox.board.forEach((value, i) => {
@@ -214,6 +216,7 @@ export function mountMatch(app: HTMLElement, kind: GameKind, gameId: string, nam
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
   return () => {
+    setGameLive(false);
     close();
     clearInterval(ping);
     removeEventListener('pagehide', close);

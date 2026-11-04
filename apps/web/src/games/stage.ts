@@ -7,8 +7,11 @@
 // window keeps the game's own shape (catalog `size`) and only grows or shrinks in proportion. In every placement the
 // game is fitted to its box (`refit`): smaller than the room its layout needs (`fit`), or still overflowing, the
 // whole game is scaled down, so nothing ever scrolls. Narrow screens: "below" the video (the rest of the screen) or
-// "large" (the whole screen). "Back to video" minimizes it (still connected, still "at" the table), "Leave table" closes it
-// for me only.
+// "large" (the whole screen). ✕ only minimizes it, in every game (owner, 4 Nov 2026: a game window's ✕ never closes or
+// deletes a game): still connected, still "at" the table, a solo game keeps its state. "Leave table" (tables only) and
+// "End table" (its opener or the host) are their own buttons and ask first while a game is in progress; solo games have
+// no close at all (their own "Start over" is the only reset). Closing the tab while my table's game is in progress asks
+// "are you sure?" (`beforeunload`, `live.ts`).
 
 import { createLogo } from '@swm/shared/logo';
 import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
@@ -20,6 +23,8 @@ import { playSound } from '../sound.ts';
 import { load, save } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { icon, type IconName } from '../ui/icons.ts';
+import { confirmDialog } from '../ui/confirm.ts';
+import { gameLive } from './live.ts';
 
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
@@ -130,9 +135,9 @@ export function createGameStage(opts: StageOptions) {
     return { node, label: (value: string) => ((text.textContent = ` ${value}`), (node.title = value)) };
   };
   const hubButton = headButton('🎮', 'game-hub-open');
-  const minimizeButton = headButton('▶', 'game-minimize');
-  const leaveButton = headButton('↩');
-  const endButton = headButton('✕', 'game-end');
+  const minimizeButton = headButton('✕', 'game-minimize');
+  const leaveButton = headButton('↩', 'game-leave');
+  const endButton = headButton('⏹', 'game-end');
   // Placement switch: free window / in the video's place (narrow screens: below / large).
   const placeButtons = PLACES.map((p) => {
     const b = el('button', { type: 'button', class: `game-place-btn place-${p}` });
@@ -146,7 +151,7 @@ export function createGameStage(opts: StageOptions) {
     return b;
   });
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
-  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), placeSwitch, hubButton.node, minimizeButton.node, leaveButton.node, endButton.node);
+  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
   // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
   const body = el('div', { class: 'game-fit' });
   const frame = el('div', { class: 'game-stage-body' }, body);
@@ -419,6 +424,7 @@ export function createGameStage(opts: StageOptions) {
     minimizeButton.label(t('game.minimize'));
     leaveButton.label(t('hub.leave'));
     endButton.label(t('hub.close'));
+    leaveButton.node.hidden = !current;
     for (const b of triggers) b.title = t('hub.title');
     stage.classList.toggle('solo-game', !current && !!solo);
     if (current) {
@@ -434,7 +440,6 @@ export function createGameStage(opts: StageOptions) {
       titleText.textContent = t(`games.${solo}.title`);
       title.title = `${t(`games.${solo}.title`)} · ${t('hub.solo')}`;
       endButton.node.hidden = true;
-      leaveButton.label(t('solo.close'));
     }
     for (const b of triggers) {
       b.classList.toggle('game-on', tables.length > 0);
@@ -483,7 +488,7 @@ export function createGameStage(opts: StageOptions) {
           setHub(false);
           void open(table);
         },
-        close: (id) => send({ t: 'table', close: id }),
+        close: (id) => void endTable(id),
         openTable: (kind) => {
           wanted = kind;
           wantedAt = Date.now();
@@ -627,9 +632,33 @@ export function createGameStage(opts: StageOptions) {
     setTimeout(() => card.remove(), 20_000);
   }
 
+  /** Asks first while my table's game is in progress (leaving or ending it then is a real loss). */
+  async function sure(kind: 'leave' | 'end'): Promise<boolean> {
+    if (kind === 'leave' && !gameLive()) return true;
+    return confirmDialog({
+      icon: kind === 'end' ? '⏹' : '↩',
+      title: t(kind === 'end' ? 'hub.closeAsk' : 'hub.leaveAsk'),
+      text: t(kind === 'end' ? 'hub.closeAskText' : 'hub.leaveAskText'),
+      yes: t(kind === 'end' ? 'hub.close' : 'hub.leave'),
+    });
+  }
+  async function endTable(id: string): Promise<void> {
+    if (await sure('end')) send({ t: 'table', close: id });
+  }
   minimizeButton.node.addEventListener('click', minimize);
-  leaveButton.node.addEventListener('click', () => leave());
-  endButton.node.addEventListener('click', () => current && send({ t: 'table', close: current.id }));
+  leaveButton.node.addEventListener('click', async () => {
+    const table = current;
+    if (table && (await sure('leave')) && current?.id === table.id) leave();
+  });
+  endButton.node.addEventListener('click', () => current && void endTable(current.id));
+  // Closing the tab (or reloading it) in the middle of a game asks first. Automated browsers only with
+  // `opt:leaveWarn` = '1' (a harness that reloads mid-game would otherwise be stopped by the prompt).
+  addEventListener('beforeunload', (event) => {
+    if (!current || !gameLive()) return;
+    if (navigator.webdriver && load('opt:leaveWarn') !== '1') return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
   hubButton.node.addEventListener('click', () => setHub(!!menu.hidden));
   for (const trigger of triggers) {
     trigger.addEventListener('click', () => {
