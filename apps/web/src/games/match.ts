@@ -58,6 +58,10 @@ const TEXT = {
     bar: 'Bar',
     off: 'Borne off',
     checkers: '{n} {colour}',
+    chessTitle: 'Chess',
+    chessText: 'Classic chess: castling, en passant, promotion, checkmate and stalemate. Tap a piece to light up where it can go.',
+    backgammonTitle: 'Backgammon',
+    backgammonText: 'Roll, race your checkers round to your home and bear them off. A lone checker can be hit and starts again; two hold a point.',
   },
   tr: {
     check: 'Şah!',
@@ -83,10 +87,17 @@ const TEXT = {
     bar: 'Kırık',
     off: 'Toplanan',
     checkers: '{n} {colour}',
+    chessTitle: 'Satranç',
+    chessText: 'Klasik satranç: rok, geçerken alma, terfi, şah mat ve pat. Taşına dokun, gidebileceği kareler yanar.',
+    backgammonTitle: 'Tavla',
+    backgammonText: 'Zar at, pullarını yol boyunca evine götür ve topla. Tek duran pul vurulur ve baştan girer; iki pul bir haneyi kapatır.',
   },
 } as const;
 const tc = (key: keyof (typeof TEXT)['en'], values: Record<string, string | number> = {}): string =>
   (lang() === 'tr' ? TEXT.tr : TEXT.en)[key].replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
+/** A board's name and line: chess and backgammon keep theirs in this chunk (the room page's i18n stays small). */
+const boardTitle = (kind: GameKind): string => (kind === 'chess' ? tc('chessTitle') : kind === 'backgammon' ? tc('backgammonTitle') : t(`games.${kind}.title`));
+const boardText = (kind: GameKind): string => (kind === 'chess' ? tc('chessText') : kind === 'backgammon' ? tc('backgammonText') : t(`games.${kind}.text`));
 /** Dice faces ⚀–⚅. */
 const DIE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 /** Chess pieces as text (the filled shapes for both sides, coloured by CSS; U+FE0E keeps them out of emoji style). */
@@ -320,7 +331,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
         'div',
         { class: 'cl-shelf-row' },
         ...SHELF.map((box) => {
-          const title = t(`games.${box.kind}.title`);
+          const title = boardTitle(box.kind);
           const button = el(
             'button',
             { type: 'button', class: `cl-box cl-box-${box.kind}${box.kind === kind ? ' on' : ''}`, 'data-board': box.kind },
@@ -330,7 +341,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
             box.soon ? el('small', {}, t('classics.soon')) : '',
           );
           button.disabled = !!box.soon || seat === -1 || (busy && box.kind !== kind);
-          button.title = box.soon ? t('classics.soon') : busy && box.kind !== kind ? t('classics.busy') : t(`games.${box.kind as GameKind}.text`);
+          button.title = box.soon ? t('classics.soon') : busy && box.kind !== kind ? t('classics.busy') : boardText(box.kind);
           button.addEventListener('click', () => {
             if (box.soon) return;
             shelfOpen = false;
