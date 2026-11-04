@@ -6,7 +6,7 @@ import { load, save } from './storage.ts';
 /**
  * Hepsi koyu; renkleri ve çizimli arka planları styles.css'teki [data-theme]
  * blokları belirler. Neon'dan sonrakiler resimli ve maskotlu (public/themes/*.svg).
- * Kaldırılan bir temayı seçmiş olan (eski 'uzay', 'siber') currentTheme'de 'gece'ye düşer.
+ * Kaldırılan bir temayı seçmiş olan (eski 'uzay', 'siber'; 'opera' since 0.9.97.34, owner) currentTheme'de 'gece'ye düşer.
  */
 export const THEMES = [
   { id: 'gece', swatch: ['#141936', '#8b6cff'] },
@@ -16,7 +16,6 @@ export const THEMES = [
   { id: 'lokum', swatch: ['#18224a', '#e0a84a'] },
   { id: 'binbirgece', swatch: ['#141236', '#e8c27a'] },
   { id: 'sinema', swatch: ['#0d1020', '#e9b949'] },
-  { id: 'opera', swatch: ['#0f3638', '#e8708a'] },
   { id: 'acikhava', swatch: ['#1a1340', '#ff8a6b'] },
   { id: 'gemi', swatch: ['#24425e', '#ec6a5a'] },
   { id: 'tren', swatch: ['#0e1428', '#6fd6a8'] },
@@ -48,7 +47,7 @@ function shown(id: ThemeId): ThemeId {
 /** Sahnesi (public/themes/<tema>.svg) olan temalar; diğerlerinin sadece maskotu var. */
 const SCENE_THEMES: readonly ThemeId[] = [
   'lokum', 'binbirgece',
-  'sinema', 'opera', 'acikhava', 'gemi', 'tren',
+  'sinema', 'acikhava', 'gemi', 'tren',
 ];
 
 /** Ana sayfa şeridinde kaç tema görünsün (kaydırma çubuğu çıkmasın). */
