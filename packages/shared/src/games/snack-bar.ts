@@ -11,6 +11,9 @@
 // - Side games 2 (owner's picks 1, 2, 4; 4 Nov 2026): customers walk up with a line and a tap serves them for more
 //   (missing one costs nothing); at a film's end Glowbeam hands over a receipt with a golden bucket; badges, each worth
 //   +1 % income (a few silly ones give nothing).
+// - Every new cinema is a different place (owner's pick 3): the lobby, then a drive-in (soda ×2), a rooftop (+25 %
+//   between 20:00 and 04:00), an art house (candy ×3 income, ×2 price), then round again.
+// - Decorations (owner's pick 6): looks only, bought once with coins, kept over every cinema.
 
 export const SNACK_KEY = 'snackBar';
 export const SNACK_VERSION = 1;
@@ -70,6 +73,41 @@ export const BUCKET_MIN = 25;
 export const BADGE_BONUS = 0.01;
 const RECEIPTS_KEEP = 20;
 
+export type PlaceId = 'lobby' | 'drive-in' | 'rooftop' | 'art-house';
+const PLACES_AFTER: readonly PlaceId[] = ['drive-in', 'rooftop', 'art-house'];
+/** The place of this cinema: the first is the lobby, then the three places in turn. */
+export const placeOf = (save: SnackSave): PlaceId => (save.cinemas < 1 ? 'lobby' : PLACES_AFTER[(save.cinemas - 1) % PLACES_AFTER.length]!);
+export const ROOFTOP_BONUS = 0.25;
+const isNight = (hour: number) => hour >= 20 || hour < 4;
+/** A stand's income in this place. */
+export function placeRate(save: SnackSave, id: StandId): number {
+  const place = placeOf(save);
+  if (place === 'drive-in' && id === 'soda') return 2;
+  if (place === 'art-house' && id === 'candy') return 3;
+  return 1;
+}
+/** A stand's price in this place. */
+export const placeCost = (save: SnackSave, id: StandId): number => (placeOf(save) === 'art-house' && id === 'candy' ? 2 : 1);
+/** The whole cinema's income in this place at this local hour. */
+export const placeFactor = (save: SnackSave, hour: number): number => (placeOf(save) === 'rooftop' && isNight(hour) ? 1 + ROOFTOP_BONUS : 1);
+
+/** Looks only (owner's pick 6): bought once, kept over every cinema and a new start keeps nothing. */
+export type DecorId = 'marquee' | 'poster' | 'rope' | 'neon';
+export const DECOR: readonly { id: DecorId; cost: number }[] = [
+  { id: 'marquee', cost: 500 },
+  { id: 'poster', cost: 5_000 },
+  { id: 'rope', cost: 50_000 },
+  { id: 'neon', cost: 500_000 },
+];
+/** Buys a decoration; false when owned already or too expensive. */
+export function buyDecor(save: SnackSave, id: DecorId): boolean {
+  const item = DECOR.find((d) => d.id === id);
+  if (!item || save.decor.includes(id) || save.coins < item.cost) return false;
+  save.coins -= item.cost;
+  save.decor.push(id);
+  return true;
+}
+
 export interface SnackStats {
   /** Serves (taps and customers) over every cinema. */
   served: number;
@@ -117,6 +155,8 @@ export interface SnackSave {
   film: SnackFilm | null;
   /** Room items whose receipt was already given. */
   receipts: string[];
+  /** Decorations bought (looks only). */
+  decor: DecorId[];
 }
 
 export interface SnackContext {
@@ -136,7 +176,7 @@ export function freshSnack(): SnackSave {
   return {
     v: SNACK_VERSION, coins: 0, earned: 0, lifetime: 0, watched: 0, levels, stars: 0, cinemas: 0, seen: 0,
     stats: { served: 0, customers: 0, together: 0, voiceServed: 0, films: 0, watched: 0 },
-    badges: [], film: null, receipts: [],
+    badges: [], film: null, receipts: [], decor: [],
   };
 }
 
@@ -180,6 +220,7 @@ export function loadSnack(raw: unknown): SnackSave {
     film && typeof film === 'object' && typeof film.item === 'string' && film.item.length <= 64
       ? { item: film.item, watched: num(film.watched), served: Math.floor(num(film.served)), coins: num(film.coins) }
       : null;
+  save.decor = Array.isArray(record.decor) ? [...new Set(record.decor.filter((id): id is DecorId => DECOR.some((d) => d.id === id)))] : [];
   save.receipts = Array.isArray(record.receipts)
     ? record.receipts.filter((id): id is string => typeof id === 'string' && id.length <= 64).slice(-RECEIPTS_KEEP)
     : [];
@@ -207,9 +248,10 @@ export const starFactor = (save: SnackSave): number => 1 + STAR_BONUS * save.sta
 export const badgeFactor = (save: SnackSave): number =>
   1 + BADGE_BONUS * save.badges.filter((id) => BADGES.find((b) => b.id === id)?.bonus).length;
 
-/** Coins per second without the together bonus. */
-export function baseRate(save: SnackSave): number {
-  return STANDS.reduce((sum, stand) => sum + standRate(stand, save.levels[stand.id]), 0) * starFactor(save) * badgeFactor(save);
+/** Coins per second without the together bonus (in this cinema's place, at this local hour). */
+export function baseRate(save: SnackSave, hour = new Date().getHours()): number {
+  const stands = STANDS.reduce((sum, stand) => sum + standRate(stand, save.levels[stand.id]) * placeRate(save, stand.id), 0);
+  return stands * starFactor(save) * badgeFactor(save) * placeFactor(save, hour);
 }
 
 /** The together bonus: 1 alone, 1.1 with one other person, 1.15 when that person is in voice with me. */
@@ -376,23 +418,24 @@ export function checkBadges(save: SnackSave): Badge[] {
 
 const standOf = (id: StandId): StandInfo => STANDS.find((s) => s.id === id)!;
 
-/** The price of the next `count` levels of a stand at `level`. */
-export function costOf(id: StandId, level: number, count = 1): number {
+/** The price of the next `count` levels of a stand at `level` (`factor`: the place's price, `placeCost`). */
+export function costOf(id: StandId, level: number, count = 1, factor = 1): number {
   const stand = standOf(id);
   if (count <= 0) return 0;
-  return (stand.cost * COST_GROWTH ** level * (COST_GROWTH ** count - 1)) / (COST_GROWTH - 1);
+  return (factor * stand.cost * COST_GROWTH ** level * (COST_GROWTH ** count - 1)) / (COST_GROWTH - 1);
 }
 
 /** How many levels of a stand the coins buy now (at most `limit`). */
 export function affordable(save: SnackSave, id: StandId, limit = 1000): number {
   const stand = standOf(id);
   const level = save.levels[id];
-  const first = stand.cost * COST_GROWTH ** level;
+  const factor = placeCost(save, id);
+  const first = factor * stand.cost * COST_GROWTH ** level;
   if (save.coins < first) return 0;
   const n = Math.floor(Math.log((save.coins * (COST_GROWTH - 1)) / first + 1) / Math.log(COST_GROWTH));
   // Float rounding can land one off on the boundary: step back while it costs more than we have.
   let count = Math.min(limit, Math.max(0, n));
-  while (count > 0 && costOf(id, level, count) > save.coins * (1 + 1e-12)) count--;
+  while (count > 0 && costOf(id, level, count, factor) > save.coins * (1 + 1e-12)) count--;
   return count;
 }
 
@@ -406,7 +449,7 @@ export function unlocked(save: SnackSave, id: StandId): boolean {
 /** Buys `count` levels; false (and nothing changes) when it is locked or too expensive. */
 export function buy(save: SnackSave, id: StandId, count = 1): boolean {
   if (!unlocked(save, id) || count < 1) return false;
-  const price = costOf(id, save.levels[id], count);
+  const price = costOf(id, save.levels[id], count, placeCost(save, id));
   if (price > save.coins * (1 + 1e-12)) return false;
   save.coins = Math.max(0, save.coins - price);
   save.levels[id] += count;
@@ -445,6 +488,6 @@ export function formatCoins(value: number): string {
   }
   if (scaled >= 1000) return value.toExponential(2).replace('+', '');
   const digits = scaled < 10 ? 2 : scaled < 100 ? 1 : 0;
-  const text = (Math.floor(scaled * 10 ** digits) / 10 ** digits).toFixed(digits).replace(/\.?0+$/, '');
+  const text = (Math.floor(scaled * 10 ** digits) / 10 ** digits).toFixed(digits).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
   return `${text}${UNITS[unit]}`;
 }

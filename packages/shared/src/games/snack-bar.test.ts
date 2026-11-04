@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BADGES, BUCKET_MIN, BUCKET_SECONDS, CUSTOMER_MIN, CUSTOMER_SECONDS, MAX_TICK_S, RECEIPT_MIN_S, PRESTIGE_MIN, SNACK_VERSION, STANDS,
   affordable, badgeFactor, baseRate, buy, checkBadges, collectReceipt, costOf, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate, loadSnack,
-  milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick, togetherFactor, unlocked,
+  ROOFTOP_BONUS, buyDecor, placeCost, placeOf, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick, togetherFactor, unlocked,
 } from './snack-bar.ts';
 
 const alone = { playing: true, others: 0, voiceOthers: 0 };
@@ -259,5 +259,56 @@ describe('Snack Bar: customers, receipts, badges (side games 2)', () => {
     const old = loadSnack({ v: 1, coins: 5, levels: { popcorn: 2 } });
     expect(old.stats.served).toBe(0);
     expect(old.badges).toEqual([]);
+  });
+});
+
+describe('Snack Bar: coin amounts', () => {
+  it('keeps the zeros of whole amounts (100K, 500K were shown as 1K, 5K)', () => {
+    expect(formatCoins(100_000)).toBe('100K');
+    expect(formatCoins(500_000)).toBe('500K');
+    expect(formatCoins(10_000)).toBe('10K');
+    expect(formatCoins(1_200)).toBe('1.2K');
+    expect(formatCoins(1_000_000)).toBe('1M');
+    expect(formatCoins(20_500_000)).toBe('20.5M');
+  });
+});
+
+describe('Snack Bar: places and decorations (side games 2)', () => {
+  it('each new cinema is a different place with its own twist', () => {
+    const save = freshSnack();
+    save.levels = { popcorn: 1, soda: 1, nachos: 0, candy: 1, 'second-counter': 0 };
+    expect(placeOf(save)).toBe('lobby');
+    const lobby = baseRate(save, 12);
+    save.cinemas = 1;
+    expect(placeOf(save)).toBe('drive-in');
+    expect(baseRate(save, 12)).toBeCloseTo(lobby + 4); // soda ×2
+    save.cinemas = 2;
+    expect(placeOf(save)).toBe('rooftop');
+    expect(baseRate(save, 12)).toBeCloseTo(lobby);
+    expect(baseRate(save, 22)).toBeCloseTo(lobby * (1 + ROOFTOP_BONUS));
+    expect(baseRate(save, 3)).toBeCloseTo(lobby * (1 + ROOFTOP_BONUS));
+    save.cinemas = 3;
+    expect(placeOf(save)).toBe('art-house');
+    expect(baseRate(save, 12)).toBeCloseTo(lobby + 2 * 220); // candy ×3
+    expect(placeCost(save, 'candy')).toBe(2);
+    save.coins = costOf('candy', 1) * 1.5;
+    expect(buy(save, 'candy')).toBe(false); // twice the price here
+    save.cinemas = 4;
+    expect(placeOf(save)).toBe('drive-in');
+  });
+
+  it('decorations are bought once and kept; looks only', () => {
+    const save = freshSnack();
+    const rate = baseRate(save, 12);
+    expect(buyDecor(save, 'marquee')).toBe(false);
+    save.coins = 600;
+    expect(buyDecor(save, 'marquee')).toBe(true);
+    expect(save.coins).toBe(100);
+    expect(buyDecor(save, 'marquee')).toBe(false);
+    expect(baseRate(save, 12)).toBe(rate);
+    save.earned = PRESTIGE_MIN;
+    newCinema(save);
+    expect(save.decor).toEqual(['marquee']);
+    expect(loadSnack({ ...JSON.parse(saveSnack(save)), decor: ['marquee', 'marquee', 'castle'] }).decor).toEqual(['marquee']);
   });
 });

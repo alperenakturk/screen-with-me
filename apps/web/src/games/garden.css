@@ -25,11 +25,11 @@
 .wg button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
 .wg button:disabled { cursor: default; }
 
-.wg-bar { display: flex; align-items: center; gap: 8px; min-height: 28px; }
-.wg-gap { flex: 1; }
+.wg-bar { display: flex; align-items: center; gap: 6px; min-height: 28px; min-width: 0; }
+.wg-gap { flex: 1 1 0; min-width: 0; }
 .wg-pill { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--wg-muted); }
 .wg-state.on { background: var(--wg-leaf); color: #0d2a20; }
-.wg-seeds { font-size: 13px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; }
+.wg-seeds { font-size: 13px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 .wg-scene { position: relative; flex: 1 1 auto; min-height: 120px; border-radius: 10px; overflow: hidden; background: #120e27; }
 .wg-scene-art, .wg-scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -142,3 +142,17 @@ html.phone .wg-scene { min-height: 260px; }
 }
 @keyframes wg-rain { to { background-position: -10px 40px; } }
 @media (prefers-reduced-motion: reduce) { .wg-scene.wg-rain::before { animation: none; } }
+
+/* Decorations and night visitors (pick 6): their own layer in the scene's frame, behind the pots. */
+.wg-decor-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.wg-decor-layer svg { width: 100%; height: 100%; display: block; }
+.wg-bulbs circle { animation: wg-twinkle 2.2s ease-in-out infinite; }
+.wg-bulbs circle:nth-child(even) { animation-delay: 1.1s; }
+@keyframes wg-twinkle { 50% { opacity: 0.45; } }
+.wg-lantern-glow { animation: wg-twinkle 3.4s ease-in-out infinite; }
+.wg-moth { animation: wg-flutter 0.35s ease-in-out infinite alternate; transform-origin: center; transform-box: fill-box; }
+@keyframes wg-flutter { to { transform: scaleX(0.6) translateY(-2px); } }
+.wg-firefly { animation: wg-glow 1.8s ease-in-out infinite; }
+@keyframes wg-glow { 50% { opacity: 0.3; } }
+.wg-decor-item { justify-content: space-between; }
+@media (prefers-reduced-motion: reduce) { .wg-bulbs circle, .wg-lantern-glow, .wg-moth, .wg-firefly { animation: none; } }

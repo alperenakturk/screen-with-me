@@ -6,7 +6,7 @@
 
 import './snack-bar.css';
 import {
-  BADGES, BADGE_BONUS, MILESTONES, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
+  BADGES, BADGE_BONUS, DECOR, MILESTONES, buyDecor, placeOf, placeCost, type DecorId, type PlaceId, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
   loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, standRate, starsFor, starFactor, tick,
   togetherFactor, unlocked, type CustomerMood, type Receipt, type SnackSave, type StandId,
 } from '@swm/shared/games/snack-bar';
@@ -62,7 +62,27 @@ const TEXT = {
     'milestone': 'Lv {n}: income ×2',
     'more': '+{n} more when the window is bigger',
     'cinema': 'Cinema #{n} · ★ {stars}',
-    cinemaShort: '🎬 #{n} · ★ {stars}',
+    cinemaShort: '{icon} #{n} · ★ {stars}',
+    'place.lobby': 'The lobby',
+    'place.drive-in': 'Drive-in',
+    'place.rooftop': 'Rooftop cinema',
+    'place.art-house': 'Art house',
+    'twist.lobby': 'Where it all started.',
+    'twist.drive-in': 'Under the stars: soda earns ×2.',
+    'twist.rooftop': 'Up on the roof: +25 % income from 20:00 to 04:00.',
+    'twist.art-house': 'Fancy sweets: candy earns ×3 and costs ×2.',
+    'sign.lobby': 'SNACK BAR',
+    'sign.drive-in': 'DRIVE-IN',
+    'sign.rooftop': 'ROOFTOP',
+    'sign.art-house': 'ART HOUSE',
+    placeOpen: 'Cinema #{n}: {place}. {twist}',
+    decorTitle: '🎨 Decorations',
+    decorLine: 'Looks only. Yours for good, in every cinema.',
+    'decor.marquee': 'Marquee lights',
+    'decor.poster': 'Glowbeam poster',
+    'decor.rope': 'Velvet rope',
+    'decor.neon': 'Neon popcorn',
+    decorOwned: '✓ Yours',
     'newCinema': '🎬 Open a new cinema',
     newCinemaButton: '🎬 New cinema',
     'newCinemaStars': '🎬 New cinema · +{stars} ★',
@@ -94,6 +114,7 @@ const TEXT = {
     badgesLine: 'Each badge: +{n} % income for good (the ones marked ✦ are just for fun).',
     badgeNew: '🏅 New badge: {name}',
     badgeFun: 'just for fun',
+    badgeEach: '+{n} % each',
     badgeTap: 'Tap a badge to see how to earn it.',
     close: 'Close',
     restart: 'Start over',
@@ -129,7 +150,27 @@ const TEXT = {
     'milestone': 'Sv {n}: gelir ×2',
     'more': 'Pencere büyüyünce +{n} tane daha',
     'cinema': '{n}. sinema · ★ {stars}',
-    cinemaShort: '🎬 {n}. · ★ {stars}',
+    cinemaShort: '{icon} {n}. · ★ {stars}',
+    'place.lobby': 'Lobi',
+    'place.drive-in': 'Arabalı sinema',
+    'place.rooftop': 'Çatı sineması',
+    'place.art-house': 'Sanat sineması',
+    'twist.lobby': 'Her şeyin başladığı yer.',
+    'twist.drive-in': 'Yıldızların altında: gazoz ×2 kazandırır.',
+    'twist.rooftop': 'Çatıda: 20.00 ile 04.00 arası gelir +%25.',
+    'twist.art-house': 'Şık tatlılar: şeker ×3 kazandırır, fiyatı ×2.',
+    'sign.lobby': 'BÜFE',
+    'sign.drive-in': 'ARABALI',
+    'sign.rooftop': 'ÇATI',
+    'sign.art-house': 'SANAT',
+    placeOpen: '{n}. sinema: {place}. {twist}',
+    decorTitle: '🎨 Süsler',
+    decorLine: 'Sadece görünüş. Her sinemada kalıcı olarak senin.',
+    'decor.marquee': 'Tabela ışıkları',
+    'decor.poster': 'Glowbeam afişi',
+    'decor.rope': 'Kadife kordon',
+    'decor.neon': 'Neon mısır',
+    decorOwned: '✓ Senin',
     'newCinema': '🎬 Yeni sinema aç',
     newCinemaButton: '🎬 Yeni sinema',
     'newCinemaStars': '🎬 Yeni sinema · +{stars} ★',
@@ -161,6 +202,7 @@ const TEXT = {
     badgesLine: 'Her rozet: gelire kalıcı +%{n} (✦ olanlar sadece eğlence için).',
     badgeNew: '🏅 Yeni rozet: {name}',
     badgeFun: 'sadece eğlence',
+    badgeEach: 'her biri +%{n}',
     badgeTap: 'Nasıl kazanılacağını görmek için bir rozete dokun.',
     close: 'Kapat',
     restart: 'Baştan başla',
@@ -289,6 +331,24 @@ function art(raw: string, cls: string): HTMLElement {
   return box;
 }
 
+const PLACE_ICON: Record<PlaceId, string> = { lobby: '🎬', 'drive-in': '🚗', rooftop: '🌃', 'art-house': '🎭' };
+const DECOR_ICON: Record<DecorId, string> = { marquee: '💡', poster: '🖼️', rope: '🎗️', neon: '🌟' };
+/** Each place's backdrop and the decorations, drawn into the counter scene (340 × 110; our own art). */
+const BACKDROPS: Record<Exclude<PlaceId, 'lobby'>, string> = {
+  'drive-in':
+    '<rect width="340" height="82" fill="#0b1640"/><g fill="#fff3d6"><circle cx="20" cy="10" r="1"/><circle cx="60" cy="22" r="1.2"/><circle cx="104" cy="8" r="1"/><circle cx="150" cy="30" r="1"/><circle cx="182" cy="12" r="1.3"/><circle cx="330" cy="40" r="1"/><circle cx="95" cy="40" r="0.8"/></g><rect x="100" y="4" width="92" height="38" rx="2" fill="#dfe8ff" opacity=".13"/><path d="M100 42 L192 42 L170 80 L122 80 Z" fill="#dfe8ff" opacity=".05"/><path d="M228 76 q4 -10 16 -10 h22 q10 0 14 10 z" fill="#050a22"/><circle cx="240" cy="78" r="3" fill="#050a22"/><circle cx="268" cy="78" r="3" fill="#050a22"/>',
+  rooftop:
+    '<rect width="340" height="82" fill="#2b1a4d"/><rect y="40" width="340" height="42" fill="#3d2160" opacity=".6"/><g fill="#140c2a"><rect x="96" y="46" width="18" height="36"/><rect x="116" y="34" width="14" height="48"/><rect x="132" y="52" width="22" height="30"/><rect x="156" y="40" width="12" height="42"/><rect x="170" y="56" width="26" height="26"/><rect x="300" y="44" width="16" height="38"/><rect x="318" y="52" width="22" height="30"/></g><g fill="#ffc65a" opacity=".7"><rect x="100" y="52" width="2" height="2"/><rect x="120" y="40" width="2" height="2"/><rect x="124" y="48" width="2" height="2"/><rect x="138" y="58" width="2" height="2"/><rect x="160" y="46" width="2" height="2"/><rect x="176" y="62" width="2" height="2"/><rect x="304" y="50" width="2" height="2"/><rect x="324" y="60" width="2" height="2"/></g><circle cx="186" cy="16" r="7" fill="#fff3d6" opacity=".8"/>',
+  'art-house':
+    '<rect width="340" height="82" fill="#2a0f1f"/><g fill="#ffc65a" opacity=".08"><circle cx="110" cy="12" r="2"/><circle cx="130" cy="26" r="2"/><circle cx="150" cy="12" r="2"/><circle cx="170" cy="26" r="2"/><circle cx="190" cy="12" r="2"/><circle cx="110" cy="40" r="2"/><circle cx="150" cy="40" r="2"/><circle cx="190" cy="40" r="2"/></g><path d="M0 0 H22 Q18 30 24 82 H0 Z" fill="#8a1f3a"/><path d="M6 0 V82 M14 0 Q11 40 16 82" stroke="#5a1024" stroke-width="2" fill="none"/><path d="M340 0 H318 Q322 30 316 82 H340 Z" fill="#8a1f3a"/><path d="M334 0 V82 M326 0 Q329 40 324 82" stroke="#5a1024" stroke-width="2" fill="none"/>',
+};
+const DECOR_ART: Record<DecorId, string> = {
+  marquee: '<g class="sb-bulbs" fill="#ffe7a8">' + Array.from({ length: 12 }, (_, i) => `<circle cx="${204 + i * 10}" cy="8" r="1.8"/><circle cx="${204 + i * 10}" cy="34" r="1.8"/>`).join('') + '</g>',
+  poster: '<rect x="152" y="6" width="34" height="40" rx="2" fill="#1a1036" stroke="#ffc65a" stroke-width="1.5"/><path d="M160 30 L169 18 A7 7 0 1 1 177 28 Z" fill="#ffc65a"/><circle cx="171" cy="22" r="1" fill="#1a1036"/><circle cx="175" cy="22" r="1" fill="#1a1036"/><rect x="156" y="38" width="26" height="3" rx="1.5" fill="#ff8f3a"/>',
+  rope: '<g><rect x="6" y="84" width="4" height="22" rx="2" fill="#ffc65a"/><circle cx="8" cy="84" r="3" fill="#ffc65a"/><rect x="62" y="84" width="4" height="22" rx="2" fill="#ffc65a"/><circle cx="64" cy="84" r="3" fill="#ffc65a"/><path d="M9 88 Q36 104 63 88" stroke="#c0283f" stroke-width="3" fill="none"/></g>',
+  neon: '<g class="sb-neon" fill="none" stroke="#ff8fd0" stroke-width="1.8" stroke-linejoin="round"><path d="M112 18 h24 l-3 22 h-18 z"/><path d="M114 18 q2 -7 7 -4 q3 -6 7 -1 q5 -3 6 5"/></g>',
+};
+
 const fmtRate = (rate: number) => formatCoins(rate < 10 ? Math.round(rate * 10) / 10 : rate);
 
 export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => void {
@@ -305,7 +365,11 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
   const head = el('div', { class: 'sb-head' }, art(coin, 'sb-coin'), coins, rate, el('span', { class: 'sb-gap' }), state, together);
 
   // ---- The scene: a tap serves a customer ----
-  const sceneArt = art(scene.replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" '), 'sb-scene-art');
+  const decorated = scene
+    .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')
+    .replace('<g id="side-light">', `${Object.entries(BACKDROPS).map(([id, svg]) => `<g id="place-${id}" style="display:none">${svg}</g>`).join('')}<g id="side-light">`)
+    .replace('</svg>', `${DECOR.map((d) => `<g id="decor-${d.id}" style="display:none">${DECOR_ART[d.id]}</g>`).join('')}</svg>`);
+  const sceneArt = art(decorated, 'sb-scene-art');
   const secondBadge = el('span', { class: 'sb-second', 'aria-hidden': 'true' }, '×2');
   const sceneButton = el('button', { type: 'button', class: 'sb-scene' }, sceneArt, secondBadge);
   const pops = el('div', { class: 'sb-pops', 'aria-hidden': 'true' });
@@ -489,11 +553,26 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
       });
       return el('li', {}, cell);
     });
+    const decor = DECOR.map((d) => {
+      const owned = game.decor.includes(d.id);
+      const label = el('span', {}, `${DECOR_ICON[d.id]} ${t(`decor.${d.id}`)}`);
+      const buyButton = el('button', { type: 'button', class: `sb-decor-buy${owned ? ' owned' : ''}` }, owned ? t('decorOwned') : formatCoins(d.cost));
+      buyButton.disabled = owned || game.coins < d.cost || blocked;
+      buyButton.addEventListener('click', () => {
+        if (!buyDecor(game, d.id)) return;
+        playSound('snackBuy');
+        persist();
+        draw();
+        openBadges();
+      });
+      return el('li', { class: 'sb-decor-item' }, label, buyButton);
+    });
     showPanel(
-      el('h3', {}, `🏅 ${t('badgesTitle')} · ${game.badges.length}/${BADGES.length}`),
-      el('p', { class: 'sb-panel-line' }, t('badgesLine', { n: Math.round(BADGE_BONUS * 100) })),
+      el('h3', { title: t('badgesLine', { n: Math.round(BADGE_BONUS * 100) }) }, `🏅 ${t('badgesTitle')} · ${game.badges.length}/${BADGES.length} · ${t('badgeEach', { n: Math.round(BADGE_BONUS * 100) })}`),
       el('ul', { class: 'sb-badge-grid' }, ...cells),
       detail,
+      el('h3', { class: 'sb-decor-title', title: t('decorLine') }, t('decorTitle')),
+      el('ul', { class: 'sb-decor' }, ...decor),
     );
   }
   badgeButton.addEventListener('click', () => (panel.hidden ? openBadges() : hidePanel()));
@@ -571,7 +650,7 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
     playSound('snackCinema');
     persist();
     draw();
-    flash(t('newCinemaDone', { n: game.cinemas + 1, stars: game.stars }));
+    flash(t('placeOpen', { n: game.cinemas + 1, place: t(`place.${placeOf(game)}`), twist: t(`twist.${placeOf(game)}`) }), 7000);
   });
 
   /** Which rows show in a small window: the newest stand I can buy and its neighbours (the next locked one too). */
@@ -609,12 +688,24 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
       if (node) node.style.display = game.levels[stand.id] > 0 ? '' : 'none';
     }
     secondBadge.hidden = game.levels['second-counter'] < 1;
+    // This cinema's place and the decorations bought.
+    const place = placeOf(game);
+    for (const id of Object.keys(BACKDROPS)) {
+      const node = group(`place-${id}`);
+      if (node) node.style.display = id === place ? '' : 'none';
+    }
+    const signText = group('sign')?.querySelector('text');
+    if (signText && signText.textContent !== t(`sign.${place}`)) signText.textContent = t(`sign.${place}`);
+    for (const d of DECOR) {
+      const node = group(`decor-${d.id}`);
+      if (node) node.style.display = game.decor.includes(d.id) ? '' : 'none';
+    }
     const shown = shownRows(compact);
     rows.forEach((row, i) => {
       const stand = STANDS[i]!;
       const level = game.levels[stand.id];
       const open = unlocked(game, stand.id);
-      const price = costOf(stand.id, level);
+      const price = costOf(stand.id, level, 1, placeCost(game, stand.id));
       const next = nextMilestone(level);
       const last = [0, ...MILESTONES].filter((m) => m <= level).pop() ?? 0;
       row.node.hidden = !shown.has(stand.id);
@@ -635,8 +726,8 @@ export function mountSnackBar(root: HTMLElement, room: () => SoloRoom): () => vo
     const hidden = STANDS.length - shown.size;
     more.hidden = hidden < 1;
     more.textContent = t('more', { n: hidden });
-    cinema.textContent = t('cinemaShort', { n: game.cinemas + 1, stars: game.stars });
-    cinema.title = t('cinema', { n: game.cinemas + 1, stars: game.stars });
+    cinema.textContent = t('cinemaShort', { icon: PLACE_ICON[placeOf(game)], n: game.cinemas + 1, stars: game.stars });
+    cinema.title = `${t('cinema', { n: game.cinemas + 1, stars: game.stars })} · ${t(`place.${placeOf(game)}`)}: ${t(`twist.${placeOf(game)}`)}`;
     badgeButton.textContent = t('badges', { n: game.badges.length, all: BADGES.length });
     badgeButton.title = t('badgesTitle');
     const stars = starsFor(game);

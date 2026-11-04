@@ -213,6 +213,40 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   const reset = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')));
   check(reset.coins < 20 && reset.levels.soda === 0 && reset.levels.popcorn === 1, '↺ Start over (after its question) starts from zero', JSON.stringify(reset.levels));
 
+  // Picks 3 + 6: a later cinema is another place (here the rooftop), decorations are bought from the badge wall.
+  await alex.goto(`${SITE}/`);
+  await alex.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('snackBar'));
+    localStorage.setItem('snackBar', JSON.stringify({ ...s, coins: 10_000, cinemas: 2, stars: 3 }));
+    localStorage.removeItem('snackBar:tab');
+  });
+  await alex.goto(`${SITE}/r/${room}#back`);
+  await until(() => alex.evaluate(() => !!document.querySelector('#game-btn')));
+  await alex.waitForTimeout(1500);
+  await openSnack(alex);
+  await wait(800);
+  const spot = await alex.evaluate(() => {
+    const art = document.querySelector('.sb-scene-art');
+    const prefix = art.dataset.prefix;
+    const shown = (id) => getComputedStyle(art.querySelector('#' + prefix + id)).display !== 'none';
+    return { sign: art.querySelector('#' + prefix + 'sign text').textContent, rooftop: shown('place-rooftop'), drive: shown('place-drive-in'), foot: document.querySelector('.sb-cinema').textContent };
+  });
+  check(spot.sign === 'ROOFTOP' && spot.rooftop && !spot.drive && /🌃/.test(spot.foot), 'cinema #3 is the rooftop: its sign, its skyline, its icon', JSON.stringify(spot));
+  await alex.evaluate(() => document.querySelector('.sb-badges-open').click());
+  await alex.evaluate(() => document.querySelector('.sb-decor-buy').click());
+  await wait(500);
+  const decor = await alex.evaluate(() => {
+    const art = document.querySelector('.sb-scene-art');
+    return { saved: JSON.parse(localStorage.getItem('snackBar')).decor, shown: getComputedStyle(art.querySelector('#' + art.dataset.prefix + 'decor-marquee')).display !== 'none', owned: document.querySelector('.sb-decor-buy')?.textContent };
+  });
+  check(decor.saved.includes('marquee') && decor.shown && /Yours/.test(decor.owned), 'a decoration is bought once and shows on the counter', JSON.stringify(decor));
+  check((await fits(alex)).length === 0, 'the wall with decorations fits without scrollbars', (await fits(alex)).join('; '));
+  await wait(300);
+  await alex.screenshot({ path: __dirname + '/snack-decor.png' });
+  await alex.evaluate(() => document.querySelector('.sb-panel-close').click());
+  await wait(400);
+  await alex.screenshot({ path: __dirname + '/snack-rooftop.png' });
+
   // Phone: the sheet fits, all five rows.
   const phone = await browser.newContext({ ...devices['iPhone 13'] });
   const pam = await person(phone, 'Pam', 'elf');

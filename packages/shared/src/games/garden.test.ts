@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DRY_SPEED, EVENING_GAP_MS, EVENING_S, FILM_MIN_S, GARDEN_VERSION, PLANTS, PLANT_IDS, POTS,
   SEEDS_MAX, SEED_EVERY_S, WATER_LAST_S,
-  ALBUM_IDS, COLOR_SEEDS_MAX, HYBRID_COLORS, LAMP_BONUS, plantColor, filmEnded, found, freshGarden, lampFree, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
+  ALBUM_IDS, COLOR_SEEDS_MAX, PETALS_NEW, PETALS_PICK, buyGardenDecor, seeVisitor, visitorFor, HYBRID_COLORS, LAMP_BONUS, plantColor, filmEnded, found, freshGarden, lampFree, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
   stageOf, tickGarden, water, type GardenSave,
 } from './garden.ts';
 
@@ -280,5 +280,32 @@ describe('Window Garden: hybrid colours and memories (side games 2)', () => {
     const back = loadGarden({ ...JSON.parse(saveGarden(garden)), colorSeeds: [{ plant: 'fern', color: 'rose' }, { plant: 'fern', color: 'gold' }], pots: [{ plant: 'fern', growth: 0.5, water: 1, color: 'sky' }] });
     expect(back.colorSeeds).toEqual([{ plant: 'fern', color: 'gold' }]);
     expect(back.pots[0]!.color).toBeUndefined();
+  });
+});
+
+describe('Window Garden: decorations and night visitors (side games 2)', () => {
+  it('petals come from picking; decorations are bought once', () => {
+    const garden = freshGarden();
+    garden.pots = [{ plant: 'fern', growth: 1, water: 1 }, { plant: 'fern', growth: 1, water: 1 }, null];
+    pick(garden, 0);
+    pick(garden, 1);
+    expect(garden.petals).toBe(PETALS_NEW + PETALS_PICK);
+    expect(buyGardenDecor(garden, 'lantern')).toBe(false);
+    expect(buyGardenDecor(garden, 'curtains')).toBe(true);
+    expect(buyGardenDecor(garden, 'curtains')).toBe(false);
+    expect(garden.petals).toBe(PETALS_NEW + PETALS_PICK - 2);
+  });
+
+  it('visitors only come at dusk or night, and only with their decoration', () => {
+    const garden = freshGarden();
+    const lucky = () => 0;
+    expect(visitorFor(garden, 'night', lucky)).toBeNull();
+    garden.decor = ['lantern'];
+    expect(visitorFor(garden, 'day', lucky)).toBeNull();
+    expect(visitorFor(garden, 'night', lucky)).toBe('firefly');
+    expect(visitorFor(garden, 'night', () => 0.99)).toBeNull();
+    expect(seeVisitor(garden, 'firefly')).toBe(true);
+    expect(seeVisitor(garden, 'firefly')).toBe(false);
+    expect(loadGarden({ ...JSON.parse(saveGarden(garden)), visitors: ['firefly', 'dragon'], decor: ['lantern', 'pool'] })).toMatchObject({ visitors: ['firefly'], decor: ['lantern'] });
   });
 });

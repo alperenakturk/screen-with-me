@@ -140,6 +140,17 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   check(!!colored && colored.pots[0].plant === 'mint' && colored.pots[0].color === 'sky' && colored.colorSeeds.length === 0, 'a colour seed grows a sky blue mint', JSON.stringify(colored?.pots[0]));
   check(await alex.evaluate(() => /^(night|dawn|day|dusk)$/.test(document.querySelector('.wg-scene').dataset.time)), 'the sky outside follows the time of day');
 
+  // Pick 6: petals from picking buy decorations; the 🎨 window lists them and the night visitors.
+  const petals = (await saved(alex)).petals;
+  check(petals >= 3, 'picking gave petals (3 for a new album entry)', String(petals));
+  await alex.evaluate(() => document.querySelector('.wg-decor-open').click());
+  await alex.evaluate(() => document.querySelector('.wg-decor-item .wg-btn.main')?.click());
+  const bought = await until(async () => { const s = await saved(alex); return s.decor.length ? s : null; }, 4000);
+  check(!!bought && bought.decor[0] === 'curtains', 'the curtains are bought with petals', JSON.stringify(bought?.decor));
+  check(await alex.evaluate(() => getComputedStyle(document.querySelector('.wg-decor-layer [data-decor="curtains"]')).display !== 'none'), 'the curtains hang at the window');
+  check((await fits(alex)).length === 0, 'the decorations window fits', (await fits(alex)).join('; '));
+  await alex.evaluate(() => document.querySelector('.wg-page-close').click());
+
   // Glowbeam the grow lamp (pick 9): once per film, on a growing plant.
   await alex.click('.wg-pot[data-pot="1"]');
   await alex.evaluate(() => document.querySelector('.wg-action .wg-btn.lamp')?.click());

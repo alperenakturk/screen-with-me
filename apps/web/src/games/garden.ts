@@ -5,7 +5,7 @@
 
 import './garden.css';
 import {
-  ALBUM_IDS, GARDEN_KEY, HYBRID_COLORS, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, albumId, plantColor, type HybridColor, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
+  ALBUM_IDS, GARDEN_DECOR, GARDEN_KEY, VISITORS, buyGardenDecor, seeVisitor, visitorFor, type GardenDecorId, type VisitorId, HYBRID_COLORS, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, albumId, plantColor, type HybridColor, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
   saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity,
 } from '@swm/shared/games/garden';
 import type { SoloRoom } from '@swm/shared/games/catalog';
@@ -32,6 +32,24 @@ import how2 from './art/tutorial/garden-2-water.svg?raw';
 import how3 from './art/tutorial/garden-3-album.svg?raw';
 import how4 from './art/tutorial/garden-4-film.svg?raw';
 import { howToPlay, restartButton } from './how-to-play.ts';
+
+/** Garden decorations and visitors (pick 6), drawn here over the window scene (same 340 × 226 frame; our own art). */
+const GARDEN_DECOR_ART: Record<GardenDecorId, string> = {
+  curtains:
+    '<path d="M44 16 H78 Q70 60 82 120 Q60 116 44 124 Z" fill="#b8475f" opacity=".92"/><path d="M52 18 Q50 70 56 120 M64 18 Q60 70 70 118" stroke="#8a2f45" stroke-width="2" fill="none"/><path d="M296 16 H262 Q270 60 258 120 Q280 116 296 124 Z" fill="#b8475f" opacity=".92"/><path d="M288 18 Q290 70 284 120 M276 18 Q280 70 270 118" stroke="#8a2f45" stroke-width="2" fill="none"/>',
+  'fairy-lights':
+    '<path d="M46 22 Q108 40 170 24 Q232 40 294 22" stroke="#3a2e57" stroke-width="1.2" fill="none"/><g class="wg-bulbs">' +
+    [[60, 27], [82, 32], [104, 34], [126, 33], [148, 29], [192, 29], [214, 33], [236, 34], [258, 32], [280, 27]]
+      .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="2.6" fill="${['#ffd76a', '#ff9fc4', '#9fd8ff'][i % 3]}"/>`)
+      .join('') +
+    '</g>',
+  cat: '<g transform="translate(300 146)"><ellipse cx="16" cy="18" rx="17" ry="9" fill="#2b2240"/><circle cx="4" cy="12" r="7" fill="#2b2240"/><path d="M0 7 L1 1 L5 6 M6 6 L9 1 L10 7" fill="#2b2240"/><path d="M1 12 q2 1.5 4 0 M6 12 q2 1.5 4 0" stroke="#ffc65a" stroke-width="1" fill="none"/><path d="M32 20 q8 -2 6 -10" stroke="#2b2240" stroke-width="4" fill="none" stroke-linecap="round"/></g>',
+  lantern: '<g transform="translate(20 20)"><line x1="10" y1="0" x2="10" y2="18" stroke="#3a2e57" stroke-width="1.5"/><rect x="2" y="18" width="16" height="22" rx="4" fill="#3a2e57"/><rect x="5" y="22" width="10" height="14" rx="3" fill="#ffc65a" class="wg-lantern-glow"/><circle cx="10" cy="29" r="14" fill="#ffc65a" opacity=".12"/></g>',
+};
+const VISITOR_ART: Record<VisitorId, string> = {
+  moth: '<g class="wg-moth"><path d="M0 0 q-10 -8 -12 2 q4 6 12 0 q10 -8 12 2 q-4 6 -12 0" fill="#e9dcc0"/><ellipse cx="0" cy="1" rx="1.4" ry="4" fill="#8a7a5a"/></g>',
+  firefly: '<g class="wg-firefly"><circle r="6" fill="#d8ff7a" opacity=".25"/><circle r="2.2" fill="#e8ff9a"/></g>',
+};
 
 const PLANT_ART: Record<string, string> = {
   fern, mint, sunbell, 'night-tulip': nightTulip, 'lantern-cactus': lanternCactus, moonbloom, 'reel-vine': reelVine, 'popcorn-shrub': popcornShrub,
@@ -101,6 +119,20 @@ const TEXT = {
     albumAlone: 'on your own',
     albumHint: 'Two plants in bloom side by side can drop a colour seed.',
     close: 'Close',
+    decor: 'Decorations',
+    decorLine: '🌸 {n} petals · picking a bloom gives 1, a new album entry 3',
+    'decor.curtains': 'Curtains',
+    'decor.fairy-lights': 'Fairy lights',
+    'decor.cat': 'Sleepy cat',
+    'decor.lantern': 'Lantern',
+    'decorHint.fairy-lights': 'a moth may visit at night',
+    'decorHint.lantern': 'a firefly may visit at night',
+    decorOwned: '✓ Yours',
+    visitors: 'Night visitors',
+    'visitor.moth': 'Moth',
+    'visitor.firefly': 'Firefly',
+    visitorNew: 'A {name} came to your window! It is in your album now.',
+    visitorNone: 'None yet: they come at dusk and at night.',
     lamp: '✨ Glowbeam',
     lampTitle: 'Glowbeam shines on this pot until the film ends: +{n} % growth (once per film)',
     lampOn: 'Glowbeam shines on it: +{n} % until the film ends',
@@ -171,6 +203,20 @@ const TEXT = {
     albumAlone: 'tek başına',
     albumHint: 'Yan yana çiçek açan iki bitki renkli bir tohum düşürebilir.',
     close: 'Kapat',
+    decor: 'Süsler',
+    decorLine: '🌸 {n} taç yaprağı · her çiçek 1, albüme yeni giren 3 verir',
+    'decor.curtains': 'Perdeler',
+    'decor.fairy-lights': 'Işık zinciri',
+    'decor.cat': 'Uykucu kedi',
+    'decor.lantern': 'Fener',
+    'decorHint.fairy-lights': 'geceleri bir güve gelebilir',
+    'decorHint.lantern': 'geceleri bir ateş böceği gelebilir',
+    decorOwned: '✓ Senin',
+    visitors: 'Gece ziyaretçileri',
+    'visitor.moth': 'Güve',
+    'visitor.firefly': 'Ateş böceği',
+    visitorNew: 'Penceresine bir {name} geldi! Artık albümünde.',
+    visitorNone: 'Henüz yok: akşamları ve geceleri gelirler.',
     lamp: '✨ Glowbeam',
     lampTitle: 'Glowbeam film bitene kadar bu saksıyı aydınlatır: büyüme +%{n} (her filmde bir kez)',
     lampOn: 'Glowbeam onu aydınlatıyor: film bitene kadar +%{n}',
@@ -246,7 +292,10 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
   const restTitle = el('b', {});
   const restLine = el('small', {});
   const rest = el('span', { class: 'wg-rest', 'aria-hidden': 'true' }, restTitle, restLine);
-  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, ...pots, rest);
+  // Decorations and visitors live in their own layer, drawn in the scene's own frame (pick 6).
+  const decorLayer = el('span', { class: 'wg-decor-layer', 'aria-hidden': 'true' });
+  decorLayer.innerHTML = `<svg viewBox="0 0 340 226" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">${GARDEN_DECOR.map((d) => `<g data-decor="${d.id}" style="display:none">${GARDEN_DECOR_ART[d.id]}</g>`).join('')}<g data-visitor style="display:none"></g></svg>`;
+  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, decorLayer, ...pots, rest);
 
   // ---- What the selected pot can do ----
   const actionTitle = el('b', { class: 'wg-action-title' });
@@ -280,7 +329,9 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       draw();
     },
   );
-  bar.append(restart, how.button);
+  const decorButton = el('button', { type: 'button', class: 'htp-open wg-decor-open' }, '🎨');
+  decorButton.addEventListener('click', () => openDecor());
+  bar.append(decorButton, restart, how.button);
   box.addEventListener('mousedown', (event) => {
     if ((event.target as Element).closest('button')) event.preventDefault();
   });
@@ -399,6 +450,12 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     seedsLine.textContent = seedText.length ? seedText.join(' ') : '🌰 0';
     seedsLine.title = `${t('seeds')}: ${RARITIES.map((r) => `${rarityName(r)} ${garden.seeds[r]}`).join(' · ')}`;
     box.classList.toggle('wg-idle', !ctx.playing);
+    decorButton.title = t('decor');
+    decorButton.setAttribute('aria-label', t('decor'));
+    for (const d of GARDEN_DECOR) {
+      const node = decorLayer.querySelector<SVGGElement>(`[data-decor="${d.id}"]`);
+      if (node) node.style.display = garden.decor.includes(d.id) ? '' : 'none';
+    }
     rest.hidden = ctx.playing || blocked;
     restTitle.textContent = t('rest');
     restLine.textContent = t('restLine');
@@ -459,6 +516,56 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     close.addEventListener('click', () => (page.hidden = true));
     page.replaceChildren(close, el('h3', {}, plantName(id)), el('ul', { class: 'wg-page-list' }, ...entries), el('p', { class: 'wg-page-hint' }, t('albumHint')));
     page.hidden = false;
+  }
+
+  // ---- Decorations (bought with petals) and the night visitors they bring (pick 6) ----
+  function openDecor(): void {
+    const items = GARDEN_DECOR.map((d) => {
+      const owned = garden.decor.includes(d.id);
+      const hint = VISITORS.find((v) => v.decor === d.id) ? t(`decorHint.${d.id}` as TextKey) : '';
+      const buyButton = el('button', { type: 'button', class: `wg-btn${owned ? '' : ' main'}` }, owned ? t('decorOwned') : `🌸 ${d.cost}`);
+      buyButton.disabled = owned || garden.petals < d.cost || blocked;
+      buyButton.addEventListener('click', () => {
+        if (!buyGardenDecor(garden, d.id)) return;
+        playSound('gardenPlant');
+        persist();
+        draw();
+        openDecor();
+      });
+      return el('li', { class: 'wg-page-entry found wg-decor-item' }, el('span', { class: 'wg-page-words' }, el('b', {}, t(`decor.${d.id}` as TextKey)), hint ? el('small', {}, hint) : ''), buyButton);
+    });
+    const seen = VISITORS.filter((v) => garden.visitors.includes(v.id)).map((v) => t(`visitor.${v.id}` as TextKey));
+    const close = el('button', { type: 'button', class: 'wg-page-close', 'aria-label': t('close'), title: t('close') }, '✕');
+    close.addEventListener('click', () => (page.hidden = true));
+    page.replaceChildren(
+      close,
+      el('h3', {}, `🎨 ${t('decor')}`),
+      el('p', { class: 'wg-page-hint' }, t('decorLine', { n: garden.petals })),
+      el('ul', { class: 'wg-page-list' }, ...items),
+      el('p', { class: 'wg-page-hint' }, `🌙 ${t('visitors')}: ${seen.length ? seen.join(', ') : t('visitorNone')}`),
+    );
+    page.hidden = false;
+  }
+
+  let visitorTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Once a watched minute: maybe a visitor flutters by the window for 40 s. */
+  function maybeVisitor(): void {
+    const sky = (sceneBox.dataset.time ?? 'night') as 'night' | 'dawn' | 'day' | 'dusk';
+    const who = visitorFor(garden, sky);
+    if (!who) return;
+    const layer = decorLayer.querySelector<SVGGElement>('[data-visitor]');
+    if (!layer) return;
+    const x = 90 + Math.random() * 160;
+    const y = 50 + Math.random() * 60;
+    layer.innerHTML = `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})">${VISITOR_ART[who]}</g>`;
+    layer.style.display = '';
+    clearTimeout(visitorTimer);
+    visitorTimer = setTimeout(() => (layer.style.display = 'none'), 40_000);
+    if (seeVisitor(garden, who)) {
+      playSound('gardenNew');
+      flash(t('visitorNew', { name: t(`visitor.${who}` as TextKey).toLocaleLowerCase(lang()) }), 6000);
+      persist();
+    }
   }
 
   // ---- The sky outside the window follows the time of day; some days it rains (pick 10, decoration only) ----
@@ -533,6 +640,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     const ctx = room();
     const result = tickGarden(garden, seconds, ctx);
     if (result.hybrids.length) persist();
+    if (ctx.playing && Math.floor(garden.watched / 60) !== Math.floor((garden.watched - seconds) / 60)) maybeVisitor();
     // Films of 20 min or more that ended while I was in the room (the room page notes them even with the garden
     // closed, owner's pick 11 B), and the one ending now: one seed each, once per item.
     const item = ctx.item;
@@ -574,6 +682,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     stopped = true;
     clearInterval(timer);
     clearTimeout(noteTimer);
+    clearTimeout(visitorTimer);
     removeEventListener('pagehide', onHide);
     removeEventListener('langchange', onLang);
     if (!blocked) {

@@ -14,6 +14,8 @@
 // - Hybrid colours (owner's pick 7): a plant that blooms beside another plant in bloom may drop a colour seed; each
 //   plant has two colours (`HYBRID_COLORS`), each a new album entry (`plant:colour`), 24 finds in all.
 // - Memories (owner's pick 10): each album entry remembers the film it bloomed during and who was in the room.
+// - Decorations (owner's pick 6): looks only, bought with petals (1 per pick, 3 for a new album entry); the fairy
+//   lights and the lantern bring night visitors (a moth, a firefly) that go into the album when first seen.
 // - A plant in bloom is picked into the album (every plant found, with how many times): the collection. Three pots.
 
 export const GARDEN_KEY = 'windowGarden';
@@ -81,6 +83,24 @@ export const COLOR_SEEDS_MAX = 9;
 export const ALBUM_IDS: readonly string[] = [...Object.keys(HYBRID_COLORS), ...Object.entries(HYBRID_COLORS).flatMap(([id, colors]) => colors.map((c) => `${id}:${c}`))];
 export const albumId = (plant: PlantId, color?: HybridColor | null): string => (color ? `${plant}:${color}` : plant);
 
+export type GardenDecorId = 'curtains' | 'fairy-lights' | 'cat' | 'lantern';
+export const GARDEN_DECOR: readonly { id: GardenDecorId; cost: number }[] = [
+  { id: 'curtains', cost: 2 },
+  { id: 'fairy-lights', cost: 4 },
+  { id: 'cat', cost: 6 },
+  { id: 'lantern', cost: 8 },
+];
+export type VisitorId = 'moth' | 'firefly';
+/** Which decoration brings which visitor (only at dusk and at night). */
+export const VISITORS: readonly { id: VisitorId; decor: GardenDecorId }[] = [
+  { id: 'moth', decor: 'fairy-lights' },
+  { id: 'firefly', decor: 'lantern' },
+];
+/** Each watched minute at dusk or night, a visitor comes this often (when its decoration is there). */
+export const VISITOR_CHANCE = 0.12;
+export const PETALS_PICK = 1;
+export const PETALS_NEW = 3;
+
 export interface ColorSeed {
   plant: PlantId;
   color: HybridColor;
@@ -130,6 +150,11 @@ export interface GardenSave {
   colorSeeds: ColorSeed[];
   /** The memory of each album entry's first find. */
   memories: Record<string, Memory>;
+  /** Petals to spend on decorations. */
+  petals: number;
+  decor: GardenDecorId[];
+  /** Night visitors seen (album extras). */
+  visitors: VisitorId[];
 }
 
 export interface GardenContext {
@@ -161,6 +186,9 @@ export function freshGarden(): GardenSave {
     lamp: null,
     colorSeeds: [],
     memories: {},
+    petals: 0,
+    decor: [],
+    visitors: [],
   };
 }
 
@@ -195,6 +223,9 @@ export function loadGarden(raw: unknown): GardenSave {
     const memory = cleanMemory(memories[id]);
     if (memory) garden.memories[id] = memory;
   }
+  garden.petals = Math.floor(num(record.petals, 9_999));
+  garden.decor = Array.isArray(record.decor) ? [...new Set(record.decor.filter((id): id is GardenDecorId => GARDEN_DECOR.some((d) => d.id === id)))] : [];
+  garden.visitors = Array.isArray(record.visitors) ? [...new Set(record.visitors.filter((id): id is VisitorId => VISITORS.some((v) => v.id === id)))] : [];
   garden.colorSeeds = (Array.isArray(record.colorSeeds) ? record.colorSeeds : [])
     .filter((c): c is ColorSeed => !!c && typeof c === 'object' && isColor((c as ColorSeed).plant, (c as ColorSeed).color))
     .map((c) => ({ plant: c.plant, color: c.color }))
@@ -372,6 +403,7 @@ export function pick(garden: GardenSave, pot: number): { plant: PlantId; color?:
   const first = !garden.album[id];
   garden.album[id] = (garden.album[id] ?? 0) + 1;
   if (first && target.bloomed) garden.memories[id] = target.bloomed;
+  garden.petals = Math.min(9_999, garden.petals + (first ? PETALS_NEW : PETALS_PICK));
   garden.pots[pot] = null;
   return { plant: target.plant, color: target.color, first };
 }
@@ -388,4 +420,28 @@ export function plantColor(garden: GardenSave, pot: number, index: number): Colo
 /** Watched minutes left until this pot blooms, if it is kept watered. */
 export function minutesLeft(pot: Pot): number {
   return Math.max(0, Math.ceil((1 - pot.growth) * GROW_MINUTES[rarityOf(pot.plant) ?? 'common'] - 1e-9));
+}
+
+/** Buys a garden decoration with petals; false when owned or too few petals. */
+export function buyGardenDecor(garden: GardenSave, id: GardenDecorId): boolean {
+  const item = GARDEN_DECOR.find((d) => d.id === id);
+  if (!item || garden.decor.includes(id) || garden.petals < item.cost) return false;
+  garden.petals -= item.cost;
+  garden.decor.push(id);
+  return true;
+}
+
+/** A visitor for this watched minute (dusk or night, its decoration there, by chance), or null. */
+export function visitorFor(garden: GardenSave, sky: 'night' | 'dawn' | 'day' | 'dusk', random: Random = Math.random): VisitorId | null {
+  if (sky !== 'night' && sky !== 'dusk') return null;
+  const possible = VISITORS.filter((v) => garden.decor.includes(v.decor));
+  if (!possible.length || random() >= VISITOR_CHANCE) return null;
+  return possible[Math.min(possible.length - 1, Math.floor(random() * possible.length))]!.id;
+}
+
+/** A visitor was seen: true when it is new in the album. */
+export function seeVisitor(garden: GardenSave, id: VisitorId): boolean {
+  if (garden.visitors.includes(id)) return false;
+  garden.visitors.push(id);
+  return true;
 }
