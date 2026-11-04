@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -91,7 +91,7 @@ jobs:
           if [ "$HAVE_TOKEN" = true ] && [ "$HAVE_ACCOUNT" = true ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
           else echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are missing, deploy skipped."; fi
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         if: steps.keys.outputs.ok == 'true'
 
       - uses: actions/setup-node@v5
