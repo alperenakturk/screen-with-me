@@ -73,15 +73,16 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
     v: 1,
     pots: [{ plant: 'mint', growth: 0.9985, water: 1 }, { plant: 'fern', growth: 0.6, water: 0.1 }, null],
     seeds: { common: 2, uncommon: 0, rare: 0, legendary: 0 },
+    colorSeeds: [{ plant: 'mint', color: 'sky' }],
     album: { fern: 1 },
-    watched: 0, seedClock: 0, together: 0, eveningSeed: false, seen: 0, ended: [],
+    watched: 0, seedClock: 0, together: 0, eveningSeed: false, seen: Date.now() - 3 * 3600_000, ended: [],
   });
   const alex = await person(ctxA, 'Alex', 'wizard', { windowGarden: seed });
   const sam = await person(ctxS, 'Sam', 'elf');
 
   check(await openGarden(alex), 'Window Garden opens from the gallery’s "On the side"');
   check((await fits(alex)).length === 0, 'fits without scrollbars at its own size', (await fits(alex)).join('; '));
-  check(/1\/8/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 1/8');
+  check(/1\/24/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 1/24');
   const drop = await alex.evaluate(() => !!document.querySelector('.wg-pot[data-pot="1"] .wg-drop'));
   check(drop, 'a thirsty pot shows 💧');
 
@@ -90,6 +91,10 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   await wait(6000);
   check((await saved(alex)).pots[0].growth === g0, 'no growth while nothing plays');
   check(/Resting/.test(await alex.evaluate(() => document.querySelector('.wg-state').textContent)), 'the pill says resting');
+  const back = (await saved(alex)).pots[1];
+  check(back.growth === 0.6 && back.water === 0.1, 'three hours away: nothing grew or dried (only in a room)', JSON.stringify(back));
+  const rest = await alex.evaluate(() => { const n = document.querySelector('.wg-rest'); return n && !n.hidden ? n.textContent : null; });
+  check(!!rest && /Resting until the film plays/.test(rest) && /away/.test(rest), 'the scene says it rests until the film plays', String(rest));
 
   // Water the thirsty fern, keeping the focus in the message box.
   await alex.evaluate(() => document.getElementById('chat-input')?.focus());
@@ -102,7 +107,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
 
   // Plant a seed in the empty pot.
   await alex.click('.wg-pot[data-pot="2"]');
-  await alex.click('.wg-action .wg-btn');
+  await alex.click('.wg-action .wg-btn.seed-common');
   const planted = await until(async () => { const s = await saved(alex); return s.pots[2] ? s : null; }, 4000);
   check(!!planted && planted.seeds.common === 1, 'a seed is planted in the empty pot', JSON.stringify(planted?.pots[2]));
 
@@ -110,6 +115,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   await alex.evaluate(() => document.getElementById('sync-test').click());
   const growing = await until(() => alex.evaluate(() => /Growing/.test(document.querySelector('.wg-state').textContent)), 8000);
   check(!!growing, 'the pill turns to "Growing" when the room plays');
+  check(await alex.evaluate(() => document.querySelector('.wg-rest').hidden), 'the resting sign goes away while the film plays');
   const bloomed = await until(() => alex.evaluate(() => document.querySelector('.wg-pot[data-pot="0"]').classList.contains('bloom')), 10000);
   check(!!bloomed, 'the mint blooms while the video plays');
   await alex.click('.wg-pot[data-pot="0"]');
@@ -118,8 +124,50 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   check(!!picked && picked.pots[0] === null, 'Pick puts it into the album and frees the pot');
   const note = await alex.evaluate(() => document.querySelector('.wg-note')?.textContent ?? '');
   check(/New in your album/.test(note), 'a first find says "New in your album"', note);
-  check(/2\/8/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 2/8');
+  check(/2\/24/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 2/24');
+
+  // Pick 10: the mint's album page remembers the film it bloomed during and who was there.
+  await alex.evaluate(() => document.querySelectorAll('.wg-album-cell')[1].click());
+  const pageText = await alex.evaluate(() => { const p = document.querySelector('.wg-page'); return p && !p.hidden ? p.textContent : null; });
+  check(!!pageText && /Mint ×1/.test(pageText) && /with Sam/.test(pageText), 'the album page remembers the film and who was in the room', String(pageText));
+  check((await fits(alex)).length === 0, 'the album page fits', (await fits(alex)).join('; '));
+  await alex.evaluate(() => document.querySelector('.wg-page-close').click());
+
+  // Pick 7: a colour seed grows a coloured plant.
+  await alex.click('.wg-pot[data-pot="0"]');
+  await alex.click('.wg-action .wg-btn.seed-color');
+  const colored = await until(async () => { const s = await saved(alex); return s.pots[0]?.color ? s : null; }, 4000);
+  check(!!colored && colored.pots[0].plant === 'mint' && colored.pots[0].color === 'sky' && colored.colorSeeds.length === 0, 'a colour seed grows a sky blue mint', JSON.stringify(colored?.pots[0]));
+  check(await alex.evaluate(() => /^(night|dawn|day|dusk)$/.test(document.querySelector('.wg-scene').dataset.time)), 'the sky outside follows the time of day');
+
+  // Pick 6: petals from picking buy decorations; the 🎨 window lists them and the night visitors.
+  const petals = (await saved(alex)).petals;
+  check(petals >= 3, 'picking gave petals (3 for a new album entry)', String(petals));
+  await alex.evaluate(() => document.querySelector('.wg-decor-open').click());
+  await alex.evaluate(() => document.querySelector('.wg-decor-item .wg-btn.main')?.click());
+  const bought = await until(async () => { const s = await saved(alex); return s.decor.length ? s : null; }, 4000);
+  check(!!bought && bought.decor[0] === 'curtains', 'the curtains are bought with petals', JSON.stringify(bought?.decor));
+  check(await alex.evaluate(() => getComputedStyle(document.querySelector('.wg-decor-layer [data-decor="curtains"]')).display !== 'none'), 'the curtains hang at the window');
+  check((await fits(alex)).length === 0, 'the decorations window fits', (await fits(alex)).join('; '));
+  await alex.evaluate(() => document.querySelector('.wg-page-close').click());
+
+  // Glowbeam the grow lamp (pick 9): once per film, on a growing plant.
+  await alex.click('.wg-pot[data-pot="1"]');
+  await alex.evaluate(() => document.querySelector('.wg-action .wg-btn.lamp')?.click());
+  const lit = await until(async () => { const s = await saved(alex); return s.lamp ? s : null; }, 6000);
+  check(!!lit && lit.lamp.pot === 1, 'Glowbeam shines on the chosen pot (saved with the film)', JSON.stringify(lit?.lamp));
+  check(await alex.evaluate(() => !!document.querySelector('.wg-pot[data-pot="1"] .wg-lamp svg')), 'Glowbeam is drawn over that pot');
+  await alex.click('.wg-pot[data-pot="2"]');
+  const again = await alex.evaluate(() => { const b = document.querySelector('.wg-action .wg-btn.lamp'); return b ? b.disabled : 'none'; });
+  check(again === true || again === 'none', 'only once per film: no second lamp', String(again));
+  await alex.click('.wg-pot[data-pot="1"]');
   await alex.screenshot({ path: __dirname + '/garden-window.png' });
+
+  // Pick 11 B: a long film that ended while I was in the room (noted by the room page) gives its seed.
+  const seedsBefore = (await saved(alex)).seeds;
+  await alex.evaluate(() => localStorage.setItem('sideFilms', JSON.stringify([{ id: 'long-film-1', duration: 1500, at: Date.now() }])));
+  const gotSeed = await until(async () => { const s = await saved(alex); return s.ended.includes('long-film-1') ? s : null; }, 8000);
+  check(!!gotSeed && gotSeed.seeds.uncommon + gotSeed.seeds.rare > seedsBefore.uncommon + seedsBefore.rare, 'a film that ended while I was in the room gives a seed', JSON.stringify(gotSeed?.seeds));
 
   // Smaller screen.
   await alex.setViewportSize({ width: 900, height: 560 });

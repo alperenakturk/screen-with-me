@@ -40,8 +40,10 @@ export interface SoloRoom {
   others: number;
   /** Of them, those in voice while I am in voice too. */
   voiceOthers: number;
-  /** The room's item now: its id, its length (0 = not known yet) and where the room is in it (seconds). */
-  item: { id: string; duration: number; position: number } | null;
+  /** The room's item now: its id, its length (0 = not known yet), where the room is in it (seconds), its title. */
+  item: { id: string; duration: number; position: number; title?: string } | null;
+  /** Others' names (Window Garden's memories keep them in this browser only). */
+  names?: string[];
 }
 
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {

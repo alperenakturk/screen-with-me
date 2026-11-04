@@ -28,6 +28,7 @@ import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
+import { setGameLive } from './live.ts';
 import { langChoices, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
@@ -299,6 +300,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const nameOf = (id: string | null) => state?.players.find((p) => p.id === id)?.name ?? '';
 
   function render(): void {
+    if (state) setGameLive(state.phase !== 'lobby' && state.phase !== 'over' && state.players.some((p) => p.id === me));
     if (!state) return;
     const s = state;
     const drawerName = nameOf(s.drawer);
@@ -528,6 +530,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
   return () => {
+    setGameLive(false);
     close();
     for (const timer of [flusher, ticker, ping]) clearInterval(timer);
     removeEventListener('pagehide', close);

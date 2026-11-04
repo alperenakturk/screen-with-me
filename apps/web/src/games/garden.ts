@@ -5,7 +5,7 @@
 
 import './garden.css';
 import {
-  GARDEN_KEY, PLANT_IDS, POTS, RARITIES, filmEnded, found, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
+  ALBUM_IDS, GARDEN_DECOR, GARDEN_KEY, VISITORS, buyGardenDecor, seeVisitor, visitorFor, type GardenDecorId, type VisitorId, HYBRID_COLORS, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, albumId, plantColor, type HybridColor, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
   saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity,
 } from '@swm/shared/games/garden';
 import type { SoloRoom } from '@swm/shared/games/catalog';
@@ -25,11 +25,31 @@ import lanternCactus from './art/garden/lantern-cactus.svg?raw';
 import moonbloom from './art/garden/moonbloom.svg?raw';
 import reelVine from './art/garden/reel-vine.svg?raw';
 import popcornShrub from './art/garden/popcorn-shrub.svg?raw';
+import glowbeam from './art/garden/glowbeam-lamp.svg?raw';
+import { takeFilmEnds } from './film-end.ts';
 import how1 from './art/tutorial/garden-1-plant.svg?raw';
 import how2 from './art/tutorial/garden-2-water.svg?raw';
 import how3 from './art/tutorial/garden-3-album.svg?raw';
 import how4 from './art/tutorial/garden-4-film.svg?raw';
-import { howToPlay } from './how-to-play.ts';
+import { howToPlay, restartButton } from './how-to-play.ts';
+
+/** Garden decorations and visitors (pick 6), drawn here over the window scene (same 340 × 226 frame; our own art). */
+const GARDEN_DECOR_ART: Record<GardenDecorId, string> = {
+  curtains:
+    '<path d="M44 16 H78 Q70 60 82 120 Q60 116 44 124 Z" fill="#b8475f" opacity=".92"/><path d="M52 18 Q50 70 56 120 M64 18 Q60 70 70 118" stroke="#8a2f45" stroke-width="2" fill="none"/><path d="M296 16 H262 Q270 60 258 120 Q280 116 296 124 Z" fill="#b8475f" opacity=".92"/><path d="M288 18 Q290 70 284 120 M276 18 Q280 70 270 118" stroke="#8a2f45" stroke-width="2" fill="none"/>',
+  'fairy-lights':
+    '<path d="M46 22 Q108 40 170 24 Q232 40 294 22" stroke="#3a2e57" stroke-width="1.2" fill="none"/><g class="wg-bulbs">' +
+    [[60, 27], [82, 32], [104, 34], [126, 33], [148, 29], [192, 29], [214, 33], [236, 34], [258, 32], [280, 27]]
+      .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="2.6" fill="${['#ffd76a', '#ff9fc4', '#9fd8ff'][i % 3]}"/>`)
+      .join('') +
+    '</g>',
+  cat: '<g transform="translate(300 146)"><ellipse cx="16" cy="18" rx="17" ry="9" fill="#2b2240"/><circle cx="4" cy="12" r="7" fill="#2b2240"/><path d="M0 7 L1 1 L5 6 M6 6 L9 1 L10 7" fill="#2b2240"/><path d="M1 12 q2 1.5 4 0 M6 12 q2 1.5 4 0" stroke="#ffc65a" stroke-width="1" fill="none"/><path d="M32 20 q8 -2 6 -10" stroke="#2b2240" stroke-width="4" fill="none" stroke-linecap="round"/></g>',
+  lantern: '<g transform="translate(20 20)"><line x1="10" y1="0" x2="10" y2="18" stroke="#3a2e57" stroke-width="1.5"/><rect x="2" y="18" width="16" height="22" rx="4" fill="#3a2e57"/><rect x="5" y="22" width="10" height="14" rx="3" fill="#ffc65a" class="wg-lantern-glow"/><circle cx="10" cy="29" r="14" fill="#ffc65a" opacity=".12"/></g>',
+};
+const VISITOR_ART: Record<VisitorId, string> = {
+  moth: '<g class="wg-moth"><path d="M0 0 q-10 -8 -12 2 q4 6 12 0 q10 -8 12 2 q-4 6 -12 0" fill="#e9dcc0"/><ellipse cx="0" cy="1" rx="1.4" ry="4" fill="#8a7a5a"/></g>',
+  firefly: '<g class="wg-firefly"><circle r="6" fill="#d8ff7a" opacity=".25"/><circle r="2.2" fill="#e8ff9a"/></g>',
+};
 
 const PLANT_ART: Record<string, string> = {
   fern, mint, sunbell, 'night-tulip': nightTulip, 'lantern-cactus': lanternCactus, moonbloom, 'reel-vine': reelVine, 'popcorn-shrub': popcornShrub,
@@ -41,7 +61,7 @@ const TEXT = {
     how1Title: 'Plant a seed',
     how1: 'Pick a pot and plant one of your seeds.',
     how2Title: 'Water it, then watch',
-    how2: "Plants grow while the room's video plays. Water them when you see 💧.",
+    how2: "Plants grow only in a room while its video plays, and never dry out while you're away. Water them when you see 💧.",
     how3Title: 'Pick the flower',
     how3: 'Every bloom goes into your album. Find all 8 plants.',
     how4Title: 'Films give seeds',
@@ -49,6 +69,8 @@ const TEXT = {
     growing: '▶ Growing',
     paused: '⏸ Resting',
     restingTitle: 'Plants grow while the film plays',
+    rest: '⏸ Resting until the film plays',
+    restLine: "Nothing grows or dries while you're away",
     album: 'Album {n}/{all}',
     seeds: 'Seeds',
     water: '💧 Water',
@@ -83,12 +105,47 @@ const TEXT = {
     pot: 'Pot {n}',
     otherTab: 'Window Garden is open in another tab.',
     playHere: 'Play here',
+    'color.gold': 'golden',
+    'color.rose': 'rose',
+    'color.sky': 'sky blue',
+    'color.violet': 'violet',
+    colorSeed: '🌈 {name}',
+    colorSeedTitle: 'A colour seed: it grows a {color} {name}',
+    hybridCame: 'A colour seed: {color} {name}!',
+    albumPage: '{name}',
+    albumNone: 'Not found yet',
+    albumBloomed: 'Bloomed during {title}',
+    albumWith: 'with {names}',
+    albumAlone: 'on your own',
+    albumHint: 'Two plants in bloom side by side can drop a colour seed.',
+    close: 'Close',
+    decor: 'Decorations',
+    decorLine: '🌸 {n} petals · picking a bloom gives 1, a new album entry 3',
+    'decor.curtains': 'Curtains',
+    'decor.fairy-lights': 'Fairy lights',
+    'decor.cat': 'Sleepy cat',
+    'decor.lantern': 'Lantern',
+    'decorHint.fairy-lights': 'a moth may visit at night',
+    'decorHint.lantern': 'a firefly may visit at night',
+    decorOwned: '✓ Yours',
+    visitors: 'Night visitors',
+    'visitor.moth': 'Moth',
+    'visitor.firefly': 'Firefly',
+    visitorNew: 'A {name} came to your window! It is in your album now.',
+    visitorNone: 'None yet: they come at dusk and at night.',
+    lamp: '✨ Glowbeam',
+    lampTitle: 'Glowbeam shines on this pot until the film ends: +{n} % growth (once per film)',
+    lampOn: 'Glowbeam shines on it: +{n} % until the film ends',
+    lampUsed: 'Glowbeam is busy with another pot this film',
+    restart: 'Start over',
+    restartAsk: 'Start Window Garden over?',
+    restartText: 'Your pots, seeds and album all go back to the start. This cannot be undone.',
   },
   tr: {
     how1Title: 'Tohum ek',
     how1: 'Bir saksı seç, tohumlarından birini ek.',
     how2Title: 'Sula, sonra izle',
-    how2: 'Bitkiler odanın videosu oynarken büyür. 💧 görünce sula.',
+    how2: 'Bitkiler yalnızca bir odada, video oynarken büyür; sen yokken kurumaz. 💧 görünce sula.',
     how3Title: 'Çiçeği topla',
     how3: 'Her çiçek albümüne girer. 8 bitkinin hepsini bul.',
     how4Title: 'Filmler tohum verir',
@@ -96,6 +153,8 @@ const TEXT = {
     growing: '▶ Büyüyor',
     paused: '⏸ Dinleniyor',
     restingTitle: 'Bitkiler film oynarken büyür',
+    rest: '⏸ Film oynayınca büyür',
+    restLine: 'Sen yokken ne büyür ne kurur',
     album: 'Albüm {n}/{all}',
     seeds: 'Tohumlar',
     water: '💧 Sula',
@@ -130,6 +189,41 @@ const TEXT = {
     pot: '{n}. saksı',
     otherTab: 'Pencere Bahçesi başka bir sekmede açık.',
     playHere: 'Burada oyna',
+    'color.gold': 'altın',
+    'color.rose': 'pembe',
+    'color.sky': 'gök mavisi',
+    'color.violet': 'mor',
+    colorSeed: '🌈 {name}',
+    colorSeedTitle: 'Renkli tohum: {color} bir {name} büyütür',
+    hybridCame: 'Renkli tohum: {color} {name}!',
+    albumPage: '{name}',
+    albumNone: 'Henüz bulunmadı',
+    albumBloomed: '{title} izlenirken açtı',
+    albumWith: '{names} ile',
+    albumAlone: 'tek başına',
+    albumHint: 'Yan yana çiçek açan iki bitki renkli bir tohum düşürebilir.',
+    close: 'Kapat',
+    decor: 'Süsler',
+    decorLine: '🌸 {n} taç yaprağı · her çiçek 1, albüme yeni giren 3 verir',
+    'decor.curtains': 'Perdeler',
+    'decor.fairy-lights': 'Işık zinciri',
+    'decor.cat': 'Uykucu kedi',
+    'decor.lantern': 'Fener',
+    'decorHint.fairy-lights': 'geceleri bir güve gelebilir',
+    'decorHint.lantern': 'geceleri bir ateş böceği gelebilir',
+    decorOwned: '✓ Senin',
+    visitors: 'Gece ziyaretçileri',
+    'visitor.moth': 'Güve',
+    'visitor.firefly': 'Ateş böceği',
+    visitorNew: 'Penceresine bir {name} geldi! Artık albümünde.',
+    visitorNone: 'Henüz yok: akşamları ve geceleri gelirler.',
+    lamp: '✨ Glowbeam',
+    lampTitle: 'Glowbeam film bitene kadar bu saksıyı aydınlatır: büyüme +%{n} (her filmde bir kez)',
+    lampOn: 'Glowbeam onu aydınlatıyor: film bitene kadar +%{n}',
+    lampUsed: 'Glowbeam bu filmde başka bir saksıda',
+    restart: 'Baştan başla',
+    restartAsk: 'Pencere Bahçesi baştan başlasın mı?',
+    restartText: 'Saksıların, tohumların ve albümün baştaki haline döner. Bu geri alınamaz.',
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -138,6 +232,9 @@ function t(key: TextKey, values: Record<string, string | number> = {}): string {
   return (table[key] ?? TEXT.en[key]).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
 }
 const plantName = (id: string) => t(`plant.${id}` as TextKey);
+const colorName = (c: HybridColor) => t(`color.${c}` as TextKey);
+/** "sky blue mint" (EN) / "gök mavisi nane" (TR): colour first in both languages. */
+const coloredName = (id: string, c?: HybridColor) => (c ? `${colorName(c)} ${plantName(id).toLocaleLowerCase(lang())}` : plantName(id));
 const rarityName = (r: Rarity) => t(`rarity.${r}` as TextKey);
 
 const LOCK_KEY = 'windowGarden:tab';
@@ -191,7 +288,14 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     });
     return button;
   });
-  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, ...pots);
+  // While the room's film does not play the garden rests, and says so on the scene (owner, 4 Nov 2026).
+  const restTitle = el('b', {});
+  const restLine = el('small', {});
+  const rest = el('span', { class: 'wg-rest', 'aria-hidden': 'true' }, restTitle, restLine);
+  // Decorations and visitors live in their own layer, drawn in the scene's own frame (pick 6).
+  const decorLayer = el('span', { class: 'wg-decor-layer', 'aria-hidden': 'true' });
+  decorLayer.innerHTML = `<svg viewBox="0 0 340 226" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">${GARDEN_DECOR.map((d) => `<g data-decor="${d.id}" style="display:none">${GARDEN_DECOR_ART[d.id]}</g>`).join('')}<g data-visitor style="display:none"></g></svg>`;
+  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, decorLayer, ...pots, rest);
 
   // ---- What the selected pot can do ----
   const actionTitle = el('b', { class: 'wg-action-title' });
@@ -214,7 +318,20 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     { art: how3, title: t('how3Title'), line: t('how3') },
     { art: how4, title: t('how4Title'), line: t('how4') },
   ]);
-  bar.append(how.button);
+  const restart = restartButton(
+    () => ({ label: t('restart'), title: t('restartAsk'), text: t('restartText'), yes: t('restart') }),
+    () => {
+      if (blocked || stopped) return;
+      garden = freshGarden();
+      garden.seen = Date.now();
+      selected = 0;
+      persist();
+      draw();
+    },
+  );
+  const decorButton = el('button', { type: 'button', class: 'htp-open wg-decor-open' }, '🎨');
+  decorButton.addEventListener('click', () => openDecor());
+  bar.append(decorButton, restart, how.button);
   box.addEventListener('mousedown', (event) => {
     if ((event.target as Element).closest('button')) event.preventDefault();
   });
@@ -232,7 +349,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     if (!p) return art(pot, 'wg-plant wg-empty-pot');
     const stage = stageOf(p);
     const raw = stage === 0 ? seed : stage === 1 ? sprout : PLANT_ART[p.plant] ?? fern;
-    const node = art(raw, `wg-plant stage-${stage}`);
+    const node = art(raw, `wg-plant stage-${stage}${p.color && stage >= 2 ? ` wg-color-${p.color}` : ''}`);
     return node;
   }
 
@@ -251,7 +368,18 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     if (!p) {
       actionTitle.textContent = `${t('pot', { n: selected + 1 })} · ${t('empty')}`;
       const have = RARITIES.filter((r) => garden.seeds[r] > 0);
-      actionText.textContent = have.length ? t('plantSeed') : t('noSeeds');
+      actionText.textContent = have.length || garden.colorSeeds.length ? t('plantSeed') : t('noSeeds');
+      // Colour seeds first (at most two buttons fit beside the seeds).
+      garden.colorSeeds.slice(0, 2).forEach((c, index) => {
+        const b = actionButton(t('colorSeed', { name: plantName(c.plant) }), `seed-color wg-color-btn-${c.color}`, () => {
+          if (!plantColor(garden, selected, index)) return;
+          playSound('gardenPlant');
+          persist();
+          draw();
+        });
+        b.title = t('colorSeedTitle', { color: colorName(c.color), name: plantName(c.plant).toLocaleLowerCase(lang()) });
+        actionButtons.append(b);
+      });
       for (const r of have) {
         actionButtons.append(
           actionButton(`🌰 ${rarityName(r)} ×${garden.seeds[r]}`, `seed-${r}`, () => {
@@ -274,7 +402,8 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
           const got = pick(garden, selected);
           if (!got) return;
           playSound(got.first ? 'gardenNew' : 'gardenPick');
-          flash(got.first ? t('pickedNew', { name: plantName(got.plant) }) : t('picked', { name: plantName(got.plant) }));
+          const name = coloredName(got.plant, got.color);
+          flash(got.first ? t('pickedNew', { name }) : t('picked', { name }));
           persist();
           draw();
         }),
@@ -282,7 +411,10 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       return;
     }
     actionTitle.textContent = name;
-    actionText.textContent = p.water < THIRSTY ? t('dry') : t('left', { n: minutesLeft(p) });
+    const itemId = room().item?.id;
+    const lit = lampOn(garden, selected, itemId);
+    const bonus = Math.round(LAMP_BONUS * 100);
+    actionText.textContent = p.water < THIRSTY ? t('dry') : lit ? t('lampOn', { n: bonus }) : t('left', { n: minutesLeft(p) });
     const full = p.water >= 0.98;
     actionButtons.append(
       actionButton(full ? t('watered') : t('water'), 'main', () => {
@@ -292,6 +424,18 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
         draw();
       }, full),
     );
+    // Glowbeam the grow lamp: once per film, on a growing plant (owner's pick 9).
+    if (!lit && itemId) {
+      const free = lampFree(garden, itemId);
+      const lampButton = actionButton(t('lamp'), 'lamp', () => {
+        if (!placeLamp(garden, selected, room().item?.id)) return;
+        playSound('gardenBloom');
+        persist();
+        draw();
+      }, !free);
+      lampButton.title = free ? t('lampTitle', { n: bonus }) : t('lampUsed');
+      actionButtons.append(lampButton);
+    }
   }
 
   function draw(): void {
@@ -299,35 +443,152 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     state.textContent = ctx.playing ? t('growing') : t('paused');
     state.classList.toggle('on', ctx.playing);
     state.title = t('restingTitle');
-    albumCount.textContent = `📖 ${t('album', { n: found(garden), all: PLANT_IDS.length })}`;
+    albumCount.textContent = `📖 ${t('album', { n: found(garden), all: ALBUM_IDS.length })}`;
+    weather();
     const seedText = RARITIES.filter((r) => garden.seeds[r] > 0).map((r) => `${r === 'common' ? '🌰' : r === 'uncommon' ? '🌰✦' : '🌰✦✦'}${garden.seeds[r]}`);
+    if (garden.colorSeeds.length) seedText.push(`🌈${garden.colorSeeds.length}`);
     seedsLine.textContent = seedText.length ? seedText.join(' ') : '🌰 0';
     seedsLine.title = `${t('seeds')}: ${RARITIES.map((r) => `${rarityName(r)} ${garden.seeds[r]}`).join(' · ')}`;
     box.classList.toggle('wg-idle', !ctx.playing);
+    decorButton.title = t('decor');
+    decorButton.setAttribute('aria-label', t('decor'));
+    for (const d of GARDEN_DECOR) {
+      const node = decorLayer.querySelector<SVGGElement>(`[data-decor="${d.id}"]`);
+      if (node) node.style.display = garden.decor.includes(d.id) ? '' : 'none';
+    }
+    rest.hidden = ctx.playing || blocked;
+    restTitle.textContent = t('rest');
+    restLine.textContent = t('restLine');
     pots.forEach((button, i) => {
       const p = garden.pots[i] ?? null;
-      const key = p ? `${p.plant}|${stageOf(p)}|${p.water < THIRSTY}|${blocked}` : `-|${blocked}`;
+      const lit = lampOn(garden, i, ctx.item?.id);
+      const key = p ? `${p.plant}|${stageOf(p)}|${p.water < THIRSTY}|${blocked}|${lit}` : `-|${blocked}|${lit}`;
       button.classList.toggle('on', i === selected);
       if (button.dataset.key === key) return;
       button.dataset.key = key;
       button.replaceChildren(potArt(i));
       if (p && !inBloom(p) && p.water < THIRSTY) button.append(el('span', { class: 'wg-drop', 'aria-hidden': 'true' }, '💧'));
       if (p && inBloom(p)) button.append(el('span', { class: 'wg-spark', 'aria-hidden': 'true' }, '✿'));
+      if (lit) button.append(art(glowbeam, 'wg-lamp'));
       button.classList.toggle('bloom', inBloom(p));
       button.setAttribute('aria-label', `${t('pot', { n: i + 1 })}: ${p ? (stageOf(p) >= 2 ? plantName(p.plant) : '…') : t('empty')}`);
       button.disabled = blocked;
     });
     drawAction();
-    const albumKey = PLANT_IDS.map((id) => garden.album[id] ?? 0).join(',') + lang();
+    const albumKey = ALBUM_IDS.map((id) => garden.album[id] ?? 0).join(',') + lang();
     if (album.dataset.key === albumKey) return;
     album.dataset.key = albumKey;
     album.replaceChildren(
       ...PLANT_IDS.map((id) => {
-        const count = garden.album[id] ?? 0;
-        const cell = el('span', { class: `wg-album-cell${count ? ' found' : ''}`, title: count ? `${plantName(id)} ×${count}` : t('unknown') }, art(PLANT_ART[id] ?? fern, 'wg-album-art'));
+        const ids = [id, ...(HYBRID_COLORS[id] ?? []).map((c) => albumId(id, c))];
+        const count = ids.reduce((n, x) => n + (garden.album[x] ?? 0), 0);
+        const dots = el('span', { class: 'wg-album-dots', 'aria-hidden': 'true' }, ...(HYBRID_COLORS[id] ?? []).map((c) => el('i', { class: `wg-dot wg-dot-${c}${garden.album[albumId(id, c)] ? ' on' : ''}` })));
+        const cell = el(
+          'button',
+          { type: 'button', class: `wg-album-cell${count ? ' found' : ''}`, title: count ? plantName(id) : t('unknown'), 'aria-label': count ? plantName(id) : t('unknown') },
+          art(PLANT_ART[id] ?? fern, 'wg-album-art'),
+          dots,
+        );
+        cell.addEventListener('click', () => openAlbumPage(id));
         return cell;
       }),
     );
+  }
+
+  // ---- The album page (picks 7 + 10): the plant, its two colours, and what each first bloom remembers ----
+  const page = el('div', { class: 'wg-page', role: 'dialog' });
+  page.hidden = true;
+  box.append(page);
+  function openAlbumPage(id: string): void {
+    const entries = [undefined, ...(HYBRID_COLORS[id] ?? [])].map((c) => {
+      const key = albumId(id, c);
+      const count = garden.album[key] ?? 0;
+      const memory = garden.memories[key];
+      const pic = art(PLANT_ART[id] ?? fern, `wg-page-art${c ? ` wg-color-${c}` : ''}`);
+      const lines: (string | Node)[] = [el('b', {}, count ? `${coloredName(id, c)} ×${count}` : c ? `${colorName(c)} · ?` : t('albumNone'))];
+      if (count && memory) {
+        if (memory.title) lines.push(el('small', {}, `🎬 ${t('albumBloomed', { title: memory.title })}`));
+        lines.push(el('small', {}, `👥 ${memory.with.length ? t('albumWith', { names: memory.with.join(', ') }) : t('albumAlone')}${memory.at ? ` · ${new Date(memory.at).toLocaleDateString(lang())}` : ''}`));
+      } else if (!count) lines.push(el('small', {}, t('albumNone')));
+      return el('li', { class: `wg-page-entry${count ? ' found' : ''}` }, pic, el('span', { class: 'wg-page-words' }, ...lines));
+    });
+    const close = el('button', { type: 'button', class: 'wg-page-close', 'aria-label': t('close'), title: t('close') }, '✕');
+    close.addEventListener('click', () => (page.hidden = true));
+    page.replaceChildren(close, el('h3', {}, plantName(id)), el('ul', { class: 'wg-page-list' }, ...entries), el('p', { class: 'wg-page-hint' }, t('albumHint')));
+    page.hidden = false;
+  }
+
+  // ---- Decorations (bought with petals) and the night visitors they bring (pick 6) ----
+  function openDecor(): void {
+    const items = GARDEN_DECOR.map((d) => {
+      const owned = garden.decor.includes(d.id);
+      const hint = VISITORS.find((v) => v.decor === d.id) ? t(`decorHint.${d.id}` as TextKey) : '';
+      const buyButton = el('button', { type: 'button', class: `wg-btn${owned ? '' : ' main'}` }, owned ? t('decorOwned') : `🌸 ${d.cost}`);
+      buyButton.disabled = owned || garden.petals < d.cost || blocked;
+      buyButton.addEventListener('click', () => {
+        if (!buyGardenDecor(garden, d.id)) return;
+        playSound('gardenPlant');
+        persist();
+        draw();
+        openDecor();
+      });
+      return el('li', { class: 'wg-page-entry found wg-decor-item' }, el('span', { class: 'wg-page-words' }, el('b', {}, t(`decor.${d.id}` as TextKey)), hint ? el('small', {}, hint) : ''), buyButton);
+    });
+    const seen = VISITORS.filter((v) => garden.visitors.includes(v.id)).map((v) => t(`visitor.${v.id}` as TextKey));
+    const close = el('button', { type: 'button', class: 'wg-page-close', 'aria-label': t('close'), title: t('close') }, '✕');
+    close.addEventListener('click', () => (page.hidden = true));
+    page.replaceChildren(
+      close,
+      el('h3', {}, `🎨 ${t('decor')}`),
+      el('p', { class: 'wg-page-hint' }, t('decorLine', { n: garden.petals })),
+      el('ul', { class: 'wg-page-list' }, ...items),
+      el('p', { class: 'wg-page-hint' }, `🌙 ${t('visitors')}: ${seen.length ? seen.join(', ') : t('visitorNone')}`),
+    );
+    page.hidden = false;
+  }
+
+  let visitorTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Once a watched minute: maybe a visitor flutters by the window for 40 s. */
+  function maybeVisitor(): void {
+    const sky = (sceneBox.dataset.time ?? 'night') as 'night' | 'dawn' | 'day' | 'dusk';
+    const who = visitorFor(garden, sky);
+    if (!who) return;
+    const layer = decorLayer.querySelector<SVGGElement>('[data-visitor]');
+    if (!layer) return;
+    const x = 90 + Math.random() * 160;
+    const y = 50 + Math.random() * 60;
+    layer.innerHTML = `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})">${VISITOR_ART[who]}</g>`;
+    layer.style.display = '';
+    clearTimeout(visitorTimer);
+    visitorTimer = setTimeout(() => (layer.style.display = 'none'), 40_000);
+    if (seeVisitor(garden, who)) {
+      playSound('gardenNew');
+      flash(t('visitorNew', { name: t(`visitor.${who}` as TextKey).toLocaleLowerCase(lang()) }), 6000);
+      persist();
+    }
+  }
+
+  // ---- The sky outside the window follows the time of day; some days it rains (pick 10, decoration only) ----
+  function weather(): void {
+    const hour = new Date().getHours();
+    const sky = hour >= 21 || hour < 5 ? 'night' : hour < 8 ? 'dawn' : hour < 17 ? 'day' : 'dusk';
+    const day = new Date().toISOString().slice(0, 10);
+    let hash = 0;
+    for (const ch of day) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    const rain = hash % 4 === 0;
+    const key = `${sky}|${rain}`;
+    if (sceneBox.dataset.sky === key) return;
+    sceneBox.dataset.sky = key;
+    sceneBox.dataset.time = sky;
+    sceneBox.classList.toggle('wg-rain', rain);
+    const stops = sceneArt.querySelectorAll<SVGStopElement>(`#${sceneArt.dataset.prefix}wss stop`);
+    const colors: Record<string, [string, string]> = { night: ['#1a2150', '#2a2257'], dawn: ['#f2a07b', '#6a62a8'], day: ['#7fb8ff', '#cfe6ff'], dusk: ['#ff8f5a', '#5a3f8a'] };
+    stops[0]?.setAttribute('stop-color', colors[sky]![0]);
+    stops[1]?.setAttribute('stop-color', colors[sky]![1]);
+    const moon = sceneArt.querySelector<SVGGElement>(`#${sceneArt.dataset.prefix}moon`);
+    if (moon) moon.style.display = sky === 'night' || sky === 'dusk' ? '' : 'none';
+    const lights = sceneArt.querySelector<SVGGElement>(`#${sceneArt.dataset.prefix}city-lights`);
+    if (lights) lights.style.display = sky === 'day' ? 'none' : '';
   }
 
   // ---- One tab at a time (as in Snack Bar) ----
@@ -378,10 +639,15 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     takeLock();
     const ctx = room();
     const result = tickGarden(garden, seconds, ctx);
-    // A film of 20 min or more reached its end (the last 10 s): one seed, once per item.
+    if (result.hybrids.length) persist();
+    if (ctx.playing && Math.floor(garden.watched / 60) !== Math.floor((garden.watched - seconds) / 60)) maybeVisitor();
+    // Films of 20 min or more that ended while I was in the room (the room page notes them even with the garden
+    // closed, owner's pick 11 B), and the one ending now: one seed each, once per item.
     const item = ctx.item;
-    if (item && item.duration > 0 && item.position >= item.duration - 10) {
-      const kind = filmEnded(garden, item.id, item.duration);
+    const ends = takeFilmEnds();
+    if (item && item.duration > 0 && item.position >= item.duration - 10) ends.push({ id: item.id, duration: item.duration });
+    for (const end of ends) {
+      const kind = filmEnded(garden, end.id, end.duration);
       if (kind) {
         playSound('gardenSeed');
         flash(t('filmSeed', { kind: rarityName(kind) }));
@@ -390,6 +656,10 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     for (const kind of result.seeds) {
       playSound('gardenSeed');
       flash(kind === 'rare' ? t('eveningSeed') : t('seedCame', { kind: rarityName(kind) }));
+    }
+    for (const seed of result.hybrids) {
+      playSound('gardenNew');
+      flash(t('hybridCame', { color: colorName(seed.color), name: plantName(seed.plant).toLocaleLowerCase(lang()) }));
     }
     for (const i of result.bloomed) {
       playSound('gardenBloom');
@@ -412,6 +682,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     stopped = true;
     clearInterval(timer);
     clearTimeout(noteTimer);
+    clearTimeout(visitorTimer);
     removeEventListener('pagehide', onHide);
     removeEventListener('langchange', onLang);
     if (!blocked) {

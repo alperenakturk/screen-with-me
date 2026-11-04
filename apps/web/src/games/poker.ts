@@ -22,6 +22,7 @@ import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
+import { setGameLive } from './live.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { settingsPanel } from './ui.ts';
@@ -111,6 +112,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     const s = state;
     if (!s) return;
     const myPlayer = s.players.find((p) => p.id === me);
+    setGameLive(!!myPlayer && s.phase !== 'lobby' && s.phase !== 'over');
     const myTurn = s.toAct !== null && s.toAct === me;
     if (peeks.hand !== s.hand) peeks = { hand: s.hand, seen: {} };
     // Sounds and the feed react to changes only.
@@ -565,6 +567,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
   return () => {
+    setGameLive(false);
     close();
     clearInterval(ticker);
     clearInterval(ping);

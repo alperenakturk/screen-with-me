@@ -2,7 +2,7 @@
 // owner's board A "ticket row", `docs/internal/design/side-games/README.md`; research `research/word-game.md`). The
 // rules are `@swm/shared/games/five-frames`; the word lists are their own chunks per language (`./words/en.ts`,
 // `./words/tr.ts`, credits in /third-party-notices.txt). One guess = one ticket: a numbered stub, a tear line, five
-// cells (card GP, the owner's request: green ✓ = right place, gold • = in the word, grey = not in it, with a legend
+// cells (IP audit, owner's "make it ours": a solid gold frame ✓ = right place, a dashed one • = in the word, a faded × = not in it, with a legend
 // until the first guess; a scored row turns over cell by cell). The letter tray is alphabetical, never
 // a keyboard strip under the board. The room's keys stay the room's: the physical keyboard types here only while the
 // board itself has the focus (click it), and its buttons never take the focus.
@@ -25,8 +25,8 @@ const TEXT = {
   en: {
     how1Title: 'Guess the five-letter word',
     how1: 'Type a word and press Enter.',
-    how2Title: 'Colours help',
-    how2: 'Green ✓ right place, yellow • in the word, grey not in it.',
+    how2Title: 'Ticket marks help',
+    how2: 'A solid frame ✓ right place, a dashed frame • in the word, a faded × not in it.',
     how3Title: 'Seven tries, one word a day',
     how3: 'Everyone gets the same word; a new one every day.',
     title: 'Five Frames',
@@ -56,8 +56,8 @@ const TEXT = {
   tr: {
     how1Title: 'Beş harfli kelimeyi bul',
     how1: "Bir kelime yaz ve Tamam'a bas.",
-    how2Title: 'Renkler yol gösterir',
-    how2: 'Yeşil ✓ doğru yerde, sarı • kelimede var, gri kelimede yok.',
+    how2Title: 'Bilet işaretleri yol gösterir',
+    how2: 'Düz çerçeve ✓ doğru yerde, kesik çerçeve • kelimede var, soluk × kelimede yok.',
     how3Title: 'Yedi hak, günde bir kelime',
     how3: 'Herkese aynı kelime; her gün yenisi.',
     title: 'Beş Kare',

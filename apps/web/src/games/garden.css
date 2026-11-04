@@ -25,15 +25,23 @@
 .wg button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
 .wg button:disabled { cursor: default; }
 
-.wg-bar { display: flex; align-items: center; gap: 8px; min-height: 28px; }
-.wg-gap { flex: 1; }
+.wg-bar { display: flex; align-items: center; gap: 6px; min-height: 28px; min-width: 0; }
+.wg-gap { flex: 1 1 0; min-width: 0; }
 .wg-pill { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--wg-muted); }
 .wg-state.on { background: var(--wg-leaf); color: #0d2a20; }
-.wg-seeds { font-size: 13px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; }
+.wg-seeds { font-size: 13px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 .wg-scene { position: relative; flex: 1 1 auto; min-height: 120px; border-radius: 10px; overflow: hidden; background: #120e27; }
 .wg-scene-art, .wg-scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .wg-idle .wg-scene-art { filter: saturate(0.6) brightness(0.8); }
+.wg-rest {
+  position: absolute; left: 50%; top: 8px; transform: translateX(-50%); max-width: calc(100% - 16px); box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 12px; border-radius: 10px;
+  background: rgba(20, 16, 43, 0.88); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12); text-align: center; pointer-events: none;
+}
+.wg-rest[hidden] { display: none; }
+.wg-rest b { font-size: 14px; line-height: 1.25; white-space: nowrap; }
+.wg-rest small { font-size: 13px; line-height: 1.25; color: var(--wg-muted); white-space: nowrap; }
 /* A pot stands on the sill: the sill's top is 168 of 226 in the scene (bottom-aligned slice), the soil line 154. */
 .wg-pot {
   position: absolute; bottom: calc(100% * (226 - 154 - 18) / 226); transform: translateX(-50%);
@@ -49,6 +57,10 @@
 .wg-empty-pot { height: 43%; opacity: 0.85; }
 .wg-pot.bloom .wg-plant { filter: drop-shadow(0 0 6px rgba(255, 198, 90, 0.55)); animation: wg-sway 3.2s ease-in-out infinite; }
 @keyframes wg-sway { 50% { transform: rotate(2deg); } }
+.wg-lamp { position: absolute; left: 50%; bottom: 22%; width: 78%; transform: translateX(-50%); pointer-events: none; }
+.wg-lamp svg { display: block; width: 100%; height: auto; animation: wg-lamp 3.6s ease-in-out infinite; transform-origin: 50% 20%; }
+@keyframes wg-lamp { 50% { transform: translateY(-3%) rotate(-2deg); } }
+.wg-btn.lamp { border-color: rgba(255, 198, 90, 0.75); }
 .wg-drop, .wg-spark { position: absolute; top: 2px; right: 6px; font-size: 16px; pointer-events: none; }
 .wg-spark { color: var(--wg-gold); font-weight: 800; }
 
@@ -68,7 +80,12 @@
 .wg-btn:disabled { opacity: 0.45; }
 
 .wg-album { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
-.wg-album-cell { aspect-ratio: 34 / 44; border-radius: 7px; background: rgba(255, 255, 255, 0.04); display: block; }
+.wg-album-cell { position: relative; aspect-ratio: 34 / 44; border-radius: 7px; background: rgba(255, 255, 255, 0.04); display: block; padding: 0; border: 0; width: 100%; }
+.wg-album-cell:focus-visible { outline: 2px solid var(--wg-gold); outline-offset: 1px; }
+.wg-album-dots { position: absolute; left: 0; right: 0; bottom: 2px; display: flex; justify-content: center; gap: 3px; }
+.wg-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.wg-dot.on.wg-dot-gold { background: #ffc65a; } .wg-dot.on.wg-dot-rose { background: #ff8fb8; }
+.wg-dot.on.wg-dot-sky { background: #7fc4ff; } .wg-dot.on.wg-dot-violet { background: #b892ff; }
 .wg-album-art, .wg-album-art svg { display: block; width: 100%; height: 100%; }
 .wg-album-cell:not(.found) .wg-album-art { opacity: 0.35; filter: grayscale(1) brightness(0.6); }
 
@@ -83,5 +100,59 @@
 }
 .wg-elsewhere[hidden] { display: none; }
 .wg-elsewhere p { margin: 0; }
-@media (prefers-reduced-motion: reduce) { .wg-pot.bloom .wg-plant { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .wg-lamp svg { animation: none; } .wg-pot.bloom .wg-plant { animation: none; } }
 html.phone .wg-scene { min-height: 260px; }
+
+/* Hybrid colours (pick 7): the same drawing, its colours turned. */
+.wg-color-gold svg { filter: hue-rotate(-45deg) saturate(1.6) brightness(1.08); }
+.wg-color-rose svg { filter: hue-rotate(-110deg) saturate(1.4); }
+.wg-color-sky svg { filter: hue-rotate(70deg) saturate(1.3); }
+.wg-color-violet svg { filter: hue-rotate(140deg) saturate(1.3); }
+.wg-btn.seed-color { border-color: #b892ff; color: #e0d0ff; }
+
+/* The album page (picks 7 + 10). */
+.wg-page {
+  position: absolute; inset: 8px; z-index: 4; display: flex; flex-direction: column; gap: 8px; padding: 14px; box-sizing: border-box;
+  border-radius: 12px; background: rgba(20, 16, 43, 0.97); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 10px 30px #000a;
+}
+.wg-page[hidden] { display: none; }
+.wg-page h3 { margin: 0; font-size: 18px; padding-right: 36px; }
+.wg-page-close {
+  position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08); font-size: 15px;
+}
+.wg-page-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+.wg-page-entry { display: flex; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); }
+.wg-page-art { flex: none; width: 54px; height: 70px; display: block; }
+.wg-page-art svg { width: 100%; height: 100%; display: block; }
+.wg-page-entry:not(.found) .wg-page-art { opacity: 0.35; filter: grayscale(1) brightness(0.6); }
+.wg-page-words { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wg-page-words b { font-size: 15px; }
+.wg-page-words small { font-size: 13px; color: var(--wg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wg-page-hint { margin: 0; font-size: 13px; color: var(--wg-muted); }
+
+/* The sky follows the time of day (the SVG's own stops change); some days it rains behind the pots. */
+.wg-scene .wg-scene-art { z-index: 0; }
+.wg-scene .wg-pot, .wg-scene .wg-rest { z-index: 2; }
+.wg-scene.wg-rain::before {
+  content: ''; position: absolute; left: 12%; right: 12%; top: 6%; bottom: 25%; z-index: 1; pointer-events: none; border-radius: 6px;
+  background: repeating-linear-gradient(105deg, transparent 0 9px, rgba(190, 215, 255, 0.35) 9px 10px);
+  background-size: 40px 40px; animation: wg-rain 0.6s linear infinite; opacity: 0.7;
+}
+@keyframes wg-rain { to { background-position: -10px 40px; } }
+@media (prefers-reduced-motion: reduce) { .wg-scene.wg-rain::before { animation: none; } }
+
+/* Decorations and night visitors (pick 6): their own layer in the scene's frame, behind the pots. */
+.wg-decor-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.wg-decor-layer svg { width: 100%; height: 100%; display: block; }
+.wg-bulbs circle { animation: wg-twinkle 2.2s ease-in-out infinite; }
+.wg-bulbs circle:nth-child(even) { animation-delay: 1.1s; }
+@keyframes wg-twinkle { 50% { opacity: 0.45; } }
+.wg-lantern-glow { animation: wg-twinkle 3.4s ease-in-out infinite; }
+.wg-moth { animation: wg-flutter 0.35s ease-in-out infinite alternate; transform-origin: center; transform-box: fill-box; }
+@keyframes wg-flutter { to { transform: scaleX(0.6) translateY(-2px); } }
+.wg-firefly { animation: wg-glow 1.8s ease-in-out infinite; }
+@keyframes wg-glow { 50% { opacity: 0.3; } }
+.wg-decor-item { justify-content: space-between; }
+@media (prefers-reduced-motion: reduce) { .wg-bulbs circle, .wg-lantern-glow, .wg-moth, .wg-firefly { animation: none; } }
