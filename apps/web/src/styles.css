@@ -2585,6 +2585,19 @@ html:not(.shell) .shell-only {
   color: var(--ok);
 }
 
+/* Card R21: on a computer in fullscreen (and the window with the side panel hidden) messages come in on the right side
+   a quarter down the video (ui/toasts.ts) with bigger text, readable from the sofa: ≈ 20 px at 1366, ≈ 29 px at 1920. */
+.toasts.right-side {
+  max-width: min(640px, 46%);
+  gap: 10px;
+}
+
+.toasts.right-side .toast {
+  font-size: clamp(18px, 1.5vw, 32px);
+  padding: 0.5em 0.85em;
+  border-radius: 0.8em;
+}
+
 .toast.leaving {
   animation: toast-out 0.4s ease-in forwards;
 }

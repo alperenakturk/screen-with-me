@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.32 (bigger chat messages in fullscreen, card R21):**
+- [ ] On a computer, open a YouTube video and a video file in fullscreen; from a second tab write a message: it comes
+  in on the right side, about a quarter down the video (not in the very top corner), with clearly bigger text, left of
+  the button column. Send five or six quick ones: they stack and never cover the player's bottom bar. Same on a film
+  page in fullscreen. A phone looks as before.
+
 **0.9.97.30 (parody avatars removed after the IP audit, card R20):**
 - [ ] In a room, open the avatar picker: two tabs, "Themed" and "Genres" ("Temalı" / "Türler"), no Parody tab. Genres
   shows 18 (detective, pirate, astronaut, inventor, ninja, cowboy, vampire, robot, hero, explorer, chef, rocker, ghost,
