@@ -127,3 +127,45 @@ describe('RoomConnection open timeout', () => {
     conn.close();
   });
 });
+
+describe('handover: false (the Test Lab\'s fake friends)', () => {
+  function storage() {
+    const map = new Map<string, string>();
+    vi.stubGlobal('sessionStorage', {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => void map.set(k, String(v)),
+      removeItem: (k: string) => void map.delete(k),
+    });
+    return map;
+  }
+  const open = (handover?: boolean) => {
+    const conn = new RoomConnection({ serverUrl: 'http://test', roomId: 'abc123', name: 'Ali', clock: new ServerClock(() => Date.now()), onMessage: () => {}, ...(handover === undefined ? {} : { handover }) });
+    conn.connect();
+    return conn;
+  };
+
+  it('neither takes the tab\'s handed-over member id nor leaves its own', async () => {
+    const map = storage();
+    map.set('swm:prev:abc123', JSON.stringify({ id: 'm-real', at: Date.now() }));
+    const fake = open(false);
+    await vi.advanceTimersByTimeAsync(1);
+    const hello = FakeSocket.all[0]!.sent.find((m) => m.t === 'hello') as { prev?: string } | undefined;
+    expect(hello?.prev).toBeUndefined();
+    expect(map.has('swm:prev:abc123')).toBe(true);
+    FakeSocket.all[0]!.emit('message', { t: 'welcome', you: 'm-fake', state: {}, queue: [], members: [], hostId: null, chat: [] });
+    map.delete('swm:prev:abc123');
+    fake.close();
+    expect(map.has('swm:prev:abc123')).toBe(false);
+  });
+
+  it('a normal connection still takes and leaves it', async () => {
+    const map = storage();
+    map.set('swm:prev:abc123', JSON.stringify({ id: 'm-real', at: Date.now() }));
+    const real = open();
+    await vi.advanceTimersByTimeAsync(1);
+    const hello = FakeSocket.all[0]!.sent.find((m) => m.t === 'hello') as { prev?: string } | undefined;
+    expect(hello?.prev).toBe('m-real');
+    real.close();
+    expect(map.has('swm:prev:abc123')).toBe(true);
+  });
+});

@@ -1132,7 +1132,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   // Hidden test panel (card 12): its live numbers; never names or ids.
-  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null }));
+  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }) }));
   // 🐞 Test Lab (card DL): the room's own status lines (the factory only runs while the lab is open).
   debugHooks.register('room', () => ({
     status: () => [
