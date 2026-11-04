@@ -4,7 +4,15 @@ Owner's rule (2 Nov 2026): one board for every session. The **Planner** writes a
 the top **Ready** card, moves it to **In progress**, and when it is live adds `Done: <PR link>` and moves it to
 **Done**. **Security** and **Research** add their suggestions under **Proposed**; the Planner and the owner decide
 whether they become Ready. Roles and rules: `CLAUDE.md` "Sessions as an office". The order follows `ROADMAP.md`
-"Focus: now / next / frozen"; the owner's tick view is https://claude.ai/artifact/EtqKiBo8k5vgR422rq14K5.
+"Focus: now / next / frozen". The owner's tick view is the hidden test board page on our site (its data file
+`board.data.js`, kept by the Planner); the old checklist Artifact is retired.
+
+**How the owner is asked (owner, 4 Nov 2026):** no more option pages or other web pages for him. The only page he uses
+is the test board (the Planner keeps it current with what he tested and what is next). Every preference or design
+question is asked **in the Planner's chat** with clickable choices (the chat's question tool, the recommended choice
+first, with a side preview of each option: a short sketch or description). Design, Game Studio, Research and the
+Developers therefore send the Planner the questions as text: question, 2–4 options (one marked recommended), and a
+short preview per option. They do not publish Artifacts for the owner.
 
 Card format:
 
