@@ -77,7 +77,7 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
-    v: '0.9.97.42',
+    v: '0.9.97.46',
     kinds: ['classics'],
     badge: 'updated',
     tr: 'Klasiklere satranç ve tavla geldi: rok, terfi, şah mat; tavlada zarı sunucu atar. Yalnızsan Glowbeam’e karşı oyna.',
