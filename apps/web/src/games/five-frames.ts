@@ -16,6 +16,7 @@ import { el } from '../dom.ts';
 import { lang as pageLang } from '../i18n.ts';
 import { playSound } from '../sound.ts';
 import { load, save } from '../storage.ts';
+import { RESTORE_EVENT, registerSideLab } from './lab-tools.ts';
 import how1 from './art/tutorial/word-1-guess.svg?raw';
 import how2 from './art/tutorial/word-2-colours.svg?raw';
 import how3 from './art/tutorial/word-3-daily.svg?raw';
@@ -129,7 +130,10 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   let list: List | null = null;
   let answer = '';
   let typed = '';
-  let day = dayNumber();
+  /** The Test Lab can play another day's word (days from today). */
+  let dayShift = 0;
+  const nowDay = () => dayNumber() + dayShift;
+  let day = nowDay();
 
   const title = el('b', { class: 'ff-title' });
   const dayLabel = el('span', { class: 'ff-day' });
@@ -395,15 +399,15 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     const loaded = await wordList(want);
     if (stopped || want !== wordLang) return;
     list = loaded;
-    day = dayNumber();
+    day = nowDay();
     answer = answerFor(day, list.answers, wordLang);
     draw();
   }
 
   // A new day while the game is open (midnight), and a save from another tab.
   const timer = setInterval(() => {
-    if (dayNumber() !== day && list) {
-      day = dayNumber();
+    if (nowDay() !== day && list) {
+      day = nowDay();
       answer = answerFor(day, list.answers, wordLang);
       typed = '';
       draw();
@@ -420,9 +424,58 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   addEventListener('langchange', onLang);
   void start();
 
+  // ---- 🐞 Test Lab (card DL3): today's answer, another day; a played day lands in the sandbox copy ----
+  const offLab = registerSideLab(
+    'fiveFrames',
+    'fiveFrames',
+    () => [
+      {
+        id: 'fiveFrames.answer',
+        title: "Five Frames: show today's answer",
+        help: "Writes the answer of the shown day and language in the lab's log (nothing in the game changes).",
+        tab: 'games',
+        where: 'Five Frames open',
+        available: () => !!answer || 'the word list is still loading',
+        run: () => `${wordLang}: ${answer}`,
+      },
+      {
+        id: 'fiveFrames.day',
+        title: 'Five Frames: another day',
+        help: 'Moves to another day (arg: days from today, e.g. 1 or -3; empty = the next day). Its game is saved in the sandbox.',
+        tab: 'games',
+        where: 'Five Frames open',
+        available: () => !!list || 'the word list is still loading',
+        run: (arg) => {
+          const asked = Number(arg);
+          dayShift = arg !== undefined && arg !== '' && Number.isInteger(asked) ? Math.max(-365, Math.min(365, asked)) : dayShift + 1;
+          day = nowDay();
+          answer = answerFor(day, list!.answers, wordLang);
+          typed = '';
+          draw();
+          return `day ${day}`;
+        },
+        undo: () => {
+          dayShift = 0;
+          day = nowDay();
+          if (list) answer = answerFor(day, list.answers, wordLang);
+          typed = '';
+          draw();
+        },
+      },
+    ],
+    () => [['Five Frames', `day ${day}${dayShift ? ` (today ${dayShift > 0 ? '+' : ''}${dayShift})` : ''} · ${wordLang}`]],
+  );
+  const onRestore = () => {
+    state = loadFrames(load(FRAMES_KEY));
+    draw();
+  };
+  addEventListener(RESTORE_EVENT, onRestore);
+
   return () => {
     how.destroy();
     stopped = true;
+    offLab();
+    removeEventListener(RESTORE_EVENT, onRestore);
     clearInterval(timer);
     clearTimeout(messageTimer);
     clearFlip();

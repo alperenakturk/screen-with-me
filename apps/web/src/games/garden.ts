@@ -9,6 +9,7 @@ import {
   saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity, canGift, giveCutting, plantGift, receiveCutting, type PlantId,
 } from '@swm/shared/games/garden';
 import type { SoloRoom } from '@swm/shared/games/catalog';
+import { RESTORE_EVENT, labTicks, registerSideLab } from './lab-tools.ts';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
 import { playSound } from '../sound.ts';
@@ -612,12 +613,12 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
 
   let visitorTimer: ReturnType<typeof setTimeout> | undefined;
   /** Once a watched minute: maybe a visitor flutters by the window for 40 s. */
-  function maybeVisitor(): void {
+  function maybeVisitor(random: () => number = Math.random): VisitorId | null {
     const sky = (sceneBox.dataset.time ?? 'night') as 'night' | 'dawn' | 'day' | 'dusk';
-    const who = visitorFor(garden, sky);
-    if (!who) return;
+    const who = visitorFor(garden, sky, random);
+    if (!who) return null;
     const layer = decorLayer.querySelector<SVGGElement>('[data-visitor]');
-    if (!layer) return;
+    if (!layer) return null;
     const x = 90 + Math.random() * 160;
     const y = 50 + Math.random() * 60;
     layer.innerHTML = `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})">${VISITOR_ART[who]}</g>`;
@@ -629,16 +630,19 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       flash(t('visitorNew', { name: t(`visitor.${who}` as TextKey).toLocaleLowerCase(lang()) }), 6000);
       persist();
     }
+    return who;
   }
 
   // ---- The sky outside the window follows the time of day; some days it rains (pick 10, decoration only) ----
+  /** The Test Lab can set the sky and the rain (looks only; null = the real time and day). */
+  const labSky: { sky: 'night' | 'dawn' | 'day' | 'dusk' | null; rain: boolean | null } = { sky: null, rain: null };
   function weather(): void {
     const hour = new Date().getHours();
-    const sky = hour >= 21 || hour < 5 ? 'night' : hour < 8 ? 'dawn' : hour < 17 ? 'day' : 'dusk';
+    const sky = labSky.sky ?? (hour >= 21 || hour < 5 ? 'night' : hour < 8 ? 'dawn' : hour < 17 ? 'day' : 'dusk');
     const day = new Date().toISOString().slice(0, 10);
     let hash = 0;
     for (const ch of day) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-    const rain = hash % 4 === 0;
+    const rain = labSky.rain ?? hash % 4 === 0;
     const key = `${sky}|${rain}`;
     if (sceneBox.dataset.sky === key) return;
     sceneBox.dataset.sky = key;
@@ -701,9 +705,17 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     }
     takeLock();
     const ctx = room();
+    // The Test Lab's "time ×10" runs the same tick more often (each one is still capped like a real second).
+    const times = labTicks();
     const result = tickGarden(garden, seconds, ctx);
+    for (let i = 1; i < times; i++) {
+      const more = tickGarden(garden, seconds, ctx);
+      result.seeds.push(...more.seeds);
+      result.bloomed.push(...more.bloomed);
+      result.hybrids.push(...more.hybrids);
+    }
     if (result.hybrids.length) persist();
-    if (ctx.playing && Math.floor(garden.watched / 60) !== Math.floor((garden.watched - seconds) / 60)) maybeVisitor();
+    if (ctx.playing && Math.floor(garden.watched / 60) !== Math.floor((garden.watched - seconds * times) / 60)) maybeVisitor();
     // Films of 20 min or more that ended while I was in the room (the room page notes them even with the garden
     // closed, owner's pick 11 B), and the one ending now: one seed each, once per item.
     const item = ctx.item;
@@ -749,10 +761,124 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
   addEventListener('langchange', onLang);
   draw();
 
+  // ---- 🐞 Test Lab (card DL3): cheats on a sandbox copy; "Restore my real saves" puts the real save back ----
+  const onRestore = () => {
+    garden = loadGarden(load(GARDEN_KEY));
+    draw();
+  };
+  addEventListener(RESTORE_EVENT, onRestore);
+  const where = 'Window Garden open';
+  const changed = (what: string) => {
+    persist();
+    draw();
+    return what;
+  };
+  const sky = (value: typeof labSky.sky, rain: boolean | null) => {
+    labSky.sky = value;
+    labSky.rain = rain;
+    delete sceneBox.dataset.sky;
+    weather();
+  };
+  const offLab = registerSideLab(
+    'windowGarden',
+    'windowGarden',
+    () => [
+      {
+        id: 'garden.grow',
+        title: 'Window Garden: grow every pot by half',
+        help: 'Each planted pot grows 50 % and is watered.',
+        tab: 'games',
+        where,
+        available: () => garden.pots.some((p) => p && p.growth < 1) || 'nothing is growing',
+        run: () => {
+          for (const p of garden.pots) if (p && p.growth < 1) (p.growth = Math.min(0.999, p.growth + 0.5)), (p.water = 1);
+          return changed('grown');
+        },
+      },
+      {
+        id: 'garden.bloom',
+        title: 'Window Garden: bloom now',
+        help: 'Every planted pot blooms on the next tick (with its memory and sound).',
+        tab: 'games',
+        where,
+        available: () => garden.pots.some((p) => p && p.growth < 1) || 'nothing is growing',
+        run: () => {
+          for (const p of garden.pots) if (p && p.growth < 1) (p.growth = 0.9999), (p.water = 1);
+          return changed('blooming');
+        },
+      },
+      {
+        id: 'garden.seeds',
+        title: 'Window Garden: one seed of each kind',
+        help: 'Adds a common, uncommon, rare and legendary seed.',
+        tab: 'games',
+        where,
+        run: () => {
+          for (const r of RARITIES) garden.seeds[r] = Math.min(99, garden.seeds[r] + 1);
+          return changed('seeds +1');
+        },
+      },
+      {
+        id: 'garden.hybrid',
+        title: 'Window Garden: a hybrid colour seed',
+        help: 'Adds a colour seed for a random plant (arg: a plant id).',
+        tab: 'games',
+        where,
+        available: () => garden.colorSeeds.length < 9 || 'the colour seeds are full (9)',
+        run: (arg) => {
+          const ids = Object.keys(HYBRID_COLORS) as PlantId[];
+          const plantId = ids.includes(arg as PlantId) ? (arg as PlantId) : ids[Math.floor(Math.random() * ids.length)]!;
+          const color = HYBRID_COLORS[plantId]![Math.floor(Math.random() * 2)]!;
+          garden.colorSeeds.push({ plant: plantId, color });
+          return changed(`${plantId}:${color}`);
+        },
+      },
+      {
+        id: 'garden.sky',
+        title: 'Window Garden: the sky (night, dawn, day, dusk)',
+        help: 'Sets the window\'s sky (arg: night / dawn / day / dusk / auto); looks only.',
+        tab: 'games',
+        where,
+        run: (arg) => {
+          const next = (['night', 'dawn', 'day', 'dusk'] as const).find((k) => k === arg) ?? (arg === 'auto' ? null : labSky.sky === 'night' ? 'day' : 'night');
+          sky(next, labSky.rain);
+          return next ?? 'auto';
+        },
+        undo: () => sky(null, labSky.rain),
+      },
+      {
+        id: 'garden.rain',
+        title: 'Window Garden: rain on / off',
+        help: 'Makes it rain outside the window or stop (looks only).',
+        tab: 'games',
+        where,
+        run: () => {
+          sky(labSky.sky, !(labSky.rain ?? sceneBox.classList.contains('wg-rain')));
+          return labSky.rain ? 'rain' : 'dry';
+        },
+        undo: () => sky(labSky.sky, null),
+      },
+      {
+        id: 'garden.visitor',
+        title: 'Window Garden: a night visitor now',
+        help: 'At night a visitor comes at once (it needs its decoration: the lantern or the fairy lights).',
+        tab: 'games',
+        where,
+        run: () => {
+          if (labSky.sky !== 'night' && labSky.sky !== 'dusk') sky('night', labSky.rain);
+          return maybeVisitor(() => 0) ?? 'no visitor: buy the lantern or the fairy lights first';
+        },
+      },
+    ],
+    () => [['Window Garden', `${garden.pots.filter(Boolean).length} growing · album ${found(garden)} · ${labSky.sky ?? 'real sky'}`]],
+  );
+
   return () => {
     how.destroy();
     if (stopped) return;
     stopped = true;
+    offLab();
+    removeEventListener(RESTORE_EVENT, onRestore);
     clearInterval(timer);
     clearTimeout(noteTimer);
     clearTimeout(visitorTimer);
