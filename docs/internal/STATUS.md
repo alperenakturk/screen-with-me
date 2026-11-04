@@ -433,6 +433,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.52 (card SZ: a lighter room page):**
+- [ ] Nothing new to see: in a room join voice (the IP notice and the pre-join window open at once), share your screen,
+  a friend watches it; a TikTok / Vimeo link and the sync test still play; sounds still play; ? opens the shortcuts card.
+  On the film page voice still works.
+
 **0.9.97.50 (security R4-9 + R4-10):**
 - [ ] Nothing to see: search YouTube twice for the same words; both work (the second comes from the server's cache
   when the address allows it). The hidden TV pairing stays off on the live site.

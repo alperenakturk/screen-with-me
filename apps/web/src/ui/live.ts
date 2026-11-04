@@ -1,14 +1,26 @@
 import { LIVE_MAX_VIEWERS, type ClientMessage, type LiveKind, type Member, type Signal } from '@swm/shared/protocol';
-import { FPS, LiveP2p, screenConstraints, type LiveQuality } from '@swm/shared/live-p2p';
+import type { LiveP2p, LiveQuality } from '@swm/shared/live-p2p';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 import { flashHint } from './hint.ts';
-import { confirmIpNotice } from './ip-notice.ts';
-import { composeScreenWithCamera, composeSupported, type Composed } from './live-compose.ts';
+import type { IpNoticeKind } from './ip-notice.ts';
+import type { Composed } from './live-compose.ts';
 import { setIcon } from './icons.ts';
-import { createLiveFloat } from './live-float.ts';
-import { openCam } from './voice-check.ts';
+import { openCam } from './voice-devices.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { loadChunk, whenIdle } from './lazy.ts';
+
+type Engine = typeof import('./live-engine.ts');
+/** The IP notice is a privacy gate: if its chunk can't load the answer is "no" (fail closed) and the person is told. */
+async function ipNotice(kind: IpNoticeKind, anchor: HTMLElement): Promise<boolean> {
+  const m = await loadChunk(() => import('./ip-notice.ts'));
+  if (m) return m.confirmIpNotice(kind, []);
+  flashHint(anchor, t('live.startFailed'), 6000);
+  return false;
+}
+/** Can the browser draw my camera into the screen's corner (`live-compose.ts`; checked here so the card needs no chunk)? */
+const scope = globalThis as { MediaStreamTrackProcessor?: unknown; MediaStreamTrackGenerator?: unknown };
+const composeSupported = typeof scope.MediaStreamTrackProcessor === 'function' && typeof scope.MediaStreamTrackGenerator === 'function' && typeof OffscreenCanvas === 'function';
 
 /**
  * Yayın kartı (sağ panelde, sesli sohbetin altında) ve yayın penceresi (videonun köşesinde, büyütülebilir).
@@ -50,12 +62,6 @@ export function createLive(
   const killButton = root.querySelector<HTMLButtonElement>('#live-kill')!;
   const hideSelfButton = root.querySelector<HTMLButtonElement>('#live-hide-self')!;
   const previewButton = root.querySelector<HTMLButtonElement>('#live-preview')!;
-  const float = createLiveFloat({
-    win,
-    wrap: root.querySelector<HTMLElement>('.player-wrap')!,
-    theater: root.querySelector<HTMLElement>('#theater')!,
-    onMove: () => dispatchEvent(new Event('swm-layout')),
-  });
   // 0.9.91.15 (owner): the streamer doesn't have to watch their own screen; remembered in this browser.
   let selfHidden = load('opt:liveSelfHidden') === '1';
   const qualityRow = root.querySelector<HTMLElement>('#live-quality-row')!;
@@ -89,14 +95,50 @@ export function createLive(
   let toldBlocked = false;
   /** My member id at the last welcome (a reconnect with the same id keeps the stream). */
   let lastId: string | null = null;
-  const live = new LiveP2p({
+  /**
+   * Card SZ: the stream itself (`live-engine.ts`) is a lazy chunk, made the first time it is needed: someone streams, the
+   * Share button is hovered or focused, a press. Until then nobody streams to or from me, so "not streaming, not watching".
+   */
+  let engine: Engine | null = null;
+  let live: LiveP2p | null = null;
+  let float: ReturnType<Engine['createLiveFloat']> | null = null;
+  let loading: Promise<LiveP2p> | null = null;
+  function ensure(): Promise<LiveP2p> {
+    loading ??= (async () => {
+      const m = await loadChunk(() => import('./live-engine.ts'));
+      if (!m) {
+        loading = null;
+        throw new Error('live-engine did not load');
+      }
+      engine = m;
+        float = m.createLiveFloat({
+          win,
+          wrap: root.querySelector<HTMLElement>('.player-wrap')!,
+          theater: root.querySelector<HTMLElement>('#theater')!,
+          onMove: () => dispatchEvent(new Event('swm-layout')),
+        });
+        live = makeLive(m);
+        live.sync(members, myId());
+      render();
+      return live;
+    })();
+    return loading;
+  }
+  const warm = () => void ensure().catch(() => {});
+  whenIdle(warm);
+  for (const button of [shareButton, watchButton]) {
+    button.addEventListener('pointerenter', warm, { once: true });
+    button.addEventListener('focus', warm, { once: true });
+    button.addEventListener('touchstart', warm, { once: true, passive: true });
+  }
+  const makeLive = (m: Engine) => new m.LiveP2p({
     capture: async (kind, q) => {
-      const screen = await navigator.mediaDevices.getDisplayMedia(screenConstraints(q));
+      const screen = await navigator.mediaDevices.getDisplayMedia(m.screenConstraints(q));
       if (kind !== 'screen' || !canCamera || !withCamBox.checked) return screen;
       // The camera is optional: if it can't open, the screen goes out alone.
       const camera = await openCam().catch(() => null);
       if (!camera) return screen;
-      composed = composeScreenWithCamera(screen, camera);
+      composed = m.composeScreenWithCamera(screen, camera);
       return composed.stream;
     },
     signal: (to, data) => send({ t: 'live-signal', to, data }),
@@ -121,7 +163,7 @@ export function createLive(
   // 🐞 Test Lab: each stream connection's state (ids shortened; read only).
   debugHooks.register('live', () => ({
     status: () => {
-      const peers = live.peerStates();
+      const peers = live?.peerStates() ?? [];
       return [['Stream peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : 'none']];
     },
   }));
@@ -133,7 +175,9 @@ export function createLive(
   function render(): void {
     const me = myId();
     const host = streamer();
-    const mine = host?.id === me && live.broadcasting !== null;
+    const broadcasting = live?.broadcasting ?? null;
+    const watching = live?.isWatching ?? false;
+    const mine = host?.id === me && broadcasting !== null;
     const viewers = members.filter((m) => m.watching).length;
     const full = viewers >= LIVE_MAX_VIEWERS;
     const idle = !host;
@@ -141,7 +185,7 @@ export function createLive(
     // Boşta ve paylaşamıyorsa (film sayfası, ekran paylaşımı olmayan telefon) kart hiç görünmez.
     card.hidden = !available || (idle && !canShare);
     // The stream ended (by me, the browser's "Stop sharing", the host or a reconnect): free the camera too.
-    if (!live.broadcasting && composed) {
+    if (!broadcasting && composed) {
       composed.close();
       composed = null;
     }
@@ -157,11 +201,11 @@ export function createLive(
     stopButton.hidden = !mine;
     killButton.hidden = !host || mine || !isHost();
     // Kalite sadece kendi ekran yayınım sürerken (varsayılan: son seçilen).
-    qualityRow.hidden = !(mine && live.broadcasting === 'screen');
+    qualityRow.hidden = !(mine && broadcasting === 'screen');
     watchButton.hidden = !host || mine;
-    watchButton.textContent = live.isWatching ? t('live.unwatch') : t('live.watch');
-    watchButton.classList.toggle('primary', !live.isWatching);
-    watchButton.classList.toggle('is-full', !live.isWatching && full);
+    watchButton.textContent = watching ? t('live.unwatch') : t('live.watch');
+    watchButton.classList.toggle('primary', !watching);
+    watchButton.classList.toggle('is-full', !watching && full);
     // Card R23: while streaming the status sits beside the faces in a narrow column: a short line, the full one as its title.
     status.title = '';
     if (idle) status.textContent = isShell ? t('live.shellIdle') : locked ? t('live.hostOnly') : t('live.idle');
@@ -177,12 +221,12 @@ export function createLive(
     limit.classList.toggle('near', !idle && !full && LIVE_MAX_VIEWERS - viewers === 1);
 
     // Pencere: yayıncıya kendi önizlemesi (sessiz), izleyiciye yayın.
-    const stream = mine ? (selfHidden ? null : live.preview) : live.isWatching ? incoming : null;
+    const stream = mine ? (selfHidden ? null : (live?.preview ?? null)) : watching ? incoming : null;
     const shown = !!stream && win.hidden;
     win.hidden = !stream;
     hideSelfButton.hidden = !mine;
     previewButton.hidden = !mine || !selfHidden;
-    if (shown) float.apply();
+    if (shown) float?.apply();
     if (stream && video.srcObject !== stream) {
       video.srcObject = stream;
       video.muted = mine;
@@ -203,10 +247,10 @@ export function createLive(
       return;
     }
     // Streams are always peer-to-peer: viewers and the streamer see each other's IP (security review 1).
-    if (!(await confirmIpNotice('stream', []))) return;
+    if (!(await ipNotice('stream', button))) return;
     button.disabled = true;
     try {
-      await live.start(kind, quality());
+      await (await ensure()).start(kind, quality());
     } catch (error) {
       // Kişi seçme penceresini kapattıysa sessizce vazgeç.
       const cancelled = error instanceof DOMException && error.name === 'NotAllowedError';
@@ -236,11 +280,11 @@ export function createLive(
     void start('screen', shareButton);
   });
   stopButton.addEventListener('click', () => {
-    live.stop();
+    live?.stop();
     render();
   });
   watchButton.addEventListener('click', () => {
-    if (live.isWatching) {
+    if (live?.isWatching) {
       live.stopWatching();
       render();
       return;
@@ -250,20 +294,22 @@ export function createLive(
       flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
       return;
     }
-    void confirmIpNotice('watch', []).then((yes) => {
-      if (!yes) return;
-      live.watch();
-      render();
-    });
+    void ipNotice('watch', watchButton)
+      .then(async (yes) => {
+        if (!yes) return;
+        (await ensure()).watch();
+        render();
+      })
+      .catch(() => flashHint(watchButton, t('live.startFailed'), 6000));
   });
   killButton.addEventListener('click', () => send({ t: 'live-stop' }));
   qualitySelect.addEventListener('change', () => {
     save('opt:liveQuality', quality());
     // With my camera in the corner the picture follows the real screen's frames: the frame rate is set there.
-    void composed?.screen.applyConstraints({ frameRate: { ideal: FPS[quality()], max: FPS[quality()] } }).catch(() => {});
-    void live.setQuality(quality());
+    if (engine) void composed?.screen.applyConstraints({ frameRate: { ideal: engine.FPS[quality()], max: engine.FPS[quality()] } }).catch(() => {});
+    void live?.setQuality(quality());
   });
-  bigButton.addEventListener('click', () => float.toggleBig());
+  bigButton.addEventListener('click', () => float?.toggleBig());
   const setSelfHidden = (hidden: boolean) => {
     selfHidden = hidden;
     save('opt:liveSelfHidden', hidden ? '1' : '0');
@@ -272,8 +318,8 @@ export function createLive(
   hideSelfButton.addEventListener('click', () => setSelfHidden(true));
   previewButton.addEventListener('click', () => setSelfHidden(false));
   closeButton.addEventListener('click', () => {
-    if (live.broadcasting) live.stop();
-    else live.stopWatching();
+    if (live?.broadcasting) live.stop();
+    else live?.stopWatching();
     render();
   });
 
@@ -284,28 +330,32 @@ export function createLive(
       // Card R1: the server gave me my member id back (a deploy or a network blip closed the room connection), so the
       // direct connections are still up: keep streaming / watching and only tell the server again. With a new id the
       // server doesn't know the old one, so the stream and the watching end.
-      if (enabled && id !== null && id === lastId && (live.broadcasting || live.isWatching)) live.resume();
+      if (live && enabled && id !== null && id === lastId && (live.broadcasting || live.isWatching)) live.resume();
       else {
-        live.stop();
-        live.stopWatching();
+        live?.stop();
+        live?.stopWatching();
       }
       lastId = id;
       render();
     },
     members(next: Member[]): void {
       members = next;
-      live.sync(members, myId());
+      if (live) live.sync(members, myId());
+      // Someone streams: get the stream's chunk now, so "▶ Watch" works at once.
+      else if (next.some((m) => m.live)) warm();
       render();
     },
     signal(from: string, data: Signal): void {
-      void live.receive(from, data).catch(() => {});
+      void ensure()
+        .then((l) => l.receive(from, data))
+        .catch(() => {});
     },
     error(code: 'live_busy' | 'live_full' | 'live_host' | 'live_stopped'): void {
       if (code === 'live_busy' || code === 'live_host' || code === 'live_stopped') {
-        live.stop();
+        live?.stop();
         flashHint(card, t(code === 'live_busy' ? 'live.busy' : code === 'live_host' ? 'live.hostOnly' : 'live.stopped'), 6000);
       } else {
-        live.stopWatching();
+        live?.stopWatching();
         const viewers = members.filter((m) => m.watching).length;
         flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
       }
@@ -318,8 +368,8 @@ export function createLive(
     },
     /** Sayfadan çıkarken / odadan atılınca. */
     leave(): void {
-      live.stop();
-      live.stopWatching();
+      live?.stop();
+      live?.stopWatching();
     },
     relabel: render,
   };
