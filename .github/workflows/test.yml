@@ -129,6 +129,11 @@ jobs:
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: node scripts/harness/test-lab/run.cjs http://localhost:8787
 
+      # Card DL3a: the Test Lab's game tools (open any game, side-game cheats on a sandbox save, restore my real saves).
+      - name: Test Lab games
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+        run: node scripts/harness/lab-games/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: cat wrangler.log || true

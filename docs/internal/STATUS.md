@@ -653,6 +653,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
   shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.47 Test Lab games: open a room with `?debug=1`, press 🐞, go to 🎮 Games (or Ctrl+K and type "games").
+  Open Snack Bar from there, give it +10K coins, then "pretend the film plays" + "time ×10": the coins climb. Try "a
+  customer now" and "the film's receipt now". Open Window Garden: "bloom now", night sky, rain. Open Five Frames: show
+  the answer, move a day. Then "Restore my real saves": your own Snack Bar / garden / Five Frames are back as before.
 - [ ] 0.9.97.40 Draw & Guess: open a Draw & Guess table with a friend. In the lobby the host picks a word category (or
   "All"); the words offered then come from it. While drawing try the 🧽 eraser, undo, then redo (button or Ctrl+Y); a new
   stroke after undo clears the redo.

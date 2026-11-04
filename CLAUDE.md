@@ -9,7 +9,7 @@ A free, account-free tool for watching a video on any site together with friends
 **website** (YouTube / direct video files) + **browser extension** (any HTML5 video on any site, iframes included) +
 **Cloudflare server**.
 
-- Live: https://screen-with-me.swm-server.workers.dev
+- Live: 0.9.97.47 (🎮 Game Studio, card DL3a: the 🐞 Test Lab's game tools: open any game, side-game cheats on a sandbox save, time ×10, "pretend the film plays", restore my real saves; see "🐞 Test Lab" Games); https://screen-with-me.swm-server.workers.dev
 - Repo: github.com/alperenakturk/screen-with-me (public since Nov 2026, source-available, all rights reserved)
 - **Read first:** `docs/internal/STATUS.md` (where we are, pending decisions, next steps; update it after every task)
   and `docs/internal/ROADMAP.md` (the owner's plan to 1.0 and beyond, with checklists).
@@ -996,6 +996,17 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   (39 checks, in CI): off = no chunk and no lab object, the drawer, tabs, status lines, the rail never under the drawer,
   the log (in / out, redacted, filter), the command box (run, undo, typing never reaches the room), a failing command
   keeps the room working, the bug text = the copied text, a page error, a phone sheet, Turkish, off again.
+  **Games (DL3a, Game Studio):** `games/lab-tools.ts` is loaded only with the lab on (the games stage imports it
+  dynamically when `swm:debug` is set, so it is not in the room page's budget; the side games' chunks import it). The hall's
+  commands (`games.open.<kind>` for every table and side game, `games.speed` ×10 side-game time (each tick runs `labTicks()`
+  times, still capped like a real second), `games.playing` "pretend the film plays" (`labRoom` gives the side games an
+  hour-long `lab-film`, nothing is sent), `games.restore`); each side game registers its own while its window is open
+  (`registerSideLab`): Snack Bar `snackBar.coins` / `.customer` / `.receipt` / `.badges` / `.place`, Window Garden
+  `garden.grow` / `.bloom` / `.seeds` / `.hybrid` / `.sky` / `.rain` / `.visitor`, Five Frames `fiveFrames.answer` / `.day`.
+  **Sandbox:** before a game's first cheat its real save is copied to `lab:real:<key>` (localStorage only, never synced);
+  `games.restore` writes every copy back through `save` and fires `swm-lab-restore`, which the open games reload from.
+  No server powers yet: dama positions, skipping quiz / draw rounds and the tip jar wait for DL3b (local / test server
+  only). Harness `scripts/harness/lab-games/run.cjs` (23 checks, in CI).
 - **Move to another device (0.9.96.4, card "Move my things to another device"):** profile menu → 📲 (`#profile-move`)
   or the other device's QR (`/#move=<code>`, `app.ts` `openMoveFromHash`, also on `hashchange`) → `ui/move-device.ts`
   (lazy chunk + `move-device.css`, own texts). Shared `move.ts`: `MOVE_KEYS` (snackBar, windowGarden, fiveFrames,
