@@ -267,6 +267,17 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Mixcloud, podcasts, web radio, Coub, a GIF search; a source picker next to the search box ("Search in: YouTube ▾").
   Each one needs its embed / player API, terms and sync support checked first (Research). Planner: after 1.0 or
   0.9.95+, owner decides once the research is in.
+  (10) **Window Garden's "film ended" seed** (Developer B, BH2, 4 Nov 2026; a game rule, so the owner's pick): today
+  the seed only comes if the garden window is open in the film's last 10 s, and skipping ahead to the end also earns
+  it. Options: A keep as is · B the seed whenever a film of ≥ 20 min ends while I'm in the room (game closed too) ·
+  C only if most of the film was really watched. Planner's pick: B (simple, fair, no tracking of what was watched).
+  (11) **Saved-room "yours" mark after a hand-over** (Developer A, BH4, 4 Nov 2026; cosmetic): after "Make host" (or
+  after acting as host while the host was away) the old host's saved-room row stays marked as theirs (`mine` is
+  sticky), so its ✕ warns "removing also unsaves the room" while the server rightly refuses that unsave. Planner: a
+  small fix card for the next lane slot (clear `mine` on a `members` update that names another host, without flicker).
+  (12) **A TV can keep the host role** (Developer A, BH4; TV lab only, frozen): if the host's TV stays connected after
+  their phone / computer leaves, the TV holds the role and knock cards / host actions reach nobody. Planner: fix with
+  the Google Cast TV version after 1.0 (ROADMAP Phase 2), not now.
 - [x] **Another new thing after the phone version:** cinema mode (owner, 2 Nov 2026; card 14 in `CARDS.md`).
 - [ ] **Phone version from scratch** (owner's picks 2 Nov 2026: 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A, "everything must fit
   our site"). [x] **0.9.92.3 step 1, the room as an app screen** (video edge to edge, faces strip with cameras, chat,
