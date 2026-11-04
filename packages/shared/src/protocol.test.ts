@@ -81,6 +81,9 @@ describe('parseClientMessage', () => {
     });
     expect(parse({ t: 'signal', to: 'abc12345', data: { sdp: { type: 'pranswer', sdp } } })).toBeNull();
     expect(parse({ t: 'signal', to: 'abc12345', data: { html: '<b>' } })).toBeNull();
+    // BH2: a viewer asks the streamer for a fresh offer; only the bare flag survives.
+    expect(parse({ t: 'live-signal', to: 'abc12345', data: { ask: true, evil: 1 } })).toEqual({ t: 'live-signal', to: 'abc12345', data: { ask: true } });
+    expect(parse({ t: 'live-signal', to: 'abc12345', data: { ask: 'yes' } })).toBeNull();
     // Büyük ama rtc olmayan mesaj hâlâ reddedilir.
     expect(parse({ t: 'chat', text: 'a'.repeat(6000) })).toBeNull();
   });

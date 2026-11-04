@@ -117,6 +117,32 @@ const box = (page, selector) =>
   await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 4 });
   await alex.waitForTimeout(600);
   check(await idle(), 'mouse leaves: it closes quickly');
+  // BH2: while the rail comes and goes it never covers the player, not even for a frame of the 0.22 s slide.
+  const sample = () =>
+    alex.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const hits = [];
+          const t0 = performance.now();
+          const step = () => {
+            const f = document.querySelector('#player iframe').getBoundingClientRect();
+            const d = document.getElementById('fs-dock');
+            const r = d.getBoundingClientRect();
+            const op = Number(getComputedStyle(d).opacity);
+            if (op >= 0.05 && r.left < f.right - 1 && r.width > 0) hits.push(`${Math.round(performance.now() - t0)} ms: rail ${Math.round(r.left)} < player ${Math.round(f.right)} (opacity ${op.toFixed(2)})`);
+            if (performance.now() - t0 < 900) requestAnimationFrame(step);
+            else resolve(hits);
+          };
+          requestAnimationFrame(step);
+        }),
+    );
+  const comingIn = sample();
+  await alex.mouse.move(wrapBox.r - 12, wrapBox.y, { steps: 4 });
+  const inHits = await comingIn;
+  const goingOut = sample();
+  await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 4 });
+  const outHits = await goingOut;
+  check(inHits.length === 0 && outHits.length === 0, 'the rail never covers the player while it slides in or out (every frame)', [...inHits, ...outHits].slice(0, 4).join(' | '));
 
   // Pin it from ⋯.
   await alex.mouse.move(wrapBox.r - 12, wrapBox.y, { steps: 4 });

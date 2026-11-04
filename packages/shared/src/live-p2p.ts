@@ -54,7 +54,12 @@ interface Peer {
   pc: RTCPeerConnection;
   pending: RTCIceCandidateInit[];
   failed: boolean;
+  /** When it was made (a viewer's `ask` right after its first offer is not a stale connection). */
+  at: number;
 }
+
+/** A viewer's `ask` within this long of the offer it answers belongs to that offer. */
+const ASK_FRESH_MS = 3000;
 
 /**
  * After a dropped room connection (a deploy restarts the room's object, a network blip) the server gives me my member id
@@ -164,6 +169,10 @@ export class LiveP2p {
     if (this.watching || this.stream) return;
     this.watching = true;
     this.options.watch(true);
+    // A fresh watch (never `resume()`): if the streamer still holds a connection to my previous page (a reload keeps
+    // my member id), it makes a new offer. Sent after the watch on the same socket, so the server pairs us first.
+    const streamer = this.lastMembers.find((m) => m.live && m.id !== this.lastId);
+    if (streamer) this.options.signal(streamer.id, { ask: true });
   }
 
   stopWatching(): void {
@@ -221,6 +230,16 @@ export class LiveP2p {
   }
 
   async receive(from: string, data: Signal): Promise<void> {
+    if ('ask' in data) {
+      // A viewer started watching on a new page. A connection made just now is the one answering it; an older one
+      // leads to a page that is gone, so offer again.
+      const peer = this.peers.get(from);
+      if (!this.stream || !peer || Date.now() - peer.at < ASK_FRESH_MS) return;
+      this.missing.delete(from);
+      this.close(from);
+      await this.offer(from);
+      return;
+    }
     if ('sdp' in data) {
       if (data.sdp.type === 'offer') {
         // Yayıncının teklifi: sadece alırım.
@@ -277,7 +296,7 @@ export class LiveP2p {
 
   private peer(memberId: string): Peer {
     const pc = new RTCPeerConnection({ iceServers: ICE });
-    const peer: Peer = { pc, pending: [], failed: false };
+    const peer: Peer = { pc, pending: [], failed: false, at: Date.now() };
     this.peers.set(memberId, peer);
     watchIceBlocked(pc, () => this.options.onBlocked?.());
     pc.onicecandidate = (event) => {

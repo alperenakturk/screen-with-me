@@ -421,7 +421,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.97.18 (knock fixes from the bug hunt, BH3):**
+**0.9.97.19 (knock fixes from the bug hunt, BH3):**
 - [ ] With "Ask before letting people in" on and a friend inside: close your tab; another friend knocks. The friend
   still inside (acting host while you are away) gets the "wants to join" card and can let them in.
 - [ ] Someone waits at the door and you turn the switch off: they come in at once.
@@ -556,6 +556,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.18 BH2: start a YouTube video and move the mouse to the video's right edge and away: the rail slides in and
+  out beside the video, never fading in over it.
+- [ ] 0.9.97.17 BH2: a friend shares the screen, you press Watch, then reload your page and press Watch again: the picture
+  comes back (it used to stay black).
 - [ ] 0.9.97.15 R8: 🎮 → On the side → pick a game you never opened: the "How to play" cards are there at once. Open the
   profile menu, then "Change theme": every preview picture is already there.
 - [ ] 0.9.97.13 R6: the invite window has no "show this when I'm alone" tick box; ⚙️ My screen has "Open the invite

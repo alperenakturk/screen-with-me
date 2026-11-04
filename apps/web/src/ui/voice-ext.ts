@@ -300,6 +300,7 @@ export class ExtVoice implements Voice {
       for (const candidate of this.loopPending.splice(0)) await pc.addIceCandidate(candidate).catch(() => {});
       return;
     }
+    if ('ask' in data) return;
     if (this.loop?.remoteDescription) await this.loop.addIceCandidate(data.candidate).catch(() => {});
     else this.loopPending.push(data.candidate);
   }
