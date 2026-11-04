@@ -202,6 +202,32 @@ const measure = (page) =>
     await ctx.close();
   }
 
+  // ---- Card R8: on a slow network the cards show within 150 ms of picking a game (the hall warmed its chunk) ----
+  for (const kind of Object.keys(GAMES)) {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const page = await enter(ctx, { seen: false });
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Network.enable');
+    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 300, downloadThroughput: 400_000, uploadThroughput: 200_000 });
+    const ms = await page.evaluate(async (kind) => {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      document.getElementById('game-btn').click();
+      for (let i = 0; i < 80 && !document.querySelector('#game-menu [data-tab="side"]'); i++) await sleep(100);
+      document.querySelector('#game-menu [data-tab="side"]')?.click();
+      await sleep(5000); // a person reading the hall
+      const t0 = performance.now();
+      document.querySelector(`#game-menu [data-solo="${kind}"]`)?.click();
+      while (performance.now() - t0 < 5000) {
+        const layer = document.querySelector('#game-stage .htp');
+        if (layer && !layer.hidden && layer.getBoundingClientRect().width > 0) return performance.now() - t0;
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+      return -1;
+    }, kind);
+    check(ms >= 0 && ms <= 150, `${GAMES[kind]}: "How to play" shows ≤ 150 ms after it is picked on a slow network`, `${Math.round(ms)} ms`);
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Side games polish harness passed');
   process.exit(failed ? 1 : 0);

@@ -1,4 +1,4 @@
-import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage } from '@swm/shared/protocol';
+import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage, type Member } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { avatarNode } from './avatar.ts';
 import { t, type I18nKey } from '../i18n.ts';
@@ -54,11 +54,49 @@ export function createChatPanel(
   });
   window.addEventListener('langchange', drawEvents);
 
+  // R13 private messages: while `privateTo` is set the box writes to that person only (a bar above it says so; ✕ or
+  // Esc goes back to the room chat). No images in private: they live in the room's shared image store.
+  let privateTo: Member | null = null;
+  const privateText = el('span', { class: 'chat-private-text' });
+  const privateEnd = el('button', { type: 'button', class: 'chat-private-end' }, '✕');
+  const privateBar = el('div', { class: 'chat-private', hidden: '', role: 'status' }, privateText, privateEnd);
+  form.before(privateBar);
+  const drawPrivate = () => {
+    privateBar.hidden = !privateTo;
+    form.classList.toggle('private', !!privateTo);
+    privateEnd.title = t('chat.privateEnd');
+    privateEnd.setAttribute('aria-label', t('chat.privateEnd'));
+    if (privateTo) {
+      privateText.textContent = t('chat.privateBar', { name: privateTo.name });
+      input.placeholder = t('chat.privatePlaceholder', { name: privateTo.name });
+    } else {
+      const key = input.dataset.i18nPlaceholder as I18nKey | undefined;
+      if (key) input.placeholder = t(key);
+    }
+  };
+  const setPrivate = (member: Member | null) => {
+    privateTo = member && member.id !== myId() ? member : null;
+    drawPrivate();
+    if (privateTo) input.focus();
+  };
+  privateEnd.addEventListener('click', () => {
+    setPrivate(null);
+    input.focus();
+  });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && privateTo) {
+      event.preventDefault();
+      event.stopPropagation();
+      setPrivate(null);
+    }
+  });
+  window.addEventListener('langchange', drawPrivate);
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const text = cleanChatText(input.value);
     if (text === null) return;
-    send({ t: 'chat', text });
+    send(privateTo ? { t: 'chat', text, to: privateTo.id } : { t: 'chat', text });
     input.value = '';
   });
 
@@ -156,13 +194,36 @@ export function createChatPanel(
     }
     const { message } = line;
     const mine = message.by.id === myId();
-    const cont = prev?.kind === 'chat' && prev.message.by.id === message.by.id && message.at - prev.message.at < GROUP_MS;
+    const priv = message.to;
+    const cont =
+      prev?.kind === 'chat' &&
+      prev.message.by.id === message.by.id &&
+      prev.message.to?.id === priv?.id &&
+      message.at - prev.message.at < GROUP_MS;
+    // Someone else's name: a press writes back to them privately (R13).
+    const nameButton = () => {
+      const b = el('button', { type: 'button', class: 'chat-name', title: t('chat.privateWith', { name: message.by.name }) }, message.by.name);
+      b.addEventListener('click', () => setPrivate(message.by));
+      return b;
+    };
+    const label = priv
+      ? (() => {
+          const other = mine ? priv : message.by;
+          const b = el(
+            'button',
+            { type: 'button', class: 'chat-private-label', title: t('chat.privateWith', { name: other.name }) },
+            t(mine ? 'chat.privateTo' : 'chat.privateFrom', { name: other.name }),
+          );
+          b.addEventListener('click', () => setPrivate(other));
+          return b;
+        })()
+      : null;
     const meta = mine
-      ? el('div', { class: 'chat-meta' }, el('time', {}, time(message.at)))
-      : el('div', { class: 'chat-meta' }, el('span', { class: 'chat-name' }, message.by.name), el('time', {}, time(message.at)));
+      ? el('div', { class: 'chat-meta' }, ...(label ? [label] : []), el('time', {}, time(message.at)))
+      : el('div', { class: 'chat-meta' }, label ?? nameButton(), el('time', {}, time(message.at)));
     return el(
       'li',
-      { class: `chat-line${mine ? ' me' : ''}${cont ? ' cont' : ''}`, title: time(message.at) },
+      { class: `chat-line${mine ? ' me' : ''}${cont ? ' cont' : ''}${priv ? ' private' : ''}`, title: time(message.at) },
       ...(mine ? [] : [avatarNode(message.by.avatar, 'chat-avatar')]),
       el(
         'div',
@@ -226,5 +287,11 @@ export function createChatPanel(
       }
     },
     render,
+    /** R13: write to this person privately (the person menu's "Message privately"); null = the room chat again. */
+    privateTo: setPrivate,
+    /** The private message could not go (they left): back to the room chat. */
+    privateGone(): void {
+      setPrivate(null);
+    },
   };
 }

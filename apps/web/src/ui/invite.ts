@@ -4,7 +4,6 @@ import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 
-import { AUTO_INVITE_KEY, autoInviteOn } from './invite-option.ts';
 
 /** WhatsApp's glyph (the Simple Icons path, CC0; the shape WhatsApp's brand resources show for share buttons). */
 const WHATSAPP_PATH =
@@ -115,10 +114,6 @@ export function openInviteDialog(url: string, door?: { on: boolean; set: (on: bo
   tabLink.addEventListener('click', () => showTab('link'));
   tabQr.addEventListener('click', () => showTab('qr'));
 
-  const auto = el('input', { type: 'checkbox', id: 'invite-auto' });
-  auto.checked = autoInviteOn();
-  auto.addEventListener('change', () => save(AUTO_INVITE_KEY, auto.checked ? '1' : '0'));
-
   const close = el('button', { type: 'button', class: 'icon-btn invite-close', title: t('close'), 'aria-label': t('close') }, '✕');
   const dialog = el(
     'div',
@@ -129,7 +124,6 @@ export function openInviteDialog(url: string, door?: { on: boolean; set: (on: bo
     ...(door ? [doorRow(door)] : []),
     linkPane,
     qrPane,
-    el('label', { class: 'invite-auto small muted' }, auto, el('span', {}, t('invite.auto'))),
   );
   const backdrop = el('div', { class: 'dialog-backdrop' }, dialog);
   const finish = () => {

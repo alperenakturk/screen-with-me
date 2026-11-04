@@ -16,7 +16,7 @@ export interface ShellOptions {
   onKey: (key: string, up: boolean) => void;
   onFullscreen: () => void;
   /** Fare film sayfasında oynadı (tam ekran kontrolleri belirsin). */
-  onActivity: () => void;
+  onActivity: (edge?: boolean) => void;
 }
 
 export interface ShellPlayer extends PlayerAdapter {
@@ -49,7 +49,7 @@ export function createShellPlayer(options: ShellOptions): ShellPlayer {
         options.onFullscreen();
         break;
       case 'activity':
-        options.onActivity();
+        options.onActivity(reply.edge === true ? true : reply.edge === false ? false : undefined);
         break;
     }
   });

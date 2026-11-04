@@ -690,6 +690,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="muted small" data-i18n="settings.view"></p>
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.showReactions"></b><span data-i18n="settings.showReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-reactions" /></label>
+              <label class="set-row"><span class="set-text"><b data-i18n="invite.auto"></b><span data-i18n="invite.auto.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-autoinvite" /></label>
               <label class="set-row desk-only"><span class="set-text"><b data-i18n="settings.railPin"></b><span data-i18n="settings.railPin.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-railpin" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
               <label class="set-row touch-only rotate-row"><span class="set-text"><b data-i18n="settings.rotateFs"></b><span data-i18n="settings.rotateFs.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-rotatefs" /></label>
@@ -981,6 +982,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (confirm(t('kickConfirm', { name: member.name }))) send({ t: 'kick', id: member.id });
     },
     makeHost: (member) => void askMakeHost(member),
+    messagePrivately: (member) => openPrivate(member),
   });
   /** Hand the host role to someone (0.9.93.2): asked first, it can't be taken back. */
   async function askMakeHost(member: Member): Promise<void> {
@@ -1077,6 +1079,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     tabs.show('chat');
     input?.focus();
   });
+
+  /** R13: the person menu's "Message privately": the chat tab, writing to them only. */
+  function openPrivate(member: Member): void {
+    if (shortsOn) setShortsOff(true);
+    tabs.show('chat');
+    chat.privateTo(member);
+  }
 
   // ---- Senkron ----
   const clock = new ServerClock();
@@ -1371,7 +1380,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'chat': {
         const { by } = message.message;
         // Shorts bubbles and corner messages show a picture as 🖼️ (+ its caption).
-        const text = message.message.image ? `🖼️ ${message.message.text}`.trim() : message.message.text;
+        const plain = message.message.image ? `🖼️ ${message.message.text}`.trim() : message.message.text;
+        const text = message.message.to ? `🔒 ${plain}` : plain;
         chat.add(message.message);
         // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
         if (shortsOn) seats.say(by, text);
@@ -1452,6 +1462,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           showError(() => t('error.others_watching', { names: watchingNames() }));
           break;
         }
+        if (message.code === 'private_gone') chat.privateGone();
         showError(() => t(`error.${message.code}`));
         if (message.code === 'version' || message.code === 'room_full' || message.code === 'knock_busy') connection.close();
         break;
@@ -1664,7 +1675,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       onFullscreen: () => {
         if (!fullscreen.isActive()) fullscreen.toggle();
       },
-      onActivity: () => fullscreen.poke(),
+      onActivity: (edge) => fullscreen.poke(edge),
     });
     current = { player, slot, youtube: false, own: false };
     $('#theater').classList.remove('yt-rail');
@@ -2677,22 +2688,47 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       return;
     }
     const notes = [...fsSideNotices.children].some((node) => node instanceof HTMLElement && !node.hidden && getComputedStyle(node).display !== 'none');
-    // By id on the document: the camera box can float on <body>, outside the room page.
-    const cams = document.getElementById('voice-cams')?.hidden === false;
+    // By id on the document: the camera box can float on <body>, outside the room page. Card R3: only cameras that
+    // really show count (a box with only hidden cameras, or none, used to hold the column open as a black strip), and
+    // not when they sit elsewhere (the person dragged them onto the player): checked once the column had time to place
+    // them, remembered until the cameras or their places change.
+    const box = document.getElementById('voice-cams');
+    const tiles = box && !box.hidden ? [...box.querySelectorAll<HTMLElement>('.cam-tile')].filter((tile) => tile.getClientRects().length > 0) : [];
+    const key = `${tiles.length}|${load('opt:camLayout') ?? ''}|${load('camFloat:fsSpot') ?? ''}|${load('camTiles:fsSpot') ?? ''}`;
+    let cams = tiles.length > 0 && camsElsewhere !== key;
+    const wasOpen = theater.classList.contains('fs-side-open');
+    if (cams && wasOpen && Date.now() - sideOpenedAt > 700) {
+      const column = document.getElementById('fs-side')?.getBoundingClientRect();
+      const inside = !!column && tiles.some((tile) => {
+        const r = tile.getBoundingClientRect();
+        return r.left < column.right && r.right > column.left && r.top < column.bottom && r.bottom > column.top;
+      });
+      if (!inside) {
+        camsElsewhere = key;
+        cams = false;
+      }
+    }
+    if (!tiles.length) camsElsewhere = null;
     const toast = (document.getElementById('toasts')?.childElementCount ?? 0) > 0;
     if (toast) sideLinger = Date.now() + SIDE_LINGER_MS;
     const open = notes || cams || toast || Date.now() < sideLinger;
-    if (open !== theater.classList.contains('fs-side-open')) {
+    if (open !== wasOpen) {
       theater.classList.toggle('fs-side-open', open);
+      if (open) sideOpenedAt = Date.now();
       // The cameras are placed in the column: place them again once it moved.
       setTimeout(() => dispatchEvent(new Event('resize')), 260);
     }
+    // Look again: when the linger ends, and once the cameras had time to settle in the column.
     if (open && !notes && !cams) sideTimer = setTimeout(updateFsSide, Math.max(200, sideLinger - Date.now() + 50));
+    else if (open && cams && Date.now() - sideOpenedAt <= 700) sideTimer = setTimeout(updateFsSide, 750 - (Date.now() - sideOpenedAt));
   }
+  /** Card R3: when the column opened, and the cameras' state ("key") last found sitting outside it. */
+  let sideOpenedAt = 0;
+  let camsElsewhere: string | null = null;
   const watchSide = new MutationObserver(updateFsSide);
   watchSide.observe(fsSideNotices, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
   const sideWatch: Array<[string, MutationObserverInit]> = [
-    ['voice-cams', { attributes: true, attributeFilter: ['hidden'] }],
+    ['voice-cams', { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true }],
     ['toasts', { childList: true }],
   ];
   for (const [id, options] of sideWatch) {
@@ -2749,6 +2785,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     };
     const set = (on: boolean) => {
       if (on && !cinemaOk()) return;
+      // Card R4: cinema mode is a view of the page, so from fullscreen it first leaves fullscreen (it used to switch on
+      // unseen behind the fullscreen video).
+      if (on && fullscreen.isActive()) fullscreen.toggle();
       sideHidden = on;
       unread = 0;
       sessionSave(cinemaKey, on ? '1' : '0');
@@ -2767,10 +2806,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const busy = () => document.querySelector('.dialog-backdrop:not([hidden]), .dock-pop:not([hidden]), .profile-pop:not([hidden]), .room-more-pop:not([hidden]), .react-tray:not([hidden]), .game-menu:not([hidden])') !== null;
     // Capture phase: Esc leaves only when nothing else is open (a window's own Esc runs after and closes it first).
     addEventListener('keydown', (event) => {
-      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target) || fullscreen.isActive()) return;
+      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
       if (event.key.toLowerCase() === 't' && !event.repeat && cinemaOk() && !busy()) {
         event.preventDefault();
-        set(!sideHidden);
+        // In fullscreen T always means "cinema mode" (out of fullscreen into it).
+        set(fullscreen.isActive() ? true : !sideHidden);
+      } else if (fullscreen.isActive()) {
+        return;
       } else if (event.key === 'Escape' && sideHidden && roomEl.classList.contains('cinema') && !busy()) {
         event.preventDefault();
         set(false);

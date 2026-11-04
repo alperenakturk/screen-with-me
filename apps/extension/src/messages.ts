@@ -47,7 +47,7 @@ export type FrameMessage =
    * Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. `click`: tıklandı (hemen
    * ardından sekme başka siteye giderse reklam yönlendirmesi sayılır, katman kalkmaz).
    */
-  | { type: 'activity'; click?: boolean }
+  | { type: 'activity'; click?: boolean; edge?: boolean }
   /** Üst çerçeve: delik açıldı (sayfa gizli, video yerinde); site deliğin içini saydam yapabilir. */
   | { type: 'hole' }
   /** Bizim tam ekranımız bitti/başladı (üst çerçeve: Esc vb.). */
