@@ -459,6 +459,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.56 (BH10: every harness on main, the owner's next round):**
+- [ ] Nothing new to see: this release only updates test scripts. Start the next round from "Next round, start here" at
+  the top of this list.
+
 **0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
 - [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
   ready", "Knock", "A private message", "My connection drops". Each line turns ✓ (the self-test turns ✗ on purpose);
