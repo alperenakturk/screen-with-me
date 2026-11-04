@@ -16,8 +16,13 @@ const check = (ok, label, extra = '') => {
 // Card 2a (owner's D): nothing of ours over the YouTube player by itself. Lists our visible things whose box meets the
 // YouTube frame's box (popups only count while open, so the caller closes them first).
 const OURS = '.r-float, .rail-edge, .countdown, .waiting-banner, .sync-badge, .action-notice, #toasts .toast, .cam-tile, .cam-pill, .live-window, .fs-dock, .fs-catcher, .game-invite, .end-card';
+// BH10: the rail and the player slide together (0.3 s / 0.22 s); a slow headless frame could catch them 2 px apart
+// mid-slide, so the boxes are measured once the theater's transitions have finished (a lasting overlap still fails).
 const overPlayer = (page) =>
-  page.evaluate((ours) => {
+  page.evaluate(async (ours) => {
+    const theater = document.querySelector('#theater');
+    for (let i = 0; i < 40 && theater?.getAnimations({ subtree: true }).some((a) => a.playState === 'running' && a instanceof CSSTransition); i++)
+      await new Promise((r) => setTimeout(r, 50));
     const frame = document.querySelector('#player iframe');
     if (!frame) return ['no YouTube frame'];
     const f = frame.getBoundingClientRect();
