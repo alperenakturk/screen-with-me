@@ -7,6 +7,15 @@
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-resume/run.cjs [site]
 const { chromium } = require('playwright');
+const path = require('path');
+
+// axe-core (WCAG 2.1 A + AA) inside the game window, when installed (CI's accessibility step installs it).
+let AXE = null;
+try {
+  AXE = require.resolve('axe-core/axe.min.js', { paths: [process.cwd(), path.join(__dirname, '../../..')] });
+} catch {
+  console.log('(axe-core not installed: the game windows are not checked with axe; npm i --no-save axe-core@4.10.2)');
+}
 
 const SITE = process.argv[2] || 'http://localhost:5173';
 let fails = 0;
@@ -52,6 +61,14 @@ const boardSig = (page) =>
     if (!b) return null;
     return [...b.querySelectorAll('.xox-cell, .dama-cell, .four-cell, .bg-point')].map((c) => `${c.className.replace(/\b(placed|movable|picked|target|last)\b/g, '').replace(/\s+/g, ' ').trim()}|${c.textContent.trim()}`).join(';');
   });
+async function axeStage(page, label) {
+  if (!AXE) return;
+  if (!(await page.evaluate(() => !!window.axe))) await page.addScriptTag({ path: AXE });
+  const list = await page.evaluate(() =>
+    axe.run('#game-stage', { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] }, resultTypes: ['violations'] }).then((r) => r.violations.map((v) => `${v.id}: ${v.nodes.slice(0, 2).map((n) => n.target.join(' ')).join(' | ')}`)),
+  );
+  check(list.length === 0, `${label}: axe finds nothing in the game window`, list.join(' ; '));
+}
 const unnamed = (page) =>
   page.evaluate(() =>
     [...document.querySelectorAll('#game-stage button, #game-stage [role="button"], #game-stage input, #game-stage select')]
@@ -124,6 +141,7 @@ async function move(page, board) {
 
     const names = await unnamed(page);
     check(names.length === 0, `${board}: every button in the window has a name`, names.join(', '));
+    await axeStage(page, board);
 
     await page.evaluate(() => document.querySelector('#game-stage .game-minimize')?.click());
     const hidden = await until(() => page.evaluate(() => document.getElementById('game-stage').hidden));
@@ -158,6 +176,7 @@ async function move(page, board) {
     await run(page, `games.open.${kind}`);
     const shown = await until(() => page.evaluate((sel) => !!document.querySelector(`#game-stage ${sel}`), sel));
     check(!!shown, `${kind}: opens`);
+    await axeStage(page, kind);
     await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
     const again = await until(() => page.evaluate((sel) => !document.getElementById('game-stage')?.hidden && !!document.querySelector(`#game-stage ${sel}`), sel), 12000);
     check(!!again, `${kind}: a reload opens it again`);
@@ -185,6 +204,7 @@ async function move(page, board) {
     check(!!going, `${kind}: the game starts`);
     const names = await unnamed(alex.page);
     check(names.length === 0, `${kind}: every button in the window has a name`, names.join(', '));
+    await axeStage(alex.page, kind);
     await sam.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
     await sam.page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 20000 }).catch(() => {});
     let back = await until(() => sam.page.evaluate(() => !!document.querySelector('#game-stage .draw-page') && !document.getElementById('game-stage').hidden), 6000);

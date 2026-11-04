@@ -5,7 +5,7 @@
 // Screenshots go to SHOTS (default: a temp folder) for a human look.
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-sweep/run.cjs [site]
-//   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run.
+//   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run; FRIENDS=3 adds the Test Lab's fake friends to the room.
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -123,6 +123,9 @@ function measure(mayScroll) {
       await page.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 });
       await wait(3500);
       const run = (id, arg) => page.evaluate(([id, arg]) => window.__swmLab.run(id, arg).then((l) => ({ dir: l.dir, text: l.text })), [id, arg]);
+      // FRIENDS=n: the Test Lab's fake friends in the room (their names in the tables, the side games' "others").
+      for (let i = 0; i < Number(process.env.FRIENDS || 0); i++) await run('friends.add');
+      if (process.env.FRIENDS) await wait(1500);
       for (const game of pick('GAMES', Object.keys(GAMES))) {
         const g = GAMES[game];
         const label = `${size}/${lang}/${game}`;
