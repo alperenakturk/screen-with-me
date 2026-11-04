@@ -164,9 +164,6 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     // film page too). CSS keeps phones out of it.
     theater.classList.toggle('side-rail', docked);
     theater.classList.toggle('rail-bare', docked && !player);
-    // YouTube in fullscreen on a computer (card 2a, owner's D): a column beside the player holds the notes, cameras and
-    // the newest messages, so nothing of ours sits over the player by itself.
-    theater.classList.toggle('yt-fs', docked && isActive() && !shell && theater.classList.contains('yt-rail') && !document.documentElement.classList.contains('phone'));
     // Without a video these only explain themselves (see NEEDS_VIDEO): dimmed, announced as unavailable, still pressable.
     for (const button of dock.querySelectorAll<HTMLElement>(NEEDS_VIDEO)) {
       if (!player && !(button === dockExit && isActive())) button.setAttribute('aria-disabled', 'true');

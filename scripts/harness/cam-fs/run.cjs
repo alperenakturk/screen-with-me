@@ -58,21 +58,19 @@ const check = (ok, label, extra = '') => {
   check(fs.fs, 'the rail\'s ⛶ opens fullscreen');
   check(fs.tiles.length >= 2 && Math.abs(fs.tiles[0].y - fs.tiles[1].y) < 4, 'fullscreen: the two cameras sit side by side too', JSON.stringify(fs));
   check(fs.box.w > fs.box.h, 'fullscreen: the window is wider than tall', JSON.stringify(fs.box));
-  // Card 2a (owner's D): with YouTube in fullscreen the cameras live in the column beside the player, never on it, in
-  // the one-window layout and in the free layout.
+  // Card R15 (owner: no column beside the YouTube player any more): with YouTube in fullscreen the cameras float over
+  // the video like with other players, in the one-window layout and in the free layout; the player keeps its width.
   await a.evaluate(() => document.exitFullscreen?.().catch(() => {}));
   await a.waitForTimeout(800);
   await a.fill('#media-input', 'https://www.youtube.com/watch?v=M7lc1UVf-VE');
   await a.click('#media-form button[value=load]');
   await a.waitForFunction(() => document.querySelector('#theater')?.classList.contains('yt-rail') && document.querySelector('#player iframe'), null, { timeout: 15000 }).catch(() => {});
   await a.waitForTimeout(1500);
-  const inColumn = () => a.evaluate(() => {
+  const overVideo = () => a.evaluate(() => {
     const frame = document.querySelector('#player iframe')?.getBoundingClientRect();
-    const side = document.querySelector('#fs-side')?.getBoundingClientRect();
     const pieces = [...document.querySelectorAll('#voice-cams .cam-tile, #voice-cams .cam-pill, #voice-cams:not(.free)')].map((n) => n.getBoundingClientRect()).filter((r) => r.width > 0);
-    const over = pieces.filter((r) => frame && r.left < frame.right - 1 && frame.left < r.right - 1 && r.top < frame.bottom - 1 && frame.top < r.bottom - 1);
-    const outside = pieces.filter((r) => side && (r.left < side.left - 1 || r.right > side.right + 1));
-    return { n: pieces.length, over: over.length, outside: outside.length, side: side && Math.round(side.width) };
+    const inside = pieces.filter((r) => frame && r.left >= frame.left - 1 && r.right <= frame.right + 1 && r.top >= frame.top - 1 && r.bottom <= frame.bottom + 1);
+    return { n: pieces.length, inside: inside.length, column: !!document.getElementById('fs-side'), playerR: Math.round(frame?.right ?? 0), vw: innerWidth };
   });
   for (const layout of ['group', 'free']) {
     await a.evaluate((l) => {
@@ -90,9 +88,9 @@ const check = (ok, label, extra = '') => {
     await a.waitForTimeout(1500);
     await a.mouse.move(400, 400, { steps: 3 });
     await a.waitForTimeout(3000);
-    const col = await inColumn();
+    const col = await overVideo();
     if (process.env.SHOTS) await a.screenshot({ path: `${process.env.SHOTS}/yt-fs-${layout}.png` });
-    check(col.n >= 2 && col.over === 0 && col.outside === 0, `YouTube fullscreen (${layout}): the cameras are in the column beside the player`, JSON.stringify(col));
+    check(col.n >= 2 && col.inside === col.n && !col.column && col.playerR >= col.vw - 80, `YouTube fullscreen (${layout}): the cameras float over the video, no column, the player keeps its width`, JSON.stringify(col));
     await a.evaluate(() => document.exitFullscreen?.().catch(() => {}));
     await a.waitForTimeout(600);
   }
