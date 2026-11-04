@@ -1029,9 +1029,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           id: state.item.id,
           duration: current?.player.getDuration() ?? 0,
           position: state.position + (state.paused ? 0 : Math.max(0, (clock.now() - state.updatedAt) / 1000) * state.rate),
+          title: state.item.title ?? '',
         }
       : null;
-    return { playing, others: others.size, voiceOthers: mine?.voice ? [...others.values()].filter(Boolean).length : 0, item };
+    const names = [...new Set(members.filter((m) => !m.tv && m.id !== myId && personOf(m) !== self).map((m) => m.name))];
+    return { playing, others: others.size, voiceOthers: mine?.voice ? [...others.values()].filter(Boolean).length : 0, item, names };
   }
   const games = createGameStage({
     wrap: $('.player-wrap'),

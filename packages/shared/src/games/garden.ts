@@ -11,6 +11,9 @@
 //   evening together (90 min watched with someone else in the room).
 // - Glowbeam the grow lamp (owner's pick 9, 4 Nov 2026): once per film, Glowbeam shines on one pot, +25 % growth while
 //   that film plays.
+// - Hybrid colours (owner's pick 7): a plant that blooms beside another plant in bloom may drop a colour seed; each
+//   plant has two colours (`HYBRID_COLORS`), each a new album entry (`plant:colour`), 24 finds in all.
+// - Memories (owner's pick 10): each album entry remembers the film it bloomed during and who was in the room.
 // - A plant in bloom is picked into the album (every plant found, with how many times): the collection. Three pots.
 
 export const GARDEN_KEY = 'windowGarden';
@@ -59,12 +62,49 @@ export const LAMP_BONUS = 0.25;
 export const SEEDS_MAX = 99;
 const ENDED_KEEP = 20;
 
+/** Each plant's two hybrid colours; which one comes depends on the neighbour (rarer neighbour → the second). */
+export type HybridColor = 'gold' | 'rose' | 'sky' | 'violet';
+export const HYBRID_COLORS: Record<PlantId, readonly [HybridColor, HybridColor]> = {
+  fern: ['gold', 'violet'],
+  mint: ['rose', 'sky'],
+  sunbell: ['rose', 'violet'],
+  'night-tulip': ['gold', 'sky'],
+  'lantern-cactus': ['rose', 'sky'],
+  moonbloom: ['gold', 'rose'],
+  'reel-vine': ['sky', 'violet'],
+  'popcorn-shrub': ['rose', 'sky'],
+};
+/** A bloom beside a bloom drops a colour seed this often. */
+export const HYBRID_CHANCE = 0.5;
+export const COLOR_SEEDS_MAX = 9;
+/** Every album entry: the plants, then each plant's colours (`plant:colour`). */
+export const ALBUM_IDS: readonly string[] = [...Object.keys(HYBRID_COLORS), ...Object.entries(HYBRID_COLORS).flatMap(([id, colors]) => colors.map((c) => `${id}:${c}`))];
+export const albumId = (plant: PlantId, color?: HybridColor | null): string => (color ? `${plant}:${color}` : plant);
+
+export interface ColorSeed {
+  plant: PlantId;
+  color: HybridColor;
+}
+/** What a bloom remembers (and the album keeps for its first find). */
+export interface Memory {
+  /** The film it bloomed during ('' when unknown). */
+  title: string;
+  /** Others in the room then (names, at most 6). */
+  with: string[];
+  /** When (ms). */
+  at: number;
+}
+
 export interface Pot {
   plant: PlantId;
   /** 0 → 1 (bloom). */
   growth: number;
   /** 0 (dry) → 1 (just watered). */
   water: number;
+  /** A hybrid colour, from a colour seed. */
+  color?: HybridColor;
+  /** Where it bloomed (set when it blooms). */
+  bloomed?: Memory;
 }
 
 export interface GardenSave {
@@ -86,14 +126,20 @@ export interface GardenSave {
   ended: string[];
   /** Glowbeam's lamp: the pot it shines on and the room item (film) it was placed in; null = not used yet. */
   lamp: { pot: number; item: string } | null;
+  /** Colour seeds waiting to be planted. */
+  colorSeeds: ColorSeed[];
+  /** The memory of each album entry's first find. */
+  memories: Record<string, Memory>;
 }
 
 export interface GardenContext {
   playing: boolean;
   /** Other people in the room (by person, not tabs). */
   others: number;
-  /** The room's item now (the lamp works only in the film it was placed in). */
-  item?: { id: string } | null;
+  /** The room's item now (the lamp works only in the film it was placed in; its title goes into memories). */
+  item?: { id: string; title?: string } | null;
+  /** Others' names (for memories). */
+  names?: string[];
 }
 
 export type Random = () => number;
@@ -113,6 +159,8 @@ export function freshGarden(): GardenSave {
     seen: 0,
     ended: [],
     lamp: null,
+    colorSeeds: [],
+    memories: {},
   };
 }
 
@@ -138,15 +186,28 @@ export function loadGarden(raw: unknown): GardenSave {
   const garden = freshGarden();
   const album = (record.album && typeof record.album === 'object' ? record.album : {}) as Record<string, unknown>;
   garden.album = {};
-  for (const id of PLANT_IDS) {
+  for (const id of ALBUM_IDS) {
     const count = Math.floor(num(album[id], 1_000_000));
     if (count > 0) garden.album[id] = count;
   }
+  const memories = (record.memories && typeof record.memories === 'object' ? record.memories : {}) as Record<string, unknown>;
+  for (const id of ALBUM_IDS) {
+    const memory = cleanMemory(memories[id]);
+    if (memory) garden.memories[id] = memory;
+  }
+  garden.colorSeeds = (Array.isArray(record.colorSeeds) ? record.colorSeeds : [])
+    .filter((c): c is ColorSeed => !!c && typeof c === 'object' && isColor((c as ColorSeed).plant, (c as ColorSeed).color))
+    .map((c) => ({ plant: c.plant, color: c.color }))
+    .slice(0, COLOR_SEEDS_MAX);
   const pots = Array.isArray(record.pots) ? record.pots : [];
   garden.pots = Array.from({ length: POTS }, (_, i) => {
     const pot = pots[i] as Record<string, unknown> | null | undefined;
     if (!pot || typeof pot !== 'object' || typeof pot.plant !== 'string' || !rarityOf(pot.plant)) return null;
-    return { plant: pot.plant, growth: unit(pot.growth), water: unit(pot.water) };
+    const clean: Pot = { plant: pot.plant, growth: unit(pot.growth), water: unit(pot.water) };
+    if (isColor(pot.plant, pot.color)) clean.color = pot.color as HybridColor;
+    const memory = cleanMemory(pot.bloomed);
+    if (memory) clean.bloomed = memory;
+    return clean;
   });
   const seeds = (record.seeds && typeof record.seeds === 'object' ? record.seeds : {}) as Record<string, unknown>;
   for (const r of RARITIES) garden.seeds[r] = Math.floor(num(seeds[r], SEEDS_MAX));
@@ -166,6 +227,16 @@ export function loadGarden(raw: unknown): GardenSave {
 
 export const saveGarden = (garden: GardenSave): string => JSON.stringify(garden);
 
+const isColor = (plant: unknown, color: unknown): boolean =>
+  typeof plant === 'string' && typeof color === 'string' && !!HYBRID_COLORS[plant]?.includes(color as HybridColor);
+function cleanMemory(raw: unknown): Memory | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const m = raw as Record<string, unknown>;
+  const title = typeof m.title === 'string' ? m.title.slice(0, 120) : '';
+  const names = Array.isArray(m.with) ? m.with.filter((n): n is string => typeof n === 'string').map((n) => n.slice(0, 40)).slice(0, 6) : [];
+  return { title, with: names, at: num(m.at) };
+}
+
 /** Different plants found so far. */
 export const found = (garden: GardenSave): number => Object.keys(garden.album).length;
 
@@ -184,11 +255,13 @@ export interface TickResult {
   seeds: Rarity[];
   /** Pots that bloomed this tick. */
   bloomed: number[];
+  /** Colour seeds that dropped this tick. */
+  hybrids: ColorSeed[];
 }
 
 /** Moves the garden on by `seconds` of wall time. */
-export function tickGarden(garden: GardenSave, seconds: number, ctx: GardenContext, now = Date.now()): TickResult {
-  const result: TickResult = { seeds: [], bloomed: [] };
+export function tickGarden(garden: GardenSave, seconds: number, ctx: GardenContext, now = Date.now(), random: Random = Math.random): TickResult {
+  const result: TickResult = { seeds: [], bloomed: [], hybrids: [] };
   // A long break starts a new evening.
   if (garden.seen && now - garden.seen > EVENING_GAP_MS) {
     garden.together = 0;
@@ -206,8 +279,22 @@ export function tickGarden(garden: GardenSave, seconds: number, ctx: GardenConte
     const next = pot.growth + grow / (GROW_MINUTES[rarityOf(pot.plant) ?? 'common'] * 60);
     // Many small ticks add up a hair short of 1: count that as bloom.
     pot.growth = next > 1 - 1e-9 ? 1 : next;
-    if (pot.growth >= 1) result.bloomed.push(i);
+    if (pot.growth >= 1) {
+      result.bloomed.push(i);
+      pot.bloomed = { title: (ctx.item?.title ?? '').slice(0, 120), with: (ctx.names ?? []).slice(0, 6), at: now };
+    }
   });
+  // A bloom beside a bloom may drop a colour seed (once per new bloom).
+  for (const i of result.bloomed) {
+    const pot = garden.pots[i]!;
+    const neighbour = [garden.pots[i - 1], garden.pots[i + 1]].find((p) => p && p.growth >= 1);
+    if (!neighbour || garden.colorSeeds.length >= COLOR_SEEDS_MAX || random() >= HYBRID_CHANCE) continue;
+    const rank = (p: Pot) => RARITIES.indexOf(rarityOf(p.plant) ?? 'common');
+    const color = HYBRID_COLORS[pot.plant]![rank(neighbour) > rank(pot) ? 1 : 0];
+    const seed = { plant: pot.plant, color };
+    garden.colorSeeds.push(seed);
+    result.hybrids.push(seed);
+  }
   garden.seedClock += seconds;
   if (garden.seedClock >= SEED_EVERY_S) {
     garden.seedClock -= SEED_EVERY_S;
@@ -277,14 +364,25 @@ export function plant(garden: GardenSave, pot: number, rarity: Rarity, random: R
   return id;
 }
 
-/** Picks a plant in bloom into the album. `first`: a new plant in the album. */
-export function pick(garden: GardenSave, pot: number): { plant: PlantId; first: boolean } | null {
+/** Picks a plant in bloom into the album. `first`: a new album entry (its memory is kept). */
+export function pick(garden: GardenSave, pot: number): { plant: PlantId; color?: HybridColor; first: boolean } | null {
   const target = garden.pots[pot];
   if (!target || target.growth < 1) return null;
-  const first = !garden.album[target.plant];
-  garden.album[target.plant] = (garden.album[target.plant] ?? 0) + 1;
+  const id = albumId(target.plant, target.color);
+  const first = !garden.album[id];
+  garden.album[id] = (garden.album[id] ?? 0) + 1;
+  if (first && target.bloomed) garden.memories[id] = target.bloomed;
   garden.pots[pot] = null;
-  return { plant: target.plant, first };
+  return { plant: target.plant, color: target.color, first };
+}
+
+/** Plants a colour seed (the `index`th waiting) in an empty pot. */
+export function plantColor(garden: GardenSave, pot: number, index: number): ColorSeed | null {
+  const seed = garden.colorSeeds[index];
+  if (!seed || pot < 0 || pot >= garden.pots.length || garden.pots[pot]) return null;
+  garden.colorSeeds.splice(index, 1);
+  garden.pots[pot] = { plant: seed.plant, growth: 0, water: 1, color: seed.color };
+  return seed;
 }
 
 /** Watched minutes left until this pot blooms, if it is kept watered. */

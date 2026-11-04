@@ -73,6 +73,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
     v: 1,
     pots: [{ plant: 'mint', growth: 0.9985, water: 1 }, { plant: 'fern', growth: 0.6, water: 0.1 }, null],
     seeds: { common: 2, uncommon: 0, rare: 0, legendary: 0 },
+    colorSeeds: [{ plant: 'mint', color: 'sky' }],
     album: { fern: 1 },
     watched: 0, seedClock: 0, together: 0, eveningSeed: false, seen: Date.now() - 3 * 3600_000, ended: [],
   });
@@ -81,7 +82,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
 
   check(await openGarden(alex), 'Window Garden opens from the gallery’s "On the side"');
   check((await fits(alex)).length === 0, 'fits without scrollbars at its own size', (await fits(alex)).join('; '));
-  check(/1\/8/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 1/8');
+  check(/1\/24/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 1/24');
   const drop = await alex.evaluate(() => !!document.querySelector('.wg-pot[data-pot="1"] .wg-drop'));
   check(drop, 'a thirsty pot shows 💧');
 
@@ -106,7 +107,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
 
   // Plant a seed in the empty pot.
   await alex.click('.wg-pot[data-pot="2"]');
-  await alex.click('.wg-action .wg-btn');
+  await alex.click('.wg-action .wg-btn.seed-common');
   const planted = await until(async () => { const s = await saved(alex); return s.pots[2] ? s : null; }, 4000);
   check(!!planted && planted.seeds.common === 1, 'a seed is planted in the empty pot', JSON.stringify(planted?.pots[2]));
 
@@ -123,7 +124,21 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   check(!!picked && picked.pots[0] === null, 'Pick puts it into the album and frees the pot');
   const note = await alex.evaluate(() => document.querySelector('.wg-note')?.textContent ?? '');
   check(/New in your album/.test(note), 'a first find says "New in your album"', note);
-  check(/2\/8/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 2/8');
+  check(/2\/24/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 2/24');
+
+  // Pick 10: the mint's album page remembers the film it bloomed during and who was there.
+  await alex.evaluate(() => document.querySelectorAll('.wg-album-cell')[1].click());
+  const pageText = await alex.evaluate(() => { const p = document.querySelector('.wg-page'); return p && !p.hidden ? p.textContent : null; });
+  check(!!pageText && /Mint ×1/.test(pageText) && /with Sam/.test(pageText), 'the album page remembers the film and who was in the room', String(pageText));
+  check((await fits(alex)).length === 0, 'the album page fits', (await fits(alex)).join('; '));
+  await alex.evaluate(() => document.querySelector('.wg-page-close').click());
+
+  // Pick 7: a colour seed grows a coloured plant.
+  await alex.click('.wg-pot[data-pot="0"]');
+  await alex.click('.wg-action .wg-btn.seed-color');
+  const colored = await until(async () => { const s = await saved(alex); return s.pots[0]?.color ? s : null; }, 4000);
+  check(!!colored && colored.pots[0].plant === 'mint' && colored.pots[0].color === 'sky' && colored.colorSeeds.length === 0, 'a colour seed grows a sky blue mint', JSON.stringify(colored?.pots[0]));
+  check(await alex.evaluate(() => /^(night|dawn|day|dusk)$/.test(document.querySelector('.wg-scene').dataset.time)), 'the sky outside follows the time of day');
 
   // Glowbeam the grow lamp (pick 9): once per film, on a growing plant.
   await alex.click('.wg-pot[data-pot="1"]');

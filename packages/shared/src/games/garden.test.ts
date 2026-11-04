@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DRY_SPEED, EVENING_GAP_MS, EVENING_S, FILM_MIN_S, GARDEN_VERSION, PLANTS, PLANT_IDS, POTS,
   SEEDS_MAX, SEED_EVERY_S, WATER_LAST_S,
-  LAMP_BONUS, filmEnded, found, freshGarden, lampFree, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
+  ALBUM_IDS, COLOR_SEEDS_MAX, HYBRID_COLORS, LAMP_BONUS, plantColor, filmEnded, found, freshGarden, lampFree, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
   stageOf, tickGarden, water, type GardenSave,
 } from './garden.ts';
 
@@ -233,5 +233,52 @@ describe('Window Garden save', () => {
     expect(garden.eveningSeed).toBe(false);
     expect(garden.seen).toBe(99);
     expect(garden.ended).toEqual(['a', 'b']);
+  });
+});
+
+describe('Window Garden: hybrid colours and memories (side games 2)', () => {
+  const film = { playing: true, others: 1, item: { id: 'f1', title: 'Night Train' }, names: ['Sam'] };
+  const always = () => 0;
+
+  it('a bloom beside a bloom drops a colour seed; the rarer neighbour gives the second colour', () => {
+    const garden = freshGarden();
+    garden.pots = [
+      { plant: 'mint', growth: 1, water: 1 },
+      { plant: 'fern', growth: 0.9999, water: 1 },
+      { plant: 'moonbloom', growth: 1, water: 1 },
+    ];
+    const result = tickGarden(garden, 1, film, 1_000_000, always);
+    expect(result.bloomed).toEqual([1]);
+    // Fern's left neighbour (mint, common) is found first: same rank → the first colour.
+    expect(result.hybrids).toEqual([{ plant: 'fern', color: HYBRID_COLORS.fern![0] }]);
+    expect(garden.pots[1]!.bloomed).toEqual({ title: 'Night Train', with: ['Sam'], at: 1_000_000 });
+    // Nothing more drops while nothing new blooms.
+    expect(tickGarden(garden, 1, film, 1_001_000, always).hybrids).toEqual([]);
+  });
+
+  it('a colour seed grows a coloured plant; picking it adds a new album entry with its memory', () => {
+    const garden = freshGarden();
+    garden.pots = [null, null, null];
+    garden.colorSeeds = [{ plant: 'mint', color: 'sky' }];
+    expect(plantColor(garden, 0, 0)).toEqual({ plant: 'mint', color: 'sky' });
+    expect(garden.colorSeeds).toEqual([]);
+    garden.pots[0]!.growth = 0.9999;
+    tickGarden(garden, 1, film, 5_000, always);
+    const got = pick(garden, 0)!;
+    expect(got).toEqual({ plant: 'mint', color: 'sky', first: true });
+    expect(garden.album['mint:sky']).toBe(1);
+    expect(garden.memories['mint:sky']).toMatchObject({ title: 'Night Train', with: ['Sam'] });
+    expect(found(garden)).toBe(1);
+    expect(ALBUM_IDS).toHaveLength(24);
+  });
+
+  it('colour seeds stop at the cap and round-trip; bad colours are dropped', () => {
+    const garden = freshGarden();
+    garden.colorSeeds = Array.from({ length: COLOR_SEEDS_MAX }, () => ({ plant: 'fern', color: 'gold' as const }));
+    garden.pots = [{ plant: 'mint', growth: 1, water: 1 }, { plant: 'fern', growth: 0.9999, water: 1 }, null];
+    expect(tickGarden(garden, 1, film, 1, always).hybrids).toEqual([]);
+    const back = loadGarden({ ...JSON.parse(saveGarden(garden)), colorSeeds: [{ plant: 'fern', color: 'rose' }, { plant: 'fern', color: 'gold' }], pots: [{ plant: 'fern', growth: 0.5, water: 1, color: 'sky' }] });
+    expect(back.colorSeeds).toEqual([{ plant: 'fern', color: 'gold' }]);
+    expect(back.pots[0]!.color).toBeUndefined();
   });
 });
