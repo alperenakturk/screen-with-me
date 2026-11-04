@@ -433,6 +433,32 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.36 (the film page keeps a new name, BH7):**
+- [ ] In a room on the main site change your name (profile → name), then open a film page in the room with the
+  extension: your friend sees you with the new name on the film page, never the old one.
+
+**0.9.97.34 (bigger chat messages in fullscreen, card R21):**
+- [ ] On a computer, open a YouTube video and a video file in fullscreen; from a second tab write a message: it comes
+  in on the right side, about a quarter down the video (not in the very top corner), with clearly bigger text, left of
+  the button column. Send five or six quick ones: they stack and never cover the player's bottom bar. Same on a film
+  page in fullscreen. A phone looks as before.
+
+**0.9.97.33 (home art: one soft light, a tidy device row, card 15e):**
+- [ ] Open the home page on your computer (and at 1366 × 768 if you can): Glowbeam's one cone of light falls on the
+  laptop, the tablet and the phone, the laptop brightest; no slab behind them and no line where the light ends; the
+  three devices stand in one row with equal gaps, none covering another; the space left of the text, between the text
+  and the art, and right of the art looks the same; the phone: the art on top, the phone device not cut off.
+
+**0.9.97.30 (parody avatars removed after the IP audit, card R20):**
+- [ ] In a room, open the avatar picker: two tabs, "Themed" and "Genres" ("Temalı" / "Türler"), no Parody tab. Genres
+  shows 18 (detective, pirate, astronaut, inventor, ninja, cowboy, vampire, robot, hero, explorer, chef, rocker, ghost,
+  alien, samurai, fairy, spy, armadillo) without scrolling; pick one and check it in the chat and the faces strip. If
+  you had a parody avatar saved, you now have a themed one instead (once; your other rooms too).
+
+**0.9.97.29 (the owner's test board on our site):**
+- [ ] Open the board's address (the Planner has it), tick a test ✅ and write a note: the ticket at the bottom shows
+  both; 📋 Copy puts it on the clipboard; reload: your ticks are still there. Works on the phone too.
+
 **0.9.97.28 (home art bigger, themed Glowbeam, 🎨 back, card 15d):**
 - [ ] On the home page (computer + phone): the laptop, tablet and phone look bigger; 🎨 is at the top right and opens
   the themes; pick another theme and Glowbeam changes its hat / costume. On Help, Privacy, Thanks and the extension
@@ -596,21 +622,33 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
-- [ ] 0.9.97.29 Snack Bar, side games 2: play a video and open Snack Bar. Within a minute a customer walks up with a
+- [ ] 0.9.97.35 Classics: open 🎮 → Together: there is one "Classics" card (no separate XOX / Four in a Row). Open it: a
+  shelf of boxes (XOX, Four in a Row, Dama; chess and backgammon say "soon"). Pick Dama alone: "Play against Glowbeam"
+  offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
+  stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
+  shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.37 Quiz bank: play two or three quizzes in a row with a friend. Questions start easy and get harder within a
+  game (stars next to the category), and the same questions don't come back game after game (the help page says
+  "Almost 1200 questions").
+- [ ] 0.9.97.32 Tip jar and cuttings (side games 2, picks 5 + 8), with a friend: both open Snack Bar while a video plays
+  and serve: a 🫙 pill shows how full the room's jar is; when it fills, both get a note and the pill says +10 % until the
+  film ends. Then open Window Garden with a plant in bloom: "🎁 Give a cutting" → your friend's name. Your friend gets a
+  note with the garden closed; in their Window Garden an empty pot offers "🎁 <plant>" and plants it. A bloom gives only one.
+- [ ] 0.9.97.31 Snack Bar, side games 2: play a video and open Snack Bar. Within a minute a customer walks up with a
   line; tap them: coins pop and they leave happy. Let a 20-min-or-longer video end: Glowbeam's receipt shows (watched,
   served, best stand) with a golden bucket; "Collect" pays it. 🏅 in the footer opens the badge wall (tap a badge to see
   how to earn it) with the decorations below (buy the marquee lights for 500: they twinkle on the sign). Open a new
   cinema (or more): the drive-in, the rooftop and the art house each look different and say their twist.
-- [ ] 0.9.97.29 Window Garden, side games 2: when two plants bloom side by side a 🌈 colour seed may drop; plant it from an
+- [ ] 0.9.97.31 Window Garden, side games 2: when two plants bloom side by side a 🌈 colour seed may drop; plant it from an
   empty pot: the plant grows in a new colour. Tap a plant in the album strip: its page shows the colours found and the
   film / friends of its first bloom. The sky outside follows the time of day (some days it rains). 🎨 opens the
   decorations (petals from picking): curtains, fairy lights, a sleepy cat, a lantern; at night a moth or a firefly
   may visit and goes into the album.
-- [ ] 0.9.97.29 Five Frames, our own look (IP audit): open 🎮 → On the side → Five Frames and guess a word. A letter in the right
+- [ ] 0.9.97.31 Five Frames, our own look (IP audit): open 🎮 → On the side → Five Frames and guess a word. A letter in the right
   place gets a solid gold frame and ✓, one in the word a dashed gold frame and •, one not in it fades with ×; no green,
   yellow or grey fills anywhere (board, letter tray, legend, "How to play", the gallery cover with CLOSE / STAGE /
   SCENE). Readable for colour-blind players (line and sign differ, not only colour).
-- [ ] 0.9.97.29 Game windows: with a friend, open XOX and play a move each. Press ✕ on the game window: it only goes
+- [ ] 0.9.97.31 Game windows: with a friend, open XOX and play a move each. Press ✕ on the game window: it only goes
   away (the friend still plays, 🎮 brings it back). Press "↩ Leave table": it asks first. "⏹ End table" asks first too;
   in the 🎮 hall the table's button says "End". Close or reload the tab mid-game: the browser asks "Leave site?"; after
   the game is over it does not. Snack Bar / Window Garden: no close button any more, ✕ only hides them; ↺ next to "?"
@@ -618,7 +656,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   shines on that pot (once per video). Watch a video of 20 min or more to its end with the garden closed, then open the
   garden: a seed is waiting.
 - [ ] 0.9.97.28 Side games only in a room: open Snack Bar and Window Garden in a room with nothing playing: the scene
-- [ ] 0.9.97.29 Side games only in a room: open Snack Bar and Window Garden in a room with nothing playing: the scene
+- [ ] 0.9.97.31 Side games only in a room: open Snack Bar and Window Garden in a room with nothing playing: the scene
   says "Closed until the film plays" / "Resting until the film plays" and "Nothing changes while you're away". Play a
   video: the sign goes, coins come, plants grow. Leave the room for a while and come back: no "while you were away"
   coins, the plants are exactly as you left them.

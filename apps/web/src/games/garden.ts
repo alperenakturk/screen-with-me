@@ -6,7 +6,7 @@
 import './garden.css';
 import {
   ALBUM_IDS, GARDEN_DECOR, GARDEN_KEY, VISITORS, buyGardenDecor, seeVisitor, visitorFor, type GardenDecorId, type VisitorId, HYBRID_COLORS, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, albumId, plantColor, type HybridColor, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
-  saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity,
+  saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity, canGift, giveCutting, plantGift, receiveCutting, type PlantId,
 } from '@swm/shared/games/garden';
 import type { SoloRoom } from '@swm/shared/games/catalog';
 import { el } from '../dom.ts';
@@ -26,7 +26,7 @@ import moonbloom from './art/garden/moonbloom.svg?raw';
 import reelVine from './art/garden/reel-vine.svg?raw';
 import popcornShrub from './art/garden/popcorn-shrub.svg?raw';
 import glowbeam from './art/garden/glowbeam-lamp.svg?raw';
-import { takeFilmEnds } from './film-end.ts';
+import { takeFilmEnds, takeGifts } from './film-end.ts';
 import how1 from './art/tutorial/garden-1-plant.svg?raw';
 import how2 from './art/tutorial/garden-2-water.svg?raw';
 import how3 from './art/tutorial/garden-3-album.svg?raw';
@@ -111,6 +111,16 @@ const TEXT = {
     'color.violet': 'violet',
     colorSeed: '🌈 {name}',
     colorSeedTitle: 'A colour seed: it grows a {color} {name}',
+    giftSeed: '🎁 {name}',
+    giftSeedTitle: 'A cutting from {from}: it grows a {name}',
+    give: '🎁 Give a cutting',
+    giveTitle: 'Give a cutting of this bloom to someone in the room (one per bloom)',
+    giveTo: 'Who gets a cutting?',
+    giveCancel: 'Cancel',
+    giveSent: '🎁 A {name} cutting is on its way to {to}',
+    giveFailed: 'The room is not connected: try again in a moment',
+    giftFrom: '🎁 {from} gave you a {name} cutting: plant it in an empty pot',
+    giftFull: 'A cutting from {from} came, but the tray is full (9): plant some first',
     hybridCame: 'A colour seed: {color} {name}!',
     albumPage: '{name}',
     albumNone: 'Not found yet',
@@ -195,6 +205,16 @@ const TEXT = {
     'color.violet': 'mor',
     colorSeed: '🌈 {name}',
     colorSeedTitle: 'Renkli tohum: {color} bir {name} büyütür',
+    giftSeed: '🎁 {name}',
+    giftSeedTitle: '{from} verdi: bir {name} büyütür',
+    give: '🎁 Çelik ver',
+    giveTitle: 'Bu çiçekten odadaki birine bir çelik ver (her çiçekten bir tane)',
+    giveTo: 'Çeliği kime vereceksin?',
+    giveCancel: 'Vazgeç',
+    giveSent: '🎁 Bir {name} çeliği {to} kişisine gidiyor',
+    giveFailed: 'Oda bağlı değil: biraz sonra yeniden dene',
+    giftFrom: '🎁 {from} sana bir {name} çeliği verdi: boş bir saksıya dik',
+    giftFull: '{from} bir çelik gönderdi ama tepsi dolu (9): önce birkaçını dik',
     hybridCame: 'Renkli tohum: {color} {name}!',
     albumPage: '{name}',
     albumNone: 'Henüz bulunmadı',
@@ -362,15 +382,50 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     return b;
   }
 
+  /** Who gets this bloom's cutting: up to three names, then Cancel. */
+  function chooseFriend(people: { id: string; name: string }[]): void {
+    const at = selected;
+    actionText.textContent = t('giveTo');
+    actionButtons.replaceChildren(
+      ...people.slice(0, 3).map((person) =>
+        actionButton(person.name, 'gift-to', () => {
+          const p = garden.pots[at];
+          if (!p || !canGift(garden, at)) return drawAction();
+          if (!room().gift?.(person.id, p.plant)) {
+            flash(t('giveFailed'));
+            return drawAction();
+          }
+          const plantId = giveCutting(garden, at) as PlantId;
+          playSound('gardenSeed');
+          flash(t('giveSent', { name: plantName(plantId).toLocaleLowerCase(lang()), to: person.name }));
+          persist();
+          drawAction();
+        }),
+      ),
+      actionButton(t('giveCancel'), '', () => drawAction()),
+    );
+  }
+
   function drawAction(): void {
     const p = garden.pots[selected] ?? null;
     actionButtons.replaceChildren();
     if (!p) {
       actionTitle.textContent = `${t('pot', { n: selected + 1 })} · ${t('empty')}`;
       const have = RARITIES.filter((r) => garden.seeds[r] > 0);
-      actionText.textContent = have.length || garden.colorSeeds.length ? t('plantSeed') : t('noSeeds');
-      // Colour seeds first (at most two buttons fit beside the seeds).
-      garden.colorSeeds.slice(0, 2).forEach((c, index) => {
+      actionText.textContent = have.length || garden.colorSeeds.length || garden.giftSeeds.length ? t('plantSeed') : t('noSeeds');
+      // A friend's cutting first, then colour seeds (at most two buttons fit beside the seeds).
+      const gift = garden.giftSeeds[0];
+      if (gift) {
+        const b = actionButton(t('giftSeed', { name: plantName(gift.plant) }), 'seed-gift', () => {
+          if (!plantGift(garden, selected, 0)) return;
+          playSound('gardenPlant');
+          persist();
+          draw();
+        });
+        b.title = t('giftSeedTitle', { from: gift.from, name: plantName(gift.plant).toLocaleLowerCase(lang()) });
+        actionButtons.append(b);
+      }
+      garden.colorSeeds.slice(0, gift ? 1 : 2).forEach((c, index) => {
         const b = actionButton(t('colorSeed', { name: plantName(c.plant) }), `seed-color wg-color-btn-${c.color}`, () => {
           if (!plantColor(garden, selected, index)) return;
           playSound('gardenPlant');
@@ -408,6 +463,13 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
           draw();
         }),
       );
+      // A cutting for a friend in the room (owner's pick 8): one per bloom, no trading.
+      const people = room().people ?? [];
+      if (canGift(garden, selected) && people.length) {
+        const give = actionButton(t('give'), 'gift', () => chooseFriend(people));
+        give.title = t('giveTitle');
+        actionButtons.append(give);
+      }
       return;
     }
     actionTitle.textContent = name;
@@ -447,6 +509,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     weather();
     const seedText = RARITIES.filter((r) => garden.seeds[r] > 0).map((r) => `${r === 'common' ? '🌰' : r === 'uncommon' ? '🌰✦' : '🌰✦✦'}${garden.seeds[r]}`);
     if (garden.colorSeeds.length) seedText.push(`🌈${garden.colorSeeds.length}`);
+    if (garden.giftSeeds.length) seedText.push(`🎁${garden.giftSeeds.length}`);
     seedsLine.textContent = seedText.length ? seedText.join(' ') : '🌰 0';
     seedsLine.title = `${t('seeds')}: ${RARITIES.map((r) => `${rarityName(r)} ${garden.seeds[r]}`).join(' · ')}`;
     box.classList.toggle('wg-idle', !ctx.playing);
@@ -651,6 +714,16 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       if (kind) {
         playSound('gardenSeed');
         flash(t('filmSeed', { kind: rarityName(kind) }));
+      }
+    }
+    // Cuttings friends gave me (they wait in this browser, `windowGarden:gifts`, even with the garden closed).
+    for (const gift of takeGifts()) {
+      const ok = PLANT_IDS.includes(gift.plant as PlantId) && receiveCutting(garden, gift.plant as PlantId, gift.from);
+      const name = PLANT_IDS.includes(gift.plant as PlantId) ? plantName(gift.plant as PlantId).toLocaleLowerCase(lang()) : '';
+      if (name) flash(ok ? t('giftFrom', { from: gift.from, name }) : t('giftFull', { from: gift.from }));
+      if (ok) {
+        playSound('gardenSeed');
+        persist();
       }
     }
     for (const kind of result.seeds) {

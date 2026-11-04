@@ -7,7 +7,7 @@
 // localStorage gizli sekmede veya engellenmiş çerezlerde hata verebilir; o durumda site yine
 // çalışsın (bu sayfa açık kaldıkça bellekte tutulur).
 
-import { CLIENT_ID } from '@swm/shared/protocol';
+import { CLIENT_ID, randomAvatar, replaceRemovedAvatar, type Avatar } from '@swm/shared/protocol';
 import { EXT_SOURCE, SITE_SOURCE, type ExtToSite, type SiteToExt, type StoreEntries } from '@swm/shared/shell';
 
 /**
@@ -160,6 +160,38 @@ export function sessionSave(key: string, value: string): void {
   }
 }
 
+/**
+ * Card R20: a saved avatar that was removed (`REMOVED_AVATARS`) is replaced once with a random themed one: the default
+ * (`avatar`, shared with the extension as `site:avatar` through `save`) and every room's own record (`me:<room>` in this
+ * browser's local storage and this tab's session storage). Runs at start-up (`app.ts`); a second run finds nothing.
+ */
+export function replaceRemovedAvatars(pick: () => Avatar = randomAvatar): number {
+  let changed = 0;
+  const fixed = replaceRemovedAvatar(load('avatar'), pick);
+  if (fixed) {
+    save('avatar', fixed);
+    changed++;
+  }
+  let rooms: string[] = [];
+  try {
+    const list = JSON.parse(load('meRooms') ?? '[]') as unknown;
+    if (Array.isArray(list)) rooms = list.filter((x): x is string => typeof x === 'string');
+  } catch {
+    // No list: nothing to look at.
+  }
+  for (const room of rooms) {
+    for (const [read, write] of [[load, save], [sessionLoad, sessionSave]] as const) {
+      const me = parseIdentity(read(`me:${room}`));
+      const swap = me && replaceRemovedAvatar(me.avatar, pick);
+      if (me && swap) {
+        write(`me:${room}`, JSON.stringify({ name: me.name, avatar: swap }));
+        changed++;
+      }
+    }
+  }
+  return changed;
+}
+
 /** Saves the default name/avatar: what the join step offers in a room I haven't been in yet. */
 export function saveIdentity(name: string, avatar?: string): void {
   save('name', name);
@@ -176,7 +208,10 @@ const ROOM_IDENTITIES = 50;
 export function roomIdentity(roomId: string): { name: string; avatar: string } | null {
   // R17: this tab's own name in the room comes first. Two tabs of one browser may be two people ("Alex" and "Alex 2");
   // the shared record holds whichever was saved last, and a reload must not turn "Alex" into "Alex 2".
-  for (const raw of [sessionLoad(`me:${roomId}`), load(`me:${roomId}`)]) {
+  // BH7: not in the film page's overlay. Its session storage is the overlay's own (another storage partition, kept for
+  // the whole tab), so it still held the name from the last film-page visit after a rename on the main site; there the
+  // shared record (synced with the main site through the extension) is the one that is up to date.
+  for (const raw of [isShell ? null : sessionLoad(`me:${roomId}`), load(`me:${roomId}`)]) {
     const found = parseIdentity(raw);
     if (found) return found;
   }
@@ -196,7 +231,7 @@ function parseIdentity(raw: string | null): { name: string; avatar: string } | n
 }
 
 export function saveRoomIdentity(roomId: string, name: string, avatar: string): void {
-  sessionSave(`me:${roomId}`, JSON.stringify({ name, avatar }));
+  if (!isShell) sessionSave(`me:${roomId}`, JSON.stringify({ name, avatar }));
   const current = parseIdentity(load(`me:${roomId}`));
   if (current?.name === name && current.avatar === avatar) return;
   save(`me:${roomId}`, JSON.stringify({ name, avatar }));

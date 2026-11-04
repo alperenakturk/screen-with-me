@@ -714,6 +714,10 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   const withHandle = await a.pixels('9b-mesaj');
   const toastR = await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const r = e?.getBoundingClientRect(); return r ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`);
   check(!!toastR && toastR.r <= dock.x - 4 && dock.x - toastR.r < 30 && toastR.b <= dock.b + 2, 'tam ekranda mesaj dock\'un hemen solunda', JSON.stringify({ toastR, dock }));
+  // Card R21: on the right side, 15–40 % down the screen (not the very top corner), with big text, visible.
+  const look = JSON.parse(await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const c = getComputedStyle(e); return JSON.stringify({ font: parseFloat(c.fontSize), vis: c.visibility }); })()`));
+  const down = toastR ? Math.round((toastR.y / screenH) * 100) : -1;
+  check(down >= 15 && down <= 40 && look.font >= 16 && look.vis === 'visible', 'tam ekranda mesaj sağda, ekranın %15–40 aşağısında, büyük yazıyla görünüyor (R21)', JSON.stringify({ down, ...look }));
   /** Kutunun sol iç boşluğundaki noktalar (yazıdan uzak): beklenen B ≈ (1 − opaklık) × A. */
   const padSample = (r, keep, img) => {
     let ok = 0;

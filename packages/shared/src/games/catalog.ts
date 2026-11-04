@@ -22,6 +22,8 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440] },
   quiz: { min: 2, max: 8, place: 'stage', size: [760, 540], fit: [540, 380] },
   poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440] },
+  // 🎲 Classics (P6): two players, or one against Glowbeam.
+  classics: { min: 1, max: 2, place: 'stage', size: [480, 620], fit: [360, 480] },
 };
 
 /**
@@ -44,6 +46,14 @@ export interface SoloRoom {
   item: { id: string; duration: number; position: number; title?: string } | null;
   /** Others' names (Window Garden's memories keep them in this browser only). */
   names?: string[];
+  /** Others in the room, by member id (Window Garden gives them cuttings). */
+  people?: { id: string; name: string }[];
+  /** The room's tip jar: how full, its size, and whether its +10 % is on for this film. */
+  tipJar?: { fill: number; size: number; boost: boolean } | null;
+  /** A Snack Bar serve puts a coin in the room's tip jar. */
+  tip?: () => void;
+  /** Sends a cutting to someone in the room; false when the room connection is down. */
+  gift?: (to: string, plant: string) => boolean;
 }
 
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
@@ -66,6 +76,13 @@ export interface GameNews {
 
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
+  {
+    v: '0.9.97.35',
+    kinds: ['classics'],
+    badge: 'new',
+    tr: 'Yeni: 🎲 Klasikler. XOX, Dört Taş ve yeni dama tek masada, raftan seç. Yalnızsan Glowbeam’e karşı oyna (kolay / orta); Glowbeam hakemlik de yapıyor.',
+    en: 'New: 🎲 Classics. Tic-tac-toe, Four in a Row and the new dama at one table, picked from a shelf. Alone? Play Glowbeam (easy / medium); it referees too.',
+  },
   {
     v: '0.9.91.11',
     kinds: ['poker'],

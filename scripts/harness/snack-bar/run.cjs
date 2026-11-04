@@ -1,7 +1,7 @@
 // 🍿 Snack Bar in the room (card "Snack Bar"): two people, Alex opens it from 🎮 → "Play on the side".
 // Checks: the hub entry, the window fits without scrollbars (default, smallest free window, phone sheet), no income
 // while nothing plays, income + the together bonus while the sync test plays, a tap serves, buying a stand, the
-// nothing paid for the time away (only in a room, 0.9.97.29) and the "closed until the film plays" sign, buttons never take the focus (the message box keeps it), one tab plays at a time,
+// nothing paid for the time away (only in a room, 0.9.97.31) and the "closed until the film plays" sign, buttons never take the focus (the message box keeps it), one tab plays at a time,
 // closing saves.
 //
 //   npm run dev, then: node scripts/harness/snack-bar/run.cjs [site]

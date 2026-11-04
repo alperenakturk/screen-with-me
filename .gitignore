@@ -19,6 +19,7 @@ shell-test-*.png
 # Gerçek ses testinin ekran görüntüleri (scripts/harness/voice)
 scripts/harness/voice/*.png
 scripts/harness/vimeo/*.png
+scripts/harness/classics/*.png
 scripts/harness/snack-bar/*.png
 scripts/harness/games-gallery/*.png
 scripts/harness/garden/*.png
