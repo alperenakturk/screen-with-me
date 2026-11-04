@@ -88,6 +88,7 @@ export class Game extends DurableObject<Env> {
     admit: (socket) => this.admit(socket),
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
+    schedule: () => this.scheduleAlarm(),
   });
 
   override async fetch(request: Request): Promise<Response> {
@@ -141,13 +142,23 @@ export class Game extends DurableObject<Env> {
   }
 
   override async alarm(): Promise<void> {
-    if (this.sockets().length > 0 || this.data.emptySince === null) return;
-    if (Date.now() - this.data.emptySince >= EMPTY_TTL_MS) {
+    await this.polls.sweepDue();
+    if (this.sockets().length === 0 && this.data.emptySince !== null && Date.now() - this.data.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
-    } else {
-      await this.ctx.storage.setAlarm(this.data.emptySince + EMPTY_TTL_MS);
     }
+    await this.scheduleAlarm();
+  }
+
+  /** The empty game's deletion and (BH8) the HTTP fallback sessions that stop polling. */
+  private async scheduleAlarm(): Promise<void> {
+    const times: number[] = [];
+    // A join clears `emptySince`; past its time while a connection is still here (one that never said hello), look again
+    // in a minute instead of firing at once.
+    if (this.data.emptySince !== null) times.push(Math.max(this.data.emptySince + EMPTY_TTL_MS, Date.now() + 60_000));
+    const due = this.polls.nextDue();
+    if (due !== null) times.push(due);
+    if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
   }
 
   private async hello(ws: WebSocket, me: Attachment, message: Extract<GameClientMessage, { t: 'hello' }>): Promise<void> {
@@ -299,7 +310,7 @@ export class Game extends DurableObject<Env> {
     if (this.sockets(ws).length === 0) {
       this.data.emptySince = Date.now();
       await this.save();
-      await this.ctx.storage.setAlarm(this.data.emptySince + EMPTY_TTL_MS);
+      await this.scheduleAlarm();
     }
   }
 

@@ -281,6 +281,7 @@ export class Room extends DurableObject<Env> {
     admit: (socket, request) => this.admit(socket, request),
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
+    schedule: () => this.scheduleAlarm(),
   });
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
@@ -896,6 +897,7 @@ export class Room extends DurableObject<Env> {
    */
   override async alarm(): Promise<void> {
     const now = Date.now();
+    await this.polls.sweepDue(now);
     // Empty but never marked empty: the object restarted while only HTTP fallback connections (kept in memory) were
     // in (or an old version's alarm). Start counting now instead of deleting a room people were just in.
     if (this.openSockets().length === 0 && this.emptySince === null) await this.setEmptySince(now);
@@ -1148,6 +1150,9 @@ export class Room extends DurableObject<Env> {
     if (this.emptySince !== null) times.push(this.emptySince + this.emptyTtl());
     if (this.settings.startsAt !== undefined) times.push(this.settings.startsAt);
     for (const table of this.tables) if (table.emptyAt !== null) times.push(table.emptyAt + TABLE_EMPTY_MS);
+    // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
+    const due = this.polls.nextDue();
+    if (due !== null) times.push(due);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }

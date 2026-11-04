@@ -515,7 +515,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   are `ctx.getWebSockets()` + `polls.sockets()` and every message goes through the same `webSocketMessage`; new
   connections are set up in `admit()` (shared by both ways). The Worker's `connect()` routes both (only `open` counts
   against `CONNECT_LIMIT`; origin checked; `X-SWM-Ip` / `X-SWM-Room` set only by the Worker). Sessions are in memory
-  (idle 45 s → closed, never polled 10 s after `open` → closed; a restart → `410` → reconnect with `prev`). Limits (0.9.93.8, security review 2 H1): `send` bodies read as a stream up to `SEND_BODY_BYTES`, ≤ 11 M characters queued per session (one full join with every emoji + chat image fits), ≤ 24 M per object (`HUB_BYTES`); `hello` is accepted once per connection (`bad_message` after), votes count only people in the room (≤ `MAX_MEMBERS`). Once needed, the tab prefers it (`sessionStorage`
+  (idle 45 s → closed, never polled 10 s after `open` → closed; BH8: closed in the object's alarm (`PollHub.sweepDue`, the
+  objects' `scheduleAlarm` include `nextDue()`, `open` calls the `schedule` handler), never from a bare `setInterval`:
+  the room's leave run from a timer long after the last request reset the live object now and then (every socket 1006); a restart → `410` → reconnect with `prev`). Limits (0.9.93.8, security review 2 H1): `send` bodies read as a stream up to `SEND_BODY_BYTES`, ≤ 11 M characters queued per session (one full join with every emoji + chat image fits), ≤ 24 M per object (`HUB_BYTES`); `hello` is accepted once per connection (`bad_message` after), votes count only people in the room (≤ `MAX_MEMBERS`). Once needed, the tab prefers it (`sessionStorage`
   `swm:http`, 30 min); the room's socket probes `/api/probe` (Worker-only WebSocket, says "ok") after 1, 2, 4 … 10 min
   and closes with `UPGRADE_CODE` 4100 to reconnect over a WebSocket. A closing page hands its member id to the next
   page of the tab (`swm:prev:<room>`, 30 s) so a reload replaces the old connection at once; the fallback's close goes
