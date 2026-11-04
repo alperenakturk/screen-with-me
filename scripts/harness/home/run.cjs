@@ -10,7 +10,7 @@
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
-const OUT = process.argv[3] || '.';
+const OUT = process.argv[3] || require('os').tmpdir();
 // The Themed avatar page (AVATAR_PAGES[0]) as the code has it: the art's faces must come from there (card 15c).
 const THEMED = (() => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '../../../packages/shared/src/protocol.ts'), 'utf8');
@@ -72,7 +72,9 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
         };
       });
       check(m.featBottom <= m.vh && m.sw <= m.vw, `${where}: the first screen fits (feature row on screen, nothing sideways)`, m);
-      check(!m.linkBox && !m.themeStrip && !m.themeBtn, `${where}: no link box, no theme strip, no 🎨`);
+      check(!m.linkBox && !m.themeStrip, `${where}: no link box, no theme strip`);
+      // Card 15d: 🎨 is back in the top bar on the home page and opens the theme window.
+      check(m.themeBtn, `${where}: 🎨 in the top bar`);
       check(m.create && m.join && m.artHidden, `${where}: Create room + Join with a code; the art is aria-hidden`);
       const wide = name === '1920' || name === '1366' || name === '1180';
       check(wide ? m.artBeside : m.artAbove, `${where}: ${wide ? 'text left, art right' : 'the art on top'}`, { beside: m.artBeside, above: m.artAbove });
@@ -96,10 +98,30 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
           rings: svg.querySelectorAll('.hm-ring.voice').length,
           textShown,
           artW: Math.round(document.querySelector('.hm-art').getBoundingClientRect().width),
+          // Card 15d: the laptop's drawn width as a share of the art (15c: 290 of 640 = 0.453).
+          laptopShare: svg.querySelector('[data-device="laptop"] rect').getBoundingClientRect().width / svg.getBoundingClientRect().width,
+          // Card 15d: nothing in the art may be an empty box: no img / video / iframe / foreignObject, every <image> has
+          // a picture that loaded, and every drawn shape has a fill or a stroke that is not black.
+          empty: [...svg.querySelectorAll('*')].filter((e) => {
+            const tag = e.tagName.toLowerCase();
+            if (['img', 'video', 'iframe', 'foreignobject', 'canvas', 'object', 'embed'].includes(tag)) return true;
+            if (tag === 'image') return !e.getAttribute('href');
+            if (tag === 'rect' && !e.closest('clipPath, mask, defs, symbol, pattern')) {
+              const cs = getComputedStyle(e);
+              const fill = cs.fill.replace(/\s/g, '');
+              return (fill === 'rgb(0,0,0)' || fill === '#000') && cs.fillOpacity !== '0';
+            }
+            return false;
+          }).map((e) => e.outerHTML.slice(0, 80)),
+          costume: svg.querySelector('.hm-glow')?.getAttribute('data-costume') ?? null,
+          theme: document.documentElement.dataset.theme,
         };
       });
       check(art.devices === 'laptop,tablet,phone' && art.screens === 3 && art.bars === 3, `${where}: three devices, three screens, three progress bars`, art);
       check(new Set(art.ids).size === 3 && art.ids.every((id) => THEMED.includes(id)) && art.hrefs.every((h, i) => h === `/avatars/${art.ids[i]}.svg`) && art.rings === 2, `${where}: three different themed avatars, two in voice rings`, art.ids);
+      check(art.laptopShare >= 0.453 * 1.15, `${where}: the devices are ≥ 15 % bigger than in 15c`, art.laptopShare.toFixed(3));
+      check(art.empty.length === 0, `${where}: no empty box in the art`, art.empty);
+      check(art.costume === art.theme, `${where}: Glowbeam wears the shown theme's costume`, { costume: art.costume, theme: art.theme });
       check(name === '390' ? art.textShown === 0 : art.textShown === 4, `${where}: ${name === '390' ? 'no art text on a phone' : 'pill, chat bubble and people line show'}`, art.textShown);
       await page.screenshot({ path: `${OUT}/home-${lang}-${name}.png` });
       if (lang === 'en' && name === '1366') {
@@ -110,6 +132,16 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
         };
         const ratio = (1.05) / (lum('#6a4cf2') + 0.05);
         check(ratio >= 4.5, 'the art\'s chat bubble reads at ≥ 4.5:1', ratio.toFixed(2));
+        // Card 15d: 🎨 opens the theme window; another theme puts Glowbeam in that theme's costume.
+        await page.click('#theme-button');
+        await page.waitForSelector('.theme-dialog .theme-card', { timeout: 4000 }).catch(() => {});
+        const cards = await page.$$('.theme-dialog .theme-card');
+        check(cards.length >= 4, '🎨 opens the theme window', cards.length);
+        if (cards.length >= 4) await cards[3].click();
+        await page.waitForFunction(() => document.querySelector('.hm-glow')?.getAttribute('data-costume') === document.documentElement.dataset.theme && document.documentElement.dataset.theme !== 'gece', null, { timeout: 5000 }).catch(() => {});
+        const switched = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, costume: document.querySelector('.hm-glow')?.getAttribute('data-costume'), glows: document.querySelectorAll('.hm-glow').length }));
+        check(switched.theme !== 'gece' && switched.costume === switched.theme && switched.glows === 1, 'a theme change dresses Glowbeam in the new costume (one Glowbeam)', switched);
+        await page.keyboard.press('Escape');
         // Join with a code opens the code box; a code goes to the room.
         await page.click('#join-toggle');
         check(await page.isVisible('#join-input'), '"Join with a code" opens the code box');
@@ -127,6 +159,28 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
       }
       await ctx.close();
     }
+  }
+
+  // Card 15d: the static pages have a 🎨 that opens the home page's theme window (`/#theme`); /connection has the real one.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    await ctx.addInitScript(`(${ours})() && localStorage.setItem('lang', 'tr')`);
+    const page = await ctx.newPage();
+    for (const path of ['/help.html', '/privacy.html', '/thanks.html', '/extension.html']) {
+      await page.goto(SITE + path);
+      const link = await page.evaluate(() => {
+        const a = document.querySelector('.theme-link');
+        return a ? { href: a.getAttribute('href'), label: a.getAttribute('aria-label'), shown: a.getBoundingClientRect().width > 0 } : null;
+      });
+      check(link?.href === '/#theme' && link.shown && link.label === 'Temayı değiştir', `${path}: 🎨 links to the theme window (named in the page's language)`, link);
+    }
+    await page.click('.theme-link');
+    await page.waitForSelector('.theme-dialog', { timeout: 5000 }).catch(() => {});
+    check((await page.isVisible('.theme-dialog')) && !(await page.evaluate(() => location.hash)), '/#theme opens the theme window on the home page (and drops the #theme)');
+    await page.goto(SITE + '/connection');
+    await page.waitForTimeout(500);
+    check(await page.isVisible('#theme-button'), '/connection: 🎨 in the top bar');
+    await ctx.close();
   }
 
   // The continue line shows with a last room, in the text column, one line.

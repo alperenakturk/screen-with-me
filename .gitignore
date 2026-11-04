@@ -25,3 +25,6 @@ scripts/harness/garden/*.png
 scripts/harness/five-frames/*.png
 scripts/harness/move/*.png
 scripts/harness/podcasts/*.png
+# Harness screenshots written to the repository root or a harness folder (never commit them)
+/home-*.png
+scripts/harness/tiktok/*.png

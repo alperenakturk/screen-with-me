@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.28 (home art bigger, themed Glowbeam, 🎨 back, card 15d):**
+- [ ] On the home page (computer + phone): the laptop, tablet and phone look bigger; 🎨 is at the top right and opens
+  the themes; pick another theme and Glowbeam changes its hat / costume. On Help, Privacy, Thanks and the extension
+  page 🎨 takes you to the home page with the themes open. Tell us if the black box over Glowbeam's head is still there
+  (and which theme / browser).
+
 **0.9.97.27 (saved rooms follow the host, BH6):**
 - [ ] Save a room, let a friend in, "Make host" them. On your home page the room's ✕ no longer says it will also
   unsave the room; on the friend's home page it does.
