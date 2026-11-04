@@ -108,7 +108,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 (name on the film page). Lane A: 15e ✅ → R22 + R23 (one PR). Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 → R26 (important) → R25 → DL1 → DL2 → DL4 → DL5. Game Studio: … → DL3. Lane A: 15e ✅ → R22 + R23 → 15f → R27. Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -169,6 +169,105 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### DL. 🐞 Sidelit Test Lab: a powerful debug mode that grows with the product (owner, 4 Nov 2026; lane B leads, Game Studio + lane A add their parts)
+- Owner: "a very detailed debug mode, for now and the future: test everything in the games, the video things, whatever
+  you think may clash; strong, detailed, and it changes as new features and ideas come. The goal is to find bugs fast
+  and raise the speed and number of tests. BE VERY CAREFUL THAT THE DEBUG MODE ITSELF IS NOT BUGGY."
+- Owner's picks (4 Nov 2026, in the Planner's chat): **a right-hand drawer + a command box**; **anyone with the hidden
+  switch** (`?debug=1`, as today) for now, but **lock it with a code before the app / store release** (ROADMAP §7);
+  **fake friends on the live site, at most 5**; **order: status + fake friends + log first**.
+- Builds on the hidden test panel of card 12 (`debug-lab.ts`, lazy `ui/debug-panel.ts`, `?debug=1` / `?debug=0`).
+- **Look:** a drawer on the right of the room (🐞 or Ctrl+Shift+D; it never covers the video's controls; on a phone a
+  bottom sheet) with tabs 📊 Status · 👥 Fake friends · 🎬 Video & network · 🎮 Games · 🧪 Scenarios · 🖥 Screen · 📜 Log,
+  plus a command box (Ctrl+K: type "add 3 friends", "bloom now", Enter) listing every command with its short help.
+  A "🐞 This is a bug" button bundles the last 2 minutes (state, log, versions, errors) into one text to copy.
+- **Rules that keep it safe and bug-free (all steps):**
+  - Off = not loaded at all (lazy chunk, outside the room's size budget); a test proves nothing changes with it off.
+  - No new power on the live server: fake friends are ordinary clients (normal rate limits, ≤ 5, a 🤖 in their name,
+    only in the room the lab opened them in, all leave when the lab closes or the tab goes); anything that needs server
+    help (skip a quiz question, set a dama position on the table) works only against `wrangler dev` / a test server.
+  - No monkey-patching: features expose small named hooks (`debugHooks.register('snackBar', {...})`); the lab only
+    calls those; a missing hook shows "not available here".
+  - Every command: a name, a one-line help, where it works, and an undo where it changes something; every run is
+    wrapped so a failing command writes a red line in the log and never breaks the room.
+  - Game cheats run on a sandbox save (a snapshot of the real `localStorage` save first; "Restore my real saves").
+  - The log never shows cids, IP hashes or tokens; the bug bundle shows exactly what it contains before copying.
+  - Every lab tool has its own harness check in CI; the lab's own harness also runs with the lab off.
+- **Steps (one PR each, in this order):**
+  1. **DL1 (lane B):** drawer + command box + 📊 Status (versions, transport, clock offset, live sync-drift graph, voice
+     / stream peer states, recent errors) + 📜 Log (in / out room messages, filtered, redacted) + "🐞 This is a bug".
+  2. **DL2 (lane B):** 👥 Fake friends: add 1–5 (name + random avatar), each can write, react, play / pause / seek,
+     stall ("not ready"), leave and come back, knock at the door, take the host role; a "chatty" mode at a set pace.
+  3. **DL3 (Game Studio):** 🎮 Games: open any game at once; Snack Bar (coins, customers, receipt, badges, place),
+     Window Garden (grow / bloom now, hybrid seed, night / rain, visitors), Five Frames (show the answer, set the day),
+     Classics (a dama position, bot level, force a win / draw on the local test server), Quiz / Draw & Guess (skip,
+     end, pick the word: test server only), tip jar fill; time ×10 for the side games; sandbox saves.
+  4. **DL4 (lane B):** 🎬 Video & network: drop my connection, force the HTTP fallback, "the server restarted"
+     (reconnect with the same id), drift +3 s, stall for N s, slow network, ads on the film page harness; 🖥 Screen
+     (lane A): theme / language / reduced-motion switcher, phone / tablet size windows, "first-time visitor", outline
+     the islands / hole / hidden boxes.
+  5. **DL5 (lane B):** 🧪 Scenarios: one-click scripted checks with ✓ / ✗ per step (room entry order, knock, fullscreen
+     messages, Enter after a click, private message, two names in one browser …), runnable with the fake friends.
+- **Rule from DL1 on (for every new card):** "Done when" includes its lab hook or scenario, so the lab grows with each
+  feature (Developers / Game Studio add it in the same PR).
+- Done when (whole card): the owner can test every two-person flow alone with fake friends, reach every game state in
+  a few clicks, cause each network / video accident on purpose, and copy one bug text; all lab harnesses green; with
+  the lab off the room's size and behaviour are unchanged.
+- Owner's pick: recorded above.
+
+### R25. Fullscreen messages lower than the message box (owner, 4 Nov 2026; lane B)
+- Owner (screenshot of R21 live, a YouTube video in fullscreen: the message "Alperen2 sELAN" sits right beside the
+  rail's 💬, at the same height as the message box that 💬 opens): "put it not right next to where you write a message
+  but further down, so the sent messages never block me while I write".
+- What: in fullscreen and with the side panel hidden, incoming messages start below the rail's message window (a
+  band that begins where the open message box ends, about 45–55 % down the video), stacking downwards and still never
+  over the player's bottom bar; with the message box open no message overlaps it, ever. Size and timing stay as R21.
+- Done when: at 1366×768 and 1920×1080 (YouTube, video file, film page) a message never overlaps the open message box
+  or its button, and never the bottom bar.
+- Tests: `yt-fs-side` (box vs. message rectangles with the box open), embed harness.
+- Owner's pick: none needed.
+
+### R26. Enter opens the message box after a click on the YouTube player (owner, 4 Nov 2026; lane B, important)
+- Owner: "when I click on the YouTube player and then press Enter, the side menu's chat doesn't react; the shortcut
+  doesn't work; if I click the side menu first and then press Enter it works. This is important; test it in the
+  extension too."
+- Why: a click on the YouTube frame moves the keyboard focus into YouTube's iframe, so our page never hears the key.
+- What: after a click on the player (YouTube, Vimeo, TikTok frames; on the film page the film's own frame), the room's
+  shortcuts work again at once: Enter opens the message box, the emoji keys, P, M, T … (e.g. take the focus back to
+  our page right after the frame got it, `window` blur → refocus, without breaking YouTube's own clicks, seek bar,
+  settings menu or captions; on the film page the extension already forwards keys, check it really does after a click
+  in the film). YouTube's own keyboard shortcuts may be lost; ours win.
+- Done when: click the YouTube video → Enter → the message box has the cursor, in the window and in fullscreen; the
+  same on a video file, Vimeo and on a film page with the extension; YouTube's play / pause by click, seek bar and
+  settings still work.
+- Tests: yt-room / yt-fs-side (click in the frame, then Enter), embed harness (click in the film, then Enter).
+- Owner's pick: none needed.
+
+### 15f. Home art: further left, pictures fill the screens (owner, 4 Nov 2026; lane A)
+- Owner (screenshot of the live 15e art, the empty space left of Glowbeam circled, and red lines along the top and
+  left inside each screen): "the Sidelit logo + all the computer, tablet and phone art should slide to the left"; "in
+  the places I marked the orange picture should reach too; it looks odd now, like a shadowed layer between the frame
+  and the screen's colour".
+- What: the whole art (Glowbeam + devices + faces + bubble) moves left so the empty band left of Glowbeam goes away
+  (keep the text column clear and the page balanced); each screen's picture fills its screen up to the bezel: no dark
+  inner band / inset shadow between the frame and the orange picture (the sheen stays, on top of the picture).
+- Done when: at the five home sizes the art starts close to the text column with no empty band; the orange picture
+  touches the bezel on every side of all three screens; the 15e checks stay green.
+- Tests: home harness (art's left edge vs. the text column, picture rect = screen rect).
+- Owner's pick: none needed.
+
+### R27. Avatar picker without tabs: one mixed list (owner, 4 Nov 2026; lane A)
+- Owner: "remove the things in the top menu; it should be plain, without categories, all avatars mixed together; no
+  categories needed for now".
+- What: the avatar dialog (site and extension) shows one grid of every avatar (themed + genres + armadillo), mixed
+  (a fixed shuffled order, not random per open, so a person finds theirs again), no tab row; the grid scrolls only if it
+  must (the owner's rule: lists that grow may scroll). Random picks for new people stay from the themed set unless
+  that is simpler to change; say which in the PR.
+- Done when: no tabs in the picker on computer and phone; every avatar is in the one list exactly once; picking still
+  needs "OK" / double-click.
+- Tests: unit (every drawn avatar listed once), avatar harness / screenshot.
+- Owner's pick: none needed.
 
 ### R24. Remove the hidden test board page from the site (owner, 4 Nov 2026; lane B)
 - Owner: "testing on the site turned out silly: every board update waits for a deploy; delete that page, the Planner

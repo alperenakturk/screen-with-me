@@ -433,6 +433,15 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.38 (Opera Night theme removed, stream beside the faces, cards R22 + R23):**
+- [ ] 🎨: no "Opera Night" any more; if you had it, you now see Gece.
+- [ ] With a friend, share your screen: in the Together card "🔴 You're live · 👁 0/4", End stream and the quality now
+  sit right of the faces; the chat below keeps (almost) all its room. Your friend sees "🔴 … is live" and Watch stream
+  in the same place. Before a stream the card looks as before.
+**0.9.97.36 (the film page keeps a new name, BH7):**
+- [ ] In a room on the main site change your name (profile → name), then open a film page in the room with the
+  extension: your friend sees you with the new name on the film page, never the old one.
+
 **0.9.97.34 (bigger chat messages in fullscreen, card R21):**
 - [ ] On a computer, open a YouTube video and a video file in fullscreen; from a second tab write a message: it comes
   in on the right side, about a quarter down the video (not in the very top corner), with clearly bigger text, left of
@@ -451,9 +460,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   alien, samurai, fairy, spy, armadillo) without scrolling; pick one and check it in the chat and the faces strip. If
   you had a parody avatar saved, you now have a themed one instead (once; your other rooms too).
 
-**0.9.97.29 (the owner's test board on our site):**
-- [ ] Open the board's address (the Planner has it), tick a test ✅ and write a note: the ticket at the bottom shows
-  both; 📋 Copy puts it on the clipboard; reload: your ticks are still there. Works on the phone too.
+**0.9.97.29 (the owner's test board on our site):** removed in 0.9.97.39 (card R24); nothing to test.
 
 **0.9.97.28 (home art bigger, themed Glowbeam, 🎨 back, card 15d):**
 - [ ] On the home page (computer + phone): the laptop, tablet and phone look bigger; 🎨 is at the top right and opens
@@ -623,6 +630,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
   shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.37 Quiz bank: play two or three quizzes in a row with a friend. Questions start easy and get harder within a
+  game (stars next to the category), and the same questions don't come back game after game (the help page says
+  "Almost 1200 questions").
 - [ ] 0.9.97.32 Tip jar and cuttings (side games 2, picks 5 + 8), with a friend: both open Snack Bar while a video plays
   and serve: a 🫙 pill shows how full the room's jar is; when it fills, both get a note and the pill says +10 % until the
   film ends. Then open Window Garden with a plant in bloom: "🎁 Give a cutting" → your friend's name. Your friend gets a

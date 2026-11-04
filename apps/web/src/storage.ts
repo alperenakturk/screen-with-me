@@ -208,7 +208,10 @@ const ROOM_IDENTITIES = 50;
 export function roomIdentity(roomId: string): { name: string; avatar: string } | null {
   // R17: this tab's own name in the room comes first. Two tabs of one browser may be two people ("Alex" and "Alex 2");
   // the shared record holds whichever was saved last, and a reload must not turn "Alex" into "Alex 2".
-  for (const raw of [sessionLoad(`me:${roomId}`), load(`me:${roomId}`)]) {
+  // BH7: not in the film page's overlay. Its session storage is the overlay's own (another storage partition, kept for
+  // the whole tab), so it still held the name from the last film-page visit after a rename on the main site; there the
+  // shared record (synced with the main site through the extension) is the one that is up to date.
+  for (const raw of [isShell ? null : sessionLoad(`me:${roomId}`), load(`me:${roomId}`)]) {
     const found = parseIdentity(raw);
     if (found) return found;
   }
@@ -228,7 +231,7 @@ function parseIdentity(raw: string | null): { name: string; avatar: string } | n
 }
 
 export function saveRoomIdentity(roomId: string, name: string, avatar: string): void {
-  sessionSave(`me:${roomId}`, JSON.stringify({ name, avatar }));
+  if (!isShell) sessionSave(`me:${roomId}`, JSON.stringify({ name, avatar }));
   const current = parseIdentity(load(`me:${roomId}`));
   if (current?.name === name && current.avatar === avatar) return;
   save(`me:${roomId}`, JSON.stringify({ name, avatar }));
