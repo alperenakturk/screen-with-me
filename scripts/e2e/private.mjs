@@ -68,5 +68,23 @@ alex.send({ t: 'chat', text: 'are you there', to: '0123456789ab' });
 await alex.wait((m) => m.t === 'error' && m.code === 'private_gone', 'gone refused');
 ok(true, 'A private message for someone not in the room is refused (private_gone)');
 
-for (const c of [alex, sam, samTab, late]) c.ws.close();
+// Card R16 (owner: "alperen" and "alperen 2" in one Chrome): another name in the same browser is another person, so a
+// private message to it is delivered (to that name's connections only), never refused as "to myself".
+const two = client({ name: 'Alex 2', avatar: 'wizard', cid: 'privateAlex0001' });
+const wT = await two.wait((m) => m.t === 'welcome', 'welcome alex 2');
+const roster = wT.members;
+const pkOf = (id) => roster.find((m) => m.id === id)?.pk;
+ok(pkOf(wT.you) && pkOf(wA.you) && pkOf(wT.you) !== pkOf(wA.you), 'R16: two names in one browser are two people (different person keys)');
+alex.inbox.length = 0;
+two.send({ t: 'chat', text: 'hi other me', to: wA.you });
+const mine = await alex.wait((m) => m.t === 'chat' || (m.t === 'error' && m.code === 'private_gone'), 'alex gets it');
+ok(mine.t === 'chat' && mine.message.text === 'hi other me', 'R16: a private message to the other name in the same browser arrives');
+await sleep(300);
+ok(!sam.inbox.some((m) => m.t === 'chat' && m.message?.text === 'hi other me'), 'R16: nobody else gets it');
+// A rename keeps the person apart: "Alex 2" renamed to "Alex" is the same person as Alex again (one browser, one name).
+two.send({ t: 'rename', name: 'Alex', avatar: 'wizard' });
+const after = await alex.wait((m) => m.t === 'members' && m.members.find((x) => x.id === wT.you)?.name === 'Alex', 'rename');
+ok(after.members.find((x) => x.id === wT.you).pk === after.members.find((x) => x.id === wA.you).pk, 'R16: the person key follows a rename');
+
+for (const c of [alex, sam, samTab, late, two]) c.ws.close();
 console.log('private: all passed');

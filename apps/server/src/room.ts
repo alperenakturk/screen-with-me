@@ -709,20 +709,25 @@ export class Room extends DurableObject<Env> {
         this.stats.chat(keyOf(attachment), me);
         await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
         return;
-      case 'rename':
+      case 'rename': {
         if (attachment.tv) return;
+        const oldPk = attachment.pk;
         attachment.name = message.name;
         if (message.avatar) attachment.avatar = message.avatar;
+        attachment.pk = await this.personKeyFor(attachment);
         ws.serializeAttachment(attachment);
         // My TV keeps my name and avatar (it is me on another screen).
         for (const tv of this.tvSockets(keyOf(attachment))) {
           const a = tv.deserializeAttachment() as Attachment;
+          if (a.pk !== oldPk) continue;
           a.name = attachment.name;
           if (attachment.avatar) a.avatar = attachment.avatar;
+          a.pk = attachment.pk;
           tv.serializeAttachment(a);
         }
         this.broadcast(this.membersMessage());
         return;
+      }
       case 'kick':
         await this.kick(ws, me, message.id);
         return;
@@ -1017,7 +1022,9 @@ export class Room extends DurableObject<Env> {
       this.personSalt = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
       await this.ctx.storage.put('personSalt', this.personSalt);
     }
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${this.personSalt}|${keyOf(attachment)}`));
+    // R16 / R17: a person is the browser *and* the name (as kicks are: `banKey`): two names in one browser are two
+    // people (the owner's "alperen" and "alperen 2" in one Chrome), the same name in its tabs / TV stays one.
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${this.personSalt}|${keyOf(attachment)}|n:${attachment.name ?? ''}`));
     return [...new Uint8Array(digest).slice(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
@@ -2020,19 +2027,19 @@ export class Room extends DurableObject<Env> {
    * room's history, the recap or anyone else's socket.
    */
   private sendPrivate(ws: WebSocket, me: Member, toId: string, text: string): void {
-    const mine = keyOf(ws.deserializeAttachment() as Attachment);
+    // R16: by person (browser + name), so another name in the same browser is someone else, not myself.
+    const mine = (ws.deserializeAttachment() as Attachment).pk;
     const target = this.joined().find((a) => a.id === toId && !a.tv);
-    if (!target || keyOf(target) === mine) {
+    if (!target || !mine || target.pk === mine) {
       this.sendTo(ws, { t: 'error', code: 'private_gone' });
       return;
     }
-    const theirs = keyOf(target);
+    const theirs = target.pk;
     const message: ChatMessage = { id: newId(), text, by: me, at: Date.now(), to: memberOf(target) };
     for (const socket of this.openSockets()) {
       const a = socket.deserializeAttachment() as Attachment | null;
       if (!a?.name || a.tv || a.knock) continue;
-      const key = keyOf(a);
-      if (key === mine || key === theirs) this.sendTo(socket, { t: 'chat', message });
+      if (a.pk === mine || a.pk === theirs) this.sendTo(socket, { t: 'chat', message });
     }
   }
 
