@@ -30,6 +30,8 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { langChoices, podium, settingsPanel } from './ui.ts';
+import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
+import type { DrawTopic } from '@swm/shared/games/draw';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
@@ -158,6 +160,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     const b = el('button', { type: 'button', class: 'draw-tool', title: t(`draw.${name}`), 'aria-label': t(`draw.${name}`) }, glyph);
     b.addEventListener('click', () => {
       tool = name;
+      // The pen after the eraser draws in black again.
+      if (name === 'pen' && color === 1) color = 0;
       renderTools();
     });
     return b;
@@ -188,21 +192,31 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     });
     return b;
   });
+  // P10: a real eraser (the white pen, one press) and redo beside undo.
+  const eraserButton = el('button', { type: 'button', class: 'draw-tool', title: t('draw.eraserTool'), 'aria-label': t('draw.eraserTool') }, '🧽');
+  eraserButton.addEventListener('click', () => {
+    tool = 'pen';
+    color = 1;
+    renderTools();
+  });
   const undoButton = el('button', { type: 'button', class: 'btn small-btn', title: `${t('draw.undo')} · Ctrl+Z` }, `↶ ${t('draw.undo')}`);
   undoButton.addEventListener('click', () => send({ t: 'undo' }));
+  const redoButton = el('button', { type: 'button', class: 'btn small-btn', title: `${t('draw.redo')} · Ctrl+Y`, 'aria-label': t('draw.redo') }, '↷');
+  redoButton.addEventListener('click', () => send({ t: 'redo' }));
   const clearButton = el('button', { type: 'button', class: 'btn small-btn' }, t('draw.clear'));
   clearButton.addEventListener('click', () => {
     clearCanvas();
     send({ t: 'clear' });
   });
   tools.append(
-    el('div', { class: 'draw-tool-pick' }, penButton, fillButton),
+    el('div', { class: 'draw-tool-pick' }, penButton, eraserButton, fillButton),
     el('div', { class: 'draw-colors' }, ...colorButtons),
     el('div', { class: 'draw-sizes' }, ...sizeButtons),
-    el('div', { class: 'draw-tool-pick' }, undoButton, clearButton),
+    el('div', { class: 'draw-tool-pick' }, undoButton, redoButton, clearButton),
   );
   function renderTools(): void {
-    penButton.classList.toggle('on', tool === 'pen');
+    penButton.classList.toggle('on', tool === 'pen' && color !== 1);
+    eraserButton.classList.toggle('on', tool === 'pen' && color === 1);
     fillButton.classList.toggle('on', tool === 'fill');
     colorButtons.forEach((b) => b.classList.toggle('on', Number(b.dataset.i) === color));
     sizeButtons.forEach((b) => b.classList.toggle('on', tool === 'pen' && Number(b.dataset.i) === size));
@@ -210,7 +224,12 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   }
   renderTools();
   const onKey = (event: KeyboardEvent) => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && iDraw()) {
+    if (!(event.ctrlKey || event.metaKey) || !iDraw()) return;
+    const key = event.key.toLowerCase();
+    if (key === 'y' || (key === 'z' && event.shiftKey)) {
+      event.preventDefault();
+      send({ t: 'redo' });
+    } else if (key === 'z') {
       event.preventDefault();
       send({ t: 'undo' });
     }
@@ -343,6 +362,13 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
         [
           { label: t('games.lang'), value: s.lang, choices: langChoices, pick: (lang) => send({ t: 'settings', lang: lang as 'tr' | 'en' }) },
           { label: t('draw.rounds'), value: s.rounds, choices: DRAW_ROUNDS.map((n) => ({ value: n, label: t('draw.roundsN', { n }) })), pick: (rounds) => send({ t: 'settings', rounds: rounds as 1 | 2 | 3 }) },
+          {
+            label: t('draw.topic'),
+            value: s.topic ?? 'mix',
+            select: true,
+            choices: (['mix', ...DRAW_CATEGORIES] as const).map((topic) => ({ value: topic, label: t(`draw.cat.${topic}`) })),
+            pick: (topic) => send({ t: 'settings', topic: topic as DrawTopic }),
+          },
         ],
         s.host === me || !host ? null : host.name,
       );
