@@ -1034,6 +1034,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   keeps the room working, the bug text = the copied text, a page error, a phone sheet, Turkish, off again. Harness
   `scripts/harness/lab-friends/run.cjs` (in CI): five at most, each action reaching me, the wait, leave and back, chatty,
   the knock card, the host role, off and a reload send them away.
+  **🎬 Video & network (DL4, `ui/lab-video.ts`, part of the lab chunk):** accidents on this tab's own side only, through
+  `DebugRoom.lab` (`RoomLab` in `debug-lab.ts`, filled by `room.ts`): `net.drop` (my connection breaks and stays down N s,
+  `RoomConnection.labDrop`), `net.restart` (reconnect now with my member id, as after a deploy), `net.slow` (every
+  message in and out waits N ms, `labLatency`; undo), `net.http` (force the HTTP fallback, `labForce`; undo), `net.normal`,
+  `video.drift` (my video N s off the room as our own seek, `SyncEngine.labDrift`: the drift correction must bring it
+  back), `video.stall` (my video counts as stuck N s, `labStall`: the room waits), `video.adFilm` (queues the
+  film-server's `/preroll` page, local server only). The connection / engine hooks are inert unless the lab calls them;
+  turning the lab off resets latency and a forced fallback, and removes `window.__swmLab` (it used to stay). Harness
+  `scripts/harness/lab-video/run.cjs` (27, in CI).
   **Games (DL3a, Game Studio):** `games/lab-tools.ts` is loaded only with the lab on (the games stage imports it
   dynamically when `swm:debug` is set, so it is not in the room page's budget; the side games' chunks import it). The hall's
   commands (`games.open.<kind>` for every table and side game, `games.speed` ×10 side-game time (each tick runs `labTicks()`
