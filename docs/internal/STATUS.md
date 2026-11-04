@@ -627,6 +627,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
   shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.37 Quiz bank: play two or three quizzes in a row with a friend. Questions start easy and get harder within a
+  game (stars next to the category), and the same questions don't come back game after game (the help page says
+  "Almost 1200 questions").
 - [ ] 0.9.97.32 Tip jar and cuttings (side games 2, picks 5 + 8), with a friend: both open Snack Bar while a video plays
   and serve: a 🫙 pill shows how full the room's jar is; when it fills, both get a note and the pill says +10 % until the
   film ends. Then open Window Garden with a plant in bloom: "🎁 Give a cutting" → your friend's name. Your friend gets a

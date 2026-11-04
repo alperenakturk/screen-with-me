@@ -4,9 +4,12 @@
 // shuffles them every game; when `enOptions` is left out the Turkish options are used as they are, e.g. numbers or
 // names). `q(tr, null, …)` / `q(null, en, …)` are questions that only make sense in one language (Turkish regions,
 // English spelling). `tf(tr, en, answer)` are true / false statements (two options, never shuffled).
-// Ids are positions in `QUIZ_BANK`: only ever append to a category's list, never insert in the middle.
+// Ids are positions in `QUIZ_BANK` (this first bank, then `QUIZ_BANK_2`): only ever append, never insert in the middle
+// (browsers remember seen ids).
 
 export const QUIZ_CATEGORIES = ['general', 'geography', 'science', 'space', 'nature', 'history', 'sports', 'food', 'arts', 'math', 'tech'] as const;
+import { QUIZ_BANK_2 } from './quiz-questions-2.ts';
+
 export type QuizCategory = (typeof QUIZ_CATEGORIES)[number];
 
 export type QuizOptions = readonly [correct: string, wrong1: string, wrong2: string, wrong3: string];
@@ -17,6 +20,8 @@ export interface QuizEntry {
   en?: { q: string; o: QuizOptions | readonly [string, string] };
   /** True / false statement: options are fixed (true first) and the correct index comes from `answer`. */
   tf?: boolean;
+  /** Difficulty: 1 easy, 2 medium, 3 hard (older entries have none: medium). */
+  d?: 1 | 2 | 3;
 }
 
 type Opts = readonly [string, string, string, string];
@@ -63,7 +68,7 @@ const tf = {
   tech: makeTf('tech'),
 };
 
-export const QUIZ_BANK: readonly QuizEntry[] = [
+const QUIZ_BANK_1: readonly QuizEntry[] = [
   // ---- General ----
   general('Bir yılda kaç ay vardır?', 'How many months are there in a year?', ['12', '10', '11', '13']),
   general('Gökkuşağında kaç renk vardır?', 'How many colors are there in a rainbow?', ['7', '5', '6', '8']),
@@ -483,3 +488,5 @@ export const QUIZ_BANK: readonly QuizEntry[] = [
   tf.tech('Her sitede aynı şifreyi kullanmak güvenlidir.', 'Using the same password on every site is safe.', false),
   tf.tech('Bilgisayarlar içeride ikili sayı sistemini kullanır.', 'Computers use binary numbers internally.', true),
 ];
+
+export const QUIZ_BANK: readonly QuizEntry[] = [...QUIZ_BANK_1, ...QUIZ_BANK_2];

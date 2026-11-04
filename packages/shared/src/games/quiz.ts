@@ -18,6 +18,33 @@ export const QUIZ_ANSWER_MS = 15_000;
 export const QUIZ_REVEAL_MS = 4_000;
 /** Questions the same game object does not ask again (rematches get new questions). */
 export const QUIZ_RECENT = 150;
+/** A browser remembers this many questions it has seen and sends them as a bitmap (base64) in its hello. */
+export const QUIZ_SEEN_KEEP = 600;
+/** Room for a bitmap of 4800 bank ids. */
+export const SEEN_CHARS = 800;
+
+/** Bank ids → a base64 bitmap (bit `id` set): compact enough for the hello's 1000 characters. */
+export function encodeSeen(ids: readonly number[]): string {
+  const max = Math.max(-1, ...ids.filter((id) => Number.isInteger(id) && id >= 0 && id < SEEN_CHARS * 6));
+  const bytes = new Uint8Array(Math.ceil((max + 1) / 8));
+  for (const id of ids) if (Number.isInteger(id) && id >= 0 && id <= max) bytes[id >> 3]! |= 1 << (id & 7);
+  let text = '';
+  for (const b of bytes) text += String.fromCharCode(b);
+  return btoa(text);
+}
+export function decodeSeen(text: string): number[] {
+  try {
+    const raw = atob(text);
+    const ids: number[] = [];
+    for (let i = 0; i < raw.length; i++) {
+      const b = raw.charCodeAt(i);
+      for (let bit = 0; bit < 8; bit++) if (b & (1 << bit)) ids.push(i * 8 + bit);
+    }
+    return ids;
+  } catch {
+    return [];
+  }
+}
 
 export type QuizLang = 'tr' | 'en';
 export type QuizPhase = 'lobby' | 'question' | 'reveal' | 'over';
@@ -45,7 +72,7 @@ export interface QuizPlayer {
 }
 
 export type QuizClientMessage =
-  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; lang?: QuizLang }
+  | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; lang?: QuizLang; seen?: string }
   /** Host only, in the lobby or on the podium. */
   | { t: 'settings'; lang?: QuizLang; topic?: QuizTopic; count?: QuizCount }
   | { t: 'start' }
@@ -68,6 +95,8 @@ export type QuizServerMessage =
       options?: string[];
       /** The question's category. */
       cat?: QuizCategory;
+      /** The question's bank id (the browser remembers what it has seen, `encodeSeen`). */
+      qid?: number;
       /** Sadece açıklamada. */
       correct?: number;
       endsAt: number | null;
@@ -104,6 +133,7 @@ export function parseQuizMessage(raw: string): QuizClientMessage | null {
       if (isAvatar(m.avatar)) hello.avatar = m.avatar;
       if (typeof m.cid === 'string' && CLIENT_ID.test(m.cid)) hello.cid = m.cid;
       if (m.lang === 'tr' || m.lang === 'en') hello.lang = m.lang;
+      if (typeof m.seen === 'string' && m.seen.length <= SEEN_CHARS && /^[A-Za-z0-9+/=]*$/.test(m.seen)) hello.seen = m.seen;
       return hello;
     }
     case 'settings': {
@@ -174,7 +204,9 @@ export function pickQuestions(
     }
     out.push({ id, cat: entry.c, question: text.q, options, correct: options.indexOf(right) });
   }
-  return out;
+  // A game warms up: easier questions first, harder towards the end (unknown difficulty counts as medium).
+  const level = (q: QuizQuestion) => QUIZ_BANK[q.id]!.d ?? 2;
+  return out.map((q, i) => ({ q, i })).sort((a, b) => level(a.q) - level(b.q) || a.i - b.i).map(({ q }) => q);
 }
 
 /** 50:50: two random wrong options to hide (none on a true / false question). */

@@ -9,6 +9,8 @@ import {
   QUIZ_REVEAL_MS,
   fiftyFifty,
   parseQuizMessage,
+  QUIZ_SEEN_KEEP,
+  decodeSeen,
   pickQuestions,
   type QuizClientMessage,
   type QuizCount,
@@ -38,6 +40,8 @@ interface Person {
   name: string;
   avatar?: Avatar;
   score: number;
+  /** Questions this person's browser has seen lately (from its hello; never sent anywhere). */
+  seen?: number[];
 }
 
 interface Saved {
@@ -208,6 +212,7 @@ export class Quiz extends DurableObject<Env> {
       d.people[key]!.name = message.name;
       if (message.avatar) d.people[key]!.avatar = message.avatar;
     }
+    if (message.seen) d.people[key]!.seen = decodeSeen(message.seen).slice(-QUIZ_SEEN_KEEP);
     me.name = message.name;
     me.key = key;
     ws.serializeAttachment(me);
@@ -241,7 +246,9 @@ export class Quiz extends DurableObject<Env> {
         if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         if (this.onlineKeys().length < 2) return this.sendTo(ws, { t: 'error', code: 'too_few' });
         for (const person of Object.values(d.people)) person.score = 0;
-        d.questions = pickQuestions(d.lang, d.count, Math.random, d.topic, d.recent);
+        // Avoid what this table asked lately and what the players' browsers have seen (P9: always new questions).
+        const seen = this.onlineKeys().flatMap((k) => d.people[k]?.seen ?? []);
+        d.questions = pickQuestions(d.lang, d.count, Math.random, d.topic, [...new Set([...d.recent, ...seen])]);
         d.recent = [...d.questions.map((q) => q.id), ...d.recent.filter((id) => !d.questions.some((q) => q.id === id))].slice(0, QUIZ_RECENT);
         d.jokers = [];
         d.fifty = {};
@@ -384,7 +391,7 @@ export class Quiz extends DurableObject<Env> {
       players,
       n: d.phase === 'lobby' ? 0 : Math.min(d.index + 1, d.questions.length),
       total: d.questions.length || d.count,
-      ...(q ? { question: q.question, options: q.options, cat: q.cat } : {}),
+      ...(q ? { question: q.question, options: q.options, cat: q.cat, qid: q.id } : {}),
       ...(q && reveal ? { correct: q.correct } : {}),
       endsAt: d.endsAt,
       lang: d.lang,
