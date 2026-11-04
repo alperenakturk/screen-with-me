@@ -97,19 +97,22 @@ const sheetName = (page) => page.evaluate(() => {
     const moreTiles = (await page.$$('.ph-sheet .ph-tile')).length;
     check((await sheetName(page)) === 'more' && moreTiles >= 11, 'phone: ⋯ opens the More sheet', String(moreTiles));
     const tileText = await page.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile')].map((b) => b.textContent ?? '').join('|'));
-    check(/Gizlilik|Privacy/.test(tileText), 'phone: ⋯ links the privacy policy (L9; the footer is hidden on phones)', tileText);
+    // R9: one list without doubles: what the profile holds (language, help, feedback, privacy) is not a tile here.
+    const labels = tileText.split('|').map((x) => x.replace(/\s*\d+$/, '').trim());
+    check(new Set(labels).size === labels.length && !/Dil|Language|Gizlilik|Privacy|Yardım|Help|Geri bildirim|feedback/i.test(tileText), 'phone: ⋯ lists every tile once, without the profile\'s language / help / feedback / privacy (R9)', tileText);
     await page.click('.ph-sheet .ph-tile >> nth=2');
     check((await sheetName(page)) === 'people' && (await page.isVisible('.ph-sheet #members')), 'phone: More → People shows the people list');
     // The phone's back button closes a sheet.
     await page.evaluate(() => history.back());
     await page.waitForTimeout(400);
     check((await sheetName(page)) === null && (await page.evaluate(() => !!document.querySelector('.tabs-card [data-panel="people"]'))), 'phone: back closes the sheet, the panel is back in the room');
-    // ⋯ → Language asks which one (0.9.92.8): two choices, nothing switches by itself.
+    // R9: ⋯ → Profile holds the language (TR / EN, nothing switches by itself) and the privacy policy (L9: the footer
+    // is hidden on phones).
     await page.click('#strip-more');
-    await page.click('.ph-sheet .ph-tile:has-text("Dil")');
-    await page.waitForTimeout(300);
-    const langs = await page.evaluate(() => ({ sheet: document.querySelector('.ph-sheet:not([hidden])')?.dataset.sheet, n: document.querySelectorAll('.ph-sheet .ph-lang').length, lang: document.documentElement.lang }));
-    check(langs.sheet === 'language' && langs.n === 2 && langs.lang === 'tr', 'phone: ⋯ → Language asks which one (no switch by itself)', JSON.stringify(langs));
+    await page.click('.ph-sheet .ph-tile:has-text("Profil")');
+    await page.waitForTimeout(400);
+    const prof = await page.evaluate(() => ({ langs: document.querySelectorAll('#profile-lang [data-set-lang]').length, lang: document.documentElement.lang, privacy: !!document.querySelector('#profile-privacy')?.getClientRects().length, href: document.querySelector('#profile-privacy')?.getAttribute('href') }));
+    check(prof.langs === 2 && prof.lang === 'tr' && prof.privacy && /privacy\.html/.test(prof.href ?? ''), 'phone: ⋯ → Profile has the language (TR / EN) and the privacy policy (L9, R9)', JSON.stringify(prof));
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
     // 😀 opens the emoji tray as a bottom sheet; 😀 again closes it.

@@ -119,6 +119,11 @@ Planner to merge them once main is green.
 - Done when: the intro plays once for everyone who enters a room from its link (first entry in that tab), not only for
   the one who created it; still not on a reload, in the shell or on a TV; reduced motion as before.
 - Tests: intro harness (a fresh browser opening `/r/<id>` sees it).
+- Done (0.9.97.16, built by lane B, shipped by lane A): the intro played only when the join step was not skipped, and
+  from the start of the room page, so since R12 someone waiting at the door ran it out behind the waiting card, and a
+  first entry through `#back` (the extension's "open the room") never got it. Now `startRoom` works out `introDue`
+  (not a TV, not the shell, `in:<room>` not yet set in this tab) and plays it on the first `welcome`. Intro harness: an
+  invited fresh browser sees it, a reload doesn't, a `#back` first entry does once, a knocker sees it after being let in.
 
 ### R8. Faster games tutorial and theme previews (owner; lane B)
 - Why: owner: the "How to play" cards appear late, and the theme picker's previews load slowly.
@@ -139,11 +144,23 @@ Planner to merge them once main is green.
   profile (L9).
 - Done when: as above; Help / room-more / phone harnesses updated.
 - Tests: room-more harness, phone harness.
+- Done (0.9.97.16): ⋯ More = Film time (host), Save the room, Today's recap, Keyboard shortcuts (computer), Sync test,
+  Room rules (`roomMoreItems`; Feedback / Help / Privacy left it). The profile menu = language, 📲 Move, name, avatar,
+  theme, saved recaps, and one small line Help · Feedback · Privacy (`.profile-links`, ids kept). "⟳ Reconnect" is gone
+  (the room-name dot and the "can't reach the room" card reconnect); its "Today's recap" button and ⌨️ stay in the
+  page hidden for ⋯ More to press. The phone's ⋯ lost its "Language" tile (⋯ → Profile has English / Türkçe), so each
+  tile shows once. Harnesses: room-more (the ⋯ list, the profile's line, nothing in both), phone (one list, ⋯ → Profile
+  has language + privacy), feedback and help (opened from the profile line).
 
 ### R10. Room games: the window title is not cut in a narrow window (lane B, small)
 - Why: B noticed "Tic-tac-… · started by Alex" in a narrow free window (outside GP's scope).
 - Done when: the game's name always shows in full; "started by …" shortens or goes first.
 - Tests: games harness at the smallest free-window size.
+- Done (0.9.97.16): the head was one line, "name · started by …" as one cut string beside six buttons, so the name went
+  first ("Tic-tac-to…" even at the default 400 px). Now the name and "· started by …" are two parts (the name never
+  shrinks, the rest is cut first, the tooltip has it all), and a table's window under 460 px wraps its head: the title
+  on its own row, the buttons on the next (the side games keep their one-row head, card GP). Checked at the free
+  window's real sizes (400 / 280 / 180 px); games-gallery harness: a narrow window keeps the name whole and inside.
 
 ### R11. Fix: two people with the same name and avatar count as one (owner's bug; lane A)
 - Why: owner: joining his own room from a second browser with the same name and avatar showed one person. Two people

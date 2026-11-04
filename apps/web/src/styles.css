@@ -6808,6 +6808,22 @@ html.shorts-view .footer {
   white-space: nowrap;
 }
 
+/* R10: a table's title is the game's name (never cut) and "· started by …" (cut first) side by side. */
+.game-stage-title-text:has(.game-stage-title-name) {
+  display: flex;
+  min-width: 0;
+}
+.game-stage-title-name {
+  flex: none;
+}
+.game-stage-title-by {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .game-invite-text {
   display: inline-flex;
   align-items: center;
@@ -12486,4 +12502,44 @@ button.chat-name:focus-visible {
 button.chat-name:hover,
 .chat-private-label:hover {
   text-decoration: underline;
+}
+
+/* R9: Help · Feedback · Privacy as one small line at the foot of the profile menu (their only place in a room). */
+.profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+.profile-links a,
+.profile-links .link-btn {
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+.profile-links a:hover,
+.profile-links .link-btn:hover {
+  color: var(--text);
+}
+
+/* R10: a narrow game table's window (a small free window, below 460 px; the side games keep their one-row head, card GP): the title gets the whole first row of the head (the
+   game's name in full, "· started by …" cut first) and the buttons move to a second row, right-aligned. */
+@container gstage (max-width: 460px) {
+  .game-stage:not(.solo-game) .game-stage-head {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 6px 8px;
+  }
+  .game-stage:not(.solo-game) .game-stage-title {
+    flex: 1 0 100%;
+  }
+  .game-stage:not(.solo-game) .game-place {
+    margin-left: auto;
+  }
 }

@@ -287,6 +287,9 @@ function withAvatar(member: { name: string; avatar?: string }): string {
 }
 
 function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false, tv }: { resumed?: boolean; tv?: string } = {}): void {
+  // Card R7: the intro plays on the first entry into this room in this tab, whichever way it came (the join card, an
+  // invite link, `#back` from the extension), never on a reload, in the shell or on a TV. Worked out before `in:` is set.
+  const introDue = !tv && !isShell && sessionLoad(`in:${roomId}`) !== '1';
   // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
   // (A TV takes its person's name and avatar from the server: nothing of its own is saved.)
   if (!tv) {
@@ -629,12 +632,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" data-set-lang="tr">TR</button>
                 <button type="button" data-set-lang="en">EN</button>
               </div>
-              <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
-              <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open">⌨️ ?</button>
-              <a class="btn small-btn" id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link>❔ <span data-i18n="help"></span></a>
-              <a class="btn small-btn" id="profile-privacy" href="/privacy.html" target="_blank" rel="noopener" data-privacy-link>🔒 <span data-i18n="privacy"></span></a>
-              <button type="button" class="btn small-btn" id="profile-feedback">💌 <span data-i18n="feedback"></span></button>
               <button type="button" class="btn small-btn" id="profile-move">📲 <span data-i18n="move.open"></span></button>
+              <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open" hidden>⌨️ ?</button>
             </div>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
@@ -646,11 +645,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="muted small" data-i18n="avatarAutoSave"></p>
             <h4 data-i18n="settings.theme"></h4>
             <div id="settings-themes" class="theme-current"></div>
-            <h4>📊 <span data-i18n="recap.title"></span></h4>
-            <p class="muted small" data-i18n="recap.explain"></p>
-            <button type="button" id="recap-open" class="btn primary recap-open">✨ <span data-i18n="recap.open"></span></button>
+            <button type="button" id="recap-open" class="btn primary recap-open" hidden>✨ <span data-i18n="recap.open"></span></button>
             <h4 class="recap-saved-title" data-i18n="recap.savedTitle"></h4>
             <div id="recap-history" class="recap-history"></div>
+            <!-- R9: Help, Feedback and Privacy live only here (the room's own things are in ⋯ More). -->
+            <p class="profile-links small">
+              <a id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link data-i18n="help"></a>
+              <span aria-hidden="true">·</span>
+              <button type="button" class="link-btn" id="profile-feedback" data-i18n="feedback"></button>
+              <span aria-hidden="true">·</span>
+              <a id="profile-privacy" href="/privacy.html" target="_blank" rel="noopener" data-privacy-link data-i18n="privacy"></a>
+            </p>
           </div>
 
         </section>
@@ -887,10 +892,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       setOpen(false);
       void import('./ui/move-device.ts').then(({ openMoveDialog }) => openMoveDialog());
     });
-    $('#profile-reconnect').addEventListener('click', () => {
-      setOpen(false);
-      reconnectNow();
-    });
     const setOpen = (open: boolean) => {
       // Right edge under the profile picture (⚙️ sits to its right since 0.9.87).
       if (open) pop.style.right = `${Math.max(12, innerWidth - profileButton.getBoundingClientRect().right)}px`;
@@ -938,7 +939,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       openSettings: (section) => settingsDialog.open(section, true),
       press: (selector) => requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(selector)?.click()),
       games: () => requestAnimationFrame(() => (desktop ? pressMoreGame() : document.querySelector<HTMLButtonElement>('#game-btn')?.click())),
-      feedback: () => openFeedbackDialog(document.getElementById(desktop ? 'room-more' : 'strip-more')),
       isHost: amHost,
       hasItem: () => roomEl.classList.contains('has-item'),
       desktop,
@@ -1162,11 +1162,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // The Sidelit intro (card 6f) while the room gets ready; not again after a reload. Its own small chunk (loaded right
   // after joining, it starts its sound with the picture), so the room page stays within its size budget.
-  if (!resumed) {
-    void import('@swm/shared/intro').then(({ INTRO_CSS, createIntro }) => {
+  // Card R7: it starts with the room's first welcome, so someone who waited at the door (R12) sees it once let in
+  // instead of it running out behind the waiting screen. The chunk is fetched now so it starts at once.
+  let introPending = introDue;
+  const intro = introDue ? import('@swm/shared/intro') : null;
+  const playIntro = () => {
+    if (!introPending || !intro) return;
+    introPending = false;
+    void intro.then(({ INTRO_CSS, createIntro }) => {
       if (!document.getElementById('swm-intro-css')) document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
       $('.player-wrap').append(createIntro(document, t('introText')));
     });
+  };
+  if (!resumed) {
     // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
     if (!isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
   }
@@ -1198,6 +1206,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     switch (message.t) {
       case 'welcome':
         myId = message.you;
+        playIntro();
         // R12: let in (or no door at all): the waiting card goes.
         $('#knock-wait').hidden = true;
         // Ayarlar önce: kişi listesi çizilirken kayıt durumu (kaydedilen odalar listesi) doğru bilinsin.

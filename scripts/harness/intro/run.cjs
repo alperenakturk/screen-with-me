@@ -61,6 +61,53 @@ const check = (ok, label, extra = '') => {
   check(moving === 0, 'reduced motion: only the whole frame fades, nothing moves', String(moving));
   check(r0.glow === 1 && r0.eyes === 1 && r0.text === 1 && r0.light > 0.4 && r0.logoX === r1.logoX, 'reduced motion: one still frame with every part', JSON.stringify(r0));
 
+  // Card R7: everyone who enters a room in a tab for the first time sees it (an invited friend in a fresh browser, a
+  // tab opened with #back from the extension), never on a reload of that tab.
+  const guestCtx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  await guestCtx.addInitScript(() => {
+    localStorage.setItem('tipsSeen', '1');
+    localStorage.setItem('lang', 'en');
+    localStorage.setItem('opt:autoInvite', '0');
+  });
+  const guest = await guestCtx.newPage();
+  const roomPath = await page.evaluate(() => location.pathname);
+  await guest.goto(`${SITE}${roomPath}`);
+  await guest.fill('#name', 'Sam');
+  await guest.click('#name-form button.primary');
+  check(await guest.waitForSelector('.swm-intro', { timeout: 5000 }).then(() => true, () => false), 'an invited friend (a fresh browser opening the room\'s link) sees it');
+  await guest.waitForFunction(() => !document.querySelector('.swm-intro'), null, { timeout: 6000 }).catch(() => {});
+  await guest.reload();
+  await guest.waitForSelector('.room');
+  await guest.waitForTimeout(2500);
+  check(!(await guest.$('.swm-intro')), 'not again on a reload of that tab');
+  const back = await guestCtx.newPage();
+  await back.goto(`${SITE}${roomPath}#back`);
+  check(await back.waitForSelector('.swm-intro', { timeout: 6000 }).then(() => true, () => false), 'a new tab opened with #back (the extension\'s "open the room") sees it once');
+
+  // Someone who waits at the door (R12, "ask before letting people in") sees it once let in, not behind the wait.
+  await page.evaluate(() => {
+    const box = document.getElementById('opt-knock');
+    box.checked = true;
+    box.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.waitForTimeout(500);
+  const knockCtx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  await knockCtx.addInitScript(() => {
+    localStorage.setItem('tipsSeen', '1');
+    localStorage.setItem('lang', 'en');
+    localStorage.setItem('opt:autoInvite', '0');
+  });
+  const knocker = await knockCtx.newPage();
+  await knocker.goto(`${SITE}${roomPath}`);
+  await knocker.fill('#name', 'Kim');
+  await knocker.click('#name-form button.primary');
+  await knocker.waitForSelector('#knock-wait:not([hidden])', { timeout: 6000 }).catch(() => {});
+  await knocker.waitForTimeout(3500);
+  const behind = !!(await knocker.$('.swm-intro'));
+  await page.click('.knock-allow', { timeout: 6000 }).catch(() => {});
+  const after = await knocker.waitForSelector('.swm-intro', { timeout: 6000 }).then(() => true, () => false);
+  check(!behind && after, 'waiting at the door: not behind the wait screen, it plays once let in', JSON.stringify({ behind, after }));
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ The Sidelit intro plays on its beats');
   process.exit(fails ? 1 : 0);

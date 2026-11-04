@@ -255,23 +255,10 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
           closeSheet();
           deps.openSettings('view');
         }),
-        // "Language" asks which one (0.9.92.8, owner: it used to switch at once, which was confusing).
-        tile('🌐', t('phone.more.language'), () => openLanguage()),
+        // R9: no "Language" tile here any more: the profile (one tile up) has English / Türkçe, so it was there twice.
       ),
     );
     openSheet({ name: 'more', nodes });
-  }
-
-  function openLanguage(): void {
-    const choice = (code: 'en' | 'tr', label: string) => {
-      const button = el('button', { type: 'button', class: `ph-lang${html.lang === code ? ' on' : ''}`, 'aria-pressed': String(html.lang === code) }, label);
-      button.addEventListener('click', () => {
-        closeSheet();
-        if (html.lang !== code) document.querySelector<HTMLButtonElement>(`.topbar [data-lang="${code}"]`)?.click();
-      });
-      return button;
-    };
-    openSheet({ name: 'language', title: t('phone.more.language'), nodes: [el('div', { class: 'ph-langs' }, choice('en', 'English'), choice('tr', 'Türkçe'))] });
   }
 
   function openPeople(): void {

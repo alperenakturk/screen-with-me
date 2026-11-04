@@ -423,8 +423,10 @@ export function createGameStage(opts: StageOptions) {
     stage.classList.toggle('solo-game', !current && !!solo);
     if (current) {
       titleIcon.replaceChildren(gameIcon(current.kind));
-      titleText.textContent = `${titleOf(current.kind)} · ${t('game.by', { name: current.by.name })}`;
-      title.title = '';
+      // R10: the game's name never shrinks; only "· started by …" gets cut in a narrow window (the tooltip has it all).
+      const by = t('game.by', { name: current.by.name });
+      titleText.replaceChildren(el('span', { class: 'game-stage-title-name' }, titleOf(current.kind)), el('span', { class: 'game-stage-title-by' }, `\u00a0· ${by}`));
+      title.title = `${titleOf(current.kind)} · ${by}`;
       endButton.node.hidden = !canClose(current);
     } else if (solo) {
       titleIcon.replaceChildren(soloIcon(solo));
