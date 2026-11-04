@@ -433,6 +433,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
+- [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
+  ready", "Knock", "A private message", "My connection drops". Each line turns ✓ (the self-test turns ✗ on purpose);
+  the fake friends leave by themselves afterwards. Tell the Planner any ✗ with its reason.
+
 **0.9.97.54 (🐞 Test Lab, step DL4: 🎬 Video & network):**
 - [ ] In a room with `?debug=1` on, add a fake friend (👥) and start the sync test. Then 🐞 → 🎬: "drop my connection"
   (the room dot turns yellow, after 6 s it is green again and the friend is still there), "the server restarted"
