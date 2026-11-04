@@ -269,7 +269,8 @@ export class PollHub {
       if (!socket.holding && (now - socket.seen > IDLE_MS || (!socket.polled && now - socket.openedAt > FIRST_POLL_MS))) {
         this.forget(socket);
         socket.markClosed(1006, 'idle');
-        void this.handlers.closed(socket as unknown as WebSocket, 1006);
+        // R4-7: through `finish`, so a throwing close handler never becomes an unhandled rejection.
+        void this.finish(socket, 1006);
       }
     }
     if (this.sessions.size === 0 && this.sweeper !== null) {

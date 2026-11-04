@@ -23,11 +23,16 @@ permissions:
   contents: read
 
 jobs:
-  # What changed: `code` = anything besides docs (`docs/**`, `*.md`); `web` = the site, the shared code, the harnesses
-  # or this workflow (the browser harnesses run only then). A manual run, or a base it can't find, runs everything.
+  # What changed (scripts/ci-changes.mjs): `code` = anything besides docs (`docs/**`, `*.md`); `web` = the site, the
+  # shared code, the harnesses or the workflows (the browser harnesses run only then). On main the range starts at the
+  # last successful run on main, not at this push: the concurrency group keeps one pending run, so a newer push cancels
+  # an older pending one, and a docs-only push after a cancelled code push must still test and deploy that code.
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     outputs:
       code: ${{ steps.diff.outputs.code }}
       web: ${{ steps.diff.outputs.web }}
@@ -36,25 +41,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check the change detection
+        run: node --test scripts/ci-changes.test.mjs
+
       - id: diff
         env:
           EVENT: ${{ github.event_name }}
-          BEFORE: ${{ github.event.before }}
-        run: |
-          # A PR's checkout is its merge commit: its first parent is the base branch, so HEAD^1..HEAD is the PR's change.
-          if [ "$EVENT" = pull_request ]; then base=HEAD^1; else base="$BEFORE"; fi
-          if [ "$EVENT" = workflow_dispatch ] || [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-            echo "code=true" >> "$GITHUB_OUTPUT"; echo "web=true" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          files=$(git diff --name-only "$base" HEAD)
-          echo "$files"
-          code=false; web=false
-          if [ -n "$files" ]; then
-            printf '%s\n' "$files" | grep -qvE '^docs/|\.md$' && code=true
-            printf '%s\n' "$files" | grep -qE '^(apps/web/|packages/shared/|scripts/harness/|\.github/workflows/)' && web=true
-          fi
-          echo "code=$code" >> "$GITHUB_OUTPUT"; echo "web=$web" >> "$GITHUB_OUTPUT"
-          echo "code=$code web=$web"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci-changes.mjs
 
   test:
     needs: changes
@@ -127,7 +121,9 @@ jobs:
       # Card DL: the 🐞 Test Lab (drawer, command box, status, log, bug text) and that with it off nothing of it loads.
       - name: Test Lab
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
-        run: node scripts/harness/test-lab/run.cjs http://localhost:8787
+        run: |
+          node scripts/harness/test-lab/run.cjs http://localhost:8787
+          node scripts/harness/lab-friends/run.cjs http://localhost:8787
 
       # Card DL3a: the Test Lab's game tools (open any game, side-game cheats on a sandbox save, restore my real saves).
       - name: Test Lab games

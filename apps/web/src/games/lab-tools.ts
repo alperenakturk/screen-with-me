@@ -71,7 +71,7 @@ export const labTicks = (): number => labClock.speed;
 const SOLO_NAMES: Record<SoloKind, string> = { snack: 'Snack Bar', garden: 'Window Garden', word: 'Five Frames' };
 
 /** The hall's commands, registered once by the games stage. */
-export function registerGamesLab(api: { openTable: (kind: RoomGameKind) => void; openSolo: (kind: SoloKind) => void; inRoom: () => true | string }): () => void {
+export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSolo: (kind: SoloKind) => Promise<void>): () => void {
   return debugHooks.register('games', () => {
     const commands: LabCommand[] = [
       ...ROOM_GAME_KINDS.map((kind): LabCommand => ({
@@ -80,8 +80,7 @@ export function registerGamesLab(api: { openTable: (kind: RoomGameKind) => void;
         help: 'Opens this game as a table in the room, as the hall would.',
         tab: 'games',
         where: 'in a room',
-        available: api.inRoom,
-        run: () => api.openTable(kind),
+        run: () => openTable(kind),
       })),
       ...SOLO_KINDS.map((kind): LabCommand => ({
         id: `games.open.${kind}`,
@@ -89,8 +88,7 @@ export function registerGamesLab(api: { openTable: (kind: RoomGameKind) => void;
         help: 'Opens this side game in the game window.',
         tab: 'games',
         where: 'in a room',
-        available: api.inRoom,
-        run: () => api.openSolo(kind),
+        run: () => void openSolo(kind),
       })),
       {
         id: 'games.speed',

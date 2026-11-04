@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { BoardState, Cell } from './board.ts';
 import { botMove, movesOf } from './bot.ts';
 import { newGame as newDama } from './dama.ts';
+import { newGame as newChess, play as playChess, type ChessState } from './chess.ts';
 import { newGame as newFour, play as playFour } from './four.ts';
 import { newGame as newXox } from './xox.ts';
 
@@ -51,5 +52,35 @@ describe('Glowbeam bot', () => {
     const s = newDama();
     const m = botMove('dama', s, 2, first)!;
     expect(movesOf('dama', s)).toContain(m);
+  });
+
+  it('Chess: a legal move at the start; medium takes a free queen and mates in one', () => {
+    const s = newChess();
+    expect(movesOf('chess', s)).toContain(botMove('chess', s, 1, first)!);
+    // White queen on d4 en prise to the black knight on f5 (nothing defends it).
+    const sq = (name: string) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
+    const empty = (): ChessState => ({ ...newChess(), board: Array(64).fill(null), kinds: '.'.repeat(64), castle: '', seen: [] });
+    const put = (st: ChessState, cell: string, mark: 'X' | 'O', kind: string) => {
+      st.board[sq(cell)] = mark;
+      st.kinds = st.kinds.slice(0, sq(cell)) + kind + st.kinds.slice(sq(cell) + 1);
+    };
+    const free = empty();
+    put(free, 'e1', 'X', 'k');
+    put(free, 'd4', 'X', 'q');
+    put(free, 'e8', 'O', 'k');
+    put(free, 'f5', 'O', 'n');
+    free.turn = 'O';
+    expect(botMove('chess', free, 2, first)).toBe(sq('f5') * 64 + sq('d4'));
+    // Back-rank mate: Ra1-a8#.
+    const mate = empty();
+    put(mate, 'g1', 'X', 'k');
+    put(mate, 'a1', 'X', 'r');
+    put(mate, 'g8', 'O', 'k');
+    put(mate, 'f7', 'O', 'p');
+    put(mate, 'g7', 'O', 'p');
+    put(mate, 'h7', 'O', 'p');
+    const m = botMove('chess', mate, 2, first)!;
+    expect(m).toBe(sq('a1') * 64 + sq('a8'));
+    expect(playChess(mate, 'X', m)!.end).toBe('mate');
   });
 });

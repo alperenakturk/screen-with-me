@@ -16,6 +16,8 @@ export interface DebugRoom {
   jumps: number;
   people: number;
   kind: string | null;
+  /** The room's 👑 Make host message (the lab's fake friends, DL2); the server refuses anyone but the host. */
+  makeHost?: (id: string) => void;
 }
 
 let roomSource: (() => DebugRoom) | null = null;

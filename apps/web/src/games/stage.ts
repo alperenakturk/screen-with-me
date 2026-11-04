@@ -109,13 +109,13 @@ interface StageOptions {
 }
 
 /** The Test Lab is switched on in this tab (the same switch `debug-lab.ts` keeps). */
-function labIsOn(): boolean {
+const labIsOn = (): boolean => {
   try {
-    return sessionStorage.getItem('swm:debug') === '1';
+    return sessionStorage.getItem('swm:debug') == '1';
   } catch {
     return false;
   }
-}
+};
 
 export function createGameStage(opts: StageOptions) {
   const { wrap, button, menu, send } = opts;
@@ -501,14 +501,7 @@ export function createGameStage(opts: StageOptions) {
           void open(table);
         },
         close: (id) => void endTable(id),
-        openTable: (kind) => {
-          wanted = kind;
-          wantedAt = Date.now();
-          // Card R1: pressed while the room connection was reconnecting (a deploy, a network blip) the request used to
-          // be lost and the game opened only on the second press: it goes out again once the room is back.
-          wantedUnsent = send({ t: 'table', open: kind }) === false;
-          setHub(false);
-        },
+        openTable,
         openSolo: (kind) => {
           setHub(false);
           void openSolo(kind);
@@ -538,6 +531,15 @@ export function createGameStage(opts: StageOptions) {
     void import('./snack-bar.ts').catch(() => (soloWarm = false));
     void import('./garden.ts').catch(() => (soloWarm = false));
     void import('./five-frames.ts').catch(() => (soloWarm = false));
+  }
+
+  function openTable(kind: RoomGameKind): void {
+    wanted = kind;
+    wantedAt = Date.now();
+    // Card R1: pressed while the room connection was reconnecting (a deploy, a network blip) the request used to
+    // be lost and the game opened only on the second press: it goes out again once the room is back.
+    wantedUnsent = send({ t: 'table', open: kind }) === false;
+    setHub(false);
   }
 
   function setHub(show: boolean): void {
@@ -756,15 +758,7 @@ export function createGameStage(opts: StageOptions) {
     lab: labIsOn()
       ? void import('./lab-tools.ts').then((m) => {
           labRoom = m.labRoom;
-          m.registerGamesLab({
-            openTable: (kind) => {
-              wanted = kind;
-              wantedAt = Date.now();
-              wantedUnsent = send({ t: 'table', open: kind }) === false;
-            },
-            openSolo: (kind) => void openSolo(kind),
-            inRoom: () => true,
-          });
+          m.registerGamesLab(openTable, openSolo);
         })
       : undefined,
     /** Opens a solo game (the room's ⋯ menu or a test). */
