@@ -433,7 +433,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.97.39 (shortcuts right after a click in the player, card R26):**
+**0.9.97.42 (shortcuts right after a click in the player, card R26):**
 - [ ] In a room with a YouTube video, click on the video (play / pause), then press Enter at once: the cursor is in the
   message box. The same with 1 (an emoji), P (pin) and T; in fullscreen too. YouTube's seek bar, ⚙ settings and
   captions still work by mouse. On a film page with the extension: click on the film, press Enter: the message box
