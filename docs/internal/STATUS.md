@@ -433,6 +433,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.53 (card BH8: the backup connection's idle sessions):**
+- [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
+  while someone on the backup connection closes their tab.
+
 **0.9.97.49 (security review 4: R4-2, R4-3, R4-5):**
 - [ ] Nothing to see in the room: rooms open and join as before; `/connection` still runs all its rows ("200 kB answer"
   included).
