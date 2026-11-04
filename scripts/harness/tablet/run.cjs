@@ -167,7 +167,7 @@ function uprightChecks(where, m) {
       await page.evaluate(() => document.querySelector('#dock-game')?.click());
       await page.waitForSelector('#game-menu:not([hidden])');
       await page.waitForTimeout(400);
-      await page.evaluate(() => document.querySelector('#game-menu [data-kind="xox"], #game-menu [data-game="xox"]')?.click());
+      await page.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]')?.click());
       await page.waitForSelector('#game-stage:not([hidden])', { timeout: 5000 }).catch(() => {});
       await page.waitForTimeout(800);
       const game = await page.evaluate(() => {

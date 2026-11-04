@@ -61,7 +61,10 @@ const move = (page) =>
     await new Promise((r) => setTimeout(r, 300));
     document.querySelector('#game-menu [data-tab="together"]')?.click();
     await new Promise((r) => setTimeout(r, 150));
-    document.querySelector('#game-menu [data-kind="xox"]')?.click();
+    // XOX lives on the Classics shelf (the hall has one Classics card).
+    document.querySelector('#game-menu [data-kind="classics"]')?.click();
+    for (let i = 0; i < 60 && !document.querySelector('#game-stage .cl-box[data-board="xox"]'); i++) await new Promise((r) => setTimeout(r, 100));
+    document.querySelector('#game-stage .cl-box[data-board="xox"]')?.click();
   });
   check(!!(await until(() => alex.evaluate(() => !!document.querySelector('#game-stage .xox-cell')), 8000)), 'Alex opens XOX');
   await wait(1500);
