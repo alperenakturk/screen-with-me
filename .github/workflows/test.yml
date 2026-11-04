@@ -64,6 +64,10 @@ jobs:
           npx playwright install --with-deps chromium
           node scripts/harness/a11y/run.cjs http://localhost:8787
 
+      # Card DL: the 🐞 Test Lab (drawer, command box, status, log, bug text) and that with it off nothing of it loads.
+      - name: Test Lab
+        run: node scripts/harness/test-lab/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: cat wrangler.log || true

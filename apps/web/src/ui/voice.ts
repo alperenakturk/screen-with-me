@@ -18,6 +18,7 @@ import { setIcon } from './icons.ts';
 import { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
+import { debugHooks } from '../debug-lab.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
 const RPC_TIMEOUT_MS = 12_000;
@@ -212,6 +213,13 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let mode: VoiceMode = 'p2p';
   let p2p: P2pVoice | null = null;
   let ext: ExtVoice | null = null;
+  // 🐞 Test Lab: each voice connection's state (ids shortened; read only).
+  debugHooks.register('voice', () => ({
+    status: () => {
+      const peers = p2p?.peerStates() ?? [];
+      return [['Voice peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : ext ? 'on the film page (extension)' : 'none']];
+    },
+  }));
   /** Sunucu sesi destekliyor mu / eklenti katmanda sesi destekliyor mu (sadece kabukta gerekir). */
   let serverVoice = false;
   let extVoice = false;

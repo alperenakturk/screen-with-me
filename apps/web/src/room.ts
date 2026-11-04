@@ -91,7 +91,7 @@ import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
-import { setDebugRoom } from './debug-lab.ts';
+import { debugHooks, debugTap, setDebugRoom } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
@@ -813,7 +813,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   setFilmPlaying(() => !!roomState?.item && !roomState.paused);
   const joinFilter = new JoinFilter();
 
-  const send = (message: ClientMessage) => connection.send(message);
+  const send = (message: ClientMessage) => {
+    debugTap('out', message);
+    return connection.send(message);
+  };
   // Üst çubukta odanın adı (kayıtlı odada adı, değilse kodu) ve kaç kişi olduğu.
   // Odadayken üst çubuk sade: bağlantı durumu oda adının noktasında (basınca yeniden bağlanır), tema/dil/⟳ profil
   // menüsünde (styles.css `in-room`).
@@ -1130,6 +1133,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   // Hidden test panel (card 12): its live numbers; never names or ids.
   setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null }));
+  // 🐞 Test Lab (card DL): the room's own status lines (the factory only runs while the lab is open).
+  debugHooks.register('room', () => ({
+    status: () => [
+      ['Clock offset', clock.synced ? `${Math.round(clock.offsetMs)} ms (rtt ${clock.rtt ?? '?'} ms)` : 'not synced yet'],
+      ['Playback', roomState?.item ? `${roomState.paused ? 'paused' : 'playing'} at ${(roomState.position).toFixed(1)} s ×${roomState.rate}` : 'nothing'],
+      ['Members', String(members.length)],
+      ['Host', myId && hostId === myId ? 'me' : hostId ? 'someone else' : '—'],
+    ],
+  }));
   /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */
   let tvRoom: ReturnType<typeof createTvRoom> | null = null;
   let tvRemote: ReturnType<typeof createTvRemote> | null = null;
@@ -1246,6 +1258,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
 
   function handleMessage(message: ServerMessage): void {
+    debugTap('in', message);
     switch (message.t) {
       case 'welcome':
         myId = message.you;

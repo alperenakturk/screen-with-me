@@ -87,6 +87,11 @@ export class LiveP2p {
 
   constructor(private readonly options: LiveOptions) {}
 
+  /** For the 🐞 Test Lab: each stream connection's state (read only). */
+  peerStates(): { id: string; state: RTCPeerConnectionState; ice: RTCIceConnectionState }[] {
+    return [...this.peers].map(([id, peer]) => ({ id, state: peer.pc.connectionState, ice: peer.pc.iceConnectionState }));
+  }
+
   get broadcasting(): LiveKind | null {
     return this.kind;
   }
