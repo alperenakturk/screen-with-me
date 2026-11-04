@@ -93,3 +93,25 @@ The others were already style hints and keep their silhouettes, hair, colours an
    - the chat at 28 px, the faces strip, the Shorts seats at 52 / 80 px, the join card at 84 px;
    - the unit test for avatar pages;
    - the size budget (SVGs are static files, not in the JS budget).
+
+## R20: a new sponge and a friendlier squid (owner, 4 Nov 2026)
+The owner asked for two faces to change and kept the others: "change only the sponge, the others are okay" and, for the
+squid, "change it too, it's very creepy now". `starfish` stays as it is. Pick page (old → options, recommended
+marked): https://claude.ai/artifact/6GRmQNs9ntXHJr6cQ6bs9s (copy: `avatars-2/r20/preview.html`).
+
+Options are in `avatars-2/r20/` (`sponge-A|B|C.svg`, `squid-A|B|C.svg`). They are made by `r20/draw.py` with the same
+badge as `full.mjs`, and their ids are already prefixed `sponge-` / `squid-`.
+- **Sponge**, the same face in all three: a wavy yellow body with pores, big blue eyes with lashes, two front teeth and
+  freckled cheeks.
+  - A: a collar and short brown shorts, no tie (recommended).
+  - B: a small white sailor cap and no clothes.
+  - C: A, waving.
+- **Squid**: the red pupils, heavy lids and sulky mouth are gone. Each option has dark pupils with highlights, pink
+  cheeks, a smile and warm backgrounds.
+  - A: calm, soft lids, on a peach background.
+  - B: wide friendly eyes, an open smile and a coral beret (recommended).
+  - C: happy closed eyes, playing a small clarinet.
+
+**After the owner's pick:** copy the chosen file to `avatars-2/full/<id>.svg` (sponge to `avatars-2/A/sponge.svg`
+too, because `full.mjs` takes the hand-drawn file from `A/` first). Then Developer A runs `node scripts/avatars.mjs`.
+The ids and avatar pages are unchanged.
