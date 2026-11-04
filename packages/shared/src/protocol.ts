@@ -66,6 +66,23 @@ export const DRAWN_AVATARS = {
   horseman: '🏹',
   veiled: '🧕',
   sorceress: '🧙‍♀️',
+  detective: '🕵️',
+  pirate: '🏴‍☠️',
+  astronaut: '🧑‍🚀',
+  inventor: '🔧',
+  ninja: '🥷',
+  cowboy: '🤠',
+  vampire: '🧛',
+  robot: '🤖',
+  hero: '🦸',
+  explorer: '🧭',
+  chef: '🧑‍🍳',
+  rocker: '🎸',
+  ghost: '👻',
+  alien: '👽',
+  samurai: '⚔️',
+  fairy: '🧚',
+  spy: '🕶️',
   armadillo: '🐾',
   director: '🎬',
   diva: '🎭',
@@ -88,8 +105,8 @@ export const AVATAR_PAGES = [
     'janissary', 'horseman', 'veiled', 'director', 'diva', 'driver', 'captain', 'conductor',
   ],
   // Card R20: the parody pages are gone (copyright audit, docs/internal/research/ip-audit.md); "Genres" holds our own
-  // genre archetypes (Design is drawing more).
-  ['armadillo'],
+  // genre archetypes (Design's avatars-3, the owner's 17 of 18).
+  ['detective', 'pirate', 'astronaut', 'inventor', 'ninja', 'cowboy', 'vampire', 'robot', 'hero', 'explorer', 'chef', 'rocker', 'ghost', 'alien', 'samurai', 'fairy', 'spy', 'armadillo'],
 ] as const;
 
 /**

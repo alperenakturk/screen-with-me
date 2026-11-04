@@ -285,6 +285,12 @@ for (const file of readdirSync(REDRAW).filter((f) => f.endsWith('.svg'))) {
   AVATARS[file.slice(0, -4)] = readFileSync(new URL(file, REDRAW), 'utf8');
 }
 
+// Card R20: the Genres tab is Design's own archetypes (docs/internal/design/avatars-3/svg/, the owner's pick).
+const GENRES = new URL('../docs/internal/design/avatars-3/svg/', import.meta.url);
+for (const file of readdirSync(GENRES).filter((f) => f.endsWith('.svg'))) {
+  AVATARS[file.slice(0, -4)] = readFileSync(new URL(file, GENRES), 'utf8');
+}
+
 for (const [id, content] of Object.entries(AVATARS)) {
   for (const out of OUTS) writeFileSync(new URL(`${id}.svg`, out), content.replace(/\n\s*\n/g, '\n'));
 }
