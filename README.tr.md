@@ -145,7 +145,7 @@ Bir güvenlik ya da gizlilik sorunu mu buldun? Lütfen herkese açık bir issue 
 
 | Kontrol | Neyi kapsıyor |
 |---|---|
-| Birim testleri (`npm test`) | 391 geçiyor: sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, oyun kuralları, ses kuralları, HTTP yedeği, özet, video puanlama |
+| Birim testleri (`npm test`) | 410 geçiyor: sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, oyun kuralları, ses kuralları, HTTP yedeği, özet, video puanlama |
 | Uçtan uca (`npm run e2e`, CI'da önce yerel sonra canlı sunucuya karşı) | Gerçek sunucu koduna karşı sahte kullanıcılar: sıra, sohbet, resimler, yönetici ve odadan çıkarma, devir, herkes hazır, pinler, özel emojiler, yönetici modları, kayıtlı odalar, özet, Shorts, arama, ses / yayın sinyalleşmesi, bütün oyunlar, HTTP yedeği |
 | Eklentiyle gerçek Chrome (`scripts/harness/embed`) | Film sayfasındaki oda katmanı: boşluğun yerleşmesi, sayfanın hiç görünmemesi, saydam mesajlar, filmin kendi çubuğunun korunması, dock, video seçimi, reklam sekmeleri, yönlendirmeler, ön-reklamlar |
 | Gerçek ses, kamera ve yayın (`scripts/harness/voice`) | Sahte cihazlı iki Chrome: gelen sesin enerjisi ve kamera kareleri ölçülür, sitede ve film sayfalarında; serbest kamera / yayın pencereleri; doğrudan bağlantıyı engelleyen tarayıcılar |

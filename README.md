@@ -144,7 +144,7 @@ the address in [SECURITY.md](SECURITY.md).
 
 | Check | What it covers |
 |---|---|
-| Unit tests (`npm test`) | 391 passing: sync engine with a fake clock and player, protocol validation, room rules, ready check, game rules, sound policy, the HTTP fallback, recap, video scoring |
+| Unit tests (`npm test`) | 410 passing: sync engine with a fake clock and player, protocol validation, room rules, ready check, game rules, sound policy, the HTTP fallback, recap, video scoring |
 | End-to-end (`npm run e2e`, in CI against a local and then the live server) | Fake users against the real server code: queue, chat, images, host and kick, handover, ready check, pins, custom emojis, host modes, saved rooms, recap, Shorts, search, voice / stream signalling, every game, the HTTP fallback |
 | Real Chrome with the extension (`scripts/harness/embed`) | The room layer over a film page: hole placement, no page flash, see-through messages, the film's own bar kept, the dock, video picker, ad tabs, redirects, pre-roll ads |
 | Real voice, cameras and streams (`scripts/harness/voice`) | Two Chromes with fake devices: received audio energy and camera frames are measured, on the site and on film pages; free camera / stream windows; browsers that block direct connections |
