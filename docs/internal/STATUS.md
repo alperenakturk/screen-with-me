@@ -606,7 +606,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
-- [ ] 0.9.97.x Tip jar and cuttings (side games 2, picks 5 + 8), with a friend: both open Snack Bar while a video plays
+- [ ] 0.9.97.32 Tip jar and cuttings (side games 2, picks 5 + 8), with a friend: both open Snack Bar while a video plays
   and serve: a 🫙 pill shows how full the room's jar is; when it fills, both get a note and the pill says +10 % until the
   film ends. Then open Window Garden with a plant in bloom: "🎁 Give a cutting" → your friend's name. Your friend gets a
   note with the garden closed; in their Window Garden an empty pot offers "🎁 <plant>" and plants it. A bloom gives only one.
