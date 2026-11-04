@@ -312,3 +312,13 @@ describe('Snack Bar: places and decorations (side games 2)', () => {
     expect(loadSnack({ ...JSON.parse(saveSnack(save)), decor: ['marquee', 'marquee', 'castle'] }).decor).toEqual(['marquee']);
   });
 });
+
+describe('the room\'s tip jar (side games 2, pick 5)', () => {
+  it('a full jar adds 10 % for this film', async () => {
+    const { TIP_BOOST } = await import('./snack-bar.ts');
+    const save = freshSnack();
+    const plain = incomeRate(save, alone);
+    expect(incomeRate(save, { ...alone, boost: true })).toBeCloseTo(plain * (1 + TIP_BOOST));
+    expect(incomeRate(save, { ...alone, playing: false, boost: true })).toBe(0);
+  });
+});

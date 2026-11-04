@@ -309,3 +309,30 @@ describe('Window Garden: decorations and night visitors (side games 2)', () => {
     expect(loadGarden({ ...JSON.parse(saveGarden(garden)), visitors: ['firefly', 'dragon'], decor: ['lantern', 'pool'] })).toMatchObject({ visitors: ['firefly'], decor: ['lantern'] });
   });
 });
+
+describe('cuttings for friends (side games 2, pick 8)', () => {
+  it('gives one cutting per bloom, and a friend plants it', async () => {
+    const { canGift, giveCutting, plantGift, receiveCutting, GIFT_SEEDS_MAX } = await import('./garden.ts');
+    const garden = freshGarden();
+    garden.pots[0] = { plant: 'mint', growth: 1, water: 1 };
+    expect(canGift(garden, 0)).toBe(true);
+    expect(giveCutting(garden, 0)).toBe('mint');
+    expect(canGift(garden, 0)).toBe(false);
+    expect(giveCutting(garden, 0)).toBeNull();
+    garden.pots[1] = { plant: 'mint', growth: 0.5, water: 1 };
+    expect(canGift(garden, 1)).toBe(false);
+
+    const friend = freshGarden();
+    expect(receiveCutting(friend, 'mint', 'Alex')).toBe(true);
+    expect(receiveCutting(friend, 'dragon' as never, 'Alex')).toBe(false);
+    expect(plantGift(friend, 0, 0)).toBeNull();
+    expect(plantGift(friend, 1, 0)).toEqual({ plant: 'mint', from: 'Alex' });
+    expect(friend.pots[1]).toMatchObject({ plant: 'mint', growth: 0 });
+    expect(friend.giftSeeds).toEqual([]);
+    for (let i = 0; i < GIFT_SEEDS_MAX + 2; i++) receiveCutting(friend, 'fern', 'Sam');
+    expect(friend.giftSeeds).toHaveLength(GIFT_SEEDS_MAX);
+    const loaded = loadGarden({ ...JSON.parse(saveGarden(garden)), giftSeeds: [{ plant: 'fern', from: 'Sam' }, { plant: 'x', from: 1 }] });
+    expect(loaded.giftSeeds).toEqual([{ plant: 'fern', from: 'Sam' }]);
+    expect(loaded.pots[0]?.gifted).toBe(true);
+  });
+});
