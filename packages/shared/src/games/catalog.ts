@@ -77,7 +77,7 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
-    v: '0.9.97.34',
+    v: '0.9.97.35',
     kinds: ['classics'],
     badge: 'new',
     tr: 'Yeni: 🎲 Klasikler. XOX, Dört Taş ve yeni dama tek masada, raftan seç. Yalnızsan Glowbeam’e karşı oyna (kolay / orta); Glowbeam hakemlik de yapıyor.',

@@ -606,7 +606,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
-- [ ] 0.9.97.34 Classics: open 🎮 → Together: there is one "Classics" card (no separate XOX / Four in a Row). Open it: a
+- [ ] 0.9.97.35 Classics: open 🎮 → Together: there is one "Classics" card (no separate XOX / Four in a Row). Open it: a
   shelf of boxes (XOX, Four in a Row, Dama; chess and backgammon say "soon"). Pick Dama alone: "Play against Glowbeam"
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
