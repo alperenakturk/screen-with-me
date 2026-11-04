@@ -6,6 +6,11 @@ interface Env {
   REALTIME_APP_SECRET?: string;
   /** "off": sesli sohbet her yerde kapanır (bütçe freni / acil durum). */
   VOICE?: string;
+  /**
+   * CI diet: `wrangler dev --var SWM_LOCAL_UNPACED:1` (CI's local server only, never in wrangler.jsonc or live) lets a
+   * localhost run skip the per-IP connection limit, so the e2e files need no minute-long pauses between them.
+   */
+  SWM_LOCAL_UNPACED?: string;
   /** Connections per IP and minute (Workers rate limiting binding; missing in old configs = no limit). */
   CONNECT_LIMIT?: RateLimit;
   /** YouTube Data API v3 key (repo secret, passed by the deploy job): without it the link box only takes links. */

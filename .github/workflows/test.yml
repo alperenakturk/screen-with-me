@@ -4,11 +4,19 @@
 # live (deploy job). Can also be started by hand from the Actions tab ("Run workflow").
 name: Tests
 
+# CI diet (Nov 2026, Actions minutes): docs-only changes run nothing; a new push to a PR cancels its older run.
 on:
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '**/*.md']
   pull_request:
+    paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Only PR runs are cancelled; a run on main always finishes (it deploys).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Read-only token: the jobs only check out the code; deploys use the Cloudflare token (security review 2, L10).
 permissions:
@@ -46,7 +54,8 @@ jobs:
       - name: Start local server
         working-directory: apps/server
         run: |
-          npx wrangler dev --port 8787 > ../../wrangler.log 2>&1 &
+          # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
+          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 > ../../wrangler.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
             sleep 1
@@ -54,10 +63,19 @@ jobs:
           echo "server did not start"; cat ../../wrangler.log; exit 1
 
       - name: End-to-end tests
+        env:
+          SWM_E2E_UNPACED: '1'
         run: npm run e2e
 
       # Card A11y: axe-core (WCAG 2.1 A + AA) on home, help, join, room, settings, invite, games hall, tic-tac-toe and
       # the first tips, plus a keyboard tour. axe-core and Playwright are installed for this step only (not site deps).
+      # The browser download is cached between runs (its system libraries are still installed each time).
+      - name: Cache Playwright's browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium
+
       - name: Accessibility (axe + keyboard tour)
         run: |
           npm i --no-save --no-audit --no-fund axe-core@4.10.2 playwright@1.63.0
