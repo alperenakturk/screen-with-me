@@ -538,6 +538,8 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.15 R8: 🎮 → On the side → pick a game you never opened: the "How to play" cards are there at once. Open the
+  profile menu, then "Change theme": every preview picture is already there.
 - [ ] 0.9.97.13 R6: the invite window has no "show this when I'm alone" tick box; ⚙️ My screen has "Open the invite
   window when I'm alone in a room" (on); turn it off: a new empty room opens without the window.
 - [ ] 0.9.97.13 R5 (update the extension first): on a film page, out of fullscreen, move the mouse slowly to the right

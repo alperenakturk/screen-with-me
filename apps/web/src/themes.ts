@@ -160,6 +160,7 @@ export function renderThemePicker(container: HTMLElement): void {
  * basınca tema hemen arkada uygulanır (canlı önizleme); "Tamam", Esc ya da dışarısı kapatır.
  */
 export function openThemeDialog(): void {
+  warmThemePreviews();
   const grid = el('div', { class: 'theme-cards', role: 'radiogroup' });
   const draw = () =>
     grid.replaceChildren(
@@ -168,7 +169,7 @@ export function openThemeDialog(): void {
         const preview = el(
           'span',
           { class: 'theme-preview', style: `background: ${scene}linear-gradient(160deg, ${theme.swatch[0]} 55%, ${theme.swatch[1]})` },
-          el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '', loading: 'lazy' }),
+          el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '' }),
         );
         const card = el(
           'button',
@@ -210,12 +211,24 @@ export function openThemeDialog(): void {
   done.focus();
 }
 
+let previewsWarm = false;
+/**
+ * Card R8: fetches every offered theme's preview pictures (mascot + scene) once, so the theme window shows them at
+ * once. Called when the "Change theme" button is hovered / focused / pressed, and when the window opens.
+ */
+export function warmThemePreviews(): void {
+  if (previewsWarm) return;
+  previewsWarm = true;
+  void preload(offered().flatMap((theme) => themeImages(theme.id)), 10_000);
+}
+
 /** Ayarlarda: şu anki tema küçük önizlemeyle + "Temayı değiştir" (büyük pencere açar). */
 export function renderThemeSetting(container: HTMLElement): void {
   const draw = () => {
     const theme = THEMES.find((x) => x.id === shown(currentTheme())) ?? THEMES[0];
     const button = el('button', { type: 'button', class: 'btn' }, t('changeTheme'));
     button.addEventListener('click', openThemeDialog);
+    for (const type of ['pointerenter', 'focus', 'pointerdown'] as const) button.addEventListener(type, warmThemePreviews, { once: true });
     container.replaceChildren(
       el('span', { class: 'theme-now' }, el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '' }), el('b', {}, t(`theme.${theme.id}` as I18nKey))),
       button,
@@ -224,4 +237,13 @@ export function renderThemeSetting(container: HTMLElement): void {
   draw();
   window.addEventListener('themechange', draw);
   window.addEventListener('langchange', draw);
+  // The profile menu holding this row opened: fetch the previews now (card R8).
+  if ('IntersectionObserver' in window) {
+    const seen = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      seen.disconnect();
+      warmThemePreviews();
+    });
+    seen.observe(container);
+  }
 }

@@ -2,7 +2,7 @@
 import { createLogo } from '@swm/shared/logo';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { lang, setLang, translate, type Lang } from './i18n.ts';
-import { applyTheme, currentTheme, openThemeDialog } from './themes.ts';
+import { applyTheme, currentTheme, openThemeDialog, warmThemePreviews } from './themes.ts';
 import { readTvLabSwitch, tvLab } from './tv-lab.ts';
 import { checkExtensionVersion } from './ext-update.ts';
 import { startDebugLab } from './debug-lab.ts';
@@ -23,7 +23,9 @@ addEventListener('pageshow', (event) => {
 document.querySelector('.brand .logo')?.append(createLogo(document, { animated: true, small: true }));
 
 // Üst menüdeki 🎨: önizlemeli büyük tema penceresi.
-document.querySelector<HTMLButtonElement>('#theme-button')!.addEventListener('click', openThemeDialog);
+const themeButton = document.querySelector<HTMLButtonElement>('#theme-button')!;
+themeButton.addEventListener('click', openThemeDialog);
+for (const type of ['pointerenter', 'focus'] as const) themeButton.addEventListener(type, warmThemePreviews, { once: true });
 
 const langButtons = document.querySelectorAll<HTMLButtonElement>('[data-lang]');
 function markLang(): void {
