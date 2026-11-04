@@ -313,7 +313,12 @@ export type VoiceMode = 'p2p' | 'sfu';
 /** Eşler arası bağlantı kurmak için iki tarayıcı arasında taşınan mesaj (WebRTC teklif/cevap ya da ağ adayı). */
 export type Signal =
   | { sdp: { type: 'offer' | 'answer'; sdp: string } }
-  | { candidate: { candidate: string; sdpMid?: string | null; sdpMLineIndex?: number | null } };
+  | { candidate: { candidate: string; sdpMid?: string | null; sdpMLineIndex?: number | null } }
+  /**
+   * A viewer that starts watching asks the streamer for a fresh offer (BH2): after a reload the viewer keeps its
+   * member id, and the streamer still holds the connection to the page that is gone.
+   */
+  | { ask: true };
 /** SDP (WebRTC bağlantı tarifi) birkaç KB olabilir: sadece `rtc` mesajları bu kadar büyük olabilir. */
 export const RTC_MESSAGE_MAX = 24_000;
 const SDP_MAX = 20_000;
@@ -872,6 +877,7 @@ function isMid(x: unknown): x is string {
 /** Bağlantı mesajını doğrular ve yeni nesneye kopyalar (sadece bilinen alanlar, makul boyut). */
 export function cleanSignal(x: unknown): Signal | null {
   if (!isObject(x)) return null;
+  if (x.ask === true) return { ask: true };
   if (isObject(x.sdp)) {
     const { type, sdp } = x.sdp;
     return (type === 'offer' || type === 'answer') && isSdp(sdp) ? { sdp: { type, sdp } } : null;

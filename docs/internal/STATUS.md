@@ -551,6 +551,8 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.16 BH2: a friend shares the screen, you press Watch, then reload your page and press Watch again: the picture
+  comes back (it used to stay black).
 - [ ] 0.9.97.15 R8: 🎮 → On the side → pick a game you never opened: the "How to play" cards are there at once. Open the
   profile menu, then "Change theme": every preview picture is already there.
 - [ ] 0.9.97.13 R6: the invite window has no "show this when I'm alone" tick box; ⚙️ My screen has "Open the invite
