@@ -20,6 +20,24 @@ Card format:
 
 ## Ready
 
+### 15d. Home: bigger devices, the theme picker back at the top right, Glowbeam's themed hat, a black box bug (owner, 4 Nov 2026; lane A)
+- Owner (screenshot of the live 15c home art): "the laptop, tablet and phone could be a bit bigger"; "the theme picker
+  should come back to the top right, on the home page before a room is opened, and stay in the same place on the other
+  pages"; "Glowbeam should have its hat too, now that themes exist: the hat changes with the theme".
+- Bug in the same screenshot: a black rectangle with a thin green cross sits over Glowbeam's head at the top left of
+  the art (looks like an empty image / video box or a debug shape). Find it and remove it; add a check that no element
+  of the art is an empty box.
+- What: the three devices about 15–20 % larger in the art box at every home size without crowding the text (phone:
+  keep the art on top and the text clear); 🎨 back at the top right of the top bar on the home page and the other
+  non-room pages (help, privacy, thanks, extension, connection), opening the same theme picker as the profile menu's
+  "Change theme" (it undoes 6g.4 for those pages only; the room keeps it in the profile menu); the home art's Glowbeam
+  wears the current theme's costume / hat (`docs/internal/design/themes/` mascots, `theme-art.mjs`), switching with the
+  theme.
+- Done when: the five home sizes show bigger devices and no stray box; 🎨 sits in the same top-right spot on every
+  non-room page; changing the theme changes Glowbeam's hat on the home art; EN + TR; phone-speed budget green.
+- Tests: home harness (device sizes, no empty / black box in the art, 🎨 present and in the same spot on home + help,
+  the mascot changes with the theme).
+
 ### 15c. Home art: a computer, a tablet and a phone + real avatars (owner, 4 Nov 2026; Design, then lane A)
 - Owner (on a screenshot of today's home art): "this screen's design should have the phone and the tablet too, as we
   said", and the faces row under the screen (the three plain colour circles + "3 watching · 2 in voice") should be
