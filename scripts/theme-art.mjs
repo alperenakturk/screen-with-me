@@ -567,87 +567,6 @@ ${grain(0.24)}
 }
 
 // =====================================================================
-// OPERA GECESİ (orta): iki yanda üç kat altın yaldızlı localar, ortada koyu
-//    kadife perde ve kristal avize, en altta orkestra çukuru ışıkları
-// =====================================================================
-
-function operaScene() {
-  const S = scene();
-  S.defs.push(`
-<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f3638"/><stop offset=".6" stop-color="#0a2628"/><stop offset="1" stop-color="#051516"/></linearGradient>
-<linearGradient id="fold" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="64" y2="0" spreadMethod="repeat"><stop offset="0" stop-color="#3e0a14"/><stop offset=".55" stop-color="#6e1826"/><stop offset=".68" stop-color="#7e2030"/><stop offset="1" stop-color="#3e0a14"/></linearGradient>
-<radialGradient id="stageGlow" gradientUnits="userSpaceOnUse" cx="800" cy="620" r="520"><stop offset="0" stop-color="#ffcf8a" stop-opacity=".28"/><stop offset="1" stop-color="#ffcf8a" stop-opacity="0"/></radialGradient>
-<linearGradient id="crimson" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a42838"/><stop offset="1" stop-color="#5a1220"/></linearGradient>
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6a6"/><stop offset=".5" stop-color="#d9a94a"/><stop offset="1" stop-color="#8a5a1c"/></linearGradient>
-<radialGradient id="boxGlow" cx="50%" cy="100%" r="90%"><stop offset="0" stop-color="#ffb860" stop-opacity=".45"/><stop offset="1" stop-color="#ffb860" stop-opacity="0"/></radialGradient>
-<radialGradient id="chand" gradientUnits="userSpaceOnUse" cx="800" cy="240" r="240"><stop offset="0" stop-color="#ffe6a6" stop-opacity=".4"/><stop offset="1" stop-color="#ffe6a6" stop-opacity="0"/></radialGradient>
-${GLOW('g', 3)}${GRAIN_DEFS}`);
-
-  const boxes = () => {
-    let s = `<rect x="0" y="120" width="290" height="700" fill="#0a2224"/>`;
-    for (let lvl = 0; lvl < 3; lvl++) {
-      const y = 330 + lvl * 165;
-      const w = 200 + lvl * 28;
-      s += `<rect x="0" y="${y - 120}" width="${w - 6}" height="120" fill="#2a120e"/><rect x="0" y="${y - 120}" width="${w - 6}" height="120" fill="url(#boxGlow)"/>`;
-      for (const hx of [w * 0.32, w * 0.66]) s += head(hx, y - 8, 10, '#120604', '#ffb860');
-      s += `<path d="M0 ${y - 120} H${w - 6} V${y - 98} Q${(w - 6) / 2} ${y - 66} 0 ${y - 98}Z" fill="#7a1a28"/><path d="M${w - 6} ${y - 98} Q${(w - 6) / 2} ${y - 66} 0 ${y - 98}" stroke="#d9a94a" stroke-width="2" fill="none"/>`;
-      s += `<rect x="${w - 12}" y="${y - 126}" width="12" height="132" fill="url(#gold)"/>`;
-      s += `<path d="M0 ${y} H${w} Q${w + 24} ${y + 27} ${w} ${y + 54} H0Z" fill="url(#crimson)"/>`;
-      s += `<path d="M0 ${y} H${w} Q${w + 24} ${y + 27} ${w} ${y + 54} H0" stroke="url(#gold)" stroke-width="4" fill="none"/>`;
-      for (let fx = 28; fx < w - 8; fx += 46) s += rays(fx, y + 46, 24, 7, ['#e8c06a'], { from: 180, to: 360, fill: 0.5, opacity: 0.85 });
-    }
-    return s;
-  };
-
-  let swags = '';
-  for (let i = 0; i < 4; i++) {
-    const x0 = 250 + i * 275;
-    swags += `<path d="M${x0} 236 Q${x0 + 137} 330 ${x0 + 275} 236Z" fill="url(#crimson)"/><path d="M${x0} 236 Q${x0 + 137} 330 ${x0 + 275} 236" stroke="url(#gold)" stroke-width="4" fill="none"/>`;
-  }
-
-  // Kristal avize: zincir, üç halka, sarkan damlalar ve mumlar
-  let drops = '';
-  const ring = (cy, rx, step, len) => {
-    let s = `<ellipse cx="800" cy="${cy}" rx="${rx}" ry="${f(rx * 0.16)}" fill="none" stroke="url(#gold)" stroke-width="4"/>`;
-    for (let x = -rx + step / 2; x < rx; x += step) {
-      const yy = cy + Math.sqrt(Math.max(0, 1 - (x / rx) ** 2)) * rx * 0.16;
-      s += `<line x1="${f(800 + x)}" y1="${f(yy)}" x2="${f(800 + x)}" y2="${f(yy + len)}" stroke="#fff4d6" stroke-opacity=".8" stroke-width="1.5"/><circle cx="${f(800 + x)}" cy="${f(yy + len + 3)}" r="3" fill="#fff4d6" filter="url(#g)"/>`;
-      s += `<rect x="${f(800 + x - 1.5)}" y="${f(cy - rx * 0.16 - 14)}" width="3" height="10" fill="#fff4d6" opacity=".7"/><circle cx="${f(800 + x)}" cy="${f(cy - rx * 0.16 - 17)}" r="2.4" fill="#ffd27a" filter="url(#g)"/>`;
-    }
-    return s;
-  };
-  drops += ring(276, 100, 20, 26) + ring(232, 66, 22, 20) + ring(196, 34, 17, 14);
-
-  let pit = '';
-  for (let x = 300; x <= 1300; x += 50) pit += `<path d="M${x - 9} 838 H${x + 9} L${x + 5} 828 H${x - 5}Z" fill="#d9a94a" opacity=".7"/><ellipse cx="${x}" cy="842" rx="16" ry="4" fill="#ffd27a" opacity=".35" filter="url(#g)"/>`;
-
-  return S.svg(`
-<defs>__DEFS__</defs>
-<rect width="${W}" height="${H}" fill="url(#bg)"/>
-<!-- Sahne perdesi (orta, koyu ve sakin) -->
-<rect x="240" y="236" width="1120" height="560" fill="url(#fold)"/>
-<rect x="240" y="236" width="1120" height="560" fill="url(#stageGlow)"/>
-<rect x="240" y="784" width="1120" height="10" fill="url(#gold)"/>
-${swags}
-<path d="M240 236 H1360" stroke="url(#gold)" stroke-width="6"/>
-<!-- Büyük altın kemer -->
-<path d="M240 800 V330 Q240 150 800 140 Q1360 150 1360 330 V800" fill="none" stroke="#d9a94a" stroke-opacity=".5" stroke-width="5"/>
-<!-- Localar -->
-${boxes()}
-<g transform="translate(${W} 0) scale(-1 1)">${boxes()}</g>
-<!-- Avize -->
-<rect width="${W}" height="${H}" fill="url(#chand)"/>
-<line x1="800" y1="0" x2="800" y2="176" stroke="#d9a94a" stroke-width="3"/>
-${drops}
-<!-- Orkestra çukuru -->
-<rect x="0" y="800" width="${W}" height="100" fill="#041011"/>
-<rect x="0" y="800" width="${W}" height="5" fill="url(#gold)"/>
-${pit}
-${grain(0.22)}
-`);
-}
-
-// =====================================================================
 // AÇIK HAVA SİNEMASI (KARANLIK gece): sağda büyük perde, soldan uzanan
 //    projektör huzmesi, arkadan görülen eski arabalar, ışıklı tabela direği
 // =====================================================================
@@ -944,14 +863,13 @@ const files = {
   'lokum-desen.svg': lokumPattern(),
   'binbirgece.svg': binbirScene(),
   'sinema.svg': sinemaScene(),
-  'opera.svg': operaScene(),
   'acikhava.svg': acikhavaScene(),
   'gemi.svg': gemiScene(),
   'tren.svg': trenScene(),
 };
 // The theme mascots are Glowbeam in costume since card 6f (the Design session's drawings, 240 × 240, drop-in names):
 // copied from docs/internal/design/themes/glowbeam-<theme>.svg as <theme>-maskot.svg.
-for (const theme of ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'opera', 'acikhava', 'gemi', 'tren']) {
+for (const theme of ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'gemi', 'tren']) {
   files[`${theme}-maskot.svg`] = readFileSync(new URL(`../docs/internal/design/themes/glowbeam-${theme}.svg`, import.meta.url), 'utf8');
 }
 for (const [name, content] of Object.entries(files)) {

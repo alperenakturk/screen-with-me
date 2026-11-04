@@ -10,8 +10,8 @@ Turkish paragraph.
 - Title: `Sidelit – Watch Videos Together in Sync`
 - Summary: `A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.`
 
-> The repo is private for now. The texts don't say "open source"; that can be added once the repo is public (before
-> that, remove the site names in `docs/internal/rakip-analizi.md`).
+> The repo is public since Nov 2026 but source-available, all rights reserved (card LIC): the texts never say "open
+> source" or name a licence. Whether to open the licence is decided at 1.0.
 
 ---
 

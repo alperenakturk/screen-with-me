@@ -433,6 +433,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.38 (Opera Night theme removed, stream beside the faces, cards R22 + R23):**
+- [ ] 🎨: no "Opera Night" any more; if you had it, you now see Gece.
+- [ ] With a friend, share your screen: in the Together card "🔴 You're live · 👁 0/4", End stream and the quality now
+  sit right of the faces; the chat below keeps (almost) all its room. Your friend sees "🔴 … is live" and Watch stream
+  in the same place. Before a stream the card looks as before.
 **0.9.97.36 (the film page keeps a new name, BH7):**
 - [ ] In a room on the main site change your name (profile → name), then open a film page in the room with the
   extension: your friend sees you with the new name on the film page, never the old one.
@@ -455,9 +460,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   alien, samurai, fairy, spy, armadillo) without scrolling; pick one and check it in the chat and the faces strip. If
   you had a parody avatar saved, you now have a themed one instead (once; your other rooms too).
 
-**0.9.97.29 (the owner's test board on our site):**
-- [ ] Open the board's address (the Planner has it), tick a test ✅ and write a note: the ticket at the bottom shows
-  both; 📋 Copy puts it on the clipboard; reload: your ticks are still there. Works on the phone too.
+**0.9.97.29 (the owner's test board on our site):** removed in 0.9.97.39 (card R24); nothing to test.
 
 **0.9.97.28 (home art bigger, themed Glowbeam, 🎨 back, card 15d):**
 - [ ] On the home page (computer + phone): the laptop, tablet and phone look bigger; 🎨 is at the top right and opens

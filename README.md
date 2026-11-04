@@ -16,7 +16,7 @@ Free · no accounts · no ads · works on YouTube and on (almost) any website.
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-251%20unit%20%2B%20e2e%20%2B%20real%20Chrome-3ccf8e)
 ![Version](https://img.shields.io/badge/version-0.9.81-7c5cff)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![License](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)
 
 </div>
 
@@ -162,8 +162,9 @@ as the remote).
 
 ## 📄 License & privacy
 
-[MIT](LICENSE) © 2026 Alperen Aktürk. All shipped code (site, server, extension) is our own; build tools are
-MIT / Apache-2.0. Privacy policy: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=en)
+© 2026 Alperen Aktürk. All rights reserved ([LICENSE](LICENSE)). The source is published so it can be read; it
+may not be copied, modified, distributed or used without written permission. Third-party parts (the word lists, build
+tools) keep their own licences: [third-party-notices.txt](apps/web/public/third-party-notices.txt). Privacy policy: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=en)
 (no accounts, no tracking; a one-off room is deleted 24 h after it is empty, a saved room after 30 days).
 Questions and troubleshooting: [help page](https://screen-with-me.swm-server.workers.dev/help.html?lang=en).
 
