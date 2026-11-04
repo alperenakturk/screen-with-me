@@ -6,7 +6,7 @@
 
 import './snack-bar.css';
 import {
-  MILESTONES, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, costOf, formatCoins, incomeRate,
+  MILESTONES, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, costOf, formatCoins, freshSnack, incomeRate,
   loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, standRate, starsFor, starFactor, tick,
   togetherFactor, unlocked, type SnackContext, type SnackSave, type StandId,
 } from '@swm/shared/games/snack-bar';
@@ -26,7 +26,7 @@ import how1 from './art/tutorial/snack-1-earn.svg?raw';
 import how2 from './art/tutorial/snack-2-tap.svg?raw';
 import how3 from './art/tutorial/snack-3-stands.svg?raw';
 import how4 from './art/tutorial/snack-4-friends.svg?raw';
-import { howToPlay } from './how-to-play.ts';
+import { howToPlay, restartButton } from './how-to-play.ts';
 
 /** Snack Bar's own words (in its chunk, not the room page's): English first, Turkish second. */
 const TEXT = {
@@ -69,6 +69,9 @@ const TEXT = {
     restLine: "Nothing changes while you're away",
     'otherTab': 'Snack Bar is open in another tab.',
     'playHere': 'Play here',
+    restart: 'Start over',
+    restartAsk: 'Start Snack Bar over?',
+    restartText: 'Your coins, stands, stars and cinemas all go back to zero. This cannot be undone.',
   },
   tr: {
     how1Title: 'Oda izlerken kazan',
@@ -109,6 +112,9 @@ const TEXT = {
     restLine: 'Sen yokken hiçbir şey değişmez',
     'otherTab': 'Büfe başka bir sekmede açık.',
     'playHere': 'Burada oyna',
+    restart: 'Baştan başla',
+    restartAsk: 'Büfe baştan başlasın mı?',
+    restartText: 'Paran, stantların, yıldızların ve sinemaların sıfırlanır. Bu geri alınamaz.',
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -213,7 +219,17 @@ export function mountSnackBar(root: HTMLElement, room: () => SnackContext): () =
     { art: how3, title: t('how3Title'), line: t('how3') },
     { art: how4, title: t('how4Title'), line: t('how4') },
   ]);
-  head.append(how.button);
+  const restart = restartButton(
+    () => ({ label: t('restart'), title: t('restartAsk'), text: t('restartText'), yes: t('restart') }),
+    () => {
+      if (blocked || stopped) return;
+      game = freshSnack();
+      game.seen = Date.now();
+      persist();
+      draw();
+    },
+  );
+  head.append(restart, how.button);
 
   // Buttons never keep the focus: the room's keys and the message box stay as they were.
   box.addEventListener('mousedown', (event) => {

@@ -20,6 +20,7 @@ import { t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
+import { setGameLive } from './live.ts';
 import { langChoices, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
@@ -91,6 +92,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   }
 
   function render(): void {
+    if (state) setGameLive(state.phase !== 'lobby' && state.phase !== 'over' && state.players.some((p) => p.id === me));
     if (!state) return;
     const s = state;
     const mine = s.players.find((p) => p.id === me);
@@ -279,6 +281,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
   return () => {
+    setGameLive(false);
     close();
     clearInterval(ticker);
     clearInterval(ping);

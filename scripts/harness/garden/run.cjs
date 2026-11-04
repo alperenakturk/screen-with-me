@@ -124,7 +124,24 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   const note = await alex.evaluate(() => document.querySelector('.wg-note')?.textContent ?? '');
   check(/New in your album/.test(note), 'a first find says "New in your album"', note);
   check(/2\/8/.test(await alex.evaluate(() => document.querySelector('.wg-album-count').textContent)), 'the album says 2/8');
+
+  // Glowbeam the grow lamp (pick 9): once per film, on a growing plant.
+  await alex.click('.wg-pot[data-pot="1"]');
+  await alex.evaluate(() => document.querySelector('.wg-action .wg-btn.lamp')?.click());
+  const lit = await until(async () => { const s = await saved(alex); return s.lamp ? s : null; }, 6000);
+  check(!!lit && lit.lamp.pot === 1, 'Glowbeam shines on the chosen pot (saved with the film)', JSON.stringify(lit?.lamp));
+  check(await alex.evaluate(() => !!document.querySelector('.wg-pot[data-pot="1"] .wg-lamp svg')), 'Glowbeam is drawn over that pot');
+  await alex.click('.wg-pot[data-pot="2"]');
+  const again = await alex.evaluate(() => { const b = document.querySelector('.wg-action .wg-btn.lamp'); return b ? b.disabled : 'none'; });
+  check(again === true || again === 'none', 'only once per film: no second lamp', String(again));
+  await alex.click('.wg-pot[data-pot="1"]');
   await alex.screenshot({ path: __dirname + '/garden-window.png' });
+
+  // Pick 11 B: a long film that ended while I was in the room (noted by the room page) gives its seed.
+  const seedsBefore = (await saved(alex)).seeds;
+  await alex.evaluate(() => localStorage.setItem('sideFilms', JSON.stringify([{ id: 'long-film-1', duration: 1500, at: Date.now() }])));
+  const gotSeed = await until(async () => { const s = await saved(alex); return s.ended.includes('long-film-1') ? s : null; }, 8000);
+  check(!!gotSeed && gotSeed.seeds.uncommon + gotSeed.seeds.rare > seedsBefore.uncommon + seedsBefore.rare, 'a film that ended while I was in the room gives a seed', JSON.stringify(gotSeed?.seeds));
 
   // Smaller screen.
   await alex.setViewportSize({ width: 900, height: 560 });

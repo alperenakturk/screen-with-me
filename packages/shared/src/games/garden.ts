@@ -9,6 +9,8 @@
 // - Nothing ever dies: a dry pot only grows slower until it is watered again.
 // - Seeds: a common one every 30 watched minutes, a better one when a film (≥ 20 min) ends, a rare one after a full
 //   evening together (90 min watched with someone else in the room).
+// - Glowbeam the grow lamp (owner's pick 9, 4 Nov 2026): once per film, Glowbeam shines on one pot, +25 % growth while
+//   that film plays.
 // - A plant in bloom is picked into the album (every plant found, with how many times): the collection. Three pots.
 
 export const GARDEN_KEY = 'windowGarden';
@@ -51,6 +53,8 @@ export const EVENING_GAP_MS = 4 * 3600_000;
 export const POTS = 3;
 /** Ticks longer than this are ignored (a sleeping laptop is not watching). */
 export const MAX_TICK_S = 5;
+/** Glowbeam's lamp: this much faster growth for the pot it shines on, while the film it was placed in plays. */
+export const LAMP_BONUS = 0.25;
 /** Seeds kept at most per rarity (an old forgotten tab cannot pile up thousands). */
 export const SEEDS_MAX = 99;
 const ENDED_KEEP = 20;
@@ -80,12 +84,16 @@ export interface GardenSave {
   seen: number;
   /** Room items whose ending already gave a seed. */
   ended: string[];
+  /** Glowbeam's lamp: the pot it shines on and the room item (film) it was placed in; null = not used yet. */
+  lamp: { pot: number; item: string } | null;
 }
 
 export interface GardenContext {
   playing: boolean;
   /** Other people in the room (by person, not tabs). */
   others: number;
+  /** The room's item now (the lamp works only in the film it was placed in). */
+  item?: { id: string } | null;
 }
 
 export type Random = () => number;
@@ -104,6 +112,7 @@ export function freshGarden(): GardenSave {
     eveningSeed: false,
     seen: 0,
     ended: [],
+    lamp: null,
   };
 }
 
@@ -146,6 +155,11 @@ export function loadGarden(raw: unknown): GardenSave {
   garden.together = num(record.together, EVENING_S);
   garden.eveningSeed = record.eveningSeed === true;
   garden.seen = num(record.seen);
+  const lamp = record.lamp as Record<string, unknown> | null | undefined;
+  garden.lamp =
+    lamp && typeof lamp === 'object' && Number.isInteger(lamp.pot) && (lamp.pot as number) >= 0 && (lamp.pot as number) < POTS && typeof lamp.item === 'string' && lamp.item.length <= 64
+      ? { pot: lamp.pot as number, item: lamp.item }
+      : null;
   garden.ended = Array.isArray(record.ended) ? record.ended.filter((id): id is string => typeof id === 'string' && id.length <= 64).slice(-ENDED_KEEP) : [];
   return garden;
 }
@@ -187,7 +201,7 @@ export function tickGarden(garden: GardenSave, seconds: number, ctx: GardenConte
     if (!pot || pot.growth >= 1) return;
     // Watered time grows at full speed, the rest at the dry speed.
     const wet = Math.min(seconds, pot.water * WATER_LAST_S);
-    const grow = wet + (seconds - wet) * DRY_SPEED;
+    const grow = (wet + (seconds - wet) * DRY_SPEED) * (lampOn(garden, i, ctx.item?.id) ? 1 + LAMP_BONUS : 1);
     pot.water = Math.max(0, pot.water - seconds / WATER_LAST_S);
     const next = pot.growth + grow / (GROW_MINUTES[rarityOf(pot.plant) ?? 'common'] * 60);
     // Many small ticks add up a hair short of 1: count that as bloom.
@@ -222,6 +236,22 @@ export function filmEnded(garden: GardenSave, itemId: string, duration: number, 
   const rarity: Rarity = random() < 0.2 ? 'rare' : 'uncommon';
   addSeed(garden, rarity);
   return rarity;
+}
+
+/** Glowbeam shines on this pot now (placed in the room item `itemId`, which is still the one on). */
+export function lampOn(garden: GardenSave, pot: number, itemId: string | null | undefined): boolean {
+  return !!itemId && garden.lamp !== null && garden.lamp.pot === pot && garden.lamp.item === itemId;
+}
+
+/** The lamp can still be placed in this film (once per film). */
+export const lampFree = (garden: GardenSave, itemId: string | null | undefined): boolean => !!itemId && garden.lamp?.item !== itemId;
+
+/** Puts Glowbeam over a growing plant for the rest of this film. False when used already, no film, or nothing grows. */
+export function placeLamp(garden: GardenSave, pot: number, itemId: string | null | undefined): boolean {
+  const target = garden.pots[pot];
+  if (!itemId || !lampFree(garden, itemId) || !target || target.growth >= 1) return false;
+  garden.lamp = { pot, item: itemId };
+  return true;
 }
 
 export function water(garden: GardenSave, pot: number): boolean {

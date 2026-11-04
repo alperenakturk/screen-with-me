@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DRY_SPEED, EVENING_GAP_MS, EVENING_S, FILM_MIN_S, GARDEN_VERSION, PLANTS, PLANT_IDS, POTS,
   SEEDS_MAX, SEED_EVERY_S, WATER_LAST_S,
-  filmEnded, found, freshGarden, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
+  LAMP_BONUS, filmEnded, found, freshGarden, lampFree, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf, saveGarden,
   stageOf, tickGarden, water, type GardenSave,
 } from './garden.ts';
 
@@ -82,6 +82,28 @@ describe('Window Garden only in a room', () => {
     expect(garden.pots[0]).toEqual({ plant: 'mint', growth: 0.3, water: 0.6 });
     expect(garden.seeds).toEqual(seeds);
     expect(garden.watched).toBe(0);
+  });
+});
+
+describe('Window Garden: Glowbeam the grow lamp', () => {
+  it('once per film, +25 % growth for its pot while that film plays', () => {
+    const garden = freshGarden();
+    garden.pots[0] = { plant: 'mint', growth: 0, water: 1 };
+    garden.pots[1] = { plant: 'fern', growth: 0, water: 1 };
+    expect(placeLamp(garden, 2, 'film-a')).toBe(false); // an empty pot
+    expect(placeLamp(garden, 0, null)).toBe(false); // no film
+    expect(placeLamp(garden, 0, 'film-a')).toBe(true);
+    expect(placeLamp(garden, 1, 'film-a')).toBe(false); // once per film
+    const film = { playing: true, others: 0, item: { id: 'film-a' } };
+    tickGarden(garden, 4, film);
+    expect(garden.pots[0]!.growth).toBeCloseTo((4 * (1 + LAMP_BONUS)) / (20 * 60));
+    expect(garden.pots[1]!.growth).toBeCloseTo(4 / (20 * 60));
+    // The next film: the lamp is off until it is placed again.
+    tickGarden(garden, 4, { ...film, item: { id: 'film-b' } });
+    expect(garden.pots[0]!.growth).toBeCloseTo((4 * (1 + LAMP_BONUS) + 4) / (20 * 60));
+    expect(lampFree(garden, 'film-b')).toBe(true);
+    expect(loadGarden(saveGarden(garden)).lamp).toEqual({ pot: 0, item: 'film-a' });
+    expect(loadGarden({ ...garden, lamp: { pot: 9, item: 'x' } }).lamp).toBeNull();
   });
 });
 

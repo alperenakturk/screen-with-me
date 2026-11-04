@@ -162,12 +162,22 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   check(rowsShown >= 3, 'at least three upgrade rows show', String(rowsShown));
   await alex.screenshot({ path: __dirname + '/snack-window.png' });
 
-  // Close: saved, window gone.
-  await alex.evaluate(() => [...document.querySelectorAll('#game-stage .game-stage-head button')].find((b) => b.title === 'Close')?.click());
-  const closed = await until(() => alex.evaluate(() => document.getElementById('game-stage').hidden && !document.querySelector('.sb')), 3000);
-  check(!!closed, 'Close shuts the game');
+  // Game window rules (owner, 4 Nov 2026): no Close for a solo game, ✕ only minimizes, ↺ Start over asks first.
+  const head = await alex.evaluate(() => [...document.querySelectorAll('#game-stage .game-stage-head button')].filter((b) => !b.hidden && b.offsetParent).map((b) => b.className + '|' + b.title));
+  check(!head.some((h) => /game-leave|game-end|\|Close$/.test(h)), 'a solo game has no close or leave button', JSON.stringify(head));
+  await alex.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
+  const minimized = await until(() => alex.evaluate(() => document.getElementById('game-stage').hidden && !!document.querySelector('#game-stage .sb')), 3000);
+  check(!!minimized, '✕ only minimizes: the game stays mounted behind 🎮');
   const lock = await alex.evaluate(() => localStorage.getItem('snackBar:tab'));
-  check(!lock, 'closing lets go of the one-tab lock', String(lock));
+  check(!!lock, 'minimized, it keeps its one-tab lock (it still plays)', String(lock));
+  await alex.evaluate(() => document.getElementById('game-btn').click());
+  check(!!(await until(() => alex.evaluate(() => !document.getElementById('game-stage').hidden), 3000)), '🎮 brings the minimized game back');
+  await alex.evaluate(() => document.querySelector('.sg-restart').click());
+  await wait(300);
+  await alex.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
+  await wait(1200);
+  const reset = await alex.evaluate(() => JSON.parse(localStorage.getItem('snackBar')));
+  check(reset.coins < 20 && reset.levels.soda === 0 && reset.levels.popcorn === 1, '↺ Start over (after its question) starts from zero', JSON.stringify(reset.levels));
 
   // Phone: the sheet fits, all five rows.
   const phone = await browser.newContext({ ...devices['iPhone 13'] });

@@ -82,6 +82,7 @@ import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
 import { createSettingsDialog } from './ui/settings-dialog.ts';
+import { watchFilmEnds } from './games/film-end.ts';
 import { createGameStage } from './games/stage.ts';
 import type { SoloRoom } from '@swm/shared/games/catalog';
 import { createLive } from './ui/live.ts';
@@ -1046,6 +1047,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     hint: (text) => flashHint($('#game-btn'), text),
     room: soloContext,
   });
+  // Films that end while I'm in the room give Window Garden's seed even with the game closed (owner's pick 11 B).
+  watchFilmEnds(() => soloContext().item);
   const reactions = createReactions(
     app,
     send,

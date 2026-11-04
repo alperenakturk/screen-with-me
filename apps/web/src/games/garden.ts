@@ -5,7 +5,7 @@
 
 import './garden.css';
 import {
-  GARDEN_KEY, PLANT_IDS, POTS, RARITIES, filmEnded, found, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
+  GARDEN_KEY, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
   saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity,
 } from '@swm/shared/games/garden';
 import type { SoloRoom } from '@swm/shared/games/catalog';
@@ -25,11 +25,13 @@ import lanternCactus from './art/garden/lantern-cactus.svg?raw';
 import moonbloom from './art/garden/moonbloom.svg?raw';
 import reelVine from './art/garden/reel-vine.svg?raw';
 import popcornShrub from './art/garden/popcorn-shrub.svg?raw';
+import glowbeam from './art/garden/glowbeam-lamp.svg?raw';
+import { takeFilmEnds } from './film-end.ts';
 import how1 from './art/tutorial/garden-1-plant.svg?raw';
 import how2 from './art/tutorial/garden-2-water.svg?raw';
 import how3 from './art/tutorial/garden-3-album.svg?raw';
 import how4 from './art/tutorial/garden-4-film.svg?raw';
-import { howToPlay } from './how-to-play.ts';
+import { howToPlay, restartButton } from './how-to-play.ts';
 
 const PLANT_ART: Record<string, string> = {
   fern, mint, sunbell, 'night-tulip': nightTulip, 'lantern-cactus': lanternCactus, moonbloom, 'reel-vine': reelVine, 'popcorn-shrub': popcornShrub,
@@ -85,6 +87,13 @@ const TEXT = {
     pot: 'Pot {n}',
     otherTab: 'Window Garden is open in another tab.',
     playHere: 'Play here',
+    lamp: '✨ Glowbeam',
+    lampTitle: 'Glowbeam shines on this pot until the film ends: +{n} % growth (once per film)',
+    lampOn: 'Glowbeam shines on it: +{n} % until the film ends',
+    lampUsed: 'Glowbeam is busy with another pot this film',
+    restart: 'Start over',
+    restartAsk: 'Start Window Garden over?',
+    restartText: 'Your pots, seeds and album all go back to the start. This cannot be undone.',
   },
   tr: {
     how1Title: 'Tohum ek',
@@ -134,6 +143,13 @@ const TEXT = {
     pot: '{n}. saksı',
     otherTab: 'Pencere Bahçesi başka bir sekmede açık.',
     playHere: 'Burada oyna',
+    lamp: '✨ Glowbeam',
+    lampTitle: 'Glowbeam film bitene kadar bu saksıyı aydınlatır: büyüme +%{n} (her filmde bir kez)',
+    lampOn: 'Glowbeam onu aydınlatıyor: film bitene kadar +%{n}',
+    lampUsed: 'Glowbeam bu filmde başka bir saksıda',
+    restart: 'Baştan başla',
+    restartAsk: 'Pencere Bahçesi baştan başlasın mı?',
+    restartText: 'Saksıların, tohumların ve albümün baştaki haline döner. Bu geri alınamaz.',
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -222,7 +238,18 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     { art: how3, title: t('how3Title'), line: t('how3') },
     { art: how4, title: t('how4Title'), line: t('how4') },
   ]);
-  bar.append(how.button);
+  const restart = restartButton(
+    () => ({ label: t('restart'), title: t('restartAsk'), text: t('restartText'), yes: t('restart') }),
+    () => {
+      if (blocked || stopped) return;
+      garden = freshGarden();
+      garden.seen = Date.now();
+      selected = 0;
+      persist();
+      draw();
+    },
+  );
+  bar.append(restart, how.button);
   box.addEventListener('mousedown', (event) => {
     if ((event.target as Element).closest('button')) event.preventDefault();
   });
@@ -290,7 +317,10 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       return;
     }
     actionTitle.textContent = name;
-    actionText.textContent = p.water < THIRSTY ? t('dry') : t('left', { n: minutesLeft(p) });
+    const itemId = room().item?.id;
+    const lit = lampOn(garden, selected, itemId);
+    const bonus = Math.round(LAMP_BONUS * 100);
+    actionText.textContent = p.water < THIRSTY ? t('dry') : lit ? t('lampOn', { n: bonus }) : t('left', { n: minutesLeft(p) });
     const full = p.water >= 0.98;
     actionButtons.append(
       actionButton(full ? t('watered') : t('water'), 'main', () => {
@@ -300,6 +330,18 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
         draw();
       }, full),
     );
+    // Glowbeam the grow lamp: once per film, on a growing plant (owner's pick 9).
+    if (!lit && itemId) {
+      const free = lampFree(garden, itemId);
+      const lampButton = actionButton(t('lamp'), 'lamp', () => {
+        if (!placeLamp(garden, selected, room().item?.id)) return;
+        playSound('gardenBloom');
+        persist();
+        draw();
+      }, !free);
+      lampButton.title = free ? t('lampTitle', { n: bonus }) : t('lampUsed');
+      actionButtons.append(lampButton);
+    }
   }
 
   function draw(): void {
@@ -317,13 +359,15 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     restLine.textContent = t('restLine');
     pots.forEach((button, i) => {
       const p = garden.pots[i] ?? null;
-      const key = p ? `${p.plant}|${stageOf(p)}|${p.water < THIRSTY}|${blocked}` : `-|${blocked}`;
+      const lit = lampOn(garden, i, ctx.item?.id);
+      const key = p ? `${p.plant}|${stageOf(p)}|${p.water < THIRSTY}|${blocked}|${lit}` : `-|${blocked}|${lit}`;
       button.classList.toggle('on', i === selected);
       if (button.dataset.key === key) return;
       button.dataset.key = key;
       button.replaceChildren(potArt(i));
       if (p && !inBloom(p) && p.water < THIRSTY) button.append(el('span', { class: 'wg-drop', 'aria-hidden': 'true' }, '💧'));
       if (p && inBloom(p)) button.append(el('span', { class: 'wg-spark', 'aria-hidden': 'true' }, '✿'));
+      if (lit) button.append(art(glowbeam, 'wg-lamp'));
       button.classList.toggle('bloom', inBloom(p));
       button.setAttribute('aria-label', `${t('pot', { n: i + 1 })}: ${p ? (stageOf(p) >= 2 ? plantName(p.plant) : '…') : t('empty')}`);
       button.disabled = blocked;
@@ -389,10 +433,13 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     takeLock();
     const ctx = room();
     const result = tickGarden(garden, seconds, ctx);
-    // A film of 20 min or more reached its end (the last 10 s): one seed, once per item.
+    // Films of 20 min or more that ended while I was in the room (the room page notes them even with the garden
+    // closed, owner's pick 11 B), and the one ending now: one seed each, once per item.
     const item = ctx.item;
-    if (item && item.duration > 0 && item.position >= item.duration - 10) {
-      const kind = filmEnded(garden, item.id, item.duration);
+    const ends = takeFilmEnds();
+    if (item && item.duration > 0 && item.position >= item.duration - 10) ends.push({ id: item.id, duration: item.duration });
+    for (const end of ends) {
+      const kind = filmEnded(garden, end.id, end.duration);
       if (kind) {
         playSound('gardenSeed');
         flash(t('filmSeed', { kind: rarityName(kind) }));

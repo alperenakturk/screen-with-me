@@ -28,14 +28,14 @@
 .sb button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
 .sb button:disabled { cursor: default; }
 
-.sb-head { display: flex; align-items: center; gap: 8px; min-height: 30px; min-width: 0; }
+.sb-head { display: flex; align-items: center; gap: 6px; min-height: 30px; min-width: 0; }
 .sb-coin { display: inline-flex; width: 26px; height: 26px; flex: none; }
 .sb-coin.small { width: 16px; height: 16px; }
 .sb-coin svg, .sb-icon svg { width: 100%; height: 100%; display: block; }
 .sb-coins { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .sb-rate { color: var(--sb-gold); font-weight: 700; font-variant-numeric: tabular-nums; }
 .sb-gap { flex: 1; }
-.sb-pill { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--sb-muted); }
+.sb-pill { font-size: 13px; font-weight: 700; padding: 3px 8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--sb-muted); }
 .sb-state.on { color: var(--sb-ink); background: var(--sb-gold); }
 .sb-together { color: #0d2a20; background: var(--sb-teal); }
 

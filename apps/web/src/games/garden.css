@@ -57,6 +57,10 @@
 .wg-empty-pot { height: 43%; opacity: 0.85; }
 .wg-pot.bloom .wg-plant { filter: drop-shadow(0 0 6px rgba(255, 198, 90, 0.55)); animation: wg-sway 3.2s ease-in-out infinite; }
 @keyframes wg-sway { 50% { transform: rotate(2deg); } }
+.wg-lamp { position: absolute; left: 50%; bottom: 22%; width: 78%; transform: translateX(-50%); pointer-events: none; }
+.wg-lamp svg { display: block; width: 100%; height: auto; animation: wg-lamp 3.6s ease-in-out infinite; transform-origin: 50% 20%; }
+@keyframes wg-lamp { 50% { transform: translateY(-3%) rotate(-2deg); } }
+.wg-btn.lamp { border-color: rgba(255, 198, 90, 0.75); }
 .wg-drop, .wg-spark { position: absolute; top: 2px; right: 6px; font-size: 16px; pointer-events: none; }
 .wg-spark { color: var(--wg-gold); font-weight: 800; }
 
@@ -91,5 +95,6 @@
 }
 .wg-elsewhere[hidden] { display: none; }
 .wg-elsewhere p { margin: 0; }
-@media (prefers-reduced-motion: reduce) { .wg-pot.bloom .wg-plant { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .wg-lamp svg { animation: none; } .wg-pot.bloom .wg-plant { animation: none; } }
 html.phone .wg-scene { min-height: 260px; }

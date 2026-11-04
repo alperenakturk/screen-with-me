@@ -590,6 +590,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.29 Game windows: with a friend, open XOX and play a move each. Press ✕ on the game window: it only goes
+  away (the friend still plays, 🎮 brings it back). Press "↩ Leave table": it asks first. "⏹ End table" asks first too;
+  in the 🎮 hall the table's button says "End". Close or reload the tab mid-game: the browser asks "Leave site?"; after
+  the game is over it does not. Snack Bar / Window Garden: no close button any more, ✕ only hides them; ↺ next to "?"
+  starts over after a question. Window Garden while a video plays: pick a growing plant, press "✨ Glowbeam": Glowbeam
+  shines on that pot (once per video). Watch a video of 20 min or more to its end with the garden closed, then open the
+  garden: a seed is waiting.
 - [ ] 0.9.97.28 Side games only in a room: open Snack Bar and Window Garden in a room with nothing playing: the scene
   says "Closed until the film plays" / "Resting until the film plays" and "Nothing changes while you're away". Play a
   video: the sign goes, coins come, plants grow. Leave the room for a while and come back: no "while you were away"
