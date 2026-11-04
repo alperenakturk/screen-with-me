@@ -54,6 +54,8 @@ interface Saved {
   started?: boolean;
 }
 
+/** Dice (backgammon) and the bot's coin flips come from the platform's crypto source, never from a client. */
+const diceRandom = (): number => crypto.getRandomValues(new Uint32Array(1))[0]! / 2 ** 32;
 const fresh = (kind: GameKind = 'xox'): Saved => ({ kind, state: GAME_RULES[kind].newGame(), seats: [null, null], score: { X: 0, O: 0, draw: 0 }, emptySince: null });
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
@@ -193,7 +195,7 @@ export class Game extends DurableObject<Env> {
         if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         // İki koltuk dolmadan oyun başlamaz (tek başına iki taraf oynanmasın).
         if (this.data.seats.some((s) => s === null)) return this.sendTo(ws, { t: 'error', code: 'not_your_turn' });
-        const next = GAME_RULES[this.data.kind].play(this.data.state, MARKS[seat]!, message.cell);
+        const next = GAME_RULES[this.data.kind].play(this.data.state, MARKS[seat]!, message.cell, diceRandom);
         if (!next) return this.sendTo(ws, { t: 'error', code: 'not_your_turn' });
         this.data.state = next;
         this.data.started = true;
@@ -271,7 +273,6 @@ export class Game extends DurableObject<Env> {
     const d = this.data;
     const index = d.seats.findIndex((s) => s?.bot);
     if (index === -1 || d.state.winner !== null || d.state.turn !== MARKS[index] || d.seats.some((s) => s === null) || this.botTimer) return;
-    if (d.kind !== 'xox' && d.kind !== 'four' && d.kind !== 'dama') return;
     this.botTimer = setTimeout(() => {
       this.botTimer = null;
       void this.botPlays(index);
@@ -281,8 +282,8 @@ export class Game extends DurableObject<Env> {
     const d = this.data;
     const seat = d.seats[index];
     if (!seat?.bot || d.state.winner !== null || d.state.turn !== MARKS[index]) return;
-    const move = botMove(d.kind as 'xox' | 'four' | 'dama', d.state, seat.bot);
-    const next = move === null ? null : GAME_RULES[d.kind].play(d.state, MARKS[index]!, move);
+    const move = botMove(d.kind, d.state, seat.bot, diceRandom);
+    const next = move === null ? null : GAME_RULES[d.kind].play(d.state, MARKS[index]!, move, diceRandom);
     if (!next) return;
     d.state = next;
     d.started = true;

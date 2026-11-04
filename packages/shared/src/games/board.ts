@@ -23,7 +23,8 @@ export interface BoardRules {
   moves: number;
   newGame(starter?: Mark): BoardState;
   /** Hamleyi uygular (yeni durum döner); geçersizse null. */
-  play(state: BoardState, mark: Mark, move: number): BoardState | null;
+  /** `random` only for games with dice (backgammon): the server passes its own. */
+  play(state: BoardState, mark: Mark, move: number, random?: () => number): BoardState | null;
   rematch(state: BoardState): BoardState;
   isState(x: unknown): x is BoardState;
 }

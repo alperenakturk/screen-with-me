@@ -658,6 +658,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
   shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.46 Chess: open 🎮 → Classics → Chess on the shelf. Alone, pick "Medium": Glowbeam plays black. Tap a piece:
+  the squares it can reach light up; tap one to move. Try castling, and walk a pawn to the last row (a chooser asks
+  queen / rook / bishop / knight). A king in check glows red; checkmate ends the game with "Checkmate!". With a friend:
+  one plays white, the other black. Backgammon (same release): Classics → Backgammon, "Medium". Press 🎲 Roll: the
+  server rolls; your checkers that can move light up; tap one, then a lit point. A double gives four moves. Hit a
+  lone black checker: it goes to the bar and must come back in. Glowbeam rolls and plays its own turn.
 - [ ] 0.9.97.40 Draw & Guess: open a Draw & Guess table with a friend. In the lobby the host picks a word category (or
   "All"); the words offered then come from it. While drawing try the 🧽 eraser, undo, then redo (button or Ctrl+Y); a new
   stroke after undo clears the redo.
