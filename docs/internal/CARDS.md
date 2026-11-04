@@ -65,6 +65,20 @@ security and promotion now that it is public"; lane A after 15f + R27, Design fo
   protection, Dependabot alerts + security updates, private vulnerability reporting, code scanning (CodeQL default
   setup), branch protection for `main` (require the CI check), Actions → fork PR workflows need approval.
 
+### SZ. Slim the room chunk (Planner's technical decision, 4 Nov 2026; lane B)
+- Why: the room page's JS is 144.9 / 145 kB gzipped after DL2; the next room feature would cross the budget.
+- Done when: the live / stream and camera windows (and other things not needed on first paint) load as lazy chunks;
+  ≥ 8 kB under 145; no behaviour change. The budget stays 145 (raise it only if a card is truly blocked, with the
+  reason in its PR).
+- Tests: size budget; voice / live / cam-fs / phone / phone-speed harnesses stay green.
+
+### BH8. Live fallback.mjs: a room WebSocket closed with 1006 mid-test (lane B, after R4-3)
+- Why: DL1's main run failed live e2e `fallback.mjs` "pong after chunked" on both attempts (close 1006 ≈ 24 s after
+  open); the runs before and after passed. Flaky tests are fixed, not ignored.
+- Done when: the cause is found (log the object's view of the close; check the "never polls" close and Workers Free
+  limits) and fixed, or the test made robust for a real, documented reason; three live runs green on the first try.
+- Tests: live e2e `fallback.mjs`.
+
 ### SEC4. Security review 4: Cloudflare best practices + public-repo exposure (owner, 4 Nov 2026; Security, read-only)
 - Why: the owner asked to review the code and the site with the Cloudflare skill (cloudflare/skills:
   workers-best-practices, durable-objects, wrangler, web-perf) and fix the security side, now that the repo is public.
@@ -139,13 +153,12 @@ security and promotion now that it is public"; lane A after 15f + R27, Design fo
 - Tests: home harness (devices present and inside the art box at the five sizes; three distinct avatar ids from the
   Themed page; two voice rings), sweep screenshots of the home page.
 
-
 ## Owner's test round 2 (4 Nov 2026, 0.9.97.22): results and new cards
 Passed (owner, alone): Enter opens the message box at once, no strip in YouTube fullscreen, T in fullscreen opens
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI → R26 (important) → R25 → DL1 → DL2 → DL4 → DL5 → SEC4 fixes. Game Studio: Draw & Guess → chess + backgammon → DL3. Lane A: 15e ✅ → R22 + R23 ✅ → 15f → R27 → GH. Security: SEC4. Design: GH art. Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI ✅ (+ #296 diff from the last good main run) → R26 ✅ → R25 ✅ → DL1 ✅ → DL2 ✅ → R4-2 + R4-3 + R4-5 → BH8 → SZ → DL4 → DL5. Game Studio: Draw & Guess ✅ → chess + backgammon ✅ (.46) → DL3a (.48) → DL3b. Lane A: 15e ✅ → R22 + R23 ✅ → 15f + R27 ✅ → GH ✅ → R4-1 + R4-6..8 (.47) → R4-9 → R4-10. Security: SEC4 ✅ (`security-review-4.md`). Design: GH art ✅. Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -644,7 +657,6 @@ Frames (the daily word game) → move-to-device code → **GP side games polish*
 (0.9.95+ growth), G1–G5 (launch), the privacy policy rewrite + terms (the "official work" step after the test round).
 **After both lanes:** Planner runs the council review (harsh feedback on the whole app), then a bug hunt. **Gate (owner, 3 Nov 2026):** the council waits until the owner has done his solo hand tests (the Planner's list of things that will not change) and added the two repo secrets `FEEDBACK_GITHUB_TOKEN` and `USAGE_TOKEN`; his test results go into the council's brief.
 
-
 _Order agreed with the owner on 2 Nov 2026. Cards 1–5 close the 0.9.93 gate (owner-reported bugs + hand tests); the
 rest is 0.9.94. The owner's picks on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: 1 = C + D, 2 = A, 3 = A, 4 = A, ideas as proposed._
 
@@ -1044,8 +1056,8 @@ into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the
 - Owner's pick: copy and whether it is a page or only a home door. Planner: 0.9.95 (owner agreed 2 Nov 2026).
 
 Cards from `security-review-4.md` (4 Nov 2026, `main` at 0.9.97.39, after the repository went public), most severe
-first (R4 = review 4). Details, file:line references and the owner's GitHub settings are in the review. Shipped cards of
-reviews 2 and 3 below are still listed here; only H3 + M7, M8 and R3-3 of them are open.
+first (R4 = review 4). Details, file:line references and the owner's GitHub settings are in the review. The shipped cards of
+reviews 2 and 3 moved to Done (4 Nov 2026); open from them: H3 + M7, M8 and R3-3. Lanes as routed by the Planner.
 
 ### Security: an upload budget across rooms (R4-1; lane A)
 - Severity: medium
@@ -1057,7 +1069,7 @@ reviews 2 and 3 below are still listed here; only H3 + M7, M8 and R3-3 of them a
   address still uploads.
 - Owner's pick: none needed.
 
-### Security: no promise shared between requests in the IP key (R4-2; lane A)
+### Security: no promise shared between requests in the IP key (R4-2; lane B)
 - Severity: medium
 - Why: `ip-key.ts` caches the day's key as a promise made inside one request; if that request is cancelled the promise
   can stay pending and every later connection in the isolate waits (Cloudflare: no request-scoped state in globals).
@@ -1067,8 +1079,8 @@ reviews 2 and 3 below are still listed here; only H3 + M7, M8 and R3-3 of them a
   fallback); e2e unchanged.
 - Owner's pick: none needed.
 
-### Security: protect the daily request quota (R4-3; lane A, the rest with R3-3)
-- Severity: medium (high if the account is on Workers Free and gets targeted)
+### Security: protect the daily request quota (R4-3; lane B, the rest with R3-3)
+- Severity: high (the owner is on Workers Free, Planner 4 Nov 2026)
 - Why: `/api/probe` (plain GET up to 512 KB) has no limit, and on the free plan every `/api/*` call counts toward the
   daily request allowance even when our limiter says 429, so a loop can stop all rooms until midnight UTC.
 - Done when: the probe's GET counts against a per-IP limit and its size is capped lower; the R3-3 card gains a WAF
@@ -1121,40 +1133,6 @@ reviews 2 and 3 below are still listed here; only H3 + M7, M8 and R3-3 of them a
 
 Cards from `security-review-3.md` (3 Nov 2026, `main` at 0.9.93.18), most severe first (R3 = review 3). Details,
 file:line references, scenarios and the owner's Cloudflare / GitHub / Google steps are in the review.
-
-### Security: no uncapped request body in a room (R3-1)
-- Severity: high
-- Why: `POST /api/rooms/:id/unsave` reads the whole body inside the room object; one chunked ~100 MB request from
-  anyone with the room link resets the room and drops everyone (the H1 crash through another door).
-- Done when: the Worker refuses an `unsave` POST without `Content-Length` or above ~1 KB; the object reads it with a
-  capped reader (shared with `fallback.ts`); a per-IP limit on `/info` + `/unsave` (with the M4 card); a code comment
-  states the rule "no Durable Object reads a request body without a cap".
-- Tests: e2e (chunked oversize `unsave` → refused and the room still answers; a normal unsave by the host still works).
-- Owner's pick: none needed.
-- Done: 0.9.95.2 (PR below). Worker: an `unsave` POST without `Content-Length` → 411, above 1 KB → 413, any other method
-  → 405; `/info` + `unsave` share the new `ROOM_INFO_LIMIT` binding (60 per IP and minute, Workers Free); an `unsave`
-  POST without an `Origin` → 403 (browsers always send one on a POST). Room object:
-  `readCapped(request, 1024)` (exported from `fallback.ts`, its comment states the rule); `TvLink /deliver` capped too.
-  Test: e2e `saved.mjs` (chunked body refused, 4 KB body refused, the room still answers; the host's unsave still works).
-
-### Security: secrets only in the deploy step (R3-2)
-- Severity: medium
-- Why: the Cloudflare token and the YouTube key sit in the environment of `npm ci`, the build and the live e2e, so a
-  compromised dependency's install script or build plugin could read them and deploy to the account.
-- Done when: the three secrets are set only on the "Deploy to Cloudflare" step (step-level `env:`, never job- or
-  workflow-level); the key check uses `secrets` in an `if:`; the workflow has `permissions: contents: read`.
-  Planner note (3 Nov 2026): the repo is private on GitHub Free, which has no Environments with branch rules for private
-  repos, so the `production` environment part waits until the repo is public or paid; step-level secrets need no owner
-  action.
-- Tests: CI green on a PR; the next merge deploys and the live e2e passes; the install / build steps' environment has
-  no `CLOUDFLARE_*` / `YOUTUBE_*` (a quick `env | grep -c` step that prints 0, removed afterwards).
-- Owner's pick: none needed now (the environment part later).
-- Done (0.9.97.4): the deploy job has no job-level `env:`; `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and
-  `YOUTUBE_API_KEY` (with `FEEDBACK_GITHUB_TOKEN` / `USAGE_TOKEN`) are set only on "Deploy to Cloudflare" (the live
-  e2e keeps `USAGE_TOKEN` for its read check). "Check keys" turns `secrets.X != ''` into an output (`steps.keys.outputs.ok`)
-  that the later steps' `if:` read. Instead of a one-off `env | grep -c` step, "Install and build" keeps a permanent
-  guard: it fails if any deploy secret is in its environment. `permissions: contents: read` came with L10.
-  The `production` environment waits for a public / paid repo.
 
 ### Y1. YouTube branding + Terms link next to search results (audit prep, from Research)
 - Why: YouTube Developer Policies III.F.2 / III.A.1: every feature showing YouTube API results must make clear they come
@@ -1225,56 +1203,6 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   harness with the extension built for the new origin.
 - Owner's pick: needed (the domain itself, and the zone settings in the dashboard).
 
-### Privacy: YouTube leftovers (R3-5)
-- Severity: low
-- Why: the YouTube API script still comes from `www.youtube.com` (with the person's YouTube cookies where third-party
-  cookies are allowed) while the policy says the player is "loaded from youtube-nocookie.com"; the CSP keeps
-  `frame-src https://www.youtube.com` and `script-src https://s.ytimg.com`, probably unused.
-- Done when: the policy (EN + TR) says the player code comes from youtube.com and the video frame from
-  youtube-nocookie.com; the two CSP hosts are dropped if the YouTube harness still plays without them.
-- Tests: `scripts/harness/yt-privacy/run.cjs` + `yt-room` with the trimmed CSP, no CSP violations in the console.
-- Owner's pick: none needed.
-- Done (0.9.97.5): the privacy policy (EN + TR) says the video frame comes from youtube-nocookie.com and the player code
-  (IFrame Player API) from youtube.com, which may carry youtube.com cookies where third-party cookies are allowed;
-  `_headers` drops `https://s.ytimg.com` from `script-src` and `https://www.youtube.com` from `frame-src`. The
-  `yt-privacy` harness now records every `securitypolicyviolation` and checks there is none with the player loaded
-  (run against `wrangler dev`, which serves `_headers`: green). With it, a live-e2e fix: `callYouTube` retries once
-  after 400 ms on a 5xx or no answer and logs only the call's name and status (`search.mjs` failed its first live
-  attempt on the 0.9.97.3 deploy with YouTube's "failed").
-  Also: the 0.9.97.4 deploy (the first with the owner's `USAGE_TOKEN`) failed `search.mjs` "the owner's key reads them"
-  on both attempts although the Worker had the secret; most likely whitespace around the pasted secret (a header loses
-  it, the stored value keeps it). `youtubeUsage` now trims both sides, and the check prints the status.
-
-### Security: fallback sessions per IP (R3-6)
-- Severity: low
-- Why: in a room with many custom emojis and chat images, two or three idle fallback sessions from one IP keep the
-  object's 24 M budget full, so real hotspot users are closed with `1009 overflow`.
-- Done when: at most ~3 fallback sessions per IP hash per object; a broadcast string counts once across sessions (or
-  join images are sent after the first poll, in pages).
-- Tests: e2e `fallback.mjs` (a 4th session from one IP refused; a second IP still joins a full-emoji room);
-  hotspot harness still passes.
-- Owner's pick: none needed.
-- Done (0.9.97.6): `PollHub` keeps each session's IP hash (`X-SWM-Ip`, set only by the Worker) and refuses a 4th open
-  session from one address in one object with `429 {code:'busy'}` (`FALLBACK_PER_IP` 3; the client's open fails and the
-  room reconnects as after any failed open). Tests: e2e `fallback.mjs` (3 open, the 4th 429, again after one closes);
-  harness `hotspot` green again (it had broken with card 6: it waited for the hidden people count and clicked the
-  hidden sync-test button). R3-8 was done with L6.
-
-### Security: requirements for the feedback endpoint (R3-7, with card 9)
-- Severity: low (preventive)
-- Why: card 9 writes user text into GitHub issues with a token; without limits it can flood the repo, ping people with
-  `@` mentions or leak more than intended.
-- Done when: fine-grained token = Issues: write on this repo only, with an expiry; `Origin` required; per-IP limit
-  (≈ 3 / hour) and a global daily cap (≈ 50); body size capped while reading; text in a code block, `@` / `#123`
-  neutralised; no IP, room id, names or chat stored; the optional e-mail and its retention named in the privacy
-  policy; Turnstile only if spam appears.
-- Tests: unit (payload builder escapes `@user`, `#1`, long text cut); e2e with the token off (`off`), limits, oversize
-  body refused.
-- Owner's pick: none needed (the owner creates the token when card 9 asks).
-
-Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe first. Each card names its finding id
-(H = high, M = medium, L = low); the details, file:line references and attack scenarios are in the review.
-
 ### Privacy: rewrite the privacy policy for KVKK + GDPR (H3, M7)
 - Severity: high
 - Why: the policy has no data controller, legal basis, rights and how to use them, transfers abroad, minimum age,
@@ -1290,87 +1218,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   permission"; a lawyer reads policy + terms before the store submission if the owner can find one (not blocking);
   the up-to-3 names on the join card stay and the policy says so (M7). Planner: before the YouTube API audit (0.9.98).
 
-### Privacy: a secret in the IP hash (M5)
-- Severity: medium
-- Why: the IP hash is an unsalted SHA-256, so every IPv4 address can be recovered from it; the policy calls it
-  scrambled.
-- Done when: `ipKey` is an HMAC with a Worker secret (rotated daily or a daily derived key), rate limits still work,
-  and the policy describes it as it is (incl. chat images counted per IP).
-- Tests: unit (same IP same day → same key, different day → different key), e2e emoji / image limits still pass.
-- Owner's pick: none needed.
-- Done: 0.9.96.19 (PR below). Shared `ip-hash.ts` (`hashIp` = HMAC-SHA-256 of the IP, 16 hex digits; `ipHashKey`,
-  `newIpHashKey`); the `IpKeys` object (binding `IPKEYS`, migration `v10`, one instance) makes a random 32-byte key
-  per UTC day and overwrites the old one, so no owner secret is needed and past days' hashes can't be matched to an
-  address by anyone. The Worker (`ip-key.ts` `ipKey`) fetches it once per isolate and day; if the object can't be
-  reached it hashes with an isolate-local random key for that moment (the site keeps working). Every rate limit and
-  `X-SWM-Ip` use it; per-day counts keyed by it (emoji / image uploads, the YouTube share) restart with the new key at
-  00:00 UTC. Privacy policy (EN + TR): what is counted (connections, emoji and chat images, searches) and how the
-  daily keyed code works. Tests: unit `ip-hash.test.ts` (same day same code, another key another code, not the plain
-  SHA-256); local full e2e (emoji / image limits) green.
-
-### Privacy: no search words in our logs (M6)
-- Severity: medium
-- Why: Workers Logs keep `/api/youtube/search?q=<words>` with the caller's IP metadata, which contradicts the policy's
-  "by the words, not by person".
-- Done when: search words travel in a POST body (or are otherwise kept out of logged URLs), and the policy names our
-  own logs and their retention.
-- Tests: e2e `search.mjs`; a local check that the logged URL has no `q`.
-- Owner's pick: none needed.
-- Done: 0.9.96.20 (PR below). `POST /api/youtube/search` and `POST /api/podcasts/search` take the words as a form body
-  (`q`, at most `WORDS_BODY_MAX` 2 KB, `readWords` in `youtube.ts`); a GET is 405, words only in the address count as
-  none (400). Language, `short` and `page` stay in the address (no words). The site sends them with shared
-  `wordsRequest(q)` (link-box search, Shorts ＋ Add, the ♾ topic feed, podcasts). Cache keys unchanged. Discover /
-  More like this / channel carry no typed words (a category, a video id, a channel link or @handle) and stay GET.
-  Privacy policy (EN + TR): our own Workers Logs (time, address, status, errors) kept at most 7 days, never with search
-  words. Tests: e2e `search.mjs` + `podcasts.mjs` (GET with `q` → 405, `q` only in the address → 400, too large body
-  → 400), harness `phone/run.cjs` checks the page's search request is a POST with no `q` in the address, harness
-  `podcasts/run.cjs` reads the words from the body.
-
-### Security: a daily YouTube quota budget (M3)
-- Severity: medium
-- Why: scripts without an `Origin` may search, limited only to 10 / min / IP, so one IP can spend the whole day's
-  quota in ~10 minutes and turn search / Shorts feed / Discover off for everyone.
-- Done when: a global daily unit budget (one Durable Object or KV counter) and a per-IP daily cap guard search, pool
-  and like; the "quota" answer is used when the budget is out.
-- Tests: unit for the budget logic; e2e `search.mjs` still passes.
-- Owner's pick: none needed (the per-IP number can be tuned later).
-- Done: 0.9.96.17 (PR below). Shared `yt-usage.ts`: `DAILY_UNIT_BUDGET` 9000 of YouTube's 10 000 units a day,
-  `IP_DAILY_UNITS` 2000 per address (≈ 20 searches), `EXPECTED_UNITS` per request kind, `unitsToday`, `budgetCheck`.
-  The `YoutubeUsage` object answers `POST /spend {ip, cost}` before each uncached request to YouTube (search, Discover,
-  More like this, channel): today's counted units + units allowed but not yet counted + the cost must fit the budget
-  (else `quota`), and the address's share today (else `busy`). The per-address numbers live in the object's memory
-  only (the same scrambled IP hash as the rate limits, never stored), reset each UTC day. If the object can't be
-  reached the request goes (YouTube's own quota is the backstop). Tests: unit `yt-usage.test.ts` (budget, per-address
-  share, today's sum); e2e `search.mjs` unchanged and green (no key locally / in CI, so the budget path is not reached
-  there; live searches go through it).
-
-### Security: rate-limit the cheap routes that wake Durable Objects (M4)
-- Severity: medium
-- Why: `/api/version` creates a new object per call, `/api/rooms/:id/info` and fallback `send/poll/close` with any
-  `sid` reach objects without a limit; a loop can spend the daily Durable Object allowance.
-- Done when: `/api/version` needs a token from the deploy job (or is strictly limited), `/info` and all fallback
-  requests have per-IP limits, the Worker checks `sid` against `^[0-9a-f]{32}$` before forwarding.
-- Tests: e2e (bad `sid` answered by the Worker; `/info` limit), deploy job's `wait-live.mjs` still works.
-- Owner's pick: none needed.
-- Done: 0.9.96.18 (PR below). `/info` + `unsave` already counted against `ROOM_INFO_LIMIT` (R3-1). `/api/version` now
-  counts against it too (its own key `version:<ip hash>`, 60 a minute; `wait-live.mjs` asks every 3 s = 20). The HTTP
-  fallback's `send` / `poll` / `close` are checked by the Worker before any object wakes: a known step (else 400), a
-  `sid` matching `^[0-9a-f]{32}$` (else 400), and the new `FALLBACK_LIMIT` (1200 per IP and minute; one batch is in
-  flight at a time, so a fast network sends at most ~10 a second while drawing). The client (`socket.ts`) treats a 429
-  as "wait 1.5 s and try again", keeping the batch, never as a failure. Tests: unit `socket.test.ts` (429 on send and
-  poll: the message arrives, the socket stays open; fails on the old code), e2e `fallback.mjs` (malformed / missing
-  `sid`, unknown step → 400).
-
-### Security: make-host only by the real host (M2)
-- Severity: medium
-- Why: during the host's 20 s reload grace the oldest guest counts as host and can hand the role to themselves for good.
-- Done when: `make-host` is refused unless the sender's key is `hostKey`.
-- Tests: e2e `host.mjs` (host reloads, oldest guest's `make-host` → `not_host`, host returns as host).
-- Owner's pick: none needed.
-- Done: 0.9.96.16 (PR below). `makeHost` in the room object also needs the sender's key to be `hostKey`, so the guest
-  who acts as host during the 20 s reload grace gets `not_host`; after the grace a join settles the role as before.
-  e2e `host.mjs` covers it (fails on the old code).
-
 ### Security: TV link hardening before the TV leaves the lab (M8)
 - Severity: medium (only while `?tvlab=1` hides the TV)
 - Why: a TV token is the whole person including host rights, a QR shown by someone else can phish it, and pairing
@@ -1380,118 +1227,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: e2e `tv.mjs` (TV connection's `kick` / `make-host` / `settings` refused; brute-force attempts limited),
   harness `tv/run.cjs`.
 - Owner's pick: none needed (part of the TV version after 1.0).
-
-### Security: one text cleaner for names, chat and titles (L1)
-- Severity: low
-- Why: zero-width and right-to-left control characters pass, so a guest can look exactly like the host or reverse
-  the text of a message.
-- Done when: one shared sanitizer (removes `\p{Cc}`, `\p{Cf}` except ZWJ inside emoji, lone surrogates; cuts by code
-  point) is used for names, room names, chat, pin notes, titles (also URL file names and oEmbed) and guesses.
-- Tests: unit in `protocol.test.ts` (U+200B, U+202E, U+2066, split surrogate pair).
-- Owner's pick: none needed.
-- Done: 0.9.96.21 (PR below). `protocol.ts` `cleanText(x, max)`: `\p{Cc}` → space, `\p{Cf}` removed except a ZWJ
-  between two pictographs and flag tag characters after 🏴, lone surrogates dropped, spaces collapsed, cut by code
-  point. Used by `cleanName`, `cleanRoomName`, `cleanChatText`, `cleanTitle`, pin notes and Draw & Guess guesses;
-  the server's `resolveTitle` (oEmbed answers, file names) runs its result through `cleanTitle`. Tests: unit
-  `protocol.test.ts` (6: U+200B, U+202E, U+2066/2069, BOM, ZWJ emoji and the England flag kept, split surrogates,
-  code-point cut, titles, pin notes); local full e2e green.
-
-### Security: safer media links (L4)
-- Severity: low
-- Why: `html5` / `page` items accept `http:`, user-info, `localhost` and private IPs, so one guest can make every
-  viewer's browser request a device on their own network; `page` titles are chosen by the client.
-- Done when: `html5` needs `https:`, user-info is refused, IP literals / private / `.local` hosts are refused, the
-  page's host is shown next to a client-given title.
-- Tests: unit (`cleanMedia` cases); e2e queue tests still pass.
-- Owner's pick: none needed.
-- Done: 0.9.96.22 (PR below). `protocol.ts` `isPublicMedia`: `html5` needs `https:`; `html5` and `page` refuse
-  user-info, IP literals (v4 / v6, also hex forms the URL parser turns into dotted ones), single-label hosts and
-  `localhost` / `.local` / `.internal` / `.lan` / `.home.arpa` / `.intranet`. The room refuses such a `load` /
-  `enqueue` with the new error `bad_link` (EN + TR text), except on a local test server (`devHost`: the request's
-  host is `localhost` / `127.0.0.1`, so the harnesses keep playing files from localhost). A film page's client-given
-  title gets its site's name (`withHost`: "Title · site.example"). Tests: unit `protocol.test.ts` (3), e2e `links.mjs`
-  (live: private address, http file, user-info refused, a public https file queued; local: local links still taken);
-  locally checked the refusal through the HTTP fallback with another `Host`.
-
-### Security: room abuse limits (L2, L3, L5)
-- Severity: low
-- Why: signal floods per connection reset on reconnect, `ready:false` lets a guest pause a host-only room again
-  after a reconnect, and 51 sockets that never say `hello` make a room "full" for 150 s.
-- Done when: signal limits are per person and target pair (a few offers per minute per pair); the wait cooldown is
-  keyed by person / IP hash; "full" counts joined members and unjoined sockets close after ~15 s.
-- Tests: e2e (`voice.mjs`, `wait.mjs` additions; unjoined sockets closed).
-- Owner's pick: none needed.
-- Done: 0.9.96.24 (PR below). L2: besides the old per-connection limit, signals (`signal`, `live-signal`) count per
-  person (browser, `personSignalLimit` 120 burst / 12 a second) and per pair of people (`pairSignalLimit` 40 / 2 a
-  second), so a reconnect no longer refills the budget; `RateLimiter` remembers at most 4000 keys. L3: the 30 s "don't
-  make the room wait again" is copied to the person (`waitCooldowns`, from `WaitTracker.cooldowns()` when a wait ends or
-  a member leaves) and handed to a new member id of the same browser (`holdOff`). L5: "full" counts joined people
-  (`MAX_MEMBERS`) and at most 30 connections waiting for `hello` (`MAX_UNJOINED`); one that has not said `hello`
-  15 s after opening (`UNJOINED_MS`) is closed with 4008 `no_hello` on the next arrival and in `pruneStale`. Tests:
-  e2e `abuse.mjs` (a burst of 100 signals cut to 40, a reconnect gets 3; a silent socket closed with 4008), `wait.mjs`
-  (a reconnect does not reset the cooldown); harness `voice/live.mjs` green; `voice/run.mjs` passes its connection
-  checks (its two failing checks fail on main too: the fake-mic energy check with a sine wav and the "free tiles" check
-  that predates 6g's one-window default; for the bug hunt).
-
-### Security: game rules for every player (L6)
-- Severity: low
-- Why: any Draw & Guess player can reset or start the game, `undo` re-sends all strokes 8 times a second, the Quiz
-  50/50 joker leaks the answer with a second identity, Poker's `people` grows without a cap and anyone can deal.
-- Done when: host / opener checks on Draw `reset` / `start` and Poker `start`; `undo` ≤ 1/s; one hidden 50/50 pair
-  per question; Poker `people` capped; (optional) game objects accept only a short-lived ticket from the room.
-  Review 3 (R3-8): game, draw, quiz and poker objects accept `hello` only once per connection, as the room does.
-- Tests: e2e `draw.mjs`, `quiz.mjs` and a Poker e2e case.
-- Owner's pick: none needed.
-- Done (0.9.96.25): Draw & Guess `start` / `reset`, Quiz `start` and Poker `start` only from the game's host (the first
-  player / seat still connected; the same person who picks the settings, `not_host` otherwise; the Start button is
-  dimmed for the others and the note says "X picks the settings and starts the game"); Draw `undo` has its own limiter
-  (`RateLimiter(3, 1)`); the Quiz 50/50 reuses the pair already hidden for that question; Poker keeps at most
-  `MAX_PEOPLE` 60 people (the longest-unseen without a seat or a connection go); game, draw, quiz and poker objects
-  answer a second `hello` on a connection with `bad` (R3-8). Not done (optional in the card): a room ticket for game
-  objects. Tests: e2e `draw.mjs` (host start / reset, second hello, undo burst), `quiz.mjs` (host start, second hello,
-  one 50/50 pair), `poker.mjs` (host deals).
-
-### Security: small hygiene fixes (L7, L8)
-- Severity: low
-- Why: the TikTok resolver's later hops may use `http:`, another port or user-info; recaps older than 90 days stay in
-  storage until read; the room's reset leaves in-memory tokens that are written back.
-- Done when: every TikTok hop needs `https:`, no port, no user-info, and bodies are cancelled; recaps are pruned in
-  the alarm / on load; `deleteAll` also clears `tvTokens`, `memberIds`, `counted`.
-- Tests: unit for the TikTok URL check; e2e recap test.
-- Owner's pick: none needed.
-- Done (0.9.97.1): every TikTok redirect hop must pass `isTikTokHop` (shared `media.ts`: `https:`, no port, no
-  user-info, a `tiktok.com` host) and each answer's body is cancelled; saved recaps past `RECAP_MAX_AGE_MS` leave
-  storage when the room object loads and on every alarm (`pruneRecaps`, shared `freshRecaps`); the empty-room reset also
-  clears `tvTokens`, `memberIds` and `counted`. Tests: unit `media.test.ts` (`isTikTokHop`), `recap.test.ts`
-  (`freshRecaps`; a live 90-day e2e is not practical); full local e2e green.
-
-### Privacy: a privacy link where people join (L9)
-- Severity: low
-- Why: the policy is only in the footer, which phones, the film page overlay and the Shorts view hide.
-- Done when: the join card and the settings / ⋯ menu link to `privacy.html` in the page's language.
-- Tests: phone harness check for the link.
-- Owner's pick: none needed.
-- Done (0.9.97.2): "🔒 Privacy" (`data-privacy-link`, `/privacy.html?lang=<page language>`) under the join card's
-  button (`#join-privacy`), in the profile menu next to Help (`#profile-privacy`) and last in ⋯ More (computer and
-  phone, `room-more.ts`, presses `#profile-privacy`, an anchor, so the film page's overlay lets it open). Tests:
-  harness `room-more` (join link + ⋯ list + phone order), `phone` (⋯ has the privacy tile).
-
-### Repo: dependency and workflow hygiene (L10)
-- Severity: low
-- Why: `npm audit` reports dev-only advisories in `undici` (via `wrangler`), there is no Dependabot, the workflow has
-  no `permissions:` block, and there is no `SECURITY.md` (ROADMAP §3).
-- Done when: `wrangler` updated and `npm audit` clean; `.github/dependabot.yml` (npm + actions, weekly);
-  `permissions: contents: read` in `test.yml`; `SECURITY.md` with the contact address; owner turns on branch
-  protection and secret scanning for `main`.
-- Tests: CI green; `npm audit` 0.
-- Owner's pick: needed only for the GitHub settings. Planner, 2 Nov 2026: on a private repo with GitHub Free,
-  branch protection / rulesets and secret scanning are not available (paid plans, or free once the repo is public);
-  the owner turns on the free parts (Dependabot alerts + security updates) now; branch rules come with the public repo
-  or a GitHub Pro decision.
-- Done (0.9.97.3): `npm audit fix` (wrangler 4.151 → 4.157, its miniflare / undici with it), `npm audit` 0;
-  `.github/dependabot.yml` (npm with dev tools grouped, GitHub Actions, weekly); `permissions: contents: read` at the top
-  of `test.yml`; `SECURITY.md` (the publisher address, what to send, 7-day answer, scope). Left for the owner: Dependabot
-  alerts + security updates in the repo settings (STATUS hand tests).
 
 ### 🍿 Snack Bar: first solo side game (0.9.95; owner picked it, 2 Nov 2026)
 - Why: the owner wants something to play alone while watching with friends; an idle game fits low attention and
@@ -1591,6 +1326,300 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: agreed (3 Nov 2026).
 
 ## Done
+
+### Security: no uncapped request body in a room (R3-1)
+- Severity: high
+- Why: `POST /api/rooms/:id/unsave` reads the whole body inside the room object; one chunked ~100 MB request from
+  anyone with the room link resets the room and drops everyone (the H1 crash through another door).
+- Done when: the Worker refuses an `unsave` POST without `Content-Length` or above ~1 KB; the object reads it with a
+  capped reader (shared with `fallback.ts`); a per-IP limit on `/info` + `/unsave` (with the M4 card); a code comment
+  states the rule "no Durable Object reads a request body without a cap".
+- Tests: e2e (chunked oversize `unsave` → refused and the room still answers; a normal unsave by the host still works).
+- Owner's pick: none needed.
+- Done: 0.9.95.2 (PR below). Worker: an `unsave` POST without `Content-Length` → 411, above 1 KB → 413, any other method
+  → 405; `/info` + `unsave` share the new `ROOM_INFO_LIMIT` binding (60 per IP and minute, Workers Free); an `unsave`
+  POST without an `Origin` → 403 (browsers always send one on a POST). Room object:
+  `readCapped(request, 1024)` (exported from `fallback.ts`, its comment states the rule); `TvLink /deliver` capped too.
+  Test: e2e `saved.mjs` (chunked body refused, 4 KB body refused, the room still answers; the host's unsave still works).
+- Done: 0.9.95.2 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: secrets only in the deploy step (R3-2)
+- Severity: medium
+- Why: the Cloudflare token and the YouTube key sit in the environment of `npm ci`, the build and the live e2e, so a
+  compromised dependency's install script or build plugin could read them and deploy to the account.
+- Done when: the three secrets are set only on the "Deploy to Cloudflare" step (step-level `env:`, never job- or
+  workflow-level); the key check uses `secrets` in an `if:`; the workflow has `permissions: contents: read`.
+  Planner note (3 Nov 2026): the repo is private on GitHub Free, which has no Environments with branch rules for private
+  repos, so the `production` environment part waits until the repo is public or paid; step-level secrets need no owner
+  action.
+- Tests: CI green on a PR; the next merge deploys and the live e2e passes; the install / build steps' environment has
+  no `CLOUDFLARE_*` / `YOUTUBE_*` (a quick `env | grep -c` step that prints 0, removed afterwards).
+- Owner's pick: none needed now (the environment part later).
+- Done (0.9.97.4): the deploy job has no job-level `env:`; `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and
+  `YOUTUBE_API_KEY` (with `FEEDBACK_GITHUB_TOKEN` / `USAGE_TOKEN`) are set only on "Deploy to Cloudflare" (the live
+  e2e keeps `USAGE_TOKEN` for its read check). "Check keys" turns `secrets.X != ''` into an output (`steps.keys.outputs.ok`)
+  that the later steps' `if:` read. Instead of a one-off `env | grep -c` step, "Install and build" keeps a permanent
+  guard: it fails if any deploy secret is in its environment. `permissions: contents: read` came with L10.
+  The `production` environment waits for a public / paid repo.
+- Done: 0.9.97.4 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Privacy: YouTube leftovers (R3-5)
+- Severity: low
+- Why: the YouTube API script still comes from `www.youtube.com` (with the person's YouTube cookies where third-party
+  cookies are allowed) while the policy says the player is "loaded from youtube-nocookie.com"; the CSP keeps
+  `frame-src https://www.youtube.com` and `script-src https://s.ytimg.com`, probably unused.
+- Done when: the policy (EN + TR) says the player code comes from youtube.com and the video frame from
+  youtube-nocookie.com; the two CSP hosts are dropped if the YouTube harness still plays without them.
+- Tests: `scripts/harness/yt-privacy/run.cjs` + `yt-room` with the trimmed CSP, no CSP violations in the console.
+- Owner's pick: none needed.
+- Done (0.9.97.5): the privacy policy (EN + TR) says the video frame comes from youtube-nocookie.com and the player code
+  (IFrame Player API) from youtube.com, which may carry youtube.com cookies where third-party cookies are allowed;
+  `_headers` drops `https://s.ytimg.com` from `script-src` and `https://www.youtube.com` from `frame-src`. The
+  `yt-privacy` harness now records every `securitypolicyviolation` and checks there is none with the player loaded
+  (run against `wrangler dev`, which serves `_headers`: green). With it, a live-e2e fix: `callYouTube` retries once
+  after 400 ms on a 5xx or no answer and logs only the call's name and status (`search.mjs` failed its first live
+  attempt on the 0.9.97.3 deploy with YouTube's "failed").
+  Also: the 0.9.97.4 deploy (the first with the owner's `USAGE_TOKEN`) failed `search.mjs` "the owner's key reads them"
+  on both attempts although the Worker had the secret; most likely whitespace around the pasted secret (a header loses
+  it, the stored value keeps it). `youtubeUsage` now trims both sides, and the check prints the status.
+- Done: 0.9.97.5 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: fallback sessions per IP (R3-6)
+- Severity: low
+- Why: in a room with many custom emojis and chat images, two or three idle fallback sessions from one IP keep the
+  object's 24 M budget full, so real hotspot users are closed with `1009 overflow`.
+- Done when: at most ~3 fallback sessions per IP hash per object; a broadcast string counts once across sessions (or
+  join images are sent after the first poll, in pages).
+- Tests: e2e `fallback.mjs` (a 4th session from one IP refused; a second IP still joins a full-emoji room);
+  hotspot harness still passes.
+- Owner's pick: none needed.
+- Done (0.9.97.6): `PollHub` keeps each session's IP hash (`X-SWM-Ip`, set only by the Worker) and refuses a 4th open
+  session from one address in one object with `429 {code:'busy'}` (`FALLBACK_PER_IP` 3; the client's open fails and the
+  room reconnects as after any failed open). Tests: e2e `fallback.mjs` (3 open, the 4th 429, again after one closes);
+  harness `hotspot` green again (it had broken with card 6: it waited for the hidden people count and clicked the
+  hidden sync-test button). R3-8 was done with L6.
+- Done: 0.9.97.6 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: requirements for the feedback endpoint (R3-7, with card 9)
+- Severity: low (preventive)
+- Why: card 9 writes user text into GitHub issues with a token; without limits it can flood the repo, ping people with
+  `@` mentions or leak more than intended.
+- Done when: fine-grained token = Issues: write on this repo only, with an expiry; `Origin` required; per-IP limit
+  (≈ 3 / hour) and a global daily cap (≈ 50); body size capped while reading; text in a code block, `@` / `#123`
+  neutralised; no IP, room id, names or chat stored; the optional e-mail and its retention named in the privacy
+  policy; Turnstile only if spam appears.
+- Tests: unit (payload builder escapes `@user`, `#1`, long text cut); e2e with the token off (`off`), limits, oversize
+  body refused.
+- Owner's pick: none needed (the owner creates the token when card 9 asks).
+
+Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe first. Each card names its finding id
+(H = high, M = medium, L = low); the details, file:line references and attack scenarios are in the review.
+- Done: 0.9.96 (built into card 9) (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Privacy: a secret in the IP hash (M5)
+- Severity: medium
+- Why: the IP hash is an unsalted SHA-256, so every IPv4 address can be recovered from it; the policy calls it
+  scrambled.
+- Done when: `ipKey` is an HMAC with a Worker secret (rotated daily or a daily derived key), rate limits still work,
+  and the policy describes it as it is (incl. chat images counted per IP).
+- Tests: unit (same IP same day → same key, different day → different key), e2e emoji / image limits still pass.
+- Owner's pick: none needed.
+- Done: 0.9.96.19 (PR below). Shared `ip-hash.ts` (`hashIp` = HMAC-SHA-256 of the IP, 16 hex digits; `ipHashKey`,
+  `newIpHashKey`); the `IpKeys` object (binding `IPKEYS`, migration `v10`, one instance) makes a random 32-byte key
+  per UTC day and overwrites the old one, so no owner secret is needed and past days' hashes can't be matched to an
+  address by anyone. The Worker (`ip-key.ts` `ipKey`) fetches it once per isolate and day; if the object can't be
+  reached it hashes with an isolate-local random key for that moment (the site keeps working). Every rate limit and
+  `X-SWM-Ip` use it; per-day counts keyed by it (emoji / image uploads, the YouTube share) restart with the new key at
+  00:00 UTC. Privacy policy (EN + TR): what is counted (connections, emoji and chat images, searches) and how the
+  daily keyed code works. Tests: unit `ip-hash.test.ts` (same day same code, another key another code, not the plain
+  SHA-256); local full e2e (emoji / image limits) green.
+- Done: 0.9.96.19 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Privacy: no search words in our logs (M6)
+- Severity: medium
+- Why: Workers Logs keep `/api/youtube/search?q=<words>` with the caller's IP metadata, which contradicts the policy's
+  "by the words, not by person".
+- Done when: search words travel in a POST body (or are otherwise kept out of logged URLs), and the policy names our
+  own logs and their retention.
+- Tests: e2e `search.mjs`; a local check that the logged URL has no `q`.
+- Owner's pick: none needed.
+- Done: 0.9.96.20 (PR below). `POST /api/youtube/search` and `POST /api/podcasts/search` take the words as a form body
+  (`q`, at most `WORDS_BODY_MAX` 2 KB, `readWords` in `youtube.ts`); a GET is 405, words only in the address count as
+  none (400). Language, `short` and `page` stay in the address (no words). The site sends them with shared
+  `wordsRequest(q)` (link-box search, Shorts ＋ Add, the ♾ topic feed, podcasts). Cache keys unchanged. Discover /
+  More like this / channel carry no typed words (a category, a video id, a channel link or @handle) and stay GET.
+  Privacy policy (EN + TR): our own Workers Logs (time, address, status, errors) kept at most 7 days, never with search
+  words. Tests: e2e `search.mjs` + `podcasts.mjs` (GET with `q` → 405, `q` only in the address → 400, too large body
+  → 400), harness `phone/run.cjs` checks the page's search request is a POST with no `q` in the address, harness
+  `podcasts/run.cjs` reads the words from the body.
+- Done: 0.9.96.20 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: a daily YouTube quota budget (M3)
+- Severity: medium
+- Why: scripts without an `Origin` may search, limited only to 10 / min / IP, so one IP can spend the whole day's
+  quota in ~10 minutes and turn search / Shorts feed / Discover off for everyone.
+- Done when: a global daily unit budget (one Durable Object or KV counter) and a per-IP daily cap guard search, pool
+  and like; the "quota" answer is used when the budget is out.
+- Tests: unit for the budget logic; e2e `search.mjs` still passes.
+- Owner's pick: none needed (the per-IP number can be tuned later).
+- Done: 0.9.96.17 (PR below). Shared `yt-usage.ts`: `DAILY_UNIT_BUDGET` 9000 of YouTube's 10 000 units a day,
+  `IP_DAILY_UNITS` 2000 per address (≈ 20 searches), `EXPECTED_UNITS` per request kind, `unitsToday`, `budgetCheck`.
+  The `YoutubeUsage` object answers `POST /spend {ip, cost}` before each uncached request to YouTube (search, Discover,
+  More like this, channel): today's counted units + units allowed but not yet counted + the cost must fit the budget
+  (else `quota`), and the address's share today (else `busy`). The per-address numbers live in the object's memory
+  only (the same scrambled IP hash as the rate limits, never stored), reset each UTC day. If the object can't be
+  reached the request goes (YouTube's own quota is the backstop). Tests: unit `yt-usage.test.ts` (budget, per-address
+  share, today's sum); e2e `search.mjs` unchanged and green (no key locally / in CI, so the budget path is not reached
+  there; live searches go through it).
+- Done: 0.9.96.17 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: rate-limit the cheap routes that wake Durable Objects (M4)
+- Severity: medium
+- Why: `/api/version` creates a new object per call, `/api/rooms/:id/info` and fallback `send/poll/close` with any
+  `sid` reach objects without a limit; a loop can spend the daily Durable Object allowance.
+- Done when: `/api/version` needs a token from the deploy job (or is strictly limited), `/info` and all fallback
+  requests have per-IP limits, the Worker checks `sid` against `^[0-9a-f]{32}$` before forwarding.
+- Tests: e2e (bad `sid` answered by the Worker; `/info` limit), deploy job's `wait-live.mjs` still works.
+- Owner's pick: none needed.
+- Done: 0.9.96.18 (PR below). `/info` + `unsave` already counted against `ROOM_INFO_LIMIT` (R3-1). `/api/version` now
+  counts against it too (its own key `version:<ip hash>`, 60 a minute; `wait-live.mjs` asks every 3 s = 20). The HTTP
+  fallback's `send` / `poll` / `close` are checked by the Worker before any object wakes: a known step (else 400), a
+  `sid` matching `^[0-9a-f]{32}$` (else 400), and the new `FALLBACK_LIMIT` (1200 per IP and minute; one batch is in
+  flight at a time, so a fast network sends at most ~10 a second while drawing). The client (`socket.ts`) treats a 429
+  as "wait 1.5 s and try again", keeping the batch, never as a failure. Tests: unit `socket.test.ts` (429 on send and
+  poll: the message arrives, the socket stays open; fails on the old code), e2e `fallback.mjs` (malformed / missing
+  `sid`, unknown step → 400).
+- Done: 0.9.96.18 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: make-host only by the real host (M2)
+- Severity: medium
+- Why: during the host's 20 s reload grace the oldest guest counts as host and can hand the role to themselves for good.
+- Done when: `make-host` is refused unless the sender's key is `hostKey`.
+- Tests: e2e `host.mjs` (host reloads, oldest guest's `make-host` → `not_host`, host returns as host).
+- Owner's pick: none needed.
+- Done: 0.9.96.16 (PR below). `makeHost` in the room object also needs the sender's key to be `hostKey`, so the guest
+  who acts as host during the 20 s reload grace gets `not_host`; after the grace a join settles the role as before.
+  e2e `host.mjs` covers it (fails on the old code).
+- Done: 0.9.96.16 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: one text cleaner for names, chat and titles (L1)
+- Severity: low
+- Why: zero-width and right-to-left control characters pass, so a guest can look exactly like the host or reverse
+  the text of a message.
+- Done when: one shared sanitizer (removes `\p{Cc}`, `\p{Cf}` except ZWJ inside emoji, lone surrogates; cuts by code
+  point) is used for names, room names, chat, pin notes, titles (also URL file names and oEmbed) and guesses.
+- Tests: unit in `protocol.test.ts` (U+200B, U+202E, U+2066, split surrogate pair).
+- Owner's pick: none needed.
+- Done: 0.9.96.21 (PR below). `protocol.ts` `cleanText(x, max)`: `\p{Cc}` → space, `\p{Cf}` removed except a ZWJ
+  between two pictographs and flag tag characters after 🏴, lone surrogates dropped, spaces collapsed, cut by code
+  point. Used by `cleanName`, `cleanRoomName`, `cleanChatText`, `cleanTitle`, pin notes and Draw & Guess guesses;
+  the server's `resolveTitle` (oEmbed answers, file names) runs its result through `cleanTitle`. Tests: unit
+  `protocol.test.ts` (6: U+200B, U+202E, U+2066/2069, BOM, ZWJ emoji and the England flag kept, split surrogates,
+  code-point cut, titles, pin notes); local full e2e green.
+- Done: 0.9.96.21 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: safer media links (L4)
+- Severity: low
+- Why: `html5` / `page` items accept `http:`, user-info, `localhost` and private IPs, so one guest can make every
+  viewer's browser request a device on their own network; `page` titles are chosen by the client.
+- Done when: `html5` needs `https:`, user-info is refused, IP literals / private / `.local` hosts are refused, the
+  page's host is shown next to a client-given title.
+- Tests: unit (`cleanMedia` cases); e2e queue tests still pass.
+- Owner's pick: none needed.
+- Done: 0.9.96.22 (PR below). `protocol.ts` `isPublicMedia`: `html5` needs `https:`; `html5` and `page` refuse
+  user-info, IP literals (v4 / v6, also hex forms the URL parser turns into dotted ones), single-label hosts and
+  `localhost` / `.local` / `.internal` / `.lan` / `.home.arpa` / `.intranet`. The room refuses such a `load` /
+  `enqueue` with the new error `bad_link` (EN + TR text), except on a local test server (`devHost`: the request's
+  host is `localhost` / `127.0.0.1`, so the harnesses keep playing files from localhost). A film page's client-given
+  title gets its site's name (`withHost`: "Title · site.example"). Tests: unit `protocol.test.ts` (3), e2e `links.mjs`
+  (live: private address, http file, user-info refused, a public https file queued; local: local links still taken);
+  locally checked the refusal through the HTTP fallback with another `Host`.
+- Done: 0.9.96.22 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: room abuse limits (L2, L3, L5)
+- Severity: low
+- Why: signal floods per connection reset on reconnect, `ready:false` lets a guest pause a host-only room again
+  after a reconnect, and 51 sockets that never say `hello` make a room "full" for 150 s.
+- Done when: signal limits are per person and target pair (a few offers per minute per pair); the wait cooldown is
+  keyed by person / IP hash; "full" counts joined members and unjoined sockets close after ~15 s.
+- Tests: e2e (`voice.mjs`, `wait.mjs` additions; unjoined sockets closed).
+- Owner's pick: none needed.
+- Done: 0.9.96.24 (PR below). L2: besides the old per-connection limit, signals (`signal`, `live-signal`) count per
+  person (browser, `personSignalLimit` 120 burst / 12 a second) and per pair of people (`pairSignalLimit` 40 / 2 a
+  second), so a reconnect no longer refills the budget; `RateLimiter` remembers at most 4000 keys. L3: the 30 s "don't
+  make the room wait again" is copied to the person (`waitCooldowns`, from `WaitTracker.cooldowns()` when a wait ends or
+  a member leaves) and handed to a new member id of the same browser (`holdOff`). L5: "full" counts joined people
+  (`MAX_MEMBERS`) and at most 30 connections waiting for `hello` (`MAX_UNJOINED`); one that has not said `hello`
+  15 s after opening (`UNJOINED_MS`) is closed with 4008 `no_hello` on the next arrival and in `pruneStale`. Tests:
+  e2e `abuse.mjs` (a burst of 100 signals cut to 40, a reconnect gets 3; a silent socket closed with 4008), `wait.mjs`
+  (a reconnect does not reset the cooldown); harness `voice/live.mjs` green; `voice/run.mjs` passes its connection
+  checks (its two failing checks fail on main too: the fake-mic energy check with a sine wav and the "free tiles" check
+  that predates 6g's one-window default; for the bug hunt).
+- Done: 0.9.96.24 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: game rules for every player (L6)
+- Severity: low
+- Why: any Draw & Guess player can reset or start the game, `undo` re-sends all strokes 8 times a second, the Quiz
+  50/50 joker leaks the answer with a second identity, Poker's `people` grows without a cap and anyone can deal.
+- Done when: host / opener checks on Draw `reset` / `start` and Poker `start`; `undo` ≤ 1/s; one hidden 50/50 pair
+  per question; Poker `people` capped; (optional) game objects accept only a short-lived ticket from the room.
+  Review 3 (R3-8): game, draw, quiz and poker objects accept `hello` only once per connection, as the room does.
+- Tests: e2e `draw.mjs`, `quiz.mjs` and a Poker e2e case.
+- Owner's pick: none needed.
+- Done (0.9.96.25): Draw & Guess `start` / `reset`, Quiz `start` and Poker `start` only from the game's host (the first
+  player / seat still connected; the same person who picks the settings, `not_host` otherwise; the Start button is
+  dimmed for the others and the note says "X picks the settings and starts the game"); Draw `undo` has its own limiter
+  (`RateLimiter(3, 1)`); the Quiz 50/50 reuses the pair already hidden for that question; Poker keeps at most
+  `MAX_PEOPLE` 60 people (the longest-unseen without a seat or a connection go); game, draw, quiz and poker objects
+  answer a second `hello` on a connection with `bad` (R3-8). Not done (optional in the card): a room ticket for game
+  objects. Tests: e2e `draw.mjs` (host start / reset, second hello, undo burst), `quiz.mjs` (host start, second hello,
+  one 50/50 pair), `poker.mjs` (host deals).
+- Done: 0.9.96.25 (with R3-8) (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Security: small hygiene fixes (L7, L8)
+- Severity: low
+- Why: the TikTok resolver's later hops may use `http:`, another port or user-info; recaps older than 90 days stay in
+  storage until read; the room's reset leaves in-memory tokens that are written back.
+- Done when: every TikTok hop needs `https:`, no port, no user-info, and bodies are cancelled; recaps are pruned in
+  the alarm / on load; `deleteAll` also clears `tvTokens`, `memberIds`, `counted`.
+- Tests: unit for the TikTok URL check; e2e recap test.
+- Owner's pick: none needed.
+- Done (0.9.97.1): every TikTok redirect hop must pass `isTikTokHop` (shared `media.ts`: `https:`, no port, no
+  user-info, a `tiktok.com` host) and each answer's body is cancelled; saved recaps past `RECAP_MAX_AGE_MS` leave
+  storage when the room object loads and on every alarm (`pruneRecaps`, shared `freshRecaps`); the empty-room reset also
+  clears `tvTokens`, `memberIds` and `counted`. Tests: unit `media.test.ts` (`isTikTokHop`), `recap.test.ts`
+  (`freshRecaps`; a live 90-day e2e is not practical); full local e2e green.
+- Done: 0.9.97.1 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Privacy: a privacy link where people join (L9)
+- Severity: low
+- Why: the policy is only in the footer, which phones, the film page overlay and the Shorts view hide.
+- Done when: the join card and the settings / ⋯ menu link to `privacy.html` in the page's language.
+- Tests: phone harness check for the link.
+- Owner's pick: none needed.
+- Done (0.9.97.2): "🔒 Privacy" (`data-privacy-link`, `/privacy.html?lang=<page language>`) under the join card's
+  button (`#join-privacy`), in the profile menu next to Help (`#profile-privacy`) and last in ⋯ More (computer and
+  phone, `room-more.ts`, presses `#profile-privacy`, an anchor, so the film page's overlay lets it open). Tests:
+  harness `room-more` (join link + ⋯ list + phone order), `phone` (⋯ has the privacy tile).
+- Done: 0.9.97.2 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
+
+### Repo: dependency and workflow hygiene (L10)
+- Severity: low
+- Why: `npm audit` reports dev-only advisories in `undici` (via `wrangler`), there is no Dependabot, the workflow has
+  no `permissions:` block, and there is no `SECURITY.md` (ROADMAP §3).
+- Done when: `wrangler` updated and `npm audit` clean; `.github/dependabot.yml` (npm + actions, weekly);
+  `permissions: contents: read` in `test.yml`; `SECURITY.md` with the contact address; owner turns on branch
+  protection and secret scanning for `main`.
+- Tests: CI green; `npm audit` 0.
+- Owner's pick: needed only for the GitHub settings. Planner, 2 Nov 2026: on a private repo with GitHub Free,
+  branch protection / rulesets and secret scanning are not available (paid plans, or free once the repo is public);
+  the owner turns on the free parts (Dependabot alerts + security updates) now; branch rules come with the public repo
+  or a GitHub Pro decision.
+- Done (0.9.97.3): `npm audit fix` (wrangler 4.151 → 4.157, its miniflare / undici with it), `npm audit` 0;
+  `.github/dependabot.yml` (npm with dev tools grouped, GitHub Actions, weekly); `permissions: contents: read` at the top
+  of `test.yml`; `SECURITY.md` (the publisher address, what to send, 7-day answer, scope). Left for the owner: Dependabot
+  alerts + security updates in the repo settings (STATUS hand tests).
+- Done: 0.9.97.3 (Security housekeeping, 4 Nov 2026; details in the CLAUDE.md "Live" line).
 
 ### 6d. Fix: an empty side column in YouTube fullscreen (owner's bug, 3 Nov 2026; after 6b, before 6c)
 - Why: owner's screenshot: in YouTube fullscreen the column from card 2a (`#fs-side`) stays as a wide empty strip
@@ -1708,7 +1737,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   blocks youtube-nocookie.com, so the YouTube harnesses route it to www.youtube.com (`scripts/harness/via-youtube.cjs`);
   real browsers use the no-cookie host.
 
-
 ### 6. Simplify the room (0.9.94 "Next" 1)
 - Why: a newcomer sees too much at once; Research found every competitor's first room view is player + add a video +
   invite (`research/newcomers-help-shorts.md` §1).
@@ -1732,7 +1760,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   `one-rail` (a fresh room has no rail), `phone` (tiles by name), `yt-room`, `room-extras`, `invite` pass;
   `store/src/room.html` has the ⋯.
 
-
 ### 5. Home page: "Continue where you left off" overflows (0.9.93, owner's bug)
 - Why: owner, 2 Nov 2026 (screenshot): a long video title runs out of the card under the room preview.
 - Done when: the card's lines are one line each with an ellipsis (full title in `title`), the card never overlaps the
@@ -1743,7 +1770,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   the title (`.home-continue`, a pill; the whole line `a.continue-link` back into the room, cut with an ellipsis, the
   full text in its `title`; ✕ forgets it). Test: `room-extras` checks a 200-character title and room name at 1920, 1366,
   1024 and 390 px (one line, inside the left column, above the title, never over the preview).
-
 
 ### 4. Invite window: a real WhatsApp button and a QR tab (0.9.93, owner's feedback)
 - Why: owner, 2 Nov 2026: the WhatsApp button shows a speech-bubble emoji; the QR text "A friend next to you can scan
@@ -1760,7 +1786,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   PNG via a canvas → `ClipboardItem`; without an image clipboard it downloads `screenwithme-invite-qr.png`); the old
   explanation sentence (`invite.qr`) is gone; EN + TR. Test: `invite/run.cjs` (glyph + green, tabs, the QR tab's only
   text is "Copy image", a PNG on the clipboard, both tabs without scrolling at 1024×640, the QR tab on an iPhone 13).
-
 
 ### 2a. Nothing of ours over the YouTube player by itself (owner picked D, 2 Nov 2026; with card 2)
 - Why: the same rule covers the see-through `#rail-edge` strip over the player's right edge, flying emojis over the
@@ -1791,7 +1816,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   but read the previous state (the server sends `choices` just before `state`; live they can arrive apart): it now
   waits for the next round's "choose" state (0.9.93.9 deploy, first-attempt failure).
 
-
 ### 2. One rail everywhere: empty room and the film page (0.9.93 "Now" 1, owner's request)
 - Why: owner, 2 Nov 2026: an empty room still shows the old bar under the video (😀 React, Games, Sync, 1×, ⇥, ⛶), and
   the extension's film page shows that bar and a rail at the same time. He wants the same right rail on every page:
@@ -1819,7 +1843,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   rail beside the film's video box in the room view and fullscreen, stays out while the film plays), `phone/run.cjs`,
   `yt-room`, `sound`. `store/src/room.html` shows the rail.
 
-
 ### 1a. Security: the HTTP fallback must not be able to crash a room (H1, M1; Planner: right after card 1)
 - Severity: high
 - Why: one person with the room link can reset the room's Durable Object (everyone drops) with a chunked POST body
@@ -1838,7 +1861,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   joined connection gets `bad_message`. Tests: `fallback.mjs` (chunked 2.5 MB body → 413 and the room still answers,
   a never-polling session closed after 10 s, second hello refused), hotspot harness.
 
-
 ### 1b. Security: cap queue votes (M1; with 1a)
 - Severity: medium
 - Why: `voters` grows without a cap and without checking the voter is present; with rotated browser ids it can pass
@@ -1849,7 +1871,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: none needed.
 - Done: 0.9.93.8 (same PR). Votes keep only people in the room (pruned on every vote) and at most `MAX_MEMBERS` per
   item. Test: `fallback.mjs` (rotated ids count once, a second person adds one, back to 1 when they leave).
-
 
 ### 1. Fix: the rail never hides in YouTube fullscreen (0.9.93 "Now" 1, owner's bug)
 - Why: owner, 2 Nov 2026 (screenshot, after 0.9.93.5): in fullscreen, with the mouse moved to the middle of the video,
@@ -1865,7 +1886,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   anywhere now keeps the computer behaviour (`hasMouse()`), focus only holds the rail for keyboard users, the hover
   flag is double-checked. `yt-room` (simulated touch laptop, fails on 0.9.93.6) and `embed/run.mjs` checks pass.
 
-
 ### Phone: next speed steps (0.9.93 "Now" 2)
 - Why: the phone room should open and react fast on mid-range phones.
 - Done when: voice / stream / TV code loads only when needed, phones get a lighter stylesheet, and an automatic phone
@@ -1876,7 +1896,6 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   page JS 142.1 → 134.5 kB, CSS 35.7 → 34.0 kB gzipped; `scripts/size-budget.mjs` in CI; phone speed test
   `scripts/harness/phone-speed/run.cjs` (4× CPU, 4G): home 556 / join 478 / in room 369 ms. Voice / live stay in the
   room chunk; a phone-only stylesheet was not worth it (most rules shared). Phone harness passes.
-
 
 ### Root cause of the live e2e first-attempt failures
 - Done: https://github.com/alperenakturk/screen-with-me/pull/113, https://github.com/alperenakturk/screen-with-me/pull/114

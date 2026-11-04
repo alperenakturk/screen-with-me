@@ -15,6 +15,9 @@ export class YoutubeUsage extends DurableObject<Env> {
 
   override async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
+    // Security R4-6: the body is read before the book. Reading a body is not storage I/O, so the input gate opens
+    // during it; a book read before it could be overwritten by a second request in between (a lost update).
+    const body = request.method === 'POST' ? await readCapped(request, 1024).catch(() => null) : null;
     const now = Date.now();
     const book = (await this.ctx.storage.get<UsageBook>('book')) ?? {};
     if (usageDay(now) !== this.budgetDay) {
@@ -23,7 +26,6 @@ export class YoutubeUsage extends DurableObject<Env> {
       this.ips.clear();
     }
     if (path === '/spend' && request.method === 'POST') {
-      const body = await readCapped(request, 256).catch(() => null);
       let ask: { ip?: unknown; cost?: unknown } = {};
       try {
         ask = body ? JSON.parse(body) : {};
@@ -45,7 +47,6 @@ export class YoutubeUsage extends DurableObject<Env> {
       return new Response(JSON.stringify(pruneUsage(book, now)), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
     if (path !== '/add' || request.method !== 'POST') return new Response('Not found', { status: 404 });
-    const body = await readCapped(request, 1024).catch(() => null);
     let parsed: unknown = null;
     try {
       parsed = body ? JSON.parse(body) : null;
@@ -88,15 +89,22 @@ export async function recordUsage(env: Env, kind: UsageKind, calls: Record<strin
   }
 }
 
+/** A `USAGE_TOKEN` shorter than this is treated as missing (a weak secret must not open the counters). */
+export const USAGE_TOKEN_MIN = 32;
+
 /**
  * `GET /api/youtube/usage` for the owner: the counters, only with the header `X-Usage-Token` equal to the Worker
  * secret `USAGE_TOKEN` (refused without the secret too).
  */
-export async function youtubeUsage(request: Request, env: Env): Promise<Response> {
+export async function youtubeUsage(request: Request, env: Env, ipKey: () => Promise<string>): Promise<Response> {
+  // Security R4-7: guesses are limited (the saved-room lookups' limit, its own key), and a short secret never counts.
+  if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: `usage:${await ipKey()}` })).success) {
+    return new Response('Too many requests', { status: 429 });
+  }
   // Both sides trimmed: an HTTP header loses spaces / a newline at its ends, a pasted GitHub secret may keep them.
   const given = (request.headers.get('X-Usage-Token') ?? '').trim();
   const key = (env.USAGE_TOKEN ?? '').trim();
-  if (!key || !env.USAGE || !(await sameText(given, key))) return new Response('Forbidden', { status: 403 });
+  if (key.length < USAGE_TOKEN_MIN || !env.USAGE || !(await sameText(given, key))) return new Response('Forbidden', { status: 403 });
   return env.USAGE.get(env.USAGE.idFromName('usage')).fetch('https://usage/read');
 }
 

@@ -108,8 +108,20 @@ interface StageOptions {
   room: () => SoloRoom;
 }
 
+/** The Test Lab is switched on in this tab (the same switch `debug-lab.ts` keeps). */
+const labIsOn = (): boolean => {
+  try {
+    return sessionStorage.getItem('swm:debug') == '1';
+  } catch {
+    return false;
+  }
+};
+
 export function createGameStage(opts: StageOptions) {
   const { wrap, button, menu, send } = opts;
+  /** The room as the side games see it (the Test Lab can make them act as if the film played). */
+  let labRoom: ((room: SoloRoom) => SoloRoom) | null = null;
+  const soloRoom = () => (labRoom ? labRoom(opts.room()) : opts.room());
   let tables: RoomGame[] = [];
   /** The table I have open (mounted even while minimized) and its close function. */
   let current: RoomGame | null = null;
@@ -489,14 +501,7 @@ export function createGameStage(opts: StageOptions) {
           void open(table);
         },
         close: (id) => void endTable(id),
-        openTable: (kind) => {
-          wanted = kind;
-          wantedAt = Date.now();
-          // Card R1: pressed while the room connection was reconnecting (a deploy, a network blip) the request used to
-          // be lost and the game opened only on the second press: it goes out again once the room is back.
-          wantedUnsent = send({ t: 'table', open: kind }) === false;
-          setHub(false);
-        },
+        openTable,
         openSolo: (kind) => {
           setHub(false);
           void openSolo(kind);
@@ -526,6 +531,15 @@ export function createGameStage(opts: StageOptions) {
     void import('./snack-bar.ts').catch(() => (soloWarm = false));
     void import('./garden.ts').catch(() => (soloWarm = false));
     void import('./five-frames.ts').catch(() => (soloWarm = false));
+  }
+
+  function openTable(kind: RoomGameKind): void {
+    wanted = kind;
+    wantedAt = Date.now();
+    // Card R1: pressed while the room connection was reconnecting (a deploy, a network blip) the request used to
+    // be lost and the game opened only on the second press: it goes out again once the room is back.
+    wantedUnsent = send({ t: 'table', open: kind }) === false;
+    setHub(false);
   }
 
   function setHub(show: boolean): void {
@@ -611,10 +625,10 @@ export function createGameStage(opts: StageOptions) {
     // Its code and stylesheet are a separate chunk: not downloaded when entering the room.
     const stop =
       kind === 'garden'
-        ? (await import('./garden.ts')).mountGarden(body, opts.room)
+        ? (await import('./garden.ts')).mountGarden(body, soloRoom)
         : kind === 'word'
           ? (await import('./five-frames.ts')).mountFiveFrames(body)
-          : (await import('./snack-bar.ts')).mountSnackBar(body, opts.room);
+          : (await import('./snack-bar.ts')).mountSnackBar(body, soloRoom);
     queueFit();
     if (solo !== kind) stop();
     else unmount = stop;
@@ -740,6 +754,13 @@ export function createGameStage(opts: StageOptions) {
       opts.hint(t(code === 'game_busy' ? 'game.busy' : `error.${code}`));
     },
     isOpen: () => !stage.hidden,
+    /** The Test Lab's game commands: loaded only while the lab is on in this tab (`?debug=1`, `debug-lab.ts`). */
+    lab: labIsOn()
+      ? void import('./lab-tools.ts').then((m) => {
+          labRoom = m.labRoom;
+          m.registerGamesLab(openTable, openSolo);
+        })
+      : undefined,
     /** Opens a solo game (the room's ⋯ menu or a test). */
     openSolo: (kind: SoloKind) => void openSolo(kind),
   };

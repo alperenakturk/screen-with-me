@@ -52,7 +52,8 @@
     "./yt-usage": "./src/yt-usage.ts",
     "./ip-hash": "./src/ip-hash.ts",
     "./move": "./src/move.ts",
-    "./podcasts": "./src/podcasts.ts"
+    "./podcasts": "./src/podcasts.ts",
+    "./upload-budget": "./src/upload-budget.ts"
   },
   "scripts": {
     "test": "vitest run",
