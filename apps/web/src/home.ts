@@ -108,17 +108,44 @@ function artFaces(): string[] {
 
 /**
  * Glowbeam's light falls on a laptop, a tablet and a phone showing the same moment (card 15c, Design's
- * `home-15c/preview.html`, 640 × 380): one picture (`#hm-pic`) clipped into each screen, a progress bar per device
- * (`.hm-prog`, the same 6 s animation), the sync pill on the laptop, the chat bubble and three themed faces (the first
- * two in voice). Glowbeam itself is `createMascot`.
+ * `home-15c/preview.html`): one picture (`#hm-pic`) clipped into each screen, a progress bar per device (`.hm-prog`, the
+ * same 6 s animation), the sync pill on the laptop, the chat bubble and three themed faces (the first two in voice).
+ *
+ * Card 15e (the owner's screenshot of 0.9.97.28): one cone of light from Glowbeam's lamp (`LAMP`) whose glow falls on
+ * all three screens, each with a soft lit sheen, the nearest (the laptop) brightest; no slab and no hard edge: the cone
+ * is blurred, fades with distance from the lamp and is faded out at the art's edges by a mask (`#hm-fade`), so it may
+ * spill a little past the art's box (`overflow: visible`) without ever ending in a line. The devices stand in one row
+ * on one line with even gaps (`GAP`), nothing covers another; the faces and the bubble sit on a row under them, the
+ * faces from the laptop's left edge, the bubble ending at the phone's right edge. The view box is the drawn content's
+ * box (Glowbeam's box at x 0, the phone's right edge at `W`), so the page's margins measure the art itself.
  */
+const DEV_X = 185; // the device row's left edge (the laptop's base)
+const DEV_Y = 8;
+const DEV_K = 1.3; // the device drawings' scale (15c's devices × 1.3)
+const GAP = 16; // between the laptop's base, the tablet and the phone, in the drawings' units
+const ROW_Y = 272; // the faces + bubble row
+const ART_W = 890;
+const ART_H = 314;
+/** Glowbeam's box (the costume's 197.6 grid, 175 units) and its lamp, the tip the light comes from. */
+const GLOW = { x: 0, y: 45.3, size: 175 };
+const LAMP = { x: GLOW.x + 0.597 * GLOW.size, y: GLOW.y + 0.605 * GLOW.size };
 function scene(): string {
   const [a, b, c] = artFaces();
   const face = (x: number, id: string | undefined, voice: boolean) =>
     `<g transform="translate(${x} 18)"><image class="hm-face" href="/avatars/${id}.svg" data-avatar="${id}" x="-15" y="-15" width="30" height="30" clip-path="url(#hm-face)"/><circle class="hm-ring${voice ? ' voice' : ''}" r="16" fill="none" stroke="${voice ? '#3ee08f' : '#ffffff26'}" stroke-width="${voice ? 3 : 2}"/></g>`;
-  return `<svg class="hm-scene" viewBox="0 0 690 380" aria-hidden="true" focusable="false">
+  // The devices in their own units: the laptop's base -18 … 308 (the body 0 … 290), all standing on y = 192.
+  const tabletX = 326 + GAP;
+  const phoneX = tabletX + 120 + GAP;
+  // A soft lit sheen over a screen, brighter on the side facing the lamp (`level`: the laptop 1, the farthest less).
+  const sheen = (x: number, y: number, w: number, h: number, rx: number, clip: string, level: number) =>
+    `<rect class="hm-sheen" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="url(#hm-sheen)" opacity="${level}" clip-path="url(#${clip})"/>`;
+  return `<svg class="hm-scene" viewBox="0 0 ${ART_W} ${ART_H}" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id="hm-beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd27a" stop-opacity=".7"/><stop offset="1" stop-color="#ffc65a" stop-opacity=".05"/></linearGradient>
+      <radialGradient id="hm-light" gradientUnits="userSpaceOnUse" cx="${LAMP.x}" cy="${LAMP.y}" r="900"><stop offset="0" stop-color="#ffd98a" stop-opacity=".62"/><stop offset=".3" stop-color="#ffc65a" stop-opacity=".3"/><stop offset=".7" stop-color="#ffc65a" stop-opacity=".1"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></radialGradient>
+      <radialGradient id="hm-fade-g" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".72" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
+      <mask id="hm-fade" maskUnits="userSpaceOnUse" x="-70" y="-90" width="${ART_W + 160}" height="${ART_H + 180}"><rect x="-70" y="-90" width="${ART_W + 160}" height="${ART_H + 180}" fill="url(#hm-fade-g)"/></mask>
+      <filter id="hm-soft" filterUnits="userSpaceOnUse" x="-120" y="-200" width="${ART_W + 400}" height="${ART_H + 400}"><feGaussianBlur stdDeviation="14"/></filter>
+      <linearGradient id="hm-sheen" x1="0" y1="0" x2="1" y2=".55"><stop offset="0" stop-color="#fff4d6" stop-opacity=".7"/><stop offset=".55" stop-color="#fff4d6" stop-opacity=".12"/><stop offset="1" stop-color="#fff4d6" stop-opacity="0"/></linearGradient>
       <linearGradient id="hm-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb070"/><stop offset="1" stop-color="#ff7a5a"/></linearGradient>
       <radialGradient id="hm-halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffc65a" stop-opacity=".45"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></radialGradient>
       <symbol id="hm-pic" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice">
@@ -132,40 +159,45 @@ function scene(): string {
       <clipPath id="hm-clip-p"><rect x="6" y="12" width="52" height="96" rx="7"/></clipPath>
       <clipPath id="hm-face"><circle r="15"/></clipPath>
     </defs>
-    <path class="hm-beam" d="M118 190 L690 10 L690 375 Z" fill="url(#hm-beam)"/>
-    <g class="hm-devices" transform="translate(192 36) scale(1.26) translate(-214 -46)">
-    <g class="hm-device" data-device="laptop" transform="translate(214 46)">
+    <g class="hm-light" mask="url(#hm-fade)">
+      <path class="hm-beam" d="M${LAMP.x} ${LAMP.y} L${LAMP.x + 1000} ${LAMP.y - 1300} L${LAMP.x + 1000} ${LAMP.y + 900} Z" fill="url(#hm-light)" filter="url(#hm-soft)"/>
+    </g>
+    <g class="hm-devices" transform="translate(${DEV_X} ${DEV_Y}) scale(${DEV_K})">
+    <g class="hm-device" data-device="laptop" transform="translate(18 0)">
       <rect width="290" height="180" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
       <use class="hm-screen" href="#hm-pic" x="12" y="12" width="266" height="156" clip-path="url(#hm-clip-l)"/>
+      ${sheen(12, 12, 266, 156, 8, 'hm-clip-l', 1)}
       <rect x="28" y="150" width="234" height="5" rx="2.5" fill="#ffffff2e"/>
       <rect class="hm-prog" x="28" y="150" width="234" height="5" rx="2.5" fill="#ffc65a"/>
       <g class="hm-pill-art"><rect x="22" y="22" width="132" height="24" rx="12" fill="#0f5a3c"/>
       <text x="88" y="38.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#c9ffe6" data-art="artSync"></text></g>
       <path d="M-18 180 H308 L298 192 H-8Z" fill="#2a2450"/>
     </g>
-    <g class="hm-device" data-device="tablet" transform="translate(486 104)">
+    <g class="hm-device" data-device="tablet" transform="translate(${tabletX} 30)">
       <rect width="120" height="162" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
       <use class="hm-screen" href="#hm-pic" x="9" y="11" width="102" height="140" clip-path="url(#hm-clip-t)"/>
+      ${sheen(9, 11, 102, 140, 7, 'hm-clip-t', 0.75)}
       <rect x="18" y="138" width="84" height="4" rx="2" fill="#ffffff2e"/>
       <rect class="hm-prog" x="18" y="138" width="84" height="4" rx="2" fill="#ffc65a"/>
     </g>
-    <g class="hm-device" data-device="phone" transform="translate(426 186)">
+    <g class="hm-device" data-device="phone" transform="translate(${phoneX} 72)">
       <rect width="64" height="120" rx="13" fill="#140f30" stroke="#ffffff30" stroke-width="2"/>
       <use class="hm-screen" href="#hm-pic" x="6" y="12" width="52" height="96" clip-path="url(#hm-clip-p)"/>
+      ${sheen(6, 12, 52, 96, 7, 'hm-clip-p', 0.55)}
       <rect x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffffff2e"/>
       <rect class="hm-prog" x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffc65a"/>
       <rect x="25" y="5" width="14" height="3" rx="1.5" fill="#ffffff26"/>
     </g>
     </g>
-    <g class="hm-bubble" transform="translate(548 332)">
-      <rect width="140" height="40" rx="20" fill="#6a4cf2"/>
-      <text x="70" y="25.5" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" data-art="artChat"></text>
-    </g>
-    <g class="hm-faces" transform="translate(188 306)">
+    <g class="hm-faces" transform="translate(${DEV_X} ${ROW_Y})">
       ${face(16, a, true)}${face(52, b, true)}${face(88, c, false)}
       <text x="112" y="23" font-size="14" fill="#c9c0ea" data-art="artPeople"></text>
     </g>
-    <circle cx="100" cy="190" r="92" fill="url(#hm-halo)"/>
+    <g class="hm-bubble" transform="translate(${ART_W - 140} ${ROW_Y})">
+      <rect width="140" height="40" rx="20" fill="#6a4cf2"/>
+      <text x="70" y="25.5" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" data-art="artChat"></text>
+    </g>
+    <circle class="hm-halo" cx="${LAMP.x}" cy="${LAMP.y}" r="80" fill="url(#hm-halo)"/>
   </svg>`;
 }
 
@@ -210,14 +242,16 @@ function placeGlowbeam(app: HTMLElement): void {
   if (!scene.querySelector('.hm-glow')) {
     const glow = createMascot(document, { mood: 'happy' });
     glow.classList.add('hm-glow');
-    for (const [k, v] of Object.entries({ x: '22', y: '112', width: '156', height: '156' })) glow.setAttribute(k, v);
+    // The plain Glowbeam in the costume box's place (its 240 canvas inside the 197.6 grid, 15d's numbers × size / 185.3).
+    const f = GLOW.size / 185.3;
+    for (const [k, v] of Object.entries({ x: GLOW.x + 14.6 * f, y: GLOW.y + 34.1 * f, width: 156 * f, height: 156 * f })) glow.setAttribute(k, String(v));
     scene.append(glow);
   }
   void costume(theme).then((group) => {
     if (!group || ticket !== glowTicket || !scene.isConnected) return;
     // The 64 grid plus room for hats above it: grid (-6, -14) to (70, 62) in the mascot's 240 canvas.
     const svg = new DOMParser().parseFromString(
-      `<svg xmlns="http://www.w3.org/2000/svg" class="hm-glow" data-costume="${theme}" viewBox="10.4 21.6 197.6 197.6" x="7.4" y="77.9" width="185.3" height="185.3">${group}</svg>`,
+      `<svg xmlns="http://www.w3.org/2000/svg" class="hm-glow" data-costume="${theme}" viewBox="10.4 21.6 197.6 197.6" x="${GLOW.x}" y="${GLOW.y}" width="${GLOW.size}" height="${GLOW.size}">${group}</svg>`,
       'image/svg+xml',
     ).documentElement;
     if (svg.nodeName !== 'svg') return;
