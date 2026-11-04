@@ -2,6 +2,10 @@ import { el } from '../dom.ts';
 
 const MAX_TOASTS = 4;
 const TOAST_MS = 5000;
+/** Card R21: on a computer the messages come in on the right side, this share of the video's height down from its top. */
+const SIDE_TOP = 0.28;
+/** The player's own bar (seek line + buttons) at the video's foot, plus a gap: messages never reach into it. */
+const BAR_SPACE = 96;
 
 /**
  * Chat messages over the video (fullscreen, or the window with the side panel hidden), shown for a few seconds.
@@ -12,7 +16,10 @@ const TOAST_MS = 5000;
  */
 export function createToasts(container: HTMLElement, anchor: HTMLElement, dock?: HTMLElement) {
   const theater = container.closest<HTMLElement>('.theater');
+  const room = container.closest<HTMLElement>('.room');
   const inFullscreen = () => !!theater?.matches(':fullscreen, .fake-fs');
+  /** Where the newest message may end at most (viewport y); null = no limit. */
+  let floor: number | null = null;
 
   function layout(): void {
     const s = container.style;
@@ -29,11 +36,26 @@ export function createToasts(container: HTMLElement, anchor: HTMLElement, dock?:
       // messages laid out against that left edge ended up under the rail once it came out.
       const slid = new DOMMatrixReadOnly(getComputedStyle(dock!).transform === 'none' ? undefined : getComputedStyle(dock!).transform).m41;
       s.right = `${Math.max(20, Math.round(p.right - (docked.left - slid) + 14))}px`;
+      container.classList.remove('left', 'up');
+      // Card R21 (owner: "bigger, and from a clearly visible place on the right side, not the very top right"): on a
+      // computer in fullscreen, or in the window with the side panel hidden, they come in a quarter down the video,
+      // with bigger text (.toasts.right-side), and stop above the player's own bar. Phones and the cinema strip keep theirs.
+      const phone = document.documentElement.classList.contains('phone');
+      const cinema = !inFullscreen() && !!room?.classList.contains('cinema');
+      if (!phone && !cinema && (inFullscreen() || room?.classList.contains('side-hidden'))) {
+        s.top = `${Math.round(p.height * SIDE_TOP)}px`;
+        floor = p.bottom - BAR_SPACE;
+        container.classList.add('right-side');
+        return;
+      }
+      floor = null;
+      container.classList.remove('right-side');
       // On the film page in fullscreen the film site's own top bar (title, back, cast) sits at the top (sweep-2 #12).
       s.top = inFullscreen() ? (document.documentElement.classList.contains('shell') ? '64px' : '20px') : '58px';
-      container.classList.remove('left', 'up');
       return;
     }
+    floor = null;
+    container.classList.remove('right-side');
     if (inFullscreen() && parent && box.width > 0) {
       const p = parent.getBoundingClientRect();
       // Above the whole bar (the seek line sits over the message box), lined up with the box's left edge.
@@ -61,6 +83,8 @@ export function createToasts(container: HTMLElement, anchor: HTMLElement, dock?:
       while (container.childElementCount >= MAX_TOASTS) container.firstElementChild?.remove();
       const toast = el('div', { class: mine ? 'toast me' : 'toast' }, el('span', { class: 'toast-name' }, name), ' ', text);
       container.append(toast);
+      // Older messages make room: the newest never reaches the player's bar.
+      while (floor !== null && container.childElementCount > 1 && toast.getBoundingClientRect().bottom > floor) container.firstElementChild?.remove();
       setTimeout(() => {
         // While the message box is open the messages stay readable.
         const hold = () => !!document.activeElement && (document.activeElement === anchor.querySelector('input') || document.activeElement === dock?.querySelector('input'));
