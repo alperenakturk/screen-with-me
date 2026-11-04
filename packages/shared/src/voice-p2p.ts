@@ -229,7 +229,7 @@ export class P2pVoice implements Voice {
 
   /** Sunucudan gelen bağlantı mesajı. */
   async receive(from: string, data: Signal): Promise<void> {
-    if (!this.joined) return;
+    if (!this.joined || 'ask' in data) return;
     if ('sdp' in data) {
       if (data.sdp.type === 'offer') {
         // Karşı taraf teklif yaptı (kimliği benden küçük): bağlantıyı kur, mikrofonumu ekle, cevapla.

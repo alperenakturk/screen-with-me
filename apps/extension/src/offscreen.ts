@@ -97,7 +97,7 @@ async function buildLoop(): Promise<void> {
 }
 
 async function loopSignal(data: Signal): Promise<void> {
-  if (!loop) return;
+  if (!loop || 'ask' in data) return;
   if ('sdp' in data) {
     if (data.sdp.type === 'answer' && loop.signalingState === 'have-local-offer') await loop.setRemoteDescription(data.sdp);
   } else await loop.addIceCandidate(data.candidate).catch(() => {});
