@@ -20,6 +20,38 @@ Card format:
 
 ## Ready
 
+### 15e. Home art: the light lands on every screen; a bigger, balanced first screen (owner, 4 Nov 2026; lane A)
+- Owner (screenshot of the live 0.9.97.28 home art): "the bright part should cover the tablet screen, the phone screen
+  and so on properly, it doesn't look natural now"; "the whole art could look bigger and move closer to the left; the
+  home page should be symmetric, well proportioned and clean".
+- What we see in the screenshot: Glowbeam's cone hits the laptop's left edge and then shows again as a flat grey
+  trapezoid behind the laptop, ending in a hard vertical edge at the far right; the tablet and the phone sit outside
+  the light, the phone overlaps the laptop's base, the faces row floats in the middle under the laptop, and there is a
+  wide empty band between the text column and the art.
+- What:
+  1. **One light that lands on the screens.** The cone opens from Glowbeam's lamp and its glow falls on the three
+     screens themselves (each screen gets a soft lit sheen / bloom matching the cone's colour, brightest on the nearest
+     device); no flat trapezoid behind the devices and no hard cut-off edge; the cone fades out softly past the last
+     device.
+  2. **A tidy device group.** Laptop, tablet and phone in one composed group with even gaps (no device covering
+     another's screen or base, or a small deliberate overlap only at the frames); the sync pill, the chat bubble and
+     the faces row placed on the group's grid (e.g. the faces row left-aligned under the laptop, the bubble by the
+     phone), not floating.
+  3. **Bigger, closer, balanced.** The art about 15 % bigger again and moved left so the gap between the text and the
+     art matches the outer margins; text column and art vertically centred on the same line; equal left / right
+     margins on 1920×1080 and 1366×768; the sideways tablet the same; upright tablet and phone keep their one-column
+     layouts but use the same lit screens.
+- Same rules as before: `aria-hidden` art, still with reduced motion, theme costumes, no empty boxes.
+- Who: lane A builds it; if the light needs drawing help, ask the Design session for the glow shapes (no option page:
+  the owner said what he wants).
+- Done when: on the five home sizes the cone visibly lights all three screens with no hard edge or grey slab; no
+  device hides another's screen; the art is bigger and the page looks balanced (equal outer margins, centred line);
+  EN + TR; phone-speed budget green.
+- Tests: home harness (screenshots of the five sizes for the owner; the cone has no hard edge inside the art box; the
+  three screens lie inside the lit area; device boxes do not overlap screens; left / right margins within 24 px of
+  each other at 1920 and 1366).
+- Owner's pick: none needed.
+
 ### 15d. Home: bigger devices, the theme picker back at the top right, Glowbeam's themed hat, a black box bug (owner, 4 Nov 2026; lane A)
 - Owner (screenshot of the live 15c home art): "the laptop, tablet and phone could be a bit bigger"; "the theme picker
   should come back to the top right, on the home page before a room is opened, and stay in the same place on the other
@@ -37,6 +69,7 @@ Card format:
   non-room page; changing the theme changes Glowbeam's hat on the home art; EN + TR; phone-speed budget green.
 - Tests: home harness (device sizes, no empty / black box in the art, 🎨 present and in the same spot on home + help,
   the mascot changes with the theme).
+- Done: #257 (0.9.97.28), Developer A: devices 17 % bigger, Glowbeam in the theme's costume, 🎨 back, no empty box.
 
 ### 15c. Home art: a computer, a tablet and a phone + real avatars (owner, 4 Nov 2026; Design, then lane A)
 - Owner (on a screenshot of today's home art): "this screen's design should have the phone and the tablet too, as we
