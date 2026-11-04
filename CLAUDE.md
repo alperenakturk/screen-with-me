@@ -64,6 +64,9 @@ We are building a **global product**, so everything is professional, formal and 
 - **Make technical decisions yourself**, briefly say why; the user asks for changes if they disagree. Only ask about
   things that belong to the user: accounts, money, publishing, legal commitments, the product name, slogans.
 - Move in safe steps; test every change, ship it, commit it.
+- **Tell the Planner at once when anything runs out (owner, 4 Nov 2026):** tokens, usage limits, Actions minutes or
+  billing, API quotas, disk, anything: every session sends the Planner a `send_message` the moment it sees it, so the
+  Planner can tell the owner.
 - The user will connect more repositories and add skills (privacy testing, bug finding, productivity) before 1.0;
   when they appear, use them and record how in this file. Added 2 Nov 2026 (installed for the owner's account on his
   computer, not in cloud sessions unless added there):
@@ -1354,7 +1357,21 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   connection, which made live e2e files fail on the first attempt, e.g. wait.mjs "timeout waiting d") → e2e against
   live (a file passing only on its retry prints a `::warning::`; every e2e file runs with `scripts/e2e/trace.mjs`, which
   logs each socket the server or network closed with its code and time). Keys are in repo Secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`);
-  without them the job is skipped with a warning. Private repo: 2000 free minutes/month.
+  without them the job is skipped with a warning.
+  **CI diet (Nov 2026; owner's testing rule: "run as many tests as needed, none on unrelated parts, never give up
+  quality"):** a first `changes` job diffs the change (a PR: `HEAD^1..HEAD` of its merge commit; main: `before..HEAD`;
+  a manual run or an unknown base: everything) into `code` (anything besides `docs/**` and `*.md`) and `web`
+  (`apps/web/`, `packages/shared/`, `scripts/harness/`, the workflows). Docs-only: the test job and the deploy are
+  skipped by their `if` (a skipped job reports success for a required check; never use `paths-ignore`, which leaves a
+  required check pending for good). The browser harnesses (a11y, Test Lab) run only when `web` is true. A new push to a
+  PR cancels its older run (`concurrency`, PR runs only); a push to main runs only typecheck, the name check, unit
+  tests, the build and the size budget before the deploy (the PR already ran the local suite on the same code), and
+  the full e2e against live after every deploy; CI's local server runs `wrangler dev --var SWM_LOCAL_UNPACED:1` (the
+  Worker skips the per-IP connection limit only with that flag and a localhost address; never set it in
+  `wrangler.jsonc` or live) and e2e runs with `SWM_E2E_UNPACED=1` (no waits between files: local e2e 463 s → ≈ 205 s);
+  Playwright's browser is cached. Every new step in the test job that needs the local server gets
+  `if: github.event_name != 'push'` (and `&& needs.changes.outputs.web == 'true'` for a browser harness of the site).
+  The repo is public since Nov 2026, so the minutes are free; the diet keeps runs short.
 - **Scene top space and sides:** the scene (1600×900) is bottom-aligned and covers the screen; on wide screens the top
   is cropped and also covered by the top bar: don't put decorations above y≈200. Room content is centered, at most
   1280 px; the user mostly looks at it while watching, so main decorations (moon, castle, dragon, caravan) stay at the
