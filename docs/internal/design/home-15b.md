@@ -93,3 +93,55 @@ Home harness at 1920×1080, 1366×768, 1180×820, 820×1180, 390×844 (EN + TR):
 - With reduced motion no animation runs.
 - The phone-speed budget is still green.
 - A Sinema saved theme gets the text backdrop.
+
+## 15c: three devices and themed faces (owner, 4 Nov 2026)
+The owner asked for two changes to the art:
+- "This screen's design should have the phone and the tablet too, as we said."
+- The faces row should show themed avatars instead of plain colour circles.
+
+This is one direction, with no options page. Preview at all five home sizes (EN / TR, "other avatars" button):
+https://claude.ai/artifact/SL6iRkQXz3B8VAStSc33fw (copy: `home-15c/preview.html`). Shots: `home-15c/A-<w>x<h>.jpg`.
+
+**The art:** `home-15c/scene.svg`. It is a drop-in replacement for `scene()` in `home.ts`: same viewBox 640 × 380, same
+ids and classes (`hm-beam`, `hm-prog`, `data-art`). Glowbeam is still `createMascot` at x 22, y 112, 156 × 156.
+- Glowbeam's beam fans out to the right edge (`M118 190 L640 20 L640 370 Z`) and falls on three devices:
+  - a laptop at the back in the middle (290 × 180 plus a base);
+  - an upright tablet on the right (120 × 162);
+  - a phone in front between them (64 × 120).
+- The three screens show the same moment. One picture symbol (`#hm-pic`, `preserveAspectRatio="xMidYMid slice"`) is
+  clipped into each screen by `hm-clip-l`, `-t` and `-p`.
+- Each device has its own progress bar with class `hm-prog`, so the one 6 s animation runs on all three at once.
+  Animate `transform: scaleX()` with `transform-box: fill-box; transform-origin: left`; today's width-based rule works
+  only for one bar.
+- The "In sync · 30 ms" pill sits on the laptop's screen. The chat bubble (opaque `#6a4cf2`) sits at the bottom
+  right, below the tablet.
+
+**The faces:** three `<image class="hm-face">` in round clips (r 15) at the bottom left, with
+"3 watching · 2 in voice" beside them.
+- The first two have the green voice ring (`#3ee08f`, 3 px); the third has a faint ring.
+- The Developer fills `href` with `/avatars/<id>.svg` for three different ids picked at random on each load from the
+  Themed page (`AVATAR_PAGES[0]`).
+
+**Sizes** (measured in the preview; the layout rules of 15b are unchanged):
+
+| Size | Art width | Gap to the text |
+|---|---|---|
+| 1920 × 1080 | 955 px | 40 px |
+| 1366 × 768 | 656 px | 40 px |
+| 1180 × 820 | 555 px | 40 px |
+| 820 × 1180 | 692 px, on top | 28 px |
+| 390 × 844 | 300 px, on top | 16 px |
+
+Nothing overflows and the first screen still fits at every size.
+
+**Phone:** at 300 px the art's words would be about 6 px. On `html.phone`, hide the pill's text, the chat bubble and
+"3 watching · 2 in voice" (`[data-art]` and the bubble group). The devices, the beam and the three faces stay as a
+picture. The text column is untouched.
+
+**Reduced motion:** the bars rest at 40 % and the beam does not breathe.
+
+**Tests:** extend the home harness:
+- three device screens and three `hm-prog` bars exist;
+- three different themed avatar ids are used, and two of them are in rings;
+- no art text shows on a phone;
+- the five sizes still fit.

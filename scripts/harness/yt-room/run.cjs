@@ -247,37 +247,30 @@ const box = (page, selector) =>
     await sam.press('#chat-input', 'Enter');
     await sam.evaluate(() => document.activeElement?.blur());
     await alex.waitForSelector('#toasts .toast', { timeout: 4000 }).catch(() => {});
-    // Card 2a (owner's D): YouTube fullscreen has a column beside the player for the notes, cameras and messages.
-    await alex.waitForTimeout(400); // the column slides in (0.22 s)
+    // Card R15 (owner: "never open a stupid menu on the side"): no column in YouTube fullscreen any more. The message
+    // comes down over the video at the top right, left of the rail, clear of YouTube's own bottom bar; the player keeps
+    // its width.
+    await alex.waitForTimeout(400);
     const toast = await box(alex, '#toasts .toast');
-    const side = await box(alex, '#fs-side');
     const fsPlayer = await box(alex, '.player');
-    check(side && fsPlayer && side.w > 150 && fsPlayer.r <= side.l + 1, 'fullscreen: a column beside the player (the player ends where it starts)', JSON.stringify({ side, fsPlayer }));
-    check(toast && side && toast.l >= side.l - 1 && toast.r <= side.r + 1, 'fullscreen: a message sits in the column, not on the player', JSON.stringify({ toast, side }));
+    const fsDock = await box(alex, '#fs-dock');
+    check(!(await alex.evaluate(() => !!document.getElementById('fs-side'))) && fsPlayer && fsPlayer.r >= vw.w - 80, 'fullscreen: no column beside the player, it keeps the width', JSON.stringify({ fsPlayer }));
+    check(toast && fsPlayer && toast.t < fsPlayer.t + (fsPlayer.b - fsPlayer.t) / 3 && toast.b < fsPlayer.b - 64 && (!fsDock || fsDock.w === 0 || toast.r <= fsDock.l + 1), 'fullscreen: the message comes down at the top right, left of the rail, clear of YouTube\'s bar', JSON.stringify({ toast, fsPlayer, fsDock }));
     await alex.evaluate(() => {
       const banner = document.querySelector('#waiting-banner');
       banner.textContent = 'Waiting for Sam…';
       banner.hidden = false;
     });
     await alex.waitForTimeout(300);
-    check(await alex.evaluate(() => !!document.querySelector('#fs-side-notices > #waiting-banner')), 'fullscreen: the wait note is in the column');
+    check(await alex.evaluate(() => !!document.querySelector('.player-wrap > #waiting-banner')), 'fullscreen: the wait note is on the video');
     await alex.evaluate(() => (document.querySelector('#waiting-banner').hidden = true));
     await sam.keyboard.press('3');
     await alex.waitForTimeout(400);
     const fsFloat = await box(alex, '.r-float.r-from');
     const fsPlayer2 = await box(alex, '.player');
-    check(fsFloat && fsPlayer2 && fsFloat.x >= fsPlayer2.r, 'fullscreen: an emoji rises beside the player', JSON.stringify({ fsFloat, fsPlayer2 }));
+    check(fsFloat && fsPlayer2 && fsFloat.x >= fsPlayer2.r - 80, 'fullscreen: an emoji rises from the rail', JSON.stringify({ fsFloat, fsPlayer2 }));
     await alex.mouse.move(vw.w / 2, vw.h / 2, { steps: 4 });
     await alex.waitForTimeout(3200);
-    const hitsFs = await overPlayer(alex);
-    check(hitsFs.length === 0, 'fullscreen: nothing of ours over the YouTube player', hitsFs.join(' | '));
-    // Card 6d: once the messages are gone (and a few seconds more) the column steps aside again.
-    const closed = await alex
-      .waitForFunction(() => !document.querySelector('#theater').classList.contains('fs-side-open'), null, { timeout: 30000 })
-      .then(() => true, () => false);
-    await alex.waitForTimeout(400);
-    const after = await alex.evaluate(() => ({ right: Math.round(document.querySelector('.player').getBoundingClientRect().right), vw: innerWidth }));
-    check(closed && after.right >= after.vw - 16, 'fullscreen: when the messages are gone the column steps aside, the player is full width again', JSON.stringify(after));
     await alex.evaluate(() => document.exitFullscreen());
     await alex.waitForTimeout(800);
   }
@@ -379,6 +372,6 @@ const box = (page, selector) =>
   }
 
   await browser.close();
-  console.log(fails ? `\n✗ ${fails} failed` : '\n✓ YouTube room: nothing of ours over the player (notes, emojis, edge, fullscreen column)');
+  console.log(fails ? `\n✗ ${fails} failed` : '\n✓ YouTube room: nothing of ours over the player (notes, emojis, edge; fullscreen like other players)');
   process.exit(fails ? 1 : 0);
 })();

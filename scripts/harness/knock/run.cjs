@@ -14,13 +14,13 @@ const check = (ok, label, extra = '') => {
 (async () => {
   const browser = await chromium.launch();
   const room = `knk${Math.random().toString(36).slice(2, 8)}`;
-  const enter = async (name) => {
+  const enter = async (name, firstTime = false) => {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-    await ctx.addInitScript(() => {
-      localStorage.setItem('tipsSeen', '1');
+    await ctx.addInitScript((fresh) => {
+      if (!fresh) localStorage.setItem('tipsSeen', '1');
       localStorage.setItem('lang', 'en');
       localStorage.setItem('opt:autoInvite', '0');
-    });
+    }, firstTime);
     const page = await ctx.newPage();
     await page.goto(`${SITE}/r/${room}`);
     await page.fill('#name', name);
@@ -39,8 +39,12 @@ const check = (ok, label, extra = '') => {
   check(inviteSwitch === true, 'the invite window has the same switch, on', String(inviteSwitch));
   await host.keyboard.press('Escape');
 
-  const friend = await enter('Sam');
+  // R18: a first-time visitor waits at the door: nothing of the room (tips, invite window, last room) before the door opens.
+  const friend = await enter('Sam', true);
   await friend.waitForSelector('#knock-wait:not([hidden])', { timeout: 8000 }).catch(() => {});
+  await friend.waitForTimeout(2500);
+  const atDoor = await friend.evaluate(() => ({ tips: !!document.querySelector('.first-tip'), invite: !!document.querySelector('.invite-dialog:not([hidden])'), joined: document.documentElement.dataset.swmJoined ?? '', last: localStorage.getItem('lastRoom') }));
+  check(!atDoor.tips && !atDoor.invite && !atDoor.joined && !atDoor.last, 'R18: at the door no first-time tips, no invite window, no "last room" yet', JSON.stringify(atDoor));
   const waiting = await friend.evaluate(() => ({ shown: !document.getElementById('knock-wait').hidden, text: document.querySelector('#knock-wait h2')?.textContent ?? '' }));
   check(waiting.shown && /Waiting for the host/.test(waiting.text), 'the friend sees "Waiting for the host to let you in…"', waiting.text);
   await host.waitForSelector('.knock-card', { timeout: 8000 }).catch(() => {});
@@ -52,7 +56,37 @@ const check = (ok, label, extra = '') => {
   const inRoom = await friend.evaluate(() => document.getElementById('knock-wait').hidden);
   const count = await host.evaluate(() => document.querySelector('.room-title')?.textContent ?? '');
   check(inRoom && /2 people/.test(count), 'Let in: the card goes, the friend is in the room ("2 people")', count);
+  await friend.waitForSelector('.first-tip', { timeout: 6000 }).catch(() => {});
+  check(await friend.evaluate(() => !!document.querySelector('.first-tip') && document.documentElement.dataset.swmJoined === '1'), 'R18: once let in, the first-time tips come (after the door, not before)');
   check(await host.evaluate(() => !document.querySelector('.knock-card')), "the host's card goes once answered");
+
+  // BH5 "removed from the room": the home page never offers to continue in a room that removed me (also after the
+  // page closes, when the room is remembered on pagehide).
+  check(await friend.evaluate(() => !!localStorage.getItem('lastRoom')), 'in the room: the room is remembered for "Continue"');
+  host.once('dialog', (d) => d.accept());
+  await host.evaluate(() => document.querySelector('.people-list .kick, .kick')?.click());
+  await friend.waitForSelector('#kicked:not([hidden])', { timeout: 8000 }).catch(() => {});
+  await friend.goto(`${SITE}/`);
+  await friend.waitForTimeout(1500);
+  const after = await friend.evaluate(() => ({ last: localStorage.getItem('lastRoom'), line: !!document.querySelector('#continue:not([hidden])') }));
+  check(!after.last && !after.line, 'BH5: removed: no "Continue" to that room on the home page', JSON.stringify(after));
+
+  // BH5 "refused at the door": one screen (the refusal), never the waiting card behind it, and nothing of the room.
+  const turned = await enter('Robin', true);
+  await host.waitForSelector('.knock-card', { timeout: 8000 }).catch(() => {});
+  await host.click('.knock-refuse');
+  await turned.waitForSelector('#kicked:not([hidden])', { timeout: 8000 }).catch(() => {});
+  await turned.waitForTimeout(1500);
+  const refused = await turned.evaluate(() => ({
+    kicked: !document.getElementById('kicked').hidden,
+    waiting: !document.getElementById('knock-wait').hidden,
+    tips: !!document.querySelector('.first-tip'),
+    intro: !!document.querySelector('.swm-intro'),
+    joined: document.documentElement.dataset.swmJoined ?? '',
+    last: localStorage.getItem('lastRoom'),
+  }));
+  check(refused.kicked && !refused.waiting, 'BH5: refused at the door: the refusal screen alone, the waiting card goes', JSON.stringify(refused));
+  check(!refused.tips && !refused.intro && !refused.joined && !refused.last, 'BH5: refused: no intro, no tips, no "last room"', JSON.stringify(refused));
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ Ask before letting people in');
   process.exit(fails ? 1 : 0);

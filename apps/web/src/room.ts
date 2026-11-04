@@ -56,6 +56,8 @@ import {
   roomIdentity,
   saveRoomIdentity,
   saveLastRoom,
+  forgetLastRoom,
+  lastRoom,
   sessionLoad,
   sessionSave,
 } from './storage.ts';
@@ -399,7 +401,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
             </div>
             <div id="rail-edge" class="rail-edge" aria-hidden="true"></div>
-            <div id="fs-side" class="fs-side"><div id="fs-side-notices" class="yt-notices fs-side-notices"></div></div>
             <div id="empty" class="empty">
               <div class="theme-mascot" aria-hidden="true"></div>
               <h2 data-i18n="emptyTitle"></h2>
@@ -1166,18 +1167,39 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // instead of it running out behind the waiting screen. The chunk is fetched now so it starts at once.
   let introPending = introDue;
   const intro = introDue ? import('@swm/shared/intro') : null;
+  // BH5: the invite window and the first-time tips wait for the intro to be gone (it is over the video, they would
+  // sit on top of it).
+  let introOver: Promise<void> = Promise.resolve();
   const playIntro = () => {
     if (!introPending || !intro) return;
     introPending = false;
-    void intro.then(({ INTRO_CSS, createIntro }) => {
+    introOver = intro.then(({ INTRO_CSS, createIntro }) => {
       if (!document.getElementById('swm-intro-css')) document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
-      $('.player-wrap').append(createIntro(document, t('introText')));
+      const node = createIntro(document, t('introText'));
+      $('.player-wrap').append(node);
+      return new Promise<void>((done) => {
+        const gone = new MutationObserver(() => {
+          if (node.isConnected) return;
+          gone.disconnect();
+          done();
+        });
+        gone.observe(node.parentElement ?? document.body, { childList: true });
+      });
     });
   };
-  if (!resumed) {
+  // R18: everything that belongs to being in the room waits for the first welcome (never while waiting at the door, or
+  // for someone refused, kicked or turned away by a full room).
+  let joinedOnce = false;
+  /** BH5: this tab was removed from the room (kicked or refused at the door). */
+  let removedHere = false;
+  const firstJoined = () => {
+    if (joinedOnce) return;
+    joinedOnce = true;
+    document.documentElement.dataset.swmJoined = '1';
+    dispatchEvent(new Event('swm-joined'));
     // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
-    if (!isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
-  }
+    if (!resumed && !isShell && !tv) void introOver.then(() => import('./ui/first-tips.ts')).then(({ showFirstTips }) => showFirstTips());
+  };
 
   /** R12: one card per person waiting at the door (host only): who it is, Let in / Refuse. */
   function drawKnocks(list: KnockEntry[]): void {
@@ -1207,6 +1229,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'welcome':
         myId = message.you;
         playIntro();
+        firstJoined();
         // R12: let in (or no door at all): the waiting card goes.
         $('#knock-wait').hidden = true;
         // Ayarlar önce: kişi listesi çizilirken kayıt durumu (kaydedilen odalar listesi) doğru bilinsin.
@@ -1442,6 +1465,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           // Filmi durdurmak odayı durdururdu (oradaki motor yayardı); sadece bağı kopar.
           if (film) closeCurrent();
           else current?.player.pause();
+          // BH5: refused at the door is one screen, never the waiting card behind it; and the home page never offers
+          // to continue in a room that removed me (pagehide would remember it again).
+          $('#knock-wait').hidden = true;
+          removedHere = true;
+          if (lastRoom()?.id === roomId) forgetLastRoom();
           $('#kicked').hidden = false;
           break;
         }
@@ -2652,15 +2680,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#chat-list').after(noticeChat);
   const noticeTop = el('div', { class: 'yt-notices yt-notices-top' });
   $('.player-wrap').before(noticeTop);
-  const fsSideNotices = $('#fs-side-notices');
   const NOTICES = '#waiting-banner, #sync-badge, #game-invite, .end-card, .countdown';
   function placeNotices(): void {
     const wrap = $('.player-wrap');
     const youtube = $('#theater').classList.contains('yt-rail') && !isShell && !document.documentElement.classList.contains('shorts-view');
-    // YouTube fullscreen on a computer (card 2a): the column beside the player; phones keep them on the video.
-    const fsSide = $('#theater').classList.contains('yt-fs');
-    const target = !youtube || (fullscreen.isActive() && !fsSide) ? wrap : fullscreen.isActive() ? fsSideNotices : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
-    for (const box of [wrap, noticeChat, noticeTop, fsSideNotices]) {
+    // Card R15 (owner): in fullscreen the notes sit on the video, YouTube too, as for video files.
+    const target = !youtube || fullscreen.isActive() ? wrap : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
+    for (const box of [wrap, noticeChat, noticeTop]) {
       if (box === target) continue;
       for (const node of box.querySelectorAll<HTMLElement>(`:scope > :is(${NOTICES})`)) target.append(node);
     }
@@ -2680,73 +2706,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   watchNotices.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   document.addEventListener('fullscreenchange', placeNotices);
 
-  /**
-   * Card 6d (owner's bug): the YouTube fullscreen column (card 2a) takes room only while it has something to show: a
-   * note, the cameras or a message. Otherwise the player is full width beside the resting rail. A message keeps it open
-   * SIDE_LINGER_MS after the last one, so a chat doesn't make the video jump back and forth.
-   */
-  const SIDE_LINGER_MS = 8000;
-  let sideLinger = 0;
-  let sideTimer: ReturnType<typeof setTimeout> | null = null;
-  function updateFsSide(): void {
-    const theater = $('#theater');
-    if (sideTimer !== null) clearTimeout(sideTimer);
-    sideTimer = null;
-    if (!theater.classList.contains('yt-fs')) {
-      // Only touch the class when it is there: even a no-op classList change rewrites the attribute, and the observer
-      // below would call this again for ever.
-      if (theater.classList.contains('fs-side-open')) theater.classList.remove('fs-side-open');
-      return;
-    }
-    const notes = [...fsSideNotices.children].some((node) => node instanceof HTMLElement && !node.hidden && getComputedStyle(node).display !== 'none');
-    // By id on the document: the camera box can float on <body>, outside the room page. Card R3: only cameras that
-    // really show count (a box with only hidden cameras, or none, used to hold the column open as a black strip), and
-    // not when they sit elsewhere (the person dragged them onto the player): checked once the column had time to place
-    // them, remembered until the cameras or their places change.
-    const box = document.getElementById('voice-cams');
-    const tiles = box && !box.hidden ? [...box.querySelectorAll<HTMLElement>('.cam-tile')].filter((tile) => tile.getClientRects().length > 0) : [];
-    const key = `${tiles.length}|${load('opt:camLayout') ?? ''}|${load('camFloat:fsSpot') ?? ''}|${load('camTiles:fsSpot') ?? ''}`;
-    let cams = tiles.length > 0 && camsElsewhere !== key;
-    const wasOpen = theater.classList.contains('fs-side-open');
-    if (cams && wasOpen && Date.now() - sideOpenedAt > 700) {
-      const column = document.getElementById('fs-side')?.getBoundingClientRect();
-      const inside = !!column && tiles.some((tile) => {
-        const r = tile.getBoundingClientRect();
-        return r.left < column.right && r.right > column.left && r.top < column.bottom && r.bottom > column.top;
-      });
-      if (!inside) {
-        camsElsewhere = key;
-        cams = false;
-      }
-    }
-    if (!tiles.length) camsElsewhere = null;
-    const toast = (document.getElementById('toasts')?.childElementCount ?? 0) > 0;
-    if (toast) sideLinger = Date.now() + SIDE_LINGER_MS;
-    const open = notes || cams || toast || Date.now() < sideLinger;
-    if (open !== wasOpen) {
-      theater.classList.toggle('fs-side-open', open);
-      if (open) sideOpenedAt = Date.now();
-      // The cameras are placed in the column: place them again once it moved.
-      setTimeout(() => dispatchEvent(new Event('resize')), 260);
-    }
-    // Look again: when the linger ends, and once the cameras had time to settle in the column.
-    if (open && !notes && !cams) sideTimer = setTimeout(updateFsSide, Math.max(200, sideLinger - Date.now() + 50));
-    else if (open && cams && Date.now() - sideOpenedAt <= 700) sideTimer = setTimeout(updateFsSide, 750 - (Date.now() - sideOpenedAt));
-  }
-  /** Card R3: when the column opened, and the cameras' state ("key") last found sitting outside it. */
-  let sideOpenedAt = 0;
-  let camsElsewhere: string | null = null;
-  const watchSide = new MutationObserver(updateFsSide);
-  watchSide.observe(fsSideNotices, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
-  const sideWatch: Array<[string, MutationObserverInit]> = [
-    ['voice-cams', { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true }],
-    ['toasts', { childList: true }],
-  ];
-  for (const [id, options] of sideWatch) {
-    const node = document.getElementById(id);
-    if (node) watchSide.observe(node, options);
-  }
-  watchSide.observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
 
   /**
    * Where a YouTube emoji rises from (card 2a): the sender's face when the faces are on screen; in fullscreen or with
@@ -3065,7 +3024,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   /** "Continue where you left off" on the home page (0.9.93.2): this room, with its saved name if it has one. */
   function rememberRoom(): void {
-    if (!tv) saveLastRoom(roomId, roomSettings.saved && roomSettings.name ? roomSettings.name : null);
+    if (!tv && !removedHere) saveLastRoom(roomId, roomSettings.saved && roomSettings.name ? roomSettings.name : null);
   }
 
   /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
@@ -3203,12 +3162,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (present.some((m) => m.id !== myId && !m.tv)) return;
     // The first-time tips wait for it (they start with "invite" too).
     document.documentElement.classList.add('invite-pending');
-    setTimeout(() => {
+    const soonest = new Promise((done) => setTimeout(done, 1700));
+    void Promise.all([soonest, introOver]).then(() => {
       document.documentElement.classList.remove('invite-pending');
       // Someone came in meanwhile, or another window is already open (name, avatar, a confirm): not now.
       if (members.some((m) => m.id !== myId && !m.tv) || document.querySelector('.dialog-backdrop:not([hidden])')) return;
       openInvite(inviteUrl, door());
-    }, 1700);
+    });
   }
   const emptyInviteEl = $<HTMLButtonElement>('#empty-invite');
   emptyInviteEl.textContent = emptyInviteLabel();
@@ -3557,7 +3517,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Sayfadan çıkarken (film sayfasına gidiş, odaya dönüş) bağlantıyı hemen kapat: tarayıcı sayfayı
   // önbellekte açık tutarsa kişi odada bir süre iki kez görünüyordu. Geri gelinirse sayfa yenilenir.
   addEventListener('pagehide', () => {
-    rememberRoom();
+    // R18: only a room I was really in becomes "Continue where you left off".
+    if (joinedOnce) rememberRoom();
     voice.leave();
     live.leave();
     connection.close();

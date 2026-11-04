@@ -275,6 +275,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   after acting as host while the host was away) the old host's saved-room row stays marked as theirs (`mine` is
   sticky), so its ✕ warns "removing also unsaves the room" while the server rightly refuses that unsave. Planner: a
   small fix card for the next lane slot (clear `mine` on a `members` update that names another host, without flicker).
+  **Done in 0.9.97.27 (BH6):** `mine` follows the host each time the room is entered; harness `saved-host`.
   (12) **A TV can keep the host role** (Developer A, BH4; TV lab only, frozen): if the host's TV stays connected after
   their phone / computer leaves, the TV holds the role and knock cards / host actions reach nobody. Planner: fix with
   the Google Cast TV version after 1.0 (ROADMAP Phase 2), not now.
@@ -432,8 +433,27 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.27 (saved rooms follow the host, BH6):**
+- [ ] Save a room, let a friend in, "Make host" them. On your home page the room's ✕ no longer says it will also
+  unsave the room; on the friend's home page it does.
+
+**0.9.97.25 (order of things, BH5):**
+- [ ] Open a brand-new room alone in a fresh browser: the intro plays first, the invite window opens only after it,
+  and the 3 tips come after you close the invite window. Reload: none of them again.
+- [ ] Remove a friend from the room: on their home page there is no "Continue" line for that room.
+
+**0.9.97.24 (two names in one browser, R16 + R17; nothing before you are in, R18):**
+- [ ] In one Chrome open the room twice, as "alperen" and "alperen 2": the room says 2 people, each tab sees the other;
+  a private message from one to the other arrives (no "not in the room" note). Reload either tab: it keeps its own
+  name and both still see each other; leave one tab in the background for 30 min and check again.
+- [ ] With "Ask before letting people in" on, a friend in a fresh browser knocks: while waiting at the door they see no
+  tips, no invite window and no "continue" line on the home page afterwards; once let in, the 3 tips come.
+
+**0.9.97.23 (home art with three devices, card 15c):**
+- [ ] Open the home page on your computer and your phone: Glowbeam's light falls on a laptop, a tablet and a phone; all three bars move together; the three faces are drawn avatars (others after a reload); the phone shows no small words in the art.
+
 **0.9.97.21 (English addresses, card C1):**
-- [ ] Open an old saved link `/baglanti` and `/eklenti.html`: they land on `/connection` and `/extension.html`.
+- [x] Open an old saved link `/baglanti` and `/eklenti.html`: they land on `/connection` and `/extension.html`. (owner, 4 Nov: /baglanti ok)
 
 **0.9.97.19 (knock fixes from the bug hunt, BH3):**
 - [ ] With "Ask before letting people in" on and a friend inside: close your tab; another friend knocks. The friend
@@ -445,9 +465,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   a second row), only "· started by …" gets cut.
 
 **0.9.97.16 (one place for each thing, card R9):**
-- [ ] Computer: ⋯ More shows only the room's things (film time, save, recap, shortcuts, sync test, rules). The profile
+- [x] Computer: ⋯ More shows only the room's things (film time, save, recap, shortcuts, sync test, rules). The profile
   menu shows you (language, move, name, avatar, theme) and one small line "Help · Feedback · Privacy"; nothing is in both.
-- [ ] Phone: ⋯ shows each tile once; ⋯ → Profile has the language (TR / EN) and the small Help · Feedback · Privacy line.
+- [x] Phone: ⋯ shows each tile once; ⋯ → Profile has the language (TR / EN) and the small Help · Feedback · Privacy line.
 
 **0.9.97.16 (the intro for everyone, card R7):**
 - [ ] Send the invite link to a friend: when they enter, they see the Sidelit intro (light + Glowbeam) once; a reload
@@ -459,7 +479,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   to the room chat. Reload: the private message is not in the history. Try it on the phone too.
 
 **0.9.97.10 (redrawn parody avatars, card R14):**
-- [ ] Avatar picker → Parody: every face is the new drawing; Anime has the notebook genius and the sweet-tooth sleuth,
+- [x] Avatar picker → Parody: every face is the new drawing; Anime has the notebook genius and the sweet-tooth sleuth,
   the white-haired hunter is under Game. Pick one: it looks right in the chat, the faces and the join card.
 
 **0.9.97.9 (ask before letting people in, card R12):**
@@ -570,9 +590,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.26 R15: YouTube in fullscreen, a friend writes a message: it comes down over the video at the top right,
+  left of the rail; the video never gets narrower, no dark column on the right; your camera floats over the video.
 - [ ] 0.9.97.20 BH2: Five Frames: skip a day after a win; the next day the 🔥 next to the day number (and in the games
   gallery) shows 0, not your old streak.
-- [ ] 0.9.97.18 BH2: start a YouTube video and move the mouse to the video's right edge and away: the rail slides in and
+- [x] 0.9.97.18 BH2: start a YouTube video and move the mouse to the video's right edge and away: the rail slides in and
   out beside the video, never fading in over it.
 - [ ] 0.9.97.17 BH2: a friend shares the screen, you press Watch, then reload your page and press Watch again: the picture
   comes back (it used to stay black).
@@ -583,11 +605,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] 0.9.97.13 R5 (update the extension first): on a film page, out of fullscreen, move the mouse slowly to the right
   edge of the film: the rail opens when the mouse is about a finger's width (40 px) inside the film; a mouse that only
   passes by doesn't make the film jump; in the middle of the film the rail goes again.
-- [ ] 0.9.97.12 R4: in fullscreen press T: fullscreen closes and cinema mode opens; T again leaves cinema mode.
-- [ ] 0.9.97.12 R3: YouTube in fullscreen with nothing going on: no dark strip on the right, the video reaches the rail.
+- [x] 0.9.97.12 R4: in fullscreen press T: fullscreen closes and cinema mode opens; T again leaves cinema mode.
+- [x] 0.9.97.12 R3: YouTube in fullscreen with nothing going on: no dark strip on the right, the video reaches the rail.
   Turn your camera on: it sits in a column beside the video; drag the camera window onto the video: the empty column
   goes away; camera off: no column. Ask a friend to check theirs too.
-- [ ] 0.9.97.11 R2: in a room press Enter once: the cursor is in the message box. Also with a video playing, after
+- [x] 0.9.97.11 R2: in a room press Enter once: the cursor is in the message box. Also with a video playing, after
   pressing a rail button, in cinema mode (T) and in fullscreen: one Enter, never an empty window first.
 - [ ] 0.9.97.8 R1: with a friend, both in voice, the friend shares the screen and you watch. Open a game (XOX, then
   Draw & Guess), let the friend join it, close it: nobody is thrown out, the stream and voice keep going, every game opens

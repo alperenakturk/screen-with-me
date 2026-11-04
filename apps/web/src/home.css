@@ -484,6 +484,13 @@ html.phone .hm-main {
   padding: 8px 20px;
 }
 
+/* 15c: at a phone's 300 px the art's words would be ~6 px: the picture stays, its texts go. */
+html.phone .hm-scene [data-art],
+html.phone .hm-scene .hm-bubble,
+html.phone .hm-scene .hm-pill-art {
+  display: none;
+}
+
 html.phone .hm-art {
   order: -1;
   flex: none;

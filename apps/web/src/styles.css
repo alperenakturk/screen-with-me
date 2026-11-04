@@ -11514,14 +11514,17 @@ html:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.yt-rail.side-rail.dock
   right: var(--edge-gutter);
 }
 
-/* BH2: the rail slides in by as much as the player's right edge moves, with the same timing, so it never sits over the
+/* BH2: the rail slides in by as much as the player's right edge moves (slower in, faster out), so it never sits over the
    YouTube player while both move (it used to fade in on top for ~0.2 s while the player was still making room). */
 html:not(.phone) .theater.yt-rail.side-rail.dock-mode .fs-dock {
-  transition: opacity 0.22s ease, visibility 0.22s, transform 0.22s ease;
+  /* Coming in: a little slower than the player makes room (0.22 s), so its edge never gets ahead of the player's. */
+  transition: opacity 0.22s ease, visibility 0.22s, transform 0.3s ease;
 }
 
 html:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.yt-rail.side-rail.dock-mode.dock-idle:not(:has(.fs-dock:hover, .dock-pop:not([hidden]))) .fs-dock {
   transform: translateX(calc(var(--rail-w) - var(--edge-gutter)));
+  /* Going away: faster than the player grows back, for the same reason (the two never start on the same frame). */
+  transition: opacity 0.15s ease, visibility 0.15s, transform 0.15s ease;
 }
 
 .theater.yt-rail.side-rail .rail-edge {
@@ -11557,77 +11560,6 @@ html.shell .theater.side-rail.rail-edge-mode.dock-mode.dock-idle .rail-edge {
   top: 0;
   bottom: 0;
   width: var(--edge-gutter, 14px);
-}
-
-/* YouTube fullscreen on a computer (card 2a, owner's D, like Watch2Gether): the player makes room for a column beside
-   it, left of the rail (or of the thin edge gutter while the rail rests). The column holds the room's notes at the top,
-   the cameras (placed by cam-float.ts) and the newest messages at the bottom. */
-.fs-side {
-  display: none;
-}
-
-.theater.yt-fs {
-  --fs-side-w: clamp(220px, 17vw, 320px);
-  --side-right: var(--edge-gutter, 14px);
-}
-
-.theater.yt-fs:is(:not(.dock-idle), :has(.fs-dock:hover, .dock-pop:not([hidden]))),
-html.is-touch:not(.has-mouse) .theater.yt-fs {
-  --side-right: var(--rail-w, 58px);
-}
-
-.theater.yt-fs :is(.player, .fs-catcher) {
-  right: calc(var(--side-right) + var(--fs-side-w)) !important;
-}
-
-/* Card 6d (owner's bug): with nothing to show (no note, camera or message) the column steps aside and the player is
-   full width beside the resting rail, as before card 2a. */
-.theater.yt-fs:not(.fs-side-open) :is(.player, .fs-catcher) {
-  right: var(--side-right) !important;
-}
-
-.theater.yt-fs:not(.fs-side-open) .fs-side {
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(18px);
-  pointer-events: none;
-}
-
-.theater.yt-fs .fs-side {
-  display: flex;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: var(--side-right);
-  width: var(--fs-side-w);
-  z-index: 2;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  box-sizing: border-box;
-  background: rgb(12 14 22 / 0.94);
-  border-left: 1px solid rgb(255 255 255 / 0.08);
-  transition: right 0.22s ease, opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
-}
-
-.theater.yt-fs .fs-side-notices {
-  font-size: 14px;
-}
-
-.theater.yt-fs .toasts {
-  top: auto !important;
-  left: auto !important;
-  bottom: 14px !important;
-  right: calc(var(--side-right) + 10px) !important;
-  width: calc(var(--fs-side-w) - 20px);
-  max-width: none;
-  align-items: stretch;
-  text-align: left;
-  z-index: 3;
-}
-
-.theater.yt-fs .action-notice {
-  display: none !important;
 }
 
 /* YouTube emojis rise from the sender's face / the rail's 😀, beside the video (card 2a; first in 0.9.92.9). */
