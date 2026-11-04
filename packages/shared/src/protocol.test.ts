@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -274,5 +274,16 @@ describe('Safer media links (security L4)', () => {
     expect(page('http://192.168.0.10/')).toBe(false);
     expect(page('https://admin:pw@films.example.org/')).toBe(false);
     expect(isPublicMedia({ kind: 'youtube', id: 'aqz-KE-bpKQ' })).toBe(true);
+  });
+});
+
+describe('personOf (R11)', () => {
+  it('tells people apart by the person key, falling back to name + avatar', () => {
+    const a = { pk: '0123456789abcdef', name: 'Alex', avatar: 'wizard' };
+    const b = { pk: 'fedcba9876543210', name: 'Alex', avatar: 'wizard' };
+    expect(personOf(a)).not.toBe(personOf(b));
+    expect(personOf({ ...a, name: 'Alex 2' })).toBe(personOf(a));
+    expect(personOf({ name: 'Alex', avatar: 'wizard' })).toBe(personOf({ name: 'Alex', avatar: 'wizard' }));
+    expect(personOf({ name: 'Alex' })).not.toBe(personOf(a));
   });
 });

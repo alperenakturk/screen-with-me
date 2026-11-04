@@ -68,7 +68,7 @@ kameralar, emojiler, oyunlar ve ortak sıra videonun etrafında.
 ### Yönetici ve güvenlik
 | | |
 |---|---|
-| 👑 **Oda yöneticisi** | Odaya ilk giren yöneticidir ve kuralları ⚙️ Ayarlar'da belirler: oynatmayı yalnız yönetici yönetir, kilitli sıra, emoji sınırları, yalnız yönetici yayın açar, hazır kontrolü. Yönetici 20 sn'den uzun süre yoksa yöneticilik odada en uzun süredir bulunana geçer. Yönetici yöneticiliği başkasına devredebilir (Kişiler'de 👑), kişileri odadan çıkarabilir ve yasaklayabilir. |
+| 👑 **Oda yöneticisi** | Odaya ilk giren yöneticidir ve kuralları ⚙️ Ayarlar'da belirler: oynatmayı yalnız yönetici yönetir, kilitli sıra, emoji sınırları, yalnız yönetici yayın açar, hazır kontrolü. Yönetici 20 sn'den uzun süre yoksa yöneticilik odada en uzun süredir bulunana geçer. Yönetici yöneticiliği başkasına devredebilir (Kişiler'de 👑), kişileri odadan çıkarabilir ve yasaklayabilir; "İçeri almadan önce sor" açıkken yeni gelen biri, yönetici içeri alana ya da reddedene kadar kapıda bekler. |
 | 🔐 **Gizlilik temelden** | Video her kişinin kendi tarayıcısında oynar; sunucu yalnızca küçük "12:34'te durdur" mesajlarını ve odanın sohbetini iletir. Eklenti oda dışında uyur, film sayfası hangi odada olduğunu okuyamaz. Kullanıcı metni hiçbir zaman HTML olarak yazılmaz; sınırlar (IP başına da), köken kontrolü, sıkı bir Content-Security-Policy ve çerçeve koruması siteyi korur. |
 
 ## 🧠 Nasıl çalışır?

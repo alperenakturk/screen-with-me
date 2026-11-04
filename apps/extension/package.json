@@ -1,7 +1,7 @@
 {
   "name": "@swm/extension",
   "private": true,
-  "version": "0.9.97.4",
+  "version": "0.9.97.12",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
@@ -12,7 +12,7 @@
     "@swm/shared": "*"
   },
   "devDependencies": {
-    "@types/chrome": "^0.3.5",
+    "@types/chrome": "^0.3.7",
     "esbuild": "^0.28.2",
     "fflate": "^0.8.3"
   }
