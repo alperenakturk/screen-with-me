@@ -1,0 +1,88 @@
+/* 🎲 Classics (P6, the owner's picks): the game shelf, the dama board, Glowbeam the referee and the bot buttons.
+   Night-gold, following the room's theme (`--accent`, `--surface`); loaded with the board game's chunk only. */
+
+/* Glowbeam the referee, beside the status line: looks at whose turn it is, cheers the winner. */
+.cl-ref { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; }
+.cl-ref .xox-status { margin: 0; }
+.cl-ref-mascot { flex: none; width: 30px; height: 30px; display: block; transition: transform 0.3s; }
+.cl-ref-mascot svg { width: 100%; height: 100%; display: block; }
+.cl-ref-mascot.wait { opacity: 0.55; transform: rotate(-10deg); }
+.cl-ref-mascot.cheer { animation: cl-cheer 0.6s ease-in-out 3; }
+@keyframes cl-cheer { 30% { transform: translateY(-8px) rotate(-8deg) scale(1.1); } 60% { transform: translateY(0) rotate(6deg); } }
+
+/* Glowbeam the bot: a seat card and the level buttons. */
+.xox-player.bot .cl-bot-avatar { display: block; width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 198, 90, 0.25), transparent 70%); }
+.cl-bot-avatar svg { width: 100%; height: 100%; display: block; }
+.cl-bot { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.cl-bot[hidden] { display: none; }
+.cl-bot-label { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+.cl-bot-icon, .cl-bot-icon svg { width: 22px; height: 22px; display: block; }
+.cl-bot-level.on { border-color: var(--accent); color: var(--text); }
+
+/* The game shelf (owner's pick 2 B): boxes on a wooden shelf, the chosen one's lid open, Glowbeam's light above. */
+.xox-board-wrap { position: relative; }
+.cl-shelf {
+  position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+.cl-shelf[hidden] { display: none; }
+.cl-shelf-title { margin: 0; font-weight: 800; font-size: 17px; }
+.cl-shelf-row { display: flex; align-items: flex-end; justify-content: center; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1; }
+.cl-shelf-board { width: min(100%, 360px); height: 10px; margin-top: -14px; border-radius: 3px; background: linear-gradient(#7a4a2c, #3e2418); box-shadow: 0 4px 10px #0008; }
+.cl-box {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px;
+  width: 64px; min-height: 92px; padding: 18px 4px 8px; border: 0; border-radius: 8px; cursor: pointer;
+  background: var(--box, #6aa0e0); color: #fff3d6; box-shadow: inset 0 -6px 0 #0003, 0 3px 6px #0006; transition: transform 0.2s;
+}
+.cl-box-xox { --box: #e05a5a; min-height: 86px; }
+.cl-box-four { --box: #4f7fd0; min-height: 98px; }
+.cl-box-dama { --box: #3f9f7a; min-height: 90px; }
+.cl-box-chess { --box: #8a6ad8; min-height: 96px; }
+.cl-box-tavla { --box: #d8772f; min-height: 88px; }
+.cl-box-lid { position: absolute; left: 0; right: 0; top: 0; height: 12px; border-radius: 8px 8px 3px 3px; background: #0003; transform-origin: 0 100%; transition: transform 0.25s; }
+.cl-box-glyph { font-size: 22px; line-height: 1; }
+.cl-box b { font-size: 13px; line-height: 1.15; text-align: center; }
+.cl-box small { font-size: 11px; opacity: 0.85; }
+.cl-box:not(:disabled):hover, .cl-box.on { transform: translateY(-6px); }
+.cl-box:not(:disabled):hover .cl-box-lid, .cl-box.on .cl-box-lid { transform: rotate(-14deg); }
+.cl-box.on { box-shadow: inset 0 -6px 0 #0003, 0 0 0 3px var(--accent), 0 -10px 22px rgba(255, 198, 90, 0.35); }
+.cl-box:disabled { cursor: default; filter: grayscale(0.6) brightness(0.75); }
+.cl-box:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Dama: an 8 × 8 board in the theme's colours; white and black men, a king wears a gold crown. */
+.dama-board {
+  display: grid; margin: 0 auto; box-sizing: border-box; grid-template-columns: repeat(8, 1fr); gap: 0; width: min(100%, 400px); aspect-ratio: 1; padding: 6px;
+  border-radius: 10px; background: color-mix(in srgb, var(--accent) 30%, #3e2418); box-shadow: inset 0 0 0 2px #0004;
+}
+.dama-board .dama-cell {
+  position: relative; aspect-ratio: 1; min-width: 0; padding: 0; border: 0; border-radius: 0; cursor: default;
+  background: color-mix(in srgb, var(--surface-2, #1e2440) 70%, #c9a46b); box-shadow: none;
+}
+.dama-board .dama-cell.dark { background: color-mix(in srgb, var(--surface-2, #1e2440) 45%, #8a5a34); }
+.dama-board .dama-cell.mark-X::before, .dama-board .dama-cell.mark-O::before {
+  content: ''; position: absolute; inset: 12%; border-radius: 50%; box-shadow: inset 0 -3px 0 #0004, 0 2px 4px #0007;
+}
+.dama-board .dama-cell.mark-X::before { background: radial-gradient(circle at 35% 30%, #ffffff, #e9dfc8); }
+.dama-board .dama-cell.mark-O::before { background: radial-gradient(circle at 35% 30%, #5a5a6a, #16141f); }
+.dama-board .dama-cell.king::after { content: '♛'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.1em; color: #ffc65a; text-shadow: 0 1px 2px #000; }
+.dama-board .dama-cell.movable { cursor: pointer; }
+.dama-board .dama-cell.movable::before { box-shadow: inset 0 -3px 0 #0004, 0 0 0 2px rgba(255, 198, 90, 0.7); }
+.dama-board .dama-cell.picked::before { box-shadow: inset 0 -3px 0 #0004, 0 0 0 3px #ffc65a, 0 0 12px #ffc65a; }
+.dama-board .dama-cell.target { cursor: pointer; }
+.dama-board .dama-cell.target:not(.mark-X):not(.mark-O)::before { content: ''; position: absolute; inset: 36%; border-radius: 50%; background: rgba(255, 198, 90, 0.75); }
+.dama-board .dama-cell.placed::before { animation: cl-place 0.25s ease-out; }
+@keyframes cl-place { from { transform: scale(0.6); } }
+.dama-board .dama-cell:disabled { opacity: 1; cursor: default; }
+.dama-man { display: inline-block; width: 18px; height: 18px; border-radius: 50%; }
+.dama-man.mark-X { background: radial-gradient(circle at 35% 30%, #fff, #e9dfc8); box-shadow: 0 0 0 1px #0005; }
+.dama-man.mark-O { background: radial-gradient(circle at 35% 30%, #5a5a6a, #16141f); box-shadow: 0 0 0 1px #fff5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cl-ref-mascot.cheer, .dama-board .dama-cell.placed::before { animation: none; }
+  .cl-box, .cl-box-lid { transition: none; }
+}
+
+/* In the game window: the referee row takes the status line's place; the dama board is as big as the window allows. */
+.game-stage .cl-ref { grid-area: status; }
+.game-stage .dama-board { width: min(100cqh - 4px, 52cqw, 440px); }
+.game-stage .cl-shelf-row { gap: 6px; }

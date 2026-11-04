@@ -94,7 +94,12 @@ async function join(page) {
       await page.waitForSelector('#game-menu:not([hidden])');
       await page.waitForTimeout(500);
       await axe(page, `${label} games hall`);
-      await page.evaluate(() => document.querySelector('#game-menu [data-kind="xox"], #game-menu [data-game="xox"]')?.click());
+      // XOX lives on the Classics shelf: the shelf first, then the board.
+      await page.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]')?.click());
+      await page.waitForSelector('#game-stage:not([hidden]) .cl-shelf .cl-box', { timeout: 6000 }).catch(() => {});
+      await page.waitForTimeout(400);
+      await axe(page, `${label} classics shelf`);
+      await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="xox"]')?.click());
       await page.waitForSelector('#game-stage:not([hidden]) .xox-board', { timeout: 6000 }).catch(() => {});
       await page.waitForTimeout(600);
       await axe(page, `${label} tic-tac-toe`);

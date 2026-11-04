@@ -14,6 +14,8 @@ import {
 } from '@swm/shared/games/protocol';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
+import { botMove } from '@swm/shared/games/bot';
+import type { BotLevel } from '@swm/shared/games/protocol';
 
 /** Oyun odası boş kaldıktan bu kadar sonra silinir. */
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
@@ -32,7 +34,13 @@ interface Seat {
   key: string;
   name: string;
   avatar?: Avatar;
+  /** Glowbeam the bot sits here (🎲 Classics, owner's pick 6 A). */
+  bot?: BotLevel;
 }
+/** Glowbeam's seat key (never a browser's). */
+const BOT_KEY = 'bot:glowbeam';
+/** Glowbeam thinks this long before its move (a move at once feels rude). */
+const BOT_DELAY_MS = 700;
 
 interface Saved {
   kind: GameKind;
@@ -40,6 +48,10 @@ interface Saved {
   seats: [Seat | null, Seat | null];
   score: GameScore;
   emptySince: number | null;
+  /** A 🎲 Classics table: its board can change from the shelf while no game is in progress. */
+  classics?: boolean;
+  /** A move was made in this game (it is in progress until it ends). */
+  started?: boolean;
 }
 
 const fresh = (kind: GameKind = 'xox'): Saved => ({ kind, state: GAME_RULES[kind].newGame(), seats: [null, null], score: { X: 0, O: 0, draw: 0 }, emptySince: null });
@@ -63,7 +75,9 @@ export class Game extends DurableObject<Env> {
       const saved = await ctx.storage.get<Saved & { xox?: unknown }>('game');
       const kind = saved?.kind ?? 'xox';
       const state = saved?.state ?? saved?.xox;
-      if (saved && GAME_RULES[kind]?.isState(state)) this.data = { kind, state, seats: saved.seats, score: saved.score, emptySince: saved.emptySince };
+      if (saved && GAME_RULES[kind]?.isState(state)) {
+        this.data = { kind, state, seats: saved.seats, score: saved.score, emptySince: saved.emptySince, classics: saved.classics === true, started: saved.started === true };
+      }
     });
   }
 
@@ -140,8 +154,11 @@ export class Game extends DurableObject<Env> {
       ws.close(4000, 'version');
       return;
     }
+    // A Classics table: whoever comes plays the board on the table (its shelf changes it); the first one marks it.
+    const untouchedTable = this.data.seats.every((seat) => seat === null) && !this.data.started && !this.data.classics;
+    if (message.classics && untouchedTable) this.data = { ...fresh(message.game), classics: true, emptySince: null };
     // Tür: hiç oynanmamış odayı ilk gelen belirler; başka türün sürdüğü koda gelen (adresi elle değiştirdiyse) giremez.
-    if (message.game !== this.data.kind) {
+    if (message.game !== this.data.kind && !(message.classics && this.data.classics)) {
       const untouched = this.data.seats.every((seat) => seat === null) && this.data.state.board.every((c) => c === null);
       if (!untouched) {
         this.sendTo(ws, { t: 'error', code: 'kind' });
@@ -166,6 +183,7 @@ export class Game extends DurableObject<Env> {
     await this.save();
     this.sendTo(ws, { t: 'welcome', you: me.id, game: this.data.kind });
     this.broadcastState();
+    this.botTurn();
   }
 
   private async apply(ws: WebSocket, me: Attachment & { name: string }, message: GameClientMessage): Promise<void> {
@@ -178,6 +196,7 @@ export class Game extends DurableObject<Env> {
         const next = GAME_RULES[this.data.kind].play(this.data.state, MARKS[seat]!, message.cell);
         if (!next) return this.sendTo(ws, { t: 'error', code: 'not_your_turn' });
         this.data.state = next;
+        this.data.started = true;
         if (next.winner) this.data.score[next.winner] += 1;
         break;
       }
@@ -185,7 +204,38 @@ export class Game extends DurableObject<Env> {
         if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         if (this.data.state.winner === null) return;
         this.data.state = GAME_RULES[this.data.kind].rematch(this.data.state);
+        this.data.started = false;
         break;
+      case 'switch': {
+        // Classics: another board from the shelf, by a player, never in the middle of a game.
+        if (!this.data.classics || seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
+        if (this.data.started && this.data.state.winner === null) return this.sendTo(ws, { t: 'error', code: 'in_progress' });
+        if (message.game === this.data.kind) return;
+        this.data.kind = message.game;
+        this.data.state = GAME_RULES[message.game].newGame();
+        this.data.score = { X: 0, O: 0, draw: 0 };
+        this.data.started = false;
+        break;
+      }
+      case 'bot': {
+        // Glowbeam takes the other seat while it is free (or held by someone who left), or leaves it.
+        if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
+        const other = seat === 0 ? 1 : 0;
+        const there = this.data.seats[other];
+        if (message.level === 0) {
+          if (!there?.bot) return;
+          this.data.seats[other] = null;
+        } else {
+          if (there && !there.bot && this.online(there.key)) return this.sendTo(ws, { t: 'error', code: 'seat_taken' });
+          this.data.seats[other] = { key: BOT_KEY, name: 'Glowbeam', bot: message.level };
+          // A new opponent: a game half-way starts over.
+          if (!there?.bot && this.data.started && this.data.state.winner === null) {
+            this.data.state = GAME_RULES[this.data.kind].newGame(this.data.state.starter);
+            this.data.started = false;
+          }
+        }
+        break;
+      }
       case 'sit': {
         if (seat !== -1) return;
         const current = this.data.seats[message.seat];
@@ -193,8 +243,9 @@ export class Game extends DurableObject<Env> {
         if (current && this.online(current.key)) return this.sendTo(ws, { t: 'error', code: 'seat_taken' });
         this.data.seats[message.seat] = { key: me.key!, name: me.name, ...(me.avatar ? { avatar: me.avatar } : {}) };
         // Yeni rakip: el yarıda kaldıysa baştan.
-        if (current && current.key !== me.key && this.data.state.winner === null && this.data.state.board.some((c) => c !== null)) {
+        if (current && current.key !== me.key && this.data.state.winner === null && this.data.started) {
           this.data.state = GAME_RULES[this.data.kind].newGame(this.data.state.starter);
+          this.data.started = false;
         }
         break;
       }
@@ -211,6 +262,35 @@ export class Game extends DurableObject<Env> {
     }
     await this.save();
     this.broadcastState();
+    this.botTurn();
+  }
+
+  private botTimer: ReturnType<typeof setTimeout> | null = null;
+  /** When it is Glowbeam's turn, it plays after a short think (its move goes through the same rules). */
+  private botTurn(): void {
+    const d = this.data;
+    const index = d.seats.findIndex((s) => s?.bot);
+    if (index === -1 || d.state.winner !== null || d.state.turn !== MARKS[index] || d.seats.some((s) => s === null) || this.botTimer) return;
+    if (d.kind !== 'xox' && d.kind !== 'four' && d.kind !== 'dama') return;
+    this.botTimer = setTimeout(() => {
+      this.botTimer = null;
+      void this.botPlays(index);
+    }, BOT_DELAY_MS);
+  }
+  private async botPlays(index: number): Promise<void> {
+    const d = this.data;
+    const seat = d.seats[index];
+    if (!seat?.bot || d.state.winner !== null || d.state.turn !== MARKS[index]) return;
+    const move = botMove(d.kind as 'xox' | 'four' | 'dama', d.state, seat.bot);
+    const next = move === null ? null : GAME_RULES[d.kind].play(d.state, MARKS[index]!, move);
+    if (!next) return;
+    d.state = next;
+    d.started = true;
+    if (next.winner) d.score[next.winner] += 1;
+    await this.save();
+    this.broadcastState();
+    // A dama capture chain: Glowbeam goes on.
+    this.botTurn();
   }
 
   private async left(ws: WebSocket): Promise<void> {
@@ -242,6 +322,7 @@ export class Game extends DurableObject<Env> {
     const seats = this.data.seats.map((seat, index) => {
       if (!seat) return null;
       const conn = joined.find((a) => a.key === seat.key);
+      if (seat.bot) return { id: `bot-${index}`, name: seat.name, online: true, bot: seat.bot };
       return { id: conn?.id ?? `seat-${index}`, name: seat.name, ...(seat.avatar ? { avatar: seat.avatar } : {}), online: !!conn };
     }) as [GamePerson | null, GamePerson | null];
     const seated = new Set(this.data.seats.map((s) => s?.key));
@@ -253,7 +334,7 @@ export class Game extends DurableObject<Env> {
       seen.add(a.key!);
       watchers.push(this.person(a));
     }
-    this.broadcast({ t: 'state', kind: this.data.kind, game: this.data.state, seats, watchers, score: this.data.score }, except);
+    this.broadcast({ t: 'state', kind: this.data.kind, game: this.data.state, seats, watchers, score: this.data.score, ...(this.data.classics ? { classics: true } : {}), started: !!this.data.started }, except);
   }
 
   private async save(): Promise<void> {

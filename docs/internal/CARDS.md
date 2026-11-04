@@ -4,8 +4,9 @@ Owner's rule (2 Nov 2026): one board for every session. The **Planner** writes a
 the top **Ready** card, moves it to **In progress**, and when it is live adds `Done: <PR link>` and moves it to
 **Done**. **Security** and **Research** add their suggestions under **Proposed**; the Planner and the owner decide
 whether they become Ready. Roles and rules: `CLAUDE.md` "Sessions as an office". The order follows `ROADMAP.md`
-"Focus: now / next / frozen". The owner's tick view is the hidden test board page on our site (its data file
-`board.data.js`, kept by the Planner); the old checklist Artifact is retired.
+"Focus: now / next / frozen". The owner's tick view is the Planner's test board Artifact https://claude.ai/artifact/NWZG7GLH4JzAnZt1rNgrJo
+(owner, 4 Nov 2026: the hidden page on our site needed a deploy for every update, so it is removed again; the
+Artifact updates at once).
 
 **How the owner is asked (owner, 4 Nov 2026):** no more option pages or other web pages for him. The only page he uses
 is the test board (the Planner keeps it current with what he tested and what is next). Every preference or design
@@ -107,7 +108,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B next: R21 (fullscreen messages bigger and lower). Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 → R24 → R26 (important) → R25. Lane A: 15e ✅ → R22 + R23 → 15f → R27. Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -168,6 +169,95 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### R25. Fullscreen messages lower than the message box (owner, 4 Nov 2026; lane B)
+- Owner (screenshot of R21 live, a YouTube video in fullscreen: the message "Alperen2 sELAN" sits right beside the
+  rail's 💬, at the same height as the message box that 💬 opens): "put it not right next to where you write a message
+  but further down, so the sent messages never block me while I write".
+- What: in fullscreen and with the side panel hidden, incoming messages start below the rail's message window (a
+  band that begins where the open message box ends, about 45–55 % down the video), stacking downwards and still never
+  over the player's bottom bar; with the message box open no message overlaps it, ever. Size and timing stay as R21.
+- Done when: at 1366×768 and 1920×1080 (YouTube, video file, film page) a message never overlaps the open message box
+  or its button, and never the bottom bar.
+- Tests: `yt-fs-side` (box vs. message rectangles with the box open), embed harness.
+- Owner's pick: none needed.
+
+### R26. Enter opens the message box after a click on the YouTube player (owner, 4 Nov 2026; lane B, important)
+- Owner: "when I click on the YouTube player and then press Enter, the side menu's chat doesn't react; the shortcut
+  doesn't work; if I click the side menu first and then press Enter it works. This is important; test it in the
+  extension too."
+- Why: a click on the YouTube frame moves the keyboard focus into YouTube's iframe, so our page never hears the key.
+- What: after a click on the player (YouTube, Vimeo, TikTok frames; on the film page the film's own frame), the room's
+  shortcuts work again at once: Enter opens the message box, the emoji keys, P, M, T … (e.g. take the focus back to
+  our page right after the frame got it, `window` blur → refocus, without breaking YouTube's own clicks, seek bar,
+  settings menu or captions; on the film page the extension already forwards keys, check it really does after a click
+  in the film). YouTube's own keyboard shortcuts may be lost; ours win.
+- Done when: click the YouTube video → Enter → the message box has the cursor, in the window and in fullscreen; the
+  same on a video file, Vimeo and on a film page with the extension; YouTube's play / pause by click, seek bar and
+  settings still work.
+- Tests: yt-room / yt-fs-side (click in the frame, then Enter), embed harness (click in the film, then Enter).
+- Owner's pick: none needed.
+
+### 15f. Home art: further left, pictures fill the screens (owner, 4 Nov 2026; lane A)
+- Owner (screenshot of the live 15e art, the empty space left of Glowbeam circled, and red lines along the top and
+  left inside each screen): "the Sidelit logo + all the computer, tablet and phone art should slide to the left"; "in
+  the places I marked the orange picture should reach too; it looks odd now, like a shadowed layer between the frame
+  and the screen's colour".
+- What: the whole art (Glowbeam + devices + faces + bubble) moves left so the empty band left of Glowbeam goes away
+  (keep the text column clear and the page balanced); each screen's picture fills its screen up to the bezel: no dark
+  inner band / inset shadow between the frame and the orange picture (the sheen stays, on top of the picture).
+- Done when: at the five home sizes the art starts close to the text column with no empty band; the orange picture
+  touches the bezel on every side of all three screens; the 15e checks stay green.
+- Tests: home harness (art's left edge vs. the text column, picture rect = screen rect).
+- Owner's pick: none needed.
+
+### R27. Avatar picker without tabs: one mixed list (owner, 4 Nov 2026; lane A)
+- Owner: "remove the things in the top menu; it should be plain, without categories, all avatars mixed together; no
+  categories needed for now".
+- What: the avatar dialog (site and extension) shows one grid of every avatar (themed + genres + armadillo), mixed
+  (a fixed shuffled order, not random per open, so a person finds theirs again), no tab row; the grid scrolls only if it
+  must (the owner's rule: lists that grow may scroll). Random picks for new people stay from the themed set unless
+  that is simpler to change; say which in the PR.
+- Done when: no tabs in the picker on computer and phone; every avatar is in the one list exactly once; picking still
+  needs "OK" / double-click.
+- Tests: unit (every drawn avatar listed once), avatar harness / screenshot.
+- Owner's pick: none needed.
+
+### R24. Remove the hidden test board page from the site (owner, 4 Nov 2026; lane B)
+- Owner: "testing on the site turned out silly: every board update waits for a deploy; delete that page, the Planner
+  goes back to the Artifact".
+- What: delete `apps/web/public/o-…/` (the whole folder), its `_headers` lines, the `owner-board` harness and any CI /
+  CLAUDE.md mention (the 0.9.97.29 note becomes "removed in …"). Nothing else changes.
+- Done when: the address answers 404 (or the home page fallback) after the deploy; CI green.
+- Tests: CI; a quick fetch of the old address after the deploy.
+- Owner's pick: none needed.
+
+### R22. Remove the "Opera Night" theme (owner, 4 Nov 2026; lane A)
+- Owner (in A's chat): remove the Opera Night theme completely.
+- What: the theme leaves every picker, the theme art and the code; a saved Opera Night becomes Gece once, like a
+  removed avatar.
+- Done when: no Opera Night anywhere (pickers, previews, files); a browser that had it saved opens in Gece.
+- Tests: theme-previews harness, a unit / harness check for the saved-theme swap.
+- Owner's pick: none needed.
+
+### R23. Stream controls fit beside the faces in the Together card (owner, 4 Nov 2026; lane A)
+- Owner (in A's chat): while a stream is on, the Together card's stream controls (stop, quality…) push the chat far
+  down; put them into the empty top-right area of the card next to the faces. Before a stream starts nothing changes.
+- Done when: with a stream on at 1366×768 and 1920×1080 the chat panel keeps (almost) the same height as without one;
+  the controls are all reachable; phones keep their own layout.
+- Tests: `voice/live.mjs` (layout check), room harness screenshot.
+- Owner's pick: none needed.
+
+### BH7. A name changed on the main site does not reach the film page (lane B, after R21)
+- Found by B while building R21: the embed harness check "a name changed on the main site also applies on the film
+  page" fails on main too (the film page still shows the old name: "Sam" instead of "Riley"). Not related to R21.
+- What: find why the overlay site on the film page does not pick up the new name (suspects: the shared settings sync
+  `site:name`, and the per-room / per-tab `me:<room>` copies since R17 being read before the synced default) and fix
+  it so that a rename in the room on the main site shows on the film page for everyone, for that room only (rooms stay
+  independent, 0.9.88).
+- Done when: the embed harness check passes again; same-browser and tab-name harnesses stay green.
+- Tests: embed harness (the existing check), `same-browser`.
+- Owner's pick: none needed.
 
 ### R21. Chat messages over a fullscreen video: bigger text, lower on the right side (owner, 4 Nov 2026; lane B)
 - Owner (screenshot, a video in fullscreen with a message "Alperen selam basılsın ya" in the very top right corner):
