@@ -140,10 +140,14 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     // Connection probe (HTTP fallback, `/connection`): does a WebSocket open on this network at all? Answers "ok" and
-    // waits for the client to close. `?bytes=N` on a plain request answers N bytes (diagnostics: large answers).
+    // waits for the client to close. `?bytes=N` on a plain request answers N bytes, at most 200 kB (diagnostics: large answers).
     if (url.pathname === '/api/probe') {
       if (request.headers.get('Upgrade') !== 'websocket') {
-        const bytes = Math.min(Math.max(Number(url.searchParams.get('bytes')) || 0, 0), 512_000);
+        // Security R4-3: the plain answer (at most 200 kB) counts against the info limit, per address (`probe:` key).
+        if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: `probe:${await ipKey(request, env)}` })).success) {
+          return Response.json({ error: 'busy' }, { status: 429, headers: { 'Cache-Control': 'no-store' } });
+        }
+        const bytes = Math.min(Math.max(Number(url.searchParams.get('bytes')) || 0, 0), 200_000);
         return new Response('x'.repeat(bytes), { headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain' } });
       }
       const guarded = await guardSocket(request, url, env);

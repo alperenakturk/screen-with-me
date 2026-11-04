@@ -7,7 +7,7 @@
 import './snack-bar.css';
 import {
   BADGES, BADGE_BONUS, DECOR, MILESTONES, buyDecor, placeOf, placeCost, type DecorId, type PlaceId, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
-  loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, standRate, starsFor, starFactor, tick,
+  RECEIPT_MIN_S, loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, standRate, starsFor, starFactor, tick,
   togetherFactor, unlocked, type CustomerMood, type Receipt, type SnackSave, type StandId,
 } from '@swm/shared/games/snack-bar';
 import { el } from '../dom.ts';
@@ -29,6 +29,7 @@ import how4 from './art/tutorial/snack-4-friends.svg?raw';
 import { howToPlay, restartButton } from './how-to-play.ts';
 import glowbeam from './art/snack-bar/glowbeam.svg?raw';
 import { takeFilmEnds } from './film-end.ts';
+import { RESTORE_EVENT, labTicks, registerSideLab } from './lab-tools.ts';
 import type { SoloRoom } from '@swm/shared/games/catalog';
 
 /** Snack Bar's own words (in its chunk, not the room page's): English first, Turkish second. */
@@ -610,9 +611,13 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   }
 
   // ---- The film's receipt (owner's pick 2 B): when a film ends, Glowbeam hands it over ----
+  /** The Test Lab's "the film's receipt now": this item counts as ended once. */
+  let labEnd: string | null = null;
   function pendingReceipt(): Receipt | null {
     const ctx = room();
     const ends = takeFilmEnds().map((e) => e.id);
+    if (labEnd) ends.push(labEnd);
+    labEnd = null;
     const item = ctx.item;
     if (item && item.duration > 0 && item.position >= item.duration - 10) ends.push(item.id);
     for (const id of ends) {
@@ -822,8 +827,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     }
     takeLock();
     const ctx = room();
-    tick(game, seconds, ctx);
-    customerTick(seconds, ctx);
+    // The Test Lab's "time ×10" runs the same tick more often (each one is still capped like a real second).
+    const times = labTicks();
+    for (let i = 0; i < times; i++) tick(game, seconds, ctx);
+    customerTick(seconds * times, ctx);
     if (ticks % 5 === 0) badges();
     showReceipt();
     if (++ticks % SAVE_EVERY === 0) persist();
@@ -846,10 +853,94 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   // A film that ended while the game was closed or minimized: its receipt waits here.
   showReceipt();
 
+  // ---- 🐞 Test Lab (card DL3): cheats on a sandbox copy; "Restore my real saves" puts the real save back ----
+  const onRestore = () => {
+    game = loadSnack(load(SNACK_KEY));
+    draw();
+  };
+  addEventListener(RESTORE_EVENT, onRestore);
+  const where = 'Snack Bar open';
+  const offLab = registerSideLab(
+    'snackBar',
+    'snackBar',
+    () => [
+      {
+        id: 'snackBar.coins',
+        title: 'Snack Bar: +10K coins',
+        help: 'Adds coins to the sandbox save (arg: how many).',
+        tab: 'games',
+        where,
+        run: (arg) => {
+          const n = Number(arg) > 0 ? Math.min(1e15, Number(arg)) : 10_000;
+          game.coins += n;
+          game.earned += n;
+          game.lifetime += n;
+          persist();
+          draw();
+          return formatCoins(game.coins);
+        },
+      },
+      {
+        id: 'snackBar.customer',
+        title: 'Snack Bar: a customer now',
+        help: 'A customer walks up at once (the film must play, or "pretend the film plays").',
+        tab: 'games',
+        where,
+        available: () => (guest ? 'a customer is already waiting' : room().playing || 'the film does not play'),
+        run: () => guestComes(room()),
+      },
+      {
+        id: 'snackBar.receipt',
+        title: "Snack Bar: the film's receipt now",
+        help: "Counts this film as watched and ended, so Glowbeam hands over its receipt.",
+        tab: 'games',
+        where,
+        run: () => {
+          const item = room().item?.id ?? 'lab-film';
+          const film = game.film?.item === item ? game.film : null;
+          game.film = { item, watched: Math.max(RECEIPT_MIN_S, film?.watched ?? 0), served: film?.served ?? 0, coins: film?.coins ?? 0 };
+          game.receipts = game.receipts.filter((r) => r !== item);
+          labEnd = item;
+          showReceipt();
+          return item;
+        },
+      },
+      {
+        id: 'snackBar.badges',
+        title: 'Snack Bar: every badge',
+        help: 'Earns all badges on the wall (each still adds its +1 %).',
+        tab: 'games',
+        where,
+        run: () => {
+          game.badges = BADGES.map((b) => b.id);
+          persist();
+          draw();
+          return `${game.badges.length} badges`;
+        },
+      },
+      {
+        id: 'snackBar.place',
+        title: 'Snack Bar: the next cinema place',
+        help: 'Moves to the next place (lobby, drive-in, rooftop, art house…) without the prestige cost.',
+        tab: 'games',
+        where,
+        run: () => {
+          game.cinemas += 1;
+          persist();
+          draw();
+          return placeOf(game);
+        },
+      },
+    ],
+    () => [['Snack Bar', `${formatCoins(game.coins)} coins · ${placeOf(game)} · ${game.badges.length} badges`]],
+  );
+
   return () => {
     how.destroy();
     if (stopped) return;
     stopped = true;
+    offLab();
+    removeEventListener(RESTORE_EVENT, onRestore);
     clearInterval(timer);
     clearTimeout(noteTimer);
     fit.disconnect();
