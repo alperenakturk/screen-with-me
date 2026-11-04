@@ -601,7 +601,7 @@ ${eyes(30.6, 4.7)}
 });
 
 const PARODY = ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl',
-  'scientist', 'sidekick', 'chemist', 'lawyer', 'dragonqueen', 'goth', 'sponge', 'starfish', 'squid', 'pinecap',
+  'scientist', 'sidekick', 'chemist', 'lawyer', 'dragonqueen', 'goth', 'pinecap',
   'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler', 'strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk',
   'waterfriend', 'earthgirl', 'notebookgenius', 'sweetsleuth', 'speedster', 'hunter'];
 const star = (x, y, r, c = '#fff3c0') => `<path d="M${x} ${y - r} L${x + r * 0.3} ${y - r * 0.3} L${x + r} ${y} L${x + r * 0.3} ${y + r * 0.3} L${x} ${y + r} L${x - r * 0.3} ${y + r * 0.3} L${x - r} ${y} L${x - r * 0.3} ${y - r * 0.3}Z" fill="${c}" opacity=".75"/>`;

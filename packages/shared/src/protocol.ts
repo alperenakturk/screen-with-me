@@ -85,9 +85,6 @@ export const DRAWN_AVATARS = {
   earthgirl: '🪨',
   airmonk: '🌀',
   waterfriend: '💧',
-  sponge: '🧽',
-  starfish: '⭐',
-  squid: '🦑',
   pinecap: '🌲',
   sweaterkid: '🧶',
   cartoonist: '✏️',
@@ -122,7 +119,7 @@ export const AVATAR_PAGES = [
   ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl'],
   [
     'scientist', 'sidekick', 'chemist', 'lawyer', 'dragonqueen', 'goth',
-    'sponge', 'starfish', 'squid', 'pinecap', 'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler',
+    'pinecap', 'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler',
   ],
   ['strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk', 'waterfriend', 'earthgirl', 'notebookgenius', 'sweetsleuth'],
   ['speedster', 'hunter'],
@@ -158,6 +155,17 @@ export function isDrawnAvatar(x: unknown): x is DrawnAvatar {
 export function avatarText(avatar: string | undefined | null): string {
   if (!avatar) return '';
   return isDrawnAvatar(avatar) ? DRAWN_AVATARS[avatar] : avatar;
+}
+
+/**
+ * Card R20 (owner, 4 Nov 2026): parody avatars removed because they read as one exact character (copyright and store
+ * risk). The server treats them as unknown (not in `AVATARS`); a saved one is replaced once by `replaceRemovedAvatar`.
+ */
+export const REMOVED_AVATARS: readonly string[] = ['sponge', 'starfish', 'squid'];
+
+/** A removed avatar → a random themed one (the 0.9.57 rule); anything else → null (keep it). */
+export function replaceRemovedAvatar(value: unknown, pick: () => Avatar = randomAvatar): Avatar | null {
+  return typeof value === 'string' && REMOVED_AVATARS.includes(value) ? pick() : null;
 }
 
 /** Yeni gelen için rastgele: temalı karakterlerden. */

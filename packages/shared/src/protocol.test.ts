@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -119,6 +119,20 @@ describe('parseClientMessage', () => {
     expect(avatarText('wizard')).toBe('🧙');
     expect(avatarText('🦊')).toBe('🦊');
     expect(avatarText(undefined)).toBe('');
+  });
+
+  it('R20: removed avatars are unknown and a saved one is replaced once with a themed one', () => {
+    for (const id of REMOVED_AVATARS) {
+      expect(isAvatar(id)).toBe(false);
+      expect(isDrawnAvatar(id)).toBe(false);
+      expect((parseClientMessage(JSON.stringify({ t: 'hello', v: PROTOCOL_VERSION, name: 'Sam', avatar: id })) as { avatar?: string } | null)?.avatar).toBeUndefined();
+      const swap = replaceRemovedAvatar(id);
+      expect(swap && (AVATAR_PAGES[0] as readonly string[]).includes(swap)).toBe(true);
+    }
+    // Anything else stays as it is; a fixed pick is used when given.
+    expect(replaceRemovedAvatar('wizard')).toBeNull();
+    expect(replaceRemovedAvatar(undefined)).toBeNull();
+    expect(replaceRemovedAvatar('squid', () => 'elf')).toBe('elf');
   });
 
   it('puts every drawn avatar on exactly one page, and every tab page exists', () => {

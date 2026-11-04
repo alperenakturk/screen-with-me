@@ -433,6 +433,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.30 (three parody avatars removed, card R20):**
+- [ ] In a room, open the avatar picker → Parody → Series: no sponge, starfish or squid any more. If you had one of
+  them saved, you now have a themed avatar instead (once; your other rooms too).
+
 **0.9.97.28 (home art bigger, themed Glowbeam, 🎨 back, card 15d):**
 - [ ] On the home page (computer + phone): the laptop, tablet and phone look bigger; 🎨 is at the top right and opens
   the themes; pick another theme and Glowbeam changes its hat / costume. On Help, Privacy, Thanks and the extension
