@@ -22,6 +22,7 @@ import {
   type LabTab,
 } from '../debug-lab.ts';
 import { createFriends } from './lab-friends.ts';
+import { createVideoLab } from './lab-video.ts';
 import './test-lab.css';
 
 const TEXT = {
@@ -433,6 +434,9 @@ export function mountDebugPanel(): void {
     commands: friends.commands,
     status: () => (friends.count() ? [['Fake friends', String(friends.count())]] : []),
   }));
+  // 🎬 Video & network (DL4): accidents on this tab's own connection and player.
+  const video = createVideoLab();
+  const unregisterVideo = debugHooks.register('video', () => ({ commands: video.commands, status: video.status }));
 
   // ---- head, tabs, body, foot ----
   const closeButton = el('button', { type: 'button', class: 'icon-btn debug-close', 'aria-label': tx.close }, '✕');
@@ -818,6 +822,8 @@ export function mountDebugPanel(): void {
     friends.close();
     offFriends();
     unregisterFriends();
+    video.close();
+    unregisterVideo();
     clearInterval(timer);
     clearInterval(sampler);
     sampler = 0;
@@ -828,9 +834,11 @@ export function mountDebugPanel(): void {
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('fullscreenchange', onFullscreen);
     document.documentElement.classList.remove('lab-open');
+    // The harness / console handle exists only while the lab is on.
+    delete (window as unknown as { __swmLab?: unknown }).__swmLab;
     debugOff();
   }
   offButton.addEventListener('click', turnOff);
   // For the lab's harness (and the owner's console): the same safe paths as the buttons.
-  (window as unknown as { __swmLab?: unknown }).__swmLab = { run: (id: string, arg?: string) => { const c = allCommands().find((x) => x.id === id); return c ? runCommand(c, arg) : Promise.reject(new Error(`no command ${id}`)); }, log: () => log.slice(), bugText: () => bugText(tx) };
+  (window as unknown as { __swmLab?: unknown }).__swmLab = { run: (id: string, arg?: string) => { const c = allCommands().find((x) => x.id === id); return c ? runCommand(c, arg) : Promise.reject(new Error(`no command ${id}`)); }, log: () => log.slice(), bugText: () => bugText(tx), status: () => hookStatus(), sync: () => { const r = debugRoom(); return r ? { drift: r.drift, jumps: r.jumps } : null; } };
 }

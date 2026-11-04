@@ -18,6 +18,29 @@ export interface DebugRoom {
   kind: string | null;
   /** The room's 👑 Make host message (the lab's fake friends, DL2); the server refuses anyone but the host. */
   makeHost?: (id: string) => void;
+  /** 🎬 Video & network (DL4): this tab's own connection and player only (never the server). */
+  lab?: RoomLab;
+}
+
+/** What the lab's 🎬 tab may do to this tab (card DL4): accidents on my side only, every one of them undoable. */
+export interface RoomLab {
+  /** My connection drops and stays down `ms` (then the room's normal reconnect). */
+  drop(ms: number): void;
+  /** Reconnect now with my member id, the way the room comes back after a deploy. */
+  restart(): void;
+  /** Every room message in and out waits `ms` (0 = off). */
+  latency(ms: number): void;
+  latencyMs(): number;
+  /** New connections over the HTTP fallback (true) or the normal way (false); reconnects now. */
+  forceHttp(on: boolean): void;
+  forcedHttp(): boolean;
+  transport(): string | null;
+  /** My video `seconds` off the room (the drift correction must bring it back); false without a video. */
+  drift(seconds: number): boolean;
+  /** My video counts as stuck for `ms` (the room waits for me); false without a video. */
+  stall(ms: number): boolean;
+  /** Adds a link to the queue like the link box does. */
+  addLink(url: string): void;
 }
 
 let roomSource: (() => DebugRoom) | null = null;

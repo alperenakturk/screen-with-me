@@ -86,7 +86,7 @@ import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
 import { playSound, setFilmPlaying } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
-import { debugHooks, debugTap, setDebugRoom } from './debug-lab.ts';
+import { debugHooks, debugTap, setDebugRoom, type RoomLab } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
@@ -1144,7 +1144,28 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   // Hidden test panel (card 12): its live numbers; never names or ids.
-  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }) }));
+  // 🎬 Video & network (card DL4): accidents on this tab's own connection and player, for the lab only.
+  const roomLab: RoomLab = {
+    drop: (ms) => connection.labDrop(ms),
+    restart: () => connection.reconnect(),
+    latency: (ms) => connection.labLatency(ms),
+    latencyMs: () => connection.labLatencyMs,
+    forceHttp: (on) => connection.labForce(on ? 'http' : null),
+    forcedHttp: () => connection.labForced === 'http',
+    transport: () => connection.transport,
+    drift: (seconds) => engine.labDrift(seconds),
+    stall: (ms) => {
+      if (!roomState?.item) return false;
+      engine.labStall(ms);
+      return true;
+    },
+    addLink: (url) => {
+      const media = parseMediaInput(url);
+      if (!media) throw new Error(`not a link: ${url}`);
+      addMedia(media, 'enqueue');
+    },
+  };
+  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }), lab: roomLab }));
   // 🐞 Test Lab (card DL): the room's own status lines (the factory only runs while the lab is open).
   debugHooks.register('room', () => ({
     status: () => [
