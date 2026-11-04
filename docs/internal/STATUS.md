@@ -438,6 +438,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   a friend watches it; a TikTok / Vimeo link and the sync test still play; sounds still play; ? opens the shortcuts card.
   On the film page voice still works.
 
+**0.9.97.50 (security R4-9 + R4-10):**
+- [ ] Nothing to see: search YouTube twice for the same words; both work (the second comes from the server's cache
+  when the address allows it). The hidden TV pairing stays off on the live site.
+
 **0.9.97.49 (security review 4: R4-2, R4-3, R4-5):**
 - [ ] Nothing to see in the room: rooms open and join as before; `/connection` still runs all its rows ("200 kB answer"
   included).

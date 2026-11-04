@@ -48,6 +48,7 @@ import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } f
 import { resolveTitle } from './titles.ts';
 import { recordUsage } from './usage.ts';
 import { allowUpload } from './upload-gate.ts';
+import { tvOn } from './tv-switch.ts';
 
 const MAX_MEMBERS = 50;
 /** Security L5: a connection that never says `hello` is closed after this long, and at most this many may wait. */
@@ -1284,7 +1285,8 @@ export class Room extends DurableObject<Env> {
     else delete attachment.client;
     if (hello.tv) {
       // A paired TV joins as its person's second device: their browser id (never sent to anyone), name and avatar.
-      const token = this.tvTokens[hello.tv];
+      // R4-10: only while the TV is switched on (`TV=on`).
+      const token = tvOn(this.env) ? this.tvTokens[hello.tv] : undefined;
       if (!token || Date.now() - token.at > TV_TOKEN_TTL_MS) {
         this.sendTo(ws, { t: 'error', code: 'tv_token' });
         ws.close(4006, 'tv_token');
@@ -1421,7 +1423,7 @@ export class Room extends DurableObject<Env> {
    * then joins this room with it. Only a person with a browser id can pair (the TV becomes "them").
    */
   private async linkTv(ws: WebSocket, attachment: Attachment, me: Joined, code: string): Promise<void> {
-    if (attachment.tv || !attachment.cid) return this.sendTo(ws, { t: 'error', code: 'tv_code' });
+    if (attachment.tv || !attachment.cid || !tvOn(this.env)) return this.sendTo(ws, { t: 'error', code: 'tv_code' });
     const key = keyOf(attachment);
     if (!this.tvLinkLimit.allow(key)) return this.sendTo(ws, { t: 'error', code: 'rate_limited' });
     const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
