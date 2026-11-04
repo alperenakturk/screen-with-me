@@ -38,6 +38,101 @@ Card format:
   Themed page; two voice rings), sweep screenshots of the home page.
 
 
+## Owner's test round 2 (4 Nov 2026, 0.9.97.22): results and new cards
+Passed (owner, alone): Enter opens the message box at once, no strip in YouTube fullscreen, T in fullscreen opens
+cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
+reports if a drop happens again over time.
+
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Design: R20. Planner's decision on "same browser, same name" below (R19).
+
+### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
+- Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
+  need to go there; they can come over the video the old way. YouTube won't say anything, and if it does we'll change
+  it. Never open a stupid menu on the side like this."
+- What: in YouTube fullscreen on a computer the `#fs-side` column (cards 2a / 6d / R3) never opens. Messages come
+  down over the video from the top right, left of the rail, like every other player (`ui/toasts.ts`); notes (waiting,
+  countdown, game invite) sit on the video as for video files; cameras float over the video in their one window as in
+  other fullscreens. This overrides the owner's earlier pick D (card 2a) for fullscreen only; Shorts (YouTube's own
+  bar, nothing of ours on the player) and the windowed room view stay as they are.
+- Note for the YouTube API audit (ROADMAP §4): our toasts over the player in fullscreen are the owner's call; if
+  Google's review objects, we change it then.
+- Done when: writing / receiving a message, a note or a camera in YouTube fullscreen never narrows the player; the
+  messages show over the video and never cover YouTube's own bottom bar.
+- Tests: `yt-room` / `yt-fs-side` harness updated (the player keeps its full width with a message, a note and a camera;
+  the toast sits inside the video, above its bottom bar).
+- Done: #251 (0.9.97.26), Developer B: no side column in YouTube fullscreen; messages over the video left of the rail.
+
+### R16. Fix: a private message to someone in the same browser says "they aren't in the room" (owner's bug; lane A)
+- Owner: in the same Chrome he joined as "alperen" and "alperen 2" (two people, as designed: a different name is a
+  different person), then sent a private message to the other one and got `private_gone`.
+- Cause (Planner's reading): `sendPrivate` compares `keyOf` (the browser key), so another person in the same browser
+  counts as "myself". It must compare the person (`Member.pk` / `personOf`: browser + name), and deliver to that
+  person's connections only, never to the other names of the same browser.
+- Done when: a DM between two names of one browser reaches the other name only; a DM to my own name is still refused.
+- Tests: e2e `private.mjs` gets the same-browser case (fails on 0.9.97.22).
+- Done: #249 (0.9.97.24), Developer A: the person key is browser + name.
+
+### R17. Fix: two tabs in the same room stop seeing each other after a while (owner's bug, "a big problem"; lane A)
+- Owner: two tabs (A and B) of the same Chrome in one room (different names); after a while neither shows the other.
+- Look at: same-browser connections replacing each other (`hello.prev` / `swm:prev:<room>` handover, `memberIds`
+  giving an id back, `4005 replaced` for the same `cid`), ghost pruning (`pruneStale`, background-tab timers), the
+  people list's "one person's two tabs count once" (`personOf` with different names), and the HTTP fallback.
+- Done when: the root cause is found and fixed; two tabs with different names stay two people for 30 min including a
+  backgrounded tab, a reload of one tab and a deploy (object restart).
+- Tests: an e2e that reproduces it (fails before the fix), plus a long-running harness check with one hidden tab.
+- Done: #249 (0.9.97.24), Developer A: each tab keeps its own name in sessionStorage; the 30-minute hidden-tab run is the owner's hand test.
+
+### R18. Fix: nothing of the room before I'm let in (owner's bug + rule: "the order of things is very important"; lane A)
+- Owner: with "Ask before letting people in" on, he joined from another browser; while he waited at the door the
+  first-time tips (and other first-time things) appeared on the locked screen. They must come only after he is in.
+- What: everything that belongs to being in the room waits for the first `welcome`: first-time tips
+  (`room.ts` calls `showFirstTips()` at start, before any welcome), the invite window, the intro (R7 already waits),
+  sounds, toasts, the extension update bubble, the language ask, the "continue" record (`lastRoom`) and anything
+  else that runs at start. The door screen shows only the door. The same for a refused / kicked / full room.
+- Done when: a knocker sees nothing but the door card until let in; after "Let in" the normal first-time path runs in
+  its usual order (intro → tips; invite window only when alone).
+- Tests: knock harness checks that no tip, invite window, toast or sound fires while waiting, and the tips come after.
+- Done: #249 (0.9.97.24), Developer A: tips, `lastRoom` and the extension bubble wait for the first welcome.
+
+### BH5. Bug hunt: the order of things on every path (owner's request; lane A, after R18)
+- Owner: "pay attention to this in general and do a detailed logic-order test to find new bugs like this."
+- What: list every path into and out of a room (first visit, invite link, `#back` from the film page, reload, a new
+  tab, the door (wait / let in / refused), kicked, banned, full room, wrong protocol, connection lost / HTTP fallback,
+  a TV, the film page shell, a phone, Shorts view, a game open on arrival, film time set) and, for each, what may show
+  and in which order (join card, intro, tips, invite window, toasts, sounds, dialogs, notes, voice prompts, the
+  extension cards). Write the table to `docs/internal/order-of-things.md`, then check each row in a harness and fix
+  what comes too early, twice or never. Small PRs, a failing test first for each fix.
+- Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
+- Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### R20. Redraw two sea-cartoon parody avatars (owner, 4 Nov 2026; Design, then lane A)
+- Owner (screenshot of the series parody page), first "remove these completely, they aren't nice", then changed his
+  mind: **keep them; redraw the sponge** ("change only the sponge, the others are okay") **and the squid** ("change it
+  too, it's very creepy now"). The pink starfish stays as it is.
+- What: Design redraws `sponge` and `squid` in `docs/internal/design/avatars-2/full/` (same ids, same style rules as
+  R14: our flat style, a hint of the character, friendly faces, no logos or exact costumes; the squid must not look
+  creepy: softer eyes, a kinder mouth, warmer colour). Then lane A runs `scripts/avatars.mjs` so the site and the
+  extension get the new files (no id change, nothing to migrate).
+- Done when: the owner OKs the two new faces on Design's preview; they are live in the picker.
+- Tests: the avatar sweep screenshot of the series page.
+
+### BH6. Small bug batch: saved-room "yours" mark + the untested order paths (lane A, after BH5)
+- From BH4 (STATUS idea 11): after "Make host" (or after acting as host while the host was away) the old host's saved-
+  room row stays marked as theirs and its ✕ shows the "removing also unsaves" warning; clear `mine` when `members`
+  names another host, without flicker before the members arrive.
+- From BH5 (`order-of-things.md`): the two paths without a test: the `version` error (an old client sees only the
+  "refresh the page" screen: no tips, intro or invite) and the TV guards (a harness check if cheap, else a note why).
+- Done when: each fix has a test that failed first; the order doc lists a test for every path.
+
+### R19. Same browser, same name and avatar = one person (Planner's decision, owner's question)
+- Owner: in the same Chrome he opened the room twice with the same name and avatar and saw one person.
+- Decision (Planner): this is on purpose and stays. A browser with the same name is the same person: their room tab
+  and their film-page tab, or two tabs they opened by mistake, must count once (people count, host rights, voice, the
+  person menu). R11 fixed the real bug: two *different browsers* with the same name and avatar are two people. To test
+  as two people alone, use another browser, a private window, or a different name in the same browser (R16 / R17 make
+  that case work fully).
+- No code. If the owner disagrees, this becomes a card.
+
 ## Owner's test round 1 (3 Nov 2026, 0.9.97.5): results and new cards
 
 The owner tested the solo list (home, join, empty room, YouTube, film page, popup). Passed: the home page, the continue
