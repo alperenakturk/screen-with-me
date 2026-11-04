@@ -618,6 +618,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.35 Classics: open 🎮 → Together: there is one "Classics" card (no separate XOX / Four in a Row). Open it: a
+  shelf of boxes (XOX, Four in a Row, Dama; chess and backgammon say "soon"). Pick Dama alone: "Play against Glowbeam"
+  offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
+  stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
+  shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
 - [ ] 0.9.97.32 Tip jar and cuttings (side games 2, picks 5 + 8), with a friend: both open Snack Bar while a video plays
   and serve: a 🫙 pill shows how full the room's jar is; when it fills, both get a note and the pill says +10 % until the
   film ends. Then open Window Garden with a plant in bloom: "🎁 Give a cutting" → your friend's name. Your friend gets a
