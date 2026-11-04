@@ -20,6 +20,24 @@ Card format:
 
 ## Ready
 
+### 15c. Home art: a computer, a tablet and a phone + real avatars (owner, 4 Nov 2026; Design, then lane A)
+- Owner (on a screenshot of today's home art): "this screen's design should have the phone and the tablet too, as we
+  said", and the faces row under the screen (the three plain colour circles + "3 watching · 2 in voice") should be
+  **three random avatars from the Themed avatar page**: "I don't like it with plain colours".
+- What: Glowbeam's light falls on **three devices** showing the same moment (a computer / laptop screen, a tablet, a
+  phone; one shared picture and progress bar, the "In sync · 30 ms" pill and the chat bubble kept); the faces row uses
+  three different drawn avatars picked at random from the Themed page (`AVATAR_PAGES`, `/avatars/<id>.svg`) on each
+  page load, two with the green "in voice" ring, the "3 watching · 2 in voice" line kept. Same theme rules as today
+  (scene themes, reduced motion = still), `aria-hidden` art.
+- Who: the Design session draws the devices into the art (one direction, no option page: the owner already said what he
+  wants) and writes build notes in `docs/internal/design/home-15b.md` (a "15c" section); then lane A builds it.
+- Done when: the art shows all three devices at every home size (1920×1080, 1366×768, sideways tablet 1180×820,
+  upright tablet 820×1180, phone 390×844) without crowding the text or the buttons; three different themed avatars,
+  a new pick on reload; EN + TR; phone-speed budget green.
+- Tests: home harness (devices present and inside the art box at the five sizes; three distinct avatar ids from the
+  Themed page; two voice rings), sweep screenshots of the home page.
+
+
 ## Owner's test round 1 (3 Nov 2026, 0.9.97.5): results and new cards
 
 The owner tested the solo list (home, join, empty room, YouTube, film page, popup). Passed: the home page, the continue
