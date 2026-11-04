@@ -4,8 +4,9 @@ Owner's rule (2 Nov 2026): one board for every session. The **Planner** writes a
 the top **Ready** card, moves it to **In progress**, and when it is live adds `Done: <PR link>` and moves it to
 **Done**. **Security** and **Research** add their suggestions under **Proposed**; the Planner and the owner decide
 whether they become Ready. Roles and rules: `CLAUDE.md` "Sessions as an office". The order follows `ROADMAP.md`
-"Focus: now / next / frozen". The owner's tick view is the hidden test board page on our site (its data file
-`board.data.js`, kept by the Planner); the old checklist Artifact is retired.
+"Focus: now / next / frozen". The owner's tick view is the Planner's test board Artifact https://claude.ai/artifact/NWZG7GLH4JzAnZt1rNgrJo
+(owner, 4 Nov 2026: the hidden page on our site needed a deploy for every update, so it is removed again; the
+Artifact updates at once).
 
 **How the owner is asked (owner, 4 Nov 2026):** no more option pages or other web pages for him. The only page he uses
 is the test board (the Planner keeps it current with what he tested and what is next). Every preference or design
@@ -107,7 +108,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B next: R21 (fullscreen messages bigger and lower). Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 (name on the film page). Lane A: 15e ✅ → R22 + R23 (one PR). Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -168,6 +169,42 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### R24. Remove the hidden test board page from the site (owner, 4 Nov 2026; lane B)
+- Owner: "testing on the site turned out silly: every board update waits for a deploy; delete that page, the Planner
+  goes back to the Artifact".
+- What: delete `apps/web/public/o-…/` (the whole folder), its `_headers` lines, the `owner-board` harness and any CI /
+  CLAUDE.md mention (the 0.9.97.29 note becomes "removed in …"). Nothing else changes.
+- Done when: the address answers 404 (or the home page fallback) after the deploy; CI green.
+- Tests: CI; a quick fetch of the old address after the deploy.
+- Owner's pick: none needed.
+
+### R22. Remove the "Opera Night" theme (owner, 4 Nov 2026; lane A)
+- Owner (in A's chat): remove the Opera Night theme completely.
+- What: the theme leaves every picker, the theme art and the code; a saved Opera Night becomes Gece once, like a
+  removed avatar.
+- Done when: no Opera Night anywhere (pickers, previews, files); a browser that had it saved opens in Gece.
+- Tests: theme-previews harness, a unit / harness check for the saved-theme swap.
+- Owner's pick: none needed.
+
+### R23. Stream controls fit beside the faces in the Together card (owner, 4 Nov 2026; lane A)
+- Owner (in A's chat): while a stream is on, the Together card's stream controls (stop, quality…) push the chat far
+  down; put them into the empty top-right area of the card next to the faces. Before a stream starts nothing changes.
+- Done when: with a stream on at 1366×768 and 1920×1080 the chat panel keeps (almost) the same height as without one;
+  the controls are all reachable; phones keep their own layout.
+- Tests: `voice/live.mjs` (layout check), room harness screenshot.
+- Owner's pick: none needed.
+
+### BH7. A name changed on the main site does not reach the film page (lane B, after R21)
+- Found by B while building R21: the embed harness check "a name changed on the main site also applies on the film
+  page" fails on main too (the film page still shows the old name: "Sam" instead of "Riley"). Not related to R21.
+- What: find why the overlay site on the film page does not pick up the new name (suspects: the shared settings sync
+  `site:name`, and the per-room / per-tab `me:<room>` copies since R17 being read before the synced default) and fix
+  it so that a rename in the room on the main site shows on the film page for everyone, for that room only (rooms stay
+  independent, 0.9.88).
+- Done when: the embed harness check passes again; same-browser and tab-name harnesses stay green.
+- Tests: embed harness (the existing check), `same-browser`.
+- Owner's pick: none needed.
 
 ### R21. Chat messages over a fullscreen video: bigger text, lower on the right side (owner, 4 Nov 2026; lane B)
 - Owner (screenshot, a video in fullscreen with a message "Alperen selam basılsın ya" in the very top right corner):
