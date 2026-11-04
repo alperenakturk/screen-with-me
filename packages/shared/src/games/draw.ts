@@ -4,6 +4,7 @@
 // A few letters of the word open as time goes by. Sunucu (ayrı Durable Object `Draw`) her şeyi doğrular; kelime sadece
 // çizene gider (tur bitince herkese). Bu dosya mesajlar, doğrulama ve saf kurallar (tahmin eşleştirme, ipucu, puan).
 
+import { DRAW_CATEGORIES, type DrawCategory } from './draw-words.ts';
 import { CLIENT_ID, cleanName, cleanText, isAvatar, type Avatar } from '../protocol.ts';
 
 /** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). 2: host settings, game end, new points. */
@@ -11,6 +12,8 @@ export const DRAW_PROTOCOL_VERSION = 3;
 /** How many times everyone draws (host's choice). */
 export const DRAW_ROUNDS = [1, 2, 3] as const;
 export type DrawRounds = (typeof DRAW_ROUNDS)[number];
+/** A word category, or `mix` for all of them (P10). */
+export type DrawTopic = 'mix' | DrawCategory;
 export const DRAW_MAX_PLAYERS = 8;
 /** Çizim süresi, kelime seçme süresi, tur sonu gösterimi. */
 export const DRAW_ROUND_MS = 80_000;
@@ -63,7 +66,7 @@ export type DrawClientMessage =
   /** Oyunu başlat (lobide, en az 2 kişi). */
   | { t: 'start' }
   /** Host only, in the lobby or on the podium. */
-  | { t: 'settings'; lang?: DrawLang; rounds?: DrawRounds }
+  | { t: 'settings'; lang?: DrawLang; rounds?: DrawRounds; topic?: DrawTopic }
   /** Çizen kelimesini seçer (0–2). */
   | { t: 'choose'; index: number }
   | { t: 'stroke'; s: Stroke }
@@ -92,6 +95,8 @@ export type DrawServerMessage =
       round: number;
       lang: DrawLang;
       rounds: DrawRounds;
+      /** The word category (P10; `mix`: all of them). */
+      topic?: DrawTopic;
       /** Who sets the language and rounds (the first player still here). */
       host: string | null;
     }
@@ -151,6 +156,7 @@ export function parseDrawMessage(raw: string): DrawClientMessage | null {
       const out: Extract<DrawClientMessage, { t: 'settings' }> = { t: 'settings' };
       if (m.lang === 'tr' || m.lang === 'en') out.lang = m.lang;
       if ((DRAW_ROUNDS as readonly unknown[]).includes(m.rounds)) out.rounds = m.rounds as DrawRounds;
+      if (m.topic === 'mix' || (DRAW_CATEGORIES as readonly unknown[]).includes(m.topic)) out.topic = m.topic as DrawTopic;
       return Object.keys(out).length > 1 ? out : null;
     }
     case 'choose':

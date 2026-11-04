@@ -17,10 +17,11 @@ import {
   type DrawPhase,
   type DrawPlayer,
   type DrawRounds,
+  type DrawTopic,
   type DrawServerMessage,
   type Stroke,
 } from '@swm/shared/games/draw';
-import { DRAW_WORDS } from '@swm/shared/games/draw-words';
+import { DRAW_WORDS, DRAW_WORD_SETS } from '@swm/shared/games/draw-words';
 import { drawGuessPoints, drawerPoints } from '@swm/shared/games/scoring';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
@@ -67,6 +68,8 @@ interface Saved {
   revealAt: number[];
   revealed: number;
   recent: string[];
+  /** The word category (P10). */
+  topic?: DrawTopic;
   emptySince: number | null;
   /** How many times everyone draws; then the podium. */
   rounds: DrawRounds;
@@ -285,6 +288,7 @@ export class Draw extends DurableObject<Env> {
         if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         if (message.lang) d.lang = message.lang;
         if (message.rounds) d.rounds = message.rounds;
+        if (message.topic) d.topic = message.topic;
         await this.save();
         this.broadcastState();
         return;
@@ -345,7 +349,7 @@ export class Draw extends DurableObject<Env> {
         return;
       case 'reset':
         if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
-        this.data = { ...fresh(), lang: d.lang, rounds: d.rounds, order: d.order, people: d.people, recent: d.recent };
+        this.data = { ...fresh(), lang: d.lang, rounds: d.rounds, topic: d.topic, order: d.order, people: d.people, recent: d.recent };
         for (const person of Object.values(this.data.people)) person.score = 0;
         this.strokes = [];
         this.undone = [];
@@ -503,8 +507,9 @@ export class Draw extends DurableObject<Env> {
 
   /** Son kullanılanlar dışından rastgele kelimeler. */
   private pickWords(count: number): string[] {
-    const list = DRAW_WORDS[this.data.lang].filter((w) => !this.data.recent.includes(w));
-    const pool = list.length >= count ? [...list] : [...DRAW_WORDS[this.data.lang]];
+    const all = !this.data.topic || this.data.topic === 'mix' ? DRAW_WORDS[this.data.lang] : DRAW_WORD_SETS[this.data.lang][this.data.topic];
+    const list = all.filter((w) => !this.data.recent.includes(w));
+    const pool = list.length >= count ? [...list] : [...all];
     const out: string[] = [];
     while (out.length < count && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]!);
     return out;
@@ -580,6 +585,7 @@ export class Draw extends DurableObject<Env> {
       round: d.round,
       lang: d.lang,
       rounds: d.rounds,
+      topic: d.topic ?? 'mix',
       host: (() => {
         const hk = this.hostKey(except);
         return hk ? d.people[hk]!.pid : null;

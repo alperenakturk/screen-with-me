@@ -872,7 +872,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   **Draw & Guess (0.9.72):** separate object `Draw` (`apps/server/src/draw.ts`, binding `DRAWS`, migration `v3`,
   `/api/draw/:id/ws`), protocol and pure rules in `packages/shared/src/games/draw.ts` (guess matching: lower case +
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer
-  gets 25 per correct guesser), words `draw-words.ts` (TR/EN, room language from the first arrival). 2–8 players
+  gets 25 per correct guesser), words `draw-words.ts` (P10: 12 categories × 45 words a language, `DRAW_CATEGORIES` / `DRAW_WORD_SETS`, the host picks one or all (`settings.topic`); TR/EN, room language from the first arrival; tools: pen, 🧽 eraser, fill, undo, redo `{t:'redo'}` (the server keeps the last 20 undone actions until a new stroke; Ctrl+Y)). 2–8 players
   (persistent `cid`), round: lobby → choose (15 s, words only to the drawer) → draw (80 s) → reveal (6 s) → next.
   Timers via storage alarm, and since 0.9.93.2 any message (the page pings every 15 s, and once the time is up) moves
   an overdue phase on (`overdue` / `advance`; Quiz the same): live alarms ran > 25 s late right after a deploy. The drawing only in memory (1000×750 grid, 50 ms chunks, latecomers get `strokes`).

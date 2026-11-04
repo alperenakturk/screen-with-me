@@ -30,6 +30,8 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { langChoices, podium, settingsPanel } from './ui.ts';
+import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
+import type { DrawTopic } from '@swm/shared/games/draw';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
@@ -360,6 +362,13 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
         [
           { label: t('games.lang'), value: s.lang, choices: langChoices, pick: (lang) => send({ t: 'settings', lang: lang as 'tr' | 'en' }) },
           { label: t('draw.rounds'), value: s.rounds, choices: DRAW_ROUNDS.map((n) => ({ value: n, label: t('draw.roundsN', { n }) })), pick: (rounds) => send({ t: 'settings', rounds: rounds as 1 | 2 | 3 }) },
+          {
+            label: t('draw.topic'),
+            value: s.topic ?? 'mix',
+            select: true,
+            choices: (['mix', ...DRAW_CATEGORIES] as const).map((topic) => ({ value: topic, label: t(`draw.cat.${topic}`) })),
+            pick: (topic) => send({ t: 'settings', topic: topic as DrawTopic }),
+          },
         ],
         s.host === me || !host ? null : host.name,
       );
