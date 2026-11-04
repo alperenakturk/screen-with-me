@@ -25,7 +25,7 @@ const check = (ok, label, detail) => {
   if (!ok) failed++;
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail === undefined ? '' : ` → ${JSON.stringify(detail)}`}`);
 };
-const ours = () => location.port === '8787' || location.hostname.includes('swm-server') || location.port === '5173';
+const ours = () => location.port === '8787' || location.port === '8789' || location.hostname.includes('swm-server') || location.port === '5173';
 
 (async () => {
   const browser = await chromium.launch();
@@ -160,6 +160,36 @@ const ours = () => location.port === '8787' || location.hostname.includes('swm-s
         check(spread <= 24 && lay.centres <= 12, `${where}: equal margins left, between and right (± 24 px), one centre line`, { margins: lay.margins, centres: lay.centres });
         // 15d's art was 588 px wide at 1366 and 1920.
         check(lay.artW >= 588 * 1.15, `${where}: the art is ≥ 15 % bigger than in 15d`, lay.artW);
+      }
+      // Card 15f: no empty band left of Glowbeam (the view box starts at its drawing), and every screen's picture fills
+      // the screen up to its bezel: just inside each screen's corners (the sheen has the screen's shape) the picture shows,
+      // not the dark device body (0.9.97.33's <use> clips sat 12 units in).
+      const fill = await page.evaluate(() => {
+        const svg = document.querySelector('.hm-scene');
+        const glow = svg.querySelector('.hm-glow');
+        const drawn = Math.min(...[...glow.querySelectorAll('path, circle, ellipse, rect')].map((e) => e.getBoundingClientRect().left));
+        return { band: Math.round(drawn - svg.getBoundingClientRect().left), screens: [...svg.querySelectorAll('.hm-sheen')].map((e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; }) };
+      });
+      check(fill.band <= 4, `${where}: no empty band left of Glowbeam`, fill.band);
+      if (name !== '390') {
+        const hide = await page.addStyleTag({ content: '.hm-sheen, .hm-pill-art, .hm-prog { visibility: hidden !important }' });
+        const png = (await page.screenshot()).toString('base64');
+        const corners = await page.evaluate(async ({ data, screens }) => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${data}`;
+          await img.decode();
+          const c = document.createElement('canvas');
+          c.width = img.width;
+          c.height = img.height;
+          const g = c.getContext('2d');
+          g.drawImage(img, 0, 0);
+          const k = img.width / innerWidth;
+          const red = (x, y) => g.getImageData(Math.round(x * k), Math.round(y * k), 1, 1).data[0];
+          // 4 px in from the top-left and top-right corners, past the rounded corner.
+          return screens.map(([l, t, r]) => Math.min(red(l + 5, t + 4), red(r - 5, t + 4), red(l + 4, t + 12)));
+        }, { data: png, screens: fill.screens });
+        check(corners.every((v) => v > 170), `${where}: each screen's picture fills it up to the bezel (no dark band)`, corners);
+        await hide.evaluate((e) => e.remove());
       }
       if (lang === 'en' && wide && name !== '1180') {
         // No hard edge: only the light on a plain background, then no step between neighbouring pixels and nothing left

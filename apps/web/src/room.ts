@@ -1132,7 +1132,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
   });
   // Hidden test panel (card 12): its live numbers; never names or ids.
-  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null }));
+  setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }) }));
   // 🐞 Test Lab (card DL): the room's own status lines (the factory only runs while the lab is open).
   debugHooks.register('room', () => ({
     status: () => [
@@ -1140,21 +1140,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       ['Playback', roomState?.item ? `${roomState.paused ? 'paused' : 'playing'} at ${(roomState.position).toFixed(1)} s ×${roomState.rate}` : 'nothing'],
       ['Members', String(members.length)],
       ['Host', myId && hostId === myId ? 'me' : hostId ? 'someone else' : '—'],
-    ],
-    commands: [
-      {
-        id: 'room.makeHost',
-        title: 'Room: make someone the host',
-        help: 'Hands the host role to the member id given (the same path as 👑 Make host). The fake friends use it.',
-        tab: 'friends',
-        where: 'host only',
-        available: () => (myId !== null && hostId === myId) || 'only the host can hand the role on',
-        run: (id) => {
-          if (!id || !members.some((m) => m.id === id)) throw new Error('no such member in the room');
-          send({ t: 'make-host', id });
-          return 'asked';
-        },
-      },
     ],
   }));
   /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */

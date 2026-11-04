@@ -136,6 +136,8 @@ const until = async (fn, ms = 8000) => {
 
   // ---- A reload sends them away too ----
   await page.goto(`${SITE}/?debug=1`);
+  // The site's code may run after the load event: wait until the switch is on before leaving the page.
+  await page.waitForSelector('.debug-fab');
   await page.goto(`${SITE}/r/${room}#back`);
   await page.waitForSelector('.room');
   await page.waitForSelector('.debug-fab');

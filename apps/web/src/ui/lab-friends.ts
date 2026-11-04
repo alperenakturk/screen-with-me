@@ -8,7 +8,7 @@ import { el } from '../dom.ts';
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { AVATAR_PAGES, REACTIONS, type Avatar, type Member, type PlaybackState, type ServerMessage } from '@swm/shared/protocol';
-import type { LabCommand } from '../debug-lab.ts';
+import { debugRoom, type LabCommand } from '../debug-lab.ts';
 
 export const MAX_FRIENDS = 5;
 const NAMES = ['Ada', 'Ben', 'Cleo', 'Dev', 'Eli', 'Fay', 'Gus'];
@@ -256,7 +256,10 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
       available: needFriend,
       run: (arg) => {
         const f = pick(arg);
-        return labCommand('room.makeHost', f.memberId ?? '');
+        const room = debugRoom();
+        if (!f.memberId || !room?.makeHost) throw new Error('not in a room yet');
+        room.makeHost(f.memberId);
+        return f.name;
       },
     },
     { id: 'friends.chatty', title: 'Friends: chatty mode on / off', help: `The fake friends write and send emojis by themselves (every ${pace} s; a number 2, 5 or 10 sets the pace).`, tab: 'friends', available: needFriend, run: (arg) => { const n = Number(arg); if (PACES.includes(n as (typeof PACES)[number])) pace = n as (typeof PACES)[number]; setChatty(!chatty || !!arg); return chatty ? `on, every ${pace} s` : 'off'; }, undo: () => setChatty(false) },
