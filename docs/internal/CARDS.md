@@ -126,6 +126,8 @@ Planner to merge them once main is green.
   the theme previews appear at once when the theme window opens (small preview images or preload on hover / open).
   The room page's JS / CSS budgets still pass.
 - Tests: harness timing (cards visible ≤ 150 ms after the game opens; previews painted when the window opens).
+- Done: PR (link added on merge) (0.9.97.14): the games hall imports the three side games' chunks when it opens (art and
+  cards are inlined in them); the profile menu / "Change theme" / 🎨 fetch every offered theme's preview pictures.
 
 ### R9. One place for each thing: ⋯ More and the profile menu (owner: "you choose"; lane B)
 - Why: owner: Feedback, Help, Privacy, Recap show in both menus; rarely used things can live in Settings.
