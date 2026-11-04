@@ -64,6 +64,19 @@ const TEXT = {
     chessText: 'Classic chess: castling, en passant, promotion, checkmate and stalemate. Tap a piece to light up where it can go.',
     backgammonTitle: 'Backgammon',
     backgammonText: 'Roll, race your checkers round to your home and bear them off. A lone checker can be hit and starts again; two hold a point.',
+    pickTitle: 'Pick a game',
+    pickLine: 'Two players, or one against Glowbeam',
+    change: 'Change game',
+    changeTitle: 'Back to the games (between games only)',
+    players: '2 players · or vs Glowbeam',
+    xoxLine: 'Three in a row: quick and playful',
+    fourLine: 'Drop discs, connect four',
+    damaLine: 'Turkish draughts: jump and crown',
+    chessLine: 'The classic, with every rule',
+    backgammonLine: 'Roll the dice and race home',
+    watchers: 'Watching: {n}',
+    wins: '{n} won',
+    offCount: '{n}/15 home',
   },
   tr: {
     check: 'Şah!',
@@ -93,6 +106,19 @@ const TEXT = {
     chessText: 'Klasik satranç: rok, geçerken alma, terfi, şah mat ve pat. Taşına dokun, gidebileceği kareler yanar.',
     backgammonTitle: 'Tavla',
     backgammonText: 'Zar at, pullarını yol boyunca evine götür ve topla. Tek duran pul vurulur ve baştan girer; iki pul bir haneyi kapatır.',
+    pickTitle: 'Bir oyun seç',
+    pickLine: 'İki kişi ya da Glowbeam’e karşı tek kişi',
+    change: 'Oyunu değiştir',
+    changeTitle: 'Oyunlara dön (yalnız iki oyun arasında)',
+    players: '2 oyuncu · ya da Glowbeam’e karşı',
+    xoxLine: 'Üçünü yan yana diz: hızlı ve eğlenceli',
+    fourLine: 'Pulları bırak, dördünü birleştir',
+    damaLine: 'Türk daması: atla ve dama ol',
+    chessLine: 'Klasik satranç, bütün kurallarıyla',
+    backgammonLine: 'Zarları at, eve ilk sen var',
+    watchers: 'İzleyen: {n}',
+    wins: '{n} galibiyet',
+    offCount: '{n}/15 toplandı',
   },
 } as const;
 const tc = (key: keyof (typeof TEXT)['en'], values: Record<string, string | number> = {}): string =>
@@ -106,6 +132,15 @@ const DIE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 const GLYPH: Record<string, string> = { p: '♟\uFE0E', n: '♞\uFE0E', b: '♝\uFE0E', r: '♜\uFE0E', q: '♛\uFE0E', k: '♚\uFE0E' };
 const fromOf = (move: number) => Math.floor((move % 4096) / 64);
 const toOf = (move: number) => move % 64;
+
+/** The picker's little cover for each board (our own drawings). */
+const COVER: Record<string, string> = {
+  xox: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#2a2350"/><g stroke="#8f84d8" stroke-width="3" stroke-linecap="round"><path d="M50 14v52M70 14v52M34 30h52M34 50h52"/></g><g stroke="#ff7aa8" stroke-width="5" stroke-linecap="round"><path d="M38 17l8 9M46 17l-8 9M74 57l8 9M82 57l-8 9"/></g><circle cx="60" cy="40" r="5.5" fill="none" stroke="#6fc8ff" stroke-width="4"/><circle cx="42" cy="60" r="5.5" fill="none" stroke="#6fc8ff" stroke-width="4"/></svg>',
+  four: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#1d2a4f"/><rect x="24" y="12" width="72" height="58" rx="7" fill="#2f5fd0"/><path d="M18 74h84" stroke="#1a3a8a" stroke-width="6" stroke-linecap="round"/><g fill="#0e1430"><circle cx="36" cy="24" r="6"/><circle cx="52" cy="24" r="6"/><circle cx="68" cy="24" r="6"/><circle cx="84" cy="24" r="6"/><circle cx="36" cy="41" r="6"/><circle cx="84" cy="41" r="6"/></g><g fill="#ff5d6c"><circle cx="52" cy="41" r="6"/><circle cx="36" cy="58" r="6"/><circle cx="68" cy="58" r="6"/></g><g fill="#ffd24a"><circle cx="68" cy="41" r="6"/><circle cx="52" cy="58" r="6"/><circle cx="84" cy="58" r="6"/></g></svg>',
+  dama: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#3a2516"/><g transform="translate(28 8)"><rect width="64" height="64" fill="#e8cf9e"/><g fill="#9a6236"><rect x="16" width="16" height="16"/><rect x="48" width="16" height="16"/><rect y="16" width="16" height="16"/><rect x="32" y="16" width="16" height="16"/><rect x="16" y="32" width="16" height="16"/><rect x="48" y="32" width="16" height="16"/><rect y="48" width="16" height="16"/><rect x="32" y="48" width="16" height="16"/></g><g fill="#fff8ec" stroke="#b9a37c" stroke-width="1.5"><circle cx="8" cy="40" r="6"/><circle cx="40" cy="56" r="6"/></g><g fill="#22202b" stroke="#000" stroke-width="1.5"><circle cx="24" cy="8" r="6"/><circle cx="56" cy="24" r="6"/></g></g></svg>',
+  chess: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#33241a"/><g transform="translate(28 8)"><rect width="64" height="64" fill="#ecd7b0"/><g fill="#a8724a"><rect x="16" width="16" height="16"/><rect x="48" width="16" height="16"/><rect y="16" width="16" height="16"/><rect x="32" y="16" width="16" height="16"/><rect x="16" y="32" width="16" height="16"/><rect x="48" y="32" width="16" height="16"/><rect y="48" width="16" height="16"/><rect x="32" y="48" width="16" height="16"/></g></g><text x="60" y="58" text-anchor="middle" font-size="44" fill="#1d1a24" stroke="#fff" stroke-width="1.2">\u265E</text></svg>',
+  backgammon: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#4a2c1c"/><rect x="10" y="8" width="100" height="64" rx="5" fill="#2e5d3c"/><rect x="57" y="8" width="6" height="64" fill="#4a2c1c"/><g fill="#e9c27a"><path d="M12 8l7 26 7-26zM40 8l7 26 7-26zM66 8l7 26 7-26zM94 8l7 26 7-26z"/><path d="M26 72l7-26 7 26zM80 72l7-26 7 26z"/></g><g fill="#c0533a"><path d="M26 8l7 26 7-26zM80 8l7 26 7-26z"/><path d="M12 72l7-26 7 26zM40 72l7-26 7 26zM66 72l7-26 7 26zM94 72l7-26 7 26z"/></g><circle cx="19" cy="64" r="5" fill="#fff8ec"/><circle cx="101" cy="16" r="5" fill="#22202b"/></svg>',
+};
 
 let artId = 0;
 /** Glowbeam, drawn small (our own art; ids made unique per copy). */
@@ -121,42 +156,68 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const classics = tableKind === 'classics';
   /** The board on the table now (a Classics table can change it from its shelf). */
   let kind: GameKind = classics ? 'xox' : tableKind;
+  // Card CL2 (owner): the board is the hero. A Classics table first shows only its picker (no board behind it); a
+  // board's screen is the opponent above the board, me below it (like a chess app), one status line, and small chips
+  // for the score, Glowbeam and the watchers (👁 with a popover).
   app.innerHTML = `
-    <div class="xox-page${classics ? ' classics' : ''}">
-      <section class="xox-players">
-        <div class="xox-player" id="seat-0"></div>
-        <div class="xox-vs" id="xox-score"></div>
-        <div class="xox-player" id="seat-1"></div>
-      </section>
-      <div class="cl-ref"><span class="cl-ref-slot"></span><p id="xox-status" class="xox-status" role="status" aria-live="polite"></p></div>
-      <div class="xox-board-wrap">
-        <div id="xox-board" class="xox-board" role="group" aria-label="${t('games.board')}"></div>
-        <div id="xox-floats" class="xox-floats" aria-hidden="true"></div>
-        <div class="cl-promo" role="group" hidden></div>
+    <div class="xox-page mt${classics ? ' classics' : ''}">
+      <section class="cl-picker" hidden></section>
+      <div class="mt-table">
+        <div class="mt-bar">
+          <span id="xox-score" class="mt-score"></span>
+          <span class="cl-bot" hidden></span>
+          <span class="mt-gap"></span>
+          <button id="mt-watch-open" type="button" class="btn small-btn mt-watch-open" aria-expanded="false"></button>
+        </div>
+        <section class="card xox-watchers mt-watch-pop" hidden>
+          <h4 data-i18n="games.watchers"></h4>
+          <ul id="xox-watchers"></ul>
+        </section>
+        <section class="xox-players">
+          <div class="xox-player" id="seat-0"></div>
+          <div class="xox-player" id="seat-1"></div>
+        </section>
+        <div class="xox-board-wrap">
+          <div id="xox-board" class="xox-board" role="group" aria-label="${t('games.board')}"></div>
+          <div id="xox-floats" class="xox-floats" aria-hidden="true"></div>
+          <div class="cl-promo" role="group" hidden></div>
+        </div>
         <div class="bg-tray" hidden></div>
-        <div class="cl-shelf" hidden></div>
+        <div class="cl-ref"><span class="cl-ref-slot"></span><p id="xox-status" class="xox-status" role="status" aria-live="polite"></p></div>
+        <div class="xox-actions">
+          <button id="xox-rematch" type="button" class="btn primary small-btn" data-i18n="games.rematch" hidden></button>
+          <button id="xox-sit" type="button" class="btn primary small-btn" data-i18n="games.sit" hidden></button>
+          <button id="xox-stand" type="button" class="btn small-btn" data-i18n="games.stand" hidden></button>
+        </div>
       </div>
-      <div class="xox-actions">
-        <button id="xox-rematch" type="button" class="btn primary" data-i18n="games.rematch" hidden></button>
-        <button id="xox-sit" type="button" class="btn primary" data-i18n="games.sit" hidden></button>
-        <span class="cl-bot" hidden></span>
-        <button id="cl-shelf-open" type="button" class="btn small-btn" hidden></button>
-        <button id="xox-stand" type="button" class="btn small-btn" data-i18n="games.stand" hidden></button>
-      </div>
-      <section class="card xox-watchers">
-        <h4 data-i18n="games.watchers"></h4>
-        <ul id="xox-watchers"></ul>
-      </section>
     </div>`;
   translate(app);
+  const page = app.querySelector<HTMLElement>('.xox-page')!;
 
   const board = app.querySelector<HTMLElement>('#xox-board')!;
   const status = app.querySelector<HTMLElement>('#xox-status')!;
   const refSlot = app.querySelector<HTMLElement>('.cl-ref-slot')!;
   const referee = glowbeam('cl-ref-mascot');
   refSlot.replaceWith(referee);
-  const shelf = app.querySelector<HTMLElement>('.cl-shelf')!;
-  const shelfButton = app.querySelector<HTMLButtonElement>('#cl-shelf-open')!;
+  const shelf = app.querySelector<HTMLElement>('.cl-picker')!;
+  // "Change game" lives in the game window's head (its slot), so the board keeps the whole window.
+  const shelfButton = el('button', { type: 'button', id: 'cl-shelf-open', class: 'btn small-btn cl-change' }) as HTMLButtonElement;
+  shelfButton.hidden = true;
+  const headSlot = app.closest('#game-stage')?.querySelector('.game-head-slot');
+  if (classics) headSlot?.append(shelfButton);
+  const watchOpen = app.querySelector<HTMLButtonElement>('#mt-watch-open')!;
+  const watchPop = app.querySelector<HTMLElement>('.mt-watch-pop')!;
+  watchOpen.addEventListener('click', () => {
+    watchPop.hidden = !watchPop.hidden;
+    watchOpen.setAttribute('aria-expanded', String(!watchPop.hidden));
+  });
+  const closeWatch = (event: Event) => {
+    if (!watchPop.hidden && !watchPop.contains(event.target as Node) && !watchOpen.contains(event.target as Node)) {
+      watchPop.hidden = true;
+      watchOpen.setAttribute('aria-expanded', 'false');
+    }
+  };
+  document.addEventListener('pointerdown', closeWatch);
   const botBox = app.querySelector<HTMLElement>('.cl-bot')!;
   const promoBox = app.querySelector<HTMLElement>('.cl-promo')!;
   const bgTray = app.querySelector<HTMLElement>('.bg-tray')!;
@@ -280,7 +341,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   let lastBoard = '';
   /** The previous state's result (undefined before the first state: joining a finished game plays nothing). */
   let lastWinner: Mark | 'draw' | null | undefined;
-  /** Classics: the shelf shows until a board is picked (and again from the "Shelf" button). */
+  /** Classics: the picker shows until a board is picked (and again from "Change game" in the head). */
   let shelfOpen = classics;
   const markNode = (mark: Mark) =>
     kind === 'four'
@@ -321,37 +382,68 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
         person ? `${person.bot ? t('classics.botName') : person.name}${person.id === me ? ` (${t('games.you')})` : ''}` : el('span', { class: 'muted' }, t('games.seatEmpty')),
         person && !person.online ? el('small', {}, ` · ${t('games.offline')}`) : '',
       ),
+      seatExtra(mark),
+      el('span', { class: 'mt-wins', title: tc('wins', { n: state?.score[mark] ?? 0 }) }, String(state?.score[mark] ?? 0)),
     );
+  }
+
+  /** What a seat has won on the board: chess / dama captures, backgammon's checkers home and pips. */
+  function seatExtra(mark: Mark): HTMLElement | string {
+    if (!state) return '';
+    const other: Mark = mark === 'X' ? 'O' : 'X';
+    if (kind === 'chess') {
+      const chess = state.game as ChessState;
+      const left: Record<string, number> = { q: 0, r: 0, b: 0, n: 0, p: 0 };
+      chess.board.forEach((c, i) => {
+        const k = chess.kinds[i]!;
+        if (c === other && k in left) left[k]!++;
+      });
+      const start: Record<string, number> = { q: 1, r: 2, b: 2, n: 2, p: 8 };
+      const taken = Object.keys(start).flatMap((k) => Array<string>(Math.max(0, start[k]! - left[k]!)).fill(GLYPH[k]!));
+      return el('span', { class: `mt-taken piece-${other}`, 'aria-hidden': 'true' }, taken.join(''));
+    }
+    if (kind === 'dama') {
+      const n = 16 - state.game.board.filter((c) => c === other).length;
+      return n ? el('span', { class: `mt-taken mark-${other}`, 'aria-hidden': 'true' }, el('span', { class: `dama-man mark-${other}` }), `×${n}`) : '';
+    }
+    if (kind === 'backgammon') {
+      const bg = state.game as BackgammonState;
+      return el('span', { class: 'mt-taken' }, `${tc('offCount', { n: bg.off[mark] })} · ${tc('pips')} ${pips(bg, mark)}`);
+    }
+    return '';
   }
 
   function drawShelf(): void {
     const seat = mySeat();
     const busy = !!state?.started && state.game.winner === null;
     shelf.replaceChildren(
-      el('p', { class: 'cl-shelf-title' }, `🎲 ${t('classics.pick')}`),
+      el('h3', { class: 'cl-picker-title' }, tc('pickTitle')),
+      el('p', { class: 'cl-picker-line muted' }, tc('pickLine')),
       el(
         'div',
-        { class: 'cl-shelf-row' },
+        { class: 'cl-picker-grid' },
         ...SHELF.map((box) => {
-          const title = boardTitle(box.kind);
+          const art = el('span', { class: 'cl-card-art', 'aria-hidden': 'true' });
+          art.innerHTML = COVER[box.kind] ?? '';
           const button = el(
             'button',
-            { type: 'button', class: `cl-box cl-box-${box.kind}${box.kind === kind ? ' on' : ''}`, 'data-board': box.kind },
-            el('span', { class: 'cl-box-lid', 'aria-hidden': 'true' }),
-            el('span', { class: 'cl-box-glyph', 'aria-hidden': 'true' }, box.glyph),
-            el('b', {}, title),
+            { type: 'button', class: `cl-box cl-card cl-box-${box.kind}${box.kind === kind && state?.chosen ? ' on' : ''}`, 'data-board': box.kind },
+            art,
+            el('b', { class: 'cl-card-name' }, boardTitle(box.kind)),
+            el('span', { class: 'cl-card-line' }, tc(`${box.kind}Line` as 'xoxLine')),
+            el('span', { class: 'cl-card-players' }, tc('players')),
           );
           button.disabled = seat === -1 || (busy && box.kind !== kind);
           button.title = busy && box.kind !== kind ? t('classics.busy') : boardText(box.kind);
           button.addEventListener('click', () => {
             shelfOpen = false;
-            if (box.kind !== kind) send({ t: 'switch', game: box.kind as GameKind });
+            // Always sent: the table learns a board was chosen (CL2), even the one it already has.
+            send({ t: 'switch', game: box.kind as GameKind });
             render();
           });
           return button;
         }),
       ),
-      el('div', { class: 'cl-shelf-board', 'aria-hidden': 'true' }),
     );
   }
 
@@ -365,7 +457,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const seat = mySeat();
     personCard(0, seats[0]);
     personCard(1, seats[1]);
-    app.querySelector('#xox-score')!.textContent = `${score.X} – ${score.O}${score.draw ? ` · ${score.draw}=` : ''}`;
+    app.querySelector('#xox-score')!.textContent = score.draw ? `${score.X} – ${score.O} · ${score.draw}=` : `${score.X} – ${score.O}`;
     const ready = seats.every((s) => s !== null);
     const myTurn = seat !== -1 && ready && game.winner === null && game.turn === MARKS[seat];
     setGameLive(seat !== -1 && ready && game.winner === null && !!state.started && !seats.some((s) => s?.bot));
@@ -444,6 +536,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     else if (myTurn && kind === 'dama' && mustCapture(dama)) status.textContent = t('classics.mustCapture');
     else status.textContent = myTurn ? t('games.yourTurn') : t('games.theirTurn', { name: nameOf(game.turn) });
     status.classList.toggle('mine', myTurn);
+    status.title = status.textContent ?? '';
     rematchButton.hidden = seat === -1 || game.winner === null;
     sitButton.hidden = seat !== -1 || seats.every((s) => s && s.online && !s.bot);
     standButton.hidden = seat === -1;
@@ -457,16 +550,29 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
         b.addEventListener('click', () => send({ t: 'bot', level: n }));
         return b;
       };
-      const leave = el('button', { type: 'button', class: 'btn small-btn' }, t('classics.botLeave'));
+      const leave = el('button', { type: 'button', class: 'btn small-btn cl-bot-leave', title: t('classics.botLeave'), 'aria-label': t('classics.botLeave') }, '✕');
       leave.addEventListener('click', () => send({ t: 'bot', level: 0 }));
       botBox.replaceChildren(el('span', { class: 'cl-bot-label' }, glowbeam('cl-bot-icon'), other?.bot ? '' : t('classics.bot')), level(1, t('classics.botEasy')), level(2, t('classics.botMedium')), other?.bot ? leave : '');
     }
-    // The shelf (Classics only).
-    shelfButton.hidden = !classics || shelfOpen;
-    shelfButton.textContent = `🎲 ${t('classics.back')}`;
-    shelfButton.title = t('classics.backTitle');
+    // Classics (CL2): the picker alone, or the board; "Change game" in the head brings the picker back between games.
+    shelfButton.hidden = !classics || shelfOpen || seat === -1;
+    shelfButton.disabled = !!state.started && game.winner === null;
+    shelfButton.replaceChildren(el('span', { 'aria-hidden': 'true' }, '🎲'), el('span', { class: 'cl-change-text' }, ` ${tc('change')}`));
+    shelfButton.title = shelfButton.disabled ? t('classics.busy') : tc('changeTitle');
+    shelfButton.setAttribute('aria-label', tc('change'));
     shelf.hidden = !classics || !shelfOpen;
+    app.querySelector<HTMLElement>('.mt-table')!.hidden = !shelf.hidden;
     if (!shelf.hidden) drawShelf();
+    // Me below the board, the other player above it.
+    page.classList.toggle('flip', seat === 1);
+    const screen = classics && shelfOpen ? 'picker' : kind;
+    if (page.dataset.board !== screen) {
+      page.dataset.board = screen;
+      page.dispatchEvent(new Event('swm-game-size', { bubbles: true }));
+    }
+    watchOpen.textContent = `👁 ${watchers.length}`;
+    watchOpen.title = tc('watchers', { n: watchers.length });
+    watchOpen.setAttribute('aria-label', watchOpen.title);
     const list = app.querySelector<HTMLElement>('#xox-watchers')!;
     list.replaceChildren(
       ...(watchers.length
@@ -553,10 +659,10 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       }
       if (message.t === 'welcome') me = message.you;
       else if (message.t === 'state') {
-        // Joining a Classics table where a game is going: straight to the board.
-        if (!state && message.started) shelfOpen = false;
-        // BH10: the game started, or someone else picked a board, while my shelf was open: show the board.
-        else if (state && ((message.started && !state.started) || message.kind !== state.kind)) shelfOpen = false;
+        // Classics (CL2): the picker shows until someone picks a board (`chosen`); joining a chosen table goes straight
+        // to its board. BH10: the game started, a board was picked or changed while my picker was open: the board.
+        if (!state) shelfOpen = classics && !message.chosen && !message.started;
+        else if ((message.started && !state.started) || (message.chosen && !state.chosen) || message.kind !== state.kind) shelfOpen = false;
         state = message;
         render();
       } else if (message.t === 'react') float(message.from, message.emoji);
@@ -588,17 +694,34 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   addEventListener('langchange', onLang);
   // Test Lab (DL3b): a ready-made position, set by the server only when it runs as a local lab server.
   const offLab = debugHooks.register('table.classics', () => ({
-    commands: Object.values(LAB_POSITIONS).flat().map((position) => ({
-      id: `classics.position.${position}`,
-      title: `Classics: set the "${position}" position`,
-      help: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.',
-      tab: 'games' as const,
-      where: 'at a Classics table, seated',
-      run: () => send({ t: 'lab', position }),
-    })),
+    commands: [
+      ...Object.values(LAB_POSITIONS).flat().map((position) => ({
+        id: `classics.position.${position}`,
+        title: `Classics: set the "${position}" position`,
+        help: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.',
+        tab: 'games' as const,
+        where: 'at a Classics table, seated',
+        run: () => send({ t: 'lab', position }),
+      })),
+      // CL2: the picker → board flow in one step (the same path as a press on a card).
+      { id: 'classics.picker', title: 'Classics: show the picker', help: 'As "Change game" in the head (between games).', tab: 'games' as const, where: 'at a Classics table', run: () => shelfButton.click() },
+      ...SHELF.map((box) => ({
+        id: `classics.pick.${box.kind}`,
+        title: `Classics: pick ${box.kind}`,
+        help: "Presses this board's card in the picker (opens the picker first).",
+        tab: 'games' as const,
+        where: 'at a Classics table, seated',
+        run: () => {
+          if (!shelfOpen) shelfButton.click();
+          shelf.querySelector<HTMLButtonElement>(`.cl-box[data-board="${box.kind}"]`)?.click();
+        },
+      })),
+    ],
   }));
   return () => {
     offLab();
+    shelfButton.remove();
+    document.removeEventListener('pointerdown', closeWatch);
     setGameLive(false);
     close();
     clearInterval(ping);

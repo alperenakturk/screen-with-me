@@ -63,7 +63,7 @@ export type GameClientMessage =
 
 export type GameServerMessage =
   | { t: 'welcome'; you: string; game: GameKind }
-  | { t: 'state'; kind: GameKind; game: BoardState; seats: [GamePerson | null, GamePerson | null]; watchers: GamePerson[]; score: GameScore; classics?: boolean; started?: boolean }
+  | { t: 'state'; kind: GameKind; game: BoardState; seats: [GamePerson | null, GamePerson | null]; watchers: GamePerson[]; score: GameScore; classics?: boolean; started?: boolean; chosen?: boolean }
   | { t: 'react'; from: GamePerson; emoji: GameEmoji }
   | { t: 'error'; code: GameErrorCode }
   | { t: 'pong' };

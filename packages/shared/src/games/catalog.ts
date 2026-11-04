@@ -16,14 +16,26 @@ export interface GameInfo {
   fit: readonly [number, number];
 }
 
+// Card CL2 (owner): every game opens in the free mini window by default, at the size its own layout wants; "in the
+// video's place" stays a choice, remembered per game (`gamePlace:<kind>`).
 export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
-  xox: { min: 2, max: 2, place: 'stage', size: [400, 560], fit: [300, 420] },
-  four: { min: 2, max: 2, place: 'stage', size: [480, 560], fit: [360, 420] },
-  draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440] },
-  quiz: { min: 2, max: 8, place: 'stage', size: [760, 540], fit: [540, 380] },
-  poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440] },
-  // 🎲 Classics (P6): two players, or one against Glowbeam.
-  classics: { min: 1, max: 2, place: 'stage', size: [480, 620], fit: [360, 440] },
+  xox: { min: 2, max: 2, place: 'float', size: [420, 560], fit: [300, 420] },
+  four: { min: 2, max: 2, place: 'float', size: [520, 590], fit: [360, 440] },
+  draw: { min: 2, max: 8, place: 'float', size: [860, 600], fit: [640, 440] },
+  quiz: { min: 2, max: 8, place: 'float', size: [680, 560], fit: [520, 400] },
+  poker: { min: 2, max: 6, place: 'float', size: [860, 600], fit: [640, 440] },
+  // 🎲 Classics (P6): two players, or one against Glowbeam. Its window follows the board on the table (`CLASSICS_SIZES`).
+  classics: { min: 1, max: 2, place: 'float', size: [600, 560], fit: [480, 440] },
+};
+
+/** Classics (CL2): the window's size per screen of the table: the picker, then each board built around itself. */
+export const CLASSICS_SIZES: Record<'picker' | 'xox' | 'four' | 'dama' | 'chess' | 'backgammon', Pick<GameInfo, 'size' | 'fit'>> = {
+  picker: { size: [600, 560], fit: [480, 440] },
+  xox: { size: [420, 580], fit: [300, 440] },
+  four: { size: [520, 600], fit: [360, 460] },
+  dama: { size: [520, 700], fit: [380, 540] },
+  chess: { size: [520, 700], fit: [380, 540] },
+  backgammon: { size: [720, 660], fit: [560, 500] },
 };
 
 /**
