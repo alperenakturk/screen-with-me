@@ -7,7 +7,7 @@
 // localStorage gizli sekmede veya engellenmiş çerezlerde hata verebilir; o durumda site yine
 // çalışsın (bu sayfa açık kaldıkça bellekte tutulur).
 
-import { CLIENT_ID } from '@swm/shared/protocol';
+import { CLIENT_ID, randomAvatar, replaceRemovedAvatar, type Avatar } from '@swm/shared/protocol';
 import { EXT_SOURCE, SITE_SOURCE, type ExtToSite, type SiteToExt, type StoreEntries } from '@swm/shared/shell';
 
 /**
@@ -158,6 +158,38 @@ export function sessionSave(key: string, value: string): void {
   } catch {
     // Kaydedilemezse sorun değil.
   }
+}
+
+/**
+ * Card R20: a saved avatar that was removed (`REMOVED_AVATARS`) is replaced once with a random themed one: the default
+ * (`avatar`, shared with the extension as `site:avatar` through `save`) and every room's own record (`me:<room>` in this
+ * browser's local storage and this tab's session storage). Runs at start-up (`app.ts`); a second run finds nothing.
+ */
+export function replaceRemovedAvatars(pick: () => Avatar = randomAvatar): number {
+  let changed = 0;
+  const fixed = replaceRemovedAvatar(load('avatar'), pick);
+  if (fixed) {
+    save('avatar', fixed);
+    changed++;
+  }
+  let rooms: string[] = [];
+  try {
+    const list = JSON.parse(load('meRooms') ?? '[]') as unknown;
+    if (Array.isArray(list)) rooms = list.filter((x): x is string => typeof x === 'string');
+  } catch {
+    // No list: nothing to look at.
+  }
+  for (const room of rooms) {
+    for (const [read, write] of [[load, save], [sessionLoad, sessionSave]] as const) {
+      const me = parseIdentity(read(`me:${room}`));
+      const swap = me && replaceRemovedAvatar(me.avatar, pick);
+      if (me && swap) {
+        write(`me:${room}`, JSON.stringify({ name: me.name, avatar: swap }));
+        changed++;
+      }
+    }
+  }
+  return changed;
 }
 
 /** Saves the default name/avatar: what the join step offers in a room I haven't been in yet. */

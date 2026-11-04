@@ -600,10 +600,7 @@ ${eyes(30.6, 4.7)}
 <path d="M27.4 37.2 Q33 40.6 37.6 35.8" stroke="#6b2f2f" stroke-width="1.5" fill="none" stroke-linecap="round"/>`),
 });
 
-const PARODY = ['hacker', 'jester', 'nightguard', 'catburglar', 'cavecreature', 'wizardboy', 'redhead', 'wizardgirl',
-  'scientist', 'sidekick', 'chemist', 'lawyer', 'dragonqueen', 'goth', 'sponge', 'starfish', 'squid', 'pinecap',
-  'sweaterkid', 'cartoonist', 'armadillo', 'timetraveler', 'strawhat', 'swordsman', 'cook', 'greenblade', 'airmonk',
-  'waterfriend', 'earthgirl', 'notebookgenius', 'sweetsleuth', 'speedster', 'hunter'];
+const PARODY = ['armadillo'];
 const star = (x, y, r, c = '#fff3c0') => `<path d="M${x} ${y - r} L${x + r * 0.3} ${y - r * 0.3} L${x + r} ${y} L${x + r * 0.3} ${y + r * 0.3} L${x} ${y + r} L${x - r * 0.3} ${y + r * 0.3} L${x - r} ${y} L${x - r * 0.3} ${y - r * 0.3}Z" fill="${c}" opacity=".75"/>`;
 const dots = (c) => `<g fill="${c}" opacity=".35"><circle cx="8" cy="18" r="1.4"/><circle cx="56" cy="14" r="1.1"/><circle cx="58" cy="36" r="1.3"/><circle cx="6" cy="38" r="1"/></g>`;
 const MOTIF = {

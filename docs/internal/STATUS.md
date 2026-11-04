@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.30 (parody avatars removed after the IP audit, card R20):**
+- [ ] In a room, open the avatar picker: two tabs, "Themed" and "Genres" ("Temalı" / "Türler"), no Parody tab. Genres
+  shows 18 (detective, pirate, astronaut, inventor, ninja, cowboy, vampire, robot, hero, explorer, chef, rocker, ghost,
+  alien, samurai, fairy, spy, armadillo) without scrolling; pick one and check it in the chat and the faces strip. If
+  you had a parody avatar saved, you now have a themed one instead (once; your other rooms too).
+
 **0.9.97.29 (the owner's test board on our site):**
 - [ ] Open the board's address (the Planner has it), tick a test ✅ and write a note: the ticket at the bottom shows
   both; 📋 Copy puts it on the clipboard; reload: your ticks are still there. Works on the phone too.
