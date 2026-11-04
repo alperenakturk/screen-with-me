@@ -533,6 +533,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.13 R6: the invite window has no "show this when I'm alone" tick box; ⚙️ My screen has "Open the invite
+  window when I'm alone in a room" (on); turn it off: a new empty room opens without the window.
+- [ ] 0.9.97.13 R5 (update the extension first): on a film page, out of fullscreen, move the mouse slowly to the right
+  edge of the film: the rail opens when the mouse is about a finger's width (40 px) inside the film; a mouse that only
+  passes by doesn't make the film jump; in the middle of the film the rail goes again.
 - [ ] 0.9.97.12 R4: in fullscreen press T: fullscreen closes and cinema mode opens; T again leaves cinema mode.
 - [ ] 0.9.97.12 R3: YouTube in fullscreen with nothing going on: no dark strip on the right, the video reaches the rail.
   Turn your camera on: it sits in a column beside the video; drag the camera window onto the video: the empty column

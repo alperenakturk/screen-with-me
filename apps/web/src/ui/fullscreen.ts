@@ -813,8 +813,16 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     showRail(): void {
       if (theater.classList.contains('dock-mode')) wakeDock();
     },
-    /** Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. */
-    poke(): void {
+    /**
+     * Başka yerden gelen hareket (film sayfasında fare oynadı): kontroller belirsin. `edge` (card R5, sent by extensions
+     * with that card): the mouse is in the last FILM_EDGE px of the film, which brings the rail like our own edge strip
+     * (after OPEN_MS, so a mouse only passing by doesn't make the film jump).
+     */
+    poke(edge?: boolean): void {
+      if (shell && edgeMode() && edge === true) {
+        setNear(true);
+        return;
+      }
       // Card 2b: a move reported by the film's frames means the mouse is on the film, not on the rail or at the edge. On
       // the film page the overlay may never hear the mouse leave (it jumps from our rail into the film's hole), so this
       // counts as leaving; a move reported right after the mouse reached the edge is from before it.
