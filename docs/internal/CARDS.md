@@ -35,8 +35,8 @@ who takes a card below also ticks the matching hand tests in `STATUS.md`.
 and try after the next deploy). The feedback form works (an issue came in). Dependabot #216 / #217: the owner asked the
 Planner to merge them once main is green.
 
-**Run order (rebalanced 4 Nov 2026, 00:00 UTC):** lane B: R1 ✅ → R2 ✅ → R3 → R4 → R5 → R8, then its bug-hunt list.
-Lane A: R3-6 ✅ → R3-8 ✅ → R11 ✅ → R12 ✅ → R14 ✅ → R13 → R6 → R7 → R9 → R10 → BH1. Design: R14 ✅. Main's runs cancel
+**Run order (rebalanced 4 Nov 2026, 00:00 UTC):** lane B: R1 ✅ → R2 ✅ → R3 ✅ → R4 ✅ → R5 → R6 → R8, then its bug-hunt list.
+Lane A: R3-6 ✅ → R3-8 ✅ → R11 ✅ → R12 ✅ → R14 ✅ → R13 → R7 → R9 → R10 → BH1. Design: R14 ✅. Main's runs cancel
 each other: never merge into main while another deploy runs.
 
 ### BH1. Bug hunt: stale voice-harness checks + one retry warning (lane A)
