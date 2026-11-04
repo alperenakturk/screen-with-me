@@ -12,13 +12,14 @@ import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
-import { confirmIpNotice } from './ip-notice.ts';
-import { applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames, shellDeviceCheck, voiceCheck } from './voice-check.ts';
+import type { IpNoticeKind } from './ip-notice.ts';
+import { applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames } from './voice-devices.ts';
 import { setIcon } from './icons.ts';
-import { ExtVoice } from './voice-ext.ts';
+import type { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { loadChunk, whenIdle } from './lazy.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
 const RPC_TIMEOUT_MS = 12_000;
@@ -37,6 +38,34 @@ const RPC_TIMEOUT_MS = 12_000;
 /** "Birlikte" kartında en fazla bu kadar kişi görünür (fazlası "+N"). */
 const PEOPLE_SHOWN = 8;
 
+/**
+ * Card SZ: windows opened only after a press are lazy chunks: the IP notice and the pre-join check. `warmVoice` fetches
+ * them when a voice button is hovered or focused, so the first press opens them at once.
+ */
+/**
+ * The IP notice is a privacy gate (security review 1, W1): if its chunk can't load (offline, a deploy replaced it) the
+ * answer is "no" (fail closed) and the person is told; nothing joins without it.
+ */
+async function ipNotice(kind: IpNoticeKind, people: string[], anchor: HTMLElement): Promise<boolean> {
+  const m = await loadChunk(() => import('./ip-notice.ts'));
+  if (m) return m.confirmIpNotice(kind, people);
+  flashHint(anchor, t('voice.failed'), 6000);
+  return false;
+}
+async function checkWindow() {
+  const m = await loadChunk(() => import('./voice-check.ts'));
+  if (!m) throw new Error('voice-check did not load');
+  return m;
+}
+let warmed = false;
+export function warmVoice(): void {
+  if (warmed) return;
+  warmed = true;
+  void Promise.all([loadChunk(() => import('./ip-notice.ts')), loadChunk(() => import('./voice-check.ts'))]).then((chunks) => {
+    if (chunks.includes(null)) warmed = false;
+  });
+}
+
 export interface VoiceRoom {
   /** Am I the host (the person menu offers "remove from room")? */
   isHost: () => boolean;
@@ -50,7 +79,7 @@ export interface VoiceRoom {
   onCams?: (cams: Map<string, MediaStream>) => void;
 }
 
-export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean, room: VoiceRoom) {
+export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean, room: VoiceRoom, Ext: typeof ExtVoice | null = null) {
   const card = root.querySelector<HTMLElement>('#voice-card')!;
   const joinButton = root.querySelector<HTMLButtonElement>('#voice-join')!;
   const onBox = root.querySelector<HTMLElement>('#voice-on')!;
@@ -99,6 +128,14 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     live?.addEventListener('click', pressLive);
     return [{ box, mic, cam, live }];
   });
+  // Card SZ: the first press on a voice button opens the IP notice / pre-join check without waiting for its chunk: they
+  // are fetched on a hover / focus / touch, and anyway once the room has settled (`whenIdle`).
+  whenIdle(warmVoice);
+  for (const button of [joinButton, ...quick.flatMap((q) => [q.mic, q.cam])]) {
+    button.addEventListener('pointerenter', warmVoice, { once: true });
+    button.addEventListener('focus', warmVoice, { once: true });
+    button.addEventListener('touchstart', warmVoice, { once: true, passive: true });
+  }
   const camWindow = createCamWindow({
     box: camsBox,
     theater: root.querySelector<HTMLElement>('#theater')!,
@@ -173,7 +210,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let shownLevel = 0;
   function myLevel(): number {
     if (!client.active || !client.micEnabled) return 0;
-    if (client instanceof ExtVoice) return client.me;
+    if (isExt(client)) return client.me;
     const mic = client.microphone ?? null;
     if (mic !== meteredMic) {
       meteredMic = mic;
@@ -236,8 +273,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   };
   if (!isShell) rememberDeviceNames();
   const makeClient = (): Voice => {
-    if (isShell) {
-      ext ??= new ExtVoice((msg) => postToExtension({ type: 'voice', msg }), {
+    if (isShell && Ext) {
+      ext ??= new Ext((msg) => postToExtension({ type: 'voice', msg }), {
         announce,
         signal: (to, data) => send({ t: 'signal', to, data }),
         rpc: (id, request) => void rpc(request).then((result) => ext?.rtcResult(id, result)),
@@ -265,11 +302,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     return p2p;
   };
   let client: Voice = makeClient();
+  /** The film page's voice (in the extension), not the page's own. */
+  function isExt(voice: Voice): voice is ExtVoice {
+    return ext !== null && voice === ext;
+  }
   /**
    * Join with the microphone on or off. ExtVoice (film page) takes `(quiet, mic)`: `quiet` = no permission tab (silent
    * rejoins). Calling it as `join(mic)` turned a muted microphone back on after a reconnect on the film page.
    */
-  const joinVoice = (mic: boolean, quiet = false) => (client instanceof ExtVoice ? client.join(quiet, mic) : client.join(mic));
+  const joinVoice = (mic: boolean, quiet = false) => (isExt(client) ? client.join(quiet, mic) : client.join(mic));
   const wantKey = `voice:${roomId}`;
   const remember = (on: boolean) => save(wantKey, on ? '1' : '0');
   const micKey = `voiceMic:${roomId}`;
@@ -528,7 +569,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   function applyVolumes(): void {
     for (const [memberId, audio] of audios) setVolume(audio, memberId);
     // On the film page the voices play in the extension.
-    if (client instanceof ExtVoice) client.volumes(Object.fromEntries(members.filter((m) => m.voice).map((m) => [m.id, volumeOf(m.id)])));
+    if (isExt(client)) client.volumes(Object.fromEntries(members.filter((m) => m.voice).map((m) => [m.id, volumeOf(m.id)])));
   }
   function setSound(member: Member, next: PersonSound): void {
     const key = personOf(member);
@@ -658,17 +699,21 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
 
   /** "🎛" on the film page: the extension's device list, choices by name; the extension switches them at once. */
   async function changeShellDevices(): Promise<void> {
-    if (!(client instanceof ExtVoice)) return;
+    if (!isExt(client)) return;
     const list = await client.devices();
     if (!list) return flashHint(peopleBox, t('voiceCheck.shellOld'), 6000);
-    const picks = await shellDeviceCheck(list);
+    const check = await checkWindow().catch(() => null);
+    if (!check) return flashHint(peopleBox, t('voice.failed'), 6000);
+    const picks = await check.shellDeviceCheck(list);
     if (picks) client.pick(picks);
   }
 
   /** "🎛 Microphone and camera" on myself: the same check window; while in voice the new devices apply at once. */
   async function changeDevices(): Promise<void> {
     const before = { mic: load('opt:micDevice') ?? '', cam: load('opt:camDevice') ?? '', speaker: load('opt:speakerDevice') ?? '' };
-    const result = await voiceCheck({ mode: 'settings', canCam: !!client.setCam });
+    const check = await checkWindow().catch(() => null);
+    if (!check) return flashHint(peopleBox, t('voice.failed'), 6000);
+    const result = await check.voiceCheck({ mode: 'settings', canCam: !!client.setCam });
     if (!result) return;
     if ((load('opt:speakerDevice') ?? '') !== before.speaker) for (const audio of audios.values()) applySpeaker(audio, load('opt:speakerDevice') ?? '');
     if (!client.active) return;
@@ -716,13 +761,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
     if (mode === 'p2p') {
       const others = members.filter((m) => m.voice && m.id !== myId()).map((m) => m.name);
-      if (!(await confirmIpNotice('voice', others))) return;
+      if (!(await ipNotice('voice', others, joinButton))) return;
     }
     // Pre-join check (0.9.90.6): devices, "join muted", "join with my camera on" (not on the film page: there the
     // extension's offscreen page holds the microphone).
     // The peer-to-peer path is what has cameras.
     const canCam = !isShell && !!client.setCam;
-    const choice = isShell ? { mic: true, cam: wantCam } : await voiceCheck({ mode: 'join', canCam, ...(wantCam ? { cam: true } : {}) });
+    const check = isShell ? null : await checkWindow().catch(() => null);
+    if (!isShell && !check) return flashHint(joinButton, t('voice.failed'), 6000);
+    const choice = check ? await check.voiceCheck({ mode: 'join', canCam, ...(wantCam ? { cam: true } : {}) }) : { mic: true, cam: wantCam };
     if (!choice) return;
     joinButton.disabled = true;
     try {
@@ -816,7 +863,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   /** Dinlediklerimin seviyesi: WebRTC'nin ölçüsü ile sesin kendisinden ölçülenin büyüğü (eklentide ölçüm orada). */
   function allLevels(): Map<string, number> {
     const out = new Map(client.levels());
-    if (client instanceof ExtVoice) return out;
+    if (isExt(client)) return out;
     for (const [memberId, level] of meter.levels()) if (memberId !== 'me') out.set(memberId, Math.max(out.get(memberId) ?? 0, level));
     return out;
   }
@@ -827,7 +874,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     // Another tab of mine (e.g. the film tab while this room tab was opened from the popup) is already in voice:
     // don't join a second time (I would hear myself and appear twice). The "Join voice" button still works.
     if (myOtherTabInVoice()) return;
-    if (client instanceof ExtVoice) {
+    if (isExt(client)) {
       // Eklenti katılmak için üye kimliğimi ve odadakileri bilmeli.
       client.sync(members, myId());
       await client.join(true, micWanted()).catch(() => {});
@@ -883,7 +930,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     welcome(voice: boolean, nextMode: VoiceMode = 'p2p'): void {
       serverVoice = voice;
       available = serverVoice && (!isShell || extVoice);
-      if (client instanceof ExtVoice) {
+      if (isExt(client)) {
         // Ses eklentide sürüyor: yeni üye kimliğiyle bağlantılar baştan kurulur (mikrofon kalır).
         mode = nextMode;
         client.mode = mode;
@@ -942,7 +989,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     },
     /** Eşler arası seste bir üyeden gelen bağlantı mesajı. */
     signal(from: string, data: Signal): void {
-      if (client instanceof ExtVoice) client.signal(from, data);
+      if (isExt(client)) client.signal(from, data);
       else void p2p?.receive(from, data).catch(() => {});
     },
     members(next: Member[]): void {
@@ -971,7 +1018,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     },
     /** Sayfadan çıkarken mikrofonu bırak. Kabukta ses eklentide sürer (film sayfası değişse de kopmaz). */
     leave(): void {
-      if (!(client instanceof ExtVoice)) client.leave();
+      if (!isExt(client)) client.leave();
     },
     /** Odadan çıkarıldım: ses her yerde (eklentide de) biter, kendiliğinden yeniden açılmaz. */
     end(): void {

@@ -437,6 +437,15 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.52 (card SZ: a lighter room page):**
+- [ ] Nothing new to see: in a room join voice (the IP notice and the pre-join window open at once), share your screen,
+  a friend watches it; a TikTok / Vimeo link and the sync test still play; sounds still play; ? opens the shortcuts card.
+  On the film page voice still works.
+
+**0.9.97.50 (security R4-9 + R4-10):**
+- [ ] Nothing to see: search YouTube twice for the same words; both work (the second comes from the server's cache
+  when the address allows it). The hidden TV pairing stays off on the live site.
+
 **0.9.97.49 (security review 4: R4-2, R4-3, R4-5):**
 - [ ] Nothing to see in the room: rooms open and join as before; `/connection` still runs all its rows ("200 kB answer"
   included).
@@ -673,6 +682,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
   shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.51 Test Lab server powers: nothing to test by hand on the live site (they exist only on a local test
+  server, and the live e2e checks after every deploy that live refuses them). Locally (`npm run dev`), with the lab on:
+  at a Classics table "set the mate1 position" shows a chess board where Ra1–a8 mates; at a Quiz table "end this phase
+  now" reveals the answer at once; in a room with a film "Fill the tip jar now" lights the 🫙 pill.
 - [ ] 0.9.97.48 Test Lab games: open a room with `?debug=1`, press 🐞, go to 🎮 Games (or Ctrl+K and type "games").
   Open Snack Bar from there, give it +10K coins, then "pretend the film plays" + "time ×10": the coins climb. Try "a
   customer now" and "the film's receipt now". Open Window Garden: "bloom now", night sky, rain. Open Five Frames: show

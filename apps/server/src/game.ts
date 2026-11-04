@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
+import { labServer } from './lab.ts';
 import type { BoardState, Mark } from '@swm/shared/games/board';
 import {
   GAME_MAX_PEOPLE,
@@ -15,6 +16,7 @@ import {
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 import { botMove } from '@swm/shared/games/bot';
+import { LAB_POSITIONS, isLabPosition, labPosition, type LabPositionKind } from '@swm/shared/games/lab-positions';
 import type { BotLevel } from '@swm/shared/games/protocol';
 
 /** Oyun odası boş kaldıktan bu kadar sonra silinir. */
@@ -67,6 +69,8 @@ const MARKS: readonly [Mark, Mark] = ['X', 'O'];
  */
 export class Game extends DurableObject<Env> {
   private data: Saved = fresh();
+  /** A local lab server (`lab.ts`, Test Lab DL3b): only then does a `lab` message do anything. */
+  private lab = false;
   private readonly limit = new RateLimiter(20, 8);
   private readonly reactLimit = new RateLimiter(6, 2);
 
@@ -92,6 +96,7 @@ export class Game extends DurableObject<Env> {
   });
 
   override async fetch(request: Request): Promise<Response> {
+    this.lab ||= labServer(this.env, request);
     // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
     const polled = await this.polls.handle(request);
     if (polled) return polled;
@@ -260,6 +265,19 @@ export class Game extends DurableObject<Env> {
           this.data.state = GAME_RULES[this.data.kind].newGame(this.data.state.starter);
           this.data.started = false;
         }
+        break;
+      }
+      case 'lab': {
+        // Test Lab (DL3b): a ready-made position, on a local lab server only (`lab.ts`); a player sets it.
+        if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
+        if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
+        const kind = (Object.keys(LAB_POSITIONS) as LabPositionKind[]).find((k) => isLabPosition(k, message.position));
+        if (!kind || (kind !== this.data.kind && !this.data.classics)) return this.sendTo(ws, { t: 'error', code: 'kind' });
+        const state = labPosition(kind, message.position);
+        if (!state) return this.sendTo(ws, { t: 'error', code: 'bad' });
+        this.data.kind = kind;
+        this.data.state = state;
+        this.data.started = true;
         break;
       }
       case 'stand':

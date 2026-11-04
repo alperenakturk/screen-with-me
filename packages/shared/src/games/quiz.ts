@@ -80,6 +80,8 @@ export type QuizClientMessage =
   | { t: 'answer'; n: number; pick: number }
   /** 50:50 on question `n` (before answering, once per game). */
   | { t: 'joker'; n: number }
+  /** Test Lab (DL3b): end the current phase now; only a local lab server acts on it. */
+  | { t: 'lab'; op: 'skip' }
   | { t: 'ping' };
 
 export type QuizServerMessage =
@@ -111,7 +113,7 @@ export type QuizServerMessage =
   | { t: 'error'; code: QuizErrorCode }
   | { t: 'pong'; now: number };
 
-export type QuizErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'too_few' | 'not_host';
+export type QuizErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'too_few' | 'not_host' | 'lab_off';
 
 const isInt = (x: unknown, min: number, max: number): x is number => Number.isInteger(x) && (x as number) >= min && (x as number) <= max;
 const maxQuestions: number = Math.max(...QUIZ_COUNTS);
@@ -147,6 +149,8 @@ export function parseQuizMessage(raw: string): QuizClientMessage | null {
       return isInt(m.n, 1, maxQuestions) && isInt(m.pick, 0, 3) ? { t: 'answer', n: m.n, pick: m.pick } : null;
     case 'joker':
       return isInt(m.n, 1, maxQuestions) ? { t: 'joker', n: m.n } : null;
+    case 'lab':
+      return m.op === 'skip' ? { t: 'lab', op: 'skip' } : null;
     case 'start':
     case 'ping':
       return { t: m.t };
