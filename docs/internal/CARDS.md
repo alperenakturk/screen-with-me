@@ -60,6 +60,7 @@ reports if a drop happens again over time.
   messages show over the video and never cover YouTube's own bottom bar.
 - Tests: `yt-room` / `yt-fs-side` harness updated (the player keeps its full width with a message, a note and a camera;
   the toast sits inside the video, above its bottom bar).
+- Done: #251 (0.9.97.26), Developer B: no side column in YouTube fullscreen; messages over the video left of the rail.
 
 ### R16. Fix: a private message to someone in the same browser says "they aren't in the room" (owner's bug; lane A)
 - Owner: in the same Chrome he joined as "alperen" and "alperen 2" (two people, as designed: a different name is a
@@ -69,6 +70,7 @@ reports if a drop happens again over time.
   person's connections only, never to the other names of the same browser.
 - Done when: a DM between two names of one browser reaches the other name only; a DM to my own name is still refused.
 - Tests: e2e `private.mjs` gets the same-browser case (fails on 0.9.97.22).
+- Done: #249 (0.9.97.24), Developer A: the person key is browser + name.
 
 ### R17. Fix: two tabs in the same room stop seeing each other after a while (owner's bug, "a big problem"; lane A)
 - Owner: two tabs (A and B) of the same Chrome in one room (different names); after a while neither shows the other.
@@ -78,6 +80,7 @@ reports if a drop happens again over time.
 - Done when: the root cause is found and fixed; two tabs with different names stay two people for 30 min including a
   backgrounded tab, a reload of one tab and a deploy (object restart).
 - Tests: an e2e that reproduces it (fails before the fix), plus a long-running harness check with one hidden tab.
+- Done: #249 (0.9.97.24), Developer A: each tab keeps its own name in sessionStorage; the 30-minute hidden-tab run is the owner's hand test.
 
 ### R18. Fix: nothing of the room before I'm let in (owner's bug + rule: "the order of things is very important"; lane A)
 - Owner: with "Ask before letting people in" on, he joined from another browser; while he waited at the door the
@@ -89,6 +92,7 @@ reports if a drop happens again over time.
 - Done when: a knocker sees nothing but the door card until let in; after "Let in" the normal first-time path runs in
   its usual order (intro → tips; invite window only when alone).
 - Tests: knock harness checks that no tip, invite window, toast or sound fires while waiting, and the tips come after.
+- Done: #249 (0.9.97.24), Developer A: tips, `lastRoom` and the extension bubble wait for the first welcome.
 
 ### BH5. Bug hunt: the order of things on every path (owner's request; lane A, after R18)
 - Owner: "pay attention to this in general and do a detailed logic-order test to find new bugs like this."
@@ -99,6 +103,7 @@ reports if a drop happens again over time.
   extension cards). Write the table to `docs/internal/order-of-things.md`, then check each row in a harness and fix
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
+- Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
 
 ### R20. Redraw two sea-cartoon parody avatars (owner, 4 Nov 2026; Design, then lane A)
 - Owner (screenshot of the series parody page), first "remove these completely, they aren't nice", then changed his
