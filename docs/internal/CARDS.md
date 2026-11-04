@@ -65,6 +65,20 @@ security and promotion now that it is public"; lane A after 15f + R27, Design fo
   protection, Dependabot alerts + security updates, private vulnerability reporting, code scanning (CodeQL default
   setup), branch protection for `main` (require the CI check), Actions → fork PR workflows need approval.
 
+### SZ. Slim the room chunk (Planner's technical decision, 4 Nov 2026; lane B)
+- Why: the room page's JS is 144.9 / 145 kB gzipped after DL2; the next room feature would cross the budget.
+- Done when: the live / stream and camera windows (and other things not needed on first paint) load as lazy chunks;
+  ≥ 8 kB under 145; no behaviour change. The budget stays 145 (raise it only if a card is truly blocked, with the
+  reason in its PR).
+- Tests: size budget; voice / live / cam-fs / phone / phone-speed harnesses stay green.
+
+### BH8. Live fallback.mjs: a room WebSocket closed with 1006 mid-test (lane B, after R4-3)
+- Why: DL1's main run failed live e2e `fallback.mjs` "pong after chunked" on both attempts (close 1006 ≈ 24 s after
+  open); the runs before and after passed. Flaky tests are fixed, not ignored.
+- Done when: the cause is found (log the object's view of the close; check the "never polls" close and Workers Free
+  limits) and fixed, or the test made robust for a real, documented reason; three live runs green on the first try.
+- Tests: live e2e `fallback.mjs`.
+
 ### SEC4. Security review 4: Cloudflare best practices + public-repo exposure (owner, 4 Nov 2026; Security, read-only)
 - Why: the owner asked to review the code and the site with the Cloudflare skill (cloudflare/skills:
   workers-best-practices, durable-objects, wrangler, web-perf) and fix the security side, now that the repo is public.
@@ -145,7 +159,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI → R26 (important) → R25 → DL1 → DL2 → DL4 → DL5 → SEC4 fixes. Game Studio: Draw & Guess → chess + backgammon → DL3. Lane A: 15e ✅ → R22 + R23 ✅ → 15f → R27 → GH. Security: SEC4. Design: GH art. Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI ✅ (+ #296 diff from the last good main run) → R26 ✅ → R25 ✅ → DL1 ✅ → DL2 ✅ → R4-2 + R4-3 + R4-5 → BH8 → SZ → DL4 → DL5. Game Studio: Draw & Guess ✅ → chess + backgammon ✅ (.46) → DL3a (.48) → DL3b. Lane A: 15e ✅ → R22 + R23 ✅ → 15f + R27 ✅ → GH ✅ → R4-1 + R4-6..8 (.47) → R4-9 → R4-10. Security: SEC4 ✅ (`security-review-4.md`). Design: GH art ✅. Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
