@@ -2,8 +2,13 @@ import { el } from '../dom.ts';
 
 const MAX_TOASTS = 4;
 const TOAST_MS = 5000;
-/** Card R21: on a computer the messages come in on the right side, this share of the video's height down from its top. */
-const SIDE_TOP = 0.28;
+/**
+ * Card R21: on a computer the messages come in on the right side. Card R25 (owner: "they sit right where I type"): they
+ * start below the rail's message box (open or not, so they never jump), at least this share of the video's height down.
+ */
+const SIDE_TOP = 0.45;
+/** Gap between the message box (or its 💬 button) and the first message. */
+const BOX_GAP = 16;
 /** The player's own bar (seek line + buttons) at the video's foot, plus a gap: messages never reach into it. */
 const BAR_SPACE = 96;
 
@@ -43,7 +48,12 @@ export function createToasts(container: HTMLElement, anchor: HTMLElement, dock?:
       const phone = document.documentElement.classList.contains('phone');
       const cinema = !inFullscreen() && !!room?.classList.contains('cinema');
       if (!phone && !cinema && (inFullscreen() || room?.classList.contains('side-hidden'))) {
-        s.top = `${Math.round(p.height * SIDE_TOP)}px`;
+        // The message box opens lined up with 💬 (fullscreen.ts openPop); messages start below whichever ends lower.
+        const below = [dock!.querySelector('#dock-chat'), dock!.querySelector('#dock-chat-form')]
+          .map((e) => e?.getBoundingClientRect())
+          .filter((r): r is DOMRect => !!r && r.height > 0)
+          .reduce((low, r) => Math.max(low, r.bottom - p.top + BOX_GAP), 0);
+        s.top = `${Math.round(Math.max(p.height * SIDE_TOP, below))}px`;
         floor = p.bottom - BAR_SPACE;
         container.classList.add('right-side');
         return;
@@ -74,6 +84,9 @@ export function createToasts(container: HTMLElement, anchor: HTMLElement, dock?:
 
   document.addEventListener('fullscreenchange', () => requestAnimationFrame(layout));
   if (theater) new MutationObserver(() => requestAnimationFrame(layout)).observe(theater, { attributes: true, attributeFilter: ['class'] });
+  // R25: the message box opening or closing moves the messages below it.
+  const box = dock?.querySelector('#dock-chat-form');
+  if (box) new MutationObserver(() => requestAnimationFrame(layout)).observe(box, { attributes: true, attributeFilter: ['hidden', 'style'] });
   addEventListener('resize', layout);
   layout();
 

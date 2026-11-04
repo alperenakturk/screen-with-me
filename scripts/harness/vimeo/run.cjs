@@ -132,6 +132,24 @@ const frameOf = (page) => page.frames().find((f) => f.url().includes('player.vim
   const title = await alex.evaluate(() => document.getElementById('now-title')?.textContent ?? '');
   check(/Vimeo|\S/.test(title) && !title.includes('undefined'), 'the queue shows a title', title);
 
+  // Card R26: a click in the player's frame moves the focus into it; the room's shortcuts must work at once after it.
+  for (const fs of [false, true]) {
+    if (fs) {
+      await alex.evaluate(() => document.getElementById('fullscreen')?.click());
+      await alex.waitForFunction(() => !!document.fullscreenElement, null, { timeout: 5000 });
+      await alex.waitForTimeout(600);
+    }
+    const box = await alex.locator('#player iframe').boundingBox();
+    await alex.mouse.click(box.x + box.width / 3, box.y + box.height / 2);
+    await alex.waitForTimeout(300);
+    await alex.keyboard.press('Enter');
+    const want = fs ? 'dock-chat-input' : 'chat-input';
+    const got = await until(() => alex.evaluate((id) => document.activeElement?.id === id, want), 3000);
+    check(!!got, `${fs ? 'fullscreen' : 'window'}: a click in the player, then Enter puts the cursor in the message box (R26)`, String(await alex.evaluate(() => document.activeElement?.id || document.activeElement?.tagName)));
+    await alex.keyboard.press('Escape');
+    await alex.waitForTimeout(300);
+  }
+
   await alex.screenshot({ path: __dirname + '/vimeo-alex.png' });
   await browser.close();
   console.log(failed ? `\n✗ ${failed} checks failed` : '\n✓ Vimeo harness passed');

@@ -1,6 +1,7 @@
 {
   "name": "@swm/extension",
   "private": true,
+  "license": "UNLICENSED",
   "version": "0.9.97.44",
   "type": "module",
   "scripts": {

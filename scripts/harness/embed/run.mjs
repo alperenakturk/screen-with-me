@@ -450,6 +450,19 @@ check(typeof t === 'number' && t > 40, 'katmandaki site film videosunun yerini b
 riley.clear();
 await a.press('1', 'Digit1', 49);
 check(!!(await riley.wait((m) => m.t === 'reaction', 5000)), '1 tuşu (odak film sayfasında) → emoji odaya gitti');
+// 6b) Card R26 (owner: "after a click on the video Enter no longer opens the message box"): a click in the film,
+// then Enter: the room's message box gets the focus (the film page forwards the key to the room view).
+{
+  const v = await a.evaluate(`(() => { const r = document.querySelector('video').getBoundingClientRect(); return { x: r.left + r.width / 3, y: r.top + r.height / 2 }; })()`);
+  await a.click(v.x, v.y);
+  await a.sleep(400);
+  await a.press('Enter', 'Enter', 13);
+  const typed = await until(() => a.evalFrame('shell=1', `['chat-input', 'dock-chat-input'].includes(document.activeElement?.id) ? document.activeElement.id : ''`), 3000);
+  check(!!typed, 'filme tıklayınca Enter odanın mesaj kutusunu açıyor (R26)', String(typed));
+  await a.press('Escape', 'Escape', 27);
+  await a.click(v.x, v.y);
+  await a.sleep(600);
+}
 await a.evalFrame('shell=1', `(() => { const i = document.getElementById('chat-input'); i.value = 'katmandan selam'; i.form.requestSubmit(); return 1; })()`);
 check(!!(await riley.wait((m) => m.t === 'chat' && m.message.text === 'katmandan selam', 5000)), 'katmandaki sohbet odaya gitti');
 
@@ -579,6 +592,18 @@ const fs2 = await a.center('#fs');
 if (fs2) await a.click(fs2.x, fs2.y);
 check(!!(await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`))), 'tam ekrana geçildi (altyazı/pin/mesaj testleri için)');
 await a.sleep(1500);
+// R26 in fullscreen: a click in the film, then Enter opens the rail's message box.
+{
+  const v = await a.evaluate(`(() => { const r = document.querySelector('video').getBoundingClientRect(); return { x: r.left + r.width / 3, y: r.top + r.height / 2 }; })()`);
+  await a.click(v.x, v.y);
+  await a.sleep(400);
+  await a.press('Enter', 'Enter', 13);
+  const typed = await until(() => a.evalFrame('shell=1', `document.activeElement?.id === 'dock-chat-input'`), 3000);
+  check(!!typed, 'tam ekranda filme tıklayınca Enter mesaj kutusunu açıyor (R26)');
+  await a.press('Escape', 'Escape', 27);
+  await a.click(v.x, v.y);
+  await a.sleep(800);
+}
 // 7e-1) Option A (0.9.91.1): the film keeps its own player bar and fills the screen; our buttons are a dock on the
 // right edge (an island), nothing of ours covers the bottom of the film.
 {
@@ -706,6 +731,9 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   check(!!holeRect && near(holeRect.b, screenH, 2), 'tam ekranda delik ekranın altına kadar (filmin çubuğu açık)', `delik alt:${holeRect?.b}`);
 
   // Messages flow up next to the dock (right-aligned to its left edge).
+  // The film is paused for these two pictures: its moving bar crossed the message's place between them (R25 moved the
+  // message lower, into its path), which made a see-through box look different.
+  riley.send({ t: 'pause', position: 75, at: Date.now() });
   await a.sleep(1500);
   const noHandle = await a.pixels('9a-mesajsiz');
   riley.send({ t: 'chat', text: 'tam ekranda saydam mi' });
@@ -714,10 +742,10 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   const withHandle = await a.pixels('9b-mesaj');
   const toastR = await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const r = e?.getBoundingClientRect(); return r ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`);
   check(!!toastR && toastR.r <= dock.x - 4 && dock.x - toastR.r < 30 && toastR.b <= dock.b + 2, 'tam ekranda mesaj dock\'un hemen solunda', JSON.stringify({ toastR, dock }));
-  // Card R21: on the right side, 15–40 % down the screen (not the very top corner), with big text, visible.
+  // Cards R21 + R25: on the right side, below the rail's message box (40–60 % down), with big text, visible.
   const look = JSON.parse(await a.evalFrame('shell=1', `(() => { const e = document.querySelector('#toasts .toast:last-child'); const c = getComputedStyle(e); return JSON.stringify({ font: parseFloat(c.fontSize), vis: c.visibility }); })()`));
   const down = toastR ? Math.round((toastR.y / screenH) * 100) : -1;
-  check(down >= 15 && down <= 40 && look.font >= 16 && look.vis === 'visible', 'tam ekranda mesaj sağda, ekranın %15–40 aşağısında, büyük yazıyla görünüyor (R21)', JSON.stringify({ down, ...look }));
+  check(down >= 40 && down <= 60 && look.font >= 16 && look.vis === 'visible', 'tam ekranda mesaj sağda, mesaj kutusunun altında (ekranın %40–60 aşağısında), büyük yazıyla görünüyor (R21, R25)', JSON.stringify({ down, ...look }));
   /** Kutunun sol iç boşluğundaki noktalar (yazıdan uzak): beklenen B ≈ (1 − opaklık) × A. */
   const padSample = (r, keep, img) => {
     let ok = 0;
@@ -743,6 +771,7 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
     // Where the film is dark "lit" can be 0; an opaque grey box would still show as flat dark pixels over bright ones.
     check(ts.n > 10 && ts.ok / ts.n >= 0.8 && ts.flat === 0, 'tam ekranda gelen mesajın altında video görünüyor (saydam)', JSON.stringify(ts));
   } else check(false, 'tam ekranda gelen mesaj göründü');
+  riley.send({ t: 'play', position: 75, at: Date.now() });
 }
 await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
 await a.sleep(800);

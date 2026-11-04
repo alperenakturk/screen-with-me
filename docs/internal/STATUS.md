@@ -439,6 +439,28 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   your messages going out and coming back. Ctrl+K: type "mark", Enter, then Undo. "🐞 This is a bug" shows a text;
   Copy and paste it to the Planner. On the phone it is a sheet from the bottom. `?debug=0` turns it off.
 
+**0.9.97.43 (messages below the message box in fullscreen, card R25):**
+- [ ] In fullscreen (YouTube, a video file, a film page), press Enter to open the message box and leave it open; let a
+  friend write a few messages: they come in below the box and its 💬 button (about half way down the video), stack
+  downward, and never cover the box, the button or the player's bottom bar. Size as before.
+
+**0.9.97.42 (shortcuts right after a click in the player, card R26):**
+- [ ] In a room with a YouTube video, click on the video (play / pause), then press Enter at once: the cursor is in the
+  message box. The same with 1 (an emoji), P (pin) and T; in fullscreen too. YouTube's seek bar, ⚙ settings and
+  captions still work by mouse. On a film page with the extension: click on the film, press Enter: the message box
+  opens (also in fullscreen) and stays open while you type.
+
+**0.9.97.41 (home screens filled, avatar picker without tabs, cards 15f + R27):**
+- [ ] Home page: each screen's orange picture reaches its frame (no dark band along the top or left), and there is no
+  empty strip left of Glowbeam; the text and the art still look balanced.
+- [ ] Open the avatar picker (join card or profile): no tabs, every avatar in one mixed grid, the same order each time
+  (and on your phone); pick one with OK or a double click.
+
+**0.9.97.38 (Opera Night theme removed, stream beside the faces, cards R22 + R23):**
+- [ ] 🎨: no "Opera Night" any more; if you had it, you now see Gece.
+- [ ] With a friend, share your screen: in the Together card "🔴 You're live · 👁 0/4", End stream and the quality now
+  sit right of the faces; the chat below keeps (almost) all its room. Your friend sees "🔴 … is live" and Watch stream
+  in the same place. Before a stream the card looks as before.
 **0.9.97.36 (the film page keeps a new name, BH7):**
 - [ ] In a room on the main site change your name (profile → name), then open a film page in the room with the
   extension: your friend sees you with the new name on the film page, never the old one.
@@ -461,9 +483,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   alien, samurai, fairy, spy, armadillo) without scrolling; pick one and check it in the chat and the faces strip. If
   you had a parody avatar saved, you now have a themed one instead (once; your other rooms too).
 
-**0.9.97.29 (the owner's test board on our site):**
-- [ ] Open the board's address (the Planner has it), tick a test ✅ and write a note: the ticket at the bottom shows
-  both; 📋 Copy puts it on the clipboard; reload: your ticks are still there. Works on the phone too.
+**0.9.97.29 (the owner's test board on our site):** removed in 0.9.97.39 (card R24); nothing to test.
 
 **0.9.97.28 (home art bigger, themed Glowbeam, 🎨 back, card 15d):**
 - [ ] On the home page (computer + phone): the laptop, tablet and phone look bigger; 🎨 is at the top right and opens
@@ -633,6 +653,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
   shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.40 Draw & Guess: open a Draw & Guess table with a friend. In the lobby the host picks a word category (or
+  "All"); the words offered then come from it. While drawing try the 🧽 eraser, undo, then redo (button or Ctrl+Y); a new
+  stroke after undo clears the redo.
 - [ ] 0.9.97.37 Quiz bank: play two or three quizzes in a row with a friend. Questions start easy and get harder within a
   game (stars next to the category), and the same questions don't come back game after game (the help page says
   "Almost 1200 questions").

@@ -1,6 +1,7 @@
 {
   "name": "@swm/shared",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "exports": {
     "./protocol": "./src/protocol.ts",

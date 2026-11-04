@@ -109,21 +109,31 @@ export const AVATAR_PAGES = [
   ['detective', 'pirate', 'astronaut', 'inventor', 'ninja', 'cowboy', 'vampire', 'robot', 'hero', 'explorer', 'chef', 'rocker', 'ghost', 'alien', 'samurai', 'fairy', 'spy', 'armadillo'],
 ] as const;
 
-/**
- * Seçicideki sekmeler: Temalı, Parodi; Parodi'nin altında Film / Dizi / Anime / Oyun.
- * Her sekme AVATAR_PAGES'teki sayfa numaralarını tutar.
- */
-export const AVATAR_TABS = [
-  { key: 'theme', pages: [0] },
-  { key: 'genres', pages: [1] },
-] as const;
-
 /** Avatarın bulunduğu sayfa (yoksa 0). */
 export function avatarPageOf(avatar: string | null | undefined): number {
   return Math.max(0, AVATAR_PAGES.findIndex((p) => (p as readonly string[]).includes(avatar ?? '')));
 }
 
 export const AVATARS = AVATAR_PAGES.flat();
+
+/**
+ * Card R27 (owner, 4 Nov 2026): the picker has no tabs; one grid shows every avatar, themed and genre mixed, in this
+ * fixed shuffled order (the same on every open and every device, so people find theirs again). A seeded shuffle of
+ * `AVATARS`, so a new avatar only needs to be on a page. The pages stay for the random pick (themed) and the home art.
+ */
+export const AVATAR_GRID: readonly string[] = (() => {
+  const list: string[] = [...AVATARS];
+  let seed = 0x5eed1e;
+  const next = () => {
+    seed = (seed * 1103515245 + 12345) >>> 0;
+    return seed / 2 ** 32;
+  };
+  for (let i = list.length - 1; i > 0; i--) {
+    const k = Math.floor(next() * (i + 1));
+    [list[i], list[k]] = [list[k]!, list[i]!];
+  }
+  return list;
+})();
 
 export type Avatar = (typeof AVATAR_PAGES)[number][number];
 
