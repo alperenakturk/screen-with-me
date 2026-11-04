@@ -18,6 +18,13 @@ const answer = await (await search('big buck bunny')).json();
 if (live) {
   ok(answer.error === 'quota' || (Array.isArray(answer.items) && answer.items.length > 0), `Live search finds videos (${answer.error ?? answer.items.length + ' results'})`);
   if (answer.items) ok(answer.items.every((i) => /^[A-Za-z0-9_-]{11}$/.test(i.id) && typeof i.title === 'string'), 'Every result has a video id and a title');
+  if (answer.items) {
+    // Security R4-9: the same words again should come from the Worker's cache. On *.workers.dev the Cache API may do
+    // nothing; that is a finding to report (the own domain fixes it), not a broken release, so it only warns.
+    const again = await search('big buck bunny');
+    if (again.headers.get('X-SWM-Cache') === 'hit') console.log('ok  The same search again is answered from the cache');
+    else console.log('::warning::R4-9: a repeated search was not answered from the cache (Cache API inactive on this host?)');
+  }
 } else {
   ok(answer.error === 'off' || Array.isArray(answer.items), `Local answer has a known shape (${answer.error ?? 'items'})`);
 }

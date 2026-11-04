@@ -19,3 +19,33 @@ export async function ipHashKey(hex: string): Promise<CryptoKey> {
 export function newIpHashKey(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+/**
+ * Security R4-2: the day's key, cached only once it is *resolved*. `fetchEntry` asks the key object for `{day, key}`
+ * and gets an abort signal that fires after `timeoutMs`; while nothing is cached every call asks on its own (a promise
+ * made in one request and shared with the next could stay pending for good if the first request were cancelled). When
+ * the object can't answer in time, a random key of this isolate is used meanwhile and the next call asks again.
+ */
+export function dailyKeyCache(fetchEntry: (signal: AbortSignal) => Promise<{ day: string; key: string }>, timeoutMs = 3000) {
+  let cached: { day: string; key: CryptoKey } | null = null;
+  let fallback: CryptoKey | null = null;
+  return async function todaysKey(now = Date.now()): Promise<CryptoKey> {
+    const day = new Date(now).toISOString().slice(0, 10);
+    if (cached?.day === day) return cached.key;
+    try {
+      const signal = AbortSignal.timeout(timeoutMs);
+      const entry = await new Promise<{ day: string; key: string }>((resolve, reject) => {
+        // The abort decides even when the fetch ignores its signal.
+        signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+        fetchEntry(signal).then(resolve, reject);
+      });
+      const key = await ipHashKey(entry.key);
+      if (entry.day === day) cached = { day, key };
+      return key;
+    } catch {
+      const own = fallback ?? (await ipHashKey(newIpHashKey()));
+      fallback ??= own;
+      return fallback;
+    }
+  };
+}

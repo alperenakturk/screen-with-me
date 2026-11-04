@@ -19,6 +19,7 @@ export { Poker } from './poker.ts';
 export { Quiz } from './quiz.ts';
 export { Room } from './room.ts';
 export { TvLink } from './tv-link.ts';
+import { tvOn } from './tv-switch.ts';
 export { MoveLink } from './move-link.ts';
 export { YoutubeUsage } from './usage.ts';
 export { IpKeys } from './ip-key.ts';
@@ -29,6 +30,7 @@ export { UploadGate } from './upload-gate.ts';
  * another website can't make its visitors join or spam rooms (security review 1, O1). Without `Origin` it is not a
  * browser (tests, tools), and such a client could fake the header anyway.
  */
+
 /** How long the probe WebSocket may stay open (R4-7). */
 const PROBE_MS = 10_000;
 
@@ -140,10 +142,14 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     // Connection probe (HTTP fallback, `/connection`): does a WebSocket open on this network at all? Answers "ok" and
-    // waits for the client to close. `?bytes=N` on a plain request answers N bytes (diagnostics: large answers).
+    // waits for the client to close. `?bytes=N` on a plain request answers N bytes, at most 200 kB (diagnostics: large answers).
     if (url.pathname === '/api/probe') {
       if (request.headers.get('Upgrade') !== 'websocket') {
-        const bytes = Math.min(Math.max(Number(url.searchParams.get('bytes')) || 0, 0), 512_000);
+        // Security R4-3: the plain answer (at most 200 kB) counts against the info limit, per address (`probe:` key).
+        if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: `probe:${await ipKey(request, env)}` })).success) {
+          return Response.json({ error: 'busy' }, { status: 429, headers: { 'Cache-Control': 'no-store' } });
+        }
+        const bytes = Math.min(Math.max(Number(url.searchParams.get('bytes')) || 0, 0), 200_000);
         return new Response('x'.repeat(bytes), { headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain' } });
       }
       const guarded = await guardSocket(request, url, env);
@@ -246,6 +252,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     // A TV waiting to be paired: it shows this code and listens here until a phone in a room types it.
     const tv = url.pathname.match(/^\/api\/tv\/([^/]+)\/ws$/);
     if (tv) {
+      // Security R4-10: the TV is hidden until it ships with M8 done, so its routes are off unless `TV=on`.
+      if (!tvOn(env)) return new Response('Not found', { status: 404 });
       if (!TV_CODE.test(tv[1]!)) return new Response('Invalid code', { status: 400 });
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       const guarded = await guardSocket(request, url, env);
