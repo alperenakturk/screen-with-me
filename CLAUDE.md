@@ -1402,8 +1402,10 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   logs each socket the server or network closed with its code and time). Keys are in repo Secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`);
   without them the job is skipped with a warning.
   **CI diet (Nov 2026; owner's testing rule: "run as many tests as needed, none on unrelated parts, never give up
-  quality"):** a first `changes` job diffs the change (a PR: `HEAD^1..HEAD` of its merge commit; main: `before..HEAD`;
-  a manual run or an unknown base: everything) into `code` (anything besides `docs/**` and `*.md`) and `web`
+  quality"):** a first `changes` job (`scripts/ci-changes.mjs`, its own test `scripts/ci-changes.test.mjs` runs
+  first) diffs the change (a PR: `HEAD^1..HEAD` of its merge commit; main: from the last successful run on main, because
+  the concurrency group keeps one pending run and a newer push cancels an older pending one, so a docs-only push after a
+  cancelled code push must still deploy that code; a manual run or an unknown base: everything) into `code` (anything besides `docs/**` and `*.md`) and `web`
   (`apps/web/`, `packages/shared/`, `scripts/harness/`, the workflows). Docs-only: the test job and the deploy are
   skipped by their `if` (a skipped job reports success for a required check; never use `paths-ignore`, which leaves a
   required check pending for good). The browser harnesses (a11y, Test Lab) run only when `web` is true. A new push to a
