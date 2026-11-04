@@ -15,7 +15,7 @@
 //              The ticket shows the part of the title before its first ':' as the decision's name.
 //   road      [{ status: 'done' | 'now' | 'next', title, text: 'a paragraph' (optional), list: ['…', …] (optional) }]
 window.SIDELIT_BOARD = {
-  meta: { updated: '4 Kasım 2026, 13:50', live: '0.9.97.31' },
+  meta: { updated: '4 Kasım 2026, 14:35', live: '0.9.97.31' },
 
   tests: [
     { group: 'Ana sayfa', filter: 'solo', id: 'home3', title: 'Üç cihaz ve rastgele avatarlar', version: '0.9.97.23',
@@ -83,10 +83,6 @@ window.SIDELIT_BOARD = {
   decisions: [
     { id: 'versions', title: 'Sürüm planı: güvenlik bitince 0.9.98, konsey + hata avından sonra 0.9.99', options: ['Onaylıyorum', 'Değişsin'] },
     { id: 'usage', title: 'Yeni USAGE_TOKEN: bir kez üret, sakla, GitHub secret\'ını güncelle', options: ['Yaptım', 'Sonra yapacağım'] },
-    { id: 'branches', title: 'GitHub\'da işi bitmiş eski dalları sil (Branches sayfası): claude/preload-previews, claude/live-reload-ask, claude/rail-slide, claude/frames-streak, claude/yt-fs-no-column',
-      options: ['Sildim', 'Sonra'] },
-    { id: 'branches2', title: 'Dört eski dalı da sil: claude/places-and-decor, claude/side-games-in-room, claude/game-window-rules, claude/five-frames-own',
-      options: ['Sildim', 'Sonra'] },
     { id: 'filmintro', title: 'Film sayfasında intro: önerim oynamasın (odaya girerken zaten oynuyor)', options: ['Oynamasın', 'Oynasın'] },
   ],
 
@@ -103,6 +99,7 @@ window.SIDELIT_BOARD = {
     { status: 'next', title: 'Resmi işler',
       list: ['Gizlilik politikası (KVKK + GDPR) baştan', 'Kullanım koşulları, kötüye kullanım iletişimi', 'YouTube API uyum denetimi (kota artışı için)', 'Kendi alan adı + destek e-postası'] },
     { status: 'next', title: '0.9.99 → mağaza', text: 'Konsey ve hata avı düzeltmeleri, Brave/Edge testi, Chrome Web Store başvurusu.' },
+    { status: 'next', title: 'Tanıtım videosu (gerçek oyuncularla)', text: '0.9.99 ile 1.0 arasında çekilir. Ekip: kamera, yönetmen ve kurgu tek kişi; iki oyuncu (bir erkek, bir kadın). Senaryoyu ve çekim listesini ben hazırlarım.' },
     { status: 'next', title: '1.0 çıkış', text: 'Son isim ve alan adı, sosyal hesaplar, tanıtım içeriği ve video.' },
   ],
 };

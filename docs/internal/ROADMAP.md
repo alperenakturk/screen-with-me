@@ -62,7 +62,7 @@ summary (STATUS history until `CHANGELOG.md` exists).
 | | **Owner approved 0.9.97 (3 Nov 2026):** the side games polish (card GP) ships as **0.9.97**; until then releases stay 0.9.96.x, after it 0.9.97.x. Proposed next (owner's OK later): 0.9.98 when the security block is done (its design / tablet / a11y work already shipped as 0.9.96.x), 0.9.99 after the council review + bug hunt. | |
 | 0.9.98 | Design sweep, tablet, accessibility | screenshot sweep fixed; tablet harness; contrast + keyboard harness pass |
 | 0.9.99 | **Feature complete**: security cards (reviews 2–3), council review fixes, bug hunt | no known high / medium security finding open; council's must-fix list done; owner's big test round starts |
-| 0.9.99.x → 1.0 | Owner's test round + bug fixes, Security final pass, privacy policy (KVKK + GDPR) + terms + lawyer if possible, trademark / domain checks, own domain + move (security review 3 R3-3), YouTube quota application, store texts and images, design fixes | 0 open bugs (or deferred by the owner); policy + terms linked; domain live; store package ready |
+| 0.9.99.x → 1.0 | Owner's test round + bug fixes, the live-action launch video (owner, 4 Nov 2026: real actors; crew of three: one person as camera, director and editor + two actors, a man and a woman), Security final pass, privacy policy (KVKK + GDPR) + terms + lawyer if possible, trademark / domain checks, own domain + move (security review 3 R3-3), YouTube quota application, store texts and images, design fixes | 0 open bugs (or deferred by the owner); policy + terms linked; domain live; store package ready |
 | 1.0.0 | Launch (§7): Chrome Web Store submission (owner, 3 Nov 2026: "then we apply") | Brave / Edge reminder, store submission, no protocol bump during review |
 
 ---
@@ -262,6 +262,10 @@ implement, test, ship.
 - [ ] After approval: install links point to the store, `eklenti.html` updated.
 - [ ] **(added)** Reserve social handles under the final name 👤 (Instagram, TikTok, X, YouTube, GitHub org, Product
   Hunt) as soon as the name is final — before announcing anything.
+- [ ] **(owner, 4 Nov 2026) Live-action launch video**, shot between 0.9.99 and 1.0 with real actors: a crew of three
+  (one person as camera, director and editor; two actors, a man and a woman) 👤. Claude drafts the script, the shot list
+  and the on-screen texts (English first, Turkish second); tools from the owner's catalogue (`hyperframes`, `video-use`,
+  `earshot`) may help with the edit.
 - [ ] Launch content: 30–60 s demo video/GIF, store screenshots, a short landing page story; first Instagram/TikTok
   posts (owner's plan; Claude can draft scripts and visuals).
 - [ ] **(added)** Feedback loop: in-product "send feedback" link, GitHub issue templates, reply within a few days.
