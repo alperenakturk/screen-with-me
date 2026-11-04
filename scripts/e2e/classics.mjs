@@ -84,6 +84,32 @@ sam.send({ t: 'sit', seat: 1 });
 ok(await until(() => alex.state.seats[1] && !alex.state.seats[1].bot && alex.state.seats[1].name === 'Sam'), 'a person can take Glowbeam\'s seat');
 ok(alex.state.started === false && filled(alex.state) === 32, 'a new opponent starts the game over');
 
+// Chess (P7) between two people: the server checks every move; fool's mate ends the game.
+const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
+const mv = (from, to) => sq(from) * 64 + sq(to);
+alex.send({ t: 'switch', game: 'chess' });
+ok(await until(() => alex.state.kind === 'chess' && sam.state.kind === 'chess' && filled(alex.state) === 32 && alex.state.game.kinds?.length === 64), 'chess from the shelf: 32 pieces, both see it');
+alex.send({ t: 'move', cell: mv('e1', 'e3') });
+ok(await until(() => alex.inbox.filter((m) => m.t === 'error' && m.code === 'not_your_turn').length >= 2), 'an illegal chess move (the king jumping two squares) is refused');
+const plies = [[alex, 'f2', 'f3'], [sam, 'e7', 'e5'], [alex, 'g2', 'g4'], [sam, 'd8', 'h4']];
+for (const [who, from, to] of plies) {
+  const before = alex.state.game.last;
+  who.send({ t: 'move', cell: mv(from, to) });
+  await until(() => alex.state.game.last === sq(to) && alex.state.game.last !== before, 6000);
+}
+ok(alex.state.game.winner === 'O' && alex.state.game.end === 'mate' && alex.state.score.O === 1, "fool's mate: black wins by checkmate, the score counts it");
+
+// Backgammon (P8): the server rolls the dice; a client can't send its own dice, only a roll and checker steps.
+alex.send({ t: 'switch', game: 'backgammon' });
+ok(await until(() => alex.state.kind === 'backgammon' && alex.state.game.pts?.length === 24 && alex.state.game.dice.length === 0), 'backgammon from the shelf: 24 points, nobody has rolled');
+const ROLL = 1000;
+sam.send({ t: 'move', cell: ROLL });
+ok(await until(() => sam.inbox.some((m) => m.t === 'error' && m.code === 'not_your_turn')), 'only the player to move may roll');
+alex.send({ t: 'move', cell: ROLL });
+ok(await until(() => alex.state.game.rolled.length === 2 && alex.state.game.rolled.every((d) => d >= 1 && d <= 6)), `the server rolls two dice (${alex.state.game.rolled?.join('–')})`);
+const g = alex.state.game;
+ok(g.dice.length > 0 || g.passed === 'X', 'the roll leaves dice to use (or passes the turn when none fit)');
+
 alex.ws.close();
 sam.ws.close();
 console.log('✓ Classics passed');

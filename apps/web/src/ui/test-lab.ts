@@ -21,6 +21,7 @@ import {
   type LabHooks,
   type LabTab,
 } from '../debug-lab.ts';
+import { createFriends } from './lab-friends.ts';
 import './test-lab.css';
 
 const TEXT = {
@@ -422,6 +423,16 @@ export function mountDebugPanel(): void {
     { id: 'lab.off', title: 'Lab: turn the lab off', help: 'Removes the lab from this tab (same as ?debug=0).', tab: 'status', run: () => turnOff() },
   ];
   const unregisterOwn = debugHooks.register('lab', () => ({ commands: own }));
+  // 👥 Fake friends (DL2): ordinary clients in this room, all gone when the lab is turned off or the tab closes.
+  const runById = (id: string, arg?: string): Promise<unknown> => {
+    const c = allCommands().find((x) => x.id === id);
+    return c ? runCommand(c, arg).then((line) => (line.dir === 'error' ? Promise.reject(new Error(line.text)) : line.text)) : Promise.reject(new Error(`no command ${id}`));
+  };
+  const friends = createFriends(roomIdInPath(), addLog, runById);
+  const unregisterFriends = debugHooks.register('friends', () => ({
+    commands: friends.commands,
+    status: () => (friends.count() ? [['Fake friends', String(friends.count())]] : []),
+  }));
 
   // ---- head, tabs, body, foot ----
   const closeButton = el('button', { type: 'button', class: 'icon-btn debug-close', 'aria-label': tx.close }, '✕');
@@ -575,7 +586,17 @@ export function mountDebugPanel(): void {
       // No tab storage.
     }
     for (const [t, b] of tabButtons) b.setAttribute('aria-selected', String(t === tab));
-    const view = tab === 'status' ? statusView : tab === 'log' ? logView : commandView(tab);
+    const view =
+      tab === 'status'
+        ? statusView
+        : tab === 'log'
+          ? logView
+          : tab === 'friends'
+            ? el('div', { class: 'lab-view', 'data-view': 'friends' }, friends.view((id, arg) => {
+                const c = allCommands().find((x) => x.id === id);
+                if (c) void runAndShow(c, arg);
+              }), el('h4', {}, tx.commands), commandView(tab))
+            : commandView(tab);
     const commands = tab === 'status' || tab === 'log' ? commandView(tab) : null;
     body.replaceChildren(view, ...(commands && commands.querySelector('.lab-commands') ? [el('h4', {}, tx.commands), commands] : []), undoBar);
     draw();
@@ -748,6 +769,9 @@ export function mountDebugPanel(): void {
     if (!panel.hidden && current === 'log') drawLog();
   };
   logListeners.add(onLog);
+  const offFriends = friends.onChange(() => {
+    if (!panel.hidden && current === 'friends') show('friends');
+  });
   const offHooks = debugHooks.onChange(() => {
     if (!panel.hidden && current !== 'status' && current !== 'log') show(current);
   });
@@ -791,6 +815,9 @@ export function mountDebugPanel(): void {
     location.reload();
   });
   function turnOff(): void {
+    friends.close();
+    offFriends();
+    unregisterFriends();
     clearInterval(timer);
     clearInterval(sampler);
     sampler = 0;
