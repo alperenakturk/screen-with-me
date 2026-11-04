@@ -83,14 +83,14 @@ const wa4 = await a4.wait((m) => m.t === 'welcome' || m.t === 'error', 'welcome 
 ok(wa4.t === 'welcome', 'Yönetici kendini yasaklamadı');
 
 // Aynı tarayıcıdan farklı isimle giren ikinci kişi (test ederken sık olur): o isim yasaklanır, yönetici değil.
-const v = client({ name: 'Veli', cid: 'alexCid12345' });
-const wv = await v.wait((m) => m.t === 'welcome', 'welcome veli');
+const v = client({ name: 'Jordan', cid: 'alexCid12345' });
+const wv = await v.wait((m) => m.t === 'welcome', 'welcome jordan');
 a2.send({ t: 'kick', id: wv.you });
 for (let i = 0; i < 20 && v.closed() === null; i++) await sleep(100);
-ok(v.closed() === 4003 && a2.closed() === null && a4.closed() === null, 'Aynı tarayıcıdaki Veli atıldı, yönetici sekmeleri açık kaldı');
-const v2 = client({ name: 'Veli', cid: 'alexCid12345' });
-const wv2 = await v2.wait((m) => m.t === 'welcome' || m.t === 'error', 'veli rejoin');
-ok(wv2.t === 'error' && wv2.code === 'kicked', 'Veli aynı isimle geri giremiyor');
+ok(v.closed() === 4003 && a2.closed() === null && a4.closed() === null, 'Aynı tarayıcıdaki Jordan atıldı, yönetici sekmeleri açık kaldı');
+const v2 = client({ name: 'Jordan', cid: 'alexCid12345' });
+const wv2 = await v2.wait((m) => m.t === 'welcome' || m.t === 'error', 'jordan rejoin');
+ok(wv2.t === 'error' && wv2.code === 'kicked', 'Jordan aynı isimle geri giremiyor');
 
 // Yeni emoji sayfaları kabul ediliyor.
 a4.send({ t: 'react', emoji: '🤮' });
@@ -109,6 +109,8 @@ const sam = roster.members.find((m) => m.name.startsWith('Sa'));
 a4.send({ t: 'make-host', id: sam.id });
 const handed = await b3.wait((m) => m.t === 'members' && m.hostId === sam.id, 'host handed');
 ok(handed.hostId === sam.id, 'The host hands the role to Sam; everyone sees the new host');
+const newHostBans = await b3.wait((m) => m.t === 'bans', 'bans to the new host');
+ok(newHostBans.bans.some((b) => b.name === 'Jordan'), 'BH4: the new host gets the list of people removed (Jordan), so they can let them back in');
 a4.send({ t: 'kick', id: sam.id });
 ok((await a4.wait((m) => m.t === 'error', 'old host kick')).code === 'not_host', 'The old host is a guest now');
 b3.send({ t: 'make-host', id: wa4.you });
