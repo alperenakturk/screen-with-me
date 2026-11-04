@@ -74,7 +74,7 @@ const roomCloses = (page) => page.evaluate(() => window.__closes.filter(([u]) =>
   check(before.active && before.shown && before.frames > 0, 'Sam streams and Alex sees it', JSON.stringify(before));
 
   // Games while streaming: no room connection closes.
-  for (const kind of ['xox', 'draw']) {
+  for (const kind of ['classics', 'draw']) {
     await alex.evaluate(async (kind) => {
       document.getElementById('game-btn').click();
       await new Promise((r) => setTimeout(r, 300));
@@ -114,7 +114,7 @@ const roomCloses = (page) => page.evaluate(() => window.__closes.filter(([u]) =>
     document.querySelector('#game-menu [data-tab="together"]')?.click();
   });
   await drop(alex);
-  await alex.evaluate(() => document.querySelector('#game-menu [data-kind="xox"]')?.click());
+  await alex.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]')?.click());
   const opened = await alex.waitForFunction(() => !document.getElementById('game-stage')?.hidden, null, { timeout: 15000 }).then(() => true, () => false);
   check(opened, 'a game pressed while the room connection was down opens on that one press');
 
