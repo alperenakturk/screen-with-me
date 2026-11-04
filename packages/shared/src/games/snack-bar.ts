@@ -6,7 +6,7 @@
 // - Income only while the room's video plays (`ctx.playing`); a paused or empty room earns nothing.
 // - Together bonus: +10 % per other person in the room, +5 % more for each of them who is in voice with me.
 // - Only in a room (owner, 4 Nov 2026): the game moves only while its window is open (or minimized) in a room and the
-//   room's video plays. Nothing is paid for the time away (the old "while you were away" share is gone, 0.9.97.29).
+//   room's video plays. Nothing is paid for the time away (the old "while you were away" share is gone, 0.9.97.31).
 // - Prestige "open a new cinema": restart with stars, each star a lasting income bonus.
 // - Side games 2 (owner's picks 1, 2, 4; 4 Nov 2026): customers walk up with a line and a tap serves them for more
 //   (missing one costs nothing); at a film's end Glowbeam hands over a receipt with a golden bucket; badges, each worth
