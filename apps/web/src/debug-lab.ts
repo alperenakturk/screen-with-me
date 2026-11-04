@@ -41,6 +41,20 @@ export interface RoomLab {
   stall(ms: number): boolean;
   /** Adds a link to the queue like the link box does. */
   addLink(url: string): void;
+  // 🧪 Scenarios (DL5): what the room shows, and the room's own UI paths.
+  playback(): { item: boolean; paused: boolean };
+  memberId(): string | null;
+  members(): { id: string; name: string }[];
+  /** Presses 🧪 Sync test (an empty room plays it). */
+  syncTest(): void;
+  isHost(): boolean;
+  knockOn(): boolean;
+  /** "Ask before letting people in" (host only; false when I'm not the host). */
+  knock(on: boolean): boolean;
+  /** The person menu's "🔒 Message privately" (false when that member is not here). */
+  openPrivate(memberId: string): boolean;
+  /** Writes in the chat box and sends it (to the private person when the box is private). */
+  write(text: string): void;
 }
 
 let roomSource: (() => DebugRoom) | null = null;
