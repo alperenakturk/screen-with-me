@@ -49,8 +49,10 @@ export function renderAvatarPicker(
         },
       }))),
     ];
-    if ('subs' in active) {
-      rows.push(tabRow(active.subs.map((sub, i) => ({
+    // Sub-tabs (the old Parody tab had Film / Series / Anime / Game; card R20 removed it). Kept for a tab that has them.
+    const subs = 'subs' in active ? (active as { subs: readonly string[] }).subs : null;
+    if (subs) {
+      rows.push(tabRow(subs.map((sub, i) => ({
         label: t(`avatarPage.${sub}` as I18nKey),
         selected: active.pages[i] === page,
         go: () => {

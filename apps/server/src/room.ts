@@ -42,6 +42,7 @@ import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting
 import { freshRecaps, RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
+import { PLANT_IDS } from '@swm/shared/games/garden';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
@@ -182,6 +183,9 @@ function memberOf(attachment: Joined): Member {
 }
 
 /** Yöneticilik ve atma için kişiyi tanıyan anahtar: kalıcı kimlik varsa o, yoksa bağlantı. */
+/** Serves that fill the room's tip jar (side games 2). */
+const TIP_JAR_SIZE = 60;
+
 function keyOf(attachment: Attachment): string {
   return attachment.cid ? `c:${attachment.cid}` : `i:${attachment.id}`;
 }
@@ -287,6 +291,11 @@ export class Room extends DurableObject<Env> {
   private readonly lastReaction = new Map<string, number>();
   /** "Odaya döndüm" haberi: kişi başı en fazla yarım dakikada bir (filmdekileri kart yağmuruna tutmasın). */
   private readonly homeLimit = new RateLimiter(1, 1 / 30);
+  /** Side games 2: a tip per person at most every 2 s; a cutting per person at most every 30 s. */
+  private readonly tipLimit = new RateLimiter(2, 0.5);
+  private readonly giftLimit = new RateLimiter(1, 1 / 30);
+  /** The room's tip jar (pick 5): filled by everyone's Snack Bar serves; full = +10 % for everyone till the film ends. */
+  private tipJar: { fill: number; boost: string | null } = { fill: 0, boost: null };
   /** Custom emojis added today in this room (`stickerDay` in storage); at most STICKER_ADDS_PER_DAY. */
   private stickerDay: { day: number; count: number } = { day: 0, count: 0 };
   /** Özel emoji ekleme: birkaç tane hemen, sonra 20 sn'de bir (büyük veri). */
@@ -557,6 +566,29 @@ export class Room extends DurableObject<Env> {
       case 'tv':
         await this.relayTv(ws, attachment, message.op, message.value);
         return;
+      case 'tip': {
+        // Only while something plays; the jar is for this film.
+        if (!this.room.state.item || this.room.state.paused || !this.tipLimit.allow(keyOf(attachment))) return;
+        this.tipJar.fill += 1;
+        if (this.tipJar.fill >= TIP_JAR_SIZE) {
+          this.tipJar = { fill: 0, boost: this.room.state.item.id };
+          this.broadcast({ t: 'tipjar', fill: 0, size: TIP_JAR_SIZE, boost: this.tipJar.boost, by: me });
+        } else if (this.tipJar.fill % 5 === 0) {
+          this.broadcast({ t: 'tipjar', fill: this.tipJar.fill, size: TIP_JAR_SIZE, boost: this.tipJar.boost });
+        }
+        return;
+      }
+      case 'gift': {
+        // A cutting goes to one person in the room (by person, not to myself); its plant is checked against the album.
+        const mine = attachment.pk;
+        const target = this.joined().find((a) => a.id === message.to && !a.tv);
+        if (!target || !mine || target.pk === mine || !PLANT_IDS.includes(message.plant) || !this.giftLimit.allow(keyOf(attachment))) return;
+        for (const socket of this.openSockets()) {
+          const a = socket.deserializeAttachment() as Attachment | null;
+          if (a?.name && !a.tv && !a.knock && a.pk === target.pk) this.sendTo(socket, { t: 'gift', from: me, plant: message.plant });
+        }
+        return;
+      }
       case 'home':
         // Sadece haber: filmdekilere "sen de dön" diye sorulur (sık basılıp kimseyi rahatsız etmesin).
         if (!this.homeLimit.allow(keyOf(attachment))) return;
@@ -1341,6 +1373,7 @@ export class Room extends DurableObject<Env> {
     }
     // Chat images of the history, one per message (the 1 MB limit again).
     for (const [id, data] of this.chatImages) this.sendTo(ws, { t: 'chat-image', id, data });
+    if (this.tipJar.fill || this.tipJar.boost) this.sendTo(ws, { t: 'tipjar', fill: this.tipJar.fill, size: TIP_JAR_SIZE, boost: this.tipJar.boost });
     this.broadcast({ t: 'members', members, hostId }, ws);
     this.sendBans();
     // R12: the host (any of their tabs) sees who is waiting at the door; those waiting learn a host is here.
@@ -2159,7 +2192,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'tip' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

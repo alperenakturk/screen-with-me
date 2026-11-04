@@ -44,6 +44,14 @@ export interface SoloRoom {
   item: { id: string; duration: number; position: number; title?: string } | null;
   /** Others' names (Window Garden's memories keep them in this browser only). */
   names?: string[];
+  /** Others in the room, by member id (Window Garden gives them cuttings). */
+  people?: { id: string; name: string }[];
+  /** The room's tip jar: how full, its size, and whether its +10 % is on for this film. */
+  tipJar?: { fill: number; size: number; boost: boolean } | null;
+  /** A Snack Bar serve puts a coin in the room's tip jar. */
+  tip?: () => void;
+  /** Sends a cutting to someone in the room; false when the room connection is down. */
+  gift?: (to: string, plant: string) => boolean;
 }
 
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
