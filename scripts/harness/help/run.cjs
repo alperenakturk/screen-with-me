@@ -234,6 +234,95 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
   const index = fs.readFileSync(path.join(PUBLIC, '..', 'index.html'), 'utf8');
   check(/href="\/thanks\.html\?lang=en"/.test(helpHtml) && /href="\/thanks\.html\?lang=tr"/.test(helpHtml) && /data-thanks-link/.test(index), 'the Help page (EN + TR) and the footer link the Thanks page');
 
+  // BH3 (consistency): every number the privacy policy states is the code's, in both languages.
+  {
+    const raw = fs.readFileSync(path.join(PUBLIC, 'privacy.html'), 'utf8');
+    const block = (lang) => {
+      const start = raw.indexOf(`data-lang-block="${lang}"`);
+      const end = lang === 'en' ? raw.indexOf('data-lang-block="tr"') : raw.length;
+      return raw.slice(start, end).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+    };
+    const H = 3_600_000;
+    const D = 86_400_000;
+    const n = {
+      chat: constant('apps/server/src/room.ts', 'CHAT_HISTORY'),
+      images: constant('packages/shared/src/protocol.ts', 'MAX_CHAT_IMAGES'),
+      session: constant('packages/shared/src/recap.ts', 'SESSION_GAP_MS') / H,
+      recapsSaved: constant('packages/shared/src/recap.ts', 'RECAPS_KEEP_SAVED'),
+      recaps: constant('packages/shared/src/recap.ts', 'RECAPS_KEEP'),
+      recapDays: constant('packages/shared/src/recap.ts', 'RECAP_MAX_AGE_MS') / D,
+      moveMin: constant('packages/shared/src/move.ts', 'MOVE_TTL_MS') / 60_000,
+      videos: constant('apps/server/src/room.ts', 'MAX_HISTORY'),
+      stickers: constant('packages/shared/src/protocol.ts', 'MAX_STICKERS'),
+      emptyH: constant('apps/server/src/room.ts', 'EMPTY_ROOM_TTL_MS') / H,
+      savedDays: constant('apps/server/src/room.ts', 'SAVED_ROOM_TTL_MS') / D,
+      tvTokenH: constant('apps/server/src/room.ts', 'TV_TOKEN_TTL_MS') / H,
+      tvCodeMin: constant('apps/server/src/tv-link.ts', 'CODE_TTL_MS') / 60_000,
+      gameH: constant('apps/server/src/game.ts', 'EMPTY_TTL_MS') / H,
+      searchH: constant('apps/server/src/youtube.ts', 'RESULT_TTL_S') / 3600,
+      titleDays: constant('packages/shared/src/room-logic.ts', 'TITLE_MAX_AGE_MS') / D,
+      usageDays: constant('packages/shared/src/yt-usage.ts', 'USAGE_DAYS'),
+      admitH: constant('apps/server/src/room.ts', 'ADMIT_TTL_MS') / H,
+    };
+    const says = {
+      en: [
+        `the last ${n.chat} messages of a room`,
+        `(up to ${n.images})`,
+        `more than ${n.session} hours`,
+        `up to ${n.recapsSaved} in a saved room, ${n.recaps} otherwise`,
+        `at most ${n.recapDays} days`,
+        `after ${n.moveMin} minutes or once used`,
+        `the last ${n.videos} videos`,
+        `at most ${n.stickers} per room`,
+        `deleted ${n.emptyH} hours after the last person leaves (${n.savedDays} days`,
+        `at most ${n.tvTokenH} hours after its last use`,
+        `valid for ${n.tvCodeMin} minutes`,
+        `deleted ${n.gameH} hours after the last player leaves`,
+        `for up to ${n.searchH} hours`,
+        `at most ${n.titleDays} days after`,
+        `kept ${n.usageDays} days`,
+        `for ${n.admitH} hours after they were last there`,
+      ],
+      tr: [
+        `son ${n.chat} mesaj`,
+        `(en fazla ${n.images})`,
+        `${n.session} saatten uzun`,
+        `kayıtlı odada en fazla ${n.recapsSaved}, diğerlerinde ${n.recaps}`,
+        `en fazla ${n.recapDays} gün`,
+        `kod ${n.moveMin} dakika sonra`,
+        `son ${n.videos} videonun`,
+        `odada en fazla ${n.stickers}`,
+        `${n.emptyH} saat sonra (yönetici odayı kaydettiyse ${n.savedDays} gün sonra)`,
+        `en fazla ${n.tvTokenH} saat tutar`,
+        `${n.tvCodeMin} dakika geçerlidir`,
+        `${n.gameH} saat sonra silinir`,
+        `en fazla ${n.searchH} saat tutar`,
+        `en çok ${n.titleDays} gün tutar`,
+        `${n.usageDays} gün tutulur`,
+        `sonra ${n.admitH} saat tutar`,
+      ],
+    };
+    for (const lang of ['en', 'tr']) {
+      const text = block(lang);
+      const wrong = says[lang].filter((x) => !text.includes(x));
+      check(wrong.length === 0, `privacy ${lang}: every number matches the code (${says[lang].length} checked)`, wrong);
+    }
+    // The games hall's quiz line ("Almost 400 questions in 11 topics") against the question bank (it once said "over
+    // 400" with 395).
+    const i18n = fs.readFileSync(path.join(ROOT, 'apps/web/src/i18n.ts'), 'utf8');
+    const bank = fs.readFileSync(path.join(ROOT, 'packages/shared/src/games/quiz-questions.ts'), 'utf8');
+    const topics = (/QUIZ_CATEGORIES = \[([^\]]+)\]/.exec(bank)?.[1] ?? '').split(',').length;
+    // The real bank, loaded the way the server does (Node strips the types).
+    const entries = Number(
+      require('child_process')
+        .spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings', '--input-type=module', '-e', `import { QUIZ_BANK } from ${JSON.stringify('file://' + path.join(ROOT, 'packages/shared/src/games/quiz-questions.ts'))}; console.log(QUIZ_BANK.length);`], { encoding: 'utf8' })
+        .stdout.trim(),
+    );
+    const quizLines = [...i18n.matchAll(/'games\.quiz\.text': '([^']+)'/g)].map((m) => m[1]);
+    const claims = quizLines.map((line) => ({ line, almost: /Almost (\d+)|(\d+)’e yakın/.exec(line), topics: /(\d+) (?:topics|konu)/.exec(line)?.[1] }));
+    const honest = claims.every((c) => c.almost && Number(c.almost[1] ?? c.almost[2]) > entries && entries >= Number(c.almost[1] ?? c.almost[2]) - 50 && Number(c.topics) === topics);
+    check(honest, `the quiz line matches the bank (${entries} questions, ${topics} topics)`, claims.map((c) => c.line));
+  }
   await browser.close();
   server.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Help page works');

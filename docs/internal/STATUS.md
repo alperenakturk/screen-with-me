@@ -421,6 +421,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.18 (knock fixes from the bug hunt, BH3):**
+- [ ] With "Ask before letting people in" on and a friend inside: close your tab; another friend knocks. The friend
+  still inside (acting host while you are away) gets the "wants to join" card and can let them in.
+- [ ] Someone waits at the door and you turn the switch off: they come in at once.
+
 **0.9.97.16 (game titles in a small window, card R10):**
 - [ ] Open XOX, put it in a free window and drag it small: the title still says "Tic-tac-toe" in full (the buttons go to
   a second row), only "· started by …" gets cut.
