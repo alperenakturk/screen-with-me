@@ -90,6 +90,13 @@ function uprightChecks(where, m) {
 }
 
 (async () => {
+  // The "keeps playing" checks need a real video: without the local server they used to fail as "paused at 0 s",
+  // which reads like a bug in the room (BH, 4 Nov 2026). Say what is missing instead.
+  const reachable = await fetch(VIDEO, { method: 'HEAD' }).then((r) => r.ok, () => false);
+  if (!reachable) {
+    console.log(`✗ No video at ${VIDEO}: start one first, e.g. (cd <folder with video.webm> && python3 -m http.server 5300)`);
+    process.exit(2);
+  }
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
   for (const [label, opts] of TABLETS) {
     const ctx = await browser.newContext(opts);
