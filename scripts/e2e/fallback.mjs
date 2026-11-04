@@ -212,6 +212,12 @@ probe.send('bye');
 ok(probeAnswer === 'ok', 'WebSocket probe answers "ok"');
 const big = await fetch(`${http}/api/probe?bytes=200000`);
 ok((await big.text()).length === 200000, 'Probe download of 200 kB (diagnostics)');
+// Security R4-3: the plain probe counts against the info limit per address (local only: live, it would spend requests).
+if (/\/\/(localhost|127\.0\.0\.1)[:/]/.test(http)) {
+  let busyAt = 0;
+  for (let i = 1; i <= 70 && !busyAt; i++) if ((await fetch(`${http}/api/probe?bytes=1`)).status === 429) busyAt = i;
+  ok(busyAt > 0 && busyAt <= 61, `The plain probe is limited per address (429 after ${busyAt || 'none of 70'})`);
+}
 
 // 12) One hello per connection; votes count people in the room once (security review 2, H1 / M1).
 alice.send({ t: 'hello', v: V, name: 'Mallory', cid: 'cid-rotated-00001' });
