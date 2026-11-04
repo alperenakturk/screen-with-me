@@ -27,6 +27,12 @@
     document.querySelectorAll('[data-set-lang]').forEach(function (button) {
       button.setAttribute('aria-pressed', String(button.getAttribute('data-set-lang') === lang));
     });
+    // Card 15d: a control's name in the page's language (the 🎨 link): data-label-en / data-label-tr.
+    document.querySelectorAll('[data-label-en]').forEach(function (el) {
+      var label = el.getAttribute('data-label-' + lang) || el.getAttribute('data-label-en');
+      el.setAttribute('aria-label', label);
+      el.setAttribute('title', label);
+    });
     var title = document.querySelector('meta[name="title-' + lang + '"]');
     if (title) document.title = title.getAttribute('content');
   }

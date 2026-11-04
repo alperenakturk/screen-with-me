@@ -26,6 +26,11 @@ document.querySelector('.brand .logo')?.append(createLogo(document, { animated: 
 const themeButton = document.querySelector<HTMLButtonElement>('#theme-button')!;
 themeButton.addEventListener('click', openThemeDialog);
 for (const type of ['pointerenter', 'focus'] as const) themeButton.addEventListener(type, warmThemePreviews, { once: true });
+// Card 15d: the static pages' 🎨 (help, privacy, thanks, extension) link to `/#theme`: the theme window opens here.
+if (location.hash === '#theme') {
+  history.replaceState(null, '', location.pathname + location.search);
+  openThemeDialog();
+}
 
 const langButtons = document.querySelectorAll<HTMLButtonElement>('[data-lang]');
 function markLang(): void {
