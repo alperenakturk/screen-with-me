@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.41 (home screens filled, avatar picker without tabs, cards 15f + R27):**
+- [ ] Home page: each screen's orange picture reaches its frame (no dark band along the top or left), and there is no
+  empty strip left of Glowbeam; the text and the art still look balanced.
+- [ ] Open the avatar picker (join card or profile): no tabs, every avatar in one mixed grid, the same order each time
+  (and on your phone); pick one with OK or a double click.
+
 **0.9.97.38 (Opera Night theme removed, stream beside the faces, cards R22 + R23):**
 - [ ] 🎨: no "Opera Night" any more; if you had it, you now see Gece.
 - [ ] With a friend, share your screen: in the Together card "🔴 You're live · 👁 0/4", End stream and the quality now

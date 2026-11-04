@@ -124,7 +124,10 @@ const DEV_Y = 8;
 const DEV_K = 1.3; // the device drawings' scale (15c's devices × 1.3)
 const GAP = 16; // between the laptop's base, the tablet and the phone, in the drawings' units
 const ROW_Y = 272; // the faces + bubble row
-const ART_W = 890;
+const ART_W = 890; // the drawing's right edge (the phone's right edge)
+/** Card 15f: the view box starts where Glowbeam's drawing starts (its 197.6 grid has 25 units of air on the left), so
+ *  the page's margins measure the drawn art and no empty band sits left of Glowbeam. */
+const VIEW_X = 25;
 const ART_H = 314;
 /** Glowbeam's box (the costume's 197.6 grid, 175 units) and its lamp, the tip the light comes from. */
 const GLOW = { x: 0, y: 45.3, size: 175 };
@@ -137,9 +140,9 @@ function scene(): string {
   const tabletX = 326 + GAP;
   const phoneX = tabletX + 120 + GAP;
   // A soft lit sheen over a screen, brighter on the side facing the lamp (`level`: the laptop 1, the farthest less).
-  const sheen = (x: number, y: number, w: number, h: number, rx: number, clip: string, level: number) =>
-    `<rect class="hm-sheen" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="url(#hm-sheen)" opacity="${level}" clip-path="url(#${clip})"/>`;
-  return `<svg class="hm-scene" viewBox="0 0 ${ART_W} ${ART_H}" aria-hidden="true" focusable="false">
+  const sheen = (x: number, y: number, w: number, h: number, rx: number, level: number) =>
+    `<rect class="hm-sheen" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="url(#hm-sheen)" opacity="${level}"/>`;
+  return `<svg class="hm-scene" viewBox="${VIEW_X} 0 ${ART_W - VIEW_X} ${ART_H}" aria-hidden="true" focusable="false">
     <defs>
       <radialGradient id="hm-light" gradientUnits="userSpaceOnUse" cx="${LAMP.x}" cy="${LAMP.y}" r="900"><stop offset="0" stop-color="#ffd98a" stop-opacity=".62"/><stop offset=".3" stop-color="#ffc65a" stop-opacity=".3"/><stop offset=".7" stop-color="#ffc65a" stop-opacity=".1"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></radialGradient>
       <radialGradient id="hm-fade-g" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".72" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
@@ -154,9 +157,11 @@ function scene(): string {
         <path d="M0 74 Q40 54 82 70 T160 64 V100 H0Z" fill="#4b2f8f"/>
         <path d="M0 84 Q56 70 106 86 T160 80 V100 H0Z" fill="#2c1c63"/>
       </symbol>
-      <clipPath id="hm-clip-l"><rect x="12" y="12" width="266" height="156" rx="8"/></clipPath>
-      <clipPath id="hm-clip-t"><rect x="9" y="11" width="102" height="140" rx="7"/></clipPath>
-      <clipPath id="hm-clip-p"><rect x="6" y="12" width="52" height="96" rx="7"/></clipPath>
+      <!-- Card 15f: a <use> clip is in the picture's own space (after its x / y), so the clips start at 0; at the screen's
+           x / y they cut the picture 12 units in and left a dark band along the top and left of every screen. -->
+      <clipPath id="hm-clip-l"><rect width="266" height="156" rx="8"/></clipPath>
+      <clipPath id="hm-clip-t"><rect width="102" height="140" rx="7"/></clipPath>
+      <clipPath id="hm-clip-p"><rect width="52" height="96" rx="7"/></clipPath>
       <clipPath id="hm-face"><circle r="15"/></clipPath>
     </defs>
     <g class="hm-light" mask="url(#hm-fade)">
@@ -166,7 +171,7 @@ function scene(): string {
     <g class="hm-device" data-device="laptop" transform="translate(18 0)">
       <rect width="290" height="180" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
       <use class="hm-screen" href="#hm-pic" x="12" y="12" width="266" height="156" clip-path="url(#hm-clip-l)"/>
-      ${sheen(12, 12, 266, 156, 8, 'hm-clip-l', 1)}
+      ${sheen(12, 12, 266, 156, 8, 1)}
       <rect x="28" y="150" width="234" height="5" rx="2.5" fill="#ffffff2e"/>
       <rect class="hm-prog" x="28" y="150" width="234" height="5" rx="2.5" fill="#ffc65a"/>
       <g class="hm-pill-art"><rect x="22" y="22" width="132" height="24" rx="12" fill="#0f5a3c"/>
@@ -176,14 +181,14 @@ function scene(): string {
     <g class="hm-device" data-device="tablet" transform="translate(${tabletX} 30)">
       <rect width="120" height="162" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
       <use class="hm-screen" href="#hm-pic" x="9" y="11" width="102" height="140" clip-path="url(#hm-clip-t)"/>
-      ${sheen(9, 11, 102, 140, 7, 'hm-clip-t', 0.75)}
+      ${sheen(9, 11, 102, 140, 7, 0.75)}
       <rect x="18" y="138" width="84" height="4" rx="2" fill="#ffffff2e"/>
       <rect class="hm-prog" x="18" y="138" width="84" height="4" rx="2" fill="#ffc65a"/>
     </g>
     <g class="hm-device" data-device="phone" transform="translate(${phoneX} 72)">
       <rect width="64" height="120" rx="13" fill="#140f30" stroke="#ffffff30" stroke-width="2"/>
       <use class="hm-screen" href="#hm-pic" x="6" y="12" width="52" height="96" clip-path="url(#hm-clip-p)"/>
-      ${sheen(6, 12, 52, 96, 7, 'hm-clip-p', 0.55)}
+      ${sheen(6, 12, 52, 96, 7, 0.55)}
       <rect x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffffff2e"/>
       <rect class="hm-prog" x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffc65a"/>
       <rect x="25" y="5" width="14" height="3" rx="1.5" fill="#ffffff26"/>

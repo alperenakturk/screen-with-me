@@ -1391,54 +1391,11 @@ html:not(.shell) .shell-only {
   font-size: 14px;
 }
 
-/* Sayfalı avatar seçici: üstte sekmeler, altında ızgara */
+/* The avatar picker: one grid of every avatar (card R27: no tabs) */
 .avatar-picker {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.avatar-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--border);
-}
-
-.avatar-tab {
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.avatar-tab[aria-selected='true'] {
-  color: var(--text);
-  border-bottom-color: var(--accent);
-}
-
-/* Parodi'nin alt sekmeleri (Film / Dizi / Anime): küçük haplar */
-.avatar-tabs.sub {
-  border-bottom: 0;
-  gap: 6px;
-  padding-top: 2px;
-}
-
-.avatar-tabs.sub .avatar-tab {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 12px;
-  padding: 3px 10px;
-}
-
-.avatar-tabs.sub .avatar-tab[aria-selected='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
 }
 
 .avatar-grid {
