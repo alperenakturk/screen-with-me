@@ -10,7 +10,7 @@ A free, account-free tool for watching a video on any site together with friends
 **Cloudflare server**.
 
 - Live: https://screen-with-me.swm-server.workers.dev
-- Repo: github.com/alperenakturk/screen-with-me (private)
+- Repo: github.com/alperenakturk/screen-with-me (public since Nov 2026, source-available, all rights reserved)
 - **Read first:** `docs/internal/STATUS.md` (where we are, pending decisions, next steps; update it after every task)
   and `docs/internal/ROADMAP.md` (the owner's plan to 1.0 and beyond, with checklists).
 - Vision and older detailed roadmap: `docs/internal/VIZYON.md` · Competitor analysis: `docs/internal/rakip-analizi.md` ·
@@ -1405,8 +1405,13 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
   `testsrc2` can generate one; make it longer than 10 min for the score).
 
 ## License and privacy
-- MIT (`LICENSE`, © 2026 Alperen Aktürk). Code shipped to users (site/server/extension) contains no third-party
-  package code; if you add a runtime dependency, check its license (MIT/Apache/BSD are fine).
+- **All rights reserved, source-available (card LIC, Nov 2026)** (`LICENSE`, © 2026 Alperen Aktürk): the source may
+  be read, not copied, modified, distributed or used without written permission. Every `package.json` says
+  `"license": "UNLICENSED"` + `"private": true`. Third-party parts keep their own licences
+  (`apps/web/public/third-party-notices.txt`); code shipped to users contains no third-party package code; if you add a
+  runtime dependency, check its license (MIT/Apache/BSD are fine) and list it there.
+- **The repo is public since Nov 2026** (so GitHub Actions minutes are free). Never commit secrets, tokens, private
+  e-mails or hidden addresses; everything in the repo and its history is readable by anyone.
 - Privacy policy: `apps/web/public/privacy.html` (TR + EN; `?lang=en|tr` opens it in the link's language, `lang.js`;
   the old `gizlilik.html` redirects there). Update it whenever we collect/store new data. There are no terms of use
   yet (ROADMAP "Legal").
@@ -1423,8 +1428,8 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
   (publisher e-mail screenwithme.app@gmail.com, non-trader); application package and form texts are ready
   (`docs/internal/web-store.md`, `npm run store`). **Not submitted yet** (goes with 1.0). After submitting, don't bump
   `PROTOCOL_VERSION` while the review is running.
-- The repo is private; never say "open source" in public texts. Plan for opening it (recommended: right after 1.0
-  store approval, site names cleaned, a new public repo with clean history): `docs/internal/VIZYON.md`.
+- The repo is public but not open source: never say "open source" in public texts. Whether to move to MIT (or another
+  open licence) is decided at 1.0 (`docs/internal/VIZYON.md`).
 - Income only through donations, after 1.0 and the first real users (GitHub Sponsors / Patreon etc.; no PayPal/Stripe
   in Turkey). Never a donation prompt inside a room / over the video. Plan: `docs/internal/VIZYON.md` "Bağış / destek".
 - Bans are at the limit of an account-free design: another browser/incognito tab gets around them.

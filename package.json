@@ -1,7 +1,7 @@
 {
   "name": "screen-with-me",
   "private": true,
-  "license": "MIT",
+  "license": "UNLICENSED",
   "author": "Alperen Aktürk",
   "type": "module",
   "workspaces": [
