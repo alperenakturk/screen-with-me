@@ -156,10 +156,10 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
       }));
       check(hrefs.footer === `/help.html?lang=${lang}` && hrefs.profile === `/help.html?lang=${lang}`, `room ${lang}: footer and profile menu link the help page in the room's language`, hrefs);
       check(hrefs.net === `/help.html?lang=${lang}#connection`, `room ${lang}: the "can't reach the room" card links the connection section`, hrefs.net);
-      await page.click('#room-more');
-      const label = lang === 'en' ? 'Help and FAQ' : 'Yardım ve SSS';
-      const [popup] = await Promise.all([room.waitForEvent('page', { timeout: 5000 }).catch(() => null), page.click(`.room-more-pop .room-more-item:has-text("${label}")`)]);
-      check(!!popup && popup.url().includes(`/help.html?lang=${lang}`), `room ${lang}: ⋯ More → ${label} opens the help page in a new tab`, popup?.url());
+      // R9: Help is in the profile menu's small line (Help · Feedback · Privacy), not in ⋯ More.
+      await page.click('.topbar-right .profile-btn');
+      const [popup] = await Promise.all([room.waitForEvent('page', { timeout: 5000 }).catch(() => null), page.click('#profile-help')]);
+      check(!!popup && new RegExp(`/help(\\.html)?\\?lang=${lang}`).test(popup.url()), `room ${lang}: the profile menu's Help opens the help page in a new tab`, popup?.url());
       if (popup) await popup.close();
       check(page.url().includes('/r/help'), `room ${lang}: the room tab stays in the room`);
       // Card 8: the "Go to the film" card (no extension here) says why the extension asks for every website.

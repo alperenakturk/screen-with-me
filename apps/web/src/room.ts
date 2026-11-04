@@ -632,12 +632,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" data-set-lang="tr">TR</button>
                 <button type="button" data-set-lang="en">EN</button>
               </div>
-              <button type="button" class="btn small-btn" id="profile-reconnect">⟳ <span data-i18n="reconnect"></span></button>
-              <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open">⌨️ ?</button>
-              <a class="btn small-btn" id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link>❔ <span data-i18n="help"></span></a>
-              <a class="btn small-btn" id="profile-privacy" href="/privacy.html" target="_blank" rel="noopener" data-privacy-link>🔒 <span data-i18n="privacy"></span></a>
-              <button type="button" class="btn small-btn" id="profile-feedback">💌 <span data-i18n="feedback"></span></button>
               <button type="button" class="btn small-btn" id="profile-move">📲 <span data-i18n="move.open"></span></button>
+              <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open" hidden>⌨️ ?</button>
             </div>
             <h4 data-i18n="settings.profile"></h4>
             <label for="rename-input" class="muted small" data-i18n="yourNameLabel"></label>
@@ -649,11 +645,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="muted small" data-i18n="avatarAutoSave"></p>
             <h4 data-i18n="settings.theme"></h4>
             <div id="settings-themes" class="theme-current"></div>
-            <h4>📊 <span data-i18n="recap.title"></span></h4>
-            <p class="muted small" data-i18n="recap.explain"></p>
-            <button type="button" id="recap-open" class="btn primary recap-open">✨ <span data-i18n="recap.open"></span></button>
+            <button type="button" id="recap-open" class="btn primary recap-open" hidden>✨ <span data-i18n="recap.open"></span></button>
             <h4 class="recap-saved-title" data-i18n="recap.savedTitle"></h4>
             <div id="recap-history" class="recap-history"></div>
+            <!-- R9: Help, Feedback and Privacy live only here (the room's own things are in ⋯ More). -->
+            <p class="profile-links small">
+              <a id="profile-help" href="/help.html" target="_blank" rel="noopener" data-help-link data-i18n="help"></a>
+              <span aria-hidden="true">·</span>
+              <button type="button" class="link-btn" id="profile-feedback" data-i18n="feedback"></button>
+              <span aria-hidden="true">·</span>
+              <a id="profile-privacy" href="/privacy.html" target="_blank" rel="noopener" data-privacy-link data-i18n="privacy"></a>
+            </p>
           </div>
 
         </section>
@@ -890,10 +892,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       setOpen(false);
       void import('./ui/move-device.ts').then(({ openMoveDialog }) => openMoveDialog());
     });
-    $('#profile-reconnect').addEventListener('click', () => {
-      setOpen(false);
-      reconnectNow();
-    });
     const setOpen = (open: boolean) => {
       // Right edge under the profile picture (⚙️ sits to its right since 0.9.87).
       if (open) pop.style.right = `${Math.max(12, innerWidth - profileButton.getBoundingClientRect().right)}px`;
@@ -941,7 +939,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       openSettings: (section) => settingsDialog.open(section, true),
       press: (selector) => requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(selector)?.click()),
       games: () => requestAnimationFrame(() => (desktop ? pressMoreGame() : document.querySelector<HTMLButtonElement>('#game-btn')?.click())),
-      feedback: () => openFeedbackDialog(document.getElementById(desktop ? 'room-more' : 'strip-more')),
       isHost: amHost,
       hasItem: () => roomEl.classList.contains('has-item'),
       desktop,

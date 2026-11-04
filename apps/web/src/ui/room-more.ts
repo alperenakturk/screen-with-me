@@ -13,7 +13,7 @@ export interface MoreItem {
 }
 
 /**
- * The room's "⋯ More" list (card 6, owner's pick C): one place for what used to be spread over the settings dialog,
+ * The room's "⋯ More" list (card 6, owner's pick C; R9: the room's things only): one place for what used to be spread over the settings dialog,
  * the profile menu and the empty room's card. The computer's top-bar menu and the phone's ⋯ sheet use this same list
  * in the same order.
  */
@@ -22,8 +22,6 @@ export function roomMoreItems(deps: {
   press: (selector: string) => void;
   /** Opens the games hall (the computer's own anchor under ⋯ More; the phone presses its sheet's 🎮). */
   games: () => void;
-  /** Opens the "Send feedback" dialog (card 9, a lazy chunk). */
-  feedback: () => void;
   isHost: () => boolean;
   hasItem: () => boolean;
   desktop: boolean;
@@ -40,13 +38,9 @@ export function roomMoreItems(deps: {
     // The sync test replaces what plays for everyone, so only from an empty room.
     { icon: '🧪', label: 'more.syncTest', run: () => deps.press('#sync-test'), dimmed: deps.hasItem() ? t('more.syncTestBusy') : null },
     { icon: '👑', label: 'more.rules', run: () => deps.openSettings('rules') },
-    // Card 9: the "Send feedback" dialog, right before Help (Design's order).
-    { icon: '💌', label: 'more.feedback', run: deps.feedback },
-    // Card 7: the help page in a new tab (an anchor, so the film-page overlay tells the extension it is no ad).
-    { icon: '❔', label: 'more.help', run: () => deps.press('#profile-help') },
-    // Security L9: the privacy policy wherever the footer is hidden (phones, the film page, the Shorts view).
-    { icon: '🔒', label: 'privacy', run: () => deps.press('#profile-privacy') },
   );
+  // R9 (Planner's pick): ⋯ More holds the room's things only. Help, Feedback and Privacy are one small line in the
+  // profile menu (on a phone: ⋯ → Profile), the privacy policy also on the join card (L9).
   return items;
 }
 

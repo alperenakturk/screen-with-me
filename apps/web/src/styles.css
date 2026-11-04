@@ -12487,3 +12487,27 @@ button.chat-name:hover,
 .chat-private-label:hover {
   text-decoration: underline;
 }
+
+/* R9: Help · Feedback · Privacy as one small line at the foot of the profile menu (their only place in a room). */
+.profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+.profile-links a,
+.profile-links .link-btn {
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+.profile-links a:hover,
+.profile-links .link-btn:hover {
+  color: var(--text);
+}

@@ -142,6 +142,13 @@ Planner to merge them once main is green.
   profile (L9).
 - Done when: as above; Help / room-more / phone harnesses updated.
 - Tests: room-more harness, phone harness.
+- Done (0.9.97.15): ⋯ More = Film time (host), Save the room, Today's recap, Keyboard shortcuts (computer), Sync test,
+  Room rules (`roomMoreItems`; Feedback / Help / Privacy left it). The profile menu = language, 📲 Move, name, avatar,
+  theme, saved recaps, and one small line Help · Feedback · Privacy (`.profile-links`, ids kept). "⟳ Reconnect" is gone
+  (the room-name dot and the "can't reach the room" card reconnect); its "Today's recap" button and ⌨️ stay in the
+  page hidden for ⋯ More to press. The phone's ⋯ lost its "Language" tile (⋯ → Profile has English / Türkçe), so each
+  tile shows once. Harnesses: room-more (the ⋯ list, the profile's line, nothing in both), phone (one list, ⋯ → Profile
+  has language + privacy), feedback and help (opened from the profile line).
 
 ### R10. Room games: the window title is not cut in a narrow window (lane B, small)
 - Why: B noticed "Tic-tac-… · started by Alex" in a narrow free window (outside GP's scope).

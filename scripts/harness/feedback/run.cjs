@@ -54,11 +54,12 @@ const check = (ok, label, extra = '') => {
   // Computer: ⋯ More.
   const pc = await page({ viewport: { width: 1366, height: 768 } });
   await enter(pc, 'Alex');
-  await pc.click('#room-more');
+  // R9: "Send feedback" lives in the profile menu's small line (Help · Feedback · Privacy), not in ⋯ More.
+  await pc.click('.topbar-right .profile-btn');
   await pc.waitForTimeout(200);
-  const items = await pc.evaluate(() => [...document.querySelectorAll('.room-more-pop:not([hidden]) .room-more-item')].map((b) => b.textContent.trim()));
-  check(items.indexOf('💌Send feedback') === items.indexOf('❔Help and FAQ') - 1, '⋯ More lists "Send feedback" right before Help', JSON.stringify(items));
-  await pc.evaluate(() => [...document.querySelectorAll('.room-more-item')].find((b) => b.textContent.includes('Send feedback')).click());
+  const line = await pc.evaluate(() => document.querySelector('.profile-pop:not([hidden]) .profile-links')?.textContent.replace(/\s+/g, ' ').trim() ?? '');
+  check(/Help.*Feedback.*Privacy/.test(line), 'the profile menu has one small line: Help · Send feedback · Privacy (R9)', line);
+  await pc.click('#profile-feedback');
   await pc.waitForSelector('.feedback-dialog');
   await pc.waitForTimeout(200);
   let s = await dialogState(pc);
@@ -105,13 +106,15 @@ const check = (ok, label, extra = '') => {
   await help.waitForSelector('.feedback-dialog', { timeout: 8000 }).then(() => check(true, 'Help → "Send feedback" opens the dialog'), () => check(false, 'Help → "Send feedback" opens the dialog'));
   check(!(await help.evaluate(() => location.hash)), 'the #feedback mark is cleared from the address');
 
-  // Phone: ⋯ sheet, the dialog as a bottom sheet that fits.
+  // Phone: ⋯ → Profile → "Send feedback" (R9), the dialog as a bottom sheet that fits.
   const phone = await page(devices['iPhone 13']);
   await enter(phone, 'Pat');
   await phone.click('#strip-more');
   await phone.waitForTimeout(400);
-  const tile = await phone.$('.ph-sheet .ph-tile:has-text("Send feedback")');
-  check(!!tile, "phone ⋯: there is a \"Send feedback\" tile");
+  await phone.click('.ph-sheet .ph-tile:has-text("Profile")');
+  await phone.waitForTimeout(400);
+  const tile = (await phone.isVisible('#profile-feedback')) ? await phone.$('#profile-feedback') : null;
+  check(!!tile, 'phone ⋯ → Profile: "Send feedback" is there');
   if (tile) {
     await tile.click();
     await phone.waitForSelector('.feedback-dialog');

@@ -103,7 +103,26 @@ const shown = (page, selector) =>
     return page.evaluate(() => [...document.querySelectorAll('.room-more-pop:not([hidden]) .room-more-item')].map((b) => b.textContent.trim()));
   };
   const list = await items();
-  check(JSON.stringify(list) === JSON.stringify(['⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules', '💌Send feedback', '❔Help and FAQ', '🔒Privacy']), '⋯ More lists film time, save, recap, shortcuts, sync test, rules, feedback (card 9), help (card 7), privacy (L9); no Games on a computer (card 6g.2: the rail\'s 🎮)', JSON.stringify(list));
+  check(JSON.stringify(list) === JSON.stringify(['⏰Film time', '💾Save the room', "✨Today's recap", '⌨️Keyboard shortcuts', '🧪Sync test', '👑Room rules']), '⋯ More lists the room\'s things only: film time, save, recap, shortcuts, sync test, rules (R9); no Games on a computer (card 6g.2: the rail\'s 🎮)', JSON.stringify(list));
+  // R9: the profile menu = me (name, avatar, theme, language, move) + one small Help · Feedback · Privacy line; no
+  // Reconnect, no recap or shortcuts button (they are in ⋯ More): nothing shows in both menus.
+  await page.keyboard.press('Escape');
+  await page.click('.topbar-right .profile-btn');
+  await page.waitForTimeout(200);
+  const profile = await page.evaluate(() => {
+    const pop = document.querySelector('.profile-pop:not([hidden])');
+    const shown = (sel) => { const e = pop?.querySelector(sel); return !!e && e.getClientRects().length > 0; };
+    return {
+      links: pop?.querySelector('.profile-links')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      reconnect: !!pop?.querySelector('#profile-reconnect'),
+      recap: shown('#recap-open'),
+      keys: shown('#profile-keys'),
+      lang: shown('#profile-lang'),
+      move: shown('#profile-move'),
+    };
+  });
+  check(/Help.*feedback.*Privacy/i.test(profile.links) && !profile.reconnect && !profile.recap && !profile.keys && profile.lang && profile.move, 'profile: language + move + one small Help · Feedback · Privacy line; no Reconnect, recap or shortcuts (R9)', JSON.stringify(profile));
+  await page.keyboard.press('Escape');
   const pop = await page.evaluate(() => { const r = document.querySelector('.room-more-pop').getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth; });
   check(pop, '1024×640: the menu fits the screen');
   const pick = async (label) => {
