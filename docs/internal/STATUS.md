@@ -596,6 +596,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] Five Frames, our own look (IP audit): open 🎮 → On the side → Five Frames and guess a word. A letter in the right
+  place gets a solid gold frame and ✓, one in the word a dashed gold frame and •, one not in it fades with ×; no green,
+  yellow or grey fills anywhere (board, letter tray, legend, "How to play", the gallery cover with CLOSE / STAGE /
+  SCENE). Readable for colour-blind players (line and sign differ, not only colour).
 - [ ] 0.9.97.30 Game windows: with a friend, open XOX and play a move each. Press ✕ on the game window: it only goes
   away (the friend still plays, 🎮 brings it back). Press "↩ Leave table": it asks first. "⏹ End table" asks first too;
   in the 🎮 hall the table's button says "End". Close or reload the tab mid-game: the browser asks "Leave site?"; after

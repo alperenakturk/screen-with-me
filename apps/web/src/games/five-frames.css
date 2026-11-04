@@ -1,5 +1,5 @@
 /* 🎟️ Five Frames (games/five-frames.ts): the Design session's "ticket row" (docs/internal/design/side-games/README.md),
-   polished in card GP (`side-games-polish.md` §3–4): green ✓ right place, gold • in the word, grey not in it (the marks
+   polished in card GP (`side-games-polish.md` §3–4): ticket marks since the IP audit: solid frame ✓ right place, dashed frame • in the word, faded × not in it (the marks
    stay for colour-blind players), a legend until the first guess, a row turning over cell by cell. Loaded with the
    game's chunk only; fits its box without scrolling. */
 .ff {
@@ -9,10 +9,10 @@
   --ff-gold: #ffc65a;
   --ff-ink: #1a1036;
   --ff-muted: #b9b0dc;
-  --ff-hit: #3fcf8e;
-  --ff-near: #ffc65a;
-  --ff-miss: #3a3458;
-  --ff-miss-text: #cfc8ea;
+  /* Ticket marks (IP audit, owner's pick "make it ours"): told apart by line and sign, never by fill colour:
+     a solid gold frame + ✓ (right place), a dashed gold frame + • (in the word), a faded letter + × (not in it). */
+  --ff-mark: #ffc65a;
+  --ff-miss-text: rgba(207, 200, 234, 0.42);
   position: relative;
   box-sizing: border-box;
   height: 100%;
@@ -65,12 +65,13 @@
   text-transform: none; background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.1);
 }
 .ff-cell.typed { background: #2a2350; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.33); color: var(--ff-cream); }
-.ff-cell.hit { background: var(--ff-hit); box-shadow: none; color: var(--ff-ink); }
-.ff-cell.near { background: var(--ff-near); box-shadow: none; color: var(--ff-ink); }
-.ff-cell.miss { background: var(--ff-miss); box-shadow: none; color: var(--ff-miss-text); }
-.ff-cell.hit::after, .ff-cell.near::after { position: absolute; top: 0; right: 3px; font-size: 11px; font-weight: 900; line-height: 1.2; }
+.ff-cell.hit { background: rgba(255, 198, 90, 0.1); box-shadow: inset 0 0 0 3px var(--ff-mark); color: var(--ff-cream); }
+.ff-cell.near { background: transparent; box-shadow: none; outline: 2px dashed var(--ff-mark); outline-offset: -3px; color: var(--ff-mark); }
+.ff-cell.miss { background: rgba(255, 255, 255, 0.02); box-shadow: none; color: var(--ff-miss-text); }
+.ff-cell.hit::after, .ff-cell.near::after, .ff-cell.miss::after { position: absolute; top: 1px; right: 4px; font-size: 11px; font-weight: 900; line-height: 1.2; color: var(--ff-mark); }
 .ff-cell.hit::after { content: '✓'; }
-.ff-cell.near::after { content: '•'; font-size: 14px; top: -2px; }
+.ff-cell.near::after { content: '•'; font-size: 14px; top: -1px; }
+.ff-cell.miss::after { content: '×'; color: var(--ff-miss-text); }
 /* A typed letter pops in; a scored row turns over cell by cell (110 + 110 ms, 80 ms apart), a solved one hops. */
 .ff-cell.pop { animation: ff-pop 0.1s ease-out; }
 @keyframes ff-pop { 50% { transform: scale(1.12); } }
@@ -102,9 +103,9 @@
   min-height: 40px; padding: 0; border: 0; border-radius: 7px; background: rgba(255, 255, 255, 0.1); font-weight: 700;
   font-size: 17px;
 }
-.ff-key.hit { background: var(--ff-hit); color: var(--ff-ink); }
-.ff-key.near { background: var(--ff-near); color: var(--ff-ink); }
-.ff-key.miss { background: var(--ff-miss); color: rgba(207, 200, 234, 0.6); }
+.ff-key.hit { background: rgba(255, 198, 90, 0.12); box-shadow: inset 0 0 0 2.5px var(--ff-mark); color: var(--ff-cream); }
+.ff-key.near { background: transparent; outline: 2px dashed var(--ff-mark); outline-offset: -3px; color: var(--ff-mark); }
+.ff-key.miss { background: transparent; color: var(--ff-miss-text); text-decoration: line-through; }
 .ff-key.back { grid-column: span 2; font-size: 15px; font-weight: 800; }
 .ff-key.enter { grid-column: span 2; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 15px; }
 @media (prefers-reduced-motion: reduce) {

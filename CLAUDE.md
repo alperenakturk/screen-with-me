@@ -931,8 +931,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   "📋 Copy result" (`🍿 Five Frames #12 · 4/7`), "a new word in …". The physical keyboard types only while the board
   (`tabindex=0`) has the focus: its `keydown` stops letters / Enter / Backspace from reaching the room; otherwise
   every key stays the room's. No tab lock (a save after each guess, other tabs follow by `storage`). **Card GP (0.9.97,
-  Design's `docs/internal/design/side-games-polish.md`):** cells green `--ff-hit` ✓ / gold `--ff-near` • / grey
-  `--ff-miss`, typed cells outlined; a legend (`.ff-legend`) shares the result slot until the first guess is scored; after
+  Design's `docs/internal/design/side-games-polish.md`):** cells were green / gold / grey until the IP audit
+  (0.9.97.x, owner's "make it ours"): a solid gold frame ✓ / a dashed gold frame • / a faded ×, never a fill colour
+  (`--ff-mark`), the cover's words CLOSE / STAGE / SCENE, typed cells outlined; a legend (`.ff-legend`) shares the result slot until the first guess is scored; after
   Enter the row turns over cell by cell (`reveal`: 110 + 110 ms per cell, 80 ms apart, typing held, the tray and the
   result's sound after the last cell, a solved row hops, an unknown word shakes; reduced motion = a 150 ms colour fade,
   a red outline); the credits link left the game ("Licenses" in the footer and on the Help page). **All three (GP):**
