@@ -4,8 +4,9 @@ Owner's rule (2 Nov 2026): one board for every session. The **Planner** writes a
 the top **Ready** card, moves it to **In progress**, and when it is live adds `Done: <PR link>` and moves it to
 **Done**. **Security** and **Research** add their suggestions under **Proposed**; the Planner and the owner decide
 whether they become Ready. Roles and rules: `CLAUDE.md` "Sessions as an office". The order follows `ROADMAP.md`
-"Focus: now / next / frozen". The owner's tick view is the hidden test board page on our site (its data file
-`board.data.js`, kept by the Planner); the old checklist Artifact is retired.
+"Focus: now / next / frozen". The owner's tick view is the Planner's test board Artifact https://claude.ai/artifact/NWZG7GLH4JzAnZt1rNgrJo
+(owner, 4 Nov 2026: the hidden page on our site needed a deploy for every update, so it is removed again; the
+Artifact updates at once).
 
 **How the owner is asked (owner, 4 Nov 2026):** no more option pages or other web pages for him. The only page he uses
 is the test board (the Planner keeps it current with what he tested and what is next). Every preference or design
@@ -168,6 +169,15 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### R24. Remove the hidden test board page from the site (owner, 4 Nov 2026; lane B)
+- Owner: "testing on the site turned out silly: every board update waits for a deploy; delete that page, the Planner
+  goes back to the Artifact".
+- What: delete `apps/web/public/o-…/` (the whole folder), its `_headers` lines, the `owner-board` harness and any CI /
+  CLAUDE.md mention (the 0.9.97.29 note becomes "removed in …"). Nothing else changes.
+- Done when: the address answers 404 (or the home page fallback) after the deploy; CI green.
+- Tests: CI; a quick fetch of the old address after the deploy.
+- Owner's pick: none needed.
 
 ### R22. Remove the "Opera Night" theme (owner, 4 Nov 2026; lane A)
 - Owner (in A's chat): remove the Opera Night theme completely.
