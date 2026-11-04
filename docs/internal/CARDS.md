@@ -107,7 +107,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B next: R21 (fullscreen messages bigger and lower) → BH7 (name on the film page). Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 (name on the film page). Lane A: 15e ✅ → R22 + R23 (one PR). Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -168,6 +168,22 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### R22. Remove the "Opera Night" theme (owner, 4 Nov 2026; lane A)
+- Owner (in A's chat): remove the Opera Night theme completely.
+- What: the theme leaves every picker, the theme art and the code; a saved Opera Night becomes Gece once, like a
+  removed avatar.
+- Done when: no Opera Night anywhere (pickers, previews, files); a browser that had it saved opens in Gece.
+- Tests: theme-previews harness, a unit / harness check for the saved-theme swap.
+- Owner's pick: none needed.
+
+### R23. Stream controls fit beside the faces in the Together card (owner, 4 Nov 2026; lane A)
+- Owner (in A's chat): while a stream is on, the Together card's stream controls (stop, quality…) push the chat far
+  down; put them into the empty top-right area of the card next to the faces. Before a stream starts nothing changes.
+- Done when: with a stream on at 1366×768 and 1920×1080 the chat panel keeps (almost) the same height as without one;
+  the controls are all reachable; phones keep their own layout.
+- Tests: `voice/live.mjs` (layout check), room harness screenshot.
+- Owner's pick: none needed.
 
 ### BH7. A name changed on the main site does not reach the film page (lane B, after R21)
 - Found by B while building R21: the embed harness check "a name changed on the main site also applies on the film
