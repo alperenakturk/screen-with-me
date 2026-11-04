@@ -117,6 +117,9 @@ prefixed `sponge-` / `squid-`.
   - E: unimpressed, one lid lower and the eyes to the side, on sand.
   - F: D with his clarinet, on light lilac.
 
+**Owner's pick (4 Nov 2026): "Sponge C (both hands up) · Squid D".** `r20/sponge.svg` and `r20/squid-D.svg` are
+copied to `A/sponge.svg`, `A/squid.svg`, `full/sponge.svg` and `full/squid.svg`. Running `full.mjs` again keeps them.
+
 **After the owner's pick:** copy the chosen file to both `avatars-2/A/<id>.svg` and `avatars-2/full/<id>.svg`.
 `full.mjs` takes a hand-drawn file from `A/` first, so the pick survives a re-run. Then Developer A runs
 `node scripts/avatars.mjs`.
