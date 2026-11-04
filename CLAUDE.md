@@ -9,7 +9,7 @@ A free, account-free tool for watching a video on any site together with friends
 **website** (YouTube / direct video files) + **browser extension** (any HTML5 video on any site, iframes included) +
 **Cloudflare server**.
 
-- Live: 0.9.97.47 (🎮 Game Studio, card DL3a: the 🐞 Test Lab's game tools: open any game, side-game cheats on a sandbox save, time ×10, "pretend the film plays", restore my real saves; see "🐞 Test Lab" Games); https://screen-with-me.swm-server.workers.dev
+- Live: https://screen-with-me.swm-server.workers.dev
 - Repo: github.com/alperenakturk/screen-with-me (public since Nov 2026, source-available, all rights reserved)
 - **Read first:** `docs/internal/STATUS.md` (where we are, pending decisions, next steps; update it after every task)
   and `docs/internal/ROADMAP.md` (the owner's plan to 1.0 and beyond, with checklists).
