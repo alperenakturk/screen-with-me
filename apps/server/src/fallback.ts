@@ -158,6 +158,13 @@ export interface PollHandlers {
   message: (socket: WebSocket, raw: string) => Promise<void>;
   /** The connection is gone (the object's `webSocketClose`). */
   closed: (socket: WebSocket, code: number) => Promise<void>;
+  /**
+   * BH8: (re)sets the object's alarm, which must include `nextDue()` and call `sweepDue()` first. Sessions that stop
+   * polling are closed in that alarm, never from a bare timer: closing one runs the room's whole leave (broadcasts,
+   * storage writes), and on the live service that work done in a `setInterval` long after the last request reset the
+   * object now and then, dropping every connection in it with 1006 (live e2e fallback.mjs, "pong after chunked").
+   */
+  schedule: () => Promise<void>;
 }
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -168,7 +175,6 @@ export class PollHub {
   private readonly sessions = new Map<string, PollSocket>();
   /** Characters queued in all sessions together (`HUB_BYTES`). */
   private queued = 0;
-  private sweeper: ReturnType<typeof setInterval> | null = null;
 
   constructor(private readonly handlers: PollHandlers) {}
 
@@ -213,8 +219,9 @@ export class PollHub {
       );
       socket.ip = ip;
       this.sessions.set(socket.sid, socket);
-      this.startSweeper();
       await this.handlers.admit(socket as unknown as WebSocket, request);
+      // Its first poll is due within FIRST_POLL_MS: the object's alarm closes it if it never comes.
+      await this.handlers.schedule();
       return json({ sid: socket.sid, hold: HOLD_MS });
     }
     const socket = this.sessions.get(url.searchParams.get('sid') ?? '');
@@ -257,8 +264,9 @@ export class PollHub {
     return new Response(null, { status: 204 });
   }
 
-  /** Closes sessions whose tab stopped polling. */
-  private sweep(now = Date.now()): void {
+  /** Forgets sessions closed long ago and returns the open ones whose tab stopped polling (now closed, forgotten). */
+  private expired(now: number): PollSocket[] {
+    const out: PollSocket[] = [];
     for (const socket of this.sessions.values()) {
       if (socket.readyState !== OPEN) {
         // Closed by the room and never picked up: forget it after a while.
@@ -269,23 +277,38 @@ export class PollHub {
       if (!socket.holding && (now - socket.seen > IDLE_MS || (!socket.polled && now - socket.openedAt > FIRST_POLL_MS))) {
         this.forget(socket);
         socket.markClosed(1006, 'idle');
-        // R4-7: through `finish`, so a throwing close handler never becomes an unhandled rejection.
-        void this.finish(socket, 1006);
+        out.push(socket);
       }
     }
-    if (this.sessions.size === 0 && this.sweeper !== null) {
-      clearInterval(this.sweeper);
-      this.sweeper = null;
+    return out;
+  }
+
+  /** On a request: closes what is due (the request is an event of its own). */
+  private sweep(now = Date.now()): void {
+    // R4-7: through `finish`, so a throwing close handler never becomes an unhandled rejection.
+    for (const socket of this.expired(now)) void this.finish(socket, 1006);
+  }
+
+  /** The object's alarm (BH8): closes the sessions whose tab stopped polling, one leave after the other. */
+  async sweepDue(now = Date.now()): Promise<void> {
+    for (const socket of this.expired(now)) await this.finish(socket, 1006);
+  }
+
+  /** When a session may next be due for closing (for the object's alarm), or null without sessions. */
+  nextDue(now = Date.now()): number | null {
+    let next: number | null = null;
+    for (const socket of this.sessions.values()) {
+      const idle = socket.seen + IDLE_MS;
+      const at = socket.readyState === OPEN && !socket.polled ? Math.min(socket.openedAt + FIRST_POLL_MS, idle) : idle;
+      next = next === null ? at : Math.min(next, at);
     }
+    // Just past the limit (the checks are strict), never sooner than a second from now (a held poll moves `seen`).
+    return next === null ? null : Math.max(next + 50, now + 1000);
   }
 
   private forget(socket: PollSocket): void {
     this.sessions.delete(socket.sid);
     socket.release();
-  }
-
-  private startSweeper(): void {
-    this.sweeper ??= setInterval(() => this.sweep(), 5_000);
   }
 
   private async finish(socket: PollSocket, code: number): Promise<void> {

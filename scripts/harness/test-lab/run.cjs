@@ -77,8 +77,14 @@ async function enterRoom(page, room, name = 'Robin') {
   check(facts.includes(`Site=${site}`) && facts.some((f) => /^Browser=Chrome \d+/.test(f)) && facts.some((f) => /^Screen=/.test(f)), '📊 Status: versions, browser, screen', facts.join(' | '));
   check(!!(await page.$('.lab-graph')), '📊 Status: the drift graph');
   check(await page.$('#debug-tvlab') !== null && await page.$('#debug-measure') !== null && await page.$('.debug-first') !== null, 'card 12\'s switches and "first-time visitor" are still there');
-  await page.click('.lab-tab[data-tab="scenarios"]');
-  check((await page.textContent('.lab-body')).includes('later step'), 'a tab without tools yet says so (no empty screen)');
+  // Every tab shows something: its tools, or "comes in a later step" (no empty screen).
+  const empty = [];
+  for (const tab of ['friends', 'video', 'games', 'scenarios', 'screen']) {
+    await page.click(`.lab-tab[data-tab="${tab}"]`);
+    const text = (await page.textContent('.lab-body')).trim();
+    if (text.length < 20) empty.push(tab);
+  }
+  check(empty.length === 0, 'no tab is an empty screen (its tools or "comes in a later step")', empty.join(','));
   await page.click('.lab-tab[data-tab="friends"]');
   check((await page.textContent('.lab-body')).includes('work in a room'), '👥 outside a room says fake friends work in a room');
 

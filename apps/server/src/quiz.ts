@@ -115,6 +115,7 @@ export class Quiz extends DurableObject<Env> {
     admit: (socket) => this.admit(socket),
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
+    schedule: () => this.scheduleAlarm(),
   });
 
   override async fetch(request: Request): Promise<Response> {
@@ -185,6 +186,7 @@ export class Quiz extends DurableObject<Env> {
 
   override async alarm(): Promise<void> {
     const now = Date.now();
+    await this.polls.sweepDue(now);
     await this.advance(now);
     const d = this.data;
     if ((d.phase === 'question' || d.phase === 'reveal') && d.fewSince && this.tooFew(now)) await this.toLobby();
@@ -389,6 +391,9 @@ export class Quiz extends DurableObject<Env> {
     if (d.endsAt !== null) times.push(d.endsAt);
     if (d.fewSince && d.phase !== 'lobby') times.push(d.fewSince + FEW_GRACE_MS);
     if (d.emptySince !== null) times.push(d.emptySince + EMPTY_TTL_MS);
+    // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
+    const due = this.polls.nextDue();
+    if (due !== null) times.push(due);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }

@@ -525,3 +525,37 @@ describe('relaxed profile (TV)', () => {
     expect(readyReports).toEqual([]);
   });
 });
+
+describe('🐞 Test Lab hooks (card DL4)', () => {
+  it('labDrift moves the video off the room without telling it, and the drift correction brings it back', async () => {
+    engine.receive(state());
+    engine.attach(player);
+    await run(2000);
+    expect(engine.labDrift(3)).toBe(true);
+    const roomTime = () => (Date.now() - 1_000_000) / 1000;
+    expect(player.time - roomTime()).toBeGreaterThan(2.5);
+    await run(2500);
+    expect(sent).toEqual([]); // our own seek: never sent to the room as the user's
+    expect(Math.abs(player.time - roomTime())).toBeLessThan(1);
+    expect(engine.syncStats().jumps).toBeGreaterThanOrEqual(1);
+  });
+
+  it('labStall reports not-ready while the room plays, keeps it while the room waits, and ready once it is over', async () => {
+    engine.receive(state());
+    engine.attach(player);
+    await run(1000);
+    engine.labStall(5000);
+    await run(2000);
+    expect(readyReports).toEqual([false]);
+    // The server pauses the room and waits: my lab stall still says "not ready".
+    engine.receive(state({ paused: true, position: player.time, updatedAt: Date.now() }));
+    await run(2000);
+    expect(readyReports).toEqual([false]);
+    await run(1500);
+    expect(readyReports).toEqual([false, true]);
+  });
+
+  it('labDrift without a player does nothing', () => {
+    expect(engine.labDrift(3)).toBe(false);
+  });
+});

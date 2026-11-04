@@ -128,6 +128,8 @@ jobs:
         run: |
           node scripts/harness/test-lab/run.cjs http://localhost:8787
           node scripts/harness/lab-friends/run.cjs http://localhost:8787
+          node scripts/harness/lab-video/run.cjs http://localhost:8787
+          node scripts/harness/lab-scenarios/run.cjs http://localhost:8787
 
       # Card DL3a: the Test Lab's game tools (open any game, side-game cheats on a sandbox save, restore my real saves).
       - name: Test Lab games
