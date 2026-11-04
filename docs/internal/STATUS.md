@@ -433,7 +433,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.97.32 (home art: one soft light, a tidy device row, card 15e):**
+**0.9.97.33 (home art: one soft light, a tidy device row, card 15e):**
 - [ ] Open the home page on your computer (and at 1366 × 768 if you can): Glowbeam's one cone of light falls on the
   laptop, the tablet and the phone, the laptop brightest; no slab behind them and no line where the light ends; the
   three devices stand in one row with equal gaps, none covering another; the space left of the text, between the text
