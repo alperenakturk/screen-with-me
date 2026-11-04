@@ -189,6 +189,41 @@ async function move(page, board) {
     await ctx.close();
   }
 
+  // BH10: Sam joins Alex's Classics table before the first move; once the game starts Sam sees the board (not the
+  // shelf "Pick a board") and can play his turn without picking the board himself.
+  {
+    const room = 'gj' + Math.random().toString(36).slice(2, 8);
+    const alex = await person(browser, room, 'Alex', 'wizard');
+    const sam = await person(browser, room, 'Sam', 'pirate');
+    await run(alex.page, 'games.open.classics');
+    await until(() => alex.page.evaluate(() => !!document.querySelector('#game-stage #cl-shelf-open')));
+    if (!(await alex.page.evaluate(() => !!document.querySelector('#game-stage .cl-box[data-board="xox"].on')))) {
+      await alex.page.evaluate(() => document.querySelector('#cl-shelf-open')?.click());
+      await wait(300);
+      await alex.page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="xox"]')?.click());
+    }
+    await until(() => sam.page.evaluate(() => !!document.querySelector('#game-invite .btn.primary')));
+    await sam.page.evaluate(() => document.querySelector('#game-invite .btn.primary')?.click());
+    const seated = await until(() => alex.page.evaluate(() => /Sam/.test(document.querySelector('#game-stage #seat-1')?.textContent ?? '')));
+    check(!!seated, 'Classics: Sam joins before the first move and takes the second seat');
+    const first = await until(() => alex.page.evaluate(() => {
+      const c = document.querySelector('#game-stage .xox-cell:not([class*="mark-"]):not(:disabled)');
+      c?.click();
+      return !!c;
+    }));
+    check(!!first, 'Classics: Alex plays the first move');
+    const board = await until(() => sam.page.evaluate(() => {
+      const shelf = document.querySelector('#game-stage .cl-shelf');
+      return (!shelf || shelf.hidden) && document.querySelectorAll('#game-stage .xox-cell[class*="mark-"]').length === 1;
+    }));
+    check(!!board, 'Classics: Sam sees the board with Alex\'s move, not the shelf');
+    await sam.page.evaluate(() => document.querySelector('#game-stage .xox-cell:not([class*="mark-"]):not(:disabled)')?.click());
+    const second = await until(() => alex.page.evaluate(() => document.querySelectorAll('#game-stage .xox-cell[class*="mark-"]').length === 2));
+    check(!!second, 'Classics: Sam plays his turn without picking the board himself');
+    await alex.ctx.close();
+    await sam.ctx.close();
+  }
+
   // Quiz and Draw & Guess: two people, a reload in the middle keeps me in the game.
   for (const kind of ['quiz', 'draw']) {
     const room = 'gq' + Math.random().toString(36).slice(2, 8);
@@ -199,7 +234,8 @@ async function move(page, board) {
     await sam.page.evaluate(() => document.querySelector('#game-invite .btn.primary')?.click());
     const two = await until(() => alex.page.evaluate(() => document.querySelectorAll('#game-stage .draw-player').length >= 2));
     check(!!two, `${kind}: both people are in the lobby`);
-    await alex.page.evaluate(() => [...document.querySelectorAll('#game-stage .btn.primary')].find((b) => !b.disabled && b.offsetWidth)?.click());
+    // The game's host is whoever reached the table first: both press Start, only the host's counts.
+    for (const p of [alex.page, sam.page]) await p.evaluate(() => [...document.querySelectorAll('#game-stage .btn.primary')].find((b) => !b.disabled && b.offsetWidth)?.click());
     const going = await until(() => alex.page.evaluate(() => !document.querySelector('#game-stage .draw-page')?.classList.contains('draw-lobby')));
     check(!!going, `${kind}: the game starts`);
     const names = await unnamed(alex.page);

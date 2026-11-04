@@ -555,6 +555,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       else if (message.t === 'state') {
         // Joining a Classics table where a game is going: straight to the board.
         if (!state && message.started) shelfOpen = false;
+        // BH10: the game started, or someone else picked a board, while my shelf was open: show the board.
+        else if (state && ((message.started && !state.started) || message.kind !== state.kind)) shelfOpen = false;
         state = message;
         render();
       } else if (message.t === 'react') float(message.from, message.emoji);
