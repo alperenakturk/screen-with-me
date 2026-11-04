@@ -548,8 +548,8 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   still in the room without voice). Voice-join sounds skip people who come back within 30 s. The film page (ExtVoice)
   still rebuilds. Tests: e2e `handover.mjs`, `voice/run.mjs` (the same camera track survives ⟳).
 - **Avatars (`protocol.ts` `AVATAR_PAGES`):** 2 pages since card R20 (0.9.97.30): themed drawn characters and "Genres"
-  (our own archetypes, Design's `avatars-3`; the parody pages were removed after the IP audit). Before: parody film / series / anime / game. Animal emojis were removed in 0.9.57 (those who had one get a random themed character). The
-  picker always opens on the "Temalı" tab. Picker tabs are `AVATAR_TABS` (Parody has sub-tabs; site `ui/avatar.ts`).
+  (our own archetypes, Design's `avatars-3`; the parody pages were removed after the IP audit). Before: parody film / series / anime / game. Animal emojis were removed in 0.9.57 (those who had one get a random themed character). Since card R27
+  the picker (site `ui/avatar.ts`) has no tabs: one grid of `AVATAR_GRID`, every avatar in a fixed seeded shuffle (the same on every open and device); the random pick for newcomers stays themed (`randomAvatar`, `AVATAR_PAGES[0]`).
   A drawn avatar's value is an id (`wizard`); the image is `/avatars/<id>.svg`; where text is needed `avatarText()`
   gives an emoji equivalent. New avatar: `DRAWN_AVATARS` + `AVATAR_PAGES` + `scripts/avatars.mjs` + site i18n
   `avatar.<id>` (a test checks every drawn avatar is on exactly one page). **Since card R14 (0.9.97.10)** the parody
