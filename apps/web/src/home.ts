@@ -1,7 +1,7 @@
 import { extractRoomId, friendlyRoomName, newRoomId } from '@swm/shared/room-id';
 import { createMascot } from '@swm/shared/logo';
 import { el } from './dom.ts';
-import { cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
+import { AVATAR_PAGES, cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
 import { forgetSaved, isFull, MAX_SAVED, savedRooms, type SavedRoom } from './saved-rooms.ts';
 import { forgetLastRoom, lastRoom, load, sessionSave } from './storage.ts';
 import { helpHref, lang, t, translate } from './i18n.ts';
@@ -98,33 +98,70 @@ function h(key: TextKey, values: Record<string, string | number> = {}): string {
   return (table[key] ?? TEXT.en[key]).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
 }
 
-/** Glowbeam's light falls on the shared screen (Design's `#sceneA`, 640 × 380); Glowbeam itself is `createMascot`. */
+/** Three different themed avatars for the art's faces, picked again on every load (card 15c). */
+function artFaces(): string[] {
+  const pool = [...AVATAR_PAGES[0]];
+  const picked: string[] = [];
+  while (picked.length < 3 && pool.length) picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]!);
+  return picked;
+}
+
+/**
+ * Glowbeam's light falls on a laptop, a tablet and a phone showing the same moment (card 15c, Design's
+ * `home-15c/preview.html`, 640 × 380): one picture (`#hm-pic`) clipped into each screen, a progress bar per device
+ * (`.hm-prog`, the same 6 s animation), the sync pill on the laptop, the chat bubble and three themed faces (the first
+ * two in voice). Glowbeam itself is `createMascot`.
+ */
 function scene(): string {
+  const [a, b, c] = artFaces();
+  const face = (x: number, id: string | undefined, voice: boolean) =>
+    `<g transform="translate(${x} 18)"><image class="hm-face" href="/avatars/${id}.svg" data-avatar="${id}" x="-15" y="-15" width="30" height="30" clip-path="url(#hm-face)"/><circle class="hm-ring${voice ? ' voice' : ''}" r="16" fill="none" stroke="${voice ? '#3ee08f' : '#ffffff26'}" stroke-width="${voice ? 3 : 2}"/></g>`;
   return `<svg class="hm-scene" viewBox="0 0 640 380" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id="hm-beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd27a" stop-opacity=".75"/><stop offset="1" stop-color="#ffc65a" stop-opacity=".06"/></linearGradient>
+      <linearGradient id="hm-beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd27a" stop-opacity=".7"/><stop offset="1" stop-color="#ffc65a" stop-opacity=".05"/></linearGradient>
       <linearGradient id="hm-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb070"/><stop offset="1" stop-color="#ff7a5a"/></linearGradient>
       <radialGradient id="hm-halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffc65a" stop-opacity=".45"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></radialGradient>
+      <symbol id="hm-pic" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice">
+        <rect width="160" height="100" fill="url(#hm-sky)"/>
+        <circle cx="86" cy="38" r="15" fill="#fff3d6" opacity=".88"/>
+        <path d="M0 74 Q40 54 82 70 T160 64 V100 H0Z" fill="#4b2f8f"/>
+        <path d="M0 84 Q56 70 106 86 T160 80 V100 H0Z" fill="#2c1c63"/>
+      </symbol>
+      <clipPath id="hm-clip-l"><rect x="12" y="12" width="266" height="156" rx="8"/></clipPath>
+      <clipPath id="hm-clip-t"><rect x="9" y="11" width="102" height="140" rx="7"/></clipPath>
+      <clipPath id="hm-clip-p"><rect x="6" y="12" width="52" height="96" rx="7"/></clipPath>
+      <clipPath id="hm-face"><circle r="15"/></clipPath>
     </defs>
-    <path class="hm-beam" d="M120 190 L600 40 L600 340 Z" fill="url(#hm-beam)"/>
-    <g transform="translate(250 66)">
-      <rect width="350" height="220" rx="16" fill="#140f30" stroke="#ffffff22" stroke-width="2"/>
-      <rect x="12" y="12" width="326" height="170" rx="10" fill="url(#hm-sky)"/>
-      <circle cx="250" cy="70" r="28" fill="#fff3d6" opacity=".85"/>
-      <path d="M12 140 Q90 100 170 132 T338 118 V182 H12Z" fill="#4b2f8f"/>
-      <path d="M12 158 Q120 130 220 160 T338 150 V182 H12Z" fill="#2c1c63"/>
-      <rect x="30" y="196" width="290" height="5" rx="2.5" fill="#ffffff22"/>
-      <rect class="hm-prog" x="30" y="196" width="290" height="5" rx="2.5" fill="#ffc65a"/>
-      <rect x="24" y="24" width="138" height="26" rx="13" fill="#0f5a3c"/>
-      <text x="93" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#c9ffe6" data-art="artSync"></text>
+    <path class="hm-beam" d="M118 190 L640 20 L640 370 Z" fill="url(#hm-beam)"/>
+    <g class="hm-device" data-device="laptop" transform="translate(214 46)">
+      <rect width="290" height="180" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
+      <use class="hm-screen" href="#hm-pic" x="12" y="12" width="266" height="156" clip-path="url(#hm-clip-l)"/>
+      <rect x="28" y="150" width="234" height="5" rx="2.5" fill="#ffffff2e"/>
+      <rect class="hm-prog" x="28" y="150" width="234" height="5" rx="2.5" fill="#ffc65a"/>
+      <g class="hm-pill-art"><rect x="22" y="22" width="132" height="24" rx="12" fill="#0f5a3c"/>
+      <text x="88" y="38.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#c9ffe6" data-art="artSync"></text></g>
+      <path d="M-18 180 H308 L298 192 H-8Z" fill="#2a2450"/>
     </g>
-    <g transform="translate(450 252)">
-      <rect width="170" height="44" rx="22" fill="#6a4cf2"/>
-      <text x="85" y="28" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" data-art="artChat"></text>
+    <g class="hm-device" data-device="tablet" transform="translate(486 104)">
+      <rect width="120" height="162" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
+      <use class="hm-screen" href="#hm-pic" x="9" y="11" width="102" height="140" clip-path="url(#hm-clip-t)"/>
+      <rect x="18" y="138" width="84" height="4" rx="2" fill="#ffffff2e"/>
+      <rect class="hm-prog" x="18" y="138" width="84" height="4" rx="2" fill="#ffc65a"/>
     </g>
-    <g transform="translate(270 300)">
-      <circle cx="0" cy="22" r="18" fill="#2fb3a3" stroke="#3ee08f" stroke-width="3"/><circle cx="40" cy="22" r="18" fill="#ff8a7a" stroke="#3ee08f" stroke-width="3"/><circle cx="80" cy="22" r="18" fill="#7c5cff"/>
-      <text x="110" y="28" font-size="15" fill="#c9c0ea" data-art="artPeople"></text>
+    <g class="hm-device" data-device="phone" transform="translate(426 186)">
+      <rect width="64" height="120" rx="13" fill="#140f30" stroke="#ffffff30" stroke-width="2"/>
+      <use class="hm-screen" href="#hm-pic" x="6" y="12" width="52" height="96" clip-path="url(#hm-clip-p)"/>
+      <rect x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffffff2e"/>
+      <rect class="hm-prog" x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffc65a"/>
+      <rect x="25" y="5" width="14" height="3" rx="1.5" fill="#ffffff26"/>
+    </g>
+    <g class="hm-bubble" transform="translate(470 326)">
+      <rect width="156" height="40" rx="20" fill="#6a4cf2"/>
+      <text x="78" y="25.5" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" data-art="artChat"></text>
+    </g>
+    <g class="hm-faces" transform="translate(200 300)">
+      ${face(16, a, true)}${face(52, b, true)}${face(88, c, false)}
+      <text x="112" y="23" font-size="14" fill="#c9c0ea" data-art="artPeople"></text>
     </g>
     <circle cx="100" cy="190" r="92" fill="url(#hm-halo)"/>
   </svg>`;
