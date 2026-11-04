@@ -95,7 +95,7 @@ const SCREENS = [
     },
     false,
   ],
-  ['connection', () => '/baglanti', (p) => p.waitForTimeout(5000), false],
+  ['connection', () => '/connection', (p) => p.waitForTimeout(5000), false],
   ['help', () => '/help.html', null, false],
   ['privacy', () => '/privacy.html', null, false],
   ['thanks', () => '/thanks.html', null, true],

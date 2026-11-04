@@ -53,14 +53,14 @@ async function person(name, avatar) {
 const JOIN = `(async () => { document.getElementById('voice-join').click(); for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 150)); const d = document.querySelector('.confirm-dialog'); if (d) d.querySelector('.btn.primary').click(); } return 1; })()`;
 const HINT = `[...document.querySelectorAll('.hint, .flash-hint, [role=status], [role=tooltip]')].map((e) => e.textContent).join(' | ')`;
 
-const ali = await person('Ali', 'wizard');
-const ayse = await person('Ayse', 'elf');
+const alex = await person('Alex', 'wizard');
+const sam = await person('Sam', 'elf');
 const ready = (b) => b.evaluate(`!document.getElementById('voice-card').hidden && document.getElementById('people-count')?.textContent === '2'`);
-check(!!(await until(async () => (await ready(ali)) && (await ready(ayse)), 20000)), 'both in the room, voice card shown');
-await ali.evaluate(JOIN);
-await ayse.evaluate(JOIN);
-check(!!(await until(async () => (await ali.evaluate(`document.querySelectorAll('#voice-people .voice-face').length`)) === 2, 15000)), 'both in voice');
-for (const [name, b] of [['Ali', ali], ['Ayse', ayse]]) {
+check(!!(await until(async () => (await ready(alex)) && (await ready(sam)), 20000)), 'both in the room, voice card shown');
+await alex.evaluate(JOIN);
+await sam.evaluate(JOIN);
+check(!!(await until(async () => (await alex.evaluate(`document.querySelectorAll('#voice-people .voice-face').length`)) === 2, 15000)), 'both in voice');
+for (const [name, b] of [['Alex', alex], ['Sam', sam]]) {
   const shown = () => b.evaluate(`document.body.innerText.includes('doğrudan bağlantıları engelliyor')`);
   if (blocked) {
     check(!!(await until(shown, 15000)), `${name} sees "your browser blocks direct connections"`, await b.evaluate(HINT).catch(() => ''));
@@ -69,7 +69,7 @@ for (const [name, b] of [['Ali', ali], ['Ayse', ayse]]) {
     check(!!heard && !(await shown()), `${name}: voice connects and no "blocked" hint`);
   }
 }
-await ali.close();
-await ayse.close();
+await alex.close();
+await sam.close();
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

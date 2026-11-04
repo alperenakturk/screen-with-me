@@ -19,9 +19,9 @@ function client(hello) {
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 const short = (id) => ({ kind: 'youtube', id, short: true });
 
-const host = client({ name: 'Ali', cid: 'shortsAli1234' });
+const host = client({ name: 'Alex', cid: 'shortsAlex1234' });
 await host.wait((m) => m.t === 'welcome', 'welcome');
-const guest = client({ name: 'Ayse', cid: 'shortsAyse123' });
+const guest = client({ name: 'Sam', cid: 'shortsSam123' });
 await guest.wait((m) => m.t === 'welcome', 'welcome guest');
 
 host.send({ t: 'load', media: short('dQw4w9WgXcQ') });

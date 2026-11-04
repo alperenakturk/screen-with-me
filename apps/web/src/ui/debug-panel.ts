@@ -231,7 +231,7 @@ export function mountDebugPanel(): void {
   const firstButton = el('button', { type: 'button', class: 'btn debug-small debug-first' }, tx.firstTime);
   const offButton = el('button', { type: 'button', class: 'btn debug-small debug-off' }, tx.hide);
   const room = roomIdInPath();
-  const connLink = el('a', { class: 'btn debug-small debug-conn', href: `/baglanti${room ? `?room=${encodeURIComponent(room)}` : ''}` }, tx.connTest);
+  const connLink = el('a', { class: 'btn debug-small debug-conn', href: `/connection${room ? `?room=${encodeURIComponent(room)}` : ''}` }, tx.connTest);
 
   panel.append(
     el('header', { class: 'debug-head' }, el('h3', {}, `🐞 ${tx.title}`), closeButton),

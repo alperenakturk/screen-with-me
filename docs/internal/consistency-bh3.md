@@ -40,6 +40,11 @@ Stream / game resume (R1, BH2) is lane B's; not touched here.
 
 ## (c) Old Turkish names in English-first places (listed only, no renames)
 
+**Done in card C1 (0.9.97.21):** `/connection`, `/extension.html` (+ `extension.js`), `?measure=1` and English test
+names (Ali → Alex, Ayşe → Sam, Can → Max, Deniz → Robin, Ece → Lee); the old addresses and `?olcum=1` keep working
+(redirects), the storage key `olcum` stays. The Turkish code comments are left for the pass before the repo goes
+public.
+
 - Pages and routes: `/eklenti.html` + `eklenti.js` (the extension page, linked from the site in 5 places),
   `/gizlilik.html` + `gizlilik.js` (redirect to `privacy.html`), the route `/baglanti` (`diag.ts`, linked from the
   room, the help page, the debug panel and the Worker).

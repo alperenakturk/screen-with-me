@@ -52,7 +52,7 @@ Short version:
 
 | Browser | Unpacked (today) | Store later | Notes |
 |---|---|---|---|
-| Chrome | `chrome://extensions` → Developer mode → Load unpacked (our `eklenti.html` steps) | Chrome Web Store (account ready, not submitted) | reference browser |
+| Chrome | `chrome://extensions` → Developer mode → Load unpacked (our `extension.html` steps) | Chrome Web Store (account ready, not submitted) | reference browser |
 | Edge | `edge://extensions` → Developer mode → Load unpacked | (a) Chrome Web Store: Edge shows "Allow extensions from other stores" once, then "Get" works; (b) **Edge Add-ons** via Microsoft Partner Center: free developer account, the same zip, review usually a few business days | Listing on Edge Add-ons is cheap (same package) and Edge users trust it more than "other stores" |
 | Brave | `brave://extensions`, same steps | Chrome Web Store works directly (Brave has no store of its own) | |
 | Opera / GX | `opera://extensions`, Developer mode | (a) Chrome Web Store: Opera shows an "Add to Opera" button on store pages (older versions needed Opera's "Install Chrome Extensions" helper); (b) **addons.opera.com**: free, but developers report reviews taking weeks to many months | Not worth waiting for Opera's own store; send Opera users to the Chrome Web Store |
@@ -255,7 +255,7 @@ a real Firefox / Safari (not available in the cloud).
    owner opens the Microsoft Partner Center account.
 3. **Website test pass in Firefox and Safari** (desktop) and fix what breaks; write "Works best in Chrome, Edge, Brave,
    Opera; the website also works in Firefox and Safari; the extension needs a Chromium browser" in the store listing /
-   `eklenti.html`. Size S.
+   `extension.html`. Size S.
 4. Do **not** submit to Opera's own store (slow); point Opera users to the Chrome Web Store.
 
 **After 1.0:**

@@ -21,74 +21,74 @@ function client(hello, where = room) {
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const a = client({ name: 'Ali', cid: 'aliCid12345' });
+const a = client({ name: 'Alex', cid: 'alexCid12345' });
 const wa = await a.wait((m) => m.t === 'welcome', 'welcome a');
-ok(wa.hostId === wa.you, 'İlk giren Ali oda yöneticisi');
+ok(wa.hostId === wa.you, 'İlk giren Alex oda yöneticisi');
 
-const b = client({ name: 'Ayse', cid: 'ayseCid12345' });
+const b = client({ name: 'Sam', cid: 'samCid12345' });
 const wb = await b.wait((m) => m.t === 'welcome', 'welcome b');
-ok(wb.hostId === wa.you, 'Ayşe yöneticiyi Ali olarak görüyor');
+ok(wb.hostId === wa.you, 'Sam yöneticiyi Alex olarak görüyor');
 
 b.send({ t: 'kick', id: wa.you });
 const err = await b.wait((m) => m.t === 'error', 'not_host');
-ok(err.code === 'not_host', 'Yönetici olmayan Ayşe kimseyi atamaz');
+ok(err.code === 'not_host', 'Yönetici olmayan Sam kimseyi atamaz');
 
-b.send({ t: 'rename', name: 'Ayşe K.', avatar: 'dwarf' });
-const ren = await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ayşe K.'), 'rename');
-ok(ren.members.find((x) => x.name === 'Ayşe K.').avatar === 'dwarf', 'İsim ve avatar değişikliği herkese yansıdı');
+b.send({ t: 'rename', name: 'Sam K.', avatar: 'dwarf' });
+const ren = await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Sam K.'), 'rename');
+ok(ren.members.find((x) => x.name === 'Sam K.').avatar === 'dwarf', 'İsim ve avatar değişikliği herkese yansıdı');
 
-// Ali sayfayı yeniler: bağlantı kopar, aynı kimlikle geri gelir → yine yönetici.
+// Alex sayfayı yeniler: bağlantı kopar, aynı kimlikle geri gelir → yine yönetici.
 a.ws.close();
 await sleep(300);
-const bAfter = await b.wait((m) => m.t === 'members' && m.members.length === 1, 'ali left');
-ok(bAfter.hostId === wb.you, 'Ali yokken Ayşe geçici yönetici');
-const a2 = client({ name: 'Ali', cid: 'aliCid12345' });
+const bAfter = await b.wait((m) => m.t === 'members' && m.members.length === 1, 'alex left');
+ok(bAfter.hostId === wb.you, 'Alex yokken Sam geçici yönetici');
+const a2 = client({ name: 'Alex', cid: 'alexCid12345' });
 const wa2 = await a2.wait((m) => m.t === 'welcome', 'welcome a2');
-ok(wa2.hostId === wa2.you, 'Ali yenileyip geri gelince yine yönetici');
+ok(wa2.hostId === wa2.you, 'Alex yenileyip geri gelince yine yönetici');
 
 a2.send({ t: 'kick', id: wb.you });
 const kickedMsg = await b.wait((m) => m.t === 'error', 'kicked');
 // The close frame can take a moment on the live network.
 for (let i = 0; i < 50 && b.closed() === null; i++) await sleep(100);
-ok(kickedMsg.code === 'kicked' && b.closed() === 4003, 'Ali, Ayşe’yi attı; Ayşe’nin bağlantısı kapandı');
+ok(kickedMsg.code === 'kicked' && b.closed() === 4003, 'Alex, Sam’i attı; Sam’in bağlantısı kapandı');
 const left = await a2.wait((m) => m.t === 'members', 'members after kick');
 ok(left.members.length === 1, 'Atılan kişi listeden düştü');
 
-const b2 = client({ name: 'Ayse', cid: 'ayseCid12345' });
+const b2 = client({ name: 'Sam', cid: 'samCid12345' });
 const again = await b2.wait((m) => m.t === 'error', 'ban');
-ok(again.code === 'kicked', 'Atılan Ayşe geri giremiyor');
+ok(again.code === 'kicked', 'Atılan Sam geri giremiyor');
 
 // Yasak listesi sadece yöneticiye gelir; yönetici yasağı kaldırınca geri girebilir.
 const bans = await a2.wait((m) => m.t === 'bans' && m.bans.length === 1, 'bans');
-ok(bans.bans[0].name === 'Ayşe K.' && !('cid' in bans.bans[0]), 'Yöneticiye çıkarılanlar listesi geldi (tarayıcı kimliği gizli)');
+ok(bans.bans[0].name === 'Sam K.' && !('cid' in bans.bans[0]), 'Yöneticiye çıkarılanlar listesi geldi (tarayıcı kimliği gizli)');
 a2.inbox.length = 0; // eski (boş) listeler karışmasın
 a2.send({ t: 'unban', id: bans.bans[0].id });
 const cleared = await a2.wait((m) => m.t === 'bans' && m.bans.length === 0, 'unban');
 ok(cleared.bans.length === 0, 'Yönetici yasağı kaldırdı');
-const b3 = client({ name: 'Ayse', cid: 'ayseCid12345' });
+const b3 = client({ name: 'Sam', cid: 'samCid12345' });
 const back = await b3.wait((m) => m.t === 'welcome' || m.t === 'error', 'rejoin');
-ok(back.t === 'welcome', 'Yasağı kalkan Ayşe geri girebildi');
+ok(back.t === 'welcome', 'Yasağı kalkan Sam geri girebildi');
 b3.send({ t: 'unban', id: 'whatever1' });
 const notHost = await b3.wait((m) => m.t === 'error', 'unban not host');
 ok(notHost.code === 'not_host', 'Yönetici olmayan yasak kaldıramaz');
 
 // Yönetici kendi ikinci sekmesini (aynı kimlik) çıkarırsa kendini yasaklamaz.
-const a3 = client({ name: 'Ali', cid: 'aliCid12345' });
+const a3 = client({ name: 'Alex', cid: 'alexCid12345' });
 const wa3 = await a3.wait((m) => m.t === 'welcome', 'welcome a3');
 a2.send({ t: 'kick', id: wa3.you });
 for (let i = 0; i < 20 && a3.closed() === null; i++) await sleep(100);
 ok(a3.closed() === 4003 && a3.inbox.some((m) => m.code === 'kicked'), `Yönetici kendi diğer sekmesini kapattı, o sekme yeniden bağlanmaz (${a3.closed()})`);
-const a4 = client({ name: 'Ali', cid: 'aliCid12345' });
+const a4 = client({ name: 'Alex', cid: 'alexCid12345' });
 const wa4 = await a4.wait((m) => m.t === 'welcome' || m.t === 'error', 'welcome a4');
 ok(wa4.t === 'welcome', 'Yönetici kendini yasaklamadı');
 
 // Aynı tarayıcıdan farklı isimle giren ikinci kişi (test ederken sık olur): o isim yasaklanır, yönetici değil.
-const v = client({ name: 'Veli', cid: 'aliCid12345' });
+const v = client({ name: 'Veli', cid: 'alexCid12345' });
 const wv = await v.wait((m) => m.t === 'welcome', 'welcome veli');
 a2.send({ t: 'kick', id: wv.you });
 for (let i = 0; i < 20 && v.closed() === null; i++) await sleep(100);
 ok(v.closed() === 4003 && a2.closed() === null && a4.closed() === null, 'Aynı tarayıcıdaki Veli atıldı, yönetici sekmeleri açık kaldı');
-const v2 = client({ name: 'Veli', cid: 'aliCid12345' });
+const v2 = client({ name: 'Veli', cid: 'alexCid12345' });
 const wv2 = await v2.wait((m) => m.t === 'welcome' || m.t === 'error', 'veli rejoin');
 ok(wv2.t === 'error' && wv2.code === 'kicked', 'Veli aynı isimle geri giremiyor');
 
@@ -102,18 +102,18 @@ b3.inbox.length = 0;
 a4.inbox.length = 0;
 b3.send({ t: 'make-host', id: wa4.you });
 ok((await b3.wait((m) => m.t === 'error', 'not_host make-host')).code === 'not_host', 'A guest cannot hand the host role on');
-// Find Ayşe's member id from Ali's view.
-a4.send({ t: 'rename', name: 'Ali' });
+// Find Sam's member id from Alex's view.
+a4.send({ t: 'rename', name: 'Alex' });
 const roster = await a4.wait((m) => m.t === 'members', 'roster');
-const ayse = roster.members.find((m) => m.name.startsWith('Ay'));
-a4.send({ t: 'make-host', id: ayse.id });
-const handed = await b3.wait((m) => m.t === 'members' && m.hostId === ayse.id, 'host handed');
-ok(handed.hostId === ayse.id, 'The host hands the role to Ayşe; everyone sees the new host');
-a4.send({ t: 'kick', id: ayse.id });
+const sam = roster.members.find((m) => m.name.startsWith('Sa'));
+a4.send({ t: 'make-host', id: sam.id });
+const handed = await b3.wait((m) => m.t === 'members' && m.hostId === sam.id, 'host handed');
+ok(handed.hostId === sam.id, 'The host hands the role to Sam; everyone sees the new host');
+a4.send({ t: 'kick', id: sam.id });
 ok((await a4.wait((m) => m.t === 'error', 'old host kick')).code === 'not_host', 'The old host is a guest now');
 b3.send({ t: 'make-host', id: wa4.you });
-const backAgain = await a4.wait((m) => m.t === 'members' && m.hostId !== ayse.id, 'host back');
-ok(backAgain.hostId !== ayse.id, 'Ayşe can hand it back');
+const backAgain = await a4.wait((m) => m.t === 'members' && m.hostId !== sam.id, 'host back');
+ok(backAgain.hostId !== sam.id, 'Sam can hand it back');
 
 for (const c of [a2, b3, a4]) c.ws.close();
 

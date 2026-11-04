@@ -27,7 +27,7 @@ scrolling: computer ≥ 1024 × 620, phone 390 × 844 (the technical details sta
 4. E-mail, optional, `type=email`: placeholder "E-mail (optional, for a reply)" · "E-posta (isteğe bağlı, yanıt için)".
 5. Checkbox, **unticked**: "Attach technical details (version, browser, connection)" · "Teknik bilgileri ekle (sürüm,
    tarayıcı, bağlantı)". Under it a folded "See what is sent" · "Neler gönderilir" showing the exact lines (site +
-   extension version, browser + OS + window size, transport, last `/baglanti` summary). Never room id, names, chat.
+   extension version, browser + OS + window size, transport, last `/connection` summary). Never room id, names, chat.
 6. Privacy line (12 px, muted): "Goes to the Sidelit team only. We keep your e-mail just to reply, and delete it
    within 90 days. Privacy" · "Sadece Sidelit ekibine gider. E-postanı yalnızca yanıt vermek için tutarız ve 90 gün
    içinde sileriz. Gizlilik" (link to `privacy.html#feedback`; the 90 days must match the policy text card 9 writes).

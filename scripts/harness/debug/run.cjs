@@ -49,7 +49,7 @@ const shown = (page, selector) =>
   check(facts.some((f) => f === 'Extension=not installed'), 'the extension (none here)');
   check(facts.some((f) => /^Connection=/.test(f)) && facts.some((f) => /^Browser=Chrome \d+ · /.test(f)) && facts.some((f) => /^Screen=1366×768/.test(f)), 'connection, browser and screen');
   check(await page.$('#debug-tvlab') !== null && await page.$('#debug-measure') !== null, 'TV lab and Shorts timing switches');
-  check(await page.getAttribute('.debug-conn', 'href') === '/baglanti', 'the connection test link');
+  check(await page.getAttribute('.debug-conn', 'href') === '/connection', 'the connection test link');
   check(await page.$('.debug-first') !== null, '"start as a first-time visitor"');
 
   // The switches really switch.
@@ -96,7 +96,7 @@ const shown = (page, selector) =>
   const roomFacts = await page.$$eval('.debug-facts dt', (d) => d.map((x) => `${x.textContent}=${x.nextElementSibling.textContent}`));
   check(roomFacts.includes('People=1') && roomFacts.includes('Playing=nothing') && roomFacts.some((f) => /^Jumps=\d+/.test(f)), 'in a room: people, playing, sync jumps', roomFacts.join(' | '));
   check(roomFacts.includes('Connection=WebSocket'), 'in a room: the connection is WebSocket');
-  check(await page.getAttribute('.debug-conn', 'href') === `/baglanti?room=${room}`, 'the connection test goes back to this room');
+  check(await page.getAttribute('.debug-conn', 'href') === `/connection?room=${room}`, 'the connection test goes back to this room');
   const box = await page.evaluate(() => { const r = document.querySelector('.debug-panel').getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.right <= innerWidth; });
   check(box, '1366×768: the panel fits the screen');
   await page.keyboard.press('Escape');

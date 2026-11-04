@@ -424,7 +424,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <p data-i18n="externalNoExt" class="desktop-only"></p>
                 <p data-i18n="externalMobile" class="mobile-only"></p>
                 <ol class="external-steps desktop-only">
-                  <li><a href="/eklenti.html" target="_blank" rel="noopener" data-i18n="externalStep1"></a></li>
+                  <li><a href="/extension.html" target="_blank" rel="noopener" data-i18n="externalStep1"></a></li>
                   <li data-i18n="externalStep2"></li>
                   <li data-i18n="externalStep3"></li>
                 </ol>
@@ -671,7 +671,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       <h3 data-i18n="extDialog.title"></h3>
       <p data-i18n="extDialog.text"></p>
       <div class="dialog-actions">
-        <a class="btn primary" href="/eklenti.html" target="_blank" rel="noopener" data-i18n="extDialog.install"></a>
+        <a class="btn primary" href="/extension.html" target="_blank" rel="noopener" data-i18n="extDialog.install"></a>
         <button type="button" class="btn" id="ext-add-anyway" data-i18n="extDialog.addAnyway"></button>
         <button type="button" class="btn" id="ext-cancel" data-i18n="extDialog.cancel"></button>
       </div>
@@ -1133,7 +1133,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       netHint.hidden = count < 2;
     },
     // Networks where WebSockets never open (phone hotspots): the room runs over the HTTP fallback (0.9.92). Nothing
-    // changes for the person; the page only notes it (tests, `/baglanti`).
+    // changes for the person; the page only notes it (tests, `/connection`).
     onTransport: (transport) => {
       document.documentElement.dataset.swmTransport = transport;
       if (transport === 'http') console.info('[Sidelit] WebSocket did not open on this network: using the HTTP fallback');
@@ -1151,7 +1151,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       'div',
       { class: 'row net-hint-actions' },
       retryButton,
-      el('a', { class: 'btn small-btn', href: `/baglanti?room=${encodeURIComponent(roomId)}` }, t('netHint.test')),
+      el('a', { class: 'btn small-btn', href: `/connection?room=${encodeURIComponent(roomId)}` }, t('netHint.test')),
       // Card 7: the help page's connection section, in a new tab so the room keeps trying.
       el('a', { class: 'btn small-btn', href: helpHref('connection'), target: '_blank', rel: 'noopener', id: 'net-hint-help' }, t('netHint.help')),
     ),
@@ -1589,13 +1589,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   /**
    * "Does everyone land on the next Short together?" (0.9.91.18, ROADMAP; measured in the owner's Chrome, the cloud
-   * can't play YouTube): with `?olcum=1` once in this tab, the Shorts view shows how long after the room switched
+   * can't play YouTube): with `?measure=1` (or the old `?olcum=1`) once in this tab, the Shorts view shows how long after the room switched
    * (server time) this video really started moving. Two people compare their numbers; the difference is how far
    * apart they landed. Nothing is sent anywhere.
    */
   const measureOn = (() => {
     try {
-      if (new URLSearchParams(location.search).has('olcum')) sessionStorage.setItem('olcum', '1');
+      // The tab's storage key stays `olcum` (kept on purpose: nothing saved may break).
+      const query = new URLSearchParams(location.search);
+      if (query.has('measure') || query.has('olcum')) sessionStorage.setItem('olcum', '1');
       return sessionStorage.getItem('olcum') === '1';
     } catch {
       return false;
@@ -2897,7 +2899,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let wentToInstall = false;
   // Every extension link opens in a new tab (the top bar's too), so the room tab never leaves the room.
   document.addEventListener('click', (event) => {
-    if ((event.target as HTMLElement).closest('a[href="/eklenti.html"]')) wentToInstall = true;
+    if ((event.target as HTMLElement).closest('a[href="/extension.html"]')) wentToInstall = true;
   });
   const extReload = $('#ext-reload');
   extReload.querySelector('button')!.addEventListener('click', () => location.reload());

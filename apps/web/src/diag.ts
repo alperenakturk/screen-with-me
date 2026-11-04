@@ -1,4 +1,4 @@
-// Connection test (/baglanti): someone who says "the room stays on Bağlanıyor…" opens this page and sends a screenshot
+// Connection test (/connection): someone who says "the room stays on Bağlanıyor…" opens this page and sends a screenshot
 // or the copied text. It measures how the page arrived (HTTP/3 = UDP, HTTP/2 = TCP), a plain request, a larger
 // download, a tiny WebSocket (probe), the room's live connection (WebSocket: open, welcome, ping) and the HTTP fallback
 // (0.9.92, the same room over plain requests). Together they tell the likely cause apart

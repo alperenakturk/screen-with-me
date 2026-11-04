@@ -37,107 +37,107 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // late right after a deploy, so these get more room than plain replies.
 const ALARM_WAIT = 25_000;
 
-const ali = client('Ali', 'drawAli000001');
-const wa = await ali.wait((m) => m.t === 'welcome', 'welcome');
-ali.send({ t: 'start' });
-const few = await ali.wait((m) => m.t === 'error', 'too few');
+const alex = client('Alex', 'drawAlex000001');
+const wa = await alex.wait((m) => m.t === 'welcome', 'welcome');
+alex.send({ t: 'start' });
+const few = await alex.wait((m) => m.t === 'error', 'too few');
 ok(few.code === 'too_few', 'Tek kişiyken oyun başlamıyor (too_few)');
-const ayse = client('Ayse', 'drawAyse00001');
-const wy = await ayse.wait((m) => m.t === 'welcome', 'welcome ayse');
-const can = client('Can', 'drawCan000001');
-const wc = await can.wait((m) => m.t === 'welcome', 'welcome can');
+const sam = client('Sam', 'drawSam00001');
+const wy = await sam.wait((m) => m.t === 'welcome', 'welcome sam');
+const max = client('Max', 'drawMax000001');
+const wc = await max.wait((m) => m.t === 'welcome', 'welcome can');
 await sleep(300);
-ok(can.state.phase === 'lobby' && can.state.players.length === 3, 'Üç kişi lobide');
+ok(max.state.phase === 'lobby' && max.state.players.length === 3, 'Üç kişi lobide');
 
-ayse.send({ t: 'start' });
-ok((await ayse.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host (the first player still here) starts');
-ayse.send({ t: 'hello', v: 3, name: 'Other', cid: 'drawOther0001', lang: 'tr' });
-ok((await ayse.wait((m) => m.t === 'error', 'second hello')).code === 'bad', 'A second hello on the same connection is refused');
-ali.send({ t: 'start' });
-const choices = await ali.wait((m) => m.t === 'choices', 'choices');
-ok(choices.words.length === 3, 'İlk çizen (ilk gelen Ali) üç kelime aldı');
+sam.send({ t: 'start' });
+ok((await sam.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host (the first player still here) starts');
+sam.send({ t: 'hello', v: 3, name: 'Other', cid: 'drawOther0001', lang: 'tr' });
+ok((await sam.wait((m) => m.t === 'error', 'second hello')).code === 'bad', 'A second hello on the same connection is refused');
+alex.send({ t: 'start' });
+const choices = await alex.wait((m) => m.t === 'choices', 'choices');
+ok(choices.words.length === 3, 'İlk çizen (ilk gelen Alex) üç kelime aldı');
 await sleep(200);
-ok(!ayse.inbox.some((m) => m.t === 'choices') && can.state.phase === 'choose' && can.state.drawer === wa.you, 'Kelimeler sadece çizene gitti, diğerleri "seçiyor" görüyor');
+ok(!sam.inbox.some((m) => m.t === 'choices') && max.state.phase === 'choose' && max.state.drawer === wa.you, 'Kelimeler sadece çizene gitti, diğerleri "seçiyor" görüyor');
 
-ali.send({ t: 'choose', index: 1 });
+alex.send({ t: 'choose', index: 1 });
 const word = choices.words[1];
-await ali.wait((m) => m.t === 'state' && m.phase === 'draw', 'draw ali');
+await alex.wait((m) => m.t === 'state' && m.phase === 'draw', 'draw alex');
 await sleep(200);
-ok(ali.state.word === word && !('word' in ayse.state) && ayse.state.hint.replace(/[_ ]/g, '') === '', 'Kelime sadece çizende; diğerlerinde "_ _ _"');
+ok(alex.state.word === word && !('word' in sam.state) && sam.state.hint.replace(/[_ ]/g, '') === '', 'Kelime sadece çizende; diğerlerinde "_ _ _"');
 
-// Çizim: Ali çizer, Ayşe ve Can görür; Ayşe çizemez.
-ali.send({ t: 'stroke', s: { c: 2, w: 1, p: [100, 100, 200, 150, 300, 220] } });
-const st = await can.wait((m) => m.t === 'stroke', 'stroke');
+// Çizim: Alex çizer, Sam ve Max görür; Sam çizemez.
+alex.send({ t: 'stroke', s: { c: 2, w: 1, p: [100, 100, 200, 150, 300, 220] } });
+const st = await max.wait((m) => m.t === 'stroke', 'stroke');
 ok(st.s.p.length === 6 && st.s.c === 2, 'Çizgi diğerlerine ulaştı');
 // A fill and one pen press in two pieces (same group), then undo: the whole press goes, the earlier line and the
 // fill stay, and everyone gets the rest to redraw.
-ali.send({ t: 'stroke', s: { c: 5, w: 0, p: [500, 400], f: 1, g: 7 } });
-const fill = await can.wait((m) => m.t === 'stroke' && m.s.f === 1, 'fill');
+alex.send({ t: 'stroke', s: { c: 5, w: 0, p: [500, 400], f: 1, g: 7 } });
+const fill = await max.wait((m) => m.t === 'stroke' && m.s.f === 1, 'fill');
 ok(fill.s.p.length === 2 && fill.s.g === 7, 'A fill reaches the others');
-ali.send({ t: 'stroke', s: { c: 0, w: 4, p: [10, 10, 50, 50], g: 8 } });
-ali.send({ t: 'stroke', s: { c: 0, w: 4, p: [50, 50, 90, 90], g: 8 } });
-await can.wait((m) => m.t === 'stroke' && m.s.g === 8 && m.s.p[0] === 50, 'second piece');
-ali.send({ t: 'undo' });
-const rest = await can.wait((m) => m.t === 'strokes', 'undo');
+alex.send({ t: 'stroke', s: { c: 0, w: 4, p: [10, 10, 50, 50], g: 8 } });
+alex.send({ t: 'stroke', s: { c: 0, w: 4, p: [50, 50, 90, 90], g: 8 } });
+await max.wait((m) => m.t === 'stroke' && m.s.g === 8 && m.s.p[0] === 50, 'second piece');
+alex.send({ t: 'undo' });
+const rest = await max.wait((m) => m.t === 'strokes', 'undo');
 ok(rest.list.length === 2 && rest.list[1].f === 1 && !rest.list.some((x) => x.g === 8), 'Undo took back the whole last press (both pieces), the rest is redrawn');
-ayse.send({ t: 'stroke', s: { c: 0, w: 0, p: [1, 1, 2, 2] } });
-const nd = await ayse.wait((m) => m.t === 'error', 'not drawer');
+sam.send({ t: 'stroke', s: { c: 0, w: 0, p: [1, 1, 2, 2] } });
+const nd = await sam.wait((m) => m.t === 'error', 'not drawer');
 ok(nd.code === 'not_drawer', 'Çizen olmayan çizemiyor');
 
 // Yanlış tahmin herkese; doğru tahmin metni kimseye gitmez, puan.
-ayse.send({ t: 'guess', text: 'yanlış kelime' });
-const wrong = await can.wait((m) => m.t === 'guess', 'wrong guess');
-ok(wrong.text === 'yanlış kelime' && wrong.name === 'Ayse', 'Yanlış tahmin herkese göründü');
-ayse.send({ t: 'guess', text: word.toUpperCase() });
-const right = await can.wait((m) => m.t === 'correct', 'correct');
+sam.send({ t: 'guess', text: 'yanlış kelime' });
+const wrong = await max.wait((m) => m.t === 'guess', 'wrong guess');
+ok(wrong.text === 'yanlış kelime' && wrong.name === 'Sam', 'Yanlış tahmin herkese göründü');
+sam.send({ t: 'guess', text: word.toUpperCase() });
+const right = await max.wait((m) => m.t === 'correct', 'correct');
 await sleep(200);
-ok(right.name === 'Ayse' && right.rank === 1 && right.points > 150 && !can.inbox.some((m) => m.t === 'guess' && m.text.toLowerCase() === word), 'Ayşe guessed first (#1, > 150 points), the word was shown to nobody');
+ok(right.name === 'Sam' && right.rank === 1 && right.points > 150 && !max.inbox.some((m) => m.t === 'guess' && m.text.toLowerCase() === word), 'Sam guessed first (#1, > 150 points), the word was shown to nobody');
 
-// Bilenler kendi arasında: Ayşe'nin mesajı Can'a gitmez, Ali'ye gider.
-ayse.send({ t: 'guess', text: 'çok kolaydı' });
-const secret = await ali.wait((m) => m.t === 'guess' && m.secret, 'secret');
+// Bilenler kendi arasında: Sam'in mesajı Max'a gitmez, Alex'e gider.
+sam.send({ t: 'guess', text: 'çok kolaydı' });
+const secret = await alex.wait((m) => m.t === 'guess' && m.secret, 'secret');
 await sleep(200);
-ok(secret.text === 'çok kolaydı' && !can.inbox.some((m) => m.t === 'guess' && m.text === 'çok kolaydı'), 'Bilenin mesajı sadece çizene ve bilenlere gitti');
+ok(secret.text === 'çok kolaydı' && !max.inbox.some((m) => m.t === 'guess' && m.text === 'çok kolaydı'), 'Bilenin mesajı sadece çizene ve bilenlere gitti');
 
 // Geç gelen o ana kadarki çizimi alır.
-const deniz = client('Deniz', 'drawDeniz0001');
-const list = await deniz.wait((m) => m.t === 'strokes', 'late strokes');
+const robin = client('Robin', 'drawRobin0001');
+const list = await robin.wait((m) => m.t === 'strokes', 'late strokes');
 ok(list.list.length === 2, 'Geç gelen o ana kadarki çizimi aldı');
 // Undo re-sends the whole drawing to everyone, so it is limited to about one a second: a burst gets "rate".
-ali.inbox.length = 0;
-for (let i = 0; i < 6; i++) ali.send({ t: 'undo' });
-ok((await ali.wait((m) => m.t === 'error', 'undo rate')).code === 'rate', 'A burst of undos is cut (about one a second)');
-// Can tries three wrong words first (two are free, the third costs 10 %).
-for (const w of ['xx1', 'xx2', 'xx3']) can.send({ t: 'guess', text: w });
+alex.inbox.length = 0;
+for (let i = 0; i < 6; i++) alex.send({ t: 'undo' });
+ok((await alex.wait((m) => m.t === 'error', 'undo rate')).code === 'rate', 'A burst of undos is cut (about one a second)');
+// Max tries three wrong words first (two are free, the third costs 10 %).
+for (const w of ['xx1', 'xx2', 'xx3']) max.send({ t: 'guess', text: w });
 await sleep(400);
-deniz.send({ t: 'guess', text: word });
-const second = await deniz.wait((m) => m.t === 'correct' && m.name === 'Deniz', 'deniz correct');
+robin.send({ t: 'guess', text: word });
+const second = await robin.wait((m) => m.t === 'correct' && m.name === 'Robin', 'robin correct');
 ok(second.rank === 2 && second.points < right.points, 'The second guesser gets less than the first');
-can.send({ t: 'guess', text: word });
-const third = await can.wait((m) => m.t === 'correct' && m.name === 'Can', 'can correct');
+max.send({ t: 'guess', text: word });
+const third = await max.wait((m) => m.t === 'correct' && m.name === 'Max', 'can correct');
 ok(third.rank === 3 && third.points < second.points, 'The third guesser, after three wrong tries, gets less still');
-const reveal = await ayse.wait((m) => m.t === 'state' && m.phase === 'reveal', 'reveal', 6000);
+const reveal = await sam.wait((m) => m.t === 'state' && m.phase === 'reveal', 'reveal', 6000);
 ok(reveal.word === word, 'Everyone guessed: the round ended, the word was shown to everyone');
 const drawerGain = reveal.players.find((p) => p.id === wa.you).gained;
 const average = Math.round((right.points + second.points + third.points) / 3);
 ok(drawerGain === average && reveal.players.find((p) => p.id === wa.you).score === drawerGain, 'The drawer got the guessers’ average (everyone guessed)');
 
-// Sıradaki çizen: Ayşe (geliş sırası).
-const next = await ayse.wait((m) => m.t === 'choices', 'next choices', ALARM_WAIT);
+// Sıradaki çizen: Sam (geliş sırası).
+const next = await sam.wait((m) => m.t === 'choices', 'next choices', ALARM_WAIT);
 // The server sends the words just before the new state; live, they can arrive in separate packets (0.9.93.9 deploy:
-// the check read the reveal's state, drawer still Ali), so wait for the "choose" state itself.
-const choosing = await ayse.wait((m) => m.t === 'state' && m.phase === 'choose' && m.round === reveal.round + 1, 'choose state');
-ok(next.words.length === 3 && choosing.drawer === wy.you, 'Sıra Ayşe’ye geçti, kelimeleri o seçiyor');
+// the check read the reveal's state, drawer still Alex), so wait for the "choose" state itself.
+const choosing = await sam.wait((m) => m.t === 'state' && m.phase === 'choose' && m.round === reveal.round + 1, 'choose state');
+ok(next.words.length === 3 && choosing.drawer === wy.you, 'Sıra Sam’e geçti, kelimeleri o seçiyor');
 
 // Sıfırla: lobi, puanlar 0. (Kutuda oyun başlamadan önceki "lobi" mesajları var: önce boşalt.)
-can.send({ t: 'reset' });
-ok((await can.wait((m) => m.t === 'error', 'not host reset')).code === 'not_host', 'Only the host resets the game');
-can.inbox.length = 0;
-ali.send({ t: 'reset' });
-await can.wait((m) => m.t === 'state' && m.phase === 'lobby', 'lobby');
-ok(can.state.players.every((p) => p.score === 0), 'Sıfırla: lobiye dönüldü, puanlar sıfır');
+max.send({ t: 'reset' });
+ok((await max.wait((m) => m.t === 'error', 'not host reset')).code === 'not_host', 'Only the host resets the game');
+max.inbox.length = 0;
+alex.send({ t: 'reset' });
+await max.wait((m) => m.t === 'state' && m.phase === 'lobby', 'lobby');
+ok(max.state.players.every((p) => p.score === 0), 'Sıfırla: lobiye dönüldü, puanlar sıfır');
 
-for (const c of [ali, ayse, can, deniz]) c.ws.close();
+for (const c of [alex, sam, max, robin]) c.ws.close();
 
 // A short game: the host picks English and one round each; two turns, then the podium.
 const short = 'draw' + Math.random().toString(36).slice(2, 8);

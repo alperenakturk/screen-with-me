@@ -35,9 +35,9 @@ function socket(path, onOpen) {
 const client = (hello) => socket(`/api/rooms/${room}/ws`, (ws) => ws.send(JSON.stringify({ t: 'hello', v: 3, ...hello })));
 const code = () => String(Math.floor(100000 + Math.random() * 900000));
 
-const phone = client({ name: 'Ali', avatar: 'wizard', cid: 'tvAli1234567' });
+const phone = client({ name: 'Alex', avatar: 'wizard', cid: 'tvAlex1234567' });
 await phone.wait((m) => m.t === 'welcome', 'welcome phone');
-const friend = client({ name: 'Ece', cid: 'tvEce1234567' });
+const friend = client({ name: 'Lee', cid: 'tvLee1234567' });
 await friend.wait((m) => m.t === 'welcome', 'welcome friend');
 
 // A wrong code: nobody waits there.
@@ -58,12 +58,12 @@ ok(paired.room === room && /^[a-f0-9]{32}$/.test(paired.token), 'The TV gets the
 await phone.wait((m) => m.t === 'tv' && m.op === 'linked', 'linked');
 ok(true, 'The phone is told the TV is linked');
 
-// The TV joins as Ali's second device.
+// The TV joins as Alex's second device.
 const tv = client({ name: 'TV', cid: 'tvBox1234567', tv: paired.token });
 const welcome = await tv.wait((m) => m.t === 'welcome', 'welcome tv');
 const meOnTv = welcome.members.find((m) => m.id === welcome.you);
-ok(meOnTv.name === 'Ali' && meOnTv.avatar === 'wizard' && meOnTv.tv === true, 'The TV joins with my name and avatar, marked as a TV');
-ok(welcome.members.find((m) => m.name === 'Ali' && !m.tv).id === welcome.hostId, 'My phone is still the host');
+ok(meOnTv.name === 'Alex' && meOnTv.avatar === 'wizard' && meOnTv.tv === true, 'The TV joins with my name and avatar, marked as a TV');
+ok(welcome.members.find((m) => m.name === 'Alex' && !m.tv).id === welcome.hostId, 'My phone is still the host');
 await phone.wait((m) => m.t === 'tv' && m.op === 'present' && m.value === true, 'present');
 ok(true, 'My phone learns that my TV is here');
 
@@ -73,7 +73,7 @@ await friend.wait((m) => m.t === 'settings', 'settings');
 phone.send({ t: 'load', media: { kind: 'test' } });
 await tv.wait((m) => m.t === 'state' && m.state.item, 'loaded on tv');
 tv.send({ t: 'pause', position: 1, at: Date.now() });
-ok((await friend.wait((m) => m.t === 'state' && m.state.paused, 'tv pause')).by.name === 'Ali', 'The TV has my host rights');
+ok((await friend.wait((m) => m.t === 'state' && m.state.paused, 'tv pause')).by.name === 'Alex', 'The TV has my host rights');
 friend.send({ t: 'play', position: 1, at: Date.now() });
 ok((await friend.wait((m) => m.t === 'error', 'friend play')).code === 'not_host', 'Others still are not the host');
 
@@ -89,9 +89,9 @@ await sleep(800);
 ok(!tv.inbox.some((m) => m.t === 'tv' && m.op === 'unlink'), "Someone else can't command my TV");
 
 // Renaming on the phone renames the TV too; a TV can't rename itself.
-phone.send({ t: 'rename', name: 'Ali B', avatar: 'wizard' });
-const renamed = await friend.wait((m) => m.t === 'members' && m.members.filter((x) => x.name === 'Ali B').length === 2, 'rename');
-ok(renamed.members.some((m) => m.tv && m.name === 'Ali B'), 'My TV follows my new name');
+phone.send({ t: 'rename', name: 'Alex B', avatar: 'wizard' });
+const renamed = await friend.wait((m) => m.t === 'members' && m.members.filter((x) => x.name === 'Alex B').length === 2, 'rename');
+ok(renamed.members.some((m) => m.tv && m.name === 'Alex B'), 'My TV follows my new name');
 
 // Reconnect with the same token works; a made-up token does not.
 const fake = client({ name: 'TV', cid: 'tvFake123456', tv: 'a'.repeat(32) });
@@ -115,7 +115,7 @@ friend.send({ t: 'tv-link', code: code2 });
 const paired2 = await waiting2.wait((m) => m.t === 'paired', 'paired 2');
 const tv2 = client({ name: 'TV', cid: 'tvBox7654321', tv: paired2.token });
 const w2 = await tv2.wait((m) => m.t === 'welcome', 'welcome tv2');
-const friendId = w2.members.find((m) => m.name === 'Ece' && !m.tv).id;
+const friendId = w2.members.find((m) => m.name === 'Lee' && !m.tv).id;
 phone.send({ t: 'kick', id: friendId });
 ok((await tv2.waitClose('tv2 kicked')) === 4003, "Kicking a person also removes their TV");
 

@@ -8,7 +8,7 @@ _Eski adıyla ScreenWithMe._
 Ücretsiz · hesap yok · reklam yok · YouTube'da ve (neredeyse) her sitede çalışır.
 
 [**Canlı site**](https://screen-with-me.swm-server.workers.dev) ·
-[**Eklentiyi kur**](https://screen-with-me.swm-server.workers.dev/eklenti.html) ·
+[**Eklentiyi kur**](https://screen-with-me.swm-server.workers.dev/extension.html) ·
 [🇬🇧 English](README.md)
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)

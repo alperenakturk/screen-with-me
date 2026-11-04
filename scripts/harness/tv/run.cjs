@@ -138,7 +138,7 @@ async function enter(page, room, name) {
   friend.on('pageerror', (e) => errors.push(`friend: ${e.message}`));
   await friend.goto(`${SITE}/?tvlab=1`);
   await friend.waitForFunction(() => localStorage.getItem('opt:tvLab') === '1');
-  await enter(friend, room, 'Ece');
+  await enter(friend, room, 'Lee');
   check(!(await friend.$('#tv-btn')), 'computer: no TV button (pairing is a phone job), even with the lab switch');
   await friend.evaluate(`(async () => { document.getElementById('voice-join').click(); for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 150)); const d = document.querySelector('.confirm-dialog'); if (!d) { if (i > 10) break; continue; } d.querySelector('.btn.primary').click(); } return 1; })()`);
   check(!!(await until(() => tv.evaluate(() => !!document.querySelector('.tv-face.in-voice')), 15000)), 'TV: the friend in voice gets a green ring');

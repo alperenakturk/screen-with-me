@@ -56,119 +56,119 @@ async function person(name, avatar) {
 const sounds = (page) => page.evaluate(() => window.__sounds.splice(0));
 const count = (list, id) => list.filter((s) => s === id).length;
 
-const ali = await person('Ali', 'wizard');
+const alex = await person('Alex', 'wizard');
 await sleep(800);
-await sounds(ali);
-const ayse = await person('Ayse', 'elf');
-await until(async () => (await ali.textContent('#people-count')) === '2');
+await sounds(alex);
+const sam = await person('Sam', 'elf');
+await until(async () => (await alex.textContent('#people-count')) === '2');
 await sleep(500);
-let a = await sounds(ali);
-check(count(a, 'roomJoin') === 1, 'Ali hears Ayşe joining the room', a.join());
+let a = await sounds(alex);
+check(count(a, 'roomJoin') === 1, 'Alex hears Sam joining the room', a.join());
 
 // A reload is not a new arrival.
-await ayse.reload();
-await ayse.waitForSelector('#people-count');
-await ayse.mouse.click(5, 300);
-await until(async () => (await ali.textContent('#people-count')) === '2');
+await sam.reload();
+await sam.waitForSelector('#people-count');
+await sam.mouse.click(5, 300);
+await until(async () => (await alex.textContent('#people-count')) === '2');
 await sleep(1500);
-a = await sounds(ali);
+a = await sounds(alex);
 check(count(a, 'roomJoin') === 0, 'a reload plays no join sound', a.join());
 
 // Voice: my own join confirms; others' join only while I'm in voice.
-await ali.click('#voice-join');
-await until(async () => (await ali.evaluate(() => window.__sounds.includes('meJoin'))));
-a = await sounds(ali);
-check(count(a, 'meJoin') === 1, 'Ali hears his own voice join', a.join());
-await sounds(ayse);
-await ayse.click('#voice-join');
-await until(async () => (await ali.evaluate(() => window.__sounds.includes('voiceJoin'))));
-a = await sounds(ali);
-let b = await sounds(ayse);
-check(count(a, 'voiceJoin') === 1, 'Ali (in voice) hears Ayşe joining voice', a.join());
-check(count(b, 'meJoin') === 1 && count(b, 'voiceJoin') === 0, 'Ayşe hears only her own join', b.join());
+await alex.click('#voice-join');
+await until(async () => (await alex.evaluate(() => window.__sounds.includes('meJoin'))));
+a = await sounds(alex);
+check(count(a, 'meJoin') === 1, 'Alex hears his own voice join', a.join());
+await sounds(sam);
+await sam.click('#voice-join');
+await until(async () => (await alex.evaluate(() => window.__sounds.includes('voiceJoin'))));
+a = await sounds(alex);
+let b = await sounds(sam);
+check(count(a, 'voiceJoin') === 1, 'Alex (in voice) hears Sam joining voice', a.join());
+check(count(b, 'meJoin') === 1 && count(b, 'voiceJoin') === 0, 'Sam hears only her own join', b.join());
 
 // Microphone toggles (button and M key).
-await ayse.click('#voice-mic');
-await ayse.mouse.click(5, 300);
-await ayse.keyboard.press('m');
+await sam.click('#voice-mic');
+await sam.mouse.click(5, 300);
+await sam.keyboard.press('m');
 await sleep(300);
-b = await sounds(ayse);
+b = await sounds(sam);
 check(b.join() === 'micOff,micOn', 'mic off / on sounds', b.join());
 
 // Chat: no sound while the chat is on screen, a sound when another tab is open.
-await ali.fill('#chat-input', 'merhaba');
-await ali.press('#chat-input', 'Enter');
+await alex.fill('#chat-input', 'merhaba');
+await alex.press('#chat-input', 'Enter');
 await sleep(800);
-b = await sounds(ayse);
+b = await sounds(sam);
 check(count(b, 'chat') === 0, 'no chat sound while the chat is visible', b.join());
-await ayse.click('[data-tab="queue"]');
-await ali.fill('#chat-input', 'nasılsın');
-await ali.press('#chat-input', 'Enter');
+await sam.click('[data-tab="queue"]');
+await alex.fill('#chat-input', 'nasılsın');
+await alex.press('#chat-input', 'Enter');
 await sleep(800);
-b = await sounds(ayse);
+b = await sounds(sam);
 check(count(b, 'chat') === 1, 'chat sound when the chat tab is not open', b.join());
-await ayse.click('[data-tab="chat"]');
-check(count(await sounds(ali), 'chat') === 0, 'my own message plays nothing');
+await sam.click('[data-tab="chat"]');
+check(count(await sounds(alex), 'chat') === 0, 'my own message plays nothing');
 
 // Voice leave.
-await ayse.click('#voice-leave');
+await sam.click('#voice-leave');
 await sleep(1200);
-a = await sounds(ali);
-b = await sounds(ayse);
-check(count(a, 'voiceLeave') === 1, 'Ali hears Ayşe leaving voice', a.join());
-check(count(b, 'meLeave') === 1, 'Ayşe hears her own leave', b.join());
+a = await sounds(alex);
+b = await sounds(sam);
+check(count(a, 'voiceLeave') === 1, 'Alex hears Sam leaving voice', a.join());
+check(count(b, 'meLeave') === 1, 'Sam hears her own leave', b.join());
 
 // Settings: switching sounds off silences everything.
-await ayse.evaluate(() => localStorage.setItem('opt:sounds', '0'));
-await ali.click('[data-tab="queue"]');
-await ayse.fill('#chat-input', 'sessiz');
-await ayse.press('#chat-input', 'Enter');
+await sam.evaluate(() => localStorage.setItem('opt:sounds', '0'));
+await alex.click('[data-tab="queue"]');
+await sam.fill('#chat-input', 'sessiz');
+await sam.press('#chat-input', 'Enter');
 await sleep(800);
-check(count(await sounds(ali), 'chat') === 1, 'Ali still hears (his own setting)');
-await ali.evaluate(() => localStorage.setItem('opt:sounds', '0'));
+check(count(await sounds(alex), 'chat') === 1, 'Alex still hears (his own setting)');
+await alex.evaluate(() => localStorage.setItem('opt:sounds', '0'));
 await sleep(4200);
-await ayse.fill('#chat-input', 'yine sessiz');
-await ayse.press('#chat-input', 'Enter');
+await sam.fill('#chat-input', 'yine sessiz');
+await sam.press('#chat-input', 'Enter');
 await sleep(800);
-check((await sounds(ali)).length === 0, 'no sound at all when switched off');
-await ali.evaluate(() => localStorage.setItem('opt:sounds', '1'));
-await ayse.evaluate(() => localStorage.setItem('opt:sounds', '1'));
-await ali.click('[data-tab="chat"]');
-await ali.click('#voice-leave');
+check((await sounds(alex)).length === 0, 'no sound at all when switched off');
+await alex.evaluate(() => localStorage.setItem('opt:sounds', '1'));
+await sam.evaluate(() => localStorage.setItem('opt:sounds', '1'));
+await alex.click('[data-tab="chat"]');
+await alex.click('#voice-leave');
 await sleep(300);
-await sounds(ali);
+await sounds(alex);
 
 // Settings dialog has the switch and the volume slider.
-await ali.click('#settings-open');
-const ui = await ali.evaluate(() => ({
+await alex.click('#settings-open');
+const ui = await alex.evaluate(() => ({
   on: document.querySelector('#opt-sounds')?.checked,
   vol: document.querySelector('#opt-soundvolume')?.value,
   visible: !!document.querySelector('#opt-soundvolume')?.offsetParent,
 }));
 check(ui.on === true && ui.vol === '70' && ui.visible, 'Settings → My screen: sounds on, volume 70 %', JSON.stringify(ui));
-await ali.keyboard.press('Escape');
+await alex.keyboard.press('Escape');
 await sleep(300);
 
 // XOX: invite, every piece, win / lose.
-await sounds(ayse);
-await ali.click('#dock-game'); // card 2: the rail holds 🎮 on a computer
-await ali.click('.hub-game >> nth=0');
-await until(async () => (await ayse.evaluate(() => window.__sounds.includes('gameInvite'))));
-b = await sounds(ayse);
-check(count(b, 'gameInvite') === 1, 'Ayşe hears the game invite', b.join());
-await ayse.click('#game-invite .btn.primary');
+await sounds(sam);
+await alex.click('#dock-game'); // card 2: the rail holds 🎮 on a computer
+await alex.click('.hub-game >> nth=0');
+await until(async () => (await sam.evaluate(() => window.__sounds.includes('gameInvite'))));
+b = await sounds(sam);
+check(count(b, 'gameInvite') === 1, 'Sam hears the game invite', b.join());
+await sam.click('#game-invite .btn.primary');
 const seated = await until(async () => {
-  const s = await ali.textContent('#xox-status');
-  return s && !s.includes('…') && (await ali.$$('#xox-board .xox-cell')).length === 9 ? s : null;
+  const s = await alex.textContent('#xox-status');
+  return s && !s.includes('…') && (await alex.$$('#xox-board .xox-cell')).length === 9 ? s : null;
 }, 15000);
 check(!!seated, 'both are seated', String(seated));
-await sounds(ali);
-await sounds(ayse);
+await sounds(alex);
+await sounds(sam);
 // Whoever starts plays 0, 1, 2 (top row); the other 3, 4.
 const myTurn = (page) => page.evaluate(() => document.querySelector('#xox-board')?.classList.contains('my-turn'));
-await until(async () => (await myTurn(ali)) || (await myTurn(ayse)));
-const first = (await ali.evaluate(() => document.querySelector('#xox-board')?.classList.contains('my-turn'))) ? ali : ayse;
-const second = first === ali ? ayse : ali;
+await until(async () => (await myTurn(alex)) || (await myTurn(sam)));
+const first = (await alex.evaluate(() => document.querySelector('#xox-board')?.classList.contains('my-turn'))) ? alex : sam;
+const second = first === alex ? sam : alex;
 const move = async (page, i) => {
   await until(async () => page.evaluate(() => document.querySelector('#xox-board')?.classList.contains('my-turn')));
   await page.click(`#xox-board .xox-cell >> nth=${i}`);

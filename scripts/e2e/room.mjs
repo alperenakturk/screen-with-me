@@ -35,15 +35,15 @@ function client(name) {
 const ok = (cond, msg) => { if (!cond) throw new Error('FAIL: ' + msg); console.log('ok  ' + msg); };
 const YT = (id) => ({ kind: 'youtube', id });
 
-const a = client('Ali');
+const a = client('Alex');
 await a.opened;
-a.send({ t: 'hello', v: V, name: 'Ali' });
+a.send({ t: 'hello', v: V, name: 'Alex' });
 const wa = await a.next((m) => m.t === 'welcome', 'welcome');
-ok(wa.members.length === 1 && wa.state.item === null && wa.queue.length === 0, 'Ali odaya girdi, oda boş');
+ok(wa.members.length === 1 && wa.state.item === null && wa.queue.length === 0, 'Alex odaya girdi, oda boş');
 
-const b = client('Ayse');
+const b = client('Sam');
 await b.opened;
-b.send({ t: 'hello', v: V, name: 'Ayse' });
+b.send({ t: 'hello', v: V, name: 'Sam' });
 await b.next((m) => m.t === 'welcome', 'welcome');
 await a.next((m) => m.t === 'members', 'members');
 
@@ -60,7 +60,7 @@ else console.log("ok  YouTube's title service didn't answer in 8 s: the room kee
 
 b.send({ t: 'enqueue', media: YT('dQw4w9WgXcQ') });
 const q1 = await a.next((m) => m.t === 'queue', 'queue add');
-ok(q1.queue.length === 1 && q1.change.kind === 'add' && q1.change.by.name === 'Ayse', 'Ayşe sıraya ekledi, Ali gördü');
+ok(q1.queue.length === 1 && q1.change.kind === 'add' && q1.change.by.name === 'Sam', 'Sam sıraya ekledi, Alex gördü');
 
 a.send({ t: 'enqueue', media: YT('jNQXAC9IVRw') });
 const q2 = await b.next((m) => m.t === 'queue' && m.queue.length === 2, 'queue add 2');
@@ -83,11 +83,11 @@ ok(j.state.item.id === x.id, 'Sıradan bir video seçilip hemen oynatıldı');
 
 b.send({ t: 'react', emoji: '🔥' });
 const r = await a.next((m) => m.t === 'reaction', 'reaction');
-ok(r.emoji === '🔥' && r.by.name === 'Ayse', 'Emoji tepkisi ulaştı');
+ok(r.emoji === '🔥' && r.by.name === 'Sam', 'Emoji tepkisi ulaştı');
 
 a.send({ t: 'chat', text: 'selam <b>herkes</b>' });
 const c1 = await b.next((m) => m.t === 'chat', 'chat');
-ok(c1.message.text === 'selam <b>herkes</b>' && c1.message.by.name === 'Ali', 'Sohbet mesajı ulaştı (metin olduğu gibi, HTML olarak işlenmez)');
+ok(c1.message.text === 'selam <b>herkes</b>' && c1.message.by.name === 'Alex', 'Sohbet mesajı ulaştı (metin olduğu gibi, HTML olarak işlenmez)');
 
 // Art arda basmak serbest ama kötüye kullanım sınırı var (RateLimiter(12, 5): bir anda en fazla ~12).
 for (let i = 0; i < 40; i++) b.send({ t: 'react', emoji: '😂' });
@@ -95,11 +95,11 @@ await new Promise((r) => setTimeout(r, 500));
 const got = a.inbox.filter((m) => m.t === 'reaction').length;
 ok(got >= 10 && got <= 16, `Emoji yağmuru serbest ama sınırlı (40 gönderildi, ${got} ulaştı)`);
 
-const c = client('Can');
+const c = client('Max');
 await c.opened;
-c.send({ t: 'hello', v: V, name: 'Can' });
+c.send({ t: 'hello', v: V, name: 'Max' });
 const wc = await c.next((m) => m.t === 'welcome', 'welcome');
-ok(wc.state.item.id === x.id && wc.chat.length === 1, 'Sonradan gelen Can videoyu ve sohbet geçmişini aldı');
+ok(wc.state.item.id === x.id && wc.chat.length === 1, 'Sonradan gelen Max videoyu ve sohbet geçmişini aldı');
 
 const old = client('Eski');
 await old.opened;

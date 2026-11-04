@@ -172,7 +172,7 @@ Tabs that have not joined a room are not affected.
 - **Don't bump `PROTOCOL_VERSION` while the review is running** (the store version would no longer be able to connect
   to the server).
 - If it is rejected, paste the reason from the e-mail into the session.
-- Once approved: share the store link; the manual install steps in `eklenti.html` become an "Add to Chrome" button,
+- Once approved: share the store link; the manual install steps in `extension.html` become an "Add to Chrome" button,
   and the site's "install the extension" links go to the store.
 - New version: bump `apps/extension/package.json` → `npm run store` → **Package** in the dashboard → upload the new
   zip → submit for review.
@@ -212,4 +212,4 @@ Before submitting (Claude checks; ✅ items were done in 0.9.0):
 - ⬜ Edge Add-ons listing submitted together with the Chrome Web Store (section above).
 - ⬜ Version `1.0.0` → `npm run store` → upload the zip in the dashboard → fill in the form with this guide → submit
   (with the owner's account; Claude can't submit).
-- ⬜ Once approved: change the install links in `eklenti.html` and on the site to the store link.
+- ⬜ Once approved: change the install links in `extension.html` and on the site to the store link.

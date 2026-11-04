@@ -20,7 +20,7 @@ export interface FeedbackInfo {
   extension?: string;
   browser?: string;
   transport?: string;
-  /** The last connection test's result (`/baglanti` "Copy the result"), shortened. */
+  /** The last connection test's result (`/connection` "Copy the result"), shortened. */
   diag?: string;
 }
 

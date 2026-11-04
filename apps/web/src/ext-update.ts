@@ -36,7 +36,7 @@ export function checkExtensionVersion(): void {
       .then((data) => {
         const latest = typeof data?.version === 'string' ? data.version : null;
         if (!latest || !olderVersion(have, latest)) return;
-        const link = document.querySelector<HTMLAnchorElement>('.topbar a.nav-link[href="/eklenti.html"]');
+        const link = document.querySelector<HTMLAnchorElement>('.topbar a.nav-link[href="/extension.html"]');
         if (!link) return;
         const text = t('extUpdate', { have, latest });
         link.classList.add('ext-update');

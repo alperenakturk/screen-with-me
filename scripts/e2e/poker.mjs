@@ -30,36 +30,36 @@ const ok = (c, m) => {
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const ali = client('Ali', 'pokerAli00001');
-const wa = await ali.wait((m) => m.t === 'welcome', 'welcome ali');
-const ayse = client('Ayse', 'pokerAyse0001');
-const wy = await ayse.wait((m) => m.t === 'welcome', 'welcome ayse');
-const can = client('Can', 'pokerCan00001');
-const wc = await can.wait((m) => m.t === 'welcome', 'welcome can');
+const alex = client('Alex', 'pokerAlex00001');
+const wa = await alex.wait((m) => m.t === 'welcome', 'welcome alex');
+const sam = client('Sam', 'pokerSam0001');
+const wy = await sam.wait((m) => m.t === 'welcome', 'welcome sam');
+const max = client('Max', 'pokerMax00001');
+const wc = await max.wait((m) => m.t === 'welcome', 'welcome can');
 await sleep(300);
-const lobby = can.state;
+const lobby = max.state;
 ok(lobby.phase === 'lobby' && lobby.players.length === 3 && lobby.host === wa.you, 'Three seats in the lobby, the first one is the host');
 
-ayse.send({ t: 'settings', jokers: true });
-ok((await ayse.wait((m) => m.t === 'error', 'not host')).code === 'not_host', 'Only the host changes the deck');
-ali.send({ t: 'settings', jokers: true });
-await can.wait((m) => m.t === 'state' && m.jokers === true, 'jokers');
+sam.send({ t: 'settings', jokers: true });
+ok((await sam.wait((m) => m.t === 'error', 'not host')).code === 'not_host', 'Only the host changes the deck');
+alex.send({ t: 'settings', jokers: true });
+await max.wait((m) => m.t === 'state' && m.jokers === true, 'jokers');
 ok(true, 'The host turned jokers on');
 
-ayse.send({ t: 'start' });
-ok((await ayse.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host deals');
-ali.send({ t: 'start' });
-const cardsA = await ali.wait((m) => m.t === 'cards', 'cards ali');
-const cardsY = await ayse.wait((m) => m.t === 'cards', 'cards ayse');
-await can.wait((m) => m.t === 'cards', 'cards can');
+sam.send({ t: 'start' });
+ok((await sam.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host deals');
+alex.send({ t: 'start' });
+const cardsA = await alex.wait((m) => m.t === 'cards', 'cards alex');
+const cardsY = await sam.wait((m) => m.t === 'cards', 'cards sam');
+await max.wait((m) => m.t === 'cards', 'cards can');
 await sleep(300);
 ok(cardsA.cards.length === 2 && cardsY.cards.length === 2 && cardsA.cards.join() !== cardsY.cards.join(), 'Everyone got two cards of their own');
-const s1 = ali.state;
+const s1 = alex.state;
 ok(s1.phase === 'preflop' && s1.pot === 6 && s1.players.every((p) => !('cards' in p)), 'Preflop: blinds 2 + 4 in the pot, nobody sees others’ cards');
-ok(!ali.inbox.some((m) => m.t === 'cards' && m.cards.join() === cardsY.cards.join()), 'Ayşe’s cards never reached Ali');
+ok(!alex.inbox.some((m) => m.t === 'cards' && m.cards.join() === cardsY.cards.join()), 'Sam’s cards never reached Alex');
 
-const byId = { [wa.you]: ali, [wy.you]: ayse, [wc.you]: can };
-const actor = () => byId[ali.state.toAct];
+const byId = { [wa.you]: alex, [wy.you]: sam, [wc.you]: max };
+const actor = () => byId[alex.state.toAct];
 const others = () => Object.values(byId).filter((c) => c !== actor());
 
 // Out of turn.
@@ -71,16 +71,16 @@ ok((await wrong.wait((m) => m.t === 'error', 'turn')).code === 'not_your_turn', 
 const raiser = actor();
 const raiserId = Object.keys(byId).find((k) => byId[k] === raiser);
 raiser.send({ t: 'act', a: 'raise', to: 20 });
-await ali.wait((m) => m.t === 'state' && m.last?.e === 'act' && m.last.a === 'raise', 'raise');
-ok(ali.state.pot === 26 && ali.state.currentBet === 20, 'Raise to 20: the pot holds 26');
+await alex.wait((m) => m.t === 'state' && m.last?.e === 'act' && m.last.a === 'raise', 'raise');
+ok(alex.state.pot === 26 && alex.state.currentBet === 20, 'Raise to 20: the pot holds 26');
 
 // Someone else disqualifies the raiser: the raiser gets their 20 back, the mover loses 10 life.
 const mover = Object.values(byId).find((c) => c !== raiser);
 const moverId = Object.keys(byId).find((k) => byId[k] === mover);
-const moverLife = ali.state.players.find((p) => p.id === moverId).life;
+const moverLife = alex.state.players.find((p) => p.id === moverId).life;
 mover.send({ t: 'move', m: 'dq', target: raiserId });
-await ali.wait((m) => m.t === 'state' && m.last?.e === 'move' && m.last.m === 'dq', 'dq');
-const afterDq = ali.state;
+await alex.wait((m) => m.t === 'state' && m.last?.e === 'move' && m.last.m === 'dq', 'dq');
+const afterDq = alex.state;
 const r = afterDq.players.find((p) => p.id === raiserId);
 const mv = afterDq.players.find((p) => p.id === moverId);
 ok(r.dq && r.life === 100 && mv.life === moverLife - 10 && mv.used.includes('dq'), 'Disqualify: the raiser is out of the hand with all 100 life, the mover paid 10');
@@ -93,14 +93,14 @@ await sleep(300);
 ok(peek.target === moverId && typeof peek.card === 'string' && !mover.inbox.some((m) => m.t === 'peek') && !raiser.inbox.some((m) => m.t === 'peek'), 'Peek: the card went only to the one who peeked');
 
 // Play the hand out: whoever acts checks or calls.
-for (let i = 0; i < 20 && ali.state.phase !== 'showdown'; i++) {
-  const s = ali.state;
+for (let i = 0; i < 20 && alex.state.phase !== 'showdown'; i++) {
+  const s = alex.state;
   const c = byId[s.toAct];
   if (!c) break;
   c.send({ t: 'act', a: s.options && s.options.call > 0 ? 'call' : 'check' });
-  await ali.wait((m) => m.t === 'state' && (m.toAct !== s.toAct || m.phase !== s.phase), 'next turn');
+  await alex.wait((m) => m.t === 'state' && (m.toAct !== s.toAct || m.phase !== s.phase), 'next turn');
 }
-const sd = ali.state;
+const sd = alex.state;
 ok(sd.phase === 'showdown' && sd.board.length === 5 && sd.players.filter((p) => p.cards).length === 2, 'Showdown: five shared cards, the two left show their hands');
 const total = sd.players.reduce((sum, p) => sum + p.life, 0);
 ok(total === 300 - 10 - 5, 'No life was created or lost (only the 10 + 5 spent on moves)');
@@ -109,12 +109,12 @@ ok(sd.players.some((p) => p.won > 0), 'Someone won the pot');
 // The next hand after the pause, with new cards. Like the game page, ping now and then: a pause whose time is up moves
 // on with any message even when the server's alarm runs late (live, right after a deploy).
 const pinger = setInterval(() => {
-  for (const c of [ali, ayse, can]) if (c.ws.readyState === WebSocket.OPEN) c.send({ t: 'ping' });
+  for (const c of [alex, sam, max]) if (c.ws.readyState === WebSocket.OPEN) c.send({ t: 'ping' });
 }, 1000);
-const next = await ali.wait((m) => m.t === 'cards' && m.hand === 2, 'hand 2', 12000);
+const next = await alex.wait((m) => m.t === 'cards' && m.hand === 2, 'hand 2', 12000);
 clearInterval(pinger);
 ok(next.cards.length === 2, 'The next hand is dealt after the showdown');
 
-for (const c of [ali, ayse, can]) c.ws.close();
+for (const c of [alex, sam, max]) c.ws.close();
 console.log('poker: all passed');
 setTimeout(() => process.exit(0), 100);

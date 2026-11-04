@@ -53,8 +53,10 @@ const match = location.pathname.match(/^\/r\/([^/]+)\/?$/);
 const roomId = match ? decodeURIComponent(match[1]!) : null;
 // Eski oyun köşesi adresleri (/oyun…) artık yok: oyunlar odanın içinde. Eski linkler ana sayfaya düşer.
 if (/^\/oyun(\/|$)/.test(location.pathname)) history.replaceState(null, '', '/');
-if (/^\/(baglanti|connection-test)\/?$/.test(location.pathname)) {
-  // Bağlantı testi: "Bağlanıyor…'da kalıyorum" diyenler için (sonuç ekranı yollanır).
+if (/^\/(connection|baglanti|connection-test)\/?$/.test(location.pathname)) {
+  // Connection test, for people whose room stays on "Connecting…" (they send the result). `/connection` is its old
+  // address (saved links keep working): the address bar shows the new one.
+  if (!/^\/connection\/?$/.test(location.pathname)) history.replaceState(null, '', '/connection' + location.search + location.hash);
   void import('./diag.ts').then(({ renderDiag }) => renderDiag(app));
 } else if (/^\/tv\/?$/.test(location.pathname)) {
   // TV version: this TV shows a code + QR; a phone in a room pairs it.

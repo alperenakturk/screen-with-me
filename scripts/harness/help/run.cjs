@@ -86,7 +86,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     // Links to our own pages exist.
     const missing = info.site.filter((href) => {
       const p = href.split(/[?#]/)[0];
-      return p !== '/' && p !== '/baglanti' && !fs.existsSync(path.join(PUBLIC, p));
+      return p !== '/' && p !== '/connection' && !fs.existsSync(path.join(PUBLIC, p));
     });
     check(info.site.length > 0 && missing.length === 0, `${lang}: links to our own pages exist`, { links: info.site, missing });
     // The numbers it states are the code's.
@@ -188,12 +188,12 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
       await room.close();
     }
   }
-  const ext = fs.readFileSync(path.join(PUBLIC, 'eklenti.html'), 'utf8');
+  const ext = fs.readFileSync(path.join(PUBLIC, 'extension.html'), 'utf8');
   check(/href="\/help\.html"/.test(ext), 'the extension page links the help page');
   // Card 8: the extension page says why it asks for every website, in both languages, with a link to the answer.
   const extPage = await ctx.newPage();
   for (const lang of ['en', 'tr']) {
-    await extPage.goto(`${base}/eklenti.html?lang=${lang}`);
+    await extPage.goto(`${base}/extension.html?lang=${lang}`);
     const note = await extPage.evaluate((lang) => {
       const el = document.querySelector(`[data-lang-block="${lang}"] .note[id^="why-all-sites"]`);
       return el && { shown: el.getBoundingClientRect().height > 0, text: el.innerText, href: el.querySelector('a')?.getAttribute('href') };

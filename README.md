@@ -8,7 +8,7 @@ _Formerly ScreenWithMe._
 Free · no accounts · no ads · works on YouTube and on (almost) any website.
 
 [**Live site**](https://screen-with-me.swm-server.workers.dev) ·
-[**Get the extension**](https://screen-with-me.swm-server.workers.dev/eklenti.html) ·
+[**Get the extension**](https://screen-with-me.swm-server.workers.dev/extension.html) ·
 [🇹🇷 Türkçe](README.tr.md)
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)

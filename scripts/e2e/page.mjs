@@ -13,7 +13,7 @@ const wait = async (pred) => {
   }
   throw new Error('timeout');
 };
-ws.send(JSON.stringify({ t: 'hello', v: 3, name: 'Ali' }));
+ws.send(JSON.stringify({ t: 'hello', v: 3, name: 'Alex' }));
 await wait((m) => m.t === 'welcome');
 ws.send(JSON.stringify({ t: 'load', media: { kind: 'page', url: 'https://film.example/dizi/bolum-1' }, title: 'Dizi – 1. Bölüm' }));
 const s = await wait((m) => m.t === 'state');

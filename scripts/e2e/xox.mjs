@@ -58,68 +58,68 @@ async function play(watcher, moves, filled) {
   return filled;
 }
 
-const ali = client('Ali', 'xoxAli0000001');
-await ali.wait((m) => m.t === 'welcome', 'welcome ali');
-const ayse = client('Ayse', 'xoxAyse000001');
-await ayse.wait((m) => m.t === 'welcome', 'welcome ayse');
-const can = client('Can', 'xoxCan0000001');
-await can.wait((m) => m.t === 'welcome', 'welcome can');
-await until(() => can.state?.seats[1]?.name === 'Ayse' && can.state.watchers.length === 1);
-const s0 = can.state;
-ok(s0.seats[0]?.name === 'Ali' && s0.seats[1]?.name === 'Ayse', 'İlk iki kişi X ve O koltuğunda');
-ok(s0.watchers.length === 1 && s0.watchers[0].name === 'Can', 'Üçüncü kişi izleyici');
+const alex = client('Alex', 'xoxAlex0000001');
+await alex.wait((m) => m.t === 'welcome', 'welcome alex');
+const sam = client('Sam', 'xoxSam000001');
+await sam.wait((m) => m.t === 'welcome', 'welcome sam');
+const max = client('Max', 'xoxMax0000001');
+await max.wait((m) => m.t === 'welcome', 'welcome can');
+await until(() => max.state?.seats[1]?.name === 'Sam' && max.state.watchers.length === 1);
+const s0 = max.state;
+ok(s0.seats[0]?.name === 'Alex' && s0.seats[1]?.name === 'Sam', 'İlk iki kişi X ve O koltuğunda');
+ok(s0.watchers.length === 1 && s0.watchers[0].name === 'Max', 'Üçüncü kişi izleyici');
 
 // Sıra: X başlar; O sırası değilken oynayamaz; izleyici oynayamaz.
-ayse.send({ t: 'move', cell: 4 });
-await ayse.wait((m) => m.t === 'error' && m.code === 'not_your_turn', 'not your turn');
+sam.send({ t: 'move', cell: 4 });
+await sam.wait((m) => m.t === 'error' && m.code === 'not_your_turn', 'not your turn');
 ok(true, 'Sırası olmayan oynayamıyor');
-can.send({ t: 'move', cell: 4 });
-await can.wait((m) => m.t === 'error' && m.code === 'not_player', 'not player');
+max.send({ t: 'move', cell: 4 });
+await max.wait((m) => m.t === 'error' && m.code === 'not_player', 'not player');
 ok(true, 'İzleyici oynayamıyor');
 
 // X kazanır: 0,1,2.
-await play(can, [[ali, 0], [ayse, 3], [ali, 1], [ayse, 4], [ali, 2]]);
-await until(() => can.state.game.winner === 'X');
-const won = can.state;
+await play(max, [[alex, 0], [sam, 3], [alex, 1], [sam, 4], [alex, 2]]);
+await until(() => max.state.game.winner === 'X');
+const won = max.state;
 ok(won.kind === 'xox' && won.game.winner === 'X' && JSON.stringify(won.game.line) === '[0,1,2]', 'X üç taşı dizdi, kazandı (izleyici de gördü)');
 ok(won.score.X === 1 && won.score.O === 0, 'Skor tutuldu');
-ali.send({ t: 'move', cell: 5 });
-await ali.wait((m) => m.t === 'error', 'no move after win');
+alex.send({ t: 'move', cell: 5 });
+await alex.wait((m) => m.t === 'error', 'no move after win');
 ok(true, 'Oyun bitince hamle yok');
 
 // Rövanş: başlayan değişir (O).
-ayse.send({ t: 'rematch' });
-await until(() => can.state.game.board.every((c) => c === null));
-ok(can.state.game.board.every((c) => c === null) && can.state.game.turn === 'O', 'Rövanşta tahta temiz, bu el O başlıyor');
+sam.send({ t: 'rematch' });
+await until(() => max.state.game.board.every((c) => c === null));
+ok(max.state.game.board.every((c) => c === null) && max.state.game.turn === 'O', 'Rövanşta tahta temiz, bu el O başlıyor');
 
-// Ayşe çıkar: koltuğu ayrılı ama boş sayılır; Can oturur.
-ayse.ws.close();
-await until(() => can.state.seats[1]?.online === false);
-ok(can.state.seats[1]?.online === false, 'Çıkan oyuncunun koltuğu "bağlı değil" görünüyor');
-can.send({ t: 'sit', seat: 1 });
-await until(() => can.state.seats[1]?.name === 'Can');
-ok(can.state.seats[1]?.name === 'Can' && can.state.watchers.length === 0, 'İzleyici boşalan koltuğa oturdu');
+// Sam çıkar: koltuğu ayrılı ama boş sayılır; Max oturur.
+sam.ws.close();
+await until(() => max.state.seats[1]?.online === false);
+ok(max.state.seats[1]?.online === false, 'Çıkan oyuncunun koltuğu "bağlı değil" görünüyor');
+max.send({ t: 'sit', seat: 1 });
+await until(() => max.state.seats[1]?.name === 'Max');
+ok(max.state.seats[1]?.name === 'Max' && max.state.watchers.length === 0, 'İzleyici boşalan koltuğa oturdu');
 
-// Ali yenilerse (aynı tarayıcı kimliği) koltuğunda kalır.
-ali.ws.close();
+// Alex yenilerse (aynı tarayıcı kimliği) koltuğunda kalır.
+alex.ws.close();
 await sleep(300);
-const ali2 = client('Ali', 'xoxAli0000001');
-await ali2.wait((m) => m.t === 'welcome', 'welcome ali2');
-await until(() => ali2.state?.seats[0]?.online === true);
-ok(ali2.state.seats[0]?.name === 'Ali' && ali2.state.seats[0]?.online === true, 'Yenileyen oyuncu koltuğunda kaldı');
+const alex2 = client('Alex', 'xoxAlex0000001');
+await alex2.wait((m) => m.t === 'welcome', 'welcome alex2');
+await until(() => alex2.state?.seats[0]?.online === true);
+ok(alex2.state.seats[0]?.name === 'Alex' && alex2.state.seats[0]?.online === true, 'Yenileyen oyuncu koltuğunda kaldı');
 
 // Emoji: sadece sabit listeden, herkese gider.
-can.send({ t: 'react', emoji: '🔥' });
-const r = await ali2.wait((m) => m.t === 'react', 'react');
-ok(r.emoji === '🔥' && r.from.name === 'Can', 'Emoji herkese gitti');
+max.send({ t: 'react', emoji: '🔥' });
+const r = await alex2.wait((m) => m.t === 'react', 'react');
+ok(r.emoji === '🔥' && r.from.name === 'Max', 'Emoji herkese gitti');
 
-for (const c of [ali2, can]) c.ws.close();
+for (const c of [alex2, max]) c.ws.close();
 
 // Dört Taş: aynı sunucu nesnesi, başka tür.
 const fourId = 'four' + Math.random().toString(36).slice(2, 8);
-const red = client('Ali', 'fourAli000001', { id: fourId, kind: 'four' });
+const red = client('Alex', 'fourAlex000001', { id: fourId, kind: 'four' });
 await red.wait((m) => m.t === 'welcome', 'welcome red');
-const yellow = client('Ayse', 'fourAyse00001', { id: fourId, kind: 'four' });
+const yellow = client('Sam', 'fourSam00001', { id: fourId, kind: 'four' });
 await yellow.wait((m) => m.t === 'welcome', 'welcome yellow');
 await until(() => yellow.state?.kind === 'four');
 ok(yellow.state.kind === 'four' && yellow.state.game.board.length === 42, 'Dört Taş odası açıldı (7×6 tahta)');
@@ -134,7 +134,7 @@ yellow.send({ t: 'move', cell: 7 });
 const bad = await yellow.wait((m) => m.t === 'error', 'bad column');
 ok(bad.code === 'not_your_turn', 'Oyun bitince (ve olmayan sütuna) hamle yok');
 // Başka türün koduna girilemez.
-const wrong = client('Can', 'fourCan000001', { id: fourId, kind: 'xox' });
+const wrong = client('Max', 'fourMax000001', { id: fourId, kind: 'xox' });
 const kindErr = await wrong.wait((m) => m.t === 'error', 'kind');
 ok(kindErr.code === 'kind', 'Dört Taş koduna XOX olarak girilemiyor (kind)');
 for (const c of [red, yellow, wrong]) c.ws.close();

@@ -19,9 +19,9 @@ function client(hello) {
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const host = client({ name: 'Ali', cid: 'recapAli1234' });
+const host = client({ name: 'Alex', cid: 'recapAlex1234' });
 await host.wait((m) => m.t === 'welcome', 'welcome');
-const guest = client({ name: 'Ayse', cid: 'recapAyse123' });
+const guest = client({ name: 'Sam', cid: 'recapSam123' });
 await guest.wait((m) => m.t === 'welcome', 'welcome guest');
 
 host.send({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' } });
@@ -37,11 +37,11 @@ guest.send({ t: 'recap' });
 const r1 = await guest.wait((m) => m.t === 'recap', 'recap to guest');
 await sleep(800);
 ok(!host.inbox.some((m) => m.t === 'recap'), 'Özet sadece isteyene gitti');
-const ayse = r1.recap.people.find((p) => p.name === 'Ayse');
-const ali = r1.recap.people.find((p) => p.name === 'Ali');
-ok(ayse?.chat === 3 && ali?.reactions === 2 && ali?.sad === 1, 'Mesaj ve tepkiler kişi kişi sayıldı');
+const sam = r1.recap.people.find((p) => p.name === 'Sam');
+const alex = r1.recap.people.find((p) => p.name === 'Alex');
+ok(sam?.chat === 3 && alex?.reactions === 2 && alex?.sad === 1, 'Mesaj ve tepkiler kişi kişi sayıldı');
 ok(r1.recap.videos === 1 && r1.recap.peak === 2, 'Video ve en kalabalık an sayıldı');
-ok(!JSON.stringify(r1).includes('recapAli1234'), 'Özette tarayıcı kimlikleri yok');
+ok(!JSON.stringify(r1).includes('recapAlex1234'), 'Özette tarayıcı kimlikleri yok');
 
 host.send({ t: 'recap' });
 const again = await host.wait((m) => m.t === 'recap', 'recap again');
