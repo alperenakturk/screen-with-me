@@ -585,7 +585,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
-- [ ] 0.9.97.25 R15: YouTube in fullscreen, a friend writes a message: it comes down over the video at the top right,
+- [ ] 0.9.97.26 R15: YouTube in fullscreen, a friend writes a message: it comes down over the video at the top right,
   left of the rail; the video never gets narrower, no dark column on the right; your camera floats over the video.
 - [ ] 0.9.97.20 BH2: Five Frames: skip a day after a win; the next day the 🔥 next to the day number (and in the games
   gallery) shows 0, not your old streak.
