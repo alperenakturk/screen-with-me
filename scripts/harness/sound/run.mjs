@@ -160,11 +160,19 @@ await sleep(300);
 await sounds(sam);
 // card 2: the rail holds 🎮 on a computer; with the sync test playing it rests until the mouse comes to the edge.
 await alex.evaluate(() => document.getElementById('dock-game').click());
-await alex.click('.hub-game >> nth=0');
+// Classics (0.9.97.35): XOX is a board on the Classics table's shelf, no longer its own card in the hall.
+await alex.waitForSelector('#game-menu [data-kind="classics"]', { state: 'attached' });
+await alex.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]').click());
+await alex.waitForSelector('#game-stage .cl-box[data-board="xox"]:not([disabled])');
+await alex.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="xox"]').click());
 await until(async () => (await sam.evaluate(() => window.__sounds.includes('gameInvite'))));
 b = await sounds(sam);
 check(count(b, 'gameInvite') === 1, 'Sam hears the game invite', b.join());
 await sam.click('#game-invite .btn.primary');
+// BH10 (reported to Game Studio): someone who joins a Classics table before the first move sees the shelf over the
+// board and must pick the board on it; close it the way a person does today.
+await sam.waitForSelector('#game-stage .cl-box[data-board="xox"]', { timeout: 8000 }).catch(() => {});
+await sam.evaluate(() => { const s = document.querySelector('#game-stage .cl-shelf'); if (s && !s.hidden) document.querySelector('#game-stage .cl-box[data-board="xox"]')?.click(); });
 const seated = await until(async () => {
   const s = await alex.textContent('#xox-status');
   return s && !s.includes('…') && (await alex.$$('#xox-board .xox-cell')).length === 9 ? s : null;
