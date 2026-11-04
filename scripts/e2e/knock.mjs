@@ -8,8 +8,8 @@ const ok = (c, m) => {
   console.log('ok  ' + m);
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-function client(name, cid) {
-  const ws = new WebSocket(`${base}/api/rooms/${room}/ws`);
+function client(name, cid, where = room) {
+  const ws = new WebSocket(`${base}/api/rooms/${where}/ws`);
   const inbox = [];
   let closed = null;
   ws.addEventListener('message', (e) => inbox.push(JSON.parse(e.data)));
@@ -92,4 +92,45 @@ const leeWaits = lee.inbox.some((m) => m.t === 'knock-wait');
 ok(leeWaits && (busy || ray.inbox.some((m) => m.t === 'knock-wait')), `A third knock from one address ${busy ? 'is refused (knock_busy)' : 'waits (no address known on this server)'}`);
 
 for (const c of [host, kim, lee, ray, eve, eveAgain]) c.ws.close();
+
+// BH3 (server sweep): the knock list follows whoever acts as host.
+const room2 = 'knock' + Math.random().toString(36).slice(2, 8);
+const h2 = client('Alex', 'knockB_Alex0001', room2);
+await h2.wait((m) => m.t === 'welcome', 'b host');
+const g2 = client('Sam', 'knockB_Sam00001', room2);
+const sam2Id = (await g2.wait((m) => m.t === 'welcome', 'b guest')).you;
+h2.send({ t: 'settings', knock: true });
+await h2.wait((m) => m.t === 'settings' && m.settings.knock === true, 'b knock on');
+// a) "Make host" while someone waits: the cards move to the new host, the old host's list empties.
+const ray2 = client('Ray', 'knockB_Ray00001', room2);
+await h2.wait((m) => m.t === 'knocks' && m.list.some((k) => k.name === 'Ray'), 'b host sees ray');
+h2.inbox.length = 0;
+g2.inbox.length = 0;
+h2.send({ t: 'make-host', id: sam2Id });
+const newHost = await g2.wait((m) => m.t === 'knocks' && m.list.some((k) => k.name === 'Ray'), 'new host gets the cards');
+const oldHost = await h2.wait((m) => m.t === 'knocks', 'old host list');
+ok(!!newHost && oldHost.list.length === 0, '"Make host" while someone waits: the new host gets the card, the old host\'s list empties');
+// b) The host (now Sam) leaves while Alex is still in: Alex acts as host and sees the waiting person.
+g2.inbox.length = 0;
+h2.inbox.length = 0;
+g2.ws.close();
+const acting = await h2.wait((m) => m.t === 'knocks' && m.list.some((k) => k.name === 'Ray'), 'acting host sees ray', 6000);
+const told = await ray2.wait((m) => m.t === 'knock-wait' && m.hostHere === true, 'ray told someone can answer', 6000);
+ok(!!acting && !!told, 'With the host away, the person acting as host (the oldest still in) sees the card and the newcomer is told someone can answer');
+h2.send({ t: 'knock-answer', id: acting.list.find((k) => k.name === 'Ray').id, allow: true });
+await ray2.wait((m) => m.t === 'welcome', 'ray let in by the acting host');
+ok(true, 'The acting host can let them in');
+// c) The same browser knocking twice shows one card (the older knock is replaced).
+const lee2a = client('Lee', 'knockB_Lee00001', room2);
+await h2.wait((m) => m.t === 'knocks' && m.list.some((k) => k.name === 'Lee'), 'lee knocks');
+const lee2b = client('Lee', 'knockB_Lee00001', room2);
+await lee2b.wait((m) => m.t === 'knock-wait', 'lee knocks again');
+await sleep(400);
+const cards = [...h2.inbox].reverse().find((m) => m.t === 'knocks');
+ok(cards.list.filter((k) => k.name === 'Lee').length === 1 && lee2a.closed() === 4005, 'The same browser knocking twice shows one card; the older knock is replaced (4005)');
+// d) The host turns the switch off while someone waits: they come in at once.
+h2.send({ t: 'settings', knock: false });
+await lee2b.wait((m) => m.t === 'welcome', 'lee comes in when the door opens');
+ok(true, 'Turning "Ask before letting people in" off lets whoever waits in at once');
+for (const c of [h2, ray2, lee2a, lee2b]) c.ws.close();
 console.log('knock: all passed');

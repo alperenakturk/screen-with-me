@@ -789,6 +789,17 @@ export class Room extends DurableObject<Env> {
         this.settings = next;
         await this.ctx.storage.put('settings', this.settings);
         this.broadcast({ t: 'settings', settings: this.settings });
+        // BH3: the door opened (the switch went off): whoever waits comes in now instead of waiting out the 10 minutes.
+        if (message.knock === false) {
+          for (const waiting of this.openSockets()) {
+            const a = waiting.deserializeAttachment() as Attachment | null;
+            if (!a?.knock || a.name) continue;
+            const hello = a.knock.hello;
+            delete a.knock;
+            waiting.serializeAttachment(a);
+            await this.join(waiting, a, hello);
+          }
+        }
         // "Sadece yönetici yayın açsın" açıldı: başkasının süren yayını kapanır.
         if (message.liveHostOnly === true) this.stopLive(true);
         await this.evaluateWait();
@@ -893,7 +904,18 @@ export class Room extends DurableObject<Env> {
     if (key === this.hostKey || this.joined(ws).some((a) => keyOf(a) === key)) return false;
     const seen = this.admitted[key];
     if (seen !== undefined && Date.now() - seen < ADMIT_TTL_MS) return false;
-    const waiting = this.knockers(ws);
+    // BH3: the same browser knocking again (a reload, a dropped network) replaces its older knock: one card per person.
+    for (const old of this.openSockets(ws)) {
+      const a = old.deserializeAttachment() as Attachment | null;
+      if (a?.knock && !a.name && keyOf(a) === key) {
+        try {
+          old.close(4005, 'replaced');
+        } catch {
+          // Already closed.
+        }
+      }
+    }
+    const waiting = this.knockers(ws).filter((a) => keyOf(a) !== key);
     if (waiting.length >= MAX_KNOCKS || (attachment.ip && waiting.filter((a) => a.ip === attachment.ip).length >= KNOCKS_PER_IP)) {
       this.sendTo(ws, { t: 'error', code: 'knock_busy' });
       ws.close(4010, 'knock_busy');
@@ -913,16 +935,24 @@ export class Room extends DurableObject<Env> {
       .sort((a, b) => a.knock!.at - b.knock!.at);
   }
 
-  /** R12: the host's tabs get the list of who waits; everyone waiting learns whether a host is there to answer. */
+  /**
+   * R12: the host's tabs get the list of who waits; everyone waiting learns whether a host is there to answer. BH3: the
+   * host is whoever acts as host now (`hostId`: the real host, or the oldest person while they are away), the same rule
+   * `answerKnock` checks, and everyone else gets an empty list, so cards never stay with someone who lost the role.
+   */
   private sendKnocks(except?: WebSocket): void {
     const waiting = this.knockers(except);
     const list = waiting.map((a) => ({ id: a.id, name: a.knock!.name, ...(a.knock!.avatar ? { avatar: a.knock!.avatar } : {}) }));
+    const hostId = this.hostId(except);
+    const hostAttachment = this.joined(except).find((a) => a.id === hostId);
+    const actingKey = hostAttachment ? keyOf(hostAttachment) : null;
     let hostHere = false;
     for (const ws of this.openSockets(except)) {
       const a = ws.deserializeAttachment() as Attachment | null;
-      if (!a?.name || keyOf(a) !== this.hostKey || a.tv) continue;
-      hostHere = true;
-      this.sendTo(ws, { t: 'knocks', list });
+      if (!a?.name || a.tv) continue;
+      const isHost = keyOf(a) === actingKey;
+      if (isHost) hostHere = true;
+      this.sendTo(ws, { t: 'knocks', list: isHost ? list : [] });
     }
     for (const ws of this.openSockets(except)) {
       const a = ws.deserializeAttachment() as Attachment | null;
@@ -1681,6 +1711,8 @@ export class Room extends DurableObject<Env> {
     await this.ctx.storage.put('host', this.hostKey);
     await this.setHostGone(null);
     this.broadcast(this.membersMessage());
+    // BH3: the knock cards move to the new host (the old one's empty).
+    if (this.knockers().length) this.sendKnocks();
   }
 
   private async kick(ws: WebSocket, me: Member, targetId: string): Promise<void> {
@@ -2037,7 +2069,7 @@ export class Room extends DurableObject<Env> {
     }
     this.broadcast(this.membersMessage(leaving), leaving);
     // R12: a knocker gave up, or the host left (those waiting learn nobody can answer now).
-    if (attachment?.knock || (attachment?.name && keyOf(attachment) === this.hostKey)) this.sendKnocks(leaving);
+    if (attachment?.knock || (attachment?.name && this.knockers(leaving).length)) this.sendKnocks(leaving);
     if (attachment?.name && this.settings.knock) await this.admit24h(keyOf(attachment));
     if (attachment?.table) await this.markEmptyTables(leaving);
     // Yönetici çıktıysa geçici yönetici listeyi alsın.
