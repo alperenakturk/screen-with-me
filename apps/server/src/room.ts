@@ -702,6 +702,10 @@ export class Room extends DurableObject<Env> {
           }
           image = await this.storeChatImage(message.image);
         }
+        if (message.to !== undefined) {
+          this.sendPrivate(ws, me, message.to, message.text);
+          return;
+        }
         this.stats.chat(keyOf(attachment), me);
         await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
         return;
@@ -1975,6 +1979,27 @@ export class Room extends DurableObject<Env> {
     this.stats.title(item.id, title);
     await this.saveStats();
     this.broadcast({ t: 'title', itemId: item.id, title });
+  }
+
+  /**
+   * R13: a private message goes to the person's own connections (not their TV) and back to mine; never into the
+   * room's history, the recap or anyone else's socket.
+   */
+  private sendPrivate(ws: WebSocket, me: Member, toId: string, text: string): void {
+    const mine = keyOf(ws.deserializeAttachment() as Attachment);
+    const target = this.joined().find((a) => a.id === toId && !a.tv);
+    if (!target || keyOf(target) === mine) {
+      this.sendTo(ws, { t: 'error', code: 'private_gone' });
+      return;
+    }
+    const theirs = keyOf(target);
+    const message: ChatMessage = { id: newId(), text, by: me, at: Date.now(), to: memberOf(target) };
+    for (const socket of this.openSockets()) {
+      const a = socket.deserializeAttachment() as Attachment | null;
+      if (!a?.name || a.tv || a.knock) continue;
+      const key = keyOf(a);
+      if (key === mine || key === theirs) this.sendTo(socket, { t: 'chat', message });
+    }
   }
 
   private async addChat(message: ChatMessage): Promise<void> {

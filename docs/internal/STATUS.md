@@ -421,6 +421,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.14 (private messages, card R13):**
+- [ ] With two friends in a room: press a friend's name in the chat (or their face → "🔒 Message privately"), write
+  something. Only that friend gets it ("🔒 Private · from …"), the other friend sees nothing; ✕ over the box goes back
+  to the room chat. Reload: the private message is not in the history. Try it on the phone too.
+
 **0.9.97.10 (redrawn parody avatars, card R14):**
 - [ ] Avatar picker → Parody: every face is the new drawing; Anime has the notebook genius and the sweet-tooth sleuth,
   the white-haired hunter is under Game. Pick one: it looks right in the chat, the faces and the join card.

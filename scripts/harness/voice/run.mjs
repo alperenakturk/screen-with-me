@@ -3,6 +3,8 @@
 // Eşler arası (varsayılan) ya da Cloudflare Realtime (sunucuda anahtar varsa) fark etmez.
 //
 //   node scripts/harness/voice/run.mjs https://screen-with-me.swm-server.workers.dev
+import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch } from '../embed/cdp.mjs';
@@ -32,6 +34,43 @@ const until = async (fn, ms = 10000) => {
  * yankısı sanıp siler (test bazen sessizlik ölçer). VOICE_A / VOICE_B: farklı ses dosyaları (wav), bkz. shell.mjs.
  */
 const micFile = (file) => (file ? [`--use-file-for-fake-audio-capture=${file}`] : []);
+
+/**
+ * Without VOICE_A / VOICE_B the harness writes its own two "voices" (20 s, 48 kHz mono): a harmonic tone whose pitch
+ * glides, cut into syllables (~4 a second), different pitch and rhythm per person. Speech-like on purpose: noise
+ * suppression keeps it, and the two never cancel each other in the echo canceller.
+ */
+function voiceWav(f0, syllables, seed) {
+  const rate = 48000;
+  const n = rate * 20;
+  const data = Buffer.alloc(44 + n * 2);
+  data.write('RIFF', 0);
+  data.writeUInt32LE(36 + n * 2, 4);
+  data.write('WAVEfmt ', 8);
+  data.writeUInt32LE(16, 16);
+  data.writeUInt16LE(1, 20);
+  data.writeUInt16LE(1, 22);
+  data.writeUInt32LE(rate, 24);
+  data.writeUInt32LE(rate * 2, 28);
+  data.writeUInt16LE(2, 32);
+  data.writeUInt16LE(16, 34);
+  data.write('data', 36);
+  data.writeUInt32LE(n * 2, 40);
+  let phase = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / rate;
+    const pitch = f0 * (1 + 0.15 * Math.sin(2 * Math.PI * 0.7 * t + seed));
+    phase += (2 * Math.PI * pitch) / rate;
+    const voice = Math.sin(phase) + 0.5 * Math.sin(2 * phase) + 0.3 * Math.sin(3 * phase) + 0.15 * Math.sin(5 * phase);
+    const syl = Math.max(0, Math.sin(Math.PI * syllables * t + seed)) ** 2;
+    data.writeInt16LE(Math.round(voice * syl * 0.25 * 32767), 44 + i * 2);
+  }
+  const file = join(tmpdir(), `swm-voice-${f0}.wav`);
+  writeFileSync(file, data);
+  return file;
+}
+process.env.VOICE_A ||= voiceWav(190, 4.2, 0);
+process.env.VOICE_B ||= voiceWav(120, 3.1, 1.3);
 
 async function person(name, avatar, file) {
   const b = await launch({ ext: EXT, out: join(here, `voice-${name}`), args: [...FAKE_MIC, ...micFile(file)] });
@@ -105,8 +144,21 @@ check(!!aliHears && !!ayseHears, 'ikisinde de karşı tarafın ses akışı geld
 await ali.sleep(1500);
 const la = await ali.evaluate(LEVEL);
 const lb = await ayse.evaluate(LEVEL);
-console.log('     ses enerjisi:', JSON.stringify({ ali: la, ayse: lb }));
-check(la.rms > 0.01 && lb.rms > 0.01, 'iki taraf da karşının sesini gerçekten duyuyor (sahte mikrofonun bip sesi geliyor)');
+// "Really hears" = clearly louder than the same stream with the other person's microphone off. A fixed level was
+// wrong: WebRTC's noise suppression and auto gain damp a steady test tone by an amount that depends on the file.
+const quiet = async (speaker, listener) => {
+  await speaker.evaluate(`document.getElementById('voice-mic').click(); 1`);
+  await speaker.sleep(1200);
+  const level = await listener.evaluate(LEVEL);
+  await speaker.evaluate(`document.getElementById('voice-mic').click(); 1`);
+  await speaker.sleep(1200);
+  return level;
+};
+const qa = await quiet(ayse, ali);
+const qb = await quiet(ali, ayse);
+console.log('     ses enerjisi:', JSON.stringify({ ali: la, ayse: lb, aliMuted: qa, ayseMuted: qb }));
+const hears = (on, off) => on.rms > 0.002 && on.rms > 4 * off.rms;
+check(hears(la, qa) && hears(lb, qb), 'iki taraf da karşının sesini gerçekten duyuyor (sahte mikrofonun sesi geliyor, kapatınca kesiliyor)');
 
 // Kendi sesimin seviyesi: 🎙 düğmesinin altındaki çubuk sahte mikrofonun bip'iyle doluyor.
 const bar = await until(() => ali.evaluate(`(() => { const i = document.querySelector('#voice-mic .mic-level > i'); const w = parseFloat(i?.style.width ?? '0'); return w > 5 ? w : null; })()`), 8000);
@@ -162,7 +214,10 @@ const stillClick = async (at) => {
   await ayse.sleep(300);
 };
 const close = (a, b, tolerance = 6) => Math.abs(a - b) <= tolerance;
-// 0.9.90.5 camera layout 2 "free tiles" (default): every camera is its own window.
+// 0.9.90.5 camera layout 2 "free tiles": every camera is its own window. Since card 6g it is no longer the default
+// (the one window is, checked above), so switch to it the way a person does: the pill's layout button.
+await ayse.evaluate(`if (!document.getElementById('voice-cams').classList.contains('free')) document.querySelector('#voice-cams .cam-layout').click(); 1`);
+await ayse.sleep(400);
 const TILE = `(() => { const t = document.querySelector('#voice-cams .cam-tile:not(.mine)'); if (!t) return null; const r = t.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), r: Math.round(r.right), island: t.hasAttribute('data-island'), free: document.getElementById('voice-cams').classList.contains('free'), t: t.querySelector('video').currentTime, iw: Math.round(document.querySelector('.player-wrap').getBoundingClientRect().right) }; })()`;
 const t0 = await until(() => ayse.evaluate(TILE));
 // 0.9.91.5 (owner): the cameras start attached under the pill, which holds only camera / layout buttons (mic, camera
@@ -337,11 +392,14 @@ await ayse.evaluate(`if (!document.getElementById('voice-cams').classList.contai
 await ayse.sleep(300);
 const PILL = `(() => { const r = document.querySelector('#voice-cams .cam-pill').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })()`;
 const p0 = await ayse.evaluate(PILL);
-await ayse.evaluate(`(() => { const p = document.querySelector('#voice-cams .cam-pill'); p.style.left = '200px'; p.style.top = '200px'; return 1; })()`);
+// Grab its real corner: a position set by hand in style is put back by the layout on its next update (the old check
+// set left/top to 200 and then dragged the video under it).
+await ayse.mouse('mouseMoved', p0.x + p0.w / 2, p0.y + p0.h / 2);
+await ayse.sleep(200);
 const p1 = await ayse.evaluate(PILL);
 await drag({ x: p1.x + p1.w - 3, y: p1.y + p1.h - 3 }, 80, 30);
 const p2 = await ayse.evaluate(PILL);
-check(p2.w > p1.w * 1.2, 'küçük menü köşesinden çekince büyüyor', `${Math.round(p1.w)} → ${Math.round(p2.w)}`);
+check(p2.w > p1.w * 1.2, 'küçük menü köşesinden çekince büyüyor', JSON.stringify({ p0, p1, p2, hit: await ayse.evaluate(`document.elementFromPoint(${p1.x + p1.w - 3}, ${p1.y + p1.h - 3})?.className`) }));
 check(Number(await ayse.evaluate(`localStorage.getItem('camPill:scale')`)) > 1, 'menünün boyu hatırlanıyor');
 await ayse.shot('kucuk-menu-buyuk');
 console.log('     menü:', JSON.stringify({ p0, p2 }));

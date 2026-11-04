@@ -982,6 +982,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (confirm(t('kickConfirm', { name: member.name }))) send({ t: 'kick', id: member.id });
     },
     makeHost: (member) => void askMakeHost(member),
+    messagePrivately: (member) => openPrivate(member),
   });
   /** Hand the host role to someone (0.9.93.2): asked first, it can't be taken back. */
   async function askMakeHost(member: Member): Promise<void> {
@@ -1078,6 +1079,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     tabs.show('chat');
     input?.focus();
   });
+
+  /** R13: the person menu's "Message privately": the chat tab, writing to them only. */
+  function openPrivate(member: Member): void {
+    if (shortsOn) setShortsOff(true);
+    tabs.show('chat');
+    chat.privateTo(member);
+  }
 
   // ---- Senkron ----
   const clock = new ServerClock();
@@ -1372,7 +1380,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'chat': {
         const { by } = message.message;
         // Shorts bubbles and corner messages show a picture as 🖼️ (+ its caption).
-        const text = message.message.image ? `🖼️ ${message.message.text}`.trim() : message.message.text;
+        const plain = message.message.image ? `🖼️ ${message.message.text}`.trim() : message.message.text;
+        const text = message.message.to ? `🔒 ${plain}` : plain;
         chat.add(message.message);
         // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
         if (shortsOn) seats.say(by, text);
@@ -1453,6 +1462,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           showError(() => t('error.others_watching', { names: watchingNames() }));
           break;
         }
+        if (message.code === 'private_gone') chat.privateGone();
         showError(() => t(`error.${message.code}`));
         if (message.code === 'version' || message.code === 'room_full' || message.code === 'knock_busy') connection.close();
         break;

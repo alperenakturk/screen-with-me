@@ -43,6 +43,8 @@ export interface VoiceRoom {
   kick: (member: Member) => void;
   /** Ask (confirm) and hand them the host role (0.9.93.2). */
   makeHost?: (member: Member) => void;
+  /** R13: open the chat writing to this person only. */
+  messagePrivately?: (member: Member) => void;
   /** The cameras on screen right now (member → picture; hidden ones and "hide myself" left out): Shorts seats. */
   onCams?: (cams: Map<string, MediaStream>) => void;
 }
@@ -630,6 +632,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       items.push(button(`🎛 ${t('voice.devices')}`, () => void (isShell ? changeShellDevices() : changeDevices())));
       items.push(button(`👤 ${t('voice.editMe')}`, () => document.querySelector<HTMLElement>('.topbar-right .profile-btn')?.click()));
     }
+    if (!isMe && !member.tv && room.messagePrivately) items.push(button(`🔒 ${t('chat.private')}`, () => room.messagePrivately!(member)));
     if (!isMe && room.isHost() && room.makeHost && !member.tv) items.push(button(`👑 ${t('makeHost')}`, () => room.makeHost!(member)));
     if (!isMe && room.isHost()) items.push(button(`🚪 ${t('voice.kick')}`, () => room.kick(member), 'danger'));
     if (items.length === 1) items.push(el('p', { class: 'person-pop-note' }, t(member.voice ? 'voice.menuNothing' : 'voice.notInVoice')));
