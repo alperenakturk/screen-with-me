@@ -878,7 +878,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   an overdue phase on (`overdue` / `advance`; Quiz the same): live alarms ran > 25 s late right after a deploy. The drawing only in memory (1000×750 grid, 50 ms chunks, latecomers get `strokes`).
   Guessers/drawer chat privately with `secret`. Piece `games/draw.ts`. Test: `scripts/e2e/draw.mjs`.
   **Quiz (0.9.74):** object `Quiz` (`apps/server/src/quiz.ts`, binding `QUIZZES`, migration `v4`, `/api/quiz/:id/ws`),
-  `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` (general knowledge, TR/EN, no film/series names; options
+  `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` + `quiz-questions-2.ts` (P9: 1175 questions, the second bank with a difficulty `d` 1–3; a game goes from easy to hard; the browser keeps the last 600 question ids it saw (`quiz:seen`) and sends them as a base64 bitmap in its hello (`encodeSeen`), the table avoids them and its own recent ones; the stars show the difficulty) (general knowledge, TR/EN, no film/series names; options
   shuffled every game). 2–8 players, 10 questions × 15 s, correct = 100–200 points (faster = more), reveal when everyone
   answered or time is up (4 s: correct option + who chose what), podium at the end; the correct option is not sent
   before the reveal. Piece `games/quiz.ts`. Test: `scripts/e2e/quiz.mjs`. Plan for more games:

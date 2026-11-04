@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QUIZ_QUESTIONS, fiftyFifty, parseQuizMessage, pickQuestions, quizPool } from './quiz.ts';
+import { QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, parseQuizMessage, pickQuestions, quizPool } from './quiz.ts';
 import { QUIZ_BANK, QUIZ_CATEGORIES } from './quiz-questions.ts';
 
 describe('Quiz', () => {
@@ -68,5 +68,40 @@ describe('Quiz', () => {
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', lang: 'en', topic: 'space', count: 5 }))).toEqual({ t: 'settings', lang: 'en', topic: 'space', count: 5 });
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', topic: 'films', count: 7 }))).toBeNull();
     expect(parseQuizMessage(JSON.stringify({ t: 'hello', v: 1, name: 'Ali', lang: 'en' }))).toEqual({ t: 'hello', v: 1, name: 'Ali', lang: 'en' });
+  });
+});
+
+describe('quiz bank 2 and rotation (P9)', () => {
+  it('the bank grew past 1100 questions, every one valid, with a difficulty on the new ones', () => {
+    expect(QUIZ_BANK.length).toBeGreaterThan(1100);
+    for (const entry of QUIZ_BANK) {
+      expect(entry.en || entry.tr).toBeTruthy();
+      for (const text of [entry.en, entry.tr]) {
+        if (!text) continue;
+        expect(text.q.length).toBeLessThanOrEqual(120);
+        expect(new Set(text.o).size).toBe(text.o.length);
+        expect(text.o.length).toBe(entry.tf === undefined ? 4 : 2);
+      }
+    }
+    expect(QUIZ_BANK.slice(-700).every((e) => e.d === 1 || e.d === 2 || e.d === 3)).toBe(true);
+  });
+
+  it('a browser seen-list: questions travel as a small bitmap', () => {
+    const ids = [0, 7, 8, 9, 300, 1170];
+    const text = encodeSeen(ids);
+    expect(text.length).toBeLessThan(SEEN_CHARS);
+    expect(decodeSeen(text)).toEqual(ids);
+    expect(decodeSeen('!!!')).toEqual([]);
+    const hello = parseQuizMessage(JSON.stringify({ t: 'hello', v: QUIZ_PROTOCOL_VERSION, name: 'Sam', seen: encodeSeen(Array.from({ length: 600 }, (_, i) => i * 2)) }));
+    expect(hello && hello.t === 'hello' && hello.seen && decodeSeen(hello.seen)).toHaveLength(600);
+  });
+
+  it('skips seen questions while enough are left, and warms up from easy to hard', () => {
+    const pool = quizPool('en', 'space');
+    const avoid = pool.slice(0, pool.length - 12);
+    const picked = pickQuestions('en', 10, Math.random, 'space', avoid);
+    expect(picked.every((q) => !avoid.includes(q.id))).toBe(true);
+    const levels = picked.map((q) => QUIZ_BANK[q.id]!.d ?? 2);
+    expect(levels).toEqual([...levels].sort((a, b) => a - b));
   });
 });
