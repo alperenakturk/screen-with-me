@@ -585,9 +585,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Phone: add the site to the home screen again: the new icon fills the shape.
 
 **Lane B for the big test round (3 Nov 2026 →):**
+- [ ] 0.9.97.26 R15: YouTube in fullscreen, a friend writes a message: it comes down over the video at the top right,
+  left of the rail; the video never gets narrower, no dark column on the right; your camera floats over the video.
 - [ ] 0.9.97.20 BH2: Five Frames: skip a day after a win; the next day the 🔥 next to the day number (and in the games
   gallery) shows 0, not your old streak.
-- [ ] 0.9.97.18 BH2: start a YouTube video and move the mouse to the video's right edge and away: the rail slides in and
+- [x] 0.9.97.18 BH2: start a YouTube video and move the mouse to the video's right edge and away: the rail slides in and
   out beside the video, never fading in over it.
 - [ ] 0.9.97.17 BH2: a friend shares the screen, you press Watch, then reload your page and press Watch again: the picture
   comes back (it used to stay black).
@@ -598,11 +600,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] 0.9.97.13 R5 (update the extension first): on a film page, out of fullscreen, move the mouse slowly to the right
   edge of the film: the rail opens when the mouse is about a finger's width (40 px) inside the film; a mouse that only
   passes by doesn't make the film jump; in the middle of the film the rail goes again.
-- [ ] 0.9.97.12 R4: in fullscreen press T: fullscreen closes and cinema mode opens; T again leaves cinema mode.
-- [ ] 0.9.97.12 R3: YouTube in fullscreen with nothing going on: no dark strip on the right, the video reaches the rail.
+- [x] 0.9.97.12 R4: in fullscreen press T: fullscreen closes and cinema mode opens; T again leaves cinema mode.
+- [x] 0.9.97.12 R3: YouTube in fullscreen with nothing going on: no dark strip on the right, the video reaches the rail.
   Turn your camera on: it sits in a column beside the video; drag the camera window onto the video: the empty column
   goes away; camera off: no column. Ask a friend to check theirs too.
-- [ ] 0.9.97.11 R2: in a room press Enter once: the cursor is in the message box. Also with a video playing, after
+- [x] 0.9.97.11 R2: in a room press Enter once: the cursor is in the message box. Also with a video playing, after
   pressing a rail button, in cinema mode (T) and in fullscreen: one Enter, never an empty window first.
 - [ ] 0.9.97.8 R1: with a friend, both in voice, the friend shares the screen and you watch. Open a game (XOX, then
   Draw & Guess), let the friend join it, close it: nobody is thrown out, the stream and voice keep going, every game opens

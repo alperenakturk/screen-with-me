@@ -401,7 +401,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
             </div>
             <div id="rail-edge" class="rail-edge" aria-hidden="true"></div>
-            <div id="fs-side" class="fs-side"><div id="fs-side-notices" class="yt-notices fs-side-notices"></div></div>
             <div id="empty" class="empty">
               <div class="theme-mascot" aria-hidden="true"></div>
               <h2 data-i18n="emptyTitle"></h2>
@@ -2681,15 +2680,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#chat-list').after(noticeChat);
   const noticeTop = el('div', { class: 'yt-notices yt-notices-top' });
   $('.player-wrap').before(noticeTop);
-  const fsSideNotices = $('#fs-side-notices');
   const NOTICES = '#waiting-banner, #sync-badge, #game-invite, .end-card, .countdown';
   function placeNotices(): void {
     const wrap = $('.player-wrap');
     const youtube = $('#theater').classList.contains('yt-rail') && !isShell && !document.documentElement.classList.contains('shorts-view');
-    // YouTube fullscreen on a computer (card 2a): the column beside the player; phones keep them on the video.
-    const fsSide = $('#theater').classList.contains('yt-fs');
-    const target = !youtube || (fullscreen.isActive() && !fsSide) ? wrap : fullscreen.isActive() ? fsSideNotices : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
-    for (const box of [wrap, noticeChat, noticeTop, fsSideNotices]) {
+    // Card R15 (owner): in fullscreen the notes sit on the video, YouTube too, as for video files.
+    const target = !youtube || fullscreen.isActive() ? wrap : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
+    for (const box of [wrap, noticeChat, noticeTop]) {
       if (box === target) continue;
       for (const node of box.querySelectorAll<HTMLElement>(`:scope > :is(${NOTICES})`)) target.append(node);
     }
@@ -2709,73 +2706,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   watchNotices.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   document.addEventListener('fullscreenchange', placeNotices);
 
-  /**
-   * Card 6d (owner's bug): the YouTube fullscreen column (card 2a) takes room only while it has something to show: a
-   * note, the cameras or a message. Otherwise the player is full width beside the resting rail. A message keeps it open
-   * SIDE_LINGER_MS after the last one, so a chat doesn't make the video jump back and forth.
-   */
-  const SIDE_LINGER_MS = 8000;
-  let sideLinger = 0;
-  let sideTimer: ReturnType<typeof setTimeout> | null = null;
-  function updateFsSide(): void {
-    const theater = $('#theater');
-    if (sideTimer !== null) clearTimeout(sideTimer);
-    sideTimer = null;
-    if (!theater.classList.contains('yt-fs')) {
-      // Only touch the class when it is there: even a no-op classList change rewrites the attribute, and the observer
-      // below would call this again for ever.
-      if (theater.classList.contains('fs-side-open')) theater.classList.remove('fs-side-open');
-      return;
-    }
-    const notes = [...fsSideNotices.children].some((node) => node instanceof HTMLElement && !node.hidden && getComputedStyle(node).display !== 'none');
-    // By id on the document: the camera box can float on <body>, outside the room page. Card R3: only cameras that
-    // really show count (a box with only hidden cameras, or none, used to hold the column open as a black strip), and
-    // not when they sit elsewhere (the person dragged them onto the player): checked once the column had time to place
-    // them, remembered until the cameras or their places change.
-    const box = document.getElementById('voice-cams');
-    const tiles = box && !box.hidden ? [...box.querySelectorAll<HTMLElement>('.cam-tile')].filter((tile) => tile.getClientRects().length > 0) : [];
-    const key = `${tiles.length}|${load('opt:camLayout') ?? ''}|${load('camFloat:fsSpot') ?? ''}|${load('camTiles:fsSpot') ?? ''}`;
-    let cams = tiles.length > 0 && camsElsewhere !== key;
-    const wasOpen = theater.classList.contains('fs-side-open');
-    if (cams && wasOpen && Date.now() - sideOpenedAt > 700) {
-      const column = document.getElementById('fs-side')?.getBoundingClientRect();
-      const inside = !!column && tiles.some((tile) => {
-        const r = tile.getBoundingClientRect();
-        return r.left < column.right && r.right > column.left && r.top < column.bottom && r.bottom > column.top;
-      });
-      if (!inside) {
-        camsElsewhere = key;
-        cams = false;
-      }
-    }
-    if (!tiles.length) camsElsewhere = null;
-    const toast = (document.getElementById('toasts')?.childElementCount ?? 0) > 0;
-    if (toast) sideLinger = Date.now() + SIDE_LINGER_MS;
-    const open = notes || cams || toast || Date.now() < sideLinger;
-    if (open !== wasOpen) {
-      theater.classList.toggle('fs-side-open', open);
-      if (open) sideOpenedAt = Date.now();
-      // The cameras are placed in the column: place them again once it moved.
-      setTimeout(() => dispatchEvent(new Event('resize')), 260);
-    }
-    // Look again: when the linger ends, and once the cameras had time to settle in the column.
-    if (open && !notes && !cams) sideTimer = setTimeout(updateFsSide, Math.max(200, sideLinger - Date.now() + 50));
-    else if (open && cams && Date.now() - sideOpenedAt <= 700) sideTimer = setTimeout(updateFsSide, 750 - (Date.now() - sideOpenedAt));
-  }
-  /** Card R3: when the column opened, and the cameras' state ("key") last found sitting outside it. */
-  let sideOpenedAt = 0;
-  let camsElsewhere: string | null = null;
-  const watchSide = new MutationObserver(updateFsSide);
-  watchSide.observe(fsSideNotices, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
-  const sideWatch: Array<[string, MutationObserverInit]> = [
-    ['voice-cams', { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true }],
-    ['toasts', { childList: true }],
-  ];
-  for (const [id, options] of sideWatch) {
-    const node = document.getElementById(id);
-    if (node) watchSide.observe(node, options);
-  }
-  watchSide.observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
 
   /**
    * Where a YouTube emoji rises from (card 2a): the sender's face when the faces are on screen; in fullscreen or with

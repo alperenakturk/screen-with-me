@@ -200,25 +200,7 @@ export function createCamWindow(opts: {
    * Where the automatic places are: the video's top-right corner (on the page the video box, in fullscreen the whole
    * screen), in the container's coordinates.
    */
-  /**
-   * YouTube fullscreen on a computer (card 2a, owner's D): the column beside the player (`#fs-side`), below its notes,
-   * in the container's coordinates; null elsewhere.
-   */
-  function sideColumn(): { left: number; top: number; right: number; bottom: number } | null {
-    if (mode() !== 'fs' || !theater.classList.contains('yt-fs')) return null;
-    const side = theater.querySelector<HTMLElement>('#fs-side');
-    const r = side?.getBoundingClientRect();
-    if (!side || !r || r.width < 60) return null;
-    const w = wrap.getBoundingClientRect();
-    const notes = side.querySelector<HTMLElement>('.fs-side-notices')?.getBoundingClientRect();
-    const top = notes && notes.height > 0 ? notes.bottom + GAP : r.top + EDGE;
-    return { left: r.left - w.left + EDGE, top: top - w.top, right: r.right - w.left - EDGE, bottom: r.bottom - w.top - EDGE };
-  }
-
   function area(c: { w: number; h: number }): { top: number; right: number; bottom: number; maxW?: number } {
-    // YouTube fullscreen: the automatic places are in the column beside the player, never on it.
-    const side = sideColumn();
-    if (side) return { top: side.top, right: side.right, bottom: side.bottom, maxW: Math.max(MIN_TILE_W, side.right - side.left) };
     // With the dock on the right (option A, 0.9.91.1; in the window too since 0.9.91.5) the column starts left of it.
     const docked = theater.classList.contains('dock-mode') ? theater.querySelector<HTMLElement>('#fs-dock')?.getBoundingClientRect() : undefined;
     const dock = docked && docked.width > 0 ? docked : undefined;
@@ -305,12 +287,10 @@ export function createCamWindow(opts: {
     }
     clearTiles();
     const c = container();
-    // YouTube fullscreen without a place the person chose: the one window fills the column beside the player.
-    const side = m === 'fs' && !load('camFloat:fsSpot') ? sideColumn() : null;
-    const spot = side ? { x: side.left / c.w, y: side.top / c.h, w: (side.right - side.left) / c.w } : m === 'fs' ? spots.fs : spots.normal;
+    const spot = m === 'fs' ? spots.fs : spots.normal;
     const inRow = Math.min(3, tilesNow().length);
     const row = inRow > 1 ? Math.min(inRow * ROW_TILE_W + (inRow - 1) * 6 + 16, c.w * ROW_MAX_SHARE) : 0;
-    const width = Math.round(side ? side.right - side.left : Math.min(Math.max(spot.w * c.w, MIN_WIDTH, row), c.w * MAX_SHARE));
+    const width = Math.round(Math.min(Math.max(spot.w * c.w, MIN_WIDTH, row), c.w * MAX_SHARE));
     box.style.width = `${width}px`;
     // A set height: the tiles fill it (CSS .sized); folded shows only the title strip.
     const sized = spot.h !== undefined && !folded;
