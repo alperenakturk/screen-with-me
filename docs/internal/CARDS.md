@@ -43,7 +43,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15. Lane A: R16 → R17 → R18 → R20 → BH5. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15. Lane A: R16 → R17 → R18 → BH5 (+ R20's copy once Design's redraw is in). Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -100,16 +100,16 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 
-### R20. Remove the sea-cartoon parody avatars (owner, 4 Nov 2026: "remove these completely, they aren't nice"; lane A)
-- Owner (screenshot of the series parody page): the yellow sponge, the pink starfish and the grey squid go.
-- What: drop `sponge`, `starfish` and `squid` from `DRAWN_AVATARS`, `AVATAR_PAGES`, `scripts/avatars.mjs`, Design's
-  `docs/internal/design/avatars-2/full/` and the i18n `avatar.<id>` names; their files leave `public/avatars` and the
-  extension's `static/avatars`. Anyone whose saved avatar (site, `me:<room>`, the extension's `site:avatar`) is one of
-  them gets a random themed one on load, like the old animal emojis (0.9.57); the server treats them as unknown (the
-  validator's default), so old clients show a themed fallback.
-- Done when: the three are gone from every picker page and file; a saved one is replaced once; the "every drawn
-  avatar is on exactly one page" test still passes.
-- Tests: unit test for the replacement of a removed avatar; avatar picker harness / sweep screenshot of the series page.
+### R20. Redraw two sea-cartoon parody avatars (owner, 4 Nov 2026; Design, then lane A)
+- Owner (screenshot of the series parody page), first "remove these completely, they aren't nice", then changed his
+  mind: **keep them; redraw the sponge** ("change only the sponge, the others are okay") **and the squid** ("change it
+  too, it's very creepy now"). The pink starfish stays as it is.
+- What: Design redraws `sponge` and `squid` in `docs/internal/design/avatars-2/full/` (same ids, same style rules as
+  R14: our flat style, a hint of the character, friendly faces, no logos or exact costumes; the squid must not look
+  creepy: softer eyes, a kinder mouth, warmer colour). Then lane A runs `scripts/avatars.mjs` so the site and the
+  extension get the new files (no id change, nothing to migrate).
+- Done when: the owner OKs the two new faces on Design's preview; they are live in the picker.
+- Tests: the avatar sweep screenshot of the series page.
 
 ### R19. Same browser, same name and avatar = one person (Planner's decision, owner's question)
 - Owner: in the same Chrome he opened the room twice with the same name and avatar and saw one person.
