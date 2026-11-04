@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALPHABET, FRAMES_VERSION, MAX_TRIES,
-  answerFor, dayNumber, freshFrames, guess, loadFrames, normalize, record, saveFrames, score, seeded, shareLine,
+  answerFor, dayNumber, freshFrames, liveStreak, guess, loadFrames, normalize, record, saveFrames, score, seeded, shareLine,
   solved, today, trayMarks, upper, wellFormed, type DayGame,
 } from './five-frames.ts';
 
@@ -87,6 +87,15 @@ describe('Five Frames days', () => {
     expect(Array.from({ length: 10 }, (_, d) => answerFor(d + 1, words, 'tr'))).not.toEqual(round1.slice(0, 10));
     expect(answerFor(-5, words, 'en')).toBe(answerFor(1, words, 'en'));
     expect(() => answerFor(1, [], 'en')).toThrow();
+  });
+});
+
+describe('Five Frames streak shown (BH2)', () => {
+  it('holds through today and yesterday, breaks after a missed day', () => {
+    const stats = { streak: 3, last: 5 };
+    expect(liveStreak(stats, 5)).toBe(3);
+    expect(liveStreak(stats, 6)).toBe(3);
+    expect(liveStreak(stats, 7)).toBe(0);
   });
 });
 
