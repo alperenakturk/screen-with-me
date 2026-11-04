@@ -171,14 +171,14 @@ check(!!(await until(() => hasChat(alice, 'back again'))), 'chat works again aft
 const diag = await (await browser.newContext()).newPage();
 await diag.goto(`${PROXY}/`);
 await diag.evaluate(() => localStorage.setItem('lang', 'en'));
-await diag.goto(`${PROXY}/baglanti`);
+await diag.goto(`${PROXY}/connection`);
 const verdict = await until(async () => {
   const text = await diag.textContent('.diag-verdict');
   return text && text.length > 5 ? text : null;
 }, 40000);
 const rowsOk = await diag.evaluate(() => [...document.querySelectorAll('.diag-row')].map((li) => li.querySelector('.diag-icon')?.textContent).join(''));
-check(!!verdict && verdict.includes('backup'), `/baglanti: "${verdict}"`);
-check(rowsOk === '✅✅✅❌❌❌❌✅✅✅', `/baglanti rows: ${rowsOk} (page, request, big answer ok; probe + room WebSocket fail; fallback ok)`);
+check(!!verdict && verdict.includes('backup'), `/connection: "${verdict}"`);
+check(rowsOk === '✅✅✅❌❌❌❌✅✅✅', `/connection rows: ${rowsOk} (page, request, big answer ok; probe + room WebSocket fail; fallback ok)`);
 await diag.close();
 
 // WebSockets start working: the probe notices and she moves to a WebSocket by herself, still one person in the room.

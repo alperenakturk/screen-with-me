@@ -26,7 +26,7 @@ function client(hello) {
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const a = client({ name: 'Ali', cid: 'waitAli000001' });
+const a = client({ name: 'Alex', cid: 'waitAlex000001' });
 const wa = await a.wait((m) => m.t === 'welcome', 'welcome a');
 ok(wa.settings?.waitForAll === true && Array.isArray(wa.waiting), 'Bekleme varsayılan olarak açık');
 
@@ -38,7 +38,7 @@ await sleep(800);
 ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Tek kişiyken takılınca oda durmuyor');
 a.send({ t: 'ready', ready: true });
 
-const b = client({ name: 'Ayse', cid: 'waitAyse00001' });
+const b = client({ name: 'Sam', cid: 'waitSam00001' });
 const wb = await b.wait((m) => m.t === 'welcome', 'welcome b');
 
 // Filmden odaya dönüş haberi: gönderen hariç herkese gider.
@@ -46,72 +46,72 @@ a.inbox.length = 0;
 b.send({ t: 'home' });
 const home = await a.wait((m) => m.t === 'home', 'home');
 await sleep(300);
-ok(home.by.name === 'Ayse' && !b.inbox.some((m) => m.t === 'home'), 'Ayşe odaya dönünce Ali haber aldı, Ayşe almadı');
+ok(home.by.name === 'Sam' && !b.inbox.some((m) => m.t === 'home'), 'Sam odaya dönünce Alex haber aldı, Sam almadı');
 
 b.send({ t: 'ready', ready: false });
 const p = await a.wait((m) => m.t === 'state' && m.by.id === 'system', 'auto pause');
 const w1 = await a.wait((m) => m.t === 'waiting' && m.ids.length === 1, 'waiting list');
-ok(p.state.paused && w1.ids[0] === wb.you, 'Ayşe takılınca oda durdu ve onu bekliyor');
+ok(p.state.paused && w1.ids[0] === wb.you, 'Sam takılınca oda durdu ve onu bekliyor');
 
 b.send({ t: 'ready', ready: true });
 const r = await a.wait((m) => m.t === 'state' && m.by.id === 'system', 'auto resume');
 await a.wait((m) => m.t === 'waiting' && m.ids.length === 0, 'waiting cleared');
-ok(!r.state.paused && Math.abs(r.state.position - p.state.position) < 0.5, 'Ayşe hazır olunca kaldığı yerden devam etti');
+ok(!r.state.paused && Math.abs(r.state.position - p.state.position) < 0.5, 'Sam hazır olunca kaldığı yerden devam etti');
 
-// Can katılır ve takılır; süre dolunca oda onsuz devam eder.
-const c = client({ name: 'Can', cid: 'waitCan000001' });
+// Max katılır ve takılır; süre dolunca oda onsuz devam eder.
+const c = client({ name: 'Max', cid: 'waitMax000001' });
 const wc = await c.wait((m) => m.t === 'welcome', 'welcome c');
 c.send({ t: 'ready', ready: false });
 await a.wait((m) => m.t === 'waiting' && m.ids.includes(wc.you), 'waiting for can');
 const t0 = Date.now();
 const timeout = await a.wait((m) => m.t === 'state' && m.by.id === 'system' && !m.state.paused, 'timeout resume', 16000);
-ok(timeout && Date.now() - t0 > 10000, `Can hazır olmayınca ${Math.round((Date.now() - t0) / 1000)} sn sonra oda onsuz devam etti`);
+ok(timeout && Date.now() - t0 > 10000, `Max hazır olmayınca ${Math.round((Date.now() - t0) / 1000)} sn sonra oda onsuz devam etti`);
 
 await sleep(300);
 a.inbox.length = 0;
 c.send({ t: 'ready', ready: true });
 c.send({ t: 'ready', ready: false });
 await sleep(800);
-ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Can hemen tekrar bekletemiyor (bekleme arası)');
+ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Max hemen tekrar bekletemiyor (bekleme arası)');
 // Security L3: the cooldown belongs to the person; reconnecting (a new member id, same browser) does not reset it.
 {
   c.ws.close();
   await sleep(300);
-  const c2 = client({ name: 'Can', cid: 'waitCan000001' });
+  const c2 = client({ name: 'Max', cid: 'waitMax000001' });
   await c2.wait((m) => m.t === 'welcome', 'welcome c2');
   a.inbox.length = 0;
   c2.send({ t: 'ready', ready: false });
   await sleep(800);
-  ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Can reconnecting does not reset the cooldown (security L3)');
+  ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Max reconnecting does not reset the cooldown (security L3)');
   c2.send({ t: 'ready', ready: true });
   c2.ws.close();
 }
 
-// Elle hareket beklemeyi iptal eder. (Ayşe ve Can bekleme arasında; yeni biri gelir.)
-const d = client({ name: 'Deniz', cid: 'waitDeniz0001' });
+// Elle hareket beklemeyi iptal eder. (Sam ve Max bekleme arasında; yeni biri gelir.)
+const d = client({ name: 'Robin', cid: 'waitRobin0001' });
 await d.wait((m) => m.t === 'welcome', 'welcome d');
 d.send({ t: 'ready', ready: false });
 await a.wait((m) => m.t === 'waiting' && m.ids.length === 1, 'waiting d');
 a.send({ t: 'play', position: 30, at: Date.now() });
 await a.wait((m) => m.t === 'waiting' && m.ids.length === 0, 'cancel by manual play');
-ok(true, 'Ali elle oynatınca bekleme iptal oldu');
+ok(true, 'Alex elle oynatınca bekleme iptal oldu');
 
 // Reklam: "reklamda" diyen kişi odayı bekletmez, kişiler listesinde işaretlenir; film geri gelince işaret kalkar.
 {
-  const e = client({ name: 'Ece', cid: 'waitEce000001' });
+  const e = client({ name: 'Lee', cid: 'waitLee000001' });
   await e.wait((m) => m.t === 'welcome', 'welcome e');
   a.send({ t: 'play', position: 40, at: Date.now() });
   await sleep(300);
   a.inbox.length = 0;
   e.send({ t: 'ready', ready: false, ad: true });
-  const adOn = await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ece' && x.ad === true), 'ad on');
+  const adOn = await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Lee' && x.ad === true), 'ad on');
   ok(!!adOn, 'Reklamdaki kişi listede "reklamda" görünüyor');
   // Reklam boyunca motorun "takıldım"ı da bekletmez (film ilerlemiyor).
   e.send({ t: 'ready', ready: false });
   await sleep(800);
   ok(!a.inbox.some((m) => m.t === 'state' && m.by.id === 'system'), 'Reklamdaki kişi için oda durmuyor');
   e.send({ t: 'ready', ready: true });
-  await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ece' && !x.ad), 'ad off');
+  await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Lee' && !x.ad), 'ad off');
   ok(true, 'Film geri gelince "reklamda" işareti kalktı');
   e.ws.close();
 }

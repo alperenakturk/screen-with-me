@@ -2,7 +2,7 @@
 
 Owner's report (31 Oct 2026): sharing the phone's hotspot, the laptop can't get into the site / room ("it doesn't get
 in"); the phone itself on its own mobile data works. Earlier (0.9.79) the same hotspot showed the page loading but the
-room's WebSocket neither opening nor closing ("Bağlanıyor…" forever). The `/baglanti` result from the hotspot is
+room's WebSocket neither opening nor closing ("Bağlanıyor…" forever). The `/connection` result from the hotspot is
 in below ("Owner's result").
 
 ## Why a hotspot differs from the phone itself
@@ -28,7 +28,7 @@ problems"). So UDP / HTTP/3 passes and every new TCP connection hangs on the tet
 showed `?`: behind the service worker the navigation entry has no protocol; since 0.9.92.1 the guess uses any h3
 request.)
 
-## Telling the causes apart (`/baglanti`, 0.9.92)
+## Telling the causes apart (`/connection`, 0.9.92)
 Rows: page protocol (h3 = UDP, h2 = TCP) · plain request (+ its protocol) · a 200 kB answer · a tiny WebSocket
 (`/api/probe`) · the room's WebSocket (open / welcome / ping) · the HTTP fallback (open / welcome / ping). The copied
 text ends with a `guess:` line:
@@ -82,7 +82,7 @@ fails use it; revisit if the measured share grows (Cloudflare dashboard → Dura
   codes, repeated failures, upgrade probe; `connection.test.ts` open timeout with the fallback.
 - Harness `scripts/harness/hotspot/run.mjs`: a proxy in front of `wrangler dev` swallows WebSocket upgrades (the
   hotspot); real Chromium: joins over HTTP in ~7 s, chat both ways, the sync test in step (~30 ms), reload back in
-  < 1 s, survives a 6 s network drop, `/baglanti` verdict, switches back to a WebSocket when they work again.
+  < 1 s, survives a 6 s network drop, `/connection` verdict, switches back to a WebSocket when they work again.
 - The real hotspot is the owner's check (STATUS "Owner's hand tests").
 
 ## Sources

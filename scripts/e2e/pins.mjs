@@ -19,40 +19,40 @@ function client(hello) {
 }
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 
-const ali = client({ name: 'Ali', cid: 'pinsAli12345' });
-await ali.wait((m) => m.t === 'welcome', 'welcome ali');
-const ayse = client({ name: 'Ayse', cid: 'pinsAyse1234' });
-await ayse.wait((m) => m.t === 'welcome', 'welcome ayse');
-ali.send({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' } });
-const loaded = await ali.wait((m) => m.t === 'state' && m.state.item, 'loaded');
+const alex = client({ name: 'Alex', cid: 'pinsAlex12345' });
+await alex.wait((m) => m.t === 'welcome', 'welcome alex');
+const sam = client({ name: 'Sam', cid: 'pinsSam1234' });
+await sam.wait((m) => m.t === 'welcome', 'welcome sam');
+alex.send({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' } });
+const loaded = await alex.wait((m) => m.t === 'state' && m.state.item, 'loaded');
 const itemId = loaded.state.item.id;
-ali.send({ t: 'pause', position: 125, at: Date.now() });
-await ali.wait((m) => m.t === 'state' && m.state.paused, 'paused');
+alex.send({ t: 'pause', position: 125, at: Date.now() });
+await alex.wait((m) => m.t === 'state' && m.state.paused, 'paused');
 
-ayse.send({ t: 'pin', note: 'Burayı anlamadım' });
-const p1 = await ali.wait((m) => m.t === 'pins' && m.pins.pins.length === 1, 'pin 1');
+sam.send({ t: 'pin', note: 'Burayı anlamadım' });
+const p1 = await alex.wait((m) => m.t === 'pins' && m.pins.pins.length === 1, 'pin 1');
 const pin = p1.pins.pins[0];
-ok(p1.pins.itemId === itemId && Math.abs(pin.at - 125) < 0.5 && pin.note === 'Burayı anlamadım' && pin.by.name === 'Ayse', 'Pin o anın saniyesi, notu ve pinleyenle herkese gidiyor');
-ok(!('owner' in pin) && !JSON.stringify(p1).includes('pinsAyse1234'), 'Pinleyenin tarayıcı kimliği istemcilere gitmiyor');
+ok(p1.pins.itemId === itemId && Math.abs(pin.at - 125) < 0.5 && pin.note === 'Burayı anlamadım' && pin.by.name === 'Sam', 'Pin o anın saniyesi, notu ve pinleyenle herkese gidiyor');
+ok(!('owner' in pin) && !JSON.stringify(p1).includes('pinsSam1234'), 'Pinleyenin tarayıcı kimliği istemcilere gitmiyor');
 
-const can = client({ name: 'Can', cid: 'pinsCan12345' });
-const w = await can.wait((m) => m.t === 'welcome', 'welcome can');
+const max = client({ name: 'Max', cid: 'pinsMax12345' });
+const w = await max.wait((m) => m.t === 'welcome', 'welcome can');
 ok(w.pins?.pins.length === 1 && w.pins.pins[0].id === pin.id, 'Yeni gelen pinleri welcome ile alıyor');
 
-can.send({ t: 'unpin', id: pin.id });
-const err = await can.wait((m) => m.t === 'error', 'unpin refused');
+max.send({ t: 'unpin', id: pin.id });
+const err = await max.wait((m) => m.t === 'error', 'unpin refused');
 ok(err.code === 'not_host', 'Başkasının pinini (yönetici değilse) kaldıramıyor');
-ayse.send({ t: 'unpin', id: pin.id });
-const p2 = await ali.wait((m) => m.t === 'pins' && m.pins.pins.length === 0, 'unpinned');
+sam.send({ t: 'unpin', id: pin.id });
+const p2 = await alex.wait((m) => m.t === 'pins' && m.pins.pins.length === 0, 'unpinned');
 ok(!!p2, 'Kendi pinini kaldırabiliyor');
 
-ali.send({ t: 'pin' });
-await ali.wait((m) => m.t === 'pins' && m.pins.pins.length === 1, 'pin 2');
-ali.send({ t: 'load', media: { kind: 'youtube', id: 'jNQXAC9IVRw' } });
-await ali.wait((m) => m.t === 'state' && m.state.item && m.state.item.id !== itemId, 'new video');
+alex.send({ t: 'pin' });
+await alex.wait((m) => m.t === 'pins' && m.pins.pins.length === 1, 'pin 2');
+alex.send({ t: 'load', media: { kind: 'youtube', id: 'jNQXAC9IVRw' } });
+await alex.wait((m) => m.t === 'state' && m.state.item && m.state.item.id !== itemId, 'new video');
 const dan = client({ name: 'Dan', cid: 'pinsDan12345' });
 const w2 = await dan.wait((m) => m.t === 'welcome', 'welcome dan');
 ok(w2.pins === undefined, 'Yeni video açılınca pinler sıfırlanıyor');
 
-for (const c of [ali, ayse, can, dan]) c.ws.close();
+for (const c of [alex, sam, max, dan]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

@@ -114,7 +114,7 @@ export default {
       return Response.json({ worker: env.CF_VERSION_METADATA?.id ?? '', object }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    // Connection probe (HTTP fallback, `/baglanti`): does a WebSocket open on this network at all? Answers "ok" and
+    // Connection probe (HTTP fallback, `/connection`): does a WebSocket open on this network at all? Answers "ok" and
     // waits for the client to close. `?bytes=N` on a plain request answers N bytes (diagnostics: large answers).
     if (url.pathname === '/api/probe') {
       if (request.headers.get('Upgrade') !== 'websocket') {

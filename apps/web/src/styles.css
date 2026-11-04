@@ -3285,7 +3285,7 @@ html:not(.shell) .shell-only {
     flex: none;
   }
 
-  .topbar .nav-link[href='/eklenti.html'] {
+  .topbar .nav-link[href='/extension.html'] {
     display: none;
   }
 
@@ -3891,7 +3891,7 @@ html:not(.shell) .shell-only {
 
 /* ---- Kabuk: film sayfasının üstündeki oda katmanı (eklenti açar, sitemiz?shell=1) ---- */
 /* Sadece ana sitede olması gerekenler gizli: eklenti linki, ana sayfaya götüren logo, alt bilgi. */
-html.shell .nav-link[href='/eklenti.html'],
+html.shell .nav-link[href='/extension.html'],
 html.shell .footer {
   display: none !important;
 }
@@ -4375,7 +4375,7 @@ html.shorts-view .footer {
   color: var(--muted);
 }
 
-/* "?olcum=1": how long after the room switched this Short started (0.9.91.17, owner's measurement). */
+/* "?measure=1": how long after the room switched this Short started (0.9.91.17, owner's measurement). */
 .shorts-measure {
   max-width: 64px;
   padding: 3px 6px;

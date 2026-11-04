@@ -255,7 +255,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   play; (5) a "who joined" note in the tab's title too; (6) the invite window also offering "invite with the film
   time" when a film time is set; (7) a "continue watching" row on the home page for the last room.
   (8) **Debug panel** (owner, 3 Nov 2026): one hidden panel (e.g. `?debug=1`, never shown to normal users, no personal
-  data) that gathers the existing pieces (`/baglanti` connection test, `?olcum=1` Shorts measurement, `?tvlab=1`) plus
+  data) that gathers the existing pieces (`/connection` connection test, `?measure=1` Shorts measurement, `?tvlab=1`) plus
   version / environment / transport, sync stats, recent errors with a "copy" button, feature switches and "start as a
   first-time visitor", so the owner can test from the phone without a computer. Fits with the kill switch (ROADMAP §6).
   **Planner, 2 Nov 2026:** (1), (2), (3), (4), (7) were built in 0.9.93.2. Proposed to the owner on https://claude.ai/artifact/9AJXCNuwBojdibzZaX1baw: (8) debug
@@ -297,10 +297,10 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   loses full-size packets (MTU black hole / carrier tethering policy) while the page itself arrives over HTTP/3 (UDP);
   WebSockets always need a new TCP connection. Built an **automatic HTTP fallback** (`socket.ts` + server
   `fallback.ts`): WebSocket not open in 6 s → the same room over held GET + POST batches (same messages, rules and
-  limits; games too), remembered for the tab, back to a WebSocket by itself when a probe opens. `/baglanti` now also
+  limits; games too), remembered for the tab, back to a WebSocket by itself when a probe opens. `/connection` now also
   tests a 200 kB answer, a tiny WebSocket and the fallback, and prints a `guess:`. A reload hands the member id to the
   next page (`swm:prev:<room>`). Tests: e2e `fallback.mjs`, unit `socket.test.ts`, harness `hotspot/run.mjs`.
-  **Owner confirmed it works on his hotspot** (31 Oct 2026). **0.9.92.1:** `/baglanti`'s guess counts any HTTP/3
+  **Owner confirmed it works on his hotspot** (31 Oct 2026). **0.9.92.1:** `/connection`'s guess counts any HTTP/3
   request (the page's own entry is empty behind the service worker); CLAUDE.md rule "speaking Turkish never makes the
   work Turkish"; English test data in the new tests.
 - [x] **0.9.91.20 first-time path** (PDF item 1; partial until the extension is in the store): one join screen
@@ -316,7 +316,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [x] **0.9.91.18 finish Shorts, part 1** (owner, 31 Oct 2026: PDF item 2 "go all in"): YouTube's own bar in the
   Shorts view and nothing of ours over the player (owner: "its player; our menu is at the bottom"; YouTube's rules);
   emojis rise from the seats; 🎲 Keşfet (shared daily pools per category) and ✨ Bunun gibi (same channel, then title
-  words) in the ♾ popup; `?olcum=1` shows the switch time per Short (the owner measures with a friend; then decide on
+  words) in the ♾ popup; `?measure=1` shows the switch time per Short (the owner measures with a friend; then decide on
   a hidden preload player); phones: the IP line is hidden in the Together card (it pushed the chat box off screen).
   Next: the room view's YouTube overlays (flying emojis / dock / toasts over YouTube, before the API audit), then PDF
   items 3–6 (simplify the room, camera pass, help / FAQ, "send feedback") when the owner says.
@@ -339,7 +339,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 ## Design sweep (card 16): what was found and what happened
 From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
 **Sweep 1 (0.9.96.8):**
-- Fixed: `/baglanti` buttons wrap on a phone (#1); each check is a grid row, its value on its own line (#2); a bare
+- Fixed: `/connection` buttons wrap on a phone (#1); each check is a grid row, its value on its own line (#2); a bare
   "?" is now "—" (#3); the join card fits a sideways phone (#4); "Fullscreen when turned sideways" is hidden on phones
   where it does nothing (#5); the link box placeholder is short enough not to be cut ("Search YouTube or paste a
   link") (#6); the EN example name is "Alex paused" (#7); the room's side cards are opaque in scene themes (#9); the
@@ -368,7 +368,7 @@ film page's hole, so a flying emoji or a fullscreen message over the film was a 
 `shell-film`; embed 111/111). Found on the way: a video link that fails to load shows its error card and the room
 then scrolls by 7–34 px on a computer (minor, proposed for the next sweep).
 **Sweep harness:** `scripts/harness/sweep/run.cjs` (home, join, empty room, room with a video, settings, invite,
-`/baglanti`, help, privacy, thanks × 1920×1080 / 1366×768 / 1024×640 / 390×844 / 844×390 × EN + Gece / TR + Sinema (phones
+`/connection`, help, privacy, thanks × 1920×1080 / 1366×768 / 1024×640 / 390×844 / 844×390 × EN + Gece / TR + Sinema (phones
 Okyanus): 100 screenshots, checks for sideways scroll, nothing past the right edge, console errors, and no page scroll
 where a screen must fit). It found the Thanks page scrolling on a sideways phone: fixed.
 
@@ -415,11 +415,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] ♾ → 🎲 Keşfet: each chip (Popüler, Müzik, Oyun, Komedi, Hayvanlar, Spor) fills the queue with Shorts.
 - [ ] ♾ → ✨ Bunun gibi while a Short plays: more Shorts from the same channel, later similar titles.
 - [ ] Shorts view: YouTube's own bar on the video, our bar only at the bottom; emojis rise from the seats.
-- [ ] With a friend, open the room once with `?olcum=1`, switch Shorts with ▲▼ ten times, tell Claude the ms numbers.
+- [ ] With a friend, open the room once with `?measure=1`, switch Shorts with ▲▼ ten times, tell Claude the ms numbers.
 - [ ] Paste a TikTok link (`tiktok.com/@…/video/…`) and a short `vm.tiktok.com/…` link: both play in sync, loop.
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.97.21 (English addresses, card C1):**
+- [ ] Open an old saved link `/baglanti` and `/eklenti.html`: they land on `/connection` and `/extension.html`.
 
 **0.9.97.19 (knock fixes from the bug hunt, BH3):**
 - [ ] With "Ask before letting people in" on and a friend inside: close your tab; another friend knocks. The friend
@@ -814,7 +817,7 @@ reproduce it with a plain mouse, see `yt-room` harness):**
 **0.9.92 (phone hotspot):**
 - [x] (owner, 31 Oct 2026: works, no problems) Laptop on the phone's hotspot: open the site and a room. It should get in within ~7 s (first time) and work:
   chat, a YouTube video in sync with a friend, voice. A reload should be quick.
-- [x] (owner's result, 31 Oct 2026: page loads, 200 kB answer over h3 in 116 ms, every WebSocket hangs 10 s, fallback opens in 153 ms, room answers in 306 ms, round trip 183 ms → TCP path broken on the tether, UDP fine; Mac, Chrome 156) On the same hotspot open `/baglanti`, press "Sonucu kopyala" and paste the text to Claude (tells which cause it
+- [x] (owner's result, 31 Oct 2026: page loads, 200 kB answer over h3 in 116 ms, every WebSocket hangs 10 s, fallback opens in 153 ms, room answers in 306 ms, round trip 183 ms → TCP path broken on the tether, UDP fine; Mac, Chrome 156) On the same hotspot open `/connection`, press "Sonucu kopyala" and paste the text to Claude (tells which cause it
   is: the `guess:` line).
 - [ ] If the site's home page itself doesn't open on the hotspot (not only the room), tell Claude: that is a
   different cause (DNS / filtering of workers.dev → own domain).
@@ -906,7 +909,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - **0.9.67:** Mehtaplı Geceler sultan mascot. **0.9.68:** push-to-talk (V) + "Ali paused" notice.
 - **0.9.70:** PWA. **0.9.71:** hide side panel. **0.9.76:** room layout "Cinema Rail" (design A).
 - **0.9.77:** home page "Showcase" + theme picker. **0.9.78:** extension version = site version; old pages reload.
-- **0.9.79:** networks that can't connect: retry, warning, `/baglanti` diagnostics (the owner's phone-hotspot test
+- **0.9.79:** networks that can't connect: retry, warning, `/connection` diagnostics (the owner's phone-hotspot test
   result is still pending).
 - **0.9.80:** room UI pass (chat bubbles, settings dialog, reaction tray, clean top bar).
 - **0.9.81:** free camera windows (drag, resize, inside the video in fullscreen; also on the film page).

@@ -30,7 +30,7 @@ const ok = (c, m) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const welcome = await (async () => {
-  const a = client({ name: 'Ali', cid: 'liveAli000001' });
+  const a = client({ name: 'Alex', cid: 'liveAlex000001' });
   const w = await a.wait((m) => m.t === 'welcome', 'welcome');
   return { a, w };
 })();
@@ -39,31 +39,31 @@ if (!welcome.w.voice) {
   console.log('(sesli sohbet/yayın bu sunucuda kapalı: test atlandı)');
   process.exit(0);
 }
-const b = client({ name: 'Ayse', cid: 'liveAyse00001' });
+const b = client({ name: 'Sam', cid: 'liveSam00001' });
 await b.wait((m) => m.t === 'welcome', 'welcome b');
 
 // İzlenecek yayın yokken izleme isteği yok sayılır.
 b.send({ t: 'live-watch', on: true });
 await sleep(300);
-ok(!b.members.find((m) => m.name === 'Ayse')?.watching, 'Yayın yokken izleyici olunamıyor');
+ok(!b.members.find((m) => m.name === 'Sam')?.watching, 'Yayın yokken izleyici olunamıyor');
 
 a.send({ t: 'live', on: true, kind: 'screen' });
-await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && x.live === 'screen'), 'ali live');
-ok(true, 'Ali yayında (ekran)');
+await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Alex' && x.live === 'screen'), 'alex live');
+ok(true, 'Alex yayında (ekran)');
 b.send({ t: 'live', on: true, kind: 'camera' });
 const busy = await b.wait((m) => m.t === 'error', 'busy');
 ok(busy.code === 'live_busy', 'İkinci yayın reddedildi (live_busy)');
 
 // Yayın bağlantı mesajı: izlemeyen birine gitmez; izleyince gider.
-a.send({ t: 'live-signal', to: b.members.find((m) => m.name === 'Ayse').id, data: { candidate: { candidate: 'x' } } });
+a.send({ t: 'live-signal', to: b.members.find((m) => m.name === 'Sam').id, data: { candidate: { candidate: 'x' } } });
 await sleep(300);
 ok(!b.inbox.some((m) => m.t === 'live-signal'), 'İzlemeyen kişiye yayın bağlantı mesajı gitmiyor');
 b.send({ t: 'live-watch', on: true });
-await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ayse' && x.watching), 'watching');
-const ayseId = a.members.find((m) => m.name === 'Ayse').id;
-a.send({ t: 'live-signal', to: ayseId, data: { sdp: { type: 'offer', sdp: 'v=0' } } });
+await a.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Sam' && x.watching), 'watching');
+const samId = a.members.find((m) => m.name === 'Sam').id;
+a.send({ t: 'live-signal', to: samId, data: { sdp: { type: 'offer', sdp: 'v=0' } } });
 const sig = await b.wait((m) => m.t === 'live-signal', 'signal');
-ok(sig.from === a.members.find((m) => m.name === 'Ali').id, 'İzleyene yayıncının teklifi ulaştı (gönderen belli)');
+ok(sig.from === a.members.find((m) => m.name === 'Alex').id, 'İzleyene yayıncının teklifi ulaştı (gönderen belli)');
 
 // İzleyici sınırı: 4.
 const extra = [];
@@ -75,22 +75,22 @@ for (let i = 0; i < 3; i++) {
 }
 await a.wait((m) => m.t === 'members' && m.members.filter((x) => x.watching).length === 4, 'four watching');
 ok(true, '4 kişi izliyor');
-const c = client({ name: 'Can', cid: 'liveCan000001' });
+const c = client({ name: 'Max', cid: 'liveMax000001' });
 await c.wait((m) => m.t === 'welcome', 'welcome c');
 c.send({ t: 'live-watch', on: true });
 const full = await c.wait((m) => m.t === 'error', 'full');
 ok(full.code === 'live_full', '5. izleyici reddedildi (live_full)');
 
-// Yönetici (Ali, ilk giren) başkasının yayınını durdurabilir; yönetici olmayan durduramaz. (Eski mesajlar karışmasın
+// Yönetici (Alex, ilk giren) başkasının yayınını durdurabilir; yönetici olmayan durduramaz. (Eski mesajlar karışmasın
 // diye her adımdan önce kutular boşaltılır.)
 const clear = () => [a, b, c].forEach((x) => (x.inbox.length = 0));
 const live = (x, name, on = true) => (m) => m.t === 'members' && m.members.some((y) => y.name === name && !!y.live === on);
 clear();
 a.send({ t: 'live', on: false });
-await b.wait(live(b, 'Ali', false), 'ali off');
+await b.wait(live(b, 'Alex', false), 'alex off');
 clear();
 b.send({ t: 'live', on: true, kind: 'camera' });
-await a.wait(live(a, 'Ayse'), 'ayse live');
+await a.wait(live(a, 'Sam'), 'sam live');
 c.send({ t: 'live-stop' });
 const notHost = await c.wait((m) => m.t === 'error', 'not host');
 ok(notHost.code === 'not_host', 'Yönetici olmayan yayını durduramıyor (not_host)');
@@ -103,7 +103,7 @@ ok(true, 'Durdurulan yayın ve izleyicileri listeden kalktı');
 // "Sadece yönetici yayın açsın": açılınca başkasının süren yayını kapanır, sonra açamaz; yönetici açabilir.
 clear();
 b.send({ t: 'live', on: true, kind: 'camera' });
-await a.wait(live(a, 'Ayse'), 'ayse live again');
+await a.wait(live(a, 'Sam'), 'sam live again');
 clear();
 a.send({ t: 'settings', liveHostOnly: true });
 const locked = await b.wait((m) => m.t === 'error', 'locked stop');
@@ -114,7 +114,7 @@ const denied = await b.wait((m) => m.t === 'error', 'live host');
 ok(denied.code === 'live_host', 'Kilitliyken yönetici olmayan yayın açamıyor (live_host)');
 clear();
 a.send({ t: 'live', on: true, kind: 'screen' });
-await b.wait(live(b, 'Ali'), 'host live');
+await b.wait(live(b, 'Alex'), 'host live');
 ok(true, 'Kilitliyken yönetici yayın açabiliyor');
 
 // Yayıncı çıkınca yayın biter, izleyiciler bırakılır.

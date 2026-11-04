@@ -43,7 +43,7 @@ const manifest = {
   description: "A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.",
   // WebSocket trafiğinin service worker'ı açık tutması Chrome 116'dan beri var.
   minimum_chrome_version: '116',
-  homepage_url: 'https://screen-with-me.swm-server.workers.dev/eklenti.html',
+  homepage_url: 'https://screen-with-me.swm-server.workers.dev/extension.html',
   // Simgeler: node scripts/make-icons.mjs ile üretilir (static/ içinde).
   icons: { 16: 'icon16.png', 32: 'icon32.png', 48: 'icon48.png', 128: 'icon128.png' },
   // offscreen: film sayfasındaki sesli sohbet görünmeyen bir eklenti sayfasında çalışır (izin eklentinin adına).
@@ -91,7 +91,7 @@ cpSync('static', 'dist', { recursive: true });
 console.log(`\n✓ dist/ hazır (${dev ? 'geliştirme' : 'yayın'}: ${SITE_URL})`);
 
 // Yayın sürümü, arkadaşların siteden indirebilmesi için zip'lenip sitenin
-// public klasörüne konur (site/eklenti.html sayfasındaki indirme linki).
+// public klasörüne konur (site/extension.html sayfasındaki indirme linki).
 if (!dev) {
   // Alt klasörler de (avatars/) zip'e girsin.
   const files = {};

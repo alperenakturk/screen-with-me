@@ -172,7 +172,7 @@ export function renderHome(app: HTMLElement): void {
       <div class="hm-ext">
         <span class="hm-ext-icon" aria-hidden="true">🧩</span>
         <div><h3 data-h="ext"></h3><p data-h="exts"></p></div>
-        <a class="btn" href="/eklenti.html" target="_blank" rel="noopener" data-h="extGo"></a>
+        <a class="btn" href="/extension.html" target="_blank" rel="noopener" data-h="extGo"></a>
       </div>
       <section id="recent" class="recent home-recent" hidden>
         <h3 data-h="saved"></h3>

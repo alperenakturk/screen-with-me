@@ -27,28 +27,28 @@ const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  '
 // A real-sized picture (~150 KB of base64), far above the general 4 KB message limit.
 const PIC = 'data:image/webp;base64,' + 'UklGRg'.repeat(25_000);
 
-const ali = client({ name: 'Ali', cid: 'cimgAli12345' });
-await ali.wait((m) => m.t === 'welcome', 'welcome ali');
-const ayse = client({ name: 'Ayse', cid: 'cimgAyse1234' });
-await ayse.wait((m) => m.t === 'welcome', 'welcome ayse');
+const alex = client({ name: 'Alex', cid: 'cimgAlex12345' });
+await alex.wait((m) => m.t === 'welcome', 'welcome alex');
+const sam = client({ name: 'Sam', cid: 'cimgSam1234' });
+await sam.wait((m) => m.t === 'welcome', 'welcome sam');
 
-ali.send({ t: 'chat', text: 'look at this', image: PIC });
-const data = await ayse.wait((m) => m.t === 'chat-image', 'chat-image');
+alex.send({ t: 'chat', text: 'look at this', image: PIC });
+const data = await sam.wait((m) => m.t === 'chat-image', 'chat-image');
 ok(data.data === PIC && /^[0-9a-f]{12}$/.test(data.id), 'The image data reaches the room');
-const msg = await ayse.wait((m) => m.t === 'chat', 'chat with image');
+const msg = await sam.wait((m) => m.t === 'chat', 'chat with image');
 ok(msg.message.image === data.id && msg.message.text === 'look at this', 'The message points at the image and keeps its caption');
-ok(ayse.log.indexOf('chat-image') < ayse.log.indexOf('chat'), 'The data arrives before the message');
+ok(sam.log.indexOf('chat-image') < sam.log.indexOf('chat'), 'The data arrives before the message');
 
-ali.send({ t: 'chat', text: '', image: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' });
-ali.send({ t: 'chat', text: 'plain text' });
-const next = await ayse.wait((m) => m.t === 'chat', 'next chat');
+alex.send({ t: 'chat', text: '', image: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' });
+alex.send({ t: 'chat', text: 'plain text' });
+const next = await sam.wait((m) => m.t === 'chat', 'next chat');
 ok(next.message.text === 'plain text' && next.message.image === undefined, 'An SVG "image" is rejected; plain text still works');
 
-const can = client({ name: 'Can', cid: 'cimgCan12345' });
-const welcome = await can.wait((m) => m.t === 'welcome', 'welcome can');
+const max = client({ name: 'Max', cid: 'cimgMax12345' });
+const welcome = await max.wait((m) => m.t === 'welcome', 'welcome can');
 ok(welcome.chat.some((m) => m.image === data.id), 'The history in welcome contains the image message');
-const late = await can.wait((m) => m.t === 'chat-image', 'late chat-image');
+const late = await max.wait((m) => m.t === 'chat-image', 'late chat-image');
 ok(late.id === data.id && late.data === PIC, 'A latecomer gets the image data after welcome');
 
-for (const c of [ali, ayse, can]) c.ws.close();
+for (const c of [alex, sam, max]) c.ws.close();
 console.log('chatimage: all passed');

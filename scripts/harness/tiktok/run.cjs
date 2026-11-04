@@ -69,53 +69,53 @@ const frameOf = (page) => page.frames().find((f) => f.url().includes('tiktok.com
 
 (async () => {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-  const ali = await person(browser, 'Ali', 'wizard');
-  const ayse = await person(browser, 'Ayse', 'elf');
+  const alex = await person(browser, 'Alex', 'wizard');
+  const sam = await person(browser, 'Sam', 'elf');
 
-  await ali.evaluate((id) => {
+  await alex.evaluate((id) => {
     const i = document.getElementById('media-input');
     i.value = `https://www.tiktok.com/@someone/video/${id}`;
     i.form.querySelector('button[value=load]').click();
   }, ID);
-  const both = await until(async () => (await ali.evaluate(() => !!document.querySelector('.room.shorts'))) && (await ayse.evaluate(() => !!document.querySelector('.room.shorts'))) && frameOf(ali) && frameOf(ayse));
+  const both = await until(async () => (await alex.evaluate(() => !!document.querySelector('.room.shorts'))) && (await sam.evaluate(() => !!document.querySelector('.room.shorts'))) && frameOf(alex) && frameOf(sam));
   check(!!both, 'TikTok linki iki kişide de Shorts görünümünü ve TikTok oynatıcısını açtı');
-  const src = await ali.evaluate(() => document.querySelector('#player iframe')?.src ?? '');
+  const src = await alex.evaluate(() => document.querySelector('#player iframe')?.src ?? '');
   check(src.includes(`/player/v1/${ID}`) && src.includes('controls=1') && src.includes('rel=0'), 'resmi gömme oynatıcı, kendi çubuğuyla', src);
 
   // The room plays after a load: both players get "play" and move.
   const playing = await until(async () => {
-    const a = await frameOf(ali)?.evaluate(() => window.cmds.includes('play') && window.time() > 0.3);
-    const b = await frameOf(ayse)?.evaluate(() => window.cmds.includes('play') && window.time() > 0.3);
+    const a = await frameOf(alex)?.evaluate(() => window.cmds.includes('play') && window.time() > 0.3);
+    const b = await frameOf(sam)?.evaluate(() => window.cmds.includes('play') && window.time() > 0.3);
     return a && b;
   }, 12000);
   check(!!playing, 'oda oynatınca iki oynatıcıya da "play" gitti ve video ilerliyor');
 
-  // Ali pauses inside TikTok's own player → the room pauses → Ayşe's player gets "pause".
-  await frameOf(ali).evaluate(() => window.userPause());
-  const paused = await until(() => frameOf(ayse).evaluate(() => window.cmds.includes('pause')), 8000);
-  check(!!paused, 'Ali TikTok oynatıcısında durdurunca Ayşe’de de durdu');
+  // Alex pauses inside TikTok's own player → the room pauses → Sam's player gets "pause".
+  await frameOf(alex).evaluate(() => window.userPause());
+  const paused = await until(() => frameOf(sam).evaluate(() => window.cmds.includes('pause')), 8000);
+  check(!!paused, 'Alex TikTok oynatıcısında durdurunca Sam’de de durdu');
 
-  // Ayşe moves the video (simulated: her player jumps and plays) → Ali's player is sent there.
-  await frameOf(ayse).evaluate(() => { window.userPlay(); });
-  const resumed = await until(() => frameOf(ali).evaluate(() => window.cmds.lastIndexOf('play') > window.cmds.indexOf('pause')), 8000);
-  check(!!resumed, 'Ayşe oynatınca Ali’de de devam etti');
+  // Sam moves the video (simulated: her player jumps and plays) → Alex's player is sent there.
+  await frameOf(sam).evaluate(() => { window.userPlay(); });
+  const resumed = await until(() => frameOf(alex).evaluate(() => window.cmds.lastIndexOf('play') > window.cmds.indexOf('pause')), 8000);
+  check(!!resumed, 'Sam oynatınca Alex’te de devam etti');
 
   // Speed: a TikTok stays at 1× (the speed menu can't change it).
-  const rate = await ali.evaluate(() => document.querySelector('#speed-btn, #dock-speed')?.textContent ?? '');
+  const rate = await alex.evaluate(() => document.querySelector('#speed-btn, #dock-speed')?.textContent ?? '');
   check(!/[2-4]×/.test(rate), 'TikTok’ta hız 1×', rate);
 
   // Nothing of ours over the player.
-  const over = await ali.evaluate(() => {
+  const over = await alex.evaluate(() => {
     const vis = (s) => { const e = document.querySelector(s); if (!e) return false; const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return cs.display !== 'none' && r.width > 0 && r.height > 0; };
     return { catcher: vis('#fs-catcher'), controls: vis('#fs-controls') };
   });
   check(!over.catcher && !over.controls, 'oynatıcının üstünde bizden bir şey yok', JSON.stringify(over));
 
   // The queue shows a TikTok title, not a raw id.
-  const title = await ali.evaluate(() => document.getElementById('now-title')?.textContent ?? '');
+  const title = await alex.evaluate(() => document.getElementById('now-title')?.textContent ?? '');
   check(/TikTok|@someone/.test(title), 'başlık TikTok olarak görünüyor', title);
 
-  await ali.screenshot({ path: __dirname + '/tiktok-ali.png' });
+  await alex.screenshot({ path: __dirname + '/tiktok-alex.png' });
   await browser.close();
   console.log(failed ? `\n✗ ${failed} kontrol başarısız` : '\n✓ TikTok testi geçti');
   process.exit(failed ? 1 : 0);

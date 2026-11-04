@@ -18,11 +18,11 @@ function client(hello) {
 }
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 
-const a = client({ name: 'Ali', avatar: 'elf' });
+const a = client({ name: 'Alex', avatar: 'elf' });
 await a.wait((m) => m.t === 'welcome');
 const b = client({ name: 'Eski' }); // avatarsız (eski sürüm)
 const wb = await b.wait((m) => m.t === 'welcome');
-ok(wb.members.find((m) => m.name === 'Ali')?.avatar === 'elf', 'Üye listesinde avatar görünüyor');
+ok(wb.members.find((m) => m.name === 'Alex')?.avatar === 'elf', 'Üye listesinde avatar görünüyor');
 ok(wb.members.find((m) => m.name === 'Eski') && !('avatar' in wb.members.find((m) => m.name === 'Eski')), 'Avatarsız eski istemci de katılabildi');
 const c = client({ name: 'Hacker', avatar: '<img src=x onerror=alert(1)>' });
 const wc = await c.wait((m) => m.t === 'welcome');

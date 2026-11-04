@@ -25,11 +25,11 @@ const ok = (c, m) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const SDP = 'v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\ns=-\r\n';
 
-const a = client({ name: 'Ali', cid: 'voiceAli0001' });
+const a = client({ name: 'Alex', cid: 'voiceAlex0001' });
 const wa = await a.wait((m) => m.t === 'welcome', 'welcome');
-const b = client({ name: 'Ayse', cid: 'voiceAyse001' });
+const b = client({ name: 'Sam', cid: 'voiceSam001' });
 const wb = await b.wait((m) => m.t === 'welcome', 'welcome b');
-const c = client({ name: 'Can', cid: 'voiceCan0001' });
+const c = client({ name: 'Max', cid: 'voiceMax0001' });
 const wc = await c.wait((m) => m.t === 'welcome', 'welcome c');
 
 if (wa.voice !== true) {
@@ -43,14 +43,14 @@ if (wa.voice !== true) {
   a.send({ t: 'voice', on: true, mic: true });
   b.send({ t: 'voice', on: true, mic: true });
   await c.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice).length === 2, 'two in voice');
-  ok(true, 'Ali ve Ayşe seste görünüyor');
+  ok(true, 'Alex ve Sam seste görünüyor');
   a.send({ t: 'signal', to: wb.you, data: { sdp: { type: 'offer', sdp: SDP } } });
   const sig = await b.wait((m) => m.t === 'signal', 'signal');
-  ok(sig.from === wa.you && sig.data.sdp.type === 'offer', 'İkisi de seste: teklif Ayşe\'ye ulaştı (gönderen belli)');
-  // Seste olmayan Can'a mesaj gitmez.
+  ok(sig.from === wa.you && sig.data.sdp.type === 'offer', 'İkisi de seste: teklif Sam\'ye ulaştı (gönderen belli)');
+  // Seste olmayan Max'a mesaj gitmez.
   a.send({ t: 'signal', to: wc.you, data: { candidate: { candidate: 'candidate:x', sdpMid: '0', sdpMLineIndex: 0 } } });
   await sleep(500);
-  ok(!c.inbox.some((m) => m.t === 'signal'), 'Seste olmayan Can\'a bağlantı mesajı gitmiyor');
+  ok(!c.inbox.some((m) => m.t === 'signal'), 'Seste olmayan Max\'a bağlantı mesajı gitmiyor');
   // Sınır: 6 kişi doluysa 7. reddedilir.
   const extra = [];
   for (let i = 0; i < 4; i++) {
@@ -71,22 +71,22 @@ if (wa.voice !== true) {
   const camFull = await a.wait((m) => m.t === 'error', 'cam full');
   ok(camFull.code === 'cam_full', '5. kamera reddedildi (cam_full)');
   // Kutularda kameralar tek tek açılırken gelen eski mesajlar var (K0'ın kamerası henüz kapalıyken olanlar da): boşalt,
-  // sonra K0'ın gerçekten kapattığı mesajı bekle (canlıda gecikme yüzünden Ali'nin isteği önce gidiyordu).
+  // sonra K0'ın gerçekten kapattığı mesajı bekle (canlıda gecikme yüzünden Alex'in isteği önce gidiyordu).
   for (const x of [a, b]) x.inbox.length = 0;
   extra[0].send({ t: 'voice', on: true, mic: true, cam: false });
   await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 3, 'cam off');
   a.send({ t: 'voice', on: true, mic: true, cam: true });
-  const aliCam = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && x.voice?.cam), 'ali cam');
-  ok(!!aliCam, 'Biri kamerasını kapatınca Ali açabildi');
+  const alexCam = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Alex' && x.voice?.cam), 'alex cam');
+  ok(!!alexCam, 'Biri kamerasını kapatınca Alex açabildi');
   for (const e of extra) e.ws.close();
   a.send({ t: 'voice', on: false });
-  await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && !x.voice), 'left');
-  ok(true, 'Ali sesten ayrılınca listeden düştü');
+  await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Alex' && !x.voice), 'left');
+  ok(true, 'Alex sesten ayrılınca listeden düştü');
 } else {
   // Cloudflare Realtime (canlıda anahtar varsa).
   a.send({ t: 'voice', on: true, mic: true });
-  const m1 = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Ali' && x.voice?.mic === true), 'voice member');
-  ok(!!m1 && !JSON.stringify(m1).includes('session'), 'Ali seste görünüyor (Cloudflare oturumu istemcilere gitmiyor)');
+  const m1 = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Alex' && x.voice?.mic === true), 'voice member');
+  ok(!!m1 && !JSON.stringify(m1).includes('session'), 'Alex seste görünüyor (Cloudflare oturumu istemcilere gitmiyor)');
   a.send({ t: 'rtc', id: 1, op: 'session' });
   const s = await a.wait((m) => m.t === 'rtc' && m.id === 1, 'session', 15000);
   ok(s.ok === true, 'Cloudflare Realtime oturumu açıldı');

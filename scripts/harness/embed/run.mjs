@@ -5,7 +5,7 @@
 //   node scripts/harness/embed/film-server.mjs    (sahte video sitesi 5299/5300)
 //   node scripts/harness/embed/run.mjs [eklenti-klasörü] [site] [sunucu-ws] [çıktı-öneki]
 //
-// Akış: Ayşe sitedeki odada bir film sayfası açar → sekme film sayfasına gider → eklenti sitenin
+// Akış: Sam sitedeki odada bir film sayfası açar → sekme film sayfasına gider → eklenti sitenin
 // oda sayfasını katman olarak açar → video bulununca katmanda delik açılır, video oraya oturur.
 // Film sayfası 127.0.0.1'de (site localhost'ta): farklı site, yani gerçek hayattaki gibi.
 import { resolve } from 'node:path';
@@ -190,15 +190,15 @@ async function recordFlash(label) {
 const fmt = (n) => (typeof n === 'number' ? Math.round(n) : n);
 const coverText = (l) => (l ? `başta:${l.atStart} eklendi:${fmt(l.added)} kalktı:${fmt(l.removed)} katman:${fmt(l.shellAt)} delik:${fmt(l.clipAt)} ilk-boyama:${fmt(l.firstPaint)} ms` : 'kayıt yok');
 
-// Ayşe: sitede (adı ve teması kayıtlı).
+// Sam: sitede (adı ve teması kayıtlı).
 await a.navigate(`${SITE}/`);
 await a.sleep(1500);
-await a.evaluate(`localStorage.setItem('name','Ayşe'); localStorage.setItem('avatar','wizard'); localStorage.setItem('lang','tr'); 1`);
+await a.evaluate(`localStorage.setItem('name','Sam'); localStorage.setItem('avatar','wizard'); localStorage.setItem('lang','tr'); 1`);
 await a.navigate(`${SITE}/r/${room}#back`);
 await a.sleep(3000);
 check((await a.evaluate(`document.documentElement.dataset.swmShell`)) === '1', 'site eklentinin kabuğu bildiğini görüyor');
 const bora = await fakeUser(room, 'Bora');
-check(!!(await until(() => bora.members.length === 2)), 'Ayşe ve Bora odada');
+check(!!(await until(() => bora.members.length === 2)), 'Sam ve Bora odada');
 
 // 0b) Sitede (kabuk değil): herkes 💬 Sohbet'le açılır; ⚙️ Ayarlar ortada pencere; 👤 sağ üstte en sonda, profil
 // panelini açıp kapatır.
@@ -243,7 +243,7 @@ await a.shot('0-site-oda');
   check(!!(await until(() => bora.members.length === 2, 15000)), 'Cem çıktı (odada yine 2 kişi)', JSON.stringify(bora.members.map((m) => m.name)));
 }
 
-// 1) Ayşe bir film sayfası açar → sekme oraya gider, eklenti katmanı açar.
+// 1) Sam bir film sayfası açar → sekme oraya gider, eklenti katmanı açar.
 await a.evaluate(`(() => { const i = document.getElementById('media-input'); i.value = '${FILM}/film'; i.form.querySelector('button[value=load]').click(); return 1; })()`);
 // "Şimdi aç" önce kısaca anlatıp sorar.
 check(!!(await until(() => a.evaluate(`!!document.querySelector('.confirm-dialog')`))), '"Şimdi aç" film linkinde önce soruyor');
@@ -253,8 +253,8 @@ const onFilm = await until(async () => String(await a.evaluate('location.href'))
 check(!!onFilm, 'kendi açtığı film sayfasına sekme kendiliğinden gitti');
 const shellUp = await until(() => a.evaluate(`!!document.querySelector('iframe[src^="chrome-extension://"]')`));
 check(!!shellUp, 'film sayfasında odanın katmanı açıldı');
-const once = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Ayşe').length === 1, 12000);
-check(!!once, 'Ayşe odada yine tek kez (bağlantıyı katmandaki site tutuyor)', JSON.stringify(bora.members.map((m) => m.name)));
+const once = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Sam').length === 1, 12000);
+check(!!once, 'Sam odada yine tek kez (bağlantıyı katmandaki site tutuyor)', JSON.stringify(bora.members.map((m) => m.name)));
 
 // 2) Video bulununca katmanda delik açılır, video deliğe yerleşir.
 const holed = await until(() => a.evaluate(`getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath.startsWith('path(')`), 15000);
@@ -277,13 +277,13 @@ await a.sleep(800);
 await a.shot('1-oda-gorunumu');
 
 // 1b) Reloading the film page by mistake (F5) keeps the room view: the overlay comes back, the hole opens again and
-// Ayşe is still in the room once (owner's report, 0.9.91.4).
+// Sam is still in the room once (owner's report, 0.9.91.4).
 {
   await a.evaluate('location.reload(); 1').catch(() => {});
   await a.sleep(1500);
   const back = await until(() => a.evaluate(`!!document.querySelector('iframe[src^="chrome-extension://"]') && getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath.startsWith('path(')`), 15000);
-  const once = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Ayşe').length === 1, 12000);
-  check(!!back && !!once, 'film sayfası yenilenince oda görünümü geri geliyor (katman + delik, Ayşe odada tek kez)', JSON.stringify({ back, members: bora.members.map((m) => m.name) }));
+  const once = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Sam').length === 1, 12000);
+  check(!!back && !!once, 'film sayfası yenilenince oda görünümü geri geliyor (katman + delik, Sam odada tek kez)', JSON.stringify({ back, members: bora.members.map((m) => m.name) }));
   await a.shot('1b-yenileme');
 }
 
@@ -431,11 +431,11 @@ const paused = await until(async () => {
 });
 check(!!paused, 'Bora durdurdu (42 sn) → film videosu durdu');
 
-// 4) Ayşe film sitesinin kendi oynatıcısıyla oynatır → oda oynar.
+// 4) Sam film sitesinin kendi oynatıcısıyla oynatır → oda oynar.
 bora.clear();
 await a.evaluate(`document.querySelector('video').play().then(() => 1)`);
-const byAyse = await bora.wait((m) => m.t === 'state' && !m.state.paused && m.by?.name === 'Ayşe', 8000);
-check(!!byAyse, 'Ayşe film videosunu oynattı → oda oynuyor (Ayşe adına)');
+const bySam = await bora.wait((m) => m.t === 'state' && !m.state.paused && m.by?.name === 'Sam', 8000);
+check(!!bySam, 'Sam film videosunu oynattı → oda oynuyor (Sam adına)');
 
 // 4b) Film sitesi oynarken adresine sorgu eklerse (zaman damgası gibi) film kapanıp video durmasın.
 await a.evaluate(`history.replaceState(null, '', location.pathname + '?t=45'); 1`);
@@ -910,13 +910,13 @@ if (process.env.FILM_AD) {
   bora.send({ t: 'play', position: 100, at: Date.now() });
   await bora.wait((m) => m.t === 'state' && !m.state.paused, 5000);
   bora.clear();
-  const inAd = await until(() => bora.members?.some((m) => m.name === 'Ayşe' && m.ad), 10000);
-  check(!!inAd, 'ön-reklam oynarken Ayşe kişiler listesinde "reklamda"');
+  const inAd = await until(() => bora.members?.some((m) => m.name === 'Sam' && m.ad), 10000);
+  check(!!inAd, 'ön-reklam oynarken Sam kişiler listesinde "reklamda"');
   await a.sleep(1500);
   check(bora.count((m) => m.t === 'state' && m.state.paused) === 0, 'reklamdaki kişi için oda durmadı (herkes hazır beklemesi yok)');
   const done = await until(async () => {
     const v = await a.evaluate(`(() => { const v = document.getElementById('v'); return { src: v.currentSrc, t: v.currentTime, p: v.paused }; })()`);
-    return !bora.members?.some((m) => m.name === 'Ayşe' && m.ad) && !v.src.includes('/ad.webm') && !v.p && v.t > 100 ? v : null;
+    return !bora.members?.some((m) => m.name === 'Sam' && m.ad) && !v.src.includes('/ad.webm') && !v.p && v.t > 100 ? v : null;
   }, 30000);
   check(!!done, 'reklam bitti: işaret kalktı, film odanın yerinde (100+ sn) oynuyor', JSON.stringify(done));
   bora.send({ t: 'pause', position: 130, at: Date.now() });
@@ -978,19 +978,19 @@ await a.evalFrame('shell=1', `document.querySelector('.confirm-dialog .btn.prima
 check(!!(await until(async () => String(await a.evaluate('location.href')).startsWith(`${SITE}/r/${room}`))), 'Odaya dön → sekme sitedeki odada');
 await a.sleep(2500);
 check((await a.evaluate(`document.documentElement.dataset.theme`)) === 'okyanus', 'katmanda seçilen tema ana sitede de geçerli');
-const back = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Ayşe').length === 1, 10000);
-check(!!back, 'Ayşe yine tek kez (artık ana sitenin bağlantısı)');
+const back = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Sam').length === 1, 10000);
+check(!!back, 'Sam yine tek kez (artık ana sitenin bağlantısı)');
 await a.shot('4-odaya-donus');
 
 // 11) Ana sitede isim + avatar değişir (iki ayar art arda kaydedilir) → film sayfasında yeni isimle görünür.
 // Eskiden eklentinin deposunda iki yazma birbirini eziyor, katman eski ismi kullanıyordu.
 await a.evaluate(`(() => {
   const input = document.getElementById('rename-input');
-  input.value = 'Ayşe Yeni';
+  input.value = 'Sam Yeni';
   document.getElementById('rename-form').requestSubmit();
   return 1;
 })()`);
-await until(() => bora.members.some((m) => m.name === 'Ayşe Yeni'), 5000);
+await until(() => bora.members.some((m) => m.name === 'Sam Yeni'), 5000);
 await a.sleep(800);
 bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/film` } });
 const renamedCard = await until(() => a.evaluate(`!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
@@ -1003,7 +1003,7 @@ const renamedShell = await until(
 await a.sleep(2500);
 const names = bora.members.map((m) => m.name);
 check(
-  !!renamedShell && names.filter((n) => n === 'Ayşe Yeni').length === 1 && !names.includes('Ayşe'),
+  !!renamedShell && names.filter((n) => n === 'Sam Yeni').length === 1 && !names.includes('Sam'),
   'ana sitede değişen isim film sayfasında da geçerli (eski isimle görünmüyor)',
   JSON.stringify(names),
 );

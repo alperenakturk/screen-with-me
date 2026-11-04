@@ -41,28 +41,28 @@ function client(hello) {
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok  ' + m); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const a = client({ name: 'Ali', cid: 'handAli12345' });
+const a = client({ name: 'Alex', cid: 'handAlex12345' });
 const wa = await a.wait((m) => m.t === 'welcome', 'welcome a');
-ok(wa.hostId === wa.you, 'Ali yönetici');
-const b = client({ name: 'Ayse', cid: 'handAyse1234' });
+ok(wa.hostId === wa.you, 'Alex yönetici');
+const b = client({ name: 'Sam', cid: 'handSam1234' });
 const wb = await b.wait((m) => m.t === 'welcome', 'welcome b');
 await sleep(200);
-const c = client({ name: 'Can', cid: 'handCan12345' });
+const c = client({ name: 'Max', cid: 'handMax12345' });
 await c.wait((m) => m.t === 'welcome', 'welcome c');
 
 // Kısa kopma (sayfa yenileme): yönetici kalır.
 a.ws.close();
 await sleep(1500);
-const a2 = client({ name: 'Ali', cid: 'handAli12345' });
+const a2 = client({ name: 'Alex', cid: 'handAlex12345' });
 const wa2 = await a2.wait((m) => m.t === 'welcome', 'welcome a2');
-ok(wa2.hostId === wa2.you, 'Ali sayfayı yenileyince yönetici kaldı');
+ok(wa2.hostId === wa2.you, 'Alex sayfayı yenileyince yönetici kaldı');
 
-// Uzun yokluk: yöneticilik kalıcı olarak odadaki en eski kişiye (Ayşe) geçer.
+// Uzun yokluk: yöneticilik kalıcı olarak odadaki en eski kişiye (Sam) geçer.
 a2.ws.close();
 await sleep(21_000);
-const a3 = client({ name: 'Ali', cid: 'handAli12345' });
+const a3 = client({ name: 'Alex', cid: 'handAlex12345' });
 const wa3 = await a3.wait((m) => m.t === 'welcome', 'welcome a3');
-ok(wa3.hostId === wb.you, 'Ali 20 sn’den uzun yokken yöneticilik Ayşe’ye geçti ve Ali dönünce de Ayşe’de kaldı');
+ok(wa3.hostId === wb.you, 'Alex 20 sn’den uzun yokken yöneticilik Sam’e geçti ve Alex dönünce de Sam’de kaldı');
 a3.ws.send(JSON.stringify({ t: 'kick', id: wb.you }));
 const err = await a3.wait((m) => m.t === 'error', 'not host');
 ok(err.code === 'not_host', 'Eski yönetici artık kimseyi atamaz');
