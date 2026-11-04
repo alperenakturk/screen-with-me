@@ -20,6 +20,14 @@ without asking: a fix that went live becomes a test, a test the owner reported p
 question he answered disappears. Then the Planner tells him in a line what changed. **Everyone talks to the owner in
 Turkish** (all sessions; among themselves English is fine; everything written to the repo stays English).
 
+**Resources and tests (owner, 4 Nov 2026):** whenever tokens, a usage limit, Actions minutes, an API quota or anything
+else is running out, every session tells the Planner at once and the Planner tells the owner. Run as many tests as a
+change needs, none on unrelated parts, and never give up quality (the CI diet, card CI, follows this rule).
+
+**The repo is public since 4 Nov 2026** (owner: no money for Actions minutes; private-repo minutes ran out after
+≈ 3500 min in four days). The license is "All rights reserved" (card LIC, PR #287). Never commit a secret, never say
+"open source" in public texts; MIT or not is decided at 1.0.
+
 Card format:
 
 ```
@@ -33,6 +41,35 @@ Card format:
 ## In progress
 
 ## Ready
+
+### CI. CI diet (owner's pick "safe + short main", 4 Nov 2026; lane B, first in the queue)
+- Why: 478 runs / ≈ 3500 min in four days; docs-only PRs ran the whole suite.
+- Done when: a superseded PR run is cancelled; docs-only changes run only a tiny "changes" job whose check still
+  reports (so branch protection can require it); e2e without the local connection pacing; Playwright cached; main runs
+  only typecheck + unit + build before the deploy and the FULL live e2e after it; the lab / a11y harnesses only when
+  `apps/web` or `packages/shared` change. PR ≈ 9 → 5 min, main ≈ 19 → 11.5 min, docs-only ≈ 0.
+- Tests: the workflow's own runs on the PR and on main. PR #286.
+
+### LIC. Source-available license before going public (owner, 4 Nov 2026; lane B) ✅
+- Done: PR #287 (`LICENSE` all rights reserved, `UNLICENSED` package.json, READMEs, CLAUDE.md).
+
+### GH. A GitHub page worth visiting (owner, 4 Nov 2026: "more current, better designed, better descriptions; more
+security and promotion now that it is public"; lane A after 15f + R27, Design for the art)
+- Why: the repo is public; the README is its front page and still reads like a dev note.
+- Done when: README.md + README.tr.md rewritten together (hero with Design's banner, what it is, features with real
+  screenshots / a GIF in legal test content, how it works, privacy, security, stack, license line, badges); `.github/`
+  issue + PR templates; SECURITY.md fit for a public repo; a 1280 × 640 social preview image for the owner to upload;
+  no film / series / piracy names, never "open source"; copy follows the `humanizer` skill.
+- Tests: the README looks right on GitHub in light and dark (screenshot), every link answers.
+- Owner's steps (Settings, he alone can): repository description + topics, social preview, secret scanning + push
+  protection, Dependabot alerts + security updates, private vulnerability reporting, code scanning (CodeQL default
+  setup), branch protection for `main` (require the CI check), Actions → fork PR workflows need approval.
+
+### SEC4. Security review 4: Cloudflare best practices + public-repo exposure (owner, 4 Nov 2026; Security, read-only)
+- Why: the owner asked to review the code and the site with the Cloudflare skill (cloudflare/skills:
+  workers-best-practices, durable-objects, wrangler, web-perf) and fix the security side, now that the repo is public.
+- Done when: `docs/internal/security-review-4.md` + proposed cards; the Planner routes them to lanes A / B.
+- Tests: each fix card carries its own.
 
 ### 15e. Home art: the light lands on every screen; a bigger, balanced first screen (owner, 4 Nov 2026; lane A)
 - Owner (screenshot of the live 0.9.97.28 home art): "the bright part should cover the tablet screen, the phone screen
@@ -108,7 +145,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 → R24 → R26 (important) → R25. Lane A: 15e ✅ → R22 + R23 → 15f → R27. Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI → R26 (important) → R25 → DL1 → DL2 → DL4 → DL5 → SEC4 fixes. Game Studio: Draw & Guess → chess + backgammon → DL3. Lane A: 15e ✅ → R22 + R23 ✅ → 15f → R27 → GH. Security: SEC4. Design: GH art. Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -169,6 +206,52 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### DL. 🐞 Sidelit Test Lab: a powerful debug mode that grows with the product (owner, 4 Nov 2026; lane B leads, Game Studio + lane A add their parts)
+- Owner: "a very detailed debug mode, for now and the future: test everything in the games, the video things, whatever
+  you think may clash; strong, detailed, and it changes as new features and ideas come. The goal is to find bugs fast
+  and raise the speed and number of tests. BE VERY CAREFUL THAT THE DEBUG MODE ITSELF IS NOT BUGGY."
+- Owner's picks (4 Nov 2026, in the Planner's chat): **a right-hand drawer + a command box**; **anyone with the hidden
+  switch** (`?debug=1`, as today) for now, but **lock it with a code before the app / store release** (ROADMAP §7);
+  **fake friends on the live site, at most 5**; **order: status + fake friends + log first**.
+- Builds on the hidden test panel of card 12 (`debug-lab.ts`, lazy `ui/debug-panel.ts`, `?debug=1` / `?debug=0`).
+- **Look:** a drawer on the right of the room (🐞 or Ctrl+Shift+D; it never covers the video's controls; on a phone a
+  bottom sheet) with tabs 📊 Status · 👥 Fake friends · 🎬 Video & network · 🎮 Games · 🧪 Scenarios · 🖥 Screen · 📜 Log,
+  plus a command box (Ctrl+K: type "add 3 friends", "bloom now", Enter) listing every command with its short help.
+  A "🐞 This is a bug" button bundles the last 2 minutes (state, log, versions, errors) into one text to copy.
+- **Rules that keep it safe and bug-free (all steps):**
+  - Off = not loaded at all (lazy chunk, outside the room's size budget); a test proves nothing changes with it off.
+  - No new power on the live server: fake friends are ordinary clients (normal rate limits, ≤ 5, a 🤖 in their name,
+    only in the room the lab opened them in, all leave when the lab closes or the tab goes); anything that needs server
+    help (skip a quiz question, set a dama position on the table) works only against `wrangler dev` / a test server.
+  - No monkey-patching: features expose small named hooks (`debugHooks.register('snackBar', {...})`); the lab only
+    calls those; a missing hook shows "not available here".
+  - Every command: a name, a one-line help, where it works, and an undo where it changes something; every run is
+    wrapped so a failing command writes a red line in the log and never breaks the room.
+  - Game cheats run on a sandbox save (a snapshot of the real `localStorage` save first; "Restore my real saves").
+  - The log never shows cids, IP hashes or tokens; the bug bundle shows exactly what it contains before copying.
+  - Every lab tool has its own harness check in CI; the lab's own harness also runs with the lab off.
+- **Steps (one PR each, in this order):**
+  1. **DL1 (lane B):** drawer + command box + 📊 Status (versions, transport, clock offset, live sync-drift graph, voice
+     / stream peer states, recent errors) + 📜 Log (in / out room messages, filtered, redacted) + "🐞 This is a bug".
+  2. **DL2 (lane B):** 👥 Fake friends: add 1–5 (name + random avatar), each can write, react, play / pause / seek,
+     stall ("not ready"), leave and come back, knock at the door, take the host role; a "chatty" mode at a set pace.
+  3. **DL3 (Game Studio):** 🎮 Games: open any game at once; Snack Bar (coins, customers, receipt, badges, place),
+     Window Garden (grow / bloom now, hybrid seed, night / rain, visitors), Five Frames (show the answer, set the day),
+     Classics (a dama position, bot level, force a win / draw on the local test server), Quiz / Draw & Guess (skip,
+     end, pick the word: test server only), tip jar fill; time ×10 for the side games; sandbox saves.
+  4. **DL4 (lane B):** 🎬 Video & network: drop my connection, force the HTTP fallback, "the server restarted"
+     (reconnect with the same id), drift +3 s, stall for N s, slow network, ads on the film page harness; 🖥 Screen
+     (lane A): theme / language / reduced-motion switcher, phone / tablet size windows, "first-time visitor", outline
+     the islands / hole / hidden boxes.
+  5. **DL5 (lane B):** 🧪 Scenarios: one-click scripted checks with ✓ / ✗ per step (room entry order, knock, fullscreen
+     messages, Enter after a click, private message, two names in one browser …), runnable with the fake friends.
+- **Rule from DL1 on (for every new card):** "Done when" includes its lab hook or scenario, so the lab grows with each
+  feature (Developers / Game Studio add it in the same PR).
+- Done when (whole card): the owner can test every two-person flow alone with fake friends, reach every game state in
+  a few clicks, cause each network / video accident on purpose, and copy one bug text; all lab harnesses green; with
+  the lab off the room's size and behaviour are unchanged.
+- Owner's pick: recorded above.
 
 ### R25. Fullscreen messages lower than the message box (owner, 4 Nov 2026; lane B)
 - Owner (screenshot of R21 live, a YouTube video in fullscreen: the message "Alperen2 sELAN" sits right beside the

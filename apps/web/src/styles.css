@@ -189,23 +189,6 @@
   --mascot: url('/themes/sinema-maskot.svg');
 }
 
-/* Opera Gecesi: koyu petrol yeşili salon, yaldızlı localar; gül kırmızısı vurgu. */
-:root[data-theme='opera'] {
-  --bg: #08201f;
-  --surface: rgb(10 34 36 / 0.86);
-  --surface-2: rgb(16 48 50 / 0.92);
-  --border: #2f5e57;
-  --text: #f4ecdc;
-  --muted: #b5ab92;
-  --accent: #e8708a;
-  --accent-hover: #f292a6;
-  --on-accent: #2a0710;
-  --art: linear-gradient(#0f3638, #08201f 60%, #051516);
-  --art-size: 100% 100%;
-  --scene: url('/themes/opera.svg');
-  --mascot: url('/themes/opera-maskot.svg');
-}
-
 /* Açık Hava Sineması: mor gece göğü, arabalar; stop lambası mercanı vurgu. */
 :root[data-theme='acikhava'] {
   --bg: #0a0920;
@@ -1408,54 +1391,11 @@ html:not(.shell) .shell-only {
   font-size: 14px;
 }
 
-/* Sayfalı avatar seçici: üstte sekmeler, altında ızgara */
+/* The avatar picker: one grid of every avatar (card R27: no tabs) */
 .avatar-picker {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.avatar-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--border);
-}
-
-.avatar-tab {
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.avatar-tab[aria-selected='true'] {
-  color: var(--text);
-  border-bottom-color: var(--accent);
-}
-
-/* Parodi'nin alt sekmeleri (Film / Dizi / Anime): küçük haplar */
-.avatar-tabs.sub {
-  border-bottom: 0;
-  gap: 6px;
-  padding-top: 2px;
-}
-
-.avatar-tabs.sub .avatar-tab {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 12px;
-  padding: 3px 10px;
-}
-
-.avatar-tabs.sub .avatar-tab[aria-selected='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
 }
 
 .avatar-grid {
@@ -8280,6 +8220,96 @@ html.in-room .topbar-right > .lang {
   flex-basis: 100%;
   padding-top: 10px;
   border-top: 1px solid var(--border);
+}
+
+/* Card R23 (owner, 4 Nov 2026): while someone streams, the stream's line and buttons sit in the empty space right of the
+   faces (a second grid column), not in a full-width row under the voice buttons that pushed the chat down. Computers and
+   tablets; the phone room has its own strip. */
+html:not(.phone) .together-card:has(.live-card.active) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(54%, 230px);
+  column-gap: 10px;
+  row-gap: 10px;
+  align-items: start;
+}
+
+html:not(.phone) .together-card:has(.live-card.active) > * {
+  grid-column: 1 / -1;
+}
+
+html:not(.phone) .together-card:has(.live-card.active) > .together-strip {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+html:not(.phone) .together-card:has(.live-card.active) > .together-actions {
+  display: contents;
+}
+
+html:not(.phone) .together-card:has(.live-card.active) .together-actions > .voice-row {
+  grid-column: 1 / -1;
+}
+
+html:not(.phone) .together-actions .live-card.active {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  min-width: 0;
+  padding: 0 0 0 10px;
+  border-top: 0;
+  border-left: 1px solid var(--border);
+}
+
+html:not(.phone) .live-card.active .live-row {
+  gap: 6px;
+}
+
+html:not(.phone) .live-card.active .live-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Line 1: the status and the viewers; line 2: the buttons (and the quality for my own screen). */
+html:not(.phone) .live-card.active .live-status {
+  flex: 1 1 calc(100% - 64px);
+}
+
+html:not(.phone) .live-card.active .voice-limit {
+  order: 1;
+  flex: none;
+  margin-left: auto;
+  font-size: 12px;
+}
+
+html:not(.phone) .live-card.active .live-row > :is(button, label) {
+  order: 2;
+}
+
+html:not(.phone) .live-card.active .small-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+html:not(.phone) .live-card.active .live-quality {
+  order: 3;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+html:not(.phone) .live-card.active .live-quality > span {
+  display: none;
+}
+
+html:not(.phone) .live-card.active .live-quality select {
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
 }
 
 .live-share-wrap {
