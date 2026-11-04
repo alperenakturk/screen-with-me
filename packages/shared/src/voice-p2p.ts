@@ -73,6 +73,11 @@ export class P2pVoice implements Voice {
 
   constructor(private readonly options: P2pVoiceOptions) {}
 
+  /** For the 🐞 Test Lab: each voice connection's state (read only). */
+  peerStates(): { id: string; state: RTCPeerConnectionState; ice: RTCIceConnectionState }[] {
+    return [...this.peers].map(([id, peer]) => ({ id, state: peer.pc.connectionState, ice: peer.pc.iceConnectionState }));
+  }
+
   get active(): boolean {
     return this.joined;
   }

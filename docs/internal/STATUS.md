@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.44 (🐞 Test Lab, step DL1):**
+- [ ] Open any page with `?debug=1`: 🐞 bottom left; Ctrl+Shift+D (or 🐞) opens the lab on the right, the room makes
+  room for it. In a room: 📊 Status shows the versions, the connection, the clock offset and a drift line; 📜 Log shows
+  your messages going out and coming back. Ctrl+K: type "mark", Enter, then Undo. "🐞 This is a bug" shows a text;
+  Copy and paste it to the Planner. On the phone it is a sheet from the bottom. `?debug=0` turns it off.
+
 **0.9.97.43 (messages below the message box in fullscreen, card R25):**
 - [ ] In fullscreen (YouTube, a video file, a film page), press Enter to open the message box and leave it open; let a
   friend write a few messages: they come in below the box and its 💬 button (about half way down the video), stack

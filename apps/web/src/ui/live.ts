@@ -8,6 +8,7 @@ import { composeScreenWithCamera, composeSupported, type Composed } from './live
 import { setIcon } from './icons.ts';
 import { createLiveFloat } from './live-float.ts';
 import { openCam } from './voice-check.ts';
+import { debugHooks } from '../debug-lab.ts';
 
 /**
  * Yayın kartı (sağ panelde, sesli sohbetin altında) ve yayın penceresi (videonun köşesinde, büyütülebilir).
@@ -117,6 +118,13 @@ export function createLive(
       flashHint(card, t('voice.blocked'), 15000);
     },
   });
+  // 🐞 Test Lab: each stream connection's state (ids shortened; read only).
+  debugHooks.register('live', () => ({
+    status: () => {
+      const peers = live.peerStates();
+      return [['Stream peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : 'none']];
+    },
+  }));
 
   function streamer(): Member | undefined {
     return members.find((m) => m.live);
