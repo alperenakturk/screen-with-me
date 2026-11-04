@@ -43,7 +43,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15. Lane A: R16 → R17 → R18 → BH5. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15. Lane A: R16 → R17 → R18 → R20 → BH5. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -99,6 +99,17 @@ reports if a drop happens again over time.
   extension cards). Write the table to `docs/internal/order-of-things.md`, then check each row in a harness and fix
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
+
+### R20. Remove the sea-cartoon parody avatars (owner, 4 Nov 2026: "remove these completely, they aren't nice"; lane A)
+- Owner (screenshot of the series parody page): the yellow sponge, the pink starfish and the grey squid go.
+- What: drop `sponge`, `starfish` and `squid` from `DRAWN_AVATARS`, `AVATAR_PAGES`, `scripts/avatars.mjs`, Design's
+  `docs/internal/design/avatars-2/full/` and the i18n `avatar.<id>` names; their files leave `public/avatars` and the
+  extension's `static/avatars`. Anyone whose saved avatar (site, `me:<room>`, the extension's `site:avatar`) is one of
+  them gets a random themed one on load, like the old animal emojis (0.9.57); the server treats them as unknown (the
+  validator's default), so old clients show a themed fallback.
+- Done when: the three are gone from every picker page and file; a saved one is replaced once; the "every drawn
+  avatar is on exactly one page" test still passes.
+- Tests: unit test for the replacement of a removed avatar; avatar picker harness / sweep screenshot of the series page.
 
 ### R19. Same browser, same name and avatar = one person (Planner's decision, owner's question)
 - Owner: in the same Chrome he opened the room twice with the same name and avatar and saw one person.
