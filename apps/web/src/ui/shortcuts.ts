@@ -1,6 +1,5 @@
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
-import { isTyping } from './reactions.ts';
 
 /** One row of the card: the keys ('–' and '/' are separators) and what they do (checked against the room's handlers). */
 const ROWS: ReadonlyArray<readonly [keys: string[], what: I18nKey]> = [
@@ -55,14 +54,4 @@ export function openShortcuts(): void {
   document.addEventListener('keydown', onKey, true);
   document.body.append(backdrop);
   close.focus();
-}
-
-/** ? anywhere in the room (not while typing, not with another window open) opens the card. */
-export function listenForShortcutsKey(): void {
-  document.addEventListener('keydown', (event) => {
-    if (event.key !== '?' || event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
-    if (document.querySelector('.dialog-backdrop:not([hidden])')) return;
-    event.preventDefault();
-    openShortcuts();
-  });
 }

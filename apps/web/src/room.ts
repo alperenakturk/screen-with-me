@@ -39,9 +39,6 @@ import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
 import { createShellPlayer, type ShellPlayer } from './players/shell.ts';
 import { createHtml5Player } from './players/html5.ts';
-import { createTestPlayer } from './players/test.ts';
-import { createTikTokPlayer } from './players/tiktok.ts';
-import { createVimeoPlayer } from './players/vimeo.ts';
 import { createYouTubePlayer } from './players/youtube.ts';
 import {
   clientId,
@@ -63,7 +60,6 @@ import {
 } from './storage.ts';
 import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
 import { autoInviteOn } from './ui/invite-option.ts';
-import { listenForShortcutsKey, openShortcuts } from './ui/shortcuts.ts';
 import { createChatPanel } from './ui/chat.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
@@ -76,7 +72,6 @@ import { showNextCard } from './ui/end-card.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
-import { createShortsSearch } from './ui/shorts-search.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -118,12 +113,30 @@ async function loadTv(): Promise<void> {
   tvModules = { room, remote };
 }
 
+/** The keyboard shortcuts card (card SZ: a lazy chunk, opened by ⌨️ or ?). */
+const openShortcuts = () => void import('./ui/shortcuts.ts').then((m) => m.openShortcuts());
+
+/**
+ * Card SZ: the film page's voice relay (`ExtVoice`, voice in the extension's offscreen page) is only needed in the
+ * shell, so it is a lazy chunk there, loaded before the room starts like the TV's modules. `null` if it failed to load.
+ */
+let extVoiceModule: typeof import('./ui/voice-ext.ts') | null | undefined;
+
 /**
  * Odaya giriş iki adımlıdır: önce isim, sonra avatar. İkisi de tarayıcıda
  * saklanır ve bir dahakine hazır gelir. "Odaya gir" tıklaması aynı zamanda
  * tarayıcının sesli oynatma izni için gereken etkileşimdir.
  */
 export function renderRoom(app: HTMLElement, roomId: string, waited = false): void {
+  if (isShell && extVoiceModule === undefined) {
+    void import('./ui/voice-ext.ts')
+      .catch(() => null)
+      .then((m) => {
+        extVoiceModule = m;
+        renderRoom(app, roomId, waited);
+      });
+    return;
+  }
   if (tvLab() && !tvModules) {
     void loadTv().then(() => renderRoom(app, roomId, waited));
     return;
@@ -988,7 +1001,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
     makeHost: (member) => void askMakeHost(member),
     messagePrivately: (member) => openPrivate(member),
-  });
+  }, extVoiceModule?.ExtVoice ?? null);
   /** Hand the host role to someone (0.9.93.2): asked first, it can't be taken back. */
   async function askMakeHost(member: Member): Promise<void> {
     const yes = await confirmDialog({ icon: '👑', title: t('makeHostTitle', { name: member.name }), text: t('makeHostText'), yes: t('makeHost') });
@@ -1631,12 +1644,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       player =
         media.kind === 'youtube'
           ? await createYouTubePlayer(slot, media.id, onError)
-          : media.kind === 'tiktok'
-            ? await createTikTokPlayer(slot, media.id, onError)
+          : // Card SZ: the TikTok, Vimeo and sync-test players are lazy chunks (most rooms never play one).
+            media.kind === 'tiktok'
+            ? await (await import('./players/tiktok.ts')).createTikTokPlayer(slot, media.id, onError)
             : media.kind === 'vimeo'
-              ? await createVimeoPlayer(slot, media.id, media.hash, onError)
+              ? await (await import('./players/vimeo.ts')).createVimeoPlayer(slot, media.id, media.hash, onError)
               : media.kind === 'test'
-                ? createTestPlayer(slot)
+                ? (await import('./players/test.ts')).createTestPlayer(slot)
                 : createHtml5Player(slot, media.url, onError, media.poster);
     } catch {
       onError();
@@ -2358,10 +2372,23 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !shortsAddForm.hidden) setShortsAdd(false);
   });
-  const shortsSearch = createShortsSearch($('#shorts-add-results'), (id) => {
-    addMedia({ kind: 'youtube', id, short: true }, 'enqueue');
-    flashHint(shortsAdd, t('queuedNote'), 2000);
-  });
+  // Card SZ: the Shorts search list is a lazy chunk, made on the first search.
+  let shortsSearchMade: Promise<{ search: (q: string) => Promise<void> | void; clear: () => void }> | null = null;
+  const shortsSearch = {
+    search: (q: string) => {
+      shortsSearchMade ??= import('./ui/shorts-search.ts').then((m) =>
+        m.createShortsSearch($('#shorts-add-results'), (id) => {
+          addMedia({ kind: 'youtube', id, short: true }, 'enqueue');
+          flashHint(shortsAdd, t('queuedNote'), 2000);
+        }),
+      ).catch((error: unknown) => {
+        shortsSearchMade = null;
+        throw error;
+      });
+      return shortsSearchMade.then((made) => made.search(q));
+    },
+    clear: () => void shortsSearchMade?.then((made) => made.clear()),
+  };
   shortsAddForm.addEventListener('submit', (event) => {
     event.preventDefault();
     if (isTikTokShortLink(shortsAddInput.value)) {
@@ -3188,7 +3215,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     createRoomMoreMenu(moreButton, () => moreItems(true));
   }
   // ? opens the keyboard shortcuts card (0.9.93.2; not on a TV, whose remote has its own keys).
-  if (!tv) listenForShortcutsKey();
+  if (!tv) {
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== '?' || event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
+      if (document.querySelector('.dialog-backdrop:not([hidden])')) return;
+      event.preventDefault();
+      openShortcuts();
+    });
+  }
   // 0.9.93.1: 🔗 Invite opens the invite window (link, copy, share, WhatsApp, QR); ⋯ → Invite on a phone presses it too.
   // R12: the host also gets "Ask before letting people in" in the invite window.
   const door = () => (amHost() ? { on: roomSettings.knock === true, set: (on: boolean) => send({ t: 'settings', knock: on }) } : undefined);
