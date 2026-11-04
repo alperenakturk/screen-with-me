@@ -17,10 +17,11 @@ import {
   type DrawPhase,
   type DrawPlayer,
   type DrawRounds,
+  type DrawTopic,
   type DrawServerMessage,
   type Stroke,
 } from '@swm/shared/games/draw';
-import { DRAW_WORDS } from '@swm/shared/games/draw-words';
+import { DRAW_WORDS, DRAW_WORD_SETS } from '@swm/shared/games/draw-words';
 import { drawGuessPoints, drawerPoints } from '@swm/shared/games/scoring';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
@@ -67,6 +68,8 @@ interface Saved {
   revealAt: number[];
   revealed: number;
   recent: string[];
+  /** The word category (P10). */
+  topic?: DrawTopic;
   emptySince: number | null;
   /** How many times everyone draws; then the podium. */
   rounds: DrawRounds;
@@ -106,6 +109,8 @@ const fresh = (): Saved => ({
 export class Draw extends DurableObject<Env> {
   private data: Saved = fresh();
   private strokes: Stroke[] = [];
+  /** Drawing actions taken away with undo, newest last (redo puts them back; a new stroke forgets them). */
+  private undone: Stroke[][] = [];
   private points = 0;
   private readonly limit = new RateLimiter(20, 8);
   private readonly strokeLimit = new RateLimiter(80, 40);
@@ -165,7 +170,7 @@ export class Draw extends DurableObject<Env> {
       await this.scheduleAlarm();
     }
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
-    const limiter = message.t === 'stroke' ? this.strokeLimit : message.t === 'guess' ? this.guessLimit : message.t === 'undo' ? this.undoLimit : this.limit;
+    const limiter = message.t === 'stroke' ? this.strokeLimit : message.t === 'guess' ? this.guessLimit : message.t === 'undo' || message.t === 'redo' ? this.undoLimit : this.limit;
     if (!limiter.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
     // One hello per connection, as in the room (review 3, R3-8): a second one could rename or re-key a live socket.
     if (message.t === 'hello') return me.name === null ? this.hello(ws, me, message) : this.sendTo(ws, { t: 'error', code: 'bad' });
@@ -203,6 +208,7 @@ export class Draw extends DurableObject<Env> {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
       this.strokes = [];
+      this.undone = [];
       return;
     }
     await this.scheduleAlarm();
@@ -282,6 +288,7 @@ export class Draw extends DurableObject<Env> {
         if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         if (message.lang) d.lang = message.lang;
         if (message.rounds) d.rounds = message.rounds;
+        if (message.topic) d.topic = message.topic;
         await this.save();
         this.broadcastState();
         return;
@@ -305,6 +312,7 @@ export class Draw extends DurableObject<Env> {
         if (this.points + message.s.p.length / 2 > MAX_POINTS) return;
         this.points += message.s.p.length / 2;
         this.strokes.push(message.s);
+        this.undone = [];
         this.broadcast({ t: 'stroke', s: message.s }, ws);
         return;
       case 'undo': {
@@ -313,7 +321,18 @@ export class Draw extends DurableObject<Env> {
         // their own action), then everyone redraws the rest.
         const last = this.strokes.pop();
         if (!last) return;
-        if (last.g !== undefined) while (this.strokes.length && this.strokes[this.strokes.length - 1]!.g === last.g) this.strokes.pop();
+        const group = [last];
+        if (last.g !== undefined) while (this.strokes.length && this.strokes[this.strokes.length - 1]!.g === last.g) group.unshift(this.strokes.pop()!);
+        this.undone = [...this.undone, group].slice(-20);
+        this.points = this.strokes.reduce((n, x) => n + x.p.length / 2, 0);
+        this.broadcast({ t: 'strokes', list: this.strokes });
+        return;
+      }
+      case 'redo': {
+        if (d.phase !== 'draw' || d.drawer !== key) return this.sendTo(ws, { t: 'error', code: 'not_drawer' });
+        const group = this.undone.pop();
+        if (!group) return;
+        this.strokes.push(...group);
         this.points = this.strokes.reduce((n, x) => n + x.p.length / 2, 0);
         this.broadcast({ t: 'strokes', list: this.strokes });
         return;
@@ -321,6 +340,7 @@ export class Draw extends DurableObject<Env> {
       case 'clear':
         if (d.phase !== 'draw' || d.drawer !== key) return this.sendTo(ws, { t: 'error', code: 'not_drawer' });
         this.strokes = [];
+        this.undone = [];
         this.points = 0;
         this.broadcast({ t: 'clear' }, ws);
         return;
@@ -329,9 +349,10 @@ export class Draw extends DurableObject<Env> {
         return;
       case 'reset':
         if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });
-        this.data = { ...fresh(), lang: d.lang, rounds: d.rounds, order: d.order, people: d.people, recent: d.recent };
+        this.data = { ...fresh(), lang: d.lang, rounds: d.rounds, topic: d.topic, order: d.order, people: d.people, recent: d.recent };
         for (const person of Object.values(this.data.people)) person.score = 0;
         this.strokes = [];
+        this.undone = [];
         this.points = 0;
         await this.save();
         this.broadcast({ t: 'clear' });
@@ -408,6 +429,7 @@ export class Draw extends DurableObject<Env> {
     d.revealAt = [];
     d.revealed = 0;
     this.strokes = [];
+    this.undone = [];
     this.points = 0;
     await this.save();
     this.broadcast({ t: 'clear' });
@@ -459,6 +481,7 @@ export class Draw extends DurableObject<Env> {
     d.gains = {};
     d.endsAt = null;
     this.strokes = [];
+    this.undone = [];
     this.points = 0;
     await this.save();
     this.broadcastState();
@@ -474,6 +497,7 @@ export class Draw extends DurableObject<Env> {
     d.guessed = [];
     d.endsAt = null;
     this.strokes = [];
+    this.undone = [];
     this.points = 0;
     await this.save();
     this.broadcast({ t: 'clear' });
@@ -483,8 +507,9 @@ export class Draw extends DurableObject<Env> {
 
   /** Son kullanılanlar dışından rastgele kelimeler. */
   private pickWords(count: number): string[] {
-    const list = DRAW_WORDS[this.data.lang].filter((w) => !this.data.recent.includes(w));
-    const pool = list.length >= count ? [...list] : [...DRAW_WORDS[this.data.lang]];
+    const all = !this.data.topic || this.data.topic === 'mix' ? DRAW_WORDS[this.data.lang] : DRAW_WORD_SETS[this.data.lang][this.data.topic];
+    const list = all.filter((w) => !this.data.recent.includes(w));
+    const pool = list.length >= count ? [...list] : [...all];
     const out: string[] = [];
     while (out.length < count && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]!);
     return out;
@@ -560,6 +585,7 @@ export class Draw extends DurableObject<Env> {
       round: d.round,
       lang: d.lang,
       rounds: d.rounds,
+      topic: d.topic ?? 'mix',
       host: (() => {
         const hk = this.hostKey(except);
         return hk ? d.people[hk]!.pid : null;
