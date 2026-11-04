@@ -1,37 +1,51 @@
-<div align="center">
+<p align="center"><img src="docs/internal/design/github/banner-tr.svg" width="100%" alt="Sidelit: Ayrı ekranlar, aynı an."></p>
 
-# ▶ Sidelit
+<p align="center">
+  <a href="https://screen-with-me.swm-server.workers.dev"><b>Sidelit'i aç</b></a> ·
+  <a href="https://screen-with-me.swm-server.workers.dev/extension.html">Eklentiyi kur</a> ·
+  <a href="https://screen-with-me.swm-server.workers.dev/help.html?lang=tr">Yardım</a> ·
+  <a href="README.md">🇬🇧 English</a>
+</p>
 
-_Eski adıyla ScreenWithMe._
+<p align="center">
+  <a href="https://github.com/alperenakturk/screen-with-me/actions/workflows/test.yml"><img src="https://github.com/alperenakturk/screen-with-me/actions/workflows/test.yml/badge.svg?branch=main" alt="CI"></a>
+  <img src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.9.97-e9b949" alt="Sürüm 0.9.97">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-t%C3%BCm%20haklar%C4%B1%20sakl%C4%B1d%C4%B1r-lightgrey" alt="Lisans: tüm hakları saklıdır"></a>
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white" alt="TypeScript strict">
+  <img src="https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white" alt="Cloudflare Workers + Durable Objects">
+</p>
 
-**Herhangi bir videoyu birlikte, tam senkron izle.**<br/>
-Ücretsiz · hesap yok · reklam yok · YouTube'da ve (neredeyse) her sitede çalışır.
+Sidelit ile arkadaşlar aynı videoyu aynı saniyede, herkes kendi ekranında izler. Bir link at, herkes odada olsun.
+Biri durdurur, sarar ya da hızı değiştirirse herkeste olur. Sohbet, ses, kameralar, emojiler, oyunlar ve ortak sıra
+videonun etrafında. Ücretsiz, hesap yok, reklam yok.
 
-[**Canlı site**](https://screen-with-me.swm-server.workers.dev) ·
-[**Eklentiyi kur**](https://screen-with-me.swm-server.workers.dev/extension.html) ·
-[🇬🇧 English](README.md)
+- **YouTube, YouTube Shorts, TikTok, Vimeo, podcast bölümleri ve video dosyaları** doğrudan sitede oynar. Kurulum
+  yok. Linkin yoksa aynı kutuya birkaç kelime yazıp YouTube'da ara.
+- **Başka herhangi bir site** (HTML5 videosu varsa, iframe içinde bile) tarayıcı eklentisiyle çalışır: sekme o siteye
+  gider ve oda onun üstünde açılır, sitenin kendi oynatıcısı odanın video alanına oturur.
 
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
-![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
-![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285f4?logo=googlechrome&logoColor=white)
-![Testler](https://img.shields.io/badge/test-251%20birim%20%2B%20u%C3%A7tan%20uca%20%2B%20ger%C3%A7ek%20Chrome-3ccf8e)
-![Sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.9.81-7c5cff)
-![Lisans](https://img.shields.io/badge/lisans-t%C3%BCm%20haklar%C4%B1%20sakl%C4%B1d%C4%B1r-lightgrey)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/readme/room.jpg" alt="Bir oda: üç kişi için senkron testi oynuyor, videonun yanında ray, sağda sohbet"></td>
+    <td width="50%"><img src="docs/readme/games.jpg" alt="Videonun üstünde açık oyun salonu: Çiz-Bil, Bilgi yarışması, Son Kalp ve Klasikler"></td>
+  </tr>
+  <tr>
+    <td>Üç kişilik bir oda. Senkron rozeti aradaki farkı söylüyor.</td>
+    <td>Oyun salonu. Oyunlar videonun yanında açılır, video oynamaya devam eder.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/readme/home.jpg" alt="Ana sayfa: Oda oluştur, Kodla katıl ve bir laptop, tablet ve telefonu aydınlatan Glowbeam"></td>
+    <td align="center"><img src="docs/readme/phone.jpg" width="230" alt="Telefonda oda: üstte video, yüzler ve ses düğmeleri, sonra sohbet"></td>
+  </tr>
+  <tr>
+    <td>Ana sayfa. Tek düğme bir oda açar.</td>
+    <td>Telefonda oda bir uygulama ekranı gibi.</td>
+  </tr>
+</table>
 
-</div>
+<sub>Ekran görüntüleri sitenin İngilizce halinden; site Türkçe de konuşur.</sub>
 
----
-
-Link at, herkes aynı saniyeyi izlesin. Biri durdurur, sarar ya da hızı değiştirirse herkeste olur. Sohbet, ses,
-kameralar, emojiler, oyunlar ve ortak sıra videonun etrafında.
-
-- **YouTube, YouTube Shorts, TikTok, Vimeo linkleri, bir podcast bölümü (arama sonuçlarında 🎧 Podcastler) ya da video dosyası** → doğrudan sitede oynar, kurulum yok. Linkin
-  yoksa aynı kutuya kelime yazıp YouTube'da ara.
-- **Başka herhangi bir site** (sayfada HTML5 `<video>` varsa, iframe içinde bile) → sekme o siteye gider ve
-  tarayıcı eklentisiyle **odanın kendisi** üstüne açılır, video odanın oynatıcı alanına oturur. Gömülmeyi
-  yasaklayan sitelerde de çalışır.
-
-## ✨ İçinde neler var
+## Özellikler
 
 ### Birlikte izlemek
 | | |
@@ -63,7 +77,7 @@ kameralar, emojiler, oyunlar ve ortak sıra videonun etrafında.
 | 📱 **Telefon için** | Telefonda oda bir uygulama ekranıdır: video kenardan kenara, altında herkesin yüzü ve kameraları, sonra sohbet. ＋ ve ⋯ alttan açılan sayfalar (video ekle, oyunlar, davet, ayarlar…), geri tuşu onları kapatır; ⛶ gerçek tam ekran verir (iPhone'da da), videonun yanında ince bir düğme sütunuyla. Shorts ve oyunlar tüm ekranı alır. Film sayfaları dışında her şey telefonda çalışır. **Tablet:** dik tutunca video üstte, düğmeleri yanında, altında iki sütun (sohbet; Birlikte, Sıra ve Kişiler), sayfa hiç kaymaz; yatay tutunca oda bilgisayardaki gibi görünür. |
 | 📶 **Zor ağlar** | WebSocket'lerin hiç açılmadığı ağlarda (bazı telefon hotspot'ları) oda kendiliğinden HTTP yedeğine geçer, mümkün olunca geri döner. Odaya ulaşılamazsa "Tekrar dene" ve bağlantı testi bir dokunuş uzakta. |
 | 📲 **Uygulama olarak kur** | Site telefonlarda ve bilgisayarlarda uygulama olarak kurulur ve her zaman en son sürümü yükler. |
-| 🎨 **Görünüm ve ses** | 11 tema (sade ve resimli), kısa bir açılış, yumuşak üretilmiş ses efektleri (dosya yok; ayarlanabilir ya da kapatılabilir). Sitede ve eklentide İngilizce ve Türkçe (varsayılan İngilizce). |
+| 🎨 **Görünüm ve ses** | 10 tema (sade ve resimli), kısa bir açılış, yumuşak üretilmiş ses efektleri (dosya yok; ayarlanabilir ya da kapatılabilir). Sitede ve eklentide İngilizce ve Türkçe (varsayılan İngilizce). |
 
 ### Yönetici ve güvenlik
 | | |
@@ -71,7 +85,7 @@ kameralar, emojiler, oyunlar ve ortak sıra videonun etrafında.
 | 👑 **Oda yöneticisi** | Odaya ilk giren yöneticidir ve kuralları ⚙️ Ayarlar'da belirler: oynatmayı yalnız yönetici yönetir, kilitli sıra, emoji sınırları, yalnız yönetici yayın açar, hazır kontrolü. Yönetici 20 sn'den uzun süre yoksa yöneticilik odada en uzun süredir bulunana geçer. Yönetici yöneticiliği başkasına devredebilir (Kişiler'de 👑), kişileri odadan çıkarabilir ve yasaklayabilir; "İçeri almadan önce sor" açıkken yeni gelen biri, yönetici içeri alana ya da reddedene kadar kapıda bekler. |
 | 🔐 **Gizlilik temelden** | Video her kişinin kendi tarayıcısında oynar; sunucu yalnızca küçük "12:34'te durdur" mesajlarını ve odanın sohbetini iletir. Eklenti oda dışında uyur, film sayfası hangi odada olduğunu okuyamaz. Kullanıcı metni hiçbir zaman HTML olarak yazılmaz; sınırlar (IP başına da), köken kontrolü, sıkı bir Content-Security-Policy ve çerçeve koruması siteyi korur. |
 
-## 🧠 Nasıl çalışır?
+## Nasıl çalışır?
 
 ```mermaid
 flowchart LR
@@ -109,18 +123,36 @@ sitenin oda sayfasını (`/r/ODA?shell=1`) yükler. Oda bağlantısını site tu
 aynısı orada çalışır, oynatma mesajları siteye gider, odanın durumu geri gelir. Site oynatıcı alanının yerini
 bildirir; üst çerçeve orada bir delik keser (`clip-path`) ve filmin oynatıcısını içine oturtur.
 
-## 🧪 Kalite
+## Gizlilik
+
+- **Hesap yok.** Her oda için bir ad ve avatar seçersin; tarayıcında kalır.
+- **Video bizden geçmez.** Herkes videoyu kendi tarayıcısında oynatır. Sunucu yalnızca "12:34'te durdur" gibi küçük
+  mesajları, odanın sohbetini ve sırasını taşır.
+- **Kısa saklama.** Tek seferlik oda boş kaldıktan 24 saat sonra, kayıtlı oda 30 gün sonra silinir. Ses, kameralar
+  ve ekran paylaşımı tarayıcılar arasında doğrudan gider ve hiç saklanmaz.
+- **Eklenti oda dışında uyur.** Bir sayfayı odadan açmadıkça o sayfada hiçbir şey yapmaz; film sitesi hangi odada
+  olduğunu okuyamaz.
+
+Neyi neden sakladığımız [gizlilik politikasında](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=tr).
+
+## Güvenlik
+
+Bir güvenlik ya da gizlilik sorunu mu buldun? Lütfen herkese açık bir issue açma.
+[Gizli güvenlik bildirimi](https://github.com/alperenakturk/screen-with-me/security/advisories/new) kullan ya da
+[SECURITY.md](SECURITY.md)'deki adrese e-posta at.
+
+## Kalite
 
 | Kontrol | Neyi kapsıyor |
 |---|---|
-| Birim testleri (`npm test`) | 256 geçiyor: sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, oyun kuralları, ses kuralları, HTTP yedeği, özet, video puanlama |
+| Birim testleri (`npm test`) | 391 geçiyor: sahte saat ve oynatıcıyla senkron motoru, protokol doğrulama, oda kuralları, herkes hazır, oyun kuralları, ses kuralları, HTTP yedeği, özet, video puanlama |
 | Uçtan uca (`npm run e2e`, CI'da önce yerel sonra canlı sunucuya karşı) | Gerçek sunucu koduna karşı sahte kullanıcılar: sıra, sohbet, resimler, yönetici ve odadan çıkarma, devir, herkes hazır, pinler, özel emojiler, yönetici modları, kayıtlı odalar, özet, Shorts, arama, ses / yayın sinyalleşmesi, bütün oyunlar, HTTP yedeği |
 | Eklentiyle gerçek Chrome (`scripts/harness/embed`) | Film sayfasındaki oda katmanı: boşluğun yerleşmesi, sayfanın hiç görünmemesi, saydam mesajlar, filmin kendi çubuğunun korunması, dock, video seçimi, reklam sekmeleri, yönlendirmeler, ön-reklamlar |
 | Gerçek ses, kamera ve yayın (`scripts/harness/voice`) | Sahte cihazlı iki Chrome: gelen sesin enerjisi ve kamera kareleri ölçülür, sitede ve film sayfalarında; serbest kamera / yayın pencereleri; doğrudan bağlantıyı engelleyen tarayıcılar |
 | Telefon, Shorts, YouTube odası, TikTok, sesler, hotspot (`scripts/harness/*`) | iPhone ve Android düzenleri, birçok ekran boyutunda Shorts rayı, YouTube oynatıcısının üstünde hiçbir şey olmaması, TikTok oynatıcısının mesaj dilini konuşan bir taklit, hangi seslerin gerçekten çaldığı, WebSocket'leri yutan bir ara sunucu |
 | Gerçek oynatıcılar (herkese açık demo sayfalarında eklenti kodu) | **Plyr, hls.js, Video.js**: bulma ✓, uzaktan ve yerel hareketler ✓, 26–100 ms fark |
 
-## 🛠️ Teknoloji
+## Teknoloji
 
 Her yerde TypeScript (strict), ön yüz çatısı yok · Vite · Cloudflare Workers + Durable Objects
 (SQLite tabanlı, WebSocket Hibernation) · Chrome Manifest V3 + esbuild · Vitest · GitHub Actions.
@@ -135,7 +167,7 @@ scripts/          uçtan uca testler, gerçek Chrome eklenti testi, simge / tema
 store/            Chrome Web Store paketi ve ekran görüntüleri
 ```
 
-## 🚀 Geliştirme
+## Geliştirme
 
 Node.js 20+ gerekir (CI 24 kullanır).
 
@@ -154,20 +186,13 @@ Yayın: `main`'e gelen her değişiklik GitHub Actions'ta test edilip yüklenir 
 `CLOUDFLARE_ACCOUNT_ID` depo sırları gerekir), ardından canlı sunucuya karşı uçtan uca testler koşar.
 Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
-## 🗺️ Sırada ne var?
+## Lisans
 
-Chrome Web Store yayını, yeni oyunlar, kısa alan adı, Firefox; 1.0'dan sonra Google Cast ile TV sürümü (telefon
-kumanda olur).
+© 2026 Alperen Aktürk. Tüm hakları saklıdır ([LICENSE](LICENSE)). Kaynak kod okunabilsin diye yayımlanıyor; yazılı izin
+olmadan kopyalanamaz, değiştirilemez, dağıtılamaz ya da kullanılamaz. Üçüncü taraf parçalar (kelime listeleri, derleme
+araçları) kendi lisanslarını korur: [third-party-notices.txt](apps/web/public/third-party-notices.txt).
 
-## 📄 Lisans ve gizlilik
-
-© 2026 Alperen Aktürk. Tüm hakları saklıdır ([LICENSE](LICENSE)). Kaynak kod yalnızca okunsun diye yayımlanır;
-yazılı izin olmadan kopyalanamaz, değiştirilemez, dağıtılamaz ve kullanılamaz. Üçüncü taraf parçalar (kelime listeleri,
-derleme araçları) kendi lisanslarını korur: [third-party-notices.txt](apps/web/public/third-party-notices.txt). Gizlilik politikası: [privacy.html](https://screen-with-me.swm-server.workers.dev/privacy.html?lang=tr)
-(hesap yok, takip yok; tek seferlik oda boşaldıktan 24 saat sonra, kayıtlı oda 30 gün sonra silinir).
-Sorular ve sorun giderme: [yardım sayfası](https://screen-with-me.swm-server.workers.dev/help.html?lang=tr).
-
-## ⚠️ Sınırlar
+## Sınırlar
 
 - DRM korumalı yayın servisleri henüz desteklenmiyor.
 - Eklenti henüz Chrome Web Store'da değil (elle kurulum, yaklaşık bir dakika).
