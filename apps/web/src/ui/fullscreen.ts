@@ -192,7 +192,15 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       b.classList.toggle('on', open);
       if (open) pop.style.top = `${Math.max(0, b.offsetTop + b.offsetHeight / 2 - pop.offsetHeight / 2)}px`;
     }
-    if (button === dockChat) dockChatInput.focus();
+    if (button === dockChat) {
+      dockChatInput.focus();
+      // Card R2: a resting rail is `visibility: hidden` until its wake has applied, and a hidden box can't take the
+      // focus: the first Enter opened an empty window and only the second put the cursor in it. Try again after it shows.
+      if (document.activeElement !== dockChatInput) {
+        requestAnimationFrame(() => openButton === dockChat && dockChatInput.focus());
+        setTimeout(() => openButton === dockChat && document.activeElement !== dockChatInput && dockChatInput.focus(), 120);
+      }
+    }
     else if (document.activeElement === dockChatInput) dockChatInput.blur();
     // A window closed: the rail goes too unless the mouse is still on it or at the edge.
     if (!button && edgeMode()) hideRailSoon();
@@ -790,6 +798,16 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     pin(): void {
       setFake(true, false);
       pinned = true;
+    },
+    /**
+     * Card R2: the rail's message box, for Enter where the side panel is not on screen (cinema mode). False when the
+     * rail has no message box here (then the caller uses the chat panel).
+     */
+    openChat(): boolean {
+      if (!theater.classList.contains('dock-mode') || !dockChat.getClientRects().length) return false;
+      wakeDock();
+      openPop(dockChat);
+      return true;
     },
     /** Shows the rail for a moment even where it waits for the edge (an emoji rises from its 😀, card 2a). */
     showRail(): void {

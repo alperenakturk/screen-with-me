@@ -62,6 +62,12 @@ Planner to merge them once main is green.
 - Done when: one Enter puts the cursor in the message box wherever the chat lives (side panel, side panel hidden,
   fullscreen, cinema mode, Shorts); never an empty panel.
 - Tests: harness (one key press → `document.activeElement` is the message box in each view).
+- Done: 0.9.97.11 (https://github.com/alperenakturk/screen-with-me/pull/231). Two causes: in cinema mode the side panel is off screen, and Enter focused its hidden chat
+  box (nothing happened); in fullscreen and cinema the rail's message window opened while the resting rail was still
+  `visibility: hidden`, so its box could not take the focus (an empty window, the second Enter put the cursor in). Now
+  Enter opens the rail's message window where the panel is not on screen (`fullscreen.openChat()`), and that window
+  focuses its box again a frame / 120 ms later. Harness `scripts/harness/enter-chat/run.cjs` (8 checks; 2 fail on
+  0.9.97.8). Shorts keep their own message box (unchanged).
 
 ### R3. Fix: YouTube fullscreen shows a big black strip on the right (owner's bug; lane B)
 - Why: a friend's YouTube fullscreen had a wide black strip from the side column (screenshot in the Planner's
@@ -72,11 +78,20 @@ Planner to merge them once main is green.
   or the friend's window size changed).
 - Tests: `yt-room` harness: fullscreen with nothing, after a message (8 s), after cameras off; screenshot check of the
   right edge.
+- Done: 0.9.97.12 (PR below). Cause: the column opened for the camera box whenever it was on screen, also when the
+  person had dragged the cameras onto the player (a place they chose: the cameras stayed there and the column beside
+  stayed open and empty, a black strip) and when the box held only cameras hidden "for me". Now only camera tiles that
+  show count, and once the column had time to place them (700 ms) cameras sitting outside it don't hold it open (until
+  the cameras or their places change); the camera box's tiles are watched too. Harness
+  `scripts/harness/yt-fs-side/run.cjs` (6 checks; the dragged-camera one fails on 0.9.97.9).
 
 ### R4. Fix: T (cinema mode) works in fullscreen too (owner; lane B)
 - Why: owner: in fullscreen T switches cinema mode on behind the fullscreen, so nothing visible happens.
 - Done when: T in fullscreen leaves fullscreen and opens cinema mode; T / Esc in cinema mode leave it as before.
 - Tests: cinema harness.
+- Done: 0.9.97.12 (PR below). The T key (and the rail's ⋯ → Cinema mode) did nothing visible in fullscreen: the key
+  handler skipped fullscreen, the menu turned cinema on behind it. Now turning cinema on from fullscreen leaves
+  fullscreen first, and T in fullscreen always means "cinema mode". Cinema harness: a new check (fails on 0.9.97.11).
 
 ### R5. Film page: the rail's edge a little wider (owner; lane B)
 - Why: owner: on the film page out of fullscreen the mouse has to go very far right to open the rail.
@@ -179,6 +194,10 @@ Planner to merge them once main is green.
   `docs/internal/design/avatars-2/full/`, steps in `avatars-2.md` "For the Developer". **Developer part: lane A, right
   after R12, before R13** (copy via `scripts/avatars.mjs`, `DRAWN_AVATARS` notebookgenius 📓 / sweetsleuth 🍰,
   `AVATAR_PAGES` both on page 3 and hunter to page 4, i18n labels; check the picker, 28 px chat, seats, join card).
+- Done (0.9.97.10): `scripts/avatars.mjs` copies `docs/internal/design/avatars-2/full/*.svg` over its parody drawings
+  (31 redrawn + 2 new in `apps/web/public/avatars/`; the extension has no avatar copies since the shell), `DRAWN_AVATARS`
+  + `AVATAR_PAGES` (Film 8 · Series 14 · Anime 9 · Game 2), EN + TR labels. Checked in Chromium: the picker's four
+  Parody tabs and a sheet at 28 / 52 / 84 px.
 
 ## Run order to the owner's test round (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end")
 

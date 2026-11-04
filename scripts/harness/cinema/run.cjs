@@ -115,6 +115,18 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
   await page.waitForTimeout(300);
   check(!(await cinema(page)), 'T leaves it');
 
+  // Card R4: T in fullscreen leaves fullscreen and opens cinema mode (it used to switch on unseen behind it).
+  await page.evaluate(() => document.getElementById('fullscreen')?.click());
+  await page.waitForFunction(() => !!document.fullscreenElement || !!document.querySelector('.fake-fs'), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await page.keyboard.press('t');
+  await page.waitForTimeout(700);
+  const fsOut = await page.evaluate(() => !document.fullscreenElement && !document.querySelector('.fake-fs'));
+  check(fsOut && (await cinema(page)), 'T in fullscreen: out of fullscreen, into cinema mode');
+  await page.keyboard.press('t');
+  await page.waitForTimeout(300);
+  check(!(await cinema(page)), 'T again leaves cinema mode');
+
   // Typing a T in the chat box does nothing.
   await page.click('#chat-input');
   await page.keyboard.type('t');
