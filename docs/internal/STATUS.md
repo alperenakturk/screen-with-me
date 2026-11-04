@@ -433,6 +433,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.43 (messages below the message box in fullscreen, card R25):**
+- [ ] In fullscreen (YouTube, a video file, a film page), press Enter to open the message box and leave it open; let a
+  friend write a few messages: they come in below the box and its 💬 button (about half way down the video), stack
+  downward, and never cover the box, the button or the player's bottom bar. Size as before.
+
 **0.9.97.42 (shortcuts right after a click in the player, card R26):**
 - [ ] In a room with a YouTube video, click on the video (play / pause), then press Enter at once: the cursor is in the
   message box. The same with 1 (an emoji), P (pin) and T; in fullscreen too. YouTube's seek bar, ⚙ settings and
