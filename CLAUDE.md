@@ -687,6 +687,17 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   built site as a Pixel 7 with a 4× slower CPU and a 4G-like network (home, join card, in the room: medians 556 / 478 /
   369 ms in the cloud container; budget 1500 each). Voice, live and camera windows stay in the room chunk (tightly
   tied to it); a phone-only stylesheet was not worth it (most rules are shared). Test: `scripts/harness/phone/run.cjs` (71 checks).
+- **Room chunk (card SZ, lane B):** the room page's static JS went from 145.0 to 136.6 kB gzipped (budget 145) by
+  moving what is needed only after a press, or only in the shell, into lazy chunks: `ui/voice-ext.ts` (loaded by
+  `renderRoom` before the room starts, only in the shell, passed to `createVoice` as `Ext`; `isExt(client)` replaces
+  `instanceof ExtVoice`), the pre-join check `ui/voice-check.ts` (its small device helpers live in `ui/voice-devices.ts`,
+  still in the room chunk), `ui/ip-notice.ts`, the stream engine `ui/live-engine.ts` (live-p2p + live-float +
+  live-compose; `live.ts` makes it on `ensure()`: someone streams, a hover / focus / touch on Share or Watch, a press,
+  a signal; until then "not streaming, not watching"), the TikTok / Vimeo / sync-test players, the sound recipes
+  (`@swm/shared/sounds`, loaded on the first press; a sound whose recipes come > 300 ms late is dropped, as before),
+  the shortcuts card and the Shorts search list. First presses stay instant: `ui/idle.ts` `whenIdle` fetches the voice
+  windows and the stream engine 4 s after the room starts, when the browser is idle. Measure a module's share of the
+  room chunk with a sourcemap build (`npx vite build --sourcemap`; gzip of separate files overstates the saving).
 - **Accessibility (card A11y, 0.9.96.13, Design's `docs/internal/design/a11y-1.md`):** `#skip-link` is the first Tab stop
   (index.html; in the room `room.ts` turns it into "Skip to the video" → `#theater`). A Tab press wakes the resting
   rail (`fullscreen.ts`), so its buttons follow the video. `ui/dialog-focus.ts` (started in `app.ts`): every

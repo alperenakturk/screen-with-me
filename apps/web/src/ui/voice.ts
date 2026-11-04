@@ -19,6 +19,7 @@ import type { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { whenIdle } from './idle.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
 const RPC_TIMEOUT_MS = 12_000;
@@ -112,7 +113,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     live?.addEventListener('click', pressLive);
     return [{ box, mic, cam, live }];
   });
-  // Card SZ: the first press on a voice button opens the IP notice / pre-join check without waiting for its chunk.
+  // Card SZ: the first press on a voice button opens the IP notice / pre-join check without waiting for its chunk: they
+  // are fetched on a hover / focus / touch, and anyway once the room has settled (`whenIdle`).
+  whenIdle(warmVoice);
   for (const button of [joinButton, ...quick.flatMap((q) => [q.mic, q.cam])]) {
     button.addEventListener('pointerenter', warmVoice, { once: true });
     button.addEventListener('focus', warmVoice, { once: true });

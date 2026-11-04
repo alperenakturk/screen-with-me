@@ -8,6 +8,7 @@ import type { Composed } from './live-compose.ts';
 import { setIcon } from './icons.ts';
 import { openCam } from './voice-devices.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { whenIdle } from './idle.ts';
 
 type Engine = typeof import('./live-engine.ts');
 const ipNotice = (kind: IpNoticeKind) => import('./ip-notice.ts').then((m) => m.confirmIpNotice(kind, []));
@@ -119,6 +120,7 @@ export function createLive(
     return loading;
   }
   const warm = () => void ensure().catch(() => {});
+  whenIdle(warm);
   for (const button of [shareButton, watchButton]) {
     button.addEventListener('pointerenter', warm, { once: true });
     button.addEventListener('focus', warm, { once: true });
