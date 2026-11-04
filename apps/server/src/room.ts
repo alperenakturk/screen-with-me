@@ -1711,6 +1711,8 @@ export class Room extends DurableObject<Env> {
     await this.ctx.storage.put('host', this.hostKey);
     await this.setHostGone(null);
     this.broadcast(this.membersMessage());
+    // BH4: the new host gets the list of people removed (else they could not let anyone back in until a reload).
+    this.sendBans();
     // BH3: the knock cards move to the new host (the old one's empty).
     if (this.knockers().length) this.sendKnocks();
   }

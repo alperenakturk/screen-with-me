@@ -197,8 +197,8 @@ await a.evaluate(`localStorage.setItem('name','Sam'); localStorage.setItem('avat
 await a.navigate(`${SITE}/r/${room}#back`);
 await a.sleep(3000);
 check((await a.evaluate(`document.documentElement.dataset.swmShell`)) === '1', 'site eklentinin kabuğu bildiğini görüyor');
-const bora = await fakeUser(room, 'Bora');
-check(!!(await until(() => bora.members.length === 2)), 'Sam ve Bora odada');
+const riley = await fakeUser(room, 'Riley');
+check(!!(await until(() => riley.members.length === 2)), 'Sam ve Riley odada');
 
 // 0b) Sitede (kabuk değil): herkes 💬 Sohbet'le açılır; ⚙️ Ayarlar ortada pencere; 👤 sağ üstte en sonda, profil
 // panelini açıp kapatır.
@@ -230,17 +230,17 @@ check(profileOpen && profileClosed, '👤 profil menüsünü düğmenin altında
 await a.shot('0-site-oda');
 {
   // İkinci kişi (yönetici değil) ayrı tarayıcıda: 💬 Sohbet'te açılmalı.
-  const c = await launch({ ext: EXT, out: `${OUT}-cem` });
+  const c = await launch({ ext: EXT, out: `${OUT}-casey` });
   await c.navigate(`${SITE}/`);
   await c.sleep(1500);
-  await c.evaluate(`localStorage.setItem('name','Cem'); localStorage.setItem('avatar','elf'); localStorage.setItem('lang','tr'); 1`);
+  await c.evaluate(`localStorage.setItem('name','Casey'); localStorage.setItem('avatar','elf'); localStorage.setItem('lang','tr'); 1`);
   await c.navigate(`${SITE}/r/${room}#back`);
-  const cemIn = await until(() => bora.members.some((m) => m.name === 'Cem'), 10000);
+  const cemIn = await until(() => riley.members.some((m) => m.name === 'Casey'), 10000);
   await c.sleep(1200);
   const cemTab = await c.evaluate(ACTIVE_TAB);
   check(!!cemIn && cemTab === 'chat', 'ikinci kişi (yönetici değil) sitede 💬 Sohbet sekmesinde açılıyor', `odada:${!!cemIn} sekme:${cemTab}`);
   c.close();
-  check(!!(await until(() => bora.members.length === 2, 15000)), 'Cem çıktı (odada yine 2 kişi)', JSON.stringify(bora.members.map((m) => m.name)));
+  check(!!(await until(() => riley.members.length === 2, 15000)), 'Casey çıktı (odada yine 2 kişi)', JSON.stringify(riley.members.map((m) => m.name)));
 }
 
 // 1) Sam bir film sayfası açar → sekme oraya gider, eklenti katmanı açar.
@@ -253,8 +253,8 @@ const onFilm = await until(async () => String(await a.evaluate('location.href'))
 check(!!onFilm, 'kendi açtığı film sayfasına sekme kendiliğinden gitti');
 const shellUp = await until(() => a.evaluate(`!!document.querySelector('iframe[src^="chrome-extension://"]')`));
 check(!!shellUp, 'film sayfasında odanın katmanı açıldı');
-const once = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Sam').length === 1, 12000);
-check(!!once, 'Sam odada yine tek kez (bağlantıyı katmandaki site tutuyor)', JSON.stringify(bora.members.map((m) => m.name)));
+const once = await until(() => riley.members.length === 2 && riley.members.filter((m) => m.name === 'Sam').length === 1, 12000);
+check(!!once, 'Sam odada yine tek kez (bağlantıyı katmandaki site tutuyor)', JSON.stringify(riley.members.map((m) => m.name)));
 
 // 2) Video bulununca katmanda delik açılır, video deliğe yerleşir.
 const holed = await until(() => a.evaluate(`getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath.startsWith('path(')`), 15000);
@@ -282,8 +282,8 @@ await a.shot('1-oda-gorunumu');
   await a.evaluate('location.reload(); 1').catch(() => {});
   await a.sleep(1500);
   const back = await until(() => a.evaluate(`!!document.querySelector('iframe[src^="chrome-extension://"]') && getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath.startsWith('path(')`), 15000);
-  const once = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Sam').length === 1, 12000);
-  check(!!back && !!once, 'film sayfası yenilenince oda görünümü geri geliyor (katman + delik, Sam odada tek kez)', JSON.stringify({ back, members: bora.members.map((m) => m.name) }));
+  const once = await until(() => riley.members.length === 2 && riley.members.filter((m) => m.name === 'Sam').length === 1, 12000);
+  check(!!back && !!once, 'film sayfası yenilenince oda görünümü geri geliyor (katman + delik, Sam odada tek kez)', JSON.stringify({ back, members: riley.members.map((m) => m.name) }));
   await a.shot('1b-yenileme');
 }
 
@@ -417,24 +417,24 @@ await a.shot('1c-tam-ekran');
 await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
 await a.sleep(800);
 
-// 3) Senkron: Bora oynatır / durdurur → film videosu uyar.
-bora.send({ t: 'play', position: 30, at: Date.now() });
+// 3) Senkron: Riley oynatır / durdurur → film videosu uyar.
+riley.send({ t: 'play', position: 30, at: Date.now() });
 const playing = await until(async () => {
   const v = await a.evaluate(`(() => { const v = document.querySelector('video'); return v && { t: v.currentTime, p: v.paused }; })()`);
   return v && !v.p && near(v.t, 30, 3) ? v : null;
 }, 15000);
-check(!!playing, 'Bora oynattı → film videosu oynuyor, aynı yerde', JSON.stringify(playing));
-bora.send({ t: 'pause', position: 42, at: Date.now() });
+check(!!playing, 'Riley oynattı → film videosu oynuyor, aynı yerde', JSON.stringify(playing));
+riley.send({ t: 'pause', position: 42, at: Date.now() });
 const paused = await until(async () => {
   const v = await a.evaluate(`(() => { const v = document.querySelector('video'); return { t: v.currentTime, p: v.paused }; })()`);
   return v.p && near(v.t, 42) ? v : null;
 });
-check(!!paused, 'Bora durdurdu (42 sn) → film videosu durdu');
+check(!!paused, 'Riley durdurdu (42 sn) → film videosu durdu');
 
 // 4) Sam film sitesinin kendi oynatıcısıyla oynatır → oda oynar.
-bora.clear();
+riley.clear();
 await a.evaluate(`document.querySelector('video').play().then(() => 1)`);
-const bySam = await bora.wait((m) => m.t === 'state' && !m.state.paused && m.by?.name === 'Sam', 8000);
+const bySam = await riley.wait((m) => m.t === 'state' && !m.state.paused && m.by?.name === 'Sam', 8000);
 check(!!bySam, 'Sam film videosunu oynattı → oda oynuyor (Sam adına)');
 
 // 4b) Film sitesi oynarken adresine sorgu eklerse (zaman damgası gibi) film kapanıp video durmasın.
@@ -447,11 +447,11 @@ const t = await until(() => a.evalFrame('shell=1', `window.__swm?.player()?.getT
 check(typeof t === 'number' && t > 40, 'katmandaki site film videosunun yerini biliyor', String(t));
 
 // 6) Kısayol (odak film sayfasında) ve katmandan sohbet.
-bora.clear();
+riley.clear();
 await a.press('1', 'Digit1', 49);
-check(!!(await bora.wait((m) => m.t === 'reaction', 5000)), '1 tuşu (odak film sayfasında) → emoji odaya gitti');
+check(!!(await riley.wait((m) => m.t === 'reaction', 5000)), '1 tuşu (odak film sayfasında) → emoji odaya gitti');
 await a.evalFrame('shell=1', `(() => { const i = document.getElementById('chat-input'); i.value = 'katmandan selam'; i.form.requestSubmit(); return 1; })()`);
-check(!!(await bora.wait((m) => m.t === 'chat' && m.message.text === 'katmandan selam', 5000)), 'katmandaki sohbet odaya gitti');
+check(!!(await riley.wait((m) => m.t === 'chat' && m.message.text === 'katmandan selam', 5000)), 'katmandaki sohbet odaya gitti');
 
 // 7) Katmandaki ayar (tema) ana siteye de geçer.
 await a.evalFrame('shell=1', `(async () => { const m = await import('/src/themes.ts'); m.applyTheme('okyanus', { wait: false }); return 1; })()`);
@@ -463,7 +463,7 @@ const FLOATS = `document.querySelectorAll('#reactions-layer .r-float').length`;
 await a.sleep(3500);
 {
   const before = await a.evalFrame('shell=1', FLOATS);
-  bora.clear();
+  riley.clear();
   // İstemci iki emoji arasında en az 150 ms bekler (tuş tekrarı da sayılmaz): 200 ms arayla bas.
   for (let i = 0; i < 4; i++) {
     await a.press('1', 'Digit1', 49);
@@ -475,11 +475,11 @@ await a.sleep(3500);
     `({ n: ${FLOATS}, counts: document.querySelectorAll('#reactions-layer .r-count').length, cooling: !!document.querySelector('.reaction-bar.cooling') })`,
   );
   await a.sleep(500);
-  const sent = bora.count((m) => m.t === 'reaction');
+  const sent = riley.count((m) => m.t === 'reaction');
   check(
     after.n - before >= 4 && after.counts === 0 && !after.cooling && sent >= 4,
     '4 kez hızlıca 1 → 4 ayrı uçan emoji (×2 sayacı yok, bekleme yok)',
-    `önce:${before} sonra:${after.n} ×sayaç:${after.counts} bekleme:${after.cooling} Bora'ya giden:${sent}`,
+    `önce:${before} sonra:${after.n} ×sayaç:${after.counts} bekleme:${after.cooling} Riley'ye giden:${sent}`,
   );
   await a.shot('5-ucusan-emojiler');
   // Art arda 10 emoji: adacıklar birbirine binmemeli (çift-tek kuralında kesişen yer katmandan kesilir → yarım/silik
@@ -502,7 +502,7 @@ await a.sleep(3500);
 }
 
 // 7c) Deliğin içindeki emoji saydam: adacıkta (emojinin çevresi) videonun kendisi görünmeli, opak koyu gri (#121212) değil.
-bora.send({ t: 'pause', position: 120, at: Date.now() });
+riley.send({ t: 'pause', position: 120, at: Date.now() });
 await until(() => a.evaluate(`(() => { const v = document.querySelector('video'); return v.paused && Math.abs(v.currentTime - 120) < 1 && !v.seeking && v.readyState >= 2; })()`), 15000);
 await a.sleep(3500); // önceki emojiler uçup gitsin
 /** Emoji atar, uçarken ekranı çeker; adacıktaki (emojinin dışındaki) noktaları videoyla (A) karşılaştırır. */
@@ -637,7 +637,7 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   check(!rects.some(isHole), 'tam ekran: videoya tıklamayı film oynatıcısı alıyor (deliğin tamamını kaplayan adacık yok)', JSON.stringify(rects));
   check(!rects.some((r) => r.b > screenH - 60 && r.r - r.x > 300), 'tam ekran: filmin alt kısmında (kendi çubuğu) bizim bir şeyimiz yok', JSON.stringify(rects));
   // Card 2b: the mouse goes back onto the film (its frames report the move): the rail goes and the film widens again.
-  bora.send({ t: 'play', position: 60, at: Date.now() });
+  riley.send({ t: 'play', position: 60, at: Date.now() });
   if (HEADFUL) {
     await a.mouse('mouseMoved', screenW / 2, screenH / 2);
     await a.sleep(150);
@@ -649,13 +649,13 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
     await passBy({ x: screenW / 2, y: screenH / 2 });
     await a.sleep(400);
     check(!!(await a.evalFrame('shell=1', DOCK_IDLE)) && near(await holeRight(), wideRight, 3), 'tam ekran: kenardan geçip giden fare rayı açmıyor (film zıplamıyor)');
-    bora.send({ t: 'pause', position: 62, at: Date.now() });
+    riley.send({ t: 'pause', position: 62, at: Date.now() });
     await a.sleep(800);
     await toEdge();
     await until(async () => !(await a.evalFrame('shell=1', DOCK_IDLE)), 2000);
     await a.sleep(400);
   } else {
-    bora.send({ t: 'pause', position: 62, at: Date.now() });
+    riley.send({ t: 'pause', position: 62, at: Date.now() });
     await a.sleep(800);
   }
   // The emoji window opens to the left of the dock: also an island.
@@ -667,7 +667,7 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   await a.shot('8a-dock-emoji');
   await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
   await a.sleep(400);
-  bora.send({ t: 'play', position: 64, at: Date.now() });
+  riley.send({ t: 'play', position: 64, at: Date.now() });
 }
 {
   const pinsHidden = await a.evalFrame(
@@ -708,7 +708,7 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
   // Messages flow up next to the dock (right-aligned to its left edge).
   await a.sleep(1500);
   const noHandle = await a.pixels('9a-mesajsiz');
-  bora.send({ t: 'chat', text: 'tam ekranda saydam mi' });
+  riley.send({ t: 'chat', text: 'tam ekranda saydam mi' });
   await until(() => a.evalFrame('shell=1', `!!document.querySelector('#toasts .toast')`), 5000);
   await a.sleep(400);
   const withHandle = await a.pixels('9b-mesaj');
@@ -745,15 +745,15 @@ await a.sleep(800);
 check(!(await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`), 1500)), 'dock\'taki çıkış düğmesi tam ekrandan çıkardı');
 
 // 8) Başkası odada sitenin oynattığı bir şey açar (senkron testi): katman tamamen açılır, film durur.
-bora.send({ t: 'load', media: { kind: 'test' } });
+riley.send({ t: 'load', media: { kind: 'test' } });
 const open = await until(() => a.evaluate(`getComputedStyle(document.querySelector('iframe[src^="chrome-extension://"]')).clipPath === 'none'`));
 check(!!open, 'odada sitenin oynattığı video: katmanda delik kapandı');
 check(await until(() => a.evaluate(`document.querySelector('video').paused`)), 'film videosu kendiliğinden durdu (odaya "durdur" gitmedi)');
-check(bora.state?.item?.media.kind === 'test', 'oda yeni videoda kaldı (film durunca oda durmadı)');
+check(riley.state?.item?.media.kind === 'test', 'oda yeni videoda kaldı (film durunca oda durmadı)');
 await a.shot('2-site-oynatici');
 
 // 9) Başkası yeni bir film sayfası açar → "Filme git" kartı; basınca sekme gider, iç içe oynatıcı deliğe oturur.
-bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/deny-nested` } });
+riley.send({ t: 'load', media: { kind: 'page', url: `${FILM}/deny-nested` } });
 const card = await until(() => a.evalFrame('shell=1', `!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
 check(!!card, 'başkasının açtığı film için katmanda "Filme git" kartı');
 await a.evalFrame('shell=1', `document.getElementById('external-go').click()`);
@@ -768,7 +768,7 @@ await a.shot('3-ic-ice');
 
 // 9b) Video sonradan gelen sayfa (/late): oda görünümü hemen (video başlamadan) gelir, olası oynatıcı kutusu deliğe
 // oturur. Aynı sekme aynı sitede: örtü sayfa yüklenirken hemen (document_start, sessionStorage işareti) gelmeli.
-bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/late` } });
+riley.send({ t: 'load', media: { kind: 'page', url: `${FILM}/late` } });
 const lateCard = await until(() => a.evalFrame('shell=1', `!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
 check(!!lateCard, '/late için "Filme git" kartı');
 const stopFlash2 = await recordFlash('late');
@@ -826,7 +826,7 @@ await a.shot('11-late-oynatici');
 // 9b-3) Elle video seçimi: sayfada iki video var, otomatik seçim büyük "fragmanı" tutar. "🎯 Video seç" → film sayfası
 // görünür, videoların üstünde düğmeler; küçük videonunkine basılır → senkron ve delik o videoya geçer.
 {
-  bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/two` } });
+  riley.send({ t: 'load', media: { kind: 'page', url: `${FILM}/two` } });
   const twoCard = await until(() => a.evalFrame('shell=1', `!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
   check(!!twoCard, '/two için "Filme git" kartı');
   await a.evalFrame('shell=1', `document.getElementById('external-go').click()`);
@@ -850,17 +850,17 @@ await a.shot('11-late-oynatici');
     return s.focus === 'small' && s.clip.startsWith('path(') && !s.picker ? s : null;
   }, 8000);
   check(!!chosen, 'küçük video seçildi: oda görünümüne dönüldü, delikte artık o video', JSON.stringify(chosen));
-  bora.send({ t: 'play', position: 30, at: Date.now() });
+  riley.send({ t: 'play', position: 30, at: Date.now() });
   const follows = await until(() => a.evaluate(`(() => { const s = document.getElementById('small'); return !s.paused && Math.abs(s.currentTime - 30) < 3; })()`), 10000);
   check(!!follows, 'oda oynatınca seçilen (küçük) video oynuyor, odanın yerinde');
   check(await a.evaluate(`document.getElementById('big').paused`), 'fragman oynamıyor (senkron ondan çıktı)');
-  bora.send({ t: 'pause', position: 40, at: Date.now() });
+  riley.send({ t: 'pause', position: 40, at: Date.now() });
 }
 
 // 9b-4) Reklam sekmesi: film sayfası ilk tıklamada başka siteye yeni sekme açar → eklenti kapatır, film sekmesi önde
 // kalır, katmanda "kapatıldı · Geri aç" notu; "Geri aç" sekmeyi açar (bu kez kapatılmaz).
 const goFilm = async (path) => {
-  bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}${path}` } });
+  riley.send({ t: 'load', media: { kind: 'page', url: `${FILM}${path}` } });
   const card = await until(() => a.evalFrame('shell=1', `!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
   if (card) await a.evalFrame('shell=1', `document.getElementById('external-go').click()`);
   return until(async () => (await a.evaluate(`location.pathname === ${JSON.stringify(path)} && getComputedStyle(${SHELL}).clipPath.startsWith('path(')`)) || null, 15000);
@@ -907,19 +907,19 @@ const adTabs = async () => ((await a.browser('Target.getTargets')).result?.targe
 // "reklamda" görünür; reklam bitince işaret kalkar ve film odanın yerine atlar.
 if (process.env.FILM_AD) {
   check(!!(await goFilm('/preroll')), '/preroll: oda görünümü açıldı');
-  bora.send({ t: 'play', position: 100, at: Date.now() });
-  await bora.wait((m) => m.t === 'state' && !m.state.paused, 5000);
-  bora.clear();
-  const inAd = await until(() => bora.members?.some((m) => m.name === 'Sam' && m.ad), 10000);
+  riley.send({ t: 'play', position: 100, at: Date.now() });
+  await riley.wait((m) => m.t === 'state' && !m.state.paused, 5000);
+  riley.clear();
+  const inAd = await until(() => riley.members?.some((m) => m.name === 'Sam' && m.ad), 10000);
   check(!!inAd, 'ön-reklam oynarken Sam kişiler listesinde "reklamda"');
   await a.sleep(1500);
-  check(bora.count((m) => m.t === 'state' && m.state.paused) === 0, 'reklamdaki kişi için oda durmadı (herkes hazır beklemesi yok)');
+  check(riley.count((m) => m.t === 'state' && m.state.paused) === 0, 'reklamdaki kişi için oda durmadı (herkes hazır beklemesi yok)');
   const done = await until(async () => {
     const v = await a.evaluate(`(() => { const v = document.getElementById('v'); return { src: v.currentSrc, t: v.currentTime, p: v.paused }; })()`);
-    return !bora.members?.some((m) => m.name === 'Sam' && m.ad) && !v.src.includes('/ad.webm') && !v.p && v.t > 100 ? v : null;
+    return !riley.members?.some((m) => m.name === 'Sam' && m.ad) && !v.src.includes('/ad.webm') && !v.p && v.t > 100 ? v : null;
   }, 30000);
   check(!!done, 'reklam bitti: işaret kalktı, film odanın yerinde (100+ sn) oynuyor', JSON.stringify(done));
-  bora.send({ t: 'pause', position: 130, at: Date.now() });
+  riley.send({ t: 'pause', position: 130, at: Date.now() });
 } else {
   console.log('     (FILM_AD yok: ön-reklam testi atlandı)');
 }
@@ -978,7 +978,7 @@ await a.evalFrame('shell=1', `document.querySelector('.confirm-dialog .btn.prima
 check(!!(await until(async () => String(await a.evaluate('location.href')).startsWith(`${SITE}/r/${room}`))), 'Odaya dön → sekme sitedeki odada');
 await a.sleep(2500);
 check((await a.evaluate(`document.documentElement.dataset.theme`)) === 'okyanus', 'katmanda seçilen tema ana sitede de geçerli');
-const back = await until(() => bora.members.length === 2 && bora.members.filter((m) => m.name === 'Sam').length === 1, 10000);
+const back = await until(() => riley.members.length === 2 && riley.members.filter((m) => m.name === 'Sam').length === 1, 10000);
 check(!!back, 'Sam yine tek kez (artık ana sitenin bağlantısı)');
 await a.shot('4-odaya-donus');
 
@@ -990,9 +990,9 @@ await a.evaluate(`(() => {
   document.getElementById('rename-form').requestSubmit();
   return 1;
 })()`);
-await until(() => bora.members.some((m) => m.name === 'Sam Yeni'), 5000);
+await until(() => riley.members.some((m) => m.name === 'Sam Yeni'), 5000);
 await a.sleep(800);
-bora.send({ t: 'load', media: { kind: 'page', url: `${FILM}/film` } });
+riley.send({ t: 'load', media: { kind: 'page', url: `${FILM}/film` } });
 const renamedCard = await until(() => a.evaluate(`!document.getElementById('external').hidden && !document.getElementById('external-go').hidden`));
 if (renamedCard) await a.evaluate(`document.getElementById('external-go').click(); 1`);
 await until(async () => String(await a.evaluate('location.href')).includes('/film'), 10000);
@@ -1001,14 +1001,14 @@ const renamedShell = await until(
   15000,
 );
 await a.sleep(2500);
-const names = bora.members.map((m) => m.name);
+const names = riley.members.map((m) => m.name);
 check(
   !!renamedShell && names.filter((n) => n === 'Sam Yeni').length === 1 && !names.includes('Sam'),
   'ana sitede değişen isim film sayfasında da geçerli (eski isimle görünmüyor)',
   JSON.stringify(names),
 );
 
-bora.close();
+riley.close();
 a.close();
 console.log(failed ? `\n✗ ${failed} kontrol başarısız` : '\n✓ Tüm kontroller geçti');
 process.exit(failed ? 1 : 0);

@@ -68,10 +68,10 @@ const LEVEL = `(async () => {
   return { n: audios.length, rms: best };
 })()`;
 
-// Odayı sahte bir üçüncü kişi (Cem) film sayfasıyla kurar.
-const cem = new WebSocket(`${WS}/api/rooms/${room}/ws`);
-await new Promise((r) => cem.addEventListener('open', r));
-cem.send(JSON.stringify({ t: 'hello', v: 3, name: 'Cem', cid: 'sesCem0000001' }));
+// Odayı sahte bir üçüncü kişi (Casey) film sayfasıyla kurar.
+const casey = new WebSocket(`${WS}/api/rooms/${room}/ws`);
+await new Promise((r) => casey.addEventListener('open', r));
+casey.send(JSON.stringify({ t: 'hello', v: 3, name: 'Casey', cid: 'sesCasey00001' }));
 
 const alex = await person('Alex', 'wizard', [...FAKE_MIC, ...micFile(process.env.VOICE_A)]);
 const sam = await person('Sam', 'elf', [...FAKE_MIC, ...micFile(process.env.VOICE_B)]);
@@ -85,7 +85,7 @@ async function toFilm(b, who) {
 }
 
 await until(() => sam.evaluate(`document.getElementById('people-count')?.textContent === '3'`), 20000);
-cem.send(JSON.stringify({ t: 'load', media: { kind: 'page', url: FILM } }));
+casey.send(JSON.stringify({ t: 'load', media: { kind: 'page', url: FILM } }));
 
 // İzin yolu (ayrı tarayıcı, istem kendiliğinden kabul edilmez; CDP eklenti kökenine izin veremiyor): ilk katılışta
 // izin sekmesi (mic.html) açılır; kişi izin vermeden kapatırsa katmanda "izin verilmedi" uyarısı, ses kapalı kalır.
@@ -256,7 +256,7 @@ await toFilm(alex, 'Alex');
 const alexKept = await until(() => alex.evalFrame('shell=1', `!document.getElementById('voice-on').hidden`), 15000);
 check(!!alexKept, 'sitede seste olan Alex filme geçince ses film sayfasında kendiliğinden açıldı');
 
-cem.close();
+casey.close();
 alex.close();
 sam.close();
 console.log(failed ? `\n✗ ${failed} kontrol başarısız` : '\n✓ Film sayfasında sesli sohbet testi geçti');
