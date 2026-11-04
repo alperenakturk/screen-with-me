@@ -433,7 +433,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
-**0.9.97.43 (image upload budget across rooms, security R4-1):**
+**0.9.97.47 (image upload budget across rooms, security R4-1):**
 - [ ] Nothing to see in normal use: in a room add a custom emoji (😀 → 🖼️ Add) and paste a picture into the chat;
   both still appear for a friend. (The new limit, about 70 full-size pictures per address and day across all rooms,
   only stops scripts.)
