@@ -271,7 +271,7 @@ export class Game extends DurableObject<Env> {
     const d = this.data;
     const index = d.seats.findIndex((s) => s?.bot);
     if (index === -1 || d.state.winner !== null || d.state.turn !== MARKS[index] || d.seats.some((s) => s === null) || this.botTimer) return;
-    if (d.kind !== 'xox' && d.kind !== 'four' && d.kind !== 'dama') return;
+    if (d.kind !== 'xox' && d.kind !== 'four' && d.kind !== 'dama' && d.kind !== 'chess') return;
     this.botTimer = setTimeout(() => {
       this.botTimer = null;
       void this.botPlays(index);
@@ -281,7 +281,7 @@ export class Game extends DurableObject<Env> {
     const d = this.data;
     const seat = d.seats[index];
     if (!seat?.bot || d.state.winner !== null || d.state.turn !== MARKS[index]) return;
-    const move = botMove(d.kind as 'xox' | 'four' | 'dama', d.state, seat.bot);
+    const move = botMove(d.kind, d.state, seat.bot);
     const next = move === null ? null : GAME_RULES[d.kind].play(d.state, MARKS[index]!, move);
     if (!next) return;
     d.state = next;

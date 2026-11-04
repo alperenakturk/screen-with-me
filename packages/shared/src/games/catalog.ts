@@ -77,6 +77,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.42',
+    kinds: ['classics'],
+    badge: 'updated',
+    tr: 'Klasiklerde satranç: rok, geçerken alma, terfi, şah mat ve pat. Yalnızsan Glowbeam’e karşı oyna.',
+    en: 'Chess joins the Classics: castling, en passant, promotion, checkmate and stalemate. Alone? Play Glowbeam.',
+  },
+  {
     v: '0.9.97.35',
     kinds: ['classics'],
     badge: 'new',

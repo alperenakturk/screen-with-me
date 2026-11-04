@@ -77,7 +77,37 @@
 .dama-man.mark-X { background: radial-gradient(circle at 35% 30%, #fff, #e9dfc8); box-shadow: 0 0 0 1px #0005; }
 .dama-man.mark-O { background: radial-gradient(circle at 35% 30%, #5a5a6a, #16141f); box-shadow: 0 0 0 1px #fff5; }
 
+/* Chess (P7): the same 8 × 8 board; pieces are text, white ones light with a dark edge, black ones dark with a light
+   edge. The last move's squares are lit, a king in check glows red, a target with a piece on it gets a ring. */
+.chess-board .dama-cell { display: grid; place-items: center; line-height: 1; font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', serif; }
+.chess-board { container-type: inline-size; }
+.chess-board .dama-cell { font-size: 9.5cqw; }
+.chess-board .dama-cell.piece-X { color: #fff8ea; text-shadow: 0 0 1px #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 2px 3px #0008; }
+.chess-board .dama-cell.piece-O { color: #1a1622; text-shadow: 0 0 1px #fff, 0 1px 0 #fff8, 0 -1px 0 #fff8, 1px 0 0 #fff8, -1px 0 0 #fff8, 0 2px 3px #0006; }
+.chess-board .dama-cell.lit { box-shadow: inset 0 0 0 100vmax rgba(255, 198, 90, 0.28); }
+.chess-board .dama-cell.in-check { box-shadow: inset 0 0 0 100vmax rgba(230, 70, 70, 0.45), inset 0 0 12px #ff4d4d; }
+.chess-board .dama-cell.movable { cursor: pointer; }
+.chess-board .dama-cell.picked { box-shadow: inset 0 0 0 3px #ffc65a, inset 0 0 14px rgba(255, 198, 90, 0.8); }
+.chess-board .dama-cell.target { cursor: pointer; }
+.chess-board .dama-cell.target:not(.piece-X):not(.piece-O)::before { content: ''; position: absolute; inset: 36%; border-radius: 50%; background: rgba(255, 198, 90, 0.75); }
+.chess-board .dama-cell.target:is(.piece-X, .piece-O)::before { content: ''; position: absolute; inset: 4%; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255, 198, 90, 0.85); }
+.chess-board .dama-cell.placed { animation: cl-place 0.25s ease-out; }
+.chess-piece { display: inline-grid; place-items: center; width: 22px; height: 22px; font-size: 20px; line-height: 1; }
+.chess-piece.piece-X { color: #fff8ea; text-shadow: 0 0 1px #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000; }
+.chess-piece.piece-O { color: #1a1622; text-shadow: 0 0 1px #fff, 0 1px 0 #fff8, 0 -1px 0 #fff8, 1px 0 0 #fff8, -1px 0 0 #fff8; }
+.cl-promo {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px;
+  max-width: 92%; padding: 10px 12px; border-radius: 12px; background: var(--surface, #161a30); box-shadow: 0 8px 28px #000a, 0 0 0 2px var(--accent);
+}
+.cl-promo[hidden] { display: none; }
+.cl-promo p { flex-basis: 100%; margin: 0 0 2px; text-align: center; font-size: 14px; }
+.cl-promo-piece { width: 48px; height: 48px; padding: 0; border: 0; border-radius: 10px; cursor: pointer; font-size: 34px; line-height: 1; background: color-mix(in srgb, var(--surface-2, #1e2440) 60%, #c9a46b); }
+.cl-promo-piece.piece-X { color: #fff8ea; text-shadow: 0 0 1px #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000; }
+.cl-promo-piece.piece-O { color: #1a1622; text-shadow: 0 0 1px #fff, 0 1px 0 #fff8, 0 -1px 0 #fff8, 1px 0 0 #fff8, -1px 0 0 #fff8; }
+.cl-promo-piece:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
 @media (prefers-reduced-motion: reduce) {
+  .chess-board .dama-cell.placed { animation: none; }
   .cl-ref-mascot.cheer, .dama-board .dama-cell.placed::before { animation: none; }
   .cl-box, .cl-box-lid { transition: none; }
 }

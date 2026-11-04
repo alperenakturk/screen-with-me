@@ -3,6 +3,7 @@
 
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
 import type { BoardRules, BoardState } from './board.ts';
+import { CHESS } from './chess.ts';
 import { DAMA } from './dama.ts';
 import { FOUR } from './four.ts';
 import { XOX } from './xox.ts';
@@ -10,11 +11,11 @@ import { XOX } from './xox.ts';
 /** Geriye uyumsuz değişiklikte artar (eski sayfa "yenile" uyarısı alır). 2: durum `game` + `kind` (Dört Taş geldi). */
 export const GAME_PROTOCOL_VERSION = 2;
 
-/** Boards: `xox` tic-tac-toe, `four` Connect Four, `dama` Turkish draughts (🎲 Classics, P6). */
-export const GAME_KINDS = ['xox', 'four', 'dama'] as const;
+/** Boards: `xox` tic-tac-toe, `four` Connect Four, `dama` Turkish draughts (🎲 Classics, P6), `chess` (P7). */
+export const GAME_KINDS = ['xox', 'four', 'dama', 'chess'] as const;
 export type GameKind = (typeof GAME_KINDS)[number];
 
-export const GAME_RULES: Record<GameKind, BoardRules> = { xox: XOX, four: FOUR, dama: DAMA };
+export const GAME_RULES: Record<GameKind, BoardRules> = { xox: XOX, four: FOUR, dama: DAMA, chess: CHESS };
 /** Glowbeam the bot's levels (0 = no bot). */
 export type BotLevel = 1 | 2;
 
@@ -42,7 +43,7 @@ export interface GameScore {
 export type GameClientMessage =
   /** `classics`: a 🎲 Classics table, whose board is chosen inside it (the table's current board is used). */
   | { t: 'hello'; v: number; game: GameKind; name: string; avatar?: Avatar; cid?: string; classics?: boolean }
-  /** XOX: the cell (0–8); Connect Four: the column (0–6); dama: `from * 64 + to`. */
+  /** XOX: the cell (0–8); Connect Four: the column (0–6); dama: `from * 64 + to`; chess: `promo * 4096 + from * 64 + to`. */
   | { t: 'move'; cell: number }
   /** Classics: another board from the shelf (a player, while no game is in progress). */
   | { t: 'switch'; game: GameKind }
@@ -91,8 +92,8 @@ export function parseGameMessage(raw: string): GameClientMessage | null {
       return hello;
     }
     case 'move':
-      // Üst sınırı oyunun kuralları ayrıca denetler (dama: from * 64 + to).
-      return Number.isInteger(m.cell) && (m.cell as number) >= 0 && (m.cell as number) < 4096 ? { t: 'move', cell: m.cell as number } : null;
+      // The game's rules check the exact range (dama: from * 64 + to; chess: promo * 4096 + from * 64 + to).
+      return Number.isInteger(m.cell) && (m.cell as number) >= 0 && (m.cell as number) < 16384 ? { t: 'move', cell: m.cell as number } : null;
     case 'switch':
       return (GAME_KINDS as readonly unknown[]).includes(m.game) ? { t: 'switch', game: m.game as GameKind } : null;
     case 'bot':

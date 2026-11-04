@@ -46,7 +46,7 @@ async function until(fn, ms = 6000) {
   check(hall.includes('classics') && !hall.includes('xox') && !hall.includes('four'), 'the hall has one Classics card, no separate XOX / Four in a Row', JSON.stringify(hall));
   await page.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]').click());
   const shelf = await until(() => page.evaluate(() => { const s = document.querySelector('#game-stage .cl-shelf'); return s && !s.hidden ? [...s.querySelectorAll('.cl-box')].map((b) => `${b.dataset.board}:${b.disabled}`) : null; }), 8000);
-  check(!!shelf && shelf.length === 5 && shelf.includes('dama:false') && shelf.includes('chess:true'), 'the game shelf: XOX, Four in a Row, Dama to play; chess and backgammon "soon"', JSON.stringify(shelf));
+  check(!!shelf && shelf.length === 5 && shelf.includes('dama:false') && shelf.includes('chess:false') && shelf.includes('tavla:true'), 'the game shelf: XOX, Four in a Row, Dama, Chess to play; backgammon "soon"', JSON.stringify(shelf));
   await wait(400);
   await page.screenshot({ path: __dirname + '/classics-shelf.png' });
 
@@ -78,6 +78,42 @@ async function until(fn, ms = 6000) {
   await page.screenshot({ path: __dirname + '/classics-dama.png' });
   const fit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });
   check(fit, 'the board fits the game window without scrollbars');
+
+  // Chess (P7): a fresh room's Classics table, chess from the shelf.
+  await page.goto(`${SITE}/r/${room}c#back`);
+  await page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 15000 });
+  await wait(3200);
+  await page.evaluate(async () => {
+    document.getElementById('game-btn').click();
+    await new Promise((r) => setTimeout(r, 400));
+    document.querySelector('#game-menu [data-tab="together"]')?.click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.querySelector('#game-menu [data-kind="classics"]').click();
+  });
+  const chessOpen = await until(() => page.evaluate(() => { const b = document.querySelector('#game-stage .cl-box[data-board="chess"]'); return b && !b.disabled; }), 5000);
+  check(!!chessOpen, 'the shelf offers chess');
+  await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="chess"]').click());
+  const pieces = await until(() => page.evaluate(() => { const c = document.querySelectorAll('#game-stage .chess-board .dama-cell'); return c.length === 64 && document.querySelectorAll('#game-stage .chess-cell.piece-X').length === 16 ? [...c].slice(0, 8).map((x) => x.textContent.replace('\uFE0E', '')).join('') : null; }), 6000);
+  check(pieces === '♜♞♝♛♚♝♞♜', 'chess is on the table: 16 white pieces, the black back row in order', String(pieces));
+  await page.evaluate(() => [...document.querySelectorAll('#game-stage .cl-bot-level')][1].click());
+  check(!!(await until(() => page.evaluate(() => document.querySelector('#game-stage #seat-1')?.classList.contains('bot')), 5000)), 'Glowbeam (medium) sits down for chess');
+  // e2 → e4 by two clicks: the pawn lights e3 and e4.
+  const targets = await page.evaluate(async () => {
+    const cells = document.querySelectorAll('#game-stage .chess-board .dama-cell');
+    cells[52].click();
+    await new Promise((r) => setTimeout(r, 150));
+    const lit = [...cells].flatMap((c, i) => (c.classList.contains('target') ? [i] : []));
+    cells[36].click();
+    return lit;
+  });
+  check(JSON.stringify(targets) === '[36,44]', 'a pawn shows its two first steps (e3, e4)', JSON.stringify(targets));
+  const replied = await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .chess-cell.lit').length === 2 && document.querySelector('#game-stage .chess-cell.lit.piece-O') && /your turn/i.test(document.getElementById('xox-status')?.textContent ?? '')), 8000);
+  check(!!replied, "Glowbeam answers with a black move; its squares are lit and it's my turn");
+  await page.screenshot({ path: __dirname + '/classics-chess.png' });
+  const chessFit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });
+  check(chessFit, 'the chess board fits the game window without scrollbars');
+  const promoHidden = await page.evaluate(() => document.querySelector('#game-stage .cl-promo')?.hidden === true);
+  check(promoHidden, 'the promotion chooser stays hidden until a pawn reaches the last row');
 
   await browser.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Classics harness passed');

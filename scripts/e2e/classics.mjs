@@ -84,6 +84,21 @@ sam.send({ t: 'sit', seat: 1 });
 ok(await until(() => alex.state.seats[1] && !alex.state.seats[1].bot && alex.state.seats[1].name === 'Sam'), 'a person can take Glowbeam\'s seat');
 ok(alex.state.started === false && filled(alex.state) === 32, 'a new opponent starts the game over');
 
+// Chess (P7) between two people: the server checks every move; fool's mate ends the game.
+const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
+const mv = (from, to) => sq(from) * 64 + sq(to);
+alex.send({ t: 'switch', game: 'chess' });
+ok(await until(() => alex.state.kind === 'chess' && sam.state.kind === 'chess' && filled(alex.state) === 32 && alex.state.game.kinds?.length === 64), 'chess from the shelf: 32 pieces, both see it');
+alex.send({ t: 'move', cell: mv('e1', 'e3') });
+ok(await until(() => alex.inbox.filter((m) => m.t === 'error' && m.code === 'not_your_turn').length >= 2), 'an illegal chess move (the king jumping two squares) is refused');
+const plies = [[alex, 'f2', 'f3'], [sam, 'e7', 'e5'], [alex, 'g2', 'g4'], [sam, 'd8', 'h4']];
+for (const [who, from, to] of plies) {
+  const before = alex.state.game.last;
+  who.send({ t: 'move', cell: mv(from, to) });
+  await until(() => alex.state.game.last === sq(to) && alex.state.game.last !== before, 6000);
+}
+ok(alex.state.game.winner === 'O' && alex.state.game.end === 'mate' && alex.state.score.O === 1, "fool's mate: black wins by checkmate, the score counts it");
+
 alex.ws.close();
 sam.ws.close();
 console.log('✓ Classics passed');

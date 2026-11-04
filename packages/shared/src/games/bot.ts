@@ -5,10 +5,11 @@
 import type { BoardState, Mark } from './board.ts';
 import { other } from './board.ts';
 import { COLS, ROWS, dropRow, play as playFour } from './four.ts';
+import { legalMoves as chessMoves, play as playChess, type ChessState } from './chess.ts';
 import { legalMoves as damaMoves, play as playDama, type DamaState } from './dama.ts';
 import { LINES, play as playXox } from './xox.ts';
 
-export type BotKind = 'xox' | 'four' | 'dama';
+export type BotKind = 'xox' | 'four' | 'dama' | 'chess';
 export type BotLevel = 1 | 2;
 
 /** Every legal move of the side to play. */
@@ -16,10 +17,11 @@ export function movesOf(kind: BotKind, state: BoardState): number[] {
   if (state.winner !== null) return [];
   if (kind === 'xox') return state.board.flatMap((c, i) => (c === null ? [i] : []));
   if (kind === 'four') return Array.from({ length: COLS }, (_, c) => c).filter((c) => dropRow(state.board, c) !== -1);
+  if (kind === 'chess') return chessMoves(state as ChessState);
   return damaMoves(state as DamaState);
 }
 
-const PLAY = { xox: playXox, four: playFour, dama: playDama } as const;
+const PLAY = { xox: playXox, four: playFour, dama: playDama, chess: playChess } as const;
 const apply = (kind: BotKind, state: BoardState, move: number) => PLAY[kind](state, state.turn, move);
 
 /** How good the position is for `me` (positive = good), when nobody has won yet. */
@@ -60,6 +62,7 @@ function evaluate(kind: BotKind, state: BoardState, me: Mark): number {
     for (let r = 0; r < ROWS; r++) score += b[r * COLS + 3] === me ? 2 : b[r * COLS + 3] === other(me) ? -2 : 0;
     return score;
   }
+  if (kind === 'chess') return evaluateChess(state as ChessState, me);
   const s = state as DamaState;
   const kings = new Set(s.kings);
   let score = 0;
@@ -70,6 +73,24 @@ function evaluate(kind: BotKind, state: BoardState, me: Mark): number {
     const value = kings.has(i) ? 3 : 1 + advance * 0.04;
     score += c === me ? value : -value;
   });
+  return score;
+}
+
+/** Chess: material in pawns, a little for pawns moving up and pieces near the middle. */
+const VALUE: Record<string, number> = { p: 1, n: 3, b: 3.2, r: 5, q: 9, k: 0 };
+function evaluateChess(s: ChessState, me: Mark): number {
+  let score = 0;
+  s.board.forEach((c, i) => {
+    if (c === null) return;
+    const kind = s.kinds[i]!;
+    const row = Math.floor(i / 8);
+    const col = i % 8;
+    let value = VALUE[kind] ?? 0;
+    if (kind === 'p') value += (c === 'X' ? 6 - row : row - 1) * 0.05;
+    else if (kind === 'n' || kind === 'b') value += (3.5 - Math.max(Math.abs(row - 3.5), Math.abs(col - 3.5))) * 0.05;
+    score += c === me ? value : -value;
+  });
+  if (s.check) score += s.turn === me ? -0.2 : 0.2;
   return score;
 }
 
@@ -97,7 +118,7 @@ function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha
   return best;
 }
 
-const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 } };
+const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 2 } };
 /** Easy Glowbeam plays a random move this often. */
 const EASY_RANDOM = 0.35;
 

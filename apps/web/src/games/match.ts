@@ -1,5 +1,5 @@
 // Two-player board games in the room's game window: tic-tac-toe, Four in a Row and, inside 🎲 Classics (P6, the owner's
-// picks in `docs/internal/design/games/classics.md`), dama from a game shelf. The first two people sit (X / O, red /
+// picks in `docs/internal/design/games/classics.md`), dama and chess (P7) from a game shelf. The first two people sit (X / O, red /
 // yellow, white / black), later ones watch; when a seat is free, a watcher can sit, and a lone player can play against
 // Glowbeam the bot (easy / medium; it plays on the server with the same rules). Glowbeam is also the referee: it says
 // whose turn it is and cheers the winner. The server checks every move; this page only draws what it gets.
@@ -9,10 +9,11 @@ import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import type { Mark } from '@swm/shared/games/board';
 import { COLS, dropRow } from '@swm/shared/games/four';
 import { legalMoves as damaMoves, mustCapture, type DamaState } from '@swm/shared/games/dama';
+import { legalMoves as chessMoves, PROMOTIONS, type ChessState } from '@swm/shared/games/chess';
 import { GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
-import { t, translate } from '../i18n.ts';
+import { lang, t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
@@ -22,13 +23,54 @@ import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
 /** The shelf (owner's pick 2 B): boards to play now, and the ones coming. */
-const SHELF: readonly { kind: GameKind | 'chess' | 'tavla'; glyph: string; soon?: boolean }[] = [
+const SHELF: readonly { kind: GameKind | 'tavla'; glyph: string; soon?: boolean }[] = [
   { kind: 'xox', glyph: '⭕' },
   { kind: 'four', glyph: '🔴' },
   { kind: 'dama', glyph: '⚪' },
-  { kind: 'chess', glyph: '♞', soon: true },
+  { kind: 'chess', glyph: '♞' },
   { kind: 'tavla', glyph: '🎲', soon: true },
 ];
+
+/** Chess texts live in this chunk (the room page's i18n stays small). */
+const TEXT = {
+  en: {
+    check: 'Check!',
+    youCheck: 'Check! Save your king',
+    promote: 'Turn your pawn into…',
+    stalemate: 'Stalemate: a draw',
+    fifty: 'Draw: 50 moves without a capture or a pawn move',
+    repeat: 'Draw: the same position three times',
+    material: 'Draw: nobody can checkmate any more',
+    mate: 'Checkmate!',
+    p: 'pawn',
+    n: 'knight',
+    b: 'bishop',
+    r: 'rook',
+    q: 'queen',
+    k: 'king',
+  },
+  tr: {
+    check: 'Şah!',
+    youCheck: 'Şah! Şahını kurtar',
+    promote: 'Piyonun ne olsun…',
+    stalemate: 'Pat: berabere',
+    fifty: 'Berabere: 50 hamledir taş alınmadı, piyon oynamadı',
+    repeat: 'Berabere: aynı konum üç kez geldi',
+    material: 'Berabere: artık kimse mat edemez',
+    mate: 'Şah mat!',
+    p: 'piyon',
+    n: 'at',
+    b: 'fil',
+    r: 'kale',
+    q: 'vezir',
+    k: 'şah',
+  },
+} as const;
+const tc = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
+/** Chess pieces as text (the filled shapes for both sides, coloured by CSS; U+FE0E keeps them out of emoji style). */
+const GLYPH: Record<string, string> = { p: '♟\uFE0E', n: '♞\uFE0E', b: '♝\uFE0E', r: '♜\uFE0E', q: '♛\uFE0E', k: '♚\uFE0E' };
+const fromOf = (move: number) => Math.floor((move % 4096) / 64);
+const toOf = (move: number) => move % 64;
 
 let artId = 0;
 /** Glowbeam, drawn small (our own art; ids made unique per copy). */
@@ -55,6 +97,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       <div class="xox-board-wrap">
         <div id="xox-board" class="xox-board" role="group" aria-label="${t('games.board')}"></div>
         <div id="xox-floats" class="xox-floats" aria-hidden="true"></div>
+        <div class="cl-promo" role="group" hidden></div>
         <div class="cl-shelf" hidden></div>
       </div>
       <div class="xox-actions">
@@ -79,6 +122,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const shelf = app.querySelector<HTMLElement>('.cl-shelf')!;
   const shelfButton = app.querySelector<HTMLButtonElement>('#cl-shelf-open')!;
   const botBox = app.querySelector<HTMLElement>('.cl-bot')!;
+  const promoBox = app.querySelector<HTMLElement>('.cl-promo')!;
   const rematchButton = app.querySelector<HTMLButtonElement>('#xox-rematch')!;
   const sitButton = app.querySelector<HTMLButtonElement>('#xox-sit')!;
   const standButton = app.querySelector<HTMLButtonElement>('#xox-stand')!;
@@ -96,21 +140,24 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   // ---- The board's cells (built again when a Classics table changes its board) ----
   let cells: HTMLButtonElement[] = [];
   let built: GameKind | null = null;
-  /** Dama: the piece I picked to move. */
+  /** Dama / chess: the piece I picked to move. */
   let picked: number | null = null;
+  /** Dama and chess share the 8 × 8 board. */
+  const grid8 = () => kind === 'dama' || kind === 'chess';
   const four = () => kind === 'four';
   const colOf = (i: number) => i % COLS;
   // Card A11y (S2): a cell says where it is ("Row 1, column 2"), and what is in it (filled in on each state).
   const cellLabel = (i: number) =>
-    kind === 'four' ? t('games.column', { n: colOf(i) + 1 }) : kind === 'dama' ? t('games.cell', { r: Math.floor(i / 8) + 1, c: (i % 8) + 1 }) : t('games.cell', { r: Math.floor(i / 3) + 1, c: (i % 3) + 1 });
+    kind === 'four' ? t('games.column', { n: colOf(i) + 1 }) : grid8() ? t('games.cell', { r: Math.floor(i / 8) + 1, c: (i % 8) + 1 }) : t('games.cell', { r: Math.floor(i / 3) + 1, c: (i % 3) + 1 });
   function build(): void {
     built = kind;
     picked = null;
-    // Dama has its own board and cells (never the XOX marks' styles).
-    board.className = kind === 'dama' ? 'dama-board' : `xox-board${kind === 'four' ? ' four-board' : ''}`;
-    const size = kind === 'four' ? 42 : kind === 'dama' ? 64 : 9;
+    promoBox.hidden = true;
+    // Dama and chess have their own 8 × 8 board and cells (never the XOX marks' styles).
+    board.className = grid8() ? `dama-board${kind === 'chess' ? ' chess-board' : ''}` : `xox-board${kind === 'four' ? ' four-board' : ''}`;
+    const size = kind === 'four' ? 42 : grid8() ? 64 : 9;
     cells = Array.from({ length: size }, (_, i) => {
-      const cell = el('button', { type: 'button', class: kind === 'dama' ? 'dama-cell' : 'xox-cell', 'aria-label': cellLabel(i) });
+      const cell = el('button', { type: 'button', class: grid8() ? 'dama-cell' : 'xox-cell', 'aria-label': cellLabel(i) });
       cell.addEventListener('click', () => press(i));
       if (kind === 'four') {
         cell.addEventListener('pointerenter', () => hoverCol(colOf(i)));
@@ -124,13 +171,37 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   function press(i: number): void {
     if (kind === 'xox') return send({ t: 'move', cell: i });
     if (kind === 'four') return send({ t: 'move', cell: colOf(i) });
-    // Dama: pick one of my pieces that can move, then one of its targets.
+    // Dama / chess: pick one of my pieces that can move, then one of its targets.
     const moves = myMoves();
-    if (picked !== null && moves.includes(picked * 64 + i)) {
-      send({ t: 'move', cell: picked * 64 + i });
+    const choices = picked === null ? [] : moves.filter((m) => fromOf(m) === picked && toOf(m) === i);
+    promoBox.hidden = true;
+    if (choices.length > 1) return promote(choices);
+    if (choices.length === 1) {
+      send({ t: 'move', cell: choices[0]! });
       picked = null;
-    } else picked = moves.some((m) => Math.floor(m / 64) === i) ? i : null;
+    } else picked = moves.some((m) => fromOf(m) === i) ? i : null;
     render();
+  }
+  /** Chess: a pawn on the last row; the player picks what it becomes. */
+  function promote(choices: number[]): void {
+    const mark = state ? MARKS[mySeat()] : 'X';
+    promoBox.setAttribute('aria-label', tc('promote'));
+    promoBox.replaceChildren(
+      el('p', {}, tc('promote')),
+      ...PROMOTIONS.map((kindOf, n) => {
+        const move = choices.find((m) => Math.floor(m / 4096) === n);
+        const b = el('button', { type: 'button', class: `cl-promo-piece piece-${mark}`, 'aria-label': tc(kindOf) }, GLYPH[kindOf]!);
+        b.addEventListener('click', () => {
+          promoBox.hidden = true;
+          picked = null;
+          if (move !== undefined) send({ t: 'move', cell: move });
+          render();
+        });
+        return b;
+      }),
+    );
+    promoBox.hidden = false;
+    promoBox.querySelector<HTMLButtonElement>('button')?.focus();
   }
   function hoverCol(col: number): void {
     cells.forEach((cell, i) => cell.classList.toggle('col-hover', colOf(i) === col && !cell.disabled));
@@ -148,6 +219,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       ? el('span', { class: `four-disc mark-${mark}`, 'aria-label': t(mark === 'X' ? 'games.red' : 'games.yellow') })
       : kind === 'dama'
         ? el('span', { class: `dama-man mark-${mark}`, 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') })
+        : kind === 'chess'
+          ? el('span', { class: `chess-piece piece-${mark}`, 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') }, GLYPH.k!)
         : el('span', { class: 'xox-mark' }, mark);
 
   function mySeat(): number {
@@ -155,11 +228,11 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     return state.seats.findIndex((s) => s?.id === me);
   }
   function myMoves(): number[] {
-    if (!state || kind !== 'dama') return [];
+    if (!state || !grid8()) return [];
     const seat = mySeat();
     const ready = state.seats.every((s) => s !== null);
     if (seat === -1 || !ready || state.game.winner !== null || state.game.turn !== MARKS[seat]) return [];
-    return damaMoves(state.game as DamaState);
+    return kind === 'chess' ? chessMoves(state.game as ChessState) : damaMoves(state.game as DamaState);
   }
 
   function personCard(seat: 0 | 1, person: GamePerson | null): void {
@@ -189,7 +262,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
         'div',
         { class: 'cl-shelf-row' },
         ...SHELF.map((box) => {
-          const title = box.kind === 'chess' ? t('classics.chess') : box.kind === 'tavla' ? t('classics.tavla') : t(`games.${box.kind}.title`);
+          const title = box.kind === 'tavla' ? t('classics.tavla') : t(`games.${box.kind}.title`);
           const button = el(
             'button',
             { type: 'button', class: `cl-box cl-box-${box.kind}${box.kind === kind ? ' on' : ''}`, 'data-board': box.kind },
@@ -227,19 +300,34 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const ready = seats.every((s) => s !== null);
     const myTurn = seat !== -1 && ready && game.winner === null && game.turn === MARKS[seat];
     setGameLive(seat !== -1 && ready && game.winner === null && !!state.started && !seats.some((s) => s?.bot));
-    const boardKey = game.board.join(',') + ((game as DamaState).kings ?? []).join('.');
+    const chess = game as ChessState;
+    const boardKey = game.board.join(',') + ((game as DamaState).kings ?? []).join('.') + (chess.kinds ?? '');
     const changed = lastBoard !== '' && boardKey !== lastBoard;
     const moves = myMoves();
     const dama = game as DamaState;
     if (kind === 'dama' && dama.chain !== null && moves.length) picked = dama.chain;
-    const targets = new Set(picked === null ? [] : moves.filter((m) => Math.floor(m / 64) === picked).map((m) => m % 64));
-    const movable = new Set(moves.map((m) => Math.floor(m / 64)));
+    if (picked !== null && !moves.some((m) => fromOf(m) === picked)) picked = null;
+    if (!moves.length) promoBox.hidden = true;
+    const targets = new Set(picked === null ? [] : moves.filter((m) => fromOf(m) === picked).map(toOf));
+    const movable = new Set(moves.map(fromOf));
+    // Chess: the king in check glows red; the last move's two squares are lit.
+    const checked = kind === 'chess' && chess.check ? game.board.findIndex((c, i) => c === game.turn && chess.kinds[i] === 'k') : -1;
     const kings = new Set(dama.kings ?? []);
     game.board.forEach((value, i) => {
       const cell = cells[i]!;
       const isNew = changed && value !== null && i === game.last;
       if (kind === 'xox') cell.setAttribute('aria-label', `${cellLabel(i)}, ${value || t('games.cellEmpty')}`);
-      const dark = kind === 'dama' && (Math.floor(i / 8) + (i % 8)) % 2 === 1;
+      const dark = grid8() && (Math.floor(i / 8) + (i % 8)) % 2 === 1;
+      if (kind === 'chess') {
+        const piece = chess.kinds[i]!;
+        const lit = i === game.last || i === chess.from;
+        cell.className = `dama-cell chess-cell${dark ? ' dark' : ''}${value ? ` piece-${value}` : ''}${lit ? ' lit' : ''}${checked === i ? ' in-check' : ''}${picked === i ? ' picked' : ''}${targets.has(i) ? ' target' : ''}${movable.has(i) ? ' movable' : ''}${isNew ? ' placed' : ''}`;
+        const glyph = value ? GLYPH[piece]! : '';
+        if (cell.textContent !== glyph) cell.textContent = glyph;
+        cell.setAttribute('aria-label', `${cellLabel(i)}${value ? `, ${t(value === 'X' ? 'games.white' : 'games.black')} ${tc(piece as 'p')}` : ''}`);
+        cell.disabled = !(movable.has(i) || targets.has(i));
+        return;
+      }
       cell.className =
         kind === 'dama'
           ? `dama-cell${dark ? ' dark' : ''}${kings.has(i) ? ' king' : ''}${picked === i ? ' picked' : ''}${targets.has(i) ? ' target' : ''}${movable.has(i) ? ' movable' : ''}${value ? ` mark-${value}` : ''}${isNew ? ' placed' : ''}`
@@ -262,7 +350,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     if (seat === -1) delete board.dataset.me;
     else board.dataset.me = MARKS[seat];
     board.classList.toggle('done', game.winner !== null);
-    const colour = (mark: Mark) => t(kind === 'four' ? (mark === 'X' ? 'games.red' : 'games.yellow') : kind === 'dama' ? (mark === 'X' ? 'games.white' : 'games.black') : 'games.you');
+    const colour = (mark: Mark) => t(kind === 'four' ? (mark === 'X' ? 'games.red' : 'games.yellow') : grid8() ? (mark === 'X' ? 'games.white' : 'games.black') : 'games.you');
     const nameOf = (mark: Mark) => {
       const p = seats[mark === 'X' ? 0 : 1];
       return p?.bot ? t('classics.botName') : (p?.name ?? (kind === 'xox' ? mark : colour(mark)));
@@ -270,10 +358,12 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     // Glowbeam the referee (owner's pick 4 A): whose turn, then a small cheer for the winner.
     referee.className = `cl-ref-mascot${game.winner ? ' cheer' : ''}${!ready ? ' wait' : ''}`;
     if (!ready) status.textContent = t('games.waiting');
-    else if (game.winner === 'draw') status.textContent = t('games.draw');
+    else if (game.winner === 'draw') status.textContent = kind === 'chess' && chess.end && chess.end !== 'mate' ? tc(chess.end) : t('games.draw');
     else if (game.winner) {
-      status.textContent = seat === -1 ? t('games.won', { name: nameOf(game.winner) }) : game.winner === MARKS[seat] ? t('games.youWon') : t('games.youLost', { name: nameOf(game.winner) });
-    } else if (myTurn && kind === 'dama' && dama.chain !== null) status.textContent = t('classics.chain');
+      const said = seat === -1 ? t('games.won', { name: nameOf(game.winner) }) : game.winner === MARKS[seat] ? t('games.youWon') : t('games.youLost', { name: nameOf(game.winner) });
+      status.textContent = kind === 'chess' && chess.end === 'mate' ? `${tc('mate')} ${said}` : said;
+    } else if (kind === 'chess' && chess.check) status.textContent = myTurn ? tc('youCheck') : `${tc('check')} ${t('games.theirTurn', { name: nameOf(game.turn) })}`;
+    else if (myTurn && kind === 'dama' && dama.chain !== null) status.textContent = t('classics.chain');
     else if (myTurn && kind === 'dama' && mustCapture(dama)) status.textContent = t('classics.mustCapture');
     else status.textContent = myTurn ? t('games.yourTurn') : t('games.theirTurn', { name: nameOf(game.turn) });
     status.classList.toggle('mine', myTurn);
