@@ -2,7 +2,7 @@
 
 🎮 Game Studio, 4 Nov 2026. Owner's ask: "make the plant game and the cinema (Snack Bar) game a bit more detailed,
 looking at similar games; give me themed suggestions". This note collects the research and the proposals. The owner
-picks on the option page https://claude.ai/artifact/59grFQzivbrh1HZ6NUthdK. **Nothing here is built until he picks.**
+picks on the option page https://claude.ai/artifact/59grFQzivbrh1HZ6NUthdK. **The owner's picks (4 Nov 2026): "Oyun seçimlerim: 1: A · 2: B · 3: A · 4: A · 5: A · 6: A · 7: A · 8: A · 9: A · 10: A · 11: B"** (all of it, with the end-of-film receipt for the golden moment and the film-ended seed whenever a long film ends in the room). Built in 0.9.97.29 except 5 (tip jar) and 8 (cutting gift), which need room messages and come next.
 
 ## Ground rules (kept from the owner's earlier picks)
 
