@@ -2,7 +2,7 @@
 // whenever a film of 20 min or more ends while I am in the room, even with the garden closed). The room page watches
 // its item (`watchFilmEnds`) and notes each ending in `localStorage` (`sideFilms`); the side games read the list
 // (`takeFilmEnds`) and keep their own record of what they already used, so the list is shared and never emptied by one.
-// Tiny on purpose: the watcher lives in the room's chunk.
+// Tiny on purpose: the watcher lives in the room's chunk. Cuttings from friends wait here too (`rememberGift`).
 
 import { load, save } from '../storage.ts';
 
@@ -59,4 +59,22 @@ export function watchFilmEnds(item: () => Item): () => void {
     last = now;
   }, 2000);
   return () => clearInterval(timer);
+}
+
+/** Cuttings friends gave me (side games 2, pick 8), until Window Garden takes them (`takeGifts`). */
+const GIFTS_KEY = 'windowGarden:gifts';
+export function rememberGift(plant: string, from: string): void {
+  const list = takeGifts(false);
+  save(GIFTS_KEY, JSON.stringify([...list, { plant, from: from.slice(0, 40) }].slice(-9)));
+}
+export function takeGifts(clear = true): { plant: string; from: string }[] {
+  let list: { plant: string; from: string }[] = [];
+  try {
+    const raw = JSON.parse(load(GIFTS_KEY) || '[]') as unknown;
+    if (Array.isArray(raw)) list = raw.filter((g): g is { plant: string; from: string } => !!g && typeof g.plant === 'string' && typeof g.from === 'string');
+  } catch {
+    // nothing kept
+  }
+  if (clear && list.length) save(GIFTS_KEY, '[]');
+  return list;
 }
