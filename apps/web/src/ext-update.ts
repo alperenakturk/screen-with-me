@@ -42,8 +42,13 @@ export function checkExtensionVersion(): void {
         link.classList.add('ext-update');
         link.title = text;
         if (load('extUpdateSeen') === latest) return;
-        save('extUpdateSeen', latest);
-        flashHint(link, text, 9000);
+        // R18: in a room, the bubble waits until I'm really in (not over the join card or the door).
+        const show = () => {
+          save('extUpdateSeen', latest);
+          flashHint(link, text, 9000);
+        };
+        if (/^\/r\//.test(location.pathname) && document.documentElement.dataset.swmJoined !== '1') addEventListener('swm-joined', show, { once: true });
+        else show();
       })
       .catch(() => {});
   };

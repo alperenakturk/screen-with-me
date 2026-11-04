@@ -174,8 +174,18 @@ export function saveIdentity(name: string, avatar?: string): void {
 const ROOM_IDENTITIES = 50;
 
 export function roomIdentity(roomId: string): { name: string; avatar: string } | null {
+  // R17: this tab's own name in the room comes first. Two tabs of one browser may be two people ("Alex" and "Alex 2");
+  // the shared record holds whichever was saved last, and a reload must not turn "Alex" into "Alex 2".
+  for (const raw of [sessionLoad(`me:${roomId}`), load(`me:${roomId}`)]) {
+    const found = parseIdentity(raw);
+    if (found) return found;
+  }
+  return null;
+}
+
+function parseIdentity(raw: string | null): { name: string; avatar: string } | null {
   try {
-    const value = JSON.parse(load(`me:${roomId}`) ?? 'null') as unknown;
+    const value = JSON.parse(raw ?? 'null') as unknown;
     if (value && typeof value === 'object' && typeof (value as { name?: unknown }).name === 'string' && typeof (value as { avatar?: unknown }).avatar === 'string') {
       return value as { name: string; avatar: string };
     }
@@ -186,7 +196,8 @@ export function roomIdentity(roomId: string): { name: string; avatar: string } |
 }
 
 export function saveRoomIdentity(roomId: string, name: string, avatar: string): void {
-  const current = roomIdentity(roomId);
+  sessionSave(`me:${roomId}`, JSON.stringify({ name, avatar }));
+  const current = parseIdentity(load(`me:${roomId}`));
   if (current?.name === name && current.avatar === avatar) return;
   save(`me:${roomId}`, JSON.stringify({ name, avatar }));
   let rooms: string[] = [];

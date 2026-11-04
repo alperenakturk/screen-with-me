@@ -432,11 +432,18 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.24 (two names in one browser, R16 + R17; nothing before you are in, R18):**
+- [ ] In one Chrome open the room twice, as "alperen" and "alperen 2": the room says 2 people, each tab sees the other;
+  a private message from one to the other arrives (no "not in the room" note). Reload either tab: it keeps its own
+  name and both still see each other; leave one tab in the background for 30 min and check again.
+- [ ] With "Ask before letting people in" on, a friend in a fresh browser knocks: while waiting at the door they see no
+  tips, no invite window and no "continue" line on the home page afterwards; once let in, the 3 tips come.
+
 **0.9.97.23 (home art with three devices, card 15c):**
 - [ ] Open the home page on your computer and your phone: Glowbeam's light falls on a laptop, a tablet and a phone; all three bars move together; the three faces are drawn avatars (others after a reload); the phone shows no small words in the art.
 
 **0.9.97.21 (English addresses, card C1):**
-- [ ] Open an old saved link `/baglanti` and `/eklenti.html`: they land on `/connection` and `/extension.html`.
+- [x] Open an old saved link `/baglanti` and `/eklenti.html`: they land on `/connection` and `/extension.html`. (owner, 4 Nov: /baglanti ok)
 
 **0.9.97.19 (knock fixes from the bug hunt, BH3):**
 - [ ] With "Ask before letting people in" on and a friend inside: close your tab; another friend knocks. The friend
@@ -448,9 +455,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   a second row), only "· started by …" gets cut.
 
 **0.9.97.16 (one place for each thing, card R9):**
-- [ ] Computer: ⋯ More shows only the room's things (film time, save, recap, shortcuts, sync test, rules). The profile
+- [x] Computer: ⋯ More shows only the room's things (film time, save, recap, shortcuts, sync test, rules). The profile
   menu shows you (language, move, name, avatar, theme) and one small line "Help · Feedback · Privacy"; nothing is in both.
-- [ ] Phone: ⋯ shows each tile once; ⋯ → Profile has the language (TR / EN) and the small Help · Feedback · Privacy line.
+- [x] Phone: ⋯ shows each tile once; ⋯ → Profile has the language (TR / EN) and the small Help · Feedback · Privacy line.
 
 **0.9.97.16 (the intro for everyone, card R7):**
 - [ ] Send the invite link to a friend: when they enter, they see the Sidelit intro (light + Glowbeam) once; a reload
@@ -462,7 +469,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   to the room chat. Reload: the private message is not in the history. Try it on the phone too.
 
 **0.9.97.10 (redrawn parody avatars, card R14):**
-- [ ] Avatar picker → Parody: every face is the new drawing; Anime has the notebook genius and the sweet-tooth sleuth,
+- [x] Avatar picker → Parody: every face is the new drawing; Anime has the notebook genius and the sweet-tooth sleuth,
   the white-haired hunter is under Game. Pick one: it looks right in the chat, the faces and the join card.
 
 **0.9.97.9 (ask before letting people in, card R12):**

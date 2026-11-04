@@ -1174,10 +1174,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       $('.player-wrap').append(createIntro(document, t('introText')));
     });
   };
-  if (!resumed) {
+  // R18: everything that belongs to being in the room waits for the first welcome (never while waiting at the door, or
+  // for someone refused, kicked or turned away by a full room).
+  let joinedOnce = false;
+  const firstJoined = () => {
+    if (joinedOnce) return;
+    joinedOnce = true;
+    document.documentElement.dataset.swmJoined = '1';
+    dispatchEvent(new Event('swm-joined'));
     // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
-    if (!isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
-  }
+    if (!resumed && !isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
+  };
 
   /** R12: one card per person waiting at the door (host only): who it is, Let in / Refuse. */
   function drawKnocks(list: KnockEntry[]): void {
@@ -1207,6 +1214,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'welcome':
         myId = message.you;
         playIntro();
+        firstJoined();
         // R12: let in (or no door at all): the waiting card goes.
         $('#knock-wait').hidden = true;
         // Ayarlar önce: kişi listesi çizilirken kayıt durumu (kaydedilen odalar listesi) doğru bilinsin.
@@ -3557,7 +3565,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // Sayfadan çıkarken (film sayfasına gidiş, odaya dönüş) bağlantıyı hemen kapat: tarayıcı sayfayı
   // önbellekte açık tutarsa kişi odada bir süre iki kez görünüyordu. Geri gelinirse sayfa yenilenir.
   addEventListener('pagehide', () => {
-    rememberRoom();
+    // R18: only a room I was really in becomes "Continue where you left off".
+    if (joinedOnce) rememberRoom();
     voice.leave();
     live.leave();
     connection.close();
