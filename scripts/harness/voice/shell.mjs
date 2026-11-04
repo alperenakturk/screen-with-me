@@ -127,7 +127,12 @@ const samHears = await until(
   15000,
 );
 check(!!samHears, 'Sam (eklenti) Alex’i duyuyor: konuşan göstergesi yanıyor');
+// "Lower the film while someone speaks" is off by default (opt:duck2) and the overlay has its own storage partition, so
+// the site's localStorage above never reaches it: switch it on with the overlay's own switch, as a person does.
+// The speech detector needs a level of 0.06 (the glow only 0.04): VOICE_A must be loud enough (STATUS "Testing in the cloud").
+await sam.evalFrame('shell=1', `(() => { const c = document.getElementById('opt-duck'); if (c && !c.checked) { c.checked = true; c.dispatchEvent(new Event('change')); } return 1; })()`);
 const ducked = await until(() => sam.evaluate(`(() => { const v = document.querySelector('video'); return v && v.volume < 0.9 ? v.volume : null; })()`), 10000);
+if (!ducked) console.log('     debug duck:', await sam.evalFrame('shell=1', `JSON.stringify({ box: document.getElementById('opt-duck')?.checked, saved: localStorage.getItem('opt:duck2'), speaking: [...document.querySelectorAll('#voice-people .speaking')].length })`), await sam.evaluate(`JSON.stringify([...document.querySelectorAll('video')].map((v) => v.volume))`));
 check(!!ducked, 'Alex konuşurken film sesi kısıldı', String(ducked));
 
 /** Kamera kutularındaki görüntüler: [kimin, genişlik, oynuyor mu] (kare geliyorsa genişlik > 0, zaman ilerler). */

@@ -388,6 +388,32 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**Next round, start here (BH10, 0.9.97.56, 4 Nov 2026).** Everything a script can check was run in the cloud
+(every harness, the screenshot sweep at five sizes in EN + TR, the Test Lab's fake friends for knock, Make host and
+private messages). What is left needs a person: real YouTube playback, a real mic and camera, your phone, and the
+extension in other browsers. One sitting, in this order, with one friend in Chrome on another computer (or your phone
+as the second person). Tick here or tell the Planner; the older lists below stay for detail.
+- [ ] 1. YouTube together (computer): you create a room, the friend joins by the invite link; play a YouTube video:
+  "3-2-1" starts you both together; pause, seek, change speed from each side; you stay in step (under a second).
+- [ ] 2. Fullscreen (computer, YouTube): the rail comes at the right edge and goes when the mouse leaves; Enter opens
+  the message box; the friend's messages come in on the right, below the box, never over YouTube's own bar.
+- [ ] 3. Voice + camera (computer): both join voice, hear each other clearly (no echo), mic on / off, cameras on;
+  ⟳ reconnect or a page reload keeps you in voice with the mic as it was.
+- [ ] 4. Screen share: share a tab with sound; the friend sees and hears it; reload the friend's page: the stream comes
+  back by itself.
+- [ ] 5. Knock + host (two people): turn on "Ask before letting people in", the friend opens the link in a fresh
+  browser: you get "Let in / Refuse"; let them in; 👑 Make host to the friend: now they get the next knock card.
+- [ ] 6. Private message: press the friend's name in the chat, write: only they see it (a third person does not).
+- [ ] 7. A game table with the friend (Classics: Turkish dama, then Quiz): play to the end, a rematch, leave the
+  table; a sound on each move.
+- [ ] 8. Your phone (Android or iPhone, the friend on the computer): join by the QR code, the YouTube video plays in
+  sync, turn the phone sideways → ⛶ fullscreen, chat sheet, 🎙 voice for a minute (hear and be heard), back upright.
+- [ ] 9. Your phone, Shorts: the friend adds a Short; swipe up / down to the next: both move together.
+- [ ] 10. The extension in Chrome on a film page (a legal demo player, e.g. the Video.js or Plyr demo): "Go to the
+  film", the room view, sync with the friend, voice on the film page (the permission window appears once).
+- [ ] 11. The extension in Edge, then Brave, then Opera (the detailed list below, "Before the 1.0 store submission"):
+  at least steps 1, 2, 3 and 6 of it in each.
+
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
 start, dark mode, largest text, keyboard on every field, first open, back button, sideways, delete confirmation,
@@ -432,6 +458,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.97.56 (BH10: every harness on main, the owner's next round):**
+- [ ] Your bug: ⋯ → "Keep the controls open" (or Settings → My screen). In the normal window (not fullscreen) play a
+  video (YouTube, a video file, the sync test, a film page with the extension), move the mouse onto the chat and wait:
+  the rail on the right stays open, the video ends at its edge. Turn it off again: the rail rests as before.
+- [ ] The rest only updates test scripts. Start the next round from "Next round, start here" at the top of this list.
 
 **0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
 - [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
@@ -1138,7 +1170,7 @@ ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=10:duration=660 \
 FILM_VIDEO=/tmp/film.webm node scripts/harness/embed/film-server.mjs &
 CHROME=/opt/pw-browsers/chromium node scripts/harness/embed/run.mjs apps/extension/dist http://localhost:5173 ws://localhost:8787 /tmp/shell-test
 # Voice: two different fake microphones are required (same beep = removed by echo cancellation)
-ffmpeg -loglevel error -f lavfi -i "sine=frequency=330:duration=20,tremolo=f=3:d=0.7" -ac 1 -ar 48000 /tmp/a.wav
+ffmpeg -loglevel error -f lavfi -i "sine=frequency=330:duration=20,tremolo=f=3:d=0.7,volume=4" -ac 1 -ar 48000 /tmp/a.wav  # volume=4: loud enough for the speech detector (film ducking in voice/shell.mjs)
 ffmpeg -loglevel error -f lavfi -i "anoisesrc=color=pink:amplitude=0.4:duration=20,tremolo=f=2:d=0.8" -ac 1 -ar 48000 /tmp/b.wav
 VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/run.mjs http://localhost:5173
 VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/shell.mjs
