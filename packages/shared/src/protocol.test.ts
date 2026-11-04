@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_TABS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_GRID, AVATARS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -133,16 +133,28 @@ describe('parseClientMessage', () => {
     expect(replaceRemovedAvatar('wizard')).toBeNull();
     expect(replaceRemovedAvatar(undefined)).toBeNull();
     expect(replaceRemovedAvatar('squid', () => 'elf')).toBe('elf');
-    // Card R20 with the IP audit: no parody page is left, only Themed and Genres.
-    expect(AVATAR_TABS.map((tab) => tab.key)).toEqual(['theme', 'genres']);
     expect(REMOVED_AVATARS).toHaveLength(32);
   });
 
-  it('puts every drawn avatar on exactly one page, and every tab page exists', () => {
+  it('puts every drawn avatar on exactly one page, and once in the picker grid', () => {
     const all = AVATAR_PAGES.flat() as readonly string[];
     for (const id of Object.keys(DRAWN_AVATARS)) expect(all.filter((a) => a === id)).toHaveLength(1);
     expect(new Set(all).size).toBe(all.length);
-    expect(AVATAR_TABS.flatMap((tab) => tab.pages).sort()).toEqual(AVATAR_PAGES.map((_, i) => i));
+    // Card R27: the picker's one grid holds every avatar once, mixed (not the pages' order), and the order is fixed.
+    expect([...AVATAR_GRID].sort()).toEqual([...AVATARS].sort());
+    expect(new Set(AVATAR_GRID).size).toBe(AVATAR_GRID.length);
+    expect(AVATAR_GRID).not.toEqual(AVATARS);
+    const firstHalf = new Set(AVATAR_GRID.slice(0, Math.ceil(AVATAR_GRID.length / 2)));
+    expect(AVATAR_PAGES.every((page) => page.some((id) => firstHalf.has(id)))).toBe(true);
+    expect(AVATAR_GRID.slice(0, 5)).toMatchInlineSnapshot(`
+      [
+        "sorceress",
+        "hero",
+        "samurai",
+        "horseman",
+        "veiled",
+      ]
+    `);
     expect(avatarPageOf('armadillo')).toBe(1);
     expect(avatarPageOf('chemist')).toBe(0);
     expect(avatarPageOf('nope')).toBe(0);

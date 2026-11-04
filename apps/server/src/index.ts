@@ -54,7 +54,9 @@ const SID_PATTERN = /^[0-9a-f]{32}$/;
 async function guardSocket(request: Request, url: URL, env: Env): Promise<Request | Response> {
   if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
   const key = await ipKey(request, env);
-  if (env.CONNECT_LIMIT && !(await env.CONNECT_LIMIT.limit({ key })).success) return new Response('Too many connections', { status: 429 });
+  // CI's local server may skip the limit (it protects nothing there); only with the flag AND a localhost address.
+  const unpaced = env.SWM_LOCAL_UNPACED === '1' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  if (env.CONNECT_LIMIT && !unpaced && !(await env.CONNECT_LIMIT.limit({ key })).success) return new Response('Too many connections', { status: 429 });
   const forwarded = new Request(request);
   forwarded.headers.set(IP_HEADER, key);
   return forwarded;

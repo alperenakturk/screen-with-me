@@ -20,6 +20,14 @@ without asking: a fix that went live becomes a test, a test the owner reported p
 question he answered disappears. Then the Planner tells him in a line what changed. **Everyone talks to the owner in
 Turkish** (all sessions; among themselves English is fine; everything written to the repo stays English).
 
+**Resources and tests (owner, 4 Nov 2026):** whenever tokens, a usage limit, Actions minutes, an API quota or anything
+else is running out, every session tells the Planner at once and the Planner tells the owner. Run as many tests as a
+change needs, none on unrelated parts, and never give up quality (the CI diet, card CI, follows this rule).
+
+**The repo is public since 4 Nov 2026** (owner: no money for Actions minutes; private-repo minutes ran out after
+≈ 3500 min in four days). The license is "All rights reserved" (card LIC, PR #287). Never commit a secret, never say
+"open source" in public texts; MIT or not is decided at 1.0.
+
 Card format:
 
 ```
@@ -33,6 +41,35 @@ Card format:
 ## In progress
 
 ## Ready
+
+### CI. CI diet (owner's pick "safe + short main", 4 Nov 2026; lane B, first in the queue)
+- Why: 478 runs / ≈ 3500 min in four days; docs-only PRs ran the whole suite.
+- Done when: a superseded PR run is cancelled; docs-only changes run only a tiny "changes" job whose check still
+  reports (so branch protection can require it); e2e without the local connection pacing; Playwright cached; main runs
+  only typecheck + unit + build before the deploy and the FULL live e2e after it; the lab / a11y harnesses only when
+  `apps/web` or `packages/shared` change. PR ≈ 9 → 5 min, main ≈ 19 → 11.5 min, docs-only ≈ 0.
+- Tests: the workflow's own runs on the PR and on main. PR #286.
+
+### LIC. Source-available license before going public (owner, 4 Nov 2026; lane B) ✅
+- Done: PR #287 (`LICENSE` all rights reserved, `UNLICENSED` package.json, READMEs, CLAUDE.md).
+
+### GH. A GitHub page worth visiting (owner, 4 Nov 2026: "more current, better designed, better descriptions; more
+security and promotion now that it is public"; lane A after 15f + R27, Design for the art)
+- Why: the repo is public; the README is its front page and still reads like a dev note.
+- Done when: README.md + README.tr.md rewritten together (hero with Design's banner, what it is, features with real
+  screenshots / a GIF in legal test content, how it works, privacy, security, stack, license line, badges); `.github/`
+  issue + PR templates; SECURITY.md fit for a public repo; a 1280 × 640 social preview image for the owner to upload;
+  no film / series / piracy names, never "open source"; copy follows the `humanizer` skill.
+- Tests: the README looks right on GitHub in light and dark (screenshot), every link answers.
+- Owner's steps (Settings, he alone can): repository description + topics, social preview, secret scanning + push
+  protection, Dependabot alerts + security updates, private vulnerability reporting, code scanning (CodeQL default
+  setup), branch protection for `main` (require the CI check), Actions → fork PR workflows need approval.
+
+### SEC4. Security review 4: Cloudflare best practices + public-repo exposure (owner, 4 Nov 2026; Security, read-only)
+- Why: the owner asked to review the code and the site with the Cloudflare skill (cloudflare/skills:
+  workers-best-practices, durable-objects, wrangler, web-perf) and fix the security side, now that the repo is public.
+- Done when: `docs/internal/security-review-4.md` + proposed cards; the Planner routes them to lanes A / B.
+- Tests: each fix card carries its own.
 
 ### 15e. Home art: the light lands on every screen; a bigger, balanced first screen (owner, 4 Nov 2026; lane A)
 - Owner (screenshot of the live 0.9.97.28 home art): "the bright part should cover the tablet screen, the phone screen
@@ -108,7 +145,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 → R24 → R26 (important) → R25. Lane A: 15e ✅ → R22 + R23 → 15f → R27. Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI → R26 (important) → R25 → DL1 → DL2 → DL4 → DL5 → SEC4 fixes. Game Studio: Draw & Guess → chess + backgammon → DL3. Lane A: 15e ✅ → R22 + R23 ✅ → 15f → R27 → GH. Security: SEC4. Design: GH art. Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -169,6 +206,52 @@ reports if a drop happens again over time.
   what comes too early, twice or never. Small PRs, a failing test first for each fix.
 - Done when: the table exists, every row has a check, every wrong order found is fixed or listed for the owner.
 - Done: #252 (0.9.97.25), Developer A: `order-of-things.md`, harness `order`, three fixes (refused-at-the-door card, no Continue after a kick, invite + tips after the intro).
+
+### DL. 🐞 Sidelit Test Lab: a powerful debug mode that grows with the product (owner, 4 Nov 2026; lane B leads, Game Studio + lane A add their parts)
+- Owner: "a very detailed debug mode, for now and the future: test everything in the games, the video things, whatever
+  you think may clash; strong, detailed, and it changes as new features and ideas come. The goal is to find bugs fast
+  and raise the speed and number of tests. BE VERY CAREFUL THAT THE DEBUG MODE ITSELF IS NOT BUGGY."
+- Owner's picks (4 Nov 2026, in the Planner's chat): **a right-hand drawer + a command box**; **anyone with the hidden
+  switch** (`?debug=1`, as today) for now, but **lock it with a code before the app / store release** (ROADMAP §7);
+  **fake friends on the live site, at most 5**; **order: status + fake friends + log first**.
+- Builds on the hidden test panel of card 12 (`debug-lab.ts`, lazy `ui/debug-panel.ts`, `?debug=1` / `?debug=0`).
+- **Look:** a drawer on the right of the room (🐞 or Ctrl+Shift+D; it never covers the video's controls; on a phone a
+  bottom sheet) with tabs 📊 Status · 👥 Fake friends · 🎬 Video & network · 🎮 Games · 🧪 Scenarios · 🖥 Screen · 📜 Log,
+  plus a command box (Ctrl+K: type "add 3 friends", "bloom now", Enter) listing every command with its short help.
+  A "🐞 This is a bug" button bundles the last 2 minutes (state, log, versions, errors) into one text to copy.
+- **Rules that keep it safe and bug-free (all steps):**
+  - Off = not loaded at all (lazy chunk, outside the room's size budget); a test proves nothing changes with it off.
+  - No new power on the live server: fake friends are ordinary clients (normal rate limits, ≤ 5, a 🤖 in their name,
+    only in the room the lab opened them in, all leave when the lab closes or the tab goes); anything that needs server
+    help (skip a quiz question, set a dama position on the table) works only against `wrangler dev` / a test server.
+  - No monkey-patching: features expose small named hooks (`debugHooks.register('snackBar', {...})`); the lab only
+    calls those; a missing hook shows "not available here".
+  - Every command: a name, a one-line help, where it works, and an undo where it changes something; every run is
+    wrapped so a failing command writes a red line in the log and never breaks the room.
+  - Game cheats run on a sandbox save (a snapshot of the real `localStorage` save first; "Restore my real saves").
+  - The log never shows cids, IP hashes or tokens; the bug bundle shows exactly what it contains before copying.
+  - Every lab tool has its own harness check in CI; the lab's own harness also runs with the lab off.
+- **Steps (one PR each, in this order):**
+  1. **DL1 (lane B):** drawer + command box + 📊 Status (versions, transport, clock offset, live sync-drift graph, voice
+     / stream peer states, recent errors) + 📜 Log (in / out room messages, filtered, redacted) + "🐞 This is a bug".
+  2. **DL2 (lane B):** 👥 Fake friends: add 1–5 (name + random avatar), each can write, react, play / pause / seek,
+     stall ("not ready"), leave and come back, knock at the door, take the host role; a "chatty" mode at a set pace.
+  3. **DL3 (Game Studio):** 🎮 Games: open any game at once; Snack Bar (coins, customers, receipt, badges, place),
+     Window Garden (grow / bloom now, hybrid seed, night / rain, visitors), Five Frames (show the answer, set the day),
+     Classics (a dama position, bot level, force a win / draw on the local test server), Quiz / Draw & Guess (skip,
+     end, pick the word: test server only), tip jar fill; time ×10 for the side games; sandbox saves.
+  4. **DL4 (lane B):** 🎬 Video & network: drop my connection, force the HTTP fallback, "the server restarted"
+     (reconnect with the same id), drift +3 s, stall for N s, slow network, ads on the film page harness; 🖥 Screen
+     (lane A): theme / language / reduced-motion switcher, phone / tablet size windows, "first-time visitor", outline
+     the islands / hole / hidden boxes.
+  5. **DL5 (lane B):** 🧪 Scenarios: one-click scripted checks with ✓ / ✗ per step (room entry order, knock, fullscreen
+     messages, Enter after a click, private message, two names in one browser …), runnable with the fake friends.
+- **Rule from DL1 on (for every new card):** "Done when" includes its lab hook or scenario, so the lab grows with each
+  feature (Developers / Game Studio add it in the same PR).
+- Done when (whole card): the owner can test every two-person flow alone with fake friends, reach every game state in
+  a few clicks, cause each network / video accident on purpose, and copy one bug text; all lab harnesses green; with
+  the lab off the room's size and behaviour are unchanged.
+- Owner's pick: recorded above.
 
 ### R25. Fullscreen messages lower than the message box (owner, 4 Nov 2026; lane B)
 - Owner (screenshot of R21 live, a YouTube video in fullscreen: the message "Alperen2 sELAN" sits right beside the
@@ -959,6 +1042,82 @@ into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the
   straight into the Shorts view with 🎲 Discover; no service is named beyond YouTube Shorts / TikTok.
 - Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
 - Owner's pick: copy and whether it is a page or only a home door. Planner: 0.9.95 (owner agreed 2 Nov 2026).
+
+Cards from `security-review-4.md` (4 Nov 2026, `main` at 0.9.97.39, after the repository went public), most severe
+first (R4 = review 4). Details, file:line references and the owner's GitHub settings are in the review. Shipped cards of
+reviews 2 and 3 below are still listed here; only H3 + M7, M8 and R3-3 of them are open.
+
+### Security: an upload budget across rooms (R4-1; lane A)
+- Severity: medium
+- Why: emoji and chat-image limits live inside each room, and room ids are free to invent, so one address can spread
+  uploads over many fresh rooms (~150 MB a minute) and fill the account's Durable Object storage within the hour.
+- Done when: a small counter object keeps a per-IP-hash daily byte budget across all rooms and an account-wide daily
+  byte cap; a room asks it before storing a sticker or chat image and answers the existing "slow down" error otherwise.
+- Tests: unit for the budget logic; e2e: uploads from one address across several new rooms stop at the budget, a second
+  address still uploads.
+- Owner's pick: none needed.
+
+### Security: no promise shared between requests in the IP key (R4-2; lane A)
+- Severity: medium
+- Why: `ip-key.ts` caches the day's key as a promise made inside one request; if that request is cancelled the promise
+  can stay pending and every later connection in the isolate waits (Cloudflare: no request-scoped state in globals).
+- Done when: only the resolved key is cached (set after `await`), each request fetches while it is empty, the fetch has a
+  timeout with the isolate-key fallback.
+- Tests: unit with a fake object whose first fetch never answers: the second call still resolves (via the timeout /
+  fallback); e2e unchanged.
+- Owner's pick: none needed.
+
+### Security: protect the daily request quota (R4-3; lane A, the rest with R3-3)
+- Severity: medium (high if the account is on Workers Free and gets targeted)
+- Why: `/api/probe` (plain GET up to 512 KB) has no limit, and on the free plan every `/api/*` call counts toward the
+  daily request allowance even when our limiter says 429, so a loop can stop all rooms until midnight UTC.
+- Done when: the probe's GET counts against a per-IP limit and its size is capped lower; the R3-3 card gains a WAF
+  rate-limiting rule for `/api/*` (runs before the Worker) as a required step; the owner's Free / Paid answer is noted.
+- Tests: e2e: the probe answers 429 past the limit; `/connection` still works.
+- Owner's pick: none needed (the Free / Paid answer through the Planner).
+
+### Repo: public-repository hardening, code side (R4-5; lane B)
+- Severity: medium (together with the owner's settings in `security-review-4.md` §5)
+- Why: the repository is public; actions pinned by tag can change under us, and CodeQL / private vulnerability reporting
+  are free now.
+- Done when: third-party actions in `test.yml` are pinned by commit SHA with the version in a comment (Dependabot keeps
+  them current); once the owner turns on private vulnerability reporting, `SECURITY.md` names GitHub's "Report a
+  vulnerability" next to the e-mail; once the owner creates the `production` environment, the deploy job uses it.
+- Tests: CI green; a Dependabot Actions PR still opens for the pinned SHAs.
+- Owner's pick: needed only for the settings (§5 of the review).
+
+### Security: Worker and Durable Object hygiene (R4-6, R4-7, R4-8; lane A)
+- Severity: low
+- Why: small gaps against Cloudflare's best practices: the usage book loses updates under concurrent requests, some abuse
+  buckets live only in memory, failed feedback sends burn the daily cap, `/api/youtube/usage` is unlimited, the poker
+  deck uses `Math.random`, the probe WebSocket never closes, one floating promise, a heavy room constructor, API answers
+  without `nosniff` / `no-store`, observability without traces.
+- Done when: `usage.ts` reads the body before `get`/`put`; feedback checks the token before the gate and has fetch
+  timeouts; `/api/youtube/usage` has a limit; the server shuffles with crypto randomness; the probe socket closes after
+  10 s; `fallback.ts:271` goes through `finish()`; the room loads small keys in one `get([...])` and images at join time;
+  a JSON helper sets `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`; `observability.traces.enabled`.
+- Tests: unit (usage book under two interleaved adds, shuffle source); e2e existing suites; a header check in e2e for
+  one `/api/*` answer.
+- Owner's pick: none needed.
+
+### Security: confirm the result cache works on the live address (R4-9; lane A)
+- Severity: low (verify)
+- Why: Cloudflare's Cache API may do nothing on `*.workers.dev`; then the 24 h search cache and the quota memo are off on
+  live and repeated searches spend quota.
+- Done when: a live e2e step searches the same words twice and sees a cache hit (a debug header on the answer); if it
+  never hits, the card notes that the custom domain (R3-3) is needed and, until then, a small cache in the
+  `YoutubeUsage` object or KV keeps repeated words free.
+- Tests: the live e2e step itself.
+- Owner's pick: none needed.
+
+### Security: TV routes off until the TV ships (R4-10; lane A)
+- Severity: low
+- Why: the TV is hidden only on the client; the server's pairing routes run for anyone, and the public review 2 describes
+  their open weaknesses (M8).
+- Done when: a server switch `TV=off` (default while the TV is frozen) answers `/api/tv/*` with 404 and the room refuses
+  `tv-link` / `hello.tv`; turning it on is part of the M8 card.
+- Tests: e2e `tv.mjs` runs with `TV=on` locally; a new e2e check that `TV=off` refuses pairing.
+- Owner's pick: none needed.
 
 Cards from `security-review-3.md` (3 Nov 2026, `main` at 0.9.93.18), most severe first (R3 = review 3). Details,
 file:line references, scenarios and the owner's Cloudflare / GitHub / Google steps are in the review.
