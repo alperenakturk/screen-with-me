@@ -88,7 +88,8 @@ jobs:
         working-directory: apps/server
         run: |
           # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
-          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 > ../../wrangler.log 2>&1 &
+          # TV:on: the hidden TV's server routes (off on live, card R4-10) stay on here, so e2e tv.mjs runs fully.
+          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var TV:on > ../../wrangler.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
             sleep 1
