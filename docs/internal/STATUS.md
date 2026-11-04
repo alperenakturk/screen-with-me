@@ -433,6 +433,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.36 (Opera Night theme removed, stream beside the faces, cards R22 + R23):**
+- [ ] 🎨: no "Opera Night" any more; if you had it, you now see Gece.
+- [ ] With a friend, share your screen: in the Together card "🔴 You're live · 👁 0/4", End stream and the quality now
+  sit right of the faces; the chat below keeps (almost) all its room. Your friend sees "🔴 … is live" and Watch stream
+  in the same place. Before a stream the card looks as before.
+
 **0.9.97.34 (bigger chat messages in fullscreen, card R21):**
 - [ ] On a computer, open a YouTube video and a video file in fullscreen; from a second tab write a message: it comes
   in on the right side, about a quarter down the video (not in the very top corner), with clearly bigger text, left of
