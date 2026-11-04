@@ -11514,6 +11514,16 @@ html:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.yt-rail.side-rail.dock
   right: var(--edge-gutter);
 }
 
+/* BH2: the rail slides in by as much as the player's right edge moves, with the same timing, so it never sits over the
+   YouTube player while both move (it used to fade in on top for ~0.2 s while the player was still making room). */
+html:not(.phone) .theater.yt-rail.side-rail.dock-mode .fs-dock {
+  transition: opacity 0.22s ease, visibility 0.22s, transform 0.22s ease;
+}
+
+html:not(.phone):is(.has-mouse, :not(.is-touch)) .theater.yt-rail.side-rail.dock-mode.dock-idle:not(:has(.fs-dock:hover, .dock-pop:not([hidden]))) .fs-dock {
+  transform: translateX(calc(var(--rail-w) - var(--edge-gutter)));
+}
+
 .theater.yt-rail.side-rail .rail-edge {
   top: 0;
   bottom: 0;
