@@ -43,7 +43,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15. Lane A: R16 → R17 → R18 → BH5 (+ R20's copy once Design's redraw is in). Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Design: R20. Planner's decision on "same browser, same name" below (R19).
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -110,6 +110,14 @@ reports if a drop happens again over time.
   extension get the new files (no id change, nothing to migrate).
 - Done when: the owner OKs the two new faces on Design's preview; they are live in the picker.
 - Tests: the avatar sweep screenshot of the series page.
+
+### BH6. Small bug batch: saved-room "yours" mark + the untested order paths (lane A, after BH5)
+- From BH4 (STATUS idea 11): after "Make host" (or after acting as host while the host was away) the old host's saved-
+  room row stays marked as theirs and its ✕ shows the "removing also unsaves" warning; clear `mine` when `members`
+  names another host, without flicker before the members arrive.
+- From BH5 (`order-of-things.md`): the two paths without a test: the `version` error (an old client sees only the
+  "refresh the page" screen: no tips, intro or invite) and the TV guards (a harness check if cheap, else a note why).
+- Done when: each fix has a test that failed first; the order doc lists a test for every path.
 
 ### R19. Same browser, same name and avatar = one person (Planner's decision, owner's question)
 - Owner: in the same Chrome he opened the room twice with the same name and avatar and saw one person.
