@@ -437,6 +437,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing to see: search YouTube twice for the same words; both work (the second comes from the server's cache
   when the address allows it). The hidden TV pairing stays off on the live site.
 
+**0.9.97.49 (security review 4: R4-2, R4-3, R4-5):**
+- [ ] Nothing to see in the room: rooms open and join as before; `/connection` still runs all its rows ("200 kB answer"
+  included).
+- [ ] Owner's settings (review §5): create the `production` environment (Settings → Environments) and move the deploy
+  secrets there; turn on private vulnerability reporting. The deploy keeps working before and after.
+
 **0.9.97.47 (image upload budget across rooms, security R4-1):**
 - [ ] Nothing to see in normal use: in a room add a custom emoji (😀 → 🖼️ Add) and paste a picture into the chat;
   both still appear for a friend. (The new limit, about 70 full-size pictures per address and day across all rooms,
@@ -667,6 +673,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   offers three levels; pick one and play (a man shows where it can go; a capture is a must, the longest one). Glowbeam
   stands beside the status line as the referee. With a friend: they join, you switch to XOX between games from the
   shelf, play a game. Mid-game the shelf only lets you go back to the board you're on.
+- [ ] 0.9.97.48 Test Lab games: open a room with `?debug=1`, press 🐞, go to 🎮 Games (or Ctrl+K and type "games").
+  Open Snack Bar from there, give it +10K coins, then "pretend the film plays" + "time ×10": the coins climb. Try "a
+  customer now" and "the film's receipt now". Open Window Garden: "bloom now", night sky, rain. Open Five Frames: show
+  the answer, move a day. Then "Restore my real saves": your own Snack Bar / garden / Five Frames are back as before.
 - [ ] 0.9.97.46 Chess: open 🎮 → Classics → Chess on the shelf. Alone, pick "Medium": Glowbeam plays black. Tap a piece:
   the squares it can reach light up; tap one to move. Try castling, and walk a pawn to the last row (a chooser asks
   queen / rook / bishop / knight). A king in check glows red; checkmate ends the game with "Checkmate!". With a friend:

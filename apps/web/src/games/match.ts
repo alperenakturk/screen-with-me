@@ -24,7 +24,7 @@ import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
 /** The shelf (owner's pick 2 B): boards to play now, and the ones coming. */
-const SHELF: readonly { kind: GameKind; glyph: string; soon?: boolean }[] = [
+const SHELF: readonly { kind: GameKind; glyph: string }[] = [
   { kind: 'xox', glyph: '⭕' },
   { kind: 'four', glyph: '🔴' },
   { kind: 'dama', glyph: '⚪' },
@@ -338,12 +338,10 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
             el('span', { class: 'cl-box-lid', 'aria-hidden': 'true' }),
             el('span', { class: 'cl-box-glyph', 'aria-hidden': 'true' }, box.glyph),
             el('b', {}, title),
-            box.soon ? el('small', {}, t('classics.soon')) : '',
           );
-          button.disabled = !!box.soon || seat === -1 || (busy && box.kind !== kind);
-          button.title = box.soon ? t('classics.soon') : busy && box.kind !== kind ? t('classics.busy') : boardText(box.kind);
+          button.disabled = seat === -1 || (busy && box.kind !== kind);
+          button.title = busy && box.kind !== kind ? t('classics.busy') : boardText(box.kind);
           button.addEventListener('click', () => {
-            if (box.soon) return;
             shelfOpen = false;
             if (box.kind !== kind) send({ t: 'switch', game: box.kind as GameKind });
             render();
