@@ -23,6 +23,11 @@ export interface RoomConnectionOptions {
   onFailures?: (count: number) => void;
   /** Which way the connection went: a WebSocket, or the HTTP fallback (`socket.ts`) on networks without WebSockets. */
   onTransport?: (transport: Transport) => void;
+  /**
+   * `false`: this connection neither takes nor leaves the tab's member id handover (`swm:prev:<room>`). For the 🐞 Test
+   * Lab's fake friends, which share the tab with the real room connection.
+   */
+  handover?: boolean;
 }
 
 const PING_INTERVAL_MS = 10_000;
@@ -62,7 +67,7 @@ export class RoomConnection {
   private failures = 0;
 
   constructor(private readonly options: RoomConnectionOptions) {
-    this.memberId = takeHandover(options.roomId);
+    this.memberId = options.handover === false ? null : takeHandover(options.roomId);
   }
 
   connect(): void {
@@ -102,7 +107,7 @@ export class RoomConnection {
     // A reload (or a quick trip to the film page) comes back as the same member: its hello carries `prev` and the
     // server drops this connection if it is still there. A WebSocket closes with the page by itself; an HTTP fallback
     // session's last request may not get out of a closing tab.
-    if (this.memberId) giveHandover(this.options.roomId, this.memberId);
+    if (this.memberId && this.options.handover !== false) giveHandover(this.options.roomId, this.memberId);
     this.stopped = true;
     this.clearTimers();
     this.ws?.close(1000);
