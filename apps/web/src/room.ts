@@ -287,6 +287,9 @@ function withAvatar(member: { name: string; avatar?: string }): string {
 }
 
 function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: Avatar, { resumed = false, tv }: { resumed?: boolean; tv?: string } = {}): void {
+  // Card R7: the intro plays on the first entry into this room in this tab, whichever way it came (the join card, an
+  // invite link, `#back` from the extension), never on a reload, in the shell or on a TV. Worked out before `in:` is set.
+  const introDue = !tv && !isShell && sessionLoad(`in:${roomId}`) !== '1';
   // Sayfa yenilenirse doğrudan odaya dönülsün (sekmeye özel; yeni sekmede isim yine sorulur).
   // (A TV takes its person's name and avatar from the server: nothing of its own is saved.)
   if (!tv) {
@@ -1162,11 +1165,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // The Sidelit intro (card 6f) while the room gets ready; not again after a reload. Its own small chunk (loaded right
   // after joining, it starts its sound with the picture), so the room page stays within its size budget.
-  if (!resumed) {
-    void import('@swm/shared/intro').then(({ INTRO_CSS, createIntro }) => {
+  // Card R7: it starts with the room's first welcome, so someone who waited at the door (R12) sees it once let in
+  // instead of it running out behind the waiting screen. The chunk is fetched now so it starts at once.
+  let introPending = introDue;
+  const intro = introDue ? import('@swm/shared/intro') : null;
+  const playIntro = () => {
+    if (!introPending || !intro) return;
+    introPending = false;
+    void intro.then(({ INTRO_CSS, createIntro }) => {
       if (!document.getElementById('swm-intro-css')) document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
       $('.player-wrap').append(createIntro(document, t('introText')));
     });
+  };
+  if (!resumed) {
     // First time in any room: three short tips (invite, add a video, join voice). Not on the film page or a TV.
     if (!isShell && !tv) void import('./ui/first-tips.ts').then(({ showFirstTips }) => showFirstTips());
   }
@@ -1198,6 +1209,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     switch (message.t) {
       case 'welcome':
         myId = message.you;
+        playIntro();
         // R12: let in (or no door at all): the waiting card goes.
         $('#knock-wait').hidden = true;
         // Ayarlar önce: kişi listesi çizilirken kayıt durumu (kaydedilen odalar listesi) doğru bilinsin.
