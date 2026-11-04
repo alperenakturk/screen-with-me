@@ -4,18 +4,62 @@
 # live (deploy job). Can also be started by hand from the Actions tab ("Run workflow").
 name: Tests
 
+# CI diet (Nov 2026): the `changes` job decides what a change needs (docs-only: no tests; harnesses only when the site
+# or the shared code changed); a new push to a PR cancels its older run. No `paths-ignore`: a required check must
+# always report (a job skipped by its `if` reports success, a workflow never started leaves the check pending).
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Only PR runs are cancelled; a run on main always finishes (it deploys).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # Read-only token: the jobs only check out the code; deploys use the Cloudflare token (security review 2, L10).
 permissions:
   contents: read
 
 jobs:
+  # What changed: `code` = anything besides docs (`docs/**`, `*.md`); `web` = the site, the shared code, the harnesses
+  # or this workflow (the browser harnesses run only then). A manual run, or a base it can't find, runs everything.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+      web: ${{ steps.diff.outputs.web }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # A PR's checkout is its merge commit: its first parent is the base branch, so HEAD^1..HEAD is the PR's change.
+          if [ "$EVENT" = pull_request ]; then base=HEAD^1; else base="$BEFORE"; fi
+          if [ "$EVENT" = workflow_dispatch ] || [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; echo "web=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only "$base" HEAD)
+          echo "$files"
+          code=false; web=false
+          if [ -n "$files" ]; then
+            printf '%s\n' "$files" | grep -qvE '^docs/|\.md$' && code=true
+            printf '%s\n' "$files" | grep -qE '^(apps/web/|packages/shared/|scripts/harness/|\.github/workflows/)' && web=true
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"; echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "code=$code web=$web"
+
   test:
+    needs: changes
+    # Docs-only: skipped, which reports as success for a required check.
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -43,10 +87,14 @@ jobs:
       - name: Room page size budget
         run: node scripts/size-budget.mjs
 
+      # CI diet (a), owner's pick: on main the PR already ran the local suite on the same code, so a push to main runs
+      # only the checks above before the deploy; the full e2e still runs against live after it.
       - name: Start local server
+        if: github.event_name != 'push'
         working-directory: apps/server
         run: |
-          npx wrangler dev --port 8787 > ../../wrangler.log 2>&1 &
+          # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
+          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 > ../../wrangler.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
             sleep 1
@@ -54,11 +102,23 @@ jobs:
           echo "server did not start"; cat ../../wrangler.log; exit 1
 
       - name: End-to-end tests
+        if: github.event_name != 'push'
+        env:
+          SWM_E2E_UNPACED: '1'
         run: npm run e2e
 
       # Card A11y: axe-core (WCAG 2.1 A + AA) on home, help, join, room, settings, invite, games hall, tic-tac-toe and
       # the first tips, plus a keyboard tour. axe-core and Playwright are installed for this step only (not site deps).
+      # The browser download is cached between runs (its system libraries are still installed each time).
+      - name: Cache Playwright's browser
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium
+
       - name: Accessibility (axe + keyboard tour)
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: |
           npm i --no-save --no-audit --no-fund axe-core@4.10.2 playwright@1.63.0
           npx playwright install --with-deps chromium
@@ -71,8 +131,9 @@ jobs:
   # Deploy to live: only on main and only if the tests passed. Cloudflare keys are in the repo's
   # Secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); without them the job warns and skips.
   deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [changes, test]
+    # Docs-only pushes to main deploy nothing (the test job was skipped).
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Two quick pushes must not deploy at the same time; the next one waits.
