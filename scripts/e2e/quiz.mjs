@@ -14,10 +14,18 @@ function client(name, cid) {
     if (m.t === 'state') last = m;
   });
   ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 2, name, cid, lang: 'tr' })));
+  let nudgedAt = 0;
   const wait = async (pred, label, ms = 8000) => {
     for (let i = 0; i < ms / 50; i++) {
       const idx = inbox.findIndex(pred);
       if (idx >= 0) return inbox.splice(idx, 1)[0];
+      // Like the game page: a phase whose time is up and that hasn't moved gets a ping (any message makes the server
+      // catch up). Live alarms can run tens of seconds late right after a deploy (BH2: draw.mjs waited 25 s silently).
+      const now = Date.now();
+      if (last?.endsAt && last.endsAt + 1500 < now && now - nudgedAt > 3000 && ws.readyState === WebSocket.OPEN) {
+        nudgedAt = now;
+        ws.send(JSON.stringify({ t: 'ping' }));
+      }
       await new Promise((r) => setTimeout(r, 50));
     }
     throw new Error(`${name}: timeout ${label}`);
