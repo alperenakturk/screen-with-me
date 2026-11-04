@@ -421,6 +421,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.15 (game titles in a small window, card R10):**
+- [ ] Open XOX, put it in a free window and drag it small: the title still says "Tic-tac-toe" in full (the buttons go to
+  a second row), only "· started by …" gets cut.
+
 **0.9.97.15 (one place for each thing, card R9):**
 - [ ] Computer: ⋯ More shows only the room's things (film time, save, recap, shortcuts, sync test, rules). The profile
   menu shows you (language, move, name, avatar, theme) and one small line "Help · Feedback · Privacy"; nothing is in both.

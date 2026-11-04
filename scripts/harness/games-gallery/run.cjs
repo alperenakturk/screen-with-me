@@ -107,6 +107,25 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
     check(!!opened, `the ${kind} card opens its table`, String(opened));
     const invited = await until(() => sam.evaluate(() => !!document.getElementById('game-invite')), 4000);
     check(!!invited, `Sam gets the ${kind} invite`);
+    if (kind === 'xox') {
+      // R10: in a narrow window the game's name stays whole; only "· started by …" gets cut.
+      const narrow = await alex.evaluate(async () => {
+        const st = document.getElementById('game-stage');
+        const old = st.getAttribute('style') ?? '';
+        st.style.width = '260px';
+        st.style.right = 'auto';
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const name = st.querySelector('.game-stage-title-name');
+        const by = st.querySelector('.game-stage-title-by');
+        const box = st.querySelector('.game-stage-title').getBoundingClientRect();
+        const n = name?.getBoundingClientRect();
+        const stageRight = st.getBoundingClientRect().right;
+        const out = name && by && n ? { name: name.textContent, whole: name.scrollWidth <= name.clientWidth + 1 && n.right <= box.right + 1, inside: box.right <= stageRight + 1 } : null;
+        st.setAttribute('style', old);
+        return out;
+      });
+      check(!!narrow && narrow.whole && narrow.inside, 'a 260 px window: the game\'s name stays whole on its own row of the head, inside the window (R10)', JSON.stringify(narrow));
+    }
     // Close it again so the hall never fills up.
     await alex.evaluate(() => document.querySelector('#game-stage .game-end')?.click());
     await until(() => alex.evaluate(() => document.getElementById('game-stage').hidden), 4000);

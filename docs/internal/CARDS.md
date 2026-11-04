@@ -154,6 +154,11 @@ Planner to merge them once main is green.
 - Why: B noticed "Tic-tac-… · started by Alex" in a narrow free window (outside GP's scope).
 - Done when: the game's name always shows in full; "started by …" shortens or goes first.
 - Tests: games harness at the smallest free-window size.
+- Done (0.9.97.15): the head was one line, "name · started by …" as one cut string beside six buttons, so the name went
+  first ("Tic-tac-to…" even at the default 400 px). Now the name and "· started by …" are two parts (the name never
+  shrinks, the rest is cut first, the tooltip has it all), and a table's window under 460 px wraps its head: the title
+  on its own row, the buttons on the next (the side games keep their one-row head, card GP). Checked at the free
+  window's real sizes (400 / 280 / 180 px); games-gallery harness: a narrow window keeps the name whole and inside.
 
 ### R11. Fix: two people with the same name and avatar count as one (owner's bug; lane A)
 - Why: owner: joining his own room from a second browser with the same name and avatar showed one person. Two people
