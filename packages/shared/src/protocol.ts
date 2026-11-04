@@ -467,6 +467,8 @@ export type ClientMessage =
   | { t: 'home' }
   /** Snack Bar served a customer while the film plays: a coin for the room's shared tip jar (side games 2, pick 5). */
   | { t: 'tip' }
+  /** Test Lab (DL3b): only a local lab server (`SWM_LAB_SERVER`) acts on it; elsewhere `bad_message`. */
+  | { t: 'lab'; op: 'tipjar' }
   /** Window Garden: a cutting of a bloomed plant for someone in the room (side games 2, pick 8). */
   | { t: 'gift'; to: string; plant: string }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
@@ -1034,6 +1036,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'at':
       if (m.table === null) return { t: 'at', table: null };
       return typeof m.table === 'string' && TABLE_ID.test(m.table) ? { t: 'at', table: m.table } : null;
+    case 'lab':
+      return m.op === 'tipjar' ? { t: 'lab', op: 'tipjar' } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

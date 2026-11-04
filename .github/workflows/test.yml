@@ -88,7 +88,8 @@ jobs:
         working-directory: apps/server
         run: |
           # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
-          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 > ../../wrangler.log 2>&1 &
+          # SWM_LAB_SERVER: the Test Lab's server powers (DL3b, lab.ts); never in wrangler.jsonc or the deploy.
+          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1 > ../../wrangler.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
             sleep 1
@@ -99,6 +100,8 @@ jobs:
         if: github.event_name != 'push'
         env:
           SWM_E2E_UNPACED: '1'
+          # lab-server.mjs: this server has the lab powers; the live run (no LAB_SERVER) checks they are refused.
+          LAB_SERVER: '1'
         run: npm run e2e
 
       # Card A11y: axe-core (WCAG 2.1 A + AA) on home, help, join, room, settings, invite, games hall, tic-tac-toe and

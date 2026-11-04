@@ -1024,8 +1024,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `garden.grow` / `.bloom` / `.seeds` / `.hybrid` / `.sky` / `.rain` / `.visitor`, Five Frames `fiveFrames.answer` / `.day`.
   **Sandbox:** before a game's first cheat its real save is copied to `lab:real:<key>` (localStorage only, never synced);
   `games.restore` writes every copy back through `save` and fires `swm-lab-restore`, which the open games reload from.
-  No server powers yet: dama positions, skipping quiz / draw rounds and the tip jar wait for DL3b (local / test server
-  only). Harness `scripts/harness/lab-games/run.cjs` (23 checks, in CI).
+  Harness `scripts/harness/lab-games/run.cjs` (25 checks, in CI). **Server powers (DL3b):** only a local test server has
+  them: `wrangler dev --var SWM_LAB_SERVER:1` (CI's local server and `npm run dev`) AND a localhost address
+  (`apps/server/src/lab.ts` `labServer`, each object's `this.lab`); the flag is never in `wrangler.jsonc` or the deploy.
+  Messages: room `{t:'lab', op:'tipjar'}` (the tip jar fills for the film playing; elsewhere `bad_message`), Classics
+  `{t:'lab', position}` (`games/lab-positions.ts` `LAB_POSITIONS`: chess `mate1`, dama `chain`, backgammon `bearoff`,
+  each checked by its board's state check; a player; elsewhere `lab_off`), Quiz / Draw `{t:'lab', op:'skip'}` (the phase
+  ends now; elsewhere `lab_off`). Lab commands: `classics.position.<name>`, `quiz.skip`, `draw.skip` (registered by the
+  table pieces while mounted), `games.tipjar`. e2e `lab-server.mjs`: with `LAB_SERVER=1` (CI's local run) they work;
+  in the live run after every deploy every one is refused and nothing changes.
 - **Move to another device (0.9.96.4, card "Move my things to another device"):** profile menu → 📲 (`#profile-move`)
   or the other device's QR (`/#move=<code>`, `app.ts` `openMoveFromHash`, also on `hashchange`) → `ui/move-device.ts`
   (lazy chunk + `move-device.css`, own texts). Shared `move.ts`: `MOVE_KEYS` (snackBar, windowGarden, fiveFrames,

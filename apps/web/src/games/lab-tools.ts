@@ -3,7 +3,7 @@
 // game's real save is copied aside, and "Restore my real saves" puts every copy back. Nothing here talks to the server.
 // With the lab off, `debugHooks.register` only stores the factory; it runs only while the lab is open.
 
-import { ROOM_GAME_KINDS, type RoomGameKind } from '@swm/shared/protocol';
+import { ROOM_GAME_KINDS, type ClientMessage, type RoomGameKind } from '@swm/shared/protocol';
 import { SOLO_KINDS, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { debugHooks, type LabCommand } from '../debug-lab.ts';
 import { load, save } from '../storage.ts';
@@ -71,7 +71,7 @@ export const labTicks = (): number => labClock.speed;
 const SOLO_NAMES: Record<SoloKind, string> = { snack: 'Snack Bar', garden: 'Window Garden', word: 'Five Frames' };
 
 /** The hall's commands, registered once by the games stage. */
-export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSolo: (kind: SoloKind) => Promise<void>): () => void {
+export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSolo: (kind: SoloKind) => Promise<void>, send: (message: ClientMessage) => unknown): () => void {
   return debugHooks.register('games', () => {
     const commands: LabCommand[] = [
       ...ROOM_GAME_KINDS.map((kind): LabCommand => ({
@@ -118,6 +118,14 @@ export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSo
         undo: () => {
           labClock.playing = false;
         },
+      },
+      {
+        id: 'games.tipjar',
+        title: 'Fill the tip jar now',
+        help: 'Local lab server only: the room\'s tip jar fills for the film playing (+10 % for everyone this film).',
+        tab: 'games',
+        where: 'in a room with a film',
+        run: () => void send({ t: 'lab', op: 'tipjar' }),
       },
       {
         id: 'games.restore',

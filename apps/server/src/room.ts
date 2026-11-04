@@ -42,6 +42,7 @@ import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting
 import { freshRecaps, RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
+import { labServer } from './lab.ts';
 import { PLANT_IDS } from '@swm/shared/games/garden';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
@@ -260,6 +261,8 @@ export class Room extends DurableObject<Env> {
   private hostKey: string | null = null;
   /** True on a local test server (`wrangler dev`): local media links are allowed there (security L4). */
   private devHost = false;
+  /** A local lab server (`lab.ts`, Test Lab DL3b): only then does a `lab` message do anything. */
+  private lab = false;
   /** Security L3: person key → until when they may not make the room wait (memory only; at most a minute old). */
   private readonly waitCooldowns = new Map<string, number>();
   /** The last item that started playing (it got its "3-2-1" then, or didn't need one): no second countdown. */
@@ -384,6 +387,7 @@ export class Room extends DurableObject<Env> {
     const path = new URL(request.url).pathname;
     // A room on a local test server (`wrangler dev`) may queue local video files and film pages (harnesses).
     if (/^(localhost|127\.0\.0\.1)$/.test(new URL(request.url).hostname)) this.devHost = true;
+    this.lab ||= labServer(this.env, request);
     // Ana sayfadaki kayıtlı odalar listesi: oda hâlâ kayıtlı mı, adı, içeride kaç kişi var.
     if (path.endsWith('/info')) {
       // The join screen (0.9.91.20) also shows who is waiting and what is on: the names of up to 3 people (one per
@@ -579,6 +583,13 @@ export class Room extends DurableObject<Env> {
         }
         return;
       }
+      case 'lab':
+        // Test Lab (DL3b): fill the tip jar for the film now, on a local lab server only (`lab.ts`).
+        if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'bad_message' });
+        if (!this.room.state.item) return;
+        this.tipJar = { fill: 0, boost: this.room.state.item.id };
+        this.broadcast({ t: 'tipjar', fill: 0, size: TIP_JAR_SIZE, boost: this.tipJar.boost, by: me });
+        return;
       case 'gift': {
         // A cutting goes to one person in the room (by person, not to myself); its plant is checked against the album.
         const mine = attachment.pk;
@@ -2198,7 +2209,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'tip' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;
