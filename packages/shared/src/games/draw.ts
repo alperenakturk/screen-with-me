@@ -69,6 +69,8 @@ export type DrawClientMessage =
   | { t: 'stroke'; s: Stroke }
   | { t: 'clear' }
   | { t: 'undo' }
+  /** Puts back the last drawing action taken away with undo (P10). */
+  | { t: 'redo' }
   | { t: 'guess'; text: string }
   /** Oyunu bitirip lobiye dön, puanları sıfırla. */
   | { t: 'reset' }
@@ -165,6 +167,7 @@ export function parseDrawMessage(raw: string): DrawClientMessage | null {
     case 'start':
     case 'clear':
     case 'undo':
+    case 'redo':
     case 'reset':
     case 'ping':
       return { t: m.t };
