@@ -62,7 +62,7 @@ const boardSig = (page) =>
   page.evaluate(() => {
     const b = document.querySelector('#game-stage #xox-board');
     if (!b) return null;
-    return [...b.querySelectorAll('.xox-cell, .dama-cell, .four-cell, .bg-point')].map((c) => `${c.className.replace(/\b(placed|movable|picked|target|last)\b/g, '').replace(/\s+/g, ' ').trim()}|${c.textContent.trim()}`).join(';');
+    return [...b.querySelectorAll('.xox-cell, .dama-cell, .four-cell, .bg-point')].map((c) => `${c.className.replace(/\b(placed|movable|picked|target|last|flip)\b/g, '').replace(/\s+/g, ' ').trim()}|${c.textContent.trim()}`).join(';');
   });
 async function axeStage(page, label) {
   if (!AXE) return;
@@ -91,6 +91,11 @@ async function move(page, board) {
   return page.evaluate(async (board) => {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const q = (s) => document.querySelector(`#game-stage ${s}`);
+    if (board === 'reversi') {
+      const c = q('.rv-cell.target:not(:disabled)');
+      c?.click();
+      return !!c;
+    }
     if (board === 'xox' || board === 'four') {
       const c = q('.xox-cell:not([class*="mark-"]):not(:disabled), .four-cell:not(:disabled)');
       c?.click();
@@ -115,7 +120,7 @@ async function move(page, board) {
 
 (async () => {
   const browser = await chromium.launch();
-  for (const board of ['xox', 'four', 'dama', 'chess', 'backgammon']) {
+  for (const board of ['xox', 'four', 'dama', 'chess', 'backgammon', 'reversi']) {
     const room = 'gr' + Math.random().toString(36).slice(2, 8);
     const { ctx, page } = await person(browser, room, 'Robin', 'wizard');
     await run(page, 'games.open.classics');

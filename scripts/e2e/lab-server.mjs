@@ -49,6 +49,12 @@ console.log(lab ? 'local lab server: the lab messages must work' : 'not a lab se
     alex.send({ t: 'move', cell: 56 * 64 + 0 });
     const mate = await alex.wait((m) => m.t === 'state' && m.game.end === 'mate', 'mate');
     ok(mate.game.winner === 'X', 'Classics: Ra1-a8 mates from it');
+    alex.send({ t: 'lab', position: 'lastmove' });
+    const rv = await alex.wait((m) => m.t === 'state' && m.kind === 'reversi', 'reversi position');
+    ok(rv.game.board.filter((c) => c === null).length === 1, 'Classics: the lab sets the reversi last-move position');
+    alex.send({ t: 'move', cell: 63 });
+    const full = await alex.wait((m) => m.t === 'state' && m.kind === 'reversi' && m.game.winner !== null, 'reversi end');
+    ok(full.game.winner === 'X' && full.game.board.every(Boolean), 'Classics: dark fills the last cell and wins');
     alex.send({ t: 'lab', position: 'nope' });
     await alex.wait(isError('kind'), 'unknown position refused');
     ok(true, 'Classics: an unknown position is refused');

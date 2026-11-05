@@ -46,14 +46,14 @@ async function until(fn, ms = 6000) {
   check(hall.includes('classics') && !hall.includes('xox') && !hall.includes('four'), 'the hall has one Classics card, no separate XOX / Four in a Row', JSON.stringify(hall));
   await page.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]').click());
   const shelf = await until(() => page.evaluate(() => { const s = document.querySelector('#game-stage .cl-picker'); return s && !s.hidden ? [...s.querySelectorAll('.cl-box')].map((b) => `${b.dataset.board}:${b.disabled}`) : null; }), 8000);
-  check(!!shelf && shelf.length === 5 && shelf.every((b) => b.endsWith(':false')) && shelf.includes('chess:false') && shelf.includes('backgammon:false'), 'the picker: XOX, Four in a Row, Dama, Chess and Backgammon, all to play', JSON.stringify(shelf));
+  check(!!shelf && shelf.length === 6 && shelf.every((b) => b.endsWith(':false')) && shelf.includes('chess:false') && shelf.includes('backgammon:false') && shelf.includes('reversi:false'), 'the picker: XOX, Four in a Row, Dama, Chess, Backgammon and Reversi, all to play', JSON.stringify(shelf));
   // CL2: the picker comes first, alone: no board (no XOX table) behind it, and the window has the picker's size.
   const alone = await page.evaluate(() => {
     const table = document.querySelector('#game-stage .mt-table');
     const cells = [...document.querySelectorAll('#game-stage .xox-cell, #game-stage .dama-cell')].filter((c) => c.getBoundingClientRect().width > 0).length;
     return { tableHidden: !!table?.hidden, cells, board: document.querySelector('#game-stage .xox-page')?.dataset.board, cards: document.querySelectorAll('#game-stage .cl-card .cl-card-art svg').length };
   });
-  check(alone.tableHidden && alone.cells === 0 && alone.board === 'picker' && alone.cards === 5, 'the picker shows alone: five cards with covers, no board behind it', JSON.stringify(alone));
+  check(alone.tableHidden && alone.cells === 0 && alone.board === 'picker' && alone.cards === 6, 'the picker shows alone: six cards with covers, no board behind it', JSON.stringify(alone));
   await wait(400);
   await page.screenshot({ path: __dirname + '/classics-shelf.png' });
 
@@ -102,7 +102,7 @@ async function until(fn, ms = 6000) {
     return { picker, enabled };
   });
   const chessNow = await until(() => page.evaluate(() => document.querySelector('#game-stage .xox-page')?.dataset.board === 'chess' && document.querySelectorAll('#game-stage .chess-cell').length === 64), 6000);
-  check(changed.picker && changed.enabled === 5 && !!chessNow, '"End and change" opens the picker with every game; picking chess ends the dama game', JSON.stringify(changed));
+  check(changed.picker && changed.enabled === 6 && !!chessNow, '"End and change" opens the picker with every game; picking chess ends the dama game', JSON.stringify(changed));
   await page.evaluate(() => {
     document.querySelector('#game-stage #cl-shelf-open')?.click();
   });
@@ -191,6 +191,37 @@ async function until(fn, ms = 6000) {
   check(!!back, 'Glowbeam rolls and plays its turn; then the Roll button is mine again');
   const bgFit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });
   check(bgFit, 'the backgammon board fits the game window without scrollbars');
+
+  // Reversi: another fresh room, reversi from the shelf, Glowbeam (medium). My legal cells show; a tap puts a disc,
+  // turns the closed line over, and Glowbeam answers.
+  await page.goto(`${SITE}/r/${room}r#back`);
+  await page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 15000 });
+  await wait(3200);
+  await page.evaluate(async () => {
+    document.getElementById('game-btn').click();
+    await new Promise((r) => setTimeout(r, 400));
+    document.querySelector('#game-menu [data-tab="together"]')?.click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.querySelector('#game-menu [data-kind="classics"]').click();
+  });
+  await until(() => page.evaluate(() => { const b = document.querySelector('#game-stage .cl-box[data-board="reversi"]'); return b && !b.disabled; }), 5000);
+  await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="reversi"]').click());
+  const rvStart = await until(() => page.evaluate(() => { const c = document.querySelectorAll('#game-stage .rv-board .rv-cell'); return c.length === 64 ? [document.querySelectorAll('#game-stage .rv-cell.mark-X').length, document.querySelectorAll('#game-stage .rv-cell.mark-O').length].join('/') : null; }), 6000);
+  check(rvStart === '2/2', 'reversi is on the table: 8 × 8, two discs each in the middle', String(rvStart));
+  await page.evaluate(() => [...document.querySelectorAll('#game-stage .cl-bot-level')][1].click());
+  await until(() => page.evaluate(() => document.querySelector('#game-stage #seat-1')?.classList.contains('bot')), 5000);
+  const hints = await until(() => page.evaluate(() => { const t = [...document.querySelectorAll('#game-stage .rv-cell.target:not(:disabled)')]; return t.length ? t.map((c) => [...c.parentNode.children].indexOf(c)).join(',') : null; }), 5000);
+  check(hints === '19,26,37,44', 'my turn: the four legal cells light up (and only they can be pressed)', String(hints));
+  await page.screenshot({ path: __dirname + '/classics-reversi.png' });
+  await page.evaluate(() => document.querySelectorAll('#game-stage .rv-cell')[19].click());
+  const turned = await until(() => page.evaluate(() => { const c = document.querySelectorAll('#game-stage .rv-cell'); return c[19].classList.contains('mark-X') && c[27].classList.contains('mark-X'); }), 4000);
+  check(!!turned, 'a tap on d3 puts a dark disc there and turns d4 over');
+  const rvAnswered = await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .rv-cell.mark-O').length >= 2 && /your turn/i.test(document.getElementById('xox-status')?.textContent ?? '') && document.querySelectorAll('#game-stage .rv-cell.target').length > 0), 8000);
+  check(!!rvAnswered, 'Glowbeam answers; then it is my turn again with new legal cells');
+  const counted = await page.evaluate(() => document.querySelector('#game-stage #seat-0 .mt-taken')?.textContent ?? '');
+  check(/^\d+$/.test(counted.trim()), 'my seat shows my disc count', counted);
+  const rvFit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });
+  check(rvFit, 'the reversi board fits the game window without scrollbars');
 
   await browser.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Classics harness passed');

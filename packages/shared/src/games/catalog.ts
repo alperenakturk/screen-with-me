@@ -31,13 +31,14 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
 };
 
 /** Classics (CL2): the window's size per screen of the table: the picker, then each board built around itself. */
-export const CLASSICS_SIZES: Record<'picker' | 'xox' | 'four' | 'dama' | 'chess' | 'backgammon', Pick<GameInfo, 'size' | 'fit'>> = {
+export const CLASSICS_SIZES: Record<'picker' | 'xox' | 'four' | 'dama' | 'chess' | 'backgammon' | 'reversi', Pick<GameInfo, 'size' | 'fit'>> = {
   picker: { size: [600, 560], fit: [480, 440] },
   xox: { size: [540, 620], fit: [320, 460] },
   four: { size: [560, 640], fit: [380, 480] },
   dama: { size: [540, 720], fit: [380, 540] },
   chess: { size: [540, 720], fit: [380, 540] },
   backgammon: { size: [720, 660], fit: [560, 500] },
+  reversi: { size: [540, 720], fit: [380, 540] },
 };
 
 /**
