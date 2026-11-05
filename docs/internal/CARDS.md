@@ -67,12 +67,37 @@ Card format:
   fixes with regression checks, the owner's ordered hand-test list (only what needs a human) in STATUS and on the board.
   Includes the owner's bug: "Keep the controls open" must keep the rail out in the window too, not only in fullscreen.
 - Found so far: the Classics shelf stays open for someone who joined before the first move (Game Studio fixed it in BHG).
+- Done: #307 (0.9.97.56), Developer A: every harness green on main, stale ones updated, "Keep the controls open" holds
+  the rail in the window too, the owner's ordered hand-test round in STATUS.
 
 ### BHG. Games quality pass before 0.9.98 (Game Studio)
 - Done when: every game at 4 sizes × EN / TR, alone and with fake friends, no scrollbars, text ≥ 13 px, a11y, reload /
   drop mid-game; fixes with checks; the games part of the owner's test list; 2–3 options for the next game work.
 - Status: PR #306 (0.9.97.57): games-sweep (440 checks), games-resume, a 20 s grace in Quiz / Draw for a short drop,
   reopen after a reload, the Classics shelf fix.
+- Done: #306 (0.9.97.57), Game Studio.
+
+### EXT1. Film page: games, the rail in fullscreen, the film's own ⛶ (owner's bugs, 5 Nov 2026; lane A)
+- Why: owner: "games don't work in the extension"; in film-page fullscreen the rail stays after the mouse goes back to
+  the middle (until pause / play); the film's own fullscreen button does nothing, only ours works.
+- Done when: the games hall and a table / side game work on the film page; the rail goes within ½ s when the mouse
+  leaves it in fullscreen and in the window; the film's own ⛶ toggles the room's fullscreen for top-frame and iframe
+  players.
+- Tests: embed harness (headful) with new EXT1 checks; the owner's hand test (update the extension first).
+- Done: #310 (0.9.97.58), Developer A: the hall is an island on the film page, the film's "edge" report closes the rail
+  on its next move, the film's element fullscreen becomes the page's.
+
+### CL2. Classics and game windows redesign (owner, 5 Nov 2026, "important"; Game Studio)
+- Why: owner (screenshot): "Classics looks awful: XOX in the background, the games on the side, nothing makes sense";
+  "always open games in the mini window at a size that fits each game"; "not the game small on the right and its
+  settings on the left: something cute and proper for each game"; picking chess once locked the table to chess.
+- Done when: every game opens as the mini window at its own size (the video's place stays an option, remembered per
+  kind); Classics opens on a picker with only the game cards; each board has its own layout (board first, seats above /
+  below, Glowbeam and watchers as small chips); "Change game" works at any time (asks while a game runs; a seated player
+  decides, watchers can't); Quiz / Draw lobbies compact.
+- Tests: e2e `classics-switch.mjs` (all 20 from → to pairs, Glowbeam moving first, two people), games-sweep, classics
+  harness; the owner's hand test.
+- Done: #309 (0.9.97.59), Game Studio.
 
 ### CI. CI diet (owner's pick "safe + short main", 4 Nov 2026; lane B, first in the queue)
 - Why: 478 runs / ≈ 3500 min in four days; docs-only PRs ran the whole suite.
@@ -203,7 +228,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6. Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI ✅ → R26 ✅ → R25 ✅ → DL1 ✅ → DL2 ✅ → R4-2/3/5 ✅. Lane B2 (fresh session): SZ ✅ → BH8 ✅ → BH9 ✅ → DL4 ✅ → DL5 ✅ → CAM1 → MB. Game Studio: Draw & Guess ✅ → chess + backgammon ✅ → DL3a ✅ → DL3b ✅ → BHG (.57). Lane A: 15e ✅ → R22 + R23 ✅ → 15f + R27 ✅ → GH ✅ → R4-1/6/7/8 ✅ → R4-9/10 ✅ → BH10 (.56). Security: SEC4 ✅. Design: GH art ✅.
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6. Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI ✅ → R26 ✅ → R25 ✅ → DL1 ✅ → DL2 ✅ → R4-2/3/5 ✅. Lane B2 (fresh session): SZ ✅ → BH8 ✅ → BH9 ✅ → DL4 ✅ → DL5 ✅ → CAM1 → MB. Game Studio: Draw & Guess ✅ → chess + backgammon ✅ → DL3a ✅ → DL3b ✅ → BHG ✅ (.57) → CL2 ✅ (.59) → next game (owner's pick). Lane A: 15e ✅ → R22 + R23 ✅ → 15f + R27 ✅ → GH ✅ → R4-1/6/7/8 ✅ → R4-9/10 ✅ → BH10 ✅ (.56) → EXT1 ✅ (.58) → privacy policy H3 + M7 (.60). Security: SEC4 ✅. Design: GH art ✅.
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -1263,6 +1288,8 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   address of the own domain later; no postal address); minimum age 13+, with "under 16 you need a parent's
   permission"; a lawyer reads policy + terms before the store submission if the owner can find one (not blocking);
   the up-to-3 names on the join card stay and the policy says so (M7). Planner: before the YouTube API audit (0.9.98).
+- Lane: A, next (Planner, 5 Nov 2026; version 0.9.97.60). Use `kvkk-gdpr-denetim`'s `SKILL.md` from `my-awesome-list`
+  as the checklist (attach it with `add_repo`, read-only).
 
 ### Security: TV link hardening before the TV leaves the lab (M8)
 - Severity: medium (only while `?tvlab=1` hides the TV)
