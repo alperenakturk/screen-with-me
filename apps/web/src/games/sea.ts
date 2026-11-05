@@ -22,6 +22,10 @@ import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
 import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
+import sea1Art from './art/tutorial/sea-1-place.svg?raw';
+import sea2Art from './art/tutorial/sea-2-shoot.svg?raw';
+import sea3Art from './art/tutorial/sea-3-sink.svg?raw';
+import { tableHowTo } from './how-to-play.ts';
 
 type State = Extract<SeaServerMessage, { t: 'state' }>;
 
@@ -73,6 +77,12 @@ const TEXT = {
     full: 'The table is full.',
     version: 'Reload the page for the new version.',
     reconnecting: 'Reconnecting…',
+    how1: 'Place your fleet',
+    how1Line: 'Shuffle, drag or turn your ships; they may not touch. Then press Ready.',
+    how2: 'Call your shots',
+    how2Line: 'Tap a cell on their sea. A hit shoots again; a miss passes the turn.',
+    how3: 'Sink them all',
+    how3Line: 'A sunk ship shows the water around it. Sink the whole fleet first to win.',
   },
   tr: {
     theirSea: 'Onun denizi',
@@ -121,6 +131,12 @@ const TEXT = {
     full: 'Masa dolu.',
     version: 'Yeni sürüm için sayfayı yenile.',
     reconnecting: 'Yeniden bağlanıyor…',
+    how1: 'Filonu yerleştir',
+    how1Line: 'Gemilerini karıştır, sürükle ya da çevir; birbirine değemezler. Sonra Hazır de.',
+    how2: 'Atışını yap',
+    how2Line: 'Onların denizinde bir kareye dokun. İsabet edersen yine atarsın; ıska sırayı geçirir.',
+    how3: 'Hepsini batır',
+    how3Line: 'Batan geminin çevresindeki su görünür. Bütün filoyu ilk batıran kazanır.',
   },
 } as const;
 
@@ -565,8 +581,15 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       { id: 'sea.reveal', title: 'Sea Battle: show their fleet (this tab)', help: 'Local lab server only: the other fleet shows faintly on their sea.', tab: 'games' as const, where: 'at a Sea Battle table, seated', run: () => send({ t: 'lab', op: 'reveal' }) },
     ],
   }));
+  // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).
+  const how = tableHowTo(app, 'sea:howSeen', () => [
+    { art: sea1Art, title: tx('how1'), line: tx('how1Line') },
+    { art: sea2Art, title: tx('how2'), line: tx('how2Line') },
+    { art: sea3Art, title: tx('how3'), line: tx('how3Line') },
+  ], bar);
   return () => {
     offLab();
+    how.destroy();
     document.removeEventListener('pointerdown', closeWatch);
     document.removeEventListener('pointerup', onUp);
     setGameLive(false);

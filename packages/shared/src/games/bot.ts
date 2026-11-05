@@ -130,9 +130,15 @@ function evaluateReversi(state: BoardState, me: Mark): number {
 }
 
 const WIN = 10_000;
-function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha: number, beta: number): number {
+/** `hot`: the move that led here took a piece (an exchange may be going on; dama: or a chain goes on). */
+function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha: number, beta: number, hot = false): number {
   if (state.winner !== null) return state.winner === 'draw' ? 0 : state.winner === me ? WIN + depth : -WIN - depth;
-  if (depth === 0) return QUIET_KINDS.has(kind) ? quiesce(kind, state, me, alpha, beta, QUIESCE_PLIES) : evaluate(kind, state, me);
+  // Captures are followed at the search's end after a capture (an exchange is going on), during a dama chain, and
+  // whenever the other side is to move there (it may take something at once); a quiet leaf with me to move is cheap.
+  if (depth === 0)
+    return QUIET_KINDS.has(kind) && (hot || state.turn !== me || (kind === 'dama' && (state as DamaState).chain !== null))
+      ? quiesce(kind, state, me, alpha, beta, QUIESCE_PLIES)
+      : evaluate(kind, state, me);
   if (Date.now() > deadline) throw TIME_UP;
   const moves = ordered(kind, state, movesOf(kind, state));
   if (!moves.length) return 0;
@@ -141,7 +147,7 @@ function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha
   for (const move of moves) {
     const next = apply(kind, state, move);
     if (!next) continue;
-    const value = search(kind, next, me, depth - 1, alpha, beta);
+    const value = search(kind, next, me, depth - 1, alpha, beta, QUIET_KINDS.has(kind) && took(state, next));
     if (maximizing) {
       best = Math.max(best, value);
       alpha = Math.max(alpha, value);
@@ -161,11 +167,16 @@ function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha
  * ("stand pat") unless dama forces it on.
  */
 const QUIET_KINDS: ReadonlySet<BotKind> = new Set(['chess', 'dama']);
-const QUIESCE_PLIES = 6;
+const QUIESCE_PLIES = 4;
 function pieces(state: BoardState, mark: Mark): number {
   let n = 0;
   for (const c of state.board) if (c === mark) n++;
   return n;
+}
+/** Did the move from `before` to `after` take a piece of the other side? */
+function took(before: BoardState, after: BoardState): boolean {
+  const them = other(before.turn);
+  return pieces(after, them) < pieces(before, them);
 }
 function quiesce(kind: BotKind, state: BoardState, me: Mark, alpha: number, beta: number, left: number): number {
   if (state.winner !== null) return state.winner === 'draw' ? 0 : state.winner === me ? WIN : -WIN;
@@ -262,22 +273,27 @@ export function botMove(kind: BotKind, state: BoardState, level: BotLevel, rando
     const out: [number, number][] = [];
     for (const move of ordered(kind, state, moves)) {
       const next = apply(kind, state, move);
-      if (next) out.push([move, search(kind, next, me, depth - 1, -Infinity, Infinity)]);
+      if (next) out.push([move, search(kind, next, me, depth - 1, -Infinity, Infinity, QUIET_KINDS.has(kind) && took(state, next))]);
     }
     return out;
   };
-  // The capture games deepen step by step against a time budget (GP2): the last finished depth's answer is played, so
-  // Glowbeam never keeps a table waiting, however busy the position.
+  // The capture games think against a time budget (GP2): the full depth first; if a very busy position runs out of
+  // time, a quick one-move look answers instead, so Glowbeam never keeps a table waiting.
   let scored: [number, number][] = [];
   if (QUIET_KINDS.has(kind)) {
-    deadline = Date.now() + BOT_BUDGET_MS;
-    try {
-      for (let depth = 1; depth <= DEPTH[kind][level]; depth++) scored = root(depth);
-    } catch (error) {
-      if (error !== TIME_UP) throw error;
-    } finally {
-      deadline = Infinity;
+    const depths = DEPTH[kind][level] > 1 ? [DEPTH[kind][level], 1] : [1];
+    for (const [i, depth] of depths.entries()) {
+      deadline = Date.now() + (i === 0 ? BOT_BUDGET_MS : BOT_BUDGET_MS / 2);
+      try {
+        scored = root(depth);
+        break;
+      } catch (error) {
+        if (error !== TIME_UP) throw error;
+      } finally {
+        deadline = Infinity;
+      }
     }
+    if (!scored.length) return moves[0]!;
   } else scored = root(DEPTH[kind][level]);
   if (!scored.length) return moves[0]!;
   const top = Math.max(...scored.map(([, v]) => v));

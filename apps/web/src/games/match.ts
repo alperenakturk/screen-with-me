@@ -24,6 +24,19 @@ import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { LAB_POSITIONS } from '@swm/shared/games/lab-positions';
 import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
+import xox1Art from './art/tutorial/xox-1-turns.svg?raw';
+import xox2Art from './art/tutorial/xox-2-line.svg?raw';
+import four1Art from './art/tutorial/four-1-drop.svg?raw';
+import four2Art from './art/tutorial/four-2-four.svg?raw';
+import dama1Art from './art/tutorial/dama-1-move.svg?raw';
+import dama2Art from './art/tutorial/dama-2-jump.svg?raw';
+import chess1Art from './art/tutorial/chess-1-moves.svg?raw';
+import chess2Art from './art/tutorial/chess-2-mate.svg?raw';
+import backgammon1Art from './art/tutorial/backgammon-1-roll.svg?raw';
+import backgammon2Art from './art/tutorial/backgammon-2-home.svg?raw';
+import reversi1Art from './art/tutorial/reversi-1-flip.svg?raw';
+import reversi2Art from './art/tutorial/reversi-2-count.svg?raw';
+import { tableHowTo, type HowToPlay } from './how-to-play.ts';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
@@ -88,6 +101,30 @@ const TEXT = {
     reversiLine: 'Close a line, turn it over',
     rvPassed: '{name} has no move and passes',
     rvDiscs: '{n} discs',
+    how_xox1: 'Take turns',
+    how_xox1Line: 'X and O put one mark each turn.',
+    how_xox2: 'Three in a row',
+    how_xox2Line: 'Three in a line, across, down or corner to corner, wins.',
+    how_four1: 'Drop a disc',
+    how_four1Line: 'Pick a column: your disc falls to the lowest free place.',
+    how_four2: 'Connect four',
+    how_four2Line: 'Four of your colour in a line wins, in any direction.',
+    how_dama1: 'Forward or sideways',
+    how_dama1Line: 'A man steps one square forward or sideways, never back.',
+    how_dama2: 'Jump and crown',
+    how_dama2Line: 'Jump over a piece to take it (taking is a must). Reach the far row to become a king.',
+    how_chess1: 'Tap a piece',
+    how_chess1Line: 'Its moves light up; tap one to play it.',
+    how_chess2: 'Checkmate wins',
+    how_chess2Line: 'Trap the other king so it has no way out.',
+    how_backgammon1: 'Roll and move',
+    how_backgammon1Line: 'Roll the dice, then move your checkers by the numbers you rolled.',
+    how_backgammon2: 'Bring them home',
+    how_backgammon2Line: 'Get all 15 into your home corner, then bear them off first.',
+    how_reversi1: 'Close a line',
+    how_reversi1Line: 'Put a disc so the other colour sits between it and one of yours: those discs turn over.',
+    how_reversi2: 'Most discs win',
+    how_reversi2Line: 'No move? You pass. When nobody can move, the most discs win.',
   },
   tr: {
     check: 'Şah!',
@@ -138,6 +175,30 @@ const TEXT = {
     reversiLine: 'Sırayı kapat, taşları çevir',
     rvPassed: '{name} oynayamıyor, pas geçti',
     rvDiscs: '{n} taş',
+    how_xox1: 'Sırayla oyna',
+    how_xox1Line: 'X ve O her turda bir işaret koyar.',
+    how_xox2: 'Üçü yan yana',
+    how_xox2Line: 'Yan yana, alt alta ya da çapraz üç işaret kazanır.',
+    how_four1: 'Pulu bırak',
+    how_four1Line: 'Bir sütun seç: pulun en alttaki boş yere düşer.',
+    how_four2: 'Dördünü birleştir',
+    how_four2Line: 'Kendi renginden dördü bir hizada kazanır, her yönde.',
+    how_dama1: 'İleri ya da yana',
+    how_dama1Line: 'Taş bir kare ileri ya da yana gider, asla geri gitmez.',
+    how_dama2: 'Atla ve dama ol',
+    how_dama2Line: 'Bir taşın üstünden atlayıp onu al (almak zorunlu). Karşı sıraya varan dama olur.',
+    how_chess1: 'Taşa dokun',
+    how_chess1Line: 'Gidebileceği kareler yanar; birine dokunup oyna.',
+    how_chess2: 'Şah mat kazanır',
+    how_chess2Line: 'Karşı şahı kaçacak yeri kalmayacak şekilde kıstır.',
+    how_backgammon1: 'Zar at ve oyna',
+    how_backgammon1Line: 'Zarları at, pullarını gelen sayılar kadar ilerlet.',
+    how_backgammon2: 'Eve topla',
+    how_backgammon2Line: '15 pulun hepsini evine getir, sonra ilk sen topla.',
+    how_reversi1: 'Sırayı kapat',
+    how_reversi1Line: 'Taşını, karşı renk seninkiyle onun arasında kalacak yere koy: o taşlar döner.',
+    how_reversi2: 'Çok taş kazanır',
+    how_reversi2Line: 'Hamlen yoksa pas geçersin. Kimse oynayamayınca taşı çok olan kazanır.',
   },
 } as const;
 const tc = (key: keyof (typeof TEXT)['en'], values: Record<string, string | number> = {}): string =>
@@ -161,6 +222,18 @@ const COVER: Record<string, string> = {
   backgammon: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#4a2c1c"/><rect x="10" y="8" width="100" height="64" rx="5" fill="#2e5d3c"/><rect x="57" y="8" width="6" height="64" fill="#4a2c1c"/><g fill="#e9c27a"><path d="M12 8l7 26 7-26zM40 8l7 26 7-26zM66 8l7 26 7-26zM94 8l7 26 7-26z"/><path d="M26 72l7-26 7 26zM80 72l7-26 7 26z"/></g><g fill="#c0533a"><path d="M26 8l7 26 7-26zM80 8l7 26 7-26z"/><path d="M12 72l7-26 7 26zM40 72l7-26 7 26zM66 72l7-26 7 26zM94 72l7-26 7 26z"/></g><circle cx="19" cy="64" r="5" fill="#fff8ec"/><circle cx="101" cy="16" r="5" fill="#22202b"/></svg>',
   reversi: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#173826"/><g transform="translate(28 8)"><rect width="64" height="64" rx="3" fill="#2f7a4c"/><g stroke="#1d5534" stroke-width="1.2"><path d="M16 0v64M32 0v64M48 0v64M0 16h64M0 32h64M0 48h64"/></g><g fill="#22202b" stroke="#000" stroke-width="1"><circle cx="40" cy="24" r="6"/><circle cx="24" cy="40" r="6"/><circle cx="56" cy="40" r="6"/></g><g fill="#fff8ec" stroke="#b9a37c" stroke-width="1"><circle cx="24" cy="24" r="6"/><circle cx="40" cy="40" r="6"/></g><circle cx="40" cy="56" r="3" fill="#ffc65a"/><path d="M48 18a8 8 0 0 1 4 6" stroke="#ffc65a" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg>',
 };
+
+/** GP2: each board's "How to play" pictures (our own, `docs/internal/design/games/tutorial-tables/gen.mjs`). */
+const HOW_ART: Partial<Record<GameKind, string[]>> = {
+  xox: [xox1Art, xox2Art],
+  four: [four1Art, four2Art],
+  dama: [dama1Art, dama2Art],
+  chess: [chess1Art, chess2Art],
+  backgammon: [backgammon1Art, backgammon2Art],
+  reversi: [reversi1Art, reversi2Art],
+};
+const howCards = (board: GameKind) =>
+  (HOW_ART[board] ?? []).map((art, i) => ({ art, title: tc(`how_${board}${i + 1}` as 'check'), line: tc(`how_${board}${i + 1}Line` as 'check') }));
 
 let artId = 0;
 /** Glowbeam, drawn small (our own art; ids made unique per copy). */
@@ -253,6 +326,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   // CL2 (owner: "picked chess once, then couldn't switch"): "Change game" works at any time. Between games the picker
   // opens at once; while a game runs it asks first, and the pick then ends that game (`switch` with `end`).
   let endOnPick = false;
+  let how: HowToPlay | null = null;
+  let howTimer: ReturnType<typeof setTimeout> | undefined;
   const running = () => !!state?.started && state.game.winner === null;
   shelfButton.addEventListener('click', async () => {
     if (running()) {
@@ -620,6 +695,16 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const screen = classics && shelfOpen ? 'picker' : kind;
     if (page.dataset.board !== screen) {
       page.dataset.board = screen;
+      // GP2: the board's "How to play" cards (shown the first time this browser plays it) and its "?" in the head.
+      // A pick first redraws the table's old board until the server's answer comes: wait a moment so only the board
+      // that stays gets its cards.
+      how?.destroy();
+      how = null;
+      clearTimeout(howTimer);
+      if (screen !== 'picker' && HOW_ART[screen as GameKind])
+        howTimer = setTimeout(() => {
+          if (page.dataset.board === screen && !how) how = tableHowTo(app, `classics:${screen}:howSeen`, () => howCards(screen as GameKind), app.querySelector<HTMLElement>('.mt-bar'));
+        }, 450);
       page.dispatchEvent(new Event('swm-game-size', { bubbles: true }));
     }
     watchOpen.textContent = `👁 ${watchers.length}`;
@@ -772,6 +857,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   }));
   return () => {
     offLab();
+    clearTimeout(howTimer);
+    how?.destroy();
     shelfButton.remove();
     document.removeEventListener('pointerdown', closeWatch);
     setGameLive(false);

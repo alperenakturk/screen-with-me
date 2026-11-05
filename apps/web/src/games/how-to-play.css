@@ -46,3 +46,8 @@ button.htp-open {
 button.htp-open:hover { background: rgba(255, 255, 255, 0.18); }
 @media (prefers-reduced-motion: reduce) { .htp { animation: none; } }
 html.phone .htp .htp-btn { min-height: 44px; }
+
+/* GP2: the tables' "?" sits in the game window's head with its other buttons (same size, same look). */
+.game-head-slot .htp-head { min-width: 36px; padding: 0 10px; font-weight: 800; }
+/* On a phone the tables' "?" sits at the start of the game's own top bar. */
+:is(.mt-bar, .sea-bar, .draw-top) > .htp-head { flex: none; min-width: 44px; min-height: 44px; }

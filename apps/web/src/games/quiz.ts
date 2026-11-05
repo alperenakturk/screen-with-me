@@ -26,6 +26,11 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { lang } from '../i18n.ts';
+import quiz1Art from './art/tutorial/quiz-1-answer.svg?raw';
+import quiz2Art from './art/tutorial/quiz-2-reveal.svg?raw';
+import quiz3Art from './art/tutorial/quiz-3-podium.svg?raw';
+import { tableHowTo } from './how-to-play.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
@@ -47,6 +52,28 @@ function rememberSeen(id: number): void {
   if (list.includes(id)) return;
   save(SEEN_KEY, JSON.stringify([...list, id].slice(-QUIZ_SEEN_KEEP)));
 }
+
+
+/** GP2: this game's "How to play" texts (its own, like every game chunk's; the room page's i18n stays small). */
+const TEXT = {
+  en: {
+    how1: 'Answer fast',
+    how1Line: 'Pick one of four answers before the time runs out; the faster, the more points.',
+    how2: 'See who was right',
+    how2Line: 'The right answer lights up, with everyone’s picks.',
+    how3: 'Top the podium',
+    how3Line: 'After ten questions, the most points win.',
+  },
+  tr: {
+    how1: 'Hızlı cevapla',
+    how1Line: 'Süre bitmeden dört cevaptan birini seç; ne kadar hızlı, o kadar puan.',
+    how2: 'Kim bildi, gör',
+    how2Line: 'Doğru cevap yanar, herkesin seçtiğiyle birlikte.',
+    how3: 'Kürsüye çık',
+    how3Line: 'On sorunun sonunda puanı en çok olan kazanır.',
+  },
+} as const;
+const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
 
 export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
@@ -314,8 +341,15 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       { id: 'quiz.skip', title: 'Quiz: end this phase now', help: 'Local lab server only: the question / round / reveal ends at once.', tab: 'games', where: 'at a Quiz table', run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));
+  // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).
+  const how = tableHowTo(app, 'quiz:howSeen', () => [
+    { art: quiz1Art, title: tx('how1'), line: tx('how1Line') },
+    { art: quiz2Art, title: tx('how2'), line: tx('how2Line') },
+    { art: quiz3Art, title: tx('how3'), line: tx('how3Line') },
+  ], app.querySelector<HTMLElement>('.draw-top'));
   return () => {
     offLab();
+    how.destroy();
     setGameLive(false);
     close();
     clearInterval(ticker);
