@@ -45,8 +45,9 @@ if (process.env.LAB_CODE) {
 }
 
 // The limit: the check shares the saved-room lookups' limit (60 per address and minute) under its own key.
+// The limiter counts per minute window, so a burst can straddle a window's end: keep asking (at most 130) until it says 429.
 const statuses = [];
-for (let i = 0; i < 70; i++) statuses.push((await ask({ code: `try-${i}` })).status);
+for (let i = 0; i < 130 && !statuses.includes(429); i++) statuses.push((await ask({ code: `try-${i}` })).status);
 ok(statuses.includes(429) && statuses.every((s) => s === 200 || s === 429), 'Guessing many codes in a row is slowed down (429)', `${statuses.filter((s) => s === 429).length} × 429`);
 
 console.log('\n✓ The Test Lab stays locked without the code');
