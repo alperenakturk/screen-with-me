@@ -99,12 +99,12 @@ Sidelit has a single purpose: watch parties. It keeps one HTML5 video, in the ta
 
 `storage`:
 ```
-Stores the website's settings (nickname, avatar, theme, language, saved rooms, the user's own custom emoji collection and a random browser ID) locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website, and which tab shows a room layer (chrome.storage.session), so it survives the service worker restarting. The custom emoji collection never leaves the device by itself; an image is sent to a room only when the user adds it there.
+Stores the website's settings locally in chrome.storage.local, so the room layer on the film page uses the same settings as the website: the nickname and avatar (per room and the default), a random browser ID, language, theme and screen settings, saved rooms and the last room, the user's own custom emoji collection, recent emojis and seen tips, the chosen microphone, camera and speaker (including the device names the browser reports), per-person volume, hidden cameras and camera tile places (stored by the other people's nicknames and avatars), and the side games' progress. chrome.storage.session holds which tab shows a room layer, so it survives the service worker restarting. Nothing in it leaves the device by itself; a custom emoji is sent to a room only when the user adds it there.
 ```
 
 `offscreen` (since 0.9.60):
 ```
-Voice chat while watching: on the film page the microphone is used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice" (after a notice that the people in voice can see their IP address) and turns off with "Leave". Nothing is recorded; audio goes peer-to-peer to the others in voice.
+Voice and video chat while watching: on the film page the microphone and camera are used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone or camera through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice" (after a notice that the people in voice can see their IP address), the camera only after they press the camera button; "Leave" turns both off. Nothing is recorded; audio and video go peer-to-peer (encrypted) to the others in voice.
 ```
 
 `scripting` (since 0.9.91.20):
@@ -127,15 +127,21 @@ Users watch videos on sites we cannot list in advance, and players are usually i
 **Are you using remote code?** **No, I am not using remote code.**
 (All code is in the package; only JSON messages go to and from the server over a WebSocket.)
 
-**Data usage**: tick these boxes (declaring too much doesn't get an item rejected, declaring too little does):
-- ☑ **Personally identifiable information**: the nickname the user picks (shown to the people in the room).
-- ☑ **Personal communications**: short chat messages go to the room; the room keeps the last 50.
-- ☑ **Location**: IP address. In peer-to-peer voice chat (also on film pages, through the offscreen document) the
-  people in voice can see each other's public IP address; the user is told so before joining voice (security review
-  1, W1).
+**Data usage**: tick these boxes (declaring too much doesn't get an item rejected, declaring too little does; privacy
+card H3 + M7, 0.9.97.60):
+- ☑ **Personally identifiable information**: the nickname the user picks (shown to the people in the room) and the
+  device names of the chosen microphone / camera, which can contain a person's name (kept on the device only).
+- ☑ **Personal communications**: chat messages (the room keeps the last 50), images in chat, custom emojis, private
+  messages (passed on, never stored), and on film pages voice, camera and screen streams (peer-to-peer, never stored).
+- ☑ **Location**: IP address. In peer-to-peer voice, camera and streams (also on film pages, through the offscreen
+  document) the people in voice or watching can see each other's public IP address; the user is told so before joining
+  voice, streaming or watching (security review 1, W1).
+- ☑ **User activity**: on the film tab of a room the content script passes key presses, clicks and mouse moves over the
+  film to our own room layer on the same page (so room shortcuts and the controls work there); this stays on the device
+  and is not sent to our server.
 - ☑ **Website content**: the page title, when a room is created or a page is opened in the room.
 - ☑ **Web history**: in the same case the page address goes to the people in the room.
-- The rest empty (health, financial, authentication, user activity).
+- The rest empty (health, financial, authentication).
 
 Tick all three statements below them:
 - ☑ I do not sell or transfer user data to third parties, outside of the approved use cases

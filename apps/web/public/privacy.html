@@ -18,15 +18,23 @@
       a { color: var(--accent); }
       h1 { margin: 16px 0 4px; }
       h2 { margin-top: 32px; font-size: 20px; }
+      h3 { margin-top: 20px; font-size: 17px; }
       .muted { color: var(--muted); }
       .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-top: 16px; }
       ul { padding-left: 22px; }
       li { margin: 6px 0; }
+      .toc { columns: 2; column-gap: 24px; padding-left: 20px; font-size: 15px; }
+      .toc li { margin: 2px 0; break-inside: avoid; }
+      .table-wrap { overflow-x: auto; margin-top: 8px; }
+      table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.5; }
+      th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+      th { color: var(--muted); font-weight: 600; }
       .top { display: flex; justify-content: space-between; align-items: center; }
       .lang { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
       .lang button { background: transparent; color: var(--muted); border: 0; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
       .lang button[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
      .top-right { display: flex; align-items: center; gap: 10px; } .theme-link { text-decoration: none; font-size: 18px; line-height: 1; padding: 4px 6px; border: 1px solid var(--border, #2c303b); border-radius: 8px; }
+      @media (max-width: 560px) { .toc { columns: 1; } table { font-size: 13px; } th, td { padding: 6px; } }
     </style>
   </head>
   <body>
@@ -45,193 +53,649 @@
       <!-- ===================== ENGLISH ===================== -->
       <div data-lang-block="en">
         <h1>Privacy policy</h1>
-        <p class="muted">Last updated: 3 November 2026</p>
+        <p class="muted">Last updated: 5 November 2026 · <a href="#changes">Changes</a></p>
 
         <div class="card">
-          <b>In short:</b> no accounts, no ads, no tracking. Videos play in your own browser; our server only relays
-          the small messages needed to keep everyone in the room in sync.
+          <b>In short:</b> no accounts, no ads, no tracking, no cookies of ours. Videos play in your own browser; our
+          server only relays the small messages that keep a room in sync and keeps a room's data only while the room
+          lives. Your voice and camera go directly to the people in voice with you, never through our server, and are
+          never recorded. Nothing is sold.
         </div>
 
-        <h2>What we use</h2>
-        <ul>
-          <li><b>Name and avatar:</b> what you pick when joining a room. Shown to the others in the room. Your browser remembers it per room (a change in one room never changes another room) and offers your last choice when you join a new room; on our server it is kept only together with the room (in its chat history and, if you are removed, in its ban list) and deleted with the room.</li>
-          <li><b>Room state:</b> the address of the current video or page, playing/paused, position, speed and the queue.</li>
-          <li><b>Chat messages:</b> the last 50 messages of a room, stored with the room so people who join later can see them. A private message to one person is only passed on to that person and to you while you are both in the room; it is never stored.</li>
-          <li><b>Images in chat:</b> pictures or GIFs you send in a room's chat (photos are resized to at most 1024 px in your browser first, which also removes hidden photo data such as location; hidden notes inside GIFs are removed too). Everyone in the room sees them and can save them. They are stored only with that room, at most the images of its last 50 messages (up to 12), and are deleted with the room.</li>
-          <li><b>Votes and room options:</b> which queued videos got a 👍 (stored with your browser ID so a vote can be taken back; others only see the count), the host modes and a scheduled start time. Deleted with the room.</li>
-          <li><b>Session recap:</b> how many messages, reactions and pins each person sent, how often they paused or skipped, and how long and which videos were watched (people are told apart by browser ID; only names and avatars appear in the recap). Only the person who asks sees the recap. The counters reset when a new session starts after a break of more than 4 hours. Recaps someone saves with "Save" (up to 20 in a saved room, 5 otherwise; at most 90 days) are stored with the room and deleted with it.</li>
-          <li><b>Your saved rooms list:</b> the names and codes of the rooms you saved are kept only in your browser.</li>
-          <li><b>Side games:</b> your progress in the games you play alone beside the video (Snack Bar, Window Garden, Five Frames) is kept only in your browser and never sent anywhere; the games only read, on your screen, whether the room's video is playing (and where it is), and how many people are in the room or in voice. When a Window Garden plant first blooms, the garden keeps the film's title and the names of the others in the room with it, in your browser only, as a memory in its album. Two things go through the room: a Snack Bar serve while the film plays drops a coin in the room's shared tip jar (the room counts only how full the jar is, in memory, never who served), and a cutting you give from Window Garden goes to that one person with your name and the plant's kind; it is not stored on the server, and their browser keeps it until they plant it.</li>
-          <li><b>Moving to another device:</b> when you choose "📲 Move to another device", your game progress, saved rooms list, custom emoji collection and default name and avatar go from that browser to your other browser once. Both devices connect to our server with the same 6-digit code; the sending device must press "Send" first. The server passes the data straight through in memory and keeps nothing; the code stops working after 10 minutes or once used.</li>
-          <li><b>Your microphone, camera and speaker choice, and camera layout:</b> which devices to use for voice and video chat (your browser's device codes), whether to join muted or with the camera on, where you put each camera tile and whose cameras you hid are kept only in your browser and never sent anywhere.</li>
-          <li><b>Saved room (if the host turns it on):</b> the addresses of the last 30 videos played in the room, where you stopped and their pins are stored with the room, so a video continues where you left off when it is opened again. Deleted as soon as the host turns saving off.</li>
-          <li><b>Pinned moments:</b> the second of the current video, an optional short note and the name/avatar of who pinned it. Visible to the room; reset when the video changes and deleted with the room.</li>
-          <li><b>Custom emojis:</b> images or GIFs you add to a room (pictures are resized to 160 px, which also removes hidden photo data such as location; hidden notes inside GIFs are removed too). They are stored only with that room, everyone in the room can see and save them, and they are deleted with the room (at most 24 per room; the oldest goes first). You, or the host, can remove one at any time. If you choose "Also save to my collection", a copy is kept <b>only in your browser</b> (and the extension's storage on your computer); it is sent to a room only when you add it there yourself.</li>
-          <li><b>Browser ID:</b> a random code created in your browser. Used so the room host keeps the host role after reloading, and so someone the host removed can't rejoin that room until the host lifts the ban. It is stored with the room on our server for this purpose and deleted with the room. With "Ask before letting people in" on, the room also keeps the IDs of the browsers the host let in, for 24 hours after they were last there, so a reload or a quick return needs no new knock. The ID itself is never shown to other people. It is not an account.</li>
-        </ul>
-        <p>All room data (state, chat, settings, saved videos) is deleted 24 hours after the last person leaves (30 days if the host saved the room).</p>
-
-        <h2>What we don't use</h2>
-        <ul>
-          <li>No account, email, phone number or password is asked for.</li>
-          <li>No ads, analytics or tracking tools, and none of their cookies.</li>
-          <li>Video content never passes through our server; everyone opens the video themselves.</li>
-          <li>Data is never sold or shared with anyone.</li>
+        <p>This policy explains what personal data Sidelit (the website, the browser extension and our server) uses, why,
+          on what legal basis, who receives it, for how long it is kept and what your rights are. It is written for the
+          Turkish Personal Data Protection Law No. 6698 (KVKK) and the EU General Data Protection Regulation (GDPR). It
+          also serves as the information notice (aydınlatma metni) under KVKK article 10.</p>
+        <ul class="toc">
+          <li><a href="#controller">Who is responsible</a></li>
+          <li><a href="#age">Who can use Sidelit</a></li>
+          <li><a href="#data">What we use and why</a></li>
+          <li><a href="#legal-basis">Legal bases</a></li>
+          <li><a href="#seen-by-others">What others in a room see</a></li>
+          <li><a href="#device">What stays on your device</a></li>
+          <li><a href="#extension">Browser extension</a></li>
+          <li><a href="#voice">Voice, camera and streams</a></li>
+          <li><a href="#games">Games</a></li>
+          <li><a href="#services">Other services we use</a></li>
+          <li><a href="#feedback">Feedback</a></li>
+          <li><a href="#sharing">Who receives data</a></li>
+          <li><a href="#transfers">Transfers abroad</a></li>
+          <li><a href="#retention">How long we keep it</a></li>
+          <li><a href="#security">Security and data breaches</a></li>
+          <li><a href="#rights">Your rights and how to use them</a></li>
+          <li><a href="#complaint">Complaints</a></li>
+          <li><a href="#changes">Changes to this policy</a></li>
         </ul>
 
-        <h2>Browser extension</h2>
+        <h2 id="controller">Who is responsible (data controller)</h2>
+        <p>The data controller is <b>Alperen Aktürk</b>, a private individual in Turkey who runs Sidelit as a free,
+          non-commercial project. Contact for everything about privacy: <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a>.
+          There is no company, no postal address for requests and no appointed representative in the EU; please write
+          to this address in English or Turkish.</p>
+
+        <h2 id="age">Who can use Sidelit</h2>
+        <p>You must be at least <b>13 years old</b> to use Sidelit. If you are under 16, you need a parent's or guardian's
+          permission. We don't ask for your age or check it, and we don't knowingly use data of children under 13. If
+          you believe a child under 13 uses Sidelit, write to us and we will delete what we can find.</p>
+
+        <h2 id="data">What we use and why</h2>
+        <p>Sidelit has no accounts: we never ask for an e-mail address (except, if you want an answer, in the feedback
+          form), a phone number, a real name or a password. A room is reached by its link. What we use:</p>
         <ul>
-          <li>The extension only works <b>in the tab you joined a room with</b>. It reads and sends nothing in other tabs.</li>
-          <li>In that tab it only uses the state of the video on the page (playing or not, at which second, speed).</li>
-          <li>When you open a page in the room, that page's address and title are shared with the room.</li>
-          <li>It does not collect browsing history.</li>
-          <li>On the film page the extension shows our own website (the room page) as a layer over the page; the room connection is the website's, exactly as on the site. The film site cannot read this layer.</li>
-          <li>Your website settings (name, avatar, theme, language, browser ID, saved rooms, your custom emoji collection) are also kept in the extension's own storage in your browser, so the layer on the film page uses the same settings. Nothing extra is sent anywhere.</li>
-          <li>The "access all sites" permission is needed so videos can be found on any site (including inside iframes).</li>
-          <li>While you watch in the room view, a tab that the video page opens to another site right after you click on it (usually an ad pop-up) is closed and the film tab is brought back; a small note lets you reopen it. Only the address of that tab is used, only on your computer, and nothing is sent anywhere. You can turn this off in the room settings.</li>
-          <li>Voice chat on film pages runs in an invisible page of the extension ("offscreen" permission), so the microphone permission is asked once for Sidelit and not for the film site. The film site cannot access your microphone through us.</li>
+          <li><b>Name and avatar</b> you pick when you join a room. Shown to the others in the room and kept on our
+            server with the room wherever it appears: the chat history, the queue (who added a video) and the list of
+            recently played videos, pins, the session recap, the ban list if the host removes you, a TV link (see
+            <a href="#voice">Voice</a>) and game tables. While you wait at the door of a room with "Ask before letting
+            people in", the host sees your name and avatar.</li>
+          <li><b>Browser ID:</b> a random code your browser creates on its first visit. It is not an account and is
+            never shown to other people. The room uses it to tell people apart: so the host keeps the host role after a
+            reload; so a person the host removed can't come back until the host allows it; to take a vote back; to let
+            you remove your own pins and custom emojis; to count the session recap per person; to keep your seat and
+            score in a game; to give you the same place in the room when your connection drops and comes back (kept 24
+            hours); to remember for 24 hours that the host let your browser in; and to link a TV to you.</li>
+          <li><b>Room state:</b> the address and title of the current video or page, playing or paused, position,
+            speed, the queue and its 👍 votes, the host's room rules and a planned start time.</li>
+          <li><b>Chat:</b> the last 50 messages of a room (name, avatar, text, time) so people who join later can read
+            them, and the pictures or GIFs of those messages (at most 12). Photos are resized in your browser to at
+            most 1024 px first, which also removes hidden photo data such as location; hidden notes inside GIFs are
+            removed too. A private message to one person goes only to that person and to you while you are both in the
+            room and is never stored. Links you post are shown as text; another site opens only after you confirm.</li>
+          <li><b>Custom emojis</b> you add to a room (resized to 160 px, hidden photo data removed): at most 24 per
+            room, kept with the room. If you tick "Also save to my collection", a copy stays only on your device.</li>
+          <li><b>Pinned moments:</b> the second of the video, an optional note and who pinned it; reset when the video
+            changes.</li>
+          <li><b>Saved room</b> (only if the host turns saving on): the room's name, the last 30 videos with where you
+            stopped and their pins, so a video continues where you left off. Turning saving off deletes this at once.</li>
+          <li><b>Session recap:</b> per person (by browser ID) how many messages, reactions and pins were sent, pauses
+            and skips, and which videos were watched for how long. Only the person who asks sees a recap; only names and
+            avatars appear in it. Recaps someone saves (up to 20 in a saved room, 5 otherwise) are kept at most 90 days.</li>
+          <li><b>Technical data:</b> your IP address reaches Cloudflare, who runs our server, as with every website. To
+            stop abuse (for example opening rooms in a loop or filling our storage with images) our server counts new
+            connections, uploads and searches per address, but never with the address itself: it uses a short code made
+            from it with a secret random key that changes every day (HMAC-SHA-256); the old key is thrown away, so after
+            the day nobody, not even we, can tell which address a code belonged to. The code is kept in memory with
+            your connection; only for image uploads our server keeps, until the end of the day, how many bytes each code
+            uploaded across all rooms. Our server's own technical logs (time, the address requested, the answer's
+            status, errors) are kept at most 7 days; search words travel inside requests, never in their address, so
+            they never appear in these logs.</li>
+        </ul>
+        <p>All of a room's data on our server is deleted 24 hours after the last person leaves (30 days if the host
+          saved the room). We don't use your data for advertising, profiling or automated decisions, and we don't sell
+          it.</p>
+
+        <h2 id="legal-basis">Legal bases</h2>
+        <div class="table-wrap"><table>
+          <tr><th>Purpose</th><th>Data</th><th>Legal basis</th></tr>
+          <tr><td>Running a room you join: syncing the video, chat, images, emojis, queue, pins, recap, saved rooms, games, voice and streams</td><td>name, avatar, browser ID, room content, messages, images</td><td>Providing the service you ask for: GDPR art. 6(1)(b); KVKK art. 5(2)(c)</td></tr>
+          <tr><td>Keeping the service safe and working: abuse limits, bans, technical logs, fair use of the YouTube search limit, counting our use of the YouTube API</td><td>daily changing IP code, browser ID, technical logs</td><td>Our legitimate interest in a secure, working free service: GDPR art. 6(1)(f); KVKK art. 5(2)(f)</td></tr>
+          <tr><td>Answering feedback</td><td>your message, optional e-mail address and technical details</td><td>You send it to ask us something: GDPR art. 6(1)(b) and (f); KVKK art. 5(2)(c) and (f)</td></tr>
+          <tr><td>Dealing with a legal claim or an authority's request</td><td>what is needed for it</td><td>GDPR art. 6(1)(c) and (f); KVKK art. 5(2)(ç) and (e)</td></tr>
+        </table></div>
+        <p>We don't process special categories of data (such as health or biometric data): your camera picture and voice
+          only travel between the people in voice with you and are never analysed, recognised or stored.</p>
+
+        <h2 id="seen-by-others">What others in a room see</h2>
+        <ul>
+          <li>Everyone in the room sees your name and avatar, your messages, images, emojis, pins and votes (as counts),
+            whether you are in voice or streaming, and when you play, pause or jump. Everyone can save the images and
+            emojis they see.</li>
+          <li><b>Before joining:</b> anyone who has a room's link sees, on the join screen, how many people are inside,
+            up to 3 of their names, the room's saved name and the title of what is playing. Share room links only with
+            people you want in the room; the host can turn on "Ask before letting people in".</li>
+          <li>People in voice with you can see your public IP address (see <a href="#voice">Voice</a>).</li>
+          <li>Others could record their own screen or speakers; we can't prevent that. Only watch and talk with people you
+            trust.</li>
         </ul>
 
-        <h2>Voice chat</h2>
+        <h2 id="device">What stays on your device (no cookies of ours)</h2>
+        <p>Sidelit sets no cookies. It keeps the following in your browser's local storage (and, with the extension, in
+          the extension's storage on your computer, so the film page uses the same settings). It stays there until you
+          clear it or remove the extension, and is never sent anywhere unless a section here says so:</p>
         <ul>
-          <li>Your microphone is used <b>only after you press "Join voice"</b>; the browser asks for permission and you can revoke it any time in its settings. "Leave" turns the microphone off.</li>
-          <li>Your voice goes <b>directly</b> (peer-to-peer, always encrypted) to the others who joined voice. Our server never hears it; it only passes the connection messages between people who joined voice. It is <b>not recorded or stored</b>.</li>
-          <li>Because the connection is direct, everyone who is in voice with you (including people who join voice later) can technically see your public IP address (roughly your city and internet provider, not your home address). You are told this before you join. People who haven't joined voice can't see it. To set up these direct connections your browser asks Cloudflare's STUN server for your public address. During the room our server only keeps who is in voice, whether their microphone and camera are on, and who is streaming or watching.</li>
-          <li><b>Screen sharing / streams:</b> your screen, window or tab is only captured after you press "Share your screen" and pick what to share in the browser's own window; your camera is added to the corner of the picture only if you ticked "Show my camera in the corner too". It goes peer-to-peer (encrypted) only to the people who press "Watch stream". As in voice, this works in both directions: the person streaming and the people watching can see each other's public IP address (both are told before they start). Nothing is recorded or stored.</li>
-          <li>Your camera is used <b>only after you press 📷</b> while in voice, and only goes (peer-to-peer, encrypted) to the others in voice. It is not recorded or stored; pressing 📷 again or leaving voice turns it off.</li>
-          <li>Others in the room could record their own screen or speakers; we can't prevent that. Only talk with people you trust.</li>
-          <li><b>TV:</b> a TV you connect with its 6-digit code joins the room as you (your name and avatar). To let it reconnect, the room keeps a random link token with your name, avatar and browser id for at most 12 hours after its last use; "Disconnect the TV" deletes it. The TV never uses a microphone; it only plays the voices of the others in voice (so, like everyone in voice, they and the TV can see each other's IP address). The code itself is not stored and is valid for 10 minutes.</li>
+          <li>your name and avatar per room and your default for a new room; your browser ID; language, theme and
+            screen settings;</li>
+          <li>your saved rooms list and the last room you were in (for "Continue where you left off": its code, name
+            and time, shown for 24 hours, or longer while the room is saved);</li>
+          <li>your custom emoji collection, recently used emojis and which tips you have seen;</li>
+          <li>your microphone, camera and speaker choice, <b>including the device names</b> your browser reports (they
+            can contain a name, such as "Alex's AirPods"), whether to join muted or with the camera on;</li>
+          <li>for the people you hear and see: the volume you set for each person, whose cameras you hid and where you
+            put each camera tile (stored by their name and avatar);</li>
+          <li>the side games' progress (Snack Bar, Window Garden, Five Frames), the Quiz questions you already saw and,
+            when a Window Garden plant first blooms, the film's title and the names of the others who were in the room,
+            as a memory in its album;</li>
+          <li>an unsent feedback draft (only for the open tab) and the last connection test's short result.</li>
+        </ul>
+        <p><b>Moving to another device:</b> "📲 Move to another device" sends your game progress, saved rooms, emoji
+          collection and default name and avatar from one of your browsers to another, once. Both connect to our server
+          with the same 6-digit code; the sending device must press "Send" first. The server passes the data straight
+          through in memory and keeps nothing; the code stops working after 10 minutes or once used.</p>
+        <p>The 🐞 test panel (only with <code>?debug=1</code>) works only in your browser; its fake friends are ordinary
+          room connections from your own tab, and "This is a bug" only copies a report to your clipboard.</p>
+
+        <h2 id="extension">Browser extension</h2>
+        <ul>
+          <li>The extension's scripts load in every page and frame but do nothing until you are in a room: they only
+            check whether this tab joined a room. On other tabs and sites they read nothing and send nothing.</li>
+          <li>In the tab you joined a room with, they find the video on the page and use only its state (playing or
+            not, position, speed, its place on the page) to keep it in sync; when you open a page in the room, its
+            address and title are shared with the room. The extension does not collect browsing history.</li>
+          <li>On the film page the extension shows our own website (the room page) as a layer over the page; the room
+            connection is the website's. The film site cannot read this layer.</li>
+          <li>While you watch in the room view, a tab the film page opens to another site right after you click on it
+            (usually an ad pop-up) is closed and you can reopen it from a small note. For this the extension looks at new
+            tabs opened from the film tab, only on your computer; nothing is sent. You can turn this off in the room
+            settings.</li>
+          <li>Permissions: "access all sites" (to find videos on any site, inside frames too), "storage" (the settings
+            above), "offscreen" (voice and cameras on film pages run in an invisible page of the extension, so the
+            microphone and camera permission is asked once for Sidelit and never given to the film site) and
+            "scripting" (right after you install it, it tells an open Sidelit tab that the extension is there).</li>
         </ul>
 
-        <h2>Games (PlayWithMe)</h2>
+        <h2 id="voice">Voice, camera and streams</h2>
         <ul>
-          <li>Games are started inside a watch room. A game keeps the board, the score, the players' names and avatars and their browser IDs (so a player who reloads keeps their seat and points; IDs are never shown to others). Emoji reactions are not stored.</li>
-          <li>Draw &amp; Guess: guesses and the short messages typed during a game are passed on to the other players and not stored. The drawing exists only while the round is played (in the game server's memory) and is gone when the round ends.</li>
-          <li>A game's data is deleted 24 hours after the last player leaves; the room only remembers which game is open (and who opened it) until the game is ended.</li>
+          <li>Your microphone is used only after you press "Join voice" and your camera only after you press 📷; the
+            browser asks for permission, and you can revoke it in its settings. "Leave" turns both off.</li>
+          <li>Voice, camera and shared screens go <b>directly</b> (peer-to-peer, always encrypted) to the people in voice
+            or watching your stream. Our server never receives them; it only passes the connection messages between
+            those people. Nothing is recorded or stored. During the room our server keeps only who is in voice, whether
+            their microphone and camera are on, and who streams or watches.</li>
+          <li>Because the connection is direct, everyone in voice with you (also people who join later), and the person
+            streaming and those watching, can technically see each other's public IP address (roughly your city and
+            internet provider, not your home address). You are told this before you join voice, stream or watch. To set
+            up these connections your browser asks Cloudflare's STUN server for your public address.</li>
+          <li>Screen sharing captures only what you pick in the browser's own window; your camera is added to the
+            corner only if you tick "Show my camera in the corner too".</li>
+          <li><b>TV</b> (a test version, hidden by default): a TV you connect with a 6-digit code joins the room as you.
+            To let it reconnect, the room keeps a random link token with your name, avatar and browser ID for at most 12
+            hours after its last use; "Disconnect the TV" deletes it. The code itself is not stored and is valid for 10
+            minutes.</li>
         </ul>
 
-        <h2>Infrastructure</h2>
-        <p>The site and server run on Cloudflare. Cloudflare may briefly process technical data such as IP addresses to operate and secure the service, and keeps short technical logs (time, address requested, errors) for a few days. To stop abuse (for example someone opening rooms in a loop), our server counts new connections, custom emoji and chat image uploads, and searches per IP address. For this it never uses the address itself but a short code made from it with a secret random key that changes every day (a keyed hash, HMAC-SHA-256); the old key is thrown away, so after the day nobody, not even we, can tell which address a code belonged to. The code is used in memory and never shown to anyone; only for image uploads our server keeps, until the end of the day, how many bytes each code uploaded across all rooms (to stop one address filling our storage). Our server also keeps its own short technical logs (Cloudflare Workers Logs: time, the address requested, the answer's status and errors) for at most 7 days; the words of a search are sent inside the request, never in its address, so they never appear in these logs. See the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare privacy policy</a>. YouTube videos open in YouTube's own player and <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a> applies.</p>
+        <h2 id="games">Games</h2>
+        <ul>
+          <li>Games played together in a room (Classics, Draw &amp; Guess, Quiz, Poker) keep the board or round, the
+            score, the players' names, avatars and browser IDs (so a player who reloads keeps their seat and points;
+            IDs are never shown). Guesses and the short messages typed in a game go to the other players and are not
+            stored; a drawing exists only while its round is played. A game's data is deleted 24 hours after the last
+            player leaves.</li>
+          <li>Side games (Snack Bar, Window Garden, Five Frames) keep their progress only on your device (see above).
+            Two things go through the room: a Snack Bar serve while the film plays drops a coin in the room's shared tip
+            jar (the room counts only how full the jar is, in memory, never who served), and a cutting you give from
+            Window Garden goes, with your name and the plant's kind, only to that person; it is not stored on our
+            server.</li>
+        </ul>
 
-        <h2>YouTube search</h2>
-        <p>The search in the room's link box uses the YouTube API Services. When you search, our server sends only the words you typed (and the page language) to YouTube and shows you the videos it finds; it does not send your name, your room or anything that identifies you, and you never sign in to YouTube. To save the daily search limit, our server keeps the results for the same words for up to 24 hours (by the words, not by person) and counts searches per IP address as the daily changing code described above (in memory only, also to give each address a fair daily share of the search limit). By using the search you agree to the <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube Terms of Service</a>; <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a> applies to what YouTube receives. The same applies to "🎲 Discover" and "✨ More like this" in the Shorts view: Discover asks YouTube for the most watched Shorts of a category (no words of yours at all) and keeps one shared answer per category, language and day; More like this sends only the id of the Short that is playing. The Shorts feed's "Discover" picks the most watched Shorts of a country: by default your country as our hosting provider (Cloudflare) sees it from your connection; it is only used to choose that list for the request and is never stored or logged (you can pick another country or "World" instead). Following a channel sends YouTube only the channel's link or @handle you typed.</p>
-        <p>A YouTube video's title shown in a room's queue comes from YouTube's public oEmbed service (nothing about you is sent). A saved room keeps such a title at most 30 days after it was looked up; after that the room looks it up again when the video is used, or shows "YouTube · " and the video's id.</p>
-        <p>To report our real daily use of the YouTube API to Google, our server counts per day how many searches and other requests reached YouTube and how many API units they cost. These are plain numbers: no words, no video, no IP address, no room. They are kept 90 days and only the operator can read them.</p>
-
-        <h2>YouTube videos</h2>
-        <p>A YouTube video in a room plays in YouTube's own official embedded player in its privacy-enhanced mode: the video frame comes from youtube-nocookie.com, and the player code that controls it (YouTube's IFrame Player API) comes from youtube.com, which can send your youtube.com cookies with that request if your browser allows third-party cookies. YouTube's player code is loaded only once a YouTube video is about to play in your room, never before. YouTube may receive your IP address, and YouTube says this mode stores no information in your browser until you play the video; once it plays, the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google privacy policy</a> applies. Video pictures in the queue and search results come from YouTube's image server (i.ytimg.com).</p>
-
-        <h2>TikTok videos</h2>
-        <p>A TikTok link in a room plays in TikTok's own official embedded player, loaded from tiktok.com in your browser; TikTok may receive your IP address and set its own cookies, as on any site that shows a TikTok video, and the <a href="https://www.tiktok.com/legal/page/global/privacy-policy/en" target="_blank" rel="noopener">TikTok privacy policy</a> applies to that. To show the video's title in the queue, our server asks TikTok's public oEmbed service about the link (nothing about you is sent). When you paste a short TikTok share link (vm.tiktok.com/…), our server opens it once to find the video it points to and keeps that answer for a week (by the link, not by person).</p>
-        <h2>Vimeo videos</h2>
-        <p>A Vimeo link in a room plays in Vimeo's own embedded player, loaded from player.vimeo.com in your browser; we open it in Vimeo's "do not track" mode (<code>dnt=1</code>), but Vimeo still receives your IP address like on any site that shows a Vimeo video, and the <a href="https://vimeo.com/privacy" target="_blank" rel="noopener">Vimeo privacy policy</a> applies to that. To show the video's title in the queue, our server asks Vimeo's public oEmbed service about the link (nothing about you is sent).</p>
+        <h2 id="services">Other services we use</h2>
+        <ul>
+          <li><b>Cloudflare</b> runs our website and server (and the STUN server above). It processes technical data such
+            as IP addresses to deliver and protect the service and keeps short technical logs for a few days.
+            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare privacy policy</a>.</li>
+          <li><b>YouTube videos</b> play in YouTube's own embedded player in its privacy-enhanced mode: the video frame
+            comes from youtube-nocookie.com and the player code that controls it (YouTube's IFrame Player API) from
+            youtube.com, which can send your youtube.com cookies if your browser allows third-party cookies. YouTube's
+            code is loaded only once a YouTube video is about to play in your room. YouTube receives your IP address and
+            says this mode stores nothing in your browser until the video plays; then the
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google privacy policy</a>
+            applies. Video pictures come from YouTube's image server (i.ytimg.com).</li>
+          <li><b>YouTube search</b> (the link box, "🎲 Discover", "✨ More like this", following a channel) uses the
+            YouTube API Services: our server sends YouTube only the words you typed, a video id, a channel link or a
+            category, with the page language and, for Discover, the country (by default your country as Cloudflare sees
+            it from your connection, used only for that request and never stored). It never sends your name, your room
+            or anything that identifies you, and you don't sign in to YouTube. Answers are kept up to 24 hours by the
+            words, not by person. By using the search you agree to the
+            <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube Terms of Service</a>;
+            the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google privacy policy</a>
+            applies to what YouTube receives. To show a video's title in the queue our server asks YouTube's public
+            oEmbed service about the video (a saved room keeps that title at most 30 days). To report our real use of
+            the YouTube API to Google, our server counts per day how many requests reached YouTube and their API units:
+            plain numbers, no words, videos, addresses or rooms, kept 90 days.</li>
+          <li><b>TikTok videos</b> play in TikTok's own embedded player from tiktok.com; TikTok receives your IP address
+            and may set its own cookies (<a href="https://www.tiktok.com/legal/page/global/privacy-policy/en" target="_blank" rel="noopener">TikTok privacy policy</a>).
+            Our server asks TikTok's public oEmbed service for a video's title, and opens a short share link
+            (vm.tiktok.com/…) once to find its video, keeping that answer a week by the link.</li>
+          <li><b>Vimeo videos</b> play in Vimeo's own embedded player from player.vimeo.com in its "do not track" mode
+            (<code>dnt=1</code>); Vimeo still receives your IP address (<a href="https://vimeo.com/privacy" target="_blank" rel="noopener">Vimeo privacy policy</a>).
+            Our server asks Vimeo's public oEmbed service for the title.</li>
+          <li><b>Podcasts:</b> "🎧 Podcasts" sends your search words from our server to Apple's public iTunes Search API
+            and reads a show's public RSS feed for its newest episodes (answers kept a day for searches, an hour for
+            episodes, by the words or the show). Cover art comes from Apple's image servers (mzstatic.com) and the audio
+            from the podcast's own host (<a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple privacy policy</a>).</li>
+          <li><b>Video files and film pages:</b> a video file or a web page opened in a room is loaded by every viewer's
+            own browser from the site that hosts it, so that site receives each viewer's IP address like any website.</li>
+        </ul>
+        <p>Sidelit doesn't host or relay any video; it only syncs the players everyone opens themselves. Only use content
+          you have the right to watch.</p>
 
         <h2 id="feedback">Feedback</h2>
-        <p>When you use "Send feedback", your message, its type and, only if you enter one, your e-mail address are sent to us and stored as an issue in our private project repository on GitHub (GitHub, Inc. hosts it; its <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">privacy statement</a> applies). Technical details (site and extension version, browser, operating system, window size, the connection type and the last connection test's short result) are added only when you tick that box, and you can see the exact lines before sending. Nothing about your room (its id, the names or the chat) and no IP address is stored with it. To limit abuse our server counts messages per address for an hour, using only a short one-way hash of the address. We use your e-mail only to answer you and delete it when the issue is closed, at the latest after 90 days. You can ask us to delete a message at any time.</p>
+        <p>"Send feedback" sends us your message, its type and, only if you enter one, your e-mail address. They are
+          stored as an issue in our project's repository on GitHub (GitHub, Inc. hosts it; its
+          <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">privacy statement</a>
+          applies). Technical details (site and extension version, browser, operating system, window size, connection
+          type, the last connection test's short result) are added only if you tick that box, and you see the exact lines
+          before sending. Nothing about your room and no IP address is stored with it; to limit abuse our server counts
+          messages per daily changing IP code for an hour. We use your e-mail only to answer you and delete it when the
+          issue is closed, at the latest after 90 days. You can ask us to delete a message at any time.</p>
 
-        <h2>Podcasts</h2>
-        <p>When you press "🎧 Podcasts" on the link box's results, our server sends your search words to Apple's public iTunes Search API to find shows (nothing about you is sent; Apple's <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">privacy policy</a> applies to Apple), and when you open a show it reads that show's public RSS feed for the newest episodes. Answers are kept for a day (searches) or an hour (episodes), by the words or the show, never by person. Cover art comes from Apple's image servers (mzstatic.com) and an episode's audio from the podcast's own host, both loaded in your browser, so they receive your IP address like any website.</p>
-        <h2>Content</h2>
-        <p>Sidelit does not host or relay any video. It only syncs the players everyone opens themselves. Only use content you have the right to watch.</p>
+        <h2 id="sharing">Who receives data</h2>
+        <p>We never sell personal data or share it for advertising. It reaches only:</p>
+        <ul>
+          <li>the other people in your room, as described in <a href="#seen-by-others">What others in a room see</a>;</li>
+          <li>Cloudflare, Inc., which runs our server and website for us (a processor that acts on our instructions);</li>
+          <li>GitHub, Inc., which stores the feedback you send;</li>
+          <li>Google (YouTube), TikTok, Vimeo and Apple, only what is described under
+            <a href="#services">Other services we use</a> (their own players, loaded in your browser, are run by them
+            under their own policies);</li>
+          <li>an authority or court, only if the law obliges us.</li>
+        </ul>
 
-        <h2>Contact</h2>
-        <p>Questions or requests: <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a></p>
+        <h2 id="transfers">Transfers abroad</h2>
+        <p>Cloudflare runs its network in many countries, so your connection may be handled outside Turkey and the EU,
+          including in the United States. GitHub, Google, Vimeo and Apple are based in the United States and TikTok
+          operates worldwide. For transfers to these processors we rely on the safeguards they offer, such as standard
+          contractual clauses in their data processing terms and, for those certified, the EU–U.S. Data Privacy
+          Framework; for transfers from Turkey, on the conditions of KVKK article 9. You can ask us for details at the
+          address above.</p>
+
+        <h2 id="retention">How long we keep it</h2>
+        <div class="table-wrap"><table>
+          <tr><th>Data</th><th>Kept</th></tr>
+          <tr><td>A room's data on our server (state, queue, chat, images, emojis, pins, votes, bans, settings)</td><td>until 24 hours after the last person leaves; 30 days if the host saved the room</td></tr>
+          <tr><td>Chat history</td><td>the last 50 messages (with at most 12 of their images), with the room</td></tr>
+          <tr><td>Saved recaps</td><td>5 per room (20 in a saved room), at most 90 days</td></tr>
+          <tr><td>Saved room's video list</td><td>the last 30 videos, until saving is turned off</td></tr>
+          <tr><td>A YouTube title in a saved room</td><td>30 days</td></tr>
+          <tr><td>Your place in a room after a dropped connection; "let in" record</td><td>24 hours</td></tr>
+          <tr><td>TV link token</td><td>12 hours after its last use</td></tr>
+          <tr><td>Games played together</td><td>24 hours after the last player leaves</td></tr>
+          <tr><td>Daily changing IP code; per-code upload count</td><td>in memory with the connection; byte counts until the end of the day</td></tr>
+          <tr><td>Our server's technical logs</td><td>at most 7 days</td></tr>
+          <tr><td>Cached YouTube answers / podcast searches / podcast episodes / TikTok short links</td><td>24 hours / a day / an hour / a week (by words or link, never by person)</td></tr>
+          <tr><td>YouTube API usage numbers</td><td>90 days</td></tr>
+          <tr><td>Feedback e-mail address</td><td>until the issue is closed, at most 90 days</td></tr>
+          <tr><td>Move-to-device code</td><td>10 minutes or one use; the data is never stored</td></tr>
+          <tr><td>Private messages, voice, camera, streams, drawings, guesses</td><td>never stored</td></tr>
+          <tr><td>What stays on your device</td><td>until you clear it or remove the extension</td></tr>
+        </table></div>
+
+        <h2 id="security">Security and data breaches</h2>
+        <p>Every connection is encrypted (HTTPS and secure WebSockets; voice, camera and streams use WebRTC's built-in
+          encryption). We keep as little as possible, delete rooms by themselves, limit requests per address, keep
+          secrets out of the code and review the service's security regularly. If a breach puts your data at risk, we
+          will report it to the Turkish Personal Data Protection Board (and, where GDPR applies, to the competent
+          authority) within 72 hours of learning of it, and tell the people affected as soon as possible, here on this
+          site and in the rooms concerned.</p>
+
+        <h2 id="rights">Your rights and how to use them</h2>
+        <p>Under KVKK article 11 and GDPR articles 15–22 you can ask us: whether we process your data and to see it
+          (access); to correct it; to delete it; to restrict its use; to receive it in a portable format; to object to its
+          use based on our legitimate interest; to learn who received it, including abroad; and to be compensated if you
+          are harmed by unlawful processing. You also have the right not to be subject to decisions made only by
+          automated means; we make none.</p>
+        <p>Write to <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a>. Because there are no
+          accounts, tell us what helps us find the data: the room link or code, the name you used and roughly when. We
+          answer free of charge within 30 days and may ask for something that shows the data is yours (for example, that
+          you are still in that room). Much of it you control yourself: leaving a room and clearing your browser's site
+          data removes what is on your device, the host can remove emojis and turn saving off, and a room deletes itself
+          24 hours after it is empty.</p>
+
+        <h2 id="complaint">Complaints</h2>
+        <p>If you are not happy with our answer, or get none within 30 days, you can complain to the Turkish Personal
+          Data Protection Board (<a href="https://www.kvkk.gov.tr" target="_blank" rel="noopener">Kişisel Verileri Koruma Kurulu, kvkk.gov.tr</a>).
+          If you live in the EU or EEA, you can also complain to the data protection authority of your country.</p>
+
+        <h2 id="changes">Changes to this policy</h2>
+        <p>When this policy changes we update the date at the top and list the change here.</p>
+        <ul>
+          <li><b>5 November 2026:</b> rewritten for KVKK and GDPR: who is responsible, the minimum age, the legal basis
+            for each purpose, who receives data, transfers abroad, a retention table, your rights and how to use them,
+            complaints, data breaches; also what others see before joining a room, the browser ID's uses, device names
+            kept on your device and the extension's permissions.</li>
+          <li><b>3 November 2026:</b> side games, moving to another device, podcasts, Vimeo and feedback added.</li>
+          <li><b>October 2026:</b> first version.</li>
+        </ul>
       </div>
 
       <!-- ===================== TÜRKÇE ===================== -->
       <div data-lang-block="tr" hidden>
         <h1>Gizlilik politikası</h1>
-        <p class="muted">Son güncelleme: 3 Kasım 2026</p>
+        <p class="muted">Son güncelleme: 5 Kasım 2026 · <a href="#changes-tr">Değişiklikler</a></p>
 
         <div class="card">
-          <b>Kısaca:</b> Hesap yok, reklam yok, takip yok. Videolar senin tarayıcında oynar; sunucumuz
-          sadece odadakilerin aynı anda izlemesi için gereken küçük mesajları taşır.
+          <b>Kısaca:</b> Hesap yok, reklam yok, takip yok, bizim çerezimiz yok. Videolar senin tarayıcında oynar;
+          sunucumuz sadece odayı senkron tutan küçük mesajları taşır ve bir odanın bilgilerini sadece oda yaşadıkça tutar.
+          Sesin ve kameran seninle seste olanlara doğrudan gider, sunucumuzdan hiç geçmez ve hiç kaydedilmez. Hiçbir şey
+          satılmaz.
         </div>
 
-        <h2>Hangi bilgiler kullanılıyor?</h2>
-        <ul>
-          <li><b>Ad ve avatar:</b> Odaya girerken seçtiğin ad ve avatar. Odadakilere gösterilir. Tarayıcın bunu oda oda hatırlar (bir odada değiştirmen başka bir odayı değiştirmez), yeni bir odaya girerken son seçimini önerir; sunucumuzda sadece odayla birlikte (sohbet geçmişinde ve çıkarıldıysan yasak listesinde) tutulur ve odayla birlikte silinir.</li>
-          <li><b>Oda durumu:</b> O an açık olan video ya da sayfanın adresi, oynuyor/durdu bilgisi, konum, hız ve sıra listesi.</li>
-          <li><b>Sohbet mesajları:</b> Odadaki son 50 mesaj, sonradan gelenler de görebilsin diye odayla birlikte saklanır. Tek bir kişiye gönderdiğin özel mesaj, ikiniz de odadayken yalnız o kişiye ve sana iletilir; hiç saklanmaz.</li>
-          <li><b>Sohbette görseller:</b> Odanın sohbetine gönderdiğin fotoğraf ya da GIF'ler (fotoğraflar önce tarayıcında en fazla 1024 piksele küçültülür; bu, konum gibi gizli fotoğraf bilgilerini de siler; GIF'lerin içindeki gizli notlar da silinir). Odadaki herkes görür ve kaydedebilir. Sadece o odayla birlikte, son 50 mesajın görselleri kadar (en fazla 12) saklanır ve odayla birlikte silinir.</li>
-          <li><b>Oylar ve oda ayarları:</b> Sıradaki hangi videoya 👍 verildiği (verdiğin oyu geri alabilmen için tarayıcı kimliğinle saklanır; diğerleri sadece sayıyı görür), yönetici modları ve planlı başlangıç saati. Odayla birlikte silinir.</li>
-          <li><b>Oturum özeti:</b> Odada kimin kaç mesaj, tepki ve pin attığı, kaç kez durdurup sardığı, ne kadar süre ve hangi videoların izlendiği sayılır (kişiler tarayıcı kimliğiyle ayırt edilir; özete sadece ad ve avatar girer). Özeti sadece isteyen görür. Sayaçlar, izlemeye 4 saatten uzun ara verilince başlayan yeni oturumla sıfırlanır. "Kaydet"e basılan özetler (kayıtlı odada en fazla 20, diğerlerinde 5; en fazla 90 gün) odayla birlikte saklanır ve odayla birlikte silinir.</li>
-          <li><b>Kaydedilmiş oda listen:</b> Kaydettiğin odaların adı ve kodu sadece tarayıcında tutulur.</li>
-          <li><b>Kenar oyunları:</b> Videonun yanında tek başına oynadığın oyunlardaki ilerlemen (Büfe, Pencere Bahçesi, Beş Kare) sadece tarayıcında tutulur ve hiçbir yere gönderilmez; oyunlar yalnızca kendi ekranında odanın videosunun oynayıp oynamadığına (ve nerede olduğuna), odada / seste kaç kişi olduğuna bakar. Pencere Bahçesi'nde bir bitki ilk kez çiçek açtığında bahçe, filmin adını ve o an odadaki diğer kişilerin adlarını albümünde bir anı olarak sadece tarayıcında saklar. İki şey odadan geçer: film oynarken Büfe'de yaptığın her servis odanın ortak bahşiş kavanozuna bir jeton atar (oda yalnızca kavanozun ne kadar dolu olduğunu bellekte sayar, kimin attığını değil) ve Pencere Bahçesi'nden verdiğin bir çelik, adın ve bitkinin türüyle yalnız o kişiye gider; sunucuda saklanmaz, o kişinin tarayıcısı onu dikene kadar tutar.</li>
-          <li><b>Başka cihaza taşıma:</b> "📲 Başka cihaza taşı"yı seçtiğinde oyunlardaki ilerlemen, kayıtlı oda listen, özel emoji koleksiyonun ve varsayılan adın ile avatarın o tarayıcıdan diğer tarayıcına bir kez gider. İki cihaz da aynı 6 haneli kodla sunucumuza bağlanır; önce gönderen cihazda "Gönder"e basılmalıdır. Sunucu veriyi bellekte doğrudan geçirir ve hiçbir şey saklamaz; kod 10 dakika sonra ya da bir kez kullanılınca geçersiz olur.</li>
-          <li><b>Mikrofon, kamera ve hoparlör seçimin, kamera düzenin:</b> Sesli ve görüntülü sohbette hangi cihazların kullanılacağı (tarayıcının cihaz kodları), sesten kapalı mikrofonla ya da açık kamerayla girip girmeyeceğin, her kamera kutusunu nereye koyduğun ve kimin kamerasını gizlediğin sadece tarayıcında tutulur, hiçbir yere gönderilmez.</li>
-          <li><b>Kaydedilmiş oda (yönetici açarsa):</b> Odada açılan son 30 videonun adresi, nerede kalındığı ve pinleri, aynı video tekrar açılınca kaldığı yerden devam edebilsin diye odayla birlikte saklanır. Yönetici kaydı kapatınca hemen silinir.</li>
-          <li><b>Pinlenmiş anlar:</b> Açık videonun hangi saniyesi, isteğe bağlı kısa not ve pinleyenin adı/avatarı. Odadakilere görünür; video değişince sıfırlanır, odayla birlikte silinir.</li>
-          <li><b>Özel emojiler:</b> Odaya eklediğin resim ya da GIF'ler (resimler 160 px'e küçültülür; bu, konum gibi gizli fotoğraf bilgilerini de siler; GIF'lerin içindeki gizli notlar da silinir). Sadece o odayla birlikte saklanır, odadaki herkes görebilir ve kaydedebilir, odayla birlikte silinir (odada en fazla 24; dolunca en eskisi gider). Sen ya da oda yöneticisi istediğin an kaldırabilir. "Koleksiyonuma da kaydet"i seçersen bir kopyası <b>sadece tarayıcında</b> (ve bilgisayarındaki eklenti deposunda) tutulur; bir odaya sadece sen eklediğinde gönderilir.</li>
-          <li><b>Tarayıcı kimliği:</b> Tarayıcında rastgele oluşturulan bir kod. Oda yöneticisinin sayfayı yenileyince yöneticiliğini kaybetmemesi ve yöneticinin çıkardığı birinin, yönetici yasağı kaldırana kadar o odaya geri girememesi için kullanılır. Bu amaçla odayla birlikte sunucumuzda tutulur ve odayla birlikte silinir. "İçeri almadan önce sor" açıkken oda, yöneticinin içeri aldığı tarayıcıların kodlarını da son bulundukları andan sonra 24 saat tutar; böylece sayfayı yenileyen ya da kısa süre sonra dönen kişi yeniden kapıyı çalmaz. Kodun kendisi başkalarına hiç gösterilmez. Hesap değildir.</li>
-        </ul>
-        <p>Odada kimse kalmadıktan 24 saat sonra (yönetici odayı kaydettiyse 30 gün sonra) odanın bütün bilgileri (oda durumu, sohbet, ayarlar, kayıtlı videolar) silinir.</p>
-
-        <h2>Neler kullanılmıyor?</h2>
-        <ul>
-          <li>Hesap, e-posta, telefon ya da şifre istenmez.</li>
-          <li>Reklam, analiz ya da takip araçları ve çerezleri yoktur.</li>
-          <li>Video içeriği sunucumuzdan geçmez; her kişi videoyu kendi açar.</li>
-          <li>Bilgiler satılmaz ve kimseyle paylaşılmaz.</li>
+        <p>Bu politika, Sidelit'in (web sitesi, tarayıcı eklentisi ve sunucumuz) hangi kişisel verileri, neden, hangi
+          hukuki sebeple kullandığını, kimlerin aldığını, ne kadar tutulduğunu ve haklarını anlatır. 6698 sayılı Kişisel
+          Verilerin Korunması Kanunu (KVKK) ve AB Genel Veri Koruma Tüzüğü (GDPR) için yazılmıştır. KVKK'nın 10. maddesi
+          uyarınca aydınlatma metni olarak da geçerlidir.</p>
+        <ul class="toc">
+          <li><a href="#controller-tr">Sorumlu kim</a></li>
+          <li><a href="#age-tr">Sidelit'i kimler kullanabilir</a></li>
+          <li><a href="#data-tr">Neleri, neden kullanıyoruz</a></li>
+          <li><a href="#legal-basis-tr">Hukuki sebepler</a></li>
+          <li><a href="#seen-by-others-tr">Odadakiler neleri görür</a></li>
+          <li><a href="#device-tr">Cihazında kalanlar</a></li>
+          <li><a href="#extension-tr">Tarayıcı eklentisi</a></li>
+          <li><a href="#voice-tr">Ses, kamera ve yayın</a></li>
+          <li><a href="#games-tr">Oyunlar</a></li>
+          <li><a href="#services-tr">Kullandığımız diğer hizmetler</a></li>
+          <li><a href="#feedback-tr">Geri bildirim</a></li>
+          <li><a href="#sharing-tr">Bilgiler kimlere gider</a></li>
+          <li><a href="#transfers-tr">Yurt dışına aktarım</a></li>
+          <li><a href="#retention-tr">Ne kadar tutuyoruz</a></li>
+          <li><a href="#security-tr">Güvenlik ve veri ihlalleri</a></li>
+          <li><a href="#rights-tr">Hakların ve nasıl kullanırsın</a></li>
+          <li><a href="#complaint-tr">Şikâyet</a></li>
+          <li><a href="#changes-tr">Bu politikadaki değişiklikler</a></li>
         </ul>
 
-        <h2>Tarayıcı eklentisi</h2>
+        <h2 id="controller-tr">Sorumlu kim (veri sorumlusu)</h2>
+        <p>Veri sorumlusu, Sidelit'i ücretsiz ve ticari olmayan bir proje olarak yürüten, Türkiye'de yaşayan gerçek kişi
+          <b>Alperen Aktürk</b>'tür. Gizlilikle ilgili her konu için iletişim: <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a>.
+          Bir şirket, başvurular için posta adresi ya da AB'de atanmış bir temsilci yoktur; lütfen bu adrese Türkçe ya da
+          İngilizce yaz.</p>
+
+        <h2 id="age-tr">Sidelit'i kimler kullanabilir</h2>
+        <p>Sidelit'i kullanmak için en az <b>13 yaşında</b> olmalısın. 16 yaşından küçüksen anne, baba ya da velinin
+          iznine ihtiyacın var. Yaşını sormaz ve kontrol etmeyiz; 13 yaşından küçük çocukların verilerini bilerek
+          kullanmayız. 13 yaşından küçük birinin Sidelit'i kullandığını düşünüyorsan bize yaz, bulabildiğimizi sileriz.</p>
+
+        <h2 id="data-tr">Neleri, neden kullanıyoruz</h2>
+        <p>Sidelit'te hesap yoktur: e-posta adresi (yalnızca, cevap istersen geri bildirim formunda), telefon numarası,
+          gerçek ad ya da şifre hiç istemeyiz. Bir odaya linkiyle girilir. Kullandıklarımız:</p>
         <ul>
-          <li>Eklenti <b>sadece bir odaya katıldığın sekmede</b> çalışır. Diğer sekmelerde hiçbir şey okumaz ve göndermez.</li>
-          <li>Odadaki sekmede sadece sayfadaki videonun durumunu (oynuyor mu, kaçıncı saniyede, hız) kullanır.</li>
-          <li>Odada bir sayfa açtığında o sayfanın adresi ve başlığı odadakilere gönderilir.</li>
-          <li>Gezinti geçmişini toplamaz.</li>
-          <li>Film sayfasında eklenti, sitemizin kendisini (oda sayfası) sayfanın üstünde katman olarak gösterir; oda bağlantısı sitedeki gibi sitenin bağlantısıdır. Film sitesi bu katmanın içini okuyamaz.</li>
-          <li>Site ayarların (ad, avatar, tema, dil, tarayıcı kimliği, kayıtlı odalar, özel emoji koleksiyonun) eklentinin kendi depolama alanında da, senin tarayıcında tutulur; böylece film sayfasındaki katman aynı ayarlarla açılır. Başka bir yere ek bir şey gönderilmez.</li>
-          <li>"Tüm sitelerde çalışma" izni, videoların her sitede (iframe içinde de) bulunabilmesi için gereklidir.</li>
-          <li>Oda görünümünde izlerken video sayfasına tıkladığın anda sayfanın başka bir siteye açtığı sekme (genelde reklam penceresi) kapatılır ve film sekmesi öne getirilir; küçük bir notla geri açabilirsin. Bunun için sadece o sekmenin adresi, sadece senin bilgisayarında kullanılır; hiçbir yere gönderilmez. Oda ayarlarından kapatabilirsin.</li>
-          <li>Film sayfalarındaki sesli sohbet eklentinin görünmeyen bir sayfasında çalışır ("offscreen" izni): mikrofon izni film sitesi için değil, bir kez Sidelit için sorulur. Film sitesi bizim üzerimizden mikrofonuna erişemez.</li>
+          <li><b>Ad ve avatar:</b> odaya girerken seçtiğin ad ve avatar. Odadakilere gösterilir ve göründüğü her yerde
+            odayla birlikte sunucumuzda tutulur: sohbet geçmişi, sıra (videoyu kimin eklediği) ve son oynatılan videolar
+            listesi, pinler, oturum özeti, yönetici seni çıkarırsa yasak listesi, TV bağlantısı (bkz. <a href="#voice-tr">Ses</a>)
+            ve oyun masaları. "İçeri almadan önce sor" açık bir odanın kapısında beklerken yönetici adını ve avatarını
+            görür.</li>
+          <li><b>Tarayıcı kimliği:</b> tarayıcının ilk ziyarette oluşturduğu rastgele bir kod. Hesap değildir ve başka
+            kişilere hiç gösterilmez. Oda kişileri ayırt etmek için kullanır: yönetici sayfayı yenileyince yöneticiliğini
+            kaybetmesin; yöneticinin çıkardığı biri yönetici izin verene kadar geri gelemesin; verdiğin oyu geri alabil;
+            kendi pinlerini ve özel emojilerini kaldırabil; oturum özeti kişi kişi sayılsın; oyunda yerin ve puanın
+            korunsun; bağlantın koparıp geri geldiğinde odada aynı yeri al (24 saat tutulur); yöneticinin tarayıcını içeri
+            aldığı 24 saat hatırlansın; bir TV sana bağlansın.</li>
+          <li><b>Oda durumu:</b> açık video ya da sayfanın adresi ve başlığı, oynuyor ya da durdu bilgisi, konum, hız, sıra
+            ve 👍 oyları, yöneticinin oda kuralları ve planlı başlangıç saati.</li>
+          <li><b>Sohbet:</b> sonradan gelenler de okuyabilsin diye odanın son 50 mesajı (ad, avatar, metin, saat) ve bu
+            mesajlardaki fotoğraf ya da GIF'ler (en fazla 12). Fotoğraflar önce tarayıcında en fazla 1024 piksele
+            küçültülür; bu, konum gibi gizli fotoğraf bilgilerini de siler; GIF'lerin içindeki gizli notlar da silinir.
+            Tek bir kişiye gönderdiğin özel mesaj, ikiniz de odadayken yalnız o kişiye ve sana gider, hiç saklanmaz.
+            Paylaştığın linkler yazı olarak görünür; başka bir site yalnızca onaylayınca açılır.</li>
+          <li><b>Özel emojiler:</b> odaya eklediğin emojiler (160 piksele küçültülür, gizli fotoğraf bilgileri silinir):
+            odada en fazla 24, odayla birlikte tutulur. "Koleksiyonuma da kaydet"i işaretlersen bir kopyası sadece
+            cihazında kalır.</li>
+          <li><b>Pinlenmiş anlar:</b> videonun hangi saniyesi, isteğe bağlı not ve kimin pinlediği; video değişince
+            sıfırlanır.</li>
+          <li><b>Kayıtlı oda</b> (sadece yönetici kaydı açarsa): odanın adı, nerede kalındığı ve pinleriyle son 30 video;
+            böylece bir video kaldığı yerden devam eder. Kaydı kapatmak bunları hemen siler.</li>
+          <li><b>Oturum özeti:</b> kişi kişi (tarayıcı kimliğiyle) kaç mesaj, tepki ve pin gönderildiği, durdurmalar ve
+            atlamalar, hangi videoların ne kadar izlendiği. Özeti sadece isteyen görür; içinde sadece adlar ve avatarlar
+            vardır. Kaydedilen özetler (kayıtlı odada en fazla 20, diğerlerinde 5) en fazla 90 gün tutulur.</li>
+          <li><b>Teknik bilgiler:</b> her web sitesinde olduğu gibi IP adresin, sunucumuzu çalıştıran Cloudflare'e ulaşır.
+            Kötüye kullanımı durdurmak için (ör. döngüyle oda açmak ya da depolamamızı resimlerle doldurmak) sunucumuz
+            yeni bağlantıları, yüklemeleri ve aramaları adrese göre sayar, ama adresin kendisiyle hiç değil: her gün
+            değişen gizli ve rastgele bir anahtarla adresten üretilmiş kısa bir kodu kullanır (HMAC-SHA-256); eski
+            anahtar atılır, böylece gün bitince hiç kimse, biz de dahil, bir kodun hangi adrese ait olduğunu bulamaz. Kod
+            bağlantınla birlikte bellekte tutulur; yalnızca resim yüklemeleri için sunucumuz gün bitene kadar her kodun
+            tüm odalarda kaç bayt yüklediğini tutar. Sunucumuzun kendi teknik kayıtları (zaman, istenen adres, cevabın
+            durumu, hatalar) en fazla 7 gün tutulur; arama kelimeleri isteğin adresinde değil içinde gider, bu yüzden bu
+            kayıtlarda hiç görünmez.</li>
+        </ul>
+        <p>Bir odanın sunucumuzdaki bütün bilgileri, odada kimse kalmadıktan 24 saat sonra (yönetici odayı kaydettiyse 30
+          gün sonra) silinir. Bilgilerini reklam, profil çıkarma ya da otomatik kararlar için kullanmayız ve satmayız.</p>
+
+        <h2 id="legal-basis-tr">Hukuki sebepler</h2>
+        <div class="table-wrap"><table>
+          <tr><th>Amaç</th><th>Bilgiler</th><th>Hukuki sebep</th></tr>
+          <tr><td>Girdiğin odayı çalıştırmak: videoyu senkronlamak, sohbet, resimler, emojiler, sıra, pinler, özet, kayıtlı odalar, oyunlar, ses ve yayın</td><td>ad, avatar, tarayıcı kimliği, oda içeriği, mesajlar, resimler</td><td>İstediğin hizmeti sunmak: KVKK md. 5/2-c; GDPR md. 6/1-b</td></tr>
+          <tr><td>Hizmeti güvenli ve çalışır tutmak: kötüye kullanım sınırları, yasaklar, teknik kayıtlar, YouTube arama hakkının adil kullanımı, YouTube API kullanımımızın sayılması</td><td>her gün değişen IP kodu, tarayıcı kimliği, teknik kayıtlar</td><td>Güvenli ve çalışan ücretsiz bir hizmetteki meşru menfaatimiz: KVKK md. 5/2-f; GDPR md. 6/1-f</td></tr>
+          <tr><td>Geri bildirime cevap vermek</td><td>mesajın, isteğe bağlı e-posta adresin ve teknik bilgiler</td><td>Bize bir şey sormak için gönderirsin: KVKK md. 5/2-c ve f; GDPR md. 6/1-b ve f</td></tr>
+          <tr><td>Hukuki bir talep ya da bir makamın isteğiyle ilgilenmek</td><td>bunun için gereken</td><td>KVKK md. 5/2-ç ve e; GDPR md. 6/1-c ve f</td></tr>
+        </table></div>
+        <p>Özel nitelikli kişisel veri (sağlık ya da biyometrik veri gibi) işlemeyiz: kamera görüntün ve sesin yalnızca
+          seninle seste olanlar arasında gider; hiç incelenmez, tanınmaz, saklanmaz.</p>
+
+        <h2 id="seen-by-others-tr">Odadakiler neleri görür</h2>
+        <ul>
+          <li>Odadaki herkes adını ve avatarını, mesajlarını, resimlerini, emojilerini, pinlerini ve oylarını (sayı
+            olarak), seste ya da yayında olup olmadığını, ne zaman oynatıp durdurduğunu ya da sardığını görür. Herkes
+            gördüğü resimleri ve emojileri kaydedebilir.</li>
+          <li><b>Odaya girmeden önce:</b> bir odanın linkine sahip olan herkes giriş ekranında içeride kaç kişi olduğunu,
+            en fazla 3 kişinin adını, odanın kayıtlı adını ve oynayan şeyin başlığını görür. Oda linklerini yalnızca odada
+            görmek istediğin kişilerle paylaş; yönetici "İçeri almadan önce sor"u açabilir.</li>
+          <li>Seninle seste olanlar genel IP adresini görebilir (bkz. <a href="#voice-tr">Ses</a>).</li>
+          <li>Odadakiler kendi ekranlarını ya da hoparlörlerini kaydedebilir; bunu engelleyemeyiz. Sadece güvendiğin
+            kişilerle izle ve konuş.</li>
         </ul>
 
-        <h2>Sesli sohbet</h2>
+        <h2 id="device-tr">Cihazında kalanlar (bizim çerezimiz yok)</h2>
+        <p>Sidelit hiç çerez koymaz. Aşağıdakileri tarayıcının yerel depolamasında (eklenti varsa, film sayfası aynı
+          ayarları kullansın diye bilgisayarındaki eklenti deposunda da) tutar. Sen silene ya da eklentiyi kaldırana kadar
+          orada kalır ve bu politikada yazmıyorsa hiçbir yere gönderilmez:</p>
         <ul>
-          <li>Mikrofonun <b>sadece "Sese katıl"a bastığında</b> kullanılır; izni tarayıcı sorar, istediğin an tarayıcı ayarlarından geri alabilirsin. "Ayrıl" mikrofonu kapatır.</li>
-          <li>Sesin sese katılan diğer kişilere <b>doğrudan</b> (eşler arası, her zaman şifreli) gider. Sunucumuz sesi hiç duymaz; sadece sese katılanlar arasındaki bağlantı mesajlarını taşır. Ses <b>kaydedilmez, saklanmaz</b>.</li>
-          <li>Bağlantı doğrudan olduğu için seninle seste olan herkes (sonradan sese katılanlar da) genel IP adresini teknik olarak görebilir (kabaca şehrin ve internet şirketin; ev adresin değil). Sese katılmadan önce bu sana söylenir. Sese katılmayanlar göremez. Bu doğrudan bağlantıları kurmak için tarayıcın genel adresini Cloudflare'in STUN sunucusuna sorar. Oda açık olduğu sürece sunucumuz sadece kimin seste olduğunu, mikrofonunun ve kamerasının açık olup olmadığını, kimin yayın yaptığını ve kimin izlediğini tutar.</li>
-          <li>Odadakiler kendi ekranlarını ya da hoparlörlerini kaydedebilir; bunu engelleyemeyiz. Sadece güvendiğin kişilerle konuş.</li>
-          <li><b>TV:</b> 6 haneli koduyla bağladığın TV odaya senin adınla ve avatarınla girer. Yeniden bağlanabilsin diye oda, adını, avatarını ve tarayıcı kimliğini içeren rastgele bir bağlantı anahtarını son kullanımdan sonra en fazla 12 saat tutar; "TV'yi ayır" bunu siler. TV hiç mikrofon kullanmaz, sadece seste olanların sesini çalar (bu yüzden seste olan herkes gibi onlar ve TV birbirinin IP adresini görebilir). Kodun kendisi saklanmaz, 10 dakika geçerlidir.</li>
-          <li><b>Ekran paylaşımı / yayın:</b> ekranın, bir pencere ya da sekme sadece "Ekranını paylaş"a basıp tarayıcının kendi penceresinde neyi paylaşacağını seçince yakalanır; kameran görüntünün köşesine sadece "Kameram da köşede görünsün"ü işaretlediysen eklenir. Sadece "Yayını izle"ye basanlara eşler arası (şifreli) gider. Sesli sohbetteki gibi bu iki yönlüdür: yayın yapan ve yayını izleyenler birbirinin genel IP adresini görebilir (ikisine de başlamadan önce söylenir). Kaydedilmez, saklanmaz.</li>
-          <li>Kameran <b>sadece sesteyken 📷'a bastığında</b> kullanılır ve sadece seste olanlara (eşler arası, şifreli) gider. Kaydedilmez, saklanmaz; 📷'a tekrar basınca ya da sesten ayrılınca kapanır.</li>
+          <li>oda oda adın ve avatarın, yeni bir oda için varsayılanın; tarayıcı kimliğin; dil, tema ve ekran ayarların;</li>
+          <li>kayıtlı odalar listen ve en son bulunduğun oda ("Kaldığın yerden devam et" için: kodu, adı ve saati; 24 saat,
+            oda kayıtlıysa daha uzun gösterilir);</li>
+          <li>özel emoji koleksiyonun, son kullandığın emojiler ve hangi ipuçlarını gördüğün;</li>
+          <li>mikrofon, kamera ve hoparlör seçimin, <b>tarayıcının bildirdiği cihaz adları dahil</b> (bunlar "Ali'nin
+            AirPods'u" gibi bir ad içerebilir), sese kapalı mikrofonla ya da açık kamerayla girip girmeyeceğin;</li>
+          <li>duyduğun ve gördüğün kişiler için: her kişi için ayarladığın ses düzeyi, kimin kamerasını gizlediğin ve her
+            kamera kutusunu nereye koyduğun (adlarıyla ve avatarlarıyla tutulur);</li>
+          <li>kenar oyunlarındaki ilerlemen (Büfe, Pencere Bahçesi, Beş Kare), Bilgi Yarışması'nda gördüğün sorular ve
+            Pencere Bahçesi'nde bir bitki ilk kez çiçek açtığında, albümünde bir anı olarak filmin adı ve odadaki diğer
+            kişilerin adları;</li>
+          <li>gönderilmemiş bir geri bildirim taslağı (sadece açık sekme için) ve son bağlantı testinin kısa sonucu.</li>
+        </ul>
+        <p><b>Başka cihaza taşıma:</b> "📲 Başka cihaza taşı", oyunlardaki ilerlemeni, kayıtlı odalarını, emoji
+          koleksiyonunu ve varsayılan adınla avatarını bir tarayıcından diğerine bir kez gönderir. İkisi de aynı 6 haneli
+          kodla sunucumuza bağlanır; önce gönderen cihazda "Gönder"e basılmalıdır. Sunucu veriyi bellekte doğrudan geçirir
+          ve hiçbir şey saklamaz; kod 10 dakika sonra ya da bir kez kullanılınca geçersiz olur.</p>
+        <p>🐞 test paneli (yalnızca <code>?debug=1</code> ile) sadece tarayıcında çalışır; sahte arkadaşları kendi
+          sekmenden açılan sıradan oda bağlantılarıdır ve "Bu bir hata" sadece bir raporu panoya kopyalar.</p>
+
+        <h2 id="extension-tr">Tarayıcı eklentisi</h2>
+        <ul>
+          <li>Eklentinin kodları her sayfada ve çerçevede yüklenir, ama sen bir odada olana kadar hiçbir şey yapmaz: sadece
+            bu sekmenin bir odaya katılıp katılmadığına bakar. Diğer sekme ve sitelerde hiçbir şey okumaz, göndermez.</li>
+          <li>Odaya katıldığın sekmede sayfadaki videoyu bulur ve senkron tutmak için sadece durumunu kullanır (oynuyor mu,
+            konum, hız, sayfadaki yeri); odada bir sayfa açtığında o sayfanın adresi ve başlığı odayla paylaşılır.
+            Eklenti gezinti geçmişini toplamaz.</li>
+          <li>Film sayfasında eklenti, sitemizin kendisini (oda sayfası) sayfanın üstünde bir katman olarak gösterir; oda
+            bağlantısı sitenin bağlantısıdır. Film sitesi bu katmanın içini okuyamaz.</li>
+          <li>Oda görünümünde izlerken, film sayfasına tıkladığın anda sayfanın başka bir siteye açtığı sekme (genelde
+            reklam penceresi) kapatılır ve küçük bir notla geri açabilirsin. Bunun için eklenti film sekmesinden açılan
+            yeni sekmelere sadece senin bilgisayarında bakar; hiçbir şey gönderilmez. Oda ayarlarından kapatabilirsin.</li>
+          <li>İzinler: "tüm sitelere erişim" (her sitede, çerçevelerin içinde de videoları bulmak için), "depolama"
+            (yukarıdaki ayarlar), "offscreen" (film sayfalarında ses ve kameralar eklentinin görünmeyen bir sayfasında
+            çalışır; böylece mikrofon ve kamera izni bir kez Sidelit için sorulur ve film sitesine hiç verilmez) ve
+            "scripting" (kurduğun anda açık bir Sidelit sekmesine eklentinin geldiğini söyler).</li>
         </ul>
 
-        <h2>Oyunlar (PlayWithMe)</h2>
+        <h2 id="voice-tr">Ses, kamera ve yayın</h2>
         <ul>
-          <li>Oyunlar izleme odasının içinde açılır. Oyun tahtayı, skoru, oyuncuların adını, avatarını ve tarayıcı kimliğini tutar (sayfayı yenileyen oyuncu yerini ve puanını kaybetmesin diye; kimlikler kimseye gösterilmez). Emojiler saklanmaz.</li>
-          <li>Çiz-Bil: tahminler ve oyun sırasında yazılan kısa mesajlar diğer oyunculara iletilir, saklanmaz. Çizim sadece tur oynanırken (oyun sunucusunun belleğinde) vardır, tur bitince silinir.</li>
-          <li>Oyunun verisi son oyuncu çıktıktan 24 saat sonra silinir; oda sadece hangi oyunun açık olduğunu (ve kimin açtığını) oyun bitene kadar hatırlar.</li>
+          <li>Mikrofonun sadece "Sese katıl"a, kameran sadece 📷'a bastığında kullanılır; izni tarayıcı sorar, ayarlarından
+            geri alabilirsin. "Ayrıl" ikisini de kapatır.</li>
+          <li>Ses, kamera ve paylaşılan ekranlar seste olanlara ya da yayınını izleyenlere <b>doğrudan</b> (eşler arası, her
+            zaman şifreli) gider. Sunucumuz bunları hiç almaz; sadece bu kişiler arasındaki bağlantı mesajlarını taşır. Hiçbir
+            şey kaydedilmez, saklanmaz. Oda açık olduğu sürece sunucumuz sadece kimin seste olduğunu, mikrofonunun ve
+            kamerasının açık olup olmadığını, kimin yayın yaptığını ve izlediğini tutar.</li>
+          <li>Bağlantı doğrudan olduğu için seninle seste olan herkes (sonradan katılanlar da), ayrıca yayın yapan ve
+            izleyenler teknik olarak birbirinin genel IP adresini görebilir (kabaca şehrin ve internet şirketin; ev adresin
+            değil). Sese katılmadan, yayın yapmadan ya da izlemeden önce bu sana söylenir. Bu bağlantıları kurmak için
+            tarayıcın genel adresini Cloudflare'in STUN sunucusuna sorar.</li>
+          <li>Ekran paylaşımı sadece tarayıcının kendi penceresinde seçtiğini yakalar; kameran köşeye sadece "Kameram da
+            köşede görünsün"ü işaretlersen eklenir.</li>
+          <li><b>TV</b> (deneme sürümü, normalde gizli): 6 haneli bir kodla bağladığın TV odaya senin olarak girer. Yeniden
+            bağlanabilsin diye oda, adını, avatarını ve tarayıcı kimliğini içeren rastgele bir bağlantı anahtarını son
+            kullanımdan sonra en fazla 12 saat tutar; "TV'yi ayır" onu siler. Kodun kendisi saklanmaz, 10 dakika
+            geçerlidir.</li>
         </ul>
 
-        <h2>Altyapı</h2>
-        <p>Site ve sunucu Cloudflare üzerinde çalışır. Cloudflare, hizmetin işleyişi ve güvenliği için IP adresi gibi teknik bilgileri kısa süreli işleyebilir ve birkaç gün kısa teknik kayıtlar (zaman, istenen adres, hatalar) tutar. Kötüye kullanımı durdurmak için (ör. döngüyle oda açan biri) sunucumuz yeni bağlantıları, özel emoji ve sohbet resmi yüklemelerini ve aramaları IP adresine göre sayar. Bunun için adresin kendisini değil, her gün değişen gizli ve rastgele bir anahtarla adresten üretilmiş kısa bir kodu kullanır (anahtarlı özet, HMAC-SHA-256); eski anahtar atılır, böylece gün bitince hiç kimse, biz de dahil, bir kodun hangi adrese ait olduğunu bulamaz. Kod bellekte kullanılır ve kimseye gösterilmez; yalnızca resim yüklemeleri için sunucumuz gün bitene kadar her kodun tüm odalarda kaç bayt yüklediğini tutar (tek bir adresin depolamamızı doldurmasını önlemek için). Sunucumuz ayrıca en fazla 7 gün boyunca kendi kısa teknik kayıtlarını tutar (Cloudflare Workers Logs: zaman, istenen adres, cevabın durumu ve hatalar); bir aramanın kelimeleri isteğin adresinde değil içinde gönderilir, bu yüzden bu kayıtlarda hiç görünmez. Ayrıntılar için <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare gizlilik politikası</a>. YouTube videoları YouTube'un kendi oynatıcısıyla açılır ve <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google'ın gizlilik politikası</a> geçerlidir.</p>
+        <h2 id="games-tr">Oyunlar</h2>
+        <ul>
+          <li>Odada birlikte oynanan oyunlar (Klasikler, Çiz-Bil, Bilgi Yarışması, Poker) tahtayı ya da turu, skoru,
+            oyuncuların adlarını, avatarlarını ve tarayıcı kimliklerini tutar (sayfayı yenileyen oyuncu yerini ve puanını
+            kaybetmesin diye; kimlikler hiç gösterilmez). Tahminler ve oyunda yazılan kısa mesajlar diğer oyunculara gider,
+            saklanmaz; bir çizim sadece turu oynanırken vardır. Oyunun verisi son oyuncu çıktıktan 24 saat sonra silinir.</li>
+          <li>Kenar oyunları (Büfe, Pencere Bahçesi, Beş Kare) ilerlemelerini sadece cihazında tutar (bkz. yukarı). İki şey
+            odadan geçer: film oynarken Büfe'de yaptığın bir servis odanın ortak bahşiş kavanozuna bir jeton atar (oda
+            yalnızca kavanozun ne kadar dolu olduğunu bellekte sayar, kimin attığını değil) ve Pencere Bahçesi'nden
+            verdiğin bir çelik, adın ve bitkinin türüyle yalnız o kişiye gider; sunucumuzda saklanmaz.</li>
+        </ul>
 
-        <h2>YouTube araması</h2>
-        <p>Odadaki link kutusundaki arama, YouTube API Hizmetlerini kullanır. Arama yaptığında sunucumuz YouTube'a sadece yazdığın kelimeleri (ve sayfanın dilini) gönderir ve bulduğu videoları sana gösterir; adını, odanı ya da seni tanıtan hiçbir şeyi göndermez, YouTube'a giriş de yapmazsın. Günlük arama hakkını korumak için sunucumuz aynı kelimelerin sonuçlarını en fazla 24 saat tutar (kişiye göre değil, kelimelere göre) ve aramaları IP adresine göre, yukarıda anlatılan, her gün değişen kodla sayar (yalnızca bellekte; her adrese günlük arama hakkından adil bir pay vermek için de). Aramayı kullanarak <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube Hizmet Şartları</a>'nı kabul etmiş olursun; YouTube'a giden bilgiler için <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google'ın gizlilik politikası</a> geçerlidir. Shorts görünümündeki "🎲 Keşfet" ve "✨ Bunun gibi" için de aynısı geçerlidir: Keşfet, YouTube'dan bir kategorinin en çok izlenen Shorts'larını ister (senin hiçbir kelimen gitmez) ve her kategori, dil ve gün için tek bir ortak cevap tutar; Bunun gibi sadece oynayan Short'un kimliğini gönderir. Shorts akışındaki "Keşfet" bir ülkenin en çok izlenen Shorts videolarını seçer: varsayılan olarak barındırma sağlayıcımızın (Cloudflare) bağlantından gördüğü ülken; bu yalnızca o istekte listeyi seçmek için kullanılır, hiçbir yere kaydedilmez (onun yerine başka bir ülke ya da "Dünya" seçebilirsin). Bir kanalı takip ettiğinde YouTube'a yalnızca yazdığın kanal linki ya da @adı gider.</p>
-        <p>Odanın sırasında görünen bir YouTube videosunun başlığı YouTube'un herkese açık oEmbed hizmetinden gelir (seninle ilgili hiçbir şey gitmez). Kayıtlı bir oda böyle bir başlığı bulunduktan sonra en çok 30 gün tutar; sonra video kullanıldığında başlığı yeniden sorar ya da "YouTube · " ve videonun kimliğini gösterir.</p>
-        <p>YouTube API'yi gerçekte ne kadar kullandığımızı Google'a bildirebilmek için sunucumuz her gün YouTube'a kaç arama ve başka istek gittiğini ve bunların kaç API birimi tuttuğunu sayar. Bunlar sadece sayılardır: kelime, video, IP adresi ya da oda yoktur. 90 gün tutulur ve yalnızca işletmeci okuyabilir.</p>
-
-        <h2>YouTube videoları</h2>
-        <p>Odadaki bir YouTube videosu, YouTube'un kendi resmi gömülü oynatıcısında, gizliliği artırılmış modda oynar: video çerçevesi youtube-nocookie.com'dan, onu yöneten oynatıcı kodu (YouTube IFrame Player API) ise youtube.com'dan gelir; tarayıcın üçüncü taraf çerezlere izin veriyorsa bu istekle youtube.com çerezlerin de gidebilir. YouTube'un oynatıcı kodu sadece odanda bir YouTube videosu oynamak üzereyken yüklenir, daha önce asla. YouTube IP adresini alabilir; YouTube'a göre bu modda videoyu oynatana kadar tarayıcında hiçbir bilgi saklanmaz, video oynayınca <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google'ın gizlilik politikası</a> geçerlidir. Sıradaki ve arama sonuçlarındaki video resimleri YouTube'un resim sunucusundan (i.ytimg.com) gelir.</p>
-
-        <h2>TikTok videoları</h2>
-        <p>Odadaki bir TikTok linki, tarayıcında tiktok.com'dan yüklenen TikTok'un kendi resmi gömülü oynatıcısında oynar; TikTok videosu gösteren her sitede olduğu gibi TikTok IP adresini alabilir ve kendi çerezlerini koyabilir, bunun için <a href="https://www.tiktok.com/legal/page/global/privacy-policy/tr" target="_blank" rel="noopener">TikTok gizlilik politikası</a> geçerlidir. Videonun başlığını sırada göstermek için sunucumuz TikTok'un herkese açık oEmbed hizmetine linki sorar (seninle ilgili hiçbir şey gitmez). Kısa bir TikTok paylaşım linki (vm.tiktok.com/…) yapıştırdığında sunucumuz linkin hangi videoya gittiğini bulmak için onu bir kez açar ve bu cevabı bir hafta tutar (kişiye göre değil, linke göre).</p>
-        <h2>Vimeo videoları</h2>
-        <p>Odadaki bir Vimeo linki, tarayıcında player.vimeo.com'dan yüklenen Vimeo'nun kendi gömülü oynatıcısında oynar; onu Vimeo'nun "izleme yok" kipinde açarız (<code>dnt=1</code>), yine de Vimeo videosu gösteren her sitede olduğu gibi Vimeo IP adresini alır ve bunun için <a href="https://vimeo.com/privacy" target="_blank" rel="noopener">Vimeo gizlilik politikası</a> geçerlidir. Videonun başlığını sırada göstermek için sunucumuz Vimeo'nun herkese açık oEmbed hizmetine linki sorar (seninle ilgili hiçbir şey gitmez).</p>
+        <h2 id="services-tr">Kullandığımız diğer hizmetler</h2>
+        <ul>
+          <li><b>Cloudflare</b> web sitemizi ve sunucumuzu (ve yukarıdaki STUN sunucusunu) çalıştırır. Hizmeti sunmak ve
+            korumak için IP adresi gibi teknik bilgileri işler ve birkaç gün kısa teknik kayıtlar tutar.
+            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare gizlilik politikası</a>.</li>
+          <li><b>YouTube videoları</b> YouTube'un kendi gömülü oynatıcısında, gizliliği artırılmış modda oynar: video
+            çerçevesi youtube-nocookie.com'dan, onu yöneten oynatıcı kodu (YouTube IFrame Player API) youtube.com'dan gelir;
+            tarayıcın üçüncü taraf çerezlere izin veriyorsa youtube.com çerezlerin de gidebilir. YouTube'un kodu sadece
+            odanda bir YouTube videosu oynamak üzereyken yüklenir. YouTube IP adresini alır; YouTube'a göre bu modda video
+            oynayana kadar tarayıcında hiçbir şey saklanmaz, sonrasında
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google'ın gizlilik politikası</a>
+            geçerlidir. Video resimleri YouTube'un resim sunucusundan (i.ytimg.com) gelir.</li>
+          <li><b>YouTube araması</b> (link kutusu, "🎲 Keşfet", "✨ Bunun gibi", bir kanalı takip etmek) YouTube API
+            Hizmetlerini kullanır: sunucumuz YouTube'a sadece yazdığın kelimeleri, bir video kimliğini, bir kanal linkini ya
+            da bir kategoriyi, sayfanın dilini ve Keşfet için ülkeyi gönderir (varsayılan olarak Cloudflare'in bağlantından
+            gördüğü ülken; yalnızca o istek için kullanılır, hiç saklanmaz). Adını, odanı ya da seni tanıtan hiçbir şeyi
+            göndermez, YouTube'a giriş de yapmazsın. Cevaplar kişiye göre değil kelimelere göre en fazla 24 saat tutulur.
+            Aramayı kullanarak <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube Hizmet Şartları</a>'nı
+            kabul etmiş olursun; YouTube'a gidenler için <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google'ın gizlilik politikası</a>
+            geçerlidir. Bir videonun başlığını sırada göstermek için sunucumuz YouTube'un herkese açık oEmbed hizmetine
+            videoyu sorar (kayıtlı bir oda bu başlığı en fazla 30 gün tutar). YouTube API'yi gerçekte ne kadar
+            kullandığımızı Google'a bildirebilmek için sunucumuz her gün YouTube'a kaç istek gittiğini ve kaç API birimi
+            tuttuğunu sayar: sadece sayılar; kelime, video, adres ya da oda yok, 90 gün tutulur.</li>
+          <li><b>TikTok videoları</b> tiktok.com'dan yüklenen TikTok'un kendi gömülü oynatıcısında oynar; TikTok IP adresini
+            alır ve kendi çerezlerini koyabilir (<a href="https://www.tiktok.com/legal/page/global/privacy-policy/tr" target="_blank" rel="noopener">TikTok gizlilik politikası</a>).
+            Sunucumuz bir videonun başlığı için TikTok'un herkese açık oEmbed hizmetine sorar ve kısa bir paylaşım linkini
+            (vm.tiktok.com/…) hangi videoya gittiğini bulmak için bir kez açar; bu cevabı linke göre bir hafta tutar.</li>
+          <li><b>Vimeo videoları</b> player.vimeo.com'dan yüklenen Vimeo'nun kendi gömülü oynatıcısında, "izleme yok"
+            kipinde (<code>dnt=1</code>) oynar; Vimeo yine de IP adresini alır (<a href="https://vimeo.com/privacy" target="_blank" rel="noopener">Vimeo gizlilik politikası</a>).
+            Sunucumuz başlık için Vimeo'nun herkese açık oEmbed hizmetine sorar.</li>
+          <li><b>Podcastler:</b> "🎧 Podcastler", arama kelimelerini sunucumuzdan Apple'ın herkese açık iTunes Search
+            API'sine gönderir ve en yeni bölümler için bir programın herkese açık RSS beslemesini okur (cevaplar kelimelere
+            ya da programa göre aramalarda bir gün, bölümlerde bir saat tutulur). Kapak resimleri Apple'ın resim
+            sunucularından (mzstatic.com), ses podcastin kendi sunucusundan gelir
+            (<a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple gizlilik politikası</a>).</li>
+          <li><b>Video dosyaları ve film sayfaları:</b> odada açılan bir video dosyası ya da web sayfası, her izleyicinin
+            kendi tarayıcısında onu barındıran siteden yüklenir; bu yüzden o site, her web sitesinde olduğu gibi her
+            izleyicinin IP adresini alır.</li>
+        </ul>
+        <p>Sidelit hiçbir video barındırmaz ve iletmez; sadece herkesin kendi açtığı oynatıcıları senkronlar. Yalnızca izleme
+          hakkın olan içerikleri kullan.</p>
 
         <h2 id="feedback-tr">Geri bildirim</h2>
-        <p>"Geri bildirim gönder"i kullandığında mesajın, türü ve yalnızca yazarsan e-posta adresin bize gönderilir ve GitHub'daki gizli proje depomuzda bir kayıt (issue) olarak saklanır (barındıran GitHub, Inc.; onun <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">gizlilik bildirimi</a> geçerlidir). Teknik bilgiler (site ve eklenti sürümü, tarayıcı, işletim sistemi, pencere boyutu, bağlantı türü ve son bağlantı testinin kısa sonucu) yalnızca o kutuyu işaretlersen eklenir ve göndermeden önce tam olarak hangi satırların gideceğini görebilirsin. Odanla ilgili hiçbir şey (kodu, adlar ya da sohbet) ve IP adresi saklanmaz. Kötüye kullanımı sınırlamak için sunucumuz bir saat boyunca adres başına mesajları sayar; bunun için adresin yalnızca kısa, geri çevrilemeyen bir özetini kullanır. E-postanı yalnızca sana yanıt vermek için kullanırız ve kayıt kapandığında, en geç 90 gün sonra sileriz. Bir mesajın silinmesini istediğin zaman isteyebilirsin.</p>
+        <p>"Geri bildirim gönder", mesajını, türünü ve yalnızca yazarsan e-posta adresini bize gönderir. Bunlar projemizin
+          GitHub'daki deposunda bir kayıt (issue) olarak saklanır (barındıran GitHub, Inc.; onun
+          <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">gizlilik bildirimi</a>
+          geçerlidir). Teknik bilgiler (site ve eklenti sürümü, tarayıcı, işletim sistemi, pencere boyutu, bağlantı türü,
+          son bağlantı testinin kısa sonucu) yalnızca o kutuyu işaretlersen eklenir ve göndermeden önce tam olarak hangi
+          satırların gideceğini görürsün. Odanla ilgili hiçbir şey ve IP adresi saklanmaz; kötüye kullanımı sınırlamak için
+          sunucumuz bir saat boyunca her gün değişen IP koduna göre mesajları sayar. E-postanı yalnızca sana cevap vermek
+          için kullanırız ve kayıt kapanınca, en geç 90 gün sonra sileriz. Bir mesajın silinmesini istediğin zaman
+          isteyebilirsin.</p>
 
-        <h2>Podcastler</h2>
-        <p>Bağlantı kutusunun sonuçlarında "🎧 Podcastler"e bastığında sunucumuz programları bulmak için arama kelimelerini Apple'ın herkese açık iTunes Search API'sine gönderir (seninle ilgili hiçbir şey gitmez; Apple için Apple'ın <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">gizlilik politikası</a> geçerlidir), bir programı açtığında da en yeni bölümler için o programın herkese açık RSS beslemesini okur. Cevaplar kişiye göre değil, kelimelere ya da programa göre bir gün (aramalar) ya da bir saat (bölümler) tutulur. Kapak resimleri Apple'ın resim sunucularından (mzstatic.com), bölümün sesi podcastin kendi sunucusundan tarayıcında yüklenir; bu yüzden her web sitesinde olduğu gibi IP adresini görürler.</p>
-        <h2>İçerik</h2>
-        <p>Sidelit hiçbir video barındırmaz ve iletmez. Sadece herkesin kendi açtığı oynatıcıları senkronlar. Yalnızca izleme hakkın olan içerikleri kullan.</p>
+        <h2 id="sharing-tr">Bilgiler kimlere gider</h2>
+        <p>Kişisel verileri hiç satmayız ve reklam için paylaşmayız. Yalnızca şunlara ulaşır:</p>
+        <ul>
+          <li>odandaki diğer kişiler, <a href="#seen-by-others-tr">Odadakiler neleri görür</a> bölümünde anlatıldığı gibi;</li>
+          <li>sunucumuzu ve web sitemizi bizim için çalıştıran Cloudflare, Inc. (talimatlarımızla çalışan veri işleyen);</li>
+          <li>gönderdiğin geri bildirimi saklayan GitHub, Inc.;</li>
+          <li>Google (YouTube), TikTok, Vimeo ve Apple, yalnızca <a href="#services-tr">Kullandığımız diğer hizmetler</a>
+            bölümünde anlatılanlar (tarayıcında yüklenen kendi oynatıcılarını kendi politikalarıyla onlar çalıştırır);</li>
+          <li>yalnızca kanun bizi zorunlu tutarsa bir makam ya da mahkeme.</li>
+        </ul>
 
-        <h2>İletişim</h2>
-        <p>Soru ve istekler için: <a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a></p>
+        <h2 id="transfers-tr">Yurt dışına aktarım</h2>
+        <p>Cloudflare ağını birçok ülkede çalıştırır; bu yüzden bağlantın Türkiye ve AB dışında, ABD dahil, işlenebilir.
+          GitHub, Google, Vimeo ve Apple ABD merkezlidir; TikTok dünya çapında çalışır. Bu veri işleyenlere aktarımlarda
+          onların sunduğu güvencelere (veri işleme şartlarındaki standart sözleşme hükümleri ve sertifikalı olanlar için
+          AB–ABD Veri Gizliliği Çerçevesi gibi), Türkiye'den aktarımlarda KVKK'nın 9. maddesindeki şartlara dayanırız.
+          Ayrıntıları yukarıdaki adresten isteyebilirsin.</p>
+
+        <h2 id="retention-tr">Ne kadar tutuyoruz</h2>
+        <div class="table-wrap"><table>
+          <tr><th>Bilgi</th><th>Süre</th></tr>
+          <tr><td>Bir odanın sunucumuzdaki bilgileri (durum, sıra, sohbet, resimler, emojiler, pinler, oylar, yasaklar, ayarlar)</td><td>son kişi çıktıktan 24 saat sonrasına kadar; yönetici odayı kaydettiyse 30 gün</td></tr>
+          <tr><td>Sohbet geçmişi</td><td>son 50 mesaj (resimlerinden en fazla 12'si), odayla birlikte</td></tr>
+          <tr><td>Kaydedilen özetler</td><td>odada 5 (kayıtlı odada 20), en fazla 90 gün</td></tr>
+          <tr><td>Kayıtlı odanın video listesi</td><td>son 30 video, kayıt kapatılana kadar</td></tr>
+          <tr><td>Kayıtlı bir odadaki YouTube başlığı</td><td>30 gün</td></tr>
+          <tr><td>Bağlantı kopunca odadaki yerin; "içeri alındı" kaydı</td><td>24 saat</td></tr>
+          <tr><td>TV bağlantı anahtarı</td><td>son kullanımdan sonra 12 saat</td></tr>
+          <tr><td>Birlikte oynanan oyunlar</td><td>son oyuncu çıktıktan 24 saat sonra</td></tr>
+          <tr><td>Her gün değişen IP kodu; kod başına yükleme sayısı</td><td>bağlantıyla birlikte bellekte; bayt sayıları gün sonuna kadar</td></tr>
+          <tr><td>Sunucumuzun teknik kayıtları</td><td>en fazla 7 gün</td></tr>
+          <tr><td>Önbellekteki YouTube cevapları / podcast aramaları / podcast bölümleri / TikTok kısa linkleri</td><td>24 saat / bir gün / bir saat / bir hafta (kelimeye ya da linke göre, kişiye göre hiç değil)</td></tr>
+          <tr><td>YouTube API kullanım sayıları</td><td>90 gün</td></tr>
+          <tr><td>Geri bildirim e-posta adresi</td><td>kayıt kapanana kadar, en fazla 90 gün</td></tr>
+          <tr><td>Cihaza taşıma kodu</td><td>10 dakika ya da bir kullanım; veri hiç saklanmaz</td></tr>
+          <tr><td>Özel mesajlar, ses, kamera, yayınlar, çizimler, tahminler</td><td>hiç saklanmaz</td></tr>
+          <tr><td>Cihazında kalanlar</td><td>sen silene ya da eklentiyi kaldırana kadar</td></tr>
+        </table></div>
+
+        <h2 id="security-tr">Güvenlik ve veri ihlalleri</h2>
+        <p>Her bağlantı şifrelidir (HTTPS ve güvenli WebSocket; ses, kamera ve yayınlar WebRTC'nin kendi şifrelemesini
+          kullanır). Olabildiğince az bilgi tutar, odaları kendiliğinden siler, istekleri adres başına sınırlar, gizli
+          anahtarları kodun dışında tutar ve hizmetin güvenliğini düzenli olarak gözden geçiririz. Bir ihlal bilgilerini
+          tehlikeye atarsa, öğrendiğimiz andan itibaren 72 saat içinde Kişisel Verileri Koruma Kurulu'na (GDPR geçerliyse
+          yetkili otoriteye de) bildirir, etkilenen kişilere de olabildiğince çabuk, bu sitede ve ilgili odalarda haber
+          veririz.</p>
+
+        <h2 id="rights-tr">Hakların ve nasıl kullanırsın</h2>
+        <p>KVKK'nın 11. maddesi ve GDPR'ın 15–22. maddeleri uyarınca bize şunları sorabilir ve isteyebilirsin: verilerinin
+          işlenip işlenmediğini öğrenmek ve görmek; düzeltilmelerini; silinmelerini; kullanımlarının sınırlanmasını;
+          taşınabilir bir biçimde almayı; meşru menfaatimize dayanan kullanıma itiraz etmeyi; yurt içinde ve yurt dışında
+          kimlere aktarıldığını öğrenmeyi; kanuna aykırı işlenmeleri yüzünden zarara uğrarsan zararın giderilmesini. Yalnızca
+          otomatik yollarla verilen kararlara tabi olmama hakkın da vardır; böyle bir karar vermeyiz.</p>
+        <p><a href="mailto:screenwithme.app@gmail.com">screenwithme.app@gmail.com</a> adresine yaz. Hesap olmadığı için
+          bilgileri bulmamıza yardım edecekleri söyle: oda linki ya da kodu, kullandığın ad ve aşağı yukarı ne zaman.
+          Ücretsiz olarak 30 gün içinde cevap veririz ve bilgilerin sana ait olduğunu gösteren bir şey isteyebiliriz (ör.
+          hâlâ o odada olduğun). Çoğunu kendin de yönetebilirsin: odadan çıkıp tarayıcının site verilerini silmek
+          cihazındakileri kaldırır, yönetici emojileri kaldırıp kaydı kapatabilir ve bir oda boşaldıktan 24 saat sonra
+          kendini siler.</p>
+
+        <h2 id="complaint-tr">Şikâyet</h2>
+        <p>Cevabımızdan memnun kalmazsan ya da 30 gün içinde cevap alamazsan Kişisel Verileri Koruma Kurulu'na
+          (<a href="https://www.kvkk.gov.tr" target="_blank" rel="noopener">kvkk.gov.tr</a>) şikâyette bulunabilirsin. AB ya da
+          AEA'da yaşıyorsan kendi ülkenin veri koruma otoritesine de şikâyette bulunabilirsin.</p>
+
+        <h2 id="changes-tr">Bu politikadaki değişiklikler</h2>
+        <p>Bu politika değişince en üstteki tarihi güncelleriz ve değişikliği buraya yazarız.</p>
+        <ul>
+          <li><b>5 Kasım 2026:</b> KVKK ve GDPR için yeniden yazıldı: sorumlu kim, en küçük yaş, her amacın hukuki sebebi,
+            bilgilerin kimlere gittiği, yurt dışına aktarım, saklama süreleri tablosu, hakların ve nasıl kullanılacağı,
+            şikâyet, veri ihlalleri; ayrıca odaya girmeden önce görünenler, tarayıcı kimliğinin kullanımları, cihazında
+            tutulan cihaz adları ve eklentinin izinleri.</li>
+          <li><b>3 Kasım 2026:</b> kenar oyunları, başka cihaza taşıma, podcastler, Vimeo ve geri bildirim eklendi.</li>
+          <li><b>Ekim 2026:</b> ilk sürüm.</li>
+        </ul>
       </div>
     </main>
   </body>

@@ -209,7 +209,10 @@ implement, test, ship.
 - [ ] Trademark filing (TÜRKPATENT, word mark, classes 9 + 42, optionally 38) 👤 — money; recommended soon after the
   name is final, at the latest a few months after 1.0.
 - [ ] Privacy policy review against the code (GDPR + Turkish KVKK): what we store, how long, where (Cloudflare), the
-  rights of users, contact address. Numbers must match the code.
+  rights of users, contact address. Numbers must match the code. 0.9.97.60 (privacy card H3 + M7): rewritten with the
+  controller, legal bases, recipients, transfers abroad, retention table, rights, complaints and age 13+; the help
+  harness checks its numbers against the code; breach plan in `docs/internal/breach-plan.md`. Left: the lawyer's
+  read-through before the store submission 👤.
 - [ ] **(added)** Terms of use (none yet): acceptable use, no illegal content, no warranty, account-free bans,
   minimum age (13+), governing law.
 - [ ] **(added)** YouTube API Services Terms: we embed YouTube; the terms require linking YouTube's ToS and Google's
