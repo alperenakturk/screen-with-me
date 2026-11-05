@@ -3,6 +3,7 @@ import { canShareSheet, isPhoneLayout, onPhoneLayout, onTurn } from '../device.t
 import { t } from '../i18n.ts';
 import { flashHint } from './hint.ts';
 import { phoneCamSize } from './phone-cams.ts';
+import { switchNote, watchCamVideo } from './cam-watch.ts';
 
 /**
  * The room on a phone (0.9.92.3, owner's picks on https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu: 1A live layout,
@@ -338,6 +339,8 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
       const person = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`)?.closest<HTMLElement>('.together-person');
       const name = id === deps.myId() ? t('voice.me') : (person?.title.split(' · ')[0] ?? '');
       tile.querySelector('.ph-cam-name')!.textContent = name;
+      // CAM1: replayed when paused, "waiting for the picture…" / "camera changing…" over it when it shows nothing.
+      watchCamVideo(video, tile, name || id.slice(0, 4), () => switchNote(id));
       tile.setAttribute('aria-label', name);
       if (video.paused) void video.play().catch(() => {});
     }
@@ -363,8 +366,11 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
         big.muted = true;
         big.srcObject = stream;
         big.classList.toggle('mine', lastFace === deps.myId());
-        node.prepend(big);
+        const host = el('div', { class: 'person-cam-box' }, big);
+        node.prepend(host);
         void big.play().catch(() => {});
+        const who = lastFace;
+        watchCamVideo(big, host, 'sheet', () => switchNote(who));
       }
     }
   }).observe(document.body, { childList: true });
