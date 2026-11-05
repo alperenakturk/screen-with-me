@@ -49,6 +49,8 @@ function serve() {
   return new Promise((resolve) => server.listen(0, () => resolve(server)));
 }
 
+/** A rate-limit binding's `limit` in wrangler.jsonc. */
+const limit = (name) => Number(new RegExp(`"name": "${name}"[^}]*"limit": (\\d+)`).exec(fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8'))[1]);
 const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);`).exec(fs.readFileSync(path.join(ROOT, file), 'utf8'))[1].replace(/_/g, '').split('*').reduce((a, b) => a * Number(b), 1));
 
 (async () => {
@@ -205,6 +207,69 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     check(!!dateEn && !!dateTr && dateEn[1] === dateTr[1] && dateEn[3] === dateTr[3] && ids.en.text.includes(`${dateEn[1]} ${dateEn[2]} ${dateEn[3]}:`), 'privacy: a dated change line for the date at the top, the same in both languages', { en: ids.en.date, tr: ids.tr.date });
   }
 
+  // Card TOS: the terms of use, in both languages: every contents link has its section, the same sections in EN and TR,
+  // a dated change line, YouTube's Terms linked, the abuse contact with its answer time, the room retention it states
+  // matching the privacy policy's numbers; linked from the footer, the help page and the extension page.
+  {
+    const nums = {
+      empty: constant('apps/server/src/room.ts', 'EMPTY_ROOM_TTL_MS') / 3_600_000,
+      saved: constant('apps/server/src/room.ts', 'SAVED_ROOM_TTL_MS') / 86_400_000,
+    };
+    const terms = {};
+    for (const lang of ['en', 'tr']) {
+      const page = await ctx.newPage();
+      const problems = [];
+      page.on('pageerror', (e) => problems.push(e.message));
+      page.on('console', (m) => m.type() === 'error' && problems.push(m.text()));
+      await page.goto(`${base}/terms.html?lang=${lang}`);
+      const info = await page.evaluate((lang) => {
+        const block = document.querySelector(`[data-lang-block="${lang}"]`);
+        const local = [...block.querySelectorAll('a[href^="#"]')].map((a) => a.getAttribute('href').slice(1));
+        return {
+          shown: !block.hidden,
+          title: document.title,
+          local,
+          unresolved: local.filter((id) => !block.querySelector(`[id="${id}"]`)),
+          ids: [...block.querySelectorAll('h2[id]')].map((e) => e.id.replace(/-tr$/, '')),
+          youtube: !!block.querySelector('a[href^="https://www.youtube.com/t/terms"]'),
+          privacy: !!block.querySelector(`a[href^="/privacy.html?lang=${lang}"]`),
+          date: block.querySelector('.muted').textContent,
+          text: block.innerText.replace(/\s+/g, ' '),
+        };
+      }, lang);
+      terms[lang] = info;
+      check(info.shown && info.local.length >= 13 && info.unresolved.length === 0, `terms ${lang}: every contents link has its section`, info.unresolved);
+      check(info.youtube && info.privacy, `terms ${lang}: links YouTube's Terms of Service and the privacy policy`);
+      const abuse = lang === 'en' ? ['"Report"', 'within 72 hours', 'a day after the last person leaves (30 days for a saved room)'] : ['"Bildirim"', '72 saat içinde', 'son kişi çıktıktan bir gün sonra silinir (kayıtlı odada 30 gün)'];
+      const missing = abuse.filter((x) => !info.text.includes(x));
+      check(nums.empty === 24 && nums.saved === 30 && missing.length === 0, `terms ${lang}: the abuse contact, its answer time and the room's lifetime as the code keeps it`, missing);
+      check(/screenwithme\.app@gmail\.com/.test(info.text) && /Alperen Aktürk/.test(info.text), `terms ${lang}: names who runs Sidelit and the contact address`);
+      check(/13/.test(info.text) && /16/.test(info.text), `terms ${lang}: the same age rule as the privacy policy (13+, a parent under 16)`);
+      check(problems.length === 0, `terms ${lang}: no CSP or page errors`, problems);
+      await page.setViewportSize({ width: 360, height: 740 });
+      check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `terms ${lang}: no sideways scroll on a phone`);
+      await page.close();
+    }
+    check(terms.en.ids.length >= 13 && JSON.stringify(terms.en.ids) === JSON.stringify(terms.tr.ids), 'terms: English and Turkish have the same sections', { en: terms.en.ids, tr: terms.tr.ids });
+    const dEn = /Last updated: (\d+) (\w+) (\d{4})/.exec(terms.en.date);
+    const dTr = /Son güncelleme: (\d+) (\S+) (\d{4})/.exec(terms.tr.date);
+    check(!!dEn && !!dTr && dEn[1] === dTr[1] && dEn[3] === dTr[3] && terms.en.text.includes(`${dEn[1]} ${dEn[2]} ${dEn[3]}:`), 'terms: a dated change line for the date at the top, the same in both languages', { en: terms.en.date, tr: terms.tr.date });
+    const linked = ['index.html', 'public/help.html', 'public/extension.html'].filter((f) => !fs.readFileSync(path.join(ROOT, 'apps/web', f), 'utf8').includes('/terms.html'));
+    check(linked.length === 0 && fs.readFileSync(path.join(ROOT, 'apps/web/src/room.ts'), 'utf8').includes('id="join-terms"'), 'terms: linked from the footer, the join card, the help page and the extension page', linked);
+    const siteUp = await fetch(SITE).then(() => true, () => false);
+    if (!siteUp) console.log(`skip the footer's terms link: ${SITE} is not running`);
+    else {
+      const home = await ctx.newPage();
+      await home.goto(`${SITE}/`);
+      await home.evaluate(() => localStorage.setItem('lang', 'tr'));
+      await home.reload();
+      await home.waitForFunction(() => document.querySelector('a[data-terms-link]')?.getAttribute('href') !== '/terms.html', null, { timeout: 5000 }).catch(() => {});
+      const footer = await home.evaluate(() => document.querySelector('a[data-terms-link]')?.getAttribute('href'));
+      check(footer === '/terms.html?lang=tr', 'terms: the footer opens the terms in the page\'s language', footer);
+      await home.close();
+    }
+  }
+
   // A section link in Turkish (the room's "can't reach" card) lands on the Turkish section.
   const tr = await ctx.newPage();
   await tr.goto(`${base}/help.html?lang=tr#connection`);
@@ -352,6 +417,28 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     };
     // The privacy policy's numbers are checked with the page itself above (privacy card, 0.9.97.60).
     void n;
+    // Card MB: the numbers added since (the image budget, the room info / probe limit) and the TV being off.
+    {
+      const ipMb = constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_IP_DAY') / 1_000_000;
+      const allMb = constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_DAY') / 1_000_000;
+      // Room information and /api/probe share ROOM_INFO_LIMIT (wrangler.jsonc, per minute).
+      const perMin = limit('ROOM_INFO_LIMIT');
+      const says = {
+        en: [`at most ${ipMb} MB of images per address and ${allMb} MB for everyone a day`, `at most ${perMin} a minute per address`, 'a test version, hidden by default'],
+        tr: [`günde adres başına en fazla ${ipMb} MB, herkes için toplam ${allMb} MB resim`, `adres başına dakikada en fazla ${perMin}`, 'deneme sürümü, normalde gizli'],
+      };
+      for (const lang of ['en', 'tr']) {
+        const text = block(lang);
+        const wrong = says[lang].filter((x) => !text.includes(x));
+        check(wrong.length === 0, `privacy ${lang}: image budget ${ipMb} / ${allMb} MB, info limit ${perMin} a minute, the TV hidden`, wrong);
+      }
+      // "Hidden" is true only while the deployed Worker has no TV=on (R4-10: the variable is set only locally).
+      const wrangler = fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8');
+      check(!/"TV"\s*:\s*"on"/.test(wrangler), 'the TV is off in the deployed config, as the privacy policy says');
+      const helpText = helpHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+      const upload = [`at most ${ipMb} MB a day from one address`, `günde en fazla ${ipMb} MB`];
+      check(upload.every((x) => helpText.includes(x)), `help (EN + TR): the image budget is the code's (${ipMb} MB)`, upload.filter((x) => !helpText.includes(x)));
+    }
     // The games hall's quiz line ("Almost 400 questions in 11 topics") against the question bank (it once said "over
     // 400" with 395).
     const i18n = fs.readFileSync(path.join(ROOT, 'apps/web/src/i18n.ts'), 'utf8');

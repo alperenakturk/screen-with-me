@@ -197,7 +197,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
         </div>
         <button class="btn primary big" data-i18n="enterRoom"></button>
         <p class="muted small" data-i18n="joinHint"></p>
-        <p class="muted small join-privacy"><a href="/privacy.html" target="_blank" rel="noopener" id="join-privacy" data-privacy-link>🔒 <span data-i18n="privacy"></span></a></p>
+        <p class="muted small join-privacy"><a href="/privacy.html" target="_blank" rel="noopener" id="join-privacy" data-privacy-link>🔒 <span data-i18n="privacy"></span></a> · <a href="/terms.html" target="_blank" rel="noopener" id="join-terms" data-terms-link data-i18n="terms"></a></p>
       </form>
     </section>
   `;
@@ -670,6 +670,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button type="button" class="link-btn" id="profile-feedback" data-i18n="feedback"></button>
               <span aria-hidden="true">·</span>
               <a id="profile-privacy" href="/privacy.html" target="_blank" rel="noopener" data-privacy-link data-i18n="privacy"></a>
+              <span aria-hidden="true">·</span>
+              <a id="profile-terms" href="/terms.html" target="_blank" rel="noopener" data-terms-link data-i18n="terms"></a>
             </p>
           </div>
 
@@ -960,6 +962,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       isHost: amHost,
       hasItem: () => roomEl.classList.contains('has-item'),
       desktop,
+      keys: hasMouse(),
     });
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
@@ -2876,6 +2879,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       badge.hidden = !on || unread === 0;
       badge.textContent = unread > 9 ? '9+' : String(unread);
       $('#dock-more-side').textContent = label;
+      // Card MB: cinema mode needs a mouse (its edges): a touch-only tablet doesn't offer it.
+      $('#dock-more-side').closest<HTMLElement>('.dock-more-item')!.hidden = !cinemaOk() && !on;
     };
     const set = (on: boolean) => {
       if (on && !cinemaOk()) return;

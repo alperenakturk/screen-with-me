@@ -43,7 +43,7 @@ WHY SCREENWITHME
 • Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
 • Shared speed: other speed extensions can't knock the room out of sync
 • The room host can lock the controls, remove people and lift bans
-• Eleven themes and drawn avatars; just pick a name, no account
+• Ten themes and drawn avatars; just pick a name, no account
 • YouTube and direct video links play right on the website, no extension needed
 • English and Turkish
 
