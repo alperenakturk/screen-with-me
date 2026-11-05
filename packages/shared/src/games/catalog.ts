@@ -92,6 +92,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.65',
+    kinds: ['classics'],
+    badge: 'updated',
+    tr: 'Klasiklere ⚫ Reversi geldi: karşı rengin sırasını kapat, taşları çevir. Bir arkadaşla ya da Glowbeam’e karşı.',
+    en: 'Reversi ⚫ joins the Classics: close a line of the other colour and turn it over. With a friend, or against Glowbeam.',
+  },
+  {
     v: '0.9.97.61',
     kinds: ['sea'],
     badge: 'new',
