@@ -24,3 +24,14 @@ if needed". Option page: https://claude.ai/artifact/UMqmwdkAGFJR8vcgk6Wbib
 - P7: chess (in-house rules: castling, en passant, promotion, check / mate / stalemate, threefold and 50-move draws).
 - P8: backgammon (dice from the server, bearing off, the doubling cube left out at first).
 - Later: okey (4 players).
+
+## Reversi (5 Nov 2026)
+
+The owner: "add the other games slowly"; the Planner's card puts **Reversi** on the shelf as the recommended small one
+(never "Othello", a trademark; the TR name stays "Reversi"). Rules in `packages/shared/src/games/reversi.ts`:
+8 × 8, the usual crossed start, dark (X, seat 1) moves first, a disc must close at least one straight line of the
+other colour (all closed lines turn over), a side without a legal move passes (the turn stays with the other side,
+`passed` says who), and when neither can move the disc count decides (equal = a draw). A move is the cell (0–63).
+Glowbeam: easy (often random, depth 1) and medium (depth 4 alpha-beta on corners, the risky cells next to an empty
+corner, edges and mobility; ≈ 50 ms a move). The board reuses the 8 × 8 grid on green felt, a gold dot on each legal
+cell on my turn, the last disc lit, the turned discs flip; each seat shows its disc count. Lab position `lastmove`.
