@@ -21,6 +21,8 @@ Please include:
 Please do not open a public issue for a security problem, and do not test against other people's rooms. Use rooms
 you created yourself.
 
+If personal data may have been exposed, we follow our [data breach plan](docs/internal/breach-plan.md).
+
 We aim to answer within 7 days and to fix confirmed problems as soon as we can. When a fix ships, we will say so in
 the release notes (and credit you if you want).
 
