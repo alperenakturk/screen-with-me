@@ -279,7 +279,7 @@
   #game-stage .mt .cl-card-players { display: none; }
 }
 /* A narrow window (a phone): score and 👁 on the bar's first line, Glowbeam's chips on the next. */
-@container game (max-width: 560px) {
+@container game (max-width: 440px) {
   #game-stage .mt .mt-gap { display: none; }
   #game-stage .mt .mt-watch-open { margin-left: auto; order: 2; }
   #game-stage .mt .cl-bot { order: 3; flex-basis: 100%; justify-content: flex-start; }
