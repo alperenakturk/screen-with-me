@@ -792,8 +792,8 @@ html.ph-game .game-stage-head .game-stage-title {
 }
 
 html.ph-game .game-stage-head .btn {
-  min-width: 36px;
-  height: 36px;
+  min-width: 44px;
+  height: 44px;
   padding: 0 8px;
 }
 
@@ -801,7 +801,7 @@ html.ph-game .game-stage .game-minimize {
   flex: 0 1 auto;
   min-width: 0;
   height: auto;
-  min-height: 36px;
+  min-height: 44px;
   padding: 3px 10px 3px 6px;
   white-space: normal;
   font-size: 13px;
@@ -829,8 +829,39 @@ html.ph-game .game-stage-head #strip-voice:not([hidden]) {
 }
 
 html.ph-game .game-stage-head #strip-voice .cam-ctl {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+}
+
+/* GP2: every control in a game is a 44 px target on a phone (Apple / Material; the games sweep checks it). Board
+   cells are sized by their boards; Sea Battle's 10 × 10 cells and Five Frames' 10-a-row keys are the exceptions a
+   phone's width allows (like the phone's own keyboard). */
+html.phone #game-stage :is(.btn, .game-chip, .game-setting-select, .sea-tab, .ff-lang, .cl-bot-leave) {
+  min-height: 44px;
+}
+html.phone #game-stage :is(.btn.small-btn, .game-chip, .ff-lang, .cl-bot-leave) {
+  min-width: 44px;
+}
+html.phone #game-stage .htp-open {
+  width: 44px;
+  height: 44px;
+}
+html.phone #game-stage .wg-album-cell {
+  min-width: 44px;
+}
+/* The Classics bar's chips (Glowbeam's levels, 👁) and Snack Bar's badge button have their own, more specific sizes. */
+html.phone #game-stage .mt :is(.cl-bot .btn, .mt-watch-open),
+html.phone #game-stage .sb .sb-badges-open {
+  min-height: 44px;
+}
+/* Window Garden's bar keeps its three 44 px buttons on screen: the pills give way (with "…") instead. */
+html.phone #game-stage .wg-bar {
+  gap: 4px;
+}
+html.phone #game-stage .wg-bar .wg-pill {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Only 🎙 here (the camera and the stream stay in the room's strip). */
