@@ -4,8 +4,7 @@ What `ROADMAP.md` "Milestone gates to 1.0" asks for 0.9.98 (design sweep, tablet
 release, and what it asks of every milestone step. Each item is done (with its proof), missing (with what it needs) or
 the owner's. Run in the cloud on the built site (`npm run build`, `wrangler dev`, a local `video.webm`).
 
-**Verdict: not full yet.** The checks a script can do pass, except one tablet check whose answer is a design decision
-(Game Studio / the owner). Two Ready cards of this step are still open (CAM1, MB), and the owner's parts (hand tests, real
+**Verdict: not full yet.** The checks a script can do pass (the tablet check after the Planner's pick A, 0.9.97.62). Two Ready cards of this step are still open (CAM1, MB), and the owner's parts (hand tests, real
 devices) are open.
 
 ## 0.9.98's own gate
@@ -13,7 +12,7 @@ devices) are open.
 | Item | State | Proof / what it needs |
 |---|---|---|
 | Screenshot sweep fixed | ✅ done | `scripts/harness/sweep/run.cjs`: 110 screens (5 sizes × EN + Gece / TR + scene theme), every check passed (no sideways scroll, nothing past the right edge, no console errors, fitting screens don't scroll). Sweep 1–3 findings closed in STATUS "Design sweep"; the one minor left there (a failed video link's error card made the room scroll 7–34 px) does not show in this sweep. |
-| Tablet harness | ⚠️ 89 / 90 | `scripts/harness/tablet/run.cjs` (iPad 820×1180 ↔ 1180×820, Android 768×1024). One failure: **"iPad upright: XOX opens in the video's place"**: since CL2 (0.9.97.59) every room game opens in the free mini window (`GAME_CATALOG` `place: 'float'`, phones excepted), while card T (owner's pick B) put games in the video's place on an upright tablet. The window now covers part of the chat column (game window 310–870 px, the video 174–609 px). Needs a decision: keep CL2's window on tablets too (then the harness check changes) or exempt upright tablets like phones. Handed to the Planner for Game Studio / the owner. |
+| Tablet harness | ✅ 91 / 91 (0.9.97.62) | `scripts/harness/tablet/run.cjs` (iPad 820×1180 ↔ 1180×820, Android 768×1024). The one failure on e132e2d ("XOX opens in the video's place", card T) came from CL2 (0.9.97.59): every room game opens in the free mini window, phones excepted. The Planner's pick A: that rule holds on tablets too. The check now asks that the window is whole on screen and moves by its head; it reports how much of the chat column it covers at first (26 % on an upright iPad: the window opens centred on the right, `stage.ts` `spot` { x: 1, y: 0.5 }, Game Studio's code). |
 | Contrast + keyboard harness | ✅ done | `scripts/harness/a11y/run.cjs` (axe WCAG 2.1 A + AA on home, join, room, settings, invite, help in EN at 1366×768 and on a phone, plus the keyboard tour): 23 / 23, also in CI. Game windows: Game Studio's `games-resume` runs axe inside every game window (BHG). |
 
 ## Every release (checked on the last three: 0.9.97.58, .59, .60)
@@ -43,7 +42,7 @@ devices) are open.
 - **MB** (lane B2): strings EN + TR checked by a script, the tablet harness extended (Test Lab drawer, stream card, cinema,
   lazy windows), `store/src/room.html` and `npm run store` refreshed, help / policy / code agree on every limit.
   The privacy card's help-harness checks already cover the policy's numbers.
-- The tablet decision above (Game Studio / the owner).
+- The tablet decision above: decided (Planner's A, 0.9.97.62). Optional for Game Studio: open the window clear of the upright tablet's chat column.
 
 ## Owner's
 - The hand-test rounds in STATUS (0.9.97.56 → .60), a phone + a computer on real devices.

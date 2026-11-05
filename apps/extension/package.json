@@ -2,7 +2,7 @@
   "name": "@swm/extension",
   "private": true,
   "license": "UNLICENSED",
-  "version": "0.9.97.61",
+  "version": "0.9.97.62",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",

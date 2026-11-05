@@ -497,6 +497,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.62 (the home door "📱 Scroll Shorts together"):**
+- [ ] On the home page (computer and phone): "📱 Scroll Shorts together" under Create / Join, with "Swipe YouTube Shorts
+  and TikToks with friends, in sync. Anyone can swipe." (Turkish: "Shorts'u birlikte kaydır").
+- [ ] Press it, enter your name: the room starts playing popular Shorts in the Shorts view by itself, ♾ shows the feed
+  running; invite a friend, both swipe ▲▼. A plain "Create room" still opens an empty room.
+- [ ] On a tablet held upright: a game opens as the small window (like on a computer); drag it by its head out of the chat.
+
 **0.9.97.61 (🎮 Sea Battle, a new room game):**
 - [ ] 🎮 → Sea Battle with a friend: you both see only your own fleet; move a ship (tap it, then tap water), turn it,
   shuffle, then Ready. Shoot in turns: a splash for a miss, a thud for a hit (shoot again), a fanfare when a ship sinks.
