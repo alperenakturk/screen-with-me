@@ -106,9 +106,21 @@ async function unnamed(page) {
   }
   check(moved >= 0, 'a tap on water moves the picked ship there');
   check(await alex.page.evaluate(() => document.querySelectorAll('#game-stage .sea-mine .sea-cell.picked').length > 0), 'the moved ship stays picked');
-  const beforeTurn = (await cellsWith(alex.page, 'mine', 'picked')).join(',');
-  await click(alex.page, '#game-stage .sea-turn');
-  check(!!(await until(async () => (await cellsWith(alex.page, 'mine', 'picked')).join(',') !== beforeTurn)), 'Turn turns the picked ship');
+  // The fleet is random: a ship next to another one (or the edge) may have no room to turn, and the page then says
+  // so and leaves it. Like a player, pick another ship and try again (CI hit that once).
+  let turned = false;
+  for (let tries = 0; tries < 8 && !turned; tries++) {
+    const beforeTurn = (await cellsWith(alex.page, 'mine', 'picked')).join(',');
+    await click(alex.page, '#game-stage .sea-turn');
+    turned = !!(await until(async () => (await cellsWith(alex.page, 'mine', 'picked')).join(',') !== beforeTurn, 1500));
+    if (turned) break;
+    const ships = await cellsWith(alex.page, 'mine', 'ship');
+    const pickedNow = await cellsWith(alex.page, 'mine', 'picked');
+    const other = ships.filter((c) => !pickedNow.includes(c))[(tries * 5) % Math.max(1, ships.length - pickedNow.length)];
+    if (other !== undefined) await alex.page.click(`#game-stage .sea-mine .sea-cell[data-cell="${other}"]`);
+    await wait(150);
+  }
+  check(turned, 'Turn turns a picked ship (another one when the first has no room)');
   // Drag: press on a ship, let go on water.
   const dragFrom = (await cellsWith(alex.page, 'mine', 'ship'))[0];
   const box = async (c) => (await alex.page.locator(`#game-stage .sea-mine .sea-cell[data-cell="${c}"]`).boundingBox());

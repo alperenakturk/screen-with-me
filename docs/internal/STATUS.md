@@ -497,6 +497,19 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.63 (🎮 card GT: game windows on tablets):**
+- [ ] On a tablet held upright, open a game (Classics, Sea Battle): its small window opens above the chat, over the
+  video, as big as that space allows; the chat and the top bar's buttons stay free. Drag it: it stays out of the chat.
+- [ ] The same tablet turned sideways: the window opens left of the side panel, never over the chat.
+- [ ] A computer and a phone: nothing changes.
+
+**0.9.97.62 (the home door "📱 Scroll Shorts together"):**
+- [ ] On the home page (computer and phone): "📱 Scroll Shorts together" under Create / Join, with "Swipe YouTube Shorts
+  and TikToks with friends, in sync. Anyone can swipe." (Turkish: "Shorts'u birlikte kaydır").
+- [ ] Press it, enter your name: the room starts playing popular Shorts in the Shorts view by itself, ♾ shows the feed
+  running; invite a friend, both swipe ▲▼. A plain "Create room" still opens an empty room.
+- [ ] On a tablet held upright: a game opens as the small window (like on a computer); drag it by its head out of the chat.
+
 **0.9.97.61 (🎮 Sea Battle, a new room game):**
 - [ ] 🎮 → Sea Battle with a friend: you both see only your own fleet; move a ship (tap it, then tap water), turn it,
   shuffle, then Ready. Shoot in turns: a splash for a miss, a thud for a hit (shoot again), a fanfare when a ship sinks.
@@ -1156,6 +1169,12 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - **Trademark filing, donations, legal entity:** see `ROADMAP.md` §4.
 
 ## History (short)
+- **0.9.97 (3–5 Nov 2026), side games and more players, then the road to 0.9.98:** the side games (Snack Bar, Window
+  Garden, Five Frames) with their polish, how-to-play cards and the tip jar / cuttings; the games gallery, Classics with
+  dama, chess and backgammon against Glowbeam, the CL2 redesign; Vimeo, podcasts, the move code; the owner's two test
+  rounds (R1–R27, BH2–BH10: knock, private messages, the order of things, fullscreen messages, the YouTube rail, the
+  film page's games and fullscreen); security reviews 3 and 4 (R3-x, R4-x); the Test Lab (DL1–DL5); a lighter room
+  chunk; the privacy policy for KVKK + GDPR. Gate check for 0.9.98: `docs/internal/gate-0.9.98.md`.
 - **2 Nov 2026, live e2e first-attempt flakes:** wait.mjs "timeout waiting d" was a deploy restarting the test's room
   object mid-test (all four connections closed with 1006; reproduced locally by reloading `wrangler dev` at the same
   moment). The deploy job now waits for the new version on the Worker and a Durable Object (`/api/version`,

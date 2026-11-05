@@ -89,6 +89,73 @@ function uprightChecks(where, m) {
   check(m.wrap && m.wrap.h <= m.vh * 0.55, `${where}: the video leaves ≥ 45 % of the height below it`, { h: m.wrap?.h, vh: m.vh });
 }
 
+/**
+ * Card GT (A's G98): a game's free window on a tablet opens clear of the chat (upright its own column, sideways the
+ * side panel), whole on screen, as big as the space beside the chat allows, and the page never scrolls.
+ */
+/** The windows' own widths (catalog `size`): a window may stop growing there. */
+const OWN_WIDTH = { classics: 600, sea: 780 };
+async function gameChecks(page, where, chatSel) {
+  for (const kind of ['classics', 'sea']) {
+    await page.evaluate(() => document.querySelector('#dock-game')?.click());
+    await page.waitForSelector('#game-menu:not([hidden])');
+    await page.waitForTimeout(400);
+    await page.evaluate((k) => document.querySelector(`#game-menu [data-kind="${k}"]`)?.click(), kind);
+    await page.waitForSelector('#game-stage:not([hidden])', { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(1200);
+    const g = await page.evaluate((sel) => {
+      const box = (e) => {
+        const b = e?.getBoundingClientRect();
+        return b && { l: Math.round(b.left), r: Math.round(b.right), t: Math.round(b.top), b: Math.round(b.bottom), w: Math.round(b.width), h: Math.round(b.height) };
+      };
+      const s = document.querySelector('#game-stage');
+      const fit = Number(getComputedStyle(s).getPropertyValue('--fit')) || 1;
+      const texts = [...s.querySelectorAll('.game-stage-body *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().width > 0);
+      const px = texts.map((e) => parseFloat(getComputedStyle(e).fontSize) * fit);
+      return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0 };
+    }, chatSel);
+    await page.screenshot({ path: `${OUT}/${where.replace(/ /g, '-')}-${kind}.png` });
+    const s = g.stage;
+    const c = g.chat;
+    const apart = !c || s.r <= c.l + 1 || s.l >= c.r - 1 || s.b <= c.t + 1 || s.t >= c.b - 1;
+    check(g.float, `${where}, ${kind}: the game opens in its small window`, g.float);
+    check(apart, `${where}, ${kind}: the window never covers the chat`, { stage: s, chat: c });
+    check(s.t >= g.bar - 1, `${where}, ${kind}: the window leaves the top bar free`, { stage: s, bar: g.bar });
+    check(s.l >= 0 && s.t >= 0 && s.r <= g.vw && s.b <= g.vh, `${where}, ${kind}: the window is whole on screen`, { stage: s, vw: g.vw, vh: g.vh });
+    // Sized to the space: it touches the free strip's limit on one side (it can't grow without covering the chat or leaving the screen).
+    const room = !c ? null : [
+      { w: g.vw, h: c.t - g.bar }, { w: g.vw, h: g.vh - c.b }, { w: c.l, h: g.vh - g.bar }, { w: g.vw - c.r, h: g.vh - g.bar },
+    ].filter((b) => s.w <= b.w && s.h <= b.h).map((b) => Math.min(b.w - s.w, b.h - s.h));
+    check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2, `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
+    check(g.minText >= 11, `${where}, ${kind}: its text stays readable (≥ 11 px)`, g.minText);
+    check(g.sh <= g.vh + 1, `${where}, ${kind}: the page never scrolls`, { sh: g.sh, vh: g.vh });
+    if (kind === 'classics') {
+      // G98 (lane A): the window moves by its head and stays on screen; card GT: and it still keeps off the chat.
+      const head = await page.evaluate(() => {
+        const r = document.querySelector('#game-stage .game-stage-title')?.getBoundingClientRect();
+        return r && { x: r.left + Math.min(40, r.width / 2), y: r.top + r.height / 2 };
+      });
+      if (head) {
+        await page.mouse.move(head.x, head.y);
+        await page.mouse.down();
+        await page.mouse.move(head.x - 120, head.y + 200, { steps: 6 });
+        await page.mouse.up();
+        await page.waitForTimeout(200);
+      }
+      const moved = await page.evaluate(() => {
+        const r = document.querySelector('#game-stage').getBoundingClientRect();
+        return { l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom), vw: innerWidth, vh: innerHeight };
+      });
+      const clear = !c || moved.r <= c.l + 1 || moved.l >= c.r - 1 || moved.b <= c.t + 1 || moved.t >= c.b - 1;
+      check(head && (moved.l !== s.l || moved.t !== s.t) && moved.r <= moved.vw && moved.b <= moved.vh && clear, `${where}, ${kind}: the window moves by its head, stays on screen and off the chat`, { before: s, moved, chat: c });
+    }
+    await page.evaluate(() => document.querySelector('#game-stage .game-end, #game-stage .game-leave')?.click());
+    await page.waitForTimeout(300);
+    await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
+    await page.waitForTimeout(600);
+  }
+}
+
 (async () => {
   // The "keeps playing" checks need a real video: without the local server they used to fail as "paused at 0 s",
   // which reads like a bug in the room (BH, 4 Nov 2026). Say what is missing instead.
@@ -163,27 +230,14 @@ function uprightChecks(where, m) {
       m = await measure(page);
       uprightChecks('iPad turned back upright', m);
 
-      // A board game opens in the video's place.
-      await page.evaluate(() => document.querySelector('#dock-game')?.click());
-      await page.waitForSelector('#game-menu:not([hidden])');
-      await page.waitForTimeout(400);
-      await page.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]')?.click());
-      await page.waitForSelector('#game-stage:not([hidden])', { timeout: 5000 }).catch(() => {});
-      await page.waitForTimeout(800);
-      const game = await page.evaluate(() => {
-        const s = document.querySelector('#game-stage');
-        const w = document.querySelector('.player-wrap')?.getBoundingClientRect();
-        const g = s?.getBoundingClientRect();
-        return { inWrap: !!s?.closest('.player-wrap'), float: s?.classList.contains('float'), g: g && { t: Math.round(g.top), b: Math.round(g.bottom), h: Math.round(g.height) }, w: w && { t: Math.round(w.top), b: Math.round(w.bottom) }, sh: document.documentElement.scrollHeight, vh: innerHeight };
-      });
-      await page.screenshot({ path: `${OUT}/iPad-xox.png` });
-      check(game.inWrap && !game.float && game.g?.h > 200, 'iPad upright: XOX opens in the video\'s place', game);
-      check(game.sh <= game.vh + 1, 'iPad upright with a game: the page never scrolls', game);
-      await page.evaluate(() => document.querySelector('#game-stage .game-minimize')?.click());
-      await page.waitForTimeout(300);
-      await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
-      await page.waitForTimeout(500);
+      await page.setViewportSize({ width: 1180, height: 820 });
+      await page.waitForTimeout(1200);
+      await gameChecks(page, `${label} sideways`, '.room .side');
+      await page.setViewportSize({ width: 820, height: 1180 });
+      await page.waitForTimeout(1200);
     }
+
+    await gameChecks(page, `${label} upright`, '.chat-panel');
 
     // The Shorts bar on one row (upright).
     await page.evaluate(() => {
