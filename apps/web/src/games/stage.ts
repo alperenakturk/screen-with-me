@@ -16,7 +16,7 @@
 import { createLogo } from '@swm/shared/logo';
 import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
-import { isPhoneLayout, onPhoneLayout, onTabletUpright } from '../device.ts';
+import { hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
@@ -68,6 +68,7 @@ const FLOAT_KEY = 'gameFloat:spot';
 const zoomKey = (kind: Kind) => `gameFloat:zoom:${kind}`;
 /** Gap kept between the free window and the screen's edges. */
 const EDGE = 8;
+type Box = { left: number; top: number; width: number; height: number };
 /** The free window's zoom range (share of the game's own size). */
 const MIN_ZOOM = 0.45;
 const MAX_ZOOM = 1.6;
@@ -240,13 +241,38 @@ export function createGameStage(opts: StageOptions) {
   }
 
   // ---- The free window: dragged by its head anywhere on the screen, resized from its corner ----
-  /** Where it may go: the screen, or the fullscreen view. */
-  function area(): { left: number; top: number; width: number; height: number } {
+  /** Where it may go: the screen, or the fullscreen view (on a tablet: the part of the screen clear of the chat). */
+  function area(): Box {
     if (inFullscreen()) {
       const r = theater.getBoundingClientRect();
       return { left: r.left, top: r.top, width: r.width, height: r.height };
     }
-    return { left: 0, top: 0, width: innerWidth, height: innerHeight };
+    const screen = { left: 0, top: 0, width: innerWidth, height: innerHeight };
+    return isTablet() ? clearOfChat(screen) ?? screen : screen;
+  }
+  /** A tablet (card GT): a touch screen without a mouse that is not in the phone layout. */
+  const isTablet = () => isTouch() && !hasMouse() && !isPhoneLayout();
+  /**
+   * Card GT (A's G98): on a tablet the free window must not cover the chat (upright it is its own column under the
+   * video, sideways the side panel). The window gets the largest strip of the screen beside the chat (above, below,
+   * left or right of it, under the top bar) in which the game is biggest; null when there is no chat on screen or nothing fits there.
+   */
+  function clearOfChat(screen: Box): Box | null {
+    const chat = (document.documentElement.classList.contains('tablet-up') ? document.querySelector('.chat-panel') : document.querySelector('.room .side')) as HTMLElement | null;
+    const c = chat?.getBoundingClientRect();
+    if (!c || c.width < 1 || c.height < 1 || c.right <= 0 || c.left >= screen.width) return null;
+    const [w, h] = sizeOf(shownKind() ?? 'xox').size;
+    // The top bar's buttons (Invite, ⋯, me, ⚙️) stay free too.
+    const bar = Math.max(0, document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0);
+    const strips: Box[] = [
+      { left: 0, top: bar, width: screen.width, height: c.top - bar },
+      { left: 0, top: c.bottom, width: screen.width, height: screen.height - c.bottom },
+      { left: 0, top: bar, width: c.left, height: screen.height - bar },
+      { left: c.right, top: bar, width: screen.width - c.right, height: screen.height - bar },
+    ];
+    const zoomIn = (b: Box) => Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h);
+    const best = strips.reduce((a, b) => (zoomIn(b) > zoomIn(a) ? b : a));
+    return zoomIn(best) >= MIN_ZOOM ? best : null;
   }
   /** The free window's zoom: what I dragged it to (1 = the game's own size), never bigger than the screen allows. */
   function floatZoom(want?: number): number {
