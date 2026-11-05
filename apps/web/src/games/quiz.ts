@@ -2,6 +2,7 @@
 // points; the reveal shows the right option and who picked what (small avatars), then a podium. In the lobby the
 // host picks the language, topic and length; everyone has one 50:50 joker per game.
 
+import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   QUIZ_SEEN_KEEP,
@@ -25,7 +26,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
-import { langChoices, podium, settingsPanel } from './ui.ts';
+import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -180,6 +181,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       );
       if (s.phase === 'over') go.textContent = t('games.again');
       parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
+      // CL2: the players are a row of faces in the card (no players column beside the lobby).
+      if (s.phase === 'lobby') intro.append(lobbyPlayers(s.players, me, s.host));
       body.replaceChildren(el('div', { class: 'quiz-center' }, intro, el('div', { class: 'quiz-setup' }, ...parts)));
     } else {
       const reveal = s.phase === 'reveal';

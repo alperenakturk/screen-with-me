@@ -23,6 +23,7 @@ const SIZES = {
 };
 // A table kind and, for the Classics, the board to put on it.
 const GAMES = {
+  picker: { table: 'classics', picker: true },
   xox: { table: 'classics', board: 'xox' },
   four: { table: 'classics', board: 'four' },
   dama: { table: 'classics', board: 'dama' },
@@ -99,9 +100,32 @@ function measure(mayScroll) {
   // A board is the game: it must be there and take a fair share of the window (a CSS slip once made it 0 wide).
   let board = '';
   const b = stage.querySelector('.dama-board, .bg-board, .xox-board, .four-board');
-  if (b) {
+  // Classics' picker shows no board at all (CL2): nothing to measure there.
+  if (b && !b.closest('[hidden]')) {
     const r = b.getBoundingClientRect();
     if (r.width < Math.min(260, box.width * 0.6) || r.height < 150) board = `${name(b)} ${Math.round(r.width)}×${Math.round(r.height)} in ${Math.round(box.width)}`;
+  }
+  // CL2: the board is the hero: no other block of the table is bigger, and nothing stands beside it as a column
+  // (the old layout had seats, status and settings in a column left of a small board).
+  let hero = '';
+  const tableBox = stage.querySelector('.mt-table');
+  if (b && tableBox && !tableBox.hidden) {
+    const br = b.getBoundingClientRect();
+    for (const part of tableBox.children) {
+      if (!visible(part) || part.contains(b) || part.matches('.mt-watch-pop')) continue;
+      const r = part.getBoundingClientRect();
+      if (r.width * r.height > br.width * br.height) hero += `${name(part)} is bigger than the board; `;
+      const overlap = Math.min(r.bottom, br.bottom) - Math.max(r.top, br.top);
+      const beside = r.right <= br.left + 2 || r.left >= br.right - 2;
+      if (beside && overlap > br.height * 0.3 && r.height > 60) hero += `${name(part)} stands beside the board; `;
+    }
+  }
+  // CL2: a Draw & Guess / Quiz lobby is one card: no players column beside it.
+  const lobby = stage.querySelector('.draw-page.draw-lobby');
+  if (lobby) {
+    const side = lobby.querySelector('.draw-side');
+    if (side && visible(side)) hero += 'the lobby has a column beside its card; ';
+    if (!lobby.querySelector('.lobby-players')) hero += 'the lobby shows no players row; ';
   }
   const page = document.scrollingElement;
   return {
@@ -110,6 +134,7 @@ function measure(mayScroll) {
     small: [...new Set(small)].slice(0, 6),
     cut: [...new Set(cut)].slice(0, 6),
     board,
+    hero,
     pageScroll: page.scrollHeight > innerHeight + 2 ? `${page.scrollHeight}>${innerHeight}` : '',
   };
 }
@@ -146,6 +171,16 @@ function measure(mayScroll) {
           return b && !b.querySelector('.game-stage-loading') && b.childElementCount > 0;
         }, null, { timeout: 12000 }).catch(() => {});
         await wait(900);
+        if (g.picker) {
+          // The picker first (CL2): open it again if an earlier board is on the table.
+          await page.evaluate(() => {
+            const b = document.querySelector('#game-stage #cl-shelf-open');
+            if (b && !b.hidden) b.click();
+          });
+          await wait(600);
+          const alone = await page.evaluate(() => !document.querySelector('#game-stage .cl-picker')?.hidden && !!document.querySelector('#game-stage .mt-table')?.hidden);
+          check(alone, `${label}: the picker shows alone (no board behind it)`);
+        }
         if (g.board) {
           const has = await page.evaluate((b) => document.querySelector(`#game-stage .cl-box[data-board="${b}"].on`) !== null, g.board);
           if (!has) {
@@ -165,6 +200,7 @@ function measure(mayScroll) {
         check(m.small.length === 0, `${label}: no text under 13 px`, m.small.join(' | '));
         check(m.cut.length === 0, `${label}: nothing cut off`, m.cut.join(' | '));
         check(!m.board, `${label}: the board is a fair size`, m.board);
+        check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
       }
       await ctx.close();

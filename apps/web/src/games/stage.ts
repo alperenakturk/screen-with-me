@@ -14,7 +14,7 @@
 // "are you sure?" (`beforeunload`, `live.ts`).
 
 import { createLogo } from '@swm/shared/logo';
-import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
+import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { isPhoneLayout, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { el } from '../dom.ts';
@@ -163,9 +163,20 @@ export function createGameStage(opts: StageOptions) {
     return b;
   });
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
-  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
+  // A game may put its own small buttons here (Classics: "Change game"); it empties the slot when it closes.
+  const headSlot = el('span', { class: 'game-head-slot' });
+  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
   // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
   const body = el('div', { class: 'game-fit' });
+  /**
+   * The window's size and the room its layout needs. Classics (CL2) follows the screen on its table: the picker or
+   * the board (`data-board` on its page, `swm-game-size` when it changes).
+   */
+  const sizeOf = (kind: Kind) => {
+    if (kind !== 'classics') return catalogOf(kind);
+    const board = body.querySelector<HTMLElement>('.xox-page')?.dataset.board as keyof typeof CLASSICS_SIZES | undefined;
+    return (board && CLASSICS_SIZES[board]) || catalogOf(kind);
+  };
   const frame = el('div', { class: 'game-stage-body' }, body);
   const grip = el('span', { class: 'game-resize', 'aria-hidden': 'true' });
   // The room's emojis fly over the free window too (ui/reactions.ts picks this layer while it is open).
@@ -240,7 +251,7 @@ export function createGameStage(opts: StageOptions) {
   /** The free window's zoom: what I dragged it to (1 = the game's own size), never bigger than the screen allows. */
   function floatZoom(want?: number): number {
     const kind = shownKind() ?? 'xox';
-    const [w, h] = catalogOf(kind).size;
+    const [w, h] = sizeOf(kind).size;
     const saved = Number(load(zoomKey(kind)) || '1');
     const room = area();
     const most = Math.min(MAX_ZOOM, (room.width - 2 * EDGE) / w, (room.height - 2 * EDGE) / h);
@@ -248,7 +259,7 @@ export function createGameStage(opts: StageOptions) {
   }
   let spot = readPair(FLOAT_KEY) ?? { x: 1, y: 0.5 };
   function placeFloat(zoom = floatZoom()): void {
-    const [w, h] = catalogOf(shownKind() ?? 'xox').size;
+    const [w, h] = sizeOf(shownKind() ?? 'xox').size;
     const width = Math.round(w * zoom);
     const height = Math.round(h * zoom);
     const room = area();
@@ -306,7 +317,7 @@ export function createGameStage(opts: StageOptions) {
   grip.addEventListener('pointermove', (event) => {
     const kind = shownKind();
     if (!sizing || !kind) return;
-    const [w, h] = catalogOf(kind).size;
+    const [w, h] = sizeOf(kind).size;
     const room = area();
     // Follow the mouse along the window's diagonal; keep the window on the screen.
     const want = ((sizing.w + event.clientX - sizing.x) / w + (sizing.h + event.clientY - sizing.y) / h) / 2;
@@ -362,7 +373,7 @@ export function createGameStage(opts: StageOptions) {
     spot = { x: 1, y: 0.4 };
     save(FLOAT_KEY, JSON.stringify(spot));
     requestAnimationFrame(() => {
-      const [w] = catalogOf(kind).size;
+      const [w] = sizeOf(kind).size;
       // Right of the video's column: since 0.9.92.2 the Shorts rail (and ▲▼) sit between the video and this space.
       const rail = document.getElementById('shorts-nav')?.getBoundingClientRect();
       const right = Math.max(wrap.getBoundingClientRect().right, rail && rail.width ? rail.right : 0);
@@ -386,7 +397,7 @@ export function createGameStage(opts: StageOptions) {
     if (!W || !H) return;
     fitting = true;
     // Phones have their own narrow layouts: only overflow shrinks the game there.
-    const [fw, fh] = narrow.matches ? [0, 0] : catalogOf(kind).fit;
+    const [fw, fh] = narrow.matches ? [0, 0] : sizeOf(kind).fit;
     let scale = Math.min(1, fw ? W / fw : 1, fh ? H / fh : 1);
     for (let i = 0; i < 4; i++) {
       body.style.width = `${W / scale}px`;
@@ -415,6 +426,12 @@ export function createGameStage(opts: StageOptions) {
   new ResizeObserver(queueFit).observe(frame);
   // A new phase (lobby → question → podium) changes what has to fit.
   new MutationObserver(queueFit).observe(body, { childList: true, subtree: true, characterData: true });
+  // Classics changed its screen (picker ↔ a board): the free window takes that screen's size.
+  body.addEventListener('swm-game-size', () => {
+    if (mode === 'float') placeFloat();
+    queueFit();
+    dispatchEvent(new Event('swm-layout'));
+  });
 
   const meId = () => opts.me().id;
   const canClose = (table: RoomGame) => table.by.id === meId() || opts.amHost();
@@ -586,6 +603,7 @@ export function createGameStage(opts: StageOptions) {
     if (current?.id === table.id && unmount) return place();
     unmount?.();
     unmount = null;
+    headSlot.replaceChildren();
     solo = null;
     current = table;
     labels();
@@ -612,6 +630,7 @@ export function createGameStage(opts: StageOptions) {
     if (!current) tell = false;
     unmount?.();
     unmount = null;
+    headSlot.replaceChildren();
     current = null;
     solo = null;
     rememberAt(null);
@@ -639,6 +658,7 @@ export function createGameStage(opts: StageOptions) {
     rememberAt({ id: `solo:${kind}`, min: false });
     unmount?.();
     unmount = null;
+    headSlot.replaceChildren();
     solo = kind;
     labels();
     if (shortsView()) besideShorts(kind);
