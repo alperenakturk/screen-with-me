@@ -32,6 +32,9 @@ const GAMES = {
   draw: { table: 'draw' },
   quiz: { table: 'quiz' },
   poker: { table: 'poker' },
+  sea: { table: 'sea' },
+  // Sea Battle in battle: Glowbeam sits, I'm ready, both seas show.
+  seaPlay: { table: 'sea', play: true },
   snack: { solo: 'snack' },
   garden: { solo: 'garden' },
   word: { solo: 'word' },
@@ -83,7 +86,7 @@ function measure(mayScroll) {
     let ref = el;
     while (ref.parentElement && ref !== stage && ref.offsetWidth < 100) ref = ref.parentElement;
     const shown = parseFloat(s.fontSize) * (ref.offsetWidth > 0 ? ref.getBoundingClientRect().width / ref.offsetWidth : 1);
-    if (own && shown < 12.8 && !el.closest('.dama-board, .chess-board, .bg-board, .xox-board')) small.push(`${name(el)} ${shown.toFixed(1)}px "${el.textContent.trim().slice(0, 18)}"`);
+    if (own && shown < 12.8 && !el.closest('.dama-board, .chess-board, .bg-board, .xox-board, .sea-grid')) small.push(`${name(el)} ${shown.toFixed(1)}px "${el.textContent.trim().slice(0, 18)}"`);
     if (/^(BUTTON|INPUT|SELECT|TEXTAREA|A)$/.test(el.tagName) || own) {
       const r = el.getBoundingClientRect();
       // Clipped by a scrolling ancestor is fine (it can be scrolled to); clipped by the game's window or the screen is not.
@@ -99,7 +102,9 @@ function measure(mayScroll) {
   }
   // A board is the game: it must be there and take a fair share of the window (a CSS slip once made it 0 wide).
   let board = '';
-  const b = stage.querySelector('.dama-board, .bg-board, .xox-board, .four-board');
+  const boards = [...stage.querySelectorAll('.dama-board, .bg-board, .xox-board, .four-board, .sea-grid')];
+  // A phone shows one Sea Battle sea at a time: measure the one on screen.
+  const b = boards.find((x) => x.getBoundingClientRect().width > 0) ?? boards[0];
   // Classics' picker shows no board at all (CL2): nothing to measure there.
   if (b && !b.closest('[hidden]')) {
     const r = b.getBoundingClientRect();
@@ -189,6 +194,14 @@ function measure(mayScroll) {
             await page.evaluate((b) => document.querySelector(`#game-stage .cl-box[data-board="${b}"]`)?.click(), g.board);
             await wait(1200);
           }
+        }
+        if (g.play) {
+          await run('sea.bot');
+          await wait(800);
+          await page.evaluate(() => document.querySelector('#game-stage .sea-ready-btn')?.click());
+          const playing = await page.waitForFunction(() => document.querySelector('#game-stage .sea')?.dataset.phase === 'play', null, { timeout: 6000 }).then(() => true, () => false);
+          check(playing, `${label}: the battle against Glowbeam starts`);
+          await wait(600);
         }
         const m = await page.evaluate(measure, MAY_SCROLL);
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });

@@ -13,6 +13,7 @@ interface __BaseEnv_Env {
 	DRAWS: DurableObjectNamespace<import("./src/index").Draw>;
 	QUIZZES: DurableObjectNamespace<import("./src/index").Quiz>;
 	POKERS: DurableObjectNamespace<import("./src/index").Poker>;
+	FLEETS: DurableObjectNamespace<import("./src/index").Sea>;
 	TVLINKS: DurableObjectNamespace<import("./src/index").TvLink>;
 	FEEDBACK: DurableObjectNamespace<import("./src/index").FeedbackGate>;
 	MOVELINKS: DurableObjectNamespace<import("./src/index").MoveLink>;

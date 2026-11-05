@@ -1,4 +1,5 @@
-// Test Lab server powers (card DL3b): a Classics position, ending a Quiz phase now, filling the room's tip jar.
+// Test Lab server powers (card DL3b): a Classics position, ending a Quiz phase now, filling the room's tip jar, a Sea
+// Battle with one ship left each and the other fleet revealed.
 // With `LAB_SERVER=1` (a local `wrangler dev --var SWM_LAB_SERVER:1`, as in CI) they must work. Without it (every live
 // run, a plain local server) every one of them must be refused and change nothing: this is the proof that the live
 // build never has these powers.
@@ -96,6 +97,29 @@ console.log(lab ? 'local lab server: the lab messages must work' : 'not a lab se
     await alex.wait(isError('bad_message'), 'bad_message from the room');
     await sleep(300);
     ok(!alex.inbox.some((m) => m.t === 'tipjar'), 'Room: refused, the tip jar stays as it was');
+  }
+  alex.close();
+}
+// 4. Sea Battle: one ship left each, and their fleet revealed (to the asking tab only).
+{
+  const alex = client(`/api/sea/labs${tag}/ws`, { t: 'hello', v: 1, name: 'Alex', cid: 'labSeaAlex' + tag });
+  await alex.wait((m) => m.t === 'state', 'sea state');
+  alex.send({ t: 'bot', level: 1 });
+  await alex.wait((m) => m.t === 'state' && m.players[1]?.bot === 1, 'Glowbeam sits');
+  alex.inbox.length = 0;
+  alex.send({ t: 'lab', op: 'oneLeft' });
+  if (lab) {
+    const s = await alex.wait((m) => m.t === 'state' && m.phase === 'play', 'one ship left');
+    ok(s.players[0].left === 1 && s.players[1].left === 1 && s.turn === 0, 'Sea Battle: the lab leaves one ship each, my turn');
+    alex.send({ t: 'lab', op: 'reveal' });
+    const r = await alex.wait((m) => m.t === 'reveal', 'reveal');
+    ok(r.seat === 1 && r.ships.length === 5, "Sea Battle: the lab reveals Glowbeam's fleet to this tab");
+  } else {
+    await alex.wait(isError('lab_off'), 'lab_off from the sea');
+    alex.send({ t: 'lab', op: 'reveal' });
+    await alex.wait(isError('lab_off'), 'lab_off for reveal');
+    await sleep(300);
+    ok(alex.state.phase === 'place' && !alex.inbox.some((m) => m.t === 'reveal'), 'Sea Battle: refused (lab_off), nothing revealed, the game untouched');
   }
   alex.close();
 }
