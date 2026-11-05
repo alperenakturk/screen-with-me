@@ -79,7 +79,7 @@ html.tablet-up .lab-drawer {
   top: auto;
   left: 0;
   width: auto;
-  height: min(48dvh, 560px);
+  height: min(42dvh, 560px);
   border-left: 0;
   border-top: 1px solid var(--border);
   border-radius: 16px 16px 0 0;
