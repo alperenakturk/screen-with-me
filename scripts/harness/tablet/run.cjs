@@ -174,6 +174,8 @@ async function gameChecks(page, where, chatSel) {
       localStorage.setItem('tipsSeen', '1');
       localStorage.setItem('opt:autoInvite', '0');
       localStorage.setItem('opt:voiceCheck', 'skip');
+      // The 🐞 Test Lab is on in this tab (card MB checks its drawer on an upright tablet).
+      sessionStorage.setItem('swm:debug', '1');
     });
     const page = await ctx.newPage();
     const errors = [];
@@ -208,6 +210,33 @@ async function gameChecks(page, where, chatSel) {
     m = await measure(page);
     uprightChecks(`${label} with a friend`, m);
     await friend.context().close();
+
+    // Card MB: the Test Lab is a bottom sheet on an upright tablet, the video and its rail stay in view above it.
+    await page.waitForSelector('.debug-fab', { timeout: 8000 });
+    await page.evaluate(() => document.querySelector('.debug-fab').click());
+    await page.waitForSelector('.lab-drawer:not([hidden])', { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    const lab = await page.evaluate(() => {
+      const r = (q) => { const e = document.querySelector(q); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: b.width, h: b.height }; };
+      return { drawer: r('.lab-drawer'), dock: r('#fs-dock'), wrap: r('.player-wrap'), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, pad: getComputedStyle(document.body).paddingRight };
+    });
+    check(lab.drawer && Math.abs(lab.drawer.b - lab.vh) <= 1 && lab.drawer.w >= lab.vw - 1 && lab.drawer.t >= lab.vh * 0.45, `${label}: the Test Lab is a bottom sheet`, lab.drawer);
+    check(lab.pad === '0px' && lab.wrap && lab.dock && lab.wrap.b <= lab.drawer.t + 1 && lab.dock.b <= lab.drawer.t + 1, `${label}: the video and its rail stay in view above the Test Lab`, lab);
+    check(lab.sh <= lab.vh + 1, `${label}: the page never scrolls with the Test Lab open`, { sh: lab.sh, vh: lab.vh });
+    await page.evaluate(() => document.querySelector('.debug-fab').click());
+    await page.waitForTimeout(300);
+
+    // Card MB: no keyboard shortcuts and no cinema mode on a touch-only tablet (both need a mouse / keyboard).
+    await page.evaluate(() => document.querySelector('#room-more')?.click());
+    await page.waitForTimeout(300);
+    const moreKeys = await page.evaluate(() => [...document.querySelectorAll('.room-more-pop:not([hidden]) [role="menuitem"], .room-more-pop:not([hidden]) button')].some((b) => b.textContent.includes('⌨')));
+    await page.keyboard.press('Escape');
+    const rail = await page.evaluate(() => {
+      const shown = (q) => { const e = document.querySelector(q); return !!e && !e.hidden && getComputedStyle(e).display !== 'none'; };
+      return { cinema: shown('.dock-more-item:has(#dock-more-side)'), keys: shown('.dock-more-item[data-press="#profile-keys"]') };
+    });
+    check(!moreKeys, `${label}: ⋯ More has no keyboard shortcuts`);
+    check(!rail.cinema && !rail.keys, `${label}: the rail's ⋯ offers no cinema mode or shortcuts`, rail);
 
     if (label === 'iPad') {
       // Turning the iPad: the computer layout, no reload, the video keeps playing.

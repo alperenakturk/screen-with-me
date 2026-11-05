@@ -49,6 +49,8 @@ function serve() {
   return new Promise((resolve) => server.listen(0, () => resolve(server)));
 }
 
+/** A rate-limit binding's `limit` in wrangler.jsonc. */
+const limit = (name) => Number(new RegExp(`"name": "${name}"[^}]*"limit": (\\d+)`).exec(fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8'))[1]);
 const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);`).exec(fs.readFileSync(path.join(ROOT, file), 'utf8'))[1].replace(/_/g, '').split('*').reduce((a, b) => a * Number(b), 1));
 
 (async () => {
@@ -415,6 +417,28 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     };
     // The privacy policy's numbers are checked with the page itself above (privacy card, 0.9.97.60).
     void n;
+    // Card MB: the numbers added since (the image budget, the room info / probe limit) and the TV being off.
+    {
+      const ipMb = constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_IP_DAY') / 1_000_000;
+      const allMb = constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_DAY') / 1_000_000;
+      // Room information and /api/probe share ROOM_INFO_LIMIT (wrangler.jsonc, per minute).
+      const perMin = limit('ROOM_INFO_LIMIT');
+      const says = {
+        en: [`at most ${ipMb} MB of images per address and ${allMb} MB for everyone a day`, `at most ${perMin} a minute per address`, 'a test version, hidden by default'],
+        tr: [`günde adres başına en fazla ${ipMb} MB, herkes için toplam ${allMb} MB resim`, `adres başına dakikada en fazla ${perMin}`, 'deneme sürümü, normalde gizli'],
+      };
+      for (const lang of ['en', 'tr']) {
+        const text = block(lang);
+        const wrong = says[lang].filter((x) => !text.includes(x));
+        check(wrong.length === 0, `privacy ${lang}: image budget ${ipMb} / ${allMb} MB, info limit ${perMin} a minute, the TV hidden`, wrong);
+      }
+      // "Hidden" is true only while the deployed Worker has no TV=on (R4-10: the variable is set only locally).
+      const wrangler = fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8');
+      check(!/"TV"\s*:\s*"on"/.test(wrangler), 'the TV is off in the deployed config, as the privacy policy says');
+      const helpText = helpHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+      const upload = [`at most ${ipMb} MB a day from one address`, `günde en fazla ${ipMb} MB`];
+      check(upload.every((x) => helpText.includes(x)), `help (EN + TR): the image budget is the code's (${ipMb} MB)`, upload.filter((x) => !helpText.includes(x)));
+    }
     // The games hall's quiz line ("Almost 400 questions in 11 topics") against the question bank (it once said "over
     // 400" with 395).
     const i18n = fs.readFileSync(path.join(ROOT, 'apps/web/src/i18n.ts'), 'utf8');
