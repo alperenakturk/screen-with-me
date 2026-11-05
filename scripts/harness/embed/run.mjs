@@ -385,6 +385,23 @@ if (HEADFUL) {
   await a.sleep(60);
   await a.mouse('mouseMoved', film.r - 18, (film.y + film.b) / 2);
   check(!!rested && !!(await until(() => a.evalFrame('shell=1', RAIL_OUT), 2000)), 'film sayfası: filmin son 40 px\'i de rayı açıyor (R5)', JSON.stringify({ rested, film }));
+  // EXT1 (owner): the mouse goes from the side panel back across the rail and the film's right edge to the middle of the
+  // film, at a person's pace: the film's "at the edge" and "away from it" come within 300 ms, and the rail stayed out.
+  {
+    const side = await a.evalFrame('shell=1', `(() => { const r = document.querySelector('.chat-panel').getBoundingClientRect(); return { x: r.left + 40, y: r.top + r.height / 2 }; })()`);
+    await a.mouse('mouseMoved', side.x, (film.y + film.b) / 2);
+    await a.sleep(600);
+    for (let x = side.x; x >= (film.x + film.r) / 2; x -= 40) {
+      await a.mouse('mouseMoved', x, (film.y + film.b) / 2);
+      await a.sleep(35);
+    }
+    const restedBack = await until(async () => !(await a.evalFrame('shell=1', RAIL_OUT)), 2500);
+    check(!!restedBack, 'film sayfası: fare yan panelden rayın ve filmin kenarının üstünden filmin ortasına geçince ray kapanıyor (EXT1)');
+    await a.mouse('mouseMoved', film.r - 20, (film.y + film.b) / 2);
+    await a.sleep(60);
+    await a.mouse('mouseMoved', film.r - 18, (film.y + film.b) / 2);
+    await until(() => a.evalFrame('shell=1', RAIL_OUT), 2000);
+  }
   // BH10 (owner): "Keep the controls open" holds the rail in the window too, also when the mouse leaves the film.
   await a.evalFrame('shell=1', `document.getElementById('rail-pin').click(); 1`);
   const chatBox = await a.evalFrame('shell=1', `(() => { const r = document.querySelector('.chat-panel').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
@@ -421,15 +438,85 @@ check(!!trayIsland, 'rayın emoji penceresi deliğin üstünde adacık (katmanda
 await a.shot('1d-tepki-tepsisi');
 await a.evalFrame('shell=1', `document.getElementById('dock-react').click(); 1`);
 check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'pencere kapanınca adacık kalktı');
+// EXT1 (owner: "games don't work on the film page"): the games hall opens next to the rail's 🎮, inside the rail, and
+// was clipped away (invisible). The hall, a Classics table (a move against Glowbeam) and a side game show over the film.
+{
+  // Seen = its middle is not in the film's open hole, or an island of ours covers it there (the hole may also close).
+  const seen = async (box) => {
+    const rects = clipRects(await a.evaluate(SHELL_CLIP));
+    const x = (box.x + box.r) / 2, y = (box.y + box.b) / 2;
+    const at = (r) => r.x <= x && x <= r.r && r.y <= y && y <= r.b;
+    return !rects[1] || !at(rects[1]) || rects.slice(2).some(at);
+  };
+  const BOX = (sel) => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return r.width ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`;
+  await a.evalFrame('shell=1', `document.getElementById('dock-game').click(); 1`);
+  const hall = await until(() => a.evalFrame('shell=1', `document.querySelector('#game-menu [data-kind="classics"]') ? ${BOX('#game-menu')} : null`));
+  check(!!hall && !!(await until(() => seen(hall))), 'film sayfası: oyun salonu filmin üstünde görünüyor (adacık) (EXT1)', JSON.stringify(hall));
+  await a.shot('1e-oyun-salonu');
+  await a.evalFrame('shell=1', `document.querySelector('#game-menu [data-kind="classics"]').click(); 1`);
+  const stage = await until(() => a.evalFrame('shell=1', `document.querySelector('#game-stage .xox-cell, #game-stage .dama-cell') ? ${BOX('#game-stage')} : null`), 10000);
+  check(!!stage && !!(await until(() => seen(stage))), 'film sayfası: Klasikler masası filmin yerinde görünüyor (EXT1)', JSON.stringify(stage));
+  // A real move against Glowbeam: XOX picked on the game shelf (it covers the board until a game is picked).
+  await a.evalFrame('shell=1', `document.querySelector('#game-stage .cl-box[data-board="xox"]')?.click(); 1`);
+  await a.sleep(800);
+  await a.evalFrame('shell=1', `document.querySelector('#game-stage .cl-bot-level')?.click(); 1`);
+  await a.sleep(1500);
+  const BOARD = `(document.getElementById('xox-board')?.innerHTML ?? '')`;
+  const CENTER = (sel) => `(() => { const c = document.querySelector(${JSON.stringify(sel)}); if (!c) return null; const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`;
+  // The table may still switch to the board it remembers: try until a move of mine lands.
+  let dama = false;
+  let mine = null;
+  for (let i = 0; i < 8 && !mine; i++) {
+    const before = await a.evalFrame('shell=1', BOARD);
+    dama = await a.evalFrame('shell=1', `!!document.querySelector('#game-stage .dama-cell')`);
+    const first = await a.evalFrame('shell=1', CENTER(dama ? '#game-stage .dama-cell.movable' : '#xox-board > :nth-child(5)'));
+    if (first) await a.click(first.x, first.y);
+    if (dama) {
+      const to = await until(() => a.evalFrame('shell=1', CENTER('#game-stage .dama-cell.target')), 1500);
+      if (to) await a.click(to.x, to.y);
+    }
+    mine = await until(async () => {
+      const now = await a.evalFrame('shell=1', BOARD);
+      const picked = await a.evalFrame('shell=1', `!!document.querySelector('#game-stage .dama-cell.picked')`);
+      return now && now !== before && !picked ? now : null;
+    }, 1200);
+  }
+  const answered = mine && (await until(async () => (await a.evalFrame('shell=1', BOARD)) !== mine, 6000));
+  check(!!mine && !!answered, `film sayfası: ${dama ? 'dama' : 'XOX'} hamlesi (gerçek tıklama) oynandı, Glowbeam cevap verdi (EXT1)`);
+  await a.shot('1f-klasikler');
+  await a.evalFrame('shell=1', `document.querySelector('#game-stage .game-end')?.click(); 1`);
+  await a.sleep(300);
+  await a.evalFrame('shell=1', `document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click(); 1`);
+  await until(() => a.evalFrame('shell=1', `!document.querySelector('#game-stage .xox-cell')`), 5000);
+  await a.evalFrame('shell=1', `document.getElementById('dock-game').click(); 1`);
+  await until(() => a.evalFrame('shell=1', `!!document.querySelector('#game-menu [data-tab="side"]')`));
+  await a.evalFrame('shell=1', `document.querySelector('#game-menu [data-tab="side"]').click(); 1`);
+  await until(() => a.evalFrame('shell=1', `!!document.querySelector('#game-menu [data-solo="snack"]')`));
+  await a.evalFrame('shell=1', `document.querySelector('#game-menu [data-solo="snack"]').click(); 1`);
+  const scene = await until(() => a.evalFrame('shell=1', `(() => { document.querySelector('.htp:not([hidden]) .htp-skip')?.click(); return ${BOX('.sb-scene')}; })()`), 10000);
+  check(!!scene && !!(await until(() => seen(scene))), 'film sayfası: Snack Bar penceresi filmin üstünde görünüyor (EXT1)', JSON.stringify(scene));
+  await a.shot('1g-snack-bar');
+  await a.evalFrame('shell=1', `document.querySelector('#game-stage .game-minimize')?.click(); 1`);
+  await a.sleep(500);
+}
 
 // 2c) Film sitesinin kendi ⛶ düğmesi → odanın tam ekranı (sitenin kontrolleri görünür).
 const fsButton = await a.center('#fs');
 if (fsButton) await a.click(fsButton.x, fsButton.y);
 const fake = await until(() => a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`));
 check(!!fake, 'film sitesinin ⛶ düğmesi → odanın tam ekranı');
+const PAGE_FS = `document.fullscreenElement === document.documentElement`;
+check(!!(await until(() => a.evaluate(PAGE_FS))), 'filmin ⛶ düğmesi: bütün film sayfası tam ekran (odanın tam ekranı, yalnızca film kutusu değil) (EXT1)');
 await a.sleep(800);
 await a.shot('1c-tam-ekran');
-await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
+// EXT1 (owner): the film's own ⛶ pressed again leaves the room's fullscreen.
+{
+  const again = await a.center('#fs');
+  if (again) await a.click(again.x, again.y);
+  const left = await until(async () => !(await a.evaluate('!!document.fullscreenElement')) && !(await a.evalFrame('shell=1', `document.getElementById('theater').classList.contains('fake-fs')`)), 4000);
+  check(!!left, "filmin ⛶ düğmesine ikinci basış odanın tam ekranından çıkarıyor (EXT1)");
+  if (!left) await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
+}
 await a.sleep(800);
 
 // 3) Senkron: Riley oynatır / durdurur → film videosu uyar.
@@ -689,6 +776,17 @@ check(railFs.apart, 'tam ekran: ray filmin videosunun üstünde değil', JSON.st
     await passBy({ x: screenW / 2, y: screenH / 2 });
     await a.sleep(400);
     check(!!(await a.evalFrame('shell=1', DOCK_IDLE)) && near(await holeRight(), wideRight, 3), 'tam ekran: kenardan geçip giden fare rayı açmıyor (film zıplamıyor)');
+    // EXT1 (owner): the rail out at the right edge, the mouse goes back to the middle at a person's pace (over the rail
+    // and the film's last 40 px): the rail stayed out until pause / play.
+    await toEdge();
+    await until(async () => !(await a.evalFrame('shell=1', DOCK_IDLE)), 2000);
+    await a.sleep(800);
+    for (let x = screenW - 8; x >= screenW / 2; x -= 40) {
+      await a.mouse('mouseMoved', x, screenH / 2);
+      await a.sleep(35);
+    }
+    const sweptBack = await until(() => a.evalFrame('shell=1', DOCK_IDLE), 2500);
+    check(!!sweptBack, 'tam ekran: ray açıkken fare sağ kenardan ortaya kayınca ray kapanıyor (EXT1)');
     riley.send({ t: 'pause', position: 62, at: Date.now() });
     await a.sleep(800);
     await toEdge();
@@ -813,6 +911,23 @@ const nested = await until(
 check(!!nested, 'gömmeyi yasaklayan sayfa, iç içe oynatıcı: oynatıcı çerçevesi deliğe yerleşti');
 await a.sleep(800);
 await a.shot('3-ic-ice');
+// EXT1 (owner): the film's own ⛶ inside a player frame of another origin opens the room's fullscreen and closes it again.
+{
+  const nestedFs = async () => {
+    const f = await a.evaluate(`(() => { const f = document.querySelector('iframe[data-swm-focus]'); const r = f.getBoundingClientRect(); return { x: r.left, y: r.top }; })()`);
+    const b = await a.evalFrame('/player', `(() => { const r = document.getElementById('fs').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+    if (f && b) await a.click(f.x + b.x, f.y + b.y);
+  };
+  await nestedFs();
+  const inFs = await until(async () => (await a.evaluate(PAGE_FS)) && (await a.evalFrame('shell=1', IN_FS)), 4000);
+  check(!!inFs, 'iç içe oynatıcı: filmin ⛶ düğmesi → odanın tam ekranı (bütün sayfa) (EXT1)');
+  await a.sleep(1000);
+  await nestedFs();
+  const outFs = await until(async () => !(await a.evaluate('!!document.fullscreenElement')) && !(await a.evalFrame('shell=1', IN_FS)), 4000);
+  check(!!outFs, 'iç içe oynatıcı: filmin ⛶ düğmesine ikinci basış tam ekrandan çıkarıyor (EXT1)');
+  if (!outFs) await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);
+  await a.sleep(800);
+}
 
 // 9b) Video sonradan gelen sayfa (/late): oda görünümü hemen (video başlamadan) gelir, olası oynatıcı kutusu deliğe
 // oturur. Aynı sekme aynı sitede: örtü sayfa yüklenirken hemen (document_start, sessionStorage işareti) gelmeli.
