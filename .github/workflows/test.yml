@@ -139,6 +139,16 @@ jobs:
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: node scripts/harness/lab-games/run.cjs http://localhost:8787
 
+      # Card BHG: every game fits its window (no inner scrollbar, text >= 13 px, nothing cut off, a fair-sized board) on
+      # a laptop and a phone in English and Turkish (the four sizes locally: drop SIZES), and minimize / restore / a
+      # reload mid-game keep the game (Classics, Quiz, Draw & Guess, side games); Sea Battle with two people and Glowbeam.
+      - name: Games quality
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+        run: |
+          SIZES=laptop,iphone node scripts/harness/games-sweep/run.cjs http://localhost:8787
+          node scripts/harness/games-resume/run.cjs http://localhost:8787
+          node scripts/harness/sea/run.cjs http://localhost:8787
+
       # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and the IP notice
       # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
       - name: Lazy chunks and their gates
@@ -154,9 +164,10 @@ jobs:
           npx playwright install --with-deps chromium
           node scripts/harness/help/run.cjs http://localhost:8787
 
+      # Only its end: the whole log of every e2e and harness run buried the failing step's own output.
       - name: Server log (on failure)
         if: failure()
-        run: cat wrangler.log || true
+        run: tail -n 150 wrangler.log || true
 
   # Deploy to live: only on main and only if the tests passed. Cloudflare keys are in the repo's
   # Secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); without them the job warns and skips.
@@ -215,17 +226,21 @@ jobs:
           # "Send feedback" (card 9, optional): a fine-grained token, Issues: write on this repository only. Only this
           # step sees it (security review 3 R3-2); it goes to the Worker as a secret like the YouTube key.
           FEEDBACK_GITHUB_TOKEN: ${{ secrets.FEEDBACK_GITHUB_TOKEN }}
+          # Privacy card (0.9.97.60): the PRIVATE repository the feedback issues go to (owner/name), a repository variable
+          # (Settings → Secrets and variables → Actions → Variables). Without it feedback answers 'off': this repository
+          # is public and a reply address must never become a public issue.
+          FEEDBACK_REPO: ${{ vars.FEEDBACK_REPO }}
           # Card Y3 (optional): the owner's key for GET /api/youtube/usage (header X-Usage-Token); without it the route
           # is refused.
           USAGE_TOKEN: ${{ secrets.USAGE_TOKEN }}
         run: |
           set -o pipefail
           [ -n "$YOUTUBE_API_KEY" ] || echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
-          [ -n "$FEEDBACK_GITHUB_TOKEN" ] || echo "::warning::FEEDBACK_GITHUB_TOKEN is missing, feedback answers 'off'."
-          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN$USAGE_TOKEN" ]; then
+          [ -n "$FEEDBACK_GITHUB_TOKEN" ] && [ -n "$FEEDBACK_REPO" ] || echo "::warning::FEEDBACK_GITHUB_TOKEN or the FEEDBACK_REPO variable is missing, feedback answers 'off'."
+          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN$FEEDBACK_REPO$USAGE_TOKEN" ]; then
             # The keys go from the environment into a temporary file outside the repo, never into the log; only the
             # ones that are set (an empty value would overwrite a working secret).
-            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN", "USAGE_TOKEN"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
+            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN", "FEEDBACK_REPO", "USAGE_TOKEN"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
             npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json" | tee "$RUNNER_TEMP/deploy.log"
             rm -f "$RUNNER_TEMP/secrets.json"
           else

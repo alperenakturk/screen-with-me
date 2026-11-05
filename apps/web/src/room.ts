@@ -1357,6 +1357,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           if (wanted) sessionSave(`create:${roomId}`, '');
           // Ana sayfada link yapıştırılarak kurulduysa: oda boşken o video açılır (link kutusunun yolundan geçer:
           // sayfa linkinde eklenti sorusu vb. aynen çalışsın).
+          // The home page's "Scroll Shorts together" door: today's popular Shorts start playing in the empty room.
+          if (sessionLoad(`shorts:${roomId}`)) {
+            sessionSave(`shorts:${roomId}`, '');
+            if (!message.state.item && message.queue.length === 0) startDoorFeed();
+          }
           const start = sessionLoad(`start:${roomId}`);
           if (start) {
             sessionSave(`start:${roomId}`, '');
@@ -1810,9 +1815,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
       // Film sayfasında basılan kısayol: sitedeki kısayol dinleyicileri (emoji, Enter, P) aynen işlesin.
       onKey: (key, up) => document.dispatchEvent(new KeyboardEvent(up ? 'keyup' : 'keydown', { key, bubbles: true, cancelable: true })),
-      onFullscreen: () => {
-        if (!fullscreen.isActive()) fullscreen.toggle();
-      },
+      // EXT1: the film's own ⛶ opens and closes the room's fullscreen, like ours.
+      onFullscreen: () => fullscreen.toggle(),
       onActivity: (edge) => fullscreen.poke(edge),
     });
     current = { player, slot, youtube: false, own: false };
@@ -1940,8 +1944,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         if (child.id === 'fs-dock') {
           // Hidden with the film's own bar (0.9.91.5): then the film takes the clicks there, and a mouse move on the
           // film brings the dock back (the film page reports it).
-          if ($('#theater').classList.contains('dock-idle')) continue;
-          for (const node of [child, ...child.querySelectorAll<HTMLElement>('.dock-pop:not([hidden])')]) {
+          // EXT1: the games hall opens next to the rail's 🎮, so it lives in the dock: an island too, even while the rail rests.
+          const pops = [...child.querySelectorAll<HTMLElement>('.dock-pop:not([hidden]), [data-island]:not([hidden])')];
+          for (const node of $('#theater').classList.contains('dock-idle') ? pops.filter((n) => n.matches('[data-island]')) : [child, ...pops]) {
             const r = node.getBoundingClientRect();
             if (r.width > 0) add(islands, r.left, r.top, r.right, r.bottom);
           }
@@ -2124,6 +2129,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     new MutationObserver(() => reportLayout()).observe($('#theater'), { attributes: true, attributeFilter: ['class'] });
     // Araç çubuğundan açılan pencereler (tepsi, hız, oyun menüsü) deliğin üstüne biner: açılınca hemen bildir.
     new MutationObserver(() => reportLayout()).observe($('.toolbar'), { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+    new MutationObserver(() => reportLayout()).observe($('#fs-dock'), { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
     // Lower the film while someone in voice is really talking (off by default since 0.9.83, owner's decision:
     // a click used to lower it too). Back to normal 1 s after they stop. New key so the old default doesn't stick.
     const duckBox = $<HTMLInputElement>('#opt-duck');
@@ -2317,6 +2323,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     note: (text) => flashHint(shortsOn ? feedButton : mediaInput, text, 5000),
     changed: () => renderFeed(),
   });
+  /** The home door's feed: 🎲 Discover "Popular" in the region chosen for Discover (the viewer's own by default). */
+  function startDoorFeed(): void {
+    feed.start(t('pool.popular'), { kind: 'pool', pool: 'popular', region: poolRegion });
+  }
   function renderFeed(): void {
     const topic = feed.topic;
     feedButton.classList.toggle('on', topic !== null);

@@ -121,6 +121,92 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     await page.close();
   }
 
+  // Privacy card (H3 + M7, 0.9.97.60): the privacy policy has the same sections in both languages, every contents
+  // link resolves, and the numbers it states are the code's.
+  {
+    const n = (file, name) => constant(file, name);
+    const DAY = 86_400_000;
+    const nums = {
+      chat: n('apps/server/src/room.ts', 'CHAT_HISTORY'),
+      images: n('packages/shared/src/protocol.ts', 'MAX_CHAT_IMAGES'),
+      emojis: n('packages/shared/src/protocol.ts', 'MAX_STICKERS'),
+      empty: n('apps/server/src/room.ts', 'EMPTY_ROOM_TTL_MS') / 3_600_000,
+      saved: n('apps/server/src/room.ts', 'SAVED_ROOM_TTL_MS') / DAY,
+      history: n('apps/server/src/room.ts', 'MAX_HISTORY'),
+      recaps: n('packages/shared/src/recap.ts', 'RECAPS_KEEP'),
+      recapsSaved: n('packages/shared/src/recap.ts', 'RECAPS_KEEP_SAVED'),
+      recapDays: n('packages/shared/src/recap.ts', 'RECAP_MAX_AGE_MS') / DAY,
+      title: n('packages/shared/src/room-logic.ts', 'TITLE_MAX_AGE_MS') / DAY,
+      memberIds: n('apps/server/src/room.ts', 'MEMBER_ID_TTL_MS') / 3_600_000,
+      admitted: n('apps/server/src/room.ts', 'ADMIT_TTL_MS') / 3_600_000,
+      tv: n('apps/server/src/room.ts', 'TV_TOKEN_TTL_MS') / 3_600_000,
+      tvCode: n('apps/server/src/tv-link.ts', 'CODE_TTL_MS') / 60_000,
+      game: n('apps/server/src/game.ts', 'EMPTY_TTL_MS') / 3_600_000,
+      move: n('packages/shared/src/move.ts', 'MOVE_TTL_MS') / 60_000,
+      usage: n('packages/shared/src/yt-usage.ts', 'USAGE_DAYS'),
+      ytCache: n('apps/server/src/youtube.ts', 'RESULT_TTL_S') / 3600,
+      tiktok: n('apps/server/src/tiktok.ts', 'RESULT_TTL_S') / 86_400,
+      podSearch: n('apps/server/src/podcasts.ts', 'SEARCH_TTL_S') / 3600,
+      podEpisodes: n('apps/server/src/podcasts.ts', 'EPISODES_TTL_S') / 3600,
+    };
+    const same = ['draw', 'quiz', 'poker'].every((f) => n(`apps/server/src/${f}.ts`, 'EMPTY_TTL_MS') / 3_600_000 === nums.game);
+    check(same, 'privacy: every game object keeps its data as long as the one the policy names', nums.game);
+    const day = (d, en) => (d === 7 ? (en ? 'a week' : 'bir hafta') : null);
+    const expect = {
+      en: [
+        `last ${nums.chat} messages`, `at most ${nums.images})`, `at most ${nums.emojis} per`, `${nums.empty} hours after the last person leaves`,
+        `${nums.saved} days if the host saved`, `last ${nums.history} videos`, `up to ${nums.recapsSaved} in a saved room, ${nums.recaps} otherwise`,
+        `at most ${nums.recapDays} days`, `${nums.title} days`, `(kept ${nums.memberIds}\n            hours)`.replace(/\s+/g, ' '),
+        `for ${nums.admitted} hours that the host let`, `at most ${nums.tv}\n            hours`.replace(/\s+/g, ' '), `valid for ${nums.tvCode}\n            minutes`.replace(/\s+/g, ' '),
+        `deleted ${nums.game} hours after the last\n            player leaves`.replace(/\s+/g, ' '), `after ${nums.move} minutes or once used`,
+        `kept ${nums.usage} days`, `up to ${nums.ytCache} hours by the\n            words`.replace(/\s+/g, ' '), day(nums.tiktok, true),
+        nums.podSearch === 24 ? 'a day for searches' : `${nums.podSearch} hours for searches`, nums.podEpisodes === 1 ? 'an hour for\n            episodes'.replace(/\s+/g, ' ') : `${nums.podEpisodes} hours for episodes`,
+      ],
+      tr: [
+        `son ${nums.chat} mesajı`, `(en fazla ${nums.images})`, `odada en fazla ${nums.emojis}`, `${nums.empty} saat sonra`, `${nums.saved}\n          gün sonra`.replace(/\s+/g, ' '),
+        `son ${nums.history} video`, `kayıtlı odada en fazla ${nums.recapsSaved}, diğerlerinde ${nums.recaps}`, `en fazla ${nums.recapDays} gün`,
+        `en fazla ${nums.title} gün`, `(${nums.memberIds} saat tutulur)`, `${nums.admitted} saat hatırlansın`, `en fazla ${nums.tv} saat`,
+        `${nums.tvCode} dakika\n            geçerlidir`.replace(/\s+/g, ' '), `son oyuncu çıktıktan ${nums.game} saat sonra silinir`, `kod ${nums.move} dakika sonra`,
+        `${nums.usage} gün tutulur`, `en fazla ${nums.ytCache} saat tutulur`, day(nums.tiktok, false),
+        nums.podSearch === 24 ? 'aramalarda bir gün' : `aramalarda ${nums.podSearch} saat`, nums.podEpisodes === 1 ? 'bölümlerde bir saat' : `bölümlerde ${nums.podEpisodes} saat`,
+      ],
+    };
+    const ids = {};
+    for (const lang of ['en', 'tr']) {
+      const page = await ctx.newPage();
+      const problems = [];
+      page.on('pageerror', (e) => problems.push(e.message));
+      page.on('console', (m) => m.type() === 'error' && problems.push(m.text()));
+      await page.goto(`${base}/privacy.html?lang=${lang}`);
+      const info = await page.evaluate((lang) => {
+        const block = document.querySelector(`[data-lang-block="${lang}"]`);
+        const local = [...block.querySelectorAll('a[href^="#"]')].map((a) => a.getAttribute('href').slice(1));
+        return {
+          shown: !block.hidden,
+          local,
+          unresolved: local.filter((id) => !block.querySelector(`[id="${id}"]`)),
+          ids: [...block.querySelectorAll('h2[id]')].map((e) => e.id.replace(/-tr$/, '')),
+          rows: block.querySelectorAll('table tr').length,
+          date: block.querySelector('.muted').textContent,
+          text: block.innerText.replace(/\s+/g, ' '),
+        };
+      }, lang);
+      ids[lang] = info;
+      check(info.shown && info.unresolved.length === 0 && info.local.length >= 18, `privacy ${lang}: every contents link has its section`, info.unresolved);
+      const wrong = expect[lang].filter((s) => s && !info.text.includes(s.replace(/\s+/g, ' ')));
+      check(wrong.length === 0, `privacy ${lang}: the numbers match the code (${JSON.stringify(nums)})`, wrong);
+      check(/screenwithme\.app@gmail\.com/.test(info.text) && /Alperen Aktürk/.test(info.text), `privacy ${lang}: names the controller and the contact address`);
+      check(problems.length === 0, `privacy ${lang}: no CSP or page errors`, problems);
+      await page.setViewportSize({ width: 360, height: 740 });
+      check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `privacy ${lang}: no sideways scroll on a phone`);
+      await page.close();
+    }
+    check(JSON.stringify(ids.en.ids) === JSON.stringify(ids.tr.ids) && ids.en.rows === ids.tr.rows, 'privacy: English and Turkish have the same sections and table rows', { en: ids.en.ids, tr: ids.tr.ids, rows: [ids.en.rows, ids.tr.rows] });
+    const dateEn = /Last updated: (\d+) (\w+) (\d{4})/.exec(ids.en.date);
+    const dateTr = /Son güncelleme: (\d+) (\S+) (\d{4})/.exec(ids.tr.date);
+    check(!!dateEn && !!dateTr && dateEn[1] === dateTr[1] && dateEn[3] === dateTr[3] && ids.en.text.includes(`${dateEn[1]} ${dateEn[2]} ${dateEn[3]}:`), 'privacy: a dated change line for the date at the top, the same in both languages', { en: ids.en.date, tr: ids.tr.date });
+  }
+
   // A section link in Turkish (the room's "can't reach" card) lands on the Turkish section.
   const tr = await ctx.newPage();
   await tr.goto(`${base}/help.html?lang=tr#connection`);
@@ -265,67 +351,31 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
       titleDays: constant('packages/shared/src/room-logic.ts', 'TITLE_MAX_AGE_MS') / D,
       usageDays: constant('packages/shared/src/yt-usage.ts', 'USAGE_DAYS'),
       admitH: constant('apps/server/src/room.ts', 'ADMIT_TTL_MS') / H,
-      uploadIpMb: constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_IP_DAY') / 1_000_000,
-      uploadAllMb: constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_DAY') / 1_000_000,
-      // Card MB: room information and /api/probe share ROOM_INFO_LIMIT (wrangler.jsonc, per minute).
-      infoPerMin: limit('ROOM_INFO_LIMIT'),
     };
-    const says = {
-      en: [
-        `the last ${n.chat} messages of a room`,
-        `(up to ${n.images})`,
-        `more than ${n.session} hours`,
-        `up to ${n.recapsSaved} in a saved room, ${n.recaps} otherwise`,
-        `at most ${n.recapDays} days`,
-        `after ${n.moveMin} minutes or once used`,
-        `the last ${n.videos} videos`,
-        `at most ${n.stickers} per room`,
-        `deleted ${n.emptyH} hours after the last person leaves (${n.savedDays} days`,
-        `at most ${n.tvTokenH} hours after its last use`,
-        `valid for ${n.tvCodeMin} minutes`,
-        `deleted ${n.gameH} hours after the last player leaves`,
-        `for up to ${n.searchH} hours`,
-        `at most ${n.titleDays} days after`,
-        `kept ${n.usageDays} days`,
-        `for ${n.admitH} hours after they were last there`,
-        `at most ${n.uploadIpMb} MB of images per address and ${n.uploadAllMb} MB for everyone a day`,
-        `room information requests and connection tests (at most ${n.infoPerMin} a minute)`,
-        'the TV version is switched off for now',
-      ],
-      tr: [
-        `son ${n.chat} mesaj`,
-        `(en fazla ${n.images})`,
-        `${n.session} saatten uzun`,
-        `kayıtlı odada en fazla ${n.recapsSaved}, diğerlerinde ${n.recaps}`,
-        `en fazla ${n.recapDays} gün`,
-        `kod ${n.moveMin} dakika sonra`,
-        `son ${n.videos} videonun`,
-        `odada en fazla ${n.stickers}`,
-        `${n.emptyH} saat sonra (yönetici odayı kaydettiyse ${n.savedDays} gün sonra)`,
-        `en fazla ${n.tvTokenH} saat tutar`,
-        `${n.tvCodeMin} dakika geçerlidir`,
-        `${n.gameH} saat sonra silinir`,
-        `en fazla ${n.searchH} saat tutar`,
-        `en çok ${n.titleDays} gün tutar`,
-        `${n.usageDays} gün tutulur`,
-        `sonra ${n.admitH} saat tutar`,
-        `günde adres başına en fazla ${n.uploadIpMb} MB, herkes için toplam ${n.uploadAllMb} MB resim`,
-        `bağlantı testlerini (dakikada en fazla ${n.infoPerMin})`,
-        'TV sürümü şimdilik kapalı',
-      ],
-    };
-    for (const lang of ['en', 'tr']) {
-      const text = block(lang);
-      const wrong = says[lang].filter((x) => !text.includes(x));
-      check(wrong.length === 0, `privacy ${lang}: every number matches the code (${says[lang].length} checked)`, wrong);
+    // The privacy policy's numbers are checked with the page itself above (privacy card, 0.9.97.60).
+    void n;
+    // Card MB: the numbers added since (the image budget, the room info / probe limit) and the TV being off.
+    {
+      const ipMb = constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_IP_DAY') / 1_000_000;
+      const allMb = constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_DAY') / 1_000_000;
+      // Room information and /api/probe share ROOM_INFO_LIMIT (wrangler.jsonc, per minute).
+      const perMin = limit('ROOM_INFO_LIMIT');
+      const says = {
+        en: [`at most ${ipMb} MB of images per address and ${allMb} MB for everyone a day`, `at most ${perMin} a minute per address`, 'a test version, hidden by default'],
+        tr: [`günde adres başına en fazla ${ipMb} MB, herkes için toplam ${allMb} MB resim`, `adres başına dakikada en fazla ${perMin}`, 'deneme sürümü, normalde gizli'],
+      };
+      for (const lang of ['en', 'tr']) {
+        const text = block(lang);
+        const wrong = says[lang].filter((x) => !text.includes(x));
+        check(wrong.length === 0, `privacy ${lang}: image budget ${ipMb} / ${allMb} MB, info limit ${perMin} a minute, the TV hidden`, wrong);
+      }
+      // "Hidden" is true only while the deployed Worker has no TV=on (R4-10: the variable is set only locally).
+      const wrangler = fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8');
+      check(!/"TV"\s*:\s*"on"/.test(wrangler), 'the TV is off in the deployed config, as the privacy policy says');
+      const helpText = helpHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+      const upload = [`at most ${ipMb} MB a day from one address`, `günde en fazla ${ipMb} MB`];
+      check(upload.every((x) => helpText.includes(x)), `help (EN + TR): the image budget is the code's (${ipMb} MB)`, upload.filter((x) => !helpText.includes(x)));
     }
-    // "Switched off" is true only while the deployed Worker has no TV=on (R4-10: the variable is set only locally).
-    const wrangler = fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8');
-    check(!/"TV"\s*:\s*"on"/.test(wrangler), 'the TV is off in the deployed config, as the privacy policy says');
-    // The help page's short privacy list names the same upload budget.
-    const helpText = helpHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-    const upload = [`at most ${n.uploadIpMb} MB a day from one address`, `günde en fazla ${n.uploadIpMb} MB`];
-    check(upload.every((x) => helpText.includes(x)), `help (EN + TR): the image budget is the code's (${n.uploadIpMb} MB)`, upload.filter((x) => !helpText.includes(x)));
     // The games hall's quiz line ("Almost 400 questions in 11 topics") against the question bank (it once said "over
     // 400" with 395).
     const i18n = fs.readFileSync(path.join(ROOT, 'apps/web/src/i18n.ts'), 'utf8');

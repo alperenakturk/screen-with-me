@@ -29,6 +29,7 @@
     "./games/scoring": "./src/games/scoring.ts",
     "./games/catalog": "./src/games/catalog.ts",
     "./games/poker": "./src/games/poker.ts",
+    "./games/sea": "./src/games/sea.ts",
     "./games/snack-bar": "./src/games/snack-bar.ts",
     "./games/garden": "./src/games/garden.ts",
     "./games/five-frames": "./src/games/five-frames.ts",

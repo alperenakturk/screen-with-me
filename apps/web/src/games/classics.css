@@ -163,3 +163,134 @@
 .game-stage .dama-board { width: min(100cqh - 4px, 52cqw, 440px); }
 .game-stage .bg-board { width: min((100cqh - 52px) * 1.45, 54cqw, 560px); }
 .game-stage .cl-shelf-row { gap: 6px; }
+
+/* A narrow window (phones, a small float; BHG): everything stacks, so the board takes the full width, and a seat's
+   name wraps onto a second line instead of ending in "Ro…". */
+@container game (max-width: 560px) {
+  .game-stage .dama-board { width: min(100cqw - 8px, 440px); }
+  .game-stage .bg-board { width: min(100cqw - 8px, 560px); }
+  .game-stage .xox-players { gap: 6px; }
+  .game-stage .xox-player { gap: 6px; padding: 8px; }
+  .game-stage .xox-name { white-space: normal; line-height: 1.15; }
+  .game-stage .xox-avatar.vacant { display: none; }
+}
+
+/* ===== Card CL2: the board is the hero (owner: "design it properly") =====
+   A Classics table first shows its picker alone. A board's screen is one column: a slim bar (score, Glowbeam, 👁),
+   the other player, the board as big as the window allows, me, the dice tray (backgammon), one status line and the
+   buttons of the moment. `#game-stage` outranks the older side-by-side rules in styles.css. */
+#game-stage .xox-page.mt {
+  display: flex; flex-direction: column; height: 100%; max-width: none; margin: 0; padding: 10px 12px 12px; box-sizing: border-box; gap: 0;
+}
+#game-stage .xox-page.mt > .mt-table {
+  position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto;
+  grid-template-areas: 'bar' 'top' 'board' 'bottom' 'tray' 'status' 'actions'; gap: 8px;
+}
+#game-stage .xox-page.mt > .mt-table[hidden], #game-stage .xox-page.mt > .cl-picker[hidden] { display: none; }
+#game-stage .mt .xox-players { display: contents; }
+#game-stage .mt #seat-1 { grid-area: top; }
+#game-stage .mt #seat-0 { grid-area: bottom; }
+#game-stage .mt.flip #seat-0 { grid-area: top; }
+#game-stage .mt.flip #seat-1 { grid-area: bottom; }
+
+/* The bar: score on the left, Glowbeam's chips, 👁 watchers on the right. */
+#game-stage .mt .mt-bar { grid-area: bar; display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap; }
+#game-stage .mt .mt-gap { flex: 1; }
+#game-stage .mt .mt-score {
+  padding: 3px 12px; border-radius: 999px; background: var(--surface-2); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+#game-stage .mt .cl-bot { gap: 6px; flex-wrap: nowrap; }
+#game-stage .mt .cl-bot-label { font-size: 13px; }
+#game-stage .mt .cl-bot .btn { min-height: 30px; padding: 3px 10px; font-size: 13px; }
+#game-stage .mt .cl-bot-icon { width: 22px; height: 22px; }
+#game-stage .mt .mt-watch-open { min-height: 30px; padding: 3px 10px; font-size: 14px; }
+#game-stage .mt .cl-bot-leave { padding-inline: 8px; }
+#game-stage .mt .mt-watch-pop {
+  position: absolute; top: 40px; right: 0; z-index: 5; width: min(240px, 90%); max-height: 60%; overflow: auto; margin: 0; padding: 10px 12px;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+#game-stage .mt .mt-watch-pop[hidden] { display: none; }
+#game-stage .mt .mt-watch-pop ul { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 0; padding: 0; list-style: none; }
+
+/* A seat: like a chess app's player line. */
+#game-stage .mt .xox-player { flex-direction: row; text-align: left; gap: 10px; padding: 6px 12px; min-height: 44px; border-radius: 14px; }
+#game-stage .mt .xox-player .xox-avatar { width: 32px; height: 32px; }
+#game-stage .mt .xox-name { white-space: nowrap; font-size: 15px; }
+#game-stage .mt .mt-taken { flex: none; font-size: 15px; color: var(--muted); letter-spacing: -1px; display: inline-flex; align-items: center; gap: 4px; }
+#game-stage .mt .mt-taken .dama-man { position: relative; display: inline-block; width: 16px; height: 16px; }
+#game-stage .mt .mt-taken.piece-O { color: #2a2530; text-shadow: 0 0 1px #fff, 0 0 2px #fff; }
+#game-stage .mt .mt-taken.piece-X { color: #fff8ec; text-shadow: 0 0 1px #000, 0 0 2px #000; }
+#game-stage .mt .mt-wins {
+  flex: none; margin-left: auto; min-width: 30px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2);
+  text-align: center; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+
+/* The board: as big as its row allows, in its own shape. */
+#game-stage .mt .xox-board-wrap { grid-area: board; container-type: size; display: grid; place-items: center; min-height: 0; align-self: stretch; justify-self: stretch; width: 100%; height: 100%; }
+#game-stage .mt .xox-board:not(.four-board), #game-stage .mt .dama-board { width: min(100cqw, 100cqh); max-width: none; margin: 0; }
+#game-stage .mt .four-board { width: min(100cqw, (100cqh - 14px) * 7 / 6); max-width: none; margin: 0 0 14px; }
+#game-stage .mt .bg-board { width: min(100cqw, 100cqh * 1.45); max-width: none; margin: 0; }
+#game-stage .mt .xox-cell { font-size: clamp(26px, 20cqmin, 88px); }
+#game-stage .mt .bg-tray { grid-area: tray; margin: 0; }
+#game-stage .mt .bg-tray[hidden] { display: none; }
+#game-stage .mt .bg-pips { display: none; }
+
+/* One status line (Glowbeam the referee beside it). */
+#game-stage .mt .cl-ref { grid-area: status; min-height: 30px; min-width: 0; }
+#game-stage .mt .xox-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-size: 15px; }
+#game-stage .mt .xox-actions { grid-area: actions; justify-content: center; gap: 8px; flex-wrap: wrap; }
+
+/* Per-game touches: XOX playful, Four in a Row on its stand, dama and chess on wood. */
+#game-stage .mt[data-board='xox'] .xox-cell { border-radius: 22%; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+#game-stage .mt[data-board='xox'] .xox-cell:nth-child(odd) { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+#game-stage .mt[data-board='four'] .xox-board-wrap::after {
+  content: ''; position: absolute; left: 50%; bottom: 0; translate: -50% 0; width: min(100cqw, (100cqh - 14px) * 7 / 6 + 36px); height: 14px;
+  border-radius: 7px 7px 4px 4px; background: linear-gradient(#1f3fa8, #142a70); box-shadow: 0 6px 14px rgb(0 0 0 / 0.35);
+}
+#game-stage .mt[data-board='dama'] .dama-board, #game-stage .mt[data-board='chess'] .dama-board {
+  padding: 3%; border-radius: 12px; background: linear-gradient(135deg, #7a4a2a, #4e2c17); box-shadow: inset 0 0 0 2px #2a170c, 0 14px 30px rgb(0 0 0 / 0.4);
+}
+#game-stage .mt[data-board='dama'] .dama-cell, #game-stage .mt[data-board='chess'] .dama-cell { background: #ecd6a8; }
+#game-stage .mt[data-board='dama'] .dama-cell.dark, #game-stage .mt[data-board='chess'] .dama-cell.dark { background: #a8703f; }
+
+/* The picker (CL2): only the game cards, no board behind them. */
+#game-stage .mt .cl-picker { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: center; text-align: center; }
+#game-stage .mt .cl-picker-title { margin: 0; font-size: 22px; }
+#game-stage .mt .cl-picker-line { margin: 0 0 10px; font-size: 14px; }
+#game-stage .mt .cl-picker-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 580px; }
+#game-stage .mt .cl-picker-grid > .cl-card { flex: 0 0 calc((100% - 20px) / 3); justify-content: flex-start; }
+#game-stage .mt .cl-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 6px 8px; min-width: 0; width: auto; height: auto;
+  border: 2px solid var(--border); border-radius: 16px; background: var(--surface); color: inherit; font: inherit; cursor: pointer; text-align: center;
+  transition: transform 0.15s, border-color 0.15s;
+}
+#game-stage .mt .cl-card:not(:disabled):hover { transform: translateY(-2px); border-color: var(--accent); }
+#game-stage .mt .cl-card.on { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+#game-stage .mt .cl-card:disabled { opacity: 0.5; cursor: default; }
+#game-stage .mt .cl-card-art { display: block; width: 100%; }
+#game-stage .mt .cl-card-art svg { display: block; width: 100%; height: auto; max-height: 96px; border-radius: 10px; }
+#game-stage .mt .cl-card-name { font-size: 15px; }
+#game-stage .mt .cl-card-line { font-size: 13px; line-height: 1.25; color: var(--muted); }
+#game-stage .mt .cl-card-players { font-size: 13px; color: var(--accent-2, var(--accent)); }
+#game-stage .mt .cl-card::before, #game-stage .mt .cl-card::after { content: none; }
+@container game (max-width: 440px) {
+  #game-stage .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 10px) / 2); }
+  #game-stage .mt .cl-card-players { display: none; }
+}
+/* A narrow window (a phone): score and 👁 on the bar's first line, Glowbeam's chips on the next. */
+@container game (max-width: 440px) {
+  #game-stage .mt .mt-gap { display: none; }
+  #game-stage .mt .mt-watch-open { margin-left: auto; order: 2; }
+  #game-stage .mt .cl-bot { order: 3; flex-basis: 100%; justify-content: flex-start; }
+  #game-stage .mt .cl-bot-label { display: none; }
+}
+
+/* The window's head: "Change game" sits left of the place switch. */
+.game-head-slot { display: inline-flex; gap: 6px; }
+.game-head-slot:empty { display: none; }
+.game-head-slot .cl-change { font-size: 13px; white-space: nowrap; }
+html.phone .game-head-slot .cl-change-text { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  #game-stage .mt .cl-card { transition: none; }
+}

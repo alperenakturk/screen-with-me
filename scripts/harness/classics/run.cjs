@@ -45,8 +45,15 @@ async function until(fn, ms = 6000) {
   });
   check(hall.includes('classics') && !hall.includes('xox') && !hall.includes('four'), 'the hall has one Classics card, no separate XOX / Four in a Row', JSON.stringify(hall));
   await page.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]').click());
-  const shelf = await until(() => page.evaluate(() => { const s = document.querySelector('#game-stage .cl-shelf'); return s && !s.hidden ? [...s.querySelectorAll('.cl-box')].map((b) => `${b.dataset.board}:${b.disabled}`) : null; }), 8000);
-  check(!!shelf && shelf.length === 5 && shelf.every((b) => b.endsWith(':false')) && shelf.includes('chess:false') && shelf.includes('backgammon:false'), 'the game shelf: XOX, Four in a Row, Dama, Chess and Backgammon, all to play', JSON.stringify(shelf));
+  const shelf = await until(() => page.evaluate(() => { const s = document.querySelector('#game-stage .cl-picker'); return s && !s.hidden ? [...s.querySelectorAll('.cl-box')].map((b) => `${b.dataset.board}:${b.disabled}`) : null; }), 8000);
+  check(!!shelf && shelf.length === 5 && shelf.every((b) => b.endsWith(':false')) && shelf.includes('chess:false') && shelf.includes('backgammon:false'), 'the picker: XOX, Four in a Row, Dama, Chess and Backgammon, all to play', JSON.stringify(shelf));
+  // CL2: the picker comes first, alone: no board (no XOX table) behind it, and the window has the picker's size.
+  const alone = await page.evaluate(() => {
+    const table = document.querySelector('#game-stage .mt-table');
+    const cells = [...document.querySelectorAll('#game-stage .xox-cell, #game-stage .dama-cell')].filter((c) => c.getBoundingClientRect().width > 0).length;
+    return { tableHidden: !!table?.hidden, cells, board: document.querySelector('#game-stage .xox-page')?.dataset.board, cards: document.querySelectorAll('#game-stage .cl-card .cl-card-art svg').length };
+  });
+  check(alone.tableHidden && alone.cells === 0 && alone.board === 'picker' && alone.cards === 5, 'the picker shows alone: five cards with covers, no board behind it', JSON.stringify(alone));
   await wait(400);
   await page.screenshot({ path: __dirname + '/classics-shelf.png' });
 
@@ -71,9 +78,37 @@ async function until(fn, ms = 6000) {
   const answered = await until(() => page.evaluate(() => /your turn/i.test(document.getElementById('xox-status')?.textContent ?? '') && document.querySelectorAll('#game-stage .dama-cell.mark-O').length === 16 && document.querySelector('#game-stage .dama-cell.placed.mark-O')), 6000);
   check(!!answered, 'Glowbeam answers; the referee says it is my turn again');
   check(await page.evaluate(() => !!document.querySelector('#game-stage .cl-ref-mascot svg')), 'Glowbeam stands beside the status line as the referee');
-  const locked = await page.evaluate(() => { document.querySelector('#cl-shelf-open')?.click(); return [...document.querySelectorAll('#game-stage .cl-box')].filter((b) => !b.disabled).map((b) => b.dataset.board); });
-  check(JSON.stringify(locked) === '["dama"]', 'mid-game the shelf only lets you go back to this board', JSON.stringify(locked));
-  await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="dama"]').click());
+  // Mid-game "Change game" (in the window's head) asks first (CL2): Cancel keeps the game, "End and change" opens the
+  // picker and the pick ends that game.
+  const asked = await page.evaluate(async () => {
+    const b = document.querySelector('#game-stage .game-stage-head #cl-shelf-open');
+    b?.click();
+    await new Promise((r) => setTimeout(r, 300));
+    const dialog = document.querySelector('.dialog-backdrop:not([hidden]) .confirm-dialog');
+    const cancel = dialog?.querySelector('.confirm-actions .btn:not(.primary)');
+    cancel?.click();
+    await new Promise((r) => setTimeout(r, 200));
+    return { inHead: !!b, enabled: !!b && !b.disabled, asked: !!dialog, picker: !document.querySelector('#game-stage .cl-picker')?.hidden };
+  });
+  check(asked.inHead && asked.enabled && asked.asked && !asked.picker, 'mid-game "Change game" in the head asks first; Cancel keeps the board', JSON.stringify(asked));
+  const changed = await page.evaluate(async () => {
+    document.querySelector('#game-stage .game-stage-head #cl-shelf-open')?.click();
+    await new Promise((r) => setTimeout(r, 300));
+    document.querySelector('.dialog-backdrop:not([hidden]) .confirm-dialog .btn.primary')?.click();
+    await new Promise((r) => setTimeout(r, 300));
+    const picker = !document.querySelector('#game-stage .cl-picker')?.hidden;
+    const enabled = [...document.querySelectorAll('#game-stage .cl-box')].filter((b) => !b.disabled).length;
+    document.querySelector('#game-stage .cl-box[data-board="chess"]')?.click();
+    return { picker, enabled };
+  });
+  const chessNow = await until(() => page.evaluate(() => document.querySelector('#game-stage .xox-page')?.dataset.board === 'chess' && document.querySelectorAll('#game-stage .chess-cell').length === 64), 6000);
+  check(changed.picker && changed.enabled === 5 && !!chessNow, '"End and change" opens the picker with every game; picking chess ends the dama game', JSON.stringify(changed));
+  await page.evaluate(() => {
+    document.querySelector('#game-stage #cl-shelf-open')?.click();
+  });
+  await wait(300);
+  await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="dama"]')?.click());
+  await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .dama-cell.mark-X').length === 16), 6000);
   await wait(400);
   await page.screenshot({ path: __dirname + '/classics-dama.png' });
   const fit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });

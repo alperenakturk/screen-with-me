@@ -1,0 +1,34 @@
+/* Card CL2: the Draw & Guess and Quiz lobbies (and podiums) are one centred card, each with its own look: the game's
+   badge, a short rules line, the players as a row of faces, the host's settings and Start. No players column beside
+   it and no empty canvas behind it. Loaded with the two games' chunks (not the room page's CSS). */
+#game-stage .draw-page.draw-lobby .draw-side { display: none; }
+#game-stage .draw-page.draw-lobby .draw-main { display: flex; justify-content: center; align-items: center; height: 100%; }
+#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left,
+#game-stage .draw-page.draw-lobby.quiz-page .quiz-main { flex: 0 1 560px; width: min(100%, 560px); max-width: 560px; margin: 0 auto; }
+#game-stage .draw-page.draw-lobby .draw-bar { display: none; }
+#game-stage .quiz-page.draw-lobby .quiz-main { --lobby-tint: #6fc8ff; }
+#game-stage .draw-page.draw-lobby:not(.quiz-page) { --lobby-tint: #ffb74a; }
+#game-stage .draw-page.draw-lobby :is(.draw-overlay, .quiz-main) {
+  border-radius: 20px; border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, var(--border));
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 16%, var(--surface)), var(--surface) 70%);
+}
+#game-stage .draw-page.draw-lobby :is(.draw-overlay, .quiz-intro) > h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; font-size: 24px; }
+#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before,
+#game-stage .quiz-page.draw-lobby .quiz-intro > h3::before {
+  display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; font-size: 28px;
+  background: color-mix(in srgb, var(--lobby-tint) 28%, var(--surface-2)); box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
+}
+#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before { content: '🎨'; rotate: -6deg; }
+#game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { content: '❓'; rotate: 6deg; }
+#game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { max-width: 46ch; margin: 4px auto 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
+
+/* The players: faces in a row (the host wears a crown), an empty chair while one is missing. */
+.lobby-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 10px 0 2px; padding: 0; list-style: none; }
+.lobby-player { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--surface-2); font-size: 14px; }
+.lobby-player.me { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--lobby-tint, var(--accent)) 60%, transparent); }
+.lobby-avatar { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; overflow: hidden; background: var(--surface); font-size: 18px; }
+.lobby-avatar img { width: 100%; height: 100%; }
+.lobby-empty { border: 2px dashed var(--border); background: none; color: var(--muted); font-size: 14px; font-weight: 700; }
+.lobby-name { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The top line (players n/8, category, timer) belongs to the running game; the lobby's faces row says who is here. */
+#game-stage .draw-page.draw-lobby .draw-top { display: none; }

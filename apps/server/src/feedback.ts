@@ -10,8 +10,11 @@ import { DurableObject } from 'cloudflare:workers';
 import { FEEDBACK_BODY_MAX, FEEDBACK_PER_DAY, FEEDBACK_PER_IP_HOUR, buildIssue, validateFeedback, type FeedbackAnswer } from '@swm/shared/feedback';
 import { readCapped } from './fallback.ts';
 
-/** The repository the issues go to (owner/name); `FEEDBACK_REPO` can point a test deployment elsewhere. */
-const DEFAULT_REPO = 'alperenakturk/screen-with-me';
+/**
+ * Privacy card (0.9.97.60): the issues go only to the private repository `FEEDBACK_REPO` names (owner/name). There is no
+ * fallback: the project's own repository is public, and a message with a reply address must never become a public issue.
+ */
+const REPO = /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/;
 
 const answer = (body: FeedbackAnswer, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
@@ -42,12 +45,12 @@ export async function sendFeedback(request: Request, url: URL, env: Env, ipKey: 
   const key = await ipKey();
   if (env.FEEDBACK_LIMIT && !(await env.FEEDBACK_LIMIT.limit({ key })).success) return answer({ error: 'busy' }, 429);
   // Security R4-7: without the token nothing is counted (an "off" answer must not use up the day's slots).
-  if (!env.FEEDBACK_GITHUB_TOKEN) return answer({ error: 'off' });
+  if (!env.FEEDBACK_GITHUB_TOKEN || !REPO.test(env.FEEDBACK_REPO ?? '')) return answer({ error: 'off' });
   const gate = env.FEEDBACK.get(env.FEEDBACK.idFromName('gate'));
   const allowed = await gate.fetch('https://gate/take', { method: 'POST', body: key });
   if (allowed.status !== 200) return answer({ error: 'busy' }, 429);
   const issue = buildIssue(feedback);
-  const github = await fetch(`https://api.github.com/repos/${env.FEEDBACK_REPO || DEFAULT_REPO}/issues`, {
+  const github = await fetch(`https://api.github.com/repos/${env.FEEDBACK_REPO}/issues`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${env.FEEDBACK_GITHUB_TOKEN}`,

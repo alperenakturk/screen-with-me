@@ -609,16 +609,29 @@ function watchLayout(): void {
 // Bizim ⛶ (sayfanın tamamı tam ekran): bitince/başlayınca site bilsin (Esc ile çıkılabilir).
 // Film sitesinin tam ekranı (oynatıcının kendi düğmesi ya da videonun yerleşik düğmesi) sadece videoyu
 // gösterirdi: oda görünümündeyken ondan çıkılır ve odanın tam ekranı istenir.
+let fullscreenBefore: Element | null = null;
 document.addEventListener('fullscreenchange', () => {
   if (!port) return;
   const element = document.fullscreenElement;
+  const before = fullscreenBefore;
+  fullscreenBefore = element;
   if (layout?.mode === 'full' && element && element !== document.documentElement) {
-    void document.exitFullscreen().catch(() => {});
-    send({ type: 'fullscreen' });
+    // EXT1: in the top frame (e.g. the video's own native ⛶, which fullscreen-guard can't redirect) go straight to the
+    // whole page's fullscreen, the room's; exiting first and asking the site raced the exit and often came to nothing.
+    // Pressed while the room's fullscreen was on, it means "leave": all the way out.
+    if (isTop && before === document.documentElement) void leaveFullscreen();
+    else if (isTop) void document.documentElement.requestFullscreen().catch(() => leaveFullscreen().then(() => send({ type: 'fullscreen' })));
+    else {
+      void document.exitFullscreen().catch(() => {});
+      send({ type: 'fullscreen' });
+    }
     return;
   }
   if (isTop) send({ type: 'fullscreen-changed', on: element === document.documentElement });
 });
+async function leaveFullscreen(): Promise<void> {
+  for (let i = 0; i < 3 && document.fullscreenElement; i++) await document.exitFullscreen().catch(() => {});
+}
 // fullscreen-guard.ts (sayfanın dünyası) film sitesinin tam ekran isteğini yakaladı.
 document.addEventListener('swm-fullscreen-request', () => {
   if (port && layout?.mode === 'full') send({ type: 'fullscreen' });

@@ -14,7 +14,7 @@
 // "are you sure?" (`beforeunload`, `live.ts`).
 
 import { createLogo } from '@swm/shared/logo';
-import { GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
+import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { isPhoneLayout, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { el } from '../dom.ts';
@@ -26,7 +26,7 @@ import { icon, type IconName } from '../ui/icons.ts';
 import { confirmDialog } from '../ui/confirm.ts';
 import { gameLive } from './live.ts';
 
-const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker', classics: 'game-four' };
+const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker', classics: 'game-four', sea: 'game-sea' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
 /** Solo games have an emoji until the games gallery (card GG) gives every game its cover. */
 const SOLO_GLYPH: Record<SoloKind, string> = { snack: '🍿', garden: '🌱', word: '🎟️' };
@@ -163,9 +163,20 @@ export function createGameStage(opts: StageOptions) {
     return b;
   });
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
-  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
+  // A game may put its own small buttons here (Classics: "Change game"); it empties the slot when it closes.
+  const headSlot = el('span', { class: 'game-head-slot' });
+  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
   // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
   const body = el('div', { class: 'game-fit' });
+  /**
+   * The window's size and the room its layout needs. Classics (CL2) follows the screen on its table: the picker or
+   * the board (`data-board` on its page, `swm-game-size` when it changes).
+   */
+  const sizeOf = (kind: Kind) => {
+    if (kind !== 'classics') return catalogOf(kind);
+    const board = body.querySelector<HTMLElement>('.xox-page')?.dataset.board as keyof typeof CLASSICS_SIZES | undefined;
+    return (board && CLASSICS_SIZES[board]) || catalogOf(kind);
+  };
   const frame = el('div', { class: 'game-stage-body' }, body);
   const grip = el('span', { class: 'game-resize', 'aria-hidden': 'true' });
   // The room's emojis fly over the free window too (ui/reactions.ts picks this layer while it is open).
@@ -240,7 +251,7 @@ export function createGameStage(opts: StageOptions) {
   /** The free window's zoom: what I dragged it to (1 = the game's own size), never bigger than the screen allows. */
   function floatZoom(want?: number): number {
     const kind = shownKind() ?? 'xox';
-    const [w, h] = catalogOf(kind).size;
+    const [w, h] = sizeOf(kind).size;
     const saved = Number(load(zoomKey(kind)) || '1');
     const room = area();
     const most = Math.min(MAX_ZOOM, (room.width - 2 * EDGE) / w, (room.height - 2 * EDGE) / h);
@@ -248,7 +259,7 @@ export function createGameStage(opts: StageOptions) {
   }
   let spot = readPair(FLOAT_KEY) ?? { x: 1, y: 0.5 };
   function placeFloat(zoom = floatZoom()): void {
-    const [w, h] = catalogOf(shownKind() ?? 'xox').size;
+    const [w, h] = sizeOf(shownKind() ?? 'xox').size;
     const width = Math.round(w * zoom);
     const height = Math.round(h * zoom);
     const room = area();
@@ -306,7 +317,7 @@ export function createGameStage(opts: StageOptions) {
   grip.addEventListener('pointermove', (event) => {
     const kind = shownKind();
     if (!sizing || !kind) return;
-    const [w, h] = catalogOf(kind).size;
+    const [w, h] = sizeOf(kind).size;
     const room = area();
     // Follow the mouse along the window's diagonal; keep the window on the screen.
     const want = ((sizing.w + event.clientX - sizing.x) / w + (sizing.h + event.clientY - sizing.y) / h) / 2;
@@ -362,7 +373,7 @@ export function createGameStage(opts: StageOptions) {
     spot = { x: 1, y: 0.4 };
     save(FLOAT_KEY, JSON.stringify(spot));
     requestAnimationFrame(() => {
-      const [w] = catalogOf(kind).size;
+      const [w] = sizeOf(kind).size;
       // Right of the video's column: since 0.9.92.2 the Shorts rail (and ▲▼) sit between the video and this space.
       const rail = document.getElementById('shorts-nav')?.getBoundingClientRect();
       const right = Math.max(wrap.getBoundingClientRect().right, rail && rail.width ? rail.right : 0);
@@ -386,7 +397,7 @@ export function createGameStage(opts: StageOptions) {
     if (!W || !H) return;
     fitting = true;
     // Phones have their own narrow layouts: only overflow shrinks the game there.
-    const [fw, fh] = narrow.matches ? [0, 0] : catalogOf(kind).fit;
+    const [fw, fh] = narrow.matches ? [0, 0] : sizeOf(kind).fit;
     let scale = Math.min(1, fw ? W / fw : 1, fh ? H / fh : 1);
     for (let i = 0; i < 4; i++) {
       body.style.width = `${W / scale}px`;
@@ -415,6 +426,12 @@ export function createGameStage(opts: StageOptions) {
   new ResizeObserver(queueFit).observe(frame);
   // A new phase (lobby → question → podium) changes what has to fit.
   new MutationObserver(queueFit).observe(body, { childList: true, subtree: true, characterData: true });
+  // Classics changed its screen (picker ↔ a board): the free window takes that screen's size.
+  body.addEventListener('swm-game-size', () => {
+    if (mode === 'float') placeFloat();
+    queueFit();
+    dispatchEvent(new Event('swm-layout'));
+  });
 
   const meId = () => opts.me().id;
   const canClose = (table: RoomGame) => table.by.id === meId() || opts.amHost();
@@ -559,13 +576,34 @@ export function createGameStage(opts: StageOptions) {
   const triggers = [button, ...(opts.extraButtons ?? [])];
 
   // ---- My table ----
+  // BHG: the tab remembers the table I am at (and whether it was minimized), so a reload mid-game takes me back to it.
+  const atKey = `swm:table:${location.pathname}`;
+  const rememberAt = (at: { id: string; min: boolean } | null) => {
+    try {
+      if (at) sessionStorage.setItem(atKey, JSON.stringify(at));
+      else sessionStorage.removeItem(atKey);
+    } catch {
+      /* storage blocked: a reload simply leaves the table */
+    }
+  };
+  const rememberedAt = (): { id: string; min: boolean } | null => {
+    try {
+      const at = JSON.parse(sessionStorage.getItem(atKey) ?? 'null') as { id?: unknown; min?: unknown } | null;
+      return at && typeof at.id === 'string' ? { id: at.id, min: at.min === true } : null;
+    } catch {
+      return null;
+    }
+  };
+
   async function open(table: RoomGame): Promise<void> {
     document.getElementById('game-invite')?.remove();
+    rememberAt({ id: table.id, min: false });
     stage.hidden = false;
     for (const b of triggers) b.classList.remove('game-waiting');
     if (current?.id === table.id && unmount) return place();
     unmount?.();
     unmount = null;
+    headSlot.replaceChildren();
     solo = null;
     current = table;
     labels();
@@ -579,6 +617,7 @@ export function createGameStage(opts: StageOptions) {
     if (table.kind === 'draw') stop = (await import('./draw.ts')).mountDraw(body, table.id, name, avatar);
     else if (table.kind === 'quiz') stop = (await import('./quiz.ts')).mountQuiz(body, table.id, name, avatar);
     else if (table.kind === 'poker') stop = (await import('./poker.ts')).mountPoker(body, table.id, name, avatar);
+    else if (table.kind === 'sea') stop = (await import('./sea.ts')).mountSea(body, table.id, name, avatar);
     else stop = (await import('./match.ts')).mountMatch(body, table.kind, table.id, name, avatar);
     queueFit();
     // Switched or closed while loading: close at once.
@@ -592,8 +631,10 @@ export function createGameStage(opts: StageOptions) {
     if (!current) tell = false;
     unmount?.();
     unmount = null;
+    headSlot.replaceChildren();
     current = null;
     solo = null;
+    rememberAt(null);
     stage.hidden = true;
     place();
     body.replaceChildren();
@@ -602,6 +643,7 @@ export function createGameStage(opts: StageOptions) {
   }
 
   function minimize(): void {
+    if (current || solo) rememberAt({ id: current ? current.id : `solo:${solo}`, min: true });
     stage.hidden = true;
     place();
     if (current || solo) for (const b of triggers) b.classList.add('game-waiting');
@@ -614,8 +656,10 @@ export function createGameStage(opts: StageOptions) {
     for (const b of triggers) b.classList.remove('game-waiting');
     if (solo === kind && unmount) return place();
     if (current) leave();
+    rememberAt({ id: `solo:${kind}`, min: false });
     unmount?.();
     unmount = null;
+    headSlot.replaceChildren();
     solo = kind;
     labels();
     if (shortsView()) besideShorts(kind);
@@ -705,6 +749,14 @@ export function createGameStage(opts: StageOptions) {
     setTables(next: RoomGame[], change: { opened?: string; closed?: string; by?: Member } = {}, announce = true): void {
       tables = next;
       if (wanted && Date.now() - wantedAt > WANTED_MS) wanted = null;
+      // Entering the room (a reload, a dropped connection): back to the table this tab was at, as it was.
+      const at = !announce && !current && !solo ? rememberedAt() : null;
+      const back = at && tables.find((x) => x.id === at.id);
+      const sideKind = at?.id.startsWith('solo:') ? at.id.slice(5) : '';
+      const side = isSoloKind(sideKind) ? sideKind : undefined;
+      if (at && !back && !side) rememberAt(null);
+      if (back) void open(back).then(() => at!.min && current?.id === back.id && minimize());
+      else if (side) void openSolo(side).then(() => at!.min && solo === side && minimize());
       // Card R1: my table opened while the room connection was down (its "opened" never reached me): open it now.
       if (wanted && !change.opened && !current) {
         const mine = tables.find((x) => x.kind === wanted && x.by.id === meId());

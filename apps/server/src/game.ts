@@ -54,6 +54,8 @@ interface Saved {
   classics?: boolean;
   /** A move was made in this game (it is in progress until it ends). */
   started?: boolean;
+  /** Classics (CL2): someone picked a board from the picker (until then the table shows the picker, no board). */
+  chosen?: boolean;
 }
 
 /** Dice (backgammon) and the bot's coin flips come from the platform's crypto source, never from a client. */
@@ -82,7 +84,7 @@ export class Game extends DurableObject<Env> {
       const kind = saved?.kind ?? 'xox';
       const state = saved?.state ?? saved?.xox;
       if (saved && GAME_RULES[kind]?.isState(state)) {
-        this.data = { kind, state, seats: saved.seats, score: saved.score, emptySince: saved.emptySince, classics: saved.classics === true, started: saved.started === true };
+        this.data = { kind, state, seats: saved.seats, score: saved.score, emptySince: saved.emptySince, classics: saved.classics === true, started: saved.started === true, chosen: saved.chosen === true };
       }
     });
   }
@@ -225,10 +227,25 @@ export class Game extends DurableObject<Env> {
         this.data.started = false;
         break;
       case 'switch': {
-        // Classics: another board from the shelf, by a player, never in the middle of a game.
+        // Classics: another board from the picker, by a seated player (during a game only with `end`, below).
         if (!this.data.classics || seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
-        if (this.data.started && this.data.state.winner === null) return this.sendTo(ws, { t: 'error', code: 'in_progress' });
-        if (message.game === this.data.kind) return;
+        // CL2: a running game changes only when the player says to end it (the page asks "End this game?" first).
+        const running = !!this.data.started && this.data.state.winner === null;
+        if (running && !message.end) return this.sendTo(ws, { t: 'error', code: 'in_progress' });
+        if (running && message.game === this.data.kind) {
+          // Ending it for the same board: a fresh game on it.
+          this.data.state = GAME_RULES[message.game].newGame();
+          this.data.started = false;
+          this.data.chosen = true;
+          break;
+        }
+        // Picking the board the table already has only marks it as chosen (CL2: the picker closes for everyone).
+        if (message.game === this.data.kind) {
+          if (this.data.chosen) return;
+          this.data.chosen = true;
+          break;
+        }
+        this.data.chosen = true;
         this.data.kind = message.game;
         this.data.state = GAME_RULES[message.game].newGame();
         this.data.score = { X: 0, O: 0, draw: 0 };
@@ -278,6 +295,7 @@ export class Game extends DurableObject<Env> {
         this.data.kind = kind;
         this.data.state = state;
         this.data.started = true;
+        this.data.chosen = true;
         break;
       }
       case 'stand':
@@ -364,7 +382,9 @@ export class Game extends DurableObject<Env> {
       seen.add(a.key!);
       watchers.push(this.person(a));
     }
-    this.broadcast({ t: 'state', kind: this.data.kind, game: this.data.state, seats, watchers, score: this.data.score, ...(this.data.classics ? { classics: true } : {}), started: !!this.data.started }, except);
+    // A game that started on a board means that board was chosen (older clients never sent a pick).
+    if (this.data.started) this.data.chosen = true;
+    this.broadcast({ t: 'state', kind: this.data.kind, game: this.data.state, seats, watchers, score: this.data.score, ...(this.data.classics ? { classics: true, chosen: !!this.data.chosen } : {}), started: !!this.data.started }, except);
   }
 
   private async save(): Promise<void> {

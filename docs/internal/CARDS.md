@@ -42,6 +42,63 @@ Card format:
 
 ## Ready
 
+### CAM1. Phone cameras: black video, slow switch, mirrored rear camera (owner's real test, 4 Nov 2026; lane B2, first)
+- Why: owner + a friend on phones and a PC: (1) the friend's camera showed on the friend's phone but was black on the
+  owner's phone and PC; (2) the phone camera UI is "very troublesome"; (3) switching to another lens (wide angle) took
+  very long to reach the others; (4) the rear camera is mirrored (left looks right); (5) a phone friend's camera
+  sometimes went black at random.
+- Done when: remote video recovers (replay on `unmute` / `visibilitychange`, re-attach on a track change); a camera
+  switch is `replaceTrack` on every peer with a short "camera changing…" state on both sides; only the front camera's own
+  preview is mirrored, never the rear one and never what others receive; the phone camera row / person sheet / voice
+  controls are clear at phone sizes; Test Lab hooks (switch camera, simulate mute / unmute, per-peer video state).
+- Tests: voice harness with a fake camera + mobile emulation per point; the owner's phone hand test. Ask the owner
+  which phones / browsers when he has time.
+
+### MB. End-of-milestone batch before 0.9.98 (lane B2, after CAM1)
+- Why: ROADMAP "core first, multipliers later": strings, tablets, store copy and numbers are done as one batch.
+- Done when: every user-facing string has EN + TR (i18n.ts and the chunks' own `TEXT`), checked by a script; the tablet
+  harness covers everything since 0.9.96.10 (Test Lab drawer, stream card, cinema, lazy windows; game issues go to Game
+  Studio); `store/src/room.html` matches the room and `npm run store` is rerun; help page, privacy policy and code agree
+  on every limit (help harness extended: upload budget, probe limit, TV off).
+
+### BH10. Full bug hunt before 0.9.98 (lane A)
+- Why: the "zero known bugs" gate.
+- Done when: every harness + the screenshot sweep on main (computer + phone, EN + TR), Test Lab multi-person paths,
+  fixes with regression checks, the owner's ordered hand-test list (only what needs a human) in STATUS and on the board.
+  Includes the owner's bug: "Keep the controls open" must keep the rail out in the window too, not only in fullscreen.
+- Found so far: the Classics shelf stays open for someone who joined before the first move (Game Studio fixed it in BHG).
+- Done: #307 (0.9.97.56), Developer A: every harness green on main, stale ones updated, "Keep the controls open" holds
+  the rail in the window too, the owner's ordered hand-test round in STATUS.
+
+### BHG. Games quality pass before 0.9.98 (Game Studio)
+- Done when: every game at 4 sizes × EN / TR, alone and with fake friends, no scrollbars, text ≥ 13 px, a11y, reload /
+  drop mid-game; fixes with checks; the games part of the owner's test list; 2–3 options for the next game work.
+- Status: PR #306 (0.9.97.57): games-sweep (440 checks), games-resume, a 20 s grace in Quiz / Draw for a short drop,
+  reopen after a reload, the Classics shelf fix.
+- Done: #306 (0.9.97.57), Game Studio.
+
+### EXT1. Film page: games, the rail in fullscreen, the film's own ⛶ (owner's bugs, 5 Nov 2026; lane A)
+- Why: owner: "games don't work in the extension"; in film-page fullscreen the rail stays after the mouse goes back to
+  the middle (until pause / play); the film's own fullscreen button does nothing, only ours works.
+- Done when: the games hall and a table / side game work on the film page; the rail goes within ½ s when the mouse
+  leaves it in fullscreen and in the window; the film's own ⛶ toggles the room's fullscreen for top-frame and iframe
+  players.
+- Tests: embed harness (headful) with new EXT1 checks; the owner's hand test (update the extension first).
+- Done: #310 (0.9.97.58), Developer A: the hall is an island on the film page, the film's "edge" report closes the rail
+  on its next move, the film's element fullscreen becomes the page's.
+
+### CL2. Classics and game windows redesign (owner, 5 Nov 2026, "important"; Game Studio)
+- Why: owner (screenshot): "Classics looks awful: XOX in the background, the games on the side, nothing makes sense";
+  "always open games in the mini window at a size that fits each game"; "not the game small on the right and its
+  settings on the left: something cute and proper for each game"; picking chess once locked the table to chess.
+- Done when: every game opens as the mini window at its own size (the video's place stays an option, remembered per
+  kind); Classics opens on a picker with only the game cards; each board has its own layout (board first, seats above /
+  below, Glowbeam and watchers as small chips); "Change game" works at any time (asks while a game runs; a seated player
+  decides, watchers can't); Quiz / Draw lobbies compact.
+- Tests: e2e `classics-switch.mjs` (all 20 from → to pairs, Glowbeam moving first, two people), games-sweep, classics
+  harness; the owner's hand test.
+- Done: #309 (0.9.97.59), Game Studio.
+
 ### CI. CI diet (owner's pick "safe + short main", 4 Nov 2026; lane B, first in the queue)
 - Why: 478 runs / ≈ 3500 min in four days; docs-only PRs ran the whole suite.
 - Done when: a superseded PR run is cancelled; docs-only changes run only a tiny "changes" job whose check still
@@ -50,6 +107,7 @@ Card format:
   `apps/web` or `packages/shared` change. PR ≈ 9 → 5 min, main ≈ 19 → 11.5 min, docs-only ≈ 0.
 - Tests: the workflow's own runs on the PR and on main. PR #286.
 
+- Done: PR #286 (0.9.97.39 batch) + #296 (main diffs from the last successful run).
 ### LIC. Source-available license before going public (owner, 4 Nov 2026; lane B) ✅
 - Done: PR #287 (`LICENSE` all rights reserved, `UNLICENSED` package.json, READMEs, CLAUDE.md).
 
@@ -73,6 +131,7 @@ security and promotion now that it is public"; lane A after 15f + R27, Design fo
   - Rule for sessions: with the ruleset, every change to `main` goes through a PR whose `changes` + `test` checks
     passed (docs-only PRs pass because skipped jobs report success); nobody pushes to `main`.
 
+- Done: PR #293 (README, templates, SECURITY.md), Design #289 (banner, social preview), #303 (settings record).
 ### SZ. Slim the room chunk (Planner's technical decision, 4 Nov 2026; lane B)
 - Why: the room page's JS is 144.9 / 145 kB gzipped after DL2; the next room feature would cross the budget.
 - Done when: the live / stream and camera windows (and other things not needed on first paint) load as lazy chunks;
@@ -80,6 +139,7 @@ security and promotion now that it is public"; lane A after 15f + R27, Design fo
   reason in its PR).
 - Tests: size budget; voice / live / cam-fs / phone / phone-speed harnesses stay green.
 
+- Done: PR #301 (0.9.97.52, room JS 145.0 → 136.9 kB).
 ### BH8. Live fallback.mjs: a room WebSocket closed with 1006 mid-test (lane B, after R4-3)
 - Why: DL1's main run failed live e2e `fallback.mjs` "pong after chunked" on both attempts (close 1006 ≈ 24 s after
   open); the runs before and after passed. Flaky tests are fixed, not ignored.
@@ -87,12 +147,14 @@ security and promotion now that it is public"; lane A after 15f + R27, Design fo
   limits) and fixed, or the test made robust for a real, documented reason; three live runs green on the first try.
 - Tests: live e2e `fallback.mjs`.
 
+- Done: PR #302 (0.9.97.53, with BH9); live `fallback.mjs` first-try green on .53, .54 and .55.
 ### SEC4. Security review 4: Cloudflare best practices + public-repo exposure (owner, 4 Nov 2026; Security, read-only)
 - Why: the owner asked to review the code and the site with the Cloudflare skill (cloudflare/skills:
   workers-best-practices, durable-objects, wrangler, web-perf) and fix the security side, now that the repo is public.
 - Done when: `docs/internal/security-review-4.md` + proposed cards; the Planner routes them to lanes A / B.
 - Tests: each fix card carries its own.
 
+- Done: `security-review-4.md` (#291); fixes R4-1/6/7/8 (.47 #294), R4-2/3/5 (.49 #298), R4-9/10 (.50 #299).
 ### 15e. Home art: the light lands on every screen; a bigger, balanced first screen (owner, 4 Nov 2026; lane A)
 - Owner (screenshot of the live 0.9.97.28 home art): "the bright part should cover the tablet screen, the phone screen
   and so on properly, it doesn't look natural now"; "the whole art could look bigger and move closer to the left; the
@@ -166,7 +228,7 @@ Passed (owner, alone): Enter opens the message box at once, no strip in YouTube 
 cinema mode, the YouTube rail slides in beside the player, the new menus, the new avatars. Games / streams: the owner
 reports if a drop happens again over time.
 
-**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6 (+ R20's copy once the owner picks the squid). Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI ✅ (+ #296 diff from the last good main run) → R26 ✅ → R25 ✅ → DL1 ✅ → DL2 ✅ → R4-2 + R4-3 + R4-5 → BH8 → SZ → DL4 → DL5. Game Studio: Draw & Guess ✅ → chess + backgammon ✅ (.46) → DL3a (.48) → DL3b. Lane A: 15e ✅ → R22 + R23 ✅ → 15f + R27 ✅ → GH ✅ → R4-1 + R4-6..8 (.47) → R4-9 → R4-10. Security: SEC4 ✅ (`security-review-4.md`). Design: GH art ✅. Design: R20. Planner's decision on "same browser, same name" below (R19).
+**Run order:** lane B: R15 ✅. Lane A: R16 ✅ → R17 ✅ → R18 ✅ → BH5 ✅ → BH6. Lane B: R21 ✅ → BH7 ✅ → R24 ✅ → LIC ✅ → CI ✅ → R26 ✅ → R25 ✅ → DL1 ✅ → DL2 ✅ → R4-2/3/5 ✅. Lane B2 (fresh session): SZ ✅ → BH8 ✅ → BH9 ✅ → DL4 ✅ → DL5 ✅ → CAM1 → MB. Game Studio: Draw & Guess ✅ → chess + backgammon ✅ → DL3a ✅ → DL3b ✅ → BHG ✅ (.57) → CL2 ✅ (.59) → next game (owner's pick). Lane A: 15e ✅ → R22 + R23 ✅ → 15f + R27 ✅ → GH ✅ → R4-1/6/7/8 ✅ → R4-9/10 ✅ → BH10 ✅ (.56) → EXT1 ✅ (.58) → privacy policy H3 + M7 (.60). Security: SEC4 ✅. Design: GH art ✅.
 
 ### R15. YouTube fullscreen: messages over the video again, never a side column (owner; lane B)
 - Owner (screenshot of YouTube fullscreen with the dark column on the right after writing a message): "messages don't
@@ -274,6 +336,7 @@ reports if a drop happens again over time.
   the lab off the room's size and behaviour are unchanged.
 - Owner's pick: recorded above.
 
+- Done: DL1 #284 (.44), DL2 #285 (.45), DL3a #295 (.48), DL3b #300 (.51), DL4 #304 (.54), DL5 #305 (.55).
 ### R25. Fullscreen messages lower than the message box (owner, 4 Nov 2026; lane B)
 - Owner (screenshot of R21 live, a YouTube video in fullscreen: the message "Alperen2 sELAN" sits right beside the
   rail's 💬, at the same height as the message box that 💬 opens): "put it not right next to where you write a message
@@ -1062,6 +1125,8 @@ into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the
   straight into the Shorts view with 🎲 Discover; no service is named beyond YouTube Shorts / TikTok.
 - Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
 - Owner's pick: copy and whether it is a page or only a home door. Planner: 0.9.95 (owner agreed 2 Nov 2026).
+- Done: 0.9.97.62 (PR https://github.com/alperenakturk/screen-with-me/pull/314): the owner's copy A, home door only; the
+  room starts 🎲 Discover "Popular" on its first welcome; harness `shorts-door` (computer EN + TR, phone).
 
 Cards from `security-review-4.md` (4 Nov 2026, `main` at 0.9.97.39, after the repository went public), most severe
 first (R4 = review 4). Details, file:line references and the owner's GitHub settings are in the review. The shipped cards of
@@ -1225,6 +1290,8 @@ file:line references, scenarios and the owner's Cloudflare / GitHub / Google ste
   address of the own domain later; no postal address); minimum age 13+, with "under 16 you need a parent's
   permission"; a lawyer reads policy + terms before the store submission if the owner can find one (not blocking);
   the up-to-3 names on the join card stay and the policy says so (M7). Planner: before the YouTube API audit (0.9.98).
+- Lane: A, next (Planner, 5 Nov 2026; version 0.9.97.60). Use `kvkk-gdpr-denetim`'s `SKILL.md` from `my-awesome-list`
+  as the checklist (attach it with `add_repo`, read-only).
 
 ### Security: TV link hardening before the TV leaves the lab (M8)
 - Severity: medium (only while `?tvlab=1` hides the TV)

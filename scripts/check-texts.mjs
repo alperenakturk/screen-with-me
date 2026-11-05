@@ -6,6 +6,10 @@
 // Both sides must have the same keys (nested objects too), arrays the same length, and no string may be empty.
 // The source is parsed with Vite's own parser (rolldown, oxc), so nothing is run and no file has to follow a type pattern.
 //
+// The games' own tables (`apps/web/src/games`) are also checked by Game Studio's `scripts/check-game-text.mjs`; this
+// one covers everything else (the site's i18n.ts, the lazy chunks, the Test Lab, the extension, shared word lists) and
+// reads the games too, as a second look.
+//
 //   node scripts/check-texts.mjs          (CI; exits 1 on a gap)
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';

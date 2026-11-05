@@ -454,8 +454,8 @@ check(/· 2 /.test(roomTitle), 'yeniden bağlanan kişi odada iki kez sayılmıy
 await sam.evaluate(`(() => { const c = document.getElementById('voice-ptt'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);
 await sam.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', bubbles: true })); 1`);
 const pttOn = await until(() => alex.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
-await alex.sleep(1500);
-const pttLevel = await alex.evaluate(LEVEL);
+// BH10: the level is measured over a short window, so right after the switch it still holds the silence before it.
+const pttLevel = (await until(async () => { const l = await alex.evaluate(LEVEL); return l.rms > 0.01 ? l : null; }, 6000)) ?? (await alex.evaluate(LEVEL));
 check(!!pttOn && pttLevel.rms > 0.01, 'bas-konuş: Sam V’ye basılı tutunca Alex onu duyuyor', JSON.stringify(pttLevel));
 await sam.evaluate(`document.dispatchEvent(new KeyboardEvent('keyup', { key: 'v', bubbles: true })); 1`);
 const pttOff = await until(() => alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);

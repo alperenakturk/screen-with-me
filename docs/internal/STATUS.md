@@ -388,6 +388,32 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**Next round, start here (BH10, 0.9.97.56, 4 Nov 2026).** Everything a script can check was run in the cloud
+(every harness, the screenshot sweep at five sizes in EN + TR, the Test Lab's fake friends for knock, Make host and
+private messages). What is left needs a person: real YouTube playback, a real mic and camera, your phone, and the
+extension in other browsers. One sitting, in this order, with one friend in Chrome on another computer (or your phone
+as the second person). Tick here or tell the Planner; the older lists below stay for detail.
+- [ ] 1. YouTube together (computer): you create a room, the friend joins by the invite link; play a YouTube video:
+  "3-2-1" starts you both together; pause, seek, change speed from each side; you stay in step (under a second).
+- [ ] 2. Fullscreen (computer, YouTube): the rail comes at the right edge and goes when the mouse leaves; Enter opens
+  the message box; the friend's messages come in on the right, below the box, never over YouTube's own bar.
+- [ ] 3. Voice + camera (computer): both join voice, hear each other clearly (no echo), mic on / off, cameras on;
+  ⟳ reconnect or a page reload keeps you in voice with the mic as it was.
+- [ ] 4. Screen share: share a tab with sound; the friend sees and hears it; reload the friend's page: the stream comes
+  back by itself.
+- [ ] 5. Knock + host (two people): turn on "Ask before letting people in", the friend opens the link in a fresh
+  browser: you get "Let in / Refuse"; let them in; 👑 Make host to the friend: now they get the next knock card.
+- [ ] 6. Private message: press the friend's name in the chat, write: only they see it (a third person does not).
+- [ ] 7. A game table with the friend (Classics: Turkish dama, then Quiz): play to the end, a rematch, leave the
+  table; a sound on each move.
+- [ ] 8. Your phone (Android or iPhone, the friend on the computer): join by the QR code, the YouTube video plays in
+  sync, turn the phone sideways → ⛶ fullscreen, chat sheet, 🎙 voice for a minute (hear and be heard), back upright.
+- [ ] 9. Your phone, Shorts: the friend adds a Short; swipe up / down to the next: both move together.
+- [ ] 10. The extension in Chrome on a film page (a legal demo player, e.g. the Video.js or Plyr demo): "Go to the
+  film", the room view, sync with the friend, voice on the film page (the permission window appears once).
+- [ ] 11. The extension in Edge, then Brave, then Opera (the detailed list below, "Before the 1.0 store submission"):
+  at least steps 1, 2, 3 and 6 of it in each.
+
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
 start, dark mode, largest text, keyboard on every field, first open, back button, sideways, delete confirmation,
@@ -433,6 +459,28 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.60 (privacy card H3 + M7: the privacy policy for KVKK + GDPR):**
+- [ ] Read the new privacy page (footer → Privacy, Turkish and English): you are named as the data controller with
+  screenwithme.app@gmail.com, age 13+ (under 16 with a parent's permission), and the join screen's names are explained.
+  Anything that reads wrong or promises more than you want, tell the Planner.
+- [ ] Before the store submission: a lawyer reads the policy (and the terms of use, once they exist).
+
+**0.9.97.58 (card EXT1: games, the rail and fullscreen on the film page; update the extension from the site first):**
+- [ ] On a film page in the room view: the rail's 🎮 opens the games hall over the film (it used to be invisible). Open
+  Classics, play XOX against Glowbeam; open Snack Bar from "On the side" and serve a few customers.
+- [ ] Film page fullscreen (our ⛶ or the film's own): bring the rail out at the right edge, then move the mouse back to
+  the middle of the film at a normal pace: the rail goes within half a second, without pause / play. Do the same in
+  the window (from the chat across the rail to the middle of the film).
+- [ ] The film's own ⛶ (on a site whose player is in the page and on one whose player is in a frame, e.g. an embedded
+  player): it opens the room's fullscreen (the rail on the right, our messages); pressing it again leaves fullscreen.
+  Also try the browser player's own fullscreen button in the video's controls: it opens our fullscreen too.
+
+**0.9.97.56 (BH10: every harness on main, the owner's next round):**
+- [ ] Your bug: ⋯ → "Keep the controls open" (or Settings → My screen). In the normal window (not fullscreen) play a
+  video (YouTube, a video file, the sync test, a film page with the extension), move the mouse onto the chat and wait:
+  the rail on the right stays open, the video ends at its edge. Turn it off again: the rail rests as before.
+- [ ] The rest only updates test scripts. Start the next round from "Next round, start here" at the top of this list.
+
 **0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
 - [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
   ready", "Knock", "A private message", "My connection drops". Each line turns ✓ (the self-test turns ✗ on purpose);
@@ -448,6 +496,44 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 **0.9.97.53 (card BH8: the backup connection's idle sessions):**
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
+
+**0.9.97.62 (the home door "📱 Scroll Shorts together"):**
+- [ ] On the home page (computer and phone): "📱 Scroll Shorts together" under Create / Join, with "Swipe YouTube Shorts
+  and TikToks with friends, in sync. Anyone can swipe." (Turkish: "Shorts'u birlikte kaydır").
+- [ ] Press it, enter your name: the room starts playing popular Shorts in the Shorts view by itself, ♾ shows the feed
+  running; invite a friend, both swipe ▲▼. A plain "Create room" still opens an empty room.
+- [ ] On a tablet held upright: a game opens as the small window (like on a computer); drag it by its head out of the chat.
+
+**0.9.97.61 (🎮 Sea Battle, a new room game):**
+- [ ] 🎮 → Sea Battle with a friend: you both see only your own fleet; move a ship (tap it, then tap water), turn it,
+  shuffle, then Ready. Shoot in turns: a splash for a miss, a thud for a hit (shoot again), a fanfare when a ship sinks.
+- [ ] The friend never sees your ships until the game is over; then both fleets show. Play again: the other shoots first.
+- [ ] Alone: "Play Glowbeam" (Easy / Medium) and play a whole game; Medium follows a hit along the ship.
+- [ ] On your phone: one sea at a time with "Their sea / My sea"; it turns to their sea on your turn.
+
+**0.9.97.59 (🎮 card CL2: the Classics redesign + "switch game at any time"):**
+- [ ] 🎮 → Classics: the table opens as a small window showing only the game cards (XOX, Four in a Row, dama, chess,
+  backgammon); pick chess: the window takes the board's shape, the board is the biggest thing in it, the other player
+  above, you below.
+- [ ] Play chess against Glowbeam, then press "Change game" in the window's head mid-game: it asks "End this game and
+  change?"; Cancel keeps the game; "End and change" → pick backgammon: a fresh backgammon board. Do it once from every
+  board (the owner's bug: stuck after chess).
+- [ ] With a friend at the table: you end a running game for another board: the friend sees the new board at once.
+- [ ] Each board's look: XOX playful cells, Four in a Row on its blue stand, dama and chess on wood with captured
+  pieces beside the names, backgammon with the dice tray under the board.
+- [ ] Draw & Guess and Quiz lobbies: one small card in the middle with the players as chips, no settings column.
+- [ ] Every game opens as a small window by default; switch one to "in the video's place", close and reopen it: it
+  remembers that for that game only. Phones: unchanged (full screen).
+
+**0.9.97.57 (🎮 card BHG: games quality pass):**
+- [ ] Quiz with a friend: start a game, the friend reloads their page mid-question: they are back in the same game
+  within a few seconds, scores kept (before: the game went back to the lobby for both).
+- [ ] Draw & Guess the same: the friend reloads mid-round, the round goes on.
+- [ ] Classics against Glowbeam (chess or backgammon): make a move, reload the page: the board comes back as it was,
+  you keep your seat. Minimize it (✕), reload: it stays minimized, 🎮 has its dot.
+- [ ] On your phone: open chess, dama and backgammon: the board fills the width, both names readable; the Quiz and
+  Draw & Guess lobbies show whole without being shrunk.
+- [ ] Open Snack Bar, reload: it opens again by itself.
 
 **0.9.97.52 (card SZ: a lighter room page):**
 - [ ] Nothing new to see: in a room join voice (the IP notice and the pre-join window open at once), share your screen,
@@ -1077,6 +1163,12 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - **Trademark filing, donations, legal entity:** see `ROADMAP.md` §4.
 
 ## History (short)
+- **0.9.97 (3–5 Nov 2026), side games and more players, then the road to 0.9.98:** the side games (Snack Bar, Window
+  Garden, Five Frames) with their polish, how-to-play cards and the tip jar / cuttings; the games gallery, Classics with
+  dama, chess and backgammon against Glowbeam, the CL2 redesign; Vimeo, podcasts, the move code; the owner's two test
+  rounds (R1–R27, BH2–BH10: knock, private messages, the order of things, fullscreen messages, the YouTube rail, the
+  film page's games and fullscreen); security reviews 3 and 4 (R3-x, R4-x); the Test Lab (DL1–DL5); a lighter room
+  chunk; the privacy policy for KVKK + GDPR. Gate check for 0.9.98: `docs/internal/gate-0.9.98.md`.
 - **2 Nov 2026, live e2e first-attempt flakes:** wait.mjs "timeout waiting d" was a deploy restarting the test's room
   object mid-test (all four connections closed with 1006; reproduced locally by reloading `wrangler dev` at the same
   moment). The deploy job now waits for the new version on the Worker and a Durable Object (`/api/version`,
@@ -1138,7 +1230,7 @@ ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=10:duration=660 \
 FILM_VIDEO=/tmp/film.webm node scripts/harness/embed/film-server.mjs &
 CHROME=/opt/pw-browsers/chromium node scripts/harness/embed/run.mjs apps/extension/dist http://localhost:5173 ws://localhost:8787 /tmp/shell-test
 # Voice: two different fake microphones are required (same beep = removed by echo cancellation)
-ffmpeg -loglevel error -f lavfi -i "sine=frequency=330:duration=20,tremolo=f=3:d=0.7" -ac 1 -ar 48000 /tmp/a.wav
+ffmpeg -loglevel error -f lavfi -i "sine=frequency=330:duration=20,tremolo=f=3:d=0.7,volume=4" -ac 1 -ar 48000 /tmp/a.wav  # volume=4: loud enough for the speech detector (film ducking in voice/shell.mjs)
 ffmpeg -loglevel error -f lavfi -i "anoisesrc=color=pink:amplitude=0.4:duration=20,tremolo=f=2:d=0.8" -ac 1 -ar 48000 /tmp/b.wav
 VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/run.mjs http://localhost:5173
 VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/shell.mjs

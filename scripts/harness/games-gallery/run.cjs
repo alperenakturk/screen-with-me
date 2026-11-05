@@ -80,7 +80,7 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
   const g = await gallery(alex);
   check(g.open && g.tabs.join() === 'together,side', 'the gallery opens with two tabs', JSON.stringify(g));
   check(g.on === 'together', 'it starts on Together', String(g.on));
-  check(g.cards.join() === 'draw,quiz,poker,classics', 'Together has a card per room game', g.cards.join());
+  check(g.cards.join() === 'draw,quiz,poker,classics,sea', 'Together has a card per room game', g.cards.join());
   check(g.covers >= 4, 'covers are drawn on the cards', String(g.covers));
   check(!g.scroll && g.onScreen, 'fits without scrollbars on a laptop', g.size);
   await alex.screenshot({ path: __dirname + '/gallery-together.png' });
