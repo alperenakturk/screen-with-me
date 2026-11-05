@@ -481,6 +481,17 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the rail on the right stays open, the video ends at its edge. Turn it off again: the rail rests as before.
 - [ ] The rest only updates test scripts. Start the next round from "Next round, start here" at the top of this list.
 
+**CAM1 (cameras on phones, from the owner's test with a friend):**
+- [ ] Two phones and a computer in voice, every camera on: everyone sees everyone (no black picture on either side).
+- [ ] On a phone, press 🔄 in the faces strip (it shows while your camera is on): the others see "Camera changing…"
+  for a moment, then the other camera within about a second; your camera never goes off for them.
+- [ ] With the rear camera, move something to the left: your own preview moves left too (only the front camera is a
+  mirror).
+- [ ] Lock a phone for 10 s, unlock it: within a few seconds the others see that phone's camera again (at most a short
+  "Waiting for the picture…" note).
+- [ ] The phone's camera row: two pictures side by side, names readable; tap one: the sheet shows it big with its
+  buttons on screen.
+
 **0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
 - [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
   ready", "Knock", "A private message", "My connection drops". Each line turns ✓ (the self-test turns ✗ on purpose);
@@ -503,6 +514,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   e-mail with the subject "Report" answered within 72 hours. Anything that reads wrong, tell the Planner.
 - [ ] Help page → "Report someone or something in a room": the steps make sense.
 - [ ] Before the store submission: a lawyer reads the terms with the privacy policy.
+
+**0.9.97.65 (🎮 ⚫ Reversi on the Classics shelf):**
+- [ ] 🎮 → Together → Classics: the picker has a sixth card, Reversi. Pick it: 8 × 8 on green felt, two discs each in
+  the middle, four gold dots on my first turn.
+- [ ] Alone: Glowbeam (easy / medium) sits down. Tap a dot: the disc goes there and the line between turns over; my
+  disc count shows beside my name; Glowbeam answers. With no legal move, the status line says who passes.
+- [ ] With a friend: play to the end; the side with more discs wins, the score counts it; Rematch swaps who starts.
+- [ ] Turkish: the card and texts read naturally.
 
 **0.9.97.63 (🎮 card GT: game windows on tablets):**
 - [ ] On a tablet held upright, open a game (Classics, Sea Battle): its small window opens above the chat, over the

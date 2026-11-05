@@ -1,5 +1,5 @@
 // Two-player board games in the room's game window: tic-tac-toe, Four in a Row and, inside 🎲 Classics (P6, the owner's
-// picks in `docs/internal/design/games/classics.md`), dama, chess (P7) and backgammon (P8) from a game shelf. The first two people sit (X / O, red /
+// picks in `docs/internal/design/games/classics.md`), dama, chess (P7), backgammon (P8) and reversi from a game shelf. The first two people sit (X / O, red /
 // yellow, white / black), later ones watch; when a seat is free, a watcher can sit, and a lone player can play against
 // Glowbeam the bot (easy / medium; it plays on the server with the same rules). Glowbeam is also the referee: it says
 // whose turn it is and cheers the winner. The server checks every move; this page only draws what it gets.
@@ -10,6 +10,7 @@ import type { Mark } from '@swm/shared/games/board';
 import { COLS, dropRow } from '@swm/shared/games/four';
 import { legalMoves as damaMoves, mustCapture, type DamaState } from '@swm/shared/games/dama';
 import { legalMoves as chessMoves, PROMOTIONS, type ChessState } from '@swm/shared/games/chess';
+import { counts as reversiCounts, legalMoves as reversiMoves, type ReversiState } from '@swm/shared/games/reversi';
 import { BAR, OFF, ROLL, fromOf as bgFrom, legalMoves as bgMoves, pips, toOf as bgTo, type BackgammonState } from '@swm/shared/games/backgammon';
 import { GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
 import type { Avatar } from '@swm/shared/protocol';
@@ -33,9 +34,10 @@ const SHELF: readonly { kind: GameKind; glyph: string }[] = [
   { kind: 'dama', glyph: '⚪' },
   { kind: 'chess', glyph: '♞' },
   { kind: 'backgammon', glyph: '🎲' },
+  { kind: 'reversi', glyph: '⚫' },
 ];
 
-/** Chess and backgammon texts live in this chunk (the room page's i18n stays small). */
+/** Chess, backgammon and reversi texts live in this chunk (the room page's i18n stays small). */
 const TEXT = {
   en: {
     check: 'Check!',
@@ -81,6 +83,11 @@ const TEXT = {
     endAsk: 'End this game and change?',
     endAskText: 'The game on the table ends for both players; the score starts again on the new board.',
     endYes: 'End and change',
+    reversiTitle: 'Reversi',
+    reversiText: 'Put a disc so it closes a line of the other colour; every closed line turns over. No move? You pass. The most discs at the end wins.',
+    reversiLine: 'Close a line, turn it over',
+    rvPassed: '{name} has no move and passes',
+    rvDiscs: '{n} discs',
   },
   tr: {
     check: 'Şah!',
@@ -126,13 +133,18 @@ const TEXT = {
     endAsk: 'Bu oyun bitsin ve oyun değişsin mi?',
     endAskText: 'Masadaki oyun iki oyuncu için de biter; yeni oyunda skor sıfırdan başlar.',
     endYes: 'Bitir ve değiştir',
+    reversiTitle: 'Reversi',
+    reversiText: 'Taşını, karşı rengin bir sırasını kapatacak yere koy; kapanan her sıra döner. Hamlen yoksa pas geçersin. Sonunda taşı çok olan kazanır.',
+    reversiLine: 'Sırayı kapat, taşları çevir',
+    rvPassed: '{name} oynayamıyor, pas geçti',
+    rvDiscs: '{n} taş',
   },
 } as const;
 const tc = (key: keyof (typeof TEXT)['en'], values: Record<string, string | number> = {}): string =>
   (lang() === 'tr' ? TEXT.tr : TEXT.en)[key].replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
 /** A board's name and line: chess and backgammon keep theirs in this chunk (the room page's i18n stays small). */
-const boardTitle = (kind: GameKind): string => (kind === 'chess' ? tc('chessTitle') : kind === 'backgammon' ? tc('backgammonTitle') : t(`games.${kind}.title`));
-const boardText = (kind: GameKind): string => (kind === 'chess' ? tc('chessText') : kind === 'backgammon' ? tc('backgammonText') : t(`games.${kind}.text`));
+const boardTitle = (kind: GameKind): string => (kind === 'chess' || kind === 'backgammon' || kind === 'reversi' ? tc(`${kind}Title`) : t(`games.${kind}.title`));
+const boardText = (kind: GameKind): string => (kind === 'chess' || kind === 'backgammon' || kind === 'reversi' ? tc(`${kind}Text`) : t(`games.${kind}.text`));
 /** Dice faces ⚀–⚅. */
 const DIE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 /** Chess pieces as text (the filled shapes for both sides, coloured by CSS; U+FE0E keeps them out of emoji style). */
@@ -147,6 +159,7 @@ const COVER: Record<string, string> = {
   dama: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#3a2516"/><g transform="translate(28 8)"><rect width="64" height="64" fill="#e8cf9e"/><g fill="#9a6236"><rect x="16" width="16" height="16"/><rect x="48" width="16" height="16"/><rect y="16" width="16" height="16"/><rect x="32" y="16" width="16" height="16"/><rect x="16" y="32" width="16" height="16"/><rect x="48" y="32" width="16" height="16"/><rect y="48" width="16" height="16"/><rect x="32" y="48" width="16" height="16"/></g><g fill="#fff8ec" stroke="#b9a37c" stroke-width="1.5"><circle cx="8" cy="40" r="6"/><circle cx="40" cy="56" r="6"/></g><g fill="#22202b" stroke="#000" stroke-width="1.5"><circle cx="24" cy="8" r="6"/><circle cx="56" cy="24" r="6"/></g></g></svg>',
   chess: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#33241a"/><g transform="translate(28 8)"><rect width="64" height="64" fill="#ecd7b0"/><g fill="#a8724a"><rect x="16" width="16" height="16"/><rect x="48" width="16" height="16"/><rect y="16" width="16" height="16"/><rect x="32" y="16" width="16" height="16"/><rect x="16" y="32" width="16" height="16"/><rect x="48" y="32" width="16" height="16"/><rect y="48" width="16" height="16"/><rect x="32" y="48" width="16" height="16"/></g></g><text x="60" y="58" text-anchor="middle" font-size="44" fill="#1d1a24" stroke="#fff" stroke-width="1.2">\u265E</text></svg>',
   backgammon: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#4a2c1c"/><rect x="10" y="8" width="100" height="64" rx="5" fill="#2e5d3c"/><rect x="57" y="8" width="6" height="64" fill="#4a2c1c"/><g fill="#e9c27a"><path d="M12 8l7 26 7-26zM40 8l7 26 7-26zM66 8l7 26 7-26zM94 8l7 26 7-26z"/><path d="M26 72l7-26 7 26zM80 72l7-26 7 26z"/></g><g fill="#c0533a"><path d="M26 8l7 26 7-26zM80 8l7 26 7-26z"/><path d="M12 72l7-26 7 26zM40 72l7-26 7 26zM66 72l7-26 7 26zM94 72l7-26 7 26z"/></g><circle cx="19" cy="64" r="5" fill="#fff8ec"/><circle cx="101" cy="16" r="5" fill="#22202b"/></svg>',
+  reversi: '<svg viewBox="0 0 120 80"><rect width="120" height="80" rx="10" fill="#173826"/><g transform="translate(28 8)"><rect width="64" height="64" rx="3" fill="#2f7a4c"/><g stroke="#1d5534" stroke-width="1.2"><path d="M16 0v64M32 0v64M48 0v64M0 16h64M0 32h64M0 48h64"/></g><g fill="#22202b" stroke="#000" stroke-width="1"><circle cx="40" cy="24" r="6"/><circle cx="24" cy="40" r="6"/><circle cx="56" cy="40" r="6"/></g><g fill="#fff8ec" stroke="#b9a37c" stroke-width="1"><circle cx="24" cy="24" r="6"/><circle cx="40" cy="40" r="6"/></g><circle cx="40" cy="56" r="3" fill="#ffc65a"/><path d="M48 18a8 8 0 0 1 4 6" stroke="#ffc65a" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg>',
 };
 
 let artId = 0;
@@ -256,8 +269,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   let built: GameKind | null = null;
   /** Dama / chess: the piece I picked to move. */
   let picked: number | null = null;
-  /** Dama and chess share the 8 × 8 board. */
-  const grid8 = () => kind === 'dama' || kind === 'chess';
+  /** Dama, chess and reversi share the 8 × 8 board. */
+  const grid8 = () => kind === 'dama' || kind === 'chess' || kind === 'reversi';
   const four = () => kind === 'four';
   const colOf = (i: number) => i % COLS;
   // Card A11y (S2): a cell says where it is ("Row 1, column 2"), and what is in it (filled in on each state).
@@ -291,7 +304,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       return;
     }
     // Dama and chess have their own 8 × 8 board and cells (never the XOX marks' styles).
-    board.className = grid8() ? `dama-board${kind === 'chess' ? ' chess-board' : ''}` : `xox-board${kind === 'four' ? ' four-board' : ''}`;
+    board.className = grid8() ? `dama-board${kind === 'chess' ? ' chess-board' : kind === 'reversi' ? ' rv-board' : ''}` : `xox-board${kind === 'four' ? ' four-board' : ''}`;
     const size = kind === 'four' ? 42 : grid8() ? 64 : 9;
     cells = Array.from({ length: size }, (_, i) => {
       const cell = el('button', { type: 'button', class: grid8() ? 'dama-cell' : 'xox-cell', 'aria-label': cellLabel(i) });
@@ -309,6 +322,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     if (kind === 'xox') return send({ t: 'move', cell: i });
     if (kind === 'four') return send({ t: 'move', cell: colOf(i) });
     const moves = myMoves();
+    // Reversi: a disc goes straight onto a legal cell.
+    if (kind === 'reversi') return void (moves.includes(i) && send({ t: 'move', cell: i }));
     if (kind === 'backgammon') {
       // Backgammon: pick a point (or the bar) with a checker that can move, then where it goes.
       if (picked !== null && moves.includes(picked * 32 + i)) {
@@ -362,6 +377,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const markNode = (mark: Mark) =>
     kind === 'four'
       ? el('span', { class: `four-disc mark-${mark}`, role: 'img', 'aria-label': t(mark === 'X' ? 'games.red' : 'games.yellow') })
+      : kind === 'reversi'
+        ? el('span', { class: `dama-man rv-man mark-${mark}`, role: 'img', 'aria-label': t(mark === 'X' ? 'games.black' : 'games.white') })
       : kind === 'dama'
         ? el('span', { class: `dama-man mark-${mark}`, role: 'img', 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') })
         : kind === 'chess'
@@ -380,6 +397,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const ready = state.seats.every((s) => s !== null);
     if (seat === -1 || !ready || state.game.winner !== null || state.game.turn !== MARKS[seat]) return [];
     if (kind === 'backgammon') return bgMoves(state.game as BackgammonState).filter((m) => m !== ROLL);
+    if (kind === 'reversi') return reversiMoves(state.game as ReversiState);
     return kind === 'chess' ? chessMoves(state.game as ChessState) : damaMoves(state.game as DamaState);
   }
 
@@ -421,6 +439,10 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     if (kind === 'dama') {
       const n = 16 - state.game.board.filter((c) => c === other).length;
       return n ? el('span', { class: `mt-taken mark-${other}`, 'aria-hidden': 'true' }, el('span', { class: `dama-man mark-${other}` }), `×${n}`) : '';
+    }
+    if (kind === 'reversi') {
+      const n = reversiCounts(state.game.board)[mark];
+      return el('span', { class: 'mt-taken', title: tc('rvDiscs', { n }) }, el('span', { class: `dama-man rv-man mark-${mark}` }), String(n));
     }
     if (kind === 'backgammon') {
       const bg = state.game as BackgammonState;
@@ -488,7 +510,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const moves = myMoves();
     const dama = game as DamaState;
     if (kind === 'dama' && dama.chain !== null && moves.length) picked = dama.chain;
-    const fromM = kind === 'backgammon' ? bgFrom : fromOf;
+    const fromM = kind === 'backgammon' ? bgFrom : kind === 'reversi' ? (m: number) => m : fromOf;
     const toM = kind === 'backgammon' ? bgTo : toOf;
     if (picked !== null && !moves.some((m) => fromM(m) === picked)) picked = null;
     if (!moves.length) promoBox.hidden = true;
@@ -503,6 +525,15 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       const isNew = changed && value !== null && i === game.last;
       if (kind === 'xox') cell.setAttribute('aria-label', `${cellLabel(i)}, ${value || t('games.cellEmpty')}`);
       const dark = grid8() && (Math.floor(i / 8) + (i % 8)) % 2 === 1;
+      if (kind === 'reversi') {
+        // A legal cell shows a small gold dot on my turn; the discs the last move turned over flip.
+        const legal = movable.has(i);
+        const flip = changed && (game as ReversiState).flipped?.includes(i);
+        cell.className = `dama-cell rv-cell${value ? ` mark-${value}` : ''}${legal ? ' target' : ''}${i === game.last ? ' lit' : ''}${isNew ? ' placed' : ''}${flip ? ' flip' : ''}`;
+        cell.setAttribute('aria-label', `${cellLabel(i)}${value ? `, ${t(value === 'X' ? 'games.black' : 'games.white')}` : legal ? `, ${t('games.cellEmpty')} ✓` : ''}`);
+        cell.disabled = !legal;
+        return;
+      }
       if (kind === 'chess') {
         const piece = chess.kinds[i]!;
         const lit = i === game.last || i === chess.from;
@@ -535,7 +566,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     if (seat === -1) delete board.dataset.me;
     else board.dataset.me = MARKS[seat];
     board.classList.toggle('done', game.winner !== null);
-    const colour = (mark: Mark) => t(kind === 'four' ? (mark === 'X' ? 'games.red' : 'games.yellow') : grid8() || kind === 'backgammon' ? (mark === 'X' ? 'games.white' : 'games.black') : 'games.you');
+    const colour = (mark: Mark) => t(kind === 'four' ? (mark === 'X' ? 'games.red' : 'games.yellow') : kind === 'reversi' ? (mark === 'X' ? 'games.black' : 'games.white') : grid8() || kind === 'backgammon' ? (mark === 'X' ? 'games.white' : 'games.black') : 'games.you');
     const nameOf = (mark: Mark) => {
       const p = seats[mark === 'X' ? 0 : 1];
       return p?.bot ? t('classics.botName') : (p?.name ?? (kind === 'xox' ? mark : colour(mark)));
@@ -551,6 +582,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     else if (kind === 'backgammon' && myTurn && bg.bar[game.turn] > 0) status.textContent = tc('enter');
     else if (kind === 'backgammon' && bg.passed && bg.passed !== game.turn && !myTurn) status.textContent = `${tc('passed', { name: nameOf(bg.passed) })} · ${t('games.theirTurn', { name: nameOf(game.turn) })}`;
     else if (kind === 'backgammon' && bg.passed && myTurn) status.textContent = `${tc('passed', { name: nameOf(bg.passed) })} · ${t('games.yourTurn')}`;
+    else if (kind === 'reversi' && (game as ReversiState).passed)
+      status.textContent = `${tc('rvPassed', { name: nameOf((game as ReversiState).passed!) })} · ${myTurn ? t('games.yourTurn') : t('games.theirTurn', { name: nameOf(game.turn) })}`;
     else if (kind === 'chess' && chess.check) status.textContent = myTurn ? tc('youCheck') : `${tc('check')} ${t('games.theirTurn', { name: nameOf(game.turn) })}`;
     else if (myTurn && kind === 'dama' && dama.chain !== null) status.textContent = t('classics.chain');
     else if (myTurn && kind === 'dama' && mustCapture(dama)) status.textContent = t('classics.mustCapture');

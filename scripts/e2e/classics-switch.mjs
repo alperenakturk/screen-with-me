@@ -4,7 +4,7 @@
 // the table, fresh. Then the same from a finished game, and between two people (both see the new board).
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'cs' + Math.random().toString(36).slice(2, 8);
-const BOARDS = ['xox', 'four', 'dama', 'chess', 'backgammon'];
+const BOARDS = ['xox', 'four', 'dama', 'chess', 'backgammon', 'reversi'];
 
 function client(name, cid) {
   const ws = new WebSocket(`${base}/api/games/${game}/ws`);
@@ -42,6 +42,7 @@ const FIRST = {
   dama: (5 * 8 + 3) * 64 + (4 * 8 + 3),
   chess: sq('e2') * 64 + sq('e4'),
   backgammon: 1000, // ROLL
+  reversi: 19, // d3
 };
 
 const alex = client('Alex', 'c'.repeat(32));

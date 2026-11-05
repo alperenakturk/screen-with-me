@@ -553,6 +553,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="strip-live" type="button" class="cam-ctl" hidden></button>
               <button id="strip-mic" type="button" class="cam-ctl"></button>
               <button id="strip-cam" type="button" class="cam-ctl"></button>
+              <button id="strip-flip" type="button" class="cam-ctl" hidden></button>
             </div>
             <button id="strip-more" type="button" class="cam-ctl strip-more phone-only" aria-haspopup="dialog" data-i18n-title="phone.more">⋯</button>
           </div>

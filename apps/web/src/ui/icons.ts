@@ -8,6 +8,7 @@ export type IconName =
   | 'mic-off'
   | 'cam'
   | 'cam-off'
+  | 'cam-flip'
   | 'screen'
   | 'screen-stop'
   | 'screen-watch'
@@ -58,6 +59,14 @@ const ICONS: Record<IconName, Shape[]> = {
   'mic-off': [...MIC, SLASH],
   cam: CAM,
   'cam-off': [...CAM, SLASH],
+  // CAM1: switch camera (front / rear / another lens): a camera body with two turning arrows.
+  'cam-flip': [
+    ['path', { d: 'M3 8.5A2 2 0 0 1 5 6.5h2.5L9 4.5h6l1.5 2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' }],
+    ['path', { d: 'M8.5 12.5a3.5 3.5 0 0 1 6.2-2.2' }],
+    ['path', { d: 'M15 8.5v2h-2' }],
+    ['path', { d: 'M15.5 14a3.5 3.5 0 0 1-6.2 2.2' }],
+    ['path', { d: 'M9 18v-2h2' }],
+  ],
   // Share: the screen with an arrow going out.
   screen: [...SCREEN, ['path', { d: 'M9 10l3-3 3 3' }], ['line', { x1: 12, y1: 7, x2: 12, y2: 13 }]],
   // My stream is on: a filled stop square inside the screen.

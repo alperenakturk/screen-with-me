@@ -26,7 +26,18 @@ export interface VoiceChoice {
  * only the devices and whether to ask before joining.
  */
 /** `cam`: joining from a 📷 button (the dock, the Shorts bar) ticks "join with my camera on" for this time only. */
-export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: boolean; cam?: boolean }): Promise<VoiceChoice | null> {
+/**
+ * `live` (CAM1, settings while my camera is on in voice): the preview shows my live camera instead of opening it a second
+ * time (on phones a second capture froze or blacked out what the others saw), and a new pick switches the live camera
+ * in place at once. `mic`: my live microphone, shown while the pick is unchanged (same reason).
+ */
+export interface LiveDevices {
+  stream: () => MediaStream | null;
+  switchTo: (deviceId: string) => Promise<void>;
+  mic?: () => MediaStream | null;
+}
+
+export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: boolean; cam?: boolean; live?: LiveDevices }): Promise<VoiceChoice | null> {
   const join = opts.mode === 'join';
   const remembered = { mic: load('opt:joinMuted') !== '1', cam: opts.canCam && (opts.cam ?? load('opt:joinCam') === '1') };
   if (join && load('opt:voiceCheck') === 'skip') return { ...remembered, changed: false };
@@ -77,18 +88,21 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
   let closed = false;
   const stop = (stream: MediaStream | null) => stream?.getTracks().forEach((track) => track.stop());
 
+  /** The live stream I am showing (never stopped here: voice owns it). */
+  let liveMic: MediaStream | null = null;
   /** The bar moves with my voice (the same check as the 🎙 bar in the card). */
   async function startMic(): Promise<void> {
-    stop(mic);
+    if (mic !== liveMic) stop(mic);
     mic = null;
+    liveMic = (micSel.s.value || '') === before.mic ? (opts.live?.mic?.() ?? null) : null;
     try {
-      mic = await openMic(micSel.s.value || undefined);
+      mic = liveMic ?? (await openMic(micSel.s.value || undefined));
     } catch (error) {
       const denied = error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError');
       note.textContent = t(denied ? 'voice.denied' : 'voice.failed');
       return;
     }
-    if (closed) return stop(mic);
+    if (closed) return mic === liveMic ? undefined : stop(mic);
     note.textContent = '';
     audio ??= new AudioContext();
     const analyser = audio.createAnalyser();
@@ -116,6 +130,10 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
     // Without a camera picture the preview is only a strip with my voice level.
     shown.classList.toggle('off', !want);
     if (!want) return;
+    if (opts.live?.stream()) {
+      showLive();
+      return;
+    }
     try {
       cam = await openCam(camSel.s.value || undefined);
     } catch {
@@ -145,8 +163,28 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
     fill(speakerSel.s, 'audiooutput', before.speaker);
   }
 
+  /** CAM1: my live camera in the preview; a rear camera is not mirrored. */
+  function showLive(): void {
+    const stream = opts.live?.stream() ?? null;
+    preview.srcObject = stream;
+    preview.classList.toggle('rear', stream?.getVideoTracks()[0]?.getSettings().facingMode === 'environment');
+    void preview.play().catch(() => {});
+  }
   micSel.s.addEventListener('change', () => void startMic());
-  camSel.s.addEventListener('change', () => void startCam());
+  camSel.s.addEventListener('change', () => {
+    if (opts.live?.stream() && camSel.s.value) {
+      // Switch the live camera now (in place, "camera changing…" for the others); the preview follows.
+      camSel.s.disabled = true;
+      void opts.live
+        .switchTo(camSel.s.value)
+        .finally(() => {
+          camSel.s.disabled = false;
+          if (!closed) showLive();
+        });
+      return;
+    }
+    void startCam();
+  });
   withCam.input.addEventListener('change', () => void startCam().then(fillDevices));
   void (async () => {
     // Microphone and camera both still to be allowed: one question for both (Chrome asks once instead of twice).
@@ -172,7 +210,7 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
   });
   closed = true;
   cancelAnimationFrame(frame);
-  stop(mic);
+  if (mic !== liveMic) stop(mic);
   stop(cam);
   void (audio as AudioContext | null)?.close().catch(() => {});
   if (!ok) return null;
