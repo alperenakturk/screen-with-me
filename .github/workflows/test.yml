@@ -213,17 +213,21 @@ jobs:
           # "Send feedback" (card 9, optional): a fine-grained token, Issues: write on this repository only. Only this
           # step sees it (security review 3 R3-2); it goes to the Worker as a secret like the YouTube key.
           FEEDBACK_GITHUB_TOKEN: ${{ secrets.FEEDBACK_GITHUB_TOKEN }}
+          # Privacy card (0.9.97.60): the PRIVATE repository the feedback issues go to (owner/name), a repository variable
+          # (Settings → Secrets and variables → Actions → Variables). Without it feedback answers 'off': this repository
+          # is public and a reply address must never become a public issue.
+          FEEDBACK_REPO: ${{ vars.FEEDBACK_REPO }}
           # Card Y3 (optional): the owner's key for GET /api/youtube/usage (header X-Usage-Token); without it the route
           # is refused.
           USAGE_TOKEN: ${{ secrets.USAGE_TOKEN }}
         run: |
           set -o pipefail
           [ -n "$YOUTUBE_API_KEY" ] || echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
-          [ -n "$FEEDBACK_GITHUB_TOKEN" ] || echo "::warning::FEEDBACK_GITHUB_TOKEN is missing, feedback answers 'off'."
-          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN$USAGE_TOKEN" ]; then
+          [ -n "$FEEDBACK_GITHUB_TOKEN" ] && [ -n "$FEEDBACK_REPO" ] || echo "::warning::FEEDBACK_GITHUB_TOKEN or the FEEDBACK_REPO variable is missing, feedback answers 'off'."
+          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN$FEEDBACK_REPO$USAGE_TOKEN" ]; then
             # The keys go from the environment into a temporary file outside the repo, never into the log; only the
             # ones that are set (an empty value would overwrite a working secret).
-            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN", "USAGE_TOKEN"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
+            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN", "FEEDBACK_REPO", "USAGE_TOKEN"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
             npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json" | tee "$RUNNER_TEMP/deploy.log"
             rm -f "$RUNNER_TEMP/secrets.json"
           else

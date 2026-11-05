@@ -459,6 +459,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.60 (privacy card H3 + M7: the privacy policy for KVKK + GDPR):**
+- [ ] Read the new privacy page (footer → Privacy, Turkish and English): you are named as the data controller with
+  screenwithme.app@gmail.com, age 13+ (under 16 with a parent's permission), and the join screen's names are explained.
+  Anything that reads wrong or promises more than you want, tell the Planner.
+- [ ] Before the store submission: a lawyer reads the policy (and the terms of use, once they exist).
+
 **0.9.97.58 (card EXT1: games, the rail and fullscreen on the film page; update the extension from the site first):**
 - [ ] On a film page in the room view: the rail's 🎮 opens the games hall over the film (it used to be invisible). Open
   Classics, play XOX against Glowbeam; open Snack Bar from "On the side" and serve a few customers.
