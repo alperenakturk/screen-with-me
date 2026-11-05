@@ -47,7 +47,8 @@ export type GameClientMessage =
   /** XOX: the cell (0–8); Connect Four: the column (0–6); dama: `from * 64 + to`; chess: `promo * 4096 + from * 64 + to`; backgammon: `from * 32 + to` or `ROLL`. */
   | { t: 'move'; cell: number }
   /** Classics: another board from the shelf (a player, while no game is in progress). */
-  | { t: 'switch'; game: GameKind }
+  /** `end` (CL2): end a running game to change the board (the page asks first); without it a running game refuses. */
+  | { t: 'switch'; game: GameKind; end?: boolean }
   /** Glowbeam takes the empty seat (level 1 easy, 2 medium) or leaves it (0). */
   | { t: 'bot'; level: 0 | BotLevel }
   /** Yeni el (oyun bittiyse oyunculardan biri başlatır). */
@@ -98,7 +99,7 @@ export function parseGameMessage(raw: string): GameClientMessage | null {
       // The game's rules check the exact range (dama: from * 64 + to; chess: promo * 4096 + from * 64 + to).
       return Number.isInteger(m.cell) && (m.cell as number) >= 0 && (m.cell as number) < 16384 ? { t: 'move', cell: m.cell as number } : null;
     case 'switch':
-      return (GAME_KINDS as readonly unknown[]).includes(m.game) ? { t: 'switch', game: m.game as GameKind } : null;
+      return (GAME_KINDS as readonly unknown[]).includes(m.game) ? { t: 'switch', game: m.game as GameKind, ...(m.end === true ? { end: true } : {}) } : null;
     case 'bot':
       return m.level === 0 || m.level === 1 || m.level === 2 ? { t: 'bot', level: m.level } : null;
     case 'sit':

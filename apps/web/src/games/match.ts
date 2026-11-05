@@ -14,6 +14,7 @@ import { BAR, OFF, ROLL, fromOf as bgFrom, legalMoves as bgMoves, pips, toOf as 
 import { GAME_PROTOCOL_VERSION, type GameClientMessage, type GameKind, type GamePerson, type GameServerMessage } from '@swm/shared/games/protocol';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
+import { confirmDialog } from '../ui/confirm.ts';
 import { lang, t, translate } from '../i18n.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
@@ -67,7 +68,7 @@ const TEXT = {
     pickTitle: 'Pick a game',
     pickLine: 'Two players, or one against Glowbeam',
     change: 'Change game',
-    changeTitle: 'Back to the games (between games only)',
+    changeTitle: 'Back to the games',
     players: '2 players · or vs Glowbeam',
     xoxLine: 'Three in a row: quick and playful',
     fourLine: 'Drop discs, connect four',
@@ -77,6 +78,9 @@ const TEXT = {
     watchers: 'Watching: {n}',
     wins: '{n} won',
     offCount: '{n}/15 home',
+    endAsk: 'End this game and change?',
+    endAskText: 'The game on the table ends for both players; the score starts again on the new board.',
+    endYes: 'End and change',
   },
   tr: {
     check: 'Şah!',
@@ -109,7 +113,7 @@ const TEXT = {
     pickTitle: 'Bir oyun seç',
     pickLine: 'İki kişi ya da Glowbeam’e karşı tek kişi',
     change: 'Oyunu değiştir',
-    changeTitle: 'Oyunlara dön (yalnız iki oyun arasında)',
+    changeTitle: 'Oyunlara dön',
     players: '2 oyuncu · ya da Glowbeam’e karşı',
     xoxLine: 'Üçünü yan yana diz: hızlı ve eğlenceli',
     fourLine: 'Pulları bırak, dördünü birleştir',
@@ -119,6 +123,9 @@ const TEXT = {
     watchers: 'İzleyen: {n}',
     wins: '{n} galibiyet',
     offCount: '{n}/15 toplandı',
+    endAsk: 'Bu oyun bitsin ve oyun değişsin mi?',
+    endAskText: 'Masadaki oyun iki oyuncu için de biter; yeni oyunda skor sıfırdan başlar.',
+    endYes: 'Bitir ve değiştir',
   },
 } as const;
 const tc = (key: keyof (typeof TEXT)['en'], values: Record<string, string | number> = {}): string =>
@@ -230,7 +237,16 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const free = state?.seats.findIndex((s) => !s || !s.online || s.bot) ?? -1;
     if (free === 0 || free === 1) send({ t: 'sit', seat: free });
   });
-  shelfButton.addEventListener('click', () => {
+  // CL2 (owner: "picked chess once, then couldn't switch"): "Change game" works at any time. Between games the picker
+  // opens at once; while a game runs it asks first, and the pick then ends that game (`switch` with `end`).
+  let endOnPick = false;
+  const running = () => !!state?.started && state.game.winner === null;
+  shelfButton.addEventListener('click', async () => {
+    if (running()) {
+      const yes = await confirmDialog({ icon: '🎲', title: tc('endAsk'), text: tc('endAskText'), yes: tc('endYes') });
+      if (!yes) return;
+      endOnPick = true;
+    }
     shelfOpen = true;
     render();
   });
@@ -433,12 +449,16 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
             el('span', { class: 'cl-card-line' }, tc(`${box.kind}Line` as 'xoxLine')),
             el('span', { class: 'cl-card-players' }, tc('players')),
           );
-          button.disabled = seat === -1 || (busy && box.kind !== kind);
-          button.title = busy && box.kind !== kind ? t('classics.busy') : boardText(box.kind);
+          button.disabled = seat === -1;
+          button.title = boardText(box.kind);
           button.addEventListener('click', () => {
             shelfOpen = false;
-            // Always sent: the table learns a board was chosen (CL2), even the one it already has.
-            send({ t: 'switch', game: box.kind as GameKind });
+            const end = endOnPick && busy;
+            endOnPick = false;
+            // Back to the running game's own board: nothing to change.
+            if (busy && box.kind === kind) return render();
+            // Always sent otherwise: the table learns a board was chosen (CL2), even the one it already has.
+            send({ t: 'switch', game: box.kind as GameKind, ...(end ? { end: true } : {}) });
             render();
           });
           return button;
@@ -554,11 +574,10 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       leave.addEventListener('click', () => send({ t: 'bot', level: 0 }));
       botBox.replaceChildren(el('span', { class: 'cl-bot-label' }, glowbeam('cl-bot-icon'), other?.bot ? '' : t('classics.bot')), level(1, t('classics.botEasy')), level(2, t('classics.botMedium')), other?.bot ? leave : '');
     }
-    // Classics (CL2): the picker alone, or the board; "Change game" in the head brings the picker back between games.
+    // Classics (CL2): the picker alone, or the board; "Change game" in the head brings the picker back at any time.
     shelfButton.hidden = !classics || shelfOpen || seat === -1;
-    shelfButton.disabled = !!state.started && game.winner === null;
     shelfButton.replaceChildren(el('span', { 'aria-hidden': 'true' }, '🎲'), el('span', { class: 'cl-change-text' }, ` ${tc('change')}`));
-    shelfButton.title = shelfButton.disabled ? t('classics.busy') : tc('changeTitle');
+    shelfButton.title = tc('changeTitle');
     shelfButton.setAttribute('aria-label', tc('change'));
     shelf.hidden = !classics || !shelfOpen;
     app.querySelector<HTMLElement>('.mt-table')!.hidden = !shelf.hidden;
