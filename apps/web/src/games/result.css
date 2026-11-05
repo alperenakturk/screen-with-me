@@ -1,0 +1,30 @@
+/* GP2: the tables' one result card (games/result.ts), over the board, night-gold. */
+.gr-layer {
+  position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 8px; box-sizing: border-box;
+  background: rgb(9 7 24 / 0.55); border-radius: 12px; animation: gr-fade 0.25s ease-out;
+}
+.gr-layer[hidden] { display: none; }
+.gr-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: min(92%, 340px); padding: 14px 18px 12px;
+  border-radius: 18px; background: linear-gradient(180deg, #2a2160, #17123a); color: #fff3d6; text-align: center;
+  box-shadow: 0 0 0 2px rgb(255 198 90 / 0.55), 0 18px 40px rgb(0 0 0 / 0.5); animation: gr-pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.gr-mascot { display: block; width: 64px; height: 64px; }
+.gr-mascot > *, .gr-mascot svg { display: block; width: 100%; height: 100%; }
+.gr-layer[data-outcome='win'] .gr-mascot { animation: gr-cheer 0.6s ease-in-out 3; }
+.gr-layer[data-outcome='lose'] .gr-mascot { transform: rotate(-12deg); opacity: 0.85; }
+.gr-title { font-size: 22px; font-weight: 900; line-height: 1.15; }
+.gr-layer[data-outcome='win'] .gr-title { color: #ffc65a; }
+.gr-line { margin: 0; font-size: 15px; color: #cfc8ea; font-variant-numeric: tabular-nums; }
+.gr-line[hidden] { display: none; }
+.gr-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; }
+.gr-actions:empty { display: none; }
+.gr-see { font-size: 14px; }
+@keyframes gr-fade { from { opacity: 0; } }
+@keyframes gr-pop { from { transform: scale(0.85); opacity: 0; } }
+@keyframes gr-cheer { 50% { transform: translateY(-8px) rotate(8deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .gr-layer, .gr-card, .gr-layer[data-outcome='win'] .gr-mascot { animation: none; }
+}
+/* A phone: the card's buttons are 44 px targets like every game control. */
+html.phone #game-stage .gr-card .btn { min-height: 44px; height: auto; min-width: 44px; }

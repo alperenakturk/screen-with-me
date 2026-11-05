@@ -215,6 +215,17 @@ async function unnamed(page) {
   check((await cellsWith(robin.page, 'theirs', 'ship')).length === 17, "after the end Glowbeam's fleet shows");
   check(!!(await until(async () => (await sounds(robin.page)).some((s) => s === 'win' || s === 'lose'))), 'the end plays a win or lose sound');
   check(!!(await robin.page.evaluate(() => !!document.querySelector('#game-stage .sea-rematch'))), 'Play again is offered');
+  // GP2: the one result card over the seas: the outcome, the score, Play again inside it, "See the seas" moves it away.
+  const card = await robin.page.evaluate(() => {
+    const l = document.querySelector('#game-stage .gr-layer');
+    return l && { open: !l.hidden, outcome: l.dataset.outcome, title: l.querySelector('.gr-title')?.textContent ?? '', line: l.querySelector('.gr-line')?.textContent ?? '', again: !!l.querySelector('.gr-actions .sea-rematch') };
+  });
+  check(!!card && card.open && /^(win|lose)$/.test(card.outcome) && card.title.length > 3 && /\d+ – \d+/.test(card.line) && card.again, 'the result card shows the outcome, the score and Play again', card);
+  await click(robin.page, '#game-stage .gr-see');
+  const after = await robin.page.evaluate(() => ({ hidden: document.querySelector('#game-stage .gr-layer')?.hidden, again: !!document.querySelector('#game-stage .sea-actions .sea-rematch') }));
+  check(after.hidden && after.again, '"See the seas" hides the card; Play again stays under the seas', after);
+  await click(robin.page, '#game-stage .sea-rematch');
+  check(!!(await until(async () => (await phase(robin.page)) === 'place')), 'Play again starts a new game (placing)');
   await robin.ctx.close();
 
   await browser.close();
