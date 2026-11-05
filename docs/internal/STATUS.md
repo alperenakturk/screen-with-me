@@ -481,6 +481,20 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.59 (🎮 card CL2: the Classics redesign + "switch game at any time"):**
+- [ ] 🎮 → Classics: the table opens as a small window showing only the game cards (XOX, Four in a Row, dama, chess,
+  backgammon); pick chess: the window takes the board's shape, the board is the biggest thing in it, the other player
+  above, you below.
+- [ ] Play chess against Glowbeam, then press "Change game" in the window's head mid-game: it asks "End this game and
+  change?"; Cancel keeps the game; "End and change" → pick backgammon: a fresh backgammon board. Do it once from every
+  board (the owner's bug: stuck after chess).
+- [ ] With a friend at the table: you end a running game for another board: the friend sees the new board at once.
+- [ ] Each board's look: XOX playful cells, Four in a Row on its blue stand, dama and chess on wood with captured
+  pieces beside the names, backgammon with the dice tray under the board.
+- [ ] Draw & Guess and Quiz lobbies: one small card in the middle with the players as chips, no settings column.
+- [ ] Every game opens as a small window by default; switch one to "in the video's place", close and reopen it: it
+  remembers that for that game only. Phones: unchanged (full screen).
+
 **0.9.97.57 (🎮 card BHG: games quality pass):**
 - [ ] Quiz with a friend: start a game, the friend reloads their page mid-question: they are back in the same game
   within a few seconds, scores kept (before: the game went back to the lobby for both).

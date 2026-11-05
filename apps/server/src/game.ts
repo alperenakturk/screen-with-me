@@ -227,7 +227,7 @@ export class Game extends DurableObject<Env> {
         this.data.started = false;
         break;
       case 'switch': {
-        // Classics: another board from the shelf, by a player, never in the middle of a game.
+        // Classics: another board from the picker, by a seated player (during a game only with `end`, below).
         if (!this.data.classics || seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         // CL2: a running game changes only when the player says to end it (the page asks "End this game?" first).
         const running = !!this.data.started && this.data.state.winner === null;
