@@ -135,7 +135,8 @@
             from it with a secret random key that changes every day (HMAC-SHA-256); the old key is thrown away, so after
             the day nobody, not even we, can tell which address a code belonged to. The code is kept in memory with
             your connection; only for image uploads our server keeps, until the end of the day, how many bytes each code
-            uploaded across all rooms. Our server's own technical logs (time, the address requested, the answer's
+            uploaded across all rooms (at most 20 MB of images per address and 400 MB for everyone a day). Room
+            information requests and connection tests are limited too (at most 60 a minute per address). Our server's own technical logs (time, the address requested, the answer's
             status, errors) are kept at most 7 days; search words travel inside requests, never in their address, so
             they never appear in these logs.</li>
         </ul>
@@ -463,7 +464,8 @@
             değişen gizli ve rastgele bir anahtarla adresten üretilmiş kısa bir kodu kullanır (HMAC-SHA-256); eski
             anahtar atılır, böylece gün bitince hiç kimse, biz de dahil, bir kodun hangi adrese ait olduğunu bulamaz. Kod
             bağlantınla birlikte bellekte tutulur; yalnızca resim yüklemeleri için sunucumuz gün bitene kadar her kodun
-            tüm odalarda kaç bayt yüklediğini tutar. Sunucumuzun kendi teknik kayıtları (zaman, istenen adres, cevabın
+            tüm odalarda kaç bayt yüklediğini tutar (günde adres başına en fazla 20 MB, herkes için toplam 400 MB resim).
+            Oda bilgisi istekleri ve bağlantı testleri de sınırlıdır (adres başına dakikada en fazla 60). Sunucumuzun kendi teknik kayıtları (zaman, istenen adres, cevabın
             durumu, hatalar) en fazla 7 gün tutulur; arama kelimeleri isteğin adresinde değil içinde gider, bu yüzden bu
             kayıtlarda hiç görünmez.</li>
         </ul>

@@ -214,6 +214,10 @@ const big = await fetch(`${http}/api/probe?bytes=200000`);
 ok((await big.text()).length === 200000, 'Probe download of 200 kB (diagnostics)');
 // Security R4-3: the plain probe counts against the info limit per address (local only: live, it would spend requests).
 if (/\/\/(localhost|127\.0\.0\.1)[:/]/.test(http)) {
+  // The local limiter counts in fixed minutes: a run across a minute's end splits the 70 between two windows and
+  // none reaches 61 (CI, 5 Nov 2026, the loop started at :59.8). Start in a fresh minute when one is near.
+  const intoMinute = Date.now() % 60_000;
+  if (intoMinute > 55_000) await new Promise((r) => setTimeout(r, 60_000 - intoMinute + 200));
   let busyAt = 0;
   for (let i = 1; i <= 70 && !busyAt; i++) if ((await fetch(`${http}/api/probe?bytes=1`)).status === 429) busyAt = i;
   ok(busyAt > 0 && busyAt <= 61, `The plain probe is limited per address (429 after ${busyAt || 'none of 70'})`);

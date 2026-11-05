@@ -25,6 +25,8 @@ export function roomMoreItems(deps: {
   isHost: () => boolean;
   hasItem: () => boolean;
   desktop: boolean;
+  /** Card MB: a keyboard is likely (a mouse is there); a touch-only tablet gets no shortcuts card. */
+  keys?: boolean;
 }): MoreItem[] {
   // Card 6g.2 (owner: "not in two places"): on a computer the rail's 🎮 is the one way to the games; phones have no rail.
   const items: MoreItem[] = deps.desktop ? [] : [{ icon: '🎮', label: 'more.games', run: deps.games }];
@@ -33,7 +35,7 @@ export function roomMoreItems(deps: {
     { icon: '💾', label: 'more.save', run: () => deps.openSettings('save') },
     { icon: '✨', label: 'more.recap', run: () => deps.press('#recap-open') },
   );
-  if (deps.desktop) items.push({ icon: '⌨️', label: 'more.shortcuts', run: () => deps.press('#profile-keys') });
+  if (deps.desktop && deps.keys !== false) items.push({ icon: '⌨️', label: 'more.shortcuts', run: () => deps.press('#profile-keys') });
   items.push(
     // The sync test replaces what plays for everyone, so only from an empty room.
     { icon: '🧪', label: 'more.syncTest', run: () => deps.press('#sync-test'), dimmed: deps.hasItem() ? t('more.syncTestBusy') : null },
