@@ -959,6 +959,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       isHost: amHost,
       hasItem: () => roomEl.classList.contains('has-item'),
       desktop,
+      keys: hasMouse(),
     });
   const settings = createSettingsPanel(app, { name: myName, avatar: myAvatar }, (name, avatar) => {
     myName = name;
@@ -2875,6 +2876,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       badge.hidden = !on || unread === 0;
       badge.textContent = unread > 9 ? '9+' : String(unread);
       $('#dock-more-side').textContent = label;
+      // Card MB: cinema mode needs a mouse (its edges): a touch-only tablet doesn't offer it.
+      $('#dock-more-side').closest<HTMLElement>('.dock-more-item')!.hidden = !cinemaOk() && !on;
     };
     const set = (on: boolean) => {
       if (on && !cinemaOk()) return;
