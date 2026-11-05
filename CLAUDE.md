@@ -922,7 +922,14 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `games/backgammon.ts` (`BackgammonState`: `pts` X positive / O negative, `bar`, `off`, `dice` left, `rolled`, `passed`;
   X moves 23 → 0, home 0–5; a move is `ROLL` or `from * 32 + to`, from 24 = bar, to 25 = off; a roll with no legal step
   passes the turn), dice only from the server (`diceRandom`), the board `.bg-board` (two rows, bar, off tray) and
-  `.bg-tray` (dice, `#bg-roll`, pips). Tests: `backgammon.test.ts`, e2e `classics.mjs`, harness `classics`. Okey comes later. **CL2 (0.9.97.59, owner: "design it properly" + "I picked chess once and then couldn't switch"):** every
+  `.bg-tray` (dice, `#bg-roll`, pips). Tests: `backgammon.test.ts`, e2e `classics.mjs`, harness `classics`. **Reversi:** kind
+  `reversi`, rules `games/reversi.ts` (`ReversiState`: 8 × 8, dark X moves first, a disc must close a line, every closed
+  line turns over (`flipped`), a side without a move passes (`passed`), the disc count decides when neither can move;
+  a move is the cell 0–63), Glowbeam `evaluateReversi` (corners, the cells next to an empty corner, edges, `mobility`;
+  easy depth 1, medium 4), the board `.dama-board.rv-board` (green felt, `.rv-cell.target` = a legal cell on my turn,
+  `.flip`), seats show the disc count, texts in `match.ts` `TEXT` (never "Othello"), lab position `lastmove`. Tests:
+  `reversi.test.ts`, e2e `classics.mjs` (a whole game) + `classics-switch.mjs` + `lab-server.mjs`, harness `classics`,
+  `games-resume`, `games-sweep`. Okey comes later. **CL2 (0.9.97.59, owner: "design it properly" + "I picked chess once and then couldn't switch"):** every
   room game opens in the free mini window by default (`GAME_CATALOG` `place: 'float'`; "in the video's place" stays a
   choice remembered per kind, `gamePlace:<kind>`; phones unchanged); a Classics window is sized per screen
   (`CLASSICS_SIZES`: picker, then each board; `stage.ts` `sizeOf` reads `.xox-page[data-board]`, the page fires
