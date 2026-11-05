@@ -4728,6 +4728,32 @@ html.shorts-view .footer {
   transform: scaleX(-1);
 }
 
+/* CAM1: only the front (selfie) camera is a mirror; the rear camera shows the world as it is (moving left looks left).
+   What the others receive is never mirrored: these rules only touch my own picture. */
+html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine, .face-cam.mine, .person-cam.mine),
+.voice-check-video.rear {
+  transform: none;
+}
+
+/* CAM1: a camera picture with no new frame ("waiting for the picture…") or one being switched ("camera changing…"). */
+[data-cam-note]::after {
+  content: attr(data-cam-note);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border-radius: inherit;
+  background: rgb(0 0 0 / 62%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .cam-name {
   position: absolute;
   left: 6px;

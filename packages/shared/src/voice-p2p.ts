@@ -12,7 +12,7 @@ import { watchIceBlocked } from './ice-watch.ts';
 export interface P2pVoiceOptions {
   /** Bir üyeye bağlantı mesajı yolla (sunucu iletir). */
   signal: (to: string, data: Signal) => void;
-  announce: (on: boolean, mic?: boolean, cam?: boolean) => void;
+  announce: (on: boolean, mic?: boolean, cam?: boolean, switching?: boolean) => void;
   onRemote: (memberId: string, stream: MediaStream | null) => void;
   /** Bir üyenin kamera görüntüsü geldi (ya da gitti: null). Görünüp görünmeyeceğine üyenin `voice.cam`'i karar verir. */
   onRemoteVideo?: (memberId: string, stream: MediaStream | null) => void;
@@ -99,17 +99,33 @@ export class P2pVoice implements Voice {
     return this.mic;
   }
 
+  /** CAM1: which way my camera looks ('user' = the front / selfie camera, 'environment' = the rear one, null = unknown). */
+  get camFacing(): string | null {
+    const track = this.cam?.getVideoTracks()[0];
+    return (track?.getSettings?.().facingMode as string | undefined) ?? null;
+  }
+
+  /** While a camera switch runs (CAM1: the others see "camera changing…"). */
+  get camSwitching(): boolean {
+    return this.switching;
+  }
+
+  private switching = false;
+  /** When the system ended my camera (another app took it, the phone slept); a reopen at most every few seconds. */
+  private camReopenedAt = 0;
+
   /** Kamerayı aç/kapa: bağlantılar kalır, sadece video kanalının görüntüsü değişir. */
   async setCam(on: boolean): Promise<void> {
     if (!this.joined || on === this.camEnabled) return;
     if (on) {
-      this.cam = await (this.options.getCam?.() ?? navigator.mediaDevices.getUserMedia({ video: CAM_CONSTRAINTS, audio: false }));
+      this.cam = await this.openCam();
       // Kişi kamera açılırken sesten ayrıldıysa.
       if (!this.joined) {
         for (const track of this.cam.getTracks()) track.stop();
         this.cam = null;
         return;
       }
+      this.watchCam(this.cam);
     } else {
       for (const track of this.cam?.getTracks() ?? []) track.stop();
       this.cam = null;
@@ -117,6 +133,73 @@ export class P2pVoice implements Voice {
     const track = this.cam?.getVideoTracks()[0] ?? null;
     for (const peer of this.peers.values()) await this.sendVideo(peer.pc, track);
     this.options.announce(true, this.micOn, this.camEnabled);
+  }
+
+  private openCam(): Promise<MediaStream> {
+    return this.options.getCam?.() ?? navigator.mediaDevices.getUserMedia({ video: CAM_CONSTRAINTS, audio: false });
+  }
+
+  /**
+   * CAM1: another camera (a lens, the rear camera, another device) while my camera is on. The new picture goes into
+   * every connection in place (`replaceTrack`, no renegotiation, nobody sees my camera go off and on), and while it
+   * runs the room shows "camera changing…" on my picture. Phones that can't open a second camera while one is open
+   * (`NotReadableError`) get the old one closed first. `open` defaults to the camera picked in my settings.
+   */
+  async switchCam(open: () => Promise<MediaStream> = () => this.openCam()): Promise<void> {
+    if (!this.joined || !this.cam || this.switching) return;
+    this.switching = true;
+    this.options.announce(true, this.micOn, true, true);
+    const old = this.cam;
+    try {
+      let next: MediaStream;
+      try {
+        next = await open();
+      } catch (error) {
+        if (!(error instanceof DOMException) || !['NotReadableError', 'AbortError', 'OverconstrainedError'].includes(error.name)) throw error;
+        for (const track of old.getTracks()) track.stop();
+        next = await open();
+      }
+      const track = next.getVideoTracks()[0];
+      if (!this.joined || this.cam !== old || !track) {
+        for (const t of next.getTracks()) t.stop();
+        return;
+      }
+      this.cam = next;
+      this.watchCam(next);
+      await Promise.all([...this.peers.values()].map((peer) => this.sendVideo(peer.pc, track)));
+      for (const t of old.getTracks()) if (!next.getTracks().includes(t)) t.stop();
+    } finally {
+      this.switching = false;
+      if (this.joined) this.options.announce(true, this.micOn, this.camEnabled);
+    }
+  }
+
+  /**
+   * CAM1 (a phone's camera "randomly went black" for the others): the system can end my camera track (another app
+   * took the camera, the phone locked); my camera is still meant to be on, so it is opened again and put back into
+   * every connection, at most once every 5 s.
+   */
+  private watchCam(stream: MediaStream): void {
+    const track = stream.getVideoTracks()[0];
+    track?.addEventListener('ended', () => {
+      if (!this.joined || this.cam !== stream || this.switching) return;
+      const now = Date.now();
+      if (now - this.camReopenedAt < 5000) return;
+      this.camReopenedAt = now;
+      void this.switchCam().catch(() => {});
+    });
+  }
+
+  /** 🐞 Test Lab: the others get no picture from me for `ms` (as when a phone's camera stalls), then it comes back. */
+  async labCamPause(ms: number): Promise<boolean> {
+    const track = this.cam?.getVideoTracks()[0];
+    if (!this.joined || !track) return false;
+    await Promise.all([...this.peers.values()].map((peer) => this.sendVideo(peer.pc, null)));
+    setTimeout(() => {
+      const now = this.cam?.getVideoTracks()[0];
+      if (this.joined && now) for (const peer of this.peers.values()) void this.sendVideo(peer.pc, now);
+    }, ms);
+    return true;
   }
 
   private async sendVideo(pc: RTCPeerConnection, track: MediaStreamTrack | null): Promise<void> {

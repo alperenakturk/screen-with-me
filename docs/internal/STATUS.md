@@ -481,6 +481,17 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the rail on the right stays open, the video ends at its edge. Turn it off again: the rail rests as before.
 - [ ] The rest only updates test scripts. Start the next round from "Next round, start here" at the top of this list.
 
+**CAM1 (cameras on phones, from the owner's test with a friend):**
+- [ ] Two phones and a computer in voice, every camera on: everyone sees everyone (no black picture on either side).
+- [ ] On a phone, press 🔄 in the faces strip (it shows while your camera is on): the others see "Camera changing…"
+  for a moment, then the other camera within about a second; your camera never goes off for them.
+- [ ] With the rear camera, move something to the left: your own preview moves left too (only the front camera is a
+  mirror).
+- [ ] Lock a phone for 10 s, unlock it: within a few seconds the others see that phone's camera again (at most a short
+  "Waiting for the picture…" note).
+- [ ] The phone's camera row: two pictures side by side, names readable; tap one: the sheet shows it big with its
+  buttons on screen.
+
 **0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
 - [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
   ready", "Knock", "A private message", "My connection drops". Each line turns ✓ (the self-test turns ✗ on purpose);
@@ -496,6 +507,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 **0.9.97.53 (card BH8: the backup connection's idle sessions):**
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
+
+**0.9.97.63 (🎮 card GT: game windows on tablets):**
+- [ ] On a tablet held upright, open a game (Classics, Sea Battle): its small window opens above the chat, over the
+  video, as big as that space allows; the chat and the top bar's buttons stay free. Drag it: it stays out of the chat.
+- [ ] The same tablet turned sideways: the window opens left of the side panel, never over the chat.
+- [ ] A computer and a phone: nothing changes.
 
 **0.9.97.62 (the home door "📱 Scroll Shorts together"):**
 - [ ] On the home page (computer and phone): "📱 Scroll Shorts together" under Create / Join, with "Swipe YouTube Shorts

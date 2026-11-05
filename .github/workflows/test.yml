@@ -55,7 +55,8 @@ jobs:
     # Docs-only: skipped, which reports as success for a required check.
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 20 (was 15) since card GT added the tablet harness: a PR's full run takes about 11 minutes before it.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -74,6 +75,12 @@ jobs:
 
       - name: Text check (every string in English and Turkish)
         run: node scripts/check-texts.mjs
+
+      # Card GT: every game's own text table has the same keys in English and Turkish.
+      - name: Game texts (EN = TR keys)
+        run: |
+          node --test scripts/check-game-text.test.mjs
+          node scripts/check-game-text.mjs
 
       - name: Unit tests
         run: npm test
@@ -141,13 +148,20 @@ jobs:
 
       # Card BHG: every game fits its window (no inner scrollbar, text >= 13 px, nothing cut off, a fair-sized board) on
       # a laptop and a phone in English and Turkish (the four sizes locally: drop SIZES), and minimize / restore / a
-      # reload mid-game keep the game (Classics, Quiz, Draw & Guess, side games); Sea Battle with two people and Glowbeam.
+      # reload mid-game keep the game (Classics, Quiz, Draw & Guess, side games); Sea Battle with two people and Glowbeam;
+      # the tablet layouts with a game window beside the chat.
       - name: Games quality
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: |
           SIZES=laptop,iphone node scripts/harness/games-sweep/run.cjs http://localhost:8787
           node scripts/harness/games-resume/run.cjs http://localhost:8787
           node scripts/harness/sea/run.cjs http://localhost:8787
+          # Card GT: on a tablet (iPad + Android, upright and sideways) a game's window stays clear of the chat.
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null)
+          mkdir -p /tmp/vid && ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 -t 120 -c:v libvpx -b:v 300k /tmp/vid/video.webm
+          (cd /tmp/vid && python3 -m http.server 5300 >/dev/null 2>&1 &)
+          sleep 1
+          node scripts/harness/tablet/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and the IP notice
       # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
@@ -165,6 +179,12 @@ jobs:
           node scripts/harness/help/run.cjs http://localhost:8787
 
       # Only its end: the whole log of every e2e and harness run buried the failing step's own output.
+      # Card CAM1: cameras between a computer and a phone (both ways, the phone's camera row and sheet, switching in
+      # place, the rear camera not mirrored, a stopped or paused picture recovering by itself).
+      - name: Phone cameras
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+        run: node scripts/harness/cam-phone/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
