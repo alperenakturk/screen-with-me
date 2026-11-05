@@ -129,6 +129,26 @@ async function gameChecks(page, where, chatSel) {
     check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2, `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
     check(g.minText >= 11, `${where}, ${kind}: its text stays readable (≥ 11 px)`, g.minText);
     check(g.sh <= g.vh + 1, `${where}, ${kind}: the page never scrolls`, { sh: g.sh, vh: g.vh });
+    if (kind === 'classics') {
+      // G98 (lane A): the window moves by its head and stays on screen; card GT: and it still keeps off the chat.
+      const head = await page.evaluate(() => {
+        const r = document.querySelector('#game-stage .game-stage-title')?.getBoundingClientRect();
+        return r && { x: r.left + Math.min(40, r.width / 2), y: r.top + r.height / 2 };
+      });
+      if (head) {
+        await page.mouse.move(head.x, head.y);
+        await page.mouse.down();
+        await page.mouse.move(head.x - 120, head.y + 200, { steps: 6 });
+        await page.mouse.up();
+        await page.waitForTimeout(200);
+      }
+      const moved = await page.evaluate(() => {
+        const r = document.querySelector('#game-stage').getBoundingClientRect();
+        return { l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom), vw: innerWidth, vh: innerHeight };
+      });
+      const clear = !c || moved.r <= c.l + 1 || moved.l >= c.r - 1 || moved.b <= c.t + 1 || moved.t >= c.b - 1;
+      check(head && (moved.l !== s.l || moved.t !== s.t) && moved.r <= moved.vw && moved.b <= moved.vh && clear, `${where}, ${kind}: the window moves by its head, stays on screen and off the chat`, { before: s, moved, chat: c });
+    }
     await page.evaluate(() => document.querySelector('#game-stage .game-end, #game-stage .game-leave')?.click());
     await page.waitForTimeout(300);
     await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
