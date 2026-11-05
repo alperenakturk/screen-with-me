@@ -1,0 +1,122 @@
+/* 🚢 Sea Battle (Game Studio). Board first, like the CL2 Classics boards: a slim bar, the seas as big as the window
+   allows, one status line with Glowbeam, the buttons of the moment. Night sea, gold marks (shape + colour). */
+.sea {
+  --sb-sea: #0d1b46;
+  --sb-sea-2: #11225a;
+  --sb-line: rgb(255 231 168 / 0.14);
+  --sb-gold: #ffc65a;
+  --sb-ship: #8b93b8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+/* The bar: score, Glowbeam's chips, 👁 watchers. */
+.sea-bar { position: relative; display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap; }
+.sea-gap { flex: 1; }
+.sea-score { padding: 3px 12px; border-radius: 999px; background: var(--surface-2); font-weight: 800; font-variant-numeric: tabular-nums; }
+.sea-bot { display: inline-flex; align-items: center; gap: 6px; }
+.sea-bot[hidden] { display: none; }
+.sea-bot-label { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+.sea-bot-icon { width: 22px; height: 22px; display: block; }
+.sea-bot-icon svg, .sea-ref-mascot svg, .sea-bot-avatar svg { width: 100%; height: 100%; display: block; }
+.sea-bot .btn { min-height: 30px; padding: 3px 10px; font-size: 13px; }
+.sea-bot-level.on { border-color: var(--sb-gold); color: var(--sb-gold); }
+.sea-watch-open { min-height: 30px; padding: 3px 10px; font-size: 14px; }
+.sea-watch-pop {
+  position: absolute; top: 38px; right: 0; z-index: 5; width: min(240px, 90%); max-height: 240px; overflow: auto; margin: 0; padding: 10px 12px;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+.sea-watch-pop[hidden] { display: none; }
+.sea-watch-pop ul { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 0; padding: 0; list-style: none; }
+.sea-watch-pop li { display: flex; align-items: center; gap: 8px; }
+
+/* The seas: side by side (theirs bigger); one at a time in a narrow window (the switch). */
+.sea-switch { display: none; gap: 6px; }
+.sea-tab { flex: 1; min-height: 36px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: inherit; font: inherit; font-size: 14px; cursor: pointer; }
+.sea-tab[aria-selected='true'] { border-color: var(--sb-gold); color: var(--sb-gold); font-weight: 700; }
+.sea-seas { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.sea-sea { container-type: size; min-width: 0; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sea-head { display: flex; align-items: center; gap: 8px; width: min(100cqw, 100cqh - 46px); min-height: 40px; padding: 4px 10px; box-sizing: border-box; border-radius: 12px; background: var(--surface); }
+.sea-head.offline { opacity: 0.6; }
+.sea-avatar { flex: none; width: 30px; height: 30px; }
+.sea-avatar.small { width: 24px; height: 24px; }
+.sea-avatar.vacant { border-radius: 50%; border: 2px dashed var(--border); box-sizing: border-box; }
+.sea-name { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.sea-name b { font-size: 13px; color: var(--muted); font-weight: 600; }
+.sea-name small { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sea-ready { color: var(--sb-gold); font-weight: 800; }
+.sea-left { margin-left: auto; display: inline-flex; gap: 3px; }
+.sea-left i { width: 8px; height: 14px; border-radius: 3px; background: var(--sb-gold); }
+
+.sea-grid {
+  --n: 10;
+  width: min(100cqw, 100cqh - 46px);
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-rows: repeat(var(--n), 1fr);
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 20%, var(--sb-sea-2), var(--sb-sea));
+  box-shadow: inset 0 0 0 1px var(--sb-line), 0 10px 26px rgb(0 0 0 / 0.35);
+  touch-action: none;
+}
+.sea-row { display: grid; grid-template-columns: repeat(var(--n), 1fr); }
+.sea-cell {
+  position: relative; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 3px;
+  background: transparent; box-shadow: inset 0 0 0 0.5px var(--sb-line); color: inherit; cursor: default;
+}
+.sea-cell:disabled { opacity: 1; }
+.sea-mark { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+/* A ship: a rounded grey block; picked (placing): gold outline. */
+.sea-cell.ship { background: var(--sb-ship); border-radius: 4px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.35); }
+.sea-mine .sea-cell.ship.picked { background: #c9cbe0; box-shadow: inset 0 0 0 2px var(--sb-gold); }
+.sea-theirs .sea-cell.ship:not(.hit) { background: rgb(139 147 184 / 0.35); }
+/* A miss: a small ring. A hit: a gold burst. Sunk: dark gold with an outline. Known-empty water: a faint dot. */
+.sea-cell.miss .sea-mark::before { content: ''; width: 34%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgb(255 243 214 / 0.65); box-sizing: border-box; }
+.sea-cell.hit { background: rgb(255 198 90 / 0.18); }
+.sea-cell.hit .sea-mark::before { content: '✸'; color: var(--sb-gold); font-size: calc(100cqmin / 16); line-height: 1; }
+.sea-cell.sunk { background: #6b4a12; box-shadow: inset 0 0 0 2px var(--sb-gold); }
+.sea-cell.sunk .sea-mark::before { content: '✕'; color: #ffe7a8; font-size: calc(100cqmin / 18); }
+.sea-cell.clear .sea-mark::before { content: ''; width: 12%; aspect-ratio: 1; border-radius: 50%; background: rgb(255 243 214 / 0.3); }
+.sea-cell.last { outline: 2px solid #ffe7a8; outline-offset: -2px; z-index: 1; }
+/* Aiming: their sea lights up and its free cells react. */
+.sea-sea.target .sea-grid { box-shadow: inset 0 0 0 2px var(--sb-gold), 0 10px 26px rgb(0 0 0 / 0.35); }
+.sea-theirs.aim .sea-cell:not(:disabled) { cursor: crosshair; }
+.sea-theirs.aim .sea-cell:not(:disabled):hover { background: rgb(255 198 90 / 0.28); }
+.sea-mine .sea-cell:not(:disabled) { cursor: pointer; }
+.sea-cell:focus-visible { outline: 2px solid var(--sb-gold); outline-offset: -2px; z-index: 2; }
+
+/* Placing (a seated player): only my sea, centred and large. */
+.sea[data-phase='place']:not(.watching) .sea-seas { grid-template-columns: minmax(0, 1fr); }
+.sea[data-phase='place']:not(.watching) .sea-theirs { display: none; }
+
+/* One status line with Glowbeam the referee; the buttons of the moment. */
+.sea-ref { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; min-width: 0; }
+.sea-ref-mascot { flex: none; width: 30px; height: 30px; display: block; transition: transform 0.3s; }
+.sea-ref-mascot.wait { opacity: 0.6; transform: rotate(-10deg); }
+.sea-ref-mascot.cheer { animation: sea-cheer 0.6s ease-in-out 3; }
+@keyframes sea-cheer { 50% { transform: translateY(-6px) rotate(8deg); } }
+.sea-status { margin: 0; min-width: 0; text-align: center; font-size: 15px; }
+.sea-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.sea-actions:empty { display: none; }
+
+/* A narrow window (a phone): one sea at a time, the switch above it. */
+@container game (max-width: 560px) {
+  .sea { padding: 8px; gap: 6px; }
+  .sea:not([data-phase='place']) .sea-switch, .sea.watching .sea-switch { display: flex; }
+  .sea-seas { grid-template-columns: minmax(0, 1fr); }
+  .sea[data-view='mine'] .sea-theirs, .sea[data-view='theirs'] .sea-mine { display: none; }
+  .sea[data-phase='place']:not(.watching) .sea-mine { display: flex; }
+  .sea-bot-label { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sea-ref-mascot { transition: none; }
+  .sea-ref-mascot.cheer { animation: none; }
+}

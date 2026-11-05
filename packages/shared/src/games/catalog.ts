@@ -26,6 +26,8 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   poker: { min: 2, max: 6, place: 'float', size: [860, 600], fit: [640, 440] },
   // 🎲 Classics (P6): two players, or one against Glowbeam. Its window follows the board on the table (`CLASSICS_SIZES`).
   classics: { min: 1, max: 2, place: 'float', size: [600, 560], fit: [480, 440] },
+  // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Glowbeam.
+  sea: { min: 1, max: 2, place: 'float', size: [780, 560], fit: [600, 440] },
 };
 
 /** Classics (CL2): the window's size per screen of the table: the picker, then each board built around itself. */

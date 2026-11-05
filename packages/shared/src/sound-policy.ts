@@ -64,6 +64,10 @@ export const SOUNDS = {
   gardenBloom: { group: 'game', level: 0.5, gap: 1500 },
   gardenPick: { group: 'game', level: 0.5, gap: 300 },
   gardenNew: { group: 'game', level: 0.7, gap: 1500 },
+  // 🚢 Sea Battle: a splash for a miss, a low thud for a hit, a short fanfare when a ship sinks.
+  seaMiss: { group: 'game', level: 0.55, gap: 150 },
+  seaHit: { group: 'game', level: 0.8, gap: 150 },
+  seaSunk: { group: 'game', level: 0.9, gap: 600 },
 } as const satisfies Record<string, SoundSpec>;
 
 export type SoundId = keyof typeof SOUNDS;
