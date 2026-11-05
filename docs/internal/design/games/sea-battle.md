@@ -6,6 +6,12 @@ fleet, call shots in turns, sink theirs first." Two players at one table, or one
 Name: **Sea Battle** (TR **Amiral Battı**, the folk name every Turkish player knows; a question below). Never
 "Battleship" (a toy company's trademark), no ship silhouettes, sounds or colours copied from any product.
 
+## The owner's picks (Planner, 5 Nov 2026: "A on all six")
+
+1. 10 × 10, ships 5, 4, 3, 3, 2. 2. A hit shoots again; a miss passes the turn. 3. Ships never touch, not even at a
+corner; a sunk ship shows the empty water around it. 4. A random fleet first, then shuffle / drag / turn, then Ready.
+5. Night sea with a gold radar, Glowbeam as the lighthouse. 6. Turkish name "Amiral Battı". Built in 0.9.97.61.
+
 ## How a game goes
 
 1. **Placing.** Each player sees their own sea and a fleet laid out at random. They can shuffle it, drag a ship to
