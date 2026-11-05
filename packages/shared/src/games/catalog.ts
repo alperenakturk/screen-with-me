@@ -91,6 +91,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.61',
+    kinds: ['sea'],
+    badge: 'new',
+    tr: 'Yeni: 🚢 Amiral Battı. Filonu gizle, sırayla atış yap, onunkini önce batır. Bir arkadaşla ya da Glowbeam’e karşı (kolay / orta).',
+    en: 'New: 🚢 Sea Battle. Hide your fleet, call shots in turns, sink theirs first. With a friend, or against Glowbeam (easy / medium).',
+  },
+  {
     v: '0.9.97.46',
     kinds: ['classics'],
     badge: 'updated',
