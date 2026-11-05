@@ -16,8 +16,13 @@ const check = (ok, label, extra = '') => {
 // Card 2a (owner's D): nothing of ours over the YouTube player by itself. Lists our visible things whose box meets the
 // YouTube frame's box (popups only count while open, so the caller closes them first).
 const OURS = '.r-float, .rail-edge, .countdown, .waiting-banner, .sync-badge, .action-notice, #toasts .toast, .cam-tile, .cam-pill, .live-window, .fs-dock, .fs-catcher, .game-invite, .end-card';
+// BH10: the rail and the player slide together (0.3 s / 0.22 s); a slow headless frame could catch them 2 px apart
+// mid-slide, so the boxes are measured once the theater's transitions have finished (a lasting overlap still fails).
 const overPlayer = (page) =>
-  page.evaluate((ours) => {
+  page.evaluate(async (ours) => {
+    const theater = document.querySelector('#theater');
+    for (let i = 0; i < 40 && theater?.getAnimations({ subtree: true }).some((a) => a.playState === 'running' && a instanceof CSSTransition); i++)
+      await new Promise((r) => setTimeout(r, 50));
     const frame = document.querySelector('#player iframe');
     if (!frame) return ['no YouTube frame'];
     const f = frame.getBoundingClientRect();
@@ -28,6 +33,7 @@ const overPlayer = (page) =>
       if (r.width < 1 || r.height < 1 || style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.05) continue;
       if (r.left < f.right - 1 && f.left < r.right - 1 && r.top < f.bottom - 1 && f.top < r.bottom - 1) hits.push(`${node.className || node.id} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)}`);
     }
+    if (hits.length) hits.push(`frame ${Math.round(f.left)},${Math.round(f.top)} ${Math.round(f.width)}×${Math.round(f.height)} theater ${document.querySelector('#theater').className}`);
     return hits;
   }, OURS);
 const box = (page, selector) =>
@@ -153,6 +159,16 @@ const box = (page, selector) =>
   await alex.waitForTimeout(3200);
   check(!(await idle()) && (await alex.evaluate(() => document.querySelector('#rail-pin').getAttribute('aria-pressed'))) === 'true', 'pinned from ⋯: it stays open');
   check(await alex.evaluate(() => document.querySelector('#opt-railpin').checked), 'Settings shows it pinned');
+  // BH10 (owner): pinned, it stays open in the window too when the mouse leaves the video (it used to rest with the
+  // player's bar on mouseleave; only fullscreen kept it).
+  const side = await box(alex, '.chat-panel');
+  await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 2 });
+  await alex.mouse.move(side.x, side.y, { steps: 6 });
+  await alex.waitForTimeout(3200);
+  const pinnedFrame = await box(alex, '#player iframe');
+  const pinnedDock = await box(alex, '#fs-dock');
+  check(!(await idle()), 'pinned, window: the mouse leaves the video for 3 s, the rail stays open');
+  check(pinnedFrame && pinnedDock && pinnedFrame.r <= pinnedDock.l + 1, 'pinned, window: the YouTube player ends at the rail\'s edge', JSON.stringify({ pinnedFrame, pinnedDock }));
   // Unpin from Settings → My screen.
   await alex.evaluate(() => {
     const box = document.querySelector('#opt-railpin');
@@ -248,14 +264,14 @@ const box = (page, selector) =>
     await sam.evaluate(() => document.activeElement?.blur());
     await alex.waitForSelector('#toasts .toast', { timeout: 4000 }).catch(() => {});
     // Card R15 (owner: "never open a stupid menu on the side"): no column in YouTube fullscreen any more. The message
-    // comes down over the video at the top right, left of the rail, clear of YouTube's own bottom bar; the player keeps
-    // its width.
+    // comes in over the video on the right, left of the rail, clear of YouTube's own bottom bar; the player keeps its
+    // width. Since R25 it starts at least `SIDE_TOP` (45 %) down, below the rail's message box (`toasts.ts`).
     await alex.waitForTimeout(400);
     const toast = await box(alex, '#toasts .toast');
     const fsPlayer = await box(alex, '.player');
     const fsDock = await box(alex, '#fs-dock');
     check(!(await alex.evaluate(() => !!document.getElementById('fs-side'))) && fsPlayer && fsPlayer.r >= vw.w - 80, 'fullscreen: no column beside the player, it keeps the width', JSON.stringify({ fsPlayer }));
-    check(toast && fsPlayer && toast.t < fsPlayer.t + (fsPlayer.b - fsPlayer.t) / 3 && toast.b < fsPlayer.b - 64 && (!fsDock || fsDock.w === 0 || toast.r <= fsDock.l + 1), 'fullscreen: the message comes down at the top right, left of the rail, clear of YouTube\'s bar', JSON.stringify({ toast, fsPlayer, fsDock }));
+    check(toast && fsPlayer && toast.t >= fsPlayer.t + (fsPlayer.b - fsPlayer.t) * 0.4 && toast.b < fsPlayer.b - 64 && (!fsDock || fsDock.w === 0 || toast.r <= fsDock.l + 1), 'fullscreen: the message comes in on the right, below the rail\'s message box (R25, ≥ 40 % down), left of the rail, clear of YouTube\'s bar', JSON.stringify({ toast, fsPlayer, fsDock }));
     await alex.evaluate(() => {
       const banner = document.querySelector('#waiting-banner');
       banner.textContent = 'Waiting for Sam…';

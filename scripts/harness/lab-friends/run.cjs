@@ -72,6 +72,15 @@ const until = async (fn, ms = 8000) => {
   const said = await run('friends.say', '1');
   const line = said.text.replace(/^▶ /, '').replace(/^"|"$/g, '');
   check(!!(await until(() => chatHas(line))), 'a friend writes: the line shows in my chat', line);
+  // BH10: a private message to a fake friend (a press on their name in the chat) goes through like to a real person.
+  await page.click('.chat-line:not(.me) button.chat-name');
+  const bar = await page.evaluate(() => document.querySelector('.chat-private-text')?.textContent ?? '');
+  await page.fill('#chat-input', 'just for the robot');
+  await page.press('#chat-input', 'Enter');
+  const sentPrivate = await until(() => page.evaluate(() => [...document.querySelectorAll('.chat-line.private.me')].some((l) => l.textContent.includes('just for the robot'))));
+  const refused = await page.evaluate(() => window.__swmLab.log().some((l) => l.dir === 'in' && l.type === 'error' && /private_gone/.test(l.text)));
+  check(/🤖/.test(bar) && !!sentPrivate && !refused, 'a private message to a fake friend: the bar names them, my bubble is private, no refusal', JSON.stringify({ bar, sentPrivate, refused }));
+  await page.click('.chat-private-end');
   await run('friends.react', '1');
   check(!!(await until(async () => (await logIn('reaction')) > 0)), 'a friend sends an emoji (it reaches me)');
 
@@ -126,6 +135,9 @@ const until = async (fn, ms = 8000) => {
   await page.click('.lab-tab[data-tab="status"]');
   const hostLine = await until(() => page.evaluate(() => [...document.querySelectorAll('.debug-facts dt')].find((d) => d.textContent === 'Host')?.nextElementSibling.textContent === 'someone else'));
   check(!!hostMoved && !!hostLine, 'a fake friend takes the host role (👑 Make host)');
+  // BH10: after handing it on I am a guest: the room rules show as a summary, not as switches.
+  const guest = await until(() => page.evaluate(() => !document.getElementById('rules-summary').hidden && document.getElementById('opt-knock')?.closest('[hidden], .host-only')?.offsetParent == null));
+  check(!!guest, 'after 👑 Make host I am a guest: the room rules are a summary for me');
 
   // ---- The room still works; turning the lab off sends them away ----
   await page.fill('#chat-input', 'me, still here');
