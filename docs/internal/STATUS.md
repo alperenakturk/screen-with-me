@@ -1149,6 +1149,12 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - **Trademark filing, donations, legal entity:** see `ROADMAP.md` §4.
 
 ## History (short)
+- **0.9.97 (3–5 Nov 2026), side games and more players, then the road to 0.9.98:** the side games (Snack Bar, Window
+  Garden, Five Frames) with their polish, how-to-play cards and the tip jar / cuttings; the games gallery, Classics with
+  dama, chess and backgammon against Glowbeam, the CL2 redesign; Vimeo, podcasts, the move code; the owner's two test
+  rounds (R1–R27, BH2–BH10: knock, private messages, the order of things, fullscreen messages, the YouTube rail, the
+  film page's games and fullscreen); security reviews 3 and 4 (R3-x, R4-x); the Test Lab (DL1–DL5); a lighter room
+  chunk; the privacy policy for KVKK + GDPR. Gate check for 0.9.98: `docs/internal/gate-0.9.98.md`.
 - **2 Nov 2026, live e2e first-attempt flakes:** wait.mjs "timeout waiting d" was a deploy restarting the test's room
   object mid-test (all four connections closed with 1006; reproduced locally by reloading `wrangler dev` at the same
   moment). The deploy job now waits for the new version on the Worker and a Durable Object (`/api/version`,
