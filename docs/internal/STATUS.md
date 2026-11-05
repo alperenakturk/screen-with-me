@@ -481,6 +481,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.57 (🎮 card BHG: games quality pass):**
+- [ ] Quiz with a friend: start a game, the friend reloads their page mid-question: they are back in the same game
+  within a few seconds, scores kept (before: the game went back to the lobby for both).
+- [ ] Draw & Guess the same: the friend reloads mid-round, the round goes on.
+- [ ] Classics against Glowbeam (chess or backgammon): make a move, reload the page: the board comes back as it was,
+  you keep your seat. Minimize it (✕), reload: it stays minimized, 🎮 has its dot.
+- [ ] On your phone: open chess, dama and backgammon: the board fills the width, both names readable; the Quiz and
+  Draw & Guess lobbies show whole without being shrunk.
+- [ ] Open Snack Bar, reload: it opens again by itself.
+
 **0.9.97.52 (card SZ: a lighter room page):**
 - [ ] Nothing new to see: in a room join voice (the IP notice and the pre-join window open at once), share your screen,
   a friend watches it; a TikTok / Vimeo link and the sync test still play; sounds still play; ? opens the shortcuts card.

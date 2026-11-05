@@ -284,13 +284,13 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   let shelfOpen = classics;
   const markNode = (mark: Mark) =>
     kind === 'four'
-      ? el('span', { class: `four-disc mark-${mark}`, 'aria-label': t(mark === 'X' ? 'games.red' : 'games.yellow') })
+      ? el('span', { class: `four-disc mark-${mark}`, role: 'img', 'aria-label': t(mark === 'X' ? 'games.red' : 'games.yellow') })
       : kind === 'dama'
-        ? el('span', { class: `dama-man mark-${mark}`, 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') })
+        ? el('span', { class: `dama-man mark-${mark}`, role: 'img', 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') })
         : kind === 'chess'
-          ? el('span', { class: `chess-piece piece-${mark}`, 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') }, GLYPH.k!)
+          ? el('span', { class: `chess-piece piece-${mark}`, role: 'img', 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') }, GLYPH.k!)
           : kind === 'backgammon'
-            ? el('span', { class: `bg-checker piece-${mark}`, 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') })
+            ? el('span', { class: `bg-checker piece-${mark}`, role: 'img', 'aria-label': t(mark === 'X' ? 'games.white' : 'games.black') })
         : el('span', { class: 'xox-mark' }, mark);
 
   function mySeat(): number {
@@ -516,7 +516,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     roll.hidden = !(canRoll && !bg.dice.length && bg.winner === null);
     roll.addEventListener('click', () => send({ t: 'move', cell: ROLL }));
     bgTray.replaceChildren(
-      el('span', { class: 'bg-dice', role: 'img', 'aria-label': bg.rolled.join(' – ') }, ...faces),
+      el('span', { class: 'bg-dice', ...(bg.rolled.length ? { role: 'img', 'aria-label': bg.rolled.join(' – ') } : { 'aria-hidden': 'true' }) }, ...faces),
       roll,
       el('span', { class: 'bg-pips' }, `${tc('pips')}: ⚪ ${pips(bg, 'X')} · ⚫ ${pips(bg, 'O')}`),
     );
@@ -555,6 +555,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       else if (message.t === 'state') {
         // Joining a Classics table where a game is going: straight to the board.
         if (!state && message.started) shelfOpen = false;
+        // BH10: the game started, or someone else picked a board, while my shelf was open: show the board.
+        else if (state && ((message.started && !state.started) || message.kind !== state.kind)) shelfOpen = false;
         state = message;
         render();
       } else if (message.t === 'react') float(message.from, message.emoji);

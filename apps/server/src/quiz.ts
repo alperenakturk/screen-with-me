@@ -27,6 +27,9 @@ import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
+/** BHG: with fewer than two players online a running game waits this long before it goes back to the lobby, so one
+ * player's reload or short drop no longer ends the game for both (as the room's host keeps the role for 20 s). */
+const FEW_GRACE_MS = 20_000;
 const MAX_SOCKETS = 40;
 
 interface Attachment {
@@ -57,6 +60,8 @@ interface Saved {
   answers: Record<string, { pick: number; gained: number; rank?: number }>;
   endsAt: number | null;
   emptySince: number | null;
+  /** Since when fewer than two players are online in a running game (`FEW_GRACE_MS`). */
+  fewSince?: number | null;
   topic: QuizTopic;
   count: QuizCount;
   /** Recently asked bank ids (a rematch asks new ones). */
@@ -184,6 +189,7 @@ export class Quiz extends DurableObject<Env> {
     await this.polls.sweepDue(now);
     await this.advance(now);
     const d = this.data;
+    if ((d.phase === 'question' || d.phase === 'reveal') && d.fewSince && this.tooFew(now)) await this.toLobby();
     if (this.sockets().length === 0 && d.emptySince !== null && now - d.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
@@ -307,7 +313,7 @@ export class Quiz extends DurableObject<Env> {
 
   private async next(): Promise<void> {
     const d = this.data;
-    if (this.onlineKeys().length < 2 && d.phase !== 'lobby') return this.toLobby();
+    if (d.phase !== 'lobby' && this.tooFew(Date.now())) return this.toLobby();
     d.index += 1;
     if (d.index >= d.questions.length) {
       d.phase = 'over';
@@ -334,8 +340,20 @@ export class Quiz extends DurableObject<Env> {
     await this.scheduleAlarm();
   }
 
+  /** Fewer than two players online for longer than the grace (`FEW_GRACE_MS`)? Starts or clears the count. */
+  private tooFew(now: number, except?: WebSocket): boolean {
+    const d = this.data;
+    if (this.onlineKeys(except).length >= 2) {
+      d.fewSince = null;
+      return false;
+    }
+    d.fewSince ??= now;
+    return now - d.fewSince >= FEW_GRACE_MS;
+  }
+
   private async toLobby(): Promise<void> {
     const d = this.data;
+    d.fewSince = null;
     d.phase = 'lobby';
     d.questions = [];
     d.index = 0;
@@ -358,7 +376,11 @@ export class Quiz extends DurableObject<Env> {
       return;
     }
     const online = this.onlineKeys(ws);
-    if ((d.phase === 'question' || d.phase === 'reveal') && online.length < 2) return this.toLobby();
+    if ((d.phase === 'question' || d.phase === 'reveal') && this.tooFew(Date.now(), ws)) return this.toLobby();
+    if (d.fewSince) {
+      await this.save();
+      await this.scheduleAlarm();
+    }
     if (d.phase === 'question' && online.every((k) => d.answers[k])) return this.reveal();
     this.broadcastState(ws);
   }
@@ -367,6 +389,7 @@ export class Quiz extends DurableObject<Env> {
     const d = this.data;
     const times: number[] = [];
     if (d.endsAt !== null) times.push(d.endsAt);
+    if (d.fewSince && d.phase !== 'lobby') times.push(d.fewSince + FEW_GRACE_MS);
     if (d.emptySince !== null) times.push(d.emptySince + EMPTY_TTL_MS);
     // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
     const due = this.polls.nextDue();
