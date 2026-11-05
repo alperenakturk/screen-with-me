@@ -508,6 +508,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.69 (card LABLOCK: the 🐞 Test Lab needs your code):**
+- [ ] Add the `LAB_CODE` secret (GitHub → Settings → Environments → production → Environment secrets), then after the
+  next deploy open the live site once with `?debug=YOUR-CODE`: the 🐞 appears and the code leaves the address. Later,
+  `?debug=1` in that browser is enough for 30 days.
+- [ ] In a private window (no pass) `?debug=1` and a wrong code show no 🐞.
+
 **0.9.97.66 (card TOS: the terms of use):**
 - [ ] Read the new terms page (footer → Terms; join card and profile menu too), in English and Turkish: Turkish law and
   Istanbul (Çağlayan) courts, 13+ (a parent's permission under 16), "as is" without a money cap, abuse reports by
