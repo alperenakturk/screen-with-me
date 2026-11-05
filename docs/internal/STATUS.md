@@ -508,6 +508,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.69 (card LABLOCK: the 🐞 Test Lab needs your code):**
+- [ ] Add the `LAB_CODE` secret (GitHub → Settings → Environments → production → Environment secrets), then after the
+  next deploy open the live site once with `?debug=YOUR-CODE`: the 🐞 appears and the code leaves the address. Later,
+  `?debug=1` in that browser is enough for 30 days.
+- [ ] In a private window (no pass) `?debug=1` and a wrong code show no 🐞.
+
 **0.9.97.68 (🎮 games polish 1: phones, Glowbeam, How to play):**
 - [ ] On the phone, every button in a game is easy to hit (the window's head, the chips, the "?").
 - [ ] Sea Battle on the phone: the first tap on their sea aims (a gold crosshair, "Aiming at C7", a 🎯 Fire button);

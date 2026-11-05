@@ -181,21 +181,50 @@ export function debugOff(): void {
   document.querySelector('#debug-panel-root')?.remove();
 }
 
-/**
- * `?debug=1` once in a tab switches the panel on for that tab (it survives reloads), `?debug=0` switches it off; the
- * word is removed from the address. Normal visits load nothing and record nothing. Not in the film-page overlay.
- */
-export function startDebugLab(inShell: boolean): void {
-  const params = new URLSearchParams(location.search);
-  const value = params.get('debug');
-  if (value !== null) {
-    if (value === '1') session(KEY, '1');
-    else debugOff();
-    params.delete('debug');
-    const rest = params.toString();
-    history.replaceState(history.state, '', `${location.pathname}${rest ? `?${rest}` : ''}${location.hash}`);
+/** Card LABLOCK: the pass the Worker gave for the owner's code, kept 30 days in this browser (`lab-pass.ts`). */
+const PASS_KEY = 'swm:labPass';
+
+function local(key: string, value?: string | null): string | null {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else if (value !== undefined) localStorage.setItem(key, value);
+    return localStorage.getItem(key);
+  } catch {
+    return null;
   }
-  if (inShell || session(KEY) !== '1') return;
+}
+
+/** A local dev or test server (`npm run dev`, `wrangler dev`, the harnesses): the lab is open without a code there. */
+function localServer(): boolean {
+  return ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+}
+
+/**
+ * May this browser open the lab? Locally always; on the live site only with the owner's code (`?debug=<code>`, which
+ * gets a 30-day pass) or with a pass from before (`?debug=1`, and every reload of a lab tab). The check is the
+ * Worker's `POST /api/lab/check`; the code is never stored here, only the pass.
+ */
+async function labAllowed(code: string | null): Promise<boolean> {
+  if (localServer()) return true;
+  const pass = local(PASS_KEY);
+  const body = code && code !== '1' ? { code } : pass ? { pass } : null;
+  if (!body) return false;
+  try {
+    const response = await fetch('/api/lab/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const answer = (await response.json()) as { ok?: unknown; pass?: unknown };
+    if (answer.ok === true) {
+      if (typeof answer.pass === 'string') local(PASS_KEY, answer.pass);
+      return true;
+    }
+    // An old pass the Worker no longer takes (expired, or a new code): forget it.
+    if ('pass' in body && response.ok) local(PASS_KEY, null);
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function mountLab(): void {
   addEventListener('error', (event) => {
     const where = event.filename ? `${event.filename.replace(location.origin, '')}:${event.lineno}:${event.colno}` : '';
     keep(String(event.message || event.error || 'error'), where);
@@ -205,4 +234,38 @@ export function startDebugLab(inShell: boolean): void {
     keep(String(reason?.message ?? reason ?? 'rejection'), 'promise');
   });
   void import('./ui/test-lab.ts').then(({ mountDebugPanel }) => mountDebugPanel());
+}
+
+/**
+ * `?debug=<code>` (live) or `?debug=1` (a local server, or a browser holding a pass) once in a tab switches the lab on
+ * for that tab (it survives reloads, each one checked again on live), `?debug=0` switches it off; the word is removed
+ * from the address. Without the code nothing loads: no 🐞, no chunk. Normal visits record nothing. Not in the
+ * film-page overlay.
+ */
+export function startDebugLab(inShell: boolean): void {
+  const params = new URLSearchParams(location.search);
+  const value = params.get('debug');
+  if (value !== null) {
+    params.delete('debug');
+    const rest = params.toString();
+    history.replaceState(history.state, '', `${location.pathname}${rest ? `?${rest}` : ''}${location.hash}`);
+    if (value === '0' || value === '') debugOff();
+  }
+  if (inShell) return;
+  const asked = value !== null && value !== '0' && value !== '';
+  if (!asked && session(KEY) !== '1') return;
+  if (localServer()) {
+    // Synchronous as before, so the room and the games already see the lab when they start.
+    session(KEY, '1');
+    mountLab();
+    return;
+  }
+  void labAllowed(asked ? value : null).then((ok) => {
+    if (!ok) {
+      session(KEY, null);
+      return;
+    }
+    session(KEY, '1');
+    mountLab();
+  });
 }

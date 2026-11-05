@@ -55,8 +55,9 @@ jobs:
     # Docs-only: skipped, which reports as success for a required check.
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    # 20 (was 15) since card GT added the tablet harness: a PR's full run takes about 11 minutes before it.
-    timeout-minutes: 20
+    # 30 (was 20): with GP2's table-how, LABLOCK's lab-check / lab-lock and the tablet harness, a PR's full run passed
+    # 20 minutes (cancelled at 20:00 during the tablet harness on PR #320).
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -99,8 +100,9 @@ jobs:
         run: |
           # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
           # SWM_LAB_SERVER: the Test Lab's server powers (DL3b, lab.ts); never in wrangler.jsonc or the deploy.
+          # LAB_CODE: a throwaway Test Lab code for this local server only (card LABLOCK: e2e lab-check, harness lab-lock).
           # TV:on: the hidden TV's server routes (off on live, card R4-10) stay on here, so e2e tv.mjs runs fully.
-          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var TV:on --var SWM_LAB_SERVER:1 > ../../wrangler.log 2>&1 &
+          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var TV:on --var SWM_LAB_SERVER:1 --var LAB_CODE:harness-lab-code > ../../wrangler.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
             sleep 1
@@ -113,6 +115,8 @@ jobs:
           SWM_E2E_UNPACED: '1'
           # lab-server.mjs: this server has the lab powers; the live run (no LAB_SERVER) checks they are refused.
           LAB_SERVER: '1'
+          # lab-check.mjs: the right code gets a pass here; live has no such code, so only refusals are checked there.
+          LAB_CODE: harness-lab-code
         run: npm run e2e
 
       # Card A11y: axe-core (WCAG 2.1 A + AA) on home, help, join, room, settings, invite, games hall, tic-tac-toe and
@@ -140,6 +144,7 @@ jobs:
           node scripts/harness/lab-friends/run.cjs http://localhost:8787
           node scripts/harness/lab-video/run.cjs http://localhost:8787
           node scripts/harness/lab-scenarios/run.cjs http://localhost:8787
+          node scripts/harness/lab-lock/run.cjs harness-lab-code
 
       # Card DL3a: the Test Lab's game tools (open any game, side-game cheats on a sandbox save, restore my real saves).
       - name: Test Lab games
@@ -234,7 +239,7 @@ jobs:
           npm ci
           npm run build
           # R3-2 guard: no deploy secret may be in this step's environment.
-          if env | grep -qE '^(CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|YOUTUBE_API_KEY|FEEDBACK_GITHUB_TOKEN|USAGE_TOKEN)='; then
+          if env | grep -qE '^(CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|YOUTUBE_API_KEY|FEEDBACK_GITHUB_TOKEN|USAGE_TOKEN|LAB_CODE)='; then
             echo "::error::A deploy secret is in the install / build environment."; exit 1
           fi
 
@@ -255,14 +260,18 @@ jobs:
           # Card Y3 (optional): the owner's key for GET /api/youtube/usage (header X-Usage-Token); without it the route
           # is refused.
           USAGE_TOKEN: ${{ secrets.USAGE_TOKEN }}
+          # Card LABLOCK (optional): the owner's code that opens the 🐞 Test Lab on the live site; without it the lab stays
+          # shut there (local servers open it without a code).
+          LAB_CODE: ${{ secrets.LAB_CODE }}
         run: |
           set -o pipefail
           [ -n "$YOUTUBE_API_KEY" ] || echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
           [ -n "$FEEDBACK_GITHUB_TOKEN" ] && [ -n "$FEEDBACK_REPO" ] || echo "::warning::FEEDBACK_GITHUB_TOKEN or the FEEDBACK_REPO variable is missing, feedback answers 'off'."
-          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN$FEEDBACK_REPO$USAGE_TOKEN" ]; then
+          [ -n "$LAB_CODE" ] || echo "::warning::LAB_CODE is missing, the Test Lab stays shut on the live site."
+          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN$FEEDBACK_REPO$USAGE_TOKEN$LAB_CODE" ]; then
             # The keys go from the environment into a temporary file outside the repo, never into the log; only the
             # ones that are set (an empty value would overwrite a working secret).
-            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN", "FEEDBACK_REPO", "USAGE_TOKEN"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
+            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN", "FEEDBACK_REPO", "USAGE_TOKEN", "LAB_CODE"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
             npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json" | tee "$RUNNER_TEMP/deploy.log"
             rm -f "$RUNNER_TEMP/secrets.json"
           else
