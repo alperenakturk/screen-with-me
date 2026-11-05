@@ -77,7 +77,11 @@ function measure(mayScroll) {
     if ((scrollsY || scrollsX) && !mayScroll.some((sel) => el.closest(sel))) scrollers.push(`${name(el)} ${scrollsY ? `${el.scrollHeight}>${el.clientHeight}` : `w${el.scrollWidth}>${el.clientWidth}`}`);
     const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0);
     // The size on screen: a game scaled down to fit (transform: scale) shows its text smaller than its font-size.
-    const shown = parseFloat(s.fontSize) * (el.offsetWidth > 0 ? el.getBoundingClientRect().width / el.offsetWidth : 1);
+    // Measured on the nearest box at least 100 px wide: a narrow span's offsetWidth is rounded to whole pixels, which
+    // made a 13 px seed count read as 11.7 px.
+    let ref = el;
+    while (ref.parentElement && ref !== stage && ref.offsetWidth < 100) ref = ref.parentElement;
+    const shown = parseFloat(s.fontSize) * (ref.offsetWidth > 0 ? ref.getBoundingClientRect().width / ref.offsetWidth : 1);
     if (own && shown < 12.8 && !el.closest('.dama-board, .chess-board, .bg-board, .xox-board')) small.push(`${name(el)} ${shown.toFixed(1)}px "${el.textContent.trim().slice(0, 18)}"`);
     if (/^(BUTTON|INPUT|SELECT|TEXTAREA|A)$/.test(el.tagName) || own) {
       const r = el.getBoundingClientRect();
