@@ -481,6 +481,17 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   the rail on the right stays open, the video ends at its edge. Turn it off again: the rail rests as before.
 - [ ] The rest only updates test scripts. Start the next round from "Next round, start here" at the top of this list.
 
+**CAM1 (cameras on phones, from the owner's test with a friend):**
+- [ ] Two phones and a computer in voice, every camera on: everyone sees everyone (no black picture on either side).
+- [ ] On a phone, press 🔄 in the faces strip (it shows while your camera is on): the others see "Camera changing…"
+  for a moment, then the other camera within about a second; your camera never goes off for them.
+- [ ] With the rear camera, move something to the left: your own preview moves left too (only the front camera is a
+  mirror).
+- [ ] Lock a phone for 10 s, unlock it: within a few seconds the others see that phone's camera again (at most a short
+  "Waiting for the picture…" note).
+- [ ] The phone's camera row: two pictures side by side, names readable; tap one: the sheet shows it big with its
+  buttons on screen.
+
 **0.9.97.55 (🐞 Test Lab, step DL5: 🧪 Scenarios):**
 - [ ] In a room with `?debug=1` on (alone, as the host): 🐞 → 🧪 → ▶ Run on each scenario: "Two people", "Everyone
   ready", "Knock", "A private message", "My connection drops". Each line turns ✓ (the self-test turns ✗ on purpose);

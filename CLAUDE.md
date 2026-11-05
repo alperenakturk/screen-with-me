@@ -1200,6 +1200,19 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   visible** (user's request): "Seste 3/6 · 📷 1/4" in the card, yellow at the last slot, red when full; a full button is
   dimmed (`.is-full`) and pressing it explains why (peer-to-peer, upload speed) via `flashHint`. Tests:
   `voice/run.mjs` (camera frames are counted), e2e `voice.mjs` (cam_full).
+- **Cameras on phones (card CAM1, the owner's test with a friend):** a second capture of the camera while the voice
+  camera is live froze or blacked out what the others saw on phones, so the pre-join / 🎛 window shows the live camera
+  (`voiceCheck({ live })`) and a pick switches it in place. `P2pVoice.switchCam(open)`: the new track goes into every
+  connection with `replaceTrack` (no renegotiation, the camera never goes off for the others; a phone that can't open
+  two cameras gets the old one closed first), while it runs `{t:'voice', …, switching: true}` (optional field,
+  `MemberVoice.switching`, the server keeps it only with `cam`) shows "Camera changing…" over that picture; a camera
+  track the system ended is reopened (`watchCam`, ≤ every 5 s). `ui/cam-watch.ts` watches every camera picture (tiles,
+  the phone's row and sheet): replays a paused one, on `unmute` and `visibilitychange` at once, "Waiting for the
+  picture…" (`data-cam-note`, CSS `::after`) after 2 s without a frame, a fresh `srcObject` after 5 s. Only my own
+  front-camera preview is a mirror (`html[data-swm-cam-facing]` from the track's `facingMode`). The phone's faces strip
+  has 🔄 `#strip-flip` (camera on, 2+ cameras; also "Switch camera" in my person menu) cycling the device's cameras.
+  Test Lab: `voice.switchCam`, `voice.camPause` (🎬), "My camera" / "Camera pictures" (📊). Harness
+  `scripts/harness/cam-phone/run.cjs` (computer + iPhone 13, in CI).
 - **Streaming / screen share (0.9.64, `packages/shared/src/live-p2p.ts`, site `ui/live.ts`, plan + decisions
   `docs/internal/yayin.md`):** bottom part of the "Birlikte" card (`#live-card`): "🖥️ Ekranını paylaş"
   (`getDisplayMedia`, 720p/30, tab audio) / "📹 Kamerayla yayın" (720p); one stream per room (`live_busy`), at most

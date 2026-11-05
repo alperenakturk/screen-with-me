@@ -299,6 +299,11 @@ export interface MemberVoice {
   mic: boolean;
   /** Kamerası açık mı (görüntülü sohbet, eşler arası; yoksa kapalı). */
   cam?: boolean;
+  /**
+   * CAM1: the camera is being switched (another lens or device): the others show "camera changing…" over the picture
+   * instead of a frozen or black one. Optional, old clients ignore it.
+   */
+  switching?: boolean;
   /** Yayın hazır olunca gelir: diğerleri bu üyenin sesini bununla çeker. */
   track?: string;
 }
@@ -472,7 +477,7 @@ export type ClientMessage =
   /** Window Garden: a cutting of a bloomed plant for someone in the room (side games 2, pick 8). */
   | { t: 'gift'; to: string; plant: string }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
-  | { t: 'voice'; on: boolean; mic?: boolean; track?: string; cam?: boolean }
+  | { t: 'voice'; on: boolean; mic?: boolean; track?: string; cam?: boolean; switching?: boolean }
   /** Sesli sohbetin bağlantı işi; cevap aynı `id` ile `{t:'rtc'}` olarak gelir. */
   | ({ t: 'rtc'; id: number } & RtcRequest)
   /** Eşler arası seste: bir üyeye bağlantı mesajı (sunucu sadece ikisi de seste ise iletir). */
@@ -1011,6 +1016,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (typeof m.mic === 'boolean') out.mic = m.mic;
       if (isTrackName(m.track)) out.track = m.track;
       if (typeof m.cam === 'boolean') out.cam = m.cam;
+      if (m.switching === true) out.switching = true;
       return out;
     }
     case 'rtc':
