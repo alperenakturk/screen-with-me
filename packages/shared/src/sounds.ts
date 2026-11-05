@@ -176,6 +176,7 @@ export function scheduleSound(ctx: Ctx, destination: AudioNode, id: SoundId, gai
     case 'gardenBloom': [7, 12, 16].forEach((n, i) => N(i * s * 1.2, n, 0.4, 0.45)); break;
     case 'gardenPick': N(0, 16, 0.1, 0.45); N(s * 0.7, 12, 0.2, 0.4); break;
     case 'gardenNew': [0, 4, 7, 12, 16].forEach((n, i) => N(i * s * 0.9, n, 0.35, 0.55)); break;
+    case 'seaAim': N(0, 24, 0.04, 0.25); break;
     case 'seaMiss': [19, 14, 12].forEach((n, i) => N(i * 0.035, n, 0.07, 0.3)); break;
     case 'seaHit': C(0, 0.7); N(0.01, -12, 0.3, 0.9); N(0.03, -5, 0.22, 0.5); break;
     case 'seaSunk': C(0, 0.6); N(0.01, -12, 0.4, 0.8); [7, 12, 16].forEach((n, i) => N(0.18 + i * s, n, 0.3, 0.6)); break;

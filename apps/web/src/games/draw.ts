@@ -31,6 +31,11 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { lang } from '../i18n.ts';
+import draw1Art from './art/tutorial/draw-1-pick.svg?raw';
+import draw2Art from './art/tutorial/draw-2-draw.svg?raw';
+import draw3Art from './art/tutorial/draw-3-guess.svg?raw';
+import { tableHowTo } from './how-to-play.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
@@ -38,6 +43,28 @@ import type { DrawTopic } from '@swm/shared/games/draw';
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
 /** Oyunu `app`'in içine kurar; dönen işlev bağlantıyı ve zamanlayıcıları kapatır. */
+
+/** GP2: this game's "How to play" texts (its own, like every game chunk's; the room page's i18n stays small). */
+const TEXT = {
+  en: {
+    how1: 'Pick a word',
+    how1Line: 'On your turn, choose one of three words; only you see it.',
+    how2: 'Draw it',
+    how2Line: 'Draw it with the pen and colours: no letters, no numbers!',
+    how3: 'Guess in the chat',
+    how3Line: 'The others type their guesses; a right guess scores for the guesser and for you.',
+  },
+  tr: {
+    how1: 'Bir kelime seç',
+    how1Line: 'Sıra sende olunca üç kelimeden birini seç; onu bir tek sen görürsün.',
+    how2: 'Çiz',
+    how2Line: 'Kalem ve renklerle çiz: harf yok, rakam yok!',
+    how3: 'Sohbette tahmin et',
+    how3Line: 'Diğerleri tahminlerini yazar; doğru tahmin hem bilene hem sana puan getirir.',
+  },
+} as const;
+const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
+
 export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
     <div class="xox-page draw-page">
@@ -565,8 +592,15 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
       { id: 'draw.skip', title: 'Draw & Guess: end this phase now', help: 'Local lab server only: the question / round / reveal ends at once.', tab: 'games', where: 'at a Draw & Guess table', run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));
+  // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).
+  const how = tableHowTo(app, 'draw:howSeen', () => [
+    { art: draw1Art, title: tx('how1'), line: tx('how1Line') },
+    { art: draw2Art, title: tx('how2'), line: tx('how2Line') },
+    { art: draw3Art, title: tx('how3'), line: tx('how3Line') },
+  ], app.querySelector<HTMLElement>('.draw-top'));
   return () => {
     offLab();
+    how.destroy();
     setGameLive(false);
     close();
     for (const timer of [flusher, ticker, ping]) clearInterval(timer);

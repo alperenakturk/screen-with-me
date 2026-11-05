@@ -514,6 +514,15 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   `?debug=1` in that browser is enough for 30 days.
 - [ ] In a private window (no pass) `?debug=1` and a wrong code show no 🐞.
 
+**0.9.97.68 (🎮 games polish 1: phones, Glowbeam, How to play):**
+- [ ] On the phone, every button in a game is easy to hit (the window's head, the chips, the "?").
+- [ ] Sea Battle on the phone: the first tap on their sea aims (a gold crosshair, "Aiming at C7", a 🎯 Fire button);
+  a second tap on the same cell or Fire shoots. On the computer one click still shoots.
+- [ ] Classics against Glowbeam: medium no longer leaves pieces to simple captures; easy plays weaker but never just
+  gives a piece away.
+- [ ] The first time you open a Classics board, Sea Battle, Quiz or Draw & Guess, picture cards explain it; the "?"
+  (window head; on the phone in the game's own bar) shows them again. In Turkish too.
+
 **0.9.97.66 (card TOS: the terms of use):**
 - [ ] Read the new terms page (footer → Terms; join card and profile menu too), in English and Turkish: Turkish law and
   Istanbul (Çağlayan) courts, 13+ (a parent's permission under 16), "as is" without a money cap, abuse reports by

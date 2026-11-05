@@ -8,6 +8,7 @@ import './how-to-play.css';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
 import { load, save } from '../storage.ts';
+import { isPhoneLayout } from '../device.ts';
 
 const TEXT = {
   en: { next: 'Next', play: "Let's play", back: 'Back', skip: 'Skip', open: 'How to play', card: 'Card {n} of {all}' },
@@ -43,7 +44,7 @@ export interface HowToPlay {
 }
 
 /** Mounts the layer into `host` (the game's root box, `position: relative`) and shows it once if `key` is not set. */
-export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]): HowToPlay {
+export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[], autoShow = true): HowToPlay {
   const layer = el('div', { class: 'htp', role: 'dialog', tabindex: '0', 'data-how': '' });
   layer.hidden = true;
   const art = el('div', { class: 'htp-picture' });
@@ -112,7 +113,7 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
   const onLang = () => !layer.hidden && draw();
   addEventListener('langchange', onLang);
   draw();
-  if (!load(key)) show();
+  if (autoShow && !load(key)) show();
   return {
     button,
     show,
@@ -120,6 +121,28 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
     destroy: () => {
       removeEventListener('langchange', onLang);
       layer.remove();
+    },
+  };
+}
+
+/**
+ * GP2 (one "How to play" pattern for every game): the tables (Classics boards, Sea Battle, Quiz, Draw & Guess) get the
+ * side games' picture cards, shown the first time (`key`) and from a "?" in the game window's head (its slot, beside
+ * "Change game"); on a phone, whose head is full, in the game's own top bar (`bar`), where the side games keep theirs.
+ * Automated browsers see them only with `opt:tableHow` = '1' (the other harnesses would be covered).
+ */
+export function tableHowTo(app: HTMLElement, key: string, cards: () => HowCard[], bar?: HTMLElement | null): HowToPlay {
+  const auto = !navigator.webdriver || load('opt:tableHow') === '1';
+  const how = howToPlay(app, key, cards, auto);
+  how.button.classList.add('btn', 'small-btn', 'htp-head');
+  if (isPhoneLayout() && bar) bar.prepend(how.button);
+  else app.closest('#game-stage')?.querySelector('.game-head-slot')?.prepend(how.button);
+  const destroy = how.destroy;
+  return {
+    ...how,
+    destroy: () => {
+      destroy();
+      how.button.remove();
     },
   };
 }
