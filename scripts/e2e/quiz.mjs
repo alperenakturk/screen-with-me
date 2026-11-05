@@ -114,5 +114,15 @@ const again = await alex.wait((m) => m.t === 'state' && m.phase === 'question', 
 ok(again.n === 1 && again.players.every((p) => p.score === 0 && !p.joker && p.streak === 0), 'New game: scores, jokers and streaks reset');
 ok(again.question !== q1.question, 'A rematch asks new questions');
 
-for (const c of [alex, sam]) c.ws.close();
+// BHG: one of two players reloads mid-game: the game waits for them (FEW_GRACE_MS) instead of going to the lobby.
+sam.ws.close();
+await alex.wait((m) => m.t === 'state' && m.players.some((p) => !p.online), 'sam offline');
+await new Promise((r) => setTimeout(r, 1200));
+ok(alex.state.phase !== 'lobby', 'A player who drops mid-game does not send the game back to the lobby at once');
+const sam2 = client('Sam', 'quizSam00001');
+await sam2.wait((m) => m.t === 'welcome', 'sam back');
+const back = await sam2.wait((m) => m.t === 'state', 'sam state');
+ok(back.phase !== 'lobby' && back.players.length === 2 && back.players.every((p) => p.online), 'Back within the grace: the same game goes on with both players');
+
+for (const c of [alex, sam2]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

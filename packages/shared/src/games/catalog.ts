@@ -23,7 +23,7 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   quiz: { min: 2, max: 8, place: 'stage', size: [760, 540], fit: [540, 380] },
   poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440] },
   // 🎲 Classics (P6): two players, or one against Glowbeam.
-  classics: { min: 1, max: 2, place: 'stage', size: [480, 620], fit: [360, 480] },
+  classics: { min: 1, max: 2, place: 'stage', size: [480, 620], fit: [360, 440] },
 };
 
 /**

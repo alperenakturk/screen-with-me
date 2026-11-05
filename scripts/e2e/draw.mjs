@@ -179,6 +179,18 @@ for (const [round, drawer, guesser] of [[1, eda, fat], [2, fat, eda]]) {
 }
 const end = await eda.wait((m) => m.t === 'state' && m.phase === 'over', 'over', ALARM_WAIT);
 ok(end.players.every((p) => p.score > 0), 'Everyone drew once: podium');
+
+// BHG: one of two players reloads mid-game: the game waits for them (FEW_GRACE_MS) instead of going to the lobby.
+eda.send({ t: 'start' });
+await eda.wait((m) => m.t === 'state' && m.phase === 'choose', 'again', ALARM_WAIT);
+fat.ws.close();
+await eda.wait((m) => m.t === 'state' && m.players.some((p) => !p.online), 'fat offline');
+await sleep(1200);
+ok(eda.state.phase !== 'lobby', 'A player who drops mid-game does not send the game back to the lobby at once');
+const fat2 = client('Fat', 'drawFat000001', short);
+await fat2.wait((m) => m.t === 'welcome', 'fat back');
+await sleep(300);
+ok(fat2.state.phase !== 'lobby' && fat2.state.players.length === 2 && fat2.state.players.every((p) => p.online), 'Back within the grace: the same game goes on with both players');
 clearInterval(pinger);
-for (const c of [eda, fat]) c.ws.close();
+for (const c of [eda, fat2]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

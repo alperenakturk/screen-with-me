@@ -6973,6 +6973,21 @@ html.shorts-view .footer {
   flex: 1;
 }
 
+/* Lobby and podium (BHG): no canvas, the card sits in the column at its own height and the column is wider, so the
+   game is never shrunk below 13 px text to fit a 4:3 canvas it doesn't use. */
+.game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left {
+  width: min(100cqw - 290px, 640px);
+}
+
+.draw-page.draw-lobby #draw-canvas {
+  display: none;
+}
+
+.draw-page.draw-lobby .draw-overlay {
+  position: static;
+  padding: 16px;
+}
+
 /* Dar/dikey sahne (Shorts, küçük pencere): her şey alt alta, sahne kayar */
 @container game (max-aspect-ratio: 1 / 1) {
   .game-stage .xox-page:not(.draw-page) {
@@ -7004,6 +7019,28 @@ html.shorts-view .footer {
 
   .game-stage .draw-feed {
     height: 180px;
+  }
+
+  .game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left {
+    width: 100%;
+  }
+
+  /* A narrow Quiz lobby / podium (BHG): no time bar and tighter gaps, so a phone shows it whole at full size. */
+  .game-stage .quiz-page.draw-lobby .draw-bar {
+    display: none;
+  }
+
+  .game-stage .quiz-page.draw-lobby :is(.quiz-body, .quiz-center, .quiz-intro, .quiz-setup) {
+    gap: 8px;
+  }
+
+  .game-stage .quiz-page.draw-lobby .quiz-main {
+    padding-block: 12px;
+  }
+
+  /* A narrow lobby: the players list stays, the guesses and their box come with the game. */
+  .game-stage .draw-page.draw-lobby :is(.draw-feed, .draw-form) {
+    display: none;
   }
 }
 
