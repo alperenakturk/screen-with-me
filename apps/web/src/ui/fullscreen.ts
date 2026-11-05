@@ -323,9 +323,19 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   const LEAVE_MS = 450;
   /** When the mouse last reached the rail or its edge (a film move reported just before it is old news). */
   let edgeAt = 0;
+  /**
+   * EXT1: the film's frames said "at the edge" after our overlay last saw the mouse: the film has the mouse now, so its
+   * next report ("away from the edge") is news even within 300 ms (the mouse passed back over the film's edge on its
+   * way to the middle, and the rail stayed out).
+   */
+  let filmHasMouse = false;
+  function sawEdge(): void {
+    edgeAt = Date.now();
+    filmHasMouse = false;
+  }
   dock.addEventListener('mouseenter', () => {
     hoveringControls = true;
-    edgeAt = Date.now();
+    sawEdge();
     if (leaveTimer !== null) clearTimeout(leaveTimer);
     leaveTimer = null;
     wakeDock();
@@ -428,10 +438,11 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     if (dockTimer !== null) clearTimeout(dockTimer);
     dockTimer = setTimeout(sleepDock, HIDE_MS);
   }
-  function setNear(near: boolean): void {
+  /** `fromFilm`: the film's frames said the mouse is in its last FILM_EDGE px (card R5), not our own overlay. */
+  function setNear(near: boolean, fromFilm = false): void {
     if (near === nearEdge) return;
     nearEdge = near;
-    if (near) edgeAt = Date.now();
+    if (near && !fromFilm) sawEdge();
     if (openTimer !== null) clearTimeout(openTimer);
     openTimer = null;
     if (!near) return hideRailSoon();
@@ -832,13 +843,15 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
      */
     poke(edge?: boolean): void {
       if (shell && edgeMode() && edge === true) {
-        setNear(true);
+        filmHasMouse = true;
+        setNear(true, true);
         return;
       }
       // Card 2b: a move reported by the film's frames means the mouse is on the film, not on the rail or at the edge. On
       // the film page the overlay may never hear the mouse leave (it jumps from our rail into the film's hole), so this
       // counts as leaving; a move reported right after the mouse reached the edge is from before it.
-      if (shell && edgeMode() && Date.now() - edgeAt > 300) {
+      if (shell && edgeMode() && (filmHasMouse || Date.now() - edgeAt > 300)) {
+        filmHasMouse = false;
         staleXY = lastXY;
         leftRail();
       }

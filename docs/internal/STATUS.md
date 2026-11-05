@@ -459,6 +459,16 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.58 (card EXT1: games, the rail and fullscreen on the film page; update the extension from the site first):**
+- [ ] On a film page in the room view: the rail's 🎮 opens the games hall over the film (it used to be invisible). Open
+  Classics, play XOX against Glowbeam; open Snack Bar from "On the side" and serve a few customers.
+- [ ] Film page fullscreen (our ⛶ or the film's own): bring the rail out at the right edge, then move the mouse back to
+  the middle of the film at a normal pace: the rail goes within half a second, without pause / play. Do the same in
+  the window (from the chat across the rail to the middle of the film).
+- [ ] The film's own ⛶ (on a site whose player is in the page and on one whose player is in a frame, e.g. an embedded
+  player): it opens the room's fullscreen (the rail on the right, our messages); pressing it again leaves fullscreen.
+  Also try the browser player's own fullscreen button in the video's controls: it opens our fullscreen too.
+
 **0.9.97.56 (BH10: every harness on main, the owner's next round):**
 - [ ] Your bug: ⋯ → "Keep the controls open" (or Settings → My screen). In the normal window (not fullscreen) play a
   video (YouTube, a video file, the sync test, a film page with the extension), move the mouse onto the chat and wait:
