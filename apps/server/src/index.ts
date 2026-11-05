@@ -7,6 +7,7 @@ import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
 import { MOVE_CODE } from '@swm/shared/move';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { sendFeedback } from './feedback.ts';
+import { labCheck } from './lab-check.ts';
 import { tiktokResolve } from './tiktok.ts';
 import { podcasts } from './podcasts.ts';
 import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
@@ -174,6 +175,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     // "Send feedback" (card 9): a GitHub issue in the private repository, see feedback.ts.
+    // Card LABLOCK: may this browser open the 🐞 Test Lab (the owner's code, or a pass it got for it)?
+    if (url.pathname === '/api/lab/check') return labCheck(request, url, env, () => ipKey(request, env));
+
     if (url.pathname === '/api/feedback') return sendFeedback(request, url, env, () => ipKey(request, env));
 
     // Card Y3: the owner's YouTube usage counters (secret header), for the quota form.

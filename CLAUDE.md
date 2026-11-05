@@ -1048,8 +1048,15 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   takes it); the game keeps ticking behind it. Harness `scripts/harness/side-games-polish/run.cjs` (39 checks). Harness
   `scripts/harness/five-frames/run.cjs` (20 checks: marks against the real list via the dev server's modules). Harness `scripts/harness/snack-bar/run.cjs` (25 checks).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
-  (it survives reloads; `?debug=0` or "Turn the lab off" removes it; locked with a code before the store release,
-  ROADMAP §7). Off = not loaded: `debug-lab.ts` (always loaded, tiny) holds only the switch, the error recorder, the
+  (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
+  (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the
+  page asks `POST /api/lab/check` (`apps/server/src/lab-check.ts`, our Origin, `ROOM_INFO_LIMIT` `lab:` key, body ≤ 1 KB),
+  which compares the code's SHA-256 with the Worker secret `LAB_CODE` (`@swm/shared/lab-pass`, constant-time) and
+  answers a 30-day pass `<expiry>.<HMAC(LAB_CODE)>` kept in `localStorage` `swm:labPass` (never the code); later
+  `?debug=1` and every reload of a lab tab show that pass to the check first (a hand-set `swm:debug` without one is
+  dropped; a new `LAB_CODE` ends old passes). No secret = shut on live; `wrangler dev --var SWM_LAB_OPEN:1` accepts any
+  code. Tests: unit `lab-pass.test.ts`, e2e `lab-check.mjs` (`LAB_CODE=<code>` with a local `--var LAB_CODE:<code>`),
+  harness `lab-lock` (a made-up host `lab.test` mapped to 127.0.0.1 acts as live; CI's server has a throwaway code). Off = not loaded: `debug-lab.ts` (always loaded, tiny) holds only the switch, the error recorder, the
   hook registry and a null-checked message tap; the lab itself is the lazy chunk `ui/test-lab.ts` + `test-lab.css`.
   **Hook API (for every feature, no monkey-patching):** `debugHooks.register(name, () => ({ commands?: LabCommand[],
   status?: () => [label, value][] }))` returns the unregister function; the factory runs only while the lab is open
