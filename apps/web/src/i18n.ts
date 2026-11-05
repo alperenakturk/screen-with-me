@@ -46,6 +46,7 @@ const tr = {
   continue: 'Devam',
   extensionNav: 'Eklenti',
   privacy: 'Gizlilik',
+  terms: 'Koşullar',
   help: 'Yardım',
   feedback: 'Geri bildirim',
   thanks: 'Teşekkürler',
@@ -1206,6 +1207,7 @@ const en: Record<Key, string> = {
   continue: 'Continue',
   extensionNav: 'Extension',
   privacy: 'Privacy',
+  terms: 'Terms',
   help: 'Help',
   feedback: 'Feedback',
   thanks: 'Thanks',
@@ -2356,6 +2358,8 @@ export function helpHref(section?: string): string {
 export function translate(root: ParentNode = document): void {
   // Gizlilik sayfası sitenin o anki dilinde açılsın.
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-privacy-link]')) link.href = `/privacy.html?lang=${current}`;
+  // The terms of use too (card TOS).
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-terms-link]')) link.href = `/terms.html?lang=${current}`;
   // The help page too (card 7), keeping a section anchor such as #connection.
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-help-link]')) link.href = helpHref(link.dataset.helpLink);
   // And the Thanks page (card 11).

@@ -1573,8 +1573,11 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
 - **The repo is public since Nov 2026** (so GitHub Actions minutes are free). Never commit secrets, tokens, private
   e-mails or hidden addresses; everything in the repo and its history is readable by anyone.
 - Privacy policy: `apps/web/public/privacy.html` (TR + EN; `?lang=en|tr` opens it in the link's language, `lang.js`;
-  the old `gizlilik.html` redirects there). Update it whenever we collect/store new data. There are no terms of use
-  yet (ROADMAP "Legal").
+  the old `gizlilik.html` redirects there). Update it whenever we collect/store new data.
+- Terms of use: `apps/web/public/terms.html` (TR + EN, same page pattern; `data-terms-link` links get `?lang=` from
+  `i18n.ts` `translate`), linked from the footer, the join card, the profile menu, the help page and the extension page;
+  its abuse / takedown section (`#abuse`, e-mail "Report", 72 hours) is where `SECURITY.md` and help `#report` point.
+  When it changes, add a dated line under "Changes" in both languages; the help harness checks both languages match.
 
 ## Known limits
 - DRM services (Netflix, Prime Video, Disney+…) are not supported yet; **goal** (research towards 1.0, ship in 1.x with
