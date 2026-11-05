@@ -854,6 +854,38 @@ html.phone #game-stage .mt :is(.cl-bot .btn, .mt-watch-open),
 html.phone #game-stage .sb .sb-badges-open {
   min-height: 44px;
 }
+/* The game window's head stays one row on a phone (a second row took the board's height): "‹ Back to video" gives
+   way with "…" instead. The Classics bar likewise: one row, tighter chips (the score, the "?", Glowbeam's levels, 👁). */
+html.ph-game .game-stage-head {
+  flex-wrap: nowrap;
+}
+html.ph-game .game-stage .game-minimize {
+  min-width: 44px;
+  overflow: hidden;
+}
+html.ph-game .game-stage .game-minimize .game-head-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html.phone #game-stage .mt .mt-bar {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+html.phone #game-stage .mt .mt-bar > :is(.htp-head, .mt-score, .mt-watch-open) {
+  flex-shrink: 0;
+}
+html.phone #game-stage .mt .cl-bot {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+html.phone #game-stage .mt :is(.cl-bot .btn, .mt-watch-open) {
+  padding: 0 8px;
+}
+html.phone #game-stage .mt .mt-score {
+  padding: 3px 8px;
+}
 /* Window Garden's bar keeps its three 44 px buttons on screen: the pills give way (with "…") instead. */
 html.phone #game-stage .wg-bar {
   gap: 4px;
