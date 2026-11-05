@@ -12,6 +12,7 @@ import snack from './art/covers/snack-bar.svg?raw';
 import garden from './art/covers/garden.svg?raw';
 import word from './art/covers/word.svg?raw';
 import poker from './art/covers/poker.svg?raw';
+import sea from './art/covers/sea.svg?raw';
 import classics from './art/covers/classics.svg?raw';
 import { GAME_CATALOG, type SoloKind } from '@swm/shared/games/catalog';
 import { formatCoins } from '@swm/shared/games/snack-bar';
@@ -24,7 +25,7 @@ import { lang, t } from '../i18n.ts';
 import { load } from '../storage.ts';
 import { icon } from '../ui/icons.ts';
 
-const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, classics, snack, garden, word };
+const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, classics, sea, snack, garden, word };
 /** Tic-tac-toe and Four in a Row live inside 🎲 Classics now (old tables of theirs still open). */
 const HALL_KINDS = ROOM_GAME_KINDS.filter((kind) => kind !== 'xox' && kind !== 'four');
 
