@@ -90,3 +90,24 @@ export function podium(players: readonly { name: string; avatar?: Avatar; score:
     }),
   );
 }
+
+/**
+ * A lobby's players (CL2): a row of faces inside the lobby card, so the lobby needs no players column beside it. The
+ * host wears a 👑; an empty chair shows while fewer than two are here.
+ */
+export function lobbyPlayers(players: readonly { id: string; name: string; avatar?: Avatar; online?: boolean }[], me: string | null, host?: string | null): HTMLElement {
+  const here = players.filter((p) => p.online !== false);
+  return el(
+    'ul',
+    { class: 'lobby-players' },
+    ...here.map((p) =>
+      el(
+        'li',
+        { class: `lobby-player${p.id === me ? ' me' : ''}` },
+        avatarNode(p.avatar, 'lobby-avatar'),
+        el('span', { class: 'lobby-name' }, `${p.id === host ? '👑 ' : ''}${p.name}${p.id === me ? ` (${t('games.you')})` : ''}`),
+      ),
+    ),
+    ...(here.length < 2 ? [el('li', { class: 'lobby-player lobby-free' }, el('span', { class: 'lobby-avatar lobby-empty', 'aria-hidden': 'true' }, '?'), el('span', { class: 'lobby-name muted' }, t('games.seatEmpty')))] : []),
+  );
+}

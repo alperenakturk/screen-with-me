@@ -2,6 +2,7 @@
 // oyuncular ve puanlar. Sunucu (Draw nesnesi) turları yürütür; burası gelen durumu çizer, çizeni dinler.
 // Çizim 1000×750'lik ızgarada tam sayı noktalar olarak, 50 ms'de bir parça parça gider.
 
+import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   DRAW_CHOOSE_MS,
@@ -30,7 +31,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
-import { langChoices, podium, settingsPanel } from './ui.ts';
+import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
 
@@ -376,7 +377,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
         s.host === me || !host ? null : host.name,
       );
       if (s.phase === 'over') overlay.append(el('h3', {}, t('games.over')), podium(s.players));
-      else overlay.append(el('h3', {}, t('games.draw.title')), el('p', { class: 'draw-rules' }, t('draw.rules')));
+      else overlay.append(el('h3', {}, t('games.draw.title')), el('p', { class: 'draw-rules' }, t('draw.rules')), lobbyPlayers(s.players, me, s.host));
       overlay.append(settings, go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
     } else if (s.phase === 'choose') {
       if (s.drawer === me && choices.length) {
