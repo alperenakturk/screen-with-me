@@ -110,6 +110,57 @@ ok(await until(() => alex.state.game.rolled.length === 2 && alex.state.game.roll
 const g = alex.state.game;
 ok(g.dice.length > 0 || g.passed === 'X', 'the roll leaves dice to use (or passes the turn when none fit)');
 
+// Reversi: the server checks every disc (it must close a line), turns lines over, passes a side without a move and
+// counts the discs at the end. A whole game between Alex (dark, X) and Sam (light, O), each playing a legal cell.
+alex.send({ t: 'switch', game: 'reversi', end: true });
+const discs = (b, m) => b.filter((c) => c === m).length;
+ok(await until(() => alex.state.kind === 'reversi' && discs(alex.state.game.board, 'X') === 2 && discs(alex.state.game.board, 'O') === 2 && !alex.state.started), 'reversi from the shelf (ending the backgammon game): two discs each in the middle');
+/** The cells `mark` may play (a plain copy of the rules, to drive the game). */
+function legal(board, mark) {
+  const them = mark === 'X' ? 'O' : 'X';
+  const out = [];
+  for (let i = 0; i < 64; i++) {
+    if (board[i] !== null) continue;
+    for (const [dr, dc] of [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]) {
+      let r = Math.floor(i / 8) + dr;
+      let c = (i % 8) + dc;
+      let seen = 0;
+      while (r >= 0 && r < 8 && c >= 0 && c < 8 && board[r * 8 + c] === them) (r += dr), (c += dc), seen++;
+      if (seen && r >= 0 && r < 8 && c >= 0 && c < 8 && board[r * 8 + c] === mark) {
+        out.push(i);
+        break;
+      }
+    }
+  }
+  return out;
+}
+const rvErrors = () => alex.inbox.filter((m) => m.t === 'error' && m.code === 'not_your_turn').length;
+let errorsBefore = rvErrors();
+alex.send({ t: 'move', cell: 0 });
+ok(await until(() => rvErrors() > errorsBefore), 'a disc that closes no line is refused');
+sam.send({ t: 'move', cell: 19 });
+ok(await until(() => sam.inbox.some((m) => m.t === 'error' && m.code === 'not_your_turn')), 'light may not play on dark’s turn');
+alex.send({ t: 'move', cell: 19 });
+ok(await until(() => alex.state.game.board[27] === 'X' && alex.state.game.flipped?.join() === '27' && alex.state.game.turn === 'O'), 'dark plays d3: d4 turns over, light’s turn');
+let rvPlies = 1;
+let sawPass = false;
+while (alex.state.game.winner === null && rvPlies < 70) {
+  const g = alex.state.game;
+  const cells = legal(g.board, g.turn);
+  ok(cells.length > 0, `ply ${rvPlies}: the side to move has a move (${g.turn})`);
+  const cell = cells[(rvPlies * 7) % cells.length];
+  const before = g.board.filter(Boolean).length;
+  (g.turn === 'X' ? alex : sam).send({ t: 'move', cell });
+  if (!(await until(() => alex.state.game.board.filter(Boolean).length === before + 1, 4000))) break;
+  if (alex.state.game.passed) sawPass = true;
+  rvPlies++;
+}
+const end = alex.state.game;
+const x = discs(end.board, 'X');
+const o = discs(end.board, 'O');
+ok(end.winner === (x > o ? 'X' : x < o ? 'O' : 'draw'), `reversi plays to the end: ${x}–${o}, ${end.winner === 'draw' ? 'a draw' : `${end.winner} wins`}${sawPass ? ' (with a pass)' : ''}`);
+ok(sam.state.game.winner === end.winner && sam.state.score[end.winner === 'draw' ? 'draw' : end.winner] >= 1, 'both players see the result, the score counts it');
+
 alex.ws.close();
 sam.ws.close();
 console.log('✓ Classics passed');

@@ -17,6 +17,7 @@
     "./games/xox": "./src/games/xox.ts",
     "./games/four": "./src/games/four.ts",
     "./games/dama": "./src/games/dama.ts",
+    "./games/reversi": "./src/games/reversi.ts",
     "./games/lab-positions": "./src/games/lab-positions.ts",
     "./games/chess": "./src/games/chess.ts",
     "./games/backgammon": "./src/games/backgammon.ts",

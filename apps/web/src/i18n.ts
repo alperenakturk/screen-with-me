@@ -46,6 +46,7 @@ const tr = {
   continue: 'Devam',
   extensionNav: 'Eklenti',
   privacy: 'Gizlilik',
+  terms: 'Koşullar',
   help: 'Yardım',
   feedback: 'Geri bildirim',
   thanks: 'Teşekkürler',
@@ -247,7 +248,7 @@ const tr = {
   'games.xox.title': 'XOX',
   'games.xox.text': 'İki kişilik klasik. İlk gelen iki kişi oynar, diğerleri izler; koltuk boşalınca geçip oturabilir.',
   'games.classics.title': 'Klasikler',
-  'games.classics.text': 'Tek masada klasikler: XOX, Dört Taş, dama, satranç ve tavla. Rafından seç; yalnızsan Glowbeam’e karşı oyna.',
+  'games.classics.text': 'Tek masada klasikler: XOX, Dört Taş, dama, satranç, tavla ve reversi. Rafından seç; yalnızsan Glowbeam’e karşı oyna.',
   'classics.pick': 'Bir oyun seç',
   'classics.back': 'Raf',
   'classics.backTitle': 'Rafa dön ve başka bir oyun seç',
@@ -1209,6 +1210,7 @@ const en: Record<Key, string> = {
   continue: 'Continue',
   extensionNav: 'Extension',
   privacy: 'Privacy',
+  terms: 'Terms',
   help: 'Help',
   feedback: 'Feedback',
   thanks: 'Thanks',
@@ -1410,7 +1412,7 @@ const en: Record<Key, string> = {
   'games.xox.title': 'Tic-tac-toe',
   'games.xox.text': 'The two-player classic. The first two people play; everyone else watches and can take a seat when one is free.',
   'games.classics.title': 'Classics',
-  'games.classics.text': 'The classics at one table: tic-tac-toe, Four in a Row, dama, chess and backgammon. Pick from the shelf; alone, play Glowbeam.',
+  'games.classics.text': 'The classics at one table: tic-tac-toe, Four in a Row, dama, chess, backgammon and reversi. Pick from the shelf; alone, play Glowbeam.',
   'classics.pick': 'Pick a game',
   'classics.back': 'Shelf',
   'classics.backTitle': 'Back to the shelf to pick another game',
@@ -2362,6 +2364,8 @@ export function helpHref(section?: string): string {
 export function translate(root: ParentNode = document): void {
   // Gizlilik sayfası sitenin o anki dilinde açılsın.
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-privacy-link]')) link.href = `/privacy.html?lang=${current}`;
+  // The terms of use too (card TOS).
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-terms-link]')) link.href = `/terms.html?lang=${current}`;
   // The help page too (card 7), keeping a section anchor such as #connection.
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-help-link]')) link.href = helpHref(link.dataset.helpLink);
   // And the Thanks page (card 11).

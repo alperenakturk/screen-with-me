@@ -8,9 +8,10 @@ import { COLS, ROWS, dropRow, play as playFour } from './four.ts';
 import { ROLL, legalMoves as bgMoves, pips, play as playBg, type BackgammonState } from './backgammon.ts';
 import { legalMoves as chessMoves, play as playChess, type ChessState } from './chess.ts';
 import { legalMoves as damaMoves, play as playDama, type DamaState } from './dama.ts';
+import { legalMoves as reversiMoves, mobility, play as playReversi, type ReversiState } from './reversi.ts';
 import { LINES, play as playXox } from './xox.ts';
 
-export type BotKind = 'xox' | 'four' | 'dama' | 'chess' | 'backgammon';
+export type BotKind = 'xox' | 'four' | 'dama' | 'chess' | 'backgammon' | 'reversi';
 export type BotLevel = 1 | 2;
 
 /** Every legal move of the side to play. */
@@ -20,10 +21,11 @@ export function movesOf(kind: BotKind, state: BoardState): number[] {
   if (kind === 'four') return Array.from({ length: COLS }, (_, c) => c).filter((c) => dropRow(state.board, c) !== -1);
   if (kind === 'chess') return chessMoves(state as ChessState);
   if (kind === 'backgammon') return bgMoves(state as BackgammonState);
+  if (kind === 'reversi') return reversiMoves(state as ReversiState);
   return damaMoves(state as DamaState);
 }
 
-const PLAY = { xox: playXox, four: playFour, dama: playDama, chess: playChess, backgammon: playBg } as const;
+const PLAY = { xox: playXox, four: playFour, dama: playDama, chess: playChess, backgammon: playBg, reversi: playReversi } as const;
 const apply = (kind: BotKind, state: BoardState, move: number) => PLAY[kind](state, state.turn, move);
 
 /** How good the position is for `me` (positive = good), when nobody has won yet. */
@@ -65,6 +67,7 @@ function evaluate(kind: BotKind, state: BoardState, me: Mark): number {
     return score;
   }
   if (kind === 'chess') return evaluateChess(state as ChessState, me);
+  if (kind === 'reversi') return evaluateReversi(state, me);
   const s = state as DamaState;
   const kings = new Set(s.kings);
   let score = 0;
@@ -96,6 +99,36 @@ function evaluateChess(s: ChessState, me: Mark): number {
   return score;
 }
 
+/**
+ * Reversi: corners are worth most, the cells next to an empty corner are dangerous (they hand it over), edges are
+ * good; having more moves than the other side counts too. The disc count itself only matters at the end (the search
+ * sees the win).
+ */
+const REVERSI_WEIGHTS = [
+  100, -20, 10, 5, 5, 10, -20, 100,
+  -20, -50, -2, -2, -2, -2, -50, -20,
+  10, -2, 1, 1, 1, 1, -2, 10,
+  5, -2, 1, 0, 0, 1, -2, 5,
+  5, -2, 1, 0, 0, 1, -2, 5,
+  10, -2, 1, 1, 1, 1, -2, 10,
+  -20, -50, -2, -2, -2, -2, -50, -20,
+  100, -20, 10, 5, 5, 10, -20, 100,
+];
+const CORNER_NEIGHBOURS: Record<number, number[]> = { 0: [1, 8, 9], 7: [6, 14, 15], 56: [48, 49, 57], 63: [54, 55, 62] };
+function evaluateReversi(state: BoardState, me: Mark): number {
+  const b = state.board;
+  let score = 0;
+  b.forEach((c, i) => {
+    if (c === null) return;
+    let w = REVERSI_WEIGHTS[i]!;
+    // Once a corner is taken, its neighbours are safe cells, not traps.
+    for (const [corner, near] of Object.entries(CORNER_NEIGHBOURS)) if (near.includes(i) && b[Number(corner)] !== null) w = 5;
+    score += c === me ? w : -w;
+  });
+  score += (mobility(b, me) - mobility(b, other(me))) * 3;
+  return score;
+}
+
 const WIN = 10_000;
 function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha: number, beta: number): number {
   if (state.winner !== null) return state.winner === 'draw' ? 0 : state.winner === me ? WIN + depth : -WIN - depth;
@@ -120,7 +153,7 @@ function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha
   return best;
 }
 
-const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 2 }, backgammon: { 1: 1, 2: 1 } };
+const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 2 }, backgammon: { 1: 1, 2: 1 }, reversi: { 1: 1, 2: 4 } };
 /** Easy Glowbeam plays a random move this often. */
 const EASY_RANDOM = 0.35;
 
