@@ -72,6 +72,9 @@ jobs:
       - name: Name check (Sidelit)
         run: node scripts/check-name.mjs
 
+      - name: Text check (every string in English and Turkish)
+        run: node scripts/check-texts.mjs
+
       - name: Unit tests
         run: npm test
 
@@ -141,6 +144,15 @@ jobs:
       - name: Lazy chunks and their gates
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
+
+      # Card MB: the help page and the privacy policy state the code's numbers (limits, retention, the upload budget,
+      # the TV being off) in both languages; the room links them. Server constants count too, so not only on `web`.
+      - name: Help page and policy numbers
+        if: github.event_name != 'push'
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+          node scripts/harness/help/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()

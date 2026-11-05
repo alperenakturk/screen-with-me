@@ -49,6 +49,8 @@ function serve() {
   return new Promise((resolve) => server.listen(0, () => resolve(server)));
 }
 
+/** A rate-limit binding's `limit` in wrangler.jsonc. */
+const limit = (name) => Number(new RegExp(`"name": "${name}"[^}]*"limit": (\\d+)`).exec(fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8'))[1]);
 const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);`).exec(fs.readFileSync(path.join(ROOT, file), 'utf8'))[1].replace(/_/g, '').split('*').reduce((a, b) => a * Number(b), 1));
 
 (async () => {
@@ -263,6 +265,10 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
       titleDays: constant('packages/shared/src/room-logic.ts', 'TITLE_MAX_AGE_MS') / D,
       usageDays: constant('packages/shared/src/yt-usage.ts', 'USAGE_DAYS'),
       admitH: constant('apps/server/src/room.ts', 'ADMIT_TTL_MS') / H,
+      uploadIpMb: constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_IP_DAY') / 1_000_000,
+      uploadAllMb: constant('packages/shared/src/upload-budget.ts', 'UPLOAD_BYTES_PER_DAY') / 1_000_000,
+      // Card MB: room information and /api/probe share ROOM_INFO_LIMIT (wrangler.jsonc, per minute).
+      infoPerMin: limit('ROOM_INFO_LIMIT'),
     };
     const says = {
       en: [
@@ -282,6 +288,9 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
         `at most ${n.titleDays} days after`,
         `kept ${n.usageDays} days`,
         `for ${n.admitH} hours after they were last there`,
+        `at most ${n.uploadIpMb} MB of images per address and ${n.uploadAllMb} MB for everyone a day`,
+        `room information requests and connection tests (at most ${n.infoPerMin} a minute)`,
+        'the TV version is switched off for now',
       ],
       tr: [
         `son ${n.chat} mesaj`,
@@ -300,6 +309,9 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
         `en çok ${n.titleDays} gün tutar`,
         `${n.usageDays} gün tutulur`,
         `sonra ${n.admitH} saat tutar`,
+        `günde adres başına en fazla ${n.uploadIpMb} MB, herkes için toplam ${n.uploadAllMb} MB resim`,
+        `bağlantı testlerini (dakikada en fazla ${n.infoPerMin})`,
+        'TV sürümü şimdilik kapalı',
       ],
     };
     for (const lang of ['en', 'tr']) {
@@ -307,6 +319,13 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
       const wrong = says[lang].filter((x) => !text.includes(x));
       check(wrong.length === 0, `privacy ${lang}: every number matches the code (${says[lang].length} checked)`, wrong);
     }
+    // "Switched off" is true only while the deployed Worker has no TV=on (R4-10: the variable is set only locally).
+    const wrangler = fs.readFileSync(path.join(ROOT, 'apps/server/wrangler.jsonc'), 'utf8');
+    check(!/"TV"\s*:\s*"on"/.test(wrangler), 'the TV is off in the deployed config, as the privacy policy says');
+    // The help page's short privacy list names the same upload budget.
+    const helpText = helpHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    const upload = [`at most ${n.uploadIpMb} MB a day from one address`, `günde en fazla ${n.uploadIpMb} MB`];
+    check(upload.every((x) => helpText.includes(x)), `help (EN + TR): the image budget is the code's (${n.uploadIpMb} MB)`, upload.filter((x) => !helpText.includes(x)));
     // The games hall's quiz line ("Almost 400 questions in 11 topics") against the question bank (it once said "over
     // 400" with 395).
     const i18n = fs.readFileSync(path.join(ROOT, 'apps/web/src/i18n.ts'), 'utf8');

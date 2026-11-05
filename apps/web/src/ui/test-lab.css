@@ -57,7 +57,7 @@
   box-shadow: -8px 0 30px rgb(0 0 0 / 40%);
 }
 
-html.lab-open:not(.phone) body {
+html.lab-open:not(.phone, .tablet-up) body {
   padding-right: var(--lab-w);
 }
 
@@ -71,6 +71,25 @@ html.lab-open:not(.phone) body {
   left: 0;
   border-left: 0;
   border-right: 1px solid var(--border);
+}
+
+/* Card MB: an upright tablet is too narrow to give the drawer 400 px (the room fell to ≈ 470 px and lost its rail),
+   so it gets the phone's bottom sheet over the chat columns; the video and its rail stay in view above it. */
+html.tablet-up .lab-drawer {
+  top: auto;
+  left: 0;
+  width: auto;
+  height: min(48dvh, 560px);
+  border-left: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* On an upright tablet the bottom left is the message box: 🐞 waits bottom right, over the queue column. */
+html.tablet-up .debug-fab {
+  left: auto;
+  right: max(12px, env(safe-area-inset-right));
 }
 
 html.phone .lab-drawer {
@@ -441,15 +460,15 @@ html.phone .lab-drawer {
 
 /* The room's windows pinned to the window's right edge move left of the open drawer (the page itself makes room with
    its padding; fixed things don't follow padding). */
-html.lab-open:not(.phone) .knock-cards {
+html.lab-open:not(.phone, .tablet-up) .knock-cards {
   right: calc(var(--lab-w) + 16px);
 }
 
-html.lab-open:not(.phone) .profile-pop {
+html.lab-open:not(.phone, .tablet-up) .profile-pop {
   right: calc(var(--lab-w) + 12px);
 }
 
-html.lab-open:not(.phone) .recap-invite {
+html.lab-open:not(.phone, .tablet-up) .recap-invite {
   right: calc(var(--lab-w) + 16px);
 }
 
