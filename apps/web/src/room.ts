@@ -1810,9 +1810,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
       // Film sayfasında basılan kısayol: sitedeki kısayol dinleyicileri (emoji, Enter, P) aynen işlesin.
       onKey: (key, up) => document.dispatchEvent(new KeyboardEvent(up ? 'keyup' : 'keydown', { key, bubbles: true, cancelable: true })),
-      onFullscreen: () => {
-        if (!fullscreen.isActive()) fullscreen.toggle();
-      },
+      // EXT1: the film's own ⛶ opens and closes the room's fullscreen, like ours.
+      onFullscreen: () => fullscreen.toggle(),
       onActivity: (edge) => fullscreen.poke(edge),
     });
     current = { player, slot, youtube: false, own: false };
