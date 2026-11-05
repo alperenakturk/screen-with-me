@@ -331,3 +331,10 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .cl-say, .cl-ref-mascot.react-cheer, .cl-ref-mascot.react-gasp { animation: none; }
 }
+
+/* GP2: smooth changes between the picker and a board (each fades and rises in when it appears). */
+#game-stage .mt .mt-table:not([hidden]), #game-stage .mt .cl-picker:not([hidden]) { animation: cl-enter 0.28s ease-out; }
+@keyframes cl-enter { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  #game-stage .mt .mt-table:not([hidden]), #game-stage .mt .cl-picker:not([hidden]) { animation: none; }
+}
