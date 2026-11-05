@@ -26,6 +26,7 @@ import sea1Art from './art/tutorial/sea-1-place.svg?raw';
 import sea2Art from './art/tutorial/sea-2-shoot.svg?raw';
 import sea3Art from './art/tutorial/sea-3-sink.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
+import { isPhoneLayout } from '../device.ts';
 
 type State = Extract<SeaServerMessage, { t: 'state' }>;
 
@@ -77,6 +78,8 @@ const TEXT = {
     full: 'The table is full.',
     version: 'Reload the page for the new version.',
     reconnecting: 'Reconnecting…',
+    aimed: 'Aiming at {cell}: tap it again, or Fire',
+    fire: 'Fire at {cell}',
     how1: 'Place your fleet',
     how1Line: 'Shuffle, drag or turn your ships; they may not touch. Then press Ready.',
     how2: 'Call your shots',
@@ -131,6 +134,8 @@ const TEXT = {
     full: 'Masa dolu.',
     version: 'Yeni sürüm için sayfayı yenile.',
     reconnecting: 'Yeniden bağlanıyor…',
+    aimed: 'Nişan {cell}: yine dokun ya da Ateş et',
+    fire: '{cell} hedefine ateş',
     how1: 'Filonu yerleştir',
     how1Line: 'Gemilerini karıştır, sürükle ya da çevir; birbirine değemezler. Sonra Hazır de.',
     how2: 'Atışını yap',
@@ -278,9 +283,23 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     note = '';
     render();
   }
+  /**
+   * The owner's pick A (GP2): on a phone a cell is 34 px, so the first tap only aims (a crosshair and the cell's name)
+   * and a second tap on it, or the big Fire button, fires; a wrong tap costs nothing. A computer fires on one click.
+   */
+  let aimAt: number | null = null;
   function onTheirs(cell: number): void {
     if (!state || state.phase !== 'play' || state.turn !== mySeat()) return;
     if (state.seas[other()]!.shots.some(([c]) => c === cell)) return;
+    if (isPhoneLayout() && aimAt !== cell) {
+      aimAt = cell;
+      playSound('seaAim');
+      return render();
+    }
+    fire(cell);
+  }
+  function fire(cell: number): void {
+    aimAt = null;
     send({ t: 'shot', cell });
   }
   mine.grid.addEventListener('click', (e) => {
@@ -375,6 +394,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       if (sunk.has(i)) cell.classList.add('sunk');
       if (h === undefined && empty.has(i)) cell.classList.add('clear');
       if (s.last && s.last.cell === i && s.last.by !== seat) cell.classList.add('last');
+      if (!isMine && myTurn && aimAt === i) cell.classList.add('aimed');
       const can = isMine ? placing() : myTurn && h === undefined;
       cell.disabled = !can;
       const what = h === undefined ? (ship !== undefined && (isMine || s.phase === 'over') ? tx('myShip') : tx('water')) : sunk.has(i) ? tx('shotSunk') : h ? tx('shotHit') : tx('shotMiss');
@@ -411,6 +431,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       if (last.by === me) said = last.result === 'miss' ? tx('miss') : last.result === 'sunk' ? tx('sunk') : SEA_RULES.again ? tx('hit') : tx('hitOnce');
       else if (me >= 0) said = tx(last.result === 'miss' ? 'theyMiss' : last.result === 'sunk' ? 'theySunk' : 'theyHit', { name: nameOfSeat(last.by) });
     }
+    if (aimAt !== null && s.turn === me) return tx('aimed', { cell: cellName(aimAt) });
     const turn = s.turn === me ? tx('yourTurn') : s.players[s.turn]?.bot ? tx('botTurn') : me < 0 ? tx('watchTurn', { name: nameOfSeat(s.turn) }) : tx('theirTurn', { name: nameOfSeat(s.turn) });
     return said ? `${said} ${turn}` : turn;
   }
@@ -469,6 +490,10 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       }
       button(ready ? tx('notReady') : `✓ ${tx('ready')}`, 'sea-ready-btn', () => send({ t: 'ready', on: !ready }), !ready);
     }
+    if (me >= 0 && s.phase === 'play' && s.turn === me && aimAt !== null) {
+      const at = aimAt;
+      button(`🎯 ${tx('fire', { cell: cellName(at) })}`, 'sea-fire', () => fire(at), true);
+    }
     if (me >= 0 && s.phase === 'over') button(tx('rematch'), 'sea-rematch', () => send({ t: 'rematch' }), true);
     if (me < 0 && s.players.some((p) => !p || (!p.bot && !p.online))) button(tx('sit'), 'sea-sit', () => send({ t: 'sit' }), true);
     actions.replaceChildren(...buttons);
@@ -478,6 +503,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     if (!state) return;
     const s = state;
     const me = mySeat();
+    // An aim lasts only while it is still my turn and the cell still free.
+    if (aimAt !== null && (s.phase !== 'play' || s.turn !== me || s.seas[other()]!.shots.some(([c]) => c === aimAt))) aimAt = null;
     root.dataset.phase = s.phase;
     root.classList.toggle('watching', me < 0);
     // My sea is seat `me` (or seat 0 for a watcher); "theirs" is the other.

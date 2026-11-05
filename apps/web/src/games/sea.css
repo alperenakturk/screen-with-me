@@ -120,3 +120,11 @@
   .sea-ref-mascot { transition: none; }
   .sea-ref-mascot.cheer { animation: none; }
 }
+
+/* GP2 (owner's pick A): a phone's first tap aims: a gold crosshair on the cell; the second tap (or Fire) shoots. */
+.sea-cell.aimed { background: rgb(255 198 90 / 0.3); box-shadow: inset 0 0 0 2px var(--sb-gold), 0 0 12px rgb(255 198 90 / 0.6); z-index: 2; }
+.sea-cell.aimed .sea-mark::before {
+  content: ''; width: 70%; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--sb-gold); box-sizing: border-box;
+  background: linear-gradient(var(--sb-gold), var(--sb-gold)) center / 2px 100% no-repeat, linear-gradient(var(--sb-gold), var(--sb-gold)) center / 100% 2px no-repeat;
+}
+.sea-fire { font-weight: 800; }

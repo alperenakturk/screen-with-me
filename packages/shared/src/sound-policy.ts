@@ -66,6 +66,8 @@ export const SOUNDS = {
   gardenNew: { group: 'game', level: 0.7, gap: 1500 },
   // 🚢 Sea Battle: a splash for a miss, a low thud for a hit, a short fanfare when a ship sinks.
   seaMiss: { group: 'game', level: 0.55, gap: 150 },
+  /** GP2: a phone's first tap on their sea aims (a soft click), the second fires. */
+  seaAim: { group: 'game', level: 0.35, gap: 80 },
   seaHit: { group: 'game', level: 0.8, gap: 150 },
   seaSunk: { group: 'game', level: 0.9, gap: 600 },
 } as const satisfies Record<string, SoundSpec>;
