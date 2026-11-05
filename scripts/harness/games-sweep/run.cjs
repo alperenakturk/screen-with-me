@@ -114,6 +114,13 @@ function measure(mayScroll) {
       if (beside && overlap > br.height * 0.3 && r.height > 60) hero += `${name(part)} stands beside the board; `;
     }
   }
+  // CL2: a Draw & Guess / Quiz lobby is one card: no players column beside it.
+  const lobby = stage.querySelector('.draw-page.draw-lobby');
+  if (lobby) {
+    const side = lobby.querySelector('.draw-side');
+    if (side && visible(side)) hero += 'the lobby has a column beside its card; ';
+    if (!lobby.querySelector('.lobby-players')) hero += 'the lobby shows no players row; ';
+  }
   const page = document.scrollingElement;
   return {
     stage: [Math.round(box.width), Math.round(box.height)],
@@ -187,7 +194,7 @@ function measure(mayScroll) {
         check(m.small.length === 0, `${label}: no text under 13 px`, m.small.join(' | '));
         check(m.cut.length === 0, `${label}: nothing cut off`, m.cut.join(' | '));
         check(!m.board, `${label}: the board is a fair size`, m.board);
-        check(!m.hero, `${label}: the board is the hero (largest, nothing beside it)`, m.hero);
+        check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
       }
       await ctx.close();
