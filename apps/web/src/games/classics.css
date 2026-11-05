@@ -294,3 +294,22 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 @media (prefers-reduced-motion: reduce) {
   #game-stage .mt .cl-card { transition: none; }
 }
+
+/* Reversi: the same 8 × 8 board on green felt; dark (X) and light (O) discs, a gold dot on each legal cell on my turn,
+   the last disc's cell lit, and the discs it turned over flip round. */
+.rv-board .dama-cell { background: #2f7a4c; box-shadow: inset 0 0 0 0.5px #1d5534; }
+.rv-board .dama-cell.mark-X::before { background: radial-gradient(circle at 35% 30%, #5a5a6a, #16141f); }
+.rv-board .dama-cell.mark-O::before { background: radial-gradient(circle at 35% 30%, #ffffff, #e9dfc8); }
+.rv-board .dama-cell.target { cursor: pointer; }
+.rv-board .dama-cell.target:hover { background: #3a9360; }
+.rv-board .dama-cell.lit { box-shadow: inset 0 0 0 100vmax rgba(255, 198, 90, 0.22), inset 0 0 0 0.5px #1d5534; }
+.rv-board .dama-cell.flip::before { animation: rv-flip 0.4s ease-in-out; }
+@keyframes rv-flip { 50% { transform: scaleX(0.05); } }
+.dama-man.rv-man.mark-X { background: radial-gradient(circle at 35% 30%, #5a5a6a, #16141f); box-shadow: 0 0 0 1px #fff5; }
+.dama-man.rv-man.mark-O { background: radial-gradient(circle at 35% 30%, #fff, #e9dfc8); box-shadow: 0 0 0 1px #0005; }
+#game-stage .mt[data-board='reversi'] .dama-board {
+  padding: 3%; border-radius: 12px; background: linear-gradient(135deg, #1f5a37, #123522); box-shadow: inset 0 0 0 2px #0b2416, 0 14px 30px rgb(0 0 0 / 0.4);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rv-board .dama-cell.flip::before { animation: none; }
+}

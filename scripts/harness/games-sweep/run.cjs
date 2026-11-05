@@ -29,6 +29,7 @@ const GAMES = {
   dama: { table: 'classics', board: 'dama' },
   chess: { table: 'classics', board: 'chess' },
   backgammon: { table: 'classics', board: 'backgammon' },
+  reversi: { table: 'classics', board: 'reversi' },
   draw: { table: 'draw' },
   quiz: { table: 'quiz' },
   poker: { table: 'poker' },
