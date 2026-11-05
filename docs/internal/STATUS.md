@@ -491,6 +491,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.61 (🎮 Sea Battle, a new room game):**
+- [ ] 🎮 → Sea Battle with a friend: you both see only your own fleet; move a ship (tap it, then tap water), turn it,
+  shuffle, then Ready. Shoot in turns: a splash for a miss, a thud for a hit (shoot again), a fanfare when a ship sinks.
+- [ ] The friend never sees your ships until the game is over; then both fleets show. Play again: the other shoots first.
+- [ ] Alone: "Play Glowbeam" (Easy / Medium) and play a whole game; Medium follows a hit along the ship.
+- [ ] On your phone: one sea at a time with "Their sea / My sea"; it turns to their sea on your turn.
+
 **0.9.97.59 (🎮 card CL2: the Classics redesign + "switch game at any time"):**
 - [ ] 🎮 → Classics: the table opens as a small window showing only the game cards (XOX, Four in a Row, dama, chess,
   backgammon); pick chess: the window takes the board's shape, the board is the biggest thing in it, the other player

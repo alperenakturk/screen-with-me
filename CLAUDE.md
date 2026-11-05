@@ -938,6 +938,23 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   against Glowbeam, a finished game, Glowbeam moving first, two people), `games-sweep` (the board is the largest thing
   and nothing sits beside it; lobbies without a side column), harness `classics` (Change game asks, Cancel, End and
   change).
+  **🚢 Sea Battle (Game Studio, owner's pick C, `docs/internal/design/games/sea-battle.md`):** room kind `sea`, its own
+  object `Sea` (`apps/server/src/sea.ts`, binding `FLEETS`, migration `v12`, `/api/sea/:id/ws`) on the Poker pattern:
+  both fleets live only there and every connection gets its own view (`view`: my ships, the other sea's shots and sunk
+  ships; both fleets once the game is over); watchers never see a ship. Rules, protocol and the bot in
+  `packages/shared/src/games/sea.ts`: `SEA_RULES` holds the owner's rule picks in one place (sea size, fleet, shoot
+  again after a hit, may ships touch), `checkFleet`, `randomFleet`, `shotResult`, `sunkShips`, `knownEmpty` (water around
+  a sunk ship when ships may not touch); Glowbeam `botShot` (easy: random, then next to a hit; medium: counts how the
+  ships afloat could lie and follows a hit along its line), 0.7 s a shot, a seat of its own (`bot`). Messages `place`
+  (checked), `shuffle`, `ready`, `shot` (my turn, a new cell), `bot`, `sit`, `rematch` (swaps who shoots first), `lab`
+  (`oneLeft`, `reveal`, local lab server only). The page `games/sea.ts` + `sea.css` (lazy chunk, own `TEXT`, class prefix
+  `sea-`; Snack Bar owns `sb-`): placing shows only my sea (tap a ship, tap water; Turn / R; drag; Shuffle; Ready), the
+  battle both seas side by side on a computer (theirs bigger, the sea being shot at outlined in gold), one sea at a time
+  with a "Their sea / My sea" switch in a narrow window, flipping to their sea on my turn; marks are shapes (ring,
+  burst, dark gold outline), cells named "A1: water"; sounds `seaMiss` / `seaHit` / `seaSunk`. Lab commands `sea.bot`,
+  `sea.oneLeft`, `sea.reveal`. Tests: unit `sea.test.ts`, e2e `sea.mjs` (no message ever carries a hidden ship) +
+  `lab-server.mjs`, harness `scripts/harness/sea/run.cjs` (in CI's "Games quality"), the `games-sweep` entries `sea` /
+  `seaPlay`.
   **Draw & Guess (0.9.72):** separate object `Draw` (`apps/server/src/draw.ts`, binding `DRAWS`, migration `v3`,
   `/api/draw/:id/ws`), protocol and pure rules in `packages/shared/src/games/draw.ts` (guess matching: lower case +
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer
