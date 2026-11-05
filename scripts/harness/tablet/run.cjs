@@ -163,7 +163,8 @@ function uprightChecks(where, m) {
       m = await measure(page);
       uprightChecks('iPad turned back upright', m);
 
-      // A board game opens in the video's place.
+      // A board game opens in the free mini window (CL2, 0.9.97.59; the Planner's pick A on the gate check G98: one rule
+      // everywhere except phones). It fits on screen and moves by its head.
       await page.evaluate(() => document.querySelector('#dock-game')?.click());
       await page.waitForSelector('#game-menu:not([hidden])');
       await page.waitForTimeout(400);
@@ -174,10 +175,29 @@ function uprightChecks(where, m) {
         const s = document.querySelector('#game-stage');
         const w = document.querySelector('.player-wrap')?.getBoundingClientRect();
         const g = s?.getBoundingClientRect();
-        return { inWrap: !!s?.closest('.player-wrap'), float: s?.classList.contains('float'), g: g && { t: Math.round(g.top), b: Math.round(g.bottom), h: Math.round(g.height) }, w: w && { t: Math.round(w.top), b: Math.round(w.bottom) }, sh: document.documentElement.scrollHeight, vh: innerHeight };
+        const c = document.querySelector('.chat-panel')?.getBoundingClientRect();
+        const over = g && c ? Math.max(0, Math.min(g.right, c.right) - Math.max(g.left, c.left)) * Math.max(0, Math.min(g.bottom, c.bottom) - Math.max(g.top, c.top)) : 0;
+        return { float: s?.classList.contains('float'), g: g && { l: Math.round(g.left), r: Math.round(g.right), t: Math.round(g.top), b: Math.round(g.bottom), h: Math.round(g.height) }, w: w && { t: Math.round(w.top), b: Math.round(w.bottom) }, chatCovered: c ? Math.round((100 * over) / (c.width * c.height)) : null, sh: document.documentElement.scrollHeight, vh: innerHeight, vw: innerWidth };
       });
       await page.screenshot({ path: `${OUT}/iPad-xox.png` });
-      check(game.inWrap && !game.float && game.g?.h > 200, 'iPad upright: XOX opens in the video\'s place', game);
+      check(game.float && game.g?.h > 200 && game.g.l >= 0 && game.g.t >= 0 && game.g.r <= game.vw && game.g.b <= game.vh, 'iPad upright: XOX opens in the free window, whole on screen', game);
+      console.log(`info iPad upright: the game window covers ${game.chatCovered} % of the chat column`);
+      const head = await page.evaluate(() => {
+        const r = document.querySelector('#game-stage .game-stage-title')?.getBoundingClientRect();
+        return r && { x: r.left + Math.min(40, r.width / 2), y: r.top + r.height / 2 };
+      });
+      if (head) {
+        await page.mouse.move(head.x, head.y);
+        await page.mouse.down();
+        await page.mouse.move(head.x - 120, head.y + 200, { steps: 6 });
+        await page.mouse.up();
+        await page.waitForTimeout(200);
+      }
+      const moved = await page.evaluate(() => {
+        const g = document.querySelector('#game-stage').getBoundingClientRect();
+        return { l: Math.round(g.left), t: Math.round(g.top), r: Math.round(g.right), b: Math.round(g.bottom), vw: innerWidth, vh: innerHeight };
+      });
+      check(head && (moved.l !== game.g.l || moved.t !== game.g.t) && moved.r <= moved.vw && moved.b <= moved.vh, 'iPad upright: the game window moves by its head and stays on screen', { before: game.g, moved });
       check(game.sh <= game.vh + 1, 'iPad upright with a game: the page never scrolls', game);
       await page.evaluate(() => document.querySelector('#game-stage .game-minimize')?.click());
       await page.waitForTimeout(300);

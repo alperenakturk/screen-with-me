@@ -1358,6 +1358,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           if (wanted) sessionSave(`create:${roomId}`, '');
           // Ana sayfada link yapıştırılarak kurulduysa: oda boşken o video açılır (link kutusunun yolundan geçer:
           // sayfa linkinde eklenti sorusu vb. aynen çalışsın).
+          // The home page's "Scroll Shorts together" door: today's popular Shorts start playing in the empty room.
+          if (sessionLoad(`shorts:${roomId}`)) {
+            sessionSave(`shorts:${roomId}`, '');
+            if (!message.state.item && message.queue.length === 0) startDoorFeed();
+          }
           const start = sessionLoad(`start:${roomId}`);
           if (start) {
             sessionSave(`start:${roomId}`, '');
@@ -2319,6 +2324,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     note: (text) => flashHint(shortsOn ? feedButton : mediaInput, text, 5000),
     changed: () => renderFeed(),
   });
+  /** The home door's feed: 🎲 Discover "Popular" in the region chosen for Discover (the viewer's own by default). */
+  function startDoorFeed(): void {
+    feed.start(t('pool.popular'), { kind: 'pool', pool: 'popular', region: poolRegion });
+  }
   function renderFeed(): void {
     const topic = feed.topic;
     feedButton.classList.toggle('on', topic !== null);
