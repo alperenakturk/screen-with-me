@@ -26,6 +26,12 @@ If personal data may have been exposed, we follow our [data breach plan](docs/in
 We aim to answer within 7 days and to fix confirmed problems as soon as we can. When a fix ships, we will say so in
 the release notes (and credit you if you want).
 
+## Abuse in a room, illegal content, copyright
+
+Not a security problem? Content or behaviour in a room (harassment, illegal content, a copyright notice) is handled as
+described in the [terms of use](https://screen-with-me.swm-server.workers.dev/terms.html#abuse): e-mail
+**screenwithme.app@gmail.com** with the subject "Report". We act within 72 hours.
+
 ## Supported versions
 
 Only the live site (https://screen-with-me.swm-server.workers.dev) and the latest extension version get fixes.

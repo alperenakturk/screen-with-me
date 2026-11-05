@@ -213,8 +213,13 @@ implement, test, ship.
   controller, legal bases, recipients, transfers abroad, retention table, rights, complaints and age 13+; the help
   harness checks its numbers against the code; breach plan in `docs/internal/breach-plan.md`. Left: the lawyer's
   read-through before the store submission 👤.
-- [ ] **(added)** Terms of use (none yet): acceptable use, no illegal content, no warranty, account-free bans,
-  minimum age (13+), governing law.
+- [x] **(added)** Terms of use: `apps/web/public/terms.html` (EN + TR, card TOS): what Sidelit is, age 13+ (a parent
+  under 16), acceptable use (no illegal content, harassment, DRM circumvention, breaking YouTube's / TikTok's / Vimeo's
+  terms), YouTube's Terms of Service linked, hosts' powers, user content (theirs, room-only, our right to remove), an
+  abuse / takedown contact ("Report", 72 hours), no warranty, liability, governing law (Türkiye, Istanbul courts;
+  consumers keep their own country's protection), dated changes; linked from the footer, the join card, the profile
+  menu, the help page (`#report`), the extension page and `SECURITY.md`; the help harness checks it. Left: the
+  lawyer's read-through with the privacy policy before the store submission 👤.
 - [ ] **(added)** YouTube API Services Terms: we embed YouTube; the terms require linking YouTube's ToS and Google's
   privacy policy in our privacy policy and following their branding rules.
 - [ ] Chrome Web Store program policies: single purpose, permission justification, Limited Use of user data, no

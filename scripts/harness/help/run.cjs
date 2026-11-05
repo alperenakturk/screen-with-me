@@ -205,6 +205,69 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     check(!!dateEn && !!dateTr && dateEn[1] === dateTr[1] && dateEn[3] === dateTr[3] && ids.en.text.includes(`${dateEn[1]} ${dateEn[2]} ${dateEn[3]}:`), 'privacy: a dated change line for the date at the top, the same in both languages', { en: ids.en.date, tr: ids.tr.date });
   }
 
+  // Card TOS: the terms of use, in both languages: every contents link has its section, the same sections in EN and TR,
+  // a dated change line, YouTube's Terms linked, the abuse contact with its answer time, the room retention it states
+  // matching the privacy policy's numbers; linked from the footer, the help page and the extension page.
+  {
+    const nums = {
+      empty: constant('apps/server/src/room.ts', 'EMPTY_ROOM_TTL_MS') / 3_600_000,
+      saved: constant('apps/server/src/room.ts', 'SAVED_ROOM_TTL_MS') / 86_400_000,
+    };
+    const terms = {};
+    for (const lang of ['en', 'tr']) {
+      const page = await ctx.newPage();
+      const problems = [];
+      page.on('pageerror', (e) => problems.push(e.message));
+      page.on('console', (m) => m.type() === 'error' && problems.push(m.text()));
+      await page.goto(`${base}/terms.html?lang=${lang}`);
+      const info = await page.evaluate((lang) => {
+        const block = document.querySelector(`[data-lang-block="${lang}"]`);
+        const local = [...block.querySelectorAll('a[href^="#"]')].map((a) => a.getAttribute('href').slice(1));
+        return {
+          shown: !block.hidden,
+          title: document.title,
+          local,
+          unresolved: local.filter((id) => !block.querySelector(`[id="${id}"]`)),
+          ids: [...block.querySelectorAll('h2[id]')].map((e) => e.id.replace(/-tr$/, '')),
+          youtube: !!block.querySelector('a[href^="https://www.youtube.com/t/terms"]'),
+          privacy: !!block.querySelector(`a[href^="/privacy.html?lang=${lang}"]`),
+          date: block.querySelector('.muted').textContent,
+          text: block.innerText.replace(/\s+/g, ' '),
+        };
+      }, lang);
+      terms[lang] = info;
+      check(info.shown && info.local.length >= 13 && info.unresolved.length === 0, `terms ${lang}: every contents link has its section`, info.unresolved);
+      check(info.youtube && info.privacy, `terms ${lang}: links YouTube's Terms of Service and the privacy policy`);
+      const abuse = lang === 'en' ? ['"Report"', 'within 72 hours', 'a day after the last person leaves (30 days for a saved room)'] : ['"Bildirim"', '72 saat içinde', 'son kişi çıktıktan bir gün sonra silinir (kayıtlı odada 30 gün)'];
+      const missing = abuse.filter((x) => !info.text.includes(x));
+      check(nums.empty === 24 && nums.saved === 30 && missing.length === 0, `terms ${lang}: the abuse contact, its answer time and the room's lifetime as the code keeps it`, missing);
+      check(/screenwithme\.app@gmail\.com/.test(info.text) && /Alperen Aktürk/.test(info.text), `terms ${lang}: names who runs Sidelit and the contact address`);
+      check(/13/.test(info.text) && /16/.test(info.text), `terms ${lang}: the same age rule as the privacy policy (13+, a parent under 16)`);
+      check(problems.length === 0, `terms ${lang}: no CSP or page errors`, problems);
+      await page.setViewportSize({ width: 360, height: 740 });
+      check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `terms ${lang}: no sideways scroll on a phone`);
+      await page.close();
+    }
+    check(terms.en.ids.length >= 13 && JSON.stringify(terms.en.ids) === JSON.stringify(terms.tr.ids), 'terms: English and Turkish have the same sections', { en: terms.en.ids, tr: terms.tr.ids });
+    const dEn = /Last updated: (\d+) (\w+) (\d{4})/.exec(terms.en.date);
+    const dTr = /Son güncelleme: (\d+) (\S+) (\d{4})/.exec(terms.tr.date);
+    check(!!dEn && !!dTr && dEn[1] === dTr[1] && dEn[3] === dTr[3] && terms.en.text.includes(`${dEn[1]} ${dEn[2]} ${dEn[3]}:`), 'terms: a dated change line for the date at the top, the same in both languages', { en: terms.en.date, tr: terms.tr.date });
+    const linked = ['index.html', 'public/help.html', 'public/extension.html'].filter((f) => !fs.readFileSync(path.join(ROOT, 'apps/web', f), 'utf8').includes('/terms.html'));
+    check(linked.length === 0 && fs.readFileSync(path.join(ROOT, 'apps/web/src/room.ts'), 'utf8').includes('id="join-terms"'), 'terms: linked from the footer, the join card, the help page and the extension page', linked);
+    const siteUp = await fetch(SITE).then(() => true, () => false);
+    if (!siteUp) console.log(`skip the footer's terms link: ${SITE} is not running`);
+    else {
+      const home = await ctx.newPage();
+      await home.goto(`${SITE}/`);
+      await home.evaluate(() => localStorage.setItem('lang', 'tr'));
+      await home.reload();
+      await home.waitForFunction(() => document.querySelector('a[data-terms-link]')?.getAttribute('href') !== '/terms.html', null, { timeout: 5000 }).catch(() => {});
+      const footer = await home.evaluate(() => document.querySelector('a[data-terms-link]')?.getAttribute('href'));
+      check(footer === '/terms.html?lang=tr', 'terms: the footer opens the terms in the page\'s language', footer);
+      await home.close();
+    }
+  }
+
   // A section link in Turkish (the room's "can't reach" card) lands on the Turkish section.
   const tr = await ctx.newPage();
   await tr.goto(`${base}/help.html?lang=tr#connection`);

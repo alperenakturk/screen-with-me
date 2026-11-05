@@ -508,6 +508,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.66 (card TOS: the terms of use):**
+- [ ] Read the new terms page (footer → Terms; join card and profile menu too), in English and Turkish: Turkish law and
+  Istanbul (Çağlayan) courts, 13+ (a parent's permission under 16), "as is" without a money cap, abuse reports by
+  e-mail with the subject "Report" answered within 72 hours. Anything that reads wrong, tell the Planner.
+- [ ] Help page → "Report someone or something in a room": the steps make sense.
+- [ ] Before the store submission: a lawyer reads the terms with the privacy policy.
+
 **0.9.97.65 (🎮 ⚫ Reversi on the Classics shelf):**
 - [ ] 🎮 → Together → Classics: the picker has a sixth card, Reversi. Pick it: 8 × 8 on green felt, two discs each in
   the middle, four gold dots on my first turn.
