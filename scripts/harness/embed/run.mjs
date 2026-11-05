@@ -448,13 +448,15 @@ check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'p
     const at = (r) => r.x <= x && x <= r.r && r.y <= y && y <= r.b;
     return !rects[1] || !at(rects[1]) || rects.slice(2).some(at);
   };
-  const BOX = (sel) => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return r.width ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; })()`;
+  // Helpers defined in the overlay page once, then called with fixed selectors.
+  const HELPERS = `(() => { window.__swmBox = (sel) => { const e = document.querySelector(sel); if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return r.width ? { x: r.left, y: r.top, r: r.right, b: r.bottom } : null; }; window.__swmCenter = (sel) => { const c = document.querySelector(sel); if (!c) return null; const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }; return 1; })()`;
+  await a.evalFrame('shell=1', HELPERS);
   await a.evalFrame('shell=1', `document.getElementById('dock-game').click(); 1`);
-  const hall = await until(() => a.evalFrame('shell=1', `document.querySelector('#game-menu [data-kind="classics"]') ? ${BOX('#game-menu')} : null`));
+  const hall = await until(() => a.evalFrame('shell=1', `document.querySelector('#game-menu [data-kind="classics"]') ? __swmBox('#game-menu') : null`));
   check(!!hall && !!(await until(() => seen(hall))), 'film sayfası: oyun salonu filmin üstünde görünüyor (adacık) (EXT1)', JSON.stringify(hall));
   await a.shot('1e-oyun-salonu');
   await a.evalFrame('shell=1', `document.querySelector('#game-menu [data-kind="classics"]').click(); 1`);
-  const stage = await until(() => a.evalFrame('shell=1', `document.querySelector('#game-stage .xox-cell, #game-stage .dama-cell') ? ${BOX('#game-stage')} : null`), 10000);
+  const stage = await until(() => a.evalFrame('shell=1', `document.querySelector('#game-stage .xox-cell, #game-stage .dama-cell') ? __swmBox('#game-stage') : null`), 10000);
   check(!!stage && !!(await until(() => seen(stage))), 'film sayfası: Klasikler masası filmin yerinde görünüyor (EXT1)', JSON.stringify(stage));
   // A real move against Glowbeam: XOX picked on the game shelf (it covers the board until a game is picked).
   await a.evalFrame('shell=1', `document.querySelector('#game-stage .cl-box[data-board="xox"]')?.click(); 1`);
@@ -462,17 +464,17 @@ check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'p
   await a.evalFrame('shell=1', `document.querySelector('#game-stage .cl-bot-level')?.click(); 1`);
   await a.sleep(1500);
   const BOARD = `(document.getElementById('xox-board')?.innerHTML ?? '')`;
-  const CENTER = (sel) => `(() => { const c = document.querySelector(${JSON.stringify(sel)}); if (!c) return null; const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`;
+  await a.evalFrame('shell=1', HELPERS);
   // The table may still switch to the board it remembers: try until a move of mine lands.
   let dama = false;
   let mine = null;
   for (let i = 0; i < 8 && !mine; i++) {
     const before = await a.evalFrame('shell=1', BOARD);
     dama = await a.evalFrame('shell=1', `!!document.querySelector('#game-stage .dama-cell')`);
-    const first = await a.evalFrame('shell=1', CENTER(dama ? '#game-stage .dama-cell.movable' : '#xox-board > :nth-child(5)'));
+    const first = await a.evalFrame('shell=1', dama ? `__swmCenter('#game-stage .dama-cell.movable')` : `__swmCenter('#xox-board > :nth-child(5)')`);
     if (first) await a.click(first.x, first.y);
     if (dama) {
-      const to = await until(() => a.evalFrame('shell=1', CENTER('#game-stage .dama-cell.target')), 1500);
+      const to = await until(() => a.evalFrame('shell=1', `__swmCenter('#game-stage .dama-cell.target')`), 1500);
       if (to) await a.click(to.x, to.y);
     }
     mine = await until(async () => {
@@ -493,7 +495,7 @@ check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'p
   await a.evalFrame('shell=1', `document.querySelector('#game-menu [data-tab="side"]').click(); 1`);
   await until(() => a.evalFrame('shell=1', `!!document.querySelector('#game-menu [data-solo="snack"]')`));
   await a.evalFrame('shell=1', `document.querySelector('#game-menu [data-solo="snack"]').click(); 1`);
-  const scene = await until(() => a.evalFrame('shell=1', `(() => { document.querySelector('.htp:not([hidden]) .htp-skip')?.click(); return ${BOX('.sb-scene')}; })()`), 10000);
+  const scene = await until(() => a.evalFrame('shell=1', `(() => { document.querySelector('.htp:not([hidden]) .htp-skip')?.click(); return __swmBox('.sb-scene'); })()`), 10000);
   check(!!scene && !!(await until(() => seen(scene))), 'film sayfası: Snack Bar penceresi filmin üstünde görünüyor (EXT1)', JSON.stringify(scene));
   await a.shot('1g-snack-bar');
   await a.evalFrame('shell=1', `document.querySelector('#game-stage .game-minimize')?.click(); 1`);
