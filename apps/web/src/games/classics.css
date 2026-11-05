@@ -313,3 +313,21 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .rv-board .dama-cell.flip::before { animation: none; }
 }
+
+/* GP2: Glowbeam the referee's reactions: a short line in a bubble above it and a little jump. */
+.cl-ref { position: relative; }
+.cl-say {
+  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); z-index: 4; max-width: 90%;
+  padding: 4px 10px; border-radius: 12px; background: #2a2160; color: #fff3d6; font-size: 14px; font-weight: 700;
+  white-space: nowrap; box-shadow: 0 0 0 1.5px rgb(255 198 90 / 0.6), 0 6px 16px rgb(0 0 0 / 0.4); pointer-events: none;
+  animation: cl-say-in 0.2s ease-out;
+}
+.cl-say[hidden] { display: none; }
+.cl-say[data-mood='cheer'] { color: #ffc65a; }
+.cl-ref-mascot.react-cheer { animation: cl-cheer 0.6s ease-in-out 1; }
+.cl-ref-mascot.react-gasp { animation: cl-gasp 0.5s ease-out 1; }
+@keyframes cl-say-in { from { opacity: 0; transform: translate(-50%, 4px); } }
+@keyframes cl-gasp { 30% { transform: scale(1.25) rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .cl-say, .cl-ref-mascot.react-cheer, .cl-ref-mascot.react-gasp { animation: none; }
+}
