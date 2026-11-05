@@ -83,6 +83,9 @@ This session can't read Cloudflare's or Google's dashboards (no account token he
 - **YouTube:** the e2e search check spends ≈ 101 units per deploy (cached when the words repeat); the owner reads the
   real numbers with the usage call above.
 - **GitHub Actions:** free (public repository).
+- **Uptime check:** 48 runs a day, each ≤ 2 page loads, 2 `/api/version` calls and 2 room joins (only on a retry);
+  it always joins the same one-time room `uptime-check` with the same browser id, so it keeps one small room alive and
+  stays far below every per-address limit (`CONNECT_LIMIT` and `ROOM_INFO_LIMIT` are 60 a minute).
 
 To see Cloudflare's numbers: dash.cloudflare.com → Workers & Pages → `screen-with-me` → Metrics (requests, errors,
 CPU) and → Durable Objects (requests, duration, rows, stored data); Account → Billing → Billable usage shows the day's

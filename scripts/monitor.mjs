@@ -12,6 +12,8 @@ const site = (args.find((a, i) => !a.startsWith('--') && (outAt < 0 || i !== out
 const RETRY_MS = Number(process.env.MONITOR_RETRY_MS ?? 60_000);
 const TIMEOUT_MS = 15_000;
 const PROTOCOL = 3; // packages/shared/src/protocol.ts PROTOCOL_VERSION
+const ROOM = 'uptime-check';
+const CID = 'uptimecheck0000001';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -44,10 +46,10 @@ const checks = {
   },
   'Room join': () =>
     new Promise((resolve, reject) => {
-      const room = 'monitor' + Math.random().toString(36).slice(2, 8);
-      const ws = new WebSocket(`${site.replace(/^http/, 'ws')}/api/rooms/${room}/ws`);
-      const cid = 'monitor' + Math.random().toString(36).slice(2, 12);
-      ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: PROTOCOL, name: 'Uptime check', avatar: 'robot', cid })));
+      // Always the same one-time room and the same browser id: the checks reuse one room (never saved, it deletes
+      // itself a day after the last check) and one member id, so they leave nothing behind and grow nothing.
+      const ws = new WebSocket(`${site.replace(/^http/, 'ws')}/api/rooms/${ROOM}/ws`);
+      ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: PROTOCOL, name: 'Uptime check', avatar: 'robot', cid: CID })));
       ws.addEventListener('message', (e) => {
         const msg = JSON.parse(String(e.data));
         if (msg.t === 'welcome') {
