@@ -105,6 +105,13 @@ b = await sounds(sam);
 check(b.join() === 'micOff,micOn', 'mic off / on sounds', b.join());
 
 // Chat: no sound while the chat is on screen, a sound when another tab is open.
+// A fresh room shows only the chat (card 6): the sync test makes it a room with a video, so the Queue tab exists.
+await alex.evaluate(() => document.getElementById('sync-test').click());
+await sam.waitForSelector('.room:not(.fresh)');
+await alex.waitForSelector('.room:not(.fresh)');
+await sleep(600);
+await sounds(sam);
+await sounds(alex);
 await alex.fill('#chat-input', 'merhaba');
 await alex.press('#chat-input', 'Enter');
 await sleep(800);
@@ -160,17 +167,21 @@ await sleep(300);
 
 // XOX: invite, every piece, win / lose.
 await sounds(sam);
-// The Classics table (0.9.97.35) opens on XOX.
-await alex.evaluate(() => document.getElementById('game-btn').click());
-await until(() => alex.evaluate(() => !!document.querySelector('#game-menu [data-kind="classics"]')));
-await alex.evaluate(() => {
-  document.querySelector('#game-menu [data-tab="together"]')?.click();
-  document.querySelector('#game-menu [data-kind="classics"]').click();
-});
+// card 2: the rail holds 🎮 on a computer; with the sync test playing it rests until the mouse comes to the edge.
+await alex.evaluate(() => document.getElementById('dock-game').click());
+// Classics (0.9.97.35): XOX is a board on the Classics table's shelf, no longer its own card in the hall.
+await alex.waitForSelector('#game-menu [data-kind="classics"]', { state: 'attached' });
+await alex.evaluate(() => document.querySelector('#game-menu [data-kind="classics"]').click());
+await alex.waitForSelector('#game-stage .cl-box[data-board="xox"]:not([disabled])');
+await alex.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="xox"]').click());
 await until(async () => (await sam.evaluate(() => window.__sounds.includes('gameInvite'))));
 b = await sounds(sam);
 check(count(b, 'gameInvite') === 1, 'Sam hears the game invite', b.join());
 await sam.click('#game-invite .btn.primary');
+// BH10 (reported to Game Studio): someone who joins a Classics table before the first move sees the shelf over the
+// board and must pick the board on it; close it the way a person does today.
+await sam.waitForSelector('#game-stage .cl-box[data-board="xox"]', { timeout: 8000 }).catch(() => {});
+await sam.evaluate(() => { const s = document.querySelector('#game-stage .cl-shelf'); if (s && !s.hidden) document.querySelector('#game-stage .cl-box[data-board="xox"]')?.click(); });
 const seated = await until(async () => {
   const s = await alex.textContent('#xox-status');
   return s && !s.includes('…') && (await alex.$$('#xox-board .xox-cell')).length === 9 ? s : null;

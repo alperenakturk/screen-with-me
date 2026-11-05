@@ -699,8 +699,9 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
     over = false;
     // The players' own bars hide when the mouse leaves a playing video: the dock too (not in fullscreen, where the
     // mouse never leaves).
+    // BH10 (owner): "Keep the controls open" holds it in the window too (it used to rest here, pinned or not).
     if (edgeMode()) setNear(false);
-    else if (!isActive() && getPlayer()?.isPaused() === false && !railBusy()) {
+    else if (!railPin && !isActive() && getPlayer()?.isPaused() === false && !railBusy()) {
       if (dockTimer !== null) clearTimeout(dockTimer);
       theater.classList.add('dock-idle');
     }
