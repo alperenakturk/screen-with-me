@@ -46,6 +46,8 @@ const check = (ok, label, extra = '') => {
     problems.push(`${label}${extra ? ` → ${extra}` : ''}`);
   }
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${!ok && extra ? ` → ${extra}` : ''}`);
+  // In CI each failure is also an annotation on the check (readable without the whole log).
+  if (!ok && process.env.GITHUB_ACTIONS) console.log(`::error title=${path.basename(__dirname)}::${label}${extra ? ` → ${extra}` : ''}`.replace(/\r?\n/g, ' '));
 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
