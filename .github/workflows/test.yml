@@ -167,6 +167,12 @@ jobs:
         run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
 
       # Only its end: the whole log of every e2e and harness run buried the failing step's own output.
+      # Card CAM1: cameras between a computer and a phone (both ways, the phone's camera row and sheet, switching in
+      # place, the rear camera not mirrored, a stopped or paused picture recovering by itself).
+      - name: Phone cameras
+        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+        run: node scripts/harness/cam-phone/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true

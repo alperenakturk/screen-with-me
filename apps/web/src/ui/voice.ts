@@ -13,7 +13,8 @@ import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
 import type { IpNoticeKind } from './ip-notice.ts';
-import { applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames } from './voice-devices.ts';
+import { CAM_KEY, CAM_NAME, applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames } from './voice-devices.ts';
+import { camStates, markSwitching, switchNote, watchCamVideo } from './cam-watch.ts';
 import { setIcon } from './icons.ts';
 import type { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
@@ -108,6 +109,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   // Quick voice buttons outside the card, pressing the card's own buttons: the Shorts bar (0.9.90.9, owner's idea: no
   // camera tiles there, cameras show inside the seats' avatar circles) and the fullscreen dock (0.9.91.1, with the
   // stream button too). Not in voice yet: the 🎙 joins.
+  const flipButton = root.querySelector<HTMLButtonElement>('#strip-flip');
+  const stripBox = root.querySelector<HTMLElement>('#strip-voice');
+  flipButton?.addEventListener('click', () => void switchCamera());
   /** The next join comes from a quick 📷 button: join with the camera on. */
   let joinWithCam = false;
   const quick = (['shorts', 'dock', 'strip'] as const).flatMap((id) => {
@@ -194,8 +198,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       send({ t: 'rtc', id, ...request } as ClientMessage);
     });
 
-  const announce = (on: boolean, mic?: boolean, cam?: boolean) =>
-    send(on ? { t: 'voice', on, mic: mic ?? true, ...(cam !== undefined ? { cam } : {}) } : { t: 'voice', on: false });
+  const announce = (on: boolean, mic?: boolean, cam?: boolean, switching?: boolean) => {
+    send(on ? { t: 'voice', on, mic: mic ?? true, ...(cam !== undefined ? { cam } : {}), ...(switching ? { switching: true } : {}) } : { t: 'voice', on: false });
+    // My own picture's "camera changing…" note follows at once (the room's echo comes a round trip later).
+    if (cam !== undefined) renderCams();
+  };
   /** Gelen kamera görüntüleri (üye → akış); görünüp görünmeyeceğine üyenin `voice.cam`'i karar verir. */
   const videos = new Map<string, MediaStream>();
   const onRemoteVideo = (memberId: string, stream: MediaStream | null) => {
@@ -249,12 +256,50 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   };
   let mode: VoiceMode = 'p2p';
   let p2p: P2pVoice | null = null;
-  let ext: ExtVoice | null = null;
+  /** How many cameras this device has (CAM1), and whether my camera was on at the last draw. */
+  let camCount = 0;
+  let camWasOn = false;
+    let ext: ExtVoice | null = null;
   // 🐞 Test Lab: each voice connection's state (ids shortened; read only).
+  // CAM1: camera accidents on this tab's own side (the 🎬 tab), and every camera picture's state on 📊 Status.
+  const camReady = () => (p2p && client === p2p && client.camEnabled ? true : 'my camera is not on (join voice, press 📷)');
   debugHooks.register('voice', () => ({
+    commands: [
+      {
+        id: 'voice.switchCam',
+        title: 'Camera: switch to the next camera',
+        help: 'My camera goes to the next one on this device in place (as on a phone: front, rear, wide); the others see "camera changing…".',
+        tab: 'video',
+        where: 'camera on',
+        available: camReady,
+        run: async () => {
+          await switchCamera();
+          return `camera: ${p2p?.camera?.getVideoTracks()[0]?.label || 'switched'}`;
+        },
+      },
+      {
+        id: 'voice.camPause',
+        title: 'Camera: the others get no picture for N s',
+        help: 'My picture stops reaching the others for N seconds (default 6), as when a phone stalls: their picture must say so and come back.',
+        tab: 'video',
+        where: 'camera on',
+        available: camReady,
+        run: async (arg?: string) => {
+          const n = Number(arg?.trim());
+          const s = Number.isFinite(n) && arg?.trim() ? Math.min(30, Math.max(1, n)) : 6;
+          if (!(await p2p?.labCamPause(s * 1000))) throw new Error('my camera is not on');
+          return `no picture for the others for ${s} s`;
+        },
+      },
+    ],
     status: () => {
       const peers = p2p?.peerStates() ?? [];
-      return [['Voice peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : ext ? 'on the film page (extension)' : 'none']];
+      const cams = camStates();
+      return [
+        ['Voice peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : ext ? 'on the film page (extension)' : 'none'],
+        ...(p2p?.camEnabled ? ([['My camera', `${p2p.camFacing ?? 'facing ?'}${p2p.camSwitching ? ' · switching' : ''}`]] as [string, string][]) : []),
+        ['Camera pictures', cams.length ? cams.map((c) => `${c.label}: ${c.state}${c.ms > 1500 ? ` (${(c.ms / 1000).toFixed(1)} s no frame)` : ''}`).join(', ') : 'none'],
+      ];
     },
   }));
   /** Sunucu sesi destekliyor mu / eklenti katmanda sesi destekliyor mu (sadece kabukta gerekir). */
@@ -414,6 +459,15 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       cam.title = camLabel;
       cam.setAttribute('aria-label', camLabel);
     }
+    // CAM1: the phone's faces strip switches the camera (front / rear / another lens) with one press.
+    if (flipButton) {
+      flipButton.hidden = !(camOn && p2p && client === p2p && camCount > 1) || (stripBox?.hidden ?? true);
+      const flipText = t('voice.switchCam');
+      flipButton.title = flipText;
+      flipButton.setAttribute('aria-label', flipText);
+      if (!flipButton.querySelector('svg')) setIcon(flipButton, 'cam-flip');
+      flipButton.disabled = !!p2p?.camSwitching;
+    }
     renderCams();
   }
 
@@ -433,6 +487,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       video.srcObject = stream;
       void video.play().catch(() => {});
     }
+    // CAM1: the picture is watched (replayed when paused, a note when it shows nothing); "camera changing…" while
+    // that person switches cameras.
+    watchCamVideo(video, box, name, () => switchNote(memberId));
     box.querySelector('.cam-name')!.textContent = name;
     // The free layout remembers each camera's place by person (it survives reconnects).
     box.dataset.person = person;
@@ -471,8 +528,18 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
   }
 
+
   function renderCams(): void {
     const me = myId();
+    // CAM1: my own preview is a mirror only for the front (selfie) camera; the rear one shows the world as it is.
+    // What the others get is never mirrored (only CSS on my own picture).
+    document.documentElement.dataset.swmCamFacing = (client.camEnabled && p2p?.camFacing) || '';
+    // Who is switching cameras (me: my own client knows first; the others: the room says so).
+    markSwitching([...members.filter((m) => m.id !== me && m.voice?.switching).map((m) => m.id), ...(p2p?.camSwitching && me ? [me] : [])]);
+    if (!!client.camEnabled !== camWasOn) {
+      camWasOn = !!client.camEnabled;
+      if (camWasOn) countCams();
+    }
     const shown: HTMLElement[] = [];
     const keep = new Set<string>();
     let hidden = 0;
@@ -666,6 +733,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       if (!ptt) items.push(button(client.micEnabled ? `🔇 ${t('voice.mute')}` : `🎙 ${t('voice.unmute')}`, () => micButton.click()));
       if (!camButton.hidden) items.push(button(client.camEnabled ? `📷 ${t('voice.camOff')}` : `📷 ${t('voice.camOn')}`, () => camButton.click()));
     }
+    if (isMe && client.camEnabled && p2p && client === p2p && camCount > 1) {
+      items.push(button(`🔄 ${t('voice.switchCam')}`, () => void switchCamera()));
+    }
     if (isMe && client.camEnabled) {
       items.push(
         button(hideSelf ? `👁 ${t('voice.showSelf')}` : `🙈 ${t('voice.hideSelf')}`, () => {
@@ -708,12 +778,53 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (picks) client.pick(picks);
   }
 
+  /** How many cameras this device has (CAM1: "🔄 Switch camera" only with two or more); refreshed when mine opens. */
+  navigator.mediaDevices?.addEventListener?.('devicechange', () => countCams());
+  function countCams(): void {
+    void navigator.mediaDevices
+      ?.enumerateDevices()
+      .then((list) => {
+        const n = list.filter((d) => d.kind === 'videoinput').length;
+        if (n === camCount) return;
+        camCount = n;
+        render();
+      })
+      .catch(() => {});
+  }
+  /**
+   * CAM1: another camera while mine is on (the next one on this device, or `id`): switched in place in every
+   * connection, "camera changing…" on my picture for everyone meanwhile; remembered as my camera.
+   */
+  async function switchCamera(id?: string): Promise<void> {
+    if (!p2p || client !== p2p || !client.camEnabled) return;
+    const list = (await navigator.mediaDevices.enumerateDevices().catch(() => [] as MediaDeviceInfo[])).filter((d) => d.kind === 'videoinput' && d.deviceId);
+    let next = list.find((d) => d.deviceId === id);
+    if (!next) {
+      const now = p2p.camera?.getVideoTracks()[0]?.getSettings().deviceId;
+      const at = list.findIndex((d) => d.deviceId === now);
+      next = list[(at + 1) % Math.max(1, list.length)];
+    }
+    if (!next) return;
+    save(CAM_KEY, next.deviceId);
+    save(CAM_NAME, next.label);
+    const chosen = next.deviceId;
+    try {
+      await p2p.switchCam(() => openCam(chosen));
+    } catch {
+      flashHint(camButton, t('voice.camDenied'), 6000);
+    }
+    render();
+  }
+
   /** "🎛 Microphone and camera" on myself: the same check window; while in voice the new devices apply at once. */
   async function changeDevices(): Promise<void> {
     const before = { mic: load('opt:micDevice') ?? '', cam: load('opt:camDevice') ?? '', speaker: load('opt:speakerDevice') ?? '' };
     const check = await checkWindow().catch(() => null);
     if (!check) return flashHint(peopleBox, t('voice.failed'), 6000);
-    const result = await check.voiceCheck({ mode: 'settings', canCam: !!client.setCam });
+    // CAM1: with my camera on, the window shows my live camera (a second capture of the camera froze what the others
+    // saw on phones) and a new pick switches it in place at once.
+    const live = client.camEnabled && p2p && client === p2p ? { stream: () => p2p?.camera ?? null, switchTo: (id: string) => switchCamera(id), mic: () => p2p?.microphone ?? null } : undefined;
+    const result = await check.voiceCheck({ mode: 'settings', canCam: !!client.setCam, ...(live ? { live } : {}) });
     if (!result) return;
     if ((load('opt:speakerDevice') ?? '') !== before.speaker) for (const audio of audios.values()) applySpeaker(audio, load('opt:speakerDevice') ?? '');
     if (!client.active) return;
@@ -728,7 +839,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
           client.sync(members, myId());
         }
       }
-      if ((load('opt:camDevice') ?? '') !== before.cam && client.camEnabled && client.setCam) {
+      if (!live && (load('opt:camDevice') ?? '') !== before.cam && client.camEnabled && client.setCam) {
+        // The film page's camera (extension) has no in-place switch.
         await client.setCam(false);
         await client.setCam(true);
       }
