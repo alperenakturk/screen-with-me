@@ -1125,6 +1125,8 @@ into Ready cards 6, 7 and 9; "Extension permission explainer" became card 8; the
   straight into the Shorts view with 🎲 Discover; no service is named beyond YouTube Shorts / TikTok.
 - Tests: e2e / harness: the door creates a room in the Shorts view with a feed starting.
 - Owner's pick: copy and whether it is a page or only a home door. Planner: 0.9.95 (owner agreed 2 Nov 2026).
+- Done: 0.9.97.62 (PR https://github.com/alperenakturk/screen-with-me/pull/314): the owner's copy A, home door only; the
+  room starts 🎲 Discover "Popular" on its first welcome; harness `shorts-door` (computer EN + TR, phone).
 
 Cards from `security-review-4.md` (4 Nov 2026, `main` at 0.9.97.39, after the repository went public), most severe
 first (R4 = review 4). Details, file:line references and the owner's GitHub settings are in the review. The shipped cards of

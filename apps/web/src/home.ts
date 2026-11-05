@@ -23,6 +23,8 @@ const TEXT = {
     sub: 'Watch a video with friends anywhere, in sync. Talk, see each other and play in the same room.',
     create: 'Create room',
     join: 'Join with a code',
+    door: 'Scroll Shorts together',
+    doorSub: 'Swipe YouTube Shorts and TikToks with friends, in sync. Anyone can swipe.',
     save: 'Save the room (a name and a link that stays)',
     cont: 'Continue',
     contGo: 'Open',
@@ -60,6 +62,8 @@ const TEXT = {
     sub: 'Arkadaşlarınla nerede olursanız olun aynı videoyu aynı anda izle. Aynı odada konuş, birbirinizi gör, oyna.',
     create: 'Oda oluştur',
     join: 'Kodla katıl',
+    door: "Shorts'u birlikte kaydır",
+    doorSub: "YouTube Shorts ve TikTok'ları arkadaşlarınla aynı anda kaydır. Herkes kaydırabilir.",
     save: 'Odayı kaydet (adı ve linki hep aynı kalır)',
     cont: 'Devam et',
     contGo: 'Aç',
@@ -284,6 +288,7 @@ export function renderHome(app: HTMLElement): void {
           <label class="hm-save"><input id="start-save" type="checkbox" /> <span data-h="save"></span></label>
           <input id="create-name" class="hm-name" maxlength="${ROOM_NAME_MAX}" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" hidden />
           <p id="create-full" class="error small" hidden></p>
+          <button id="shorts-door" type="button" class="hm-door"><span class="hm-door-icon" aria-hidden="true">📱</span><span><b data-h="door"></b><em data-h="doorSub"></em></span></button>
           <div id="continue" class="hm-cont" hidden></div>
         </div>
         <div class="hm-art" aria-hidden="true">${scene()}</div>
@@ -356,6 +361,14 @@ export function renderHome(app: HTMLElement): void {
       }
       sessionSave(`create:${id}`, name);
     }
+    location.assign(`/r/${id}`);
+  });
+
+  // "Scroll Shorts together" (Research card, owner's copy A): a one-time room that starts a 🎲 Discover feed of
+  // today's popular Shorts as soon as I'm in (room.ts reads `shorts:<room>` on the first welcome).
+  $('#shorts-door').addEventListener('click', () => {
+    const id = newRoomId();
+    sessionSave(`shorts:${id}`, '1');
     location.assign(`/r/${id}`);
   });
 

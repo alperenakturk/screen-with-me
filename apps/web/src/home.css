@@ -166,6 +166,48 @@ html.in-home main {
   width: min(100%, 420px);
 }
 
+/* "📱 Scroll Shorts together": a door to a room that starts on today's popular Shorts. */
+.hm-door {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 460px);
+  padding: 10px 14px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.04);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.hm-door:hover {
+  background: rgb(255 255 255 / 0.09);
+}
+
+.hm-door:focus-visible {
+  outline: 3px solid #fff3d6;
+  outline-offset: 2px;
+}
+
+.hm-door-icon {
+  font-size: 24px;
+}
+
+.hm-door b {
+  display: block;
+  font-size: 16px;
+}
+
+.hm-door em {
+  display: block;
+  font-style: normal;
+  font-size: 14px;
+  color: #c9c0ea;
+}
+
 .hm-text .error {
   margin: 0;
 }
@@ -542,6 +584,7 @@ html.phone .hm-btn {
 }
 
 html.phone .hm-join:not([hidden]),
+html.phone .hm-door,
 html.phone .hm-name {
   width: 100%;
 }
