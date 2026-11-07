@@ -6,11 +6,18 @@ this repository as `v<version>` (from 0.9.97.70 on).
 
 Versions count in four parts before 1.0: the fourth part is a release, the third part moves for a bigger step.
 
-## 0.9.97 — 3 to 5 November 2026
+## 0.9.97 — 3 to 7 November 2026
 
-### 0.9.97.70 — 5 Nov
+### 0.9.97.70 — 7 Nov
 - Behind the scenes: this changelog, a version tag for every release that goes live, and a check of the live site
   every 30 minutes that tells us at once when it is down.
+
+### 0.9.97.69 — 7 Nov
+- The hidden test panel now opens on the live site only with the owner's code.
+
+### 0.9.97.68 — 5 Nov
+- Games on a phone: every button is big enough to tap; Glowbeam plays smarter on medium and fairer on
+  easy; better "How to play" cards; easier aiming in Sea Battle.
 
 ### 0.9.97.67 — 5 Nov
 - On an upright tablet the test panel opens as a sheet at the bottom; menus no longer offer cinema mode or keyboard

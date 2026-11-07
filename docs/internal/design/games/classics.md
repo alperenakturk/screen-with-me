@@ -35,3 +35,13 @@ other colour (all closed lines turn over), a side without a legal move passes (t
 Glowbeam: easy (often random, depth 1) and medium (depth 4 alpha-beta on corners, the risky cells next to an empty
 corner, edges and mobility; ≈ 50 ms a move). The board reuses the 8 × 8 grid on green felt, a gold dot on each legal
 cell on my turn, the last disc lit, the turned discs flip; each seat shows its disc count. Lab position `lastmove`.
+
+## Glowbeam's level (GP2, 5 Nov 2026)
+
+Medium chess and dama follow captures at the end of the search (a quiescence search: after a capture, or whenever the
+other side is to move there; dama's forced chain jumps too), captures first, within a 500 ms budget with a one-move
+fallback. Measured: medium chess ≈ 250 ms a move, dama ≈ 35 ms. It never leaves its queen to a pawn, never allows a
+mate in one it could stop, and never hands a dama man over when a safe move exists (unit tests). Easy plays a weaker
+move now and then, but only one close to its best (`EASY_SLACK`). **Later job:** two-move tactics (forks, pins) need a
+depth-3 search, which the chess move generator (legality by playing each move) can't do within the budget; a faster
+generator (pseudo-legal moves + a king-safety check) would let medium see them. The Planner accepted this for 1.0.

@@ -130,17 +130,24 @@ function evaluateReversi(state: BoardState, me: Mark): number {
 }
 
 const WIN = 10_000;
-function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha: number, beta: number): number {
+/** `hot`: the move that led here took a piece (an exchange may be going on; dama: or a chain goes on). */
+function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha: number, beta: number, hot = false): number {
   if (state.winner !== null) return state.winner === 'draw' ? 0 : state.winner === me ? WIN + depth : -WIN - depth;
-  if (depth === 0) return evaluate(kind, state, me);
-  const moves = movesOf(kind, state);
+  // Captures are followed at the search's end after a capture (an exchange is going on), during a dama chain, and
+  // whenever the other side is to move there (it may take something at once); a quiet leaf with me to move is cheap.
+  if (depth === 0)
+    return QUIET_KINDS.has(kind) && (hot || state.turn !== me || (kind === 'dama' && (state as DamaState).chain !== null))
+      ? quiesce(kind, state, me, alpha, beta, QUIESCE_PLIES)
+      : evaluate(kind, state, me);
+  if (Date.now() > deadline) throw TIME_UP;
+  const moves = ordered(kind, state, movesOf(kind, state));
   if (!moves.length) return 0;
   const maximizing = state.turn === me;
   let best = maximizing ? -Infinity : Infinity;
   for (const move of moves) {
     const next = apply(kind, state, move);
     if (!next) continue;
-    const value = search(kind, next, me, depth - 1, alpha, beta);
+    const value = search(kind, next, me, depth - 1, alpha, beta, QUIET_KINDS.has(kind) && took(state, next));
     if (maximizing) {
       best = Math.max(best, value);
       alpha = Math.max(alpha, value);
@@ -151,6 +158,74 @@ function search(kind: BotKind, state: BoardState, me: Mark, depth: number, alpha
     if (beta <= alpha) break;
   }
   return best;
+}
+
+/**
+ * GP2 (no silly blunders on medium): a search that stops right after a capture can't see the piece taken back (the
+ * "horizon"), so it walked into simple exchanges. At the search's end the capture games (chess, dama) go on with
+ * captures only (and dama's forced chain jumps) until the position is quiet; the side to move may also stop there
+ * ("stand pat") unless dama forces it on.
+ */
+const QUIET_KINDS: ReadonlySet<BotKind> = new Set(['chess', 'dama']);
+const QUIESCE_PLIES = 4;
+function pieces(state: BoardState, mark: Mark): number {
+  let n = 0;
+  for (const c of state.board) if (c === mark) n++;
+  return n;
+}
+/** Did the move from `before` to `after` take a piece of the other side? */
+function took(before: BoardState, after: BoardState): boolean {
+  const them = other(before.turn);
+  return pieces(after, them) < pieces(before, them);
+}
+function quiesce(kind: BotKind, state: BoardState, me: Mark, alpha: number, beta: number, left: number): number {
+  if (state.winner !== null) return state.winner === 'draw' ? 0 : state.winner === me ? WIN : -WIN;
+  if (Date.now() > deadline) throw TIME_UP;
+  const forced = kind === 'dama' && (state as DamaState).chain !== null;
+  const stand = evaluate(kind, state, me);
+  if (left === 0) return stand;
+  const maximizing = state.turn === me;
+  const them = other(state.turn);
+  const before = pieces(state, them);
+  let best = forced ? (maximizing ? -Infinity : Infinity) : stand;
+  if (!forced) {
+    if (maximizing) {
+      if (stand >= beta) return stand;
+      alpha = Math.max(alpha, stand);
+    } else {
+      if (stand <= alpha) return stand;
+      beta = Math.min(beta, stand);
+    }
+  }
+  const moves = movesOf(kind, state);
+  // Which moves are captures, told without playing them all: in chess the target square holds a piece (or it is en
+  // passant, or a promotion); in dama capturing is a must, so when one move captures, every move does.
+  let noisy: number[];
+  if (kind === 'chess') {
+    const c = state as ChessState;
+    noisy = moves.filter((m) => {
+      const from = Math.floor((m % 4096) / 64);
+      const to = m % 64;
+      return c.board[to] !== null || (c.kinds[from] === 'p' && (to === c.ep || to < 8 || to >= 56));
+    });
+  } else {
+    const first = moves.length ? apply(kind, state, moves[0]!) : null;
+    noisy = forced || (first && pieces(first, them) < before) ? moves : [];
+  }
+  for (const move of ordered(kind, state, noisy)) {
+    const next = apply(kind, state, move);
+    if (!next) continue;
+    const value = quiesce(kind, next, me, alpha, beta, left - 1);
+    if (maximizing) {
+      best = Math.max(best, value);
+      alpha = Math.max(alpha, value);
+    } else {
+      best = Math.min(best, value);
+      beta = Math.min(beta, value);
+    }
+    if (beta <= alpha) break;
+  }
+  return Number.isFinite(best) ? best : stand;
 }
 
 const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 2 }, backgammon: { 1: 1, 2: 1 }, reversi: { 1: 1, 2: 4 } };
@@ -190,18 +265,58 @@ export function botMove(kind: BotKind, state: BoardState, level: BotLevel, rando
     }
     return best;
   }
-  if (level === 1 && random() < EASY_RANDOM) return moves[Math.floor(random() * moves.length)]!;
+  const slack = EASY_SLACK[kind];
+  if (level === 1 && slack === Infinity && random() < EASY_RANDOM) return moves[Math.floor(random() * moves.length)]!;
   const me = state.turn;
-  let best: number[] = [];
-  let bestValue = -Infinity;
-  for (const move of moves) {
-    const next = apply(kind, state, move);
-    if (!next) continue;
-    const value = search(kind, next, me, DEPTH[kind][level] - 1, -Infinity, Infinity);
-    if (value > bestValue) {
-      bestValue = value;
-      best = [move];
-    } else if (value === bestValue) best.push(move);
-  }
-  return best.length ? best[Math.floor(random() * best.length)]! : moves[0]!;
+  /** Every move with its value at `depth` (plain minimax at the root, so each value is exact). */
+  const root = (depth: number): [number, number][] => {
+    const out: [number, number][] = [];
+    for (const move of ordered(kind, state, moves)) {
+      const next = apply(kind, state, move);
+      if (next) out.push([move, search(kind, next, me, depth - 1, -Infinity, Infinity, QUIET_KINDS.has(kind) && took(state, next))]);
+    }
+    return out;
+  };
+  // The capture games think against a time budget (GP2): the full depth first; if a very busy position runs out of
+  // time, a quick one-move look answers instead, so Glowbeam never keeps a table waiting.
+  let scored: [number, number][] = [];
+  if (QUIET_KINDS.has(kind)) {
+    const depths = DEPTH[kind][level] > 1 ? [DEPTH[kind][level], 1] : [1];
+    for (const [i, depth] of depths.entries()) {
+      deadline = Date.now() + (i === 0 ? BOT_BUDGET_MS : BOT_BUDGET_MS / 2);
+      try {
+        scored = root(depth);
+        break;
+      } catch (error) {
+        if (error !== TIME_UP) throw error;
+      } finally {
+        deadline = Infinity;
+      }
+    }
+    if (!scored.length) return moves[0]!;
+  } else scored = root(DEPTH[kind][level]);
+  if (!scored.length) return moves[0]!;
+  const top = Math.max(...scored.map(([, v]) => v));
+  // Easy (GP2: "fair, not random"): now and then a weaker move, but only one close to its best, never a gift.
+  const near = level === 1 && random() < EASY_RANDOM ? scored.filter(([, v]) => v >= top - slack && top - v < WIN / 2) : [];
+  const pool = near.length ? near : scored.filter(([, v]) => v === top);
+  return pool[Math.floor(random() * pool.length)]![0];
+}
+
+/**
+ * How far below its best easy Glowbeam may play now and then: about a minor piece in chess, a man in dama, an edge
+ * cell in reversi. XOX and Four in a Row keep a plain random move (a child can win them).
+ */
+const EASY_SLACK: Record<BotKind, number> = { xox: Infinity, four: Infinity, dama: 1.2, chess: 2.5, reversi: 12, backgammon: Infinity };
+
+/** How long Glowbeam may think about one move in chess / dama (it also waits `BOT_DELAY_MS` before answering). */
+export const BOT_BUDGET_MS = 500;
+const TIME_UP = Symbol('time up');
+let deadline = Infinity;
+/** Captures first, the most valuable piece taken first (alpha-beta cuts far more that way); other kinds as they come. */
+function ordered(kind: BotKind, state: BoardState, moves: number[]): number[] {
+  if (kind !== 'chess') return moves;
+  const c = state as ChessState;
+  const gain = (m: number) => (c.board[m % 64] !== null ? (VALUE[c.kinds[m % 64]!] ?? 0) * 10 - (VALUE[c.kinds[Math.floor((m % 4096) / 64)]!] ?? 0) : -100);
+  return moves.slice().sort((a, b) => gain(b) - gain(a));
 }

@@ -57,7 +57,7 @@ const check = (ok, label, extra = '') => {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Measures the open game: inner scrollbars, small text, cut-off controls, page scroll. */
-function measure(mayScroll) {
+function measure({ mayScroll, minTarget }) {
   const stage = document.querySelector('#game-stage');
   if (!stage || stage.hidden) return { missing: true };
   const box = stage.getBoundingClientRect();
@@ -133,8 +133,23 @@ function measure(mayScroll) {
     if (side && visible(side)) hero += 'the lobby has a column beside its card; ';
     if (!lobby.querySelector('.lobby-players')) hero += 'the lobby shows no players row; ';
   }
+  // GP2: every control is big enough to hit: 44 px on a phone (Apple / Material), 24 px elsewhere (WCAG 2.2 AA).
+  // A board cell counts too; the smaller side of the box is what a finger has to hit.
+  const tiny = [];
+  for (const el of stage.querySelectorAll('button, [role="button"], input, select, a[href]')) {
+    if (!visible(el) || el.disabled || el.closest('[aria-hidden="true"], [hidden]')) continue;
+    const r = el.getBoundingClientRect();
+    const side = Math.min(r.width, r.height);
+    // The two places a phone's width can't give 44 px: Five Frames' keys (10 a row, like the phone's own keyboard: tall
+    // enough, at least 26 wide) and Sea Battle's 10 × 10 cells (the owner's question on how a phone aims is open).
+    if (el.matches('.ff-key') && r.height >= minTarget - 0.5 && r.width >= 26) continue;
+    if (el.matches('.sea-cell')) continue;
+    if (side < minTarget - 0.5) tiny.push(`${name(el)} ${Math.round(r.width)}×${Math.round(r.height)}`);
+  }
   const page = document.scrollingElement;
   return {
+    tiny: [...new Set(tiny)],
+    tinyCount: tiny.length,
     stage: [Math.round(box.width), Math.round(box.height)],
     scrollers: [...new Set(scrollers)].slice(0, 6),
     small: [...new Set(small)].slice(0, 6),
@@ -204,7 +219,8 @@ function measure(mayScroll) {
           check(playing, `${label}: the battle against Glowbeam starts`);
           await wait(600);
         }
-        const m = await page.evaluate(measure, MAY_SCROLL);
+        const phone = size === 'iphone' || size === 'pixel';
+        const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
         if (m.missing) {
           check(false, `${label}: the game window shows`);
@@ -215,6 +231,7 @@ function measure(mayScroll) {
         check(m.cut.length === 0, `${label}: nothing cut off`, m.cut.join(' | '));
         check(!m.board, `${label}: the board is a fair size`, m.board);
         check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
+        check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
       }
       await ctx.close();
