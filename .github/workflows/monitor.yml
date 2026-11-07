@@ -39,7 +39,7 @@ jobs:
       - name: Check the live site
         id: check
         run: |
-          if node scripts/monitor.mjs https://screen-with-me.swm-server.workers.dev --out "$RUNNER_TEMP/result.md"; then
+          if node scripts/monitor.mjs "$(node scripts/site-config.mjs origin)" --out "$RUNNER_TEMP/result.md"; then
             echo "up=true" >> "$GITHUB_OUTPUT"
           else
             echo "up=false" >> "$GITHUB_OUTPUT"

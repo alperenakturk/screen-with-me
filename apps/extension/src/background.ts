@@ -11,7 +11,7 @@
 import { isForwardedKey, isRelayable, type EmbedReply } from '@swm/shared/embed';
 import { ROOM_ID_PATTERN, type PlaybackState } from '@swm/shared/protocol';
 import { cleanLayout, type ShellLayout } from '@swm/shared/shell';
-import { SITE_URL } from './config.ts';
+import { isSiteOrigin, sitePatterns } from './config.ts';
 import { readValue } from './store.ts';
 import {
   MIC_RESULT,
@@ -33,7 +33,6 @@ import {
 // (sonradan yüklenen oynatıcı iframe'leri kendiliğinden bağlansın diye).
 void chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
 
-const SITE_ORIGIN = new URL(SITE_URL).origin;
 const SHELL_PAGE = chrome.runtime.getURL('shell.html');
 
 interface Frame {
@@ -351,7 +350,7 @@ async function handleShell(shell: Shell, port: chrome.runtime.Port, message: She
       }
       if (url.protocol !== 'https:' && url.protocol !== 'http:') break;
       // Sitedeki odaya dönülüyorsa katman kalkar (site kendi sayfasında devralır).
-      if (url.origin === SITE_ORIGIN) endShell(shell.tabId);
+      if (isSiteOrigin(url.origin)) endShell(shell.tabId);
       // Odadaki başka bir film sayfası (başka bir site olabilir): katman oraya da gelsin.
       else {
         shell.site = siteOf(url.href);
@@ -545,7 +544,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   if (go?.type !== 'site-go') return;
   // Sadece sitenin kendi sayfası (üst çerçeve) sekmeyi film sayfasına göndertebilir.
   const tabId = sender.tab?.id;
-  if (tabId === undefined || sender.origin !== SITE_ORIGIN || sender.frameId !== 0) return;
+  if (tabId === undefined || !isSiteOrigin(sender.origin) || sender.frameId !== 0) return;
   if (typeof go.roomId !== 'string' || !ROOM_ID_PATTERN.test(go.roomId) || typeof go.url !== 'string') return;
   let url: URL;
   try {
@@ -553,7 +552,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   } catch {
     return;
   }
-  if ((url.protocol !== 'https:' && url.protocol !== 'http:') || url.origin === SITE_ORIGIN) return;
+  if ((url.protocol !== 'https:' && url.protocol !== 'http:') || isSiteOrigin(url.origin)) return;
   const roomId = go.roomId;
   void (async () => {
     await ready;
@@ -584,7 +583,7 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
   const shell = shells.get(tabId);
   if (!shell) return;
   // Sekme sitemize döndüyse (🏠, geri tuşu): katman kalkar, site kendi sayfasında devralır.
-  if (info.url && originOf(info.url) === SITE_ORIGIN) {
+  if (info.url && isSiteOrigin(originOf(info.url))) {
     endShell(tabId);
     return;
   }
@@ -656,7 +655,7 @@ async function checkOpened(tabId: number, url: string): Promise<void> {
   if (!/^https?:/.test(url)) return;
   opened.delete(tabId);
   const shell = shells.get(entry.opener);
-  if (!shell || originOf(url) === SITE_ORIGIN || siteOf(url) === shell.site) return;
+  if (!shell || isSiteOrigin(originOf(url)) || siteOf(url) === shell.site) return;
   // Film sayfasına (deliğe) tıklanmadan açılan sekmeye dokunulmaz.
   if (entry.at - shell.lastClick > CLICK_MS) return;
   // Kullanıcı ayarlardan kapattıysa dokunma.
@@ -672,7 +671,7 @@ async function checkOpened(tabId: number, url: string): Promise<void> {
 // on "install": after an update the old bridge may still be alive in those tabs.
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason !== 'install') return;
-  void chrome.tabs.query({ url: `${SITE_ORIGIN}/*` }).then((tabs) => {
+  void chrome.tabs.query({ url: sitePatterns() }).then((tabs) => {
     for (const tab of tabs) {
       if (tab.id !== undefined) void chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['site-bridge.js'] }).catch(() => {});
     }

@@ -8,9 +8,13 @@
 import { build } from 'esbuild';
 import { zipSync } from 'fflate';
 import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { readSiteConfig } from '../../scripts/site-config.mjs';
 
 const dev = process.argv.includes('--dev');
-const SITE_URL = dev ? 'http://localhost:5173' : 'https://screen-with-me.swm-server.workers.dev';
+// The site's address comes from site.config.json (card R3-3); aliases are other addresses of the same site.
+const site = readSiteConfig();
+const SITE_URL = dev ? 'http://localhost:5173' : site.origin;
+const SITE_ALIASES = dev ? [] : site.aliases;
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 
 rmSync('dist', { recursive: true, force: true });
@@ -22,7 +26,7 @@ const common = {
   target: 'chrome110',
   minify: !dev,
   sourcemap: dev ? 'inline' : false,
-  define: { __SITE_URL__: JSON.stringify(SITE_URL) },
+  define: { __SITE_URL__: JSON.stringify(SITE_URL), __SITE_ALIASES__: JSON.stringify(SITE_ALIASES) },
   logLevel: 'info',
 };
 // Arka plan ES modülü olarak yüklenir; sayfalara eklenen betikler ise klasik
@@ -32,7 +36,7 @@ await build({ ...common, entryPoints: ['src/content.ts', 'src/site-bridge.ts', '
 
 const siteMatches = dev
   ? ['http://localhost:5173/*', 'http://localhost:8787/*']
-  : [`${SITE_URL}/*`];
+  : [SITE_URL, ...SITE_ALIASES].map((origin) => `${origin}/*`);
 
 const manifest = {
   manifest_version: 3,
@@ -43,7 +47,7 @@ const manifest = {
   description: "A watch party for any site: everyone's video stays in sync, with chat, emoji reactions and voice. Free, no account needed.",
   // WebSocket trafiğinin service worker'ı açık tutması Chrome 116'dan beri var.
   minimum_chrome_version: '116',
-  homepage_url: 'https://screen-with-me.swm-server.workers.dev/extension.html',
+  homepage_url: `${site.origin}/extension.html`,
   // Simgeler: node scripts/make-icons.mjs ile üretilir (static/ içinde).
   icons: { 16: 'icon16.png', 32: 'icon32.png', 48: 'icon48.png', 128: 'icon128.png' },
   // offscreen: film sayfasındaki sesli sohbet görünmeyen bir eklenti sayfasında çalışır (izin eklentinin adına).

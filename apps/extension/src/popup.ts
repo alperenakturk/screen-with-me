@@ -2,7 +2,7 @@
 // film sayfasının üstüne sitenin oda görünümünü getirmek. Burada sadece kısa bilgi ve tek düğme var:
 // odadaki bir film sekmesindeysek odayı ayrı sekmede aç, değilse "Sidelit'i aç".
 
-import { SITE_URL } from './config.ts';
+import { SITE_URL, isSiteOrigin, sitePatterns } from './config.ts';
 import { langReady, t } from './i18n.ts';
 import { SESSIONS_KEY } from './messages.ts';
 
@@ -11,12 +11,21 @@ const action = document.querySelector<HTMLButtonElement>('#action')!;
 const action2 = document.querySelector<HTMLButtonElement>('#action2')!;
 document.querySelector('#version')!.textContent = `v${chrome.runtime.getManifest().version}`;
 
+/** The origin of a tab's address, or null when it has none or it isn't one. */
+function originOfTab(url: string | undefined): string | null {
+  try {
+    return url ? new URL(url).origin : null;
+  } catch {
+    return null;
+  }
+}
+
 async function main(): Promise<void> {
   await langReady;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const { [SESSIONS_KEY]: saved } = await chrome.storage.session.get(SESSIONS_KEY).catch(() => ({}) as Record<string, unknown>);
   const shell = Array.isArray(saved) ? (saved as { tabId: number; roomId: string }[]).find((s) => s.tabId === tab?.id) : undefined;
-  const onSite = !!tab?.url?.startsWith(SITE_URL);
+  const onSite = isSiteOrigin(originOfTab(tab?.url));
 
   if (shell && tab?.id !== undefined) {
     text.textContent = t('popupInRoom');
@@ -30,7 +39,7 @@ async function main(): Promise<void> {
   }
   // Not on a film tab of a room. If a room is open in another tab, the main button goes back to it (owner's feedback,
   // 0.9.89: the button only ever opened the home page in a new tab, even while a room was open).
-  const roomTabs = onSite ? [] : await chrome.tabs.query({ url: `${SITE_URL}/r/*` }).catch(() => [] as chrome.tabs.Tab[]);
+  const roomTabs = onSite ? [] : await chrome.tabs.query({ url: sitePatterns('/r/*') }).catch(() => [] as chrome.tabs.Tab[]);
   const roomTab = roomTabs.find((t) => t.id !== undefined);
   const openHome = () => {
     void chrome.tabs.create({ url: SITE_URL });

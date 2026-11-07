@@ -3,6 +3,7 @@ import './phone.css';
 import { markDevice } from './device.ts';
 import { isShell, syncStore } from './storage.ts';
 import { keepFloatingInFullscreen } from './ui/fs-layer.ts';
+import { HANDOFF_PREFIX, onAlias } from './site.ts';
 
 markDevice();
 keepFloatingInFullscreen();
@@ -54,7 +55,16 @@ if (framedElsewhere()) {
   link.rel = 'noopener';
   link.textContent = 'Sidelit ↗';
   document.body.replaceChildren(link);
+} else if (!isShell && onAlias()) {
+  // An older address of the site (card R3-3): carry this browser's saves to the main address once and go there.
+  // Never in the film page's overlay: an extension built for this address must keep working until it updates.
+  void import('./domain-move.ts').then((m) => m.leaveAlias());
 } else {
+  // Arriving from an older address: take its saves in before anything reads them (a lazy chunk, only then).
+  const handoff = !isShell && location.hash.startsWith(HANDOFF_PREFIX) ? import('./domain-move.ts').then((m) => void m.takeHandoff()) : Promise.resolve();
   // Önce ayarlar eklentiyle eşitlenir (dil, tema, isim ilk karede doğru gelsin), sonra site çizilir.
-  void syncStore().then(() => import('./app.ts'));
+  void handoff
+    .catch(() => {})
+    .then(() => syncStore())
+    .then(() => import('./app.ts'));
 }

@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 
 export const isCode = (file) => !/^docs\/|\.md$/.test(file);
-export const isWeb = (file) => /^(apps\/web\/|packages\/shared\/|scripts\/harness\/|\.github\/workflows\/|\.github\/actions\/)/.test(file);
+export const isWeb = (file) => /^(apps\/web\/|packages\/shared\/|scripts\/harness\/|\.github\/workflows\/|\.github\/actions\/|site\.config\.json$|scripts\/site-config\.)/.test(file);
 
 /** What a list of changed files needs. */
 export function decide(files) {

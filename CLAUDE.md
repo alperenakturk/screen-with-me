@@ -215,6 +215,7 @@ npm run build:extension:dev  # extension that connects to the local server
 npm run store                # Web Store package: store/ (zip + screenshots + promo image)
 NODE_PATH=$(npm root -g) node --experimental-strip-types scripts/make-icons.mjs  # icons (Chromium) + logo / mascot SVGs from logo.ts
 node scripts/check-name.mjs  # no "ScreenWithMe" left in a user-facing file (CI)
+node scripts/check-domain.mjs [--live]  # the site's address comes only from site.config.json (CI; --live after deploy)
 node scripts/theme-art.mjs   # scene + mascot SVGs of illustrated themes (apps/web/public/themes/)
 node scripts/avatars.mjs     # drawn avatars (apps/web/public/avatars + apps/extension/static/avatars)
 ```
@@ -1313,6 +1314,13 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   unticked, its exact lines shown (`technicalInfo`: site / extension version, browser · OS · window, transport,
   `diagLast` from `/connection`). Privacy policy `#feedback`. Tests: unit `feedback.test.ts`, e2e `feedback.mjs` (live:
   refusals only), harness `scripts/harness/feedback/run.cjs`.
+- **The site's address (card R3-3, `docs/internal/custom-domain.md`):** one value, `site.config.json` (`origin` +
+  `aliases`), read by `scripts/site-config.mjs`; the extension build (`SITE_URL`, `isSiteOrigin`, `sitePatterns`,
+  `homepage_url`, site matches), the site build (`%SITE_ORIGIN%` og:image, `__SITE__` in `site.ts`, the generated
+  `/domain.js` for the static pages), CI's live checks and the monitor follow it. Never write the address anywhere else
+  (`check-domain.mjs` fails). On an alias (not the shell) `main.ts` → lazy `domain-move.ts` carries the browser's
+  saves once in `#handoff=` (accepted only with an alias referrer, move keys merged, other keys fill empty ones) and
+  moves to the main address; harness `domain-move`. Moving to an own domain = the steps in that doc.
 - **Saved rooms (`saved-rooms.ts`):** "Oda oluştur" on the home page → one-time / saved (name required; the name is
   carried to the room via `sessionStorage` `create:<room>`, the first person in, as host, sends `settings {saved,
   name}`). The list lives in the browser (at most 20); anyone entering a saved room gets it in their list
