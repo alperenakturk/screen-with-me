@@ -128,3 +128,13 @@
   background: linear-gradient(var(--sb-gold), var(--sb-gold)) center / 2px 100% no-repeat, linear-gradient(var(--sb-gold), var(--sb-gold)) center / 100% 2px no-repeat;
 }
 .sea-fire { font-weight: 800; }
+.sea-seas { position: relative; }
+/* GP2: Glowbeam's jump for my hit, its gasp when mine is hit. */
+.sea-ref-mascot.react-cheer { animation: sea-cheer 0.6s ease-in-out 1; }
+.sea-ref-mascot.react-gasp { animation: sea-gasp 0.5s ease-out 1; }
+@keyframes sea-gasp { 30% { transform: scale(1.25) rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) { .sea-ref-mascot.react-cheer, .sea-ref-mascot.react-gasp { animation: none; } }
+/* GP2: the battle's seas come in softly when the placing ends. */
+.sea[data-phase='play'] .sea-sea { animation: sea-enter 0.3s ease-out; }
+@keyframes sea-enter { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .sea[data-phase='play'] .sea-sea { animation: none; } }

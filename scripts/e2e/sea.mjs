@@ -86,9 +86,10 @@ for (const [n, cell] of samShips.entries()) {
   ok(await until(() => alex.state.seas[1].shots.length === n + 2), `Alex hits ${cell}`);
   if (n === 0) ok(alex.state.turn === 0 && alex.state.last?.result === 'hit', 'a hit lets Alex shoot again');
 }
-ok(sam.state.seas[1].sunk.length === 5, 'every ship of Sam is sunk');
+// Alex's view arrives first; Sam's own copy of the same shot can be a moment behind on live.
+ok(await until(() => sam.state.seas[1].sunk.length === 5), 'every ship of Sam is sunk');
 ok(leaks(alex, 1).length === 0 && leaks(sam, 0).length === 0 && leaks(watcher, 0).length === 0 && leaks(watcher, 1).length === 0, 'no message ever carried a hidden ship');
-ok(alex.state.phase === 'over' && alex.state.winner === 0, 'Alex sinks the whole fleet and wins');
+ok(await until(() => alex.state.phase === 'over' && alex.state.winner === 0), 'Alex sinks the whole fleet and wins');
 ok(await until(() => watcher.state.seas[0].ships && watcher.state.seas[1].ships), 'after the game everyone sees both fleets');
 ok(alex.state.players[0].wins === 1, 'the score counts the win');
 
