@@ -213,9 +213,18 @@ function measure({ mayScroll, minTarget }) {
         }
         if (g.play) {
           await run('sea.bot');
-          await wait(800);
-          await page.evaluate(() => document.querySelector('#game-stage .sea-ready-btn')?.click());
-          const playing = await page.waitForFunction(() => document.querySelector('#game-stage .sea')?.dataset.phase === 'play', null, { timeout: 6000 }).then(() => true, () => false);
+          // Glowbeam's seat and the Ready button come a moment later on a slow runner: press Ready until the battle starts.
+          const playing = await page
+            .waitForFunction(
+              () => {
+                if (document.querySelector('#game-stage .sea')?.dataset.phase === 'play') return true;
+                document.querySelector('#game-stage .sea-ready-btn:not(:disabled)')?.click();
+                return false;
+              },
+              null,
+              { timeout: 10000, polling: 500 },
+            )
+            .then(() => true, () => false);
           check(playing, `${label}: the battle against Glowbeam starts`);
           await wait(600);
         }
