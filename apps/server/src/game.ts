@@ -43,6 +43,8 @@ interface Seat {
 const BOT_KEY = 'bot:glowbeam';
 /** Glowbeam thinks this long before its move (a move at once feels rude). */
 const BOT_DELAY_MS = 700;
+/** When Glowbeam starts thinking after its turn begins (the rest of `BOT_DELAY_MS` is waited after the think). */
+const BOT_THINK_AT_MS = 150;
 
 interface Saved {
   kind: GameKind;
@@ -315,21 +317,35 @@ export class Game extends DurableObject<Env> {
   }
 
   private botTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Glowbeam is between its think and its answer (no second turn starts meanwhile). */
+  private botBusy = false;
   /** When it is Glowbeam's turn, it plays after a short think (its move goes through the same rules). */
   private botTurn(): void {
     const d = this.data;
     const index = d.seats.findIndex((s) => s?.bot);
-    if (index === -1 || d.state.winner !== null || d.state.turn !== MARKS[index] || d.seats.some((s) => s === null) || this.botTimer) return;
+    if (index === -1 || d.state.winner !== null || d.state.turn !== MARKS[index] || d.seats.some((s) => s === null) || this.botTimer || this.botBusy) return;
+    // GP3: Glowbeam thinks first (chess / dama may take up to `BOT_BUDGET_MS`) and answers once `BOT_DELAY_MS` has passed
+    // since its turn began, so a deeper think never makes the table wait longer.
+    const turnAt = Date.now();
     this.botTimer = setTimeout(() => {
       this.botTimer = null;
-      void this.botPlays(index);
-    }, BOT_DELAY_MS);
+      void this.botPlays(index, turnAt);
+    }, BOT_THINK_AT_MS);
   }
-  private async botPlays(index: number): Promise<void> {
+  private async botPlays(index: number, turnAt: number): Promise<void> {
     const d = this.data;
     const seat = d.seats[index];
     if (!seat?.bot || d.state.winner !== null || d.state.turn !== MARKS[index]) return;
+    const before = d.state;
     const move = botMove(d.kind, d.state, seat.bot, diceRandom);
+    const wait = turnAt + BOT_DELAY_MS - Date.now();
+    if (wait > 0) {
+      this.botBusy = true;
+      await new Promise((done) => setTimeout(done, wait));
+      this.botBusy = false;
+    }
+    // The table may have moved on meanwhile (a switch, a person taking the seat, the game ended).
+    if (this.data.state !== before || !this.data.seats[index]?.bot) return this.botTurn();
     const next = move === null ? null : GAME_RULES[d.kind].play(d.state, MARKS[index]!, move, diceRandom);
     if (!next) return;
     d.state = next;
