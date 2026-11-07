@@ -158,10 +158,17 @@ jobs:
           node scripts/harness/lab-video/run.cjs http://localhost:8787
           node scripts/harness/lab-scenarios/run.cjs http://localhost:8787
           node scripts/harness/lab-lock/run.cjs harness-lab-code
+          # Card LABTR: the same lab in Turkish (plain words, no English left, the command box finds Turkish words).
+          LAB_LANG=tr node scripts/harness/test-lab/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-friends/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-video/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-scenarios/run.cjs http://localhost:8787
 
       # Card DL3a: the Test Lab's game tools (open any game, side-game cheats on a sandbox save, restore my real saves).
       - name: Test Lab games
-        run: node scripts/harness/lab-games/run.cjs http://localhost:8787
+        run: |
+          node scripts/harness/lab-games/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-games/run.cjs http://localhost:8787
 
       # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and the IP notice
       # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
@@ -197,12 +204,14 @@ jobs:
       - name: Games sweep (laptop + iPhone, EN + TR)
         run: SIZES=laptop,iphone node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
-      - name: Games resume, Sea Battle, How to play
+      - name: Games resume, Sea Battle, How to play, result card
         run: |
           node scripts/harness/games-resume/run.cjs http://localhost:8787
           node scripts/harness/sea/run.cjs http://localhost:8787
           # GP2: the tables' How to play cards (first time, the "?", per Classics board, Turkish).
           node scripts/harness/table-how/run.cjs http://localhost:8787
+          # GP2: the one result card (Classics; Sea's in the sea harness) and Glowbeam the referee's reactions.
+          node scripts/harness/game-result/run.cjs http://localhost:8787
 
       # Card GT: on a tablet (iPad + Android, upright and sideways) a game's window stays clear of the chat.
       - name: Tablets

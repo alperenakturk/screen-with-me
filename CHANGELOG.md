@@ -8,6 +8,15 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.72 — 7 Nov
+- The hidden test panel speaks plain English and Turkish, following the site's language (also when you switch it),
+  with green / yellow / red dots for what is fine and what is not; its search finds a command in either language.
+
+### 0.9.97.71 — 7 Nov
+- Games: when a Classics game or a Sea Battle ends, one card comes up over the board with Glowbeam, the score and
+  Rematch; "See the board" puts it away. Glowbeam beside the board cheers a good capture, gasps at a lost piece and
+  calls "Check!". Boards and battles fade in softly (still with "reduce motion").
+
 ### 0.9.97.70 — 7 Nov
 - Behind the scenes: this changelog, a version tag for every release that goes live, and a check of the live site
   every 30 minutes that tells us at once when it is down.

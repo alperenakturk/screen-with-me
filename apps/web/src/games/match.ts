@@ -37,6 +37,7 @@ import backgammon2Art from './art/tutorial/backgammon-2-home.svg?raw';
 import reversi1Art from './art/tutorial/reversi-1-flip.svg?raw';
 import reversi2Art from './art/tutorial/reversi-2-count.svg?raw';
 import { tableHowTo, type HowToPlay } from './how-to-play.ts';
+import { resultCard } from './result.ts';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
@@ -101,6 +102,12 @@ const TEXT = {
     reversiLine: 'Close a line, turn it over',
     rvPassed: '{name} has no move and passes',
     rvDiscs: '{n} discs',
+    seeBoard: 'See the board',
+    sayTake: 'Nice capture!',
+    sayOuch: 'Ouch!',
+    sayTaken: 'Taken!',
+    sayCheck: 'Check! Mind the king',
+    sayFlips: '{n} discs at once!',
     how_xox1: 'Take turns',
     how_xox1Line: 'X and O put one mark each turn.',
     how_xox2: 'Three in a row',
@@ -175,6 +182,12 @@ const TEXT = {
     reversiLine: 'Sırayı kapat, taşları çevir',
     rvPassed: '{name} oynayamıyor, pas geçti',
     rvDiscs: '{n} taş',
+    seeBoard: 'Tahtaya bak',
+    sayTake: 'Güzel aldın!',
+    sayOuch: 'Ah, gitti!',
+    sayTaken: 'Taş gitti!',
+    sayCheck: 'Şah! Şahına dikkat',
+    sayFlips: 'Bir anda {n} taş!',
     how_xox1: 'Sırayla oyna',
     how_xox1Line: 'X ve O her turda bir işaret koyar.',
     how_xox2: 'Üçü yan yana',
@@ -292,6 +305,26 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const refSlot = app.querySelector<HTMLElement>('.cl-ref-slot')!;
   const referee = glowbeam('cl-ref-mascot');
   refSlot.replaceWith(referee);
+  // GP2: Glowbeam the referee reacts: a short line in a bubble and a little jump (a cheer for my good move, a gasp
+  // when I lose a piece). Only words and a 0.6 s move; reduced motion keeps the words.
+  const bubble = el('span', { class: 'cl-say', 'aria-hidden': 'true' });
+  bubble.hidden = true;
+  referee.after(bubble);
+  let sayTimer: ReturnType<typeof setTimeout> | undefined;
+  const say = (text: string, mood: 'cheer' | 'gasp' | 'plain') => {
+    bubble.textContent = text;
+    bubble.hidden = false;
+    bubble.dataset.mood = mood;
+    referee.classList.remove('react-cheer', 'react-gasp');
+    void referee.offsetWidth;
+    if (mood !== 'plain') referee.classList.add(`react-${mood}`);
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => {
+      bubble.hidden = true;
+      referee.classList.remove('react-cheer', 'react-gasp');
+    }, 1800);
+  };
+  let prevCounts: { X: number; O: number } | null = null;
   const shelf = app.querySelector<HTMLElement>('.cl-picker')!;
   // "Change game" lives in the game window's head (its slot), so the board keeps the whole window.
   const shelfButton = el('button', { type: 'button', id: 'cl-shelf-open', class: 'btn small-btn cl-change' }) as HTMLButtonElement;
@@ -315,6 +348,9 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const promoBox = app.querySelector<HTMLElement>('.cl-promo')!;
   const bgTray = app.querySelector<HTMLElement>('.bg-tray')!;
   const rematchButton = app.querySelector<HTMLButtonElement>('#xox-rematch')!;
+  // GP2: the one result card over the board; Rematch moves into it while it shows and back after.
+  const actionsBox = app.querySelector<HTMLElement>('.xox-actions')!;
+  const result = resultCard(app.querySelector<HTMLElement>('.xox-board-wrap')!, glowbeam('gr-glow'), (moved) => actionsBox.prepend(...moved));
   const sitButton = app.querySelector<HTMLButtonElement>('#xox-sit')!;
   const standButton = app.querySelector<HTMLButtonElement>('#xox-stand')!;
   rematchButton.addEventListener('click', () => send({ t: 'rematch' }));
@@ -629,6 +665,17 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       cell.disabled = kind === 'four' ? !myTurn || dropRow(game.board, colOf(i)) === -1 : kind === 'dama' ? !(movable.has(i) || targets.has(i)) : !myTurn || value !== null;
     });
     lastBoard = boardKey;
+    // The referee's reactions (GP2): a capture in chess / dama, a check, a big reversi flip.
+    const counts = { X: game.board.filter((c) => c === 'X').length, O: game.board.filter((c) => c === 'O').length };
+    if (changed && prevCounts && game.winner === null && (kind === 'chess' || kind === 'dama' || kind === 'reversi')) {
+      const lost = (['X', 'O'] as const).find((m) => counts[m] < prevCounts![m] && kind !== 'reversi');
+      const flips = kind === 'reversi' ? ((game as ReversiState).flipped?.length ?? 0) : 0;
+      const mine = seat === -1 ? null : MARKS[seat]!;
+      if (kind === 'chess' && chess.check) say(tc('sayCheck'), mine && game.turn === mine ? 'gasp' : 'plain');
+      else if (lost) say(mine === null ? tc('sayTaken') : lost === mine ? tc('sayOuch') : tc('sayTake'), mine === null ? 'plain' : lost === mine ? 'gasp' : 'cheer');
+      else if (flips >= 4) say(tc('sayFlips', { n: flips }), mine && game.board[game.last ?? -1] === mine ? 'cheer' : 'plain');
+    }
+    prevCounts = counts;
     // Sounds: every placed piece (mine and the opponent's: theirs means "your turn"), then the result.
     const placed = changed && game.last !== undefined && game.board[game.last] !== null;
     if (placed) playSound(kind === 'four' ? 'drop' : 'place');
@@ -647,7 +694,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       return p?.bot ? t('classics.botName') : (p?.name ?? (kind === 'xox' ? mark : colour(mark)));
     };
     // Glowbeam the referee (owner's pick 4 A): whose turn, then a small cheer for the winner.
-    referee.className = `cl-ref-mascot${game.winner ? ' cheer' : ''}${!ready ? ' wait' : ''}`;
+    const reacting = [...referee.classList].filter((c) => c.startsWith('react-')).join(' ');
+    referee.className = `cl-ref-mascot${game.winner ? ' cheer' : ''}${!ready ? ' wait' : ''}${reacting ? ` ${reacting}` : ''}`;
     if (!ready) status.textContent = t('games.waiting');
     else if (game.winner === 'draw') status.textContent = kind === 'chess' && chess.end && chess.end !== 'mate' ? tc(chess.end) : t('games.draw');
     else if (game.winner) {
@@ -666,6 +714,17 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     status.classList.toggle('mine', myTurn);
     status.title = status.textContent ?? '';
     rematchButton.hidden = seat === -1 || game.winner === null;
+    if (game.winner !== null && ready && !(classics && shelfOpen)) {
+      const outcome = game.winner === 'draw' ? 'draw' : seat === -1 ? 'over' : game.winner === MARKS[seat] ? 'win' : 'lose';
+      result.show({
+        key: `${kind}:${score.X}:${score.O}:${score.draw}`,
+        outcome,
+        title: status.textContent ?? '',
+        line: `${nameOf('X')} ${score.X} – ${score.O} ${nameOf('O')}`,
+        actions: seat === -1 ? [] : [rematchButton],
+        see: tc('seeBoard'),
+      });
+    } else result.hide();
     sitButton.hidden = seat !== -1 || seats.every((s) => s && s.online && !s.bot);
     standButton.hidden = seat === -1;
     // Glowbeam the bot (owner's pick 6 A): offered to a seated player while the other seat is free.
@@ -834,20 +893,20 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     commands: [
       ...Object.values(LAB_POSITIONS).flat().map((position) => ({
         id: `classics.position.${position}`,
-        title: `Classics: set the "${position}" position`,
-        help: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.',
+        title: { en: `Classics: set the "${position}" position`, tr: `Klasikler: "${position}" dizilişini kur` },
+        help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel lab sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
         tab: 'games' as const,
-        where: 'at a Classics table, seated',
+        where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
         run: () => send({ t: 'lab', position }),
       })),
       // CL2: the picker → board flow in one step (the same path as a press on a card).
-      { id: 'classics.picker', title: 'Classics: show the picker', help: 'As "Change game" in the head (between games).', tab: 'games' as const, where: 'at a Classics table', run: () => shelfButton.click() },
+      { id: 'classics.picker', title: { en: 'Classics: show the picker', tr: 'Klasikler: oyun seçiciyi göster' }, help: { en: 'As "Change game" in the head (between games).', tr: 'Başlıktaki "Oyunu değiştir" gibi (iki oyun arasında).' }, tab: 'games' as const, where: { en: 'at a Classics table', tr: 'Klasikler masasında' }, run: () => shelfButton.click() },
       ...SHELF.map((box) => ({
         id: `classics.pick.${box.kind}`,
-        title: `Classics: pick ${box.kind}`,
-        help: "Presses this board's card in the picker (opens the picker first).",
+        title: { en: `Classics: pick ${box.kind}`, tr: `Klasikler: ${box.kind} seç` },
+        help: { en: "Presses this board's card in the picker (opens the picker first).", tr: 'Seçicide bu oyunun kartına basar (önce seçiciyi açar).' },
         tab: 'games' as const,
-        where: 'at a Classics table, seated',
+        where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
         run: () => {
           if (!shelfOpen) shelfButton.click();
           shelf.querySelector<HTMLButtonElement>(`.cl-box[data-board="${box.kind}"]`)?.click();
@@ -858,6 +917,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   return () => {
     offLab();
     clearTimeout(howTimer);
+    clearTimeout(sayTimer);
     how?.destroy();
     shelfButton.remove();
     document.removeEventListener('pointerdown', closeWatch);

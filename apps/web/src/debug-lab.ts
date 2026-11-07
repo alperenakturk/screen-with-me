@@ -67,18 +67,43 @@ let roomSource: (() => DebugRoom) | null = null;
 /** The lab's tabs. A command shows in its tab and in the command box (Ctrl+K). */
 export type LabTab = 'status' | 'friends' | 'video' | 'games' | 'scenarios' | 'screen' | 'log';
 
+/**
+ * A lab text (card LABTR): plain English, or `{ en, tr }` so the lab follows the page's language. Write the pair inline
+ * (`title: { en: 'Drop my connection for 6 s', tr: 'Bağlantımı 6 sn kopar' }`): scripts/check-texts.mjs checks that
+ * every `{ en, tr }` object has both. Plain words that say what you will see, no jargon (the owner reads them).
+ */
+export type LabText = string | { en: string; tr: string };
+
+/** An error whose message the lab shows in the page's language (`throw labFail({ en, tr })`). */
+export function labFail(text: LabText): Error {
+  return Object.assign(new Error(typeof text === 'string' ? text : text.en), { lab: text });
+}
+
+/** One side of a lab text (to build a pair out of several). */
+export function labText(text: LabText, l: 'en' | 'tr'): string {
+  return typeof text === 'string' ? text : text[l];
+}
+
+/** A direct (voice / camera / stream) connection's state for 📊 Status: 🟢 connected, 🟡 on its way, 🔴 broken. */
+export function labPeer(id: string, state: string, ice: string): LabText {
+  const mark = state === 'connected' ? '🟢' : state === 'failed' || state === 'closed' || state === 'disconnected' ? '🔴' : '🟡';
+  const word = { connected: ['connected', 'bağlı'], connecting: ['connecting', 'bağlanıyor'], new: ['starting', 'başlıyor'], failed: ['broken', 'koptu'], disconnected: ['lost for now', 'şimdilik koptu'], closed: ['closed', 'kapandı'] }[state] ?? [state, state];
+  // The raw states stay in English only (for the bug report); Turkish says it in plain words (owner: no jargon).
+  return { en: `${mark} ${id.slice(0, 4)} ${word[0]} (${state}/${ice})`, tr: `${mark} ${id.slice(0, 4)} ${word[1]}` };
+}
+
 export interface LabCommand {
-  /** Unique, dotted: "snackBar.coins", "friends.add". The command box matches it and the title. */
+  /** Unique, dotted: "snackBar.coins", "friends.add". The command box matches it and the title (both languages). */
   id: string;
-  /** Short title, in English (the lab is a developer tool): "Snack Bar: +10K coins". */
-  title: string;
-  /** One line of help shown under the title. */
-  help: string;
+  /** Short title that says what happens: "Snack Bar: +10K coins". */
+  title: LabText;
+  /** One line of help shown under the title: what you will see. */
+  help: LabText;
   tab: LabTab;
   /** Where it works, shown as a tag: "in a room", "test server only"… */
-  where?: string;
+  where?: LabText;
   /** `true` when it can run now, otherwise the reason it can't ("not in a room", "no Snack Bar save"). */
-  available?: () => true | string;
+  available?: () => true | LabText;
   /** Runs the command. A thrown error or rejected promise becomes a red line in the lab's log, never a broken room. */
   run: (arg?: string) => unknown;
   /** Puts back what `run` changed; offered as "Undo" right after a run. Commands that change nothing have none. */
@@ -88,7 +113,7 @@ export interface LabCommand {
 export interface LabHooks {
   commands?: LabCommand[];
   /** Extra lines for 📊 Status, read about once a second while it shows. */
-  status?: () => [label: string, value: string][];
+  status?: () => [label: LabText, value: LabText][];
 }
 
 type LabFactory = () => LabHooks;
