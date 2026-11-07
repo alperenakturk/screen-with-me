@@ -508,6 +508,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.71 (🎮 games polish 2: one result card, Glowbeam the referee):**
+- [ ] Finish a Classics game (any board) or a Sea Battle: one card comes up over the board: Glowbeam (cheering when
+  you win), "You won!" / "Glowbeam won" / "A draw", the score, Rematch / Play again inside it. "👁 See the board" puts
+  it away so you can look at the final position; Rematch stays under the board.
+- [ ] Glowbeam beside the board reacts: "Nice capture!" when you take a piece, a gasp when you lose one, "Check!" in
+  chess, a jump at a hit and a sunk ship in Sea Battle. The bubble goes by itself.
+- [ ] The picker, the board and the battle fade in softly; with "reduce motion" on in your system nothing moves.
+
 **0.9.97.69 (card LABLOCK: the 🐞 Test Lab needs your code):**
 - [ ] Add the `LAB_CODE` secret (GitHub → Settings → Environments → production → Environment secrets), then after the
   next deploy open the live site once with `?debug=YOUR-CODE`: the 🐞 appears and the code leaves the address. Later,
