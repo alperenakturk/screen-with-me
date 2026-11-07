@@ -16,6 +16,7 @@ test('decide: docs-only, code, web', () => {
   assert.deepEqual(decide(['docs/a.md', 'apps/server/src/index.ts']), { code: true, web: false });
   assert.deepEqual(decide(['packages/shared/src/x.ts']), { code: true, web: true });
   assert.deepEqual(decide(['.github/workflows/test.yml']), { code: true, web: true });
+  assert.deepEqual(decide(['.github/actions/prepare/action.yml']), { code: true, web: true });
   assert.deepEqual(decide([]), { code: false, web: false });
 });
 

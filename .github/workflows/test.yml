@@ -1,4 +1,5 @@
-# On every push and PR: typecheck, unit tests, build and end-to-end tests against a local server.
+# On every push and PR: typecheck, unit tests, build; on a PR also end-to-end tests and browser harnesses against a
+# local server, in parallel jobs (card CI2).
 # The local server is `wrangler dev` (no account needed); e2e connects fake users to the real server code.
 # On every push to main, if the tests pass, site + server are deployed to Cloudflare and e2e runs against
 # live (deploy job). Can also be started by hand from the Actions tab ("Run workflow").
@@ -50,14 +51,16 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/ci-changes.mjs
 
-  test:
+  # Card CI2: the tests run as parallel jobs (a PR's single job had grown past 20 minutes): `checks` (typecheck, texts,
+  # unit tests, build, size budget; push and PR), and on a PR only `e2e` (the local server's e2e + the help harness),
+  # `site` (the site's browser harnesses) and `games` (games quality). Each builds the code itself (the shared start is
+  # `.github/actions/prepare`). The job named `test` waits for all of them and is the ruleset's required check.
+  checks:
     needs: changes
     # Docs-only: skipped, which reports as success for a required check.
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    # 30 (was 20): with GP2's table-how, LABLOCK's lab-check / lab-lock and the tablet harness, a PR's full run passed
-    # 20 minutes (cancelled at 20:00 during the tablet harness on PR #320).
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -92,25 +95,21 @@ jobs:
       - name: Room page size budget
         run: node scripts/size-budget.mjs
 
-      # CI diet (a), owner's pick: on main the PR already ran the local suite on the same code, so a push to main runs
-      # only the checks above before the deploy; the full e2e still runs against live after it.
-      - name: Start local server
-        if: github.event_name != 'push'
-        working-directory: apps/server
-        run: |
-          # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
-          # SWM_LAB_SERVER: the Test Lab's server powers (DL3b, lab.ts); never in wrangler.jsonc or the deploy.
-          # LAB_CODE: a throwaway Test Lab code for this local server only (card LABLOCK: e2e lab-check, harness lab-lock).
-          # TV:on: the hidden TV's server routes (off on live, card R4-10) stay on here, so e2e tv.mjs runs fully.
-          npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var TV:on --var SWM_LAB_SERVER:1 --var LAB_CODE:harness-lab-code > ../../wrangler.log 2>&1 &
-          for i in $(seq 1 60); do
-            if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
-            sleep 1
-          done
-          echo "server did not start"; cat ../../wrangler.log; exit 1
+  # CI diet (a), owner's pick: on main the PR already ran the local suite on the same code, so a push to main runs only
+  # `checks` before the deploy; the full e2e still runs against live after it.
+  e2e:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
 
       - name: End-to-end tests
-        if: github.event_name != 'push'
         env:
           SWM_E2E_UNPACED: '1'
           # lab-server.mjs: this server has the lab powers; the live run (no LAB_SERVER) checks they are refused.
@@ -119,26 +118,40 @@ jobs:
           LAB_CODE: harness-lab-code
         run: npm run e2e
 
-      # Card A11y: axe-core (WCAG 2.1 A + AA) on home, help, join, room, settings, invite, games hall, tic-tac-toe and
-      # the first tips, plus a keyboard tour. axe-core and Playwright are installed for this step only (not site deps).
-      # The browser download is cached between runs (its system libraries are still installed each time).
-      - name: Cache Playwright's browser
-        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-1.63.0-chromium
-
-      - name: Accessibility (axe + keyboard tour)
-        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
+      # Card MB: the help page and the privacy policy state the code's numbers (limits, retention, the upload budget,
+      # the TV being off) in both languages; the room links them. Server constants count too, so not only on `web`.
+      - name: Help page and policy numbers
         run: |
-          npm i --no-save --no-audit --no-fund axe-core@4.10.2 playwright@1.63.0
+          npm i --no-save --no-audit --no-fund playwright@1.63.0
           npx playwright install --with-deps chromium
-          node scripts/harness/a11y/run.cjs http://localhost:8787
+          node scripts/harness/help/run.cjs http://localhost:8787
+
+      # Only its end: the whole log of every run buried the failing step's own output.
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 150 wrangler.log || true
+
+  # The site's browser harnesses, only when the site, the shared code, the harnesses or the workflows changed.
+  site:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
+          playwright: 'true'
+
+      # Card A11y: axe-core (WCAG 2.1 A + AA) on home, help, join, room, settings, invite, games hall, tic-tac-toe and
+      # the first tips, plus a keyboard tour.
+      - name: Accessibility (axe + keyboard tour)
+        run: node scripts/harness/a11y/run.cjs http://localhost:8787
 
       # Card DL: the 🐞 Test Lab (drawer, command box, status, log, bug text) and that with it off nothing of it loads.
       - name: Test Lab
-        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: |
           node scripts/harness/test-lab/run.cjs http://localhost:8787
           node scripts/harness/lab-friends/run.cjs http://localhost:8787
@@ -148,59 +161,88 @@ jobs:
 
       # Card DL3a: the Test Lab's game tools (open any game, side-game cheats on a sandbox save, restore my real saves).
       - name: Test Lab games
-        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: node scripts/harness/lab-games/run.cjs http://localhost:8787
-
-      # Card BHG: every game fits its window (no inner scrollbar, text >= 13 px, nothing cut off, a fair-sized board) on
-      # a laptop and a phone in English and Turkish (the four sizes locally: drop SIZES), and minimize / restore / a
-      # reload mid-game keep the game (Classics, Quiz, Draw & Guess, side games); Sea Battle with two people and Glowbeam;
-      # the tablet layouts with a game window beside the chat.
-      - name: Games quality
-        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
-        run: |
-          SIZES=laptop,iphone node scripts/harness/games-sweep/run.cjs http://localhost:8787
-          node scripts/harness/games-resume/run.cjs http://localhost:8787
-          node scripts/harness/sea/run.cjs http://localhost:8787
-          # GP2: the tables' How to play cards (first time, the "?", per Classics board, Turkish).
-          node scripts/harness/table-how/run.cjs http://localhost:8787
-          # Card GT: on a tablet (iPad + Android, upright and sideways) a game's window stays clear of the chat.
-          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null)
-          mkdir -p /tmp/vid && ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 -t 120 -c:v libvpx -b:v 300k /tmp/vid/video.webm
-          (cd /tmp/vid && python3 -m http.server 5300 >/dev/null 2>&1 &)
-          sleep 1
-          node scripts/harness/tablet/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and the IP notice
       # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
       - name: Lazy chunks and their gates
-        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
 
-      # Card MB: the help page and the privacy policy state the code's numbers (limits, retention, the upload budget,
-      # the TV being off) in both languages; the room links them. Server constants count too, so not only on `web`.
-      - name: Help page and policy numbers
-        if: github.event_name != 'push'
-        run: |
-          npm i --no-save --no-audit --no-fund playwright@1.63.0
-          npx playwright install --with-deps chromium
-          node scripts/harness/help/run.cjs http://localhost:8787
-
-      # Only its end: the whole log of every e2e and harness run buried the failing step's own output.
       # Card CAM1: cameras between a computer and a phone (both ways, the phone's camera row and sheet, switching in
       # place, the rear camera not mirrored, a stopped or paused picture recovering by itself).
       - name: Phone cameras
-        if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
         run: node scripts/harness/cam-phone/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
 
+  # Card BHG: every game fits its window (no inner scrollbar, text >= 13 px, nothing cut off, a fair-sized board) on a
+  # laptop and a phone in English and Turkish (the four sizes locally: drop SIZES), and minimize / restore / a reload
+  # mid-game keep the game (Classics, Quiz, Draw & Guess, side games); Sea Battle with two people and Glowbeam; the
+  # tablet layouts with a game window beside the chat.
+  games:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
+          playwright: 'true'
+
+      - name: Games sweep (laptop + iPhone, EN + TR)
+        run: SIZES=laptop,iphone node scripts/harness/games-sweep/run.cjs http://localhost:8787
+
+      - name: Games resume, Sea Battle, How to play
+        run: |
+          node scripts/harness/games-resume/run.cjs http://localhost:8787
+          node scripts/harness/sea/run.cjs http://localhost:8787
+          # GP2: the tables' How to play cards (first time, the "?", per Classics board, Turkish).
+          node scripts/harness/table-how/run.cjs http://localhost:8787
+
+      # Card GT: on a tablet (iPad + Android, upright and sideways) a game's window stays clear of the chat.
+      - name: Tablets
+        run: |
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null)
+          mkdir -p /tmp/vid && ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 -t 120 -c:v libvpx -b:v 300k /tmp/vid/video.webm
+          (cd /tmp/vid && python3 -m http.server 5300 >/dev/null 2>&1 &)
+          sleep 1
+          node scripts/harness/tablet/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 150 wrangler.log || true
+
+  # The ruleset's required check: green when every test job passed or was skipped on purpose (docs-only, a push to
+  # main, no site change); red when one failed or was cancelled, or the change detection itself failed. `always()`, so
+  # a failed job can never make this one "skipped" (which a required check would count as success).
+  test:
+    needs: [changes, checks, e2e, site, games]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All test jobs passed
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.games.result }}
+        run: |
+          echo "changes: $CHANGES · checks, e2e, site, games: $RESULTS"
+          [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
+          done
+
   # Deploy to live: only on main and only if the tests passed. Cloudflare keys are in the repo's
   # Secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); without them the job warns and skips.
   deploy:
     needs: [changes, test]
-    # Docs-only pushes to main deploy nothing (the test job was skipped).
+    # Docs-only pushes to main deploy nothing (the test jobs were skipped). `test` always runs (CI2), so this job needs
+    # no `always()`: a failed `test` skips it as before.
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -1,0 +1,58 @@
+# Card CI2: the shared start of every test job (after the checkout): Node, `npm ci`, the build and, when asked, the
+# local server and Playwright's browser. One place, so the parallel jobs never drift apart.
+name: Prepare
+description: Node, npm ci and the build; optionally the local wrangler dev server and Playwright's Chromium.
+inputs:
+  server:
+    description: "'true' starts the local server on :8787 (needs the build)."
+    default: 'false'
+  playwright:
+    description: "'true' installs axe-core + Playwright 1.63.0 and Chromium (the browser download is cached)."
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 24
+        cache: npm
+
+    - name: Install
+      shell: bash
+      run: npm ci
+
+    - name: Build (extension + site)
+      shell: bash
+      run: npm run build
+
+    - name: Start local server
+      if: inputs.server == 'true'
+      shell: bash
+      working-directory: apps/server
+      run: |
+        # SWM_LOCAL_UNPACED: no per-IP connection limit on this local server, so e2e needs no pauses (CI diet).
+        # SWM_LAB_SERVER: the Test Lab's server powers (DL3b, lab.ts); never in wrangler.jsonc or the deploy.
+        # LAB_CODE: a throwaway Test Lab code for this local server only (card LABLOCK: e2e lab-check, harness lab-lock).
+        # TV:on: the hidden TV's server routes (off on live, card R4-10) stay on here, so e2e tv.mjs runs fully.
+        npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var TV:on --var SWM_LAB_SERVER:1 --var LAB_CODE:harness-lab-code > ../../wrangler.log 2>&1 &
+        for i in $(seq 1 60); do
+          if curl -sf http://localhost:8787/ > /dev/null; then echo "server ready"; exit 0; fi
+          sleep 1
+        done
+        echo "server did not start"; cat ../../wrangler.log; exit 1
+
+    # axe-core and Playwright are installed for the harnesses only (not site deps); the browser download is cached
+    # between runs (its system libraries are still installed each time).
+    - name: Cache Playwright's browser
+      if: inputs.playwright == 'true'
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-1.63.0-chromium
+
+    - name: Install Playwright
+      if: inputs.playwright == 'true'
+      shell: bash
+      run: |
+        npm i --no-save --no-audit --no-fund axe-core@4.10.2 playwright@1.63.0
+        npx playwright install --with-deps chromium
