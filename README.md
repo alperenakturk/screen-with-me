@@ -150,6 +150,9 @@ the address in [SECURITY.md](SECURITY.md).
 | Real voice, cameras and streams (`scripts/harness/voice`) | Two Chromes with fake devices: received audio energy and camera frames are measured, on the site and on film pages; free camera / stream windows; browsers that block direct connections |
 | Phones, Shorts, YouTube room, TikTok, sounds, hotspot (`scripts/harness/*`) | iPhone and Android layouts, the Shorts rail at many screen sizes, nothing over the YouTube player, a stand-in for TikTok's player protocol, which sounds really play, a proxy that swallows WebSockets |
 | Real players (extension code on public demo pages) | **Plyr, hls.js, Video.js**: detection ✓, remote and local actions ✓, 26–100 ms apart |
+| Live site (`.github/workflows/monitor.yml`) | An uptime check every 30 minutes (home page, server version, a room join); an `outage` issue while it is down |
+
+What changed in each version: [CHANGELOG.md](CHANGELOG.md). Every version that went live after its tests passed is tagged `v<version>`.
 
 
 ## Tech

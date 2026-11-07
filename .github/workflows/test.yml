@@ -215,6 +215,9 @@ jobs:
     # can live there instead of the repository, so no other job or branch can read them. Repository secrets still reach
     # it until the owner moves them; GitHub creates the environment on first use if it doesn't exist yet.
     environment: production
+    # Card OPS1: `live` is true only when this run deployed and the live e2e passed; the `tag` job reads it.
+    outputs:
+      live: ${{ steps.live.outputs.ok }}
     # Two quick pushes must not deploy at the same time; the next one waits.
     concurrency:
       group: deploy
@@ -302,3 +305,33 @@ jobs:
             sleep 30
           fi
           npm run e2e -- wss://screen-with-me.swm-server.workers.dev
+
+      - name: Mark the version live
+        id: live
+        if: steps.keys.outputs.ok == 'true'
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
+
+  # Card OPS1: every version that went live with a green live e2e gets a tag `v<version>` (the extension's version, the
+  # same number as the site's footer). The only job that may write to the repository, and only tags: `contents: write`
+  # lives here alone (security R4-5), the actions are pinned by SHA, no third-party action. A version deployed again
+  # (a fix without a new number) keeps the tag of its first live deploy.
+  tag:
+    needs: deploy
+    if: needs.deploy.outputs.live == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Tag the live version
+        run: |
+          v="v$(node -p "require('./apps/extension/package.json').version")"
+          if git ls-remote --exit-code --tags origin "refs/tags/$v" > /dev/null; then
+            echo "$v is already tagged (an earlier deploy of the same version)."
+            exit 0
+          fi
+          git tag "$v" "$GITHUB_SHA"
+          git push origin "refs/tags/$v"
+          echo "Tagged $v at $GITHUB_SHA."
