@@ -42,8 +42,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check the change detection
-        run: node --test scripts/ci-changes.test.mjs
+      - name: Check the change detection and the workflow guards
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-workflow.test.mjs
 
       - id: diff
         env:
