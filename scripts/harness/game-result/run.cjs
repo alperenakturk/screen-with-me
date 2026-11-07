@@ -58,7 +58,8 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
       }),
     );
     check(card && card.outcome === 'win' && /checkmate/i.test(card.title) && /1 – 0/.test(card.line) && card.rematch && card.mascot, `${label}: mate → the result card: Glowbeam, "Checkmate! You won", 1 – 0, Rematch inside`, card);
-    await wait(500); // the card pops in (0.35 s): measure it at its own size
+    // The card pops in (0.35 s, with an overshoot): measure it once its animation is over, at its own size.
+    await page.evaluate(() => Promise.all((document.querySelector('#game-stage .gr-card')?.getAnimations() ?? []).map((a) => a.finished)));
     const fits = await page.evaluate(() => {
       const c = document.querySelector('#game-stage .gr-card')?.getBoundingClientRect();
       const s = document.querySelector('#game-stage')?.getBoundingClientRect();
@@ -81,15 +82,19 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
     await until(() => page.evaluate(() => document.querySelector('#game-stage .xox-page')?.dataset.board === 'dama'));
     await run('classics.position.chain');
     await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .dama-cell.mark-X').length === 2));
+    // Every line the bubble shows from now on is recorded: Glowbeam (the bot) may answer with a capture of its own a
+    // moment later, which replaces "Nice capture!" with "Ouch!" before a slow runner looks.
     await page.evaluate(() => {
+      const b = document.querySelector('#game-stage .cl-say');
+      const mascot = document.querySelector('#game-stage .cl-ref-mascot');
+      window.__said = [];
+      const note = () => !b.hidden && window.__said.push({ text: b.textContent, mood: b.dataset.mood, jump: !!mascot?.classList.contains('react-cheer') });
+      new MutationObserver(note).observe(b, { attributes: true, childList: true, characterData: true, subtree: true });
       const from = document.querySelector('#game-stage .dama-cell.movable');
       from?.click();
       setTimeout(() => document.querySelector('#game-stage .dama-cell.target')?.click(), 150);
     });
-    const said = await until(() => page.evaluate(() => {
-      const b = document.querySelector('#game-stage .cl-say');
-      return b && !b.hidden ? { text: b.textContent, mood: b.dataset.mood, jump: document.querySelector('#game-stage .cl-ref-mascot')?.classList.contains('react-cheer') } : null;
-    }));
+    const said = await until(() => page.evaluate(() => window.__said.find((x) => /nice capture/i.test(x.text)) ?? null));
     check(said && /nice capture/i.test(said.text) && said.mood === 'cheer', `${label}: a capture → Glowbeam says "Nice capture!" and cheers`, said);
     await wait(2200);
     check(await page.evaluate(() => document.querySelector('#game-stage .cl-say')?.hidden), `${label}: the bubble goes away by itself`);
@@ -140,9 +145,10 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
         const s = document.querySelector('#game-stage').getBoundingClientRect();
         return { outcome: l.dataset.outcome, title: l.querySelector('.gr-title')?.textContent ?? '', line: l.querySelector('.gr-line')?.textContent ?? '', podium: l.querySelectorAll('.game-podium li:not(.vacant)').length, mascot: !!l.querySelector('.gr-mascot svg'), again: again?.textContent ?? '', disabled: again?.disabled ?? null, inside: c.left >= s.left - 1 && c.right <= s.right + 1 && c.top >= s.top - 1 && c.bottom <= s.bottom + 1, btns: [...l.querySelectorAll('button')].map((b) => Math.round(Math.min(b.getBoundingClientRect().width, b.getBoundingClientRect().height))) };
       });
-      await wait(500);
+      await until(() => card(sam.page));
+      for (const p of [alex.page, sam.page]) await p.evaluate(() => Promise.all((document.querySelector('#game-stage .gr-card')?.getAnimations() ?? []).map((a) => a.finished))).catch(() => {});
       const a = await card(alex.page);
-      const b = await until(() => card(sam.page));
+      const b = await card(sam.page);
       check(!!over && a && a.podium === 2 && a.mascot && a.line.length > 0 && /tie|won/i.test(a.title), `${label} ${kind}: the game ends on the result card: Glowbeam, who won, his line, the podium inside`, a);
       // Nobody scored: a tie at the top. The game's host (whoever reached the table first) starts again; the other
       // waits for them by name.
