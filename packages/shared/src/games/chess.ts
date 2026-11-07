@@ -245,6 +245,18 @@ export function legalMoves(s: ChessState): number[] {
   });
 }
 
+/** Does the side to play have any legal move? (Stops at the first one: the end-of-game test needs no full list.) */
+function hasLegalMove(s: ChessState): boolean {
+  const mark = s.turn;
+  for (const move of pseudoMoves(s)) {
+    const next = applyMove(s, move);
+    const kinds = next.kinds.join('');
+    const king = kingOf(next.board, kinds, mark);
+    if (king >= 0 && !attacked(next.board, kinds, king, other(mark))) return true;
+  }
+  return false;
+}
+
 /** A short hash of what makes two positions the same (pieces, side to move, castling, a usable en passant). */
 function positionKey(s: ChessState): string {
   let epUsable = '';
@@ -286,6 +298,15 @@ const CASTLE_LOST: Record<number, string> = { [at(7, 4)]: 'KQ', [at(7, 7)]: 'K',
 export function play(state: BoardState, mark: Mark, move: number): ChessState | null {
   const s = state as ChessState;
   if (s.winner !== null || s.turn !== mark || !Number.isInteger(move) || move < 0 || !legalMoves(s).includes(move)) return null;
+  return playLegal(s, move);
+}
+
+/**
+ * The position after a move already known to be legal (one from `legalMoves`): Glowbeam's search plays thousands of
+ * them, so it skips `play`'s check. Everything else (check, mate, the draws) is worked out exactly as in `play`.
+ */
+export function playLegal(s: ChessState, move: number): ChessState {
+  const mark = s.turn;
   const from = Math.floor((move % 4096) / CELLS);
   const to = move % CELLS;
   const done = applyMove(s, move);
@@ -313,8 +334,7 @@ export function play(state: BoardState, mark: Mark, move: number): ChessState | 
   next.seen = reset ? [key] : [...s.seen, key].slice(-MAX_SEEN);
   const king = kingOf(next.board, kinds, next.turn);
   next.check = king >= 0 && attacked(next.board, kinds, king, mark);
-  const replies = legalMoves(next);
-  if (replies.length === 0) {
+  if (!hasLegalMove(next)) {
     next.winner = next.check ? mark : 'draw';
     next.end = next.check ? 'mate' : 'stalemate';
   } else if (next.halfmove >= FIFTY) {

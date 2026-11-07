@@ -5,6 +5,7 @@
 // middle of the table; "How to play" walks through the game in four short steps.
 
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
+import { gameHint } from './hint.ts';
 import {
   MOVE_COST,
   POKER_MAX_PLAYERS,
@@ -237,13 +238,11 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   }
 
   // The announcement in the middle of the table: stays 2.4 s, the newest replaces the last.
-  const toast = el('div', { class: 'pk-toast', 'aria-live': 'assertive' });
-  let toastTimer = 0;
+  // GP3: the games' shared hint style (`hint.ts`); a hand's result in gold.
+  const toast = el('div', { class: 'pk-toast' });
+  const hint = gameHint(toast);
   function announce(text: string, kind: string): void {
-    toast.textContent = text;
-    toast.className = `pk-toast show ${kind}`;
-    clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => (toast.className = 'pk-toast'), kind === 'result' ? 3000 : 2400);
+    hint.show(text, kind === 'result' ? 3000 : 2400, kind === 'result' ? 'good' : 'plain');
   }
 
   function helpButton(): HTMLElement {
@@ -571,7 +570,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     close();
     clearInterval(ticker);
     clearInterval(ping);
-    clearTimeout(toastTimer);
+    hint.hide();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
   };

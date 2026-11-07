@@ -10852,42 +10852,6 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   position: relative;
 }
 
-.pk-toast,
-.game-toast {
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  z-index: 4;
-  max-width: min(92%, 560px);
-  padding: 12px 20px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
-  font-size: 17px;
-  font-weight: 700;
-  text-align: center;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.92);
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.pk-toast.show,
-.game-toast.show {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.pk-toast.move {
-  border-color: var(--warn);
-}
-
-.pk-toast.result {
-  border-color: var(--pk-life);
-  font-size: 19px;
-}
-
 .pk-help {
   display: inline-grid;
   place-items: center;
