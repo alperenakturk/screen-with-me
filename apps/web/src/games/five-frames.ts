@@ -431,20 +431,20 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     () => [
       {
         id: 'fiveFrames.answer',
-        title: "Five Frames: show today's answer",
-        help: "Writes the answer of the shown day and language in the lab's log (nothing in the game changes).",
+        title: { en: "Five Frames: show today's answer", tr: 'Beş Kare: bugünün cevabını göster' },
+        help: { en: "Writes the answer of the shown day and language in the lab's log (nothing in the game changes).", tr: 'Görünen günün ve dilin cevabını lab kaydına yazar (oyunda hiçbir şey değişmez).' },
         tab: 'games',
-        where: 'Five Frames open',
-        available: () => !!answer || 'the word list is still loading',
+        where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
+        available: () => !!answer || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },
         run: () => `${wordLang}: ${answer}`,
       },
       {
         id: 'fiveFrames.day',
-        title: 'Five Frames: another day',
-        help: 'Moves to another day (arg: days from today, e.g. 1 or -3; empty = the next day). Its game is saved in the sandbox.',
+        title: { en: 'Five Frames: another day', tr: 'Beş Kare: başka bir gün' },
+        help: { en: 'Moves to another day (arg: days from today, e.g. 1 or -3; empty = the next day). Its game is saved in the sandbox.', tr: 'Başka bir güne geçer (bugünden gün sayısı yaz, ör. 1 ya da -3; boş = ertesi gün). O günün oyunu deneme kaydına yazılır.' },
         tab: 'games',
-        where: 'Five Frames open',
-        available: () => !!list || 'the word list is still loading',
+        where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
+        available: () => !!list || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },
         run: (arg) => {
           const asked = Number(arg);
           dayShift = arg !== undefined && arg !== '' && Number.isInteger(asked) ? Math.max(-365, Math.min(365, asked)) : dayShift + 1;

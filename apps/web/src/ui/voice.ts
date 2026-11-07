@@ -19,7 +19,7 @@ import { setIcon } from './icons.ts';
 import type { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
-import { debugHooks } from '../debug-lab.ts';
+import { debugHooks, labFail, labPeer, labText, type LabText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
 
 /** Sunucu bu sürede cevap vermezse bağlantı işi başarısız sayılır. */
@@ -262,44 +262,59 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     let ext: ExtVoice | null = null;
   // 🐞 Test Lab: each voice connection's state (ids shortened; read only).
   // CAM1: camera accidents on this tab's own side (the 🎬 tab), and every camera picture's state on 📊 Status.
-  const camReady = () => (p2p && client === p2p && client.camEnabled ? true : 'my camera is not on (join voice, press 📷)');
+  const camReady = () => (p2p && client === p2p && client.camEnabled ? true : { en: 'my camera is not on (join voice, press 📷)', tr: 'kameram açık değil (sese katıl, 📷\'a bas)' });
+  const CAM_ON = { en: 'camera on', tr: 'kamera açıkken' };
   debugHooks.register('voice', () => ({
     commands: [
       {
         id: 'voice.switchCam',
-        title: 'Camera: switch to the next camera',
-        help: 'My camera goes to the next one on this device in place (as on a phone: front, rear, wide); the others see "camera changing…".',
+        title: { en: 'Switch to my next camera', tr: 'Sıradaki kamerama geç' },
+        help: { en: 'My camera changes to the next one on this device without leaving voice (on a phone: front, back, wide); the others see "camera changing…".', tr: 'Kameram sesten çıkmadan bu cihazdaki sıradakine geçer (telefonda: ön, arka, geniş); diğerleri "kamera değişiyor…" görür.' },
         tab: 'video',
-        where: 'camera on',
+        where: CAM_ON,
         available: camReady,
         run: async () => {
           await switchCamera();
-          return `camera: ${p2p?.camera?.getVideoTracks()[0]?.label || 'switched'}`;
+          const label = p2p?.camera?.getVideoTracks()[0]?.label;
+          return label ? { en: `camera: ${label}`, tr: `kamera: ${label}` } : { en: 'camera switched', tr: 'kamera değişti' };
         },
       },
       {
         id: 'voice.camPause',
-        title: 'Camera: the others get no picture for N s',
-        help: 'My picture stops reaching the others for N seconds (default 6), as when a phone stalls: their picture must say so and come back.',
+        title: { en: 'My camera freezes for the others for 6 s', tr: 'Kameram diğerlerinde 6 sn donsun' },
+        help: { en: 'My picture stops reaching the others, as when a phone stalls: their tile must say "waiting for the picture…" and come back by itself. A number sets the seconds (1–30).', tr: 'Görüntüm diğerlerine gitmez, telefon takılınca olduğu gibi: onların ekranında "görüntü bekleniyor…" yazmalı ve kendiliğinden geri gelmeli. Bir sayı yazarsan saniye olur (1–30).' },
         tab: 'video',
-        where: 'camera on',
+        where: CAM_ON,
         available: camReady,
         run: async (arg?: string) => {
           const n = Number(arg?.trim());
           const s = Number.isFinite(n) && arg?.trim() ? Math.min(30, Math.max(1, n)) : 6;
-          if (!(await p2p?.labCamPause(s * 1000))) throw new Error('my camera is not on');
-          return `no picture for the others for ${s} s`;
+          if (!(await p2p?.labCamPause(s * 1000))) throw labFail({ en: 'my camera is not on', tr: 'kameram açık değil' });
+          return { en: `no picture for the others for ${s} s`, tr: `diğerlerine ${s} sn görüntü gitmiyor` };
         },
       },
     ],
     status: () => {
       const peers = p2p?.peerStates() ?? [];
       const cams = camStates();
-      return [
-        ['Voice peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : ext ? 'on the film page (extension)' : 'none'],
-        ...(p2p?.camEnabled ? ([['My camera', `${p2p.camFacing ?? 'facing ?'}${p2p.camSwitching ? ' · switching' : ''}`]] as [string, string][]) : []),
-        ['Camera pictures', cams.length ? cams.map((c) => `${c.label}: ${c.state}${c.ms > 1500 ? ` (${(c.ms / 1000).toFixed(1)} s no frame)` : ''}`).join(', ') : 'none'],
+      const facing = p2p?.camFacing === 'user' ? { en: 'front', tr: 'ön' } : p2p?.camFacing === 'environment' ? { en: 'back', tr: 'arka' } : { en: 'unknown side', tr: 'yönü bilinmiyor' };
+      const rows: [LabText, LabText][] = [
+        [
+          { en: 'Voice connections', tr: 'Ses bağlantıları' },
+          peers.length
+            ? { en: peers.map((p) => labText(labPeer(p.id, p.state, p.ice), 'en')).join(', '), tr: peers.map((p) => labText(labPeer(p.id, p.state, p.ice), 'tr')).join(', ') }
+            : ext ? { en: 'on the film page (the extension holds them)', tr: 'film sayfasında (eklentide)' } : { en: 'none', tr: 'yok' },
+        ],
       ];
+      if (p2p?.camEnabled) rows.push([{ en: 'My camera', tr: 'Kameram' }, p2p.camSwitching ? { en: `🟡 ${facing.en} · changing`, tr: `🟡 ${facing.tr} · değişiyor` } : { en: `🟢 ${facing.en}`, tr: `🟢 ${facing.tr}` }]);
+      const pic = (c: { label: string; state: string; ms: number }, l: 'en' | 'tr') => {
+        const stuck = c.ms > 1500;
+        const mark = c.state === 'playing' && !stuck ? '🟢' : stuck ? '🔴' : '🟡';
+        const gap = stuck ? (l === 'en' ? ` (no new frame for ${(c.ms / 1000).toFixed(1)} s)` : ` (${(c.ms / 1000).toFixed(1)} sn yeni kare yok)`) : '';
+        return `${mark} ${c.label}: ${c.state}${gap}`;
+      };
+      rows.push([{ en: 'Camera pictures', tr: 'Kamera görüntüleri' }, cams.length ? { en: cams.map((c) => pic(c, 'en')).join(', '), tr: cams.map((c) => pic(c, 'tr')).join(', ') } : { en: 'none', tr: 'yok' }]);
+      return rows;
     },
   }));
   /** Sunucu sesi destekliyor mu / eklenti katmanda sesi destekliyor mu (sadece kabukta gerekir). */

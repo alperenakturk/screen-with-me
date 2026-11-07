@@ -7,6 +7,9 @@
 const { chromium } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
+// LABTR: the whole run in English (default) or Turkish (`LAB_LANG=tr`); `L(en, tr)` picks the text a check expects.
+const LANG = process.env.LAB_LANG === 'tr' ? 'tr' : 'en';
+const L = (en, tr) => (LANG === 'tr' ? tr : en);
 let fails = 0;
 const check = (ok, label, extra = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${!ok && extra ? ` → ${extra}` : ''}`);
@@ -24,11 +27,11 @@ const until = async (fn, ms = 8000) => {
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
-  await ctx.addInitScript(() => {
-    if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'en');
+  await ctx.addInitScript((lang) => {
+    if (!localStorage.getItem('lang')) localStorage.setItem('lang', lang);
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
-  });
+  }, LANG);
   const page = await ctx.newPage();
   const room = `fr${Math.random().toString(36).slice(2, 7)}`;
   await page.goto(`${SITE}/?debug=1`);
@@ -55,13 +58,13 @@ const until = async (fn, ms = 8000) => {
   await page.click('.lab-tab[data-tab="friends"]');
   const rows = await until(() => page.evaluate(() => {
     const r = [...document.querySelectorAll('.lab-friend')];
-    return r.length === 3 && r.every((x) => x.textContent.includes('in the room')) ? r.map((x) => x.querySelector('strong').textContent).join(',') : null;
+    return r.length === 3 && r.every((x) => x.textContent.includes(localStorage.getItem('lang') === 'tr' ? 'odada' : 'in the room')) ? r.map((x) => x.querySelector('strong').textContent).join(',') : null;
   }));
   check(!!rows && rows.split(',').every((n) => n.startsWith('🤖')), '👥 lists them with 🤖 in their names, "in the room"', String(rows));
   await run('friends.add3');
   check(!!(await until(async () => (await people()) === 6)), 'adding three more stops at five friends (6 people)', String(await people()));
   const sixth = await run('friends.add');
-  check(sixth.dir === 'error' && /at most 5/.test(sixth.text), 'a sixth is refused (at most 5)', JSON.stringify(sixth));
+  check(sixth.dir === 'error' && (LANG === 'tr' ? /en çok 5/ : /at most 5/).test(sixth.text), 'a sixth is refused (at most 5)', JSON.stringify(sixth));
   await run('friends.removeAll');
   check(!!(await until(async () => (await people()) === 1)), '"everyone leaves" empties the room again');
 
@@ -123,7 +126,7 @@ const until = async (fn, ms = 8000) => {
   await run('friends.add');
   const card = await page.waitForSelector('.knock-card', { timeout: 8000 }).then(() => true, () => false);
   check(card, 'with "Ask before letting people in" a new fake friend knocks (I get the card)');
-  const door = await until(() => page.evaluate(() => [...document.querySelectorAll('.lab-friend')].some((r) => r.textContent.includes('at the door'))));
+  const door = await until(() => page.evaluate(() => [...document.querySelectorAll('.lab-friend')].some((r) => r.textContent.includes(localStorage.getItem('lang') === 'tr' ? 'kapıda' : 'at the door'))));
   check(!!door, '👥 shows them "at the door"');
   await page.click('.knock-allow');
   check(!!(await until(async () => (await people()) === 3)), '"Let in": they join (3 people)');
@@ -131,9 +134,9 @@ const until = async (fn, ms = 8000) => {
 
   // ---- Take the host role ----
   await run('friends.host', '1');
-  const hostMoved = await until(() => page.evaluate(() => /Host=someone else/.test([...document.querySelectorAll('.debug-facts dt')].map((d) => `${d.textContent}=${d.nextElementSibling.textContent}`).join('|')) || window.__swmLab.log().some((l) => l.type === 'members' && l.dir === 'in')));
+  const hostMoved = await until(() => page.evaluate(() => (localStorage.getItem('lang') === 'tr' ? /Yönetici=başka biri/ : /Host=someone else/).test([...document.querySelectorAll('.debug-facts dt')].map((d) => `${d.textContent}=${d.nextElementSibling.textContent}`).join('|')) || window.__swmLab.log().some((l) => l.type === 'members' && l.dir === 'in')));
   await page.click('.lab-tab[data-tab="status"]');
-  const hostLine = await until(() => page.evaluate(() => [...document.querySelectorAll('.debug-facts dt')].find((d) => d.textContent === 'Host')?.nextElementSibling.textContent === 'someone else'));
+  const hostLine = await until(() => page.evaluate(([k, v]) => [...document.querySelectorAll('.debug-facts dt')].find((d) => d.textContent === k)?.nextElementSibling.textContent === v, [L('Host', 'Yönetici'), L('someone else', 'başka biri')]));
   check(!!hostMoved && !!hostLine, 'a fake friend takes the host role (👑 Make host)');
   // BH10: after handing it on I am a guest: the room rules show as a summary, not as switches.
   const guest = await until(() => page.evaluate(() => !document.getElementById('rules-summary').hidden && document.getElementById('opt-knock')?.closest('[hidden], .host-only')?.offsetParent == null));

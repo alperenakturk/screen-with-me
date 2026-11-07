@@ -508,6 +508,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.72 (card LABTR: the 🐞 Test Lab in plain Turkish):**
+- [ ] With the site in Turkish, open the 🐞 Test Lab: every tab, button, status line and command is Turkish and plain
+  ("Bağlantımı 6 sn kopar", "Videom 3 sn geride kalsın", "Saat farkı"); green / yellow / red dots show what is fine.
+- [ ] Switch the language (profile menu): the open lab changes language at once.
+- [ ] Ctrl+K, type "kopar" (or "baglanti"): "Bağlantımı 6 sn kopar" is found; Enter runs it.
+
 **0.9.97.71 (🎮 games polish 2: one result card, Glowbeam the referee):**
 - [ ] Finish a Classics game (any board) or a Sea Battle: one card comes up over the board: Glowbeam (cheering when
   you win), "You won!" / "Glowbeam won" / "A draw", the score, Rematch / Play again inside it. "👁 See the board" puts

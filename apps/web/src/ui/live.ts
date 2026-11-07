@@ -7,7 +7,7 @@ import type { IpNoticeKind } from './ip-notice.ts';
 import type { Composed } from './live-compose.ts';
 import { setIcon } from './icons.ts';
 import { openCam } from './voice-devices.ts';
-import { debugHooks } from '../debug-lab.ts';
+import { debugHooks, labPeer, labText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
 
 type Engine = typeof import('./live-engine.ts');
@@ -164,7 +164,14 @@ export function createLive(
   debugHooks.register('live', () => ({
     status: () => {
       const peers = live?.peerStates() ?? [];
-      return [['Stream peers', peers.length ? peers.map((p) => `${p.id.slice(0, 4)} ${p.state}/${p.ice}`).join(', ') : 'none']];
+      return [
+        [
+          { en: 'Stream connections', tr: 'Yayın bağlantıları' },
+          peers.length
+            ? { en: peers.map((p) => labText(labPeer(p.id, p.state, p.ice), 'en')).join(', '), tr: peers.map((p) => labText(labPeer(p.id, p.state, p.ice), 'tr')).join(', ') }
+            : { en: 'none', tr: 'yok' },
+        ],
+      ];
     },
   }));
 

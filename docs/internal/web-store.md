@@ -30,13 +30,15 @@ HOW IT WORKS
 3. The page opens with your room around the video. Press play and you're watching together.
 There are no settings to learn: the extension icon only shows whether the tab is in a room, with one button back to the room.
 
-WHY SCREENWITHME
+WHY SIDELIT
 • Works with standard HTML5 video players, even inside iframes and in players that load late
 • Tight sync, measured 30–100 ms apart on popular open-source players
 • Wrong video picked up (a trailer or a preview)? Choose the right one with one click
 • "Everyone ready": if someone is still buffering, the room waits for them (up to 12 s)
 • Emoji reactions and quick chat over the video, also in fullscreen
 • Voice chat while you watch: the microphone is asked for once and only turns on when you join voice
+• Cameras and screen sharing with the people in the room, also on the film page
+• Games to play together while you wait or between episodes (Classics, Sea Battle, quiz, draw and guess) and small games on the side
 • Pin moments with an optional note and jump back to talk about them later
 • Add your own custom emojis (images or GIFs) to a room; they stay in that room only
 • Send pictures in the room chat; links open in a new tab after a check
@@ -44,7 +46,7 @@ WHY SCREENWITHME
 • Shared speed: other speed extensions can't knock the room out of sync
 • The room host can lock the controls, remove people and lift bans
 • Ten themes and drawn avatars; just pick a name, no account
-• YouTube and direct video links play right on the website, no extension needed
+• YouTube (with search), Vimeo, TikTok, podcasts and direct video links play right on the website, no extension needed
 • English and Turkish
 
 PRIVATE BY DESIGN
@@ -64,7 +66,7 @@ NOTES
 Türkçe: Arkadaşlarınla videoyu aynı saniyede izle. Sitede oda kur, linki paylaş, videonun olduğu sayfanın linkini odaya yapıştır: herkes o sayfaya gider ve oda (sohbet, emojiler, sesli sohbet, kontroller) videonun etrafında açılır. Biri durdurduğunda, sardığında ya da hızı değiştirdiğinde herkeste olur. Hesap yok, reklam yok, takip yok; eklenti sadece odaya katıldığın sekmede çalışır.
 ```
 
-**Category:** Entertainment. If it isn't listed: Social & Communication.
+**Category:** Entertainment (under Lifestyle). If it isn't offered: Social Networking.
 **Language:** English.
 
 **Images** (in the `store/` folder, made by `npm run store`):
@@ -83,7 +85,8 @@ site's real `styles.css`, so keep its markup in step with `room.ts` when the sit
 **Extra fields:**
 - Official URL: leave empty (it asks for domain verification).
 - Homepage URL: `https://screen-with-me.swm-server.workers.dev/`
-- Support URL: `https://screen-with-me.swm-server.workers.dev/`
+- Support URL: `https://screen-with-me.swm-server.workers.dev/help.html` (Help / FAQ, with the feedback form and the
+  abuse-report e-mail; the terms of use are linked from its footer)
 
 ---
 
@@ -125,7 +128,10 @@ Users watch videos on sites we cannot list in advance, and players are usually i
 ```
 
 **Are you using remote code?** **No, I am not using remote code.**
-(All code is in the package; only JSON messages go to and from the server over a WebSocket.)
+(All code is in the package; only JSON messages go to and from the server over a WebSocket. The room layer on a film
+page is the extension's own `shell.html`, which shows our website in an iframe: the website runs as a web page in its
+own origin, never inside the extension's context, so it is not remote code in the MV3 sense. Say so in the reviewer
+note if asked.)
 
 **Data usage**: tick these boxes (declaring too much doesn't get an item rejected, declaring too little does; privacy
 card H3 + M7, 0.9.97.60):
@@ -194,8 +200,8 @@ store avoids it.
 3. Availability: public, all markets. Properties: category "Social", privacy policy URL
    `https://screen-with-me.swm-server.workers.dev/privacy.html`, website = the site.
 4. Store listing (English + Turkish): copy the texts and screenshots from §1 (`store/screenshot-*.png` are 1280×800,
-   which Edge accepts). Edge also wants a square logo (300×300 recommended); `store/` only has 128 px today, so add a
-   300 px one to `npm run store` before submission day.
+   which Edge accepts). Edge's square store logo is `store/edge-logo-300.png` (300×300, made by `npm run store` from
+   the full-bleed app icon since STORE1).
 5. Notes for certification: the same reviewer note as §4.
 6. Review takes a few business days. Submit together with the Chrome Web Store (1.0); later updates: upload the new
    zip in both dashboards.

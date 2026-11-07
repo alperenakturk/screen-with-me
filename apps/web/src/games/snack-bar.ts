@@ -855,15 +855,15 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     draw();
   };
   addEventListener(RESTORE_EVENT, onRestore);
-  const where = 'Snack Bar open';
+  const where = { en: 'Snack Bar open', tr: 'Büfe açıkken' };
   const offLab = registerSideLab(
     'snackBar',
     'snackBar',
     () => [
       {
         id: 'snackBar.coins',
-        title: 'Snack Bar: +10K coins',
-        help: 'Adds coins to the sandbox save (arg: how many).',
+        title: { en: 'Snack Bar: +10K coins', tr: 'Büfe: +10B jeton' },
+        help: { en: 'Adds coins to the sandbox save (arg: how many).', tr: 'Deneme kaydına jeton ekler; jeton sayısı hemen artar (bir sayı yazarsan o kadar).' },
         tab: 'games',
         where,
         run: (arg) => {
@@ -878,17 +878,17 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       },
       {
         id: 'snackBar.customer',
-        title: 'Snack Bar: a customer now',
-        help: 'A customer walks up at once (the film must play, or "pretend the film plays").',
+        title: { en: 'Snack Bar: a customer now', tr: 'Büfe: hemen bir müşteri gelsin' },
+        help: { en: 'A customer walks up at once (the film must play, or "pretend the film plays").', tr: 'Bir müşteri hemen tezgâha gelir (film oynamalı ya da "film oynuyormuş gibi yap" açık olmalı).' },
         tab: 'games',
         where,
-        available: () => (guest ? 'a customer is already waiting' : room().playing || 'the film does not play'),
+        available: () => (guest ? { en: 'a customer is already waiting', tr: 'zaten bir müşteri bekliyor' } : room().playing || { en: 'the film does not play', tr: 'film oynamıyor' }),
         run: () => guestComes(room()),
       },
       {
         id: 'snackBar.receipt',
-        title: "Snack Bar: the film's receipt now",
-        help: "Counts this film as watched and ended, so Glowbeam hands over its receipt.",
+        title: { en: "Snack Bar: the film's receipt now", tr: 'Büfe: filmin fişi şimdi gelsin' },
+        help: { en: "Counts this film as watched and ended, so Glowbeam hands over its receipt.", tr: 'Bu filmi izlenmiş ve bitmiş sayar; Glowbeam fişini hemen getirir.' },
         tab: 'games',
         where,
         run: () => {
@@ -903,8 +903,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       },
       {
         id: 'snackBar.badges',
-        title: 'Snack Bar: every badge',
-        help: 'Earns all badges on the wall (each still adds its +1 %).',
+        title: { en: 'Snack Bar: every badge', tr: 'Büfe: bütün rozetler' },
+        help: { en: 'Earns all badges on the wall (each still adds its +1 %).', tr: 'Duvardaki bütün rozetleri kazandırır (her biri yine +%1 ekler).' },
         tab: 'games',
         where,
         run: () => {
@@ -916,8 +916,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       },
       {
         id: 'snackBar.place',
-        title: 'Snack Bar: the next cinema place',
-        help: 'Moves to the next place (lobby, drive-in, rooftop, art house…) without the prestige cost.',
+        title: { en: 'Snack Bar: the next cinema place', tr: 'Büfe: sıradaki sinema yeri' },
+        help: { en: 'Moves to the next place (lobby, drive-in, rooftop, art house…) without the prestige cost.', tr: 'Bedel ödemeden sıradaki yere geçer (lobi, arabalı sinema, çatı, sanat sineması…).' },
         tab: 'games',
         where,
         run: () => {
@@ -928,7 +928,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
         },
       },
     ],
-    () => [['Snack Bar', `${formatCoins(game.coins)} coins · ${placeOf(game)} · ${game.badges.length} badges`]],
+    () => [[{ en: 'Snack Bar', tr: 'Büfe' }, { en: `${formatCoins(game.coins)} coins · ${placeOf(game)} · ${game.badges.length} badges`, tr: `${formatCoins(game.coins)} jeton · ${placeOf(game)} · ${game.badges.length} rozet` }]],
   );
 
   return () => {

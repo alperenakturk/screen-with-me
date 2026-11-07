@@ -1,6 +1,8 @@
 // Every user-facing string has an English and a Turkish version (card MB). Two kinds of text tables are checked:
 //   - an object with `en` and `tr` members (`const TEXT = { en: {...}, tr: {...} }` in the lazy chunks, the games,
 //     the Test Lab, the home page…; also `Record<'en' | 'tr', …>` tables such as Snack Bar's badges);
+//   - an inline pair `{ en: '…', tr: '…' }` (card LABTR: the Test Lab's commands, status lines and step texts), and every
+//     lab command (an object with `id`, `tab` and `run`) must give its title, help and tag as such a pair;
 //   - a file with two top-level tables `const tr = {...}` and `const en = {...}` (the site's and the extension's
 //     i18n.ts).
 // Both sides must have the same keys (nested objects too), arrays the same length, and no string may be empty.
@@ -29,6 +31,8 @@ ROOTS.forEach(walk);
 const problems = [];
 let tables = 0;
 let strings = 0;
+let pairs = 0;
+const lineOf = (src, at) => src.slice(0, at).split('\n').length;
 
 /** The expression under `as const`, `satisfies …`, `<T>x`, `x!`. */
 function bare(node) {
@@ -105,6 +109,24 @@ for (const file of files) {
     }
   }
   visit(ast, (node) => {
+    // LABTR: an inline pair `{ en: '…', tr: '…' }` (the Test Lab's commands and status lines) needs both texts.
+    if (node.type === 'ObjectExpression' && node.properties.length === 2) {
+      const m = members(node, src);
+      if (m.has('en') && m.has('tr') && isText(m.get('en')) && isText(m.get('tr'))) {
+        pairs++;
+        compare(m.get('en'), m.get('tr'), `${name}:${lineOf(src, node.start)}`, src);
+      }
+    }
+    // LABTR: a Test Lab command (an object with `id`, `tab` and `run`) says its title, help and tag in both languages.
+    if (node.type === 'ObjectExpression') {
+      const m = members(node, src);
+      if (m.has('id') && m.has('tab') && m.has('run')) {
+        for (const key of ['title', 'help', 'where']) {
+          const v = m.get(key) && bare(m.get(key));
+          if (v && isText(v)) problems.push(`${name}:${lineOf(src, v.start)} lab command ${key}: no Turkish text (write { en, tr })`);
+        }
+      }
+    }
     if (node.type !== 'VariableDeclarator' || !node.init) return;
     const init = bare(node.init);
     if (init.type !== 'ObjectExpression') return;
@@ -129,4 +151,4 @@ if (tables < 10) {
   console.error(`✗ only ${tables} text tables found: the check no longer sees the code`);
   process.exit(1);
 }
-console.log(`✓ ${tables} text tables, ${strings} strings, each in English and Turkish`);
+console.log(`✓ ${tables} text tables and ${pairs} inline pairs, ${strings} strings, each in English and Turkish`);

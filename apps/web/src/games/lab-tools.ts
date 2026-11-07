@@ -5,7 +5,7 @@
 
 import { ROOM_GAME_KINDS, type ClientMessage, type RoomGameKind } from '@swm/shared/protocol';
 import { SOLO_KINDS, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
-import { debugHooks, type LabCommand } from '../debug-lab.ts';
+import { debugHooks, type LabCommand, type LabText } from '../debug-lab.ts';
 import { load, save } from '../storage.ts';
 
 /** Side games: how fast their clock runs, and whether they act as if the room's film played. */
@@ -68,7 +68,12 @@ export function labRoom(r: SoloRoom): SoloRoom {
 /** How many ticks a side game runs for one real tick (×10 time). */
 export const labTicks = (): number => labClock.speed;
 
-const SOLO_NAMES: Record<SoloKind, string> = { snack: 'Snack Bar', garden: 'Window Garden', word: 'Five Frames' };
+const SOLO_NAMES: Record<SoloKind, { en: string; tr: string }> = {
+  snack: { en: 'Snack Bar', tr: 'Büfe' },
+  garden: { en: 'Window Garden', tr: 'Pencere Bahçesi' },
+  word: { en: 'Five Frames', tr: 'Beş Kare' },
+};
+const IN_ROOM = { en: 'in a room', tr: 'odada' };
 
 /** The hall's commands, registered once by the games stage. */
 export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSolo: (kind: SoloKind) => Promise<void>, send: (message: ClientMessage) => unknown): () => void {
@@ -76,24 +81,24 @@ export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSo
     const commands: LabCommand[] = [
       ...ROOM_GAME_KINDS.map((kind): LabCommand => ({
         id: `games.open.${kind}`,
-        title: `Open a table: ${kind}`,
-        help: 'Opens this game as a table in the room, as the hall would.',
+        title: { en: `Open a table: ${kind}`, tr: `Masa aç: ${kind}` },
+        help: { en: 'Opens this game as a table in the room, the same as from the games hall; the others get the invite.', tr: 'Bu oyunu odada masa olarak açar, oyun salonundan açmakla aynı; diğerlerine davet gider.' },
         tab: 'games',
-        where: 'in a room',
+        where: IN_ROOM,
         run: () => openTable(kind),
       })),
       ...SOLO_KINDS.map((kind): LabCommand => ({
         id: `games.open.${kind}`,
-        title: `Open on the side: ${SOLO_NAMES[kind]}`,
-        help: 'Opens this side game in the game window.',
+        title: { en: `Open on the side: ${SOLO_NAMES[kind].en}`, tr: `Yanda aç: ${SOLO_NAMES[kind].tr}` },
+        help: { en: 'Opens this side game in the game window.', tr: 'Bu yan oyunu oyun penceresinde açar.' },
         tab: 'games',
-        where: 'in a room',
+        where: IN_ROOM,
         run: () => void openSolo(kind),
       })),
       {
         id: 'games.speed',
-        title: labClock.speed > 1 ? 'Side games: normal time' : 'Side games: time ×10',
-        help: 'Snack Bar and Window Garden tick ten times a second (arg: a speed from 1 to 30).',
+        title: labClock.speed > 1 ? { en: 'Side games: normal time', tr: 'Yan oyunlar: zaman normal aksın' } : { en: 'Side games: time ×10', tr: 'Yan oyunlar: zaman 10 kat hızlı aksın' },
+        help: { en: 'Snack Bar and Window Garden run ten times faster: coins and plants grow quickly (a number 1–30 sets the speed).', tr: 'Büfe ve Pencere Bahçesi 10 kat hızlı işler: jetonlar ve bitkiler çabuk büyür (1–30 arası bir sayı hızı belirler).' },
         tab: 'games',
         run: (arg) => {
           const was = labClock.speed;
@@ -107,13 +112,13 @@ export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSo
       },
       {
         id: 'games.playing',
-        title: labClock.playing ? 'Side games: stop pretending' : 'Side games: pretend the film plays',
-        help: 'The side games act as if the room played an hour-long film (nothing is sent to the room).',
+        title: labClock.playing ? { en: 'Side games: stop pretending', tr: 'Yan oyunlar: rol yapmayı bırak' } : { en: 'Side games: pretend the film plays', tr: 'Yan oyunlar: film oynuyormuş gibi yap' },
+        help: { en: 'The side games act as if the room played an hour-long film, so they earn and grow; the room itself gets nothing.', tr: 'Yan oyunlar odada bir saatlik film oynuyormuş gibi davranır, kazanır ve büyür; odaya hiçbir şey gitmez.' },
         tab: 'games',
         run: () => {
           labClock.playing = !labClock.playing;
           if (labClock.playing) labFilmStart = Date.now();
-          return labClock.playing ? 'pretending' : 'off';
+          return labClock.playing ? { en: 'pretending', tr: 'rol yapıyor' } : { en: 'off', tr: 'kapalı' };
         },
         undo: () => {
           labClock.playing = false;
@@ -121,33 +126,33 @@ export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSo
       },
       {
         id: 'games.tipjar',
-        title: 'Fill the tip jar now',
-        help: 'Local lab server only: the room\'s tip jar fills for the film playing (+10 % for everyone this film).',
+        title: { en: 'Fill the tip jar now', tr: 'Bahşiş kavanozunu hemen doldur' },
+        help: { en: 'Local lab server only: the room\'s tip jar fills for the film playing (+10 % for everyone this film).', tr: 'Sadece yerel lab sunucusunda: odanın bahşiş kavanozu oynayan film için dolar (bu film boyunca herkese +%10).' },
         tab: 'games',
-        where: 'in a room with a film',
+        where: { en: 'in a room with a film', tr: 'film oynayan bir odada' },
         run: () => void send({ t: 'lab', op: 'tipjar' }),
       },
       {
         id: 'games.restore',
-        title: 'Restore my real saves',
-        help: 'Puts back the side-game saves the lab copied aside before its first cheat.',
+        title: { en: 'Restore my real saves', tr: 'Gerçek kayıtlarımı geri getir' },
+        help: { en: 'Puts back the side-game saves the lab kept aside before its first cheat: my real coins and plants come back.', tr: 'Lab\'ın ilk hileden önce kenara ayırdığı yan oyun kayıtlarını geri koyar: gerçek jetonlarım ve bitkilerim geri gelir.' },
         tab: 'games',
-        available: () => sandboxed().length > 0 || 'no lab cheat used yet: the saves are the real ones',
+        available: () => sandboxed().length > 0 || { en: 'no lab cheat used yet: the saves are the real ones', tr: 'henüz lab hilesi kullanılmadı: kayıtlar zaten gerçek' },
         run: () => restoreSaves().join(', '),
       },
     ];
     return {
       commands,
-      status: () => [
-        ['Side-game time', `×${labClock.speed}${labClock.playing ? ' · pretend playing' : ''}`],
-        ['Sandboxed saves', sandboxed().join(', ') || 'none'],
+      status: (): [LabText, LabText][] => [
+        [{ en: 'Side-game time', tr: 'Yan oyun zamanı' }, { en: `×${labClock.speed}${labClock.playing ? ' · pretending the film plays' : ''}`, tr: `×${labClock.speed}${labClock.playing ? ' · film oynuyormuş gibi' : ''}` }],
+        [{ en: 'Saves kept aside', tr: 'Kenara ayrılan kayıtlar' }, sandboxed().join(', ') || { en: 'none', tr: 'yok' }],
       ],
     };
   });
 }
 
 /** For a side game: register its own commands while its window is open; each run is sandboxed first. */
-export function registerSideLab(name: string, key: (typeof SIDE_SAVES)[number], commands: () => LabCommand[], status?: () => [string, string][]): () => void {
+export function registerSideLab(name: string, key: (typeof SIDE_SAVES)[number], commands: () => LabCommand[], status?: () => [LabText, LabText][]): () => void {
   return debugHooks.register(name, () => ({
     commands: commands().map((c) => ({
       ...c,
