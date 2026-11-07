@@ -3,6 +3,7 @@
 // host picks the language, topic and length; everyone has one 50:50 joker per game.
 
 import './lobby.css';
+import { gameHint } from './hint.ts';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   QUIZ_SEEN_KEEP,
@@ -31,6 +32,7 @@ import quiz1Art from './art/tutorial/quiz-1-answer.svg?raw';
 import quiz2Art from './art/tutorial/quiz-2-reveal.svg?raw';
 import quiz3Art from './art/tutorial/quiz-3-podium.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
+import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
@@ -63,6 +65,10 @@ const TEXT = {
     how2Line: 'The right answer lights up, with everyone’s picks.',
     how3: 'Top the podium',
     how3Line: 'After ten questions, the most points win.',
+    endWin: 'The sharpest mind in the room!',
+    endLose: 'So close. One more round?',
+    endDraw: 'Neck and neck! Play again to settle it.',
+    endOver: 'What a quiz!',
   },
   tr: {
     how1: 'Hızlı cevapla',
@@ -71,6 +77,10 @@ const TEXT = {
     how2Line: 'Doğru cevap yanar, herkesin seçtiğiyle birlikte.',
     how3: 'Kürsüye çık',
     how3Line: 'On sorunun sonunda puanı en çok olan kazanır.',
+    endWin: 'Odanın en keskin zekâsı!',
+    endLose: 'Çok yaklaştın. Bir tur daha?',
+    endDraw: 'Başa baş! Yeniden oynayıp kapatın.',
+    endOver: 'Ne yarışmaydı!',
   },
 } as const;
 const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
@@ -95,7 +105,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
           <ul id="quiz-players" class="draw-players"></ul>
         </aside>
       </div>
-      <div id="quiz-flash" class="game-toast" aria-live="polite"></div>
+      <div id="quiz-flash" hidden></div>
     </div>`;
   translate(app);
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;
@@ -120,14 +130,11 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   /** Who had used their joker at the last state (a new one is announced to everyone). */
   let jokers = new Set<string>();
   let primed = false;
-  let flashTimer = 0;
-  function flash(text: string): void {
-    const box = $('#quiz-flash');
-    box.textContent = text;
-    box.classList.add('show');
-    clearTimeout(flashTimer);
-    flashTimer = window.setTimeout(() => box.classList.remove('show'), 2200);
-  }
+  const hint = gameHint($('#quiz-flash'));
+  const flash = (text: string) => hint.show(text, 2200);
+  // GP3: the tables' result card at the end, with the podium inside.
+  const result = resultCard(app.firstElementChild as HTMLElement, resultGlowbeam());
+  const endLines = () => ({ win: tx('endWin'), lose: tx('endLose'), draw: tx('endDraw'), over: tx('endOver') });
 
   function sounds(s: State, mine: State['players'][number] | undefined): void {
     const key = `${s.phase}:${s.n}`;
@@ -180,6 +187,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     joker.textContent = `½ ${t('quiz.joker')}`;
     joker.title = mine?.joker ? t('quiz.jokerUsed') : t('quiz.jokerTitle');
 
+    if (s.phase === 'over') showPointsResult(result, `quiz:${gameId}`, s.players, s.host, me, endLines(), () => send({ t: 'start' }));
+    else result.hide();
     if (s.phase === 'lobby' || s.phase === 'over') {
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'quiz.again' : 'draw.start'));
@@ -354,7 +363,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     close();
     clearInterval(ticker);
     clearInterval(ping);
-    clearTimeout(flashTimer);
+    hint.hide();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
   };

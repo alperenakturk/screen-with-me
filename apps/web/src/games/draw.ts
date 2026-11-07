@@ -36,6 +36,7 @@ import draw1Art from './art/tutorial/draw-1-pick.svg?raw';
 import draw2Art from './art/tutorial/draw-2-draw.svg?raw';
 import draw3Art from './art/tutorial/draw-3-guess.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
+import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
@@ -53,6 +54,10 @@ const TEXT = {
     how2Line: 'Draw it with the pen and colours: no letters, no numbers!',
     how3: 'Guess in the chat',
     how3Line: 'The others type their guesses; a right guess scores for the guesser and for you.',
+    endWin: 'The best artist in the room!',
+    endLose: 'Lovely drawings. One more round?',
+    endDraw: 'A tie! Play again to settle it.',
+    endOver: 'What a gallery!',
   },
   tr: {
     how1: 'Bir kelime seç',
@@ -61,6 +66,10 @@ const TEXT = {
     how2Line: 'Kalem ve renklerle çiz: harf yok, rakam yok!',
     how3: 'Sohbette tahmin et',
     how3Line: 'Diğerleri tahminlerini yazar; doğru tahmin hem bilene hem sana puan getirir.',
+    endWin: 'Odanın en iyi ressamı!',
+    endLose: 'Çizimler harikaydı. Bir tur daha?',
+    endDraw: 'Berabere! Yeniden oynayıp kapatın.',
+    endOver: 'Ne sergiydi!',
   },
 } as const;
 const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
@@ -347,6 +356,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const input = $<HTMLInputElement>('#draw-input');
   const nameOf = (id: string | null) => state?.players.find((p) => p.id === id)?.name ?? '';
 
+  // GP3: the tables' result card at the end, with the podium inside.
+  const result = resultCard(app.firstElementChild as HTMLElement, resultGlowbeam());
   function render(): void {
     if (state) setGameLive(state.phase !== 'lobby' && state.phase !== 'over' && state.players.some((p) => p.id === me));
     if (!state) return;
@@ -382,6 +393,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     overlay.hidden = s.phase === 'draw';
     // Lobby and podium need no canvas: the card takes the canvas's place at its own height (BHG: it was shrunk to fit).
     app.firstElementChild!.classList.toggle('draw-lobby', s.phase === 'lobby' || s.phase === 'over');
+    if (s.phase === 'over') showPointsResult(result, `draw:${gameId}`, s.players, s.host, me, { win: tx('endWin'), lose: tx('endLose'), draw: tx('endDraw'), over: tx('endOver') }, () => send({ t: 'start' }));
+    else result.hide();
     if (s.phase === 'lobby' || s.phase === 'over') {
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'games.again' : 'draw.start'));

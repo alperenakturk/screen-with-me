@@ -1,0 +1,13 @@
+/* GP3: one hint style for every game: a short line that comes and goes over the game, night-gold like the result card
+   and Glowbeam's bubble. The element keeps its own class too (`.sb-note`, `.wg-note`, `#quiz-flash`) for the tests. */
+.game-hint {
+  position: absolute; left: 50%; top: 44px; z-index: 5; box-sizing: border-box; width: max-content; max-width: min(92%, 420px);
+  margin: 0; padding: 8px 14px; border-radius: 14px; background: #2a2160; color: #fff3d6;
+  font-size: 15px; font-weight: 700; line-height: 1.3; text-align: center; pointer-events: none;
+  box-shadow: 0 0 0 1.5px rgb(255 198 90 / 0.6), 0 8px 22px rgb(0 0 0 / 0.45);
+  transform: translateX(-50%); animation: game-hint-in 0.2s ease-out;
+}
+.game-hint[hidden] { display: none; }
+.game-hint[data-mood='good'] { color: #ffc65a; }
+@keyframes game-hint-in { from { opacity: 0; transform: translate(-50%, -6px); } }
+@media (prefers-reduced-motion: reduce) { .game-hint { animation: none; } }

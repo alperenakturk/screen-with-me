@@ -101,12 +101,6 @@
 }
 .sb-prestige:disabled { border-color: rgba(255, 255, 255, 0.15); color: var(--sb-muted); }
 
-.sb-note {
-  position: absolute; left: 12px; right: 12px; top: 44px; margin: 0; padding: 8px 10px; border-radius: 10px;
-  background: var(--sb-gold); color: var(--sb-ink); font-weight: 700; text-align: center; box-shadow: 0 6px 18px #0008;
-  animation: sb-note 0.25s ease-out;
-}
-.sb-note[hidden] { display: none; }
 @keyframes sb-note { from { transform: translateY(-6px); opacity: 0; } }
 .sb-elsewhere {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -192,7 +186,7 @@
 .sb-neon { filter: drop-shadow(0 0 2px #ff8fd0); }
 @media (prefers-reduced-motion: reduce) {
   .sb-bulbs circle { animation: none; }
-  .sb-pop, .sb-row.sb-bought, .sb-note, .sb-guest, .sb-guest-happy, .sb-guest-bye, .sb-panel { animation: none; }
+  .sb-pop, .sb-row.sb-bought, .sb-guest, .sb-guest-happy, .sb-guest-bye, .sb-panel { animation: none; }
   .sb-pop { display: none; }
 }
 /* A phone sheet: the scene bigger (the Design session's 108 px). */

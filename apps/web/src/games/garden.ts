@@ -4,6 +4,7 @@
 // and texts. Like Snack Bar it never takes the room's keys or the focus, and one tab plays at a time.
 
 import './garden.css';
+import { gameHint } from './hint.ts';
 import {
   ALBUM_IDS, GARDEN_DECOR, GARDEN_KEY, VISITORS, buyGardenDecor, seeVisitor, visitorFor, type GardenDecorId, type VisitorId, HYBRID_COLORS, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, albumId, plantColor, type HybridColor, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
   saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity, canGift, giveCutting, plantGift, receiveCutting, type PlantId,
@@ -357,13 +358,8 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     if ((event.target as Element).closest('button')) event.preventDefault();
   });
 
-  let noteTimer: ReturnType<typeof setTimeout> | undefined;
-  function flash(text: string, ms = 4500): void {
-    note.textContent = text;
-    note.hidden = false;
-    clearTimeout(noteTimer);
-    noteTimer = setTimeout(() => (note.hidden = true), ms);
-  }
+  const hint = gameHint(note);
+  const flash = (text: string, ms = 4500) => hint.show(text, ms);
 
   function potArt(i: number): HTMLElement {
     const p = garden.pots[i];
@@ -880,7 +876,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     offLab();
     removeEventListener(RESTORE_EVENT, onRestore);
     clearInterval(timer);
-    clearTimeout(noteTimer);
+    hint.hide();
     clearTimeout(visitorTimer);
     removeEventListener('pagehide', onHide);
     removeEventListener('langchange', onLang);

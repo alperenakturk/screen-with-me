@@ -17,6 +17,10 @@
 .gr-layer[data-outcome='win'] .gr-title { color: #ffc65a; }
 .gr-line { margin: 0; font-size: 15px; color: #cfc8ea; font-variant-numeric: tabular-nums; }
 .gr-line[hidden] { display: none; }
+.gr-card.wide { max-width: min(94%, 440px); }
+.gr-extra:empty { display: none; }
+.gr-extra { width: 100%; }
+.gr-extra .game-podium { margin: 2px 0; }
 .gr-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; }
 .gr-actions:empty { display: none; }
 .gr-see { font-size: 14px; }
@@ -28,3 +32,4 @@
 }
 /* A phone: the card's buttons are 44 px targets like every game control. */
 html.phone #game-stage .gr-card .btn { min-height: 44px; height: auto; min-width: 44px; }
+.draw-page:has(> .gr-layer) { position: relative; }
