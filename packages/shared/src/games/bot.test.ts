@@ -131,6 +131,12 @@ describe('Glowbeam bot', () => {
     expect(m % 64).toBe(sq('d5'));
   });
 
+  it('Chess: medium sees a knight fork (GP3: the third half-move)', () => {
+    // Nd5-c7+ checks the king on e8 and hits the rook on a8: after the king steps away the knight takes the rook.
+    const s = board([['g1', 'X', 'k'], ['d5', 'X', 'n'], ['a2', 'X', 'p'], ['b2', 'X', 'p'], ['e8', 'O', 'k'], ['a8', 'O', 'r'], ['g7', 'O', 'p'], ['h7', 'O', 'p']]);
+    expect(botMove('chess', s, 2, first)).toBe(sq('d5') * 64 + sq('c7'));
+  });
+
   it('Chess: medium answers within its time budget, also in a busy middle game', () => {
     let s: ChessState = newChess();
     for (const [a, b] of [['e2', 'e4'], ['e7', 'e5'], ['g1', 'f3'], ['b8', 'c6'], ['f1', 'c4'], ['g8', 'f6'], ['d2', 'd3'], ['f8', 'c5']]) s = playChess(s, s.turn, sq(a!) * 64 + sq(b!))!;

@@ -5,6 +5,7 @@
 // the focus after a click (so 1–8, Enter, P, V still reach the room), and it has no key handlers of its own.
 
 import './snack-bar.css';
+import { gameHint } from './hint.ts';
 import {
   BADGES, BADGE_BONUS, DECOR, MILESTONES, buyDecor, placeOf, placeCost, type DecorId, type PlaceId, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
   RECEIPT_MIN_S, loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, standRate, starsFor, starFactor, tick,
@@ -469,13 +470,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     if ((event.target as Element).closest('button')) event.preventDefault();
   });
 
-  function flash(text: string, ms = 5000): void {
-    note.textContent = text;
-    note.hidden = false;
-    clearTimeout(noteTimer);
-    noteTimer = setTimeout(() => (note.hidden = true), ms);
-  }
-  let noteTimer: ReturnType<typeof setTimeout> | undefined;
+  const hint = gameHint(note);
+  const flash = (text: string, ms = 5000) => hint.show(text, ms);
 
   sceneButton.addEventListener('click', (event) => {
     if (blocked) return;
@@ -942,7 +938,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     offLab();
     removeEventListener(RESTORE_EVENT, onRestore);
     clearInterval(timer);
-    clearTimeout(noteTimer);
+    hint.hide();
     fit.disconnect();
     removeEventListener('pagehide', onHide);
     removeEventListener('langchange', onLang);

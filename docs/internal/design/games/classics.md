@@ -42,6 +42,12 @@ Medium chess and dama follow captures at the end of the search (a quiescence sea
 other side is to move there; dama's forced chain jumps too), captures first, within a 500 ms budget with a one-move
 fallback. Measured: medium chess ≈ 250 ms a move, dama ≈ 35 ms. It never leaves its queen to a pawn, never allows a
 mate in one it could stop, and never hands a dama man over when a safe move exists (unit tests). Easy plays a weaker
-move now and then, but only one close to its best (`EASY_SLACK`). **Later job:** two-move tactics (forks, pins) need a
-depth-3 search, which the chess move generator (legality by playing each move) can't do within the budget; a faster
-generator (pseudo-legal moves + a king-safety check) would let medium see them. The Planner accepted this for 1.0.
+move now and then, but only one close to its best (`EASY_SLACK`).
+
+**GP3 (0.9.97.73): medium chess looks three half-moves ahead**, so it sees a knight fork (unit test). The search plays
+moves it already knows are legal through `playLegal` (no second legality check), and `play` decides mate / stalemate
+by finding the first legal reply instead of listing them all: about 8× more moves a millisecond (8.9 → 71). Depth 3
+first; a position too busy for it falls back to 2, then 1, all within the budget. Measured over three medium-vs-medium
+games: median 459 ms a move, 90 % under 530 ms, the slowest 620 ms. The server now thinks first and answers once
+`BOT_DELAY_MS` (700 ms) has passed since Glowbeam's turn began (`BOT_THINK_AT_MS` 150), so a table never waits longer than
+before. Pins and longer combinations still need more depth.
