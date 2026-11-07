@@ -834,20 +834,20 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     commands: [
       ...Object.values(LAB_POSITIONS).flat().map((position) => ({
         id: `classics.position.${position}`,
-        title: `Classics: set the "${position}" position`,
-        help: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.',
+        title: { en: `Classics: set the "${position}" position`, tr: `Klasikler: "${position}" dizilişini kur` },
+        help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel lab sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
         tab: 'games' as const,
-        where: 'at a Classics table, seated',
+        where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
         run: () => send({ t: 'lab', position }),
       })),
       // CL2: the picker → board flow in one step (the same path as a press on a card).
-      { id: 'classics.picker', title: 'Classics: show the picker', help: 'As "Change game" in the head (between games).', tab: 'games' as const, where: 'at a Classics table', run: () => shelfButton.click() },
+      { id: 'classics.picker', title: { en: 'Classics: show the picker', tr: 'Klasikler: oyun seçiciyi göster' }, help: { en: 'As "Change game" in the head (between games).', tr: 'Başlıktaki "Oyunu değiştir" gibi (iki oyun arasında).' }, tab: 'games' as const, where: { en: 'at a Classics table', tr: 'Klasikler masasında' }, run: () => shelfButton.click() },
       ...SHELF.map((box) => ({
         id: `classics.pick.${box.kind}`,
-        title: `Classics: pick ${box.kind}`,
-        help: "Presses this board's card in the picker (opens the picker first).",
+        title: { en: `Classics: pick ${box.kind}`, tr: `Klasikler: ${box.kind} seç` },
+        help: { en: "Presses this board's card in the picker (opens the picker first).", tr: 'Seçicide bu oyunun kartına basar (önce seçiciyi açar).' },
         tab: 'games' as const,
-        where: 'at a Classics table, seated',
+        where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
         run: () => {
           if (!shelfOpen) shelfButton.click();
           shelf.querySelector<HTMLButtonElement>(`.cl-box[data-board="${box.kind}"]`)?.click();

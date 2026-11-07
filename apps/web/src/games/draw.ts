@@ -589,7 +589,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   // Test Lab (DL3b): the current phase ends now (local lab server only).
   const offLab = debugHooks.register('table.draw', () => ({
     commands: [
-      { id: 'draw.skip', title: 'Draw & Guess: end this phase now', help: 'Local lab server only: the question / round / reveal ends at once.', tab: 'games', where: 'at a Draw & Guess table', run: () => send({ t: 'lab', op: 'skip' }) },
+      { id: 'draw.skip', title: { en: 'Draw & Guess: end this phase now', tr: 'Çiz-Bil: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));
   // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).

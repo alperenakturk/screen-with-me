@@ -7,6 +7,8 @@
 const { chromium } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:5173';
+// LABTR: the whole run in English (default) or Turkish (`LAB_LANG=tr`).
+const LANG = process.env.LAB_LANG === 'tr' ? 'tr' : 'en';
 let fails = 0;
 const check = (ok, label, extra = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${!ok && extra ? ` → ${extra}` : ''}`);
@@ -27,14 +29,14 @@ const until = async (fn, ms = 6000) => {
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   // A known real Snack Bar save (an old player's coins) to restore at the end.
   const REAL = JSON.stringify({ v: 1, coins: 1234, earned: 1234, lifetime: 1234, watched: 0, levels: {}, stars: 0, cinemas: 0, seen: 0, stats: {}, badges: [], film: null, receipts: [], decor: [] });
-  await ctx.addInitScript((real) => {
-    if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'en');
+  await ctx.addInitScript(([real, lang]) => {
+    if (!localStorage.getItem('lang')) localStorage.setItem('lang', lang);
     for (const [k, v] of Object.entries({ name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1' })) localStorage.setItem(k, v);
     if (!sessionStorage.getItem('seeded')) {
       localStorage.setItem('snackBar', real);
       sessionStorage.setItem('seeded', '1');
     }
-  }, REAL);
+  }, [REAL, LANG]);
   const page = await ctx.newPage();
   const loaded = [];
   page.on('request', (r) => {
@@ -105,13 +107,13 @@ const until = async (fn, ms = 6000) => {
   await wait(300);
   check(hybrid.dir === 'lab' && (await garden()).colorSeeds.length === seedsBefore + 1, 'garden: a hybrid colour seed', hybrid.text);
   const visitor = await run('garden.visitor');
-  check(visitor.dir === 'lab' && (/lantern|fairy/.test(visitor.text) || /moth|firefly/.test(visitor.text)), 'garden: a visitor (or why not: its decoration is missing)', visitor.text);
+  check(visitor.dir === 'lab' && (/lantern|fairy|fener|peri/.test(visitor.text) || /moth|firefly/.test(visitor.text)), 'garden: a visitor (or why not: its decoration is missing)', visitor.text);
 
   // ---- Five Frames ----
   const w = await run('games.open.word');
   check(w.dir === 'lab' && !!(await until(() => page.evaluate(() => !!document.querySelector('#game-stage .ff-day')), 8000)), 'lab: open Five Frames');
   const answer = await until(async () => { const l = await run('fiveFrames.answer'); return l.dir === 'lab' ? l : null; }, 8000);
-  check(!!answer && /^▶ "(en|tr): \S{5}"$/u.test(answer.text), "Five Frames: today's answer in the log", answer?.text);
+  check(!!answer && /^▶ "?(en|tr): \S{5}"?$/u.test(answer.text), "Five Frames: today's answer in the log", answer?.text);
   const dayBefore = await page.evaluate(() => document.querySelector('#game-stage .ff-day')?.textContent);
   const next = await run('fiveFrames.day', '1');
   const dayAfter = await page.evaluate(() => document.querySelector('#game-stage .ff-day')?.textContent);
@@ -134,7 +136,7 @@ const until = async (fn, ms = 6000) => {
   const back = await page.evaluate(() => ({ snack: localStorage.getItem('snackBar'), copies: Object.keys(localStorage).filter((k) => k.startsWith('lab:real:')) }));
   check(restored.dir === 'lab' && JSON.parse(back.snack || '{}').coins === 1234 && back.copies.length === 0, 'Restore my real saves: the real Snack Bar save is back, no copies left', `${restored.text} ${back.snack?.slice(0, 40)} ${back.copies}`);
   const again = await run('games.restore');
-  check(again.dir === 'error' && /no lab cheat/.test(again.text), 'nothing to restore any more: the command says why', again.text);
+  check(again.dir === 'error' && /no lab cheat|lab hilesi/.test(again.text), 'nothing to restore any more: the command says why', again.text);
   await run('games.speed', '1');
   await run('games.playing');
 

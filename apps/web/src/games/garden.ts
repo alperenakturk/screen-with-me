@@ -767,7 +767,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     draw();
   };
   addEventListener(RESTORE_EVENT, onRestore);
-  const where = 'Window Garden open';
+  const where = { en: 'Window Garden open', tr: 'Pencere Bahçesi açıkken' };
   const changed = (what: string) => {
     persist();
     draw();
@@ -785,11 +785,11 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     () => [
       {
         id: 'garden.grow',
-        title: 'Window Garden: grow every pot by half',
-        help: 'Each planted pot grows 50 % and is watered.',
+        title: { en: 'Window Garden: grow every pot by half', tr: 'Pencere Bahçesi: her saksı yarı yarıya büyüsün' },
+        help: { en: 'Each planted pot grows 50 % and is watered.', tr: 'Ekili her saksı %50 büyür ve sulanır.' },
         tab: 'games',
         where,
-        available: () => garden.pots.some((p) => p && p.growth < 1) || 'nothing is growing',
+        available: () => garden.pots.some((p) => p && p.growth < 1) || { en: 'nothing is growing', tr: 'büyüyen bir şey yok' },
         run: () => {
           for (const p of garden.pots) if (p && p.growth < 1) (p.growth = Math.min(0.999, p.growth + 0.5)), (p.water = 1);
           return changed('grown');
@@ -797,11 +797,11 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       },
       {
         id: 'garden.bloom',
-        title: 'Window Garden: bloom now',
-        help: 'Every planted pot blooms on the next tick (with its memory and sound).',
+        title: { en: 'Window Garden: bloom now', tr: 'Pencere Bahçesi: hemen çiçek açsın' },
+        help: { en: 'Every planted pot blooms on the next tick (with its memory and sound).', tr: 'Ekili her saksı bir sonraki anda çiçek açar (anısı ve sesiyle).' },
         tab: 'games',
         where,
-        available: () => garden.pots.some((p) => p && p.growth < 1) || 'nothing is growing',
+        available: () => garden.pots.some((p) => p && p.growth < 1) || { en: 'nothing is growing', tr: 'büyüyen bir şey yok' },
         run: () => {
           for (const p of garden.pots) if (p && p.growth < 1) (p.growth = 0.9999), (p.water = 1);
           return changed('blooming');
@@ -809,8 +809,8 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       },
       {
         id: 'garden.seeds',
-        title: 'Window Garden: one seed of each kind',
-        help: 'Adds a common, uncommon, rare and legendary seed.',
+        title: { en: 'Window Garden: one seed of each kind', tr: 'Pencere Bahçesi: her türden bir tohum' },
+        help: { en: 'Adds a common, uncommon, rare and legendary seed.', tr: 'Sıradan, az bulunur, nadir ve efsanevi birer tohum ekler.' },
         tab: 'games',
         where,
         run: () => {
@@ -820,11 +820,11 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       },
       {
         id: 'garden.hybrid',
-        title: 'Window Garden: a hybrid colour seed',
-        help: 'Adds a colour seed for a random plant (arg: a plant id).',
+        title: { en: 'Window Garden: a hybrid colour seed', tr: 'Pencere Bahçesi: bir melez renk tohumu' },
+        help: { en: 'Adds a colour seed for a random plant (arg: a plant id).', tr: 'Rastgele bir bitki için renk tohumu ekler (bir bitki adı yazarsan o bitki).' },
         tab: 'games',
         where,
-        available: () => garden.colorSeeds.length < 9 || 'the colour seeds are full (9)',
+        available: () => garden.colorSeeds.length < 9 || { en: 'the colour seeds are full (9)', tr: 'renk tohumları dolu (9)' },
         run: (arg) => {
           const ids = Object.keys(HYBRID_COLORS) as PlantId[];
           const plantId = ids.includes(arg as PlantId) ? (arg as PlantId) : ids[Math.floor(Math.random() * ids.length)]!;
@@ -835,8 +835,8 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       },
       {
         id: 'garden.sky',
-        title: 'Window Garden: the sky (night, dawn, day, dusk)',
-        help: 'Sets the window\'s sky (arg: night / dawn / day / dusk / auto); looks only.',
+        title: { en: 'Window Garden: the sky (night, dawn, day, dusk)', tr: 'Pencere Bahçesi: gökyüzü (gece, şafak, gündüz, akşam)' },
+        help: { en: 'Sets the window\'s sky (arg: night / dawn / day / dusk / auto); looks only.', tr: 'Penceredeki gökyüzünü değiştirir (night / dawn / day / dusk / auto yaz); sadece görünüş.' },
         tab: 'games',
         where,
         run: (arg) => {
@@ -848,8 +848,8 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       },
       {
         id: 'garden.rain',
-        title: 'Window Garden: rain on / off',
-        help: 'Makes it rain outside the window or stop (looks only).',
+        title: { en: 'Window Garden: rain on / off', tr: 'Pencere Bahçesi: yağmur aç / kapat' },
+        help: { en: 'Makes it rain outside the window or stop (looks only).', tr: 'Pencerenin dışında yağmur yağdırır ya da durdurur (sadece görünüş).' },
         tab: 'games',
         where,
         run: () => {
@@ -860,17 +860,17 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       },
       {
         id: 'garden.visitor',
-        title: 'Window Garden: a night visitor now',
-        help: 'At night a visitor comes at once (it needs its decoration: the lantern or the fairy lights).',
+        title: { en: 'Window Garden: a night visitor now', tr: 'Pencere Bahçesi: hemen bir gece misafiri' },
+        help: { en: 'At night a visitor comes at once (it needs its decoration: the lantern or the fairy lights).', tr: 'Gece hemen bir misafir gelir (süsü gerekir: fener ya da peri ışıkları).' },
         tab: 'games',
         where,
         run: () => {
           if (labSky.sky !== 'night' && labSky.sky !== 'dusk') sky('night', labSky.rain);
-          return maybeVisitor(() => 0) ?? 'no visitor: buy the lantern or the fairy lights first';
+          return maybeVisitor(() => 0) ?? { en: 'no visitor: buy the lantern or the fairy lights first', tr: 'misafir yok: önce feneri ya da peri ışıklarını al' };
         },
       },
     ],
-    () => [['Window Garden', `${garden.pots.filter(Boolean).length} growing · album ${found(garden)} · ${labSky.sky ?? 'real sky'}`]],
+    () => [[{ en: 'Window Garden', tr: 'Pencere Bahçesi' }, { en: `${garden.pots.filter(Boolean).length} growing · album ${found(garden)} · ${labSky.sky ?? 'real sky'}`, tr: `${garden.pots.filter(Boolean).length} büyüyor · albüm ${found(garden)} · ${labSky.sky ?? 'gerçek gökyüzü'}` }]],
   );
 
   return () => {

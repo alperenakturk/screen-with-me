@@ -7,6 +7,9 @@
 const { chromium } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
+// LABTR: the whole run in English (default) or Turkish (`LAB_LANG=tr`); `L(en, tr)` picks the text a check expects.
+const LANG = process.env.LAB_LANG === 'tr' ? 'tr' : 'en';
+const L = (en, tr) => (LANG === 'tr' ? tr : en);
 let fails = 0;
 const check = (ok, label, extra = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${!ok && extra ? ` → ${extra}` : ''}`);
@@ -24,11 +27,11 @@ const until = async (fn, ms = 8000) => {
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
-  await ctx.addInitScript(() => {
-    if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'en');
+  await ctx.addInitScript((lang) => {
+    if (!localStorage.getItem('lang')) localStorage.setItem('lang', lang);
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
-  });
+  }, LANG);
   const page = await ctx.newPage();
   // My own room connections only (the fake friends' sockets go to the same address): a socket is mine once its hello
   // carries my name.
@@ -72,10 +75,11 @@ const until = async (fn, ms = 8000) => {
   // ---- The 🎬 tab lists its commands; without a video the video ones refuse ----
   await page.click('.debug-fab');
   await page.click('.lab-tab[data-tab="video"]');
-  const listed = await until(() => page.evaluate(() => [...document.querySelectorAll('.lab-view .lab-commands li')].map((li) => li.textContent).join(' | ') || null));
-  check(!!listed && ['drop my connection', 'server restarted', 'slow', 'HTTP fallback', 'drift', 'stall'].every((w) => listed.includes(w)), '🎬 lists drop / restart / slow / fallback / drift / stall', String(listed).slice(0, 200));
+  const listed = await until(() => page.evaluate(() => [...document.querySelectorAll('.lab-view .lab-commands li')].map((li) => `${li.dataset.command}=${li.querySelector('strong')?.textContent}`).join(' | ') || null));
+  check(!!listed && ['net.drop', 'net.restart', 'net.slow', 'net.http', 'video.drift', 'video.stall'].every((w) => listed.includes(w)), '🎬 lists drop / restart / slow / fallback / drift / stall', String(listed).slice(0, 200));
+  check(!!listed && listed.includes(L('net.drop=Drop my connection for 6 s', 'net.drop=Bağlantımı 6 sn kopar')) && listed.includes(L('video.stall=My video gets stuck for 5 s', 'video.stall=Videom 5 sn takılsın')), '🎬 titles say what will happen, in the page language', String(listed).slice(0, 200));
   const noVideo = await run('video.drift');
-  check(noVideo.dir === 'error' && /no video/.test(noVideo.text), 'drift without a video is refused, not run', JSON.stringify(noVideo));
+  check(noVideo.dir === 'error' && (LANG === 'tr' ? /video yok/ : /no video/).test(noVideo.text), 'drift without a video is refused, not run', JSON.stringify(noVideo));
 
   // ---- A friend and the sync test, so there is a room to wait for me ----
   await run('friends.add');
@@ -132,14 +136,15 @@ const until = async (fn, ms = 8000) => {
   // ---- Slow network: a ping waits ----
   await until(async () => (await transport()) === 'ws');
   await run('net.slow', '700');
-  check(String(await statusLine('Lab latency')).startsWith('700'), '📊 shows the lab latency', String(await statusLine('Lab latency')));
+  const slowLine = L('Lab slowness', 'Lab yavaşlığı');
+  check(/^🟡 .*700/.test(String(await statusLine(slowLine))), '📊 shows the lab slowness (🟡, 700 ms)', String(await statusLine(slowLine)));
   const pingAt = Date.now();
   await page.evaluate(() => document.getElementById('chat-input') && (document.getElementById('chat-input').value = 'slow hello'));
   await page.press('#chat-input', 'Enter');
   const sentAt = await until(async () => sent.find((s) => s.at >= pingAt && /slow hello/.test(s.data))?.at ?? null, 5000);
   check(!!sentAt && sentAt - pingAt >= 600, `a message leaves ${sentAt ? sentAt - pingAt : '?'} ms later (≥ 600)`);
   await run('net.normal');
-  check(!(await statusLine('Lab latency')), 'back to normal: no lab latency');
+  check(!(await statusLine(slowLine)), 'back to normal: no lab slowness');
 
   // ---- Force the HTTP fallback, then back ----
   await run('net.http');

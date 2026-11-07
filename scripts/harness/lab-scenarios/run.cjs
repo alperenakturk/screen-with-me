@@ -6,6 +6,8 @@
 const { chromium } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
+// LABTR: the whole run in English (default) or Turkish (`LAB_LANG=tr`).
+const LANG = process.env.LAB_LANG === 'tr' ? 'tr' : 'en';
 const SCENARIOS = ['basics', 'wait', 'knock', 'private', 'reconnect'];
 let fails = 0;
 const check = (ok, label, extra = '') => {
@@ -24,11 +26,11 @@ const until = async (fn, ms = 8000) => {
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
-  await ctx.addInitScript(() => {
-    if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'en');
+  await ctx.addInitScript((lang) => {
+    if (!localStorage.getItem('lang')) localStorage.setItem('lang', lang);
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
-  });
+  }, LANG);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('     pageerror', e.message));
   const room = `sc${Math.random().toString(36).slice(2, 7)}`;
@@ -72,16 +74,16 @@ const until = async (fn, ms = 8000) => {
   // ---- A broken step: ✗ with its reason, the rest skipped, the room fine ----
   const broken = await run('scenario.selfTest');
   const brokenSteps = await page.evaluate(() => [...document.querySelectorAll('.lab-scenario[data-scenario="selfTest"] .lab-step')].map((s) => s.textContent));
-  check(broken.dir === 'error' && /expected/.test(broken.text) && brokenSteps[0]?.startsWith('✓') && brokenSteps[1]?.startsWith('✗') && brokenSteps[2]?.startsWith('–'), 'a step that breaks is ✗ with why, the rest skipped (–), a red log line', JSON.stringify({ broken, brokenSteps }));
+  check(broken.dir === 'error' && (LANG === 'tr' ? /bekleniyor/ : /expected/).test(broken.text) && brokenSteps[0]?.startsWith('✓') && brokenSteps[1]?.startsWith('✗') && brokenSteps[2]?.startsWith('–'), 'a step that breaks is ✗ with why, the rest skipped (–), a red log line', JSON.stringify({ broken, brokenSteps }));
   check(await page.evaluate(() => document.querySelector('.room-title-dot')?.dataset.status === 'open'), 'the room keeps working');
 
   // ---- Not the host any more: "knock" refuses to start and says why ----
   await run('friends.add');
   await until(async () => (await people()) === 2);
   await run('friends.host');
-  check(!!(await until(() => page.evaluate(() => window.__swmLab.status().some(([k, v]) => k === 'Host' && v === 'someone else')), 8000)), 'a fake friend took the host role');
+  check(!!(await until(() => page.evaluate(() => window.__swmLab.status().some(([k, v]) => k === (localStorage.getItem('lang') === 'tr' ? 'Yönetici' : 'Host') && v === (localStorage.getItem('lang') === 'tr' ? 'başka biri' : 'someone else'))), 8000)), 'a fake friend took the host role');
   const notHost = await run('scenario.knock');
-  check(notHost.dir === 'error' && /host/.test(notHost.text), 'not the host: "knock" refuses to start and says why', JSON.stringify(notHost));
+  check(notHost.dir === 'error' && (LANG === 'tr' ? /yönetici/ : /host/).test(notHost.text), 'not the host: "knock" refuses to start and says why', JSON.stringify(notHost));
   await run('friends.removeAll');
 
   await browser.close();

@@ -4,18 +4,19 @@
 // (`DebugRoom.lab`, the friends' ordinary connections) and the page as it shows; nothing here is a server power. Part of
 // the lab chunk (lazy, never loaded with the lab off).
 import { el } from '../dom.ts';
-import { debugRoom, type LabCommand, type RoomLab } from '../debug-lab.ts';
+import { debugRoom, labFail, type LabCommand, type LabText, type RoomLab } from '../debug-lab.ts';
+import { errorText, say } from './lab-text.ts';
 import type { FakeFriend } from './lab-friends.ts';
 
 export interface ScenarioFriends {
   list(): readonly FakeFriend[];
-  add(count: number): string;
-  removeAll(): string;
+  add(count: number): LabText;
+  removeAll(): LabText;
 }
 
 type Mark = 'ok' | 'fail' | 'skip';
 export interface StepResult {
-  title: string;
+  title: LabText;
   mark: Mark;
   ms: number;
   note?: string;
@@ -33,7 +34,7 @@ interface Ctx {
   /** The fake friends in the room now (index 0 = the first one added). */
   inRoom(): FakeFriend[];
   /** Polls `fn` until it gives something truthy (then returned) or `ms` pass (then throws `why`). */
-  until<T>(fn: () => T | null | undefined | false, why: string, ms?: number): Promise<T>;
+  until<T>(fn: () => T | null | undefined | false, why: LabText, ms?: number): Promise<T>;
   /** One lab command by id (the 🎬 ones), as the command box runs it. */
   command(id: string, arg?: string): Promise<unknown>;
   /** Puts something back when the scenario ends, whatever happened. */
@@ -42,15 +43,15 @@ interface Ctx {
   memo: Record<string, string | null>;
 }
 interface Step {
-  title: string;
+  title: LabText;
   run: (ctx: Ctx) => Promise<string | void> | string | void;
 }
 interface Scenario {
   id: string;
-  title: string;
-  help: string;
+  title: LabText;
+  help: LabText;
   /** True when it can run now, otherwise why not. */
-  needs?: (room: RoomLab) => true | string;
+  needs?: (room: RoomLab) => true | LabText;
   steps: Step[];
 }
 
@@ -67,168 +68,186 @@ async function addFriends(ctx: Ctx, count: number): Promise<FakeFriend[]> {
   const before = ctx.inRoom().length;
   ctx.friends.add(count);
   ctx.cleanup(() => ctx.friends.removeAll());
-  await ctx.until(() => ctx.inRoom().length >= before + count, `${count} fake friend(s) did not get in`, 12_000);
+  await ctx.until(() => ctx.inRoom().length >= before + count, { en: `${count} fake friend(s) did not get in`, tr: `${count} sahte arkadaş içeri giremedi` }, 12_000);
   return ctx.inRoom().slice(before);
 }
 async function withVideo(ctx: Ctx): Promise<string> {
-  if (ctx.room.playback().item) return 'a video is already playing';
+  if (ctx.room.playback().item) return say({ en: 'a video is already playing', tr: 'zaten bir video oynuyor' });
   ctx.room.syncTest();
-  await ctx.until(() => ctx.room.playback().item && !ctx.room.playback().paused, 'the sync test did not start', 8000);
-  return 'sync test playing';
+  await ctx.until(() => ctx.room.playback().item && !ctx.room.playback().paused, { en: 'the sync test did not start', tr: 'senkron testi başlamadı' }, 8000);
+  return say({ en: 'sync test playing', tr: 'senkron testi oynuyor' });
 }
+
+const A_FRIEND_JOINS = { en: 'a fake friend joins', tr: 'sahte bir arkadaş girer' };
+const A_VIDEO_PLAYS = { en: 'a video plays', tr: 'bir video oynar' };
 
 const SCENARIOS: Scenario[] = [
   {
     id: 'basics',
-    title: 'Two people: join, chat, pause / play, leave',
-    help: 'A fake friend joins, writes, pauses and plays the room (the sync test), then leaves: each step must show on my side.',
+    title: { en: 'Two people: join, chat, pause / play, leave', tr: 'İki kişi: gir, yaz, durdur / oynat, çık' },
+    help: {
+      en: 'A fake friend joins, writes, pauses and plays the room (the sync test), then leaves: each step must show on my screen.',
+      tr: 'Sahte bir arkadaş girer, yazar, odayı durdurur ve oynatır (senkron testi), sonra çıkar: her adım benim ekranımda görünmeli.',
+    },
     steps: [
-      { title: 'a friend joins', run: async (ctx) => (await addFriends(ctx, 1))[0]!.name },
+      { title: A_FRIEND_JOINS, run: async (ctx) => (await addFriends(ctx, 1))[0]!.name },
       {
-        title: 'their message shows in my chat',
+        title: { en: 'their message shows in my chat', tr: 'mesajı benim sohbetimde görünür' },
         run: async (ctx) => {
           const text = `hello ${stamp()}`;
           ctx.inRoom()[0]!.say(text);
-          await ctx.until(() => chatHas(text), 'the line never showed');
+          await ctx.until(() => chatHas(text), { en: 'the message never showed', tr: 'mesaj hiç görünmedi' });
         },
       },
-      { title: 'a video plays', run: (ctx) => withVideo(ctx) },
+      { title: A_VIDEO_PLAYS, run: (ctx) => withVideo(ctx) },
       {
-        title: 'they pause: the room pauses for me',
+        title: { en: 'they pause: the room pauses for me', tr: 'durdurur: oda bende de durur' },
         run: async (ctx) => {
           ctx.inRoom()[0]!.pause();
-          await ctx.until(() => ctx.room.playback().paused, 'still playing');
+          await ctx.until(() => ctx.room.playback().paused, { en: 'still playing', tr: 'hâlâ oynuyor' });
         },
       },
       {
-        title: 'they play: the room plays for me',
+        title: { en: 'they play: the room plays for me', tr: 'oynatır: oda bende de oynar' },
         run: async (ctx) => {
           ctx.inRoom()[0]!.play();
-          await ctx.until(() => !ctx.room.playback().paused, 'still paused');
+          await ctx.until(() => !ctx.room.playback().paused, { en: 'still paused', tr: 'hâlâ duruyor' });
         },
       },
       {
-        title: 'they leave: the room has only me',
+        title: { en: 'they leave: only I am in the room', tr: 'çıkar: odada sadece ben kalırım' },
         run: async (ctx) => {
           const name = ctx.inRoom()[0]!.name;
           ctx.inRoom()[0]!.leave();
-          await ctx.until(() => !ctx.room.members().some((m) => m.name === name), `${name} is still listed`);
+          await ctx.until(() => !ctx.room.members().some((m) => m.name === name), { en: `${name} is still listed`, tr: `${name} hâlâ listede` });
         },
       },
     ],
   },
   {
     id: 'wait',
-    title: 'Everyone ready: the room waits for a stuck friend',
-    help: 'A friend\'s video gets stuck for 5 s: the room pauses with the waiting note, then plays on by itself.',
+    title: { en: 'Everyone ready: the room waits for a stuck friend', tr: 'Herkes hazır: oda takılan arkadaşı bekler' },
+    help: {
+      en: 'A fake friend\'s video gets stuck for 5 s: the room pauses with the waiting note, then plays on by itself.',
+      tr: 'Sahte bir arkadaşın videosu 5 sn takılır: oda bekleme notuyla durur, sonra kendiliğinden devam eder.',
+    },
     steps: [
-      { title: 'a friend joins', run: async (ctx) => (await addFriends(ctx, 1))[0]!.name },
-      { title: 'a video plays', run: (ctx) => withVideo(ctx) },
+      { title: A_FRIEND_JOINS, run: async (ctx) => (await addFriends(ctx, 1))[0]!.name },
+      { title: A_VIDEO_PLAYS, run: (ctx) => withVideo(ctx) },
       {
-        title: 'they get stuck: the room waits (note shown)',
+        title: { en: 'they get stuck: the room waits (the note shows)', tr: 'takılır: oda bekler (not görünür)' },
         run: async (ctx) => {
           ctx.inRoom()[0]!.stallFor(5);
-          await ctx.until(() => shown('#waiting-banner') && ctx.room.playback().paused, 'the room did not wait', 6000);
+          await ctx.until(() => shown('#waiting-banner') && ctx.room.playback().paused, { en: 'the room did not wait', tr: 'oda beklemedi' }, 6000);
         },
       },
       {
-        title: 'it plays on by itself once they are ready',
+        title: { en: 'it plays on by itself once they are ready', tr: 'hazır olunca kendiliğinden devam eder' },
         run: async (ctx) => {
-          await ctx.until(() => !shown('#waiting-banner') && !ctx.room.playback().paused, 'still waiting', 15_000);
+          await ctx.until(() => !shown('#waiting-banner') && !ctx.room.playback().paused, { en: 'still waiting', tr: 'hâlâ bekliyor' }, 15_000);
         },
       },
     ],
   },
   {
     id: 'knock',
-    title: 'Knock: a newcomer waits at the door until I let them in',
-    help: 'With "Ask before letting people in" on (I must be the host), a fake friend knocks, I press Let in on their card, they are in. The setting goes back.',
-    needs: (room) => (room.isHost() ? true : 'only the host can'),
+    title: { en: 'Knock: a newcomer waits at the door until I let them in', tr: 'Kapı: yeni gelen ben içeri alana kadar kapıda bekler' },
+    help: {
+      en: 'With "Ask before letting people in" on (I must be the host), a fake friend knocks, I press Let in on their card and they are in. The setting goes back afterwards.',
+      tr: '"İçeri almadan önce sor" açıkken (yönetici ben olmalıyım) sahte bir arkadaş kapıyı çalar, kartında İçeri al\'a basarım ve içeri girer. Ayar sonra eski haline döner.',
+    },
+    needs: (room) => (room.isHost() ? true : { en: 'only the host can', tr: 'sadece yönetici yapabilir' }),
     steps: [
       {
-        title: 'the door is on',
+        title: { en: 'the door is on', tr: 'kapı açık' },
         run: async (ctx) => {
           const was = ctx.room.knockOn();
           ctx.cleanup(() => ctx.room.knock(was));
-          if (!ctx.room.knock(true)) throw new Error('only the host can');
-          await ctx.until(() => ctx.room.knockOn(), 'the setting did not change');
+          if (!ctx.room.knock(true)) throw labFail({ en: 'only the host can', tr: 'sadece yönetici yapabilir' });
+          await ctx.until(() => ctx.room.knockOn(), { en: 'the setting did not change', tr: 'ayar değişmedi' });
         },
       },
       {
-        title: 'a friend knocks and waits at the door',
+        title: { en: 'a fake friend knocks and waits at the door', tr: 'sahte bir arkadaş kapıyı çalar ve bekler' },
         run: async (ctx) => {
           ctx.friends.add(1);
           ctx.cleanup(() => ctx.friends.removeAll());
-          const friend = await ctx.until(() => ctx.friends.list().find((f) => f.status === 'door'), 'nobody waited at the door', 10_000);
+          const friend = await ctx.until(() => ctx.friends.list().find((f) => f.status === 'door'), { en: 'nobody waited at the door', tr: 'kapıda kimse beklemedi' }, 10_000);
           return friend.name;
         },
       },
       {
-        title: 'their card shows for me',
+        title: { en: 'their card shows on my screen', tr: 'kartı benim ekranımda görünür' },
         run: async (ctx) => {
-          await ctx.until(() => document.querySelector('#knock-cards .knock-card .knock-allow'), 'no knock card');
+          await ctx.until(() => document.querySelector('#knock-cards .knock-card .knock-allow'), { en: 'no knock card', tr: 'kapı kartı yok' });
         },
       },
       {
-        title: 'Let in: they are in the room',
+        title: { en: 'Let in: they are in the room', tr: 'İçeri al: odaya girer' },
         run: async (ctx) => {
           document.querySelector<HTMLButtonElement>('#knock-cards .knock-card .knock-allow')!.click();
-          await ctx.until(() => ctx.inRoom().length === 1, 'they are still at the door', 8000);
+          await ctx.until(() => ctx.inRoom().length === 1, { en: 'they are still at the door', tr: 'hâlâ kapıda' }, 8000);
         },
       },
     ],
   },
   {
     id: 'private',
-    title: 'A private message reaches one person only',
-    help: 'Two fake friends; I write privately to the first (the person menu\'s path): my bubble says private, the first gets it, the second never does.',
+    title: { en: 'A private message reaches one person only', tr: 'Özel mesaj sadece bir kişiye gider' },
+    help: {
+      en: 'Two fake friends; I write privately to the first (the person menu\'s way): my bubble says private, the first gets it, the second never does.',
+      tr: 'İki sahte arkadaş; ilkine özel yazarım (kişi menüsündeki yoldan): balonumda özel yazar, ilki alır, ikincisi hiç almaz.',
+    },
     steps: [
-      { title: 'two friends join', run: async (ctx) => (await addFriends(ctx, 2)).map((f) => f.name).join(', ') },
+      { title: { en: 'two fake friends join', tr: 'iki sahte arkadaş girer' }, run: async (ctx) => (await addFriends(ctx, 2)).map((f) => f.name).join(', ') },
       {
-        title: 'I write privately to the first',
+        title: { en: 'I write privately to the first', tr: 'ilkine özel yazarım' },
         run: async (ctx) => {
           const [first] = ctx.inRoom();
-          if (!ctx.room.openPrivate(first!.memberId!)) throw new Error('no such member');
+          if (!ctx.room.openPrivate(first!.memberId!)) throw labFail({ en: 'no such person in the room', tr: 'odada böyle biri yok' });
           const text = `secret ${stamp()}`;
           ctx.room.write(text);
           ctx.memo.text = text;
-          await ctx.until(() => [...document.querySelectorAll('.chat-line.private')].some((l) => l.textContent?.includes(text)), 'my private bubble never showed');
+          await ctx.until(() => [...document.querySelectorAll('.chat-line.private')].some((l) => l.textContent?.includes(text)), { en: 'my private bubble never showed', tr: 'özel balonum hiç görünmedi' });
         },
       },
       {
-        title: 'the first friend got it, marked private',
+        title: { en: 'the first fake friend got it, marked private', tr: 'ilk sahte arkadaş özel olarak aldı' },
         run: async (ctx) => {
           const text = ctx.memo.text!;
-          await ctx.until(() => ctx.inRoom()[0]!.heard.find((h) => h.text === text && h.private), 'it never arrived');
+          await ctx.until(() => ctx.inRoom()[0]!.heard.find((h) => h.text === text && h.private), { en: 'it never arrived', tr: 'hiç gelmedi' });
         },
       },
       {
-        title: 'the second friend never got it',
+        title: { en: 'the second fake friend never got it', tr: 'ikinci sahte arkadaş hiç almadı' },
         run: async (ctx) => {
           const text = ctx.memo.text!;
           await sleep(1200);
-          if (ctx.inRoom()[1]!.heard.some((h) => h.text === text)) throw new Error('the second friend got it');
+          if (ctx.inRoom()[1]!.heard.some((h) => h.text === text)) throw labFail({ en: 'the second friend got it', tr: 'ikinci arkadaş da aldı' });
         },
       },
     ],
   },
   {
     id: 'reconnect',
-    title: 'My connection drops while a friend writes',
-    help: 'My connection is down for 4 s while a fake friend writes: I come back with the same member id, still with them, and their line reaches me.',
+    title: { en: 'My connection drops while a friend writes', tr: 'Arkadaşım yazarken bağlantım kopar' },
+    help: {
+      en: 'My connection is down for 4 s while a fake friend writes: I come back as the same person, still with them, and their message reaches me.',
+      tr: 'Sahte bir arkadaş yazarken bağlantım 4 sn kopar: aynı kişi olarak geri dönerim, hâlâ onunlayım ve mesajı bana ulaşır.',
+    },
     steps: [
-      { title: 'a friend joins', run: async (ctx) => (await addFriends(ctx, 1))[0]!.name },
+      { title: A_FRIEND_JOINS, run: async (ctx) => (await addFriends(ctx, 1))[0]!.name },
       {
-        title: 'my connection drops',
+        title: { en: 'my connection drops', tr: 'bağlantım kopar' },
         run: async (ctx) => {
           const id = ctx.room.memberId();
           ctx.memo.id = id;
           await ctx.command('net.drop', '4');
-          await ctx.until(() => ctx.room.transport() === null, 'still connected', 3000);
+          await ctx.until(() => ctx.room.transport() === null, { en: 'still connected', tr: 'hâlâ bağlı' }, 3000);
         },
       },
       {
-        title: 'they write while I am away',
+        title: { en: 'they write while I am away', tr: 'ben yokken yazar' },
         run: async (ctx) => {
           const text = `while away ${stamp()}`;
           ctx.inRoom()[0]!.say(text);
@@ -236,36 +255,41 @@ const SCENARIOS: Scenario[] = [
         },
       },
       {
-        title: 'I am back with the same member id',
+        title: { en: 'I am back as the same person', tr: 'aynı kişi olarak geri dönerim' },
         run: async (ctx) => {
-          await ctx.until(() => ctx.room.transport() !== null && ctx.room.memberId() !== null, 'not back', 15_000);
+          await ctx.until(() => ctx.room.transport() !== null && ctx.room.memberId() !== null, { en: 'not back', tr: 'geri dönmedi' }, 15_000);
           const before = ctx.memo.id;
-          if (ctx.room.memberId() !== before) throw new Error(`a new member id (${before} → ${ctx.room.memberId()})`);
+          const now = ctx.room.memberId();
+          if (now !== before) throw labFail({ en: `came back as someone new (${before} → ${now})`, tr: `yeni biri olarak döndü (${before} → ${now})` });
         },
       },
       {
-        title: 'their line reached me and they are still here',
+        title: { en: 'their message reached me and they are still here', tr: 'mesajı bana ulaştı ve hâlâ burada' },
         run: async (ctx) => {
           const text = ctx.memo.text!;
-          await ctx.until(() => chatHas(text), 'the line is missing');
-          await ctx.until(() => ctx.room.members().length === 2, `${ctx.room.members().length} people`);
+          await ctx.until(() => chatHas(text), { en: 'the message is missing', tr: 'mesaj eksik' });
+          const n = () => ctx.room.members().length;
+          await ctx.until(() => n() === 2, { en: `${n()} people`, tr: `${n()} kişi` });
         },
       },
     ],
   },
   {
     id: 'selfTest',
-    title: 'Lab self-test: a scenario that fails on purpose',
-    help: 'Its second step fails on purpose: it must show ✗ with the reason and skip the rest (–), and the room keeps working.',
+    title: { en: 'Lab self-test: a scenario that fails on purpose', tr: 'Lab kendini dener: bilerek bozulan senaryo' },
+    help: {
+      en: 'Its second step fails on purpose: it must show ✗ with the reason and skip the rest (–), and the room keeps working.',
+      tr: 'İkinci adımı bilerek bozulur: nedeniyle birlikte ✗ göstermeli, kalanları atlamalı (–) ve oda çalışmaya devam etmeli.',
+    },
     steps: [
-      { title: 'a step that passes', run: () => 'fine' },
+      { title: { en: 'a step that passes', tr: 'geçen bir adım' }, run: () => say({ en: 'fine', tr: 'tamam' }) },
       {
-        title: 'a step that fails on purpose',
+        title: { en: 'a step that fails on purpose', tr: 'bilerek bozulan bir adım' },
         run: () => {
-          throw new Error('self-test: this failure is expected');
+          throw labFail({ en: 'self-test: this failure is expected', tr: 'kendini deneme: bu hata bekleniyor' });
         },
       },
-      { title: 'a step after the failure', run: () => 'never runs' },
+      { title: { en: 'a step after the failure', tr: 'hatadan sonraki adım' }, run: () => say({ en: 'never runs', tr: 'hiç çalışmaz' }) },
     ],
   },
 ];
@@ -280,8 +304,8 @@ export function createScenarios(friends: ScenarioFriends, command: (id: string, 
 
   async function play(scenario: Scenario): Promise<ScenarioResult> {
     const room = debugRoom()?.lab;
-    if (!room) throw new Error('not in a room');
-    if (running) throw new Error(`"${running}" is still running`);
+    if (!room) throw labFail({ en: 'not in a room', tr: 'odada değilsin' });
+    if (running) throw labFail({ en: `"${running}" is still running`, tr: `"${running}" hâlâ çalışıyor` });
     running = scenario.id;
     const cleanups: (() => void)[] = [];
     const ctx: Ctx = {
@@ -293,7 +317,7 @@ export function createScenarios(friends: ScenarioFriends, command: (id: string, 
         for (;;) {
           const v = fn();
           if (v) return v as never;
-          if (Date.now() > end) throw new Error(why);
+          if (Date.now() > end) throw labFail(why);
           await sleep(150);
         }
       },
@@ -316,7 +340,7 @@ export function createScenarios(friends: ScenarioFriends, command: (id: string, 
           steps.push({ title: step.title, mark: 'ok', ms: Math.round(performance.now() - start), ...(note ? { note } : {}) });
         } catch (error) {
           result.ok = false;
-          steps.push({ title: step.title, mark: 'fail', ms: Math.round(performance.now() - start), note: String((error as Error)?.message ?? error) });
+          steps.push({ title: step.title, mark: 'fail', ms: Math.round(performance.now() - start), note: errorText(error) });
         }
         changed();
       }
@@ -338,25 +362,25 @@ export function createScenarios(friends: ScenarioFriends, command: (id: string, 
   const summary = (r: ScenarioResult) => {
     const passed = r.steps.filter((s) => s.mark === 'ok').length;
     const failed = r.steps.find((s) => s.mark === 'fail');
-    return `${r.ok ? '✓' : '✗'} ${passed}/${r.steps.length}${failed ? ` · ✗ ${failed.title}: ${failed.note ?? ''}` : ''}`;
+    return `${r.ok ? '✓' : '✗'} ${passed}/${r.steps.length}${failed ? ` · ✗ ${say(failed.title)}: ${failed.note ?? ''}` : ''}`;
   };
 
   const commands: LabCommand[] = SCENARIOS.map((s) => ({
     id: `scenario.${s.id}`,
-    title: `Scenario: ${s.title}`,
+    title: typeof s.title === 'string' ? s.title : { en: `Scenario: ${s.title.en}`, tr: `Senaryo: ${s.title.tr}` },
     help: s.help,
     tab: 'scenarios',
-    where: 'in a room',
+    where: { en: 'in a room', tr: 'odada' },
     available: () => {
       const room = debugRoom()?.lab;
-      if (!room) return 'not in a room';
-      if (running) return `"${running}" is running`;
+      if (!room) return { en: 'not in a room', tr: 'odada değilsin' };
+      if (running) return { en: `"${running}" is running`, tr: `"${running}" çalışıyor` };
       return s.needs ? s.needs(room) : true;
     },
     run: async () => {
       const r = await play(s);
       // A failed check is a red line in the log (the command "failed"), with the step that broke.
-      if (!r.ok) throw new Error(summary(r));
+      if (!r.ok) throw labFail(summary(r));
       return summary(r);
     },
   }));
@@ -366,21 +390,21 @@ export function createScenarios(friends: ScenarioFriends, command: (id: string, 
     const box = el('div', { class: 'lab-scenarios' });
     for (const s of SCENARIOS) {
       const r = results.get(s.id);
-      const button = el('button', { type: 'button', class: 'btn debug-small lab-scenario-run', 'data-scenario': s.id }, running === s.id ? '…' : '▶ Run');
+      const button = el('button', { type: 'button', class: 'btn debug-small lab-scenario-run', 'data-scenario': s.id }, running === s.id ? '…' : say({ en: '▶ Run', tr: '▶ Çalıştır' }));
       (button as HTMLButtonElement).disabled = running !== null;
       button.addEventListener('click', () => run(`scenario.${s.id}`));
       box.append(
         el(
           'section',
           { class: `lab-scenario${r ? (r.ok ? ' ok' : ' fail') : ''}`, 'data-scenario': s.id },
-          el('div', { class: 'lab-scenario-head' }, el('strong', {}, s.title), button),
-          el('p', { class: 'muted small' }, s.help),
+          el('div', { class: 'lab-scenario-head' }, el('strong', {}, say(s.title)), button),
+          el('p', { class: 'muted small' }, say(s.help)),
           r
             ? el(
                 'ol',
                 { class: 'lab-steps' },
                 ...r.steps.map((step) =>
-                  el('li', { class: `lab-step ${step.mark}` }, `${step.mark === 'ok' ? '✓' : step.mark === 'fail' ? '✗' : '–'} ${step.title}`, step.note ? el('small', {}, ` · ${step.note}`) : null, step.ms ? el('small', { class: 'muted' }, ` ${step.ms} ms`) : null),
+                  el('li', { class: `lab-step ${step.mark}` }, `${step.mark === 'ok' ? '✓' : step.mark === 'fail' ? '✗' : '–'} ${say(step.title)}`, step.note ? el('small', {}, ` · ${step.note}`) : null, step.ms ? el('small', { class: 'muted' }, ` ${step.ms} ms`) : null),
                 ),
               )
             : null,

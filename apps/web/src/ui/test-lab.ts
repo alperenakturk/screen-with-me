@@ -15,15 +15,18 @@ import {
   debugErrors,
   debugHooks,
   debugOff,
+  labFail,
   debugRoom,
   setDebugTap,
   type LabCommand,
   type LabHooks,
   type LabTab,
+  type LabText,
 } from '../debug-lab.ts';
 import { createFriends } from './lab-friends.ts';
 import { createVideoLab } from './lab-video.ts';
 import { createScenarios } from './lab-scenarios.ts';
+import { both, errorText, say } from './lab-text.ts';
 import './test-lab.css';
 
 const TEXT = {
@@ -33,26 +36,29 @@ const TEXT = {
     close: 'Close',
     tabs: { status: '📊 Status', friends: '👥 Friends', video: '🎬 Video & network', games: '🎮 Games', scenarios: '🧪 Scenarios', screen: '🖥 Screen', log: '📜 Log' },
     device: 'This device',
-    site: 'Site',
+    site: 'Site version',
     extension: 'Extension',
     none: 'not installed',
     connection: 'Connection',
+    connWs: '🟢 good (live connection)',
+    connHttp: '🟡 backup way (the live connection would not open)',
     noRoom: 'not in a room',
     browser: 'Browser',
     screen: 'Screen',
     kind: 'Device',
+    kinds: { phone: 'phone layout', 'is-touch': 'touch screen', 'has-mouse': 'mouse', 'is-standalone': 'installed app', sideways: 'sideways' },
     language: 'Language',
     sync: 'Sync',
-    drift: 'Behind the room',
-    jumps: 'Jumps',
-    people: 'People',
+    drift: 'How far my video is from the room',
+    jumps: 'Times my video jumped to catch up',
+    people: 'People in the room',
     playing: 'Playing',
     nothing: 'nothing',
-    graph: 'Drift, last 60 s (± 1 s)',
+    graph: 'My video against the room, last 60 s (middle line = together, ± 1 s)',
     switches: 'Switches',
-    tvLab: 'TV version (lab)',
-    measure: 'Shorts switch timing',
-    reloadNote: 'Switches apply after a reload.',
+    tvLab: 'TV version (trial)',
+    measure: 'Measure how fast Shorts switch',
+    reloadNote: 'Switches work after a reload.',
     reload: '⟳ Reload',
     connTest: '📶 Connection test',
     firstTime: '🌱 Start as a first-time visitor',
@@ -62,6 +68,9 @@ const TEXT = {
     clear: 'Clear',
     bug: '🐞 This is a bug',
     bugTitle: 'Bug report',
+    bugHead: 'Sidelit bug report',
+    bugLog: 'Log, last 2 minutes',
+    bugConn: 'Connection test',
     bugNote: 'This is exactly the text that will be copied: versions, the room\'s state, errors and the last 2 minutes of the log. No names, browser ids or chat images.',
     copy: '📋 Copy',
     copied: '✓ Copied',
@@ -69,21 +78,23 @@ const TEXT = {
     hide: 'Turn the lab off',
     hideNote: '`?debug=0` also turns it off.',
     commands: 'Commands',
-    searchPlaceholder: 'Type a command… (Enter runs it)',
+    searchPlaceholder: 'Type what you want to do… (Enter runs it)',
     noCommands: 'No commands here yet.',
     soon: 'Comes in a later step of the lab.',
     noMatch: 'No command matches.',
     run: 'Run',
     undo: 'Undo',
-    unavailable: 'not available',
+    unavailable: 'not now',
     filter: 'Filter',
-    pings: 'Pings',
+    pings: 'Show pings',
     pause: 'Pause',
     resume: 'Resume',
     logEmpty: 'Nothing logged yet.',
-    ran: 'ran',
-    failed: 'failed',
+    ran: 'done',
+    failed: 'did not work',
     undone: 'undone',
+    noUndo: 'nothing to undo',
+    done: 'done',
   },
   tr: {
     open: 'Test Lab',
@@ -91,25 +102,28 @@ const TEXT = {
     close: 'Kapat',
     tabs: { status: '📊 Durum', friends: '👥 Arkadaşlar', video: '🎬 Video ve ağ', games: '🎮 Oyunlar', scenarios: '🧪 Senaryolar', screen: '🖥 Ekran', log: '📜 Kayıt' },
     device: 'Bu cihaz',
-    site: 'Site',
+    site: 'Site sürümü',
     extension: 'Eklenti',
     none: 'kurulu değil',
     connection: 'Bağlantı',
+    connWs: '🟢 iyi (canlı bağlantıyla bağlı)',
+    connHttp: '🟡 yedek yolla bağlı (canlı bağlantı açılmadı)',
     noRoom: 'odada değil',
     browser: 'Tarayıcı',
     screen: 'Ekran',
     kind: 'Cihaz',
+    kinds: { phone: 'telefon düzeni', 'is-touch': 'dokunmatik ekran', 'has-mouse': 'fare', 'is-standalone': 'yüklü uygulama', sideways: 'yan çevrilmiş' },
     language: 'Dil',
     sync: 'Senkron',
-    drift: 'Odanın gerisinde',
-    jumps: 'Atlamalar',
-    people: 'Kişi',
+    drift: 'Videomun odadan farkı',
+    jumps: 'Videomun yetişmek için atladığı sayı',
+    people: 'Odadaki kişi',
     playing: 'Oynayan',
     nothing: 'hiçbir şey',
-    graph: 'Kayma, son 60 sn (± 1 sn)',
+    graph: 'Videom ile oda, son 60 sn (orta çizgi = birlikte, ± 1 sn)',
     switches: 'Anahtarlar',
     tvLab: 'TV sürümü (deneme)',
-    measure: 'Shorts geçiş ölçümü',
+    measure: 'Shorts geçiş hızını ölç',
     reloadNote: 'Anahtarlar sayfa yenilenince geçerli olur.',
     reload: '⟳ Yenile',
     connTest: '📶 Bağlantı testi',
@@ -120,6 +134,9 @@ const TEXT = {
     clear: 'Temizle',
     bug: '🐞 Bu bir hata',
     bugTitle: 'Hata raporu',
+    bugHead: 'Sidelit hata raporu (Sidelit bug report)',
+    bugLog: 'Kayıt, son 2 dakika (Log, last 2 minutes)',
+    bugConn: 'Bağlantı testi (Connection test)',
     bugNote: 'Kopyalanacak yazı tam olarak bu: sürümler, odanın durumu, hatalar ve kaydın son 2 dakikası. Ad, tarayıcı kimliği ya da sohbet resmi yok.',
     copy: '📋 Kopyala',
     copied: '✓ Kopyalandı',
@@ -127,24 +144,27 @@ const TEXT = {
     hide: 'Lab\'ı kapat',
     hideNote: '`?debug=0` de kapatır.',
     commands: 'Komutlar',
-    searchPlaceholder: 'Bir komut yaz… (Enter çalıştırır)',
+    searchPlaceholder: 'Ne yapmak istediğini yaz… (Enter çalıştırır)',
     noCommands: 'Burada henüz komut yok.',
     soon: 'Lab\'ın sonraki bir adımında gelecek.',
     noMatch: 'Eşleşen komut yok.',
     run: 'Çalıştır',
     undo: 'Geri al',
-    unavailable: 'şu an kullanılamaz',
+    unavailable: 'şu an olmaz',
     filter: 'Süz',
-    pings: 'Ping\'ler',
+    pings: 'Bağlantı yoklamalarını da göster',
     pause: 'Durdur',
     resume: 'Devam',
     logEmpty: 'Henüz kayıt yok.',
-    ran: 'çalıştı',
-    failed: 'başarısız',
+    ran: 'oldu',
+    failed: 'olmadı',
     undone: 'geri alındı',
+    noUndo: 'geri alınacak bir şey yok',
+    done: 'oldu',
   },
 };
 type Text = (typeof TEXT)['en'];
+const currentText = (): Text => TEXT[lang() === 'tr' ? 'tr' : 'en'];
 const TABS: LabTab[] = ['status', 'friends', 'video', 'games', 'scenarios', 'screen', 'log'];
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -233,11 +253,18 @@ function allCommands(): LabCommand[] {
 function availability(command: LabCommand): true | string {
   if (!command.available) return true;
   try {
-    const result = command.available();
-    return result === true ? true : String(result || 'not available');
+    const result: true | LabText | false = command.available();
+    return result === true ? true : say(result || { en: 'not available', tr: 'kullanılamaz' });
   } catch (error) {
-    return String((error as Error)?.message ?? error);
+    return errorText(error);
   }
+}
+
+/** A command's result for the log: a `{ en, tr }` pair in the page's language, anything else as short text. */
+function resultText(result: unknown): string {
+  if (typeof result === 'string') return result;
+  if (result && typeof result === 'object' && typeof (result as { en?: unknown }).en === 'string' && typeof (result as { tr?: unknown }).tr === 'string') return say(result as LabText);
+  return redact(result);
 }
 
 /** Runs a command so that nothing it does can break the room. Resolves with the line written to the log. */
@@ -245,15 +272,15 @@ export async function runCommand(command: LabCommand, arg?: string, mode: 'run' 
   const fn = mode === 'run' ? command.run : command.undo;
   const why = mode === 'run' ? availability(command) : true;
   if (why !== true || !fn) {
-    addLog({ dir: 'error', type: command.id, text: why === true ? 'no undo' : why });
+    addLog({ dir: 'error', type: command.id, text: why === true ? currentText().noUndo : why });
     return log[log.length - 1]!;
   }
   try {
     const result = await Promise.resolve().then(() => fn(arg));
-    addLog({ dir: 'lab', type: command.id, text: `${mode === 'run' ? '▶' : '↶'} ${result === undefined ? (mode === 'run' ? 'done' : 'undone') : redact(result)}` });
+    addLog({ dir: 'lab', type: command.id, text: `${mode === 'run' ? '▶' : '↶'} ${result === undefined ? (mode === 'run' ? currentText().done : currentText().undone) : resultText(result)}` });
     lastRun = mode === 'run' && command.undo ? { command } : null;
   } catch (error) {
-    addLog({ dir: 'error', type: command.id, text: `${mode === 'run' ? '▶' : '↶'} ${String((error as Error)?.message ?? error)}` });
+    addLog({ dir: 'error', type: command.id, text: `${mode === 'run' ? '▶' : '↶'} ${errorText(error)}` });
     lastRun = null;
   }
   return log[log.length - 1]!;
@@ -274,9 +301,9 @@ function browserName(): string {
   return `${browser} · ${os}`;
 }
 
-function deviceKind(): string {
+function deviceKind(tx: Text): string {
   const root = document.documentElement.classList;
-  const parts = ['phone', 'is-touch', 'has-mouse', 'is-standalone', 'sideways'].filter((name) => root.contains(name));
+  const parts = (Object.keys(tx.kinds) as (keyof Text['kinds'])[]).filter((name) => root.contains(name)).map((name) => tx.kinds[name]);
   return parts.length ? parts.join(' · ') : '—';
 }
 
@@ -290,11 +317,11 @@ function facts(tx: Text): [string, string][] {
   return [
     [tx.site, document.querySelector('.footer-version')?.textContent?.trim() || '?'],
     [tx.extension, root.swmExtension || tx.none],
-    [tx.connection, root.swmTransport === 'http' ? 'HTTP fallback' : root.swmTransport === 'ws' ? 'WebSocket' : tx.noRoom],
+    [tx.connection, root.swmTransport === 'http' ? tx.connHttp : root.swmTransport === 'ws' ? tx.connWs : tx.noRoom],
     [tx.browser, browserName()],
     [tx.screen, `${innerWidth}×${innerHeight} · ×${Math.round(devicePixelRatio * 100) / 100}`],
-    [tx.kind, deviceKind()],
-    [tx.language, lang()],
+    [tx.kind, deviceKind(tx)],
+    [tx.language, lang() === 'tr' ? 'Türkçe' : 'English'],
   ];
 }
 
@@ -302,11 +329,22 @@ function syncFacts(tx: Text): [string, string][] | null {
   const room = debugRoom();
   if (!room) return null;
   return [
-    [tx.drift, room.drift === null ? '—' : `${Math.round(room.drift * 1000)} ms`],
+    [tx.drift, room.drift === null ? '—' : `${driftMark(room.drift)} ${Math.round(room.drift * 1000)} ms`],
     [tx.jumps, String(room.jumps)],
     [tx.people, String(room.people)],
     [tx.playing, room.kind ?? tx.nothing],
   ];
+}
+
+/** Lower case without accents, Turkish ı / İ as i: what the command box compares. */
+export function fold(text: string): string {
+  return text.trim().toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i');
+}
+
+/** 🟢 together, 🟡 a little apart (the sync closes it), 🔴 far apart (the sync jumps). */
+function driftMark(seconds: number): string {
+  const off = Math.abs(seconds);
+  return off < 0.25 ? '🟢' : off < 1 ? '🟡' : '🔴';
 }
 
 function hookStatus(): [string, string][] {
@@ -314,7 +352,7 @@ function hookStatus(): [string, string][] {
   for (const { name, hooks: h } of hooks()) {
     if (!h.status) continue;
     try {
-      for (const row of h.status()) if (Array.isArray(row) && row.length === 2) rows.push([String(row[0]), String(row[1])]);
+      for (const row of h.status()) if (Array.isArray(row) && row.length === 2) rows.push([say(row[0]), say(row[1])]);
     } catch (error) {
       rows.push([name, `status failed: ${String((error as Error)?.message ?? error)}`]);
     }
@@ -324,14 +362,14 @@ function hookStatus(): [string, string][] {
 
 /** The bug text: exactly what "Copy" copies (shown first). */
 export function bugText(tx: Text = TEXT.en): string {
-  const lines = ['Sidelit bug report', new Date().toISOString(), `Page: ${location.pathname}`, ''];
+  const lines = [tx.bugHead, new Date().toISOString(), `Page: ${location.pathname}`, ''];
   for (const [k, v] of facts(tx)) lines.push(`${k}: ${v}`);
   const sync = syncFacts(tx);
   if (sync) for (const [k, v] of sync) lines.push(`${k}: ${v}`);
   for (const [k, v] of hookStatus()) lines.push(`${k}: ${v}`);
   try {
     const diag = localStorage.getItem('diagLast');
-    if (diag) lines.push('', 'Connection test:', diag);
+    if (diag) lines.push('', `${tx.bugConn}:`, diag);
   } catch {
     // No storage.
   }
@@ -340,7 +378,7 @@ export function bugText(tx: Text = TEXT.en): string {
   for (const e of errors) lines.push(`${new Date(e.at).toLocaleTimeString()} ${e.msg}${e.where ? ` (${e.where})` : ''}`);
   const since = Date.now() - LOG_MS;
   const recent = log.filter((l) => l.at >= since);
-  lines.push('', `Log, last 2 minutes (${recent.length}):`);
+  lines.push('', `${tx.bugLog} (${recent.length}):`);
   for (const l of recent) lines.push(`${new Date(l.at).toLocaleTimeString()} ${l.dir.padEnd(5)} ${l.type} ${l.text}`);
   return lines.join('\n');
 }
@@ -386,18 +424,30 @@ function table(rows: [string, string][]): HTMLElement {
   return list;
 }
 
-function toggle(label: string, on: boolean, change: (on: boolean) => void, id: string): HTMLElement {
+function toggle(label: HTMLElement, on: boolean, change: (on: boolean) => void, id: string): HTMLElement {
   const input = el('input', { type: 'checkbox', class: 'switch', role: 'switch', id });
   input.checked = on;
   input.addEventListener('change', () => change(input.checked));
-  return el('label', { class: 'debug-switch', for: id }, el('span', {}, label), input);
+  return el('label', { class: 'debug-switch', for: id }, label, input);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 export function mountDebugPanel(): void {
   if (document.querySelector('#debug-panel-root')) return;
-  const tx = TEXT[lang() === 'tr' ? 'tr' : 'en'];
+  let tx = currentText();
+  // LABTR: the lab follows the page's language. Fixed labels register here and are set again on `langchange`; lists,
+  // status lines and commands are drawn from `tx` / `say` each time anyway.
+  const labels: (() => void)[] = [];
+  function words<T extends Element>(node: T, text: (t: Text) => string, attr?: string): T {
+    const apply = () => {
+      if (attr) node.setAttribute(attr, text(tx));
+      else node.textContent = text(tx);
+    };
+    apply();
+    labels.push(apply);
+    return node;
+  }
   setDebugTap((dir, message) => {
     const type = typeOf(message);
     addLog({ dir, type, text: redact(message) });
@@ -408,21 +458,21 @@ export function mountDebugPanel(): void {
   });
 
   const root = el('div', { id: 'debug-panel-root' });
-  const fab = el('button', { type: 'button', class: 'debug-fab', title: `${tx.open} · Ctrl+Shift+D`, 'aria-label': tx.open, 'aria-expanded': 'false' }, '🐞');
-  const panel = el('section', { class: 'debug-panel lab-drawer', role: 'dialog', 'aria-label': tx.title });
+  const fab = words(words(el('button', { type: 'button', class: 'debug-fab', 'aria-expanded': 'false' }, '🐞'), (t) => `${t.open} · Ctrl+Shift+D`, 'title'), (t) => t.open, 'aria-label');
+  const panel = words(el('section', { class: 'debug-panel lab-drawer', role: 'dialog' }), (t) => t.title, 'aria-label');
   panel.hidden = true;
 
   // ---- the lab's own commands ----
   let marks = 0;
   const own: LabCommand[] = [
-    { id: 'lab.bug', title: 'Lab: this is a bug', help: 'Shows the bug text (versions, state, errors, last 2 min of log) to copy.', tab: 'status', run: () => openBug() },
-    { id: 'lab.mark', title: 'Lab: put a marker in the log', help: 'A line "— mark N —" in the log, to find a moment later. Undo removes it.', tab: 'log', run: () => { marks++; addLog({ dir: 'lab', type: 'mark', text: `— mark ${marks} —` }); return `mark ${marks}`; }, undo: () => { let i = log.length - 1; while (i >= 0 && log[i]!.type !== 'mark') i--; if (i >= 0) log.splice(i, 1); for (const fn of logListeners) fn(); } },
-    { id: 'lab.clearLog', title: 'Lab: clear the log', help: 'Empties the lab\'s log (the room is not touched).', tab: 'log', run: () => { log.length = 0; for (const fn of logListeners) fn(); } },
-    { id: 'lab.clearErrors', title: 'Lab: clear the errors', help: 'Empties the list of recent errors.', tab: 'status', run: () => { clearDebugErrors(); fab.classList.remove('has-error'); draw(); } },
-    { id: 'lab.selfTest', title: 'Lab: self-test (a failing command)', help: 'Runs a command that throws: the log gets a red line and the room keeps working.', tab: 'log', run: () => { throw new Error('self-test: this error is expected'); } },
-    { id: 'lab.reload', title: 'Lab: reload the page', help: 'Reloads this tab (the lab stays on).', tab: 'status', run: () => location.reload() },
-    { id: 'lab.firstVisit', title: 'Lab: start as a first-time visitor', help: 'Forgets name, avatar, tips and room names in this browser (never the browser id), then reloads.', tab: 'screen', run: () => { if (confirm(tx.firstAsk)) { forgetVisits(); location.reload(); } } },
-    { id: 'lab.off', title: 'Lab: turn the lab off', help: 'Removes the lab from this tab (same as ?debug=0).', tab: 'status', run: () => turnOff() },
+    { id: 'lab.bug', title: { en: 'Lab: this is a bug', tr: 'Lab: bu bir hata' }, help: { en: 'Shows the text to copy for a bug: versions, the room\'s state, errors and the last 2 minutes of the log.', tr: 'Hata için kopyalanacak yazıyı gösterir: sürümler, odanın durumu, hatalar ve kaydın son 2 dakikası.' }, tab: 'status', run: () => openBug() },
+    { id: 'lab.mark', title: { en: 'Lab: put a marker in the log', tr: 'Lab: kayda bir işaret koy' }, help: { en: 'A line "— mark N —" in the log, to find this moment later. Undo removes it.', tr: 'Kayda "— mark N —" satırı düşer, bu anı sonra bulmak için. Geri al siler.' }, tab: 'log', run: () => { marks++; addLog({ dir: 'lab', type: 'mark', text: `— mark ${marks} —` }); return `mark ${marks}`; }, undo: () => { let i = log.length - 1; while (i >= 0 && log[i]!.type !== 'mark') i--; if (i >= 0) log.splice(i, 1); for (const fn of logListeners) fn(); } },
+    { id: 'lab.clearLog', title: { en: 'Lab: clear the log', tr: 'Lab: kaydı temizle' }, help: { en: 'Empties the lab\'s log. The room is not touched.', tr: 'Lab\'ın kaydını boşaltır. Odaya dokunmaz.' }, tab: 'log', run: () => { log.length = 0; for (const fn of logListeners) fn(); } },
+    { id: 'lab.clearErrors', title: { en: 'Lab: clear the errors', tr: 'Lab: hataları temizle' }, help: { en: 'Empties the list of recent errors; 🐞 turns back to normal.', tr: 'Son hatalar listesini boşaltır; 🐞 normale döner.' }, tab: 'status', run: () => { clearDebugErrors(); fab.classList.remove('has-error'); draw(); } },
+    { id: 'lab.selfTest', title: { en: 'Lab: self-test (a command that fails)', tr: 'Lab: kendini dene (bozuk bir komut)' }, help: { en: 'Runs a command that fails on purpose: you see a red line in the log and the room keeps working.', tr: 'Bilerek bozulan bir komut çalışır: kayıtta kırmızı bir satır görürsün, oda çalışmaya devam eder.' }, tab: 'log', run: () => { throw labFail({ en: 'self-test: this error is expected', tr: 'kendini deneme: bu hata bekleniyor' }); } },
+    { id: 'lab.reload', title: { en: 'Lab: reload the page', tr: 'Lab: sayfayı yenile' }, help: { en: 'Reloads this tab; the lab stays on.', tr: 'Bu sekmeyi yeniler; lab açık kalır.' }, tab: 'status', run: () => location.reload() },
+    { id: 'lab.firstVisit', title: { en: 'Lab: start as a first-time visitor', tr: 'Lab: ilk kez gelen biri gibi başla' }, help: { en: 'Forgets my name, avatar, tips and room names in this browser (never the browser id), then reloads.', tr: 'Bu tarayıcıdaki adımı, avatarımı, ipuçlarını ve oda adlarını unutur (tarayıcı kimliğini asla), sonra yeniler.' }, tab: 'screen', run: () => { if (confirm(tx.firstAsk)) { forgetVisits(); location.reload(); } } },
+    { id: 'lab.off', title: { en: 'Lab: turn the lab off', tr: 'Lab: lab\'ı kapat' }, help: { en: 'Removes the lab from this tab (same as ?debug=0).', tr: 'Lab\'ı bu sekmeden kaldırır (?debug=0 ile aynı).' }, tab: 'status', run: () => turnOff() },
   ];
   const unregisterOwn = debugHooks.register('lab', () => ({ commands: own }));
   // 👥 Fake friends (DL2): ordinary clients in this room, all gone when the lab is turned off or the tab closes.
@@ -433,7 +483,7 @@ export function mountDebugPanel(): void {
   const friends = createFriends(roomIdInPath(), addLog, runById);
   const unregisterFriends = debugHooks.register('friends', () => ({
     commands: friends.commands,
-    status: () => (friends.count() ? [['Fake friends', String(friends.count())]] : []),
+    status: () => (friends.count() ? [[{ en: 'Fake friends', tr: 'Sahte arkadaşlar' }, String(friends.count())]] : []),
   }));
   // 🎬 Video & network (DL4): accidents on this tab's own connection and player.
   const video = createVideoLab();
@@ -443,62 +493,62 @@ export function mountDebugPanel(): void {
   const unregisterScenarios = debugHooks.register('scenarios', () => ({ commands: scenarios.commands }));
 
   // ---- head, tabs, body, foot ----
-  const closeButton = el('button', { type: 'button', class: 'icon-btn debug-close', 'aria-label': tx.close }, '✕');
+  const closeButton = words(el('button', { type: 'button', class: 'icon-btn debug-close' }, '✕'), (t) => t.close, 'aria-label');
   const tabBar = el('div', { class: 'lab-tabs', role: 'tablist' });
   const tabButtons = new Map<LabTab, HTMLButtonElement>();
   for (const tab of TABS) {
-    const b = el('button', { type: 'button', role: 'tab', class: 'lab-tab', 'data-tab': tab, 'aria-selected': 'false' }, tx.tabs[tab]);
+    const b = words(el('button', { type: 'button', role: 'tab', class: 'lab-tab', 'data-tab': tab, 'aria-selected': 'false' }), (t) => t.tabs[tab]);
     b.addEventListener('click', () => show(tab));
     tabButtons.set(tab, b);
     tabBar.append(b);
   }
   const body = el('div', { class: 'debug-body lab-body', role: 'tabpanel' });
-  const bugButton = el('button', { type: 'button', class: 'btn primary debug-copy lab-bug' }, tx.bug);
-  const offButton = el('button', { type: 'button', class: 'btn debug-small debug-off' }, tx.hide);
+  const bugButton = words(el('button', { type: 'button', class: 'btn primary debug-copy lab-bug' }), (t) => t.bug);
+  const offButton = words(el('button', { type: 'button', class: 'btn debug-small debug-off' }), (t) => t.hide);
   const cmdButton = el('button', { type: 'button', class: 'btn debug-small lab-cmd-open', title: 'Ctrl+K' }, '⌘ Ctrl+K');
   panel.append(
-    el('header', { class: 'debug-head' }, el('h3', {}, `🐞 ${tx.title}`), cmdButton, closeButton),
+    el('header', { class: 'debug-head' }, words(el('h3', {}), (t) => `🐞 ${t.title}`), cmdButton, closeButton),
     tabBar,
     body,
-    el('footer', { class: 'debug-foot' }, bugButton, offButton, el('p', { class: 'muted small' }, tx.hideNote)),
+    el('footer', { class: 'debug-foot' }, bugButton, offButton, words(el('p', { class: 'muted small' }), (t) => t.hideNote)),
   );
 
   // ---- Status tab ----
   const deviceBox = el('div');
   const syncBox = el('div');
   const hookBox = el('div');
-  const graph = el('canvas', { class: 'lab-graph', width: '320', height: '64', 'aria-label': tx.graph });
+  const graph = words(el('canvas', { class: 'lab-graph', width: '320', height: '64' }), (t) => t.graph, 'aria-label');
   const errorBox = el('ul', { class: 'debug-errors' });
   const errorTitle = el('h4', {});
-  const clearButton = el('button', { type: 'button', class: 'btn debug-small debug-clear' }, tx.clear);
-  const reloadButton = el('button', { type: 'button', class: 'btn debug-small debug-reload' }, tx.reload);
-  const firstButton = el('button', { type: 'button', class: 'btn debug-small debug-first' }, tx.firstTime);
+  const clearButton = words(el('button', { type: 'button', class: 'btn debug-small debug-clear' }), (t) => t.clear);
+  const reloadButton = words(el('button', { type: 'button', class: 'btn debug-small debug-reload' }), (t) => t.reload);
+  const firstButton = words(el('button', { type: 'button', class: 'btn debug-small debug-first' }), (t) => t.firstTime);
   const room = roomIdInPath();
-  const connLink = el('a', { class: 'btn debug-small debug-conn', href: `/connection${room ? `?room=${encodeURIComponent(room)}` : ''}` }, tx.connTest);
+  const connLink = words(el('a', { class: 'btn debug-small debug-conn', href: `/connection${room ? `?room=${encodeURIComponent(room)}` : ''}` }), (t) => t.connTest);
   const statusView = el('div', { class: 'lab-view', 'data-view': 'status' },
-    el('h4', {}, tx.device),
+    words(el('h4', {}), (t) => t.device),
     deviceBox,
     syncBox,
     hookBox,
-    el('h4', {}, tx.graph),
+    words(el('h4', {}), (t) => t.graph),
     graph,
-    el('h4', {}, tx.switches),
-    toggle(tx.tvLab, load('opt:tvLab') === '1', (on) => save('opt:tvLab', on ? '1' : '0'), 'debug-tvlab'),
-    toggle(tx.measure, measureOn(), setMeasure, 'debug-measure'),
-    el('p', { class: 'muted small' }, tx.reloadNote),
+    words(el('h4', {}), (t) => t.switches),
+    toggle(words(el('span', {}), (t) => t.tvLab), load('opt:tvLab') === '1', (on) => save('opt:tvLab', on ? '1' : '0'), 'debug-tvlab'),
+    toggle(words(el('span', {}), (t) => t.measure), measureOn(), setMeasure, 'debug-measure'),
+    words(el('p', { class: 'muted small' }), (t) => t.reloadNote),
     el('div', { class: 'debug-actions' }, reloadButton, connLink, firstButton),
     el('div', { class: 'debug-errors-head' }, errorTitle, clearButton),
     errorBox,
   );
 
   // ---- Log tab ----
-  const filterInput = el('input', { type: 'search', class: 'lab-filter', placeholder: tx.filter, 'aria-label': tx.filter });
-  const pingsBox = el('input', { type: 'checkbox', id: 'lab-pings' });
-  const pauseButton = el('button', { type: 'button', class: 'btn debug-small lab-pause' }, tx.pause);
-  const logList = el('ol', { class: 'lab-log' });
   let paused = false;
+  const filterInput = words(words(el('input', { type: 'search', class: 'lab-filter' }), (t) => t.filter, 'placeholder'), (t) => t.filter, 'aria-label');
+  const pingsBox = el('input', { type: 'checkbox', id: 'lab-pings' });
+  const pauseButton = words(el('button', { type: 'button', class: 'btn debug-small lab-pause' }), (t) => (paused ? t.resume : t.pause));
+  const logList = el('ol', { class: 'lab-log' });
   const logView = el('div', { class: 'lab-view', 'data-view': 'log' },
-    el('div', { class: 'lab-log-tools' }, filterInput, el('label', { class: 'lab-check', for: 'lab-pings' }, pingsBox, tx.pings), pauseButton),
+    el('div', { class: 'lab-log-tools' }, filterInput, el('label', { class: 'lab-check', for: 'lab-pings' }, pingsBox, words(el('span', {}), (t) => t.pings)), pauseButton),
     logList,
   );
   const HIDDEN_TYPES = new Set(['ping', 'pong', 'clock', 'time']);
@@ -529,7 +579,7 @@ export function mountDebugPanel(): void {
     runButton.disabled = why !== true;
     runButton.addEventListener('click', () => void runAndShow(command));
     return el('li', { class: 'lab-command', 'data-command': command.id },
-      el('div', { class: 'lab-command-text' }, el('strong', {}, command.title), el('small', {}, command.help), command.where || why !== true ? el('span', { class: 'lab-tag' }, why === true ? command.where! : `${tx.unavailable}: ${why}`) : null),
+      el('div', { class: 'lab-command-text' }, el('strong', {}, say(command.title)), el('small', {}, say(command.help)), command.where || why !== true ? el('span', { class: 'lab-tag' }, why === true ? say(command.where) : `${tx.unavailable}: ${why}`) : null),
       runButton,
     );
   }
@@ -545,10 +595,10 @@ export function mountDebugPanel(): void {
     const undoButton = lastRun?.command === command ? el('button', { type: 'button', class: 'btn debug-small lab-undo-btn' }, tx.undo) : null;
     undoButton?.addEventListener('click', async () => {
       const back = await runCommand(command, undefined, 'undo');
-      undoBar.replaceChildren(el('span', {}, `${command.title}: ${back.dir === 'error' ? `${tx.failed}: ${back.text}` : tx.undone}`));
+      undoBar.replaceChildren(el('span', {}, `${say(command.title)}: ${back.dir === 'error' ? `${tx.failed}: ${back.text}` : tx.undone}`));
       draw();
     });
-    undoBar.replaceChildren(el('span', {}, `${command.title}: ${failedRun ? `${tx.failed}: ${line.text}` : tx.ran}`), ...(undoButton ? [undoButton] : []));
+    undoBar.replaceChildren(el('span', {}, `${say(command.title)}: ${failedRun ? `${tx.failed}: ${line.text}` : tx.ran}`), ...(undoButton ? [undoButton] : []));
     draw();
   }
   function commandView(tab: LabTab): HTMLElement {
@@ -652,22 +702,26 @@ export function mountDebugPanel(): void {
   }
 
   // ---- the command box (Ctrl+K) ----
-  const cmdBox = el('div', { class: 'lab-cmdbox', role: 'dialog', 'aria-label': tx.commands, hidden: '' });
-  const cmdInput = el('input', { type: 'text', class: 'lab-cmd-input', placeholder: tx.searchPlaceholder, 'aria-label': tx.searchPlaceholder, autocomplete: 'off', spellcheck: 'false' });
+  const cmdBox = words(el('div', { class: 'lab-cmdbox', role: 'dialog', hidden: '' }), (t) => t.commands, 'aria-label');
+  const cmdInput = words(words(el('input', { type: 'text', class: 'lab-cmd-input', autocomplete: 'off', spellcheck: 'false' }), (t) => t.searchPlaceholder, 'placeholder'), (t) => t.searchPlaceholder, 'aria-label');
   const cmdList = el('ul', { class: 'lab-cmd-list', role: 'listbox' });
   cmdBox.append(cmdInput, cmdList);
   let picked = 0;
   let matches: LabCommand[] = [];
   function drawCmds(): void {
-    const words = cmdInput.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    matches = allCommands().filter((c) => words.every((w) => `${c.id} ${c.title} ${c.help}`.toLowerCase().includes(w)));
+    const words = fold(cmdInput.value).split(/\s+/).filter(Boolean);
+    // LABTR: both languages, so "drop", "kopar" and "baglanti" find net.drop on any page.
+    matches = allCommands().filter((c) => {
+      const hay = fold(`${c.id} ${both(c.title)} ${both(c.help)}`);
+      return words.every((w) => hay.includes(w));
+    });
     picked = Math.min(picked, Math.max(0, matches.length - 1));
     cmdList.replaceChildren(
       ...(matches.length
         ? matches.map((c, i) => {
             const why = availability(c);
             const item = el('li', { role: 'option', class: `lab-cmd-item${i === picked ? ' picked' : ''}${why === true ? '' : ' off'}`, 'aria-selected': String(i === picked), 'data-command': c.id },
-              el('strong', {}, c.title), el('small', {}, why === true ? c.help : `${tx.unavailable}: ${why}`));
+              el('strong', {}, say(c.title)), el('small', {}, why === true ? say(c.help) : `${tx.unavailable}: ${why}`));
             item.addEventListener('mousedown', (event) => {
               event.preventDefault();
               picked = i;
@@ -720,11 +774,11 @@ export function mountDebugPanel(): void {
   cmdButton.addEventListener('click', openCmd);
 
   // ---- the bug text ----
-  const bugBox = el('div', { class: 'lab-bug-box', role: 'dialog', 'aria-label': tx.bugTitle, hidden: '' });
-  const bugArea = el('textarea', { class: 'lab-bug-text', readonly: '', 'aria-label': tx.bugTitle, spellcheck: 'false' });
+  const bugBox = words(el('div', { class: 'lab-bug-box', role: 'dialog', hidden: '' }), (t) => t.bugTitle, 'aria-label');
+  const bugArea = words(el('textarea', { class: 'lab-bug-text', readonly: '', spellcheck: 'false' }), (t) => t.bugTitle, 'aria-label');
   const bugCopy = el('button', { type: 'button', class: 'btn primary lab-bug-copy' }, tx.copy);
-  const bugClose = el('button', { type: 'button', class: 'icon-btn lab-bug-close', 'aria-label': tx.close }, '✕');
-  bugBox.append(el('header', { class: 'debug-head' }, el('h3', {}, tx.bugTitle), bugClose), el('p', { class: 'muted small' }, tx.bugNote), bugArea, el('div', { class: 'debug-actions' }, bugCopy));
+  const bugClose = words(el('button', { type: 'button', class: 'icon-btn lab-bug-close' }, '✕'), (t) => t.close, 'aria-label');
+  bugBox.append(el('header', { class: 'debug-head' }, words(el('h3', {}), (t) => t.bugTitle), bugClose), words(el('p', { class: 'muted small' }), (t) => t.bugNote), bugArea, el('div', { class: 'debug-actions' }, bugCopy));
   function openBug(): string {
     bugArea.value = bugText(tx);
     bugBox.hidden = false;
@@ -814,6 +868,13 @@ export function mountDebugPanel(): void {
     }
   }
   document.addEventListener('keydown', onKey, true);
+  const onLang = () => {
+    tx = currentText();
+    for (const apply of labels) apply();
+    if (!panel.hidden) show(current);
+    if (!cmdBox.hidden) drawCmds();
+  };
+  addEventListener('langchange', onLang);
   addEventListener('swm-debug-error', () => {
     fab.classList.add('has-error');
     draw();
@@ -846,6 +907,7 @@ export function mountDebugPanel(): void {
     offHooks();
     unregisterOwn();
     document.removeEventListener('keydown', onKey, true);
+    removeEventListener('langchange', onLang);
     document.removeEventListener('fullscreenchange', onFullscreen);
     document.documentElement.classList.remove('lab-open');
     // The harness / console handle exists only while the lab is on.

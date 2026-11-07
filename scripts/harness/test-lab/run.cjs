@@ -5,9 +5,13 @@
 //   built site on wrangler dev (CI):  npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //                                     node scripts/harness/test-lab/run.cjs http://localhost:8787
 //   or the dev servers:               npm run dev, then node scripts/harness/test-lab/run.cjs http://localhost:5173
+//   in Turkish (card LABTR):          LAB_LANG=tr node scripts/harness/test-lab/run.cjs
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
+// LABTR: the whole run in English (default) or Turkish; `L(en, tr)` picks the text a check expects.
+const LANG = process.env.LAB_LANG === 'tr' ? 'tr' : 'en';
+const L = (en, tr) => (LANG === 'tr' ? tr : en);
 let fails = 0;
 const check = (ok, label, extra = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${!ok && extra ? ` → ${extra}` : ''}`);
@@ -41,11 +45,11 @@ async function enterRoom(page, room, name = 'Robin') {
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, permissions: ['clipboard-read', 'clipboard-write'] });
-  await ctx.addInitScript(() => {
-    if (!localStorage.getItem('lang')) localStorage.setItem('lang', 'en');
+  await ctx.addInitScript((lang) => {
+    if (!localStorage.getItem('lang')) localStorage.setItem('lang', lang);
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
-  });
+  }, LANG);
   const page = await ctx.newPage();
   const chunks = [];
   page.on('request', (r) => {
@@ -74,7 +78,7 @@ async function enterRoom(page, room, name = 'Robin') {
   check(tabs.join(',') === 'status,friends,video,games,scenarios,screen,log', 'seven tabs: 📊 👥 🎬 🎮 🧪 🖥 📜', tabs.join(','));
   const facts = await page.$$eval('.debug-facts dt', (d) => d.map((x) => `${x.textContent}=${x.nextElementSibling.textContent}`));
   const site = (await page.textContent('.footer-version')).trim();
-  check(facts.includes(`Site=${site}`) && facts.some((f) => /^Browser=Chrome \d+/.test(f)) && facts.some((f) => /^Screen=/.test(f)), '📊 Status: versions, browser, screen', facts.join(' | '));
+  check(facts.includes(`${L('Site version', 'Site sürümü')}=${site}`) && facts.some((f) => new RegExp(`^${L('Browser', 'Tarayıcı')}=Chrome \\d+`).test(f)) && facts.some((f) => f.startsWith(`${L('Screen', 'Ekran')}=`)), '📊 Status: versions, browser, screen', facts.join(' | '));
   check(!!(await page.$('.lab-graph')), '📊 Status: the drift graph');
   check(await page.$('#debug-tvlab') !== null && await page.$('#debug-measure') !== null && await page.$('.debug-first') !== null, 'card 12\'s switches and "first-time visitor" are still there');
   // Every tab shows something: its tools, or "comes in a later step" (no empty screen).
@@ -86,7 +90,7 @@ async function enterRoom(page, room, name = 'Robin') {
   }
   check(empty.length === 0, 'no tab is an empty screen (its tools or "comes in a later step")', empty.join(','));
   await page.click('.lab-tab[data-tab="friends"]');
-  check((await page.textContent('.lab-body')).includes('work in a room'), '👥 outside a room says fake friends work in a room');
+  check((await page.textContent('.lab-body')).includes(L('work in a room', 'bir odada çalışır')), '👥 outside a room says fake friends work in a room');
 
   // ---- In a room: status lines from the features, the log ----
   const room = `lab${Math.random().toString(36).slice(2, 7)}`;
@@ -96,8 +100,11 @@ async function enterRoom(page, room, name = 'Robin') {
   await page.click('.lab-tab[data-tab="status"]');
   await page.waitForTimeout(1200);
   const roomFacts = await page.$$eval('.debug-facts dt', (d) => d.map((x) => `${x.textContent}=${x.nextElementSibling.textContent}`));
-  check(roomFacts.some((f) => f.startsWith('Clock offset=') && /ms/.test(f)) && roomFacts.includes('People=1') && roomFacts.includes('Connection=WebSocket'), 'in a room: clock offset, people, connection', roomFacts.join(' | '));
-  check(roomFacts.some((f) => f.startsWith('Voice peers=')) && roomFacts.some((f) => f.startsWith('Stream peers=')), 'in a room: voice and stream connection states', roomFacts.join(' | '));
+  check(roomFacts.some((f) => f.startsWith(L('Clock difference', 'Saat farkı')) && /🟢|🟡|🔴/.test(f) && /ms/.test(f)) && roomFacts.includes(L('People in the room=1', 'Odadaki kişi=1')) && roomFacts.includes(L('Connection=🟢 good (live connection)', 'Bağlantı=🟢 iyi (canlı bağlantıyla bağlı)')), 'in a room: clock difference with its colour, people, connection in plain words', roomFacts.join(' | '));
+  check(roomFacts.some((f) => f.startsWith(L('Voice connections=', 'Ses bağlantıları='))) && roomFacts.some((f) => f.startsWith(L('Stream connections=', 'Yayın bağlantıları='))), 'in a room: voice and stream connection states', roomFacts.join(' | '));
+  // LABTR: every line on 📊 Status in the page's language, no technical words in Turkish.
+  const jargon = roomFacts.filter((f) => (LANG === 'tr' ? /websocket|http|peer|ice|rtt|offset|fallback|\b(the|my|not|none)\b/i : /\b(yok|bağlı|odada)\b/).test(f));
+  check(jargon.length === 0, `📊 Status speaks ${LANG === 'tr' ? 'plain Turkish' : 'English'} only`, jargon.join(' | '));
   // The drawer makes room: the rail is never under it.
   const layout = await page.evaluate(() => {
     const d = document.querySelector('.lab-drawer').getBoundingClientRect();
@@ -140,7 +147,7 @@ async function enterRoom(page, room, name = 'Robin') {
   // ---- A failing command: a red line, the room keeps working ----
   await page.evaluate(() => window.__swmLab.run('lab.selfTest'));
   const red = await page.evaluate(() => window.__swmLab.log().find((l) => l.type === 'lab.selfTest'));
-  check(red?.dir === 'error' && /expected/.test(red.text), 'a failing command writes a red line', JSON.stringify(red));
+  check(red?.dir === 'error' && (LANG === 'tr' ? /bekleniyor/ : /expected/).test(red.text), 'a failing command writes a red line', JSON.stringify(red));
   await page.fill('#chat-input', 'still alive');
   await page.press('#chat-input', 'Enter');
   check(!!(await until(() => page.evaluate(() => [...document.querySelectorAll('.chat-line')].some((l) => l.textContent.includes('still alive'))))), '…and the room keeps working');
@@ -150,7 +157,7 @@ async function enterRoom(page, room, name = 'Robin') {
   // ---- This is a bug ----
   await page.click('.lab-bug');
   const text = await page.inputValue('.lab-bug-text');
-  check(text.startsWith('Sidelit bug report') && text.includes(site) && text.includes('Log, last 2 minutes') && text.includes('lab log check') && text.includes('Clock offset'), '🐞 This is a bug: versions, state, the log of the last 2 minutes', text.split('\n').slice(0, 4).join(' / '));
+  check(text.startsWith(L('Sidelit bug report', 'Sidelit hata raporu (Sidelit bug report)')) && text.includes(site) && text.includes(L('Log, last 2 minutes', 'Kayıt, son 2 dakika')) && text.includes('lab log check') && text.includes(L('Clock difference', 'Saat farkı')), '🐞 This is a bug: versions, state, the log of the last 2 minutes', text.split('\n').slice(0, 4).join(' / '));
   check(!text.includes(cid), 'the bug text has no browser id');
   await page.click('.lab-bug-copy');
   await page.waitForTimeout(300);
@@ -174,7 +181,7 @@ async function enterRoom(page, room, name = 'Robin') {
 
   // ---- A phone: a bottom sheet ----
   const phone = await browser.newContext({ ...devices['iPhone 13'] });
-  await phone.addInitScript(() => localStorage.setItem('lang', 'en'));
+  await phone.addInitScript((lang) => localStorage.setItem('lang', lang), LANG);
   const pp = await phone.newPage();
   await pp.goto(`${SITE}/?debug=1`);
   await pp.waitForSelector('.debug-fab');
@@ -186,13 +193,39 @@ async function enterRoom(page, room, name = 'Robin') {
   check(fits.ok && fits.wide, 'iPhone 13: a bottom sheet that fits, no sideways scroll', JSON.stringify(fits));
   await phone.close();
 
-  // ---- Turkish ----
-  await page.evaluate(() => localStorage.setItem('lang', 'tr'));
+  // ---- The other language (LABTR) ----
+  const other = LANG === 'tr' ? 'en' : 'tr';
+  await page.evaluate((l) => localStorage.setItem('lang', l), other);
   await page.reload();
   await page.waitForSelector('.debug-fab');
   await page.click('.debug-fab');
-  check((await page.textContent('.lab-tab[data-tab="log"]')).includes('Kayıt'), 'Turkish texts');
-  await page.evaluate(() => localStorage.setItem('lang', 'en'));
+  check((await page.textContent('.lab-tab[data-tab="log"]')).includes(other === 'tr' ? 'Kayıt' : 'Log'), `${other === 'tr' ? 'Turkish' : 'English'} texts after a reload`);
+  await page.evaluate((l) => localStorage.setItem('lang', l), LANG);
+  await page.reload();
+  await page.waitForSelector('.debug-fab');
+  await page.click('.debug-fab');
+  // The language buttons switch the lab at once, no reload (the room's top bar keeps them; the profile menu presses them).
+  await page.evaluate((l) => document.querySelector(`.topbar [data-lang="${l}"]`)?.click(), other);
+  const switched = await until(() => page.evaluate((l) => document.querySelector('.lab-tab[data-tab="log"]')?.textContent.includes(l === 'tr' ? 'Kayıt' : 'Log') && document.querySelector('.lab-bug')?.textContent.includes(l === 'tr' ? 'Bu bir hata' : 'This is a bug'), other), 3000);
+  check(!!switched, 'the lab follows a language change at once (tabs, buttons)');
+  await page.evaluate((l) => document.querySelector(`.topbar [data-lang="${l}"]`)?.click(), LANG);
+  // The command box finds a command by its words in either language, accents optional.
+  for (const words of ['kopar', 'baglantimi', 'drop my']) {
+    await page.keyboard.press('Control+K');
+    await page.keyboard.type(words);
+    const found = await page.$$eval('.lab-cmd-item', (i) => i.map((x) => x.dataset.command));
+    check(found.includes('net.drop'), `the command box finds net.drop by "${words}"`, found.join(','));
+    await page.keyboard.press('Escape');
+  }
+  // Every command row in this language: Turkish rows carry no English helper words, English rows no Turkish ones.
+  const leftovers = [];
+  for (const tab of ['status', 'friends', 'video', 'games', 'scenarios', 'screen', 'log']) {
+    await page.click(`.lab-tab[data-tab="${tab}"]`);
+    await page.waitForTimeout(150);
+    const rows = await page.$$eval('.lab-command-text, .lab-scenario-head, .lab-scenario > p', (r) => r.map((x) => x.textContent));
+    for (const row of rows) if ((LANG === 'tr' ? /\b(the|my|your|with|when|a fake)\b/i : /\b(sahte|bir|odada|değil)\b/i).test(row)) leftovers.push(`${tab}: ${row.slice(0, 80)}`);
+  }
+  check(leftovers.length === 0, `every command says it in ${LANG === 'tr' ? 'Turkish' : 'English'}`, leftovers.slice(0, 4).join(' || '));
 
   // ---- Off again ----
   await page.click('.debug-off');

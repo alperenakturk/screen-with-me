@@ -338,7 +338,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   // Test Lab (DL3b): the current phase ends now (local lab server only).
   const offLab = debugHooks.register('table.quiz', () => ({
     commands: [
-      { id: 'quiz.skip', title: 'Quiz: end this phase now', help: 'Local lab server only: the question / round / reveal ends at once.', tab: 'games', where: 'at a Quiz table', run: () => send({ t: 'lab', op: 'skip' }) },
+      { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));
   // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).

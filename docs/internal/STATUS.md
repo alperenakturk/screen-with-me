@@ -508,6 +508,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.72 (card LABTR: the 🐞 Test Lab in plain Turkish):**
+- [ ] With the site in Turkish, open the 🐞 Test Lab: every tab, button, status line and command is Turkish and plain
+  ("Bağlantımı 6 sn kopar", "Videom 3 sn geride kalsın", "Saat farkı"); green / yellow / red dots show what is fine.
+- [ ] Switch the language (profile menu): the open lab changes language at once.
+- [ ] Ctrl+K, type "kopar" (or "baglanti"): "Bağlantımı 6 sn kopar" is found; Enter runs it.
+
 **0.9.97.69 (card LABLOCK: the 🐞 Test Lab needs your code):**
 - [ ] Add the `LAB_CODE` secret (GitHub → Settings → Environments → production → Environment secrets), then after the
   next deploy open the live site once with `?debug=YOUR-CODE`: the 🐞 appears and the code leaves the address. Later,
