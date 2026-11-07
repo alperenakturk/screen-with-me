@@ -151,6 +151,9 @@ Bir güvenlik ya da gizlilik sorunu mu buldun? Lütfen herkese açık bir issue 
 | Gerçek ses, kamera ve yayın (`scripts/harness/voice`) | Sahte cihazlı iki Chrome: gelen sesin enerjisi ve kamera kareleri ölçülür, sitede ve film sayfalarında; serbest kamera / yayın pencereleri; doğrudan bağlantıyı engelleyen tarayıcılar |
 | Telefon, Shorts, YouTube odası, TikTok, sesler, hotspot (`scripts/harness/*`) | iPhone ve Android düzenleri, birçok ekran boyutunda Shorts rayı, YouTube oynatıcısının üstünde hiçbir şey olmaması, TikTok oynatıcısının mesaj dilini konuşan bir taklit, hangi seslerin gerçekten çaldığı, WebSocket'leri yutan bir ara sunucu |
 | Gerçek oynatıcılar (herkese açık demo sayfalarında eklenti kodu) | **Plyr, hls.js, Video.js**: bulma ✓, uzaktan ve yerel hareketler ✓, 26–100 ms fark |
+| Canlı site (`.github/workflows/monitor.yml`) | 30 dakikada bir çalışma kontrolü (ana sayfa, sunucu sürümü, bir odaya giriş); site çökükken bir `outage` kaydı |
+
+Her sürümde ne değişti: [CHANGELOG.md](CHANGELOG.md) (İngilizce). Testleri geçip yayına giren her sürüm `v<sürüm>` etiketi alır.
 
 ## Teknoloji
 
