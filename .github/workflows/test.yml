@@ -42,8 +42,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check the change detection
-        run: node --test scripts/ci-changes.test.mjs
+      - name: Check the change detection and the workflow guards
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-workflow.test.mjs
 
       - id: diff
         env:
@@ -250,9 +250,11 @@ jobs:
   # Secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); without them the job warns and skips.
   deploy:
     needs: [changes, test]
-    # Docs-only pushes to main deploy nothing (the test jobs were skipped). `test` always runs (CI2), so this job needs
-    # no `always()`: a failed `test` skips it as before.
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true'
+    # Docs-only pushes to main deploy nothing (the test jobs were skipped). A status function is needed (CI2): without one
+    # the `if` gets an implicit `success()`, which looks at every job up the chain, and a push skips e2e / site / games,
+    # so the deploy was skipped too. `!cancelled()` (not `always()`) keeps a cancelled run from deploying; the explicit
+    # `needs.test.result` keeps "deploy only when the tests passed".
+    if: ${{ !cancelled() && needs.test.result == 'success' && needs.changes.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Security R4-5: the deploy runs in the `production` environment. Its secrets (Cloudflare, YouTube, feedback, usage)
@@ -361,7 +363,8 @@ jobs:
   # (a fix without a new number) keeps the tag of its first live deploy.
   tag:
     needs: deploy
-    if: needs.deploy.outputs.live == 'true'
+    # !cancelled() for the same reason as deploy's: skipped test jobs up the chain must not skip the tag.
+    if: ${{ !cancelled() && needs.deploy.result == 'success' && needs.deploy.outputs.live == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
