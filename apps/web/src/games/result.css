@@ -30,6 +30,7 @@
 @media (prefers-reduced-motion: reduce) {
   .gr-layer, .gr-card, .gr-layer[data-outcome='win'] .gr-mascot { animation: none; }
 }
-/* A phone: the card's buttons are 44 px targets like every game control. */
-html.phone #game-stage .gr-card .btn { min-height: 44px; height: auto; min-width: 44px; }
+/* A phone: the card's buttons are 44 px targets like every game control. 48 px, since a game drawn a little smaller to
+   fit its window (Draw & Guess's `.game-fit`) shrinks the card with it. */
+html.phone #game-stage .gr-card .btn { min-height: 48px; height: auto; min-width: 48px; }
 .draw-page:has(> .gr-layer) { position: relative; }
