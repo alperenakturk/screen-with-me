@@ -13,6 +13,10 @@ interface Env {
   SWM_LOCAL_UNPACED?: string;
   /** Test Lab DL3b: `wrangler dev --var SWM_LAB_SERVER:1` (local test servers only, never live) turns on the server's lab messages. */
   SWM_LAB_SERVER?: string;
+  /** Card LABLOCK: the owner's Test Lab code (a production secret, never in the repo); without it the lab stays shut on live. */
+  LAB_CODE?: string;
+  /** Card LABLOCK: `wrangler dev --var SWM_LAB_OPEN:1` (local test servers only, never live) opens the lab for any code. */
+  SWM_LAB_OPEN?: string;
   /** Security R4-1, local tests only (`wrangler dev --var UPLOAD_IP_BYTES:<n>`): a lower per-address daily image budget. */
   UPLOAD_IP_BYTES?: string;
   /** Security R4-10: "on" turns the hidden TV version's server side on (pairing, `tv-link`, a TV's hello); off otherwise. */
