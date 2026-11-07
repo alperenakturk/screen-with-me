@@ -6,7 +6,7 @@ import type { BoardState, Mark } from './board.ts';
 import { other } from './board.ts';
 import { COLS, ROWS, dropRow, play as playFour } from './four.ts';
 import { ROLL, legalMoves as bgMoves, pips, play as playBg, type BackgammonState } from './backgammon.ts';
-import { legalMoves as chessMoves, play as playChess, type ChessState } from './chess.ts';
+import { legalMoves as chessMoves, play as playChess, playLegal as playChessLegal, type ChessState } from './chess.ts';
 import { legalMoves as damaMoves, play as playDama, type DamaState } from './dama.ts';
 import { legalMoves as reversiMoves, mobility, play as playReversi, type ReversiState } from './reversi.ts';
 import { LINES, play as playXox } from './xox.ts';
@@ -26,7 +26,8 @@ export function movesOf(kind: BotKind, state: BoardState): number[] {
 }
 
 const PLAY = { xox: playXox, four: playFour, dama: playDama, chess: playChess, backgammon: playBg, reversi: playReversi } as const;
-const apply = (kind: BotKind, state: BoardState, move: number) => PLAY[kind](state, state.turn, move);
+// Chess moves come from `legalMoves` here, so the search skips `play`'s own legality check (GP3: twice as fast).
+const apply = (kind: BotKind, state: BoardState, move: number) => (kind === 'chess' ? playChessLegal(state as ChessState, move) : PLAY[kind](state, state.turn, move));
 
 /** How good the position is for `me` (positive = good), when nobody has won yet. */
 function evaluate(kind: BotKind, state: BoardState, me: Mark): number {
@@ -228,7 +229,7 @@ function quiesce(kind: BotKind, state: BoardState, me: Mark, alpha: number, beta
   return Number.isFinite(best) ? best : stand;
 }
 
-const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 2 }, backgammon: { 1: 1, 2: 1 }, reversi: { 1: 1, 2: 4 } };
+const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 3 }, backgammon: { 1: 1, 2: 1 }, reversi: { 1: 1, 2: 4 } };
 /** Easy Glowbeam plays a random move this often. */
 const EASY_RANDOM = 0.35;
 
@@ -281,9 +282,13 @@ export function botMove(kind: BotKind, state: BoardState, level: BotLevel, rando
   // time, a quick one-move look answers instead, so Glowbeam never keeps a table waiting.
   let scored: [number, number][] = [];
   if (QUIET_KINDS.has(kind)) {
-    const depths = DEPTH[kind][level] > 1 ? [DEPTH[kind][level], 1] : [1];
+    // GP3: medium chess looks three half-moves ahead (it sees a fork) now that a move is cheap to play; a position too
+    // busy for that falls back to two, then one, all within the budget.
+    const full = DEPTH[kind][level];
+    const depths = full > 2 ? [full, full - 1, 1] : full > 1 ? [full, 1] : [1];
+    const started = Date.now();
     for (const [i, depth] of depths.entries()) {
-      deadline = Date.now() + (i === 0 ? BOT_BUDGET_MS : BOT_BUDGET_MS / 2);
+      deadline = i === depths.length - 1 ? Date.now() + BOT_BUDGET_MS / 2 : started + BOT_BUDGET_MS;
       try {
         scored = root(depth);
         break;

@@ -508,6 +508,14 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.73 (🎮 games polish 3: Quiz / Draw result card, one hint style, smarter chess):**
+- [ ] Finish a Quiz or a Draw & Guess with a friend: the result card shows Glowbeam, who won (or a tie), his line and
+  the podium; whoever started the game sees "▶ Play again", the other sees "Waiting for … to start". "👁 Settings &
+  scores" puts the card away. On the phone too.
+- [ ] Short messages in Snack Bar, Window Garden, Quiz and Last Heart look the same (a dark pill with a gold ring at the
+  top of the game).
+- [ ] Classics → chess against Glowbeam on medium: he answers in under a second as before and now spots a knight fork.
+
 **0.9.97.72 (card LABTR: the 🐞 Test Lab in plain Turkish):**
 - [ ] With the site in Turkish, open the 🐞 Test Lab: every tab, button, status line and command is Turkish and plain
   ("Bağlantımı 6 sn kopar", "Videom 3 sn geride kalsın", "Saat farkı"); green / yellow / red dots show what is fine.
