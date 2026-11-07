@@ -508,6 +508,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.74 (🎮 card YTG: no game window over a YouTube video, computer):**
+- [ ] With a YouTube video playing, open Classics or Sea Battle: the window opens beside or under the video, never on
+  it; in the window's place menu "in the video's place" is off and says why. Fullscreen: the game tucks away.
+  With a video file instead, "in the video's place" works again.
+
 **0.9.97.73 (🎮 games polish 3: Quiz / Draw result card, one hint style, smarter chess):**
 - [ ] Finish a Quiz or a Draw & Guess with a friend: the result card shows Glowbeam, who won (or a tie), his line and
   the podium; whoever started the game sees "▶ Play again", the other sees "Waiting for … to start". "👁 Settings &

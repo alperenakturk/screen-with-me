@@ -202,13 +202,40 @@ export function createGameStage(opts: StageOptions) {
   const shortsView = () => document.documentElement.classList.contains('shorts-view');
   /** The placement in use now. */
   let mode: Place | 'below' | 'full' = 'stage';
+  /**
+   * Card YTG (the YouTube audit): YouTube's rules allow nothing of ours in front of its player. On a computer, while the
+   * room's item is YouTube, a game never sits on the player: "in the video's place" acts as the free window, and the free
+   * window keeps to the space beside the player (under it when there is none). The phone's small preview is the owner's
+   * call and stays as it is.
+   */
+  const overYoutube = () => theater.classList.contains('yt-rail') && !isPhoneLayout();
+  /** The YouTube player's box on the screen: the whole theater, since the player widens when the rail beside it rests. */
+  const playerBox = (): DOMRect | null => {
+    const r = theater.getBoundingClientRect();
+    return r.width > 1 && r.height > 1 ? r : null;
+  };
 
+  /** Was the theater fullscreen at the last placement (YTG: entering it vs. a game coming up in it). */
+  let fsBefore = inFullscreen();
   /** Puts the game window where its placement says (moves the element only when its parent changes). */
   function place(): void {
+    // YTG: a YouTube video in fullscreen fills the screen, so a game has nowhere to go but over it. Going fullscreen
+    // with a game open tucks the game away (a dot on 🎮); a game brought up in fullscreen leaves fullscreen.
+    const fsNow = inFullscreen();
+    const entered = fsNow && !fsBefore;
+    fsBefore = fsNow;
+    if (overYoutube() && fsNow && !stage.hidden) {
+      if (entered) return minimize();
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    }
     const kind = shownKind();
-    const want = kind ? (shortsView() ? 'float' : placeOf(kind)) : 'stage';
+    const chosen = kind ? (shortsView() ? 'float' : placeOf(kind)) : 'stage';
+    const youtube = overYoutube();
+    const want = youtube ? 'float' : chosen;
     // A phone always plays full screen (0.9.92.5, pick 10A): the video shrinks to a thumbnail in the head.
-    mode = narrow.matches ? (want === 'stage' || shortsView() || isPhoneLayout() ? 'full' : 'below') : want;
+    mode = narrow.matches ? (!youtube && (want === 'stage' || shortsView() || isPhoneLayout()) ? 'full' : 'below') : want;
+    // YTG: no room beside the YouTube player for the free window: under it instead.
+    if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer()) mode = 'below';
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
     const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
@@ -225,10 +252,12 @@ export function createGameStage(opts: StageOptions) {
       const p = PLACES[i]!;
       const on = narrow.matches ? (p === 'stage' ? mode === 'full' : mode === 'below') : p === want;
       b.classList.toggle('on', on);
+      // YTG: "in the video's place" is not offered over a YouTube video.
+      b.disabled = youtube && p === 'stage';
       b.setAttribute('aria-pressed', String(on));
       const name = narrow.matches ? (p === 'stage' ? 'large' : 'below') : p;
       b.replaceChildren(icon(`place-${name === 'large' ? 'stage' : name}` as IconName));
-      b.title = t(`hub.place.${name}`);
+      b.title = b.disabled ? t('hub.place.notYoutube') : t(`hub.place.${name}`);
       b.setAttribute('aria-label', b.title);
     });
     // The film page's hole and islands follow at once.
@@ -237,7 +266,9 @@ export function createGameStage(opts: StageOptions) {
 
   /** Below the video (narrow screens): the window starts where the video ends. */
   function placeBelow(): void {
-    stage.style.setProperty('--game-top', `${Math.max(0, Math.round(wrap.getBoundingClientRect().bottom))}px`);
+    // YTG: under the whole theater over a YouTube video (its frame may reach past the video's box).
+    const bottom = (overYoutube() ? theater : wrap).getBoundingClientRect().bottom;
+    stage.style.setProperty('--game-top', `${Math.max(0, Math.round(bottom))}px`);
   }
 
   // ---- The free window: dragged by its head anywhere on the screen, resized from its corner ----
@@ -247,8 +278,18 @@ export function createGameStage(opts: StageOptions) {
       const r = theater.getBoundingClientRect();
       return { left: r.left, top: r.top, width: r.width, height: r.height };
     }
+    const room = pageRoom();
+    return overYoutube() ? besidePlayer() ?? room : room;
+  }
+  /** The page's room for the free window (on a tablet: clear of the chat). */
+  function pageRoom(): Box {
     const screen = { left: 0, top: 0, width: innerWidth, height: innerHeight };
     return isTablet() ? clearOfChat(screen) ?? screen : screen;
+  }
+  /** YTG: the largest part of the page's room beside the YouTube player (left, right, above or below it). */
+  function besidePlayer(): Box | null {
+    const p = playerBox();
+    return p ? largestClear(pageRoom(), p) : pageRoom();
   }
   /** A tablet (card GT): a touch screen without a mouse that is not in the phone layout. */
   const isTablet = () => isTouch() && !hasMouse() && !isPhoneLayout();
@@ -261,14 +302,23 @@ export function createGameStage(opts: StageOptions) {
     const chat = (document.documentElement.classList.contains('tablet-up') ? document.querySelector('.chat-panel') : document.querySelector('.room .side')) as HTMLElement | null;
     const c = chat?.getBoundingClientRect();
     if (!c || c.width < 1 || c.height < 1 || c.right <= 0 || c.left >= screen.width) return null;
+    return largestClear(screen, c);
+  }
+  /**
+   * The strip of `room` beside `c` (above, below, left or right of it, under the top bar) in which the game is biggest;
+   * null when the game doesn't fit in any of them.
+   */
+  function largestClear(room: Box, c: DOMRect): Box | null {
     const [w, h] = sizeOf(shownKind() ?? 'xox').size;
     // The top bar's buttons (Invite, ⋯, me, ⚙️) stay free too.
-    const bar = Math.max(0, document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0);
+    const bar = Math.max(room.top, document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0);
+    const right = room.left + room.width;
+    const bottom = room.top + room.height;
     const strips: Box[] = [
-      { left: 0, top: bar, width: screen.width, height: c.top - bar },
-      { left: 0, top: c.bottom, width: screen.width, height: screen.height - c.bottom },
-      { left: 0, top: bar, width: c.left, height: screen.height - bar },
-      { left: c.right, top: bar, width: screen.width - c.right, height: screen.height - bar },
+      { left: room.left, top: bar, width: room.width, height: Math.min(c.top, bottom) - bar },
+      { left: room.left, top: Math.max(c.bottom, bar), width: room.width, height: bottom - Math.max(c.bottom, bar) },
+      { left: room.left, top: bar, width: Math.min(c.left, right) - room.left, height: bottom - bar },
+      { left: Math.max(c.right, room.left), top: bar, width: right - Math.max(c.right, room.left), height: bottom - bar },
     ];
     const zoomIn = (b: Box) => Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h);
     const best = strips.reduce((a, b) => (zoomIn(b) > zoomIn(a) ? b : a));
@@ -378,12 +428,15 @@ export function createGameStage(opts: StageOptions) {
   // Fullscreen without the Fullscreen API (iPhone, the film page) is a class on the theater.
   new MutationObserver(() => {
     const fs = inFullscreen();
-    if (fs !== wasFs) {
+    const yt = overYoutube();
+    if (fs !== wasFs || yt !== wasYoutube) {
       wasFs = fs;
+      wasYoutube = yt;
       place();
     }
   }).observe(theater, { attributes: true, attributeFilter: ['class'] });
   let wasFs = inFullscreen();
+  let wasYoutube = overYoutube();
   let wasShorts = shortsView();
   new MutationObserver(() => {
     const now = shortsView();
