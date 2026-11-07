@@ -64,6 +64,11 @@ We are building a **global product**, so everything is professional, formal and 
 - **Make technical decisions yourself**, briefly say why; the user asks for changes if they disagree. Only ask about
   things that belong to the user: accounts, money, publishing, legal commitments, the product name, slogans.
 - Move in safe steps; test every change, ship it, commit it.
+- **Secrets go into the owner's KeePass (owner, 7 Nov 2026):** the owner keeps every password, token and secret in
+  KeePass, in a folder per project (`Sidelit`). Whenever a step asks him to create or save a secret, give him a ready
+  KeePass entry name at that moment (pattern `Where – What for`, e.g. `GitHub – LAB_CODE (test panel code)`), the URL and
+  a short note, and say which characters the generator should use (letters + digits only when it goes into an address).
+  Don't list future entries in advance. Never ask him to paste a secret into the chat.
 - **Tell the Planner at once when anything runs out (owner, 4 Nov 2026):** tokens, usage limits, Actions minutes or
   billing, API quotas, disk, anything: every session sends the Planner a `send_message` the moment it sees it, so the
   Planner can tell the owner.
