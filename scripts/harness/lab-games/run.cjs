@@ -123,8 +123,15 @@ const until = async (fn, ms = 6000) => {
   const table = await run('games.open.classics');
   const seated = await until(async () => (await page.evaluate(() => !!document.querySelector('#game-stage .cl-shelf, #game-stage #cl-shelf-open'))) || null, 10000);
   check(table.dir === 'lab' && !!seated, 'lab: open a Classics table', table.text);
-  const pos = await until(async () => { const l = await run('classics.position.mate1'); return l.dir === 'lab' ? l : null; }, 8000);
-  const chess = await until(async () => (await page.evaluate(() => document.querySelectorAll('#game-stage .chess-board .dama-cell, #game-stage .chess-board [data-cell]').length)) || null, 8000);
+  // The server takes a position only from a seated player (`not_player` before the table's seat arrives), so on a slow
+  // runner the first send can be refused: send it again until the chess board shows.
+  const chessCells = () => page.evaluate(() => document.querySelectorAll('#game-stage .chess-board .dama-cell, #game-stage .chess-board [data-cell]').length);
+  let pos = null;
+  const chess = await until(async () => {
+    const l = await run('classics.position.mate1');
+    if (l.dir === 'lab') pos = l;
+    return (await until(chessCells, 1500)) || null;
+  }, 15000);
   check(!!pos && !!chess, 'Classics: the server sets the chess mate-in-one position (the chess board shows)', `${pos?.text} cells ${chess}`);
 
   // A closed game's command is gone; the room keeps working.

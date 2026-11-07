@@ -27,6 +27,7 @@ import sea2Art from './art/tutorial/sea-2-shoot.svg?raw';
 import sea3Art from './art/tutorial/sea-3-sink.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
 import { isPhoneLayout } from '../device.ts';
+import { resultCard } from './result.ts';
 
 type State = Extract<SeaServerMessage, { t: 'state' }>;
 
@@ -79,6 +80,7 @@ const TEXT = {
     version: 'Reload the page for the new version.',
     reconnecting: 'Reconnecting…',
     aimed: 'Aiming at {cell}: tap it again, or Fire',
+    seeBoard: 'See the seas',
     fire: 'Fire at {cell}',
     how1: 'Place your fleet',
     how1Line: 'Shuffle, drag or turn your ships; they may not touch. Then press Ready.',
@@ -135,6 +137,7 @@ const TEXT = {
     version: 'Yeni sürüm için sayfayı yenile.',
     reconnecting: 'Yeniden bağlanıyor…',
     aimed: 'Nişan {cell}: yine dokun ya da Ateş et',
+    seeBoard: 'Denizlere bak',
     fire: '{cell} hedefine ateş',
     how1: 'Filonu yerleştir',
     how1Line: 'Gemilerini karıştır, sürükle ya da çevir; birbirine değemezler. Sonra Hazır de.',
@@ -212,6 +215,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const theirs = seaBox('theirs');
   const mine = seaBox('mine');
   const seas = el('div', { class: 'sea-seas' }, theirs.box, mine.box);
+  // GP2: the one result card over the seas; Play again moves into it while it shows.
+  const result = resultCard(seas, glowbeam('gr-glow'), (moved) => actions.prepend(...moved));
   const referee = glowbeam('sea-ref-mascot');
   const status = el('p', { class: 'sea-status', role: 'status', 'aria-live': 'polite' });
   const actions = el('div', { class: 'sea-actions' });
@@ -529,7 +534,20 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     drawBar();
     drawActions();
     status.textContent = statusText();
-    referee.className = `sea-ref-mascot${s.phase === 'over' && s.winner === me ? ' cheer' : ''}${s.phase !== 'play' ? ' wait' : ''}`;
+    if (s.phase === 'over' && s.winner !== null) {
+      const [a, b] = s.players;
+      const rematch = actions.querySelector<HTMLElement>('.sea-rematch');
+      result.show({
+        key: `${a?.wins ?? 0}:${b?.wins ?? 0}`,
+        outcome: me < 0 ? 'over' : s.winner === me ? 'win' : 'lose',
+        title: me < 0 ? tx('winner', { name: nameOfSeat(s.winner) }) : s.winner === me ? tx('youWin') : tx('youLose', { name: nameOfSeat(1 - me) }),
+        line: `${a?.name ?? '?'} ${a?.wins ?? 0} – ${b?.wins ?? 0} ${b?.name ?? '?'}`,
+        actions: rematch ? [rematch] : [],
+        see: tx('seeBoard'),
+      });
+    } else result.hide();
+    const reacting = [...referee.classList].filter((c) => c.startsWith('react-')).join(' ');
+    referee.className = `sea-ref-mascot${s.phase === 'over' && s.winner === me ? ' cheer' : ''}${s.phase !== 'play' ? ' wait' : ''}${reacting ? ` ${reacting}` : ''}`;
     setGameLive(me >= 0 && s.phase === 'play' && !s.players.some((p) => p?.bot));
   }
 
@@ -537,6 +555,14 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const key = s.last ? `${s.last.by}:${s.last.cell}` : '';
     if (s.last && key !== lastShot && prev) {
       playSound(s.last.result === 'miss' ? 'seaMiss' : s.last.result === 'sunk' ? 'seaSunk' : 'seaHit');
+      // GP2: Glowbeam jumps for my hit, gasps when mine is hit (the words are in the status line).
+      if (s.last.result !== 'miss' && s.seat >= 0) {
+        const mood = s.last.by === s.seat ? 'react-cheer' : 'react-gasp';
+        referee.classList.remove('react-cheer', 'react-gasp');
+        void referee.offsetWidth;
+        referee.classList.add(mood);
+        setTimeout(() => referee.classList.remove(mood), 700);
+      }
     }
     lastShot = key;
     if (prev && s.phase === 'over' && lastPhase !== 'over' && s.seat >= 0) playSound(s.winner === s.seat ? 'win' : 'lose');
