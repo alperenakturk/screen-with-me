@@ -508,6 +508,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.75 (card R3-3: ready for an own domain):**
+- [ ] Nothing new to see: everything stays on the same address. The switch-day steps (buy the domain, then two short
+  releases) are in `docs/internal/custom-domain.md`.
+
 **0.9.97.74 (🎮 card YTG: no game window over a YouTube video, computer):**
 - [ ] With a YouTube video playing, open Classics or Sea Battle: the window opens beside or under the video, never on
   it; in the window's place menu "in the video's place" is off and says why. Fullscreen: the game tucks away.
