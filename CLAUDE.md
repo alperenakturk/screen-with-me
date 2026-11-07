@@ -1549,8 +1549,13 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   the full e2e against live after every deploy; CI's local server runs `wrangler dev --var SWM_LOCAL_UNPACED:1` (the
   Worker skips the per-IP connection limit only with that flag and a localhost address; never set it in
   `wrangler.jsonc` or live) and e2e runs with `SWM_E2E_UNPACED=1` (no waits between files: local e2e 463 s → ≈ 205 s);
-  Playwright's browser is cached. Every new step in the test job that needs the local server gets
-  `if: github.event_name != 'push'` (and `&& needs.changes.outputs.web == 'true'` for a browser harness of the site).
+  Playwright's browser is cached. **Card CI2: parallel jobs.** `checks` (typecheck, texts, unit tests, build, size
+  budget; push + PR), and on a PR only `e2e` (local e2e + the help harness), `site` (the site's browser harnesses) and
+  `games` (games quality); each starts with the composite action `.github/actions/prepare` (Node, `npm ci`, build,
+  `server: 'true'` = the local server, `playwright: 'true'` = axe + Playwright + Chromium). The job named `test` (the
+  ruleset's required check, `if: always()`) fails when any of them failed or was cancelled; `deploy` needs it. A new
+  harness goes into the job of its kind (`e2e` when it needs no `web` change, else `site` / `games`); move a step to
+  another job, never make one job much longer than the others (wall-clock is the longest job).
   The repo is public since Nov 2026, so the minutes are free; the diet keeps runs short.
 - **Scene top space and sides:** the scene (1600×900) is bottom-aligned and covers the screen; on wide screens the top
   is cropped and also covered by the top bar: don't put decorations above y≈200. Room content is centered, at most
