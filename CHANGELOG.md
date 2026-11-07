@@ -8,6 +8,10 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.74 — 7 Nov
+- Games: on a computer a game window never covers a YouTube video. It opens beside or under the video, "in the
+  video's place" is off while YouTube plays (and says why), and going fullscreen tucks the game away.
+
 ### 0.9.97.73 — 7 Nov
 - Games: Quiz and Draw & Guess end on the same card as the board games, with Glowbeam, the podium and "Play again"
   (the game's host starts it, the others see who will). Short game messages look the same in every game. Glowbeam
