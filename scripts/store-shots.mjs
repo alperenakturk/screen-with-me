@@ -59,6 +59,8 @@ const shots = [
   ['4', 'screenshot-4.png', 1280, 800],
   ['5', 'screenshot-5.png', 1280, 800],
   ['promo', 'promo-small.png', 440, 280],
+  // Edge Add-ons asks for a square store logo (300 x 300 recommended); Chrome takes the 128 px icon.
+  ['edge', 'edge-logo-300.png', 300, 300],
   // Davet linki önizlemesi (WhatsApp/Discord): sitenin public klasörüne
   ['og', '../apps/web/public/og.png', 1200, 630],
 ];
