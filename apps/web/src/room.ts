@@ -1193,12 +1193,30 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   setDebugRoom(() => ({ ...engine.syncStats(), people: new Set(members.filter((m) => !m.tv).map(personOf)).size, kind: roomState?.item?.media.kind ?? null, makeHost: (id) => send({ t: 'make-host', id }), lab: roomLab }));
   // 🐞 Test Lab (card DL): the room's own status lines (the factory only runs while the lab is open).
   debugHooks.register('room', () => ({
-    status: () => [
-      ['Clock offset', clock.synced ? `${Math.round(clock.offsetMs)} ms (rtt ${clock.rtt ?? '?'} ms)` : 'not synced yet'],
-      ['Playback', roomState?.item ? `${roomState.paused ? 'paused' : 'playing'} at ${(roomState.position).toFixed(1)} s ×${roomState.rate}` : 'nothing'],
-      ['Members', String(members.length)],
-      ['Host', myId && hostId === myId ? 'me' : hostId ? 'someone else' : '—'],
-    ],
+    // LABTR: `{ en, tr }` pairs, the lab shows the page's language; 🟢 / 🟡 / 🔴 where a number can be good or bad.
+    status: () => {
+      const rtt = clock.rtt ?? 0;
+      const mark = rtt < 150 ? '🟢' : rtt < 400 ? '🟡' : '🔴';
+      const at = roomState ? roomState.position.toFixed(1) : '0';
+      return [
+        [
+          { en: 'Clock difference (my clock against the server\'s)', tr: 'Saat farkı (saatimin sunucuyla farkı)' },
+          clock.synced
+            ? { en: `${mark} ${Math.round(clock.offsetMs)} ms · a message takes ${rtt} ms there and back`, tr: `${mark} ${Math.round(clock.offsetMs)} ms · bir mesaj ${rtt} ms'de gidip geliyor` }
+            : { en: '🟡 not measured yet', tr: '🟡 henüz ölçülmedi' },
+        ],
+        [
+          { en: 'The room\'s video', tr: 'Odanın videosu' },
+          !roomState?.item
+            ? { en: 'nothing', tr: 'hiçbir şey' }
+            : roomState.paused
+              ? { en: `paused at ${at} s ×${roomState.rate}`, tr: `${at}. sn'de durdu ×${roomState.rate}` }
+              : { en: `playing at ${at} s ×${roomState.rate}`, tr: `${at}. sn'de oynuyor ×${roomState.rate}` },
+        ],
+        [{ en: 'Connections in the room', tr: 'Odadaki bağlantılar' }, String(members.length)],
+        [{ en: 'Host', tr: 'Yönetici' }, myId && hostId === myId ? { en: 'me', tr: 'ben' } : hostId ? { en: 'someone else', tr: 'başka biri' } : '—'],
+      ];
+    },
   }));
   /** TV version: the room on a TV (this browser was paired), and this device as my TV's remote (phone / computer). */
   let tvRoom: ReturnType<typeof createTvRoom> | null = null;

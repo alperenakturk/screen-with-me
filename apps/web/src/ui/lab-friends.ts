@@ -8,7 +8,8 @@ import { el } from '../dom.ts';
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { AVATAR_PAGES, REACTIONS, type Avatar, type Member, type PlaybackState, type ServerMessage } from '@swm/shared/protocol';
-import { debugRoom, type LabCommand } from '../debug-lab.ts';
+import { debugRoom, labFail, type LabCommand, type LabText } from '../debug-lab.ts';
+import { errorText, labTr } from './lab-text.ts';
 
 export const MAX_FRIENDS = 5;
 const NAMES = ['Ada', 'Ben', 'Cleo', 'Dev', 'Eli', 'Fay', 'Gus'];
@@ -16,6 +17,58 @@ const LINES = ['hi everyone 👋', 'this part is great', 'lol', 'wait what happe
 const PACES = [2, 5, 10] as const;
 
 type Log = (line: { dir: 'lab' | 'error'; type: string; text: string }) => void;
+
+const NOT_IN_ROOM = { en: 'not in a room', tr: 'odada değilsin' };
+/** The 👥 tab's own words (the commands carry theirs). */
+const TEXT = {
+  en: {
+    removed: 'was removed from the room',
+    notYet: 'is not in the room yet',
+    notSent: 'not sent (connection down)',
+    none: 'No fake friends yet. "Add" brings one in.',
+    outside: 'Fake friends work in a room.',
+    host: '👑 host',
+    inRoom: '🟢 in the room',
+    door: '🟡 at the door',
+    connecting: '🟡 connecting',
+    reconnecting: '🟡 coming back',
+    closed: '🔴 gone',
+    say: '💬 write',
+    pause: 'Pause',
+    play: 'Play',
+    stall: '⏳ get stuck',
+    bounce: '↺ leave & come back',
+    makeHost: '👑 make host',
+    add: '＋ Add',
+    chattyOn: '🗣 Chatty: on',
+    chattyOff: '🗣 Chatty: off',
+    everyone: '🚪 Everyone leaves',
+  },
+  tr: {
+    removed: 'odadan çıkarıldı',
+    notYet: 'henüz odada değil',
+    notSent: 'gönderilemedi (bağlantı kopuk)',
+    none: 'Henüz sahte arkadaş yok. "Ekle" bir tane getirir.',
+    outside: 'Sahte arkadaşlar bir odada çalışır.',
+    host: '👑 yönetici',
+    inRoom: '🟢 odada',
+    door: '🟡 kapıda bekliyor',
+    connecting: '🟡 bağlanıyor',
+    reconnecting: '🟡 geri geliyor',
+    closed: '🔴 gitti',
+    say: '💬 yazsın',
+    pause: 'Durdursun',
+    play: 'Oynatsın',
+    stall: '⏳ takılsın',
+    bounce: '↺ çıkıp gelsin',
+    makeHost: '👑 yönetici yap',
+    add: '＋ Ekle',
+    chattyOn: '🗣 Konuşkan: açık',
+    chattyOff: '🗣 Konuşkan: kapalı',
+    everyone: '🚪 Herkes çıksın',
+  },
+};
+const tx = () => TEXT[labTr() ? 'tr' : 'en'];
 
 export class FakeFriend {
   readonly name: string;
@@ -87,7 +140,7 @@ export class FakeFriend {
         return;
       case 'kicked':
         this.status = 'gone';
-        this.log({ dir: 'lab', type: 'friends', text: `${this.name} was removed from the room` });
+        this.log({ dir: 'lab', type: 'friends', text: `${this.name} ${tx().removed}` });
         break;
       case 'error':
         this.log({ dir: 'error', type: 'friends', text: `${this.name}: ${message.code}` });
@@ -110,9 +163,9 @@ export class FakeFriend {
   }
 
   send(message: Parameters<RoomConnection['send']>[0]): boolean {
-    if (!this.inRoom) throw new Error(`${this.name} is not in the room yet`);
+    if (!this.inRoom) throw labFail({ en: `${this.name} ${TEXT.en.notYet}`, tr: `${this.name} ${TEXT.tr.notYet}` });
     const ok = this.conn.send(message);
-    if (!ok) throw new Error(`${this.name}: not sent (connection down)`);
+    if (!ok) throw labFail({ en: `${this.name}: ${TEXT.en.notSent}`, tr: `${this.name}: ${TEXT.tr.notSent}` });
     return ok;
   }
 
@@ -179,22 +232,24 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
     for (const fn of listeners) fn();
   };
 
-  const needRoom = () => (roomId ? true : 'not in a room');
-  const needFriend = () => (roomId ? (friends.some((f) => f.inRoom) ? true : 'add a fake friend first') : 'not in a room');
+  const needRoom = (): true | LabText => (roomId ? true : NOT_IN_ROOM);
+  const needFriend = (): true | LabText => (roomId ? (friends.some((f) => f.inRoom) ? true : { en: 'add a fake friend first', tr: 'önce bir sahte arkadaş ekle' }) : NOT_IN_ROOM);
+  const IN_ROOM = { en: 'in a room', tr: 'odada' };
+  const ONE = { en: ' A number (1–5) picks which friend.', tr: ' Bir sayı (1–5) hangi arkadaş olduğunu seçer.' };
   /** The friend a command acts on: the given number (1–5) or a random one in the room. */
   const pick = (arg?: string): FakeFriend => {
     const n = Number(arg);
     const inRoom = friends.filter((f) => f.inRoom);
     const friend = Number.isInteger(n) && n >= 1 ? friends[n - 1] : inRoom[Math.floor(Math.random() * inRoom.length)];
-    if (!friend) throw new Error('no such fake friend');
+    if (!friend) throw labFail({ en: 'no such fake friend', tr: 'böyle bir sahte arkadaş yok' });
     return friend;
   };
 
-  function add(count: number): string {
-    if (!roomId) throw new Error('not in a room');
+  function add(count: number): LabText {
+    if (!roomId) throw labFail(NOT_IN_ROOM);
     const room = roomId;
     const room_ = Math.min(count, MAX_FRIENDS - friends.length);
-    if (room_ <= 0) throw new Error(`at most ${MAX_FRIENDS} fake friends`);
+    if (room_ <= 0) throw labFail({ en: `at most ${MAX_FRIENDS} fake friends`, tr: `en çok ${MAX_FRIENDS} sahte arkadaş` });
     const used = new Set(friends.map((f) => f.name));
     const added: string[] = [];
     for (let i = 0; i < room_; i++) {
@@ -204,16 +259,16 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
       added.push(name);
     }
     changed();
-    return `added ${added.join(', ')}`;
+    return { en: `added ${added.join(', ')}`, tr: `eklendi: ${added.join(', ')}` };
   }
 
-  function removeAll(): string {
+  function removeAll(): LabText {
     const n = friends.length;
     for (const f of [...friends]) f.leave();
     friends.length = 0;
     setChatty(false);
     changed();
-    return `${n} left`;
+    return { en: `${n} left`, tr: `${n} kişi çıktı` };
   }
 
   function setChatty(on: boolean): void {
@@ -228,7 +283,7 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
           if (Math.random() < 0.7) f.say();
           else f.react();
         } catch (error) {
-          log({ dir: 'error', type: 'friends', text: String((error as Error)?.message ?? error) });
+          log({ dir: 'error', type: 'friends', text: errorText(error) });
         }
       }, pace * 1000);
     }
@@ -236,48 +291,77 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
   }
 
   const commands: LabCommand[] = [
-    { id: 'friends.add', title: 'Friends: add a fake friend', help: `A 🤖 person joins this room (at most ${MAX_FRIENDS}); with "Ask before letting people in" on, they knock at the door. Undo: everyone leaves.`, tab: 'friends', where: 'in a room', available: needRoom, run: () => add(1), undo: removeAll },
-    { id: 'friends.add3', title: 'Friends: add 3 fake friends', help: 'Three 🤖 people join this room. Undo: everyone leaves.', tab: 'friends', where: 'in a room', available: needRoom, run: () => add(3), undo: removeAll },
-    { id: 'friends.removeAll', title: 'Friends: everyone leaves', help: 'All fake friends leave the room.', tab: 'friends', available: () => (friends.length ? true : 'no fake friends'), run: removeAll },
-    { id: 'friends.say', title: 'Friends: someone writes', help: 'A fake friend writes a chat line (a number picks which one).', tab: 'friends', available: needFriend, run: (arg) => pick(arg).say() },
-    { id: 'friends.react', title: 'Friends: someone sends an emoji', help: 'A fake friend sends an emoji.', tab: 'friends', available: needFriend, run: (arg) => pick(arg).react() },
-    { id: 'friends.pause', title: 'Friends: someone pauses', help: 'A fake friend pauses the room (as if in their player). Undo plays.', tab: 'friends', available: needFriend, run: (arg) => pick(arg).pause(), undo: () => pick().play() },
-    { id: 'friends.play', title: 'Friends: someone plays', help: 'A fake friend plays the room. Undo pauses.', tab: 'friends', available: needFriend, run: (arg) => pick(arg).play(), undo: () => pick().pause() },
+    {
+      id: 'friends.add',
+      title: { en: 'Add a fake friend', tr: 'Sahte bir arkadaş ekle' },
+      help: { en: `A 🤖 person joins this room and shows in the faces and the people list (at most ${MAX_FRIENDS}); with "Ask before letting people in" on, they knock at the door. Undo: everyone leaves.`, tr: `Odaya 🤖 bir kişi girer, yüzlerde ve kişi listesinde görünür (en çok ${MAX_FRIENDS}); "İçeri almadan önce sor" açıksa kapıyı çalar. Geri al: herkes çıkar.` },
+      tab: 'friends',
+      where: IN_ROOM,
+      available: needRoom,
+      run: () => add(1),
+      undo: removeAll,
+    },
+    { id: 'friends.add3', title: { en: 'Add 3 fake friends', tr: '3 sahte arkadaş ekle' }, help: { en: 'Three 🤖 people join this room. Undo: everyone leaves.', tr: 'Odaya 🤖 üç kişi girer. Geri al: herkes çıkar.' }, tab: 'friends', where: IN_ROOM, available: needRoom, run: () => add(3), undo: removeAll },
+    { id: 'friends.removeAll', title: { en: 'All fake friends leave', tr: 'Bütün sahte arkadaşlar çıksın' }, help: { en: 'Every fake friend leaves the room; the room shows only the real people again.', tr: 'Bütün sahte arkadaşlar odadan çıkar; odada yine sadece gerçek kişiler görünür.' }, tab: 'friends', available: () => (friends.length ? true : { en: 'no fake friends', tr: 'sahte arkadaş yok' }), run: removeAll },
+    { id: 'friends.say', title: { en: 'A fake friend writes', tr: 'Sahte bir arkadaş yazsın' }, help: { en: `A chat line from them shows in my chat.${ONE.en}`, tr: `Onlardan bir mesaj sohbetimde görünür.${ONE.tr}` }, tab: 'friends', available: needFriend, run: (arg) => pick(arg).say() },
+    { id: 'friends.react', title: { en: 'A fake friend sends an emoji', tr: 'Sahte bir arkadaş emoji göndersin' }, help: { en: `Their emoji flies over the video.${ONE.en}`, tr: `Emojileri videonun üstünde uçar.${ONE.tr}` }, tab: 'friends', available: needFriend, run: (arg) => pick(arg).react() },
+    { id: 'friends.pause', title: { en: 'A fake friend pauses', tr: 'Sahte bir arkadaş durdursun' }, help: { en: `Everyone's video stops and "🤖 … paused" shows. Undo plays again.${ONE.en}`, tr: `Herkesin videosu durur, "🤖 … durdurdu" yazar. Geri al yeniden oynatır.${ONE.tr}` }, tab: 'friends', available: needFriend, run: (arg) => pick(arg).pause(), undo: () => pick().play() },
+    { id: 'friends.play', title: { en: 'A fake friend plays', tr: 'Sahte bir arkadaş oynatsın' }, help: { en: `Everyone's video plays. Undo pauses.${ONE.en}`, tr: `Herkesin videosu oynar. Geri al durdurur.${ONE.tr}` }, tab: 'friends', available: needFriend, run: (arg) => pick(arg).play(), undo: () => pick().pause() },
     {
       id: 'friends.seek',
-      title: 'Friends: someone jumps +30 s',
-      help: 'A fake friend jumps 30 s ahead. Undo jumps back.',
+      title: { en: 'A fake friend jumps 30 s ahead', tr: 'Sahte bir arkadaş 30 sn ileri atlasın' },
+      help: { en: `Everyone's video jumps 30 s ahead together. Undo jumps back.${ONE.en}`, tr: `Herkesin videosu birlikte 30 sn ileri atlar. Geri al geri atlar.${ONE.tr}` },
       tab: 'friends',
       available: needFriend,
-      run: (arg) => `to ${pick(arg).seek(30).toFixed(1)} s`,
-      undo: () => `to ${pick().seek(-30).toFixed(1)} s`,
+      run: (arg) => {
+        const to = pick(arg).seek(30).toFixed(1);
+        return { en: `to ${to} s`, tr: `${to}. sn'ye` };
+      },
+      undo: () => {
+        const to = pick().seek(-30).toFixed(1);
+        return { en: `to ${to} s`, tr: `${to}. sn'ye` };
+      },
     },
-    { id: 'friends.stall', title: 'Friends: someone\'s video gets stuck (5 s)', help: 'A fake friend reports "not ready" for 5 s: the room waits for them.', tab: 'friends', available: needFriend, run: (arg) => pick(arg).stallFor(5) },
-    { id: 'friends.bounce', title: 'Friends: someone leaves and comes back', help: 'A fake friend\'s connection closes; they are back after 5 s with the same member id.', tab: 'friends', available: needFriend, run: (arg) => { const f = pick(arg); f.bounce(5); return f.name; } },
+    { id: 'friends.stall', title: { en: 'A fake friend\'s video gets stuck for 5 s', tr: 'Sahte bir arkadaşın videosu 5 sn takılsın' }, help: { en: `The room pauses with "waiting for 🤖 …" and plays on when they are ready.${ONE.en}`, tr: `Oda "🤖 … bekleniyor" diye durur, hazır olunca devam eder.${ONE.tr}` }, tab: 'friends', available: needFriend, run: (arg) => pick(arg).stallFor(5) },
+    { id: 'friends.bounce', title: { en: 'A fake friend leaves and comes back', tr: 'Sahte bir arkadaş çıkıp geri gelsin' }, help: { en: `Their connection drops; after 5 s they are back as the same person (not twice in the list).${ONE.en}`, tr: `Bağlantısı kopar; 5 sn sonra aynı kişi olarak geri gelir (listede iki kez görünmez).${ONE.tr}` }, tab: 'friends', available: needFriend, run: (arg) => { const f = pick(arg); f.bounce(5); return f.name; } },
     {
       id: 'friends.host',
-      title: 'Friends: make a fake friend the host',
-      help: 'I hand the host role to a fake friend (the same path as 👑 Make host).',
+      title: { en: 'Make a fake friend the host', tr: 'Sahte bir arkadaşı yönetici yap' },
+      help: { en: `I hand the host role to them, the same way as 👑 Make host: the chat says so and I become a guest.${ONE.en}`, tr: `Yöneticiliği ona veririm, 👑 Yönetici yap ile aynı yoldan: sohbet bunu yazar, ben misafir olurum.${ONE.tr}` },
       tab: 'friends',
       available: needFriend,
       run: (arg) => {
         const f = pick(arg);
         const room = debugRoom();
-        if (!f.memberId || !room?.makeHost) throw new Error('not in a room yet');
+        if (!f.memberId || !room?.makeHost) throw labFail({ en: 'not in a room yet', tr: 'henüz odada değil' });
         room.makeHost(f.memberId);
         return f.name;
       },
     },
-    { id: 'friends.chatty', title: 'Friends: chatty mode on / off', help: `The fake friends write and send emojis by themselves (every ${pace} s; a number 2, 5 or 10 sets the pace).`, tab: 'friends', available: needFriend, run: (arg) => { const n = Number(arg); if (PACES.includes(n as (typeof PACES)[number])) pace = n as (typeof PACES)[number]; setChatty(!chatty || !!arg); return chatty ? `on, every ${pace} s` : 'off'; }, undo: () => setChatty(false) },
+    {
+      id: 'friends.chatty',
+      title: { en: 'Fake friends chat by themselves (on / off)', tr: 'Sahte arkadaşlar kendi kendine konuşsun (aç / kapat)' },
+      help: { en: `They write and send emojis on their own every ${pace} s, like a lively room. A number 2, 5 or 10 sets how often.`, tr: `Hareketli bir oda gibi her ${pace} sn'de bir kendileri yazar ve emoji gönderir. 2, 5 ya da 10 yazarsan sıklığı o olur.` },
+      tab: 'friends',
+      available: needFriend,
+      run: (arg) => {
+        const n = Number(arg);
+        if (PACES.includes(n as (typeof PACES)[number])) pace = n as (typeof PACES)[number];
+        setChatty(!chatty || !!arg);
+        return chatty ? { en: `on, every ${pace} s`, tr: `açık, ${pace} sn'de bir` } : { en: 'off', tr: 'kapalı' };
+      },
+      undo: () => setChatty(false),
+    },
   ];
 
   /** The 👥 tab: one row per friend with its quick buttons. */
   function view(run: (id: string, arg?: string) => void): HTMLElement {
     const box = el('div', { class: 'lab-friends' });
-    if (!friends.length) box.append(el('p', { class: 'muted' }, roomId ? 'No fake friends yet. "Add" brings one in.' : 'Fake friends work in a room.'));
+    const t = tx();
+    if (!friends.length) box.append(el('p', { class: 'muted' }, roomId ? t.none : t.outside));
     friends.forEach((f, i) => {
       const n = String(i + 1);
-      const label = f.status === 'open' ? (f.memberId && f.hostId === f.memberId ? 'host' : 'in the room') : f.status === 'door' ? 'at the door' : f.status;
+      const label = f.status === 'open' ? (f.memberId && f.hostId === f.memberId ? t.host : t.inRoom) : f.status === 'door' ? t.door : f.status === 'connecting' ? t.connecting : f.status === 'reconnecting' ? t.reconnecting : f.status === 'closed' || f.status === 'gone' ? t.closed : f.status;
       const quick = (id: string, text: string) => {
         const b = el('button', { type: 'button', class: 'btn debug-small', 'data-friend': n, 'data-command': id }, text);
         b.disabled = !f.inRoom;
@@ -287,17 +371,17 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
       box.append(
         el('div', { class: 'lab-friend', 'data-friend': n },
           el('div', { class: 'lab-friend-head' }, el('img', { src: `/avatars/${f.avatar}.svg`, alt: '', width: '24', height: '24' }), el('strong', {}, f.name), el('span', { class: 'lab-tag' }, label)),
-          el('div', { class: 'debug-actions' }, quick('friends.say', '💬 say'), quick('friends.react', '😀'), quick('friends.pause', 'Pause'), quick('friends.play', 'Play'), quick('friends.seek', '+30 s'), quick('friends.stall', '⏳ stall'), quick('friends.bounce', '↺ leave & back'), quick('friends.host', '👑 host')),
+          el('div', { class: 'debug-actions' }, quick('friends.say', t.say), quick('friends.react', '😀'), quick('friends.pause', t.pause), quick('friends.play', t.play), quick('friends.seek', '+30 s'), quick('friends.stall', t.stall), quick('friends.bounce', t.bounce), quick('friends.host', t.makeHost)),
         ),
       );
     });
-    const addButton = el('button', { type: 'button', class: 'btn primary debug-small lab-friend-add', 'data-command': 'friends.add' }, `＋ Add (${friends.length}/${MAX_FRIENDS})`);
+    const addButton = el('button', { type: 'button', class: 'btn primary debug-small lab-friend-add', 'data-command': 'friends.add' }, `${t.add} (${friends.length}/${MAX_FRIENDS})`);
     addButton.disabled = !roomId || friends.length >= MAX_FRIENDS;
     addButton.addEventListener('click', () => run('friends.add'));
-    const chattyButton = el('button', { type: 'button', class: 'btn debug-small lab-friend-chatty', 'data-command': 'friends.chatty' }, chatty ? `🗣 Chatty: on (${pace} s)` : '🗣 Chatty: off');
+    const chattyButton = el('button', { type: 'button', class: 'btn debug-small lab-friend-chatty', 'data-command': 'friends.chatty' }, chatty ? `${t.chattyOn} (${pace} s)` : t.chattyOff);
     chattyButton.disabled = !friends.some((f) => f.inRoom);
     chattyButton.addEventListener('click', () => run('friends.chatty'));
-    const allButton = el('button', { type: 'button', class: 'btn debug-small', 'data-command': 'friends.removeAll' }, '🚪 Everyone leaves');
+    const allButton = el('button', { type: 'button', class: 'btn debug-small', 'data-command': 'friends.removeAll' }, t.everyone);
     allButton.disabled = !friends.length;
     allButton.addEventListener('click', () => run('friends.removeAll'));
     box.append(el('div', { class: 'debug-actions lab-friends-foot' }, addButton, chattyButton, allButton));

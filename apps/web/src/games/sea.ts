@@ -629,9 +629,9 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   // Test Lab: ready-made moments (the server does them only as a local lab server).
   const offLab = debugHooks.register('table.sea', () => ({
     commands: [
-      { id: 'sea.bot', title: 'Sea Battle: Glowbeam takes the other seat', help: 'Medium level; only while the other seat is free.', tab: 'games' as const, where: 'at a Sea Battle table, seated', run: () => send({ t: 'bot', level: 2 }) },
-      { id: 'sea.oneLeft', title: 'Sea Battle: one ship left each', help: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tab: 'games' as const, where: 'at a Sea Battle table, seated', run: () => send({ t: 'lab', op: 'oneLeft' }) },
-      { id: 'sea.reveal', title: 'Sea Battle: show their fleet (this tab)', help: 'Local lab server only: the other fleet shows faintly on their sea.', tab: 'games' as const, where: 'at a Sea Battle table, seated', run: () => send({ t: 'lab', op: 'reveal' }) },
+      { id: 'sea.bot', title: { en: 'Sea Battle: Glowbeam takes the other seat', tr: 'Amiral Battı: Glowbeam diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
+      { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel lab sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
+      { id: 'sea.reveal', title: { en: 'Sea Battle: show their fleet (this tab)', tr: 'Amiral Battı: rakibin filosunu göster (bu sekmede)' }, help: { en: 'Local lab server only: the other fleet shows faintly on their sea.', tr: 'Sadece yerel lab sunucusunda: rakibin filosu kendi denizinde silik görünür.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'reveal' }) },
     ],
   }));
   // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).

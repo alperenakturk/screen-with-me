@@ -145,11 +145,18 @@ jobs:
           node scripts/harness/lab-video/run.cjs http://localhost:8787
           node scripts/harness/lab-scenarios/run.cjs http://localhost:8787
           node scripts/harness/lab-lock/run.cjs harness-lab-code
+          # Card LABTR: the same lab in Turkish (plain words, no English left, the command box finds Turkish words).
+          LAB_LANG=tr node scripts/harness/test-lab/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-friends/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-video/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-scenarios/run.cjs http://localhost:8787
 
       # Card DL3a: the Test Lab's game tools (open any game, side-game cheats on a sandbox save, restore my real saves).
       - name: Test Lab games
         if: github.event_name != 'push' && needs.changes.outputs.web == 'true'
-        run: node scripts/harness/lab-games/run.cjs http://localhost:8787
+        run: |
+          node scripts/harness/lab-games/run.cjs http://localhost:8787
+          LAB_LANG=tr node scripts/harness/lab-games/run.cjs http://localhost:8787
 
       # Card BHG: every game fits its window (no inner scrollbar, text >= 13 px, nothing cut off, a fair-sized board) on
       # a laptop and a phone in English and Turkish (the four sizes locally: drop SIZES), and minimize / restore / a
