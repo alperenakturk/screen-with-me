@@ -508,6 +508,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.82 (🎮 card LIVE-GREEN: the game e2e ride out network drops):**
+- Nothing to test by hand: only the automatic game tests changed.
+
 **0.9.97.81 (🎮 cards FF2 + GW: game window sizes, ⛶ in every game, Five Frames' result):**
 - [ ] Open any game and shrink its window from the corner: it stops before the text gets small; grow it: the game gets
   bigger in proportion and stops at a sensible size.
