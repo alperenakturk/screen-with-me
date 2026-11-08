@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PODCAST_ART, cleanArt, parseDuration, parseEpisodesAnswer, parseFeed, parseItunesLookup, parseItunesSearch, parseShowsAnswer } from './podcasts.ts';
+import { FEED_MAX_ITEMS, FeedReader, PODCAST_ART, cleanArt, parseDuration, parseEpisodesAnswer, parseFeed, parseItunesLookup, parseItunesSearch, parseShowsAnswer } from './podcasts.ts';
 
 const FEED = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"><channel>
@@ -23,6 +23,47 @@ describe('Podcast feeds', () => {
     ]);
     expect(parseFeed(FEED, 1)).toHaveLength(1);
     expect(parseFeed('not xml')).toEqual([]);
+  });
+
+  // PERF1c: a huge feed is cut at FEED_MAX_ITEMS items, so the Worker stays within its CPU limit.
+  const bigFeed = (n: number) => {
+    let items = '';
+    for (let i = 0; i < n; i++) {
+      const day = String(1 + (i % 28)).padStart(2, '0');
+      items += `<item><title>Episode ${n - i}</title><pubDate>${day} Oct 2026 08:00:00 GMT</pubDate><enclosure url="https://cdn.example.com/ep${n - i}.mp3" type="audio/mpeg"/><description>${'words '.repeat(400)}</description></item>`;
+    }
+    return `<rss><channel><title>Big</title>${items}</channel></rss>`;
+  };
+  it('parses at most FEED_MAX_ITEMS items of a huge feed', () => {
+    const xml = bigFeed(2000);
+    const all = parseFeed(xml, 10_000, 10_000);
+    const capped = parseFeed(xml, 10_000);
+    expect(all).toHaveLength(2000);
+    expect(capped).toHaveLength(FEED_MAX_ITEMS);
+    // The newest come first in the feed, so the cap keeps them.
+    expect(capped.map((e) => e.title)).toContain('Episode 2000');
+    expect(capped.map((e) => e.title)).not.toContain('Episode 1');
+  });
+  it('the feed reader stops at FEED_MAX_ITEMS closed items, also across chunks', () => {
+    const bytes = new TextEncoder().encode(bigFeed(500));
+    const reader = new FeedReader();
+    let chunks = 0;
+    for (let at = 0; at < bytes.length; at += 997) {
+      chunks++;
+      if (reader.push(bytes.subarray(at, at + 997))) break;
+    }
+    const text = reader.text();
+    expect(chunks * 997).toBeLessThan(bytes.length);
+    expect(text.match(/<\/item>/g)!.length).toBeGreaterThanOrEqual(FEED_MAX_ITEMS);
+    expect(text.match(/<\/item>/g)!.length).toBeLessThan(FEED_MAX_ITEMS + 2);
+    expect(parseFeed(text, 10_000)).toHaveLength(FEED_MAX_ITEMS);
+  });
+  it('the feed reader stops at its byte limit', () => {
+    const reader = new FeedReader(10_000, 5000);
+    const chunk = new TextEncoder().encode('x'.repeat(3000));
+    expect(reader.push(chunk)).toBe(false);
+    expect(reader.push(chunk)).toBe(true);
+    expect(reader.text()).toHaveLength(5000);
   });
 
   it('durations in every shape podcasts use', () => {

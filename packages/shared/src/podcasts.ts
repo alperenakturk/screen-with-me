@@ -5,6 +5,13 @@
 
 export const PODCAST_RESULTS = 12;
 export const PODCAST_EPISODES = 30;
+/**
+ * PERF1c: a feed is read and parsed only up to this many `<item>`s. Feeds list the newest first by convention, and we
+ * show the newest `PODCAST_EPISODES`; a 4 MB feed parsed whole took 14–24 ms of CPU, over the Worker's 10 ms (Free plan).
+ */
+export const FEED_MAX_ITEMS = 200;
+/** A feed is never read past this many bytes, whatever its items. */
+export const FEED_MAX_BYTES = 4 * 1024 * 1024;
 /** A show's id at Apple (its `collectionId`): digits only. */
 export const PODCAST_ID = /^\d{1,12}$/;
 /** Cover art is only taken from Apple's image servers (the site's CSP allows those). */
@@ -99,10 +106,13 @@ export function parseDuration(value: string | null): number {
  * A feed's text → its newest episodes with an audio file (`<enclosure>` of an audio type, or an address ending like
  * audio). A small reader for RSS 2.0 as podcasts use it: no DOM in a Worker, and nothing in a feed is ever run.
  */
-export function parseFeed(xml: string, limit = PODCAST_EPISODES): PodcastEpisode[] {
-  const items = xml.match(/<item[\s>][\s\S]*?<\/item>/gi) ?? [];
+export function parseFeed(xml: string, limit = PODCAST_EPISODES, maxItems = FEED_MAX_ITEMS): PodcastEpisode[] {
   const episodes: PodcastEpisode[] = [];
-  for (const item of items) {
+  const itemPattern = /<item[\s>][\s\S]*?<\/item>/gi;
+  let seen = 0;
+  for (let match = itemPattern.exec(xml); match && seen < maxItems; match = itemPattern.exec(xml)) {
+    seen++;
+    const item = match[0];
     const enclosure = item.match(/<enclosure\b[^>]*>/i)?.[0] ?? '';
     const rawUrl = attr(enclosure, 'url');
     const type = attr(enclosure, 'type') ?? '';
@@ -115,6 +125,44 @@ export function parseFeed(xml: string, limit = PODCAST_EPISODES): PodcastEpisode
     episodes.push({ title, url, duration: parseDuration(decode(tag(item, 'itunes:duration') ?? '')), date: Number.isFinite(date) ? date : 0 });
   }
   return episodes.sort((a, b) => b.date - a.date).slice(0, limit);
+}
+
+/**
+ * The Worker's feed reader (PERF1c): takes the body's chunks and says when to stop, at `FEED_MAX_ITEMS` closed items
+ * or `FEED_MAX_BYTES`, so a huge feed is neither downloaded nor decoded whole.
+ */
+export class FeedReader {
+  private readonly decoder = new TextDecoder();
+  private parts: string[] = [];
+  private bytes = 0;
+  private items = 0;
+  private tail = '';
+  private readonly maxItems: number;
+  private readonly maxBytes: number;
+
+  constructor(maxItems = FEED_MAX_ITEMS, maxBytes = FEED_MAX_BYTES) {
+    this.maxItems = maxItems;
+    this.maxBytes = maxBytes;
+  }
+
+  /** Adds a chunk; true when the reader has enough and the rest of the body can be dropped. */
+  push(chunk: Uint8Array): boolean {
+    const room = this.maxBytes - this.bytes;
+    const part = chunk.byteLength > room ? chunk.subarray(0, room) : chunk;
+    this.bytes += part.byteLength;
+    const text = this.decoder.decode(part, { stream: true });
+    this.parts.push(text);
+    // Count closing tags, also one split across two chunks (the last 6 characters are kept for the next look).
+    const look = this.tail + text;
+    this.items += look.match(/<\/item>/gi)?.length ?? 0;
+    this.tail = look.slice(-6);
+    if (/<\/item>/i.test(this.tail)) this.tail = '';
+    return this.items >= this.maxItems || this.bytes >= this.maxBytes;
+  }
+
+  text(): string {
+    return this.parts.join('') + this.decoder.decode();
+  }
 }
 
 /** The Worker's answers, checked on the page. */
