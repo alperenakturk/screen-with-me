@@ -189,6 +189,18 @@ const sheetName = (page) => page.evaluate(() => {
       chat: document.querySelector('.room [data-panel="chat"]').getBoundingClientRect().width,
     }));
     check(!turned.fs && turned.button && turned.chat === 0, 'phone turned sideways: no automatic fullscreen, one big ⛶, no chat beside', JSON.stringify(turned));
+    // BH13: a video that can't be played here ("can't be played" card) offers no ⛶ "Watch fullscreen".
+    const turnFsShown = () => page.evaluate(() => { const b = document.querySelector('.ph-turn-fs'); return !!b && b.getBoundingClientRect().width > 0; });
+    await page.evaluate(() => {
+      const err = document.getElementById('player-error');
+      err.textContent = 'This video can\'t be played here.';
+      err.hidden = false;
+    });
+    await page.waitForTimeout(150);
+    check(!(await turnFsShown()), 'sideways: a video that can\'t be played offers no ⛶ "Watch fullscreen"');
+    await page.evaluate(() => { document.getElementById('player-error').hidden = true; });
+    await page.waitForTimeout(150);
+    check(await turnFsShown(), 'sideways: ⛶ "Watch fullscreen" comes back once the video plays');
     await page.click('.ph-turn-fs');
     await page.waitForTimeout(600);
     check(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs')), 'sideways: ⛶ opens the fullscreen');
