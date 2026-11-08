@@ -388,22 +388,25 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
-**Next round, start here (BH10, 0.9.97.56, 4 Nov 2026).** Everything a script can check was run in the cloud
+**Next round, start here (BH10, 0.9.97.56, 4 Nov 2026; items 1–7 checked against 0.9.97.86 in BH13).** Everything a script can check was run in the cloud
 (every harness, the screenshot sweep at five sizes in EN + TR, the Test Lab's fake friends for knock, Make host and
 private messages). What is left needs a person: real YouTube playback, a real mic and camera, your phone, and the
 extension in other browsers. One sitting, in this order, with one friend in Chrome on another computer (or your phone
 as the second person). Tick here or tell the Planner; the older lists below stay for detail.
-- [ ] 1. YouTube together (computer): you create a room, the friend joins by the invite link; play a YouTube video:
-  "3-2-1" starts you both together; pause, seek, change speed from each side; you stay in step (under a second).
+- [ ] 1. YouTube together (computer): you create a room, the friend joins by the invite link (🔗 Invite → Copy); play
+  a YouTube video: "3-2-1" starts you both together; pause, seek, change speed from each side, and ← / → (jumps 5 s for
+  everyone); you stay in step (under a second).
 - [ ] 2. Fullscreen (computer, YouTube): the rail comes at the right edge and goes when the mouse leaves; Enter opens
   the message box; the friend's messages come in on the right, below the box, never over YouTube's own bar.
-- [ ] 3. Voice + camera (computer): both join voice, hear each other clearly (no echo), mic on / off, cameras on;
-  ⟳ reconnect or a page reload keeps you in voice with the mic as it was.
-- [ ] 4. Screen share: share a tab with sound; the friend sees and hears it; reload the friend's page: the stream comes
-  back by itself.
+- [ ] 3. Voice + camera (computer): both press 🎙 (a small window checks your mic first, then "Join"), hear each other
+  clearly (no echo), mic on / off (or M), cameras on: they open in their own window, which you can drag and resize; a
+  page reload keeps you in voice with the mic and camera as they were.
+- [ ] 4. Screen share: "🖥️ Share ▾" in the Together card → share a tab with sound; the friend presses "▶ Watch", sees
+  and hears it; reload the friend's page: the stream comes back by itself.
 - [ ] 5. Knock + host (two people): turn on "Ask before letting people in", the friend opens the link in a fresh
   browser: you get "Let in / Refuse"; let them in; 👑 Make host to the friend: now they get the next knock card.
-- [ ] 6. Private message: press the friend's name in the chat, write: only they see it (a third person does not).
+- [ ] 6. Private message: press the friend's name in the chat (or their face → "🔒 Message privately"), write: only
+  they see it, marked 🔒 (a third person does not); ✕ goes back to the room chat.
 - [ ] 7. The games with the friend: the short list "🎮 Games, start here" right below (about 20 minutes).
 - [ ] 8. Your phone (Android or iPhone, the friend on the computer): join by the QR code (🔗 Invite → "QR code" tab on
   the computer), the YouTube video plays in sync; turn the phone sideways and press the big ⛶ "Watch fullscreen"; in
@@ -492,6 +495,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - The games' hand tests are now one list, "🎮 Games, start here" (G1–G10). New here: G3's Glowbeam in Draw & Guess
   sits in the drawing's corner, never over the chat.
 
+**0.9.97.87 (BH13-B follow-up: no fullscreen offer for a video that can't play):**
+- [ ] Phone sideways, a video that can't be played here (e.g. a YouTube video whose owner blocks embedding): only
+  the error card and "hold the phone upright", no big ⛶ "Watch fullscreen".
+
 **0.9.97.86 (card BH13-B: bug hunt on Shorts, players and the extension):**
 - [ ] With the extension installed but older than the site (an old zip), open a new room on a computer: the 3 first
   tips come first, the "new version of the extension" bubble only after them, by the Extension link.
@@ -503,7 +510,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   corner left of the video on a computer, and in the bar under the video on a phone; the Short itself stays clear.
 
 **0.9.97.83 (card PERF1b: the room's styles load only with the room):**
-- [ ] Open the home page on your phone and computer: it looks as before and shows a little sooner. Open a room (join
+- [ ] _(Covered by Next round items 1–8: any unstyled flash or changed look shows there.)_ Open the home page on your phone and computer: it looks as before and shows a little sooner. Open a room (join
   card, then in the room, a game, fullscreen, the phone's sheets): nothing flashes unstyled and nothing looks different.
   A different look anywhere means a rule went to the wrong file: tell the Planner the screen.
 
@@ -569,7 +576,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] In the Shorts view press ＋ Add, paste a Short's link and press "▶ Play now": it opens for everyone at once.
   Paste two links and press it again: the first plays, the second is in the queue. Type words and press it: the first
   Short found plays.
-- [ ] In the room view with a YouTube video, click the video, then press → and ←: the video jumps 5 s ahead / back on
+- [ ] _(Covered by Next round item 1.)_ In the room view with a YouTube video, click the video, then press → and ←: the video jumps 5 s ahead / back on
   your friend's screen too. Enter still opens the chat; in the chat box the arrows only move the cursor.
 
 **0.9.97.79 (card PERF1a: only the page's language is downloaded):**
@@ -589,7 +596,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.75 (card R3-3: ready for an own domain):**
-- [ ] Nothing new to see: everything stays on the same address. The switch-day steps (buy the domain, then two short
+- [ ] _(No hand test needed.)_ Nothing new to see: everything stays on the same address. The switch-day steps (buy the domain, then two short
   releases) are in `docs/internal/custom-domain.md`.
 
 **0.9.97.74 (🎮 card YTG: no game window over a YouTube video, computer):**

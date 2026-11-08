@@ -560,13 +560,16 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const turnText = el('p', { class: 'muted' });
   const turn = el('div', { class: 'ph-turn' }, turnFs, turnText);
   $('.room')?.append(turn);
+  // BH13: a video that can't be played here (the player's error card) has nothing to watch fullscreen.
+  const playerError = $('#player-error');
   const drawTurn = () => {
-    const playing = !!$('.room.has-item');
+    const playing = !!$('.room.has-item') && (!playerError || playerError.hidden);
     turnFs.hidden = !playing;
     turnText.textContent = t(playing ? 'phone.turn.or' : 'phone.turn.upright');
   };
   const roomBox = $('.room');
   if (roomBox) new MutationObserver(drawTurn).observe(roomBox, { attributes: true, attributeFilter: ['class'] });
+  if (playerError) new MutationObserver(drawTurn).observe(playerError, { attributes: true, attributeFilter: ['hidden'] });
   addEventListener('langchange', drawTurn);
   drawTurn();
   $('#dock-chat')?.addEventListener(

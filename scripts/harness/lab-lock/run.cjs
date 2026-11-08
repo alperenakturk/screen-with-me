@@ -7,10 +7,12 @@
 //   - on localhost `?debug=1` still opens it without any code (the harnesses rely on it).
 //
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var LAB_CODE:harness-lab-code)
-//   NODE_PATH=$(npm root -g) node scripts/harness/lab-lock/run.cjs [code]
+//   NODE_PATH=$(npm root -g) node scripts/harness/lab-lock/run.cjs [code | site address (then LAB_CODE or the default)]
 const { chromium } = require('playwright');
 
-const CODE = process.argv[2] || 'harness-lab-code';
+// run-all.sh passes the site's address first, like every other harness: that is not a code (BH13).
+const ARG = process.argv[2] || '';
+const CODE = ARG && !/^https?:\/\//.test(ARG) ? ARG : process.env.LAB_CODE || 'harness-lab-code';
 const PORT = 8787;
 const LIVE = `http://lab.test:${PORT}`;
 const LOCAL = `http://localhost:${PORT}`;

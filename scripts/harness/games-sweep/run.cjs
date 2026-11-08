@@ -295,12 +295,24 @@ async function windowPasses(page, label, g, phone) {
         }
         if (g.board) {
           const has = await page.evaluate((b) => document.querySelector(`#game-stage .cl-box[data-board="${b}"].on`) !== null, g.board);
-          if (!has) {
-            await page.evaluate(() => document.querySelector('#cl-shelf-open')?.click());
-            await wait(300);
+          // The picker step before may have left the picker open on a table that already has this board: its box then
+          // counts as chosen but the window still shows (and is sized for) the picker. A press on the box closes it.
+          const pickerOpen = await page.evaluate(() => document.querySelector('#game-stage .xox-page')?.dataset.board === 'picker');
+          let shown = false;
+          // A slow runner (CI) may not have drawn the picker 300 ms after "Change game", or a pass before may have left a
+          // game in progress ("End this game and change?"): try a few times, waiting for each step instead of a fixed time.
+          for (let tries = 0; tries < 4 && !shown; tries++) {
+            if (tries === 0 && has && !pickerOpen) { shown = true; break; }
+            const onPicker = await page.evaluate(() => document.querySelector('#game-stage .xox-page')?.dataset.board === 'picker');
+            if (!onPicker) await page.evaluate(() => document.querySelector('#game-stage #cl-shelf-open')?.click());
+            await page.waitForFunction((b) => !!document.querySelector(`#game-stage .cl-box[data-board="${b}"]`)?.offsetParent, g.board, { timeout: 4000 }).catch(() => {});
             await page.evaluate((b) => document.querySelector(`#game-stage .cl-box[data-board="${b}"]`)?.click(), g.board);
-            await wait(1200);
+            await wait(300);
+            await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .confirm-dialog .btn.primary')?.click());
+            shown = await page.waitForFunction((b) => document.querySelector('#game-stage .xox-page')?.dataset.board === b, g.board, { timeout: 4000 }).then(() => true, () => false);
           }
+          if (shown) await wait(600);
+          check(shown, `${label}: the ${g.board} board is on the table`);
         }
         if (g.play) {
           // Glowbeam's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):

@@ -22,6 +22,9 @@ games' tip jar, cuttings and badges.
 - Rooms: a short Wi-Fi drop no longer throws you out to the browser's "no internet" page; at worst the room reloads
   once by itself when the connection is back.
 
+### 0.9.97.87 — 8 Nov
+- A phone held sideways no longer offers "Watch fullscreen" next to a video that can't be played there.
+
 ### 0.9.97.86 — 8 Nov
 - The "a new version of the extension is out" bubble no longer lands on top of the first-time tips in a new room (it
   waits for them), and no longer points at nothing on a phone or a narrow window.
