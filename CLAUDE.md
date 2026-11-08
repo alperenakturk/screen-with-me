@@ -695,7 +695,7 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   `tv-lab.ts` so the room no longer loads `tv.ts` + the QR encoder), the invite window (`openInvite`; the option is
   `ui/invite-option.ts`), the first-time tips and `sticker-file` (emoji / chat image preparation). The room page went
   from JS 142.1 → 134.5 kB and CSS 35.7 → 34.0 kB gzipped. `scripts/size-budget.mjs` (CI, after the build) fails when
-  the room page's static JS / CSS pass their budgets (140 / 37 kB; the first PR that crosses 140 raises it to 145 and says why, the Planner's rule); `scripts/harness/phone-speed/run.cjs` opens the
+  the room page's static JS / CSS pass their budgets (145 / 38 kB since cards SZ and PERF1b, and every page's first stylesheet 12 kB; a PR that has to raise one says why in the script, the Planner's rule); `scripts/harness/phone-speed/run.cjs` opens the
   built site as a Pixel 7 with a 4× slower CPU and a 4G-like network (home, join card, in the room: medians 556 / 478 /
   369 ms in the cloud container; budget 1500 each). Voice, live and camera windows stay in the room chunk (tightly
   tied to it); a phone-only stylesheet was not worth it (most rules are shared). Test: `scripts/harness/phone/run.cjs` (71 checks).

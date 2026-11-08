@@ -17,7 +17,7 @@ list, big services, donations, going public), `BUYUME.md` (growth), `gelecek-fik
 - **English on GitHub, Turkish with the owner** (see `CLAUDE.md` "Language and GitHub conventions").
 - **Consistency:** one name, one vocabulary, one set of numbers across code, UI, policy and docs.
 
-## Focus: now / next / frozen (owner agreed, 2 Nov 2026)
+## Focus: now / next / frozen (owner agreed, 2 Nov 2026; table updated 8 Nov 2026)
 The task queue in `STATUS.md` had about twelve open items at once, and every new feature was built for two languages
 and four screen sizes at the same time. From now on work follows this list; anything not in "Now" waits.
 - **Core first, multipliers later:** a new feature is built and tested in English + Turkish strings as they come, on
@@ -30,13 +30,13 @@ and four screen sizes at the same time. From now on work follows this list; anyt
 
 | | Items (in this order) |
 |---|---|
-| **Now** (owner, 3 Nov 2026: "do all of 1–11, I test everything at the end") | The run order in `CARDS.md`: bugs → Sidelit 0.9.95 → feedback, Shorts, thanks, debug panel, cinema mode, design sweep, tablet, accessibility, security cards (lane A); side games + Vimeo / podcasts (lane B); then council review, security pass, bug hunt → owner's test round → official work (policy, KVKK, applications) → store submission |
-| **Next** (0.9.94) | Simplify the room (C + D) → Help / FAQ (EN + TR) + permission explainer → "Send feedback" (→ GitHub issues) → Shorts channel feed + Discover by country → Thanks page → debug panel → Shorts measurement → cinema mode → home page redesign → design bug sweep (cards 6–16 in `CARDS.md`) |
-| **Frozen** (not before 0.9.95) | Tablet layout, accessibility pass, camera window settings pass, new ideas and games |
-| **0.9.95 additions (owner, 2 Nov 2026)** | Side games: 🍿 Snack Bar (idle) → 🌱 Window Garden (cozy collection) → daily word game (EN + TR); then the move-to-device code. Accounts: none now (option A; passkey account only after 1.0 if users ask) |
+| **Now** (8 Nov 2026) | **The 0.9.98 gate** (`gate-0.9.98.md`): live e2e first-attempt green 3 deploys in a row, the owner's hand-test round on a real phone and computer, no open owner bug; then the owner says "0.9.98" |
+| **Next** | **0.9.99, feature complete:** only the cards already on the board (games, polish, the owner's test-round bugs); no new features after it |
+| **Then** | **1.0 work:** bug fixes and security, the store submission (Chrome, then Edge), own domain and support e-mail, legal (trademark, final policy and terms), launch content |
+| **Frozen** | New features and ideas (they go to "Ideas waiting for the owner's pick" in `STATUS.md`); the TV version (after 1.0, with Google Cast) |
 | **Version plan (owner, 3 Nov 2026)** | All current work lands by **0.9.99** (feature complete); 0.9.99 → 1.0 is bug fixes, security, KVKK / legal, design fixes and the official work; then the store submission. Cloudflare: Workers **Free** (paid only with income and users) |
 | **Name (owner, 3 Nov 2026)** | **Sidelit** from now on (card 6c); trademark + domain checks by the owner before 1.0 (`research/name-sidelit-check.md`) |
-| **Owner's decisions to make early** 👤 | Final name and domain (0.9.96 depends on them; a good case for a multi-advisor "council" decision session) |
+| **Owner's decisions to make early** 👤 | Final name, trademark and domain (the store listing and the own domain wait on them) |
 
 ## Milestone gates to 1.0 (owner's request, 2 Nov 2026: "be sure each version step is fully done")
 The owner's guide PDF (3rd edition, "1.0'a kadar kontrol rehberi") follows this. The third version part still moves

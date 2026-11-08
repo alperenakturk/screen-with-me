@@ -6,7 +6,15 @@ this repository as `v<version>` (from 0.9.97.70 on).
 
 Versions count in four parts before 1.0: the fourth part is a release, the third part moves for a bigger step.
 
-## 0.9.97 — 3 to 7 November 2026
+## 0.9.97 — 3 to 8 November 2026
+
+The step before 0.9.98: a door the host can open or close, private messages, two names in one browser told apart,
+the Test Lab (fake friends, scenarios, network tricks, locked behind the owner's code), the terms of use and a privacy
+policy rewritten for KVKK and GDPR, an uptime check, release tags and this changelog, four rounds of security fixes,
+cameras that behave on phones, a lighter and faster site (only your language and only the page's styles are
+downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row, Turkish dama, chess, backgammon,
+Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
+games' tip jar, cuttings and badges.
 
 ### 0.9.97.84 — 8 Nov
 - Shorts: a "waiting for someone" note (or a game invite) no longer covers the Short you're watching; it waits in the
