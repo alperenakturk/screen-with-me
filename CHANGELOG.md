@@ -8,6 +8,11 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.79 — 8 Nov
+- Faster pages: every page now downloads only the language it shows, so English pages are about 19 kB lighter and
+  Turkish pages fetch their texts before they draw. The app icons and the link preview image are 10–25 % smaller with
+  exactly the same pixels.
+
 ### 0.9.97.78 — 8 Nov
 - Behind the scenes: a room saves the counters behind "Today's recap" (emojis, pauses, jumps) at most every 30 seconds
   instead of on every press, so a lively evening costs far fewer storage writes. The recap still counts everything.

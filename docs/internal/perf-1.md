@@ -110,6 +110,12 @@ recap e2e checks that a burst of emojis and messages counts in full, also after 
 - Subsetting the font: it already serves the home headings and game covers; saving it means fewer letters for future copy.
 - Inlining critical CSS: win 2 gets most of it without a build step.
 
+**Built (PERF1a + win 5, 0.9.97.79):** English stays in the main chunk and Turkish is `i18n-tr.ts`, loaded before the
+first frame when the saved language is Turkish; the room page's static JS is **124.3 kB** gzipped (was 143.2; budget
+145). Lossless PNG re-compression is `scripts/png-squeeze.mjs` (best row filter, deflate 9, pixels compared before
+writing): icon-512 158 → 119 kB, icon-192 28 → 24 kB, maskable 154 → 119 kB, `og.png` 204 → 175 kB, the store images
+3–24 % smaller.
+
 ## 6. Built in this card
 
 - `scripts/harness/perf/run.cjs`: the phone + laptop timing and weight table above, re-runnable for the next pass (`PERF2`).
