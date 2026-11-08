@@ -87,6 +87,15 @@ interface GateState {
  * day. One instance (`gate`); its state is small (at most a day's worth of hashes, pruned to the last hour).
  */
 export class FeedbackGate extends DurableObject<Env> {
+  /** Card UPTIME2: the uptime check's small book (the open outage issue, since when down); see uptime.ts. */
+  async uptimeBook(): Promise<unknown> {
+    return (await this.ctx.storage.get('uptime')) ?? null;
+  }
+
+  async saveUptimeBook(book: { issue: number | null; downSince: number | null }): Promise<void> {
+    await this.ctx.storage.put('uptime', { issue: book.issue, downSince: book.downSince });
+  }
+
   override async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
     if ((path !== '/take' && path !== '/give') || request.method !== 'POST') return new Response('Not found', { status: 404 });

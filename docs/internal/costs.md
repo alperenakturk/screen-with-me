@@ -32,7 +32,8 @@ Docs: https://developers.cloudflare.com/workers/platform/limits/ · https://deve
 | Stored data | 5 GB for the account | see "Storage per room" | new writes fail (rooms can't save state, images, chat) until old rooms are deleted |
 
 Objects we run (12 classes): `Room` (one per room), `Game`, `Draw`, `Quiz`, `Poker`, `Sea` (one per table), `TvLink`
-(also one throw-away object per `/api/version` call, used by the deploy's wait and the uptime check), `FeedbackGate`,
+(also one throw-away object per `/api/version` call, used by the deploy's wait and both uptime checks), `FeedbackGate`
+(also keeps the Worker uptime check's small book: the open outage issue, since when down),
 `MoveLink`, `YoutubeUsage`, `IpKeys`, `UploadGate` (one each).
 
 Docs: https://developers.cloudflare.com/durable-objects/platform/pricing/ · https://developers.cloudflare.com/durable-objects/platform/limits/
@@ -71,8 +72,9 @@ APIs & Services → YouTube Data API v3 → Quotas.
 | --- | --- | --- | --- |
 | Actions minutes | free for standard runners on a public repository | CI on every PR, deploy + live e2e on main, the uptime check every 30 min (≈ 1 min each, 48 a day) | — |
 | Concurrent jobs | 20 on the free plan | PR runs of several sessions at once | jobs queue, nothing fails |
-| Scheduled workflows | GitHub turns a schedule off after 60 days without any activity in the repository | the uptime check | it stops checking; any push turns it back on (GitHub also e-mails a warning) |
+| Scheduled workflows | **best-effort**: GitHub starts them late or drops them (8 Nov 2026: 1 run of ≈ 12 planned in 6 hours), and turns a schedule off after 60 days without any activity in the repository | the outside uptime check (`monitor.yml`), kept only as a backup | it checks rarely or not at all; the Worker's own cron (below) is the one to rely on |
 | `GITHUB_TOKEN` API calls | 1000 an hour per repository | the uptime check's issue calls (≤ 3 a run), the tag job | — |
+| Worker uptime issues | at most one GitHub call per cron run (open / edit / close one `outage` issue), with the feedback token in the private feedback repository | the Worker's uptime cron (card UPTIME2) | — |
 | Feedback issues | our own cap: `FEEDBACK_PER_DAY` 50 a day, 3 per address an hour | "Send feedback" (a fine-grained token, private repository) | the form says "try again later" |
 
 ## Today's usage
@@ -83,7 +85,15 @@ This session can't read Cloudflare's or Google's dashboards (no account token he
 - **YouTube:** the e2e search check spends ≈ 101 units per deploy (cached when the words repeat); the owner reads the
   real numbers with the usage call above.
 - **GitHub Actions:** free (public repository).
-- **Uptime check:** 48 runs a day, each ≤ 2 page loads, 2 `/api/version` calls and 2 room joins (only on a retry);
+- **Worker uptime check (card UPTIME2, the one to rely on):** Cloudflare cron trigger every 15 minutes (96 runs a day;
+  cron triggers are free on Workers Free), each in-process: the home page through the `ASSETS` binding, `/api/version`
+  (one throw-away `TvLink`) and `/api/rooms/uptime-check/info` (the same one-time room); a failure is checked again a
+  minute later. Each run is a few ms of CPU, well under the limit. Results: one `outage` issue in the private feedback
+  repository (`FEEDBACK_GITHUB_TOKEN` + `FEEDBACK_REPO`, the owner watches it), opened on a repeated failure, edited
+  while down, closed when back; never more than one GitHub call a run; without the token only a log line. **Honest
+  limit:** it runs inside Cloudflare, so it cannot see an outage of Cloudflare itself (the Worker would not run), nor
+  a network that cannot reach workers.dev; for those, `monitor.yml` below and https://www.cloudflarestatus.com.
+- **Outside uptime check (`monitor.yml`, backup):** planned 48 runs a day (best-effort, see above), each ≤ 2 page loads, 2 `/api/version` calls and 2 room joins (only on a retry);
   it always joins the same one-time room `uptime-check` with the same browser id, so it keeps one small room alive and
   stays far below every per-address limit (`CONNECT_LIMIT` and `ROOM_INFO_LIMIT` are 60 a minute).
 
@@ -106,5 +116,6 @@ totals against the free plan.
 2. **Cloudflare health:** Notifications → "Workers: error rate" (if offered on Free) for a spike in 5xx answers.
 3. **Google Cloud budget / quota alert:** console.cloud.google.com → Monitoring → Alerting → a policy on "YouTube Data
    API quota usage" above 80 %, or simply check the Quotas page weekly.
-4. **GitHub:** watch the repository (Watch → Custom → Issues) so the `outage` issue from the uptime check reaches the
+4. **GitHub:** watch the private feedback repository (Watch → Custom → Issues) for the Worker uptime check's `outage`
+   issue, and this repository for the outside check's; then the `outage` issue reaches the
    owner's e-mail / phone.
