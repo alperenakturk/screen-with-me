@@ -8,6 +8,12 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.80 — 8 Nov
+- Shorts: the "＋ Add" window has "▶ Play now" beside "Add": a pasted Short (or the first one a search finds) opens
+  for everyone at once; with several links the first plays and the rest join the queue.
+- Room view: ← / → move the video 5 seconds back / ahead for everyone (as a jump in the player does; rooms where only
+  the host controls the video keep that rule). Enter still opens the chat. Listed in the keyboard shortcuts card.
+
 ### 0.9.97.77 — 8 Nov
 - Podcasts: a show with a very large feed (thousands of episodes) now opens as fast as any other; the server reads
   only the first 200 episodes of a feed, where the newest ones are.

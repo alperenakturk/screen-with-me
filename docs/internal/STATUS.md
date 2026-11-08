@@ -508,6 +508,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.80 (card YTK: "Play now" in the Shorts add window, ← / → in the room view):**
+- [ ] In the Shorts view press ＋ Add, paste a Short's link and press "▶ Play now": it opens for everyone at once.
+  Paste two links and press it again: the first plays, the second is in the queue. Type words and press it: the first
+  Short found plays.
+- [ ] In the room view with a YouTube video, click the video, then press → and ←: the video jumps 5 s ahead / back on
+  your friend's screen too. Enter still opens the chat; in the chat box the arrows only move the cursor.
+
 **0.9.97.77 (cards PERF1 + PERF1c: speed pass, big podcast feeds):**
 - [ ] Search a podcast with a very long history in the link box (🎧 Podcasts) and open the show: its newest
   episodes list as quickly as any other show's.
