@@ -491,6 +491,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.90 (🎮 card LABWAKE: the Test Lab's server powers survive a quiet table):**
+- Nothing to test by hand: only the local test server changes (live refuses lab messages as before).
+
 **0.9.97.89 (card OFFLINE2: a lost internet behind a connected Wi-Fi no longer throws the room away):**
 - [ ] On your phone, join a room over your phone's hotspot from a second device (or a laptop on that hotspot). Move
   the phone with the hotspot somewhere with no signal for ~20 s while the laptop's Wi-Fi stays "connected", then open
