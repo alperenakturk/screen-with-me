@@ -178,6 +178,10 @@ jobs:
       - name: Lazy chunks and their gates
         run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
 
+      # Card PERF1a: only the page's language is downloaded (Turkish is its own chunk, in before the first frame).
+      - name: One language per page
+        run: node scripts/harness/lang-chunk/run.cjs http://localhost:8787
+
       # Card R3-3: an older address of the site moves to the main one and carries the browser's saves once
       # (its own build with a two-address test config; no server needed).
       - name: Moving to an own domain
@@ -269,7 +273,9 @@ jobs:
     # `needs.test.result` keeps "deploy only when the tests passed".
     if: ${{ !cancelled() && needs.test.result == 'success' && needs.changes.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 25, not 15: the live e2e alone took 13.6 min on 0.9.97.76 (ghost.mjs waits 90 s of silence per game, drop.mjs
+    # 130 s), so one file's retry pushed 0.9.97.77's job past 15 min and it was cancelled before "mark the version live".
+    timeout-minutes: 25
     # Security R4-5: the deploy runs in the `production` environment. Its secrets (Cloudflare, YouTube, feedback, usage)
     # can live there instead of the repository, so no other job or branch can read them. Repository secrets still reach
     # it until the owner moves them; GitHub creates the environment on first use if it doesn't exist yet.

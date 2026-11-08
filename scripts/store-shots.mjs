@@ -8,11 +8,12 @@
 // styles.css'ini kullanır ve oradaki /themes/…, /avatars/… gibi kök adresler apps/web/public'ten gelir.
 
 import { execFile } from 'node:child_process';
-import { copyFileSync, existsSync, readFileSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { squeezePng } from './png-squeeze.mjs';
 
 const root = new URL('../', import.meta.url);
 const store = new URL('store/', root);
@@ -79,6 +80,9 @@ for (const [shot, file, w, h] of shots) {
     `--screenshot=${path(new URL(file, store))}`,
     `${page}?shot=${shot}`,
   ]);
+  // Card PERF1 win 5: the same pixels, smaller (the link preview og.png is fetched by every chat app that shows a link).
+  const out = new URL(file, store);
+  writeFileSync(out, squeezePng(readFileSync(out)));
   console.log(`✓ store/${file}`);
 }
 server.close();

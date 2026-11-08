@@ -508,6 +508,19 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.79 (card PERF1a: only the page's language is downloaded):**
+- [ ] Open the site in Turkish (TR in the top bar, then reload): everything is Turkish from the first moment, nothing
+  flashes in English first. Switch to EN and back to TR: both switches are instant.
+- [ ] Share a room link in WhatsApp: the preview picture looks the same as before.
+
+**0.9.97.78 (card PERF1e: the recap's counters saved every 30 s):**
+- [ ] In a room with a friend, send a lot of emojis and pause / play a few times, then open 👤 → Today's recap: your
+  emojis and pauses are all counted. Both leave, come back a minute later: the recap still has them.
+
+**0.9.97.77 (cards PERF1 + PERF1c: speed pass, big podcast feeds):**
+- [ ] Search a podcast with a very long history in the link box (🎧 Podcasts) and open the show: its newest
+  episodes list as quickly as any other show's.
+
 **0.9.97.76 (🎮 card GHOST: game tables notice a dead connection):**
 - [ ] Play Draw & Guess or the Quiz with a friend on a phone; the friend turns the phone's Wi-Fi and mobile data off
   mid-game. About a minute and a half later the friend shows offline at your table, and the game goes back to the

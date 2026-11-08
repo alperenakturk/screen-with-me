@@ -1,7 +1,7 @@
 // Sitenin asıl başlangıcı (main.ts, ayarlar eklentiyle eşitlendikten sonra bunu yükler).
 import { createLogo } from '@swm/shared/logo';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
-import { lang, setLang, translate, type Lang } from './i18n.ts';
+import { lang, setLang, translate, warmLang, type Lang } from './i18n.ts';
 import { applyTheme, currentTheme, openThemeDialog, warmThemePreviews } from './themes.ts';
 import { readTvLabSwitch, tvLab } from './tv-lab.ts';
 import { checkExtensionVersion } from './ext-update.ts';
@@ -40,9 +40,12 @@ function markLang(): void {
 }
 for (const button of langButtons) {
   button.addEventListener('click', () => {
-    setLang(button.dataset.lang as Lang);
-    markLang();
+    void setLang(button.dataset.lang as Lang).then(markLang);
   });
+  // PERF1a: the other language is its own chunk; fetch it while the pointer or the focus is on its button.
+  const warm = (): void => warmLang(button.dataset.lang as Lang);
+  button.addEventListener('pointerenter', warm);
+  button.addEventListener('focus', warm);
 }
 markLang();
 
