@@ -502,8 +502,9 @@ check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'p
   // whole tab (an island over everything), and Esc brings the window back.
   await a.evalFrame('shell=1', `document.querySelector('#game-stage .game-full')?.click(); 1`);
   const maxed = await until(() => a.evalFrame('shell=1', `(() => { const s = document.getElementById('game-stage'); const r = s.getBoundingClientRect(); return s.classList.contains('game-max') && r.width >= innerWidth - 1 && r.height >= innerHeight - 1; })()`));
-  // The game scales up a frame later (its fit): wait for the scene to grow.
-  const bigScene = maxed && (await until(async () => { const b = await a.evalFrame('shell=1', `__swmBox('.sb-scene')`); return b && b.r - b.x > (scene.r - scene.x) * 1.2 ? b : null; }));
+  // The game scales up a frame later (its fit): wait for the scene to grow. How much depends on how big the window
+  // already was (a window opened at ×1.3 grows only ≈ ×1.1 on a 1280 × 860 tab), so any growth counts (BH13-G).
+  const bigScene = maxed && (await until(async () => { const b = await a.evalFrame('shell=1', `__swmBox('.sb-scene')`); return b && b.r - b.x > (scene.r - scene.x) * 1.04 ? b : null; }));
   const wide = !!bigScene && (await until(() => seen(bigScene)));
   check(!!maxed && !!wide, 'film sayfası: ⛶ oyunu bütün sekmeye açıyor (filmin üstünde bir adacık) (GW)', JSON.stringify({ maxed, bigScene, scene, clip: clipRects(await a.evaluate(SHELL_CLIP)).slice(0, 4) }));
   await a.shot('1h-game-full');

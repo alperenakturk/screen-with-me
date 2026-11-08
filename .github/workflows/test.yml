@@ -233,6 +233,8 @@ jobs:
           node scripts/harness/table-how/run.cjs http://localhost:8787
           # GP2: the one result card (Classics; Sea's in the sea harness) and Glowbeam the referee's reactions.
           node scripts/harness/game-result/run.cjs http://localhost:8787
+          # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
+          OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
 
       # Card YTG: over a YouTube video a game's window stays clear of the player (three sizes, a drag, fullscreen).
       - name: Games beside a YouTube video

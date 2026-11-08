@@ -16,7 +16,13 @@ if (isShell) document.documentElement.classList.add('shell');
 // Yeni sürüm yüklenince eski parça dosyaları (oda, oyunlar…) sunucudan silinir. Eski sayfa (açık kalmış sekme,
 // önbellekteki sayfa) bir parçayı bulamazsa oda hiç açılmıyordu: sayfa bir kez kendiliğinden yenilenir (döngü olmasın
 // diye en fazla 30 sn'de bir).
-function reloadForNewVersion(): void {
+function reloadForNewVersion(reason?: unknown): void {
+  // Offline, a chunk that didn't load is the network, not a new version: a reload now would only show the browser's
+  // offline page (BH13-G: an 8 s drop mid-game threw the whole room away). It is tried again once we are back online.
+  if (!navigator.onLine) {
+    missedOffline.add(chunkUrl(reason));
+    return;
+  }
   const key = 'swm-stale-reload';
   let last = 0;
   try {
@@ -27,13 +33,33 @@ function reloadForNewVersion(): void {
   }
   if (Date.now() - last > 30_000) location.reload();
 }
+/** Chunks that failed while offline ('' = address unknown). */
+const missedOffline = new Set<string>();
+/** The chunk's address in a failed import's message, if it names one. */
+function chunkUrl(reason: unknown): string {
+  const text = String((reason as Error | undefined)?.message ?? reason ?? '');
+  return text.match(/(?:https?:\/\/[^\s'"]+|\/assets\/[^\s'"]+?)\.(?:js|css)\b/)?.[0] ?? '';
+}
+// Back online: fetch the missed chunks again; only if one still fails (or can't be named) does the page reload, so a
+// chunk missed during a drop never leaves a dead button. (Chrome keeps a failed module import for the page's life, so
+// there it reloads once, into the working room; other browsers may load it again in place.)
+addEventListener('online', () => {
+  if (!missedOffline.size) return;
+  const urls = [...missedOffline];
+  missedOffline.clear();
+  setTimeout(() => {
+    const retry = (url: string): Promise<unknown> =>
+      !url ? Promise.reject(new Error('unknown chunk')) : url.endsWith('.css') ? fetch(url).then((r) => (r.ok ? r : Promise.reject(new Error(String(r.status))))) : import(/* @vite-ignore */ url);
+    Promise.all(urls.map(retry)).catch(() => reloadForNewVersion());
+  }, 1000);
+});
 addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
-  reloadForNewVersion();
+  reloadForNewVersion((event as Event & { payload?: unknown }).payload);
 });
 addEventListener('unhandledrejection', (event) => {
   const message = String((event.reason as Error | undefined)?.message ?? event.reason ?? '');
-  if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(message)) reloadForNewVersion();
+  if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(message)) reloadForNewVersion(event.reason);
 });
 
 /**

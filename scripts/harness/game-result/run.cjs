@@ -134,6 +134,16 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
       await alex.page.evaluate((k) => window.__swmLab.run(`${k}.referee`), kind);
       const said = await until(() => alex.page.evaluate(() => { const r = document.querySelector('#game-stage .rf'); return r && !r.hidden ? { text: r.querySelector('.rf-say')?.textContent ?? '', mood: r.dataset.mood, glow: !!r.querySelector('.rf-glow svg') } : null; }));
       check(said && said.text.length > 0 && said.text.length <= 40 && said.mood === 'cheer' && said.glow, `${label} ${kind}: Glowbeam the referee says a short line`, said);
+      // BH13-G: his corner never covers a control (Draw & Guess's corner was the chat's Send button).
+      const under = await alex.page.evaluate(() => {
+        const r = document.querySelector('#game-stage .rf')?.getBoundingClientRect();
+        if (!r) return ['no referee'];
+        return [...document.querySelectorAll('#game-stage button, #game-stage input')].filter((b) => {
+          const c = b.getBoundingClientRect();
+          return c.width && c.height && !b.closest('[hidden]') && c.left < r.right && c.right > r.left && c.top < r.bottom && c.bottom > r.top;
+        }).map((b) => b.id || b.className || b.textContent.trim());
+      });
+      check(under.length === 0, `${label} ${kind}: Glowbeam's line covers no button or box`, under.join(', '));
       check(!!(await until(() => alex.page.evaluate(() => document.querySelector('#game-stage .rf')?.hidden), 5000)), `${label} ${kind}: his line goes away by itself`);
       // Alex answers / guesses nothing; the lab ends each phase until the podium.
       const over = await until(async () => {
@@ -199,6 +209,15 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
     await alex.page.evaluate(() => window.__swmLab.run('poker.referee'));
     const said = await until(() => alex.page.evaluate(() => { const r = document.querySelector('#game-stage .rf'); return r && !r.hidden ? { text: r.querySelector('.rf-say')?.textContent ?? '', mood: r.dataset.mood } : null; }));
     check(said && said.text.length > 0 && said.text.length <= 40 && said.mood === 'gasp', `${label} poker: Glowbeam the referee says a short line`, said);
+    const under = await alex.page.evaluate(() => {
+      const r = document.querySelector('#game-stage .rf')?.getBoundingClientRect();
+      if (!r) return ['no referee'];
+      return [...document.querySelectorAll('#game-stage button, #game-stage input')].filter((b) => {
+        const c = b.getBoundingClientRect();
+        return c.width && c.height && !b.closest('[hidden]') && c.left < r.right && c.right > r.left && c.top < r.bottom && c.bottom > r.top;
+      }).map((b) => b.id || b.className || b.textContent.trim());
+    });
+    check(under.length === 0, `${label} poker: Glowbeam's line covers no button or box`, under.join(', '));
     await alex.page.evaluate(() => window.__swmLab.run('poker.end'));
     const card = (page) => page.evaluate(() => {
       const l = document.querySelector('#game-stage .gr-layer');
