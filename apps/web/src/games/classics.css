@@ -340,3 +340,5 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 @media (prefers-reduced-motion: reduce) {
   #game-stage .mt .mt-table:not([hidden]), #game-stage .mt .cl-picker:not([hidden]) { animation: none; }
 }
+/* CLFLASH: until the table's state came (a reload, a slow line), a quiet line instead of a board it may not have. */
+#game-stage .xox-page.mt > .mt-loading { flex: 1; display: grid; place-items: center; margin: 0; font-size: 15px; }
