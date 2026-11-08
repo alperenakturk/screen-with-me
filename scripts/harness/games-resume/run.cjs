@@ -167,8 +167,12 @@ async function move(page, board) {
       back = await until(() => page.evaluate(() => !!document.querySelector('#game-stage #xox-board')), 6000);
     }
     check(!!back, `${board}: after a reload mid-game the table comes back`);
-    const after = await until(boardSig.bind(null, page));
+    // The table draws its first frame before the server's state arrives (a slow CI runner showed the empty first frame):
+    // wait for the board to come back rather than reading the first one drawn.
+    await until(async () => (await boardSig(page)) === before, 8000);
+    const after = await boardSig(page);
     check(after === before, `${board}: … with the same board`, after === before ? '' : `${(after ?? '').slice(0, 80)} vs ${before?.slice(0, 80)}`);
+    await until(() => page.evaluate(() => /Robin/.test(document.querySelector('#game-stage #seat-0')?.textContent ?? '')), 4000);
     const seat = await page.evaluate(() => document.querySelector('#game-stage #seat-0')?.textContent ?? '');
     check(/Robin/.test(seat), `${board}: … and I keep my seat`, seat);
     await ctx.close();
