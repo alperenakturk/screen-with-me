@@ -459,6 +459,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.83 (card PERF1b: the room's styles load only with the room):**
+- [ ] Open the home page on your phone and computer: it looks as before and shows a little sooner. Open a room (join
+  card, then in the room, a game, fullscreen, the phone's sheets): nothing flashes unstyled and nothing looks different.
+  A different look anywhere means a rule went to the wrong file: tell the Planner the screen.
+
 **0.9.97.60 (privacy card H3 + M7: the privacy policy for KVKK + GDPR):**
 - [ ] Read the new privacy page (footer → Privacy, Turkish and English): you are named as the data controller with
   screenwithme.app@gmail.com, age 13+ (under 16 with a parent's permission), and the join screen's names are explained.

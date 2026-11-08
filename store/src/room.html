@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   Mağaza görüntüleri için oda taklidi: film sayfasının üstünde eklentinin açtığı katman (kabuk)
-  sitenin oda sayfasının kendisi olduğu için burada da sitenin gerçek styles.css'i ve
+  sitenin oda sayfasının kendisi olduğu için burada da sitenin gerçek styles.css'i + room.css'i ve
   room.ts'teki işaretleme kullanılır, içerik sabittir. Film videosu odanın oynatıcı deliğinde
   çizilmiş bir manzara (telifli görüntü yok). shots.html bunu iframe'de, küçültülmüş açar.
 
@@ -12,6 +12,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="/apps/web/src/styles.css" />
+    <!-- The room's own styles (card PERF1b: they load with the room chunk on the site). -->
+    <link rel="stylesheet" href="/apps/web/src/room.css" />
     <style>
       /* Kaydırma çubuğu ve imleç görüntüde olmasın; animasyonlar ilk karede dursun. */
       html { scrollbar-width: none; }
