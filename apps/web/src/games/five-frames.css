@@ -84,11 +84,17 @@
 .ff-row.hop .ff-cell { animation: ff-hop 0.12s ease-out both; animation-delay: calc(var(--i, 0) * 60ms); }
 @keyframes ff-hop { 50% { transform: translateY(-6px); } }
 
-.ff-result { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.ff-result { flex: none; display: flex; align-items: center; gap: 8px; min-height: 30px; }
 .ff-message { flex: 1; margin: 0; font-size: 15px; font-weight: 700; color: var(--ff-cream); line-height: 1.25; }
 .ff-message:empty { display: none; }
 .ff-message.flash { color: var(--ff-gold); }
-.ff-share { min-height: 36px; padding: 4px 12px; border-radius: 8px; border: 0; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 15px; white-space: nowrap; }
+.ff-share { display: inline-grid; flex: none; min-height: 36px; padding: 4px 12px; border-radius: 8px; border: 0; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 15px; white-space: nowrap; }
+/* FF2: both labels in one cell: the button keeps the longer label's width in both states. */
+.ff-share > span { grid-area: 1 / 1; text-align: center; }
+.ff-share:not(.copied) .ff-share-done,
+.ff-share.copied .ff-share-label { visibility: hidden; }
+.ff-msg-line { display: block; line-height: 1.15; text-wrap: balance; }
+.ff-msg-next { margin-top: 1px; font-size: 13px; font-weight: 600; color: var(--ff-muted); }
 .ff-share[hidden] { display: none; }
 .ff-legend { flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 13px; color: var(--ff-muted); white-space: nowrap; }
 .ff-legend[hidden] { display: none; }

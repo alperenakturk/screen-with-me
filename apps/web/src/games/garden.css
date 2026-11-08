@@ -28,6 +28,8 @@
 .wg-bar { display: flex; align-items: center; gap: 6px; min-height: 28px; min-width: 0; }
 .wg-gap { flex: 1 1 0; min-width: 0; }
 .wg-pill { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--wg-muted); }
+/* GW: while the film plays the state pill is just ▶; it never shrinks into "…". */
+.wg-state { flex: none; }
 .wg-state.on { background: var(--wg-leaf); color: #0d2a20; }
 .wg-seeds { font-size: 13px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 

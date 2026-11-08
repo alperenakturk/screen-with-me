@@ -747,6 +747,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     shelfButton.replaceChildren(el('span', { 'aria-hidden': 'true' }, '🎲'), el('span', { class: 'cl-change-text' }, ` ${tc('change')}`));
     shelfButton.title = tc('changeTitle');
     shelfButton.setAttribute('aria-label', tc('change'));
+    shelfButton.setAttribute('aria-label', tc('change'));
     shelf.hidden = !classics || !shelfOpen;
     app.querySelector<HTMLElement>('.mt-table')!.hidden = !shelf.hidden;
     if (!shelf.hidden) drawShelf();

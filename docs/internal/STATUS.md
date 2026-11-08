@@ -508,6 +508,15 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.81 (🎮 cards FF2 + GW: game window sizes, ⛶ in every game, Five Frames' result):**
+- [ ] Open any game and shrink its window from the corner: it stops before the text gets small; grow it: the game gets
+  bigger in proportion and stops at a sensible size.
+- [ ] Press ⛶ in a game's head: the game alone fills the screen at a good size; Esc (or ⛶ again) brings the window back
+  where it was. Try it with a YouTube video playing, and on a film page (there it fills the tab).
+- [ ] Finish Five Frames in Turkish: two lines ("2/7 denemede buldun! 🎉" / "Yeni kelime: 21 sa 10 dk sonra"), and
+  "📋 Kopyala" → "Kopyalandı ✓" keeps the same width.
+- [ ] Snack Bar / Window Garden in Turkish while a film plays: nothing in their top row ends in "…".
+
 **0.9.97.80 (card YTK: "Play now" in the Shorts add window, ← / → in the room view):**
 - [ ] In the Shorts view press ＋ Add, paste a Short's link and press "▶ Play now": it opens for everyone at once.
   Paste two links and press it again: the first plays, the second is in the queue. Type words and press it: the first

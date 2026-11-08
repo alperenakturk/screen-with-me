@@ -499,16 +499,18 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
 
   function draw(): void {
     const ctx = room();
-    state.textContent = ctx.playing ? t('growing') : t('paused');
+    // GW play-through: in Turkish "▶ Büyüyor" left the seed count cut to "🌰…": while the film plays the pill is just ▶.
+    state.textContent = ctx.playing ? '▶' : t('paused');
+    state.setAttribute('aria-label', ctx.playing ? t('growing') : t('paused'));
     state.classList.toggle('on', ctx.playing);
-    state.title = t('restingTitle');
+    state.title = ctx.playing ? t('growing') : t('restingTitle');
     albumCount.textContent = `📖 ${t('album', { n: found(garden), all: ALBUM_IDS.length })}`;
     weather();
-    const seedText = RARITIES.filter((r) => garden.seeds[r] > 0).map((r) => `${r === 'common' ? '🌰' : r === 'uncommon' ? '🌰✦' : '🌰✦✦'}${garden.seeds[r]}`);
-    if (garden.colorSeeds.length) seedText.push(`🌈${garden.colorSeeds.length}`);
-    if (garden.giftSeeds.length) seedText.push(`🎁${garden.giftSeeds.length}`);
-    seedsLine.textContent = seedText.length ? seedText.join(' ') : '🌰 0';
-    seedsLine.title = `${t('seeds')}: ${RARITIES.map((r) => `${rarityName(r)} ${garden.seeds[r]}`).join(' · ')}`;
+    // GW play-through: one count per kind ("🌰2 🌰✦1 🌈1 🎁1") no longer fit beside the album in a 400 px window: the head
+    // shows the total, its tooltip (and the seed buttons on an empty pot) the kinds.
+    const seedCount = RARITIES.reduce((n, r) => n + garden.seeds[r], 0) + garden.colorSeeds.length + garden.giftSeeds.length;
+    seedsLine.textContent = `🌰 ${seedCount}`;
+    seedsLine.title = `${t('seeds')}: ${RARITIES.map((r) => `${rarityName(r)} ${garden.seeds[r]}`).join(' · ')}${garden.colorSeeds.length ? ` · 🌈 ${garden.colorSeeds.length}` : ''}${garden.giftSeeds.length ? ` · 🎁 ${garden.giftSeeds.length}` : ''}`;
     box.classList.toggle('wg-idle', !ctx.playing);
     decorButton.title = t('decor');
     decorButton.setAttribute('aria-label', t('decor'));

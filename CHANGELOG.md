@@ -8,6 +8,13 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.81 — 8 Nov
+- Games: every game window has a clear smallest and largest size: it can't be shrunk until its text is unreadable, and
+  grown past its own size it shows the game bigger. A new ⛶ in every game's head puts the game alone on the whole screen
+  (on a video page it fills the tab; Esc brings the window back). Five Frames' result is two tidy lines ("A new word in
+  21 h 10 min"; in Turkish "21 sa 10 dk") and its copy button no longer changes size. Snack Bar and Window Garden no
+  longer cut their labels short.
+
 ### 0.9.97.80 — 8 Nov
 - Shorts: the "＋ Add" window has "▶ Play now" beside "Add": a pasted Short (or the first one a search finds) opens
   for everyone at once; with several links the first plays and the rest join the queue.

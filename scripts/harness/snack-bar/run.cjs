@@ -135,7 +135,7 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
 
   // The sync test plays: income comes, with the together bonus for Sam.
   await alex.evaluate(() => document.getElementById('sync-test')?.click());
-  const playing = await until(() => alex.evaluate(() => /Film on/.test(document.querySelector('.sb-state').textContent)), 10000);
+  const playing = await until(() => alex.evaluate(() => document.querySelector('.sb-state').classList.contains('on') && /Film on/.test(document.querySelector('.sb-state').getAttribute('aria-label'))), 10000);
   check(!!playing, 'the pill turns to "Film on" when the room plays');
   check(await alex.evaluate(() => document.querySelector('.sb-rest').hidden), 'the "closed" sign goes away while the film plays');
   check(/\+10 %/.test(await text(alex, '.sb-together')), 'together bonus +10 % with one other person', await text(alex, '.sb-together'));

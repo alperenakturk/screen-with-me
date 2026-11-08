@@ -498,6 +498,17 @@ check(!!trayBox && !!(await until(async () => !(await islandOver(trayBox)))), 'p
   const scene = await until(() => a.evalFrame('shell=1', `(() => { document.querySelector('.htp:not([hidden]) .htp-skip')?.click(); return __swmBox('.sb-scene'); })()`), 10000);
   check(!!scene && !!(await until(() => seen(scene))), 'film sayfası: Snack Bar penceresi filmin üstünde görünüyor (EXT1)', JSON.stringify(scene));
   await a.shot('1g-snack-bar');
+  // Card GW: ⛶ in the game's head works on the film page too: no Fullscreen API in the overlay, so the game fills the
+  // whole tab (an island over everything), and Esc brings the window back.
+  await a.evalFrame('shell=1', `document.querySelector('#game-stage .game-full')?.click(); 1`);
+  const maxed = await until(() => a.evalFrame('shell=1', `(() => { const s = document.getElementById('game-stage'); const r = s.getBoundingClientRect(); return s.classList.contains('game-max') && r.width >= innerWidth - 1 && r.height >= innerHeight - 1; })()`));
+  // The game scales up a frame later (its fit): wait for the scene to grow.
+  const bigScene = maxed && (await until(async () => { const b = await a.evalFrame('shell=1', `__swmBox('.sb-scene')`); return b && b.r - b.x > (scene.r - scene.x) * 1.2 ? b : null; }));
+  const wide = !!bigScene && (await until(() => seen(bigScene)));
+  check(!!maxed && !!wide, 'film sayfası: ⛶ oyunu bütün sekmeye açıyor (filmin üstünde bir adacık) (GW)', JSON.stringify({ maxed, bigScene, scene, clip: clipRects(await a.evaluate(SHELL_CLIP)).slice(0, 4) }));
+  await a.shot('1h-game-full');
+  await a.evalFrame('shell=1', `dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); 1`);
+  check(!!(await until(() => a.evalFrame('shell=1', `!document.getElementById('game-stage').classList.contains('game-max')`))), 'film sayfası: Esc oyunu yeniden pencereye döndürüyor (GW)');
   await a.evalFrame('shell=1', `document.querySelector('#game-stage .game-minimize')?.click(); 1`);
   await a.sleep(500);
 }
