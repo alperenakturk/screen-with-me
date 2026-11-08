@@ -11014,7 +11014,13 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
 
 /* ==== 0.9.91.12: Shorts search in the Shorts bar's "＋ Ekle" box (ui/shorts-search.ts) ==== */
 .shorts-add-pop {
-  width: min(360px, calc(100vw - 24px));
+  width: min(400px, calc(100vw - 24px));
+}
+
+/* Card YTK: "▶ Play now" beside "Add"; neither button wraps its words. */
+.shorts-add-pop .feed-topic-row .btn {
+  flex: none;
+  white-space: nowrap;
 }
 
 /* The player's "can't be played here" note in the Shorts view (0.9.93.1): a small card in the empty bottom left corner

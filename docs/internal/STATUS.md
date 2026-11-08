@@ -516,6 +516,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Finish Five Frames in Turkish: two lines ("2/7 denemede buldun! 🎉" / "Yeni kelime: 21 sa 10 dk sonra"), and
   "📋 Kopyala" → "Kopyalandı ✓" keeps the same width.
 - [ ] Snack Bar / Window Garden in Turkish while a film plays: nothing in their top row ends in "…".
+**0.9.97.80 (card YTK: "Play now" in the Shorts add window, ← / → in the room view):**
+- [ ] In the Shorts view press ＋ Add, paste a Short's link and press "▶ Play now": it opens for everyone at once.
+  Paste two links and press it again: the first plays, the second is in the queue. Type words and press it: the first
+  Short found plays.
+- [ ] In the room view with a YouTube video, click the video, then press → and ←: the video jumps 5 s ahead / back on
+  your friend's screen too. Enter still opens the chat; in the chat box the arrows only move the cursor.
 
 **0.9.97.79 (card PERF1a: only the page's language is downloaded):**
 - [ ] Open the site in Turkish (TR in the top bar, then reload): everything is Turkish from the first moment, nothing
