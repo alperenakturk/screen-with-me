@@ -1385,7 +1385,8 @@ html.phone #shorts-feed-form .feed-like {
   border-radius: 14px;
 }
 
-html.phone #shorts-feed-form .feed-topic-row .btn {
+html.phone #shorts-feed-form .feed-topic-row .btn,
+html.phone #shorts-add-form .feed-topic-row .btn {
   min-height: 44px;
   padding: 0 14px;
 }

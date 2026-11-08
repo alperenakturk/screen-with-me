@@ -98,6 +98,8 @@ function openFeedbackDialog(opener: HTMLElement | null): void {
 }
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+/** Card YTK: how far ← / → move the room's video, in seconds. */
+const SEEK_STEP = 5;
 
 /** The invite window and its QR encoder load when it is first opened (phone speed, 0.9.93.6). */
 function openInvite(url: string, door?: { on: boolean; set: (on: boolean) => void }): void {
@@ -507,7 +509,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="small desk-label" for="shorts-add-input" data-i18n="shorts.addLabel"></label>
               <div class="feed-topic-row">
                 <input id="shorts-add-input" autocomplete="off" data-i18n-placeholder="shorts.addPlaceholder" />
-                <button class="btn primary small-btn" data-i18n="shorts.addButton"></button>
+                <button class="btn primary small-btn" value="enqueue" data-i18n="shorts.addButton"></button>
+                <button class="btn small-btn shorts-play-now" value="load" data-i18n="shorts.playNow" data-i18n-title="shorts.playNowHint"></button>
               </div>
               <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
@@ -1099,7 +1102,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     'keydown',
     (event) => {
       if (!document.querySelector('.dialog-backdrop:not([hidden]), .recap-backdrop') || isTyping(event.target)) return;
-      if (isForwardedKey(event.key) || [' ', 'k', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) event.stopImmediatePropagation();
+      if (isForwardedKey(event.key) || [' ', 'k', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown'].includes(event.key)) event.stopImmediatePropagation();
     },
     true,
   );
@@ -2446,7 +2449,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (event.key === 'Escape' && !shortsAddForm.hidden) setShortsAdd(false);
   });
   // Card SZ: the Shorts search list is a lazy chunk, made on the first search.
-  let shortsSearchMade: Promise<{ search: (q: string) => Promise<void> | void; clear: () => void }> | null = null;
+  let shortsSearchMade: Promise<{ search: (q: string) => Promise<string | null>; clear: () => void }> | null = null;
   const shortsSearch = {
     search: (q: string) => {
       shortsSearchMade ??= loadChunk(() => import('./ui/shorts-search.ts')).then((m) => {
@@ -2459,35 +2462,51 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           flashHint(shortsAdd, t('queuedNote'), 2000);
         });
       });
-      return shortsSearchMade.then((made) => made.search(q)).catch(() => flashHint(shortsAdd, t('searchError.failed'), 4000));
+      return shortsSearchMade
+        .then((made) => made.search(q))
+        .catch(() => {
+          flashHint(shortsAdd, t('searchError.failed'), 4000);
+          return null;
+        });
     },
     clear: () => void shortsSearchMade?.then((made) => made.clear()),
   };
   shortsAddForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    // Card YTK: "▶ Play now" opens it at once (the link box's path); with several links the first plays, the rest queue.
+    const mode = (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue';
+    const queued = (text: string) => mode === 'enqueue' && flashHint(shortsAdd, text, 2500);
     if (isTikTokShortLink(shortsAddInput.value)) {
       void resolveTikTok(shortsAddInput.value, shortsAdd).then((media) => {
         if (!media) return;
         shortsAddInput.value = '';
         setShortsAdd(false);
-        addMedia(media, 'enqueue');
-        flashHint(shortsAdd, t('queuedNote'), 2500);
+        addMedia(media, mode);
+        queued(t('queuedNote'));
       });
       return;
     }
     const list = parseMediaList(shortsAddInput.value);
     const one = list.media.length === 1 ? list.media[0]! : parseMediaInput(shortsAddInput.value);
     if (list.media.length < 2 && one === null) {
-      // Words: a search of YouTube Shorts only (0.9.91.12); the box stays open to add from the list.
-      if (shortsAddInput.value.trim()) void shortsSearch.search(shortsAddInput.value);
+      // Words: a search of YouTube Shorts only (0.9.91.12); the box stays open to add from the list. "Play now" opens
+      // the first Short found and closes the box.
+      if (!shortsAddInput.value.trim()) return;
+      void shortsSearch.search(shortsAddInput.value).then((first) => {
+        if (mode !== 'load' || !first) return;
+        shortsSearch.clear();
+        shortsAddInput.value = '';
+        setShortsAdd(false);
+        addMedia({ kind: 'youtube', id: first, short: true }, 'load');
+      });
       return;
     }
     shortsSearch.clear();
     shortsAddInput.value = '';
     setShortsAdd(false);
-    if (list.media.length >= 2) addMany(list.media, list.skipped, 'enqueue');
-    else addMedia(one!, 'enqueue');
-    flashHint(shortsAdd, list.media.length >= 2 ? t('queuedMany', { n: list.media.length, skipped: list.skipped }) : t('queuedNote'), 2500);
+    if (list.media.length >= 2) addMany(list.media, list.skipped, mode);
+    else addMedia(one!, mode);
+    queued(list.media.length >= 2 ? t('queuedMany', { n: list.media.length, skipped: list.skipped }) : t('queuedNote'));
   });
   addEventListener('langchange', renderFeed);
   renderFeed();
@@ -2603,6 +2622,20 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       event.preventDefault();
       shortsPrev($('#shorts-prev'));
     }
+  });
+  // Card YTK: ← / → move the room's video 5 s back / ahead in the room view (R26 gives the focus back to our page after a
+  // click in the player, so the player's own arrow keys never see them). A normal seek: host rules apply on the server.
+  // Not in the Shorts view (↑ ↓ are next / previous there), on the film page (the film site has its own keys), on a TV,
+  // while a game is open, in a text box, a menu, a list or the Test Lab, or on a focused <video> (its own keys seek).
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    if (event.defaultPrevented || shortsOn || isShell || tv || games.isOpen() || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+    const target = event.target;
+    if (isTyping(target) || target instanceof HTMLVideoElement) return;
+    if (target instanceof Element && target.closest('[role="menu"], [role="listbox"], [role="tablist"], [role="radiogroup"], [role="slider"], [role="grid"], [role="dialog"], .lab-drawer, .dialog-backdrop')) return;
+    const kind = roomState?.item?.media.kind;
+    if (kind !== 'youtube' && kind !== 'html5' && kind !== 'vimeo' && kind !== 'test') return;
+    if (engine.requestSeek(event.key === 'ArrowRight' ? SEEK_STEP : -SEEK_STEP)) event.preventDefault();
   });
   // Fare tekerleği (videonun dışında; YouTube çerçevesi tekerleği kendisi alır): bir tık bir video.
   let wheelAt = 0;

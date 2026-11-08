@@ -5,7 +5,8 @@ import { lang, t } from '../i18n.ts';
 /**
  * Shorts search in the Shorts bar's "＋ Ekle" box (0.9.91.12, owner): words + Enter list YouTube Shorts only (the same
  * `short=1` search as the ♾ feed: one search ≈ 1 % of the day's quota, answers cached for a day on the server and
- * for this page here). A row's ＋ adds that Short to the queue; the box stays open to add more.
+ * for this page here). A row's ＋ adds that Short to the queue; the box stays open to add more. `search` answers the
+ * first Short it shows (card YTK: "▶ Play now" with words opens it), or null (no result, an error, a newer search).
  */
 export function createShortsSearch(list: HTMLElement, add: (id: string) => void) {
   const answers = new Map<string, SearchAnswer>();
@@ -44,13 +45,18 @@ export function createShortsSearch(list: HTMLElement, add: (id: string) => void)
     list.hidden = false;
   }
 
-  async function search(raw: string): Promise<void> {
+  const firstOf = (answer: SearchAnswer): string | null => ('items' in answer ? (answer.items.find((item) => !item.live)?.id ?? null) : null);
+
+  async function search(raw: string): Promise<string | null> {
     const query = normalizeQuery(raw);
-    if (query === null) return;
+    if (query === null) return null;
     const key = `${lang()}|${query}`;
     const mine = ++current;
     const known = answers.get(key);
-    if (known) return show(known);
+    if (known) {
+      show(known);
+      return firstOf(known);
+    }
     note(t('searching'));
     let answer: SearchAnswer;
     try {
@@ -60,7 +66,9 @@ export function createShortsSearch(list: HTMLElement, add: (id: string) => void)
       answer = { error: 'failed' };
     }
     if ('items' in answer) answers.set(key, answer);
-    if (mine === current) show(answer);
+    if (mine !== current) return null;
+    show(answer);
+    return firstOf(answer);
   }
 
   function clear(): void {
