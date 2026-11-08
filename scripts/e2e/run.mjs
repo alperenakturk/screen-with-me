@@ -40,7 +40,7 @@ async function paceConnects() {
 // pass on that retry is reported as a warning to look into. No retry locally.
 const live = !/localhost|127\.0\.0\.1/.test(base);
 let failed = 0;
-for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'uploads.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'roomgame.mjs', 'poker.mjs', 'search.mjs', 'tv.mjs', 'fallback.mjs', 'countdown.mjs', 'feedback.mjs', 'move.mjs', 'gamestream.mjs', 'podcasts.mjs', 'links.mjs', 'abuse.mjs', 'people.mjs', 'knock.mjs', 'private.mjs', 'sidegames.mjs', 'classics.mjs', 'classics-switch.mjs', 'sea.mjs', 'lab-server.mjs', 'lab-check.mjs']) {
+for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'uploads.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'roomgame.mjs', 'poker.mjs', 'search.mjs', 'tv.mjs', 'fallback.mjs', 'countdown.mjs', 'feedback.mjs', 'move.mjs', 'gamestream.mjs', 'podcasts.mjs', 'links.mjs', 'abuse.mjs', 'people.mjs', 'knock.mjs', 'private.mjs', 'sidegames.mjs', 'classics.mjs', 'classics-switch.mjs', 'sea.mjs', 'ghost.mjs', 'lab-server.mjs', 'lab-check.mjs']) {
   await paceConnects();
   console.log(`\n▶ ${test}`);
   let result = spawnSync(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });

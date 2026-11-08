@@ -28,6 +28,7 @@ import sea3Art from './art/tutorial/sea-3-sink.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
 import { isPhoneLayout } from '../device.ts';
 import { resultCard } from './result.ts';
+import { GAME_PING_MS, silence } from './silent.ts';
 
 type State = Extract<SeaServerMessage, { t: 'state' }>;
 
@@ -230,7 +231,10 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const myShips = () => checkFleet(SEA_RULES, places) ?? [];
   const placing = () => state?.phase === 'place' && mySeat() >= 0 && !state.players[mySeat()]?.ready;
 
+  // GHOST: the Test Lab's "go silent" keeps this page quiet, as a dead connection would be.
+  const quiet = silence();
   function send(message: SeaClientMessage): void {
+    if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
 
@@ -617,8 +621,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   }
   connect();
   const ping = window.setInterval(() => {
-    if (ws?.readyState === OPEN) ws.send(JSON.stringify({ t: 'ping' }));
-  }, 20_000);
+    send({ t: 'ping' });
+  }, GAME_PING_MS);
   const close = () => {
     stopped = true;
     ws?.close();
@@ -629,6 +633,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   // Test Lab: ready-made moments (the server does them only as a local lab server).
   const offLab = debugHooks.register('table.sea', () => ({
     commands: [
+      quiet.command('sea', { en: 'Sea Battle', tr: 'Amiral Battı' }),
       { id: 'sea.bot', title: { en: 'Sea Battle: Glowbeam takes the other seat', tr: 'Amiral Battı: Glowbeam diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
       { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel lab sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
       { id: 'sea.reveal', title: { en: 'Sea Battle: show their fleet (this tab)', tr: 'Amiral Battı: rakibin filosunu göster (bu sekmede)' }, help: { en: 'Local lab server only: the other fleet shows faintly on their sea.', tr: 'Sadece yerel lab sunucusunda: rakibin filosu kendi denizinde silik görünür.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'reveal' }) },

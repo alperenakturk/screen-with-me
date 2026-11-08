@@ -508,6 +508,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.76 (🎮 card GHOST: game tables notice a dead connection):**
+- [ ] Play Draw & Guess or the Quiz with a friend on a phone; the friend turns the phone's Wi-Fi and mobile data off
+  mid-game. About a minute and a half later the friend shows offline at your table, and the game goes back to the
+  lobby 20 s after that. Turning data back on brings the friend back.
+- [ ] Leave a game table open in a tab, switch to another tab for 10 minutes, come back: you are still at the table
+  (nobody saw you leave).
+
 **0.9.97.75 (card R3-3: ready for an own domain):**
 - [ ] Nothing new to see: everything stays on the same address. The switch-day steps (buy the domain, then two short
   releases) are in `docs/internal/custom-domain.md`.

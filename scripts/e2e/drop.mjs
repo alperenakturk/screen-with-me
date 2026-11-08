@@ -6,15 +6,15 @@
 //
 // `dropFor` closes the socket the test means to drop and returns how long the step should wait. If the network already
 // closed it, the step says so and waits much longer for the server to notice by itself, so it still tests what it says
-// ("a player who is gone shows offline") instead of failing on a race it can't win. Game Studio's ghost-check card is
-// what makes that wait short; until then a run that needs the long wait prints why.
-export const NETWORK_DROP_WAIT_MS = 60_000;
+// ("a player who is gone shows offline") instead of failing on a race it can't win. Since card GHOST the game objects
+// close a socket silent for 90 s (`apps/server/src/ghost.ts` `GHOST_MS`), so the wait is that plus room for a late alarm.
+export const NETWORK_DROP_WAIT_MS = 130_000;
 
 export function dropFor(ws, name, ms = 8000) {
   if (ws.readyState === WebSocket.OPEN) {
     ws.close();
     return ms;
   }
-  console.log(`· ${name}'s socket was already closed by the network before the drop step; waiting up to ${NETWORK_DROP_WAIT_MS / 1000} s for the server to notice (no ghost check in game objects yet)`);
+  console.log(`· ${name}'s socket was already closed by the network before the drop step; waiting up to ${NETWORK_DROP_WAIT_MS / 1000} s for the server's ghost check to notice`);
   return NETWORK_DROP_WAIT_MS;
 }
