@@ -40,6 +40,34 @@ Card format:
 
 ## In progress
 
+- **G98c** (lane A): the 0.9.98 gate re-checked against main, the owner-only list for his test round (docs PR #347).
+
+## Shipped 0.9.97.60 – 0.9.97.85 (cards routed by message, without their own block)
+Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CLAUDE.md's "Next up" line.
+- Privacy policy for KVKK + GDPR (H3 + M7): 0.9.97.60, #312, A. Feedback goes only to the owner's private repository.
+- 🚢 Sea Battle: 0.9.97.61, #313, Game Studio.
+- Home door "Scroll Shorts together" + gate check G98: 0.9.97.62, #314, A.
+- GT, game windows clear of the chat on tablets: 0.9.97.63, #315, Game Studio.
+- CAM1: 0.9.97.64, #316, B2 (block below). Reversi: 0.9.97.65, #317, Game Studio.
+- TOS, terms of use + abuse contact: 0.9.97.66, #318, A. MB: 0.9.97.67, #319, B2 (block below).
+- GP2, games polish 1 / 2 / 3: 0.9.97.68 / .71 / .73, #322 / #323 / #328, Game Studio.
+- LABLOCK, the Test Lab behind the owner's code: 0.9.97.69, #320, A. LABTR, the lab in plain EN + TR: 0.9.97.72, #324, A.
+- OPS1, changelog, release tags, uptime check, cost guard: 0.9.97.70, #321, B2.
+- STORE1, store dry run: #327, A. YTA, YouTube API audit pack: #330, A. CI2, parallel PR jobs: #326 + #329, B2.
+- YTG, no game window over a YouTube video: 0.9.97.74, #332, Game Studio.
+- R3-3, the site's address in one config value: 0.9.97.75, #331 + #334, A. TAG1, tags with catch-up: #333, B2.
+- G98b, gate re-check: #335, A. BH11, game e2e offline check: #336, Game Studio.
+- GHOST, game tables close silent connections (90 s): 0.9.97.76, #338, Game Studio.
+- PERF1 / 1c / 1e / 1a / 1b, speed and weight: 0.9.97.77 / .78 / .79 / .83, #337 / #339 / #341 / #345, A.
+- YTK, Shorts "Play now" + ← / → seek: 0.9.97.80, #340, B2.
+- FF2 + GW, Five Frames' result line, game window sizes, ⛶ in every game: 0.9.97.81, #342, Game Studio.
+- LIVE-GREEN, game e2e ride out network drops: 0.9.97.82, #343, Game Studio.
+- BH12, the room's notes off the player in the Shorts view: 0.9.97.84, #344, B2.
+- GP4, Last Heart result card + How to play, Glowbeam the referee at Quiz / Draw / Last Heart: 0.9.97.85, #346, Game
+  Studio.
+- Waiting for the owner: Sea Battle zoom on a phone (GP4 item 5, A keep / B zoom). After 1.0: bigger Five Frames keys on
+  a phone, Window Garden plant names and moods (GP4 items 6–7).
+
 ## Ready
 
 ### CAM1. Phone cameras: black video, slow switch, mirrored rear camera (owner's real test, 4 Nov 2026; lane B2, first)
@@ -53,6 +81,9 @@ Card format:
   controls are clear at phone sizes; Test Lab hooks (switch camera, simulate mute / unmute, per-peer video state).
 - Tests: voice harness with a fake camera + mobile emulation per point; the owner's phone hand test. Ask the owner
   which phones / browsers when he has time.
+- Done: #316 (0.9.97.64), Developer B2: a camera switch in place with "Camera changing…", black / paused pictures
+  recover by themselves, only the front camera's own preview is a mirror, 🔄 in the phone's faces strip. The owner's
+  two-phone retest is in his next hand-test round.
 
 ### MB. End-of-milestone batch before 0.9.98 (lane B2, after CAM1)
 - Why: ROADMAP "core first, multipliers later": strings, tablets, store copy and numbers are done as one batch.
@@ -60,6 +91,8 @@ Card format:
   harness covers everything since 0.9.96.10 (Test Lab drawer, stream card, cinema, lazy windows; game issues go to Game
   Studio); `store/src/room.html` matches the room and `npm run store` is rerun; help page, privacy policy and code agree
   on every limit (help harness extended: upload budget, probe limit, TV off).
+- Done: #319 (0.9.97.67), Developer B2: `check-texts.mjs` in CI, the tablet pass, store copy and screenshots, policy
+  numbers checked by the help harness.
 
 ### BH10. Full bug hunt before 0.9.98 (lane A)
 - Why: the "zero known bugs" gate.
