@@ -365,7 +365,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   // GP3: the tables' result card at the end, with the podium inside.
   const result = resultCard(app.firstElementChild as HTMLElement, resultGlowbeam());
   // GP4: Glowbeam the referee at a reveal: everyone guessed it, or nobody did (a tough word, never the drawing's fault).
-  const ref = referee(app.firstElementChild as HTMLElement);
+  // In the drawing's corner (BH13-G): at the reveal the drawing is done, and the page's corner is the chat's Send button.
+  const ref = referee(app.querySelector<HTMLElement>('.draw-canvas-wrap')!);
   function refereeLine(s: State): void {
     const guessers = s.players.filter((p) => p.online && p.id !== s.drawer);
     if (!guessers.length) return;
