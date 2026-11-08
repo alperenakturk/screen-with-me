@@ -82,6 +82,33 @@ const tap = (page, word) => page.evaluate(async (w) => {
 }, word);
 const row = (page, i) => page.evaluate((n) => [...document.querySelectorAll('#game-stage .ff-row')[n].querySelectorAll('.ff-cell')].map((c) => (c.classList.contains('hit') ? 'hit' : c.classList.contains('near') ? 'near' : c.classList.contains('miss') ? 'miss' : '-')), i);
 
+// FF2: the result is two tidy lines (no line breaks inside either, no " · " / " - " join), and the copy button keeps
+// its width when it says "Copied ✓".
+const resultLook = (page) =>
+  page.evaluate(() => {
+    const lines = [...document.querySelectorAll('#game-stage .ff-msg-line')].map((l) => {
+      const r = document.createRange();
+      r.selectNodeContents(l);
+      return { text: l.textContent, rows: new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size };
+    });
+    const b = document.querySelector('#game-stage .ff-share');
+    const res = document.querySelector('#game-stage .ff-result').getBoundingClientRect();
+    const last = document.querySelector('#game-stage .ff-msg-next')?.getBoundingClientRect();
+    const tray = document.querySelector('#game-stage .ff-tray')?.getBoundingClientRect();
+    // Nothing of the two lines sticks out of the result row, and the row stays clear of the letter tray.
+    const inside = !!last && last.bottom <= res.bottom + 0.5 && (!tray || res.bottom <= tray.top + 0.5);
+    return { lines, inside, box: [Math.round(res.height), Math.round(last?.bottom ?? 0), Math.round(res.bottom), Math.round(tray?.top ?? 0)], shareW: b?.getBoundingClientRect().width ?? 0, copied: !!b?.classList.contains('copied') };
+  });
+async function checkResult(page, label, unit) {
+  const before = await resultLook(page);
+  await page.evaluate(() => document.querySelector('#game-stage .ff-share').click());
+  const after = await until(async () => { const l = await resultLook(page); return l.copied ? l : null; }, 3000);
+  await page.locator('#game-stage .ff-result').screenshot({ path: `${__dirname}/frames-result-${label.replace(/\W+/g, '-')}.png` }).catch(() => {});
+  const tidy = before.lines.length === 2 && before.lines.every((l) => l.rows === 1 && !/ [·-] /.test(l.text)) && unit.test(before.lines[1].text) && before.inside;
+  check(tidy, `${label}: the result is two tidy lines, inside its row`, `${JSON.stringify(before.lines)} box ${before.box}`);
+  check(!!after && Math.abs(after.shareW - before.shareW) < 0.5, `${label}: "Copied ✓" keeps the copy button's width`, `${before.shareW} → ${after?.shareW}`);
+}
+
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, permissions: ['clipboard-read', 'clipboard-write'] });
@@ -140,6 +167,17 @@ const row = (page, i) => page.evaluate((n) => [...document.querySelectorAll('#ga
   await open(alex);
   const kept = await until(() => alex.evaluate(() => /Solved in 2\/7/.test(document.querySelector('#game-stage .ff-message')?.textContent ?? '')), 4000);
   check(!!kept, 'after a reload the day is still solved');
+  await checkResult(alex, 'English', /^A new word in \d+\u00a0(h\u00a0\d+\u00a0)?min$/);
+  // The same finished day with the page in Turkish: "Yeni kelime: 21 sa 10 dk sonra", Turkish units.
+  await alex.evaluate(() => import('/src/i18n.ts').then((m) => m.setLang('tr')));
+  await alex.waitForTimeout(300);
+  await checkResult(alex, 'Turkish', /^Yeni kelime: \d+\u00a0(sa\u00a0\d+\u00a0)?dk\u00a0sonra$/);
+  await alex.setViewportSize({ width: 900, height: 560 });
+  await alex.waitForTimeout(600);
+  await checkResult(alex, 'Turkish at 900×560', /^Yeni kelime: \d+\u00a0(sa\u00a0\d+\u00a0)?dk\u00a0sonra$/);
+  await alex.setViewportSize({ width: 1366, height: 768 });
+  await alex.evaluate(() => import('/src/i18n.ts').then((m) => m.setLang('en')));
+  await alex.waitForTimeout(600);
 
   // BH2: a streak with a missed day since its last win shows 🔥 0, not the old number.
   await alex.evaluate((d) => {
@@ -169,11 +207,14 @@ const row = (page, i) => page.evaluate((n) => [...document.querySelectorAll('#ga
   await alex.waitForTimeout(600);
   check((await fits(alex)).length === 0, 'fits a 900×560 window', (await fits(alex)).join('; '));
 
-  const phone = await browser.newContext({ ...devices['iPhone 13'] });
+  const phone = await browser.newContext({ ...devices['iPhone 13'], permissions: ['clipboard-read', 'clipboard-write'] });
   const pam = await person(phone, 'Pam', 'elf');
   check(await open(pam), 'phone: it opens');
   await pam.waitForTimeout(500);
   check((await fits(pam)).length === 0, 'phone: fits without scrollbars', (await fits(pam)).join('; '));
+  await tap(pam, en.answer);
+  check(!!(await until(() => pam.evaluate(() => !!document.querySelector('#game-stage .ff-msg-next')), 4000)), 'phone: solved');
+  await checkResult(pam, 'phone', /^A new word in /);
   await pam.screenshot({ path: __dirname + '/frames-phone.png' });
 
   await browser.close();
