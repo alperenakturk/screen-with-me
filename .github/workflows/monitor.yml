@@ -2,6 +2,9 @@
 # a tiny room join, a failure tried once more after a minute). When the site is down it opens one issue labelled
 # `outage` (GitHub notifies the owner, no new account); while it stays down that issue's text is updated in place (an
 # edit sends no new notification); the first green check closes it with a comment. Never more than one open issue.
+# Card UPTIME2: GitHub runs scheduled workflows best-effort (1 of ≈ 12 planned runs on 8 Nov 2026), so the check to rely
+# on is the Worker's own cron (apps/server/src/uptime.ts, every 15 minutes, its issue in the private feedback
+# repository); this workflow stays as the outside backup (it also sees an outage of Cloudflare itself).
 name: Uptime
 
 on:

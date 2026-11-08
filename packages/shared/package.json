@@ -57,6 +57,7 @@
     "./move": "./src/move.ts",
     "./podcasts": "./src/podcasts.ts",
     "./upload-budget": "./src/upload-budget.ts",
+    "./uptime": "./src/uptime.ts",
     "./lab-pass": "./src/lab-pass.ts"
   },
   "scripts": {

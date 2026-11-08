@@ -19,7 +19,7 @@ The owner picks the domain later. `example.app` below stands for it.
 | Alias → main | `src/main.ts` → `src/domain-move.ts` (lazy chunk) | see §3 |
 | Static pages | `extension.html`, `help.html`, `privacy.html`, `terms.html`, `thanks.html` load `/domain.js` first | an alias visit moves to the same page on the main address (no saves carried; see §3) |
 | CI | `.github/workflows/test.yml` | `check-domain.mjs` in the check job. The deploy's `wait-live`, live e2e and `check-domain.mjs --live` all read the address |
-| Monitor | `monitor.yml`, `scripts/monitor.mjs` | checks the config's main address |
+| Monitor | `monitor.yml`, `scripts/monitor.mjs` | checks the config's main address from outside (GitHub cron, best-effort). The Worker's own uptime cron (`apps/server/src/uptime.ts`) needs no address: it calls its own code in-process, so it sees the Worker on any domain but not an outage of Cloudflare itself or a network that cannot reach the domain |
 | Harness | `scripts/harness/domain-move/run.cjs` | builds the site with a two-address test config (`localhost` main, `127.0.0.1` alias) and checks everything in §3 |
 
 **Already domain-agnostic, nothing to change:**

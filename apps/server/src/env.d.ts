@@ -37,6 +37,8 @@ interface Env {
   ROOM_INFO_LIMIT?: RateLimit;
   /** Card Y3: the owner's key for `GET /api/youtube/usage` (header `X-Usage-Token`); without it the route is refused. */
   USAGE_TOKEN?: string;
+  /** Card UPTIME2: the static site (`assets.binding`), so the cron's uptime check can load the home page in-process. */
+  ASSETS?: Fetcher;
   /** The running version's metadata (`version_metadata` binding; answered by `/api/version`). */
   CF_VERSION_METADATA?: WorkerVersionMetadata;
 }

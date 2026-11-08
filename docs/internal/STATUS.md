@@ -491,6 +491,11 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.92 (card UPTIME2: the Worker checks itself every 15 minutes):**
+- [ ] In the private feedback repository: Watch → Custom → Issues (if not already), so an `outage` issue reaches your
+  phone / e-mail. Nothing should arrive while the site is fine; the Worker's log (Cloudflare → Workers →
+  screen-with-me → Logs) shows one `uptime` line every 15 minutes.
+
 **0.9.97.91 (🎮 card CLFLASH: no wrong board after a reload):**
 - Covered by G-list item "reload mid-game" (no separate step): after the reload the table says "Setting up the table…",
   then its own board, never a tic-tac-toe grid first.

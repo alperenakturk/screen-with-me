@@ -13,6 +13,7 @@ import { podcasts } from './podcasts.ts';
 import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 import { youtubeUsage } from './usage.ts';
 import { ipKey } from './ip-key.ts';
+import { runUptime } from './uptime.ts';
 
 export { Draw } from './draw.ts';
 export { FeedbackGate } from './feedback.ts';
@@ -110,6 +111,10 @@ export default {
   async fetch(request, env): Promise<Response> {
     const response = await route(request, env);
     return withApiHeaders(request, response);
+  },
+  // Card UPTIME2: the cron trigger (wrangler.jsonc `triggers.crons`) runs the uptime check against our own code.
+  scheduled(_controller, env, ctx): void {
+    ctx.waitUntil(runUptime(env, (request) => route(request, env)).then(() => undefined, (error: unknown) => console.error(JSON.stringify({ msg: 'uptime: run failed', error: String(error) }))));
   },
 } satisfies ExportedHandler<Env>;
 

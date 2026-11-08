@@ -121,6 +121,11 @@ jobs:
           LAB_CODE: harness-lab-code
         run: npm run e2e
 
+      # Card UPTIME2: the Worker's own uptime cron, fired once on a second local server without a GitHub token: it must
+      # find the built site healthy and only log.
+      - name: Uptime cron (log only without a token)
+        run: node scripts/check-uptime-cron.mjs 8791
+
       # Card MB: the help page and the privacy policy state the code's numbers (limits, retention, the upload budget,
       # the TV being off) in both languages; the room links them. Server constants count too, so not only on `web`.
       - name: Help page and policy numbers
