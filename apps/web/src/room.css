@@ -10762,6 +10762,23 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   margin: 0 0 8px;
 }
 
+/* Card BH12: in the Shorts view the notes (everyone-ready wait, a game invite, "can't be played") wait in the empty
+   bottom left corner beside the video, like the old "can't be played" card; nothing of ours over YouTube's player. */
+.yt-notices-shorts {
+  position: fixed;
+  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 45;
+  width: max(180px, min(320px, calc(50vw - 230px)));
+}
+
+.yt-notices-shorts > * {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface) !important;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+}
+
 [data-panel='chat'] > .yt-notices {
   flex: none;
   padding: 0 8px 8px;
@@ -12582,6 +12599,43 @@ html.ph-shorts .room.shorts .shorts-bar :is(.react-tray, .shorts-feed-pop, .game
 
 .ph-toast[hidden] {
   display: none;
+}
+
+/* Card BH12: the room's notes in the Shorts view take the message slot of the bar (over the toast, never over the
+   video); one line each, the newest at the bottom. */
+.ph-shorts-bar > .yt-notices-shorts {
+  position: absolute;
+  left: max(10px, env(safe-area-inset-left));
+  top: 8px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  right: 272px;
+  z-index: 2;
+  width: auto;
+  justify-content: flex-end;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.ph-shorts-bar > .yt-notices-shorts > * {
+  flex-wrap: nowrap !important;
+  padding: 4px 10px;
+  border-radius: 10px;
+  box-shadow: none;
+  font-size: 13px;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.sideways.ph-shorts .ph-shorts-bar > .yt-notices-shorts {
+  position: static;
+  order: -1;
+  width: 100%;
+  max-width: 160px;
+}
+
+html.sideways.ph-shorts .ph-shorts-bar > .yt-notices-shorts > * {
+  white-space: normal !important;
 }
 
 .ph-shorts-bar .chat-tool {

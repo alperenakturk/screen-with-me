@@ -8,6 +8,10 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.84 — 8 Nov
+- Shorts: a "waiting for someone" note (or a game invite) no longer covers the Short you're watching; it waits in the
+  empty corner left of the video on a computer and in the bar under the video on a phone.
+
 ### 0.9.97.83 — 8 Nov
 - Faster first page: the home page and the connection test no longer download the room's styles, which load only
   when you open a room (the first stylesheet every page waits for is about seven times smaller). The room looks the
