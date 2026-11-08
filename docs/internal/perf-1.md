@@ -65,6 +65,31 @@ What Lighthouse flags:
 - **Durable Object storage per room:** unchanged since OPS1 (`costs.md` "Storage per room"). A typical room without images is 10–50 kB; a full room is about 10 MB, mostly 24 custom emojis plus 12 chat images. The risk there is saved rooms full of images, already named in `costs.md`.
 - **Rows written** is still the free limit a busy evening would hit first (`costs.md`). The room writes on most user actions: 58 `storage.put` / `delete` call sites in `room.ts`. Nobody has measured how many writes one chat message or one play / pause costs.
 
+## 4b. Storage writes per user action (card PERF1d, measured)
+
+**How it was measured:** a local-only counter wrapped the room object's `storage.put` / `delete` (never committed). Two people then went through one room on `wrangler dev`, and each step's writes were counted. A row is one key written.
+
+| Step | Rows written | Which keys |
+|---|---|---|
+| First person joins | 6 | `roomId`, `admitted`, `personSalt`, `memberIds`, `host`, `stats` |
+| Second person joins | 3 | `admitted`, `memberIds`, `stats` |
+| A video added to an empty room (plays at once) | 5 | `room` ×2, `stats` ×2, `counted` |
+| A video added to the queue | 5 | `room` ×2, `stats` ×2, `voters` |
+| Pause / play / seek | 2 each | `room`, `stats` |
+| A chat message | 1 each | `chat` |
+| An emoji | **1 each** | `stats` (the recap's counters) |
+| A pin | 1 | `pins` |
+| Someone leaves / the last one leaves | 1 / 4 | `waits`; `hostGoneAt`, `waits`, `stats`, `emptySince` |
+
+**What it means:**
+- Every emoji and every play / pause / seek writes the recap's counters (`stats`) once more. Half of a lively room's writes are those counters.
+- A busy evening in one room: 5 people for 2 hours, about 200 messages, 500 emojis and 50 controls. That is ≈ 200 + 500 + 100 = **≈ 800 rows**.
+- The Free plan's 100 000 rows a day is then about **125 such room evenings**.
+- If the counters were saved at most every 30 s (and when the room empties), the same evening would be ≈ 300 rows, or about **330 room evenings a day**.
+- What a restart would lose: up to 30 s of recap counts. That matches what "sleep resilience" accepts elsewhere.
+
+**Chat:** one write per line, but it rewrites the 50-message history each time. That is fine for the rows count; it is bytes, not rows, that grow.
+
 ## 5. The five wins, ranked
 
 | # | Win | Gain | Cost / risk | Who |
@@ -72,7 +97,7 @@ What Lighthouse flags:
 | 1 | **Load only the page's language.** Split `i18n.ts` into an English table (in the main chunk, the default) and a Turkish table, loaded before the site starts when `lang` is `tr` and on a switch to Turkish. `t()` falls back to English while it loads. | ≈ −19 kB gzipped on every page (the `dom` chunk 39.5 → ≈ 20 kB); gives the room's JS budget its headroom back. | Medium: `setLang` becomes async, `check-texts.mjs` reads two files, every harness that picks Turkish must wait for it. App code, so a version. | Developer (proposed card PERF1a) |
 | 2 | **The home page without the room's stylesheet.** Move room-only rules out of `styles.css` into a `room.css` loaded with the room chunk, as `home.css` already is for the home page. | Lighthouse estimates ≈ −460 ms FCP on a mobile home page; the home page fetches ≈ 30 kB less. | Medium–high: a wrong split shows an unstyled flash in the room. The sweep (110 screens), the phone and tablet harnesses are the guard. App code, a version. | Developer (PERF1b, after 1) |
 | 3 | **Podcast feeds within the CPU limit.** Stop parsing a feed once enough items are read: feeds list the newest first, so the first ≈ 200 items are enough. Also stop reading the body there instead of up to 4 MB. | A 4 MB feed falls from 14–24 ms to the few ms of a normal one, under the Free plan's 10 ms. | Low; a unit test with a big feed. The one trade-off: a feed listed oldest first and longer than 200 items would show older episodes. Server code, a version. | Developer (PERF1c) |
-| 4 | **Count writes per user action.** An e2e storage shim (or the Test Lab) that counts `storage.put` per chat message, play / pause, seek, emoji, pin and game move. Then batch the obvious ones, e.g. one write per chat line instead of rewriting the 50-message history. | Measures the free limit we would hit first; the batching likely halves writes on chatty evenings. | Measuring is low risk and needs no version. Batching touches the room's storage: a version, with care (hibernation, restarts). | Developer, measure first (PERF1d) |
+| 4 | **Save the recap's counters at most every 30 s.** Measured in §4b: every emoji and every play / pause / seek writes `stats`. Keep them in memory and write on a 30 s timer through the room's existing alarm, and when the room empties. Never an in-memory `setTimeout` (the room's sleep-resilience rule). | About −60 % rows on a lively evening (≈ 800 → ≈ 300 per room evening), so roughly 2.5× more busy rooms a day under the Free plan's 100 000 rows. | Low–medium: a restart loses at most 30 s of recap counts. Server code, a version. | Developer (PERF1e) |
 | 5 | **Lossless PNG re-compression** in `make-icons.mjs` (icons) and `store-shots.mjs` (`og.png`). | −15–25 % per file: icon-192 −4 kB on most page loads, and the install icons and link preview lighter. | Low: same pixels; a byte-size check in the icons script. Files only, but the icons ship in the extension too, so it rides a version. | Developer (small, with any release) |
 
 **Not worth doing now:**
