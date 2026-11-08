@@ -178,6 +178,10 @@ jobs:
       - name: Lazy chunks and their gates
         run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
 
+      # Card PERF1a: only the page's language is downloaded (Turkish is its own chunk, in before the first frame).
+      - name: One language per page
+        run: node scripts/harness/lang-chunk/run.cjs http://localhost:8787
+
       # Card R3-3: an older address of the site moves to the main one and carries the browser's saves once
       # (its own build with a two-address test config; no server needed).
       - name: Moving to an own domain

@@ -4,6 +4,7 @@ import { markDevice } from './device.ts';
 import { isShell, syncStore } from './storage.ts';
 import { keepFloatingInFullscreen } from './ui/fs-layer.ts';
 import { HANDOFF_PREFIX, onAlias } from './site.ts';
+import { loadLang } from './i18n.ts';
 
 markDevice();
 keepFloatingInFullscreen();
@@ -66,5 +67,7 @@ if (framedElsewhere()) {
   void handoff
     .catch(() => {})
     .then(() => syncStore())
+    // PERF1a: the page's language table (Turkish is its own chunk) is in before the first frame.
+    .then(() => loadLang())
     .then(() => import('./app.ts'));
 }
