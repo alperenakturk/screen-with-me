@@ -42,7 +42,7 @@ import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting
 import { freshRecaps, RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
-import { labServer } from './lab.ts';
+import { labOnRequest, labRemembered } from './lab.ts';
 import { PLANT_IDS } from '@swm/shared/games/garden';
 import { RateLimiter } from './rate-limit.ts';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
@@ -395,7 +395,7 @@ export class Room extends DurableObject<Env> {
     const path = new URL(request.url).pathname;
     // A room on a local test server (`wrangler dev`) may queue local video files and film pages (harnesses).
     if (/^(localhost|127\.0\.0\.1)$/.test(new URL(request.url).hostname)) this.devHost = true;
-    this.lab ||= labServer(this.env, request);
+    this.lab = await labOnRequest(this.ctx.storage, this.env, request, this.lab);
     // Ana sayfadaki kayıtlı odalar listesi: oda hâlâ kayıtlı mı, adı, içeride kaç kişi var.
     if (path.endsWith('/info')) {
       // The join screen (0.9.91.20) also shows who is waiting and what is on: the names of up to 3 people (one per
@@ -593,6 +593,7 @@ export class Room extends DurableObject<Env> {
       }
       case 'lab':
         // Test Lab (DL3b): fill the tip jar for the film now, on a local lab server only (`lab.ts`).
+        this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'bad_message' });
         if (!this.room.state.item) return;
         this.tipJar = { fill: 0, boost: this.room.state.item.id };

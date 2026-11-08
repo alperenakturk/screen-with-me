@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
-import { labServer } from './lab.ts';
+import { labOnRequest, labRemembered } from './lab.ts';
 import type { BoardState, Mark } from '@swm/shared/games/board';
 import {
   GAME_MAX_PEOPLE,
@@ -104,7 +104,7 @@ export class Game extends DurableObject<Env> {
   });
 
   override async fetch(request: Request): Promise<Response> {
-    this.lab ||= labServer(this.env, request);
+    this.lab = await labOnRequest(this.ctx.storage, this.env, request, this.lab);
     // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
     const polled = await this.polls.handle(request);
     if (polled) return polled;
@@ -301,6 +301,7 @@ export class Game extends DurableObject<Env> {
       }
       case 'lab': {
         // Test Lab (DL3b): a ready-made position, on a local lab server only (`lab.ts`); a player sets it.
+        this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
         if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         const kind = (Object.keys(LAB_POSITIONS) as LabPositionKind[]).find((k) => isLabPosition(k, message.position));

@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
-import { labServer } from './lab.ts';
+import { labOnRequest, labRemembered } from './lab.ts';
 import {
   QUIZ_ANSWER_MS,
   QUIZ_MAX_PLAYERS,
@@ -123,7 +123,7 @@ export class Quiz extends DurableObject<Env> {
   });
 
   override async fetch(request: Request): Promise<Response> {
-    this.lab ||= labServer(this.env, request);
+    this.lab = await labOnRequest(this.ctx.storage, this.env, request, this.lab);
     // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
     const polled = await this.polls.handle(request);
     if (polled) return polled;
@@ -256,6 +256,7 @@ export class Quiz extends DurableObject<Env> {
     switch (message.t) {
       case 'lab':
         // Test Lab (DL3b): the current phase ends now, on a local lab server only (`lab.ts`).
+        this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
         if (this.data.endsAt !== null) {
           this.data.endsAt = Date.now();

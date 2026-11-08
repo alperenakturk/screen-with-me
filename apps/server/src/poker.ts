@@ -18,7 +18,7 @@ import {
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 import { closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
-import { labServer } from './lab.ts';
+import { labOnRequest, labRemembered } from './lab.ts';
 
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_SOCKETS = 40;
@@ -83,7 +83,7 @@ export class Poker extends DurableObject<Env> {
   });
 
   override async fetch(request: Request): Promise<Response> {
-    this.lab ||= labServer(this.env, request);
+    this.lab = await labOnRequest(this.ctx.storage, this.env, request, this.lab);
     // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
     const polled = await this.polls.handle(request);
     if (polled) return polled;
@@ -234,6 +234,7 @@ export class Poker extends DurableObject<Env> {
     switch (message.t) {
       case 'lab': {
         // Test Lab (GP4): the game ends now and the sender is the last heart (local lab server only, `lab.ts`).
+        this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
         if (t.phase === 'lobby' || t.phase === 'over') return;
         for (const seat of t.seats) seat.life = seat.key === key ? Math.max(1, seat.life) : 0;

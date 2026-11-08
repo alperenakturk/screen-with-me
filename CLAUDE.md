@@ -1135,6 +1135,9 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   Harness `scripts/harness/lab-games/run.cjs` (25 checks, in CI). **Server powers (DL3b):** only a local test server has
   them: `wrangler dev --var SWM_LAB_SERVER:1` (CI's local server and `npm run dev`) AND a localhost address
   (`apps/server/src/lab.ts` `labServer`, each object's `this.lab`); the flag is never in `wrangler.jsonc` or the deploy.
+  LABWAKE: an object rebuilt after hibernation (≈ 20 s quiet, wrangler dev too) has no request, so `labOnRequest` keeps
+  the yes in the object's storage (`swm:lab`, written only on a lab server) and a lab message reads it back with
+  `labRemembered` (only while `SWM_LAB_SERVER` is set); `lab-server.mjs` checks a lab message after 25 s of quiet.
   Messages: room `{t:'lab', op:'tipjar'}` (the tip jar fills for the film playing; elsewhere `bad_message`), Classics
   `{t:'lab', position}` (`games/lab-positions.ts` `LAB_POSITIONS`: chess `mate1`, dama `chain`, backgammon `bearoff`,
   each checked by its board's state check; a player; elsewhere `lab_off`), Quiz / Draw `{t:'lab', op:'skip'}` (the phase
