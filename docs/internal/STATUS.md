@@ -406,11 +406,17 @@ as the second person). Tick here or tell the Planner; the older lists below stay
 - [ ] 6. Private message: press the friend's name in the chat, write: only they see it (a third person does not).
 - [ ] 7. A game table with the friend (Classics: Turkish dama, then Quiz): play to the end, a rematch, leave the
   table; a sound on each move.
-- [ ] 8. Your phone (Android or iPhone, the friend on the computer): join by the QR code, the YouTube video plays in
-  sync, turn the phone sideways → ⛶ fullscreen, chat sheet, 🎙 voice for a minute (hear and be heard), back upright.
-- [ ] 9. Your phone, Shorts: the friend adds a Short; swipe up / down to the next: both move together.
-- [ ] 10. The extension in Chrome on a film page (a legal demo player, e.g. the Video.js or Plyr demo): "Go to the
-  film", the room view, sync with the friend, voice on the film page (the permission window appears once).
+- [ ] 8. Your phone (Android or iPhone, the friend on the computer): join by the QR code (🔗 Invite → "QR code" tab on
+  the computer), the YouTube video plays in sync; turn the phone sideways and press the big ⛶ "Watch fullscreen"; in
+  fullscreen 💬 opens the chat beside the video; 🎙 voice for a minute (hear and be heard); back upright leaves
+  fullscreen.
+- [ ] 9. Your phone, Shorts: the friend adds a few Shorts (or 🎲 Discover in ♾); swipe up / down on the bar under the
+  video (a swipe on the video itself stays YouTube's) or press ▲ ▼: both move together; a "waiting…" note shows in
+  that bar, never on the video.
+- [ ] 10. The extension in Chrome on a film page (a legal demo player, e.g. the Video.js or Plyr demo): paste its
+  address in the room, "Go to the film", the room view (the film in its place, the rail comes at the film's right edge
+  and goes when the mouse leaves), sync with the friend, the film's own ⛶ fills the screen with our rail, 🎮 opens the
+  games hall over the film, voice on the film page (the small permission window appears once).
 - [ ] 11. The extension in Edge, then Brave, then Opera (the detailed list below, "Before the 1.0 store submission"):
   at least steps 1, 2, 3 and 6 of it in each.
 
@@ -458,6 +464,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] A friend opens your invite link in a fresh browser: one screen ("X seni bekliyor"), name + avatar, in; the 3 tips.
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
+
+**0.9.97.86 (card BH13-B: bug hunt on Shorts, players and the extension):**
+- [ ] With the extension installed but older than the site (an old zip), open a new room on a computer: the 3 first
+  tips come first, the "new version of the extension" bubble only after them, by the Extension link.
+- [ ] Phone, Shorts with a friend writing while the room waits for someone: the bar under the video shows the
+  "waiting…" note alone, the friend's message comes after.
 
 **0.9.97.84 (card BH12: notes beside a Short, never over it):**
 - [ ] In the Shorts view with a friend, if the room waits for someone ("Waiting for …"), the note shows in the empty

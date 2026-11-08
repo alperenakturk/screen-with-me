@@ -14,7 +14,7 @@ const check = (ok, label, detail) => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail === undefined ? '' : ` → ${JSON.stringify(detail)}`}`);
 };
 
-async function openShort(ctx) {
+async function openShort(ctx, query = '') {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -27,7 +27,7 @@ async function openShort(ctx) {
       localStorage.setItem('tipsSeen', '1');
     } catch {}
   });
-  await page.goto(`${SITE}/r/rail${Math.random().toString(36).slice(2, 7)}`);
+  await page.goto(`${SITE}/r/rail${Math.random().toString(36).slice(2, 7)}${query}`);
   await page.fill('#name', 'Alex');
   await page.click('#name-form button.primary');
   await page.waitForSelector('#media-input, #add-toggle', { state: 'attached' });
@@ -159,8 +159,48 @@ const box = (page, sel) =>
   const wait = await box(page, '#waiting-banner');
   const inBar = await page.evaluate(() => !!document.querySelector('.ph-shorts-bar #waiting-banner'));
   check(inBar && !!wait && wait.y >= video.b - 1 && wait.b <= bar.b + 1 && wait.h > 10, 'phone: the wait note sits in the bar under the video', { wait, video, bar });
+  // BH13: a friend's chat toast and a note at once: the note has the slot, the toast waits (they mixed into one line).
+  await page.evaluate(() => {
+    const toast = document.querySelector('.ph-toast');
+    toast.textContent = 'Ada: one more?';
+    toast.hidden = false;
+  });
+  await page.waitForTimeout(100);
+  check(!(await page.isVisible('.ph-toast')) && (await page.isVisible('#waiting-banner')), 'phone: with a note in the slot the chat toast waits');
   check(errors.length === 0, 'phone: no page errors', errors);
   await phone.close();
+
+  // BH13: with the 🐞 Test Lab on, its button never covers the Shorts notes (computer) or the phone's 😀 / bar slot.
+  const overlap = (a, b) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b;
+  const showWait = (p) =>
+    p.evaluate(() => {
+      const banner = document.querySelector('#waiting-banner');
+      banner.textContent = 'Waiting for Sam…';
+      banner.hidden = false;
+    });
+  for (const [name, opts] of [['laptop', { viewport: { width: 1366, height: 768 } }], ['phone', { ...devices['Pixel 7'] }]]) {
+    const ctx = await browser.newContext(opts);
+    await viaYouTube(ctx);
+    const { page: p } = await openShort(ctx, '?debug=1');
+    await p.waitForSelector('.debug-fab', { timeout: 8000 }).catch(() => {});
+    await showWait(p);
+    await p.waitForTimeout(200);
+    const fab = await box(p, '.debug-fab').catch(() => null);
+    const note = await box(p, '#waiting-banner');
+    check(!!fab && !overlap(fab, note), `lab on, ${name} Shorts: 🐞 does not cover the wait note`, { fab, note });
+    if (name === 'phone') {
+      const slot = await box(p, '.ph-shorts-bar');
+      check(!!fab && fab.b <= slot.y + 1, 'lab on, phone Shorts: 🐞 sits above the bar', { fab, slot });
+      await p.evaluate(() => document.querySelector('#shorts-exit').click());
+      await p.waitForTimeout(800);
+      if (await p.isVisible('#chat-react')) {
+        const react = await box(p, '#chat-react');
+        const fab2 = await box(p, '.debug-fab');
+        check(!overlap(fab2, react), 'lab on, phone room: 🐞 does not cover 😀', { fab: fab2, react });
+      } else console.log('note: phone room view not reached, 😀 check skipped');
+    }
+    await ctx.close();
+  }
   await browser.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Shorts rail works');
   process.exit(failed ? 1 : 0);

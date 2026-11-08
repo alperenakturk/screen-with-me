@@ -186,6 +186,10 @@ jobs:
       - name: Room styles only in the room
         run: node scripts/harness/room-css/run.cjs http://localhost:8787
 
+      # BH13: the outdated-extension notice (the link's dot; the bubble waits for the first-time tips; none on a phone).
+      - name: Outdated extension notice
+        run: node scripts/harness/ext-update/run.cjs http://localhost:8787
+
       # Card R3-3: an older address of the site moves to the main one and carries the browser's saves once
       # (its own build with a two-address test config; no server needed).
       - name: Moving to an own domain
