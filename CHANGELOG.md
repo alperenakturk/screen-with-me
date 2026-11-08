@@ -16,6 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.89 — 8 Nov
+- A room no longer turns into the browser's "no internet" page when your Wi-Fi stays connected but the internet drops
+  (a weak phone hotspot, say). The page waits, checks every 10 seconds, and once the site answers again it reloads
+  once, straight back into the room.
+
 ### 0.9.97.88 — 8 Nov
 - Games: in Draw & Guess, Glowbeam's little cheer now pops up in the drawing's corner instead of over the chat's Send
   button. Behind the scenes, every table was played by two people with a reload and a dropped connection mid-game.

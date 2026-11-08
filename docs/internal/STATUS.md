@@ -491,6 +491,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.89 (card OFFLINE2: a lost internet behind a connected Wi-Fi no longer throws the room away):**
+- [ ] On your phone, join a room over your phone's hotspot from a second device (or a laptop on that hotspot). Move
+  the phone with the hotspot somewhere with no signal for ~20 s while the laptop's Wi-Fi stays "connected", then open
+  🎮 or ⋯ More on the laptop: the room stays on screen (never the browser's "no internet" page); once the signal is
+  back the page reloads once, straight into the room.
+
 **0.9.97.88 (🎮 card BH13-G: bug hunt on the games):**
 - The games' hand tests are now one list, "🎮 Games, start here" (G1–G10). New here: G3's Glowbeam in Draw & Guess
   sits in the drawing's corner, never over the chat.

@@ -20,21 +20,47 @@ function reloadForNewVersion(reason?: unknown): void {
   // Offline, a chunk that didn't load is the network, not a new version: a reload now would only show the browser's
   // offline page (BH13-G: an 8 s drop mid-game threw the whole room away). It is tried again once we are back online.
   if (!navigator.onLine) {
-    missedOffline.add(chunkUrl(reason));
+    rememberMissed(reason);
     return;
   }
-  const key = 'swm-stale-reload';
-  let last = 0;
+  // Card OFFLINE2: `navigator.onLine` stays true while the Wi-Fi is connected but has no internet (a phone hotspot
+  // losing signal, the router's line down). Ask our own site first: if it doesn't answer, it's the network again.
+  void originAnswers().then((up) => {
+    if (!up) {
+      rememberMissed(reason);
+      return;
+    }
+    const key = 'swm-stale-reload';
+    let last = 0;
+    try {
+      last = Number(sessionStorage.getItem(key) ?? 0);
+      sessionStorage.setItem(key, String(Date.now()));
+    } catch {
+      // Depo kapalı: yine de bir kez yenile.
+    }
+    if (Date.now() - last > 30_000) location.reload();
+  });
+}
+/** How long the reachability check waits for our site before calling the network down. */
+const PROBE_MS = 3000;
+/** How often a page with a missed chunk asks whether our site answers again (`online` never fires on a "connected" Wi-Fi). */
+const REPROBE_MS = 10_000;
+/** Does our own site answer at all? Any HTTP answer counts (a 404 still means the network works). */
+async function originAnswers(): Promise<boolean> {
   try {
-    last = Number(sessionStorage.getItem(key) ?? 0);
-    sessionStorage.setItem(key, String(Date.now()));
+    await fetch(location.pathname, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(PROBE_MS) });
+    return true;
   } catch {
-    // Depo kapalı: yine de bir kez yenile.
+    return false;
   }
-  if (Date.now() - last > 30_000) location.reload();
 }
 /** Chunks that failed while offline ('' = address unknown). */
 const missedOffline = new Set<string>();
+let reprobe = 0;
+function rememberMissed(reason: unknown): void {
+  missedOffline.add(chunkUrl(reason));
+  if (!reprobe) reprobe = window.setInterval(() => void originAnswers().then((up) => up && backOnline()), REPROBE_MS);
+}
 /** The chunk's address in a failed import's message, if it names one. */
 function chunkUrl(reason: unknown): string {
   const text = String((reason as Error | undefined)?.message ?? reason ?? '');
@@ -43,16 +69,19 @@ function chunkUrl(reason: unknown): string {
 // Back online: fetch the missed chunks again; only if one still fails (or can't be named) does the page reload, so a
 // chunk missed during a drop never leaves a dead button. (Chrome keeps a failed module import for the page's life, so
 // there it reloads once, into the working room; other browsers may load it again in place.)
-addEventListener('online', () => {
+function backOnline(): void {
+  if (reprobe) {
+    clearInterval(reprobe);
+    reprobe = 0;
+  }
   if (!missedOffline.size) return;
   const urls = [...missedOffline];
   missedOffline.clear();
-  setTimeout(() => {
-    const retry = (url: string): Promise<unknown> =>
-      !url ? Promise.reject(new Error('unknown chunk')) : url.endsWith('.css') ? fetch(url).then((r) => (r.ok ? r : Promise.reject(new Error(String(r.status))))) : import(/* @vite-ignore */ url);
-    Promise.all(urls.map(retry)).catch(() => reloadForNewVersion());
-  }, 1000);
-});
+  const retry = (url: string): Promise<unknown> =>
+    !url ? Promise.reject(new Error('unknown chunk')) : url.endsWith('.css') ? fetch(url).then((r) => (r.ok ? r : Promise.reject(new Error(String(r.status))))) : import(/* @vite-ignore */ url);
+  Promise.all(urls.map(retry)).catch(() => reloadForNewVersion());
+}
+addEventListener('online', () => setTimeout(backOnline, 1000));
 addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
   reloadForNewVersion((event as Event & { payload?: unknown }).payload);
