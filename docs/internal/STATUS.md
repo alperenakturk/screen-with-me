@@ -495,6 +495,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - The games' hand tests are now one list, "🎮 Games, start here" (G1–G10). New here: G3's Glowbeam in Draw & Guess
   sits in the drawing's corner, never over the chat.
 
+**0.9.97.87 (BH13-B follow-up: no fullscreen offer for a video that can't play):**
+- [ ] Phone sideways, a video that can't be played here (e.g. a YouTube video whose owner blocks embedding): only
+  the error card and "hold the phone upright", no big ⛶ "Watch fullscreen".
+
 **0.9.97.86 (card BH13-B: bug hunt on Shorts, players and the extension):**
 - [ ] With the extension installed but older than the site (an old zip), open a new room on a computer: the 3 first
   tips come first, the "new version of the extension" bubble only after them, by the Extension link.
