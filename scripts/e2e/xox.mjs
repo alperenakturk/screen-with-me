@@ -1,5 +1,6 @@
 // PlayWithMe XOX: iki oyuncu oturur, üçüncü izler; hamleler sunucuda doğrulanır, kazanan ve skor, rövanş, boş
 // koltuğa oturma. Sonda Dört Taş: taş sütunun dibine düşer, dört taş kazanır; başka türün koduna girilemez.
+import { dropFor } from './drop.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'xox' + Math.random().toString(36).slice(2, 8);
 
@@ -95,8 +96,8 @@ await until(() => max.state.game.board.every((c) => c === null));
 ok(max.state.game.board.every((c) => c === null) && max.state.game.turn === 'O', 'Rövanşta tahta temiz, bu el O başlıyor');
 
 // Sam çıkar: koltuğu ayrılı ama boş sayılır; Max oturur.
-sam.ws.close();
-await until(() => max.state.seats[1]?.online === false);
+const samDropWait = dropFor(sam.ws, 'Sam');
+await until(() => max.state.seats[1]?.online === false, samDropWait);
 ok(max.state.seats[1]?.online === false, 'Çıkan oyuncunun koltuğu "bağlı değil" görünüyor');
 max.send({ t: 'sit', seat: 1 });
 await until(() => max.state.seats[1]?.name === 'Max');

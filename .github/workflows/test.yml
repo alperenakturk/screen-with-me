@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-workflow.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs
 
       - id: diff
         env:
@@ -373,10 +373,12 @@ jobs:
         if: steps.keys.outputs.ok == 'true'
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
-  # Card OPS1: every version that went live with a green live e2e gets a tag `v<version>` (the extension's version, the
-  # same number as the site's footer). The only job that may write to the repository, and only tags: `contents: write`
-  # lives here alone (security R4-5), the actions are pinned by SHA, no third-party action. A version deployed again
-  # (a fix without a new number) keeps the tag of its first live deploy.
+  # Card OPS1 / TAG1: every version that went live gets a tag `v<version>` (the extension's version, the same number as
+  # the site's footer), made by scripts/tag-live.mjs: this run's version at this run's commit, plus a catch-up for an
+  # earlier live version that has no tag yet. The only job that may write to the repository, and only tags:
+  # `contents: write` lives here alone (security R4-5), `actions: read` lets it see which commits deployed, and there is
+  # no `workflows` permission on purpose: a tag the token may not make (main's workflow files changed since that commit)
+  # becomes a warning with the owner's steps, never a red run. A version deployed again keeps its first tag.
   tag:
     needs: deploy
     # !cancelled() for the same reason as deploy's: skipped test jobs up the chain must not skip the tag.
@@ -385,16 +387,13 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
-      - name: Tag the live version
-        run: |
-          v="v$(node -p "require('./apps/extension/package.json').version")"
-          if git ls-remote --exit-code --tags origin "refs/tags/$v" > /dev/null; then
-            echo "$v is already tagged (an earlier deploy of the same version)."
-            exit 0
-          fi
-          git tag "$v" "$GITHUB_SHA"
-          git push origin "refs/tags/$v"
-          echo "Tagged $v at $GITHUB_SHA."
+      - name: Tag the live versions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/tag-live.mjs

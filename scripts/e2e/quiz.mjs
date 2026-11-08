@@ -1,6 +1,7 @@
 // Quiz: lobby, host settings (language, topic, length; others get not_host), questions (the right option stays secret
 // until the reveal), the 50:50 joker (only to its user, once per game), reveal with points and rank, moving on by
 // itself, podium at the end, new game with new questions.
+import { dropFor } from './drop.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'quiz' + Math.random().toString(36).slice(2, 8);
 
@@ -117,8 +118,8 @@ ok(again.n === 1 && again.players.every((p) => p.score === 0 && !p.joker && p.st
 ok(again.question !== q1.question, 'A rematch asks new questions');
 
 // BHG: one of two players reloads mid-game: the game waits for them (FEW_GRACE_MS) instead of going to the lobby.
-sam.ws.close();
-await alex.wait((m) => m.t === 'state' && m.players.some((p) => !p.online), 'sam offline');
+const samDropWait = dropFor(sam.ws, 'Sam');
+await alex.wait((m) => m.t === 'state' && m.players.some((p) => !p.online), 'sam offline', samDropWait);
 await new Promise((r) => setTimeout(r, 1200));
 ok(alex.state.phase !== 'lobby', 'A player who drops mid-game does not send the game back to the lobby at once');
 const sam2 = client('Sam', 'quizSam00001');

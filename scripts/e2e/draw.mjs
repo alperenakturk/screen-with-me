@@ -1,6 +1,7 @@
 // Çiz-Bil: lobi, kelime seçimi (sadece çizene), çizimin aktarılması, geç gelenin çizimi alması, tahminler (yanlış
 // herkese, "yaklaştın" sadece tahmin edene, doğru bilenin puanı), bilenlerin gizli sohbeti, herkes bilince turun
 // bitmesi ve kelimenin açıklanması, sıranın sonraki çizene geçmesi.
+import { dropFor } from './drop.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'draw' + Math.random().toString(36).slice(2, 8);
 
@@ -185,8 +186,8 @@ ok(end.players.every((p) => p.score > 0), 'Everyone drew once: podium');
 // BHG: one of two players reloads mid-game: the game waits for them (FEW_GRACE_MS) instead of going to the lobby.
 eda.send({ t: 'start' });
 await eda.wait((m) => m.t === 'state' && m.phase === 'choose', 'again', ALARM_WAIT);
-fat.ws.close();
-await eda.wait((m) => m.t === 'state' && m.players.some((p) => !p.online), 'fat offline');
+const fatDropWait = dropFor(fat.ws, 'Fat');
+await eda.wait((m) => m.t === 'state' && m.players.some((p) => !p.online), 'fat offline', fatDropWait);
 await sleep(1200);
 ok(eda.state.phase !== 'lobby', 'A player who drops mid-game does not send the game back to the lobby at once');
 const fat2 = client('Fat', 'drawFat000001', short);
