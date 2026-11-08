@@ -508,6 +508,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.78 (card PERF1e: the recap's counters saved every 30 s):**
+- [ ] In a room with a friend, send a lot of emojis and pause / play a few times, then open 👤 → Today's recap: your
+  emojis and pauses are all counted. Both leave, come back a minute later: the recap still has them.
+
 **0.9.97.77 (cards PERF1 + PERF1c: speed pass, big podcast feeds):**
 - [ ] Search a podcast with a very long history in the link box (🎧 Podcasts) and open the show: its newest
   episodes list as quickly as any other show's.

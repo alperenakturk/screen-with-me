@@ -8,6 +8,10 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.78 — 8 Nov
+- Behind the scenes: a room saves the counters behind "Today's recap" (emojis, pauses, jumps) at most every 30 seconds
+  instead of on every press, so a lively evening costs far fewer storage writes. The recap still counts everything.
+
 ### 0.9.97.77 — 8 Nov
 - Podcasts: a show with a very large feed (thousands of episodes) now opens as fast as any other; the server reads
   only the first 200 episodes of a feed, where the newest ones are.
