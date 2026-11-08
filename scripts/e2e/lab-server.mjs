@@ -151,4 +151,32 @@ console.log(lab ? 'local lab server: the lab messages must work' : 'not a lab se
   alex.close();
   sam.close();
 }
+// 6. LABWAKE: after a table sits quiet long enough for its object to hibernate (≈ 10–20 s, wrangler dev too), a lab
+// message still works: the flag is remembered in the object's storage, not only in memory (it came back `lab_off`).
+// Local lab server only (live refuses every lab message above); the tables wait side by side, 25 s in all.
+if (lab) {
+  const pk = (name) => ({ t: 'hello', v: 1, name, cid: `wakePk${name}${tag}` });
+  const alex = client(`/api/poker/wake${tag}/ws`, pk('Alex'));
+  const wa = await alex.wait((m) => m.t === 'welcome', 'wake poker welcome');
+  const sam = client(`/api/poker/wake${tag}/ws`, pk('Sam'));
+  await alex.wait((m) => m.t === 'state' && m.players.length === 2, 'wake poker two seats');
+  alex.send({ t: 'start' });
+  await alex.wait((m) => m.t === 'state' && m.phase === 'preflop', 'wake poker dealt');
+  const cl = client(`/api/games/wake${tag}/ws`, { t: 'hello', v: 2, game: 'xox', name: 'Alex', cid: 'wakeCl' + tag, classics: true });
+  await cl.wait((m) => m.t === 'state', 'wake classics state');
+  cl.send({ t: 'bot', level: 1 });
+  await cl.wait((m) => m.t === 'state' && m.seats[1]?.bot, 'wake bot seated');
+  alex.inbox.length = 0;
+  cl.inbox.length = 0;
+  await sleep(25000);
+  alex.send({ t: 'lab', op: 'end' });
+  cl.send({ t: 'lab', position: 'mate1' });
+  const over = await alex.wait((m) => (m.t === 'state' && m.phase === 'over') || m.t === 'error', 'wake poker lab', 4000);
+  ok(over.t === 'state' && over.winner === wa.you, 'Last Heart: a lab message after 25 s of quiet (the object hibernated) still works');
+  const pos = await cl.wait((m) => (m.t === 'state' && m.kind === 'chess') || m.t === 'error', 'wake classics lab', 4000);
+  ok(pos.t === 'state', 'Classics: a lab position after 25 s of quiet still works');
+  alex.close();
+  sam.close();
+  cl.close();
+}
 process.exit(0);

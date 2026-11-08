@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
-import { labServer } from './lab.ts';
+import { labOnRequest, labRemembered } from './lab.ts';
 import { RateLimiter } from './rate-limit.ts';
 import type { Avatar } from '@swm/shared/protocol';
 import {
@@ -103,7 +103,7 @@ export class Sea extends DurableObject<Env> {
   });
 
   override async fetch(request: Request): Promise<Response> {
-    this.lab ||= labServer(this.env, request);
+    this.lab = await labOnRequest(this.ctx.storage, this.env, request, this.lab);
     const polled = await this.polls.handle(request);
     if (polled) return polled;
     if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
@@ -309,6 +309,7 @@ export class Sea extends DurableObject<Env> {
         break;
       }
       case 'lab': {
+        this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         if (message.op === 'reveal') return this.sendTo(ws, { t: 'reveal', seat: 1 - seat, ships: this.ships(1 - seat) });

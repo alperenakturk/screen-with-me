@@ -73,6 +73,9 @@ async function person(browser, room, name, opts, rear = false) {
   const sent = [];
   page.on('websocket', (ws) => ws.on('framesent', (f) => /"t":"voice"/.test(String(f.payload)) && sent.push({ at: Date.now(), data: String(f.payload) })));
   await page.goto(`${SITE}/?debug=1`);
+  // The page turns the lab on once its app has started, which can be after "load": leaving before that left the tab
+  // without the lab, and the 🐞 never came in the room (1 in 3 on a CI-like server).
+  await page.waitForFunction(() => sessionStorage.getItem('swm:debug') === '1', null, { timeout: 10000 });
   await page.goto(`${SITE}/r/${room}`);
   await page.fill('#name', name);
   await page.click('#name-form button.primary');

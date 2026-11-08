@@ -202,10 +202,13 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
     const [alex, sam] = people;
     await alex.page.evaluate(() => window.__swmLab.run('games.open.poker'));
     await until(() => sam.page.evaluate(() => !!document.querySelector('#game-invite .btn.primary')));
+    // Alex sits first, so the table's host (the first player still connected) is Alex: when Sam's connection got there
+    // first, Alex's Start stayed disabled, the game never started and the lab's end was ignored in the lobby (1 in 10).
+    await until(() => alex.page.evaluate(() => document.querySelectorAll('#game-stage .pk-lobby-seats li').length >= 1), 12000);
     await sam.page.evaluate(() => document.querySelector('#game-invite .btn.primary')?.click());
     await until(() => alex.page.evaluate(() => document.querySelectorAll('#game-stage .pk-lobby-seats li').length >= 2));
     await until(() => alex.page.evaluate(() => { const b = [...document.querySelectorAll('#game-stage .pk-lobby .btn.primary')].find((b) => !b.disabled); b?.click(); return !!b; }));
-    await until(() => alex.page.evaluate(() => !document.querySelector('#game-stage .pk-lobby')));
+    check(!!(await until(() => alex.page.evaluate(() => !document.querySelector('#game-stage .pk-lobby')))), `${label} poker: Alex (the table's host) deals the first hand`);
     await alex.page.evaluate(() => window.__swmLab.run('poker.referee'));
     const said = await until(() => alex.page.evaluate(() => { const r = document.querySelector('#game-stage .rf'); return r && !r.hidden ? { text: r.querySelector('.rf-say')?.textContent ?? '', mood: r.dataset.mood } : null; }));
     check(said && said.text.length > 0 && said.text.length <= 40 && said.mood === 'gasp', `${label} poker: Glowbeam the referee says a short line`, said);
