@@ -8,7 +8,7 @@ const BOARDS = ['xox', 'four', 'dama', 'chess', 'backgammon', 'reversi'];
 
 function client(name, cid) {
   const ws = new WebSocket(`${base}/api/games/${game}/ws`);
-  // GHOST: like the game pages, a ping every 15 s (a socket silent for 45 s is closed as a dead connection).
+  // GHOST: like the game pages, a ping every 15 s (a socket silent for 90 s is closed as a dead connection).
   setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
   const inbox = [];
   let last = null;

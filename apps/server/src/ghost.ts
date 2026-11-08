@@ -1,11 +1,15 @@
 // Ghost connections in the game objects (card GHOST): a socket that died without a close frame (1006, a phone that lost
 // its network) stays "open" for the object, so its player stays online, keeps a seat or the turn, and the Quiz / Draw
-// "too few players" grace never starts. Every game page pings every 15 s; a socket silent for `GHOST_MS` is closed in
+// "too few players" grace never starts. Every game page pings every 15 s; a socket silent for `GHOST_MS` (90 s) is closed in
 // the object's alarm and goes through the same leave path as a real close. The time lives in the socket's attachment
 // (hibernation keeps it), never in a bare timer (BH8).
 
-/** A socket silent this long is taken for dead (three missed pings of the game pages, plus slack). */
-export const GHOST_MS = 45_000;
+/**
+ * A socket silent this long is taken for dead. The pages ping every 15 s, but Chrome's intensive throttling runs a tab's
+ * timers only once a minute after it has been hidden for 5 minutes: a 60 s gap plus jitter must never drop someone who
+ * is only in another tab (Planner's call, card GHOST), so 90 s, not 45.
+ */
+export const GHOST_MS = 90_000;
 /** The attachment is rewritten at most this often (a live socket's stored time is never older than this). */
 const SEEN_EVERY_MS = 5_000;
 /** The close code a ghost gets (the room uses the same one for its stale sockets). */

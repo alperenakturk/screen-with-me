@@ -1,8 +1,8 @@
 // GHOST: a game connection that dies without a close frame (a phone losing its network: 1006, no goodbye) must not stay
 // "online" for ever. In Draw & Guess, Quiz, Classics and Sea Battle a second player goes silent (their socket stays
-// open, nothing is sent); the game object's alarm closes it after about 45 s, the player shows offline within a minute,
+// open, nothing is sent); the game object's alarm closes it after about 90 s (`GHOST_MS`), the player shows offline soon after,
 // and the game handles it like a real leave (Draw / Quiz: back to the lobby after the 20 s grace). The four games run
-// side by side, so the file takes about 75 s.
+// side by side, so the file takes about 2 minutes.
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const tag = Math.random().toString(36).slice(2, 8);
 const PING_MS = 15_000;
@@ -59,7 +59,7 @@ function client(path, hello, pinging) {
   };
 }
 
-const OFFLINE_MS = 65_000;
+const OFFLINE_MS = 130_000; // 90 s + room for a live alarm that runs late right after a deploy
 const GRACE_MS = 30_000;
 
 async function draw() {
@@ -71,7 +71,7 @@ async function draw() {
   alex.send({ t: 'start' });
   ok(await until(() => alex.state.phase !== 'lobby', 8000), 'Draw: the game starts');
   const silentAt = Date.now();
-  ok(await until(() => alex.state.players.some((p) => p.name === 'Sam' && !p.online), OFFLINE_MS), 'Draw: the silent player shows offline within a minute');
+  ok(await until(() => alex.state.players.some((p) => p.name === 'Sam' && !p.online), OFFLINE_MS), 'Draw: the silent player shows offline after about 90 s');
   ok(alex.state.players.some((p) => p.name === 'Alex' && p.online), 'Draw: the player who keeps pinging stays online');
   console.log(`    (Draw: offline after ${Math.round((Date.now() - silentAt) / 1000)} s; the server closed it with ${sam.closed ?? 'nothing yet'})`);
   ok(await until(() => alex.state.phase === 'lobby', GRACE_MS), 'Draw: with one player left the game goes back to the lobby after the grace');
@@ -87,7 +87,7 @@ async function quiz() {
   ok(await until(() => alex.state?.players?.filter((p) => p.online).length === 2, 8000), 'Quiz: two players online');
   alex.send({ t: 'start' });
   ok(await until(() => alex.state.phase === 'question', 8000), 'Quiz: the game starts');
-  ok(await until(() => alex.state.players.some((p) => p.name === 'Sam' && !p.online), OFFLINE_MS), 'Quiz: the silent player shows offline within a minute');
+  ok(await until(() => alex.state.players.some((p) => p.name === 'Sam' && !p.online), OFFLINE_MS), 'Quiz: the silent player shows offline after about 90 s');
   ok(alex.state.players.some((p) => p.name === 'Alex' && p.online), 'Quiz: the player who keeps pinging stays online');
   ok(await until(() => alex.state.phase === 'lobby', GRACE_MS), 'Quiz: with one player left the game goes back to the lobby after the grace');
   alex.stop();
@@ -101,7 +101,7 @@ async function classics() {
   await until(() => alex.state, 8000);
   const sam = client(path, hello('Sam', 'ghostClasSam001'), false);
   ok(await until(() => alex.state?.seats?.every((s) => s?.online), 8000), 'Classics: both seats online');
-  ok(await until(() => alex.state.seats.some((s) => s?.name === 'Sam' && !s.online), OFFLINE_MS), 'Classics: the silent player\'s seat shows offline within a minute (a watcher may sit)');
+  ok(await until(() => alex.state.seats.some((s) => s?.name === 'Sam' && !s.online), OFFLINE_MS), 'Classics: the silent player\'s seat shows offline after about 90 s (a watcher may sit)');
   ok(alex.state.seats.some((s) => s?.name === 'Alex' && s.online), 'Classics: the player who keeps pinging stays online');
   ok(alex.state.seats.some((s) => s?.name === 'Sam'), 'Classics: the seat stays theirs, as after a real leave');
   alex.stop();
@@ -114,7 +114,7 @@ async function sea() {
   await until(() => alex.state, 8000);
   const sam = client(path, { t: 'hello', v: 1, name: 'Sam', cid: 's'.repeat(31) + 'g' }, false);
   ok(await until(() => alex.state?.players?.every((p) => p?.online), 8000), 'Sea Battle: both players online');
-  ok(await until(() => alex.state.players.some((p) => p?.name === 'Sam' && !p.online), OFFLINE_MS), 'Sea Battle: the silent player shows offline within a minute');
+  ok(await until(() => alex.state.players.some((p) => p?.name === 'Sam' && !p.online), OFFLINE_MS), 'Sea Battle: the silent player shows offline after about 90 s');
   ok(alex.state.players.some((p) => p?.name === 'Alex' && p.online), 'Sea Battle: the player who keeps pinging stays online');
   alex.stop();
   sam.stop();
