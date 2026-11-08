@@ -2858,20 +2858,35 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $('#chat-list').after(noticeChat);
   const noticeTop = el('div', { class: 'yt-notices yt-notices-top' });
   $('.player-wrap').before(noticeTop);
+  // Card BH12: the Shorts view plays in YouTube's or TikTok's own player too, so its notes (the everyone-ready wait
+  // above all, or a game invite) wait beside the video: in the empty bottom left corner on a computer, in the slim
+  // bar's message slot on a phone. They used to sit on the video, over the player.
+  const noticeShorts = el('div', { class: 'yt-notices yt-notices-shorts' });
   const NOTICES = '#waiting-banner, #sync-badge, #game-invite, .end-card, .countdown';
   function placeNotices(): void {
     const wrap = $('.player-wrap');
-    const youtube = $('#theater').classList.contains('yt-rail') && !isShell && !document.documentElement.classList.contains('shorts-view');
+    const html = document.documentElement;
+    const shortsView = html.classList.contains('shorts-view') && !fullscreen.isActive();
+    const youtube = $('#theater').classList.contains('yt-rail') && !isShell && !html.classList.contains('shorts-view');
+    if (shortsView) {
+      const bar = html.classList.contains('ph-shorts') ? document.querySelector<HTMLElement>('.ph-shorts-bar') : null;
+      const home = bar ?? roomEl;
+      if (noticeShorts.parentElement !== home) home.append(noticeShorts);
+    }
     // Card R15 (owner): in fullscreen the notes sit on the video, YouTube too, as for video files.
-    const target = !youtube || fullscreen.isActive() ? wrap : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
-    for (const box of [wrap, noticeChat, noticeTop]) {
+    const target = shortsView ? noticeShorts : !youtube || fullscreen.isActive() ? wrap : roomEl.classList.contains('side-hidden') ? noticeTop : noticeChat;
+    for (const box of [wrap, noticeChat, noticeTop, noticeShorts]) {
       if (box === target) continue;
       for (const node of box.querySelectorAll<HTMLElement>(`:scope > :is(${NOTICES})`)) target.append(node);
     }
     // Card A11y / sweep (Planner-approved): on a computer with the side panel the "can't be played" line sits above
     // the message box too; under the video it made the room scroll by its height.
     const errInChat = !isShell && !isPhoneLayout() && innerWidth > 860 && !roomEl.classList.contains('side-hidden') && !fullscreen.isActive() && !shortsOn;
-    if (errInChat && playerErrorEl.parentElement !== noticeChat) noticeChat.append(playerErrorEl);
+    // In the Shorts view on a computer the "can't be played" card shares the bottom left corner with the notes.
+    const errInShorts = shortsView && !html.classList.contains('ph-shorts');
+    if (errInShorts && playerErrorEl.parentElement !== noticeShorts) noticeShorts.append(playerErrorEl);
+    else if (errInShorts) return;
+    else if (errInChat && playerErrorEl.parentElement !== noticeChat) noticeChat.append(playerErrorEl);
     else if (!errInChat && playerErrorEl.parentElement !== errHome) errHome.insertBefore(playerErrorEl, errNext);
   }
   const errHome = playerErrorEl.parentElement!;

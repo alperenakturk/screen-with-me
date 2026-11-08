@@ -149,6 +149,16 @@ const box = (page, sel) =>
   // Phones have their own slim bar under the video (0.9.92.4, `ui/phone-room.ts`), not the rail.
   const bar = await box(page, '.ph-shorts-bar');
   check(!!bar && bar.y >= video.b - 1 && bar.h > 30 && (await page.isVisible('#ph-shorts-chat')) && !(await page.isVisible('#shorts-chat-btn')), 'phone: the phone bar stays under the video, no rail', { video, bar });
+  // Card BH12: a wait note takes the bar's message slot, never the video.
+  await page.evaluate(() => {
+    const banner = document.querySelector('#waiting-banner');
+    banner.textContent = 'Waiting for Sam…';
+    banner.hidden = false;
+  });
+  await page.waitForTimeout(200);
+  const wait = await box(page, '#waiting-banner');
+  const inBar = await page.evaluate(() => !!document.querySelector('.ph-shorts-bar #waiting-banner'));
+  check(inBar && !!wait && wait.y >= video.b - 1 && wait.b <= bar.b + 1 && wait.h > 10, 'phone: the wait note sits in the bar under the video', { wait, video, bar });
   check(errors.length === 0, 'phone: no page errors', errors);
   await phone.close();
   await browser.close();

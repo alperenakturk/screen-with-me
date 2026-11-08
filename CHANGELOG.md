@@ -8,6 +8,10 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.84 — 8 Nov
+- Shorts: a "waiting for someone" note (or a game invite) no longer covers the Short you're watching; it waits in the
+  empty corner left of the video on a computer and in the bar under the video on a phone.
+
 ### 0.9.97.81 — 8 Nov
 - Games: every game window has a clear smallest and largest size: it can't be shrunk until its text is unreadable, and
   grown past its own size it shows the game bigger. A new ⛶ in every game's head puts the game alone on the whole screen

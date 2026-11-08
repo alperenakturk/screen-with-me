@@ -508,6 +508,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.84 (card BH12: notes beside a Short, never over it):**
+- [ ] In the Shorts view with a friend, if the room waits for someone ("Waiting for …"), the note shows in the empty
+  corner left of the video on a computer, and in the bar under the video on a phone; the Short itself stays clear.
+
 **0.9.97.81 (🎮 cards FF2 + GW: game window sizes, ⛶ in every game, Five Frames' result):**
 - [ ] Open any game and shrink its window from the corner: it stops before the text gets small; grow it: the game gets
   bigger in proportion and stops at a sensible size.
