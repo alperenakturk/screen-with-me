@@ -3,6 +3,7 @@
 // With `LAB_SERVER=1` (a local `wrangler dev --var SWM_LAB_SERVER:1`, as in CI) they must work. Without it (every live
 // run, a plain local server) every one of them must be refused and change nothing: this is the proof that the live
 // build never has these powers.
+import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const lab = process.env.LAB_SERVER === '1' && /^ws:\/\/(localhost|127\.0\.0\.1)/.test(base);
 const tag = Math.random().toString(36).slice(2, 8);
@@ -13,7 +14,7 @@ const ok = (c, m) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function client(path, hello) {
-  const ws = new WebSocket(`${base}${path}`);
+  const ws = new GameSocket(`${base}${path}`);
   const inbox = [];
   let last = null;
   ws.addEventListener('message', (e) => {

@@ -1,11 +1,12 @@
 // Life poker: seats in the lobby, host settings (jokers), dealing (each player gets only their own cards), turns
 // (out of turn refused), the special moves (disqualify refunds the target and costs 10 life, peek shows a card only
 // to the one who peeked, free fold gives your bets back), the showdown and the next hand.
+import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'poker' + Math.random().toString(36).slice(2, 8);
 
 function client(name, cid) {
-  const ws = new WebSocket(`${base}/api/poker/${game}/ws`);
+  const ws = new GameSocket(`${base}/api/poker/${game}/ws`);
   // GHOST: like the game pages, a ping every 15 s (a socket silent for 90 s is closed as a dead connection).
   setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
   const inbox = [];

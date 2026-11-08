@@ -2,11 +2,12 @@
 // until the reveal), the 50:50 joker (only to its user, once per game), reveal with points and rank, moving on by
 // itself, podium at the end, new game with new questions.
 import { dropFor } from './drop.mjs';
+import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'quiz' + Math.random().toString(36).slice(2, 8);
 
 function client(name, cid) {
-  const ws = new WebSocket(`${base}/api/quiz/${game}/ws`);
+  const ws = new GameSocket(`${base}/api/quiz/${game}/ws`);
   // GHOST: like the game pages, a ping every 15 s (a socket silent for 90 s is closed as a dead connection).
   setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
   const inbox = [];
