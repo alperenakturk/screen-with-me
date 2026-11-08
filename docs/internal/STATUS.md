@@ -516,6 +516,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Finish Five Frames in Turkish: two lines ("2/7 denemede buldun! 🎉" / "Yeni kelime: 21 sa 10 dk sonra"), and
   "📋 Kopyala" → "Kopyalandı ✓" keeps the same width.
 - [ ] Snack Bar / Window Garden in Turkish while a film plays: nothing in their top row ends in "…".
+
 **0.9.97.80 (card YTK: "Play now" in the Shorts add window, ← / → in the room view):**
 - [ ] In the Shorts view press ＋ Add, paste a Short's link and press "▶ Play now": it opens for everyone at once.
   Paste two links and press it again: the first plays, the second is in the queue. Type words and press it: the first
