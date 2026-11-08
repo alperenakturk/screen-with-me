@@ -7,6 +7,7 @@
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { referee } from './referee.ts';
 import {
   MOVE_COST,
   POKER_MAX_PLAYERS,
@@ -29,8 +30,15 @@ import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { settingsPanel } from './ui.ts';
 import { GAME_PING_MS, silence } from './silent.ts';
+import { tableHowTo } from './how-to-play.ts';
+import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
+import poker1Art from './art/tutorial/poker-1-life.svg?raw';
+import poker2Art from './art/tutorial/poker-2-hand.svg?raw';
+import poker3Art from './art/tutorial/poker-3-moves.svg?raw';
 
 type State = Extract<PokerServerMessage, { t: 'state' }>;
+/** GP4: a pot this big (half a starting life) makes Glowbeam gasp. */
+const BIG_POT = 50;
 const SUIT_GLYPH: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const MOVE_ICON: Record<PokerMove, string> = { dq: '🚫', free: '🕊️', shield: '🛡️', peek: '👁️' };
 /** Moves that need a target (a rival still in the hand). */
@@ -71,6 +79,17 @@ function flask(pot: number, total: number): HTMLElement {
 export function mountPoker(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   const root = el('div', { class: 'pk' });
   app.replaceChildren(root);
+  // GP4: the tables' one result card (Glowbeam, who won, the podium by life left, Play again for the host).
+  const endCard = resultCard(app, resultGlowbeam());
+  // GP4: Glowbeam the referee at a showdown: a split pot, or a big one (never a word about a player's mistake).
+  const ref = referee(app);
+  function refereeLine(s: State): void {
+    const winners = s.players.filter((p) => (p.won ?? 0) > 0);
+    const pot = winners.reduce((sum, p) => sum + (p.won ?? 0), 0);
+    if (winners.length >= 2) ref.say(t('poker.say.split'), 'cheer');
+    else if (pot >= BIG_POT) ref.say(t('poker.say.pot'), 'gasp');
+  }
+  const endLines = () => ({ win: t('poker.end.win'), lose: t('poker.end.lose'), draw: t('poker.end.over'), over: t('poker.end.over') });
 
   let state: State | null = null;
   let me: string | null = null;
@@ -122,6 +141,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     const turnKey = `${s.hand}:${s.phase}:${s.toAct}`;
     if (myTurn && turnKey !== lastTurnKey) playSound('roundMine');
     lastTurnKey = turnKey;
+    if (s.phase === 'showdown' && lastPhase !== 'showdown' && lastPhase !== '') refereeLine(s);
     if (s.phase === 'showdown' && lastPhase !== 'showdown' && myPlayer?.dealt) playSound(myPlayer.won ? 'guessRight' : 'wrong');
     if (s.phase === 'over' && lastPhase !== 'over') playSound('podium');
     lastPhase = s.phase;
@@ -137,6 +157,11 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     announced = big ? bigKey : announced;
     if (s.endsAt !== clock.endsAt) clock = { endsAt: s.endsAt ?? 0, from: Date.now() + offset };
 
+    if (s.phase === 'over') {
+      // The winner is the one heart left; the others rank by the life they had left (all 0 once out).
+      const players = s.players.map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, online: p.online, score: p.id === s.winner ? Math.max(1, p.life) : p.life }));
+      showPointsResult(endCard, `poker:${gameId}:${s.hand}`, players, s.host, me, endLines(), () => send({ t: 'start' }));
+    } else endCard.hide();
     if (howto !== null) return renderHowto();
     if (s.phase === 'lobby' || s.phase === 'over') return renderLobby(s, myPlayer);
     const total = s.players.reduce((sum, p) => sum + p.life, 0) + s.pot;
@@ -248,7 +273,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   }
 
   function helpButton(): HTMLElement {
-    const b = el('button', { type: 'button', class: 'pk-help', title: t('poker.howto'), 'aria-label': t('poker.howto') }, '?');
+    // GP4: "How to play" is the tables' picture cards (the "?" in the window's head); this one is the reference of hands and moves.
+    const b = el('button', { type: 'button', class: 'pk-help', title: t('poker.ref'), 'aria-label': t('poker.ref') }, '♠');
     b.addEventListener('click', () => {
       howto = 0;
       render();
@@ -440,13 +466,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       parts.push(el('h3', {}, winner ? t('poker.winner', { name: winner.name }) : t('games.over')));
       if (winner) parts.push(el('div', { class: 'pk-champion' }, avatarNode(winner.avatar, 'pk-champion-avatar'), lifeBar(winner.life)));
     } else parts.push(el('h3', {}, t('games.poker.title')), el('p', { class: 'pk-rules' }, t('poker.rules')));
-    const learn = el('button', { type: 'button', class: 'btn pk-learn' }, `❔ ${t('poker.howto')}`);
-    learn.addEventListener('click', () => {
-      howto = 0;
-      render();
-    });
     parts.push(
-      learn,
       settingsPanel(
         [
           {
@@ -571,9 +591,23 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
   // Test Lab (GHOST): this tab goes quiet, as a dead connection would.
-  const offLab = debugHooks.register('table.poker', () => ({ commands: [quiet.command('poker', { en: 'Last Heart', tr: 'Son Kalp' })] }));
+  const offLab = debugHooks.register('table.poker', () => ({
+    commands: [
+      quiet.command('poker', { en: 'Last Heart', tr: 'Son Kalp' }),
+      { id: 'poker.end', title: { en: 'Last Heart: end the game, I win', tr: 'Son Kalp: oyunu bitir, ben kazanayım' }, help: { en: 'Local lab server only: everyone else runs out of life and the result card shows.', tr: 'Sadece yerel lab sunucusunda: diğer herkesin canı biter ve sonuç kartı çıkar.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => send({ t: 'lab', op: 'end' }) },
+      { id: 'poker.referee', title: { en: 'Last Heart: Glowbeam reacts', tr: 'Son Kalp: Glowbeam tepki versin' }, help: { en: 'Glowbeam says one of his showdown lines in the corner of the table.', tr: 'Glowbeam masanın köşesinde el sonunda söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => ref.say(t('poker.say.pot'), 'gasp') },
+    ],
+  }));
+  // GP4: the same "How to play" picture cards as every table (first time, and the "?" in the window's head).
+  const how = tableHowTo(app, 'poker:howSeen', () => [
+    { art: poker1Art, title: t('poker.how1'), line: t('poker.how1Line') },
+    { art: poker2Art, title: t('poker.how2'), line: t('poker.how2Line') },
+    { art: poker3Art, title: t('poker.how3'), line: t('poker.how3Line') },
+  ]);
   return () => {
     offLab();
+    ref.destroy();
+    how.destroy();
     setGameLive(false);
     close();
     clearInterval(ticker);

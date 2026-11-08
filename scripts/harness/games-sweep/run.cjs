@@ -303,19 +303,23 @@ async function windowPasses(page, label, g, phone) {
           }
         }
         if (g.play) {
-          await run('sea.bot');
-          // Glowbeam's seat and the Ready button come a moment later on a slow runner: press Ready until the battle starts.
-          const playing = await page
-            .waitForFunction(
-              () => {
-                if (document.querySelector('#game-stage .sea')?.dataset.phase === 'play') return true;
-                document.querySelector('#game-stage .sea-ready-btn:not(:disabled)')?.click();
-                return false;
-              },
-              null,
-              { timeout: 10000, polling: 500 },
-            )
-            .then(() => true, () => false);
+          // Glowbeam's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):
+          // ask for Glowbeam again every few seconds (a taken seat just refuses it) and press Ready until the battle starts.
+          let playing = false;
+          for (let tries = 0; tries < 5 && !playing; tries++) {
+            await run('sea.bot');
+            playing = await page
+              .waitForFunction(
+                () => {
+                  if (document.querySelector('#game-stage .sea')?.dataset.phase === 'play') return true;
+                  document.querySelector('#game-stage .sea-ready-btn:not(:disabled)')?.click();
+                  return false;
+                },
+                null,
+                { timeout: 4000, polling: 400 },
+              )
+              .then(() => true, () => false);
+          }
           check(playing, `${label}: the battle against Glowbeam starts`);
           await wait(600);
         }

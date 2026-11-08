@@ -31,6 +31,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { referee } from './referee.ts';
 import { lang } from '../i18n.ts';
 import draw1Art from './art/tutorial/draw-1-pick.svg?raw';
 import draw2Art from './art/tutorial/draw-2-draw.svg?raw';
@@ -59,6 +60,8 @@ const TEXT = {
     endLose: 'Lovely drawings. One more round?',
     endDraw: 'A tie! Play again to settle it.',
     endOver: 'What a gallery!',
+    refAll: 'Everyone got it!',
+    refTough: 'A tough word!',
   },
   tr: {
     how1: 'Bir kelime seç',
@@ -71,6 +74,8 @@ const TEXT = {
     endLose: 'Çizimler harikaydı. Bir tur daha?',
     endDraw: 'Berabere! Yeniden oynayıp kapatın.',
     endOver: 'Ne sergiydi!',
+    refAll: 'Herkes bildi!',
+    refTough: 'Zor bir kelimeydi!',
   },
 } as const;
 const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
@@ -359,6 +364,15 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
 
   // GP3: the tables' result card at the end, with the podium inside.
   const result = resultCard(app.firstElementChild as HTMLElement, resultGlowbeam());
+  // GP4: Glowbeam the referee at a reveal: everyone guessed it, or nobody did (a tough word, never the drawing's fault).
+  const ref = referee(app.firstElementChild as HTMLElement);
+  function refereeLine(s: State): void {
+    const guessers = s.players.filter((p) => p.online && p.id !== s.drawer);
+    if (!guessers.length) return;
+    const got = guessers.filter((p) => p.guessed).length;
+    if (got === guessers.length && guessers.length >= 2) ref.say(tx('refAll'), 'cheer');
+    else if (got === 0) ref.say(tx('refTough'), 'gasp');
+  }
   function render(): void {
     if (state) setGameLive(state.phase !== 'lobby' && state.phase !== 'over' && state.players.some((p) => p.id === me));
     if (!state) return;
@@ -457,6 +471,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase === 'draw' && lastPhase === 'draw' && !s.word && s.hint !== lastHint) playSound('hint');
     lastHint = s.hint;
     if (s.phase !== lastPhase) {
+      if (s.phase === 'reveal' && lastPhase !== '') refereeLine(s);
       if (s.phase === 'draw') line('system', t('draw.isDrawing', { name: drawerName }));
       if (s.phase === 'reveal' && s.word) line('system', `${t('draw.wordWas')} ${s.word}`);
       const drawer = s.players.find((p) => p.id === s.drawer);
@@ -607,6 +622,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const offLab = debugHooks.register('table.draw', () => ({
     commands: [
       quiet.command('draw', { en: 'Draw & Guess', tr: 'Çiz-Bil' }),
+      { id: 'draw.referee', title: { en: 'Draw & Guess: Glowbeam reacts', tr: 'Çiz-Bil: Glowbeam tepki versin' }, help: { en: 'Glowbeam says one of his reveal lines in the corner of the table.', tr: 'Glowbeam masanın köşesinde kelime açılınca söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
       { id: 'draw.skip', title: { en: 'Draw & Guess: end this phase now', tr: 'Çiz-Bil: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));
@@ -618,6 +634,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   ], app.querySelector<HTMLElement>('.draw-top'));
   return () => {
     offLab();
+    ref.destroy();
     how.destroy();
     setGameLive(false);
     close();

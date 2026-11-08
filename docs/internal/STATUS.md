@@ -517,6 +517,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.85 (🎮 card GP4: Last Heart's result card and How to play, Glowbeam the referee):**
+- [ ] Play Last Heart with a friend to the end: the result card shows (Glowbeam, who won, the podium); "Play again" for
+  the host, "Waiting for …" for the other. The first time you open it, the "How to play" picture cards show; "?" in
+  the window's head brings them back.
+- [ ] Quiz / Draw & Guess with a friend: when everyone gets a question / word, a small Glowbeam in the bottom right
+  says "Everyone got it!" for a moment (Turkish: "Herkes bildi!"); his lines are kind and go away by themselves.
+
 **0.9.97.82 (🎮 card LIVE-GREEN: the game e2e ride out network drops):**
 - Nothing to test by hand: only the automatic game tests changed.
 

@@ -1,0 +1,22 @@
+/* GP4: Glowbeam the referee (games/referee.ts): bottom right of the table, a short line beside him, never in the way. */
+.rf {
+  position: absolute; right: 10px; bottom: 10px; z-index: 6; display: flex; align-items: flex-end; gap: 6px;
+  pointer-events: none; max-width: calc(100% - 20px);
+}
+.rf[hidden] { display: none; }
+.rf-glow { flex: none; width: 44px; height: 44px; }
+.rf-glow .gr-glow, .rf-glow svg { width: 100%; height: 100%; display: block; }
+.rf-say {
+  padding: 5px 11px; border-radius: 12px 12px 4px 12px; background: #2a2160; color: #fff3d6; font-size: 14px;
+  font-weight: 700; line-height: 1.25; box-shadow: 0 0 0 1.5px rgb(255 198 90 / 0.6), 0 6px 16px rgb(0 0 0 / 0.4);
+}
+.rf[data-mood='cheer'] .rf-say { color: #ffc65a; }
+.rf.rf-in { animation: rf-in 0.22s ease-out; }
+.rf.rf-in[data-mood='cheer'] .rf-glow { animation: rf-cheer 0.6s ease-in-out 1; }
+.rf.rf-in[data-mood='gasp'] .rf-glow { animation: rf-gasp 0.5s ease-out 1; }
+@keyframes rf-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes rf-cheer { 30% { transform: translateY(-6px) rotate(-6deg); } 60% { transform: translateY(0) rotate(5deg); } }
+@keyframes rf-gasp { 30% { transform: scale(1.2) rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .rf.rf-in, .rf.rf-in .rf-glow { animation: none; }
+}

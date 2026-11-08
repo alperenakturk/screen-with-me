@@ -1,5 +1,5 @@
 // Test Lab server powers (card DL3b): a Classics position, ending a Quiz phase now, filling the room's tip jar, a Sea
-// Battle with one ship left each and the other fleet revealed.
+// Battle with one ship left each and the other fleet revealed, a Last Heart game ended (GP4).
 // With `LAB_SERVER=1` (a local `wrangler dev --var SWM_LAB_SERVER:1`, as in CI) they must work. Without it (every live
 // run, a plain local server) every one of them must be refused and change nothing: this is the proof that the live
 // build never has these powers.
@@ -129,5 +129,26 @@ console.log(lab ? 'local lab server: the lab messages must work' : 'not a lab se
     ok(alex.state.phase === 'place' && !alex.inbox.some((m) => m.t === 'reveal'), 'Sea Battle: refused (lab_off), nothing revealed, the game untouched');
   }
   alex.close();
+}
+// 5. Last Heart (GP4): the game ends now and the asking player is the last heart.
+{
+  const hello = (name) => ({ t: 'hello', v: 1, name, cid: `labPk${name}${tag}` });
+  const alex = client(`/api/poker/labp${tag}/ws`, hello('Alex'));
+  const wa = await alex.wait((m) => m.t === 'welcome', 'poker welcome');
+  const sam = client(`/api/poker/labp${tag}/ws`, hello('Sam'));
+  await alex.wait((m) => m.t === 'state' && m.players.length === 2, 'poker two seats');
+  alex.send({ t: 'start' });
+  await alex.wait((m) => m.t === 'state' && m.phase === 'preflop', 'poker dealt');
+  alex.send({ t: 'lab', op: 'end' });
+  if (lab) {
+    const over = await alex.wait((m) => m.t === 'state' && m.phase === 'over', 'poker over', 3000);
+    ok(over.winner === wa.you, 'Last Heart: the lab ends the game, the asking player wins');
+  } else {
+    await alex.wait(isError('lab_off'), 'lab_off from poker');
+    await sleep(300);
+    ok(alex.state.phase !== 'over' && alex.state.phase !== 'lobby', 'Last Heart: refused (lab_off), the game goes on');
+  }
+  alex.close();
+  sam.close();
 }
 process.exit(0);

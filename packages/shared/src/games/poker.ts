@@ -592,6 +592,8 @@ export type PokerClientMessage =
   | { t: 'move'; m: PokerMove; target?: string }
   /** Take a free seat (lobby or between games). */
   | { t: 'sit' }
+  /** Test Lab (GP4): end the game now, the sender wins (a local lab server only; elsewhere `lab_off`). */
+  | { t: 'lab'; op: 'end' }
   | { t: 'ping' };
 
 export type PokerServerMessage =
@@ -623,7 +625,7 @@ export type PokerServerMessage =
   | { t: 'error'; code: PokerErrorCode }
   | { t: 'pong'; now: number };
 
-export type PokerErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'too_few' | 'not_host' | PokerError;
+export type PokerErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'too_few' | 'not_host' | 'lab_off' | PokerError;
 
 const PID = /^[A-Za-z0-9_-]{1,20}$/;
 
@@ -654,6 +656,8 @@ export function parsePokerMessage(raw: string): PokerClientMessage | null {
       if (!(POKER_MOVES as unknown[]).includes(m.m)) return null;
       if (m.target !== undefined && (typeof m.target !== 'string' || !PID.test(m.target))) return null;
       return { t: 'move', m: m.m as PokerMove, ...(typeof m.target === 'string' ? { target: m.target } : {}) };
+    case 'lab':
+      return m.op === 'end' ? { t: 'lab', op: 'end' } : null;
     case 'start':
     case 'sit':
     case 'ping':

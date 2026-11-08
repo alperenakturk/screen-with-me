@@ -27,6 +27,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { referee } from './referee.ts';
 import { lang } from '../i18n.ts';
 import quiz1Art from './art/tutorial/quiz-1-answer.svg?raw';
 import quiz2Art from './art/tutorial/quiz-2-reveal.svg?raw';
@@ -70,6 +71,9 @@ const TEXT = {
     endLose: 'So close. One more round?',
     endDraw: 'Neck and neck! Play again to settle it.',
     endOver: 'What a quiz!',
+    refAll: 'Everyone got it!',
+    refStreak: '{n} in a row!',
+    refTricky: 'A tricky one!',
   },
   tr: {
     how1: 'Hızlı cevapla',
@@ -82,6 +86,9 @@ const TEXT = {
     endLose: 'Çok yaklaştın. Bir tur daha?',
     endDraw: 'Başa baş! Yeniden oynayıp kapatın.',
     endOver: 'Ne yarışmaydı!',
+    refAll: 'Herkes bildi!',
+    refStreak: 'Üst üste {n}!',
+    refTricky: 'Zorlu bir soruydu!',
   },
 } as const;
 const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
@@ -136,9 +143,20 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   // GP3: the tables' result card at the end, with the podium inside.
   const result = resultCard(app.firstElementChild as HTMLElement, resultGlowbeam());
   const endLines = () => ({ win: tx('endWin'), lose: tx('endLose'), draw: tx('endDraw'), over: tx('endOver') });
+  // GP4: Glowbeam the referee says a kind word at a reveal (everyone right, my streak, a tricky one); never a mistake.
+  const ref = referee(app.firstElementChild as HTMLElement);
+  function refereeLine(s: State): void {
+    const playing = s.players.filter((p) => p.online);
+    const right = playing.filter((p) => p.pick === s.correct);
+    const mine = s.players.find((p) => p.id === me);
+    if (playing.length >= 2 && right.length === playing.length) ref.say(tx('refAll'), 'cheer');
+    else if (mine && mine.pick === s.correct && mine.streak >= 3) ref.say(tx('refStreak').replace('{n}', String(mine.streak)), 'cheer');
+    else if (playing.length >= 1 && right.length === 0) ref.say(tx('refTricky'), 'gasp');
+  }
 
   function sounds(s: State, mine: State['players'][number] | undefined): void {
     const key = `${s.phase}:${s.n}`;
+    if (lastKey !== '' && key !== lastKey && s.phase === 'reveal') refereeLine(s);
     if (lastKey !== '' && key !== lastKey && mine) {
       if (s.phase === 'question') playSound('roundMine');
       else if (s.phase === 'reveal') playSound(mine.gained ? 'guessRight' : 'wrong');
@@ -352,6 +370,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   const offLab = debugHooks.register('table.quiz', () => ({
     commands: [
       quiet.command('quiz', { en: 'Quiz', tr: 'Bilgi yarışması' }),
+      { id: 'quiz.referee', title: { en: 'Quiz: Glowbeam reacts', tr: 'Bilgi yarışması: Glowbeam tepki versin' }, help: { en: 'Glowbeam says one of his reveal lines in the corner of the table.', tr: 'Glowbeam masanın köşesinde cevap anındaki sözlerinden birini söyler.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
       { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));
@@ -363,6 +382,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   ], app.querySelector<HTMLElement>('.draw-top'));
   return () => {
     offLab();
+    ref.destroy();
     how.destroy();
     setGameLive(false);
     close();
