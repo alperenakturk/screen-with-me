@@ -295,12 +295,17 @@ async function windowPasses(page, label, g, phone) {
         }
         if (g.board) {
           const has = await page.evaluate((b) => document.querySelector(`#game-stage .cl-box[data-board="${b}"].on`) !== null, g.board);
-          if (!has) {
-            await page.evaluate(() => document.querySelector('#cl-shelf-open')?.click());
+          // The picker step before may have left the picker open on a table that already has this board: its box then
+          // counts as chosen but the window still shows (and is sized for) the picker. A press on the box closes it.
+          const pickerOpen = await page.evaluate(() => document.querySelector('#game-stage .xox-page')?.dataset.board === 'picker');
+          if (!has || pickerOpen) {
+            if (!pickerOpen) await page.evaluate(() => document.querySelector('#cl-shelf-open')?.click());
             await wait(300);
             await page.evaluate((b) => document.querySelector(`#game-stage .cl-box[data-board="${b}"]`)?.click(), g.board);
             await wait(1200);
           }
+          const shown = await page.waitForFunction((b) => document.querySelector('#game-stage .xox-page')?.dataset.board === b, g.board, { timeout: 6000 }).then(() => true, () => false);
+          check(shown, `${label}: the ${g.board} board is on the table`);
         }
         if (g.play) {
           // Glowbeam's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):
