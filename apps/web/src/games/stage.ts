@@ -605,6 +605,7 @@ export function createGameStage(opts: StageOptions) {
     minimizeButton.label(t('game.minimize'));
     leaveButton.label(t('hub.leave'));
     endButton.label(t('hub.close'));
+    fullLabel();
     leaveButton.node.hidden = !current;
     for (const b of triggers) b.title = t('hub.title');
     stage.classList.toggle('solo-game', !current && !!solo);
