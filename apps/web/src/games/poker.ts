@@ -6,6 +6,7 @@
 
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
+import { debugHooks } from '../debug-lab.ts';
 import {
   MOVE_COST,
   POKER_MAX_PLAYERS,
@@ -27,6 +28,7 @@ import { setGameLive } from './live.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { settingsPanel } from './ui.ts';
+import { GAME_PING_MS, silence } from './silent.ts';
 
 type State = Extract<PokerServerMessage, { t: 'state' }>;
 const SUIT_GLYPH: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
@@ -501,7 +503,10 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   let ws: SwmSocket | null = null;
   let stopped = false;
   let pingAt = 0;
+  // GHOST: the Test Lab's "go silent" keeps this page quiet, as a dead connection would be.
+  const quiet = silence();
   function send(message: PokerClientMessage): void {
+    if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
@@ -557,7 +562,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   const ping = window.setInterval(() => {
     pingAt = performance.now();
     send({ t: 'ping' });
-  }, 15_000);
+  }, GAME_PING_MS);
   const close = () => {
     stopped = true;
     ws?.close();
@@ -565,7 +570,10 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   const onLang = () => render();
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
+  // Test Lab (GHOST): this tab goes quiet, as a dead connection would.
+  const offLab = debugHooks.register('table.poker', () => ({ commands: [quiet.command('poker', { en: 'Last Heart', tr: 'Son Kalp' })] }));
   return () => {
+    offLab();
     setGameLive(false);
     close();
     clearInterval(ticker);

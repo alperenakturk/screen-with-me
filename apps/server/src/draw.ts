@@ -26,6 +26,7 @@ import { DRAW_WORDS, DRAW_WORD_SETS } from '@swm/shared/games/draw-words';
 import { drawGuessPoints, drawerPoints } from '@swm/shared/games/scoring';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
+import { closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
 
 /** Oda boş kaldıktan bu kadar sonra silinir. */
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
@@ -41,6 +42,9 @@ const RECENT_WORDS = 60;
 
 interface Attachment {
   id: string;
+  /** GHOST: when the last message came, and whether the alarm closed it as a dead connection (`ghost.ts`). */
+  seen?: number;
+  ghost?: boolean;
   /** hello gelene kadar yok. */
   name: string | null;
   /** Kalıcı tarayıcı kimliği (puan ve sıra buna bağlı; istemcilere gitmez). */
@@ -161,7 +165,7 @@ export class Draw extends DurableObject<Env> {
       this.sendTo(server, { t: 'error', code: 'full' });
       server.close(4001, 'full');
     } else {
-      server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: null } satisfies Attachment);
+      server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: null, seen: Date.now() } satisfies Attachment);
       if (this.data.emptySince !== null) {
         this.data.emptySince = null;
         await this.save();
@@ -170,6 +174,7 @@ export class Draw extends DurableObject<Env> {
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    touch(ws);
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parseDrawMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
@@ -194,10 +199,12 @@ export class Draw extends DurableObject<Env> {
     } catch {
       // Zaten kapanmış.
     }
+    if (wasGhost(ws)) return;
     await this.left(ws);
   }
 
   override async webSocketError(ws: WebSocket): Promise<void> {
+    if (wasGhost(ws)) return;
     await this.left(ws);
   }
 
@@ -213,6 +220,8 @@ export class Draw extends DurableObject<Env> {
   override async alarm(): Promise<void> {
     const now = Date.now();
     await this.polls.sweepDue(now);
+    // GHOST: sockets silent past `GHOST_MS` died without a close frame; they leave like a real close.
+    for (const ws of closeGhosts(this.sockets())) await this.left(ws);
     await this.advance(now);
     const d = this.data;
     if (d.phase !== 'lobby' && d.phase !== 'over' && d.fewSince && this.tooFew(now)) await this.toLobby();
@@ -285,6 +294,8 @@ export class Draw extends DurableObject<Env> {
     if (d.phase === 'draw' && this.strokes.length) this.sendTo(ws, { t: 'strokes', list: this.strokes });
     if (d.phase === 'choose' && d.drawer === key) this.sendTo(ws, { t: 'choices', words: d.choices });
     this.broadcastState();
+    // GHOST: the alarm also watches this connection for silence.
+    await this.scheduleAlarm();
   }
 
   /** The host: the first player (in arrival order) who is still connected. */
@@ -586,6 +597,8 @@ export class Draw extends DurableObject<Env> {
     // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
     const due = this.polls.nextDue();
     if (due !== null) times.push(due);
+    const ghost = nextGhostCheck(this.sockets());
+    if (ghost !== null) times.push(ghost);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -647,7 +660,7 @@ export class Draw extends DurableObject<Env> {
   }
 
   private sockets(except?: WebSocket): WebSocket[] {
-    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
+    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN && !wasGhost(ws));
   }
 
   private sendTo(ws: WebSocket, message: DrawServerMessage): void {

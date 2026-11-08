@@ -40,6 +40,7 @@ import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
+import { GAME_PING_MS, silence } from './silent.ts';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
@@ -506,7 +507,10 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   let ws: SwmSocket | null = null;
   let stopped = false;
   let pingAt = 0;
+  // GHOST: the Test Lab's "go silent" keeps this page quiet, as a dead connection would be.
+  const quiet = silence();
   function send(message: DrawClientMessage): void {
+    if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
@@ -588,7 +592,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const ping = window.setInterval(() => {
     pingAt = performance.now();
     send({ t: 'ping' });
-  }, 15_000);
+  }, GAME_PING_MS);
   const close = () => {
     stopped = true;
     ws?.close();
@@ -602,6 +606,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   // Test Lab (DL3b): the current phase ends now (local lab server only).
   const offLab = debugHooks.register('table.draw', () => ({
     commands: [
+      quiet.command('draw', { en: 'Draw & Guess', tr: 'Çiz-Bil' }),
       { id: 'draw.skip', title: { en: 'Draw & Guess: end this phase now', tr: 'Çiz-Bil: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));

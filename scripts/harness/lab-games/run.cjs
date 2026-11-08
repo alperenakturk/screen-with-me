@@ -38,6 +38,11 @@ const until = async (fn, ms = 6000) => {
     }
   }, [REAL, LANG]);
   const page = await ctx.newPage();
+  // GHOST: every frame this tab sends to a Classics table (the "go silent" check below).
+  const tableSent = [];
+  page.on('websocket', (ws) => {
+    if (/\/api\/games\//.test(ws.url())) ws.on('framesent', (f) => tableSent.push({ at: Date.now(), data: String(f.payload) }));
+  });
   const loaded = [];
   page.on('request', (r) => {
     if (/lab-tools/.test(r.url())) loaded.push(r.url());
@@ -133,6 +138,19 @@ const until = async (fn, ms = 6000) => {
     return (await until(chessCells, 1500)) || null;
   }, 15000);
   check(!!pos && !!chess, 'Classics: the server sets the chess mate-in-one position (the chess board shows)', `${pos?.text} cells ${chess}`);
+
+  // GHOST: "go silent" (a dead connection): for the seconds given this tab sends nothing to its table, not even a
+  // position request; then it talks again.
+  const silent = await run('classics.silent', '3');
+  const quietFrom = Date.now();
+  await run('classics.position.mate1');
+  await wait(1000);
+  const duringQuiet = tableSent.filter((f) => f.at >= quietFrom).length;
+  await wait(2300);
+  const talkFrom = Date.now();
+  await run('classics.position.mate1');
+  const talks = await until(async () => tableSent.some((f) => f.at >= talkFrom && f.data.includes('"lab"')), 3000);
+  check(silent.dir === 'lab' && duringQuiet === 0 && !!talks, '"go silent": the table hears nothing for 3 s, then the tab talks again', `${silent.text} quiet ${duringQuiet}`);
 
   // A closed game's command is gone; the room keeps working.
   const gone = await page.evaluate(() => window.__swmLab.run('snackBar.coins', '5').then(() => 'ran', (e) => String(e.message)));

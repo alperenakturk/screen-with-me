@@ -8,6 +8,11 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.76 — 8 Nov
+- Games: a player whose connection died without a word (a phone that lost its network) no longer stays "online" at a
+  game table for ever: after about a minute and a half of silence they show as gone, and Draw & Guess or the Quiz
+  carries on as when someone leaves. A tab that is only in the background is never dropped.
+
 ### 0.9.97.75 — 8 Nov
 - Behind the scenes: the site's address now lives in one setting, ready for an own domain. Nothing changes today;
   once the domain is chosen, old links will move to it and carry each browser's saves (name, avatar, saved rooms,
