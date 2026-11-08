@@ -38,6 +38,7 @@ import reversi1Art from './art/tutorial/reversi-1-flip.svg?raw';
 import reversi2Art from './art/tutorial/reversi-2-count.svg?raw';
 import { tableHowTo, type HowToPlay } from './how-to-play.ts';
 import { resultCard } from './result.ts';
+import { GAME_PING_MS, silence } from './silent.ts';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
@@ -835,7 +836,10 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   // ---- The connection (reconnects when it drops) ----
   let ws: SwmSocket | null = null;
   let stopped = false;
+  // GHOST: the Test Lab's "go silent" keeps this page quiet, as a dead connection would be.
+  const quiet = silence();
   function send(message: GameClientMessage): void {
+    if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
   function connect(): void {
@@ -876,7 +880,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   }
   build();
   connect();
-  const ping = window.setInterval(() => send({ t: 'ping' }), 20_000);
+  const ping = window.setInterval(() => send({ t: 'ping' }), GAME_PING_MS);
   const close = () => {
     stopped = true;
     ws?.close();
@@ -891,6 +895,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   // Test Lab (DL3b): a ready-made position, set by the server only when it runs as a local lab server.
   const offLab = debugHooks.register('table.classics', () => ({
     commands: [
+      quiet.command('classics', { en: 'Classics', tr: 'Klasikler' }),
       ...Object.values(LAB_POSITIONS).flat().map((position) => ({
         id: `classics.position.${position}`,
         title: { en: `Classics: set the "${position}" position`, tr: `Klasikler: "${position}" dizilişini kur` },

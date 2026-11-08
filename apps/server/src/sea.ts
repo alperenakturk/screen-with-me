@@ -23,6 +23,7 @@ import {
   type ShipPlace,
   type ShotResult,
 } from '@swm/shared/games/sea';
+import { closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
 
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_SOCKETS = 40;
@@ -31,6 +32,9 @@ const BOT_KEY = 'bot:glowbeam';
 
 interface Attachment {
   id: string;
+  /** GHOST: when the last message came, and whether the alarm closed it as a dead connection (`ghost.ts`). */
+  seen?: number;
+  ghost?: boolean;
   name: string | null;
   /** Persistent browser id (the seat is tied to it; never sent to clients). */
   key?: string;
@@ -115,7 +119,7 @@ export class Sea extends DurableObject<Env> {
       server.close(4001, 'full');
       return;
     }
-    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: null } satisfies Attachment);
+    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: null, seen: Date.now() } satisfies Attachment);
     if (this.data.emptySince !== null) {
       this.data.emptySince = null;
       await this.save();
@@ -123,6 +127,7 @@ export class Sea extends DurableObject<Env> {
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    touch(ws);
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parseSeaMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
@@ -139,16 +144,20 @@ export class Sea extends DurableObject<Env> {
     } catch {
       // Already closed.
     }
+    if (wasGhost(ws)) return;
     await this.left(ws);
   }
 
   override async webSocketError(ws: WebSocket): Promise<void> {
+    if (wasGhost(ws)) return;
     await this.left(ws);
   }
 
   override async alarm(): Promise<void> {
     const now = Date.now();
     await this.polls.sweepDue(now);
+    // GHOST: sockets silent past `GHOST_MS` died without a close frame; they leave like a real close.
+    for (const ws of closeGhosts(this.sockets())) await this.left(ws);
     if (this.sockets().length === 0 && this.data.emptySince !== null && now - this.data.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
@@ -380,6 +389,8 @@ export class Sea extends DurableObject<Env> {
     if (this.data.emptySince !== null) times.push(this.data.emptySince + EMPTY_TTL_MS);
     const due = this.polls.nextDue();
     if (due !== null) times.push(due);
+    const ghost = nextGhostCheck(this.sockets());
+    if (ghost !== null) times.push(ghost);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -450,7 +461,7 @@ export class Sea extends DurableObject<Env> {
   }
 
   private sockets(except?: WebSocket): WebSocket[] {
-    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
+    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN && !wasGhost(ws));
   }
 
   private sendTo(ws: WebSocket, message: SeaServerMessage): void {

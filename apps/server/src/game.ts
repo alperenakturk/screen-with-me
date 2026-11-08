@@ -18,12 +18,16 @@ import { RateLimiter } from './rate-limit.ts';
 import { botMove } from '@swm/shared/games/bot';
 import { LAB_POSITIONS, isLabPosition, labPosition, type LabPositionKind } from '@swm/shared/games/lab-positions';
 import type { BotLevel } from '@swm/shared/games/protocol';
+import { closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
 
 /** Oyun odası boş kaldıktan bu kadar sonra silinir. */
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 
 interface Attachment {
   id: string;
+  /** GHOST: when the last message came, and whether the alarm closed it as a dead connection (`ghost.ts`). */
+  seen?: number;
+  ghost?: boolean;
   /** hello gelene kadar yok. */
   name: string | null;
   avatar?: Avatar;
@@ -117,7 +121,7 @@ export class Game extends DurableObject<Env> {
       this.sendTo(server, { t: 'error', code: 'full' });
       server.close(4001, 'full');
     } else {
-      server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: null } satisfies Attachment);
+      server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: null, seen: Date.now() } satisfies Attachment);
       if (this.data.emptySince !== null) {
         this.data.emptySince = null;
         await this.save();
@@ -126,6 +130,7 @@ export class Game extends DurableObject<Env> {
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    touch(ws);
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parseGameMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
@@ -143,15 +148,19 @@ export class Game extends DurableObject<Env> {
     } catch {
       // Zaten kapanmış.
     }
+    if (wasGhost(ws)) return;
     await this.left(ws);
   }
 
   override async webSocketError(ws: WebSocket): Promise<void> {
+    if (wasGhost(ws)) return;
     await this.left(ws);
   }
 
   override async alarm(): Promise<void> {
     await this.polls.sweepDue();
+    // GHOST: sockets silent past `GHOST_MS` died without a close frame; they leave like a real close.
+    for (const ws of closeGhosts(this.sockets())) await this.left(ws);
     if (this.sockets().length === 0 && this.data.emptySince !== null && Date.now() - this.data.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
@@ -167,6 +176,8 @@ export class Game extends DurableObject<Env> {
     if (this.data.emptySince !== null) times.push(Math.max(this.data.emptySince + EMPTY_TTL_MS, Date.now() + 60_000));
     const due = this.polls.nextDue();
     if (due !== null) times.push(due);
+    const ghost = nextGhostCheck(this.sockets());
+    if (ghost !== null) times.push(ghost);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
   }
 
@@ -206,6 +217,8 @@ export class Game extends DurableObject<Env> {
     this.sendTo(ws, { t: 'welcome', you: me.id, game: this.data.kind });
     this.broadcastState();
     this.botTurn();
+    // GHOST: the alarm also watches this connection for silence.
+    await this.scheduleAlarm();
   }
 
   private async apply(ws: WebSocket, me: Attachment & { name: string }, message: GameClientMessage): Promise<void> {
@@ -408,7 +421,7 @@ export class Game extends DurableObject<Env> {
   }
 
   private sockets(except?: WebSocket): WebSocket[] {
-    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN);
+    return [...this.ctx.getWebSockets(), ...this.polls.sockets()].filter((ws) => ws !== except && ws.readyState === WebSocket.OPEN && !wasGhost(ws));
   }
 
   private sendTo(ws: WebSocket, message: GameServerMessage): void {
