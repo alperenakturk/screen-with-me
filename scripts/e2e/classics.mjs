@@ -2,11 +2,12 @@
 // the other seat and answers every move through the server's rules; the board switches from the shelf only while no
 // game is in progress; dama moves are checked (a man may not step backward); a second person joins the table and
 // gets the board on it, whatever board their hello named.
+import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'cl' + Math.random().toString(36).slice(2, 8);
 
 function client(name, cid, kind = 'xox') {
-  const ws = new WebSocket(`${base}/api/games/${game}/ws`);
+  const ws = new GameSocket(`${base}/api/games/${game}/ws`);
   // GHOST: like the game pages, a ping every 15 s (a socket silent for 90 s is closed as a dead connection).
   setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
   const inbox = [];

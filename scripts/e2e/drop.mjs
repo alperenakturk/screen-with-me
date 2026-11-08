@@ -11,7 +11,8 @@
 export const NETWORK_DROP_WAIT_MS = 130_000;
 
 export function dropFor(ws, name, ms = 8000) {
-  if (ws.readyState === WebSocket.OPEN) {
+  // LIVE-GREEN: a GameSocket coming back from a network drop is CONNECTING; closing it stops that, so the drop is ours.
+  if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
     ws.close();
     return ms;
   }
