@@ -7211,6 +7211,30 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   opacity: 1;
 }
 
+/* Card GW: the game alone on the whole screen (⛶ in its head): the browser's fullscreen, or the whole tab where there
+   is no Fullscreen API (the film page). stage.ts scales the game up in proportion (`--fit` above 1). */
+#game-stage:fullscreen,
+#game-stage.game-max {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 2147483000;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#game-stage:fullscreen :is(.game-resize, .game-place),
+#game-stage.game-max :is(.game-resize, .game-place) {
+  display: none;
+}
+
+#game-stage:fullscreen .game-stage-head,
+#game-stage.game-max .game-stage-head {
+  cursor: default;
+}
+
 /* Card GP: a side game's narrow window keeps its full title ("🍿 Snack Bar · just you"): 36 px head buttons, 4 px apart. */
 @container gstage (max-width: 440px) {
   .game-stage.float.solo-game .game-stage-head {
@@ -12540,9 +12564,9 @@ button.chat-name:hover,
   color: var(--text);
 }
 
-/* R10: a narrow game table's window (a small free window, below 460 px; the side games keep their one-row head, card GP): the title gets the whole first row of the head (the
+/* R10: a narrow game table's window (a small free window, below 520 px since card GW added ⛶; the side games keep their one-row head, card GP): the title gets the whole first row of the head (the
    game's name in full, "· started by …" cut first) and the buttons move to a second row, right-aligned. */
-@container gstage (max-width: 460px) {
+@container gstage (max-width: 520px) {
   .game-stage:not(.solo-game) .game-stage-head {
     flex-wrap: wrap;
     row-gap: 6px;

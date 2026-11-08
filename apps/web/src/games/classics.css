@@ -291,6 +291,8 @@
 .game-head-slot:empty { display: none; }
 .game-head-slot .cl-change { font-size: 13px; white-space: nowrap; }
 html.phone .game-head-slot .cl-change-text { display: none; }
+/* Card GW: a narrow table window keeps the game's name in its head: "Change game" shows its 🎲 only (its name is its label). */
+@container gstage (max-width: 640px) { .game-head-slot .cl-change-text { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   #game-stage .mt .cl-card { transition: none; }
 }
