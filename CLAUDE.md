@@ -1564,6 +1564,12 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
   ruleset's required check, `if: always()`) fails when any of them failed or was cancelled; `deploy` needs it. A new
   harness goes into the job of its kind (`e2e` when it needs no `web` change, else `site` / `games`); move a step to
   another job, never make one job much longer than the others (wall-clock is the longest job).
+  **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
+  for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
+  has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose
+  `.github/workflows` differ from main's head, so that case (and any refused push) is a `::warning::` with the owner's
+  steps (Releases → new release → tag `v<version>` → target the commit), never a red run. `ci-workflow.test.mjs` checks
+  the permissions; `tag-live.test.mjs` the plan.
   The repo is public since Nov 2026, so the minutes are free; the diet keeps runs short.
 - **Scene top space and sides:** the scene (1600×900) is bottom-aligned and covers the screen; on wide screens the top
   is cropped and also covered by the top bar: don't put decorations above y≈200. Room content is centered, at most

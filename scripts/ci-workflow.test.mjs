@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const FILE = join(dirname(fileURLToPath(import.meta.url)), '..', '.github', 'workflows', 'test.yml');
 
-/** Every job under `jobs:` as { needs, if } (single-line values only). */
+/** Every job under `jobs:` as { needs, if, block } (single-line values; `block` = the job's own lines). */
 function jobs(text) {
   const out = {};
   const lines = text.split('\n');
@@ -18,8 +18,10 @@ function jobs(text) {
   let name = null;
   for (const line of lines.slice(start + 1)) {
     const job = line.match(/^ {2}([a-z][\w-]*):\s*$/);
-    if (job) { name = job[1]; out[name] = {}; continue; }
-    const key = name && line.match(/^ {4}(needs|if):\s*(.+)$/);
+    if (job) { name = job[1]; out[name] = { block: '' }; continue; }
+    if (!name) continue;
+    if (!line.trimStart().startsWith('#')) out[name].block += `${line}\n`;
+    const key = line.match(/^ {4}(needs|if):\s*(.+)$/);
     if (key) out[name][key[1]] = key[2].trim();
   }
   return out;
@@ -51,4 +53,16 @@ test('tag runs only after a live deploy, never in a cancelled run', () => {
   assert.match(c, /!cancelled\(\)/);
   assert.match(c, /needs\.deploy\.result == 'success'/);
   assert.match(c, /needs\.deploy\.outputs\.live == 'true'/);
+});
+
+test('tag: only contents: write + actions: read, never workflows; the catch-up script does the tagging (TAG1)', () => {
+  const perms = all.tag.block.match(/^ {4}permissions:\n((?: {6}.+\n)+)/m)?.[1] ?? '';
+  const granted = perms.trim().split('\n').map((l) => l.trim()).sort();
+  assert.deepEqual(granted, ['actions: read', 'contents: write']);
+  assert.match(all.tag.block, /node scripts\/tag-live\.mjs/);
+  assert.match(all.tag.block, /fetch-depth: 0/, 'the catch-up reads older commits');
+  for (const [name, job] of Object.entries(all)) {
+    if (name !== 'tag') assert.doesNotMatch(job.block, /contents: write/, `${name} must not write to the repository`);
+    assert.doesNotMatch(job.block, /workflows: write/, `${name} must not get workflow rights`);
+  }
 });
