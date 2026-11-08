@@ -465,6 +465,12 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.86 (card BH13-B: bug hunt on Shorts, players and the extension):**
+- [ ] With the extension installed but older than the site (an old zip), open a new room on a computer: the 3 first
+  tips come first, the "new version of the extension" bubble only after them, by the Extension link.
+- [ ] Phone, Shorts with a friend writing while the room waits for someone: the bar under the video shows the
+  "waiting…" note alone, the friend's message comes after.
+
 **0.9.97.84 (card BH12: notes beside a Short, never over it):**
 - [ ] In the Shorts view with a friend, if the room waits for someone ("Waiting for …"), the note shows in the empty
   corner left of the video on a computer, and in the bar under the video on a phone; the Short itself stays clear.
