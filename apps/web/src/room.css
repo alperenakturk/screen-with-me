@@ -7,16 +7,21 @@
  * move-device…) belongs in styles.css / phone.css instead; harness `room-css` checks the split.
  */
 
-@media (prefers-reduced-motion: reduce) {
-  body::before {
-    animation: none !important;
-  }
-}
-
 @keyframes mascot-float {
   50% {
     transform: translateY(-8px) rotate(-1.5deg);
   }
+}
+
+/* Ana sayfanın üstündeki tema şeridi: girmeden önce temaları denemek için */
+.theme-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 10px;
+  margin: -8px 0 8px;
+  justify-content: center;
 }
 
 .theme-strip-label {
@@ -79,55 +84,50 @@
   }
 }
 
-/* Yazı alanları ve butonlar temanın yazı tipini kullansın (orta çağ). */
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
+.status[data-status='open']::before {
+  background: var(--ok);
 }
 
-[hidden] {
-  display: none !important;
+.status[data-status='closed']::before {
+  background: var(--danger);
 }
 
-.status {
-  font-size: 13px;
-  color: var(--chrome-text);
+.btn.big {
+  padding: 14px 24px;
+  font-size: 16px;
+}
+
+.row input {
+  flex: 1;
+}
+
+.stack {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.lang button {
-  background: transparent;
-  color: var(--chrome-text);
-  border: 0;
-  padding: 4px 10px;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.lang button[aria-pressed='true'] {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-.row {
+/* ---- Ana sayfa ---- */
+.hero {
+  max-width: 440px;
+  margin: 8vh auto 0;
+  text-align: center;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.card h3 {
-  margin: 0 0 12px;
-  font-size: 14px;
-  color: var(--muted);
-  font-weight: 600;
+.hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 7vw, 48px);
 }
 
-.muted {
+.tagline {
+  margin: 0 0 8px;
   color: var(--muted);
+  font-size: 18px;
+  /* Satırlar dengeli kırılsın (tek kelime alt satırda yalnız kalmasın). */
+  text-wrap: balance;
 }
 
 .divider {
@@ -146,23 +146,19 @@ textarea {
   background: var(--border);
 }
 
-.nav-link {
-  color: var(--chrome-text);
-  text-decoration: none;
-  font-size: 14px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.nav-link:hover {
-  color: var(--text);
-  border-color: var(--muted);
-}
-
 /* Tek başınayken senkron düğmeleri soluk (basınca uyarı balonu) */
 .alone {
   opacity: 0.5;
+}
+
+/* Sağ üstteki 👤 Profil: basınca altında menü açılır (açıkken düğme vurgulu) */
+.profile-btn {
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 2px 9px;
+  cursor: pointer;
 }
 
 .profile-btn[aria-expanded='true'] {
@@ -171,11 +167,21 @@ textarea {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-/* Bağlantıyı yenile düğmesi: küçük; bağlantı koptuysa vurgu renginde. */
-.reconnect {
-  padding: 2px 9px;
-  font-size: 16px;
-  line-height: 1.4;
+.profile-pop {
+  position: fixed;
+  top: 58px;
+  right: 12px;
+  /* Pencerelerin (avatar, tema, özet: z-index 1000) altında: menüden açılan pencereyi örtmesin. */
+  z-index: 900;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  border-radius: calc(var(--radius) + 2px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.45);
+  animation: r-in 0.18s ease-out;
 }
 
 .reconnect.attention {
@@ -191,26 +197,6 @@ textarea {
   to {
     transform: rotate(360deg);
   }
-}
-
-.theme-wrap {
-  position: relative;
-}
-
-.theme-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  z-index: 20;
-  width: 220px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
 }
 
 .theme-option {
@@ -229,6 +215,22 @@ textarea {
   text-align: left;
 }
 
+.theme-option:hover {
+  background: var(--surface-2);
+}
+
+.theme-option[aria-checked='true'] {
+  border-color: var(--accent);
+}
+
+.theme-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgb(255 255 255 / 0.15);
+  flex: none;
+}
+
 .link-btn {
   padding: 0;
   border: 0;
@@ -239,12 +241,6 @@ textarea {
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-@media (max-width: 860px) {
-  .topbar .nav-link span:last-child {
-    display: none;
-  }
 }
 
 /* ---- Sağ panel (Sinema Rayı): "Birlikte" kartı + sekmeler ---- */
@@ -266,6 +262,24 @@ textarea {
   display: flex;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 6px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .tab:hover {
@@ -768,33 +782,33 @@ html:not(.shell) .shell-only {
   font-size: 46px;
 }
 
-.dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: rgb(0 0 0 / 0.6);
-  backdrop-filter: blur(3px);
-}
-
-.avatar-dialog {
-  width: min(760px, 100%);
+/* Odadaki ayarlarda şu anki avatar */
+.avatar-current {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
 }
 
-.dialog-head,
-.dialog-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.avatar-big {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  background: var(--surface-2);
+  overflow: hidden;
+  flex: none;
 }
 
-.dialog-foot {
-  justify-content: flex-end;
+.avatar-big img {
+  width: 100%;
+  height: 100%;
+}
+
+/* Avatarlar canlı: üstüne gelince sallanır, seçili olan yavaşça süzülür */
+.avatar-option .avatar-glyph {
+  transition: transform 0.2s;
 }
 
 .avatar-option:hover .avatar-glyph {
@@ -1231,12 +1245,6 @@ html:not(.shell) .shell-only {
   font-size: 14px;
 }
 
-.btn:disabled,
-.icon-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
 .toolbar {
   display: flex;
   align-items: center;
@@ -1275,6 +1283,14 @@ html:not(.shell) .shell-only {
 
 .reaction-btn:active {
   transform: scale(0.9);
+}
+
+/* Emoji sayfası değiştiren küçük ▲▼ */
+.reaction-pager {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
 }
 
 .reaction-page {
@@ -1420,25 +1436,6 @@ html:not(.shell) .shell-only {
   opacity: 0.7;
 }
 
-.icon-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 8px;
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.icon-btn:not(:disabled):hover {
-  border-color: var(--muted);
-  background: var(--surface-2);
-}
-
 .big-icon {
   width: 38px;
   height: 38px;
@@ -1493,6 +1490,27 @@ html:not(.shell) .shell-only {
   font-size: 42px;
   line-height: 1;
   filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.5));
+}
+
+.r-sticker {
+  height: 64px;
+  max-width: 110px;
+  object-fit: contain;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.5));
+}
+
+.r-who {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 1px 2px;
+  border-radius: 999px;
+  background: rgb(10 10 18 / 0.6);
+  backdrop-filter: blur(4px);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .r-avatar {
@@ -1996,14 +2014,6 @@ html:not(.shell) .shell-only {
     display: none;
   }
 
-  main {
-    padding: 16px;
-  }
-
-  .status {
-    font-size: 0;
-  }
-
   .media-form {
     flex-wrap: wrap;
   }
@@ -2110,6 +2120,18 @@ html:not(.shell) .shell-only {
   display: none;
 }
 
+.pin-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+.fs-seek-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .pin-strip.fs {
   position: absolute;
   left: 0;
@@ -2196,56 +2218,6 @@ html:not(.shell) .shell-only {
   justify-content: center;
 }
 
-.recent {
-  margin-top: 18px;
-  text-align: left;
-}
-
-.recent[hidden] {
-  display: none;
-}
-
-.recent h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  color: var(--muted);
-}
-
-.recent ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.recent li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-
-.recent-link {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  color: var(--text);
-  text-decoration: none;
-}
-
-.recent-link b {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Senkron testi: sitenin çizdiği sayaç ve "aynı yerdesiniz" rozeti */
 .test-player {
   position: absolute;
@@ -2327,6 +2299,62 @@ html:not(.shell) .shell-only {
 
 .sync-badge[hidden] {
   display: none;
+}
+
+#sync-test {
+  margin-top: 10px;
+}
+
+/* İzleme sonu kartı (oynatıcının ortasında) */
+.end-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+  width: min(440px, calc(100% - 32px));
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: rgb(12 12 20 / 0.94);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.5);
+  animation: r-in 0.3s ease-out;
+}
+
+.end-emoji {
+  font-size: 34px;
+}
+
+.end-card h3 {
+  margin: 4px 0;
+}
+
+.end-name {
+  margin: 0 0 10px;
+  font-weight: 600;
+  color: #d8d2ff;
+}
+
+.end-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.end-pins {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  text-align: left;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .end-actions {
@@ -2412,49 +2440,6 @@ html:not(.shell) .shell-only {
 
 /* ---- Telefon (dar ekran): hiçbir şey yana taşmasın ---- */
 @media (max-width: 560px) {
-  .topbar {
-    gap: 8px;
-    padding: 10px 12px;
-  }
-
-  .brand {
-    font-size: 15px;
-    min-width: 0;
-  }
-
-  .topbar-right {
-    gap: 6px;
-    min-width: 0;
-  }
-
-  .topbar .nav-link {
-    padding: 6px 8px;
-  }
-
-  .lang button {
-    padding: 4px 6px;
-    font-size: 12px;
-  }
-
-  /* Sağ üstteki düğmeler sıkışıp kesilmesin (dil seçici "TR E" diye kesiliyordu): küçülmezler, sığmayan eklenti
-     bağlantısı telefonda gizlenir (eklenti zaten sadece masaüstü tarayıcıda çalışır; ana sayfada anlatılıyor). */
-  .topbar-right > * {
-    flex: none;
-  }
-
-  .topbar .nav-link[href='/extension.html'] {
-    display: none;
-  }
-
-  .status {
-    font-size: 0;
-  }
-
-  main,
-  .room {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
 
   .room {
     gap: 12px;
@@ -2498,6 +2483,44 @@ html:not(.shell) .shell-only {
 
   .media-form {
     flex-wrap: wrap;
+  }
+
+  .media-form input {
+    flex: 1 1 100%;
+  }
+
+  .media-form > .btn {
+    flex: 1;
+  }
+
+  .empty h2 {
+    font-size: 17px;
+  }
+
+  .empty-steps {
+    font-size: 13px;
+  }
+
+  .sticker-panel {
+    left: auto;
+    right: 0;
+  }
+
+  .end-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .avatar-picker.big .avatar-grid,
+  .avatar-picker.huge .avatar-grid {
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  }
+
+  .schedule-row .row {
+    flex-wrap: wrap;
+  }
+
+  .create-row .btn {
+    flex: 1 1 100%;
   }
 }
 
@@ -2544,64 +2567,6 @@ html:not(.shell) .shell-only {
 .avatar-current {
   overflow: hidden;
   padding: 6px 0;
-}
-
-/* Tema penceresi: önizleme kartları */
-.theme-dialog {
-  width: min(900px, 100%);
-}
-
-.theme-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-  max-height: min(64vh, 620px);
-  overflow-y: auto;
-  padding: 4px;
-}
-
-.theme-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 6px;
-  border-radius: 14px;
-  border: 2px solid transparent;
-  background: var(--surface-2, #1c1f33);
-  color: var(--text);
-  cursor: pointer;
-  text-align: left;
-}
-
-.theme-card:hover {
-  border-color: var(--border);
-}
-
-.theme-card[aria-checked='true'] {
-  border-color: var(--chip-b, var(--accent));
-}
-
-.theme-preview {
-  position: relative;
-  display: block;
-  aspect-ratio: 16 / 10;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.theme-preview img {
-  position: absolute;
-  left: 50%;
-  bottom: 6%;
-  width: 44%;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 4px 10px rgb(0 0 0 / 0.4));
-}
-
-.theme-card-name {
-  font-weight: 600;
-  font-size: 14px;
-  padding: 0 4px 2px;
 }
 
 .theme-current {
@@ -2657,6 +2622,60 @@ html:not(.shell) .shell-only {
   text-underline-offset: 3px;
 }
 
+/* Sıra boşken oylama notu gereksiz */
+.tab-panel:has(.queue:empty) .queue-hint {
+  display: none;
+}
+
+/* Ayarlar paneli: panel kısa kalınca satırlar ezilmesin (avatar satırı 12 px'e düşüyordu),
+   onay kutuları daralmasın; düğmeler panelde küçük. */
+.settings > * {
+  flex-shrink: 0;
+}
+
+.check-row input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.settings .btn {
+  padding: 7px 12px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.settings .avatar-big {
+  width: 52px;
+  height: 52px;
+}
+
+.settings #rename-input {
+  min-width: 0;
+  flex: 1;
+}
+
+/* Sohbet: oda hareketleri varsayılan gizli; sağ üstte küçük aç/kapa */
+.chat-panel {
+  position: relative;
+}
+
+.chat-events {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  z-index: 2;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .chat-events:hover,
 .chat-events[aria-pressed='true'] {
   color: var(--text);
@@ -2683,11 +2702,6 @@ html:not(.shell) .shell-only {
 /* Yönetici emojileri kapattı */
 .no-reactions .reaction-bar {
   display: none;
-}
-
-.recent-link.gone b {
-  text-decoration: line-through;
-  opacity: 0.6;
 }
 
 /* Yönetici kutusundaki kayıt alanı */
@@ -2806,6 +2820,24 @@ html:not(.shell) .shell-only {
   height: 30px;
   border-radius: 999px;
   cursor: pointer;
+}
+
+.recap-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  animation: recap-in 0.45s ease-out;
+}
+
+@keyframes recap-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
 }
 
 .recap-big {
@@ -3096,30 +3128,9 @@ html.shell .tab[data-tab='queue'] {
   display: none !important;
 }
 
-/* Onay penceresi (odaya dönüş, film sitesine gitme) */
-.confirm-dialog {
-  width: min(420px, 100%);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-align: center;
-}
-
-.confirm-dialog h3,
-.confirm-dialog p {
-  margin: 0;
-}
-
 .confirm-icon {
   font-size: 40px;
   line-height: 1;
-}
-
-.confirm-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 6px;
 }
 
 .recap-saved-title:has(+ .recap-history:empty) {
@@ -3202,14 +3213,38 @@ html.shorts-view .footer {
   align-items: center;
 }
 
+.room.shorts .theater:not(:fullscreen, .fake-fs) :is(.now-playing, .toolbar, .pin-strip) {
+  display: none !important;
+}
+
+.room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
+  aspect-ratio: 9 / 16;
+  height: clamp(320px, calc(100dvh - 210px), 880px);
+  width: auto;
+  max-width: 100%;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
+}
+
 /* Shorts'tan Shorts'a geçiş: yeni video aşağıdan (↓), geri dönülen yukarıdan (↑) kayarak gelir. */
 .player-wrap.swipe-up {
   animation: swipe-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.player-wrap.swipe-down {
+  animation: swipe-down 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 @keyframes swipe-up {
   from {
     transform: translateY(16%);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-down {
+  from {
+    transform: translateY(-16%);
     opacity: 0;
   }
 }
@@ -6388,16 +6423,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
     display: none;
   }
 
-  /* Telefonda üst çubuk sığsın (davet düğmesi de eklendi) */
-  .topbar {
-    gap: 8px;
-    padding-inline: 12px;
-  }
-
-  .topbar-right {
-    gap: 6px;
-  }
-
   /* Bağlıyken ⟳ telefonda gizli (yer yok; bağlantı koparsa yine görünür) */
   #status[data-status='open'] ~ #reconnect {
     display: none;
@@ -6408,17 +6433,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
 .live-row .btn {
   font-size: 13px;
   padding: 6px 10px;
-}
-
-@media (max-width: 380px) {
-  .topbar .brand {
-    gap: 6px;
-    font-size: 14px;
-  }
-
-  .topbar-right {
-    gap: 4px;
-  }
 }
 
 /* ---- Odaya bağlanılamıyor uyarısı ve bağlantı testi sayfası ---- */
@@ -6442,60 +6456,8 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   text-decoration: none;
 }
 
-.diag {
-  max-width: 640px;
-  margin: 6vh auto 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.diag h1 {
-  margin: 0;
-}
-
-.diag-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* One grid per row: the icon in its own column, the value always on a small line under the name (sweep-1 #2). */
-.diag-row {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  align-items: baseline;
-  gap: 0 8px;
-}
-
-.diag-row > .muted {
-  grid-column: 2;
-  font-size: 0.9em;
-}
-
-.diag-icon {
-  width: 22px;
-}
-
-/* The buttons wrap instead of running off a phone's card (sweep-1 #1). */
-.diag .row {
-  flex-wrap: wrap;
-}
-
-.diag-verdict {
-  margin: 4px 0;
-  font-weight: 600;
-}
-
 .diag-verdict.bad {
   color: var(--warn);
-}
-
-.diag .btn {
-  text-decoration: none;
 }
 
 /* ==== 0.9.80 oda arayüzü (kullanıcı seçti: 1B balonlar, 2C ayar penceresi, 3B tepki tepsisi + adı yazan düğmeler,
@@ -6672,6 +6634,18 @@ html.in-room .topbar-right > .lang {
   padding: 34px 12px 12px;
 }
 
+.chat-list .chat-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.chat-list .chat-line.cont {
+  margin-top: 3px;
+}
+
 .chat-list .chat-line .chat-avatar {
   width: 28px;
   height: 28px;
@@ -6681,6 +6655,22 @@ html.in-room .topbar-right > .lang {
 .chat-list .chat-line.cont .chat-avatar {
   visibility: hidden;
   height: 0;
+}
+
+.chat-list .chat-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 82%;
+}
+
+.chat-list .chat-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 6px 3px;
+  font-size: 12px;
 }
 
 .chat-list .chat-name {
@@ -6693,8 +6683,63 @@ html.in-room .topbar-right > .lang {
   color: var(--muted);
 }
 
+.chat-list .chat-text {
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 17px;
+  background: var(--surface-2);
+  line-height: 1.38;
+  overflow-wrap: anywhere;
+}
+
+.chat-list .chat-line:not(.me):not(.cont) .chat-text {
+  border-top-left-radius: 6px;
+}
+
+.chat-list .chat-line.me {
+  justify-content: flex-end;
+}
+
+.chat-list .chat-line.me .chat-body {
+  align-items: flex-end;
+}
+
+.chat-list .chat-line.me .chat-text {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.chat-list .chat-line.me:not(.cont) .chat-text {
+  border-top-right-radius: 6px;
+}
+
+/* Oda hareketleri: ortada ince çizgiler arasında */
+.chat-list .chat-system {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 2px;
+  padding: 0;
+  font-size: 11.5px;
+  text-align: center;
+}
+
+.chat-list .chat-system::before,
+.chat-list .chat-system::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 .chat-list .chat-system > span {
   max-width: 80%;
+}
+
+/* Yazma kutusu: gönder oku kutunun içinde */
+.chat-form {
+  position: relative;
+  display: flex;
 }
 
 .chat-form #chat-input {
@@ -8970,97 +9015,12 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
     grid-template-columns: repeat(3, auto);
   }
 }
-
-/* ==== TV test (/tv-test): read from across the room, every button reachable with the remote's arrows. ==== */
-.tvt {
-  max-width: 1500px;
-  margin: 3vh auto 40px;
-  padding: 0 4vw;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  font-size: clamp(16px, 1.6vw, 26px);
-}
-.tvt h1 {
-  margin: 0;
-  font-size: 1.8em;
-}
-.tvt h2 {
-  margin: 8px 0 0;
-  font-size: 1.1em;
-}
-.tvt-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 24px;
-}
-@media (max-width: 760px) {
-  .tvt-grid {
-    grid-template-columns: 1fr;
-  }
-}
-.tvt-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.tvt-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  overflow-wrap: anywhere;
-}
-.tvt-icon {
-  width: 1.4em;
-}
-.tvt-side {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-.tvt-yt {
-  aspect-ratio: 16 / 9;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #000;
-}
-.tvt-yt > * {
-  width: 100%;
-  height: 100%;
-}
-.tvt-keys {
-  min-height: 6em;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: var(--panel, rgba(255, 255, 255, 0.06));
-  font-family: ui-monospace, monospace;
-}
 .tvt-key {
   opacity: 0.6;
 }
 .tvt-key.new {
   opacity: 1;
   font-weight: 700;
-}
-.tvt-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-.tvt .tvt-btn {
-  font-size: 1em;
-  padding: 0.6em 1.2em;
-}
-.tvt .tvt-btn:focus,
-.tvt .tvt-btn:focus-visible {
-  outline: 5px solid #fff;
-  outline-offset: 4px;
-  transform: scale(1.05);
 }
 
 /* ---- Life poker (0.9.91.8, games/poker.ts): a potion flask for the pot, life bars, move cards; not a casino ---- */
@@ -9223,6 +9183,98 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   overflow: hidden;
 }
 
+.pk-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--pk-life), var(--pk-life-2));
+  transition: width 0.4s ease;
+}
+
+.pk-life.low .pk-heart {
+  animation: pk-beat 0.9s ease-in-out infinite;
+}
+
+.pk-life.over .pk-bar i {
+  box-shadow: 0 0 8px var(--pk-life-2);
+}
+
+@keyframes pk-beat {
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+/* Rivals */
+.pk-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.pk-seat {
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  min-width: 0;
+}
+
+.pk-seat.turn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.pk-seat.folded,
+.pk-seat.out {
+  opacity: 0.5;
+}
+
+.pk-seat.away .pk-name::after {
+  content: ' ·';
+  color: var(--muted);
+}
+
+.pk-seat.won {
+  border-color: var(--warn);
+}
+
+.pk-seat.target {
+  cursor: pointer;
+  border-color: var(--danger);
+  animation: pk-target 1s ease-in-out infinite;
+}
+
+@keyframes pk-target {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 30%, transparent);
+  }
+}
+
+.pk-seat-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pk-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  font-size: 15px;
+}
+
 .pk-avatar img {
   width: 100%;
   height: 100%;
@@ -9233,6 +9285,32 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
+}
+
+.pk-dealer {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.pk-seat-cards {
+  display: flex;
+  gap: 4px;
+  min-height: 39px;
+}
+
+.pk-seat-status {
+  min-height: 15px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 /* The middle: flask + board + feed */
@@ -10005,23 +10083,6 @@ html.shorts-view .game-stage .game-place {
   accent-color: var(--accent);
 }
 
-/* 0.9.91.13: a newer extension is out (ext-update.ts): a dot on the top bar's "Eklenti" link. */
-.nav-link.ext-update {
-  position: relative;
-}
-
-.nav-link.ext-update::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px var(--bg);
-}
-
 /* 0.9.91.16: a pinned camera in the one-window layout is a spotlight: big on the left, the others in a strip on the
    right sharing its height (ui/cam-float.ts sets .spotlight and --cam-others). */
 .voice-cams .cam-grid.spotlight {
@@ -10318,6 +10379,16 @@ html.shorts-view .game-stage .game-place {
     margin-top: 9vh;
     padding: 32px 34px;
     font-size: 17px;
+  }
+
+  .join-card:not(.avatar-card) .step-title {
+    font-size: 30px;
+  }
+
+  .join-card .join-avatar {
+    width: 84px;
+    height: 84px;
+    font-size: 44px;
   }
 
   .join-card .join-row input {
@@ -10687,23 +10758,6 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   gap: 12px;
 }
 
-.invite-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.invite-head h3 {
-  font-size: 18px;
-  color: var(--text);
-}
-
-.invite-head h3,
-.invite-sub {
-  margin: 0;
-}
-
 .invite-row {
   display: flex;
   gap: 8px;
@@ -11056,6 +11110,43 @@ html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fulls
   display: none;
 }
 
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .player-wrap {
+  flex: none;
+  width: calc(var(--cw) + 58px);
+  height: calc(var(--cw) * 9 / 16);
+  aspect-ratio: auto;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  transition: width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* The message strip: one line under the video, right-aligned to the video's edge, at most two pills. */
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .toasts {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  top: calc(100% + 8px) !important;
+  bottom: auto !important;
+  right: 58px !important;
+  left: auto !important;
+  max-width: calc(100% - 58px);
+  height: 28px;
+}
+
+html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .toast {
+  max-width: 46ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  border: 1px solid var(--border);
+}
+
 html.cinema-on:not(.phone, .shell) .room.cinema:not(.shorts) .theater:not(:fullscreen, .fake-fs) .toast:nth-last-child(n + 3) {
   display: none;
 }
@@ -11178,27 +11269,6 @@ html.shell .theater:is(:fullscreen, .fake-fs) .action-notice {
   }
 }
 
-/* ==== Accessibility (card A11y; Design's findings docs/internal/design/a11y-1.md) ==== */
-/* K1: "Skip to the content / video", the first Tab stop, visible only while focused. */
-.skip-link {
-  position: fixed;
-  top: 8px;
-  left: 8px;
-  z-index: 100;
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 700;
-  text-decoration: none;
-  outline: 3px solid var(--accent-hover);
-  transform: translateY(-200%);
-}
-
-.skip-link:focus-visible {
-  transform: none;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -11206,11 +11276,6 @@ html.shell .theater:is(:fullscreen, .fake-fs) .action-notice {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-
-main:focus,
-#theater:focus {
-  outline: none;
 }
 
 /* K5: the video's first stop shows a ring. */

@@ -16,7 +16,9 @@ const assets = join(dist, 'assets');
 // Card PERF1b (8 Nov 2026): the room's styles moved out of the entry stylesheet into room.css (`room-*.css`, loaded with
 // the room chunk). The room page still counts both; `entryCss` is what every page (home, /connection) downloads first
 // and blocks its first paint on: ≈ 9 kB, so a room rule that drifts back into styles.css shows here.
-const BUDGET = { js: 145, css: 37, entryCss: 12 };
+// The room page's CSS budget went 37 → 38 with it: two gzipped files instead of one, and phone.css's few home rules are
+// in both files so phone rules still come last on the room page (36.9 → 37.3 kB); the home page gains 31.5 kB.
+const BUDGET = { js: 145, css: 38, entryCss: 12 };
 
 const gz = (file) => gzipSync(readFileSync(join(assets, file))).length / 1024;
 const html = readFileSync(join(dist, 'index.html'), 'utf8');

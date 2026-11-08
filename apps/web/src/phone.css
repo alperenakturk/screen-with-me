@@ -1,3 +1,9 @@
+@media (prefers-reduced-motion: reduce) {
+  :is(.profile-pop, .live-menu, .speed-pop, .game-menu, .react-tray, .person-pop, .shorts-feed-pop, .theme-menu) {
+    animation: none !important;
+  }
+}
+
 /* Touch screens: no double-tap zoom on buttons, no zoom-in when a text box is focused (iOS zooms under 16 px), and
    no keyboard-only things (push-to-talk is the V key). */
 @media (pointer: coarse), (hover: none), (max-width: 700px) {
@@ -13,14 +19,19 @@
   textarea {
     font-size: max(16px, 1em);
   }
-
-  .voice-ptt {
-    display: none !important;
-  }
 }
 
-.theater:is(:fullscreen, .fake-fs) .fs-dock {
-  right: max(14px, env(safe-area-inset-right));
+/* iPhone notch / home bar: content stays inside the safe area (viewport-fit=cover). */
+.topbar {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* The ad-blocker tip is about desktop extensions: not on phones. */
+@media (pointer: coarse) {
+  .footer > span:first-child {
+    display: none;
+  }
 }
 
 /* ==== Speed on a phone (0.9.92.5, speed plan): no frosted glass and no drifting background. Both keep a phone's GPU
@@ -34,11 +45,4 @@ html.phone *::after {
 
 html.phone body::before {
   animation: none !important;
-}
-
-/* ==== Cameras on a phone (0.9.92.6, owner: "one picture per person, no free camera windows on a phone"): the faces
-   stay faces; cameras are one swipeable row under the faces strip (ui/phone-room.ts `.ph-cams`), a tap opens the
-   person's sheet with the camera big. The computer's camera windows and pill never show on a phone. ==== */
-html.phone :is(#voice-cams, .voice-cams, .cam-pill) {
-  display: none !important;
 }
