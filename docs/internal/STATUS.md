@@ -459,6 +459,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Without the extension, open a film page in the room → the install card; install the zip, come back to the tab:
   the card says "Filme git" by itself.
 
+**0.9.97.84 (card BH12: notes beside a Short, never over it):**
+- [ ] In the Shorts view with a friend, if the room waits for someone ("Waiting for …"), the note shows in the empty
+  corner left of the video on a computer, and in the bar under the video on a phone; the Short itself stays clear.
+
 **0.9.97.83 (card PERF1b: the room's styles load only with the room):**
 - [ ] Open the home page on your phone and computer: it looks as before and shows a little sooner. Open a room (join
   card, then in the room, a game, fullscreen, the phone's sheets): nothing flashes unstyled and nothing looks different.

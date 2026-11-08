@@ -84,6 +84,8 @@ const box = (page, selector) =>
   const video = await box(alex, '.player');
   check(note && form && note.b <= form.t + 1 && note.t > form.t - 120, 'just above the message box', JSON.stringify({ note, form }));
   check(note && video && note.l >= video.r, 'not over the video');
+  // BH12: put the room's own state back (a note left showing here leaked into the Shorts checks below).
+  await alex.evaluate(() => (document.querySelector('#waiting-banner').hidden = true));
 
   // Card 2a (owner's D): Sam's emoji rises from Sam's face beside the video, not over the YouTube player.
   await sam.keyboard.press('1');
@@ -385,6 +387,20 @@ const box = (page, selector) =>
     const hitsShorts = await overPlayer(alex);
     check(await alex.evaluate(() => document.documentElement.classList.contains('shorts-view')), 'a Short opens the Shorts view');
     check(hitsShorts.length === 0, 'Shorts view: nothing of ours over the YouTube player', hitsShorts.join(' | '));
+    // Card BH12: a wait for someone loading (shown here by hand, the wait itself comes and goes with headless loading)
+    // sits in the empty corner left of the video, never over the Short.
+    await alex.evaluate(() => {
+      const banner = document.querySelector('#waiting-banner');
+      banner.textContent = 'Waiting for Sam…';
+      banner.hidden = false;
+    });
+    await alex.waitForTimeout(200);
+    const waitShorts = await overPlayer(alex);
+    const waitBox = await box(alex, '#waiting-banner');
+    const shortFrame = await box(alex, '#player iframe');
+    check(waitShorts.length === 0, 'Shorts view: the wait note is not over the YouTube player', waitShorts.join(' | '));
+    check(!!waitBox && !!shortFrame && waitBox.r <= shortFrame.l && waitBox.b <= (await alex.evaluate(() => innerHeight)), 'Shorts view: the wait note sits left of the video, on screen', JSON.stringify({ waitBox, shortFrame }));
+    await alex.evaluate(() => (document.querySelector('#waiting-banner').hidden = true));
   }
 
   await browser.close();
