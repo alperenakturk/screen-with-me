@@ -8,6 +8,11 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.75 — 8 Nov
+- Behind the scenes: the site's address now lives in one setting, ready for an own domain. Nothing changes today;
+  once the domain is chosen, old links will move to it and carry each browser's saves (name, avatar, saved rooms,
+  games) along once.
+
 ### 0.9.97.74 — 7 Nov
 - Games: on a computer a game window never covers a YouTube video. It opens beside or under the video, "in the
   video's place" is off while YouTube plays (and says why), and going fullscreen tucks the game away.

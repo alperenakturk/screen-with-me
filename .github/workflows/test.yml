@@ -77,6 +77,9 @@ jobs:
       - name: Name check (Sidelit)
         run: node scripts/check-name.mjs
 
+      - name: The site's address comes from site.config.json only
+        run: node scripts/check-domain.mjs
+
       - name: Text check (every string in English and Turkish)
         run: node scripts/check-texts.mjs
 
@@ -174,6 +177,11 @@ jobs:
       # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
       - name: Lazy chunks and their gates
         run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
+
+      # Card R3-3: an older address of the site moves to the main one and carries the browser's saves once
+      # (its own build with a two-address test config; no server needed).
+      - name: Moving to an own domain
+        run: node scripts/harness/domain-move/run.cjs
 
       # Card CAM1: cameras between a computer and a phone (both ways, the phone's camera row and sheet, switching in
       # place, the rear camera not mirrored, a stopped or paused picture recovering by itself).
@@ -348,13 +356,17 @@ jobs:
         run: |
           # The new version takes a minute or two to spread, and objects started on the old code restart later (closing
           # their connections mid-test). Wait until the Worker and a Durable Object both answer with the new id.
+          # The address comes from site.config.json (card R3-3).
+          SITE="$(node scripts/site-config.mjs origin)"
           if [ -n "$SWM_VERSION" ]; then
-            node scripts/wait-live.mjs https://screen-with-me.swm-server.workers.dev "$SWM_VERSION"
+            node scripts/wait-live.mjs "$SITE" "$SWM_VERSION"
           else
             echo "::warning::No version id in the deploy output; waiting 30 s instead."
             sleep 30
           fi
-          npm run e2e -- wss://screen-with-me.swm-server.workers.dev
+          npm run e2e -- "$(node scripts/site-config.mjs ws)"
+          # Card R3-3: the main address and every alias answer, og:image and /domain.js name the main address.
+          node scripts/check-domain.mjs --live
 
       - name: Mark the version live
         id: live

@@ -14,7 +14,7 @@ import type { PlaybackState } from '@swm/shared/protocol';
 import { holePath, type ShellLayout } from '@swm/shared/shell';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { describeVideo, findVideos, scoreVideo, wrapVideoElement } from '@swm/shared/video-element';
-import { SITE_URL } from './config.ts';
+import { isSiteOrigin } from './config.ts';
 import { applyFocus, NO_INSETS, type Insets } from './focus.ts';
 import { PORT_NAME, PROBE, SESSIONS_KEY, type BackgroundMessage, type FrameMessage } from './messages.ts';
 import { startPicking, stopPicking } from './picker.ts';
@@ -42,11 +42,10 @@ const AD_HOSTS = [
   'adsrvr.org',
 ];
 const inAdFrame = AD_HOSTS.some((host) => location.hostname === host || location.hostname.endsWith(`.${host}`));
-const SITE_ORIGIN = new URL(SITE_URL).origin;
 const isTop = window === window.top;
 
 // Sitemizin içindeki çerçevelerde (sitenin YouTube oynatıcısı, kabuktaki site) hiçbir şey yapma.
-const insideOurSite = Array.from(location.ancestorOrigins ?? []).includes(SITE_ORIGIN);
+const insideOurSite = Array.from(location.ancestorOrigins ?? []).some(isSiteOrigin);
 
 let port: chrome.runtime.Port | null = null;
 let scanTimer: ReturnType<typeof setInterval> | null = null;

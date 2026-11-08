@@ -38,6 +38,12 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.svg': 'image/s
 function serve() {
   const extra = headers();
   const server = http.createServer((req, res) => {
+    // Card R3-3: the build writes /domain.js from site.config.json (no aliases here: it does nothing).
+    if (new URL(req.url, 'http://x').pathname === '/domain.js') {
+      res.writeHead(200, { 'Content-Type': 'text/javascript', ...extra });
+      res.end('// site.config.json has no aliases\n');
+      return;
+    }
     const file = path.join(PUBLIC, decodeURIComponent(new URL(req.url, 'http://x').pathname));
     if (!file.startsWith(PUBLIC) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       res.writeHead(404).end();

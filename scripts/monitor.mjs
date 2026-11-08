@@ -4,11 +4,12 @@
 // (one bad moment, e.g. a deploy restarting the objects, is not an outage). Prints one line per check and, with
 // `--out <file>`, writes a short Markdown summary for the outage issue. Exit 0 = healthy, 1 = down.
 import { writeFileSync } from 'node:fs';
+import { readSiteConfig } from './site-config.mjs';
 
 const args = process.argv.slice(2);
 const outAt = args.indexOf('--out');
 const out = outAt >= 0 ? args[outAt + 1] : null;
-const site = (args.find((a, i) => !a.startsWith('--') && (outAt < 0 || i !== outAt + 1)) ?? 'https://screen-with-me.swm-server.workers.dev').replace(/\/$/, '');
+const site = (args.find((a, i) => !a.startsWith('--') && (outAt < 0 || i !== outAt + 1)) ?? readSiteConfig().origin).replace(/\/$/, '');
 const RETRY_MS = Number(process.env.MONITOR_RETRY_MS ?? 60_000);
 const TIMEOUT_MS = 15_000;
 const PROTOCOL = 3; // packages/shared/src/protocol.ts PROTOCOL_VERSION
