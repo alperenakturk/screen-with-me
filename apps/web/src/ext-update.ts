@@ -42,12 +42,29 @@ export function checkExtensionVersion(): void {
         link.classList.add('ext-update');
         link.title = text;
         if (load('extUpdateSeen') === latest) return;
-        // R18: in a room, the bubble waits until I'm really in (not over the join card or the door).
+        const inRoom = /^\/r\//.test(location.pathname);
+        let waited = 0;
         const show = () => {
+          // The link is hidden (a phone, a narrow window): no bubble pointing at nothing; the dot shows it next time.
+          const r = link.getBoundingClientRect();
+          if (!r.width || !r.height) return;
+          // BH13: one bubble at a time. In a room the first-time tips (their first one sits right under the top bar)
+          // and the invite window or any dialog go first; the bubble waits for them, at most 10 minutes.
+          const html = document.documentElement;
+          const busy =
+            document.querySelector('.first-tip, .dialog-backdrop:not([hidden])') ||
+            html.classList.contains('invite-pending') ||
+            (inRoom && load('tipsSeen') !== '1' && waited < 6000);
+          if (busy) {
+            waited += 1000;
+            if (waited < 600_000) setTimeout(show, 1000);
+            return;
+          }
           save('extUpdateSeen', latest);
           flashHint(link, text, 9000);
         };
-        if (/^\/r\//.test(location.pathname) && document.documentElement.dataset.swmJoined !== '1') addEventListener('swm-joined', show, { once: true });
+        // R18: in a room, the bubble waits until I'm really in (not over the join card or the door).
+        if (inRoom && document.documentElement.dataset.swmJoined !== '1') addEventListener('swm-joined', show, { once: true });
         else show();
       })
       .catch(() => {});

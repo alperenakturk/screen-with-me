@@ -86,6 +86,17 @@ html.tablet-up .lab-drawer {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* BH13: the Shorts view's notes sit in the bottom left corner on a computer (BH12); with the lab on they stand on 🐞. */
+.room > .yt-notices-shorts {
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 52px);
+}
+
+/* BH13: on a phone the bottom left is 😀 of the message box (room) or the bar's message slot (Shorts): 🐞 waits above. */
+html.ph-room .debug-fab,
+html.ph-shorts .debug-fab {
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 72px);
+}
+
 /* On an upright tablet the bottom left is the message box: 🐞 waits bottom right, over the queue column. */
 html.tablet-up .debug-fab {
   left: auto;

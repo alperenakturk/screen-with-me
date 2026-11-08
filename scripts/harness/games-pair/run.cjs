@@ -81,7 +81,8 @@ const boardSig = (page) =>
   page.evaluate(() => {
     const b = document.querySelector('#game-stage #xox-board');
     if (!b) return null;
-    return [...b.querySelectorAll('.xox-cell, .dama-cell, .four-cell, .bg-point')].map((c) => `${c.className.replace(/\b(placed|movable|picked|target|last|flip|from)\b/g, '').replace(/\s+/g, ' ').trim()}|${c.textContent.trim()}`).join(';');
+    // A cell's name says what is on it (backgammon's checkers are empty discs, only the name counts them).
+    return [...b.querySelectorAll('.xox-cell, .dama-cell, .four-cell, .bg-point, .bg-bar, .bg-off')].map((c) => `${c.className.replace(/\b(placed|movable|picked|target|last|flip|from)\b/g, '').replace(/\s+/g, ' ').trim()}|${c.getAttribute('aria-label') ?? ''}|${c.textContent.trim()}`).join(';');
   });
 /** A move by whoever may: a free cell, a column, or a movable piece and its first target (backgammon rolls first). */
 function move(page, board) {

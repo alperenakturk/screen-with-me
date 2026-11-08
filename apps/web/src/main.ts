@@ -17,6 +17,9 @@ if (isShell) document.documentElement.classList.add('shell');
 // önbellekteki sayfa) bir parçayı bulamazsa oda hiç açılmıyordu: sayfa bir kez kendiliğinden yenilenir (döngü olmasın
 // diye en fazla 30 sn'de bir).
 function reloadForNewVersion(): void {
+  // Offline, a chunk that didn't load is the network, not a new version: a reload now would only show the browser's
+  // offline page (BH13-G: an 8 s drop mid-game threw the whole room away). The next miss once online reloads.
+  if (!navigator.onLine) return;
   const key = 'swm-stale-reload';
   let last = 0;
   try {

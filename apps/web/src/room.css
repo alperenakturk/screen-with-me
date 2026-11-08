@@ -12627,6 +12627,17 @@ html.ph-shorts .room.shorts .shorts-bar :is(.react-tray, .shorts-feed-pop, .game
   text-overflow: ellipsis;
 }
 
+/* BH13: a note shows → the slot is the note's, the chat toast waits (both at once read as one mixed line). */
+.ph-shorts-bar:has(> .yt-notices-shorts > :not([hidden])) > .ph-toast {
+  display: none;
+}
+
+.ph-shorts-bar > .yt-notices-shorts:has(> :not([hidden])) {
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
 html.sideways.ph-shorts .ph-shorts-bar > .yt-notices-shorts {
   position: static;
   order: -1;
