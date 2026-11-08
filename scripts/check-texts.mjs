@@ -3,8 +3,9 @@
 //     the Test Lab, the home page…; also `Record<'en' | 'tr', …>` tables such as Snack Bar's badges);
 //   - an inline pair `{ en: '…', tr: '…' }` (card LABTR: the Test Lab's commands, status lines and step texts), and every
 //     lab command (an object with `id`, `tab` and `run`) must give its title, help and tag as such a pair;
-//   - a file with two top-level tables `const tr = {...}` and `const en = {...}` (the site's and the extension's
-//     i18n.ts).
+//   - a file with two top-level tables `const tr = {...}` and `const en = {...}` (the extension's i18n.ts), or a
+//     top-level `en` whose Turkish lives in a sibling `<name>-tr.ts` (the site's i18n.ts + i18n-tr.ts, card PERF1a:
+//     the Turkish table is its own chunk).
 // Both sides must have the same keys (nested objects too), arrays the same length, and no string may be empty.
 // The source is parsed with Vite's own parser (rolldown, oxc), so nothing is run and no file has to follow a type pattern.
 //
@@ -94,6 +95,10 @@ function visit(node, fn) {
   }
 }
 
+/** Top-level `en` tables waiting for their Turkish in a sibling `-tr.ts` file, and those files' `tr` tables. */
+const loneEn = new Map();
+const siblingTr = new Map();
+
 for (const file of files) {
   const src = readFileSync(file, 'utf8');
   if (!/\btr\b/.test(src) || !/\ben\b/.test(src)) continue;
@@ -139,7 +144,17 @@ for (const file of files) {
   if (top.has('en') && top.has('tr')) {
     tables++;
     compare(top.get('en'), top.get('tr'), name, src);
-  }
+  } else if (top.has('en')) loneEn.set(file.replace(/\.ts$/, ''), { node: top.get('en'), name, src });
+  else if (top.has('tr') && /-tr\.ts$/.test(file)) siblingTr.set(file.replace(/-tr\.ts$/, ''), top.get('tr'));
+}
+for (const [base, en] of loneEn) {
+  const tr = siblingTr.get(base);
+  if (!tr) continue;
+  tables++;
+  compare(en.node, tr, `${en.name} + ${relative(process.cwd(), `${base}-tr.ts`)}`, en.src);
+}
+for (const base of siblingTr.keys()) {
+  if (!loneEn.has(base)) problems.push(`${relative(process.cwd(), `${base}-tr.ts`)}: a Turkish table without its English one`);
 }
 
 if (problems.length) {

@@ -62,4 +62,44 @@ await sleep(1500);
 ok(!host.inbox.some((m) => m.t === 'reaction'), 'Emojiler kapalıyken tepki kimseye gitmiyor');
 
 for (const c of [host, guest]) c.ws.close();
+
+// PERF1e: the counters are written at most every 30 s (and when the room empties), never lost in normal use: a burst
+// of emojis and controls counts in full, and so does what came just before everyone left and someone came back.
+const room2 = 'recap' + Math.random().toString(36).slice(2, 8);
+function client2(hello) {
+  const c = client(hello);
+  c.ws.close();
+  const ws = new WebSocket(`${base}/api/rooms/${room2}/ws`);
+  c.inbox.length = 0;
+  ws.addEventListener('message', (e) => c.inbox.push(JSON.parse(e.data)));
+  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, ...hello })));
+  return { ...c, ws, send: (m) => ws.send(JSON.stringify(m)) };
+}
+const p1 = client2({ name: 'Robin', cid: 'recapRobin123' });
+await p1.wait((m) => m.t === 'welcome', 'welcome robin');
+const p2 = client2({ name: 'Kim', cid: 'recapKim12345' });
+await p2.wait((m) => m.t === 'welcome', 'welcome kim');
+for (let i = 0; i < 6; i++) {
+  p1.send({ t: 'react', emoji: '🔥' });
+  await sleep(250);
+}
+for (let i = 0; i < 4; i++) {
+  p2.send({ t: 'chat', text: 'burst ' + i });
+  await sleep(100);
+}
+await sleep(500);
+p2.send({ t: 'recap' });
+const burst = await p2.wait((m) => m.t === 'recap', 'recap burst');
+const robin = burst.recap.people.find((p) => p.name === 'Robin');
+ok(robin?.reactions === 6 && burst.recap.chat === 4, 'A burst of emojis and messages counts in full (counters kept between writes)');
+// Everyone leaves (the counters are written at once), someone comes back: the same session, nothing lost.
+p1.ws.close();
+p2.ws.close();
+await sleep(1500);
+const p3 = client2({ name: 'Robin', cid: 'recapRobin123' });
+await p3.wait((m) => m.t === 'welcome', 'welcome robin back');
+p3.send({ t: 'recap' });
+const after = await p3.wait((m) => m.t === 'recap', 'recap after empty');
+ok(after.recap.people.find((p) => p.name === 'Robin')?.reactions === 6 && after.recap.chat === 4 && after.recap.from === burst.recap.from, 'After the room emptied and someone came back, the counts are all there');
+p3.ws.close();
 setTimeout(() => process.exit(0), 100);

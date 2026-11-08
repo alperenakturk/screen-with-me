@@ -515,6 +515,15 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] In the room view with a YouTube video, click the video, then press → and ←: the video jumps 5 s ahead / back on
   your friend's screen too. Enter still opens the chat; in the chat box the arrows only move the cursor.
 
+**0.9.97.79 (card PERF1a: only the page's language is downloaded):**
+- [ ] Open the site in Turkish (TR in the top bar, then reload): everything is Turkish from the first moment, nothing
+  flashes in English first. Switch to EN and back to TR: both switches are instant.
+- [ ] Share a room link in WhatsApp: the preview picture looks the same as before.
+
+**0.9.97.78 (card PERF1e: the recap's counters saved every 30 s):**
+- [ ] In a room with a friend, send a lot of emojis and pause / play a few times, then open 👤 → Today's recap: your
+  emojis and pauses are all counted. Both leave, come back a minute later: the recap still has them.
+
 **0.9.97.77 (cards PERF1 + PERF1c: speed pass, big podcast feeds):**
 - [ ] Search a podcast with a very long history in the link box (🎧 Podcasts) and open the show: its newest
   episodes list as quickly as any other show's.

@@ -68,6 +68,12 @@ const STICKER_ADDS_PER_DAY = 60;
 const CHAT_IMAGES_PER_DAY = 100;
 /** Kimse kalmayan oda bu süre sonra silinir. */
 const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+/**
+ * PERF1e: the recap's counters (`stats`) are written at most this often while people are in (every emoji and every
+ * play / pause / seek used to write them: half a lively room's rows). The room's alarm writes what is waiting, and the
+ * last person leaving writes at once; a restart in between loses at most this much of the recap's counts.
+ */
+export const STATS_SAVE_MS = 30_000;
 /** Kaydedilmiş oda boşken bu kadar saklanır. */
 const SAVED_ROOM_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /** Kayıtlı odada en fazla kaç videonun kaldığı yer hatırlanır. */
@@ -910,6 +916,7 @@ export class Room extends DurableObject<Env> {
   override async alarm(): Promise<void> {
     const now = Date.now();
     await this.polls.sweepDue(now);
+    if (this.statsDirty && now - this.statsSavedAt >= STATS_SAVE_MS) await this.saveStats(true);
     // Empty but never marked empty: the object restarted while only HTTP fallback connections (kept in memory) were
     // in (or an old version's alarm). Start counting now instead of deleting a room people were just in.
     if (this.openSockets().length === 0 && this.emptySince === null) await this.setEmptySince(now);
@@ -931,6 +938,7 @@ export class Room extends DurableObject<Env> {
       this.history = {};
       this.played = [];
       this.stats = new StatsTracker(null, now);
+      this.statsDirty = false;
       this.recaps = [];
       this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
       this.emptySince = null;
@@ -1165,6 +1173,7 @@ export class Room extends DurableObject<Env> {
     // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
     const due = this.polls.nextDue();
     if (due !== null) times.push(due);
+    if (this.statsDirty) times.push(this.statsSavedAt + STATS_SAVE_MS);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -1242,8 +1251,23 @@ export class Room extends DurableObject<Env> {
     this.stats.tick(Date.now(), !s.paused && s.item !== null, s.rate, present);
   }
 
-  private async saveStats(): Promise<void> {
-    await this.ctx.storage.put('stats', this.stats.data);
+  /** Counters changed since the last write (PERF1e), and when that write was. */
+  private statsDirty = false;
+  private statsSavedAt = 0;
+
+  /** Writes the recap's counters now if the last write is `STATS_SAVE_MS` old (or `force`), else leaves it to the alarm. */
+  private async saveStats(force = false): Promise<void> {
+    const now = Date.now();
+    if (force || now - this.statsSavedAt >= STATS_SAVE_MS) {
+      await this.ctx.storage.put('stats', this.stats.data);
+      this.statsSavedAt = now;
+      this.statsDirty = false;
+      return;
+    }
+    if (!this.statsDirty) {
+      this.statsDirty = true;
+      await this.scheduleAlarm();
+    }
   }
 
   /** Boş oda ne kadar saklanır: kaydedilmiş oda 30 gün, diğerleri 24 saat. */
@@ -2148,7 +2172,7 @@ export class Room extends DurableObject<Env> {
     await this.saveWaits();
     if (this.openSockets(leaving).length === 0) {
       this.statsTick(false);
-      await this.saveStats();
+      await this.saveStats(true);
       // Kayıtlı odada son kişi çıkınca açık videonun yeri de hatırlansın.
       const state = this.room.state;
       if (this.settings.saved && state.item) {

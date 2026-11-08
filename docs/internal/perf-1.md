@@ -90,6 +90,12 @@ What Lighthouse flags:
 
 **Chat:** one write per line, but it rewrites the 50-message history each time. That is fine for the rows count; it is bytes, not rows, that grow.
 
+**Built (PERF1e, 0.9.97.78):** `room.ts` keeps the counters in memory and writes `stats` at most every `STATS_SAVE_MS`
+(30 s) through the room's alarm, and at once when the last person leaves. Emojis and play / pause / seek now write
+0 rows each between those saves (play / pause / seek still write `room`), so the busy evening above is ≈ 200 chat +
+100 controls + about 240 counter saves at most (one per 30 s for 2 hours) ≈ 300–540 rows, instead of ≈ 800. The
+recap e2e checks that a burst of emojis and messages counts in full, also after the room empties and someone returns.
+
 ## 5. The five wins, ranked
 
 | # | Win | Gain | Cost / risk | Who |
@@ -103,6 +109,12 @@ What Lighthouse flags:
 **Not worth doing now:**
 - Subsetting the font: it already serves the home headings and game covers; saving it means fewer letters for future copy.
 - Inlining critical CSS: win 2 gets most of it without a build step.
+
+**Built (PERF1a + win 5, 0.9.97.79):** English stays in the main chunk and Turkish is `i18n-tr.ts`, loaded before the
+first frame when the saved language is Turkish; the room page's static JS is **124.3 kB** gzipped (was 143.2; budget
+145). Lossless PNG re-compression is `scripts/png-squeeze.mjs` (best row filter, deflate 9, pixels compared before
+writing): icon-512 158 → 119 kB, icon-192 28 → 24 kB, maskable 154 → 119 kB, `og.png` 204 → 175 kB, the store images
+3–24 % smaller.
 
 ## 6. Built in this card
 
