@@ -16,6 +16,9 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.87 — 8 Nov
+- A phone held sideways no longer offers "Watch fullscreen" next to a video that can't be played there.
+
 ### 0.9.97.86 — 8 Nov
 - The "a new version of the extension is out" bubble no longer lands on top of the first-time tips in a new room (it
   waits for them), and no longer points at nothing on a phone or a narrow window.
