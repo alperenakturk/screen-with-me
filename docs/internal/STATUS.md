@@ -388,24 +388,28 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
-**Next round, start here (BH10, 0.9.97.56, 4 Nov 2026).** Everything a script can check was run in the cloud
+**Next round, start here (BH10, 0.9.97.56, 4 Nov 2026; items 1–7 checked against 0.9.97.86 in BH13).** Everything a script can check was run in the cloud
 (every harness, the screenshot sweep at five sizes in EN + TR, the Test Lab's fake friends for knock, Make host and
 private messages). What is left needs a person: real YouTube playback, a real mic and camera, your phone, and the
 extension in other browsers. One sitting, in this order, with one friend in Chrome on another computer (or your phone
 as the second person). Tick here or tell the Planner; the older lists below stay for detail.
-- [ ] 1. YouTube together (computer): you create a room, the friend joins by the invite link; play a YouTube video:
-  "3-2-1" starts you both together; pause, seek, change speed from each side; you stay in step (under a second).
+- [ ] 1. YouTube together (computer): you create a room, the friend joins by the invite link (🔗 Invite → Copy); play
+  a YouTube video: "3-2-1" starts you both together; pause, seek, change speed from each side, and ← / → (jumps 5 s for
+  everyone); you stay in step (under a second).
 - [ ] 2. Fullscreen (computer, YouTube): the rail comes at the right edge and goes when the mouse leaves; Enter opens
   the message box; the friend's messages come in on the right, below the box, never over YouTube's own bar.
-- [ ] 3. Voice + camera (computer): both join voice, hear each other clearly (no echo), mic on / off, cameras on;
-  ⟳ reconnect or a page reload keeps you in voice with the mic as it was.
-- [ ] 4. Screen share: share a tab with sound; the friend sees and hears it; reload the friend's page: the stream comes
-  back by itself.
+- [ ] 3. Voice + camera (computer): both press 🎙 (a small window checks your mic first, then "Join"), hear each other
+  clearly (no echo), mic on / off (or M), cameras on: they open in their own window, which you can drag and resize; a
+  page reload keeps you in voice with the mic and camera as they were.
+- [ ] 4. Screen share: "🖥️ Share ▾" in the Together card → share a tab with sound; the friend presses "▶ Watch", sees
+  and hears it; reload the friend's page: the stream comes back by itself.
 - [ ] 5. Knock + host (two people): turn on "Ask before letting people in", the friend opens the link in a fresh
   browser: you get "Let in / Refuse"; let them in; 👑 Make host to the friend: now they get the next knock card.
-- [ ] 6. Private message: press the friend's name in the chat, write: only they see it (a third person does not).
-- [ ] 7. A game table with the friend (Classics: Turkish dama, then Quiz): play to the end, a rematch, leave the
-  table; a sound on each move.
+- [ ] 6. Private message: press the friend's name in the chat (or their face → "🔒 Message privately"), write: only
+  they see it, marked 🔒 (a third person does not); ✕ goes back to the room chat.
+- [ ] 7. A game table with the friend while the video plays (🎮 → Classics): Turkish dama, then "Change game" to chess
+  mid-game (it asks "End this game and change?"); play to the end: the result card with Glowbeam and Rematch; ⛶ in the
+  game's head puts it alone on the whole screen (Esc back); then a Quiz; "↩ Leave table"; a sound on each move.
 - [ ] 8. Your phone (Android or iPhone, the friend on the computer): join by the QR code (🔗 Invite → "QR code" tab on
   the computer), the YouTube video plays in sync; turn the phone sideways and press the big ⛶ "Watch fullscreen"; in
   fullscreen 💬 opens the chat beside the video; 🎙 voice for a minute (hear and be heard); back upright leaves
