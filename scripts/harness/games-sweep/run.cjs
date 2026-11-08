@@ -6,6 +6,8 @@
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-sweep/run.cjs [site]
 //   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run; FRIENDS=3 adds the Test Lab's fake friends to the room.
+//   Card GW: on computers every game is also shrunk to its smallest and grown to its largest window and put in its own
+//   fullscreen (browser and whole tab); GW_LANGS=tr runs those passes in Turkish only, GW_LANGS=none skips them.
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -331,7 +333,8 @@ async function windowPasses(page, label, g, phone) {
         check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
         check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
-        if (!phone && !process.env.NO_GW) await windowPasses(page, label, g, phone);
+        // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).
+        if (!phone && pick('GW_LANGS', ['en', 'tr']).includes(lang)) await windowPasses(page, label, g, phone);
       }
       await ctx.close();
     }

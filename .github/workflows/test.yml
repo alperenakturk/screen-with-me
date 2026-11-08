@@ -209,8 +209,9 @@ jobs:
           server: 'true'
           playwright: 'true'
 
-      - name: Games sweep (laptop + iPhone, EN + TR)
-        run: SIZES=laptop,iphone node scripts/harness/games-sweep/run.cjs http://localhost:8787
+      - name: Games sweep (laptop + iPhone, EN + TR; window sizes and fullscreen)
+        # Card GW: the window passes (smallest, largest, fullscreen) in Turkish only, to keep this job near the others.
+        run: SIZES=laptop,iphone GW_LANGS=tr node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       - name: Games resume, Sea Battle, How to play, result card
         run: |
