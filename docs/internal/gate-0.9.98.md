@@ -1,72 +1,93 @@
-# Gate check 0.9.98 (card G98b, 8 Nov 2026, against main at 4766263, 0.9.97.75)
+# Gate check 0.9.98 (card G98c, 8 Nov 2026, against main at 2617906, 0.9.97.84)
 
-First check: card G98 on 5 Nov, against e132e2d (0.9.97.60). This page redoes it against today's main. Since then these
-cards have landed:
-- CAM1 (.64), MB (.67), TOS (.66), LABLOCK (.69), OPS1 (.70), LABTR (.72), R3-3 (.75);
-- CI2 (#326 / #329), STORE1, YTA;
-- the games work (.61, .63, .65, .68, .71, .73, .74).
+Earlier checks:
+- G98: 5 Nov, against e132e2d (0.9.97.60).
+- G98b: 8 Nov, against 4766263 (0.9.97.75).
 
-Each item below is ✅ done (with proof), ❌ missing (with what it needs) or 👤 the owner's. The script checks were run in
-the cloud on the built site (`npm run build`, `wrangler dev` with CI's flags, a local `video.webm`).
+This page redoes the check against today's main. Each item below is one of:
+- ✅ done (with proof);
+- ❌ missing (with what it needs);
+- 👤 only the owner can do it.
 
-## What still blocks 0.9.98 (and who owns it)
+## In short
 
-1. **The step's hand tests** (👤 owner):
-   - STATUS "Owner's hand tests" from "Next round, start here" (0.9.97.56) down to 0.9.97.75: 94 open boxes, 2 ticked;
-   - the CAM1 block (two phones and a computer in voice) is the one that matters most.
-2. **A real phone and a real computer** (👤 owner): the phone check is the CAM1 retest (the owner's own bug from 4 Nov;
-   fixed in 0.9.97.64, not yet confirmed on his phones). The computer check is one pass through the round in STATUS.
-3. **Live e2e green on the first attempt, 3 deploys in a row** (❌ Developer A, a small card): .73 and .74 were clean,
-   but in .75 `draw.mjs` passed only on its retry. Its Draw & Guess socket was closed with 1006, 12.6 s after it
-   opened, and the player timed out "offline". The rule counts that as red until its cause is found.
-4. **Saying the step is full** (👤 owner): the third version part moves only when the owner says so.
-5. **Housekeeping** (not a gate item, 👤 owner or B2): tag `v0.9.97.74` is missing. Its deploy and live e2e were green,
-   but GitHub refused the tag push because the push changed a workflow. TAG1 (#333) fixes this from now on.
+Every gate item a script can check is ✅. What is left is the owner's:
+- his hand-test round on a real phone and computer;
+- confirming that no bug he reported is still open;
+- saying "0.9.98".
 
-Nothing else blocks: the step's own gate (sweep, tablet, accessibility) passes, and its two Ready cards (CAM1, MB) shipped.
+The list of what only he can do is at the end of this page.
 
 ## 0.9.98's own gate
 
 | Item | State | Proof |
 |---|---|---|
-| Screenshot sweep fixed | ✅ | `scripts/harness/sweep/run.cjs` on main: 110 screens (5 sizes × EN + Gece / TR + scene theme), "every screen passed its checks". |
-| Tablet harness | ✅ 143 / 143 | `scripts/harness/tablet/run.cjs` (iPad + Android, upright and sideways; since MB it also covers the Test Lab drawer, the stream card, cinema and the lazy windows). It needs the server on :8787 with CI's flags (`SWM_LAB_SERVER`, `LAB_CODE`): with the wrong port the Test Lab can't open and the run stops early, which is a set-up error, not a product one. |
-| Contrast + keyboard harness | ✅ 23 / 23 | `scripts/harness/a11y/run.cjs` (axe WCAG 2.1 A + AA + the keyboard tour), "axe finds nothing, the keyboard tour works"; also in CI on every PR (`site` job). |
+| Screenshot sweep fixed | ✅ | `scripts/harness/sweep/run.cjs` (110 screens, 5 sizes × EN + TR) passed in G98b. Since then, PERF1b compared every element's computed style before / after on 144 screens: only timing noise differs. |
+| Tablet harness | ✅ | `scripts/harness/tablet/run.cjs` runs in CI's "Games quality" job on every PR. It passed locally on 0.9.97.83 ("Tablets: the room fits upright and sideways"). |
+| Contrast + keyboard harness | ✅ | `scripts/harness/a11y/run.cjs` runs in CI's `site` job on every PR. It passed locally on 0.9.97.83 ("axe finds nothing, the keyboard tour works"). |
 
-## Every release (the last three: 0.9.97.73, .74, .75)
+## Every release (the last ones: 0.9.97.80 – .84)
 
 | Item | State | Proof |
 |---|---|---|
-| Typecheck + unit tests | ✅ | CI green on each merge (#328, #332, #331; CI2's `checks` job). |
-| A test for every change | ✅ | .73 and .74: Game Studio's games-sweep / games-youtube checks. .75: `check-domain.mjs` plus the `domain-move` harness (17 checks; its `#back` race was fixed in #334). |
-| Harnesses of the touched area | ✅ | The `site` and `games` jobs run them on every PR (CI2). |
-| Docs: CLAUDE.md, STATUS hand tests, README TR + EN | ✅ | CLAUDE.md "Live" and STATUS hand tests are updated for each release. `CHANGELOG.md` has one block per release (OPS1). The READMEs carry "0.9.97" in both languages. |
-| Same version in the footer and the extension | ✅ | `v0.9.97.75` in `apps/web/index.html` = `0.9.97.75` in `apps/extension/package.json`. |
-| Deploy green, live e2e green on the first attempt | ⚠️ | Runs 42426256343 (.73), 42427304689 (.74) and 42428121277 (.75): all three deploys and live e2e passed, and each ends "✓ Tüm uçtan uca testler geçti". .73 and .74 needed no retry. In .75, `draw.mjs` failed on its first attempt and passed on the retry (`##[warning]draw.mjs failed on the live run's first attempt`), see blocker 3. The .75 deploy also ran `check-domain.mjs --live`: "site address checks passed". |
+| Typecheck + unit tests, a test for every change, harnesses of the touched area | ✅ | CI's `checks`, `site`, `games` and `e2e` jobs are green on each of these PRs (.82 = #343, .83 = #345, .84 = #344). Each card brought its own check: YTK (`vimeo`, `shorts-rail`, `room-extras`), FF2 / GW (games-sweep resize + fullscreen passes), LIVE-GREEN (`GameSocket` self-test), PERF1b (`room-css`), BH12 (`yt-room`, `shorts-rail`). |
+| Docs: CLAUDE.md, STATUS hand tests, CHANGELOG | ✅ | Each release has its "Live" line, a STATUS hand-test block and a CHANGELOG block. |
+| Same version in the footer and the extension | ✅ | `v0.9.97.84` in `apps/web/index.html` = `0.9.97.84` in `apps/extension/package.json`. |
+| Deploy green, live e2e green on the first attempt | ✅ (.84 still running) | See the next table. |
+
+## Live e2e on the first attempt, since G98b
+
+| Version | Main run | Deploy + live e2e | First attempt | Tag |
+|---|---|---|---|---|
+| .76 | 42432587774 | ✅ | clean | ✅ |
+| .77 | 42433408090 | cancelled | ghost.mjs failed, its retry cut off | – |
+| .78 | 42434827850 | ✅ | clean | ✅ |
+| .79 | 42436121162 | ✅ | classics-switch.mjs + sea.mjs passed only on retry | ✅ |
+| .80 | 42437819286 | ✅ | clean | ✅ |
+| .81 | 42439678811 | ✅ | clean | ✅ |
+| .82 | 42440779262 | ✅ | clean | ✅ |
+| .83 | 42442919894 | ✅ | clean | ✅ |
+| .84 | 42443908127 | running at the time of writing | – | – |
+
+Notes on the table:
+- **.77:** the .78 push cancelled its run (the cancel came 17 s after that push, not at the time limit). .78 then
+  deployed the same code.
+- **.79:** in both files a game socket was cut by the network (1006), at 57 s and at 0.5 s after it opened. The cause
+  was found and fixed in .82 (card LIVE-GREEN): the game e2e reconnect after a network drop the way the pages do, with
+  guardrails so a real server reset still fails the run.
+- **No `GameSocket` drop warnings** appear in .82 or .83. The only 1006 closes in all these logs are the .77 and .79
+  ones above.
+- **Result:** .80, .81, .82 and .83 are four clean deploys in a row. The milestone item "3 in a row" is met.
 
 ## Every milestone step (0.9.97 → 0.9.98)
 
 | Item | State | Proof / what it needs |
 |---|---|---|
-| No open bug the owner reported in this step | ✅ (to confirm 👤) | CAM1, the one open on 5 Nov, shipped in 0.9.97.64 (#316). The owner's own retest is blocker 2. CARDS "In progress" is empty. Ready holds only CAM1 and MB, both shipped. |
-| The step's STATUS hand-test boxes ticked or noted | 👤 | 94 open boxes in this step's rounds (blocker 1). |
-| Live e2e first-attempt green on 3 deploys in a row | ❌ | .73 ✅, .74 ✅, .75 retry (blocker 3). Three clean deploys after the cause is found close it. |
-| Phone + computer each tried on a real device | 👤 | Blocker 2. |
-| Every new string has its English | ✅ | `scripts/check-texts.mjs` (MB, LABTR) checks `i18n.ts`, every chunk's own `TEXT` table and the Test Lab's inline pairs in CI. |
-| A one-paragraph summary | ✅ | STATUS "History (short)" for 0.9.97. `CHANGELOG.md` now lists every release; a short step paragraph can go above its 0.9.97 block when the step closes. |
+| No open bug the owner reported in this step | ✅ (to confirm 👤) | CARDS "In progress" is empty. Ready lists CAM1 and MB, but both shipped (.64, .67); the Planner can move them to Done. The only open GitHub issue is #227, a test "Feedback: fdfsfds" with no content, which can be closed. CAM1 (the owner's own camera bug) still needs his retest on his phones. |
+| The step's STATUS hand-test boxes ticked or noted | 👤 | The 0.9.97 blocks in STATUS "Owner's hand tests" (from 0.9.97.38 up to .84) hold 107 open boxes and 4 ticked. The "Next round, start here" list on top has 11 open items. That one round covers most of the blocks below it. |
+| Live e2e first-attempt green on 3 deploys in a row | ✅ | .80 → .83, see above. |
+| Phone + computer each tried on a real device | 👤 | The owner's round below, steps 1 – 9. |
+| Every new string has its English (and Turkish) | ✅ | `node scripts/check-texts.mjs`: "36 text tables and 305 inline pairs, 2693 strings, each in English and Turkish". `node scripts/check-game-text.mjs`: "10 game text tables: English and Turkish have the same keys". Both run in CI. |
+| Tablet batch done | ✅ | MB (.67) and GT (.63) shipped. The tablet harness covers the Test Lab drawer, the stream card, cinema, the lazy windows and the games' free windows, and runs in CI. |
+| A one-paragraph summary | ✅ | `CHANGELOG.md` now has a paragraph for the whole 0.9.97 step above its release blocks (this PR). |
 
-## Landed since the first check (for the owner's summary)
+## What only the owner can do (plain words, for his test round)
 
-- **Cameras on phones (CAM1):** cameras switch in place, a black picture recovers, and only the front camera is
-  mirrored.
-- **End-of-milestone batch (MB):** a text check, a tablet pass, the store copy, and the policy numbers matching the code.
-- **Terms of use with an abuse contact (TOS).**
-- **The Test Lab** is locked behind the owner's code (LABLOCK) and is in plain Turkish and English (LABTR).
-- **Operations (OPS1):** a changelog, release tags, an uptime check and a cost guard.
-- **CI split into parallel jobs (CI2)**, with a fix so deploy and tag run when the PR-only jobs are skipped.
-- **Store submission dry run (STORE1)** and the **YouTube API audit pack (YTA)**.
-- **The site's address in one setting (R3-3)**, ready for an own domain.
-- **Games:**
-  - Sea Battle and Reversi;
-  - game windows clear of the chat on tablets and never over a YouTube video;
-  - three polish rounds.
+1. **One evening with a friend, on a computer:**
+   - "Next round, start here" in STATUS, items 1 – 7: YouTube together, fullscreen and the rail, voice and cameras,
+     screen share, the door ("Ask before letting people in"), a private message, a game table.
+   - About 45 minutes.
+2. **His phone (Android or iPhone), the friend on the computer:**
+   - Items 8 – 9: join by the QR code, YouTube, then Shorts swiping together.
+   - Then the camera retest from CAM1 (0.9.97.64): switch to the back camera, the friend's picture never stays black,
+     the back camera is not a mirror.
+3. **The extension in Chrome on a film page** (item 10, a legal demo player such as the Video.js or Plyr demo):
+   - "Go to the film", the rail, our fullscreen and the film's own ⛶.
+4. **Edge, Brave and Opera** (item 11): the same short list in each.
+   - This can wait until just before the store submission.
+5. **A quick look at the home page and a room:** nothing looks different or flashes unstyled. This checks 0.9.97.83,
+   which moved the room's styles into their own file.
+6. **Say "0.9.98"** when he is happy with the round. The third version part only moves on his word.
+
+Not part of this gate: tag `v0.9.97.74` is still missing. Its deploy was green, but the tag push was refused because
+that push changed a workflow; TAG1 (#333) stops this from happening again.
