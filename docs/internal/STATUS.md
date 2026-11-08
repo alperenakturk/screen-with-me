@@ -480,7 +480,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   corner left of the video on a computer, and in the bar under the video on a phone; the Short itself stays clear.
 
 **0.9.97.83 (card PERF1b: the room's styles load only with the room):**
-- [ ] Open the home page on your phone and computer: it looks as before and shows a little sooner. Open a room (join
+- [ ] _(Covered by Next round items 1–8: any unstyled flash or changed look shows there.)_ Open the home page on your phone and computer: it looks as before and shows a little sooner. Open a room (join
   card, then in the room, a game, fullscreen, the phone's sheets): nothing flashes unstyled and nothing looks different.
   A different look anywhere means a rule went to the wrong file: tell the Planner the screen.
 
@@ -556,7 +556,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] In the Shorts view press ＋ Add, paste a Short's link and press "▶ Play now": it opens for everyone at once.
   Paste two links and press it again: the first plays, the second is in the queue. Type words and press it: the first
   Short found plays.
-- [ ] In the room view with a YouTube video, click the video, then press → and ←: the video jumps 5 s ahead / back on
+- [ ] _(Covered by Next round item 1.)_ In the room view with a YouTube video, click the video, then press → and ←: the video jumps 5 s ahead / back on
   your friend's screen too. Enter still opens the chat; in the chat box the arrows only move the cursor.
 
 **0.9.97.79 (card PERF1a: only the page's language is downloaded):**
@@ -580,7 +580,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   (nobody saw you leave).
 
 **0.9.97.75 (card R3-3: ready for an own domain):**
-- [ ] Nothing new to see: everything stays on the same address. The switch-day steps (buy the domain, then two short
+- [ ] _(No hand test needed.)_ Nothing new to see: everything stays on the same address. The switch-day steps (buy the domain, then two short
   releases) are in `docs/internal/custom-domain.md`.
 
 **0.9.97.74 (🎮 card YTG: no game window over a YouTube video, computer):**
