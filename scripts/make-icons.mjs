@@ -15,6 +15,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { logoSvg, mascotSvg } from '../packages/shared/src/logo.ts';
+import { squeezePng } from './png-squeeze.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -33,7 +34,9 @@ async function render(page, svg, size, pad = 0, bg = 'transparent') {
       `<img style="width:${inner}px;height:${inner}px;display:block" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}"></div></body></html>`,
   );
   await page.waitForFunction(() => document.querySelector('img').complete);
-  return page.screenshot({ type: 'png', omitBackground: bg === 'transparent', clip: { x: 0, y: 0, width: size, height: size } });
+  const shot = await page.screenshot({ type: 'png', omitBackground: bg === 'transparent', clip: { x: 0, y: 0, width: size, height: size } });
+  // Card PERF1 win 5: the same pixels, 10–25 % smaller (best row filters, deflate level 9; checked pixel for pixel).
+  return squeezePng(shot);
 }
 
 const browser = await chromium.launch();
