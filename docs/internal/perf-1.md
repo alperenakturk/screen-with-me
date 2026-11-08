@@ -90,6 +90,12 @@ What Lighthouse flags:
 
 **Chat:** one write per line, but it rewrites the 50-message history each time. That is fine for the rows count; it is bytes, not rows, that grow.
 
+**Built (PERF1e, 0.9.97.78):** `room.ts` keeps the counters in memory and writes `stats` at most every `STATS_SAVE_MS`
+(30 s) through the room's alarm, and at once when the last person leaves. Emojis and play / pause / seek now write
+0 rows each between those saves (play / pause / seek still write `room`), so the busy evening above is ≈ 200 chat +
+100 controls + about 240 counter saves at most (one per 30 s for 2 hours) ≈ 300–540 rows, instead of ≈ 800. The
+recap e2e checks that a burst of emojis and messages counts in full, also after the room empties and someone returns.
+
 ## 5. The five wins, ranked
 
 | # | Win | Gain | Cost / risk | Who |
