@@ -404,8 +404,7 @@ as the second person). Tick here or tell the Planner; the older lists below stay
 - [ ] 5. Knock + host (two people): turn on "Ask before letting people in", the friend opens the link in a fresh
   browser: you get "Let in / Refuse"; let them in; 👑 Make host to the friend: now they get the next knock card.
 - [ ] 6. Private message: press the friend's name in the chat, write: only they see it (a third person does not).
-- [ ] 7. A game table with the friend (Classics: Turkish dama, then Quiz): play to the end, a rematch, leave the
-  table; a sound on each move.
+- [ ] 7. The games with the friend: the short list "🎮 Games, start here" right below (about 20 minutes).
 - [ ] 8. Your phone (Android or iPhone, the friend on the computer): join by the QR code, the YouTube video plays in
   sync, turn the phone sideways → ⛶ fullscreen, chat sheet, 🎙 voice for a minute (hear and be heard), back upright.
 - [ ] 9. Your phone, Shorts: the friend adds a Short; swipe up / down to the next: both move together.
@@ -413,6 +412,30 @@ as the second person). Tick here or tell the Planner; the older lists below stay
   film", the room view, sync with the friend, voice on the film page (the permission window appears once).
 - [ ] 11. The extension in Edge, then Brave, then Opera (the detailed list below, "Before the 1.0 store submission"):
   at least steps 1, 2, 3 and 6 of it in each.
+
+**🎮 Games, start here (BH13-G, 8 Nov 2026; replaces the games lines of 0.9.97.68–0.9.97.85 below).** Every games
+harness passed in the cloud on 0.9.97.85 (EN + TR, laptop, desktop, iPhone, Pixel, iPad, Android tablet, the film page),
+plus two people at every table with a reload and a network drop in the middle. Left for a person, most important first,
+with the same friend:
+- [ ] G1. Classics with the friend: Turkish dama to the end (a sound on each move, the result card with Glowbeam,
+  Rematch); then mid-game "🎲 Change game" → it asks first → chess. The friend reloads mid-game: back in the same seat.
+- [ ] G2. Sea Battle with the friend on a phone: Ready, then the phone's first tap aims and the second fires; play to the
+  end; the result card. Turn the phone's Wi-Fi off for 10 s mid-game and on again: the game goes on.
+- [ ] G3. Quiz, then Draw & Guess, to the end: the result card with the podium, "Play again" for whoever started,
+  "Waiting for …" for the other. When everyone gets it, a small Glowbeam says "Everyone got it!" (in Draw & Guess in
+  the drawing's corner, never over the chat).
+- [ ] G4. Last Heart to the end: "How to play" picture cards on the first open, the result card at the end.
+- [ ] G5. With a YouTube video playing (computer): a game opens beside or under the video, never on it; fullscreen
+  tucks it away.
+- [ ] G6. Any game: shrink the window from its corner (it stops before the text gets small), grow it, then ⛶: the game
+  alone on the screen at a good size; Esc brings the window back.
+- [ ] G7. Your phone: a game takes the screen with the video as a small picture top left (a tap goes back to the
+  video); every button is easy to hit.
+- [ ] G8. Alone against Glowbeam (medium chess or dama): he answers in about a second and doesn't give pieces away.
+- [ ] G9. While a film plays: Snack Bar earns, Window Garden grows, Five Frames in Turkish (the result on two lines);
+  nothing in their top rows ends in "…".
+- [ ] G10. The friend turns the phone's data off for 2 minutes during a Quiz: after about 1.5 min they show offline,
+  20 s later the game goes back to the lobby; data back on brings them back.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
@@ -518,23 +541,13 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   while someone on the backup connection closes their tab.
 
 **0.9.97.85 (🎮 card GP4: Last Heart's result card and How to play, Glowbeam the referee):**
-- [ ] Play Last Heart with a friend to the end: the result card shows (Glowbeam, who won, the podium); "Play again" for
-  the host, "Waiting for …" for the other. The first time you open it, the "How to play" picture cards show; "?" in
-  the window's head brings them back.
-- [ ] Quiz / Draw & Guess with a friend: when everyone gets a question / word, a small Glowbeam in the bottom right
-  says "Everyone got it!" for a moment (Turkish: "Herkes bildi!"); his lines are kind and go away by themselves.
+- Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.82 (🎮 card LIVE-GREEN: the game e2e ride out network drops):**
 - Nothing to test by hand: only the automatic game tests changed.
 
 **0.9.97.81 (🎮 cards FF2 + GW: game window sizes, ⛶ in every game, Five Frames' result):**
-- [ ] Open any game and shrink its window from the corner: it stops before the text gets small; grow it: the game gets
-  bigger in proportion and stops at a sensible size.
-- [ ] Press ⛶ in a game's head: the game alone fills the screen at a good size; Esc (or ⛶ again) brings the window back
-  where it was. Try it with a YouTube video playing, and on a film page (there it fills the tab).
-- [ ] Finish Five Frames in Turkish: two lines ("2/7 denemede buldun! 🎉" / "Yeni kelime: 21 sa 10 dk sonra"), and
-  "📋 Kopyala" → "Kopyalandı ✓" keeps the same width.
-- [ ] Snack Bar / Window Garden in Turkish while a film plays: nothing in their top row ends in "…".
+- Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.80 (card YTK: "Play now" in the Shorts add window, ← / → in the room view):**
 - [ ] In the Shorts view press ＋ Add, paste a Short's link and press "▶ Play now": it opens for everyone at once.
@@ -557,28 +570,17 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
   episodes list as quickly as any other show's.
 
 **0.9.97.76 (🎮 card GHOST: game tables notice a dead connection):**
-- [ ] Play Draw & Guess or the Quiz with a friend on a phone; the friend turns the phone's Wi-Fi and mobile data off
-  mid-game. About a minute and a half later the friend shows offline at your table, and the game goes back to the
-  lobby 20 s after that. Turning data back on brings the friend back.
-- [ ] Leave a game table open in a tab, switch to another tab for 10 minutes, come back: you are still at the table
-  (nobody saw you leave).
+- Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.75 (card R3-3: ready for an own domain):**
 - [ ] Nothing new to see: everything stays on the same address. The switch-day steps (buy the domain, then two short
   releases) are in `docs/internal/custom-domain.md`.
 
 **0.9.97.74 (🎮 card YTG: no game window over a YouTube video, computer):**
-- [ ] With a YouTube video playing, open Classics or Sea Battle: the window opens beside or under the video, never on
-  it; in the window's place menu "in the video's place" is off and says why. Fullscreen: the game tucks away.
-  With a video file instead, "in the video's place" works again.
+- Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.73 (🎮 games polish 3: Quiz / Draw result card, one hint style, smarter chess):**
-- [ ] Finish a Quiz or a Draw & Guess with a friend: the result card shows Glowbeam, who won (or a tie), his line and
-  the podium; whoever started the game sees "▶ Play again", the other sees "Waiting for … to start". "👁 Settings &
-  scores" puts the card away. On the phone too.
-- [ ] Short messages in Snack Bar, Window Garden, Quiz and Last Heart look the same (a dark pill with a gold ring at the
-  top of the game).
-- [ ] Classics → chess against Glowbeam on medium: he answers in under a second as before and now spots a knight fork.
+- Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.72 (card LABTR: the 🐞 Test Lab in plain Turkish):**
 - [ ] With the site in Turkish, open the 🐞 Test Lab: every tab, button, status line and command is Turkish and plain
@@ -587,12 +589,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Ctrl+K, type "kopar" (or "baglanti"): "Bağlantımı 6 sn kopar" is found; Enter runs it.
 
 **0.9.97.71 (🎮 games polish 2: one result card, Glowbeam the referee):**
-- [ ] Finish a Classics game (any board) or a Sea Battle: one card comes up over the board: Glowbeam (cheering when
-  you win), "You won!" / "Glowbeam won" / "A draw", the score, Rematch / Play again inside it. "👁 See the board" puts
-  it away so you can look at the final position; Rematch stays under the board.
-- [ ] Glowbeam beside the board reacts: "Nice capture!" when you take a piece, a gasp when you lose one, "Check!" in
-  chess, a jump at a hit and a sunk ship in Sea Battle. The bubble goes by itself.
-- [ ] The picker, the board and the battle fade in softly; with "reduce motion" on in your system nothing moves.
+- Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.69 (card LABLOCK: the 🐞 Test Lab needs your code):**
 - [ ] Add the `LAB_CODE` secret (GitHub → Settings → Environments → production → Environment secrets), then after the
@@ -601,13 +598,7 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] In a private window (no pass) `?debug=1` and a wrong code show no 🐞.
 
 **0.9.97.68 (🎮 games polish 1: phones, Glowbeam, How to play):**
-- [ ] On the phone, every button in a game is easy to hit (the window's head, the chips, the "?").
-- [ ] Sea Battle on the phone: the first tap on their sea aims (a gold crosshair, "Aiming at C7", a 🎯 Fire button);
-  a second tap on the same cell or Fire shoots. On the computer one click still shoots.
-- [ ] Classics against Glowbeam: medium no longer leaves pieces to simple captures; easy plays weaker but never just
-  gives a piece away.
-- [ ] The first time you open a Classics board, Sea Battle, Quiz or Draw & Guess, picture cards explain it; the "?"
-  (window head; on the phone in the game's own bar) shows them again. In Turkish too.
+- Moved into "🎮 Games, start here" above (BH13-G).
 
 **0.9.97.66 (card TOS: the terms of use):**
 - [ ] Read the new terms page (footer → Terms; join card and profile menu too), in English and Turkish: Turkish law and
