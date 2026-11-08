@@ -186,6 +186,11 @@ jobs:
       - name: Room styles only in the room
         run: node scripts/harness/room-css/run.cjs http://localhost:8787
 
+      # Card OFFLINE2: a lazy chunk that fails while our site can't be reached (also with navigator.onLine true) waits
+      # for the network instead of reloading into the browser's error page; a chunk gone after a deploy still reloads.
+      - name: A failed chunk waits for the network
+        run: node scripts/harness/offline-reload/run.cjs http://localhost:8787
+
       # BH13: the outdated-extension notice (the link's dot; the bubble waits for the first-time tips; none on a phone).
       - name: Outdated extension notice
         run: node scripts/harness/ext-update/run.cjs http://localhost:8787
