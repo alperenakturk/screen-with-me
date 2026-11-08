@@ -508,6 +508,10 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] Nothing new to see. If you ever use the room over the phone hotspot again: the room keeps working for everyone
   while someone on the backup connection closes their tab.
 
+**0.9.97.77 (cards PERF1 + PERF1c: speed pass, big podcast feeds):**
+- [ ] Search a podcast with a very long history in the link box (🎧 Podcasts) and open the show: its newest
+  episodes list as quickly as any other show's.
+
 **0.9.97.76 (🎮 card GHOST: game tables notice a dead connection):**
 - [ ] Play Draw & Guess or the Quiz with a friend on a phone; the friend turns the phone's Wi-Fi and mobile data off
   mid-game. About a minute and a half later the friend shows offline at your table, and the game goes back to the

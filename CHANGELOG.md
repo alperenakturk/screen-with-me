@@ -8,6 +8,10 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.77 — 8 Nov
+- Podcasts: a show with a very large feed (thousands of episodes) now opens as fast as any other; the server reads
+  only the first 200 episodes of a feed, where the newest ones are.
+
 ### 0.9.97.76 — 8 Nov
 - Games: a player whose connection died without a word (a phone that lost its network) no longer stays "online" at a
   game table for ever: after about a minute and a half of silence they show as gone, and Draw & Guess or the Quiz
