@@ -18,6 +18,7 @@ import {
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 import { closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
+import { labServer } from './lab.ts';
 
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_SOCKETS = 40;
@@ -58,6 +59,8 @@ const fresh = (): Saved => ({ table: newPokerData(), people: {}, endsAt: null, e
 export class Poker extends DurableObject<Env> {
   private data: Saved = fresh();
   private readonly limit = new RateLimiter(20, 8);
+  /** A local lab server (`lab.ts`, Test Lab DL3b / GP4): only then does a `lab` message do anything. */
+  private lab = false;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -80,6 +83,7 @@ export class Poker extends DurableObject<Env> {
   });
 
   override async fetch(request: Request): Promise<Response> {
+    this.lab ||= labServer(this.env, request);
     // Networks where the WebSocket never opens (phone hotspots): the same connection over plain HTTP requests.
     const polled = await this.polls.handle(request);
     if (polled) return polled;
@@ -228,6 +232,15 @@ export class Poker extends DurableObject<Env> {
     const t = this.data.table;
     const engine = this.engine;
     switch (message.t) {
+      case 'lab': {
+        // Test Lab (GP4): the game ends now and the sender is the last heart (local lab server only, `lab.ts`).
+        if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
+        if (t.phase === 'lobby' || t.phase === 'over') return;
+        for (const seat of t.seats) seat.life = seat.key === key ? Math.max(1, seat.life) : 0;
+        engine.startHand();
+        await this.changed();
+        return;
+      }
       case 'settings':
         if (t.phase !== 'lobby' && t.phase !== 'over') return;
         if (this.hostKey() !== key) return this.sendTo(ws, { t: 'error', code: 'not_host' });

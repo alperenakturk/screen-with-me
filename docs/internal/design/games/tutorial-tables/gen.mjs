@@ -41,6 +41,18 @@ const dice = (x, y, n) => {
   return `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" rx="8" fill="${PALE}" stroke="#b9a37c" stroke-width="2"/>${pips.map(([a, b]) => `<circle cx="${x + a * 9}" cy="${y + b * 9}" r="3.6" fill="${INK}"/>`).join('')}`;
 };
 
+/** A playing card at (x, y), 40 × 56, with a heart (red) or spade (dark) in the middle; `back` = face down. */
+const card = (x, y, red, back = false, lit = false) =>
+  back
+    ? `<rect x="${x}" y="${y}" width="40" height="56" rx="6" fill="#3a2d78" stroke="#8f84d8" stroke-width="2"/><path d="M${x + 8} ${y + 8}h24v40h-24z" fill="none" stroke="#8f84d8" stroke-width="1.5" stroke-dasharray="3 3"/>`
+    : `<rect x="${x}" y="${y}" width="40" height="56" rx="6" fill="${PALE}" stroke="${lit ? GOLD : '#b9a37c'}" stroke-width="${lit ? 3 : 1.5}"/>${red ? heart(x + 20, y + 28, 0.9, '#e05a5a') : spade(x + 20, y + 28)}`;
+const heart = (x, y, s = 1, color = '#e05a5a') => `<path d="M${x} ${y + 9 * s}c-${12 * s}-${8 * s}-${14 * s}-${14 * s}-${9 * s}-${18 * s}c${3 * s}-${2.5 * s} ${7 * s}-${1 * s} ${9 * s} ${3 * s}c${2 * s}-${4 * s} ${6 * s}-${5.5 * s} ${9 * s}-${3 * s}c${5 * s} ${4 * s} ${3 * s} ${10 * s}-${9 * s} ${18 * s}z" fill="${color}"/>`;
+const spade = (x, y) => `<path d="M${x} ${y - 11}c-10 9-13 13-10 17 2 3 6 3 9 0l-2 7h6l-2-7c3 3 7 3 9 0 3-4 0-8-10-17z" fill="${INK}"/>`;
+/** A life bar (share 0–1) with a heart at its start. */
+const life = (x, y, w, share) => `${heart(x - 12, y + 2, 0.55)}<rect x="${x}" y="${y - 4}" width="${w}" height="10" rx="5" fill="#ffffff1f"/><rect x="${x}" y="${y - 4}" width="${(w * share).toFixed(1)}" height="10" rx="5" fill="#e05a5a"/>`;
+/** The glass flask of the pot, filled to `level` (0–1). */
+const flask = (x, y, level) => `<clipPath id="fl${x}"><path d="M${x - 9} ${y}h18v22l20 40a10 10 0 0 1-9 15h-40a10 10 0 0 1-9-15l20-40z"/></clipPath><g clip-path="url(#fl${x})"><rect x="${x - 40}" y="${(y + 77 - 70 * level).toFixed(1)}" width="80" height="80" fill="#e05a5a"/></g><path d="M${x - 9} ${y}h18v22l20 40a10 10 0 0 1-9 15h-40a10 10 0 0 1-9-15l20-40z" fill="none" stroke="${PALE}" stroke-width="2.5" stroke-opacity=".8"/>`;
+
 const ART = {
   // ---- Classics ----
   'xox-1-turns': frame(
@@ -102,6 +114,16 @@ const ART = {
   ),
   'quiz-3-podium': frame(
     `<rect x="126" y="70" width="68" height="86" rx="6" fill="${GOLD}"/><rect x="58" y="98" width="68" height="58" rx="6" fill="#cfc8ea"/><rect x="194" y="116" width="68" height="40" rx="6" fill="#c08a4a"/><circle cx="160" cy="50" r="14" fill="#6fc8ff"/><circle cx="92" cy="80" r="12" fill="#ff7aa8"/><circle cx="228" cy="98" r="12" fill="#a3e07a"/>${glow(160, 50, 34)}${crown(160, 30)}`,
+  ),
+  // ---- Last Heart ----
+  'poker-1-life': frame(
+    `${[0, 1, 2].map((i) => `<circle cx="70" cy="${48 + i * 42}" r="13" fill="${['#6fc8ff', '#ff7aa8', '#a3e07a'][i]}"/>${life(104, 48 + i * 42, 120, [1, 0.62, 0.25][i])}`).join('')}${glow(266, 92, 36)}${heart(266, 92, 2.2)}`,
+  ),
+  'poker-2-hand': frame(
+    `${card(36, 104, true, false, true)}${card(80, 104, false, false, true)}${[0, 1, 2, 3, 4].map((i) => card(130 + i * 34, 30, i % 2 === 0, i > 2, i === 0)).join('')}${flask(276, 96, 0.55)}${arrow(122, 128, 238, 150, MUTED, 3)}`,
+  ),
+  'poker-3-moves': frame(
+    `${[0, 1, 2].map((i) => `<rect x="${52 + i * 76}" y="40" width="64" height="96" rx="10" fill="${i === 1 ? '#3a2d78' : '#2a2350'}" stroke="${i === 1 ? GOLD : '#8f84d8'}" stroke-width="${i === 1 ? 3 : 1.5}"/>`).join('')}<path d="M84 64l18 7v14c0 11-8 18-18 22-10-4-18-11-18-22v-14z" fill="none" stroke="${PALE}" stroke-width="3.5" stroke-linejoin="round"/><path d="M146 88c10-14 30-14 40 0-10 14-30 14-40 0z" fill="none" stroke="${GOLD}" stroke-width="3.5"/><circle cx="166" cy="88" r="5" fill="${GOLD}"/>${glow(166, 88, 34)}<path d="M222 70l24 36M246 70l-24 36" stroke="#e05a5a" stroke-width="5" stroke-linecap="round"/>${[0, 1, 2].map((i) => heart(84 + i * 76, 124, 0.45)).join('')}`,
   ),
   // ---- Draw & Guess ----
   'draw-1-pick': frame(
