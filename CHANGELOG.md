@@ -8,6 +8,12 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.85 — 8 Nov
+- Games: Last Heart ends on the same result card as the other tables (who won, the podium, Play again) and has the
+  same picture cards for "How to play". Glowbeam now cheers or gasps in a corner of the Quiz, Draw & Guess and Last
+  Heart tables at the big moments: everyone got it, a streak, a tricky question, a split or a big pot. Always kind,
+  never about someone's mistake.
+
 ### 0.9.97.82 — 8 Nov
 - Behind the scenes: the game tests that run after every release now ride out a network blip the way the game pages
   do, so a release is no longer held back by one dropped test connection. Nothing changes in the games themselves.
