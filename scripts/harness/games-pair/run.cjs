@@ -2,10 +2,12 @@
 // board (XOX, Four in a Row, dama, chess, backgammon, reversi), Sea Battle and Last Heart are played a few turns between
 // the two; then Sam reloads mid-game (he is back in his seat with the same board / fleet / cards), and Sam's network
 // drops for 8 s (the browser goes offline and back): the table carries on and both still see each other's moves. Quiz
-// and Draw & Guess get the same drop. No page errors anywhere.
+// and Draw & Guess get the same drop. No page reloads while offline, and a lazy chunk asked for while offline works once
+// the browser is back online (BH13-G). No page errors anywhere.
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-pair/run.cjs [site]
-//   BOARDS=dama,chess limits the Classics boards; TABLES=sea,poker,quiz,draw the other tables.
+//   BOARDS=dama,chess limits the Classics boards; TABLES=sea,poker,quiz,draw the other tables; OFFLINE_CHUNK=1 adds
+//   the offline-chunk check to a narrowed run (it runs by itself in a full run).
 const { chromium } = require('playwright');
 const path = require('path');
 
@@ -69,11 +71,18 @@ async function backAtTable(p, sel) {
   return !!back;
 }
 
-/** The network drops for `ms` and comes back (the page stays open). */
+/** The network drops for `ms` and comes back. While offline the page never reloads (BH13-G: a lazy chunk that failed
+ * offline used to reload it into the browser's offline page and throw the room away); back online it is the room
+ * (a page that missed a chunk may reload once then: Chrome never retries a failed module, see main.ts). */
 async function drop(p, ms = DROP_MS) {
+  await p.page.evaluate(() => (window.__samePage = true));
   await p.ctx.setOffline(true);
   await wait(ms);
+  const stayed = await p.page.evaluate(() => window.__samePage === true).catch(() => false);
   await p.ctx.setOffline(false);
+  check(stayed, `${p.name}'s page does not reload while the network is down`);
+  const room = await until(() => p.page.evaluate(() => location.pathname.startsWith('/r/') && !!document.querySelector('#game-btn')), 15000);
+  check(!!room, `${p.name}'s page is the room again once the network is back`);
 }
 
 // ---- Classics ----
@@ -307,8 +316,31 @@ async function points(browser, kind) {
   await sam.ctx.close();
 }
 
+/** A lazy chunk asked for while offline (the "?" shortcuts card): no reload; back online it loads on the next press. */
+async function offlineChunk(browser) {
+  const room = 'gp' + Math.random().toString(36).slice(2, 8);
+  const p = await person(browser, room, 'Robin', 'wizard');
+  await p.page.evaluate(() => (window.__samePage = true));
+  await p.page.evaluate(() => document.activeElement?.blur());
+  await p.ctx.setOffline(true);
+  await p.page.keyboard.press('?');
+  await wait(2500);
+  check(await p.page.evaluate(() => window.__samePage === true).catch(() => false), 'offline chunk: the page does not reload while offline');
+  await p.ctx.setOffline(false);
+  await wait(3000);
+  await p.page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 20000 }).catch(() => {});
+  if (!(await p.page.evaluate(() => !!document.querySelector('.shortcuts-dialog')))) {
+    await p.page.evaluate(() => document.activeElement?.blur());
+    await p.page.keyboard.press('?');
+  }
+  check(!!(await until(() => p.page.evaluate(() => !!document.querySelector('.shortcuts-dialog')))), 'offline chunk: back online (after at most one reload), the shortcuts card opens');
+  check(!p.errors.length, 'offline chunk: no page errors', p.errors.slice(0, 2).join(' | '));
+  await p.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch();
+  if (!process.env.BOARDS && !process.env.TABLES || process.env.OFFLINE_CHUNK) await offlineChunk(browser);
   for (const board of BOARDS) await classics(browser, board);
   if (TABLES.includes('sea')) await sea(browser);
   if (TABLES.includes('poker')) await poker(browser);

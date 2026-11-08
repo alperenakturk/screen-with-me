@@ -19,6 +19,8 @@ games' tip jar, cuttings and badges.
 ### 0.9.97.88 — 8 Nov
 - Games: in Draw & Guess, Glowbeam's little cheer now pops up in the drawing's corner instead of over the chat's Send
   button. Behind the scenes, every table was played by two people with a reload and a dropped connection mid-game.
+- Rooms: a short Wi-Fi drop no longer throws you out to the browser's "no internet" page; at worst the room reloads
+  once by itself when the connection is back.
 
 ### 0.9.97.86 — 8 Nov
 - The "a new version of the extension is out" bubble no longer lands on top of the first-time tips in a new room (it
