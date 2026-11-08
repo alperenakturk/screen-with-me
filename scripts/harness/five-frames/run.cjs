@@ -169,15 +169,22 @@ async function checkResult(page, label, unit) {
   check(!!kept, 'after a reload the day is still solved');
   await checkResult(alex, 'English', /^A new word in \d+\u00a0(h\u00a0\d+\u00a0)?min$/);
   // The same finished day with the page in Turkish: "Yeni kelime: 21 sa 10 dk sonra", Turkish units.
-  await alex.evaluate(() => import('/src/i18n.ts').then((m) => m.setLang('tr')));
-  await alex.waitForTimeout(300);
+  const pageLang = async (lang) => {
+    // The page's language changes, the word game stays the solved English one.
+    await alex.evaluate((l) => { localStorage.setItem('lang', l); localStorage.setItem('fiveFrames:lang', 'en'); }, lang);
+    await alex.reload();
+    await until(() => alex.evaluate(() => !!document.querySelector('#game-btn')));
+    await alex.waitForTimeout(1200);
+    await open(alex);
+    await until(() => alex.evaluate(() => !!document.querySelector('#game-stage .ff-msg-next')), 4000);
+  };
+  await pageLang('tr');
   await checkResult(alex, 'Turkish', /^Yeni kelime: \d+\u00a0(sa\u00a0\d+\u00a0)?dk\u00a0sonra$/);
   await alex.setViewportSize({ width: 900, height: 560 });
   await alex.waitForTimeout(600);
   await checkResult(alex, 'Turkish at 900×560', /^Yeni kelime: \d+\u00a0(sa\u00a0\d+\u00a0)?dk\u00a0sonra$/);
   await alex.setViewportSize({ width: 1366, height: 768 });
-  await alex.evaluate(() => import('/src/i18n.ts').then((m) => m.setLang('en')));
-  await alex.waitForTimeout(600);
+  await pageLang('en');
 
   // BH2: a streak with a missed day since its last win shows 🔥 0, not the old number.
   await alex.evaluate((d) => {

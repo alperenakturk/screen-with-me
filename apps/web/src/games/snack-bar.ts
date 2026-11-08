@@ -690,7 +690,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     coins.textContent = formatCoins(game.coins);
     coins.title = t('coinsTitle');
     rate.textContent = t('rate', { n: fmtRate(income) });
-    state.textContent = ctx.playing ? t('playing') : t('paused');
+    // GW play-through: with the others' bonus and the tip jar beside it, "▶ Film on" was cut to "▶ Film a…" in Turkish:
+    // while the film plays the pill is just ▶ (its name is its label and tooltip).
+    state.textContent = ctx.playing ? '▶' : t('paused');
+    state.setAttribute('aria-label', ctx.playing ? t('playing') : t('paused'));
     state.classList.toggle('on', ctx.playing);
     together.textContent = t('together', { n: bonus });
     together.hidden = bonus <= 0;
