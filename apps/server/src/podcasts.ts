@@ -3,6 +3,7 @@ import {
   PODCAST_EPISODES,
   PODCAST_ID,
   PODCAST_RESULTS,
+  FeedReader,
   parseFeed,
   parseItunesLookup,
   parseItunesSearch,
@@ -21,8 +22,6 @@ import { normalizeQuery } from '@swm/shared/youtube-search';
 const TIMEOUT_MS = 6000;
 const SEARCH_TTL_S = 24 * 3600;
 const EPISODES_TTL_S = 3600;
-/** A feed bigger than this is cut there (episodes are newest first in nearly every feed). */
-const FEED_MAX_BYTES = 4 * 1024 * 1024;
 
 const cacheKey = (origin: string, path: string) => new Request(`${origin}/__cache/${path}`);
 function json(answer: ShowsAnswer | EpisodesAnswer, maxAge = 0): Response {
@@ -34,28 +33,18 @@ async function getJson(url: string): Promise<unknown> {
   const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS), headers: { Accept: 'application/json' } });
   return response.ok ? response.json() : null;
 }
-/** The start of a feed's text, at most `FEED_MAX_BYTES`. */
+/** The start of a feed's text: up to `FEED_MAX_ITEMS` items or `FEED_MAX_BYTES` (PERF1c, `FeedReader`). */
 async function readFeed(url: string): Promise<string | null> {
   const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS), redirect: 'follow', headers: { Accept: 'application/rss+xml, application/xml, text/xml' } });
   if (!response.ok || !response.body) return null;
   const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  while (size < FEED_MAX_BYTES) {
+  const feed = new FeedReader();
+  for (;;) {
     const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    size += value.byteLength;
+    if (done || feed.push(value)) break;
   }
   void reader.cancel().catch(() => {});
-  const all = new Uint8Array(Math.min(size, FEED_MAX_BYTES));
-  let at = 0;
-  for (const chunk of chunks) {
-    const part = chunk.subarray(0, Math.max(0, all.length - at));
-    all.set(part, at);
-    at += part.length;
-  }
-  return new TextDecoder().decode(all);
+  return feed.text();
 }
 
 export async function podcasts(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
