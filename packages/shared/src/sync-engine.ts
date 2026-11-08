@@ -176,6 +176,21 @@ export class SyncEngine {
     this.localChange('rate', { rate, position: player.getTime() });
   }
 
+  /**
+   * Card YTK: a jump of `delta` seconds from our own keys (← / →), shared with the room like a seek made in the player.
+   * Clamped to 0 and, when known, to just before the end. Returns false when there is nothing to move.
+   */
+  requestSeek(delta: number): boolean {
+    const player = this.player;
+    if (player === null || this.state === null || this.state.item === null) return false;
+    const duration = player.getDuration();
+    const end = duration > 1 ? duration - 0.5 : Infinity;
+    const target = Math.max(0, Math.min(end, player.getTime() + delta));
+    this.seekTo(target);
+    this.localChange('seek', { position: target });
+    return true;
+  }
+
   /** "Herkesi bana eşitle": kendi oynatıcımın konumunu odaya yayar. */
   syncEveryoneToMe(): void {
     const player = this.player;
