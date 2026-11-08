@@ -2,11 +2,12 @@
 // herkese, "yaklaştın" sadece tahmin edene, doğru bilenin puanı), bilenlerin gizli sohbeti, herkes bilince turun
 // bitmesi ve kelimenin açıklanması, sıranın sonraki çizene geçmesi.
 import { dropFor } from './drop.mjs';
+import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'draw' + Math.random().toString(36).slice(2, 8);
 
 function client(name, cid, id = game) {
-  const ws = new WebSocket(`${base}/api/draw/${id}/ws`);
+  const ws = new GameSocket(`${base}/api/draw/${id}/ws`);
   // GHOST: like the game pages, a ping every 15 s (a socket silent for 90 s is closed as a dead connection).
   setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
   const inbox = [];

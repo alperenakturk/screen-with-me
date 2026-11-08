@@ -85,6 +85,8 @@ const en = {
   'game.menuTitle': 'Start a game in the room',
   'game.change': 'Other game',
   'game.minimize': 'Back to video',
+  'game.full': 'Full screen',
+  'game.fullExit': 'Leave full screen',
   'game.back': 'Back to the game',
   'game.end': 'End game',
   'game.by': 'started by {name}',

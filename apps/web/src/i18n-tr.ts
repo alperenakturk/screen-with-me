@@ -87,6 +87,8 @@ export const tr: Record<I18nKey, string> = {
   'game.menuTitle': 'Odada oyun aç',
   'game.change': 'Başka oyun',
   'game.minimize': 'Videoya dön',
+  'game.full': 'Tam ekran',
+  'game.fullExit': 'Tam ekrandan çık',
   'game.back': 'Oyuna dön',
   'game.end': 'Oyunu bitir',
   'game.by': '{name} açtı',

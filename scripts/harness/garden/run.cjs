@@ -113,7 +113,7 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
 
   // The sync test plays: the mint blooms, gets picked into the album.
   await alex.evaluate(() => document.getElementById('sync-test').click());
-  const growing = await until(() => alex.evaluate(() => /Growing/.test(document.querySelector('.wg-state').textContent)), 8000);
+  const growing = await until(() => alex.evaluate(() => document.querySelector('.wg-state').classList.contains('on') && /Growing/.test(document.querySelector('.wg-state').getAttribute('aria-label'))), 8000);
   check(!!growing, 'the pill turns to "Growing" when the room plays');
   check(await alex.evaluate(() => document.querySelector('.wg-rest').hidden), 'the resting sign goes away while the film plays');
   const bloomed = await until(() => alex.evaluate(() => document.querySelector('.wg-pot[data-pot="0"]').classList.contains('bloom')), 10000);

@@ -6,6 +6,8 @@
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-sweep/run.cjs [site]
 //   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run; FRIENDS=3 adds the Test Lab's fake friends to the room.
+//   Card GW: on computers every game is also shrunk to its smallest and grown to its largest window and put in its own
+//   fullscreen (browser and whole tab); GW_LANGS=tr runs those passes in Turkish only, GW_LANGS=none skips them.
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -40,6 +42,20 @@ const GAMES = {
   garden: { solo: 'garden' },
   word: { solo: 'word' },
 };
+// Card GW: each game's smallest and largest free window, read from the catalog (the harness may run on the built site).
+const CATALOG = fs.readFileSync(path.join(__dirname, '../../../packages/shared/src/games/catalog.ts'), 'utf8');
+/** The catalog entry a game's window follows: a Classics board (or its picker), a table, a side game. */
+function catalogEntry(g) {
+  const section = (start) => CATALOG.slice(CATALOG.indexOf(start));
+  const find = (text, key) => {
+    const m = new RegExp(`\\n  ${key}: \\{[^}]*minSize: \\[(\\d+), (\\d+)\\], maxSize: \\[(\\d+), (\\d+)\\]`).exec(text);
+    return m ? { min: [+m[1], +m[2]], max: [+m[3], +m[4]] } : null;
+  };
+  if (g.picker) return find(section('CLASSICS_SIZES'), 'picker');
+  if (g.board) return find(section('CLASSICS_SIZES'), g.board);
+  if (g.solo) return find(section('SOLO_CATALOG'), g.solo);
+  return find(section('GAME_CATALOG'), g.table);
+}
 // Lists that grow without end and may scroll (the owner's rule allows them).
 const MAY_SCROLL = ['.draw-chat', '.draw-guesses', '.chat-list', '.quiz-players', '.sb-upgrades', '.wg-album-page', '.htp'];
 
@@ -160,6 +176,81 @@ function measure({ mayScroll, minTarget }) {
   };
 }
 
+/** Runs `measure` and reports its findings under `label`. */
+async function judge(page, label, phone) {
+  const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
+  if (m.missing) return check(false, `${label}: the game window shows`), null;
+  check(m.scrollers.length === 0, `${label}: no scrollbar inside (${m.stage.join('×')})`, m.scrollers.join(' | '));
+  check(m.small.length === 0, `${label}: no text under 13 px`, m.small.join(' | '));
+  check(m.cut.length === 0, `${label}: nothing cut off`, m.cut.join(' | '));
+  check(!m.board, `${label}: the board is a fair size`, m.board);
+  return m;
+}
+const stageBox = (page) => page.evaluate(() => {
+  const r = document.querySelector('#game-stage').getBoundingClientRect();
+  return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), vw: innerWidth, vh: innerHeight };
+});
+/**
+ * Card GW: the free window shrunk to its smallest and grown to its largest by its corner (never past the catalog's
+ * limits, or the screen), then the game's own fullscreen (⛶): the whole screen, the same checks, and Esc brings the
+ * window back where it was.
+ */
+async function windowPasses(page, label, g, phone) {
+  const lim = catalogEntry(g);
+  const float = await page.evaluate(() => document.querySelector('#game-stage')?.classList.contains('float'));
+  if (lim && float) {
+    const start = await stageBox(page);
+    const drag = async (dx, dy) => {
+      const grip = await page.$('#game-stage .game-resize');
+      const b = await grip.boundingBox();
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(b.x + dx, b.y + dy, { steps: 6 });
+      await page.mouse.up();
+      await wait(700);
+      return stageBox(page);
+    };
+    const small = await drag(-3000, -3000);
+    const screenSmall = start.vw - 16 < lim.min[0] || start.vh - 16 < lim.min[1];
+    check(screenSmall || (small.w >= lim.min[0] - 2 && small.h >= lim.min[1] - 2), `${label}: the grip stops at the smallest size (${lim.min.join('×')})`, `${small.w}×${small.h}`);
+    await judge(page, `${label} at its smallest`, phone);
+    const big = await drag(3000, 3000);
+    check(big.w <= lim.max[0] + 2 && big.h <= lim.max[1] + 2 && big.x + big.w <= big.vw && big.y + big.h <= big.vh, `${label}: the grip stops at the largest size (${lim.max.join('×')}) or the screen`, `${big.w}×${big.h} at ${big.x},${big.y}`);
+    await judge(page, `${label} at its largest`, phone);
+    // Back to its own size for the next game (double click on the head).
+    await page.evaluate(() => document.querySelector('#game-stage .game-stage-title')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    await wait(400);
+  }
+  const before = await stageBox(page);
+  const button = await page.$('#game-stage .game-full');
+  if (!button || !(await button.isVisible())) return check(false, `${label}: ⛶ shows in the game's head`);
+  await button.click();
+  await wait(900);
+  const full = await stageBox(page);
+  check(full.w >= full.vw - 1 && full.h >= full.vh - 1 && full.x <= 0 && full.y <= 0, `${label}: ⛶ puts the game on the whole screen`, `${full.w}×${full.h} at ${full.x},${full.y}`);
+  const fit = await page.evaluate(() => Number(getComputedStyle(document.querySelector('#game-stage')).getPropertyValue('--fit')) || 1);
+  check(fit >= 0.999, `${label}: in fullscreen the game is shown at least at its own size (scale ${fit.toFixed(2)})`);
+  await judge(page, `${label} in fullscreen`, phone);
+  await page.screenshot({ path: path.join(SHOTS, `${label.replace(/\//g, '-')}-full.png`) });
+  // A headless browser can't press its own Esc for fullscreen: ⛶ again leaves (Esc is the browser's own key there).
+  await button.click();
+  await wait(900);
+  const same = (a, b) => Math.abs(a.w - b.w) <= 2 && Math.abs(a.h - b.h) <= 2 && Math.abs(a.x - b.x) <= 2 && Math.abs(a.y - b.y) <= 2;
+  const back = await stageBox(page);
+  check(same(back, before), `${label}: leaving fullscreen brings the window back where it was`, `${JSON.stringify(before)} → ${JSON.stringify(back)}`);
+  // Where there is no Fullscreen API (the film page's overlay, an iPhone) ⛶ fills the whole tab and Esc leaves.
+  await page.evaluate(() => Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => false }));
+  await button.click();
+  await wait(700);
+  const tab = await stageBox(page);
+  check(tab.w >= tab.vw - 1 && tab.h >= tab.vh - 1, `${label}: without the Fullscreen API ⛶ fills the tab`, `${tab.w}×${tab.h}`);
+  await page.keyboard.press('Escape');
+  await wait(700);
+  const back2 = await stageBox(page);
+  check(same(back2, before), `${label}: Esc leaves the whole-tab view, the window comes back`, `${JSON.stringify(before)} → ${JSON.stringify(back2)}`);
+  await page.evaluate(() => delete document.fullscreenEnabled);
+}
+
 (async () => {
   const browser = await chromium.launch();
   for (const size of pick('SIZES', Object.keys(SIZES))) {
@@ -242,6 +333,8 @@ function measure({ mayScroll, minTarget }) {
         check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
         check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
+        // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).
+        if (!phone && pick('GW_LANGS', ['en', 'tr']).includes(lang)) await windowPasses(page, label, g, phone);
       }
       await ctx.close();
     }

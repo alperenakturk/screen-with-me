@@ -45,7 +45,8 @@ const TEXT = {
     won: 'Solved in {n}/7! 🎉',
     lost: 'The word was {word}',
     next: 'A new word in {time}',
-    share: '📋 Copy result',
+    share: '📋 Copy',
+    shareTitle: 'Copy the result (the day and the tries, no letters)',
     copied: 'Copied ✓',
     langTitle: 'Word language',
     loading: 'Loading the words…',
@@ -75,8 +76,9 @@ const TEXT = {
     repeat: 'Bunu zaten denedin',
     won: '{n}/7 denemede buldun! 🎉',
     lost: 'Kelime {word} idi',
-    next: 'Yeni kelime {time} sonra',
-    share: '📋 Sonucu kopyala',
+    next: 'Yeni kelime: {time}\u00a0sonra',
+    share: '📋 Kopyala',
+    shareTitle: 'Sonucu kopyala (gün ve deneme sayısı, harfler yok)',
     copied: 'Kopyalandı ✓',
     langTitle: 'Kelime dili',
     loading: 'Kelimeler yükleniyor…',
@@ -115,12 +117,13 @@ function wordList(lang: Lang): Promise<List> {
   return list;
 }
 
-/** "3 h 12 min" until the player's next midnight. */
-function untilMidnight(now = new Date()): string {
+/** "3 h 12 min" (Turkish "3 sa 12 dk") until the player's next midnight, joined by no-break spaces so it never wraps. */
+function untilMidnight(now = new Date(), lang: Lang = pageLang() === 'tr' ? 'tr' : 'en'): string {
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   const min = Math.max(1, Math.ceil((next.getTime() - now.getTime()) / 60_000));
   const h = Math.floor(min / 60);
-  return h > 0 ? `${h} h ${min % 60} min` : `${min} min`;
+  const [hours, mins] = lang === 'tr' ? ['sa', 'dk'] : ['h', 'min'];
+  return (h > 0 ? `${h} ${hours} ${min % 60} ${mins}` : `${min} ${mins}`).replace(/ /g, '\u00a0');
 }
 
 export function mountFiveFrames(root: HTMLElement): () => void {
@@ -160,7 +163,17 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   });
 
   const message = el('p', { class: 'ff-message', role: 'status' });
-  const share = el('button', { type: 'button', class: 'ff-share' });
+  // FF2: both labels sit in one grid cell, so "Copy result" and "Copied ✓" give the button the same width.
+  const shareLabel = el('span', { class: 'ff-share-label' });
+  const copiedLabel = el('span', { class: 'ff-share-done' });
+  const share = el('button', { type: 'button', class: 'ff-share' }, shareLabel, copiedLabel);
+  function setShare(copied: boolean): void {
+    shareLabel.textContent = t('share');
+    copiedLabel.textContent = t('copied');
+    share.title = t('shareTitle');
+    share.setAttribute('aria-label', copied ? t('copied') : t('shareTitle'));
+    share.classList.toggle('copied', copied);
+  }
   // The three colours with their marks, until the first guess is scored (then the game's "?" explains them).
   const swatch = (mark: Mark, letter: string) => el('span', { class: `ff-cell ff-swatch ${mark}`, 'aria-hidden': 'true' }, letter);
   const legendLabels = [el('span'), el('span'), el('span')];
@@ -366,10 +379,14 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     legend.hidden = scored > 0;
     if (done) {
       const n = g.guesses.indexOf(answer);
-      message.textContent = `${n >= 0 ? t('won', { n: n + 1 }) : t('lost', { word: upper(answer, wordLang) })} · ${t('next', { time: untilMidnight() })}`;
+      // FF2: two lines, the result and when the next word comes.
+      message.replaceChildren(
+        el('span', { class: 'ff-msg-line' }, n >= 0 ? t('won', { n: n + 1 }) : t('lost', { word: upper(answer, wordLang) })),
+        el('span', { class: 'ff-msg-line ff-msg-next' }, t('next', { time: untilMidnight() })),
+      );
       message.classList.remove('flash');
       share.hidden = false;
-      share.textContent = t('share');
+      setShare(false);
     } else {
       message.textContent = '';
       message.classList.remove('flash');
@@ -387,8 +404,9 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   share.addEventListener('click', () => {
     const text = shareLine(t('title'), game(), answer);
     void navigator.clipboard?.writeText(text).then(
-      () => (share.textContent = t('copied')),
-      () => (share.textContent = text),
+      () => setShare(true),
+      // No clipboard: show the line itself, to copy by hand.
+      () => say(text, 8000),
     );
   });
 
