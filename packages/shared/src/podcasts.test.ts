@@ -58,6 +58,13 @@ describe('Podcast feeds', () => {
     expect(text.match(/<\/item>/g)!.length).toBeLessThan(FEED_MAX_ITEMS + 2);
     expect(parseFeed(text, 10_000)).toHaveLength(FEED_MAX_ITEMS);
   });
+  it('a feed of open <item> tags without an end is read in one pass (CodeQL: no polynomial regex)', () => {
+    const evil = '<rss>' + '<item\t'.repeat(400_000);
+    const t = performance.now();
+    expect(parseFeed(evil)).toEqual([]);
+    expect(performance.now() - t).toBeLessThan(500);
+    expect(parseFeed('<itemize><title>x</title></itemize>' + FEED)).toHaveLength(2);
+  });
   it('the feed reader stops at its byte limit', () => {
     const reader = new FeedReader(10_000, 5000);
     const chunk = new TextEncoder().encode('x'.repeat(3000));

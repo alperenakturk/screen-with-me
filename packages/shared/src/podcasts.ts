@@ -103,16 +103,31 @@ export function parseDuration(value: string | null): number {
 }
 
 /**
+ * The first `max` `<item>…</item>` blocks of a feed, found with plain index searches: one pass over the text, however it
+ * is built (a lazy regular expression rescans the rest of the text from every `<item` without a closing tag).
+ */
+function* feedItems(xml: string, max: number): Generator<string> {
+  const lower = xml.toLowerCase();
+  let from = 0;
+  for (let n = 0; n < max; n++) {
+    let start = lower.indexOf('<item', from);
+    // `<item` followed by a space or `>`: not `<itemize>` or the like.
+    while (start >= 0 && !/[\s>]/.test(lower[start + 5] ?? '')) start = lower.indexOf('<item', start + 5);
+    if (start < 0) return;
+    const end = lower.indexOf('</item>', start + 5);
+    if (end < 0) return;
+    yield xml.slice(start, end + 7);
+    from = end + 7;
+  }
+}
+
+/**
  * A feed's text → its newest episodes with an audio file (`<enclosure>` of an audio type, or an address ending like
  * audio). A small reader for RSS 2.0 as podcasts use it: no DOM in a Worker, and nothing in a feed is ever run.
  */
 export function parseFeed(xml: string, limit = PODCAST_EPISODES, maxItems = FEED_MAX_ITEMS): PodcastEpisode[] {
   const episodes: PodcastEpisode[] = [];
-  const itemPattern = /<item[\s>][\s\S]*?<\/item>/gi;
-  let seen = 0;
-  for (let match = itemPattern.exec(xml); match && seen < maxItems; match = itemPattern.exec(xml)) {
-    seen++;
-    const item = match[0];
+  for (const item of feedItems(xml, maxItems)) {
     const enclosure = item.match(/<enclosure\b[^>]*>/i)?.[0] ?? '';
     const rawUrl = attr(enclosure, 'url');
     const type = attr(enclosure, 'type') ?? '';
