@@ -1,7 +1,7 @@
 // Moving to an own domain (card R3-3, docs/internal/custom-domain.md): the site is built with a test site.config.json
 // whose main address is http://localhost:PORT and whose alias is http://127.0.0.1:PORT (one server, two addresses,
 // like the Worker serving workers.dev and the own domain). Checks:
-//   - a room link on the alias lands on the same room on the main address, with the page's fragment (#back) kept and
+//   - a room link on the alias lands on the same room on the main address, with the page's fragment (one the site leaves alone) kept and
 //     no `#handoff=` left in the address bar;
 //   - the browser's saves went along: name, avatar, saved rooms, a game save (move keys) and a plain setting (lang);
 //     a value the main address already had is not overwritten (fill only what is empty);
@@ -82,12 +82,13 @@ const SNACK = JSON.stringify({ v: 1, coins: 1234, earned: 5000 });
       { SAVED, SNACK },
     );
 
-    await page.goto(`${ALIAS}/r/abc12345#back`);
+    // A fragment the site doesn't act on (the room clears `#back` itself after reading it, which raced this check).
+    await page.goto(`${ALIAS}/r/abc12345#keep-me`);
     await page.waitForURL((u) => u.origin === MAIN, { timeout: 8000 }).catch(() => {});
-    await page.waitForFunction(() => !location.hash.startsWith('#handoff='), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(() => location.hash === '#keep-me', null, { timeout: 8000 }).catch(() => {});
     const landed = new URL(page.url());
     check(landed.origin === MAIN && landed.pathname === '/r/abc12345', 'a room link on the alias lands on the same room on the main address', page.url());
-    check(landed.hash === '#back', 'the page fragment is kept and the handoff is gone from the address', landed.hash);
+    check(landed.hash === '#keep-me', 'the page fragment is kept and the handoff is gone from the address', landed.hash);
     const got = await page.evaluate(() => Object.fromEntries(['name', 'avatar', 'savedRooms', 'snackBar', 'lang', 'opt:sounds'].map((k) => [k, localStorage.getItem(k)])));
     check(got.name === 'Alex' && got.avatar === 'wizard', 'name and avatar went along', got);
     check((got.savedRooms || '').includes('abc12345'), 'saved rooms went along', got.savedRooms);
