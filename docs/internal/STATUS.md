@@ -512,6 +512,9 @@ legal demo player page such as a Video.js or Plyr demo for the film page). For e
 - [ ] In the Shorts view with a friend, if the room waits for someone ("Waiting for …"), the note shows in the empty
   corner left of the video on a computer, and in the bar under the video on a phone; the Short itself stays clear.
 
+**0.9.97.82 (🎮 card LIVE-GREEN: the game e2e ride out network drops):**
+- Nothing to test by hand: only the automatic game tests changed.
+
 **0.9.97.81 (🎮 cards FF2 + GW: game window sizes, ⛶ in every game, Five Frames' result):**
 - [ ] Open any game and shrink its window from the corner: it stops before the text gets small; grow it: the game gets
   bigger in proportion and stops at a sensible size.

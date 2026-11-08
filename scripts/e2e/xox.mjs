@@ -1,11 +1,12 @@
 // PlayWithMe XOX: iki oyuncu oturur, üçüncü izler; hamleler sunucuda doğrulanır, kazanan ve skor, rövanş, boş
 // koltuğa oturma. Sonda Dört Taş: taş sütunun dibine düşer, dört taş kazanır; başka türün koduna girilemez.
 import { dropFor } from './drop.mjs';
+import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'xox' + Math.random().toString(36).slice(2, 8);
 
 function client(name, cid, { id = game, kind = 'xox' } = {}) {
-  const ws = new WebSocket(`${base}/api/games/${id}/ws`);
+  const ws = new GameSocket(`${base}/api/games/${id}/ws`);
   // GHOST: like the game pages, a ping every 15 s (a socket silent for 90 s is closed as a dead connection).
   setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
   const inbox = [];

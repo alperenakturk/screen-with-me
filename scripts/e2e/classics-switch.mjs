@@ -2,12 +2,13 @@
 // at any time. For every pair of boards (from → to), against Glowbeam: a game is started on `from`; a plain switch is
 // refused while it runs (the page asks "End this game and change?" first), a switch with `end` ends it and puts `to` on
 // the table, fresh. Then the same from a finished game, and between two people (both see the new board).
+import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'cs' + Math.random().toString(36).slice(2, 8);
 const BOARDS = ['xox', 'four', 'dama', 'chess', 'backgammon', 'reversi'];
 
 function client(name, cid) {
-  const ws = new WebSocket(`${base}/api/games/${game}/ws`);
+  const ws = new GameSocket(`${base}/api/games/${game}/ws`);
   // GHOST: like the game pages, a ping every 15 s (a socket silent for 90 s is closed as a dead connection).
   setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
   const inbox = [];
@@ -66,9 +67,13 @@ async function start() {
   return until(() => alex.state.started === true && alex.state.game.winner === null);
 }
 
+// LIVE-GREEN: live (after every deploy) checks one switch away from every board (the server code is the same for every
+// pair, which the local run covers in full: all 30); that keeps the live run short.
+const live = !/localhost|127\.0\.0\.1/.test(base);
 for (const from of BOARDS) {
   for (const to of BOARDS) {
     if (from === to) continue;
+    if (live && to !== BOARDS[(BOARDS.indexOf(from) + 1) % BOARDS.length]) continue;
     // Paced like a person: the table's normal limit (20 messages, then 8 a second) also holds here.
     await sleep(1300);
     ok(await onBoard(from), `${from} on the table`);

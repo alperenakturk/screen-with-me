@@ -12,6 +12,10 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 - Shorts: a "waiting for someone" note (or a game invite) no longer covers the Short you're watching; it waits in the
   empty corner left of the video on a computer and in the bar under the video on a phone.
 
+### 0.9.97.82 — 8 Nov
+- Behind the scenes: the game tests that run after every release now ride out a network blip the way the game pages
+  do, so a release is no longer held back by one dropped test connection. Nothing changes in the games themselves.
+
 ### 0.9.97.81 — 8 Nov
 - Games: every game window has a clear smallest and largest size: it can't be shrunk until its text is unreadable, and
   grown past its own size it shows the game bigger. A new ⛶ in every game's head puts the game alone on the whole screen
