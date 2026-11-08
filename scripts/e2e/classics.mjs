@@ -55,6 +55,15 @@ alex.send({ t: 'move', cell: 4 });
 ok(await until(() => filled(alex.state) === 2, 6000), 'Glowbeam answers the move through the server');
 ok(alex.state.started === true, 'the game counts as started');
 
+// LIVE-GREEN self-test (local run): the network cuts Alex's socket mid-game. Like a page he is back with the same
+// browser id, his seat and the game as they were, and the file goes on (a warning line names the drop).
+if (/localhost|127\.0\.0\.1/.test(base)) {
+  const before = filled(alex.state);
+  alex.ws.labDrop();
+  const seatBack = await until(() => alex.ws.readyState === WebSocket.OPEN && alex.inbox.filter((m) => m.t === 'welcome').length >= 2, 6000);
+  ok(seatBack && (await until(() => filled(alex.state) === before && alex.state.started === true && alex.state.seats[0]?.name === 'Alex')), 'a network drop mid-game: Alex comes back to his seat and the same game');
+}
+
 // No other board while the game is on.
 alex.send({ t: 'switch', game: 'dama' });
 ok(await until(() => alex.inbox.some((m) => m.t === 'error' && m.code === 'in_progress')), 'the shelf is locked while a game is in progress');
