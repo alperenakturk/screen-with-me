@@ -43,6 +43,7 @@ const check = (ok, label, extra = '') => {
   await alex.keyboard.press('Shift+Slash');
   const card = await alex.waitForSelector('.shortcuts-dialog', { timeout: 2000 }).catch(() => null);
   check(!!card && (await alex.$$eval('.shortcuts-list kbd', (k) => k.length)) >= 9, '? opens the shortcuts card');
+  check((await alex.$$eval('.shortcuts-list kbd', (k) => k.map((e) => e.textContent).join(' '))).includes('← →'), 'the card lists ← / → (card YTK)');
   const fits = await alex.evaluate(() => {
     const r = document.querySelector('.shortcuts-dialog').getBoundingClientRect();
     return r.top >= 0 && r.bottom <= innerHeight;

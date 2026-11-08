@@ -132,6 +132,30 @@ const frameOf = (page) => page.frames().find((f) => f.url().includes('player.vim
   const title = await alex.evaluate(() => document.getElementById('now-title')?.textContent ?? '');
   check(/Vimeo|\S/.test(title) && !title.includes('undefined'), 'the queue shows a title', title);
 
+  // Card YTK: after a click in the player, → / ← move the video 5 s for the whole room; in a text box they don't.
+  {
+    const box = await alex.locator('#player iframe').boundingBox();
+    await alex.mouse.click(box.x + box.width / 3, box.y + box.height / 2);
+    await alex.waitForTimeout(300);
+    const before = await frameOf(sam).evaluate(() => window.time());
+    await alex.keyboard.press('ArrowRight');
+    const ahead = await until(() => frameOf(sam).evaluate((b) => (window.seekedTo ?? 0) > b + 3.5 && (window.seekedTo ?? 0) < b + 7.5, before), 6000);
+    check(!!ahead, '→ after a click in the player moves the room 5 s ahead (Sam’s player follows)', JSON.stringify(await frameOf(sam).evaluate(() => ({ to: window.seekedTo, t: window.time() }))));
+    const mid = await frameOf(sam).evaluate(() => window.time());
+    await alex.keyboard.press('ArrowLeft');
+    const back = await until(() => frameOf(sam).evaluate((b) => (window.seekedTo ?? 0) < b - 3 && (window.seekedTo ?? 0) > b - 7.5, mid), 6000);
+    check(!!back, '← moves the room 5 s back', JSON.stringify(await frameOf(sam).evaluate(() => ({ to: window.seekedTo, t: window.time() }))));
+    await alex.locator('#chat-input').focus();
+    await alex.keyboard.type('hi');
+    const seekedBefore = await frameOf(sam).evaluate(() => window.seekedTo);
+    await alex.keyboard.press('ArrowLeft');
+    await alex.waitForTimeout(1200);
+    const still = await frameOf(sam).evaluate((s) => window.seekedTo === s, seekedBefore);
+    check(still, '← in the message box moves the cursor, not the video');
+    await alex.locator('#chat-input').fill('');
+    await alex.evaluate(() => document.activeElement?.blur());
+  }
+
   // Card R26: a click in the player's frame moves the focus into it; the room's shortcuts must work at once after it.
   for (const fs of [false, true]) {
     if (fs) {

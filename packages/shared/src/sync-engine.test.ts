@@ -248,6 +248,35 @@ describe('local user actions', () => {
   });
 });
 
+describe('our own ← / → keys (card YTK)', () => {
+  beforeEach(async () => {
+    engine.receive(state({ position: 100 }));
+    engine.attach(player);
+    await run(1000);
+  });
+
+  it('moves my player and sends one seek, without an echo afterwards', async () => {
+    expect(engine.requestSeek(5)).toBe(true);
+    expect(player.time).toBeCloseTo(106, 0);
+    await run(1500);
+    expect(sent.map((m) => m.t)).toEqual(['seek']);
+    expect((sent[0] as { position: number }).position).toBeCloseTo(106, 0);
+  });
+
+  it('never goes below 0 or past the end', () => {
+    engine.requestSeek(-500);
+    expect(player.time).toBe(0);
+    engine.requestSeek(5000);
+    expect(player.time).toBeCloseTo(599.5, 1);
+  });
+
+  it('does nothing without a player', () => {
+    engine.detach();
+    expect(engine.requestSeek(5)).toBe(false);
+    expect(sent).toEqual([]);
+  });
+});
+
 describe('drift correction', () => {
   it('jumps back in sync when far behind, silently', async () => {
     engine.receive(state());

@@ -18,6 +18,9 @@ async function openShort(ctx) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  // What the page sends to the room (card YTK checks "▶ Play now" and the arrow keys by it).
+  const sent = [];
+  page.on('websocket', (ws) => ws.on('framesent', (f) => sent.push(String(f.payload))));
   await page.addInitScript(() => {
     // Also runs in the YouTube frame, where storage is off limits.
     try {
@@ -37,7 +40,7 @@ async function openShort(ctx) {
   await page.click('#media-form button[value=load]');
   await page.waitForFunction(() => document.documentElement.classList.contains('shorts-view'));
   await page.waitForTimeout(800);
-  return { page, errors };
+  return { page, errors, sent };
 }
 
 const box = (page, sel) =>
@@ -57,7 +60,7 @@ const box = (page, sel) =>
   for (const [name, width, height, folded] of sizes) {
     const ctx = await browser.newContext({ viewport: { width, height } });
     await viaYouTube(ctx);
-    const { page, errors } = await openShort(ctx);
+    const { page, errors, sent } = await openShort(ctx);
     const video = await box(page, '.player-wrap');
     const bar = await box(page, '#shorts-bar');
     const nav = await box(page, '#shorts-nav');
@@ -110,6 +113,31 @@ const box = (page, sel) =>
     const addButton = await box(page, '#shorts-add-form .feed-topic-row .btn');
     check(add.r <= width && add.b <= height && add.y >= 0, `${name}: the ＋ window with results stays on screen`, add);
     check(addButton.w > 40 && addButton.r <= add.r && Math.abs(addButton.y - (await box(page, '#shorts-add-input')).y) < 12, `${name}: ＋ Add's button sits beside the box`, addButton);
+    const playNow = await box(page, '#shorts-add-form .shorts-play-now');
+    check(playNow.w > 40 && playNow.x >= addButton.r && playNow.r <= add.r && Math.abs(playNow.y - addButton.y) < 4, `${name}: "▶ Play now" sits beside Add, inside the window`, { playNow, addButton, add });
+    if (name.startsWith('laptop')) {
+      const msgs = () => sent.map((m) => { try { return JSON.parse(m); } catch { return {}; } });
+      // Shorts view: → / ← stay what they were (no seek of ours).
+      await page.mouse.click(5, height / 2);
+      await page.keyboard.press('ArrowRight');
+      await page.waitForTimeout(500);
+      check(!msgs().some((m) => m.t === 'seek'), `${name}: → in the Shorts view sends no seek`);
+      // Words + "Play now": the first result opens at once and the window closes.
+      await page.click('#shorts-add');
+      await page.fill('#shorts-add-input', 'dogs');
+      await page.click('#shorts-add-form .shorts-play-now');
+      const loaded = await page.waitForFunction(() => document.querySelector('#shorts-add-form').hidden, null, { timeout: 4000 }).catch(() => null);
+      const first = msgs().find((m) => m.t === 'load' && m.media?.id === 'abcdefghij0');
+      check(!!loaded && !!first && first.media.short === true, `${name}: words + "▶ Play now" open the first Short found and close the window`, msgs().filter((m) => m.t === 'load').map((m) => m.media?.id));
+      // Two links + "Play now": the first plays now, the second is queued.
+      await page.waitForTimeout(600);
+      await page.click('#shorts-add');
+      await page.fill('#shorts-add-input', 'https://www.youtube.com/shorts/dQw4w9WgXcQ https://youtube.com/shorts/jNQXAC9IVRw');
+      await page.click('#shorts-add-form .shorts-play-now');
+      await page.waitForTimeout(1200);
+      const many = msgs();
+      check(many.some((m) => m.t === 'load' && m.media?.id === 'dQw4w9WgXcQ') && many.some((m) => m.t === 'enqueue' && m.media?.id === 'jNQXAC9IVRw'), `${name}: several links + "▶ Play now": the first plays, the rest are queued`, many.filter((m) => m.t === 'load' || m.t === 'enqueue').map((m) => `${m.t}:${m.media?.id}`));
+    }
     check(await page.evaluate(() => document.querySelector('#player-error')?.hidden !== false || document.querySelector('#player-error').getBoundingClientRect().right < document.querySelector('.player-wrap').getBoundingClientRect().left), `${name}: a player note never covers the video`);
     check(errors.length === 0, `${name}: no page errors`, errors);
     await ctx.close();
