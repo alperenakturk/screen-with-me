@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_BOOK, cleanBook, decideUptime, nextBook, uptimeBody } from './uptime.ts';
+import { EMPTY_BOOK, UPTIME_LABEL, UPTIME_TITLE, cleanBook, decideUptime, nextBook, uptimeBody, uptimeRequest } from './uptime.ts';
 
 describe('uptime: one GitHub call a run', () => {
   it('opens one issue when down without one, edits it while down, closes it when back, else nothing', () => {
@@ -58,5 +58,15 @@ describe('uptime: one GitHub call a run', () => {
     expect(up.startsWith('Back up at 2026-11-08 10:15 UTC (down since 2026-11-08 09:30 UTC).')).toBe(true);
     expect(up).not.toContain('What to look at');
     expect(up).not.toMatch(/\n\n\n/);
+  });
+
+  it('builds the one GitHub call; an open can go without the label and still says [outage]', () => {
+    expect(uptimeRequest({ kind: 'none' }, 'x')).toBeNull();
+    expect(uptimeRequest({ kind: 'open' }, 'x')).toEqual({ path: '', method: 'POST', data: { title: UPTIME_TITLE, body: 'x', labels: [UPTIME_LABEL] } });
+    const bare = uptimeRequest({ kind: 'open' }, 'x', false)!;
+    expect(bare.data).toEqual({ title: UPTIME_TITLE, body: 'x' });
+    expect(UPTIME_TITLE).toContain('[outage]');
+    expect(uptimeRequest({ kind: 'edit', issue: 4 }, 'y')).toEqual({ path: '/4', method: 'PATCH', data: { body: 'y' } });
+    expect(uptimeRequest({ kind: 'close', issue: 4 }, 'z')).toEqual({ path: '/4', method: 'PATCH', data: { body: 'z', state: 'closed', state_reason: 'completed' } });
   });
 });

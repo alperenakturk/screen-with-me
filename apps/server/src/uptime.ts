@@ -4,16 +4,17 @@
 // the `ASSETS` binding, `/api/version` and a room object's `/info` through the Worker's router), tries a failure once
 // more after a minute, and keeps one issue labelled `outage` in the private feedback repository (the owner watches it):
 // opened on a repeated failure, its text updated while the site stays down, closed when it is back. At most one GitHub
-// call a run. Without `FEEDBACK_GITHUB_TOKEN` / `FEEDBACK_REPO` it only logs. Honest limit: running inside Cloudflare,
+// call a run (two only when GitHub refuses a new issue's label). The book lives in `FeedbackGate` under its own key,
+// apart from the feedback counters: the uptime check never takes or gives a feedback slot, and feedback never blocks it. Without `FEEDBACK_GITHUB_TOKEN` / `FEEDBACK_REPO` it only logs. Honest limit: running inside Cloudflare,
 // it cannot see an outage of Cloudflare itself, nor a problem only some networks have reaching workers.dev.
 import {
   UPTIME_CHECK_MS,
-  UPTIME_LABEL,
   UPTIME_RETRY_MS,
   cleanBook,
   decideUptime,
   nextBook,
   uptimeBody,
+  uptimeRequest,
   type UptimeAction,
   type UptimeCheck,
 } from '@swm/shared/uptime';
@@ -73,28 +74,32 @@ export async function runChecks(env: Env, serve: Serve): Promise<UptimeCheck[]> 
   ];
 }
 
-/** The one GitHub call of a run. Returns whether it worked and, for an open, the new issue's number. */
+/**
+ * The GitHub call of a run (one; a second only when GitHub refused an open's label with 422, then without the label).
+ * Returns whether it worked and, for an open, the new issue's number.
+ */
 async function callGitHub(env: Env, action: UptimeAction, body: string): Promise<{ done: boolean; opened: number | null }> {
+  const send = (label: boolean) => {
+    const request = uptimeRequest(action, body, label)!;
+    return fetch(`https://api.github.com/repos/${env.FEEDBACK_REPO}/issues${request.path}`, {
+      method: request.method,
+      headers: {
+        Authorization: `Bearer ${env.FEEDBACK_GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'sidelit-uptime',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request.data),
+      signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
+    }).catch(() => null);
+  };
   if (action.kind === 'none') return { done: true, opened: null };
-  const base = `https://api.github.com/repos/${env.FEEDBACK_REPO}/issues`;
-  const request =
-    action.kind === 'open'
-      ? { url: base, method: 'POST', data: { title: 'Live site is down', body, labels: [UPTIME_LABEL] } }
-      : action.kind === 'edit'
-        ? { url: `${base}/${action.issue}`, method: 'PATCH', data: { body } }
-        : { url: `${base}/${action.issue}`, method: 'PATCH', data: { body, state: 'closed', state_reason: 'completed' } };
-  const res = await fetch(request.url, {
-    method: request.method,
-    headers: {
-      Authorization: `Bearer ${env.FEEDBACK_GITHUB_TOKEN}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'sidelit-uptime',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(request.data),
-    signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
-  }).catch(() => null);
+  let res = await send(true);
+  if (action.kind === 'open' && res?.status === 422) {
+    console.error(JSON.stringify({ msg: 'uptime: the outage label was refused, opening without it' }));
+    res = await send(false);
+  }
   if (!res || !res.ok) {
     console.error(JSON.stringify({ msg: 'uptime: GitHub refused or did not answer', action: action.kind, status: res?.status ?? null }));
     return { done: false, opened: null };

@@ -87,7 +87,11 @@ interface GateState {
  * day. One instance (`gate`); its state is small (at most a day's worth of hashes, pruned to the last hour).
  */
 export class FeedbackGate extends DurableObject<Env> {
-  /** Card UPTIME2: the uptime check's small book (the open outage issue, since when down); see uptime.ts. */
+  /**
+   * Card UPTIME2: the uptime check's small book (the open outage issue, since when down); see uptime.ts. Its own key
+   * (`uptime`), apart from the feedback counters (`gate`): the uptime check never takes or gives a feedback slot, and
+   * the feedback limits never stop an outage update.
+   */
   async uptimeBook(): Promise<unknown> {
     return (await this.ctx.storage.get('uptime')) ?? null;
   }

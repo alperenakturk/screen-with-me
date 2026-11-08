@@ -79,3 +79,24 @@ export function uptimeBody(checks: UptimeCheck[], healthy: boolean, now: number,
     .filter((line, i, all) => !(line === '' && all[i - 1] === ''))
     .join('\n');
 }
+
+/** The issue's title; it says "[outage]" itself, so the issue is findable even where the label could not be made. */
+export const UPTIME_TITLE = '[outage] Live site is down';
+
+export interface UptimeRequest {
+  /** Path under `/repos/<owner>/<name>/issues`. */
+  path: string;
+  method: 'POST' | 'PATCH';
+  data: Record<string, unknown>;
+}
+
+/**
+ * The GitHub call for an action (none for 'none'). `label` false = open without the `outage` label: a fine-grained
+ * token may be refused (422) when the label doesn't exist yet and it can't create it; the alert must still go out.
+ */
+export function uptimeRequest(action: UptimeAction, body: string, label = true): UptimeRequest | null {
+  if (action.kind === 'none') return null;
+  if (action.kind === 'open') return { path: '', method: 'POST', data: { title: UPTIME_TITLE, body, ...(label ? { labels: [UPTIME_LABEL] } : {}) } };
+  if (action.kind === 'edit') return { path: `/${action.issue}`, method: 'PATCH', data: { body } };
+  return { path: `/${action.issue}`, method: 'PATCH', data: { body, state: 'closed', state_reason: 'completed' } };
+}
