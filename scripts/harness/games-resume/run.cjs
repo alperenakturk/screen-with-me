@@ -158,6 +158,15 @@ async function move(page, board) {
     await until(() => page.evaluate(() => !document.getElementById('game-stage').hidden));
     check((await boardSig(page)) === before, `${board}: restored with the same board`);
 
+    // CLFLASH: from the reload on, note whether the table ever shows an XOX grid (it drew one until its state came).
+    if (board !== 'xox')
+      await ctx.addInitScript(() => {
+        const look = () => {
+          const cell = document.querySelector('#game-stage .xox-page .xox-board:not(.four-board) .xox-cell');
+          if (cell && cell.checkVisibility() && !document.getElementById('game-stage')?.hidden) window.__sawXox = true;
+        };
+        new MutationObserver(look).observe(document, { childList: true, subtree: true, attributes: true });
+      });
     await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
     await page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 20000 }).catch(() => {});
     // After a reload the table is still there: it reopens, or the 🎮 / the invite brings it back.
@@ -173,6 +182,7 @@ async function move(page, board) {
     const after = await boardSig(page);
     check(after === before, `${board}: … with the same board`, after === before ? '' : `${(after ?? '').slice(0, 80)} vs ${before?.slice(0, 80)}`);
     await until(() => page.evaluate(() => /Robin/.test(document.querySelector('#game-stage #seat-0')?.textContent ?? '')), 4000);
+    if (board !== 'xox') check(!(await page.evaluate(() => window.__sawXox)), `${board}: after the reload the table never shows an XOX grid first`);
     const seat = await page.evaluate(() => document.querySelector('#game-stage #seat-0')?.textContent ?? '');
     check(/Robin/.test(seat), `${board}: … and I keep my seat`, seat);
     await ctx.close();

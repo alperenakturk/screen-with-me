@@ -16,6 +16,10 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.91 — 8 Nov
+- Games: after a reload, a Classics table says "Setting up the table…" until it is back, instead of flashing an empty
+  tic-tac-toe grid for a moment.
+
 ### 0.9.97.90 — 8 Nov
 - Behind the scenes only: the games' test tools keep working after a table has been quiet for a while, so our
   automatic tests no longer fail at random. Nothing changes on the live site.

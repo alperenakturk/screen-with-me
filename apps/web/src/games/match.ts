@@ -55,6 +55,7 @@ const SHELF: readonly { kind: GameKind; glyph: string }[] = [
 /** Chess, backgammon and reversi texts live in this chunk (the room page's i18n stays small). */
 const TEXT = {
   en: {
+    loading: 'Setting up the table…',
     check: 'Check!',
     youCheck: 'Check! Save your king',
     promote: 'Turn your pawn into…',
@@ -135,6 +136,7 @@ const TEXT = {
     how_reversi2Line: 'No move? You pass. When nobody can move, the most discs win.',
   },
   tr: {
+    loading: 'Masa hazırlanıyor…',
     check: 'Şah!',
     youCheck: 'Şah! Şahını kurtar',
     promote: 'Piyonun ne olsun…',
@@ -269,7 +271,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   app.innerHTML = `
     <div class="xox-page mt${classics ? ' classics' : ''}">
       <section class="cl-picker" hidden></section>
-      <div class="mt-table">
+      ${classics ? `<p class="mt-loading muted" role="status">${tc('loading')}</p>` : ''}
+      <div class="mt-table"${classics ? ' hidden' : ''}>
         <div class="mt-bar">
           <span id="xox-score" class="mt-score"></span>
           <span class="cl-bot" hidden></span>
@@ -749,6 +752,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     shelfButton.setAttribute('aria-label', tc('change'));
     shelfButton.setAttribute('aria-label', tc('change'));
     shelf.hidden = !classics || !shelfOpen;
+    // CLFLASH: until the table's state came, a Classics table shows only a quiet line, never a board it may not have.
+    app.querySelector('.mt-loading')?.remove();
     app.querySelector<HTMLElement>('.mt-table')!.hidden = !shelf.hidden;
     if (!shelf.hidden) drawShelf();
     // Me below the board, the other player above it.
