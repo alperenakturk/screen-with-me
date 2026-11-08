@@ -13,14 +13,18 @@ const assets = join(dist, 'assets');
 // JS raised to 145 by card T (tablets, 3 Nov 2026; the Planner's rule): the upright-tablet check has to run before the
 // room lays out (device.ts), and the split chat / tabs and the game placement live in modules the room loads anyway,
 // so JS reached 140.1. The tablet styles themselves are a lazy stylesheet (tablet.css) and are not counted.
-const BUDGET = { js: 145, css: 37 };
+// Card PERF1b (8 Nov 2026): the room's styles moved out of the entry stylesheet into room.css (`room-*.css`, loaded with
+// the room chunk). The room page still counts both; `entryCss` is what every page (home, /connection) downloads first
+// and blocks its first paint on: ≈ 9 kB, so a room rule that drifts back into styles.css shows here.
+const BUDGET = { js: 145, css: 37, entryCss: 12 };
 
 const gz = (file) => gzipSync(readFileSync(join(assets, file))).length / 1024;
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
 const entry = html.match(/src="\/assets\/([^"]+\.js)"/)?.[1];
 const css = [...html.matchAll(/href="\/assets\/([^"]+\.css)"/g)].map((m) => m[1]);
 const room = readdirSync(assets).find((f) => /^room-[\w-]+\.js$/.test(f) && !f.startsWith('room-id'));
-if (!entry || !room) throw new Error('entry or room chunk not found');
+const roomCss = readdirSync(assets).filter((f) => /^room-[\w-]+\.css$/.test(f));
+if (!entry || !room || !roomCss.length) throw new Error('entry, room chunk or room stylesheet not found');
 
 // Static imports only (`from"./x.js"` / `import"./x.js"`); dynamic `import("./x.js")` chunks load later.
 const seen = new Set();
@@ -34,10 +38,16 @@ walk(entry);
 walk(room);
 
 const js = [...seen].reduce((sum, f) => sum + gz(f), 0);
-const cssSize = css.reduce((sum, f) => sum + gz(f), 0);
+const entryCss = css.reduce((sum, f) => sum + gz(f), 0);
+const cssSize = entryCss + roomCss.reduce((sum, f) => sum + gz(f), 0);
 console.log(`Room page, gzipped: JS ${js.toFixed(1)} kB (${seen.size} files, budget ${BUDGET.js}) · CSS ${cssSize.toFixed(1)} kB (budget ${BUDGET.css})`);
+console.log(`Every page's first stylesheet: ${entryCss.toFixed(1)} kB (budget ${BUDGET.entryCss})`);
 for (const f of [...seen].sort((a, b) => gz(b) - gz(a))) console.log(`  ${gz(f).toFixed(1).padStart(6)} kB  ${f}`);
-const over = [js > BUDGET.js && `JS ${js.toFixed(1)} > ${BUDGET.js}`, cssSize > BUDGET.css && `CSS ${cssSize.toFixed(1)} > ${BUDGET.css}`].filter(Boolean);
+const over = [
+  js > BUDGET.js && `JS ${js.toFixed(1)} > ${BUDGET.js}`,
+  cssSize > BUDGET.css && `CSS ${cssSize.toFixed(1)} > ${BUDGET.css}`,
+  entryCss > BUDGET.entryCss && `the first stylesheet ${entryCss.toFixed(1)} > ${BUDGET.entryCss} (a room rule in styles.css? it belongs in room.css)`,
+].filter(Boolean);
 if (over.length) {
   console.error(`✗ Over the room page budget: ${over.join(', ')}`);
   process.exit(1);
