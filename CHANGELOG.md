@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.86 — 8 Nov
+- The "a new version of the extension is out" bubble no longer lands on top of the first-time tips in a new room (it
+  waits for them), and no longer points at nothing on a phone or a narrow window.
+- Shorts on a phone: a "waiting…" note and a friend's message no longer share the bar's slot at once; the note goes
+  first.
+- Test Lab: its 🐞 button no longer covers the Shorts notes, the phone's 😀 or the Shorts bar.
+
 ### 0.9.97.85 — 8 Nov
 - Games: Last Heart ends on the same result card as the other tables (who won, the podium, Play again) and has the
   same picture cards for "How to play". Glowbeam now cheers or gasps in a corner of the Quiz, Draw & Guess and Last
