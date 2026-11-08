@@ -182,6 +182,10 @@ jobs:
       - name: One language per page
         run: node scripts/harness/lang-chunk/run.cjs http://localhost:8787
 
+      # Card PERF1b: the room's styles (room.css) load only with the room, styled from its first frame.
+      - name: Room styles only in the room
+        run: node scripts/harness/room-css/run.cjs http://localhost:8787
+
       # Card R3-3: an older address of the site moves to the main one and carries the browser's saves once
       # (its own build with a two-address test config; no server needed).
       - name: Moving to an own domain

@@ -1,3 +1,6 @@
+// Card PERF1b: the room's styles load with the room chunk (Vite puts them in before this module runs), so the home
+// page, /connection and the TV pages never download them.
+import './room.css';
 import { friendlyRoomName } from '@swm/shared/room-id';
 import { createRoomMoreMenu, roomMoreItems } from './ui/room-more.ts';
 import { ServerClock } from '@swm/shared/clock';
