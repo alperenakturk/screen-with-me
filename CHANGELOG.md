@@ -8,6 +8,11 @@ Versions count in four parts before 1.0: the fourth part is a release, the third
 
 ## 0.9.97 — 3 to 7 November 2026
 
+### 0.9.97.83 — 8 Nov
+- Faster first page: the home page and the connection test no longer download the room's styles, which load only
+  when you open a room (the first stylesheet every page waits for is about seven times smaller). The room looks the
+  same and is styled from its first frame.
+
 ### 0.9.97.82 — 8 Nov
 - Behind the scenes: the game tests that run after every release now ride out a network blip the way the game pages
   do, so a release is no longer held back by one dropped test connection. Nothing changes in the games themselves.
