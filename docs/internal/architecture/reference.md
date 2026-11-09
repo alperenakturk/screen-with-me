@@ -54,6 +54,7 @@ Each entry is a top-level bullet below; search for `- **<title>`.
 26. Site
 27. First-time path
 28. Ghost connections
+    - Free plan quota guards (QUOTA1a: free keepalive, limits, measuring)
 29. Avatars
 30. Intro sound
 31. Player controls
@@ -499,6 +500,45 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `P2pVoice.sync` waits before closing a vanished person's connection (15 s if they left the list, 2.5 s if they are
   still in the room without voice). Voice-join sounds skip people who come back within 30 s. The film page (ExtVoice)
   still rebuilds. Tests: e2e `handover.mjs`, `voice/run.mjs` (the same camera track survives ⟳).
+  Since QUOTA1a "last message" means the later of `seen` and the runtime's last free-keepalive answer (`heardAt`, below).
+- **Free plan quota guards (card QUOTA1a, 0.9.97.93; `docs/internal/OPTIMIZATION.md`, `docs/internal/security-review-cf.md`
+  CF-1 / CF-3 / CF-5):** every message that reaches a Durable Object is billed, an awake object is billed by the second,
+  and on Free a used-up quota stops every object until 00:00 UTC (a full storage until rooms expire).
+  - **Free keepalive** (`packages/shared/src/keepalive.ts`, `apps/server/src/keepalive.ts`): pages send the exact text
+    `KEEPALIVE` (`{"t":"hb"}`); every object answers it through `ctx.setWebSocketAutoResponse` (`startKeepalive`), so it
+    neither wakes nor bills the object and a room where people only watch can hibernate. The room page sends it every
+    10 s (`ROOM_KEEPALIVE_MS`) and a real `{t:'ping', c}` (a `ServerClock` sample) every 6th tick plus the burst after
+    opening; game pages every 15 s (`GAME_KEEPALIVE_MS`) and a real ping every 4th tick (their clock offset). Any answer
+    counts as "heard" for `RoomConnection`'s 15 s silence check; the answer never reaches `onMessage`. Liveness checks read
+    `heardAt` = max(`seen`, `getWebSocketAutoResponseTimestamp`): the room's 150 s stale check and the games' `GHOST_MS`
+    (`ghost.ts` takes a `heard` function). The HTTP fallback can't be auto-answered: its keepalive reaches the object,
+    which answers it (`answerKeepalive`). Old pages' `{t:'ping'}` still works as before. Draw & Guess and Quiz phases that
+    are overdue are nudged by the page's explicit ping (the keepalive no longer wakes them). Text not matching exactly
+    reaches the object as before.
+  - **Limits** (`apps/server/src/limits.ts`): a default in code and a Worker variable of the same name
+    (`wrangler.jsonc` has `keep_vars`, so one set in the dashboard survives deploys): `MSG_RATE` 20/s + `MSG_BURST` 120
+    (a token bucket per connection, `FloodGuard`; real pings count, the keepalive doesn't; `DRAW_MSG_RATE` 40 for the
+    drawer's strokes): over it the room sends `{t:'error', code:'flood'}` and closes with 1008 (the page shows
+    `error.flood` and reconnects), a game sends `rate` and closes it the same way (`closeAsGone`, the leave runs once).
+    `ROOM_IP_CONNECTIONS` 12 connections per IP hash per room (carrier NAT and families; CI's local server is unpaced and
+    skips it, no live e2e file holds more than 12 in a room): the 13th gets `room_ip_full` (`error.room_ip_full`, the
+    page stops reconnecting). A socket refused during its upgrade (also `room_full`) is marked `refused` and closed on its
+    first message (a close made during the upgrade never reaches the page and blocks a later one) or by the unjoined sweep.
+    Image budgets `UPLOAD_IP_BYTES` 10 MB / `UPLOAD_DAY_BYTES` 150 MB per UTC day and `UPLOAD_WINDOW_BYTES` 3 GB over 30
+    days (`upload-budget.ts`; the window bounds what the account's rooms can hold, well under Free's 5 GB; answer `store`).
+    Chat images run out 24 h after their message (7 days in a saved room; `CHAT_IMAGE_TTL_MS`, the alarm drops them, the
+    message stays with its placeholder). Not done on purpose (council): deferred playback writes, a cross-room gate on
+    hello.
+  - **Measuring:** `scripts/harness/do-load/run.mjs` (8 people with the real `RoomConnection`, a video, a Classics table;
+    `busy` with chat + reactions, `quiet` = only watching) reads the lab meter `/api/lab/meter` (`meter.ts`, only with
+    `SWM_LAB_SERVER`: requests, WebSocket messages, rows written, awake time per object kind). On 9 Nov 2026, per minute
+    for room + table: quiet 65 → 11 requests, 174 → 33 s awake; busy 129 → 83 requests, 118 → 106 s awake (reactions
+    every 8 s keep a busy room awake by nature), rows unchanged (13.7).
+  - **Test Lab** (🎬 tab): "Send too much at once" (`limits.flood`), "Open 12 more connections to this room"
+    (`limits.crowd`), "Chat images run out now" (`limits.ageImages`, local lab server: `{t:'lab', op:'age-images'}`).
+    Tests: e2e `quota.mjs` (keepalive answers, flood, the per-address cap against a paced server, image expiry on a lab
+    server), `ghost.mjs` (players sending only the keepalive stay online), unit `keepalive.test.ts`,
+    `connection.test.ts`, `upload-budget.test.ts`.
 - **Avatars (`protocol.ts` `AVATAR_PAGES`):** 2 pages since card R20 (0.9.97.30): themed drawn characters and "Genres"
   (our own archetypes, Design's `avatars-3`; the parody pages were removed after the IP audit). Before: parody film / series / anime / game. Animal emojis were removed in 0.9.57 (those who had one get a random themed character). Since card R27
   the picker (site `ui/avatar.ts`) has no tabs: one grid of `AVATAR_GRID`, every avatar in a fixed seeded shuffle (the same on every open and device); the random pick for newcomers stays themed (`randomAvatar`, `AVATAR_PAGES[0]`).

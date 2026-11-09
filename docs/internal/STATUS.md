@@ -388,6 +388,15 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.93 (QUOTA1a, server limits; fold into the next round).** Mostly invisible; these confirm nothing real is hit.
+- [ ] Q1. Leave a room open in a background tab for 10 minutes (the free keepalive): when you come back you are still
+  in the room, no "reconnecting", the video still in step with the friend.
+- [ ] Q2. A game table (Classics or Quiz) left idle for 5 minutes, then play on: nobody shows offline, the timer is right.
+- [ ] Q3. Four or five tabs of the same room in one browser (plus the friend): all stay in; nothing says "too many
+  connections from your network" (that only comes from the 13th connection of one address).
+- [ ] Q4. Optional, with the Test Lab (`?debug=1`, 🎬 tab): "Send too much at once" shows a short note and the tab
+  comes back as the same person; "Open 12 more connections" reports one refused.
+
 **Next round, start here (BH10, 0.9.97.56, 4 Nov 2026; items 1–7 checked against 0.9.97.86 in BH13).** Everything a script can check was run in the cloud
 (every harness, the screenshot sweep at five sizes in EN + TR, the Test Lab's fake friends for knock, Make host and
 private messages). What is left needs a person: real YouTube playback, a real mic and camera, your phone, and the

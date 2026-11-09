@@ -135,6 +135,9 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     const nums = {
       chat: n('apps/server/src/room.ts', 'CHAT_HISTORY'),
       images: n('packages/shared/src/protocol.ts', 'MAX_CHAT_IMAGES'),
+      // IMG2: how long a chat image is kept (one-time room in days, saved room in days).
+      imageDays: n('apps/server/src/room.ts', 'CHAT_IMAGE_TTL_MS') / 86_400_000,
+      imageDaysSaved: n('apps/server/src/room.ts', 'SAVED_CHAT_IMAGE_TTL_MS') / 86_400_000,
       emojis: n('packages/shared/src/protocol.ts', 'MAX_STICKERS'),
       empty: n('apps/server/src/room.ts', 'EMPTY_ROOM_TTL_MS') / 3_600_000,
       saved: n('apps/server/src/room.ts', 'SAVED_ROOM_TTL_MS') / DAY,
@@ -160,7 +163,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     const day = (d, en) => (d === 7 ? (en ? 'a week' : 'bir hafta') : null);
     const expect = {
       en: [
-        `last ${nums.chat} messages`, `at most ${nums.images})`, `at most ${nums.emojis} per`, `${nums.empty} hours after the last person leaves`,
+        `last ${nums.chat} messages`, `at most ${nums.images}; a picture is deleted a day after its message, a week in a saved room)`, `at most ${nums.emojis} per`, `${nums.empty} hours after the last person leaves`,
         `${nums.saved} days if the host saved`, `last ${nums.history} videos`, `up to ${nums.recapsSaved} in a saved room, ${nums.recaps} otherwise`,
         `at most ${nums.recapDays} days`, `${nums.title} days`, `(kept ${nums.memberIds}\n            hours)`.replace(/\s+/g, ' '),
         `for ${nums.admitted} hours that the host let`, `at most ${nums.tv}\n            hours`.replace(/\s+/g, ' '), `valid for ${nums.tvCode}\n            minutes`.replace(/\s+/g, ' '),
@@ -169,7 +172,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
         nums.podSearch === 24 ? 'a day for searches' : `${nums.podSearch} hours for searches`, nums.podEpisodes === 1 ? 'an hour for\n            episodes'.replace(/\s+/g, ' ') : `${nums.podEpisodes} hours for episodes`,
       ],
       tr: [
-        `son ${nums.chat} mesajı`, `(en fazla ${nums.images})`, `odada en fazla ${nums.emojis}`, `${nums.empty} saat sonra`, `${nums.saved}\n          gün sonra`.replace(/\s+/g, ' '),
+        `son ${nums.chat} mesajı`, `(en fazla ${nums.images}; bir resim mesajından bir gün sonra, kayıtlı odada bir hafta sonra silinir)`, `odada en fazla ${nums.emojis}`, `${nums.empty} saat sonra`, `${nums.saved}\n          gün sonra`.replace(/\s+/g, ' '),
         `son ${nums.history} video`, `kayıtlı odada en fazla ${nums.recapsSaved}, diğerlerinde ${nums.recaps}`, `en fazla ${nums.recapDays} gün`,
         `en fazla ${nums.title} gün`, `(${nums.memberIds} saat tutulur)`, `${nums.admitted} saat hatırlansın`, `en fazla ${nums.tv} saat`,
         `${nums.tvCode} dakika\n            geçerlidir`.replace(/\s+/g, ' '), `son oyuncu çıktıktan ${nums.game} saat sonra silinir`, `kod ${nums.move} dakika sonra`,
@@ -201,6 +204,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
       check(info.shown && info.unresolved.length === 0 && info.local.length >= 18, `privacy ${lang}: every contents link has its section`, info.unresolved);
       const wrong = expect[lang].filter((s) => s && !info.text.includes(s.replace(/\s+/g, ' ')));
       check(wrong.length === 0, `privacy ${lang}: the numbers match the code (${JSON.stringify(nums)})`, wrong);
+      check(nums.imageDays === 1 && nums.imageDaysSaved === 7, `privacy ${lang}: chat images "a day" / "a week in a saved room" match CHAT_IMAGE_TTL_MS / SAVED_CHAT_IMAGE_TTL_MS`, [nums.imageDays, nums.imageDaysSaved]);
       check(/screenwithme\.app@gmail\.com/.test(info.text) && /Alperen Aktürk/.test(info.text), `privacy ${lang}: names the controller and the contact address`);
       check(problems.length === 0, `privacy ${lang}: no CSP or page errors`, problems);
       await page.setViewportSize({ width: 360, height: 740 });

@@ -44,11 +44,11 @@ Docs: https://developers.cloudflare.com/durable-objects/platform/pricing/ · htt
   chat images ≤ `MAX_CHAT_IMAGES` 12 × 280 000 ≈ 3.4 MB. Everything else (chat 50 messages, queue, 50 pins, 30 played
   items, 30 saved positions, recaps, ≤ 500 admitted browsers, ≤ 200 member ids, ≤ 50 TV tokens) stays well under
   200 kB. **A full room is ≈ 10 MB; a typical room without images ≈ 10–50 kB.**
-- Images are the only way to fill the 5 GB: the daily upload budget lets at most `UPLOAD_BYTES_PER_DAY` 400 MB in a
-  day for everyone (`UPLOAD_BYTES_PER_IP_DAY` 20 MB per address, `UploadGate`). One-time rooms drop theirs after a day,
-  so the risk is **saved rooms full of images**: in the worst case 400 MB a day kept 30 days ≈ 12 GB, more than the
-  free 5 GB. Realistic use is far below; watch "Stored data" on the dashboard. If it climbs: lower
-  `UPLOAD_BYTES_PER_DAY`, or keep images in saved rooms for fewer days.
+- Images are the only way to fill the 5 GB. Since QUOTA1a / IMG2 (0.9.97.93) the budget bounds it: at most
+  `UPLOAD_BYTES_PER_DAY` 150 MB a day for everyone (`UPLOAD_BYTES_PER_IP_DAY` 10 MB per address) and at most
+  `UPLOAD_BYTES_WINDOW` 3 GB over the last 30 days (`UploadGate`, answer `store`); chat images go 24 h after their
+  message (7 days in a saved room), one-time rooms after a day empty. So images can never hold more than 3 GB of the
+  free 5 GB. Each number is also a Worker variable (`apps/server/src/limits.ts`); watch "Stored data" on the dashboard.
 
 ## YouTube Data API v3
 
