@@ -388,6 +388,11 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.95 (QUOTA2 + ERR1; fold into the next round).** Only with a network where the room uses its backup connection.
+- [ ] Q5. On your phone hotspot (or with the Test Lab's "Use the backup connection"), stay in a room for 10 minutes: no
+  "reconnecting", the video stays in step, chat arrives at once.
+- [ ] Q6. Optional, Test Lab 🎬: "Open 13 backup connections in other rooms" reports one refused on the live site.
+
 **0.9.97.93 (QUOTA1a, server limits; fold into the next round).** Mostly invisible; these confirm nothing real is hit.
 - [ ] Q1. Leave a room open in a background tab for 10 minutes (the free keepalive): when you come back you are still
   in the room, no "reconnecting", the video still in step with the friend.

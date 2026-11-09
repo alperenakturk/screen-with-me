@@ -54,7 +54,7 @@ Each entry is a top-level bullet below; search for `- **<title>`.
 26. Site
 27. First-time path
 28. Ghost connections
-    - Free plan quota guards (QUOTA1a: free keepalive, limits, measuring)
+    - Free plan quota guards (QUOTA1a: free keepalive, limits, measuring; QUOTA2: the HTTP fallback; ERR1: errors)
 29. Avatars
 30. Intro sound
 31. Player controls
@@ -540,6 +540,31 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     Tests: e2e `quota.mjs` (keepalive answers, flood, the per-address cap against a paced server, image expiry on a lab
     server), `ghost.mjs` (players sending only the keepalive stay online), unit `keepalive.test.ts`,
     `connection.test.ts`, `upload-budget.test.ts`.
+  - **The HTTP fallback (QUOTA2, 0.9.97.95; CF-2):** one address holds at most `FALLBACK_SESSIONS_PER_IP` (12) fallback
+    sessions across every room and table. `FallbackGate` (`fallback-gate.ts`, binding `FBGATE`, migration `v13`) is one
+    small object per IP hash (no single gate for everyone): the Worker takes a lease on `open` (`takeFallbackLease`,
+    header `X-SWM-Lease`, stripped from anything a client sends) or answers 429 `busy`; the object holding the session
+    gives it back when the session is forgotten (`PollHub` `flushLeases`, after each request and in the alarm) and renews
+    it every 10 min from the alarm (`LEASE_MS` 30 min, so a lease an object forgot runs out). A gate that can't be
+    reached lets the session through; CI's local server (unpaced) skips it. Over the fallback the page never sends the
+    keepalive: `HttpSocket` answers it itself when a poll was answered in the last 25 s (`KEEPALIVE_FRESH_MS`), else on
+    the next answer. Every fallback message goes through `webSocketMessage`, so the same `FloodGuard` bucket counts it.
+    Idle polls (`idlePolls`, Worker variables `FALLBACK_IDLE_AFTER_MS` / `FALLBACK_IDLE_HOLD_MS` / `FALLBACK_IDLE_GAP_MS`):
+    a session without news for a while gets a shorter hold and `X-SWM-Next` (the page waits that long before its next
+    poll, cut short by a keepalive); **off by default** (gap 0): objects are billed until about 10 s after their last
+    request, so only a wait over ~10 s saves anything, and a hotspot user would then get others' actions that much
+    later. Measured (do-load, quiet room, 2 of 8 on the fallback): 36 → 20 requests a minute (≈ 28.7 → 12.4 billed).
+    Test Lab: "Open 13 backup connections in other rooms" (`limits.fallbackCrowd`). Tests: e2e `quota.mjs` (the fallback
+    in the ceiling; the cross-room cap and a closed session giving its place back, against a paced server), unit
+    `socket.test.ts`.
+  - **Errors (ERR1, 0.9.97.95; CF-6 / CF-7 / CF-12, `errors.ts`):** the Worker's `fetch` catches whatever `route` throws:
+    one JSON line (`logError`: message, `routeOf` = the path with its id masked, the error's name, `retryable` /
+    `overloaded`; never an IP, id, name or text) and a 503 `{"error":"unavailable"}` (`busy` when the object is
+    overloaded), never Cloudflare's HTML page. Calls to objects without a body go through `stubFetch`: tried once more
+    when the error is `retryable` and not `overloaded`. The room's 12 s wait timer and the bots' timers end in
+    `.catch(logError)` (no floating promise; the alarm still covers the wait). `/api/rooms/:id/info|unsave` drops every
+    client-sent `X-SWM-*` header before the room. Test Lab: "Make one server request fail" (`limits.serverError`, local
+    lab route `/api/lab/fail`). Tests: unit `server-errors.test.ts`, e2e `quota.mjs`.
 - **Avatars (`protocol.ts` `AVATAR_PAGES`):** 2 pages since card R20 (0.9.97.30): themed drawn characters and "Genres"
   (our own archetypes, Design's `avatars-3`; the parody pages were removed after the IP audit). Before: parody film / series / anime / game. Animal emojis were removed in 0.9.57 (those who had one get a random themed character). Since card R27
   the picker (site `ui/avatar.ts`) has no tabs: one grid of `AVATAR_GRID`, every avatar in a fixed seeded shuffle (the same on every open and device); the random pick for newcomers stays themed (`randomAvatar`, `AVATAR_PAGES[0]`).
