@@ -80,6 +80,12 @@ jobs:
       - name: The site's address comes from site.config.json only
         run: node scripts/check-domain.mjs
 
+      # Card DOCS1: CLAUDE.md holds rules and a map only (≤ 30 KB); reference goes to docs/internal/architecture/.
+      - name: Docs size check
+        run: |
+          node --test scripts/check-docs.test.mjs
+          node scripts/check-docs.mjs
+
       - name: Text check (every string in English and Turkish)
         run: node scripts/check-texts.mjs
 
