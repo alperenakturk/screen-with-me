@@ -1157,6 +1157,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // 🎬 Video & network (card DL4): accidents on this tab's own connection and player, for the lab only.
   const roomLab: RoomLab = {
     drop: (ms) => connection.labDrop(ms),
+    flood: (count) => {
+      for (let i = 0; i < count; i++) connection.send({ t: 'ping', c: Date.now() });
+    },
+    ageImages: () => void connection.send({ t: 'lab', op: 'age-images' }),
+    socketUrl: () => `${location.origin.replace(/^http/, 'ws')}/api/rooms/${encodeURIComponent(roomId)}/ws`,
     restart: () => connection.reconnect(),
     latency: (ms) => connection.labLatency(ms),
     latencyMs: () => connection.labLatencyMs,
@@ -1632,7 +1637,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         }
         if (message.code === 'private_gone') chat.privateGone();
         showError(() => t(`error.${message.code}`));
-        if (message.code === 'version' || message.code === 'room_full' || message.code === 'knock_busy') connection.close();
+        if (message.code === 'version' || message.code === 'room_full' || message.code === 'room_ip_full' || message.code === 'knock_busy') connection.close();
         break;
       case 'pong':
         break;

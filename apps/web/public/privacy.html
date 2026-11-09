@@ -54,7 +54,7 @@
       <!-- ===================== ENGLISH ===================== -->
       <div data-lang-block="en">
         <h1>Privacy policy</h1>
-        <p class="muted">Last updated: 5 November 2026 · <a href="#changes">Changes</a></p>
+        <p class="muted">Last updated: 9 November 2026 · <a href="#changes">Changes</a></p>
 
         <div class="card">
           <b>In short:</b> no accounts, no ads, no tracking, no cookies of ours. Videos play in your own browser; our
@@ -117,7 +117,8 @@
           <li><b>Room state:</b> the address and title of the current video or page, playing or paused, position,
             speed, the queue and its 👍 votes, the host's room rules and a planned start time.</li>
           <li><b>Chat:</b> the last 50 messages of a room (name, avatar, text, time) so people who join later can read
-            them, and the pictures or GIFs of those messages (at most 12). Photos are resized in your browser to at
+            them, and the pictures or GIFs of those messages (at most 12; a picture is deleted a day after its message, a week in
+            a saved room). Photos are resized in your browser to at
             most 1024 px first, which also removes hidden photo data such as location; hidden notes inside GIFs are
             removed too. A private message to one person goes only to that person and to you while you are both in the
             room and is never stored. Links you post are shown as text; another site opens only after you confirm.</li>
@@ -136,7 +137,7 @@
             from it with a secret random key that changes every day (HMAC-SHA-256); the old key is thrown away, so after
             the day nobody, not even we, can tell which address a code belonged to. The code is kept in memory with
             your connection; only for image uploads our server keeps, until the end of the day, how many bytes each code
-            uploaded across all rooms (at most 20 MB of images per address and 400 MB for everyone a day). Room
+            uploaded across all rooms (at most 10 MB of images per address and 150 MB for everyone a day). Room
             information requests and connection tests are limited too (at most 60 a minute per address). Our server's own technical logs (time, the address requested, the answer's
             status, errors) are kept at most 7 days; search words travel inside requests, never in their address, so
             they never appear in these logs.</li>
@@ -324,7 +325,7 @@
         <div class="table-wrap"><table>
           <tr><th>Data</th><th>Kept</th></tr>
           <tr><td>A room's data on our server (state, queue, chat, images, emojis, pins, votes, bans, settings)</td><td>until 24 hours after the last person leaves; 30 days if the host saved the room</td></tr>
-          <tr><td>Chat history</td><td>the last 50 messages (with at most 12 of their images), with the room</td></tr>
+          <tr><td>Chat history</td><td>the last 50 messages (with at most 12 of their images, each deleted a day after its message, a week in a saved room), with the room</td></tr>
           <tr><td>Saved recaps</td><td>5 per room (20 in a saved room), at most 90 days</td></tr>
           <tr><td>Saved room's video list</td><td>the last 30 videos, until saving is turned off</td></tr>
           <tr><td>A YouTube title in a saved room</td><td>30 days</td></tr>
@@ -370,6 +371,8 @@
         <h2 id="changes">Changes to this policy</h2>
         <p>When this policy changes we update the date at the top and list the change here.</p>
         <ul>
+          <li><b>9 November 2026:</b> chat pictures are deleted a day after their message (a week in a saved room); the
+            daily image limits are now 10 MB per address and 150 MB in total.</li>
           <li><b>5 November 2026:</b> rewritten for KVKK and GDPR: who is responsible, the minimum age, the legal basis
             for each purpose, who receives data, transfers abroad, a retention table, your rights and how to use them,
             complaints, data breaches; also what others see before joining a room, the browser ID's uses, device names
@@ -382,7 +385,7 @@
       <!-- ===================== TÜRKÇE ===================== -->
       <div data-lang-block="tr" hidden>
         <h1>Gizlilik politikası</h1>
-        <p class="muted">Son güncelleme: 5 Kasım 2026 · <a href="#changes-tr">Değişiklikler</a></p>
+        <p class="muted">Son güncelleme: 9 Kasım 2026 · <a href="#changes-tr">Değişiklikler</a></p>
 
         <div class="card">
           <b>Kısaca:</b> Hesap yok, reklam yok, takip yok, bizim çerezimiz yok. Videolar senin tarayıcında oynar;
@@ -445,7 +448,8 @@
           <li><b>Oda durumu:</b> açık video ya da sayfanın adresi ve başlığı, oynuyor ya da durdu bilgisi, konum, hız, sıra
             ve 👍 oyları, yöneticinin oda kuralları ve planlı başlangıç saati.</li>
           <li><b>Sohbet:</b> sonradan gelenler de okuyabilsin diye odanın son 50 mesajı (ad, avatar, metin, saat) ve bu
-            mesajlardaki fotoğraf ya da GIF'ler (en fazla 12). Fotoğraflar önce tarayıcında en fazla 1024 piksele
+            mesajlardaki fotoğraf ya da GIF'ler (en fazla 12; bir resim mesajından bir gün sonra, kayıtlı odada bir hafta
+            sonra silinir). Fotoğraflar önce tarayıcında en fazla 1024 piksele
             küçültülür; bu, konum gibi gizli fotoğraf bilgilerini de siler; GIF'lerin içindeki gizli notlar da silinir.
             Tek bir kişiye gönderdiğin özel mesaj, ikiniz de odadayken yalnız o kişiye ve sana gider, hiç saklanmaz.
             Paylaştığın linkler yazı olarak görünür; başka bir site yalnızca onaylayınca açılır.</li>
@@ -465,7 +469,7 @@
             değişen gizli ve rastgele bir anahtarla adresten üretilmiş kısa bir kodu kullanır (HMAC-SHA-256); eski
             anahtar atılır, böylece gün bitince hiç kimse, biz de dahil, bir kodun hangi adrese ait olduğunu bulamaz. Kod
             bağlantınla birlikte bellekte tutulur; yalnızca resim yüklemeleri için sunucumuz gün bitene kadar her kodun
-            tüm odalarda kaç bayt yüklediğini tutar (günde adres başına en fazla 20 MB, herkes için toplam 400 MB resim).
+            tüm odalarda kaç bayt yüklediğini tutar (günde adres başına en fazla 10 MB, herkes için toplam 150 MB resim).
             Oda bilgisi istekleri ve bağlantı testleri de sınırlıdır (adres başına dakikada en fazla 60). Sunucumuzun kendi teknik kayıtları (zaman, istenen adres, cevabın
             durumu, hatalar) en fazla 7 gün tutulur; arama kelimeleri isteğin adresinde değil içinde gider, bu yüzden bu
             kayıtlarda hiç görünmez.</li>
@@ -648,7 +652,7 @@
         <div class="table-wrap"><table>
           <tr><th>Bilgi</th><th>Süre</th></tr>
           <tr><td>Bir odanın sunucumuzdaki bilgileri (durum, sıra, sohbet, resimler, emojiler, pinler, oylar, yasaklar, ayarlar)</td><td>son kişi çıktıktan 24 saat sonrasına kadar; yönetici odayı kaydettiyse 30 gün</td></tr>
-          <tr><td>Sohbet geçmişi</td><td>son 50 mesaj (resimlerinden en fazla 12'si), odayla birlikte</td></tr>
+          <tr><td>Sohbet geçmişi</td><td>son 50 mesaj (resimlerinden en fazla 12'si; her resim mesajından bir gün sonra, kayıtlı odada bir hafta sonra silinir), odayla birlikte</td></tr>
           <tr><td>Kaydedilen özetler</td><td>odada 5 (kayıtlı odada 20), en fazla 90 gün</td></tr>
           <tr><td>Kayıtlı odanın video listesi</td><td>son 30 video, kayıt kapatılana kadar</td></tr>
           <tr><td>Kayıtlı bir odadaki YouTube başlığı</td><td>30 gün</td></tr>
@@ -694,6 +698,8 @@
         <h2 id="changes-tr">Bu politikadaki değişiklikler</h2>
         <p>Bu politika değişince en üstteki tarihi güncelleriz ve değişikliği buraya yazarız.</p>
         <ul>
+          <li><b>9 Kasım 2026:</b> sohbet resimleri mesajından bir gün sonra (kayıtlı odada bir hafta sonra) silinir;
+            günlük resim sınırları artık adres başına 10 MB, toplamda 150 MB.</li>
           <li><b>5 Kasım 2026:</b> KVKK ve GDPR için yeniden yazıldı: sorumlu kim, en küçük yaş, her amacın hukuki sebebi,
             bilgilerin kimlere gittiği, yurt dışına aktarım, saklama süreleri tablosu, hakların ve nasıl kullanılacağı,
             şikâyet, veri ihlalleri; ayrıca odaya girmeden önce görünenler, tarayıcı kimliğinin kullanımları, cihazında

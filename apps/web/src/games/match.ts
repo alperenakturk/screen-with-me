@@ -38,7 +38,8 @@ import reversi1Art from './art/tutorial/reversi-1-flip.svg?raw';
 import reversi2Art from './art/tutorial/reversi-2-count.svg?raw';
 import { tableHowTo, type HowToPlay } from './how-to-play.ts';
 import { resultCard } from './result.ts';
-import { GAME_PING_MS, silence } from './silent.ts';
+import { silence } from './silent.ts';
+import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
 type State = Extract<GameServerMessage, { t: 'state' }>;
@@ -848,6 +849,9 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
+  function sendKeepalive(): void {
+    if (!quiet.on && ws?.readyState === OPEN) ws.send(KEEPALIVE);
+  }
   function connect(): void {
     if (stopped) return;
     const url = `${location.origin.replace(/^http/, 'ws')}/api/games/${encodeURIComponent(gameId)}/ws`;
@@ -857,6 +861,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       socket.send(JSON.stringify({ t: 'hello', v: GAME_PROTOCOL_VERSION, game: kind, name, avatar, cid: clientId(), ...(classics ? { classics: true } : {}) } satisfies GameClientMessage)),
     );
     socket.addEventListener('message', (event) => {
+      if (event.data === KEEPALIVE_ACK) return;
       let message: GameServerMessage;
       try {
         message = JSON.parse(String(event.data)) as GameServerMessage;
@@ -886,7 +891,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   }
   build();
   connect();
-  const ping = window.setInterval(() => send({ t: 'ping' }), GAME_PING_MS);
+  // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute.
+  const ping = window.setInterval(keepaliveTicks(GAME_CLOCK_EVERY, sendKeepalive, () => send({ t: 'ping' })), GAME_KEEPALIVE_MS);
   const close = () => {
     stopped = true;
     ws?.close();

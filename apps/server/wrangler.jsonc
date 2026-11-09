@@ -3,6 +3,9 @@
   "name": "screen-with-me",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
+  // QUOTA1a: limits such as MSG_RATE or ROOM_IP_CONNECTIONS (apps/server/src/limits.ts) can be set as variables in the
+  // dashboard (Workers → screen-with-me → Settings → Variables) to loosen one in an emergency; a deploy keeps them.
+  "keep_vars": true,
   // Site (apps/web'in derlenmiş hali) aynı Worker'dan statik dosya olarak sunulur.
   // /api/* istekleri önce Worker koduna gider; diğer her şey dosyalardan gelir,
   // bulunamayan yollar (örn. /r/abc123) index.html'e düşer.

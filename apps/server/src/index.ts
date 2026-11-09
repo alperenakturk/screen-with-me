@@ -8,12 +8,14 @@ import { MOVE_CODE } from '@swm/shared/move';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { sendFeedback } from './feedback.ts';
 import { labCheck } from './lab-check.ts';
+import { labServer } from './lab.ts';
 import { tiktokResolve } from './tiktok.ts';
 import { podcasts } from './podcasts.ts';
 import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 import { youtubeUsage } from './usage.ts';
 import { ipKey } from './ip-key.ts';
 import { runUptime } from './uptime.ts';
+import { meterRead } from './meter.ts';
 
 export { Draw } from './draw.ts';
 export { FeedbackGate } from './feedback.ts';
@@ -181,6 +183,11 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     // "Send feedback" (card 9): a GitHub issue in the private repository, see feedback.ts.
     // Card LABLOCK: may this browser open the 🐞 Test Lab (the owner's code, or a pass it got for it)?
+    // QUOTA1a: the lab meter of the objects' cost (local test servers only, see meter.ts).
+    if (url.pathname === '/api/lab/meter') {
+      if (!labServer(env, request)) return new Response('Not found', { status: 404 });
+      return Response.json(meterRead(url.searchParams.get('reset') === '1'));
+    }
     if (url.pathname === '/api/lab/check') return labCheck(request, url, env, () => ipKey(request, env));
 
     if (url.pathname === '/api/feedback') return sendFeedback(request, url, env, () => ipKey(request, env));

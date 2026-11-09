@@ -473,7 +473,8 @@ export type ClientMessage =
   /** Snack Bar served a customer while the film plays: a coin for the room's shared tip jar (side games 2, pick 5). */
   | { t: 'tip' }
   /** Test Lab (DL3b): only a local lab server (`SWM_LAB_SERVER`) acts on it; elsewhere `bad_message`. */
-  | { t: 'lab'; op: 'tipjar' }
+  /** `age-images` (QUOTA1a / IMG2): the room's chat images run out now, as if their time had passed. */
+  | { t: 'lab'; op: 'tipjar' | 'age-images' }
   /** Window Garden: a cutting of a bloomed plant for someone in the room (side games 2, pick 8). */
   | { t: 'gift'; to: string; plant: string }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
@@ -537,6 +538,10 @@ export type ErrorCode =
   | 'not_joined'
   | 'version'
   | 'room_full'
+  /** QUOTA1a: this address already has `ROOM_IP_CONNECTIONS` connections in the room. */
+  | 'room_ip_full'
+  /** QUOTA1a: this connection sent far more than a person would; it is closed (the page reconnects). */
+  | 'flood'
   | 'rate_limited'
   | 'queue_full'
   /** Oda yöneticisi seni çıkardı (ya da kısa süre önce çıkarılmıştın). */
@@ -1043,7 +1048,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (m.table === null) return { t: 'at', table: null };
       return typeof m.table === 'string' && TABLE_ID.test(m.table) ? { t: 'at', table: m.table } : null;
     case 'lab':
-      return m.op === 'tipjar' ? { t: 'lab', op: 'tipjar' } : null;
+      return m.op === 'tipjar' || m.op === 'age-images' ? { t: 'lab', op: m.op } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':
