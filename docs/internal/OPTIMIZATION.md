@@ -131,3 +131,11 @@ whole site waited. What changed:
 5. **Then, as each area is touched:** split `reference.md` into area files (≈ 6–8), resolving its contradictions and
    applying the glossary inside each one; ROOMCAP leftovers, QUOTA2, ERR1 as normal cards; HYG1 after 1.0.
 6. **STATUS / CARDS slimming** (finished material → archive) in the same style as DOCS1, after the test round.
+
+## Owner's answers (9 Nov 2026)
+- "Messy" means mostly the **sessions and work flow** and the **files**. Product concepts he will name himself; until
+  then the product is not reworked for tidiness unless something is clearly broken (the glossary applies to docs only).
+- **At most two building sessions** while there is work (lane A = site, server, players, extension; Game Studio =
+  games), otherwise one or none. Lane B's open work moves to lane A.
+- **Messages:** the Planner writes to the owner only when he is needed, plus one short summary per finished group of
+  work.
