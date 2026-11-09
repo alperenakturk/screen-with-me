@@ -270,12 +270,13 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const onKey = (event: KeyboardEvent) => {
     if (!(event.ctrlKey || event.metaKey) || !iDraw()) return;
     const key = event.key.toLowerCase();
+    // KEYREP: one undo / redo per press; a held key's repeats are swallowed, never sent.
     if (key === 'y' || (key === 'z' && event.shiftKey)) {
       event.preventDefault();
-      send({ t: 'redo' });
+      if (!event.repeat) send({ t: 'redo' });
     } else if (key === 'z') {
       event.preventDefault();
-      send({ t: 'undo' });
+      if (!event.repeat) send({ t: 'undo' });
     }
   };
   addEventListener('keydown', onKey);

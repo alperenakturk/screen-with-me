@@ -356,7 +356,9 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     if ((e.key === 'r' || e.key === 'R') && placing()) {
       e.preventDefault();
       e.stopPropagation();
-      turnShip();
+      // KEYREP: a held R turns the ship once; key-repeat sent a `place` ~30 times a second and could trip the
+      // server's per-connection message limit (QUOTA1a).
+      if (!e.repeat) turnShip();
     }
   });
   for (const tab of [tabTheirs, tabMine]) {

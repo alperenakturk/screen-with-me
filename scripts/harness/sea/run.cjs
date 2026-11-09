@@ -121,6 +121,23 @@ async function unnamed(page) {
     await wait(150);
   }
   check(turned, 'Turn turns a picked ship (another one when the first has no room)');
+  // KEYREP: a held R (one press, then key-repeats) turns the ship once and sends one `place`; the repeats used to send
+  // one each (~30 a second) and could trip the server's per-connection message limit (QUOTA1a: closed with 1008).
+  const pickedBefore = (await cellsWith(alex.page, 'mine', 'picked')).join(',');
+  const placesSent = await alex.page.evaluate(async () => {
+    let n = 0;
+    const send = WebSocket.prototype.send;
+    WebSocket.prototype.send = function (data) {
+      if (typeof data === 'string' && data.includes('"t":"place"')) n++;
+      return send.call(this, data);
+    };
+    const root = document.querySelector('#game-stage .sea');
+    for (let i = 0; i < 40; i++) root.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', repeat: i > 0, bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 400));
+    WebSocket.prototype.send = send;
+    return n;
+  });
+  check(placesSent <= 1 && (placesSent === 1) === ((await cellsWith(alex.page, 'mine', 'picked')).join(',') !== pickedBefore), 'a held R (40 key-repeats) turns the ship once and sends one place', placesSent);
   // Drag: press on a ship, let go on water.
   const dragFrom = (await cellsWith(alex.page, 'mine', 'ship'))[0];
   const box = async (c) => (await alex.page.locator(`#game-stage .sea-mine .sea-cell[data-cell="${c}"]`).boundingBox());
