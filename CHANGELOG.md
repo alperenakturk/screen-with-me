@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.93 — 9 Nov
+- The site uses much less of its free server allowance, so a busy evening (or one person misusing it) can no longer
+  stop every room for the rest of the day. A room where people only watch now costs about a sixth of what it did.
+- A page that sends far too much at once is reconnected with a short note, and one network can hold up to 12
+  connections in a room (enough for a family or a phone carrier sharing one address).
+- Chat images are kept for a day (a week in a saved room); after that the message stays and shows "Image".
+- Behind the scenes: lower daily totals for uploaded images, and a 30-day cap on what all rooms can store.
+
 ### 0.9.97.92 — 8 Nov
 - Behind the scenes: the site now checks its own health every 15 minutes from inside its server and tells the team
   when it is down. Nothing changes for people using it.

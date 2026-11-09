@@ -1,5 +1,6 @@
 import type { ServerClock } from './clock.ts';
 import { PROTOCOL_VERSION, type Avatar, type ClientKind, type ClientMessage, type ServerMessage } from './protocol.ts';
+import { KEEPALIVE, KEEPALIVE_ACK, ROOM_CLOCK_EVERY, ROOM_KEEPALIVE_MS, keepaliveTicks } from './keepalive.ts';
 import { OPEN, UPGRADE_CODE, openSocket, type SwmSocket, type Transport } from './socket.ts';
 
 export type ConnectionStatus = 'connecting' | 'open' | 'reconnecting' | 'closed';
@@ -30,7 +31,6 @@ export interface RoomConnectionOptions {
   handover?: boolean;
 }
 
-const PING_INTERVAL_MS = 10_000;
 /** Bağlanınca saati hızlıca öğrenmek için ilk birkaç ping sık atılır. */
 const INITIAL_PINGS_MS = [0, 250, 600, 1200];
 const MAX_RETRY_DELAY_MS = 10_000;
@@ -45,6 +45,13 @@ const SILENCE_TIMEOUT_MS = 15_000;
  * the HTTP fallback.
  */
 const OPEN_TIMEOUT_MS = 16_000;
+/** QUOTA1a: the close code a connection gets for sending far too much at once (the server's `FLOOD_CODE`). */
+export const FLOOD_CLOSE = 1008;
+/** After a flood close the page waits at least this long before reconnecting (no reconnect storm). */
+export const FLOOD_FIRST_MS = 10_000;
+/** Another flood close within this window after coming back doubles the wait, up to `FLOOD_MAX_MS`. */
+export const FLOOD_WINDOW_MS = 120_000;
+export const FLOOD_MAX_MS = 120_000;
 
 /**
  * Sunucuyla WebSocket bağlantısı. Bağlantı koparsa kendiliğinden, giderek
@@ -65,6 +72,9 @@ export class RoomConnection {
   private lastPingAt = 0;
   /** Art arda açılamayan bağlantı sayısı. */
   private failures = 0;
+  /** QUOTA1a: the last flood close and the wait it got (the next one within the window doubles it). */
+  private floodAt = 0;
+  private floodWait = 0;
   /**
    * 🐞 Test Lab (card DL4) only, inert otherwise: the network is "down" until this time (no new connection opens), every
    * message waits this long each way, and the transport forced for new connections.
@@ -96,6 +106,14 @@ export class RoomConnection {
     if (this.latencyMs > 0) setTimeout(() => ws.readyState === OPEN && ws.send(data), this.latencyMs);
     else ws.send(data);
     return true;
+  }
+
+  /** Sends a ready-made text (the keepalive), with the lab latency like `send`. */
+  private sendRaw(data: string): void {
+    const ws = this.ws;
+    if (ws?.readyState !== OPEN) return;
+    if (this.latencyMs > 0) setTimeout(() => ws.readyState === OPEN && ws.send(data), this.latencyMs);
+    else ws.send(data);
   }
 
   /** 🐞 Test Lab: the connection drops (as on a network blip) and none opens again for `downMs`. */
@@ -187,6 +205,9 @@ export class RoomConnection {
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
       this.lastHeard = Date.now();
       this.lastPingAt = 0;
+      // QUOTA1a: mostly the free keepalive (the object answers it without waking), a real ping (a clock sample) once a
+      // minute; either answer counts as "heard".
+      const tick = keepaliveTicks(ROOM_CLOCK_EVERY, () => this.sendRaw(KEEPALIVE), () => this.ping());
       this.pingTimer = setInterval(() => {
         // Son ping'e hiç cevap gelmediyse (ve üstünden yeterince geçtiyse) bağlantı yarı açık:
         // yeniden kur. Sadece "uzun süredir ses yok"a bakmayız; Chrome arka plandaki
@@ -203,12 +224,13 @@ export class RoomConnection {
           return;
         }
         this.lastPingAt = now;
-        this.ping();
-      }, PING_INTERVAL_MS);
+        tick();
+      }, ROOM_KEEPALIVE_MS);
     });
 
     const receive = (event: { data: unknown }) => {
       this.lastHeard = Date.now();
+      if (event.data === KEEPALIVE_ACK) return;
       let message: ServerMessage;
       try {
         message = JSON.parse(String(event.data)) as ServerMessage;
@@ -232,7 +254,16 @@ export class RoomConnection {
       if (this.stopped) return;
       if (!opened) this.options.onFailures?.(++this.failures);
       // The HTTP fallback found that WebSockets work again: switch over at once.
-      const delay = event.code === UPGRADE_CODE ? 0 : Math.min(MAX_RETRY_DELAY_MS, 500 * 2 ** this.retries) + Math.random() * 300;
+      let delay = event.code === UPGRADE_CODE ? 0 : Math.min(MAX_RETRY_DELAY_MS, 500 * 2 ** this.retries) + Math.random() * 300;
+      if (event.code === FLOOD_CLOSE) {
+        // Closed for sending too much: never hammer the server back at once (10 s, doubled for a repeat within 2 min).
+        const now = Date.now();
+        // The window counts from when the page came back after the last flood close (its wait included).
+        const repeat = this.floodAt > 0 && now - (this.floodAt + this.floodWait) < FLOOD_WINDOW_MS;
+        this.floodWait = repeat ? Math.min(FLOOD_MAX_MS, this.floodWait * 2) : FLOOD_FIRST_MS;
+        this.floodAt = now;
+        delay = this.floodWait;
+      }
       this.retries++;
       this.options.onStatus?.('reconnecting');
       this.timers.push(setTimeout(() => this.open('reconnecting'), delay));

@@ -29,7 +29,8 @@ import { setGameLive } from './live.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { settingsPanel } from './ui.ts';
-import { GAME_PING_MS, silence } from './silent.ts';
+import { silence } from './silent.ts';
+import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 import { tableHowTo } from './how-to-play.ts';
 import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
 import poker1Art from './art/tutorial/poker-1-life.svg?raw';
@@ -529,12 +530,16 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
+  function sendKeepalive(): void {
+    if (!quiet.on && ws?.readyState === OPEN) ws.send(KEEPALIVE);
+  }
   function connect(): void {
     if (stopped) return;
     const socket = openSocket(`${location.origin.replace(/^http/, 'ws')}/api/poker/${encodeURIComponent(gameId)}/ws`);
     ws = socket;
     socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'hello', v: POKER_PROTOCOL_VERSION, name, avatar, cid: clientId() } satisfies PokerClientMessage)));
     socket.addEventListener('message', (event) => {
+      if (event.data === KEEPALIVE_ACK) return;
       let m: PokerServerMessage;
       try {
         m = JSON.parse(String(event.data)) as PokerServerMessage;
@@ -579,10 +584,14 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     });
   }
   connect();
-  const ping = window.setInterval(() => {
-    pingAt = performance.now();
-    send({ t: 'ping' });
-  }, GAME_PING_MS);
+  // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute (the clock offset).
+  const ping = window.setInterval(
+    keepaliveTicks(GAME_CLOCK_EVERY, sendKeepalive, () => {
+      pingAt = performance.now();
+      send({ t: 'ping' });
+    }),
+    GAME_KEEPALIVE_MS,
+  );
   const close = () => {
     stopped = true;
     ws?.close();

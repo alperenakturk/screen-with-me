@@ -17,6 +17,8 @@ const en = {
   'knock.allow': 'Let in',
   'knock.refuse': 'Refuse',
   'error.knock_busy': 'Too many people are waiting at the door. Try again in a little while.',
+  'error.room_ip_full': 'Too many connections to this room come from your network. Close a tab or two of this room and try again.',
+  'error.flood': 'Your page sent too much at once, so the room reconnected it. If it keeps happening, reload the page.',
   'error.private_gone': "They aren't in the room any more, so the private message wasn't sent.",
   'chat.private': 'Message privately',
   'chat.privateWith': 'Message {name} privately',

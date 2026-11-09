@@ -23,6 +23,12 @@ interface Seen {
 }
 
 type Socket = Pick<WebSocket, 'serializeAttachment' | 'deserializeAttachment' | 'close'>;
+/**
+ * QUOTA1a: when a socket was last heard, given its stored `seen` (the object passes the later of it and the runtime's
+ * last free-keepalive answer, `keepalive.ts` `heardAt`). Without it, `seen` alone.
+ */
+export type Heard = (ws: Socket, seen: number | undefined) => number | undefined;
+const seenOnly: Heard = (_ws, seen) => seen;
 
 /** Notes a message's time on its socket. Call it before the handler reads the attachment, so a later write keeps it. */
 export function touch(ws: Socket, now = Date.now()): void {
@@ -33,23 +39,23 @@ export function touch(ws: Socket, now = Date.now()): void {
 }
 
 /** When the alarm should look for ghosts next (null: no socket to watch). */
-export function nextGhostCheck(sockets: Socket[]): number | null {
+export function nextGhostCheck(sockets: Socket[], heard: Heard = seenOnly): number | null {
   let next: number | null = null;
   for (const ws of sockets) {
     const a = ws.deserializeAttachment() as Seen | null;
     if (a?.seen === undefined || a.ghost) continue;
-    const due = a.seen + GHOST_MS + 1;
+    const due = (heard(ws, a.seen) ?? a.seen) + GHOST_MS + 1;
     if (next === null || due < next) next = due;
   }
   return next;
 }
 
 /** Closes every socket silent for longer than `GHOST_MS` and returns them, for the object's leave path. */
-export function closeGhosts<S extends Socket>(sockets: S[], now = Date.now(), limit = GHOST_MS): S[] {
+export function closeGhosts<S extends Socket>(sockets: S[], now = Date.now(), limit = GHOST_MS, heard: Heard = seenOnly): S[] {
   const gone: S[] = [];
   for (const ws of sockets) {
     const a = ws.deserializeAttachment() as Seen | null;
-    if (!a || a.seen === undefined || a.ghost || now - a.seen <= limit) continue;
+    if (!a || a.seen === undefined || a.ghost || now - (heard(ws, a.seen) ?? a.seen) <= limit) continue;
     a.ghost = true;
     ws.serializeAttachment(a);
     try {
@@ -65,4 +71,20 @@ export function closeGhosts<S extends Socket>(sockets: S[], now = Date.now(), li
 /** True once the alarm has closed this socket as a ghost (its leave ran; a late close event must not run it again). */
 export function wasGhost(ws: Socket): boolean {
   return !!(ws.deserializeAttachment() as Seen | null)?.ghost;
+}
+
+/**
+ * QUOTA1a: closes a socket the object gives up on now (it sent far too much), marked like a ghost so the close event
+ * that may follow doesn't run its leave a second time. The caller runs the leave.
+ */
+export function closeAsGone(ws: Socket & { send(data: string): void }, code: number, reason: string, last?: string): void {
+  const a = (ws.deserializeAttachment() as Seen | null) ?? {};
+  a.ghost = true;
+  ws.serializeAttachment(a);
+  try {
+    if (last) ws.send(last);
+    ws.close(code, reason);
+  } catch {
+    // Already closed.
+  }
 }

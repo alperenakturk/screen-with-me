@@ -1,11 +1,12 @@
 import { DurableObject } from 'cloudflare:workers';
-import { takeUpload, UPLOAD_LIMITS, type UploadLimits, type UploadState } from '@swm/shared/upload-budget';
+import { takeUpload, type UploadLimits, type UploadState } from '@swm/shared/upload-budget';
+import { limitOf } from './limits.ts';
 import { readCapped } from './fallback.ts';
 
 /**
  * Security review 4, R4-1: one counter for every image the rooms store (custom emojis, chat images), so an address
  * can't fill the account's storage by spreading uploads over many fresh rooms. One instance (`gate`); `POST /take`
- * with `{key, bytes}` answers 200 `ok` or 429 `ip` / `day`. Its state is today's byte counts per IP hash only (no
+ * with `{key, bytes}` answers 200 `ok` or 429 `ip` / `day` / `store` (IMG2: the 30-day window). Its state is today's byte counts per IP hash only (no
  * images, rooms or names), reset when the UTC day changes (`takeUpload` in `@swm/shared/upload-budget`).
  */
 export class UploadGate extends DurableObject<Env> {
@@ -28,10 +29,9 @@ export class UploadGate extends DurableObject<Env> {
   }
 }
 
-/** The limits; a local `wrangler dev --var UPLOAD_IP_BYTES:<n>` may lower the per-address one for a test (never live). */
+/** The limits: the code defaults, or the Worker variables `UPLOAD_IP_BYTES` / `UPLOAD_DAY_BYTES` / `UPLOAD_WINDOW_BYTES`. */
 function limitsOf(env: Env): UploadLimits {
-  const local = Number(env.UPLOAD_IP_BYTES);
-  return Number.isInteger(local) && local > 0 && local < UPLOAD_LIMITS.perIp ? { ...UPLOAD_LIMITS, perIp: local } : UPLOAD_LIMITS;
+  return { perIp: limitOf(env, 'UPLOAD_IP_BYTES'), perDay: limitOf(env, 'UPLOAD_DAY_BYTES'), window: limitOf(env, 'UPLOAD_WINDOW_BYTES') };
 }
 
 /**
