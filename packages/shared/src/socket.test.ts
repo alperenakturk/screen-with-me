@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpSocket, UPGRADE_CODE, openSocket, prefersHttp, setPreferHttp } from './socket.ts';
+import { KEEPALIVE, KEEPALIVE_ACK } from './keepalive.ts';
 
 /** A WebSocket that neither opens nor closes (the owner's phone hotspot), or one that opens at once. */
 class FakeWebSocket {
@@ -62,8 +63,14 @@ class FakeServer {
     if (init?.signal?.aborted) throw new DOMException('aborted', 'AbortError');
     if (this.queue.length) return new Response(this.queue.splice(0).join('\n'));
     if (this.closed) return Response.json(this.closed, { status: 410 });
-    return new Response(null, { status: 204 });
+    return new Response(null, { status: 204, headers: this.next ? { 'X-SWM-Next': String(this.next) } : {} });
   };
+  /** QUOTA2: the wait an empty answer asks for. */
+  next = 0;
+  /** Answers the held poll empty. */
+  empty() {
+    this.wake?.();
+  }
   say(...messages: string[]) {
     this.queue.push(...messages);
     this.wake?.();
@@ -132,6 +139,50 @@ describe('openSocket', () => {
     expect(FakeWebSocket.all.length).toBe(1);
     socket.close();
     again.close();
+  });
+
+  it('QUOTA2: never sends the keepalive over the fallback, a recent poll answer answers it', async () => {
+    const socket = new HttpSocket('ws://test/api/rooms/abc/ws');
+    const messages: string[] = [];
+    socket.addEventListener('message', (e) => messages.push(e.data));
+    await vi.advanceTimersByTimeAsync(10);
+    // No poll answered yet: the keepalive waits for the next answer.
+    socket.send(KEEPALIVE);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(messages).toEqual([]);
+    server.say('{"t":"welcome"}');
+    await vi.advanceTimersByTimeAsync(10);
+    expect(messages).toEqual([KEEPALIVE_ACK, '{"t":"welcome"}']);
+    // A poll was just answered: the next keepalive is answered at once.
+    socket.send(KEEPALIVE);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(messages.at(-1)).toBe(KEEPALIVE_ACK);
+    expect(server.sent).not.toContain(KEEPALIVE);
+    expect(server.ops.filter((op) => op === 'send')).toEqual([]);
+    socket.close();
+  });
+
+  it('QUOTA2: waits as long as an idle answer asks before polling again, a keepalive cuts the wait short', async () => {
+    const socket = new HttpSocket('ws://test/api/rooms/abc/ws');
+    const messages: string[] = [];
+    socket.addEventListener('message', (e) => messages.push(e.data));
+    await vi.advanceTimersByTimeAsync(10);
+    server.next = 10_000;
+    const polls = () => server.ops.filter((op) => op === 'poll').length;
+    server.empty();
+    await vi.advanceTimersByTimeAsync(10);
+    const before = polls();
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(polls()).toBe(before);
+    await vi.advanceTimersByTimeAsync(5_100);
+    expect(polls()).toBe(before + 1);
+    // Another idle answer, then a keepalive (the last answer is fresh: answered at once, the wait goes on).
+    server.empty();
+    await vi.advanceTimersByTimeAsync(10);
+    socket.send(KEEPALIVE);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(messages.at(-1)).toBe(KEEPALIVE_ACK);
+    socket.close();
   });
 
   it('closes with the server’s code when the session ends (410)', async () => {

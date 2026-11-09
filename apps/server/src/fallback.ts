@@ -52,11 +52,15 @@ export class PollSocket {
   closeReason = '';
   /** Last time the client polled or sent (or now, while a poll is held). */
   seen = Date.now();
+  /** QUOTA2: last time something was queued for the client (idle polls). */
+  newsAt = Date.now();
   /** Whether the client has polled at least once. */
   polled = false;
   readonly openedAt = Date.now();
   /** The address's short hash (`X-SWM-Ip`, set only by the Worker), for `FALLBACK_PER_IP`. */
   ip = '';
+  /** QUOTA2: the address's lease for this session (`fallback-gate.ts`, set only by the Worker); '' = none. */
+  lease = '';
   private queue: string[] = [];
   private queued = 0;
   private attachment: unknown = null;
@@ -79,6 +83,7 @@ export class PollSocket {
     }
     this.queue.push(data);
     this.queued += data.length;
+    this.newsAt = Date.now();
     this.wake();
   }
 
@@ -167,6 +172,14 @@ export interface PollHandlers {
   schedule: () => Promise<void>;
 }
 
+/** QUOTA2: how a hub gives its sessions' leases back and renews them (`fallback-gate.ts` `leaseHooks`). */
+export interface LeaseHub {
+  release(ip: string, leases: string[]): Promise<void>;
+  renew(ip: string, leases: string[]): Promise<void>;
+}
+/** The holding object renews its sessions' leases this often (`fallback-gate.ts` `LEASE_MS` is 30 min). */
+const LEASE_RENEW_MS = 10 * 60_000;
+
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 const gone = (socket?: PollSocket) => json({ code: socket?.closeCode ?? 1006, reason: socket?.closeReason ?? 'gone' }, 410);
 
@@ -175,8 +188,37 @@ export class PollHub {
   private readonly sessions = new Map<string, PollSocket>();
   /** Characters queued in all sessions together (`HUB_BYTES`). */
   private queued = 0;
+  /** QUOTA2: leases of forgotten sessions not yet given back (ip → leases), and when they were last renewed. */
+  private released = new Map<string, string[]>();
+  private renewedAt = Date.now();
 
-  constructor(private readonly handlers: PollHandlers) {}
+  private readonly leases?: LeaseHub;
+  private readonly idle: () => { after: number; hold: number; gap: number };
+
+  constructor(
+    private readonly handlers: PollHandlers,
+    options: { leases?: LeaseHub; idle?: () => { after: number; hold: number; gap: number } } = {},
+  ) {
+    this.leases = options.leases;
+    this.idle = options.idle ?? (() => ({ after: Infinity, hold: HOLD_MS, gap: 0 }));
+  }
+
+  /** Gives back the leases of sessions that ended (after a request or in the alarm; failures only logged). */
+  private async flushLeases(): Promise<void> {
+    if (!this.leases || this.released.size === 0) return;
+    const out = this.released;
+    this.released = new Map();
+    for (const [ip, leases] of out) await this.leases.release(ip, leases);
+  }
+
+  /** Renews the leases of the open sessions now and then (from the alarm, which runs while sessions live). */
+  private async renewLeases(now: number): Promise<void> {
+    if (!this.leases || now - this.renewedAt < LEASE_RENEW_MS) return;
+    this.renewedAt = now;
+    const byIp = new Map<string, string[]>();
+    for (const s of this.sessions.values()) if (s.readyState === OPEN && s.lease && s.ip) byIp.set(s.ip, [...(byIp.get(s.ip) ?? []), s.lease]);
+    for (const [ip, leases] of byIp) await this.leases.renew(ip, leases);
+  }
 
   /** Open fallback connections, typed as WebSockets for the object's own lists. */
   sockets(): WebSocket[] {
@@ -185,6 +227,14 @@ export class PollHub {
 
   /** Answers a fallback request, or returns null when the request is not one (`?http=` missing). */
   async handle(request: Request): Promise<Response | null> {
+    try {
+      return await this.handleOp(request);
+    } finally {
+      await this.flushLeases();
+    }
+  }
+
+  private async handleOp(request: Request): Promise<Response | null> {
     const url = new URL(request.url);
     const op = url.searchParams.get('http');
     if (op === null) return null;
@@ -206,6 +256,9 @@ export class PollHub {
       if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
       const ip = request.headers.get('X-SWM-Ip') ?? '';
       if (ip && [...this.sessions.values()].filter((s) => s.ip === ip && s.readyState === OPEN).length >= FALLBACK_PER_IP) {
+        // The Worker already took a lease for it: give it straight back.
+        const lease = request.headers.get('X-SWM-Lease') ?? '';
+        if (/^[0-9a-f]{32}$/.test(lease)) this.released.set(ip, [...(this.released.get(ip) ?? []), lease]);
         return json({ code: 'busy' }, 429);
       }
       const socket = new PollSocket(
@@ -218,6 +271,8 @@ export class PollHub {
         },
       );
       socket.ip = ip;
+      const lease = request.headers.get('X-SWM-Lease') ?? '';
+      if (/^[0-9a-f]{32}$/.test(lease)) socket.lease = lease;
       this.sessions.set(socket.sid, socket);
       await this.handlers.admit(socket as unknown as WebSocket, request);
       // Its first poll is due within FIRST_POLL_MS: the object's alarm closes it if it never comes.
@@ -230,14 +285,19 @@ export class PollHub {
       if (!socket) return gone();
       socket.seen = Date.now();
       socket.polled = true;
-      if (!socket.pending && socket.readyState === OPEN) await socket.wait(HOLD_MS);
+      // QUOTA2: a session with no news for a while may get a shorter hold and a wait before its next poll (off by default).
+      const idle = this.idle();
+      // The wait stays well inside IDLE_MS (a session that stops polling for 45 s is closed).
+      const quiet = idle.gap > 0 && Date.now() - socket.newsAt > idle.after;
+      const gap = Math.min(idle.gap, 20_000);
+      if (!socket.pending && socket.readyState === OPEN) await socket.wait(quiet ? Math.min(HOLD_MS, idle.hold) : HOLD_MS);
       socket.seen = Date.now();
       if (socket.pending) return new Response(socket.take().join('\n'), { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
       if (socket.readyState !== OPEN) {
         this.forget(socket);
         return gone(socket);
       }
-      return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+      return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store', ...(quiet ? { 'X-SWM-Next': String(Math.round(gap)) } : {}) } });
     }
     if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
     if (!socket || socket.readyState !== OPEN) return gone(socket);
@@ -292,6 +352,8 @@ export class PollHub {
   /** The object's alarm (BH8): closes the sessions whose tab stopped polling, one leave after the other. */
   async sweepDue(now = Date.now()): Promise<void> {
     for (const socket of this.expired(now)) await this.finish(socket, 1006);
+    await this.flushLeases();
+    await this.renewLeases(now);
   }
 
   /** When a session may next be due for closing (for the object's alarm), or null without sessions. */
@@ -307,7 +369,7 @@ export class PollHub {
   }
 
   private forget(socket: PollSocket): void {
-    this.sessions.delete(socket.sid);
+    if (this.sessions.delete(socket.sid) && socket.lease && socket.ip) this.released.set(socket.ip, [...(this.released.get(socket.ip) ?? []), socket.lease]);
     socket.release();
   }
 

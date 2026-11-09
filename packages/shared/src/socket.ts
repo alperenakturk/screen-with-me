@@ -31,6 +31,8 @@ export interface SwmSocket {
   addEventListener<K extends keyof SocketEvents>(type: K, listener: Listener<K>): void;
 }
 
+import { KEEPALIVE, KEEPALIVE_ACK } from './keepalive.ts';
+
 export const CONNECTING = 0;
 export const OPEN = 1;
 export const CLOSING = 2;
@@ -56,6 +58,14 @@ const SEND_BATCH = 40;
 /** How long to wait after a 429 (the Worker's per-address limit for fallback requests, security M4). */
 const LIMITED_WAIT_MS = 1500;
 const SEND_BATCH_BYTES = 900_000;
+/**
+ * QUOTA2: over the fallback the keepalive is never sent (each send is a request to the object): a poll answered within
+ * this long already proves the connection works, so the socket answers the keepalive itself. The server holds a poll
+ * at most 20 s, so a healthy session always has one this recent.
+ */
+const KEEPALIVE_FRESH_MS = 25_000;
+/** QUOTA2: the longest wait between polls the server may ask for (`X-SWM-Next`, idle sessions). */
+const NEXT_POLL_MAX_MS = 20_000;
 
 let preferHttpUntil = 0;
 
@@ -131,6 +141,11 @@ export class HttpSocket extends Emitter implements SwmSocket {
   private sending = false;
   private errors = 0;
   private readonly abort = new AbortController();
+  /** QUOTA2: when the last poll was answered, and whether a keepalive waits for the next answer. */
+  private answeredAt = 0;
+  private keepalivePending = false;
+  /** Ends the wait the server asked for before the next poll (a keepalive wants an answer now). */
+  private wakeGap: (() => void) | null = null;
 
   constructor(private readonly url: string) {
     super();
@@ -140,6 +155,14 @@ export class HttpSocket extends Emitter implements SwmSocket {
   send(data: string): void {
     if (this.readyState === CONNECTING) throw new Error('InvalidStateError: still connecting');
     if (this.readyState !== OPEN) return;
+    if (data === KEEPALIVE) {
+      if (Date.now() - this.answeredAt < KEEPALIVE_FRESH_MS) setTimeout(() => this.readyState === OPEN && this.emit('message', { data: KEEPALIVE_ACK }), 0);
+      else {
+        this.keepalivePending = true;
+        this.wakeGap?.();
+      }
+      return;
+    }
     this.outbox.push(data);
     void this.flush();
   }
@@ -192,7 +215,28 @@ export class HttpSocket extends Emitter implements SwmSocket {
         }
         if (!response.ok && response.status !== 204) throw new Error(String(response.status));
         this.errors = 0;
-        if (response.status === 204) continue;
+        this.answeredAt = Date.now();
+        if (this.keepalivePending) {
+          this.keepalivePending = false;
+          this.emit('message', { data: KEEPALIVE_ACK });
+        }
+        if (response.status === 204) {
+          // QUOTA2: a quiet session may be asked to wait before its next poll (cut short by a keepalive).
+          const next = Math.min(NEXT_POLL_MAX_MS, Number(response.headers.get('X-SWM-Next')) || 0);
+          if (next > 0) {
+            await new Promise<void>((resolve) => {
+              const timer = setTimeout(done, next);
+              const self = this;
+              function done(): void {
+                clearTimeout(timer);
+                self.wakeGap = null;
+                resolve();
+              }
+              this.wakeGap = done;
+            });
+          }
+          continue;
+        }
         const text = await response.text();
         for (const line of text.split('\n')) {
           if (this.readyState !== OPEN) return;

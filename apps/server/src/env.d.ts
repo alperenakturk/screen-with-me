@@ -18,6 +18,7 @@ interface Env {
   MSG_BURST?: string;
   DRAW_MSG_RATE?: string;
   ROOM_IP_CONNECTIONS?: string;
+  FALLBACK_SESSIONS_PER_IP?: string;
   /** Card LABLOCK: the owner's Test Lab code (a production secret, never in the repo); without it the lab stays shut on live. */
   LAB_CODE?: string;
   /** Card LABLOCK: `wrangler dev --var SWM_LAB_OPEN:1` (local test servers only, never live) opens the lab for any code. */

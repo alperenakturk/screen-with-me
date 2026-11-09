@@ -52,6 +52,8 @@ export function meterObject(object: Metered, ctx: DurableObjectState, env: { SWM
     const original = object[name] as ((...args: unknown[]) => unknown) | undefined;
     if (typeof original !== 'function') continue;
     target[name] = function (this: unknown, ...args: unknown[]) {
+      // An HTTP-fallback message reaches `webSocketMessage` inside its own request, which was counted already.
+      if (name === 'webSocketMessage' && !(args[0] instanceof WebSocket)) return original.apply(object, args);
       hit(kind, id, name === 'webSocketMessage');
       return original.apply(object, args);
     };

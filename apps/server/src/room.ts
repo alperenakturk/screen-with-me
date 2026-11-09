@@ -1,3 +1,4 @@
+import { hubOptions } from './fallback-gate.ts';
 import { KEEPALIVE } from '@swm/shared/keepalive';
 import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
 import { closeFlooder, floodGuard, limitOf } from './limits.ts';
@@ -311,7 +312,7 @@ export class Room extends DurableObject<Env> {
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
     schedule: () => this.scheduleAlarm(),
-  });
+  }, hubOptions(this.env));
 
   // Her bağlantı için ayrı kovalar: genel komutlar, emoji, sohbet.
   private readonly commandLimit = new RateLimiter(20, 4);

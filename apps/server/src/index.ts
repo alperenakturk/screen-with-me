@@ -30,6 +30,8 @@ export { MoveLink } from './move-link.ts';
 export { YoutubeUsage } from './usage.ts';
 export { IpKeys } from './ip-key.ts';
 export { UploadGate } from './upload-gate.ts';
+export { FallbackGate } from './fallback-gate.ts';
+import { LEASE_HEADER, gateOf } from './fallback-gate.ts';
 
 /**
  * Browsers always send `Origin` with a WebSocket; only our own site (and local development) may open connections, so
@@ -87,6 +89,10 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
     forwarded = await guardSocket(request, url, env);
   } else if (op === 'open') {
     forwarded = await guardSocket(request, url, env);
+    if (!(forwarded instanceof Response)) {
+      const refused = await takeFallbackLease(forwarded, url, env);
+      if (refused) return refused;
+    }
   } else {
     if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
     // Security M4: only a known step with a well-formed session id reaches the object, and at most FALLBACK_LIMIT
@@ -96,12 +102,35 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
     if (env.FALLBACK_LIMIT && !(await env.FALLBACK_LIMIT.limit({ key: await ipKey(request, env) })).success) return new Response('Too many requests', { status: 429 });
     forwarded = new Request(request);
     forwarded.headers.delete(IP_HEADER);
+    forwarded.headers.delete(LEASE_HEADER);
   }
   if (forwarded instanceof Response) return forwarded;
   // The room learns its own id (it hands it to a TV it pairs); never from the client.
   if (roomId) forwarded.headers.set(ROOM_HEADER, roomId);
   else forwarded.headers.delete(ROOM_HEADER);
   return stub.fetch(forwarded);
+}
+
+/**
+ * QUOTA2: a new HTTP-fallback session takes a lease from its address's gate (`fallback-gate.ts`); the lease id goes to
+ * the object with the request, which gives it back when the session ends. Over the address's limit: 429 `busy` (the
+ * page waits and tries again, as after any failed open). CI's local server (unpaced) skips it; a gate that can't be
+ * reached lets the session through (hotspot users must not lose the room because of a counter).
+ */
+async function takeFallbackLease(forwarded: Request, url: URL, env: Env): Promise<Response | null> {
+  forwarded.headers.delete(LEASE_HEADER);
+  const ip = forwarded.headers.get(IP_HEADER);
+  const unpaced = env.SWM_LOCAL_UNPACED === '1' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  if (!ip || unpaced || !env.FBGATE) return null;
+  const lease = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  try {
+    if (!(await gateOf(env, ip).take(lease))) return Response.json({ code: 'busy' }, { status: 429 });
+  } catch (error) {
+    console.error(JSON.stringify({ msg: 'fallback gate', what: 'take', error: error instanceof Error ? error.name : 'error' }));
+    return null;
+  }
+  forwarded.headers.set(LEASE_HEADER, lease);
+  return null;
 }
 
 /**
