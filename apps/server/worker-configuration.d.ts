@@ -20,6 +20,7 @@ interface __BaseEnv_Env {
 	USAGE: DurableObjectNamespace<import("./src/index").YoutubeUsage>;
 	IPKEYS: DurableObjectNamespace<import("./src/index").IpKeys>;
 	UPLOADS: DurableObjectNamespace<import("./src/index").UploadGate>;
+	FBGATE: DurableObjectNamespace<import("./src/index").FallbackGate>;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {

@@ -1,3 +1,5 @@
+import { logError } from './errors.ts';
+import { hubOptions } from './fallback-gate.ts';
 import { meterObject } from './meter.ts';
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
@@ -106,7 +108,7 @@ export class Game extends DurableObject<Env> {
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
     schedule: () => this.scheduleAlarm(),
-  });
+  }, hubOptions(this.env));
 
   override async fetch(request: Request): Promise<Response> {
     this.lab = await labOnRequest(this.ctx.storage, this.env, request, this.lab);
@@ -360,7 +362,7 @@ export class Game extends DurableObject<Env> {
     const turnAt = Date.now();
     this.botTimer = setTimeout(() => {
       this.botTimer = null;
-      void this.botPlays(index, turnAt);
+      this.botPlays(index, turnAt).catch((error: unknown) => logError('game: bot', error));
     }, BOT_THINK_AT_MS);
   }
   private async botPlays(index: number, turnAt: number): Promise<void> {

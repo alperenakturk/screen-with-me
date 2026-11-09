@@ -5,7 +5,7 @@
 import { UPLOAD_BYTES_PER_DAY, UPLOAD_BYTES_PER_IP_DAY, UPLOAD_BYTES_WINDOW } from '@swm/shared/upload-budget';
 
 export const LIMIT_DEFAULTS: Record<
-  'MSG_RATE' | 'MSG_BURST' | 'DRAW_MSG_RATE' | 'ROOM_IP_CONNECTIONS' | 'UPLOAD_IP_BYTES' | 'UPLOAD_DAY_BYTES' | 'UPLOAD_WINDOW_BYTES',
+  'MSG_RATE' | 'MSG_BURST' | 'DRAW_MSG_RATE' | 'ROOM_IP_CONNECTIONS' | 'FALLBACK_SESSIONS_PER_IP' | 'UPLOAD_IP_BYTES' | 'UPLOAD_DAY_BYTES' | 'UPLOAD_WINDOW_BYTES',
   number
 > = {
   /**
@@ -23,6 +23,12 @@ export const LIMIT_DEFAULTS: Record<
    * people behind one address (carrier NAT), and a family shares one router; a room holds 50.
    */
   ROOM_IP_CONNECTIONS: 12,
+  /**
+   * QUOTA2: open HTTP-fallback sessions one address may hold across all rooms and tables (`fallback-gate.ts`). A
+   * fallback session keeps its object awake; only networks where WebSockets never open use it (a phone hotspot), and a
+   * household there has a few tabs, each with a room and maybe a table.
+   */
+  FALLBACK_SESSIONS_PER_IP: 12,
   /** Images (custom emojis, chat images) one address may store per UTC day, all rooms (`upload-budget.ts`). */
   UPLOAD_IP_BYTES: UPLOAD_BYTES_PER_IP_DAY,
   /** Images everyone may store per UTC day. */

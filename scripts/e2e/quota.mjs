@@ -99,6 +99,51 @@ if (unpaced) {
   ok(refused.length === 1 && refused[0].closed() === 4012 && refused[0] === extra[11], 'the 13th connection from one address gets "room_ip_full" (4012)');
   for (const s of extra) s.ws.close();
 }
+// 5. QUOTA2: the HTTP fallback counts in the same message ceiling: 160 messages in four quick batches close it (1008).
+{
+  const http = base.replace(/^ws/, 'http');
+  const open = await (await fetch(`${http}/api/rooms/${room}/ws?http=open`, { method: 'POST' })).json();
+  const at = (op) => `${http}/api/rooms/${room}/ws?http=${op}&sid=${open.sid}`;
+  await fetch(at('send'), { method: 'POST', body: JSON.stringify([JSON.stringify({ t: 'hello', v: V, name: 'Robin', cid: 'quotaRobin0001' })]) });
+  const pings = JSON.stringify(Array.from({ length: 40 }, (_, i) => JSON.stringify({ t: 'ping', c: i })));
+  for (let i = 0; i < 4; i++) await fetch(at('send'), { method: 'POST', body: pings });
+  let closed = null;
+  let flood = false;
+  for (let i = 0; i < 10 && closed === null; i++) {
+    const r = await fetch(at('poll'));
+    if (r.status === 410) closed = (await r.json()).code;
+    else if (r.status === 200 && (await r.text()).includes('"flood"')) flood = true;
+  }
+  ok(flood && closed === 1008, 'an HTTP-fallback session counts in the same ceiling: "flood", then closed with 1008');
+}
+
+// 6. QUOTA2: one address holds at most 12 HTTP-fallback sessions across all rooms (a paced server; CI's local one skips it).
+if (!unpaced) {
+  const http = base.replace(/^ws/, 'http');
+  const sids = [];
+  let refused = 0;
+  for (let i = 0; i < 13; i++) {
+    const r = await fetch(`${http}/api/rooms/${room}x${i}/ws?http=open`, { method: 'POST' });
+    if (r.status === 429) refused++;
+    else if (r.ok) sids.push([`${room}x${i}`, (await r.json()).sid]);
+  }
+  ok(sids.length === 12 && refused === 1, 'the 13th HTTP-fallback session of one address, in another room, gets 429');
+  // Closing one gives its place back.
+  const [first, sid] = sids.shift();
+  await fetch(`${http}/api/rooms/${first}/ws?http=close&sid=${sid}`, { method: 'POST' });
+  const again = await fetch(`${http}/api/rooms/${room}y/ws?http=open`, { method: 'POST' });
+  ok(again.ok, 'a closed session gives its place back');
+  if (again.ok) sids.push([`${room}y`, (await again.json()).sid]);
+  for (const [r, s] of sids) await fetch(`${http}/api/rooms/${r}/ws?http=close&sid=${s}`, { method: 'POST' });
+}
+
+// 7. ERR1: a request that fails inside the Worker gets small JSON (503), never Cloudflare's HTML error page.
+if (local && process.env.LAB_SERVER === '1') {
+  const r = await fetch(`${base.replace(/^ws/, 'http')}/api/lab/fail`);
+  const body = await r.text();
+  ok(r.status === 503 && body === JSON.stringify({ error: 'unavailable' }) && !body.includes('lab: a failure'), 'a failing request gets {"error":"unavailable"} (503), no details');
+}
+
 // 4. IMG2: chat images run out (1 day in a one-time room): the lab server ages them at once; the message stays, a newcomer
 //    gets no image data for it.
 if (local && process.env.LAB_SERVER === '1') {

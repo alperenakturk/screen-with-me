@@ -4,7 +4,7 @@
 // once a minute and prints DO requests, WebSocket messages, storage rows written and awake time per minute.
 //
 //   (cd apps/server && npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1)
-//   node --experimental-transform-types scripts/harness/do-load/run.mjs [http://localhost:8787] [minutes] [busy|quiet]
+//   node --experimental-transform-types scripts/harness/do-load/run.mjs [http://localhost:8787] [minutes] [busy|quiet] [fallback people]
 //
 // Free plan per day, for the whole account: 100 000 requests (WebSocket messages count 20:1), 100 000 rows written,
 // 13 000 GB-s (an awake object is billed at 128 MB: ≈ 28 awake object-hours).
@@ -16,6 +16,8 @@ const SITE = (process.argv[2] || 'http://localhost:8787').replace(/\/$/, '');
 const MINUTES = Number(process.argv[3] || 3);
 // `busy`: chat and reactions all evening; `quiet`: everyone just watches (no chat, no reactions, no moves).
 const SCENE = process.argv[4] === 'quiet' ? 'quiet' : 'busy';
+// QUOTA2: how many of the eight use the HTTP fallback (a phone hotspot), e.g. 2.
+const FALLBACK = Number(process.argv[5] || 0);
 const WS = SITE.replace(/^http/, 'ws');
 const NAMES = ['Alex', 'Sam', 'Robin', 'Kim', 'Jo', 'Max', 'Lee', 'Ari'];
 const roomId = 'load' + Math.random().toString(36).slice(2, 8);
@@ -46,7 +48,8 @@ const people = NAMES.map((name, i) => {
       if (m.t === 'welcome' && m.game) gameId = m.game.id;
     },
   });
-  conn.connect();
+  if (i < FALLBACK) conn.labForce('http');
+  else conn.connect();
   return { name, conn, welcome: welcome.promise };
 });
 await Promise.all(people.map((p) => p.welcome));
@@ -115,7 +118,7 @@ const per = (v) => v / MINUTES;
 // Billed requests: HTTP and alarms 1:1, WebSocket messages 20:1.
 const billed = per(total.requests - total.messages + total.messages / 20);
 console.log(
-  `\n${SCENE}, per minute (room + table): ${per(total.requests).toFixed(0)} requests (${per(total.messages).toFixed(0)} WebSocket messages, ≈ ${billed.toFixed(1)} billed), ` +
+  `\n${SCENE}${FALLBACK ? ` (${FALLBACK} on the HTTP fallback)` : ''}, per minute (room + table): ${per(total.requests).toFixed(0)} requests (${per(total.messages).toFixed(0)} WebSocket messages, ≈ ${billed.toFixed(1)} billed), ` +
     `${per(total.rows).toFixed(1)} rows written, ${(per(total.awakeMs) / 1000).toFixed(0)} s awake`,
 );
 console.log(

@@ -1,3 +1,4 @@
+import { hubOptions } from './fallback-gate.ts';
 import { meterObject } from './meter.ts';
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
@@ -125,7 +126,7 @@ export class Quiz extends DurableObject<Env> {
     message: (socket, raw) => this.webSocketMessage(socket, raw),
     closed: (socket, code) => this.webSocketClose(socket, code),
     schedule: () => this.scheduleAlarm(),
-  });
+  }, hubOptions(this.env));
 
   override async fetch(request: Request): Promise<Response> {
     this.lab = await labOnRequest(this.ctx.storage, this.env, request, this.lab);

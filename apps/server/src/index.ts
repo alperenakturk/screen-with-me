@@ -30,6 +30,9 @@ export { MoveLink } from './move-link.ts';
 export { YoutubeUsage } from './usage.ts';
 export { IpKeys } from './ip-key.ts';
 export { UploadGate } from './upload-gate.ts';
+export { FallbackGate } from './fallback-gate.ts';
+import { LEASE_HEADER, gateOf } from './fallback-gate.ts';
+import { failed, logError, routeOf, stubFetch } from './errors.ts';
 
 /**
  * Browsers always send `Origin` with a WebSocket; only our own site (and local development) may open connections, so
@@ -87,6 +90,10 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
     forwarded = await guardSocket(request, url, env);
   } else if (op === 'open') {
     forwarded = await guardSocket(request, url, env);
+    if (!(forwarded instanceof Response)) {
+      const refused = await takeFallbackLease(forwarded, url, env);
+      if (refused) return refused;
+    }
   } else {
     if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
     // Security M4: only a known step with a well-formed session id reaches the object, and at most FALLBACK_LIMIT
@@ -96,12 +103,35 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
     if (env.FALLBACK_LIMIT && !(await env.FALLBACK_LIMIT.limit({ key: await ipKey(request, env) })).success) return new Response('Too many requests', { status: 429 });
     forwarded = new Request(request);
     forwarded.headers.delete(IP_HEADER);
+    forwarded.headers.delete(LEASE_HEADER);
   }
   if (forwarded instanceof Response) return forwarded;
   // The room learns its own id (it hands it to a TV it pairs); never from the client.
   if (roomId) forwarded.headers.set(ROOM_HEADER, roomId);
   else forwarded.headers.delete(ROOM_HEADER);
-  return stub.fetch(forwarded);
+  return stubFetch(stub, forwarded);
+}
+
+/**
+ * QUOTA2: a new HTTP-fallback session takes a lease from its address's gate (`fallback-gate.ts`); the lease id goes to
+ * the object with the request, which gives it back when the session ends. Over the address's limit: 429 `busy` (the
+ * page waits and tries again, as after any failed open). CI's local server (unpaced) skips it; a gate that can't be
+ * reached lets the session through (hotspot users must not lose the room because of a counter).
+ */
+async function takeFallbackLease(forwarded: Request, url: URL, env: Env): Promise<Response | null> {
+  forwarded.headers.delete(LEASE_HEADER);
+  const ip = forwarded.headers.get(IP_HEADER);
+  const unpaced = env.SWM_LOCAL_UNPACED === '1' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  if (!ip || unpaced || !env.FBGATE) return null;
+  const lease = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  try {
+    if (!(await gateOf(env, ip).take(lease))) return Response.json({ code: 'busy' }, { status: 429 });
+  } catch (error) {
+    console.error(JSON.stringify({ msg: 'fallback gate', what: 'take', error: error instanceof Error ? error.name : 'error' }));
+    return null;
+  }
+  forwarded.headers.set(LEASE_HEADER, lease);
+  return null;
 }
 
 /**
@@ -111,7 +141,14 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
  */
 export default {
   async fetch(request, env): Promise<Response> {
-    const response = await route(request, env);
+    let response: Response;
+    try {
+      response = await route(request, env);
+    } catch (error) {
+      // ERR1: a JSON answer and one structured log line instead of Cloudflare's HTML error page.
+      logError('route failed', error, { route: routeOf(new URL(request.url).pathname) });
+      response = failed(error);
+    }
     return withApiHeaders(request, response);
   },
   // Card UPTIME2: the cron trigger (wrangler.jsonc `triggers.crons`) runs the uptime check against our own code.
@@ -184,6 +221,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     // "Send feedback" (card 9): a GitHub issue in the private repository, see feedback.ts.
     // Card LABLOCK: may this browser open the 🐞 Test Lab (the owner's code, or a pass it got for it)?
     // QUOTA1a: the lab meter of the objects' cost (local test servers only, see meter.ts).
+    // ERR1: a request that fails inside the Worker, to see the JSON answer and the log line (local lab server only).
+    if (url.pathname === '/api/lab/fail' && labServer(env, request)) throw new Error('lab: a failure on purpose');
     if (url.pathname === '/api/lab/meter') {
       if (!labServer(env, request)) return new Response('Not found', { status: 404 });
       return Response.json(meterRead(url.searchParams.get('reset') === '1'));
@@ -230,7 +269,10 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: await ipKey(request, env) })).success) {
         return new Response('Too many requests', { status: 429 });
       }
-      return env.ROOMS.get(env.ROOMS.idFromName(info[1]!)).fetch(request);
+      // CF-12: only the Worker sets the internal headers; a client's own copies never reach the room.
+      const clean = new Request(request);
+      for (const name of [...clean.headers.keys()]) if (name.toLowerCase().startsWith('x-swm-')) clean.headers.delete(name);
+      return stubFetch(env.ROOMS.get(env.ROOMS.idFromName(info[1]!)), clean);
     }
 
     const match = url.pathname.match(/^\/api\/rooms\/([^/]+)\/ws$/);
@@ -282,7 +324,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       const guarded = await guardSocket(request, url, env);
       if (guarded instanceof Response) return guarded;
-      return env.TVLINKS.get(env.TVLINKS.idFromName(tv[1]!)).fetch(guarded);
+      return stubFetch(env.TVLINKS.get(env.TVLINKS.idFromName(tv[1]!)), guarded);
     }
 
     // Moving my things to another device: the sender shows this code and waits here; the receiver types it.
@@ -292,7 +334,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       const guarded = await guardSocket(request, url, env);
       if (guarded instanceof Response) return guarded;
-      return env.MOVELINKS.get(env.MOVELINKS.idFromName(move[1]!)).fetch(guarded);
+      return stubFetch(env.MOVELINKS.get(env.MOVELINKS.idFromName(move[1]!)), guarded);
     }
 
     return new Response('Not found', { status: 404 });

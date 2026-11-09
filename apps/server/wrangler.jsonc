@@ -39,7 +39,9 @@
       // The day's random key for the IP hash (security M5): one instance, today's key only
       { "name": "IPKEYS", "class_name": "IpKeys" },
       // Image upload budgets across all rooms (security R4-1): one instance, today's byte counts per IP hash only
-      { "name": "UPLOADS", "class_name": "UploadGate" }
+      { "name": "UPLOADS", "class_name": "UploadGate" },
+      // QUOTA2: open HTTP-fallback sessions per address across all rooms and tables: one small instance per IP hash
+      { "name": "FBGATE", "class_name": "FallbackGate" }
     ]
   },
   // Ücretsiz planda Durable Object'ler SQLite tabanlı olmak zorunda.
@@ -55,7 +57,8 @@
     { "tag": "v9", "new_sqlite_classes": ["YoutubeUsage"] },
     { "tag": "v10", "new_sqlite_classes": ["IpKeys"] },
     { "tag": "v11", "new_sqlite_classes": ["UploadGate"] },
-    { "tag": "v12", "new_sqlite_classes": ["Sea"] }
+    { "tag": "v12", "new_sqlite_classes": ["Sea"] },
+    { "tag": "v13", "new_sqlite_classes": ["FallbackGate"] }
   ],
   // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
   // address joining at once must still fit, a script opening rooms in a loop must not.
