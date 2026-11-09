@@ -519,7 +519,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     (`wrangler.jsonc` has `keep_vars`, so one set in the dashboard survives deploys): `MSG_RATE` 20/s + `MSG_BURST` 120
     (a token bucket per connection, `FloodGuard`; real pings count, the keepalive doesn't; `DRAW_MSG_RATE` 40 for the
     drawer's strokes): over it the room sends `{t:'error', code:'flood'}` and closes with 1008 (the page shows
-    `error.flood` and reconnects), a game sends `rate` and closes it the same way (`closeAsGone`, the leave runs once).
+    `error.flood` and reconnects after 10 s, doubled for a repeat within 2 min of coming back, up to 2 min:
+    `RoomConnection` `FLOOD_FIRST_MS` / `FLOOD_MAX_MS`, no reconnect storm), a game sends `rate` and closes it the same way (`closeAsGone`, the leave runs once).
     `ROOM_IP_CONNECTIONS` 12 connections per IP hash per room (carrier NAT and families; CI's local server is unpaced and
     skips it, no live e2e file holds more than 12 in a room): the 13th gets `room_ip_full` (`error.room_ip_full`, the
     page stops reconnecting). A socket refused during its upgrade (also `room_full`) is marked `refused` and closed on its

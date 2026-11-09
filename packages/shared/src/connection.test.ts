@@ -29,6 +29,11 @@ class FakeSocket {
   emit(type: string, data?: unknown) {
     for (const fn of this.listeners[type] ?? []) fn({ data: data === undefined ? undefined : JSON.stringify(data) });
   }
+  /** Sunucu bağlantıyı bu kodla kapatır. */
+  closeWith(code: number) {
+    this.readyState = 3;
+    for (const fn of this.listeners['close'] ?? []) fn({ code } as never);
+  }
   /** Sunucu: bu bağlantıdaki son ping'e cevap ver. */
   pong() {
     const ping = [...this.sent].reverse().find((m) => m.t === 'ping');
@@ -120,6 +125,53 @@ describe('RoomConnection keepalive (QUOTA1a)', () => {
     }
     expect(FakeSocket.all.length).toBe(1);
     expect(seen).not.toContain('hb');
+    conn.close();
+  });
+});
+
+describe('RoomConnection after a flood close (QUOTA1a)', () => {
+  it('waits 10 s before reconnecting, doubles the wait for a repeat within 2 min, up to 2 min', async () => {
+    const conn = connect();
+    await vi.advanceTimersByTimeAsync(5);
+    const waits: number[] = [];
+    for (let round = 0; round < 6; round++) {
+      const n = FakeSocket.all.length;
+      FakeSocket.all[n - 1]!.closeWith(1008);
+      const start = Date.now();
+      while (FakeSocket.all.length === n) await vi.advanceTimersByTimeAsync(500);
+      waits.push(Math.round((Date.now() - start) / 1000));
+      await vi.advanceTimersByTimeAsync(5);
+    }
+    expect(waits).toEqual([10, 20, 40, 80, 120, 120]);
+    conn.close();
+  });
+
+  it('starts again at 10 s once 2 minutes passed without another flood close', async () => {
+    const conn = connect();
+    await vi.advanceTimersByTimeAsync(5);
+    FakeSocket.all[0]!.closeWith(1008);
+    await vi.advanceTimersByTimeAsync(10_500);
+    expect(FakeSocket.all.length).toBe(2);
+    // The server keeps answering, then much later another flood close.
+    for (let i = 0; i < 15; i++) {
+      await vi.advanceTimersByTimeAsync(10_000);
+      FakeSocket.all[1]!.emit('message', { t: 'hb' });
+      FakeSocket.all[1]!.pong();
+    }
+    FakeSocket.all[1]!.closeWith(1008);
+    await vi.advanceTimersByTimeAsync(9_000);
+    expect(FakeSocket.all.length).toBe(2);
+    await vi.advanceTimersByTimeAsync(1_500);
+    expect(FakeSocket.all.length).toBe(3);
+    conn.close();
+  });
+
+  it('a normal drop still reconnects within about a second', async () => {
+    const conn = connect();
+    await vi.advanceTimersByTimeAsync(5);
+    FakeSocket.all[0]!.closeWith(1006);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(FakeSocket.all.length).toBe(2);
     conn.close();
   });
 });
