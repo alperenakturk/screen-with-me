@@ -1,3 +1,4 @@
+import { logError } from './errors.ts';
 import { hubOptions } from './fallback-gate.ts';
 import { meterObject } from './meter.ts';
 import { DurableObject } from 'cloudflare:workers';
@@ -361,7 +362,7 @@ export class Game extends DurableObject<Env> {
     const turnAt = Date.now();
     this.botTimer = setTimeout(() => {
       this.botTimer = null;
-      void this.botPlays(index, turnAt);
+      this.botPlays(index, turnAt).catch((error: unknown) => logError('game: bot', error));
     }, BOT_THINK_AT_MS);
   }
   private async botPlays(index: number, turnAt: number): Promise<void> {

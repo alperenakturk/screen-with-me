@@ -1,3 +1,4 @@
+import { logError } from './errors.ts';
 import { hubOptions } from './fallback-gate.ts';
 import { meterObject } from './meter.ts';
 import { DurableObject } from 'cloudflare:workers';
@@ -377,7 +378,7 @@ export class Sea extends DurableObject<Env> {
     if (seat < 0 || d.phase !== 'play' || d.turn !== seat || this.botTimer) return;
     this.botTimer = setTimeout(() => {
       this.botTimer = null;
-      void this.botPlays(seat);
+      this.botPlays(seat).catch((error: unknown) => logError('sea: bot', error));
     }, SEA_BOT_DELAY_MS);
   }
 

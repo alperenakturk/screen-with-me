@@ -162,6 +162,48 @@ export function createVideoLab() {
       },
     },
     {
+      id: 'limits.fallbackCrowd',
+      title: { en: 'Open 13 backup connections in other rooms', tr: 'Başka odalarda 13 yedek bağlantı aç' },
+      help: {
+        en: 'Opens 13 backup-way (hotspot) connections from this browser, each in a new empty room, then closes them. One address may hold 12 across all rooms, so one is refused. A test server started for CI lets all of them in. A number sets how many (1–30).',
+        tr: 'Bu tarayıcıdan, her biri yeni ve boş bir odada olmak üzere 13 yedek yol (hotspot) bağlantısı açar, sonra kapatır. Bir adres tüm odalarda en çok 12 tutabilir, biri reddedilir. CI için açılan test sunucusu hepsini alır. Bir sayı yazarsan kaç tane olacağı o olur (1–30).',
+      },
+      tab: 'video',
+      run: async (arg) => {
+        const n = amount(arg, 13, 1, 30);
+        const tag = Math.random().toString(36).slice(2, 7);
+        const opened: string[] = [];
+        let refused = 0;
+        for (let i = 0; i < n; i++) {
+          const base = `${location.origin}/api/rooms/lab${tag}${i}/ws`;
+          const r = await fetch(`${base}?http=open`, { method: 'POST', cache: 'no-store' }).catch(() => null);
+          if (r?.status === 429) refused++;
+          else if (r?.ok) {
+            const { sid } = (await r.json()) as { sid: string };
+            opened.push(`${base}?http=close&sid=${sid}`);
+          }
+        }
+        for (const url of opened) await fetch(url, { method: 'POST' }).catch(() => {});
+        return { en: `${opened.length} opened, ${refused} refused for too many from this address (all closed again)`, tr: `${opened.length} açıldı, ${refused} tanesi bu adresten çok fazla diye reddedildi (hepsi yeniden kapatıldı)` };
+      },
+    },
+    {
+      id: 'limits.serverError',
+      title: { en: 'Make one server request fail', tr: 'Bir sunucu isteği hata versin' },
+      help: {
+        en: 'Local lab server only: one request fails inside the server on purpose. It must answer a short {"error":"unavailable"} (503) and write one line to its log, never an error page.',
+        tr: 'Sadece yerel lab sunucusunda: bir istek sunucunun içinde bilerek hata verir. Kısa bir {"error":"unavailable"} (503) cevabı vermeli ve kaydına tek satır yazmalı, asla bir hata sayfası değil.',
+      },
+      tab: 'video',
+      where: { en: 'test server only', tr: 'sadece test sunucusu' },
+      available: () => (local() ? true : { en: 'not a local test server', tr: 'yerel test sunucusu değil' }),
+      run: async () => {
+        const r = await fetch('/api/lab/fail', { cache: 'no-store' });
+        const body = await r.text();
+        return { en: `answer ${r.status}: ${body.slice(0, 60)}`, tr: `cevap ${r.status}: ${body.slice(0, 60)}` };
+      },
+    },
+    {
       id: 'limits.ageImages',
       title: { en: 'Chat images run out now', tr: 'Sohbet görselleri şimdi süresini doldursun' },
       help: {

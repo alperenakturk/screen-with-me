@@ -1,3 +1,4 @@
+import { logError } from './errors.ts';
 import { hubOptions } from './fallback-gate.ts';
 import { KEEPALIVE } from '@swm/shared/keepalive';
 import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
@@ -1988,7 +1989,9 @@ export class Room extends DurableObject<Env> {
       this.broadcast({ t: 'waiting', ids: decision.ids });
       // Süre dolunca beklenenler olmadan devam etmek için tekrar bak.
       if (this.waitTimer !== null) clearTimeout(this.waitTimer);
-      this.waitTimer = setTimeout(() => void this.evaluateWait(), WAIT_MAX_MS + 50);
+      // The alarm covers this too; the timer is there because live alarms were seen running late right after a deploy.
+      // CF-6: never a floating promise.
+      this.waitTimer = setTimeout(() => this.evaluateWait().catch((error: unknown) => logError('room: wait timer', error)), WAIT_MAX_MS + 50);
     } else if (decision.kind === 'update') {
       this.broadcast({ t: 'waiting', ids: decision.ids });
     } else if (decision.kind === 'resume') {

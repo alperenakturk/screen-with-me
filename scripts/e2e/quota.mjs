@@ -137,6 +137,13 @@ if (!unpaced) {
   for (const [r, s] of sids) await fetch(`${http}/api/rooms/${r}/ws?http=close&sid=${s}`, { method: 'POST' });
 }
 
+// 7. ERR1: a request that fails inside the Worker gets small JSON (503), never Cloudflare's HTML error page.
+if (local && process.env.LAB_SERVER === '1') {
+  const r = await fetch(`${base.replace(/^ws/, 'http')}/api/lab/fail`);
+  const body = await r.text();
+  ok(r.status === 503 && body === JSON.stringify({ error: 'unavailable' }) && !body.includes('lab: a failure'), 'a failing request gets {"error":"unavailable"} (503), no details');
+}
+
 // 4. IMG2: chat images run out (1 day in a one-time room): the lab server ages them at once; the message stays, a newcomer
 //    gets no image data for it.
 if (local && process.env.LAB_SERVER === '1') {

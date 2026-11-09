@@ -32,6 +32,7 @@ export { IpKeys } from './ip-key.ts';
 export { UploadGate } from './upload-gate.ts';
 export { FallbackGate } from './fallback-gate.ts';
 import { LEASE_HEADER, gateOf } from './fallback-gate.ts';
+import { failed, logError, routeOf, stubFetch } from './errors.ts';
 
 /**
  * Browsers always send `Origin` with a WebSocket; only our own site (and local development) may open connections, so
@@ -108,7 +109,7 @@ async function connect(request: Request, url: URL, env: Env, stub: DurableObject
   // The room learns its own id (it hands it to a TV it pairs); never from the client.
   if (roomId) forwarded.headers.set(ROOM_HEADER, roomId);
   else forwarded.headers.delete(ROOM_HEADER);
-  return stub.fetch(forwarded);
+  return stubFetch(stub, forwarded);
 }
 
 /**
@@ -140,7 +141,14 @@ async function takeFallbackLease(forwarded: Request, url: URL, env: Env): Promis
  */
 export default {
   async fetch(request, env): Promise<Response> {
-    const response = await route(request, env);
+    let response: Response;
+    try {
+      response = await route(request, env);
+    } catch (error) {
+      // ERR1: a JSON answer and one structured log line instead of Cloudflare's HTML error page.
+      logError('route failed', error, { route: routeOf(new URL(request.url).pathname) });
+      response = failed(error);
+    }
     return withApiHeaders(request, response);
   },
   // Card UPTIME2: the cron trigger (wrangler.jsonc `triggers.crons`) runs the uptime check against our own code.
@@ -213,6 +221,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     // "Send feedback" (card 9): a GitHub issue in the private repository, see feedback.ts.
     // Card LABLOCK: may this browser open the 🐞 Test Lab (the owner's code, or a pass it got for it)?
     // QUOTA1a: the lab meter of the objects' cost (local test servers only, see meter.ts).
+    // ERR1: a request that fails inside the Worker, to see the JSON answer and the log line (local lab server only).
+    if (url.pathname === '/api/lab/fail' && labServer(env, request)) throw new Error('lab: a failure on purpose');
     if (url.pathname === '/api/lab/meter') {
       if (!labServer(env, request)) return new Response('Not found', { status: 404 });
       return Response.json(meterRead(url.searchParams.get('reset') === '1'));
@@ -259,7 +269,10 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (env.ROOM_INFO_LIMIT && !(await env.ROOM_INFO_LIMIT.limit({ key: await ipKey(request, env) })).success) {
         return new Response('Too many requests', { status: 429 });
       }
-      return env.ROOMS.get(env.ROOMS.idFromName(info[1]!)).fetch(request);
+      // CF-12: only the Worker sets the internal headers; a client's own copies never reach the room.
+      const clean = new Request(request);
+      for (const name of [...clean.headers.keys()]) if (name.toLowerCase().startsWith('x-swm-')) clean.headers.delete(name);
+      return stubFetch(env.ROOMS.get(env.ROOMS.idFromName(info[1]!)), clean);
     }
 
     const match = url.pathname.match(/^\/api\/rooms\/([^/]+)\/ws$/);
@@ -311,7 +324,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       const guarded = await guardSocket(request, url, env);
       if (guarded instanceof Response) return guarded;
-      return env.TVLINKS.get(env.TVLINKS.idFromName(tv[1]!)).fetch(guarded);
+      return stubFetch(env.TVLINKS.get(env.TVLINKS.idFromName(tv[1]!)), guarded);
     }
 
     // Moving my things to another device: the sender shows this code and waits here; the receiver types it.
@@ -321,7 +334,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       const guarded = await guardSocket(request, url, env);
       if (guarded instanceof Response) return guarded;
-      return env.MOVELINKS.get(env.MOVELINKS.idFromName(move[1]!)).fetch(guarded);
+      return stubFetch(env.MOVELINKS.get(env.MOVELINKS.idFromName(move[1]!)), guarded);
     }
 
     return new Response('Not found', { status: 404 });
