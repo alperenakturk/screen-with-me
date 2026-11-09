@@ -949,7 +949,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   burst, dark gold outline), cells named "A1: water"; sounds `seaMiss` / `seaHit` / `seaSunk`. Lab commands `sea.bot`,
   `sea.oneLeft`, `sea.reveal`. Tests: unit `sea.test.ts`, e2e `sea.mjs` (no message ever carries a hidden ship) +
   `lab-server.mjs`, harness `scripts/harness/sea/run.cjs` (in CI's "Games quality"), the `games-sweep` entries `sea` /
-  `seaPlay`.
+  `seaPlay`. KEYREP (0.9.97.94): a held R turns the ship once (`event.repeat` ignored); its repeats sent a `place` each,
+  ~30/s, past the server's per-connection message limit (QUOTA1a); the sea harness holds R for 40 repeats.
   **Draw & Guess (0.9.72):** separate object `Draw` (`apps/server/src/draw.ts`, binding `DRAWS`, migration `v3`,
   `/api/draw/:id/ws`), protocol and pure rules in `packages/shared/src/games/draw.ts` (guess matching: lower case +
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer
@@ -957,7 +958,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (persistent `cid`), round: lobby → choose (15 s, words only to the drawer) → draw (80 s) → reveal (6 s) → next.
   Timers via storage alarm, and since 0.9.93.2 any message (the page pings every 15 s, and once the time is up) moves
   an overdue phase on (`overdue` / `advance`; Quiz the same): live alarms ran > 25 s late right after a deploy. The drawing only in memory (1000×750 grid, 50 ms chunks, latecomers get `strokes`).
-  Guessers/drawer chat privately with `secret`. Piece `games/draw.ts`. Test: `scripts/e2e/draw.mjs`.
+  Guessers/drawer chat privately with `secret`. Piece `games/draw.ts`. Test: `scripts/e2e/draw.mjs`. Ctrl+Z / Ctrl+Y
+  send one undo / redo per press, never per key-repeat (KEYREP, 0.9.97.94).
   **Quiz (0.9.74):** object `Quiz` (`apps/server/src/quiz.ts`, binding `QUIZZES`, migration `v4`, `/api/quiz/:id/ws`),
   `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` + `quiz-questions-2.ts` (P9: 1175 questions, the second bank with a difficulty `d` 1–3; a game goes from easy to hard; the browser keeps the last 600 question ids it saw (`quiz:seen`) and sends them as a base64 bitmap in its hello (`encodeSeen`), the table avoids them and its own recent ones; the stars show the difficulty) (general knowledge, TR/EN, no film/series names; options
   shuffled every game). 2–8 players, 10 questions × 15 s, correct = 100–200 points (faster = more), reveal when everyone

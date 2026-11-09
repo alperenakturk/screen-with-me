@@ -280,7 +280,8 @@ async function windowPasses(page, label, g, phone) {
         // Wait for the game's own content, then put the board on the Classics table.
         await page.waitForFunction(() => {
           const b = document.querySelector('#game-stage .game-stage-body');
-          return b && !b.querySelector('.game-stage-loading') && b.childElementCount > 0;
+          // CLFLASH: a Classics table shows "Setting up the table…" (.mt-loading) until its state comes.
+          return b && !b.querySelector('.game-stage-loading, .mt-loading') && b.childElementCount > 0;
         }, null, { timeout: 12000 }).catch(() => {});
         await wait(900);
         if (g.picker) {
@@ -289,8 +290,7 @@ async function windowPasses(page, label, g, phone) {
             const b = document.querySelector('#game-stage #cl-shelf-open');
             if (b && !b.hidden) b.click();
           });
-          await wait(600);
-          const alone = await page.evaluate(() => !document.querySelector('#game-stage .cl-picker')?.hidden && !!document.querySelector('#game-stage .mt-table')?.hidden);
+          const alone = await page.waitForFunction(() => !document.querySelector('#game-stage .cl-picker')?.hidden && !!document.querySelector('#game-stage .mt-table')?.hidden, null, { timeout: 6000 }).then(() => true, () => false);
           check(alone, `${label}: the picker shows alone (no board behind it)`);
         }
         if (g.board) {

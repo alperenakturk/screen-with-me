@@ -16,6 +16,10 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.94 — 9 Nov
+- Games: holding down R in Sea Battle turns the ship once, and holding Ctrl+Z / Ctrl+Y in Draw & Guess undoes or redoes
+  once, instead of repeating so fast that the game could lose its connection.
+
 ### 0.9.97.93 — 9 Nov
 - The site uses much less of its free server allowance, so a busy evening (or one person misusing it) can no longer
   stop every room for the rest of the day. A room where people only watch now costs about a sixth of what it did.
