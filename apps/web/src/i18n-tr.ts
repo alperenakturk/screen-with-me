@@ -19,6 +19,8 @@ export const tr: Record<I18nKey, string> = {
   'knock.allow': 'İçeri al',
   'knock.refuse': 'Reddet',
   'error.knock_busy': 'Kapıda bekleyen çok kişi var. Biraz sonra yeniden dene.',
+  'error.room_ip_full': 'Bu odaya senin ağından çok fazla bağlantı var. Bu odanın bir iki sekmesini kapatıp yeniden dene.',
+  'error.flood': 'Sayfan bir anda çok fazla şey gönderdi, oda bağlantıyı yeniden kurdu. Tekrar olursa sayfayı yenile.',
   'error.private_gone': 'Bu kişi artık odada değil; özel mesaj gitmedi.',
   'chat.private': 'Özel mesaj gönder',
   'chat.privateWith': '{name} ile özel yazış',

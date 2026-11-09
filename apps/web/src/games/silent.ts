@@ -1,10 +1,8 @@
-// GHOST: every game page pings its object every 15 s in every phase, so the object can tell a live connection from a dead
-// one (silent past 90 s = closed and gone, `apps/server/src/ghost.ts`). The Test Lab's "go silent" stops this page from
+// GHOST: every game page sends its object a keepalive every 15 s in every phase (QUOTA1a: mostly the free one the object
+// answers without waking, `@swm/shared/keepalive`), so the object can tell a live connection from a dead one (silent
+// past 90 s = closed and gone, `apps/server/src/ghost.ts`). The Test Lab's "go silent" stops this page from
 // sending anything for a while, as a connection that died without a word would.
 import type { LabCommand } from '../debug-lab.ts';
-
-/** The game pages' ping period (the server's ghost limit is 90 s, room for a hidden tab's once-a-minute timers). */
-export const GAME_PING_MS = 15_000;
 
 export interface Silence {
   /** True while the lab keeps this page quiet: `send` drops everything, pings included. */

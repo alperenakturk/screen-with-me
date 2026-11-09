@@ -41,7 +41,8 @@ import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
-import { GAME_PING_MS, silence } from './silent.ts';
+import { silence } from './silent.ts';
+import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
 
@@ -529,6 +530,9 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
+  function sendKeepalive(): void {
+    if (!quiet.on && ws?.readyState === OPEN) ws.send(KEEPALIVE);
+  }
   function connect(): void {
     if (stopped) return;
     const url = `${location.origin.replace(/^http/, 'ws')}/api/draw/${encodeURIComponent(gameId)}/ws`;
@@ -539,6 +543,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
       socket.send(JSON.stringify({ t: 'hello', v: DRAW_PROTOCOL_VERSION, name, avatar, cid: clientId(), lang } satisfies DrawClientMessage)),
     );
     socket.addEventListener('message', (event) => {
+      if (event.data === KEEPALIVE_ACK) return;
       let m: DrawServerMessage;
       try {
         m = JSON.parse(String(event.data)) as DrawServerMessage;
@@ -605,10 +610,14 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     });
   }
   connect();
-  const ping = window.setInterval(() => {
-    pingAt = performance.now();
-    send({ t: 'ping' });
-  }, GAME_PING_MS);
+  // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute (the clock offset).
+  const ping = window.setInterval(
+    keepaliveTicks(GAME_CLOCK_EVERY, sendKeepalive, () => {
+      pingAt = performance.now();
+      send({ t: 'ping' });
+    }),
+    GAME_KEEPALIVE_MS,
+  );
   const close = () => {
     stopped = true;
     ws?.close();

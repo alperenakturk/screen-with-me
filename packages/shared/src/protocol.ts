@@ -537,6 +537,10 @@ export type ErrorCode =
   | 'not_joined'
   | 'version'
   | 'room_full'
+  /** QUOTA1a: this address already has `ROOM_IP_CONNECTIONS` connections in the room. */
+  | 'room_ip_full'
+  /** QUOTA1a: this connection sent far more than a person would; it is closed (the page reconnects). */
+  | 'flood'
   | 'rate_limited'
   | 'queue_full'
   /** Oda yöneticisi seni çıkardı (ya da kısa süre önce çıkarılmıştın). */

@@ -1,5 +1,6 @@
 import type { ServerClock } from './clock.ts';
 import { PROTOCOL_VERSION, type Avatar, type ClientKind, type ClientMessage, type ServerMessage } from './protocol.ts';
+import { KEEPALIVE, KEEPALIVE_ACK, ROOM_CLOCK_EVERY, ROOM_KEEPALIVE_MS, keepaliveTicks } from './keepalive.ts';
 import { OPEN, UPGRADE_CODE, openSocket, type SwmSocket, type Transport } from './socket.ts';
 
 export type ConnectionStatus = 'connecting' | 'open' | 'reconnecting' | 'closed';
@@ -30,7 +31,6 @@ export interface RoomConnectionOptions {
   handover?: boolean;
 }
 
-const PING_INTERVAL_MS = 10_000;
 /** Bağlanınca saati hızlıca öğrenmek için ilk birkaç ping sık atılır. */
 const INITIAL_PINGS_MS = [0, 250, 600, 1200];
 const MAX_RETRY_DELAY_MS = 10_000;
@@ -96,6 +96,14 @@ export class RoomConnection {
     if (this.latencyMs > 0) setTimeout(() => ws.readyState === OPEN && ws.send(data), this.latencyMs);
     else ws.send(data);
     return true;
+  }
+
+  /** Sends a ready-made text (the keepalive), with the lab latency like `send`. */
+  private sendRaw(data: string): void {
+    const ws = this.ws;
+    if (ws?.readyState !== OPEN) return;
+    if (this.latencyMs > 0) setTimeout(() => ws.readyState === OPEN && ws.send(data), this.latencyMs);
+    else ws.send(data);
   }
 
   /** 🐞 Test Lab: the connection drops (as on a network blip) and none opens again for `downMs`. */
@@ -187,6 +195,9 @@ export class RoomConnection {
       for (const delay of INITIAL_PINGS_MS) this.timers.push(setTimeout(() => this.ping(), delay));
       this.lastHeard = Date.now();
       this.lastPingAt = 0;
+      // QUOTA1a: mostly the free keepalive (the object answers it without waking), a real ping (a clock sample) once a
+      // minute; either answer counts as "heard".
+      const tick = keepaliveTicks(ROOM_CLOCK_EVERY, () => this.sendRaw(KEEPALIVE), () => this.ping());
       this.pingTimer = setInterval(() => {
         // Son ping'e hiç cevap gelmediyse (ve üstünden yeterince geçtiyse) bağlantı yarı açık:
         // yeniden kur. Sadece "uzun süredir ses yok"a bakmayız; Chrome arka plandaki
@@ -203,12 +214,13 @@ export class RoomConnection {
           return;
         }
         this.lastPingAt = now;
-        this.ping();
-      }, PING_INTERVAL_MS);
+        tick();
+      }, ROOM_KEEPALIVE_MS);
     });
 
     const receive = (event: { data: unknown }) => {
       this.lastHeard = Date.now();
+      if (event.data === KEEPALIVE_ACK) return;
       let message: ServerMessage;
       try {
         message = JSON.parse(String(event.data)) as ServerMessage;

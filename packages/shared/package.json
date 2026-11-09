@@ -40,6 +40,7 @@
     "./sync-engine": "./src/sync-engine.ts",
     "./video-element": "./src/video-element.ts",
     "./connection": "./src/connection.ts",
+    "./keepalive": "./src/keepalive.ts",
     "./logo": "./src/logo.ts",
     "./qr": "./src/qr.ts",
     "./recap": "./src/recap.ts",

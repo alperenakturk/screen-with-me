@@ -35,7 +35,8 @@ import quiz3Art from './art/tutorial/quiz-3-podium.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
 import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
-import { GAME_PING_MS, silence } from './silent.ts';
+import { silence } from './silent.ts';
+import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -302,7 +303,15 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     const waitingForMe = s.phase === 'question' && !(myPick && myPick.n === s.n) && s.players.some((p) => p.id === me && !p.answered);
     if (waitingForMe && secs >= 1 && secs <= 3 && secs !== lastTick) playSound('tick');
     lastTick = waitingForMe && secs <= 3 ? secs : 0;
+    // Time is up but the phase hasn't moved: nudge the table with a real ping (any message makes it catch up). Since
+    // QUOTA1a the page's keepalive no longer reaches the table, so this is the page's way to say "it's late".
+    const now = Date.now();
+    if (left === 0 && s.endsAt + 1500 < now + offset && now - nudgedAt > 3000) {
+      nudgedAt = now;
+      send({ t: 'ping' });
+    }
   }
+  let nudgedAt = 0;
   const ticker = window.setInterval(tick, 200);
 
   // ---- Bağlantı ----
@@ -315,6 +324,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (quiet.on) return;
     if (ws?.readyState === OPEN) ws.send(JSON.stringify(message));
   }
+  function sendKeepalive(): void {
+    if (!quiet.on && ws?.readyState === OPEN) ws.send(KEEPALIVE);
+  }
   function connect(): void {
     if (stopped) return;
     const socket = openSocket(`${location.origin.replace(/^http/, 'ws')}/api/quiz/${encodeURIComponent(gameId)}/ws`);
@@ -324,6 +336,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       socket.send(JSON.stringify({ t: 'hello', v: QUIZ_PROTOCOL_VERSION, name, avatar, cid: clientId(), lang, seen: encodeSeen(seenIds()) } satisfies QuizClientMessage)),
     );
     socket.addEventListener('message', (event) => {
+      if (event.data === KEEPALIVE_ACK) return;
       let m: QuizServerMessage;
       try {
         m = JSON.parse(String(event.data)) as QuizServerMessage;
@@ -352,10 +365,14 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     });
   }
   connect();
-  const ping = window.setInterval(() => {
-    pingAt = performance.now();
-    send({ t: 'ping' });
-  }, GAME_PING_MS);
+  // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute (the clock offset).
+  const ping = window.setInterval(
+    keepaliveTicks(GAME_CLOCK_EVERY, sendKeepalive, () => {
+      pingAt = performance.now();
+      send({ t: 'ping' });
+    }),
+    GAME_KEEPALIVE_MS,
+  );
   const close = () => {
     stopped = true;
     ws?.close();

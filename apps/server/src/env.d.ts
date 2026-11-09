@@ -13,6 +13,11 @@ interface Env {
   SWM_LOCAL_UNPACED?: string;
   /** Test Lab DL3b: `wrangler dev --var SWM_LAB_SERVER:1` (local test servers only, never live) turns on the server's lab messages. */
   SWM_LAB_SERVER?: string;
+  /** QUOTA1a limits (`limits.ts`): optional overrides of the code defaults, e.g. `MSG_RATE` "30". */
+  MSG_RATE?: string;
+  MSG_BURST?: string;
+  DRAW_MSG_RATE?: string;
+  ROOM_IP_CONNECTIONS?: string;
   /** Card LABLOCK: the owner's Test Lab code (a production secret, never in the repo); without it the lab stays shut on live. */
   LAB_CODE?: string;
   /** Card LABLOCK: `wrangler dev --var SWM_LAB_OPEN:1` (local test servers only, never live) opens the lab for any code. */

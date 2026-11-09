@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ServerClock } from './clock.ts';
 import { RoomConnection } from './connection.ts';
+import { KEEPALIVE_ACK } from './keepalive.ts';
 
 /** Sahte WebSocket: açılır, gönderilenleri kaydeder; sunucu cevabını test yazar. */
 class FakeSocket {
@@ -76,6 +77,49 @@ describe('RoomConnection silence detection', () => {
       FakeSocket.all[0]!.pong();
     }
     expect(FakeSocket.all.length).toBe(1);
+    conn.close();
+  });
+});
+
+describe('RoomConnection keepalive (QUOTA1a)', () => {
+  it('sends the free keepalive on most ticks and a real clock ping once a minute', async () => {
+    const conn = connect();
+    await vi.advanceTimersByTimeAsync(5);
+    const socket = FakeSocket.all[0]!;
+    await vi.advanceTimersByTimeAsync(2_000); // the first pings after opening (clock samples)
+    socket.sent.length = 0;
+    for (let i = 0; i < 12; i++) {
+      await vi.advanceTimersByTimeAsync(10_000);
+      socket.emit('message', JSON.parse(KEEPALIVE_ACK));
+      socket.pong();
+    }
+    const kinds = socket.sent.map((m) => m.t);
+    expect(kinds.filter((t) => t === 'ping').length).toBe(2);
+    expect(kinds.filter((t) => t === 'hb').length).toBe(10);
+    conn.close();
+  });
+
+  it('stays connected on keepalive answers between pings and never hands them to the page', async () => {
+    const seen: string[] = [];
+    const conn = new RoomConnection({
+      serverUrl: 'http://test',
+      roomId: 'abc123',
+      name: 'Alex',
+      clock: new ServerClock(() => Date.now()),
+      onMessage: (m) => seen.push(m.t),
+    });
+    conn.connect();
+    await vi.advanceTimersByTimeAsync(5);
+    const socket = FakeSocket.all[0]!;
+    socket.pong();
+    for (let i = 0; i < 18; i++) {
+      await vi.advanceTimersByTimeAsync(10_000);
+      // The runtime answers the keepalive, the object the real pings.
+      if (socket.sent.at(-1)?.t === 'hb') socket.emit('message', JSON.parse(KEEPALIVE_ACK));
+      else socket.pong();
+    }
+    expect(FakeSocket.all.length).toBe(1);
+    expect(seen).not.toContain('hb');
     conn.close();
   });
 });

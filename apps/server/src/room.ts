@@ -1,3 +1,7 @@
+import { KEEPALIVE } from '@swm/shared/keepalive';
+import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
+import { closeFlooder, floodGuard, limitOf } from './limits.ts';
+import { meterObject } from './meter.ts';
 import { DurableObject } from 'cloudflare:workers';
 import {
   MAX_PINS,
@@ -286,6 +290,8 @@ export class Room extends DurableObject<Env> {
   private emptySince: number | null = null;
   /** Hayalet ayıklamanın en son çalıştığı an (bkz. pruneStale). */
   private lastPrune = 0;
+  /** QUOTA1a: the per-connection message ceiling (`limits.ts`). */
+  private readonly flood = floodGuard(this.env);
   /** HTTP fallback connections (`fallback.ts`): the same messages and rules as the WebSockets. */
   private readonly polls = new PollHub({
     admit: (socket, request) => this.admit(socket, request),
@@ -344,6 +350,8 @@ export class Room extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    meterObject(this, ctx, env, 'room');
+    startKeepalive(ctx);
     ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get<RoomData>('room');
       if (saved && Array.isArray(saved.queue)) this.room = saved;
@@ -432,6 +440,11 @@ export class Room extends DurableObject<Env> {
     return new Response(null, { status: 101, webSocket: client });
   }
 
+  /** CI's local server (`SWM_LOCAL_UNPACED` on localhost): every test runs from one address, so the per-address cap is off. */
+  private unpaced(request: Request): boolean {
+    return this.env.SWM_LOCAL_UNPACED === '1' && /^(localhost|127\.0\.0\.1)$/.test(new URL(request.url).hostname);
+  }
+
   /** A new connection (WebSocket or HTTP fallback): full room → closed, otherwise it waits for its hello. */
   private async admit(server: WebSocket, request: Request): Promise<void> {
     // Security L5: "full" counts people who joined; sockets that never said hello are closed after UNJOINED_MS and
@@ -441,11 +454,15 @@ export class Room extends DurableObject<Env> {
     const others = this.openSockets().filter((s) => s !== server).map((s) => s.deserializeAttachment() as Attachment | null);
     const joined = others.filter((a) => a?.name).length;
     const waiting = others.length - joined;
+    const ip = request.headers.get(IP_HEADER);
     if (joined >= MAX_MEMBERS || waiting >= MAX_UNJOINED) {
       this.sendTo(server, { t: 'error', code: 'room_full' });
       server.close(4001, 'room_full');
+    } else if (ip && !this.unpaced(request) && others.filter((a) => a?.ip === ip).length >= limitOf(this.env, 'ROOM_IP_CONNECTIONS')) {
+      // QUOTA1a: one address can't fill a room (generous for carrier NAT and families; CI's local server skips it).
+      this.sendTo(server, { t: 'error', code: 'room_ip_full' });
+      server.close(4012, 'room_ip_full');
     } else {
-      const ip = request.headers.get(IP_HEADER);
       const attachment: Attachment = { id: newId().slice(0, 8), name: null, openedAt: now, ...(ip ? { ip } : {}) };
       server.serializeAttachment(attachment);
       await this.freezeIfLongEmpty();
@@ -455,6 +472,22 @@ export class Room extends DurableObject<Env> {
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    // QUOTA1a: the free keepalive reaches the object only over the HTTP fallback (a WebSocket's gets the runtime's answer).
+    if (raw === KEEPALIVE) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (a) {
+        a.seen = Date.now();
+        ws.serializeAttachment(a);
+      }
+      answerKeepalive(ws, raw);
+      return;
+    }
+    // QUOTA1a: a connection that sends far more than any person would is closed (pings count, the keepalive doesn't).
+    if (!this.flood.allow(ws)) {
+      closeFlooder(ws, JSON.stringify({ t: 'error', code: 'flood' } satisfies ServerMessage));
+      await this.onLeave(ws);
+      return;
+    }
     const message = typeof raw === 'string' ? parseClientMessage(raw) : null;
     if (message === null) {
       this.sendTo(ws, { t: 'error', code: 'bad_message' });
@@ -1154,7 +1187,9 @@ export class Room extends DurableObject<Env> {
     this.closeUnjoined(now);
     for (const ws of this.openSockets()) {
       const a = ws.deserializeAttachment() as Attachment | null;
-      if (!a?.name || a.seen === undefined || now - a.seen <= STALE_MS) continue;
+      // QUOTA1a: "heard" = its last message or the runtime's last answer to its free keepalive.
+      const heard = heardAt(this.ctx, ws, a?.seen);
+      if (!a?.name || heard === undefined || now - heard <= STALE_MS) continue;
       try {
         ws.close(4004, 'stale');
       } catch {

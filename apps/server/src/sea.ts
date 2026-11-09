@@ -1,3 +1,4 @@
+import { meterObject } from './meter.ts';
 import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
 import { labOnRequest, labRemembered } from './lab.ts';
@@ -23,7 +24,9 @@ import {
   type ShipPlace,
   type ShotResult,
 } from '@swm/shared/games/sea';
-import { closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
+import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
+import { FLOOD_CODE, floodGuard } from './limits.ts';
+import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
 
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_SOCKETS = 40;
@@ -89,6 +92,8 @@ export class Sea extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    meterObject(this, ctx, env, 'sea');
+    startKeepalive(ctx);
     void ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get<Saved>('sea');
       if (saved?.seats) this.data = { ...fresh(), ...saved };
@@ -126,8 +131,20 @@ export class Sea extends DurableObject<Env> {
     }
   }
 
+  /** QUOTA1a: the per-connection message ceiling (`limits.ts`). */
+  private readonly flood = floodGuard(this.env, 'MSG_RATE');
+  /** QUOTA1a: a socket's last message or the runtime's last free-keepalive answer, whichever is later. */
+  private readonly heard = (ws: unknown, seen: number | undefined) => heardAt(this.ctx, ws, seen);
+
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
     touch(ws);
+    if (answerKeepalive(ws, raw)) return;
+    // QUOTA1a: a connection that sends far more than any player would is closed (its leave runs once, here).
+    if (!this.flood.allow(ws)) {
+      closeAsGone(ws, FLOOD_CODE, 'flood', JSON.stringify({ t: 'error', code: 'rate' }));
+      await this.left(ws);
+      return;
+    }
     const me = ws.deserializeAttachment() as Attachment;
     const message = typeof raw === 'string' ? parseSeaMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
@@ -157,7 +174,7 @@ export class Sea extends DurableObject<Env> {
     const now = Date.now();
     await this.polls.sweepDue(now);
     // GHOST: sockets silent past `GHOST_MS` died without a close frame; they leave like a real close.
-    for (const ws of closeGhosts(this.sockets())) await this.left(ws);
+    for (const ws of closeGhosts(this.sockets(), Date.now(), GHOST_MS, this.heard)) await this.left(ws);
     if (this.sockets().length === 0 && this.data.emptySince !== null && now - this.data.emptySince >= EMPTY_TTL_MS) {
       await this.ctx.storage.deleteAll();
       this.data = fresh();
@@ -390,7 +407,7 @@ export class Sea extends DurableObject<Env> {
     if (this.data.emptySince !== null) times.push(this.data.emptySince + EMPTY_TTL_MS);
     const due = this.polls.nextDue();
     if (due !== null) times.push(due);
-    const ghost = nextGhostCheck(this.sockets());
+    const ghost = nextGhostCheck(this.sockets(), this.heard);
     if (ghost !== null) times.push(ghost);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();

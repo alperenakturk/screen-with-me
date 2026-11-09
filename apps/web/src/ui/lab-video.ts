@@ -111,6 +111,57 @@ export function createVideoLab() {
       },
     },
     {
+      id: 'limits.flood',
+      title: { en: 'Send too much at once', tr: 'Bir anda çok fazla gönder' },
+      help: {
+        en: 'This tab sends 300 messages in one go, far more than a person ever does: the room closes my connection with a note ("sent too much at once") and I reconnect as the same person. A number sets how many (1–1000).',
+        tr: 'Bu sekme bir seferde 300 mesaj gönderir, bir insanın hiç göndermeyeceği kadar: oda bağlantımı bir notla kapatır ("bir anda çok fazla şey gönderdi") ve aynı kişi olarak geri bağlanırım. Bir sayı yazarsan kaç tane olacağı o olur (1–1000).',
+      },
+      tab: 'video',
+      where: IN_ROOM,
+      available: inRoom,
+      run: (arg) => {
+        const n = amount(arg, 300, 1, 1000);
+        need().flood(n);
+        return { en: `sent ${n} at once`, tr: `bir anda ${n} gönderildi` };
+      },
+    },
+    {
+      id: 'limits.crowd',
+      title: { en: 'Open 12 more connections to this room', tr: 'Bu odaya 12 bağlantı daha aç' },
+      help: {
+        en: 'Opens 12 extra connections from this browser (they never join; closed after 5 s). One address may hold 12 in a room, so with mine the last one is refused ("too many connections from your network"). A test server started for CI lets all of them in. A number sets how many (1–40).',
+        tr: 'Bu tarayıcıdan 12 bağlantı daha açar (odaya girmezler; 5 sn sonra kapanır). Bir adres bir odada 12 bağlantı tutabilir, benimkiyle birlikte sonuncusu reddedilir ("ağından çok fazla bağlantı var"). CI için açılan test sunucusu hepsini alır. Bir sayı yazarsan kaç tane olacağı o olur (1–40).',
+      },
+      tab: 'video',
+      where: IN_ROOM,
+      available: inRoom,
+      run: async (arg) => {
+        const n = amount(arg, 12, 1, 40);
+        const url = need().socketUrl();
+        const results = await Promise.all(
+          Array.from(
+            { length: n },
+            () =>
+              new Promise<boolean>((done) => {
+                const ws = new WebSocket(url);
+                let refused = false;
+                ws.addEventListener('message', (e) => {
+                  if (String(e.data).includes('"room_ip_full"')) refused = true;
+                });
+                ws.addEventListener('close', () => done(refused));
+                setTimeout(() => {
+                  ws.close();
+                  done(refused);
+                }, 5000);
+              }),
+          ),
+        );
+        const refused = results.filter(Boolean).length;
+        return { en: `${n} opened, ${refused} refused for too many from this address`, tr: `${n} açıldı, ${refused} tanesi bu adresten çok fazla diye reddedildi` };
+      },
+    },
+    {
       id: 'video.drift',
       title: { en: 'My video falls 3 s behind', tr: 'Videom 3 sn geride kalsın' },
       help: {
