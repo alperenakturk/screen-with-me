@@ -2,8 +2,12 @@
 // an object is billed; on Free, a used-up quota stops every object until 00:00 UTC). Each limit has a default here and
 // a Worker variable of the same name that overrides it without a code release (`wrangler.jsonc` `vars`, or the
 // dashboard's Variables): only to loosen or tighten it in an emergency.
+import { UPLOAD_BYTES_PER_DAY, UPLOAD_BYTES_PER_IP_DAY, UPLOAD_BYTES_WINDOW } from '@swm/shared/upload-budget';
 
-export const LIMIT_DEFAULTS = {
+export const LIMIT_DEFAULTS: Record<
+  'MSG_RATE' | 'MSG_BURST' | 'DRAW_MSG_RATE' | 'ROOM_IP_CONNECTIONS' | 'UPLOAD_IP_BYTES' | 'UPLOAD_DAY_BYTES' | 'UPLOAD_WINDOW_BYTES',
+  number
+> = {
   /**
    * Messages per second one connection may send on average (a token bucket: `MSG_BURST` at once, refilled at this
    * rate). The free keepalive never reaches the object and isn't counted; real pings are. A person never comes near:
@@ -19,7 +23,13 @@ export const LIMIT_DEFAULTS = {
    * people behind one address (carrier NAT), and a family shares one router; a room holds 50.
    */
   ROOM_IP_CONNECTIONS: 12,
-} as const;
+  /** Images (custom emojis, chat images) one address may store per UTC day, all rooms (`upload-budget.ts`). */
+  UPLOAD_IP_BYTES: UPLOAD_BYTES_PER_IP_DAY,
+  /** Images everyone may store per UTC day. */
+  UPLOAD_DAY_BYTES: UPLOAD_BYTES_PER_DAY,
+  /** IMG2: images everyone may store over the last 30 days (bounds what the account's storage holds). */
+  UPLOAD_WINDOW_BYTES: UPLOAD_BYTES_WINDOW,
+};
 
 export type LimitName = keyof typeof LIMIT_DEFAULTS;
 

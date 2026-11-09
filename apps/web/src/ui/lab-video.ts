@@ -162,6 +162,21 @@ export function createVideoLab() {
       },
     },
     {
+      id: 'limits.ageImages',
+      title: { en: 'Chat images run out now', tr: 'Sohbet görselleri şimdi süresini doldursun' },
+      help: {
+        en: 'Local lab server only: the room drops its chat images as if their time were up (1 day, 7 in a saved room). Their messages stay; after a reload they show the "Image" placeholder.',
+        tr: 'Sadece yerel lab sunucusunda: oda sohbet görsellerini süreleri dolmuş gibi siler (1 gün, kayıtlı odada 7). Mesajları kalır; sayfa yenilenince yerlerinde "Görsel" yazar.',
+      },
+      tab: 'video',
+      where: { en: 'test server only', tr: 'sadece test sunucusu' },
+      available: () => (local() ? inRoom() : { en: 'not a local test server', tr: 'yerel test sunucusu değil' }),
+      run: () => {
+        need().ageImages();
+        return { en: 'asked the room', tr: 'odaya söylendi' };
+      },
+    },
+    {
       id: 'video.drift',
       title: { en: 'My video falls 3 s behind', tr: 'Videom 3 sn geride kalsın' },
       help: {

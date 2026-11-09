@@ -45,6 +45,8 @@ export interface RoomLab {
   flood(count: number): void;
   /** The room's connection address (`…/api/rooms/<id>/ws`), for extra test connections. */
   socketUrl(): string;
+  /** IMG2: the room's chat images run out now (a local lab server only; others refuse). */
+  ageImages(): void;
   // 🧪 Scenarios (DL5): what the room shows, and the room's own UI paths.
   playback(): { item: boolean; paused: boolean };
   memberId(): string | null;

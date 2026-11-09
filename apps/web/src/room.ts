@@ -1160,6 +1160,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     flood: (count) => {
       for (let i = 0; i < count; i++) connection.send({ t: 'ping', c: Date.now() });
     },
+    ageImages: () => void connection.send({ t: 'lab', op: 'age-images' }),
     socketUrl: () => `${location.origin.replace(/^http/, 'ws')}/api/rooms/${encodeURIComponent(roomId)}/ws`,
     restart: () => connection.reconnect(),
     latency: (ms) => connection.labLatency(ms),

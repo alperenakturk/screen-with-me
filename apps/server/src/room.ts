@@ -80,6 +80,13 @@ const EMPTY_ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 export const STATS_SAVE_MS = 30_000;
 /** Kaydedilmiş oda boşken bu kadar saklanır. */
 const SAVED_ROOM_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/**
+ * QUOTA1a / IMG2: how long a chat image is kept after its message (CF-5, storage is the 30-day risk). A one-time room is
+ * deleted a day after it empties, but one people never leave kept its images for good; a saved room kept them 30 days.
+ * After this its message stays and shows the image placeholder.
+ */
+const CHAT_IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
+const SAVED_CHAT_IMAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 /** Kayıtlı odada en fazla kaç videonun kaldığı yer hatırlanır. */
 const MAX_HISTORY = 30;
 /** Shorts'ta ↑ (bir öncekine dön) için hatırlanan son oynayanlar. */
@@ -107,6 +114,12 @@ const SYSTEM: Member = { id: SYSTEM_MEMBER_ID, name: 'Sidelit' };
 
 /** Her WebSocket bağlantısına iliştirilen bilgi. Sunucu uykuya geçse bile korunur. */
 interface Attachment {
+  /**
+   * QUOTA1a: refused while opening (room full, too many from one address): it gets the error at once, but a close made
+   * during the upgrade never reaches the page (and blocks a later one), so the socket is closed on its first message (a
+   * page sends its hello at once) or by the unjoined sweep after `UNJOINED_MS`.
+   */
+  refused?: 4001 | 4012;
   id: string;
   name: string | null;
   avatar?: Avatar;
@@ -456,12 +469,12 @@ export class Room extends DurableObject<Env> {
     const waiting = others.length - joined;
     const ip = request.headers.get(IP_HEADER);
     if (joined >= MAX_MEMBERS || waiting >= MAX_UNJOINED) {
+      server.serializeAttachment({ id: newId().slice(0, 8), name: null, openedAt: now, refused: 4001 } satisfies Attachment);
       this.sendTo(server, { t: 'error', code: 'room_full' });
-      server.close(4001, 'room_full');
-    } else if (ip && !this.unpaced(request) && others.filter((a) => a?.ip === ip).length >= limitOf(this.env, 'ROOM_IP_CONNECTIONS')) {
+    } else if (ip && !this.unpaced(request) && others.filter((a) => a?.ip === ip && !a.refused).length >= limitOf(this.env, 'ROOM_IP_CONNECTIONS')) {
       // QUOTA1a: one address can't fill a room (generous for carrier NAT and families; CI's local server skips it).
+      server.serializeAttachment({ id: newId().slice(0, 8), name: null, openedAt: now, refused: 4012 } satisfies Attachment);
       this.sendTo(server, { t: 'error', code: 'room_ip_full' });
-      server.close(4012, 'room_ip_full');
     } else {
       const attachment: Attachment = { id: newId().slice(0, 8), name: null, openedAt: now, ...(ip ? { ip } : {}) };
       server.serializeAttachment(attachment);
@@ -480,6 +493,11 @@ export class Room extends DurableObject<Env> {
         ws.serializeAttachment(a);
       }
       answerKeepalive(ws, raw);
+      return;
+    }
+    const refused = (ws.deserializeAttachment() as Attachment | null)?.refused;
+    if (refused) {
+      ws.close(refused, refused === 4012 ? 'room_ip_full' : 'room_full');
       return;
     }
     // QUOTA1a: a connection that sends far more than any person would is closed (pings count, the keepalive doesn't).
@@ -628,6 +646,12 @@ export class Room extends DurableObject<Env> {
         // Test Lab (DL3b): fill the tip jar for the film now, on a local lab server only (`lab.ts`).
         this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'bad_message' });
+        if (message.op === 'age-images') {
+          // IMG2: the chat images' time is up now (their messages stay, showing the placeholder).
+          await this.pruneChatImages(Date.now() + this.chatImageTtl());
+          await this.scheduleAlarm();
+          return;
+        }
         if (!this.room.state.item) return;
         this.tipJar = { fill: 0, boost: this.room.state.item.id };
         this.broadcast({ t: 'tipjar', fill: 0, size: TIP_JAR_SIZE, boost: this.tipJar.boost, by: me });
@@ -799,6 +823,8 @@ export class Room extends DurableObject<Env> {
         }
         this.stats.chat(keyOf(attachment), me);
         await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
+        // IMG2: the alarm drops the image when its time is up.
+        if (image) await this.scheduleAlarm();
         return;
       case 'rename': {
         if (attachment.tv) return;
@@ -986,6 +1012,7 @@ export class Room extends DurableObject<Env> {
       return;
     }
     await this.pruneRecaps(now);
+    if (this.chatImages.size) await this.pruneChatImages(now);
     if (this.waits.waitingSince !== null && now - this.waits.waitingSince >= WAIT_MAX_MS) await this.evaluateWait();
     await this.closeEmptyTables(now);
     if (this.settings.startsAt !== undefined && now >= this.settings.startsAt) await this.startScheduled(now);
@@ -1175,7 +1202,8 @@ export class Room extends DurableObject<Env> {
       if (!a || a.name || a.openedAt === undefined || now - a.openedAt <= UNJOINED_MS) continue;
       if (a.knock && now - a.knock.at <= KNOCK_MAX_MS) continue;
       try {
-        ws.close(a.knock ? 4011 : 4008, a.knock ? 'knock_timeout' : 'no_hello');
+        if (a.refused) ws.close(a.refused, a.refused === 4012 ? 'room_ip_full' : 'room_full');
+        else ws.close(a.knock ? 4011 : 4008, a.knock ? 'knock_timeout' : 'no_hello');
       } catch {
         // Already closed.
       }
@@ -1204,6 +1232,8 @@ export class Room extends DurableObject<Env> {
     const times: number[] = [];
     if (this.waits.waitingSince !== null) times.push(this.waits.waitingSince + WAIT_MAX_MS + 50);
     if (this.emptySince !== null) times.push(this.emptySince + this.emptyTtl());
+    const imageDue = this.chatImageDue();
+    if (imageDue !== null) times.push(imageDue + 50);
     if (this.settings.startsAt !== undefined) times.push(this.settings.startsAt);
     for (const table of this.tables) if (table.emptyAt !== null) times.push(table.emptyAt + TABLE_EMPTY_MS);
     // BH8: HTTP fallback sessions that stop polling are closed in the alarm.
@@ -1236,9 +1266,24 @@ export class Room extends DurableObject<Env> {
     return id;
   }
 
-  /** Drops images whose messages left the chat history, and the oldest ones beyond MAX_CHAT_IMAGES. */
-  private async pruneChatImages(): Promise<void> {
-    const used = new Set(this.chat.flatMap((m) => (m.image ? [m.image] : [])));
+  /** How long this room keeps a chat image (IMG2). */
+  private chatImageTtl(): number {
+    return this.settings.saved ? SAVED_CHAT_IMAGE_TTL_MS : CHAT_IMAGE_TTL_MS;
+  }
+
+  /** When the oldest kept chat image runs out (null: none). */
+  private chatImageDue(): number | null {
+    const ats = this.chat.filter((m) => m.image && this.chatImages.has(m.image)).map((m) => m.at);
+    return ats.length ? Math.min(...ats) + this.chatImageTtl() : null;
+  }
+
+  /**
+   * Drops images whose messages left the chat history or are older than `chatImageTtl()` (IMG2), and the oldest ones
+   * beyond MAX_CHAT_IMAGES.
+   */
+  private async pruneChatImages(now = Date.now()): Promise<void> {
+    const ttl = this.chatImageTtl();
+    const used = new Set(this.chat.flatMap((m) => (m.image && now - m.at < ttl ? [m.image] : [])));
     const drop = [...this.chatImages.keys()].filter((id) => !used.has(id));
     const kept = [...this.chatImages.keys()].filter((id) => used.has(id));
     drop.push(...kept.slice(0, Math.max(0, kept.length - MAX_CHAT_IMAGES)));

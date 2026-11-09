@@ -37,6 +37,19 @@ describe('upload budget (R4-1)', () => {
     const next = takeUpload(state, 'aa', 1000, DAY + 1, limits);
     expect(next.answer).toBe('ok');
     expect(next.state.perIp).toEqual({ aa: 1000 });
+    expect(next.state.past).toEqual({ '0': 1000 });
+  });
+
+  it('IMG2: stops everyone once the window total is reached, and frees days that leave the window', () => {
+    const w = { perIp: 1e9, perDay: 1000, window: 2500 };
+    let state: UploadState | undefined;
+    for (let d = 0; d < 2; d++) ({ state } = takeUpload(state, 'aa', 1000, d * DAY, w));
+    ({ state } = takeUpload(state, 'aa', 400, 2 * DAY, w));
+    const refused = takeUpload(state, 'bb', 200, 2 * DAY + 1, w);
+    expect(refused.answer).toBe('store');
+    // 30 days after day 0 it has left the window: room again.
+    expect(takeUpload(state, 'bb', 900, 30 * DAY, w).answer).toBe('ok');
+    expect(Object.keys(takeUpload(state, 'bb', 1, 31 * DAY, w).state.past ?? {})).toEqual(['2']);
   });
 
   it('refuses bad keys and sizes without counting them', () => {

@@ -22,8 +22,10 @@ interface Env {
   LAB_CODE?: string;
   /** Card LABLOCK: `wrangler dev --var SWM_LAB_OPEN:1` (local test servers only, never live) opens the lab for any code. */
   SWM_LAB_OPEN?: string;
-  /** Security R4-1, local tests only (`wrangler dev --var UPLOAD_IP_BYTES:<n>`): a lower per-address daily image budget. */
+  /** Image budgets (`limits.ts`, `upload-budget.ts`); e.g. a local test's `wrangler dev --var UPLOAD_IP_BYTES:<n>`. */
   UPLOAD_IP_BYTES?: string;
+  UPLOAD_DAY_BYTES?: string;
+  UPLOAD_WINDOW_BYTES?: string;
   /** Security R4-10: "on" turns the hidden TV version's server side on (pairing, `tv-link`, a TV's hello); off otherwise. */
   TV?: string;
   /** Connections per IP and minute (Workers rate limiting binding; missing in old configs = no limit). */
