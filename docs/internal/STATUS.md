@@ -661,6 +661,9 @@ with the same friend:
   left; Last Heart's cards beside its special moves), text big, nothing cut off or scrolling, the end card fits. Open
   each side game and press the head's "in the video's place" icon (or 🐞 → 🎮 "Oyun penceresi: videonun yeri ile
   serbest pencere arasında geç"): Five Frames' tickets left, letters right. Also on a tablet both ways.
+- [ ] G19. Side games beside the video (SIDE340): on a 1366 × 768 laptop open Snack Bar, Window Garden and Five Frames:
+  each opens in the narrow column right of the video (never on the video), every text readable, nothing cut off;
+  type a word in Five Frames, buy a stand in Snack Bar, water a pot in Window Garden.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
