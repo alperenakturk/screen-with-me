@@ -24,6 +24,14 @@ games' tip jar, cuttings and badges.
 - A little motion: the game window slides in as it opens, chess and dama pieces slide to their new square, and Last
   Heart's cards flip over when they turn face up. If your device is set to reduce motion, none of it plays.
 
+### 0.9.97.105 — 10 Nov
+- Meet **Stub**, Sidelit's new mascot: a cinema ticket that came along to the show. Stub lights the way on the home page
+  with an usher's torch, wears each theme's costume, waits in the empty room, sits on the Help page and on the
+  extension's "Start watching" card. (The games get their Stub in a release of their own.)
+- **Neon** has a new look: one warm neon sign on a dark brick wall, coral and amber instead of magenta and cyan.
+- The home page's pictures in Moonlit Nights, Drive-In and Night Express moved their landmarks to the right, so nothing
+  busy sits behind the title any more.
+
 ### 0.9.97.104 — 10 Nov
 - Snack Bar: every place has its own shop-front colours; a seasonal stand comes each week (hot cocoa, lemonade, cotton
   candy, caramel apples) and earns its own badge at level 5; after each film the receipt has a short manager's report

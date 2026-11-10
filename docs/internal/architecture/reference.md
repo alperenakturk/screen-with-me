@@ -589,7 +589,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   **The picture (card 6f, 0.9.95.6, Design's storyboard `docs/internal/design/intro/`, built 1:1 from `preview.html`):**
   `intro.ts` `createIntro`: the logo pops in with its light off, at 0.72 s the light (`logo-light` group: cone + bloom)
   bursts from the triangle's tip (`scaleX`, `transform-origin: 29px 32px`, view-box), the eyes fade in and blink, at
-  1.1 s the logo slides left while Glowbeam (`createMascot`, happy) springs out of the light, "Enjoy the show!" rises,
+  1.1 s the logo slides left while the mascot (Stub since card NP3; `createMascot`, happy) springs out of the light, "Enjoy the show!" rises,
   fade out at 2.16–2.7 s (card R7, 0.9.97.16: `startRoom` works out `introDue` = not a TV, not the shell, `in:<room>` not yet set in this tab, and `playIntro()` runs on the first `welcome`); sizes scale with `--s` = min(26vmin, 140px); reduced motion = one still frame fading in and
   out. Harness `scripts/harness/intro/run.cjs` (seeks every animation to each beat).
 - **Player controls (option A, 0.9.91.1, owner's choice on https://claude.ai/artifact/SjcRcwoKd8n93W1cK4c6TC):**
@@ -1495,8 +1495,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `home.*` keys in `i18n.ts`). First screen (`.hm-first`, the window minus the top bar, `--hm-top`): text (`.hm-text`:
   pill, the owner's slogan with its second line in gold, one line, "Create room" (`#start-form`, gold) + "Join with a
   code" (`#join-toggle` → `#join`), the save box (`#start-save` → `#create-name`, `create:<room>`), the continue line
-  `#continue` (`lastRoom`, "↺ Continue: name · N inside · Open")) and the art (`.hm-art`, inline SVG: Glowbeam
-  (in the shown theme's costume since card 15d, `placeGlowbeam`; `createMascot` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and three random themed avatar faces (a phone hides the art's words); `aria-hidden`; the bar
+  `#continue` (`lastRoom`, "↺ Continue: name · N inside · Open")) and the art (`.hm-art`, inline SVG: the mascot
+  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and three random themed avatar faces (a phone hides the art's words); `aria-hidden`; the bar
   runs 6 s, the beam breathes, nothing moves with reduced motion), the three feature cards (`.hm-feat`) at its foot.
   Then `#how`: three steps, the extension card, saved rooms (`#recent`), a Help line. No video link box (3A) and no theme strip; 🎨 in the top bar (back since card 15d). Computer / sideways tablet: two columns (slogan 64 px); upright tablet: one centred
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
@@ -1535,7 +1535,18 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   font is fetched. The home titles use `--font-title` (`'Sidelit Title'`, the variable Bricolage Grotesque: the
   wordmark cut lacks ğ ş ı İ). Setting: ⚙️ My screen `#opt-font` (`ui/settings.ts`); Test Lab `fonts.next`,
   `fonts.<id>` (this page only) and a status line. Saved with `save()`, so the extension's overlay gets it too. Harness
-  `scripts/harness/fonts/run.cjs` (CI, `site` job). Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). Harness
+  `scripts/harness/fonts/run.cjs` (CI, `site` job). Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). **Stub (card NP3, Design's MASCOT3 `docs/internal/design/mascot-3.md`):** the mascot is
+  Stub, a cinema ticket with the logo's ink eyes on the D1 light, drawn in `packages/shared/src/logo.ts` `mascotTree`
+  (moods default / happy / watching / waiting / wow / sorry, `small` = the ≤ 32 px cut, `torch` = the usher's torch in
+  the right hand); `mascot.svg` / `mascot-happy.svg` come from `make-icons.mjs`; the theme costumes are copied from
+  `docs/internal/design/mascot-3/costumes/<theme>.svg` by `scripts/theme-art.mjs` (every costume holds the torch). The
+  home's light starts at the torch lens (`LAMP` = 0.908 / 0.561 of the mascot box) and its cone (`beamPath`) is drawn
+  from `BEAM_BACK` units behind the lens so it is wide enough for the laptop next to it. Stub also stands beside the help
+  page's title and on the extension's "Start watching" card (`start-card.ts`, `createMascot`, waiting). The scenes keep
+  their landmarks out of the home's text column: Moonlit Nights' tile panel, column, arch and kandil are mirrored to the
+  right edge (one cypress), Drive-In's sign mast stands by the screen and its bulb chain sags low, Night Express's clock
+  tower stands left of the locomotive. **Neon** is one warm neon sign on a dark brick wall (`#ff5a7a` coral, amber
+  second light, faint brick courses; Design's `mascot-3/neon.css`). The games' Stub art and texts are Game Studio's. Harness
   `scripts/harness/home/run.cjs` (5 sizes × EN + TR).
 - **Bigger room on a computer (0.9.92.7, owner: "too much empty space"):** above 860 px wide (not the film page,
   Shorts view, TV or phone) `main` has no 1280 px cap; the room's grid is `minmax(0, max(--stage-w, 560px))` +

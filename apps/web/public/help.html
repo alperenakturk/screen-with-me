@@ -33,6 +33,7 @@
       .feedback-link { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #6a4cf2; color: #fff; text-decoration: none; font-weight: 600; }
       @media (max-width: 560px) { nav.toc { columns: 1; } }
      .top-right { display: flex; align-items: center; gap: 10px; } .theme-link { text-decoration: none; font-size: 18px; line-height: 1; padding: 4px 6px; border: 1px solid var(--border, #2c303b); border-radius: 8px; }
+     .help-title { display: flex; align-items: center; gap: 10px; } .help-stub { flex: none; width: 56px; height: 56px; }
     </style>
   </head>
   <body>
@@ -49,7 +50,7 @@
       </div>
 
       <div data-lang-block="en">
-        <h1>Help</h1>
+        <h1 class="help-title"><img class="help-stub" src="/mascot.svg" alt="" width="56" height="56" />Help</h1>
         <p class="muted">Sidelit lets friends watch the same video at the same moment, each on their own screen. Free, no account.</p>
         <nav class="toc card" aria-label="Contents">
           <a href="#how">How it works</a>
@@ -134,7 +135,7 @@
       </div>
 
       <div data-lang-block="tr" hidden>
-        <h1>Yardım</h1>
+        <h1 class="help-title"><img class="help-stub" src="/mascot.svg" alt="" width="56" height="56" />Yardım</h1>
         <p class="muted">Sidelit ile arkadaşlarınla aynı videoyu, herkes kendi ekranında, aynı anda izlersin. Ücretsiz, hesap gerekmez.</p>
         <nav class="toc card" aria-label="İçindekiler">
           <a href="#how-tr">Nasıl çalışır</a>

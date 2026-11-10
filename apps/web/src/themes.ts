@@ -17,7 +17,7 @@ const SWATCHES: Record<ThemeId, readonly [string, string]> = {
   matinee: ['#f4ede1', '#b03f1c'],
   okyanus: ['#0b2a45', '#2ec5e8'],
   gunbatimi: ['#3a1530', '#ff7a4d'],
-  neon: ['#050508', '#ff2bd6'],
+  neon: ['#0c0809', '#ff5a7a'],
   lokum: ['#18224a', '#e0a84a'],
   binbirgece: ['#141236', '#e8c27a'],
   sinema: ['#0d1020', '#e9b949'],
