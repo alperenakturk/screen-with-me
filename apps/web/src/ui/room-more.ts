@@ -2,7 +2,8 @@ import { menuKeys } from './menu-keys.ts';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 
-export type SettingsSection = 'view' | 'rules' | 'save' | 'schedule';
+import type { SettingsSection } from './settings-dialog.ts';
+export type { SettingsSection };
 
 export interface MoreItem {
   icon: string;
@@ -32,7 +33,7 @@ export function roomMoreItems(deps: {
   const items: MoreItem[] = deps.desktop ? [] : [{ icon: '🎮', label: 'more.games', run: deps.games }];
   if (deps.isHost()) items.push({ icon: '⏰', label: 'more.filmTime', run: () => deps.openSettings('schedule') });
   items.push(
-    { icon: '💾', label: 'more.save', run: () => deps.openSettings('save') },
+    { icon: '💾', label: 'more.save', run: () => deps.openSettings('room') },
     { icon: '✨', label: 'more.recap', run: () => deps.press('#recap-open') },
   );
   if (deps.desktop && deps.keys !== false) items.push({ icon: '⌨️', label: 'more.shortcuts', run: () => deps.press('#profile-keys') });

@@ -1,5 +1,5 @@
 // 📲 Move to another device (card "Move my things to another device"): a laptop in a room sends, a phone opens the QR
-// link (`/#move=<code>`) and receives. Checks: profile menu → the dialog; Send shows a 6-digit code and a QR; the
+// link (`/#move=<code>`) and receives. Checks: Settings → Me → the dialog; Send shows a 6-digit code and a QR; the
 // phone's link starts "Receive" by itself; nothing moves until the laptop presses Send; the phone gets the game save,
 // the saved rooms (joined with its own) and the name; a refusal and a wrong code are explained.
 //
@@ -39,7 +39,7 @@ async function laptop(browser) {
     localStorage.setItem('savedRooms', JSON.stringify([{ id: 'movieNight1', name: 'Movie night', at: 100 }]));
   }, snack);
   await page.goto(`${SITE}/r/${room}#back`);
-  await until(() => page.evaluate(() => !!document.getElementById('profile-move')));
+  await until(() => page.evaluate(() => !!document.getElementById('settings-move')));
   await page.waitForTimeout(800);
   return page;
 }
@@ -57,7 +57,8 @@ async function phone(browser, hash) {
   return page;
 }
 const startSend = async (page) => {
-  await page.evaluate(() => document.getElementById('profile-move').click());
+  // Card SIMP1: Settings → Me → Move to another device.
+  await page.evaluate(() => document.getElementById('settings-move').click());
   await until(() => page.evaluate(() => !!document.querySelector('.move-dialog [data-move="send"]')), 5000);
   await page.evaluate(() => document.querySelector('.move-dialog [data-move="send"]').click());
   return until(() => page.evaluate(() => document.querySelector('[data-move-code]')?.dataset.moveCode), 5000);

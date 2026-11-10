@@ -12,7 +12,6 @@ import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
-import type { IpNoticeKind } from './ip-notice.ts';
 import { CAM_KEY, CAM_NAME, applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames } from './voice-devices.ts';
 import { camStates, markSwitching, switchNote, watchCamVideo } from './cam-watch.ts';
 import { setIcon } from './icons.ts';
@@ -40,19 +39,10 @@ const RPC_TIMEOUT_MS = 12_000;
 const PEOPLE_SHOWN = 8;
 
 /**
- * Card SZ: windows opened only after a press are lazy chunks: the IP notice and the pre-join check. `warmVoice` fetches
- * them when a voice button is hovered or focused, so the first press opens them at once.
+ * Card SZ: windows opened only after a press are lazy chunks: the pre-join check. `warmVoice` fetches it when a voice
+ * button is hovered or focused, so the first press opens it at once. (Card SIMP1 removed the IP notice that used to ask
+ * first; the privacy policy's "Voice" section, linked from Settings → Sound & camera, says who sees what.)
  */
-/**
- * The IP notice is a privacy gate (security review 1, W1): if its chunk can't load (offline, a deploy replaced it) the
- * answer is "no" (fail closed) and the person is told; nothing joins without it.
- */
-async function ipNotice(kind: IpNoticeKind, people: string[], anchor: HTMLElement): Promise<boolean> {
-  const m = await loadChunk(() => import('./ip-notice.ts'));
-  if (m) return m.confirmIpNotice(kind, people);
-  flashHint(anchor, t('voice.failed'), 6000);
-  return false;
-}
 async function checkWindow() {
   const m = await loadChunk(() => import('./voice-check.ts'));
   if (!m) throw new Error('voice-check did not load');
@@ -62,8 +52,8 @@ let warmed = false;
 export function warmVoice(): void {
   if (warmed) return;
   warmed = true;
-  void Promise.all([loadChunk(() => import('./ip-notice.ts')), loadChunk(() => import('./voice-check.ts'))]).then((chunks) => {
-    if (chunks.includes(null)) warmed = false;
+  void loadChunk(() => import('./voice-check.ts')).then((chunk) => {
+    if (!chunk) warmed = false;
   });
 }
 
@@ -171,10 +161,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     })(),
   );
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
-  // "People in voice can see your IP · Why?" (peer-to-peer only; Cloudflare's server hides addresses).
-  const ipLine = root.querySelector<HTMLElement>('#voice-ip')!;
-  const ipWhy = root.querySelector<HTMLButtonElement>('#voice-ip-why')!;
-  ipWhy.addEventListener('click', () => flashHint(ipWhy, t('ipNotice.whyText'), 7000));
   const pttBox = root.querySelector<HTMLInputElement>('#voice-ptt')!;
   /** Bas-konuş: mikrofon kapalı durur, V tuşu (ya da 🎙) basılı tutulunca açılır. Tarayıcıda hatırlanır. */
   let ptt = load('opt:ptt') === '1';
@@ -380,7 +366,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let wasActive = false;
   function render(): void {
     card.hidden = !available;
-    ipLine.hidden = !available || mode !== 'p2p';
     const active = client.active;
     // Sese yeni girildi (düğmeyle ya da kendiliğinden): bas-konuşta mikrofon kapalı başlar.
     if (active && !wasActive && ptt) {
@@ -886,10 +871,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       flashHint(joinButton, t('voice.fullHint', { n: inVoice, max: voiceMax() }), 7000);
       return;
     }
-    if (mode === 'p2p') {
-      const others = members.filter((m) => m.voice && m.id !== myId()).map((m) => m.name);
-      if (!(await ipNotice('voice', others, joinButton))) return;
-    }
     // Pre-join check (0.9.90.6): devices, "join muted", "join with my camera on" (not on the film page: there the
     // extension's offscreen page holds the microphone).
     // The peer-to-peer path is what has cameras.
@@ -1053,6 +1034,10 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let lastId: string | null = null;
 
   return {
+    /** Settings → Sound & camera (card SIMP1): the same "🎛 Choose microphone and camera" window as on myself. */
+    devices(): void {
+      void (isShell ? changeShellDevices() : changeDevices());
+    },
     /** Sunucu sesli sohbeti destekliyor mu (yeni bağlantıda). Yeniden bağlanınca ses de yeniden kurulur. */
     welcome(voice: boolean, nextMode: VoiceMode = 'p2p'): void {
       serverVoice = voice;

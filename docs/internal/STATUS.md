@@ -347,6 +347,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Edge Add-ons steps in `web-store.md`. Left for the owner: the hand tests below, the Microsoft Partner Center account.
 - [ ] After 1.0 (owner decides): Firefox extension (L), TURN relay (Phase 2). Not planned: Safari extension, Opera's
   own store.
+- [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
+  categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
+  line off the room screen, "Move to another device" in Settings → Me, IP notice removed (privacy policy + help
+  wording, dated change line), join screen's links behind ⓘ, Test Lab "Settings: <category>", harness `settings`
+  (CI) + `lazy-gates` / `room-more` / `move` updated, reference. Next: version from the Planner, CHANGELOG block,
+  PR → green → merge → deploy check → ping lane A (Test Lab texts) and Game Studio → report.
 
 ## Design sweep (card 16): what was found and what happened
 From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
@@ -387,6 +393,18 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
+
+**SIMP1 (a calmer room screen, Settings in categories; fold into the next round).**
+- [ ] C1. In a room on the laptop: the top left shows only the green dot (no room name, no "· N people"), and there is
+  no line at the bottom (privacy, terms, version). ⚙️ → 🏠 Room shows the room's name and how many people are in.
+- [ ] C2. ⚙️ shows the categories on the left: Me · My screen · Room · Room rules · Film time · Sound & camera · About.
+  Click each one: nothing scrolls inside the window. On the phone (⋯ → ⚙️) the same order as chips at the top.
+- [ ] C3. ⚙️ → ℹ️ About shows the version and opens Help, Feedback, Privacy and Terms; ⚙️ → 👤 Me → 📲 Move opens the
+  move window (the profile menu no longer has it).
+- [ ] C4. 🎙 Join voice goes straight to the microphone check (no "Before you join voice" IP window any more); ⚙️ → 🔊
+  Sound & camera → "Who sees what (privacy)" opens the privacy page at its Voice section.
+- [ ] C5. Open an invite link in a fresh browser: the join card has no privacy line at the bottom; the small ⓘ at its
+  top right shows Privacy · Terms · Help.
 
 **0.9.97.105 (NP3, Stub the mascot, Neon's new look, scene landmarks moved right; fold into the next round).**
 - [ ] S1. The home page in Night, Matinee and two scene themes: Stub wears the theme's costume and its torch is where
