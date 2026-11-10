@@ -26,6 +26,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { icon, type IconName } from '../ui/icons.ts';
 import { confirmDialog } from '../ui/confirm.ts';
 import { gameLive } from './live.ts';
+import { debugHooks } from '../debug-lab.ts';
 
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker', classics: 'game-four', sea: 'game-sea', duel: 'game-duel' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
@@ -63,8 +64,15 @@ const placeOf = (kind: Kind): Place => {
   if (saved === 'side') return 'float';
   return PLACES.includes(saved as Place) ? (saved as Place) : catalogOf(kind).place;
 };
-/** The free window's spot on the screen, as a share of the free room (0–1). */
+/** The free window's spot on the screen, as a share of the free room (0–1), per game (`gameFloat:spot` = before 0.9.97.111, for every game). */
 const FLOAT_KEY = 'gameFloat:spot';
+const spotKey = (kind: Kind) => `${FLOAT_KEY}:${kind}`;
+/** Where a free window opens until it is moved: the right edge, halfway down. */
+const SPOT_HOME = { x: 1, y: 0.5 };
+/** Gap left between the free window and a YouTube player it settles beside. */
+const BESIDE_GAP = 4;
+/** A dragged window stays on its side of the YouTube player until another side is this much nearer (no jumping). */
+const SIDE_STICK = 160;
 /** The free window's zoom per game (what I last dragged it to; empty = the game's own size). */
 const zoomKey = (kind: Kind) => `gameFloat:zoom:${kind}`;
 /** Gap kept between the free window and the screen's edges. */
@@ -72,8 +80,6 @@ const EDGE = 8;
 type Box = { left: number; top: number; width: number; height: number };
 /** The least zoom at which a strip of the screen still counts as room for the free window (tablets, YouTube). */
 const MIN_ZOOM = 0.45;
-/** The most a game is scaled up in its own fullscreen (card GW). */
-const MAX_FULL = 2.4;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
@@ -153,8 +159,6 @@ export function createGameStage(opts: StageOptions) {
   const minimizeButton = headButton('✕', 'game-minimize');
   const leaveButton = headButton('↩', 'game-leave');
   const endButton = headButton('⏹', 'game-end');
-  // Card GW (owner: "some games don't go fullscreen"): the game alone on the whole screen, at its best size.
-  const fullButton = headButton('⛶', 'game-full');
   // Placement switch: free window / in the video's place (narrow screens: below / large).
   const placeButtons = PLACES.map((p) => {
     const b = el('button', { type: 'button', class: `game-place-btn place-${p}` });
@@ -170,7 +174,7 @@ export function createGameStage(opts: StageOptions) {
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
   // A game may put its own small buttons here (Classics: "Change game"); it empties the slot when it closes.
   const headSlot = el('span', { class: 'game-head-slot' });
-  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, fullButton.node, minimizeButton.node);
+  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
   // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
   const body = el('div', { class: 'game-fit' });
   /**
@@ -243,9 +247,7 @@ export function createGameStage(opts: StageOptions) {
     // YTG: no room beside the YouTube player for the free window: under it instead.
     if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer()) mode = 'below';
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
-    // Card GW: the game on the whole tab (no Fullscreen API) leaves the video box, which may clip a fixed child.
-    const maxed = stage.classList.contains('game-max');
-    const parent = maxed ? (inFullscreen() ? theater : document.body) : narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
+    const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
     for (const m of ['float', 'stage', 'below', 'full'] as const) stage.classList.toggle(m, mode === m);
     // On the film page the free window is a window of its own over the film (inside the video box it is one anyway).
@@ -255,8 +257,11 @@ export function createGameStage(opts: StageOptions) {
     if (mode === 'below') placeBelow();
     if (mode === 'float') placeFloat();
     else for (const p of ['left', 'top', 'width', 'height', 'transform']) stage.style.removeProperty(p);
-    stage.toggleAttribute('data-island', mode === 'float' || maxed);
-    fullLabel();
+    stage.toggleAttribute('data-island', mode === 'float');
+    // Bug W2: over a YouTube video only the free window is possible (YTG), so the switch has nothing to switch: it goes,
+    // and the head says in plain words why the window keeps beside the video.
+    placeSwitch.hidden = youtube;
+    head.title = youtube && mode === 'float' ? t('game.besideYoutube') : '';
     placeButtons.forEach((b, i) => {
       const p = PLACES[i]!;
       const on = narrow.matches ? (p === 'stage' ? mode === 'full' : mode === 'below') : p === want;
@@ -289,6 +294,51 @@ export function createGameStage(opts: StageOptions) {
     }
     const room = pageRoom();
     return overYoutube() ? besidePlayer() ?? room : room;
+  }
+  /**
+   * Where the free window may be moved: the fullscreen view, or the page (on a tablet: clear of the chat). Over a YouTube
+   * video too (bug W5): the window moves anywhere and only keeps off the player itself (`clearOfPlayer`); `area` (the
+   * strip beside the player) only limits its size.
+   */
+  function posRoom(): Box {
+    if (inFullscreen()) {
+      const r = theater.getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width, height: r.height };
+    }
+    return pageRoom();
+  }
+  /** The side of the YouTube player the window keeps to while it is dragged (null: the nearest one). */
+  let side: 'left' | 'right' | 'up' | 'down' | null = null;
+  /**
+   * YTG + bug W5: a free window that would cover the YouTube player settles just beside it, on the nearest side where it
+   * fits on the screen; while it is dragged it slides along the player's edge and only changes sides when another one is
+   * clearly nearer, so it never jumps under the mouse.
+   */
+  function clearOfPlayer(b: { left: number; top: number }, width: number, height: number, room: Box): { left: number; top: number } {
+    const p = playerBox();
+    if (!p || !overYoutube() || inFullscreen()) return b;
+    if (b.left >= p.right || p.left >= b.left + width || b.top >= p.bottom || p.top >= b.top + height) return b;
+    const lo = { x: room.left + EDGE, y: room.top + EDGE };
+    const hi = { x: room.left + room.width - EDGE - width, y: room.top + room.height - EDGE - height };
+    const options = [
+      { s: 'left' as const, left: p.left - width - BESIDE_GAP, top: b.top },
+      { s: 'right' as const, left: p.right + BESIDE_GAP, top: b.top },
+      { s: 'up' as const, left: b.left, top: p.top - height - BESIDE_GAP },
+      { s: 'down' as const, left: b.left, top: p.bottom + BESIDE_GAP },
+    ]
+      .map((o) => ({ ...o, left: Math.min(Math.max(o.left, lo.x), hi.x), top: Math.min(Math.max(o.top, lo.y), hi.y) }))
+      .filter((o) => o.left >= p.right || p.left >= o.left + width || o.top >= p.bottom || p.top >= o.top + height)
+      .map((o) => ({ ...o, d: Math.abs(o.left - b.left) + Math.abs(o.top - b.top) }))
+      .sort((x, y) => x.d - y.d);
+    const kept = options.find((o) => o.s === side);
+    const best = kept && kept.d <= options[0]!.d + SIDE_STICK ? kept : options[0];
+    if (!best) {
+      // Nowhere beside it on this screen: the largest strip beside the player (the window was sized for it).
+      const strip = besidePlayer() ?? room;
+      return { left: strip.left + EDGE, top: strip.top + EDGE };
+    }
+    side = best.s;
+    return { left: best.left, top: best.top };
   }
   /** The page's room for the free window (on a tablet: clear of the chat). */
   function pageRoom(): Box {
@@ -356,58 +406,108 @@ export function createGameStage(opts: StageOptions) {
     const wanted = want ?? (Number.isFinite(saved) && saved > 0 ? saved : screenZoom);
     return Math.min(most, Math.max(low, wanted));
   }
-  let spot = readPair(FLOAT_KEY) ?? { x: 1, y: 0.5 };
+  /** The free window's spot (each game remembers its own, bug W5) and the game it belongs to. */
+  let spot = { ...SPOT_HOME };
+  let spotFor: Kind | null = null;
+  const saveSpot = () => spotFor && save(spotKey(spotFor), JSON.stringify(spot));
   function placeFloat(zoom = floatZoom()): void {
-    const [w, h] = sizeOf(shownKind() ?? 'xox').size;
+    const kind = shownKind() ?? 'xox';
+    if (spotFor !== kind) {
+      spotFor = kind;
+      spot = readPair(spotKey(kind)) ?? readPair(FLOAT_KEY) ?? { ...SPOT_HOME };
+      side = null;
+    }
+    const [w, h] = sizeOf(kind).size;
     const width = Math.round(w * zoom);
     const height = Math.round(h * zoom);
-    const room = area();
+    const room = posRoom();
     const x = Math.min(1, Math.max(0, spot.x));
     const y = Math.min(1, Math.max(0, spot.y));
-    stage.style.left = `${Math.round(room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x)}px`;
-    stage.style.top = `${Math.round(room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y)}px`;
+    const at = clearOfPlayer(
+      { left: room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x, top: room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y },
+      width,
+      height,
+      room,
+    );
+    stage.style.left = `${Math.round(at.left)}px`;
+    stage.style.top = `${Math.round(at.top)}px`;
     stage.style.width = `${width}px`;
     stage.style.height = `${height}px`;
   }
-  let drag: { x: number; y: number; left: number; top: number } | null = null;
-  head.addEventListener('pointerdown', (event) => {
-    if (mode !== 'float' || gameFull() || (event.target as Element).closest('button')) return;
+  /** The spot of the window as it stands now (after it settled beside a YouTube player): what a drop remembers. */
+  function spotNow(): { x: number; y: number } {
+    const room = posRoom();
     const box = stage.getBoundingClientRect();
-    drag = { x: event.clientX, y: event.clientY, left: box.left, top: box.top };
+    const freeX = room.width - 2 * EDGE - box.width;
+    const freeY = room.height - 2 * EDGE - box.height;
+    return {
+      x: freeX > 0 ? Math.min(1, Math.max(0, (box.left - room.left - EDGE) / freeX)) : 0,
+      y: freeY > 0 ? Math.min(1, Math.max(0, (box.top - room.top - EDGE) / freeY)) : 0,
+    };
+  }
+  // Bug W5: the drag follows the mouse once per frame (pointer events can come faster than the screen draws).
+  let drag: { x: number; y: number; left: number; top: number; id: number } | null = null;
+  let dragAt: { x: number; y: number } | null = null;
+  let dragFrame = 0;
+  head.addEventListener('pointerdown', (event) => {
+    if (mode !== 'float' || event.button !== 0 || (event.target as Element).closest('button, a, select, input')) return;
+    const box = stage.getBoundingClientRect();
+    drag = { x: event.clientX, y: event.clientY, left: box.left, top: box.top, id: event.pointerId };
+    side = null;
     head.setPointerCapture(event.pointerId);
+    stage.classList.add('game-dragging');
   });
   head.addEventListener('pointermove', (event) => {
-    if (!drag) return;
-    const room = area();
+    if (!drag || event.pointerId !== drag.id) return;
+    dragAt = { x: event.clientX, y: event.clientY };
+    if (!dragFrame) dragFrame = requestAnimationFrame(dragStep);
+  });
+  function dragStep(): void {
+    dragFrame = 0;
+    if (!drag || !dragAt) return;
+    const room = posRoom();
     const box = stage.getBoundingClientRect();
     const freeX = Math.max(1, room.width - 2 * EDGE - box.width);
     const freeY = Math.max(1, room.height - 2 * EDGE - box.height);
     spot = {
-      x: Math.min(1, Math.max(0, (drag.left + event.clientX - drag.x - room.left - EDGE) / freeX)),
-      y: Math.min(1, Math.max(0, (drag.top + event.clientY - drag.y - room.top - EDGE) / freeY)),
+      x: Math.min(1, Math.max(0, (drag.left + dragAt.x - drag.x - room.left - EDGE) / freeX)),
+      y: Math.min(1, Math.max(0, (drag.top + dragAt.y - drag.y - room.top - EDGE) / freeY)),
     };
     placeFloat();
     dispatchEvent(new Event('swm-layout'));
-  });
-  const endDrag = () => {
-    if (!drag) return;
+  }
+  const endDrag = (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (dragFrame) cancelAnimationFrame(dragFrame);
+    dragStep();
     drag = null;
-    save(FLOAT_KEY, JSON.stringify(spot));
+    dragAt = null;
+    stage.classList.remove('game-dragging');
+    spot = spotNow();
+    saveSpot();
   };
   head.addEventListener('pointerup', endDrag);
   head.addEventListener('pointercancel', endDrag);
-  // Double click on the head: back to the game's own size.
-  head.addEventListener('dblclick', (event) => {
+  /** Double click on the head (or the lab): the game's own size, back where it first opened. */
+  function resetFloat(): void {
     const kind = shownKind();
-    if (mode !== 'float' || !kind || (event.target as Element).closest('button')) return;
+    if (!kind) return;
     save(zoomKey(kind), '');
-    placeFloat();
+    spotFor = kind;
+    spot = { ...SPOT_HOME };
+    side = null;
+    saveSpot();
+    if (mode === 'float') placeFloat();
     dispatchEvent(new Event('swm-layout'));
+  }
+  head.addEventListener('dblclick', (event) => {
+    if (mode !== 'float' || (event.target as Element).closest('button, a, select, input')) return;
+    resetFloat();
   });
   // The corner: the top-left stays put and the window grows or shrinks in proportion (the game keeps its shape).
   let sizing: { x: number; y: number; w: number; h: number; left: number; top: number } | null = null;
   grip.addEventListener('pointerdown', (event) => {
-    if (mode !== 'float' || gameFull()) return;
+    if (mode !== 'float') return;
     event.preventDefault();
     const box = stage.getBoundingClientRect();
     sizing = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, left: box.left, top: box.top };
@@ -417,7 +517,7 @@ export function createGameStage(opts: StageOptions) {
     const kind = shownKind();
     if (!sizing || !kind) return;
     const [w, h] = sizeOf(kind).size;
-    const room = area();
+    const room = posRoom();
     // Follow the mouse along the window's diagonal; keep the window on the screen.
     const want = ((sizing.w + event.clientX - sizing.x) / w + (sizing.h + event.clientY - sizing.y) / h) / 2;
     const fits = Math.min((room.left + room.width - EDGE - sizing.left) / w, (room.top + room.height - EDGE - sizing.top) / h);
@@ -435,7 +535,8 @@ export function createGameStage(opts: StageOptions) {
   const endSizing = () => {
     if (!sizing) return;
     sizing = null;
-    save(FLOAT_KEY, JSON.stringify(spot));
+    spot = spotNow();
+    saveSpot();
   };
   grip.addEventListener('pointerup', endSizing);
   grip.addEventListener('pointercancel', endSizing);
@@ -472,8 +573,9 @@ export function createGameStage(opts: StageOptions) {
   /** The free space right of the upright Short: the window goes there, made small enough to fit beside it. */
   function besideShorts(kind: Kind): void {
     save(`gamePlace:${kind}`, 'float');
+    spotFor = kind;
     spot = { x: 1, y: 0.4 };
-    save(FLOAT_KEY, JSON.stringify(spot));
+    saveSpot();
     requestAnimationFrame(() => {
       const [w] = sizeOf(kind).size;
       // Right of the video's column: since 0.9.92.2 the Shorts rail (and ▲▼) sit between the video and this space.
@@ -489,46 +591,9 @@ export function createGameStage(opts: StageOptions) {
   }
   place();
 
-  // ---- Card GW: the game on the whole screen (⛶ in its head) ----
-  /** The game alone on the screen: the browser's fullscreen, or without the Fullscreen API (the film page) the whole tab. */
-  function gameFull(): boolean {
-    return document.fullscreenElement === stage || stage.classList.contains('game-max');
-  }
-  function enterFull(): void {
-    if (gameFull() || stage.hidden) return;
-    const onTab = () => {
-      stage.classList.add('game-max');
-      place();
-    };
-    if (document.fullscreenEnabled && stage.requestFullscreen) void stage.requestFullscreen().catch(onTab);
-    else onTab();
-  }
-  function leaveFull(): void {
-    if (document.fullscreenElement === stage) void document.exitFullscreen().catch(() => {});
-    if (stage.classList.contains('game-max')) {
-      stage.classList.remove('game-max');
-      place();
-    }
-  }
-  function fullLabel(): void {
-    const on = gameFull();
-    fullButton.label(t(on ? 'game.fullExit' : 'game.full'));
-    fullButton.node.setAttribute('aria-pressed', String(on));
-    fullButton.node.hidden = narrow.matches;
-    stage.classList.toggle('game-full-on', on);
-  }
-  fullButton.node.addEventListener('click', () => (gameFull() ? leaveFull() : enterFull()));
-  // Esc leaves the whole-tab fullscreen too (the browser's own fullscreen handles Esc itself).
-  addEventListener(
-    'keydown',
-    (event) => {
-      if (event.key !== 'Escape' || !stage.classList.contains('game-max')) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      leaveFull();
-    },
-    true,
-  );
+  // W1 (owner, 10 Nov 2026): no game goes to its own full screen ("I don't want ANY game taken to full screen and made
+  // huge"): two placements only, the video's place and the free window (inside the video's fullscreen while there is
+  // one). Card GW's ⛶ and its whole-tab view are gone.
 
   // ---- Fit the game to its box: no scrollbars, ever (owner's rule) ----
   let fitting = false;
@@ -542,15 +607,15 @@ export function createGameStage(opts: StageOptions) {
     // Phones have their own narrow layouts: only overflow shrinks the game there.
     const [fw, fh] = narrow.matches ? [0, 0] : sizeOf(kind).fit;
     let scale = Math.min(1, fw ? W / fw : 1, fh ? H / fh : 1);
-    // Card GW: a free window grown past the game's own size, or the game's own fullscreen, shows the game bigger
+    // Card GW: a free window grown past the game's own size shows the game bigger
     // (in proportion, as at its own size) instead of stretching its layout: the scale grows with the window.
     // It keeps its own shape (the layout it was made for), centred in what is left over.
     let own: [number, number] | null = null;
-    if (!narrow.matches && (mode === 'float' || gameFull())) {
+    if (!narrow.matches && mode === 'float') {
       const [sw, sh] = sizeOf(kind).size;
       const iw = sw - (stage.offsetWidth - W);
       const ih = sh - (stage.offsetHeight - H);
-      const up = Math.min(W / iw, H / ih, gameFull() ? MAX_FULL : Infinity);
+      const up = Math.min(W / iw, H / ih);
       if (up > 1.001) {
         scale = up;
         own = [iw, ih];
@@ -612,7 +677,6 @@ export function createGameStage(opts: StageOptions) {
     minimizeButton.label(t('game.minimize'));
     leaveButton.label(t('hub.leave'));
     endButton.label(t('hub.close'));
-    fullLabel();
     leaveButton.node.hidden = !current;
     for (const b of triggers) b.title = t('hub.title');
     stage.classList.toggle('solo-game', !current && !!solo);
@@ -805,7 +869,6 @@ export function createGameStage(opts: StageOptions) {
   }
 
   function minimize(): void {
-    leaveFull();
     if (current || solo) rememberAt({ id: current ? current.id : `solo:${solo}`, min: true });
     stage.hidden = true;
     place();
@@ -881,7 +944,23 @@ export function createGameStage(opts: StageOptions) {
     event.preventDefault();
     event.returnValue = '';
   });
-  hubButton.node.addEventListener('click', () => setHub(!!menu.hidden));
+  // Bug W3: the head's 🎮 opens the games hall next to itself. It used to open it beside the toolbar's 🎮, which a
+  // computer hides, so nothing showed. The hall hangs from a fixed box under the button (inside the fullscreen view
+  // while there is one, or the browser would hide it).
+  const headMenuWrap = el('div', { class: 'game-menu-wrap more-game-wrap head-game-wrap' });
+  // Above the window in every placement, the game's own full screen included (no room.css rule: its budget is full).
+  headMenuWrap.style.zIndex = '2147483001';
+  function hubFromHead(): void {
+    if (!menu.hidden && menu.parentElement === headMenuWrap) return setHub(false);
+    const r = hubButton.node.getBoundingClientRect();
+    headMenuWrap.style.top = `${Math.round(r.bottom + 6)}px`;
+    headMenuWrap.style.right = `${Math.max(EDGE, Math.round(innerWidth - r.right))}px`;
+    const parent = document.fullscreenElement ?? document.body;
+    if (headMenuWrap.parentElement !== parent) parent.append(headMenuWrap);
+    if (menu.parentElement !== headMenuWrap) headMenuWrap.append(menu);
+    setHub(true);
+  }
+  hubButton.node.addEventListener('click', hubFromHead);
   for (const trigger of triggers) {
     trigger.addEventListener('click', () => {
       // A minimized table comes back first; the hub is one more press away (or the head's 🎮).
@@ -904,6 +983,34 @@ export function createGameStage(opts: StageOptions) {
   });
   addEventListener('langchange', labels);
   labels();
+
+  // Test Lab (bug W1–W5): the game window's state and its reset, offered while the lab is on.
+  debugHooks.register('gameWindow', () => ({
+    commands: [
+      {
+        id: 'gameWindow.reset',
+        title: { en: 'Game window: back to its own size and spot', tr: 'Oyun penceresi: kendi boyutu ve yeri' },
+        help: { en: 'The same as a double click on the free window’s head: the open game’s window goes back to its first size and spot.', tr: 'Serbest pencerenin başlığına çift tıklamakla aynı: açık oyunun penceresi ilk boyutuna ve yerine döner.' },
+        tab: 'games',
+        available: () => (shownKind() ? true : { en: 'no game open', tr: 'açık oyun yok' }),
+        run: resetFloat,
+      },
+      {
+        id: 'gameWindow.hall',
+        title: { en: 'Game window: open the hall from its 🎮', tr: 'Oyun penceresi: 🎮 ile salonu aç' },
+        help: { en: 'Presses the 🎮 in the open game window’s head: the games hall opens right under it.', tr: 'Açık oyun penceresinin başındaki 🎮’ya basar: oyun salonu hemen altında açılır.' },
+        tab: 'games',
+        available: () => (!stage.hidden ? true : { en: 'no game window on screen', tr: 'ekranda oyun penceresi yok' }),
+        run: () => hubButton.node.click(),
+      },
+    ],
+    status: () => {
+      const kind = shownKind();
+      if (!kind) return [];
+      const where = stage.hidden ? 'minimized' : mode;
+      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${overYoutube() ? ' · YouTube' : ''}`]];
+    },
+  }));
 
   return {
     /**
