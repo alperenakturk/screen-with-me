@@ -917,7 +917,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Snack Bar (`fitRows` counts the rows' own column in real pixels), Window Garden (pots ≤ the scene's height:
   `container-type: size`, `min(23cqw, 48cqh)`), the Classics shelf in one row, the lobbies full width. The window
   head's "in the video's place" icon (`place-stage`) is a frame filled by the game, distinct from ⛶. The Last Heart
-  lobby is the same tinted card as Quiz / Draw & Guess (`room.css` `.pk-lobby`).
+  lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code
