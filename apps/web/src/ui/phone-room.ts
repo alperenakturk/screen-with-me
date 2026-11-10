@@ -432,12 +432,13 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   function labTile(): HTMLElement[] {
     const fab = $<HTMLButtonElement>('.debug-fab');
     if (!fab) return [];
-    const button = tile('🐞', t('phone.more.lab'), () => {
+    const error = fab.classList.contains('has-error');
+    const button = tile('🐞', t(error ? 'phone.more.labError' : 'phone.more.lab'), () => {
       closeSheet();
       fab.click();
     });
     button.classList.add('ph-lab-tile');
-    button.classList.toggle('has-error', fab.classList.contains('has-error'));
+    button.classList.toggle('has-error', error);
     return [button];
   }
 

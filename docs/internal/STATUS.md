@@ -493,8 +493,8 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
 
 **0.9.97.120 (lane A: Test Lab 🐞 on phones; with the Lab on).**
 - [ ] L1. Phone upright in a room: no floating 🐞 anywhere. Open ⋯: a "🐞 Test Lab / Test Panosu" tile opens the Lab.
-- [ ] L2. Phone sideways with a video playing (and in fullscreen): a small 🐞 bottom right, never over the video or its
-  buttons.
+- [ ] L2. Phone sideways with a video playing: a small 🐞 bottom right, never over the video or its buttons; in
+  fullscreen no 🐞.
 
 **0.9.97.118 (lane A: first-look fixes; fold into the next round).**
 - [ ] Y1. Phone and tablet, before joining voice: the 🎙 and 📷 buttons look plain (not red). Join voice and mute: now

@@ -906,6 +906,7 @@ const en = {
   'phone.plus.fullscreen': 'Fullscreen',
   'phone.add.title': 'Add a video',
   'phone.more.lab': 'Test Lab',
+  'phone.more.labError': 'Test Lab · errors',
   'phone.more.invite': 'Invite',
   'phone.more.copied': 'Invite link copied',
   'more.button': 'More',

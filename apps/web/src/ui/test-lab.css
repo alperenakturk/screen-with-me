@@ -99,9 +99,11 @@ html.ph-shorts .debug-fab {
 
 /* LABFAB: an upright phone in the room has no floating 🐞 (it covered the player row, chat names and the Shorts video):
    ⋯ More has a "🐞 Test Lab" tile, and ⋯ gets a red ring while there are errors. Held sideways with a video (no ⋯
-   there) a small 🐞 waits in the bottom right corner: beside the video, at the rail's free foot in fullscreen. */
+   there) a small 🐞 waits in the bottom right corner beside the video. In fullscreen none: the rail's foot is full on
+   a small phone (iPhone SE with a ⏯), and a 🐞 there read as one of its buttons. */
 html.ph-room:not(.sideways) .debug-fab,
 html.ph-room:not(:has(.room.has-item)) .debug-fab,
+html.ph-room:has(:fullscreen, .fake-fs, .pseudo-fs) .debug-fab,
 html.ph-shorts .debug-fab {
   display: none;
 }

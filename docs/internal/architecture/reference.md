@@ -1258,7 +1258,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `voice` / `live` register their peers' states (`P2pVoice.peerStates()`, `LiveP2p.peerStates()`, read only). The log
   keeps 2 min / 600 lines, `redact` drops browser ids, IP hashes, tokens and `data:` images. **UI:** 🐞 bottom left (LABFAB: in a phone's room
   upright there is no floating 🐞, ⋯ More / the Shorts ⋯ has a `.ph-lab-tile` that clicks it and ⋯ is ringed red on
-  errors; held sideways with a video a 34 px 🐞 sits bottom right, beside the video or at the rail's foot; rules in
+  errors; held sideways with a video a 34 px 🐞 sits bottom right beside the video, none in fullscreen (the rail's foot is full on an
+  iPhone SE); the tile reads "Test Lab · errors" while there are errors; rules in
   `test-lab.css`, `labTile` in `phone-room.ts`, checks in the test-lab harness) or
   Ctrl+Shift+D opens a drawer on the right (`--lab-w`, the page makes room with `html.lab-open` so it never covers the
   rail; in real fullscreen it moves into the fullscreen element on the left; on a phone a bottom sheet); tabs 📊 Status

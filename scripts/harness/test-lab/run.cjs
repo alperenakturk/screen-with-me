@@ -203,6 +203,7 @@ async function enterRoom(page, room, name = 'Robin') {
   await pp.tap('#strip-more');
   const labTile = await until(() => pp.$('.ph-sheet .ph-lab-tile'));
   check(!!labTile && (await labTile.evaluate((b) => b.classList.contains('has-error'))), 'iPhone 13 room: ⋯ More has a red-ringed 🐞 Test Lab tile');
+  check(!!labTile && /·/.test(await labTile.innerText()), 'iPhone 13 room: the tile says there are errors in words, not only red', labTile && (await labTile.innerText()));
   if (labTile) await labTile.tap();
   check(!!(await until(() => shown(pp, '.lab-drawer'))), 'iPhone 13 room: the tile opens the drawer');
   await pp.evaluate(() => document.querySelector('.debug-fab').click());
@@ -231,7 +232,7 @@ async function enterRoom(page, room, name = 'Robin') {
   check((await clearOfAll()) === 'clear', 'iPhone 13 sideways: a small 🐞 shows, clear of everything', await clearOfAll());
   await pp.evaluate(() => document.querySelector('#fullscreen')?.click());
   await pp.waitForTimeout(800);
-  check((await clearOfAll()) === 'clear', 'iPhone 13 sideways fullscreen: 🐞 clear of the video and the rail', await clearOfAll());
+  check((await clearOfAll()) === 'hidden', 'iPhone 13 sideways fullscreen: no 🐞 (the rail\'s foot is full on small phones)', await clearOfAll());
   await phone.close();
 
   // ---- The other language (LABTR) ----
