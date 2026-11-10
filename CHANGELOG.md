@@ -16,6 +16,15 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.114 — 10 Nov
+- When a table opens in the video's place while the video plays, the video pauses for everyone, so nobody misses the
+  film under the game. A short note says "Video paused for the game"; press play when you want it again. (With a
+  YouTube video the table sits beside the video and nothing pauses.)
+- Snack Bar, Window Garden and Five Frames always play in their own window on the right; the button that moved them
+  into the video's place is gone.
+- With a YouTube video in cinema mode, a game you open no longer lands below the screen: the side panel comes back and
+  the game sits beside the video; turning cinema mode on puts an open game away (as fullscreen does).
+
 ### 0.9.97.113 — 10 Nov
 - Games look right in the video's place: a game you put in the video's place now fills it in proportion, with its
   board, cards and text as big as the place allows, instead of a small game stretched across a wide box. A board sits
