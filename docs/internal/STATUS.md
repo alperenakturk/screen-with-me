@@ -363,6 +363,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   wording, dated change line), join screen's links behind ⓘ, Test Lab "Settings: <category>", harness `settings`
   (CI) + `lazy-gates` / `room-more` / `move` updated, reference, Room rules in two groups (Planner's pick C),
   0.9.97.107 + CHANGELOG, PR #383. Next: green → merge → deploy check → ping lane A (Test Lab texts) and Game Studio → report.
+- [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
+  phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
 
 ## Design sweep (card 16): what was found and what happened
 From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
