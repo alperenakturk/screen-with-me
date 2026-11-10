@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="lumis-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3d6"/><stop offset=".5" stop-color="#ffc65a"/><stop offset="1" stop-color="#ff9440"/></linearGradient></defs>
+<path d="M29 30 Q12 2 3 16 Q0 31 17 37 Q25 38 29 34Z M35 30 Q52 2 61 16 Q64 31 47 37 Q39 38 35 34Z" fill="#2a2068" stroke="#ffc65a" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M29 39 Q15 43 13 55 Q21 59 29 47Z M35 39 Q49 43 51 55 Q43 59 35 47Z" fill="#2a2068" stroke="#ffc65a" stroke-width="2.2" stroke-linejoin="round"/>
+<ellipse cx="32" cy="37" rx="12" ry="16" fill="url(#lumis-gold)"/>
+<ellipse cx="27.5" cy="33" rx="3.3" ry="4.6" fill="#140d33"/><ellipse cx="36.5" cy="33" rx="3.3" ry="4.6" fill="#140d33"/></svg>
