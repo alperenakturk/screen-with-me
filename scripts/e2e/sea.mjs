@@ -1,7 +1,7 @@
 // 🚢 Sea Battle (Game Studio): two people place and fire; the server keeps the fleets hidden. Checks: each player gets
 // only their own ships (and the other side's sunk ones), a watcher gets none until the game is over, shots out of turn
 // or twice are refused, a bad fleet is refused, a hit shoots again and a miss passes the turn, the game ends when a
-// fleet is sunk and everyone then sees both fleets; a reload keeps the seat; Glowbeam plays a whole game.
+// fleet is sunk and everyone then sees both fleets; a reload keeps the seat; Stub plays a whole game.
 import { GameSocket } from './game-socket.mjs';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'sb' + Math.random().toString(36).slice(2, 8);
@@ -106,15 +106,15 @@ ok(await until(() => sam2.state?.seat === 1), 'a reload keeps the seat');
 alex.send({ t: 'rematch' });
 ok(await until(() => alex.state.phase === 'place' && alex.state.turn === 1 && alex.state.seas[0].shots.length === 0), 'rematch: a fresh game, the other player shoots first');
 
-// Glowbeam: Robin alone at a new table plays a whole game against the bot.
+// Stub: Robin alone at a new table plays a whole game against the bot.
 const solo = client('Robin', 'c'.repeat(32), game + 'g');
 ok(await until(() => solo.state?.seat === 0), 'Robin sits at an empty table');
 solo.send({ t: 'bot', level: 2 });
-ok(await until(() => solo.state.players[1]?.bot === 2 && solo.state.players[1].ready), 'Glowbeam sits, ready');
+ok(await until(() => solo.state.players[1]?.bot === 2 && solo.state.players[1].ready), 'Stub sits, ready');
 solo.send({ t: 'ready', on: true });
-ok(await until(() => solo.state.phase === 'play'), 'the battle with Glowbeam starts');
+ok(await until(() => solo.state.phase === 'play'), 'the battle with Stub starts');
 let cell = 0;
-// LIVE-GREEN: live plays until Glowbeam has fired a few shots (its bot runs in the same object either way); the local run
+// LIVE-GREEN: live plays until Stub has fired a few shots (its bot runs in the same object either way); the local run
 // plays the whole game.
 const live = !/localhost|127\.0\.0\.1/.test(base);
 for (let guard = 0; guard < 400 && solo.state.phase === 'play' && !(live && solo.state.seas[0].shots.length >= 3); guard++) {
@@ -129,9 +129,9 @@ for (let guard = 0; guard < 400 && solo.state.phase === 'play' && !(live && solo
   solo.send({ t: 'shot', cell });
   await until(() => solo.state.seas[1].shots.length > before || solo.state.phase !== 'play', 4000);
 }
-if (!live) ok(solo.state.phase === 'over', `the game against Glowbeam ends (${solo.state.winner === 0 ? 'Robin' : 'Glowbeam'} wins)`);
-ok(solo.state.seas[0].shots.length > 0, 'Glowbeam fired');
-ok(leaks(solo, 1).length === 0, "Glowbeam's fleet never reached Robin before the end");
+if (!live) ok(solo.state.phase === 'over', `the game against Stub ends (${solo.state.winner === 0 ? 'Robin' : 'Stub'} wins)`);
+ok(solo.state.seas[0].shots.length > 0, 'Stub fired');
+ok(leaks(solo, 1).length === 0, "Stub's fleet never reached Robin before the end");
 
 for (const c of [alex, sam2, watcher, solo]) c.ws.close();
 console.log('✓ Sea Battle passed');

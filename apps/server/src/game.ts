@@ -45,14 +45,14 @@ interface Seat {
   key: string;
   name: string;
   avatar?: Avatar;
-  /** Glowbeam the bot sits here (🎲 Classics, owner's pick 6 A). */
+  /** Stub the bot sits here (🎲 Classics, owner's pick 6 A). */
   bot?: BotLevel;
 }
-/** Glowbeam's seat key (never a browser's). */
+/** Stub's seat key (never a browser's). */
 const BOT_KEY = 'bot:glowbeam';
-/** Glowbeam thinks this long before its move (a move at once feels rude). */
+/** Stub thinks this long before its move (a move at once feels rude). */
 const BOT_DELAY_MS = 700;
-/** When Glowbeam starts thinking after its turn begins (the rest of `BOT_DELAY_MS` is waited after the think). */
+/** When Stub starts thinking after its turn begins (the rest of `BOT_DELAY_MS` is waited after the think). */
 const BOT_THINK_AT_MS = 150;
 
 interface Saved {
@@ -287,7 +287,7 @@ export class Game extends DurableObject<Env> {
         break;
       }
       case 'bot': {
-        // Glowbeam takes the other seat while it is free (or held by someone who left), or leaves it.
+        // Stub takes the other seat while it is free (or held by someone who left), or leaves it.
         if (seat === -1) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         const other = seat === 0 ? 1 : 0;
         const there = this.data.seats[other];
@@ -296,7 +296,7 @@ export class Game extends DurableObject<Env> {
           this.data.seats[other] = null;
         } else {
           if (there && !there.bot && this.online(there.key)) return this.sendTo(ws, { t: 'error', code: 'seat_taken' });
-          this.data.seats[other] = { key: BOT_KEY, name: 'Glowbeam', bot: message.level };
+          this.data.seats[other] = { key: BOT_KEY, name: 'Stub', bot: message.level };
           // A new opponent: a game half-way starts over.
           if (!there?.bot && this.data.started && this.data.state.winner === null) {
             this.data.state = GAME_RULES[this.data.kind].newGame(this.data.state.starter);
@@ -350,14 +350,14 @@ export class Game extends DurableObject<Env> {
   }
 
   private botTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Glowbeam is between its think and its answer (no second turn starts meanwhile). */
+  /** Stub is between its think and its answer (no second turn starts meanwhile). */
   private botBusy = false;
-  /** When it is Glowbeam's turn, it plays after a short think (its move goes through the same rules). */
+  /** When it is Stub's turn, it plays after a short think (its move goes through the same rules). */
   private botTurn(): void {
     const d = this.data;
     const index = d.seats.findIndex((s) => s?.bot);
     if (index === -1 || d.state.winner !== null || d.state.turn !== MARKS[index] || d.seats.some((s) => s === null) || this.botTimer || this.botBusy) return;
-    // GP3: Glowbeam thinks first (chess / dama may take up to `BOT_BUDGET_MS`) and answers once `BOT_DELAY_MS` has passed
+    // GP3: Stub thinks first (chess / dama may take up to `BOT_BUDGET_MS`) and answers once `BOT_DELAY_MS` has passed
     // since its turn began, so a deeper think never makes the table wait longer.
     const turnAt = Date.now();
     this.botTimer = setTimeout(() => {
@@ -386,7 +386,7 @@ export class Game extends DurableObject<Env> {
     if (next.winner) d.score[next.winner] += 1;
     await this.save();
     this.broadcastState();
-    // A dama capture chain: Glowbeam goes on.
+    // A dama capture chain: Stub goes on.
     this.botTurn();
   }
 

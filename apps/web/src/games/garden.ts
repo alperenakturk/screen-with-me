@@ -27,7 +27,8 @@ import lanternCactus from './art/garden/lantern-cactus.svg?raw';
 import moonbloom from './art/garden/moonbloom.svg?raw';
 import reelVine from './art/garden/reel-vine.svg?raw';
 import popcornShrub from './art/garden/popcorn-shrub.svg?raw';
-import glowbeam from './art/garden/glowbeam-lamp.svg?raw';
+// MASCOT3: Stub lights the pot with his usher's torch.
+import stubLamp from './art/garden/stub-lamp.svg?raw';
 import { takeFilmEnds, takeGifts } from './film-end.ts';
 import how1 from './art/tutorial/garden-1-plant.svg?raw';
 import how2 from './art/tutorial/garden-2-water.svg?raw';
@@ -145,10 +146,10 @@ const TEXT = {
     'visitor.firefly': 'Firefly',
     visitorNew: 'A {name} came to your window! It is in your album now.',
     visitorNone: 'None yet: they come at dusk and at night.',
-    lamp: '✨ Glowbeam',
-    lampTitle: 'Glowbeam shines on this pot until the film ends: +{n} % growth (once per film)',
-    lampOn: 'Glowbeam shines on it: +{n} % until the film ends',
-    lampUsed: 'Glowbeam is busy with another pot this film',
+    lamp: '✨ Stub',
+    lampTitle: 'Stub shines on this pot until the film ends: +{n} % growth (once per film)',
+    lampOn: 'Stub shines on it: +{n} % until the film ends',
+    lampUsed: 'Stub is busy with another pot this film',
     restart: 'Start over',
     restartAsk: 'Start Window Garden over?',
     restartText: 'Your pots, seeds and album all go back to the start. This cannot be undone.',
@@ -239,10 +240,10 @@ const TEXT = {
     'visitor.firefly': 'Ateş böceği',
     visitorNew: 'Penceresine bir {name} geldi! Artık albümünde.',
     visitorNone: 'Henüz yok: akşamları ve geceleri gelirler.',
-    lamp: '✨ Glowbeam',
-    lampTitle: 'Glowbeam film bitene kadar bu saksıyı aydınlatır: büyüme +%{n} (her filmde bir kez)',
-    lampOn: 'Glowbeam onu aydınlatıyor: film bitene kadar +%{n}',
-    lampUsed: 'Glowbeam bu filmde başka bir saksıda',
+    lamp: '✨ Stub',
+    lampTitle: 'Stub film bitene kadar bu saksıyı aydınlatır: büyüme +%{n} (her filmde bir kez)',
+    lampOn: 'Stub onu aydınlatıyor: film bitene kadar +%{n}',
+    lampUsed: 'Stub bu filmde başka bir saksıda',
     restart: 'Baştan başla',
     restartAsk: 'Pencere Bahçesi baştan başlasın mı?',
     restartText: 'Saksıların, tohumların ve albümün baştaki haline döner. Bu geri alınamaz.',
@@ -483,7 +484,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
         draw();
       }, full),
     );
-    // Glowbeam the grow lamp: once per film, on a growing plant (owner's pick 9).
+    // Stub the grow lamp: once per film, on a growing plant (owner's pick 9).
     if (!lit && itemId) {
       const free = lampFree(garden, itemId);
       const lampButton = actionButton(t('lamp'), 'lamp', () => {
@@ -531,7 +532,7 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       button.replaceChildren(potArt(i));
       if (p && !inBloom(p) && p.water < THIRSTY) button.append(el('span', { class: 'wg-drop', 'aria-hidden': 'true' }, '💧'));
       if (p && inBloom(p)) button.append(el('span', { class: 'wg-spark', 'aria-hidden': 'true' }, '✿'));
-      if (lit) button.append(art(glowbeam, 'wg-lamp'));
+      if (lit) button.append(art(stubLamp, 'wg-lamp'));
       button.classList.toggle('bloom', inBloom(p));
       button.setAttribute('aria-label', `${t('pot', { n: i + 1 })}: ${p ? (stageOf(p) >= 2 ? plantName(p.plant) : '…') : t('empty')}`);
       button.disabled = blocked;

@@ -34,9 +34,9 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   draw: { min: 2, max: 8, place: 'float', size: [860, 600], fit: [640, 440], minSize: [789, 550], maxSize: [1204, 840] },
   quiz: { min: 2, max: 8, place: 'float', size: [680, 640], fit: [520, 440], minSize: [625, 588], maxSize: [952, 896] },
   poker: { min: 2, max: 6, place: 'float', size: [860, 600], fit: [640, 440], minSize: [728, 507], maxSize: [1204, 840] },
-  // 🎲 Classics (P6): two players, or one against Glowbeam. Its window follows the board on the table (`CLASSICS_SIZES`).
+  // 🎲 Classics (P6): two players, or one against Stub. Its window follows the board on the table (`CLASSICS_SIZES`).
   classics: { min: 1, max: 2, place: 'float', size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896] },
-  // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Glowbeam.
+  // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Stub.
   sea: { min: 1, max: 2, place: 'float', size: [780, 560], fit: [600, 440], minSize: [764, 548], maxSize: [1170, 840] },
   // ⚔️ Five Frames Duel (FFDUEL): my board and the other's marks side by side, the letter tray under them.
   duel: { min: 2, max: 2, place: 'float', size: [600, 660], fit: [540, 600], minSize: [600, 660], maxSize: [900, 990] },
@@ -121,22 +121,22 @@ export const GAME_NEWS: readonly GameNews[] = [
     v: '0.9.97.65',
     kinds: ['classics'],
     badge: 'updated',
-    tr: 'Klasiklere ⚫ Reversi geldi: karşı rengin sırasını kapat, taşları çevir. Bir arkadaşla ya da Glowbeam’e karşı.',
-    en: 'Reversi ⚫ joins the Classics: close a line of the other colour and turn it over. With a friend, or against Glowbeam.',
+    tr: 'Klasiklere ⚫ Reversi geldi: karşı rengin sırasını kapat, taşları çevir. Bir arkadaşla ya da Stub’a karşı.',
+    en: 'Reversi ⚫ joins the Classics: close a line of the other colour and turn it over. With a friend, or against Stub.',
   },
   {
     v: '0.9.97.61',
     kinds: ['sea'],
     badge: 'new',
-    tr: 'Yeni: 🚢 Amiral Battı. Filonu gizle, sırayla atış yap, onunkini önce batır. Bir arkadaşla ya da Glowbeam’e karşı (kolay / orta).',
-    en: 'New: 🚢 Sea Battle. Hide your fleet, call shots in turns, sink theirs first. With a friend, or against Glowbeam (easy / medium).',
+    tr: 'Yeni: 🚢 Amiral Battı. Filonu gizle, sırayla atış yap, onunkini önce batır. Bir arkadaşla ya da Stub’a karşı (kolay / orta).',
+    en: 'New: 🚢 Sea Battle. Hide your fleet, call shots in turns, sink theirs first. With a friend, or against Stub (easy / medium).',
   },
   {
     v: '0.9.97.46',
     kinds: ['classics'],
     badge: 'updated',
-    tr: 'Klasiklere satranç ve tavla geldi. Yalnızsan Glowbeam’e karşı oyna.',
-    en: 'Chess and backgammon join the Classics. Alone? Play Glowbeam.',
+    tr: 'Klasiklere satranç ve tavla geldi. Yalnızsan Stub’a karşı oyna.',
+    en: 'Chess and backgammon join the Classics. Alone? Play Stub.',
   },
   {
     v: '0.9.97.40',
@@ -149,8 +149,8 @@ export const GAME_NEWS: readonly GameNews[] = [
     v: '0.9.97.35',
     kinds: ['classics'],
     badge: 'new',
-    tr: 'Yeni: 🎲 Klasikler. XOX, Dört Taş ve yeni dama tek masada, raftan seç. Yalnızsan Glowbeam’e karşı oyna (kolay / orta); Glowbeam hakemlik de yapıyor.',
-    en: 'New: 🎲 Classics. Tic-tac-toe, Four in a Row and the new dama at one table, picked from a shelf. Alone? Play Glowbeam (easy / medium); it referees too.',
+    tr: 'Yeni: 🎲 Klasikler. XOX, Dört Taş ve yeni dama tek masada, raftan seç. Yalnızsan Stub’a karşı oyna (kolay / orta); Stub hakemlik de yapıyor.',
+    en: 'New: 🎲 Classics. Tic-tac-toe, Four in a Row and the new dama at one table, picked from a shelf. Alone? Play Stub (easy / medium); it referees too.',
   },
   {
     v: '0.9.91.11',

@@ -83,7 +83,7 @@ function secureRandom(): number {
 /**
  * 🚢 Sea Battle: one table = one object (its id comes from the room). Two seats; everyone else watches. Both fleets live
  * only here: each connection gets its own view (`view`), with the ships of its own seat and, for the other sea, only
- * the shots and the sunk ships. Glowbeam can take the second seat.
+ * the shots and the sunk ships. Stub can take the second seat.
  */
 export class Sea extends DurableObject<Env> {
   private data: Saved = fresh();
@@ -238,7 +238,7 @@ export class Sea extends DurableObject<Env> {
     return (s && checkFleet(SEA_RULES, s.places)) ?? [];
   }
 
-  /** A fresh game on the same seats: new fleets for Glowbeam, nobody ready, the other player shoots first. */
+  /** A fresh game on the same seats: new fleets for Stub, nobody ready, the other player shoots first. */
   private newGame(swap: boolean): void {
     const d = this.data;
     if (swap) d.first = 1 - d.first;
@@ -288,7 +288,7 @@ export class Sea extends DurableObject<Env> {
         break;
       }
       case 'bot': {
-        // Glowbeam takes (or leaves) the other seat; only a seated player asks, and never over a person who is here.
+        // Stub takes (or leaves) the other seat; only a seated player asks, and never over a person who is here.
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         const other = 1 - seat;
         const there = d.seats[other];
@@ -309,7 +309,7 @@ export class Sea extends DurableObject<Env> {
       case 'sit': {
         if (seat >= 0) return;
         // A free seat, or the seat of someone who left (their fleet stays with the seat).
-        // Glowbeam's seat too: a person takes it and a new game starts.
+        // Stub's seat too: a person takes it and a new game starts.
         let free = d.seats.findIndex((s) => s === null || (!s.bot && !this.online(s.key)));
         if (free < 0) free = d.seats.findIndex((s) => s?.bot);
         if (free < 0) return this.sendTo(ws, { t: 'error', code: 'full' });
@@ -430,7 +430,7 @@ export class Sea extends DurableObject<Env> {
       const person = d.people[s.key];
       return {
         id: s.bot ? `bot-${i}` : (person?.pid ?? `gone-${i}`),
-        name: s.bot ? 'Glowbeam' : (person?.name ?? '?'),
+        name: s.bot ? 'Stub' : (person?.name ?? '?'),
         ...(person?.avatar && !s.bot ? { avatar: person.avatar } : {}),
         online: this.online(s.key, except),
         ...(s.bot ? { bot: s.bot } : {}),

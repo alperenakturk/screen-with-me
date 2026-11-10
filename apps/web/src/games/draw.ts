@@ -37,7 +37,7 @@ import draw1Art from './art/tutorial/draw-1-pick.svg?raw';
 import draw2Art from './art/tutorial/draw-2-draw.svg?raw';
 import draw3Art from './art/tutorial/draw-3-guess.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
-import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
+import { resultCard, resultStub, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
@@ -365,8 +365,8 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const nameOf = (id: string | null) => state?.players.find((p) => p.id === id)?.name ?? '';
 
   // GP3: the tables' result card at the end, with the podium inside.
-  const result = resultCard(app.firstElementChild as HTMLElement, resultGlowbeam());
-  // GP4: Glowbeam the referee at a reveal: everyone guessed it, or nobody did (a tough word, never the drawing's fault).
+  const result = resultCard(app.firstElementChild as HTMLElement, resultStub());
+  // GP4: Stub the referee at a reveal: everyone guessed it, or nobody did (a tough word, never the drawing's fault).
   // In the drawing's corner (BH13-G): at the reveal the drawing is done, and the page's corner is the chat's Send button.
   const ref = referee(app.querySelector<HTMLElement>('.draw-canvas-wrap')!);
   function refereeLine(s: State): void {
@@ -633,7 +633,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   const offLab = debugHooks.register('table.draw', () => ({
     commands: [
       quiet.command('draw', { en: 'Draw & Guess', tr: 'Çiz-Bil' }),
-      { id: 'draw.referee', title: { en: 'Draw & Guess: Glowbeam reacts', tr: 'Çiz-Bil: Glowbeam tepki versin' }, help: { en: 'Glowbeam says one of his reveal lines in the corner of the table.', tr: 'Glowbeam masanın köşesinde kelime açılınca söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
+      { id: 'draw.referee', title: { en: 'Draw & Guess: Stub reacts', tr: 'Çiz-Bil: Stub tepki versin' }, help: { en: 'Stub says one of his reveal lines in the corner of the table.', tr: 'Stub masanın köşesinde kelime açılınca söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
       { id: 'draw.skip', title: { en: 'Draw & Guess: end this phase now', tr: 'Çiz-Bil: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));

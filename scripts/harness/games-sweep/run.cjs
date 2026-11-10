@@ -38,7 +38,7 @@ const GAMES = {
   quiz: { table: 'quiz' },
   poker: { table: 'poker' },
   sea: { table: 'sea' },
-  // Sea Battle in battle: Glowbeam sits, I'm ready, both seas show.
+  // Sea Battle in battle: Stub sits, I'm ready, both seas show.
   seaPlay: { table: 'sea', play: true },
   // ⚔️ Five Frames Duel: waiting alone, then racing with Sam (a socket from this script) on the board and the tray.
   duel: { table: 'duel' },
@@ -322,8 +322,8 @@ async function windowPasses(page, label, g, phone) {
           check(shown, `${label}: the ${g.board} board is on the table`);
         }
         if (g.play) {
-          // Glowbeam's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):
-          // ask for Glowbeam again every few seconds (a taken seat just refuses it) and press Ready until the battle starts.
+          // Stub's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):
+          // ask for Stub again every few seconds (a taken seat just refuses it) and press Ready until the battle starts.
           let playing = false;
           for (let tries = 0; tries < 5 && !playing; tries++) {
             await run('sea.bot');
@@ -339,7 +339,7 @@ async function windowPasses(page, label, g, phone) {
               )
               .then(() => true, () => false);
           }
-          check(playing, `${label}: the battle against Glowbeam starts`);
+          check(playing, `${label}: the battle against Stub starts`);
           await wait(600);
         }
         let sam = null;

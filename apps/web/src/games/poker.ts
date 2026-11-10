@@ -33,13 +33,13 @@ import { settingsPanel } from './ui.ts';
 import { silence } from './silent.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 import { tableHowTo } from './how-to-play.ts';
-import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
+import { resultCard, resultStub, showPointsResult } from './result.ts';
 import poker1Art from './art/tutorial/poker-1-life.svg?raw';
 import poker2Art from './art/tutorial/poker-2-hand.svg?raw';
 import poker3Art from './art/tutorial/poker-3-moves.svg?raw';
 
 type State = Extract<PokerServerMessage, { t: 'state' }>;
-/** GP4: a pot this big (half a starting life) makes Glowbeam gasp. */
+/** GP4: a pot this big (half a starting life) makes Stub gasp. */
 const BIG_POT = 50;
 const SUIT_GLYPH: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const MOVE_ICON: Record<PokerMove, string> = { dq: '🚫', free: '🕊️', shield: '🛡️', peek: '👁️' };
@@ -81,9 +81,9 @@ function flask(pot: number, total: number): HTMLElement {
 export function mountPoker(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   const root = el('div', { class: 'pk' });
   app.replaceChildren(root);
-  // GP4: the tables' one result card (Glowbeam, who won, the podium by life left, Play again for the host).
-  const endCard = resultCard(app, resultGlowbeam());
-  // GP4: Glowbeam the referee at a showdown: a split pot, or a big one (never a word about a player's mistake).
+  // GP4: the tables' one result card (Stub, who won, the podium by life left, Play again for the host).
+  const endCard = resultCard(app, resultStub());
+  // GP4: Stub the referee at a showdown: a split pot, or a big one (never a word about a player's mistake).
   const ref = referee(app);
   function refereeLine(s: State): void {
     const winners = s.players.filter((p) => (p.won ?? 0) > 0);
@@ -605,7 +605,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     commands: [
       quiet.command('poker', { en: 'Last Heart', tr: 'Son Kalp' }),
       { id: 'poker.end', title: { en: 'Last Heart: end the game, I win', tr: 'Son Kalp: oyunu bitir, ben kazanayım' }, help: { en: 'Local lab server only: everyone else runs out of life and the result card shows.', tr: 'Sadece yerel lab sunucusunda: diğer herkesin canı biter ve sonuç kartı çıkar.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => send({ t: 'lab', op: 'end' }) },
-      { id: 'poker.referee', title: { en: 'Last Heart: Glowbeam reacts', tr: 'Son Kalp: Glowbeam tepki versin' }, help: { en: 'Glowbeam says one of his showdown lines in the corner of the table.', tr: 'Glowbeam masanın köşesinde el sonunda söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => ref.say(t('poker.say.pot'), 'gasp') },
+      { id: 'poker.referee', title: { en: 'Last Heart: Stub reacts', tr: 'Son Kalp: Stub tepki versin' }, help: { en: 'Stub says one of his showdown lines in the corner of the table.', tr: 'Stub masanın köşesinde el sonunda söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => ref.say(t('poker.say.pot'), 'gasp') },
     ],
   }));
   // GP4: the same "How to play" picture cards as every table (first time, and the "?" in the window's head).

@@ -151,12 +151,12 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   check((await fits(alex)).length === 0, 'the decorations window fits', (await fits(alex)).join('; '));
   await alex.evaluate(() => document.querySelector('.wg-page-close').click());
 
-  // Glowbeam the grow lamp (pick 9): once per film, on a growing plant.
+  // Stub the grow lamp (pick 9): once per film, on a growing plant.
   await alex.click('.wg-pot[data-pot="1"]');
   await alex.evaluate(() => document.querySelector('.wg-action .wg-btn.lamp')?.click());
   const lit = await until(async () => { const s = await saved(alex); return s.lamp ? s : null; }, 6000);
-  check(!!lit && lit.lamp.pot === 1, 'Glowbeam shines on the chosen pot (saved with the film)', JSON.stringify(lit?.lamp));
-  check(await alex.evaluate(() => !!document.querySelector('.wg-pot[data-pot="1"] .wg-lamp svg')), 'Glowbeam is drawn over that pot');
+  check(!!lit && lit.lamp.pot === 1, 'Stub shines on the chosen pot (saved with the film)', JSON.stringify(lit?.lamp));
+  check(await alex.evaluate(() => !!document.querySelector('.wg-pot[data-pot="1"] .wg-lamp svg')), 'Stub is drawn over that pot');
   await alex.click('.wg-pot[data-pot="2"]');
   const again = await alex.evaluate(() => { const b = document.querySelector('.wg-action .wg-btn.lamp'); return b ? b.disabled : 'none'; });
   check(again === true || again === 'none', 'only once per film: no second lamp', String(again));

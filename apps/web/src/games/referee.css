@@ -1,4 +1,4 @@
-/* GP4: Glowbeam the referee (games/referee.ts): bottom right of the table, a short line beside him, never in the way. */
+/* GP4: Stub the referee (games/referee.ts): bottom right of the table, a short line beside him, never in the way. */
 .rf {
   position: absolute; right: 10px; bottom: 10px; z-index: 6; display: flex; align-items: flex-end; gap: 6px;
   pointer-events: none; max-width: calc(100% - 20px);

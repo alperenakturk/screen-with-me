@@ -1,9 +1,9 @@
-// GP2: the tables' one result card and Glowbeam the referee's reactions (Classics; Sea Battle's card is in the sea
+// GP2: the tables' one result card and Stub the referee's reactions (Classics; Sea Battle's card is in the sea
 // harness). With the local lab server's ready-made positions: chess mate in one (Ra1–a8#) → "You won!", the score, Rematch
 // inside the card, "See the board" moves it away, Rematch starts a new game; dama's capture chain → "Nice capture!".
 // GP3: Quiz and Draw & Guess end on the same card (podium inside, "Play again" for the game's host only), two people,
 // the phases ended by the lab server's skip. GP4: Last Heart ends on the same card (the lab server's `end`), and
-// Glowbeam the referee says a short line at Quiz, Draw & Guess and Last Heart (their lab commands).
+// Stub the referee says a short line at Quiz, Draw & Guess and Last Heart (their lab commands).
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1)
 //   NODE_PATH=$(npm root -g) node scripts/harness/game-result/run.cjs [site]
 const { chromium, devices } = require('playwright');
@@ -58,7 +58,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
         return l && !l.hidden ? { outcome: l.dataset.outcome, title: l.querySelector('.gr-title')?.textContent ?? '', line: l.querySelector('.gr-line')?.textContent ?? '', rematch: !!l.querySelector('.gr-actions #xox-rematch'), mascot: !!l.querySelector('.gr-mascot svg') } : null;
       }),
     );
-    check(card && card.outcome === 'win' && /checkmate/i.test(card.title) && /1 – 0/.test(card.line) && card.rematch && card.mascot, `${label}: mate → the result card: Glowbeam, "Checkmate! You won", 1 – 0, Rematch inside`, card);
+    check(card && card.outcome === 'win' && /checkmate/i.test(card.title) && /1 – 0/.test(card.line) && card.rematch && card.mascot, `${label}: mate → the result card: Stub, "Checkmate! You won", 1 – 0, Rematch inside`, card);
     // The card pops in (0.35 s, with an overshoot): measure it once its animation is over, at its own size.
     await page.evaluate(() => Promise.all((document.querySelector('#game-stage .gr-card')?.getAnimations() ?? []).map((a) => a.finished)));
     const fits = await page.evaluate(() => {
@@ -83,7 +83,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
     await until(() => page.evaluate(() => document.querySelector('#game-stage .xox-page')?.dataset.board === 'dama'));
     await run('classics.position.chain');
     await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .dama-cell.mark-X').length === 2));
-    // Every line the bubble shows from now on is recorded: Glowbeam (the bot) may answer with a capture of its own a
+    // Every line the bubble shows from now on is recorded: Stub (the bot) may answer with a capture of its own a
     // moment later, which replaces "Nice capture!" with "Ouch!" before a slow runner looks.
     await page.evaluate(() => {
       const b = document.querySelector('#game-stage .cl-say');
@@ -96,7 +96,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
       setTimeout(() => document.querySelector('#game-stage .dama-cell.target')?.click(), 150);
     });
     const said = await until(() => page.evaluate(() => window.__said.find((x) => /nice capture/i.test(x.text)) ?? null));
-    check(said && /nice capture/i.test(said.text) && said.mood === 'cheer', `${label}: a capture → Glowbeam says "Nice capture!" and cheers`, said);
+    check(said && /nice capture/i.test(said.text) && said.mood === 'cheer', `${label}: a capture → Stub says "Nice capture!" and cheers`, said);
     await wait(2200);
     check(await page.evaluate(() => document.querySelector('#game-stage .cl-say')?.hidden), `${label}: the bubble goes away by itself`);
     check(!errors.length, `${label}: no page errors`, errors.slice(0, 2));
@@ -130,10 +130,10 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
       await wait(400);
       for (const p of [alex.page, sam.page]) await p.evaluate(() => [...document.querySelectorAll('#game-stage .btn.primary')].find((b) => !b.disabled && b.offsetWidth)?.click());
       await until(() => alex.page.evaluate(() => !document.querySelector('#game-stage .draw-page')?.classList.contains('draw-lobby')));
-      // GP4: Glowbeam the referee says a short line in the table's corner and goes by himself.
+      // GP4: Stub the referee says a short line in the table's corner and goes by himself.
       await alex.page.evaluate((k) => window.__swmLab.run(`${k}.referee`), kind);
       const said = await until(() => alex.page.evaluate(() => { const r = document.querySelector('#game-stage .rf'); return r && !r.hidden ? { text: r.querySelector('.rf-say')?.textContent ?? '', mood: r.dataset.mood, glow: !!r.querySelector('.rf-glow svg') } : null; }));
-      check(said && said.text.length > 0 && said.text.length <= 40 && said.mood === 'cheer' && said.glow, `${label} ${kind}: Glowbeam the referee says a short line`, said);
+      check(said && said.text.length > 0 && said.text.length <= 40 && said.mood === 'cheer' && said.glow, `${label} ${kind}: Stub the referee says a short line`, said);
       // BH13-G: his corner never covers a control (Draw & Guess's corner was the chat's Send button).
       const under = await alex.page.evaluate(() => {
         const r = document.querySelector('#game-stage .rf')?.getBoundingClientRect();
@@ -143,7 +143,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
           return c.width && c.height && !b.closest('[hidden]') && c.left < r.right && c.right > r.left && c.top < r.bottom && c.bottom > r.top;
         }).map((b) => b.id || b.className || b.textContent.trim());
       });
-      check(under.length === 0, `${label} ${kind}: Glowbeam's line covers no button or box`, under.join(', '));
+      check(under.length === 0, `${label} ${kind}: Stub's line covers no button or box`, under.join(', '));
       check(!!(await until(() => alex.page.evaluate(() => document.querySelector('#game-stage .rf')?.hidden), 5000)), `${label} ${kind}: his line goes away by itself`);
       // Alex answers / guesses nothing; the lab ends each phase until the podium.
       const over = await until(async () => {
@@ -165,7 +165,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
       for (const p of [alex.page, sam.page]) await p.evaluate(() => Promise.all((document.querySelector('#game-stage .gr-card')?.getAnimations() ?? []).map((a) => a.finished))).catch(() => {});
       const a = await card(alex.page);
       const b = await card(sam.page);
-      check(!!over && a && a.podium === 2 && a.mascot && a.line.length > 0 && /tie|won/i.test(a.title), `${label} ${kind}: the game ends on the result card: Glowbeam, who won, his line, the podium inside`, a);
+      check(!!over && a && a.podium === 2 && a.mascot && a.line.length > 0 && /tie|won/i.test(a.title), `${label} ${kind}: the game ends on the result card: Stub, who won, his line, the podium inside`, a);
       // Nobody scored: a tie at the top. The game's host (whoever reached the table first) starts again; the other
       // waits for them by name.
       const [host, guest, hostName] = a && a.disabled === false ? [alex, sam, 'Alex'] : [sam, alex, 'Sam'];
@@ -211,7 +211,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
     check(!!(await until(() => alex.page.evaluate(() => !document.querySelector('#game-stage .pk-lobby')))), `${label} poker: Alex (the table's host) deals the first hand`);
     await alex.page.evaluate(() => window.__swmLab.run('poker.referee'));
     const said = await until(() => alex.page.evaluate(() => { const r = document.querySelector('#game-stage .rf'); return r && !r.hidden ? { text: r.querySelector('.rf-say')?.textContent ?? '', mood: r.dataset.mood } : null; }));
-    check(said && said.text.length > 0 && said.text.length <= 40 && said.mood === 'gasp', `${label} poker: Glowbeam the referee says a short line`, said);
+    check(said && said.text.length > 0 && said.text.length <= 40 && said.mood === 'gasp', `${label} poker: Stub the referee says a short line`, said);
     const under = await alex.page.evaluate(() => {
       const r = document.querySelector('#game-stage .rf')?.getBoundingClientRect();
       if (!r) return ['no referee'];
@@ -220,7 +220,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
         return c.width && c.height && !b.closest('[hidden]') && c.left < r.right && c.right > r.left && c.top < r.bottom && c.bottom > r.top;
       }).map((b) => b.id || b.className || b.textContent.trim());
     });
-    check(under.length === 0, `${label} poker: Glowbeam's line covers no button or box`, under.join(', '));
+    check(under.length === 0, `${label} poker: Stub's line covers no button or box`, under.join(', '));
     await alex.page.evaluate(() => window.__swmLab.run('poker.end'));
     const card = (page) => page.evaluate(() => {
       const l = document.querySelector('#game-stage .gr-layer');
@@ -235,7 +235,7 @@ const sq = (name) => (8 - Number(name[1])) * 8 + (name.charCodeAt(0) - 97);
     for (const p of [alex.page, sam.page]) await p.evaluate(() => Promise.all((document.querySelector('#game-stage .gr-card')?.getAnimations() ?? []).map((a) => a.finished))).catch(() => {});
     const a = await card(alex.page);
     const b = await card(sam.page);
-    check(a && a.outcome === 'win' && /you won/i.test(a.title) && a.mascot && a.podium === 2 && a.line.length > 0, `${label} poker: the game ends on the result card: Glowbeam, "You won!", his line, the podium inside`, a);
+    check(a && a.outcome === 'win' && /you won/i.test(a.title) && a.mascot && a.podium === 2 && a.line.length > 0, `${label} poker: the game ends on the result card: Stub, "You won!", his line, the podium inside`, a);
     check(b && b.outcome === 'lose' && /alex/i.test(b.title), `${label} poker: the other player's card names the winner`, b);
     check(a && a.again.includes('Play again') && a.disabled === false && b && b.again.includes('Alex') && b.disabled === true, `${label} poker: "Play again" for the host, "Waiting for Alex" for the other`, { a: a?.again, b: b?.again });
     check(a && a.inside && a.btns.every((n) => n >= (label === 'iPhone' ? 44 : 24)), `${label} poker: the card fits the game window, its buttons big enough`, a);

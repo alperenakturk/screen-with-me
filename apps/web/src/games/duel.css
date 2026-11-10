@@ -103,7 +103,7 @@ html.phone .duel-lobby .game-chip { min-height: 44px; }
 html.phone.sideways .duel-lobby h3::before { display: none; }
 html.phone.sideways .duel-lobby { padding: 6px 12px; gap: 4px; }
 html.phone.sideways .duel-lobby-rules { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
-/* GPRO: a sideways phone during a game: my tickets at the full height on the left; the bar, their marks, Glowbeam's
+/* GPRO: a sideways phone during a game: my tickets at the full height on the left; the bar, their marks, Stub's
    line, the buttons and the letters on the right. */
 html.phone.sideways #game-stage .ff.duel:not([data-phase='wait']) {
   display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr);
