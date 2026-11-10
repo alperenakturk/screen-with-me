@@ -926,12 +926,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   switch) · 🎮 · ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own
   slot (`.game-head-slot`: "?" How to play, Classics' shelf). No game has its own full screen (card GW's ⛶ and `.game-max`
   were removed): the free window lives inside the video's fullscreen while there is one. **Where a game plays
-  (`placeOf`):** a table uses my pick or the catalog's free window; the owner's decision that the tables always play in
-  the video's place without a switch (over YouTube, `overYoutube` / YTG, beside the player) is the flag
-  `STAGE_READY` (it also sends a side game with no room beside the video to the video's place), off until card .113 makes their layouts read well there; a side game uses my pick (`gamePlace:<kind>`), else the free
-  window in its **home** (`homeBox`: the column right of the theater, under the top bar, over the side panel, as big as
-  the column allows up to `maxSize` and never below `minSize`; no fit there → the largest strip beside the video, else
-  null) when one exists, else (with `STAGE_READY`) the video's place, until then its own-size window at the right edge; tablets, phones and the video's fullscreen keep the catalog default.
+  (`placeOf`, owner 10 Nov 2026):** the tables always play in the video's place, without a switch (`STAGE_READY`, on
+  since card .113; over YouTube, `overYoutube` / YTG, the free window beside the player); the side games always play in
+  the free window, without a switch on a computer (narrow screens keep their below / large pick, `gamePlace:<kind>`).
+  The free window's **home** (`homeBox`) is the column right of the theater, under the top bar, over the side panel,
+  right-aligned at its top, as big as the column allows up to `maxSize` and never below `minSize` (a column narrower
+  than that: the window sticks out over the video's edge by the difference); over YouTube it shrinks to the column (or
+  the largest strip beside the player, `largestClear`) so it never covers the player; tablets, phones and the video's
+  fullscreen use `SPOT_HOME`. **A table pauses the video** (`autoPause`, 0.9.97.114): opening a table (not coming back
+  to it after a reload) in the video's place while the video plays calls the room's `pauseVideo` (`room.ts`: the player's
+  own pause, which the sync engine sends to everyone; nothing in a host-only room for a guest), once, with the note
+  `game.pausedForGame` by the head's 🎮; closing the table doesn't play it again.
   `#game-stage[data-place]` mirrors the mode for the games' CSS. **The free window:** positioned in `posRoom` (the page,
   or the fullscreen view; tablets clear of the chat), its size limited by `area` (the strip beside a YouTube player);
   over YouTube `clearOfPlayer` settles it beside the player on the nearest side that fits, keeping its side while dragged
@@ -942,8 +947,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   click on the head (or `gameWindow.reset`) forgets the spot. **🎮 in the head** (`hubFromHead`): the hall moves into a
   fixed `.head-game-wrap` (inside `document.fullscreenElement` while there is one); from a free window it slides out of
   the window's left side, level with its top (its right side when there is no room), elsewhere it hangs under the 🎮
-  (`data-side` on the wrap); a drag closes it. Test Lab: `gameWindow.reset`, `gameWindow.hall` and a 📊 status line
-  (placement, home, where the hall opened). Harness: `scripts/harness/game-window-head` (CI `games-more`).
+  (`data-side` on the wrap); a drag closes it. Test Lab: `gameWindow.reset`, `gameWindow.hall`, `gameWindow.autoPause` and a 📊 status line
+  (placement, home, where the hall opened, the last automatic pause). Harness: `scripts/harness/game-window-head` (CI `games-more`).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code

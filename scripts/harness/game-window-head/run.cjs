@@ -16,12 +16,14 @@
 //       size; ✕ and 🎮 bring it back in the same spot; a double click on the head puts it back; the corner resizes it.
 //
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1)
-//   node scripts/harness/game-window-head/run.cjs [site]
+//   node scripts/harness/game-window-head/run.cjs [site] [webm]   (a playable webm, default http://localhost:5300/video.webm)
 const { chromium, devices } = require('playwright');
 const { viaYouTube } = require('../via-youtube.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const VIDEO = `${SITE}/sample.mp4`;
+/** A video headless Chromium can play (H.264 it can't): CI serves one on :5300 (games-more's video step). */
+const WEBM = process.argv[3] || 'http://localhost:5300/video.webm';
 const YOUTUBE = 'https://www.youtube.com/watch?v=M7lc1UVf-VE';
 let fails = 0;
 const check = (ok, label, extra) => {
@@ -129,13 +131,11 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => localStorage.setItem('gameFloat:spot:snack', JSON.stringify({ x: 0, y: 0 })));
     await openGame(page, 'snack');
     const first = await box(page);
-    // The column right of the video is narrower than Snack Bar's smallest readable size here: not its home. Until card
-    // .113 (stage.ts STAGE_READY) it opens as its own-size window at the right edge, then in the video's place.
-    check((first.mode === 'stage' && first.inVideo) || (first.mode === 'float' && first.w === 400 && first.x + first.w >= 1366 - 10), `${L} 112: Snack Bar doesn't fit right of the video at its smallest size: its own window at the right edge (or the video's place)`, first);
-    if (first.mode === 'stage') {
-      await page.click('#game-stage .place-float');
-      await wait(300);
-    }
+    // 0.9.97.114 (owner): side games only ever play in the free window, in the right column at least at their smallest
+    // readable size; on a 1366 laptop the column is narrower, so the window sticks out over the video's edge a little.
+    const edge = await page.evaluate(() => document.getElementById('theater').getBoundingClientRect().right);
+    check(first.mode === 'float' && first.w === 400 && first.x + first.w >= 1366 - 10 && edge - first.x <= 60, `${L} 114: Snack Bar opens as its window at the right, its smallest size, over the video's edge by ≤ 60 px`, { first, edge });
+    check(await page.evaluate(() => document.querySelector('#game-stage .game-place').hidden), `${L} 114: a side game has no placement switch`);
     check(!(await page.$('#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
     await page.keyboard.press('Escape');
     check(!(await page.evaluate(() => document.getElementById('game-stage').classList.contains('game-max') || !!document.fullscreenElement)), `${L} W1: nothing puts Snack Bar on the whole screen`);
@@ -151,24 +151,19 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     check(hallSide.left && hallSide.level, `${L} 112: the hall slides out of the free window's left side, level with its top`, hallSide);
     await page.click('#game-stage .game-hub-open');
     check(await page.evaluate(() => document.getElementById('game-menu').hidden), `${L} W3: 🎮 again closes the hall`);
-    // W2: in the video's place, with no video.
-    await page.click('#game-stage .place-stage');
-    await wait(400);
+    // W2: a table plays in the video's place (no video), and its 🎮 shows the hall there.
+    await openGame(page, 'classics');
     let b = await box(page);
-    check(b.mode === 'stage' && b.inVideo && b.w > 600, `${L} W2: "in the video's place" (no video) puts Snack Bar in the video's frame`, b);
+    check(b.mode === 'stage' && b.inVideo && b.w > 600, `${L} W2: a table plays in the video's frame (no video)`, b);
     await page.click('#game-stage .game-hub-open');
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in the video's place opens the hall, visible`);
     await page.keyboard.press('Escape');
-    await page.click('#game-stage .place-float');
-    await wait(300);
-    // A video file: the video's place, then the free window over the video.
+    // A video file: the table in the video's place; then Snack Bar's free window, dragged over the video.
     check(!!(await load(page, VIDEO)), `${L}: the room plays a video file`);
-    await page.click('#game-stage .place-stage');
-    await wait(400);
     b = await box(page);
-    check(b.mode === 'stage' && b.inVideo, `${L} W2: "in the video's place" (video file) works`, b);
-    await page.click('#game-stage .place-float');
-    await wait(400);
+    check(b.mode === 'stage' && b.inVideo, `${L} W2: with a video file the table stays in the video's place`, b);
+    await openGame(page, 'snack');
+    await wait(300);
     const start = await box(page);
     check(start.mode === 'float', `${L}: back to the free window`, start);
     // W5: a drag onto the video: the window follows the mouse every step and may cover the video.
@@ -290,8 +285,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
   // ---- 0.9.97.112: every game's home is right of the video; the hall shows with the side panel open or closed ----
   for (const [L, viewport] of [['1920 home', { width: 1920, height: 1080 }], ['1366 home', { width: 1366, height: 768 }]]) {
     const { ctx, page, errors } = await room(browser, viewport);
-    // Owner (0.9.97.112): side games open right of the video when they fit there at their smallest readable size
-    // (catalog minSize), else in the video's place; the tables always play in the video's place, with no switch.
+    // Owner (0.9.97.112–114): side games always open as the free window in the right column (never over the video when
+    // they fit there at their smallest readable size, else over its edge by the difference); the tables always play in
+    // the video's place. No game has a placement switch on a computer.
     const minW = { snack: 400, garden: 400, word: 400 };
     for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz', 'draw', 'poker', 'duel']) {
       await openGame(page, kind);
@@ -300,12 +296,12 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       const switchShown = await page.evaluate(() => !document.querySelector('#game-stage .game-place').hidden);
       if (minW[kind]) {
         const fits = room >= minW[kind];
-        check(fits ? b.mode === 'float' && !b.overPlayer && b.onScreen && b.x + b.w >= viewport.width - 12 && b.w >= minW[kind] : b.mode === 'stage' || (b.mode === 'float' && b.onScreen && b.w >= minW[kind]), `${L} ${kind}: ${fits ? 'opens right of the video, never over it' : "doesn't fit beside the video: its own window (the video's place once STAGE_READY)"}`, { b, room });
-        check(switchShown, `${L} ${kind}: a side game keeps the placement switch`);
+        check(b.mode === 'float' && b.onScreen && b.x + b.w >= viewport.width - 12 && b.w >= minW[kind] && (fits ? !b.overPlayer : b.w - room <= 60), `${L} ${kind}: opens as its window at the right${fits ? ', never over the video' : ', over the video by at most the missing width'}`, { b, room });
+        check(!switchShown, `${L} ${kind}: a side game has no placement switch`);
       } else {
         // Until card .113 turns stage.ts STAGE_READY on, a table keeps its free window and the switch; then it plays
         // in the video's place without one. Either way it opens whole on screen, and 🎮 shows the hall.
-        check(b.onScreen && (b.mode === 'stage' ? b.inVideo && !switchShown : b.mode === 'float' && switchShown), `${L} ${kind}: a table opens in its placement (${b.mode}), whole on screen`, { b, switchShown });
+        check(b.onScreen && b.mode === 'stage' && b.inVideo && !switchShown, `${L} ${kind}: a table plays in the video's place, no switch`, { b, switchShown });
         await page.click('#game-stage .game-hub-open');
         check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: 🎮 in the video's place opens the hall, visible`);
         await page.keyboard.press('Escape');
@@ -316,10 +312,6 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await wait(500);
     for (const kind of ['snack', 'sea']) {
       await openGame(page, kind);
-      if (kind === 'snack') {
-        await page.click('#game-stage .place-float');
-        await wait(300);
-      }
       await page.click('#game-stage .game-hub-open');
       check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: side panel closed, 🎮 opens the hall beside the window, visible`);
       await page.keyboard.press('Escape');
@@ -333,6 +325,47 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     check(!!(await until(() => page.evaluate(() => document.getElementById('game-menu').hidden))), `${L}: choosing a game closes the hall`);
     check(!errors.length, `${L}: no page errors`, errors.slice(0, 2));
     await ctx.close();
+  }
+
+  // ---- 0.9.97.114: a table opening in the video's place pauses the playing video for everyone; side games never do ----
+  {
+    const playBrowser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
+    const name = 'gp' + Math.random().toString(36).slice(2, 8);
+    const join = async (who) => {
+      const ctx = await playBrowser.newContext({ viewport: { width: 1366, height: 768 } });
+      await ctx.addInitScript((n) => {
+        for (const [k, v] of Object.entries({ lang: 'en', name: n, avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'snackBar:howSeen': '1', 'classics:chess:howSeen': '1' })) localStorage.setItem(k, v);
+      }, who);
+      const page = await ctx.newPage();
+      await page.goto(`${SITE}/r/${name}?debug=1#back`);
+      await page.waitForFunction(() => !!window.__swmLab && !!document.querySelector('#media-input'), null, { timeout: 20000 });
+      await wait(1200);
+      return { ctx, page };
+    };
+    const alex = await join('Alex');
+    const sam = await join('Sam');
+    const playing = (page) => page.evaluate(() => {
+      const v = document.querySelector('#theater video');
+      return !!v && !v.paused;
+    });
+    await load(alex.page, WEBM);
+    const both = await until(async () => (await playing(alex.page)) && (await playing(sam.page)), 15000);
+    check(!!both, '114: the video plays for both');
+    if (both) {
+      await openGame(alex.page, 'snack');
+      await wait(1500);
+      check((await playing(alex.page)) && (await playing(sam.page)), '114: opening a side game never pauses the video');
+      await openGame(alex.page, 'classics');
+      const paused = await until(async () => !(await playing(alex.page)) && !(await playing(sam.page)), 6000);
+      check(!!paused, "114: opening a table in the video's place pauses the video for everyone");
+      check(await alex.page.evaluate(() => [...document.querySelectorAll('.hint, [role="status"]')].some((e) => /paused for the game/i.test(e.textContent))), '114: a short note says "Video paused for the game"');
+      await alex.page.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
+      await wait(2000);
+      check(!(await playing(alex.page)) && !(await playing(sam.page)), "114: putting the table away doesn't play the video again");
+    }
+    await alex.ctx.close();
+    await sam.ctx.close();
+    await playBrowser.close();
   }
 
   // ---- A phone: side games play full, no ⛶, 🎮 opens the hall ----
