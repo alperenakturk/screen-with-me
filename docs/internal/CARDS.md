@@ -70,6 +70,32 @@ Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CL
 
 ## Ready
 
+### LAB2. The Test Lab ready for the owner's test round (owner, 10 Nov 2026; lane A 0.9.97.107, Game Studio 0.9.97.108)
+- Why: the owner starts his 0.9.98 test round now (his pick) and will run it **through the Test Lab**: "make the debug
+  part really solid, fix what is broken there; nothing may fail in the part we test with". Afterwards the Planner gives
+  him a very basic step-by-step guide, easy to hard ("open this, unlock the lab, press this, tell me what you see").
+- Done when:
+  - **Lane A (the lab itself, 0.9.97.107):** every lab command in every tab (📊 👥 🎬 🧪 🖥 📜, command box, 🐞 This is a
+    bug) is run once on a computer and on a phone (bottom sheet), in EN and TR, on a live-like host (`lab-lock`'s
+    `lab.test`): no red line except `lab.selfTest`, every help line says what really happens, every Undo works. Every
+    bug found is fixed. Unlocking with `?debug=<code>` works on a phone and on a computer and survives a reload.
+    **🧪 Test round:** one scenario per test on the owner's board (STATUS "Owner's hand tests" N1–N4, S1–S4, F1–F2 and
+    the 0.9.98 round items) that sets the stage where the lab can (e.g. cycle the themes, add a fake friend who plays /
+    pauses / writes, drop my connection), with a one-line TR + EN help that says what to look at. Tests that need a
+    real second person or device say so in their help line.
+  - **Game Studio (the 🎮 tab, 0.9.97.108):** every games command (Duel match / hard mode, Sea zoom, Snack Bar coins /
+    season / report, bot games, motion, Stub states …) runs without error in EN and TR on a computer and a phone; every
+    game test on the board (G1–G16) can be set up from the 🎮 tab (add what is missing, e.g. a fake friend at a table,
+    jump to the result card, skip to the Snack Bar's next milestone). Every bug found is fixed. Game Studio adds
+    hooks in games code only; the lab chunk is lane A's.
+  - **Both:** a list for the Planner, one line per board test: the lab steps with the exact Turkish button / command
+    names and what the owner should see (written to STATUS "Test round with the Lab", English with the TR labels
+    quoted). The Planner turns it into the owner's Turkish guide.
+- Tests: `test-lab` + `lab-friends` + `lab-lock` harnesses (extend them for every fixed bug and every new scenario),
+  `LAB_LANG=tr`, the games harnesses; live e2e green.
+- Owner's pick: none needed.
+
+
 ## Owner's night picks (10 Nov 2026): cards
 The owner answered the overnight question page: mascot **C Stub**, themes **B**, home colours **A**, default font
 **A**, game window on a computer **A1**, camera window **C2**, Sea Battle phone zoom **B**, Snack Bar extras **1–4**,
