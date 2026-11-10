@@ -1132,7 +1132,7 @@ export function createGameStage(opts: StageOptions) {
     lab: labIsOn()
       ? void import('./lab-tools.ts').then((m) => {
           labRoom = m.labRoom;
-          m.registerGamesLab(openTable, openSolo, send);
+          m.registerGamesLab(openTable, openSolo, send, () => current);
         })
       : undefined,
     /** Opens a solo game (the room's ⋯ menu or a test). */
