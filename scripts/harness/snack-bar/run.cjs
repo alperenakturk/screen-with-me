@@ -165,7 +165,7 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   // Pick 4: the badge wall.
   await alex.evaluate(() => document.querySelector('.sb-badges-open').click());
   const wall = await alex.evaluate(() => ({ all: document.querySelectorAll('.sb-badge').length, got: document.querySelectorAll('.sb-badge.got').length, shown: !document.querySelector('.sb-panel').hidden }));
-  check(wall.shown && wall.all === 30 && wall.got >= 2, 'the badge wall shows 30 badges, the earned ones lit', JSON.stringify(wall));
+  check(wall.shown && wall.all === 37 && wall.got >= 2, 'the badge wall shows 37 badges, the earned ones lit', JSON.stringify(wall));
   check((await fits(alex)).length === 0, 'the badge wall fits without scrollbars', (await fits(alex)).join('; '));
   await alex.evaluate(() => document.querySelectorAll('.sb-badge')[1].click());
   check(/Serve 10/.test(await text(alex, '.sb-badge-detail')), 'a tap on a badge says how to earn it', await text(alex, '.sb-badge-detail'));
@@ -262,7 +262,8 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   await wait(500);
   check((await fits(pam)).length === 0, 'phone: fits without scrollbars', (await fits(pam)).join('; '));
   const phoneRows = await pam.evaluate(() => [...document.querySelectorAll('.sb-row')].filter((r) => !r.hidden).length);
-  check(phoneRows === 5, 'phone: all five upgrades show', String(phoneRows));
+  // SB3: the open stands and the next locked one (a stand two steps away stays out of sight).
+  check(phoneRows === 3, 'phone: a fresh game shows its two open stands and the next one', String(phoneRows));
   await pam.screenshot({ path: __dirname + '/snack-phone.png' });
 
   await browser.close();

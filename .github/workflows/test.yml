@@ -95,6 +95,10 @@ jobs:
           node --test scripts/check-game-text.test.mjs
           node scripts/check-game-text.mjs
 
+      # Card SB3: Snack Bar's balance (10 h of film: no strategy dominates, the first new cinema in time).
+      - name: Snack Bar balance
+        run: node --experimental-strip-types scripts/snack-sim.mjs --check
+
       - name: Unit tests
         run: npm test
 
@@ -251,6 +255,8 @@ jobs:
           node scripts/harness/game-result/run.cjs http://localhost:8787
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
           OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
+          # Card SB3: Snack Bar's economy (migration, buy modes, upgrades, staff, eight stands, new places).
+          node scripts/harness/snack-bar-3/run.cjs http://localhost:8787
 
       # Card YTG: over a YouTube video a game's window stays clear of the player (three sizes, a drag, fullscreen).
       - name: Games beside a YouTube video
