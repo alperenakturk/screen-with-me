@@ -1822,7 +1822,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose
   `.github/workflows` differ from main's head, so that case (and any refused push) is a `::warning::` with the owner's
   steps (Releases → new release → tag `v<version>` → target the commit), never a red run. `ci-workflow.test.mjs` checks
-  the permissions; `tag-live.test.mjs` the plan.
+  the permissions; `tag-live.test.mjs` the plan. **TAG2:** GitHub checks a new tag against main's current workflow
+  files, so any release that changed `.github/workflows` lost its tag as soon as a later one changed them again (v0.9.97.74,
+  .99, .103, .107; .107 even though it was main's head when it deployed, because #385 merged during its run). With the
+  repository secret `TAG_TOKEN` (fine-grained, this repository only, Contents + Workflows read and write; only the tag
+  step gets it) every untagged live version is pushed with it and the catch-up (`LOOKBACK` 80 first-parent commits)
+  back-fills the missing ones; without it the job behaves as before.
   The repo is public since Nov 2026, so the minutes are free; the diet keeps runs short.
 - **Scene top space and sides:** the scene (1600×900) is bottom-aligned and covers the screen; on wide screens the top
   is cropped and also covered by the top bar: don't put decorations above y≈200. Room content is centered, at most

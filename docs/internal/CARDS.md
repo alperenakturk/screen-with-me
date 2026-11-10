@@ -70,6 +70,29 @@ Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CL
 
 ## Ready
 
+### QA1. Faster CI and fewer bugs reaching the owner (owner, 10 Nov 2026: "why do tests take so long, weren't we cutting them? and how are there so many bugs with this many tests?"; B2, ops)
+- Why: a PR's CI takes ~15–20 min (the `site` job ~15 min, ~4–5 min of it installing), each main run (deploy + live e2e) ~25 min, and
+  releases go one after another, so a small fix needs ~45 min to be live. Harnesses grew with every card. Meanwhile the
+  owner still finds bugs in his first minutes: the checks test what each card named, not what a person sees in states
+  nobody listed (side panel closed, YouTube room, a 1366 laptop, real mouse hover), and they never judge "looks right".
+- Done when:
+  1. **Speed:** a measured table of every CI job and step (median of the last 10 runs) in `docs/internal/architecture/`
+     (CI section); install time cut (cache `node_modules` / Playwright deps keyed on the lockfile); jobs rebalanced so the
+     longest PR job is ≤ 10 min; nothing skipped, no `paths-ignore` (CLAUDE.md), no check weakened. Report before → after.
+  2. **State matrix for game windows and the room's right column:** one harness that opens every game in each allowed
+     place × {side panel open, closed} × {YouTube, file, no video} × {1366, 1920, tablet} and checks: nothing cut off,
+     nothing over a YouTube player, no free window over the video unless dragged, every head button visibly does
+     something. Real-mouse checks (hover, drag, resize) run headful under `xvfb-run`.
+  3. **A "first look" review before merging any UI change:** the PR attaches screenshots at 1366, 1920, tablet and phone
+     of every screen it touched, and a fresh reviewer (a subagent given only the screenshots + CLAUDE.md product rules,
+     not the developer's reasoning) lists what looks wrong; the developer fixes or answers each line in the PR. Written
+     into CLAUDE.md §9 by the Planner once B2 has the tooling (`scripts/shots.mjs` or similar).
+  4. **Fewer, fuller releases:** the Planner batches small fixes into one release per lane where it can (less waiting
+     on deploy + live e2e); no change for B2.
+- Tests: the new harness in CI; CI timings before/after in the PR.
+- Owner's pick: none needed (technical).
+
+
 ### SIMP1. A calmer room screen: fewer things on it, a tidy Settings (owner, 10 Nov 2026; lane A, after LAB2)
 - Why: owner: "let's simplify the general design and take out things that aren't necessary, so they don't tire the
   user's eyes." His examples, all moved, nothing a user needs is lost:
