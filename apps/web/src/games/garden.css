@@ -33,7 +33,7 @@
 .wg-state.on { background: var(--wg-leaf); color: #0d2a20; }
 .wg-seeds { font-size: 13px; font-weight: 700; color: var(--wg-gold); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
-.wg-scene { position: relative; flex: 1 1 auto; min-height: 120px; border-radius: 10px; overflow: hidden; background: #120e27; }
+.wg-scene { position: relative; flex: 1 1 auto; min-height: 120px; border-radius: 10px; overflow: hidden; background: #120e27; container-type: size; }
 .wg-scene-art, .wg-scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .wg-idle .wg-scene-art { filter: saturate(0.6) brightness(0.8); }
 .wg-rest {
@@ -47,7 +47,8 @@
 /* A pot stands on the sill: the sill's top is 168 of 226 in the scene (bottom-aligned slice), the soil line 154. */
 .wg-pot {
   position: absolute; bottom: calc(100% * (226 - 154 - 18) / 226); transform: translateX(-50%);
-  width: 23%; aspect-ratio: 48 / 70; padding: 0; border: 0; border-radius: 12px; background: transparent;
+  /* GPRO (layout audit): a wide, low scene (a sideways phone) keeps the pots under its top: no taller than 70 % of it. */
+  width: min(23cqw, 48cqh); aspect-ratio: 48 / 70; padding: 0; border: 0; border-radius: 12px; background: transparent;
   display: flex; align-items: flex-end; justify-content: center;
 }
 .wg-pot.on { background: rgba(255, 198, 90, 0.12); box-shadow: inset 0 0 0 1.5px rgba(255, 198, 90, 0.6); }
@@ -153,3 +154,10 @@ html.phone .wg-scene { min-height: 260px; }
 @keyframes wg-glow { 50% { opacity: 0.3; } }
 .wg-decor-item { justify-content: space-between; }
 @media (prefers-reduced-motion: reduce) { .wg-bulbs circle, .wg-lantern-glow, .wg-moth, .wg-firefly { animation: none; } }
+/* GPRO (layout audit): a sideways phone gets two columns, the window sill on the left, the pot's line, the album and
+   the note on the right, so nothing is pushed into a tiny scale. */
+html.phone.sideways .wg { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; column-gap: 10px; }
+html.phone.sideways .wg-bar { grid-column: 1 / -1; }
+html.phone.sideways .wg-scene { grid-column: 1; grid-row: 2 / span 3; min-height: 0; }
+html.phone.sideways .wg-action, html.phone.sideways .wg-album, html.phone.sideways .wg-note, html.phone.sideways .wg-elsewhere { grid-column: 2; }
+html.phone.sideways .wg-album { align-self: start; }

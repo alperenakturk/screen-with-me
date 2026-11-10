@@ -484,6 +484,9 @@ with the same friend:
 - [ ] G12. Five Frames Duel with a friend: open it from 🎮 "Together", both press Ready, race to the word. You see
   their marks (✓ • ×) but never their letters; the first to find it wins, "Play again" brings a practice word. Try it on
   your phone too: your board, their strip of marks and the letters all fit.
+- [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
+  time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
+  video's place" and ⛶ full screen now look different.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

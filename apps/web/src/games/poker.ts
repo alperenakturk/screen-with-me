@@ -4,6 +4,7 @@
 // says whose turn it is and how many seconds are left; moves and hand results are announced to everyone in the
 // middle of the table; "How to play" walks through the game in four short steps.
 
+import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
 import { debugHooks } from '../debug-lab.ts';

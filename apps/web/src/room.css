@@ -9585,6 +9585,8 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   font-size: 24px;
 }
 
+html.phone.sideways #game-stage .pk-lobby > .pk-rules { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; max-width: none; }
+
 .pk-rules {
   max-width: 540px;
   margin: 0;

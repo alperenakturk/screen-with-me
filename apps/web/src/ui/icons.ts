@@ -135,7 +135,8 @@ const ICONS: Record<IconName, Shape[]> = {
   ],
   // Where the game window sits: next to the video, floating over it, in its place, under it (phones).
   'place-float': [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['rect', { x: 12, y: 11, width: 7, height: 6, rx: 1 }]],
-  'place-stage': [['path', { d: 'M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4' }]],
+  // GPRO (layout audit): the game filling the video's frame, never the ⛶ corners of full screen.
+  'place-stage': [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['rect', { x: 6, y: 8, width: 12, height: 8, rx: 1, fill: 'currentColor' }]],
   'place-below': [['rect', { x: 5, y: 3, width: 14, height: 18, rx: 2 }], ['line', { x1: 5, y1: 10, x2: 19, y2: 10 }]],
   // Life poker: a heart on a card.
   'game-poker': [

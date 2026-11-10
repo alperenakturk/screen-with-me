@@ -121,3 +121,16 @@
 html.phone .ff-row { height: 44px; }
 html.phone .ff-cells { grid-template-columns: repeat(5, 38px); }
 html.phone .ff-key { min-height: 44px; }
+/* GPRO (layout audit): a sideways phone puts the tickets on the left and the head, the result and the letters on the
+   right, so nothing is scaled below a readable size. */
+html.phone.sideways #game-stage .ff:not(.duel) {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: 'board head' 'board result' 'board tray'; gap: 6px 12px; padding: 6px 10px;
+}
+html.phone.sideways #game-stage .ff:not(.duel) .ff-head { grid-area: head; }
+html.phone.sideways #game-stage .ff:not(.duel) .ff-board { grid-area: board; gap: 2px; align-self: center; }
+html.phone.sideways #game-stage .ff:not(.duel) .ff-row { height: 33px; }
+html.phone.sideways #game-stage .ff:not(.duel) .ff-cells { grid-template-columns: repeat(5, 30px); gap: 4px; padding: 2px 4px; }
+html.phone.sideways #game-stage .ff:not(.duel) .ff-cell { font-size: 18px; }
+html.phone.sideways #game-stage .ff:not(.duel) .ff-result { grid-area: result; }
+html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align-self: end; }

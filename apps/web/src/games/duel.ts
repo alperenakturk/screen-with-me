@@ -30,6 +30,10 @@ type State = Extract<DuelServerMessage, { t: 'state' }>;
 const TEXT = {
   en: {
     daily: 'Word of the day #{n}',
+    lobbyTitle: 'Five Frames Duel',
+    lobbyRules: 'The same word for both of you, seven tries each. You see their marks, never their letters; the first to find the word wins.',
+    lobbyLang: 'Word language',
+    lobbyWaiting: 'Waiting…',
     practice: 'Practice word',
     langTitle: 'Word language (both play in it)',
     waiting: 'Waiting for a second player…',
@@ -79,6 +83,10 @@ const TEXT = {
   },
   tr: {
     daily: 'Günün kelimesi #{n}',
+    lobbyTitle: 'Beş Kare Düellosu',
+    lobbyRules: 'İkinize aynı kelime, herkese yedi hak. Onun işaretlerini görürsün, harflerini asla; kelimeyi önce bulan kazanır.',
+    lobbyLang: 'Kelime dili',
+    lobbyWaiting: 'Bekleniyor…',
     practice: 'Alıştırma kelimesi',
     langTitle: 'Kelime dili (ikiniz de bu dilde oynarsınız)',
     waiting: 'İkinci oyuncu bekleniyor…',
@@ -162,6 +170,27 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     return b;
   });
   const langs = el('span', { class: 'ff-langs', role: 'group' }, ...langButtons);
+  // GPRO (one lobby look): while the table waits, a tinted card like Quiz / Draw & Guess / Last Heart: the title, the
+  // rules, the two faces, the word language, then Glowbeam's line and Ready (moved into the card while it shows).
+  const lobbyLangButtons = (['en', 'tr'] as const).map((l) => {
+    const b = el('button', { type: 'button', class: 'game-chip', 'data-lang': l }, l === 'en' ? 'English' : 'Türkçe');
+    b.addEventListener('click', () => send({ t: 'lang', lang: l }));
+    return b;
+  });
+  const lobbyTitle = el('h3', {});
+  const lobbyRules = el('p', { class: 'duel-lobby-rules' });
+  const lobbyFaces = el('ul', { class: 'duel-lobby-faces' });
+  const lobbyLangLabel = el('span', { class: 'duel-lobby-label' });
+  const lobbyBody = el('div', { class: 'duel-lobby-body' });
+  const lobby = el(
+    'section',
+    { class: 'duel-lobby', hidden: '' },
+    lobbyTitle,
+    lobbyRules,
+    lobbyFaces,
+    el('div', { class: 'duel-lobby-lang' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
+    lobbyBody,
+  );
   const watchers = el('span', { class: 'duel-watchers' });
   const bar = el('div', { class: 'ff-head duel-bar' }, score0, tag, el('span', { class: 'ff-gap' }), watchers, langs);
 
@@ -197,7 +226,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const actions = el('div', { class: 'duel-actions' });
   const tray = el('div', { class: 'ff-tray' });
   // The table id is no secret (the room lists it); harnesses join it as a second player.
-  const box = el('div', { class: 'ff duel', 'data-table': gameId }, bar, main, el('div', { class: 'duel-ref' }, referee, status), actions, tray);
+  const refRow = el('div', { class: 'duel-ref' }, referee, status);
+  const box = el('div', { class: 'ff duel', 'data-table': gameId }, bar, main, lobby, refRow, actions, tray);
   app.replaceChildren(box);
   const result = resultCard(main, glowbeam('duel-gr'), (moved) => actions.prepend(...moved));
   // Buttons never keep the focus (the room's keys stay the room's).
@@ -388,6 +418,35 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     return word;
   }
 
+  function drawLobby(s: State): void {
+    const waiting = s.phase === 'wait';
+    lobby.hidden = !waiting;
+    main.hidden = waiting;
+    // Glowbeam's line and Ready sit in the card while it shows, under the board otherwise.
+    if (waiting && refRow.parentElement !== lobbyBody) lobbyBody.append(refRow, actions);
+    else if (!waiting && refRow.parentElement === lobbyBody) main.after(refRow, actions);
+    if (!waiting) return;
+    lobbyTitle.textContent = tx('lobbyTitle');
+    lobbyRules.textContent = tx('lobbyRules');
+    lobbyLangLabel.textContent = tx('lobbyLang');
+    lobbyLangButtons.forEach((b) => {
+      const on = b.dataset.lang === s.lang;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+      b.title = tx('langTitle');
+      b.disabled = mySeat() < 0;
+    });
+    lobbyFaces.replaceChildren(
+      ...[0, 1].map((i) => {
+        const p = s.players[i];
+        if (!p) return el('li', { class: 'duel-face duel-face-free' }, el('span', { class: 'duel-face-q', 'aria-hidden': 'true' }, '?'), el('span', {}, tx('lobbyWaiting')));
+        const face = avatarNode(p.avatar, p.name);
+        face.classList.add('duel-avatar');
+        return el('li', { class: `duel-face${i === mySeat() ? ' me' : ''}${p.ready ? ' ready' : ''}` }, face, el('span', {}, `${p.name}${p.ready ? ' ✓' : ''}`));
+      }),
+    );
+  }
+
   function render(): void {
     const s = state;
     if (!s) return;
@@ -404,6 +463,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       btn.title = tx('langTitle');
       btn.disabled = seat < 0 || s.phase === 'play';
     });
+    drawLobby(s);
     watchers.textContent = s.watchers.length ? tx('watchers', { n: s.watchers.length }) : '';
     watchers.title = tx('watchersTitle', { names: s.watchers.map((w) => w.name).join(', ') });
     // A player: my board + their marks; a watcher: both players' marks.

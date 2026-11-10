@@ -22,6 +22,8 @@ const SIZES = {
   desktop: { viewport: { width: 1920, height: 1080 } },
   iphone: devices['iPhone 13'],
   pixel: devices['Pixel 7'],
+  // GPRO (layout audit): a phone held sideways, 844 × 340 or so after the browser's bars.
+  side: devices['iPhone 13 landscape'],
 };
 // A table kind and, for the Classics, the board to put on it.
 const GAMES = {
@@ -128,7 +130,9 @@ function measure({ mayScroll, minTarget }) {
   // Classics' picker shows no board at all (CL2): nothing to measure there.
   if (b && !b.closest('[hidden]')) {
     const r = b.getBoundingClientRect();
-    if (r.width < Math.min(260, box.width * 0.6) || r.height < 150) board = `${name(b)} ${Math.round(r.width)}×${Math.round(r.height)} in ${Math.round(box.width)}`;
+    // A sideways phone's window is wide and low: the board is fair when it takes most of the height there.
+    const room = Math.min(box.width, box.height);
+    if (r.width < Math.min(260, room * 0.55) || r.height < Math.min(150, box.height * 0.55)) board = `${name(b)} ${Math.round(r.width)}×${Math.round(r.height)} in ${Math.round(box.width)}×${Math.round(box.height)}`;
   }
   // CL2: the board is the hero: no other block of the table is bigger, and nothing stands beside it as a column
   // (the old layout had seats, status and settings in a column left of a small board).
@@ -368,7 +372,7 @@ async function windowPasses(page, label, g, phone) {
           await page.evaluate(() => ['a', 'b'].forEach((k) => document.querySelector(`#game-stage .ff-key[data-key="${k}"]`)?.click()));
           await wait(2000);
         }
-        const phone = size === 'iphone' || size === 'pixel';
+        const phone = size === 'iphone' || size === 'pixel' || size === 'side';
         const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
         if (m.missing) {

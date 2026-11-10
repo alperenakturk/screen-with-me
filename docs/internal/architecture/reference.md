@@ -910,7 +910,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   EN / TR: no inner scrollbar, text ≥ 13 px on screen (the fit scale counted), nothing cut off, a fair-sized board, no
   page scroll; `FRIENDS=n` adds fake friends) and `games-resume` (move + sound, named buttons, axe, minimize / restore,
   reload for every Classics board, the side games, Quiz and Draw), both in CI's "Games quality" step (the sweep on
-  laptop + iPhone there). Run the sweep after every game layout change.
+  laptop + iPhone there). Run the sweep after every game layout change. **GPRO (`docs/internal/design/games/games-pro.md`):**
+  sweep size `side` (iPhone 13 landscape; local runs, `SIZES=side`) with a board check against the window's smaller
+  side; sideways-phone layouts under `html.phone.sideways` (never bare `html.sideways`, which a laptop has too):
+  Classics boards and Sea Battle (board / one sea at the full height on the left, the rest on the right), Five Frames,
+  Snack Bar (`fitRows` counts the rows' own column in real pixels), Window Garden (pots ≤ the scene's height:
+  `container-type: size`, `min(23cqw, 48cqh)`), the Classics shelf in one row, the lobbies full width. The window
+  head's "in the video's place" icon (`place-stage`) is a frame filled by the game, distinct from ⛶. The Last Heart
+  lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code
@@ -994,7 +1001,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `sit` only between games (a free or away seat). The page `games/duel.ts` + `duel.css` (lazy chunk, own `TEXT`,
   reuses `five-frames.css`; `.ff.duel`, `data-table` = the table id): my tickets left, the other's marks right (watchers:
   both); on a phone their marks are a strip (one column per guess); the alphabetical tray while playing; the keyboard
-  types only while the board has the focus. Lab commands `duel.answer`, `duel.win`, `duel.silent` (`lab` op `answer`,
+  types only while the board has the focus. GPRO: while the table waits, a lobby card (`.duel-lobby`: title, rules,
+  faces, EN / TR chips; Glowbeam's line and Ready move into it) like the other tables' lobbies. Lab commands `duel.answer`, `duel.win`, `duel.silent` (`lab` op `answer`,
   local lab server only). Tests: unit `duel.test.ts`, e2e `duel.mjs` (no message carries the word or the other's
   letters before the end, reconnect, a simultaneous finish, rematch = practice, a draw), `games-sweep` `duel` /
   `duelPlay` (Sam joins as a socket), `games-pair` `duel` (reload, network drop; in CI).

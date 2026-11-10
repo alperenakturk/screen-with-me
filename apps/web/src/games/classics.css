@@ -188,6 +188,19 @@
   grid-template-areas: 'bar' 'top' 'board' 'bottom' 'tray' 'status' 'actions'; gap: 8px;
 }
 #game-stage .xox-page.mt > .mt-table[hidden], #game-stage .xox-page.mt > .cl-picker[hidden] { display: none; }
+/* GPRO (layout audit): a sideways phone puts the board on the left at the full height, the bar, players, status and
+   buttons in a column on its right (the board was squeezed to a sliver between them). */
+html.phone.sideways #game-stage .xox-page.mt > .mt-table {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'board bar' 'board top' 'board bottom' 'board tray' 'board .' 'board status' 'board actions'; gap: 4px 12px;
+}
+html.phone.sideways #game-stage .xox-page.mt[data-board='backgammon'] > .mt-table { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+html.phone.sideways #game-stage .mt .cl-bot-label { display: none; }
+html.phone.sideways #game-stage .mt .xox-player { padding: 2px 10px; }
+html.phone.sideways #game-stage .xox-page.mt { padding: 6px 10px; }
+html.phone.sideways #game-stage .mt .mt-taken { font-size: 13px; flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em; overflow: hidden; text-overflow: ellipsis; }
 #game-stage .mt .xox-players { display: contents; }
 #game-stage .mt #seat-1 { grid-area: top; }
 #game-stage .mt #seat-0 { grid-area: bottom; }
@@ -278,6 +291,12 @@
   #game-stage .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 10px) / 2); }
   #game-stage .mt .cl-card-players { display: none; }
 }
+/* GPRO (layout audit): a sideways phone shows all six cards in one row (names only), so nothing is cut off. */
+html.phone.sideways #game-stage .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; gap: 6px; }
+html.phone.sideways #game-stage .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
+html.phone.sideways #game-stage .mt .cl-card-line, html.phone.sideways #game-stage .mt .cl-card-players { display: none; }
+html.phone.sideways #game-stage .mt .cl-card-art svg { max-height: 64px; }
+html.phone.sideways #game-stage .mt .cl-picker-line { margin-bottom: 4px; }
 /* A narrow window (a phone): score and 👁 on the bar's first line, Glowbeam's chips on the next. */
 @container game (max-width: 440px) {
   #game-stage .mt .mt-gap { display: none; }
