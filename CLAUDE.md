@@ -260,6 +260,9 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
 2. Bump the site version in the footer (`apps/web/index.html` `.footer-version`). The extension version is kept at
    the same number (the owner thought differing numbers meant "outdated"): `apps/extension/package.json` (the zip on
    the site and the extension page read it).
+2b. **First look (owner, 10 Nov 2026, card QA1):** a UI change runs `scripts/shots.cjs` (the screens the diff touches, at
+   1366, 1920, tablet and phone) and gives a fresh subagent only `.shots/<branch>/` (`REVIEW.md` is its brief); the PR
+   lists each finding as fixed or answered. Tests check rules; this checks what a person sees.
 3. Add the release's block to `CHANGELOG.md` (user-facing, English); update the feature's section in
    `docs/internal/architecture/`; `README.md` + `README.tr.md` together when they are affected; `STATUS.md` (and
    ROADMAP checkboxes). Never a release paragraph in this file.
