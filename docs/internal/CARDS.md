@@ -82,6 +82,15 @@ Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CL
   3. "Move to another device" leaves the profile popover and goes into Settings (few people use it).
   4. Settings get categories (e.g. Me · My screen · Room · Sound & camera · About), each a short list, no scrolling where
      it can be avoided (CLAUDE.md "No scrolling inside a view"), the same order on a computer and a phone.
+  5. (owner, same day) **The voice / stream IP notice goes**: no dialog before joining voice, starting or watching a stream,
+     and no "🔒 Those in voice can see your IP · Why?" line under the voice row ("nobody uses it; put it officially where it
+     has to be, no warnings"). The fact stays where the law needs it: `privacy.html` #voice already says it in both
+     languages (check the wording still matches: others in voice / a stream can see your public IP); Settings → Sound &
+     camera gets a quiet "Who sees what (privacy)" link to that section. `ui/ip-notice.ts` and its `opt:ipNotice:*` keys
+     go (old keys are harmless); the Planner updates CLAUDE.md's "fails closed (the IP notice)" line after it ships.
+  6. (owner, same day) The room's **join screen** (name / avatar before entering) loses its privacy / terms footer
+     line too; the links live in a small ⓘ / ⚙️ on that screen (an invited person never sees the home page, so the notice
+     must stay one tap away there) and in Settings → About.
 - Done when: the room screen shows only what you need while watching; every moved item is reachable in ≤ 2 clicks from
   Settings; nothing is removed from the product; EN + TR texts; `store/src/room.html` copy updated; the screenshot /
   layout harnesses at phone, tablet, laptop and desktop sizes are updated; the Test Lab steps that named the old places
