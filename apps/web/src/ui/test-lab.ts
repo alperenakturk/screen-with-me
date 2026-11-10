@@ -26,6 +26,7 @@ import {
 import { createFriends } from './lab-friends.ts';
 import { createVideoLab } from './lab-video.ts';
 import { createScenarios } from './lab-scenarios.ts';
+import { createTestRound, ROUND_PREFIX } from './lab-round.ts';
 import { both, errorText, say } from './lab-text.ts';
 import './test-lab.css';
 
@@ -491,6 +492,9 @@ export function mountDebugPanel(): void {
   // 🧪 Scenarios (DL5): scripted two-person checks with the fake friends.
   const scenarios = createScenarios(friends, runById);
   const unregisterScenarios = debugHooks.register('scenarios', () => ({ commands: scenarios.commands }));
+  // 🧪 Test round (LAB2): one command per test on the owner's board.
+  const round = createTestRound(friends);
+  const unregisterRound = debugHooks.register('round', () => ({ commands: round.commands }));
 
   // ---- head, tabs, body, foot ----
   const closeButton = words(el('button', { type: 'button', class: 'icon-btn debug-close' }, '✕'), (t) => t.close, 'aria-label');
@@ -658,7 +662,7 @@ export function mountDebugPanel(): void {
               ? el('div', { class: 'lab-view', 'data-view': 'scenarios' }, scenarios.view((id) => {
                   const c = allCommands().find((x) => x.id === id);
                   if (c) void runAndShow(c);
-                }))
+                }), el('h4', { class: 'lab-round-head' }, say({ en: '🧪 Test round: one per test on the board', tr: '🧪 Test turu: panodaki her test için bir tane' })), el('ul', { class: 'lab-commands lab-round' }, ...allCommands().filter((c) => c.id.startsWith(ROUND_PREFIX)).map(commandRow)))
               : commandView(tab);
     const commands = tab === 'status' || tab === 'log' ? commandView(tab) : null;
     body.replaceChildren(view, ...(commands && commands.querySelector('.lab-commands') ? [el('h4', {}, tx.commands), commands] : []), undoBar);
@@ -899,6 +903,8 @@ export function mountDebugPanel(): void {
     unregisterVideo();
     offScenarios();
     unregisterScenarios();
+    round.close();
+    unregisterRound();
     clearInterval(timer);
     clearInterval(sampler);
     sampler = 0;
@@ -916,5 +922,5 @@ export function mountDebugPanel(): void {
   }
   offButton.addEventListener('click', turnOff);
   // For the lab's harness (and the owner's console): the same safe paths as the buttons.
-  (window as unknown as { __swmLab?: unknown }).__swmLab = { run: (id: string, arg?: string) => { const c = allCommands().find((x) => x.id === id); return c ? runCommand(c, arg) : Promise.reject(new Error(`no command ${id}`)); }, log: () => log.slice(), bugText: () => bugText(tx), status: () => hookStatus(), sync: () => { const r = debugRoom(); return r ? { drift: r.drift, jumps: r.jumps } : null; } };
+  (window as unknown as { __swmLab?: unknown }).__swmLab = { run: (id: string, arg?: string) => { const c = allCommands().find((x) => x.id === id); return c ? runCommand(c, arg) : Promise.reject(new Error(`no command ${id}`)); }, undo: (id: string) => { const c = allCommands().find((x) => x.id === id); return c ? runCommand(c, undefined, 'undo') : Promise.reject(new Error(`no command ${id}`)); }, list: () => allCommands().map((c) => ({ id: c.id, tab: c.tab, title: say(c.title), help: say(c.help), where: c.where ? say(c.where) : null, available: availability(c), undo: !!c.undo })), log: () => log.slice(), bugText: () => bugText(tx), status: () => hookStatus(), sync: () => { const r = debugRoom(); return r ? { drift: r.drift, jumps: r.jumps } : null; } };
 }

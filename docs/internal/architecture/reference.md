@@ -1211,7 +1211,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   copy of the room's state), `stall` (`ready: false` for 5 s: the room waits), `bounce` (leave, back after 5 s with the
   same member id), `host` (the room's 👑 Make host message through `DebugRoom.makeHost`; host only; kept out of the room page's budget), `chatty`
   (they write / react by themselves every 2, 5 or 10 s). All leave when the lab is turned off and on `pagehide`.
-  `window.__swmLab` (`run(id, arg)`, `log()`, `bugText()`) exists only while the lab is on (harnesses). **Rule for
+  `window.__swmLab` (`run(id, arg)`, `undo(id)`, `list()` (every command with its tab, texts, availability and whether it
+  has an Undo), `log()`, `bugText()`) exists only while the lab is on (harnesses). `friends.host` has an Undo since LAB2:
+  the friend hands the role back (`make-host` from their own connection, they are the real host then).
+  **🧪 Test round (card LAB2, 0.9.97.109, `ui/lab-round.ts`, part of the lab chunk):** one command per test on the owner's
+  board, `round.<id>`: `s1`–`s4`, `n1`–`n4` (+ `n2old`), `f1`, `f2` (STATUS "Owner's hand tests") and `t1`–`t11` (the
+  0.9.98 round's items 1–11, "Next round, start here"; item 7 is Game Studio's 🎮 tab). Each sets the stage the lab can
+  (themes / fonts on this page only, a fake friend who pauses / plays / jumps, writes three lines in fullscreen, knocks
+  at the door, writes privately; the invite's QR tab; the Help or home page in a new tab) and returns one line of what to
+  look at; tests that need a real person or device (t3, t4, t9, t10, t11) only say so. `n2old` (saves the removed Ocean
+  Liner theme) and `n4` (forgets the camera window's place) reload the page; their Undo puts the saved values back from
+  `sessionStorage` `lab:roundKept` and reloads. Shown under the scenarios in the 🧪 tab (`.lab-round`). Scenarios whose
+  friends need room send earlier fake friends away first (at most `MAX_FRIENDS`), and "a video plays" starts a paused
+  video again. Harness `scripts/harness/lab-sweep/run.cjs` (LAB2, in CI): every command of every tab (🎮 is Game
+  Studio's) run once and undone on a live-like host (`lab.localhost`: Chromium sends it to this computer by itself; a
+  `--host-resolver-rules` name gets its WebSockets refused in the cloud container), computer + Pixel 7, EN + TR: no red
+  line except the self-tests, every tab, the command box, "This is a bug", the N2 reload check; `DEVICES=`, `LANGS=`,
+  `TABS=` narrow it. One address may open 60 new connections a minute (`CONNECT_LIMIT`): the sweep waits a minute after
+  🎬 "Open 12 more connections" and between runs, and the scenarios' "did not get in" says so. **Rule for
   every new card from DL1 on:** its "Done when" includes its lab hook or scenario. Harness `scripts/harness/test-lab/run.cjs`
   (39 checks, in CI): off = no chunk and no lab object, the drawer, tabs, status lines, the rail never under the drawer,
   the log (in / out, redacted, filter), the command box (run, undo, typing never reaches the room), a failing command

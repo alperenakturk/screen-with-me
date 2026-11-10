@@ -325,11 +325,35 @@ jobs:
         if: failure()
         run: tail -n 150 wrangler.log || true
 
+  # Card LAB2: every Test Lab command run once and undone on a live-like host (lab.localhost: the owner's code unlocks
+  # it, the server's limits apply), a computer in English and a phone in Turkish. The 🎮 tab is Game Studio's.
+  lab-sweep:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
+          playwright: 'true'
+
+      - name: Test Lab sweep
+        run: |
+          DEVICES=laptop LANGS=en node scripts/harness/lab-sweep/run.cjs harness-lab-code
+          DEVICES=phone LANGS=tr node scripts/harness/lab-sweep/run.cjs harness-lab-code
+
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 150 wrangler.log || true
+
   # The ruleset's required check: green when every test job passed or was skipped on purpose (docs-only, a push to
   # main, no site change); red when one failed or was cancelled, or the change detection itself failed. `always()`, so
   # a failed job can never make this one "skipped" (which a required check would count as success).
   test:
-    needs: [changes, checks, e2e, site, games, games-more]
+    needs: [changes, checks, e2e, site, games, games-more, lab-sweep]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -337,9 +361,9 @@ jobs:
       - name: All test jobs passed
         env:
           CHANGES: ${{ needs.changes.result }}
-          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.games.result }} ${{ needs.games-more.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.lab-sweep.result }}
         run: |
-          echo "changes: $CHANGES · checks, e2e, site, games, games-more: $RESULTS"
+          echo "changes: $CHANGES · checks, e2e, site, games, games-more, lab-sweep: $RESULTS"
           [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
           for r in $RESULTS; do
             case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
