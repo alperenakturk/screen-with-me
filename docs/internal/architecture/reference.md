@@ -1831,6 +1831,46 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   ruleset's required check, `if: always()`) fails when any of them failed or was cancelled; `deploy` needs it. A new
   harness goes into the job of its kind (`e2e` when it needs no `web` change, else `site` / `games`); move a step to
   another job, never make one job much longer than the others (wall-clock is the longest job).
+  **Card QA1: measured timings** (`node scripts/ci-timings.mjs [--steps] [--runs 10]`: median and slowest of the last
+  finished runs per job and step, PRs and main apart; needs `gh`). Before QA1 (10 Nov 2026, last 10 runs):
+
+  | PR job | Median | Biggest steps |
+  |---|---|---|
+  | site | 12:10 | Theme contrast 5:27, Test Lab 2:33, a11y 0:45 |
+  | games | 8:34 | games-resume + Sea Battle + how-to-play + result 5:20, games sweep 2:39 |
+  | e2e | 8:14 | local e2e 7:28 (ghost.mjs alone 110 s of waiting) |
+  | games-more | 5:57 | Test Lab games 2:17, tablets 1:20 |
+  | lab-sweep | 5:48 | Test Lab sweep 5:09 |
+  | checks | 0:34 | unit tests 0:10 |
+  | **whole PR run** | **12:27** | the longest job |
+  | main: deploy | 13:37 | live e2e 13:13 (paced: one address may open 60 room connections a minute) |
+
+  Setup is not the cost: `.github/actions/prepare` takes ≈ 0:30 a job (`npm ci` 3 s with npm's cache, the build 1 s,
+  the local server 2 s, Playwright with its cached browser and system libraries ≈ 14 s), so caching `node_modules` or
+  the apt libraries would save seconds, not minutes. QA1 changed what runs where: the theme contrast check is its own
+  `contrast` job, `game-proportions` (6.5 min, which had made `games-more` 12.5) is the `game-windows` job, and the PR's local e2e runs three files at a time (`SWM_E2E_PARALLEL=3`, only with
+  `SWM_E2E_UNPACED` on localhost; the files in `run.mjs` `SOLO` that count per address or for the whole server run alone
+  after the others; each file's output prints in one piece with its time). The live e2e stays one file at a time:
+  its pacing is per address, so sharding it needs separate runners (a later step, inside the deploy's concurrency
+  group so no deploy restarts objects mid-run).
+  **First look (QA1 part 3, `scripts/shots.cjs`):** screenshots of every screen a change touched at laptop 1366×768,
+  desktop 1920×1080, upright tablet 820×1180 and phone (iPhone 13), EN by default (`--langs en,tr`), into `.shots/<branch>`
+  (git-ignored) with `index.md` (what each picture is) and `REVIEW.md` (the brief for a fresh reviewer subagent: CLAUDE.md
+  §6 product rules + what to look for; it gets only that folder). Screens: `--screens list`; without `--screens` it maps
+  `git diff --name-only origin/main...HEAD` through `SCREEN_FOR`. Room screens open as the first person with `?debug=1`
+  (Test Lab commands `settings.<section>`, `games.open.<kind>`; the lab's 🐞 is hidden before the shot); a video file
+  from `--video` (default the film server's `http://localhost:5300/video.webm`). Run it against the built site on the
+  local server with the lab flag.
+  **State matrix (QA1 part 2, `scripts/harness/state-matrix/run.cjs`):** every game the lab can open (`games.open.*`) in
+  each placement its head offers × side panel open / closed (cinema) × no video / a file / YouTube (`via-youtube.cjs`) ×
+  1366, 1920 and an upright tablet: the window and its controls whole on screen, nothing over a YouTube player, a free
+  window never over the video unless dragged; once per size, every head button visibly changes something (a real mouse
+  click at its middle; the placement already in use is skipped) and, on a computer, hover / drag by the head / resize
+  from the corner (in proportion) / double click back home. Three states at a time; ≈ 2.5 min headful under
+  `HEADFUL=1 xvfb-run -a`. W's allowed placements are notes, not failures (1366 side panel open ≤ 48 px over the
+  video's edge, cinema mode's SPOT_HOME, the tablet keeping clear of the chat). Not in CI until its last finding is
+  fixed: the room's intro (`.swm-intro`, over `.player-wrap`) takes the first click on a game opened in its first
+  seconds ("?" of the first table does nothing).
   **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
   for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose
