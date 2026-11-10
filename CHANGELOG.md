@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.106 — 10 Nov
+- Stub, the cinema ticket, is now the games' mascot: the referee who cheers and gasps, the bot you play against in the
+  Classics and Sea Battle, the cashier at the Snack Bar and the usher whose torch lights your window garden. He cheers
+  on the result card when you win and looks a little sorry when you lose.
+- Every table in the games hall wears its own drawn badge, the same one you see on its lobby card.
+- A little motion: the game window slides in as it opens, chess and dama pieces slide to their new square, and Last
+  Heart's cards flip over when they turn face up. If your device is set to reduce motion, none of it plays.
+
 ### 0.9.97.104 — 10 Nov
 - Snack Bar: every place has its own shop-front colours; a seasonal stand comes each week (hot cocoa, lemonade, cotton
   candy, caramel apples) and earns its own badge at level 5; after each film the receipt has a short manager's report

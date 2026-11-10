@@ -104,6 +104,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.106',
+    kinds: ['classics', 'sea', 'draw', 'quiz', 'poker', 'duel'],
+    badge: 'updated',
+    tr: 'Masaların yeni maskotu Stub: hakem, rakip ve kazanınca seninle sevinen bilet. Her masanın kendi rozeti; taşlar artık kayarak gidiyor.',
+    en: 'Stub, the ticket, is the tables’ new mascot: the referee, the opponent, and the one who cheers your win. Every table has its own badge; pieces now slide.',
+  },
+  {
     v: '0.9.97.103',
     kinds: ['duel', 'sea'],
     badge: 'updated',

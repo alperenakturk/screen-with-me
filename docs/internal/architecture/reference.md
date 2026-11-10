@@ -1093,6 +1093,27 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "Soon" until built. The last tab is remembered (`opt:hubTab`); `keepHubOnScreen` slides the window back on screen
   (`translate`) when its button sits near an edge; phones: a bottom sheet as tall as its content. Harness
   `scripts/harness/games-gallery/run.cjs` (24 checks).
+  NG3 (0.9.97.106): the hall's badge styles live in the lazy `games/gallery.css` (room CSS budget); a cover card's
+  NEW / UPDATED badge sits on its own line under the title. **Table badges:** `scripts/game-badges.mjs` draws one set
+  (`games/art/badges/<kind>.svg`: a rounded tile in the table's tint, a cream line icon) for classics, draw, quiz,
+  poker, sea and duel; worn on the hall's covers (`.hub-card[data-kind] .hub-cover::after`) and on the lobby cards
+  (`h3::before` in `lobby.css` / `duel.css`, replacing the emoji).
+  **Stub, the games' mascot (MASCOT3, NG3, 0.9.97.106):** `games/stub.ts` holds every pose from Design's set
+  (`docs/internal/design/mascot-3/`, copied to `games/art/stub/`): `stubArt(pose, cls)` / `setStubPose` (unique ids
+  per copy): the referee `referee` / `cheer` / `gasp` (`referee.ts` by mood; Classics and Sea Battle through
+  `syncRefereePose` from their `react-*` / `cheer` classes), the bot's face `opponent` (seat avatars), `small` (the
+  bot buttons' label), the result card `plain` → `win` / `sorry` by the outcome (`resultCard` sets it; `resultStub()`),
+  Snack Bar's cashier (the counter scene's `#cashier` group) and receipt (`win`), Window Garden's lamp = Stub's usher
+  torch (`art/garden/stub-lamp.svg`). Every game text says "Stub" (Turkish "Stub’a karşı"); the server names the bot
+  "Stub"; the saved bot key `bot:glowbeam` stays (old seats keep working). The room and the home (lane A, NP3) draw
+  Stub from `logo.ts`.
+  **Motion (NG3, owner's pick 10: 4):** `games/motion.ts`, Web Animations from code (no room CSS), all skipped under
+  `prefers-reduced-motion`: `slideIn` (the game window comes up as `stage.ts` opens it; `translate`, so the window's
+  fit transform stays), `slidePiece` (chess / dama: a copy of the moved piece slides from the old square inside the
+  board, `.dama-board` is the cells' offset parent; the real one waits as `.arriving`; chess sends `from`, dama finds
+  the mover's emptied square), `flipIn` (Last Heart: a card that turns face up flips, 70 ms stagger, once per hand).
+  Harness `scripts/harness/motion/run.cjs` (CI `games` job): the window animates, both chess moves slide and leave no
+  copy, nothing animates under reduced motion.
   **🌱 Window Garden (0.9.95.4, the owner's look A "window sill"):** `games/garden.ts` + `garden.css` (lazy chunk, own
   `TEXT`, art from `docs/internal/design/side-games/garden/` in `games/art/garden/`). The scene's `#pot-1..3` groups are
   hidden and three pot buttons stand on the sill (26 / 50 / 74 %); a pot shows seed → sprout → the plant at 72 / 86 /
