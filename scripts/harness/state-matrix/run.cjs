@@ -1,5 +1,5 @@
-// Card QA1 part 2: the states nobody listed. Every game in each placement it allows × side panel open / closed (cinema
-// mode) × no video / a video file / a YouTube video × a 1366 laptop / a 1920 monitor / an upright tablet. In each state:
+// Card QA1 part 2: the states nobody listed. Every game in each placement it allows × side panel open / cinema mode
+// (SIDES=open,closed; cinema mode is the room's only way to hide the side panel) × no video / a video file / a YouTube video × a 1366 laptop / a 1920 monitor / an upright tablet. In each state:
 //   - nothing of the game is cut off (its window and every control inside it are inside the screen and the window);
 //   - nothing sits over a YouTube player (YouTube's Required Minimum Functionality);
 //   - a free window never covers the video unless I dragged it there (owner, 0.9.97.112: "never cover any part of our
@@ -159,7 +159,8 @@ const placesOf = (page) =>
 
 /** One state of the matrix: a room with this video and side panel, every game in every placement it offers. */
 async function runState(browser, kinds, size, video, side) {
-  const where = `${size} · ${video} · side ${side}`;
+  // `closed` = cinema mode (card 14): the room's only way to hide the side panel.
+  const where = `${size} · ${video} · ${side === 'closed' ? 'cinema mode' : 'side panel open'}`;
   const { ctx, page } = await newPage(browser, size);
   try {
     if (!(await setVideo(page, video))) {

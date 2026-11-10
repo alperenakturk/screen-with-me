@@ -49,10 +49,19 @@ const FILES = ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs',
 // count something per address or for the whole server (upload / feedback / search budgets, the lab's powers, the
 // per-address caps, the HTTP fallback's sessions) run alone, after the others. Each file's output is printed in one
 // piece when it ends. Live and local runs without the variable stay one file at a time, as before.
-/** One run of a file, its output straight to ours; resolves its exit code (the event loop stays free for the canaries). */
+/**
+ * One run of a file, its output passed straight on; resolves its exit code and whether trace.mjs saw the server drop
+ * one of its own connections (1006). The event loop stays free for the canaries.
+ */
+let ownDrop = false;
 const runAttempt = (test) =>
   new Promise((resolve) => {
-    const child = spawn(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
+    ownDrop = false;
+    const child = spawn(process.execPath, [...trace, join(here, test), base], { stdio: ['ignore', 'pipe', 'inherit'] });
+    child.stdout.on('data', (chunk) => {
+      process.stdout.write(chunk);
+      if (/socket closed by the server or network: 1006\b/.test(String(chunk))) ownDrop = true;
+    });
     child.on('close', (code) => resolve(code ?? 1));
   });
 const SOLO = new Set(['chatimage.mjs', 'uploads.mjs', 'search.mjs', 'fallback.mjs', 'feedback.mjs', 'abuse.mjs', 'lab-server.mjs', 'lab-check.mjs', 'quota.mjs']);
@@ -91,9 +100,13 @@ if (parallel > 1) {
   // whether the server dropped canary connections while it ran (objects restarting: infrastructure) or not (then the
   // cause is in the code or the test). It changes no result: a retry that fails again is red either way.
   const canary = live ? startCanary(base, { count: 2, connectLog }) : null;
+  // Objects restart one at a time, so a canary in another room can miss the one that hit the file (10 Nov 2026,
+  // saved.mjs): the file's own dropped connection (1006 in its trace) counts first.
   const restarts = (from, to) => {
     const seen = canary ? canary.between(from, to) : [];
-    return seen.length ? `the server dropped ${seen.length} canary connection(s) meanwhile (codes ${[...new Set(seen.map((d) => d.code))].join(', ')}): objects were restarting` : 'no canary connection was dropped meanwhile: the cause is likely the code or the test, not a restart';
+    if (ownDrop) return 'the server dropped this file\'s own connection (1006): an object restart (a deploy rolling out) or a crash in that object';
+    if (seen.length) return `the server dropped ${seen.length} canary connection(s) meanwhile (codes ${[...new Set(seen.map((d) => d.code))].join(', ')}): objects were restarting`;
+    return 'no connection of this file or of a canary was dropped meanwhile: the cause is likely the code or the test, not a restart';
   };
   for (const test of RUN) {
     await paceConnects();
