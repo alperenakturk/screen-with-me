@@ -106,4 +106,6 @@ html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary {
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .draw-page:not(.quiz-page):not(.draw-lobby) .draw-main { justify-content: center; }
   #game-stage .draw-page:not(.quiz-page):not(.draw-lobby) .draw-side { flex: 0 1 360px; }
+  /* The canvas is shorter here: Stub's line goes to its top corner, clear of the word buttons in its middle. */
+  #game-stage .draw-canvas-wrap > .rf { top: 10px; bottom: auto; align-items: flex-start; }
 }
