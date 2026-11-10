@@ -1,5 +1,5 @@
-/* Varsayılan tema "Gece": gece yarısı laciverti, mor vurgu. Sade temalarda resim yok: adına uygun katmanlı
-   renk geçişleri (--art), hafif yıldız tozu/desen ve arkada çok yavaş süzülen ışık bulutları (--aura) var. */
+/* The default theme "Gece" (Night): midnight navy, a violet accent. Plain themes have no picture: one gentle layered
+   gradient (--art) and light star dust or a pattern (THEME1 removed the corner glows and the drifting aura). */
 :root {
   --bg: #0b0d1f;
   --surface: #151a2e;
@@ -21,19 +21,27 @@
     radial-gradient(1px 1px at 40px 60px, rgb(255 255 255 / 0.7) 99%, transparent),
     radial-gradient(1px 1px at 190px 140px, rgb(220 210 255 / 0.55) 99%, transparent),
     radial-gradient(1.4px 1.4px at 110px 230px, rgb(255 255 255 / 0.5) 99%, transparent),
-    radial-gradient(ellipse 70% 45% at 50% -5%, rgb(139 108 255 / 0.26), transparent 70%),
-    radial-gradient(ellipse 45% 50% at 0% 75%, rgb(70 110 255 / 0.13), transparent 70%),
-    radial-gradient(ellipse 45% 50% at 100% 90%, rgb(220 100 200 / 0.11), transparent 70%),
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgb(139 108 255 / 0.2), transparent 70%),
     linear-gradient(#181d46, #0f1230 45%, #090b1c);
-  --art-size: 251px 263px, 317px 289px, 283px 307px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  --aura:
-    radial-gradient(38% 32% at 22% 28%, rgb(139 108 255 / 0.14), transparent 70%),
-    radial-gradient(34% 30% at 78% 62%, rgb(80 130 255 / 0.11), transparent 70%);
+  /* THEME1: one gentle gradient and the star dust; the corner glows and the drifting aura read as stock decoration. */
+  --art-size: 251px 263px, 317px 289px, 283px 307px, 100% 100%, 100% 100%;
   /* Temanın kostümlü maskotu (public/themes/*-maskot.svg). */
   --mascot: url('/themes/gece-maskot.svg');
   color: var(--text);
   /* Üst/alt şeritteki yazılar: soluk ama her temada okunur. */
   --chrome-text: color-mix(in srgb, var(--text) 72%, var(--muted));
+}
+
+/* THEME1 (Design's themes-2.md): tokens every theme shares, worked out from the theme's own colours.
+   --field-border: the edge of inputs, selects and switches, ≥ 3:1 on the surface (WCAG 1.4.11); --border stays the
+   soft card edge. --hero-scrim: a quiet zone behind the home page's text column on scene themes (none on plain ones). */
+:root {
+  --field-border: color-mix(in srgb, var(--muted) 62%, var(--surface));
+  --hero-scrim: none;
+}
+
+:root:is([data-theme='lokum'], [data-theme='binbirgece'], [data-theme='sinema'], [data-theme='acikhava'], [data-theme='gemi'], [data-theme='tren']) {
+  --hero-scrim: color-mix(in srgb, var(--bg) 88%, transparent);
 }
 
 /* ---- Sade temalar (hepsi koyu). Seçim üst menüdeki 🎨'den, ana sayfadaki şeritten ya da
@@ -55,13 +63,9 @@
     radial-gradient(1.6px 1.6px at 70px 90px, rgb(180 240 255 / 0.35) 99%, transparent),
     radial-gradient(1px 1px at 200px 210px, rgb(180 240 255 / 0.3) 99%, transparent),
     repeating-linear-gradient(105deg, rgb(120 220 255 / 0.035) 0 60px, transparent 60px 150px),
-    radial-gradient(ellipse 80% 45% at 50% -8%, rgb(46 197 232 / 0.24), transparent 70%),
-    radial-gradient(ellipse 70% 40% at 50% 112%, rgb(20 120 160 / 0.22), transparent 70%),
+    radial-gradient(ellipse 80% 45% at 50% -8%, rgb(46 197 232 / 0.2), transparent 70%),
     linear-gradient(#0c3150, #072036 45%, #041422);
-  --art-size: 271px 293px, 313px 337px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  --aura:
-    radial-gradient(40% 30% at 25% 20%, rgb(46 197 232 / 0.12), transparent 70%),
-    radial-gradient(36% 30% at 75% 70%, rgb(40 220 190 / 0.08), transparent 70%);
+  --art-size: 271px 293px, 313px 337px, 100% 100%, 100% 100%, 100% 100%;
   --mascot: url('/themes/okyanus-maskot.svg');
 }
 
@@ -84,9 +88,6 @@
     radial-gradient(ellipse 60% 45% at 85% 0%, rgb(170 80 200 / 0.18), transparent 70%),
     linear-gradient(#2b1442, #3b1736 38%, #2a1020 72%, #1a0b14);
   --art-size: 233px 197px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  --aura:
-    radial-gradient(40% 30% at 20% 70%, rgb(255 110 120 / 0.1), transparent 70%),
-    radial-gradient(36% 28% at 80% 30%, rgb(190 90 220 / 0.1), transparent 70%);
   --mascot: url('/themes/gunbatimi-maskot.svg');
 }
 
@@ -111,9 +112,6 @@
     radial-gradient(ellipse 60% 40% at 50% 50%, rgb(140 60 255 / 0.1), transparent 70%),
     linear-gradient(#120b26, #0b0818 55%, #070612);
   --art-size: 56px 56px, 56px 56px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  --aura:
-    radial-gradient(34% 28% at 70% 25%, rgb(255 43 214 / 0.12), transparent 70%),
-    radial-gradient(34% 28% at 25% 75%, rgb(25 245 240 / 0.1), transparent 70%);
   --mascot: url('/themes/neon-maskot.svg');
   --on-accent: #2a0524;
 }
@@ -277,19 +275,6 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background: var(--scene, none) center bottom / cover no-repeat;
-}
-
-/* Sade temalar: sahne yerine arkada çok yavaş süzülen ışık bulutları (--aura); resimli temalarda yok. */
-:root:is(:not([data-theme]), [data-theme='gece'], [data-theme='okyanus'], [data-theme='gunbatimi'], [data-theme='neon']):not(.shell) body::before {
-  inset: -12%;
-  background: var(--aura, none);
-  animation: aura-drift 38s ease-in-out infinite alternate;
-}
-
-@keyframes aura-drift {
-  to {
-    transform: translate(6%, 4%) scale(1.08);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -532,7 +517,7 @@ input,
 select {
   background: var(--surface);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 10px;
   padding: 10px 12px;
   font: inherit;

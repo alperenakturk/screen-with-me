@@ -24,8 +24,12 @@ const THEMES = pick('THEMES', ALL_THEMES);
 const PAGES = pick('PAGES', ['home', 'help', 'join', 'room', 'settings', 'games']);
 const DEVICES = {
   laptop: { viewport: { width: 1366, height: 768 } },
+  // The scene is cover-scaled from the bottom centre, so a wide screen puts other parts of it behind the home text.
+  desktop: { viewport: { width: 1920, height: 1080 } },
   phone: devices['Pixel 7'],
 };
+/** Pages per device: the 1920 run is for the home page's scene only. */
+const DEVICE_PAGES = { desktop: ['home'] };
 
 /** Visible text runs in the viewport: one entry per element with its own text. */
 function collect() {
@@ -82,9 +86,14 @@ function collect() {
       }
     }
     if (clipped) continue;
-    // Covered by something on top (a dialog's backdrop, a window): not what the person reads now.
-    const hit = document.elementFromPoint(Math.min(vw - 1, (r.left + r.right) / 2), Math.min(vh - 1, (r.top + r.bottom) / 2));
-    if (hit && hit !== el && !el.contains(hit) && !hit.contains(el)) continue;
+    // Covered by something on top (a dialog's backdrop, a window), even in part: not what the person reads now. Five
+    // points along the line (a window may cover only its end, then its background pixels would be the window's).
+    const y = Math.min(vh - 1, (r.top + r.bottom) / 2);
+    const covered = [0.05, 0.25, 0.5, 0.75, 0.95].some((f) => {
+      const hit = document.elementFromPoint(Math.min(vw - 1, Math.max(0, r.left + (r.right - r.left) * f)), y);
+      return hit && hit !== el && !el.contains(hit) && !hit.contains(el);
+    });
+    if (covered) continue;
     const color = parse(s.webkitTextFillColor && s.webkitTextFillColor !== s.color && !/rgba\(0, 0, 0, 0\)/.test(s.webkitTextFillColor) ? s.webkitTextFillColor : s.color);
     if (!color) continue;
     seen.add(el);
@@ -188,7 +197,7 @@ const STILL = `*, *::before, *::after { animation-play-state: paused !important;
         } else console.log(`ok   ${key}: ${rated.length} text runs`);
       };
       const room = 'ct' + Math.random().toString(36).slice(2, 7);
-      for (const name of PAGES) {
+      for (const name of PAGES.filter((p) => !DEVICE_PAGES[device] || DEVICE_PAGES[device].includes(p))) {
         try {
           if (name === 'home') {
             await page.goto(`${SITE}/`);

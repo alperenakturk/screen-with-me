@@ -1439,9 +1439,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   runs 6 s, the beam breathes, nothing moves with reduced motion), the three feature cards (`.hm-feat`) at its foot.
   Then `#how`: three steps, the extension card, saved rooms (`#recent`), a Help line. No video link box (3A) and no theme strip; 🎨 in the top bar (back since card 15d). Computer / sideways tablet: two columns (slogan 64 px); upright tablet: one centred
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
-  saved Sinema theme gets a soft backdrop behind the text. The footer shows the site version (`index.html`
-  `.footer-version`, bump on every release). Plain themes (gece/okyanus/gunbatimi/neon) have a layered `--art` + a
-  slowly drifting `--aura` behind it (`body::before`; not in the shell or with reduced motion). Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). Harness
+  scene theme gets a quiet zone behind the text column (THEME1: `.hm-text::before`, a blurred block of `--hero-scrim`;
+  the second section's heading and help line get the same block). The footer shows the site version (`index.html`
+  `.footer-version`, bump on every release). Plain themes (gece/okyanus/gunbatimi/neon) have one layered `--art`
+  (gradient + star dust or a pattern; THEME1 removed the corner glows and the drifting `--aura`). **Theme tokens
+  (THEME1, Design's `docs/internal/design/themes-2.md`):** `--field-border` (inputs, selects, the switch's off edge;
+  `--muted` 62 % into `--surface`, ≥ 3:1) and `--hero-scrim` (`--bg` at 88 % on the six scene themes, `none` on plain
+  ones) are worked out in `styles.css` from each theme's own colours; my chat bubble and primary buttons use
+  `--accent-btn` (Gece `#6a4cf2`, white text ≥ 4.5:1). The home's accent lives in `home.css` `.hm-first` (`--hm-accent`,
+  `--hm-accent-fill`, `--hm-accent-ink`: the brand gold today; the owner's Q2 "home follows the theme" sets them to
+  `--accent` / `--accent-btn` / `--on-accent`); its soft text is `--hm-soft` (from `--text` and `--muted`). Harness
+  `scripts/harness/contrast/run.cjs` (CI, `site` job): every theme's text against the real pixels behind it (WCAG AA,
+  4.5:1 or 3:1 for large text; the worst 15 % of the background counts) on home at 1366 and 1920, help, join, room,
+  settings and the games hall, and the plain themes on a Pixel 7; `REPORT_ONLY=1` for audits. Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). Harness
   `scripts/harness/home/run.cjs` (5 sizes × EN + TR).
 - **Bigger room on a computer (0.9.92.7, owner: "too much empty space"):** above 860 px wide (not the film page,
   Shorts view, TV or phone) `main` has no 1280 px cap; the room's grid is `minmax(0, max(--stage-w, 560px))` +
