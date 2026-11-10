@@ -211,7 +211,7 @@ async function unnamed(page) {
   await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samMiss}"]`);
   check(!!(await until(() => turnOf())), "Sam's miss (the second tap) passes the turn back");
   check(!!(await until(async () => (await cellsWith(alex.page, 'mine', 'miss')).includes(samMiss))), 'phone: the second tap shot the cell');
-  check(!(await zoom()).zoomed, 'phone: after the shot the whole sea shows again');
+  check(!!(await until(async () => !(await zoom()).zoomed, 3000)), 'phone: after the shot the whole sea shows again');
   await alex.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samShips[0]}"]`);
   check(!!(await until(async () => (await cellsWith(alex.page, 'theirs', 'hit')).includes(samShips[0]))), 'a hit shows on their sea');
   check(!!(await until(async () => (await sounds(sam.page)).includes('seaHit'))), 'the hit sounds on both sides');

@@ -330,6 +330,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     aimAt = null;
     zoomQ = null;
     send({ t: 'shot', cell });
+    // The whole sea comes back at once, not when the server's answer arrives.
+    render();
   }
   function unzoom(): void {
     zoomQ = null;
