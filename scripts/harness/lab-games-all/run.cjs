@@ -4,7 +4,7 @@
 // error behind, and every listed id must exist. The "not now" answers are printed so their help lines can be checked.
 //
 //   npm run dev (a local lab server), then: node scripts/harness/lab-games-all/run.cjs [site]
-//   ONLY=laptop-en narrows the run (laptop-en, laptop-tr, phone-en, phone-tr).
+//   ONLY=laptop-en,phone-tr narrows the run (laptop-en, laptop-tr, phone-en, phone-tr; CI runs those two).
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -94,8 +94,8 @@ async function audit(browser, device, lang) {
 
 (async () => {
   const browser = await chromium.launch();
-  const only = process.env.ONLY;
-  for (const device of ['laptop', 'phone']) for (const lang of ['en', 'tr']) if (!only || only === `${device}-${lang}`) await audit(browser, device, lang);
+  const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
+  for (const device of ['laptop', 'phone']) for (const lang of ['en', 'tr']) if (!only || only.includes(`${device}-${lang}`)) await audit(browser, device, lang);
   await browser.close();
   console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ Every games command passed');
   process.exit(fails ? 1 : 0);

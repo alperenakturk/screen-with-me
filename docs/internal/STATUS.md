@@ -514,6 +514,41 @@ with the same friend:
   games hall: each table has a drawn badge, the same as on its lobby card. With "reduce motion" on in your phone's
   settings, nothing slides.
 
+### Test round with the Lab: games (🎮, card LAB2, Game Studio)
+For the Planner's step-by-step guide. In a room with the lab open (🐞 → "🎮 Oyunlar"), each line: what to press (the
+exact Turkish names, in quotes) and what the owner should see. On the live site the commands marked "local test server
+only" answer "sadece yerel test sunucusunda"; nothing below needs them. A "🤖 friend" is a pretend player who joins
+the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masalardan kalksın" sends it away.
+- G1 (dama): "Masa aç: Klasikler" → "Klasikler: dama seç" → on the board "Kolay"/"Orta" (Stub sits). Play to the end:
+  a sound on each move, pieces slide, the result card with Stub, Rematch. Mid-game "🎲 Oyunu değiştir" asks first →
+  chess. *The friend's reload needs a real second person (Classics have no 🤖 friend: Stub is the opponent).*
+- G2 (Sea Battle on a phone): "Masa aç: Amiral Battı" → "Bu masaya 🤖 bir arkadaş otursun" (it places a fleet and
+  presses Ready) → press Ready. First tap aims and zooms, second fires; play to the end: the result card. Wi-Fi off
+  10 s mid-game and on: the game goes on.
+- G3 (Quiz, Draw & Guess): "Masa aç: Bilgi yarışması" → the 🤖 friend → the fewest questions → "Başlat". The friend
+  answers; at the end the result card with the podium, "▶ Yeniden oyna" for me. Same with "Masa aç: Çiz-Bil": it draws a
+  circle on its turn and guesses on mine. *"Everyone got it!" needs the friend to be right: rare with the 🤖 friend.*
+- G4 (Last Heart): "Masa aç: Son Kalp" → the 🤖 friend → "Başlat": "How to play" cards on the first open; the friend
+  checks or calls each turn; the result card at the end.
+- G5–G7, G13 (window, YouTube, phone, sideways): no lab step: open any table with "Masa aç: …" and do as the board
+  says (the 🎬 tab's video is lane A's).
+- G8 (alone against Stub): "Masa aç: Klasikler" → "Klasikler: satranç seç" → "Orta": Stub answers in about a second.
+- G9 (side games): "Yanda aç: Büfe" / "Yanda aç: Pencere Bahçesi" / "Yanda aç: Beş Kare", then "Yan oyunlar: film
+  oynuyormuş gibi yap" and "Yan oyunlar: zaman 10 kat hızlı aksın": coins and plants grow without a film; "Gerçek
+  kayıtlarımı geri getir" at the end puts the real saves back.
+- G10 (a friend's data drops): "Masa aç: Bilgi yarışması" → the 🤖 friend → "Başlat" → "🤖 arkadaşın bağlantısı 2
+  dakika kopsun": after about 1.5 min the friend shows offline, the game goes on; after 2 min it is back.
+- G11, G15 (Snack Bar): "Yanda aç: Büfe" → "Büfe: +10B jeton" (repeat for more) → "📜 Gelişmeler": recipes, the
+  usher, this week's stand on top. "Büfe: sonraki eşiğe bir seviye kala" then buy popcorn with ×1: its own sound.
+  "Büfe: müdürün raporu şimdi gelsin": the receipt with the manager's report. "Büfe: sonraki haftanın mevsim standı":
+  the next week's stand comes, a line says so. "Büfe: sıradaki sinema yeri": the counter's colours change.
+- G12, G14 (Duel): "Masa aç: Beş Kare Düellosu" → "Beş Kare Düellosu: zor modda üç oyunluk maç" (or the lobby's chips)
+  → the 🤖 friend (it presses Ready and tries real words) → Ready. The bar shows "1. oyun / 3"; a guess without a found
+  letter is refused and names it. *The friend rarely finds the word: you win the games.* Phone: the Sea zoom as G2.
+- G16 (Stub, badges, motion): as G8 (his face on the seat, pieces slide), win or lose (the card: cheering / sorry);
+  "Yanda aç: Büfe" (Stub at the till), "Yanda aç: Pencere Bahçesi" (his torch over a pot). The games hall: each table's
+  badge, the same as on its lobby card. "Reduce motion" is the phone's own setting.
+
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
 start, dark mode, largest text, keyboard on every field, first open, back button, sideways, delete confirmation,

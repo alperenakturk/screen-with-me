@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.108 — 10 Nov
+- Test Lab, 🎮 Games (for testing the games alone): a pretend 🤖 friend can sit at a Quiz, Draw & Guess, Last Heart,
+  Five Frames Duel or Sea Battle table and play along, or lose its connection for two minutes. New shortcuts jump a
+  Quiz or Draw & Guess game to its result card and bring a Snack Bar stand to one level before its next milestone. A
+  command that can't run right now says why (and on the live site, which ones only work on a local test server); the
+  tables' commands show the games' names.
+
 ### 0.9.97.106 — 10 Nov
 - Stub, the cinema ticket, is now the games' mascot: the referee who cheers and gasps, the bot you play against in the
   Classics and Sea Battle, the cashier at the Snack Bar and the usher whose torch lights your window garden. He cheers

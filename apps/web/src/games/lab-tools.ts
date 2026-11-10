@@ -75,6 +75,17 @@ const SOLO_NAMES: Record<SoloKind, { en: string; tr: string }> = {
   word: { en: 'Five Frames', tr: 'Beş Kare' },
 };
 const IN_ROOM = { en: 'in a room', tr: 'odada' };
+/** LAB2: the tables by name (the owner reads the Turkish list, never an id). */
+const TABLE_NAMES: Record<RoomGameKind, { en: string; tr: string }> = {
+  classics: { en: 'Classics', tr: 'Klasikler' },
+  xox: { en: 'Tic-tac-toe', tr: 'XOX' },
+  four: { en: 'Four in a Row', tr: 'Dört Taş' },
+  draw: { en: 'Draw & Guess', tr: 'Çiz-Bil' },
+  quiz: { en: 'Quiz', tr: 'Bilgi yarışması' },
+  poker: { en: 'Last Heart', tr: 'Son Kalp' },
+  sea: { en: 'Sea Battle', tr: 'Amiral Battı' },
+  duel: { en: 'Five Frames Duel', tr: 'Beş Kare Düellosu' },
+};
 
 /** The hall's commands, registered once by the games stage. */
 /** LAB2: the tables a 🤖 friend can sit at (`lab-table-friend.ts`, loaded only when one sits down). */
@@ -91,7 +102,7 @@ export function registerGamesLab(
     const commands: LabCommand[] = [
       ...ROOM_GAME_KINDS.map((kind): LabCommand => ({
         id: `games.open.${kind}`,
-        title: { en: `Open a table: ${kind}`, tr: `Masa aç: ${kind}` },
+        title: { en: `Open a table: ${TABLE_NAMES[kind]?.en ?? kind}`, tr: `Masa aç: ${TABLE_NAMES[kind]?.tr ?? kind}` },
         help: { en: 'Opens this game as a table in the room, the same as from the games hall; the others get the invite.', tr: 'Bu oyunu odada masa olarak açar, oyun salonundan açmakla aynı; diğerlerine davet gider.' },
         tab: 'games',
         where: IN_ROOM,
