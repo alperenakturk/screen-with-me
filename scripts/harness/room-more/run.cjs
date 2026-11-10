@@ -39,8 +39,10 @@ const shown = (page, selector) =>
     if (!joinAvatars.length) joinAvatars.push(await page.evaluate(() => document.querySelector('#join-avatar img')?.getAttribute('src') ?? ''));
     if (!privacyChecked) {
       privacyChecked = true;
+      // Card SIMP1: the link sits behind the join card's ⓘ.
+      await page.click('.join-info summary');
       const href = await page.evaluate(() => document.querySelector('#join-privacy')?.getAttribute('href'));
-      check(href === '/privacy.html?lang=en' && (await page.isVisible('#join-privacy')), 'the join card links the privacy policy in the page language (L9)', String(href));
+      check(href === '/privacy.html?lang=en' && (await page.isVisible('#join-privacy')), 'the join card links the privacy policy in the page language behind ⓘ (L9, SIMP1)', String(href));
     }
     await page.fill('#name', name);
     await page.click('#name-form button.primary');
@@ -121,7 +123,7 @@ const shown = (page, selector) =>
       move: shown('#profile-move'),
     };
   });
-  check(/Help.*feedback.*Privacy/i.test(profile.links) && !profile.reconnect && !profile.recap && !profile.keys && profile.lang && profile.move, 'profile: language + move + one small Help · Feedback · Privacy line; no Reconnect, recap or shortcuts (R9)', JSON.stringify(profile));
+  check(/Help.*feedback.*Privacy/i.test(profile.links) && !profile.reconnect && !profile.recap && !profile.keys && profile.lang && !profile.move, 'profile: language + one small Help · Feedback · Privacy line; no Reconnect, recap, shortcuts or move (R9; SIMP1 moved it to Settings → Me)', JSON.stringify(profile));
   await page.keyboard.press('Escape');
   const pop = await page.evaluate(() => { const r = document.querySelector('.room-more-pop').getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth; });
   check(pop, '1024×640: the menu fits the screen');
@@ -129,18 +131,19 @@ const shown = (page, selector) =>
     await page.evaluate((l) => [...document.querySelectorAll('.room-more-pop:not([hidden]) .room-more-item')].find((b) => b.textContent.includes(l))?.click(), label);
     await page.waitForTimeout(400);
   };
-  const solo = (sec) => page.evaluate((s) => {
+  // Card SIMP1: Settings open at that category, with the list of categories beside it.
+  const opensAt = (sec) => page.evaluate((s) => {
     const d = document.querySelector('#settings-dialog');
     const visible = [...d.querySelectorAll('.settings-sec')].filter((x) => !x.hidden).map((x) => x.dataset.sec);
-    return !d.hidden && d.classList.contains('solo') && getComputedStyle(d.querySelector('.settings-nav')).display === 'none' && visible.join() === s;
+    return !d.hidden && getComputedStyle(d.querySelector('.settings-nav')).display !== 'none' && visible.join() === s;
   }, sec);
   const closeDialog = () => page.evaluate(() => document.querySelector('#settings-close')?.click());
   await page.keyboard.press('Escape');
   await page.mouse.click(5, 300);
-  for (const [label, sec] of [['Film time', 'schedule'], ['Save the room', 'save'], ['Room rules', 'rules']]) {
+  for (const [label, sec] of [['Film time', 'schedule'], ['Save the room', 'room'], ['Room rules', 'rules']]) {
     await items();
     await pick(label);
-    check(await solo(sec), `⋯ → ${label} opens only that part of the settings`);
+    check(await opensAt(sec), `⋯ → ${label} opens Settings at that category`);
     await closeDialog();
     await page.waitForTimeout(200);
   }
@@ -153,7 +156,7 @@ const shown = (page, selector) =>
   check(await page.evaluate(() => !!document.querySelector('.hint, .flash-hint, [role="tooltip"]')) || true, '⋯ → Sync test (alone: a hint, like the old button)');
   await page.click('#settings-open');
   await page.waitForTimeout(300);
-  check(await solo('view'), '⚙️ opens only "My screen"');
+  check(await opensAt('view'), '⚙️ opens Settings at "My screen"');
   await closeDialog();
 
   // After the first video everything comes back, for everyone.

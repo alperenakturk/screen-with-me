@@ -79,7 +79,7 @@ import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
-import { createSettingsDialog } from './ui/settings-dialog.ts';
+import { createSettingsDialog, type SettingsSection } from './ui/settings-dialog.ts';
 import { rememberGift, watchFilmEnds } from './games/film-end.ts';
 import { createGameStage } from './games/stage.ts';
 import type { SoloRoom } from '@swm/shared/games/catalog';
@@ -202,8 +202,11 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
         </div>
         <button class="btn primary big" data-i18n="enterRoom"></button>
         <p class="muted small" data-i18n="joinHint"></p>
-        <p class="muted small join-privacy"><a href="/privacy.html" target="_blank" rel="noopener" id="join-privacy" data-privacy-link>🔒 <span data-i18n="privacy"></span></a> · <a href="/terms.html" target="_blank" rel="noopener" id="join-terms" data-terms-link data-i18n="terms"></a></p>
       </form>
+      <details class="join-info">
+        <summary data-i18n-title="joinInfo">ⓘ</summary>
+        <p class="small"><a href="/privacy.html" target="_blank" rel="noopener" id="join-privacy" data-privacy-link>🔒 <span data-i18n="privacy"></span></a> · <a href="/terms.html" target="_blank" rel="noopener" id="join-terms" data-terms-link data-i18n="terms"></a> · <a href="/help.html" target="_blank" rel="noopener" id="join-help" data-help-link data-i18n="help"></a></p>
+      </details>
     </section>
   `;
   translate(app);
@@ -598,7 +601,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
             </div>
           </div>
-          <p id="voice-ip" class="muted small voice-ip" hidden>🔒 <span data-i18n="ipNotice.line"></span> <button type="button" class="link-btn" id="voice-ip-why" data-i18n="ipNotice.why"></button></p>
           <div id="voice-cams" class="voice-cams" hidden>
           </div>
           <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
@@ -653,7 +655,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" data-set-lang="tr">TR</button>
                 <button type="button" data-set-lang="en">EN</button>
               </div>
-              <button type="button" class="btn small-btn" id="profile-move">📲 <span data-i18n="move.open"></span></button>
               <button type="button" class="btn small-btn desk-only" id="profile-keys" data-i18n-title="keys.open" hidden>⌨️ ?</button>
             </div>
             <h4 data-i18n="settings.profile"></h4>
@@ -704,16 +705,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       <section class="settings-window" role="dialog" aria-modal="true" aria-labelledby="settings-heading">
         <nav class="settings-nav">
           <h3 id="settings-heading">⚙️ <span data-i18n="tab.settings"></span></h3>
+          <button type="button" data-sec="me">👤 <span data-i18n="settings.secMe"></span></button>
           <button type="button" data-sec="view">🖥️ <span data-i18n="settings.secView"></span></button>
+          <button type="button" data-sec="room">🏠 <span data-i18n="settings.secRoom"></span></button>
           <button type="button" data-sec="rules">👑 <span data-i18n="settings.secRules"></span></button>
-          <button type="button" data-sec="save">💾 <span data-i18n="settings.secSave"></span></button>
           <button type="button" data-sec="schedule" class="host-only">⏰ <span data-i18n="settings.secSchedule"></span></button>
+          <button type="button" data-sec="sound">🔊 <span data-i18n="settings.secSound"></span></button>
+          <button type="button" data-sec="about">ℹ️ <span data-i18n="settings.secAbout"></span></button>
         </nav>
         <div class="settings-main">
           <header class="settings-head">
             <h4 id="settings-title"></h4>
             <button type="button" class="icon-btn settings-close" id="settings-close" data-i18n-title="close">✕</button>
           </header>
+          <div class="settings-sec" data-sec="me" hidden>
+            <p class="muted small" data-i18n="settings.me"></p>
+            <div class="set-box">
+              <div class="set-row"><span class="set-text"><b data-i18n="settings.profile"></b><span data-i18n="settings.profile.d"></span></span><button type="button" class="btn small-btn" id="settings-profile" data-i18n="settings.profile.btn"></button></div>
+              <div class="set-row"><span class="set-text"><b data-i18n="move.open"></b><span data-i18n="settings.move.d"></span></span><button type="button" class="btn small-btn" id="settings-move">📲 <span data-i18n="settings.move.btn"></span></button></div>
+            </div>
+          </div>
           <div class="settings-sec" data-sec="view">
             <p class="muted small" data-i18n="settings.view"></p>
             <div class="set-box">
@@ -723,36 +734,37 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="set-row"><span class="set-text"><b data-i18n="settings.actionNotice"></b><span data-i18n="settings.actionNotice.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-actionnotice" /></label>
               <label class="set-row touch-only rotate-row"><span class="set-text"><b data-i18n="settings.rotateFs"></b><span data-i18n="settings.rotateFs.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-rotatefs" /></label>
               <label class="set-row"><span class="set-text"><b data-i18n="settings.font"></b><span data-i18n="settings.font.d"></span></span><select id="opt-font" class="set-select" data-i18n-title="settings.font"></select></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
-              <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
               <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.closeAds"></b><span data-i18n="settings.closeAds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-closeads" /></label>
-              <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.duck"></b><span data-i18n="settings.duck.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-duck" /></label>
             </div>
           </div>
-          <div class="settings-sec host-box" data-sec="rules" hidden>
-            <p id="opt-wait-hint" class="muted small"></p>
-            <ul id="rules-summary" class="rules-summary"></ul>
-            <div class="set-box host-ui">
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.waitForAll"></b><span data-i18n="settings.waitForAll.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-wait" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.hostOnlyMode"></b><span data-i18n="settings.hostOnlyMode.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-hostonly" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.countdown"></b><span data-i18n="settings.countdown.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-countdown" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.knock"></b><span data-i18n="settings.knock.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-knock" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
-              <div class="set-row"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.reactionGap"></b><span data-i18n="settings.reactionGap.d"></span></span>
-                <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
-              </label>
-            </div>
-          </div>
-          <div class="settings-sec" data-sec="save" hidden>
+          <div class="settings-sec" data-sec="room" hidden>
+            <p class="settings-room"><b id="settings-room-name"></b> <span id="settings-room-count" class="muted"></span></p>
             <p id="save-status" class="small"></p>
             <form id="save-form" class="set-inline">
               <input id="save-name" maxlength="40" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" />
               <button class="btn primary" id="save-submit"></button>
             </form>
             <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
+          </div>
+          <div class="settings-sec host-box" data-sec="rules" hidden>
+            <p id="opt-wait-hint" class="muted small"></p>
+            <ul id="rules-summary" class="rules-summary"></ul>
+            <div class="host-ui">
+            <div class="rules-groups" role="group" data-i18n-title="settings.secRules"><button type="button" class="chip" data-rules="play" aria-pressed="true">▶️ <span data-i18n="settings.rulesPlay"></span></button><button type="button" class="chip" data-rules="room" aria-pressed="false">🏠 <span data-i18n="settings.rulesRoom"></span></button></div>
+            <div class="set-box rules-box" data-show="play">
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.waitForAll"></b><span data-i18n="settings.waitForAll.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-wait" /></label>
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.hostOnlyMode"></b><span data-i18n="settings.hostOnlyMode.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-hostonly" /></label>
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.countdown"></b><span data-i18n="settings.countdown.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-countdown" /></label>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.knock"></b><span data-i18n="settings.knock.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-knock" /></label>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
+              <div class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.reactionGap"></b><span data-i18n="settings.reactionGap.d"></span></span>
+                <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
+              </label>
+            </div>
+            </div>
           </div>
           <div class="settings-sec" data-sec="schedule" hidden>
             <p class="schedule-intro" data-i18n="settings.schedule"></p>
@@ -776,6 +788,29 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <input type="datetime-local" id="opt-start" aria-labelledby="settings-title" />
               <button type="button" class="btn primary" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
             </div>
+          </div>
+          <div class="settings-sec" data-sec="sound" hidden>
+            <div class="set-box">
+              <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
+              <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
+              <label class="set-row shell-only"><span class="set-text"><b data-i18n="settings.duck"></b><span data-i18n="settings.duck.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-duck" /></label>
+              <div class="set-row"><span class="set-text"><b data-i18n="settings.devices"></b><span data-i18n="settings.devices.d"></span></span><button type="button" class="btn small-btn" id="settings-devices">🎛 <span data-i18n="settings.devices.btn"></span></button></div>
+              <label class="set-row" id="settings-voiceask-row"><span class="set-text"><b data-i18n="settings.voiceAsk"></b><span data-i18n="settings.voiceAsk.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-voiceask" /></label>
+            </div>
+            <p class="muted small"><span data-i18n="settings.voiceOnPress"></span> <a id="settings-who-sees" href="/privacy.html#voice" target="_blank" rel="noopener" data-privacy-link="voice">🔒 <span data-i18n="settings.whoSees"></span></a></p>
+          </div>
+          <div class="settings-sec" data-sec="about" hidden>
+            <p class="settings-about"><b>Sidelit</b> <span id="settings-version" class="muted"></span></p>
+            <p class="muted small" data-i18n="settings.about"></p>
+            <ul class="settings-links">
+              <li><a id="about-help" href="/help.html" target="_blank" rel="noopener" data-help-link data-i18n="help"></a></li>
+              <li><button type="button" class="link-btn" id="about-feedback" data-i18n="feedback"></button></li>
+              <li><a id="about-privacy" href="/privacy.html" target="_blank" rel="noopener" data-privacy-link data-i18n="privacy"></a></li>
+              <li><a id="about-terms" href="/terms.html" target="_blank" rel="noopener" data-terms-link data-i18n="terms"></a></li>
+              <li><a id="about-extension" href="/extension.html" target="_blank" rel="noopener" data-i18n="extensionNav"></a></li>
+              <li><a id="about-thanks" href="/thanks.html" target="_blank" rel="noopener" data-thanks-link data-i18n="thanks"></a></li>
+              <li><a id="about-licenses" href="/third-party-notices.txt" target="_blank" rel="noopener" data-i18n="licenses"></a></li>
+            </ul>
           </div>
         </div>
       </section>
@@ -869,6 +904,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // avatar count twice (R11: the server's person key).
     const people = new Set(members.map(personOf)).size;
     roomTitleCount.textContent = people ? `· ${t(people === 1 ? 'peopleOne' : 'peopleCount', { n: people })}` : '';
+    // Card SIMP1: the name and the count live in Settings → Room (the top bar keeps them only for screen readers).
+    const settingsName = document.getElementById('settings-room-name');
+    if (settingsName) settingsName.textContent = roomTitleName.textContent;
+    const settingsCount = document.getElementById('settings-room-count');
+    if (settingsCount) settingsCount.textContent = people ? `· ${t(people === 1 ? 'peopleOne' : 'peopleCount', { n: people })}` : '';
     tvRoom?.title(roomTitleName.textContent);
   }
   addEventListener('langchange', drawRoomTitle);
@@ -914,11 +954,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     drawLang();
     $('#profile-keys').addEventListener('click', () => openShortcuts());
     $('#profile-feedback').addEventListener('click', () => openFeedbackDialog($('#profile-feedback')));
-    // Move my things to another device (its window is a lazy chunk).
-    $('#profile-move').addEventListener('click', () => {
-      setOpen(false);
-      void import('./ui/move-device.ts').then(({ openMoveDialog }) => openMoveDialog());
-    });
     const setOpen = (open: boolean) => {
       // Right edge under the profile picture (⚙️ sits to its right since 0.9.87).
       if (open) pop.style.right = `${Math.max(12, innerWidth - profileButton.getBoundingClientRect().right)}px`;
@@ -957,13 +992,65 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     tabs.show(isTabId(remembered) && !(isShell && remembered === 'queue') ? remembered : 'chat');
   }
   // ⚙️ Settings (top right, next to the profile picture) opens the centered dialog.
-  const settingsDialog = createSettingsDialog(app, amHost);
-  // The button lives in the top bar, outside `app`.
-  // Card 6 (owner's pick C): ⚙️ is "My screen" only; the room's own settings open from "⋯ More".
-  document.getElementById('settings-open')?.addEventListener('click', () => settingsDialog.open('view', true));
+  // Card SIMP1: the categories always show beside the open one; Room and About fill in their facts when shown.
+  const settingsDialog = createSettingsDialog(app, amHost, (section) => {
+    if (section === 'room') drawRoomTitle();
+    // The check window's own "ask me" box writes the same key: read it fresh each time.
+    if (section === 'sound') $<HTMLInputElement>('#opt-voiceask').checked = load('opt:voiceCheck') !== 'skip';
+    if (section === 'about') $('#settings-version').textContent = document.querySelector('.footer-version')?.textContent?.trim() ?? '';
+  });
+  // The button lives in the top bar, outside `app`; ⚙️ opens at "My screen", "⋯ More" items at their own category.
+  document.getElementById('settings-open')?.addEventListener('click', () => settingsDialog.open('view'));
+  // Me: the profile menu (name, picture, theme) and moving my things to another device (card SIMP1; a lazy chunk).
+  $('#settings-profile').addEventListener('click', () => {
+    settingsDialog.close();
+    requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.profile-btn')?.click());
+  });
+  $('#settings-move').addEventListener('click', () => {
+    settingsDialog.close();
+    void loadChunk(() => import('./ui/move-device.ts')).then((m) => m?.openMoveDialog());
+  });
+  // About: the feedback window (the same one as the profile menu's link).
+  $('#about-feedback').addEventListener('click', () => {
+    settingsDialog.close();
+    openFeedbackDialog($('#about-feedback'));
+  });
+  // Room rules in two groups (card SIMP1, Planner's pick C: nine switches scrolled on a phone): ▶️ Playback / 🏠 In the room.
+  {
+    const box = $('.rules-box');
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('.rules-groups [data-rules]')];
+    for (const chip of chips)
+      chip.addEventListener('click', () => {
+        box.dataset.show = chip.dataset.rules;
+        for (const other of chips) other.setAttribute('aria-pressed', String(other === chip));
+      });
+  }
+  // Test Lab (card SIMP1): open Settings at each category, so a test can check what moved where in two clicks.
+  {
+    const names: [SettingsSection, { en: string; tr: string }][] = [
+      ['me', { en: 'Me', tr: 'Ben' }],
+      ['view', { en: 'My screen', tr: 'Ekranım' }],
+      ['room', { en: 'Room (name, people, save)', tr: 'Oda (ad, kişiler, kaydet)' }],
+      ['rules', { en: 'Room rules', tr: 'Oda kuralları' }],
+      ['schedule', { en: 'Film time', tr: 'Film saati' }],
+      ['sound', { en: 'Sound & camera', tr: 'Ses ve kamera' }],
+      ['about', { en: 'About (version, privacy, terms)', tr: 'Hakkında (sürüm, gizlilik, kurallar)' }],
+    ];
+    debugHooks.register('settings', () => ({
+      commands: names.map(([section, name]) => ({
+        id: `settings.${section}`,
+        title: { en: `Settings: ${name.en}`, tr: `Ayarlar: ${name.tr}` },
+        help: { en: 'Opens Settings at this category, the list of categories beside it', tr: 'Ayarları bu bölümde açar, bölümlerin listesi yanında' },
+        tab: 'screen',
+        available: () => section !== 'schedule' || amHost() || { en: 'only the host has Film time', tr: 'Film saati yalnızca yöneticide' },
+        run: () => settingsDialog.open(section),
+        undo: () => settingsDialog.close(),
+      })),
+    }));
+  }
   const moreItems = (desktop: boolean) =>
     roomMoreItems({
-      openSettings: (section) => settingsDialog.open(section, true),
+      openSettings: (section) => settingsDialog.open(section),
       press: (selector) => requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(selector)?.click()),
       games: () => requestAnimationFrame(() => (desktop ? pressMoreGame() : document.querySelector<HTMLButtonElement>('#game-btn')?.click())),
       isHost: amHost,
@@ -1012,6 +1099,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     makeHost: (member) => void askMakeHost(member),
     messagePrivately: (member) => openPrivate(member),
   }, extVoiceModule?.ExtVoice ?? null);
+  // Settings → Sound & camera (card SIMP1): the devices window and "check before joining voice" (`opt:voiceCheck`, the
+  // same key as the check window's own box). Nothing here opens the microphone before "Join voice" is pressed.
+  $('#settings-devices').addEventListener('click', () => {
+    settingsDialog.close();
+    voice.devices();
+  });
+  {
+    const ask = $<HTMLInputElement>('#opt-voiceask');
+    // The film page has no pre-join check (the extension's offscreen page holds the microphone).
+    $('#settings-voiceask-row').hidden = isShell;
+    ask.addEventListener('change', () => save('opt:voiceCheck', ask.checked ? '' : 'skip'));
+  }
   /** Hand the host role to someone (0.9.93.2): asked first, it can't be taken back. */
   async function askMakeHost(member: Member): Promise<void> {
     const yes = await confirmDialog({ icon: '👑', title: t('makeHostTitle', { name: member.name }), text: t('makeHostText'), yes: t('makeHost') });
@@ -1019,7 +1118,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   const live = createLive(app, send, () => myId, isShell, () => amHost());
   // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels.
-  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({ root: app, openSettings: (section) => settingsDialog.open(section, true), myId: () => myId, moreItems: () => moreItems(false) });
+  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({ root: app, openSettings: (section) => settingsDialog.open(section), myId: () => myId, moreItems: () => moreItems(false) });
   phoneRoom?.setCams(seatCams);
   // Odanın içindeki oyunlar: 🎮 → oyun seç → oyun videonun yerinde açılır (ayrı oyun odası yok).
   // "⋯ More → Games" on a computer (card 6): the games hall opens next to the 🎮 pressed, so an invisible one waits
