@@ -447,15 +447,16 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       box.hidden = !available || (!active && joinButton.hidden);
       const micText = active ? micLabel : t('voice.join');
       if (mic.textContent) mic.textContent = '';
-      // Not in voice yet: the mic looks off (red), like the camera (owner, 0.9.91.12); pressing it joins.
-      setIcon(mic, active && client.micEnabled ? 'mic' : 'mic-off');
-      mic.classList.toggle('off', !active || !client.micEnabled);
+      // Not in voice yet: a plain mic and camera, never red (a red "off" next to "Join voice" read like an error,
+      // first-look review); pressing either joins. Red = off only once I'm in voice.
+      setIcon(mic, !active || client.micEnabled ? 'mic' : 'mic-off');
+      mic.classList.toggle('off', active && !client.micEnabled);
       mic.title = micText;
       mic.setAttribute('aria-label', micText);
       cam.hidden = active ? camButton.hidden : !client.setCam;
       if (cam.textContent) cam.textContent = '';
-      setIcon(cam, camOn ? 'cam' : 'cam-off');
-      cam.classList.toggle('off', !camOn);
+      setIcon(cam, camOn || !active ? 'cam' : 'cam-off');
+      cam.classList.toggle('off', active && !camOn);
       cam.title = camLabel;
       cam.setAttribute('aria-label', camLabel);
     }

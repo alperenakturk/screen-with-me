@@ -132,6 +132,22 @@ html.is-touch:not(.phone, .has-mouse) :is(.chat-send, .chat-attach, .tab, .media
   min-height: 44px;
 }
 
+/* YT5 batch: the 44 px send arrow was taller than the 42 px box and sat over its rounded corner: the box grows to fit
+   it with 5 px around, inside the corner's curve. */
+html.is-touch:not(.phone, .has-mouse) .chat-form #chat-input {
+  height: 54px;
+  padding-right: 112px;
+}
+
+html.is-touch:not(.phone, .has-mouse) .chat-form .chat-attach {
+  right: 63px;
+}
+
+html.is-touch:not(.phone, .has-mouse) .chat-form .chat-send {
+  width: 44px;
+  height: 44px;
+}
+
 /* ---- Shorts on an upright tablet: the bottom bar on one row (names only in the titles) ---- */
 html.tablet-up .room.shorts .shorts-bar {
   flex-wrap: nowrap;

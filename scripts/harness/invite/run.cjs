@@ -42,7 +42,8 @@ const check = (ok, label, extra = '') => {
   const link = await alex.inputValue('.invite-link');
   check(link.endsWith(`/r/${room}`), 'it shows the room link', link);
   check(await alex.evaluate(() => !!document.querySelector('.invite-actions a.invite-wa[href^="https://wa.me/?text="] svg.wa-glyph path')), 'a WhatsApp button with WhatsApp\'s own glyph');
-  check(await alex.evaluate(() => getComputedStyle(document.querySelector('.invite-wa')).backgroundColor === 'rgb(37, 211, 102)'), 'in WhatsApp green');
+  // YT5 batch: the glyph keeps WhatsApp's green, the button itself is the theme's plain one (not a bright green slab).
+  check(await alex.evaluate(() => getComputedStyle(document.querySelector('.invite-wa .wa-glyph')).color === 'rgb(37, 211, 102)' && getComputedStyle(document.querySelector('.invite-wa')).backgroundColor !== 'rgb(37, 211, 102)'), 'WhatsApp\'s green on its glyph, the button in the theme\'s colours');
   check(await alex.evaluate(() => document.querySelector('#invite-pane-qr').hidden && !document.querySelector('#invite-pane-link').hidden), 'the Link tab is open first');
   check((await alex.textContent('.room-title')).includes('1 person'), 'the title says "1 person"', await alex.textContent('.room-title'));
   await alex.click('.invite-copy');

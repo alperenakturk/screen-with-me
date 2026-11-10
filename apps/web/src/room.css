@@ -10781,20 +10781,18 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   display: none;
 }
 
-/* WhatsApp's own glyph and green (card 4, brand colour #25D366); dark text keeps it readable. */
+/* WhatsApp's own glyph in its own green (card 4, brand colour #25D366) on the theme's plain button: still WhatsApp at
+   a glance, but no longer the loudest thing in a light theme (YT5 batch, first-look review). */
 .btn.invite-wa {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #25d366;
-  border-color: #25d366;
-  color: #052e16;
   font-weight: 700;
 }
 
-.btn.invite-wa:hover {
-  background: #2ee072;
+.btn.invite-wa .wa-glyph {
+  color: #25d366;
 }
 
 .wa-glyph {
@@ -11591,8 +11589,14 @@ html.ph-room .room .empty {
   gap: 6px;
 }
 
+/* YT5 batch: a small Stub in the box's bottom-right corner (the computer shows him above the title), placed over the
+   corner so the card needs no extra height. */
 html.ph-room .room .empty .theme-mascot {
-  display: none;
+  --mascot-size: 46px;
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  margin: 0;
 }
 
 html.ph-room .room .empty h2 {
@@ -13063,3 +13067,42 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   font-size: inherit;
 }
 
+
+/* YT5 batch: cinema mode's way out for a mouse or a touch, in the page's empty bottom-left corner (never over the
+   video; chat lines come in under the video on the right); quiet until the mouse is on it. */
+.cinema-exit {
+  display: none;
+}
+
+html.cinema-on:not(.phone, .shell):has(.room.cinema:not(.shorts)) .cinema-exit:not([hidden]) {
+  display: block;
+  position: fixed;
+  left: 16px;
+  bottom: 10px;
+  z-index: 31;
+  min-height: 32px;
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+html.cinema-on .cinema-exit:hover,
+html.cinema-on .cinema-exit:focus-visible {
+  opacity: 1;
+  color: var(--text);
+}
+
+/* YT5 batch: "Next ⏭" with nothing queued was 40 % opacity and nearly vanished; a disabled control keeps a visible
+   shape (≥ 3:1): the muted text colour for the label and its frame, at full opacity. */
+#skip:disabled {
+  opacity: 1;
+  color: var(--muted);
+  border-color: var(--muted);
+}
