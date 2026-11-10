@@ -7,6 +7,7 @@
 import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
+import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { flipIn } from './motion.ts';
 import { referee } from './referee.ts';
@@ -620,7 +621,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   const offLab = debugHooks.register('table.poker', () => ({
     commands: [
       quiet.command('poker', { en: 'Last Heart', tr: 'Son Kalp' }),
-      { id: 'poker.end', title: { en: 'Last Heart: end the game, I win', tr: 'Son Kalp: oyunu bitir, ben kazanayım' }, help: { en: 'Local lab server only: everyone else runs out of life and the result card shows.', tr: 'Sadece yerel lab sunucusunda: diğer herkesin canı biter ve sonuç kartı çıkar.' }, tab: 'games', available: () => (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => send({ t: 'lab', op: 'end' }) },
+      { id: 'poker.end', title: { en: 'Last Heart: end the game, I win', tr: 'Son Kalp: oyunu bitir, ben kazanayım' }, help: { en: 'Local lab server only: everyone else runs out of life and the result card shows.', tr: 'Sadece yerel lab sunucusunda: diğer herkesin canı biter ve sonuç kartı çıkar.' }, tab: 'games', available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => send({ t: 'lab', op: 'end' }) },
       { id: 'poker.referee', title: { en: 'Last Heart: Stub reacts', tr: 'Son Kalp: Stub tepki versin' }, help: { en: 'Stub says one of his showdown lines in the corner of the table.', tr: 'Stub masanın köşesinde el sonunda söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => ref.say(t('poker.say.pot'), 'gasp') },
     ],
   }));

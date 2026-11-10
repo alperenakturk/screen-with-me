@@ -26,6 +26,7 @@ import { clientId, load, save } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
+import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { referee } from './referee.ts';
 import { lang } from '../i18n.ts';
@@ -388,9 +389,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     commands: [
       quiet.command('quiz', { en: 'Quiz', tr: 'Bilgi yarışması' }),
       { id: 'quiz.referee', title: { en: 'Quiz: Stub reacts', tr: 'Bilgi yarışması: Stub tepki versin' }, help: { en: 'Stub says one of his reveal lines in the corner of the table.', tr: 'Stub masanın köşesinde cevap anındaki sözlerinden birini söyler.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
-      { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', available: () => (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
+      { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).
-      { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel lab sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const step = () => { if (!state || state.phase === 'over' || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
+      { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel lab sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const step = () => { if (!state || state.phase === 'over' || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
     ],
   }));
   // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).

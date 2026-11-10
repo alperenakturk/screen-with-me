@@ -6,6 +6,7 @@
 import { ROOM_GAME_KINDS, type ClientMessage, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { SOLO_KINDS, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { debugHooks, type LabCommand, type LabText } from '../debug-lab.ts';
+import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { load, save } from '../storage.ts';
 
 /** Side games: how fast their clock runs, and whether they act as if the room's film played. */
@@ -139,6 +140,7 @@ export function registerGamesLab(
         help: { en: 'Local lab server only: the room\'s tip jar fills for the film playing (+10 % for everyone this film).', tr: 'Sadece yerel lab sunucusunda: odanın bahşiş kavanozu oynayan film için dolar (bu film boyunca herkese +%10).' },
         tab: 'games',
         where: { en: 'in a room with a film', tr: 'film oynayan bir odada' },
+        available: () => labServerHere() || LOCAL_ONLY,
         run: () => void send({ t: 'lab', op: 'tipjar' }),
       },
       {
