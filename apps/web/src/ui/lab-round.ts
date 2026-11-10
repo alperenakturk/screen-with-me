@@ -195,7 +195,7 @@ export function createTestRound(friends: ScenarioFriends) {
       later(14_000, () => f!.seek(30));
       return { en: `${f!.name} pauses in 2 s, plays at 8 s, jumps +30 s at 14 s`, tr: `${f!.name} 2 sn sonra durdurur, 8. sn oynatır, 14. sn +30 sn atlar` };
     }, { available: inRoom, where: { en: 'in a room', tr: 'odada' }, undo: everyoneLeaves }),
-    cmd('t2', { en: 'Fullscreen with messages', tr: 'Mesajlarla tam ekran' }, { en: 'Something plays, the room goes fullscreen and a fake friend writes three lines 3 s apart: they come in on the right, never over the player\'s own bar; the rail comes at the right edge. Undo: fullscreen ends, the friend leaves.', tr: 'Bir şey oynar, oda tam ekran olur ve sahte bir arkadaş 3 sn arayla üç satır yazar: sağdan gelirler, oynatıcının kendi çubuğunun üstüne asla binmezler; ray sağ kenarda gelir. Geri al: tam ekran biter, arkadaş çıkar.' }, async () => {
+    cmd('t2', { en: 'Messages in fullscreen', tr: 'Mesajlarla tam ekran' }, { en: 'Something plays, the room goes fullscreen and a fake friend writes three lines 3 s apart: they come in on the right, never over the player\'s own bar; the rail comes at the right edge. Undo: fullscreen ends, the friend leaves.', tr: 'Bir şey oynar, oda tam ekran olur ve sahte bir arkadaş 3 sn arayla üç satır yazar: sağdan gelirler, oynatıcının kendi çubuğunun üstüne asla binmezler; ray sağ kenarda gelir. Geri al: tam ekran biter, arkadaş çıkar.' }, async () => {
       const [f] = await friendsIn(1);
       await somethingPlays();
       document.querySelector<HTMLButtonElement>('#fullscreen')?.click();
