@@ -134,3 +134,20 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-cells { grid-template-columns
 html.phone.sideways #game-stage .ff:not(.duel) .ff-cell { font-size: 18px; }
 html.phone.sideways #game-stage .ff:not(.duel) .ff-result { grid-area: result; }
 html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align-self: end; }
+/* Card PROP: in the video's place (a wide, short box, the game laid out at its catalog `wide` size) the same side by
+   side layout as a sideways phone: the tickets on the left at the full height, the head, the result and the letters on
+   the right. */
+@container game (min-aspect-ratio: 16 / 10) {
+  #game-stage .ff:not(.duel) {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas: 'board head' 'board result' 'board tray'; gap: 8px 20px; padding: 12px 16px;
+  }
+  #game-stage .ff:not(.duel) .ff-head { grid-area: head; }
+  #game-stage .ff:not(.duel) .ff-board { grid-area: board; align-self: center; }
+  #game-stage .ff:not(.duel) .ff-result { grid-area: result; }
+  #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align-self: end; }
+  #game-stage .ff:not(.duel) .ff-row { height: 46px; }
+  #game-stage .ff:not(.duel) .ff-cells { grid-template-columns: repeat(5, 42px); }
+  #game-stage .ff:not(.duel) .ff-cell { font-size: 22px; }
+  #game-stage .ff:not(.duel) .ff-key { min-height: 48px; font-size: 18px; }
+}

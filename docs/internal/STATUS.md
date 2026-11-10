@@ -656,6 +656,11 @@ with the same friend:
 - [ ] G17. Word games and the keyboard (BUG6): open Five Frames and type at once, no click: the letters go into the
   word. Click the chat box and type: the word stays as it is. Press Esc (or click the game): typing goes to the word
   again. In the Duel, press Ready; when the race starts, type without a click. Try Turkish letters (ğ, ü, ş) too.
+- [ ] G18. Games in the video's place (PROP): on your computer open each table: it opens in the video's place (no
+  switch) and fills it in proportion (a board on the left, its players and buttons on the right; Sea Battle's seas
+  left; Last Heart's cards beside its special moves), text big, nothing cut off or scrolling, the end card fits. Open
+  each side game and press the head's "in the video's place" icon (or 🐞 → 🎮 "Oyun penceresi: videonun yeri ile
+  serbest pencere arasında geç"): Five Frames' tickets left, letters right. Also on a tablet both ways.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

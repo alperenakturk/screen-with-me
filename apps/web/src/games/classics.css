@@ -367,3 +367,21 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 /* NG3: while a moved piece slides in (games/motion.ts `slidePiece`), the real one on its new square waits hidden. */
 .dama-board .dama-cell.arriving { color: transparent !important; text-shadow: none !important; }
 .dama-board .dama-cell.arriving::before, .dama-board .dama-cell.arriving::after { opacity: 0; }
+
+/* ===== Card PROP: in the video's place (owner: "the same experience in both modes") =====
+   The video's place is wide and short: the game is laid out at its wide size (catalog `wide`, about 2 : 1) and scaled to
+   the box, so a board's screen goes side by side like a sideways phone: the board on the left at the full height, the
+   bar, players, status and buttons in a column on its right. The picker's cards go in one row. */
+@container game (min-aspect-ratio: 16 / 10) {
+  #game-stage .xox-page.mt > .mt-table {
+    grid-template-columns: min(100cqh - 24px, 58cqw) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'board bar' 'board top' 'board bottom' 'board tray' 'board .' 'board status' 'board actions'; gap: 8px 18px;
+  }
+  #game-stage .xox-page.mt[data-board='backgammon'] > .mt-table { grid-template-columns: min((100cqh - 24px) * 1.45, 54cqw) minmax(0, 1fr); }
+  /* Inside the board's own box (a size container): as big as it allows. */
+  #game-stage .mt .dama-board { width: calc(min(100cqh, 100cqw) - 4px); }
+  #game-stage .mt .bg-board { width: calc(min(100cqh * 1.45, 100cqw) - 4px); }
+  #game-stage .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; }
+  #game-stage .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
+}

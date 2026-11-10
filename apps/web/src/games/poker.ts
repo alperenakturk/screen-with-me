@@ -5,6 +5,7 @@
 // middle of the table; "How to play" walks through the game in four short steps.
 
 import './lobby.css';
+import './poker.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
 import { LOCAL_ONLY, labServerHere } from './lab-server.ts';

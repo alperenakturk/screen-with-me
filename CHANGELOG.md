@@ -16,6 +16,16 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.113 — 10 Nov
+- Games look right in the video's place: a game you put in the video's place now fills it in proportion, with its
+  board, cards and text as big as the place allows, instead of a small game stretched across a wide box. A board sits
+  on the left with the players and buttons beside it; Five Frames and the Duel put the tickets on the left and the
+  letters on the right; Last Heart, Sea Battle and Draw & Guess lay out their tables and lobbies side by side, and the
+  end-of-game card with its podium fits too.
+- The shared tables (Classics, Sea Battle, Draw & Guess, Quiz, Last Heart, the Duel) now always play in the video's
+  place, with no switch (beside the player while a YouTube video plays). Snack Bar, Window Garden and Five Frames keep
+  both: the free window beside the video when there is room, else the video's place.
+
 ### 0.9.97.112 — 10 Nov
 - Snack Bar, Window Garden and Five Frames open on the right, over the chat, and never cover the video, when they fit
   there at a readable size (on a big screen); on a laptop they open as before. Their switch still moves them.

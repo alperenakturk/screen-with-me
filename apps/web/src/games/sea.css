@@ -164,3 +164,18 @@ html.phone.sideways #game-stage .sea-seas { grid-area: seas; height: 100%; aspec
 html.phone.sideways #game-stage .sea:not([data-phase='place']) .sea-switch, html.phone.sideways #game-stage .sea.watching .sea-switch { display: flex; }
 html.phone.sideways #game-stage .sea[data-view='mine'] .sea-theirs, html.phone.sideways #game-stage .sea[data-view='theirs'] .sea-mine { display: none; }
 html.phone.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-mine { display: flex; }
+
+/* Card PROP: in the video's place (a wide, short box, the game laid out at its catalog `wide` size) the seas take the
+   full height on the left; the bar, Stub's line and the buttons stand in a column on the right. */
+@container game (min-aspect-ratio: 16 / 10) {
+  #game-stage .sea {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 250px); grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-areas: 'seas bar' 'seas ref' 'seas actions' 'seas .'; gap: 10px 18px;
+  }
+  #game-stage .sea-bar { grid-area: bar; }
+  #game-stage .sea-switch { display: none; }
+  #game-stage .sea-seas { grid-area: seas; height: 100%; }
+  #game-stage .sea-ref { grid-area: ref; justify-content: flex-start; }
+  #game-stage .sea-status { text-align: left; }
+  #game-stage .sea-actions { grid-area: actions; justify-content: flex-start; }
+}

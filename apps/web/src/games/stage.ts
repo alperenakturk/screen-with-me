@@ -64,7 +64,7 @@ const PLACES: readonly Place[] = ['float', 'stage'];
  * no room beside the video opens there too. Off until then: the tables keep the catalog's free window and the switch,
  * and a side game with no room beside the video opens as its free window at the right edge.
  */
-const STAGE_READY = false;
+const STAGE_READY = true;
 /** The placement I picked for a game with the switch (null: none yet). */
 const savedPlace = (kind: Kind): Place | null => {
   const saved = load(`gamePlace:${kind}`);
@@ -91,6 +91,10 @@ const EDGE = 8;
 type Box = { left: number; top: number; width: number; height: number };
 /** The least zoom at which a strip of the screen still counts as room for the free window (tablets, YouTube). */
 const MIN_ZOOM = 0.45;
+/** PROP: the most the video's place scales a game up, and the free window's head + border its `size` includes. */
+const MAX_STAGE = 2.2;
+const CHROME_W = 2;
+const CHROME_H = 52;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
@@ -421,9 +425,9 @@ export function createGameStage(opts: StageOptions) {
     return Math.min(most, Math.max(low, wanted));
   }
   /**
-   * 0.9.97.112 (owner): where a game plays when I haven't picked. The tables (big, shared) will always play in the video's
-   * place, with no switch (over YouTube, where nothing may cover the player, beside it), once their layouts read well
-   * there (Game Studio's card .113 turns `STAGE_READY` on); until then they keep the catalog's free window and the switch. A side game opens as the free window in its home
+   * 0.9.97.112 (owner): where a game plays when I haven't picked. The tables (big, shared) always play in the video's
+   * place, with no switch (over YouTube, where nothing may cover the player, beside it): `STAGE_READY`, on since card
+   * PROP (0.9.97.113) made every table read well there. A side game opens as the free window in its home
    * right of the video when it fits there at its smallest readable size (`homeBox`), else in the video's place; my own
    * pick with the switch wins. Tablets and the video's fullscreen keep the catalog's default.
    */
@@ -701,6 +705,19 @@ export function createGameStage(opts: StageOptions) {
       if (up > 1.001) {
         scale = up;
         own = [iw, ih];
+      }
+    } else if (!narrow.matches && mode === 'stage') {
+      // PROP (owner: "the same experience in both modes"): in the video's place the game keeps its own shape too, scaled
+      // to the box like the free window, from the shape that suits the box best: its own (`size`) or its wide one (`wide`).
+      const info = sizeOf(kind) as { size: readonly [number, number]; wide?: readonly [number, number] };
+      for (const [sw, sh] of [info.size, ...(info.wide ? [info.wide] : [])]) {
+        const iw = sw - CHROME_W;
+        const ih = sh - CHROME_H;
+        const up = Math.max(MIN_FIT, Math.min(W / iw, H / ih, MAX_STAGE));
+        if (!own || up > scale) {
+          scale = up;
+          own = [iw, ih];
+        }
       }
     }
     for (let i = 0; i < 4; i++) {

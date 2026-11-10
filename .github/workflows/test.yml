@@ -316,6 +316,8 @@ jobs:
           node scripts/harness/motion/run.cjs http://localhost:8787
           # BUG6: a word game (Five Frames, the Duel) takes the keyboard as it opens; the chat keeps its own keys.
           node scripts/harness/word-focus/run.cjs http://localhost:8787
+          # Card PROP: every game well proportioned in the video's place and the free window (laptop, desktop, tablet).
+          SIZES=laptop,desktop,tablet node scripts/harness/game-proportions/run.cjs http://localhost:8787
 
       # Card LAB2: every 🎮 Test Lab command runs (a computer in English, a phone in Turkish), the 🤖 friend at a table.
       - name: "Test Lab games: every command, the table friend"

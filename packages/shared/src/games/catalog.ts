@@ -24,34 +24,41 @@ export interface GameInfo {
    */
   minSize: readonly [number, number];
   maxSize: readonly [number, number];
+  /**
+   * Card PROP (owner: "the same experience in both modes"): the shape the game is laid out at in the video's place, a
+   * wide, short box (px, head and border included, like `size`). The game window picks this shape or `size`, whichever
+   * shows the game bigger in the box, and scales it to the box; the game's CSS reflows for it
+   * (`@container game (min-aspect-ratio: 16 / 10)`).
+   */
+  wide?: readonly [number, number];
 }
 
 // Card CL2 (owner): every table opens in the free mini window by default, at the size its own layout wants; "in the
 // video's place" stays a choice, remembered per game (`gamePlace:<kind>`). The owner's 0.9.97.112 decision (tables always
 // in the video's place) waits for card .113: stage.ts `STAGE_READY`. The side games: stage.ts `placeOf`.
 export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
-  xox: { min: 2, max: 2, place: 'float', size: [420, 560], fit: [300, 420], minSize: [540, 620], maxSize: [672, 896] },
-  four: { min: 2, max: 2, place: 'float', size: [520, 590], fit: [360, 440], minSize: [543, 620], maxSize: [832, 944] },
-  draw: { min: 2, max: 8, place: 'float', size: [860, 600], fit: [640, 440], minSize: [789, 550], maxSize: [1204, 840] },
-  quiz: { min: 2, max: 8, place: 'float', size: [680, 640], fit: [520, 440], minSize: [625, 588], maxSize: [952, 896] },
-  poker: { min: 2, max: 6, place: 'float', size: [860, 600], fit: [640, 440], minSize: [728, 507], maxSize: [1204, 840] },
+  xox: { min: 2, max: 2, place: 'stage', size: [420, 560], fit: [300, 420], minSize: [540, 620], maxSize: [672, 896], wide: [820, 440] },
+  four: { min: 2, max: 2, place: 'stage', size: [520, 590], fit: [360, 440], minSize: [543, 620], maxSize: [832, 944], wide: [820, 440] },
+  draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440], minSize: [789, 550], maxSize: [1204, 840], wide: [820, 440] },
+  quiz: { min: 2, max: 8, place: 'stage', size: [680, 640], fit: [520, 440], minSize: [625, 588], maxSize: [952, 896], wide: [820, 440] },
+  poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440], minSize: [728, 507], maxSize: [1204, 840], wide: [880, 480] },
   // 🎲 Classics (P6): two players, or one against Stub. Its window follows the board on the table (`CLASSICS_SIZES`).
-  classics: { min: 1, max: 2, place: 'float', size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896] },
+  classics: { min: 1, max: 2, place: 'stage', size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896], wide: [820, 440] },
   // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Stub.
-  sea: { min: 1, max: 2, place: 'float', size: [780, 560], fit: [600, 440], minSize: [764, 548], maxSize: [1170, 840] },
+  sea: { min: 1, max: 2, place: 'stage', size: [780, 560], fit: [600, 440], minSize: [764, 548], maxSize: [1170, 840], wide: [820, 440] },
   // ⚔️ Five Frames Duel (FFDUEL): my board and the other's marks side by side, the letter tray under them.
-  duel: { min: 2, max: 2, place: 'float', size: [600, 660], fit: [540, 600], minSize: [600, 660], maxSize: [900, 990] },
+  duel: { min: 2, max: 2, place: 'stage', size: [600, 660], fit: [540, 600], minSize: [600, 660], maxSize: [900, 990], wide: [860, 470] },
 };
 
 /** Classics (CL2): the window's size per screen of the table: the picker, then each board built around itself. */
-export const CLASSICS_SIZES: Record<'picker' | 'xox' | 'four' | 'dama' | 'chess' | 'backgammon' | 'reversi', Pick<GameInfo, 'size' | 'fit' | 'minSize' | 'maxSize'>> = {
-  picker: { size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896] },
-  xox: { size: [540, 620], fit: [320, 460], minSize: [540, 620], maxSize: [864, 992] },
-  four: { size: [560, 640], fit: [380, 480], minSize: [543, 620], maxSize: [896, 1024] },
-  dama: { size: [540, 720], fit: [380, 540], minSize: [507, 676], maxSize: [864, 1152] },
-  chess: { size: [540, 720], fit: [380, 540], minSize: [507, 676], maxSize: [864, 1152] },
-  backgammon: { size: [720, 660], fit: [560, 500], minSize: [631, 578], maxSize: [1080, 990] },
-  reversi: { size: [540, 720], fit: [380, 540], minSize: [507, 676], maxSize: [864, 1152] },
+export const CLASSICS_SIZES: Record<'picker' | 'xox' | 'four' | 'dama' | 'chess' | 'backgammon' | 'reversi', Pick<GameInfo, 'size' | 'fit' | 'minSize' | 'maxSize' | 'wide'>> = {
+  picker: { size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896], wide: [820, 440] },
+  xox: { size: [540, 620], fit: [320, 460], minSize: [540, 620], maxSize: [864, 992], wide: [820, 440] },
+  four: { size: [560, 640], fit: [380, 480], minSize: [543, 620], maxSize: [896, 1024], wide: [820, 440] },
+  dama: { size: [540, 720], fit: [380, 540], minSize: [507, 676], maxSize: [864, 1152], wide: [820, 440] },
+  chess: { size: [540, 720], fit: [380, 540], minSize: [507, 676], maxSize: [864, 1152], wide: [820, 440] },
+  backgammon: { size: [720, 660], fit: [560, 500], minSize: [631, 578], maxSize: [1080, 990], wide: [820, 440] },
+  reversi: { size: [540, 720], fit: [380, 540], minSize: [507, 676], maxSize: [864, 1152], wide: [820, 440] },
 };
 
 /**
@@ -87,9 +94,9 @@ export interface SoloRoom {
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
   // Card GP (Design's `side-games-polish.md` §2): each opens at the size its content needs, so its scale (`--fit`) is 1
   // at 1366 × 768 and the text never shrinks below 13 px (the window is the fit + its 55 px head and border); smaller windows scale it down (stage.ts `refit`).
-  snack: { place: 'float', size: [400, 575], fit: [380, 520], minSize: [400, 575], maxSize: [600, 862] },
-  garden: { place: 'float', size: [400, 555], fit: [380, 500], minSize: [400, 555], maxSize: [600, 832] },
-  word: { place: 'float', size: [400, 635], fit: [380, 580], minSize: [400, 635], maxSize: [600, 952] },
+  snack: { place: 'float', size: [400, 575], fit: [380, 520], minSize: [400, 575], maxSize: [600, 862], wide: [900, 480] },
+  garden: { place: 'float', size: [400, 555], fit: [380, 500], minSize: [400, 555], maxSize: [600, 832], wide: [900, 480] },
+  word: { place: 'float', size: [400, 635], fit: [380, 580], minSize: [400, 635], maxSize: [600, 952], wide: [820, 440] },
 };
 
 export interface GameNews {
