@@ -12865,7 +12865,7 @@ html.ph-game .game-stage .xox-page:not(.draw-page) {
    must stay transparent (room.css `html.shell-film .player-wrap`); these rules would outrank it, hence :not(.shell-film). */
 /* The card around the video becomes a mat, a step darker than the paper, so the eye goes paper → mat → frame → screen
    instead of paper → black. */
-:root[data-theme='matinee']:not(.shell-film) .theater:not(:fullscreen, .fake-fs) {
+:root[data-theme='matinee']:not(.shell-film, .cinema-on) .theater:not(:fullscreen, .fake-fs) {
   background: var(--mat);
   border-color: color-mix(in srgb, var(--bezel) 22%, var(--mat));
   box-shadow: inset 0 1px 0 rgb(255 250 240 / 0.5);
@@ -12907,6 +12907,14 @@ html.ph-game .game-stage .xox-page:not(.draw-page) {
   --border: #54483a;
   --field-border: #8f8170;
   color: var(--text);
+}
+/* A phone (first-look review): the video runs edge to edge, so no mat, side frame or drop shadow (that read as a grey
+   smudge under it); one dark frame line closes the screen against the paper. Cinema mode keeps its own dark page. */
+:root[data-theme='matinee'].phone:not(.shell-film) .player-wrap {
+  border-width: 0 0 2px;
+}
+:root[data-theme='matinee']:is(.phone, .cinema-on):not(.shell-film) .player-wrap {
+  box-shadow: inset 0 0 60px rgb(10 6 2 / 0.4);
 }
 /* "Run a sync test" alone in the room is dimmed (.alone, 50 %); on the lit umber that fell under AA (4.2): a lighter dim. */
 :root[data-theme='matinee']:not(.shell-film) .player-wrap > .empty .alone {

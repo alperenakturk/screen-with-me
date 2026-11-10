@@ -3,7 +3,7 @@
 //   npm run build:extension:dev
 //   npm run dev                                   (sunucu 8787 + site 5173)
 //   node scripts/harness/embed/film-server.mjs    (sahte video sitesi 5299/5300)
-//   node scripts/harness/embed/run.mjs [eklenti-klasörü] [site] [sunucu-ws] [çıktı-öneki]
+//   [THEME=matinee] node scripts/harness/embed/run.mjs [eklenti-klasörü] [site] [sunucu-ws] [çıktı-öneki]
 //
 // Akış: Sam sitedeki odada bir film sayfası açar → sekme film sayfasına gider → eklenti sitenin
 // oda sayfasını katman olarak açar → video bulununca katmanda delik açılır, video oraya oturur.
@@ -194,6 +194,9 @@ const coverText = (l) => (l ? `başta:${l.atStart} eklendi:${fmt(l.added)} kalkt
 await a.navigate(`${SITE}/`);
 await a.sleep(1500);
 await a.evaluate(`localStorage.setItem('name','Sam'); localStorage.setItem('avatar','wizard'); localStorage.setItem('lang','tr'); 1`);
+// THEME=matinee (MATINEE2): the whole run in a theme, e.g. the light one whose framed screen must never paint over the
+// film page's hole (its room rules are scoped :not(.shell-film)).
+if (process.env.THEME) await a.evaluate(`localStorage.setItem('theme', ${JSON.stringify(process.env.THEME)}); 1`);
 await a.navigate(`${SITE}/r/${room}#back`);
 await a.sleep(3000);
 check((await a.evaluate(`document.documentElement.dataset.swmShell`)) === '1', 'site eklentinin kabuğu bildiğini görüyor');
