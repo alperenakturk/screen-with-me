@@ -81,9 +81,10 @@ const dragBy = async (b, x, y, dx, dy) => {
   await b.sleep(200);
 };
 const before = await rect(sam);
-await dragBy(sam, before.x + before.w / 2, before.y + before.h / 2, -160, -60);
+// It starts in the video's top right (LAYOUT1: clear of the player's own bar), so it is dragged down and left.
+await dragBy(sam, before.x + before.w / 2, before.y + before.h / 2, -160, 60);
 const moved = await rect(sam);
-check(moved.inWrap && moved.x < before.x - 100 && moved.y < before.y - 30, 'yayın penceresi videonun içinde sürüklenip taşındı', JSON.stringify({ before, moved }));
+check(moved.inWrap && moved.x < before.x - 100 && moved.y > before.y + 30, 'yayın penceresi videonun içinde sürüklenip taşındı', JSON.stringify({ before, moved }));
 await sam.evaluate(`document.querySelector('#live-window .live-pop').click(); 1`);
 await sam.sleep(200);
 const popped = await rect(sam);

@@ -683,7 +683,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   fullscreen (4B):** on a phone in landscape the dock is a slim column (52 px + safe area) beside the video, never on it
   (`.player` / `.fs-catcher` end at its edge, so the player's own bar stays free), always visible, only 💬 😀 🎙 📷 and
   exit (🖥️ only while someone streams: `data-idle` on `#dock-live`); its windows open left of it (`overflow: visible`).
-  **Step 3 (0.9.92.5):** games (10A): on a phone `games/stage.ts` always uses `full` and sets `html.ph-game` (not in
+  **Step 3 (0.9.92.5):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
   the Shorts view); phone.css shrinks the theater itself (CSS only, the player is never reloaded) to a 92×52 preview
   at the left of the game's head; `::after` over it catches the tap, `phone-room.ts` turns it into the head's
   `.game-minimize`; the strip's `#strip-voice` moves into the head while `ph-game` (only 🎙 shows there) and back
@@ -1270,7 +1270,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the screen's frames drive it and a background tab doesn't freeze it; hidden where unsupported); quality changes go
   to the real screen track; the browser's "Stop sharing" ends the composed track too. `LiveKind` 'camera' stays in the
   protocol for old clients. Test: `voice/live.mjs` (19 checks).
-  **0.9.91.15 free stream window (owner: "free like the cameras", `ui/live-float.ts`):** `#live-window` sits in the
+  **0.9.91.15 free stream window (owner: "free like the cameras", `ui/live-float.ts`):** (LAYOUT1: the in-video default is the top right, `y: 0.04`, clear of the player's own bar; at least 150 px wide on a phone, `PHONE_MIN_WIDTH`, 200 elsewhere) `#live-window` sits in the
   video (default) or floats on the page (⧉ / ⤓, `opt:livePlace`; not under 700 px); drag anywhere, corner grip resizes
   (16:9 kept), double click resets; places as shares of the container in `liveSpot:video` / `liveSpot:free` /
   `liveSpot:fs`; in fullscreen (real or `.fake-fs`) it always lives inside the video; ⤢ covers the video (a free window
