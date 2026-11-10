@@ -384,9 +384,62 @@ then scrolls by 7–34 px on a computer (minor, proposed for the next sweep).
 Okyanus): 100 screenshots, checks for sideways scroll, nothing past the right edge, console errors, and no page scroll
 where a screen must fit). It found the Thanks page scrolling on a sideways phone: fixed.
 
+## Test round with the Lab (card LAB2, 0.9.97.107; for the Planner's Turkish guide)
+How to start, once per device: open the live site with `?debug=<the owner's code>` at the end of the address (the 🐞
+appears bottom left and stays for 30 days, also after a reload); open a room; 🐞 → tab "🧪 Senaryolar" → the list
+"🧪 Test turu: panodaki her test için bir tane" under the scenarios. Each row has "Çalıştır" and, where it changes
+something, "Geri al" (puts it back). The same commands are in the command box (Ctrl+K, type "test turu"). On a phone the
+lab is a bottom sheet; the same tab and buttons. Lines below: board test → the row's Turkish title → what to press →
+what he should see. The 🎮 games tests (G1–G16) are Game Studio's list in the "🎮 Oyunlar" tab.
+- S1 → "Test turu S1: Dört temada Stub" → press "Çalıştır" four times, each time look at the home page (open it in
+  another tab or go to it): Stub wears the theme's costume (Gece, Matine, Mehtaplı Geceler, Açık Hava Sineması), the
+  light comes from his torch and covers the laptop, tablet and phone. "Geri al" = his own theme again.
+- S2 → "Test turu S2: Neon'un yeni görünümü" → "Çalıştır" → the home page and the room in coral and amber, easy to read.
+- S3 → "Test turu S3: Tam ekranda resimli temalar" → "Çalıştır" three times on the home page, F11 each time: the title
+  and the buttons have only sky behind them (Mehtaplı Geceler, Açık Hava Sineması, Gece Ekspresi).
+- S4 → "Test turu S4: Yardım sayfasında ve boş odada Stub" → "Çalıştır" opens Yardım in a new tab: Stub beside the
+  title; an empty room (no video) shows Stub too. The extension's "İzlemeye başla" card: only with the extension.
+- N1 → "Test turu N1: Gündüz Matine" → "Çalıştır", then open ⚙️ Ayarlar and 🎮 Oyunlar: all readable, the video's place
+  stays black, the empty room's words on it are light.
+- N2 → "Test turu N2: Dört temada ana sayfanın rengi" → "Çalıştır" four times on the home page (Okyanus, Neon, Matine,
+  Gece): the slogan's second line, "Oda oluştur" and the step numbers take the theme's colour; Gece keeps gold. Then
+  "Test turu N2b: Okyanus Gemisi seçili bir tarayıcı" → "Çalıştır": the page reloads in Gece; "Geri al" reloads with
+  his own theme.
+- N3 → "Test turu N3: Sidelit yazı tipi ve cihazın yazı tipi" → "Çalıştır" twice: first Sidelit, then the device's font;
+  both readable. (A fresh browser starting with Sidelit: "Lab: ilk kez gelen biri gibi başla" in "🖥 Ekran".)
+- N4 → needs a second device with a camera → "Test turu N4: Kamera penceresinin başladığı yer" → "Çalıştır" (the page
+  reloads), both join voice with 📷: the camera window starts at the video's bottom left above the player's bar; drag it,
+  reload, it stays; double-click its bar, it goes back. "Geri al" puts his old place back.
+- F1 → "Test turu F1: Yedi yazı tipi" → "Çalıştır" seven times: the whole site changes at once, ğ ş ı İ look right (the
+  log line shows them in that font). Then pick one in ⚙️ → Ekranım → Yazı tipi and reload: it stays.
+- F2 → "Test turu F2: Ana sayfa başlığının yazı tipi" → "Çalıştır" opens the home page: its title has the same letters
+  as "Sidelit" in the top bar.
+- Round item 1 → "Test turu T1: Birlikte oynatma (sahte arkadaş)" → "Çalıştır": a 🤖 friend joins; at 2 s they pause,
+  at 8 s play, at 14 s jump 30 s ahead: his video follows each time. Real YouTube with a real friend is still his.
+- Item 2 → "Test turu T2: Mesajlarla tam ekran" → "Çalıştır": fullscreen opens, three 🤖 messages come in on the right
+  3 s apart, never over the player's bar; the rail comes at the right edge. "Geri al" ends fullscreen.
+- Item 3 → "Test turu T3: Ses ve kameralar": needs a real friend or a second device (the row only says what to check).
+- Item 4 → "Test turu T4: Ekran paylaşımı": needs a real friend on another device.
+- Item 5 → "Test turu T5: Kapı: sahte bir arkadaş kapıyı çalar" (as the host) → "Çalıştır": "İçeri almadan önce sor"
+  turns on and a 🤖 friend knocks: the "İçeri al / Reddet" card top right; let them in, then 👑 Yönetici yap on them.
+  "Geri al" opens the door and sends the friend away.
+- Item 6 → "Test turu T6: Özel mesaj" → "Çalıştır": two 🤖 friends join, the first writes to him privately (🔒); he
+  presses their name in the chat and answers: only that friend gets it; ✕ goes back to the room chat.
+- Item 7 (games) → Game Studio's "🎮 Oyunlar" tab.
+- Item 8 → "Test turu T8: Telefondan QR kodla katıl" → "Çalıştır": the invite window opens on "QR kod"; he scans it with
+  the phone. "Geri al" closes the window.
+- Item 9 → "Test turu T9: Telefonda birlikte Shorts": needs his phone and a friend.
+- Item 10 → "Test turu T10: Film sayfasında eklenti": needs the extension and a legal demo player page.
+- Item 11 → "Test turu T11: Edge, Brave, Opera": those browsers with the extension.
+
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
+
+**0.9.97.107 (LAB2, the Test Lab for the test round; fold into the next round).**
+- [ ] LAB1. Phone and computer: open the live site with `?debug=<your code>`: 🐞 shows; reload: it stays. 🐞 → "🧪
+  Senaryolar": under the scenarios the "🧪 Test turu" list has a row for every test on the board; "Çalıştır" on
+  "Test turu N1" shows Matinee, "Geri al" brings your theme back.
 
 **0.9.97.105 (NP3, Stub the mascot, Neon's new look, scene landmarks moved right; fold into the next round).**
 - [ ] S1. The home page in Night, Matinee and two scene themes: Stub wears the theme's costume and its torch is where

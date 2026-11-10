@@ -79,7 +79,7 @@ const until = async (fn, ms = 8000) => {
   check(!!listed && ['net.drop', 'net.restart', 'net.slow', 'net.http', 'video.drift', 'video.stall'].every((w) => listed.includes(w)), '🎬 lists drop / restart / slow / fallback / drift / stall', String(listed).slice(0, 200));
   check(!!listed && listed.includes(L('net.drop=Drop my connection for 6 s', 'net.drop=Bağlantımı 6 sn kopar')) && listed.includes(L('video.stall=My video gets stuck for 5 s', 'video.stall=Videom 5 sn takılsın')), '🎬 titles say what will happen, in the page language', String(listed).slice(0, 200));
   const noVideo = await run('video.drift');
-  check(noVideo.dir === 'error' && (LANG === 'tr' ? /video yok/ : /no video/).test(noVideo.text), 'drift without a video is refused, not run', JSON.stringify(noVideo));
+  check(noVideo.dir === 'error' && (LANG === 'tr' ? /önce bir video ekle/ : /add a video first/).test(noVideo.text), 'drift without a video is refused, not run', JSON.stringify(noVideo));
 
   // ---- A friend and the sync test, so there is a room to wait for me ----
   await run('friends.add');

@@ -16,6 +16,15 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.107 — 10 Nov
+- The Test Lab is ready for the big test round: a new "🧪 Test round" list has one button for each test on the
+  owner's board. Each one sets the scene where it can (shows the themes or fonts one by one, brings in a pretend friend
+  who pauses, writes or knocks at the door, opens the invite's QR code) and says in one line what to look at; tests that
+  need a real friend or a second device say so.
+- Fixes in the Test Lab itself: the video tricks wait for a video instead of failing without one, "make a fake friend
+  the host" can be undone (they hand it back), the scripted checks make room for their own pretend friends and start a
+  paused video again, and the lab explains when the server's limit of new connections a minute holds friends back.
+
 ### 0.9.97.106 — 10 Nov
 - Stub, the cinema ticket, is now the games' mascot: the referee who cheers and gasps, the bot you play against in the
   Classics and Sea Battle, the cashier at the Snack Bar and the usher whose torch lights your window garden. He cheers
