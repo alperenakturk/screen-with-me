@@ -9,7 +9,7 @@
 // - Nothing ever dies: a dry pot only grows slower until it is watered again.
 // - Seeds: a common one every 30 watched minutes, a better one when a film (≥ 20 min) ends, a rare one after a full
 //   evening together (90 min watched with someone else in the room).
-// - Glowbeam the grow lamp (owner's pick 9, 4 Nov 2026): once per film, Glowbeam shines on one pot, +25 % growth while
+// - Stub the grow lamp (owner's pick 9, 4 Nov 2026): once per film, Stub shines on one pot, +25 % growth while
 //   that film plays.
 // - Hybrid colours (owner's pick 7): a plant that blooms beside another plant in bloom may drop a colour seed; each
 //   plant has two colours (`HYBRID_COLORS`), each a new album entry (`plant:colour`), 24 finds in all.
@@ -58,7 +58,7 @@ export const EVENING_GAP_MS = 4 * 3600_000;
 export const POTS = 3;
 /** Ticks longer than this are ignored (a sleeping laptop is not watching). */
 export const MAX_TICK_S = 5;
-/** Glowbeam's lamp: this much faster growth for the pot it shines on, while the film it was placed in plays. */
+/** Stub's lamp: this much faster growth for the pot it shines on, while the film it was placed in plays. */
 export const LAMP_BONUS = 0.25;
 /** Seeds kept at most per rarity (an old forgotten tab cannot pile up thousands). */
 export const SEEDS_MAX = 99;
@@ -153,7 +153,7 @@ export interface GardenSave {
   seen: number;
   /** Room items whose ending already gave a seed. */
   ended: string[];
-  /** Glowbeam's lamp: the pot it shines on and the room item (film) it was placed in; null = not used yet. */
+  /** Stub's lamp: the pot it shines on and the room item (film) it was placed in; null = not used yet. */
   lamp: { pot: number; item: string } | null;
   /** Colour seeds waiting to be planted. */
   colorSeeds: ColorSeed[];
@@ -373,7 +373,7 @@ export function filmEnded(garden: GardenSave, itemId: string, duration: number, 
   return rarity;
 }
 
-/** Glowbeam shines on this pot now (placed in the room item `itemId`, which is still the one on). */
+/** Stub shines on this pot now (placed in the room item `itemId`, which is still the one on). */
 export function lampOn(garden: GardenSave, pot: number, itemId: string | null | undefined): boolean {
   return !!itemId && garden.lamp !== null && garden.lamp.pot === pot && garden.lamp.item === itemId;
 }
@@ -381,7 +381,7 @@ export function lampOn(garden: GardenSave, pot: number, itemId: string | null | 
 /** The lamp can still be placed in this film (once per film). */
 export const lampFree = (garden: GardenSave, itemId: string | null | undefined): boolean => !!itemId && garden.lamp?.item !== itemId;
 
-/** Puts Glowbeam over a growing plant for the rest of this film. False when used already, no film, or nothing grows. */
+/** Puts Stub over a growing plant for the rest of this film. False when used already, no film, or nothing grows. */
 export function placeLamp(garden: GardenSave, pot: number, itemId: string | null | undefined): boolean {
   const target = garden.pots[pot];
   if (!itemId || !lampFree(garden, itemId) || !target || target.growth >= 1) return false;

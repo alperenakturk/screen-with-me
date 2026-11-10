@@ -101,7 +101,10 @@ const weekNow = () => Math.floor((Math.floor(Date.now() / 86_400_000) + 3) / 7);
     window.__sounds = [];
     addEventListener('swm-sound', (e) => window.__sounds.push(e.detail));
   });
-  await page.click('#game-stage .sb-row[data-stand="popcorn"] .sb-price');
+  // SIDE340 (0.9.97.115): on this laptop the window is the narrow column beside the video, where the popcorn row (the
+  // oldest) is out of sight: a real click on the window's title gives the activation, then the row's button is pressed.
+  await page.click('#game-stage .game-stage-title');
+  await page.evaluate(() => document.querySelector('#game-stage .sb-row[data-stand="popcorn"] .sb-price').click());
   await wait(600);
   const sounds = await page.evaluate(() => window.__sounds);
   check((await saved(page)).levels.popcorn === 50 && sounds.includes('snackPop'), "popcorn's level-50 milestone plays the popcorn's own sound", JSON.stringify(sounds));
@@ -116,7 +119,14 @@ const weekNow = () => Math.floor((Math.floor(Date.now() / 86_400_000) + 3) / 7);
   await wait(300);
   const row = await page.evaluate(() => document.querySelector('#game-stage .sb-up.sb-season')?.dataset.season ?? null);
   check(row === SEASONS[weekNow() % 4], "Upgrades shows this week's seasonal stand on top", `${row} (expected ${SEASONS[weekNow() % 4]})`);
-  check((await fits(page)).length === 0, 'the Upgrades panel with the seasonal stand fits without scrollbars', (await fits(page)).join('; '));
+  // 0.9.97.115: in the narrow column the Upgrades list may scroll inside its panel (✕ stays in sight); nothing else may.
+  const upFit = (await fits(page)).filter((f) => !f.startsWith('#game-stage .sb-panel '));
+  const upClose = await page.evaluate(() => {
+    const p = document.querySelector('#game-stage .sb-panel').getBoundingClientRect();
+    const x = document.querySelector('#game-stage .sb-panel-close').getBoundingClientRect();
+    return x.height > 0 && x.top >= p.top - 1 && x.bottom <= p.bottom + 1;
+  });
+  check(upFit.length === 0 && upClose, 'the Upgrades panel with the seasonal stand fits (its list may scroll inside, ✕ in sight)', upFit.join('; '));
   await page.evaluate(() => document.querySelector('#game-stage .sb-up.sb-season .sb-up-buy').click());
   await wait(300);
   const bought = (await saved(page)).season;

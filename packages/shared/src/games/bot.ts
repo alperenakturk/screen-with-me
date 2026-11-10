@@ -1,4 +1,4 @@
-// Glowbeam, the bot of 🎲 Classics (owner's pick 6 A: someone alone in the room plays against Glowbeam). It plays on
+// Stub, the bot of 🎲 Classics (owner's pick 6 A: someone alone in the room plays against Stub). It plays on
 // the server with the same rules the players use, so it can never cheat. Two levels: easy (often a random move, never
 // looks far) and medium (a small minimax search). Pure: no timers, no randomness except the `random` passed in.
 
@@ -230,7 +230,7 @@ function quiesce(kind: BotKind, state: BoardState, me: Mark, alpha: number, beta
 }
 
 const DEPTH: Record<BotKind, Record<BotLevel, number>> = { xox: { 1: 1, 2: 9 }, four: { 1: 2, 2: 5 }, dama: { 1: 1, 2: 3 }, chess: { 1: 1, 2: 3 }, backgammon: { 1: 1, 2: 1 }, reversi: { 1: 1, 2: 4 } };
-/** Easy Glowbeam plays a random move this often. */
+/** Easy Stub plays a random move this often. */
 const EASY_RANDOM = 0.35;
 
 /** Backgammon: one checker step judged by the position it leaves (dice make deep search pointless here). */
@@ -248,7 +248,7 @@ function backgammonValue(s: BackgammonState, me: Mark): number {
   return score;
 }
 
-/** Glowbeam's move for the side to play, or null when there is none. */
+/** Stub's move for the side to play, or null when there is none. */
 export function botMove(kind: BotKind, state: BoardState, level: BotLevel, random: () => number = Math.random): number | null {
   const moves = movesOf(kind, state);
   if (!moves.length) return null;
@@ -279,7 +279,7 @@ export function botMove(kind: BotKind, state: BoardState, level: BotLevel, rando
     return out;
   };
   // The capture games think against a time budget (GP2): the full depth first; if a very busy position runs out of
-  // time, a quick one-move look answers instead, so Glowbeam never keeps a table waiting.
+  // time, a quick one-move look answers instead, so Stub never keeps a table waiting.
   let scored: [number, number][] = [];
   if (QUIET_KINDS.has(kind)) {
     // GP3: medium chess looks three half-moves ahead (it sees a fork) now that a move is cheap to play; a position too
@@ -309,12 +309,12 @@ export function botMove(kind: BotKind, state: BoardState, level: BotLevel, rando
 }
 
 /**
- * How far below its best easy Glowbeam may play now and then: about a minor piece in chess, a man in dama, an edge
+ * How far below its best easy Stub may play now and then: about a minor piece in chess, a man in dama, an edge
  * cell in reversi. XOX and Four in a Row keep a plain random move (a child can win them).
  */
 const EASY_SLACK: Record<BotKind, number> = { xox: Infinity, four: Infinity, dama: 1.2, chess: 2.5, reversi: 12, backgammon: Infinity };
 
-/** How long Glowbeam may think about one move in chess / dama (it also waits `BOT_DELAY_MS` before answering). */
+/** How long Stub may think about one move in chess / dama (it also waits `BOT_DELAY_MS` before answering). */
 export const BOT_BUDGET_MS = 500;
 const TIME_UP = Symbol('time up');
 let deadline = Infinity;

@@ -1,5 +1,5 @@
 // Backgammon, the fourth board of 🎲 Classics (P8, `docs/internal/design/games/classics.md`). In-house rules: the server
-// checks every move and rolls the dice (the page and the bot never roll), the page draws with them, Glowbeam plays them.
+// checks every move and rolls the dice (the page and the bot never roll), the page draws with them, Stub plays them.
 //
 // - 24 points, numbered 0–23. X (white) moves from 23 down to 0 and bears off below 0; its home is points 0–5.
 //   O (black) moves from 0 up to 23 and bears off above 23; its home is points 18–23. `pts[i]` > 0 is X checkers,

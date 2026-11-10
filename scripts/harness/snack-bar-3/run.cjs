@@ -34,8 +34,8 @@ async function person(ctx, room, extra = {}) {
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
     localStorage.setItem('snackBar:howSeen', '1');
-    // These checks were written for Snack Bar's free window; since 0.9.97.112 a 1366 laptop opens it in the video's
-    // place by default (no room beside the video), so the run picks the free window as a person would with the switch.
+    // These checks are for Snack Bar's free window (since 0.9.97.115 a 1366 laptop opens it there by itself, in the
+    // narrow column beside the video); the pick stays so the run never depends on the column's width.
     localStorage.setItem('gamePlace:snack', 'float');
     for (const [k, v] of Object.entries(more)) localStorage.setItem(k, v);
   }, extra);
@@ -86,7 +86,10 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   }, 8000);
   check(!!migrated && migrated.levels.popcorn === 12 && migrated.levels.soda === 3 && migrated.coins >= 50_000 && migrated.stars === 5 && migrated.decor[0] === 'marquee', 'the version 1 save is migrated: levels, coins, decorations kept, 2 stars → 5', JSON.stringify(migrated && { v: migrated.v, levels: migrated.levels, coins: migrated.coins, stars: migrated.stars }));
   // Soda has levels, so nachos is open too; candy is the next locked one; the hot dog grill is out of sight.
-  check(JSON.stringify(await shownRows(page)) === JSON.stringify(['popcorn', 'soda', 'nachos', 'candy']), 'rows: the open stands and the next locked one', JSON.stringify(await shownRows(page)));
+  // SIDE340: in the narrow column beside the video (1366 laptop) three rows fit: the newest ones.
+  const narrowFirst = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
+  const wantRows = narrowFirst ? ['soda', 'nachos', 'candy'] : ['popcorn', 'soda', 'nachos', 'candy'];
+  check(JSON.stringify(await shownRows(page)) === JSON.stringify(wantRows), 'rows: the open stands and the next locked one', JSON.stringify(await shownRows(page)));
 
   // Buy ×10 and Max.
   await mode(page, 10);
@@ -115,7 +118,11 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
     title: document.querySelector('#game-stage .sb-panel h3')?.textContent ?? '',
   }));
   check(panel.recipes.includes('popcorn:1') && panel.staff.length === 4, 'Upgrades lists the open popcorn recipe and the four staff', JSON.stringify(panel));
-  check((await fits(page)).length === 0, 'the Upgrades panel fits without scrollbars', (await fits(page)).join('; '));
+  // 0.9.97.115 (owner): Upgrades is a growing list, so it may scroll inside its own panel (a narrow laptop column);
+  // nothing else may: the game, the rows and the window stay without scrollbars, and the panel's ✕ stays in sight.
+  const upFit = (await fits(page)).filter((f) => !f.startsWith('#game-stage .sb-panel '));
+  const upClose = await page.evaluate(() => { const p = document.querySelector('#game-stage .sb-panel'); const c = p.querySelector('.sb-panel-close').getBoundingClientRect(); const r = p.getBoundingClientRect(); return c.top >= r.top - 1 && c.bottom <= r.bottom + 1; });
+  check(upFit.length === 0 && upClose, 'the Upgrades panel fits (its list may scroll inside it, ✕ in sight)', upFit.join('; '));
   await page.screenshot({ path: __dirname + '/sb3-upgrades.png' });
   await page.evaluate(() => document.querySelector('#game-stage .sb-up[data-recipe="popcorn:1"] .sb-up-buy').click());
   await wait(300);
@@ -158,8 +165,28 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   await lab(page, 'snackBar.levels');
   await wait(1200);
   const rowsAll = await shownRows(page);
-  check(rowsAll.length >= 4 && rowsAll.includes('arcade'), 'with eight stands the newest ones show (at least four rows in the default window)', JSON.stringify(rowsAll));
+  // SIDE340 (0.9.97.115): on a 1366 laptop the default window is the narrow column beside the video (about 354 px):
+  // three rows there, four in a window of the game's own size.
+  const narrowWindow = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
+  check(rowsAll.length >= (narrowWindow ? 3 : 4) && rowsAll.includes('arcade'), `with eight stands the newest ones show (at least ${narrowWindow ? 'three' : 'four'} rows in the default window)`, JSON.stringify(rowsAll));
   check((await fits(page)).length === 0, 'eight stands fit without scrollbars (laptop)', (await fits(page)).join('; '));
+  // 0.9.97.115 (owner: "Upgrades runs off the bottom, the staff list is cut"): with every stand open the list may scroll
+  // inside the panel, its ✕ stays in sight and the last staff member can be reached.
+  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open').click());
+  await wait(400);
+  const longList = await page.evaluate(async () => {
+    const panel = document.querySelector('#game-stage .sb-panel');
+    panel.scrollTop = panel.scrollHeight;
+    await new Promise((r) => setTimeout(r, 100));
+    const pr = panel.getBoundingClientRect();
+    const close = panel.querySelector('.sb-panel-close').getBoundingClientRect();
+    const rows = panel.querySelectorAll('.sb-up');
+    const last = rows[rows.length - 1].getBoundingClientRect();
+    return { rows: rows.length, close: close.top >= pr.top - 1 && close.bottom <= pr.bottom + 1, last: last.bottom <= pr.bottom + 1 && last.top >= pr.top, stage: (() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1; })() };
+  });
+  check(longList.rows >= 12 && longList.close && longList.last && longList.stage, 'Upgrades with every stand: the list scrolls inside the panel, ✕ in sight, the last staff member reachable', JSON.stringify(longList));
+  await page.evaluate(() => document.querySelector('#game-stage .sb-panel-close')?.click());
+  await wait(300);
   const scene = await page.evaluate(() => {
     const art = document.querySelector('#game-stage .sb-scene-art');
     const p = art.dataset.prefix;

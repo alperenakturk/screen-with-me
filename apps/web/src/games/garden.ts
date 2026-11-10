@@ -505,7 +505,10 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     state.setAttribute('aria-label', ctx.playing ? t('growing') : t('paused'));
     state.classList.toggle('on', ctx.playing);
     state.title = ctx.playing ? t('growing') : t('restingTitle');
-    albumCount.textContent = `📖 ${t('album', { n: found(garden), all: ALBUM_IDS.length })}`;
+    // SIDE340: the narrow column beside the video shows the short form (garden.css swaps them).
+    const albumText = `📖 ${t('album', { n: found(garden), all: ALBUM_IDS.length })}`;
+    albumCount.title = albumText;
+    albumCount.replaceChildren(el('span', { class: 'wg-album-long' }, albumText), el('span', { class: 'wg-album-short' }, `📖 ${found(garden)}/${ALBUM_IDS.length}`));
     weather();
     // GW play-through: one count per kind ("🌰2 🌰✦1 🌈1 🎁1") no longer fit beside the album in a 400 px window: the head
     // shows the total, its tooltip (and the seed buttons on an empty pot) the kinds.

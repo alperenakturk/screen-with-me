@@ -131,10 +131,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => localStorage.setItem('gameFloat:spot:snack', JSON.stringify({ x: 0, y: 0 })));
     await openGame(page, 'snack');
     const first = await box(page);
-    // 0.9.97.114 (owner): side games only ever play in the free window, in the right column at least at their smallest
-    // readable size; on a 1366 laptop the column is narrower, so the window sticks out over the video's edge a little.
-    const edge = await page.evaluate(() => document.getElementById('theater').getBoundingClientRect().right);
-    check(first.mode === 'float' && first.w === 400 && first.x + first.w >= 1366 - 10 && edge - first.x <= 60, `${L} 114: Snack Bar opens as its window at the right, its smallest size, over the video's edge by ≤ 60 px`, { first, edge });
+    // 0.9.97.114 (owner): side games only ever play in the free window, in the right column. SIDE340 (0.9.97.115): they
+    // read well down to 320 px, so the column right of the video (about 354 px here) holds them: never over the video.
+    check(first.mode === 'float' && !first.overVideo && first.w >= 320 && first.x + first.w >= 1366 - 10, `${L} 115: Snack Bar opens in the narrow column right of the video, never over it`, first);
     check(await page.evaluate(() => document.querySelector('#game-stage .game-place').hidden), `${L} 114: a side game has no placement switch`);
     check(!(await page.$('#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
     await page.keyboard.press('Escape');
@@ -219,7 +218,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await dblHead(page);
     await wait(300);
     const home = await box(page);
-    check(home.mode === 'float' && home.w === 400 && home.x + home.w >= 1366 - 10, `${L} W5: a double click on the head puts it back (own size, right edge: no room beside the video here)`, home);
+    check(home.mode === 'float' && !home.overVideo && Math.abs(home.w - first.w) <= 2 && home.x + home.w >= 1366 - 10, `${L} W5: a double click on the head puts it back in its home beside the video`, home);
     // The lab's reset does the same.
     await dragHead(page, -300, 0, 4);
     await page.evaluate(() => window.__swmLab.run('gameWindow.reset'));
@@ -287,8 +286,8 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const { ctx, page, errors } = await room(browser, viewport);
     // Owner (0.9.97.112–114): side games always open as the free window in the right column (never over the video when
     // they fit there at their smallest readable size, else over its edge by the difference); the tables always play in
-    // the video's place. No game has a placement switch on a computer.
-    const minW = { snack: 400, garden: 400, word: 400 };
+    // the video's place. No game has a placement switch on a computer. SIDE340 (0.9.97.115): smallest readable 320 px.
+    const minW = { snack: 320, garden: 320, word: 320 };
     for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz', 'draw', 'poker', 'duel']) {
       await openGame(page, kind);
       const b = await box(page);

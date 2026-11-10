@@ -9,7 +9,7 @@ import { newGame as newXox } from './xox.ts';
 const xox = (cells: string, turn: 'X' | 'O'): BoardState => ({ ...newXox(), board: [...cells].map((c) => (c === '.' ? null : (c as Cell))), turn });
 const first = () => 0;
 
-describe('Glowbeam bot', () => {
+describe('Stub bot', () => {
   it('XOX: takes a win, blocks a loss, never loses a whole game at medium', () => {
     expect(botMove('xox', xox('XX.OO....', 'X'), 2, first)).toBe(2);
     expect(botMove('xox', xox('OO.X.....', 'X'), 2, first)).toBe(2);
