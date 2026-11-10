@@ -40,6 +40,9 @@ const GAMES = {
   sea: { table: 'sea' },
   // Sea Battle in battle: Glowbeam sits, I'm ready, both seas show.
   seaPlay: { table: 'sea', play: true },
+  // ⚔️ Five Frames Duel: waiting alone, then racing with Sam (a socket from this script) on the board and the tray.
+  duel: { table: 'duel' },
+  duelPlay: { table: 'duel', race: true },
   snack: { solo: 'snack' },
   garden: { solo: 'garden' },
   word: { solo: 'word' },
@@ -339,6 +342,36 @@ async function windowPasses(page, label, g, phone) {
           check(playing, `${label}: the battle against Glowbeam starts`);
           await wait(600);
         }
+        let sam = null;
+        if (g.race) {
+          // Sam joins the table from this script (a plain socket), says ready, guesses once; I press Ready.
+          const id = await page.evaluate(() => document.querySelector('#game-stage .duel')?.dataset.table);
+          sam = new WebSocket(`${SITE.replace(/^http/, 'ws')}/api/duel/${id}/ws`);
+          sam.addEventListener('open', () => {
+            sam.send(JSON.stringify({ t: 'hello', v: 1, name: 'Sam', cid: 's'.repeat(32) }));
+            sam.send(JSON.stringify({ t: 'ready', on: true }));
+          });
+          // Once the race is on, Sam guesses once (his marks show on my screen; the word list is English by default).
+          let guessed = false;
+          sam.addEventListener('message', (e) => {
+            const m = JSON.parse(e.data);
+            if (m.t === 'state' && m.phase === 'play' && !guessed) {
+              guessed = true;
+              sam.send(JSON.stringify({ t: 'guess', word: 'slate' }));
+            }
+          });
+          const racing = await page
+            .waitForFunction(() => {
+              if (document.querySelector('#game-stage .duel')?.dataset.phase === 'play') return true;
+              document.querySelector('#game-stage .duel-ready.primary')?.click();
+              return false;
+            }, null, { timeout: 10000, polling: 300 })
+            .then(() => true, () => false);
+          check(racing, `${label}: the race with Sam starts`);
+          // Two letters typed on my board, and Sam's first row of marks.
+          await page.evaluate(() => ['a', 'b'].forEach((k) => document.querySelector(`#game-stage .ff-key[data-key="${k}"]`)?.click()));
+          await wait(2000);
+        }
         const phone = size === 'iphone' || size === 'pixel' || size === 'side';
         const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
@@ -351,6 +384,7 @@ async function windowPasses(page, label, g, phone) {
         check(m.cut.length === 0, `${label}: nothing cut off`, m.cut.join(' | '));
         check(!m.board, `${label}: the board is a fair size`, m.board);
         check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
+        sam?.close();
         check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
         // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).

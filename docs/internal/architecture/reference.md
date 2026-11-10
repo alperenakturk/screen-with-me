@@ -501,6 +501,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   still in the room without voice). Voice-join sounds skip people who come back within 30 s. The film page (ExtVoice)
   still rebuilds. Tests: e2e `handover.mjs`, `voice/run.mjs` (the same camera track survives ⟳).
   Since QUOTA1a "last message" means the later of `seen` and the runtime's last free-keepalive answer (`heardAt`, below).
+- **Durable Objects and their migrations** (`apps/server/wrangler.jsonc`; all SQLite-backed, a new class = a new
+  migration tag, never an edited one): `v1` `Room` (`ROOMS`), `v2` `Game` (`GAMES`), `v3` `Draw` (`DRAWS`), `v4` `Quiz`
+  (`QUIZZES`), `v5` `TvLink` (`TVLINKS`), `v6` `Poker` (`POKERS`), `v7` `FeedbackGate` (`FEEDBACK`), `v8` `MoveLink`
+  (`MOVELINKS`), `v9` `YoutubeUsage` (`USAGE`), `v10` `IpKeys` (`IPKEYS`), `v11` `UploadGate` (`UPLOADS`), `v12` `Sea`
+  (`FLEETS`), `v13` `FallbackGate` (`FBGATE`), `v14` `Duel` (`DUELS`, Five Frames Duel, 0.9.97.99).
 - **Free plan quota guards (card QUOTA1a, 0.9.97.93; `docs/internal/OPTIMIZATION.md`, `docs/internal/security-review-cf.md`
   CF-1 / CF-3 / CF-5):** every message that reaches a Durable Object is billed, an awake object is billed by the second,
   and on Free a used-up quota stops every object until 00:00 UTC (a full storage until rooms expire).
@@ -983,6 +988,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `lab-server.mjs`, harness `scripts/harness/sea/run.cjs` (in CI's "Games quality"), the `games-sweep` entries `sea` /
   `seaPlay`. KEYREP (0.9.97.94): a held R turns the ship once (`event.repeat` ignored); its repeats sent a `place` each,
   ~30/s, past the server's per-connection message limit (QUOTA1a); the sea harness holds R for 40 repeats.
+  **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
+  object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
+  the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
+  `solved` / `out`; the word (`answer`) and all words only once the game is over. Rules and protocol in
+  `packages/shared/src/games/duel.ts` (`duelGuess` = the solo game's `guess` checks, `duelOutcome`: the first to solve
+  wins, both used up = draw; `practiceWord`); the word lists moved to `packages/shared/src/games/words/` (the server
+  unpacks them with `decodeWords`). Phases `wait` (both press Ready; a seated player picks EN / TR, which resets Ready)
+  → `play` → `over` ("Play again" = ready; both = the next game). The table's first game is the day's word (`daily` =
+  day number, `answerFor` on the server's UTC day), every next one a practice word (secure random, never the day's).
+  A guess after the game was decided gets `error over` (two winning guesses at once: the first processed wins).
+  `sit` only between games (a free or away seat). The page `games/duel.ts` + `duel.css` (lazy chunk, own `TEXT`,
+  reuses `five-frames.css`; `.ff.duel`, `data-table` = the table id): my tickets left, the other's marks right (watchers:
+  both); on a phone their marks are a strip (one column per guess); the alphabetical tray while playing; the keyboard
+  types only while the board has the focus. Lab commands `duel.answer`, `duel.win`, `duel.silent` (`lab` op `answer`,
+  local lab server only). Tests: unit `duel.test.ts`, e2e `duel.mjs` (no message carries the word or the other's
+  letters before the end, reconnect, a simultaneous finish, rematch = practice, a draw), `games-sweep` `duel` /
+  `duelPlay` (Sam joins as a socket), `games-pair` `duel` (reload, network drop; in CI).
   **Draw & Guess (0.9.72):** separate object `Draw` (`apps/server/src/draw.ts`, binding `DRAWS`, migration `v3`,
   `/api/draw/:id/ws`), protocol and pure rules in `packages/shared/src/games/draw.ts` (guess matching: lower case +
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer
@@ -1055,7 +1077,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "🌱 2 growing · 📖 3/8". Harness `scripts/harness/garden/run.cjs` (17 checks).
   **🎟️ Five Frames (0.9.95.5, card "Daily word game", board A "ticket row", name owner's pick):** `games/five-frames.ts`
   + `five-frames.css` (lazy chunk, own `TEXT`), rules `@swm/shared/games/five-frames`, word lists as their own chunks
-  per language (`games/words/en.ts` 8636 guesses from ENABLE, public domain, 977 answers; `tr.ts` 4793 guesses from
+  per language (`packages/shared/src/games/words/en.ts` 8636 guesses from ENABLE, public domain, 977 answers; `tr.ts` 4793 guesses from
   the Zemberek-NLP lexicon, Apache 2.0, â/î/û as a/i/u, 1606 answers): `WORDS` = all guesses glued together (five
   letters each), `ANSWERS` = base-36 positions in it (not plain text), our own picks of common words (no suffixes, no
   grim words). Credits + the Apache licence text: `apps/web/public/third-party-notices.txt` ("About the word lists" in
@@ -1424,9 +1446,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   runs 6 s, the beam breathes, nothing moves with reduced motion), the three feature cards (`.hm-feat`) at its foot.
   Then `#how`: three steps, the extension card, saved rooms (`#recent`), a Help line. No video link box (3A) and no theme strip; 🎨 in the top bar (back since card 15d). Computer / sideways tablet: two columns (slogan 64 px); upright tablet: one centred
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
-  saved Sinema theme gets a soft backdrop behind the text. The footer shows the site version (`index.html`
-  `.footer-version`, bump on every release). Plain themes (gece/okyanus/gunbatimi/neon) have a layered `--art` + a
-  slowly drifting `--aura` behind it (`body::before`; not in the shell or with reduced motion). Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). Harness
+  scene theme gets a quiet zone behind the text column (THEME1: `.hm-text::before`, a blurred block of `--hero-scrim`;
+  the second section's heading and help line get the same block). The footer shows the site version (`index.html`
+  `.footer-version`, bump on every release). Plain themes (gece/okyanus/gunbatimi/neon) have one layered `--art`
+  (gradient + star dust or a pattern; THEME1 removed the corner glows and the drifting `--aura`). **Theme tokens
+  (THEME1, Design's `docs/internal/design/themes-2.md`):** `--field-border` (inputs, selects, the switch's off edge;
+  `--muted` 62 % into `--surface`, ≥ 3:1) and `--hero-scrim` (`--bg` at 88 % on the six scene themes, `none` on plain
+  ones) are worked out in `styles.css` from each theme's own colours; my chat bubble and primary buttons use
+  `--accent-btn` (Gece `#6a4cf2`, white text ≥ 4.5:1). The home's accent lives in `home.css` `.hm-first` (`--hm-accent`,
+  `--hm-accent-fill`, `--hm-accent-ink`: the brand gold today; the owner's Q2 "home follows the theme" sets them to
+  `--accent` / `--accent-btn` / `--on-accent`); its soft text is `--hm-soft` (from `--text` and `--muted`). Harness
+  `scripts/harness/contrast/run.cjs` (CI, `site` job): every theme's text against the real pixels behind it (WCAG AA,
+  4.5:1 or 3:1 for large text; the worst 15 % of the background counts) on home at 1366 and 1920, help, join, room,
+  settings and the games hall, and the plain themes on a Pixel 7; `REPORT_ONLY=1` for audits. Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). Harness
   `scripts/harness/home/run.cjs` (5 sizes × EN + TR).
 - **Bigger room on a computer (0.9.92.7, owner: "too much empty space"):** above 860 px wide (not the film page,
   Shorts view, TV or phone) `main` has no 1280 px cap; the room's grid is `minmax(0, max(--stage-w, 560px))` +

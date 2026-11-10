@@ -2,6 +2,7 @@ import { DRAW_ID_PATTERN } from '@swm/shared/games/draw';
 import { GAME_ID_PATTERN } from '@swm/shared/games/protocol';
 import { POKER_ID_PATTERN } from '@swm/shared/games/poker';
 import { SEA_ID_PATTERN } from '@swm/shared/games/sea';
+import { DUEL_ID_PATTERN } from '@swm/shared/games/duel';
 import { QUIZ_ID_PATTERN } from '@swm/shared/games/quiz';
 import { ROOM_ID_PATTERN, TV_CODE } from '@swm/shared/protocol';
 import { MOVE_CODE } from '@swm/shared/move';
@@ -22,6 +23,7 @@ export { FeedbackGate } from './feedback.ts';
 export { Game } from './game.ts';
 export { Poker } from './poker.ts';
 export { Sea } from './sea.ts';
+export { Duel } from './duel.ts';
 export { Quiz } from './quiz.ts';
 export { Room } from './room.ts';
 export { TvLink } from './tv-link.ts';
@@ -307,6 +309,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (sea) {
       if (!SEA_ID_PATTERN.test(sea[1]!)) return new Response('Invalid game id', { status: 400 });
       return connect(request, url, env, env.FLEETS.get(env.FLEETS.idFromName(sea[1]!)));
+    }
+    // ⚔️ Five Frames Duel.
+    const duel = url.pathname.match(/^\/api\/duel\/([^/]+)\/ws$/);
+    if (duel) {
+      if (!DUEL_ID_PATTERN.test(duel[1]!)) return new Response('Invalid game id', { status: 400 });
+      return connect(request, url, env, env.DUELS.get(env.DUELS.idFromName(duel[1]!)));
     }
     // Life poker.
     const poker = url.pathname.match(/^\/api\/poker\/([^/]+)\/ws$/);

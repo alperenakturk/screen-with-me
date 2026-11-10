@@ -38,6 +38,8 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   classics: { min: 1, max: 2, place: 'float', size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896] },
   // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Glowbeam.
   sea: { min: 1, max: 2, place: 'float', size: [780, 560], fit: [600, 440], minSize: [764, 548], maxSize: [1170, 840] },
+  // ⚔️ Five Frames Duel (FFDUEL): my board and the other's marks side by side, the letter tray under them.
+  duel: { min: 2, max: 2, place: 'float', size: [600, 660], fit: [540, 600], minSize: [600, 660], maxSize: [900, 990] },
 };
 
 /** Classics (CL2): the window's size per screen of the table: the picker, then each board built around itself. */
@@ -101,6 +103,13 @@ export interface GameNews {
 
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
+  {
+    v: '0.9.97.99',
+    kinds: ['duel'],
+    badge: 'new',
+    tr: 'Yeni: ⚔️ Beş Kare Düellosu. Aynı beş harfli kelimeyi bir arkadaşından önce bul: onun işaretlerini görürsün, harflerini asla.',
+    en: 'New: ⚔️ Five Frames Duel. Race a friend to the same five-letter word: you see their marks, never their letters.',
+  },
   {
     v: '0.9.97.65',
     kinds: ['classics'],

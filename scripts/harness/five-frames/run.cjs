@@ -67,7 +67,7 @@ const fits = (page) =>
 const solve = (page, lang) =>
   page.evaluate(async ([root, lang]) => {
     const rules = await import(`/@fs${root}/packages/shared/src/games/five-frames.ts`);
-    const { WORDS, ANSWERS } = await import(`/src/games/words/${lang}.ts`);
+    const { WORDS, ANSWERS } = await import(`/@fs${root}/packages/shared/src/games/words/${lang}.ts`);
     const chars = Array.from(WORDS);
     const words = [];
     for (let i = 0; i < chars.length; i += 5) words.push(chars.slice(i, i + 5).join(''));

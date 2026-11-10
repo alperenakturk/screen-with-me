@@ -388,6 +388,12 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.98 (THEME1, readable themes; fold into the next round).**
+- [ ] T1. Home page in the picture themes (🎨: Ocean Liner, Night Express, Moonlit Nights), on the laptop and a big
+  monitor: every line left of the picture reads easily; nothing of the picture shows through the text.
+- [ ] T2. In a room, the search box and the chat box have a visible edge in each theme you try; in Night your own chat
+  bubble reads easily.
+
 **0.9.97.96 (LAYOUT1, layout audit; fold into the next round).** Report: `docs/internal/layout-audit.md`.
 - [ ] L1. Phone held sideways (best a big Android phone): open a game from ⋯ → it fills the whole screen, not a small
   window over the video.
@@ -467,12 +473,15 @@ with the same friend:
   nothing in their top rows ends in "…".
 - [ ] G10. The friend turns the phone's data off for 2 minutes during a Quiz: after about 1.5 min they show offline,
   20 s later the game goes back to the lobby; data back on brings them back.
-- [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
-  time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
-  video's place" and ⛶ full screen now look different.
 - [ ] G11. Snack Bar 3: your old Snack Bar is still there (levels, coins, decorations, stars a bit higher). Play a
   film: try ×10 and Max, open "📋 Upgrades" and buy a recipe (that stand earns twice), hire the usher (customers get
   served without a tap). One stand says "⭐ ×2 today". Does buying feel like a choice now, not "always the top one"?
+- [ ] G12. Five Frames Duel with a friend: open it from 🎮 "Together", both press Ready, race to the word. You see
+  their marks (✓ • ×) but never their letters; the first to find it wins, "Play again" brings a practice word. Try it on
+  your phone too: your board, their strip of marks and the letters all fit.
+- [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
+  time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
+  video's place" and ⛶ full screen now look different.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

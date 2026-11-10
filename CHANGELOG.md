@@ -16,6 +16,18 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.99 — 10 Nov
+- Games: new table, ⚔️ Five Frames Duel. Race a friend to the same five-letter word, in English or Turkish: you see
+  their marks as they guess, never their letters, and the first to find the word wins. The first game is the word of
+  the day, "Play again" brings a practice word. If neither finds it in seven tries, it is a draw.
+
+### 0.9.97.98 — 10 Nov
+- Easier to read in every theme: on the picture themes the home page's text now sits on a calm, darker area, so the
+  picture behind it never hides a word (the Ocean Liner theme's light sky was the worst).
+- Text boxes, the search box and switches have clearly visible edges in every theme.
+- The plain themes are calmer: the drifting colour clouds and the corner glows are gone.
+- Night theme: your own chat messages and the games hall's counts are easier to read.
+
 ### 0.9.97.97 — 10 Nov
 - Games: Snack Bar grows into a proper snack-bar game. Eight stands (new: a hot dog grill, an ice cream cart and an
   arcade), each with its own price, recipes that double a stand, a menu bonus for keeping many stands busy, four staff

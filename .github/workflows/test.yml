@@ -168,6 +168,11 @@ jobs:
       - name: Accessibility (axe + keyboard tour)
         run: node scripts/harness/a11y/run.cjs http://localhost:8787
 
+      # Card THEME1: every theme's text passes WCAG AA against the real pixels behind it (scene pictures included):
+      # home (1366 and 1920), help, join card, room, settings and the games hall; phones the plain themes.
+      - name: Theme contrast (WCAG AA)
+        run: node scripts/harness/contrast/run.cjs http://localhost:8787
+
       # Card DL: the 🐞 Test Lab (drawer, command box, status, log, bug text) and that with it off nothing of it loads.
       - name: Test Lab
         run: |
@@ -254,7 +259,7 @@ jobs:
           # GP2: the one result card (Classics; Sea's in the sea harness) and Glowbeam the referee's reactions.
           node scripts/harness/game-result/run.cjs http://localhost:8787
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
-          OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
+          OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,duel,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
           # Card SB3: Snack Bar's economy (migration, buy modes, upgrades, staff, eight stands, new places).
           node scripts/harness/snack-bar-3/run.cjs http://localhost:8787
 
