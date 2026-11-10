@@ -749,18 +749,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="settings-sec host-box" data-sec="rules" hidden>
             <p id="opt-wait-hint" class="muted small"></p>
             <ul id="rules-summary" class="rules-summary"></ul>
-            <div class="set-box host-ui">
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.waitForAll"></b><span data-i18n="settings.waitForAll.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-wait" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.hostOnlyMode"></b><span data-i18n="settings.hostOnlyMode.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-hostonly" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.countdown"></b><span data-i18n="settings.countdown.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-countdown" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.knock"></b><span data-i18n="settings.knock.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-knock" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
-              <div class="set-row"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
-              <label class="set-row"><span class="set-text"><b data-i18n="settings.reactionGap"></b><span data-i18n="settings.reactionGap.d"></span></span>
+            <div class="host-ui">
+            <div class="rules-groups" role="group" data-i18n-title="settings.secRules"><button type="button" class="chip" data-rules="play" aria-pressed="true">▶️ <span data-i18n="settings.rulesPlay"></span></button><button type="button" class="chip" data-rules="room" aria-pressed="false">🏠 <span data-i18n="settings.rulesRoom"></span></button></div>
+            <div class="set-box rules-box" data-show="play">
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.waitForAll"></b><span data-i18n="settings.waitForAll.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-wait" /></label>
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.hostOnlyMode"></b><span data-i18n="settings.hostOnlyMode.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-hostonly" /></label>
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.lockQueue"></b><span data-i18n="settings.lockQueue.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-lockqueue" /></label>
+              <label class="set-row" data-group="play"><span class="set-text"><b data-i18n="settings.countdown"></b><span data-i18n="settings.countdown.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-countdown" /></label>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.knock"></b><span data-i18n="settings.knock.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-knock" /></label>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
+              <div class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.reactionGap"></b><span data-i18n="settings.reactionGap.d"></span></span>
                 <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
               </label>
+            </div>
             </div>
           </div>
           <div class="settings-sec" data-sec="schedule" hidden>
@@ -1012,6 +1015,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     settingsDialog.close();
     openFeedbackDialog($('#about-feedback'));
   });
+  // Room rules in two groups (card SIMP1, Planner's pick C: nine switches scrolled on a phone): ▶️ Playback / 🏠 In the room.
+  {
+    const box = $('.rules-box');
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('.rules-groups [data-rules]')];
+    for (const chip of chips)
+      chip.addEventListener('click', () => {
+        box.dataset.show = chip.dataset.rules;
+        for (const other of chips) other.setAttribute('aria-pressed', String(other === chip));
+      });
+  }
   // Test Lab (card SIMP1): open Settings at each category, so a test can check what moved where in two clicks.
   {
     const names: [SettingsSection, { en: string; tr: string }][] = [

@@ -1092,6 +1092,8 @@ const en = {
   'settings.secRoom': 'Room',
   'settings.secSound': 'Sound & camera',
   'settings.secAbout': 'About',
+  'settings.rulesPlay': 'Playback',
+  'settings.rulesRoom': 'In the room',
   'settings.me': 'Only about you, in this browser.',
   'settings.profile.d': 'Your name, picture and theme.',
   'settings.profile.btn': 'Open profile',

@@ -1463,7 +1463,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     + name; consecutive messages from the same person within 3 min merge (`.cont`); room actions centered between thin
     lines; send arrow (`#chat-send`) inside the box.
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
-    categories on the left, the same order on every device (card SIMP1, 0.9.97.x): 👤 Me (`me`: open the profile menu,
+    categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count
     `#settings-room-name` / `#settings-room-count`, filled by `drawRoomTitle`; save / rename / unsave, the old `save`
     section; `open('save')` still lands here) · 👑 Room rules (`rules`) · ⏰ Film time (`schedule`, host only) · 🔊 Sound
@@ -1472,7 +1472,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     from `.footer-version`, Help, Feedback, Privacy, Terms, Extension, Thanks, Licenses). `createSettingsDialog`'s
     `onShow(section)` fills Room / About / the voice switch when shown. The window is as tall as its longest category
     (`height: auto`, ≥ 540 px, ≤ the window) so none scrolls on a computer; on ≤ 640 px the categories are a wrapping
-    row of chips; a phone shows it full screen (only Room rules, nine switches, scrolls there). Rows are title + short
+    row of chips; a phone shows it full screen. Room rules come in two groups, ▶️ Playback (wait, host-only, lock
+    queue, countdown) / 🏠 In the room (knock, emojis, streams, clear emojis, emoji rate): `.rules-groups` chips set
+    `.rules-box[data-show]`, rows carry `data-group` (Planner's pick C: nine switches scrolled on a phone). Rows are title + short
     description + toggle (`.set-row`, `input.switch`, `role=switch`). Non-hosts don't see the rule toggles; they see
     `#rules-summary` (✓/– summary, "X sets the rules"). The dialog is always in the page (hidden): selectors for open
     dialogs are `.dialog-backdrop:not([hidden])` (closes the hole in the shell, swallows shortcuts). Test Lab: 🖥️ Screen

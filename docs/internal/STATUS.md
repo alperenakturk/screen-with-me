@@ -351,8 +351,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
   line off the room screen, "Move to another device" in Settings → Me, IP notice removed (privacy policy + help
   wording, dated change line), join screen's links behind ⓘ, Test Lab "Settings: <category>", harness `settings`
-  (CI) + `lazy-gates` / `room-more` / `move` updated, reference. Next: version from the Planner, CHANGELOG block,
-  PR → green → merge → deploy check → ping lane A (Test Lab texts) and Game Studio → report.
+  (CI) + `lazy-gates` / `room-more` / `move` updated, reference, Room rules in two groups (Planner's pick C),
+  0.9.97.107 + CHANGELOG, PR #383. Next: green → merge → deploy check → ping lane A (Test Lab texts) and Game Studio → report.
 
 ## Design sweep (card 16): what was found and what happened
 From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
@@ -394,11 +394,12 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
-**SIMP1 (a calmer room screen, Settings in categories; fold into the next round).**
+**0.9.97.107 (SIMP1, a calmer room screen, Settings in categories; fold into the next round).**
 - [ ] C1. In a room on the laptop: the top left shows only the green dot (no room name, no "· N people"), and there is
   no line at the bottom (privacy, terms, version). ⚙️ → 🏠 Room shows the room's name and how many people are in.
 - [ ] C2. ⚙️ shows the categories on the left: Me · My screen · Room · Room rules · Film time · Sound & camera · About.
-  Click each one: nothing scrolls inside the window. On the phone (⋯ → ⚙️) the same order as chips at the top.
+  Click each one: nothing scrolls inside the window. On the phone (⋯ → ⚙️) the same order as chips at the top; Room
+  rules has two chips, Playback and In the room, and neither scrolls.
 - [ ] C3. ⚙️ → ℹ️ About shows the version and opens Help, Feedback, Privacy and Terms; ⚙️ → 👤 Me → 📲 Move opens the
   move window (the profile menu no longer has it).
 - [ ] C4. 🎙 Join voice goes straight to the microphone check (no "Before you join voice" IP window any more); ⚙️ → 🔊

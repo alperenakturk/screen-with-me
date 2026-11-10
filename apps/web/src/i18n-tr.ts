@@ -1094,6 +1094,8 @@ export const tr: Record<I18nKey, string> = {
   'settings.secRoom': 'Oda',
   'settings.secSound': 'Ses ve kamera',
   'settings.secAbout': 'Hakkında',
+  'settings.rulesPlay': 'Oynatma',
+  'settings.rulesRoom': 'Odada',
   'settings.me': 'Sadece seninle ilgili, bu tarayıcıda.',
   'settings.profile.d': 'Adın, resmin ve teman.',
   'settings.profile.btn': 'Profili aç',

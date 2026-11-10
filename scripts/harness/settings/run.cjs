@@ -5,7 +5,8 @@
 //     for screen readers); the join screen has no footer line, its links sit behind ⓘ;
 //   - ⚙️ opens Settings with the category list beside it, the same order everywhere (Me · My screen · Room · Room rules
 //     · Film time · Sound & camera · About); "⋯ More" items open at their own category;
-//   - every category fits without scrolling inside, no row title wraps over 2 lines (computer sizes);
+//   - every category fits without scrolling inside (Room rules in two groups, Playback / In the room), no row title
+//     wraps over 2 lines (computer sizes);
 //   - the moved items are there: Room shows the room's name and count, Me has "Move to another device", About shows
 //     the version and the privacy / terms links, Sound & camera has the "Who sees what" link to the privacy policy's
 //     voice section; the profile menu no longer has "Move to another device";
@@ -112,10 +113,16 @@ const SIZES = [
         await page.waitForTimeout(120);
         const m = await page.evaluate(MEASURE);
         check(m.sec === sec, `${where} ${sec}: the right category shows`, m.sec);
-        // Room rules (nine switches, the host's) is the one list a phone scrolls, as it did before SIMP1.
-        if (size === 'phone' && sec === 'rules') console.log(`note ${where} ${sec}: scrolls ${m.over} px on a phone (nine switches)`);
-        else check(m.over <= 1 && m.dialog.top >= 0 && m.dialog.bottom <= m.vh + 1, `${where} ${sec}: fits without scrolling inside`, { over: m.over, ...m.dialog, vh: m.vh });
+        check(m.over <= 1 && m.dialog.top >= 0 && m.dialog.bottom <= m.vh + 1, `${where} ${sec}: fits without scrolling inside`, { over: m.over, ...m.dialog, vh: m.vh });
         if (size === 'laptop' || size === 'desktop') check(m.worst <= 2, `${where} ${sec}: no row title wraps over 2 lines`, { lines: m.worst, title: m.worstText });
+        // Room rules in two groups (Planner's pick C): the other group fits too, and each shows only its own rows.
+        if (sec === 'rules') {
+          await page.click('.rules-groups [data-rules="room"]');
+          const r = await page.evaluate(MEASURE);
+          const rows = await page.evaluate(() => [...document.querySelectorAll('.rules-box .set-row')].filter((x) => x.getBoundingClientRect().height > 0).map((x) => x.dataset.group));
+          check(r.over <= 1 && rows.length === 5 && rows.every((g) => g === 'room'), `${where} rules → In the room: its five rows, no scrolling`, { over: r.over, rows });
+          await page.click('.rules-groups [data-rules="play"]');
+        }
       }
 
       // What moved in is there.
