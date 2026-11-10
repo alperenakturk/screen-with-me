@@ -976,6 +976,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `lab-server.mjs`, harness `scripts/harness/sea/run.cjs` (in CI's "Games quality"), the `games-sweep` entries `sea` /
   `seaPlay`. KEYREP (0.9.97.94): a held R turns the ship once (`event.repeat` ignored); its repeats sent a `place` each,
   ~30/s, past the server's per-connection message limit (QUOTA1a); the sea harness holds R for 40 repeats.
+  **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
+  object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
+  the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
+  `solved` / `out`; the word (`answer`) and all words only once the game is over. Rules and protocol in
+  `packages/shared/src/games/duel.ts` (`duelGuess` = the solo game's `guess` checks, `duelOutcome`: the first to solve
+  wins, both used up = draw; `practiceWord`); the word lists moved to `packages/shared/src/games/words/` (the server
+  unpacks them with `decodeWords`). Phases `wait` (both press Ready; a seated player picks EN / TR, which resets Ready)
+  → `play` → `over` ("Play again" = ready; both = the next game). The table's first game is the day's word (`daily` =
+  day number, `answerFor` on the server's UTC day), every next one a practice word (secure random, never the day's).
+  A guess after the game was decided gets `error over` (two winning guesses at once: the first processed wins).
+  `sit` only between games (a free or away seat). The page `games/duel.ts` + `duel.css` (lazy chunk, own `TEXT`,
+  reuses `five-frames.css`; `.ff.duel`, `data-table` = the table id): my tickets left, the other's marks right (watchers:
+  both); on a phone their marks are a strip (one column per guess); the alphabetical tray while playing; the keyboard
+  types only while the board has the focus. Lab commands `duel.answer`, `duel.win`, `duel.silent` (`lab` op `answer`,
+  local lab server only). Tests: unit `duel.test.ts`, e2e `duel.mjs` (no message carries the word or the other's
+  letters before the end, reconnect, a simultaneous finish, rematch = practice, a draw), `games-sweep` `duel` /
+  `duelPlay` (Sam joins as a socket), `games-pair` `duel` (reload, network drop; in CI).
   **Draw & Guess (0.9.72):** separate object `Draw` (`apps/server/src/draw.ts`, binding `DRAWS`, migration `v3`,
   `/api/draw/:id/ws`), protocol and pure rules in `packages/shared/src/games/draw.ts` (guess matching: lower case +
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer

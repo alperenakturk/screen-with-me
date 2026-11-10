@@ -459,6 +459,9 @@ with the same friend:
   nothing in their top rows ends in "…".
 - [ ] G10. The friend turns the phone's data off for 2 minutes during a Quiz: after about 1.5 min they show offline,
   20 s later the game goes back to the lobby; data back on brings them back.
+- [ ] G12. Five Frames Duel with a friend: open it from 🎮 "Together", both press Ready, race to the word. You see
+  their marks (✓ • ×) but never their letters; the first to find it wins, "Play again" brings a practice word. Try it on
+  your phone too: your board, their strip of marks and the letters all fit.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
