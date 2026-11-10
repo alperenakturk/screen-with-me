@@ -148,8 +148,10 @@ for (const [id, m] of Object.entries(SET)) {
 }
 
 // The home art (card 15c scene) with each mascot in Glowbeam's place, on the home page's night background.
-const scene = readFileSync(new URL('../home-15c/scene.svg', import.meta.url), 'utf8').replace(/<!--[\s\S]*?-->\s*/, '')
-  .replace(/<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '').replace(/<text /g, `<text font-family="'Segoe UI', Helvetica, Arial, sans-serif" `);
+// Only what sits inside the <svg> element (the file's leading comment and the outer tag are left out).
+const sceneFile = readFileSync(new URL('../home-15c/scene.svg', import.meta.url), 'utf8');
+const scene = sceneFile.slice(sceneFile.indexOf('>', sceneFile.indexOf('<svg')) + 1, sceneFile.lastIndexOf('</svg>'))
+  .replace(/<text /g, `<text font-family="'Segoe UI', Helvetica, Arial, sans-serif" `);
 for (const [id, m] of Object.entries(SET)) {
   const s = scene.replace(/id="hm-/g, `id="${id}-hm-`).replace(/url\(#hm-/g, `url(#${id}-hm-`).replace(/href="#hm-/g, `href="#${id}-hm-`);
   const inner = m.front().replaceAll('K-', `${id}m-`);
