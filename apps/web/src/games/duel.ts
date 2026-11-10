@@ -18,6 +18,7 @@ import { setGameLive } from './live.ts';
 import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { stubArt } from './stub.ts';
+import { grabKeys, keepKeys } from './word-keys.ts';
 import how1 from './art/tutorial/word-1-guess.svg?raw';
 import how2 from './art/tutorial/word-2-colours.svg?raw';
 import how3 from './art/tutorial/quiz-3-podium.svg?raw';
@@ -610,6 +611,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         state = m;
         sounds(prev, m);
         render();
+        // BUG6: the race starts (or I came back to a running one): the keyboard goes straight to the word.
+        if (m.phase === 'play' && prev?.phase !== 'play' && m.seat >= 0) grabKeys(board);
       } else if (m.t === 'reveal') {
         revealed = m.answer;
         render();
@@ -693,7 +696,9 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     { art: how2, title: tx('how2'), line: tx('how2Line') },
     { art: how3, title: tx('how3'), line: tx('how3Line') },
   ], bar);
+  const offKeys = keepKeys(box, board);
   return () => {
+    offKeys();
     offLab();
     how.destroy();
     clearTimeout(noteTimer);

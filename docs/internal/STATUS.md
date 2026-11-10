@@ -347,6 +347,16 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Edge Add-ons steps in `web-store.md`. Left for the owner: the hand tests below, the Microsoft Partner Center account.
 - [ ] After 1.0 (owner decides): Firefox extension (L), TURN relay (Phase 2). Not planned: Safari extension, Opera's
   own store.
+- [ ] **Lane W, game window bugs W1–W5** (owner's screenshots, 10 Nov 2026; branch `claude/game-window-head`):
+  - [x] Reproduce: 🎮 in the head opened the hall beside the hidden toolbar 🎮; "in the video's place" is a dead
+    disabled button over YouTube; the free window's drag was locked to the one strip beside a YouTube player.
+  - [x] Fix in `games/stage.ts` (owner's follow-up: no ⛶ in any game), Test Lab hooks, harness
+    `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
+  - [x] PR #386 (0.9.97.111) merged.
+  - [ ] 0.9.97.112 (owner's live test): side games right of the video when they fit
+    at their smallest size; the hall slides out of the free window; resize corner fix. Branch
+    `claude/game-window-right`, then PR, merge, deploy + live e2e + tag, report. Tables always in the video's place
+    (owner's decision) waits for card .113's layouts: stage.ts `STAGE_READY`.
 - [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
   categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
   line off the room screen, "Move to another device" in Settings → Me, IP notice removed (privacy policy + help
@@ -481,6 +491,24 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.112 (lane W: where games open, the hall from a free window, the resize corner; fold into the next round).**
+- [ ] P2. On the big screen open Snack Bar: it opens on the right over the chat, nothing of the video covered. On the
+  laptop (1366 wide) there is no room beside the video yet: it opens as its own window at the right edge, as before.
+- [ ] P3. Snack Bar as a free window, press its 🎮: the hall slides out of the window's left side. Close the side panel
+  (🎞) and try again: the hall still shows. Esc, a click elsewhere or picking a game closes it.
+- [ ] P4. Move the mouse over a free window's bottom-right corner without clicking: nothing moves. Drag the corner: it
+  only resizes.
+
+**0.9.97.111 (W1–W5, the game window’s head and free window; fold into the next round).**
+- [ ] W1. No game window has ⛶ any more (side games and tables): only the video's place and the free window. With the
+  video in fullscreen, a game opens as a free window inside it.
+- [ ] W2. A room with a video file (or none): the second placement button puts the game in the video's place. With a
+  YouTube video the two placement buttons are gone; hovering the window's bar says why.
+- [ ] W3. The 🎮 in any game window's head opens the games hall right under it (free window, video's place, the video's fullscreen).
+- [ ] W5. Drag a free window by its bar: it follows the mouse anywhere, also over a video file; over a YouTube video it
+  slides along the player's edge and never covers it. Resize from the corner, open another game and come back: each
+  game keeps its own spot and size, also after a reload. Double-click the bar: back to its first size and spot.
+
 **0.9.97.109 (LAB2, the Test Lab for the test round; fold into the next round).**
 - [ ] LAB1. Phone and computer: open the live site with `?debug=<your code>`: 🐞 shows; reload: it stays. 🐞 → "🧪
   Senaryolar": under the scenarios the "🧪 Test turu" list has a row for every test on the board; "Çalıştır" on
@@ -596,8 +624,8 @@ with the same friend:
 - [ ] G4. Last Heart to the end: "How to play" picture cards on the first open, the result card at the end.
 - [ ] G5. With a YouTube video playing (computer): a game opens beside or under the video, never on it; fullscreen
   tucks it away.
-- [ ] G6. Any game: shrink the window from its corner (it stops before the text gets small), grow it, then ⛶: the game
-  alone on the screen at a good size; Esc brings the window back.
+- [ ] G6. Any game: shrink the window from its corner (it stops before the text gets small), then grow it: the game
+  stays readable at every size.
 - [ ] G7. Your phone: a game takes the screen with the video as a small picture top left (a tap goes back to the
   video); every button is easy to hit.
 - [ ] G8. Alone against Glowbeam (medium chess or dama): he answers in about a second and doesn't give pieces away.
@@ -612,8 +640,8 @@ with the same friend:
   their marks (✓ • ×) but never their letters; the first to find it wins, "Play again" brings a practice word. Try it on
   your phone too: your board, their strip of marks and the letters all fit.
 - [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
-  time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
-  video's place" and ⛶ full screen now look different.
+  time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: the two
+  placement icons look different.
 - [ ] G14. Five Frames Duel extras: in the lobby pick "Best of three" and "Hard mode", play with a friend. The bar shows
   "Game 1 of 3" and the score; a guess that leaves out a letter you found is refused and names it. On your phone, Sea
   Battle: tap their sea once (it zooms into that corner), tap a cell to fire, "Whole sea" goes back.
@@ -624,6 +652,10 @@ with the same friend:
   lose a game (he cheers / looks sorry on the card), open Snack Bar (Stub at the till) and Window Garden's lamp. The
   games hall: each table has a drawn badge, the same as on its lobby card. With "reduce motion" on in your phone's
   settings, nothing slides.
+
+- [ ] G17. Word games and the keyboard (BUG6): open Five Frames and type at once, no click: the letters go into the
+  word. Click the chat box and type: the word stays as it is. Press Esc (or click the game): typing goes to the word
+  again. In the Duel, press Ready; when the race starts, type without a click. Try Turkish letters (ğ, ü, ş) too.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

@@ -33,6 +33,9 @@ async function person(ctx, room, extra = {}) {
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
     localStorage.setItem('snackBar:howSeen', '1');
+    // These checks were written for Snack Bar's free window; since 0.9.97.112 a 1366 laptop opens it in the video's
+    // place by default (no room beside the video), so the run picks the free window as a person would with the switch.
+    localStorage.setItem('gamePlace:snack', 'float');
     for (const [k, v] of Object.entries(more)) localStorage.setItem(k, v);
   }, extra);
   await page.goto(`${SITE}/r/${room}#back`);

@@ -14,6 +14,7 @@ import {
 } from '@swm/shared/games/five-frames';
 import { el } from '../dom.ts';
 import { lang as pageLang } from '../i18n.ts';
+import { grabKeys, keepKeys } from './word-keys.ts';
 import { playSound } from '../sound.ts';
 import { load, save } from '../storage.ts';
 import { RESTORE_EVENT, registerSideLab } from './lab-tools.ts';
@@ -414,6 +415,8 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     day = nowDay();
     answer = answerFor(day, list.answers, wordLang);
     draw();
+    // BUG6: the keyboard goes straight to the word.
+    grabKeys(board);
   }
 
   // A new day while the game is open (midnight), and a save from another tab.
@@ -475,7 +478,11 @@ export function mountFiveFrames(root: HTMLElement): () => void {
         },
       },
     ],
-    () => [['Five Frames', `day ${day}${dayShift ? ` (today ${dayShift > 0 ? '+' : ''}${dayShift})` : ''} · ${wordLang}`]],
+    () => [
+      ['Five Frames', `day ${day}${dayShift ? ` (today ${dayShift > 0 ? '+' : ''}${dayShift})` : ''} · ${wordLang}`],
+      // BUG6: where the letters go now (the word, or a text box such as the chat).
+      [{ en: 'Keyboard goes to', tr: 'Klavye nereye gidiyor' }, document.activeElement === board ? { en: 'the word', tr: 'kelimeye' } : { en: 'somewhere else (click the game)', tr: 'başka yere (oyuna tıkla)' }],
+    ],
   );
   const onRestore = () => {
     state = loadFrames(load(FRAMES_KEY));
@@ -483,7 +490,9 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   };
   addEventListener(RESTORE_EVENT, onRestore);
 
+  const offKeys = keepKeys(box, board);
   return () => {
+    offKeys();
     how.destroy();
     stopped = true;
     offLab();

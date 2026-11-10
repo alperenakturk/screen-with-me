@@ -15,7 +15,7 @@ mapping: `docs/internal/docs-sprawl.md` §2.2.
 Release notes go to `CHANGELOG.md`, never here as "since 0.9.x" narration.
 
 **Not yet here:** some facts lived only in the old `CLAUDE.md` "Live:" line (Last Heart / poker, `GameSocket`,
-`ghost.ts` / `GHOST_MS`, `room.css`, `i18n-tr.ts` / `loadLang`, the uptime cron, `zoomRange` / `.game-full`,
+`ghost.ts` / `GHOST_MS`, `room.css`, `i18n-tr.ts` / `loadLang`, the uptime cron, `zoomRange`,
 `STATS_SAVE_MS`, `FEED_MAX_ITEMS`, `SEEK_STEP`, `.yt-notices-shorts`, `resultCard` / `showPointsResult`, `tableHowTo`,
 `gameHint`, `overYoutube` / `clearOfChat`, `SIDE_TOP`, `markHit`, `tvOn`, `quiesce`, `aimAt`, `setGameLive`,
 `introOver` / `removedHere` / `swm-joined`, `sendBans` …; full list: `docs/internal/docs-sprawl.md` §1.3). Until they
@@ -922,6 +922,28 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `container-type: size`, `min(23cqw, 48cqh)`), the Classics shelf in one row, the lobbies full width. The window
   head's "in the video's place" icon (`place-stage`) is a frame filled by the game, distinct from ⛶. The Last Heart
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
+  **Game window head and free window (lane W, bugs W1–W5 + 0.9.97.112, owner 10 Nov 2026):** the head is (placement
+  switch) · 🎮 · ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own
+  slot (`.game-head-slot`: "?" How to play, Classics' shelf). No game has its own full screen (card GW's ⛶ and `.game-max`
+  were removed): the free window lives inside the video's fullscreen while there is one. **Where a game plays
+  (`placeOf`):** a table uses my pick or the catalog's free window; the owner's decision that the tables always play in
+  the video's place without a switch (over YouTube, `overYoutube` / YTG, beside the player) is the flag
+  `STAGE_READY` (it also sends a side game with no room beside the video to the video's place), off until card .113 makes their layouts read well there; a side game uses my pick (`gamePlace:<kind>`), else the free
+  window in its **home** (`homeBox`: the column right of the theater, under the top bar, over the side panel, as big as
+  the column allows up to `maxSize` and never below `minSize`; no fit there → the largest strip beside the video, else
+  null) when one exists, else (with `STAGE_READY`) the video's place, until then its own-size window at the right edge; tablets, phones and the video's fullscreen keep the catalog default.
+  `#game-stage[data-place]` mirrors the mode for the games' CSS. **The free window:** positioned in `posRoom` (the page,
+  or the fullscreen view; tablets clear of the chat), its size limited by `area` (the strip beside a YouTube player);
+  over YouTube `clearOfPlayer` settles it beside the player on the nearest side that fits, keeping its side while dragged
+  (`SIDE_STICK`). Once moved or resized, each game remembers its spot (`gameFloat:at:<kind>`; the older
+  `gameFloat:spot[:<kind>]` keys are ignored, so every game first opens in its home) and zoom (`gameFloat:zoom:<kind>`,
+  saved as it leaves its home). A drag follows the mouse once per frame; drag and resize live only while the button is
+  held (`buttons`, `lostpointercapture`, `pointercancel` end them), so hovering the corner never moves the window. A double
+  click on the head (or `gameWindow.reset`) forgets the spot. **🎮 in the head** (`hubFromHead`): the hall moves into a
+  fixed `.head-game-wrap` (inside `document.fullscreenElement` while there is one); from a free window it slides out of
+  the window's left side, level with its top (its right side when there is no room), elsewhere it hangs under the 🎮
+  (`data-side` on the wrap); a drag closes it. Test Lab: `gameWindow.reset`, `gameWindow.hall` and a 📊 status line
+  (placement, home, where the hall opened). Harness: `scripts/harness/game-window-head` (CI `games-more`).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code
@@ -1138,7 +1160,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   row, Turkish 11), ⌫ + gold Enter; EN / TR switch (`fiveFrames:lang`, each its own day and stats); the result line,
   "📋 Copy result" (`🍿 Five Frames #12 · 4/7`), "a new word in …". The physical keyboard types only while the board
   (`tabindex=0`) has the focus: its `keydown` stops letters / Enter / Backspace from reaching the room; otherwise
-  every key stays the room's. No tab lock (a save after each guess, other tabs follow by `storage`). **Card GP (0.9.97,
+  every key stays the room's. **BUG6 (owner: "the keyboard goes straight to the word"):** `games/word-keys.ts`
+  `grabKeys(board)` gives the board the focus when the word is ready (`start()`: open, the EN / TR switch, a new day)
+  and, in the Duel, when a race begins (phase → `play`, seated); never on a touch-only device (the tray is the
+  keyboard), never from a text box that has the focus (chat), never under open "How to play" cards (their
+  `htp-close` event grabs then). `keepKeys(box, board)`: a press anywhere on the game (not a text box) and Esc in a
+  text box outside the game give the keys back. Lab status "Keyboard goes to" (Five Frames); harness
+  `scripts/harness/word-focus/run.cjs` (games-more). No tab lock (a save after each guess, other tabs follow by `storage`). **Card GP (0.9.97,
   Design's `docs/internal/design/side-games-polish.md`):** cells were green / gold / grey until the IP audit
   (0.9.97.31, owner's "make it ours"): a solid gold frame ✓ / a dashed gold frame • / a faded ×, never a fill colour
   (`--ff-mark`), the cover's words CLOSE / STAGE / SCENE, typed cells outlined; a legend (`.ff-legend`) shares the result slot until the first guess is scored; after

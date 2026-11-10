@@ -31,7 +31,7 @@ const where = (page) =>
     const g = s.getBoundingClientRect();
     const overlap = g.left < t.right - 1 && t.left < g.right - 1 && g.top < t.bottom - 1 && t.top < g.bottom - 1;
     const onScreen = g.left >= -1 && g.top >= -1 && g.right <= innerWidth + 1 && g.bottom <= innerHeight + 1;
-    return { shown: true, overlap, onScreen, mode: ['float', 'stage', 'below', 'full'].find((m) => s.classList.contains(m)), game: [g.left, g.top, g.width, g.height].map(Math.round), player: [t.left, t.top, t.width, t.height].map(Math.round), stageBtn: document.querySelector('#game-stage .place-stage')?.disabled ?? null };
+    return { shown: true, overlap, onScreen, mode: ['float', 'stage', 'below', 'full'].find((m) => s.classList.contains(m)), game: [g.left, g.top, g.width, g.height].map(Math.round), player: [t.left, t.top, t.width, t.height].map(Math.round), switchGone: document.querySelector('#game-stage .game-place')?.hidden ?? null };
   });
 
 (async () => {
@@ -61,7 +61,8 @@ const where = (page) =>
       await wait(600);
       const now = await where(page);
       check(now.shown && !now.overlap && now.onScreen, `${label} ${kind}: the game window opens clear of the YouTube player, whole on screen`, now ?? w);
-      if (now.mode === 'float') check(now.stageBtn === true, `${label} ${kind}: "in the video's place" is not offered`, now);
+      // Bug W2: only the free window is possible over YouTube, so the placement switch is gone (it used to show disabled).
+      if (now.mode === 'float') check(now.switchGone === true, `${label} ${kind}: "in the video's place" is not offered`, now);
       // Pressing "in the video's place" anyway does nothing; a drag of the head onto the player can't bring it there.
       await page.evaluate(() => document.querySelector('#game-stage .place-stage')?.click());
       if (now.mode === 'float') {
@@ -89,20 +90,15 @@ const where = (page) =>
       check(!!left, `${label}: bringing the game up in fullscreen leaves fullscreen`);
       const back = await where(page);
       check(back.shown && !back.overlap, `${label}: … and the window is clear of the player again`, back);
-      // Card GW: the game's own fullscreen (⛶) still works over a YouTube room: the game alone on the screen, not tucked away.
-      await page.click('#game-stage .game-full');
-      const own = await until(() => page.evaluate(() => document.fullscreenElement?.id === 'game-stage' && !document.getElementById('game-stage').hidden));
-      check(!!own, `${label}: ⛶ puts the game itself on the whole screen (the YouTube room stays behind)`);
-      await page.click('#game-stage .game-full');
-      const out = await until(() => page.evaluate(() => !document.fullscreenElement && !document.getElementById('game-stage').hidden));
-      const clear = await where(page);
-      check(!!out && clear.shown && !clear.overlap, `${label}: leaving the game's fullscreen brings the window back clear of the player`, clear);
-      // A video that isn't YouTube (the sync test): "in the video's place" is offered again.
+      // W1 (owner): no game has its own full screen any more (no ⛶ in any head).
+      check(!(await page.$('#game-stage .game-full')), `${label}: no ⛶ in the game's head`);
+      // A video that isn't YouTube (the sync test): the video's place is possible again (offered by the switch; once card
+      // .113 turns STAGE_READY on, the table plays there).
       await page.evaluate(() => window.__swmLab.run('games.open.classics'));
       await page.fill('#media-input', `${SITE}/sample.mp4`);
       await page.evaluate(() => document.querySelector('#media-form button[value="load"]')?.click());
-      const free = await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail') && document.querySelector('#game-stage .place-stage')?.disabled === false));
-      check(!!free, `${label}: with a video that isn't YouTube "in the video's place" is offered again`);
+      const free = await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail') && (document.getElementById('game-stage').dataset.place === 'stage' || document.querySelector('#game-stage .game-place')?.hidden === false)));
+      check(!!free, `${label}: with a video that isn't YouTube the video's place is possible again (offered, or the table plays there)`);
     }
     check(!errors.length, `${label}: no page errors`, errors.slice(0, 2));
     await ctx.close();

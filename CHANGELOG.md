@@ -16,6 +16,27 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.112 — 10 Nov
+- Snack Bar, Window Garden and Five Frames open on the right, over the chat, and never cover the video, when they fit
+  there at a readable size (on a big screen); on a laptop they open as before. Their switch still moves them.
+- From a game in its own window, 🎮 slides the games hall out of the window's side, so it shows even with the side
+  panel closed.
+- Moving the mouse over a game window's resize corner no longer makes the window jump.
+
+### 0.9.97.111 — 10 Nov
+- The 🎮 in a game window's bar opens the games hall again, right under the button.
+- Games no longer have their own full-screen button: a game plays in the video's place or in its free window (also
+  inside the video's full screen), never blown up over the whole screen.
+- With a YouTube video in the room, a game can only sit beside the video (YouTube's rule), so the "in the video's place"
+  button that did nothing is gone; hovering the window's bar says why.
+- A game's free window can be dragged anywhere by its bar, also over a video file. Next to a YouTube video it slides
+  along the player's edge instead of getting stuck. Each game remembers its own spot and size, and a double click on
+  the bar puts it back.
+
+### 0.9.97.110 — 10 Nov
+- Five Frames and the Five Frames Duel take your keyboard as they open (and when a Duel race starts): just type the
+  word, no click first. Click the chat to write there; Esc or a click on the game brings your typing back to the word.
+
 ### 0.9.97.109 — 10 Nov
 - The Test Lab is ready for the big test round: a new "🧪 Test round" list has one button for each test on the
   owner's board. Each one sets the scene where it can (shows the themes or fonts one by one, brings in a pretend friend
