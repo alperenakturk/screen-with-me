@@ -11,7 +11,7 @@
 //   repeat.
 
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
-import { LANGS, MAX_TRIES, guess, type GuessError, type Lang, type Mark } from './five-frames.ts';
+import { LANGS, MAX_TRIES, WORD_LENGTH, guess, letters, score, type GuessError, type Lang, type Mark } from './five-frames.ts';
 
 export const DUEL_PROTOCOL_VERSION = 1;
 export const DUEL_ID_PATTERN = /^[A-Za-z0-9_-]{3,40}$/;
@@ -44,6 +44,40 @@ export function duelOutcome(boards: readonly DuelBoard[], answer: string, by: nu
   return null;
 }
 
+/**
+ * Hard mode (NG1, owner's pick 9.4): every letter found so far must be used again. A ✓ letter stays in its place; a •
+ * letter appears somewhere (as many times as the marks have shown it). Returns null when the guess keeps to that, or
+ * the first rule it breaks: the letter and, for a ✓, its place (0-based). Both normalized words.
+ */
+export function hardModeMiss(previous: readonly string[], answer: string, word: string): { letter: string; at?: number } | null {
+  const w = letters(word);
+  for (const before of previous) {
+    const marks = score(before, answer);
+    const b = letters(before);
+    // Right places first.
+    for (let i = 0; i < WORD_LENGTH; i++) if (marks[i] === 'hit' && w[i] !== b[i]) return { letter: b[i]!, at: i };
+    // Then every letter the guess showed as in the word, counted.
+    const need = new Map<string, number>();
+    b.forEach((c, i) => {
+      if (marks[i] !== 'miss') need.set(c, (need.get(c) ?? 0) + 1);
+    });
+    for (const [c, n] of need) if (w.filter((x) => x === c).length < n) return { letter: c };
+  }
+  return null;
+}
+
+/** Best of three (NG1, owner's pick 9.3): the match is over when someone has two wins, or after three games. */
+export const MATCH_GAMES = 3;
+export function matchOver(bestOf: 1 | 3, wins: readonly number[], games: number): boolean {
+  if (bestOf === 1) return games >= 1;
+  return Math.max(...wins) >= 2 || games >= MATCH_GAMES;
+}
+/** The match's winner (seat), or null for a tie. */
+export function matchWinner(wins: readonly number[]): number | null {
+  if (wins[0] === wins[1]) return null;
+  return wins[0]! > wins[1]! ? 0 : 1;
+}
+
 /** A practice word: any answer except `avoid` (the day's word), picked with `random` (the server's secure one). */
 export function practiceWord(answers: readonly string[], avoid: string, random: () => number): string {
   const pool = answers.length > 1 ? answers.filter((w) => w !== avoid) : answers;
@@ -58,6 +92,7 @@ export type DuelClientMessage =
   | { t: 'guess'; word: string }
   | { t: 'sit' }
   | { t: 'rematch' }
+  | { t: 'settings'; bestOf?: 1 | 3; hard?: boolean }
   | { t: 'lab'; op: 'answer' };
 
 export interface DuelPlayer {
@@ -96,10 +131,15 @@ export type DuelServerMessage =
       answer?: string;
       /** Games played at this table (a new one = new boards). */
       round: number;
+      /** NG1: one game or best of three, and hard mode (letters found must be used again). */
+      bestOf: 1 | 3;
+      hard: boolean;
+      /** The match so far: games played in it, wins per seat, whether it is over (and who won it, null = a tie). */
+      match: { games: number; wins: number[]; over: boolean; winner: number | null };
       watchers: { id: string; name: string; avatar?: Avatar }[];
     }
   /** My guess wasn't counted: why (`short` / `letters` / `unknown` / `repeat` / `done`). */
-  | { t: 'error'; code: string }
+  | { t: 'error'; code: string; letter?: string; at?: number }
   /** Test Lab, a local lab server only: the answer, to this tab. */
   | { t: 'reveal'; answer: string };
 
@@ -133,6 +173,12 @@ export function parseDuelMessage(raw: string): DuelClientMessage | null {
     case 'guess':
       // Five letters (Turkish ones are single code points once composed); the server normalizes and checks the rest.
       return typeof m.word === 'string' && m.word.length > 0 && m.word.length <= 20 ? { t: 'guess', word: m.word } : null;
+    case 'settings': {
+      const out: Extract<DuelClientMessage, { t: 'settings' }> = { t: 'settings' };
+      if (m.bestOf === 1 || m.bestOf === 3) out.bestOf = m.bestOf;
+      if (typeof m.hard === 'boolean') out.hard = m.hard;
+      return out.bestOf === undefined && out.hard === undefined ? null : out;
+    }
     case 'lab':
       return m.op === 'answer' ? { t: 'lab', op: 'answer' } : null;
     default:

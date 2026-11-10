@@ -99,10 +99,10 @@ The rule from `themes-2.md` point 3: landmarks only in the **right 45 %** (x ≥
 
 **Matching pieces:** the costume uses the same coral, and the theme swatch becomes `['#0c0809', '#ff5a7a']`.
 
-## Name ideas (for the owner, via the Planner)
-| Name | Why | TR |
-|---|---|---|
-| **Stub (recommended)** | What he is: the part of the ticket you keep. Short, friendly, one syllable, easy in both languages. | Stub |
-| Tiki | A soft, playful "ticket"; reads the same in Turkish | Tiki |
-| Admit | From "ADMIT ONE" on old tickets; a bit formal | Admit |
-| Matty | From "matinee"; warm, but less obvious | Matty |
+## Name
+**Stub** (the owner's pick, 10 Nov 2026): the same in English and Turkish. Every text that says "Glowbeam" changes to "Stub" when the mascot changes, for example:
+- "2 players · or vs Stub";
+- the Test Lab's "Stub reacts";
+- the referee comments.
+
+The other ideas were Tiki, Admit and Matty.

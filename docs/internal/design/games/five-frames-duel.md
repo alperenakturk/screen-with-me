@@ -38,9 +38,14 @@ the word, and "Play again".
 
 One message per guess (plus Ready / language), far under the per-connection limit (QUOTA1a, 20 a second).
 
-## Ideas for later (owner's pick)
+## NG1 (0.9.97.103, owner's picks)
 
-- A cover of its own in the games hall (it uses the solo Five Frames cover now).
-- Glowbeam as a second player (a bot that guesses from the marks, easy / medium).
-- A best-of-three match with a small scoreboard.
-- A "hard mode" (marks you got must be used in the next guess).
+- **Own cover** in the games hall: two ticket boards with a gold "VS" between them.
+- **Best of three** (lobby choice "Games: One game / Best of three"): game 1 is the day's word, games 2 and 3 practice
+  words; the match ends at two wins or after three games (a draw game counts as played, so 1–1 after three is a tied
+  match). The bar shows "Game 2 of 3 · Alex 1 – 0 Sam"; "Next game" between games; the result card names the match
+  winner once it is over. Settings change only between matches.
+- **Hard mode** (lobby choice, the same for both): every letter found so far must be used again; a ✓ stays in its
+  place, a • appears somewhere, counted (two • E's need two E's). A guess that breaks it is refused with the letter
+  (and place) and costs nothing, in English and Turkish. The tag and the result card say "Hard mode".
+- Not taken: Glowbeam as the second player.

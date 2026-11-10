@@ -93,6 +93,9 @@ html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
 .duel-face .duel-avatar { width: 28px; height: 28px; }
 .duel-lobby-lang { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .duel-lobby-label { font-size: 13px; font-weight: 700; color: var(--ff-muted); }
+.duel-lobby-settings { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+/* NG1: three settings rows are too tall for a sideways phone, so they flow side by side (two lines). */
+html.phone.sideways .duel-lobby-settings { flex-direction: row; flex-wrap: wrap; justify-content: center; column-gap: 18px; row-gap: 4px; }
 .duel-lobby-body { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .duel[data-phase='wait'] .duel-bar .ff-langs { display: none; }
 html.phone .duel-lobby .game-chip { min-height: 44px; }

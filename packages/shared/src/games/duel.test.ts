@@ -68,3 +68,45 @@ describe('Five Frames Duel messages', () => {
     expect(parseDuelMessage('{')).toBeNull();
   });
 });
+
+describe('Five Frames Duel: hard mode and best of three (NG1)', () => {
+  it('hard mode keeps ✓ letters in place and uses every • letter', async () => {
+    const { hardModeMiss } = await import('./duel.ts');
+    // CRANE vs SLATE: A and E are ✓ (places 2 and 4), nothing else.
+    expect(hardModeMiss(['slate'], 'crane', 'brick')).toEqual({ letter: 'a', at: 2 });
+    expect(hardModeMiss(['slate'], 'crane', 'shame')).toBeNull();
+    // CRANE vs NACRE: every letter is in the word but out of place (•): all five must come back.
+    expect(hardModeMiss(['nacre'], 'crane', 'brace')).toEqual({ letter: 'n' });
+    expect(hardModeMiss(['nacre'], 'crane', 'crane')).toBeNull();
+    // GEESE vs EERIE: E ✓ at places 1 and 4, a third E • : three E's, two of them in place.
+    expect(hardModeMiss(['geese'], 'eerie', 'eerie')).toBeNull();
+    expect(hardModeMiss(['geese'], 'eerie', 'eaten')).toEqual({ letter: 'e', at: 1 });
+    expect(hardModeMiss(['geese'], 'eerie', 'beige')).toEqual({ letter: 'e' });
+    expect(hardModeMiss([], 'crane', 'zzzzz')).toBeNull();
+  });
+
+  it('hard mode works with Turkish letters', async () => {
+    const { hardModeMiss } = await import('./duel.ts');
+    // KALEM vs KILIÇ: K ✓ at 0, L ✓ at 2.
+    expect(hardModeMiss(['kalem'], 'kılıç', 'kalın')).toBeNull();
+    expect(hardModeMiss(['kalem'], 'kılıç', 'kaşık')).toEqual({ letter: 'l', at: 2 });
+    expect(hardModeMiss(['kalem'], 'kılıç', 'sabun')).toEqual({ letter: 'k', at: 0 });
+  });
+
+  it('a best-of-three match ends at two wins or after three games', async () => {
+    const { matchOver, matchWinner } = await import('./duel.ts');
+    expect(matchOver(1, [1, 0], 1)).toBe(true);
+    expect(matchOver(3, [1, 0], 1)).toBe(false);
+    expect(matchOver(3, [1, 1], 2)).toBe(false);
+    expect(matchOver(3, [2, 0], 2)).toBe(true);
+    expect(matchOver(3, [1, 1], 3)).toBe(true);
+    expect(matchWinner([2, 1])).toBe(0);
+    expect(matchWinner([1, 1])).toBeNull();
+  });
+
+  it('copies the settings message', () => {
+    expect(parseDuelMessage(JSON.stringify({ t: 'settings', bestOf: 3, hard: true }))).toEqual({ t: 'settings', bestOf: 3, hard: true });
+    expect(parseDuelMessage(JSON.stringify({ t: 'settings', bestOf: 2 }))).toBeNull();
+    expect(parseDuelMessage(JSON.stringify({ t: 'settings', hard: 'yes' }))).toBeNull();
+  });
+});

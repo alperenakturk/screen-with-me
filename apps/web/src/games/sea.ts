@@ -81,7 +81,9 @@ const TEXT = {
     full: 'The table is full.',
     version: 'Reload the page for the new version.',
     reconnecting: 'Reconnecting…',
-    aimed: 'Aiming at {cell}: tap it again, or Fire',
+    aimed: 'Aiming at {cell}: tap a cell to fire, or Fire',
+    wholeSea: 'Whole sea',
+    wholeSeaTitle: 'Back to the whole sea',
     seeBoard: 'See the seas',
     fire: 'Fire at {cell}',
     how1: 'Place your fleet',
@@ -138,7 +140,9 @@ const TEXT = {
     full: 'Masa dolu.',
     version: 'Yeni sürüm için sayfayı yenile.',
     reconnecting: 'Yeniden bağlanıyor…',
-    aimed: 'Nişan {cell}: yine dokun ya da Ateş et',
+    aimed: 'Nişan {cell}: ateş için bir kareye dokun ya da Ateş et',
+    wholeSea: 'Bütün deniz',
+    wholeSeaTitle: 'Bütün denize dön',
     seeBoard: 'Denizlere bak',
     fire: '{cell} hedefine ateş',
     how1: 'Filonu yerleştir',
@@ -195,7 +199,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const tabMine = el('button', { type: 'button', role: 'tab', class: 'sea-tab', 'data-sea': 'mine' });
   switcher.append(tabTheirs, tabMine);
 
-  function seaBox(which: 'theirs' | 'mine'): { box: HTMLElement; head: HTMLElement; grid: HTMLElement; cells: HTMLButtonElement[] } {
+  function seaBox(which: 'theirs' | 'mine'): { box: HTMLElement; head: HTMLElement; grid: HTMLElement; frame: HTMLElement; cells: HTMLButtonElement[] } {
     const head = el('div', { class: 'sea-head' });
     const grid = el('div', { class: 'sea-grid', role: 'grid' });
     grid.style.setProperty('--n', String(size));
@@ -211,8 +215,10 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       }
       grid.append(row);
     }
-    const box = el('section', { class: `sea-sea sea-${which}`, 'data-sea': which }, head, grid);
-    return { box, head, grid, cells };
+    // NG1 (owner's pick 7B): on a phone the enemy sea zooms into a quarter; the frame clips the zoomed grid.
+    const frame = el('div', { class: 'sea-zoom' }, grid);
+    const box = el('section', { class: `sea-sea sea-${which}`, 'data-sea': which }, head, frame);
+    return { box, head, grid, frame, cells };
   }
   const theirs = seaBox('theirs');
   const mine = seaBox('mine');
@@ -301,20 +307,40 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
    * and a second tap on it, or the big Fire button, fires; a wrong tap costs nothing. A computer fires on one click.
    */
   let aimAt: number | null = null;
+  /**
+   * NG1 (owner's pick 7B): on a phone the first tap also zooms the enemy sea into the quarter of that cell (cells twice
+   * as big); a second tap on any free cell of the zoomed quarter fires there. "Whole sea" goes back; a shot does too.
+   */
+  let zoomQ: number | null = null;
+  const quarterOf = (cell: number) => (Math.floor(cell / size) >= size / 2 ? 2 : 0) + (cell % size >= size / 2 ? 1 : 0);
   function onTheirs(cell: number): void {
     if (!state || state.phase !== 'play' || state.turn !== mySeat()) return;
     if (state.seas[other()]!.shots.some(([c]) => c === cell)) return;
-    if (isPhoneLayout() && aimAt !== cell) {
-      aimAt = cell;
-      playSound('seaAim');
-      return render();
+    if (isPhoneLayout()) {
+      if (zoomQ === null || quarterOf(cell) !== zoomQ) {
+        zoomQ = quarterOf(cell);
+        aimAt = cell;
+        playSound('seaAim');
+        return render();
+      }
     }
     fire(cell);
   }
   function fire(cell: number): void {
     aimAt = null;
+    zoomQ = null;
     send({ t: 'shot', cell });
+    // The whole sea comes back at once, not when the server's answer arrives.
+    render();
   }
+  function unzoom(): void {
+    zoomQ = null;
+    aimAt = null;
+    render();
+  }
+  const wholeSea = el('button', { type: 'button', class: 'btn small-btn sea-whole', hidden: '' }, `↩ ${tx('wholeSea')}`) as HTMLButtonElement;
+  wholeSea.addEventListener('click', unzoom);
+  theirs.frame.append(wholeSea);
   mine.grid.addEventListener('click', (e) => {
     const cell = (e.target as HTMLElement).closest<HTMLElement>('.sea-cell');
     if (cell && !dragged) onMine(Number(cell.dataset.cell));
@@ -520,6 +546,13 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const me = mySeat();
     // An aim lasts only while it is still my turn and the cell still free.
     if (aimAt !== null && (s.phase !== 'play' || s.turn !== me || s.seas[other()]!.shots.some(([c]) => c === aimAt))) aimAt = null;
+    // The zoom (NG1) lasts as long as the aim does.
+    if (aimAt === null) zoomQ = null;
+    theirs.frame.classList.toggle('zoomed', zoomQ !== null);
+    theirs.frame.dataset.q = zoomQ === null ? '' : String(zoomQ);
+    wholeSea.hidden = zoomQ === null;
+    wholeSea.textContent = `↩ ${tx('wholeSea')}`;
+    wholeSea.title = tx('wholeSeaTitle');
     root.dataset.phase = s.phase;
     root.classList.toggle('watching', me < 0);
     // My sea is seat `me` (or seat 0 for a watcher); "theirs" is the other.
@@ -647,6 +680,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       quiet.command('sea', { en: 'Sea Battle', tr: 'Amiral Battı' }),
       { id: 'sea.bot', title: { en: 'Sea Battle: Glowbeam takes the other seat', tr: 'Amiral Battı: Glowbeam diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
       { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel lab sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
+      { id: 'sea.zoom', title: { en: 'Sea Battle: zoom into the next quarter (phone view)', tr: 'Amiral Battı: sonraki çeyreğe yakınlaş (telefon görünümü)' }, help: { en: 'Shows the phone zoom on any screen: each run aims at the middle of the next quarter of their sea; Whole sea goes back.', tr: 'Telefondaki yakınlaşmayı her ekranda gösterir: her çalıştırmada rakibin denizinin sonraki çeyreğinin ortasına nişan alır; Bütün deniz geri döner.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, during the battle', tr: 'Amiral Battı masasında, savaş sırasında' }, run: () => { const q = zoomQ === null ? 0 : (zoomQ + 1) % 4; const half = size / 2; zoomQ = q; aimAt = (Math.floor(q / 2) * half + Math.floor(half / 2)) * size + (q % 2) * half + Math.floor(half / 2); render(); } },
       { id: 'sea.reveal', title: { en: 'Sea Battle: show their fleet (this tab)', tr: 'Amiral Battı: rakibin filosunu göster (bu sekmede)' }, help: { en: 'Local lab server only: the other fleet shows faintly on their sea.', tr: 'Sadece yerel lab sunucusunda: rakibin filosu kendi denizinde silik görünür.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'reveal' }) },
     ],
   }));

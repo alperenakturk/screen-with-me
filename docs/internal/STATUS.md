@@ -388,6 +388,15 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.102 (NP1, the owner's night picks: themes, home colours, default font, camera window; fold into the next round).**
+- [ ] N1. 🎨 → Matinee by day: home, the room, settings and the games hall read well; the video's place stays black and
+  the empty room's words on it are light.
+- [ ] N2. The home page in a few themes (Ocean, Neon, Matinee): the slogan's second line, "Create room" and the step
+  numbers have the theme's colour; Night keeps the gold. A browser that had Ocean Liner now shows Night.
+- [ ] N3. A fresh browser shows the Sidelit font (Figtree text); ⚙️ → My screen → Font → "the device's font" still works.
+- [ ] N4. Two devices in voice with cameras on a computer: the camera window starts at the video's bottom left, just
+  above the player's own bar; drag it away, reload, it stays where you put it; double-click its bar, it goes back.
+
 **0.9.97.100 (FONT1, font setting; fold into the next round).**
 - [ ] F1. ⚙️ → My screen → Font: try each of the seven; the whole site changes at once, Turkish letters (ğ ş ı İ) look
   right, and the choice stays after a reload. "My device's font" looks like today.
@@ -487,6 +496,9 @@ with the same friend:
 - [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
   time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
   video's place" and ⛶ full screen now look different.
+- [ ] G14. Five Frames Duel extras: in the lobby pick "Best of three" and "Hard mode", play with a friend. The bar shows
+  "Game 1 of 3" and the score; a guess that leaves out a letter you found is refused and names it. On your phone, Sea
+  Battle: tap their sea once (it zooms into that corner), tap a cell to fire, "Whole sea" goes back.
 - [ ] G15. Snack Bar extras: your old Snack Bar is still there. Open "📋 Upgrades": this week's stand is on top (buy a
   level). Play a film to its end: the receipt has the manager's report. Open a new cinema: the counter's colours
   change. Buying a stand to level 10, 25 or 50 plays its own little sound.

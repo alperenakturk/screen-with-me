@@ -70,6 +70,81 @@ Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CL
 
 ## Ready
 
+## Owner's night picks (10 Nov 2026): cards
+The owner answered the overnight question page: mascot **C Stub**, themes **B**, home colours **A**, default font
+**A**, game window on a computer **A1**, camera window **C2**, Sea Battle phone zoom **B**, Snack Bar extras **1–4**,
+Duel extras **1, 3, 4**, games extras **2 + 4**. His note on the sideways "game mode" (option 3, not picked): "is it
+really needed?" Planner's answer: no. Since 0.9.97.101 every game already fills a sideways phone with nothing cut off,
+so no separate mode is built. Versions are assigned by the Planner.
+
+### NP1. Themes B, home colours from the theme, default font, camera window like Meet (lane A, 0.9.97.102)
+- Why: owner's picks 2B, 3A, 4A, 6C2 (`docs/internal/design/themes-2.md`, `fonts.md`, `layout-audit.md`).
+- Done when:
+  - **Themes (2B):** Ocean Liner is removed (a saved `theme` value falls back to Night, nothing breaks); **Matinee**
+    (the first light theme, tokens in `docs/internal/design/themes-2/ready/themes.css`) is added, with every hard-coded
+    white / dark spot themes-2.md lists checked; Drive-In, Night Express, Neon, Moonlit Nights, Arabian Nights, Sunset
+    and Picture Palace stay and get the token fixes from themes-2.md "Per theme" (Sunset's glow moved off "How it
+    works", Arabian Nights' Shorts card on `--surface`, scrims where listed). Graphite and Pine are **not** added.
+    Scene redraws and Neon's new look come in NP3 (they need Design's art). 10 themes.
+  - **Home colours (3A):** the home slogan accent and the main button take `--hm-accent` / `--hm-accent-fill` /
+    `--hm-accent-ink` from each theme's accent; the gold stays in the logo and is Night's accent.
+  - **Default font (4A):** `DEFAULT_FONT` = Bricolage Grotesque titles + Figtree text for everyone who has not picked
+    one; "Device font" stays a choice in ⚙️ → My screen.
+  - **Game window (5A1):** no change (it keeps opening on the right, over the chat).
+  - **Camera window (6C2):** a camera window starts at the video's bottom-left corner, like Meet, above the video's own
+    controls (never over YouTube's player controls: the RMF rule), on a computer and a tablet; phones unchanged.
+  - The contrast harness passes for all 10 themes at 1366 and 1920 (`ONLY=home` and the room); `privacy.html` untouched.
+- Tests: contrast harness (CI), a unit test for the dropped-theme fallback, the layout harness for the camera start
+  place, Test Lab hook to cycle themes. Owner's hand test: Matinee by day, the camera window with two devices.
+- Owner's pick: done (night picks).
+
+### NG1. Sea Battle zoom on a phone + Duel extras (Game Studio, 0.9.97.103)
+- Why: owner's picks 7B and 9: 1, 3, 4.
+- Done when:
+  - **Sea Battle (7B):** on a phone, a tap on the enemy sea zooms into the quarter you aim at; a second tap fires;
+    a way back to the whole sea is always visible.
+  - **Duel cover (9.1):** the Five Frames Duel has its own cover art in the games hall (drawn like the other tables'
+    covers in NG3; if NG3's style is not set yet, a cover that NG3 can restyle).
+  - **Best of three (9.3):** a choice in the Duel's lobby card: one game or best of three; the first game is the word
+    of the day, the next ones practice words; a score line between games.
+  - **Hard mode (9.4):** a lobby choice; letters found must be used in later guesses (EN + TR), the same rule for both
+    players, shown on the result card.
+  - Glowbeam / mascot as the second player (9.2) is **not** built.
+- Tests: Duel e2e for best of three + hard mode (`GameSocket`), unit tests for the hard-mode rule, the phone harness for
+  Sea Battle zoom, Test Lab scenarios for both.
+- Owner's pick: done.
+
+### NG2. Snack Bar extras (Game Studio, 0.9.97.104)
+- Why: owner's picks 8: 1, 2, 3, 4.
+- Done when: (1) each place (city, by the sea, planetarium …) has its own shop-front colours; (2) seasonal stands that
+  come and go with a badge for each; (3) a short manager's report after each film (what sold, what to buy next); (4) a
+  short sound per stand at its milestones (the shared sound settings and mute apply). Saved Snack Bar games carry over.
+- Tests: economy unit tests, the side-games harness at phone / computer sizes, Test Lab hooks for a season and a report.
+- Owner's pick: done.
+
+### NG3. Drawn covers and badges for every table + motion polish (Game Studio, after NG2)
+- Why: owner's picks 10: 2 and 4. Option 3 (a sideways "game mode") is not built: see the note above.
+- Done when: every table in the games hall has a drawn cover and badge in one style (the lobby card uses the same
+  badge); motion: windows slide open, pieces move instead of jumping, cards flip; every motion obeys
+  `prefers-reduced-motion`; no frame drops on a mid phone.
+- Tests: games harness screenshots, a reduced-motion check, the CSS / chunk budgets.
+- Owner's pick: done.
+
+### MASCOT3. Stub becomes the mascot (Design first, then lane A + Game Studio)
+- Why: owner's pick 1C (`docs/internal/design/mascot-2/`: Stub, the ticket). Glowbeam's art is replaced everywhere.
+- Done when:
+  - **Design:** the final Stub set: front, happy, small (favicon-size readable), home, the referee / opponent poses
+    the games use, and a costume for each scene theme (Moonlit Nights, Arabian Nights, Picture Palace, Drive-In, Night
+    Express) and Matinee; plus the scene redraw notes for NP3 (landmarks in the right 45 % and bottom 25 %) and a new
+    look for Neon (not magenta + cyan). The logo D1 does not change.
+  - **Lane A (NP3, version later):** Stub on the home page, in the room, on 404 / help pages and the extension's
+    "Start watching" card; scene redraws in `scripts/theme-art.mjs`; Neon's new look; contrast harness green.
+  - **Game Studio (with NG3 or right after):** the referee / opponent in the games uses Stub's art.
+  - The mascot's name in the UI: the Planner asks the owner (it is a product name).
+- Tests: the home + room screenshot harness in all themes, the games harness.
+- Owner's pick: done (the name is asked separately).
+
+
 ### CAM1. Phone cameras: black video, slow switch, mirrored rear camera (owner's real test, 4 Nov 2026; lane B2, first)
 - Why: owner + a friend on phones and a PC: (1) the friend's camera showed on the friend's phone but was black on the
   owner's phone and PC; (2) the phone camera UI is "very troublesome"; (3) switching to another lens (wide angle) took

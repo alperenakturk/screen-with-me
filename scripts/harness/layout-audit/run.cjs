@@ -237,7 +237,15 @@ function measure(selectors) {
       await wait(2500);
       await page.evaluate(() => document.querySelector('#voice-cam')?.click());
       await wait(3000);
-      await note('camera', ['.voice-cams.free .cam-tile', '.voice-cams.floating', '.cam-float', '.ph-cams', '.voice-cams']);
+      const cam = await note('camera', ['.voice-cams.free .cam-tile', '.voice-cams.floating', '.cam-float', '.ph-cams', '.voice-cams']);
+      // Card NP1 (owner's C2, like Meet): on a computer and a tablet the camera window starts at the video's bottom-left
+      // corner, clear of the player's own bar (≥ 48 px above the video's bottom edge).
+      if (!phone && cam?.found && cam.video) {
+        const b = cam.box;
+        const v = cam.video;
+        const ok = b.x - v.x >= 0 && b.x - v.x <= 40 && v.y + v.h - (b.y + b.h) >= 48 && v.y + v.h - (b.y + b.h) <= 120;
+        check(ok, `${device} · camera: starts at the video's bottom left, above its bar`, JSON.stringify({ box: b, video: v }));
+      }
     }
 
     if (STEPS.includes('stream')) {
