@@ -25,7 +25,9 @@ the laptop).
 ## One lobby look (Planner's pick 1)
 
 Every table that has a lobby opens with the same tinted card: Quiz (blue, ❓), Draw & Guess (amber, 🎨), Last Heart
-(pink, ♥) and the Five Frames Duel's waiting screen (gold, once the Duel is on main). Classics and Sea Battle have no
+(pink, ♥) and the Five Frames Duel's waiting screen (gold, ⚔️: the faces, the word language, Glowbeam's line and Ready
+in the card). On a sideways phone the Duel's race is two columns too (my tickets left; the bar, their marks, the
+letters right). Classics and Sea Battle have no
 lobby on purpose: the board is the first thing you see (owner, CL2); the side games have none either. On a sideways
 phone the lobbies are two columns (rules and faces left, settings and Start right). The Draw lobby's white paper no
 longer shows in the card's corners.

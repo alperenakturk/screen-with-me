@@ -68,3 +68,55 @@ html.phone .duel-mark { height: 9px; border-radius: 2px; font-size: 0; }
 html.phone .duel-mark.near { outline-width: 1.5px; outline-style: solid; outline-offset: -1.5px; }
 html.phone .duel.watching .duel-mini { flex-direction: column; }
 html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
+
+/* GPRO (one lobby look): while the table waits, the same tinted card as Quiz / Draw & Guess / Last Heart, in gold. */
+.duel-lobby {
+  --lobby-tint: #ffc65a;
+  flex: 0 1 auto; min-height: 0; box-sizing: border-box; width: min(100%, 560px); margin: auto; padding: 18px 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;
+  border-radius: 20px; border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, transparent);
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 14%, transparent), transparent 70%);
+}
+.duel-lobby[hidden] { display: none; }
+.duel-lobby h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; font-size: 22px; }
+.duel-lobby h3::before {
+  content: '⚔️'; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; font-size: 26px; rotate: -6deg;
+  background: color-mix(in srgb, var(--lobby-tint) 26%, var(--ff-panel)); box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 22%, transparent);
+}
+.duel-lobby-rules { max-width: 46ch; margin: 0; font-size: 14px; line-height: 1.4; color: var(--ff-muted); }
+.duel-lobby-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 2px 0; padding: 0; list-style: none; }
+.duel-face { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); font-size: 14px; }
+.duel-face.me { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--lobby-tint) 60%, transparent); }
+.duel-face.ready { color: var(--ff-gold); }
+.duel-face.duel-face-free { color: var(--ff-muted); }
+.duel-face-q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed rgba(255, 255, 255, 0.25); font-weight: 800; box-sizing: border-box; }
+.duel-face .duel-avatar { width: 28px; height: 28px; }
+.duel-lobby-lang { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.duel-lobby-label { font-size: 13px; font-weight: 700; color: var(--ff-muted); }
+.duel-lobby-body { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.duel[data-phase='wait'] .duel-bar .ff-langs { display: none; }
+html.phone .duel-lobby .game-chip { min-height: 44px; }
+/* A sideways phone: no badge, the rules in two lines. */
+html.phone.sideways .duel-lobby h3::before { display: none; }
+html.phone.sideways .duel-lobby { padding: 6px 12px; gap: 4px; }
+html.phone.sideways .duel-lobby-rules { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+/* GPRO: a sideways phone during a game: my tickets at the full height on the left; the bar, their marks, Glowbeam's
+   line, the buttons and the letters on the right. */
+html.phone.sideways #game-stage .ff.duel:not([data-phase='wait']) {
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-areas: 'board bar bar' 'board side ref' 'board actions actions' 'board tray tray'; gap: 4px 12px; padding: 6px 10px;
+}
+html.phone.sideways #game-stage .ff.duel:not([data-phase='wait']) .duel-main:not([hidden]) { display: contents; }
+html.phone.sideways #game-stage .ff.duel .duel-bar { grid-area: bar; }
+html.phone.sideways #game-stage .ff.duel .duel-board { grid-area: board; align-self: center; width: auto; gap: 2px; }
+html.phone.sideways #game-stage .ff.duel .duel-side { grid-area: side; width: auto; justify-content: flex-start; }
+html.phone.sideways #game-stage .ff.duel .duel-ref { grid-area: ref; justify-content: flex-start; text-align: left; }
+html.phone.sideways #game-stage .ff.duel .duel-actions { grid-area: actions; }
+html.phone.sideways #game-stage .ff.duel .ff-tray { grid-area: tray; align-self: end; }
+html.phone.sideways #game-stage .ff.duel .ff-row { height: 31px; }
+html.phone.sideways #game-stage .ff.duel .ff-cells { grid-template-columns: repeat(5, 29px); gap: 4px; padding: 1px 4px; }
+html.phone.sideways #game-stage .ff.duel .ff-cell { font-size: 18px; }
+html.phone.sideways #game-stage .ff.duel .duel-mini { padding: 2px 8px; }
+html.phone.sideways #game-stage .ff.duel .duel-mini-row { grid-template-columns: 7px; grid-auto-rows: 7px; }
+html.phone.sideways #game-stage .ff.duel .duel-mark { height: 7px; }
+html.phone.sideways #game-stage .ff.duel .ff-tray { gap: 3px; }

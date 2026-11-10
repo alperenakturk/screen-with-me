@@ -1001,7 +1001,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `sit` only between games (a free or away seat). The page `games/duel.ts` + `duel.css` (lazy chunk, own `TEXT`,
   reuses `five-frames.css`; `.ff.duel`, `data-table` = the table id): my tickets left, the other's marks right (watchers:
   both); on a phone their marks are a strip (one column per guess); the alphabetical tray while playing; the keyboard
-  types only while the board has the focus. Lab commands `duel.answer`, `duel.win`, `duel.silent` (`lab` op `answer`,
+  types only while the board has the focus. GPRO: while the table waits, a lobby card (`.duel-lobby`: title, rules,
+  faces, EN / TR chips; Glowbeam's line and Ready move into it) like the other tables' lobbies. Lab commands `duel.answer`, `duel.win`, `duel.silent` (`lab` op `answer`,
   local lab server only). Tests: unit `duel.test.ts`, e2e `duel.mjs` (no message carries the word or the other's
   letters before the end, reconnect, a simultaneous finish, rematch = practice, a draw), `games-sweep` `duel` /
   `duelPlay` (Sam joins as a socket), `games-pair` `duel` (reload, network drop; in CI).
