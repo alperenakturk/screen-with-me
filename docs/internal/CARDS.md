@@ -70,6 +70,36 @@ Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CL
 
 ## Ready
 
+### SIMP1. A calmer room screen: fewer things on it, a tidy Settings (owner, 10 Nov 2026; lane A, after LAB2)
+- Why: owner: "let's simplify the general design and take out things that aren't necessary, so they don't tire the
+  user's eyes." His examples, all moved, nothing a user needs is lost:
+  1. The room name and the people count at the top left go off the room screen (the name lives in Settings → Room, the
+     count in the people list / the faces strip that already shows who is here).
+  2. The footer line (privacy, terms, version …) leaves the room screen; it goes to Settings → About (privacy policy and
+     terms one click away in both languages, the version number there; the extension page / store copy that reads the
+     footer version is updated). The home page keeps a small privacy / terms link (KVKK / GDPR: the notice must stay easy
+     to reach before you use the site).
+  3. "Move to another device" leaves the profile popover and goes into Settings (few people use it).
+  4. Settings get categories (e.g. Me · My screen · Room · Sound & camera · About), each a short list, no scrolling where
+     it can be avoided (CLAUDE.md "No scrolling inside a view"), the same order on a computer and a phone.
+  5. (owner, same day) **The voice / stream IP notice goes**: no dialog before joining voice, starting or watching a stream,
+     and no "🔒 Those in voice can see your IP · Why?" line under the voice row ("nobody uses it; put it officially where it
+     has to be, no warnings"). The fact stays where the law needs it: `privacy.html` #voice already says it in both
+     languages (check the wording still matches: others in voice / a stream can see your public IP); Settings → Sound &
+     camera gets a quiet "Who sees what (privacy)" link to that section. `ui/ip-notice.ts` and its `opt:ipNotice:*` keys
+     go (old keys are harmless); the Planner updates CLAUDE.md's "fails closed (the IP notice)" line after it ships.
+  6. (owner, same day) The room's **join screen** (name / avatar before entering) loses its privacy / terms footer
+     line too; the links live in a small ⓘ / ⚙️ on that screen (an invited person never sees the home page, so the notice
+     must stay one tap away there) and in Settings → About.
+- Done when: the room screen shows only what you need while watching; every moved item is reachable in ≤ 2 clicks from
+  Settings; nothing is removed from the product; EN + TR texts; `store/src/room.html` copy updated; the screenshot /
+  layout harnesses at phone, tablet, laptop and desktop sizes are updated; the Test Lab steps that named the old places
+  are updated; a hand test on the board.
+- Tests: layout + settings harnesses, help / privacy harness (links still reachable in both languages), unit tests where
+  logic moves.
+- Owner's pick: done (his request). Anything else the developer wants to remove goes to the Planner as a question first.
+
+
 ### LAB2. The Test Lab ready for the owner's test round (owner, 10 Nov 2026; lane A 0.9.97.107, Game Studio 0.9.97.108)
 - Why: the owner starts his 0.9.98 test round now (his pick) and will run it **through the Test Lab**: "make the debug
   part really solid, fix what is broken there; nothing may fail in the part we test with". Afterwards the Planner gives
