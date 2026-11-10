@@ -117,6 +117,14 @@ async function dragHead(page, dx, dy, steps = 12) {
   await wait(200);
   return path;
 }
+/** 0.9.97.117: a side game's home lines up with the side panel (its right edge and top) and stops above the message box. */
+const panelFit = (page) =>
+  page.evaluate(() => {
+    const w = document.getElementById('game-stage').getBoundingClientRect();
+    const p = document.querySelector('.room .side').getBoundingClientRect();
+    const f = document.getElementById('chat-form').getBoundingClientRect();
+    return { right: Math.abs(w.right - p.right) <= 2, top: Math.abs(w.top - p.top) <= 2, aboveInput: w.bottom <= f.top + 1, gap: Math.round(f.top - w.bottom) };
+  });
 const dblHead = (page) => page.evaluate(() => document.querySelector('#game-stage .game-stage-title').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
 const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <= d && Math.abs(a.w - b.w) <= d && Math.abs(a.h - b.h) <= d;
 
@@ -133,7 +141,8 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const first = await box(page);
     // 0.9.97.114 (owner): side games only ever play in the free window, in the right column. SIDE340 (0.9.97.115): they
     // read well down to 320 px, so the column right of the video (about 354 px here) holds them: never over the video.
-    check(first.mode === 'float' && !first.overVideo && first.w >= 320 && first.x + first.w >= 1366 - 10, `${L} 115: Snack Bar opens in the narrow column right of the video, never over it`, first);
+    const fit1 = await panelFit(page);
+    check(first.mode === 'float' && !first.overVideo && first.w >= 300 && fit1.right && fit1.top && fit1.aboveInput && fit1.gap <= 8, `${L} 117: Snack Bar's window lines up with the side panel down to just above the message box, never over the video`, { first, fit1 });
     check(await page.evaluate(() => document.querySelector('#game-stage .game-place').hidden), `${L} 114: a side game has no placement switch`);
     check(!(await page.$('#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
     await page.keyboard.press('Escape');
@@ -218,7 +227,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await dblHead(page);
     await wait(300);
     const home = await box(page);
-    check(home.mode === 'float' && !home.overVideo && Math.abs(home.w - first.w) <= 2 && home.x + home.w >= 1366 - 10, `${L} W5: a double click on the head puts it back in its home beside the video`, home);
+    // (The side panel may have grown since the first open: a video now plays. The home follows it.)
+    const fitHome = await panelFit(page);
+    check(home.mode === 'float' && !home.overVideo && fitHome.right && fitHome.top && fitHome.aboveInput && fitHome.gap <= 8, `${L} W5: a double click on the head puts it back in its home beside the video`, { home, fitHome });
     // The lab's reset does the same.
     await dragHead(page, -300, 0, 4);
     await page.evaluate(() => window.__swmLab.run('gameWindow.reset'));
@@ -295,7 +306,8 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       const switchShown = await page.evaluate(() => !document.querySelector('#game-stage .game-place').hidden);
       if (minW[kind]) {
         const fits = room >= minW[kind];
-        check(b.mode === 'float' && b.onScreen && b.x + b.w >= viewport.width - 12 && b.w >= minW[kind] && (fits ? !b.overPlayer : b.w - room <= 60), `${L} ${kind}: opens as its window at the right${fits ? ', never over the video' : ', over the video by at most the missing width'}`, { b, room });
+        const pf = await panelFit(page);
+        check(b.mode === 'float' && b.onScreen && !b.overVideo && pf.right && pf.top && pf.aboveInput && pf.gap <= 8, `${L} ${kind}: opens over the side panel, lined up with it down to just above the message box, never over the video`, { b, room, pf });
         check(!switchShown, `${L} ${kind}: a side game has no placement switch`);
       } else {
         // Until card .113 turns stage.ts STAGE_READY on, a table keeps its free window and the switch; then it plays

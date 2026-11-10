@@ -458,6 +458,19 @@ export function createGameStage(opts: StageOptions) {
     const fits = (b: Box) => Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h);
     let col: Box | null = { left: video.right, top: bar, width: page.left + page.width - video.right, height: page.top + page.height - bar };
     const { low, high } = zoomRange(kind);
+    // Game Studio's review (0.9.97.117): the home lines up with the side panel: from its top down to just above the chat's
+    // message box, at least the game's smallest width (right-aligned to the panel, out over the video's edge when the
+    // panel is narrower), so no sliver of chat shows around it and the message box stays free. The game is fitted in it.
+    const panel = document.querySelector<HTMLElement>('.room .side')?.getBoundingClientRect();
+    const form = document.getElementById('chat-form')?.getBoundingClientRect();
+    if (!overYoutube() && panel && form && panel.width > 1 && form.height > 1 && panel.left >= video.right - 1) {
+      const { minSize, maxSize } = sizeOf(kind);
+      const width = Math.round(Math.min(maxSize[0], Math.max(minSize[0], panel.width)));
+      const height = Math.round(form.top - EDGE / 2 - panel.top);
+      // Never over the picture itself (the video box); the theater card's own padding may be covered.
+      const left = Math.max(page.left + EDGE, wrap.getBoundingClientRect().right + EDGE / 2, panel.right - width);
+      if (height >= minSize[1]) return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
+    }
     // Over YouTube nothing may cover the player: the window shrinks to the column (or the largest strip beside it).
     // Elsewhere (0.9.97.114, owner) a side game keeps at least its smallest readable size in the right column, sticking
     // out over the video's right edge when the column is narrower than that (a 1366 laptop: ≈ 46 px).
