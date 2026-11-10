@@ -129,9 +129,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => localStorage.setItem('gameFloat:spot:snack', JSON.stringify({ x: 0, y: 0 })));
     await openGame(page, 'snack');
     const first = await box(page);
-    // The column right of the video is narrower than Snack Bar's smallest readable size here: not its home. Until card
-    // .113 (stage.ts STAGE_READY) it opens as its own-size window at the right edge, then in the video's place.
-    check((first.mode === 'stage' && first.inVideo) || (first.mode === 'float' && first.w === 400 && first.x + first.w >= 1366 - 10), `${L} 112: Snack Bar doesn't fit right of the video at its smallest size: its own window at the right edge (or the video's place)`, first);
+    // SIDE340 (0.9.97.114): Snack Bar reads well down to 340 px, so the column right of the video (about 354 px here) is
+    // its home: it opens there, never over the video.
+    check(first.mode === 'float' && !first.overVideo && first.w >= 340 && first.x + first.w >= 1366 - 10, `${L} 112: Snack Bar opens in the narrow column right of the video, never over it`, first);
     if (first.mode === 'stage') {
       await page.click('#game-stage .place-float');
       await wait(300);
@@ -224,7 +224,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await dblHead(page);
     await wait(300);
     const home = await box(page);
-    check(home.mode === 'float' && home.w === 400 && home.x + home.w >= 1366 - 10, `${L} W5: a double click on the head puts it back (own size, right edge: no room beside the video here)`, home);
+    check(home.mode === 'float' && !home.overVideo && Math.abs(home.w - first.w) <= 2 && home.x + home.w >= 1366 - 10, `${L} W5: a double click on the head puts it back in its home beside the video`, home);
     // The lab's reset does the same.
     await dragHead(page, -300, 0, 4);
     await page.evaluate(() => window.__swmLab.run('gameWindow.reset'));
@@ -292,7 +292,8 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const { ctx, page, errors } = await room(browser, viewport);
     // Owner (0.9.97.112): side games open right of the video when they fit there at their smallest readable size
     // (catalog minSize), else in the video's place; the tables always play in the video's place, with no switch.
-    const minW = { snack: 400, garden: 400, word: 400 };
+    // SIDE340 (0.9.97.114): the side games read well down to 340 px wide (catalog minSize).
+    const minW = { snack: 340, garden: 340, word: 340 };
     for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz', 'draw', 'poker', 'duel']) {
       await openGame(page, kind);
       const b = await box(page);

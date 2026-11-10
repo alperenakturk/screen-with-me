@@ -151,3 +151,21 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-cell { font-size: 22px; }
   #game-stage .ff:not(.duel) .ff-key { min-height: 48px; font-size: 18px; }
 }
+/* SIDE340 (0.9.97.114): the free window in the narrow column beside the video (about 340 × 510): slimmer tickets and
+   keys, so the game stays at its own size (13 px text) instead of being scaled down. */
+@container game (max-height: 540px) and (max-aspect-ratio: 1 / 1) {
+  #game-stage .ff:not(.duel) { gap: 4px; padding-block: 7px; }
+  /* The window's head already says "Five Frames". */
+  #game-stage .ff:not(.duel) .ff-title { display: none; }
+  #game-stage .ff:not(.duel) .ff-board { gap: 3px; }
+  #game-stage .ff:not(.duel) .ff-row { height: 33px; }
+  #game-stage .ff:not(.duel) .ff-cells { grid-template-columns: repeat(5, 30px); }
+  #game-stage .ff:not(.duel) .ff-cell { font-size: 18px; }
+  #game-stage .ff:not(.duel) .ff-key { min-height: 32px; }
+  #game-stage .ff:not(.duel) .ff-legend { gap: 2px 8px; flex-wrap: wrap; white-space: normal; }
+  #game-stage .ff:not(.duel) .ff-legend-item { white-space: nowrap; }
+  #game-stage .ff:not(.duel) .ff-tray { gap: 3px 2px; }
+  #game-stage .ff:not(.duel) .ff-key.enter, #game-stage .ff:not(.duel) .ff-key.back { font-size: 14px; }
+  #game-stage .ff:not(.duel) .ff-legend-item { gap: 3px; }
+  #game-stage .ff:not(.duel) .ff-cell.ff-swatch { width: 18px; height: 18px; }
+}

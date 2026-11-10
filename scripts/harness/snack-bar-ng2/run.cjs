@@ -101,7 +101,10 @@ const weekNow = () => Math.floor((Math.floor(Date.now() / 86_400_000) + 3) / 7);
     window.__sounds = [];
     addEventListener('swm-sound', (e) => window.__sounds.push(e.detail));
   });
-  await page.click('#game-stage .sb-row[data-stand="popcorn"] .sb-price');
+  // SIDE340 (0.9.97.114): on this laptop the window is the narrow column beside the video, where the popcorn row (the
+  // oldest) is out of sight: a real click on the window's title gives the activation, then the row's button is pressed.
+  await page.click('#game-stage .game-stage-title');
+  await page.evaluate(() => document.querySelector('#game-stage .sb-row[data-stand="popcorn"] .sb-price').click());
   await wait(600);
   const sounds = await page.evaluate(() => window.__sounds);
   check((await saved(page)).levels.popcorn === 50 && sounds.includes('snackPop'), "popcorn's level-50 milestone plays the popcorn's own sound", JSON.stringify(sounds));

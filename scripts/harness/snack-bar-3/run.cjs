@@ -34,8 +34,8 @@ async function person(ctx, room, extra = {}) {
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
     localStorage.setItem('snackBar:howSeen', '1');
-    // These checks were written for Snack Bar's free window; since 0.9.97.112 a 1366 laptop opens it in the video's
-    // place by default (no room beside the video), so the run picks the free window as a person would with the switch.
+    // These checks are for Snack Bar's free window (since 0.9.97.114 a 1366 laptop opens it there by itself, in the
+    // narrow column beside the video); the pick stays so the run never depends on the column's width.
     localStorage.setItem('gamePlace:snack', 'float');
     for (const [k, v] of Object.entries(more)) localStorage.setItem(k, v);
   }, extra);
@@ -86,7 +86,10 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   }, 8000);
   check(!!migrated && migrated.levels.popcorn === 12 && migrated.levels.soda === 3 && migrated.coins >= 50_000 && migrated.stars === 5 && migrated.decor[0] === 'marquee', 'the version 1 save is migrated: levels, coins, decorations kept, 2 stars → 5', JSON.stringify(migrated && { v: migrated.v, levels: migrated.levels, coins: migrated.coins, stars: migrated.stars }));
   // Soda has levels, so nachos is open too; candy is the next locked one; the hot dog grill is out of sight.
-  check(JSON.stringify(await shownRows(page)) === JSON.stringify(['popcorn', 'soda', 'nachos', 'candy']), 'rows: the open stands and the next locked one', JSON.stringify(await shownRows(page)));
+  // SIDE340: in the narrow column beside the video (1366 laptop) three rows fit: the newest ones.
+  const narrowFirst = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
+  const wantRows = narrowFirst ? ['soda', 'nachos', 'candy'] : ['popcorn', 'soda', 'nachos', 'candy'];
+  check(JSON.stringify(await shownRows(page)) === JSON.stringify(wantRows), 'rows: the open stands and the next locked one', JSON.stringify(await shownRows(page)));
 
   // Buy ×10 and Max.
   await mode(page, 10);
@@ -158,7 +161,10 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   await lab(page, 'snackBar.levels');
   await wait(1200);
   const rowsAll = await shownRows(page);
-  check(rowsAll.length >= 4 && rowsAll.includes('arcade'), 'with eight stands the newest ones show (at least four rows in the default window)', JSON.stringify(rowsAll));
+  // SIDE340 (0.9.97.114): on a 1366 laptop the default window is the narrow column beside the video (about 354 px):
+  // three rows there, four in a window of the game's own size.
+  const narrowWindow = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
+  check(rowsAll.length >= (narrowWindow ? 3 : 4) && rowsAll.includes('arcade'), `with eight stands the newest ones show (at least ${narrowWindow ? 'three' : 'four'} rows in the default window)`, JSON.stringify(rowsAll));
   check((await fits(page)).length === 0, 'eight stands fit without scrollbars (laptop)', (await fits(page)).join('; '));
   const scene = await page.evaluate(() => {
     const art = document.querySelector('#game-stage .sb-scene-art');
