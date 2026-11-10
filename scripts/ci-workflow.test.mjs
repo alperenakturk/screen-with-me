@@ -31,12 +31,12 @@ const all = jobs(readFileSync(FILE, 'utf8'));
 const cond = (job) => (all[job]?.if ?? '').replace(/^\$\{\{\s*|\s*\}\}$/g, '');
 
 test('the jobs are found', () => {
-  for (const name of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'lab-sweep', 'test', 'deploy', 'tag']) assert.ok(all[name], name);
+  for (const name of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'lab-sweep', 'test', 'deploy', 'tag']) assert.ok(all[name], name);
 });
 
 test('the summary job `test` always reports and waits for every test job', () => {
   assert.match(cond('test'), /\balways\(\)/);
-  for (const job of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'lab-sweep']) assert.match(all.test.needs, new RegExp(`\\b${job}\\b`));
+  for (const job of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'lab-sweep']) assert.match(all.test.needs, new RegExp(`\\b${job}\\b`));
 });
 
 test('deploy runs despite skipped test jobs, but only after the tests passed, never in a cancelled run', () => {

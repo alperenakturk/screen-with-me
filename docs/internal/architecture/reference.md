@@ -1836,7 +1836,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Setup is not the cost: `.github/actions/prepare` takes ≈ 0:30 a job (`npm ci` 3 s with npm's cache, the build 1 s,
   the local server 2 s, Playwright with its cached browser and system libraries ≈ 14 s), so caching `node_modules` or
   the apt libraries would save seconds, not minutes. QA1 changed what runs where: the theme contrast check is its own
-  `contrast` job, and the PR's local e2e runs three files at a time (`SWM_E2E_PARALLEL=3`, only with
+  `contrast` job, `game-proportions` (6.5 min, which had made `games-more` 12.5) is the `game-windows` job, and the PR's local e2e runs three files at a time (`SWM_E2E_PARALLEL=3`, only with
   `SWM_E2E_UNPACED` on localhost; the files in `run.mjs` `SOLO` that count per address or for the whole server run alone
   after the others; each file's output prints in one piece with its time). The live e2e stays one file at a time:
   its pacing is per address, so sharding it needs separate runners (a later step, inside the deploy's concurrency

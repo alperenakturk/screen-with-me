@@ -315,14 +315,34 @@ jobs:
           node scripts/harness/motion/run.cjs http://localhost:8787
           # BUG6: a word game (Five Frames, the Duel) takes the keyboard as it opens; the chat keeps its own keys.
           node scripts/harness/word-focus/run.cjs http://localhost:8787
-          # Card PROP: every game well proportioned in the video's place and the free window (laptop, desktop, tablet).
-          SIZES=laptop,desktop,tablet node scripts/harness/game-proportions/run.cjs http://localhost:8787
 
       # Card LAB2: every 🎮 Test Lab command runs (a computer in English, a phone in Turkish), the 🤖 friend at a table.
       - name: "Test Lab games: every command, the table friend"
         run: |
           ONLY=laptop-en,phone-tr node scripts/harness/lab-games-all/run.cjs http://localhost:8787
           node scripts/harness/lab-table-friend/run.cjs http://localhost:8787
+
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 150 wrangler.log || true
+
+  # Card QA1: the game windows' own job (game-proportions alone took 6.5 of games-more's 12.5 min).
+  game-windows:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
+          playwright: 'true'
+
+      # Card PROP: every game well proportioned in the video's place and the free window (laptop, desktop, tablet).
+      - name: Game proportions
+        run: SIZES=laptop,desktop,tablet node scripts/harness/game-proportions/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()
@@ -379,7 +399,7 @@ jobs:
   # main, no site change); red when one failed or was cancelled, or the change detection itself failed. `always()`, so
   # a failed job can never make this one "skipped" (which a required check would count as success).
   test:
-    needs: [changes, checks, e2e, site, contrast, games, games-more, lab-sweep]
+    needs: [changes, checks, e2e, site, contrast, games, games-more, game-windows, lab-sweep]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -387,9 +407,9 @@ jobs:
       - name: All test jobs passed
         env:
           CHANGES: ${{ needs.changes.result }}
-          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.lab-sweep.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.game-windows.result }} ${{ needs.lab-sweep.result }}
         run: |
-          echo "changes: $CHANGES · checks, e2e, site, contrast, games, games-more, lab-sweep: $RESULTS"
+          echo "changes: $CHANGES · checks, e2e, site, contrast, games, games-more, game-windows, lab-sweep: $RESULTS"
           [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
           for r in $RESULTS; do
             case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
