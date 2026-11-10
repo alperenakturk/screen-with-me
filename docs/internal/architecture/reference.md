@@ -501,6 +501,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   still in the room without voice). Voice-join sounds skip people who come back within 30 s. The film page (ExtVoice)
   still rebuilds. Tests: e2e `handover.mjs`, `voice/run.mjs` (the same camera track survives ⟳).
   Since QUOTA1a "last message" means the later of `seen` and the runtime's last free-keepalive answer (`heardAt`, below).
+- **Durable Objects and their migrations** (`apps/server/wrangler.jsonc`; all SQLite-backed, a new class = a new
+  migration tag, never an edited one): `v1` `Room` (`ROOMS`), `v2` `Game` (`GAMES`), `v3` `Draw` (`DRAWS`), `v4` `Quiz`
+  (`QUIZZES`), `v5` `TvLink` (`TVLINKS`), `v6` `Poker` (`POKERS`), `v7` `FeedbackGate` (`FEEDBACK`), `v8` `MoveLink`
+  (`MOVELINKS`), `v9` `YoutubeUsage` (`USAGE`), `v10` `IpKeys` (`IPKEYS`), `v11` `UploadGate` (`UPLOADS`), `v12` `Sea`
+  (`FLEETS`), `v13` `FallbackGate` (`FBGATE`), `v14` `Duel` (`DUELS`, Five Frames Duel, 0.9.97.99).
 - **Free plan quota guards (card QUOTA1a, 0.9.97.93; `docs/internal/OPTIMIZATION.md`, `docs/internal/security-review-cf.md`
   CF-1 / CF-3 / CF-5):** every message that reaches a Durable Object is billed, an awake object is billed by the second,
   and on Free a used-up quota stops every object until 00:00 UTC (a full storage until rooms expire).
