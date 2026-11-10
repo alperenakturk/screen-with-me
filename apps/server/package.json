@@ -13,6 +13,6 @@
     "@swm/shared": "*"
   },
   "devDependencies": {
-    "wrangler": "^4.157.0"
+    "wrangler": "^4.158.0"
   }
 }
