@@ -31,12 +31,12 @@ const all = jobs(readFileSync(FILE, 'utf8'));
 const cond = (job) => (all[job]?.if ?? '').replace(/^\$\{\{\s*|\s*\}\}$/g, '');
 
 test('the jobs are found', () => {
-  for (const name of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'lab-sweep', 'test', 'deploy', 'tag']) assert.ok(all[name], name);
+  for (const name of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'state-matrix', 'lab-sweep', 'test', 'deploy', 'live-e2e', 'tag']) assert.ok(all[name], name);
 });
 
 test('the summary job `test` always reports and waits for every test job', () => {
   assert.match(cond('test'), /\balways\(\)/);
-  for (const job of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'lab-sweep']) assert.match(all.test.needs, new RegExp(`\\b${job}\\b`));
+  for (const job of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'state-matrix', 'lab-sweep']) assert.match(all.test.needs, new RegExp(`\\b${job}\\b`));
 });
 
 test('deploy runs despite skipped test jobs, but only after the tests passed, never in a cancelled run', () => {
@@ -52,7 +52,19 @@ test('tag runs only after a live deploy, never in a cancelled run', () => {
   const c = cond('tag');
   assert.match(c, /!cancelled\(\)/);
   assert.match(c, /needs\.deploy\.result == 'success'/);
-  assert.match(c, /needs\.deploy\.outputs\.live == 'true'/);
+  assert.match(c, /needs\.deploy\.outputs\.deployed == 'true'/);
+  assert.match(c, /needs\.live-e2e\.result == 'success'/, 'QA1 part 1b: only after every live e2e shard passed');
+});
+
+test('the live e2e runs in shards on separate runners, only after a deploy, never skipping a shard on a failure', () => {
+  const c = cond('live-e2e');
+  assert.match(c, /!cancelled\(\)/);
+  assert.match(c, /needs\.deploy\.outputs\.deployed == 'true'/);
+  const block = all['live-e2e'].block;
+  assert.match(block, /fail-fast: false/);
+  assert.match(block, /shard: \[1, 2\]/);
+  assert.match(block, /SWM_E2E_SHARD: \$\{\{ matrix\.shard \}\}\/2/);
+  assert.match(block, /npm run e2e -- /);
 });
 
 test('tag: only contents: write + actions: read, never workflows; the catch-up script does the tagging (TAG1)', () => {

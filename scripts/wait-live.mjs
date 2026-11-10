@@ -8,6 +8,11 @@
 // Also waits at least `SETTLE_MS` after the deploy (BH1): on 3 Nov 2026 the probe said the new id from its first second,
 // yet a room created 35 s after it settled was restarted 79 s after the deploy (wait.mjs "timeout waiting d", socket
 // 1006); Cloudflare keeps restarting objects for a while whatever a fresh probe answers.
+// QA1 part 4: then a quiet spell of canary rooms (scripts/e2e/canary.mjs): idle room connections the server never closes
+// by itself; one dropped means objects are still restarting (on 10 Nov 2026 rooms dropped 2.5–5 min after the deploy,
+// after the 2 min settle). The e2e starts after `QUIET_MS` with no drop, at most `QUIET_LIMIT_MS` more (then a warning).
+import { waitQuiet } from './e2e/canary.mjs';
+
 const [base, want] = process.argv.slice(2);
 if (!base || !want) {
   console.error('usage: node scripts/wait-live.mjs <https base> <version id>');
@@ -17,6 +22,8 @@ const STABLE = 8;
 const GAP_MS = 3000;
 const LIMIT_MS = 4 * 60_000;
 const SETTLE_MS = 120_000;
+const QUIET_MS = 60_000;
+const QUIET_LIMIT_MS = 4 * 60_000;
 const started = Date.now();
 let streak = 0;
 while (streak < STABLE) {
@@ -44,4 +51,9 @@ if (rest > 0) {
   console.log(`… letting the new version settle for ${Math.round(rest / 1000)} s more (objects restart for a while after a deploy)`);
   await new Promise((r) => setTimeout(r, rest));
 }
-console.log(`✓ Live runs version ${want} (Worker and Durable Object, ${STABLE} times in a row, ${Math.round((Date.now() - started) / 1000)} s after the deploy)`);
+console.log(`… waiting for ${QUIET_MS / 1000} s with no canary room dropped (at most ${QUIET_LIMIT_MS / 60_000} min)`);
+const ws = base.replace(/^http/, 'ws');
+const calm = await waitQuiet(ws, { quietMs: QUIET_MS, limitMs: QUIET_LIMIT_MS });
+if (!calm.quiet) console.log(`::warning::Canary rooms were still being dropped ${Math.round(calm.waited / 1000)} s after the settle (${calm.drops} drops); running the e2e anyway (a file that fails while a canary drops says so).`);
+console.log(`✓ Live runs version ${want} (Worker and Durable Object, ${STABLE} times in a row; canary rooms quiet for ${QUIET_MS / 1000} s; ${Math.round((Date.now() - started) / 1000)} s after the deploy, ${calm.drops} canary drops on the way)`);
+process.exit(0);

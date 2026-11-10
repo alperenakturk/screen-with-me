@@ -354,8 +354,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
   - [x] PR #386 (0.9.97.111) merged.
   - [x] 0.9.97.112 (#390) live: side games' home beside the video, the hall from a free window, the resize corner.
-  - [ ] 0.9.97.114: side games only in the free window; a table in the video's place pauses the playing video. Branch
-    `claude/game-window-solo`, then PR, merge, deploy + live e2e + tag, report.
+  - [x] 0.9.97.114 (#393) live: side games only in the free window; a table pauses the video.
+  - [ ] 0.9.97.116: MATINEE2 (Design's calmer Matinee, framed screen) + the intro no longer eats a game's first click.
+    Branch `claude/matinee2`, PR, merge after .115's main run has started, deploy + live e2e + tag, report.
 - [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
   categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
   line off the room screen, "Move to another device" in Settings → Me, IP notice removed (privacy policy + help
@@ -490,7 +491,7 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
-**YT5 batch (lane A: first-look fixes; fold into the next round).**
+**0.9.97.118 (lane A: first-look fixes; fold into the next round).**
 - [ ] Y1. Phone and tablet, before joining voice: the 🎙 and 📷 buttons look plain (not red). Join voice and mute: now
   🎙 turns red.
 - [ ] Y2. Tablet upright: the chat box's ➤ sits fully inside the box's rounded border.
@@ -502,6 +503,13 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
   still clearly visible.
 - [ ] Y6. Phone, empty room: a small sleepy Stub sits in the corner of the "No video yet" box; the chat line keeps 👋
   next to its last word.
+
+**0.9.97.116 (MATINEE2 + the intro's first click; fold into the next round).**
+- [ ] M1. 🎨 → Matinee: the page and cards are a calm warm paper (nothing near-white); the video sits in a framed screen
+  (darker mat, thin dark frame, warm deep-brown screen), in an empty room and while a film plays. Fullscreen is black.
+- [ ] M2. On the phone in Matinee: the video runs edge to edge with a thin dark line under it, no grey smudge.
+- [ ] M3. With the extension on a film page in Matinee: the film shows normally in its place (nothing painted over it).
+- [ ] M4. Enter a new room and open a table at once (within 3 s): the first click on its "?" opens How to play.
 
 **0.9.97.114 (lane W: side games only in their window, a table pauses the video; fold into the next round).**
 - [ ] Q1. Play a video file with a friend, open Snack Bar: the video keeps playing. Open a table (chess): the video

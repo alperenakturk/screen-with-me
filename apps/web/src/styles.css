@@ -118,28 +118,35 @@
   --mascot: url('/themes/neon-maskot.svg');
 }
 
-/* Matinee: the first light theme. Warm paper, ink text, rust accent; no picture, a faint paper grain and one soft window light. */
+/* Matinee (MATINEE2, Design 10 Nov 2026: calmer paper, deeper ink; docs/internal/design/themes-2/matinee2/): warm paper,
+   ink text, rust accent; a faint paper grain, no window light. --mat / --bezel / --screen / --screen-lit frame the video's
+   place (room.css). */
 :root[data-theme='matinee'] {
   color-scheme: light;
-  --bg: #f4ede1;
-  --surface: #fffaf1;
-  --surface-2: #efe5d4;
-  --border: #d6c8b2;
-  --field-border: #8a7a64;
-  --text: #1f1a14;
-  --muted: #5c5244;
-  --accent: #b03f1c;
-  --accent-hover: #c24a24;
+  --bg: #e8dfcf; /* page: was #f4ede1 (luminance 0.85 → 0.74) */
+  --surface: #f1eadd; /* cards, side panel, dialogs: was #fffaf1 near-white (0.96 → 0.83) */
+  --surface-2: #e2d7c5; /* secondary buttons, tabs, inputs' fill */
+  --border: #c9b99f;
+  --field-border: #7d6c56;
+  --text: #26201a;
+  --muted: #564b3e;
+  --accent: #9a3517;
+  --accent-hover: #ab3f1c;
   --on-accent: #ffffff;
-  --danger: #b3261e;
-  --ok: #1d7a4f;
-  --warn: #8a5a00;
+  --danger: #9e231a;
+  --ok: #165d3c;
+  --warn: #714a00;
   --glow: none;
-  --art: radial-gradient(ellipse 60% 50% at 85% 0%, rgb(255 214 150 / 0.35), transparent 70%),
-    radial-gradient(1px 1px at 20px 30px, rgb(120 90 50 / 0.12) 99%, transparent),
-    radial-gradient(1px 1px at 70px 90px, rgb(120 90 50 / 0.1) 99%, transparent),
-    linear-gradient(#f7f1e6, #f1e8d9);
-  --art-size: 100% 100%, 97px 103px, 131px 127px, 100% 100%;
+  /* The video's place (new tokens, used in room.css below). */
+  --mat: #ddd1bc; /* the card the video sits in: one step darker than the page, a picture mat */
+  --bezel: #4a3d30; /* the thin dark frame where the mat meets the screen */
+  --screen: #231c16; /* deep warm umber instead of #000; films' own black bars stay black inside the picture */
+  --screen-lit: #43382c; /* the screen's softly lit middle (the empty room) */
+  /* No bright window light any more: one quiet gradient and the faint paper grain. */
+  --art: radial-gradient(1px 1px at 20px 30px, rgb(90 64 34 / 0.1) 99%, transparent),
+    radial-gradient(1px 1px at 70px 90px, rgb(90 64 34 / 0.08) 99%, transparent),
+    linear-gradient(#ebe3d4, #e3d9c8);
+  --art-size: 97px 103px, 131px 127px, 100% 100%;
   --mascot: url('/themes/matinee-maskot.svg');
 }
 /* ---- Çizimli temalar. Üç katman:

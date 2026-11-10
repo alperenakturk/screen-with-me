@@ -1,7 +1,9 @@
 // Uçtan uca testleri sırayla çalıştırır (gerçek sunucuya bağlanan sahte kullanıcılar).
 //   npm run e2e                                   → yerel sunucu (npm run dev açık olmalı)
 //   npm run e2e -- wss://screen-with-me.swm-server.workers.dev   → yayındaki site
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { shardFiles } from './shard.mjs';
+import { startCanary } from './canary.mjs';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -47,8 +49,17 @@ const FILES = ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs',
 // count something per address or for the whole server (upload / feedback / search budgets, the lab's powers, the
 // per-address caps, the HTTP fallback's sessions) run alone, after the others. Each file's output is printed in one
 // piece when it ends. Live and local runs without the variable stay one file at a time, as before.
+/** One run of a file, its output straight to ours; resolves its exit code (the event loop stays free for the canaries). */
+const runAttempt = (test) =>
+  new Promise((resolve) => {
+    const child = spawn(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
+    child.on('close', (code) => resolve(code ?? 1));
+  });
 const SOLO = new Set(['chatimage.mjs', 'uploads.mjs', 'search.mjs', 'fallback.mjs', 'feedback.mjs', 'abuse.mjs', 'lab-server.mjs', 'lab-check.mjs', 'quota.mjs']);
 const parallel = unpaced ? Math.max(1, Number(process.env.SWM_E2E_PARALLEL ?? 1)) : 1;
+const shard = /^(\d+)\/(\d+)$/.exec(process.env.SWM_E2E_SHARD ?? '');
+const RUN = shard ? shardFiles(FILES, Number(shard[1]), Number(shard[2])) : FILES;
+if (shard) console.log(`Shard ${shard[1]}/${shard[2]}: ${RUN.join(' ')}`);
 
 if (parallel > 1) {
   const runOne = (test) =>
@@ -65,7 +76,7 @@ if (parallel > 1) {
         resolve();
       });
     });
-  const shared = FILES.filter((f) => !SOLO.has(f));
+  const shared = RUN.filter((f) => !SOLO.has(f));
   // The longest first, so one slow file doesn't end the run alone.
   shared.sort((a, b) => (b === 'ghost.mjs') - (a === 'ghost.mjs'));
   let next = 0;
@@ -74,20 +85,36 @@ if (parallel > 1) {
       while (next < shared.length) await runOne(shared[next++]);
     }),
   );
-  for (const test of FILES.filter((f) => SOLO.has(f))) await runOne(test);
+  for (const test of RUN.filter((f) => SOLO.has(f))) await runOne(test);
 } else {
-  for (const test of FILES) {
+  // Card QA1 part 4: on live, canary rooms stay open beside the suite (scripts/e2e/canary.mjs). A file that fails says
+  // whether the server dropped canary connections while it ran (objects restarting: infrastructure) or not (then the
+  // cause is in the code or the test). It changes no result: a retry that fails again is red either way.
+  const canary = live ? startCanary(base, { count: 2, connectLog }) : null;
+  const restarts = (from, to) => {
+    const seen = canary ? canary.between(from, to) : [];
+    return seen.length ? `the server dropped ${seen.length} canary connection(s) meanwhile (codes ${[...new Set(seen.map((d) => d.code))].join(', ')}): objects were restarting` : 'no canary connection was dropped meanwhile: the cause is likely the code or the test, not a restart';
+  };
+  for (const test of RUN) {
     await paceConnects();
     console.log(`\n▶ ${test}`);
-    let result = spawnSync(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
-    if (result.status !== 0 && live) {
+    let from = Date.now();
+    let result = await runAttempt(test);
+    if (result !== 0 && live) {
+      console.log(`  (${test}: ${restarts(from, Date.now())})`);
       await paceConnects();
       console.log(`\n↻ ${test} canlıda bir kez daha deneniyor (yeni sürüm yayılırken bağlantı kopmuş olabilir)`);
-      result = spawnSync(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
+      from = Date.now();
+      result = await runAttempt(test);
       // A pass on the retry still counts as red until its cause is found (ROADMAP "Milestone gates"): make it visible.
-      if (result.status === 0) console.log(`::warning::${test} failed on the live run's first attempt and passed on the retry; find out why.`);
+      if (result === 0) console.log(`::warning::${test} failed on the live run's first attempt and passed on the retry; find out why.`);
+      else console.log(`  (${test} again: ${restarts(from, Date.now())})`);
     }
-    if (result.status !== 0) failed++;
+    if (result !== 0) failed++;
+  }
+  if (canary) {
+    canary.stop();
+    if (canary.drops.length) console.log(`\nCanary rooms dropped by the server during the run: ${canary.drops.map((d) => `${new Date(d.at).toISOString().slice(11, 19)} (${d.code})`).join(', ')}`);
   }
 }
 console.log(failed ? `\n✗ ${failed} test dosyası başarısız` : '\n✓ Tüm uçtan uca testler geçti');
