@@ -169,3 +169,4 @@ out('index.html', `<!doctype html><html lang="en"><head><meta charset="utf-8"><m
 </main></body></html>
 `);
 console.log('✓ mascot-3; home LAMP fraction', LAMP_FRACTION);
+export { stub, jerkCap, bowTie };
