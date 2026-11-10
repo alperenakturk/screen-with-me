@@ -13021,13 +13021,8 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
 
 
 /* YT5 batch: cinema mode's way out for a mouse or a touch, in the page's empty bottom-left corner (never over the
-   video; chat lines come in under the video on the right); quiet until the mouse is on it. */
+   video; chat lines come in under the video on the right); quiet until the mouse is on it. `hidden` outside cinema. */
 .cinema-exit {
-  display: none;
-}
-
-html.cinema-on:not(.phone, .shell):has(.room.cinema:not(.shorts)) .cinema-exit:not([hidden]) {
-  display: block;
   position: fixed;
   left: 16px;
   bottom: 10px;
@@ -13041,20 +13036,20 @@ html.cinema-on:not(.phone, .shell):has(.room.cinema:not(.shorts)) .cinema-exit:n
   font: inherit;
   font-size: 13px;
   cursor: pointer;
-  opacity: 0.85;
-  transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-html.cinema-on .cinema-exit:hover,
-html.cinema-on .cinema-exit:focus-visible {
-  opacity: 1;
+.cinema-exit:is(:hover, :focus-visible) {
   color: var(--text);
 }
 
-/* YT5 batch: "Next ⏭" with nothing queued was 40 % opacity and nearly vanished; a disabled control keeps a visible
-   shape (≥ 3:1): the muted text colour for the label and its frame, at full opacity. */
-#skip:disabled {
+/* First-look review: the invite window's "Ask before letting people in" row lines up with the rows under it. */
+.invite-dialog .set-row.invite-door {
+  padding-inline: 0;
+}
+
+/* First-look review: "Run a sync test" alone in the room (.alone) read as broken at 50 %: full opacity in the muted
+   text colour (≥ 4.5:1 on the room's surfaces); pressing it still explains that it needs a friend. */
+#sync-test.alone {
   opacity: 1;
   color: var(--muted);
-  border-color: var(--muted);
 }

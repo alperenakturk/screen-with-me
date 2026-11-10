@@ -852,7 +852,7 @@ export const tr: Record<I18nKey, string> = {
   'pool.sports': '⚽ Spor',
   queuedMany: '✓ {n} video sıraya ekleniyor',
   queuedManySkipped: '✓ {n} video sıraya ekleniyor ({skipped} link eklenmedi: film sayfaları tek tek eklenir, en fazla 30)',
-  emptyStep1: 'Arkadaşlarını çağır:',
+  emptyStep1: 'Arkadaşlarını davet et:',
   copyInvite: 'Davet linkini kopyala',
   share: 'Paylaş',
   inviteShareText: 'Gel birlikte izleyelim 🍿',

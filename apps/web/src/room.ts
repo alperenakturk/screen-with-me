@@ -3043,7 +3043,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#dock-chat').append(badge);
     const edge = el('div', { id: 'cinema-edge', class: 'cinema-edge', 'aria-hidden': 'true' });
     // YT5 batch: a visible way out for a mouse or a touch, besides T / Esc (only shown in cinema mode, `room.css`).
-    const exit = el('button', { id: 'cinema-exit', class: 'cinema-exit', type: 'button' });
+    const exit = el('button', { id: 'cinema-exit', class: 'cinema-exit', type: 'button', hidden: '' });
     const topbar = document.querySelector<HTMLElement>('.topbar');
     document.body.append(edge, exit);
     let unread = 0;

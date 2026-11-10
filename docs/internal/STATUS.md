@@ -503,6 +503,9 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
   still clearly visible.
 - [ ] Y6. Phone, empty room: a small sleepy Stub sits in the corner of the "No video yet" box; the chat line keeps 👋
   next to its last word.
+- [ ] Y7. Tablet upright, a new room: the Queue / People tabs show above the queue card. Phone, alone in a room:
+  "Run a sync test" is clearly readable. An empty chat has no "Show activity" button until something happens. In
+  Turkish the empty room's step 1 says "Arkadaşlarını davet et".
 
 **0.9.97.116 (MATINEE2 + the intro's first click; fold into the next round).**
 - [ ] M1. 🎨 → Matinee: the page and cards are a calm warm paper (nothing near-white); the video sits in a framed screen

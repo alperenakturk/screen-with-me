@@ -25,6 +25,9 @@ games' tip jar, cuttings and badges.
 - "Next ⏭" with nothing queued stays readable (greyed, but its frame and label still show).
 - On an upright tablet the chat box's send arrow sits inside the box; on a phone the empty room shows a small Stub and
   the empty-chat line keeps its 👋 with the last word.
+- Smaller things: an upright tablet shows the Queue / People heading from the start; "Run a sync test" alone in a room is
+  readable instead of faded; "Show activity" appears only once there is activity; the invite window's first row lines
+  up with the rest; Turkish step 1 says "Arkadaşlarını davet et".
 
 ### 0.9.97.116 — 10 Nov
 - The Matinee theme is calmer: warmer, softer paper instead of near-white cards, and the video sits in a framed screen
