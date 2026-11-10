@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.113 — 10 Nov
+- Games look right in the video's place: a game you put in the video's place now fills it in proportion, with its
+  board, cards and text as big as the place allows, instead of a small game stretched across a wide box. A board sits
+  on the left with the players and buttons beside it; Five Frames and the Duel put the tickets on the left and the
+  letters on the right; Last Heart and Draw & Guess lay out their tables and lobbies side by side. The free window works
+  as before.
+
 ### 0.9.97.110 — 10 Nov
 - Five Frames and the Five Frames Duel take your keyboard as they open (and when a Duel race starts): just type the
   word, no click first. Click the chat to write there; Esc or a click on the game brings your typing back to the word.

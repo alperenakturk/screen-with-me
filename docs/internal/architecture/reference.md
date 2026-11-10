@@ -970,6 +970,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   during a game a plain switch is refused (`in_progress`) and the page asks "End this game and change?", then sends
   `end: true` (any seated player decides, not only the opener / host); everyone at the table gets the fresh board.
   Draw & Guess / Quiz lobbies are one centred card with the players as chips (`lobby.css`, `ui.ts` `lobbyPlayers`).
+  **PROP (0.9.97.113, owner: "in the video's place the games look out of proportion; the same experience in both
+  modes"):** in "stage" (the video's place) `stage.ts` `refit` no longer stretches a game's layout over the box at
+  scale ≤ 1: like the free window, it lays the game out at one of its own shapes and scales that to the box (up to
+  `MAX_STAGE` 2.2), picking the shape that shows it bigger: the catalog `size` or its `wide` shape (every
+  `GAME_CATALOG` / `CLASSICS_SIZES` / `SOLO_CATALOG` entry; about 2 : 1, e.g. 820 × 440, the head included like
+  `size`). In the wide shape the game box is ≥ 16 : 10, and each game's CSS reflows for it with
+  `@container game (min-aspect-ratio: 16 / 10)`: a Classics board on the left at the full height and the bar, seats,
+  status and buttons in a column (`classics.css`, the picker's cards in one row); Five Frames' tickets left, head,
+  result and letters right (`five-frames.css`); the Duel's boards left, referee, buttons and letters right
+  (`duel.css`); Last Heart's seat in two columns (cards and actions | special moves) and its lobby card in two
+  columns (`poker.css`, new, with the poker chunk); the Draw & Guess lobby card in two columns and the canvas beside a
+  360 px column (`lobby.css`); Quiz (its 7 : 4 rule), Sea Battle, Snack Bar and Window Garden reflow as they were.
+  The free window, phones and narrow screens are unchanged. Lab command `games.place` flips the open game between the
+  two placements. Harness `scripts/harness/game-proportions/run.cjs` (games-more: laptop, desktop, tablet): every
+  game and a game going with the 🤖 friend, in both placements; on the screen the usual text is ≥ 11.5 px (≥ 16 in a
+  box ≥ 700 px each way), nothing under 8.5 px, the game covers ≥ 28 % of the video's place, and there it is shown at
+  least 85 % as big as in the free window.
   Lab commands `classics.picker`, `classics.pick.<board>`. Tests: e2e `classics-switch.mjs` (every from → to pair
   against Glowbeam, a finished game, Glowbeam moving first, two people), `games-sweep` (the board is the largest thing
   and nothing sits beside it; lobbies without a side column), harness `classics` (Change game asks, Cancel, End and
