@@ -7,8 +7,10 @@
 import './snack-bar.css';
 import { gameHint } from './hint.ts';
 import {
-  BADGES, BADGE_BONUS, DECOR, MILESTONES, buyDecor, placeOf, placeCost, type DecorId, type PlaceId, SNACK_KEY, STANDS, STAR_BONUS, PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
-  RECEIPT_MIN_S, loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, standRate, starsFor, starFactor, tick,
+  BADGES, BADGE_BONUS, DECOR, MENU_BONUS, MENU_LEVEL, MILESTONES, RECIPE_IDS, STAFF, USHER_DELAY_S, buyDecor, buyRecipe, dayNumber, globalFactor, hire, menuFactor,
+  placeOf, placeCost, recipeInfo, recipesOpen, specialOf, standIncome, type DecorId, type PlaceId, type RecipeId, type StaffId, SNACK_KEY, STANDS, STAR_BONUS,
+  PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
+  RECEIPT_MIN_S, loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick,
   togetherFactor, unlocked, type CustomerMood, type Receipt, type SnackSave, type StandId,
 } from '@swm/shared/games/snack-bar';
 import { el } from '../dom.ts';
@@ -23,6 +25,9 @@ import soda from './art/snack-bar/soda.svg?raw';
 import nachos from './art/snack-bar/nachos.svg?raw';
 import candy from './art/snack-bar/candy.svg?raw';
 import second from './art/snack-bar/second-counter.svg?raw';
+import hotdog from './art/snack-bar/hotdog.svg?raw';
+import iceCream from './art/snack-bar/ice-cream.svg?raw';
+import arcade from './art/snack-bar/arcade.svg?raw';
 import how1 from './art/tutorial/snack-1-earn.svg?raw';
 import how2 from './art/tutorial/snack-2-tap.svg?raw';
 import how3 from './art/tutorial/snack-3-stands.svg?raw';
@@ -41,7 +46,7 @@ const TEXT = {
     how2Title: 'Tap to serve',
     how2: 'Tap the counter for an extra coin. When a customer walks up, tap them for more.',
     how3Title: 'Buy and level up stands',
-    how3: 'Levels 10, 25, 50, 100 and 200 double a stand.',
+    how3: 'Levels 10, 25, 50, 100, 200, 300 and 400 double a stand; recipes double it too. Lower stands stay worth levelling.',
     how4Title: 'Friends make it faster',
     how4: '+10% for each person in the room, +5% for each one in voice with you.',
     'coinsTitle': 'Your coins',
@@ -61,6 +66,62 @@ const TEXT = {
     'stand.nachos': 'Nachos',
     'stand.candy': 'Candy jar',
     'stand.second-counter': 'Second counter',
+    'stand.hotdog': 'Hot dog grill',
+    'stand.ice-cream': 'Ice cream cart',
+    'stand.arcade': 'Arcade corner',
+    buyMode: 'How many to buy',
+    buyOne: '×1',
+    buyTen: '×10',
+    buyMax: 'Max',
+    buyCount: 'Buy {n} for {price}',
+    special: '⭐ ×2 today',
+    specialTitle: "Today's special: this stand earns ×2 until midnight (UTC).",
+    menuMark: '📋',
+    menuTitle: 'Level {n} or more: this stand counts for the menu bonus.',
+    upgrades: '📜 Upgrades',
+    upgradesTitle: 'Recipes and staff',
+    recipesTitle: '📜 Recipes',
+    recipesLine: 'Each recipe doubles one stand. New ones open at stand levels 5, 25 and 75.',
+    recipesNone: 'No recipe to buy yet: level a stand to 5.',
+    recipeDoubles: '×2 {stand}',
+    staffTitle: '🧑‍🍳 Staff',
+    staffLine: 'Hired once, they stay with you in every cinema.',
+    staffHired: '✓ Hired',
+    menuBonus: '📋 Menu bonus: +{n} % ({count} stands at level {level}+)',
+    menuBonusNone: '📋 Menu bonus: +{bonus} % for each stand at level {level} or more',
+    'staff.tip-box': 'Tip box',
+    'staffWhat.tip-box': 'A tap on the counter pays 2 seconds of income.',
+    'staff.usher': 'Usher',
+    'staffWhat.usher': 'Serves a waiting customer for you after a few seconds.',
+    'staff.long-line': 'Longer line',
+    'staffWhat.long-line': 'Customers come twice as often.',
+    'staff.manager': 'Manager',
+    'staffWhat.manager': 'Every customer pays twice as much.',
+    ushered: '🧑‍💼 The usher served a customer',
+    'recipe.popcorn:1': 'Real butter',
+    'recipe.popcorn:2': 'Caramel glaze',
+    'recipe.popcorn:3': 'Truffle salt',
+    'recipe.soda:1': 'Bigger cups',
+    'recipe.soda:2': 'Free refills',
+    'recipe.soda:3': 'Craft syrups',
+    'recipe.nachos:1': 'Extra cheese',
+    'recipe.nachos:2': 'Jalapeños',
+    'recipe.nachos:3': 'Loaded tray',
+    'recipe.candy:1': 'Pick and mix',
+    'recipe.candy:2': 'Chocolate box',
+    'recipe.candy:3': 'Gold wrappers',
+    'recipe.second-counter:1': 'Express lane',
+    'recipe.second-counter:2': 'Card reader',
+    'recipe.second-counter:3': 'Night shift',
+    'recipe.hotdog:1': 'Mustard bar',
+    'recipe.hotdog:2': 'Toasted buns',
+    'recipe.hotdog:3': 'Chili dogs',
+    'recipe.ice-cream:1': 'Waffle cones',
+    'recipe.ice-cream:2': 'Sprinkles',
+    'recipe.ice-cream:3': 'Sundae bar',
+    'recipe.arcade:1': 'Claw machine',
+    'recipe.arcade:2': 'High-score board',
+    'recipe.arcade:3': 'Prize wall',
     'level': 'Lv {n} · +{rate}/s',
     'new': 'New · +{rate}/s',
     'locked': '🔒 Opens with the {name}',
@@ -73,14 +134,20 @@ const TEXT = {
     'place.drive-in': 'Drive-in',
     'place.rooftop': 'Rooftop cinema',
     'place.art-house': 'Art house',
+    'place.seaside': 'Seaside cinema',
+    'place.planetarium': 'Planetarium',
     'twist.lobby': 'Where it all started.',
     'twist.drive-in': 'Under the stars: soda earns ×2.',
     'twist.rooftop': 'Up on the roof: +25 % income from 20:00 to 04:00.',
     'twist.art-house': 'Fancy sweets: candy earns ×3 and costs ×2.',
+    'twist.seaside': 'By the sea: every customer pays ×2.',
+    'twist.planetarium': 'A quiet dome: +25 % income while you watch alone.',
     'sign.lobby': 'SNACK BAR',
     'sign.drive-in': 'DRIVE-IN',
     'sign.rooftop': 'ROOFTOP',
     'sign.art-house': 'ART HOUSE',
+    'sign.seaside': 'SEASIDE',
+    'sign.planetarium': 'PLANETARIUM',
     placeOpen: 'Cinema #{n}: {place}. {twist}',
     decorTitle: '🎨 Decorations',
     decorLine: 'Looks only. Yours for good, in every cinema.',
@@ -133,7 +200,7 @@ const TEXT = {
     how2Title: 'Dokun, servis yap',
     how2: 'Fazladan bir jeton için tezgâha dokun. Bir müşteri gelince ona dokun, daha çok kazan.',
     how3Title: 'Stant al, seviye atlat',
-    how3: '10, 25, 50, 100 ve 200. seviyeler standı iki katına çıkarır.',
+    how3: '10, 25, 50, 100, 200, 300 ve 400. seviyeler standı iki katına çıkarır; tarifler de öyle. Alttaki stantlar da geliştirmeye değer.',
     how4Title: 'Arkadaşlar hızlandırır',
     how4: 'Odadaki her kişi %10, seste seninle olan her kişi %5 ekler.',
     'coinsTitle': 'Paran',
@@ -153,6 +220,62 @@ const TEXT = {
     'stand.nachos': 'Nachos',
     'stand.candy': 'Şeker kavanozu',
     'stand.second-counter': 'İkinci tezgâh',
+    'stand.hotdog': 'Sosisli ızgarası',
+    'stand.ice-cream': 'Dondurma arabası',
+    'stand.arcade': 'Oyun köşesi',
+    buyMode: 'Kaç tane alınsın',
+    buyOne: '×1',
+    buyTen: '×10',
+    buyMax: 'Hepsi',
+    buyCount: '{price} karşılığında {n} tane al',
+    special: '⭐ bugün ×2',
+    specialTitle: 'Günün fırsatı: bu stant gece yarısına (UTC) kadar ×2 kazandırır.',
+    menuMark: '📋',
+    menuTitle: '{n}. seviye ve üstü: bu stant menü bonusuna sayılır.',
+    upgrades: '📜 Gelişmeler',
+    upgradesTitle: 'Tarifler ve çalışanlar',
+    recipesTitle: '📜 Tarifler',
+    recipesLine: 'Her tarif bir standı iki katına çıkarır. Yenileri stant 5, 25 ve 75. seviyede açılır.',
+    recipesNone: 'Alınacak tarif yok: bir standı 5. seviyeye çıkar.',
+    recipeDoubles: '{stand} ×2',
+    staffTitle: '🧑‍🍳 Çalışanlar',
+    staffLine: 'Bir kez işe alınır, her sinemada seninle kalır.',
+    staffHired: '✓ İşe alındı',
+    menuBonus: '📋 Menü bonusu: +%{n} ({level}+ seviyede {count} stant)',
+    menuBonusNone: '📋 Menü bonusu: {level}. seviye ve üstündeki her stant için +%{bonus}',
+    'staff.tip-box': 'Bahşiş kutusu',
+    'staffWhat.tip-box': 'Tezgâha her dokunuş 2 saniyelik gelir kazandırır.',
+    'staff.usher': 'Yer gösterici',
+    'staffWhat.usher': 'Bekleyen müşteriye birkaç saniye sonra senin yerine servis yapar.',
+    'staff.long-line': 'Uzun kuyruk',
+    'staffWhat.long-line': 'Müşteriler iki kat sık gelir.',
+    'staff.manager': 'Müdür',
+    'staffWhat.manager': 'Her müşteri iki kat öder.',
+    ushered: '🧑‍💼 Yer gösterici bir müşteriye servis yaptı',
+    'recipe.popcorn:1': 'Gerçek tereyağı',
+    'recipe.popcorn:2': 'Karamel kaplama',
+    'recipe.popcorn:3': 'Trüflü tuz',
+    'recipe.soda:1': 'Büyük bardaklar',
+    'recipe.soda:2': 'Bedava dolum',
+    'recipe.soda:3': 'Özel şuruplar',
+    'recipe.nachos:1': 'Bol peynir',
+    'recipe.nachos:2': 'Jalapeño',
+    'recipe.nachos:3': 'Dolu tabak',
+    'recipe.candy:1': 'Karışık şeker',
+    'recipe.candy:2': 'Çikolata kutusu',
+    'recipe.candy:3': 'Altın ambalaj',
+    'recipe.second-counter:1': 'Hızlı kasa',
+    'recipe.second-counter:2': 'Kart okuyucu',
+    'recipe.second-counter:3': 'Gece vardiyası',
+    'recipe.hotdog:1': 'Hardal barı',
+    'recipe.hotdog:2': 'Kızarmış ekmek',
+    'recipe.hotdog:3': 'Acılı sosisli',
+    'recipe.ice-cream:1': 'Waffle külah',
+    'recipe.ice-cream:2': 'Renkli şekerleme',
+    'recipe.ice-cream:3': 'Sundae barı',
+    'recipe.arcade:1': 'Pençe makinesi',
+    'recipe.arcade:2': 'Rekor tablosu',
+    'recipe.arcade:3': 'Ödül duvarı',
     'level': 'Sv {n} · +{rate}/sn',
     'new': 'Yeni · +{rate}/sn',
     'locked': '🔒 {name} ile açılır',
@@ -165,14 +288,20 @@ const TEXT = {
     'place.drive-in': 'Arabalı sinema',
     'place.rooftop': 'Çatı sineması',
     'place.art-house': 'Sanat sineması',
+    'place.seaside': 'Sahil sineması',
+    'place.planetarium': 'Planetaryum',
     'twist.lobby': 'Her şeyin başladığı yer.',
     'twist.drive-in': 'Yıldızların altında: gazoz ×2 kazandırır.',
     'twist.rooftop': 'Çatıda: 20.00 ile 04.00 arası gelir +%25.',
     'twist.art-house': 'Şık tatlılar: şeker ×3 kazandırır, fiyatı ×2.',
+    'twist.seaside': 'Deniz kenarında: her müşteri ×2 öder.',
+    'twist.planetarium': 'Sessiz kubbe: tek başına izlerken gelir +%25.',
     'sign.lobby': 'BÜFE',
     'sign.drive-in': 'ARABALI',
     'sign.rooftop': 'ÇATI',
     'sign.art-house': 'SANAT',
+    'sign.seaside': 'SAHİL',
+    'sign.planetarium': 'PLANETARYUM',
     placeOpen: '{n}. sinema: {place}. {twist}',
     decorTitle: '🎨 Süsler',
     decorLine: 'Sadece görünüş. Her sinemada kalıcı olarak senin.',
@@ -268,6 +397,13 @@ const BADGE_TEXT: Record<'en' | 'tr', Record<string, [string, string]>> = {
     'just-looking': ['Just looking', 'Watch an hour without serving anyone'],
     'tap-happy': ['Tap happy', 'Serve 2,000 times'],
     'popcorn-purist': ['Popcorn purist', 'Earn 10K coins with no soda fountain'],
+    'hotdog-1': ['Sizzle', 'Buy the hot dog grill'],
+    'ice-cream-1': ['Brain freeze', 'Buy the ice cream cart'],
+    'arcade-1': ['Player one', 'Open the arcade corner'],
+    'first-recipe': ['Secret recipe', 'Buy your first recipe'],
+    'head-chef': ['Head chef', 'Have 12 recipes in one cinema'],
+    'full-staff': ['Full crew', 'Hire every member of staff'],
+    'big-menu': ['Big menu', 'Five stands at level 25'],
   },
   tr: {
     'first-sale': ['İlk satış', 'İlk müşterine servis yap'],
@@ -300,12 +436,21 @@ const BADGE_TEXT: Record<'en' | 'tr', Record<string, [string, string]>> = {
     'just-looking': ['Sadece bakıyorum', 'Hiç servis yapmadan bir saat izle'],
     'tap-happy': ['Dokunmatik', '2.000 kez servis yap'],
     'popcorn-purist': ['Saf mısırcı', 'Gazoz almadan 10K kazan'],
+    'hotdog-1': ['Cızırtı', 'Sosisli ızgarasını al'],
+    'ice-cream-1': ['Beyin dondu', 'Dondurma arabasını al'],
+    'arcade-1': ['Birinci oyuncu', 'Oyun köşesini aç'],
+    'first-recipe': ['Gizli tarif', 'İlk tarifini al'],
+    'head-chef': ['Baş aşçı', 'Bir sinemada 12 tarifin olsun'],
+    'full-staff': ['Tam ekip', 'Bütün çalışanları işe al'],
+    'big-menu': ['Zengin menü', 'Beş stant 25. seviyede'],
   },
 };
 const badgeText = (id: string): [string, string] => BADGE_TEXT[lang() === 'tr' ? 'tr' : 'en'][id] ?? BADGE_TEXT.en[id] ?? [id, ''];
 
-const CUSTOMER_COLORS = ['#ff9fc4', '#9ec3ff', '#ffd9a0', '#b9a0ff', '#8fe0b8', '#ffb38a'];
-const HATS = ['', 'cap', 'beanie', 'bow'] as const;
+const CUSTOMER_COLORS = ['#ff9fc4', '#9ec3ff', '#ffd9a0', '#b9a0ff', '#8fe0b8', '#ffb38a', '#7fd6e0'];
+/** Skin tones for the guests (SB3: more variety). */
+const SKINS = ['#ffe2c4', '#f1c7a0', '#d9a06e', '#a8714a', '#7a4a2c'];
+const HATS = ['', 'cap', 'beanie', 'bow', 'glasses', 'headphones', 'party'] as const;
 /** A small walking guest, drawn here (our own art): a round head, a body, maybe a hat. */
 function customerSvg(n: number): string {
   const body = CUSTOMER_COLORS[n % CUSTOMER_COLORS.length]!;
@@ -315,16 +460,28 @@ function customerSvg(n: number): string {
     cap: '<path d="M17 13a9 9 0 0 1 18 0z" fill="#1a1036"/><rect x="30" y="11" width="9" height="3" rx="1.5" fill="#1a1036"/>',
     beanie: '<path d="M17 14a9 9 0 0 1 18 0z" fill="#e05a5a"/><circle cx="26" cy="4.5" r="2.5" fill="#fff3d6"/>',
     bow: '<path d="M30 8l5-3v6zM30 8l-5-3v6z" fill="#e05a5a"/>',
+    glasses: '<g fill="none" stroke="#1a1036" stroke-width="1.3"><circle cx="22" cy="20" r="3.2"/><circle cx="30" cy="20" r="3.2"/><path d="M25.2 20h1.6"/></g>',
+    headphones: '<path d="M15 21a11 11 0 0 1 22 0" fill="none" stroke="#1a1036" stroke-width="2.4"/><rect x="12.5" y="18" width="4" height="7" rx="2" fill="#e05a5a"/><rect x="35.5" y="18" width="4" height="7" rx="2" fill="#e05a5a"/>',
+    party: '<path d="M21 10 L26 -1 L31 10 Z" fill="#ffc65a"/><circle cx="26" cy="-1" r="1.8" fill="#ff8fd0"/><path d="M23 6 h6" stroke="#ff8fd0" stroke-width="1.2"/>',
   };
-  return `<svg viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg"><path d="M10 64c0-16 7-26 16-26s16 10 16 26z" fill="${body}"/><circle cx="26" cy="20" r="11" fill="#ffe2c4"/><circle cx="22" cy="20" r="1.6" fill="#1a1036"/><circle cx="30" cy="20" r="1.6" fill="#1a1036"/><path d="M22.5 25q3.5 2.5 7 0" stroke="#1a1036" stroke-width="1.4" fill="none" stroke-linecap="round"/>${hats[hat ?? ''] ?? ''}</svg>`;
+  const skin = SKINS[(n * 7) % SKINS.length];
+  return `<svg viewBox="0 0 52 64" xmlns="http://www.w3.org/2000/svg" overflow="visible"><path d="M10 64c0-16 7-26 16-26s16 10 16 26z" fill="${body}"/><circle cx="26" cy="20" r="11" fill="${skin}"/><circle cx="22" cy="20" r="1.6" fill="#1a1036"/><circle cx="30" cy="20" r="1.6" fill="#1a1036"/><path d="M22.5 25q3.5 2.5 7 0" stroke="#1a1036" stroke-width="1.4" fill="none" stroke-linecap="round"/>${hats[hat ?? ''] ?? ''}</svg>`;
 }
 
-const ART: Record<StandId, string> = { popcorn, soda, nachos, candy, 'second-counter': second };
+const ART: Record<StandId, string> = { popcorn, soda, nachos, candy, 'second-counter': second, hotdog, 'ice-cream': iceCream, arcade };
 /** Scene groups shown once their stand has a level (the second counter has no group: a badge instead). */
-const SCENE_GROUP: Partial<Record<StandId, string>> = { popcorn: 'popcorn-machine', soda: 'soda', nachos: 'nachos', candy: 'candy' };
+const SCENE_GROUP: Partial<Record<StandId, string>> = {
+  popcorn: 'popcorn-machine', soda: 'soda', nachos: 'nachos', candy: 'candy', hotdog: 'hotdog', 'ice-cream': 'ice-cream', arcade: 'arcade',
+};
+const STAFF_ICON: Record<StaffId, string> = { 'tip-box': '🫙', usher: '🧑‍💼', 'long-line': '🚶', manager: '👔' };
+/** Buy one level, ten, or as many as the coins allow. */
+type BuyMode = 1 | 10 | 'max';
+const BUY_MODE_KEY = 'snackBar:buyMode';
 /** Below this height (in the game's own pixels) only three upgrade rows show. */
 const COMPACT_H = 470;
 const ROWS_COMPACT = 3;
+/** Room kept for the "+N more" line when fitting the rows. */
+const MORE_RESERVE = 20;
 /** One tab plays at a time (two tabs would earn twice and overwrite each other's save). */
 const LOCK_KEY = 'snackBar:tab';
 const LOCK_FRESH_MS = 4000;
@@ -341,7 +498,7 @@ function art(raw: string, cls: string): HTMLElement {
   return box;
 }
 
-const PLACE_ICON: Record<PlaceId, string> = { lobby: '🎬', 'drive-in': '🚗', rooftop: '🌃', 'art-house': '🎭' };
+const PLACE_ICON: Record<PlaceId, string> = { lobby: '🎬', 'drive-in': '🚗', rooftop: '🌃', 'art-house': '🎭', seaside: '🏖️', planetarium: '🔭' };
 const DECOR_ICON: Record<DecorId, string> = { marquee: '💡', poster: '🖼️', rope: '🎗️', neon: '🌟' };
 /** Each place's backdrop and the decorations, drawn into the counter scene (340 × 110; our own art). */
 const BACKDROPS: Record<Exclude<PlaceId, 'lobby'>, string> = {
@@ -349,6 +506,10 @@ const BACKDROPS: Record<Exclude<PlaceId, 'lobby'>, string> = {
     '<rect width="340" height="82" fill="#0b1640"/><g fill="#fff3d6"><circle cx="20" cy="10" r="1"/><circle cx="60" cy="22" r="1.2"/><circle cx="104" cy="8" r="1"/><circle cx="150" cy="30" r="1"/><circle cx="182" cy="12" r="1.3"/><circle cx="330" cy="40" r="1"/><circle cx="95" cy="40" r="0.8"/></g><rect x="100" y="4" width="92" height="38" rx="2" fill="#dfe8ff" opacity=".13"/><path d="M100 42 L192 42 L170 80 L122 80 Z" fill="#dfe8ff" opacity=".05"/><path d="M228 76 q4 -10 16 -10 h22 q10 0 14 10 z" fill="#050a22"/><circle cx="240" cy="78" r="3" fill="#050a22"/><circle cx="268" cy="78" r="3" fill="#050a22"/>',
   rooftop:
     '<rect width="340" height="82" fill="#2b1a4d"/><rect y="40" width="340" height="42" fill="#3d2160" opacity=".6"/><g fill="#140c2a"><rect x="96" y="46" width="18" height="36"/><rect x="116" y="34" width="14" height="48"/><rect x="132" y="52" width="22" height="30"/><rect x="156" y="40" width="12" height="42"/><rect x="170" y="56" width="26" height="26"/><rect x="300" y="44" width="16" height="38"/><rect x="318" y="52" width="22" height="30"/></g><g fill="#ffc65a" opacity=".7"><rect x="100" y="52" width="2" height="2"/><rect x="120" y="40" width="2" height="2"/><rect x="124" y="48" width="2" height="2"/><rect x="138" y="58" width="2" height="2"/><rect x="160" y="46" width="2" height="2"/><rect x="176" y="62" width="2" height="2"/><rect x="304" y="50" width="2" height="2"/><rect x="324" y="60" width="2" height="2"/></g><circle cx="186" cy="16" r="7" fill="#fff3d6" opacity=".8"/>',
+  seaside:
+    '<rect width="340" height="82" fill="#ff9f6b"/><rect width="340" height="40" fill="#ffb98a"/><circle cx="150" cy="44" r="16" fill="#ffe08a"/><rect y="46" width="340" height="36" fill="#2b6f9e"/><g stroke="#9fd3f0" stroke-width="1.4" stroke-linecap="round" opacity=".7"><path d="M20 56 h18 M70 62 h24 M120 54 h16 M168 64 h22 M220 57 h18 M262 66 h20 M300 58 h16"/></g><path d="M0 76 Q60 70 120 76 T240 76 T340 76 V82 H0 Z" fill="#f2d39a"/><path d="M300 76 V30" stroke="#5a3a24" stroke-width="3"/><path d="M300 30 q-16 -2 -24 8 M300 30 q-12 -10 -22 -8 M300 30 q14 -10 24 -4 M300 30 q16 0 22 10" stroke="#3d8f5a" stroke-width="3.5" fill="none" stroke-linecap="round"/>',
+  planetarium:
+    '<rect width="340" height="82" fill="#0a0e2a"/><path d="M40 82 Q170 -30 300 82 Z" fill="#141a44"/><g fill="#fff3d6"><circle cx="90" cy="40" r="1.2"/><circle cx="112" cy="26" r="1"/><circle cx="140" cy="18" r="1.4"/><circle cx="168" cy="30" r="1"/><circle cx="196" cy="14" r="1.2"/><circle cx="220" cy="34" r="1.3"/><circle cx="246" cy="46" r="1"/><circle cx="128" cy="56" r=".9"/><circle cx="206" cy="58" r=".9"/></g><path d="M112 26 L140 18 L168 30 L196 14 L220 34" stroke="#9ec3ff" stroke-opacity=".45" stroke-width=".8" fill="none"/><circle cx="270" cy="22" r="7" fill="#ffb38a"/><ellipse cx="270" cy="22" rx="12" ry="3" fill="none" stroke="#ffe08a" stroke-width="1.2" transform="rotate(-18 270 22)"/>',
   'art-house':
     '<rect width="340" height="82" fill="#2a0f1f"/><g fill="#ffc65a" opacity=".08"><circle cx="110" cy="12" r="2"/><circle cx="130" cy="26" r="2"/><circle cx="150" cy="12" r="2"/><circle cx="170" cy="26" r="2"/><circle cx="190" cy="12" r="2"/><circle cx="110" cy="40" r="2"/><circle cx="150" cy="40" r="2"/><circle cx="190" cy="40" r="2"/></g><path d="M0 0 H22 Q18 30 24 82 H0 Z" fill="#8a1f3a"/><path d="M6 0 V82 M14 0 Q11 40 16 82" stroke="#5a1024" stroke-width="2" fill="none"/><path d="M340 0 H318 Q322 30 316 82 H340 Z" fill="#8a1f3a"/><path d="M334 0 V82 M326 0 Q329 40 324 82" stroke="#5a1024" stroke-width="2" fill="none"/>',
 };
@@ -363,9 +524,9 @@ const fmtRate = (rate: number) => formatCoins(rate < 10 ? Math.round(rate * 10) 
 
 export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () => void {
   /** The room as the rules see it: a full tip jar this film adds its +10 % (pick 5). */
-  const room = (): SoloRoom & { boost: boolean } => {
+  const room = (): SoloRoom & { boost: boolean; special: StandId } => {
     const r = roomNow();
-    return { ...r, boost: !!r.tipJar?.boost };
+    return { ...r, boost: !!r.tipJar?.boost, special: specialOf(dayNumber()) };
   };
   const tabId = Math.random().toString(36).slice(2);
   let game: SnackSave = loadSnack(load(SNACK_KEY));
@@ -400,10 +561,32 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   const sceneBox = el('div', { class: 'sb-scene-box' }, sceneButton, customers, rest, pops);
   const group = (name: string) => sceneArt.querySelector<SVGGElement>(`#${sceneArt.dataset.prefix}${name}`);
 
+  // ---- Buy ×1 / ×10 / Max and the Upgrades panel (SB3) ----
+  const savedMode = load(BUY_MODE_KEY);
+  let mode: BuyMode = savedMode === '10' ? 10 : savedMode === 'max' ? 'max' : 1;
+  const modeButtons = ([1, 10, 'max'] as BuyMode[]).map((m) => {
+    const b = el('button', { type: 'button', class: 'sb-mode', 'data-mode': String(m), 'aria-pressed': 'false' });
+    b.addEventListener('click', () => {
+      mode = m;
+      save(BUY_MODE_KEY, String(m));
+      draw();
+    });
+    return b;
+  });
+  const modes = el('div', { class: 'sb-modes', role: 'group' }, ...modeButtons);
+  const upgradesButton = el('button', { type: 'button', class: 'sb-upgrades-open' });
+  const buyBar = el('div', { class: 'sb-buybar' }, modes, el('span', { class: 'sb-gap' }), upgradesButton);
+  /** How many levels a press buys now (0: not even one is affordable). */
+  function countFor(id: StandId): number {
+    if (mode === 'max') return affordable(game, id);
+    return affordable(game, id, mode) >= mode ? mode : 0;
+  }
+
   // ---- Upgrade rows ----
-  interface Row { id: StandId; node: HTMLElement; level: HTMLElement; bar: HTMLElement; price: HTMLButtonElement; name: HTMLElement }
+  interface Row { id: StandId; node: HTMLElement; level: HTMLElement; bar: HTMLElement; price: HTMLButtonElement; name: HTMLElement; tag: HTMLElement }
   const rows: Row[] = STANDS.map((stand) => {
     const name = el('b', { class: 'sb-name' });
+    const tag = el('span', { class: 'sb-tag' });
     const level = el('small', { class: 'sb-level' });
     const bar = el('span', { class: 'sb-bar-fill' });
     const price = el('button', { type: 'button', class: 'sb-price' });
@@ -411,13 +594,15 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       'li',
       { class: 'sb-row', 'data-stand': stand.id },
       art(ART[stand.id], 'sb-icon'),
-      el('span', { class: 'sb-row-text' }, name, level, el('span', { class: 'sb-bar' }, bar)),
+      el('span', { class: 'sb-row-text' }, el('span', { class: 'sb-name-line' }, name, tag), level, el('span', { class: 'sb-bar' }, bar)),
       price,
     );
     price.addEventListener('click', () => {
-      if (blocked || !buy(game, stand.id, 1)) return;
+      const before = game.levels[stand.id];
+      const count = countFor(stand.id);
+      if (blocked || count < 1 || !buy(game, stand.id, count)) return;
       const level = game.levels[stand.id];
-      playSound(milestoneFactor(level) > milestoneFactor(level - 1) ? 'snackMilestone' : 'snackBuy');
+      playSound(milestoneFactor(level) > milestoneFactor(before) ? 'snackMilestone' : 'snackBuy');
       node.classList.remove('sb-bought');
       void node.offsetWidth;
       node.classList.add('sb-bought');
@@ -425,9 +610,75 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       persist();
       draw();
     });
-    return { id: stand.id, node, level, bar, price, name };
+    return { id: stand.id, node, level, bar, price, name, tag };
   });
   const list = el('ul', { class: 'sb-rows' }, ...rows.map((r) => r.node));
+
+  function openUpgrades(): void {
+    const menuCount = STANDS.filter((st) => game.levels[st.id] >= MENU_LEVEL).length;
+    const menuLine = el(
+      'p',
+      { class: 'sb-panel-line sb-menu-line' },
+      menuCount > 0
+        ? t('menuBonus', { n: Math.round((menuFactor(game) - 1) * 100), count: menuCount, level: MENU_LEVEL })
+        : t('menuBonusNone', { bonus: Math.round(MENU_BONUS * 100), level: MENU_LEVEL }),
+    );
+    const open = recipesOpen(game);
+    const recipeRows = open.map((id) => {
+      const info = recipeInfo(game, id);
+      const buyButton = el('button', { type: 'button', class: 'sb-up-buy' }, art(coin, 'sb-coin small'), formatCoins(info.price));
+      buyButton.disabled = blocked || game.coins < info.price;
+      buyButton.title = t('buy', { price: formatCoins(info.price) });
+      buyButton.addEventListener('click', () => {
+        if (blocked || !buyRecipe(game, id)) return;
+        playSound('snackMilestone');
+        badges();
+        persist();
+        draw();
+        openUpgrades();
+      });
+      return el(
+        'li',
+        { class: 'sb-up', 'data-recipe': id },
+        art(ART[info.stand], 'sb-icon small'),
+        el('span', { class: 'sb-up-text' }, el('b', {}, t(`recipe.${id}` as TextKey)), el('small', {}, t('recipeDoubles', { stand: t(`stand.${info.stand}` as TextKey) }))),
+        buyButton,
+      );
+    });
+    const staffRows = STAFF.map((member) => {
+      const hired = game.staff.includes(member.id);
+      const hireButton = el('button', { type: 'button', class: `sb-up-buy${hired ? ' owned' : ''}` }, ...(hired ? [t('staffHired')] : [art(coin, 'sb-coin small'), formatCoins(member.cost)]));
+      hireButton.disabled = hired || blocked || game.coins < member.cost;
+      hireButton.addEventListener('click', () => {
+        if (blocked || !hire(game, member.id)) return;
+        playSound('snackMilestone');
+        badges();
+        persist();
+        draw();
+        openUpgrades();
+      });
+      return el(
+        'li',
+        { class: 'sb-up', 'data-staff': member.id },
+        el('span', { class: 'sb-up-icon', 'aria-hidden': 'true' }, STAFF_ICON[member.id]),
+        el('span', { class: 'sb-up-text' }, el('b', {}, t(`staff.${member.id}` as TextKey)), el('small', {}, t(`staffWhat.${member.id}` as TextKey))),
+        hireButton,
+      );
+    });
+    showPanel(
+      el('h3', {}, t('upgradesTitle')),
+      menuLine,
+      el('h4', { class: 'sb-up-title', title: t('recipesLine') }, t('recipesTitle')),
+      open.length ? el('ul', { class: 'sb-up-list' }, ...recipeRows) : el('p', { class: 'sb-panel-line' }, t('recipesNone')),
+      el('h4', { class: 'sb-up-title', title: t('staffLine') }, t('staffTitle')),
+      el('ul', { class: 'sb-up-list' }, ...staffRows),
+    );
+    panel.classList.add('sb-panel-upgrades');
+  }
+  upgradesButton.addEventListener('click', () => (panel.hidden ? openUpgrades() : hidePanel()));
+  /** Something in the Upgrades panel can be bought now (a dot on its button). */
+  const upgradeReady = () =>
+    !blocked && (recipesOpen(game).some((id) => recipeInfo(game, id).price <= game.coins) || STAFF.some((m) => !game.staff.includes(m.id) && m.cost <= game.coins));
   const more = el('p', { class: 'sb-more' });
 
   // ---- Footer: cinema and prestige ----
@@ -444,7 +695,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   note.hidden = true;
   const elsewhere = el('div', { class: 'sb-elsewhere' }, el('p', {}), el('button', { type: 'button', class: 'btn small-btn primary' }));
   elsewhere.hidden = true;
-  const box = el('div', { class: 'sb' }, head, sceneBox, list, more, foot, note, panel, elsewhere);
+  const box = el('div', { class: 'sb' }, head, sceneBox, buyBar, list, more, foot, note, panel, elsewhere);
   root.replaceChildren(box);
   const how = howToPlay(box, 'snackBar:howSeen', () => [
     { art: how1, title: t('how1Title'), line: t('how1') },
@@ -510,7 +761,23 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     guest = null;
     node.classList.add(happy ? 'sb-guest-happy' : 'sb-guest-bye');
     setTimeout(() => node.remove(), 700);
-    nextCustomer = 25 + Math.random() * 20;
+    // The longer line (staff, SB3) brings them twice as often.
+    nextCustomer = (25 + Math.random() * 20) / (game.staff.includes('long-line') ? 2 : 1);
+  }
+  /** Serves the waiting customer (a tap, or the usher). */
+  function serveGuest(x = 0, y = 0, byUsher = false): void {
+    if (blocked || !guest) return;
+    const ctx = room();
+    const got = serveCustomer(game, ctx);
+    if (!got) return;
+    ctx.tip?.();
+    playSound('snackServe');
+    popAt(got, x, y);
+    guestLeaves(true);
+    if (byUsher) flash(t('ushered'), 2200);
+    badges();
+    persist();
+    draw();
   }
   function guestComes(ctx: SoloRoom): void {
     const mood = customerMood({ ...ctx, duration: ctx.item?.duration ?? 0 });
@@ -521,16 +788,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     node.addEventListener('click', (event) => {
       event.stopPropagation();
       if (blocked || !guest || guest.node !== node) return;
-      const ctx = room();
-      const got = serveCustomer(game, ctx);
-      if (!got) return;
-      ctx.tip?.();
-      playSound('snackServe');
-      popAt(got, event.clientX, event.clientY);
-      guestLeaves(true);
-      badges();
-      persist();
-      draw();
+      serveGuest(event.clientX, event.clientY);
     });
     customers.replaceChildren(node);
     guest = { node, left: 25 };
@@ -538,7 +796,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   function customerTick(seconds: number, ctx: SoloRoom): void {
     if (guest) {
       guest.left -= seconds;
-      if (guest.left <= 0 || !ctx.playing) guestLeaves(false);
+      if (!ctx.playing) guestLeaves(false);
+      // The usher (staff, SB3) serves a customer who waited a few seconds.
+      else if (game.staff.includes('usher') && 25 - guest.left >= USHER_DELAY_S) serveGuest(0, 0, true);
+      else if (guest.left <= 0) guestLeaves(false);
       return;
     }
     if (!ctx.playing) return;
@@ -596,7 +857,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   function showPanel(...content: Node[]): void {
     const close = el('button', { type: 'button', class: 'sb-panel-close', 'aria-label': t('close'), title: t('close') }, '✕');
     close.addEventListener('click', hidePanel);
-    panel.classList.remove('sb-panel-receipt');
+    panel.classList.remove('sb-panel-receipt', 'sb-panel-upgrades');
     panel.replaceChildren(close, ...content);
     panel.hidden = false;
   }
@@ -673,16 +934,20 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     flash(t('placeOpen', { n: game.cinemas + 1, place: t(`place.${placeOf(game)}`), twist: t(`twist.${placeOf(game)}`) }), 7000);
   });
 
-  /** Which rows show in a small window: the newest stand I can buy and its neighbours (the next locked one too). */
-  function shownRows(compact: boolean): Set<StandId> {
-    if (!compact) return new Set(STANDS.map((s) => s.id));
+  /**
+   * Which rows show: the open stands and the next locked one (SB3: eight stands; a stand two steps away stays out of
+   * sight), at most `room` of them, the newest first to stay. `room` is worked out from the window's height (`fitRows`).
+   */
+  function shownRows(room: number): Set<StandId> {
     const firstLocked = STANDS.findIndex((s) => !unlocked(game, s.id));
     const end = firstLocked < 0 ? STANDS.length - 1 : firstLocked;
-    const start = Math.max(0, end - (ROWS_COMPACT - 1));
-    return new Set(STANDS.slice(start, start + ROWS_COMPACT).map((s) => s.id));
+    const start = Math.max(0, end - (room - 1));
+    return new Set(STANDS.slice(start, end + 1).map((s) => s.id));
   }
 
   let compact = false;
+  /** How many rows fit (SB3): the window's height minus everything but the list, over one row's height. */
+  let rowRoom = STANDS.length;
   function draw(): void {
     const ctx = room();
     const income = incomeRate(game, ctx);
@@ -735,30 +1000,51 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       const node = group(`decor-${d.id}`);
       if (node) node.style.display = game.decor.includes(d.id) ? '' : 'none';
     }
-    const shown = shownRows(compact);
+    const shown = shownRows(rowRoom);
+    const special = ctx.special;
+    const factor = globalFactor(game);
+    for (const b of modeButtons) {
+      const m = b.dataset.mode;
+      b.textContent = m === '10' ? t('buyTen') : m === 'max' ? t('buyMax') : t('buyOne');
+      b.setAttribute('aria-pressed', String(m === String(mode)));
+    }
+    modes.setAttribute('aria-label', t('buyMode'));
+    upgradesButton.textContent = t('upgrades');
+    upgradesButton.title = t('upgradesTitle');
+    upgradesButton.classList.toggle('ready', upgradeReady());
     rows.forEach((row, i) => {
       const stand = STANDS[i]!;
       const level = game.levels[stand.id];
       const open = unlocked(game, stand.id);
-      const price = costOf(stand.id, level, 1, placeCost(game, stand.id));
+      const factorPrice = placeCost(game, stand.id);
+      const count = open ? countFor(stand.id) : 0;
+      // The price shown: what this press buys (×1, ×10, or the most I can afford; one level when that is none yet).
+      const shownCount = count || (mode === 10 ? 10 : 1);
+      const price = costOf(stand.id, level, shownCount, factorPrice);
       const next = nextMilestone(level);
       const last = [0, ...MILESTONES].filter((m) => m <= level).pop() ?? 0;
       row.node.hidden = !shown.has(stand.id);
       row.node.classList.toggle('locked', !open);
+      row.node.classList.toggle('special', open && special === stand.id);
       row.name.textContent = t(`stand.${stand.id}`);
+      const tags = [special === stand.id ? t('special') : '', level >= MENU_LEVEL ? t('menuMark') : ''].filter(Boolean).join(' ');
+      row.tag.textContent = tags;
+      row.tag.hidden = !tags;
+      row.tag.title = [special === stand.id ? t('specialTitle') : '', level >= MENU_LEVEL ? t('menuTitle', { n: MENU_LEVEL }) : ''].filter(Boolean).join(' ');
+      const income = (lv: number) => standIncome({ ...game, levels: { ...game.levels, [stand.id]: lv } }, stand.id, special) * factor;
       row.level.textContent = open
         ? level > 0
-          ? t('level', { n: level, rate: fmtRate(standRate(stand, level) * starFactor(game)) })
-          : t('new', { rate: fmtRate(standRate(stand, 1) * starFactor(game)) })
+          ? t('level', { n: level, rate: fmtRate(income(level)) })
+          : t('new', { rate: fmtRate(income(1)) })
         : t('locked', { name: t(`stand.${STANDS[i - 1]?.id ?? stand.id}`) });
       row.bar.style.width = `${next ? Math.round(((level - last) / (next - last)) * 100) : 100}%`;
       row.bar.parentElement!.title = next ? t('milestone', { n: next }) : '';
-      row.price.replaceChildren(art(coin, 'sb-coin small'), formatCoins(price));
-      const can = open && affordable(game, stand.id, 1) > 0 && !blocked;
-      row.price.disabled = !can;
-      row.price.title = open ? t('buy', { price: formatCoins(price) }) : t('locked', { name: t(`stand.${STANDS[i - 1]?.id ?? stand.id}`) });
+      row.price.replaceChildren(art(coin, 'sb-coin small'), mode === 'max' && count > 1 ? `×${count} ` : mode === 10 ? '×10 ' : '', formatCoins(price));
+      row.price.disabled = !open || count < 1 || blocked;
+      row.price.title = open ? t('buyCount', { n: shownCount, price: formatCoins(price) }) : t('locked', { name: t(`stand.${STANDS[i - 1]?.id ?? stand.id}`) });
     });
-    const hidden = STANDS.length - shown.size;
+    const openCount = STANDS.filter((st) => unlocked(game, st.id)).length + (STANDS.some((st) => !unlocked(game, st.id)) ? 1 : 0);
+    const hidden = Math.max(0, openCount - shown.size);
     more.hidden = hidden < 1;
     more.textContent = t('more', { n: hidden });
     cinema.textContent = t('cinemaShort', { icon: PLACE_ICON[placeOf(game)], n: game.cinemas + 1, stars: game.stars });
@@ -836,12 +1122,28 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     draw();
   }, 1000);
 
+  /** Rows that fit the window (SB3): never a scrollbar; the rest is the "+N more" line. */
+  function fitRows(): void {
+    const height = root.clientHeight;
+    const first = rows.find((r) => !r.node.hidden)?.node;
+    if (!height || !first) return;
+    const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
+    const rowH = first.offsetHeight + gap;
+    // Everything but the list and the "+N more" line, which gets a fixed reserve (so showing it never changes the sum).
+    const others = box.scrollHeight - list.offsetHeight - (more.hidden ? 0 : more.offsetHeight) + MORE_RESERVE;
+    const next = Math.max(ROWS_COMPACT, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
+    if (next !== rowRoom) {
+      rowRoom = next;
+      draw();
+    }
+  }
   const fit = new ResizeObserver(() => {
     const next = root.clientHeight > 0 && root.clientHeight < COMPACT_H;
     if (next !== compact) {
       compact = next;
       draw();
     }
+    fitRows();
   });
   fit.observe(root);
   const onHide = () => persist();
@@ -918,9 +1220,40 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
         },
       },
       {
+        id: 'snackBar.upgrades',
+        title: { en: 'Snack Bar: every open recipe and all staff', tr: 'Büfe: açık bütün tarifler ve bütün çalışanlar' },
+        help: { en: 'Buys the recipes open now and hires all staff for free (sandbox save), then opens the Upgrades panel.', tr: 'Şu an açık tarifleri alır ve bütün çalışanları bedavaya işe alır (deneme kaydı), sonra Gelişmeler panelini açar.' },
+        tab: 'games',
+        where,
+        run: () => {
+          game.coins += 1e30;
+          for (let i = 0; i < RECIPE_IDS.length; i++) for (const id of recipesOpen(game)) buyRecipe(game, id);
+          for (const m of STAFF) hire(game, m.id);
+          game.coins = Math.max(0, game.coins - 1e30);
+          persist();
+          draw();
+          openUpgrades();
+          return `${game.recipes.length} recipes · ${game.staff.length} staff`;
+        },
+      },
+      {
+        id: 'snackBar.levels',
+        title: { en: 'Snack Bar: every stand to level 30', tr: 'Büfe: bütün stantlar 30. seviyeye' },
+        help: { en: 'Opens all eight stands at level 30 (the menu bonus and the first two recipes open).', tr: 'Sekiz standın hepsini 30. seviyede açar (menü bonusu ve ilk iki tarif açılır).' },
+        tab: 'games',
+        where,
+        run: () => {
+          for (const st of STANDS) game.levels[st.id] = Math.max(game.levels[st.id], 30);
+          persist();
+          draw();
+          fitRows();
+          return STANDS.map((st) => game.levels[st.id]).join('/');
+        },
+      },
+      {
         id: 'snackBar.place',
         title: { en: 'Snack Bar: the next cinema place', tr: 'Büfe: sıradaki sinema yeri' },
-        help: { en: 'Moves to the next place (lobby, drive-in, rooftop, art house…) without the prestige cost.', tr: 'Bedel ödemeden sıradaki yere geçer (lobi, arabalı sinema, çatı, sanat sineması…).' },
+        help: { en: 'Moves to the next place (lobby, drive-in, rooftop, art house, seaside, planetarium) without the prestige cost.', tr: 'Bedel ödemeden sıradaki yere geçer (lobi, arabalı sinema, çatı, sanat sineması, sahil, planetaryum).' },
         tab: 'games',
         where,
         run: () => {

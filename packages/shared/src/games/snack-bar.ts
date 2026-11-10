@@ -102,7 +102,7 @@ export function specialOf(day: number): StandId {
   let x = Math.floor(day) >>> 0;
   x ^= x >>> 16;
   x = Math.imul(x, 0x45d9f3b) >>> 0;
-  x ^= x >>> 16;
+  x = (x ^ (x >>> 16)) >>> 0; // a bitwise result is signed: back to unsigned, or the index could go negative
   return STAND_IDS[x % STAND_IDS.length]!;
 }
 /** Today's UTC day number (for `specialOf`). */
@@ -142,8 +142,13 @@ export const BUCKET_MIN = 25;
 export const BADGE_BONUS = 0.01;
 const RECEIPTS_KEEP = 20;
 
-export type PlaceId = 'lobby' | 'drive-in' | 'rooftop' | 'art-house';
-const PLACES_AFTER: readonly PlaceId[] = ['drive-in', 'rooftop', 'art-house'];
+export type PlaceId = 'lobby' | 'drive-in' | 'rooftop' | 'art-house' | 'seaside' | 'planetarium';
+/** SB3 added the seaside and the planetarium after the art house (a v1 save past its fourth cinema moves on the round). */
+const PLACES_AFTER: readonly PlaceId[] = ['drive-in', 'rooftop', 'art-house', 'seaside', 'planetarium'];
+/** The seaside: customers pay ×2. */
+export const SEASIDE_CUSTOMERS = 2;
+/** The planetarium: +25 % income while nobody else is in the room (a quiet night under the stars). */
+export const PLANETARIUM_BONUS = 0.25;
 /** The place of this cinema: the first is the lobby, then the three places in turn. */
 export const placeOf = (save: SnackSave): PlaceId => (save.cinemas < 1 ? 'lobby' : PLACES_AFTER[(save.cinemas - 1) % PLACES_AFTER.length]!);
 export const ROOFTOP_BONUS = 0.25;
@@ -366,7 +371,9 @@ export function togetherFactor(ctx: SnackContext): number {
 
 /** Coins per second right now (0 while the room's video is not playing). */
 export function incomeRate(save: SnackSave, ctx: SnackContext): number {
-  return ctx.playing ? baseRate(save, undefined, ctx.special) * togetherFactor(ctx) * (ctx.boost ? 1 + TIP_BOOST : 1) : 0;
+  if (!ctx.playing) return 0;
+  const alone = placeOf(save) === 'planetarium' && Math.floor(ctx.others) <= 0 ? 1 + PLANETARIUM_BONUS : 1;
+  return baseRate(save, undefined, ctx.special) * togetherFactor(ctx) * (ctx.boost ? 1 + TIP_BOOST : 1) * alone;
 }
 
 function earn(save: SnackSave, coins: number): void {
@@ -422,7 +429,9 @@ export function serve(save: SnackSave, ctx: SnackContext): number {
 /** A tap on a waiting customer: more than a plain tap. 0 while the video is not playing. */
 export function serveCustomer(save: SnackSave, ctx: SnackContext): number {
   if (!ctx.playing) return 0;
-  const coins = Math.max(CUSTOMER_MIN, incomeRate(save, ctx) * (save.staff.includes('manager') ? CUSTOMER_SECONDS_MANAGER : CUSTOMER_SECONDS));
+  const seconds = save.staff.includes('manager') ? CUSTOMER_SECONDS_MANAGER : CUSTOMER_SECONDS;
+  const place = placeOf(save) === 'seaside' ? SEASIDE_CUSTOMERS : 1;
+  const coins = Math.max(CUSTOMER_MIN, incomeRate(save, ctx) * seconds * place);
   served(save, ctx, coins);
   save.stats.customers += 1;
   return coins;

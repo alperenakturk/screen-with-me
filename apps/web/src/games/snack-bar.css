@@ -72,7 +72,7 @@
 
 .sb-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
 .sb-row {
-  display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; min-height: 50px; box-sizing: border-box; padding: 4px 6px 4px 6px;
+  display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; min-height: 46px; box-sizing: border-box; padding: 3px 6px 3px 6px;
   border-radius: 10px; background: rgba(255, 255, 255, 0.05);
 }
 .sb-row[hidden] { display: none; }
@@ -193,3 +193,47 @@
 }
 /* A phone sheet: the scene bigger (the Design session's 108 px). */
 html.phone .sb-scene { height: 108px; }
+
+/* SB3: buy ×1 / ×10 / Max, the Upgrades panel (recipes and staff), the daily special and the menu bonus mark. */
+.sb-buybar { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.sb-modes { display: inline-flex; padding: 2px; border-radius: 9px; background: rgba(255, 255, 255, 0.06); }
+.sb-mode {
+  min-width: 44px; min-height: 28px; padding: 2px 10px; border: 0; border-radius: 7px; background: transparent;
+  color: var(--sb-muted); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.sb-mode[aria-pressed='true'] { background: var(--sb-gold); color: var(--sb-ink); }
+.sb-upgrades-open {
+  position: relative; min-height: 30px; padding: 3px 12px; border: 0; border-radius: 9px; font-size: 13px; font-weight: 800;
+  background: rgba(255, 255, 255, 0.08); color: var(--sb-cream);
+}
+.sb-upgrades-open.ready { background: rgba(255, 198, 90, 0.18); box-shadow: inset 0 0 0 1px rgba(255, 198, 90, 0.55); }
+.sb-upgrades-open.ready::after {
+  content: ''; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--sb-gold);
+}
+.sb-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.sb-name-line .sb-name { flex: 0 1 auto; }
+.sb-tag { flex: none; font-size: 13px; font-weight: 800; color: var(--sb-gold); white-space: nowrap; }
+.sb-tag[hidden] { display: none; }
+.sb-row.special { box-shadow: inset 0 0 0 1px rgba(255, 198, 90, 0.5); background: rgba(255, 198, 90, 0.08); }
+.sb-icon.small { width: 26px; height: 26px; }
+.sb-panel-upgrades { gap: 6px; }
+.sb-panel-upgrades .sb-menu-line { color: var(--sb-gold); }
+.sb-up-title { margin: 4px 0 0; font-size: 14px; color: var(--sb-cream); }
+.sb-up-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.sb-up {
+  display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 8px; min-height: 40px; padding: 2px 6px;
+  border-radius: 9px; background: rgba(255, 255, 255, 0.05);
+}
+.sb-up-icon { font-size: 20px; line-height: 1; text-align: center; }
+.sb-up-text { display: flex; flex-direction: column; min-width: 0; }
+.sb-up-text b { font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-up-text small { font-size: 13px; line-height: 1.2; color: var(--sb-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-up-buy {
+  display: inline-flex; align-items: center; gap: 4px; min-width: 64px; min-height: 34px; justify-content: center; padding: 3px 9px;
+  border: 0; border-radius: 8px; font-size: 14px; font-weight: 800; background: var(--sb-gold); color: var(--sb-ink);
+  font-variant-numeric: tabular-nums;
+}
+.sb-up-buy:disabled { background: rgba(255, 255, 255, 0.08); color: var(--sb-muted); }
+.sb-up-buy.owned { background: transparent; color: var(--sb-teal); }
+/* A phone's targets are 44 px (GP2; the games sweep checks it). */
+html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy) { min-height: 44px; }
