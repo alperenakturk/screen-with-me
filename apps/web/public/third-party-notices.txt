@@ -1,6 +1,29 @@
 Third-party notices: Sidelit
 ============================
 
+Fonts. The site's fonts are self-hosted from /fonts/ (never loaded from a font service). Each is licensed under
+the SIL Open Font License, Version 1.1; its full licence text is beside the font files:
+
+- Bricolage Grotesque (the wordmark and titles), Copyright 2022 The Bricolage Grotesque Project Authors
+  (https://github.com/ateliertriay/bricolage): /fonts/OFL-bricolage-grotesque.txt
+- Figtree, Copyright 2022 The Figtree Project Authors (https://github.com/erikdkennedy/figtree):
+  /fonts/OFL-figtree.txt
+- Atkinson Hyperlegible Next, Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors
+  (https://github.com/googlefonts/atkinson-hyperlegible-next): /fonts/OFL-atkinson-hyperlegible-next.txt
+- Nunito, Copyright 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito): /fonts/OFL-nunito.txt
+- Lexend, Copyright 2019 The Lexend Project Authors (https://github.com/googlefonts/lexend): /fonts/OFL-lexend.txt
+- Fraunces, Copyright 2020 The Fraunces Project Authors (https://github.com/undercasetype/Fraunces):
+  /fonts/OFL-fraunces.txt
+- Manrope, Copyright 2019 The Manrope Project Authors (https://github.com/sharanda/manrope): /fonts/OFL-manrope.txt
+- Plus Jakarta Sans, Copyright 2020 The Plus Jakarta Sans Project Authors (https://github.com/tokotype/PlusJakartaSans):
+  /fonts/OFL-plus-jakarta-sans.txt
+
+All of them except the wordmark are the unmodified latin and latin-ext
+variable-weight cuts published by Fontsource (@fontsource-variable/*, same licence); the wordmark is a cut of
+Bricolage Grotesque ExtraBold.
+
+------------------------------------------------------------------------------------------------------------------
+
 The Five Frames word game (the daily word game played beside the video) ships two word lists.
 
 1. English allowed guesses: ENABLE word list (enable1.txt), five-letter words.
