@@ -74,6 +74,10 @@ type Box = { left: number; top: number; width: number; height: number };
 const MIN_ZOOM = 0.45;
 /** The most a game is scaled up in its own fullscreen (card GW). */
 const MAX_FULL = 2.4;
+/** PROP: the most the video's place scales a game up, and the free window's head + border its `size` includes. */
+const MAX_STAGE = 2.2;
+const CHROME_W = 2;
+const CHROME_H = 52;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
@@ -554,6 +558,19 @@ export function createGameStage(opts: StageOptions) {
       if (up > 1.001) {
         scale = up;
         own = [iw, ih];
+      }
+    } else if (!narrow.matches && mode === 'stage') {
+      // PROP (owner: "the same experience in both modes"): in the video's place the game keeps its own shape too, scaled
+      // to the box like the free window, from the shape that suits the box best: its own (`size`) or its wide one (`wide`).
+      const info = sizeOf(kind) as { size: readonly [number, number]; wide?: readonly [number, number] };
+      for (const [sw, sh] of [info.size, ...(info.wide ? [info.wide] : [])]) {
+        const iw = sw - CHROME_W;
+        const ih = sh - CHROME_H;
+        const up = Math.max(MIN_FIT, Math.min(W / iw, H / ih, MAX_STAGE));
+        if (!own || up > scale) {
+          scale = up;
+          own = [iw, ih];
+        }
       }
     }
     for (let i = 0; i < 4; i++) {
