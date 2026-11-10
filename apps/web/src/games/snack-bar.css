@@ -278,6 +278,9 @@ html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
   #game-stage .sb-upgrades-open { white-space: nowrap; padding-inline: 8px; }
   #game-stage .sb-buybar { gap: 4px; }
   #game-stage .sb-mode { min-width: 38px; padding-inline: 6px; }
+  /* The badge wall's nine columns of 30 px glyphs need 294 px: a little smaller in the narrow column. */
+  #game-stage .sb-badge-glyph { width: 26px; height: 26px; font-size: 15px; }
+  #game-stage .sb-badge { padding-block: 2px; }
 }
 @container game (max-width: 360px) and (max-height: 460px) {
   #game-stage .sb-scene { height: 80px; }

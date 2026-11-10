@@ -18,8 +18,8 @@ games' tip jar, cuttings and badges.
 
 ### 0.9.97.115 — 10 Nov
 - Snack Bar, Window Garden and Five Frames fit the narrow column beside the video on a laptop (down to about 320 px
-  wide), so on a 1366 × 768 or 1440 × 900 screen they open there, next to the film, instead of taking the video's place. Everything stays
-  readable: Five Frames' tickets and keys are a little slimmer there, Snack Bar shows its three newest stands, and the
+  wide), so on a 1366 × 768 or 1440 × 900 screen their window sits next to the film instead of over the video's edge.
+  Everything stays readable: Five Frames' tickets and keys are a little slimmer there, Snack Bar shows its three newest stands, and the
   badge wall in the video's place has more columns.
 - Snack Bar's "📜 Upgrades" (recipes and staff) no longer runs off the bottom: a long list scrolls inside it and its ✕
   stays in sight.
@@ -27,6 +27,15 @@ games' tip jar, cuttings and badges.
   Guess's card was cut at the bottom on a laptop).
 - Stub, the games' ticket mascot, now appears on every game cover in 🎮 and on Snack Bar's first "How to play" card,
   where the old mascot was still drawn.
+
+### 0.9.97.114 — 10 Nov
+- When a table opens in the video's place while the video plays, the video pauses for everyone, so nobody misses the
+  film under the game. A short note says "Video paused for the game"; press play when you want it again. (With a
+  YouTube video the table sits beside the video and nothing pauses.)
+- Snack Bar, Window Garden and Five Frames always play in their own window on the right; the button that moved them
+  into the video's place is gone.
+- With a YouTube video in cinema mode, a game you open no longer lands below the screen: the side panel comes back and
+  the game sits beside the video; turning cinema mode on puts an open game away (as fullscreen does).
 
 ### 0.9.97.113 — 10 Nov
 - Games look right in the video's place: a game you put in the video's place now fills it in proportion, with its

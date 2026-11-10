@@ -1,0 +1,84 @@
+/* MATINEE2 (Design, 10 Nov 2026): a calmer Matinee. Owner, 10 Nov: "far too bright, it tires the eyes; the video's
+   place comes in black, the jump is very harsh". Notes and numbers: README.md next to this file.
+   1. Tokens: replace the :root[data-theme='matinee'] block in apps/web/src/styles.css.
+   2. The video's place: the rules below the tokens go into apps/web/src/room.css (they replace card NP1's
+      ".player-wrap > .empty" block there). */
+
+/* ---- 1. Tokens: warm paper, not near-white; small surface steps; deeper ink accents (all AA, README) ---- */
+:root[data-theme='matinee'] {
+  color-scheme: light;
+  --bg: #e8dfcf; /* page: was #f4ede1 (luminance 0.85 → 0.74) */
+  --surface: #f1eadd; /* cards, side panel, dialogs: was #fffaf1 near-white (0.96 → 0.83) */
+  --surface-2: #e2d7c5; /* secondary buttons, tabs, inputs' fill */
+  --border: #c9b99f;
+  --field-border: #7d6c56;
+  --text: #26201a;
+  --muted: #564b3e;
+  --accent: #9a3517;
+  --accent-hover: #ab3f1c;
+  --on-accent: #ffffff;
+  --danger: #9e231a;
+  --ok: #165d3c;
+  --warn: #714a00;
+  --glow: none;
+  /* The video's place (new tokens, used in room.css below). */
+  --mat: #ddd1bc; /* the card the video sits in: one step darker than the page, a picture mat */
+  --bezel: #4a3d30; /* the thin dark frame where the mat meets the screen */
+  --screen: #231c16; /* deep warm umber instead of #000; films' own black bars stay black inside the picture */
+  --screen-lit: #43382c; /* the screen's softly lit middle (the empty room) */
+  /* No bright window light any more: one quiet gradient and the faint paper grain. */
+  --art: radial-gradient(1px 1px at 20px 30px, rgb(90 64 34 / 0.1) 99%, transparent),
+    radial-gradient(1px 1px at 70px 90px, rgb(90 64 34 / 0.08) 99%, transparent),
+    linear-gradient(#ebe3d4, #e3d9c8);
+  --art-size: 97px 103px, 131px 127px, 100% 100%;
+  --mascot: url('/themes/matinee-maskot.svg');
+}
+
+/* ---- 2. The video's place (room.css) ---- */
+/* Never in the extension overlay (html.shell-film): there the video's place is the hole the film page shows through and
+   must stay transparent (room.css `html.shell-film .player-wrap`); these rules would outrank it, hence :not(.shell-film). */
+/* The card around the video becomes a mat, a step darker than the paper, so the eye goes paper → mat → frame → screen
+   instead of paper → black. */
+:root[data-theme='matinee']:not(.shell-film) .theater:not(:fullscreen, .fake-fs) {
+  background: var(--mat);
+  border-color: color-mix(in srgb, var(--bezel) 22%, var(--mat));
+  box-shadow: inset 0 1px 0 rgb(255 250 240 / 0.5);
+}
+/* The screen: a warm umber, lit a little in the middle, a dark frame line and a soft shadow under it. The inner
+   vignette sits under the video (an inset shadow paints below children), so it only shows on the empty screen and in the
+   letterbox, never over a film. */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap {
+  background: radial-gradient(ellipse 70% 75% at 50% 42%, var(--screen-lit), var(--screen) 80%);
+  border: 2px solid var(--bezel);
+  /* Two soft rings bridge the mat and the frame, then a low shadow; inside, a gentle vignette. */
+  box-shadow:
+    0 0 0 4px rgb(74 61 48 / 0.16),
+    0 0 0 9px rgb(74 61 48 / 0.07),
+    0 14px 30px -14px rgb(58 40 22 / 0.55),
+    inset 0 0 60px rgb(10 6 2 / 0.4);
+}
+/* #player paints its own #000 over the frame (room.css .player): let the screen tone through. */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap > .player {
+  background: transparent;
+}
+/* A film playing: the letterbox is the screen tone (near-black, warm), the picture's own blacks stay black. */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap.filming,
+:root[data-theme='matinee']:not(.shell-film) .player-wrap:has(video, iframe) {
+  background: var(--screen);
+}
+/* Fullscreen keeps true black: nothing light around it there. */
+:root[data-theme='matinee']:not(.shell-film) .theater:is(:fullscreen, .fake-fs) .player-wrap {
+  background: #000;
+  border: 0;
+  box-shadow: none;
+}
+/* The empty room's words on the screen: a dark palette of their own (was card NP1's block, now on the umber). */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap > .empty {
+  --text: #f1e8d8;
+  --muted: #cbbfa9;
+  --surface: #2e271f;
+  --surface-2: #3a3128;
+  --border: #54483a;
+  --field-border: #8f8170;
+  color: var(--text);
+}
