@@ -99,6 +99,8 @@ const TEXT = {
     watchers: 'Watching: {n}',
     wins: '{n} won',
     offCount: '{n}/15 home',
+    offTray: 'Checkers borne off',
+    score: '🏆 {s}',
     endAsk: 'End this game and change?',
     endAskText: 'The game on the table ends for both players; the score starts again on the new board.',
     endYes: 'End and change',
@@ -130,9 +132,9 @@ const TEXT = {
     how_chess2: 'Checkmate wins',
     how_chess2Line: 'Trap the other king so it has no way out.',
     how_backgammon1: 'Roll and move',
-    how_backgammon1Line: 'Roll the dice, then move your checkers by the numbers you rolled.',
+    how_backgammon1Line: 'Roll the dice. The checkers with a gold ring can move: tap one, then the point it goes to.',
     how_backgammon2: 'Bring them home',
-    how_backgammon2Line: 'Get all 15 into your home corner, then bear them off first.',
+    how_backgammon2Line: 'Bring all 15 to your home corner, then bear them off first. Pips: how far your checkers still have to go.',
     how_reversi1: 'Close a line',
     how_reversi1Line: 'Put a disc so the other colour sits between it and one of yours: those discs turn over.',
     how_reversi2: 'Most discs win',
@@ -180,6 +182,8 @@ const TEXT = {
     watchers: 'İzleyen: {n}',
     wins: '{n} galibiyet',
     offCount: '{n}/15 toplandı',
+    offTray: 'Toplanan pullar',
+    score: '🏆 {s}',
     endAsk: 'Bu oyun bitsin ve oyun değişsin mi?',
     endAskText: 'Masadaki oyun iki oyuncu için de biter; yeni oyunda skor sıfırdan başlar.',
     endYes: 'Bitir ve değiştir',
@@ -211,9 +215,9 @@ const TEXT = {
     how_chess2: 'Şah mat kazanır',
     how_chess2Line: 'Karşı şahı kaçacak yeri kalmayacak şekilde kıstır.',
     how_backgammon1: 'Zar at ve oyna',
-    how_backgammon1Line: 'Zarları at, pullarını gelen sayılar kadar ilerlet.',
+    how_backgammon1Line: 'Zarları at. Altın halkalı pullar oynayabilir: birine, sonra gideceği haneye dokun.',
     how_backgammon2: 'Eve topla',
-    how_backgammon2Line: '15 pulun hepsini evine getir, sonra ilk sen topla.',
+    how_backgammon2Line: '15 pulun hepsini evine getir, sonra ilk sen topla. Kalan yol: pullarının daha ne kadar gideceği.',
     how_reversi1: 'Sırayı kapat',
     how_reversi1Line: 'Taşını, karşı renk seninkiyle onun arasında kalacak yere koy: o taşlar döner.',
     how_reversi2: 'Çok taş kazanır',
@@ -531,7 +535,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
         person && !person.online ? el('small', {}, ` · ${t('games.offline')}`) : '',
       ),
       seatExtra(mark),
-      el('span', { class: 'mt-wins', title: tc('wins', { n: state?.score[mark] ?? 0 }) }, String(state?.score[mark] ?? 0)),
+      // THEMEG: the wins count says what it counts (a bare "0" beside the other counters meant nothing).
+      el('span', { class: 'mt-wins', title: tc('wins', { n: state?.score[mark] ?? 0 }) }, el('i', { class: 'mt-cup', 'aria-hidden': 'true' }, '🏆'), String(state?.score[mark] ?? 0)),
     );
   }
 
@@ -613,7 +618,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const seat = mySeat();
     personCard(0, seats[0]);
     personCard(1, seats[1]);
-    app.querySelector('#xox-score')!.textContent = score.draw ? `${score.X} – ${score.O} · ${score.draw}=` : `${score.X} – ${score.O}`;
+    app.querySelector('#xox-score')!.setAttribute('title', tc('wins', { n: `${score.X} – ${score.O}` }));
+    app.querySelector('#xox-score')!.textContent = tc('score', { s: score.draw ? `${score.X} – ${score.O} · ${score.draw}=` : `${score.X} – ${score.O}` });
     const ready = seats.every((s) => s !== null);
     const myTurn = seat !== -1 && ready && game.winner === null && game.turn === MARKS[seat];
     setGameLive(seat !== -1 && ready && game.winner === null && !!state.started && !seats.some((s) => s?.bot));
@@ -737,7 +743,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       });
     } else result.hide();
     sitButton.hidden = seat !== -1 || seats.every((s) => s && s.online && !s.bot);
-    standButton.hidden = seat === -1;
+    // THEMEG: "Just watch" (give up the seat) never sits under your own turn, where it read like a way to forfeit by mistake.
+    standButton.hidden = seat === -1 || myTurn;
     // Stub the bot (owner's pick 6 A): offered to a seated player while the other seat is free.
     const other = seat === -1 ? null : seats[seat === 0 ? 1 : 0];
     const canBot = seat !== -1 && (!other || !other.online || !!other.bot);
@@ -815,6 +822,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       } else {
         cell.className = `bg-off${targets.has(i) ? ' target' : ''}`;
         cell.replaceChildren(el('span', { class: 'bg-off-o' }, `⚫ ${bg.off.O}`), el('span', { class: 'bg-off-x' }, `⚪ ${bg.off.X}`));
+        cell.title = tc('offTray');
         cell.setAttribute('aria-label', `${tc('off')}: ${tc('checkers', { n: bg.off.X, colour: colourOf('X') })}, ${tc('checkers', { n: bg.off.O, colour: colourOf('O') })}`);
       }
       cell.disabled = !(movable.has(i) || targets.has(i));

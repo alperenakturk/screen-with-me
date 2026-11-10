@@ -222,7 +222,7 @@ async function placeIn(page, mode) {
             const box = document.querySelector('#game-stage .game-stage-body').getBoundingClientRect();
             const out = [];
             for (let i = 0; i < 5 && !layer.hidden; i++) {
-              for (const e of layer.querySelectorAll('.htp-art, .htp-title, .htp-line, .htp-btn:not([hidden]), .htp-skip')) {
+              for (const e of layer.querySelectorAll('.htp-art, .htp-title, .htp-line, .htp-btn:not([hidden]), .htp-skip:not([hidden])')) {
                 const r = e.getBoundingClientRect();
                 if (r.bottom > box.bottom + 1 || r.top < box.top - 1 || r.right > box.right + 1 || r.left < box.left - 1) out.push(`card ${i + 1} ${e.className}`);
               }

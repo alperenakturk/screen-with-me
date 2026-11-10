@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ROOM_GAME_KINDS } from '../protocol.ts';
-import { GAME_CATALOG, GAME_NEWS, LATEST_NEWS, compareVersions, unseenNews } from './catalog.ts';
+import { GAME_CATALOG, GAME_NEWS, LATEST_NEWS, badgeFresh, compareVersions, unseenNews } from './catalog.ts';
 
 describe('Games catalog', () => {
   it('every room game is in the catalog', () => {
@@ -20,5 +20,16 @@ describe('Games catalog', () => {
     expect(unseenNews(LATEST_NEWS)).toEqual([]);
     expect(unseenNews(null).length).toBeGreaterThan(0);
     expect(unseenNews('0.9.91.6').every((n) => compareVersions(n.v, '0.9.91.6') > 0)).toBe(true);
+  });
+});
+
+describe('Hall badges (THEMEG)', () => {
+  it('show in the release of the note and the next one only', () => {
+    expect(badgeFresh({ v: '0.9.97.117' }, '0.9.97.117')).toBe(true);
+    expect(badgeFresh({ v: '0.9.97.117' }, '0.9.97.118')).toBe(true);
+    expect(badgeFresh({ v: '0.9.97.117' }, '0.9.97.119')).toBe(false);
+    expect(badgeFresh({ v: '0.9.97.117' }, '0.9.98.1')).toBe(false);
+    expect(badgeFresh({ v: '0.9.97.117' }, '0.9.97.116')).toBe(false);
+    expect(badgeFresh({ v: '0.9.91.6' }, '0.9.97.117')).toBe(false);
   });
 });

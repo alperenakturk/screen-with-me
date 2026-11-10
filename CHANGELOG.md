@@ -29,6 +29,17 @@ games' tip jar, cuttings and badges.
   readable instead of faded; "Show activity" appears only once there is activity; the invite window's first row lines
   up with the rest; Turkish step 1 says "Arkadaşlarını davet et".
 
+### 0.9.97.117 — 10 Nov
+- Games follow the room's theme: the "How to play" cards, the tables' "?", the dice and the turn ring take the theme's
+  colours (a light theme gets a light card), and the games hall is solid on the picture themes.
+- Backgammon no longer shows a pink "warning" ring: the player whose turn it is gets the theme's own colour, the dice
+  are readable on light themes, the counters say what they count (🏆 wins), the How to play cards explain the gold
+  rings (checkers that can move) and the pip count, and "Just watch" stays out of the way on your own turn.
+- The games hall: text is at least 13 px, What's new reads in full, and NEW / UPDATED shows only for the release that
+  brought the change and the next one.
+- Window Garden: the button always says "💧 Water" (a full pot shows it outlined, not faded), and resting shows a moon.
+- "How to play" cards have one way out: "Skip" beside Back / Next instead of a ✕ in the corner.
+
 ### 0.9.97.116 — 10 Nov
 - The Matinee theme is calmer: warmer, softer paper instead of near-white cards, and the video sits in a framed screen
   (a darker mat, a thin dark frame, a warm deep-brown screen) instead of a black slab on light paper. Fullscreen stays

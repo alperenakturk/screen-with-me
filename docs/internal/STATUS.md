@@ -695,6 +695,10 @@ with the same friend:
   type a word in Five Frames, buy a stand in Snack Bar, water a pot in Window Garden. Open Snack Bar's "📜 Gelişmeler":
   the whole list can be reached (it scrolls inside), ✕ always visible. Open any table's "?" in the video's place on the
   laptop: every card shows whole, its buttons visible.
+- [ ] G20. Games in the room's theme (THEMEG): switch to Matinee (Settings › My screen). Open Snack Bar: its "How to
+  play" card is light, with "Skip" at the bottom (no ✕ in the corner). On a phone, play backgammon against Stub: no
+  pink ring, the dice are readable, 🏆 shows the wins, "Just watch" is gone on your turn; its "?" explains the gold
+  rings. Open the games hall: only Classics says UPDATED, What's new reads in full. Window Garden: "💧 Water".
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

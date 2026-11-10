@@ -52,8 +52,9 @@ const SCREENS = {
   join: { what: 'Join card (an invited person, before entering)', go: (p) => p.goto(`${SITE}/r/${room()}`).then(() => p.waitForSelector('#name')) },
   room: { what: 'Empty room after joining', room: true },
   'room-video': { what: 'Room playing a video file', room: true, video: true },
-  // Computers only: a phone's room is one column and an upright tablet keeps its columns (the button closes nothing).
-  'room-side-closed': { what: 'Room playing a video, side panel closed', room: true, video: true, sizes: ['laptop', 'desktop'], after: (p) => p.evaluate(() => document.querySelector('#side-toggle')?.click()) },
+  // Cinema mode (card 14) is the room's only way to hide the side panel. Computers only: a phone's room is one column
+  // and a touch-only tablet doesn't offer it (it needs a mouse for its edges).
+  'room-cinema': { what: 'Room playing a video in cinema mode (#side-toggle: the side panel hides, the video fills the page)', room: true, video: true, sizes: ['laptop', 'desktop'], after: (p) => p.evaluate(() => document.querySelector('#side-toggle')?.click()) },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
       `settings-${sec}`,
@@ -71,7 +72,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/src\/(home|app)\.|^apps\/web\/index\.html|^apps\/web\/src\/styles\.css|^apps\/web\/src\/themes/, ['home', 'join', 'room']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],
-  [/^apps\/web\/src\/(room\.|ui\/|phone|tablet|i18n)/, ['join', 'room', 'room-video', 'room-side-closed']],
+  [/^apps\/web\/src\/(room\.|ui\/|phone|tablet|i18n)/, ['join', 'room', 'room-video', 'room-cinema']],
   [/^apps\/web\//, ['room']],
 ];
 let roomSeq = 0;

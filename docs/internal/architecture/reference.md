@@ -1220,7 +1220,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   three chunks): picture cards from `games/art/tutorial/` (Design's, no words in them, ids prefixed `htpN-`), texts in
   each game's `TEXT`, shown on the first open (`snackBar:howSeen`, `windowGarden:howSeen`, `fiveFrames:howSeen`, set on
   close) and from the "?" (`.htp-open`) in the game's own top bar; ✕ / Esc / ← → / Enter while it has the focus (it never
-  takes it); the game keeps ticking behind it. Harness `scripts/harness/side-games-polish/run.cjs` (39 checks). Harness
+  takes it); the game keeps ticking behind it. Harness `scripts/harness/side-games-polish/run.cjs` (39 checks).
+  **THEMEG:** the card is drawn in the room theme's tokens (`--surface-2` → `--surface` over `--bg`, so it stays opaque on
+  the scene themes; `--text`, `--muted`, `--accent`, Next in `--accent-btn`); the tables' "?" (`.htp-head`) looks like
+  the head's other `.btn`s; the side games' round "?" keeps its game's dark bar colours. Classics: the pink / blue turn
+  ring is for the X / O boards only, the other boards ring the turn in `--accent`; backgammon's dice are `--text`. The
+  hall's UPDATED badge is an accent tint and `.game-menu` sits on `--bg` (gallery.css). Checks: `table-how` (Matinee).
+  0.9.97.117 also: "Skip" (`.htp-skip`, words, hidden on the last card) sits in `.htp-actions` instead of a corner ✕;
+  hall text ≥ 13 px and What's new unclamped (gallery.css); a NEW / UPDATED badge only while `badgeFresh(note,
+  SITE_VERSION)` (the note's release or the next; `SITE_VERSION` read from `.footer-version`); Window Garden's Water
+  button always "💧 Water" (`.wg-btn.full` when the pot is full), 🌙 for resting; Classics' wins pill and score carry
+  🏆, the backgammon tray a title, "Just watch" hidden on your own turn. Harness
   `scripts/harness/five-frames/run.cjs` (20 checks: marks against the real list via the dev server's modules). Harness `scripts/harness/snack-bar/run.cjs` (25 checks).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
@@ -1876,7 +1886,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once
   10–12 min after it. `wait-live.mjs` now also waits for 60 s with no canary drop (at most 4 min more, then a warning);
   `run.mjs` keeps 2 canaries open beside the live suite and, when a file fails, prints whether the server dropped
-  canaries meanwhile ("objects were restarting") or not ("the cause is likely the code or the test"). Results are not
+  canaries meanwhile ("objects were restarting"), whether its own connection got a 1006 from the server (objects
+  restart one at a time, so a canary in another room can miss it: "an object restart or a crash in that object"), or
+  neither ("the cause is likely the code or the test").
+  **For people, not only tests:** a deploy restarts room and game objects one at a time for several minutes (seen 2.5–5
+  min after it, once 10–12 min), so a real person in a room during a release can see one reconnect too (the site
+  reconnects by itself). Every release deploys, so an owner's hand test right after a release may meet one; that is a
+  deploy, not a bug, unless it repeats away from a release. Results are not
   changed: a file that fails its retry is red either way. `host.mjs` / `modes.mjs` timeouts name the socket's close code
   and the last messages.
   **First look (QA1 part 3, `scripts/shots.cjs`):** screenshots of every screen a change touched at laptop 1366×768,
