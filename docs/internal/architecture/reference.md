@@ -1420,7 +1420,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `--accent` / `--accent-btn` / `--on-accent`); its soft text is `--hm-soft` (from `--text` and `--muted`). Harness
   `scripts/harness/contrast/run.cjs` (CI, `site` job): every theme's text against the real pixels behind it (WCAG AA,
   4.5:1 or 3:1 for large text; the worst 15 % of the background counts) on home at 1366 and 1920, help, join, room,
-  settings and the games hall, and the plain themes on a Pixel 7; `REPORT_ONLY=1` for audits. Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). Harness
+  settings and the games hall, and the plain themes on a Pixel 7; `REPORT_ONLY=1` for audits. **Font (card FONT1, Design's
+  `docs/internal/design/fonts.md`):** `fonts.ts` (`FONTS` device / sidelit / readable / rounded / easy, `DEFAULT_FONT`
+  device until the owner picks, `localStorage` `font`, `applyFont` sets `data-font` on `<html>` from `app.ts` before the
+  page is drawn, `fontchange` event); styles.css has one `@font-face` pair per family (latin + latin-ext by
+  `unicode-range`, self-hosted OFL variable cuts in `public/fonts/` with their licences, also in
+  `third-party-notices.txt`; never a font CDN) and maps `data-font` to `--font` / `--font-title`, so only the picked
+  font is fetched. The home titles use `--font-title` (`'Sidelit Title'`, the variable Bricolage Grotesque: the
+  wordmark cut lacks ğ ş ı İ). Setting: ⚙️ My screen `#opt-font` (`ui/settings.ts`); Test Lab `fonts.next`,
+  `fonts.<id>` (this page only) and a status line. Harness `scripts/harness/fonts/run.cjs` (CI, `site` job). Card 15e (0.9.97.33): one soft cone, a tidy device row, equal margins (see the Live line). Harness
   `scripts/harness/home/run.cjs` (5 sizes × EN + TR).
 - **Bigger room on a computer (0.9.92.7, owner: "too much empty space"):** above 860 px wide (not the film page,
   Shorts view, TV or phone) `main` has no 1280 px cap; the room's grid is `minmax(0, max(--stage-w, 560px))` +
