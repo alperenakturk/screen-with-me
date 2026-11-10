@@ -92,12 +92,13 @@ const where = (page) =>
       check(back.shown && !back.overlap, `${label}: … and the window is clear of the player again`, back);
       // W1 (owner): no game has its own full screen any more (no ⛶ in any head).
       check(!(await page.$('#game-stage .game-full')), `${label}: no ⛶ in the game's head`);
-      // A video that isn't YouTube (the sync test): "in the video's place" is offered again.
+      // A video that isn't YouTube (the sync test): the table goes back to the video's place (0.9.97.112: tables always
+      // play there unless the player is YouTube's).
       await page.evaluate(() => window.__swmLab.run('games.open.classics'));
       await page.fill('#media-input', `${SITE}/sample.mp4`);
       await page.evaluate(() => document.querySelector('#media-form button[value="load"]')?.click());
-      const free = await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail') && document.querySelector('#game-stage .game-place')?.hidden === false));
-      check(!!free, `${label}: with a video that isn't YouTube "in the video's place" is offered again`);
+      const free = await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail') && document.getElementById('game-stage').dataset.place === 'stage'));
+      check(!!free, `${label}: with a video that isn't YouTube the table plays in the video's place again`);
     }
     check(!errors.length, `${label}: no page errors`, errors.slice(0, 2));
     await ctx.close();

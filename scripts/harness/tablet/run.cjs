@@ -94,13 +94,19 @@ function uprightChecks(where, m) {
  * side panel), whole on screen, as big as the space beside the chat allows, and the page never scrolls.
  */
 /** The windows' own widths (catalog `size`): a window may stop growing there. */
-const OWN_WIDTH = { classics: 600, sea: 780 };
+const OWN_WIDTH = { snack: 400, garden: 400 };
+// 0.9.97.112 (owner): the tables always play in the video's place; the free window is the side games' (checked here).
 async function gameChecks(page, where, chatSel) {
-  for (const kind of ['classics', 'sea']) {
+  await page.evaluate(() => {
+    for (const k of ['snackBar:howSeen', 'windowGarden:howSeen']) localStorage.setItem(k, '1');
+  });
+  for (const kind of ['snack', 'garden']) {
     await page.evaluate(() => document.querySelector('#dock-game')?.click());
     await page.waitForSelector('#game-menu:not([hidden])');
     await page.waitForTimeout(400);
-    await page.evaluate((k) => document.querySelector(`#game-menu [data-kind="${k}"]`)?.click(), kind);
+    await page.evaluate(() => document.querySelector('#game-menu [data-tab="side"]')?.click());
+    await page.waitForTimeout(300);
+    await page.evaluate((k) => document.querySelector(`#game-menu [data-solo="${k}"]`)?.click(), kind);
     await page.waitForSelector('#game-stage:not([hidden])', { timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(1200);
     const g = await page.evaluate((sel) => {
@@ -129,7 +135,7 @@ async function gameChecks(page, where, chatSel) {
     check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2, `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
     check(g.minText >= 11, `${where}, ${kind}: its text stays readable (≥ 11 px)`, g.minText);
     check(g.sh <= g.vh + 1, `${where}, ${kind}: the page never scrolls`, { sh: g.sh, vh: g.vh });
-    if (kind === 'classics') {
+    if (kind === 'snack') {
       // G98 (lane A): the window moves by its head and stays on screen; card GT: and it still keeps off the chat.
       const head = await page.evaluate(() => {
         const r = document.querySelector('#game-stage .game-stage-title')?.getBoundingClientRect();
@@ -149,11 +155,30 @@ async function gameChecks(page, where, chatSel) {
       const clear = !c || moved.r <= c.l + 1 || moved.l >= c.r - 1 || moved.b <= c.t + 1 || moved.t >= c.b - 1;
       check(head && (moved.l !== s.l || moved.t !== s.t) && moved.r <= moved.vw && moved.b <= moved.vh && clear, `${where}, ${kind}: the window moves by its head, stays on screen and off the chat`, { before: s, moved, chat: c });
     }
-    await page.evaluate(() => document.querySelector('#game-stage .game-end, #game-stage .game-leave')?.click());
-    await page.waitForTimeout(300);
-    await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
+    await page.evaluate(() => document.querySelector('#game-stage .game-minimize')?.click());
     await page.waitForTimeout(600);
   }
+  // A table plays in the video's place, whole on screen, clear of the chat.
+  await page.evaluate(() => document.querySelector('#dock-game')?.click());
+  await page.waitForSelector('#game-menu:not([hidden])');
+  await page.waitForTimeout(400);
+  await page.evaluate(() => document.querySelector('#game-menu [data-tab="together"]')?.click());
+  await page.waitForTimeout(300);
+  await page.evaluate(() => document.querySelector('#game-menu [data-kind="sea"]')?.click());
+  await page.waitForSelector('#game-stage:not([hidden])', { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const t = await page.evaluate((sel) => {
+    const s = document.querySelector('#game-stage');
+    const r = s.getBoundingClientRect();
+    const c = document.querySelector(sel)?.getBoundingClientRect();
+    const apart = !c || r.right <= c.left + 1 || r.left >= c.right - 1 || r.bottom <= c.top + 1 || r.top >= c.bottom - 1;
+    return { place: s.dataset.place, inVideo: !!s.parentElement?.classList.contains('player-wrap'), apart, onScreen: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 };
+  }, chatSel);
+  check(t.place === 'stage' && t.inVideo && t.apart && t.onScreen, `${where}, sea: a table plays in the video's place, clear of the chat`, t);
+  await page.evaluate(() => document.querySelector('#game-stage .game-end')?.click());
+  await page.waitForTimeout(300);
+  await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());
+  await page.waitForTimeout(600);
 }
 
 (async () => {
