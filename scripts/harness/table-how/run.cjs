@@ -142,7 +142,17 @@ async function person(browser, opts, lang = 'en', more = {}) {
     check(open && m.color === text && !/34,\s*26,\s*74/.test(m.bg), 'Matinee: Snack Bar\'s How to play card takes the theme (its text colour, no navy)', { open, ...m, text });
     await page.evaluate(() => document.querySelector('#game-stage .htp-skip')?.click());
     await page.evaluate(() => document.querySelector('#game-stage .game-hub-open')?.click());
-    const badge = await until(() => page.evaluate(() => { const b = document.querySelector('#game-menu .hub-badge.updated'); return b ? getComputedStyle(b).backgroundColor : null; }), 6000);
+    // The badge shows only in its note's release and the next (`badgeFresh`); once the site's version moves on, the
+    // check puts a badge of its own into the hall so the theme's colour is still measured.
+    await until(() => page.evaluate(() => !!document.querySelector('#game-menu .hub-card b')), 6000);
+    const badge = await page.evaluate(() => {
+      let b = document.querySelector('#game-menu .hub-badge.updated');
+      if (!b) {
+        b = Object.assign(document.createElement('span'), { className: 'hub-badge updated', textContent: 'Updated' });
+        document.querySelector('#game-menu .hub-card b')?.append(b);
+      }
+      return b.isConnected ? getComputedStyle(b).backgroundColor : null;
+    });
     check(!!badge && !/111,\s*211,\s*255/.test(badge), 'Matinee: the hall\'s UPDATED badge is not the old light blue', badge);
     await ctx.close();
   }
