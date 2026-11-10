@@ -144,7 +144,9 @@ export function registerGamesLab(
         available: () => {
           const stage = document.getElementById('game-stage');
           if (!stage || stage.hidden) return { en: 'open a game first', tr: 'önce bir oyun aç' };
-          return stage.classList.contains('float') || stage.classList.contains('stage') ? true : { en: 'not on a narrow screen (a phone has one placement)', tr: 'dar ekranda değil (telefonda tek yerleşim var)' };
+          if (!stage.classList.contains('float') && !stage.classList.contains('stage')) return { en: 'not on a narrow screen (a phone has one placement)', tr: 'dar ekranda değil (telefonda tek yerleşim var)' };
+          const toggle = stage.querySelector<HTMLElement>('.game-place');
+          return toggle && !toggle.hidden ? true : { en: "a table always plays in the video's place (side games only)", tr: 'masa hep videonun yerinde oynanır (sadece yan oyunlar)' };
         },
         run: () => {
           const stage = document.getElementById('game-stage');

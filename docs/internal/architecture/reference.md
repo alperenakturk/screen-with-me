@@ -922,23 +922,28 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `container-type: size`, `min(23cqw, 48cqh)`), the Classics shelf in one row, the lobbies full width. The window
   head's "in the video's place" icon (`place-stage`) is a frame filled by the game, distinct from ⛶. The Last Heart
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
-  **Game window head and free window (lane W, bugs W1–W5, owner 10 Nov 2026):** the head is (placement switch) · 🎮 ·
-  ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own slot (`.game-head-slot`:
-  "?" How to play, Classics' shelf). 🎮 opens the games hall **under itself** (`hubFromHead`: the menu moves into a fixed
-  `.head-game-wrap`, inside `document.fullscreenElement` while there is one); it used to open beside the toolbar's 🎮,
-  which a computer hides. No game has its own full screen any more (owner, 10 Nov 2026: card GW's ⛶ and its whole-tab
-  `.game-max` view were removed): two placements only, the video's place and the free window, which lives inside the
-  video's fullscreen while there is one. Over a YouTube video (`overYoutube`, YTG) the placement switch is hidden (only the
-  free window is possible; it used to show a disabled "in the video's place") and the head's tooltip
-  (`game.besideYoutube`) says why. The free window is positioned in `posRoom` (the page, or the fullscreen view; tablets
-  clear of the chat) and only its size is limited by `area` (the strip beside a YouTube player); over YouTube
-  `clearOfPlayer` settles it just beside the player on the nearest side that fits, keeping its side while dragged
-  (`SIDE_STICK`) so it never jumps (the drag used to be locked inside the one strip beside the player). Over a video
-  file or the film page nothing pushes it away. Each game remembers its spot (`gameFloat:spot:<kind>`, falling back to
-  the old shared `gameFloat:spot`) and zoom (`gameFloat:zoom:<kind>`); a drag follows the mouse once per frame; a double
-  click on the head (or the Test Lab's `gameWindow.reset`) puts it back at its own size on the right edge. Test Lab:
-  `gameWindow.reset`, `gameWindow.hall` and a 📊 status line (`stage.ts`). Harness: `scripts/harness/game-window-head`
-  (CI `games-more`).
+  **Game window head and free window (lane W, bugs W1–W5 + 0.9.97.112, owner 10 Nov 2026):** the head is (placement
+  switch) · 🎮 · ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own
+  slot (`.game-head-slot`: "?" How to play, Classics' shelf). No game has its own full screen (card GW's ⛶ and `.game-max`
+  were removed): the free window lives inside the video's fullscreen while there is one. **Where a game plays
+  (`placeOf`):** a table uses my pick or the catalog's free window; the owner's decision that the tables always play in
+  the video's place without a switch (over YouTube, `overYoutube` / YTG, beside the player) is the flag
+  `STAGE_READY` (it also sends a side game with no room beside the video to the video's place), off until card .113 makes their layouts read well there; a side game uses my pick (`gamePlace:<kind>`), else the free
+  window in its **home** (`homeBox`: the column right of the theater, under the top bar, over the side panel, as big as
+  the column allows up to `maxSize` and never below `minSize`; no fit there → the largest strip beside the video, else
+  null) when one exists, else (with `STAGE_READY`) the video's place, until then its own-size window at the right edge; tablets, phones and the video's fullscreen keep the catalog default.
+  `#game-stage[data-place]` mirrors the mode for the games' CSS. **The free window:** positioned in `posRoom` (the page,
+  or the fullscreen view; tablets clear of the chat), its size limited by `area` (the strip beside a YouTube player);
+  over YouTube `clearOfPlayer` settles it beside the player on the nearest side that fits, keeping its side while dragged
+  (`SIDE_STICK`). Once moved or resized, each game remembers its spot (`gameFloat:at:<kind>`; the older
+  `gameFloat:spot[:<kind>]` keys are ignored, so every game first opens in its home) and zoom (`gameFloat:zoom:<kind>`,
+  saved as it leaves its home). A drag follows the mouse once per frame; drag and resize live only while the button is
+  held (`buttons`, `lostpointercapture`, `pointercancel` end them), so hovering the corner never moves the window. A double
+  click on the head (or `gameWindow.reset`) forgets the spot. **🎮 in the head** (`hubFromHead`): the hall moves into a
+  fixed `.head-game-wrap` (inside `document.fullscreenElement` while there is one); from a free window it slides out of
+  the window's left side, level with its top (its right side when there is no room), elsewhere it hangs under the 🎮
+  (`data-side` on the wrap); a drag closes it. Test Lab: `gameWindow.reset`, `gameWindow.hall` and a 📊 status line
+  (placement, home, where the hall opened). Harness: `scripts/harness/game-window-head` (CI `games-more`).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code
@@ -999,8 +1004,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`duel.css`); Last Heart's seat in two columns (cards and actions | special moves) and its lobby card in two
   columns (`poker.css`, new, with the poker chunk); the Draw & Guess lobby card in two columns and the canvas beside a
   360 px column (`lobby.css`); Quiz (its 7 : 4 rule), Sea Battle, Snack Bar and Window Garden reflow as they were.
-  The free window, phones and narrow screens are unchanged. Lab command `games.place` flips the open game between the
-  two placements. Harness `scripts/harness/game-proportions/run.cjs` (games-more: laptop, desktop, tablet): every
+  Sea Battle: the seas full height on the left, bar, Stub's line and buttons on the right (`sea.css`); the result card
+  with a podium in two columns (`result.css`). With every table reading well there, `stage.ts` `STAGE_READY` is on
+  (W's switch from 0.9.97.112): tables always play in the video's place with no switch (over YouTube beside the
+  player), `GAME_CATALOG` `place` is 'stage' for all of them; side games keep the free window / video's place choice.
+  The free window, phones and narrow screens are unchanged. Lab command `games.place` flips an open side game between
+  the two placements (a table answers that it always plays in the video's place). Harness `scripts/harness/game-proportions/run.cjs` (games-more: laptop, desktop, tablet): every
   game and a game going with the 🤖 friend, in both placements; on the screen the usual text is ≥ 11.5 px (≥ 16 in a
   box ≥ 700 px each way), nothing under 8.5 px, the game covers ≥ 28 % of the video's place, and there it is shown at
   least 85 % as big as in the free window.
