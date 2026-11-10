@@ -44,6 +44,11 @@ test('a commit whose workflows differ from main is never pushed by the token, on
   assert.ok(plan.every((p) => p.action === 'owner'));
 });
 
+test('TAG2: with a token that may tag workflow changes (TAG_TOKEN), every untagged live version is pushed', async () => {
+  const plan = await planTags({ ...base, sameWorkflows: async () => false, canTagWorkflows: true });
+  assert.deepEqual(plan.map((p) => [p.version, p.action]), [['0.9.97.73', 'push'], ['0.9.97.74', 'push'], ['0.9.97.75', 'push']]);
+});
+
 test("the owner's steps name the version, the commit and the release page", () => {
   const text = ownerSteps('owner/repo', '0.9.97.74', '7d6201b0123456789');
   assert.match(text, /v0\.9\.97\.74/);
