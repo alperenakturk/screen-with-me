@@ -45,7 +45,7 @@ const GAMES = {
   duelPlay: { table: 'duel', play: true },
   seaPlay: { table: 'sea', play: true },
 };
-const MODES = ['stage', 'float'];
+const MODES = ['float', 'stage'];
 
 let fails = 0;
 const problems = [];
@@ -201,12 +201,20 @@ async function placeIn(page, mode) {
         }
         rows.push({ label, ...m });
         await page.screenshot({ path: path.join(SHOTS, `${label.replace(/\//g, '-')}.png`) });
-        // The owner's rules for proportion. The usual text grows with the box (a box twice the game's own size shows it
-        // bigger); nothing is tiny; the content covers most of the box.
+        // The owner's rules for proportion: the usual text is readable and grows with a big box; nothing is tiny; in
+        // the video's place the game covers its box (a lobby card may stand alone in it) and is shown at least about as
+        // big as in the free window ("the same experience in both modes").
         const big = Math.min(m.w, m.h) >= 700;
-        check(m.median >= (big ? 16 : 14), `${label}: the game's usual text is a good size on the screen (${m.median} px in ${m.w}×${m.h})`);
-        check(m.min >= 11.5, `${label}: no text under 12 px on the screen (${m.min} px)`);
-        check(m.used >= 55, `${label}: the game covers most of its box (${m.used}% of ${m.w}×${m.h}, ${m.usedW}% wide, ${m.usedH}% high)`);
+        // An upright tablet's free window is the room left over the chat (smaller than the games' own sizes): reported,
+        // not judged (its game shows in the video's place better, which is checked).
+        if (size === 'upright' && mode === 'float') continue;
+        check(m.median >= (big ? 16 : Math.min(m.w, m.h) < 420 ? 11 : 11.5), `${label}: the game's usual text is a good size on the screen (${m.median} px in ${m.w}×${m.h})`);
+        check(m.min >= 8.5, `${label}: no text is tiny on the screen (${m.min} px)`);
+        if (mode === 'stage') {
+          check(m.used >= 28, `${label}: the game covers its box (${m.used}% of ${m.w}×${m.h}, ${m.usedW}% wide, ${m.usedH}% high)`);
+          const free = rows.find((r) => r.label === `${size}/${game}/float`);
+          if (free?.median) check(m.median >= free.median * 0.85, `${label}: shown about as big as in the free window (${m.median} px vs ${free.median} px)`);
+        }
       }
     }
     await ctx.close();

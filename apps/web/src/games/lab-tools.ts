@@ -132,6 +132,30 @@ export function registerGamesLab(
         },
       },
       {
+        // Card PROP: the same game in both placements, to compare (the head's switch does the same).
+        id: 'games.place',
+        title: { en: "Game window: switch between the video's place and the free window", tr: 'Oyun penceresi: videonun yeri ile serbest pencere arasında geç' },
+        help: {
+          en: "Moves the open game to the other placement (in the video's place / a free window), so you can see it is well proportioned in both.",
+          tr: 'Açık oyunu öbür yerleşime taşır (videonun yeri / serbest pencere); iki yerde de orantılı göründüğünü karşılaştırırsın.',
+        },
+        tab: 'games',
+        where: IN_ROOM,
+        available: () => {
+          const stage = document.getElementById('game-stage');
+          if (!stage || stage.hidden) return { en: 'open a game first', tr: 'önce bir oyun aç' };
+          return stage.classList.contains('float') || stage.classList.contains('stage') ? true : { en: 'not on a narrow screen (a phone has one placement)', tr: 'dar ekranda değil (telefonda tek yerleşim var)' };
+        },
+        run: () => {
+          const stage = document.getElementById('game-stage');
+          const to = stage?.classList.contains('stage') ? 'float' : 'stage';
+          const button = stage?.querySelector<HTMLButtonElement>(`.game-place-btn.place-${to}`);
+          if (!button || button.disabled) return to === 'stage' ? { en: "the video's place is not offered here (a YouTube video plays)", tr: 'burada videonun yeri sunulmuyor (YouTube videosu oynuyor)' } : { en: 'no free window here', tr: 'burada serbest pencere yok' };
+          button.click();
+          return to === 'stage' ? { en: "in the video's place", tr: 'videonun yerinde' } : { en: 'a free window', tr: 'serbest pencere' };
+        },
+      },
+      {
         id: 'games.playing',
         title: labClock.playing ? { en: 'Side games: stop pretending', tr: 'Yan oyunlar: rol yapmayı bırak' } : { en: 'Side games: pretend the film plays', tr: 'Yan oyunlar: film oynuyormuş gibi yap' },
         help: { en: 'The side games act as if the room played an hour-long film, so they earn and grow; the room itself gets nothing.', tr: 'Yan oyunlar odada bir saatlik film oynuyormuş gibi davranır, kazanır ve büyür; odaya hiçbir şey gitmez.' },
