@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
 
       - id: diff
         env:
@@ -425,16 +425,16 @@ jobs:
     # `needs.test.result` keeps "deploy only when the tests passed".
     if: ${{ !cancelled() && needs.test.result == 'success' && needs.changes.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true' }}
     runs-on: ubuntu-latest
-    # 25, not 15: the live e2e alone took 13.6 min on 0.9.97.76 (ghost.mjs waits 90 s of silence per game, drop.mjs
-    # 130 s), so one file's retry pushed 0.9.97.77's job past 15 min and it was cancelled before "mark the version live".
-    timeout-minutes: 25
+    # Card QA1 part 1b: the live e2e is its own job (`live-e2e`, two shards); this one deploys and waits for the version.
+    timeout-minutes: 15
     # Security R4-5: the deploy runs in the `production` environment. Its secrets (Cloudflare, YouTube, feedback, usage)
     # can live there instead of the repository, so no other job or branch can read them. Repository secrets still reach
     # it until the owner moves them; GitHub creates the environment on first use if it doesn't exist yet.
     environment: production
-    # Card OPS1: `live` is true only when this run deployed and the live e2e passed; the `tag` job reads it.
+    # Card OPS1 / QA1: `deployed` is true only when this run deployed and the new version answers; the live e2e
+    # (`live-e2e`) and the `tag` job read it.
     outputs:
-      live: ${{ steps.live.outputs.ok }}
+      deployed: ${{ steps.deployed.outputs.ok }}
     # Two quick pushes must not deploy at the same time; the next one waits.
     concurrency:
       group: deploy
@@ -507,11 +507,8 @@ jobs:
           # The new version's id, for the live e2e's wait below.
           echo "SWM_VERSION=$(grep -oE 'Current Version ID: [0-9a-f-]+' "$RUNNER_TEMP/deploy.log" | awk '{print $4}')" >> "$GITHUB_ENV"
 
-      - name: End-to-end tests against live
+      - name: Wait for the new version
         if: steps.keys.outputs.ok == 'true'
-        env:
-          # Card Y3: search.mjs reads the usage counters with the owner's key when it is set.
-          USAGE_TOKEN: ${{ secrets.USAGE_TOKEN }}
         run: |
           # The new version takes a minute or two to spread, and objects started on the old code restart later (closing
           # their connections mid-test). Wait until the Worker and a Durable Object both answer with the new id.
@@ -523,14 +520,46 @@ jobs:
             echo "::warning::No version id in the deploy output; waiting 30 s instead."
             sleep 30
           fi
-          npm run e2e -- "$(node scripts/site-config.mjs ws)"
           # Card R3-3: the main address and every alias answer, og:image and /domain.js name the main address.
           node scripts/check-domain.mjs --live
 
-      - name: Mark the version live
-        id: live
+      - name: Mark the version deployed
+        id: deployed
         if: steps.keys.outputs.ok == 'true'
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
+
+  # Card QA1 part 1b: the e2e against live, in two shards on separate runners. The live server lets one address open 60
+  # room connections a minute, so one runner had to pace the whole suite (13 min); each shard has its own address
+  # (`SWM_E2E_SHARD`, scripts/e2e/shard.mjs balances them by their measured live time). No deploy can start under them:
+  # the workflow's concurrency group runs main's runs one after another and never cancels one.
+  live-e2e:
+    needs: deploy
+    if: ${{ !cancelled() && needs.deploy.result == 'success' && needs.deploy.outputs.deployed == 'true' }}
+    runs-on: ubuntu-latest
+    # 25 before the split for the whole suite (a file's retry included); a shard is half of it.
+    timeout-minutes: 15
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: End-to-end tests against live
+        env:
+          # Card Y3: search.mjs reads the usage counters with the owner's key when it is set.
+          USAGE_TOKEN: ${{ secrets.USAGE_TOKEN }}
+          SWM_E2E_SHARD: ${{ matrix.shard }}/2
+        run: npm run e2e -- "$(node scripts/site-config.mjs ws)"
 
   # Card OPS1 / TAG1: every version that went live gets a tag `v<version>` (the extension's version, the same number as
   # the site's footer), made by scripts/tag-live.mjs: this run's version at this run's commit, plus a catch-up for an
@@ -541,9 +570,10 @@ jobs:
   # TAG2: the optional secret TAG_TOKEN (fine-grained, this repository only: Contents + Workflows read and write) makes
   # those tags too, and the catch-up then back-fills the ones missed; only this step sees it.
   tag:
-    needs: deploy
-    # !cancelled() for the same reason as deploy's: skipped test jobs up the chain must not skip the tag.
-    if: ${{ !cancelled() && needs.deploy.result == 'success' && needs.deploy.outputs.live == 'true' }}
+    needs: [deploy, live-e2e]
+    # !cancelled() for the same reason as deploy's: skipped test jobs up the chain must not skip the tag. Live = deployed
+    # and every live e2e shard passed (QA1 part 1b).
+    if: ${{ !cancelled() && needs.deploy.result == 'success' && needs.deploy.outputs.deployed == 'true' && needs.live-e2e.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

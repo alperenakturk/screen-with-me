@@ -47,6 +47,15 @@ export async function planTags({ commits, tagged, isLive, sameWorkflows, since =
 }
 
 /** The owner's steps to make a tag the workflow token may not make (GitHub's web page uses the owner's own rights). */
+/**
+ * Did this run put its commit live? Its `deploy` job succeeded and so did every shard of the live e2e (card QA1 part
+ * 1b: `live-e2e (1)`, `live-e2e (2)` …; runs from before the split have none, and their e2e lived inside `deploy`).
+ */
+export function wentLive(jobs) {
+  const shards = jobs.filter((j) => /^live-e2e\b/.test(j.name));
+  return jobs.some((j) => j.name === 'deploy' && j.conclusion === 'success') && shards.every((j) => j.conclusion === 'success');
+}
+
 export function ownerSteps(repo, version, sha) {
   return `v${version} reached live at ${sha.slice(0, 7)} but can't be tagged by the workflow (main's workflow files changed since). ` +
     `Owner: https://github.com/${repo}/releases/new → "Choose a tag": type v${version} → "Create new tag on publish" → ` +
@@ -74,12 +83,12 @@ async function main() {
     return res.json();
   };
   const isLive = async (sha) => {
-    if (sha === self) return true; // the deploy job of this very run succeeded (the tag job's condition)
+    if (sha === self) return true; // this very run deployed and its live e2e passed (the tag job's condition)
     try {
       const { workflow_runs: runs = [] } = await getJson(`/actions/workflows/test.yml/runs?head_sha=${sha}&event=push&per_page=10`);
       for (const run of runs) {
         const { jobs = [] } = await getJson(`/actions/runs/${run.id}/jobs?per_page=30`);
-        if (jobs.some((j) => j.name === 'deploy' && j.conclusion === 'success')) return true;
+        if (wentLive(jobs)) return true;
       }
     } catch (e) {
       console.log(`::warning::Could not read the runs of ${sha.slice(0, 7)} (${e.message}); not tagging it now.`);

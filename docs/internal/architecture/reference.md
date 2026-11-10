@@ -1851,8 +1851,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `contrast` job, `game-proportions` (6.5 min, which had made `games-more` 12.5) is the `game-windows` job, and the PR's local e2e runs three files at a time (`SWM_E2E_PARALLEL=3`, only with
   `SWM_E2E_UNPACED` on localhost; the files in `run.mjs` `SOLO` that count per address or for the whole server run alone
   after the others; each file's output prints in one piece with its time). The live e2e stays one file at a time:
-  its pacing is per address, so sharding it needs separate runners (a later step, inside the deploy's concurrency
-  group so no deploy restarts objects mid-run).
+  its pacing is per address. **QA1 part 1b:** it runs as the `live-e2e` job, two shards on separate runners (separate
+  addresses) after `deploy` (which now deploys, waits for the version and checks the domain; output `deployed`):
+  `SWM_E2E_SHARD=<i>/<n>`, `scripts/e2e/shard.mjs` puts each file in the lightest shard by its measured live time
+  (`LIVE_SECONDS`; a new e2e file is added there, `shard.test.mjs` fails until it is), `fail-fast: false`. The workflow's
+  concurrency group runs main's runs one at a time and never cancels one, so no deploy restarts objects under a shard.
+  `tag` needs `deploy` and `live-e2e`; `tag-live.mjs` `wentLive` counts a commit live when its deploy and every shard
+  passed (older runs had no shards).
   **First look (QA1 part 3, `scripts/shots.cjs`):** screenshots of every screen a change touched at laptop 1366×768,
   desktop 1920×1080, upright tablet 820×1180 and phone (iPhone 13), EN by default (`--langs en,tr`), into `.shots/<branch>`
   (git-ignored) with `index.md` (what each picture is) and `REVIEW.md` (the brief for a fresh reviewer subagent: CLAUDE.md
