@@ -166,6 +166,23 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   const narrowWindow = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
   check(rowsAll.length >= (narrowWindow ? 3 : 4) && rowsAll.includes('arcade'), `with eight stands the newest ones show (at least ${narrowWindow ? 'three' : 'four'} rows in the default window)`, JSON.stringify(rowsAll));
   check((await fits(page)).length === 0, 'eight stands fit without scrollbars (laptop)', (await fits(page)).join('; '));
+  // 0.9.97.115 (owner: "Upgrades runs off the bottom, the staff list is cut"): with every stand open the list may scroll
+  // inside the panel, its ✕ stays in sight and the last staff member can be reached.
+  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open').click());
+  await wait(400);
+  const longList = await page.evaluate(async () => {
+    const panel = document.querySelector('#game-stage .sb-panel');
+    panel.scrollTop = panel.scrollHeight;
+    await new Promise((r) => setTimeout(r, 100));
+    const pr = panel.getBoundingClientRect();
+    const close = panel.querySelector('.sb-panel-close').getBoundingClientRect();
+    const rows = panel.querySelectorAll('.sb-up');
+    const last = rows[rows.length - 1].getBoundingClientRect();
+    return { rows: rows.length, close: close.top >= pr.top - 1 && close.bottom <= pr.bottom + 1, last: last.bottom <= pr.bottom + 1 && last.top >= pr.top, stage: (() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1; })() };
+  });
+  check(longList.rows >= 12 && longList.close && longList.last && longList.stage, 'Upgrades with every stand: the list scrolls inside the panel, ✕ in sight, the last staff member reachable', JSON.stringify(longList));
+  await page.evaluate(() => document.querySelector('#game-stage .sb-panel-close')?.click());
+  await wait(300);
   const scene = await page.evaluate(() => {
     const art = document.querySelector('#game-stage .sb-scene-art');
     const p = art.dataset.prefix;

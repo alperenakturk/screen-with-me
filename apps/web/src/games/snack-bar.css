@@ -290,3 +290,7 @@ html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .sb-badge-grid { grid-template-columns: repeat(14, minmax(0, 1fr)); }
 }
+/* 0.9.97.115 (owner: "Upgrades runs off the bottom, the staff list is cut"): a growing list, so the panel scrolls inside
+   (a visible thin scrollbar) with its ✕ always on top; it still fits whole wherever it can. */
+.sb-panel-upgrades { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.sb-panel-upgrades > .sb-panel-close { position: sticky; top: 0; z-index: 1; flex: none; align-self: flex-end; margin: -6px -4px -32px 0; background: #2c2556; box-shadow: 0 2px 8px #0008; }

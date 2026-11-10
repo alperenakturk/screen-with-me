@@ -663,7 +663,9 @@ with the same friend:
   serbest pencere arasında geç"): Five Frames' tickets left, letters right. Also on a tablet both ways.
 - [ ] G19. Side games beside the video (SIDE340): on a 1366 × 768 laptop open Snack Bar, Window Garden and Five Frames:
   each opens in the narrow column right of the video (never on the video), every text readable, nothing cut off;
-  type a word in Five Frames, buy a stand in Snack Bar, water a pot in Window Garden.
+  type a word in Five Frames, buy a stand in Snack Bar, water a pot in Window Garden. Open Snack Bar's "📜 Gelişmeler":
+  the whole list can be reached (it scrolls inside), ✕ always visible. Open any table's "?" in the video's place on the
+  laptop: every card shows whole, its buttons visible.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold
