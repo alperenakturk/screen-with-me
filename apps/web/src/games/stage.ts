@@ -13,7 +13,6 @@
 // no close at all (their own "Start over" is the only reset). Closing the tab while my table's game is in progress asks
 // "are you sure?" (`beforeunload`, `live.ts`).
 
-import { createLogo } from '@swm/shared/logo';
 import { slideIn } from './motion.ts';
 import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
@@ -38,21 +37,6 @@ const soloIcon = (kind: SoloKind): HTMLElement => el('span', { class: 'hub-glyph
 /** A game the window can show: a room game (a table) or a solo game played on the side. */
 type Kind = RoomGameKind | SoloKind;
 const catalogOf = (kind: Kind) => (isSoloKind(kind) ? SOLO_CATALOG[kind] : GAME_CATALOG[kind]);
-
-const PAD = `<svg class="pwm-pad" viewBox="0 0 84 54" aria-hidden="true">
-  <path d="M20 6h44a15 15 0 0 1 15 14l2 19a10 10 0 0 1-17.5 6.5L56 38H28l-7.5 7.5A10 10 0 0 1 3 39l2-19A15 15 0 0 1 20 6z" fill="#241a5c" stroke="#ffd166" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="15" y="22" width="15" height="5.5" rx="1.6" fill="#fff"/><rect x="19.75" y="17.25" width="5.5" height="15" rx="1.6" fill="#fff"/>
-  <circle cx="60" cy="19" r="3.6" fill="#ff6b9a"/><circle cx="67.5" cy="25.5" r="3.6" fill="#4ade80"/>
-  <circle cx="52.5" cy="25.5" r="3.6" fill="#60a5fa"/><circle cx="60" cy="32" r="3.6" fill="#ffd166"/>
-</svg>`;
-
-/** PlayWithMe logo (the Sidelit face holding a game pad); the small one heads the stage. */
-function playLogo(): HTMLElement {
-  const box = el('span', { class: 'pwm-logo small', 'aria-hidden': 'true' });
-  box.append(createLogo(document, { animated: true }));
-  box.insertAdjacentHTML('beforeend', PAD);
-  return box;
-}
 
 /** What's new I have seen (the newest note's version). */
 const SEEN_KEY = 'opt:gamesSeen';
@@ -195,7 +179,7 @@ export function createGameStage(opts: StageOptions) {
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
   // A game may put its own small buttons here (Classics: "Change game"); it empties the slot when it closes.
   const headSlot = el('span', { class: 'game-head-slot' });
-  const head = el('header', { class: 'game-stage-head' }, playLogo(), title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
+  const head = el('header', { class: 'game-stage-head' }, title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
   // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
   const body = el('div', { class: 'game-fit' });
   /**
