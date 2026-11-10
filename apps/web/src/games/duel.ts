@@ -234,9 +234,13 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     lobbyTitle,
     lobbyRules,
     lobbyFaces,
-    el('div', { class: 'duel-lobby-lang' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
-    el('div', { class: 'duel-lobby-lang' }, lobbyGamesLabel, el('span', { class: 'game-chips', role: 'group' }, ...gamesChips.map((c) => c.b))),
-    el('div', { class: 'duel-lobby-lang' }, lobbyHardLabel, el('span', { class: 'game-chips', role: 'group' }, ...hardChips.map((c) => c.b))),
+    el(
+      'div',
+      { class: 'duel-lobby-settings' },
+      el('div', { class: 'duel-lobby-lang' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
+      el('div', { class: 'duel-lobby-lang' }, lobbyGamesLabel, el('span', { class: 'game-chips', role: 'group' }, ...gamesChips.map((c) => c.b))),
+      el('div', { class: 'duel-lobby-lang' }, lobbyHardLabel, el('span', { class: 'game-chips', role: 'group' }, ...hardChips.map((c) => c.b))),
+    ),
     lobbyBody,
   );
   const watchers = el('span', { class: 'duel-watchers' });
@@ -663,6 +667,14 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         tab: 'games' as const,
         where,
         run: () => send({ t: 'lab', op: 'answer' }),
+      },
+      {
+        id: 'duel.match',
+        title: { en: 'Five Frames Duel: best of three in hard mode', tr: 'Beş Kare Düellosu: zor modda üç oyunluk maç' },
+        help: { en: 'Sets the table to best of three with hard mode on (both players press Ready again).', tr: 'Masayı üç oyunluk maça ve zor moda alır (iki oyuncu da yeniden Hazır’a basar).' },
+        tab: 'games' as const,
+        where,
+        run: () => send({ t: 'settings', bestOf: 3, hard: true }),
       },
       {
         id: 'duel.win',

@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.103 — 10 Nov
+- Five Frames Duel: pick "Best of three" in the lobby for a short match (the first game is the word of the day, then
+  practice words, with the score between games), and "Hard mode", where every letter you found must be used again.
+  The Duel has its own cover in the games hall.
+- Sea Battle on a phone: the first tap zooms into that corner of their sea so the cells are easy to hit, the second tap
+  fires; "Whole sea" goes back at any time.
+
 ### 0.9.97.101 — 10 Nov
 - Games on a phone held sideways: chess, dama, backgammon, Reversi and the others show the board at the full height
   with the players and buttons beside it; Sea Battle shows one sea at a time, big; Five Frames, the Five Frames Duel,

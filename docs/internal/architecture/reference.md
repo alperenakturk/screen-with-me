@@ -988,6 +988,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `lab-server.mjs`, harness `scripts/harness/sea/run.cjs` (in CI's "Games quality"), the `games-sweep` entries `sea` /
   `seaPlay`. KEYREP (0.9.97.94): a held R turns the ship once (`event.repeat` ignored); its repeats sent a `place` each,
   ~30/s, past the server's per-connection message limit (QUOTA1a); the sea harness holds R for 40 repeats.
+  NG1 (0.9.97.103, owner's pick 7B): on a phone layout (`isPhoneLayout`) the first tap on their sea zooms that quarter
+  (`zoomQ`, `quarterOf`; the grid sits in a `.sea-zoom` frame, `.zoomed` + `data-q` = `transform: scale(2)` with a
+  `transform-origin` per corner, no transition under reduced motion) and aims; a second tap in the same quarter fires,
+  a tap in another quarter moves the zoom; "Whole sea" (`.sea-whole`, 44 px, always shown while zoomed) goes back; a
+  shot or a lost aim ends the zoom. Lab command `sea.zoom` (shows the zoom on any screen, next quarter each run); the
+  sea harness checks zoom, Whole sea, quarter change and fire on a phone.
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
@@ -1002,10 +1008,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   reuses `five-frames.css`; `.ff.duel`, `data-table` = the table id): my tickets left, the other's marks right (watchers:
   both); on a phone their marks are a strip (one column per guess); the alphabetical tray while playing; the keyboard
   types only while the board has the focus. GPRO: while the table waits, a lobby card (`.duel-lobby`: title, rules,
-  faces, EN / TR chips; Glowbeam's line and Ready move into it) like the other tables' lobbies. Lab commands `duel.answer`, `duel.win`, `duel.silent` (`lab` op `answer`,
+  faces, EN / TR chips; Glowbeam's line and Ready move into it) like the other tables' lobbies. Lab commands `duel.answer`, `duel.win`, `duel.match`, `duel.silent` (`lab` op `answer`,
   local lab server only). Tests: unit `duel.test.ts`, e2e `duel.mjs` (no message carries the word or the other's
   letters before the end, reconnect, a simultaneous finish, rematch = practice, a draw), `games-sweep` `duel` /
   `duelPlay` (Sam joins as a socket), `games-pair` `duel` (reload, network drop; in CI).
+  NG1 (0.9.97.103): own cover (`art/covers/duel.svg`); two lobby choices, message `settings` (`bestOf` 1 | 3, `hard`),
+  only between matches, resets Ready (mid-match `error in_progress`). Best of three (`matchOver`, `matchWinner`;
+  saved `matchWins`, `matchGames`): game 1 is the day's word, the next ones practice words; the bar shows "Game n of 3 ·
+  a–b" and "Play again" reads "Next game" until someone has two wins or three games are played; a seat's `wins` counts
+  matches. Hard mode (`hardModeMiss`): every ✓ letter stays in place and every ✓ / • letter is used again (counted),
+  checked against all my earlier guesses; a miss is `error hard` with `letter` (+ `at`) and costs nothing; the tag and
+  the result card say "Hard mode". View fields `bestOf`, `hard`, `match`. Lab command `duel.match` (best of three, hard
+  on). Tests: `duel.test.ts` (hard mode EN + TR, match end), `duel.mjs` second table (settings, refusal mid-match, hard
+  refusal names letter and place, a full match with a solver that keeps to the marks, a new match at 0–0).
   **Draw & Guess (0.9.72):** separate object `Draw` (`apps/server/src/draw.ts`, binding `DRAWS`, migration `v3`,
   `/api/draw/:id/ws`), protocol and pure rules in `packages/shared/src/games/draw.ts` (guess matching: lower case +
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer
