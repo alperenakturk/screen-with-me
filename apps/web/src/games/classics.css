@@ -361,3 +361,9 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 }
 /* CLFLASH: until the table's state came (a reload, a slow line), a quiet line instead of a board it may not have. */
 #game-stage .xox-page.mt > .mt-loading { flex: 1; display: grid; place-items: center; margin: 0; font-size: 15px; }
+
+/* NG3: the board holds the sliding copy of a moved piece (games/motion.ts), so it is the cells' offset parent. */
+.dama-board { position: relative; }
+/* NG3: while a moved piece slides in (games/motion.ts `slidePiece`), the real one on its new square waits hidden. */
+.dama-board .dama-cell.arriving { color: transparent !important; text-shadow: none !important; }
+.dama-board .dama-cell.arriving::before, .dama-board .dama-cell.arriving::after { opacity: 0; }

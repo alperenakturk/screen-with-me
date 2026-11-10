@@ -8,6 +8,7 @@ import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { flipIn } from './motion.ts';
 import { referee } from './referee.ts';
 import {
   MOVE_COST,
@@ -132,6 +133,21 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     }
   }
 
+  /** NG3: cards that turned face up this hand (they flip over once, a short stagger from the left). */
+  const shownFaces = new Set<string>();
+  let facesHand = -1;
+  const faceUp = (node: HTMLElement, key: string, index: number): HTMLElement => {
+    const hand = state?.hand ?? -1;
+    if (hand !== facesHand) {
+      facesHand = hand;
+      shownFaces.clear();
+    }
+    if (!shownFaces.has(key)) {
+      shownFaces.add(key);
+      flipIn(node, index * 70);
+    }
+    return node;
+  };
   function render(): void {
     const s = state;
     if (!s) return;
@@ -188,7 +204,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
             'span',
             { class: 'pk-seat-cards' },
             ...(p.cards
-              ? p.cards.map((c) => cardNode(c, p.best?.includes(c) ? 'small best' : 'small'))
+              ? p.cards.map((c, i) => faceUp(cardNode(c, p.best?.includes(c) ? 'small best' : 'small'), `p${p.id}:${c}`, i))
               : p.dealt && !p.folded && !p.dq
                 ? [cardNode(peeks.seen[p.id] ?? null, 'small'), cardNode(null, 'small')]
                 : []),
@@ -201,7 +217,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     );
 
     // ---- The middle: board, flask, what happened ----
-    const board = el('div', { class: 'pk-board' }, ...Array.from({ length: 5 }, (_, i) => (s.board[i] ? cardNode(s.board[i]!, winningCard(s, s.board[i]!) ? 'best' : '') : el('span', { class: 'pk-card slot' }))));
+    const board = el('div', { class: 'pk-board' }, ...Array.from({ length: 5 }, (_, i) => (s.board[i] ? faceUp(cardNode(s.board[i]!, winningCard(s, s.board[i]!) ? 'best' : ''), `b${i}:${s.board[i]}`, i) : el('span', { class: 'pk-card slot' }))));
     const middle = el(
       'div',
       { class: 'pk-middle' },
@@ -223,7 +239,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       el(
         'div',
         { class: 'pk-me-top' },
-        el('span', { class: 'pk-hand' }, ...(myCards.length && myPlayer?.dealt ? myCards.map((c) => cardNode(c, myPlayer.best?.includes(c) ? 'big best' : 'big')) : [])),
+        el('span', { class: 'pk-hand' }, ...(myCards.length && myPlayer?.dealt ? myCards.map((c, i) => faceUp(cardNode(c, myPlayer.best?.includes(c) ? 'big best' : 'big'), `m:${c}`, i)) : [])),
         el(
           'div',
           { class: 'pk-me-info' },

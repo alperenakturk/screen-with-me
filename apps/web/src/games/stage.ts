@@ -14,6 +14,7 @@
 // "are you sure?" (`beforeunload`, `live.ts`).
 
 import { createLogo } from '@swm/shared/logo';
+import { slideIn } from './motion.ts';
 import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
@@ -757,6 +758,7 @@ export function createGameStage(opts: StageOptions) {
   async function open(table: RoomGame): Promise<void> {
     document.getElementById('game-invite')?.remove();
     rememberAt({ id: table.id, min: false });
+    if (stage.hidden) slideIn(stage);
     stage.hidden = false;
     for (const b of triggers) b.classList.remove('game-waiting');
     if (current?.id === table.id && unmount) return place();
@@ -813,6 +815,7 @@ export function createGameStage(opts: StageOptions) {
   /** Opens a solo game on the side; my table (if any) is left first: the window shows one game at a time. */
   async function openSolo(kind: SoloKind): Promise<void> {
     document.getElementById('game-invite')?.remove();
+    if (stage.hidden) slideIn(stage);
     stage.hidden = false;
     for (const b of triggers) b.classList.remove('game-waiting');
     if (solo === kind && unmount) return place();

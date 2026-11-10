@@ -268,6 +268,8 @@ jobs:
           node scripts/harness/snack-bar-3/run.cjs http://localhost:8787
           # Card NG2: place colours, the seasonal stand, the manager's report, a stand's own milestone sound.
           node scripts/harness/snack-bar-ng2/run.cjs http://localhost:8787
+          # Card NG3: the window slides in, chess pieces slide, nothing moves under "reduce motion".
+          node scripts/harness/motion/run.cjs http://localhost:8787
 
       # Card YTG: over a YouTube video a game's window stays clear of the player (three sizes, a drag, fullscreen).
       - name: Games beside a YouTube video

@@ -23,6 +23,7 @@ import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { LAB_POSITIONS } from '@swm/shared/games/lab-positions';
+import { slidePiece } from './motion.ts';
 import { stubArt, syncRefereePose } from './stub.ts';
 import xox1Art from './art/tutorial/xox-1-turns.svg?raw';
 import xox2Art from './art/tutorial/xox-2-line.svg?raw';
@@ -480,6 +481,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   let state: State | null = null;
   let me: string | null = null;
   let lastBoard = '';
+  /** The board before this state (NG3: where a chess / dama piece slides from). */
+  let prevCells: readonly (string | null)[] | null = null;
   /** The previous state's result (undefined before the first state: joining a finished game plays nothing). */
   let lastWinner: Mark | 'draw' | null | undefined;
   /** Classics: the picker shows until a board is picked (and again from "Change game" in the head). */
@@ -664,6 +667,13 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       cell.disabled = kind === 'four' ? !myTurn || dropRow(game.board, colOf(i)) === -1 : kind === 'dama' ? !(movable.has(i) || targets.has(i)) : !myTurn || value !== null;
     });
     lastBoard = boardKey;
+    // NG3: a chess or dama piece slides from its old square (chess sends it; dama: the mover's piece that left).
+    if (changed && game.last !== undefined && (kind === 'chess' || kind === 'dama')) {
+      const mover = game.board[game.last];
+      const from = kind === 'chess' ? chess.from : (prevCells?.findIndex((v, i) => v === mover && game.board[i] === null) ?? -1);
+      if (from !== undefined && from !== null && from >= 0) slidePiece(cells[from], cells[game.last]);
+    }
+    prevCells = [...game.board];
     // The referee's reactions (GP2): a capture in chess / dama, a check, a big reversi flip.
     const counts = { X: game.board.filter((c) => c === 'X').length, O: game.board.filter((c) => c === 'O').length };
     if (changed && prevCounts && game.winner === null && (kind === 'chess' || kind === 'dama' || kind === 'reversi')) {
