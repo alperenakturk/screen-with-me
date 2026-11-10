@@ -11,8 +11,10 @@
   padding: 40px 16px 14px;
   box-sizing: border-box;
   border-radius: 12px;
-  background: linear-gradient(180deg, #221a4a, #14102b);
-  color: #fff3d6;
+  /* THEMEG: the card takes the room theme's colours (a light theme gets a light card); --bg underneath keeps it opaque
+     on the scene themes, whose surfaces are see-through. */
+  background: linear-gradient(180deg, var(--surface-2), var(--surface)), var(--bg);
+  color: var(--text);
   font: 15px/1.35 system-ui, sans-serif;
   text-align: center;
   outline: none;
@@ -24,20 +26,22 @@
 .htp-art, .htp-art svg { display: block; width: 100%; height: auto; border-radius: 12px; }
 .htp-words { display: flex; flex-direction: column; gap: 6px; max-width: 340px; }
 .htp-title { font-size: 17px; font-weight: 800; }
-.htp-line { margin: 0; color: #b9b0dc; }
+.htp-line { margin: 0; color: var(--muted); }
 .htp-dots { display: flex; gap: 6px; }
-.htp-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); }
-.htp-dot.on { background: #ffc65a; }
+.htp-dot { width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--text) 22%, transparent); }
+.htp-dot.on { background: var(--accent); }
 .htp-actions { display: flex; gap: 8px; margin-top: auto; width: 100%; justify-content: center; }
 .htp .htp-btn {
-  min-height: 40px; min-width: 110px; padding: 6px 16px; border-radius: 10px; border: 1.5px solid rgba(255, 198, 90, 0.55);
-  background: transparent; color: #ffc65a; font: 700 15px/1.2 system-ui, sans-serif; cursor: pointer; touch-action: manipulation;
+  min-height: 40px; min-width: 110px; padding: 6px 16px; border-radius: 10px; border: 1.5px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  background: transparent; color: var(--accent); font: 700 15px/1.2 system-ui, sans-serif; cursor: pointer; touch-action: manipulation;
 }
 .htp .htp-btn[hidden] { display: none; }
-.htp .htp-next { background: #ffc65a; border-color: #ffc65a; color: #1a1036; }
+/* The room's main-button colour (--accent-btn where a theme darkens it), so white text keeps ≥ 4.5:1 (Night's plain
+   --accent was 3.7:1). */
+.htp .htp-next { background: var(--accent-btn, var(--accent)); border-color: var(--accent-btn, var(--accent)); color: var(--on-accent); }
 .htp .htp-skip {
   position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08); color: #fff3d6; font-size: 15px; cursor: pointer;
+  background: color-mix(in srgb, var(--text) 9%, transparent); color: var(--text); font-size: 15px; cursor: pointer;
 }
 button.htp-open {
   flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.1);
@@ -49,6 +53,10 @@ html.phone .htp .htp-btn { min-height: 44px; }
 
 /* GP2: the tables' "?" sits in the game window's head with its other buttons (same size, same look). */
 .game-head-slot .htp-head { min-width: 36px; padding: 0 10px; font-weight: 800; }
+/* THEMEG: the tables' "?" looks like the buttons beside it in every theme (the side games' round "?" keeps the game's
+   own dark bar colours). */
+button.htp-open.htp-head { width: auto; height: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); }
+button.htp-open.htp-head:hover { background: var(--surface-2); border-color: var(--muted); }
 /* On a phone the tables' "?" sits at the start of the game's own top bar. */
 :is(.mt-bar, .sea-bar, .draw-top) > .htp-head { flex: none; min-width: 44px; min-height: 44px; }
 

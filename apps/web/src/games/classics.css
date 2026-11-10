@@ -147,7 +147,7 @@
 .bg-point:focus-visible, .bg-bar:focus-visible, .bg-off:focus-visible { outline: 3px solid var(--accent); outline-offset: -2px; }
 .bg-tray { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 6px; min-height: 36px; }
 .bg-tray[hidden] { display: none; }
-.bg-dice { display: inline-flex; gap: 4px; font-size: 30px; line-height: 1; color: #fff8ea; }
+.bg-dice { display: inline-flex; gap: 4px; font-size: 30px; line-height: 1; color: var(--text); }
 .bg-die.used { opacity: 0.3; }
 .bg-pips { font-size: 13px; opacity: 0.8; }
 
@@ -384,4 +384,12 @@ html.phone .game-head-slot .cl-change-text { display: none; }
   #game-stage .mt .bg-board { width: calc(min(100cqh * 1.45, 100cqw) - 4px); }
   #game-stage .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; }
   #game-stage .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
+}
+
+/* THEMEG: the pink / blue turn ring is the X / O mark's colour, right for tic-tac-toe and Four in a Row; the other boards
+   (dama, chess, backgammon, reversi) have no X or O, so a pink ring read as a red warning. They ring the player whose
+   turn it is in the theme's accent, like the picked "Easy" / "Medium". */
+[data-board]:not([data-board='xox'], [data-board='four']) .xox-player.turn:is(.mark-X, .mark-O) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
 }
