@@ -1437,6 +1437,25 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
         },
       },
       {
+        // LAB2 (hand test G15): one press away from a stand's own milestone sound.
+        id: 'snackBar.milestone',
+        title: { en: 'Snack Bar: one level before the next milestone', tr: 'Büfe: sonraki eşiğe bir seviye kala' },
+        help: {
+          en: 'The popcorn machine goes to one level below its next milestone (10, 25, 50 …) with the coins for one more level: buy it (×1) and hear its own sound.',
+          tr: 'Mısır makinesi sonraki eşiğinin (10, 25, 50 …) bir seviye altına gelir, bir seviyelik de jeton verilir: ×1 ile al ve kendi sesini duy.',
+        },
+        tab: 'games',
+        where,
+        run: () => {
+          const next = nextMilestone(game.levels.popcorn) ?? MILESTONES[MILESTONES.length - 1]!;
+          game.levels.popcorn = Math.max(1, next - 1);
+          game.coins += costOf('popcorn', game.levels.popcorn, 1, placeCost(game, 'popcorn'));
+          persist();
+          draw();
+          return { en: `popcorn ${game.levels.popcorn} → ${next}`, tr: `mısır ${game.levels.popcorn} → ${next}` };
+        },
+      },
+      {
         id: 'snackBar.place',
         title: { en: 'Snack Bar: the next cinema place', tr: 'Büfe: sıradaki sinema yeri' },
         help: { en: 'Moves to the next place (lobby, drive-in, rooftop, art house, seaside, planetarium) without the prestige cost.', tr: 'Bedel ödemeden sıradaki yere geçer (lobi, arabalı sinema, çatı, sanat sineması, sahil, planetaryum).' },

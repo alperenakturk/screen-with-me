@@ -1234,6 +1234,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   LABWAKE: an object rebuilt after hibernation (≈ 20 s quiet, wrangler dev too) has no request, so `labOnRequest` keeps
   the yes in the object's storage (`swm:lab`, written only on a lab server) and a lab message reads it back with
   `labRemembered` (only while `SWM_LAB_SERVER` is set); `lab-server.mjs` checks a lab message after 25 s of quiet.
+  **LAB2 (0.9.97.108, the owner's test round):** every 🎮 command answers honestly: a command that needs a state says
+  why it can't run now (`available`: a game going, the battle / race on, a seat taken), and the server-power ones say
+  "local test server only" off localhost (`games/lab-server.ts` `labServerHere`, `LOCAL_ONLY`). **🤖 friend at a table**
+  (`games/lab-table-friend.ts`, loaded on first use): `games.friend` seats a pretend player at the open Quiz, Draw &
+  Guess, Last Heart, Duel or Sea Battle table (its own random `cid`, the normal hello through `openSocket`, "🤖" in its
+  name; at the Classics it points to Stub). It answers questions, draws a circle / guesses words, checks or calls,
+  presses Ready and tries real words, places a fleet and shoots; it never presses Start. `games.friendQuiet` (no message
+  for 2 min: the table marks it offline at ≈ 90 s), `games.friendLeave`. Shortcuts: `quiz.toEnd` / `draw.toEnd` (skips
+  every phase to the result card, local server), `snackBar.milestone` (popcorn one level below its next milestone, with
+  the coins for it). The tables' commands carry their names (`Masa aç: Bilgi yarışması`). Harnesses
+  `scripts/harness/lab-games-all/run.cjs` (every command, laptop / phone × EN / TR; `LIVE=1` on a live-like host:
+  local-only ones say so) and `scripts/harness/lab-table-friend/run.cjs` (the friend at each table), both in CI's
+  `games-more`. The owner's steps: STATUS "Test round with the Lab: games".
   Messages: room `{t:'lab', op:'tipjar'}` (the tip jar fills for the film playing; elsewhere `bad_message`), Classics
   `{t:'lab', position}` (`games/lab-positions.ts` `LAB_POSITIONS`: chess `mate1`, dama `chain`, backgammon `bearoff`,
   each checked by its board's state check; a player; elsewhere `lab_off`), Quiz / Draw `{t:'lab', op:'skip'}` (the phase

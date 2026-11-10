@@ -21,6 +21,7 @@ import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
+import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { LAB_POSITIONS } from '@swm/shared/games/lab-positions';
 import { slidePiece } from './motion.ts';
@@ -909,6 +910,11 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   };
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
+  // LAB2: the boards by name in the lab's lists.
+  const BOARD_NAMES: Record<string, { en: string; tr: string }> = {
+    xox: { en: 'tic-tac-toe', tr: 'XOX' }, four: { en: 'Four in a Row', tr: 'Dört Taş' }, dama: { en: 'dama', tr: 'dama' },
+    chess: { en: 'chess', tr: 'satranç' }, backgammon: { en: 'backgammon', tr: 'tavla' }, reversi: { en: 'reversi', tr: 'reversi' },
+  };
   // Test Lab (DL3b): a ready-made position, set by the server only when it runs as a local lab server.
   const offLab = debugHooks.register('table.classics', () => ({
     commands: [
@@ -919,13 +925,16 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
         help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel lab sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
         tab: 'games' as const,
         where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
+        // LAB2: the server sets the position (and switches to its board) only for a seated player.
+        available: () =>
+          !labServerHere() ? LOCAL_ONLY : mySeat() !== -1 || { en: 'take a seat at the table first', tr: 'önce masada bir koltuğa otur' },
         run: () => send({ t: 'lab', position }),
       })),
       // CL2: the picker → board flow in one step (the same path as a press on a card).
       { id: 'classics.picker', title: { en: 'Classics: show the picker', tr: 'Klasikler: oyun seçiciyi göster' }, help: { en: 'As "Change game" in the head (between games).', tr: 'Başlıktaki "Oyunu değiştir" gibi (iki oyun arasında).' }, tab: 'games' as const, where: { en: 'at a Classics table', tr: 'Klasikler masasında' }, run: () => shelfButton.click() },
       ...SHELF.map((box) => ({
         id: `classics.pick.${box.kind}`,
-        title: { en: `Classics: pick ${box.kind}`, tr: `Klasikler: ${box.kind} seç` },
+        title: { en: `Classics: pick ${BOARD_NAMES[box.kind]?.en ?? box.kind}`, tr: `Klasikler: ${BOARD_NAMES[box.kind]?.tr ?? box.kind} seç` },
         help: { en: "Presses this board's card in the picker (opens the picker first).", tr: 'Seçicide bu oyunun kartına basar (önce seçiciyi açar).' },
         tab: 'games' as const,
         where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
