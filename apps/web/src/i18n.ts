@@ -132,6 +132,8 @@ const en = {
   'games.poker.title': 'Last Heart',
   'games.sea.title': 'Sea Battle',
   'games.sea.text': 'Hide your fleet, call shots in turns, sink theirs first. 2 players, or against Glowbeam.',
+  'games.duel.title': 'Five Frames Duel',
+  'games.duel.text': 'Race a friend to the same five-letter word: you see their marks, never their letters. 2 players.',
   'games.poker.text': 'Poker with hearts: you bet life instead of chips, everyone starts at 100 %, the last one standing wins. Special moves, with or without jokers. 2–6 players.',
   'quiz.jokerBy': '½ {name} used the 50:50 joker',
   'poker.howto': 'How to play',

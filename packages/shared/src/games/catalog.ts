@@ -38,6 +38,8 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   classics: { min: 1, max: 2, place: 'float', size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896] },
   // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Glowbeam.
   sea: { min: 1, max: 2, place: 'float', size: [780, 560], fit: [600, 440], minSize: [764, 548], maxSize: [1170, 840] },
+  // ⚔️ Five Frames Duel (FFDUEL): my board and the other's marks side by side, the letter tray under them.
+  duel: { min: 2, max: 2, place: 'float', size: [600, 660], fit: [540, 600], minSize: [600, 660], maxSize: [900, 990] },
 };
 
 /** Classics (CL2): the window's size per screen of the table: the picker, then each board built around itself. */

@@ -90,7 +90,7 @@ Owner's pick for the daily word game. Web search only (registries not reachable 
 - **Turkish guesses:** Zemberek-NLP `master-dictionary.dict`, five-letter lemmas without proper nouns, abbreviations
   or punctuation, lower-cased the Turkish way, â / î / û written a / i / u: 4,793. **Answers:** 1,606 common words
   picked by hand from that list (lemmas only, "no suffixes"; grim words left out).
-- Both ship in the game's lazy chunks (`apps/web/src/games/words/`), answers as base-36 positions (not plain text).
+- Both ship in the game's lazy chunks (`packages/shared/src/games/words/`; the Five Frames Duel server reads them too), answers as base-36 positions (not plain text).
   Credits and the full Apache 2.0 text: `apps/web/public/third-party-notices.txt`, linked from the game.
 - To change a list: edit the picks, regenerate the two modules (all guesses glued, answers as positions). Changing the
   answers changes the daily word for everyone on the same day (everyone gets the new list together after a deploy).

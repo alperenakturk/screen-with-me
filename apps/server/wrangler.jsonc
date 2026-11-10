@@ -28,6 +28,8 @@
       { "name": "POKERS", "class_name": "Poker" },
       // 🚢 Sea Battle tables (fleets hidden here)
       { "name": "FLEETS", "class_name": "Sea" },
+      // ⚔️ Five Frames Duel tables (the answer and the guesses hidden here)
+      { "name": "DUELS", "class_name": "Duel" },
       // TVs waiting to be paired (one per 6-digit code, nothing stored)
       { "name": "TVLINKS", "class_name": "TvLink" },
       // Feedback counters (card 9): one instance, a day's and an hour's counts, no texts
@@ -58,7 +60,8 @@
     { "tag": "v10", "new_sqlite_classes": ["IpKeys"] },
     { "tag": "v11", "new_sqlite_classes": ["UploadGate"] },
     { "tag": "v12", "new_sqlite_classes": ["Sea"] },
-    { "tag": "v13", "new_sqlite_classes": ["FallbackGate"] }
+    { "tag": "v13", "new_sqlite_classes": ["FallbackGate"] },
+    { "tag": "v14", "new_sqlite_classes": ["Duel"] }
   ],
   // New connections per IP and minute (WebSocket upgrades; rooms and games). Generous: a class or family behind one
   // address joining at once must still fit, a script opening rooms in a loop must not.

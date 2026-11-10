@@ -1039,7 +1039,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "🌱 2 growing · 📖 3/8". Harness `scripts/harness/garden/run.cjs` (17 checks).
   **🎟️ Five Frames (0.9.95.5, card "Daily word game", board A "ticket row", name owner's pick):** `games/five-frames.ts`
   + `five-frames.css` (lazy chunk, own `TEXT`), rules `@swm/shared/games/five-frames`, word lists as their own chunks
-  per language (`games/words/en.ts` 8636 guesses from ENABLE, public domain, 977 answers; `tr.ts` 4793 guesses from
+  per language (`packages/shared/src/games/words/en.ts` 8636 guesses from ENABLE, public domain, 977 answers; `tr.ts` 4793 guesses from
   the Zemberek-NLP lexicon, Apache 2.0, â/î/û as a/i/u, 1606 answers): `WORDS` = all guesses glued together (five
   letters each), `ANSWERS` = base-36 positions in it (not plain text), our own picks of common words (no suffixes, no
   grim words). Credits + the Apache licence text: `apps/web/public/third-party-notices.txt` ("About the word lists" in
