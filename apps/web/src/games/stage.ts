@@ -64,10 +64,13 @@ const placeOf = (kind: Kind): Place => {
   if (saved === 'side') return 'float';
   return PLACES.includes(saved as Place) ? (saved as Place) : catalogOf(kind).place;
 };
-/** The free window's spot on the screen, as a share of the free room (0–1), per game (`gameFloat:spot` = before 0.9.97.111, for every game). */
-const FLOAT_KEY = 'gameFloat:spot';
-const spotKey = (kind: Kind) => `${FLOAT_KEY}:${kind}`;
-/** Where a free window opens until it is moved: the right edge, halfway down. */
+/**
+ * The free window's spot on the screen, as a share of the free room (0–1), per game, once I moved or resized it.
+ * 0.9.97.112 (owner): spots saved before (`gameFloat:spot`, `gameFloat:spot:<kind>`) are left behind once, so every
+ * game first opens in its new home: the column right of the video (`homeBox`).
+ */
+const spotKey = (kind: Kind) => `gameFloat:at:${kind}`;
+/** Where a free window opens when there is no room beside the video (the video's fullscreen, a tablet): the right edge. */
 const SPOT_HOME = { x: 1, y: 0.5 };
 /** Gap left between the free window and a YouTube player it settles beside. */
 const BESIDE_GAP = 4;
@@ -406,23 +409,63 @@ export function createGameStage(opts: StageOptions) {
     const wanted = want ?? (Number.isFinite(saved) && saved > 0 ? saved : screenZoom);
     return Math.min(most, Math.max(low, wanted));
   }
-  /** The free window's spot (each game remembers its own, bug W5) and the game it belongs to. */
-  let spot = { ...SPOT_HOME };
+  /**
+   * 0.9.97.112 (owner: "open towards the right, over the chat; never cover any part of our video screen"): until I move
+   * or resize it, a free window opens in the column right of the video (over the side panel), as big as that column
+   * allows up to the game's largest size, never over the video. No room there: the largest strip beside the video
+   * (above, below, left). No room anywhere beside it (the video's fullscreen, cinema mode on a small screen) or on a
+   * tablet (card GT keeps it clear of the chat): null, and the window takes `SPOT_HOME`.
+   */
+  function homeBox(kind: Kind): Box | null {
+    if (inFullscreen() || isTablet() || isPhoneLayout()) return null;
+    const video = theater.getBoundingClientRect();
+    if (video.width < 2 || video.height < 2) return null;
+    const [w, h] = sizeOf(kind).size;
+    const page = pageRoom();
+    const bar = Math.max(page.top, document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0);
+    const fits = (b: Box) => Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h);
+    let col: Box | null = { left: video.right, top: bar, width: page.left + page.width - video.right, height: page.top + page.height - bar };
+    if (fits(col) < MIN_ZOOM) col = largestClear(page, video);
+    if (!col) return null;
+    const zoom = Math.min(zoomRange(kind).high, fits(col));
+    const width = Math.round(w * zoom);
+    const height = Math.round(h * zoom);
+    // Right-aligned at the top of the column (over the side panel's top); centred in a strip above or below the video.
+    const right = col.left >= video.right - 1;
+    return {
+      left: Math.round(right ? col.left + col.width - EDGE - width : col.left + (col.width - width) / 2),
+      top: Math.round(col.top + EDGE),
+      width,
+      height,
+    };
+  }
+  /** The free window's spot once I moved or resized it (each game its own; null: its home, `homeBox`). */
+  let spot: { x: number; y: number } | null = null;
   let spotFor: Kind | null = null;
-  const saveSpot = () => spotFor && save(spotKey(spotFor), JSON.stringify(spot));
-  function placeFloat(zoom = floatZoom()): void {
+  const saveSpot = () => spotFor && save(spotKey(spotFor), spot ? JSON.stringify(spot) : '');
+  function placeFloat(zoom?: number): void {
     const kind = shownKind() ?? 'xox';
     if (spotFor !== kind) {
       spotFor = kind;
-      spot = readPair(spotKey(kind)) ?? readPair(FLOAT_KEY) ?? { ...SPOT_HOME };
+      spot = readPair(spotKey(kind));
       side = null;
     }
+    const home = !spot && zoom === undefined ? homeBox(kind) : null;
+    if (home) {
+      stage.style.left = `${home.left}px`;
+      stage.style.top = `${home.top}px`;
+      stage.style.width = `${home.width}px`;
+      stage.style.height = `${home.height}px`;
+      return;
+    }
+    zoom ??= floatZoom();
+    const where = spot ?? SPOT_HOME;
     const [w, h] = sizeOf(kind).size;
     const width = Math.round(w * zoom);
     const height = Math.round(h * zoom);
     const room = posRoom();
-    const x = Math.min(1, Math.max(0, spot.x));
-    const y = Math.min(1, Math.max(0, spot.y));
+    const x = Math.min(1, Math.max(0, where.x));
+    const y = Math.min(1, Math.max(0, where.y));
     const at = clearOfPlayer(
       { left: room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x, top: room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y },
       width,
@@ -454,6 +497,10 @@ export function createGameStage(opts: StageOptions) {
     const box = stage.getBoundingClientRect();
     drag = { x: event.clientX, y: event.clientY, left: box.left, top: box.top, id: event.pointerId };
     side = null;
+    // Leaving its home: the window keeps the size it had there.
+    const kind = shownKind();
+    if (kind && !spot) save(zoomKey(kind), String(Math.round((box.width / sizeOf(kind).size[0]) * 1000) / 1000));
+    if (!menu.hidden && menu.parentElement === headMenuWrap) setHub(false);
     head.setPointerCapture(event.pointerId);
     stage.classList.add('game-dragging');
   });
@@ -494,7 +541,7 @@ export function createGameStage(opts: StageOptions) {
     if (!kind) return;
     save(zoomKey(kind), '');
     spotFor = kind;
-    spot = { ...SPOT_HOME };
+    spot = null;
     side = null;
     saveSpot();
     if (mode === 'float') placeFloat();
@@ -952,13 +999,24 @@ export function createGameStage(opts: StageOptions) {
   headMenuWrap.style.zIndex = '2147483001';
   function hubFromHead(): void {
     if (!menu.hidden && menu.parentElement === headMenuWrap) return setHub(false);
-    const r = hubButton.node.getBoundingClientRect();
-    headMenuWrap.style.top = `${Math.round(r.bottom + 6)}px`;
-    headMenuWrap.style.right = `${Math.max(EDGE, Math.round(innerWidth - r.right))}px`;
     const parent = document.fullscreenElement ?? document.body;
     if (headMenuWrap.parentElement !== parent) parent.append(headMenuWrap);
     if (menu.parentElement !== headMenuWrap) headMenuWrap.append(menu);
     setHub(true);
+    // 0.9.97.112 (owner): from a free window the hall slides out of the window's left side (its right side when there
+    // is no room on the left), level with its top, so it shows wherever the window is; elsewhere it hangs under the 🎮.
+    const r = hubButton.node.getBoundingClientRect();
+    const win = stage.getBoundingClientRect();
+    const mw = menu.getBoundingClientRect().width || 440;
+    let from: 'left' | 'right' | null = null;
+    if (mode === 'float' && !isPhoneLayout()) from = win.left - 2 * EDGE >= mw ? 'left' : innerWidth - win.right - 2 * EDGE >= mw ? 'right' : null;
+    headMenuWrap.style.top = `${Math.round(from ? win.top : r.bottom + 6)}px`;
+    headMenuWrap.style.right = `${Math.round(from === 'left' ? innerWidth - win.left + EDGE : from === 'right' ? innerWidth - win.right - EDGE - mw : Math.max(EDGE, innerWidth - r.right))}px`;
+    headMenuWrap.dataset.side = from ?? 'below';
+    if (from && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      menu.animate([{ opacity: 0, transform: `translateX(${from === 'left' ? 24 : -24}px)` }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+    requestAnimationFrame(keepHubOnScreen);
   }
   hubButton.node.addEventListener('click', hubFromHead);
   for (const trigger of triggers) {
@@ -989,8 +1047,8 @@ export function createGameStage(opts: StageOptions) {
     commands: [
       {
         id: 'gameWindow.reset',
-        title: { en: 'Game window: back to its own size and spot', tr: 'Oyun penceresi: kendi boyutu ve yeri' },
-        help: { en: 'The same as a double click on the free window’s head: the open game’s window goes back to its first size and spot.', tr: 'Serbest pencerenin başlığına çift tıklamakla aynı: açık oyunun penceresi ilk boyutuna ve yerine döner.' },
+        title: { en: 'Game window: back to its home beside the video', tr: 'Oyun penceresi: videonun yanındaki yerine' },
+        help: { en: 'The same as a double click on the free window’s head: the open game’s window forgets where I put it and goes back to the column right of the video (never over the video).', tr: 'Serbest pencerenin başlığına çift tıklamakla aynı: açık oyunun penceresi koyduğum yeri unutur, videonun sağındaki sütuna döner (videonun üstüne hiç çıkmaz).' },
         tab: 'games',
         available: () => (shownKind() ? true : { en: 'no game open', tr: 'açık oyun yok' }),
         run: resetFloat,
@@ -1008,7 +1066,9 @@ export function createGameStage(opts: StageOptions) {
       const kind = shownKind();
       if (!kind) return [];
       const where = stage.hidden ? 'minimized' : mode;
-      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${overYoutube() ? ' · YouTube' : ''}`]];
+      const home = mode === 'float' && !spot ? ' · home' : '';
+      const hall = !menu.hidden && menu.parentElement === headMenuWrap ? ` · hall ${headMenuWrap.dataset.side ?? ''}` : '';
+      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${home}${hall}${overYoutube() ? ' · YouTube' : ''}`]];
     },
   }));
 

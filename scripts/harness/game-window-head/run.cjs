@@ -6,6 +6,9 @@
 //       the free window is possible) and the head says why.
 //   W3  The head's 🎮 opens the games hall right under itself, visible, in the free window, in the video's place and in
 //       the video's fullscreen; pressed again it closes.
+//   112 Until I move it, a free window opens right of the video (over the side panel) and never over the video; an old
+//       saved spot is left behind once; from a free window 🎮's hall slides out of its left side, visible with the side
+//       panel open or closed, and closes on Esc, an outside click or a chosen game.
 //   W5  The free window follows a drag of its head (over a video file it may cover the video, nothing pushes it away);
 //       over a YouTube player it never covers it and never jumps while dragged; each game remembers its own spot and
 //       size; ✕ and 🎮 bring it back in the same spot; a double click on the head puts it back; the corner resizes it.
@@ -120,15 +123,24 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
   {
     const { ctx, page, errors } = await room(browser, { width: 1366, height: 768 });
     const L = '1366';
+    // 0.9.97.112: a spot saved by an older release is left behind once (the game opens in its new home).
+    await page.evaluate(() => localStorage.setItem('gameFloat:spot:snack', JSON.stringify({ x: 0, y: 0 })));
     await openGame(page, 'snack');
+    const first = await box(page);
+    check(first.mode === 'float' && !first.overPlayer && first.x + first.w >= 1366 - 12 && first.onScreen, `${L} 112: Snack Bar opens right of the video (over the side panel), not over it, ignoring an old saved spot`, first);
     check(!(await page.$('#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
     await page.keyboard.press('Escape');
     check(!(await page.evaluate(() => document.getElementById('game-stage').classList.contains('game-max') || !!document.fullscreenElement)), `${L} W1: nothing puts Snack Bar on the whole screen`);
     // W3: 🎮 in the free window's head.
     await page.click('#game-stage .game-hub-open');
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in the free window opens the hall, visible`);
-    const menuBelow = await page.evaluate(() => document.getElementById('game-menu').getBoundingClientRect().top >= document.querySelector('#game-stage .game-hub-open').getBoundingClientRect().bottom - 1);
-    check(menuBelow, `${L} W3: the hall hangs under the 🎮 pressed`);
+    await wait(300); // the slide-out (180 ms) ends
+    const hallSide = await page.evaluate(() => {
+      const m = document.getElementById('game-menu').getBoundingClientRect();
+      const w = document.getElementById('game-stage').getBoundingClientRect();
+      return { left: m.right <= w.left + 1, level: Math.abs(m.top - w.top) <= 2 };
+    });
+    check(hallSide.left && hallSide.level, `${L} 112: the hall slides out of the free window's left side, level with its top`, hallSide);
     await page.click('#game-stage .game-hub-open');
     check(await page.evaluate(() => document.getElementById('game-menu').hidden), `${L} W3: 🎮 again closes the hall`);
     // W2: in the video's place, with no video.
@@ -192,7 +204,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await dblHead(page);
     await wait(300);
     const home = await box(page);
-    check(home.w === 400 && home.x + home.w >= 1366 - 10, `${L} W5: a double click on the head puts it back (own size, right edge)`, home);
+    check(near(home, first) && !home.overPlayer, `${L} W5: a double click on the head puts it back home, right of the video`, { home, first });
     // The lab's reset does the same.
     await dragHead(page, -300, 0, 4);
     await page.evaluate(() => window.__swmLab.run('gameWindow.reset'));
@@ -251,6 +263,34 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       await wait(300);
       check(!(await box(page)).overPlayer, `${L} ${kind}: a double click puts it back, still beside the player`, await box(page));
     }
+    check(!errors.length, `${L}: no page errors`, errors.slice(0, 2));
+    await ctx.close();
+  }
+
+  // ---- 0.9.97.112: every game's home is right of the video; the hall shows with the side panel open or closed ----
+  for (const [L, viewport] of [['1920 home', { width: 1920, height: 1080 }], ['1366 home', { width: 1366, height: 768 }]]) {
+    const { ctx, page, errors } = await room(browser, viewport);
+    for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz']) {
+      await openGame(page, kind);
+      const b = await box(page);
+      check(b.mode === 'float' && !b.overPlayer && b.onScreen && b.x + b.w >= viewport.width - 12, `${L} ${kind}: opens right of the video, never over it`, b);
+    }
+    // The side panel closed (cinema mode): the hall still opens beside the free window, visible.
+    await page.evaluate(() => document.getElementById('side-toggle')?.click());
+    await wait(500);
+    for (const kind of ['snack', 'sea']) {
+      await openGame(page, kind);
+      await page.click('#game-stage .game-hub-open');
+      check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: side panel closed, 🎮 opens the hall beside the window, visible`);
+      await page.keyboard.press('Escape');
+      check(await page.evaluate(() => document.getElementById('game-menu').hidden), `${L} ${kind}: Esc closes the hall`);
+    }
+    // Choosing a game in the hall closes it.
+    await page.click('#game-stage .game-hub-open');
+    await page.evaluate(() => document.querySelector('#game-menu [data-tab="side"]')?.click());
+    await until(() => page.evaluate(() => !!document.querySelector('#game-menu [data-solo="garden"]')));
+    await page.evaluate(() => document.querySelector('#game-menu [data-solo="garden"]').click());
+    check(!!(await until(() => page.evaluate(() => document.getElementById('game-menu').hidden))), `${L}: choosing a game closes the hall`);
     check(!errors.length, `${L}: no page errors`, errors.slice(0, 2));
     await ctx.close();
   }
