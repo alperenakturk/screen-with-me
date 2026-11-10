@@ -16,6 +16,16 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.101 — 10 Nov
+- Games on a phone held sideways: chess, dama, backgammon, Reversi and the others show the board at the full height
+  with the players and buttons beside it; Sea Battle shows one sea at a time, big; Five Frames, the Five Frames Duel,
+  Snack Bar and Window Garden lay out in two columns; the Classics shelf fits in one row. Nothing is cut off or shrunk
+  to tiny text any more.
+- Every table with a lobby (Quiz, Draw & Guess, Last Heart, the Five Frames Duel) opens with the same card: the game's
+  badge, a short rule line, who is here and the settings.
+- In a game window's head, "in the video's place" and full screen now have clearly different icons and clearer
+  tooltips.
+
 ### 0.9.97.100 — 10 Nov
 - A new "Font" setting (⚙️ → My screen): keep your device's own font or pick one of six: Sidelit, Poster, Polished,
   Readable, Rounded or Easy reading. Only the font you pick is downloaded, and every Turkish letter is in each.
