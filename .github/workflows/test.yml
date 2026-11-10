@@ -168,6 +168,11 @@ jobs:
       - name: Accessibility (axe + keyboard tour)
         run: node scripts/harness/a11y/run.cjs http://localhost:8787
 
+      # Card THEME1: every theme's text passes WCAG AA against the real pixels behind it (scene pictures included):
+      # home (1366 and 1920), help, join card, room, settings and the games hall; phones the plain themes.
+      - name: Theme contrast (WCAG AA)
+        run: node scripts/harness/contrast/run.cjs http://localhost:8787
+
       # Card DL: the 🐞 Test Lab (drawer, command box, status, log, bug text) and that with it off nothing of it loads.
       - name: Test Lab
         run: |

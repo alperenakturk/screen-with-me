@@ -325,7 +325,7 @@ const ours = () => location.port === '8787' || location.port === '8789' || locat
     await ctx.close();
   }
 
-  // A saved Sinema theme (its own projector light) gets the soft backdrop behind the text.
+  // A scene theme (here Sinema, its own projector light) gets the quiet zone behind the text (THEME1: --hero-scrim).
   {
     const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
     await ctx.addInitScript(`(${ours})() && localStorage.setItem('theme', 'sinema')`);
@@ -333,8 +333,8 @@ const ours = () => location.port === '8787' || location.port === '8789' || locat
     await page.goto(SITE);
     await page.waitForSelector('.hm-first');
     await page.waitForTimeout(500);
-    const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.hm-text'), '::before').backgroundImage);
-    check(/radial-gradient/.test(bg), 'Sinema: a soft backdrop behind the text', bg.slice(0, 40));
+    const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.hm-text'), '::before').backgroundColor);
+    check(/(rgba?|color)\(/.test(bg) && !/(, 0\)| \/ 0\))$/.test(bg), 'Sinema: a quiet zone behind the text', bg);
     await page.screenshot({ path: `${OUT}/home-sinema-1366.png` });
     await ctx.close();
   }
