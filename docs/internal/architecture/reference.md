@@ -1193,7 +1193,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `window.__swmLab` (`run(id, arg)`, `undo(id)`, `list()` (every command with its tab, texts, availability and whether it
   has an Undo), `log()`, `bugText()`) exists only while the lab is on (harnesses). `friends.host` has an Undo since LAB2:
   the friend hands the role back (`make-host` from their own connection, they are the real host then).
-  **🧪 Test round (card LAB2, 0.9.97.107, `ui/lab-round.ts`, part of the lab chunk):** one command per test on the owner's
+  **🧪 Test round (card LAB2, 0.9.97.108, `ui/lab-round.ts`, part of the lab chunk):** one command per test on the owner's
   board, `round.<id>`: `s1`–`s4`, `n1`–`n4` (+ `n2old`), `f1`, `f2` (STATUS "Owner's hand tests") and `t1`–`t11` (the
   0.9.98 round's items 1–11, "Next round, start here"; item 7 is Game Studio's 🎮 tab). Each sets the stage the lab can
   (themes / fonts on this page only, a fake friend who pauses / plays / jumps, writes three lines in fullscreen, knocks

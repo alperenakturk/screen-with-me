@@ -384,7 +384,7 @@ then scrolls by 7–34 px on a computer (minor, proposed for the next sweep).
 Okyanus): 100 screenshots, checks for sideways scroll, nothing past the right edge, console errors, and no page scroll
 where a screen must fit). It found the Thanks page scrolling on a sideways phone: fixed.
 
-## Test round with the Lab (card LAB2, 0.9.97.107; for the Planner's Turkish guide)
+## Test round with the Lab (card LAB2, 0.9.97.108; for the Planner's Turkish guide)
 How to start, once per device: open the live site with `?debug=<the owner's code>` at the end of the address (the 🐞
 appears bottom left and stays for 30 days, also after a reload); open a room; 🐞 → tab "🧪 Senaryolar" → the list
 "🧪 Test turu: panodaki her test için bir tane" under the scenarios. Each row has "Çalıştır" and, where it changes
@@ -436,7 +436,7 @@ what he should see. The 🎮 games tests (G1–G16) are Game Studio's list in th
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
-**0.9.97.107 (LAB2, the Test Lab for the test round; fold into the next round).**
+**0.9.97.108 (LAB2, the Test Lab for the test round; fold into the next round).**
 - [ ] LAB1. Phone and computer: open the live site with `?debug=<your code>`: 🐞 shows; reload: it stays. 🐞 → "🧪
   Senaryolar": under the scenarios the "🧪 Test turu" list has a row for every test on the board; "Çalıştır" on
   "Test turu N1" shows Matinee, "Geri al" brings your theme back.
