@@ -24,8 +24,12 @@ const THEMES = pick('THEMES', ALL_THEMES);
 const PAGES = pick('PAGES', ['home', 'help', 'join', 'room', 'settings', 'games']);
 const DEVICES = {
   laptop: { viewport: { width: 1366, height: 768 } },
+  // The scene is cover-scaled from the bottom centre, so a wide screen puts other parts of it behind the home text.
+  desktop: { viewport: { width: 1920, height: 1080 } },
   phone: devices['Pixel 7'],
 };
+/** Pages per device: the 1920 run is for the home page's scene only. */
+const DEVICE_PAGES = { desktop: ['home'] };
 
 /** Visible text runs in the viewport: one entry per element with its own text. */
 function collect() {
@@ -188,7 +192,7 @@ const STILL = `*, *::before, *::after { animation-play-state: paused !important;
         } else console.log(`ok   ${key}: ${rated.length} text runs`);
       };
       const room = 'ct' + Math.random().toString(36).slice(2, 7);
-      for (const name of PAGES) {
+      for (const name of PAGES.filter((p) => !DEVICE_PAGES[device] || DEVICE_PAGES[device].includes(p))) {
         try {
           if (name === 'home') {
             await page.goto(`${SITE}/`);

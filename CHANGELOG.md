@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.98 — 10 Nov
+- Easier to read in every theme: on the picture themes the home page's text now sits on a calm, darker area, so the
+  picture behind it never hides a word (the Ocean Liner theme's light sky was the worst).
+- Text boxes, the search box and switches have clearly visible edges in every theme.
+- The plain themes are calmer: the drifting colour clouds and the corner glows are gone.
+- Night theme: your own chat messages and the games hall's counts are easier to read.
+
 ### 0.9.97.96 — 10 Nov
 - Phones: every game fills the whole screen when the phone is held sideways too (on big phones it used to open as a
   small window over the video).
