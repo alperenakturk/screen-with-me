@@ -81,6 +81,8 @@
 }
 .wg-btn.main { border-color: var(--wg-gold); background: var(--wg-gold); color: var(--wg-ink); }
 .wg-btn:disabled { opacity: 0.45; }
+/* THEMEG: a full pot's Water button: outlined, full contrast, not faded (it is a state, not a broken button). */
+.wg-btn.full:disabled { opacity: 1; border-color: rgba(255, 198, 90, 0.5); color: var(--wg-gold); cursor: default; }
 
 .wg-album { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
 .wg-album-cell { position: relative; aspect-ratio: 34 / 44; border-radius: 7px; background: rgba(255, 255, 255, 0.04); display: block; padding: 0; border: 0; width: 100%; }

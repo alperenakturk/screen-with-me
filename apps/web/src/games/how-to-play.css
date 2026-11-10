@@ -7,8 +7,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: safe center;
   gap: 10px;
-  padding: 40px 16px 14px;
+  padding: 16px 16px 14px;
   box-sizing: border-box;
   border-radius: 12px;
   /* THEMEG: the card takes the room theme's colours (a light theme gets a light card); --bg underneath keeps it opaque
@@ -30,7 +31,9 @@
 .htp-dots { display: flex; gap: 6px; }
 .htp-dot { width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--text) 22%, transparent); }
 .htp-dot.on { background: var(--accent); }
-.htp-actions { display: flex; gap: 8px; margin-top: auto; width: 100%; justify-content: center; }
+/* THEMEG: the card's content sits together in the middle (Skip / Next pinned to the bottom left a big empty gap under
+   a short line). */
+.htp-actions { display: flex; gap: 8px; margin-top: 4px; width: 100%; justify-content: center; }
 .htp .htp-btn {
   min-height: 40px; min-width: 110px; padding: 6px 16px; border-radius: 10px; border: 1.5px solid color-mix(in srgb, var(--accent) 60%, transparent);
   background: transparent; color: var(--accent); font: 700 15px/1.2 system-ui, sans-serif; cursor: pointer; touch-action: manipulation;
@@ -40,9 +43,12 @@
    --accent was 3.7:1). */
 .htp .htp-next { background: var(--accent-btn, var(--accent)); border-color: var(--accent-btn, var(--accent)); color: var(--on-accent); }
 .htp .htp-skip {
-  position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; border-radius: 8px;
-  background: color-mix(in srgb, var(--text) 9%, transparent); color: var(--text); font-size: 15px; cursor: pointer;
+  min-height: 40px; padding: 6px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--muted);
+  font: 600 15px/1.2 system-ui, sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  touch-action: manipulation; margin-right: auto;
 }
+.htp .htp-skip[hidden] { display: none; }
+html.phone .htp .htp-skip { min-height: 44px; }
 button.htp-open {
   flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.1);
   color: #fff3d6; font: 800 15px/1 system-ui, sans-serif; cursor: pointer; touch-action: manipulation;
@@ -52,7 +58,7 @@ button.htp-open:hover { background: rgba(255, 255, 255, 0.18); }
 html.phone .htp .htp-btn { min-height: 44px; }
 
 /* GP2: the tables' "?" sits in the game window's head with its other buttons (same size, same look). */
-.game-head-slot .htp-head { min-width: 36px; padding: 0 10px; font-weight: 800; }
+.game-head-slot .htp-head { min-width: 36px; min-height: 31px; padding: 0 10px; font-weight: 800; }
 /* THEMEG: the tables' "?" looks like the buttons beside it in every theme (the side games' round "?" keeps the game's
    own dark bar colours). */
 button.htp-open.htp-head { width: auto; height: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); }
@@ -66,11 +72,11 @@ button.htp-open.htp-head:hover { background: var(--surface-2); border-color: var
   .htp {
     display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: 1fr auto auto auto 1fr;
     grid-template-areas: 'pic .' 'pic words' 'pic dots' 'pic actions' 'pic .'; align-items: center; justify-items: center;
-    gap: 10px 24px; padding: 44px 24px 16px;
+    gap: 10px 24px; padding: 20px 24px 16px;
   }
   .htp-picture { grid-area: pic; display: flex; justify-content: center; max-width: 100%; min-height: 0; }
   .htp-art { display: flex; justify-content: center; }
-  .htp-art svg { width: auto; max-width: 100%; max-height: calc(100cqh - 76px); }
+  .htp-art svg { width: auto; max-width: 100%; max-height: calc(100cqh - 52px); }
   .htp-words { grid-area: words; }
   .htp-dots { grid-area: dots; }
   .htp-actions { grid-area: actions; margin-top: 6px; }

@@ -1225,7 +1225,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the scene themes; `--text`, `--muted`, `--accent`, Next in `--accent-btn`); the tables' "?" (`.htp-head`) looks like
   the head's other `.btn`s; the side games' round "?" keeps its game's dark bar colours. Classics: the pink / blue turn
   ring is for the X / O boards only, the other boards ring the turn in `--accent`; backgammon's dice are `--text`. The
-  hall's UPDATED badge is an accent tint and `.game-menu` sits on `--bg` (gallery.css). Checks: `table-how` (Matinee). Harness
+  hall's UPDATED badge is an accent tint and `.game-menu` sits on `--bg` (gallery.css). Checks: `table-how` (Matinee).
+  0.9.97.117 also: "Skip" (`.htp-skip`, words, hidden on the last card) sits in `.htp-actions` instead of a corner ✕;
+  hall text ≥ 13 px and What's new unclamped (gallery.css); a NEW / UPDATED badge only while `badgeFresh(note,
+  SITE_VERSION)` (the note's release or the next; `SITE_VERSION` read from `.footer-version`); Window Garden's Water
+  button always "💧 Water" (`.wg-btn.full` when the pot is full), 🌙 for resting; Classics' wins pill and score carry
+  🏆, the backgammon tray a title, "Just watch" hidden on your own turn. Harness
   `scripts/harness/five-frames/run.cjs` (20 checks: marks against the real list via the dev server's modules). Harness `scripts/harness/snack-bar/run.cjs` (25 checks).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server

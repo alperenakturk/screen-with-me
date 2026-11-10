@@ -53,8 +53,10 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
   const dots = el('div', { class: 'htp-dots', 'aria-hidden': 'true' });
   const back = el('button', { type: 'button', class: 'htp-btn htp-back', 'data-how': 'back' });
   const next = el('button', { type: 'button', class: 'htp-btn htp-next', 'data-how': 'next' });
-  const skip = el('button', { type: 'button', class: 'htp-skip', 'data-how': 'skip' }, '✕');
-  layer.append(skip, art, el('div', { class: 'htp-words' }, title, line), dots, el('div', { class: 'htp-actions' }, back, next));
+  // THEMEG: one obvious way out: "Skip" in words beside Back / Next (a corner ✕ sat 60 px from the game window's own ✕,
+  // and nobody could tell which closed what). Esc still skips.
+  const skip = el('button', { type: 'button', class: 'htp-skip', 'data-how': 'skip' });
+  layer.append(art, el('div', { class: 'htp-words' }, title, line), dots, el('div', { class: 'htp-actions' }, skip, back, next));
   host.append(layer);
   const button = el('button', { type: 'button', class: 'htp-open', 'data-how': 'open' }, '?');
   // Like the games' own buttons: a press never takes the focus.
@@ -75,8 +77,8 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
     back.textContent = t('back');
     back.hidden = index === 0;
     next.textContent = index === list.length - 1 ? t('play') : t('next');
-    skip.title = t('skip');
-    skip.setAttribute('aria-label', t('skip'));
+    skip.textContent = t('skip');
+    skip.hidden = index === list.length - 1;
     button.title = t('open');
     button.setAttribute('aria-label', t('open'));
   }

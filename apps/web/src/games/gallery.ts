@@ -16,7 +16,7 @@ import poker from './art/covers/poker.svg?raw';
 import sea from './art/covers/sea.svg?raw';
 import classics from './art/covers/classics.svg?raw';
 import './gallery.css';
-import { GAME_CATALOG, type SoloKind } from '@swm/shared/games/catalog';
+import { GAME_CATALOG, badgeFresh, type SoloKind } from '@swm/shared/games/catalog';
 import { formatCoins } from '@swm/shared/games/snack-bar';
 import { PLANT_IDS } from '@swm/shared/games/garden';
 import { dayNumber, liveStreak } from '@swm/shared/games/five-frames';
@@ -27,6 +27,8 @@ import { lang, t } from '../i18n.ts';
 import { load } from '../storage.ts';
 import { icon } from '../ui/icons.ts';
 
+/** The site's version, from the footer (index.html's `.footer-version`, the one place it is written). */
+const SITE_VERSION = (document.querySelector('.footer-version')?.textContent ?? '').trim().replace(/^v/, '');
 const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, classics, sea, duel, snack, garden, word };
 /** Tic-tac-toe and Four in a Row live inside 🎲 Classics now (old tables of theirs still open). */
 const HALL_KINDS = ROOM_GAME_KINDS.filter((kind) => kind !== 'xox' && kind !== 'four');
@@ -219,7 +221,8 @@ export function renderGallery(s: GalleryState): HTMLElement[] {
         { class: `hub-games hub-cards${tables.length || news.length ? ' compact' : ''}` },
         ...HALL_KINDS.map((kind) => {
           const info = GAME_CATALOG[kind];
-          const badge = news.find((n) => n.kinds.includes(kind));
+          // THEMEG: the badge only in the note's release and the next one (the note itself stays in What's new).
+          const badge = news.find((n) => n.kinds.includes(kind) && badgeFresh(n, SITE_VERSION));
           const item = el(
             'button',
             { type: 'button', class: 'hub-game hub-card', 'data-kind': kind },

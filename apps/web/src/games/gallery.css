@@ -6,7 +6,9 @@
   /* The bright amber in every theme (Matinee's --warn is a dark amber for text on cream, card NP1). */
   background: #f5b94a;
   color: #2a1d00;
-  font-size: 9px;
+  /* THEMEG: ≥ 13 px like every other text (it was 9 px). */
+  font-size: 13px;
+  line-height: 1.2;
   font-weight: 800;
   letter-spacing: 0.05em;
   vertical-align: 2px;
@@ -39,3 +41,12 @@
 /* THEMEG: the scene themes' --surface is see-through (the scene shows behind cards); over the room's own buttons the
    hall read as broken, so it gets the theme's solid --bg underneath. */
 .game-menu { background: linear-gradient(var(--surface), var(--surface)), var(--bg); }
+
+/* THEMEG: no text under 13 px in the hall (the count, the section labels and the player lines were 12 px), and What's
+   new reads in full: it wraps instead of stopping at two lines with "…". */
+.hub-count, .hub-label, .hub-table-text small, .hub-game-text small, .hub-side-text small { font-size: 13px; }
+.hub-news-line { font-size: 13px; }
+.hub-news-line > span { display: inline; -webkit-line-clamp: unset; overflow: visible; }
+
+/* THEMEG: the chosen tab in the theme's accent (it was the games' gold on every theme). */
+.hub-tab.on { background: var(--accent-btn, var(--accent)); color: var(--on-accent); }
