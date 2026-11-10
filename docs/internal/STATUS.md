@@ -487,6 +487,9 @@ with the same friend:
 - [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
   time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
   video's place" and ⛶ full screen now look different.
+- [ ] G15. Snack Bar extras: your old Snack Bar is still there. Open "📋 Upgrades": this week's stand is on top (buy a
+  level). Play a film to its end: the receipt has the manager's report. Open a new cinema: the counter's colours
+  change. Buying a stand to level 10, 25 or 50 plays its own little sound.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

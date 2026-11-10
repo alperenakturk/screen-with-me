@@ -12,10 +12,13 @@ import {
   PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
   RECEIPT_MIN_S, loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick,
   togetherFactor, unlocked, type CustomerMood, type Receipt, type SnackSave, type StandId,
+  SEASON_BADGE_LEVEL, SEASON_BONUS, SEASON_GLYPH, SEASON_LEVELS, buySeason, managerReport, rollSeason, seasonCost, seasonDaysLeft, seasonLevel,
+  seasonOf, seasonWeek,
 } from '@swm/shared/games/snack-bar';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
 import { playSound } from '../sound.ts';
+import type { SoundId } from '@swm/shared/sound-policy';
 import { load, save } from '../storage.ts';
 import { confirmDialog } from '../ui/confirm.ts';
 import scene from './art/snack-bar/counter-scene.svg?raw';
@@ -177,7 +180,6 @@ const TEXT = {
     receiptFilm: 'Film watched',
     receiptServed: 'Customers served',
     receiptEarned: 'Coins earned',
-    receiptBest: 'Best stand',
     receiptBucket: '🪣 Golden bucket',
     receiptCollect: 'Collect {n}',
     receiptThanks: 'Thanks for watching with us!',
@@ -193,6 +195,25 @@ const TEXT = {
     restart: 'Start over',
     restartAsk: 'Start Snack Bar over?',
     restartText: 'Your coins, stands, stars and cinemas all go back to zero. This cannot be undone.',
+    // NG2: the seasonal stand and the manager's report.
+    'season.cocoa': 'Hot cocoa',
+    'season.lemonade': 'Lemonade',
+    'season.cotton-candy': 'Cotton candy',
+    'season.caramel-apple': 'Caramel apples',
+    seasonTitle: "This week's stand",
+    seasonLine: 'Each level adds {bonus} % to all your income until the week ends. Level {badge} earns its badge.',
+    seasonLevel: 'Lv {n}/{max}: +{bonus} % income',
+    seasonNew: 'New this week',
+    seasonDays: '{n} days left',
+    seasonLastDay: 'last day',
+    seasonTop: 'Top level',
+    seasonArrived: '{glyph} New this week: {name}! Find it under Upgrades.',
+    reportTitle: "📋 Manager's report",
+    reportSold: 'Sold most',
+    reportNext: 'Buy next',
+    reportStand: '{stand}, level {n}',
+    reportSeason: '{stand}, level {n} (this week)',
+    reportNone: 'Save up for now',
   },
   tr: {
     how1Title: 'Oda izlerken kazan',
@@ -331,7 +352,6 @@ const TEXT = {
     receiptFilm: 'İzlenen film',
     receiptServed: 'Servis yapılan müşteri',
     receiptEarned: 'Kazanılan para',
-    receiptBest: 'En iyi stant',
     receiptBucket: '🪣 Altın kova',
     receiptCollect: '{n} al',
     receiptThanks: 'Bizimle izlediğin için teşekkürler!',
@@ -347,6 +367,24 @@ const TEXT = {
     restart: 'Baştan başla',
     restartAsk: 'Büfe baştan başlasın mı?',
     restartText: 'Paran, stantların, yıldızların ve sinemaların sıfırlanır. Bu geri alınamaz.',
+    'season.cocoa': 'Sıcak kakao',
+    'season.lemonade': 'Limonata',
+    'season.cotton-candy': 'Pamuk şeker',
+    'season.caramel-apple': 'Karamelli elma',
+    seasonTitle: 'Bu haftanın standı',
+    seasonLine: 'Her seviye hafta bitene kadar bütün gelirine %{bonus} ekler. {badge}. seviye rozetini kazandırır.',
+    seasonLevel: 'Sv {n}/{max}: gelir +%{bonus}',
+    seasonNew: 'Bu hafta yeni',
+    seasonDays: '{n} gün kaldı',
+    seasonLastDay: 'son gün',
+    seasonTop: 'En üst seviye',
+    seasonArrived: '{glyph} Bu hafta yeni: {name}! Gelişmeler’de.',
+    reportTitle: '📋 Müdürün raporu',
+    reportSold: 'En çok satan',
+    reportNext: 'Sıradaki alım',
+    reportStand: '{stand}, {n}. seviye',
+    reportSeason: '{stand}, {n}. seviye (bu hafta)',
+    reportNone: 'Şimdilik biriktir',
   },
 } as const;
 type En = (typeof TEXT)['en'];
@@ -404,6 +442,10 @@ const BADGE_TEXT: Record<'en' | 'tr', Record<string, [string, string]>> = {
     'head-chef': ['Head chef', 'Have 12 recipes in one cinema'],
     'full-staff': ['Full crew', 'Hire every member of staff'],
     'big-menu': ['Big menu', 'Five stands at level 25'],
+    'season-cocoa': ['Cocoa season', 'Hot cocoa stand level 5 in its week'],
+    'season-lemonade': ['Lemonade season', 'Lemonade stand level 5 in its week'],
+    'season-cotton-candy': ['Cotton candy season', 'Cotton candy stand level 5 in its week'],
+    'season-caramel-apple': ['Caramel apple season', 'Caramel apple stand level 5 in its week'],
   },
   tr: {
     'first-sale': ['İlk satış', 'İlk müşterine servis yap'],
@@ -443,6 +485,10 @@ const BADGE_TEXT: Record<'en' | 'tr', Record<string, [string, string]>> = {
     'head-chef': ['Baş aşçı', 'Bir sinemada 12 tarifin olsun'],
     'full-staff': ['Tam ekip', 'Bütün çalışanları işe al'],
     'big-menu': ['Zengin menü', 'Beş stant 25. seviyede'],
+    'season-cocoa': ['Kakao mevsimi', 'Sıcak kakao standı kendi haftasında 5. seviye'],
+    'season-lemonade': ['Limonata mevsimi', 'Limonata standı kendi haftasında 5. seviye'],
+    'season-cotton-candy': ['Pamuk şeker mevsimi', 'Pamuk şeker standı kendi haftasında 5. seviye'],
+    'season-caramel-apple': ['Karamelli elma mevsimi', 'Karamelli elma standı kendi haftasında 5. seviye'],
   },
 };
 const badgeText = (id: string): [string, string] => BADGE_TEXT[lang() === 'tr' ? 'tr' : 'en'][id] ?? BADGE_TEXT.en[id] ?? [id, ''];
@@ -520,13 +566,22 @@ const DECOR_ART: Record<DecorId, string> = {
   neon: '<g class="sb-neon" fill="none" stroke="#ff8fd0" stroke-width="1.8" stroke-linejoin="round"><path d="M112 18 h24 l-3 22 h-18 z"/><path d="M114 18 q2 -7 7 -4 q3 -6 7 -1 q5 -3 6 5"/></g>',
 };
 
+/** NG2: each stand's own short sound when it reaches a milestone. */
+const STAND_SOUND: Record<StandId, SoundId> = {
+  popcorn: 'snackPop', soda: 'snackFizz', nachos: 'snackCrunch', candy: 'snackCandy',
+  'second-counter': 'snackBell', hotdog: 'snackSizzle', 'ice-cream': 'snackScoop', arcade: 'snackArcade',
+};
+
 const fmtRate = (rate: number) => formatCoins(rate < 10 ? Math.round(rate * 10) / 10 : rate);
 
 export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () => void {
   /** The room as the rules see it: a full tip jar this film adds its +10 % (pick 5). */
-  const room = (): SoloRoom & { boost: boolean; special: StandId } => {
+  /** NG2: the Test Lab can move the week on (`snackBar.season`). */
+  let labWeeks = 0;
+  const week = () => seasonWeek(dayNumber()) + labWeeks;
+  const room = (): SoloRoom & { boost: boolean; special: StandId; week: number } => {
     const r = roomNow();
-    return { ...r, boost: !!r.tipJar?.boost, special: specialOf(dayNumber()) };
+    return { ...r, boost: !!r.tipJar?.boost, special: specialOf(dayNumber()), week: week() };
   };
   const tabId = Math.random().toString(36).slice(2);
   let game: SnackSave = loadSnack(load(SNACK_KEY));
@@ -547,7 +602,14 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   const decorated = scene
     .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')
     .replace('<g id="side-light">', `${Object.entries(BACKDROPS).map(([id, svg]) => `<g id="place-${id}" style="display:none">${svg}</g>`).join('')}<g id="side-light">`)
-    .replace('</svg>', `${DECOR.map((d) => `<g id="decor-${d.id}" style="display:none">${DECOR_ART[d.id]}</g>`).join('')}</svg>`);
+    .replace('</svg>', `${DECOR.map((d) => `<g id="decor-${d.id}" style="display:none">${DECOR_ART[d.id]}</g>`).join('')}</svg>`)
+    // NG2: the shop front (wall, counter, its stripes) takes the place's colours (`.sb[data-place]` in snack-bar.css).
+    .replace('stop-color="#2b1a4a"', 'style="stop-color:var(--sb-wall-a,#2b1a4a)"')
+    .replace('stop-color="#171030"', 'style="stop-color:var(--sb-wall-b,#171030)"')
+    .replace('fill="#120b26"', 'style="fill:var(--sb-shelf,#120b26)"')
+    .replace('stop-color="#7a4a2c" stop-opacity="1"', 'style="stop-color:var(--sb-counter-a,#7a4a2c)"')
+    .replace('stop-color="#3e2418" stop-opacity="1"', 'style="stop-color:var(--sb-counter-b,#3e2418)"')
+    .replace('fill="#c0283f"', 'style="fill:var(--sb-stripe,#c0283f)"');
   const sceneArt = art(decorated, 'sb-scene-art');
   const secondBadge = el('span', { class: 'sb-second', 'aria-hidden': 'true' }, '×2');
   const sceneButton = el('button', { type: 'button', class: 'sb-scene' }, sceneArt, secondBadge);
@@ -602,7 +664,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       const count = countFor(stand.id);
       if (blocked || count < 1 || !buy(game, stand.id, count)) return;
       const level = game.levels[stand.id];
-      playSound(milestoneFactor(level) > milestoneFactor(before) ? 'snackMilestone' : 'snackBuy');
+      playSound(milestoneFactor(level) > milestoneFactor(before) ? STAND_SOUND[stand.id] : 'snackBuy');
       node.classList.remove('sb-bought');
       void node.offsetWidth;
       node.classList.add('sb-bought');
@@ -665,8 +727,43 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
         hireButton,
       );
     });
+    // NG2: this week's seasonal stand on top.
+    const w = week();
+    const sid = seasonOf(w);
+    const sLevel = seasonLevel(game, w);
+    const sPrice = seasonCost(game, w);
+    const sDays = seasonDaysLeft(dayNumber() + labWeeks * 7);
+    const seasonButton = el(
+      'button',
+      { type: 'button', class: `sb-up-buy${sPrice === null ? ' owned' : ''}` },
+      ...(sPrice === null ? [t('seasonTop')] : [art(coin, 'sb-coin small'), formatCoins(sPrice)]),
+    );
+    seasonButton.disabled = sPrice === null || blocked || game.coins < sPrice;
+    if (sPrice !== null) seasonButton.title = t('buy', { price: formatCoins(sPrice) });
+    seasonButton.addEventListener('click', () => {
+      if (blocked || !buySeason(game, week())) return;
+      playSound(seasonLevel(game, week()) === SEASON_BADGE_LEVEL ? 'snackMilestone' : 'snackBuy');
+      badges();
+      persist();
+      draw();
+      openUpgrades();
+    });
+    const seasonRow = el(
+      'li',
+      { class: 'sb-up sb-season', 'data-season': sid, title: t('seasonLine', { bonus: Math.round(SEASON_BONUS * 100), badge: SEASON_BADGE_LEVEL }) },
+      el('span', { class: 'sb-up-icon', 'aria-hidden': 'true' }, SEASON_GLYPH[sid]),
+      el(
+        'span',
+        { class: 'sb-up-text' },
+        el('b', {}, `${t(`season.${sid}` as TextKey)} · ${sDays > 1 ? t('seasonDays', { n: sDays }) : t('seasonLastDay')}`),
+        el('small', {}, sLevel > 0 ? t('seasonLevel', { n: sLevel, max: SEASON_LEVELS, bonus: Math.round(sLevel * SEASON_BONUS * 100) }) : t('seasonNew')),
+      ),
+      seasonButton,
+    );
     showPanel(
       el('h3', {}, t('upgradesTitle')),
+      el('h4', { class: 'sb-up-title', title: t('seasonLine', { bonus: Math.round(SEASON_BONUS * 100), badge: SEASON_BADGE_LEVEL }) }, t('seasonTitle')),
+      el('ul', { class: 'sb-up-list' }, seasonRow),
       menuLine,
       el('h4', { class: 'sb-up-title', title: t('recipesLine') }, t('recipesTitle')),
       open.length ? el('ul', { class: 'sb-up-list' }, ...recipeRows) : el('p', { class: 'sb-panel-line' }, t('recipesNone')),
@@ -677,8 +774,15 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   }
   upgradesButton.addEventListener('click', () => (panel.hidden ? openUpgrades() : hidePanel()));
   /** Something in the Upgrades panel can be bought now (a dot on its button). */
-  const upgradeReady = () =>
-    !blocked && (recipesOpen(game).some((id) => recipeInfo(game, id).price <= game.coins) || STAFF.some((m) => !game.staff.includes(m.id) && m.cost <= game.coins));
+  const upgradeReady = () => {
+    if (blocked) return false;
+    const seasonPrice = seasonCost(game, week());
+    return (
+      recipesOpen(game).some((id) => recipeInfo(game, id).price <= game.coins) ||
+      STAFF.some((m) => !game.staff.includes(m.id) && m.cost <= game.coins) ||
+      (seasonPrice !== null && seasonPrice <= game.coins)
+    );
+  };
   const more = el('p', { class: 'sb-more' });
 
   // ---- Footer: cinema and prestige ----
@@ -899,6 +1003,30 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       hidePanel();
       draw();
     });
+    /** NG2: the manager's report: what sold most and the best buy now (the fastest payback). */
+    function reportOf(): HTMLElement {
+      const report = managerReport(game, week());
+      const sold = report.top.map((x) => `${t(`stand.${x.id}`)} ${Math.round(x.share * 100)} %`).join(' · ');
+      const next = report.next;
+      const nextText = !next
+        ? t('reportNone')
+        : next.kind === 'stand'
+          ? t('reportStand', { stand: t(`stand.${next.id}`), n: next.level })
+          : next.kind === 'recipe'
+            ? t(`recipe.${next.id}` as TextKey)
+            : t('reportSeason', { stand: t(`season.${next.id}` as TextKey), n: next.level });
+      return el(
+        'section',
+        { class: 'sb-report' },
+        el('h4', {}, t('reportTitle')),
+        el(
+          'ul',
+          { class: 'sb-receipt-rows' },
+          rowOf(t('reportSold'), sold || '–'),
+          el('li', { 'data-next': next?.kind ?? 'none' }, el('span', {}, t('reportNext')), el('b', {}, next ? `${nextText} · ${formatCoins(next.price)}` : nextText)),
+        ),
+      );
+    }
     const mascot = el('span', { class: 'sb-receipt-mascot', 'aria-hidden': 'true' });
     mascot.innerHTML = glowbeam.replace(/id="([^"]+)"/g, 'id="sbr-$1"').replace(/url\(#([^)]+)\)/g, 'url(#sbr-$1)');
     showPanel(
@@ -913,9 +1041,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
           rowOf(t('receiptFilm'), t('minutes', { n: Math.max(1, Math.round(receipt.watched / 60)) })),
           rowOf(t('receiptServed'), String(receipt.served)),
           rowOf(t('receiptEarned'), formatCoins(receipt.coins)),
-          rowOf(t('receiptBest'), t(`stand.${receipt.best}`)),
           rowOf(t('receiptBucket'), `+${formatCoins(receipt.bucket)}`),
         ),
+        reportOf(),
         el('p', { class: 'sb-panel-line' }, t('receiptThanks')),
         collect,
       ),
@@ -990,6 +1118,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     secondBadge.hidden = game.levels['second-counter'] < 1;
     // This cinema's place and the decorations bought.
     const place = placeOf(game);
+    box.dataset.place = place;
     for (const id of Object.keys(BACKDROPS)) {
       const node = group(`place-${id}`);
       if (node) node.style.display = id === place ? '' : 'none';
@@ -1095,6 +1224,16 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     game.seen = Date.now();
     persist();
   }
+  // NG2: a new week brings a new seasonal stand (the old one leaves; its badge stays).
+  let shownWeek = week();
+  function newWeek(now: number): void {
+    if (now === shownWeek) return;
+    shownWeek = now;
+    rollSeason(game, now);
+    const id = seasonOf(now);
+    flash(t('seasonArrived', { glyph: SEASON_GLYPH[id], name: t(`season.${id}` as TextKey) }), 6000);
+    persist();
+  }
   let last = performance.now();
   let ticks = 0;
   const timer = setInterval(() => {
@@ -1112,6 +1251,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     }
     takeLock();
     const ctx = room();
+    newWeek(ctx.week);
     // The Test Lab's "time ×10" runs the same tick more often (each one is still capped like a real second).
     const times = labTicks();
     for (let i = 0; i < times; i++) tick(game, seconds, ctx);
@@ -1218,6 +1358,38 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
           labEnd = item;
           showReceipt();
           return item;
+        },
+      },
+      {
+        id: 'snackBar.report',
+        title: { en: "Snack Bar: the manager's report now", tr: 'Büfe: müdürün raporu şimdi gelsin' },
+        help: { en: "The film's receipt with the manager's report (what sold most, what to buy next).", tr: 'Müdürün raporuyla filmin fişi (en çok satan, sıradaki alım).' },
+        tab: 'games',
+        where,
+        run: () => {
+          const item = room().item?.id ?? 'lab-film';
+          game.film = { item, watched: Math.max(RECEIPT_MIN_S, game.film?.item === item ? game.film.watched : 0), served: game.film?.served ?? 0, coins: game.film?.coins ?? 0 };
+          game.receipts = game.receipts.filter((r) => r !== item);
+          labEnd = item;
+          hidePanel();
+          showReceipt();
+          const next = managerReport(game, week()).next;
+          return next ? `${next.kind} ${next.id}` : 'none';
+        },
+      },
+      {
+        id: 'snackBar.season',
+        title: { en: 'Snack Bar: next week’s seasonal stand', tr: 'Büfe: sonraki haftanın mevsim standı' },
+        help: { en: 'Moves the game a week on: this week’s stand leaves and the next one comes (sandbox save), then opens Upgrades.', tr: 'Oyunu bir hafta ileri alır: bu haftanın standı gider, sıradaki gelir (deneme kaydı), sonra Gelişmeler’i açar.' },
+        tab: 'games',
+        where,
+        run: () => {
+          labWeeks += 1;
+          newWeek(week());
+          draw();
+          hidePanel();
+          openUpgrades();
+          return seasonOf(week());
         },
       },
       {

@@ -16,6 +16,12 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.104 — 10 Nov
+- Snack Bar: every place has its own shop-front colours; a seasonal stand comes each week (hot cocoa, lemonade, cotton
+  candy, caramel apples) and earns its own badge at level 5; after each film the receipt has a short manager's report
+  (what sold most and what to buy next); each stand plays its own little sound when it reaches a milestone. Your saved
+  Snack Bar carries over.
+
 ### 0.9.97.101 — 10 Nov
 - Games on a phone held sideways: chess, dama, backgammon, Reversi and the others show the board at the full height
   with the players and buttons beside it; Sea Battle shows one sea at a time, big; Five Frames, the Five Frames Duel,

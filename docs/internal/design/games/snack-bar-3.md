@@ -132,9 +132,25 @@ stand). Recipes and staff start empty.
 - **Rows fit the window:** the open stands plus the next locked one; when there are more than fit, the newest show and
   the rest is "+N more" (computed in real pixels, so the phone's scaled window counts right).
 
+## NG2 (0.9.97.104, owner's picks 8: 1–4)
+
+- **A shop front per place:** the panel, the back wall, the shelf, the counter and its stripes take the place's
+  colours (lobby purple and red, drive-in night blue and orange, rooftop indigo and gold, art house burgundy and brass,
+  seaside teal with sand-wood and blue, planetarium midnight with lilac).
+- **Seasonal stands:** one a week in turn (Monday to Sunday, UTC): ☕ hot cocoa, 🍋 lemonade, 🍭 cotton candy, 🍎
+  caramel apples. It sits on top of "📋 Upgrades": up to level 10, each level +5 % on the whole income while its week
+  lasts; a level costs a minute of the income now (at least 50 coins), ×1.5 a level, so level 1 pays back in about
+  20 minutes of film and the top levels are a long-film goal. Level 5 earns that stand's badge (+1 %, kept for good).
+  When the week ends the stand leaves (its levels go; nothing else changes). A real calendar season was not used:
+  it would be wrong for half the world and a stand would wait three months.
+- **The manager's report** on each film's receipt (instead of "Best stand"): the three best-selling stands with their
+  share, and "Buy next": the purchase that pays itself back the fastest now (a stand's next level, an open recipe or
+  the seasonal stand), with its price.
+- **A sound per stand** when it reaches a milestone: popcorn pops, soda fizz, nachos crunch, candy chime, the second
+  counter's bell, the hot dog's sizzle, an ice cream scoop, an arcade bleep (game family B, the shared sound settings
+  and mute apply).
+- Saves carry over: `season` is a new optional field (an old save loads with none); version stays 2.
+
 ## Ideas for later (owner's pick)
 
-- A shop-front theme per place (the counter's colours change with the place), not only the backdrop.
-- Seasonal specials (a pumpkin stand in October) with a badge each.
-- A "manager's report" after each film: which purchase paid back best, as a tip.
-- Sound per stand (sizzle, fizz, arcade bleep) when its milestone is reached.
+- (Taken in NG2: shop fronts, seasonal stands, the manager's report, a sound per stand.)

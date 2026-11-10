@@ -1048,6 +1048,18 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "Play here" takes over); its buttons never keep the focus (`mousedown` preventDefault), no key handlers; sounds
   `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). At least three rows always show. Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
   JS budget (`scripts/size-budget.mjs`) is nearly full.
+  NG2 (0.9.97.104): `.sb[data-place]` sets the place's colours (`--sb-panel`, `--sb-night`, `--sb-wall-a/b`,
+  `--sb-shelf`, `--sb-counter-a/b`, `--sb-stripe`); the scene's wall, shelf, counter and stripes read them through
+  `var()` (replaced in `decorated`). Seasonal stand: `SEASONS` (cocoa, lemonade, cotton-candy, caramel-apple),
+  `seasonWeek` (Monday weeks, UTC), `seasonOf`, save field `season { week, level }` (optional, old saves load with
+  null), `seasonCost` (60 s of income without itself, min 50, ×1.5 a level), `buySeason`, `seasonFactor` (+5 % a
+  level, in `globalFactor`), `rollSeason` (in `tick`, `ctx.week`), badges `season-<id>` at level 5; shown on top of
+  Upgrades (`.sb-season`), a line when the week changes. `managerReport` (top three stands by share, `next` = the
+  fastest payback among stand levels, open recipes and the seasonal stand) on the receipt (`.sb-report`, replaces
+  "Best stand"). Milestone sounds per stand (`STAND_SOUND`: `snackPop`, `snackFizz`, `snackCrunch`, `snackCandy`,
+  `snackBell`, `snackSizzle`, `snackScoop`, `snackArcade`). Lab commands `snackBar.report`, `snackBar.season` (moves
+  the week on, `labWeeks`). Tests: `snack-bar.test.ts` NG2 block, harness `scripts/harness/snack-bar-ng2/run.cjs`
+  (CI `games` job).
   **Tip jar and cuttings (side games 2, picks 5 + 8):** the room's only side-game messages. `{t:'tip'}` (Snack Bar's serve
   and customer serve, `SoloRoom.tip`) counts only while an item plays and not paused, ≤ 1 per 2 s per person
   (`tipLimit`); the room object keeps `tipJar {fill, boost}` in memory (`TIP_JAR_SIZE` 60), broadcasts `{t:'tipjar',
