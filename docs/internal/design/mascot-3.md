@@ -19,6 +19,7 @@ Review page: `mascot-3/index.html` (open it locally). `mascot-3/draw.mjs` remake
 | `stub-win.svg` | the result card after a win: cheering, with sparkles |
 | `stub-sorry.svg` | the result card after a loss |
 | `stub-home-pose.svg` | the home's big pose: happy, holding an **usher's torch**. The torch is the light's source in the 15c "light beam" art: an usher lighting the way. |
+| `stub-cashier.svg` | Snack Bar's cashier: a paper soda-fountain cap, a bow tie, waving. Drop-in for `apps/web/src/games/art/snack-bar/glowbeam-cashier.svg` (the same 64 viewBox at 128 px). |
 | `stub-home.svg` | the full home art (the 15c scene) with Stub and the beam re-anchored at the torch |
 
 ## Theme costumes (`mascot-3/costumes/<theme>.svg`)
@@ -59,7 +60,7 @@ Ocean Liner (`gemi`) is dropped (owner, option B), so it has no costume.
      - the bot avatar: `stub-opponent.svg`;
      - the bot labels: `stub-small.svg`;
      - the result card: `stub-win.svg` or `stub-sorry.svg` by outcome.
-   - Snack Bar's `glowbeam-cashier.svg` needs a Stub cashier (Game Studio's art, or ask Design).
+   - Snack Bar's `glowbeam-cashier.svg` → `stub-cashier.svg`.
    - Texts that say "Glowbeam" ("2 players · or vs Glowbeam", "Glowbeam reacts" in the Test Lab) change with the mascot's name (below).
 5. **Checks after:**
    - the home at 1366 and 1920 in every theme (the beam starts at the torch);

@@ -99,6 +99,10 @@ const SET = {
 };
 for (const [name, body] of Object.entries(SET)) out(`svg/${name}.svg`, svg64(body));
 out('svg/stub-small.svg', svg64(small('sm')));
+// Snack Bar's cashier (games/art/snack-bar/glowbeam-cashier.svg, 64 grid shown at 128): a paper soda-fountain cap and a bow tie.
+const jerkCap = `<g transform="translate(${FX} 16)"><path d="M-11 0 Q-10 -7 0 -8.4 Q10 -7 11 0 Z" fill="#fff3d6" stroke="#d6c8b2" stroke-width=".6"/><path d="M-10.6 -1.6 Q0 -4 10.6 -1.6 L11 0 Q0 -2.4 -11 0Z" fill="#ff8a7a"/><path d="M-6 -6.6 Q0 -8.2 6 -6.6" stroke="#ff8a7a" stroke-width="1.6" fill="none"/></g>`;
+const bowTie = `<path d="M22.6 44 L26.5 46 L30.4 44 L30.4 48.4 L26.5 46.4 L22.6 48.4Z" fill="#e0475a"/><circle cx="26.5" cy="46.2" r="1" fill="#a8263a"/>`;
+out('svg/stub-cashier.svg', svg64(stub('ca', { mood: 'happy', arms: ['down', 'wave'], tilt: -5, hat: jerkCap + bowTie })).replace('width="64" height="64"', 'width="128" height="128"'));
 // The avatar: zoomed on the card so a circle crop shows the face and the band.
 out('svg/stub-opponent.svg', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 10 46 46" width="64" height="64"><circle cx="29" cy="33" r="23" fill="#2a2160"/>${stub('op', { mood: 'determined', tilt: 0, glow: false, legs: false, arms: 'none', hat: band })}</svg>\n`);
 
@@ -158,7 +162,7 @@ out('index.html', `<!doctype html><html lang="en"><head><meta charset="utf-8"><m
 <h2>Moods (logo.ts names + sorry)</h2><div class="row">${['default', 'happy', 'watching', 'waiting', 'wow', 'sorry'].map((m) => tile(`svg/stub-${m}.svg`, m)).join('')}</div>
 <h2>Small sizes: the full figure vs the ≤ 32 px cut</h2><div class="row" style="align-items:flex-end;background:#151a2e;padding:12px;border-radius:12px">${sizes}</div>
 <div class="row" style="margin-top:8px;background:#f4ede1;padding:12px;border-radius:12px">${sizes}</div>
-<h2>Games</h2><div class="row">${tile('svg/stub-referee.svg', 'referee · plain')}${tile('svg/stub-referee-cheer.svg', 'referee · cheer')}${tile('svg/stub-referee-gasp.svg', 'referee · gasp')}${tile('svg/stub-opponent.svg', 'opponent (bot avatar)')}${tile('svg/stub-win.svg', 'result · win')}${tile('svg/stub-sorry.svg', 'result · sorry')}</div>
+<h2>Games</h2><div class="row">${tile('svg/stub-referee.svg', 'referee · plain')}${tile('svg/stub-referee-cheer.svg', 'referee · cheer')}${tile('svg/stub-referee-gasp.svg', 'referee · gasp')}${tile('svg/stub-opponent.svg', 'opponent (bot avatar)')}${tile('svg/stub-win.svg', 'result · win')}${tile('svg/stub-sorry.svg', 'result · sorry')}${tile('svg/stub-cashier.svg', 'Snack Bar cashier')}</div>
 <div class="row" style="margin-top:8px">${['stub-referee', 'stub-opponent'].map((n) => `<figure style="background:#151a2e"><img src="svg/${n}.svg" width="44" height="44" alt="" style="${n === 'stub-opponent' ? 'border-radius:50%' : ''}"><img src="svg/${n}.svg" width="32" height="32" alt="" style="${n === 'stub-opponent' ? 'border-radius:50%' : ''}"><figcaption>${n.replace('stub-', '')} at 44 / 32 px</figcaption></figure>`).join('')}</div>
 <h2>Home art (Stub's usher torch is the light's source)</h2><img class="home" src="svg/stub-home.svg" alt="">
 <h2>Theme costumes</h2><div class="row">${Object.entries(COSTUMES).map(([id, [name]]) => tile(`costumes/${id}.svg`, `${name} · ${id}`, BG[id], 150)).join('')}</div>
