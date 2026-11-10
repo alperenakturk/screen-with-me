@@ -93,7 +93,7 @@ const where = (page) =>
       // W1 (owner): no game has its own full screen any more (no ⛶ in any head).
       check(!(await page.$('#game-stage .game-full')), `${label}: no ⛶ in the game's head`);
       // A video that isn't YouTube (the sync test): the video's place is possible again (offered by the switch; once card
-      // .113 turns TABLES_IN_STAGE on, the table plays there).
+      // .113 turns STAGE_READY on, the table plays there).
       await page.evaluate(() => window.__swmLab.run('games.open.classics'));
       await page.fill('#media-input', `${SITE}/sample.mp4`);
       await page.evaluate(() => document.querySelector('#media-form button[value="load"]')?.click());

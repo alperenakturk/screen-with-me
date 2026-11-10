@@ -18,7 +18,7 @@ games' tip jar, cuttings and badges.
 
 ### 0.9.97.112 — 10 Nov
 - Snack Bar, Window Garden and Five Frames open on the right, over the chat, and never cover the video, when they fit
-  there at a readable size; on a smaller screen they open in the video's place. Their switch still moves them.
+  there at a readable size (on a big screen); on a laptop they open as before. Their switch still moves them.
 - From a game in its own window, 🎮 slides the games hall out of the window's side, so it shows even with the side
   panel closed.
 - Moving the mouse over a game window's resize corner no longer makes the window jump.

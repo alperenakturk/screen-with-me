@@ -28,7 +28,7 @@ export interface GameInfo {
 
 // Card CL2 (owner): every table opens in the free mini window by default, at the size its own layout wants; "in the
 // video's place" stays a choice, remembered per game (`gamePlace:<kind>`). The owner's 0.9.97.112 decision (tables always
-// in the video's place) waits for card .113: stage.ts `TABLES_IN_STAGE`. The side games: stage.ts `placeOf`.
+// in the video's place) waits for card .113: stage.ts `STAGE_READY`. The side games: stage.ts `placeOf`.
 export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   xox: { min: 2, max: 2, place: 'float', size: [420, 560], fit: [300, 420], minSize: [540, 620], maxSize: [672, 896] },
   four: { min: 2, max: 2, place: 'float', size: [520, 590], fit: [360, 440], minSize: [543, 620], maxSize: [832, 944] },

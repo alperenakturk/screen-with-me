@@ -356,7 +356,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   - [ ] 0.9.97.112 (owner's live test): side games right of the video when they fit
     at their smallest size; the hall slides out of the free window; resize corner fix. Branch
     `claude/game-window-right`, then PR, merge, deploy + live e2e + tag, report. Tables always in the video's place
-    (owner's decision) waits for card .113's layouts: stage.ts `TABLES_IN_STAGE`.
+    (owner's decision) waits for card .113's layouts: stage.ts `STAGE_READY`.
 - [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
   categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
   line off the room screen, "Move to another device" in Settings → Me, IP notice removed (privacy policy + help
@@ -493,7 +493,7 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
 
 **0.9.97.112 (lane W: where games open, the hall from a free window, the resize corner; fold into the next round).**
 - [ ] P2. On the big screen open Snack Bar: it opens on the right over the chat, nothing of the video covered. On the
-  laptop (1366 wide) it opens in the video's place (no room beside the video yet); its switch still makes it a window.
+  laptop (1366 wide) there is no room beside the video yet: it opens as its own window at the right edge, as before.
 - [ ] P3. Snack Bar as a free window, press its 🎮: the hall slides out of the window's left side. Close the side panel
   (🎞) and try again: the hall still shows. Esc, a click elsewhere or picking a game closes it.
 - [ ] P4. Move the mouse over a free window's bottom-right corner without clicking: nothing moves. Drag the corner: it

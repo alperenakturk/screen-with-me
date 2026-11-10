@@ -928,10 +928,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   were removed): the free window lives inside the video's fullscreen while there is one. **Where a game plays
   (`placeOf`):** a table uses my pick or the catalog's free window; the owner's decision that the tables always play in
   the video's place without a switch (over YouTube, `overYoutube` / YTG, beside the player) is the flag
-  `TABLES_IN_STAGE`, off until card .113 makes their layouts read well there; a side game uses my pick (`gamePlace:<kind>`), else the free
+  `STAGE_READY` (it also sends a side game with no room beside the video to the video's place), off until card .113 makes their layouts read well there; a side game uses my pick (`gamePlace:<kind>`), else the free
   window in its **home** (`homeBox`: the column right of the theater, under the top bar, over the side panel, as big as
   the column allows up to `maxSize` and never below `minSize`; no fit there → the largest strip beside the video, else
-  null) when one exists, else the video's place; tablets, phones and the video's fullscreen keep the catalog default.
+  null) when one exists, else (with `STAGE_READY`) the video's place, until then its own-size window at the right edge; tablets, phones and the video's fullscreen keep the catalog default.
   `#game-stage[data-place]` mirrors the mode for the games' CSS. **The free window:** positioned in `posRoom` (the page,
   or the fullscreen view; tablets clear of the chat), its size limited by `area` (the strip beside a YouTube player);
   over YouTube `clearOfPlayer` settles it beside the player on the nearest side that fits, keeping its side while dragged

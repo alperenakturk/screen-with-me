@@ -129,10 +129,13 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => localStorage.setItem('gameFloat:spot:snack', JSON.stringify({ x: 0, y: 0 })));
     await openGame(page, 'snack');
     const first = await box(page);
-    // The column right of the video is narrower than Snack Bar's smallest readable size here: the video's place.
-    check(first.mode === 'stage' && first.inVideo, `${L} 112: Snack Bar doesn't fit right of the video at its smallest size, so it opens in the video's place`, first);
-    await page.click('#game-stage .place-float');
-    await wait(300);
+    // The column right of the video is narrower than Snack Bar's smallest readable size here: not its home. Until card
+    // .113 (stage.ts STAGE_READY) it opens as its own-size window at the right edge, then in the video's place.
+    check((first.mode === 'stage' && first.inVideo) || (first.mode === 'float' && first.w === 400 && first.x + first.w >= 1366 - 10), `${L} 112: Snack Bar doesn't fit right of the video at its smallest size: its own window at the right edge (or the video's place)`, first);
+    if (first.mode === 'stage') {
+      await page.click('#game-stage .place-float');
+      await wait(300);
+    }
     check(!(await page.$('#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
     await page.keyboard.press('Escape');
     check(!(await page.evaluate(() => document.getElementById('game-stage').classList.contains('game-max') || !!document.fullscreenElement)), `${L} W1: nothing puts Snack Bar on the whole screen`);
@@ -297,10 +300,10 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       const switchShown = await page.evaluate(() => !document.querySelector('#game-stage .game-place').hidden);
       if (minW[kind]) {
         const fits = room >= minW[kind];
-        check(fits ? b.mode === 'float' && !b.overPlayer && b.onScreen && b.x + b.w >= viewport.width - 12 && b.w >= minW[kind] : b.mode === 'stage', `${L} ${kind}: ${fits ? 'opens right of the video, never over it' : "doesn't fit beside the video: the video's place"}`, { b, room });
+        check(fits ? b.mode === 'float' && !b.overPlayer && b.onScreen && b.x + b.w >= viewport.width - 12 && b.w >= minW[kind] : b.mode === 'stage' || (b.mode === 'float' && b.onScreen && b.w >= minW[kind]), `${L} ${kind}: ${fits ? 'opens right of the video, never over it' : "doesn't fit beside the video: its own window (the video's place once STAGE_READY)"}`, { b, room });
         check(switchShown, `${L} ${kind}: a side game keeps the placement switch`);
       } else {
-        // Until card .113 turns stage.ts TABLES_IN_STAGE on, a table keeps its free window and the switch; then it plays
+        // Until card .113 turns stage.ts STAGE_READY on, a table keeps its free window and the switch; then it plays
         // in the video's place without one. Either way it opens whole on screen, and 🎮 shows the hall.
         check(b.onScreen && (b.mode === 'stage' ? b.inVideo && !switchShown : b.mode === 'float' && switchShown), `${L} ${kind}: a table opens in its placement (${b.mode}), whole on screen`, { b, switchShown });
         await page.click('#game-stage .game-hub-open');
