@@ -388,6 +388,11 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.100 (FONT1, font setting; fold into the next round).**
+- [ ] F1. ⚙️ → My screen → Font: try each of the seven; the whole site changes at once, Turkish letters (ğ ş ı İ) look
+  right, and the choice stays after a reload. "My device's font" looks like today.
+- [ ] F2. The home page's big title has the logo's typeface (the same letters as "Sidelit" in the top bar).
+
 **0.9.97.98 (THEME1, readable themes; fold into the next round).**
 - [ ] T1. Home page in the picture themes (🎨: Ocean Liner, Night Express, Moonlit Nights), on the laptop and a big
   monitor: every line left of the picture reads easily; nothing of the picture shows through the text.

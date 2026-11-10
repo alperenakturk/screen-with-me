@@ -76,7 +76,7 @@ html.in-home main {
 
 .hm-slogan {
   margin: 0;
-  font: 800 64px/1.02 'Bricolage Grotesque', var(--font, system-ui), sans-serif;
+  font: 800 64px/1.02 var(--font-title);
   letter-spacing: -0.02em;
   text-wrap: balance;
   color: var(--text);
@@ -337,7 +337,7 @@ html.in-home main {
 
 .hm-how > h2 {
   margin: 0;
-  font: 800 32px/1.1 'Bricolage Grotesque', var(--font, system-ui), sans-serif;
+  font: 800 32px/1.1 var(--font-title);
 }
 
 .hm-steps {
