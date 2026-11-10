@@ -33,6 +33,21 @@ const TEXT = {
     lobbyTitle: 'Five Frames Duel',
     lobbyRules: 'The same word for both of you, seven tries each. You see their marks, never their letters; the first to find the word wins.',
     lobbyLang: 'Word language',
+    lobbyGames: 'Games',
+    oneGame: 'One game',
+    bestOf3: 'Best of three',
+    hardMode: 'Hard mode',
+    hardOff: 'Off',
+    hardOn: 'On',
+    hardTitle: 'Letters you found must be used in your next guesses.',
+    hardMiss: 'Hard mode: use {letter}',
+    hardMissAt: 'Hard mode: {letter} goes in place {n}',
+    hardLine: 'Hard mode',
+    matchLine: 'Game {n} of 3 · {a} {wa} – {wb} {b}',
+    matchWon: '{name} wins the match {wa}–{wb}! 🏆',
+    youWonMatch: 'You win the match {wa}–{wb}! 🏆',
+    matchTied: 'The match ends {wa}–{wb}: a tie.',
+    nextGame: 'Next game',
     lobbyWaiting: 'Waiting…',
     practice: 'Practice word',
     langTitle: 'Word language (both play in it)',
@@ -86,6 +101,21 @@ const TEXT = {
     lobbyTitle: 'Beş Kare Düellosu',
     lobbyRules: 'İkinize aynı kelime, herkese yedi hak. Onun işaretlerini görürsün, harflerini asla; kelimeyi önce bulan kazanır.',
     lobbyLang: 'Kelime dili',
+    lobbyGames: 'Oyun',
+    oneGame: 'Tek oyun',
+    bestOf3: 'Üçte iki',
+    hardMode: 'Zor mod',
+    hardOff: 'Kapalı',
+    hardOn: 'Açık',
+    hardTitle: 'Bulduğun harfleri sonraki tahminlerinde kullanmalısın.',
+    hardMiss: 'Zor mod: {letter} harfini kullan',
+    hardMissAt: 'Zor mod: {letter} {n}. yerde olmalı',
+    hardLine: 'Zor mod',
+    matchLine: '{n}. oyun / 3 · {a} {wa} – {wb} {b}',
+    matchWon: '{name} maçı {wa}–{wb} kazandı! 🏆',
+    youWonMatch: 'Maçı {wa}–{wb} kazandın! 🏆',
+    matchTied: 'Maç {wa}–{wb} bitti: berabere.',
+    nextGame: 'Sonraki oyun',
     lobbyWaiting: 'Bekleniyor…',
     practice: 'Alıştırma kelimesi',
     langTitle: 'Kelime dili (ikiniz de bu dilde oynarsınız)',
@@ -182,6 +212,22 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const lobbyFaces = el('ul', { class: 'duel-lobby-faces' });
   const lobbyLangLabel = el('span', { class: 'duel-lobby-label' });
   const lobbyBody = el('div', { class: 'duel-lobby-body' });
+  // NG1: one game or best of three, and hard mode (owner's picks 9.3, 9.4).
+  const chip = (label: () => string, run: () => void) => {
+    const b = el('button', { type: 'button', class: 'game-chip' }) as HTMLButtonElement;
+    b.addEventListener('click', run);
+    return { b, label };
+  };
+  const gamesChips = [
+    { ...chip(() => tx('oneGame'), () => send({ t: 'settings', bestOf: 1 })), v: 1 as const },
+    { ...chip(() => tx('bestOf3'), () => send({ t: 'settings', bestOf: 3 })), v: 3 as const },
+  ];
+  const hardChips = [
+    { ...chip(() => tx('hardOff'), () => send({ t: 'settings', hard: false })), v: false },
+    { ...chip(() => tx('hardOn'), () => send({ t: 'settings', hard: true })), v: true },
+  ];
+  const lobbyGamesLabel = el('span', { class: 'duel-lobby-label' });
+  const lobbyHardLabel = el('span', { class: 'duel-lobby-label' });
   const lobby = el(
     'section',
     { class: 'duel-lobby', hidden: '' },
@@ -189,6 +235,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     lobbyRules,
     lobbyFaces,
     el('div', { class: 'duel-lobby-lang' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
+    el('div', { class: 'duel-lobby-lang' }, lobbyGamesLabel, el('span', { class: 'game-chips', role: 'group' }, ...gamesChips.map((c) => c.b))),
+    el('div', { class: 'duel-lobby-lang' }, lobbyHardLabel, el('span', { class: 'game-chips', role: 'group' }, ...hardChips.map((c) => c.b))),
     lobbyBody,
   );
   const watchers = el('span', { class: 'duel-watchers' });
@@ -390,7 +438,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     } else if (s.phase === 'wait' && two) {
       items.push(mine?.ready ? actionButton('duel-ready', tx('notReady'), () => send({ t: 'ready', on: false }), false) : actionButton('duel-ready', tx('ready'), () => send({ t: 'ready', on: true })));
     } else if (s.phase === 'over' && !mine?.ready) {
-      items.push(actionButton('duel-rematch', tx('rematch'), () => send({ t: 'rematch' })));
+      items.push(actionButton('duel-rematch', s.match.over ? tx('rematch') : tx('nextGame'), () => send({ t: 'rematch' })));
     }
     actions.replaceChildren(...items);
   }
@@ -429,6 +477,16 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     lobbyTitle.textContent = tx('lobbyTitle');
     lobbyRules.textContent = tx('lobbyRules');
     lobbyLangLabel.textContent = tx('lobbyLang');
+    lobbyGamesLabel.textContent = tx('lobbyGames');
+    lobbyHardLabel.textContent = tx('hardMode');
+    lobbyHardLabel.title = tx('hardTitle');
+    for (const c of [...gamesChips, ...hardChips]) {
+      const on = 'v' in c && (typeof c.v === 'boolean' ? s.hard === c.v : s.bestOf === c.v);
+      c.b.textContent = c.label();
+      c.b.classList.toggle('on', on);
+      c.b.setAttribute('aria-pressed', String(on));
+      c.b.disabled = mySeat() < 0;
+    }
     lobbyLangButtons.forEach((b) => {
       const on = b.dataset.lang === s.lang;
       b.classList.toggle('on', on);
@@ -454,8 +512,16 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     box.dataset.phase = s.phase;
     box.classList.toggle('watching', seat < 0);
     const [a, b] = s.players;
-    score0.textContent = a && b ? `${a.name} ${a.wins} – ${b.wins} ${b.name}` : '';
-    tag.textContent = s.phase === 'wait' ? '' : s.daily !== null ? tx('daily', { n: s.daily }) : tx('practice');
+    // Best of three: during a match the bar shows the match score and which game this is.
+    const playing = s.phase === 'play';
+    const inMatch = s.bestOf === 3 && (playing || (s.match.games > 0 && !s.match.over));
+    const gameNo = playing ? s.match.games + 1 : s.match.games;
+    score0.textContent = !(a && b)
+      ? ''
+      : inMatch
+        ? tx('matchLine', { n: gameNo, a: a.name, b: b.name, wa: s.match.wins[0] ?? 0, wb: s.match.wins[1] ?? 0 })
+        : `${a.name} ${a.wins} – ${b.wins} ${b.name}`;
+    tag.textContent = s.phase === 'wait' ? '' : `${s.daily !== null ? tx('daily', { n: s.daily }) : tx('practice')}${s.hard ? ` · ${tx('hardLine')}` : ''}`;
     langButtons.forEach((btn) => {
       const on = btn.dataset.lang === s.lang;
       btn.classList.toggle('on', on);
@@ -482,12 +548,21 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase === 'over') {
       const rematch = actions.querySelector<HTMLElement>('.duel-rematch');
       const outcome = s.draw ? 'draw' : seat < 0 ? 'over' : s.winner === seat ? 'win' : 'lose';
-      const title = s.draw ? tx('draw') : seat < 0 ? tx('winner', { name: nameOf(s.winner ?? 0) }) : s.winner === seat ? tx('youWin') : tx('youLose', { name: nameOf(other()) });
+      let title = s.draw ? tx('draw') : seat < 0 ? tx('winner', { name: nameOf(s.winner ?? 0) }) : s.winner === seat ? tx('youWin') : tx('youLose', { name: nameOf(other()) });
+      // Best of three: the match result once it is decided.
+      const [wa, wb] = [s.match.wins[0] ?? 0, s.match.wins[1] ?? 0];
+      if (s.bestOf === 3 && s.match.over) {
+        const mw = s.match.winner;
+        title = mw === null ? tx('matchTied', { wa, wb }) : mw === seat ? tx('youWonMatch', { wa: Math.max(wa, wb), wb: Math.min(wa, wb) }) : tx('matchWon', { name: nameOf(mw), wa: Math.max(wa, wb), wb: Math.min(wa, wb) });
+      }
+      const lineParts = [s.answer ? tx('theWord', { word: upper(s.answer, s.lang) }) : ''];
+      if (s.bestOf === 3 && !s.match.over) lineParts.push(tx('matchLine', { n: s.match.games, a: nameOf(0), b: nameOf(1), wa, wb }));
+      if (s.hard) lineParts.push(tx('hardLine'));
       result.show({
         key: `${s.round}`,
-        outcome,
+        outcome: s.bestOf === 3 && s.match.over ? (s.match.winner === null ? 'draw' : seat < 0 ? 'over' : s.match.winner === seat ? 'win' : 'lose') : outcome,
         title,
-        line: s.answer ? tx('theWord', { word: upper(s.answer, s.lang) }) : '',
+        line: lineParts.filter(Boolean).join(' · '),
         actions: rematch ? [rematch] : [],
         see: tx('seeBoard'),
       });
@@ -541,6 +616,10 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         render();
       } else if (m.t === 'error') {
         if (m.code === 'short' || m.code === 'letters' || m.code === 'unknown' || m.code === 'repeat') shake(tx(m.code));
+        else if (m.code === 'hard' && m.letter) {
+          const letter = upper(m.letter, wordLang());
+          shake(m.at !== undefined ? tx('hardMissAt', { letter, n: m.at + 1 }) : tx('hardMiss', { letter }));
+        }
         else if (m.code === 'over') {
           typed = '';
           say(tx('lateGuess'), 3000);
