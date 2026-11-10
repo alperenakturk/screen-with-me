@@ -24,6 +24,7 @@ games' tip jar, cuttings and badges.
 - Fixes in the Test Lab itself: the video tricks wait for a video instead of failing without one, "make a fake friend
   the host" can be undone (they hand it back), the scripted checks make room for their own pretend friends and start a
   paused video again, and the lab explains when the server's limit of new connections a minute holds friends back.
+- Sea Battle: the small ✕ that sends Stub away from his seat is a little wider, so it is easy to hit.
 
 ### 0.9.97.108 — 10 Nov
 - Test Lab, 🎮 Games (for testing the games alone): a pretend 🤖 friend can sit at a Quiz, Draw & Guess, Last Heart,
