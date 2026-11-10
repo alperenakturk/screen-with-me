@@ -1003,11 +1003,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   voice while I am). **🍿 Snack Bar** (`games/snack-bar.ts` + `snack-bar.css`, a lazy chunk; art copied from
   `docs/internal/design/side-games/snack-bar/` to `games/art/snack-bar/`, inlined with unique ids): ticks once a
   second, saves every 5 s / on close / `pagehide`; income only while playing, +10 % per other person, +5 % per one in
-  voice with me, 5 stands with ×2 milestones, prestige "new
-  cinema" from 1M earned (stars +5 % each); no "while you were away" pay since 0.9.97.31; a tap on the scene serves; one tab at a time (`snackBar:tab` heartbeat,
+  voice with me; no "while you were away" pay since 0.9.97.31; a tap on the scene serves. **Economy v2 (card SB3,
+  `SNACK_VERSION = 2`, design + balance tables `docs/internal/design/games/snack-bar-3.md`):** 8 stands (popcorn …
+  second counter, hot dog, ice cream, arcade), each with its own price growth 1.08–1.15 (`costOf`, bulk = geometric
+  sum); ×2 milestones at 10/25/50/100/200/300/400; 3 recipes per stand (×2 each, `RECIPE_STEPS`, `buyRecipe`);
+  the menu +10 % per stand at level ≥ 25 (`menuFactor`); staff kept over cinemas (`hire`: tip box, usher serves after
+  `USHER_DELAY_S`, long line halves the wait, manager); today's special ×2 (`specialOf(dayNumber())`, passed as
+  `ctx.special`); new cinema from `PRESTIGE_MIN` 100 B, stars ⌊∛(earned / 6.4 M)⌋, +2 % each; places cycle lobby,
+  drive-in, rooftop, art house, seaside (customers ×2), planetarium (+25 % alone). `loadSnack` migrates v1 (stars ×2.5
+  rounded up, nothing earns less; unit test). The page: buy bar ×1 / ×10 / Max (`snackBar:buyMode`), "📋 Upgrades"
+  panel (recipes + staff, dot when affordable), rows = open stands + the next locked one, as many as fit (`fitRows`,
+  real pixels × the window's `--fit`; the rest "+N more"). Balance: `scripts/snack-sim.mjs --check` (CI `checks` job);
+  harness `scripts/harness/snack-bar-3/run.cjs` (CI `games` job). One tab at a time (`snackBar:tab` heartbeat,
   "Play here" takes over); its buttons never keep the focus (`mousedown` preventDefault), no key handlers; sounds
-  `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). Below 380 px of game height three
-  upgrade rows show (+ "N more"). Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
+  `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). At least three rows always show. Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
   JS budget (`scripts/size-budget.mjs`) is nearly full.
   **Tip jar and cuttings (side games 2, picks 5 + 8):** the room's only side-game messages. `{t:'tip'}` (Snack Bar's serve
   and customer serve, `SoloRoom.tip`) counts only while an item plays and not paused, ≤ 1 per 2 s per person
@@ -1133,7 +1142,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   commands (`games.open.<kind>` for every table and side game, `games.speed` ×10 side-game time (each tick runs `labTicks()`
   times, still capped like a real second), `games.playing` "pretend the film plays" (`labRoom` gives the side games an
   hour-long `lab-film`, nothing is sent), `games.restore`); each side game registers its own while its window is open
-  (`registerSideLab`): Snack Bar `snackBar.coins` / `.customer` / `.receipt` / `.badges` / `.place`, Window Garden
+  (`registerSideLab`): Snack Bar `snackBar.coins` / `.customer` / `.receipt` / `.badges` / `.place` / `.upgrades` (open recipes + all staff) / `.levels` (every stand to 30), Window Garden
   `garden.grow` / `.bloom` / `.seeds` / `.hybrid` / `.sky` / `.rain` / `.visitor`, Five Frames `fiveFrames.answer` / `.day`.
   **Sandbox:** before a game's first cheat its real save is copied to `lab:real:<key>` (localStorage only, never synced);
   `games.restore` writes every copy back through `save` and fires `swm-lab-restore`, which the open games reload from.

@@ -121,12 +121,9 @@ function play(strategyName, playerName, hours) {
     if (player.taps > 0 && t % Math.round(1 / player.taps) === 0) serve(save, ctx);
     if (t % FILM_S === 0) collectReceipt(save, `film-${Math.floor(t / FILM_S) - 1}`);
     if (t % 5 === 0) checkBadges(save);
-    if (process.env.SIM_TRACE && strategyName === 'best' && playerName === process.env.SIM_TRACE && [60, 300, 600, 1800, 3600, 7200, 18000, 36000].includes(t))
-      console.log(`t=${t}s income=${fmt(income(save, player))}/s earned=${fmt(save.earned)} levels=${STAND_IDS.map((id) => save.levels[id]).join('/')} recipes=${save.recipes.length} staff=${save.staff.join('+')} buys=${log.length}`);
     // A new cinema once it at least doubles the stars (the usual idle-game rule of thumb).
     const stars = starsFor(save);
     if (stars >= Math.max(1, save.stars)) {
-      if (process.env.SIM_DEBUG) console.log('cinema at', t, 'earned', save.earned, 'stars', stars, strategyName, playerName, JSON.stringify(save.levels), save.recipes.join(), save.staff.join(), log.slice(0,15).map(e=>e.t+':'+e.id).join(' '));
       newCinema(save);
       firstCinema ??= t;
       wanted = null;
@@ -146,7 +143,7 @@ function play(strategyName, playerName, hours) {
   return { save, log, firstCinema, income: income(save, player), lifetime: save.lifetime };
 }
 
-const fmt = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : n.toFixed(0));
+const fmt = (n) => (n >= 1e15 ? n.toExponential(2) : n >= 1e12 ? `${(n / 1e12).toFixed(2)}T` : n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : n.toFixed(0));
 const hm = (s) => (s == null ? '—' : `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')} min`);
 
 export { play, PLAYERS, STRATEGIES };

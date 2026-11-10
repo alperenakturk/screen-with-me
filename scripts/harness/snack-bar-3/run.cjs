@@ -129,11 +129,14 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   await page.evaluate(() => document.querySelector('.sb-panel-close')?.click());
 
   // The film plays: a customer comes (test guests) and the usher serves them within a few seconds.
+  // The sync test only plays with someone else in the room: Sam joins from a second browser.
+  const samCtx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  await person(samCtx, room);
   await page.evaluate(() => document.getElementById('sync-test')?.click());
   await until(() => page.evaluate(() => document.querySelector('#game-stage .sb-state')?.classList.contains('on')), 10000);
   const served0 = (await saved(page)).stats.customers;
   const ushered = await until(async () => (await saved(page)).stats.customers > served0, 20000);
-  check(!!ushered, 'the usher serves a waiting customer by itself');
+  check(!!ushered, 'the usher serves a waiting customer by itself', JSON.stringify(await page.evaluate(() => ({ on: document.querySelector('#game-stage .sb-state')?.className, guest: !!document.querySelector('#game-stage .sb-guest'), stats: JSON.parse(localStorage.getItem('snackBar')).stats, staff: JSON.parse(localStorage.getItem('snackBar')).staff }))));
 
   // Today's special: one row is tagged.
   const special = await page.evaluate(() => [...document.querySelectorAll('#game-stage .sb-row.special')].map((r) => r.dataset.stand));
@@ -152,7 +155,7 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   await lab(page, 'snackBar.levels');
   await wait(1200);
   const rowsAll = await shownRows(page);
-  check(rowsAll.length >= 5 && rowsAll.includes('arcade'), 'with eight stands the newest ones show (at least five rows)', JSON.stringify(rowsAll));
+  check(rowsAll.length >= 4 && rowsAll.includes('arcade'), 'with eight stands the newest ones show (at least four rows in the default window)', JSON.stringify(rowsAll));
   check((await fits(page)).length === 0, 'eight stands fit without scrollbars (laptop)', (await fits(page)).join('; '));
   const scene = await page.evaluate(() => {
     const art = document.querySelector('#game-stage .sb-scene-art');

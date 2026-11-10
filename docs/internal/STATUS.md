@@ -459,6 +459,9 @@ with the same friend:
   nothing in their top rows ends in "…".
 - [ ] G10. The friend turns the phone's data off for 2 minutes during a Quiz: after about 1.5 min they show offline,
   20 s later the game goes back to the lobby; data back on brings them back.
+- [ ] G11. Snack Bar 3: your old Snack Bar is still there (levels, coins, decorations, stars a bit higher). Play a
+  film: try ×10 and Max, open "📋 Upgrades" and buy a recipe (that stand earns twice), hire the usher (customers get
+  served without a tap). One stand says "⭐ ×2 today". Does buying feel like a choice now, not "always the top one"?
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

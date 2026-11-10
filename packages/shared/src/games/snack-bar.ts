@@ -30,7 +30,7 @@ export interface StandInfo {
   id: StandId;
   /** Price of the first level. */
   cost: number;
-  /** Every level costs this much more than the last (1.07 for popcorn up to 1.14 for the arcade). */
+  /** Every level costs this much more than the last (1.08 for popcorn up to 1.15 for the arcade). */
   growth: number;
   /** Coins per second each level earns (before bonuses). */
   rate: number;
