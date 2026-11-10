@@ -288,6 +288,11 @@ jobs:
       - name: Games beside a YouTube video
         run: node scripts/harness/games-youtube/run.cjs http://localhost:8787
 
+      # Bugs W1–W5: the game window's head (no ⛶ in Snack Bar, the video's place, 🎮 opens the hall) and the free window
+      # (drag, resize, each game's own spot, double-click reset, never over a YouTube player).
+      - name: Game window head
+        run: node scripts/harness/game-window-head/run.cjs http://localhost:8787
+
       # Card GT: on a tablet (iPad + Android, upright and sideways) a game's window stays clear of the chat.
       - name: Tablets
         run: |

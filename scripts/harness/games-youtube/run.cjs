@@ -31,7 +31,7 @@ const where = (page) =>
     const g = s.getBoundingClientRect();
     const overlap = g.left < t.right - 1 && t.left < g.right - 1 && g.top < t.bottom - 1 && t.top < g.bottom - 1;
     const onScreen = g.left >= -1 && g.top >= -1 && g.right <= innerWidth + 1 && g.bottom <= innerHeight + 1;
-    return { shown: true, overlap, onScreen, mode: ['float', 'stage', 'below', 'full'].find((m) => s.classList.contains(m)), game: [g.left, g.top, g.width, g.height].map(Math.round), player: [t.left, t.top, t.width, t.height].map(Math.round), stageBtn: document.querySelector('#game-stage .place-stage')?.disabled ?? null };
+    return { shown: true, overlap, onScreen, mode: ['float', 'stage', 'below', 'full'].find((m) => s.classList.contains(m)), game: [g.left, g.top, g.width, g.height].map(Math.round), player: [t.left, t.top, t.width, t.height].map(Math.round), switchGone: document.querySelector('#game-stage .game-place')?.hidden ?? null };
   });
 
 (async () => {
@@ -61,7 +61,8 @@ const where = (page) =>
       await wait(600);
       const now = await where(page);
       check(now.shown && !now.overlap && now.onScreen, `${label} ${kind}: the game window opens clear of the YouTube player, whole on screen`, now ?? w);
-      if (now.mode === 'float') check(now.stageBtn === true, `${label} ${kind}: "in the video's place" is not offered`, now);
+      // Bug W2: only the free window is possible over YouTube, so the placement switch is gone (it used to show disabled).
+      if (now.mode === 'float') check(now.switchGone === true, `${label} ${kind}: "in the video's place" is not offered`, now);
       // Pressing "in the video's place" anyway does nothing; a drag of the head onto the player can't bring it there.
       await page.evaluate(() => document.querySelector('#game-stage .place-stage')?.click());
       if (now.mode === 'float') {
@@ -101,7 +102,7 @@ const where = (page) =>
       await page.evaluate(() => window.__swmLab.run('games.open.classics'));
       await page.fill('#media-input', `${SITE}/sample.mp4`);
       await page.evaluate(() => document.querySelector('#media-form button[value="load"]')?.click());
-      const free = await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail') && document.querySelector('#game-stage .place-stage')?.disabled === false));
+      const free = await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail') && document.querySelector('#game-stage .game-place')?.hidden === false));
       check(!!free, `${label}: with a video that isn't YouTube "in the video's place" is offered again`);
     }
     check(!errors.length, `${label}: no page errors`, errors.slice(0, 2));

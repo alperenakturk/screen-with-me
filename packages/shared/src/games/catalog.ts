@@ -24,6 +24,8 @@ export interface GameInfo {
    */
   minSize: readonly [number, number];
   maxSize: readonly [number, number];
+  /** The game never needs the whole screen (owner, bug W1: Snack Bar): its window has no ⛶. Phones keep their own full layout. */
+  noFull?: boolean;
 }
 
 // Card CL2 (owner): every game opens in the free mini window by default, at the size its own layout wants; "in the
@@ -86,7 +88,7 @@ export interface SoloRoom {
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
   // Card GP (Design's `side-games-polish.md` §2): each opens at the size its content needs, so its scale (`--fit`) is 1
   // at 1366 × 768 and the text never shrinks below 13 px (the window is the fit + its 55 px head and border); smaller windows scale it down (stage.ts `refit`).
-  snack: { place: 'float', size: [400, 575], fit: [380, 520], minSize: [400, 575], maxSize: [600, 862] },
+  snack: { place: 'float', size: [400, 575], fit: [380, 520], minSize: [400, 575], maxSize: [600, 862], noFull: true },
   garden: { place: 'float', size: [400, 555], fit: [380, 500], minSize: [400, 555], maxSize: [600, 832] },
   word: { place: 'float', size: [400, 635], fit: [380, 580], minSize: [400, 635], maxSize: [600, 952] },
 };

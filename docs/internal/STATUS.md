@@ -347,6 +347,12 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   Edge Add-ons steps in `web-store.md`. Left for the owner: the hand tests below, the Microsoft Partner Center account.
 - [ ] After 1.0 (owner decides): Firefox extension (L), TURN relay (Phase 2). Not planned: Safari extension, Opera's
   own store.
+- [ ] **Lane W, game window bugs W1–W5** (owner's screenshots, 10 Nov 2026; branch `claude/game-window-head`):
+  - [x] Reproduce: 🎮 in the head opened the hall beside the hidden toolbar 🎮; "in the video's place" is a dead
+    disabled button over YouTube; the free window's drag was locked to the one strip beside a YouTube player.
+  - [x] Fix in `games/stage.ts` (+ `catalog.ts` `noFull`, one `room.css` rule), Test Lab hooks, harness
+    `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
+  - [ ] PR, version from the Planner, merge, deploy + live e2e + tag, report (per-game table) to the Planner.
 
 ## Design sweep (card 16): what was found and what happened
 From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
@@ -387,6 +393,15 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
+
+**W1–W5 (lane W, the game window's head and free window; fold into the next round).**
+- [ ] W1. Open Snack Bar: its head has no ⛶ any more. Window Garden, Five Frames and the tables still have it.
+- [ ] W2. A room with a video file (or none): the second placement button puts the game in the video's place. With a
+  YouTube video the two placement buttons are gone; hovering the window's bar says why.
+- [ ] W3. The 🎮 in any game window's head opens the games hall right under it (free window, video's place, ⛶).
+- [ ] W5. Drag a free window by its bar: it follows the mouse anywhere, also over a video file; over a YouTube video it
+  slides along the player's edge and never covers it. Resize from the corner, open another game and come back: each
+  game keeps its own spot and size, also after a reload. Double-click the bar: back to its first size and spot.
 
 **0.9.97.105 (NP3, Stub the mascot, Neon's new look, scene landmarks moved right; fold into the next round).**
 - [ ] S1. The home page in Night, Matinee and two scene themes: Stub wears the theme's costume and its torch is where

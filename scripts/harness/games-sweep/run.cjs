@@ -230,6 +230,8 @@ async function windowPasses(page, label, g, phone) {
   }
   const before = await stageBox(page);
   const button = await page.$('#game-stage .game-full');
+  // Bug W1 (owner): Snack Bar never needs the whole screen: no ⛶ in its head.
+  if (g.solo === 'snack') return check(!button || !(await button.isVisible()), `${label}: Snack Bar has no ⛶`);
   if (!button || !(await button.isVisible())) return check(false, `${label}: ⛶ shows in the game's head`);
   await button.click();
   await wait(900);

@@ -13063,3 +13063,8 @@ html.ph-game .game-stage .xox-page:not(.draw-page) {
   --field-border: #8f8170;
   color: var(--text);
 }
+
+/* Bug W3: the games hall opened from a game window's 🎮 hangs under that button, above the window in every placement. */
+.head-game-wrap {
+  z-index: 2147483001;
+}
