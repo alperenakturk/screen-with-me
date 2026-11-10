@@ -353,10 +353,9 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   - [x] Fix in `games/stage.ts` (owner's follow-up: no ⛶ in any game), Test Lab hooks, harness
     `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
   - [x] PR #386 (0.9.97.111) merged.
-  - [ ] 0.9.97.112 (owner's live test): side games right of the video when they fit
-    at their smallest size; the hall slides out of the free window; resize corner fix. Branch
-    `claude/game-window-right`, then PR, merge, deploy + live e2e + tag, report. Tables always in the video's place
-    (owner's decision) waits for card .113's layouts: stage.ts `STAGE_READY`.
+  - [x] 0.9.97.112 (#390) live: side games' home beside the video, the hall from a free window, the resize corner.
+  - [ ] 0.9.97.114: side games only in the free window; a table in the video's place pauses the playing video. Branch
+    `claude/game-window-solo`, then PR, merge, deploy + live e2e + tag, report.
 - [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
   categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
   line off the room screen, "Move to another device" in Settings → Me, IP notice removed (privacy policy + help
@@ -490,6 +489,12 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
+
+**0.9.97.114 (lane W: side games only in their window, a table pauses the video; fold into the next round).**
+- [ ] Q1. Play a video file with a friend, open Snack Bar: the video keeps playing. Open a table (chess): the video
+  pauses on both screens and a note says "Video paused for the game". Put the table away (✕): the video stays paused.
+- [ ] Q2. Snack Bar, Window Garden and Five Frames open as a window on the right with no placement buttons in their bar;
+  on the laptop the window may cover a thin strip of the video's right edge.
 
 **0.9.97.112 (lane W: where games open, the hall from a free window, the resize corner; fold into the next round).**
 - [ ] P2. On the big screen open Snack Bar: it opens on the right over the chat, nothing of the video covered. On the

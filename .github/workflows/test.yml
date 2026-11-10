@@ -290,11 +290,6 @@ jobs:
       - name: Games beside a YouTube video
         run: node scripts/harness/games-youtube/run.cjs http://localhost:8787
 
-      # Bugs W1–W5: the game window's head (no ⛶ in Snack Bar, the video's place, 🎮 opens the hall) and the free window
-      # (drag, resize, each game's own spot, double-click reset, never over a YouTube player).
-      - name: Game window head
-        run: node scripts/harness/game-window-head/run.cjs http://localhost:8787
-
       # Card GT: on a tablet (iPad + Android, upright and sideways) a game's window stays clear of the chat.
       - name: Tablets
         run: |
@@ -303,6 +298,12 @@ jobs:
           (cd /tmp/vid && python3 -m http.server 5300 >/dev/null 2>&1 &)
           sleep 1
           node scripts/harness/tablet/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+
+      # Lane W: the game window's head and free window (W1–W5, 0.9.97.112–114): no ⛶, 🎮 opens the hall, drag / resize /
+      # each game's own spot, never over a YouTube player, side games only in the free window, a table pausing the video
+      # (needs the webm the Tablets step serves on :5300).
+      - name: Game window head
+        run: node scripts/harness/game-window-head/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       - name: Snack Bar and motion
         run: |

@@ -26,6 +26,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { icon, type IconName } from '../ui/icons.ts';
 import { confirmDialog } from '../ui/confirm.ts';
 import { gameLive } from './live.ts';
+import { flashHint } from '../ui/hint.ts';
 import { debugHooks } from '../debug-lab.ts';
 
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker', classics: 'game-four', sea: 'game-sea', duel: 'game-duel' };
@@ -130,6 +131,11 @@ interface StageOptions {
   hint: (text: string) => void;
   /** What a solo game needs from the room: is the video playing, how many others are here / in voice with me. */
   room: () => SoloRoom;
+  /**
+   * 0.9.97.114 (owner): pauses the room's video the way a press of ⏸ would (the sync engine sends it to everyone; the
+   * server stays the source of truth). False when nothing played or I may not control it (host-only rooms).
+   */
+  pauseVideo?: () => boolean;
 }
 
 /** The Test Lab is switched on in this tab (the same switch `debug-lab.ts` keeps). */
@@ -225,6 +231,8 @@ export function createGameStage(opts: StageOptions) {
    * space right of the video and remembers that, so it stays free back in the room view until I pin it again.
    */
   const shortsView = () => document.documentElement.classList.contains('shorts-view');
+  /** Cinema mode (card 14): the side panel hidden, the video as large as the page allows. */
+  const cinemaOn = () => document.documentElement.classList.contains('cinema-on');
   /** The placement in use now. */
   let mode: Place | 'below' | 'full' = 'stage';
   /**
@@ -261,6 +269,16 @@ export function createGameStage(opts: StageOptions) {
     mode = narrow.matches ? (!youtube && (want === 'stage' || shortsView() || isPhoneLayout()) ? 'full' : 'below') : want;
     // YTG: no room beside the YouTube player for the free window: under it instead.
     if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer()) mode = 'below';
+    // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
+    // game's head unreachable). Like fullscreen (YTG): a game brought up there leaves cinema mode (the side panel comes
+    // back and the game sits beside the player), and turning cinema on with a game open puts the game away.
+    if (mode === 'below' && youtube && !narrow.matches && !stage.hidden && cinemaOn()) {
+      const toggle = document.getElementById('side-toggle') as HTMLButtonElement | null;
+      if (toggle && !toggle.hidden) {
+        toggle.click();
+        if (!cinemaOn()) return place();
+      }
+    }
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
     const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
@@ -278,7 +296,9 @@ export function createGameStage(opts: StageOptions) {
     // Bug W2: over a YouTube video only the free window is possible (YTG), so the switch has nothing to switch: it goes,
     // and the head says in plain words why the window keeps beside the video.
     // 0.9.97.112 (owner): the tables always play in the video's place, so only the side games have the switch.
-    placeSwitch.hidden = youtube || !kind || (STAGE_READY && !isSoloKind(kind));
+    // Owner (0.9.97.112–114): the tables always play in the video's place, the side games always in the free window, so
+    // on a computer there is nothing to switch; narrow screens keep "below / large".
+    placeSwitch.hidden = youtube || !kind || !narrow.matches || (STAGE_READY && !isSoloKind(kind));
     head.title = youtube && mode === 'float' ? t('game.besideYoutube') : '';
     placeButtons.forEach((b, i) => {
       const p = PLACES[i]!;
@@ -433,10 +453,9 @@ export function createGameStage(opts: StageOptions) {
    */
   function placeOf(kind: Kind): Place {
     if (!isSoloKind(kind)) return STAGE_READY ? 'stage' : (savedPlace(kind) ?? catalogOf(kind).place);
-    const saved = savedPlace(kind);
-    if (saved) return saved;
-    if (isTablet() || inFullscreen() || isPhoneLayout()) return catalogOf(kind).place;
-    return homeBox(kind) || !STAGE_READY ? 'float' : 'stage';
+    // 0.9.97.114 (owner: the video's place for a side game is "pointless, delete it"): side games only ever play in the
+    // free window; narrow screens keep their own pick, below / large.
+    return narrow.matches ? (savedPlace(kind) ?? catalogOf(kind).place) : 'float';
   }
   /**
    * 0.9.97.112 (owner: "open towards the right, over the chat; never cover any part of our video screen"): until I move
@@ -455,15 +474,21 @@ export function createGameStage(opts: StageOptions) {
     const fits = (b: Box) => Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h);
     let col: Box | null = { left: video.right, top: bar, width: page.left + page.width - video.right, height: page.top + page.height - bar };
     const { low, high } = zoomRange(kind);
-    if (fits(col) < low) col = largestClear(page, video);
-    if (!col || fits(col) < low) return null;
-    const zoom = Math.min(high, fits(col));
+    // Over YouTube nothing may cover the player: the window shrinks to the column (or the largest strip beside it).
+    // Elsewhere (0.9.97.114, owner) a side game keeps at least its smallest readable size in the right column, sticking
+    // out over the video's right edge when the column is narrower than that (a 1366 laptop: ≈ 46 px).
+    if (overYoutube()) {
+      if (fits(col) < MIN_ZOOM) col = largestClear(page, video);
+      if (!col || fits(col) < MIN_ZOOM) return null;
+    }
+    const most = Math.min((page.width - 2 * EDGE) / w, (page.top + page.height - col.top - 2 * EDGE) / h);
+    const zoom = overYoutube() ? Math.min(high, fits(col)) : Math.min(most, Math.max(low, Math.min(high, fits(col))));
     const width = Math.round(w * zoom);
     const height = Math.round(h * zoom);
     // Right-aligned at the top of the column (over the side panel's top); centred in a strip above or below the video.
     const right = col.left >= video.right - 1;
     return {
-      left: Math.round(right ? col.left + col.width - EDGE - width : col.left + (col.width - width) / 2),
+      left: Math.round(Math.max(page.left + EDGE, right ? col.left + col.width - EDGE - width : col.left + (col.width - width) / 2)),
       top: Math.round(col.top + EDGE),
       width,
       height,
@@ -648,7 +673,15 @@ export function createGameStage(opts: StageOptions) {
   let wasFs = inFullscreen();
   let wasYoutube = overYoutube();
   let wasShorts = shortsView();
+  let wasCinema = cinemaOn();
   new MutationObserver(() => {
+    const cinema = cinemaOn();
+    if (cinema !== wasCinema) {
+      wasCinema = cinema;
+      // Cinema mode turned on over YouTube with a game open: the game goes away (a dot on 🎮), as in fullscreen.
+      if (cinema && overYoutube() && !stage.hidden && !narrow.matches) return minimize();
+      if (!stage.hidden) place();
+    }
     const now = shortsView();
     if (now === wasShorts) return;
     wasShorts = now;
@@ -918,7 +951,8 @@ export function createGameStage(opts: StageOptions) {
     }
   };
 
-  async function open(table: RoomGame): Promise<void> {
+  /** `resume`: back to the table this tab was at (a reload), not a fresh open: no automatic pause then. */
+  async function open(table: RoomGame, resume = false): Promise<void> {
     document.getElementById('game-invite')?.remove();
     rememberAt({ id: table.id, min: false });
     if (stage.hidden) slideIn(stage);
@@ -934,6 +968,7 @@ export function createGameStage(opts: StageOptions) {
     if (shortsView()) besideShorts(table.kind);
     place();
     send({ t: 'at', table: table.id });
+    if (!resume) autoPause();
     body.replaceChildren(el('p', { class: 'muted game-stage-loading' }, '…'));
     const { name, avatar } = opts.me();
     // Game code lives in separate chunks: not downloaded when entering the room.
@@ -948,6 +983,19 @@ export function createGameStage(opts: StageOptions) {
     // Switched or closed while loading: close at once.
     if (current?.id !== table.id) stop();
     else unmount = stop;
+  }
+
+  /** When the last automatic pause happened (the Test Lab's status line). */
+  let pausedAt = 0;
+  /**
+   * 0.9.97.114 (owner): a table that opens in the video's place while the video plays pauses it, once, for everyone
+   * (nobody watches a film hidden under a game). Never over YouTube (the table sits beside the player there, so the film
+   * stays in view), never for side games (the free window), and closing the table doesn't play it again.
+   */
+  function autoPause(): void {
+    if (mode !== 'stage' || !current || !opts.pauseVideo?.()) return;
+    pausedAt = Date.now();
+    flashHint(hubButton.node, t('game.pausedForGame'));
   }
 
   /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */
@@ -1106,6 +1154,14 @@ export function createGameStage(opts: StageOptions) {
         run: resetFloat,
       },
       {
+        id: 'gameWindow.autoPause',
+        title: { en: 'Game window: pause as a table would', tr: 'Oyun penceresi: masa açılınca olduğu gibi durdur' },
+        help: { en: 'Runs what opening a table in the video’s place does: if the video plays, it pauses for everyone and a short note says why.', tr: 'Bir masa videonun yerinde açılınca olanı yapar: video oynuyorsa herkes için durur ve kısa bir not nedenini söyler.' },
+        tab: 'games',
+        available: () => (current && mode === 'stage' ? true : { en: 'no table open in the video’s place', tr: 'videonun yerinde açık masa yok' }),
+        run: autoPause,
+      },
+      {
         id: 'gameWindow.hall',
         title: { en: 'Game window: open the hall from its 🎮', tr: 'Oyun penceresi: 🎮 ile salonu aç' },
         help: { en: 'Presses the 🎮 in the open game window’s head: the games hall opens right under it.', tr: 'Açık oyun penceresinin başındaki 🎮’ya basar: oyun salonu hemen altında açılır.' },
@@ -1120,7 +1176,8 @@ export function createGameStage(opts: StageOptions) {
       const where = stage.hidden ? 'minimized' : mode;
       const home = mode === 'float' && !spot ? ' · home' : '';
       const hall = !menu.hidden && menu.parentElement === headMenuWrap ? ` · hall ${headMenuWrap.dataset.side ?? ''}` : '';
-      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${home}${hall}${overYoutube() ? ' · YouTube' : ''}`]];
+      const paused = pausedAt ? ` · paused the video ${Math.round((Date.now() - pausedAt) / 1000)} s ago` : '';
+      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${home}${hall}${paused}${overYoutube() ? ' · YouTube' : ''}`]];
     },
   }));
 
@@ -1138,7 +1195,7 @@ export function createGameStage(opts: StageOptions) {
       const sideKind = at?.id.startsWith('solo:') ? at.id.slice(5) : '';
       const side = isSoloKind(sideKind) ? sideKind : undefined;
       if (at && !back && !side) rememberAt(null);
-      if (back) void open(back).then(() => at!.min && current?.id === back.id && minimize());
+      if (back) void open(back, true).then(() => at!.min && current?.id === back.id && minimize());
       else if (side) void openSolo(side).then(() => at!.min && solo === side && minimize());
       // Card R1: my table opened while the room connection was down (its "opened" never reached me): open it now.
       if (wanted && !change.opened && !current) {

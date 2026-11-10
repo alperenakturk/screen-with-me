@@ -1189,6 +1189,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     activity: (text) => addActivity(text),
     hint: (text) => flashHint($('#game-btn'), text),
     room: soloContext,
+    // 0.9.97.114 (owner): a table opening in the video's place pauses the playing video, as a press of ⏸ would.
+    pauseVideo: () => {
+      const player = current?.player;
+      if (!player || !roomState?.item || player.isPaused() || (roomSettings.hostOnly && !amHost())) return false;
+      player.pause();
+      return true;
+    },
   });
   // Films that end while I'm in the room give Window Garden's seed even with the game closed (owner's pick 11 B).
   watchFilmEnds(() => soloContext().item);
