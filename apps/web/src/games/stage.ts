@@ -190,10 +190,12 @@ export function createGameStage(opts: StageOptions) {
   wrap.append(stage);
   const theater = (wrap.closest('.theater') as HTMLElement | null) ?? wrap;
   const narrowQuery = matchMedia('(max-width: 860px)');
-  // An upright tablet (card T) is narrow but plays like a computer: the game in the video's place.
+  // An upright tablet (card T) is narrow but plays like a computer: the game in the video's place. A phone is always
+  // narrow, also held sideways wider than 860 px (LAYOUT1: a Pixel 7 sideways is 863 px wide and got the computer's
+  // free window over its tiny video, while a 750 px iPhone got the whole screen).
   const narrow = {
     get matches(): boolean {
-      return narrowQuery.matches && !document.documentElement.classList.contains('tablet-up');
+      return (narrowQuery.matches || isPhoneLayout()) && !document.documentElement.classList.contains('tablet-up');
     },
   };
   const inFullscreen = () => theater.matches(':fullscreen') || theater.classList.contains('fake-fs');

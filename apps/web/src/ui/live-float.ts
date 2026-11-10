@@ -12,12 +12,15 @@ interface Spot {
 type Where = 'video' | 'free' | 'fs';
 
 const DEFAULTS: Record<Where, Spot> = {
-  video: { x: 0.6, y: 0.5, w: 0.36 },
+  // Top right: the player's own bar (play, time, seek) is at the bottom (LAYOUT1: on a phone it covered it).
+  video: { x: 0.6, y: 0.04, w: 0.36 },
   free: { x: 0.62, y: 0.12, w: 0.3 },
   fs: { x: 0.56, y: 0.5, w: 0.3 },
 };
 const KEYS: Record<Where, string> = { video: 'liveSpot:video', free: 'liveSpot:free', fs: 'liveSpot:fs' };
 const MIN_WIDTH = 200;
+/** On a phone the video is ≈ 390 px wide: 200 px would be half of it. */
+const PHONE_MIN_WIDTH = 150;
 /** It may grow to this share of its container (⤢ covers the whole video). */
 const MAX_SHARE = 0.9;
 const EDGE = 8;
@@ -91,7 +94,7 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
     }
     const c = container(w);
     const spot = spots[w];
-    const width = Math.round(Math.min(Math.max(MIN_WIDTH, spot.w * c.w), c.w * MAX_SHARE));
+    const width = Math.round(Math.min(Math.max(innerWidth <= NARROW ? PHONE_MIN_WIDTH : MIN_WIDTH, spot.w * c.w), c.w * MAX_SHARE));
     const height = (width * 9) / 16;
     win.style.width = `${width}px`;
     win.style.left = `${Math.round(Math.min(Math.max(EDGE, spot.x * c.w), Math.max(EDGE, c.w - width - EDGE)))}px`;
@@ -139,7 +142,7 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
     if (drag.resize) {
       // The corner grows the width; the height follows (16:9).
       const max = Math.min(c.w * MAX_SHARE, c.w - drag.left - EDGE, ((c.h - drag.top - EDGE) * 16) / 9);
-      win.style.width = `${Math.round(Math.min(Math.max(MIN_WIDTH, drag.width + Math.max(dx, (dy * 16) / 9)), max))}px`;
+      win.style.width = `${Math.round(Math.min(Math.max(innerWidth <= NARROW ? PHONE_MIN_WIDTH : MIN_WIDTH, drag.width + Math.max(dx, (dy * 16) / 9)), max))}px`;
     } else {
       win.style.left = `${Math.round(Math.min(Math.max(EDGE, drag.left + dx), Math.max(EDGE, c.w - win.offsetWidth - EDGE)))}px`;
       win.style.top = `${Math.round(Math.min(Math.max(EDGE, drag.top + dy), Math.max(EDGE, c.h - win.offsetHeight - EDGE)))}px`;

@@ -104,6 +104,7 @@ function measure(selectors) {
   for (const device of pick('DEVICES', Object.keys(DEVICES))) {
     const phone = /iphone|pixel/.test(device);
     const touch = phone || /ipad/.test(device);
+    const sideways = phone && /-side$/.test(device);
     const ctx = await browser.newContext({ ...DEVICES[device], permissions: ['camera', 'microphone'] });
     await viaYouTube(ctx);
     await ctx.addInitScript(() => {
@@ -164,11 +165,12 @@ function measure(selectors) {
       });
       if (v && !touch) await page.mouse.move(v.x, v.y, { steps: 4 });
       await wait(700);
-      await note('rail', ['#fs-dock', '.together-strip', '.ph-shorts-bar']);
+      // A sideways phone out of fullscreen shows the video and "Watch fullscreen" only (owner's 8B), no rail.
+      await note('rail', sideways ? ['.ph-turn'] : ['#fs-dock', '.together-strip', '.ph-shorts-bar']);
       await page.mouse.move(5, 5);
     }
 
-    if (STEPS.includes('message')) {
+    if (STEPS.includes('message') && !sideways) {
       await run('friends.add');
       await wait(1500);
       await run('friends.say', '1');
@@ -194,6 +196,8 @@ function measure(selectors) {
       await page.evaluate(() => document.querySelector('.debug-fab')?.click());
       await wait(900);
       await note('lab', ['.lab-drawer', '.debug-panel', '.test-lab']);
+      // On a phone the drawer is a bottom sheet: 🐞 must not sit over its rows.
+      if (phone) check(await page.evaluate(() => getComputedStyle(document.querySelector('.debug-fab')).display === 'none'), `${device} · lab: 🐞 hidden while the sheet is open`);
       await page.evaluate(() => document.querySelector('.debug-fab')?.click());
       await closeAll();
     }
@@ -214,14 +218,17 @@ function measure(selectors) {
             return ['full', 'float', 'inplace', 'shorts'].filter((c) => s.classList.contains(c)).join(' ') || 'in the video';
           });
           rows[`game-${game}`].mode = mode;
-          if (!phone) check(!m.coversRail, `${device} · game ${game}: does not cover the rail`);
+          // A phone always plays a game on the whole screen, held either way (LAYOUT1: a Pixel 7 sideways is 863 px wide
+          // and got the computer's free window). An upright tablet may cover the video (the Planner's A, card T).
+          if (phone) check(mode.includes('full'), `${device} · game ${game}: the whole screen on a phone`, mode);
+          else if (!touch) check(!m.coversRail, `${device} · game ${game}: does not cover the rail`);
         }
       }
       await page.evaluate(() => document.querySelector('#game-stage .game-minimize')?.click());
       await wait(500);
     }
 
-    if (STEPS.includes('camera')) {
+    if (STEPS.includes('camera') && !sideways) {
       await page.evaluate(() => document.querySelector('#voice-join')?.click());
       await wait(2500);
       await page.evaluate(() => document.querySelector('#voice-cam')?.click());
@@ -235,7 +242,9 @@ function measure(selectors) {
         setTimeout(() => document.querySelector('#live-screen')?.click(), 300);
       });
       await wait(4000);
-      await note('stream', ['#live-window']);
+      const st = await note('stream', ['#live-window']);
+      // My own picture starts in the top corner: the player's own bar (play, time) is at the bottom (LAYOUT1, phones).
+      if (st?.found && st.video) check(st.box.y + st.box.h <= st.video.y + st.video.h * 0.78, `${device} · stream: clear of the player's bar`, JSON.stringify(st.box));
       await page.evaluate(() => document.querySelector('#live-stop')?.click());
       await wait(800);
     }
