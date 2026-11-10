@@ -147,7 +147,7 @@
 .bg-point:focus-visible, .bg-bar:focus-visible, .bg-off:focus-visible { outline: 3px solid var(--accent); outline-offset: -2px; }
 .bg-tray { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 6px; min-height: 36px; }
 .bg-tray[hidden] { display: none; }
-.bg-dice { display: inline-flex; gap: 4px; font-size: 30px; line-height: 1; color: #fff8ea; }
+.bg-dice { display: inline-flex; gap: 4px; font-size: 30px; line-height: 1; color: var(--text); }
 .bg-die.used { opacity: 0.3; }
 .bg-pips { font-size: 13px; opacity: 0.8; }
 
@@ -235,7 +235,7 @@ html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em
 #game-stage .mt .mt-taken.piece-O { color: #2a2530; text-shadow: 0 0 1px #fff, 0 0 2px #fff; }
 #game-stage .mt .mt-taken.piece-X { color: #fff8ec; text-shadow: 0 0 1px #000, 0 0 2px #000; }
 #game-stage .mt .mt-wins {
-  flex: none; margin-left: auto; min-width: 30px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2);
+  flex: none; margin-left: auto; min-width: 30px; padding: 2px 7px; border-radius: 999px; background: var(--surface-2);
   text-align: center; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
 }
 
@@ -385,3 +385,19 @@ html.phone .game-head-slot .cl-change-text { display: none; }
   #game-stage .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; }
   #game-stage .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
 }
+
+/* THEMEG: the pink / blue turn ring is the X / O mark's colour, right for tic-tac-toe and Four in a Row; the other boards
+   (dama, chess, backgammon, reversi) have no X or O, so a pink ring read as a red warning. They ring the player whose
+   turn it is in the theme's accent, like the picked "Easy" / "Medium". */
+[data-board]:not([data-board='xox'], [data-board='four']) .xox-player.turn:is(.mark-X, .mark-O) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* THEMEG: a small cup says the pill counts wins; it costs little width so the name keeps its room. */
+#game-stage .mt .mt-cup { font-style: normal; font-size: 12px; margin-right: 2px; vertical-align: 1px; }
+/* THEMEG: on a phone the backgammon row keeps the name whole ("Alex (you)"): tighter gaps, the home / pips line in 13 px
+   gives way first with "…" if a long name still needs the room. */
+html.phone #game-stage [data-board='backgammon'] .xox-player { gap: 6px; }
+html.phone #game-stage [data-board='backgammon'] .xox-name { flex: 1 0 auto; }
+html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: block; white-space: nowrap; font-size: 13px; letter-spacing: 0; }

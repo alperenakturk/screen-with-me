@@ -70,14 +70,14 @@ const TEXT = {
     how4Title: 'Films give seeds',
     how4: 'Watch a film of 20 minutes or more to the end for a new seed.',
     growing: '▶ Growing',
-    paused: '⏸ Resting',
+    paused: '🌙 Resting',
     restingTitle: 'Plants grow while the film plays',
-    rest: '⏸ Resting until the film plays',
+    rest: '🌙 Resting until the film plays',
     restLine: "Nothing grows or dries while you're away",
     album: 'Album {n}/{all}',
     seeds: 'Seeds',
     water: '💧 Water',
-    watered: 'Watered',
+    watered: 'Full of water',
     pick: '✿ Pick it',
     plantSeed: 'Plant a seed',
     noSeeds: 'No seeds yet: one comes every 30 watched minutes',
@@ -164,14 +164,14 @@ const TEXT = {
     how4Title: 'Filmler tohum verir',
     how4: '20 dakikalık ya da daha uzun bir filmi sonuna kadar izle, yeni tohum kazan.',
     growing: '▶ Büyüyor',
-    paused: '⏸ Dinleniyor',
+    paused: '🌙 Dinleniyor',
     restingTitle: 'Bitkiler film oynarken büyür',
-    rest: '⏸ Film oynayınca büyür',
+    rest: '🌙 Film oynayınca büyür',
     restLine: 'Sen yokken ne büyür ne kurur',
     album: 'Albüm {n}/{all}',
     seeds: 'Tohumlar',
     water: '💧 Sula',
-    watered: 'Sulandı',
+    watered: 'Suyu dolu',
     pick: '✿ Topla',
     plantSeed: 'Tohum ek',
     noSeeds: 'Henüz tohum yok: her 30 izlenen dakikada bir gelir',
@@ -476,14 +476,16 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     const bonus = Math.round(LAMP_BONUS * 100);
     actionText.textContent = p.water < THIRSTY ? t('dry') : lit ? t('lampOn', { n: bonus }) : t('left', { n: minutesLeft(p) });
     const full = p.water >= 0.98;
-    actionButtons.append(
-      actionButton(full ? t('watered') : t('water'), 'main', () => {
-        if (!water(garden, selected)) return;
-        playSound('gardenWater');
-        persist();
-        draw();
-      }, full),
-    );
+    // THEMEG: always "💧 Water" (present tense); a full pot shows it as the quiet outlined button, full contrast, with
+    // "Full of water" on hover, instead of a faded "Watered" that read as a broken button.
+    const waterButton = actionButton(t('water'), full ? 'full' : 'main', () => {
+      if (!water(garden, selected)) return;
+      playSound('gardenWater');
+      persist();
+      draw();
+    }, full);
+    if (full) waterButton.title = t('watered');
+    actionButtons.append(waterButton);
     // Stub the grow lamp: once per film, on a growing plant (owner's pick 9).
     if (!lit && itemId) {
       const free = lampFree(garden, itemId);

@@ -6,12 +6,20 @@
   /* The bright amber in every theme (Matinee's --warn is a dark amber for text on cream, card NP1). */
   background: #f5b94a;
   color: #2a1d00;
-  font-size: 9px;
+  /* THEMEG: ≥ 13 px like every other text (it was 9 px). */
+  font-size: 13px;
+  line-height: 1.2;
   font-weight: 800;
   letter-spacing: 0.05em;
   vertical-align: 2px;
 }
-.hub-badge.updated { background: #6fd3ff; color: #00233a; }
+/* THEMEG: "UPDATED" in the theme's own accent (a light blue clashed with the warm themes): a tint of the accent with
+   the accent leaning toward the text colour, so it stays readable on dark and light themes alike. */
+.hub-badge.updated {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  color: color-mix(in srgb, var(--accent) 65%, var(--text));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
 .hub-badge.soon { background: var(--surface-2); color: var(--muted); }
 /* On a cover card the badge has its own line under the title: next to a long title ("Five Frames Duel UPDATED") it
    wrapped under the title's own text, and a bright badge inside the title's line hurts its contrast. */
@@ -29,3 +37,16 @@
 .hub-card[data-kind='sea'] .hub-cover::after { background-image: url('./art/badges/sea.svg'); }
 .hub-card[data-kind='duel'] .hub-cover::after { background-image: url('./art/badges/duel.svg'); }
 .hub-card[data-kind]:not([data-kind='classics'], [data-kind='draw'], [data-kind='quiz'], [data-kind='poker'], [data-kind='sea'], [data-kind='duel']) .hub-cover::after { content: none; }
+
+/* THEMEG: the scene themes' --surface is see-through (the scene shows behind cards); over the room's own buttons the
+   hall read as broken, so it gets the theme's solid --bg underneath. */
+.game-menu { background: linear-gradient(var(--surface), var(--surface)), var(--bg); }
+
+/* THEMEG: no text under 13 px in the hall (the count, the section labels and the player lines were 12 px), and What's
+   new reads in full: it wraps instead of stopping at two lines with "…". */
+.hub-count, .hub-label, .hub-table-text small, .hub-game-text small, .hub-side-text small { font-size: 13px; }
+.hub-news-line { font-size: 13px; }
+.hub-news-line > span { display: inline; -webkit-line-clamp: unset; overflow: visible; }
+
+/* THEMEG: the chosen tab in the theme's accent (it was the games' gold on every theme). */
+.hub-tab.on { background: var(--accent-btn, var(--accent)); color: var(--on-accent); }

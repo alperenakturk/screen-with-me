@@ -112,6 +112,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.117',
+    kinds: ['classics'],
+    badge: 'updated',
+    tr: 'Klasikler: tavlanın nasıl oynanır kartları artık altın halkalı pulları ve kalan yolu anlatıyor, sayaçlar ne saydığını söylüyor; oyunlar odanın temasına uyuyor.',
+    en: 'Classics: backgammon’s How to play cards now explain the gold-ringed checkers and how far you have left, the counters say what they count; the games follow the room’s theme.',
+  },
+  {
     v: '0.9.97.106',
     kinds: ['classics', 'sea', 'draw', 'quiz', 'poker', 'duel'],
     badge: 'updated',
@@ -246,6 +253,19 @@ export function compareVersions(a: string, b: string): number {
 /** Notes newer than what this person saw (`null`: never opened the hub → the latest few). */
 export function unseenNews(seen: string | null, limit = 3): GameNews[] {
   return GAME_NEWS.filter((n) => seen === null || compareVersions(n.v, seen) > 0).slice(0, limit);
+}
+
+/**
+ * THEMEG: a game's NEW / UPDATED badge shows only in the release that brought the note and the one after it (`site` is
+ * the site's version); after that the note stays in What's new but the hall's cards go quiet. A badge on every card
+ * for months meant nothing.
+ */
+export function badgeFresh(note: Pick<GameNews, 'v'>, site: string): boolean {
+  const n = note.v.split('.').map(Number);
+  const s = site.split('.').map(Number);
+  if (n.length !== s.length || n.slice(0, -1).some((x, i) => x !== s[i])) return false;
+  const d = s[s.length - 1]! - n[n.length - 1]!;
+  return d >= 0 && d <= 1;
 }
 
 /** The newest note's version (what "seen" is set to). */
