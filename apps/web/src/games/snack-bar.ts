@@ -1133,6 +1133,16 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     if (!height || !first) return;
     const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
     const rowH = first.offsetHeight + gap;
+    // GPRO: a sideways phone has the rows in their own column (snack-bar.css): as many as its height holds.
+    if (document.documentElement.classList.contains('phone') && document.documentElement.classList.contains('sideways')) {
+      // In real pixels, like below: a scaled-down window has a taller list, which would hold one row too many.
+      const fit = Math.max(2, Math.min(STANDS.length, Math.floor((list.clientHeight * scale + gap) / rowH)));
+      if (fit !== rowRoom) {
+        rowRoom = fit;
+        draw();
+      }
+      return;
+    }
     // Everything but the list and the "+N more" line, which gets a fixed reserve (so showing it never changes the sum).
     const others = box.scrollHeight - list.offsetHeight - (more.hidden ? 0 : more.offsetHeight) + MORE_RESERVE;
     const next = Math.max(ROWS_COMPACT, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));

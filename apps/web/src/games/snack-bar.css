@@ -238,3 +238,18 @@ html.phone .sb-scene { height: 108px; }
 .sb-up-buy.owned { background: transparent; color: var(--sb-teal); }
 /* A phone's targets are 44 px (GP2; the games sweep checks it). */
 html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-price) { min-height: 44px; }
+
+/* GPRO (layout audit): a sideways phone gets two columns: coins, the counter and the footer on the left; the buy bar
+   and as many stand rows as the height holds on the right (`fitRows`), so nothing is scaled below a readable size. */
+html.phone.sideways #game-stage .sb {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'head buy' 'scene rows' 'note rows' 'foot more'; gap: 6px 12px;
+}
+html.phone.sideways #game-stage .sb-head { grid-area: head; }
+html.phone.sideways #game-stage .sb-scene-box { grid-area: scene; }
+html.phone.sideways #game-stage .sb-scene { height: 96px; }
+html.phone.sideways #game-stage .sb-buybar { grid-area: buy; }
+html.phone.sideways #game-stage .sb-rows { grid-area: rows; overflow: hidden; contain: size; }
+html.phone.sideways #game-stage .sb-more { grid-area: more; align-self: center; }
+html.phone.sideways #game-stage .sb-foot { grid-area: foot; flex-wrap: wrap; }
+html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
