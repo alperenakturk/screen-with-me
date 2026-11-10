@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1596" height="282" font-family="system-ui, sans-serif">
+<rect width="100%" height="100%" fill="#2a2a2e"/>
+<g transform="translate(16 16)">
+  <rect width="300" height="250" rx="14" fill="#f4ede1"/>
+  <text x="16" y="30" font-size="13" font-weight="700" fill="#5c5244">Matinee (light)</text>
+  <rect x="16" y="44" width="268" height="190" rx="12" fill="#fffaf1" stroke="#8a7a64"/>
+  <text x="32" y="74" font-size="17" font-weight="700" fill="#1f1a14">Different screens,</text>
+  <text x="32" y="96" font-size="17" font-weight="700" fill="#b03f1c">same moment.</text>
+  <text x="32" y="120" font-size="13" fill="#1f1a14">Watch a video with friends, in sync.</text>
+  <text x="32" y="140" font-size="12" fill="#5c5244">Saved room · 3 watching</text>
+  <rect x="32" y="152" width="236" height="30" rx="8" fill="#efe5d4" stroke="#8a7a64" stroke-width="1.5"/>
+  <text x="42" y="171" font-size="12" fill="#5c5244">Search YouTube or paste a link</text>
+  <rect x="32" y="192" width="104" height="30" rx="8" fill="#b03f1c"/>
+  <text x="84" y="211" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">Create room</text>
+  <text x="152" y="211" font-size="13" fill="#b03f1c" text-decoration="underline">How it works</text>
+</g>
+<g transform="translate(332 16)">
+  <rect width="300" height="250" rx="14" fill="#0b1611"/>
+  <text x="16" y="30" font-size="13" font-weight="700" fill="#a2bcab">Pine (scene)</text>
+  <rect x="16" y="44" width="268" height="190" rx="12" fill="#12231b" stroke="#2f4d3e"/>
+  <text x="32" y="74" font-size="17" font-weight="700" fill="#ecf3ec">Different screens,</text>
+  <text x="32" y="96" font-size="17" font-weight="700" fill="#f0b85a">same moment.</text>
+  <text x="32" y="120" font-size="13" fill="#ecf3ec">Watch a video with friends, in sync.</text>
+  <text x="32" y="140" font-size="12" fill="#a2bcab">Saved room · 3 watching</text>
+  <rect x="32" y="152" width="236" height="30" rx="8" fill="#1a3025" stroke="#2f4d3e" stroke-width="1.5"/>
+  <text x="42" y="171" font-size="12" fill="#a2bcab">Search YouTube or paste a link</text>
+  <rect x="32" y="192" width="104" height="30" rx="8" fill="#f0b85a"/>
+  <text x="84" y="211" font-size="13" font-weight="700" fill="#1f1504" text-anchor="middle">Create room</text>
+  <text x="152" y="211" font-size="13" fill="#f0b85a" text-decoration="underline">How it works</text>
+</g>
+<g transform="translate(648 16)">
+  <rect width="300" height="250" rx="14" fill="#111113"/>
+  <text x="16" y="30" font-size="13" font-weight="700" fill="#a8a8b3">Graphite (plain)</text>
+  <rect x="16" y="44" width="268" height="190" rx="12" fill="#1b1b1f" stroke="#45454e"/>
+  <text x="32" y="74" font-size="17" font-weight="700" fill="#f2f2f4">Different screens,</text>
+  <text x="32" y="96" font-size="17" font-weight="700" fill="#ffc65a">same moment.</text>
+  <text x="32" y="120" font-size="13" fill="#f2f2f4">Watch a video with friends, in sync.</text>
+  <text x="32" y="140" font-size="12" fill="#a8a8b3">Saved room · 3 watching</text>
+  <rect x="32" y="152" width="236" height="30" rx="8" fill="#25252a" stroke="#45454e" stroke-width="1.5"/>
+  <text x="42" y="171" font-size="12" fill="#a8a8b3">Search YouTube or paste a link</text>
+  <rect x="32" y="192" width="104" height="30" rx="8" fill="#ffc65a"/>
+  <text x="84" y="211" font-size="13" font-weight="700" fill="#1d1405" text-anchor="middle">Create room</text>
+  <text x="152" y="211" font-size="13" fill="#ffc65a" text-decoration="underline">How it works</text>
+</g>
+<g transform="translate(964 16)">
+  <rect width="300" height="250" rx="14" fill="#0b0d1f"/>
+  <text x="16" y="30" font-size="13" font-weight="700" fill="#9aa0c2">Gece today</text>
+  <rect x="16" y="44" width="268" height="190" rx="12" fill="#151a2e" stroke="#2a3152"/>
+  <text x="32" y="74" font-size="17" font-weight="700" fill="#eceefa">Different screens,</text>
+  <text x="32" y="96" font-size="17" font-weight="700" fill="#8b6cff">same moment.</text>
+  <text x="32" y="120" font-size="13" fill="#eceefa">Watch a video with friends, in sync.</text>
+  <text x="32" y="140" font-size="12" fill="#9aa0c2">Saved room · 3 watching</text>
+  <rect x="32" y="152" width="236" height="30" rx="8" fill="#1e2440" stroke="#2a3152" stroke-width="1.5"/>
+  <text x="42" y="171" font-size="12" fill="#9aa0c2">Search YouTube or paste a link</text>
+  <rect x="32" y="192" width="104" height="30" rx="8" fill="#6a4cf2"/>
+  <text x="84" y="211" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">Create room</text>
+  <text x="152" y="211" font-size="13" fill="#8b6cff" text-decoration="underline">How it works</text>
+</g>
+<g transform="translate(1280 16)">
+  <rect width="300" height="250" rx="14" fill="#051726"/>
+  <text x="16" y="30" font-size="13" font-weight="700" fill="#8db0c4">Okyanus today</text>
+  <rect x="16" y="44" width="268" height="190" rx="12" fill="#0b2338" stroke="#1c405e"/>
+  <text x="32" y="74" font-size="17" font-weight="700" fill="#e6f4fb">Different screens,</text>
+  <text x="32" y="96" font-size="17" font-weight="700" fill="#2ec5e8">same moment.</text>
+  <text x="32" y="120" font-size="13" fill="#e6f4fb">Watch a video with friends, in sync.</text>
+  <text x="32" y="140" font-size="12" fill="#8db0c4">Saved room · 3 watching</text>
+  <rect x="32" y="152" width="236" height="30" rx="8" fill="#123049" stroke="#1c405e" stroke-width="1.5"/>
+  <text x="42" y="171" font-size="12" fill="#8db0c4">Search YouTube or paste a link</text>
+  <rect x="32" y="192" width="104" height="30" rx="8" fill="#2ec5e8"/>
+  <text x="84" y="211" font-size="13" font-weight="700" fill="#032130" text-anchor="middle">Create room</text>
+  <text x="152" y="211" font-size="13" fill="#2ec5e8" text-decoration="underline">How it works</text>
+</g>
+</svg>

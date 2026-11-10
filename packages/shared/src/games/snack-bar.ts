@@ -16,33 +16,97 @@
 // - Decorations (owner's pick 6): looks only, bought once with coins, kept over every cinema.
 
 export const SNACK_KEY = 'snackBar';
-export const SNACK_VERSION = 1;
+/**
+ * 2 = SB3 (owner, 10 Nov 2026: "give it proper logic and maths like other clicker games"): eight stands with their own
+ * price growth, recipes, staff, the menu bonus and the daily special. A version 1 save is migrated (`loadSnack`):
+ * every level, coin, star, badge and decoration is kept, and no stand earns less than it did.
+ */
+export const SNACK_VERSION = 2;
 
-/** The Design session's upgrades (`docs/internal/design/side-games/snack-bar/items/<id>.svg`, scene groups). */
-export type StandId = 'popcorn' | 'soda' | 'nachos' | 'candy' | 'second-counter';
+/** The stands, cheapest first (art: `apps/web/src/games/art/snack-bar/<id>.svg`). Ids never change (saves keep them). */
+export type StandId = 'popcorn' | 'soda' | 'nachos' | 'candy' | 'second-counter' | 'hotdog' | 'ice-cream' | 'arcade';
 
 export interface StandInfo {
   id: StandId;
   /** Price of the first level. */
   cost: number;
+  /** Every level costs this much more than the last (1.08 for popcorn up to 1.15 for the arcade). */
+  growth: number;
   /** Coins per second each level earns (before bonuses). */
   rate: number;
 }
 
-/** In unlock order; each one costs ~11× the one before and earns ~8× more. */
+/**
+ * SB3 economy (`docs/internal/design/games/snack-bar-3.md`, checked by `scripts/snack-sim.mjs`): each stand costs
+ * ~25× the one before and earns ~8× more, so its first level pays itself back ~3× slower (20 s for popcorn, ~17 h for
+ * the arcade: the stands open one after another over hours of film, not minutes). The cheap stands' prices grow slower
+ * (×1.08 a level up to ×1.15 for the arcade), so they stay worth levelling long after the next stand opens; with the
+ * milestones, recipes and the menu bonus the best buy moves between stands instead of always being the newest one
+ * (v1: every stand grew ×1.15 and only the newest one paid).
+ */
 export const STANDS: readonly StandInfo[] = [
-  { id: 'popcorn', cost: 10, rate: 0.5 },
-  { id: 'soda', cost: 120, rate: 4 },
-  { id: 'nachos', cost: 1_300, rate: 30 },
-  { id: 'candy', cost: 14_000, rate: 220 },
-  { id: 'second-counter', cost: 150_000, rate: 1_600 },
+  { id: 'popcorn', cost: 10, growth: 1.08, rate: 0.5 },
+  { id: 'soda', cost: 250, growth: 1.09, rate: 4 },
+  { id: 'nachos', cost: 6_000, growth: 1.1, rate: 32 },
+  { id: 'candy', cost: 150_000, growth: 1.11, rate: 250 },
+  { id: 'second-counter', cost: 4e6, growth: 1.12, rate: 2_000 },
+  { id: 'hotdog', cost: 1e8, growth: 1.13, rate: 16_000 },
+  { id: 'ice-cream', cost: 2.5e9, growth: 1.14, rate: 130_000 },
+  { id: 'arcade', cost: 6e10, growth: 1.15, rate: 1_000_000 },
 ];
 export const STAND_IDS = STANDS.map((s) => s.id);
 
-/** Every level costs this much more than the last. */
-export const COST_GROWTH = 1.15;
+/** Version 1's price growth (kept for the migration's note and the tests). */
+export const COST_GROWTH_V1 = 1.15;
 /** A stand's income doubles when it reaches each of these levels. */
-export const MILESTONES: readonly number[] = [10, 25, 50, 100, 200];
+export const MILESTONES: readonly number[] = [10, 25, 50, 100, 200, 300, 400];
+
+/** The menu bonus: +10 % income for every stand at level `MENU_LEVEL` or more (eight stands: up to +80 %). */
+export const MENU_LEVEL = 25;
+export const MENU_BONUS = 0.1;
+
+/**
+ * Recipes: three one-time upgrades a stand, each doubling it. A recipe shows once the stand has `need` levels and
+ * costs `price` × the stand's first price. Ids `<stand>:<1|2|3>`; they start over with a new cinema.
+ */
+export const RECIPE_STEPS: readonly { need: number; price: number }[] = [
+  { need: 5, price: 30 },
+  { need: 25, price: 1_200 },
+  { need: 75, price: 90_000 },
+];
+export const RECIPE_FACTOR = 2;
+export type RecipeId = `${StandId}:${1 | 2 | 3}`;
+export const RECIPE_IDS: readonly RecipeId[] = STAND_IDS.flatMap((id) => [1, 2, 3].map((n) => `${id}:${n}` as RecipeId));
+
+/** Staff: hired once with coins, kept over every cinema (like decorations). The page carries out what they do. */
+export type StaffId = 'tip-box' | 'usher' | 'long-line' | 'manager';
+export const STAFF: readonly { id: StaffId; cost: number }[] = [
+  /** Taps on the counter pay `TAP_SECONDS_TIPBOX` s of income instead of `SERVE_SECONDS`. */
+  { id: 'tip-box', cost: 400 },
+  /** Serves a waiting customer after `USHER_DELAY_S` s (the page). */
+  { id: 'usher', cost: 6_000 },
+  /** Customers come twice as often (the page halves its wait). */
+  { id: 'long-line', cost: 80_000 },
+  /** A customer pays `CUSTOMER_SECONDS_MANAGER` s of income instead of `CUSTOMER_SECONDS`. */
+  { id: 'manager', cost: 1_500_000 },
+];
+export const TAP_SECONDS_TIPBOX = 2;
+export const USHER_DELAY_S = 8;
+export const CUSTOMER_SECONDS_MANAGER = 10;
+
+/** The daily special: one stand a day (UTC) earns ×2 (`specialOf`). */
+export const SPECIAL_FACTOR = 2;
+/** The stand on special on this UTC day (days since 1970); the same for everyone, a different one most days. */
+export function specialOf(day: number): StandId {
+  // A small integer hash (xorshift-multiply), so neighbouring days spread over the stands.
+  let x = Math.floor(day) >>> 0;
+  x ^= x >>> 16;
+  x = Math.imul(x, 0x45d9f3b) >>> 0;
+  x = (x ^ (x >>> 16)) >>> 0; // a bitwise result is signed: back to unsigned, or the index could go negative
+  return STAND_IDS[x % STAND_IDS.length]!;
+}
+/** Today's UTC day number (for `specialOf`). */
+export const dayNumber = (now = Date.now()): number => Math.floor(now / 86_400_000);
 
 /** Together bonus per other person in the room, and extra per other person in voice with me. */
 export const TOGETHER_BONUS = 0.1;
@@ -55,11 +119,16 @@ export const SERVE_SECONDS = 1;
 /** Ticks longer than this are ignored (a sleeping laptop or a frozen tab is not watching). */
 export const MAX_TICK_S = 5;
 
-/** A new cinema opens once this cinema earned this much; stars = floor(sqrt(earned / STAR_UNIT)). */
-export const PRESTIGE_MIN = 1_000_000;
-export const STAR_UNIT = 100_000;
-/** Each star: +5 % income for good. */
-export const STAR_BONUS = 0.05;
+/**
+ * A new cinema opens once this cinema earned this much; stars = floor(cbrt(earned / STAR_UNIT)), a soft curve: twice
+ * the stars take eight times the coins (v1: a square root). SB3: the first one opens after ~2 h of film for an active
+ * player, with ~25 stars.
+ */
+export const PRESTIGE_MIN = 1e11;
+export const STAR_UNIT = 6.4e6;
+/** Each star: +2 % income for good (v1: 5 %; a v1 save's stars are converted so they keep their bonus, `V1_STAR_RATIO`). */
+export const STAR_BONUS = 0.02;
+export const V1_STAR_RATIO = 2.5;
 
 /** A customer served: this many seconds of income (at least `CUSTOMER_MIN` coins). */
 export const CUSTOMER_SECONDS = 5;
@@ -73,8 +142,13 @@ export const BUCKET_MIN = 25;
 export const BADGE_BONUS = 0.01;
 const RECEIPTS_KEEP = 20;
 
-export type PlaceId = 'lobby' | 'drive-in' | 'rooftop' | 'art-house';
-const PLACES_AFTER: readonly PlaceId[] = ['drive-in', 'rooftop', 'art-house'];
+export type PlaceId = 'lobby' | 'drive-in' | 'rooftop' | 'art-house' | 'seaside' | 'planetarium';
+/** SB3 added the seaside and the planetarium after the art house (a v1 save past its fourth cinema moves on the round). */
+const PLACES_AFTER: readonly PlaceId[] = ['drive-in', 'rooftop', 'art-house', 'seaside', 'planetarium'];
+/** The seaside: customers pay ×2. */
+export const SEASIDE_CUSTOMERS = 2;
+/** The planetarium: +25 % income while nobody else is in the room (a quiet night under the stars). */
+export const PLANETARIUM_BONUS = 0.25;
 /** The place of this cinema: the first is the lobby, then the three places in turn. */
 export const placeOf = (save: SnackSave): PlaceId => (save.cinemas < 1 ? 'lobby' : PLACES_AFTER[(save.cinemas - 1) % PLACES_AFTER.length]!);
 export const ROOFTOP_BONUS = 0.25;
@@ -157,6 +231,10 @@ export interface SnackSave {
   receipts: string[];
   /** Decorations bought (looks only). */
   decor: DecorId[];
+  /** Recipes bought in this cinema (SB3). */
+  recipes: RecipeId[];
+  /** Staff hired (SB3; kept over every cinema). */
+  staff: StaffId[];
 }
 
 export interface SnackContext {
@@ -170,6 +248,8 @@ export interface SnackContext {
   item?: { id: string } | null;
   /** The room's tip jar filled during this film: +10 % (pick 5). */
   boost?: boolean;
+  /** Today's special (`specialOf(dayNumber())`, the page passes it): that stand earns ×2. */
+  special?: StandId | null;
 }
 
 /** The room's full tip jar: this much more income for everyone until the film ends. */
@@ -181,7 +261,7 @@ export function freshSnack(): SnackSave {
   return {
     v: SNACK_VERSION, coins: 0, earned: 0, lifetime: 0, watched: 0, levels, stars: 0, cinemas: 0, seen: 0,
     stats: { served: 0, customers: 0, together: 0, voiceServed: 0, films: 0, watched: 0 },
-    badges: [], film: null, receipts: [], decor: [],
+    badges: [], film: null, receipts: [], decor: [], recipes: [], staff: [],
   };
 }
 
@@ -204,7 +284,8 @@ export function loadSnack(raw: unknown): SnackSave {
   }
   if (!data || typeof data !== 'object') return freshSnack();
   const record = data as Record<string, unknown>;
-  if (record.v !== SNACK_VERSION) return freshSnack();
+  // Version 1 (before SB3) has the same fields minus recipes and staff: everything it holds is kept as it is.
+  if (record.v !== SNACK_VERSION && record.v !== 1) return freshSnack();
   const save = freshSnack();
   const levels = (record.levels && typeof record.levels === 'object' ? record.levels : {}) as Record<string, unknown>;
   for (const id of STAND_IDS) save.levels[id] = int(levels[id], 10_000);
@@ -214,6 +295,8 @@ export function loadSnack(raw: unknown): SnackSave {
   save.lifetime = Math.max(num(record.lifetime), save.earned);
   save.watched = num(record.watched);
   save.stars = int(record.stars, 1_000_000);
+  // A v1 star was +5 %, a v2 star is +2 %: the same bonus takes 2.5 as many (rounded up, never less).
+  if (record.v === 1) save.stars = Math.ceil(save.stars * V1_STAR_RATIO);
   save.cinemas = int(record.cinemas, 1_000_000);
   save.seen = num(record.seen);
   const stats = (record.stats && typeof record.stats === 'object' ? record.stats : {}) as Record<string, unknown>;
@@ -226,6 +309,10 @@ export function loadSnack(raw: unknown): SnackSave {
       ? { item: film.item, watched: num(film.watched), served: Math.floor(num(film.served)), coins: num(film.coins) }
       : null;
   save.decor = Array.isArray(record.decor) ? [...new Set(record.decor.filter((id): id is DecorId => DECOR.some((d) => d.id === id)))] : [];
+  save.recipes = Array.isArray(record.recipes)
+    ? [...new Set(record.recipes.filter((id): id is RecipeId => typeof id === 'string' && (RECIPE_IDS as readonly string[]).includes(id)))]
+    : [];
+  save.staff = Array.isArray(record.staff) ? [...new Set(record.staff.filter((id): id is StaffId => STAFF.some((s) => s.id === id)))] : [];
   save.receipts = Array.isArray(record.receipts)
     ? record.receipts.filter((id): id is string => typeof id === 'string' && id.length <= 64).slice(-RECEIPTS_KEEP)
     : [];
@@ -242,9 +329,21 @@ export function milestoneFactor(level: number): number {
 /** The next milestone above this level, or null after the last one. */
 export const nextMilestone = (level: number): number | null => MILESTONES.find((m) => m > level) ?? null;
 
-/** Coins per second of one stand before the room's bonuses. */
-export function standRate(stand: StandInfo, level: number): number {
-  return stand.rate * level * milestoneFactor(level);
+/** Coins per second of one stand before the room's bonuses (`recipes`: how many of its recipes are bought). */
+export function standRate(stand: StandInfo, level: number, recipes = 0): number {
+  return stand.rate * level * milestoneFactor(level) * RECIPE_FACTOR ** recipes;
+}
+
+/** How many of a stand's recipes this cinema bought. */
+export const recipesOf = (save: SnackSave, id: StandId): number => save.recipes.filter((r) => r.startsWith(`${id}:`)).length;
+
+/** The menu bonus: +10 % for every stand at level 25 or more. */
+export const menuFactor = (save: SnackSave): number => 1 + MENU_BONUS * STAND_IDS.filter((id) => save.levels[id] >= MENU_LEVEL).length;
+
+/** A stand's coins per second in this cinema (its recipes, the place's twist, today's special; no global bonuses). */
+export function standIncome(save: SnackSave, id: StandId, special?: StandId | null): number {
+  const stand = standOf(id);
+  return standRate(stand, save.levels[id], recipesOf(save, id)) * placeRate(save, id) * (special === id ? SPECIAL_FACTOR : 1);
 }
 
 export const starFactor = (save: SnackSave): number => 1 + STAR_BONUS * save.stars;
@@ -253,10 +352,14 @@ export const starFactor = (save: SnackSave): number => 1 + STAR_BONUS * save.sta
 export const badgeFactor = (save: SnackSave): number =>
   1 + BADGE_BONUS * save.badges.filter((id) => BADGES.find((b) => b.id === id)?.bonus).length;
 
-/** Coins per second without the together bonus (in this cinema's place, at this local hour). */
-export function baseRate(save: SnackSave, hour = new Date().getHours()): number {
-  const stands = STANDS.reduce((sum, stand) => sum + standRate(stand, save.levels[stand.id]) * placeRate(save, stand.id), 0);
-  return stands * starFactor(save) * badgeFactor(save) * placeFactor(save, hour);
+/** The bonuses on every stand: stars, badges, the menu bonus and the place at this hour. */
+export const globalFactor = (save: SnackSave, hour = new Date().getHours()): number =>
+  starFactor(save) * badgeFactor(save) * menuFactor(save) * placeFactor(save, hour);
+
+/** Coins per second without the together bonus (in this cinema's place, at this local hour, with today's special). */
+export function baseRate(save: SnackSave, hour = new Date().getHours(), special?: StandId | null): number {
+  const stands = STAND_IDS.reduce((sum, id) => sum + standIncome(save, id, special), 0);
+  return stands * globalFactor(save, hour);
 }
 
 /** The together bonus: 1 alone, 1.1 with one other person, 1.15 when that person is in voice with me. */
@@ -268,7 +371,9 @@ export function togetherFactor(ctx: SnackContext): number {
 
 /** Coins per second right now (0 while the room's video is not playing). */
 export function incomeRate(save: SnackSave, ctx: SnackContext): number {
-  return ctx.playing ? baseRate(save) * togetherFactor(ctx) * (ctx.boost ? 1 + TIP_BOOST : 1) : 0;
+  if (!ctx.playing) return 0;
+  const alone = placeOf(save) === 'planetarium' && Math.floor(ctx.others) <= 0 ? 1 + PLANETARIUM_BONUS : 1;
+  return baseRate(save, undefined, ctx.special) * togetherFactor(ctx) * (ctx.boost ? 1 + TIP_BOOST : 1) * alone;
 }
 
 function earn(save: SnackSave, coins: number): void {
@@ -316,7 +421,7 @@ function served(save: SnackSave, ctx: SnackContext, coins: number): void {
 /** A tap on the counter. Returns the coins earned (0 while the video is not playing). */
 export function serve(save: SnackSave, ctx: SnackContext): number {
   if (!ctx.playing) return 0;
-  const coins = Math.max(1, incomeRate(save, ctx) * SERVE_SECONDS);
+  const coins = Math.max(1, incomeRate(save, ctx) * (save.staff.includes('tip-box') ? TAP_SECONDS_TIPBOX : SERVE_SECONDS));
   served(save, ctx, coins);
   return coins;
 }
@@ -324,7 +429,9 @@ export function serve(save: SnackSave, ctx: SnackContext): number {
 /** A tap on a waiting customer: more than a plain tap. 0 while the video is not playing. */
 export function serveCustomer(save: SnackSave, ctx: SnackContext): number {
   if (!ctx.playing) return 0;
-  const coins = Math.max(CUSTOMER_MIN, incomeRate(save, ctx) * CUSTOMER_SECONDS);
+  const seconds = save.staff.includes('manager') ? CUSTOMER_SECONDS_MANAGER : CUSTOMER_SECONDS;
+  const place = placeOf(save) === 'seaside' ? SEASIDE_CUSTOMERS : 1;
+  const coins = Math.max(CUSTOMER_MIN, incomeRate(save, ctx) * seconds * place);
   served(save, ctx, coins);
   save.stats.customers += 1;
   return coins;
@@ -356,7 +463,7 @@ export interface Receipt {
 export function receiptFor(save: SnackSave, itemId: string): Receipt | null {
   const film = save.film;
   if (!film || film.item !== itemId || film.watched < RECEIPT_MIN_S || save.receipts.includes(itemId)) return null;
-  const best = [...STANDS].sort((a, b) => standRate(b, save.levels[b.id]) - standRate(a, save.levels[a.id]))[0]!.id;
+  const best = [...STAND_IDS].sort((a, b) => standIncome(save, b) - standIncome(save, a))[0]!;
   return { item: itemId, watched: film.watched, served: film.served, coins: film.coins, bucket: Math.max(BUCKET_MIN, baseRate(save) * BUCKET_SECONDS), best };
 }
 
@@ -412,6 +519,14 @@ export const BADGES: readonly Badge[] = [
   { id: 'just-looking', glyph: '👀', bonus: false, test: (s) => s.stats.watched >= 3600 && s.stats.served === 0 },
   { id: 'tap-happy', glyph: '👆', bonus: false, test: (s) => s.stats.served >= 2_000 },
   { id: 'popcorn-purist', glyph: '🌽', bonus: false, test: (s) => s.lifetime >= 10_000 && s.levels.soda === 0 },
+  // SB3: the new stands, the recipes, the staff and the menu bonus.
+  { id: 'hotdog-1', glyph: '🌭', bonus: true, test: lv('hotdog', 1) },
+  { id: 'ice-cream-1', glyph: '🍦', bonus: true, test: lv('ice-cream', 1) },
+  { id: 'arcade-1', glyph: '🕹️', bonus: true, test: lv('arcade', 1) },
+  { id: 'first-recipe', glyph: '📜', bonus: true, test: (s) => s.recipes.length >= 1 },
+  { id: 'head-chef', glyph: '👨‍🍳', bonus: true, test: (s) => s.recipes.length >= 12 },
+  { id: 'full-staff', glyph: '🧑‍🤝‍🧑', bonus: true, test: (s) => STAFF.every((x) => s.staff.includes(x.id)) },
+  { id: 'big-menu', glyph: '📋', bonus: true, test: (s) => STAND_IDS.filter((id) => s.levels[id] >= MENU_LEVEL).length >= 5 },
 ];
 
 /** Adds the badges earned now; returns the new ones. */
@@ -427,7 +542,8 @@ const standOf = (id: StandId): StandInfo => STANDS.find((s) => s.id === id)!;
 export function costOf(id: StandId, level: number, count = 1, factor = 1): number {
   const stand = standOf(id);
   if (count <= 0) return 0;
-  return (factor * stand.cost * COST_GROWTH ** level * (COST_GROWTH ** count - 1)) / (COST_GROWTH - 1);
+  const g = stand.growth;
+  return (factor * stand.cost * g ** level * (g ** count - 1)) / (g - 1);
 }
 
 /** How many levels of a stand the coins buy now (at most `limit`). */
@@ -435,9 +551,10 @@ export function affordable(save: SnackSave, id: StandId, limit = 1000): number {
   const stand = standOf(id);
   const level = save.levels[id];
   const factor = placeCost(save, id);
-  const first = factor * stand.cost * COST_GROWTH ** level;
+  const g = stand.growth;
+  const first = factor * stand.cost * g ** level;
   if (save.coins < first) return 0;
-  const n = Math.floor(Math.log((save.coins * (COST_GROWTH - 1)) / first + 1) / Math.log(COST_GROWTH));
+  const n = Math.floor(Math.log((save.coins * (g - 1)) / first + 1) / Math.log(g));
   // Float rounding can land one off on the boundary: step back while it costs more than we have.
   let count = Math.min(limit, Math.max(0, n));
   while (count > 0 && costOf(id, level, count, factor) > save.coins * (1 + 1e-12)) count--;
@@ -461,9 +578,43 @@ export function buy(save: SnackSave, id: StandId, count = 1): boolean {
   return true;
 }
 
+/** A recipe's stand, step (1–3), the levels it needs and its price in this cinema. */
+export function recipeInfo(save: SnackSave, id: RecipeId): { stand: StandId; step: number; need: number; price: number } {
+  const [stand, n] = id.split(':') as [StandId, string];
+  const step = Number(n);
+  const info = RECIPE_STEPS[step - 1]!;
+  return { stand, step, need: info.need, price: standOf(stand).cost * info.price * placeCost(save, stand) };
+}
+/** Recipes that can be bought now (the stand has enough levels, the earlier steps are bought), cheapest first. */
+export function recipesOpen(save: SnackSave): RecipeId[] {
+  return RECIPE_IDS.filter((id) => {
+    if (save.recipes.includes(id)) return false;
+    const { stand, step, need } = recipeInfo(save, id);
+    return save.levels[stand] >= need && (step === 1 || save.recipes.includes(`${stand}:${step - 1}` as RecipeId));
+  }).sort((a, b) => recipeInfo(save, a).price - recipeInfo(save, b).price);
+}
+/** Buys a recipe; false when it is not open or too expensive. */
+export function buyRecipe(save: SnackSave, id: RecipeId): boolean {
+  if (!recipesOpen(save).includes(id)) return false;
+  const { price } = recipeInfo(save, id);
+  if (price > save.coins * (1 + 1e-12)) return false;
+  save.coins = Math.max(0, save.coins - price);
+  save.recipes.push(id);
+  return true;
+}
+/** Hires a member of staff; false when hired already or too expensive. */
+export function hire(save: SnackSave, id: StaffId): boolean {
+  const item = STAFF.find((x) => x.id === id);
+  if (!item || save.staff.includes(id) || save.coins < item.cost) return false;
+  save.coins -= item.cost;
+  save.staff.push(id);
+  return true;
+}
+
 /** Stars a new cinema would bring now (0 before `PRESTIGE_MIN`). */
 export function starsFor(save: SnackSave): number {
-  return save.earned >= PRESTIGE_MIN ? Math.floor(Math.sqrt(save.earned / STAR_UNIT)) : 0;
+  // The small nudge keeps an exact cube (8 → 2) from rounding down.
+  return save.earned >= PRESTIGE_MIN ? Math.floor(Math.cbrt(save.earned / STAR_UNIT) + 1e-9) : 0;
 }
 
 /** Opens a new cinema: coins and stands start over, stars are added. False when it is too early. */
@@ -474,6 +625,7 @@ export function newCinema(save: SnackSave): boolean {
   save.coins = 0;
   save.earned = 0;
   save.levels = fresh.levels;
+  save.recipes = [];
   save.stars += stars;
   save.cinemas += 1;
   return true;
