@@ -649,84 +649,6 @@ ${grain(0.24)}
 }
 
 // =====================================================================
-// TRANSATLANTİK (şafak, aydınlık): sağda yükselen dev gemi burnu, kırmızı
-//    bacalar, solda ufuktan doğan güneş ve ışınlar, kâğıt bulutlar, martılar
-// =====================================================================
-
-function gemiScene() {
-  const S = scene();
-  const r = rng(97);
-  S.defs.push(`
-<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#24425e"/><stop offset=".42" stop-color="#6a8aa0"/><stop offset=".72" stop-color="#f0c08a"/><stop offset=".82" stop-color="#f7dcae"/></linearGradient>
-<radialGradient id="fadeG" gradientUnits="userSpaceOnUse" cx="190" cy="740" r="1300"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
-<mask id="fade"><rect width="${W}" height="${H}" fill="url(#fadeG)"/></mask>
-<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a8290"/><stop offset="1" stop-color="#143843"/></linearGradient>
-<linearGradient id="hull" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0c1622"/><stop offset=".4" stop-color="#1c2c40"/><stop offset="1" stop-color="#2a3e56"/></linearGradient>
-<linearGradient id="white" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff6e6"/><stop offset="1" stop-color="#cfc6b8"/></linearGradient>
-<linearGradient id="funnel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8584a"/><stop offset="1" stop-color="#9a2a22"/></linearGradient>
-<radialGradient id="sun" cx="50%" cy="60%" r="60%"><stop offset="0" stop-color="#fffbea"/><stop offset="1" stop-color="#ffc77a"/></radialGradient>
-${SOFT('#5a3a30')}${GLOW('g', 6)}${GRAIN_DEFS}`);
-
-  const cloudC = { top: '#f2d6b8', bottom: '#b8907a', edge: '#7a5a50' };
-  const clouds = [[10, 430, 320, 60, 11], [110, 370, 210, 40, 12], [540, 300, 240, 38, 13], [880, 360, 200, 34, 14], [1000, 250, 180, 30, 15]]
-    .map(([x, y, w, h, s]) => S.cloud(x, y, w, h, s, cloudC)).join('');
-  const gull = (x, y, s) => `<path transform="translate(${x} ${y}) scale(${s})" d="M-16 0 Q-8 -9 0 0 Q8 -9 16 0" stroke="#24364a" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-
-  let sea = '';
-  for (let i = 0; i < 18; i++) {
-    const y = 748 + i * 8;
-    const w = 40 + i * 14;
-    sea += `<line x1="${f(190 - w / 2 + (r() - 0.5) * 30)}" y1="${y}" x2="${f(190 + w / 2 + (r() - 0.5) * 30)}" y2="${y}" stroke="#fff2d4" stroke-width="2.2" opacity="${f(0.75 - i * 0.035)}" stroke-dasharray="${f(14 + r() * 24)} ${f(6 + r() * 12)}"/>`;
-  }
-  for (let i = 0; i < 36; i++) {
-    const x = r() * W;
-    const y = 750 + r() * 140;
-    sea += `<line x1="${f(x)}" y1="${f(y)}" x2="${f(x + 20 + r() * 40)}" y2="${f(y)}" stroke="#bfe6ea" stroke-width="1.5" opacity="${f(0.15 + r() * 0.3)}"/>`;
-  }
-
-  // Gemi: aşağıdan bakılan dev burun. Pruva öne yatık; güverte ve su hattı sağa doğru
-  // birbirine yaklaşır (gemi uzaklaşıyor gibi), lomboz sıraları da aynı çizgilerde.
-  const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-  let portholes = '';
-  for (const [from, to, o] of [[[1352, 444], [1600, 500], 0.85], [[1362, 560], [1600, 598], 0.6], [[1368, 680], [1600, 700], 0.45]]) {
-    for (let i = 0; i < 12; i++) {
-      const t = 0.06 + (i / 12) ** 1.15 * 0.94;
-      const [x, y] = lerp(from, to, t);
-      portholes += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(4.2 - t * 1.6)}" fill="#ffe2a8" opacity="${o}"/>`;
-    }
-  }
-  const ship = `
-<path d="M1500 262 L1494 150 Q1520 142 1548 150 L1552 262Z" fill="url(#funnel)"/><path d="M1494 150 Q1520 142 1548 150 L1547 172 Q1520 166 1495 172Z" fill="#141a22"/>
-<path d="M1580 262 L1576 170 Q1596 164 1610 170 V262Z" fill="url(#funnel)"/><path d="M1576 170 Q1596 164 1610 170 V190 Q1596 186 1577 192Z" fill="#141a22"/>
-<path d="M1426 360 V306 H1466 V266 H1600 V400Z" fill="url(#white)"/>
-${Array.from({ length: 7 }, (_, i) => `<rect x="${1474 + i * 18}" y="280" width="10" height="8" rx="2" fill="#2a3a4a"/><rect x="${1436 + i * 22}" y="320" width="12" height="8" rx="2" fill="#2a3a4a"/>`).join('')}
-<path d="M1372 882 Q1340 600 1316 318 L1600 392 V852Z" fill="url(#hull)"/>
-<path d="M1316 318 L1600 392 V408 L1318 336Z" fill="url(#white)"/>
-<path d="M1372 882 Q1340 600 1316 318" stroke="#ffe2b8" stroke-width="3" fill="none" opacity=".75"/>
-<path d="M1368 852 L1600 826 V852 L1372 882Z" fill="#b8322a"/>
-${portholes}
-<g transform="translate(1348 400)" fill="none" stroke="#ffe2b8" stroke-width="3" opacity=".8"><circle cx="0" cy="-12" r="4"/><line x1="0" y1="-8" x2="0" y2="14"/><line x1="-8" y1="-2" x2="8" y2="-2"/><path d="M-10 6 Q0 18 10 6"/></g>
-<path d="M1300 888 Q1330 862 1372 874 Q1400 864 1430 880 Q1370 896 1300 888Z" fill="#f4fbfa" opacity=".85"/>
-<path d="M1250 894 Q1290 880 1330 892" stroke="#f4fbfa" stroke-width="3" fill="none" opacity=".6"/>`;
-
-  const sail = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" fill="#24364a"><path d="M-14 0 H14 L10 5 H-10Z"/><path d="M0 -2 V-30 L12 -4Z"/><path d="M-2 -4 V-24 L-10 -4Z" opacity=".7"/></g>`;
-
-  return S.svg(`
-<defs>__DEFS__</defs>
-<rect width="${W}" height="${H}" fill="url(#sky)"/>
-<g mask="url(#fade)">${rays(190, 740, 1700, 44, ['#fff2d4', '#f7cf8e'], { from: 180, to: 360, fill: 0.5, opacity: 0.38 })}</g>
-<circle cx="190" cy="742" r="96" fill="url(#sun)" filter="url(#g)"/>
-${clouds}
-${gull(700, 420, 1.2)}${gull(760, 396, 0.9)}${gull(1050, 470, 1)}${gull(460, 520, 0.8)}${gull(1180, 300, 1.1)}
-<rect x="0" y="740" width="${W}" height="160" fill="url(#sea)"/>
-${sea}
-${sail(640, 742, 0.9)}${sail(980, 744, 0.7)}
-${ship}
-${grain(0.2)}
-`);
-}
-
-// =====================================================================
 // GECE EKSPRESİ (KARANLIK): sağdan gelen aerodinamik deco lokomotif, farının huzmesi,
 //     kemerli viyadük, uzak şehir ışıkları; solda deco saat kulesi ve sinyal
 // =====================================================================
@@ -864,12 +786,11 @@ const files = {
   'binbirgece.svg': binbirScene(),
   'sinema.svg': sinemaScene(),
   'acikhava.svg': acikhavaScene(),
-  'gemi.svg': gemiScene(),
   'tren.svg': trenScene(),
 };
 // The theme mascots are Glowbeam in costume since card 6f (the Design session's drawings, 240 × 240, drop-in names):
 // copied from docs/internal/design/themes/glowbeam-<theme>.svg as <theme>-maskot.svg.
-for (const theme of ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'gemi', 'tren']) {
+for (const theme of ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'tren', 'matinee']) {
   files[`${theme}-maskot.svg`] = readFileSync(new URL(`../docs/internal/design/themes/glowbeam-${theme}.svg`, import.meta.url), 'utf8');
 }
 for (const [name, content] of Object.entries(files)) {

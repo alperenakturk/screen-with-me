@@ -478,7 +478,7 @@ const en = {
   'theme.binbirgece': 'Arabian Nights',
   'theme.sinema': 'Picture Palace',
   'theme.acikhava': 'Drive-In',
-  'theme.gemi': 'Ocean Liner',
+  'theme.matinee': 'Matinee',
   'theme.tren': 'Night Express',
   pickAvatar: 'Pick an avatar',
   myRoom: 'My room',

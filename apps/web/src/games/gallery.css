@@ -3,7 +3,8 @@
   margin-left: 6px;
   padding: 1px 5px;
   border-radius: 4px;
-  background: var(--warn);
+  /* The bright amber in every theme (Matinee's --warn is a dark amber for text on cream, card NP1). */
+  background: #f5b94a;
   color: #2a1d00;
   font-size: 9px;
   font-weight: 800;

@@ -1,5 +1,5 @@
-// Card FONT1: the "Font" setting. Checks that the device font (the default) downloads no text font in the room; that
-// each choice applies at once, downloads only its own files (and the latin-ext one only when Turkish letters show) and
+// Card FONT1: the "Font" setting. Checks that the default (Sidelit: Bricolage Grotesque + Figtree, card NP1) downloads
+// only its own text font; that the device font downloads none in the room; that each choice applies at once, downloads only its own files (and the latin-ext one only when Turkish letters show) and
 // stays after a reload; that the home titles use the wordmark's family with all Turkish letters; and the Test Lab's
 // font commands.
 //
@@ -46,14 +46,15 @@ const FILES = {
   const title = await page.evaluate(() => getComputedStyle(document.querySelector('.hm-slogan')).fontFamily);
   check(/Sidelit Title/.test(title), 'home: the title uses the wordmark family', title);
   check(fonts.some((f) => f.startsWith('bricolage-grotesque-latin')), 'home: the title font is downloaded', fonts);
-  check(!fonts.some((f) => /figtree|nunito|lexend|atkinson/.test(f)), 'home: no text font with the device font', fonts);
+  check(fonts.some((f) => f.startsWith('figtree-latin')), 'home: the default text font (Figtree) is downloaded', fonts);
+  check(!fonts.some((f) => /nunito|lexend|atkinson|manrope|plus-jakarta|fraunces/.test(f)), 'home: no other text font', fonts);
   const turkish = await page.evaluate(async () => {
     await document.fonts.load('800 64px "Sidelit Title"', 'ğĞşŞıİçÇöÖüÜ');
     return document.fonts.check('800 64px "Sidelit Title"', 'ğĞşŞıİçÇöÖüÜ');
   });
   check(turkish, 'home: the title font has every Turkish letter');
 
-  // The room: the device font downloads no text font.
+  // The room: the default downloads Figtree and nothing else for the text.
   const room = 'ft' + Math.random().toString(36).slice(2, 7);
   fonts = [];
   await page.goto(`${SITE}/r/${room}`);
@@ -61,16 +62,20 @@ const FILES = {
   await page.click('#name-form button.primary');
   await page.waitForSelector('.room');
   await wait(3500);
-  check(fonts.length === 0, 'room: the device font downloads no font file', fonts);
+  check(fonts.every((f) => /^(figtree|bricolage)/.test(f)), 'room: only the default font files are downloaded', fonts);
   const body = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
-  check(/system-ui/.test(body) && !/Sidelit/.test(body), 'room: the body uses the device font', body);
+  check(/^"Sidelit Body"/.test(body), 'room: the body uses the default font (Figtree)', body);
 
   // The setting: five choices with names.
   await page.evaluate(() => document.querySelector('#settings-open')?.click());
   await page.waitForSelector('#opt-font', { state: 'visible' });
   const options = await page.$$eval('#opt-font option', (o) => o.map((x) => [x.value, x.textContent.trim()]));
   check(options.length === 7 && options.every(([, text]) => text.length > 1), 'setting: seven named choices', options);
-  check((await page.$eval('#opt-font', (s) => s.value)) === 'device', 'setting: the device font is the default');
+  check((await page.$eval('#opt-font', (s) => s.value)) === 'sidelit', 'setting: Sidelit is the default');
+  await page.selectOption('#opt-font', 'device');
+  await wait(300);
+  const dev = await page.evaluate(() => [document.documentElement.dataset.font, getComputedStyle(document.body).fontFamily]);
+  check(dev[0] === 'device' && /system-ui/.test(dev[1]) && !/Sidelit/.test(dev[1]), 'device: the device font is still a choice', dev);
 
   for (const [id, file] of Object.entries(FILES)) {
     fonts = [];
@@ -79,7 +84,9 @@ const FILES = {
     await wait(600);
     const shown = await page.evaluate(() => [document.documentElement.dataset.font, getComputedStyle(document.body).fontFamily]);
     check(shown[0] === id && shown[1].startsWith('"Sidelit'), `${id}: applies at once`, shown);
-    check(fonts.some((f) => f.startsWith(`${file}-latin`)), `${id}: its font is downloaded`, fonts);
+    // Sidelit's Figtree was downloaded with the page already (the default), so a second request is not expected.
+    if (id === 'sidelit') check(await page.evaluate(() => document.fonts.check('16px "Sidelit Body"')), 'sidelit: its font is loaded');
+    else check(fonts.some((f) => f.startsWith(`${file}-latin`)), `${id}: its font is downloaded`, fonts);
     const title = id === 'poster' ? 'fraunces' : 'bricolage';
     check(fonts.every((f) => f.startsWith(file) || f.startsWith(title)), `${id}: no other font is downloaded`, fonts);
     const tr = await page.evaluate(async () => {

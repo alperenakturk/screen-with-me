@@ -22,8 +22,14 @@ interface TileSpot {
 
 export type CamSize = 'small' | 'medium' | 'large';
 
-const NORMAL_DEFAULT: Spot = { x: 0.74, y: 0.58, w: 0.2 };
-const FS_DEFAULT: Spot = { x: 0.7, y: 0.08, w: 0.26 };
+/**
+ * Default sizes (shares of the container's width). The default place is worked out from the video (card NP1, owner's
+ * C2, like Meet): its bottom-left corner, above the video's own controls (`PLAYER_BAR`), until the person moves it.
+ */
+const NORMAL_DEFAULT: Spot = { x: 0, y: 0, w: 0.2 };
+const FS_DEFAULT: Spot = { x: 0, y: 0, w: 0.26 };
+/** Room left free under a default camera window for the player's own bar (YouTube's is ≈ 48 px plus its seek line). */
+const PLAYER_BAR = 72;
 /**
  * The one window keeps its cameras side by side (owner, 0.9.93.2: in fullscreen it was narrow and stacked them): at
  * least this wide per camera (up to three in a row), but never more than this share of its container.
@@ -145,7 +151,9 @@ export function createCamWindow(opts: {
   // old default was never saved), so it is kept.
   let folded = load('opt:camFolded') === '1';
   let layout: 'free' | 'group' = load('opt:camLayout') === 'free' ? 'free' : 'group';
-  let spots = { normal: readSpot('camFloat:spot', NORMAL_DEFAULT), fs: readSpot('camFloat:fsSpot', FS_DEFAULT) };
+  /** A saved place, or null: the default place (bottom left of the video). A reset saves 'null'. */
+  const savedSpot = (key: string, fallback: Spot): Spot | null => (load(key) && load(key) !== 'null' ? readSpot(key, fallback) : null);
+  let spots = { normal: savedSpot('camFloat:spot', NORMAL_DEFAULT), fs: savedSpot('camFloat:fsSpot', FS_DEFAULT) };
   const tileSpots = { normal: readTiles('camTiles:spot'), fs: readTiles('camTiles:fsSpot') };
   let pillSpots: { normal: Spot | null; fs: Spot | null } = {
     normal: load('camPill:spot') ? readSpot('camPill:spot', NORMAL_DEFAULT) : null,
@@ -200,18 +208,18 @@ export function createCamWindow(opts: {
    * Where the automatic places are: the video's top-right corner (on the page the video box, in fullscreen the whole
    * screen), in the container's coordinates.
    */
-  function area(c: { w: number; h: number }): { top: number; right: number; bottom: number; maxW?: number } {
+  function area(c: { w: number; h: number }): { top: number; right: number; bottom: number; left: number; maxW?: number } {
     // With the dock on the right (option A, 0.9.91.1; in the window too since 0.9.91.5) the column starts left of it.
     const docked = theater.classList.contains('dock-mode') ? theater.querySelector<HTMLElement>('#fs-dock')?.getBoundingClientRect() : undefined;
     const dock = docked && docked.width > 0 ? docked : undefined;
     if (mode() === 'fs') {
       const right = dock ? dock.left - wrap.getBoundingClientRect().left - GAP : c.w;
-      return { top: 0, right: Math.min(c.w, right), bottom: c.h };
+      return { top: 0, right: Math.min(c.w, right), bottom: c.h, left: 0 };
     }
     const r = wrap.getBoundingClientRect();
     return r.width > 200 && r.height > 120
-      ? { top: Math.max(0, r.top), right: Math.min(c.w, dock ? dock.left - GAP : r.right), bottom: Math.min(c.h, r.bottom) }
-      : { top: 0, right: c.w, bottom: c.h };
+      ? { top: Math.max(0, r.top), right: Math.min(c.w, dock ? dock.left - GAP : r.right), bottom: Math.min(c.h, r.bottom), left: Math.max(0, r.left) }
+      : { top: 0, right: c.w, bottom: c.h, left: 0 };
   }
 
   /**
@@ -287,7 +295,8 @@ export function createCamWindow(opts: {
     }
     clearTiles();
     const c = container();
-    const spot = m === 'fs' ? spots.fs : spots.normal;
+    const saved = m === 'fs' ? spots.fs : spots.normal;
+    const spot = saved ?? (m === 'fs' ? FS_DEFAULT : NORMAL_DEFAULT);
     const inRow = Math.min(3, tilesNow().length);
     const row = inRow > 1 ? Math.min(inRow * ROW_TILE_W + (inRow - 1) * 6 + 16, c.w * ROW_MAX_SHARE) : 0;
     const width = Math.round(Math.min(Math.max(spot.w * c.w, MIN_WIDTH, row), c.w * MAX_SHARE));
@@ -297,8 +306,17 @@ export function createCamWindow(opts: {
     box.classList.toggle('sized', sized);
     box.style.height = sized ? `${Math.round(Math.min(Math.max(spot.h! * c.h, MIN_HEIGHT), c.h * MAX_SHARE))}px` : '';
     const height = box.offsetHeight;
-    box.style.left = `${Math.round(Math.min(Math.max(0, spot.x * c.w), Math.max(0, c.w - width)))}px`;
-    box.style.top = `${Math.round(Math.min(Math.max(0, spot.y * c.h), Math.max(0, c.h - height)))}px`;
+    let left = spot.x * c.w;
+    let top = spot.y * c.h;
+    if (!saved) {
+      // Like Meet: the video's bottom-left corner, clear of the player's own bar.
+      const video = area(c);
+      left = video.left + EDGE;
+      top = video.bottom - PLAYER_BAR - height;
+      if (top < video.top + EDGE) top = video.bottom - height - EDGE;
+    }
+    box.style.left = `${Math.round(Math.min(Math.max(0, left), Math.max(0, c.w - width)))}px`;
+    box.style.top = `${Math.round(Math.min(Math.max(0, top), Math.max(0, c.h - height)))}px`;
   }
 
   /** Grips and island marks on the tiles (they come and go with the people in voice). */
@@ -376,7 +394,7 @@ export function createCamWindow(opts: {
       setTileSpot(person, spot);
       return;
     }
-    const prev = m === 'fs' ? spots.fs : spots.normal;
+    const prev = (m === 'fs' ? spots.fs : spots.normal) ?? (m === 'fs' ? FS_DEFAULT : NORMAL_DEFAULT);
     // While folded only the place changes (the width comes back when opened).
     const spot: Spot = { x: box.offsetLeft / c.w, y: box.offsetTop / c.h, w: folded ? prev.w : box.offsetWidth / c.w };
     const h = folded ? prev.h : box.style.height ? box.offsetHeight / c.h : prev.h;
@@ -516,8 +534,8 @@ export function createCamWindow(opts: {
     }
     if (!element.closest('.cam-bar')) return;
     const fs = mode() === 'fs';
-    spots = fs ? { ...spots, fs: FS_DEFAULT } : { ...spots, normal: NORMAL_DEFAULT };
-    save(fs ? 'camFloat:fsSpot' : 'camFloat:spot', JSON.stringify(fs ? FS_DEFAULT : NORMAL_DEFAULT));
+    spots = fs ? { ...spots, fs: null } : { ...spots, normal: null };
+    save(fs ? 'camFloat:fsSpot' : 'camFloat:spot', 'null');
     apply();
     opts.onMove();
   });
