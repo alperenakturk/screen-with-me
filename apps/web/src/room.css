@@ -13036,13 +13036,14 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   font-size: 16px;
 }
 
-.join-info summary::-webkit-details-marker {
-  display: none;
-}
-
 .join-info[open] summary {
   color: var(--text);
   background: var(--surface-2);
+}
+
+/* Closed, its links are not there at all (a closed <details> still lays them out for scripts). */
+.join-info:not([open]) p {
+  display: none;
 }
 
 .join-info p {
