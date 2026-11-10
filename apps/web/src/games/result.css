@@ -34,3 +34,13 @@
    fit its window (Draw & Guess's `.game-fit`) shrinks the card with it. */
 html.phone #game-stage .gr-card .btn { min-height: 48px; height: auto; min-width: 48px; }
 .draw-page:has(> .gr-layer) { position: relative; }
+/* Card PROP: in the video's place (a wide, short box) a card with a podium goes side by side: Stub, the title, the
+   line and the buttons on the left, the podium on the right (stacked, it was taller than the box). */
+@container game (min-aspect-ratio: 16 / 10) {
+  .gr-card.wide:has(.gr-extra:not(:empty)) {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-auto-flow: dense; align-items: center; justify-items: center;
+    column-gap: 22px; max-width: min(94%, 680px);
+  }
+  .gr-card.wide:has(.gr-extra:not(:empty)) > :not(.gr-extra) { grid-column: 1; }
+  .gr-card.wide:has(.gr-extra:not(:empty)) > .gr-extra { grid-column: 2; grid-row: 1 / span 5; }
+}
