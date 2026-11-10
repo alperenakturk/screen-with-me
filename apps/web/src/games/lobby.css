@@ -32,3 +32,13 @@
 .lobby-name { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The top line (players n/8, category, timer) belongs to the running game; the lobby's faces row says who is here. */
 #game-stage .draw-page.draw-lobby .draw-top { display: none; }
+
+/* GPRO (layout audit): a sideways phone gives the lobby card the whole width, drops the big badge and keeps the rules
+   to three lines (the "?" has them all), so the card fits the low screen at a readable size. */
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left,
+html.phone.sideways #game-stage .draw-page.draw-lobby.quiz-page .quiz-main { flex-basis: 100%; width: 100%; max-width: none; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before,
+html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { display: none; }
+html.phone.sideways #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; max-width: none;
+}
