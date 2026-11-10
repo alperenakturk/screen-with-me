@@ -1,7 +1,7 @@
 // Uçtan uca testleri sırayla çalıştırır (gerçek sunucuya bağlanan sahte kullanıcılar).
 //   npm run e2e                                   → yerel sunucu (npm run dev açık olmalı)
 //   npm run e2e -- wss://screen-with-me.swm-server.workers.dev   → yayındaki site
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -40,18 +40,55 @@ async function paceConnects() {
 // pass on that retry is reported as a warning to look into. No retry locally.
 const live = !/localhost|127\.0\.0\.1/.test(base);
 let failed = 0;
-for (const test of ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'uploads.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'roomgame.mjs', 'poker.mjs', 'search.mjs', 'tv.mjs', 'fallback.mjs', 'countdown.mjs', 'feedback.mjs', 'move.mjs', 'gamestream.mjs', 'podcasts.mjs', 'links.mjs', 'abuse.mjs', 'people.mjs', 'knock.mjs', 'private.mjs', 'sidegames.mjs', 'classics.mjs', 'classics-switch.mjs', 'sea.mjs', 'duel.mjs', 'ghost.mjs', 'lab-server.mjs', 'lab-check.mjs', 'quota.mjs']) {
-  await paceConnects();
-  console.log(`\n▶ ${test}`);
-  let result = spawnSync(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
-  if (result.status !== 0 && live) {
+const FILES = ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'uploads.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'roomgame.mjs', 'poker.mjs', 'search.mjs', 'tv.mjs', 'fallback.mjs', 'countdown.mjs', 'feedback.mjs', 'move.mjs', 'gamestream.mjs', 'podcasts.mjs', 'links.mjs', 'abuse.mjs', 'people.mjs', 'knock.mjs', 'private.mjs', 'sidegames.mjs', 'classics.mjs', 'classics-switch.mjs', 'sea.mjs', 'duel.mjs', 'ghost.mjs', 'lab-server.mjs', 'lab-check.mjs', 'quota.mjs'];
+
+// Card QA1: on CI's unpaced local server (SWM_E2E_UNPACED, never live) up to SWM_E2E_PARALLEL files run at once; each
+// file uses its own rooms, and most of the suite's time is waiting (ghost.mjs alone waits 90 s of silence). Files that
+// count something per address or for the whole server (upload / feedback / search budgets, the lab's powers, the
+// per-address caps, the HTTP fallback's sessions) run alone, after the others. Each file's output is printed in one
+// piece when it ends. Live and local runs without the variable stay one file at a time, as before.
+const SOLO = new Set(['chatimage.mjs', 'uploads.mjs', 'search.mjs', 'fallback.mjs', 'feedback.mjs', 'abuse.mjs', 'lab-server.mjs', 'lab-check.mjs', 'quota.mjs']);
+const parallel = unpaced ? Math.max(1, Number(process.env.SWM_E2E_PARALLEL ?? 1)) : 1;
+
+if (parallel > 1) {
+  const runOne = (test) =>
+    new Promise((resolve) => {
+      const started = Date.now();
+      const child = spawn(process.execPath, [...trace, join(here, test), base], { stdio: ['ignore', 'pipe', 'pipe'] });
+      const out = [];
+      child.stdout.on('data', (d) => out.push(d));
+      child.stderr.on('data', (d) => out.push(d));
+      child.on('close', (code) => {
+        console.log(`\n▶ ${test} (${Math.round((Date.now() - started) / 1000)} s)`);
+        process.stdout.write(Buffer.concat(out));
+        if (code !== 0) failed++;
+        resolve();
+      });
+    });
+  const shared = FILES.filter((f) => !SOLO.has(f));
+  // The longest first, so one slow file doesn't end the run alone.
+  shared.sort((a, b) => (b === 'ghost.mjs') - (a === 'ghost.mjs'));
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: parallel }, async () => {
+      while (next < shared.length) await runOne(shared[next++]);
+    }),
+  );
+  for (const test of FILES.filter((f) => SOLO.has(f))) await runOne(test);
+} else {
+  for (const test of FILES) {
     await paceConnects();
-    console.log(`\n↻ ${test} canlıda bir kez daha deneniyor (yeni sürüm yayılırken bağlantı kopmuş olabilir)`);
-    result = spawnSync(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
-    // A pass on the retry still counts as red until its cause is found (ROADMAP "Milestone gates"): make it visible.
-    if (result.status === 0) console.log(`::warning::${test} failed on the live run's first attempt and passed on the retry; find out why.`);
+    console.log(`\n▶ ${test}`);
+    let result = spawnSync(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
+    if (result.status !== 0 && live) {
+      await paceConnects();
+      console.log(`\n↻ ${test} canlıda bir kez daha deneniyor (yeni sürüm yayılırken bağlantı kopmuş olabilir)`);
+      result = spawnSync(process.execPath, [...trace, join(here, test), base], { stdio: 'inherit' });
+      // A pass on the retry still counts as red until its cause is found (ROADMAP "Milestone gates"): make it visible.
+      if (result.status === 0) console.log(`::warning::${test} failed on the live run's first attempt and passed on the retry; find out why.`);
+    }
+    if (result.status !== 0) failed++;
   }
-  if (result.status !== 0) failed++;
 }
 console.log(failed ? `\n✗ ${failed} test dosyası başarısız` : '\n✓ Tüm uçtan uca testler geçti');
 process.exit(failed ? 1 : 0);

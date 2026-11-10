@@ -129,6 +129,9 @@ jobs:
           LAB_SERVER: '1'
           # lab-check.mjs: the right code gets a pass here; live has no such code, so only refusals are checked there.
           LAB_CODE: harness-lab-code
+          # Card QA1: three files at a time on this unpaced local server (7.3 → 3.5 min); files that count per address or
+          # for the whole server run alone after them (scripts/e2e/run.mjs `SOLO`). The live run stays one at a time.
+          SWM_E2E_PARALLEL: '3'
         run: npm run e2e
 
       # Card UPTIME2: the Worker's own uptime cron, fired once on a second local server without a GitHub token: it must
@@ -167,11 +170,6 @@ jobs:
       # the first tips, plus a keyboard tour.
       - name: Accessibility (axe + keyboard tour)
         run: node scripts/harness/a11y/run.cjs http://localhost:8787
-
-      # Card THEME1: every theme's text passes WCAG AA against the real pixels behind it (scene pictures included):
-      # home (1366 and 1920), help, join card, room, settings and the games hall; phones the plain themes.
-      - name: Theme contrast (WCAG AA)
-        run: node scripts/harness/contrast/run.cjs http://localhost:8787
 
       # Card FONT1: the Font setting (only the picked font downloads, Turkish letters, kept after a reload, Test Lab).
       - name: Font setting
@@ -329,6 +327,29 @@ jobs:
         if: failure()
         run: tail -n 150 wrangler.log || true
 
+  # Card QA1: the theme contrast check is its own job (5.5 of the site job's 12 min; the site job was the longest).
+  contrast:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
+          playwright: 'true'
+
+      # Card THEME1: every theme's text passes WCAG AA against the real pixels behind it (scene pictures included):
+      # home (1366 and 1920), help, join card, room, settings and the games hall; phones the plain themes.
+      - name: Theme contrast (WCAG AA)
+        run: node scripts/harness/contrast/run.cjs http://localhost:8787
+
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 150 wrangler.log || true
+
   # Card LAB2: every Test Lab command run once and undone on a live-like host (lab.localhost: the owner's code unlocks
   # it, the server's limits apply), a computer in English and a phone in Turkish. The 🎮 tab is Game Studio's.
   lab-sweep:
@@ -357,7 +378,7 @@ jobs:
   # main, no site change); red when one failed or was cancelled, or the change detection itself failed. `always()`, so
   # a failed job can never make this one "skipped" (which a required check would count as success).
   test:
-    needs: [changes, checks, e2e, site, games, games-more, lab-sweep]
+    needs: [changes, checks, e2e, site, contrast, games, games-more, lab-sweep]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -365,9 +386,9 @@ jobs:
       - name: All test jobs passed
         env:
           CHANGES: ${{ needs.changes.result }}
-          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.lab-sweep.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.lab-sweep.result }}
         run: |
-          echo "changes: $CHANGES · checks, e2e, site, games, games-more, lab-sweep: $RESULTS"
+          echo "changes: $CHANGES · checks, e2e, site, contrast, games, games-more, lab-sweep: $RESULTS"
           [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
           for r in $RESULTS; do
             case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
