@@ -1864,6 +1864,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   concurrency group runs main's runs one at a time and never cancels one, so no deploy restarts objects under a shard.
   `tag` needs `deploy` and `live-e2e`; `tag-live.mjs` `wentLive` counts a commit live when its deploy and every shard
   passed (older runs had no shards).
+  **QA1 part 4 (canary rooms, `scripts/e2e/canary.mjs`):** idle room connections that say hello and send the free
+  keepalive; the server never closes one by itself, so a close not ours means objects were restarted. Of the last 30
+  live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once
+  10–12 min after it. `wait-live.mjs` now also waits for 60 s with no canary drop (at most 4 min more, then a warning);
+  `run.mjs` keeps 2 canaries open beside the live suite and, when a file fails, prints whether the server dropped
+  canaries meanwhile ("objects were restarting") or not ("the cause is likely the code or the test"). Results are not
+  changed: a file that fails its retry is red either way. `host.mjs` / `modes.mjs` timeouts name the socket's close code
+  and the last messages.
   **First look (QA1 part 3, `scripts/shots.cjs`):** screenshots of every screen a change touched at laptop 1366×768,
   desktop 1920×1080, upright tablet 820×1180 and phone (iPhone 13), EN by default (`--langs en,tr`), into `.shots/<branch>`
   (git-ignored) with `index.md` (what each picture is) and `REVIEW.md` (the brief for a fresh reviewer subagent: CLAUDE.md

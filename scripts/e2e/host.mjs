@@ -5,7 +5,14 @@ function client(hello, where = room) {
   const ws = new WebSocket(`${base}/api/rooms/${where}/ws`);
   const inbox = [];
   let closed = null;
-  ws.addEventListener('message', (e) => inbox.push(JSON.parse(e.data)));
+  // QA1 part 4: the last messages and the close code go into a timeout's error (a restart or a real wrong answer?).
+  const recent = [];
+  ws.addEventListener('message', (e) => {
+    const m = JSON.parse(e.data);
+    inbox.push(m);
+    recent.push(m.t + (m.code ? `:${m.code}` : ''));
+    if (recent.length > 6) recent.shift();
+  });
   ws.addEventListener('close', (e) => (closed = e.code));
   ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, ...hello })));
   const wait = async (pred, label) => {
@@ -14,7 +21,7 @@ function client(hello, where = room) {
       if (idx >= 0) return inbox.splice(idx, 1)[0];
       await new Promise((r) => setTimeout(r, 100));
     }
-    throw new Error('timeout ' + label);
+    throw new Error(`timeout ${label} (socket ${closed === null ? 'open' : `closed ${closed}`}; last messages: ${recent.join(', ') || 'none'})`);
   };
   return { ws, wait, inbox, closed: () => closed, send: (m) => ws.send(JSON.stringify(m)) };
 }
