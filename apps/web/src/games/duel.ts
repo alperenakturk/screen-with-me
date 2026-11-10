@@ -15,6 +15,7 @@ import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
+import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { stubArt } from './stub.ts';
 import how1 from './art/tutorial/word-1-guess.svg?raw';
@@ -658,7 +659,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         id: 'duel.answer',
         title: { en: 'Five Frames Duel: show the word (this tab)', tr: 'Beş Kare Düellosu: kelimeyi göster (bu sekmede)' },
         help: { en: 'Local lab server only: the word shows in the status line of this tab.', tr: 'Sadece yerel lab sunucusunda: kelime bu sekmenin durum satırında görünür.' },
-        tab: 'games' as const,
+        tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase === 'play') || { en: 'only during the race (both pressed Ready)', tr: 'sadece yarış sırasında (ikisi de Hazır’a bastı)' },
         where,
         run: () => send({ t: 'lab', op: 'answer' }),
       },
@@ -666,7 +667,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         id: 'duel.match',
         title: { en: 'Five Frames Duel: best of three in hard mode', tr: 'Beş Kare Düellosu: zor modda üç oyunluk maç' },
         help: { en: 'Sets the table to best of three with hard mode on (both players press Ready again).', tr: 'Masayı üç oyunluk maça ve zor moda alır (iki oyuncu da yeniden Hazır’a basar).' },
-        tab: 'games' as const,
+        tab: 'games' as const, available: () => (!!state && state.seat >= 0 && state.phase !== 'play') || { en: 'only between games (in the lobby)', tr: 'sadece iki oyun arasında (lobide)' },
         where,
         run: () => send({ t: 'settings', bestOf: 3, hard: true }),
       },
@@ -674,7 +675,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         id: 'duel.win',
         title: { en: 'Five Frames Duel: guess the word now', tr: 'Beş Kare Düellosu: kelimeyi şimdi tahmin et' },
         help: { en: 'Local lab server only: asks for the word, then sends it as my guess (I win).', tr: 'Sadece yerel lab sunucusunda: kelimeyi ister, sonra tahminim olarak gönderir (kazanırım).' },
-        tab: 'games' as const,
+        tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase === 'play' && state.seat >= 0) || { en: 'only during the race (both pressed Ready)', tr: 'sadece yarış sırasında (ikisi de Hazır’a bastı)' },
         where,
         run: () => {
           send({ t: 'lab', op: 'answer' });

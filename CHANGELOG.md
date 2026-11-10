@@ -25,6 +25,13 @@ games' tip jar, cuttings and badges.
   the host" can be undone (they hand it back), the scripted checks make room for their own pretend friends and start a
   paused video again, and the lab explains when the server's limit of new connections a minute holds friends back.
 
+### 0.9.97.108 — 10 Nov
+- Test Lab, 🎮 Games (for testing the games alone): a pretend 🤖 friend can sit at a Quiz, Draw & Guess, Last Heart,
+  Five Frames Duel or Sea Battle table and play along, or lose its connection for two minutes. New shortcuts jump a
+  Quiz or Draw & Guess game to its result card and bring a Snack Bar stand to one level before its next milestone. A
+  command that can't run right now says why (and on the live site, which ones only work on a local test server); the
+  tables' commands show the games' names.
+
 ### 0.9.97.107 — 10 Nov
 - A calmer room screen: the top left shows only the connection dot, and the line at the bottom (privacy, terms,
   version) is gone. The room's name and how many people are in it are in ⚙️ Settings → Room; the links and the version
