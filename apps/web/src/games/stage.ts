@@ -132,7 +132,7 @@ interface StageOptions {
   /** What a solo game needs from the room: is the video playing, how many others are here / in voice with me. */
   room: () => SoloRoom;
   /**
-   * 0.9.97.115 (owner): pauses the room's video the way a press of ⏸ would (the sync engine sends it to everyone; the
+   * 0.9.97.114 (owner): pauses the room's video the way a press of ⏸ would (the sync engine sends it to everyone; the
    * server stays the source of truth). False when nothing played or I may not control it (host-only rooms).
    */
   pauseVideo?: () => boolean;
@@ -284,7 +284,7 @@ export function createGameStage(opts: StageOptions) {
     // Bug W2: over a YouTube video only the free window is possible (YTG), so the switch has nothing to switch: it goes,
     // and the head says in plain words why the window keeps beside the video.
     // 0.9.97.112 (owner): the tables always play in the video's place, so only the side games have the switch.
-    // Owner (0.9.97.112–115): the tables always play in the video's place, the side games always in the free window, so
+    // Owner (0.9.97.112–114): the tables always play in the video's place, the side games always in the free window, so
     // on a computer there is nothing to switch; narrow screens keep "below / large".
     placeSwitch.hidden = youtube || !kind || !narrow.matches || (STAGE_READY && !isSoloKind(kind));
     head.title = youtube && mode === 'float' ? t('game.besideYoutube') : '';
@@ -441,7 +441,7 @@ export function createGameStage(opts: StageOptions) {
    */
   function placeOf(kind: Kind): Place {
     if (!isSoloKind(kind)) return STAGE_READY ? 'stage' : (savedPlace(kind) ?? catalogOf(kind).place);
-    // 0.9.97.115 (owner: the video's place for a side game is "pointless, delete it"): side games only ever play in the
+    // 0.9.97.114 (owner: the video's place for a side game is "pointless, delete it"): side games only ever play in the
     // free window; narrow screens keep their own pick, below / large.
     return narrow.matches ? (savedPlace(kind) ?? catalogOf(kind).place) : 'float';
   }
@@ -463,7 +463,7 @@ export function createGameStage(opts: StageOptions) {
     let col: Box | null = { left: video.right, top: bar, width: page.left + page.width - video.right, height: page.top + page.height - bar };
     const { low, high } = zoomRange(kind);
     // Over YouTube nothing may cover the player: the window shrinks to the column (or the largest strip beside it).
-    // Elsewhere (0.9.97.115, owner) a side game keeps at least its smallest readable size in the right column, sticking
+    // Elsewhere (0.9.97.114, owner) a side game keeps at least its smallest readable size in the right column, sticking
     // out over the video's right edge when the column is narrower than that (a 1366 laptop: ≈ 46 px).
     if (overYoutube()) {
       if (fits(col) < MIN_ZOOM) col = largestClear(page, video);
@@ -968,7 +968,7 @@ export function createGameStage(opts: StageOptions) {
   /** When the last automatic pause happened (the Test Lab's status line). */
   let pausedAt = 0;
   /**
-   * 0.9.97.115 (owner): a table that opens in the video's place while the video plays pauses it, once, for everyone
+   * 0.9.97.114 (owner): a table that opens in the video's place while the video plays pauses it, once, for everyone
    * (nobody watches a film hidden under a game). Never over YouTube (the table sits beside the player there, so the film
    * stays in view), never for side games (the free window), and closing the table doesn't play it again.
    */
