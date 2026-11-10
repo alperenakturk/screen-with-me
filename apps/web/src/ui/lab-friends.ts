@@ -12,6 +12,8 @@ import { debugRoom, labFail, type LabCommand, type LabText } from '../debug-lab.
 import { errorText, labTr } from './lab-text.ts';
 
 export const MAX_FRIENDS = 5;
+/** The fake friend I last made the host (`friends.host`), for its Undo. */
+let hostFriend: FakeFriend | null = null;
 const NAMES = ['Ada', 'Ben', 'Cleo', 'Dev', 'Eli', 'Fay', 'Gus'];
 const LINES = ['hi everyone 👋', 'this part is great', 'lol', 'wait what happened', 'can you pause a sec?', 'back!', 'nice one', 'I can hear you fine', 'who picked this 😄', 'one more?'];
 const PACES = [2, 5, 10] as const;
@@ -327,7 +329,7 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
     {
       id: 'friends.host',
       title: { en: 'Make a fake friend the host', tr: 'Sahte bir arkadaşı yönetici yap' },
-      help: { en: `I hand the host role to them, the same way as 👑 Make host: the chat says so and I become a guest.${ONE.en}`, tr: `Yöneticiliği ona veririm, 👑 Yönetici yap ile aynı yoldan: sohbet bunu yazar, ben misafir olurum.${ONE.tr}` },
+      help: { en: `I hand the host role to them, the same way as 👑 Make host: the chat says so and I become a guest. Undo: they hand it back to me.${ONE.en}`, tr: `Yöneticiliği ona veririm, 👑 Yönetici yap ile aynı yoldan: sohbet bunu yazar, ben misafir olurum. Geri al: bana geri verir.${ONE.tr}` },
       tab: 'friends',
       available: needFriend,
       run: (arg) => {
@@ -335,6 +337,16 @@ export function createFriends(roomId: string | null, log: Log, labCommand: (id: 
         const room = debugRoom();
         if (!f.memberId || !room?.makeHost) throw labFail({ en: 'not in a room yet', tr: 'henüz odada değil' });
         room.makeHost(f.memberId);
+        hostFriend = f;
+        return f.name;
+      },
+      // LAB2: the friend hands it back the same way (they are the real host now), so the host's commands work again.
+      undo: () => {
+        const f = hostFriend;
+        const me = debugRoom()?.lab?.memberId();
+        if (!f?.inRoom || !me) throw labFail({ en: 'that fake friend has left (the role moved on by itself)', tr: 'o sahte arkadaş çıktı (yöneticilik kendiliğinden geçti)' });
+        f.send({ t: 'make-host', id: me });
+        hostFriend = null;
         return f.name;
       },
     },

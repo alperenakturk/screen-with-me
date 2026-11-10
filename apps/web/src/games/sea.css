@@ -26,6 +26,7 @@
 .sea-bot-icon svg, .sea-ref-mascot svg, .sea-bot-avatar svg { width: 100%; height: 100%; display: block; }
 .sea-bot .btn { min-height: 30px; padding: 3px 10px; font-size: 13px; }
 .sea-bot-level.on { border-color: var(--sb-gold); color: var(--sb-gold); }
+.sea-bot-leave { min-width: 30px; }
 .sea-watch-open { min-height: 30px; padding: 3px 10px; font-size: 14px; }
 .sea-watch-pop {
   position: absolute; top: 38px; right: 0; z-index: 5; width: min(240px, 90%); max-height: 240px; overflow: auto; margin: 0; padding: 10px 12px;
