@@ -18,8 +18,9 @@
   display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; font-size: 28px;
   background: color-mix(in srgb, var(--lobby-tint) 28%, var(--surface-2)); box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
 }
-#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before { content: '🎨'; rotate: -6deg; }
-#game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { content: '❓'; rotate: 6deg; }
+/* NG3: the table's drawn badge (scripts/game-badges.mjs; the games hall's covers wear the same one). */
+#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before { content: ''; rotate: -6deg; background: url('./art/badges/draw.svg') center / 100% no-repeat; }
+#game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { content: ''; rotate: 6deg; background: url('./art/badges/quiz.svg') center / 100% no-repeat; }
 #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { max-width: 46ch; margin: 4px auto 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
 
 /* The players: faces in a row (the host wears a crown), an empty chair while one is missing. */
@@ -71,8 +72,8 @@ html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-b
 }
 #game-stage .pk-lobby > h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 #game-stage .pk-lobby > h3::before {
-  content: '♥'; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; font-size: 28px; rotate: -6deg;
-  color: var(--lobby-tint); background: color-mix(in srgb, var(--lobby-tint) 28%, var(--surface-2));
+  content: ''; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; rotate: -6deg;
+  background: url('./art/badges/poker.svg') center / 100% no-repeat;
   box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
 }
 #game-stage .pk-lobby > .pk-rules { color: var(--muted); }
