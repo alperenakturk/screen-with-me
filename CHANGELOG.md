@@ -25,6 +25,19 @@ games' tip jar, cuttings and badges.
   along the player's edge instead of getting stuck. Each game remembers its own spot and size, and a double click on
   the bar puts it back.
 
+### 0.9.97.107 — 10 Nov
+- A calmer room screen: the top left shows only the connection dot, and the line at the bottom (privacy, terms,
+  version) is gone. The room's name and how many people are in it are in ⚙️ Settings → Room; the links and the version
+  are in ⚙️ Settings → About.
+- ⚙️ Settings show their parts in a list beside them, in the same order on every device: Me, My screen, Room, Room
+  rules, Film time (host), Sound & camera, About. Room rules come in two groups, Playback and In the room, so nothing
+  scrolls on a phone.
+- "Move to another device" is now in Settings → Me (it left the profile menu). Settings → Sound & camera has your
+  microphone and camera, "Check before joining voice", and "Who sees what (privacy)".
+- No more separate window before you join voice, start a stream or watch one. The privacy policy explains who can see
+  your internet address and the room links to it; your microphone still turns on only when you press "Join voice".
+- The join screen is cleaner: privacy, terms and help sit behind a small ⓘ.
+
 ### 0.9.97.106 — 10 Nov
 - Stub, the cinema ticket, is now the games' mascot: the referee who cheers and gasps, the bot you play against in the
   Classics and Sea Battle, the cashier at the Snack Bar and the usher whose torch lights your window garden. He cheers

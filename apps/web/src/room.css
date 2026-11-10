@@ -6386,21 +6386,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 60%, transparent);
 }
 
-.room-title-name {
-  margin: 0;
-  font: inherit;
-  font-weight: 700;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.room-title-count {
-  flex: none;
-  color: var(--chrome-text);
-}
-
 .invite-btn {
   display: inline-flex;
   align-items: center;
@@ -6412,12 +6397,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   background: var(--ok);
   border-color: var(--ok);
   color: #04120b;
-}
-
-@media (max-width: 860px) {
-  .room-title-count {
-    display: none;
-  }
 }
 
 @media (max-width: 560px) {
@@ -6616,10 +6595,6 @@ html.in-room .topbar-right > .lang {
     padding-left: 10px;
     margin-right: auto;
   }
-
-  html.in-room .room-title :is(.room-title-name, .room-title-count) {
-    display: none;
-  }
 }
 
 /* -- Tabs: three equal tabs (⚙️ moved next to the profile picture in 0.9.87) -- */
@@ -6776,9 +6751,11 @@ html.in-room .topbar-right > .lang {
 }
 
 /* -- 2C: Ayarlar penceresi -- */
+/* SIMP1: as tall as its longest category (Room rules) up to the window, so none scrolls on a computer. */
 .settings-window {
   width: min(740px, 100%);
-  height: min(540px, calc(100vh - 32px));
+  min-height: min(540px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
   border: 1px solid var(--border);
@@ -7063,11 +7040,12 @@ html.in-room .topbar-right > .lang {
     height: min(620px, calc(100dvh - 24px));
   }
 
+  /* SIMP1: seven categories wrap as chips (no sideways scrolling). */
   .settings-nav {
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 4px;
-    padding: 10px;
-    overflow-x: auto;
+    padding: 8px;
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
@@ -7078,7 +7056,7 @@ html.in-room .topbar-right > .lang {
 
   .settings-nav button {
     flex: none;
-    padding: 8px 10px;
+    padding: 6px 9px;
     font-size: 13px;
   }
 
@@ -7859,38 +7837,6 @@ button.together-person:focus-visible .together-name {
   background: var(--surface-2);
 }
 
-/* Peer-to-peer IP notice: the line under the voice row and the dialog's extra part. */
-.voice-ip {
-  margin: 8px 0 0;
-}
-
-.voice-ip .link-btn {
-  font-size: inherit;
-}
-
-.ip-notice {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0 0 12px;
-  text-align: left;
-}
-
-.ip-notice p {
-  margin: 0;
-}
-
-.ip-notice-who {
-  font-weight: 600;
-}
-
-.ip-notice-again {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
 /* ==== 0.9.87: ⚙️ next to the profile picture; "Film time" (scheduled start) section ==== */
 .topbar .nav-link.settings-btn {
   width: 38px;
@@ -7966,7 +7912,8 @@ button.together-person:focus-visible .together-name {
   margin-bottom: 12px;
 }
 
-.schedule-chips .chip {
+.schedule-chips .chip,
+.rules-groups .chip {
   padding: 7px 12px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -7977,7 +7924,8 @@ button.together-person:focus-visible .together-name {
   cursor: pointer;
 }
 
-.schedule-chips .chip:hover {
+.schedule-chips .chip:hover,
+.rules-groups .chip[aria-pressed='true'] {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
 }
@@ -11063,21 +11011,6 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   cursor: default;
 }
 
-/* The settings dialog opened for one section ("⋯ More" items, ⚙️ = My screen): no list of sections beside it. */
-#settings-dialog.solo .settings-nav {
-  display: none;
-}
-
-/* Card 6b (owner's bug): alone, the section is the whole dialog. The two-column grid used to give it the hidden list's
-   210 px column (every row wrapped word by word and the list scrolled); the dialog is one column, as tall as its
-   content up to the window. */
-#settings-dialog.solo .settings-window {
-  width: min(620px, 100%);
-  height: auto;
-  max-height: calc(100dvh - 32px);
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-}
 
 /* What moved into "⋯ More" leaves the profile menu (the buttons stay in the page for the menus to press). */
 .profile-pop :is(#recap-open, #profile-keys) {
@@ -11249,11 +11182,7 @@ html.in-room .side .card {
   background: linear-gradient(var(--surface), var(--surface)), var(--bg);
 }
 
-/* Sweep-1 small things: the ad-blocker tip belongs on the home page, not under every room; the invite window's line
-   wraps without leaving one word alone. */
-html.in-room .footer > span:first-child {
-  display: none;
-}
+/* Sweep-1 small things: the invite window's line wraps without leaving one word alone. */
 
 .invite-sub {
   text-wrap: pretty;
@@ -11631,7 +11560,7 @@ html.ph-room .room .tabs-card {
 }
 
 /* What lives in sheets or nowhere on a phone. */
-html.ph-room .room :is(#media-form, #media-done, .now-playing, .together-head, .together-actions, .voice-ip, .voice-hint, .voice-cams, .tabs, #profile-panel, .shorts-enter) {
+html.ph-room .room :is(#media-form, #media-done, .now-playing, .together-head, .together-actions, .voice-hint, .voice-cams, .tabs, #profile-panel, .shorts-enter) {
   display: none !important;
 }
 
@@ -13064,7 +12993,97 @@ html.ph-game .game-stage .xox-page:not(.draw-page) {
   color: var(--text);
 }
 
-/* Bug W3: the games hall opened from a game window's 🎮 hangs under that button, above the window in every placement. */
-.head-game-wrap {
-  z-index: 2147483001;
+/* ==== Card SIMP1: a calmer room screen ==== */
+/* The room's footer line (privacy, terms, version …) lives in Settings → About; the join screen's goes behind ⓘ. The
+   footer stays in the page (hidden): the version is read from it. */
+html.in-room .footer,
+html:has(main > .join-card) .footer {
+  display: none;
 }
+
+/* The room's name and people count left the top bar for Settings → Room; the name stays the page's heading for screen
+   readers (card A11y), the dot keeps showing the connection. */
+html.in-room .room-title :is(.room-title-name, .room-title-count) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.join-card {
+  position: relative;
+}
+
+.join-info {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  text-align: right;
+}
+
+.join-info summary {
+  list-style: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.join-info[open] summary {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+/* Closed, its links are not there at all (a closed <details> still lays them out for scripts). */
+.join-info:not([open]) p {
+  display: none;
+}
+
+.join-info p {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  white-space: nowrap;
+}
+
+/* Room rules in two groups (one shows at a time). */
+.rules-groups {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.rules-box[data-show='play'] [data-group='room'],
+.rules-box[data-show='room'] [data-group='play'] {
+  display: none;
+}
+
+/* Settings: Room and About. */
+:is(.settings-room, .settings-about) {
+  margin: 0;
+  font-size: 16px;
+}
+
+.settings-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.settings-links .link-btn {
+  font-size: inherit;
+}
+

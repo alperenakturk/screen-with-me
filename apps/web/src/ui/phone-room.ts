@@ -17,12 +17,12 @@ import { switchNote, watchCamVideo } from './cam-watch.ts';
  * back when they close. A face whose camera is on shows the live picture in its circle; tapping it opens the person
  * sheet with the camera big.
  */
-import type { MoreItem } from './room-more.ts';
+import type { MoreItem, SettingsSection } from './room-more.ts';
 
 export interface PhoneRoomDeps {
   root: HTMLElement;
   /** The settings dialog (a section may be named). */
-  openSettings: (section?: 'view' | 'rules' | 'save' | 'schedule') => void;
+  openSettings: (section?: SettingsSection) => void;
   myId: () => string | null;
   /** The room's "⋯ More" list, shared with the computer's menu (card 6). */
   moreItems: () => MoreItem[];

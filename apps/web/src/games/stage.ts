@@ -999,6 +999,8 @@ export function createGameStage(opts: StageOptions) {
   // computer hides, so nothing showed. The hall hangs from a fixed box under the button (inside the fullscreen view
   // while there is one, or the browser would hide it).
   const headMenuWrap = el('div', { class: 'game-menu-wrap more-game-wrap head-game-wrap' });
+  // Above the window in every placement, the game's own full screen included (no room.css rule: its budget is full).
+  headMenuWrap.style.zIndex = '2147483001';
   function hubFromHead(): void {
     if (!menu.hidden && menu.parentElement === headMenuWrap) return setHub(false);
     const r = hubButton.node.getBoundingClientRect();
