@@ -16,6 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.120 — 10 Nov
+- Testers only: on a phone the Test Lab's 🐞 no longer sits over the video, the player's own buttons or the chat. Held
+  upright, the room's ⋯ menu has a "🐞 Test Lab" tile instead (ringed red while the lab has errors); held sideways with a
+  video, a small 🐞 waits in the bottom-right corner, clear of the video and its buttons.
+
 ### 0.9.97.118 — 10 Nov
 - Before you join voice, the microphone and camera buttons look plain instead of red; red now only means "off" while
   you are in voice.

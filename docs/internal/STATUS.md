@@ -491,6 +491,11 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.120 (lane A: Test Lab 🐞 on phones; with the Lab on).**
+- [ ] L1. Phone upright in a room: no floating 🐞 anywhere. Open ⋯: a "🐞 Test Lab / Test Panosu" tile opens the Lab.
+- [ ] L2. Phone sideways with a video playing (and in fullscreen): a small 🐞 bottom right, never over the video or its
+  buttons.
+
 **0.9.97.118 (lane A: first-look fixes; fold into the next round).**
 - [ ] Y1. Phone and tablet, before joining voice: the 🎙 and 📷 buttons look plain (not red). Join voice and mute: now
   🎙 turns red.
