@@ -104,6 +104,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.103',
+    kinds: ['duel', 'sea'],
+    badge: 'updated',
+    tr: 'Beş Kare Düellosu’nda üç oyunluk maç ve zor mod (bulunan harfler tekrar kullanılmalı). Telefonda Amiral Battı: ilk dokunuş yakınlaştırır, ikincisi ateşler.',
+    en: 'Five Frames Duel: best of three and hard mode (letters you found must be used again). Sea Battle on a phone: the first tap zooms in, the second fires.',
+  },
+  {
     v: '0.9.97.99',
     kinds: ['duel'],
     badge: 'new',

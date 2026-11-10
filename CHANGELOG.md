@@ -23,6 +23,12 @@ games' tip jar, cuttings and badges.
 - **Neon** has a new look: one warm neon sign on a dark brick wall, coral and amber instead of magenta and cyan.
 - The home page's pictures in Moonlit Nights, Drive-In and Night Express moved their landmarks to the right, so nothing
   busy sits behind the title any more.
+### 0.9.97.103 — 10 Nov
+- Five Frames Duel: pick "Best of three" in the lobby for a short match (the first game is the word of the day, then
+  practice words, with the score between games), and "Hard mode", where every letter you found must be used again.
+  The Duel has its own cover in the games hall.
+- Sea Battle on a phone: the first tap zooms into that corner of their sea so the cells are easy to hit, the second tap
+  fires; "Whole sea" goes back at any time.
 
 ### 0.9.97.102 — 10 Nov
 - A new theme, **Matinee**: the first light theme, warm paper with ink-dark text and a rust accent, for watching in
