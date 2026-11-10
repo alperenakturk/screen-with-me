@@ -85,7 +85,7 @@ describe('Window Garden only in a room', () => {
   });
 });
 
-describe('Window Garden: Glowbeam the grow lamp', () => {
+describe('Window Garden: Stub the grow lamp', () => {
   it('once per film, +25 % growth for its pot while that film plays', () => {
     const garden = freshGarden();
     garden.pots[0] = { plant: 'mint', growth: 0, water: 1 };

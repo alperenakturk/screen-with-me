@@ -9,7 +9,7 @@
 //   room's video plays. Nothing is paid for the time away (the old "while you were away" share is gone, 0.9.97.31).
 // - Prestige "open a new cinema": restart with stars, each star a lasting income bonus.
 // - Side games 2 (owner's picks 1, 2, 4; 4 Nov 2026): customers walk up with a line and a tap serves them for more
-//   (missing one costs nothing); at a film's end Glowbeam hands over a receipt with a golden bucket; badges, each worth
+//   (missing one costs nothing); at a film's end Stub hands over a receipt with a golden bucket; badges, each worth
 //   +1 % income (a few silly ones give nothing).
 // - Every new cinema is a different place (owner's pick 3): the lobby, then a drive-in (soda ×2), a rooftop (+25 %
 //   between 20:00 and 04:00), an art house (candy ×3 income, ×2 price), then round again.

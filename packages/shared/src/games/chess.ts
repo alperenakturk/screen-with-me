@@ -1,5 +1,5 @@
 // Chess, the third board of 🎲 Classics (P7, `docs/internal/design/games/classics.md`). In-house rules: the server
-// checks every move with them, the page draws with them, and the Glowbeam bot plays with them.
+// checks every move with them, the page draws with them, and the Stub bot plays with them.
 //
 // - 8 × 8 board, cells 0–63, row 0 at the top. X (white) starts at the bottom (rows 6–7) and plays first.
 // - `board` holds whose piece stands on a cell (the shared `BoardState` shape); `kinds` holds which piece it is, one
@@ -302,7 +302,7 @@ export function play(state: BoardState, mark: Mark, move: number): ChessState | 
 }
 
 /**
- * The position after a move already known to be legal (one from `legalMoves`): Glowbeam's search plays thousands of
+ * The position after a move already known to be legal (one from `legalMoves`): Stub's search plays thousands of
  * them, so it skips `play`'s check. Everything else (check, mate, the draws) is worked out exactly as in `play`.
  */
 export function playLegal(s: ChessState, move: number): ChessState {

@@ -83,7 +83,7 @@ describe('sea battle rules', () => {
   });
 });
 
-describe('Glowbeam at sea', () => {
+describe('Stub at sea', () => {
   it('never shoots the same cell twice or water known to be empty', () => {
     for (const level of [1, 2] as const) {
       const random = seeded(level);

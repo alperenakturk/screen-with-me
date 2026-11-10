@@ -12232,13 +12232,13 @@ html.phone #game-stage .htp-open {
 html.phone #game-stage .wg-album-cell {
   min-width: 44px;
 }
-/* The Classics bar's chips (Glowbeam's levels, 👁) and Snack Bar's badge button have their own, more specific sizes. */
+/* The Classics bar's chips (Stub's levels, 👁) and Snack Bar's badge button have their own, more specific sizes. */
 html.phone #game-stage .mt :is(.cl-bot .btn, .mt-watch-open),
 html.phone #game-stage .sb .sb-badges-open {
   min-height: 44px;
 }
 /* The game window's head stays one row on a phone (a second row took the board's height): "‹ Back to video" gives
-   way with "…" instead. The Classics bar likewise: one row, tighter chips (the score, the "?", Glowbeam's levels, 👁). */
+   way with "…" instead. The Classics bar likewise: one row, tighter chips (the score, the "?", Stub's levels, 👁). */
 html.ph-game .game-stage-head {
   flex-wrap: nowrap;
 }

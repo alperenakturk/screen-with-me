@@ -25,6 +25,8 @@ games' tip jar, cuttings and badges.
   stays in sight.
 - "How to play" cards fit the video's place: the picture on the left, the words and buttons on the right (Draw &
   Guess's card was cut at the bottom on a laptop).
+- Stub, the games' ticket mascot, now appears on every game cover in 🎮 and on Snack Bar's first "How to play" card,
+  where the old mascot was still drawn.
 
 ### 0.9.97.113 — 10 Nov
 - Games look right in the video's place: a game you put in the video's place now fills it in proportion, with its

@@ -1,12 +1,12 @@
 // 🚢 Sea Battle (Game Studio, owner's pick C, 5 Nov 2026; notes in docs/internal/design/games/sea-battle.md): two
 // players hide a fleet each, then call shots in turns; the first fleet sunk loses. Pure rules, the protocol and the
-// Glowbeam bot. The server (`apps/server/src/sea.ts`) holds both fleets and sends each player only their own ships.
+// Stub bot. The server (`apps/server/src/sea.ts`) holds both fleets and sends each player only their own ships.
 
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
 
 export const SEA_PROTOCOL_VERSION = 1;
 export const SEA_ID_PATTERN = /^[A-Za-z0-9_-]{3,40}$/;
-/** Glowbeam waits this long before a shot (like the Classics bot). */
+/** Stub waits this long before a shot (like the Classics bot). */
 export const SEA_BOT_DELAY_MS = 700;
 
 /** The rule choices (the owner's questions 1–3 in the design note); one place to change them. */
@@ -131,7 +131,7 @@ export function knownEmpty(rules: SeaRules, view: SeaView): Set<number> {
 export type SeaBotLevel = 1 | 2;
 
 /**
- * Glowbeam's shot. Easy: a random cell, but after a hit it tries the cells next to it. Medium: counts, for every cell,
+ * Stub's shot. Easy: a random cell, but after a hit it tries the cells next to it. Medium: counts, for every cell,
  * how many ways the ships still afloat could cover it (skipping misses, sunk ships and the water around them), and
  * gives cells next to an open hit a large bonus, so it follows a hit along the ship's line.
  */
