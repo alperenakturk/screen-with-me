@@ -16,6 +16,15 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.112 — 10 Nov
+- The tables (Classics, Sea Battle, Draw & Guess, Quiz, Last Heart, Five Frames Duel) always play in the video's place:
+  they are too big to sit beside the video. With a YouTube video they keep beside it, as before.
+- Snack Bar, Window Garden and Five Frames open on the right, over the chat, and never cover the video, when they fit
+  there at a readable size; on a smaller screen they open in the video's place. Their switch still moves them.
+- From a game in its own window, 🎮 slides the games hall out of the window's side, so it shows even with the side
+  panel closed.
+- Moving the mouse over a game window's resize corner no longer makes the window jump.
+
 ### 0.9.97.111 — 10 Nov
 - The 🎮 in a game window's bar opens the games hall again, right under the button.
 - Games no longer have their own full-screen button: a game plays in the video's place or in its free window (also

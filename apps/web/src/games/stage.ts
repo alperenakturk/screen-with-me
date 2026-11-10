@@ -58,11 +58,12 @@ const SEEN_KEY = 'opt:gamesSeen';
 
 type Place = 'float' | 'stage';
 const PLACES: readonly Place[] = ['float', 'stage'];
-const placeOf = (kind: Kind): Place => {
+/** The placement I picked for a side game with the switch (null: none yet). */
+const savedPlace = (kind: Kind): Place | null => {
   const saved = load(`gamePlace:${kind}`);
   // "side" (0.9.91.8–0.9.91.9) became the free window.
   if (saved === 'side') return 'float';
-  return PLACES.includes(saved as Place) ? (saved as Place) : catalogOf(kind).place;
+  return PLACES.includes(saved as Place) ? (saved as Place) : null;
 };
 /**
  * The free window's spot on the screen, as a share of the free room (0–1), per game, once I moved or resized it.
@@ -253,6 +254,8 @@ export function createGameStage(opts: StageOptions) {
     const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
     for (const m of ['float', 'stage', 'below', 'full'] as const) stage.classList.toggle(m, mode === m);
+    // For the games' own CSS (card .113): the placement in use, also as an attribute.
+    stage.dataset.place = mode;
     // On the film page the free window is a window of its own over the film (inside the video box it is one anyway).
     document.documentElement.classList.toggle('game-below', mode === 'below' && !stage.hidden);
     // phone.css: the room's video becomes a small preview in the game's head (it keeps playing, a tap goes back).
@@ -263,7 +266,8 @@ export function createGameStage(opts: StageOptions) {
     stage.toggleAttribute('data-island', mode === 'float');
     // Bug W2: over a YouTube video only the free window is possible (YTG), so the switch has nothing to switch: it goes,
     // and the head says in plain words why the window keeps beside the video.
-    placeSwitch.hidden = youtube;
+    // 0.9.97.112 (owner): the tables always play in the video's place, so only the side games have the switch.
+    placeSwitch.hidden = youtube || !kind || !isSoloKind(kind);
     head.title = youtube && mode === 'float' ? t('game.besideYoutube') : '';
     placeButtons.forEach((b, i) => {
       const p = PLACES[i]!;
@@ -410,10 +414,23 @@ export function createGameStage(opts: StageOptions) {
     return Math.min(most, Math.max(low, wanted));
   }
   /**
+   * 0.9.97.112 (owner): where a game plays when I haven't picked. The tables (big, shared) always play in the video's
+   * place (over YouTube, where nothing may cover the player, beside it). A side game opens as the free window in its home
+   * right of the video when it fits there at its smallest readable size (`homeBox`), else in the video's place; my own
+   * pick with the switch wins. Tablets and the video's fullscreen keep the catalog's default.
+   */
+  function placeOf(kind: Kind): Place {
+    if (!isSoloKind(kind)) return 'stage';
+    const saved = savedPlace(kind);
+    if (saved) return saved;
+    if (isTablet() || inFullscreen() || isPhoneLayout()) return catalogOf(kind).place;
+    return homeBox(kind) ? 'float' : 'stage';
+  }
+  /**
    * 0.9.97.112 (owner: "open towards the right, over the chat; never cover any part of our video screen"): until I move
    * or resize it, a free window opens in the column right of the video (over the side panel), as big as that column
-   * allows up to the game's largest size, never over the video. No room there: the largest strip beside the video
-   * (above, below, left). No room anywhere beside it (the video's fullscreen, cinema mode on a small screen) or on a
+   * allows up to the game's largest size, never over the video, and never smaller than the game's smallest readable
+   * size (catalog `minSize`). No room there: the largest strip beside the video (above, below, left). No room anywhere beside it (the video's fullscreen, cinema mode on a small screen) or on a
    * tablet (card GT keeps it clear of the chat): null, and the window takes `SPOT_HOME`.
    */
   function homeBox(kind: Kind): Box | null {
@@ -425,9 +442,10 @@ export function createGameStage(opts: StageOptions) {
     const bar = Math.max(page.top, document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0);
     const fits = (b: Box) => Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h);
     let col: Box | null = { left: video.right, top: bar, width: page.left + page.width - video.right, height: page.top + page.height - bar };
-    if (fits(col) < MIN_ZOOM) col = largestClear(page, video);
-    if (!col) return null;
-    const zoom = Math.min(zoomRange(kind).high, fits(col));
+    const { low, high } = zoomRange(kind);
+    if (fits(col) < low) col = largestClear(page, video);
+    if (!col || fits(col) < low) return null;
+    const zoom = Math.min(high, fits(col));
     const width = Math.round(w * zoom);
     const height = Math.round(h * zoom);
     // Right-aligned at the top of the column (over the side panel's top); centred in a strip above or below the video.
@@ -506,6 +524,7 @@ export function createGameStage(opts: StageOptions) {
   });
   head.addEventListener('pointermove', (event) => {
     if (!drag || event.pointerId !== drag.id) return;
+    if (!(event.buttons & 1) || mode !== 'float') return endDrag(event);
     dragAt = { x: event.clientX, y: event.clientY };
     if (!dragFrame) dragFrame = requestAnimationFrame(dragStep);
   });
@@ -523,18 +542,20 @@ export function createGameStage(opts: StageOptions) {
     placeFloat();
     dispatchEvent(new Event('swm-layout'));
   }
-  const endDrag = (event: PointerEvent) => {
+  function endDrag(event: PointerEvent): void {
     if (!drag || event.pointerId !== drag.id) return;
     if (dragFrame) cancelAnimationFrame(dragFrame);
-    dragStep();
+    if (mode === 'float') dragStep();
     drag = null;
     dragAt = null;
     stage.classList.remove('game-dragging');
+    if (mode !== 'float') return;
     spot = spotNow();
     saveSpot();
-  };
+  }
   head.addEventListener('pointerup', endDrag);
   head.addEventListener('pointercancel', endDrag);
+  head.addEventListener('lostpointercapture', endDrag);
   /** Double click on the head (or the lab): the game's own size, back where it first opened. */
   function resetFloat(): void {
     const kind = shownKind();
@@ -552,17 +573,21 @@ export function createGameStage(opts: StageOptions) {
     resetFloat();
   });
   // The corner: the top-left stays put and the window grows or shrinks in proportion (the game keeps its shape).
-  let sizing: { x: number; y: number; w: number; h: number; left: number; top: number } | null = null;
+  // 0.9.97.112 (owner: hovering the corner made the window jump): a resize lives only while the button is held on the
+  // corner; a gesture whose end was lost (released outside the page, capture lost) ends at the next move, never resizes.
+  let sizing: { x: number; y: number; w: number; h: number; left: number; top: number; id: number } | null = null;
   grip.addEventListener('pointerdown', (event) => {
-    if (mode !== 'float') return;
+    if (mode !== 'float' || event.button !== 0) return;
     event.preventDefault();
+    event.stopPropagation();
     const box = stage.getBoundingClientRect();
-    sizing = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, left: box.left, top: box.top };
+    sizing = { x: event.clientX, y: event.clientY, w: box.width, h: box.height, left: box.left, top: box.top, id: event.pointerId };
     grip.setPointerCapture(event.pointerId);
   });
   grip.addEventListener('pointermove', (event) => {
     const kind = shownKind();
-    if (!sizing || !kind) return;
+    if (!sizing || !kind || event.pointerId !== sizing.id) return;
+    if (!(event.buttons & 1) || mode !== 'float') return endSizing();
     const [w, h] = sizeOf(kind).size;
     const room = posRoom();
     // Follow the mouse along the window's diagonal; keep the window on the screen.
@@ -579,14 +604,16 @@ export function createGameStage(opts: StageOptions) {
     placeFloat(zoom);
     dispatchEvent(new Event('swm-layout'));
   });
-  const endSizing = () => {
+  function endSizing(): void {
     if (!sizing) return;
     sizing = null;
+    if (mode !== 'float') return;
     spot = spotNow();
     saveSpot();
-  };
+  }
   grip.addEventListener('pointerup', endSizing);
   grip.addEventListener('pointercancel', endSizing);
+  grip.addEventListener('lostpointercapture', endSizing);
 
   narrowQuery.addEventListener('change', place);
   onTabletUpright(place);

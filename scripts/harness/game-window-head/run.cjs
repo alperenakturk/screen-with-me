@@ -6,7 +6,9 @@
 //       the free window is possible) and the head says why.
 //   W3  The head's 🎮 opens the games hall right under itself, visible, in the free window, in the video's place and in
 //       the video's fullscreen; pressed again it closes.
-//   112 Until I move it, a free window opens right of the video (over the side panel) and never over the video; an old
+//   112 Tables always play in the video's place (no switch); a side game opens right of the video (over the side panel)
+//       when it fits there at its smallest readable size, else in the video's place; never over the video; hovering the
+//       resize corner never moves the window; an old
 //       saved spot is left behind once; from a free window 🎮's hall slides out of its left side, visible with the side
 //       panel open or closed, and closes on Esc, an outside click or a chosen game.
 //   W5  The free window follows a drag of its head (over a video file it may cover the video, nothing pushes it away);
@@ -127,7 +129,10 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => localStorage.setItem('gameFloat:spot:snack', JSON.stringify({ x: 0, y: 0 })));
     await openGame(page, 'snack');
     const first = await box(page);
-    check(first.mode === 'float' && !first.overPlayer && first.x + first.w >= 1366 - 12 && first.onScreen, `${L} 112: Snack Bar opens right of the video (over the side panel), not over it, ignoring an old saved spot`, first);
+    // The column right of the video is narrower than Snack Bar's smallest readable size here: the video's place.
+    check(first.mode === 'stage' && first.inVideo, `${L} 112: Snack Bar doesn't fit right of the video at its smallest size, so it opens in the video's place`, first);
+    await page.click('#game-stage .place-float');
+    await wait(300);
     check(!(await page.$('#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
     await page.keyboard.press('Escape');
     check(!(await page.evaluate(() => document.getElementById('game-stage').classList.contains('game-max') || !!document.fullscreenElement)), `${L} W1: nothing puts Snack Bar on the whole screen`);
@@ -181,6 +186,18 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await wait(300);
     const grown = await box(page);
     check(grown.w > dropped.w + 20 && grown.x === dropped.x && grown.y === dropped.y, `${L} W5: the corner resizes it, its top-left stays`, { dropped, grown });
+    // 112-A: hovering the corner (no button held) never moves or resizes the window, also after a gesture whose end was lost.
+    const g2 = await (await page.$('#game-stage .game-resize')).boundingBox();
+    await page.mouse.move(g2.x + g2.width / 2, g2.y + g2.height / 2);
+    await page.mouse.down();
+    await page.evaluate(() => document.querySelector('#game-stage .game-resize').dispatchEvent(new PointerEvent('lostpointercapture', { pointerId: 1, bubbles: true })));
+    await page.mouse.up();
+    for (const [dx, dy] of [[-30, -10], [10, 20], [-60, 40], [5, 5]]) {
+      await page.mouse.move(g2.x + g2.width / 2 + dx, g2.y + g2.height / 2 + dy, { steps: 3 });
+      await page.mouse.move(g2.x + g2.width / 2, g2.y + g2.height / 2, { steps: 3 });
+    }
+    await wait(200);
+    check(near(await box(page), grown, 1), `${L} 112: hovering the resize corner never moves or resizes the window`, { now: await box(page), grown });
     // Each game keeps its own spot: Window Garden opens at its own place, Snack Bar comes back to its own.
     await openGame(page, 'garden');
     const garden = await box(page);
@@ -204,7 +221,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await dblHead(page);
     await wait(300);
     const home = await box(page);
-    check(near(home, first) && !home.overPlayer, `${L} W5: a double click on the head puts it back home, right of the video`, { home, first });
+    check(home.mode === 'float' && home.w === 400 && home.x + home.w >= 1366 - 10, `${L} W5: a double click on the head puts it back (own size, right edge: no room beside the video here)`, home);
     // The lab's reset does the same.
     await dragHead(page, -300, 0, 4);
     await page.evaluate(() => window.__swmLab.run('gameWindow.reset'));
@@ -227,7 +244,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       const s = document.getElementById('game-stage');
       return { inside: document.fullscreenElement?.contains(s) ?? false, hidden: s.hidden, float: s.classList.contains('float'), w: Math.round(s.getBoundingClientRect().width) };
     });
-    check(inFs.inside && !inFs.hidden && inFs.float && inFs.w < 1366, `${L}: in the video's fullscreen the game stays a free window inside it (not the whole screen)`, inFs);
+    check(inFs.inside && !inFs.hidden && !inFs.float, `${L}: in the video's fullscreen a table plays in the video's place inside it`, inFs);
     await page.click('#game-stage .game-hub-open');
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in the video's fullscreen opens the hall, visible`);
     await page.keyboard.press('Escape');
@@ -270,16 +287,35 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
   // ---- 0.9.97.112: every game's home is right of the video; the hall shows with the side panel open or closed ----
   for (const [L, viewport] of [['1920 home', { width: 1920, height: 1080 }], ['1366 home', { width: 1366, height: 768 }]]) {
     const { ctx, page, errors } = await room(browser, viewport);
-    for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz']) {
+    // Owner (0.9.97.112): side games open right of the video when they fit there at their smallest readable size
+    // (catalog minSize), else in the video's place; the tables always play in the video's place, with no switch.
+    const minW = { snack: 400, garden: 400, word: 400 };
+    for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz', 'draw', 'poker', 'duel']) {
       await openGame(page, kind);
       const b = await box(page);
-      check(b.mode === 'float' && !b.overPlayer && b.onScreen && b.x + b.w >= viewport.width - 12, `${L} ${kind}: opens right of the video, never over it`, b);
+      const room = await page.evaluate(() => innerWidth - document.getElementById('theater').getBoundingClientRect().right - 16);
+      const switchShown = await page.evaluate(() => !document.querySelector('#game-stage .game-place').hidden);
+      if (minW[kind]) {
+        const fits = room >= minW[kind];
+        check(fits ? b.mode === 'float' && !b.overPlayer && b.onScreen && b.x + b.w >= viewport.width - 12 && b.w >= minW[kind] : b.mode === 'stage', `${L} ${kind}: ${fits ? 'opens right of the video, never over it' : "doesn't fit beside the video: the video's place"}`, { b, room });
+        check(switchShown, `${L} ${kind}: a side game keeps the placement switch`);
+      } else {
+        check(b.mode === 'stage' && b.inVideo, `${L} ${kind}: a table plays in the video's place`, b);
+        check(!switchShown, `${L} ${kind}: a table has no placement switch`);
+        await page.click('#game-stage .game-hub-open');
+        check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: 🎮 in the video's place opens the hall, visible`);
+        await page.keyboard.press('Escape');
+      }
     }
     // The side panel closed (cinema mode): the hall still opens beside the free window, visible.
     await page.evaluate(() => document.getElementById('side-toggle')?.click());
     await wait(500);
     for (const kind of ['snack', 'sea']) {
       await openGame(page, kind);
+      if (kind === 'snack') {
+        await page.click('#game-stage .place-float');
+        await wait(300);
+      }
       await page.click('#game-stage .game-hub-open');
       check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: side panel closed, 🎮 opens the hall beside the window, visible`);
       await page.keyboard.press('Escape');
