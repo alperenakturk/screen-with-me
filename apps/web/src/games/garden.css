@@ -196,6 +196,8 @@ html.phone.sideways .wg-album { align-self: start; }
 :root[data-theme='matinee'] .wg button.htp-open:hover { background: var(--surface-2); }
 :root[data-theme='matinee'] .wg-pill.wg-state.on { background: var(--ok); color: #fff; box-shadow: none; }
 :root[data-theme='matinee'] .wg-scene { background: var(--al-120e27, #e4d9c6); box-shadow: inset 0 0 0 1px var(--border); }
+/* The disc that cuts the moon into a crescent takes the Matinee sky's colour at the moon's height (else a pale disc shows). */
+:root[data-theme='matinee'] .wg-scene-art { --al-1d2353: #d9c3ad; }
 :root[data-theme='matinee'] .wg-idle .wg-scene-art { filter: saturate(0.7) brightness(0.94); }
 :root[data-theme='matinee'] .wg-rest,
 :root[data-theme='matinee'] .wg-elsewhere { background: rgb(241 234 221 / 0.94); box-shadow: 0 0 0 1px var(--border); }
@@ -213,4 +215,4 @@ html.phone.sideways .wg-album { align-self: start; }
 :root[data-theme='matinee'] .wg-btn.seed-color { border-color: #6b3fb0; color: #5a2f9e; }
 :root[data-theme='matinee'] .wg-dot { background: var(--wg-line); }
 :root[data-theme='matinee'] .wg-album-cell:not(.found) .wg-album-art,
-:root[data-theme='matinee'] .wg-page-entry:not(.found) .wg-page-art { opacity: 0.4; filter: grayscale(1) brightness(0.85); }
+:root[data-theme='matinee'] .wg-page-entry:not(.found) .wg-page-art { opacity: 0.6; filter: grayscale(1) brightness(0.55); }
