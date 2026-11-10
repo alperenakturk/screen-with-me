@@ -307,7 +307,7 @@ jobs:
           node scripts/harness/motion/run.cjs http://localhost:8787
 
       # Card LAB2: every 🎮 Test Lab command runs (a computer in English, a phone in Turkish), the 🤖 friend at a table.
-      - name: Test Lab games: every command, the table friend
+      - name: "Test Lab games: every command, the table friend"
         run: |
           ONLY=laptop-en,phone-tr node scripts/harness/lab-games-all/run.cjs http://localhost:8787
           node scripts/harness/lab-table-friend/run.cjs http://localhost:8787
