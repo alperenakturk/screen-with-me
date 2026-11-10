@@ -17,7 +17,7 @@ has a new size `side` (iPhone 13 landscape) for this.
 | Five Frames, sideways phone | Everything scaled to 5–12 px text | Tickets on the left, the head, the result and the letters on the right |
 | Snack Bar, sideways phone | Scaled to 7 px text | Coins, counter and footer on the left; the buy bar and as many rows as fit on the right |
 | Last Heart lobby | Plain text on the dark window, unlike the Quiz and Draw & Guess lobbies | The same tinted card with a ♥ badge |
-| Quiz / Draw & Guess / Last Heart lobbies, sideways phone | Narrow card, big badge, long rules | Full width, no badge, rules in two or three lines (the "?" has them all) |
+| Quiz / Draw & Guess / Last Heart lobbies, sideways phone | Narrow card, big badge, long rules | Two columns (rules and faces left, settings and Start right), no badge, rules in three lines (the "?" has them all) |
 
 Checked: `games-sweep` passes for every game on laptop, iPhone and a sideways iPhone (EN + TR; the window passes on
 the laptop).
