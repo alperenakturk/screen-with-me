@@ -1869,7 +1869,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once
   10–12 min after it. `wait-live.mjs` now also waits for 60 s with no canary drop (at most 4 min more, then a warning);
   `run.mjs` keeps 2 canaries open beside the live suite and, when a file fails, prints whether the server dropped
-  canaries meanwhile ("objects were restarting") or not ("the cause is likely the code or the test"). Results are not
+  canaries meanwhile ("objects were restarting"), whether its own connection got a 1006 from the server (objects
+  restart one at a time, so a canary in another room can miss it: "an object restart or a crash in that object"), or
+  neither ("the cause is likely the code or the test"). Results are not
   changed: a file that fails its retry is red either way. `host.mjs` / `modes.mjs` timeouts name the socket's close code
   and the last messages.
   **First look (QA1 part 3, `scripts/shots.cjs`):** screenshots of every screen a change touched at laptop 1366×768,
