@@ -523,3 +523,8 @@ html.lab-open:not(.phone, .tablet-up) .recap-invite {
 .lab-step.skip {
   opacity: 0.6;
 }
+
+/* LAYOUT1: on a phone the open drawer is a bottom sheet and 🐞 sat over its rows; the drawer's ✕ closes it there. */
+html.phone .debug-fab[aria-expanded='true'] {
+  display: none;
+}

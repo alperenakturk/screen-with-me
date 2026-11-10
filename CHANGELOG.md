@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.96 — 10 Nov
+- Phones: every game fills the whole screen when the phone is held sideways too (on big phones it used to open as a
+  small window over the video).
+- Phones: your own screen-share preview starts small in the top corner of the video, so the video's play and time bar
+  stays free.
+- Big screens: the side games (Snack Bar, Window Garden, Five Frames) open larger on big monitors, and dialogs such as
+  the invite window grow a little on very wide screens.
+
 ### 0.9.97.95 — 9 Nov
 - On networks where the room uses its backup connection (some phone hotspots), each tab now asks the server about half
   as often, and one network can keep up to 12 such connections open across all rooms.
