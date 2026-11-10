@@ -195,7 +195,15 @@ async function runState(browser, kinds, size, video, side) {
         }
         check(!m.offScreen && m.cut.length === 0, `${label}: nothing cut off`, m.offScreen ? { box: m.box } : m.cut);
         if (m.youtube) check(!m.overPlayer, `${label}: nothing over the YouTube player`, { game: m.box, player: m.player });
-        else if (video === 'file' && m.mode === 'float') check(!m.overPlayer, `${label}: the free window leaves the video uncovered (not dragged)`, { game: m.box, video: m.player });
+        else if (video === 'file' && m.mode === 'float' && m.overPlayer) {
+          // Known on purpose (W, 10 Nov 2026): on a tablet the free window keeps clear of the chat (card GT), not of the
+          // video; at 1366 a side game's 400 px window may reach ≈ 40 px over the video's right edge (owner's call until
+          // Game Studio's .115). Anything more covers the video.
+          const over = m.box[0] < m.player[0] + m.player[2] ? m.player[0] + m.player[2] - m.box[0] : 0;
+          const known = size === 'tablet' || (size === '1366' && side === 'open' && over <= 44);
+          if (known) console.log(`note ${label}: over the video by ${over} px (known, see the comment)`);
+          else check(false, `${label}: the free window leaves the video uncovered (not dragged)`, { game: m.box, video: m.player, over });
+        }
       }
     }
   } finally {
