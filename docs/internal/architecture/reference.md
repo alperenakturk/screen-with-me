@@ -935,7 +935,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the largest strip beside the player, `largestClear`) so it never covers the player; tablets, phones and the video's
   fullscreen use `SPOT_HOME`. Over YouTube in cinema mode (`cinemaOn`: the player fills the page, "under it" would be
   below the screen) a game brought up leaves cinema mode (`#side-toggle`), and turning cinema on with a game open puts
-  the game away, as fullscreen does (YTG). **A table pauses the video** (`autoPause`, 0.9.97.114): opening a table (not coming back
+  the game away, as fullscreen does (YTG). Opening any game ends the room's intro (`endIntro`: `.swm-intro` over the video took the first
+  click on a game's head; room.ts's observer sees it leave). **A table pauses the video** (`autoPause`, 0.9.97.114): opening a table (not coming back
   to it after a reload) in the video's place while the video plays calls the room's `pauseVideo` (`room.ts`: the player's
   own pause, which the sync engine sends to everyone; nothing in a host-only room for a guest), once, with the note
   `game.pausedForGame` by the head's 🎮; closing the table doesn't play it again.
@@ -1634,9 +1635,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   okyanus, gunbatimi, neon, lokum, binbirgece, sinema, acikhava, tren; `resolveTheme` turns a removed one
   (`REMOVED_THEMES`: uzay, siber, opera, gemi) or anything unknown into Night; unit test `themes.test.ts`); swatches
   and pictures in `themes.ts`. **Matinee** (`matinee`, Design's `docs/internal/design/themes-2/ready/themes.css`) is the
-  only light theme (`color-scheme: light`, its own `--field-border` / `--danger` / `--ok` / `--warn`); the video's place
-  stays black, so the empty room's words there get a dark palette of their own (`room.css`
-  `:root[data-theme='matinee'] .player-wrap > .empty`), the games hall inside the rail takes `--text` back (the rail's
+  only light theme (`color-scheme: light`, its own `--field-border` / `--danger` / `--ok` / `--warn`). **MATINEE2** (owner:
+  "too bright", "the black video's place is a harsh jump"; Design's `themes-2/matinee2/`): calmer paper (no near-white
+  surface) and a framed screen: the `.theater` card is a mat (`--mat`), `.player-wrap` a 2 px `--bezel` frame with soft
+  rings and a warm umber screen (`--screen` / `--screen-lit`, an inset vignette under the video), `#player` transparent;
+  fullscreen stays black; on a phone only a bottom frame line (the video is edge to edge) and in cinema mode no mat. All
+  these rules are scoped `:root[data-theme='matinee']:not(.shell-film)` so they never paint over the film page's hole
+  (embed harness with `THEME=matinee`). The empty room's words on the screen get a dark palette of their own
+  (`.player-wrap > .empty`; the dimmed `.alone` sync test at 70 % there, AA), the games hall inside the rail takes `--text` back (the rail's
   text is white), and the hall's "New" badge keeps the bright amber. Ocean Liner (`gemi`) is gone (scene, mascot,
   i18n). Sunset's sun glow sits at 82 % (it was behind "How it works"). Test Lab `themes.next`, `themes.<id>` (this page
   only, `applyTheme(id, { remember: false })`) and a status line (`registerThemeLab`). Harness
