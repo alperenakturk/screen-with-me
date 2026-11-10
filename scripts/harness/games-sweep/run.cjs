@@ -199,8 +199,7 @@ const stageBox = (page) => page.evaluate(() => {
 });
 /**
  * Card GW: the free window shrunk to its smallest and grown to its largest by its corner (never past the catalog's
- * limits, or the screen), then the game's own fullscreen (⛶): the whole screen, the same checks, and Esc brings the
- * window back where it was.
+ * limits, or the screen); and no ⛶ in its head (W1: no game has its own fullscreen any more).
  */
 async function windowPasses(page, label, g, phone) {
   const lim = catalogEntry(g);
