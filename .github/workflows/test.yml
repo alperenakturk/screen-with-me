@@ -487,6 +487,8 @@ jobs:
   # `contents: write` lives here alone (security R4-5), `actions: read` lets it see which commits deployed, and there is
   # no `workflows` permission on purpose: a tag the token may not make (main's workflow files changed since that commit)
   # becomes a warning with the owner's steps, never a red run. A version deployed again keeps its first tag.
+  # TAG2: the optional secret TAG_TOKEN (fine-grained, this repository only: Contents + Workflows read and write) makes
+  # those tags too, and the catch-up then back-fills the ones missed; only this step sees it.
   tag:
     needs: deploy
     # !cancelled() for the same reason as deploy's: skipped test jobs up the chain must not skip the tag.
@@ -504,4 +506,5 @@ jobs:
       - name: Tag the live versions
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TAG_TOKEN: ${{ secrets.TAG_TOKEN }}
         run: node scripts/tag-live.mjs
