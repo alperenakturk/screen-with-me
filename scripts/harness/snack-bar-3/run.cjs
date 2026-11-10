@@ -34,7 +34,7 @@ async function person(ctx, room, extra = {}) {
     localStorage.setItem('opt:autoInvite', '0');
     localStorage.setItem('tipsSeen', '1');
     localStorage.setItem('snackBar:howSeen', '1');
-    // These checks are for Snack Bar's free window (since 0.9.97.114 a 1366 laptop opens it there by itself, in the
+    // These checks are for Snack Bar's free window (since 0.9.97.115 a 1366 laptop opens it there by itself, in the
     // narrow column beside the video); the pick stays so the run never depends on the column's width.
     localStorage.setItem('gamePlace:snack', 'float');
     for (const [k, v] of Object.entries(more)) localStorage.setItem(k, v);
@@ -118,7 +118,7 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
     title: document.querySelector('#game-stage .sb-panel h3')?.textContent ?? '',
   }));
   check(panel.recipes.includes('popcorn:1') && panel.staff.length === 4, 'Upgrades lists the open popcorn recipe and the four staff', JSON.stringify(panel));
-  // 0.9.97.114 (owner): Upgrades is a growing list, so it may scroll inside its own panel (a narrow laptop column);
+  // 0.9.97.115 (owner): Upgrades is a growing list, so it may scroll inside its own panel (a narrow laptop column);
   // nothing else may: the game, the rows and the window stay without scrollbars, and the panel's ✕ stays in sight.
   const upFit = (await fits(page)).filter((f) => !f.startsWith('#game-stage .sb-panel '));
   const upClose = await page.evaluate(() => { const p = document.querySelector('#game-stage .sb-panel'); const c = p.querySelector('.sb-panel-close').getBoundingClientRect(); const r = p.getBoundingClientRect(); return c.top >= r.top - 1 && c.bottom <= r.bottom + 1; });
@@ -165,12 +165,12 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   await lab(page, 'snackBar.levels');
   await wait(1200);
   const rowsAll = await shownRows(page);
-  // SIDE340 (0.9.97.114): on a 1366 laptop the default window is the narrow column beside the video (about 354 px):
+  // SIDE340 (0.9.97.115): on a 1366 laptop the default window is the narrow column beside the video (about 354 px):
   // three rows there, four in a window of the game's own size.
   const narrowWindow = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
   check(rowsAll.length >= (narrowWindow ? 3 : 4) && rowsAll.includes('arcade'), `with eight stands the newest ones show (at least ${narrowWindow ? 'three' : 'four'} rows in the default window)`, JSON.stringify(rowsAll));
   check((await fits(page)).length === 0, 'eight stands fit without scrollbars (laptop)', (await fits(page)).join('; '));
-  // 0.9.97.114 (owner: "Upgrades runs off the bottom, the staff list is cut"): with every stand open the list may scroll
+  // 0.9.97.115 (owner: "Upgrades runs off the bottom, the staff list is cut"): with every stand open the list may scroll
   // inside the panel, its ✕ stays in sight and the last staff member can be reached.
   await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open').click());
   await wait(400);

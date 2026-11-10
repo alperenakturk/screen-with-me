@@ -151,7 +151,7 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-cell { font-size: 22px; }
   #game-stage .ff:not(.duel) .ff-key { min-height: 48px; font-size: 18px; }
 }
-/* SIDE340 (0.9.97.114): the free window in the narrow column beside the video (about 340 × 510): slimmer tickets and
+/* SIDE340 (0.9.97.115): the free window in the narrow column beside the video (about 340 × 510): slimmer tickets and
    keys, so the game stays at its own size (13 px text) instead of being scaled down. */
 @container game (max-height: 540px) and (max-aspect-ratio: 1 / 1) {
   #game-stage .ff:not(.duel) { gap: 4px; padding-block: 7px; }

@@ -16,7 +16,7 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.114 — 10 Nov
+### 0.9.97.115 — 10 Nov
 - Snack Bar, Window Garden and Five Frames fit the narrow column beside the video on a laptop (down to about 320 px
   wide), so on a 1366 × 768 or 1440 × 900 screen they open there, next to the film, instead of taking the video's place. Everything stays
   readable: Five Frames' tickets and keys are a little slimmer there, Snack Bar shows its three newest stands, and the

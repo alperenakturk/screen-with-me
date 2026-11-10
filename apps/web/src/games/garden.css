@@ -163,7 +163,7 @@ html.phone.sideways .wg-action, html.phone.sideways .wg-album, html.phone.sidewa
 html.phone.sideways .wg-album { align-self: start; }
 /* The album chip's short form shows only in the narrow column. */
 .wg-album-short { display: none; }
-/* SIDE340 (0.9.97.114): the narrow column beside the video: the top bar's chips and buttons a little closer. */
+/* SIDE340 (0.9.97.115): the narrow column beside the video: the top bar's chips and buttons a little closer. */
 @container game (max-width: 360px) {
   #game-stage .wg-bar { gap: 3px; }
   #game-stage .wg { padding-inline: 8px; }

@@ -1194,7 +1194,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Enter the row turns over cell by cell (`reveal`: 110 + 110 ms per cell, 80 ms apart, typing held, the tray and the
   result's sound after the last cell, a solved row hops, an unknown word shakes; reduced motion = a 150 ms colour fade,
   a red outline); the credits link left the game ("Licenses" in the footer and on the Help page).
-  **SIDE340 (0.9.97.114):** the three side games read well down to 320 px wide, so on a 1366 or 1440 laptop they open in the
+  **SIDE340 (0.9.97.115):** the three side games read well down to 320 px wide, so on a 1366 or 1440 laptop they open in the
   column right of the video (W's `homeBox`, about 354 px) instead of the video's place: `SOLO_CATALOG` `fit`
   312 × 400 / 384 / 448 and `minSize` 320 × 460 / 444 / 508 (the window keeps `size`'s shape); a narrow game box
   (`@container game (max-width: 360px)`, height ≤ 420–540) slims Five Frames' rows (33 px), cells and keys, hides its
