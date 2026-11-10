@@ -224,7 +224,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   recent) and "＋ Ekle" (`#shorts-add`) queues links (one or many, same paths as the link box; words point to the ♾
   feed); on a phone Tepki shares a row with 🎙 / 📷 and ↩ / 🔁 lose their text. **0.9.91.12:** words in "＋ Ekle" search
   YouTube Shorts only (`ui/shorts-search.ts`, the feed's `short=1` search, ≈ 1 % of the day's quota per new query,
-  cached); a row's ＋ queues it as a Short; before joining voice 🎙 looks off (red) like 📷. **0.9.91.13:** a game in
+  cached); a row's ＋ queues it as a Short; before joining voice 🎙 / 📷 look plain (never red: since the YT5 batch, red = off only while in voice). **0.9.91.13:** a game in
   the Shorts view is always a free window (`games/stage.ts` `shortsView`: opening the view with a game open saves
   `gamePlace:<kind>` = float and sizes it to fit right of the video, `besideShorts`; it stays free back in the room
   view); 🎮 in the Shorts bar (`#shorts-game`, `extraButtons`: the hub moves next to the button pressed); a new ♾ feed
@@ -1738,8 +1738,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Invite window (0.9.93.1, owner: "an invite screen when I enter the room, with a QR code, like other watch sites";
   `ui/invite.ts`):** the room link with Copy, the share sheet (touch devices), WhatsApp (`wa.me/?text=`, the owner's
   slogan "Sana bir koltuk ayırdım 🍿" / "I saved you a seat 🍿"), a QR code (`@swm/shared/qr` `qrSvg`; since 0.9.93.11 its own
-  "QR code" tab with "Copy image" (PNG to the clipboard, else a download), the WhatsApp button with WhatsApp's glyph and
-  green) and "show this when I'm alone in a room" (`opt:autoInvite`, default on). It opens by itself 1.7 s after
+  "QR code" tab with "Copy image" (PNG to the clipboard, else a download), the WhatsApp button with WhatsApp's glyph in its
+  green on the theme's plain button, YT5 batch) and "show this when I'm alone in a room" (`opt:autoInvite`, default on). It opens by itself 1.7 s after
   the first `welcome` when nobody else (TVs aside) is in the room (`maybeAutoInvite`; not after a reload, in the shell
   or on a TV; skipped if someone arrived or another dialog is open); while it is pending `html.invite-pending` holds the
   first-time tips back. 🔗 Invite (and ⋯ → Invite on a phone, which presses it) opens it; the empty room's "Copy invite
@@ -1756,6 +1756,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   not while a dialog is open). **Unread in the tab title:** chat from others while `document.hidden` → "(n) title",
   cleared on `visibilitychange` (`drawTabTitle`, `baseTitle` from `renderSaved`). Test: `scripts/harness/invite/run.cjs`
   (22 checks).
+- **🎞 Cinema mode (card 14, 0.9.96.7; `room.ts` `side`, CSS `html.cinema-on` in `room.css`, harness `cinema`):** T, the
+  rail's ⋯ or `#side-toggle` (the old "hide the side panel") turns the page around the video dark and gives the video the
+  largest 16:9 beside the rail; the top bar comes back at the top edge (`#cinema-edge`, `cinema-peek`), chat lines come in
+  under the video, 💬 counts unread; per tab (`sessionStorage`), computers only (`cinemaOk`, a mouse). Leaving: T, Esc
+  (when no window of ours is open) or, since the YT5 batch, the quiet `#cinema-exit` button ("✕ Leave cinema mode · T",
+  bottom-left of the page, clear of the video and the chat lines); the first two times a hint says "press T or Esc to
+  leave" (`cinemaHint`).
 - **Hide the side panel (0.9.71):** ⇥ in the toolbar under the video (`#side-toggle`): `.room.side-hidden`, the video
   takes the full width, chat messages appear in the video corner as in fullscreen (`toasts`), unread count on the
   button; `localStorage` `opt:sideHidden`; not in the shell or on narrow screens (≤860 px).

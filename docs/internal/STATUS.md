@@ -490,6 +490,19 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**YT5 batch (lane A: first-look fixes; fold into the next round).**
+- [ ] Y1. Phone and tablet, before joining voice: the 🎙 and 📷 buttons look plain (not red). Join voice and mute: now
+  🎙 turns red.
+- [ ] Y2. Tablet upright: the chat box's ➤ sits fully inside the box's rounded border.
+- [ ] Y3. Laptop: press T on a playing video (cinema mode). The hint says "press T or Esc to leave"; a small
+  "✕ Leave cinema mode · T" button sits bottom-left; clicking it leaves cinema mode.
+- [ ] Y4. Invite window in the light Matinee theme: the WhatsApp button is the theme's plain button with a green
+  WhatsApp sign, not a bright green block.
+- [ ] Y5. Play one video with nothing queued: "Next ⏭" (tablet, above the video) is greyed but its frame and label are
+  still clearly visible.
+- [ ] Y6. Phone, empty room: a small sleepy Stub sits in the corner of the "No video yet" box; the chat line keeps 👋
+  next to its last word.
+
 **0.9.97.114 (lane W: side games only in their window, a table pauses the video; fold into the next round).**
 - [ ] Q1. Play a video file with a friend, open Snack Bar: the video keeps playing. Open a table (chess): the video
   pauses on both screens and a note says "Video paused for the game". Put the table away (✕): the video stays paused.
