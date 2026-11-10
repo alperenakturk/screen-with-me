@@ -420,6 +420,10 @@ what he should see. The 🎮 games tests (G1–G16) are Game Studio's list in th
   log line shows them in that font). Then pick one in ⚙️ → Ekranım → Yazı tipi and reload: it stays.
 - F2 → "Test turu F2: Ana sayfa başlığının yazı tipi" → "Çalıştır" opens the home page: its title has the same letters
   as "Sidelit" in the top bar.
+- C1–C5 (SIMP1, the new Settings) → tab "🖥 Ekran" → "Ayarlar: Ben", "Ayarlar: Ekranım", "Ayarlar: Oda (ad, kişiler,
+  kaydet)", "Ayarlar: Oda kuralları", "Ayarlar: Film saati" (host), "Ayarlar: Ses ve kamera", "Ayarlar: Hakkında (sürüm,
+  gizlilik, kurallar)": each opens ⚙️ at that category with the list beside it; nothing scrolls inside; Oda shows the
+  room's name and people, Hakkında the version and the links, Ben "📲 Başka cihaza taşı". "Geri al" closes Settings.
 - Round item 1 → "Test turu T1: Birlikte oynatma (sahte arkadaş)" → "Çalıştır": a 🤖 friend joins; at 2 s they pause,
   at 8 s play, at 14 s jump 30 s ahead: his video follows each time. Real YouTube with a real friend is still his.
 - Item 2 → "Test turu T2: Mesajlarla tam ekran" → "Çalıştır": fullscreen opens, three 🤖 messages come in on the right
