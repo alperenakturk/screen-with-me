@@ -3,7 +3,7 @@
 // pictures included). Text is hidden for a second screenshot; each text box's background pixels are sampled and the
 // text colour is checked against them (the 10th-percentile pixel = the worst common spot behind the text).
 //   npm run dev   (site on :5173, server on :8787)
-//   [SIZE=1920x1080] [ONLY=home] NODE_PATH=$(npm root -g) node docs/internal/design/themes-2/audit.cjs [site] [out folder]
+//   [SIZE=1920x1080] [ONLY=home] [THEMES=matinee] [CSS=proposal.css] NODE_PATH=$(npm root -g) node docs/internal/design/themes-2/audit.cjs [site] [out folder]
 const { chromium } = require('playwright');
 const fs = require('fs');
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -11,7 +11,8 @@ const OUT = process.argv[3] || '/tmp/themes-2';
 fs.mkdirSync(OUT, { recursive: true });
 const [W, H] = (process.env.SIZE || '1366x768').split('x').map(Number); // SIZE=1920x1080 for another window
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null; // ONLY=home,room to run some screens
-const THEMES = ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'gemi', 'tren'];
+const THEMES = process.env.THEMES ? process.env.THEMES.split(',') : ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'gemi', 'tren'];
+const EXTRA_CSS = process.env.CSS ? fs.readFileSync(process.env.CSS, 'utf8') : ''; // CSS=proposal.css: measure a proposal
 const rid = () => `audit${Math.random().toString(36).slice(2, 7)}`;
 async function join(p) {
   await p.waitForSelector('#name');
@@ -95,6 +96,7 @@ const measure = async ({ png, items }) => {
     for (const [name, path, prepare] of SCREENS.filter(([n]) => !ONLY || ONLY.includes(n))) {
       const ctx = await browser.newContext({ viewport: { width: W, height: H } });
       await ctx.addInitScript((th) => { localStorage.setItem('lang', 'en'); localStorage.setItem('theme', th); localStorage.setItem('tipsSeen', '1'); localStorage.setItem('opt:autoInvite', '0'); }, theme);
+      if (EXTRA_CSS) await ctx.addInitScript((c) => { const add = () => { const st = document.createElement('style'); st.textContent = c; document.head.append(st); }; document.head ? add() : document.addEventListener('DOMContentLoaded', add); }, EXTRA_CSS);
       const p = await ctx.newPage();
       try {
         await p.goto(SITE + path(), { waitUntil: 'networkidle' });
