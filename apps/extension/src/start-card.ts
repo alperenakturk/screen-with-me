@@ -4,6 +4,7 @@
 // It sits just under the room's overlay (one z-index lower): it shows through the hole over the video, and a window
 // of the site (⚙️, "Odaya dön"…) covers it. On the same z-index it was above the overlay and hid those windows.
 
+import { createMascot } from '@swm/shared/logo';
 import { langReady, t } from './i18n.ts';
 
 let host: HTMLElement | null = null;
@@ -23,6 +24,7 @@ function render(video: HTMLVideoElement | null, onStart: () => void): void {
     :host { all: initial; }
     .box { position: fixed; z-index: 2147483646; display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 12px; background: rgb(0 0 0 / .72); font: 600 17px/1.4 system-ui, sans-serif; color: #fff; text-align: center; padding: 16px; }
+    .stub { width: 72px; height: 72px; }
     button { font: inherit; color: #fff; background: #7c5cff; border: 0; border-radius: 10px; padding: 12px 22px; cursor: pointer; }
   `;
   const box = document.createElement('div');
@@ -44,7 +46,10 @@ function render(video: HTMLVideoElement | null, onStart: () => void): void {
     clearStart();
     onStart();
   });
-  box.append(text, button);
+  // Stub, the mascot (card NP3), waiting for the press; built with createElementNS (no innerHTML on a film page).
+  const stub = createMascot(document, { mood: 'waiting' });
+  stub.setAttribute('class', 'stub');
+  box.append(stub, text, button);
   shadow.append(style, box);
   document.documentElement.append(host);
 }

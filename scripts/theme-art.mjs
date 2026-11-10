@@ -303,7 +303,10 @@ ${ripples}
 ${glitter}
 <!-- Mehtap kayıkları -->
 ${caique(520, 770, 0.8, { hull: '#0e0a14', canopy: '#7a1e22' })}${caique(840, 812, 1, { hull: '#0e0a14', canopy: '#2a5a6a' })}${caique(1000, 734, 0.55, { hull: '#14101c' })}${caique(1290, 790, 0.85, { hull: '#0e0a14', canopy: '#8a6a2a' })}${caique(660, 722, 0.45, { hull: '#14101c' })}
-<!-- Sol: çini pano, mermer sütun ve kemer, kemerden sarkan kandil -->
+<!-- Card NP3 (MASCOT3's scene notes): the tile panel, marble column, arch and kandil moved to the right edge (the
+     left group mirrored: panel x 1470…1610, column 1420…1478, the arch sweeping left to ~1040), so the home text column
+     keeps only the moonlit water and sky. -->
+<g transform="translate(${W} 0) scale(-1 1)">
 <g filter="url(#br2)">
   <rect x="-10" y="0" width="140" height="840" fill="url(#tile)"/>
   <rect x="-10" y="0" width="140" height="840" fill="#05040e" opacity=".45"/>
@@ -313,11 +316,11 @@ ${caique(520, 770, 0.8, { hull: '#0e0a14', canopy: '#7a1e22' })}${caique(840, 81
   <rect x="112" y="196" width="78" height="26" fill="url(#marble)"/><rect x="116" y="790" width="70" height="20" fill="url(#marble)"/>
 </g>
 ${kandil(262, 190, '#c8402e', 'kg', 150)}
-<!-- Sağ: servi ve fener -->
-<g filter="url(#br)">
+</g>
+<!-- One cypress in front of the tile panel (the second one is gone, NP3) -->
+<g filter="url(#br)" transform="translate(80 0)">
   <path d="M1460 840 C1410 640 1418 420 1462 220 C1504 420 1514 640 1468 840Z" fill="#0b1712"/>
   <path d="M1462 220 C1430 420 1424 600 1446 760" stroke="#2c4a3c" stroke-width="10" fill="none" opacity=".7"/>
-  <path d="M1556 840 C1526 700 1530 540 1558 400 C1588 540 1592 700 1562 840Z" fill="#0a1410"/>
 </g>
 <rect width="${W}" height="${H}" fill="url(#lamp)"/>
 <!-- Taş korkuluk ve döşeme -->
@@ -597,11 +600,15 @@ ${star5(1470, 300, 14, '#ffd27a')}
   // Makine dairesi ve tabela direği (sol)
   let bulbs = '';
   for (let y = 400; y < 740; y += 22) bulbs += `<circle cx="38" cy="${y}" r="3" fill="#ffd27a" filter="url(#g)"/><circle cx="92" cy="${y}" r="3" fill="#ffd27a" filter="url(#g)"/>`;
+  // Card NP3 (MASCOT3's scene notes): the lit sign mast stands right of the middle, next to the screen (it sat behind
+  // the home's text, 4.2:1 at 1920); the machine room stays low on the left, under the text column.
   const sign = `
+<g transform="translate(1200 0)">
 <path d="M34 760 V400 L50 380 V360 L65 340 L80 360 V380 L96 400 V760Z" fill="#1c1434" stroke="#ff8a6b" stroke-width="2"/>
 ${[450, 520, 590, 660].map((y) => `<path d="M48 ${y} L65 ${y + 18} L82 ${y}" stroke="#ff8a6b" stroke-width="5" fill="none" filter="url(#g)"/>`).join('')}
 ${bulbs}
 ${star5(65, 318, 22, '#ffd27a')}
+</g>
 <path d="M120 760 V676 H140 V660 H230 V676 H250 V760Z" fill="#170f2c"/>
 <rect x="226" y="690" width="22" height="18" fill="#fff1c8" filter="url(#g)"/>`;
 
@@ -629,7 +636,8 @@ ${star5(65, 318, 22, '#ffd27a')}
     }
     return s;
   };
-  garland += gpath(96, 420, 800, 560, 40) + gpath(800, 560, 1336, 470, 30);
+  // NP3: the bulb chain sags low, along the top of the parking lot, and up to the mast by the screen.
+  garland += gpath(0, 694, 640, 704, 18) + gpath(640, 704, 1234, 640, 20) + gpath(1296, 420, 1336, 470, 14);
 
   return S.svg(`
 <defs>__DEFS__</defs>
@@ -749,8 +757,9 @@ ${[1430, 1500, 1570].map((x) => `<circle cx="${x}" cy="802" r="18" fill="#0a0d18
     return s + signal;
   };
 
-  // Uzun: üst şerit sivri ucu kesmesin diye tabandan biraz küçültülür
-  const clock = `<g transform="translate(13 80) scale(.9)">${towerA()}</g>`;
+  // Tall: scaled down a little so the top strip doesn't cut the spire. Card NP3 (MASCOT3's scene notes): the tower
+  // stands left of the locomotive (x ≈ 1090…1324), not behind the home's "same moment." (2.2:1 at 1920).
+  const clock = `<g transform="translate(1090 80) scale(.9)">${towerA()}</g>`;
 
   return S.svg(`
 <defs>__DEFS__</defs>
@@ -788,10 +797,11 @@ const files = {
   'acikhava.svg': acikhavaScene(),
   'tren.svg': trenScene(),
 };
-// The theme mascots are Glowbeam in costume since card 6f (the Design session's drawings, 240 × 240, drop-in names):
-// copied from docs/internal/design/themes/glowbeam-<theme>.svg as <theme>-maskot.svg.
+// The theme mascots are Stub in costume since card NP3 (Design's MASCOT3, 240 × 240, Stub in the group the home page
+// lifts out, every costume holding the usher's torch): copied from docs/internal/design/mascot-3/costumes/<theme>.svg as
+// <theme>-maskot.svg (card 6f's Glowbeam costumes were docs/internal/design/themes/glowbeam-<theme>.svg).
 for (const theme of ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'tren', 'matinee']) {
-  files[`${theme}-maskot.svg`] = readFileSync(new URL(`../docs/internal/design/themes/glowbeam-${theme}.svg`, import.meta.url), 'utf8');
+  files[`${theme}-maskot.svg`] = readFileSync(new URL(`../docs/internal/design/mascot-3/costumes/${theme}.svg`, import.meta.url), 'utf8');
 }
 for (const [name, content] of Object.entries(files)) {
   writeFileSync(new URL(name, OUT), content.replace(/\n\s*\n/g, '\n'));

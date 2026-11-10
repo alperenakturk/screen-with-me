@@ -92,29 +92,30 @@
   --mascot: url('/themes/gunbatimi-maskot.svg');
 }
 
-/* Neon: simsiyah zemin, köşelerde pembe ve camgöbeği ışıklar, pembe vurgu. */
+/* Neon (card NP3, Design's MASCOT3 neon.css): one warm neon sign on a dark brick wall, a coral-red tube and an amber
+   second light; faint brick courses instead of the stock magenta + cyan grid. */
 :root[data-theme='neon'] {
-  --bg: #050508;
-  --surface: #0d0d17;
-  --surface-2: #151527;
-  --border: #29294d;
-  --text: #f1eefe;
-  --muted: #9b97c2;
-  --accent: #ff2bd6;
-  --accent-hover: #ff5ce0;
-  --ok: #19f5a0;
-  --glow: 0 0 18px rgb(255 43 214 / 0.45);
-  /* Gece şehri: simsiyah değil, koyu mor-lacivert; köşelerde pembe ve camgöbeği ışıklar, ince ızgara */
+  --bg: #0c0809;
+  --surface: #171013;
+  --surface-2: #21171b;
+  --border: #3a2a30;
+  --text: #f7eef0;
+  --muted: #b9a3aa;
+  --accent: #ff5a7a;
+  --accent-hover: #ff7a93;
+  --on-accent: #2a0610;
+  --ok: #5fe0a0;
+  --warn: #ffb347;
+  --glow: 0 0 16px rgb(255 90 122 / 0.45);
+  /* Brick courses (faint mortar lines every 28 px), the sign's glow at the top right, an amber spill at the bottom left. */
   --art:
-    linear-gradient(rgb(255 43 214 / 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(25 245 240 / 0.035) 1px, transparent 1px),
-    radial-gradient(ellipse 50% 45% at 0% 0%, rgb(255 43 214 / 0.26), transparent 70%),
-    radial-gradient(ellipse 50% 45% at 100% 100%, rgb(25 245 240 / 0.2), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 50% 50%, rgb(140 60 255 / 0.1), transparent 70%),
-    linear-gradient(#120b26, #0b0818 55%, #070612);
-  --art-size: 56px 56px, 56px 56px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+    linear-gradient(rgb(255 240 240 / 0.03) 1px, transparent 1px),
+    radial-gradient(ellipse 42% 30% at 88% 4%, rgb(255 90 122 / 0.22), transparent 70%),
+    radial-gradient(ellipse 30% 22% at 8% 98%, rgb(255 179 71 / 0.1), transparent 70%),
+    linear-gradient(#150d10, #0c0809);
+  --art-size: 100% 28px, 100% 100%, 100% 100%, 100% 100%;
+  --aura: none;
   --mascot: url('/themes/neon-maskot.svg');
-  --on-accent: #2a0524;
 }
 
 /* Matinee: the first light theme. Warm paper, ink text, rust accent; no picture, a faint paper grain and one soft window light. */

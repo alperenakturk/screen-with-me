@@ -10,7 +10,7 @@ import './home.css';
 /**
  * The home page (card 15b, the owner's picks 1A "Light beam", 2A a short intro section, 3A no video link box;
  * Design's notes in docs/internal/design/home-15b.md). One first screen that never scrolls inside: the slogan, Create
- * room / Join with a code, the save box and the continue line beside (or under) Glowbeam's light falling on a shared
+ * room / Join with a code, the save box and the continue line beside (or under) Stub's light falling on a shared
  * screen, three feature cards at its foot; under it "How it works" (three steps, the extension, saved rooms, help).
  * Its texts live here (not in i18n.ts: the home page is a lazy chunk and the room page's budget is nearly full), and so
  * do its styles (home.css).
@@ -111,17 +111,17 @@ function artFaces(): string[] {
 }
 
 /**
- * Glowbeam's light falls on a laptop, a tablet and a phone showing the same moment (card 15c, Design's
+ * Stub's light falls on a laptop, a tablet and a phone showing the same moment (card 15c, Design's
  * `home-15c/preview.html`): one picture (`#hm-pic`) clipped into each screen, a progress bar per device (`.hm-prog`, the
  * same 6 s animation), the sync pill on the laptop, the chat bubble and three themed faces (the first two in voice).
  *
- * Card 15e (the owner's screenshot of 0.9.97.28): one cone of light from Glowbeam's lamp (`LAMP`) whose glow falls on
+ * Card 15e (the owner's screenshot of 0.9.97.28): one cone of light from Stub's lamp (`LAMP`) whose glow falls on
  * all three screens, each with a soft lit sheen, the nearest (the laptop) brightest; no slab and no hard edge: the cone
  * is blurred, fades with distance from the lamp and is faded out at the art's edges by a mask (`#hm-fade`), so it may
  * spill a little past the art's box (`overflow: visible`) without ever ending in a line. The devices stand in one row
  * on one line with even gaps (`GAP`), nothing covers another; the faces and the bubble sit on a row under them, the
  * faces from the laptop's left edge, the bubble ending at the phone's right edge. The view box is the drawn content's
- * box (Glowbeam's box at x 0, the phone's right edge at `W`), so the page's margins measure the art itself.
+ * box (Stub's box at x 0, the phone's right edge at `W`), so the page's margins measure the art itself.
  */
 const DEV_X = 185; // the device row's left edge (the laptop's base)
 const DEV_Y = 8;
@@ -129,13 +129,24 @@ const DEV_K = 1.3; // the device drawings' scale (15c's devices × 1.3)
 const GAP = 16; // between the laptop's base, the tablet and the phone, in the drawings' units
 const ROW_Y = 272; // the faces + bubble row
 const ART_W = 890; // the drawing's right edge (the phone's right edge)
-/** Card 15f: the view box starts where Glowbeam's drawing starts (its 197.6 grid has 25 units of air on the left), so
- *  the page's margins measure the drawn art and no empty band sits left of Glowbeam. */
+/** Card 15f: the view box starts where Stub's drawing starts (its 197.6 grid has 25 units of air on the left), so
+ *  the page's margins measure the drawn art and no empty band sits left of Stub. */
 const VIEW_X = 25;
 const ART_H = 314;
-/** Glowbeam's box (the costume's 197.6 grid, 175 units) and its lamp, the tip the light comes from. */
+/** The mascot's box (the costume's 197.6 grid, 175 units) and the light's source: Stub's usher torch lens (card NP3,
+ *  Design's MASCOT3 `LAMP_FRACTION`; every costume holds the torch in the same place). */
 const GLOW = { x: 0, y: 45.3, size: 175 };
-const LAMP = { x: GLOW.x + 0.597 * GLOW.size, y: GLOW.y + 0.605 * GLOW.size };
+const LAMP = { x: GLOW.x + 0.908 * GLOW.size, y: GLOW.y + 0.561 * GLOW.size };
+/**
+ * The cone of light (card NP3): Stub's torch sits close to the laptop, so the cone's edges are drawn from a point
+ * `BEAM_BACK` units behind the lens (up 1.3, down 1.4 per unit) and cut at the lens: it starts there as a short soft
+ * edge (blurred, behind Stub) and is already wide enough to light all three screens.
+ */
+const BEAM_BACK = 80;
+function beamPath(): string {
+  const at = (dx: number, k: number) => `${LAMP.x + dx} ${(LAMP.y + k * (dx + BEAM_BACK)).toFixed(1)}`;
+  return `M${at(0, -1.3)} L${at(1000, -1.3)} L${at(1000, 1.4)} L${at(0, 1.4)} Z`;
+}
 function scene(): string {
   const [a, b, c] = artFaces();
   const face = (x: number, id: string | undefined, voice: boolean) =>
@@ -169,7 +180,7 @@ function scene(): string {
       <clipPath id="hm-face"><circle r="15"/></clipPath>
     </defs>
     <g class="hm-light" mask="url(#hm-fade)">
-      <path class="hm-beam" d="M${LAMP.x} ${LAMP.y} L${LAMP.x + 1000} ${LAMP.y - 1300} L${LAMP.x + 1000} ${LAMP.y + 900} Z" fill="url(#hm-light)" filter="url(#hm-soft)"/>
+      <path class="hm-beam" d="${beamPath()}" fill="url(#hm-light)" filter="url(#hm-soft)"/>
     </g>
     <g class="hm-devices" transform="translate(${DEV_X} ${DEV_Y}) scale(${DEV_K})">
     <g class="hm-device" data-device="laptop" transform="translate(18 0)">
@@ -211,9 +222,9 @@ function scene(): string {
 }
 
 /**
- * Card 15d: the art's Glowbeam wears the shown theme's costume: the Glowbeam group (body + hat / glasses, Design's
+ * Card 15d: the art's Stub wears the shown theme's costume: the Stub group (body + hat / glasses, Design's
  * `docs/internal/design/themes/`, the 64 grid at `translate(26 58) scale(2.6)`) of `/themes/<theme>-maskot.svg`,
- * without the theme's canvas props (moon, popcorn…). Until it arrives (or if it fails) the plain happy Glowbeam shows.
+ * without the theme's canvas props (moon, popcorn…). Until it arrives (or if it fails) the plain happy Stub shows.
  */
 const GLOW_GROUP = '<g transform="translate(26 58) scale(2.6)">';
 const costumes = new Map<string, Promise<string | null>>();
@@ -228,7 +239,7 @@ function costume(theme: string): Promise<string | null> {
   }
   return found;
 }
-/** The Glowbeam group of a theme mascot, its ids made unique for the page. */
+/** The Stub group of a theme mascot, its ids made unique for the page. */
 function glowGroup(svg: string, theme: string): string | null {
   const start = svg.indexOf(GLOW_GROUP);
   if (start < 0) return null;
@@ -243,15 +254,15 @@ function glowGroup(svg: string, theme: string): string | null {
   return null;
 }
 let glowTicket = 0;
-function placeGlowbeam(app: HTMLElement): void {
+function placeMascot(app: HTMLElement): void {
   const scene = app.querySelector('.hm-scene');
   if (!scene) return;
   const theme = document.documentElement.dataset.theme || 'gece';
   const ticket = ++glowTicket;
   if (!scene.querySelector('.hm-glow')) {
-    const glow = createMascot(document, { mood: 'happy' });
+    const glow = createMascot(document, { mood: 'happy', torch: true });
     glow.classList.add('hm-glow');
-    // The plain Glowbeam in the costume box's place (its 240 canvas inside the 197.6 grid, 15d's numbers × size / 185.3).
+    // The plain Stub (with its torch) in the costume box's place (its 240 canvas inside the 197.6 grid, 15d's numbers × size / 185.3).
     const f = GLOW.size / 185.3;
     for (const [k, v] of Object.entries({ x: GLOW.x + 14.6 * f, y: GLOW.y + 34.1 * f, width: 156 * f, height: 156 * f })) glow.setAttribute(k, String(v));
     scene.append(glow);
@@ -321,9 +332,9 @@ export function renderHome(app: HTMLElement): void {
       <p class="hm-help"><span data-h="help"></span> <a id="hm-help" data-h="helpGo"></a></p>
     </section>
   `;
-  // Glowbeam at the source of the light, in the art's own coordinates (card 15d: in the shown theme's costume).
-  placeGlowbeam(app);
-  window.addEventListener('themechange', () => placeGlowbeam(app));
+  // Stub at the source of the light, in the art's own coordinates (card 15d: in the shown theme's costume).
+  placeMascot(app);
+  window.addEventListener('themechange', () => placeMascot(app));
   const draw = () => {
     for (const node of app.querySelectorAll<HTMLElement>('[data-h]')) node.textContent = h(node.dataset.h as TextKey);
     for (const node of app.querySelectorAll<SVGTextElement>('[data-art]')) node.textContent = h(node.dataset.art as TextKey);
