@@ -16,6 +16,12 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.116 — 10 Nov
+- The Matinee theme is calmer: warmer, softer paper instead of near-white cards, and the video sits in a framed screen
+  (a darker mat, a thin dark frame, a warm deep-brown screen) instead of a black slab on light paper. Fullscreen stays
+  black.
+- Opening a game right after you enter a room no longer swallows your first click on the game's buttons.
+
 ### 0.9.97.114 — 10 Nov
 - When a table opens in the video's place while the video plays, the video pauses for everyone, so nobody misses the
   film under the game. A short note says "Video paused for the game"; press play when you want it again. (With a
