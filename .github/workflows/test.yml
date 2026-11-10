@@ -173,6 +173,10 @@ jobs:
       - name: Theme contrast (WCAG AA)
         run: node scripts/harness/contrast/run.cjs http://localhost:8787
 
+      # Card FONT1: the Font setting (only the picked font downloads, Turkish letters, kept after a reload, Test Lab).
+      - name: Font setting
+        run: node scripts/harness/fonts/run.cjs http://localhost:8787
+
       # Card DL: the 🐞 Test Lab (drawer, command box, status, log, bug text) and that with it off nothing of it loads.
       - name: Test Lab
         run: |

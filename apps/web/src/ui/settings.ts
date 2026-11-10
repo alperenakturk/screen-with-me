@@ -6,6 +6,7 @@ import { renderThemeSetting } from '../themes.ts';
 import { load, save } from '../storage.ts';
 import { RAIL_PIN_EVENT } from './fullscreen.ts';
 import { AUTO_INVITE_KEY, autoInviteOn } from './invite-option.ts';
+import { applyFont, currentFont, FONTS, type FontId } from '../fonts.ts';
 import { previewSound, setSoundVolume, setSoundsOn, soundVolume, soundsOn } from '../sound.ts';
 
 export interface Options {
@@ -126,6 +127,15 @@ export function createSettingsPanel(
     volumeText.textContent = `${volume.value}%`;
   });
   volume.addEventListener('change', previewSound);
+
+  // Card FONT1: the site's font (only the picked one is downloaded; the device's own font downloads nothing).
+  const font = root.querySelector<HTMLSelectElement>('#opt-font');
+  if (font) {
+    font.replaceChildren(...FONTS.map((id) => el('option', { value: id }, t(`font.${id}` as const))));
+    font.value = currentFont();
+    font.addEventListener('change', () => applyFont(font.value as FontId));
+    addEventListener('fontchange', () => (font.value = currentFont()));
+  }
 
   return {
     options,

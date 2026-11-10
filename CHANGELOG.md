@@ -16,6 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.100 — 10 Nov
+- A new "Font" setting (⚙️ → My screen): keep your device's own font or pick one of six: Sidelit, Poster, Polished,
+  Readable, Rounded or Easy reading. Only the font you pick is downloaded, and every Turkish letter is in each.
+- The home page's big title now really uses the logo's typeface (it fell back to the device's font before).
+
 ### 0.9.97.98 — 10 Nov
 - Easier to read in every theme: on the picture themes the home page's text now sits on a calm, darker area, so the
   picture behind it never hides a word (the Ocean Liner theme's light sky was the worst).
