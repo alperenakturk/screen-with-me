@@ -1864,6 +1864,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   concurrency group runs main's runs one at a time and never cancels one, so no deploy restarts objects under a shard.
   `tag` needs `deploy` and `live-e2e`; `tag-live.mjs` `wentLive` counts a commit live when its deploy and every shard
   passed (older runs had no shards).
+  **QA1 part 4 (canary rooms, `scripts/e2e/canary.mjs`):** idle room connections that say hello and send the free
+  keepalive; the server never closes one by itself, so a close not ours means objects were restarted. Of the last 30
+  live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once
+  10–12 min after it. `wait-live.mjs` now also waits for 60 s with no canary drop (at most 4 min more, then a warning);
+  `run.mjs` keeps 2 canaries open beside the live suite and, when a file fails, prints whether the server dropped
+  canaries meanwhile ("objects were restarting") or not ("the cause is likely the code or the test"). Results are not
+  changed: a file that fails its retry is red either way. `host.mjs` / `modes.mjs` timeouts name the socket's close code
+  and the last messages.
   **First look (QA1 part 3, `scripts/shots.cjs`):** screenshots of every screen a change touched at laptop 1366×768,
   desktop 1920×1080, upright tablet 820×1180 and phone (iPhone 13), EN by default (`--langs en,tr`), into `.shots/<branch>`
   (git-ignored) with `index.md` (what each picture is) and `REVIEW.md` (the brief for a fresh reviewer subagent: CLAUDE.md
@@ -1879,9 +1887,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   click at its middle; the placement already in use is skipped) and, on a computer, hover / drag by the head / resize
   from the corner (in proportion) / double click back home. Three states at a time; ≈ 2.5 min headful under
   `HEADFUL=1 xvfb-run -a`. W's allowed placements are notes, not failures (1366 side panel open ≤ 48 px over the
-  video's edge, cinema mode's SPOT_HOME, the tablet keeping clear of the chat). Not in CI until its last finding is
-  fixed: the room's intro (`.swm-intro`, over `.player-wrap`) takes the first click on a game opened in its first
-  seconds ("?" of the first table does nothing).
+  video's edge, cinema mode's SPOT_HOME, the tablet keeping clear of the chat). Its findings so far: YouTube + cinema
+  put the head below the screen (W, .114) and the room's intro took the first click on a game (W, .116). In CI as the
+  `state-matrix` job (its own: `game-windows` + it would pass 10 min).
   **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
   for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose
