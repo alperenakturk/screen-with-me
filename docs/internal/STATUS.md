@@ -491,6 +491,22 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.118 (lane A: first-look fixes; fold into the next round).**
+- [ ] Y1. Phone and tablet, before joining voice: the 🎙 and 📷 buttons look plain (not red). Join voice and mute: now
+  🎙 turns red.
+- [ ] Y2. Tablet upright: the chat box's ➤ sits fully inside the box's rounded border.
+- [ ] Y3. Laptop: press T on a playing video (cinema mode). The hint says "press T or Esc to leave"; a small
+  "✕ Leave cinema mode · T" button sits bottom-left; clicking it leaves cinema mode.
+- [ ] Y4. Invite window in the light Matinee theme: the WhatsApp button is the theme's plain button with a green
+  WhatsApp sign, not a bright green block.
+- [ ] Y5. Play one video with nothing queued: "Next ⏭" (tablet, above the video) is greyed but its frame and label are
+  still clearly visible.
+- [ ] Y6. Phone, empty room: a small sleepy Stub sits in the corner of the "No video yet" box; the chat line keeps 👋
+  next to its last word.
+- [ ] Y7. Tablet upright, a new room: the Queue / People tabs show above the queue card. Phone, alone in a room:
+  "Run a sync test" is clearly readable. An empty chat has no "Show activity" button until something happens. In
+  Turkish the empty room's step 1 says "Arkadaşlarını davet et".
+
 **0.9.97.116 (MATINEE2 + the intro's first click; fold into the next round).**
 - [ ] M1. 🎨 → Matinee: the page and cards are a calm warm paper (nothing near-white); the video sits in a framed screen
   (darker mat, thin dark frame, warm deep-brown screen), in an empty room and while a film plays. Fullscreen is black.

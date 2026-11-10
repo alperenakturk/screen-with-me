@@ -111,6 +111,22 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
   await page.waitForSelector('.room');
   await page.waitForTimeout(1500);
   check(await cinema(page), 'a reload keeps cinema mode (this tab)');
+  // YT5 batch: a visible way out for a mouse or a touch, in the page's corner, never over the video.
+  const exitBox = await rect(page, '#cinema-exit');
+  // …and clear of the chat lines that come in under the video (they were at the bottom right).
+  await friend.fill('#chat-input', 'Another one');
+  await friend.keyboard.press('Enter');
+  await page.waitForTimeout(800);
+  const lastToast = await rect(page, '.toasts .toast:last-child');
+  check(!!lastToast && !!exitBox && (lastToast.x >= exitBox.r || lastToast.r <= exitBox.x || lastToast.y >= exitBox.b || lastToast.b <= exitBox.y), 'the button and a chat line under the video do not overlap', JSON.stringify({ lastToast, exitBox }));
+  const videoBox = await rect(page, '.player');
+  check(!!exitBox && exitBox.w > 0 && (exitBox.y >= videoBox.b || exitBox.x >= videoBox.r), 'the "Leave cinema mode" button shows, clear of the video', JSON.stringify({ exitBox, videoBox }));
+  await page.click('#cinema-exit');
+  await page.waitForTimeout(300);
+  check(!(await cinema(page)) && !(await visible(page, '#cinema-exit')), 'pressing it leaves cinema mode and it goes');
+  await page.keyboard.press('t');
+  await page.waitForTimeout(300);
+  check(await cinema(page), 'T enters it again');
   await page.keyboard.press('t');
   await page.waitForTimeout(300);
   check(!(await cinema(page)), 'T leaves it');

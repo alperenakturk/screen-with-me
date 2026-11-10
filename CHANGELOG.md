@@ -16,6 +16,19 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.118 — 10 Nov
+- Before you join voice, the microphone and camera buttons look plain instead of red; red now only means "off" while
+  you are in voice.
+- Cinema mode has a visible way out: a quiet "✕ Leave cinema mode · T" button in the bottom-left corner, and the hint
+  now says "press T or Esc to leave".
+- The invite window's WhatsApp button fits each theme: WhatsApp's green sign on the theme's own button.
+- "Next ⏭" with nothing queued stays readable (greyed, but its frame and label still show).
+- On an upright tablet the chat box's send arrow sits inside the box; on a phone the empty room shows a small Stub and
+  the empty-chat line keeps its 👋 with the last word.
+- Smaller things: an upright tablet shows the Queue / People heading from the start; "Run a sync test" alone in a room is
+  readable instead of faded; "Show activity" appears only once there is activity; the invite window's first row lines
+  up with the rest; Turkish step 1 says "Arkadaşlarını davet et".
+
 ### 0.9.97.117 — 10 Nov
 - Games follow the room's theme: the "How to play" cards, the tables' "?", the dice and the turn ring take the theme's
   colours (a light theme gets a light card), and the games hall is solid on the picture themes.
