@@ -86,9 +86,14 @@ function collect() {
       }
     }
     if (clipped) continue;
-    // Covered by something on top (a dialog's backdrop, a window): not what the person reads now.
-    const hit = document.elementFromPoint(Math.min(vw - 1, (r.left + r.right) / 2), Math.min(vh - 1, (r.top + r.bottom) / 2));
-    if (hit && hit !== el && !el.contains(hit) && !hit.contains(el)) continue;
+    // Covered by something on top (a dialog's backdrop, a window), even in part: not what the person reads now. Five
+    // points along the line (a window may cover only its end, then its background pixels would be the window's).
+    const y = Math.min(vh - 1, (r.top + r.bottom) / 2);
+    const covered = [0.05, 0.25, 0.5, 0.75, 0.95].some((f) => {
+      const hit = document.elementFromPoint(Math.min(vw - 1, Math.max(0, r.left + (r.right - r.left) * f)), y);
+      return hit && hit !== el && !el.contains(hit) && !hit.contains(el);
+    });
+    if (covered) continue;
     const color = parse(s.webkitTextFillColor && s.webkitTextFillColor !== s.color && !/rgba\(0, 0, 0, 0\)/.test(s.webkitTextFillColor) ? s.webkitTextFillColor : s.color);
     if (!color) continue;
     seen.add(el);

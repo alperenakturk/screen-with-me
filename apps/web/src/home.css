@@ -680,3 +680,8 @@ html.phone.sideways .hm-btn {
   border-radius: 14px;
   background: var(--hero-scrim, none);
 }
+
+/* The help line's link sits on Sunset's sun glow at the foot of a phone's page (3.7:1): its own backdrop everywhere. */
+.hm-how > .hm-help {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+}
