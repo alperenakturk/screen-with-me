@@ -1256,7 +1256,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   room; Undo is offered right after). The room taps its messages (`debugTap('in' | 'out', message)` in `room.ts` `send` /
   `handleMessage`) and registers `room` status lines (clock offset `ServerClock.offsetMs`, playback, members, host);
   `voice` / `live` register their peers' states (`P2pVoice.peerStates()`, `LiveP2p.peerStates()`, read only). The log
-  keeps 2 min / 600 lines, `redact` drops browser ids, IP hashes, tokens and `data:` images. **UI:** 🐞 bottom left or
+  keeps 2 min / 600 lines, `redact` drops browser ids, IP hashes, tokens and `data:` images. **UI:** 🐞 bottom left (LABFAB: in a phone's room
+  upright there is no floating 🐞, ⋯ More / the Shorts ⋯ has a `.ph-lab-tile` that clicks it and ⋯ is ringed red on
+  errors; held sideways with a video a 34 px 🐞 sits bottom right, beside the video or at the rail's foot; rules in
+  `test-lab.css`, `labTile` in `phone-room.ts`, checks in the test-lab harness) or
   Ctrl+Shift+D opens a drawer on the right (`--lab-w`, the page makes room with `html.lab-open` so it never covers the
   rail; in real fullscreen it moves into the fullscreen element on the left; on a phone a bottom sheet); tabs 📊 Status
   (card 12's facts + hook lines + a 60 s drift graph + switches + errors), 👥 🎬 🎮 🧪 🖥 (the commands registered for

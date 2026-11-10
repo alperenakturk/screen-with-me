@@ -191,6 +191,47 @@ async function enterRoom(page, room, name = 'Robin') {
     return { ok: r.left >= 0 && r.right <= innerWidth + 1 && r.top > 0 && r.bottom <= innerHeight + 1, wide: document.documentElement.scrollWidth <= innerWidth };
   });
   check(fits.ok && fits.wide, 'iPhone 13: a bottom sheet that fits, no sideways scroll', JSON.stringify(fits));
+
+  // LABFAB: in the room an upright phone has no floating 🐞 (it covered the player row, chat names and the Shorts
+  // video): ⋯ More has a 🐞 tile that opens the drawer, ⋯ is ringed red on errors; held sideways a small 🐞 waits in
+  // the bottom right corner, clear of the video, its own bar and the rail (also in fullscreen).
+  await enterRoom(pp, `lab-fab-${Date.now().toString(36)}`, 'Robin');
+  await pp.evaluate(() => { document.querySelector('.first-tip, .tip-bubble')?.remove(); });
+  check(!(await shown(pp, '.debug-fab')), 'iPhone 13 room: no floating 🐞 while upright');
+  await pp.evaluate(() => window.dispatchEvent(new Event('swm-debug-error')));
+  check(await pp.evaluate(() => getComputedStyle(document.querySelector('#strip-more')).boxShadow.includes('229, 72, 77')), 'iPhone 13 room: ⋯ is ringed red while the lab has errors');
+  await pp.tap('#strip-more');
+  const labTile = await until(() => pp.$('.ph-sheet .ph-lab-tile'));
+  check(!!labTile && (await labTile.evaluate((b) => b.classList.contains('has-error'))), 'iPhone 13 room: ⋯ More has a red-ringed 🐞 Test Lab tile');
+  if (labTile) await labTile.tap();
+  check(!!(await until(() => shown(pp, '.lab-drawer'))), 'iPhone 13 room: the tile opens the drawer');
+  await pp.evaluate(() => document.querySelector('.debug-fab').click());
+  await until(async () => !(await shown(pp, '.lab-drawer')));
+  const clearOfAll = () => pp.evaluate(() => {
+    const f = document.querySelector('.debug-fab');
+    const a = f.getBoundingClientRect();
+    if (a.width < 2) return 'hidden';
+    const hit = [...document.querySelectorAll('button, a, input, video, iframe, .player')].filter((e) => {
+      if (e === f) return false;
+      const b = e.getBoundingClientRect();
+      const cs = getComputedStyle(e);
+      if (b.width < 2 || b.height < 2 || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+      return !(b.right <= a.left || b.left >= a.right || b.bottom <= a.top || b.top >= a.bottom);
+    });
+    return hit.length ? hit.map((e) => e.id || e.className || e.tagName).join(', ') : 'clear';
+  });
+  await pp.setViewportSize({ width: 664, height: 390 });
+  await pp.waitForTimeout(800);
+  check((await clearOfAll()) === 'hidden', 'iPhone 13 sideways, no video: no floating 🐞 (⋯ shows there)', await clearOfAll());
+  await pp.evaluate(() => window.__swmLab.run('friends.add')); // the sync test needs a second person
+  await until(() => pp.evaluate(() => document.querySelectorAll('#voice-people .voice-face').length > 1));
+  await pp.evaluate(() => document.querySelector('#sync-test')?.click());
+  await until(() => pp.evaluate(() => !!document.querySelector('.room.has-item')));
+  await pp.waitForTimeout(800);
+  check((await clearOfAll()) === 'clear', 'iPhone 13 sideways: a small 🐞 shows, clear of everything', await clearOfAll());
+  await pp.evaluate(() => document.querySelector('#fullscreen')?.click());
+  await pp.waitForTimeout(800);
+  check((await clearOfAll()) === 'clear', 'iPhone 13 sideways fullscreen: 🐞 clear of the video and the rail', await clearOfAll());
   await phone.close();
 
   // ---- The other language (LABTR) ----

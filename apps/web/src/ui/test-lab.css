@@ -97,6 +97,27 @@ html.ph-shorts .debug-fab {
   bottom: calc(max(12px, env(safe-area-inset-bottom)) + 72px);
 }
 
+/* LABFAB: an upright phone in the room has no floating 🐞 (it covered the player row, chat names and the Shorts video):
+   ⋯ More has a "🐞 Test Lab" tile, and ⋯ gets a red ring while there are errors. Held sideways with a video (no ⋯
+   there) a small 🐞 waits in the bottom right corner: beside the video, at the rail's free foot in fullscreen. */
+html.ph-room:not(.sideways) .debug-fab,
+html.ph-room:not(:has(.room.has-item)) .debug-fab,
+html.ph-shorts .debug-fab {
+  display: none;
+}
+html.ph-room.sideways .debug-fab {
+  left: auto;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+}
+html:is(.ph-room, .ph-shorts):has(.debug-fab.has-error) :is(#strip-more, #ph-shorts-more),
+.ph-lab-tile.has-error {
+  box-shadow: 0 0 0 3px rgb(229 72 77 / 55%);
+}
+
 /* On an upright tablet the bottom left is the message box: 🐞 waits bottom right, over the queue column. */
 html.tablet-up .debug-fab {
   left: auto;

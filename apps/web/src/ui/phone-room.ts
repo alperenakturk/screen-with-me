@@ -256,6 +256,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
           closeSheet();
           deps.openSettings('view');
         }),
+        ...labTile(),
         // R9: no "Language" tile here any more: the profile (one tile up) has English / Türkçe, so it was there twice.
       ),
     );
@@ -426,6 +427,20 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     });
   }
 
+  // LABFAB: with the Test Lab on, an upright phone has no floating 🐞 in the room (it sat over the player, chat names or
+  // the Shorts video): ⋯ gets this tile instead, red-ringed like 🐞 while there are errors.
+  function labTile(): HTMLElement[] {
+    const fab = $<HTMLButtonElement>('.debug-fab');
+    if (!fab) return [];
+    const button = tile('🐞', t('phone.more.lab'), () => {
+      closeSheet();
+      fab.click();
+    });
+    button.classList.add('ph-lab-tile');
+    button.classList.toggle('has-error', fab.classList.contains('has-error'));
+    return [button];
+  }
+
   function openShortsMore(): void {
     const tiles: HTMLElement[] = [];
     if (!$('#shorts-voice')?.hidden) {
@@ -449,6 +464,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
         deps.openSettings();
       }),
       tile('↩', t('shorts.roomView'), press('#shorts-exit')),
+      ...labTile(),
     );
     openSheet({ name: 'shorts-more', nodes: [el('div', { class: 'ph-grid' }, ...tiles)] });
   }
