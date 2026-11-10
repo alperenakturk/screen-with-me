@@ -3,7 +3,7 @@
 // game's real save is copied aside, and "Restore my real saves" puts every copy back. Nothing here talks to the server.
 // With the lab off, `debugHooks.register` only stores the factory; it runs only while the lab is open.
 
-import { ROOM_GAME_KINDS, type ClientMessage, type RoomGameKind } from '@swm/shared/protocol';
+import { ROOM_GAME_KINDS, type ClientMessage, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { SOLO_KINDS, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { debugHooks, type LabCommand, type LabText } from '../debug-lab.ts';
 import { load, save } from '../storage.ts';
@@ -76,7 +76,16 @@ const SOLO_NAMES: Record<SoloKind, { en: string; tr: string }> = {
 const IN_ROOM = { en: 'in a room', tr: 'odada' };
 
 /** The hall's commands, registered once by the games stage. */
-export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSolo: (kind: SoloKind) => Promise<void>, send: (message: ClientMessage) => unknown): () => void {
+/** LAB2: the tables a 🤖 friend can sit at (`lab-table-friend.ts`, loaded only when one sits down). */
+const FRIEND_KINDS: readonly RoomGameKind[] = ['quiz', 'draw', 'poker', 'duel', 'sea'];
+let friendsAtTables = 0;
+
+export function registerGamesLab(
+  openTable: (kind: RoomGameKind) => void,
+  openSolo: (kind: SoloKind) => Promise<void>,
+  send: (message: ClientMessage) => unknown,
+  table: () => RoomGame | null = () => null,
+): () => void {
   return debugHooks.register('games', () => {
     const commands: LabCommand[] = [
       ...ROOM_GAME_KINDS.map((kind): LabCommand => ({
@@ -133,6 +142,62 @@ export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSo
         run: () => void send({ t: 'lab', op: 'tipjar' }),
       },
       {
+        id: 'games.friend',
+        title: { en: 'A 🤖 friend sits at this table', tr: 'Bu masaya 🤖 bir arkadaş otursun' },
+        help: {
+          en: 'A pretend player joins the open table and plays along: answers the quiz, draws and guesses, checks or calls in Last Heart, presses Ready and guesses words in the Duel, places a fleet and shoots in Sea Battle. It never presses Start: you do. Classics: play Stub instead. Undo: it leaves.',
+          tr: 'Açık masaya sahte bir oyuncu oturur ve oynar: bilgi yarışmasını cevaplar, çizer ve tahmin eder, Son Kalp’te bekler ya da görür, Düello’da Hazır’a basıp kelime dener, Amiral Battı’da filosunu dizip atış yapar. Başlat’a hiç basmaz: sen basarsın. Klasikler: onun yerine Stub’a karşı oyna. Geri al: kalkar.',
+        },
+        tab: 'games',
+        where: { en: 'at a Quiz, Draw & Guess, Last Heart, Duel or Sea Battle table', tr: 'Bilgi yarışması, Çiz-Bil, Son Kalp, Düello ya da Amiral Battı masasında' },
+        available: () => {
+          const open = table();
+          if (!open) return { en: 'open a table first', tr: 'önce bir masa aç' };
+          return FRIEND_KINDS.includes(open.kind) || { en: 'at the Classics play Stub instead (Easy / Medium)', tr: 'Klasiklerde onun yerine Stub’a karşı oyna (Kolay / Orta)' };
+        },
+        run: async () => {
+          const open = table()!;
+          const m = await import('./lab-table-friend.ts');
+          if (!m.canSit(open.kind)) return '';
+          const name = m.sitFriend(open.kind, open.id);
+          friendsAtTables = m.tableFriends().length;
+          return name;
+        },
+        undo: async () => {
+          const m = await import('./lab-table-friend.ts');
+          m.leaveFriends();
+          friendsAtTables = 0;
+        },
+      },
+      {
+        // LAB2 (hand test G10): a friend's network drops in the middle of a game.
+        id: 'games.friendQuiet',
+        title: { en: 'The 🤖 friend loses the connection for 2 minutes', tr: '🤖 arkadaşın bağlantısı 2 dakika kopsun' },
+        help: {
+          en: 'The friend at the table sends nothing for 2 minutes, as if its phone lost data: after about 1.5 minutes the table shows it offline, the game goes on without it; then it comes back.',
+          tr: 'Masadaki arkadaş 2 dakika hiçbir şey göndermez, telefonunun interneti gitmiş gibi: yaklaşık 1,5 dakika sonra masa onu çevrimdışı gösterir, oyun onsuz sürer; sonra geri gelir.',
+        },
+        tab: 'games',
+        available: () => friendsAtTables > 0 || { en: 'no 🤖 friend sits at a table', tr: 'masada oturan 🤖 arkadaş yok' },
+        run: async () => {
+          const m = await import('./lab-table-friend.ts');
+          return { en: `${m.quietFriends(120_000)} quiet for 2 min`, tr: `${m.quietFriends(120_000)} kişi 2 dk sessiz` };
+        },
+      },
+      {
+        id: 'games.friendLeave',
+        title: { en: 'The 🤖 friends leave the tables', tr: '🤖 arkadaşlar masalardan kalksın' },
+        help: { en: 'Every pretend player at a table leaves (as if they closed their tab).', tr: 'Masadaki bütün sahte oyuncular kalkar (sekmelerini kapatmış gibi).' },
+        tab: 'games',
+        available: () => friendsAtTables > 0 || { en: 'no 🤖 friend sits at a table', tr: 'masada oturan 🤖 arkadaş yok' },
+        run: async () => {
+          const m = await import('./lab-table-friend.ts');
+          const n = m.leaveFriends();
+          friendsAtTables = 0;
+          return { en: `${n} left`, tr: `${n} kişi kalktı` };
+        },
+      },
+      {
         id: 'games.restore',
         title: { en: 'Restore my real saves', tr: 'Gerçek kayıtlarımı geri getir' },
         help: { en: 'Puts back the side-game saves the lab kept aside before its first cheat: my real coins and plants come back.', tr: 'Lab\'ın ilk hileden önce kenara ayırdığı yan oyun kayıtlarını geri koyar: gerçek jetonlarım ve bitkilerim geri gelir.' },
@@ -146,6 +211,7 @@ export function registerGamesLab(openTable: (kind: RoomGameKind) => void, openSo
       status: (): [LabText, LabText][] => [
         [{ en: 'Side-game time', tr: 'Yan oyun zamanı' }, { en: `×${labClock.speed}${labClock.playing ? ' · pretending the film plays' : ''}`, tr: `×${labClock.speed}${labClock.playing ? ' · film oynuyormuş gibi' : ''}` }],
         [{ en: 'Saves kept aside', tr: 'Kenara ayrılan kayıtlar' }, sandboxed().join(', ') || { en: 'none', tr: 'yok' }],
+        [{ en: '🤖 friends at tables', tr: 'Masadaki 🤖 arkadaşlar' }, String(friendsAtTables)],
       ],
     };
   });

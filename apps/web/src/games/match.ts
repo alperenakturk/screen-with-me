@@ -910,17 +910,21 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
   // Test Lab (DL3b): a ready-made position, set by the server only when it runs as a local lab server.
+  const BOARD_TR: Record<string, string> = { chess: 'satranç', dama: 'dama', backgammon: 'tavla', reversi: 'reversi' };
   const offLab = debugHooks.register('table.classics', () => ({
     commands: [
       quiet.command('classics', { en: 'Classics', tr: 'Klasikler' }),
-      ...Object.values(LAB_POSITIONS).flat().map((position) => ({
+      ...Object.entries(LAB_POSITIONS).flatMap(([board, names]) => names.map((position) => ({
         id: `classics.position.${position}`,
         title: { en: `Classics: set the "${position}" position`, tr: `Klasikler: "${position}" dizilişini kur` },
         help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel lab sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
         tab: 'games' as const,
         where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
+        // LAB2: a position belongs to its board; say so instead of sending a message the server ignores.
+        available: () =>
+          (mySeat() !== -1 && kind === board) || { en: `pick ${board} and take a seat first`, tr: `önce ${BOARD_TR[board] ?? board} seç ve bir koltuğa otur` },
         run: () => send({ t: 'lab', position }),
-      })),
+      }))),
       // CL2: the picker → board flow in one step (the same path as a press on a card).
       { id: 'classics.picker', title: { en: 'Classics: show the picker', tr: 'Klasikler: oyun seçiciyi göster' }, help: { en: 'As "Change game" in the head (between games).', tr: 'Başlıktaki "Oyunu değiştir" gibi (iki oyun arasında).' }, tab: 'games' as const, where: { en: 'at a Classics table', tr: 'Klasikler masasında' }, run: () => shelfButton.click() },
       ...SHELF.map((box) => ({
