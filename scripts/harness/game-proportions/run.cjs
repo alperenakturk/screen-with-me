@@ -38,6 +38,12 @@ const GAMES = {
   snack: { solo: 'snack' },
   garden: { solo: 'garden' },
   word: { solo: 'word' },
+  // A game going, with the Test Lab's 🤖 friend at the table (it answers, draws, bets, races, shoots).
+  quizPlay: { table: 'quiz', play: true },
+  drawPlay: { table: 'draw', play: true },
+  pokerPlay: { table: 'poker', play: true },
+  duelPlay: { table: 'duel', play: true },
+  seaPlay: { table: 'sea', play: true },
 };
 const MODES = ['stage', 'float'];
 
@@ -166,6 +172,22 @@ async function placeIn(page, mode) {
       }, null, { timeout: 12000 }).catch(() => {});
       await wait(800);
       await putBoard(page, g);
+      if (g.play) {
+        // The 🤖 friend sits, then I start (Quiz, Draw & Guess, Last Heart) or press Ready (Duel, Sea Battle).
+        await page.waitForFunction(() => !!window.__swmLab.list?.().some((c) => c.id === 'games.friend'), null, { timeout: 8000 }).catch(() => {});
+        await run('games.friend');
+        await page.waitForFunction(() => /🤖/.test(document.querySelector('#game-stage .game-fit')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+        for (let i = 0; i < 6; i++) {
+          const pressed = await page.evaluate(() => {
+            const b = [...document.querySelectorAll('#game-stage .game-fit button')].find((x) => !x.disabled && x.offsetWidth && /start the game|^\s*ready|i'm ready/i.test(x.textContent));
+            b?.click();
+            return !!b;
+          });
+          if (pressed) break;
+          await wait(800);
+        }
+        await wait(g.table === 'draw' ? 4500 : 3000);
+      }
       for (const mode of pick('MODES', MODES)) {
         const label = `${size}/${game}/${mode}`;
         if (!(await placeIn(page, mode))) {

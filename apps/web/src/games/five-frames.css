@@ -146,8 +146,8 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-board { grid-area: board; align-self: center; }
   #game-stage .ff:not(.duel) .ff-result { grid-area: result; }
   #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align-self: end; }
-  #game-stage .ff:not(.duel) .ff-row { height: 50px; }
-  #game-stage .ff:not(.duel) .ff-cells { grid-template-columns: repeat(5, 44px); }
+  #game-stage .ff:not(.duel) .ff-row { height: 46px; }
+  #game-stage .ff:not(.duel) .ff-cells { grid-template-columns: repeat(5, 42px); }
   #game-stage .ff:not(.duel) .ff-cell { font-size: 22px; }
   #game-stage .ff:not(.duel) .ff-key { min-height: 48px; font-size: 18px; }
 }
