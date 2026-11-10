@@ -16,6 +16,12 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.121 — 10 Nov
+- On a computer, Snack Bar, Window Garden and Five Frames open in a window that lines up with the chat column: from its
+  top down to just above the message box, so no cut-off strip of chat shows around it and you can still type.
+- Dragging a game window by its top bar no longer stops halfway on a busy page, and a window you resized no longer
+  jumps back to where you last dropped it when you click its top bar.
+
 ### 0.9.97.118 — 10 Nov
 - Before you join voice, the microphone and camera buttons look plain instead of red; red now only means "off" while
   you are in voice.

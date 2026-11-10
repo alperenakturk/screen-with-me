@@ -491,6 +491,11 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.121 (lane W: the side game window lines up with the chat column; fold into the next round).**
+- [ ] W121. Laptop (1366 and a big screen): open Snack Bar from 🎮. Its window covers the chat column from the top
+  down to just above the message box (no strip of chat around it) and you can still type a message. Drag it by its
+  top bar, resize it from the corner, then double-click the top bar: it goes back to the column.
+
 **0.9.97.118 (lane A: first-look fixes; fold into the next round).**
 - [ ] Y1. Phone and tablet, before joining voice: the 🎙 and 📷 buttons look plain (not red). Join voice and mute: now
   🎙 turns red.
