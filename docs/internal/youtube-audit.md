@@ -139,7 +139,7 @@ new quota (90 %, the headroom covers counting gaps), the per-address share to 5 
 
 | Rule (Developer Policies / Terms / RMF) | What Sidelit does | Where | State |
 |---|---|---|---|
-| Show that YouTube is the source of API results (branding) | "Results from YouTube · YouTube Terms of Service" under every list of API results: search, Shorts search, Discover, More like this, channel | card Y1, `.yt-attrib` (`ui/search.ts`, `room.ts`), harness `yt-attrib` | ✅ (see gap 5 for the logo) |
+| Show that YouTube is the source of API results (branding) | "Results from YouTube · YouTube Terms of Service" under every list of API results: search, Shorts search, Discover, More like this, channel | card Y1, `.yt-attrib` (`ui/search.ts`, `room.ts`), harness `yt-attrib` | ✅ (text only, no logo: gap 5) |
 | Link the YouTube Terms of Service; users agree to them | the attribution line links them; our terms say "you agree to the YouTube Terms of Service" | `terms.html` (EN + TR) | ✅ |
 | Privacy policy: uses YouTube API Services, links Google's Privacy Policy, explains what is collected | "YouTube videos" + "YouTube search" sections; retention table | `privacy.html` | ✅ |
 | Cached non-authorized data ≤ 30 days, kept fresh | search / feed answers 24 h; Discover and channels per UTC day; a stored title ≤ 30 days (`titleAt`, `freshenTitles`) | card Y2, `youtube.ts` `cached` | ✅ |
@@ -174,9 +174,17 @@ new quota (90 %, the headroom covers counting gaps), the per-address share to 5 
    C) turn them off in YouTube fullscreen (chat only from 💬).
 4. **🟡 The own domain** (the form asks for the product URL and policy URLs; workers.dev works but looks temporary).
    ROADMAP §6.
-5. **🟢 YouTube logo in the attribution.** We say "Results from YouTube" in text; the branding guidelines prefer the
+5. **✅ YouTube logo in the attribution (decided: text only, see below).** We say "Results from YouTube" in text; the branding guidelines prefer the
    YouTube logo / "Developed with YouTube" mark next to results. *Fix:* add the official logo asset to `.yt-attrib`
    (from YouTube's brand resources, unchanged colours and clear space).
+   *Checked 10 Nov 2026 (YT5):* brand.youtube's logo and icon pages set a minimum height of **100 px** (digital) and a
+   clear space of the icon's triangle all round; the API branding guidelines require that minimum, a link to YouTube on
+   any logo, and that a logo is never the most prominent element on the page. A 100 px logo under a compact results
+   list would be the panel's biggest element, a smaller one breaks the minimum: the choice went to the owner (Planner).
+   *Decision (owner, 10 Nov 2026, A):* keep the text attribution ("Results from YouTube · YouTube Terms of Service",
+   linking to YouTube) under every list of API results and no logo, because of the 100 px minimum and the
+   not-most-prominent rule. Tell the auditor this if asked. The downloaded files are not in the repo (not used).
+   Files: brand.youtube → YouTube logo → download (full colour, white or #212121 text, red #FF0033; PNG / AI / EPS).
 6. **🟢 A written statement for the auditor about sync control** (we drive play / pause / seek / rate through the
    official IFrame API for synchronised group viewing). No code; it is in §2 point 7 already. Keep the screencast
    showing YouTube's own controls working.

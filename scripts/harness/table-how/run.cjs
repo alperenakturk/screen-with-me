@@ -30,11 +30,11 @@ const cards = (page) =>
   });
 const press = (page, sel) => page.evaluate((s) => document.querySelector(`#game-stage ${s}`)?.click(), sel);
 
-async function person(browser, opts, lang = 'en') {
+async function person(browser, opts, lang = 'en', more = {}) {
   const ctx = await browser.newContext(opts);
-  await ctx.addInitScript((lang) => {
-    for (const [k, v] of Object.entries({ lang, name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'opt:tableHow': '1' })) localStorage.setItem(k, v);
-  }, lang);
+  await ctx.addInitScript(([lang, more]) => {
+    for (const [k, v] of Object.entries({ lang, name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'opt:tableHow': '1', ...more })) localStorage.setItem(k, v);
+  }, [lang, more]);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -102,6 +102,50 @@ async function person(browser, opts, lang = 'en') {
     await ctx.close();
   }
   // Turkish: the cards speak the page's language.
+  // THEMEG (W's first look in Matinee): the cards, the tables' "?", the dice, the turn ring and the hall's UPDATED badge
+  // take the room theme's colours; the pink / blue turn ring stays for the X / O boards only.
+  {
+    const rgb = (c) => c.replace(/\s+/g, '');
+    const { ctx, page, run } = await person(browser, devices['iPhone 13'], 'en', { theme: 'matinee', 'classics:backgammon:howSeen': '1' });
+    await page.evaluate(() => document.querySelector('.swm-intro')?.remove());
+    await run('games.open.classics');
+    await until(() => page.evaluate(() => !!document.querySelector('#game-stage [data-board="backgammon"]')));
+    await press(page, '[data-board="backgammon"]');
+    await until(() => page.evaluate(() => !!document.querySelector('#game-stage .cl-bot-level')));
+    await page.evaluate(() => document.querySelector('#game-stage .cl-bot-level')?.click());
+    const roll = await until(() => page.evaluate(() => [...document.querySelectorAll('#game-stage .btn.primary')].find((b) => b.getBoundingClientRect().width > 0 && !b.disabled && /Roll/.test(b.textContent)) ? true : null), 8000);
+    if (roll) await page.evaluate(() => [...document.querySelectorAll('#game-stage .btn.primary')].find((b) => /Roll/.test(b.textContent)).click());
+    await until(() => page.evaluate(() => !!document.querySelector('#game-stage .bg-die') && !!document.querySelector('#game-stage .htp-head')));
+    const m = await page.evaluate(() => {
+      const root = getComputedStyle(document.documentElement);
+      const tok = (n) => { const d = document.createElement('i'); d.style.color = root.getPropertyValue(n); document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; };
+      const turn = document.querySelector('#game-stage .xox-player.turn');
+      const q = document.querySelector('#game-stage .htp-head');
+      return { text: tok('--text'), accent: tok('--accent'), die: getComputedStyle(document.querySelector('#game-stage .bg-dice') ?? document.body).color, ring: turn ? getComputedStyle(turn).borderTopColor : null, q: q ? getComputedStyle(q).color : null };
+    });
+    check(rgb(m.die) === rgb(m.text), 'Matinee phone: the backgammon dice are in the theme\'s text colour (not cream on cream)', m);
+    check(m.ring && rgb(m.ring) === rgb(m.accent), 'Matinee phone: backgammon rings the turn in the theme\'s accent, not the X mark\'s pink', m);
+    check(m.q && rgb(m.q) === rgb(m.text), 'Matinee phone: the tables\' "?" is in the theme\'s text colour', m);
+    await ctx.close();
+  }
+  {
+    const { ctx, page, run } = await person(browser, { viewport: { width: 1366, height: 768 } }, 'en', { theme: 'matinee' });
+    await page.evaluate(() => document.querySelector('.swm-intro')?.remove());
+    await run('games.open.snack');
+    const open = await until(() => page.evaluate(() => !![...document.querySelectorAll('#game-stage .htp')].find((l) => !l.hidden)), 8000);
+    const m = await page.evaluate(() => {
+      const card = [...document.querySelectorAll('#game-stage .htp')].find((l) => !l.hidden);
+      const cs = card && getComputedStyle(card);
+      return { color: cs?.color, bg: cs?.backgroundImage ?? '' };
+    });
+    const text = await page.evaluate(() => { const d = document.createElement('i'); d.style.color = 'var(--text)'; document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; });
+    check(open && m.color === text && !/34,\s*26,\s*74/.test(m.bg), 'Matinee: Snack Bar\'s How to play card takes the theme (its text colour, no navy)', { open, ...m, text });
+    await page.evaluate(() => document.querySelector('#game-stage .htp-skip')?.click());
+    await page.evaluate(() => document.querySelector('#game-stage .game-hub-open')?.click());
+    const badge = await until(() => page.evaluate(() => { const b = document.querySelector('#game-menu .hub-badge.updated'); return b ? getComputedStyle(b).backgroundColor : null; }), 6000);
+    check(!!badge && !/111,\s*211,\s*255/.test(badge), 'Matinee: the hall\'s UPDATED badge is not the old light blue', badge);
+    await ctx.close();
+  }
   const { ctx, page, run } = await person(browser, { viewport: { width: 1366, height: 768 } }, 'tr');
   await run('games.open.sea');
   const c = await until(async () => {

@@ -45,6 +45,8 @@ export function createChatPanel(
     const hidden = lines.filter((line) => line.kind === 'system').length;
     eventsButton.textContent = showEvents ? t('eventsHide') : hidden ? t('eventsShowN', { n: hidden }) : t('eventsShow');
     eventsButton.title = t('eventsTitle');
+    // Nothing to show yet: no button (it read as a control with no purpose in an empty chat, first-look review).
+    eventsButton.hidden = !showEvents && hidden === 0;
   };
   eventsButton.addEventListener('click', () => {
     showEvents = !showEvents;
@@ -53,6 +55,7 @@ export function createChatPanel(
     scrollToEnd();
   });
   window.addEventListener('langchange', drawEvents);
+  drawEvents();
 
   // R13 private messages: while `privateTo` is set the box writes to that person only (a bar above it says so; ✕ or
   // Esc goes back to the room chat). No images in private: they live in the room's shared image store.

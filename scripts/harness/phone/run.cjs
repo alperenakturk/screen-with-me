@@ -459,7 +459,8 @@ const sheetName = (page) => page.evaluate(() => {
     const added = await page.evaluate(() => document.querySelector('#shorts-add-results .shorts-result')?.classList.contains('added'));
     check(rows === 2 && added && queued >= 1 && asked.includes('short') && !asked.includes('words-in-address'), 'Shorts çubuğu: “＋ Ekle” kelimeyle sadece Shorts arıyor, sonuç tek tıkla sıraya giriyor', JSON.stringify({ rows, added, queued, asked }));
     const mic = await page.evaluate(() => ({ off: document.getElementById('shorts-mic').classList.contains('off'), cam: document.getElementById('shorts-cam').classList.contains('off') }));
-    check(mic.off && mic.cam, 'sese katılmadan önce 🎙 ve 📷 ikisi de kapalı görünüyor', JSON.stringify(mic));
+    // YT5 batch: before joining voice they look plain (no red "off"); red only once in voice.
+    check(!mic.off && !mic.cam, 'sese katılmadan önce 🎙 ve 📷 kırmızı değil (sade)', JSON.stringify(mic));
     // A new Shorts feed takes the old feed's Shorts out of the queue (0.9.91.13).
     const queueIds = () => page.evaluate(() => [...document.querySelectorAll('#queue li')].map((li) => li.textContent).join('|'));
     const startFeed = async (topic) => {

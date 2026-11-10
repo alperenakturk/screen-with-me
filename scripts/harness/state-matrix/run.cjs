@@ -1,5 +1,5 @@
-// Card QA1 part 2: the states nobody listed. Every game in each placement it allows × side panel open / closed (cinema
-// mode) × no video / a video file / a YouTube video × a 1366 laptop / a 1920 monitor / an upright tablet. In each state:
+// Card QA1 part 2: the states nobody listed. Every game in each placement it allows × side panel open / cinema mode
+// (SIDES=open,closed; cinema mode is the room's only way to hide the side panel) × no video / a video file / a YouTube video × a 1366 laptop / a 1920 monitor / an upright tablet. In each state:
 //   - nothing of the game is cut off (its window and every control inside it are inside the screen and the window);
 //   - nothing sits over a YouTube player (YouTube's Required Minimum Functionality);
 //   - a free window never covers the video unless I dragged it there (owner, 0.9.97.112: "never cover any part of our
@@ -159,7 +159,8 @@ const placesOf = (page) =>
 
 /** One state of the matrix: a room with this video and side panel, every game in every placement it offers. */
 async function runState(browser, kinds, size, video, side) {
-  const where = `${size} · ${video} · side ${side}`;
+  // `closed` = cinema mode (card 14): the room's only way to hide the side panel.
+  const where = `${size} · ${video} · ${side === 'closed' ? 'cinema mode' : 'side panel open'}`;
   const { ctx, page } = await newPage(browser, size);
   try {
     if (!(await setVideo(page, video))) {
@@ -263,7 +264,18 @@ async function runHead(browser, kinds, size) {
       // The real mouse on the free window (a computer; the side games open free when there is room beside the video).
       if (!computer) continue;
       if (!(await page.evaluate(() => document.getElementById('game-stage')?.dataset.place === 'float'))) continue;
-      const homeBox = (await page.evaluate(measure)).box;
+      // Wait for the window to stop moving (it may still be gliding into place after opening or after the last button).
+      const settled = async () => {
+        let last = (await page.evaluate(measure)).box.join();
+        for (let i = 0; i < 20; i++) {
+          await wait(150);
+          const now = await page.evaluate(measure);
+          if (now.box.join() === last) return now;
+          last = now.box.join();
+        }
+        return page.evaluate(measure);
+      };
+      const homeBox = (await settled()).box;
       const head = await page.evaluate(() => {
         const s = document.getElementById('game-stage').getBoundingClientRect();
         const h = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
@@ -291,8 +303,7 @@ async function runHead(browser, kinds, size) {
       await page.mouse.down();
       await page.mouse.move(head.hx - 160, head.hy + 60, { steps: 10 });
       await page.mouse.up();
-      await wait(400);
-      const moved = await page.evaluate(measure);
+      const moved = await settled();
       check(Math.abs(moved.box[0] - (head.s[0] - 160)) < 40 || Math.abs(moved.box[1] - (head.s[1] + 60)) < 40, `${size} ${kind}: dragging the head moves the free window`, { from: head.s.map(Math.round), to: moved.box });
       check(!moved.offScreen && moved.cut.length === 0, `${size} ${kind}: after a drag nothing is cut off`, moved.cut);
       // Resize from the corner: bigger, else smaller (a window at its largest or smallest here can only go one way), in
@@ -308,8 +319,7 @@ async function runHead(browser, kinds, size) {
           await page.mouse.down();
           await page.mouse.move(g.x + dx, g.y + dy, { steps: 10 });
           await page.mouse.up();
-          await wait(400);
-          grown = await page.evaluate(measure);
+          grown = await settled();
           if (grown.box[2] !== moved.box[2]) break;
         }
         const ratio = (b) => b[2] / b[3];
@@ -323,8 +333,7 @@ async function runHead(browser, kinds, size) {
         return { x: r.left + Math.min(30, r.width / 2), y: r.top + r.height / 2 };
       });
       await page.mouse.dblclick(title.x, title.y);
-      await wait(500);
-      const home = await page.evaluate(measure);
+      const home = await settled();
       // Home is where it opened (its size and spot before I moved it).
       const atHome = home.box.every((v, i) => Math.abs(v - homeBox[i]) <= 4);
       check(atHome, `${size} ${kind}: a double click on the head puts it back where it opened`, { now: home.box, opened: homeBox });
