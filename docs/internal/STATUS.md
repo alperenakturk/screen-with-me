@@ -509,6 +509,10 @@ with the same friend:
 - [ ] G15. Snack Bar extras: your old Snack Bar is still there. Open "📋 Upgrades": this week's stand is on top (buy a
   level). Play a film to its end: the receipt has the manager's report. Open a new cinema: the counter's colours
   change. Buying a stand to level 10, 25 or 50 plays its own little sound.
+- [ ] G16. Stub in the games: play chess against Stub (his face on the seat; the pieces slide to their squares), win or
+  lose a game (he cheers / looks sorry on the card), open Snack Bar (Stub at the till) and Window Garden's lamp. The
+  games hall: each table has a drawn badge, the same as on its lobby card. With "reduce motion" on in your phone's
+  settings, nothing slides.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

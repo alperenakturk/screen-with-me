@@ -33,7 +33,7 @@ import quiz1Art from './art/tutorial/quiz-1-answer.svg?raw';
 import quiz2Art from './art/tutorial/quiz-2-reveal.svg?raw';
 import quiz3Art from './art/tutorial/quiz-3-podium.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
-import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
+import { resultCard, resultStub, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { silence } from './silent.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
@@ -142,9 +142,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   const hint = gameHint($('#quiz-flash'));
   const flash = (text: string) => hint.show(text, 2200);
   // GP3: the tables' result card at the end, with the podium inside.
-  const result = resultCard(app.firstElementChild as HTMLElement, resultGlowbeam());
+  const result = resultCard(app.firstElementChild as HTMLElement, resultStub());
   const endLines = () => ({ win: tx('endWin'), lose: tx('endLose'), draw: tx('endDraw'), over: tx('endOver') });
-  // GP4: Glowbeam the referee says a kind word at a reveal (everyone right, my streak, a tricky one); never a mistake.
+  // GP4: Stub the referee says a kind word at a reveal (everyone right, my streak, a tricky one); never a mistake.
   const ref = referee(app.firstElementChild as HTMLElement);
   function refereeLine(s: State): void {
     const playing = s.players.filter((p) => p.online);
@@ -387,7 +387,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   const offLab = debugHooks.register('table.quiz', () => ({
     commands: [
       quiet.command('quiz', { en: 'Quiz', tr: 'Bilgi yarışması' }),
-      { id: 'quiz.referee', title: { en: 'Quiz: Glowbeam reacts', tr: 'Bilgi yarışması: Glowbeam tepki versin' }, help: { en: 'Glowbeam says one of his reveal lines in the corner of the table.', tr: 'Glowbeam masanın köşesinde cevap anındaki sözlerinden birini söyler.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
+      { id: 'quiz.referee', title: { en: 'Quiz: Stub reacts', tr: 'Bilgi yarışması: Stub tepki versin' }, help: { en: 'Stub says one of his reveal lines in the corner of the table.', tr: 'Stub masanın köşesinde cevap anındaki sözlerinden birini söyler.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
       { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel lab sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
     ],
   }));

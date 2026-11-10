@@ -16,7 +16,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
-import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
+import { stubArt } from './stub.ts';
 import how1 from './art/tutorial/word-1-guess.svg?raw';
 import how2 from './art/tutorial/word-2-colours.svg?raw';
 import how3 from './art/tutorial/quiz-3-podium.svg?raw';
@@ -171,12 +171,6 @@ function tx(key: TextKey, values: Record<string, string | number> = {}): string 
   return (table[key] ?? TEXT.en[key]).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
 }
 
-function glowbeam(prefix: string): HTMLElement {
-  const node = el('span', { class: 'duel-glow', 'aria-hidden': 'true' });
-  // Our own static art (never user data), ids made unique.
-  node.innerHTML = glowbeamArt.replace(/id="([^"]+)"/g, `id="${prefix}$1"`).replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`);
-  return node;
-}
 
 /** Mounts the duel into `app`; the returned function closes the connection and timers. */
 export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
@@ -201,7 +195,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   });
   const langs = el('span', { class: 'ff-langs', role: 'group' }, ...langButtons);
   // GPRO (one lobby look): while the table waits, a tinted card like Quiz / Draw & Guess / Last Heart: the title, the
-  // rules, the two faces, the word language, then Glowbeam's line and Ready (moved into the card while it shows).
+  // rules, the two faces, the word language, then Stub's line and Ready (moved into the card while it shows).
   const lobbyLangButtons = (['en', 'tr'] as const).map((l) => {
     const b = el('button', { type: 'button', class: 'game-chip', 'data-lang': l }, l === 'en' ? 'English' : 'Türkçe');
     b.addEventListener('click', () => send({ t: 'lang', lang: l }));
@@ -273,7 +267,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const side = el('div', { class: 'duel-side' }, minis[0]!.box, minis[1]!.box);
   const main = el('div', { class: 'duel-main' }, board, side);
 
-  const referee = glowbeam('duel-ref');
+  const referee = stubArt('plain', 'duel-glow');
   const status = el('p', { class: 'duel-status', role: 'status', 'aria-live': 'polite' });
   const actions = el('div', { class: 'duel-actions' });
   const tray = el('div', { class: 'ff-tray' });
@@ -281,7 +275,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const refRow = el('div', { class: 'duel-ref' }, referee, status);
   const box = el('div', { class: 'ff duel', 'data-table': gameId }, bar, main, lobby, refRow, actions, tray);
   app.replaceChildren(box);
-  const result = resultCard(main, glowbeam('duel-gr'), (moved) => actions.prepend(...moved));
+  const result = resultCard(main, stubArt('plain', 'duel-glow'), (moved) => actions.prepend(...moved));
   // Buttons never keep the focus (the room's keys stay the room's).
   box.addEventListener('mousedown', (event) => {
     if ((event.target as Element).closest('button')) event.preventDefault();
@@ -474,7 +468,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     const waiting = s.phase === 'wait';
     lobby.hidden = !waiting;
     main.hidden = waiting;
-    // Glowbeam's line and Ready sit in the card while it shows, under the board otherwise.
+    // Stub's line and Ready sit in the card while it shows, under the board otherwise.
     if (waiting && refRow.parentElement !== lobbyBody) lobbyBody.append(refRow, actions);
     else if (!waiting && refRow.parentElement === lobbyBody) main.after(refRow, actions);
     if (!waiting) return;

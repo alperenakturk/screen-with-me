@@ -36,7 +36,7 @@ import how2 from './art/tutorial/snack-2-tap.svg?raw';
 import how3 from './art/tutorial/snack-3-stands.svg?raw';
 import how4 from './art/tutorial/snack-4-friends.svg?raw';
 import { howToPlay, restartButton } from './how-to-play.ts';
-import glowbeam from './art/snack-bar/glowbeam.svg?raw';
+import { stubArt } from './stub.ts';
 import { takeFilmEnds } from './film-end.ts';
 import { RESTORE_EVENT, labTicks, registerSideLab } from './lab-tools.ts';
 import type { SoloRoom } from '@swm/shared/games/catalog';
@@ -155,7 +155,7 @@ const TEXT = {
     decorTitle: '🎨 Decorations',
     decorLine: 'Looks only. Yours for good, in every cinema.',
     'decor.marquee': 'Marquee lights',
-    'decor.poster': 'Glowbeam poster',
+    'decor.poster': 'Stub poster',
     'decor.rope': 'Velvet rope',
     'decor.neon': 'Neon popcorn',
     decorOwned: '✓ Yours',
@@ -327,7 +327,7 @@ const TEXT = {
     decorTitle: '🎨 Süsler',
     decorLine: 'Sadece görünüş. Her sinemada kalıcı olarak senin.',
     'decor.marquee': 'Tabela ışıkları',
-    'decor.poster': 'Glowbeam afişi',
+    'decor.poster': 'Stub afişi',
     'decor.rope': 'Kadife kordon',
     'decor.neon': 'Neon mısır',
     decorOwned: '✓ Senin',
@@ -971,7 +971,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     showReceipt();
   }
 
-  // ---- The film's receipt (owner's pick 2 B): when a film ends, Glowbeam hands it over ----
+  // ---- The film's receipt (owner's pick 2 B): when a film ends, Stub hands it over ----
   /** The Test Lab's "the film's receipt now": this item counts as ended once. */
   let labEnd: string | null = null;
   function pendingReceipt(): Receipt | null {
@@ -1027,8 +1027,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
         ),
       );
     }
-    const mascot = el('span', { class: 'sb-receipt-mascot', 'aria-hidden': 'true' });
-    mascot.innerHTML = glowbeam.replace(/id="([^"]+)"/g, 'id="sbr-$1"').replace(/url\(#([^)]+)\)/g, 'url(#sbr-$1)');
+    // MASCOT3: Stub hands the receipt over, cheering.
+    const mascot = stubArt('win', 'sb-receipt-mascot');
     showPanel(
       el(
         'div',
@@ -1347,7 +1347,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       {
         id: 'snackBar.receipt',
         title: { en: "Snack Bar: the film's receipt now", tr: 'Büfe: filmin fişi şimdi gelsin' },
-        help: { en: "Counts this film as watched and ended, so Glowbeam hands over its receipt.", tr: 'Bu filmi izlenmiş ve bitmiş sayar; Glowbeam fişini hemen getirir.' },
+        help: { en: "Counts this film as watched and ended, so Stub hands over its receipt.", tr: 'Bu filmi izlenmiş ve bitmiş sayar; Stub fişini hemen getirir.' },
         tab: 'games',
         where,
         run: () => {

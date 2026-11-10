@@ -1,6 +1,6 @@
 // 🎲 Classics in the room (P6–P8): the hall offers one Classics card (no separate XOX / Four in a Row cards); it opens the
-// game shelf; Dama from the shelf; alone, "Play against Glowbeam" (easy) seats the bot; a dama move by click (a man,
-// then a highlighted square); Glowbeam answers and referees; screenshots of the shelf and the board.
+// game shelf; Dama from the shelf; alone, "Play against Stub" (easy) seats the bot; a dama move by click (a man,
+// then a highlighted square); Stub answers and referees; screenshots of the shelf and the board.
 //
 //   npm run dev, then: node scripts/harness/classics/run.cjs [site]
 const { chromium } = require('playwright');
@@ -60,9 +60,9 @@ async function until(fn, ms = 6000) {
   await page.evaluate(() => document.querySelector('#game-stage .cl-box[data-board="dama"]').click());
   check(!!(await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .dama-cell.mark-X').length === 16), 6000)), 'Dama is on the table: 16 white men');
   const botOffer = await page.evaluate(() => { const b = document.querySelector('#game-stage .cl-bot'); return b && !b.hidden ? b.textContent : null; });
-  check(!!botOffer && /Glowbeam/.test(botOffer), 'alone at the table: "Play against Glowbeam" is offered', String(botOffer));
+  check(!!botOffer && /Stub/.test(botOffer), 'alone at the table: "Play against Stub" is offered', String(botOffer));
   await page.evaluate(() => [...document.querySelectorAll('#game-stage .cl-bot-level')][0].click());
-  check(!!(await until(() => page.evaluate(() => document.querySelector('#game-stage #seat-1')?.classList.contains('bot')), 5000)), 'Glowbeam takes the other seat');
+  check(!!(await until(() => page.evaluate(() => document.querySelector('#game-stage #seat-1')?.classList.contains('bot')), 5000)), 'Stub takes the other seat');
 
   // A move by click: a movable man, then a highlighted square.
   const moved = await page.evaluate(async () => {
@@ -76,8 +76,8 @@ async function until(fn, ms = 6000) {
   });
   check(moved, 'a man shows where it can go; a click moves it');
   const answered = await until(() => page.evaluate(() => /your turn/i.test(document.getElementById('xox-status')?.textContent ?? '') && document.querySelectorAll('#game-stage .dama-cell.mark-O').length === 16 && document.querySelector('#game-stage .dama-cell.placed.mark-O')), 6000);
-  check(!!answered, 'Glowbeam answers; the referee says it is my turn again');
-  check(await page.evaluate(() => !!document.querySelector('#game-stage .cl-ref-mascot svg')), 'Glowbeam stands beside the status line as the referee');
+  check(!!answered, 'Stub answers; the referee says it is my turn again');
+  check(await page.evaluate(() => !!document.querySelector('#game-stage .cl-ref-mascot svg')), 'Stub stands beside the status line as the referee');
   // Mid-game "Change game" (in the window's head) asks first (CL2): Cancel keeps the game, "End and change" opens the
   // picker and the pick ends that game.
   const asked = await page.evaluate(async () => {
@@ -131,7 +131,7 @@ async function until(fn, ms = 6000) {
   const pieces = await until(() => page.evaluate(() => { const c = document.querySelectorAll('#game-stage .chess-board .dama-cell'); return c.length === 64 && document.querySelectorAll('#game-stage .chess-cell.piece-X').length === 16 ? [...c].slice(0, 8).map((x) => x.textContent.replace('\uFE0E', '')).join('') : null; }), 6000);
   check(pieces === '♜♞♝♛♚♝♞♜', 'chess is on the table: 16 white pieces, the black back row in order', String(pieces));
   await page.evaluate(() => [...document.querySelectorAll('#game-stage .cl-bot-level')][1].click());
-  check(!!(await until(() => page.evaluate(() => document.querySelector('#game-stage #seat-1')?.classList.contains('bot')), 5000)), 'Glowbeam (medium) sits down for chess');
+  check(!!(await until(() => page.evaluate(() => document.querySelector('#game-stage #seat-1')?.classList.contains('bot')), 5000)), 'Stub (medium) sits down for chess');
   // e2 → e4 by two clicks: the pawn lights e3 and e4.
   const targets = await page.evaluate(async () => {
     const cells = document.querySelectorAll('#game-stage .chess-board .dama-cell');
@@ -143,14 +143,14 @@ async function until(fn, ms = 6000) {
   });
   check(JSON.stringify(targets) === '[36,44]', 'a pawn shows its two first steps (e3, e4)', JSON.stringify(targets));
   const replied = await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .chess-cell.lit').length === 2 && document.querySelector('#game-stage .chess-cell.lit.piece-O') && /your turn/i.test(document.getElementById('xox-status')?.textContent ?? '')), 8000);
-  check(!!replied, "Glowbeam answers with a black move; its squares are lit and it's my turn");
+  check(!!replied, "Stub answers with a black move; its squares are lit and it's my turn");
   await page.screenshot({ path: __dirname + '/classics-chess.png' });
   const chessFit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });
   check(chessFit, 'the chess board fits the game window without scrollbars');
   const promoHidden = await page.evaluate(() => document.querySelector('#game-stage .cl-promo')?.hidden === true);
   check(promoHidden, 'the promotion chooser stays hidden until a pawn reaches the last row');
 
-  // Backgammon (P8): another fresh room, backgammon from the shelf, Glowbeam (medium); the server rolls the dice.
+  // Backgammon (P8): another fresh room, backgammon from the shelf, Stub (medium); the server rolls the dice.
   await page.goto(`${SITE}/r/${room}b#back`);
   await page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 15000 });
   await wait(3200);
@@ -173,7 +173,7 @@ async function until(fn, ms = 6000) {
   const rolled = await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .bg-die').length >= 2 && document.querySelector('#game-stage .bg-point.movable, #game-stage .bg-bar.movable') ? document.querySelectorAll('#game-stage .bg-die').length : null), 6000);
   check(!!rolled, 'the server rolls: dice show, my checkers that can move light up', String(rolled));
   await page.screenshot({ path: __dirname + '/classics-backgammon.png' });
-  // Play my whole turn by clicks (a movable point, then its first target), then Glowbeam takes its turn.
+  // Play my whole turn by clicks (a movable point, then its first target), then Stub takes its turn.
   for (let i = 0; i < 4; i++) {
     const stepped = await page.evaluate(async () => {
       const from = document.querySelector('#game-stage .bg-point.movable, #game-stage .bg-bar.movable');
@@ -188,12 +188,12 @@ async function until(fn, ms = 6000) {
     if (!stepped) break;
   }
   const back = await until(() => page.evaluate(() => { const r = document.getElementById('bg-roll'); return r && !r.hidden && document.querySelectorAll('#game-stage .bg-board .bg-checker.piece-O').length >= 13; }), 15000);
-  check(!!back, 'Glowbeam rolls and plays its turn; then the Roll button is mine again');
+  check(!!back, 'Stub rolls and plays its turn; then the Roll button is mine again');
   const bgFit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });
   check(bgFit, 'the backgammon board fits the game window without scrollbars');
 
-  // Reversi: another fresh room, reversi from the shelf, Glowbeam (medium). My legal cells show; a tap puts a disc,
-  // turns the closed line over, and Glowbeam answers.
+  // Reversi: another fresh room, reversi from the shelf, Stub (medium). My legal cells show; a tap puts a disc,
+  // turns the closed line over, and Stub answers.
   await page.goto(`${SITE}/r/${room}r#back`);
   await page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 15000 });
   await wait(3200);
@@ -217,7 +217,7 @@ async function until(fn, ms = 6000) {
   const turned = await until(() => page.evaluate(() => { const c = document.querySelectorAll('#game-stage .rv-cell'); return c[19].classList.contains('mark-X') && c[27].classList.contains('mark-X'); }), 4000);
   check(!!turned, 'a tap on d3 puts a dark disc there and turns d4 over');
   const rvAnswered = await until(() => page.evaluate(() => document.querySelectorAll('#game-stage .rv-cell.mark-O').length >= 2 && /your turn/i.test(document.getElementById('xox-status')?.textContent ?? '') && document.querySelectorAll('#game-stage .rv-cell.target').length > 0), 8000);
-  check(!!rvAnswered, 'Glowbeam answers; then it is my turn again with new legal cells');
+  check(!!rvAnswered, 'Stub answers; then it is my turn again with new legal cells');
   const counted = await page.evaluate(() => document.querySelector('#game-stage #seat-0 .mt-taken')?.textContent ?? '');
   check(/^\d+$/.test(counted.trim()), 'my seat shows my disc count', counted);
   const rvFit = await page.evaluate(() => { const b = document.querySelector('#game-stage .game-stage-body'); return b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1; });

@@ -16,3 +16,16 @@
 /* On a cover card the badge has its own line under the title: next to a long title ("Five Frames Duel UPDATED") it
    wrapped under the title's own text, and a bright badge inside the title's line hurts its contrast. */
 .hub-card .hub-game-text .hub-badge { display: table; margin: 2px 0 0; }
+
+/* NG3: each table's drawn badge on its cover (the lobby card wears the same one), bottom left. */
+.hub-card[data-kind] .hub-cover::after {
+  content: ''; position: absolute; left: 6px; bottom: 6px; width: 30px; height: 30px; rotate: -6deg;
+  background: center / 100% no-repeat; filter: drop-shadow(0 3px 6px rgb(0 0 0 / 0.45));
+}
+.hub-card[data-kind='classics'] .hub-cover::after { background-image: url('./art/badges/classics.svg'); }
+.hub-card[data-kind='draw'] .hub-cover::after { background-image: url('./art/badges/draw.svg'); }
+.hub-card[data-kind='quiz'] .hub-cover::after { background-image: url('./art/badges/quiz.svg'); }
+.hub-card[data-kind='poker'] .hub-cover::after { background-image: url('./art/badges/poker.svg'); }
+.hub-card[data-kind='sea'] .hub-cover::after { background-image: url('./art/badges/sea.svg'); }
+.hub-card[data-kind='duel'] .hub-cover::after { background-image: url('./art/badges/duel.svg'); }
+.hub-card[data-kind]:not([data-kind='classics'], [data-kind='draw'], [data-kind='quiz'], [data-kind='poker'], [data-kind='sea'], [data-kind='duel']) .hub-cover::after { content: none; }

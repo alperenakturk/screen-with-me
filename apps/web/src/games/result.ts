@@ -1,5 +1,5 @@
 // GP2 (one result screen for the tables): when a Classics board or Sea Battle ends, a card comes up over the board:
-// Glowbeam (cheering a win, a little sorry for a loss), "You won!" / "{name} won" / "A draw", the score, and the game's
+// Stub (cheering a win, a little sorry for a loss), "You won!" / "{name} won" / "A draw", the score, and the game's
 // own buttons (Rematch, Change game…) moved into it, plus "See the board" to look at the final position (the card then
 // stays away until the next result). The same look everywhere; each game passes its own words and buttons.
 
@@ -8,7 +8,7 @@ import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
 import { podium } from './ui.ts';
-import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
+import { setStubPose, stubArt } from './stub.ts';
 
 export type Outcome = 'win' | 'lose' | 'draw' | 'over';
 
@@ -32,7 +32,7 @@ export interface ResultCard {
   readonly open: boolean;
 }
 
-/** Mounts the card into `host` (positioned over the board) with Glowbeam's picture `mascot`. */
+/** Mounts the card into `host` (positioned over the board) with the mascot's picture `mascot` (a `stubArt` changes pose with the outcome). */
 export function resultCard(host: HTMLElement, mascot: HTMLElement, onHide?: (moved: HTMLElement[]) => void): ResultCard {
   const title = el('b', { class: 'gr-title' });
   const line = el('p', { class: 'gr-line' });
@@ -64,6 +64,8 @@ export function resultCard(host: HTMLElement, mascot: HTMLElement, onHide?: (mov
       current = view.key;
       if (seen === view.key) return hide();
       layer.dataset.outcome = view.outcome;
+      // MASCOT3: Stub cheers a win and is a little sorry for a loss; a draw or a watcher's view gets him plain.
+      if (mascot.dataset.stub) setStubPose(mascot, view.outcome === 'win' ? 'win' : view.outcome === 'lose' ? 'sorry' : 'plain');
       title.textContent = view.title;
       line.textContent = view.line;
       line.hidden = !view.line;
@@ -82,13 +84,9 @@ export function resultCard(host: HTMLElement, mascot: HTMLElement, onHide?: (mov
   };
 }
 
-let artId = 0;
-/** Glowbeam for a result card (our own art; ids made unique per copy). */
-export function resultGlowbeam(): HTMLElement {
-  const prefix = `grb${++artId}-`;
-  const node = el('span', { class: 'gr-glow', 'aria-hidden': 'true' });
-  node.innerHTML = glowbeamArt.replace(/id="([^"]+)"/g, `id="${prefix}$1"`).replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`);
-  return node;
+/** Stub for a result card (MASCOT3): the card turns him to the outcome's pose when it shows. */
+export function resultStub(): HTMLElement {
+  return stubArt('plain', 'gr-glow');
 }
 
 /** A points game's end (Quiz, Draw & Guess): who won by the score, a tie on top is a draw; watchers see "over". */
@@ -100,7 +98,7 @@ export function pointsOutcome(players: readonly { id: string; name: string; scor
   return { outcome: !playing ? 'over' : top.id === me ? 'win' : 'lose', winner: top.name };
 }
 
-/** The points games' card words (Quiz, Draw & Guess); each game adds Glowbeam's own lines. */
+/** The points games' card words (Quiz, Draw & Guess); each game adds Stub's own lines. */
 const TEXT = {
   en: {
     youWon: 'You won!',
@@ -133,7 +131,7 @@ export interface PointsLines {
 }
 
 /**
- * GP3: the end of a points game (Quiz, Draw & Guess) on the same card as the tables: Glowbeam, who won, his line, the
+ * GP3: the end of a points game (Quiz, Draw & Guess) on the same card as the tables: Stub, who won, his line, the
  * podium inside, and "Play again" (only the game's host starts it; the others see who will).
  */
 export function showPointsResult(

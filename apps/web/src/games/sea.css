@@ -1,5 +1,5 @@
 /* 🚢 Sea Battle (Game Studio). Board first, like the CL2 Classics boards: a slim bar, the seas as big as the window
-   allows, one status line with Glowbeam, the buttons of the moment. Night sea, gold marks (shape + colour). */
+   allows, one status line with Stub, the buttons of the moment. Night sea, gold marks (shape + colour). */
 .sea {
   --sb-sea: #0d1b46;
   --sb-sea-2: #11225a;
@@ -15,7 +15,7 @@
   font-size: 15px;
 }
 
-/* The bar: score, Glowbeam's chips, 👁 watchers. */
+/* The bar: score, Stub's chips, 👁 watchers. */
 .sea-bar { position: relative; display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap; }
 .sea-gap { flex: 1; }
 .sea-score { padding: 3px 12px; border-radius: 999px; background: var(--surface-2); font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -106,7 +106,7 @@
 .sea[data-phase='place']:not(.watching) .sea-seas { grid-template-columns: minmax(0, 1fr); }
 .sea[data-phase='place']:not(.watching) .sea-theirs { display: none; }
 
-/* One status line with Glowbeam the referee; the buttons of the moment. */
+/* One status line with Stub the referee; the buttons of the moment. */
 .sea-ref { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; min-width: 0; }
 .sea-ref-mascot { flex: none; width: 30px; height: 30px; display: block; transition: transform 0.3s; }
 .sea-ref-mascot.wait { opacity: 0.6; transform: rotate(-10deg); }
@@ -139,7 +139,7 @@
 }
 .sea-fire { font-weight: 800; }
 .sea-seas { position: relative; }
-/* GP2: Glowbeam's jump for my hit, its gasp when mine is hit. */
+/* GP2: Stub's jump for my hit, its gasp when mine is hit. */
 .sea-ref-mascot.react-cheer { animation: sea-cheer 0.6s ease-in-out 1; }
 .sea-ref-mascot.react-gasp { animation: sea-gasp 0.5s ease-out 1; }
 @keyframes sea-gasp { 30% { transform: scale(1.25) rotate(-8deg); } }
@@ -150,7 +150,7 @@
 @media (prefers-reduced-motion: reduce) { .sea[data-phase='play'] .sea-sea { animation: none; } }
 
 /* GPRO (layout audit): a sideways phone shows one sea at a time at the full height on the left (the switch picks
-   which), the bar, the switch, Glowbeam's line and the buttons in a column on its right. */
+   which), the bar, the switch, Stub's line and the buttons in a column on its right. */
 html.phone.sideways #game-stage .sea {
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas: 'seas bar' 'seas switch' 'seas ref' 'seas actions'; gap: 6px 12px; padding: 6px 10px;

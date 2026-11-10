@@ -8,6 +8,7 @@ import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { flipIn } from './motion.ts';
 import { referee } from './referee.ts';
 import {
   MOVE_COST,
@@ -33,13 +34,13 @@ import { settingsPanel } from './ui.ts';
 import { silence } from './silent.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 import { tableHowTo } from './how-to-play.ts';
-import { resultCard, resultGlowbeam, showPointsResult } from './result.ts';
+import { resultCard, resultStub, showPointsResult } from './result.ts';
 import poker1Art from './art/tutorial/poker-1-life.svg?raw';
 import poker2Art from './art/tutorial/poker-2-hand.svg?raw';
 import poker3Art from './art/tutorial/poker-3-moves.svg?raw';
 
 type State = Extract<PokerServerMessage, { t: 'state' }>;
-/** GP4: a pot this big (half a starting life) makes Glowbeam gasp. */
+/** GP4: a pot this big (half a starting life) makes Stub gasp. */
 const BIG_POT = 50;
 const SUIT_GLYPH: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const MOVE_ICON: Record<PokerMove, string> = { dq: '🚫', free: '🕊️', shield: '🛡️', peek: '👁️' };
@@ -81,9 +82,9 @@ function flask(pot: number, total: number): HTMLElement {
 export function mountPoker(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   const root = el('div', { class: 'pk' });
   app.replaceChildren(root);
-  // GP4: the tables' one result card (Glowbeam, who won, the podium by life left, Play again for the host).
-  const endCard = resultCard(app, resultGlowbeam());
-  // GP4: Glowbeam the referee at a showdown: a split pot, or a big one (never a word about a player's mistake).
+  // GP4: the tables' one result card (Stub, who won, the podium by life left, Play again for the host).
+  const endCard = resultCard(app, resultStub());
+  // GP4: Stub the referee at a showdown: a split pot, or a big one (never a word about a player's mistake).
   const ref = referee(app);
   function refereeLine(s: State): void {
     const winners = s.players.filter((p) => (p.won ?? 0) > 0);
@@ -132,6 +133,21 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     }
   }
 
+  /** NG3: cards that turned face up this hand (they flip over once, a short stagger from the left). */
+  const shownFaces = new Set<string>();
+  let facesHand = -1;
+  const faceUp = (node: HTMLElement, key: string, index: number): HTMLElement => {
+    const hand = state?.hand ?? -1;
+    if (hand !== facesHand) {
+      facesHand = hand;
+      shownFaces.clear();
+    }
+    if (!shownFaces.has(key)) {
+      shownFaces.add(key);
+      flipIn(node, index * 70);
+    }
+    return node;
+  };
   function render(): void {
     const s = state;
     if (!s) return;
@@ -188,7 +204,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
             'span',
             { class: 'pk-seat-cards' },
             ...(p.cards
-              ? p.cards.map((c) => cardNode(c, p.best?.includes(c) ? 'small best' : 'small'))
+              ? p.cards.map((c, i) => faceUp(cardNode(c, p.best?.includes(c) ? 'small best' : 'small'), `p${p.id}:${c}`, i))
               : p.dealt && !p.folded && !p.dq
                 ? [cardNode(peeks.seen[p.id] ?? null, 'small'), cardNode(null, 'small')]
                 : []),
@@ -201,7 +217,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     );
 
     // ---- The middle: board, flask, what happened ----
-    const board = el('div', { class: 'pk-board' }, ...Array.from({ length: 5 }, (_, i) => (s.board[i] ? cardNode(s.board[i]!, winningCard(s, s.board[i]!) ? 'best' : '') : el('span', { class: 'pk-card slot' }))));
+    const board = el('div', { class: 'pk-board' }, ...Array.from({ length: 5 }, (_, i) => (s.board[i] ? faceUp(cardNode(s.board[i]!, winningCard(s, s.board[i]!) ? 'best' : ''), `b${i}:${s.board[i]}`, i) : el('span', { class: 'pk-card slot' }))));
     const middle = el(
       'div',
       { class: 'pk-middle' },
@@ -223,7 +239,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       el(
         'div',
         { class: 'pk-me-top' },
-        el('span', { class: 'pk-hand' }, ...(myCards.length && myPlayer?.dealt ? myCards.map((c) => cardNode(c, myPlayer.best?.includes(c) ? 'big best' : 'big')) : [])),
+        el('span', { class: 'pk-hand' }, ...(myCards.length && myPlayer?.dealt ? myCards.map((c, i) => faceUp(cardNode(c, myPlayer.best?.includes(c) ? 'big best' : 'big'), `m:${c}`, i)) : [])),
         el(
           'div',
           { class: 'pk-me-info' },
@@ -605,7 +621,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     commands: [
       quiet.command('poker', { en: 'Last Heart', tr: 'Son Kalp' }),
       { id: 'poker.end', title: { en: 'Last Heart: end the game, I win', tr: 'Son Kalp: oyunu bitir, ben kazanayım' }, help: { en: 'Local lab server only: everyone else runs out of life and the result card shows.', tr: 'Sadece yerel lab sunucusunda: diğer herkesin canı biter ve sonuç kartı çıkar.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => send({ t: 'lab', op: 'end' }) },
-      { id: 'poker.referee', title: { en: 'Last Heart: Glowbeam reacts', tr: 'Son Kalp: Glowbeam tepki versin' }, help: { en: 'Glowbeam says one of his showdown lines in the corner of the table.', tr: 'Glowbeam masanın köşesinde el sonunda söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => ref.say(t('poker.say.pot'), 'gasp') },
+      { id: 'poker.referee', title: { en: 'Last Heart: Stub reacts', tr: 'Son Kalp: Stub tepki versin' }, help: { en: 'Stub says one of his showdown lines in the corner of the table.', tr: 'Stub masanın köşesinde el sonunda söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => ref.say(t('poker.say.pot'), 'gasp') },
     ],
   }));
   // GP4: the same "How to play" picture cards as every table (first time, and the "?" in the window's head).

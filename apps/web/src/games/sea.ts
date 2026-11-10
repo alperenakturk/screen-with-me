@@ -21,7 +21,7 @@ import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
-import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
+import { stubArt, syncRefereePose } from './stub.ts';
 import sea1Art from './art/tutorial/sea-1-place.svg?raw';
 import sea2Art from './art/tutorial/sea-2-shoot.svg?raw';
 import sea3Art from './art/tutorial/sea-3-sink.svg?raw';
@@ -44,7 +44,7 @@ const TEXT = {
     otherPlacing: '{name} is placing their fleet',
     yourTurn: 'Your turn: pick a cell on their sea',
     theirTurn: '{name} is aiming…',
-    botTurn: 'Glowbeam is aiming…',
+    botTurn: 'Stub is aiming…',
     watchTurn: "{name}'s turn",
     miss: 'Splash, a miss.',
     hit: 'Hit! Shoot again.',
@@ -62,10 +62,10 @@ const TEXT = {
     notReady: 'Not ready',
     rematch: 'Play again',
     sit: 'Take the seat',
-    bot: 'Play Glowbeam:',
+    bot: 'Play Stub:',
     botEasy: 'Easy',
     botMedium: 'Medium',
-    botLeave: 'Glowbeam leaves',
+    botLeave: 'Stub leaves',
     watchers: 'Watching',
     noWatchers: 'Nobody is watching.',
     left: '{n} ships left',
@@ -103,7 +103,7 @@ const TEXT = {
     otherPlacing: '{name} filosunu yerleştiriyor',
     yourTurn: 'Sıra sende: onun denizinden bir kare seç',
     theirTurn: '{name} nişan alıyor…',
-    botTurn: 'Glowbeam nişan alıyor…',
+    botTurn: 'Stub nişan alıyor…',
     watchTurn: 'Sıra {name} oyuncusunda',
     miss: 'Şıp, boş.',
     hit: 'İsabet! Bir daha at.',
@@ -121,10 +121,10 @@ const TEXT = {
     notReady: 'Hazır değilim',
     rematch: 'Yeniden oyna',
     sit: 'Yere otur',
-    bot: 'Glowbeam’e karşı:',
+    bot: 'Stub’a karşı:',
     botEasy: 'Kolay',
     botMedium: 'Orta',
-    botLeave: 'Glowbeam kalksın',
+    botLeave: 'Stub kalksın',
     watchers: 'İzleyenler',
     noWatchers: 'İzleyen yok.',
     left: '{n} gemi kaldı',
@@ -157,13 +157,6 @@ const TEXT = {
 const tx = (key: keyof (typeof TEXT)['en'], values: Record<string, string | number> = {}): string =>
   (lang() === 'tr' ? TEXT.tr : TEXT.en)[key].replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
 
-let artId = 0;
-function glowbeam(cls: string): HTMLElement {
-  const prefix = `sbg${++artId}-`;
-  const node = el('span', { class: cls, 'aria-hidden': 'true' });
-  node.innerHTML = glowbeamArt.replace(/id="([^"]+)"/g, `id="${prefix}$1"`).replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`);
-  return node;
-}
 
 const COLS = 'ABCDEFGHIJ';
 
@@ -224,8 +217,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const mine = seaBox('mine');
   const seas = el('div', { class: 'sea-seas' }, theirs.box, mine.box);
   // GP2: the one result card over the seas; Play again moves into it while it shows.
-  const result = resultCard(seas, glowbeam('gr-glow'), (moved) => actions.prepend(...moved));
-  const referee = glowbeam('sea-ref-mascot');
+  const result = resultCard(seas, stubArt('plain', 'gr-glow'), (moved) => actions.prepend(...moved));
+  const referee = stubArt('referee', 'sea-ref-mascot');
   const status = el('p', { class: 'sea-status', role: 'status', 'aria-live': 'polite' });
   const actions = el('div', { class: 'sea-actions' });
   root.append(bar, switcher, seas, el('div', { class: 'sea-ref' }, referee, status), actions);
@@ -445,7 +438,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
 
   function seatHead(head: HTMLElement, seat: number, label: string): void {
     const p = state!.players[seat];
-    const who = p?.bot ? glowbeam('sea-avatar sea-bot-avatar') : p ? avatarNode(p.avatar, 'sea-avatar') : el('span', { class: 'sea-avatar vacant' });
+    const who = p?.bot ? stubArt('opponent', 'sea-avatar sea-bot-avatar') : p ? avatarNode(p.avatar, 'sea-avatar') : el('span', { class: 'sea-avatar vacant' });
     const left = p ? el('span', { class: 'sea-left', title: p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }) }, ...Array.from({ length: p.left }, () => el('i', { 'aria-hidden': 'true' })), el('span', { class: 'sr-only' }, p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }))) : '';
     const ready = state!.phase === 'place' && p?.ready ? el('span', { class: 'sea-ready' }, '✓') : '';
     head.replaceChildren(who, el('span', { class: 'sea-name' }, el('b', {}, label), p ? el('small', {}, p.name) : el('small', {}, tx('waiting'))), ready, left);
@@ -483,7 +476,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const b = s.players[1];
     score.textContent = `${a?.wins ?? 0} : ${b?.wins ?? 0}`;
     score.setAttribute('aria-label', `${a?.name ?? '?'} ${a?.wins ?? 0}, ${b?.name ?? '?'} ${b?.wins ?? 0}`);
-    // Glowbeam: offered to a seated player while the other seat is free (or Glowbeam's), not mid-battle.
+    // Stub: offered to a seated player while the other seat is free (or Stub's), not mid-battle.
     const me = mySeat();
     const opp = me >= 0 ? s.players[1 - me] : null;
     const canBot = me >= 0 && (!opp || !!opp.bot) && s.phase !== 'play';
@@ -497,7 +490,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       const leave = el('button', { type: 'button', class: 'btn small-btn sea-bot-leave', title: tx('botLeave'), 'aria-label': tx('botLeave') }, '✕');
       leave.addEventListener('click', () => send({ t: 'bot', level: 0 }));
       botBox.replaceChildren(
-        el('span', { class: 'sea-bot-label' }, glowbeam('sea-bot-icon'), opp?.bot ? '' : tx('bot')),
+        el('span', { class: 'sea-bot-label' }, stubArt('small', 'sea-bot-icon'), opp?.bot ? '' : tx('bot')),
         ...(canBot || opp?.bot ? [level(1, tx('botEasy')), level(2, tx('botMedium'))] : []),
         opp?.bot && s.phase !== 'play' ? leave : '',
       );
@@ -591,6 +584,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     } else result.hide();
     const reacting = [...referee.classList].filter((c) => c.startsWith('react-')).join(' ');
     referee.className = `sea-ref-mascot${s.phase === 'over' && s.winner === me ? ' cheer' : ''}${s.phase !== 'play' ? ' wait' : ''}${reacting ? ` ${reacting}` : ''}`;
+    syncRefereePose(referee);
     setGameLive(me >= 0 && s.phase === 'play' && !s.players.some((p) => p?.bot));
   }
 
@@ -598,13 +592,17 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const key = s.last ? `${s.last.by}:${s.last.cell}` : '';
     if (s.last && key !== lastShot && prev) {
       playSound(s.last.result === 'miss' ? 'seaMiss' : s.last.result === 'sunk' ? 'seaSunk' : 'seaHit');
-      // GP2: Glowbeam jumps for my hit, gasps when mine is hit (the words are in the status line).
+      // GP2: Stub jumps for my hit, gasps when mine is hit (the words are in the status line).
       if (s.last.result !== 'miss' && s.seat >= 0) {
         const mood = s.last.by === s.seat ? 'react-cheer' : 'react-gasp';
         referee.classList.remove('react-cheer', 'react-gasp');
         void referee.offsetWidth;
         referee.classList.add(mood);
-        setTimeout(() => referee.classList.remove(mood), 700);
+        syncRefereePose(referee);
+        setTimeout(() => {
+          referee.classList.remove(mood);
+          syncRefereePose(referee);
+        }, 700);
       }
     }
     lastShot = key;
@@ -678,7 +676,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const offLab = debugHooks.register('table.sea', () => ({
     commands: [
       quiet.command('sea', { en: 'Sea Battle', tr: 'Amiral Battı' }),
-      { id: 'sea.bot', title: { en: 'Sea Battle: Glowbeam takes the other seat', tr: 'Amiral Battı: Glowbeam diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
+      { id: 'sea.bot', title: { en: 'Sea Battle: Stub takes the other seat', tr: 'Amiral Battı: Stub diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
       { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel lab sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
       { id: 'sea.zoom', title: { en: 'Sea Battle: zoom into the next quarter (phone view)', tr: 'Amiral Battı: sonraki çeyreğe yakınlaş (telefon görünümü)' }, help: { en: 'Shows the phone zoom on any screen: each run aims at the middle of the next quarter of their sea; Whole sea goes back.', tr: 'Telefondaki yakınlaşmayı her ekranda gösterir: her çalıştırmada rakibin denizinin sonraki çeyreğinin ortasına nişan alır; Bütün deniz geri döner.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, during the battle', tr: 'Amiral Battı masasında, savaş sırasında' }, run: () => { const q = zoomQ === null ? 0 : (zoomQ + 1) % 4; const half = size / 2; zoomQ = q; aimAt = (Math.floor(q / 2) * half + Math.floor(half / 2)) * size + (q % 2) * half + Math.floor(half / 2); render(); } },
       { id: 'sea.reveal', title: { en: 'Sea Battle: show their fleet (this tab)', tr: 'Amiral Battı: rakibin filosunu göster (bu sekmede)' }, help: { en: 'Local lab server only: the other fleet shows faintly on their sea.', tr: 'Sadece yerel lab sunucusunda: rakibin filosu kendi denizinde silik görünür.' }, tab: 'games' as const, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'reveal' }) },

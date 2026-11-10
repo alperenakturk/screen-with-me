@@ -1,7 +1,7 @@
 // Two-player board games in the room's game window: tic-tac-toe, Four in a Row and, inside 🎲 Classics (P6, the owner's
 // picks in `docs/internal/design/games/classics.md`), dama, chess (P7), backgammon (P8) and reversi from a game shelf. The first two people sit (X / O, red /
 // yellow, white / black), later ones watch; when a seat is free, a watcher can sit, and a lone player can play against
-// Glowbeam the bot (easy / medium; it plays on the server with the same rules). Glowbeam is also the referee: it says
+// Stub the bot (easy / medium; it plays on the server with the same rules). Stub is also the referee: it says
 // whose turn it is and cheers the winner. The server checks every move; this page only draws what it gets.
 
 import './classics.css';
@@ -23,7 +23,8 @@ import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { LAB_POSITIONS } from '@swm/shared/games/lab-positions';
-import glowbeamArt from './art/snack-bar/glowbeam.svg?raw';
+import { slidePiece } from './motion.ts';
+import { stubArt, syncRefereePose } from './stub.ts';
 import xox1Art from './art/tutorial/xox-1-turns.svg?raw';
 import xox2Art from './art/tutorial/xox-2-line.svg?raw';
 import four1Art from './art/tutorial/four-1-drop.svg?raw';
@@ -85,10 +86,10 @@ const TEXT = {
     backgammonTitle: 'Backgammon',
     backgammonText: 'Roll, race your checkers round to your home and bear them off. A lone checker can be hit and starts again; two hold a point.',
     pickTitle: 'Pick a game',
-    pickLine: 'Two players, or one against Glowbeam',
+    pickLine: 'Two players, or one against Stub',
     change: 'Change game',
     changeTitle: 'Back to the games',
-    players: '2 players · or vs Glowbeam',
+    players: '2 players · or vs Stub',
     xoxLine: 'Three in a row: quick and playful',
     fourLine: 'Drop discs, connect four',
     damaLine: 'Turkish draughts: jump and crown',
@@ -166,10 +167,10 @@ const TEXT = {
     backgammonTitle: 'Tavla',
     backgammonText: 'Zar at, pullarını yol boyunca evine götür ve topla. Tek duran pul vurulur ve baştan girer; iki pul bir haneyi kapatır.',
     pickTitle: 'Bir oyun seç',
-    pickLine: 'İki kişi ya da Glowbeam’e karşı tek kişi',
+    pickLine: 'İki kişi ya da Stub’a karşı tek kişi',
     change: 'Oyunu değiştir',
     changeTitle: 'Oyunlara dön',
-    players: '2 oyuncu · ya da Glowbeam’e karşı',
+    players: '2 oyuncu · ya da Stub’a karşı',
     xoxLine: 'Üçünü yan yana diz: hızlı ve eğlenceli',
     fourLine: 'Pulları bırak, dördünü birleştir',
     damaLine: 'Türk daması: atla ve dama ol',
@@ -252,14 +253,6 @@ const HOW_ART: Partial<Record<GameKind, string[]>> = {
 const howCards = (board: GameKind) =>
   (HOW_ART[board] ?? []).map((art, i) => ({ art, title: tc(`how_${board}${i + 1}` as 'check'), line: tc(`how_${board}${i + 1}Line` as 'check') }));
 
-let artId = 0;
-/** Glowbeam, drawn small (our own art; ids made unique per copy). */
-function glowbeam(cls: string): HTMLElement {
-  const prefix = `gb${++artId}-`;
-  const node = el('span', { class: cls, 'aria-hidden': 'true' });
-  node.innerHTML = glowbeamArt.replace(/id="([^"]+)"/g, `id="${prefix}$1"`).replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`);
-  return node;
-}
 
 /** Mounts the game into `app`; the returned function closes the connection and timers. */
 export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', gameId: string, name: string, avatar: Avatar): () => void {
@@ -268,7 +261,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   let kind: GameKind = classics ? 'xox' : tableKind;
   // Card CL2 (owner): the board is the hero. A Classics table first shows only its picker (no board behind it); a
   // board's screen is the opponent above the board, me below it (like a chess app), one status line, and small chips
-  // for the score, Glowbeam and the watchers (👁 with a popover).
+  // for the score, Stub and the watchers (👁 with a popover).
   app.innerHTML = `
     <div class="xox-page mt${classics ? ' classics' : ''}">
       <section class="cl-picker" hidden></section>
@@ -308,9 +301,9 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const board = app.querySelector<HTMLElement>('#xox-board')!;
   const status = app.querySelector<HTMLElement>('#xox-status')!;
   const refSlot = app.querySelector<HTMLElement>('.cl-ref-slot')!;
-  const referee = glowbeam('cl-ref-mascot');
+  const referee = stubArt('referee', 'cl-ref-mascot');
   refSlot.replaceWith(referee);
-  // GP2: Glowbeam the referee reacts: a short line in a bubble and a little jump (a cheer for my good move, a gasp
+  // GP2: Stub the referee reacts: a short line in a bubble and a little jump (a cheer for my good move, a gasp
   // when I lose a piece). Only words and a 0.6 s move; reduced motion keeps the words.
   const bubble = el('span', { class: 'cl-say', 'aria-hidden': 'true' });
   bubble.hidden = true;
@@ -323,10 +316,12 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     referee.classList.remove('react-cheer', 'react-gasp');
     void referee.offsetWidth;
     if (mood !== 'plain') referee.classList.add(`react-${mood}`);
+    syncRefereePose(referee);
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => {
       bubble.hidden = true;
       referee.classList.remove('react-cheer', 'react-gasp');
+      syncRefereePose(referee);
     }, 1800);
   };
   let prevCounts: { X: number; O: number } | null = null;
@@ -355,7 +350,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const rematchButton = app.querySelector<HTMLButtonElement>('#xox-rematch')!;
   // GP2: the one result card over the board; Rematch moves into it while it shows and back after.
   const actionsBox = app.querySelector<HTMLElement>('.xox-actions')!;
-  const result = resultCard(app.querySelector<HTMLElement>('.xox-board-wrap')!, glowbeam('gr-glow'), (moved) => actionsBox.prepend(...moved));
+  const result = resultCard(app.querySelector<HTMLElement>('.xox-board-wrap')!, stubArt('plain', 'gr-glow'), (moved) => actionsBox.prepend(...moved));
   const sitButton = app.querySelector<HTMLButtonElement>('#xox-sit')!;
   const standButton = app.querySelector<HTMLButtonElement>('#xox-stand')!;
   rematchButton.addEventListener('click', () => send({ t: 'rematch' }));
@@ -486,6 +481,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   let state: State | null = null;
   let me: string | null = null;
   let lastBoard = '';
+  /** The board before this state (NG3: where a chess / dama piece slides from). */
+  let prevCells: readonly (string | null)[] | null = null;
   /** The previous state's result (undefined before the first state: joining a finished game plays nothing). */
   let lastWinner: Mark | 'draw' | null | undefined;
   /** Classics: the picker shows until a board is picked (and again from "Change game" in the head). */
@@ -525,7 +522,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     box.replaceChildren(
       markNode(mark),
       // An empty seat: a dashed empty circle and "Waiting…" (sweep-2 #5: "… ? O" looked broken).
-      person?.bot ? glowbeam('xox-avatar cl-bot-avatar') : person ? avatarNode(person.avatar, 'xox-avatar') : el('span', { class: 'xox-avatar vacant' }),
+      person?.bot ? stubArt('opponent', 'xox-avatar cl-bot-avatar') : person ? avatarNode(person.avatar, 'xox-avatar') : el('span', { class: 'xox-avatar vacant' }),
       el(
         'span',
         { class: 'xox-name' },
@@ -670,6 +667,13 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       cell.disabled = kind === 'four' ? !myTurn || dropRow(game.board, colOf(i)) === -1 : kind === 'dama' ? !(movable.has(i) || targets.has(i)) : !myTurn || value !== null;
     });
     lastBoard = boardKey;
+    // NG3: a chess or dama piece slides from its old square (chess sends it; dama: the mover's piece that left).
+    if (changed && game.last !== undefined && (kind === 'chess' || kind === 'dama')) {
+      const mover = game.board[game.last];
+      const from = kind === 'chess' ? chess.from : (prevCells?.findIndex((v, i) => v === mover && game.board[i] === null) ?? -1);
+      if (from !== undefined && from !== null && from >= 0) slidePiece(cells[from], cells[game.last]);
+    }
+    prevCells = [...game.board];
     // The referee's reactions (GP2): a capture in chess / dama, a check, a big reversi flip.
     const counts = { X: game.board.filter((c) => c === 'X').length, O: game.board.filter((c) => c === 'O').length };
     if (changed && prevCounts && game.winner === null && (kind === 'chess' || kind === 'dama' || kind === 'reversi')) {
@@ -698,9 +702,10 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       const p = seats[mark === 'X' ? 0 : 1];
       return p?.bot ? t('classics.botName') : (p?.name ?? (kind === 'xox' ? mark : colour(mark)));
     };
-    // Glowbeam the referee (owner's pick 4 A): whose turn, then a small cheer for the winner.
+    // Stub the referee (owner's pick 4 A): whose turn, then a small cheer for the winner.
     const reacting = [...referee.classList].filter((c) => c.startsWith('react-')).join(' ');
     referee.className = `cl-ref-mascot${game.winner ? ' cheer' : ''}${!ready ? ' wait' : ''}${reacting ? ` ${reacting}` : ''}`;
+    syncRefereePose(referee);
     if (!ready) status.textContent = t('games.waiting');
     else if (game.winner === 'draw') status.textContent = kind === 'chess' && chess.end && chess.end !== 'mate' ? tc(chess.end) : t('games.draw');
     else if (game.winner) {
@@ -732,7 +737,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     } else result.hide();
     sitButton.hidden = seat !== -1 || seats.every((s) => s && s.online && !s.bot);
     standButton.hidden = seat === -1;
-    // Glowbeam the bot (owner's pick 6 A): offered to a seated player while the other seat is free.
+    // Stub the bot (owner's pick 6 A): offered to a seated player while the other seat is free.
     const other = seat === -1 ? null : seats[seat === 0 ? 1 : 0];
     const canBot = seat !== -1 && (!other || !other.online || !!other.bot);
     botBox.hidden = !canBot;
@@ -744,7 +749,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       };
       const leave = el('button', { type: 'button', class: 'btn small-btn cl-bot-leave', title: t('classics.botLeave'), 'aria-label': t('classics.botLeave') }, '✕');
       leave.addEventListener('click', () => send({ t: 'bot', level: 0 }));
-      botBox.replaceChildren(el('span', { class: 'cl-bot-label' }, glowbeam('cl-bot-icon'), other?.bot ? '' : t('classics.bot')), level(1, t('classics.botEasy')), level(2, t('classics.botMedium')), other?.bot ? leave : '');
+      botBox.replaceChildren(el('span', { class: 'cl-bot-label' }, stubArt('small', 'cl-bot-icon'), other?.bot ? '' : t('classics.bot')), level(1, t('classics.botEasy')), level(2, t('classics.botMedium')), other?.bot ? leave : '');
     }
     // Classics (CL2): the picker alone, or the board; "Change game" in the head brings the picker back at any time.
     shelfButton.hidden = !classics || shelfOpen || seat === -1;

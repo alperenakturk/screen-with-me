@@ -1,5 +1,5 @@
 // Games: minimize, restore and reload in the middle of a game (card BHG, Game Studio). For every Classics board,
-// played alone against Glowbeam: a move is made (with its sound), the window is minimized and brought back with the
+// played alone against Stub: a move is made (with its sound), the window is minimized and brought back with the
 // same board, the page is reloaded mid-game (the "are you sure?" is accepted) and the table comes back with my seat
 // and the same board; every visible button in the window has a name (keyboard / screen readers). Then Quiz and Draw &
 // Guess with two people: a reload mid-question / mid-round keeps the player in the game (the server waits 20 s for
@@ -132,16 +132,16 @@ async function move(page, board) {
     }
     await until(() => page.evaluate(() => !!document.querySelector('#game-stage .cl-bot-level')));
     await page.evaluate(() => document.querySelector('#game-stage .cl-bot-level')?.click());
-    await until(() => page.evaluate(() => /Glowbeam/.test(document.querySelector('#game-stage #seat-1')?.textContent ?? '')));
+    await until(() => page.evaluate(() => /Stub/.test(document.querySelector('#game-stage #seat-1')?.textContent ?? '')));
     await page.evaluate(() => (window.__sounds.length = 0));
-    // Wait for my turn (Glowbeam may start), then move.
+    // Wait for my turn (Stub may start), then move.
     let moved = false;
     for (let i = 0; i < 20 && !moved; i++) {
       moved = await move(page, board);
       if (!moved) await wait(400);
     }
-    check(moved, `${board}: I can make a move against Glowbeam`);
-    await wait(1600); // Glowbeam's answer
+    check(moved, `${board}: I can make a move against Stub`);
+    await wait(1600); // Stub's answer
     const sounds = await page.evaluate(() => window.__sounds.slice());
     check(sounds.length > 0, `${board}: the move plays a sound`, JSON.stringify(sounds));
     const before = await boardSig(page);

@@ -2,7 +2,7 @@
 // Placing: a tap picks a ship, a tap on water moves it, Turn turns it, a drag moves it, Shuffle shuffles, Ready locks.
 // Shooting: a miss and a hit each play their sound on both sides and show on both seas; Sam's page never draws Alex's
 // ships before the game is over; the phone shows one sea at a time and flips to their sea on Sam's turn. Every button
-// has a name; axe finds nothing in the window. Then Robin alone plays Glowbeam until the end.
+// has a name; axe finds nothing in the window. Then Robin alone plays Stub until the end.
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/sea/run.cjs [site]
 const { chromium, devices } = require('playwright');
@@ -224,15 +224,15 @@ async function unnamed(page) {
   await alex.ctx.close();
   await sam.ctx.close();
 
-  // Robin alone against Glowbeam, to the end.
+  // Robin alone against Stub, to the end.
   const robin = await person(browser, room + 'g', 'Robin', 'robot');
   await run(robin.page, 'games.open.sea');
   await until(() => robin.page.evaluate(() => !!document.querySelector('#game-stage .sea-bot-level')));
   await click(robin.page, '#game-stage .sea-bot-level:nth-of-type(2)');
   await robin.page.evaluate(() => [...document.querySelectorAll('#game-stage .sea-bot-level')].pop()?.click());
-  check(!!(await until(() => robin.page.evaluate(() => /Glowbeam/.test(document.querySelector('#game-stage .sea-theirs .sea-head')?.textContent ?? '') || !!document.querySelector('#game-stage .sea-bot-level.on')))), 'Glowbeam takes the other seat');
+  check(!!(await until(() => robin.page.evaluate(() => /Stub/.test(document.querySelector('#game-stage .sea-theirs .sea-head')?.textContent ?? '') || !!document.querySelector('#game-stage .sea-bot-level.on')))), 'Stub takes the other seat');
   await click(robin.page, '#game-stage .sea-ready-btn');
-  check(!!(await until(async () => (await phase(robin.page)) === 'play')), 'the battle with Glowbeam starts');
+  check(!!(await until(async () => (await phase(robin.page)) === 'play')), 'the battle with Stub starts');
   for (let i = 0; i < 300 && (await phase(robin.page)) === 'play'; i++) {
     const shot = await robin.page.evaluate(() => {
       if (!document.querySelector('#game-stage .sea-theirs.aim')) return false;
@@ -242,9 +242,9 @@ async function unnamed(page) {
     });
     await wait(shot ? 180 : 300);
   }
-  check((await phase(robin.page)) === 'over', 'the game against Glowbeam ends');
-  check((await cellsWith(robin.page, 'mine', 'miss')).length + (await cellsWith(robin.page, 'mine', 'hit')).length > 0, 'Glowbeam fired at my sea');
-  check((await cellsWith(robin.page, 'theirs', 'ship')).length === 17, "after the end Glowbeam's fleet shows");
+  check((await phase(robin.page)) === 'over', 'the game against Stub ends');
+  check((await cellsWith(robin.page, 'mine', 'miss')).length + (await cellsWith(robin.page, 'mine', 'hit')).length > 0, 'Stub fired at my sea');
+  check((await cellsWith(robin.page, 'theirs', 'ship')).length === 17, "after the end Stub's fleet shows");
   check(!!(await until(async () => (await sounds(robin.page)).some((s) => s === 'win' || s === 'lose'))), 'the end plays a win or lose sound');
   check(!!(await robin.page.evaluate(() => !!document.querySelector('#game-stage .sea-rematch'))), 'Play again is offered');
   // GP2: the one result card over the seas: the outcome, the score, Play again inside it, "See the seas" moves it away.
