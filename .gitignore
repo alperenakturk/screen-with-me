@@ -30,3 +30,4 @@ scripts/harness/podcasts/*.png
 /home-*.png
 scripts/harness/tiktok/*.png
 scripts/harness/snack-bar-ng2/*.png
+.shots/

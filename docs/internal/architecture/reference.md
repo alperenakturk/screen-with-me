@@ -1834,6 +1834,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   after the others; each file's output prints in one piece with its time). The live e2e stays one file at a time:
   its pacing is per address, so sharding it needs separate runners (a later step, inside the deploy's concurrency
   group so no deploy restarts objects mid-run).
+  **First look (QA1 part 3, `scripts/shots.cjs`):** screenshots of every screen a change touched at laptop 1366×768,
+  desktop 1920×1080, upright tablet 820×1180 and phone (iPhone 13), EN by default (`--langs en,tr`), into `.shots/<branch>`
+  (git-ignored) with `index.md` (what each picture is) and `REVIEW.md` (the brief for a fresh reviewer subagent: CLAUDE.md
+  §6 product rules + what to look for; it gets only that folder). Screens: `--screens list`; without `--screens` it maps
+  `git diff --name-only origin/main...HEAD` through `SCREEN_FOR`. Room screens open as the first person with `?debug=1`
+  (Test Lab commands `settings.<section>`, `games.open.<kind>`; the lab's 🐞 is hidden before the shot); a video file
+  from `--video` (default the film server's `http://localhost:5300/video.webm`). Run it against the built site on the
+  local server with the lab flag.
   **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
   for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose
