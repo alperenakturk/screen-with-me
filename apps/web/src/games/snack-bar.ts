@@ -1124,7 +1124,11 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
 
   /** Rows that fit the window (SB3): never a scrollbar; the rest is the "+N more" line. */
   function fitRows(): void {
-    const height = root.clientHeight;
+    // The window scales the game down when it overflows (stage.ts `refit`, `--fit`), which makes the game's own box
+    // taller: count in the window's real pixels, or more rows would bring more scaling, round and round.
+    const stage = root.closest<HTMLElement>('#game-stage');
+    const scale = Math.min(1, parseFloat(stage ? getComputedStyle(stage).getPropertyValue('--fit') : '') || 1);
+    const height = root.clientHeight * scale;
     const first = rows.find((r) => !r.node.hidden)?.node;
     if (!height || !first) return;
     const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
