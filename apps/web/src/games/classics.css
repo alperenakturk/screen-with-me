@@ -278,6 +278,12 @@
   #game-stage .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 10px) / 2); }
   #game-stage .mt .cl-card-players { display: none; }
 }
+/* GPRO (layout audit): a sideways phone shows all six cards in one row (names only), so nothing is cut off. */
+html.sideways #game-stage .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; gap: 6px; }
+html.sideways #game-stage .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
+html.sideways #game-stage .mt .cl-card-line, html.sideways #game-stage .mt .cl-card-players { display: none; }
+html.sideways #game-stage .mt .cl-card-art svg { max-height: 64px; }
+html.sideways #game-stage .mt .cl-picker-line { margin-bottom: 4px; }
 /* A narrow window (a phone): score and 👁 on the bar's first line, Glowbeam's chips on the next. */
 @container game (max-width: 440px) {
   #game-stage .mt .mt-gap { display: none; }

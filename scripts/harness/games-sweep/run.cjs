@@ -22,6 +22,8 @@ const SIZES = {
   desktop: { viewport: { width: 1920, height: 1080 } },
   iphone: devices['iPhone 13'],
   pixel: devices['Pixel 7'],
+  // GPRO (layout audit): a phone held sideways, 844 × 340 or so after the browser's bars.
+  side: devices['iPhone 13 landscape'],
 };
 // A table kind and, for the Classics, the board to put on it.
 const GAMES = {
@@ -335,7 +337,7 @@ async function windowPasses(page, label, g, phone) {
           check(playing, `${label}: the battle against Glowbeam starts`);
           await wait(600);
         }
-        const phone = size === 'iphone' || size === 'pixel';
+        const phone = size === 'iphone' || size === 'pixel' || size === 'side';
         const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
         if (m.missing) {
