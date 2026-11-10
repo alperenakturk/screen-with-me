@@ -6,12 +6,15 @@
 //   a commit whose .github/workflows differ from main's head ("refusing to allow a GitHub App to create or update
 //   workflow …"), so such a tag is not attempted: it gets a `::warning::` with the owner's steps instead. A refused push
 //   is a warning too. The run stays green either way: a missing tag never hides a good deploy.
+// - TAG2: with the repository secret TAG_TOKEN (a fine-grained token for this repository only: Contents read and write +
+//   Workflows read and write), every untagged live version is pushed with that token, those commits included, so no
+//   release ever needs a hand step and the catch-up back-fills the ones missed before. Without it: as above.
 // Usage in CI: node scripts/tag-live.mjs (needs GITHUB_SHA, GITHUB_REPOSITORY, GITHUB_TOKEN; actions: read).
 import { execFileSync } from 'node:child_process';
 
 const VERSION_FILE = 'apps/extension/package.json';
 /** How far back on main the catch-up looks (first-parent commits). */
-export const LOOKBACK = 40;
+export const LOOKBACK = 80;
 /** Tags start here (CHANGELOG.md: "from 0.9.97.70 on"); older versions are never tagged. */
 export const FIRST_TAGGED = '0.9.97.70';
 
@@ -28,16 +31,17 @@ export function versionAtLeast(version, floor) {
 /**
  * Which tags to make. `commits` = main's first-parent commits, oldest first, each { sha, version }; `tagged` = versions
  * that already have a tag; `isLive(sha)` = a deploy of that commit succeeded; `sameWorkflows(sha)` = its
- * .github/workflows equal main head's. Returns [{ version, sha, action: 'push' | 'owner' }], one per untagged live version.
+ * .github/workflows equal main head's; `canTagWorkflows` = a token with the Workflows permission is there (TAG_TOKEN), so
+ * those commits can be tagged too. Returns [{ version, sha, action: 'push' | 'owner' }], one per untagged live version.
  */
-export async function planTags({ commits, tagged, isLive, sameWorkflows, since = FIRST_TAGGED }) {
+export async function planTags({ commits, tagged, isLive, sameWorkflows, since = FIRST_TAGGED, canTagWorkflows = false }) {
   const plan = [];
   const done = new Set(tagged);
   for (const { sha, version } of commits) {
     if (!version || done.has(version) || !versionAtLeast(version, since)) continue;
     if (!(await isLive(sha))) continue;
     done.add(version);
-    plan.push({ version, sha, action: (await sameWorkflows(sha)) ? 'push' : 'owner' });
+    plan.push({ version, sha, action: canTagWorkflows || (await sameWorkflows(sha)) ? 'push' : 'owner' });
   }
   return plan;
 }
@@ -55,7 +59,7 @@ const versionAt = (sha) => {
 };
 
 async function main() {
-  const { GITHUB_SHA: self, GITHUB_REPOSITORY: repo, GITHUB_TOKEN: token, GITHUB_API_URL: api = 'https://api.github.com' } =
+  const { GITHUB_SHA: self, GITHUB_REPOSITORY: repo, GITHUB_TOKEN: token, GITHUB_API_URL: api = 'https://api.github.com', TAG_TOKEN: tagToken } =
     process.env;
   if (!self || !repo) throw new Error('GITHUB_SHA and GITHUB_REPOSITORY are needed');
   git('fetch', '--quiet', '--tags', 'origin', '+refs/heads/main:refs/remotes/origin/main');
@@ -86,16 +90,22 @@ async function main() {
     try { git('diff', '--quiet', sha, 'origin/main', '--', '.github/workflows'); return true; } catch { return false; }
   };
 
-  const plan = await planTags({ commits, tagged, isLive, sameWorkflows });
+  const plan = await planTags({ commits, tagged, isLive, sameWorkflows, canTagWorkflows: !!tagToken });
+  // TAG2: pushes go with TAG_TOKEN when it is set (the checkout's own credentials are switched off for that push).
+  const push = (ref) =>
+    tagToken
+      ? git('-c', 'http.https://github.com/.extraheader=', 'push', `https://x-access-token:${tagToken}@github.com/${repo}.git`, ref)
+      : git('push', 'origin', ref);
   if (!plan.length) console.log(`Nothing to tag: every live version in the last ${LOOKBACK} commits has its tag.`);
   for (const { version, sha, action } of plan) {
     if (action === 'owner') { console.log(`::warning::${ownerSteps(repo, version, sha)}`); continue; }
     try {
       git('tag', `v${version}`, sha);
-      git('push', 'origin', `refs/tags/v${version}`);
+      push(`refs/tags/v${version}`);
       console.log(`Tagged v${version} at ${sha}.`);
     } catch (e) {
-      console.log(`::warning::Pushing v${version} was refused (${String(e.message).split('\n')[0]}). ${ownerSteps(repo, version, sha)}`);
+      const why = String(e.message).split('\n')[0].replaceAll(tagToken || '\u0000', '***');
+      console.log(`::warning::Pushing v${version} was refused (${why}). ${ownerSteps(repo, version, sha)}`);
     }
   }
 }

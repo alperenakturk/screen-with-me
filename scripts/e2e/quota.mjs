@@ -99,42 +99,57 @@ if (unpaced) {
   ok(refused.length === 1 && refused[0].closed() === 4012 && refused[0] === extra[11], 'the 13th connection from one address gets "room_ip_full" (4012)');
   for (const s of extra) s.ws.close();
 }
-// 5. QUOTA2: the HTTP fallback counts in the same message ceiling: 160 messages in four quick batches close it (1008).
+// 5. QUOTA2: the HTTP fallback counts in the same message ceiling: batches of 40 pings close it (1008). The bucket
+//    refills 20 a second, so a slow live round trip can absorb a fixed count (0.9.97.112's first live run: 161
+//    messages in five POSTs never flooded): keep sending until the session is closed, at most 12 batches (480
+//    messages, more than the bucket can take back unless the sends spread over 18 s). The session is always closed
+//    at the end, so a failure here never leaves an open lease behind for part 6 (or for this file's retry).
 {
   const http = base.replace(/^ws/, 'http');
   const open = await (await fetch(`${http}/api/rooms/${room}/ws?http=open`, { method: 'POST' })).json();
   const at = (op) => `${http}/api/rooms/${room}/ws?http=${op}&sid=${open.sid}`;
-  await fetch(at('send'), { method: 'POST', body: JSON.stringify([JSON.stringify({ t: 'hello', v: V, name: 'Robin', cid: 'quotaRobin0001' })]) });
-  const pings = JSON.stringify(Array.from({ length: 40 }, (_, i) => JSON.stringify({ t: 'ping', c: i })));
-  for (let i = 0; i < 4; i++) await fetch(at('send'), { method: 'POST', body: pings });
-  let closed = null;
-  let flood = false;
-  for (let i = 0; i < 10 && closed === null; i++) {
-    const r = await fetch(at('poll'));
-    if (r.status === 410) closed = (await r.json()).code;
-    else if (r.status === 200 && (await r.text()).includes('"flood"')) flood = true;
+  try {
+    await fetch(at('send'), { method: 'POST', body: JSON.stringify([JSON.stringify({ t: 'hello', v: V, name: 'Robin', cid: 'quotaRobin0001' })]) });
+    const pings = JSON.stringify(Array.from({ length: 40 }, (_, i) => JSON.stringify({ t: 'ping', c: i })));
+    const started = Date.now();
+    let batches = 0;
+    while (batches < 12 && (await fetch(at('send'), { method: 'POST', body: pings })).status !== 410) batches++;
+    const spent = Date.now() - started;
+    let closed = null;
+    let flood = false;
+    for (let i = 0; i < 10 && closed === null; i++) {
+      const r = await fetch(at('poll'));
+      if (r.status === 410) closed = (await r.json()).code;
+      else if (r.status === 200 && (await r.text()).includes('"flood"')) flood = true;
+    }
+    ok(flood && closed === 1008, `an HTTP-fallback session counts in the same ceiling: "flood", then closed with 1008 (${batches} batches of 40 in ${spent} ms)`);
+  } finally {
+    await fetch(at('close'), { method: 'POST' }).catch(() => {});
   }
-  ok(flood && closed === 1008, 'an HTTP-fallback session counts in the same ceiling: "flood", then closed with 1008');
 }
 
 // 6. QUOTA2: one address holds at most 12 HTTP-fallback sessions across all rooms (a paced server; CI's local one skips it).
 if (!unpaced) {
   const http = base.replace(/^ws/, 'http');
   const sids = [];
-  let refused = 0;
-  for (let i = 0; i < 13; i++) {
-    const r = await fetch(`${http}/api/rooms/${room}x${i}/ws?http=open`, { method: 'POST' });
-    if (r.status === 429) refused++;
-    else if (r.ok) sids.push([`${room}x${i}`, (await r.json()).sid]);
+  try {
+    let refused = 0;
+    for (let i = 0; i < 13; i++) {
+      const r = await fetch(`${http}/api/rooms/${room}x${i}/ws?http=open`, { method: 'POST' });
+      if (r.status === 429) refused++;
+      else if (r.ok) sids.push([`${room}x${i}`, (await r.json()).sid]);
+    }
+    ok(sids.length === 12 && refused === 1, `the 13th HTTP-fallback session of one address, in another room, gets 429 (${sids.length} opened, ${refused} refused)`);
+    // Closing one gives its place back.
+    const [first, sid] = sids.shift();
+    await fetch(`${http}/api/rooms/${first}/ws?http=close&sid=${sid}`, { method: 'POST' });
+    const again = await fetch(`${http}/api/rooms/${room}y/ws?http=open`, { method: 'POST' });
+    ok(again.ok, 'a closed session gives its place back');
+    if (again.ok) sids.push([`${room}y`, (await again.json()).sid]);
+  } finally {
+    // Also on a failure: the leases go back at once instead of after 45 s (the retry would count them).
+    for (const [r, s] of sids) await fetch(`${http}/api/rooms/${r}/ws?http=close&sid=${s}`, { method: 'POST' }).catch(() => {});
   }
-  ok(sids.length === 12 && refused === 1, 'the 13th HTTP-fallback session of one address, in another room, gets 429');
-  // Closing one gives its place back.
-  const [first, sid] = sids.shift();
-  await fetch(`${http}/api/rooms/${first}/ws?http=close&sid=${sid}`, { method: 'POST' });
-  const again = await fetch(`${http}/api/rooms/${room}y/ws?http=open`, { method: 'POST' });
-  ok(again.ok, 'a closed session gives its place back');
-  if (again.ok) sids.push([`${room}y`, (await again.json()).sid]);
-  for (const [r, s] of sids) await fetch(`${http}/api/rooms/${r}/ws?http=close&sid=${s}`, { method: 'POST' });
 }
 
 // 7. ERR1: a request that fails inside the Worker gets small JSON (503), never Cloudflare's HTML error page.
