@@ -64,7 +64,7 @@ const placeOf = (kind: Kind): Place => {
   if (saved === 'side') return 'float';
   return PLACES.includes(saved as Place) ? (saved as Place) : catalogOf(kind).place;
 };
-/** The free window's spot on the screen, as a share of the free room (0–1), per game (`gameFloat:spot` = before 0.9.97.110, for every game). */
+/** The free window's spot on the screen, as a share of the free room (0–1), per game (`gameFloat:spot` = before 0.9.97.111, for every game). */
 const FLOAT_KEY = 'gameFloat:spot';
 const spotKey = (kind: Kind) => `${FLOAT_KEY}:${kind}`;
 /** Where a free window opens until it is moved: the right edge, halfway down. */

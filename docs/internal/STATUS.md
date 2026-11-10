@@ -352,7 +352,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     disabled button over YouTube; the free window's drag was locked to the one strip beside a YouTube player.
   - [x] Fix in `games/stage.ts` (+ `catalog.ts` `noFull`, one `room.css` rule), Test Lab hooks, harness
     `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
-  - [ ] PR, version from the Planner, merge, deploy + live e2e + tag, report (per-game table) to the Planner.
+  - [ ] PR #386 (0.9.97.111), merge, deploy + live e2e + tag, report (per-game table) to the Planner.
 
 ## Design sweep (card 16): what was found and what happened
 From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
@@ -394,7 +394,7 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
-**W1–W5 (lane W, the game window's head and free window; fold into the next round).**
+**0.9.97.111 (W1–W5, the game window’s head and free window; fold into the next round).**
 - [ ] W1. Open Snack Bar: its head has no ⛶ any more. Window Garden, Five Frames and the tables still have it.
 - [ ] W2. A room with a video file (or none): the second placement button puts the game in the video's place. With a
   YouTube video the two placement buttons are gone; hovering the window's bar says why.

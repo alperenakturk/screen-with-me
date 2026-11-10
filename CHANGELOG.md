@@ -16,6 +16,15 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.111 — 10 Nov
+- The 🎮 in a game window's bar opens the games hall again, right under the button.
+- Snack Bar no longer has a full-screen button: it never needs the whole screen.
+- With a YouTube video in the room, a game can only sit beside the video (YouTube's rule), so the "in the video's place"
+  button that did nothing is gone; hovering the window's bar says why.
+- A game's free window can be dragged anywhere by its bar, also over a video file. Next to a YouTube video it slides
+  along the player's edge instead of getting stuck. Each game remembers its own spot and size, and a double click on
+  the bar puts it back.
+
 ### 0.9.97.106 — 10 Nov
 - Stub, the cinema ticket, is now the games' mascot: the referee who cheers and gasps, the bot you play against in the
   Classics and Sea Battle, the cashier at the Snack Bar and the usher whose torch lights your window garden. He cheers
