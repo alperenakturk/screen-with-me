@@ -348,6 +348,33 @@ jobs:
         if: failure()
         run: tail -n 150 wrangler.log || true
 
+  # Card QA1 part 2: the state matrix. Every game in each placement × side panel open / closed × no video / a file /
+  # YouTube × 1366 / 1920 / tablet: nothing cut off, nothing over YouTube, no free window over the video unless dragged,
+  # every head button does something; a real mouse (hover, drag, resize) in a real window under xvfb.
+  state-matrix:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
+          playwright: 'true'
+
+      - name: Game windows in every state
+        run: |
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null)
+          mkdir -p /tmp/vid && ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 -t 120 -c:v libvpx -b:v 300k /tmp/vid/video.webm
+          (cd /tmp/vid && python3 -m http.server 5300 >/dev/null 2>&1 &)
+          HEADFUL=1 FILM_URL=http://localhost:5300/video.webm xvfb-run -a node scripts/harness/state-matrix/run.cjs http://localhost:8787
+
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 150 wrangler.log || true
+
   # Card QA1: the theme contrast check is its own job (5.5 of the site job's 12 min; the site job was the longest).
   contrast:
     needs: changes
@@ -399,7 +426,7 @@ jobs:
   # main, no site change); red when one failed or was cancelled, or the change detection itself failed. `always()`, so
   # a failed job can never make this one "skipped" (which a required check would count as success).
   test:
-    needs: [changes, checks, e2e, site, contrast, games, games-more, game-windows, lab-sweep]
+    needs: [changes, checks, e2e, site, contrast, games, games-more, game-windows, state-matrix, lab-sweep]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -407,9 +434,9 @@ jobs:
       - name: All test jobs passed
         env:
           CHANGES: ${{ needs.changes.result }}
-          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.game-windows.result }} ${{ needs.lab-sweep.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.game-windows.result }} ${{ needs.state-matrix.result }} ${{ needs.lab-sweep.result }}
         run: |
-          echo "changes: $CHANGES · checks, e2e, site, contrast, games, games-more, game-windows, lab-sweep: $RESULTS"
+          echo "changes: $CHANGES · checks, e2e, site, contrast, games, games-more, game-windows, state-matrix, lab-sweep: $RESULTS"
           [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
           for r in $RESULTS; do
             case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
