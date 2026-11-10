@@ -905,7 +905,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   EN / TR: no inner scrollbar, text ≥ 13 px on screen (the fit scale counted), nothing cut off, a fair-sized board, no
   page scroll; `FRIENDS=n` adds fake friends) and `games-resume` (move + sound, named buttons, axe, minimize / restore,
   reload for every Classics board, the side games, Quiz and Draw), both in CI's "Games quality" step (the sweep on
-  laptop + iPhone there). Run the sweep after every game layout change.
+  laptop + iPhone there). Run the sweep after every game layout change. **GPRO (`docs/internal/design/games/games-pro.md`):**
+  sweep size `side` (iPhone 13 landscape; local runs, `SIZES=side`) with a board check against the window's smaller
+  side; sideways-phone layouts under `html.phone.sideways` (never bare `html.sideways`, which a laptop has too):
+  Classics boards and Sea Battle (board / one sea at the full height on the left, the rest on the right), Five Frames,
+  Snack Bar (`fitRows` counts the rows' own column in real pixels), Window Garden (pots ≤ the scene's height:
+  `container-type: size`, `min(23cqw, 48cqh)`), the Classics shelf in one row, the lobbies full width. The window
+  head's "in the video's place" icon (`place-stage`) is a frame filled by the game, distinct from ⛶. The Last Heart
+  lobby is the same tinted card as Quiz / Draw & Guess (`room.css` `.pk-lobby`).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code

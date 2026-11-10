@@ -9581,6 +9581,25 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   font-size: 24px;
 }
 
+/* GPRO: the same lobby card as Quiz and Draw & Guess (games/lobby.css): a tinted card with the game's badge. */
+#game-stage .pk-lobby {
+  --lobby-tint: #ff6b8a;
+  box-sizing: border-box; width: min(100%, 580px); margin: 8px auto; padding: 16px 18px; border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, var(--border));
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 16%, var(--surface)), var(--surface) 70%);
+}
+#game-stage .pk-lobby > h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#game-stage .pk-lobby > h3::before {
+  content: '♥'; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; font-size: 28px; rotate: -6deg;
+  color: var(--lobby-tint); background: color-mix(in srgb, var(--lobby-tint) 28%, var(--surface-2));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
+}
+#game-stage .pk-lobby > .pk-rules { color: var(--muted); }
+html.phone.sideways #game-stage .pk-lobby { width: 100%; padding: 8px 12px; }
+html.phone.sideways #game-stage .pk-lobby > h3::before { display: none; }
+html.phone.sideways #game-stage .pk-lobby { gap: 6px; }
+html.phone.sideways #game-stage .pk-lobby > .pk-rules { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; max-width: none; }
+
 .pk-rules {
   max-width: 540px;
   margin: 0;
