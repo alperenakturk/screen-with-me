@@ -29,3 +29,4 @@ scripts/harness/podcasts/*.png
 # Harness screenshots written to the repository root or a harness folder (never commit them)
 /home-*.png
 scripts/harness/tiktok/*.png
+scripts/harness/snack-bar-ng2/*.png

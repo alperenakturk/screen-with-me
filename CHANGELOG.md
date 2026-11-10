@@ -23,6 +23,13 @@ games' tip jar, cuttings and badges.
 - **Neon** has a new look: one warm neon sign on a dark brick wall, coral and amber instead of magenta and cyan.
 - The home page's pictures in Moonlit Nights, Drive-In and Night Express moved their landmarks to the right, so nothing
   busy sits behind the title any more.
+
+### 0.9.97.104 — 10 Nov
+- Snack Bar: every place has its own shop-front colours; a seasonal stand comes each week (hot cocoa, lemonade, cotton
+  candy, caramel apples) and earns its own badge at level 5; after each film the receipt has a short manager's report
+  (what sold most and what to buy next); each stand plays its own little sound when it reaches a milestone. Your saved
+  Snack Bar carries over.
+
 ### 0.9.97.103 — 10 Nov
 - Five Frames Duel: pick "Best of three" in the lobby for a short match (the first game is the word of the day, then
   practice words, with the score between games), and "Hard mode", where every letter you found must be used again.

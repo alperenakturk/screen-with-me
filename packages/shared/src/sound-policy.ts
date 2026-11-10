@@ -57,6 +57,15 @@ export const SOUNDS = {
   snackBuy: { group: 'game', level: 0.5, gap: 120 },
   snackMilestone: { group: 'game', level: 0.65, gap: 600 },
   snackCinema: { group: 'game', level: 0.8, gap: 3000 },
+  // NG2: a short sound of its own for each stand when it reaches a milestone (instead of `snackMilestone`).
+  snackPop: { group: 'game', level: 0.6, gap: 400 },
+  snackFizz: { group: 'game', level: 0.6, gap: 400 },
+  snackCrunch: { group: 'game', level: 0.6, gap: 400 },
+  snackCandy: { group: 'game', level: 0.6, gap: 400 },
+  snackBell: { group: 'game', level: 0.55, gap: 400 },
+  snackSizzle: { group: 'game', level: 0.6, gap: 400 },
+  snackScoop: { group: 'game', level: 0.6, gap: 400 },
+  snackArcade: { group: 'game', level: 0.55, gap: 400 },
   // Window Garden (solo, on the side): cozy and quiet.
   gardenPlant: { group: 'game', level: 0.4, gap: 200 },
   gardenWater: { group: 'game', level: 0.35, gap: 200 },

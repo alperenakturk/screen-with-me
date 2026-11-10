@@ -14,6 +14,9 @@
 // - Every new cinema is a different place (owner's pick 3): the lobby, then a drive-in (soda ×2), a rooftop (+25 %
 //   between 20:00 and 04:00), an art house (candy ×3 income, ×2 price), then round again.
 // - Decorations (owner's pick 6): looks only, bought once with coins, kept over every cinema.
+// - NG2 (owner's picks 8: 1–4, 10 Nov 2026): each place has its own shop-front colours (the page), a seasonal stand
+//   that changes every week (four in turn, a badge each), a manager's report on each film's receipt (what sold, what
+//   to buy next) and a short sound per stand at its milestones (the page). Saves carry over: `season` is optional.
 
 export const SNACK_KEY = 'snackBar';
 /**
@@ -235,6 +238,8 @@ export interface SnackSave {
   recipes: RecipeId[];
   /** Staff hired (SB3; kept over every cinema). */
   staff: StaffId[];
+  /** NG2: this week's seasonal stand (`week` = `seasonWeek`); a new week starts it again at level 0. */
+  season: { week: number; level: number } | null;
 }
 
 export interface SnackContext {
@@ -248,6 +253,8 @@ export interface SnackContext {
   item?: { id: string } | null;
   /** The room's tip jar filled during this film: +10 % (pick 5). */
   boost?: boolean;
+  /** NG2: this week (`seasonWeek`); the page passes it (the Test Lab can move it). Default: from `now`. */
+  week?: number;
   /** Today's special (`specialOf(dayNumber())`, the page passes it): that stand earns ×2. */
   special?: StandId | null;
 }
@@ -261,7 +268,7 @@ export function freshSnack(): SnackSave {
   return {
     v: SNACK_VERSION, coins: 0, earned: 0, lifetime: 0, watched: 0, levels, stars: 0, cinemas: 0, seen: 0,
     stats: { served: 0, customers: 0, together: 0, voiceServed: 0, films: 0, watched: 0 },
-    badges: [], film: null, receipts: [], decor: [], recipes: [], staff: [],
+    badges: [], film: null, receipts: [], decor: [], recipes: [], staff: [], season: null,
   };
 }
 
@@ -313,6 +320,11 @@ export function loadSnack(raw: unknown): SnackSave {
     ? [...new Set(record.recipes.filter((id): id is RecipeId => typeof id === 'string' && (RECIPE_IDS as readonly string[]).includes(id)))]
     : [];
   save.staff = Array.isArray(record.staff) ? [...new Set(record.staff.filter((id): id is StaffId => STAFF.some((s) => s.id === id)))] : [];
+  const season = record.season as Record<string, unknown> | null | undefined;
+  save.season =
+    season && typeof season === 'object' && typeof season.week === 'number' && Number.isInteger(season.week) && season.week >= 0
+      ? { week: season.week, level: int(season.level, SEASON_LEVELS) }
+      : null;
   save.receipts = Array.isArray(record.receipts)
     ? record.receipts.filter((id): id is string => typeof id === 'string' && id.length <= 64).slice(-RECEIPTS_KEEP)
     : [];
@@ -354,7 +366,53 @@ export const badgeFactor = (save: SnackSave): number =>
 
 /** The bonuses on every stand: stars, badges, the menu bonus and the place at this hour. */
 export const globalFactor = (save: SnackSave, hour = new Date().getHours()): number =>
-  starFactor(save) * badgeFactor(save) * menuFactor(save) * placeFactor(save, hour);
+  starFactor(save) * badgeFactor(save) * menuFactor(save) * placeFactor(save, hour) * seasonFactor(save);
+
+// ---- NG2: the seasonal stand ----
+/** Four seasonal stands, one a week in turn (the same week for everyone, on the UTC calendar). Ids never change. */
+export type SeasonId = 'cocoa' | 'lemonade' | 'cotton-candy' | 'caramel-apple';
+export const SEASONS: readonly SeasonId[] = ['cocoa', 'lemonade', 'cotton-candy', 'caramel-apple'];
+export const SEASON_DAYS = 7;
+/** A seasonal stand goes up to level 10, each level +5 % on the whole income while its week lasts. */
+export const SEASON_LEVELS = 10;
+export const SEASON_BONUS = 0.05;
+/** Its price: this many seconds of the income now (without the seasonal stand itself), ×1.5 a level. */
+export const SEASON_COST_SECONDS = 60;
+export const SEASON_GROWTH = 1.5;
+export const SEASON_COST_MIN = 50;
+/** Reaching this level of a seasonal stand earns its badge (kept after the week ends). */
+export const SEASON_BADGE_LEVEL = 5;
+/** The week of a day number (`dayNumber`); weeks start on Monday (day 0, 1 Jan 1970, was a Thursday). */
+export const seasonWeek = (day: number): number => Math.floor((day + 3) / SEASON_DAYS);
+export const seasonOf = (week: number): SeasonId => SEASONS[((week % SEASONS.length) + SEASONS.length) % SEASONS.length]!;
+/** Whole days left in this week's season, counting today (1 on its last day). */
+export const seasonDaysLeft = (day: number): number => SEASON_DAYS - ((day + 3) % SEASON_DAYS);
+/** The seasonal stand's level in this save's week (0 when none was bought this week). */
+export const seasonLevel = (save: SnackSave, week?: number): number =>
+  save.season && (week === undefined || save.season.week === week) ? save.season.level : 0;
+export const seasonFactor = (save: SnackSave): number => 1 + SEASON_BONUS * seasonLevel(save);
+/** A new week: the old seasonal stand leaves (its badge stays). True when it changed the save. */
+export function rollSeason(save: SnackSave, week: number): boolean {
+  if (!save.season || save.season.week === week) return false;
+  save.season = null;
+  return true;
+}
+/** The price of the seasonal stand's next level (null at the top). */
+export function seasonCost(save: SnackSave, week: number, hour = new Date().getHours()): number | null {
+  const level = seasonLevel(save, week);
+  if (level >= SEASON_LEVELS) return null;
+  const rate = baseRate(save, hour) / seasonFactor(save);
+  return Math.max(SEASON_COST_MIN, rate * SEASON_COST_SECONDS) * SEASON_GROWTH ** level;
+}
+/** Buys a level of this week's seasonal stand; false when at the top or too expensive. */
+export function buySeason(save: SnackSave, week: number, hour = new Date().getHours()): boolean {
+  rollSeason(save, week);
+  const price = seasonCost(save, week, hour);
+  if (price === null || price > save.coins * (1 + 1e-12)) return false;
+  save.coins = Math.max(0, save.coins - price);
+  save.season = { week, level: seasonLevel(save, week) + 1 };
+  return true;
+}
 
 /** Coins per second without the together bonus (in this cinema's place, at this local hour, with today's special). */
 export function baseRate(save: SnackSave, hour = new Date().getHours(), special?: StandId | null): number {
@@ -393,6 +451,7 @@ function filmOf(save: SnackSave, ctx: SnackContext): SnackFilm | null {
 
 export function tick(save: SnackSave, seconds: number, ctx: SnackContext, now = Date.now()): number {
   save.seen = now;
+  rollSeason(save, ctx.week ?? seasonWeek(dayNumber(now)));
   if (!(seconds > 0) || seconds > MAX_TICK_S || !ctx.playing) return 0;
   save.watched += seconds;
   save.stats.watched += seconds;
@@ -477,6 +536,50 @@ export function collectReceipt(save: SnackSave, itemId: string): number {
   return receipt.bucket;
 }
 
+/** The seasonal stands' pictures (the badge and the stand's row). */
+export const SEASON_GLYPH: Record<SeasonId, string> = { cocoa: '☕', lemonade: '🍋', 'cotton-candy': '🍭', 'caramel-apple': '🍎' };
+
+/** What the manager suggests buying next: the purchase that pays itself back the fastest. */
+export type Suggestion =
+  | { kind: 'stand'; id: StandId; level: number; price: number }
+  | { kind: 'recipe'; id: RecipeId; price: number }
+  | { kind: 'season'; id: SeasonId; level: number; price: number };
+export interface ManagerReport {
+  /** The best-selling stands now, at most three, with their share of the stands' income (0–1). */
+  top: { id: StandId; share: number }[];
+  /** The fastest payback among the next level of every open stand, the open recipes and this week's seasonal stand. */
+  next: Suggestion | null;
+}
+
+/** NG2: the manager's report on a film's receipt. `week`: this week (`seasonWeek`). */
+export function managerReport(save: SnackSave, week: number, hour = new Date().getHours()): ManagerReport {
+  const incomes = STAND_IDS.map((id) => ({ id, income: standIncome(save, id) })).filter((x) => x.income > 0);
+  const total = incomes.reduce((sum, x) => sum + x.income, 0);
+  const top = incomes
+    .sort((a, b) => b.income - a.income)
+    .slice(0, 3)
+    .map((x) => ({ id: x.id, share: total > 0 ? x.income / total : 0 }));
+  const factor = globalFactor(save, hour);
+  const options: { s: Suggestion; gain: number }[] = [];
+  for (const id of STAND_IDS) {
+    if (!unlocked(save, id)) continue;
+    const level = save.levels[id];
+    const gain = (standIncome({ ...save, levels: { ...save.levels, [id]: level + 1 } }, id) - standIncome(save, id)) * factor;
+    options.push({ s: { kind: 'stand', id, level: level + 1, price: costOf(id, level, 1, placeCost(save, id)) }, gain });
+  }
+  for (const id of recipesOpen(save)) {
+    const info = recipeInfo(save, id);
+    options.push({ s: { kind: 'recipe', id, price: info.price }, gain: standIncome(save, info.stand) * (RECIPE_FACTOR - 1) * factor });
+  }
+  const seasonPrice = seasonCost(save, week, hour);
+  if (seasonPrice !== null) {
+    const level = seasonLevel(save, week);
+    options.push({ s: { kind: 'season', id: seasonOf(week), level: level + 1, price: seasonPrice }, gain: (baseRate(save, hour) / seasonFactor(save)) * SEASON_BONUS });
+  }
+  const best = options.filter((o) => o.gain > 0).sort((a, b) => a.s.price / a.gain - b.s.price / b.gain)[0];
+  return { top, next: best?.s ?? null };
+}
+
 export interface Badge {
   id: string;
   /** Its picture on the badge wall. */
@@ -527,6 +630,13 @@ export const BADGES: readonly Badge[] = [
   { id: 'head-chef', glyph: '👨‍🍳', bonus: true, test: (s) => s.recipes.length >= 12 },
   { id: 'full-staff', glyph: '🧑‍🤝‍🧑', bonus: true, test: (s) => STAFF.every((x) => s.staff.includes(x.id)) },
   { id: 'big-menu', glyph: '📋', bonus: true, test: (s) => STAND_IDS.filter((id) => s.levels[id] >= MENU_LEVEL).length >= 5 },
+  // NG2: one for each seasonal stand, at level 5 in its week.
+  ...SEASONS.map((id): Badge => ({
+    id: `season-${id}`,
+    glyph: SEASON_GLYPH[id],
+    bonus: true,
+    test: (s) => !!s.season && seasonOf(s.season.week) === id && s.season.level >= SEASON_BADGE_LEVEL,
+  })),
 ];
 
 /** Adds the badges earned now; returns the new ones. */
