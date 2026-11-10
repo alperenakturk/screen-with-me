@@ -204,25 +204,59 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     }
     await wait(200);
     check(near(await box(page), grown, 1), `${L} 112: hovering the resize corner never moves or resizes the window`, { now: await box(page), grown });
+    // 117: a drag goes on through a stray move with no button held (another pointer), and a drag whose release was never
+    // heard ends at the next press without throwing the window back.
+    {
+      const before = await box(page);
+      const t = await (await page.$('#game-stage .game-stage-title')).boundingBox();
+      const hx = t.x + 30;
+      const hy = t.y + t.height / 2;
+      await page.mouse.move(hx, hy);
+      await page.mouse.down();
+      await page.mouse.move(hx - 20, hy + 10, { steps: 3 });
+      await page.evaluate(() => document.querySelector('#game-stage .game-stage-head').dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse', buttons: 0, clientX: 5, clientY: 5, bubbles: true })));
+      await page.mouse.move(hx - 60, hy + 30, { steps: 4 });
+      await page.mouse.up();
+      await wait(300);
+      const went = await box(page);
+      check(Math.abs(went.x - (before.x - 60)) <= 3 && Math.abs(went.y - (before.y + 30)) <= 3, `${L} 117: a stray buttonless move doesn't end a drag`, { before, went });
+      // A release nobody heard: press, move, then the button comes up outside (no pointerup reaches the page).
+      await page.mouse.move(hx - 60, hy + 30);
+      await page.mouse.down();
+      await page.mouse.move(hx - 40, hy + 20, { steps: 3 });
+      await wait(100);
+      const held = await box(page);
+      await page.evaluate(() => addEventListener('pointerup', (e) => e.stopPropagation(), { capture: true, once: true }));
+      await page.mouse.up();
+      await page.evaluate(() => document.querySelector('#game-stage .game-stage-head').dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse', buttons: 0, clientX: 5, clientY: 5, bubbles: true })));
+      await wait(200);
+      check(near(await box(page), held, 2), `${L} 117: a buttonless move after a lost release leaves the window where it stands`, { now: await box(page), held });
+      await page.mouse.move(hx - 40, hy + 20);
+      await page.mouse.down();
+      await page.mouse.up();
+      await wait(200);
+      check(near(await box(page), held, 2), `${L} 117: the next press ends that drag without moving the window`, { now: await box(page), held });
+    }
+    const resized = await box(page);
     // Each game keeps its own spot: Window Garden opens at its own place, Snack Bar comes back to its own.
     await openGame(page, 'garden');
     const garden = await box(page);
-    check(!near(garden, grown, 20), `${L} W5: another game keeps its own spot`, { garden, snack: grown });
+    check(!near(garden, resized, 20), `${L} W5: another game keeps its own spot`, { garden, snack: resized });
     await openGame(page, 'snack');
-    check(near(await box(page), grown), `${L} W5: Snack Bar comes back to its own spot and size`, { now: await box(page), grown });
+    check(near(await box(page), resized), `${L} W5: Snack Bar comes back to its own spot and size`, { now: await box(page), resized });
     // ✕ then 🎮: back in the same spot.
     await page.click('#game-stage .game-minimize');
     await wait(300);
     await page.evaluate(() => (document.querySelector('#dock-game') ?? document.querySelector('#game-btn')).click());
     await until(() => page.evaluate(() => !document.getElementById('game-stage').hidden));
     await wait(300);
-    check(near(await box(page), grown), `${L} W5: ✕ and back: the same spot`, await box(page));
+    check(near(await box(page), resized), `${L} W5: ✕ and back: the same spot`, await box(page));
     // A reload remembers it.
     await page.reload();
     await page.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 });
     await wait(1200);
     await openGame(page, 'snack');
-    check(near(await box(page), grown), `${L} W5: after a reload Snack Bar opens where I left it`, await box(page));
+    check(near(await box(page), resized), `${L} W5: after a reload Snack Bar opens where I left it`, await box(page));
     // Double click on the head: its own size, back home.
     await dblHead(page);
     await wait(300);

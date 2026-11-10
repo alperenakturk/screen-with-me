@@ -88,8 +88,10 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   // Soda has levels, so nachos is open too; candy is the next locked one; the hot dog grill is out of sight.
   // SIDE340: in the narrow column beside the video (1366 laptop) three rows fit: the newest ones.
   const narrowFirst = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
-  const wantRows = narrowFirst ? ['soda', 'nachos', 'candy'] : ['popcorn', 'soda', 'nachos', 'candy'];
-  check(JSON.stringify(await shownRows(page)) === JSON.stringify(wantRows), 'rows: the open stands and the next locked one', JSON.stringify(await shownRows(page)));
+  const shown1 = await shownRows(page);
+  // 0.9.97.117: the narrow window now runs down the side panel to the message box, so it may be tall enough for all four.
+  const wantRows = narrowFirst ? [['soda', 'nachos', 'candy'], ['popcorn', 'soda', 'nachos', 'candy']] : [['popcorn', 'soda', 'nachos', 'candy']];
+  check(wantRows.some((w) => JSON.stringify(w) === JSON.stringify(shown1)), 'rows: the open stands and the next locked one', JSON.stringify(shown1));
 
   // Buy ×10 and Max.
   await mode(page, 10);
