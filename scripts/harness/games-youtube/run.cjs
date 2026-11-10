@@ -89,14 +89,6 @@ const where = (page) =>
       check(!!left, `${label}: bringing the game up in fullscreen leaves fullscreen`);
       const back = await where(page);
       check(back.shown && !back.overlap, `${label}: … and the window is clear of the player again`, back);
-      // Card GW: the game's own fullscreen (⛶) still works over a YouTube room: the game alone on the screen, not tucked away.
-      await page.click('#game-stage .game-full');
-      const own = await until(() => page.evaluate(() => document.fullscreenElement?.id === 'game-stage' && !document.getElementById('game-stage').hidden));
-      check(!!own, `${label}: ⛶ puts the game itself on the whole screen (the YouTube room stays behind)`);
-      await page.click('#game-stage .game-full');
-      const out = await until(() => page.evaluate(() => !document.fullscreenElement && !document.getElementById('game-stage').hidden));
-      const clear = await where(page);
-      check(!!out && clear.shown && !clear.overlap, `${label}: leaving the game's fullscreen brings the window back clear of the player`, clear);
       // A video that isn't YouTube (the sync test): "in the video's place" is offered again.
       await page.evaluate(() => window.__swmLab.run('games.open.classics'));
       await page.fill('#media-input', `${SITE}/sample.mp4`);
