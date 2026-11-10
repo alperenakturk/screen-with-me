@@ -53,9 +53,19 @@
 .sea-left { margin-left: auto; display: inline-flex; gap: 3px; }
 .sea-left i { width: 8px; height: 14px; border-radius: 3px; background: var(--sb-gold); }
 
+/* NG1: the frame around a sea's grid; on a phone the enemy sea zooms into one quarter inside it (twice the size). */
+.sea-zoom { position: relative; flex: none; width: min(100cqw, 100cqh - 46px); aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
+.sea-zoom > .sea-grid { transition: transform 0.25s ease-out; transform-origin: 0 0; }
+.sea-zoom.zoomed > .sea-grid { transform: scale(2); }
+.sea-zoom.zoomed[data-q='1'] > .sea-grid { transform-origin: 100% 0; }
+.sea-zoom.zoomed[data-q='2'] > .sea-grid { transform-origin: 0 100%; }
+.sea-zoom.zoomed[data-q='3'] > .sea-grid { transform-origin: 100% 100%; }
+.sea-whole { position: absolute; z-index: 3; left: 50%; bottom: 8px; translate: -50% 0; min-height: 44px; padding: 4px 14px; font-weight: 800; box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); }
+.sea-whole[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .sea-zoom > .sea-grid { transition: none; } }
 .sea-grid {
   --n: 10;
-  width: min(100cqw, 100cqh - 46px);
+  width: 100%;
   aspect-ratio: 1;
   display: grid;
   grid-template-rows: repeat(var(--n), 1fr);

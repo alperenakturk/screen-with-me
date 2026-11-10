@@ -11,6 +11,9 @@ import {
   boardSolved,
   duelGuess,
   duelOutcome,
+  hardModeMiss,
+  matchOver,
+  matchWinner,
   parseDuelMessage,
   practiceWord,
   type DuelClientMessage,
@@ -18,7 +21,7 @@ import {
   type DuelPlayer,
   type DuelServerMessage,
 } from '@swm/shared/games/duel';
-import { answerFor, dayNumber, decodeWords, score, type Lang } from '@swm/shared/games/five-frames';
+import { answerFor, dayNumber, decodeWords, normalize, score, type Lang } from '@swm/shared/games/five-frames';
 import * as EN from '@swm/shared/games/words/en';
 import * as TR from '@swm/shared/games/words/tr';
 import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
@@ -77,12 +80,19 @@ interface Saved {
   winner: number | null;
   draw: boolean;
   round: number;
+  /** NG1: one game or best of three; hard mode. */
+  bestOf: 1 | 3;
+  hard: boolean;
+  /** The match: wins per seat and games played in it; over = the next Ready starts a new match. */
+  matchWins: number[];
+  matchGames: number;
   people: Record<string, Person>;
   emptySince: number | null;
 }
 
 const fresh = (): Saved => ({
-  seats: [null, null], phase: 'wait', lang: 'en', answer: '', daily: null, dailyDone: false, winner: null, draw: false, round: 0, people: {}, emptySince: null,
+  seats: [null, null], phase: 'wait', lang: 'en', answer: '', daily: null, dailyDone: false, winner: null, draw: false, round: 0,
+  bestOf: 1, hard: false, matchWins: [0, 0], matchGames: 0, people: {}, emptySince: null,
 });
 
 /** The platform's secure random numbers for practice words (never `Math.random`, review 4 R4-7). */
@@ -260,11 +270,22 @@ export class Duel extends DurableObject<Env> {
     d.winner = null;
     d.draw = false;
     d.round++;
+    // A new match after the last one ended (or the first); else the next game of this match.
+    if (this.matchDone()) {
+      d.matchWins = [0, 0];
+      d.matchGames = 0;
+    }
     for (const s of d.seats) {
       if (!s) continue;
       s.guesses = [];
       s.ready = false;
     }
+  }
+
+  /** The current match is over (or none has started): the next game starts a new one. */
+  private matchDone(): boolean {
+    const d = this.data;
+    return d.matchGames === 0 || matchOver(d.bestOf, d.matchWins, d.matchGames);
   }
 
   private async apply(ws: WebSocket, key: string, message: DuelClientMessage): Promise<void> {
@@ -277,6 +298,15 @@ export class Duel extends DurableObject<Env> {
         if (d.lang === message.lang) return;
         d.lang = message.lang;
         // A new language: both say ready again.
+        for (const s of d.seats) if (s) s.ready = false;
+        break;
+      }
+      case 'settings': {
+        // Only between matches: a seated player picks one game or best of three, and hard mode.
+        if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
+        if (d.phase === 'play' || !this.matchDone()) return this.sendTo(ws, { t: 'error', code: 'in_progress' });
+        if (message.bestOf !== undefined) d.bestOf = message.bestOf;
+        if (message.hard !== undefined) d.hard = message.hard;
         for (const s of d.seats) if (s) s.ready = false;
         break;
       }
@@ -300,15 +330,31 @@ export class Duel extends DurableObject<Env> {
         // A guess that arrives after the other one won (or a draw) doesn't count: the server decides who was first.
         if (d.phase !== 'play') return this.sendTo(ws, { t: 'error', code: 'over' });
         const board = d.seats[seat]!;
+        // NG1 hard mode: the letters found so far must be used again (checked before the list, so the hint is precise).
+        if (d.hard && board.guesses.length) {
+          const word = normalize(message.word, d.lang);
+          const miss = word.length ? hardModeMiss(board.guesses, d.answer, word) : null;
+          if (miss && Array.from(word).length === 5) return this.sendTo(ws, { t: 'error', code: 'hard', letter: miss.letter, ...(miss.at !== undefined ? { at: miss.at } : {}) });
+        }
         const error = duelGuess(board, message.word, d.answer, d.lang, (w) => wordList(d.lang).allowed.has(w));
         if (error) return this.sendTo(ws, { t: 'error', code: error });
         const outcome = duelOutcome(d.seats.map((s) => ({ guesses: s?.guesses ?? [] })), d.answer, seat);
         if (outcome !== null) {
           d.phase = 'over';
+          d.matchGames++;
           if (outcome === 'draw') d.draw = true;
           else {
             d.winner = outcome;
-            d.seats[outcome]!.wins++;
+            d.matchWins[outcome] = (d.matchWins[outcome] ?? 0) + 1;
+            // The score in the bar counts matches won (a single game is a match of one).
+            if (matchOver(d.bestOf, d.matchWins, d.matchGames)) {
+              const w = matchWinner(d.matchWins);
+              if (w !== null) d.seats[w]!.wins++;
+            }
+          }
+          if (outcome === 'draw' && matchOver(d.bestOf, d.matchWins, d.matchGames)) {
+            const w = matchWinner(d.matchWins);
+            if (w !== null) d.seats[w]!.wins++;
           }
         }
         break;
@@ -400,6 +446,9 @@ export class Duel extends DurableObject<Env> {
       draw: d.draw,
       ...(over ? { answer: d.answer } : {}),
       round: d.round,
+      bestOf: d.bestOf,
+      hard: d.hard,
+      match: { games: d.matchGames, wins: [...d.matchWins], over: this.matchDone(), winner: this.matchDone() && d.matchGames ? matchWinner(d.matchWins) : null },
       watchers,
     };
   }

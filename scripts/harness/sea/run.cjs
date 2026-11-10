@@ -180,23 +180,38 @@ async function unnamed(page) {
   // Sam misses back at a corner of Alex's sea that holds no ship.
   const alexShips = await cellsWith(alex.page, 'mine', 'ship');
   const samMiss = [...Array(100).keys()].reverse().find((c) => !alexShips.includes(c));
-  // GP2 (owner's pick A): on a phone the first tap only aims; a second tap (or Fire) shoots.
+  // NG1 (owner's pick 7B): on a phone the first tap zooms into that quarter and aims; a second tap fires; "Whole sea"
+  // goes back. (GP2's aim + Fire button stay.)
   const other = [...Array(100).keys()].find((c) => !alexShips.includes(c) && c !== samMiss);
   await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${other}"]`);
-  await wait(300);
+  await wait(400);
+  const zoom = () => sam.page.evaluate(() => {
+    const f = document.querySelector('#game-stage .sea-theirs .sea-zoom');
+    const g = f?.querySelector('.sea-grid');
+    const w = document.querySelector('#game-stage .sea-whole');
+    return { zoomed: !!f?.classList.contains('zoomed'), q: f?.dataset.q, scale: g ? g.getBoundingClientRect().width / f.getBoundingClientRect().width : 0, whole: !!w && !w.hidden && w.getBoundingClientRect().height >= 44 };
+  });
   const aimed = await sam.page.evaluate(() => ({
     cells: [...document.querySelectorAll('#game-stage .sea-theirs .sea-cell.aimed')].map((c) => Number(c.dataset.cell)),
     status: document.querySelector('#game-stage .sea-status')?.textContent ?? '',
     fire: document.querySelector('#game-stage .sea-fire')?.textContent ?? '',
   }));
+  const z1 = await zoom();
   check(aimed.cells.length === 1 && aimed.cells[0] === other && /aiming at [A-J]\d+/i.test(aimed.status) && /fire at [A-J]\d+/i.test(aimed.fire), "phone: Sam's first tap only aims (crosshair, the cell's name, a Fire button)", aimed);
+  check(z1.zoomed && z1.q === '0' && z1.scale > 1.9 && z1.whole, 'phone: the first tap zooms into that quarter (cells twice as big), "Whole sea" shows (44 px)', z1);
   check(!(await cellsWith(alex.page, 'mine', 'miss')).includes(other), 'phone: nothing is fired by an aim');
+  await sam.page.click('#game-stage .sea-whole');
+  await wait(400);
+  const z2 = await zoom();
+  check(!z2.zoomed && !z2.whole && (await sam.page.evaluate(() => !document.querySelector('#game-stage .sea-theirs .sea-cell.aimed'))), '"Whole sea" goes back to the whole sea (no aim)', z2);
   await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samMiss}"]`);
-  await wait(200);
-  check((await sam.page.evaluate(() => [...document.querySelectorAll('#game-stage .sea-theirs .sea-cell.aimed')].map((c) => Number(c.dataset.cell)))).join() === String(samMiss), 'phone: tapping another cell moves the aim');
-  await click(sam.page, '#game-stage .sea-fire');
-  check(!!(await until(() => turnOf())), "Sam's miss (by Fire) passes the turn back");
-  check(!!(await until(async () => (await cellsWith(alex.page, 'mine', 'miss')).includes(samMiss))), 'phone: Fire shot the aimed cell');
+  await wait(400);
+  const z3 = await zoom();
+  check(z3.zoomed && z3.q === '3', 'phone: a tap in another corner zooms into that quarter', z3);
+  await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samMiss}"]`);
+  check(!!(await until(() => turnOf())), "Sam's miss (the second tap) passes the turn back");
+  check(!!(await until(async () => (await cellsWith(alex.page, 'mine', 'miss')).includes(samMiss))), 'phone: the second tap shot the cell');
+  check(!!(await until(async () => !(await zoom()).zoomed, 3000)), 'phone: after the shot the whole sea shows again');
   await alex.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samShips[0]}"]`);
   check(!!(await until(async () => (await cellsWith(alex.page, 'theirs', 'hit')).includes(samShips[0]))), 'a hit shows on their sea');
   check(!!(await until(async () => (await sounds(sam.page)).includes('seaHit'))), 'the hit sounds on both sides');

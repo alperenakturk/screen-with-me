@@ -152,5 +152,85 @@ ok(someoneSolved ? alex.state.winner !== null : alex.state.draw && alex.state.wi
 ok(alex.state.answer !== answer, 'the practice word was not the day’s word');
 
 for (const c of [alex, sam, robin]) c.ws.close();
+
+// ---- NG1: best of three in hard mode, at a new table ----
+// The players play like a simple solver: each guess fits every mark seen so far (so it also keeps hard mode's rule).
+const game2 = 'fm' + Math.random().toString(36).slice(2, 8);
+function client2(name, cid) {
+  const ws = new GameSocket(`${base}/api/duel/${game2}/ws`);
+  setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ t: 'ping' })), 15_000).unref();
+  const inbox = [];
+  let last = null;
+  ws.addEventListener('message', (e) => {
+    const m = JSON.parse(e.data);
+    inbox.push(m);
+    if (m.t === 'state') last = m;
+  });
+  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, name, cid })));
+  return { ws, inbox, send: (m) => ws.send(JSON.stringify(m)), get state() { return last; } };
+}
+const p1 = client2('Alex', 'd'.repeat(32));
+ok(await until(() => p1.state?.seat === 0), 'match table: Alex sits');
+const p2 = client2('Sam', 'e'.repeat(32));
+ok(await until(() => p2.state?.seat === 1), 'match table: Sam sits');
+p2.send({ t: 'settings', bestOf: 3, hard: true });
+ok(await until(() => p1.state.bestOf === 3 && p1.state.hard === true), 'Sam picks best of three and hard mode; Alex sees it');
+p1.send({ t: 'ready', on: true });
+p2.send({ t: 'ready', on: true });
+ok(await until(() => p1.state.phase === 'play'), 'the match starts');
+ok(Number.isInteger(p1.state.daily), 'game 1 of the match is the word of the day');
+p1.inbox.length = 0;
+p1.send({ t: 'settings', hard: false });
+ok(await until(() => p1.inbox.some((m) => m.code === 'in_progress')), 'settings cannot change during a match');
+
+// Hard mode: a word that ignores a found letter is refused, with the letter named.
+const answer2 = answerFor(p1.state.daily, answers, 'en');
+const withHit = words.find((w) => w !== answer2 && score(w, answer2).some((m) => m === 'hit'));
+p1.send({ t: 'guess', word: withHit });
+ok(await until(() => p1.state.players[0].marks.length === 1), 'Alex guesses a word with a letter in the right place');
+const hitAt = score(withHit, answer2).indexOf('hit');
+const breaker = words.find((w) => w[hitAt] !== withHit[hitAt] && w !== withHit);
+p1.inbox.length = 0;
+p1.send({ t: 'guess', word: breaker });
+ok(await until(() => p1.inbox.some((m) => m.code === 'hard' && m.letter === withHit[hitAt] && m.at === hitAt)), `hard mode refuses a guess without the found letter (${withHit[hitAt]} at ${hitAt + 1})`);
+ok(p1.state.players[0].marks.length === 1, '… and it does not count');
+
+/** The words still possible after these guesses and marks. */
+const fits = (guesses, marks) => words.filter((w) => guesses.every((g, i) => score(g, w).join() === marks[i].join()));
+/** Plays one guess for a player: the first word that fits everything they saw. */
+async function solverGuess(c, seat) {
+  const me = c.state.players[seat];
+  const left = fits(me.words ?? [], me.marks).filter((w) => !(me.words ?? []).includes(w));
+  const before = me.marks.length;
+  c.send({ t: 'guess', word: left[0] });
+  return until(() => c.state.players[seat].marks.length > before || c.state.phase === 'over', 5000);
+}
+// Game 1: Alex finds the word of the day.
+p1.send({ t: 'guess', word: answer2 });
+ok(await until(() => p1.state.phase === 'over' && p1.state.winner === 0), 'Alex wins game 1');
+ok(p1.state.match.wins.join() === '1,0' && !p1.state.match.over && p1.state.match.games === 1, 'the match stands 1–0 after game 1, not over');
+let rounds = 1;
+while (!p1.state.match.over && rounds < 3) {
+  const r = p1.state.round;
+  p1.send({ t: 'rematch' });
+  p2.send({ t: 'rematch' });
+  ok(await until(() => p1.state.phase === 'play' && p1.state.round === r + 1), `game ${rounds + 1} starts`);
+  ok(p1.state.daily === null && p1.state.match.games === rounds, `game ${rounds + 1} is a practice word, the match goes on`);
+  for (let i = 0; i < 7 && p1.state.phase === 'play'; i++) {
+    if (p1.state.phase === 'play' && !p1.state.players[0].solved && !p1.state.players[0].out) await solverGuess(p1, 0);
+    if (p2.state.phase === 'play' && !p2.state.players[1].solved && !p2.state.players[1].out) await solverGuess(p2, 1);
+  }
+  ok(await until(() => p1.state.phase === 'over'), `game ${rounds + 1} ends (every guess kept hard mode's rule)`);
+  rounds++;
+}
+const m = p1.state.match;
+ok(m.over && m.games <= 3 && (Math.max(...m.wins) >= 2 || m.games === 3), `the match is over after ${m.games} games (${m.wins.join('–')})`);
+ok(m.winner === (m.wins[0] === m.wins[1] ? null : m.wins[0] > m.wins[1] ? 0 : 1), 'the match winner is the one with more wins');
+const r2 = p1.state.round;
+p1.send({ t: 'rematch' });
+p2.send({ t: 'rematch' });
+ok(await until(() => p1.state.phase === 'play' && p1.state.round === r2 + 1), 'Play again starts a new match');
+ok(p1.state.match.games === 0 && p1.state.match.wins.join() === '0,0', 'the new match starts from 0–0');
+for (const c of [p1, p2]) c.ws.close();
 console.log('✓ Five Frames Duel e2e passed');
 process.exit(0);

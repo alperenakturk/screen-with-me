@@ -496,6 +496,9 @@ with the same friend:
 - [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
   time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
   video's place" and ⛶ full screen now look different.
+- [ ] G14. Five Frames Duel extras: in the lobby pick "Best of three" and "Hard mode", play with a friend. The bar shows
+  "Game 1 of 3" and the score; a guess that leaves out a letter you found is refused and names it. On your phone, Sea
+  Battle: tap their sea once (it zooms into that corner), tap a cell to fire, "Whole sea" goes back.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

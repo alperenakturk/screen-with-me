@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.103 — 10 Nov
+- Five Frames Duel: pick "Best of three" in the lobby for a short match (the first game is the word of the day, then
+  practice words, with the score between games), and "Hard mode", where every letter you found must be used again.
+  The Duel has its own cover in the games hall.
+- Sea Battle on a phone: the first tap zooms into that corner of their sea so the cells are easy to hit, the second tap
+  fires; "Whole sea" goes back at any time.
+
 ### 0.9.97.102 — 10 Nov
 - A new theme, **Matinee**: the first light theme, warm paper with ink-dark text and a rust accent, for watching in
   daylight. The video's own place stays black.
