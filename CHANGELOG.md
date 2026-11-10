@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.97 — 10 Nov
+- Games: Snack Bar grows into a proper snack-bar game. Eight stands (new: a hot dog grill, an ice cream cart and an
+  arcade), each with its own price, recipes that double a stand, a menu bonus for keeping many stands busy, four staff
+  to hire (one serves customers for you), a "special of the day" and two new places (by the sea, a planetarium). Buy
+  ×1, ×10 or as many as you can afford. Your saved Snack Bar comes along: levels, coins and decorations stay, and your
+  stars are converted so their bonus never drops.
+- Games: a fresh look for the counter, the new stands and more kinds of customers.
+
 ### 0.9.97.96 — 10 Nov
 - Phones: every game fills the whole screen when the phone is held sideways too (on big phones it used to open as a
   small window over the video).
