@@ -354,7 +354,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
   - [x] PR #386 (0.9.97.111) merged.
   - [x] 0.9.97.112 (#390) live: side games' home beside the video, the hall from a free window, the resize corner.
-  - [ ] 0.9.97.114: side games only in the free window; a table in the video's place pauses the playing video. Branch
+  - [ ] 0.9.97.115: side games only in the free window; a table in the video's place pauses the playing video. Branch
     `claude/game-window-solo`, then PR, merge, deploy + live e2e + tag, report.
 - [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
   categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
@@ -490,7 +490,7 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
-**0.9.97.114 (lane W: side games only in their window, a table pauses the video; fold into the next round).**
+**0.9.97.115 (lane W: side games only in their window, a table pauses the video; fold into the next round).**
 - [ ] Q1. Play a video file with a friend, open Snack Bar: the video keeps playing. Open a table (chess): the video
   pauses on both screens and a note says "Video paused for the game". Put the table away (✕): the video stays paused.
 - [ ] Q2. Snack Bar, Window Garden and Five Frames open as a window on the right with no placement buttons in their bar;

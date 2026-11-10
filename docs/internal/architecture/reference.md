@@ -933,7 +933,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   right-aligned at its top, as big as the column allows up to `maxSize` and never below `minSize` (a column narrower
   than that: the window sticks out over the video's edge by the difference); over YouTube it shrinks to the column (or
   the largest strip beside the player, `largestClear`) so it never covers the player; tablets, phones and the video's
-  fullscreen use `SPOT_HOME`. **A table pauses the video** (`autoPause`, 0.9.97.114): opening a table (not coming back
+  fullscreen use `SPOT_HOME`. **A table pauses the video** (`autoPause`, 0.9.97.115): opening a table (not coming back
   to it after a reload) in the video's place while the video plays calls the room's `pauseVideo` (`room.ts`: the player's
   own pause, which the sync engine sends to everyone; nothing in a host-only room for a guest), once, with the note
   `game.pausedForGame` by the head's 🎮; closing the table doesn't play it again.

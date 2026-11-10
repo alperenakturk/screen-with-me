@@ -16,7 +16,7 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.114 — 10 Nov
+### 0.9.97.115 — 10 Nov
 - When a table opens in the video's place while the video plays, the video pauses for everyone, so nobody misses the
   film under the game. A short note says "Video paused for the game"; press play when you want it again. (With a
   YouTube video the table sits beside the video and nothing pauses.)
