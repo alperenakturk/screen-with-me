@@ -16,6 +16,15 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.119 — 10 Nov
+- In the light Matinee theme the games' pictures are drawn in light colours too: every "How to play" picture and
+  Window Garden's window sill, and the garden's body (its chips, the pot card and the album) is light with dark words.
+  Other themes keep their night look.
+- Sea Battle on a phone: "Whole sea" sits in the board's title line, so it never covers the zoomed corner of the sea.
+- Backgammon: bigger dice (a used die is struck through), the tray's dark checkers have a light rim, and the bot level
+  you picked is filled in.
+- Window Garden: the 🎨 button is named "Decorations" for screen readers and on hover.
+
 ### 0.9.97.117 — 10 Nov
 - Games follow the room's theme: the "How to play" cards, the tables' "?", the dice and the turn ring take the theme's
   colours (a light theme gets a light card), and the games hall is solid on the picture themes.

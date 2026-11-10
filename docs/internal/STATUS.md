@@ -683,6 +683,10 @@ with the same friend:
   play" card is light, with "Skip" at the bottom (no ✕ in the corner). On a phone, play backgammon against Stub: no
   pink ring, the dice are readable, 🏆 shows the wins, "Just watch" is gone on your turn; its "?" explains the gold
   rings. Open the games hall: only Classics says UPDATED, What's new reads in full. Window Garden: "💧 Water".
+- [ ] G21. Light art in Matinee (0.9.97.119): in Matinee open any "How to play" picture and Window Garden: the pictures,
+  the window sill and the garden's cards are light, the words dark (Night still looks as before). Phone, Sea Battle vs
+  Stub: tap their sea, "Whole sea" sits in the title line, not over the cells. Backgammon: big dice, a used die struck
+  through, the dark checkers in the tray have a light rim, the bot level you picked is filled.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

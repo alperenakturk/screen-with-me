@@ -182,6 +182,20 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   check((await fits(pam)).length === 0, 'phone: fits without scrollbars', (await fits(pam)).join('; '));
   await pam.screenshot({ path: __dirname + '/garden-phone.png' });
 
+  // 0.9.97.119: the body follows a light theme (Matinee): dark words on light cards; Night keeps its own colours.
+  const look = () => alex.evaluate(() => {
+    const lum = (c) => { const [r, g, b] = c.match(/[\d.]+/g).map(Number); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
+    const wg = document.querySelector('.wg');
+    const bg = getComputedStyle(wg).backgroundImage.match(/rgba?\([^)]+\)/)?.[0] ?? 'rgb(0,0,0)';
+    return { bg: lum(bg), text: lum(getComputedStyle(document.querySelector('.wg-action-title')).color) };
+  });
+  const night = await look();
+  check(night.bg < 0.3 && night.text > 0.7, 'Night: the garden keeps its night colours', JSON.stringify(night));
+  await alex.evaluate(() => document.documentElement.setAttribute('data-theme', 'matinee'));
+  await wait(300);
+  const matinee = await look();
+  check(matinee.bg > 0.7 && matinee.text < 0.3, 'Matinee: a light body with dark words', JSON.stringify(matinee));
+
   void sam;
   await browser.close();
   console.log(failed ? `\n✗ ${failed} checks failed` : '\n✓ Window Garden harness passed');
