@@ -253,3 +253,19 @@ html.phone.sideways #game-stage .sb-rows { grid-area: rows; overflow: hidden; co
 html.phone.sideways #game-stage .sb-more { grid-area: more; align-self: center; }
 html.phone.sideways #game-stage .sb-foot { grid-area: foot; flex-wrap: wrap; }
 html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
+
+/* NG2 (owner's pick 8.1): each place has its own shop-front colours: the panel, the back wall, the shelf, the counter
+   and its stripes (the scene reads them through `var()` fills, snack-bar.ts `decorated`). The lobby keeps the defaults. */
+.sb[data-place='drive-in'] { --sb-panel: #152844; --sb-night: #0b1426; --sb-wall-a: #1a2f52; --sb-wall-b: #0a1424; --sb-shelf: #0b1830; --sb-counter-a: #46566e; --sb-counter-b: #1f2836; --sb-stripe: #ff8f3a; }
+.sb[data-place='rooftop'] { --sb-panel: #1f1745; --sb-night: #0f0b26; --sb-wall-a: #2a2160; --sb-wall-b: #0f0b26; --sb-shelf: #150f33; --sb-counter-a: #54447a; --sb-counter-b: #261c40; --sb-stripe: #ffc65a; }
+.sb[data-place='art-house'] { --sb-panel: #2e1426; --sb-night: #170a14; --sb-wall-a: #4a1830; --sb-wall-b: #1c0910; --sb-shelf: #240a14; --sb-counter-a: #6b4a2c; --sb-counter-b: #33200f; --sb-stripe: #d9b26a; }
+.sb[data-place='seaside'] { --sb-panel: #123a42; --sb-night: #0a2026; --sb-wall-a: #15505a; --sb-wall-b: #0a2228; --sb-shelf: #0a2c33; --sb-counter-a: #c99a62; --sb-counter-b: #7a5634; --sb-stripe: #3fa7d6; }
+.sb[data-place='planetarium'] { --sb-panel: #121a42; --sb-night: #080c22; --sb-wall-a: #16204e; --sb-wall-b: #05081a; --sb-shelf: #0a1030; --sb-counter-a: #36427a; --sb-counter-b: #161c3a; --sb-stripe: #b9a0ff; }
+
+/* NG2: this week's seasonal stand (top of Upgrades) and the manager's report on the receipt. */
+.sb-up.sb-season { background: rgba(255, 198, 90, 0.1); box-shadow: inset 0 0 0 1px rgba(255, 198, 90, 0.35); }
+.sb-report { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; border-top: 1px dashed rgba(26, 16, 54, 0.3); }
+.sb-report h4 { margin: 0; font-size: 14px; }
+.sb-report .sb-receipt-rows li:last-child { font-size: 14px; }
+.sb-report .sb-receipt-rows b { text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-report .sb-receipt-rows span { white-space: nowrap; }

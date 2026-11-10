@@ -180,6 +180,14 @@ export function scheduleSound(ctx: Ctx, destination: AudioNode, id: SoundId, gai
     case 'seaMiss': [19, 14, 12].forEach((n, i) => N(i * 0.035, n, 0.07, 0.3)); break;
     case 'seaHit': C(0, 0.7); N(0.01, -12, 0.3, 0.9); N(0.03, -5, 0.22, 0.5); break;
     case 'seaSunk': C(0, 0.6); N(0.01, -12, 0.4, 0.8); [7, 12, 16].forEach((n, i) => N(0.18 + i * s, n, 0.3, 0.6)); break;
+    case 'snackPop': [0, 0.06, 0.11].forEach((dt, i) => C(dt, 0.6 - i * 0.08)); N(0.17, 19, 0.14, 0.5); break;
+    case 'snackFizz': [24, 26, 28, 31].forEach((n, i) => N(i * 0.03, n, 0.05, 0.25)); N(0.16, 19, 0.22, 0.5); break;
+    case 'snackCrunch': C(0, 0.8); C(0.05, 0.65); N(0.1, 7, 0.15, 0.5); N(0.1 + s * 0.6, 12, 0.22, 0.5); break;
+    case 'snackCandy': [12, 19, 24].forEach((n, i) => N(i * s * 0.5, n, 0.1, 0.45)); break;
+    case 'snackBell': N(0, 24, 0.55, 0.6); N(0.01, 31, 0.4, 0.25); break;
+    case 'snackSizzle': [0, 0.03, 0.06, 0.09].forEach((dt, i) => C(dt, 0.4 - i * 0.06)); N(0.13, 4, 0.18, 0.5); N(0.13 + s, 9, 0.26, 0.5); break;
+    case 'snackScoop': [7, 12, 16, 19].forEach((n, i) => N(i * s * 0.4, n, 0.09, 0.4)); break;
+    case 'snackArcade': [12, 16, 19, 24, 28].forEach((n, i) => N(i * 0.05, n, 0.05, 0.4)); N(0.3, 24, 0.25, 0.5); break;
     case 'snackCinema': [0, 7, 12, 16, 19].forEach((n, i) => N(i * s, n, 0.3, 0.7)); [12, 16, 19].forEach((n) => N(s * 5.2, n, 0.9, 0.4)); break;
   }
 }

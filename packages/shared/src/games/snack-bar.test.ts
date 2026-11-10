@@ -252,8 +252,8 @@ describe('Snack Bar: customers, receipts, badges (side games 2)', () => {
     save.badges.push('tap-happy');
     expect(badgeFactor(save)).toBeCloseTo(1.01);
     expect(baseRate(save)).toBeCloseTo(0.5 * 1.01);
-    expect(BADGES).toHaveLength(37);
-    expect(new Set(BADGES.map((b) => b.id)).size).toBe(37);
+    expect(BADGES).toHaveLength(41);
+    expect(new Set(BADGES.map((b) => b.id)).size).toBe(41);
   });
 
   it('round-trips the new fields; unknown badges and broken records are dropped', () => {
@@ -424,5 +424,97 @@ describe('Snack Bar v2 (SB3): recipes, staff, the menu bonus, the special, the n
     for (const [id, level] of Object.entries(v1.levels)) {
       expect(standIncome(save, id as never)).toBeGreaterThanOrEqual(v1Rate[id]! * level * v1Milestones(level));
     }
+  });
+});
+
+describe('Snack Bar NG2: seasonal stands and the manager’s report', () => {
+  it('weeks start on Monday and the four stands come in turn', async () => {
+    const { seasonWeek, seasonOf, seasonDaysLeft, SEASONS } = await import('./snack-bar.ts');
+    // Day 4 = Monday 5 Jan 1970: a new week; day 3 (Sunday) is the last day of the week before.
+    expect(seasonWeek(4)).toBe(seasonWeek(3) + 1);
+    expect(seasonWeek(4)).toBe(seasonWeek(10));
+    expect(seasonDaysLeft(4)).toBe(7);
+    expect(seasonDaysLeft(10)).toBe(1);
+    expect(new Set([0, 1, 2, 3].map((w) => seasonOf(w))).size).toBe(SEASONS.length);
+    expect(seasonOf(4)).toBe(seasonOf(0));
+  });
+
+  it('a seasonal stand costs a minute of income, adds 5 % a level and leaves with its week', async () => {
+    const { buySeason, seasonCost, seasonFactor, rollSeason, SEASON_COST_MIN, SEASON_LEVELS, SEASON_GROWTH } = await import('./snack-bar.ts');
+    const save = freshSnack();
+    save.levels.popcorn = 100;
+    save.coins = 1e12;
+    const rate = baseRate(save, 12);
+    const first = seasonCost(save, 7, 12)!;
+    expect(first).toBeCloseTo(Math.max(SEASON_COST_MIN, rate * 60));
+    expect(buySeason(save, 7, 12)).toBe(true);
+    expect(seasonFactor(save)).toBeCloseTo(1.05);
+    expect(baseRate(save, 12)).toBeCloseTo(rate * 1.05);
+    // The price grows ×1.5 a level and is counted without the stand's own bonus.
+    expect(seasonCost(save, 7, 12)).toBeCloseTo(first * SEASON_GROWTH);
+    while (buySeason(save, 7, 12));
+    expect(save.season).toEqual({ week: 7, level: SEASON_LEVELS });
+    expect(seasonCost(save, 7, 12)).toBeNull();
+    // A new week: the stand leaves and the bonus with it.
+    expect(rollSeason(save, 8)).toBe(true);
+    expect(save.season).toBeNull();
+    expect(baseRate(save, 12)).toBeCloseTo(rate);
+    // Too few coins: nothing changes.
+    save.coins = 0;
+    expect(buySeason(save, 8, 12)).toBe(false);
+    expect(save.season).toBeNull();
+  });
+
+  it('tick ends last week’s stand', () => {
+    const save = freshSnack();
+    save.season = { week: 1, level: 3 };
+    tick(save, 1, alone, 30 * 86_400_000);
+    expect(save.season).toBeNull();
+  });
+
+  it('level 5 earns the season’s badge, which stays after the week', async () => {
+    const { buySeason, seasonOf, rollSeason } = await import('./snack-bar.ts');
+    const save = freshSnack();
+    save.coins = 1e9;
+    for (let i = 0; i < 4; i++) buySeason(save, 2, 12);
+    expect(checkBadges(save).map((b) => b.id)).not.toContain(`season-${seasonOf(2)}`);
+    buySeason(save, 2, 12);
+    expect(checkBadges(save).map((b) => b.id)).toContain(`season-${seasonOf(2)}`);
+    rollSeason(save, 3);
+    expect(save.badges).toContain(`season-${seasonOf(2)}`);
+    expect(BADGES.filter((b) => b.id.startsWith('season-'))).toHaveLength(4);
+  });
+
+  it('old saves carry over (no season) and a broken season is dropped', () => {
+    const old = JSON.parse(saveSnack(freshSnack()));
+    delete old.season;
+    expect(loadSnack(JSON.stringify(old)).season).toBeNull();
+    expect(loadSnack(JSON.stringify({ ...old, season: { week: 5, level: 99 } })).season).toEqual({ week: 5, level: 10 });
+    expect(loadSnack(JSON.stringify({ ...old, season: { week: 'x', level: 2 } })).season).toBeNull();
+    expect(loadSnack(JSON.stringify({ ...old, season: { week: 5, level: 3 } })).season).toEqual({ week: 5, level: 3 });
+  });
+
+  it('the report names the best sellers and the fastest payback', async () => {
+    const { managerReport } = await import('./snack-bar.ts');
+    const save = freshSnack();
+    save.levels.popcorn = 30;
+    save.levels.soda = 2;
+    const report = managerReport(save, 7, 12);
+    expect(report.top[0]!.id).toBe('popcorn');
+    expect(report.top.reduce((sum, x) => sum + x.share, 0)).toBeCloseTo(1);
+    expect(report.next).not.toBeNull();
+    // Popcorn's first recipe (×2 for the stand that earns nearly everything) is the fastest payback here.
+    expect(report.next).toMatchObject({ kind: 'recipe', id: 'popcorn:1' });
+    // A late game (every stand at 400, every recipe bought): levels cost far more than they add, and the seasonal
+    // stand (a minute of income for +5 %: 20 minutes back) is the best buy.
+    const late = freshSnack();
+    for (const id of STAND_IDS) late.levels[id] = 400;
+    late.recipes = [...RECIPE_IDS];
+    expect(managerReport(late, 7, 12).next).toMatchObject({ kind: 'season', level: 1 });
+    // A fresh game: the next popcorn level (10 coins for +0.5/s) beats the seasonal stand's 50-coin minimum.
+    expect(managerReport(freshSnack(), 7, 12).next).toMatchObject({ kind: 'stand', id: 'popcorn', level: 2 });
+    // At the seasonal stand's top it is never suggested.
+    save.season = { week: 7, level: 10 };
+    expect(managerReport(save, 7, 12).next?.kind).not.toBe('season');
   });
 });
