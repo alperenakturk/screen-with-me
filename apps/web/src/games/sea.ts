@@ -334,7 +334,9 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   }
   const wholeSea = el('button', { type: 'button', class: 'btn small-btn sea-whole', hidden: '' }, `↩ ${tx('wholeSea')}`) as HTMLButtonElement;
   wholeSea.addEventListener('click', unzoom);
-  theirs.frame.append(wholeSea);
+  // B2's find: over the zoomed grid it covered the bottom cells it was next to (H10 could not be shot in the bottom-right
+  // quarter). It sits in the sea's own title row instead, never over a cell.
+  theirs.head.append(wholeSea);
   mine.grid.addEventListener('click', (e) => {
     const cell = (e.target as HTMLElement).closest<HTMLElement>('.sea-cell');
     if (cell && !dragged) onMine(Number(cell.dataset.cell));
@@ -443,6 +445,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const left = p ? el('span', { class: 'sea-left', title: p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }) }, ...Array.from({ length: p.left }, () => el('i', { 'aria-hidden': 'true' })), el('span', { class: 'sr-only' }, p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }))) : '';
     const ready = state!.phase === 'place' && p?.ready ? el('span', { class: 'sea-ready' }, '✓') : '';
     head.replaceChildren(who, el('span', { class: 'sea-name' }, el('b', {}, label), p ? el('small', {}, p.name) : el('small', {}, tx('waiting'))), ready, left);
+    if (head === theirs.head) head.append(wholeSea);
     head.classList.toggle('offline', !!p && !p.online);
   }
 
