@@ -932,7 +932,7 @@ export const tr: Record<I18nKey, string> = {
   'yt.terms': 'YouTube Hizmet Şartları',
   skipToContent: 'İçeriğe atla',
   skipToVideo: 'Videoya atla',
-  chatEmpty: 'Henüz mesaj yok. Arkadaşların gelince burada konuşursunuz\u00a0👋',
+  chatEmpty: 'Henüz mesaj yok. Arkadaşların gelince burada konuşursun\u00a0👋',
   'action.next': 'Sıradaki videoya geçildi: {title}',
   'queue.add': '{name} sıraya ekledi: {title}',
   'queue.remove': '{name} sıradan çıkardı: {title}',
