@@ -15,7 +15,7 @@ mapping: `docs/internal/docs-sprawl.md` §2.2.
 Release notes go to `CHANGELOG.md`, never here as "since 0.9.x" narration.
 
 **Not yet here:** some facts lived only in the old `CLAUDE.md` "Live:" line (Last Heart / poker, `GameSocket`,
-`ghost.ts` / `GHOST_MS`, `room.css`, `i18n-tr.ts` / `loadLang`, the uptime cron, `zoomRange` / `.game-full`,
+`ghost.ts` / `GHOST_MS`, `room.css`, `i18n-tr.ts` / `loadLang`, the uptime cron, `zoomRange`,
 `STATS_SAVE_MS`, `FEED_MAX_ITEMS`, `SEEK_STEP`, `.yt-notices-shorts`, `resultCard` / `showPointsResult`, `tableHowTo`,
 `gameHint`, `overYoutube` / `clearOfChat`, `SIDE_TOP`, `markHit`, `tvOn`, `quiesce`, `aimAt`, `setGameLive`,
 `introOver` / `removedHere` / `swm-joined`, `sendBans` …; full list: `docs/internal/docs-sprawl.md` §1.3). Until they
@@ -923,11 +923,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   head's "in the video's place" icon (`place-stage`) is a frame filled by the game, distinct from ⛶. The Last Heart
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
   **Game window head and free window (lane W, bugs W1–W5, owner 10 Nov 2026):** the head is (placement switch) · 🎮 ·
-  ↩ Leave (tables) · ⏹ End (tables, opener or host) · ⛶ · ✕ (minimize), plus the game's own slot (`.game-head-slot`:
+  ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own slot (`.game-head-slot`:
   "?" How to play, Classics' shelf). 🎮 opens the games hall **under itself** (`hubFromHead`: the menu moves into a fixed
   `.head-game-wrap`, inside `document.fullscreenElement` while there is one); it used to open beside the toolbar's 🎮,
-  which a computer hides. A game whose catalog entry has `noFull` (Snack Bar) has no ⛶ and leaves the game's own full
-  screen when it is switched to. Over a YouTube video (`overYoutube`, YTG) the placement switch is hidden (only the
+  which a computer hides. No game has its own full screen any more (owner, 10 Nov 2026: card GW's ⛶ and its whole-tab
+  `.game-max` view were removed): two placements only, the video's place and the free window, which lives inside the
+  video's fullscreen while there is one. Over a YouTube video (`overYoutube`, YTG) the placement switch is hidden (only the
   free window is possible; it used to show a disabled "in the video's place") and the head's tooltip
   (`game.besideYoutube`) says why. The free window is positioned in `posRoom` (the page, or the fullscreen view; tablets
   clear of the chat) and only its size is limited by `area` (the strip beside a YouTube player); over YouTube

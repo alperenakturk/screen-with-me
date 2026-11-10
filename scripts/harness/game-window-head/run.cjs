@@ -1,10 +1,11 @@
 // The game window's head and free window (owner's bugs W1–W5, 10 Nov 2026): every head button does its job.
 // Checks, on a computer (1366 × 768 and 1920 × 1080) and a phone:
-//   W1  Snack Bar has no ⛶ (and Escape / a lab call can't put it on the whole screen); the other games keep theirs.
+//   W1  No game has a ⛶ or any other way into its own full screen (owner: two placements only, the video's place and
+//       the free window); in the video's fullscreen the game stays a free window inside it.
 //   W2  "In the video's place" works with no video and with a video file; over a YouTube video the switch is gone (only
 //       the free window is possible) and the head says why.
 //   W3  The head's 🎮 opens the games hall right under itself, visible, in the free window, in the video's place and in
-//       a table's own full screen; pressed again it closes.
+//       the video's fullscreen; pressed again it closes.
 //   W5  The free window follows a drag of its head (over a video file it may cover the video, nothing pushes it away);
 //       over a YouTube player it never covers it and never jumps while dragged; each game remembers its own spot and
 //       size; ✕ and 🎮 bring it back in the same spot; a double click on the head puts it back; the corner resizes it.
@@ -120,7 +121,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const { ctx, page, errors } = await room(browser, { width: 1366, height: 768 });
     const L = '1366';
     await openGame(page, 'snack');
-    check(!(await visible(page, '#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
+    check(!(await page.$('#game-stage .game-full')), `${L} W1: Snack Bar has no ⛶`);
     await page.keyboard.press('Escape');
     check(!(await page.evaluate(() => document.getElementById('game-stage').classList.contains('game-max') || !!document.fullscreenElement)), `${L} W1: nothing puts Snack Bar on the whole screen`);
     // W3: 🎮 in the free window's head.
@@ -197,19 +198,29 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => window.__swmLab.run('gameWindow.reset'));
     await wait(300);
     check(near(await box(page), home), `${L}: the Test Lab's "back to its own size and spot" works`, await box(page));
-    // A table keeps ⛶; its 🎮 opens the hall even in the game's own full screen.
-    await openGame(page, 'classics');
-    check(await visible(page, '#game-stage .game-full'), `${L} W1: a table (Classics) keeps ⛶`);
-    await page.click('#game-stage .game-full');
-    await until(() => page.evaluate(() => document.fullscreenElement?.id === 'game-stage'));
+    // W1 (owner): no game has a ⛶ or any way into its own full screen: side games and tables alike.
+    for (const kind of ['garden', 'word', 'classics']) {
+      await openGame(page, kind);
+      check(!(await page.$('#game-stage .game-full')), `${L} W1: ${kind} has no ⛶`);
+    }
+    await page.keyboard.press('f');
+    await page.evaluate(() => document.querySelector('#game-stage .game-stage-title').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    await wait(300);
+    check(!(await page.evaluate(() => document.fullscreenElement?.id === 'game-stage' || document.getElementById('game-stage').classList.contains('game-max'))), `${L} W1: no key or double click puts a game on the whole screen`);
+    // The video's own fullscreen: the game stays a free window inside it, and its 🎮 opens the hall there.
+    await page.evaluate(() => document.getElementById('theater').requestFullscreen());
+    await until(() => page.evaluate(() => document.fullscreenElement?.id === 'theater'));
+    await wait(400);
+    const inFs = await page.evaluate(() => {
+      const s = document.getElementById('game-stage');
+      return { inside: document.fullscreenElement?.contains(s) ?? false, hidden: s.hidden, float: s.classList.contains('float'), w: Math.round(s.getBoundingClientRect().width) };
+    });
+    check(inFs.inside && !inFs.hidden && inFs.float && inFs.w < 1366, `${L}: in the video's fullscreen the game stays a free window inside it (not the whole screen)`, inFs);
     await page.click('#game-stage .game-hub-open');
-    check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in a table's full screen opens the hall, visible`);
-    // Switching to Snack Bar from there leaves the full screen (Snack Bar never has it).
-    await page.evaluate(() => document.querySelector('#game-menu [data-tab="side"]')?.click());
-    await until(() => page.evaluate(() => !!document.querySelector('#game-menu [data-solo="snack"]')));
-    await page.evaluate(() => document.querySelector('#game-menu [data-solo="snack"]').click());
-    const out = await until(() => page.evaluate(() => !document.fullscreenElement && !document.getElementById('game-stage').classList.contains('game-max') && !document.getElementById('game-stage').hidden));
-    check(!!out, `${L} W1: switching to Snack Bar from a table's full screen leaves it`);
+    check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in the video's fullscreen opens the hall, visible`);
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => document.fullscreenElement && document.exitFullscreen());
+    await wait(300);
     check(!errors.length, `${L}: no page errors`, errors.slice(0, 2));
     await ctx.close();
   }
@@ -250,7 +261,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await openGame(page, 'snack');
     const b = await box(page);
     check(b.mode === 'full', 'phone: Snack Bar plays on the whole screen', b);
-    check(!(await visible(page, '#game-stage .game-full')), 'phone: no ⛶');
+    check(!(await page.$('#game-stage .game-full')), 'phone: no ⛶');
     await page.evaluate(() => document.querySelector('#game-stage .game-hub-open').click());
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), 'phone W3: 🎮 opens the hall');
     check(!errors.length, 'phone: no page errors', errors.slice(0, 2));

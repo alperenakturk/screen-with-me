@@ -18,7 +18,8 @@ games' tip jar, cuttings and badges.
 
 ### 0.9.97.111 — 10 Nov
 - The 🎮 in a game window's bar opens the games hall again, right under the button.
-- Snack Bar no longer has a full-screen button: it never needs the whole screen.
+- Games no longer have their own full-screen button: a game plays in the video's place or in its free window (also
+  inside the video's full screen), never blown up over the whole screen.
 - With a YouTube video in the room, a game can only sit beside the video (YouTube's rule), so the "in the video's place"
   button that did nothing is gone; hovering the window's bar says why.
 - A game's free window can be dragged anywhere by its bar, also over a video file. Next to a YouTube video it slides

@@ -97,8 +97,6 @@ const en = {
   'game.change': 'Other game',
   'game.minimize': 'Back to video',
   'game.besideYoutube': 'YouTube doesn’t allow anything over its video, so the game keeps beside it. Drag it by this bar; double-click to put it back.',
-  'game.full': 'Full screen: only the game, on the whole screen (Esc to leave)',
-  'game.fullExit': 'Leave full screen',
   'game.back': 'Back to the game',
   'game.end': 'End game',
   'game.by': 'started by {name}',

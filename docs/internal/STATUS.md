@@ -350,7 +350,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] **Lane W, game window bugs W1–W5** (owner's screenshots, 10 Nov 2026; branch `claude/game-window-head`):
   - [x] Reproduce: 🎮 in the head opened the hall beside the hidden toolbar 🎮; "in the video's place" is a dead
     disabled button over YouTube; the free window's drag was locked to the one strip beside a YouTube player.
-  - [x] Fix in `games/stage.ts` (+ `catalog.ts` `noFull`), Test Lab hooks, harness
+  - [x] Fix in `games/stage.ts` (owner's follow-up: no ⛶ in any game), Test Lab hooks, harness
     `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
   - [ ] PR #386 (0.9.97.111), merge, deploy + live e2e + tag, report (per-game table) to the Planner.
 - [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
@@ -401,10 +401,11 @@ Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them)
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
 **0.9.97.111 (W1–W5, the game window’s head and free window; fold into the next round).**
-- [ ] W1. Open Snack Bar: its head has no ⛶ any more. Window Garden, Five Frames and the tables still have it.
+- [ ] W1. No game window has ⛶ any more (side games and tables): only the video's place and the free window. With the
+  video in fullscreen, a game opens as a free window inside it.
 - [ ] W2. A room with a video file (or none): the second placement button puts the game in the video's place. With a
   YouTube video the two placement buttons are gone; hovering the window's bar says why.
-- [ ] W3. The 🎮 in any game window's head opens the games hall right under it (free window, video's place, ⛶).
+- [ ] W3. The 🎮 in any game window's head opens the games hall right under it (free window, video's place, the video's fullscreen).
 - [ ] W5. Drag a free window by its bar: it follows the mouse anywhere, also over a video file; over a YouTube video it
   slides along the player's edge and never covers it. Resize from the corner, open another game and come back: each
   game keeps its own spot and size, also after a reload. Double-click the bar: back to its first size and spot.
@@ -519,8 +520,8 @@ with the same friend:
 - [ ] G4. Last Heart to the end: "How to play" picture cards on the first open, the result card at the end.
 - [ ] G5. With a YouTube video playing (computer): a game opens beside or under the video, never on it; fullscreen
   tucks it away.
-- [ ] G6. Any game: shrink the window from its corner (it stops before the text gets small), grow it, then ⛶: the game
-  alone on the screen at a good size; Esc brings the window back.
+- [ ] G6. Any game: shrink the window from its corner (it stops before the text gets small), grow it. (Its ⛶ is gone
+  since 0.9.97.111, owner: no game on the whole screen.)
 - [ ] G7. Your phone: a game takes the screen with the video as a small picture top left (a tap goes back to the
   video); every button is easy to hit.
 - [ ] G8. Alone against Glowbeam (medium chess or dama): he answers in about a second and doesn't give pieces away.
@@ -535,8 +536,8 @@ with the same friend:
   their marks (✓ • ×) but never their letters; the first to find it wins, "Play again" brings a practice word. Try it on
   your phone too: your board, their strip of marks and the letters all fit.
 - [ ] G13. Phone held sideways with a game open: chess or dama shows the board big on the left; Sea Battle one sea at a
-  time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: "in the
-  video's place" and ⛶ full screen now look different.
+  time; Five Frames, Snack Bar and Window Garden in two columns; nothing cut off. The game window's head: the two
+  placement icons look different.
 - [ ] G14. Five Frames Duel extras: in the lobby pick "Best of three" and "Hard mode", play with a friend. The bar shows
   "Game 1 of 3" and the score; a guess that leaves out a letter you found is refused and names it. On your phone, Sea
   Battle: tap their sea once (it zooms into that corner), tap a cell to fire, "Whole sea" goes back.

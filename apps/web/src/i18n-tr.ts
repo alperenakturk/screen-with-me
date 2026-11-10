@@ -99,8 +99,6 @@ export const tr: Record<I18nKey, string> = {
   'game.change': 'Başka oyun',
   'game.minimize': 'Videoya dön',
   'game.besideYoutube': 'YouTube videosunun üstüne bir şey konmasına izin vermiyor, oyun bu yüzden yanında durur. Bu çubuktan sürükle; geri koymak için çift tıkla.',
-  'game.full': 'Tam ekran: bütün ekranda sadece oyun (çıkmak için Esc)',
-  'game.fullExit': 'Tam ekrandan çık',
   'game.back': 'Oyuna dön',
   'game.end': 'Oyunu bitir',
   'game.by': '{name} açtı',
