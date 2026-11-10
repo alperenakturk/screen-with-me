@@ -6,8 +6,8 @@
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-sweep/run.cjs [site]
 //   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run; FRIENDS=3 adds the Test Lab's fake friends to the room.
-//   Card GW: on computers every game is also shrunk to its smallest and grown to its largest window and put in its own
-//   fullscreen (browser and whole tab); GW_LANGS=tr runs those passes in Turkish only, GW_LANGS=none skips them.
+//   Card GW: on computers every game is also shrunk to its smallest and grown to its largest window; GW_LANGS=tr runs
+//   that pass in Turkish only, GW_LANGS=none skips it.
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -199,8 +199,7 @@ const stageBox = (page) => page.evaluate(() => {
 });
 /**
  * Card GW: the free window shrunk to its smallest and grown to its largest by its corner (never past the catalog's
- * limits, or the screen), then the game's own fullscreen (⛶): the whole screen, the same checks, and Esc brings the
- * window back where it was.
+ * limits, or the screen). (The game's own fullscreen ⛶ is gone: owner's decision, 10 Nov 2026.)
  */
 async function windowPasses(page, label, g, phone) {
   const lim = catalogEntry(g);
@@ -228,34 +227,6 @@ async function windowPasses(page, label, g, phone) {
     await page.evaluate(() => document.querySelector('#game-stage .game-stage-title')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
     await wait(400);
   }
-  const before = await stageBox(page);
-  const button = await page.$('#game-stage .game-full');
-  if (!button || !(await button.isVisible())) return check(false, `${label}: ⛶ shows in the game's head`);
-  await button.click();
-  await wait(900);
-  const full = await stageBox(page);
-  check(full.w >= full.vw - 1 && full.h >= full.vh - 1 && full.x <= 0 && full.y <= 0, `${label}: ⛶ puts the game on the whole screen`, `${full.w}×${full.h} at ${full.x},${full.y}`);
-  const fit = await page.evaluate(() => Number(getComputedStyle(document.querySelector('#game-stage')).getPropertyValue('--fit')) || 1);
-  check(fit >= 0.999, `${label}: in fullscreen the game is shown at least at its own size (scale ${fit.toFixed(2)})`);
-  await judge(page, `${label} in fullscreen`, phone);
-  await page.screenshot({ path: path.join(SHOTS, `${label.replace(/\//g, '-')}-full.png`) });
-  // A headless browser can't press its own Esc for fullscreen: ⛶ again leaves (Esc is the browser's own key there).
-  await button.click();
-  await wait(900);
-  const same = (a, b) => Math.abs(a.w - b.w) <= 2 && Math.abs(a.h - b.h) <= 2 && Math.abs(a.x - b.x) <= 2 && Math.abs(a.y - b.y) <= 2;
-  const back = await stageBox(page);
-  check(same(back, before), `${label}: leaving fullscreen brings the window back where it was`, `${JSON.stringify(before)} → ${JSON.stringify(back)}`);
-  // Where there is no Fullscreen API (the film page's overlay, an iPhone) ⛶ fills the whole tab and Esc leaves.
-  await page.evaluate(() => Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => false }));
-  await button.click();
-  await wait(700);
-  const tab = await stageBox(page);
-  check(tab.w >= tab.vw - 1 && tab.h >= tab.vh - 1, `${label}: without the Fullscreen API ⛶ fills the tab`, `${tab.w}×${tab.h}`);
-  await page.keyboard.press('Escape');
-  await wait(700);
-  const back2 = await stageBox(page);
-  check(same(back2, before), `${label}: Esc leaves the whole-tab view, the window comes back`, `${JSON.stringify(before)} → ${JSON.stringify(back2)}`);
-  await page.evaluate(() => delete document.fullscreenEnabled);
 }
 
 (async () => {

@@ -16,6 +16,10 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.110 — 10 Nov
+- Five Frames and the Five Frames Duel take your keyboard as they open (and when a Duel race starts): just type the
+  word, no click first. Click the chat to write there; Esc or a click on the game brings your typing back to the word.
+
 ### 0.9.97.109 — 10 Nov
 - The Test Lab is ready for the big test round: a new "🧪 Test round" list has one button for each test on the
   owner's board. Each one sets the scene where it can (shows the themes or fonts one by one, brings in a pretend friend

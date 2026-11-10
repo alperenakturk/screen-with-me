@@ -596,8 +596,8 @@ with the same friend:
 - [ ] G4. Last Heart to the end: "How to play" picture cards on the first open, the result card at the end.
 - [ ] G5. With a YouTube video playing (computer): a game opens beside or under the video, never on it; fullscreen
   tucks it away.
-- [ ] G6. Any game: shrink the window from its corner (it stops before the text gets small), grow it, then ⛶: the game
-  alone on the screen at a good size; Esc brings the window back.
+- [ ] G6. Any game: shrink the window from its corner (it stops before the text gets small), then grow it: the game
+  stays readable at every size.
 - [ ] G7. Your phone: a game takes the screen with the video as a small picture top left (a tap goes back to the
   video); every button is easy to hit.
 - [ ] G8. Alone against Glowbeam (medium chess or dama): he answers in about a second and doesn't give pieces away.
@@ -624,6 +624,10 @@ with the same friend:
   lose a game (he cheers / looks sorry on the card), open Snack Bar (Stub at the till) and Window Garden's lamp. The
   games hall: each table has a drawn badge, the same as on its lobby card. With "reduce motion" on in your phone's
   settings, nothing slides.
+
+- [ ] G17. Word games and the keyboard (BUG6): open Five Frames and type at once, no click: the letters go into the
+  word. Click the chat box and type: the word stays as it is. Press Esc (or click the game): typing goes to the word
+  again. In the Duel, press Ready; when the race starts, type without a click. Try Turkish letters (ğ, ü, ş) too.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

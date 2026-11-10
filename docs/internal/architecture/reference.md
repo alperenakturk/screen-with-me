@@ -1138,7 +1138,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   row, Turkish 11), ⌫ + gold Enter; EN / TR switch (`fiveFrames:lang`, each its own day and stats); the result line,
   "📋 Copy result" (`🍿 Five Frames #12 · 4/7`), "a new word in …". The physical keyboard types only while the board
   (`tabindex=0`) has the focus: its `keydown` stops letters / Enter / Backspace from reaching the room; otherwise
-  every key stays the room's. No tab lock (a save after each guess, other tabs follow by `storage`). **Card GP (0.9.97,
+  every key stays the room's. **BUG6 (owner: "the keyboard goes straight to the word"):** `games/word-keys.ts`
+  `grabKeys(board)` gives the board the focus when the word is ready (`start()`: open, the EN / TR switch, a new day)
+  and, in the Duel, when a race begins (phase → `play`, seated); never on a touch-only device (the tray is the
+  keyboard), never from a text box that has the focus (chat), never under open "How to play" cards (their
+  `htp-close` event grabs then). `keepKeys(box, board)`: a press anywhere on the game (not a text box) and Esc in a
+  text box outside the game give the keys back. Lab status "Keyboard goes to" (Five Frames); harness
+  `scripts/harness/word-focus/run.cjs` (games-more). No tab lock (a save after each guess, other tabs follow by `storage`). **Card GP (0.9.97,
   Design's `docs/internal/design/side-games-polish.md`):** cells were green / gold / grey until the IP audit
   (0.9.97.31, owner's "make it ours"): a solid gold frame ✓ / a dashed gold frame • / a faded ×, never a fill colour
   (`--ff-mark`), the cover's words CLOSE / STAGE / SCENE, typed cells outlined; a legend (`.ff-legend`) shares the result slot until the first guess is scored; after
