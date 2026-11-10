@@ -352,7 +352,11 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
     disabled button over YouTube; the free window's drag was locked to the one strip beside a YouTube player.
   - [x] Fix in `games/stage.ts` (owner's follow-up: no ⛶ in any game), Test Lab hooks, harness
     `game-window-head` (CI `games-more`); `games-youtube`, `games-sweep`, `embed` updated.
-  - [ ] PR #386 (0.9.97.111), merge, deploy + live e2e + tag, report (per-game table) to the Planner.
+  - [x] PR #386 (0.9.97.111) merged.
+  - [ ] 0.9.97.112 (owner's live test): side games right of the video when they fit
+    at their smallest size; the hall slides out of the free window; resize corner fix. Branch
+    `claude/game-window-right`, then PR, merge, deploy + live e2e + tag, report. Tables always in the video's place
+    (owner's decision) waits for card .113's layouts: stage.ts `STAGE_READY`.
 - [ ] **SIMP1** (lane B, branch `claude/simp1`): a calmer room screen + Settings in categories. Done: Settings
   categories (Me · My screen · Room · Room rules · Film time · Sound & camera · About), room name / count / footer
   line off the room screen, "Move to another device" in Settings → Me, IP notice removed (privacy policy + help
@@ -486,6 +490,14 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
+
+**0.9.97.112 (lane W: where games open, the hall from a free window, the resize corner; fold into the next round).**
+- [ ] P2. On the big screen open Snack Bar: it opens on the right over the chat, nothing of the video covered. On the
+  laptop (1366 wide) there is no room beside the video yet: it opens as its own window at the right edge, as before.
+- [ ] P3. Snack Bar as a free window, press its 🎮: the hall slides out of the window's left side. Close the side panel
+  (🎞) and try again: the hall still shows. Esc, a click elsewhere or picking a game closes it.
+- [ ] P4. Move the mouse over a free window's bottom-right corner without clicking: nothing moves. Drag the corner: it
+  only resizes.
 
 **0.9.97.111 (W1–W5, the game window’s head and free window; fold into the next round).**
 - [ ] W1. No game window has ⛶ any more (side games and tables): only the video's place and the free window. With the
