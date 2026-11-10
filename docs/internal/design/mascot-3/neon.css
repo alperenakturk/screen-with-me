@@ -1,0 +1,28 @@
+/* MASCOT3 / NP3: Neon's new look (docs/internal/design/mascot-3.md). Replaces the block in apps/web/src/styles.css.
+   One warm neon sign on a dark brick wall instead of the stock magenta + cyan grid: a coral-red tube, an amber second
+   light, no grid, no drifting aura. Contrast on --surface: text 16.5, muted 7.9 (7.4 on surface-2), button text 6.2
+   (7.5 on hover), links 6.3, field border 3.6 (as the 60 % mix). */
+:root[data-theme='neon'] {
+  --bg: #0c0809;
+  --surface: #171013;
+  --surface-2: #21171b;
+  --border: #3a2a30;
+  --text: #f7eef0;
+  --muted: #b9a3aa;
+  --accent: #ff5a7a;
+  --accent-hover: #ff7a93;
+  --on-accent: #2a0610;
+  --ok: #5fe0a0;
+  --warn: #ffb347;
+  --glow: 0 0 16px rgb(255 90 122 / 0.45);
+  /* Brick courses (faint mortar lines every 28 px), the sign's glow at the top right, an amber spill at the bottom left. */
+  --art:
+    linear-gradient(rgb(255 240 240 / 0.03) 1px, transparent 1px),
+    radial-gradient(ellipse 42% 30% at 88% 4%, rgb(255 90 122 / 0.22), transparent 70%),
+    radial-gradient(ellipse 30% 22% at 8% 98%, rgb(255 179 71 / 0.1), transparent 70%),
+    linear-gradient(#150d10, #0c0809);
+  --art-size: 100% 28px, 100% 100%, 100% 100%, 100% 100%;
+  --aura: none;
+  --mascot: url('/themes/neon-maskot.svg');
+}
+/* The old rule ":root[data-theme='neon'] .btn.primary:hover" (lighter hover) still fits: the button text is dark. */
