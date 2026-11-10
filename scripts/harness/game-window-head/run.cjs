@@ -368,6 +368,24 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await playBrowser.close();
   }
 
+  // ---- The room's intro (over the video for its first ≈ 3 s) ends when a game opens, so the first click on the head works ----
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    await ctx.addInitScript(() => {
+      for (const [k, v] of Object.entries({ lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'classics:chess:howSeen': '1' })) localStorage.setItem(k, v);
+    });
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/r/gi${Math.random().toString(36).slice(2, 8)}?debug=1#back`);
+    const introShown = await until(() => page.evaluate(() => !!document.querySelector('.player-wrap .swm-intro') && !!window.__swmLab), 10000);
+    check(!!introShown, 'intro: a fresh room shows its intro over the video');
+    await page.evaluate(() => window.__swmLab.run('games.open.sea'));
+    await until(() => page.evaluate(() => document.getElementById('game-stage').dataset.place === 'stage' && !!document.querySelector('#game-stage .htp-open')), 8000);
+    check(!(await page.evaluate(() => !!document.querySelector('.player-wrap .swm-intro'))), 'intro: opening a game ends it');
+    await page.click('#game-stage .htp-open');
+    check(!!(await until(() => visible(page, '#game-stage .htp'), 3000)), "intro: the first click on the game's \"?\" opens How to play");
+    await ctx.close();
+  }
+
   // ---- A phone: side games play full, no ⛶, 🎮 opens the hall ----
   {
     const { ctx, page, errors } = await room(browser, null, { phone: true });

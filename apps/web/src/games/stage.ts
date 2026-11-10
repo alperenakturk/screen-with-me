@@ -936,8 +936,15 @@ export function createGameStage(opts: StageOptions) {
   };
 
   /** `resume`: back to the table this tab was at (a reload), not a fresh open: no automatic pause then. */
+  /**
+   * The room's intro (`.swm-intro`, over the video for its first seconds) ends when a game opens: in the video's place it
+   * sat over the game and took the first click on its head (Game Studio + B2's QA1 matrix). room.ts sees it leave.
+   */
+  const endIntro = () => wrap.querySelector('.swm-intro')?.remove();
+
   async function open(table: RoomGame, resume = false): Promise<void> {
     document.getElementById('game-invite')?.remove();
+    endIntro();
     rememberAt({ id: table.id, min: false });
     if (stage.hidden) slideIn(stage);
     stage.hidden = false;
@@ -1009,6 +1016,7 @@ export function createGameStage(opts: StageOptions) {
   /** Opens a solo game on the side; my table (if any) is left first: the window shows one game at a time. */
   async function openSolo(kind: SoloKind): Promise<void> {
     document.getElementById('game-invite')?.remove();
+    endIntro();
     if (stage.hidden) slideIn(stage);
     stage.hidden = false;
     for (const b of triggers) b.classList.remove('game-waiting');

@@ -935,7 +935,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the largest strip beside the player, `largestClear`) so it never covers the player; tablets, phones and the video's
   fullscreen use `SPOT_HOME`. Over YouTube in cinema mode (`cinemaOn`: the player fills the page, "under it" would be
   below the screen) a game brought up leaves cinema mode (`#side-toggle`), and turning cinema on with a game open puts
-  the game away, as fullscreen does (YTG). **A table pauses the video** (`autoPause`, 0.9.97.114): opening a table (not coming back
+  the game away, as fullscreen does (YTG). Opening any game ends the room's intro (`endIntro`: `.swm-intro` over the video took the first
+  click on a game's head; room.ts's observer sees it leave). **A table pauses the video** (`autoPause`, 0.9.97.114): opening a table (not coming back
   to it after a reload) in the video's place while the video plays calls the room's `pauseVideo` (`room.ts`: the player's
   own pause, which the sync engine sends to everyone; nothing in a host-only room for a guest), once, with the note
   `game.pausedForGame` by the head's 🎮; closing the table doesn't play it again.
