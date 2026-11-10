@@ -6,7 +6,7 @@
 import { el } from '../dom.ts';
 import { debugRoom, labFail, type LabCommand, type LabText, type RoomLab } from '../debug-lab.ts';
 import { errorText, say } from './lab-text.ts';
-import type { FakeFriend } from './lab-friends.ts';
+import { MAX_FRIENDS, type FakeFriend } from './lab-friends.ts';
 
 export interface ScenarioFriends {
   list(): readonly FakeFriend[];
@@ -65,14 +65,28 @@ const stamp = () => Math.random().toString(36).slice(2, 6);
 
 /** Friends join and the room shows them; resolves with the new ones. */
 async function addFriends(ctx: Ctx, count: number): Promise<FakeFriend[]> {
+  // LAB2: a scenario's friends are its own; fake friends added before (at most MAX_FRIENDS) leave first when there is no
+  // place for them (the scenario's cleanup sends every fake friend away anyway).
+  if (ctx.friends.list().length + count > MAX_FRIENDS) {
+    ctx.friends.removeAll();
+    await ctx.until(() => !ctx.room.members().some((m) => m.name.startsWith('🤖')), { en: 'the earlier fake friends did not leave', tr: 'önceki sahte arkadaşlar çıkmadı' }, 8000);
+  }
   const before = ctx.inRoom().length;
   ctx.friends.add(count);
   ctx.cleanup(() => ctx.friends.removeAll());
-  await ctx.until(() => ctx.inRoom().length >= before + count, { en: `${count} fake friend(s) did not get in`, tr: `${count} sahte arkadaş içeri giremedi` }, 12_000);
+  await ctx.until(() => ctx.inRoom().length >= before + count, { en: `${count} fake friend(s) did not get in (after many new connections in the last minute, e.g. 🎬 "Open 12 more connections" or many reloads, the server lets one address open only 60 a minute: wait a minute and run it again)`, tr: `${count} sahte arkadaş içeri giremedi (son bir dakikada çok yeni bağlantı açıldıysa, ör. 🎬 "Bu odaya 12 bağlantı daha aç" ya da çok yenileme, sunucu bir adresin dakikada sadece 60 bağlantı açmasına izin verir: bir dakika bekleyip yeniden çalıştır)` }, 12_000);
   return ctx.inRoom().slice(before);
 }
 async function withVideo(ctx: Ctx): Promise<string> {
-  if (ctx.room.playback().item) return say({ en: 'a video is already playing', tr: 'zaten bir video oynuyor' });
+  if (ctx.room.playback().item) {
+    if (!ctx.room.playback().paused) return say({ en: 'a video is already playing', tr: 'zaten bir video oynuyor' });
+    // LAB2: a video that is there but paused (an earlier command paused it) plays again, by the fake friend.
+    const friend = ctx.inRoom()[0];
+    if (!friend) throw labFail({ en: 'the video is paused: press play first', tr: 'video duruyor: önce oynat' });
+    friend.play();
+    await ctx.until(() => !ctx.room.playback().paused, { en: 'the paused video did not play again', tr: 'duran video yeniden oynamadı' }, 8000);
+    return say({ en: 'the paused video plays again', tr: 'duran video yeniden oynuyor' });
+  }
   ctx.room.syncTest();
   await ctx.until(() => ctx.room.playback().item && !ctx.room.playback().paused, { en: 'the sync test did not start', tr: 'senkron testi başlamadı' }, 8000);
   return say({ en: 'sync test playing', tr: 'senkron testi oynuyor' });

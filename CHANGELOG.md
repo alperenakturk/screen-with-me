@@ -16,6 +16,16 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.109 — 10 Nov
+- The Test Lab is ready for the big test round: a new "🧪 Test round" list has one button for each test on the
+  owner's board. Each one sets the scene where it can (shows the themes or fonts one by one, brings in a pretend friend
+  who pauses, writes or knocks at the door, opens the invite's QR code) and says in one line what to look at; tests that
+  need a real friend or a second device say so.
+- Fixes in the Test Lab itself: the video tricks wait for a video instead of failing without one, "make a fake friend
+  the host" can be undone (they hand it back), the scripted checks make room for their own pretend friends and start a
+  paused video again, and the lab explains when the server's limit of new connections a minute holds friends back.
+- Sea Battle: the small ✕ that sends Stub away from his seat is a little wider, so it is easy to hit.
+
 ### 0.9.97.108 — 10 Nov
 - Test Lab, 🎮 Games (for testing the games alone): a pretend 🤖 friend can sit at a Quiz, Draw & Guess, Last Heart,
   Five Frames Duel or Sea Battle table and play along, or lose its connection for two minutes. New shortcuts jump a

@@ -936,7 +936,10 @@ await a.shot('3-ic-ice');
   const inFs = await until(async () => (await a.evaluate(PAGE_FS)) && (await a.evalFrame('shell=1', IN_FS)), 4000);
   check(!!inFs, 'iç içe oynatıcı: filmin ⛶ düğmesi → odanın tam ekranı (bütün sayfa) (EXT1)');
   await a.sleep(1000);
-  await nestedFs();
+  // Headless Chrome routes a mouse press over the fullscreen page wrongly between our overlay and the film's frames
+  // (see HEADFUL above), so there the second press is the film button's own click(); headful (xvfb-run) uses the mouse.
+  if (HEADFUL) await nestedFs();
+  else await a.evalFrame('/player', `document.getElementById('fs').click(); 1`);
   const outFs = await until(async () => !(await a.evaluate('!!document.fullscreenElement')) && !(await a.evalFrame('shell=1', IN_FS)), 4000);
   check(!!outFs, 'iç içe oynatıcı: filmin ⛶ düğmesine ikinci basış tam ekrandan çıkarıyor (EXT1)');
   if (!outFs) await a.evalFrame('shell=1', `document.getElementById('dock-exit').click(); 1`);

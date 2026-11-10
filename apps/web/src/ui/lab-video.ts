@@ -12,6 +12,12 @@ const NOT_IN_ROOM = { en: 'not in a room', tr: 'odada değilsin' };
 const IN_ROOM = { en: 'in a room', tr: 'odada' };
 const WITH_VIDEO = { en: 'with a video', tr: 'video açıkken' };
 const inRoom = (): true | LabText => (lab() ? true : NOT_IN_ROOM);
+/** Card LAB2: a command that needs a video says so before it runs (it used to run and end in a red line). */
+const withVideo = (): true | LabText => {
+  const handles = lab();
+  if (!handles) return NOT_IN_ROOM;
+  return handles.playback().item ? true : { en: 'add a video first (a link, or 🧪 Sync test)', tr: 'önce bir video ekle (bir link ya da 🧪 Senkron testi)' };
+};
 const local = (): boolean => ['localhost', '127.0.0.1'].includes(location.hostname);
 /** A whole number from the command box's argument, within limits, or the default. */
 function amount(arg: string | undefined, fallback: number, min: number, max: number): number {
@@ -130,8 +136,8 @@ export function createVideoLab() {
       id: 'limits.crowd',
       title: { en: 'Open 12 more connections to this room', tr: 'Bu odaya 12 bağlantı daha aç' },
       help: {
-        en: 'Opens 12 extra connections from this browser (they never join; closed after 5 s). One address may hold 12 in a room, so with mine the last one is refused ("too many connections from your network"). A test server started for CI lets all of them in. A number sets how many (1–40).',
-        tr: 'Bu tarayıcıdan 12 bağlantı daha açar (odaya girmezler; 5 sn sonra kapanır). Bir adres bir odada 12 bağlantı tutabilir, benimkiyle birlikte sonuncusu reddedilir ("ağından çok fazla bağlantı var"). CI için açılan test sunucusu hepsini alır. Bir sayı yazarsan kaç tane olacağı o olur (1–40).',
+        en: 'Opens 12 extra connections from this browser (they never join; closed after 5 s). One address may hold 12 in a room, so with mine the last one is refused ("too many connections from your network"). A test server started for CI lets all of them in. They also count toward the 60 new connections one address may open in a minute, so fake friends may need a minute to get in afterwards. A number sets how many (1–40).',
+        tr: 'Bu tarayıcıdan 12 bağlantı daha açar (odaya girmezler; 5 sn sonra kapanır). Bir adres bir odada 12 bağlantı tutabilir, benimkiyle birlikte sonuncusu reddedilir ("ağından çok fazla bağlantı var"). CI için açılan test sunucusu hepsini alır. Bir adresin dakikada açabileceği 60 yeni bağlantıdan da sayılırlar; bu yüzden sonrasında sahte arkadaşların girmesi bir dakika sürebilir. Bir sayı yazarsan kaç tane olacağı o olur (1–40).',
       },
       tab: 'video',
       where: IN_ROOM,
@@ -166,7 +172,7 @@ export function createVideoLab() {
       title: { en: 'Open 13 backup connections in other rooms', tr: 'Başka odalarda 13 yedek bağlantı aç' },
       help: {
         en: 'Opens 13 backup-way (hotspot) connections from this browser, each in a new empty room, then closes them. One address may hold 12 across all rooms, so one is refused. A test server started for CI lets all of them in. A number sets how many (1–30).',
-        tr: 'Bu tarayıcıdan, her biri yeni ve boş bir odada olmak üzere 13 yedek yol (hotspot) bağlantısı açar, sonra kapatır. Bir adres tüm odalarda en çok 12 tutabilir, biri reddedilir. CI için açılan test sunucusu hepsini alır. Bir sayı yazarsan kaç tane olacağı o olur (1–30).',
+        tr: 'Bu tarayıcıdan, her biri yeni ve boş bir odada olmak üzere 13 yedek yol (hotspot) bağlantısı açar, sonra kapatır. Bir adres tüm odalarda en çok 12 tutabilir, biri reddedilir. CI için açılan test sunucusu hepsini alır. Bir adresin dakikada açabileceği 60 yeni bağlantıdan da sayılırlar; bu yüzden sonrasında sahte arkadaşların girmesi bir dakika sürebilir. Bir sayı yazarsan kaç tane olacağı o olur (1–30).',
       },
       tab: 'video',
       run: async (arg) => {
@@ -227,7 +233,7 @@ export function createVideoLab() {
       },
       tab: 'video',
       where: WITH_VIDEO,
-      available: inRoom,
+      available: withVideo,
       run: (arg) => {
         const s = amount(arg, -3, -60, 60);
         if (!need().drift(s)) throw labFail({ en: 'no video playing here', tr: 'burada oynayan video yok' });
@@ -244,7 +250,7 @@ export function createVideoLab() {
       },
       tab: 'video',
       where: WITH_VIDEO,
-      available: inRoom,
+      available: withVideo,
       run: (arg) => {
         const s = amount(arg, 5, 1, 30);
         if (!need().stall(s * 1000)) throw labFail({ en: 'no video in the room', tr: 'odada video yok' });

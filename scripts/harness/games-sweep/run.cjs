@@ -325,8 +325,11 @@ async function windowPasses(page, label, g, phone) {
           // Stub's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):
           // ask for Stub again every few seconds (a taken seat just refuses it) and press Ready until the battle starts.
           let playing = false;
+          // Sea Battle's lab commands exist once its code has loaded (late on a slow runner, where `run` used to throw
+          // "no command sea.bot" out of this loop): wait for the command, and let a refused try fall to the next one.
+          await page.waitForFunction(() => window.__swmLab?.list?.().some((c) => c.id === 'sea.bot'), null, { timeout: 15000 }).catch(() => {});
           for (let tries = 0; tries < 5 && !playing; tries++) {
-            await run('sea.bot');
+            await run('sea.bot').catch(() => null);
             playing = await page
               .waitForFunction(
                 () => {
