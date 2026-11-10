@@ -948,7 +948,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`SIDE_STICK`). Once moved or resized, each game remembers its spot (`gameFloat:at:<kind>`; the older
   `gameFloat:spot[:<kind>]` keys are ignored, so every game first opens in its home) and zoom (`gameFloat:zoom:<kind>`,
   saved as it leaves its home). A drag follows the mouse once per frame; drag and resize live only while the button is
-  held (`buttons`, `lostpointercapture`, `pointercancel` end them), so hovering the corner never moves the window. A double
+  held, so hovering the corner never moves the window. The resize ends on `buttons` / `lostpointercapture` /
+  `pointercancel`; the drag (0.9.97.117) hears its moves and release on the page too (a capture that didn't take still
+  drags), ignores a move with no button held (another pointer), and a drag whose release was never heard ends at the
+  next press where the window stands (never replaying the old pointer). A double
   click on the head (or `gameWindow.reset`) forgets the spot. **🎮 in the head** (`hubFromHead`): the hall moves into a
   fixed `.head-game-wrap` (inside `document.fullscreenElement` while there is one); from a free window it slides out of
   the window's left side, level with its top (its right side when there is no room), elsewhere it hangs under the 🎮
