@@ -1,5 +1,5 @@
 // Dama (Turkish draughts), the first new board of 🎲 Classics (owner's pick 5 A, `docs/internal/design/games/classics.md`).
-// The server checks every move with these rules; the page draws with them; the Glowbeam bot plays with them.
+// The server checks every move with these rules; the page draws with them; the Stub bot plays with them.
 //
 // Rules (Turkish dama):
 // - 8 × 8 board (cells 0–63, row 0 at the top). Each side has 16 men on its 2nd and 3rd rows; X (white) starts at the

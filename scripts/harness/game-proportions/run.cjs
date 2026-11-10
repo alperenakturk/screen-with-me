@@ -211,6 +211,28 @@ async function placeIn(page, mode) {
         check(m.median >= (big ? 16 : Math.min(m.w, m.h) < 420 ? 11 : 11.5), `${label}: the game's usual text is a good size on the screen (${m.median} px in ${m.w}×${m.h})`);
         check(m.min >= 8.5, `${label}: no text is tiny on the screen (${m.min} px)`);
         if (mode === 'stage') {
+          // 0.9.97.115 (owner: "the How to play card is cut at the bottom"): every card of the game's "How to play" fits
+          // the window here, its buttons visible.
+          const cut = await page.evaluate(async () => {
+            const open = document.querySelector('#game-stage .htp-open');
+            const layer = document.querySelector('#game-stage .htp');
+            if (!open || !layer) return null;
+            if (layer.hidden) open.click();
+            await new Promise((r) => setTimeout(r, 300));
+            const box = document.querySelector('#game-stage .game-stage-body').getBoundingClientRect();
+            const out = [];
+            for (let i = 0; i < 5 && !layer.hidden; i++) {
+              for (const e of layer.querySelectorAll('.htp-art, .htp-title, .htp-line, .htp-btn:not([hidden]), .htp-skip')) {
+                const r = e.getBoundingClientRect();
+                if (r.bottom > box.bottom + 1 || r.top < box.top - 1 || r.right > box.right + 1 || r.left < box.left - 1) out.push(`card ${i + 1} ${e.className}`);
+              }
+              layer.querySelector('.htp-next').click();
+              await new Promise((r) => setTimeout(r, 150));
+            }
+            if (!layer.hidden) layer.querySelector('.htp-skip')?.click();
+            return out;
+          });
+          if (cut) check(cut.length === 0, `${label}: every "How to play" card fits the window`, cut.join(', '));
           check(m.used >= 28, `${label}: the game covers its box (${m.used}% of ${m.w}×${m.h}, ${m.usedW}% wide, ${m.usedH}% high)`);
           const free = rows.find((r) => r.label === `${size}/${game}/float`);
           if (free?.median) check(m.median >= free.median * 0.85, `${label}: shown about as big as in the free window (${m.median} px vs ${free.median} px)`);

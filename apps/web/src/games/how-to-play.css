@@ -51,3 +51,19 @@ html.phone .htp .htp-btn { min-height: 44px; }
 .game-head-slot .htp-head { min-width: 36px; padding: 0 10px; font-weight: 800; }
 /* On a phone the tables' "?" sits at the start of the game's own top bar. */
 :is(.mt-bar, .sea-bar, .draw-top) > .htp-head { flex: none; min-width: 44px; min-height: 44px; }
+
+/* Card PROP (0.9.97.115, owner: "the How to play card is cut at the bottom in the video's place"): in a wide, short box
+   the picture stands on the left at the box's height, the title, line, dots and buttons on the right. */
+@container game (min-aspect-ratio: 16 / 10) {
+  .htp {
+    display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: 1fr auto auto auto 1fr;
+    grid-template-areas: 'pic .' 'pic words' 'pic dots' 'pic actions' 'pic .'; align-items: center; justify-items: center;
+    gap: 10px 24px; padding: 44px 24px 16px;
+  }
+  .htp-picture { grid-area: pic; display: flex; justify-content: center; max-width: 100%; min-height: 0; }
+  .htp-art { display: flex; justify-content: center; }
+  .htp-art svg { width: auto; max-width: 100%; max-height: calc(100cqh - 76px); }
+  .htp-words { grid-area: words; }
+  .htp-dots { grid-area: dots; }
+  .htp-actions { grid-area: actions; margin-top: 6px; }
+}

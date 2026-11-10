@@ -18,7 +18,7 @@ export const GAME_KINDS = ['xox', 'four', 'dama', 'chess', 'backgammon', 'revers
 export type GameKind = (typeof GAME_KINDS)[number];
 
 export const GAME_RULES: Record<GameKind, BoardRules> = { xox: XOX, four: FOUR, dama: DAMA, chess: CHESS, backgammon: BACKGAMMON, reversi: REVERSI };
-/** Glowbeam the bot's levels (0 = no bot). */
+/** Stub the bot's levels (0 = no bot). */
 export type BotLevel = 1 | 2;
 
 /** Maçta atılabilen emojiler (sabit liste: sohbet yok, kimse kimseye yazı yazamaz). */
@@ -32,7 +32,7 @@ export interface GamePerson {
   avatar?: Avatar;
   /** Şu an bağlı mı (koltuktaki kişi çıktıysa izleyiciler oturabilir). */
   online: boolean;
-  /** Glowbeam the bot sits here (its level). */
+  /** Stub the bot sits here (its level). */
   bot?: BotLevel;
 }
 
@@ -50,7 +50,7 @@ export type GameClientMessage =
   /** Classics: another board from the shelf (a player, while no game is in progress). */
   /** `end` (CL2): end a running game to change the board (the page asks first); without it a running game refuses. */
   | { t: 'switch'; game: GameKind; end?: boolean }
-  /** Glowbeam takes the empty seat (level 1 easy, 2 medium) or leaves it (0). */
+  /** Stub takes the empty seat (level 1 easy, 2 medium) or leaves it (0). */
   | { t: 'bot'; level: 0 | BotLevel }
   /** Yeni el (oyun bittiyse oyunculardan biri başlatır). */
   | { t: 'rematch' }

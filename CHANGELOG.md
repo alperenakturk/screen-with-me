@@ -16,6 +16,18 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.115 — 10 Nov
+- Snack Bar, Window Garden and Five Frames fit the narrow column beside the video on a laptop (down to about 320 px
+  wide), so on a 1366 × 768 or 1440 × 900 screen their window sits next to the film instead of over the video's edge.
+  Everything stays readable: Five Frames' tickets and keys are a little slimmer there, Snack Bar shows its three newest stands, and the
+  badge wall in the video's place has more columns.
+- Snack Bar's "📜 Upgrades" (recipes and staff) no longer runs off the bottom: a long list scrolls inside it and its ✕
+  stays in sight.
+- "How to play" cards fit the video's place: the picture on the left, the words and buttons on the right (Draw &
+  Guess's card was cut at the bottom on a laptop).
+- Stub, the games' ticket mascot, now appears on every game cover in 🎮 and on Snack Bar's first "How to play" card,
+  where the old mascot was still drawn.
+
 ### 0.9.97.114 — 10 Nov
 - When a table opens in the video's place while the video plays, the video pauses for everyone, so nobody misses the
   film under the game. A short note says "Video paused for the game"; press play when you want it again. (With a
