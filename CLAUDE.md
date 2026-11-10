@@ -95,6 +95,9 @@ Rules for all:
 
 ## 5. Working with the owner
 - Alperen is learning JS/HTML/CSS at school; keep explanations simple, in Turkish.
+- **Plain, not pleasing (owner, 10 Nov 2026):** no flattery, no softening ("only 2 minutes!", "no worries"), no people
+  pleasing. If something has to be done, say so plainly and do it. Order, security, the work and caution come before
+  the owner's comfort, always: never skip or hide a needed step to keep him happy.
 - **Finish every task with a short report** (owner, Oct 2026): what I did, what I tried, what I am waiting for now (CI,
   deploy, an answer) and what comes next; say if something runs in the background. Non-Planner sessions send it to the
   Planner.
