@@ -177,6 +177,11 @@ new quota (90 %, the headroom covers counting gaps), the per-address share to 5 
 5. **🟢 YouTube logo in the attribution.** We say "Results from YouTube" in text; the branding guidelines prefer the
    YouTube logo / "Developed with YouTube" mark next to results. *Fix:* add the official logo asset to `.yt-attrib`
    (from YouTube's brand resources, unchanged colours and clear space).
+   *Checked 10 Nov 2026 (YT5):* brand.youtube's logo and icon pages set a minimum height of **100 px** (digital) and a
+   clear space of the icon's triangle all round; the API branding guidelines require that minimum, a link to YouTube on
+   any logo, and that a logo is never the most prominent element on the page. A 100 px logo under a compact results
+   list would be the panel's biggest element, a smaller one breaks the minimum: the choice went to the owner (Planner).
+   Files: brand.youtube → YouTube logo → download (full colour, white or #212121 text, red #FF0033; PNG / AI / EPS).
 6. **🟢 A written statement for the auditor about sync control** (we drive play / pause / seek / rate through the
    official IFrame API for synchronised group viewing). No code; it is in §2 point 7 already. Keep the screencast
    showing YouTube's own controls working.
