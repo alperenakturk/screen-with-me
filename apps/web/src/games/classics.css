@@ -188,6 +188,14 @@
   grid-template-areas: 'bar' 'top' 'board' 'bottom' 'tray' 'status' 'actions'; gap: 8px;
 }
 #game-stage .xox-page.mt > .mt-table[hidden], #game-stage .xox-page.mt > .cl-picker[hidden] { display: none; }
+/* GPRO (layout audit): a sideways phone puts the board on the left at the full height, the bar, players, status and
+   buttons in a column on its right (the board was squeezed to a sliver between them). */
+html.sideways #game-stage .xox-page.mt > .mt-table {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'board bar' 'board top' 'board bottom' 'board tray' 'board status' 'board actions'; gap: 6px 12px;
+}
+html.sideways #game-stage .xox-page.mt[data-board='backgammon'] > .mt-table { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
 #game-stage .mt .xox-players { display: contents; }
 #game-stage .mt #seat-1 { grid-area: top; }
 #game-stage .mt #seat-0 { grid-area: bottom; }

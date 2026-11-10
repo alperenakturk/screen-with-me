@@ -127,7 +127,9 @@ function measure({ mayScroll, minTarget }) {
   // Classics' picker shows no board at all (CL2): nothing to measure there.
   if (b && !b.closest('[hidden]')) {
     const r = b.getBoundingClientRect();
-    if (r.width < Math.min(260, box.width * 0.6) || r.height < 150) board = `${name(b)} ${Math.round(r.width)}×${Math.round(r.height)} in ${Math.round(box.width)}`;
+    // A sideways phone's window is wide and low: the board is fair when it takes most of the height there.
+    const room = Math.min(box.width, box.height);
+    if (r.width < Math.min(260, room * 0.55) || r.height < Math.min(150, box.height * 0.55)) board = `${name(b)} ${Math.round(r.width)}×${Math.round(r.height)} in ${Math.round(box.width)}×${Math.round(box.height)}`;
   }
   // CL2: the board is the hero: no other block of the table is bigger, and nothing stands beside it as a column
   // (the old layout had seats, status and settings in a column left of a small board).
