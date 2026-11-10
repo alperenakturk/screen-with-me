@@ -211,7 +211,7 @@ async function placeIn(page, mode) {
         check(m.median >= (big ? 16 : Math.min(m.w, m.h) < 420 ? 11 : 11.5), `${label}: the game's usual text is a good size on the screen (${m.median} px in ${m.w}×${m.h})`);
         check(m.min >= 8.5, `${label}: no text is tiny on the screen (${m.min} px)`);
         if (mode === 'stage') {
-          // 0.9.97.115 (owner: "the How to play card is cut at the bottom"): every card of the game's "How to play" fits
+          // 0.9.97.114 (owner: "the How to play card is cut at the bottom"): every card of the game's "How to play" fits
           // the window here, its buttons visible.
           const cut = await page.evaluate(async () => {
             const open = document.querySelector('#game-stage .htp-open');

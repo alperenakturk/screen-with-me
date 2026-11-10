@@ -1194,13 +1194,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Enter the row turns over cell by cell (`reveal`: 110 + 110 ms per cell, 80 ms apart, typing held, the tray and the
   result's sound after the last cell, a solved row hops, an unknown word shakes; reduced motion = a 150 ms colour fade,
   a red outline); the credits link left the game ("Licenses" in the footer and on the Help page).
-  **SIDE340 (0.9.97.115):** the three side games read well down to 340 px wide, so on a 1366 laptop they open in the
+  **SIDE340 (0.9.97.114):** the three side games read well down to 320 px wide, so on a 1366 or 1440 laptop they open in the
   column right of the video (W's `homeBox`, about 354 px) instead of the video's place: `SOLO_CATALOG` `fit`
-  328 × 434 / 417 / 485 and `minSize` 340 × 489 / 472 / 540 (the window keeps `size`'s shape); a narrow game box
-  (`@container game (max-width: 360px)`, height ≤ 460–540) slims Five Frames' rows (33 px), cells and keys, hides its
+  312 × 400 / 384 / 448 and `minSize` 320 × 460 / 444 / 508 (the window keeps `size`'s shape); a narrow game box
+  (`@container game (max-width: 360px)`, height ≤ 420–540) slims Five Frames' rows (33 px), cells and keys, hides its
   title (the window's head shows it) and wraps its legend; Snack Bar's cinema line takes its own row, the scene is
-  80 px, rows 40 px and the Upgrades rows 34 px (three stand rows, "+N more"); Window Garden's bar is tighter. A
-  1440 × 900 screen (column 341 px) still uses the video's place. Snack Bar's badge wall has 14 columns in the wide
+  80 px, rows 40 px and the Upgrades rows 34 px (three stand rows, "+N more"); Window Garden's bar is tighter (a short
+  "📖 n/24" album chip). A 1440 × 900 screen (column 341 px) also gets the column. Snack Bar's badge wall has 14 columns in the wide
   box. Harnesses `game-window-head`, `snack-bar-3`, `snack-bar-ng2` follow the new home. Snack Bar's Upgrades panel
   (`.sb-panel-upgrades`) scrolls inside with a sticky ✕ when the list is long (snack-bar-3 checks it with every stand).
   "How to play" (`how-to-play.css`) in a wide box (`@container game (min-aspect-ratio: 16 / 10)`): picture left at the

@@ -118,7 +118,11 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
     title: document.querySelector('#game-stage .sb-panel h3')?.textContent ?? '',
   }));
   check(panel.recipes.includes('popcorn:1') && panel.staff.length === 4, 'Upgrades lists the open popcorn recipe and the four staff', JSON.stringify(panel));
-  check((await fits(page)).length === 0, 'the Upgrades panel fits without scrollbars', (await fits(page)).join('; '));
+  // 0.9.97.114 (owner): Upgrades is a growing list, so it may scroll inside its own panel (a narrow laptop column);
+  // nothing else may: the game, the rows and the window stay without scrollbars, and the panel's ✕ stays in sight.
+  const upFit = (await fits(page)).filter((f) => !f.startsWith('#game-stage .sb-panel '));
+  const upClose = await page.evaluate(() => { const p = document.querySelector('#game-stage .sb-panel'); const c = p.querySelector('.sb-panel-close').getBoundingClientRect(); const r = p.getBoundingClientRect(); return c.top >= r.top - 1 && c.bottom <= r.bottom + 1; });
+  check(upFit.length === 0 && upClose, 'the Upgrades panel fits (its list may scroll inside it, ✕ in sight)', upFit.join('; '));
   await page.screenshot({ path: __dirname + '/sb3-upgrades.png' });
   await page.evaluate(() => document.querySelector('#game-stage .sb-up[data-recipe="popcorn:1"] .sb-up-buy').click());
   await wait(300);
@@ -166,7 +170,7 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   const narrowWindow = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
   check(rowsAll.length >= (narrowWindow ? 3 : 4) && rowsAll.includes('arcade'), `with eight stands the newest ones show (at least ${narrowWindow ? 'three' : 'four'} rows in the default window)`, JSON.stringify(rowsAll));
   check((await fits(page)).length === 0, 'eight stands fit without scrollbars (laptop)', (await fits(page)).join('; '));
-  // 0.9.97.115 (owner: "Upgrades runs off the bottom, the staff list is cut"): with every stand open the list may scroll
+  // 0.9.97.114 (owner: "Upgrades runs off the bottom, the staff list is cut"): with every stand open the list may scroll
   // inside the panel, its ✕ stays in sight and the last staff member can be reached.
   await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open').click());
   await wait(400);

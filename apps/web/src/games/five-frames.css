@@ -169,3 +169,11 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-legend-item { gap: 3px; }
   #game-stage .ff:not(.duel) .ff-cell.ff-swatch { width: 18px; height: 18px; }
 }
+@container game (max-height: 480px) and (max-aspect-ratio: 1 / 1) {
+  #game-stage .ff:not(.duel) .ff-row { height: 30px; }
+  #game-stage .ff:not(.duel) .ff-cells { grid-template-columns: repeat(5, 28px); }
+  #game-stage .ff:not(.duel) .ff-cell { font-size: 17px; }
+  #game-stage .ff:not(.duel) .ff-key { min-height: 30px; }
+  #game-stage .ff:not(.duel) .ff-tray { gap: 3px 1px; }
+  #game-stage .ff:not(.duel) { padding-inline: 8px; }
+}

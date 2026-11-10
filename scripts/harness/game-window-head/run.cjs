@@ -129,9 +129,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => localStorage.setItem('gameFloat:spot:snack', JSON.stringify({ x: 0, y: 0 })));
     await openGame(page, 'snack');
     const first = await box(page);
-    // SIDE340 (0.9.97.114): Snack Bar reads well down to 340 px, so the column right of the video (about 354 px here) is
+    // SIDE340 (0.9.97.114): Snack Bar reads well down to 320 px, so the column right of the video (about 354 px here) is
     // its home: it opens there, never over the video.
-    check(first.mode === 'float' && !first.overVideo && first.w >= 340 && first.x + first.w >= 1366 - 10, `${L} 112: Snack Bar opens in the narrow column right of the video, never over it`, first);
+    check(first.mode === 'float' && !first.overVideo && first.w >= 320 && first.x + first.w >= 1366 - 10, `${L} 112: Snack Bar opens in the narrow column right of the video, never over it`, first);
     if (first.mode === 'stage') {
       await page.click('#game-stage .place-float');
       await wait(300);
@@ -292,8 +292,8 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const { ctx, page, errors } = await room(browser, viewport);
     // Owner (0.9.97.112): side games open right of the video when they fit there at their smallest readable size
     // (catalog minSize), else in the video's place; the tables always play in the video's place, with no switch.
-    // SIDE340 (0.9.97.114): the side games read well down to 340 px wide (catalog minSize).
-    const minW = { snack: 340, garden: 340, word: 340 };
+    // SIDE340 (0.9.97.114): the side games read well down to 320 px wide (catalog minSize).
+    const minW = { snack: 320, garden: 320, word: 320 };
     for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz', 'draw', 'poker', 'duel']) {
       await openGame(page, kind);
       const b = await box(page);
