@@ -660,6 +660,20 @@ button.nav-link {
   backdrop-filter: blur(3px);
 }
 
+/* LAYOUT1 (Planner's E): on big screens a dialog grows a little, so a 440 px card is not a toast on a 2560 px screen.
+   Not the settings page (it sizes itself to the window) or the image viewer (the image fills the screen). */
+@media (min-width: 2200px) and (min-height: 1100px) {
+  .dialog-backdrop:not(.settings-backdrop, .image-viewer) > * {
+    zoom: 1.2;
+  }
+}
+
+@media (min-width: 2500px) and (min-height: 1300px) {
+  .dialog-backdrop:not(.settings-backdrop, .image-viewer) > * {
+    zoom: 1.35;
+  }
+}
+
 .avatar-dialog {
   width: min(760px, 100%);
   display: flex;

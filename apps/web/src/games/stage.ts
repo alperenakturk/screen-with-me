@@ -345,10 +345,14 @@ export function createGameStage(opts: StageOptions) {
     const kind = shownKind() ?? 'xox';
     const [w, h] = sizeOf(kind).size;
     const { low, high } = zoomRange(kind);
-    const saved = Number(load(zoomKey(kind)) || '1');
+    const saved = Number(load(zoomKey(kind)) || '0');
     const room = area();
     const most = Math.min(high, (room.width - 2 * EDGE) / w, (room.height - 2 * EDGE) / h);
-    const wanted = want ?? (Number.isFinite(saved) && saved > 0 ? saved : 1);
+    // Until I size it myself, a window grows with the screen (LAYOUT1, the Planner's B2: the games' own sizes are made
+    // for 1366 × 768, so on a 2560 × 1440 screen a side game was 6 % of it): 1 on a laptop, ≈ 1.4 at 1920 × 1080, the
+    // game's largest size (≈ 1.5) at 2560 × 1440.
+    const screenZoom = Math.max(1, Math.min(innerWidth / 1366, innerHeight / 768));
+    const wanted = want ?? (Number.isFinite(saved) && saved > 0 ? saved : screenZoom);
     return Math.min(most, Math.max(low, wanted));
   }
   let spot = readPair(FLOAT_KEY) ?? { x: 1, y: 0.5 };

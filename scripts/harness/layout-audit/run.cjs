@@ -181,7 +181,9 @@ function measure(selectors) {
     if (STEPS.includes('invite')) {
       await page.evaluate(() => document.querySelector('#invite-btn')?.click());
       await wait(900);
-      await note('invite', ['.invite-dialog', '.dialog-backdrop:not([hidden]) .dialog', '.ph-sheet']);
+      const inv = await note('invite', ['.invite-dialog', '.dialog-backdrop:not([hidden]) .dialog', '.ph-sheet']);
+      // Dialogs grow a little on big screens (LAYOUT1, the Planner's E): 440 px was 4 % of a 2560 px screen.
+      if (device === 'wide' && inv?.found) check(inv.box.w >= 560, `${device} · invite: grows on a big screen`, `${inv.box.w} px wide`);
       await closeAll();
     }
 
@@ -222,6 +224,8 @@ function measure(selectors) {
           // and got the computer's free window). An upright tablet may cover the video (the Planner's A, card T).
           if (phone) check(mode.includes('full'), `${device} · game ${game}: the whole screen on a phone`, mode);
           else if (!touch) check(!m.coversRail, `${device} · game ${game}: does not cover the rail`);
+          // A free window grows with a big screen until resized (LAYOUT1, the Planner's B2).
+          if (['desktop', 'wide'].includes(device) && ['snack', 'garden', 'word'].includes(game)) check(m.box.w >= 540, `${device} · game ${game}: grows with the screen`, `${m.box.w} px wide`);
         }
       }
       await page.evaluate(() => document.querySelector('#game-stage .game-minimize')?.click());

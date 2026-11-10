@@ -388,6 +388,14 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.96 (LAYOUT1, layout audit; fold into the next round).** Report: `docs/internal/layout-audit.md`.
+- [ ] L1. Phone held sideways (best a big Android phone): open a game from ⋯ → it fills the whole screen, not a small
+  window over the video.
+- [ ] L2. Phone: share your screen (or watch a friend's stream): the small picture sits top right of the video and the
+  video's own play / time bar under it stays free.
+- [ ] L3. Big monitor (1920 or wider): open Snack Bar from 🎮 → "On the side": the window is bigger than on the laptop and
+  its text easy to read; drag its corner smaller, reload: it keeps your size.
+
 **0.9.97.95 (QUOTA2 + ERR1; fold into the next round).** Only with a network where the room uses its backup connection.
 - [ ] Q5. On your phone hotspot (or with the Test Lab's "Use the backup connection"), stay in a room for 10 minutes: no
   "reconnecting", the video stays in step, chat arrives at once.
